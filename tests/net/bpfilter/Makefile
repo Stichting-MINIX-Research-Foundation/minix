@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/08/14 19:09:15 alnsn Exp $
+# $NetBSD: Makefile,v 1.2 2014/06/10 04:28:40 he Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,6 @@ TESTS_C=	t_bpfilter
 
 LDADD+=		-lrumpnet_shmif
 LDADD+=		-lrumpdev_bpf -lrumpdev -lrumpnet_netinet -lrumpnet_net
-LDADD+=		-lrumpnet -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD+=		-lrumpnet -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 
 .include <bsd.test.mk>

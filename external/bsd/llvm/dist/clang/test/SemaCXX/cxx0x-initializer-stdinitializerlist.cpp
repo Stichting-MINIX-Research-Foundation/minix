@@ -117,6 +117,7 @@ void argument_deduction() {
 
 void auto_deduction() {
   auto l = {1, 2, 3, 4};
+  auto l2 {1, 2, 3, 4}; // expected-warning {{will change meaning in a future version of Clang}}
   static_assert(same_type<decltype(l), std::initializer_list<int>>::value, "");
   auto bl = {1, 2.0}; // expected-error {{cannot deduce}}
 
@@ -229,4 +230,33 @@ namespace RefVersusInitList {
 namespace PR18013 {
   int f();
   std::initializer_list<long (*)()> x = {f}; // expected-error {{cannot initialize an array element of type 'long (*const)()' with an lvalue of type 'int ()': different return type ('long' vs 'int')}}
+}
+
+namespace DR1070 {
+  struct S {
+    S(std::initializer_list<int>);
+  };
+  S s[3] = { {1, 2, 3}, {4, 5} }; // ok
+  S *p = new S[3] { {1, 2, 3}, {4, 5} }; // ok
+}
+
+namespace ListInitInstantiate {
+  struct A {
+    A(std::initializer_list<A>);
+    A(std::initializer_list<int>);
+  };
+  struct B : A {
+    B(int);
+  };
+  template<typename T> struct X {
+    X();
+    A a;
+  };
+  template<typename T> X<T>::X() : a{B{0}, B{1}} {}
+
+  X<int> x;
+
+  int f(const A&);
+  template<typename T> void g() { int k = f({0}); }
+  template void g<int>();
 }

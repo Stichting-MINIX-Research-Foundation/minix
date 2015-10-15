@@ -1,7 +1,10 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -ftemplate-depth 16 -fcxx-exceptions -fexceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple %itanium_abi_triple -std=c++11 -ftemplate-depth 16 -fcxx-exceptions -fexceptions %s
 
 // DR1330: an exception specification for a function template is only
 // instantiated when it is needed.
+
+// Note: the test is Itanium-specific because it depends on key functions in the
+// PR12763 namespace.
 
 template<typename T> void f1(T*) throw(T); // expected-error{{incomplete type 'Incomplete' is not allowed in exception specification}}
 struct Incomplete; // expected-note{{forward}}
@@ -55,6 +58,13 @@ namespace dr1330_example {
     S().f<S>(); // ok
     S().f<int>(); // expected-note {{instantiation of exception spec}}
   }
+
+  template<typename T>
+  struct U {
+    void f() noexcept(T::error);
+    void (g)() noexcept(T::error);
+  };
+  U<int> uint; // ok
 }
 
 namespace core_19754_example {
@@ -133,4 +143,38 @@ namespace PR12763 {
     virtual void g();
   };
   void X::g() {} // expected-note {{in instantiation of}}
+}
+
+namespace Variadic {
+  template<bool B> void check() { static_assert(B, ""); }
+  template<bool B, bool B2, bool ...Bs> void check() { static_assert(B, ""); check<B2, Bs...>(); }
+
+  template<typename ...T> void consume(T...);
+
+  template<typename ...T> void f(void (*...p)() throw (T)) {
+    void (*q[])() = { p... };
+    consume((p(),0)...);
+  }
+  template<bool ...B> void g(void (*...p)() noexcept (B)) {
+    consume((p(),0)...);
+    check<noexcept(p()) == B ...>();
+  }
+  template<typename ...T> void i() {
+    consume([]() throw(T) {} ...);
+    consume([]() noexcept(sizeof(T) == 4) {} ...);
+  }
+  template<bool ...B> void j() {
+    consume([](void (*p)() noexcept(B)) {
+      void (*q)() noexcept = p; // expected-error {{not superset of source}}
+    } ...);
+  }
+
+  void z() {
+    f<int, char, double>(nullptr, nullptr, nullptr);
+    g<true, false, true>(nullptr, nullptr, nullptr);
+    i<int, long, short>();
+    j<true, true>();
+    j<true, false>(); // expected-note {{in instantiation of}}
+  }
+
 }

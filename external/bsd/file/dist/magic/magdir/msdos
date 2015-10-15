@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: msdos,v 1.85 2013/03/09 22:36:00 christos Exp $
+# $File: msdos,v 1.100 2014/06/03 19:17:27 christos Exp $
 # msdos:  file(1) magic for MS-DOS files
 #
 
@@ -42,9 +42,9 @@
 # Many of the compressed formats were extraced from IDARC 1.23 source code.
 #
 0	string/b	MZ
-!:mime	application/x-dosexec
 # All non-DOS EXE extensions have the relocation table more than 0x40 bytes into the file.
 >0x18	leshort <0x40 MS-DOS executable
+!:mime	application/x-dosexec
 # These traditional tests usually work but not always.  When test quality support is
 # implemented these can be turned on.
 #>>0x18	leshort	0x1c	(Borland compiler)
@@ -56,6 +56,7 @@
 
 # Maybe it's a PE?
 >>(0x3c.l) string PE\0\0 PE
+!:mime	application/x-dosexec
 >>>(0x3c.l+24)	leshort		0x010b	\b32 executable
 >>>(0x3c.l+24)	leshort		0x020b	\b32+ executable
 >>>(0x3c.l+24)	leshort		0x0107	ROM image
@@ -134,8 +135,10 @@
 # Hmm, not a PE but the relocation table is too high for a traditional DOS exe,
 # must be one of the unusual subformats.
 >>(0x3c.l) string !PE\0\0 MS-DOS executable
+!:mime	application/x-dosexec
 
 >>(0x3c.l)		string		NE \b, NE
+!:mime	application/x-dosexec
 >>>(0x3c.l+0x36)	byte		1 for OS/2 1.x
 >>>(0x3c.l+0x36)	byte		2 for MS Windows 3.x
 >>>(0x3c.l+0x36)	byte		3 for MS-DOS
@@ -150,6 +153,7 @@
 >>>(0x3c.l+0x70)	search/0x80	WinZip(R)\ Self-Extractor \b, ZIP self-extracting archive (WinZip)
 
 >>(0x3c.l)		string		LX\0\0 \b, LX
+!:mime	application/x-dosexec
 >>>(0x3c.l+0x0a)	leshort		<1 (unknown OS)
 >>>(0x3c.l+0x0a)	leshort		1 for OS/2
 >>>(0x3c.l+0x0a)	leshort		2 for MS Windows
@@ -168,8 +172,10 @@
 
 # MS Windows system file, supposedly a collection of LE executables
 >>(0x3c.l)		string		W3 \b, W3 for MS Windows
+!:mime	application/x-dosexec
 
 >>(0x3c.l)		string		LE\0\0 \b, LE executable
+!:mime	application/x-dosexec
 >>>(0x3c.l+0x0a)	leshort		1
 # some DOS extenders use LE files with OS/2 header
 >>>>0x240		search/0x100	DOS/4G for MS-DOS, DOS4GW DOS extender
@@ -196,6 +202,7 @@
 # and definitely not NE/LE/LX/PE
 >>0x3c		lelong	>0x20000000
 >>>(4.s*512)	leshort !0x014c \b, MZ for MS-DOS
+!:mime	application/x-dosexec
 # header data too small for extended executable
 >2		long	!0
 >>0x18		leshort <0x40
@@ -203,17 +210,19 @@
 
 >>>>&(2.s-514)	string	!LE
 >>>>>&-2	string	!BW \b, MZ for MS-DOS
+!:mime	application/x-dosexec
 >>>>&(2.s-514)	string	LE \b, LE
 >>>>>0x240	search/0x100	DOS/4G for MS-DOS, DOS4GW DOS extender
 # educated guess since indirection is still not capable enough for complex offset
 # calculations (next embedded executable would be at &(&2*512+&0-2)
 # I suspect there are only LE executables in these multi-exe files
 >>>>&(2.s-514)	string	BW
->>>>>0x240	search/0x100	DOS/4G ,\b LE for MS-DOS, DOS4GW DOS extender (embedded)
->>>>>0x240	search/0x100	!DOS/4G ,\b BW collection for MS-DOS
+>>>>>0x240	search/0x100	DOS/4G	\b, LE for MS-DOS, DOS4GW DOS extender (embedded)
+>>>>>0x240	search/0x100	!DOS/4G	\b, BW collection for MS-DOS
 
 # This sequence skips to the first COFF segment, usually .text
 >(4.s*512)	leshort		0x014c \b, COFF
+!:mime	application/x-dosexec
 >>(8.s*16)	string		go32stub for MS-DOS, DJGPP go32 DOS extender
 >>(8.s*16)	string		emx
 >>>&1		string		x for DOS, Win or OS/2, emx %s
@@ -373,7 +382,7 @@
 # they have their real name at offset 22
 >>>>>22		string			>\0			\b%-.5s
 >4	uleshort&0x8000			0x0000			
-# 32 bit sector adressing ( > 32 MB) for block devices
+# 32 bit sector addressing ( > 32 MB) for block devices
 >>4	uleshort&0x0002			0x0002			\b,32-bit sector-
 # support by driver functions 13h, 17h, 18h
 >4	uleshort&0x0040			0x0040			\b,IOCTL-
@@ -578,16 +587,48 @@
 #ico files
 0	string/b	\102\101\050\000\000\000\056\000\000\000\000\000\000\000	Icon for MS Windows
 
-# Windows icons (Ian Springer <ips@fpk.hp.com>)
-0	string/b	\000\000\001\000	MS Windows icon resource
-!:mime	image/x-icon
->4	byte	1			- 1 icon
->4	byte	>1			- %d icons
->>6	byte	>0			\b, %dx
->>>7	byte	>0			\b%d
->>8	byte	0			\b, 256-colors
->>8	byte	>0			\b, %d-colors
+# Windows icons
+0   name    ico-dir
+# not entirely accurate, the number of icons is part of the header
+>0  byte    1   - 1 icon
+>0  ubyte   >1  - %d icons
+>2  byte    0   \b, 256x
+>2  byte    !0  \b, %dx
+>3  byte    0   \b256
+>3  byte    !0  \b%d
+>4  ubyte   !0  \b, %d colors
 
+0   belong  0x00000100
+>9  byte    0
+>>0 byte    x           MS Windows icon resource
+!:mime	image/x-icon
+>>4 use     ico-dir
+>9  ubyte   0xff
+>>0 byte    x           MS Windows icon resource
+!:mime	image/x-icon
+>>4 use     ico-dir
+
+# Windows non-animated cursors
+0   name    cur-dir
+# not entirely accurate, the number of icons is part of the header
+>0  byte        1   - 1 icon
+>0  ubyte       >1  - %d icons
+>2  byte        0   \b, 256x
+>2  byte        !0  \b, %dx
+>3  byte        0   \b256
+>3  byte        !0  \b%d
+>6  uleshort    x   \b, hotspot @%dx
+>8  uleshort    x   \b%d
+
+0   belong  0x00000200
+>9  byte    0
+>>0 byte    x           MS Windows cursor resource
+!:mime image/x-cur
+>>4 use     cur-dir
+>9  ubyte   0xff
+>>0 byte    x           MS Windows cursor resource
+!:mime image/x-cur
+>>4 use     cur-dir
 
 # .chr files
 0	string/b	PK\010\010BGI	Borland font 
@@ -644,6 +685,12 @@
 #0	string		AH		Halo(TM) bitmapped font file
 0	lelong		0x08086b70	TurboC BGI file
 0	lelong		0x08084b50	TurboC Font file
+
+# Debian#712046: The magic below identifies "Delphi compiled form data". 
+# An additional source of information is available at:
+# http://www.woodmann.com/fravia/dafix_t1.htm
+0	string		TPF0
+>4	pstring		>\0		Delphi compiled form '%s'
 
 # tests for DBase files moved, updated and merged to database
 
@@ -702,6 +749,19 @@
 0	leshort		0x223e9f78	TNEF
 !:mime	application/vnd.ms-tnef
 
+# Norton Guide (.NG , .HLP) files added by Joerg Jenderek from source NG2HTML.C
+# of http://www.davep.org/norton-guides/ng2h-105.tgz
+# http://en.wikipedia.org/wiki/Norton_Guides
+0	string		NG\0\001	
+# only value 0x100 found at offset 2
+>2	ulelong		0x00000100	Norton Guide
+# Title[40]
+>>8	string		>\0		"%-.40s"
+#>>6	uleshort	x		\b, MenuCount=%u
+# szCredits[5][66]
+>>48	string		>\0		\b, %-.66s
+>>114	string		>\0		%-.66s
+
 # 4DOS help (.HLP) files added by Joerg Jenderek from source TPHELP.PAS 
 # of http://www.4dos.info/
 # pointer,HelpID[8]=4DHnnnmm
@@ -756,90 +816,6 @@
 >40	string	\ EMF		Windows Enhanced Metafile (EMF) image data
 >>44	ulelong x		version 0x%x
 
-# From: Alex Beregszaszi <alex@fsn.hu>
-0	string/b	COWD		VMWare3
->4	byte	3		disk image
->>32	lelong	x		(%d/
->>36	lelong	x		\b%d/
->>40	lelong	x		\b%d)
->4	byte	2		undoable disk image
->>32	string	>\0		(%s)
-
-0	string/b	VMDK		 VMware4 disk image
-0	string/b	KDMV		 VMware4 disk image
-
-#--------------------------------------------------------------------
-# Qemu Emulator Images
-# Lines written by Friedrich Schwittay (f.schwittay@yousable.de)
-# Updated by Adam Buchbinder (adam.buchbinder@gmail.com)
-# Made by reading sources, reading documentation, and doing trial and error
-# on existing QCOW files
-0	string/b	QFI\xFB	QEMU QCOW Image
-
-# Uncomment the following line to display Magic (only used for debugging
-# this magic number)
-#>0	string/b	x	, Magic: %s
-
-# There are currently 2 Versions: "1" and "2".
-# http://www.gnome.org/~markmc/qcow-image-format-version-1.html
->4	belong	1	(v1)
-
-# Using the existence of the Backing File Offset to determine whether
-# to read Backing File Information
->>12	belong	 >0	 \b, has backing file (
-# Note that this isn't a null-terminated string; the length is actually
-# (16.L). Assuming a null-terminated string happens to work usually, but it
-# may spew junk until it reaches a \0 in some cases.
->>>(12.L)	 string >\0	\bpath %s
-
-# Modification time of the Backing File
-# Really useful if you want to know if your backing
-# file is still usable together with this image
->>>>20	bedate >0	\b, mtime %s)
->>>>20	default x	\b)
-
-# Size is stored in bytes in a big-endian u64.
->>24	bequad	x	 \b, %lld bytes
-
-# 1 for AES encryption, 0 for none.
->>36	belong	1	\b, AES-encrypted
-
-# http://www.gnome.org/~markmc/qcow-image-format.html
->4	belong	2	(v2)
-# Using the existence of the Backing File Offset to determine whether
-# to read Backing File Information
->>8	bequad  >0	 \b, has backing file
-# Note that this isn't a null-terminated string; the length is actually
-# (16.L). Assuming a null-terminated string happens to work usually, but it
-# may spew junk until it reaches a \0 in some cases. Also, since there's no
-# .Q modifier, we just use the bottom four bytes as an offset. Note that if
-# the file is over 4G, and the backing file path is stored after the first 4G,
-# the wrong filename will be printed. (This should be (8.Q), when that syntax
-# is introduced.)
->>>(12.L)	 string >\0	(path %s)
->>24	bequad	x	\b, %lld bytes
->>32	belong	1	\b, AES-encrypted
-
->4	default x	(unknown version)
-
-0	string/b	QEVM		QEMU suspend to disk image
-
-# QEMU QED Image
-# http://wiki.qemu.org/Features/QED/Specification
-0	string/b	QED\0		QEMU QED Image
-
-# VDI Image
-64	string/b	\x7f\x10\xda\xbe	VDI Image
->68	string/b	\x01\x00\x01\x00	version 1.1
->0	string		>\0			(%s)
->368	lequad		x			 \b, %lld bytes
-
-0	string/b	Bochs\ Virtual\ HD\ Image	Bochs disk image,
->32	string	x				type %s,
->48	string	x				subtype %s
-
-0	lelong	0x02468ace			Bochs Sparse disk image
-
 # from http://filext.com by Derek M Jones <derek@knosof.co.uk>
 # False positive with PPT (also currently this string is too long)
 #0	string/b	\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x3E\x00\x03\x00\xFE\xFF\x09\x00\x06	Microsoft Installer
@@ -873,8 +849,8 @@
 # URL:	http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/DDSFileReference/ddsfileformat.asp
 # From: Morten Hustveit <morten@debian.org>
 0	string/b	DDS\040\174\000\000\000 Microsoft DirectDraw Surface (DDS),
->16	lelong	>0			%hd x
->12	lelong	>0			%hd,
+>16	lelong	>0			%d x
+>12	lelong	>0			%d,
 >84	string	x			%.4s
 
 # Type: Microsoft Document Imaging Format (.mdi)

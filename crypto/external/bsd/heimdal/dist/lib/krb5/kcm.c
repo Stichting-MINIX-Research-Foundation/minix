@@ -1,4 +1,4 @@
-/*	$NetBSD: kcm.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: kcm.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -159,7 +159,7 @@ kcm_alloc(krb5_context context, const char *name, krb5_ccache *id)
 	}
     } else
 	k->name = NULL;
-    
+
     (*id)->data.data = k;
     (*id)->data.length = sizeof(*k);
 
@@ -556,7 +556,7 @@ kcm_get_first (krb5_context context,
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
 	ret = ENOMEM;
-	krb5_set_error_message(context, ret, 
+	krb5_set_error_message(context, ret,
 			       N_("malloc: out of memory", ""));
 	return ret;
     }
@@ -579,7 +579,7 @@ kcm_get_first (krb5_context context,
 	if (ptr == NULL) {
 	    free(c->uuids);
 	    free(c);
-	    krb5_set_error_message(context, ENOMEM, 
+	    krb5_set_error_message(context, ENOMEM,
 				   N_("malloc: out of memory", ""));
 	    return ENOMEM;
 	}
@@ -639,7 +639,7 @@ kcm_get_next (krb5_context context,
 	return ret;
     }
 
-    sret = krb5_storage_write(request, 
+    sret = krb5_storage_write(request,
 			      &c->uuids[c->offset],
 			      sizeof(c->uuids[c->offset]));
     c->offset++;
@@ -791,7 +791,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
 	ret = ENOMEM;
-	krb5_set_error_message(context, ret, 
+	krb5_set_error_message(context, ret,
 			       N_("malloc: out of memory", ""));
 	goto out;
     }
@@ -822,7 +822,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
 	if (ptr == NULL) {
 	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, 
+	    krb5_set_error_message(context, ret,
 				   N_("malloc: out of memory", ""));
 	    goto out;
 	}
@@ -839,7 +839,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     if (ret && c) {
         free(c->uuids);
         free(c);
-    } else 
+    } else
 	*cursor = c;
 
     return ret;
@@ -871,7 +871,7 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
     if (ret)
 	return ret;
 
-    sret = krb5_storage_write(request, 
+    sret = krb5_storage_write(request,
 			      &c->uuids[c->offset],
 			      sizeof(c->uuids[c->offset]));
     c->offset++;
@@ -958,14 +958,14 @@ kcm_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 }
 
 static krb5_error_code
-kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops, 
+kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
 		     const char *defstr, char **str)
 {
     krb5_error_code ret;
     krb5_storage *request, *response;
     krb5_data response_data;
     char *name;
-    
+
     *str = NULL;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_DEFAULT_CACHE, &request);
@@ -1041,7 +1041,7 @@ kcm_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat kdc_offset)
     krb5_kcmcache *k = KCMCACHE(id);
     krb5_error_code ret;
     krb5_storage *request;
-    
+
     ret = krb5_kcm_storage_request(context, KCM_OP_SET_KDC_OFFSET, &request);
     if (ret)
 	return ret;
@@ -1071,7 +1071,7 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     krb5_storage *request, *response;
     krb5_data response_data;
     int32_t offset;
-    
+
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_KDC_OFFSET, &request);
     if (ret)
 	return ret;
@@ -1157,11 +1157,13 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     kcm_move,
     kcm_get_default_name_api,
     kcm_set_default,
-    kcm_lastchange
+    kcm_lastchange,
+    NULL,
+    NULL
 };
 
 
-krb5_boolean
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kcm_is_running(krb5_context context)
 {
     krb5_error_code ret;
@@ -1186,7 +1188,7 @@ _krb5_kcm_is_running(krb5_context context)
  * Response:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_noop(krb5_context context,
 	       krb5_ccache id)
 {
@@ -1214,7 +1216,7 @@ _krb5_kcm_noop(krb5_context context,
  * Repsonse:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_initial_ticket(krb5_context context,
 			     krb5_ccache id,
 			     krb5_principal server,
@@ -1271,7 +1273,7 @@ _krb5_kcm_get_initial_ticket(krb5_context context,
  * Repsonse:
  *
  */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_ticket(krb5_context context,
 		     krb5_ccache id,
 		     krb5_kdc_flags flags,

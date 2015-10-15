@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/02/04 15:00:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMipa
 
@@ -9,7 +9,6 @@ LIB=	LLVMipa
 SRCS+=	CallPrinter.cpp \
 	CallGraph.cpp \
 	CallGraphSCCPass.cpp \
-	FindUsedTypes.cpp \
 	GlobalsModRef.cpp \
 	IPA.cpp \
 	InlineCost.cpp

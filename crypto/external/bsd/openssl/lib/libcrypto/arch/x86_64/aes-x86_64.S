@@ -1325,12 +1325,12 @@ AES_cbc_encrypt:
 	leaq	.LAES_Td(%rip),%r14
 .Lcbc_picked_te:
 
-	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10d
+	movq	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10
 	cmpq	$512,%rdx
 	jb	.Lcbc_slow_prologue
 	testq	$15,%rdx
 	jnz	.Lcbc_slow_prologue
-	btl	$28,%r10d
+	bt	$28,(%r10)
 	jc	.Lcbc_slow_prologue
 
 

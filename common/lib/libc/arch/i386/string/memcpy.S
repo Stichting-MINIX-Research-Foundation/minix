@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.3 2007/11/12 18:41:59 ad Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.4 2014/03/22 19:38:46 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.3 2007/11/12 18:41:59 ad Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.4 2014/03/22 19:38:46 jakllsch Exp $")
 #endif
 
 	/*
@@ -130,4 +130,14 @@ ENTRY(memcpy)
 1:	movb	(%esi),%al
 	movb	%al,(%edi)
 	jmp	.Lback_aligned
+#endif
+
+#ifdef BCOPY
+END(bcopy)
+#else
+#ifdef MEMMOVE
+END(memmove)
+#else
+END(memcpy)
+#endif
 #endif

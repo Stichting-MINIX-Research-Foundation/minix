@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.185 2012/11/03 19:39:21 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.191 2015/01/20 17:28:00 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -8,29 +8,33 @@
 CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/minix/fs
 CPPFLAGS.fsversion.c+= -I${NETBSDSRCDIR}/minix/fs
 
-SRCS+= dhcp_gettag.c dhcp_settag.c fsversion.c gcov.c gcov_flush.c itoa.c \
+SRCS+= dhcp_gettag.c dhcp_settag.c fsversion.c gcov.c itoa.c \
 	oneC_sum.c paramvalue.c read_tsc_64.c servxcheck.c fslib.c
 
 .endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
+
+.if ${RUMPRUN} != "yes"
+SRCS+=	_errno.c
+.endif
 
 .if defined(__MINIX)
 # Unsupported by Minix.
 # 	closefrom.c confstr.c extattr.c getdevmajor.c \
 #	pthread_atfork.c \
 #	sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
-
+#
 # To be ported
 # nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
 #
 # Not useful but portable
 #	disklabel.c
 
-SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
-	closedir.c \
+SRCS+=	alarm.c alphasort.c arc4random.c assert.c \
+	basename.c clock.c closedir.c \
 	ctermid.c ctype_.c daemon.c \
 	dehumanize_number.c devname.c dirname.c err.c errx.c \
-	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdomainname.c getgrent.c \
@@ -42,8 +46,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
 	nice.c \
 	opendir.c pause.c popen.c posix_spawn_sched.c \
-	posix_spawn_fileactions.c posix_spawnp.c \
-	psignal.c \
+	posix_spawn_fileactions.c posix_spawnp.c psignal.c \
 	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
@@ -55,12 +58,8 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
-	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
-.endif
-
-# indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c \
-	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+	warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c wordexp.c
+.endif # defined(__MINIX)
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
@@ -120,9 +119,10 @@ MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
 	endutxent.3 setutxent.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
-        err.3 warnx.3 err.3 vwarnx.3
-MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
-	exec.3 execvp.3 exec.3 exect.3
+        err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
+	err.3 vwarnc.3
+MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execlpe.3 \
+	exec.3 execv.3 exec.3 execvp.3 exec.3 execvpe.3 exec.3 exect.3 
 MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
 	extattr_copy_file.3 extattr_copy_fd.3 \
 	extattr_copy_file.3 extattr_copy_link.3 \
@@ -170,6 +170,7 @@ MLINKS+=glob.3 glob_pattern_p.3
 MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
+MLINKS+=popen.3 popenve.3
 MLINKS+=posix_spawn.3 posix_spawnp.3 \
 	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_addclose.3 \
 	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_adddup2.3 \

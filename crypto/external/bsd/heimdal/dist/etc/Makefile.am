@@ -2,4 +2,4 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-EXTRA_DIST = services.append
+EXTRA_DIST = NTMakefile services.append

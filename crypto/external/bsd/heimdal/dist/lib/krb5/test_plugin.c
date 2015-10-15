@@ -1,4 +1,4 @@
-/*	$NetBSD: test_plugin.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_plugin.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -98,7 +98,7 @@ main(int argc, char **argv)
     if (ret)
 	errx(1, "krb5_init_contex");
 
-    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA, 
+    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
 			       KRB5_PLUGIN_LOCATE, &resolve);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_plugin_register");

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.51 2013/07/12 17:48:29 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.53 2014/06/18 18:12:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -156,6 +156,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_PROMPT_ESC	21	/* , prompt_func, Char);	      set/get */
 #define	EL_RPROMPT_ESC	22	/* , prompt_func, Char);	      set/get */
 #define	EL_RESIZE	23	/* , el_zfunc_t, void *);	      set     */
+#define	EL_ALIAS_TEXT	24	/* , el_afunc_t, void *);	      set     */
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 
@@ -224,6 +225,7 @@ int		history(History *, HistEvent *, int, ...);
 #define	H_NEXT_EVDATA	23	/* , const int, histdata_t *);	*/
 #define	H_DELDATA	24	/* , int, histdata_t *);*/
 #define	H_REPLACE	25	/* , const char *, histdata_t);	*/
+#define	H_SAVE_FP	26	/* , FILE *);		*/
 
 
 

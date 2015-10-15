@@ -1,4 +1,4 @@
-/* $Id: imsg.c,v 1.5 2012/01/20 14:08:04 joerg Exp $ */
+/* Id */
 /*	$OpenBSD: imsg.c,v 1.3 2010/05/26 13:56:07 nicm Exp $	*/
 
 /*
@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "tmux.h"

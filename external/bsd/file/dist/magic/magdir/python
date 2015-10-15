@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: python,v 1.22 2013/03/18 12:49:55 christos Exp $
+# $File: python,v 1.26 2014/08/04 05:58:40 christos Exp $
 # python:  file(1) magic for python
 #
 # Outlook puts """ too for urgent messages
@@ -23,6 +23,7 @@
 0	belong		0x4f0c0d0a	python 3.1 byte-compiled
 0	belong		0x6c0c0d0a	python 3.2 byte-compiled
 0	belong		0x9e0c0d0a	python 3.3 byte-compiled
+0	belong		0xee0c0d0a	python 3.4 byte-compiled
 
 0	search/1/w	#!\ /usr/bin/python	Python script text executable
 !:mime text/x-python
@@ -44,13 +45,13 @@
 !:mime text/x-python
 
 # comments
-0	search/4096	'''
->&0	regex	.*'''$	Python script text executable
-!:mime text/x-python
+#0	search/4096	'''
+#>&0	regex	.*'''$	Python script text executable
+#!:mime text/x-python
 
-0	search/4096	"""
->&0	regex	.*"""$	Python script text executable
-!:mime text/x-python
+#0	search/4096	"""
+#>&0	regex	.*"""$	Python script text executable
+#!:mime text/x-python
 
 # try:
 # except: or finally:
@@ -62,6 +63,6 @@
 !:mime text/x-python
 
 # def name(args, args):
-0	regex	 \^(\ |\\t)*def\ +[a-zA-Z]+
->&0	regex	\ *\\(([a-zA-Z]|,|\ )*\\):$ Python script text executable
+0	regex	 \^(\ |\\t){0,50}def\ {1,50}[a-zA-Z]{1,100}
+>&0	regex	\ {0,50}\\(([a-zA-Z]|,|\ ){1,255}\\):$ Python script text executable
 !:mime text/x-python

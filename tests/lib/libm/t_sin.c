@@ -1,4 +1,4 @@
-/* $NetBSD: t_sin.c,v 1.3 2011/09/14 13:29:58 jruoho Exp $ */
+/* $NetBSD: t_sin.c,v 1.4 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -84,12 +84,10 @@ ATF_TC_HEAD(sin_nan, tc)
 
 ATF_TC_BODY(sin_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(sin(x)) != 0);
-#endif
 }
 
 ATF_TC(sin_inf_neg);
@@ -100,11 +98,9 @@ ATF_TC_HEAD(sin_inf_neg, tc)
 
 ATF_TC_BODY(sin_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	ATF_CHECK(isnan(sin(x)) != 0);
-#endif
 }
 
 ATF_TC(sin_inf_pos);
@@ -115,11 +111,9 @@ ATF_TC_HEAD(sin_inf_pos, tc)
 
 ATF_TC_BODY(sin_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 
 	ATF_CHECK(isnan(sin(x)) != 0);
-#endif
 }
 
 
@@ -131,11 +125,9 @@ ATF_TC_HEAD(sin_zero_neg, tc)
 
 ATF_TC_BODY(sin_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 
 	ATF_CHECK(sin(x) == x);
-#endif
 }
 
 ATF_TC(sin_zero_pos);
@@ -146,11 +138,9 @@ ATF_TC_HEAD(sin_zero_pos, tc)
 
 ATF_TC_BODY(sin_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 
 	ATF_CHECK(sin(x) == x);
-#endif
 }
 
 /*
@@ -187,12 +177,10 @@ ATF_TC_HEAD(sinf_nan, tc)
 
 ATF_TC_BODY(sinf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(sinf(x)) != 0);
-#endif
 }
 
 ATF_TC(sinf_inf_neg);
@@ -203,14 +191,12 @@ ATF_TC_HEAD(sinf_inf_neg, tc)
 
 ATF_TC_BODY(sinf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (isnan(sinf(x)) == 0) {
 		atf_tc_expect_fail("PR lib/45362");
 		atf_tc_fail("sinf(-Inf) != NaN");
 	}
-#endif
 }
 
 ATF_TC(sinf_inf_pos);
@@ -221,14 +207,12 @@ ATF_TC_HEAD(sinf_inf_pos, tc)
 
 ATF_TC_BODY(sinf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
 	if (isnan(sinf(x)) == 0) {
 		atf_tc_expect_fail("PR lib/45362");
 		atf_tc_fail("sinf(+Inf) != NaN");
 	}
-#endif
 }
 
 
@@ -240,11 +224,9 @@ ATF_TC_HEAD(sinf_zero_neg, tc)
 
 ATF_TC_BODY(sinf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 
 	ATF_CHECK(sinf(x) == x);
-#endif
 }
 
 ATF_TC(sinf_zero_pos);
@@ -255,11 +237,9 @@ ATF_TC_HEAD(sinf_zero_pos, tc)
 
 ATF_TC_BODY(sinf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 
 	ATF_CHECK(sinf(x) == x);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

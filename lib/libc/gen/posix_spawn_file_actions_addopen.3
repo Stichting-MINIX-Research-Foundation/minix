@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn_file_actions_addopen.3,v 1.3 2013/07/20 21:39:57 wiz Exp $
+.\" $NetBSD: posix_spawn_file_actions_addopen.3,v 1.5 2014/02/02 16:59:13 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/gen/posix_spawn_file_actions_addopen.3,v 1.2.2.1.4.1 2010/06/14 02:09:06 kensmith Exp $
 .\"
-.Dd December 20, 2011
+.Dd February 2, 2014
 .Dt POSIX_SPAWN_FILE_ACTIONS_ADDOPEN 3
 .Os
 .Sh NAME
@@ -147,12 +147,16 @@ otherwise, an error number is returned to indicate the error.
 These
 functions fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
+.It Bq Er EBADF
 The value specified by
 .Fa fildes
 or
 .Fa newfildes
 is negative.
+.It Bq Er EINVAL
+The value specified by
+.Fa file_actions
+is invalid.
 .It Bq Er ENOMEM
 Insufficient memory exists to add to the spawn file actions object.
 .El

@@ -1,7 +1,10 @@
-#	$NetBSD: airport,v 1.51 2013/04/25 13:34:10 mbalmer Exp $
+#	$NetBSD: airport,v 1.60 2015/10/02 09:01:23 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
+#
+# Note that these are three letter IATA codes, most airports also have a
+# four letter ICAO code, e.g. Bern is BRN (IATA) and LSZB (ICAO).
 #
 # Airport Code : Airport
 AAA:Anaa, French Polynesia
@@ -918,7 +921,7 @@ BRJ:Bright, Victoria, Australia
 BRK:Bourke, New South Wales, Australia
 BRL:Burlington Municipal Airport, IA, USA
 BRM:Barquisimeto, Venezuela
-BRN:Bern-Belp, Switzerland
+BRN:Bern Airport, Bern-Belp, Switzerland
 BRO:Brownsville/South Padre Island, TX, USA
 BRP:Biaru, Papua New Guinea
 BRQ:Brno, Czech Republic
@@ -2837,6 +2840,7 @@ HBZ:Heber Springs Municipal Airport, AR, USA
 HCA:Big Spring, TX, USA
 HCB:Shoal Cove, AK, USA
 HCD:Hutchinson (Butler Field), MN, USA
+HCJ:Hechi Jinchengjiang Airport, China
 HCM:Ell, Somalia
 HCQ:Halls Creek, Western Australia, Australia
 HCR:Holy Cross Airport, AK, USA
@@ -3143,6 +3147,7 @@ ICA:Icabaru, Venezuela
 ICI:Cicia, Fiji
 ICK:Nieuw Nickerie (New Nickerie), Suriname
 ICL:Clarinda (Schenck Field), IA, USA
+ICN:Incheon, South Korea
 ICR:Nicaro, Cuba
 ICT:Wichita Mid-Continent, Kansas, USA
 ICY:Icy Bay Airport, AK, USA
@@ -3404,7 +3409,7 @@ JCI:Kansas City (Johnson County Airport), MO, USA
 JCJ:Cheju, South Korea
 JCK:Julia Creek, Queensland, Australia
 JCM:Jacobina, BA, Brazil
-JCN:Inchon (Heliport), South Korea
+JCN:Incheon (Heliport), South Korea
 JCR:Jacareacanga, PR, Brazil
 JCT:Junction (Kimble County Airport), TX, USA
 JCX:Los Angeles (Citicorp Heliport), CA, USA
@@ -3728,7 +3733,7 @@ KGX:Grayling Airport, AK, USA
 KGY:Kingaroy, Queensland, Australia
 KGZ:Glacier Creek Airport, AK, USA
 KHA:Khaneh, Iran
-KHC:Kerch, Krym (Crimea), Ukraine
+KHC:Kerch, Ukraine
 KHE:Kherson, Mykolayiv, Ukraine
 KHG:Kashi, China
 KHH:Kaohsiung International, Taiwan
@@ -4079,6 +4084,7 @@ LAH:Labuha, Indonesia
 LAI:Lannion, France
 LAJ:Lages, SC, Brazil
 LAK:Aklavik Airport, NT, Canada
+LAKU:Shaikh Zayed International Airport, Kukes, Albania
 LAL:Lakeland Regional Airport, FL, USA
 LAM:Los Alamos Airport, NM, USA
 LAN:Lansing Capital City, Michigan, USA
@@ -7027,7 +7033,7 @@ SIL:Sila, Papua New Guinea
 SIM:Simbai, Papua New Guinea
 SIN:Singapore
 SIO:Smithton, Tasmania, Australia
-SIP:Simferopol, Adygea, Ukraine
+SIP:Simferopol, Ukraine
 SIQ:Singkep (Dabo Airport), Indonesia
 SIR:Sion (Sitten), Switzerland
 SIS:Sishen, South Africa
@@ -7298,7 +7304,7 @@ STK:Sterling (Crosson Field), CO, USA
 STL:St. Louis/Lambert International, Missouri, USA
 STM:Santarem, PA, Brazil
 STN:London (Stansted), UK
-STO:All Airports around Stockholm, Sweden
+STO:All airports around Stockholm, Sweden
 STP:St. Paul (Holman Field), MN, USA
 STQ:St. Marys Municipal Airport, PA, USA
 STR:Stuttgart (Echterdingen), Germany
@@ -7318,7 +7324,7 @@ SUE:Sturgeon Bay (Door County), WI, USA
 SUF:Lamezia Terme, Italy
 SUG:Surigao, Philippines
 SUH:Sur, Oman
-SUI:Sokhumi, Abkhazia, Georgia
+SUI:Sukhum, Abkhazia
 SUJ:Satu Mare, Romania
 SUK:Samchok, South Korea
 SUL:Sui, Pakistan
@@ -8170,7 +8176,7 @@ VIH:Rolla/Vichy (Rolla National Airport), MO, USA
 VIJ:Virgin Gorda (Valley), British Virgin Islands
 VIK:Kavik, AK, USA
 VIL:Dakhla (Villa Cisneros), Western Sahara
-VIN:Vinnytsya, Russia
+VIN:Vinnytsya, Ukraine
 VIQ:Viqueque, Indonesia
 VIS:Visalia Municipal Airport, CA, USA
 VIT:Vitoria, Spain
@@ -9164,9 +9170,7 @@ ZBX:Branson (Table Rock Heliport), MO, USA
 ZBY:Sayaboury, Laos
 ZCC:Baden Baden (Railway Station), Germany
 ZCL:Zacatecas (General Leobardo Ruiz), Mexico
-ZCO:Temuco, Chile
-ZDJ:Bern, Switzerland
-ZDT:Chur, Switzerland
+ZCO:Maquehue Airport, Temuco, Chile
 ZEC:Seconda, South Africa
 ZEF:Elkin Municipal Airport, NC, USA
 ZEG:Senggo, Indonesia

@@ -17,8 +17,7 @@ int max_error = 1;
 
 #define ITERATIONS     2
 
-
-#define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
+#define System(cmd)	if (system_p(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 #define Chmod(a,b)	if (chmod(a,b) != 0) printf("Can't chmod %s\n", a)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: csplit.1,v 1.4 2009/03/12 12:35:51 joerg Exp $
+.\"	$NetBSD: csplit.1,v 1.5 2014/02/04 19:48:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/csplit/csplit.1,v 1.11 2005/01/25 22:29:51 tjr Exp $
 .\"
-.Dd January 4, 2009
+.Dd February 4, 2014
 .Dt CSPLIT 1
 .Os
 .Sh NAME
@@ -121,8 +121,6 @@ After all the patterns have been processed, the remaining input data
 .Pp
 Requesting to split at a line before the current line number or past the
 end of the file will result in an error.
-.Pp
-.Ex -std
 .Sh ENVIRONMENT
 The
 .Ev LANG , LC_ALL , LC_COLLATE ,
@@ -132,12 +130,14 @@ environment variables affect the execution of
 .Nm
 as described in
 .Xr environ 7 .
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 Split the
 .Xr mdoc 7
 file
 .Pa foo.1
-into one file for each section (up to 20):
+into one file for each section (up to 21 plus one for the rest, if any):
 .Pp
 .Dl "$ csplit -k foo.1 '%^\e.Sh%' '/^\e.Sh/' '{20}'"
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_s_mp_mul_digs.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_s_mp_mul_digs.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_S_MP_MUL_DIGS_C
@@ -18,7 +18,7 @@
  */
 
 /* multiplies |a| * |b| and only computes upto digs digits of result
- * HAC pp. 595, Algorithm 14.12  Modified so you can control how 
+ * HAC pp. 595, Algorithm 14.12  Modified so you can control how
  * many digits of output are created.
  */
 int s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
@@ -31,7 +31,7 @@ int s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
 
   /* can we use the fast multiplier? */
   if (((digs) < MP_WARRAY) &&
-      MIN (a->used, b->used) < 
+      MIN (a->used, b->used) <
           (1 << ((CHAR_BIT * sizeof (mp_word)) - (2 * DIGIT_BIT)))) {
     return fast_s_mp_mul_digs (a, b, c, digs);
   }
@@ -53,10 +53,10 @@ int s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
     /* setup some aliases */
     /* copy of the digit from a used within the nested loop */
     tmpx = a->dp[ix];
-    
+
     /* an alias for the destination shifted ix places */
     tmpt = t.dp + ix;
-    
+
     /* an alias for the digits of b */
     tmpy = b->dp;
 
@@ -87,6 +87,6 @@ int s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_s_mp_mul_digs.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_s_mp_mul_digs.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_sock.c,v 1.1.1.1 2013/04/11 16:43:24 christos Exp $	*/
+/*	$NetBSD: bufferevent_sock.c,v 1.1.1.2 2015/01/29 06:38:05 spz Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  * Copyright (c) 2002-2006 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_sock.c,v 1.1.1.1 2013/04/11 16:43:24 christos Exp $");
+__RCSID("$NetBSD: bufferevent_sock.c,v 1.1.1.2 2015/01/29 06:38:05 spz Exp $");
 
 #ifdef _EVENT_HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -518,7 +518,7 @@ bufferevent_socket_get_dns_error(struct bufferevent *bev)
 
 	BEV_LOCK(bev);
 	rv = bev_p->dns_error;
-	BEV_LOCK(bev);
+	BEV_UNLOCK(bev);
 
 	return rv;
 }

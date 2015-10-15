@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.4 2013/11/30 14:54:29 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.5 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: recover.c,v 10.31 2001/11/01 15:24:44 skimo Exp  (Berkeley) Date: 2001/11/01 15:24:44 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: recover.c,v 1.5 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

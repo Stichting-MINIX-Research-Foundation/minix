@@ -1,4 +1,4 @@
-/*	$NetBSD: protocol.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: protocol.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -61,7 +61,7 @@ kcm_op_noop(krb5_context context,
 {
     KCM_LOG_REQUEST(context, client, opcode);
 
-    return 0;	
+    return 0;
 }
 
 /*
@@ -110,7 +110,7 @@ kcm_op_get_name(krb5_context context,
 
 /*
  * Request:
- *	
+ *
  * Response:
  *	NameZ
  */
@@ -141,9 +141,9 @@ kcm_op_gen_new(krb5_context context,
  * Request:
  *	NameZ
  *	Principal
- *	
+ *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_initialize(krb5_context context,
@@ -207,9 +207,9 @@ kcm_op_initialize(krb5_context context,
 /*
  * Request:
  *	NameZ
- *	
+ *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_destroy(krb5_context context,
@@ -240,9 +240,9 @@ kcm_op_destroy(krb5_context context,
  * Request:
  *	NameZ
  *	Creds
- *	
+ *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_store(krb5_context context,
@@ -300,7 +300,7 @@ kcm_op_store(krb5_context context,
  *
  * Response:
  *	Creds
- *	
+ *
  */
 static krb5_error_code
 kcm_op_retrieve(krb5_context context,
@@ -434,7 +434,7 @@ kcm_op_get_principal(krb5_context context,
  *
  * Response:
  *	UUIDs
- *	
+ *
  */
 static krb5_error_code
 kcm_op_get_cred_uuid_list(krb5_context context,
@@ -537,7 +537,7 @@ kcm_op_get_cred_by_uuid(krb5_context context,
  *	MatchCreds
  *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_remove_cred(krb5_context context,
@@ -595,7 +595,7 @@ kcm_op_remove_cred(krb5_context context,
  *	Flags
  *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_set_flags(krb5_context context,
@@ -642,7 +642,7 @@ kcm_op_set_flags(krb5_context context,
  *	GID
  *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_chown(krb5_context context,
@@ -696,7 +696,7 @@ kcm_op_chown(krb5_context context,
  *	Mode
  *
  * Response:
- *	
+ *
  */
 static krb5_error_code
 kcm_op_chmod(krb5_context context,
@@ -1259,7 +1259,7 @@ find_ntlm_cred(const char *user, const char *domain, kcm_client *client)
     struct kcm_ntlm_cred *c;
 
     for (c = ntlm_head; c != NULL; c = c->next)
-	if ((user[0] == '\0' || strcmp(user, c->user) == 0) && 
+	if ((user[0] == '\0' || strcmp(user, c->user) == 0) &&
 	    (domain == NULL || strcmp(domain, c->domain) == 0) &&
 	    kcm_is_same_session(client, c->uid, c->session))
 	    return c;
@@ -1450,7 +1450,7 @@ kcm_op_do_ntlm(krb5_context context,
     memset(&type3, 0, sizeof(type3));
     sessionkey.data = NULL;
     sessionkey.length = 0;
-    
+
     ret = krb5_ret_stringz(request, &user);
     if (ret)
 	goto error;
@@ -1491,22 +1491,22 @@ kcm_op_do_ntlm(krb5_context context,
     type3.flags = type2.flags;
     type3.targetname = type2.targetname;
     type3.ws = rk_UNCONST("workstation");
-    
+
     /*
      * NTLM Version 1 if no targetinfo buffer.
      */
-    
+
     if (1 || type2.targetinfo.length == 0) {
 	struct ntlm_buf sessionkey;
-	
+
 	if (type2.flags & NTLM_NEG_NTLM2_SESSION) {
 	    unsigned char nonce[8];
-	    
+
 	    if (RAND_bytes(nonce, sizeof(nonce)) != 1) {
 		ret = EINVAL;
 		goto error;
 	    }
-	    
+
 	    ret = heim_ntlm_calculate_ntlm2_sess(nonce,
 						 type2.challenge,
 						 c->nthash.data,
@@ -1517,11 +1517,11 @@ kcm_op_do_ntlm(krb5_context context,
 					    c->nthash.length,
 					    type2.challenge,
 					    &type3.ntlm);
-	    
+
 	}
 	if (ret)
 	    goto error;
-	
+
 	ret = heim_ntlm_build_ntlm1_master(c->nthash.data,
 					   c->nthash.length,
 					   &sessionkey,
@@ -1543,14 +1543,14 @@ kcm_op_do_ntlm(krb5_context context,
 	    goto error;
 	}
 	flags |= NTLM_FLAG_SESSIONKEY;
-#if 0	
+#if 0
     } else {
 	struct ntlm_buf sessionkey;
 	unsigned char ntlmv2[16];
 	struct ntlm_targetinfo ti;
-	
+
 	/* verify infotarget */
-	
+
 	ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
 	if(ret) {
 	    _gss_ntlm_delete_sec_context(minor_status,
@@ -1558,14 +1558,14 @@ kcm_op_do_ntlm(krb5_context context,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	if (ti.domainname && strcmp(ti.domainname, name->domain) != 0) {
 	    _gss_ntlm_delete_sec_context(minor_status,
 					 context_handle, NULL);
 	    *minor_status = EINVAL;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = heim_ntlm_calculate_ntlm2(ctx->client->key.data,
 					ctx->client->key.length,
 					type3.username,
@@ -1580,7 +1580,7 @@ kcm_op_do_ntlm(krb5_context context,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = heim_ntlm_build_ntlm1_master(ntlmv2, sizeof(ntlmv2),
 					   &sessionkey,
 					   &type3.sessionkey);
@@ -1591,10 +1591,10 @@ kcm_op_do_ntlm(krb5_context context,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	flags |= NTLM_FLAG_NTLM2_SESSION |
 	         NTLM_FLAG_SESSION;
-	
+
 	if (type3.flags & NTLM_NEG_KEYEX)
 	    flags |= NTLM_FLAG_KEYEX;
 
@@ -1609,7 +1609,7 @@ kcm_op_do_ntlm(krb5_context context,
 	}
 #endif
     }
-    
+
 #if 0
     if (flags & NTLM_FLAG_NTLM2_SESSION) {
 	_gss_ntlm_set_key(&ctx->u.v2.send, 0, (ctx->flags & NTLM_NEG_KEYEX),
@@ -1632,7 +1632,7 @@ kcm_op_do_ntlm(krb5_context context,
     ret = heim_ntlm_encode_type3(&type3, &ndata);
     if (ret)
 	goto error;
-	
+
     data.data = ndata.data;
     data.length = ndata.length;
     ret = krb5_store_data(response, data);

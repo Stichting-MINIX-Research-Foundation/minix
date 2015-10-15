@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.33 2013/02/09 17:17:36 christos Exp $
+# $NetBSD: mi,v 1.36 2015/08/23 18:28:41 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -53,11 +53,19 @@
 ./usr/X11R6/man/man1/xdmxconfig.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg,minix-false
-./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
+./usr/X11R7/bin/Xvfb					-unknown-	xorg
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=amd64
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=amd64
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/dri/gallium_dri.so		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/dri/gallium_dri.so.0		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/dri/kms_swrast_dri.so		-unknown-	xorg,minix-false
+./usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0		-unknown-	xorg,minix-false
 ./usr/X11R7/man/cat1/Xmark.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xnest.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0				-unknown-	.cat,xorg
@@ -71,5 +79,6 @@
 ./usr/X11R7/man/man1/Xmark.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg,minix-false
+./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	obsolete
+./var/db/obsolete/xserver				xbase-sys-root	xorg

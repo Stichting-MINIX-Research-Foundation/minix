@@ -50,6 +50,6 @@ test: $(OBJECTS) windll
 	gcc $(CFLAGS) demo/demo.c libtommath.dll.a -Wl,--enable-auto-import -o test -s
 	cd mtest ; $(CC) -O3 -fomit-frame-pointer -funroll-loops mtest.c -o mtest -s
 
-/* Source: /cvs/libtom/libtommath/makefile.cygwin_dll,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:45 */
+/* Source: /cvs/libtom/libtommath/makefile.cygwin_dll,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:45  */

@@ -1,0 +1,37 @@
+#	$NetBSD: Makefile.options,v 1.1 2014/03/01 10:00:49 mrg Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_OPTIONS_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_OPTIONS_=1
+
+# Common makefile fragment to build options*
+
+CLEANFILES+=	options.h options.c optionlist options-save.c
+optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+
+options.c: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.awk \
+		      ${DIST}/gcc/optc-gen.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		    -f ${DIST}/gcc/opt-read.awk \
+		    -f ${DIST}/gcc/optc-gen.awk \
+		    -v header_name="config.h system.h coretypes.h options.h tm.h" \
+		< optionlist > ${.TARGET}
+
+options-save.c: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.awk \
+			   ${DIST}/gcc/optc-save-gen.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		    -f ${DIST}/gcc/opt-read.awk \
+		    -f ${DIST}/gcc/optc-save-gen.awk \
+		    -v header_name="config.h system.h coretypes.h tm.h" \
+		< optionlist > ${.TARGET}
+
+options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.awk \
+		      ${DIST}/gcc/opth-gen.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		    -f ${DIST}/gcc/opt-read.awk \
+		    -f ${DIST}/gcc/opth-gen.awk \
+		< optionlist > ${.TARGET}
+
+options.o: options.c coretypes.h opts.h intl.h
+
+.endif

@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.6 2013/11/29 23:00:48 joerg Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.9 2014/05/06 16:02:10 joerg Exp $");
 
 #include "crtbegin.h"
 
@@ -39,7 +39,7 @@ __weakref_visible void Jv_RegisterClasses(const fptr_t *)
 	__weak_reference(_Jv_RegisterClasses);
 
 #if !defined(HAVE_INITFINI_ARRAY)
-__dso_hidden const fptr_t __CTOR_LIST__[] __section(".ctors") = {
+__dso_hidden const fptr_t __aligned(sizeof(void *)) __CTOR_LIST__[] __section(".ctors") = {
 	(fptr_t) -1,
 };
 __dso_hidden extern const fptr_t __CTOR_LIST_END__[];
@@ -54,7 +54,7 @@ __weakref_visible void cxa_finalize(void *)
 __dso_hidden void *__dso_handle;
 #endif
 
-#if !defined(__ARM_EABI__)
+#if !defined(__ARM_EABI__) || defined(__ARM_DWARF_EH__)
 __dso_hidden
 #if !defined(__mips__)
 	const
@@ -81,7 +81,7 @@ __do_global_ctors_aux(void)
 
 	__initialized = 1;
 
-#if !defined(__ARM_EABI__)
+#if !defined(__ARM_EABI__) || defined(__ARM_DWARF_EH__)
 	if (register_frame_info)
 		register_frame_info(__EH_FRAME_LIST__, &dwarf_eh_object);
 #endif
@@ -96,9 +96,9 @@ __do_global_ctors_aux(void)
 #endif
 }
 
-#if !defined(__ARM_EABI__) || defined(SHARED)
+#if !defined(__ARM_EABI__) || defined(SHARED) || defined(__ARM_DWARF_EH__)
 #if !defined(HAVE_INITFINI_ARRAY)
-__dso_hidden const fptr_t __DTOR_LIST__[] __section(".dtors") = {
+__dso_hidden const fptr_t __aligned(sizeof(void *)) __DTOR_LIST__[] __section(".dtors") = {
 	(fptr_t) -1,
 };
 __dso_hidden extern const fptr_t __DTOR_LIST_END__[];
@@ -127,9 +127,9 @@ __do_global_dtors_aux(void)
 	}
 #endif
 
-#if !defined(__ARM_EABI__)
+#if !defined(__ARM_EABI__) || defined(__ARM_DWARF_EH__)
 	if (deregister_frame_info)
 		deregister_frame_info(__EH_FRAME_LIST__);
 #endif
 }
-#endif /* !__ARM_EABI__ || SHARED */
+#endif /* !__ARM_EABI__ || SHARED || __ARM_DWARF_EH__ */

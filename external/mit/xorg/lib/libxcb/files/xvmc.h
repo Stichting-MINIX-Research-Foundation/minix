@@ -13,8 +13,6 @@
 #define __XVMC_H
 
 #include "xcb.h"
-#include "xproto.h"
-#include "shm.h"
 #include "xv.h"
 
 #ifdef __cplusplus
@@ -23,7 +21,7 @@ extern "C" {
 
 #define XCB_XVMC_MAJOR_VERSION 1
 #define XCB_XVMC_MINOR_VERSION 1
-  
+
 extern xcb_extension_t xcb_xvmc_id;
 
 typedef uint32_t xcb_xvmc_context_t;
@@ -337,16 +335,6 @@ typedef struct xcb_xvmc_list_subpicture_types_reply_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xvmc_context_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xvmc_context_next
- ** 
- ** @param xcb_xvmc_context_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xvmc_context_next (xcb_xvmc_context_iterator_t *i  /**< */);
 
@@ -359,16 +347,6 @@ xcb_xvmc_context_next (xcb_xvmc_context_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_context_end
- ** 
- ** @param xcb_xvmc_context_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_context_end (xcb_xvmc_context_iterator_t i  /**< */);
 
@@ -380,16 +358,6 @@ xcb_xvmc_context_end (xcb_xvmc_context_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xvmc_surface_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xvmc_surface_next
- ** 
- ** @param xcb_xvmc_surface_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xvmc_surface_next (xcb_xvmc_surface_iterator_t *i  /**< */);
 
@@ -402,16 +370,6 @@ xcb_xvmc_surface_next (xcb_xvmc_surface_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_surface_end
- ** 
- ** @param xcb_xvmc_surface_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_surface_end (xcb_xvmc_surface_iterator_t i  /**< */);
 
@@ -423,16 +381,6 @@ xcb_xvmc_surface_end (xcb_xvmc_surface_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xvmc_subpicture_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xvmc_subpicture_next
- ** 
- ** @param xcb_xvmc_subpicture_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xvmc_subpicture_next (xcb_xvmc_subpicture_iterator_t *i  /**< */);
 
@@ -445,16 +393,6 @@ xcb_xvmc_subpicture_next (xcb_xvmc_subpicture_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_subpicture_end
- ** 
- ** @param xcb_xvmc_subpicture_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_subpicture_end (xcb_xvmc_subpicture_iterator_t i  /**< */);
 
@@ -466,16 +404,6 @@ xcb_xvmc_subpicture_end (xcb_xvmc_subpicture_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xvmc_surface_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xvmc_surface_info_next
- ** 
- ** @param xcb_xvmc_surface_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xvmc_surface_info_next (xcb_xvmc_surface_info_iterator_t *i  /**< */);
 
@@ -488,16 +416,6 @@ xcb_xvmc_surface_info_next (xcb_xvmc_surface_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_surface_info_end
- ** 
- ** @param xcb_xvmc_surface_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i  /**< */);
 
@@ -507,18 +425,8 @@ xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_query_version_cookie_t xcb_xvmc_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xvmc_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_query_version_cookie_t
 xcb_xvmc_query_version (xcb_connection_t *c  /**< */);
 
@@ -528,21 +436,11 @@ xcb_xvmc_query_version (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_query_version_cookie_t xcb_xvmc_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xvmc_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_query_version_cookie_t
 xcb_xvmc_query_version_unchecked (xcb_connection_t *c  /**< */);
 
@@ -553,25 +451,13 @@ xcb_xvmc_query_version_unchecked (xcb_connection_t *c  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_query_version_reply_t * xcb_xvmc_query_version_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xvmc_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_xvmc_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_query_version_reply_t *
 xcb_xvmc_query_version_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xvmc_query_version_cookie_t   cookie  /**< */,
@@ -586,19 +472,8 @@ xcb_xvmc_list_surface_types_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_surface_types_cookie_t xcb_xvmc_list_surface_types
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_xv_port_t     port_id
- ** @returns xcb_xvmc_list_surface_types_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_surface_types_cookie_t
 xcb_xvmc_list_surface_types (xcb_connection_t *c  /**< */,
                              xcb_xv_port_t     port_id  /**< */);
@@ -609,62 +484,21 @@ xcb_xvmc_list_surface_types (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_surface_types_cookie_t xcb_xvmc_list_surface_types_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_xv_port_t     port_id
- ** @returns xcb_xvmc_list_surface_types_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_surface_types_cookie_t
 xcb_xvmc_list_surface_types_unchecked (xcb_connection_t *c  /**< */,
                                        xcb_xv_port_t     port_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xvmc_surface_info_t * xcb_xvmc_list_surface_types_surfaces
- ** 
- ** @param const xcb_xvmc_list_surface_types_reply_t *R
- ** @returns xcb_xvmc_surface_info_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_surface_info_t *
 xcb_xvmc_list_surface_types_surfaces (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xvmc_list_surface_types_surfaces_length
- ** 
- ** @param const xcb_xvmc_list_surface_types_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xvmc_list_surface_types_surfaces_length (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xvmc_surface_info_iterator_t xcb_xvmc_list_surface_types_surfaces_iterator
- ** 
- ** @param const xcb_xvmc_list_surface_types_reply_t *R
- ** @returns xcb_xvmc_surface_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_surface_info_iterator_t
 xcb_xvmc_list_surface_types_surfaces_iterator (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
 
@@ -675,25 +509,13 @@ xcb_xvmc_list_surface_types_surfaces_iterator (const xcb_xvmc_list_surface_types
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_list_surface_types_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_surface_types_reply_t * xcb_xvmc_list_surface_types_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xvmc_list_surface_types_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xvmc_list_surface_types_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_surface_types_reply_t *
 xcb_xvmc_list_surface_types_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xvmc_list_surface_types_cookie_t   cookie  /**< */,
@@ -708,24 +530,8 @@ xcb_xvmc_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_context_cookie_t xcb_xvmc_create_context
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_context_t  context_id
- ** @param xcb_xv_port_t       port_id
- ** @param xcb_xvmc_surface_t  surface_id
- ** @param uint16_t            width
- ** @param uint16_t            height
- ** @param uint32_t            flags
- ** @returns xcb_xvmc_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_context_cookie_t
 xcb_xvmc_create_context (xcb_connection_t   *c  /**< */,
                          xcb_xvmc_context_t  context_id  /**< */,
@@ -741,27 +547,11 @@ xcb_xvmc_create_context (xcb_connection_t   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_context_cookie_t xcb_xvmc_create_context_unchecked
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_context_t  context_id
- ** @param xcb_xv_port_t       port_id
- ** @param xcb_xvmc_surface_t  surface_id
- ** @param uint16_t            width
- ** @param uint16_t            height
- ** @param uint32_t            flags
- ** @returns xcb_xvmc_create_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_context_cookie_t
 xcb_xvmc_create_context_unchecked (xcb_connection_t   *c  /**< */,
                                    xcb_xvmc_context_t  context_id  /**< */,
@@ -771,42 +561,12 @@ xcb_xvmc_create_context_unchecked (xcb_connection_t   *c  /**< */,
                                    uint16_t            height  /**< */,
                                    uint32_t            flags  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_xvmc_create_context_priv_data
- ** 
- ** @param const xcb_xvmc_create_context_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_xvmc_create_context_priv_data (const xcb_xvmc_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xvmc_create_context_priv_data_length
- ** 
- ** @param const xcb_xvmc_create_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xvmc_create_context_priv_data_length (const xcb_xvmc_create_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_create_context_priv_data_end
- ** 
- ** @param const xcb_xvmc_create_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_create_context_priv_data_end (const xcb_xvmc_create_context_reply_t *R  /**< */);
 
@@ -817,25 +577,13 @@ xcb_xvmc_create_context_priv_data_end (const xcb_xvmc_create_context_reply_t *R 
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_create_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_context_reply_t * xcb_xvmc_create_context_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xvmc_create_context_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xvmc_create_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_context_reply_t *
 xcb_xvmc_create_context_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xvmc_create_context_cookie_t   cookie  /**< */,
@@ -847,22 +595,11 @@ xcb_xvmc_create_context_reply (xcb_connection_t                  *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_context_checked
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_context_t  context_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_context_checked (xcb_connection_t   *c  /**< */,
                                   xcb_xvmc_context_t  context_id  /**< */);
@@ -873,19 +610,8 @@ xcb_xvmc_destroy_context_checked (xcb_connection_t   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_context
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_context_t  context_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_context (xcb_connection_t   *c  /**< */,
                           xcb_xvmc_context_t  context_id  /**< */);
@@ -899,20 +625,8 @@ xcb_xvmc_create_surface_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_surface_cookie_t xcb_xvmc_create_surface
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_surface_t  surface_id
- ** @param xcb_xvmc_context_t  context_id
- ** @returns xcb_xvmc_create_surface_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_surface_cookie_t
 xcb_xvmc_create_surface (xcb_connection_t   *c  /**< */,
                          xcb_xvmc_surface_t  surface_id  /**< */,
@@ -924,64 +638,22 @@ xcb_xvmc_create_surface (xcb_connection_t   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_surface_cookie_t xcb_xvmc_create_surface_unchecked
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_surface_t  surface_id
- ** @param xcb_xvmc_context_t  context_id
- ** @returns xcb_xvmc_create_surface_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_surface_cookie_t
 xcb_xvmc_create_surface_unchecked (xcb_connection_t   *c  /**< */,
                                    xcb_xvmc_surface_t  surface_id  /**< */,
                                    xcb_xvmc_context_t  context_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_xvmc_create_surface_priv_data
- ** 
- ** @param const xcb_xvmc_create_surface_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_xvmc_create_surface_priv_data (const xcb_xvmc_create_surface_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xvmc_create_surface_priv_data_length
- ** 
- ** @param const xcb_xvmc_create_surface_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xvmc_create_surface_priv_data_length (const xcb_xvmc_create_surface_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_create_surface_priv_data_end
- ** 
- ** @param const xcb_xvmc_create_surface_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_create_surface_priv_data_end (const xcb_xvmc_create_surface_reply_t *R  /**< */);
 
@@ -992,25 +664,13 @@ xcb_xvmc_create_surface_priv_data_end (const xcb_xvmc_create_surface_reply_t *R 
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_create_surface_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_surface_reply_t * xcb_xvmc_create_surface_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xvmc_create_surface_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xvmc_create_surface_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_surface_reply_t *
 xcb_xvmc_create_surface_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xvmc_create_surface_cookie_t   cookie  /**< */,
@@ -1022,22 +682,11 @@ xcb_xvmc_create_surface_reply (xcb_connection_t                  *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_surface_checked
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_surface_t  surface_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c  /**< */,
                                   xcb_xvmc_surface_t  surface_id  /**< */);
@@ -1048,19 +697,8 @@ xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_surface
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xvmc_surface_t  surface_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_surface (xcb_connection_t   *c  /**< */,
                           xcb_xvmc_surface_t  surface_id  /**< */);
@@ -1074,23 +712,8 @@ xcb_xvmc_create_subpicture_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_subpicture_cookie_t xcb_xvmc_create_subpicture
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xvmc_subpicture_t  subpicture_id
- ** @param xcb_xvmc_context_t     context
- ** @param uint32_t               xvimage_id
- ** @param uint16_t               width
- ** @param uint16_t               height
- ** @returns xcb_xvmc_create_subpicture_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_subpicture_cookie_t
 xcb_xvmc_create_subpicture (xcb_connection_t      *c  /**< */,
                             xcb_xvmc_subpicture_t  subpicture_id  /**< */,
@@ -1105,26 +728,11 @@ xcb_xvmc_create_subpicture (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_subpicture_cookie_t xcb_xvmc_create_subpicture_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xvmc_subpicture_t  subpicture_id
- ** @param xcb_xvmc_context_t     context
- ** @param uint32_t               xvimage_id
- ** @param uint16_t               width
- ** @param uint16_t               height
- ** @returns xcb_xvmc_create_subpicture_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_subpicture_cookie_t
 xcb_xvmc_create_subpicture_unchecked (xcb_connection_t      *c  /**< */,
                                       xcb_xvmc_subpicture_t  subpicture_id  /**< */,
@@ -1133,42 +741,12 @@ xcb_xvmc_create_subpicture_unchecked (xcb_connection_t      *c  /**< */,
                                       uint16_t               width  /**< */,
                                       uint16_t               height  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_xvmc_create_subpicture_priv_data
- ** 
- ** @param const xcb_xvmc_create_subpicture_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_xvmc_create_subpicture_priv_data (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xvmc_create_subpicture_priv_data_length
- ** 
- ** @param const xcb_xvmc_create_subpicture_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xvmc_create_subpicture_priv_data_length (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xvmc_create_subpicture_priv_data_end
- ** 
- ** @param const xcb_xvmc_create_subpicture_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xvmc_create_subpicture_priv_data_end (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
 
@@ -1179,25 +757,13 @@ xcb_xvmc_create_subpicture_priv_data_end (const xcb_xvmc_create_subpicture_reply
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_create_subpicture_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_create_subpicture_reply_t * xcb_xvmc_create_subpicture_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_xvmc_create_subpicture_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_xvmc_create_subpicture_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_create_subpicture_reply_t *
 xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_xvmc_create_subpicture_cookie_t   cookie  /**< */,
@@ -1209,22 +775,11 @@ xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_subpicture_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xvmc_subpicture_t  subpicture_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c  /**< */,
                                      xcb_xvmc_subpicture_t  subpicture_id  /**< */);
@@ -1235,19 +790,8 @@ xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xvmc_destroy_subpicture
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xvmc_subpicture_t  subpicture_id
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xvmc_destroy_subpicture (xcb_connection_t      *c  /**< */,
                              xcb_xvmc_subpicture_t  subpicture_id  /**< */);
@@ -1261,20 +805,8 @@ xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_subpicture_types_cookie_t xcb_xvmc_list_subpicture_types
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xv_port_t       port_id
- ** @param xcb_xvmc_surface_t  surface_id
- ** @returns xcb_xvmc_list_subpicture_types_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_subpicture_types_cookie_t
 xcb_xvmc_list_subpicture_types (xcb_connection_t   *c  /**< */,
                                 xcb_xv_port_t       port_id  /**< */,
@@ -1286,64 +818,22 @@ xcb_xvmc_list_subpicture_types (xcb_connection_t   *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_subpicture_types_cookie_t xcb_xvmc_list_subpicture_types_unchecked
- ** 
- ** @param xcb_connection_t   *c
- ** @param xcb_xv_port_t       port_id
- ** @param xcb_xvmc_surface_t  surface_id
- ** @returns xcb_xvmc_list_subpicture_types_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_subpicture_types_cookie_t
 xcb_xvmc_list_subpicture_types_unchecked (xcb_connection_t   *c  /**< */,
                                           xcb_xv_port_t       port_id  /**< */,
                                           xcb_xvmc_surface_t  surface_id  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xv_image_format_info_t * xcb_xvmc_list_subpicture_types_types
- ** 
- ** @param const xcb_xvmc_list_subpicture_types_reply_t *R
- ** @returns xcb_xv_image_format_info_t *
- **
- *****************************************************************************/
- 
 xcb_xv_image_format_info_t *
 xcb_xvmc_list_subpicture_types_types (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xvmc_list_subpicture_types_types_length
- ** 
- ** @param const xcb_xvmc_list_subpicture_types_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xvmc_list_subpicture_types_types_length (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xv_image_format_info_iterator_t xcb_xvmc_list_subpicture_types_types_iterator
- ** 
- ** @param const xcb_xvmc_list_subpicture_types_reply_t *R
- ** @returns xcb_xv_image_format_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xv_image_format_info_iterator_t
 xcb_xvmc_list_subpicture_types_types_iterator (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
 
@@ -1354,25 +844,13 @@ xcb_xvmc_list_subpicture_types_types_iterator (const xcb_xvmc_list_subpicture_ty
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xvmc_list_subpicture_types_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xvmc_list_subpicture_types_reply_t * xcb_xvmc_list_subpicture_types_reply
- ** 
- ** @param xcb_connection_t                         *c
- ** @param xcb_xvmc_list_subpicture_types_cookie_t   cookie
- ** @param xcb_generic_error_t                     **e
- ** @returns xcb_xvmc_list_subpicture_types_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xvmc_list_subpicture_types_reply_t *
 xcb_xvmc_list_subpicture_types_reply (xcb_connection_t                         *c  /**< */,
                                       xcb_xvmc_list_subpicture_types_cookie_t   cookie  /**< */,

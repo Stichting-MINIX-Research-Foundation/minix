@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.35 2010/11/14 22:04:36 tron Exp $	*/
+/*	$NetBSD: getenv.c,v 1.36 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.35 2010/11/14 22:04:36 tron Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.36 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +45,6 @@ __RCSID("$NetBSD: getenv.c,v 1.35 2010/11/14 22:04:36 tron Exp $");
 #include <string.h>
 
 #include "env.h"
-#include "reentrant.h"
 #include "local.h"
 
 __weak_alias(getenv_r, _getenv_r)

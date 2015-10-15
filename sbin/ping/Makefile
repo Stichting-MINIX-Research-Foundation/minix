@@ -8,12 +8,12 @@ BINOWN=	root
 BINMODE=4555
 LDADD=	-lm
 DPADD=	${LIBM}
-
-# BJG - no ipsec
-#CPPFLAGS+=	-DIPSEC
-
-#LDADD+= -lipsec
-#DPADD+= ${LIBIPSEC}
+.include <bsd.own.mk>
+.if !defined(__MINIX)
+CPPFLAGS+=	-DIPSEC
+LDADD+= -lipsec
+DPADD+= ${LIBIPSEC}
+.endif # !defined(__MINIX)
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.ping.c=-O0

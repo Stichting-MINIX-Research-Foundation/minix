@@ -1,4 +1,4 @@
-.\" $NetBSD: err.3,v 1.20 2010/03/22 19:30:53 joerg Exp $
+.\" $NetBSD: err.3,v 1.21 2014/01/16 17:21:38 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)err.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 21, 2001
+.Dd January 16, 2014
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -37,10 +37,14 @@
 .Nm verr ,
 .Nm errx ,
 .Nm verrx ,
+.Nm errc ,
+.Nm verrc ,
 .Nm warn ,
 .Nm vwarn ,
 .Nm warnx ,
-.Nm vwarnx
+.Nm vwarnx ,
+.Nm warnc ,
+.Nm vwarnc
 .Nd formatted error messages
 .Sh LIBRARY
 .Lb libc
@@ -55,6 +59,10 @@
 .Ft void
 .Fn verrx "int status" "const char *fmt" "va_list args"
 .Ft void
+.Fn errc "int status" "int code" "const char *fmt" "..."
+.Ft void
+.Fn verrc "int status" "int code" "const char *fmt" "va_list args"
+.Ft void
 .Fn warn "const char *fmt" "..."
 .Ft void
 .Fn vwarn "const char *fmt" "va_list args"
@@ -62,6 +70,10 @@
 .Fn warnx "const char *fmt" "..."
 .Ft void
 .Fn vwarnx "const char *fmt" "va_list args"
+.Ft void
+.Fn warnc "int code" "const char *fmt" "..."
+.Ft void
+.Fn vwarnc "int code" "const char *fmt" "va_list args"
 .Sh DESCRIPTION
 The
 .Fn err
@@ -90,6 +102,17 @@ is output next, preceded by a colon character and a space if
 is not
 .Dv NULL .
 In all cases, the output is followed by a newline character.
+The
+.Fn errc ,
+.Fn verrc ,
+.Fn warnc ,
+and
+.Fn vwarnc
+functions take an additional
+.Ar code
+argument to be used as the error number instead of using the global
+.Va errno
+variable.
 The
 .Fn errx ,
 .Fn verrx ,
@@ -151,6 +174,14 @@ and
 .Fn warn
 functions first appeared in
 .Bx 4.4 .
+The
+.Fn errc
+and
+.Fn warnc
+functions first appeared in
+.Fx 3.0
+and
+.Nx 7.0 .
 .Sh CAVEATS
 It is important never to pass a string with user-supplied data as a
 format without using

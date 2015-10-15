@@ -58,7 +58,7 @@
 #endif
 
 /* development versions have .99 suffix */
-#define NETPGP_BASE_VERSION	"3.99.15"
+#define NETPGP_BASE_VERSION	"3.99.17"
 
 #define NETPGP_VERSION_CAT(a, b)	"NetPGP portable " a "/[" b "]"
 #define NETPGP_VERSION_STRING \

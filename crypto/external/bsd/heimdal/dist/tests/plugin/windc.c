@@ -1,4 +1,4 @@
-/*	$NetBSD: windc.c,v 1.1.1.1 2011/04/13 18:16:02 elric Exp $	*/
+/*	$NetBSD: windc.c,v 1.1.1.2 2014/04/24 12:45:57 pettai Exp $	*/
 
 #include <krb5/krb5.h>
 #include <krb5/hdb.h>
@@ -43,10 +43,11 @@ pac_generate(void *ctx, krb5_context context,
 
 static krb5_error_code
 pac_verify(void *ctx, krb5_context context,
-	   const krb5_principal client_principal,
-	   struct hdb_entry_ex *client,
-	   struct hdb_entry_ex *server,
-	   struct hdb_entry_ex *krbtgt,
+	   const krb5_principal new_ticket_client,
+	   const krb5_principal delegation_proxy,
+	   struct hdb_entry_ex * client,
+	   struct hdb_entry_ex * server,
+	   struct hdb_entry_ex * krbtgt,
 	   krb5_pac *pac)
 {
     krb5_error_code ret;
@@ -67,8 +68,8 @@ static krb5_error_code
 client_access(void *ctx,
 	      krb5_context context,
 	      krb5_kdc_configuration *config,
-	      hdb_entry_ex *client, const char *client_name, 
-	      hdb_entry_ex *server, const char *server_name, 
+	      hdb_entry_ex *client, const char *client_name,
+	      hdb_entry_ex *server, const char *server_name,
 	      KDC_REQ *req,
 	      krb5_data *e_data)
 {

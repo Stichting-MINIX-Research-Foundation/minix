@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: events.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: events.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("NetBSD");
 
 /* thread-safe in case we multi-thread later */
 static HEIMDAL_MUTEX events_mutex = HEIMDAL_MUTEX_INITIALIZER;

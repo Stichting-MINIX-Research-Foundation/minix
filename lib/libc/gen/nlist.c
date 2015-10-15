@@ -1,4 +1,4 @@
-/* $NetBSD: nlist.c,v 1.24 2012/03/21 15:32:26 christos Exp $ */
+/* $NetBSD: nlist.c,v 1.25 2014/09/18 13:58:20 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.24 2012/03/21 15:32:26 christos Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.25 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,7 +119,7 @@ nlist(const char *name, struct nlist *list)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(list != NULL);
 
-	fd = open(name, O_RDONLY, 0);
+	fd = open(name, O_RDONLY | O_CLOEXEC, 0);
 	if (fd < 0)
 		return (-1);
 	n = __fdnlist(fd, list);

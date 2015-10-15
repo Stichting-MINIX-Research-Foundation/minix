@@ -1,4 +1,4 @@
-/*	$NetBSD: edidvar.h,v 1.2 2006/05/11 19:05:41 gdamore Exp $	*/
+/*	$NetBSD: edidvar.h,v 1.3 2014/11/17 00:46:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,6 +75,7 @@ struct edid_info {
 	uint8_t		edid_max_vsize;		/* in cm */
 	uint8_t		edid_gamma;
 	uint8_t		edid_features;
+	uint8_t		edid_ext_block_count;
 
 	int			edid_have_range;
 	struct edid_range	edid_range;

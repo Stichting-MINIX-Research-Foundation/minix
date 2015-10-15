@@ -1,4 +1,4 @@
-/*	$NetBSD: dbinfo.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: dbinfo.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -114,7 +114,7 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 	if (ret == 0 && di) {
 	    databases = di;
 	    dt = &di->next;
-	}		
+	}
 
 	for ( ; db_binding != NULL; db_binding = db_binding->next) {
 

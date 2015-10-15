@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.31 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.32 2015/05/11 16:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -112,8 +112,7 @@ typedef enum {
 
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
-	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || \
-	 _PROP_EOF(c))
+	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 #define	_PROP_TAG_MATCH(ctx, t)					\
 	_prop_object_internalize_match((ctx)->poic_tagname,	\

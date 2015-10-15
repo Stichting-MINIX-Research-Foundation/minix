@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.38 2014/11/26 23:44:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.33 2011/08/29 14:22:46 joerg Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.38 2014/11/26 23:44:21 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ int	 orcmd(char **, int, const char *,
     const char *, const char *, int *);
 int	 orcmd_af(char **, int, const char *,
     const char *, const char *, int *, int);
+static int	relay_signal;
 #endif
 
 int
@@ -96,7 +97,7 @@ main(int argc, char **argv)
 	struct protoent *proto;
 
 #ifdef IN_RCMD
-	char	*locuser = 0, *loop;
+	char	*locuser = 0, *loop, *relay;
 #endif /* IN_RCMD */
 	int argoff, asrsh, ch, dflag, nflag, one, rem;
 	size_t i;
@@ -131,6 +132,8 @@ main(int argc, char **argv)
 	}
 
 #ifdef IN_RCMD
+	if ((relay = getenv("RCMD_RELAY_SIGNAL")) && strcmp(relay, "YES") == 0)
+		relay_signal = 1;
 	if ((loop = getenv("RCMD_LOOP")) && strcmp(loop, "YES") == 0)
 		warnx("rcmd appears to be looping!");
 
@@ -150,7 +153,7 @@ main(int argc, char **argv)
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "malloc");
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
-		switch(ch) {
+		switch (ch) {
 		case '4':
 			family = AF_INET;
 			break;
@@ -201,6 +204,7 @@ main(int argc, char **argv)
 #else
 		if (asrsh)
 			*argv = __UNCONST("rlogin");
+		setuid(uid);
 		execv(_PATH_RLOGIN, argv);
 		err(1, "can't exec %s", _PATH_RLOGIN);
 #endif
@@ -265,14 +269,17 @@ main(int argc, char **argv)
 
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
-	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
-		struct sigaction sa;
+#ifdef IN_RCMD
+	if (!relay_signal)
+#endif
+		for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
+			struct sigaction sa;
 
-		if (sa.sa_handler != SIG_IGN) {
-			sa.sa_handler = sendsig;
-			(void)sigaction(sigs[i], &sa, NULL);
+			if (sa.sa_handler != SIG_IGN) {
+				sa.sa_handler = sendsig;
+				(void)sigaction(sigs[i], &sa, NULL);
+			}
 		}
-	}
 
 	if (!nflag) {
 		pid = fork();
@@ -282,13 +289,8 @@ main(int argc, char **argv)
 	else
 		pid = -1;
 
-#if defined(KERBEROS) && defined(CRYPT)
-	if (!doencrypt)
-#endif
-	{
-		(void)ioctl(remerr, FIONBIO, &one);
-		(void)ioctl(rem, FIONBIO, &one);
-	}
+	(void)ioctl(remerr, FIONBIO, &one);
+	(void)ioctl(rem, FIONBIO, &one);
 
 	talk(nflag, &oset, pid, rem);
 
@@ -305,17 +307,12 @@ checkfd(struct pollfd *fdp, int outfd)
 
 	if (fdp->revents & (POLLNVAL|POLLERR|POLLHUP))
 		return -1;
-	   
+
 	if ((fdp->revents & POLLIN) == 0)
 		return 0;
 
 	errno = 0;
-#if defined(KERBEROS) && defined(CRYPT)
-	if (doencrypt)
-		nr = des_read(fdp->fd, buf, sizeof buf);
-	else
-#endif
-		nr = read(fdp->fd, buf, sizeof buf);
+	nr = read(fdp->fd, buf, sizeof buf);
 
 	if (nr <= 0) {
 		if (errno != EAGAIN)
@@ -339,7 +336,7 @@ static void
 talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 {
 	int nr, nw, nfds;
-	struct pollfd fds[2], *fdp = &fds[0];
+	struct pollfd fds[3], *fdp = &fds[0];
 	char *bp, buf[BUFSIZ];
 
 	if (!nflag && pid == 0) {
@@ -380,12 +377,7 @@ rewrite:		if (poll(fdp, 1, INFTIM) == -1) {
 			if ((fdp->revents & POLLOUT) == 0)
 				goto rewrite;
 
-#if defined(KERBEROS) && defined(CRYPT)
-			if (doencrypt)
-				nw = des_write(rem, bp, nr);
-			else
-#endif
-				nw = write(rem, bp, nr);
+			nw = write(rem, bp, nr);
 
 			if (nw < 0) {
 				if (errno == EAGAIN)
@@ -400,26 +392,45 @@ done:
 		exit(0);
 	}
 
-	(void)sigprocmask(SIG_SETMASK, oset, NULL);
-	fds[0].events = fds[1].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
-	fds[0].fd = remerr;
-	fds[1].fd = rem;
-	fdp = &fds[0];
+	fdp = &fds[1];
 	nfds = 2;
+	fds[0].events = 0;
+#ifdef IN_RCMD
+	if (relay_signal) {
+		fdp = &fds[0];
+		nfds = 3;
+		fds[0].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+		fds[0].fd = 2;
+	} else
+#endif
+		(void)sigprocmask(SIG_SETMASK, oset, NULL);
+	fds[1].events = fds[2].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+	fds[1].fd = remerr;
+	fds[2].fd = rem;
 	do {
 		if (poll(fdp, nfds, INFTIM) == -1) {
 			if (errno != EINTR)
 				err(1, "poll");
 			continue;
 		}
-		if (fds[0].events != 0 && checkfd(&fds[0], 2) == -1) {
-			nfds--;
-			fds[0].events = 0;
-			fdp = &fds[1];
-		}
-		if (fds[1].events != 0 && checkfd(&fds[1], 1) == -1) {
+		if ((fds[1].events != 0 && checkfd(&fds[1], 2) == -1)
+#ifdef IN_RCMD
+		    || (fds[0].events != 0 && checkfd(&fds[0], remerr) == -1)
+#endif
+		    ) {
 			nfds--;
 			fds[1].events = 0;
+#ifdef IN_RCMD
+			if (relay_signal) {
+				nfds--;
+				fds[0].events = 0;
+			}
+#endif
+			fdp = &fds[2];
+		}
+		if (fds[2].events != 0 && checkfd(&fds[2], 1) == -1) {
+			nfds--;
+			fds[2].events = 0;
 		}
 	}
 	while (nfds);
@@ -431,9 +442,8 @@ sendsig(int sig)
 	char signo;
 
 	signo = sig;
-		(void)write(remerr, &signo, 1);
+	(void)write(remerr, &signo, 1);
 }
-
 
 static char *
 copyargs(char **argv)

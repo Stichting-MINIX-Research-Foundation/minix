@@ -1,4 +1,4 @@
-/*	$NetBSD: test_acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: test_acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Kungliga Tekniska Högskolan
@@ -81,7 +81,7 @@ test_add(gss_cred_id_t cred_handle)
 				 NULL,
 				 &time_rec,
 				 NULL);
-			
+
     if (GSS_ERROR(major_status))
 	errx(1, "add_cred failed");
 
@@ -110,7 +110,7 @@ copy_cred(void)
 				    &time_rec);
     if (GSS_ERROR(major_status))
 	errx(1, "acquire_cred failed");
-	
+
     print_time(time_rec);
 
     test_add(cred_handle);
@@ -139,7 +139,7 @@ acquire_cred_service(const char *service,
     if (service) {
 	name_buffer.value = rk_UNCONST(service);
 	name_buffer.length = strlen(service);
-	
+
 	major_status = gss_import_name(&minor_status,
 				       &name_buffer,
 				       nametype,
@@ -207,7 +207,7 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    gss_OID_set oidset = GSS_C_NULL_OID_SET; 
+    gss_OID_set oidset = GSS_C_NULL_OID_SET;
     gss_OID mechoid = GSS_C_NO_OID;
     OM_uint32 maj_stat, min_stat;
     gss_cred_id_t cred;
@@ -245,7 +245,7 @@ main(int argc, char **argv)
 	    errx(1, "unknown type %s", acquire_type);
     } else
 	flag = GSS_C_ACCEPT;
-	
+
     if (name_type) {
 	if (strcasecmp("hostbased-service", name_type) == 0)
 	    type = GSS_C_NT_HOSTBASED_SERVICE;
@@ -265,13 +265,13 @@ main(int argc, char **argv)
 
     if (kerberos_flag) {
 	mechoid = GSS_KRB5_MECHANISM;
-	
-	maj_stat = gss_create_empty_oid_set(&min_stat, &oidset); 
+
+	maj_stat = gss_create_empty_oid_set(&min_stat, &oidset);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_create_empty_oid_set: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-	
-	maj_stat = gss_add_oid_set_member(&min_stat, GSS_KRB5_MECHANISM, &oidset); 
+
+	maj_stat = gss_add_oid_set_member(&min_stat, GSS_KRB5_MECHANISM, &oidset);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_add_oid_set_member: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
@@ -280,10 +280,10 @@ main(int argc, char **argv)
     if (target_name) {
 	gss_buffer_desc name;
 
-	name.value = target_name; 
-	name.length = strlen(target_name); 
+	name.value = target_name;
+	name.length = strlen(target_name);
 	maj_stat = gss_import_name(&min_stat, &name,
-				   GSS_C_NT_HOSTBASED_SERVICE, &target); 
+				   GSS_C_NT_HOSTBASED_SERVICE, &target);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gss_import_name: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
@@ -295,14 +295,14 @@ main(int argc, char **argv)
 
 	if (enctype) {
 	    int32_t enctypelist = enctype;
-	    
-	    maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, cred, 
-						       1, &enctypelist); 
+
+	    maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, cred,
+						       1, &enctypelist);
 	    if (maj_stat)
 		errx(1, "gss_krb5_set_allowable_enctypes: %s",
 		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 	}
-	
+
 	if (target) {
 	    gss_ctx_id_t context = GSS_C_NO_CONTEXT;
 	    gss_buffer_desc out;
@@ -310,12 +310,12 @@ main(int argc, char **argv)
 	    out.length = 0;
 	    out.value = NULL;
 
-	    maj_stat = gss_init_sec_context(&min_stat, 
-					    cred, &context, 
-					    target, mechoid, 
+	    maj_stat = gss_init_sec_context(&min_stat,
+					    cred, &context,
+					    target, mechoid,
 					    GSS_C_MUTUAL_FLAG, 0, NULL,
-					    GSS_C_NO_BUFFER, NULL, 
-					    &out, NULL, NULL); 
+					    GSS_C_NO_BUFFER, NULL,
+					    &out, NULL, NULL);
 	    if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 		errx(1, "init_sec_context failed: %s",
 		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));

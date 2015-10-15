@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 #include "krb5_locl.h"
 
 static struct _krb5_key_type keytype_arcfour = {
-    KEYTYPE_ARCFOUR,
+    ENCTYPE_ARCFOUR_HMAC_MD5,
     "arcfour",
     128,
     16,
@@ -319,7 +319,7 @@ struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5 = {
     8,
     &keytype_arcfour,
     &_krb5_checksum_hmac_md5,
-    NULL,
+    &_krb5_checksum_hmac_md5,
     F_SPECIAL,
     ARCFOUR_encrypt,
     0,

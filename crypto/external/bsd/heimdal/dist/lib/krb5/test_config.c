@@ -1,4 +1,4 @@
-/*	$NetBSD: test_config.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_config.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -63,15 +63,15 @@ check_config_file(krb5_context context, char *filelist, char **res, int def)
     if (def) {
 	char **deflist;
 	int j;
-	
+
 	ret = krb5_get_default_config_files(&deflist);
 	if (ret)
 	    krb5_err(context, 1, ret, "get_default_config_files");
-	
+
 	for (j = 0 ; pp[i] && deflist[j]; i++, j++)
 	    if (strcmp(pp[i], deflist[j]) != 0)
 		krb5_errx(context, 1, "'%s' != '%s'", pp[i], deflist[j]);
-	
+
 	if (deflist[j] != NULL)
 	    krb5_errx(context, 1, "pp ended before def list");
 	krb5_free_config_files(deflist);
@@ -227,7 +227,7 @@ check_escaped_strings(void)
 
         if (*s || *e)
             errx(1, "Configuation string list for value [%s] has incorrect length.",
-		 config_strings_tests[i].name); 
+		 config_strings_tests[i].name);
 
         krb5_config_free_strings(ps);
     }

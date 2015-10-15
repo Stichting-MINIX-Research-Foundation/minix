@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.35 2012/10/10 22:51:55 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.36 2014/07/20 20:55:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -83,7 +83,7 @@ CODE prioritynames[] = {
 	{ "warning",	LOG_WARNING },
 	{ NULL,		-1 }
 };
-#endif
+#endif /* SYSLOG_NAMES */
 
 /* facility codes */
 #define	LOG_KERN	(0<<3)	/* kernel messages */
@@ -140,7 +140,7 @@ CODE facilitynames[] = {
 	{ "local7",	LOG_LOCAL7 },
 	{ NULL,		-1 }
 };
-#endif
+#endif /* SYSLOG_NAMES */
 
 #ifdef _KERNEL
 #define	LOG_PRINTF	-1	/* pseudo-priority to indicate use of printf */

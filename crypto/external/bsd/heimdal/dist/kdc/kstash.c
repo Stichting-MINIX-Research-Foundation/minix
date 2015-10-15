@@ -1,4 +1,4 @@
-/*	$NetBSD: kstash.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: kstash.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -48,15 +48,17 @@ static int random_key_flag;
 static const char *enctype_str = "des3-cbc-sha1";
 
 static struct getargs args[] = {
-    { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type" },
+    { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type",
+	NULL },
     { "key-file", 'k', arg_string, &keyfile, "master key file", "file" },
     { "convert-file", 0, arg_flag, &convert_flag,
-      "just convert keyfile to new format" },
+      "just convert keyfile to new format", NULL },
     { "master-key-fd", 0, arg_integer, &master_key_fd,
       "filedescriptor to read passphrase from", "fd" },
-    { "random-key", 0, arg_flag, &random_key_flag, "generate a random master key" },
-    { "help", 'h', arg_flag, &help_flag },
-    { "version", 0, arg_flag, &version_flag }
+    { "random-key", 0, arg_flag, &random_key_flag,
+	"generate a random master key", NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);
@@ -118,7 +120,7 @@ main(int argc, char **argv)
 		    krb5_err(context, 1, errno, "failed to read passphrase");
 		buf[n] = '\0';
 		buf[strcspn(buf, "\r\n")] = '\0';
-		
+
 	    } else {
 		if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Master key: ", 1))
 		    exit(1);
@@ -126,7 +128,7 @@ main(int argc, char **argv)
 	    krb5_string_to_key_salt(context, enctype, buf, salt, &key);
 	}
 	ret = hdb_add_master_key(context, &key, &mkey);
-	
+
 	krb5_free_keyblock_contents(context, &key);
 
     }

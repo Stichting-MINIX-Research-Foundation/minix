@@ -67,6 +67,7 @@ resize(atf_dynstr_t *ad, size_t newsize)
     return err;
 }
 
+ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0)
 static
 atf_error_t
 prepend_or_append(atf_dynstr_t *ad, const char *fmt, va_list ap,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.55 2013/10/03 10:45:57 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.57 2014/08/25 20:40:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.55 2013/10/03 10:45:57 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.57 2014/08/25 20:40:53 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -170,7 +170,7 @@ static const long reloc_target_bitmask[] = {
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
 	_BM(10), _BM(22),		/* _PC10, _PC22 */  
 	_BM(30), 0,			/* _WPLT30, _COPY */
-	_BM(32), _BM(32), _BM(32),	/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
+	-1, _BM(32), -1,		/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32), _BM(32),		/* _UA32, PLT32 */
 	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
 	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
@@ -192,18 +192,18 @@ static const long reloc_target_bitmask[] = {
 /*
  * Instruction templates:
  */
-#define	BAA	0x10400000	/*	ba,a	%xcc, 0 */
+#define	BAA	0x30680000	/*	ba,a	%xcc, 0 */
 #define	SETHI	0x03000000	/*	sethi	%hi(0), %g1 */
 #define	JMP	0x81c06000	/*	jmpl	%g1+%lo(0), %g0 */
 #define	NOP	0x01000000	/*	sethi	%hi(0), %g0 */
-#define	OR	0x82806000	/*	or	%g1, 0, %g1 */
-#define	XOR	0x82c06000	/*	xor	%g1, 0, %g1 */
-#define	MOV71	0x8283a000	/*	or	%o7, 0, %g1 */
-#define	MOV17	0x9c806000	/*	or	%g1, 0, %o7 */
+#define	OR	0x82106000	/*	or	%g1, 0, %g1 */
+#define	XOR	0x82186000	/*	xor	%g1, 0, %g1 */
+#define	MOV71	0x8213e000	/*	or	%o7, 0, %g1 */
+#define	MOV17	0x9e106000	/*	or	%g1, 0, %o7 */
 #define	CALL	0x40000000	/*	call	0 */
-#define	SLLX	0x8b407000	/*	sllx	%g1, 0, %g1 */
+#define	SLLX	0x83287000	/*	sllx	%g1, 0, %g1 */
 #define	SETHIG5	0x0b000000	/*	sethi	%hi(0), %g5 */
-#define	ORG5	0x82804005	/*	or	%g1, %g5, %g1 */
+#define	ORG5	0x82104005	/*	or	%g1, %g5, %g1 */
 
 
 /* %hi(v)/%lo(v) with variable shift */
@@ -602,9 +602,15 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
 
-	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> new=%p", 
-	    defobj->strtab + def->st_name, (void *)value));
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
+	rdbg(("bind now/fixup in %s at %p --> new=%p", 
+	    defobj->strtab + def->st_name, (void*)where, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct a direct
@@ -696,7 +702,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *
 		 */
 		where[3] = JMP;
-		where[2] = XOR | ((~value) & 0x00001fff);
+		where[2] = XOR | (value & 0x00003ff) | 0x1c00;
 		where[1] = SETHI | HIVAL(~value, 10);
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));

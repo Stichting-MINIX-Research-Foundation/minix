@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.18 2009/04/12 11:09:49 lukem Exp $	*/
+/*	$NetBSD: indent.c,v 1.19 2014/09/04 04:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.18 2009/04/12 11:09:49 lukem Exp $");
+__RCSID("$NetBSD: indent.c,v 1.19 2014/09/04 04:06:07 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -123,6 +123,7 @@ main(int argc, char **argv)
 				 * without the matching : in a <c>?<s>:<s>
 				 * construct */
 	const char *t_ptr;	/* used for copying tokens */
+	int	tabs_to_var = 0; /* true if using tabs to indent to var name */
 	int     type_code;	/* the type of token, returned by lexi */
 
 	int     last_else = 0;	/* true iff last keyword was an else */
@@ -998,6 +999,7 @@ check_type:
 		         * : i);
 		         */
 			dec_ind = ps.decl_indent > 0 ? ps.decl_indent : i;
+			tabs_to_var = (use_tabs ? ps.decl_indent > 0 : 0);
 			goto copy_id;
 
 		case ident:	/* got an identifier or constant */
@@ -1012,11 +1014,44 @@ check_type:
 							sprintf(e_code, "\n.De %dp+\200p\n", dec_ind * 7);
 							ps.dumped_decl_indent = 1;
 							e_code += strlen(e_code);
-						} else
-							while ((e_code - s_code) < dec_ind) {
+							CHECK_SIZE_CODE;
+						} else {
+							int cur_dec_ind;
+							int pos, startpos;
+
+							/*
+							 * in order to get the tab math right for
+							 * indentations that are not multiples of 8 we
+							 * need to modify both startpos and dec_ind
+							 * (cur_dec_ind) here by eight minus the
+							 * remainder of the current starting column
+							 * divided by eight. This seems to be a
+							 * properly working fix
+							 */
+							startpos = e_code - s_code;
+							cur_dec_ind = dec_ind;
+							pos = startpos;
+							if ((ps.ind_level * ps.ind_size) % 8 != 0) {
+								pos += (ps.ind_level * ps.ind_size) % 8;
+								cur_dec_ind += (ps.ind_level * ps.ind_size) % 8;
+							}
+
+							if (tabs_to_var) {
+								while ((pos & ~7) + 8 <= cur_dec_ind) {
+									CHECK_SIZE_CODE;
+									*e_code++ = '\t';
+									pos = (pos & ~7) + 8;
+								}
+							}
+							while (pos < cur_dec_ind) {
 								CHECK_SIZE_CODE;
 								*e_code++ = ' ';
+								pos++;
 							}
+							if (ps.want_blank && e_code - s_code == startpos)
+								*e_code++ = ' ';
+							ps.want_blank = false;
+						}
 					}
 				} else {
 					if (dec_ind && s_code != e_code)

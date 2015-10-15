@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.serverlib,v 1.4 2008/08/24 13:43:57 rtr Exp $
+#	$NetBSD: Makefile.serverlib,v 1.8 2015/07/18 08:56:06 mrg Exp $
 
-NOLINT=         1
-NOPROFILE=      1
+# We can't use LIBISPRIVATE here as we need the ".so" installed.
+MKPICINSTALL:=	no
+MKLINT:=	no
+MKDEBUGLIB:=	no
+MKPROFILE:=	no
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR
 .include <bsd.endian.mk>
@@ -17,3 +20,6 @@ X_BYTE_ORDER=0
 CPPFLAGS+=	${X11FLAGS.SERVER}
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
+CPPFLAGS+=	-D__GLX_ALIGN64
+.endif

@@ -1,7 +1,6 @@
-diff -rNU3 gcc-4.5.3/configure dist/configure
---- gcc-4.5.3/configure	Wed Nov  7 20:12:53 2012
-+++ dist/configure	Wed Nov  7 19:25:20 2012
-@@ -5321,7 +5321,7 @@
+--- dist.minix/configure	2015-10-16 13:43:21.000000000 +0200
++++ dist/configure	2015-10-16 13:43:34.000000000 +0200
+@@ -5300,7 +5300,7 @@
  
  
  # Check for GMP, MPFR and MPC

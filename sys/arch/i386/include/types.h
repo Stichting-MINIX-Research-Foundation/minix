@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.76 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.83 2015/08/27 12:30:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@ typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
@@ -104,11 +104,21 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_COUNTER
+#define	__HAVE_CPU_BOOTCONF
 #define	__HAVE_MD_CPU_OFFLINE
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#if defined(_KERNEL)
+/*
+ * Processors < i586 do not have cmpxchg8b, and we compile for i486
+ * by default. The kernel tsc driver uses them though, and handles < i586
+ * by patching.  E.g. rump kernels and crash(8) and a selection of
+ * other run-in-userspace code defines _KERNEL, but is careful not to
+ * build anything using 64bit atomic ops by default.
+ */
 #define __HAVE_ATOMIC64_OPS
+#endif
 #define	__HAVE_ATOMIC_AS_MEMBAR
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_INTR_CONTROL
@@ -121,6 +131,10 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
+
+#if !defined(XEN) && !defined(NO_PCI_MSI_MSIX)
+#define __HAVE_PCI_MSI_MSIX
+#endif
 #endif
 
 #endif	/* _I386_MACHTYPES_H_ */

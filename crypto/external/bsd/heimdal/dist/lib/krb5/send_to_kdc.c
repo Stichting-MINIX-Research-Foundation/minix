@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.3 2014/05/12 18:46:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -40,6 +40,63 @@ struct send_to_kdc {
     krb5_send_to_kdc_func func;
     void *data;
 };
+
+/*
+ * connect to a remote host and in the case of stream sockets, provide
+ * a timeout for the connexion.
+ */
+
+static int
+timed_connect(int s, struct addrinfo *addr, time_t tmout)
+{
+#ifdef HAVE_POLL
+    socklen_t sl;
+    int err;
+    int flags;
+    int ret;
+
+    if (addr->ai_socktype != SOCK_STREAM)
+	return connect(s, addr->ai_addr, addr->ai_addrlen);
+
+    flags = fcntl(s, F_GETFL);
+    if (flags == -1)
+	return -1;
+
+    if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1)
+	return -1;
+    ret = connect(s, addr->ai_addr, addr->ai_addrlen);
+    if (ret == -1 && errno != EINPROGRESS)
+	return -1;
+
+    for (;;) {
+	struct pollfd fds;
+
+	fds.fd = s;
+	fds.events = POLLIN | POLLOUT;
+	fds.revents = 0;
+
+	ret = poll(&fds, 1, tmout * 1000);
+	if (ret != -1 || errno != EINTR)
+	    break;
+    }
+    if (fcntl(s, F_SETFL, flags) == -1)
+	return -1;
+
+    if (ret != 1)
+	return -1;
+
+    sl = sizeof(err);
+    ret = getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &sl);
+    if (ret == -1)
+	return -1;
+    if (err != 0)
+	return -1;
+
+    return 0;
+#else
+    return connect(s, addr->ai_addr, addr->ai_addrlen);
+#endif
+}
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -90,7 +147,7 @@ recv_loop (krb5_socket_t fd,
 		 return 0;
 
 	     if (limit)
-		 nbytes = min(nbytes, limit - rep->length);
+		 nbytes = min((size_t)nbytes, limit - rep->length);
 
 	     tmp = realloc (rep->data, rep->length + nbytes);
 	     if (tmp == NULL) {
@@ -270,7 +327,7 @@ send_via_proxy (krb5_context context,
     int ret;
     krb5_socket_t s = rk_INVALID_SOCKET;
     char portstr[NI_MAXSERV];
-		
+
     if (proxy == NULL)
 	return ENOMEM;
     if (strncmp (proxy, "http://", 7) == 0)
@@ -294,7 +351,7 @@ send_via_proxy (krb5_context context,
 	if (s < 0)
 	    continue;
 	rk_cloexec(s);
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+	if (timed_connect (s, a, context->kdc_timeout) < 0) {
 	    rk_closesocket (s);
 	    continue;
 	}
@@ -341,7 +398,7 @@ send_via_plugin(krb5_context context,
 	service = _krb5_plugin_get_symbol(e);
 	if (service->minor_version != 0)
 	    continue;
-	
+
 	(*service->init)(context, &ctx);
 	ret = (*service->send_to_kdc)(context, ctx, hi,
 				      timeout, send_data, receive);
@@ -368,12 +425,12 @@ send_via_plugin(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendto (krb5_context context,
 	     const krb5_data *send_data,
-	     krb5_krbhst_handle handle,	
+	     krb5_krbhst_handle handle,
 	     krb5_data *receive)
 {
      krb5_error_code ret;
      krb5_socket_t fd;
-     int i;
+     size_t i;
 
      krb5_data_zero(receive);
 
@@ -421,7 +478,7 @@ krb5_sendto (krb5_context context,
 		 if (rk_IS_BAD_SOCKET(fd))
 		     continue;
 		 rk_cloexec(fd);
-		 if (connect (fd, a->ai_addr, a->ai_addrlen) < 0) {
+		 if (timed_connect (fd, a, context->kdc_timeout) < 0) {
 		     rk_closesocket (fd);
 		     continue;
 		 }
@@ -513,7 +570,7 @@ _krb5_copy_send_to_kdc_func(krb5_context context, krb5_context to)
 {
     if (context->send_to_kdc)
 	return krb5_set_send_to_kdc_func(to,
-					 context->send_to_kdc->func, 
+					 context->send_to_kdc->func,
 					 context->send_to_kdc->data);
     else
 	return krb5_set_send_to_kdc_func(to, NULL, NULL);
@@ -604,7 +661,7 @@ krb5_sendto_context(krb5_context context,
 	    type = KRB5_KRBHST_KDC;
     }
 
-    if (send_data->length > context->large_msg_size)
+    if ((int)send_data->length > context->large_msg_size)
 	ctx->flags |= KRB5_KRBHST_FLAGS_LARGE_MSG;
 
     /* loop until we get back a appropriate response */

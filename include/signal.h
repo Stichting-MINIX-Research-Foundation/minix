@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.54 2010/08/27 08:40:38 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.55 2015/07/31 12:51:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -199,7 +199,7 @@ int	sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict);
 void	psiginfo(const siginfo_t *, const char *);
 
 #ifndef __LIBC12_SOURCE__
-struct timespec;
+#include <sys/timespec.h>
 int	sigtimedwait(const sigset_t * __restrict,
     siginfo_t * __restrict, const struct timespec * __restrict)
     __RENAME(__sigtimedwait50);

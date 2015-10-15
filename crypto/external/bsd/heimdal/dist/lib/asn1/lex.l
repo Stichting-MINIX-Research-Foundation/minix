@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.1.1.2 2011/04/14 14:08:21 elric Exp $	*/
+/*	$NetBSD: lex.l,v 1.1.1.3 2014/04/24 12:45:28 pettai Exp $	*/
 
 %{
 /*
@@ -218,7 +218,7 @@ WITH			{ return kw_WITH; }
 			    char *p = buf;
 			    int f = 0;
 			    int skip_ws = 0;
-		
+
 			    while((c = input()) != EOF) {
 				if(isspace(c) && skip_ws) {
 				    if(c == '\n')
@@ -226,7 +226,7 @@ WITH			{ return kw_WITH; }
 				    continue;
 				}
 				skip_ws = 0;
-			
+
 				if(c == '"') {
 				    if(f) {
 					*p++ = '"';

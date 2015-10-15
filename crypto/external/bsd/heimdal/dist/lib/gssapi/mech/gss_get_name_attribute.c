@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_get_name_attribute.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_get_name_attribute.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_get_name_attribute(OM_uint32 *minor_status,
 		       gss_name_t input_name,
 		       gss_buffer_t attr,
@@ -47,10 +47,12 @@ gss_get_name_attribute(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
+
     *minor_status = 0;
-    *authenticated = 0;
-    *complete = 0;
+    if (authenticated != NULL)
+        *authenticated = 0;
+    if (complete != NULL)
+        *complete = 0;
     _mg_buffer_zero(value);
     _mg_buffer_zero(display_value);
 

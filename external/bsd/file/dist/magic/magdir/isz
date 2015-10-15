@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: isz,v 1.1 2010/03/27 16:17:09 christos Exp $
+# $File: isz,v 1.3 2014/04/30 21:41:02 christos Exp $
 # ISO Zipped file format 
 # http://www.ezbsystems.com/isz/iszspec.txt
 0	string	IsZ!	ISO Zipped file

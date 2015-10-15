@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.60 2013/08/30 16:42:17 jmcneill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.65 2015/06/11 15:56:53 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libkern/libkern.h>
 
@@ -110,12 +111,14 @@ static int default_unit, default_partition;
 static const char *default_filename;
 
 char *sprint_bootsel(const char *);
-void bootit(const char *, int, int);
+static void bootit(const char *, int);
 void print_banner(void);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
+#if LIBSA_ENABLE_LS_OP
 void	command_ls(char *);
+#endif
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
@@ -125,14 +128,16 @@ void	command_menu(char *);
 #endif
 void	command_modules(char *);
 void	command_multiboot(char *);
-#ifdef __minix
+#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
 void	command_load_mods(char *);
-#endif
+#endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
+#if LIBSA_ENABLE_LS_OP
 	{ "ls",		command_ls },
+#endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
@@ -142,9 +147,9 @@ const struct bootblk_command commands[] = {
 #endif
 	{ "modules",	command_modules },
 	{ "load",	module_add },
-#ifdef __minix
+#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
 	{ "load_mods",  command_load_mods },
-#endif
+#endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
@@ -230,7 +235,8 @@ sprint_bootsel(const char *filename)
 
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
-		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
+		    'a' + partition, file);
 		return buf;
 	}
 	return "(invalid)";
@@ -240,20 +246,16 @@ static void
 clearit(void)
 {
 
-	if (bootconf.clear)
+	if (bootcfg_info.clear)
 		clear_pc_screen();
 }
 
-void
-bootit(const char *filename, int howto, int tell)
+static void
+bootit(const char *filename, int howto)
 {
-
-	if (tell) {
-		printf("booting %s", sprint_bootsel(filename));
-		if (howto)
-			printf(" (howto 0x%x)", howto);
-		printf("\n");
-	}
+	if (howto & AB_VERBOSE)
+		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
+		    howto);
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
@@ -269,12 +271,13 @@ print_banner(void)
 	clearit();
 #ifndef SMALL
 	int n;
-	if (bootconf.banner[0]) {
-		for (n = 0; bootconf.banner[n] && n < MAXBANNER; n++) 
-			printf("%s\n", bootconf.banner[n]);
+	if (bootcfg_info.banner[0]) {
+		for (n = 0; bootcfg_info.banner[n]
+		    && n < BOOTCFG_MAXBANNER; n++) 
+			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
-#ifndef __minix
+#if !defined(__minix)
 		printf("\n"
 		       ">> %s, Revision %s (from NetBSD %s)\n"
 		       ">> Memory: %d/%d k\n",
@@ -285,7 +288,7 @@ print_banner(void)
 			"--- Welcome to MINIX 3. This is the boot monitor. ---\n"
 			"Memory: %d/%d k\n",
 			getbasemem(), getextmem());
-#endif
+#endif /* !defined(__minix) */
 
 #ifndef SMALL
 	}
@@ -334,9 +337,9 @@ boot2(int biosdev, uint64_t biossector)
 
 #ifndef SMALL
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
-		parsebootconf(BOOTCONF);
+		parsebootconf(BOOTCFG_FILENAME);
 	} else {
-		bootconf.timeout = boot_params.bp_timeout;
+		bootcfg_info.timeout = boot_params.bp_timeout;
 	}
 	
 
@@ -344,14 +347,14 @@ boot2(int biosdev, uint64_t biossector)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootconf.consdev)
-		command_consdev(bootconf.consdev);
+	if (bootcfg_info.consdev)
+		command_consdev(bootcfg_info.consdev);
 	else 
 		print_banner();
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
@@ -369,7 +372,8 @@ boot2(int biosdev, uint64_t biossector)
 #ifdef SMALL
 		c = awaitkey(boot_params.bp_timeout, 1);
 #else
-		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+		c = awaitkey((bootcfg_info.timeout < 0) ? 0
+		    : bootcfg_info.timeout, 1);
 #endif
 		if ((c != '\r') && (c != '\n') && (c != '\0')) {
 		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
@@ -394,9 +398,9 @@ boot2(int biosdev, uint64_t biossector)
 		 * try pairs of names[] entries, foo and foo.gz
 		 */
 		/* don't print "booting..." again */
-		bootit(names[currname][0], 0, 0);
+		bootit(names[currname][0], 0);
 		/* since it failed, try compressed bootfile. */
-		bootit(names[currname][1], 0, 1);
+		bootit(names[currname][1], AB_VERBOSE);
 	}
 
 	bootmenu();	/* does not return */
@@ -410,7 +414,9 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+#if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
+#endif
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
@@ -419,41 +425,40 @@ command_help(char *arg)
 #endif
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
-#if defined(__minix)
+#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
 	       "load_mods {path_to_modules}, pattern might be used\n"
-#endif /* defined(__minix) */
+#endif /*defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "splash {path_to_image_file}\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "help|?\n"
 	       "quit\n");
 }
 
+#if LIBSA_ENABLE_LS_OP
 void
 command_ls(char *arg)
 {
 	const char *save = default_filename;
 
 	default_filename = "/";
-#if !defined(__minix)
 	ls(arg);
-#else
-	ls(arg, NULL);
-#endif /* !defined(__minix) */
 	default_filename = save;
 }
+#endif
 
-#if defined(__minix)
+#if defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP
 void
 command_load_mods(char *arg)
 {
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ls(arg, module_add);
+	load_mods(arg, module_add);
 	default_filename = save;
 }
-#endif /* defined(__minix) */
+#endif /* defined(__minix) && LIBSA_ENABLE_LOAD_MODS_OP */
 
 /* ARGSUSED */
 void
@@ -471,23 +476,23 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto, tell;
+	int howto;
 
 	if (!parseboot(arg, &filename, &howto))
 		return;
 
-	tell = ((howto & AB_VERBOSE) != 0);
 	if (filename != NULL) {
-		bootit(filename, howto, tell);
+		bootit(filename, howto);
 	} else {
 		int i;
 
 #ifndef SMALL
-		bootdefault();
+		if (howto == 0)
+			bootdefault();
 #endif
 		for (i = 0; i < NUMNAMES; i++) {
-			bootit(names[i][0], howto, tell);
-			bootit(names[i][1], howto, tell);
+			bootit(names[i][0], howto);
+			bootit(names[i][1], howto);
 		}
 	}
 }
@@ -556,7 +561,7 @@ void
 command_menu(char *arg)
 {
 
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	} else {

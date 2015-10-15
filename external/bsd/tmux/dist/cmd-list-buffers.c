@@ -1,4 +1,4 @@
-/* $Id: cmd-list-buffers.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -26,33 +27,42 @@
  * List paste buffers.
  */
 
-int	cmd_list_buffers_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_buffers_entry = {
 	"list-buffers", "lsb",
-	"", 0, 0,
-	"",
+	"F:", 0, 0,
+	"[-F format]",
 	0,
-	NULL,
 	NULL,
 	cmd_list_buffers_exec
 };
 
-/* ARGSUSED */
-int
-cmd_list_buffers_exec(unused struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_list_buffers_exec(unused struct cmd *self, struct cmd_q *cmdq)
 {
+	struct args		*args = self->args;
 	struct paste_buffer	*pb;
+	struct format_tree	*ft;
 	u_int			 idx;
-	char			*tmp;
+	char			*line;
+	const char		*template;
+
+	if ((template = args_get(args, 'F')) == NULL)
+		template = LIST_BUFFERS_TEMPLATE;
 
 	idx = 0;
 	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {
-		tmp = paste_print(pb, 50);
-		ctx->print(ctx,
-		    "%u: %zu bytes: \"%s\"", idx - 1, pb->size, tmp);
-		xfree(tmp);
+		ft = format_create();
+		format_add(ft, "line", "%u", idx - 1);
+		format_paste_buffer(ft, pb);
+
+		line = format_expand(ft, template);
+		cmdq_print(cmdq, "%s", line);
+		free(line);
+
+		format_free(ft);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

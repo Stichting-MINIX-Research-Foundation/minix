@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.28 2009/08/08 21:23:15 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.29 2014/03/18 14:28:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -250,7 +250,7 @@ be16dec(const void *buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, buf);
 
-	return __CAST(uint16_t, ((p[0] << 8) | p[1]));
+	return ((__CAST(uint16_t, p[0]) << 8) | p[1]);
 }
 
 static __inline uint16_t __unused
@@ -258,7 +258,7 @@ le16dec(const void *buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, buf);
 
-	return __CAST(uint16_t, ((p[1] << 8) | p[0]));
+	return (p[0] | (__CAST(uint16_t, p[1]) << 8));
 }
 
 static __inline void __unused
@@ -288,7 +288,7 @@ be32dec(const void *buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, buf);
 
-	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+	return ((__CAST(uint32_t, be16dec(p)) << 16) | be16dec(p + 2));
 }
 
 static __inline uint32_t __unused
@@ -296,7 +296,7 @@ le32dec(const void *buf)
 {
 	const uint8_t *p = __CAST(const uint8_t *, buf);
 
-	return ((p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
+	return (le16dec(p) | (__CAST(uint32_t, le16dec(p + 2)) << 16));
 }
 
 static __inline void __unused

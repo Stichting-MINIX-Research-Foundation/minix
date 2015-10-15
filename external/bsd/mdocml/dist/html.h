@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.h,v 1.47 2011/10/05 21:35:17 kristaps Exp $ */
+/*	Id: html.h,v 1.50 2014/01/05 19:10:56 joerg Exp  */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,6 +75,7 @@ enum	htmlfont {
 	HTMLFONT_NONE = 0,
 	HTMLFONT_BOLD,
 	HTMLFONT_ITALIC,
+	HTMLFONT_BI,
 	HTMLFONT_MAX
 };
 
@@ -117,6 +118,7 @@ struct	html {
 #define	HTML_PREKEEP	 (1 << 3)
 #define	HTML_NONOSPACE	 (1 << 4) /* never add spaces */
 #define	HTML_LITERAL	 (1 << 5) /* literal (e.g., <PRE>) context */
+#define	HTML_SKIPCHAR	 (1 << 6) /* skip the next character */
 	struct tagq	  tags; /* stack of open tags */
 	struct rofftbl	  tbl; /* current table */
 	struct tag	 *tblt; /* current open table scope */
@@ -145,6 +147,9 @@ void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);
 void		  print_eqn(struct html *, const struct eqn *);
 
+#if __GNUC__ - 0 >= 4
+__attribute__((__format__ (__printf__, 2, 3)))
+#endif
 void		  bufcat_fmt(struct html *, const char *, ...);
 void		  bufcat(struct html *, const char *);
 void		  bufcat_id(struct html *, const char *);

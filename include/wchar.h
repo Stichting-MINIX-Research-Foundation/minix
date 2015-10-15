@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.40 2013/11/21 09:09:52 degroote Exp $	*/
+/*	$NetBSD: wchar.h,v 1.41 2014/10/13 00:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -156,6 +156,11 @@ long long int wcstoll(const wchar_t * __restrict,
 /* LONGLONG */
 unsigned long long int wcstoull(const wchar_t * __restrict,
 	wchar_t ** __restrict, int);
+#endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+FILE	*open_wmemstream(wchar_t **, size_t *);
 #endif
 
 wint_t ungetwc(wint_t, FILE *);

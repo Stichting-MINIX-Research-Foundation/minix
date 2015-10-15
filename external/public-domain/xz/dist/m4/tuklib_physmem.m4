@@ -53,7 +53,8 @@ AC_CACHE_CHECK([how to detect the amount of physical memory],
 # a non-compilable text instead of #error to generate an error.
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 #if defined(_WIN32) || defined(__CYGWIN__) || defined(__OS2__) \
-		|| defined(__DJGPP__) || defined(__VMS)
+		|| defined(__DJGPP__) || defined(__VMS) \
+		|| defined(AMIGA) || defined(__AROS__)
 int main(void) { return 0; }
 #else
 compile error

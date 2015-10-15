@@ -41,7 +41,7 @@ case "$host" in
 	;;
 *-*-linux* | *-*-linux-gnu)
 	case `uname -r` in
-	2.*)
+	2.*|3.*)
 		native_pthread_support=yes
 		PTHREAD_CFLAGS=-pthread
 		PTHREAD_LIBADD=-pthread

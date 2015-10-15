@@ -1,4 +1,4 @@
-/*	$NetBSD: sha512.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: sha512.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 Kungliga Tekniska Högskolan
@@ -142,7 +142,7 @@ calc (SHA512_CTX *m, uint64_t *in)
 
 	T1 = HH + Sigma1(EE) + Ch(EE, FF, GG) + constant_512[i] + data[i];
 	T2 = Sigma0(AA) + Maj(AA,BB,CC);
-			
+
 	HH = GG;
 	GG = FF;
 	FF = EE;

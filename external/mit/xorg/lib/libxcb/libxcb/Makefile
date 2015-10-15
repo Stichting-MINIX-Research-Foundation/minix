@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.5 2011/02/24 08:15:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2015/07/23 01:06:33 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	xcb
 .PATH:	${X11SRCDIR.${LIB}}/src
+.PATH:	${X11SRCDIR.${LIB}}/man
 .PATH:	${X11SRCDIR.${LIB}}
 .PATH:	${.CURDIR}/../files
+
+SHLIB_MAJOR=	2
+SHLIB_MINOR=	0
 
 SRCS=	xcb_auth.c \
 	xcb_conn.c \
@@ -57,6 +61,7 @@ INCS=	\
 	xfixes.h \
 	xinerama.h \
 	xinput.h \
+	xkb.h \
 	xproto.h \
 	xselinux.h \
 	xtest.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_bool_compare_and_swap_4.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: sync_bool_compare_and_swap_4.S,v 1.3 2015/05/17 22:08:24 justin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.

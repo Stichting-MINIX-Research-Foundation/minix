@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.85 2013/10/02 21:48:55 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.85 2013/10/02 21:48:55 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,17 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		cpp = &n1->ncase.cases;
 		noalias = 1;
 		checkkwd = 2, readtoken();
-		do {
+		/*
+		 * Both ksh and bash accept 'case x in esac'
+		 * so configure scripts started taking advantage of this.
+		 * The page: http://pubs.opengroup.org/onlinepubs/\
+		 * 009695399/utilities/xcu_chap02.html contradicts itself,
+		 * as to if this is legal; the "Case Conditional Format"
+		 * paragraph shows one case is required, but the "Grammar"
+		 * section shows a grammar that explicitly allows the no
+		 * case option.
+		 */
+		while (lasttoken != TESAC) {
 			*cpp = cp = (union node *)stalloc(sizeof (struct nclist));
 			if (lasttoken == TLP)
 				readtoken();
@@ -467,7 +477,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 				}
 			}
 			cpp = &cp->nclist.next;
-		} while(lasttoken != TESAC);
+		}
 		noalias = 0;
 		*cpp = NULL;
 		checkkwd = 1;
@@ -637,8 +647,8 @@ void fixredir(union node *n, const char *text, int err)
 	if (!err)
 		n->ndup.vname = NULL;
 
-	if (is_digit(text[0]) && text[1] == '\0')
-		n->ndup.dupfd = digit_val(text[0]);
+	if (is_number(text))
+		n->ndup.dupfd = number(text);
 	else if (text[0] == '-' && text[1] == '\0')
 		n->ndup.dupfd = -1;
 	else {
@@ -678,7 +688,8 @@ parsefname(void)
 		if (heredoclist == NULL)
 			heredoclist = here;
 		else {
-			for (p = heredoclist ; p->next ; p = p->next);
+			for (p = heredoclist ; p->next ; p = p->next)
+				continue;
 			p->next = here;
 		}
 	} else if (n->type == NTOFD || n->type == NFROMFD) {
@@ -762,13 +773,13 @@ readtoken(void)
 			for (pp = parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext))
 				{
-					lasttoken = t = pp - 
+					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
 					goto out;
 				}
 			}
-			if(!noalias &&
+			if (!noalias &&
 			    (ap = lookupalias(wordtext, 1)) != NULL) {
 				pushstring(ap->val, strlen(ap->val), ap);
 				checkkwd = savecheckkwd;
@@ -823,19 +834,25 @@ xxreadtoken(void)
 		case ' ': case '\t':
 			continue;
 		case '#':
-			while ((c = pgetc()) != '\n' && c != PEOF);
+			while ((c = pgetc()) != '\n' && c != PEOF)
+				continue;
 			pungetc();
 			continue;
 		case '\\':
-			if (pgetc() == '\n') {
+			switch (pgetc()) {
+			case '\n':
 				startlinno = ++plinno;
 				if (doprompt)
 					setprompt(2);
 				else
 					setprompt(0);
 				continue;
+			case PEOF:
+				RETURN(TEOF);
+			default:
+				pungetc();
+				break;
 			}
-			pungetc();
 			goto breakloop;
 		case '\n':
 			plinno++;
@@ -990,6 +1007,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					break;
 				}
 				if (c == '\n') {
+					plinno++;
 					if (doprompt)
 						setprompt(2);
 					else
@@ -1136,8 +1154,7 @@ endword:
 	if (eofmark == NULL) {
 		if ((c == '>' || c == '<')
 		 && quotef == 0
-		 && len <= 2
-		 && (*out == '\0' || is_digit(*out))) {
+		 && (*out == '\0' || is_number(out))) {
 			PARSEREDIR();
 			return lasttoken = TREDIR;
 		} else {
@@ -1172,7 +1189,8 @@ checkend: {
 				char *p, *q;
 
 				p = line;
-				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++);
+				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++)
+					continue;
 				if ((*p == '\0' || *p == '\n') && *q == '\0') {
 					c = PEOF;
 					plinno++;
@@ -1194,8 +1212,9 @@ checkend: {
  */
 
 parseredir: {
-	char fd = *out;
+	char fd[64];
 	union node *np;
+	strlcpy(fd, out, sizeof(fd));
 
 	np = (union node *)stalloc(sizeof (struct nfile));
 	if (c == '>') {
@@ -1244,8 +1263,8 @@ parseredir: {
 			break;
 		}
 	}
-	if (fd != '\0')
-		np->nfile.fd = digit_val(fd);
+	if (*fd != '\0')
+		np->nfile.fd = number(fd);
 	redirnode = np;
 	goto parseredir_return;
 }

@@ -143,6 +143,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `atexit' function. */
 #define HAVE_ATEXIT 1
 
+/* Define to 1 if you have the `backtrace' function. */
+/* #undef HAVE_BACKTRACE */
+
 /* Define to 1 if you have the <bind/bitypes.h> header file. */
 /* #undef HAVE_BIND_BITYPES_H */
 
@@ -212,6 +215,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <db5/db.h> header file. */
 /* #undef HAVE_DB5_DB_H */
 
+/* Define to 1 if you have the <db6/db.h> header file. */
+/* #undef HAVE_DB6_DB_H */
+
 /* Define if you have user supplied header location */
 /* #undef HAVE_DBHEADER */
 
@@ -223,9 +229,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `dbopen' function. */
 #define HAVE_DBOPEN 1
-
-/* Define to 1 if you have the <db_185.h> header file. */
-/* #undef HAVE_DB_185_H */
 
 /* Define to 1 if you have the `db_create' function. */
 /* #undef HAVE_DB_CREATE */
@@ -340,6 +343,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the function `estrdup'. */
 #define HAVE_ESTRDUP 1
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
 
 /* Define if you have the function `fchown'. */
 #define HAVE_FCHOWN 1
@@ -720,6 +726,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you want support for cache in sqlite. */
 /* #undef HAVE_SCC */
 
+/* Define to 1 if you have the <search.h> header file. */
+/* #undef HAVE_SEARCH_H */
+
 /* Define to 1 if you have the <security/pam_modules.h> header file. */
 #define HAVE_SECURITY_PAM_MODULES_H 1
 
@@ -809,6 +818,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if the system has the type `socklen_t'. */
 #define HAVE_SOCKLEN_T 1
+
+/* Define if you want support for sqlite in Heimdal. */
+/* #undef HAVE_SQLITE3 */
 
 /* Define to 1 if the system has the type `ssize_t'. */
 #define HAVE_SSIZE_T 1
@@ -1101,6 +1113,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #define HAVE_SYS_WAIT_H 1
 
+/* Define to 1 if you have the `tdelete' function. */
+/* #undef HAVE_TDELETE */
+
 /* Define to 1 if you have the <termcap.h> header file. */
 #define HAVE_TERMCAP_H 1
 
@@ -1112,6 +1127,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the <term.h> header file. */
 #define HAVE_TERM_H 1
+
+/* Define to 1 if you have the `tfind' function. */
+/* #undef HAVE_TFIND */
 
 /* Define to 1 if you have the `tgetent' function. */
 #define HAVE_TGETENT 1
@@ -1128,11 +1146,17 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <tmpdir.h> header file. */
 /* #undef HAVE_TMPDIR_H */
 
+/* Define if you have the function `tsearch'. */
+/* #undef HAVE_TSEARCH 1 */
+
 /* Define to 1 if you have the `ttyname' function. */
 #define HAVE_TTYNAME 1
 
 /* Define to 1 if you have the `ttyslot' function. */
 #define HAVE_TTYSLOT 1
+
+/* Define to 1 if you have the `twalk' function. */
+/* #undef HAVE_TWALK */
 
 /* Define to 1 if you have the <udb.h> header file. */
 /* #undef HAVE_UDB_H */
@@ -1298,7 +1322,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define KRB5 1
 
 /* Define to enable kx509. */
-/* #undef KX509 */
+#define KX509 1
 
 /* path to lib */
 #define LIBDIR "/usr/lib"
@@ -1444,7 +1468,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 1.5pre1"
+#define PACKAGE_STRING "Heimdal 1.5.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
@@ -1453,7 +1477,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.5pre1"
+#define PACKAGE_VERSION "1.5.3"
 
 /* Define to enable PKINIT. */
 #define PKINIT 1
@@ -1508,7 +1532,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.5pre1"
+#define VERSION "1.5.3"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
@@ -1534,6 +1558,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
+
+/* Define to get POSIX getpwnam_r in some systems. */
+/* #undef _POSIX_PTHREAD_SEMANTICS */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

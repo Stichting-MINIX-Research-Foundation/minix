@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2011/03/26 19:51:41 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2015/07/15 14:27:49 pooka Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S \
@@ -8,18 +8,13 @@ SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S \
 
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
-.if defined(__MINIX)
+.if ${RUMPRUN} != "yes" && ! defined(__MINIX)
 # Already defined in minix/lib/libc/arch/i386/sys
-.else
 SRCS+=	resumecontext.S swapcontext.S
+SRCS+=	_lwp.c makecontext.c
 .endif
 
-# objects built from C sources
-.if defined(__MINIX)
 SRCS+=	bswap64.c
-.else
-SRCS+=	bswap64.c _lwp.c makecontext.c
-.endif
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c

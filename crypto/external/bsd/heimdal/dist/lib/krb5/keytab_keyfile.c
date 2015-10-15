@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab_keyfile.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keytab_keyfile.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -214,9 +214,17 @@ akf_start_seq_get(krb5_context context,
 	return ret;
     }
 
+    c->data = NULL;
     c->sp = krb5_storage_from_fd(c->fd);
+    if (c->sp == NULL) {
+	close(c->fd);
+	krb5_clear_error_message (context);
+	return KRB5_KT_NOTFOUND;
+    }
+    krb5_storage_set_eof_code(c->sp, KRB5_KT_END);
+
     ret = krb5_ret_uint32(c->sp, &d->num_entries);
-    if(ret) {
+    if(ret || d->num_entries > INT_MAX / 8) {
 	krb5_storage_free(c->sp);
 	close(c->fd);
 	krb5_clear_error_message (context);
@@ -257,7 +265,10 @@ akf_next_entry(krb5_context context,
 
     entry->vno = kvno;
 
-    entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
+    if (cursor->data)
+	entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
+    else
+	entry->keyblock.keytype         = ETYPE_DES_CBC_CRC;
     entry->keyblock.keyvalue.length = 8;
     entry->keyblock.keyvalue.data   = malloc (8);
     if (entry->keyblock.keyvalue.data == NULL) {
@@ -279,7 +290,11 @@ akf_next_entry(krb5_context context,
     entry->aliases = NULL;
 
  out:
-    krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
+    if (cursor->data) {
+	krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
+	cursor->data = NULL;
+    } else
+	cursor->data = cursor;
     return ret;
 }
 
@@ -290,6 +305,7 @@ akf_end_seq_get(krb5_context context,
 {
     krb5_storage_free(cursor->sp);
     close(cursor->fd);
+    cursor->data = NULL;
     return 0;
 }
 
@@ -350,7 +366,7 @@ akf_add_entry(krb5_context context,
 				   strerror(ret));
 	    return ret;
 	}
-	
+
 	ret = krb5_ret_int32(sp, &len);
 	if(ret) {
 	    krb5_storage_free(sp);
@@ -389,7 +405,7 @@ akf_add_entry(krb5_context context,
     }
 
     len++;
-	
+
     if(krb5_storage_seek(sp, 0, SEEK_SET) < 0) {
 	ret = errno;
 	krb5_set_error_message (context, ret,
@@ -397,7 +413,7 @@ akf_add_entry(krb5_context context,
 				strerror(ret));
 	goto out;
     }
-	
+
     ret = krb5_store_int32(sp, len);
     if(ret) {
 	ret = errno;
@@ -412,7 +428,7 @@ akf_add_entry(krb5_context context,
 				N_("seek to end: %s", ""), strerror(ret));
 	goto out;
     }
-	
+
     ret = krb5_store_int32(sp, entry->vno);
     if(ret) {
 	krb5_set_error_message(context, ret,

@@ -1,4 +1,4 @@
-/*	$NetBSD: roken_gethostby.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: roken_gethostby.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
@@ -144,6 +144,7 @@ roken_gethostby(const char *hostname)
     int offset = 0;
     int n;
     char *p, *foo;
+    size_t len;
 
     if(dns_addr.sin_family == 0)
 	return NULL; /* no configured host */
@@ -162,7 +163,9 @@ roken_gethostby(const char *hostname)
 	free(request);
 	return NULL;
     }
-    if(write(s, request, strlen(request)) != strlen(request)) {
+
+    len = strlen(request);
+    if(write(s, request, len) != (ssize_t)len) {
 	close(s);
 	free(request);
 	return NULL;
@@ -190,12 +193,12 @@ roken_gethostby(const char *hostname)
 	static char addrs[4 * MAX_ADDRS];
 	static char *addr_list[MAX_ADDRS + 1];
 	int num_addrs = 0;
-	
+
 	he.h_name = p;
 	he.h_aliases = NULL;
 	he.h_addrtype = AF_INET;
 	he.h_length = 4;
-	
+
 	while((p = strtok_r(NULL, " \t\r\n", &foo)) && num_addrs < MAX_ADDRS) {
 	    struct in_addr ip;
 	    inet_aton(p, &ip);

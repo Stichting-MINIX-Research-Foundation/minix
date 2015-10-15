@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.4 2013/05/27 23:15:51 christos Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.7 2015/09/08 18:33:12 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -112,10 +112,10 @@
 #define HAVE_DEHUMANIZE_NUMBER 1
 #endif /* __NetBSD_Version__ */
 
-#ifdef __minix
+#if defined(__minix)
 #undef _PATH_UNIX
 #define _PATH_UNIX "kernel"
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 #ifndef HAVE_DEHUMANIZE_NUMBER	/* not in my 4.0-STABLE yet */
 extern int dehumanize_number(const char *str, int64_t *size);
@@ -125,11 +125,11 @@ extern int dehumanize_number(const char *str, int64_t *size);
 char *strndup(const char *str, size_t n);
 #endif /* !HAVE_STRNDUP */
 
-#ifndef __minix
+#if !defined(__minix)
 #ifdef LIBWRAP
 #include <tcpd.h>
 #endif
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 #define FDMASK(fd)	(1 << (fd))
 
@@ -158,9 +158,10 @@ char *strndup(const char *str, size_t n);
 #ifdef NDEBUG
 #define DPRINTF(x, ...) (void)0
 #else
+void dbprintf(const char *, const char *, size_t, const char *, ...)
+    __printflike(4, 5);
 #define DPRINTF(x, ...) /*LINTED null effect */(void)(Debug & (x) \
-    ? (printf("%s:%s:%s:%.4d\t", make_timestamp(NULL, true), \
-    __FILE__, __func__, __LINE__), printf(__VA_ARGS__)) : 0)
+    ? dbprintf(__FILE__, __func__, __LINE__, __VA_ARGS__) : ((void)0))
 #endif
 
 /* shortcuts for libevent */

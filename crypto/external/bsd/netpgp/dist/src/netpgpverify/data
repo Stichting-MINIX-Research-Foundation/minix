@@ -1,0 +1,26 @@
+PROG=netpgpverify
+
+SRCS= b64.c bignum.c digest.c
+SRCS+= libverify.c main.c misc.c
+SRCS+= pgpsum.c rsa.c
+
+SRCS+= bzlib.c zlib.c
+
+SRCS+= sha1.c sha2.c md5c.c rmd160.c tiger.c
+
+CPPFLAGS+=-I.
+
+.ifndef PRODUCTION
+CPPFLAGS+=-g -O0
+LDFLAGS+=-g -O0
+.endif
+
+MAN=	netpgpverify.1
+WARNS=	6
+
+.include <bsd.prog.mk>
+
+tst:
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.asc
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.gpg
+	./${PROG} -v

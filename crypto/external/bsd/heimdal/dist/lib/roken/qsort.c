@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: qsort.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -127,7 +127,7 @@ loop:	SWAPINIT(a, es);
 	swap_cnt = 0;
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
-			for (pl = pm; 
+			for (pl = pm;
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
@@ -175,7 +175,7 @@ loop:	SWAPINIT(a, es);
 	}
 	if (swap_cnt == 0) {  /* Switch to insertion sort */
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
-			for (pl = pm; 
+			for (pl = pm;
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);

@@ -275,8 +275,12 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
    * executable instead. But open the current executable in an
    * fd for the current process.
    */
-  if(elf_has_interpreter(execi.args.hdr, execi.args.hdr_len,
-	elf_interpreter, sizeof(elf_interpreter))) {
+  r = elf_has_interpreter(execi.args.hdr, execi.args.hdr_len,
+	elf_interpreter, sizeof(elf_interpreter));
+  if (0 > r)
+	FAILCHECK(r);
+
+  if (0 < r) {
 	/* Switch the executable vnode to the interpreter */
 	execi.is_dyn = 1;
 
@@ -739,7 +743,7 @@ static int map_header(struct vfs_exec_info *execi)
    * expects it to be aligned appropriately. From here we can only guess the
    * proper alignment, but 64 bits should work for all versions of ELF..
    */
-  static char hdr[PAGE_SIZE] __aligned(8);
+  static char hdr[10*PAGE_SIZE] __aligned(8);
 
   pos = 0;	/* Read from the start of the file */
 

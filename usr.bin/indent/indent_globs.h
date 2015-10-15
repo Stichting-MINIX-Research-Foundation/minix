@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.9 2009/04/12 11:09:49 lukem Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.10 2014/09/04 04:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -222,6 +222,8 @@ EXTERN int     extra_expression_indent; /* True if continuation lines from the
 					 * "for(e;e;e)" should be indented an extra
 					 * tab stop so that they don't conflict with
 					 * the code that follows */
+EXTERN int    use_tabs;			/* set true to use tabs for spacing,
+					 * false uses all spaces */
 
 /* -troff font state information */
 

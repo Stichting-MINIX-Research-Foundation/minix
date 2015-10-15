@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.gcc.mk,v 1.10 2012/12/10 23:49:39 pooka Exp $
+#	$NetBSD: bsd.gcc.mk,v 1.11 2015/06/07 15:04:28 matt Exp $
 
 .if !defined(_BSD_GCC_MK_)
 _BSD_GCC_MK_=1
@@ -21,14 +21,14 @@ _GCC_CRTN!=		${CC} --print-file-name=crtn.o
 _GCC_CRTDIR!=		dirname ${_GCC_CRTBEGIN}
 _GCC_LIBGCCDIR!=	dirname `${CC} --print-libgcc-file-name`
 .else
-_GCC_CRTBEGIN?=		${DESTDIR}/usr/lib/crtbegin.o
-_GCC_CRTBEGINS?=	${DESTDIR}/usr/lib/crtbeginS.o
-_GCC_CRTEND?=		${DESTDIR}/usr/lib/crtend.o
-_GCC_CRTENDS?=		${DESTDIR}/usr/lib/crtendS.o
-_GCC_CRTI?=		${DESTDIR}/usr/lib/crti.o
-_GCC_CRTN?=		${DESTDIR}/usr/lib/crtn.o
-_GCC_CRTDIR?=		${DESTDIR}/usr/lib
-_GCC_LIBGCCDIR?=	${DESTDIR}/usr/lib
+_GCC_CRTBEGIN?=		${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtbegin.o
+_GCC_CRTBEGINS?=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtbeginS.o
+_GCC_CRTEND?=		${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtend.o
+_GCC_CRTENDS?=		${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtendS.o
+_GCC_CRTI?=		${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
+_GCC_CRTN?=		${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crtn.o
+_GCC_CRTDIR?=		${DESTDIR}/usr/lib${MLIBDIR:D/${MLIBDIR}}
+_GCC_LIBGCCDIR?=	${DESTDIR}/usr/lib${MLIBDIR:D/${MLIBDIR}}
 .endif
 
 .endif	# ! defined(_BSD_GCC_MK_)

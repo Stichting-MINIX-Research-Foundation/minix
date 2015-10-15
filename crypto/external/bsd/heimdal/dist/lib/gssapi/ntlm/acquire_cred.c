@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -65,7 +65,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
 	maj_stat = _gss_ntlm_allocate_ctx(min_stat, &ctx);
 	if (maj_stat != GSS_S_COMPLETE)
 	    return maj_stat;
-	
+
 	maj_stat = (*ctx->server->nsi_probe)(min_stat, ctx->ictx,
 					     name->domain);
 	{
@@ -75,7 +75,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
 	}
 	if (maj_stat)
 	    return maj_stat;
-    }	
+    }
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_INITIATE) {
 	ntlm_cred cred;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: context_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: context_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: context_s.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static void
 set_funcs(kadm5_server_context *c)
@@ -89,27 +89,27 @@ find_db_spec(kadm5_server_context *ctx)
 	ret = hdb_get_dbinfo(context, &info);
 	if (ret)
 	    return ret;
-	
+
 	d = NULL;
 	while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
 	    const char *p = hdb_dbinfo_get_realm(context, d);
-	
+
 	    /* match default (realm-less) */
 	    if(p != NULL && strcmp(ctx->config.realm, p) != 0)
 		continue;
-	
+
 	    p = hdb_dbinfo_get_dbname(context, d);
 	    if (p)
 		ctx->config.dbname = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_acl_file(context, d);
 	    if (p)
 		ctx->config.acl_file = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_mkey_file(context, d);
 	    if (p)
 		ctx->config.stash_file = strdup(p);
-	
+
 	    p = hdb_dbinfo_get_log_file(context, d);
 	    if (p)
 		ctx->log_context.log_file = strdup(p);

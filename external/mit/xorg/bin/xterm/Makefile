@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/05/31 21:40:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2015/07/23 09:37:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
 	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
 	wcwidth.c xutf8.c cachedGCs.c xtermcap.c version.c
+
+# graphics_regis.c graphics_sixel.c
+# xterm.appdata.xml
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
@@ -28,15 +31,23 @@ BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lcurses -lterminfo -lutil
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
+LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXinerama
+DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXINERAMA}
+LDADD+=	-lXpm -lXext -lX11 -lcurses -lterminfo -lutil
+DPADD+=	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
+
+.if defined(__MINIX)
+LDADD+= -lmthread
+DPADD+= ${LIBMTHREAD}
+.endif # defined(__MINIX)
 
 SUBDIR=	resize uxterm
 
 .PATH:	${X11SRCDIR.${PROG}}
 
 COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
+
+# XXXMRG should probably build builtin_icons.h
 
 .include "Makefile.inc"
 

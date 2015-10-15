@@ -437,8 +437,7 @@ int sig_nr;			/* signal to be sent */
        return;
   }
 
-  if((s = sigismember(&rp->p_pending, sig_nr)) < 0)
-	panic("sigismember failed");
+  s = sigismember(&rp->p_pending, sig_nr);
   /* Check if the signal is already pending. Process it otherwise. */
   if (!s) {
       sigaddset(&rp->p_pending, sig_nr);

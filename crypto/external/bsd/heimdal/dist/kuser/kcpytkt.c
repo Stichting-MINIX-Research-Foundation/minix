@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpytkt.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kcpytkt.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 
 #include "kuser_locl.h"
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void do_kcpytkt (int count, char *names[], 
+static void do_kcpytkt (int count, char *names[],
                         char *fromccachestr, char *etypestr, int flags)
 {
     krb5_context context;
@@ -132,7 +132,7 @@ static void do_kcpytkt (int count, char *names[],
 	in_creds.session.keytype = etype;
 
         ret = krb5_cc_retrieve_cred(context, fromccache, retflags,
-                                    &in_creds, &out_creds);  
+                                    &in_creds, &out_creds);
 	if (ret) {
             krb5_warn(context, ret, "Can't retrieve credentials for %s", princ);
 

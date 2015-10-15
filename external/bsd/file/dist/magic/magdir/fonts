@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: fonts,v 1.26 2013/03/09 22:36:00 christos Exp $
+# $File: fonts,v 1.27 2014/04/30 21:41:02 christos Exp $
 # fonts:  file(1) magic for font data
 #
 0	search/1	FONT		ASCII vfont text
@@ -96,5 +96,5 @@
 0	string		wOFF	Web Open Font Format
 >4	belong		x	\b, flavor %d
 >8	belong		x	\b, length %d
->20	beshort		x	\b, version %hd
->22	beshort		x	\b.%hd
+>20	beshort		x	\b, version %d
+>22	beshort		x	\b.%d

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_init_sec_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_init_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -101,7 +101,7 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *          the error code.
- *	  
+ *
  * @ingroup gssapi
  */
 

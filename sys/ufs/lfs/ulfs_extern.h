@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.10 2013/07/28 01:22:55 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.20 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -58,8 +58,6 @@ struct uio;
 struct vattr;
 struct vnode;
 
-extern pool_cache_t ulfs_direct_cache;	/* memory pool for lfs_directs */
-
 __BEGIN_DECLS
 #define	ulfs_abortop	genfs_abortop
 int	ulfs_access(void *);
@@ -75,8 +73,6 @@ int	ulfs_inactive(void *);
 int	ulfs_link(void *);
 #define	ulfs_lock	genfs_lock
 int	ulfs_lookup(void *);
-int	ulfs_mkdir(void *);
-int	ulfs_mknod(void *);
 #define	ulfs_mmap	genfs_mmap
 #define	ulfs_revoke	genfs_revoke
 int	ulfs_open(void *);
@@ -90,7 +86,6 @@ int	ulfs_rmdir(void *);
 #define	ulfs_poll	genfs_poll
 int	ulfs_setattr(void *);
 int	ulfs_strategy(void *);
-int	ulfs_symlink(void *);
 #define	ulfs_unlock	genfs_unlock
 int	ulfs_whiteout(void *);
 int	ulfsspec_close(void *);
@@ -108,35 +103,22 @@ int	ulfs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
 		      int *, int *, ulfs_issequential_callback_t);
 int	ulfs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 
-/* ulfs_ihash.c */
-void	ulfs_ihashinit(void);
-void	ulfs_ihashreinit(void);
-void	ulfs_ihashdone(void);
-struct vnode *ulfs_ihashlookup(dev_t, ino_t);
-struct vnode *ulfs_ihashget(dev_t, ino_t, int);
-void	ulfs_ihashins(struct inode *);
-void	ulfs_ihashrem(struct inode *);
-
 /* ulfs_inode.c */
 int	ulfs_reclaim(struct vnode *);
 int	ulfs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
 
 /* ulfs_lookup.c */
 void	ulfs_dirbad(struct inode *, doff_t, const char *);
-int	ulfs_dirbadentry(struct vnode *, struct lfs_direct *, int);
-void	ulfs_makedirentry(struct inode *, struct componentname *,
-			 struct lfs_direct *);
+int	ulfs_dirbadentry(struct vnode *, LFS_DIRHEADER *, int);
 int	ulfs_direnter(struct vnode *, const struct ulfs_lookup_results *,
-		     struct vnode *, struct lfs_direct *,
-		     struct componentname *, struct buf *);
+		     struct vnode *,
+		     struct componentname *, ino_t, unsigned,
+		     struct buf *);
 int	ulfs_dirremove(struct vnode *, const struct ulfs_lookup_results *,
 		      struct inode *, int, int);
 int	ulfs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ulfs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ulfs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ulfs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
-			int *, struct vnode **);
 int	ulfs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ulfs_quota.c */
@@ -172,10 +154,13 @@ int	ulfs_fhtovp(struct mount *, struct ulfs_ufid *, struct vnode **);
 /* ulfs_vnops.c */
 void	ulfs_vinit(struct mount *, int (**)(void *),
 		  int (**)(void *), struct vnode **);
-int	ulfs_makeinode(int, struct vnode *, const struct ulfs_lookup_results *,
+int	ulfs_makeinode(struct vattr *vap, struct vnode *,
+		      const struct ulfs_lookup_results *,
 		      struct vnode **, struct componentname *);
 int	ulfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ulfs_gop_markupdate(struct vnode *, int);
+int	ulfs_bufio(enum uio_rw, struct vnode *, void *, size_t, off_t, int,
+	    kauth_cred_t, size_t *, struct lwp *);
 
 /*
  * Snapshot function prototypes.
@@ -184,8 +169,5 @@ void	ulfs_gop_markupdate(struct vnode *, int);
 void	ulfs_snapgone(struct inode *);
 
 __END_DECLS
-
-extern kmutex_t ulfs_ihash_lock;
-extern kmutex_t ulfs_hashlock;
 
 #endif /* !_UFS_LFS_ULFS_EXTERN_H_ */

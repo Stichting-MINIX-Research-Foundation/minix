@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.12 2013/01/19 15:28:25 apb Exp $
+.\"     $NetBSD: parsedate.3,v 1.15 2014/10/08 22:10:04 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 19, 2013
+.Dd October 8, 2014
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -46,15 +46,20 @@ function parses a datetime from
 .Ar datestr
 described in English relative to an optional
 .Ar time
-point and an optional timezone offset in seconds specified in
+point,
+and an optional timezone offset (in minutes behind/west of UTC)
+specified in
 .Ar tzoff .
-If either
+If
 .Ar time
-or
+is
+.Dv NULL
+then the current time is used.
+If
 .Ar tzoff
-are
+is
 .Dv NULL ,
-then the current time and timezone offset are used.
+then the current time zone is used.
 .Pp
 The
 .Ar datestr
@@ -198,11 +203,14 @@ Timezone names:
 .Pp
 A variety of unambiguous dates are recognized:
 .Bl -tag -compact -width "20 Jun 1994"
-.It 69-09-10
+.It 9/10/69
 For years between 69-99 we assume 1900+ and for years between 0-68
 we assume 2000+.
 .It 2006-11-17
 An ISO-8601 date.
+.It 69-09-10
+The year in an ISO-8601 date is always taken literally,
+so this is the year 69, not 2069.
 .It 10/1/2000
 October 10, 2000; the common US format.
 .It 20 Jun 1994
@@ -210,7 +218,8 @@ October 10, 2000; the common US format.
 .It 1-sep-06
 Other common abbreviations.
 .It 1/11
-the year can be omitted
+The year can be omitted.
+This is the US month/day format.
 .El
 .Pp
 As well as times:

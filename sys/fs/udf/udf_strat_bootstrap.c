@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_strat_bootstrap.c,v 1.4 2014/11/10 18:46:33 maxv Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.4 2014/11/10 18:46:33 maxv Exp $");
 #endif /* not lint */
 
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pook
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>

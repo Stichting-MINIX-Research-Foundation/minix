@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: backupfile.c,v 1.19 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/backupfile.c,v 1.5 2008/08/11 00:05:06 joerg Exp $
- * $NetBSD: backupfile.c,v 1.14 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: backupfile.c,v 1.15 2014/04/11 17:30:03 christos Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backupfile.c,v 1.14 2008/09/19 18:33:34 joerg Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.15 2014/04/11 17:30:03 christos Exp $");
 
 #include <ctype.h>
 #include <dirent.h>
@@ -227,11 +227,11 @@ invalid_arg(const char *kind, const char *value, int problem)
 }
 
 static const char *backup_args[] = {
-	"never", "simple", "nil", "existing", "t", "numbered", 0
+	"none", "never", "simple", "nil", "existing", "t", "numbered", 0
 };
 
 static enum backup_type backup_types[] = {
-	simple, simple, numbered_existing,
+	none, simple, simple, numbered_existing,
 	numbered_existing, numbered, numbered
 };
 

@@ -1,7 +1,3 @@
-#	$NetBSD: Makefile.makestrs,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile.makestrs,v 1.2 2015/06/24 22:20:26 matt Exp $
 
-MAKESTRSDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/makestrs && ${PRINTOBJDIR}
-MAKESTRS=	${MAKESTRSDIR}/makestrs
-
-${MAKESTRS}:
-	(cd ${NETBSDSRCDIR}/external/mit/xorg/tools/makestrs && ${MAKE})
+MAKESTRS=	${TOOL_MAKESTRS}

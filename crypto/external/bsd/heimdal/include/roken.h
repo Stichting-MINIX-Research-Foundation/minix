@@ -60,6 +60,8 @@ typedef int rk_socket_t;
 #define rk_SOCK_EXIT() do { } while(0)
 
 
+#define IN_LOOPBACKNET 127
+
 
 #define UNREACHABLE(x)
 #define UNUSED_ARGUMENT(x)

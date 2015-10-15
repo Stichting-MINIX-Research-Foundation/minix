@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: varied.out,v 1.22 2010/07/02 00:06:27 christos Exp $
+# $File: varied.out,v 1.23 2014/04/30 21:41:02 christos Exp $
 # varied.out:  file(1) magic for various USG systems
 #
 #	Herewith many of the object file formats used by USG systems.
@@ -26,7 +26,7 @@
 >7      string          >\0     version '%s'
 # gnu gmon magic From: Eugen Dedu <dedu@ese-metz.fr>
 0	string		gmon		GNU prof performance data
->4	long		x		- version %ld
+>4	long		x		- version %d
 # From: Dave Pearson <davep@davep.org>
 # Harbour <URL:http://harbour-project.org/> HRB files.
 0	string		\xc0HRB		Harbour HRB file

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtest.c,v 1.1.1.1 2011/04/13 18:15:07 elric Exp $	*/
+/*	$NetBSD: mtest.c,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 /* makes a bignum test harness with NUM tests per operation
  *
@@ -305,6 +305,6 @@ int main(void)
    return 0;
 }
 
-/* Source: /cvs/libtom/libtommath/mtest/mtest.c,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:47 */
+/* Source: /cvs/libtom/libtommath/mtest/mtest.c,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:47  */

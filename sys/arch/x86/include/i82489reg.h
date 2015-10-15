@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.12 2013/01/26 17:37:39 dyoung Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.13 2015/07/17 05:16:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,34 +35,34 @@
  * "local" APIC.
  */
 
-#define	LAPIC_ID		0x020		/* ID. RW */
+#define	LAPIC_ID		0x020	/* ID. RW */
 #	define LAPIC_ID_MASK		0xff000000
 #	define LAPIC_ID_SHIFT		24
 
-#define LAPIC_VERS		0x030		/* Version. R */
+#define LAPIC_VERS		0x030	/* Version. R */
 #	define LAPIC_VERSION_MASK	0x000000ff
 #	define LAPIC_VERSION_LVT_MASK	0x00ff0000
 #	define LAPIC_VERSION_LVT_SHIFT	16
 
-#define LAPIC_TPRI		0x080		/* Task Prio. RW */
+#define LAPIC_TPRI		0x080	/* Task Prio. RW */
 #	define LAPIC_TPRI_MASK		0x000000ff
 #	define LAPIC_TPRI_INT_MASK	0x000000f0
 #	define LAPIC_TPRI_SUB_MASK	0x0000000f
 
-#define LAPIC_APRI		0x090		/* Arbitration prio R */
+#define LAPIC_APRI		0x090	/* Arbitration prio R */
 #	define LAPIC_APRI_MASK		0x000000ff
 
-#define LAPIC_PPRI		0x0a0		/* Processor prio. R */
-#define LAPIC_EOI		0x0b0		/* End Int. W */
-#define LAPIC_RRR		0x0c0		/* Remote read R */
-#define LAPIC_LDR		0x0d0		/* Logical dest. RW */
+#define LAPIC_PPRI		0x0a0	/* Processor prio. R */
+#define LAPIC_EOI		0x0b0	/* End Int. W */
+#define LAPIC_RRR		0x0c0	/* Remote read R */
+#define LAPIC_LDR		0x0d0	/* Logical dest. RW */
 
-#define LAPIC_DFR		0x0e0		/* Dest. format RW */
+#define LAPIC_DFR		0x0e0	/* Dest. format RW */
 #	define LAPIC_DFR_MASK		0xf0000000
 #	define LAPIC_DFR_FLAT		0xf0000000
 #	define LAPIC_DFR_CLUSTER	0x00000000
 
-#define LAPIC_SVR		0x0f0		/* Spurious intvec RW */
+#define LAPIC_SVR		0x0f0	/* Spurious intvec RW */
 #	define LAPIC_SVR_VECTOR_MASK	0x000000ff
 #	define LAPIC_SVR_VEC_FIX	0x0000000f
 #	define LAPIC_SVR_VEC_PROG	0x000000f0
@@ -71,12 +71,12 @@
 #	define LAPIC_SVR_FOCUS		0x00000200
 #	define LAPIC_SVR_FDIS		0x00000200
 
-#define LAPIC_ISR	0x100			/* In-Service Status */
-#define LAPIC_TMR	0x180			/* Trigger Mode */
-#define LAPIC_IRR	0x200			/* Interrupt Req */
-#define LAPIC_ESR	0x280			/* Err status. R */
+#define LAPIC_ISR	0x100		/* In-Service Status */
+#define LAPIC_TMR	0x180		/* Trigger Mode */
+#define LAPIC_IRR	0x200		/* Interrupt Req */
+#define LAPIC_ESR	0x280		/* Err status. R */
 
-#define LAPIC_ICRLO	0x300			/* Int. cmd. RW */
+#define LAPIC_ICRLO	0x300		/* Int. cmd. RW */
 #	define LAPIC_DLMODE_MASK	0x00000700
 #	define LAPIC_DLMODE_FIXED	0x00000000
 #	define LAPIC_DLMODE_LOW		0x00000100
@@ -107,29 +107,29 @@
 #	define LAPIC_DEST_ALLEXCL	0x000c0000
 
 
-#define LAPIC_ICRHI	0x310			/* Int. cmd. RW */
+#define LAPIC_ICRHI	0x310		/* Int. cmd. RW */
 
-#define LAPIC_LVTT	0x320			/* Loc.vec.(timer) RW */
+#define LAPIC_LVTT	0x320		/* Loc.vec.(timer) RW */
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
 #	define LAPIC_LVTT_DS		0x00001000
 #	define LAPIC_LVTT_M		0x00010000
 #	define LAPIC_LVTT_TM		0x00020000
 
-#define LAPIC_TMINT	0x330			/* Loc.vec (Thermal) */
-#define LAPIC_PCINT	0x340			/* Loc.vec (Perf Mon) */
-#define LAPIC_LVINT0	0x350			/* Loc.vec (LINT0) RW */
+#define LAPIC_TMINT	0x330		/* Loc.vec (Thermal) */
+#define LAPIC_PCINT	0x340		/* Loc.vec (Perf Mon) */
+#define LAPIC_LVINT0	0x350		/* Loc.vec (LINT0) RW */
 #	define LAPIC_LVT_MASKED		0x00010000
 #	define LAPIC_LVT_LEVTRIG	0x00008000
 #	define LAPIC_LVT_REMOTE_IRR	0x00004000
 #	define LAPIC_INP_POL		0x00002000
 #	define LAPIC_PEND_SEND		0x00001000
 
-#define LAPIC_LVINT1	0x360			/* Loc.vec (LINT1) RW */
-#define LAPIC_LVERR	0x370			/* Loc.vec (ERROR) RW */
-#define LAPIC_ICR_TIMER	0x380			/* Initial count RW */
-#define LAPIC_CCR_TIMER	0x390			/* Current count RO */
+#define LAPIC_LVINT1	0x360		/* Loc.vec (LINT1) RW */
+#define LAPIC_LVERR	0x370		/* Loc.vec (ERROR) RW */
+#define LAPIC_ICR_TIMER	0x380		/* Initial count RW */
+#define LAPIC_CCR_TIMER	0x390		/* Current count RO */
 
-#define LAPIC_DCR_TIMER	0x3e0			/* Divisor config register */
+#define LAPIC_DCR_TIMER	0x3e0		/* Divisor config register */
 #	define LAPIC_DCRT_DIV1		0x0b
 #	define LAPIC_DCRT_DIV2		0x00
 #	define LAPIC_DCRT_DIV4		0x01
@@ -155,14 +155,14 @@
 #define	LAPIC_MSIDATA_DM_NMI		__SHIFTIN(4, LAPIC_MSIDATA_DM_MASK)
 #define	LAPIC_MSIDATA_DM_INIT		__SHIFTIN(5, LAPIC_MSIDATA_DM_MASK)
 #define	LAPIC_MSIDATA_DM_RSVD1		__SHIFTIN(6, LAPIC_MSIDATA_DM_MASK)
-#define	LAPIC_MSIDATA_DM_EXTINT	__SHIFTIN(7, LAPIC_MSIDATA_DM_MASK)
+#define	LAPIC_MSIDATA_DM_EXTINT		__SHIFTIN(7, LAPIC_MSIDATA_DM_MASK)
 #define	LAPIC_MSIDATA_RSVD0_MASK	__BITS(13, 11)
 #define	LAPIC_MSIDATA_LEVEL_MASK	__BIT(14)
 #define	LAPIC_MSIDATA_LEVEL_DEASSERT	__SHIFTIN(0, LAPIC_MSIDATA_LEVEL_MASK)
 #define	LAPIC_MSIDATA_LEVEL_ASSERT	__SHIFTIN(1, LAPIC_MSIDATA_LEVEL_MASK)
 #define	LAPIC_MSIDATA_TRGMODE_MASK	__BIT(15)
-#define	LAPIC_MSIDATA_TRGMODE_EDGE	__SHIFTIN(0, LAPIC_MSIDATA_TRGMODE_MASK)
-#define	LAPIC_MSIDATA_TRGMODE_LEVEL	__SHIFTIN(1, LAPIC_MSIDATA_TRGMODE_MASK)
+#define	LAPIC_MSIDATA_TRGMODE_EDGE	__SHIFTIN(0,LAPIC_MSIDATA_TRGMODE_MASK)
+#define	LAPIC_MSIDATA_TRGMODE_LEVEL	__SHIFTIN(1,LAPIC_MSIDATA_TRGMODE_MASK)
 #define	LAPIC_MSIDATA_RSVD1_MASK	__BITS(31, 16)
 
 #define LAPIC_BASE		0xfee00000
@@ -170,16 +170,16 @@
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
 
 /* Extended APIC registers, valid when CPUID features4 EAPIC is present */
-#define LEAPIC_FR	0x400				/* Feature register */
-#	define LEAPIC_FR_ELC		__BITS(23,16)	/* Ext. Lvt Count RO */
-#	define LEAPIC_FR_EIDCAP		__BIT(2)	/* Ext. Apic ID Cap. RO */
-#	define LEAPIC_FR_SEIOCAP	__BIT(1)	/* Specific EOI Cap. RO */
-#	define LEAPIC_FR_IERCAP		__BIT(0)	/* Intr. Enable Reg. RO */
+#define LEAPIC_FR	0x400	/* Feature register */
+#	define LEAPIC_FR_ELC		__BITS(23,16) /* Ext. Lvt Count RO */
+#	define LEAPIC_FR_EIDCAP		__BIT(2)     /* Ext. Apic ID Cap. RO */
+#	define LEAPIC_FR_SEIOCAP	__BIT(1)     /* Specific EOI Cap. RO */
+#	define LEAPIC_FR_IERCAP		__BIT(0)     /* Intr. Enable Reg. RO */
 
 #define LEAPIC_CR	0x410	/* Control Register */
-#	define LEAPIC_CR_EID_ENABLE	__BIT(2)	/* Ext. Apic ID enable */
-#	define LEAPIC_CR_SEOI_ENABLE	__BIT(1)	/* Specific EOI enable */
-#	define LEAPIC_CR_IER_ENABLE	__BIT(0)	/* Enable writes to IER */
+#	define LEAPIC_CR_EID_ENABLE	__BIT(2)     /* Ext. Apic ID enable */
+#	define LEAPIC_CR_SEOI_ENABLE	__BIT(1)     /* Specific EOI enable */
+#	define LEAPIC_CR_IER_ENABLE	__BIT(0)     /* Enable writes to IER */
 
 #define LEAPIC_SEOIR	0x420	/* Specific EOI Register */
 #	define LEAPIC_SEOI_VEC	__BITS(7,0)
@@ -206,7 +206,7 @@
 #define LEAPIC_LVTR_528	0x528
 #define LEAPIC_LVTR_52C	0x52C
 #define LEAPIC_LVTR_530	0x530
-#	define LEAPIC_LVTR_MASK		__BIT(16)	/* interrupt masked RW */
+#	define LEAPIC_LVTR_MASK		__BIT(16)     /* interrupt masked RW */
 #	define LEAPIC_LVTR_DSTAT	__BIT(12)	/* delivery state RO */
 #	define LEAPIC_LVTR_MSGTYPE	__BITS(10,8)	/* Message type */
 #	define LEAPIC_LVTR_VEC		__BITS(7,0)	/* the intr. vector */

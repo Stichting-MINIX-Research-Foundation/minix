@@ -10,28 +10,8 @@ if [ $? -eq 0 ]; then
 	FETCH="curl -O -f"
 fi
 
-# Configure fetch method - GMAKE
-URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/make-3.80.tar.bz2"
-BACKUP_URL="ftp://ftp.gnu.org/gnu/make/make-3.80.tar.bz2"
-
-# Fetch sources if not available
-if [ ! -d gmake ];
-then
-	if [ ! -f make-3.80.tar.bz2 ]; then
-		$FETCH $URL
-		if [ $? -ne 0 ]; then
-			$FETCH $BACKUP_URL
-		fi
-	fi
-
-	tar -xjf make-3.80.tar.bz2 && \
-	mv make-3.80 gmake && \
-	echo "make*" >> .gitignore
-	echo "gmake*" >> .gitignore
-fi
-
 # Configure fetch method - TEXINFO
-URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.3.0/texinfo-4.8.tar.bz2"
+URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/texinfo-4.8.tar.bz2"
 BACKUP_URL="ftp://ftp.gnu.org/gnu/texinfo/texinfo-4.8.tar.bz2"
 
 # Fetch sources if not available

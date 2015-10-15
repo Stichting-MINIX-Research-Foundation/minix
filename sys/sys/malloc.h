@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.114 2012/04/30 22:51:27 rmind Exp $	*/
+/*	$NetBSD: malloc.h,v 1.116 2014/12/27 19:32:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -56,7 +56,6 @@
 MALLOC_DECLARE(M_DEVBUF);
 MALLOC_DECLARE(M_DMAMAP);
 MALLOC_DECLARE(M_FREE);
-MALLOC_DECLARE(M_PCB);
 MALLOC_DECLARE(M_TEMP);
 MALLOC_DECLARE(M_RTABLE);
 MALLOC_DECLARE(M_FTABLE);
@@ -74,19 +73,5 @@ void	kern_free(void *);
 #define	realloc(ptr, size, type, flags)	kern_realloc(ptr, size, flags)
 
 #endif /* _KERNEL */
-
-/*
- * Set of buckets for each size of memory block that is retained
- */
-struct kmembuckets {
-	void *kb_next;	/* list of free blocks */
-	void *kb_last;	/* last free block */
-	long	kb_calls;	/* total calls to allocate this size */
-	long	kb_total;	/* total number of blocks allocated */
-	long	kb_totalfree;	/* # of free elements in this bucket */
-	long	kb_elmpercl;	/* # of elements in this sized allocation */
-	long	kb_highwat;	/* high water mark */
-	long	kb_couldfree;	/* over high water mark and could free */
-};
 
 #endif /* !_SYS_MALLOC_H_ */

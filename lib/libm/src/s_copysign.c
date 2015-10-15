@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_copysign.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
+__RCSID("$NetBSD: s_copysign.c,v 1.13 2015/05/14 19:26:12 joerg Exp $");
 #endif
 
 /*
@@ -23,6 +23,11 @@ __RCSID("$NetBSD: s_copysign.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
 
 #include "math.h"
 #include "math_private.h"
+
+#if !defined(__HAVE_LONG_DOUBLE) && !defined(__HAVE_IBM_LONGDOUBLE)
+__strong_alias(_copysignl, copysign)
+__weak_alias(copysignl, copysign)
+#endif
 
 double
 copysign(double x, double y)

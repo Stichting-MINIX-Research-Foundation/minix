@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.S,v 1.5 2011/09/30 23:45:41 christos Exp $	*/
+/*	$NetBSD: fpsetround.S,v 1.6 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -31,3 +31,8 @@ ENTRY(fpsetround)
 	fldcw	-4(%esp)
 
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetround)
+#else
+END(fpsetround)
+#endif

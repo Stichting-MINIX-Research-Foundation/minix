@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.53 2014/10/30 07:53:41 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.53 2014/10/30 07:53:41 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,15 +49,12 @@ __RCSID("$NetBSD: map_object.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
 #include "debug.h"
 #include "rtld.h"
 
+#if defined(__minix)
 #define MINIXVERBOSE 0
 
 #if MINIXVERBOSE
 #include <stdio.h>
 #endif
-
-static int protflags(int);	/* Elf flags -> mmap protection */
-
-#define EA_UNDEF		(~(Elf_Addr)0)
 
 static void Pread(void *addr, size_t size, int fd, off_t off)
 {
@@ -73,6 +70,20 @@ static void Pread(void *addr, size_t size, int fd, off_t off)
 }
 
 /* minix-without-mmap version of _rtld_map_object() */
+
+#else
+static int protflags(int);	/* Elf flags -> mmap protection */
+#endif /* defined(__minix) */
+
+#define EA_UNDEF		(~(Elf_Addr)0)
+
+/*
+ * Map a shared object into memory.  The argument is a file descriptor,
+ * which must be open on the object and positioned at its beginning.
+ *
+ * The return value is a pointer to a newly-allocated Obj_Entry structure
+ * for the shared object.  Returns NULL on failure.
+ */
 Obj_Entry *
 _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 {
@@ -88,30 +99,38 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 	int		 nsegs;
 	caddr_t		 mapbase = MAP_FAILED;
 	size_t		 mapsize = 0;
+#if !defined(__minix)
 	int		 mapflags;
+#endif /* !defined(__minix) */
 	Elf_Off		 base_offset;
+#if !defined(__minix)
 #ifdef MAP_ALIGNED
 	Elf_Addr	 base_alignment;
 #endif
+#endif /* !defined(__minix) */
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
+#if !defined(__minix)
 	int		 text_flags;
+#endif /* !defined(__minix) */
 	caddr_t		 base_addr;
 	Elf_Off		 data_offset;
 	Elf_Addr	 data_vaddr;
 	Elf_Addr	 data_vlimit;
+#if !defined(__minix)
 	int		 data_flags;
+#endif /* !defined(__minix) */
 	caddr_t		 data_addr;
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	Elf_Addr	 tls_vaddr = 0; /* Noise GCC */
 #endif
 	Elf_Addr	 phdr_vaddr;
 	size_t		 phdr_memsz;
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if defined(__minix) && (defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II))
 	caddr_t		 gap_addr;
 	size_t		 gap_size;
-#endif
+#endif /* defined(__minix) */
 	int i;
 #ifdef RTLD_LOADER
 	Elf_Addr	 clear_vaddr;
@@ -271,18 +290,24 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 	 * and unmap the gaps left by padding to alignment.
 	 */
 
+#if !defined(__minix)
 #ifdef MAP_ALIGNED
 	base_alignment = segs[0]->p_align;
 #endif
+#endif /* !defined(__minix) */
 	base_offset = round_down(segs[0]->p_offset);
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
 	text_vlimit = round_up(segs[0]->p_vaddr + segs[0]->p_memsz);
+#if !defined(__minix)
 	text_flags = protflags(segs[0]->p_flags);
+#endif /* !defined(__minix) */
 	data_offset = round_down(segs[1]->p_offset);
 	data_vaddr = round_down(segs[1]->p_vaddr);
 	data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
+#if !defined(__minix)
 	data_flags = protflags(segs[1]->p_flags);
+#endif /* !defined(__minix) */
 #ifdef RTLD_LOADER
 	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
 #endif
@@ -344,6 +369,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 	/*
 	 * Calculate log2 of the base section alignment.
 	 */
+#if !defined(__minix)
 	mapflags = 0;
 #ifdef MAP_ALIGNED
 	if (base_alignment > _rtld_pagesz) {
@@ -353,6 +379,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 		mapflags = MAP_ALIGNED(log2);
 	}
 #endif
+#endif /* defined(__minix) */
 
 #ifdef RTLD_LOADER
 	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
@@ -406,7 +433,7 @@ _rtld_map_object_fallback(const char *path, int fd, const struct stat *sb)
 		    xstrerror(errno));
 		goto bad;
 	}
-#endif
+#endif /* defined(__minix) */
 
 #ifdef RTLD_LOADER
 	/* Clear any BSS in the last page of the data segment. */
@@ -450,6 +477,7 @@ bad:
 	return NULL;
 }
 
+#if !defined(__minix)
 /*
  * Given a set of ELF protection flags, return the corresponding protection
  * flags for MMAP.
@@ -475,3 +503,4 @@ protflags(int elfflags)
 #endif /* defined(__minix) */
 	return prot;
 }
+#endif /* defined(__minix) */

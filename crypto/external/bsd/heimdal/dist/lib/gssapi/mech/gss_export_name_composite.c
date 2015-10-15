@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_export_name_composite.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_export_name_composite.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2010, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "mech_locl.h"
 
-OM_uint32
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name_composite(OM_uint32 *minor_status,
 		          gss_name_t input_name,
 		          gss_buffer_t exp_composite_name)
@@ -42,7 +42,7 @@ gss_export_name_composite(OM_uint32 *minor_status,
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;
     struct _gss_mechanism_name *mn;
-        
+
     *minor_status = 0;
     _mg_buffer_zero(exp_composite_name);
 

@@ -1,6 +1,18 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions %s -Wno-unreachable-code
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -std=gnu++11 %s -Wno-unreachable-code
 
+namespace testInvalid {
+Invalid inv; // expected-error {{unknown type name}}
+// Make sure this doesn't assert.
+void fn()
+{
+    int c = 0;
+    if (inv)
+Here: ;
+    goto Here;
+}
+}
+
 namespace test0 {
   struct D { ~D(); };
 
@@ -20,7 +32,7 @@ namespace test1 {
 
   int f(bool b) {
     if (b)
-      goto foo; // expected-error {{goto into protected scope}}
+      goto foo; // expected-error {{cannot jump}}
     C c; // expected-note {{jump bypasses variable initialization}}
   foo:
     return 1;
@@ -67,7 +79,7 @@ namespace test4 {
 
     C c0;
 
-    goto *ip; // expected-error {{indirect goto might cross protected scopes}}
+    goto *ip; // expected-error {{cannot jump}}
     C c1; // expected-note {{jump bypasses variable initialization}}
   lbl1: // expected-note {{possible target of indirect goto}}
     return 0;
@@ -91,7 +103,7 @@ namespace test5 {
     if (ip[1]) {
       D d; // expected-note {{jump exits scope of variable with non-trivial destructor}}
       ip += 2;
-      goto *ip; // expected-error {{indirect goto might cross protected scopes}}
+      goto *ip; // expected-error {{cannot jump}}
     }
     return 1;
   }
@@ -141,13 +153,13 @@ namespace test8 {
     switch (c) {
     case 0:
       int x = 56; // expected-note {{jump bypasses variable initialization}}
-    case 1:       // expected-error {{switch case is in protected scope}}
+    case 1:       // expected-error {{cannot jump}}
       x = 10;
     }
   }
 
   void test2() {
-    goto l2;     // expected-error {{goto into protected scope}}
+    goto l2;     // expected-error {{cannot jump}}
   l1: int x = 5; // expected-note {{jump bypasses variable initialization}}
   l2: x++;
   }
@@ -196,7 +208,7 @@ namespace PR10462 {
 namespace test10 {
   int test() {
     static void *ps[] = { &&a0 };
-    goto *&&a0; // expected-error {{goto into protected scope}}
+    goto *&&a0; // expected-error {{cannot jump}}
     int a = 3; // expected-note {{jump bypasses variable initialization}}
   a0:
     return 0;
@@ -213,7 +225,7 @@ namespace test11 {
     static void *ips[] = { &&l0 };
   l0:  // expected-note {{possible target of indirect goto}}
     C c0 = 42; // expected-note {{jump exits scope of variable with non-trivial destructor}}
-    goto *ip; // expected-error {{indirect goto might cross protected scopes}}
+    goto *ip; // expected-error {{cannot jump}}
   }
 }
 
@@ -226,9 +238,9 @@ namespace test12 {
     static void *ips[] = { &&l0 };
     const C c0 = 17;
   l0: // expected-note {{possible target of indirect goto}}
-    const C &c1 = 42; // expected-note {{jump exits scope of variable with non-trivial destructor}}
+    const C &c1 = 42; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
     const C &c2 = c0;
-    goto *ip; // expected-error {{indirect goto might cross protected scopes}}
+    goto *ip; // expected-error {{cannot jump}}
   }
 }
 
@@ -241,8 +253,8 @@ namespace test13 {
   void f(void **ip) {
     static void *ips[] = { &&l0 };
   l0: // expected-note {{possible target of indirect goto}}
-    const int &c1 = C(1).i; // expected-note {{jump exits scope of variable with non-trivial destructor}}
-    goto *ip;  // expected-error {{indirect goto might cross protected scopes}}
+    const int &c1 = C(1).i; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    goto *ip;  // expected-error {{cannot jump}}
   }
 }
 
@@ -264,21 +276,21 @@ namespace test14 {
 // PR14225
 namespace test15 {
   void f1() try {
-    goto x; // expected-error {{goto into protected scope}}
+    goto x; // expected-error {{cannot jump}}
   } catch(...) {  // expected-note {{jump bypasses initialization of catch block}}
     x: ;
   }
   void f2() try {  // expected-note {{jump bypasses initialization of try block}}
     x: ;
   } catch(...) {
-    goto x; // expected-error {{goto into protected scope}}
+    goto x; // expected-error {{cannot jump}}
   }
 }
 
 namespace test16 {
   struct S { int n; };
   int f() {
-    goto x; // expected-error {{goto into protected scope}}
+    goto x; // expected-error {{cannot jump}}
     const S &s = S(); // expected-note {{jump bypasses variable initialization}}
 x:  return s.n;
   }
@@ -288,22 +300,144 @@ x:  return s.n;
 namespace test17 {
   struct S { int get(); private: int n; };
   int f() {
-    goto x; // expected-error {{goto into protected scope}}
+    goto x; // expected-error {{cannot jump}}
     S s = {}; // expected-note {{jump bypasses variable initialization}}
 x:  return s.get();
   }
 }
 #endif
 
-// This test must be last, because the error prohibits further jump diagnostics.
-namespace testInvalid {
-Invalid inv; // expected-error {{unknown type name}}
-// Make sure this doesn't assert.
-void fn()
-{
-    int c = 0;
-    if (inv)
-Here: ;
-    goto Here;
+namespace test18 {
+  struct A { ~A(); };
+  struct B { const int &r; const A &a; };
+  int f() {
+    void *p = &&x;
+    const A a = A();
+  x:
+    B b = { 0, a }; // ok
+    goto *p;
+  }
+  int g() {
+    void *p = &&x;
+  x: // expected-note {{possible target of indirect goto}}
+    B b = { 0, A() }; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    goto *p; // expected-error {{cannot jump}}
+  }
 }
+
+#if __cplusplus >= 201103L
+namespace std {
+  typedef decltype(sizeof(int)) size_t;
+  template<typename T> struct initializer_list {
+    const T *begin;
+    size_t size;
+    initializer_list(const T *, size_t);
+  };
+}
+namespace test19 {
+  struct A { ~A(); };
+
+  int f() {
+    void *p = &&x;
+    A a;
+  x: // expected-note {{possible target of indirect goto}}
+    std::initializer_list<A> il = { a }; // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    goto *p; // expected-error {{cannot jump}}
+  }
+}
+
+namespace test20 {
+  struct A { ~A(); };
+  struct B {
+    const A &a;
+  };
+
+  int f() {
+    void *p = &&x;
+    A a;
+  x:
+    std::initializer_list<B> il = {
+      a,
+      a
+    };
+    goto *p;
+  }
+  int g() {
+    void *p = &&x;
+    A a;
+  x: // expected-note {{possible target of indirect goto}}
+    std::initializer_list<B> il = {
+      a,
+      { A() } // expected-note {{jump exits scope of lifetime-extended temporary with non-trivial destructor}}
+    };
+    goto *p; // expected-error {{cannot jump}}
+  }
+}
+#endif
+
+namespace test21 {
+  template<typename T> void f() {
+  goto x; // expected-error {{cannot jump}}
+    T t; // expected-note {{bypasses}}
+ x: return;
+  }
+
+  template void f<int>();
+  struct X { ~X(); };
+  template void f<X>(); // expected-note {{instantiation of}}
+}
+
+namespace PR18217 {
+  typedef int *X;
+
+  template <typename T>
+  class MyCl {
+    T mem;
+  };
+
+  class Source {
+    MyCl<X> m;
+  public:
+    int getKind() const;
+  };
+
+  bool b;
+  template<typename TT>
+  static void foo(const Source &SF, MyCl<TT *> Source::*m) {
+    switch (SF.getKind()) {
+      case 1: return;
+      case 2: break;
+      case 3:
+      case 4: return;
+    };
+    if (b) {
+      auto &y = const_cast<MyCl<TT *> &>(SF.*m); // expected-warning 0-1{{extension}}
+    }
+  }
+
+  int Source::getKind() const {
+    foo(*this, &Source::m);
+    return 0;
+  }
+}
+
+namespace test_recovery {
+  // Test that jump scope checking recovers when there are unspecified errors
+  // in the function declaration or body.
+
+  void test(nexist, int c) { // expected-error {{}}
+    nexist_fn(); // expected-error {{}}
+    goto nexist_label; // expected-error {{use of undeclared label}}
+    goto a0; // expected-error {{cannot jump}}
+    int a = 0; // expected-note {{jump bypasses variable initialization}}
+    a0:;
+
+    switch (c) {
+    case $: // expected-error {{}}
+    case 0:
+      int x = 56; // expected-note {{jump bypasses variable initialization}}
+    case 1: // expected-error {{cannot jump}}
+      x = 10;
+    }
+  }
 }

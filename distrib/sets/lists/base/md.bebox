@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.20 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.bebox,v 1.22 2014/08/06 12:15:01 martin Exp $
 ./dev/pms0					base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-root
 ./usr/mdec/boot_com0				base-sysutil-root

@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.32 2009/03/11 17:54:03 dyoung Exp $ */
+.\" $NetBSD: usermod.8,v 1.34 2014/09/19 16:04:29 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -228,12 +228,12 @@ At very large sites this can take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Sh EXIT STATUS
-.Ex -std usermod
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .El
+.Sh EXIT STATUS
+.Ex -std usermod
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr group 5 ,

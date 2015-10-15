@@ -13,7 +13,7 @@ nodist_include_HEADERS = krb5-types.h
 
 noinst_HEADERS = heim_threads.h crypto-headers.h
 
-EXTRA_DIST = krb5-types.cross
+EXTRA_DIST = NTMakefile krb5-types.cross
 
 if !CROSS_COMPILE
 

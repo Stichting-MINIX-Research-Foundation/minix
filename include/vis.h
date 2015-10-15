@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.21 2013/02/20 17:01:15 christos Exp $	*/
+/*	$NetBSD: vis.h,v 1.23 2015/05/23 11:48:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,6 +63,9 @@
 #define	VIS_NOESCAPE	0x0400	/* don't decode `\' */
 #define	_VIS_END	0x0800	/* for unvis */
 #define	VIS_GLOB	0x1000	/* encode glob(3) magic characters */
+#define	VIS_SHELL	0x2000	/* encode shell special characters [not glob] */
+#define	VIS_META	(VIS_WHITE | VIS_GLOB | VIS_SHELL)
+#define	VIS_NOLOCALE	0x4000	/* encode using the C locale */
 
 /*
  * unvis return codes

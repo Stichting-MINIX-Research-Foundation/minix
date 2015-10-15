@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.158 2013/09/09 15:04:12 prlw1 Exp $
+# $NetBSD: postinstall,v 1.201 2015/08/24 07:21:14 christos Exp $
 #
-# Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -58,6 +58,8 @@
 : ${HOST_SH:=sh}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
+: ${SED:=sed}
+: ${SORT:=sort}
 : ${STAT:=stat}
 
 #
@@ -110,22 +112,71 @@ mkdtemp()
 #    eval "set -- $quotedlist"
 # or like this:
 #    eval "\$command $quotedlist \$filename"
+#
 shell_quote()
-{
+{(
 	local result=''
-	local arg
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
 	for arg in "$@" ; do
-		# Append a space if necessary
-		result="${result}${result:+ }"
-		# Convert each embedded ' to '\'',
-		# then insert ' at the beginning of the first line,
-		# and append ' at the end of the last line.
-		result="${result}$(printf "%s\n" "$arg" | \
-			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
 	done
 	printf "%s\n" "$result"
+)}
+
+# Convert arg $1 to a basic regular expression (as in sed)
+# that will match the arg.  This works by inserting backslashes
+# before characters that are special in basic regular expressions.
+# It also inserts backslashes before the extra characters specified
+# in $2 (which defaults to "/,").
+# XXX: Does not handle embedded newlines.
+# Usage: regex="$(bre_quote "${string}")"
+bre_quote()
+{
+	local arg="$1"
+	local extra="${2-/,}"
+	printf "%s\n" "${arg}" | ${SED} -e 's/[][^$.*\\'"${extra}"']/\\&/g'
 }
 
+# unprefix dir
+#	Remove any dir prefix from a list of paths on stdin,
+#	and write the result to stdout.  Useful for converting
+#	from ${DEST_DIR}/path to /path.
+#
+unprefix()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: unprefix dir"
+	local prefix="${1%/}"
+	prefix="$(bre_quote "${prefix}")"
+
+	${SED} -e "s,^${prefix}/,/,"
+}
 
 # additem item description
 #	Add item to list of supported items to check/fix,
@@ -135,7 +186,7 @@ additem()
 {
 	[ $# -eq 2 ] || err 3 "USAGE: additem item description"
 	defaultitems="${defaultitems}${defaultitems:+ }$1"
-	eval desc_$1=\"$2\"
+	eval desc_$1=\"\$2\"
 }
 
 # adddisableditem item description
@@ -146,7 +197,7 @@ adddisableditem()
 {
 	[ $# -eq 2 ] || err 3 "USAGE: adddisableditem item description"
 	otheritems="${otheritems}${otheritems:+ }$1"
-	eval desc_$1=\"$2\"
+	eval desc_$1=\"\$2\"
 }
 
 # checkdir op dir mode
@@ -172,18 +223,24 @@ check_dir()
 	return 0
 }
 
-# check_ids op type file start id [...]
-#	Check if file of type "users" or "groups" contains the relevant IDs
+# check_ids op type file srcfile start id [...]
+#	Check if file of type "users" or "groups" contains the relevant IDs.
+#	Use srcfile as a reference for the expected contents.
+#	The specified "id" names should be given in numerical order,
+#	with the first name corresponding to numerical value "start",
+#	and with the special name "SKIP" being used to mark gaps in the
+#	sequence.
 #	Returns 0 if ok, 1 otherwise.
-#	
+#
 check_ids()
 {
-	[ $# -ge 5 ] || err 3 "USAGE: checks_ids op type file start id [...]"
+	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id [...]"
 	_op="$1"
 	_type="$2"
 	_file="$3"
-	_start="$4"
-	shift 4
+	_srcfile="$4"
+	_start="$5"
+	shift 5
 	#_ids="$@"
 
 	if [ ! -f "${_file}" ]; then
@@ -225,6 +282,14 @@ check_ids()
 	' "$@" < "${_file}")"	|| return 1
 	if [ -n "${_missing}" ]; then
 		msg "Error ${_type}${_notfixed}:" $(echo ${_missing})
+		msg "Use the following as a template:"
+		set -- ${_missing}
+		while [ $# -gt 0 ]
+		do
+			${GREP} -E "^${1}:" ${_srcfile}
+			shift 2
+		done
+		msg "and adjust if necessary."
 		return 1
 	fi
 	return 0
@@ -379,7 +444,7 @@ rcvar_is_enabled()
 	_rcie_var="$1"
 	(
 		[ -f "${DEST_DIR}/etc/rc.conf" ] && . "${DEST_DIR}/etc/rc.conf"
-		eval _rcie_val="\${${_rcie_var}}"
+		eval _rcie_val=\"\${${_rcie_var}}\"
 		case $_rcie_val in
 		#	"yes", "true", "on", or "1"
 		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
@@ -434,8 +499,8 @@ file_exists_exact()
 	[ -n "$1" ] || err 3 "USAGE: file_exists_exact path"
 	_path="${1#.}"
 	[ -h "${DEST_DIR}${_path}" ] || \
-        	[ -e "${DEST_DIR}${_path}" ] || return 1
-	while [ "${_path}" != "/" ] ; do
+		[ -e "${DEST_DIR}${_path}" ] || return 1
+	while [ "${_path}" != "/" -a "${_path}" != "." ] ; do
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
@@ -448,8 +513,8 @@ file_exists_exact()
 
 # obsolete_paths op
 #	Obsolete the list of paths provided on stdin.
-#	Each path is relative to ${DEST_DIR}, and should
-#	be an absolute path or start with `./'.
+#	Each path should start with '/' or './', and
+#	will be interpreted relative to ${DEST_DIR}.
 #
 obsolete_paths()
 {
@@ -458,9 +523,9 @@ obsolete_paths()
 
 	failed=0
 	while read ofile; do
-                if ! file_exists_exact "${ofile}"; then
-                    continue
-                fi
+		if ! file_exists_exact "${ofile}"; then
+			continue
+		fi
 		ofile="${DEST_DIR}${ofile#.}"
 		cmd="rm"
 		ftype="file"
@@ -473,7 +538,7 @@ obsolete_paths()
 		if [ "${op}" = "check" ]; then
 			msg "Remove obsolete ${ftype} ${ofile}"
 			failed=1
-		elif ! eval "${cmd} \${ofile}"; then
+		elif ! eval "${cmd} \"\${ofile}\""; then
 			msg "Can't remove obsolete ${ftype} ${ofile}"
 			failed=1
 		else
@@ -501,7 +566,7 @@ obsolete_libs()
 }
 
 _obsolete_libs()
-{ 
+{
 	dir="$1"
 
 	(
@@ -557,8 +622,39 @@ function checklib(results, line, regex) {
 }
 
 #}'
-	
+
 	)
+}
+
+# obsolete_stand dir
+#	Prints the names of all obsolete files and subdirs below the
+#	provided dir.  dir should be something like /stand/${MACHINE}.
+#	The input dir and all output paths are interpreted
+#	relative to ${DEST_DIR}.
+#
+#	Assumes that the numerically largest subdir is current, and all
+#	others are obsolete.
+#
+obsolete_stand()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_stand dir"
+	local dir="$1"
+	local subdir
+
+	if ! [ -d "${DEST_DIR}${dir}" ]; then
+		msg "${DEST_DIR}${dir} doesn't exist; can't check for obsolete files"
+		return 1
+	fi
+
+	( cd "${DEST_DIR}${dir}" && ls -1d [0-9]*[0-9]/. ) \
+	| ${GREP} -v '[^0-9./]' \
+	| sort -t. -r -k1n -k2n -k3n \
+	| tail -n +2 \
+	| while read subdir ; do
+		subdir="${subdir%/.}"
+		find "${DEST_DIR}${dir}/${subdir}" -depth -print
+	done \
+	| unprefix "${DEST_DIR}"
 }
 
 # modify_file op srcfile scratchfile awkprog
@@ -622,7 +718,7 @@ contents_owner()
 		find "${_dir}" \( \( ! -user "${_user}" \) -o \
 		\( ! -group "${_grp}" \) \) -a -print0 \
 		| xargs -0 chown "${_user}:${_grp}"
-	fi	
+	fi
 }
 
 # get_makevar var [var ...]
@@ -634,9 +730,9 @@ get_makevar()
 
 	for _var in "$@"; do
 		_value="$(echo '.include <bsd.own.mk>' | \
-		    ${MAKE} -f - -V "${_var}")"
+		    ${MAKE} -f - -V "\${${_var}}")"
 
-		eval ${_var}=\"${_value}\"
+		eval ${_var}=\"\${_value}\"
 	done
 }
 
@@ -718,9 +814,9 @@ do_ddbonpanic()
 			result=1
 		else
 			echo >> "${DEST_DIR}/etc/sysctl.conf"
-			sed < "${SRC_DIR}/etc/sysctl.conf" \
+			${SED} < "${SRC_DIR}/etc/sysctl.conf" \
 			   -e '/^ddb\.onpanic/q' | \
-			       sed -e '1,/^$/d' >> \
+			       ${SED} -e '1,/^$/d' >> \
 			    "${DEST_DIR}/etc/sysctl.conf"
 			result=$?
 		fi
@@ -796,6 +892,30 @@ do_dhcpcd()
 }
 
 #
+#	dhcpcdrundir
+#
+additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
+do_dhcpcdrundir()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
+	op="$1"
+	failed=0
+
+	if [ -d "${DEST_DIR}/@RUNDIR@" ]; then
+		if [ "${op}" = "check" ]; then
+			msg "Remove eroneously created /@RUNDIR@"
+			failed=1
+		elif ! rm -r "${DEST_DIR}/@RUNDIR@"; then
+			msg "Failed to remove ${DEST_DIR}/@RUNDIR@"
+			failed=1
+		else
+			msg "Removed eroneously created ${DEST_DIR}/@RUNDIR@"
+		fi
+	fi
+	return ${failed}
+}
+
+#
 #	envsys
 #
 additem envsys "envsys configuration is up to date"
@@ -830,9 +950,14 @@ do_fontconfig()
 
 	# First, check for updates we can handle.
 	if ! $SOURCEMODE; then
-		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail" 
+		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail"
 	else
 		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
+	fi
+
+	if [ ! -d "${FONTCONFIG_DIR}" ]; then
+		msg "${FONTCONFIG_DIR} is not a directory; skipping check"
+		return 0
 	fi
 
 	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
@@ -866,7 +991,17 @@ do_fontconfig()
 		80-delicious.conf \
 		90-synthetic.conf
 	failed=$(( ${failed} + $? ))
-		
+
+	if ! $SOURCEMODE; then
+		FONTS_DIR="${SRC_DIR}/etc/fonts"
+	else
+		FONTS_DIR="${SRC_DIR}/external/mit/xorg/lib/fontconfig/etc"
+	fi
+
+	populate_dir "$op" false "${FONTS_DIR}" "${DEST_DIR}/etc/fonts" 444 \
+		fonts.conf
+	failed=$(( ${failed} + $? ))
+
 	# We can't modify conf.d easily; someone might have removed a file.
 
 	conf_d_failed=0
@@ -881,7 +1016,7 @@ do_fontconfig()
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
-    "in the ${DESTDIR}/etc/fonts/conf.d/ subdirectory:"
+    "in the ${DEST_DIR}/etc/fonts/conf.d/ subdirectory:"
 		msg \
     "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
 		msg \
@@ -907,7 +1042,8 @@ do_gid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
-	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
+	check_ids "$1" groups "${DEST_DIR}/etc/group" \
+	    "${SRC_DIR}/etc/group" 14 \
 	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
 	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd
 }
@@ -1012,8 +1148,8 @@ do_motd()
 	then
 		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
 		tmp2="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
-		sed '1,2d' <"${SRC_DIR}/etc/motd" >"${tmp1}"
-		sed '1,2d' <"${DEST_DIR}/etc/motd" >"${tmp2}"
+		${SED} '1,2d' <"${SRC_DIR}/etc/motd" >"${tmp1}"
+		${SED} '1,2d' <"${DEST_DIR}/etc/motd" >"${tmp2}"
 
 		if [ "$1" = check ]; then
 			cmp -s "${tmp1}" "${tmp2}"
@@ -1024,7 +1160,7 @@ do_motd()
 			fi
 		else
 			head -n 2 "${DEST_DIR}/etc/motd" >"${tmp1}"
-			sed '1,2d' <"${SRC_DIR}/etc/motd" >>"${tmp1}"
+			${SED} '1,2d' <"${SRC_DIR}/etc/motd" >>"${tmp1}"
 			cp "${tmp1}" "${DEST_DIR}/etc/motd"
 			result=0
 		fi
@@ -1052,9 +1188,13 @@ do_mtree()
 	if ! $SOURCEMODE; then
 		MTREE_DIR="${SRC_DIR}/etc/mtree"
 	else
-		${MAKE} -s -C "${SRC_DIR}/etc/mtree" emit_dist_file > \
+		/bin/rm -rf "${SCRATCHDIR}/obj"
+		mkdir "${SCRATCHDIR}/obj"
+		${MAKE} -s -C "${SRC_DIR}/etc/mtree" TOOL_AWK="${AWK}" \
+		    MAKEOBJDIR="${SCRATCHDIR}/obj" emit_dist_file > \
 		    "${SCRATCHDIR}/NetBSD.dist"
 		MTREE_DIR="${SCRATCHDIR}"
+		/bin/rm -rf "${SCRATCHDIR}/obj"
 	fi
 	compare_dir "$1" "${MTREE_DIR}" "${DEST_DIR}/etc/mtree" 444 NetBSD.dist
 	failed=$(( ${failed} + $? ))
@@ -1179,6 +1319,167 @@ do_pwd_mkdb()
 #
 #	rc
 #
+
+# XXX Generate these from ../../distrib/sets/lists
+rc_644_files="
+rc
+rc.subr
+rc.shutdown
+"
+rc_555_files="
+DAEMON
+DISKS
+LOGIN
+NETWORKING
+SERVERS
+accounting
+altqd
+amd
+apmd
+bluetooth
+bootconf.sh
+bootparams
+ccd
+cgd
+cleartmp
+cron
+devpubd
+dhclient
+dhcpcd
+dhcpd
+dhcrelay
+dmesg
+downinterfaces
+envsys
+fsck
+fsck_root
+ftp_proxy
+ftpd
+gpio
+hostapd
+httpd
+identd
+ifwatchd
+inetd
+ipfilter
+ipfs
+ipmon
+ipnat
+ipsec
+irdaattach
+iscsi_target
+iscsid
+isdnd
+isibootd
+kdc
+ldconfig
+ldpd
+local
+lpd
+lvm
+makemandb
+mdnsd
+mixerctl
+modules
+mopd
+motd
+mountall
+mountcritlocal
+mountcritremote
+mountd
+moused
+mrouted
+named
+ndbootd
+network
+newsyslog
+nfsd
+nfslocking
+npf
+ntpd
+ntpdate
+perusertmp
+pf
+pf_boot
+pflogd
+postfix
+powerd
+ppp
+pwcheck
+quota
+racoon
+raidframe
+raidframeparity
+random_seed
+rarpd
+rbootd
+resize_root
+rndctl
+root
+route6d
+routed
+rpcbind
+rtadvd
+rtclocaltime
+rwho
+savecore
+screenblank
+securelevel
+sshd
+staticroute
+swap1
+swap2
+sysctl
+sysdb
+syslogd
+timed
+tpctl
+ttys
+veriexec
+virecover
+wdogctl
+wpa_supplicant
+wscons
+wsmoused
+ypbind
+yppasswdd
+ypserv
+"
+rc_obsolete_files="
+NETWORK
+btattach
+btconfig
+btcontrol
+btdevctl
+bthcid
+btuartd
+daemon
+fsck.sh
+gated
+kerberos
+login
+nfsiod
+poffd
+portmap
+sdpd
+servers
+sunndd
+systemfs
+xntpd
+"
+rc_obsolete_vars="
+amd amd_master
+btcontrol btcontrol_devices
+critical_filesystems critical_filesystems_beforenet
+mountcritlocal mountcritremote
+network ip6forwarding
+network nfsiod_flags
+sdpd sdpd_control
+sdpd sdpd_groupname
+sdpd sdpd_username
+sysctl defcorename
+"
+
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
@@ -1191,7 +1492,7 @@ do_rc()
 	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
-		rc rc.subr rc.shutdown
+		${rc_644_files}
 	failed=$(( ${failed} + $? ))
 
 	if ! $SOURCEMODE; then
@@ -1201,40 +1502,25 @@ do_rc()
 	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
-		DAEMON DISKS LOGIN NETWORKING SERVERS \
-		accounting altqd amd apmd \
-		bluetooth bootconf.sh bootparams \
-		ccd cgd cleartmp cron devpubd \
-		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck fsck_root ftp_proxy ftpd \
-		gpio \
-		hostapd httpd \
-		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
-		irdaattach iscsi_target isdnd isibootd \
-		kdc \
-		ldconfig ldpd local lpd lvm \
-		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
-		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
-		ntpdate \
-		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
-		quota \
-		racoon rpcbind raidframe raidframeparity random_seed rarpd \
-		rbootd rndctl root route6d routed rtadvd rtclocaltime \
-		rtsold rwho \
-		savecore screenblank securelevel sshd \
-		staticroute swap1 swap2 sysctl sysdb syslogd \
-		timed tpctl ttys \
-		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		ypbind yppasswdd ypserv \
+		${rc_555_files} \
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
+
+	if ! find_file_in_dirlist blacklistd "blacklistd" \
+	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d" \
+	    "${SRC_DIR}/etc/rc.d"; then
+	    failed=1
+	else
+	    populate_dir "$op" true "${dir}" "${DEST_DIR}/etc/rc.d" 555 \
+		blacklistd
+	    failed=$(( ${failed} + $? ))
+	fi
 
 	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
 		# generate scripts
 		mkdir "${SCRATCHDIR}/rc"
 		for f in ${generated_scripts}; do
-			sed -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
+			${SED} -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
 			    < "${SRC_DIR}/etc/rc.d/${f}.in" \
 			    > "${SCRATCHDIR}/rc/${f}"
 		done
@@ -1245,25 +1531,14 @@ do_rc()
 	fi
 
 		# check for obsolete rc.d files
-	for f in NETWORK btattach btconfig btcontrol btdevctl bthcid btuartd \
-	    fsck.sh kerberos nfsiod sdpd servers \
-	    systemfs daemon gated login poffd portmap sunndd xntpd; do
+	for f in ${rc_obsolete_files}; do
 		fd="/etc/rc.d/${f}"
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.conf(5) variables
-	set --	amd amd_master \
-		btcontrol btcontrol_devices \
-		critical_filesystems critical_filesystems_beforenet \
-		mountcritlocal mountcritremote \
-		network ip6forwarding \
-		network nfsiod_flags \
-		sdpd sdpd_control \
-		sdpd sdpd_groupname \
-		sdpd sdpd_username \
-		sysctl defcorename
+	set -- ${rc_obsolete_vars}
 	while [ $# -gt 1 ]; do
 		if rcconf_is_set "${op}" "$1" "$2" 1; then
 			failed=1
@@ -1293,11 +1568,13 @@ do_sendmail()
 	for f in /etc/mail/helpfile /etc/mail/local-host-names \
 	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
 	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type f) \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type d) \
-	    "${DEST_DIR}/var/log/sendmail.st" \
-	    "${DEST_DIR}/var/spool/clientmqueue" \
-	    "${DEST_DIR}/var/spool/mqueue"; do
+	    $( ( find "${DEST_DIR}/usr/share/sendmail" -type f ; \
+	         find "${DEST_DIR}/usr/share/sendmail" -type d \
+	       ) | unprefix "${DEST_DIR}" ) \
+	    /var/log/sendmail.st \
+	    /var/spool/clientmqueue \
+	    /var/spool/mqueue
+	do
 		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
@@ -1328,7 +1605,7 @@ do_mailerconf()
 		failed=$?
 	    fi
 	fi
-	
+
 	return ${failed}
 }
 
@@ -1538,7 +1815,7 @@ ${pcpath} was a directory, should be a file.
 		_notfixed="${NOT_FIXED}"
 	fi
 
-	if [ ! -d "${DESTDIR}${pcpath}" ]; then
+	if [ ! -d "${DEST_DIR}${pcpath}" ]; then
 		return 0
 	fi
 
@@ -1546,7 +1823,7 @@ ${pcpath} was a directory, should be a file.
 	# itself.  If the directory contains unexpected extra files
 	# then it will not be deleted.
 	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
-	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
+	    &&  ${SORT} -ru "${DEST_DIR}"/var/db/obsolete/xbase \
 	    | ${GREP} -E "^\\.?${pcpath}/" ;
 	    echo "${pcpath}" ) \
 	| obsolete_paths "${op}"
@@ -1554,7 +1831,7 @@ ${pcpath} was a directory, should be a file.
 
 	# If the directory was removed above, then try to replace it with
 	# a file.
-	if [ -d "${DESTDIR}${pcpath}" ]; then
+	if [ -d "${DEST_DIR}${pcpath}" ]; then
 		msg "${filemsg}${_notfixed}"
 		failed=$(( ${failed} + 1 ))
 	else
@@ -1583,7 +1860,8 @@ do_uid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
-	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
+	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
+	    "${SRC_DIR}/etc/master.passwd" 12 \
 	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
 	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd
 }
@@ -1645,7 +1923,7 @@ do_atf()
 		failed=1
 	fi
 	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
-	    "${SRC_DIR}/external/bsd/atf/dist/atf-run/sample" \
+	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
 	    "${SRC_DIR}/etc/atf"; then
 			# ${dir} is set by find_file_in_dirlist()
 		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
@@ -1673,7 +1951,7 @@ handle_atf_user()
 	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
 	then
 		if [ "$1" = "fix" ]; then
-			sed -e \
+			${SED} -e \
 			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
 			    "${conf}" >"${conf}.new"
 			failed=$(( ${failed} + $? ))
@@ -1750,29 +2028,28 @@ do_catpages()
 }
 
 #
-#	obsolete
-#	(this item is last to allow other items to move obsolete files)
+#	man.conf
 #
-additem obsolete "remove obsolete file sets and minor libraries"
-do_obsolete()
+additem manconf "check for a mandoc usage in /etc/man.conf"
+do_manconf()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_manconf  fix|check"
 	op="$1"
 	failed=0
 
-	sort -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
-
-	(
-		obsolete_libs /lib
-		obsolete_libs /usr/lib
-		obsolete_libs /usr/lib/i18n
-		obsolete_libs /usr/X11R6/lib
-		obsolete_libs /usr/X11R7/lib
-		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
-		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
-	) | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
+	[ -f "${DEST_DIR}/etc/man.conf" ] || return 0
+	if ${GREP} -w "mandoc" "${DEST_DIR}/etc/man.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		failed=1
+		notfixed=""
+		if [ "${op}" = "fix" ]; then
+			notfixed="${NOT_FIXED}"
+		fi
+		msg "The file /etc/man.conf has not been adapted to mandoc usage; you"
+		msg "probably want to copy a new version over. ${notfixed}"
+	fi
 
 	return ${failed}
 }
@@ -1792,6 +2069,11 @@ do_ptyfsoldnodes()
 	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
 		msg "ptyfs is not in use"
 		return 0
+	fi
+
+	if [ ! -e "${DEST_DIR}/dev/pts" ]; then
+		msg "ptyfs is not properly configured: missing /dev/pts"
+		return 1
 	fi
 
 	# Find the device major numbers for the pty master and slave
@@ -1864,6 +2146,87 @@ do_ptyfsoldnodes()
 
 
 #
+#	varshm
+#
+additem varshm "check for a tmpfs mounted on /var/shm"
+do_varshm()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varshm  fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
+	if ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		if [ "${op}" = "check" ]; then
+			failed=1
+			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+		elif [ "${op}" = "fix" ]; then
+			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
+				>> "${DEST_DIR}/etc/fstab"
+			msg "Added tmpfs with 25% ram limit as /var/shm"
+
+		fi
+	fi
+
+	return ${failed}
+}
+
+#
+#	obsolete_stand
+#
+adddisableditem obsolete_stand "remove obsolete files from /stand"
+do_obsolete_stand()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stnd  fix|check"
+	op="$1"
+	failed=0
+
+	for dir in \
+	    /stand/${MACHINE} \
+	    /stand/${MACHINE}-4xx \
+	    /stand/${MACHINE}-booke \
+	    /stand/${MACHINE}-xen \
+	    /stand/${MACHINE}pae-xen
+	do
+		[ -d "${DESTDIR}${dir}" ] && obsolete_stand "${dir}"
+	done | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	obsolete
+#	(this item is last to allow other items to move obsolete files)
+#
+additem obsolete "remove obsolete file sets and minor libraries"
+do_obsolete()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	op="$1"
+	failed=0
+
+	${SORT} -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
+		obsolete_libs /usr/X11R7/lib
+		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
+		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
+	) | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
 #	end of items
 #	------------
 #
@@ -1884,7 +2247,7 @@ Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op 
 			* A directory that contains a NetBSD source tree;
 			* A distribution set file such as "etc.tgz" or
 			  "xetc.tgz".  Pass multiple -s options to specify
-                          multiple such files;
+			  multiple such files;
 			* A temporary directory in which one or both of
 			  "etc.tgz" and "xetc.tgz" have been extracted.
 							[${SRC_DIR:-/usr/src}]
@@ -2142,7 +2505,7 @@ _Fix_me_
 		fi
 
 		;;
-		
+
 	*)
 		warn "Unknown operation '"${op}"'"
 		usage

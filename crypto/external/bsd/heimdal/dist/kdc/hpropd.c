@@ -1,4 +1,4 @@
-/*	$NetBSD: hpropd.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: hpropd.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -46,19 +46,20 @@ static char *ktname = NULL;
 
 struct getargs args[] = {
     { "database", 'd', arg_string, rk_UNCONST(&database), "database", "file" },
-    { "stdin",    'n', arg_flag, &from_stdin, "read from stdin" },
-    { "print",	    0, arg_flag, &print_dump, "print dump to stdout" },
+    { "stdin",    'n', arg_flag, &from_stdin, "read from stdin", NULL },
+    { "print",	    0, arg_flag, &print_dump, "print dump to stdout", NULL },
 #ifdef SUPPORT_INETD
     { "inetd",	   'i',	arg_negative_flag,	&inetd_flag,
-      "Not started from inetd" },
+      "Not started from inetd", NULL },
 #endif
     { "keytab",   'k',	arg_string, &ktname,	"keytab to use for authentication", "keytab" },
-    { "realm",   'r',	arg_string, &local_realm, "realm to use" },
+    { "realm",   'r',	arg_string, &local_realm, "realm to use", NULL },
     { "version",    0, arg_flag, &version_flag, NULL, NULL },
     { "help",    'h',  arg_flag, &help_flag, NULL, NULL}
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
+static char unparseable_name[] = "unparseable name";
 
 static void
 usage(int ret)
@@ -173,7 +174,7 @@ main(int argc, char **argv)
 			    0, keytab, &ticket);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_recvauth");
-	
+
 	ret = krb5_unparse_name(context, ticket->server, &server);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_unparse_name");
@@ -196,7 +197,7 @@ main(int argc, char **argv)
 	    char *s;
 	    ret = krb5_unparse_name(context, c2, &s);
 	    if (ret)
-		s = "unparseable name";
+		s = unparseable_name;
 	    krb5_errx(context, 1, "Unauthorized connection from %s", s);
 	}
 	krb5_free_principal(context, c1);
@@ -262,7 +263,7 @@ main(int argc, char **argv)
 		char *s;
 		ret = krb5_unparse_name(context, entry.entry.principal, &s);
 		if (ret)
-		    s = strdup("unparseable name");
+		    s = strdup(unparseable_name);
 		krb5_warnx(context, "Entry exists: %s", s);
 		free(s);
 	    } else if(ret)

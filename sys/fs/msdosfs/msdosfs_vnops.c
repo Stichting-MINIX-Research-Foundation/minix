@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.87 2013/11/02 10:30:18 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.93 2015/04/04 12:34:44 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.87 2013/11/02 10:30:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.93 2015/04/04 12:34:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.87 2013/11/02 10:30:18 hannken E
 int
 msdosfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -155,13 +155,11 @@ msdosfs_create(void *v)
 		goto bad;
 	fstrans_done(ap->a_dvp->v_mount);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
 	fstrans_done(ap->a_dvp->v_mount);
-	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -524,7 +522,7 @@ msdosfs_read(void *v)
 		 * vnode for the directory.
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
-		    NOCRED, 0, &bp);
+		    0, &bp);
 		if (error) {
 			goto bad;
 		}
@@ -534,8 +532,13 @@ msdosfs_read(void *v)
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
-	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-		error = deupdat(dep, 1);
+	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
+		int uerror;
+
+		uerror = deupdat(dep, 1);
+		if (error == 0)
+			error = uerror;
+	}
 bad:
 	fstrans_done(vp->v_mount);
 	return (error);
@@ -1074,18 +1077,25 @@ abortit:
 		}
 		cache_purge(fvp);
 		if (!doingdirectory) {
+			struct denode_key old_key = ip->de_key;
+			struct denode_key new_key = ip->de_key;
+
 			error = pcbmap(dp, de_cluster(pmp, to_diroffset), 0,
-				       &ip->de_dirclust, 0);
+				       &new_key.dk_dirclust, 0);
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
 				VOP_UNLOCK(fvp);
 				goto bad;
 			}
-			ip->de_diroffset = to_diroffset;
-			if (ip->de_dirclust != MSDOSFSROOT)
-				ip->de_diroffset &= pmp->pm_crbomask;
+			new_key.dk_diroffset = to_diroffset;
+			if (new_key.dk_dirclust != MSDOSFSROOT)
+				new_key.dk_diroffset &= pmp->pm_crbomask;
+			vcache_rekey_enter(pmp->pm_mountp, fvp, &old_key,
+			    sizeof(old_key), &new_key, sizeof(new_key));
+			ip->de_key = new_key;
+			vcache_rekey_exit(pmp->pm_mountp, fvp, &old_key,
+			    sizeof(old_key), &ip->de_key, sizeof(ip->de_key));
 		}
-		reinsert(ip);
 	}
 
 	/*
@@ -1100,7 +1110,7 @@ abortit:
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-		    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
+		    pmp->pm_bpcluster, B_MODIFY, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			VOP_UNLOCK(fvp);
@@ -1168,7 +1178,7 @@ static const struct {
 int
 msdosfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struvt vnode **a_vpp;
 		struvt componentname *a_cnp;
@@ -1269,7 +1279,6 @@ msdosfs_mkdir(void *v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
-	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (0);
@@ -1277,7 +1286,6 @@ msdosfs_mkdir(void *v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	vput(ap->a_dvp);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
 }
@@ -1493,7 +1501,7 @@ msdosfs_readdir(void *v)
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-		    NOCRED, 0, &bp);
+		    0, &bp);
 		if (error) {
 			goto bad;
 		}
@@ -1875,6 +1883,8 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
 	{ &vop_read_desc, msdosfs_read },		/* read */
 	{ &vop_write_desc, msdosfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hostname.1,v 1.19 2013/07/19 11:19:23 wiz Exp $
+.\"	$NetBSD: hostname.1,v 1.20 2014/02/13 12:00:29 elric Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hostname.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd July 19, 2013
+.Dd April 28, 1995
 .Dt HOSTNAME 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd set or print name of current host system
 .Sh SYNOPSIS
 .Nm
-.Op Fl AadfIis
+.Op Fl s
 .Op Ar name-of-host
 .Sh DESCRIPTION
 .Nm
@@ -50,36 +50,14 @@ time.
 .Pp
 Options:
 .Bl -tag -width flag
-.It Fl A
-Display the FQDN of each address on all interfaces.
-.It Fl a
-Display alias name(s) of the host.
-.It Fl d
-Display the DNS domain.
-.It Fl f
-Display the FQDN for the hostname.
-.It Fl I
-Display each IP address on all interfaces.
-.It Fl i
-Display the IP address(es) for the hostname.
 .It Fl s
-Display the short hostname.
+Trims off any domain information from the printed
+name.
 .El
-.Sh NOTES
-With the exception of
-.Fl I
-and
-.Fl s ,
-the other options will retrieve their results from the resolver.
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr getaddrinfo 3 ,
-.Xr gethostbyname 3 ,
 .Xr gethostname 3 ,
-.Xr getifaddrs 3 ,
-.Xr getnameinfo 3 ,
-.Xr sethostname 3 ,
-.Xr hosts 5
+.Xr sethostname 3
 .Sh HISTORY
 The
 .Nm

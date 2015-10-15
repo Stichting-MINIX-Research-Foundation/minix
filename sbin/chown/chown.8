@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.6 2012/10/23 17:30:59 wiz Exp $
+.\"	$NetBSD: chown.8,v 1.7 2013/12/17 09:54:08 apb Exp $
 .\"
 .Dd October 22, 2012
 .Dt CHOWN 8
@@ -104,6 +104,9 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+The default is as if the
+.Fl P
+option had been specified.
 .Pp
 The
 .Fl L

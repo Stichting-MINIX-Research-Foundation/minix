@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.97 2011/05/03 17:44:31 dyoung Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.108 2015/06/04 09:20:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,23 @@ struct ipovly {
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
 } __packed;
+
+/*
+ * IP Flow structure
+ */
+struct ipflow {
+	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
+	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	struct in_addr ipf_dst;		/* destination address */
+	struct in_addr ipf_src;		/* source address */
+	uint8_t ipf_tos;		/* type-of-service */
+	struct route ipf_ro;		/* associated route entry */
+	u_long ipf_uses;		/* number of uses in this period */
+	u_long ipf_last_uses;		/* number of uses in last period */
+	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
+	u_long ipf_errors;		/* other errors returned by if_output */
+	u_int ipf_timer;		/* lifetime timer */
+};
 
 /*
  * IP sequence queue structure.
@@ -149,16 +166,23 @@ struct ip_moptions {
 #include "opt_mbuftrace.h"
 #endif
 
-/* flags passed to ip_output as last parameter */
-#define	IP_FORWARDING		0x1		/* most of ip header exists */
-#define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
-#define	IP_RETURNMTU		0x4		/* pass back mtu on EMSGSIZE */
-#define	IP_NOIPNEWID		0x8		/* don't fill in ip_id */
+/*
+ * The following flags can be passed to ip_output() as last parameter
+ */
+#define	IP_FORWARDING		0x0001		/* most of ip header exists */
+#define	IP_RAWOUTPUT		0x0002		/* raw ip header exists */
+#define	IP_RETURNMTU		0x0004		/* pass back mtu on EMSGSIZE */
+#define	IP_NOIPNEWID		0x0008		/* don't fill in ip_id */
+__CTASSERT(SO_DONTROUTE ==	0x0010);
+__CTASSERT(SO_BROADCAST ==	0x0020);
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
+
+#define	IP_IGMP_MCAST		0x0040		/* IGMP for mcast join/leave */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
 
 extern struct domain inetdomain;
+extern const struct pr_usrreqs rip_usrreqs;
 
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
@@ -174,45 +198,34 @@ extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct mowner ip_rx_mowner;
 extern struct mowner ip_tx_mowner;
 #endif
-#ifdef GATEWAY
-extern int ip_maxflows;
-extern int ip_hashsize;
-#endif
-extern struct pool inmulti_pool;
 struct	 inpcb;
 struct   sockopt;
 
+void	ip_init(void);
+void	in_init(void);
+
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
-int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
-void	 ip_forward(struct mbuf *, int);
 void	 ip_freemoptions(struct ip_moptions *);
-int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
-void	 ip_init(void);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, ...);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
-int	 ip_pcbopts(struct mbuf **, const struct sockopt *);
 
 void	 ip_reass_init(void);
 int	 ip_reass_packet(struct mbuf **, struct ip *);
 void	 ip_reass_slowtimo(void);
 void	 ip_reass_drain(void);
 
-struct in_ifaddr *
-	 ip_rtaddr(struct in_addr);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
-int	 ip_setmoptions(struct ip_moptions **, const struct sockopt *);
 void	 ip_slowtimo(void);
 void	 ip_fasttimo(void);
 struct mbuf *
 	 ip_srcroute(void);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
-void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
@@ -220,9 +233,17 @@ void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-int	ipflow_init(int);
+
+int	ip_setmoptions(struct ip_moptions **, const struct sockopt *sopt);
+int	ip_getmoptions(struct ip_moptions *, struct sockopt *sopt);
+
+int	ip_hresolv_output(struct ifnet * const, struct mbuf * const,
+	    const struct sockaddr * const, struct rtentry *);
+
+/* IP Flow interface. */
+void	ipflow_init(void);
 void	ipflow_poolinit(void);
-void	ipflow_prune(void);
+struct ipflow *ipflow_reap(bool);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);

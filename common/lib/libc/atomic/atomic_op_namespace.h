@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.4 2008/06/23 10:33:52 ad Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.7 2014/10/13 07:31:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #define	atomic_and_uint_nv	_atomic_and_uint_nv
 #define	atomic_and_ulong_nv	_atomic_and_ulong_nv
 #define	atomic_and_64_nv	_atomic_and_64_nv
+#define	atomic_and_16_nv	_atomic_and_16_nv
+#define	atomic_and_8_nv		_atomic_and_8_nv
 
 #define	atomic_or_32		_atomic_or_32
 #define	atomic_or_uint		_atomic_or_uint
@@ -73,6 +75,8 @@
 #define	atomic_cas_ulong	_atomic_cas_ulong
 #define	atomic_cas_ptr		_atomic_cas_ptr
 #define	atomic_cas_64		_atomic_cas_64
+#define atomic_cas_16		_atomic_cas_16
+#define atomic_cas_8		_atomic_cas_8
 
 #define	atomic_cas_32_ni	_atomic_cas_32_ni
 #define	atomic_cas_uint_ni	_atomic_cas_uint_ni
@@ -118,8 +122,18 @@
 
 #if defined(_KERNEL)
 #define	atomic_op_alias(a,s)	__strong_alias(a,s)
+#ifdef _HARDKERNEL
+#define	crt_alias(a,s)	__strong_alias(a,s)
+#endif
 #else
 #define	atomic_op_alias(a,s)	__weak_alias(a,s)
+#ifdef _LIBC
+#define	crt_alias(a,s)	__strong_alias(a,s)
+#endif
 #endif /* _KERNEL */
+
+#ifndef	crt_alias
+#define	crt_alias(a,s)
+#endif
 
 #endif /* _ATOMIC_OP_NAMESPACE_H_ */

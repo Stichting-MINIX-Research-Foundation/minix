@@ -14,6 +14,13 @@ extern "C" {
   template<typename T> class D; // expected-error{{templates must have C++ linkage}}
 }
 
+extern "C" {
+  class PR17968 {
+    template<typename T> class D; // expected-error{{templates must have C++ linkage}}
+    template<typename T> void f(); // expected-error{{templates must have C++ linkage}}
+  };
+}
+
 template<class U> class A; // expected-note{{previous template declaration is here}}
 
 template<int N> class A; // expected-error{{template parameter has a different kind in template redeclaration}}
@@ -50,7 +57,7 @@ void f() {
   template<typename T> class X; // expected-error{{expression}}
 }
 
-template<typename T> class X1 var; // expected-warning{{variable templates are a C++1y extension}} \
+template<typename T> class X1 var; // expected-warning{{variable templates are a C++14 extension}} \
                                    // expected-error {{variable has incomplete type 'class X1'}} \
                                    // expected-note {{forward declaration of 'X1'}}
 

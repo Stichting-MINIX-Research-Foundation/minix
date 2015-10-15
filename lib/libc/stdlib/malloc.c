@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $	*/
+/*	$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -12,7 +12,7 @@
  *
  */
 
-#ifdef __minix
+#if defined(__minix)
 #include "extern.h"
 #ifdef _LIBSYS
 #include <minix/sysutil.h>
@@ -22,7 +22,7 @@
 #define wrtwarning(w) printf("libminc malloc warning: %s\n", w)
 #define wrterror(w) panic("libminc malloc error: %s\n", w)
 #endif
-#endif
+#endif /* defined(__minix) */
 
 /*
  * Defining MALLOC_EXTRA_SANITY will enable extra checks which are related
@@ -94,12 +94,14 @@ void utrace(struct ut *, int);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #endif /* __FreeBSD__ */
 
+#if defined(__minix)
 /* #undef these things so that malloc uses the non-internal symbols.
  * This is necessary for VM to be able to define its own versions, and
  * use this malloc.
  */
 #undef mmap
 #undef munmap
+#endif /* defined(__minix) */
 
 #include <sys/types.h>
 #if defined(__NetBSD__)
@@ -109,7 +111,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -126,7 +128,7 @@ static mutex_t thread_lock = MUTEX_INITIALIZER;
     static int fdzero;
 #   define MMAP_FD	fdzero
 #   define INIT_MMAP() \
-	{ if ((fdzero = open(_PATH_DEVZERO, O_RDWR, 0000)) == -1) \
+	{ if ((fdzero = open(_PATH_DEVZERO, O_RDWR | O_CLOEXEC, 0000)) == -1) \
 	    wrterror("open of /dev/zero"); }
 #endif /* __sparc__ */
 

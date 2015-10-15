@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_radix_size.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_radix_size.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_RADIX_SIZE_C
@@ -56,7 +56,7 @@ int mp_radix_size (mp_int * a, int radix, int *size)
   }
 
   /* force temp to positive */
-  t.sign = MP_ZPOS; 
+  t.sign = MP_ZPOS;
 
   /* fetch out all of the digits */
   while (mp_iszero (&t) == MP_NO) {
@@ -75,6 +75,6 @@ int mp_radix_size (mp_int * a, int radix, int *size)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_radix_size.c,v */
-/* Revision: 1.5 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_radix_size.c,v  */
+/* Revision: 1.5  */
+/* Date: 2006/12/28 01:25:13  */

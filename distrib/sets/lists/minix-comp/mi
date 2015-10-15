@@ -18,9 +18,6 @@
 ./usr/bin/c++filt                                       minix-comp      binutils
 ./usr/bin/cc                                            minix-comp      gcccmds
 ./usr/bin/cc                                            minix-comp      llvm,llvmcmds
-./usr/bin/cc1                                           minix-comp      gcccmds
-./usr/bin/cc1obj                                        minix-comp      gcccmds
-./usr/bin/cc1plus                                       minix-comp      gcccmds
 ./usr/bin/clang++                                       minix-comp      llvm,llvmcmds
 ./usr/bin/clang-cpp                                     minix-comp      llvm,llvmcmds
 ./usr/bin/clang-tblgen                                  minix-comp      llvm,llvmcmds
@@ -62,7 +59,7 @@
 ./usr/include/atf-c++/check.hpp                         minix-comp      atf
 ./usr/include/atf-c++/config.hpp                        minix-comp      atf
 ./usr/include/atf-c++/macros.hpp                        minix-comp      atf
-./usr/include/atf-c++/noncopyable.hpp                   minix-comp      atf
+./usr/include/atf-c++/noncopyable.hpp                   minix-comp      atf,obsolete
 ./usr/include/atf-c++/tests.hpp                         minix-comp      atf
 ./usr/include/atf-c++/utils.hpp                         minix-comp      atf
 ./usr/include/atf-c                                     minix-comp      atf
@@ -79,6 +76,7 @@
 ./usr/include/atf-c/utils.h                             minix-comp      atf
 ./usr/include/atomic.h                                  minix-comp
 ./usr/include/bitstring.h                               minix-comp
+./usr/include/blacklist.h                               minix-comp
 ./usr/include/bm.h                                      minix-comp
 ./usr/include/bzlib.h                                   minix-comp
 ./usr/include/c++                                       minix-comp      libcxx
@@ -96,7 +94,8 @@
 ./usr/include/c++/__std_stream                          minix-comp      libcxx
 ./usr/include/c++/__tree                                minix-comp      libcxx
 ./usr/include/c++/__tuple                               minix-comp      libcxx
-./usr/include/c++/__tuple_03                            minix-comp      libcxx
+./usr/include/c++/__tuple_03                            minix-comp      libcxx,obsolete
+./usr/include/c++/__undef___deallocate                  minix-comp      libcxx
 ./usr/include/c++/__undef_min_max                       minix-comp      libcxx
 ./usr/include/c++/algorithm                             minix-comp      libcxx
 ./usr/include/c++/array                                 minix-comp      libcxx
@@ -139,8 +138,17 @@
 ./usr/include/c++/deque                                 minix-comp      libcxx
 ./usr/include/c++/exception                             minix-comp      libcxx
 ./usr/include/c++/experimental                          minix-comp      libcxx
+./usr/include/c++/experimental/__config                 minix-comp      libcxx
+./usr/include/c++/experimental/algorithm                minix-comp      libcxx
+./usr/include/c++/experimental/chrono                   minix-comp      libcxx
 ./usr/include/c++/experimental/dynarray                 minix-comp      libcxx
 ./usr/include/c++/experimental/optional                 minix-comp      libcxx
+./usr/include/c++/experimental/ratio                    minix-comp      libcxx
+./usr/include/c++/experimental/string_view              minix-comp      libcxx
+./usr/include/c++/experimental/system_error             minix-comp      libcxx
+./usr/include/c++/experimental/tuple                    minix-comp      libcxx
+./usr/include/c++/experimental/type_traits              minix-comp      libcxx
+./usr/include/c++/experimental/utility                  minix-comp      libcxx
 ./usr/include/c++/ext                                   minix-comp      libcxx
 ./usr/include/c++/ext/__hash                            minix-comp      libcxx
 ./usr/include/c++/ext/hash_map                          minix-comp      libcxx
@@ -195,42 +203,44 @@
 ./usr/include/c++/vector                                minix-comp      libcxx
 ./usr/include/cdbr.h                                    minix-comp
 ./usr/include/cdbw.h                                    minix-comp
-./usr/include/clang-3.4                                 minix-comp
-./usr/include/clang-3.4/__wmmintrin_aes.h               minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/__wmmintrin_pclmul.h            minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/ammintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/avx2intrin.h                    minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/avxintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/bmi2intrin.h                    minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/bmiintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/emmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/f16cintrin.h                    minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/fma4intrin.h                    minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/fmaintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/immintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/lzcntintrin.h                   minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/mm3dnow.h                       minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/mm_malloc.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/mmintrin.h                      minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/nmmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/pmmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/popcntintrin.h                  minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/prfchwintrin.h                  minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/rdseedintrin.h                  minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/rtmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/shaintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/smmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/tbmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/tmmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/wmmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/x86intrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/xmmintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/clang-3.4/xopintrin.h                     minix-comp      llvm,llvmcmds
-./usr/include/compat                                    minix-comp
-./usr/include/compat/machine                            minix-comp
+./usr/include/clang-3.4                                 minix-comp      obsolete
+./usr/include/clang-3.4/__wmmintrin_aes.h               minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/__wmmintrin_pclmul.h            minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/ammintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/avx2intrin.h                    minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/avxintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/bmi2intrin.h                    minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/bmiintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/emmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/f16cintrin.h                    minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/fma4intrin.h                    minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/fmaintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/immintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/lzcntintrin.h                   minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/mm3dnow.h                       minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/mm_malloc.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/mmintrin.h                      minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/nmmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/pmmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/popcntintrin.h                  minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/prfchwintrin.h                  minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/rdseedintrin.h                  minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/rtmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/shaintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/smmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/tbmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/tmmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/wmmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/x86intrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/xmmintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.4/xopintrin.h                     minix-comp      llvm,llvmcmds,obsolete
+./usr/include/clang-3.6                                 minix-comp      llvm
+./usr/include/compat                                    minix-comp      obsolete
+./usr/include/compat/machine                            minix-comp      obsolete
 ./usr/include/complex.h                                 minix-comp
 ./usr/include/configfile.h                              minix-comp
 ./usr/include/cpio.h                                    minix-comp
+./usr/include/crypto                                    minix-comp      crypto
 ./usr/include/ctype.h                                   minix-comp
 ./usr/include/curses.h                                  minix-comp
 ./usr/include/db.h                                      minix-comp
@@ -355,13 +365,15 @@
 ./usr/include/g++/backward/strstream                    minix-comp      libstdcxx
 ./usr/include/g++/bits                                  minix-comp      libstdcxx
 ./usr/include/g++/bits/algorithmfwd.h                   minix-comp      libstdcxx
+./usr/include/g++/bits/alloc_traits.h                   minix-comp      libstdcxx
 ./usr/include/g++/bits/allocator.h                      minix-comp      libstdcxx
-./usr/include/g++/bits/atomic_0.h                       minix-comp      libstdcxx
-./usr/include/g++/bits/atomic_2.h                       minix-comp      libstdcxx
+./usr/include/g++/bits/atomic_0.h                       minix-comp      libstdcxx,obsolete
+./usr/include/g++/bits/atomic_2.h                       minix-comp      libstdcxx,obsolete
 ./usr/include/g++/bits/atomic_base.h                    minix-comp      libstdcxx
+./usr/include/g++/bits/atomic_lockfree_defines.h        minix-comp      libstdcxx
 ./usr/include/g++/bits/atomic_word.h                    minix-comp      libstdcxx
-./usr/include/g++/bits/atomicfwd_c.h                    minix-comp      libstdcxx
-./usr/include/g++/bits/atomicfwd_cxx.h                  minix-comp      libstdcxx
+./usr/include/g++/bits/atomicfwd_c.h                    minix-comp      libstdcxx,obsolete
+./usr/include/g++/bits/atomicfwd_cxx.h                  minix-comp      libstdcxx,obsolete
 ./usr/include/g++/bits/basic_file.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/basic_ios.h                      minix-comp      libstdcxx
 ./usr/include/g++/bits/basic_ios.tcc                    minix-comp      libstdcxx
@@ -374,17 +386,20 @@
 ./usr/include/g++/bits/c++io.h                          minix-comp      libstdcxx
 ./usr/include/g++/bits/c++locale.h                      minix-comp      libstdcxx
 ./usr/include/g++/bits/char_traits.h                    minix-comp      libstdcxx
-./usr/include/g++/bits/cmath.tcc                        minix-comp      libstdcxx
+./usr/include/g++/bits/cmath.tcc                        minix-comp      libstdcxx,obsolete
 ./usr/include/g++/bits/codecvt.h                        minix-comp      libstdcxx
 ./usr/include/g++/bits/concept_check.h                  minix-comp      libstdcxx
 ./usr/include/g++/bits/cpp_type_traits.h                minix-comp      libstdcxx
 ./usr/include/g++/bits/cpu_defines.h                    minix-comp      libstdcxx
 ./usr/include/g++/bits/ctype_base.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/ctype_inline.h                   minix-comp      libstdcxx
-./usr/include/g++/bits/ctype_noninline.h                minix-comp      libstdcxx
+./usr/include/g++/bits/ctype_noninline.h                minix-comp      libstdcxx,obsolete
+./usr/include/g++/bits/cxxabi_forced.h                  minix-comp      libstdcxx
 ./usr/include/g++/bits/cxxabi_tweaks.h                  minix-comp      libstdcxx
 ./usr/include/g++/bits/deque.tcc                        minix-comp      libstdcxx
 ./usr/include/g++/bits/error_constants.h                minix-comp      libstdcxx
+./usr/include/g++/bits/exception_defines.h              minix-comp      libstdcxx
+./usr/include/g++/bits/exception_ptr.h                  minix-comp      libstdcxx
 ./usr/include/g++/bits/extc++.h                         minix-comp      libstdcxx
 ./usr/include/g++/bits/forward_list.h                   minix-comp      libstdcxx
 ./usr/include/g++/bits/forward_list.tcc                 minix-comp      libstdcxx
@@ -396,8 +411,9 @@
 ./usr/include/g++/bits/gthr-default.h                   minix-comp      libstdcxx
 ./usr/include/g++/bits/gthr-posix.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/gthr-single.h                    minix-comp      libstdcxx
-./usr/include/g++/bits/gthr-tpf.h                       minix-comp      libstdcxx
+./usr/include/g++/bits/gthr-tpf.h                       minix-comp      libstdcxx,obsolete
 ./usr/include/g++/bits/gthr.h                           minix-comp      libstdcxx
+./usr/include/g++/bits/hash_bytes.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/hashtable.h                      minix-comp      libstdcxx
 ./usr/include/g++/bits/hashtable_policy.h               minix-comp      libstdcxx
 ./usr/include/g++/bits/indirect_array.h                 minix-comp      libstdcxx
@@ -412,14 +428,28 @@
 ./usr/include/g++/bits/locale_facets_nonio.tcc          minix-comp      libstdcxx
 ./usr/include/g++/bits/localefwd.h                      minix-comp      libstdcxx
 ./usr/include/g++/bits/mask_array.h                     minix-comp      libstdcxx
+./usr/include/g++/bits/memoryfwd.h                      minix-comp      libstdcxx
 ./usr/include/g++/bits/messages_members.h               minix-comp      libstdcxx
 ./usr/include/g++/bits/move.h                           minix-comp      libstdcxx
+./usr/include/g++/bits/nested_exception.h               minix-comp      libstdcxx
+./usr/include/g++/bits/opt_random.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/os_defines.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/ostream.tcc                      minix-comp      libstdcxx
 ./usr/include/g++/bits/ostream_insert.h                 minix-comp      libstdcxx
 ./usr/include/g++/bits/postypes.h                       minix-comp      libstdcxx
+./usr/include/g++/bits/ptr_traits.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/random.h                         minix-comp      libstdcxx
 ./usr/include/g++/bits/random.tcc                       minix-comp      libstdcxx
+./usr/include/g++/bits/range_access.h                   minix-comp      libstdcxx
+./usr/include/g++/bits/regex.h                          minix-comp      libstdcxx
+./usr/include/g++/bits/regex_compiler.h                 minix-comp      libstdcxx
+./usr/include/g++/bits/regex_constants.h                minix-comp      libstdcxx
+./usr/include/g++/bits/regex_cursor.h                   minix-comp      libstdcxx
+./usr/include/g++/bits/regex_error.h                    minix-comp      libstdcxx
+./usr/include/g++/bits/regex_grep_matcher.h             minix-comp      libstdcxx
+./usr/include/g++/bits/regex_grep_matcher.tcc           minix-comp      libstdcxx
+./usr/include/g++/bits/regex_nfa.h                      minix-comp      libstdcxx
+./usr/include/g++/bits/regex_nfa.tcc                    minix-comp      libstdcxx
 ./usr/include/g++/bits/shared_ptr.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/shared_ptr_base.h                minix-comp      libstdcxx
 ./usr/include/g++/bits/slice_array.h                    minix-comp      libstdcxx
@@ -459,6 +489,7 @@
 ./usr/include/g++/bits/unique_ptr.h                     minix-comp      libstdcxx
 ./usr/include/g++/bits/unordered_map.h                  minix-comp      libstdcxx
 ./usr/include/g++/bits/unordered_set.h                  minix-comp      libstdcxx
+./usr/include/g++/bits/uses_allocator.h                 minix-comp      libstdcxx
 ./usr/include/g++/bits/valarray_after.h                 minix-comp      libstdcxx
 ./usr/include/g++/bits/valarray_array.h                 minix-comp      libstdcxx
 ./usr/include/g++/bits/valarray_array.tcc               minix-comp      libstdcxx
@@ -477,11 +508,12 @@
 ./usr/include/g++/climits                               minix-comp      libstdcxx
 ./usr/include/g++/clocale                               minix-comp      libstdcxx
 ./usr/include/g++/cmath                                 minix-comp      libstdcxx
-./usr/include/g++/complex.h                             minix-comp      libstdcxx
+./usr/include/g++/complex.h                             minix-comp      libstdcxx,obsolete
 ./usr/include/g++/complex                               minix-comp      libstdcxx
 ./usr/include/g++/condition_variable                    minix-comp      libstdcxx
 ./usr/include/g++/csetjmp                               minix-comp      libstdcxx
 ./usr/include/g++/csignal                               minix-comp      libstdcxx
+./usr/include/g++/cstdalign                             minix-comp      libstdcxx
 ./usr/include/g++/cstdarg                               minix-comp      libstdcxx
 ./usr/include/g++/cstdbool                              minix-comp      libstdcxx
 ./usr/include/g++/cstddef                               minix-comp      libstdcxx
@@ -493,13 +525,15 @@
 ./usr/include/g++/ctime                                 minix-comp      libstdcxx
 ./usr/include/g++/cwchar                                minix-comp      libstdcxx
 ./usr/include/g++/cwctype                               minix-comp      libstdcxx
-./usr/include/g++/cxxabi-forced.h                       minix-comp      libstdcxx
+./usr/include/g++/cxxabi-forced.h                       minix-comp      libstdcxx,obsolete
 ./usr/include/g++/cxxabi.h                              minix-comp      libstdcxx
 ./usr/include/g++/debug                                 minix-comp      libstdcxx
+./usr/include/g++/debug/array                           minix-comp      libstdcxx
 ./usr/include/g++/debug/bitset                          minix-comp      libstdcxx
 ./usr/include/g++/debug/debug.h                         minix-comp      libstdcxx
 ./usr/include/g++/debug/deque                           minix-comp      libstdcxx
 ./usr/include/g++/debug/formatter.h                     minix-comp      libstdcxx
+./usr/include/g++/debug/forward_list                    minix-comp      libstdcxx
 ./usr/include/g++/debug/functions.h                     minix-comp      libstdcxx
 ./usr/include/g++/debug/list                            minix-comp      libstdcxx
 ./usr/include/g++/debug/macros.h                        minix-comp      libstdcxx
@@ -510,7 +544,13 @@
 ./usr/include/g++/debug/safe_base.h                     minix-comp      libstdcxx
 ./usr/include/g++/debug/safe_iterator.h                 minix-comp      libstdcxx
 ./usr/include/g++/debug/safe_iterator.tcc               minix-comp      libstdcxx
+./usr/include/g++/debug/safe_local_iterator.h           minix-comp      libstdcxx
+./usr/include/g++/debug/safe_local_iterator.tcc         minix-comp      libstdcxx
 ./usr/include/g++/debug/safe_sequence.h                 minix-comp      libstdcxx
+./usr/include/g++/debug/safe_sequence.tcc               minix-comp      libstdcxx
+./usr/include/g++/debug/safe_unordered_base.h           minix-comp      libstdcxx
+./usr/include/g++/debug/safe_unordered_container.h      minix-comp      libstdcxx
+./usr/include/g++/debug/safe_unordered_container.tcc    minix-comp      libstdcxx
 ./usr/include/g++/debug/set.h                           minix-comp      libstdcxx
 ./usr/include/g++/debug/set                             minix-comp      libstdcxx
 ./usr/include/g++/debug/string                          minix-comp      libstdcxx
@@ -522,14 +562,16 @@
 ./usr/include/g++/decimal/decimal                       minix-comp      libstdcxx
 ./usr/include/g++/deque                                 minix-comp      libstdcxx
 ./usr/include/g++/exception                             minix-comp      libstdcxx
-./usr/include/g++/exception_defines.h                   minix-comp      libstdcxx
-./usr/include/g++/exception_ptr.h                       minix-comp      libstdcxx
+./usr/include/g++/exception_defines.h                   minix-comp      libstdcxx,obsolete
+./usr/include/g++/exception_ptr.h                       minix-comp      libstdcxx,obsolete
 ./usr/include/g++/ext                                   minix-comp      libstdcxx
 ./usr/include/g++/ext/algorithm                         minix-comp      libstdcxx
+./usr/include/g++/ext/alloc_traits.h                    minix-comp      libstdcxx
 ./usr/include/g++/ext/array_allocator.h                 minix-comp      libstdcxx
 ./usr/include/g++/ext/atomicity.h                       minix-comp      libstdcxx
 ./usr/include/g++/ext/bitmap_allocator.h                minix-comp      libstdcxx
 ./usr/include/g++/ext/cast.h                            minix-comp      libstdcxx
+./usr/include/g++/ext/cmath                             minix-comp      libstdcxx
 ./usr/include/g++/ext/codecvt_specializations.h         minix-comp      libstdcxx
 ./usr/include/g++/ext/concurrence.h                     minix-comp      libstdcxx
 ./usr/include/g++/ext/debug_allocator.h                 minix-comp      libstdcxx
@@ -545,9 +587,283 @@
 ./usr/include/g++/ext/new_allocator.h                   minix-comp      libstdcxx
 ./usr/include/g++/ext/numeric                           minix-comp      libstdcxx
 ./usr/include/g++/ext/numeric_traits.h                  minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds                             minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/assoc_container.hpp         minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail                      minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_     minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/bin_search_tree_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/node_iterators.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/point_iterators.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/r_erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/rotate_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_         minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/binary_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/entry_cmp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/entry_pred.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/point_const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/resize_policy.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binary_heap_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_       minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_/binomial_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_  minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/binomial_heap_base_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/branch_policy        minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/branch_policy/branch_policy.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/branch_policy/null_node_metadata.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/branch_policy/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_   minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/cc_ht_map_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/cmp_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/cond_key_dtor_entry_dealtor.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/constructor_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/constructor_destructor_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/constructor_destructor_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/debug_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/debug_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/entry_list_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/erase_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/erase_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/find_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/insert_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/insert_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/resize_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/resize_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/resize_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/size_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/cond_dealtor.hpp     minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/container_base_dispatch.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/debug_map_base.hpp   minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/eq_fn                minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/eq_fn/eq_by_less.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/eq_fn/hash_eq_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_   minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/constructor_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/constructor_destructor_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/constructor_destructor_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/debug_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/debug_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/erase_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/erase_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/find_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/find_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/gp_ht_map_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/insert_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/insert_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/iterator_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/resize_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/resize_no_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/resize_store_hash_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn              minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/direct_mask_range_hashing_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/direct_mod_range_hashing_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/linear_probe_fn_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/mask_based_range_hashing.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/mod_based_range_hashing.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/probe_fn_base.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/quadratic_probe_fn_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/ranged_hash_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/ranged_probe_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/sample_probe_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/sample_range_hashing.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/sample_ranged_hash_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/hash_fn/sample_ranged_probe_fn.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_ minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/left_child_next_sibling_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/node.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/point_const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_     minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/constructor_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/entry_metadata_base.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/lu_map_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_map_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_policy   minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_policy/lu_counter_metadata.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/list_update_policy/sample_update_policy.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_         minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/constructors_destructor_fn_imps.h minix-comp      libstdcxxpp
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/node_iterators.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/ov_tree_map_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_        minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/pairing_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_            minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/insert_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/iterators_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/pat_trie_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/pat_trie_base.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/policy_access_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/r_erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/rotate_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/split_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/synth_access_traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/pat_trie_/update_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/priority_queue_base_dispatch.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_         minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/constructors_destructor_fn_imps.h minix-comp      libstdcxxpp
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/node.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/rb_tree_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_    minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/rc.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/rc_binomial_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy        minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/cc_hash_max_collision_check_resize_trigg minix-comp      libstdcxxer_imp.hpp
+./usr/include/g++/ext/pb_ds/detail/resize_policy/cc_hash_max_collision_check_resize_trigger_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/hash_exponential_size_policy_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/hash_load_check_resize_trigger_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/hash_load_check_resize_trigger_size_base.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/hash_prime_size_policy_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/hash_standard_resize_policy_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/sample_resize_policy.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/sample_resize_trigger.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/resize_policy/sample_size_policy.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_          minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/constructors_destructor_fn_imps.hp minix-comp      libstdcxxp
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/info_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/node.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/splay_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/splay_tree_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/splay_tree_/traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/standard_policies.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_           minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/constructors_destructor_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/debug_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/erase_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/find_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/insert_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/split_join_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/thin_heap_.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/thin_heap_/trace_fn_imps.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/tree_policy          minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/tree_policy/node_metadata_selector.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/tree_policy/order_statistics_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/tree_policy/sample_tree_node_update.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/tree_trace_base.hpp  minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy          minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/node_metadata_selector.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/order_statistics_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/prefix_search_node_update_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/sample_trie_access_traits.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/sample_trie_node_update.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/trie_policy_base.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/trie_policy/trie_string_access_traits_imp.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/type_utils.hpp       minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/types_traits.hpp     minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator   minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator/const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator/iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator/point_const_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator/point_iterator.hpp minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/exception.hpp               minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/hash_policy.hpp             minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/list_update_policy.hpp      minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/priority_queue.hpp          minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/tag_and_trait.hpp           minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/tree_policy.hpp             minix-comp      libstdcxx
+./usr/include/g++/ext/pb_ds/trie_policy.hpp             minix-comp      libstdcxx
 ./usr/include/g++/ext/pod_char_traits.h                 minix-comp      libstdcxx
 ./usr/include/g++/ext/pointer.h                         minix-comp      libstdcxx
 ./usr/include/g++/ext/pool_allocator.h                  minix-comp      libstdcxx
+./usr/include/g++/ext/random                            minix-comp      libstdcxx
+./usr/include/g++/ext/random.tcc                        minix-comp      libstdcxx
 ./usr/include/g++/ext/rb_tree                           minix-comp      libstdcxx
 ./usr/include/g++/ext/rc_string_base.h                  minix-comp      libstdcxx
 ./usr/include/g++/ext/rope                              minix-comp      libstdcxx
@@ -564,7 +880,7 @@
 ./usr/include/g++/ext/vstring.tcc                       minix-comp      libstdcxx
 ./usr/include/g++/ext/vstring_fwd.h                     minix-comp      libstdcxx
 ./usr/include/g++/ext/vstring_util.h                    minix-comp      libstdcxx
-./usr/include/g++/fenv.h                                minix-comp      libstdcxx
+./usr/include/g++/fenv.h                                minix-comp      libstdcxx,obsolete
 ./usr/include/g++/forward_list                          minix-comp      libstdcxx
 ./usr/include/g++/fstream                               minix-comp      libstdcxx
 ./usr/include/g++/functional                            minix-comp      libstdcxx
@@ -582,7 +898,7 @@
 ./usr/include/g++/map                                   minix-comp      libstdcxx
 ./usr/include/g++/memory                                minix-comp      libstdcxx
 ./usr/include/g++/mutex                                 minix-comp      libstdcxx
-./usr/include/g++/nested_exception.h                    minix-comp      libstdcxx
+./usr/include/g++/nested_exception.h                    minix-comp      libstdcxx,obsolete
 ./usr/include/g++/new                                   minix-comp      libstdcxx
 ./usr/include/g++/numeric                               minix-comp      libstdcxx
 ./usr/include/g++/ostream                               minix-comp      libstdcxx
@@ -630,19 +946,52 @@
 ./usr/include/g++/parallel/types.h                      minix-comp      libstdcxx
 ./usr/include/g++/parallel/unique_copy.h                minix-comp      libstdcxx
 ./usr/include/g++/parallel/workstealing.h               minix-comp      libstdcxx
+./usr/include/g++/profile                               minix-comp      libstdcxx
+./usr/include/g++/profile/array                         minix-comp      libstdcxx
+./usr/include/g++/profile/base.h                        minix-comp      libstdcxx
+./usr/include/g++/profile/bitset                        minix-comp      libstdcxx
+./usr/include/g++/profile/deque                         minix-comp      libstdcxx
+./usr/include/g++/profile/forward_list                  minix-comp      libstdcxx
+./usr/include/g++/profile/impl                          minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler.h               minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_algos.h         minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_container_size.h minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_hash_func.h     minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_hashtable_size.h minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_list_to_slist.h minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_list_to_vector.h minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_map_to_unordered_map.h minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_node.h          minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_state.h         minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_trace.h         minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_vector_size.h   minix-comp      libstdcxx
+./usr/include/g++/profile/impl/profiler_vector_to_list.h minix-comp      libstdcxx
+./usr/include/g++/profile/iterator_tracker.h            minix-comp      libstdcxx
+./usr/include/g++/profile/list                          minix-comp      libstdcxx
+./usr/include/g++/profile/map.h                         minix-comp      libstdcxx
+./usr/include/g++/profile/map                           minix-comp      libstdcxx
+./usr/include/g++/profile/multimap.h                    minix-comp      libstdcxx
+./usr/include/g++/profile/multiset.h                    minix-comp      libstdcxx
+./usr/include/g++/profile/set.h                         minix-comp      libstdcxx
+./usr/include/g++/profile/set                           minix-comp      libstdcxx
+./usr/include/g++/profile/unordered_base.h              minix-comp      libstdcxx
+./usr/include/g++/profile/unordered_map                 minix-comp      libstdcxx
+./usr/include/g++/profile/unordered_set                 minix-comp      libstdcxx
+./usr/include/g++/profile/vector                        minix-comp      libstdcxx
 ./usr/include/g++/queue                                 minix-comp      libstdcxx
 ./usr/include/g++/random                                minix-comp      libstdcxx
 ./usr/include/g++/ratio                                 minix-comp      libstdcxx
 ./usr/include/g++/regex                                 minix-comp      libstdcxx
+./usr/include/g++/scoped_allocator                      minix-comp      libstdcxx
 ./usr/include/g++/set                                   minix-comp      libstdcxx
 ./usr/include/g++/sstream                               minix-comp      libstdcxx
 ./usr/include/g++/stack                                 minix-comp      libstdcxx
-./usr/include/g++/stdatomic.h                           minix-comp      libstdcxx
+./usr/include/g++/stdatomic.h                           minix-comp      libstdcxx,obsolete
 ./usr/include/g++/stdexcept                             minix-comp      libstdcxx
 ./usr/include/g++/streambuf                             minix-comp      libstdcxx
 ./usr/include/g++/string                                minix-comp      libstdcxx
 ./usr/include/g++/system_error                          minix-comp      libstdcxx
-./usr/include/g++/tgmath.h                              minix-comp      libstdcxx
+./usr/include/g++/tgmath.h                              minix-comp      libstdcxx,obsolete
 ./usr/include/g++/thread                                minix-comp      libstdcxx
 ./usr/include/g++/tr1                                   minix-comp      libstdcxx
 ./usr/include/g++/tr1/array                             minix-comp      libstdcxx
@@ -707,37 +1056,48 @@
 ./usr/include/g++/tr1/utility                           minix-comp      libstdcxx
 ./usr/include/g++/tr1/wchar.h                           minix-comp      libstdcxx
 ./usr/include/g++/tr1/wctype.h                          minix-comp      libstdcxx
-./usr/include/g++/tr1_impl                              minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/array                        minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/boost_sp_counted_base.h      minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cctype                       minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cfenv                        minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cinttypes                    minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cmath                        minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/complex                      minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cstdint                      minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cstdio                       minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cstdlib                      minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cwchar                       minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/cwctype                      minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/regex                        minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/type_traits                  minix-comp      libstdcxx
-./usr/include/g++/tr1_impl/utility                      minix-comp      libstdcxx
+./usr/include/g++/tr1_impl                              minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/array                        minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/boost_sp_counted_base.h      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cctype                       minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cfenv                        minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cinttypes                    minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cmath                        minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/complex                      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cstdint                      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cstdio                       minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cstdlib                      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cwchar                       minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/cwctype                      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/regex                        minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/type_traits                  minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr1_impl/utility                      minix-comp      libstdcxx,obsolete
+./usr/include/g++/tr2                                   minix-comp      libstdcxx
+./usr/include/g++/tr2/bool_set                          minix-comp      libstdcxx
+./usr/include/g++/tr2/bool_set.tcc                      minix-comp      libstdcxx
+./usr/include/g++/tr2/dynamic_bitset                    minix-comp      libstdcxx
+./usr/include/g++/tr2/ratio                             minix-comp      libstdcxx
+./usr/include/g++/tr2/type_traits                       minix-comp      libstdcxx
 ./usr/include/g++/tuple                                 minix-comp      libstdcxx
 ./usr/include/g++/type_traits                           minix-comp      libstdcxx
+./usr/include/g++/typeindex                             minix-comp      libstdcxx
 ./usr/include/g++/typeinfo                              minix-comp      libstdcxx
 ./usr/include/g++/unordered_map                         minix-comp      libstdcxx
 ./usr/include/g++/unordered_set                         minix-comp      libstdcxx
 ./usr/include/g++/utility                               minix-comp      libstdcxx
 ./usr/include/g++/valarray                              minix-comp      libstdcxx
 ./usr/include/g++/vector                                minix-comp      libstdcxx
-./usr/include/gcc-4.5                                   minix-comp      gcc=45
-./usr/include/gcc-4.5/mmintrin.h                        minix-comp      gcccmds
-./usr/include/gcc-4.5/tgmath.h                          minix-comp      gcccmds
+./usr/include/gcc-4.5                                   minix-comp      gcc=45,gcccmds,obsolete
+./usr/include/gcc-4.5/mmintrin.h                        minix-comp      gcc=45,gcccmds,obsolete
+./usr/include/gcc-4.5/tgmath.h                          minix-comp      gcc=45,gcccmds,obsolete
+./usr/include/gcc-4.8                                   minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/mmintrin.h                        minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/tgmath.h                          minix-comp      gcc=5,gcccmds
 ./usr/include/gelf.h                                    minix-comp
 ./usr/include/getopt.h                                  minix-comp
 ./usr/include/glob.h                                    minix-comp
 ./usr/include/grp.h                                     minix-comp
+./usr/include/gssapi                                    minix-comp      crypto
 ./usr/include/hesiod.h                                  minix-comp
 ./usr/include/histedit.h                                minix-comp
 ./usr/include/iconv.h                                   minix-comp
@@ -753,6 +1113,8 @@
 ./usr/include/isofs/cd9660/cd9660_rrip.h                minix-comp
 ./usr/include/isofs/cd9660/iso.h                        minix-comp
 ./usr/include/isofs/cd9660/iso_rrip.h                   minix-comp
+./usr/include/kadm5                                     minix-comp      crypto
+./usr/include/krb5                                      minix-comp      crypto
 ./usr/include/kvm.h                                     minix-comp
 ./usr/include/langinfo.h                                minix-comp
 ./usr/include/lauxlib.h                                 minix-comp
@@ -795,7 +1157,8 @@
 ./usr/include/lzma/hardware.h                           minix-comp
 ./usr/include/lzma/index.h                              minix-comp
 ./usr/include/lzma/index_hash.h                         minix-comp
-./usr/include/lzma/lzma.h                               minix-comp
+./usr/include/lzma/lzma.h                               minix-comp      obsolete
+./usr/include/lzma/lzma12.h                             minix-comp
 ./usr/include/lzma/stream_flags.h                       minix-comp
 ./usr/include/lzma/version.h                            minix-comp
 ./usr/include/lzma/vli.h                                minix-comp
@@ -961,18 +1324,22 @@
 ./usr/include/nl_types.h                                minix-comp
 ./usr/include/nlist.h                                   minix-comp
 ./usr/include/nsswitch.h                                minix-comp
-./usr/include/objc                                      minix-comp      gcc=45
-./usr/include/objc/NXConstStr.h                         minix-comp      gcc=45
-./usr/include/objc/Object.h                             minix-comp      gcc=45
-./usr/include/objc/Protocol.h                           minix-comp      gcc=45
+./usr/include/objc                                      minix-comp      gcc
+./usr/include/objc/NXConstStr.h                         minix-comp      gcc
+./usr/include/objc/Object.h                             minix-comp      gcc
+./usr/include/objc/Protocol.h                           minix-comp      gcc
 ./usr/include/objc/encoding.h                           minix-comp      gcc=45
 ./usr/include/objc/hash.h                               minix-comp      gcc=45
+./usr/include/objc/message.h                            minix-comp      gcc=5,gcccmds
 ./usr/include/objc/objc-api.h                           minix-comp      gcc=45
-./usr/include/objc/objc-decls.h                         minix-comp      gcc=45
+./usr/include/objc/objc-decls.h                         minix-comp      gcc
+./usr/include/objc/objc-exception.h                     minix-comp      libstdcxx
 ./usr/include/objc/objc-list.h                          minix-comp      gcc=45
-./usr/include/objc/objc.h                               minix-comp      gcc=45
+./usr/include/objc/objc-sync.h                          minix-comp      gcc=5,gcccmds
+./usr/include/objc/objc.h                               minix-comp      gcc
+./usr/include/objc/runtime.h                            minix-comp      gcc=5,gcccmds
 ./usr/include/objc/sarray.h                             minix-comp      gcc=45
-./usr/include/objc/thr.h                                minix-comp      gcc=45
+./usr/include/objc/thr.h                                minix-comp      gcc
 ./usr/include/objc/typedstream.h                        minix-comp      gcc=45
 ./usr/include/openssl                                   minix-comp
 ./usr/include/openssl/aes.h                             minix-comp      crypto
@@ -1138,12 +1505,23 @@
 ./usr/include/sys/buf.h                                 minix-comp
 ./usr/include/sys/callback.h                            minix-comp
 ./usr/include/sys/callout.h                             minix-comp
+./usr/include/sys/cdbr.h                                minix-comp
 ./usr/include/sys/cdefs.h                               minix-comp
 ./usr/include/sys/cdefs_aout.h                          minix-comp
 ./usr/include/sys/cdefs_elf.h                           minix-comp
 ./usr/include/sys/cdio.h                                minix-comp
 ./usr/include/sys/chio.h                                minix-comp
+./usr/include/sys/clock.h                               minix-comp
 ./usr/include/sys/clockctl.h                            minix-comp
+./usr/include/sys/common_ansi.h                         minix-comp
+./usr/include/sys/common_int_const.h                    minix-comp
+./usr/include/sys/common_int_fmtio.h                    minix-comp
+./usr/include/sys/common_int_limits.h                   minix-comp
+./usr/include/sys/common_int_mwgwtypes.h                minix-comp
+./usr/include/sys/common_int_types.h                    minix-comp
+./usr/include/sys/common_limits.h                       minix-comp
+./usr/include/sys/common_lock.h                         minix-comp
+./usr/include/sys/common_wchar_limits.h                 minix-comp
 ./usr/include/sys/condvar.h                             minix-comp
 ./usr/include/sys/conf.h                                minix-comp
 ./usr/include/sys/core.h                                minix-comp
@@ -1198,6 +1576,8 @@
 ./usr/include/sys/gpio.h                                minix-comp
 ./usr/include/sys/hash.h                                minix-comp
 ./usr/include/sys/ieee754.h                             minix-comp
+./usr/include/sys/intr.h                                minix-comp
+./usr/include/sys/intrio.h                              minix-comp
 ./usr/include/sys/inttypes.h                            minix-comp
 ./usr/include/sys/ioc_block.h                           minix-comp
 ./usr/include/sys/ioc_disk.h                            minix-comp
@@ -1269,6 +1649,7 @@
 ./usr/include/sys/resourcevar.h                         minix-comp
 ./usr/include/sys/rmd160.h                              minix-comp
 ./usr/include/sys/rnd.h                                 minix-comp
+./usr/include/sys/rndio.h                               minix-comp
 ./usr/include/sys/rwlock.h                              minix-comp
 ./usr/include/sys/scanio.h                              minix-comp
 ./usr/include/sys/sched.h                               minix-comp
@@ -1284,7 +1665,7 @@
 ./usr/include/sys/signal.h                              minix-comp
 ./usr/include/sys/signalvar.h                           minix-comp
 ./usr/include/sys/sigtypes.h                            minix-comp
-./usr/include/sys/simplelock.h                          minix-comp
+./usr/include/sys/simplelock.h                          minix-comp      obsolete
 ./usr/include/sys/sleepq.h                              minix-comp
 ./usr/include/sys/socket.h                              minix-comp
 ./usr/include/sys/socketvar.h                           minix-comp
@@ -1296,6 +1677,7 @@
 ./usr/include/sys/statfs.h                              minix-comp
 ./usr/include/sys/statvfs.h                             minix-comp
 ./usr/include/sys/stdarg.h                              minix-comp
+./usr/include/sys/stdbool.h                             minix-comp
 ./usr/include/sys/stdint.h                              minix-comp
 ./usr/include/sys/svrctl.h                              minix-comp
 ./usr/include/sys/swap.h                                minix-comp
@@ -1311,6 +1693,7 @@
 ./usr/include/sys/timeb.h                               minix-comp
 ./usr/include/sys/timepps.h                             minix-comp
 ./usr/include/sys/times.h                               minix-comp
+./usr/include/sys/timespec.h                            minix-comp
 ./usr/include/sys/timex.h                               minix-comp
 ./usr/include/sys/tls.h                                 minix-comp
 ./usr/include/sys/trace.h                               minix-comp
@@ -1355,7 +1738,7 @@
 ./usr/include/ucontext.h                                minix-comp
 ./usr/include/ucontextoffsets.h                         minix-comp
 ./usr/include/ufs                                       minix-comp
-./usr/include/ufs/chfs                                  minix-comp
+./usr/include/ufs/chfs                                  minix-comp      obsolete
 ./usr/include/ufs/ext2fs                                minix-comp
 ./usr/include/ufs/ext2fs/ext2fs.h                       minix-comp
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h                minix-comp
@@ -1366,6 +1749,7 @@
 ./usr/include/ufs/ffs/fs.h                              minix-comp
 ./usr/include/ufs/lfs                                   minix-comp
 ./usr/include/ufs/lfs/lfs.h                             minix-comp
+./usr/include/ufs/lfs/lfs_accessors.h                   minix-comp
 ./usr/include/ufs/lfs/lfs_extern.h                      minix-comp
 ./usr/include/ufs/lfs/lfs_inode.h                       minix-comp
 ./usr/include/ufs/mfs                                   minix-comp
@@ -1386,6 +1770,7 @@
 ./usr/include/ulimit.h                                  minix-comp
 ./usr/include/unctrl.h                                  minix-comp
 ./usr/include/unistd.h                                  minix-comp
+./usr/include/unwind.h                                  minix-comp      gcc=5,gcccmds
 ./usr/include/unwind.h                                  minix-comp      llvm
 ./usr/include/util.h                                    minix-comp
 ./usr/include/utime.h                                   minix-comp
@@ -1540,7 +1925,7 @@
 ./usr/lib/libgcc.a                                      minix-comp      gcc=45
 ./usr/lib/libgcc_eh.a                                   minix-comp      gcc=45
 ./usr/lib/libgcc_s.a                                    minix-comp
-./usr/lib/libgcc_s_pic.a                                minix-comp      !libgcc
+./usr/lib/libgcc_s_pic.a                                minix-comp      obsolete
 ./usr/lib/libgcov.a                                     minix-comp      gcc=45,!gcccmds
 ./usr/lib/libinputdriver.a                              minix-comp
 ./usr/lib/libinputdriver_pic.a                          minix-comp
@@ -1604,8 +1989,18 @@
 ./usr/lib/libvtreefs_pic.a                              minix-comp
 ./usr/lib/libz.a                                        minix-comp
 ./usr/lib/libz_pic.a                                    minix-comp
+./usr/libexec/cc1                                       minix-comp      gcccmds
+./usr/libexec/cc1obj                                    minix-comp      gcccmds
+./usr/libexec/cc1plus                                   minix-comp      gcccmds
+./usr/libexec/liblto_plugin.so.0.0                      minix-base      gcc=5
+./usr/libexec/liblto_plugin.so.0                        minix-base      gcc=5
+./usr/libexec/liblto_plugin.so                          minix-base      gcc=5
+./usr/libexec/lto-wrapper                               minix-base      gcc=5
+./usr/libexec/lto1                                      minix-base      gcc=5
 ./usr/man                                               minix-comp      gcccmds
+./usr/man                                               minix-comp      man
 ./usr/man/man1                                          minix-comp      gcccmds
+./usr/man/man1                                          minix-comp      man
 ./usr/man/man1/c++.1                                    minix-comp      gcccmds
 ./usr/man/man1/cc.1                                     minix-comp      gcccmds
 ./usr/man/man1/cccp.1                                   minix-comp      gcccmds

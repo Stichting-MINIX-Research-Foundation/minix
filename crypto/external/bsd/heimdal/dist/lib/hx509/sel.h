@@ -1,4 +1,4 @@
-/*	$NetBSD: sel.h,v 1.2 2011/05/25 19:21:17 he Exp $	*/
+/*	$NetBSD: sel.h,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -84,5 +84,5 @@ extern struct hx_expr_input _hx509_expr_input;
 
 int  _hx509_sel_yyparse(void);
 int  _hx509_sel_yylex(void);
-void _hx509_sel_yyerror(char *);
+void _hx509_sel_yyerror(const char *);
 

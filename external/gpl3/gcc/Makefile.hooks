@@ -1,0 +1,27 @@
+#	$NetBSD: Makefile.hooks,v 1.1 2014/03/01 10:00:31 mrg Exp $
+
+#
+# Makefile fragment to build genhooks and *target-hooks*.h
+#
+
+.for f in hooks
+gen${f}.lo: ${HH} gen${f}.c
+gen${f}: gen${f}.lo ${GENPROG_ERROR_DEPENDS} 
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
+CLEANFILES+=	genhooks
+.endfor
+
+# and now the outputs of genhooks
+target-hooks-def.h: genhooks
+	./genhooks "Target Hook" >${.TARGET}
+c-family/c-target-hooks-def.h: genhooks
+	mkdir -p c-family
+	./genhooks "C Target Hook" >${.TARGET}
+common/common-target-hooks-def.h: genhooks
+	mkdir -p common
+	./genhooks "Common Target Hook" >${.TARGET}
+
+CLEANFILES+=	target-hooks-def.h \
+		c-family/c-target-hooks-def.h \
+		common/common-target-hooks-def.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_clamp.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_clamp.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_CLAMP_C
@@ -17,7 +17,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* trim unused digits 
+/* trim unused digits
  *
  * This is used to ensure that leading zero digits are
  * trimed and the leading "used" digit will be non-zero
@@ -41,6 +41,6 @@ mp_clamp (mp_int * a)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_clamp.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_clamp.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

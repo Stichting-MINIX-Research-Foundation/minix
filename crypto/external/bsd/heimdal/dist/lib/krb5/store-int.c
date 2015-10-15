@@ -1,4 +1,4 @@
-/*	$NetBSD: store-int.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: store-int.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@ _krb5_get_int(void *buffer, unsigned long *value, size_t size)
 {
     unsigned char *p = buffer;
     unsigned long v = 0;
-    int i;
+    size_t i;
     for (i = 0; i < size; i++)
 	v = (v << 8) + p[i];
     *value = v;

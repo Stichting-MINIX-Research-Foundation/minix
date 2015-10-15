@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flex 2.5.36\n"
 "Report-Msgid-Bugs-To: flex-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2012-07-22 20:48-0400\n"
+"POT-Creation-Date: 2014-03-26 15:00-0400\n"
 "PO-Revision-Date: 2012-08-03 13:42+0200\n"
 "Last-Translator: Michael Piefel <piefel@informatik.hu-berlin.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: de\n"
 
 #: buf.c:78
 msgid "Allocation of buffer to print string failed"
@@ -173,311 +173,311 @@ msgstr "Konnte eoltbl nicht schreiben"
 msgid "Could not write yynultrans_tbl"
 msgstr "Konnte yynultrans_tbl nicht schreiben"
 
-#: main.c:189
+#: main.c:191
 msgid "rule cannot be matched"
 msgstr "Regel kann nicht passen"
 
-#: main.c:194
+#: main.c:196
 msgid "-s option given but default rule can be matched"
 msgstr "„-s“-Option gegeben, aber Vorgabe-Regel kann nicht passen"
 
-#: main.c:234
+#: main.c:236
 msgid "Can't use -+ with -l option"
 msgstr "Kann nicht „-+“ zusammen mit „-l“-Option verwenden"
 
-#: main.c:237
+#: main.c:239
 msgid "Can't use -f or -F with -l option"
 msgstr "Kann nicht „-f“ oder „-F“ zusammen mit „-l“-Option verwenden"
 
-#: main.c:241
+#: main.c:243
 msgid "Can't use --reentrant or --bison-bridge with -l option"
 msgstr ""
 "Kann nicht „--reentrant“ oder „--bison-bridge“ mit „-l“-Option verwenden"
 
-#: main.c:278
+#: main.c:275
 msgid "-Cf/-CF and -Cm don't make sense together"
 msgstr "„-Cf“/„-CF“ und „-Cm“ sind zusammen nicht sinnvoll"
 
-#: main.c:281
+#: main.c:278
 msgid "-Cf/-CF and -I are incompatible"
 msgstr "„-Cf“/„-CF“ und „-I“ sind inkompatibel"
 
-#: main.c:285
+#: main.c:282
 msgid "-Cf/-CF are incompatible with lex-compatibility mode"
 msgstr "„-Cf“/„-CF“ sind inkompatibel mit lex-Kompatibilitätsmodus"
 
-#: main.c:290
+#: main.c:287
 msgid "-Cf and -CF are mutually exclusive"
 msgstr "„-Cf“ und „-CF“ schließen sich gegenseitig aus"
 
-#: main.c:294
+#: main.c:291
 msgid "Can't use -+ with -CF option"
 msgstr "Kann nicht „-+“ zusammen mit „-CF“-Option verwenden"
 
-#: main.c:297
+#: main.c:294
 #, c-format
 msgid "%array incompatible with -+ option"
 msgstr "„%array“ inkompatibel mit „-+“-Option"
 
-#: main.c:302
+#: main.c:299
 msgid "Options -+ and --reentrant are mutually exclusive."
 msgstr "Optionen „-+“ und „--reentrant“ schließen sich gegenseitig aus."
 
-#: main.c:305
+#: main.c:302
 msgid "bison bridge not supported for the C++ scanner."
 msgstr "Brücke zu Bison für den C++-Scanner nicht unterstützt."
 
-#: main.c:360 main.c:406
+#: main.c:357 main.c:403
 #, c-format
 msgid "could not create %s"
 msgstr "konnte %s nicht erzeugen"
 
-#: main.c:419
+#: main.c:416
 msgid "could not write tables header"
 msgstr "konnte Tabellenköpfe nicht schreiben"
 
-#: main.c:423
+#: main.c:420
 #, c-format
 msgid "can't open skeleton file %s"
 msgstr "kann Skelett-Datei %s nicht öffnen"
 
-#: main.c:459
+#: main.c:456
 msgid "allocation of macro definition failed"
 msgstr "Anlegen der Makrodefinition fehlgeschlagen"
 
-#: main.c:507
+#: main.c:504
 #, c-format
 msgid "input error reading skeleton file %s"
 msgstr "Eingabefehler beim Lesen der Skelett-Datei %s"
 
-#: main.c:511
+#: main.c:508
 #, c-format
 msgid "error closing skeleton file %s"
 msgstr "Fehler beim Schließen der Skelett-Datei %s"
 
-#: main.c:696
+#: main.c:693
 #, c-format
 msgid "error creating header file %s"
 msgstr "Fehler beim Erstellen der Header-Datei %s"
 
-#: main.c:704
+#: main.c:701
 #, c-format
 msgid "error writing output file %s"
 msgstr "Fehler beim Schreiben der Ausgabe-Datei %s"
 
-#: main.c:708
+#: main.c:705
 #, c-format
 msgid "error closing output file %s"
 msgstr "Fehler beim Schließen der Ausgabe-Datei %s"
 
-#: main.c:712
+#: main.c:709
 #, c-format
 msgid "error deleting output file %s"
 msgstr "Fehler beim Löschen der Ausgabe-Datei %s"
 
-#: main.c:719
+#: main.c:716
 #, c-format
 msgid "No backing up.\n"
 msgstr "Kein Backing-up.\n"
 
-#: main.c:723
+#: main.c:720
 #, c-format
 msgid "%d backing up (non-accepting) states.\n"
 msgstr "%d Zustände mit Backing-up (nicht akzeptierend).\n"
 
-#: main.c:727
+#: main.c:724
 #, c-format
 msgid "Compressed tables always back up.\n"
 msgstr "Komprimierte Tabellen benutzen immer Backing-up.\n"
 
-#: main.c:730
+#: main.c:727
 #, c-format
 msgid "error writing backup file %s"
 msgstr "Fehler beim Schreiben der Backup-Datei %s"
 
-#: main.c:734
+#: main.c:731
 #, c-format
 msgid "error closing backup file %s"
 msgstr "Fehler beim Schließen der Backup-Datei %s"
 
-#: main.c:739
+#: main.c:736
 #, c-format
 msgid "%s version %s usage statistics:\n"
 msgstr "%s Version %s Benutzungsstatistiken:\n"
 
-#: main.c:742
+#: main.c:739
 #, c-format
 msgid "  scanner options: -"
 msgstr "  Scanner-Optionen: -"
 
-#: main.c:821
+#: main.c:818
 #, c-format
 msgid "  %d/%d NFA states\n"
 msgstr "  %d/%d NFA-Zustände\n"
 
-#: main.c:823
+#: main.c:820
 #, c-format
 msgid "  %d/%d DFA states (%d words)\n"
 msgstr "  %d/%d DFA-Zustände (%d Wörter)\n"
 
-#: main.c:825
+#: main.c:822
 #, c-format
 msgid "  %d rules\n"
 msgstr "  %d Regeln\n"
 
-#: main.c:830
+#: main.c:827
 #, c-format
 msgid "  No backing up\n"
 msgstr "  Kein Backing-up.\n"
 
-#: main.c:834
+#: main.c:831
 #, c-format
 msgid "  %d backing-up (non-accepting) states\n"
 msgstr "  %d Zustände mit Backing-up (nicht akzeptierend).\n"
 
-#: main.c:839
+#: main.c:836
 #, c-format
 msgid "  Compressed tables always back-up\n"
 msgstr "  Komprimierte Tabellen benutzen immer Backing-up.\n"
 
-#: main.c:843
+#: main.c:840
 #, c-format
 msgid "  Beginning-of-line patterns used\n"
 msgstr "  Zeilenanfang-Muster benutzt\n"
 
-#: main.c:845
+#: main.c:842
 #, c-format
 msgid "  %d/%d start conditions\n"
 msgstr "  %d/%d Startbedingungen\n"
 
-#: main.c:849
+#: main.c:846
 #, c-format
 msgid "  %d epsilon states, %d double epsilon states\n"
 msgstr "  %d Epsilon-Zustände, %d Doppel-Epsilon-Zustände\n"
 
-#: main.c:853
+#: main.c:850
 #, c-format
 msgid "  no character classes\n"
 msgstr "  keine Zeichenklassen\n"
 
-#: main.c:857
+#: main.c:854
 #, c-format
 msgid "  %d/%d character classes needed %d/%d words of storage, %d reused\n"
 msgstr ""
 "  %d/%d Zeichenklassen brauchten %d/%d Speicherwörter, %d wiederbenutzt\n"
 
-#: main.c:862
+#: main.c:859
 #, c-format
 msgid "  %d state/nextstate pairs created\n"
 msgstr "  %d Zustand/Nächster-Zustand-Paare erzeugt\n"
 
-#: main.c:865
+#: main.c:862
 #, c-format
 msgid "  %d/%d unique/duplicate transitions\n"
 msgstr "  %d/%d einzigartige/doppelte Übergänge\n"
 
-#: main.c:870
+#: main.c:867
 #, c-format
 msgid "  %d table entries\n"
 msgstr "  %d Tabelleneinträge\n"
 
-#: main.c:878
+#: main.c:875
 #, c-format
 msgid "  %d/%d base-def entries created\n"
 msgstr "  %d/%d Einträge „base-def“ erzeugt\n"
 
-#: main.c:882
+#: main.c:879
 #, c-format
 msgid "  %d/%d (peak %d) nxt-chk entries created\n"
 msgstr "  %d/%d (max. %d) Einträge „nxt-chk“ erzeugt\n"
 
-#: main.c:886
+#: main.c:883
 #, c-format
 msgid "  %d/%d (peak %d) template nxt-chk entries created\n"
 msgstr "  %d/%d (max. %d) Einträge „template nxt-chk“ erzeugt\n"
 
-#: main.c:890
+#: main.c:887
 #, c-format
 msgid "  %d empty table entries\n"
 msgstr "  %d leere Tabelleneinträge\n"
 
-#: main.c:892
+#: main.c:889
 #, c-format
 msgid "  %d protos created\n"
 msgstr "  %d Protos erzeugt\n"
 
-#: main.c:895
+#: main.c:892
 #, c-format
 msgid "  %d templates created, %d uses\n"
 msgstr "  %d Schablonen erzeugt, %d Benutzungen\n"
 
-#: main.c:903
+#: main.c:900
 #, c-format
 msgid "  %d/%d equivalence classes created\n"
 msgstr "  %d/%d Äquivalenz-Klassen erzeugt\n"
 
-#: main.c:911
+#: main.c:908
 #, c-format
 msgid "  %d/%d meta-equivalence classes created\n"
 msgstr "  %d/%d Meta-Äquivalenz-Klassen erzeugt\n"
 
-#: main.c:917
+#: main.c:914
 #, c-format
 msgid "  %d (%d saved) hash collisions, %d DFAs equal\n"
 msgstr "  %d (%d gespeichert) Hash-Kollisionen, %d DFAs gleich\n"
 
-#: main.c:919
+#: main.c:916
 #, c-format
 msgid "  %d sets of reallocations needed\n"
 msgstr "  %d Sätze von Neuallozierungen benötigt\n"
 
-#: main.c:921
+#: main.c:918
 #, c-format
 msgid "  %d total table entries needed\n"
 msgstr "  %d Tabelleneinträge insgesamt benötigt\n"
 
-#: main.c:998
+#: main.c:995
 #, c-format
 msgid "Internal error. flexopts are malformed.\n"
 msgstr "Interner Fehler. flexopts sind missgestaltet.\n"
 
-#: main.c:1008
+#: main.c:1005
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Versuchen Sie es mit „%s --help“ für mehr Informationen.\n"
 
-#: main.c:1065
+#: main.c:1062
 #, c-format
 msgid "unknown -C option '%c'"
 msgstr "unbekannte „-C“-Option „%c“"
 
-#: main.c:1194
+#: main.c:1191
 #, c-format
 msgid "%s %s\n"
 msgstr "%s %s\n"
 
-#: main.c:1469
+#: main.c:1466
 msgid "fatal parse error"
 msgstr "fataler Parse-Fehler"
 
-#: main.c:1501
+#: main.c:1498
 #, c-format
 msgid "could not create backing-up info file %s"
 msgstr "konnte Datei %s mit Informationen zum Backing-up nicht erzeugen"
 
-#: main.c:1522
+#: main.c:1519
 #, c-format
 msgid "-l AT&T lex compatibility option entails a large performance penalty\n"
 msgstr ""
 "-l AT&T-lex-Kompatibilitätsmodus führt zu großen Geschwindigkeitseinbußen\n"
 
-#: main.c:1525
+#: main.c:1522
 #, c-format
 msgid " and may be the actual source of other reported performance penalties\n"
 msgstr ""
 " und ist möglicherweise die wirkliche Quelle anderer gemeldeter Einbußen\n"
 
-#: main.c:1531
+#: main.c:1528
 #, c-format
 msgid ""
 "%%option yylineno entails a performance penalty ONLY on rules that can match "
@@ -486,54 +486,54 @@ msgstr ""
 "%%option yylineno führt zu Geschwindigkeitseinbußen NUR für Regeln, die auf "
 "einen Zeilenvorschub passen können\n"
 
-#: main.c:1538
+#: main.c:1535
 #, c-format
 msgid "-I (interactive) entails a minor performance penalty\n"
 msgstr "-I (interaktiv) führt zu kleineren Geschwindigkeitseinbußen\n"
 
-#: main.c:1543
+#: main.c:1540
 #, c-format
 msgid "yymore() entails a minor performance penalty\n"
 msgstr "yymore() führt zu kleineren Geschwindigkeitseinbußen\n"
 
-#: main.c:1549
+#: main.c:1546
 #, c-format
 msgid "REJECT entails a large performance penalty\n"
 msgstr "REJECT führt zu großen Geschwindigkeitseinbußen\n"
 
-#: main.c:1554
+#: main.c:1551
 #, c-format
 msgid "Variable trailing context rules entail a large performance penalty\n"
 msgstr ""
 "Regeln mit variablem folgenden Kontext führen zu großen "
 "Geschwindigkeitseinbußen\n"
 
-#: main.c:1566
+#: main.c:1563
 msgid "REJECT cannot be used with -f or -F"
 msgstr "REJECT kann nicht mit „-f“ oder „-F“ zusammen verwendet werden"
 
-#: main.c:1569
+#: main.c:1566
 #, c-format
 msgid "%option yylineno cannot be used with REJECT"
 msgstr "%option yylineno kann nicht mit REJECT zusammen verwendet werden"
 
-#: main.c:1572
+#: main.c:1569
 msgid "variable trailing context rules cannot be used with -f or -F"
 msgstr ""
 "Regeln mit variablem folgenden Kontext können nicht mit „-f“ oder „-F“ "
 "verwendet werden"
 
-#: main.c:1695
+#: main.c:1692
 #, c-format
 msgid "%option yyclass only meaningful for C++ scanners"
 msgstr "%option yyclass ist nur bei C++-Scannern sinnvoll"
 
-#: main.c:1802
+#: main.c:1799
 #, c-format
 msgid "Usage: %s [OPTIONS] [FILE]...\n"
 msgstr "Aufruf: %s [OPTIONEN...] [DATEI...]\n"
 
-#: main.c:1805
+#: main.c:1802
 #, c-format
 msgid ""
 "Generates programs that perform pattern-matching on text.\n"
@@ -739,20 +739,20 @@ msgstr "leere Maschine in dupmachine()"
 msgid "Variable trailing context rule at line %d\n"
 msgstr "Regel mit veränderlichem folgenden Kontext in Zeile %d\n"
 
-#: nfa.c:353
+#: nfa.c:364
 msgid "bad state type in mark_beginning_as_normal()"
 msgstr "ungültiger Zustandstyp in mark_beginning_as_normal()"
 
-#: nfa.c:598
+#: nfa.c:609
 #, c-format
 msgid "input rules are too complicated (>= %d NFA states)"
 msgstr "Eingaberegeln sind zu kompliziert (>= %d NFA-Zustände)"
 
-#: nfa.c:677
+#: nfa.c:688
 msgid "found too many transitions in mkxtion()"
 msgstr "zu viele Übergänge in mkxtion() gefunden"
 
-#: nfa.c:703
+#: nfa.c:714
 #, c-format
 msgid "too many rules (> %d)!"
 msgstr "zu viele Regeln (> %d)!"

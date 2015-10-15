@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.5 2013/11/02 23:23:51 christos Exp $
+# $NetBSD: md.i386,v 1.9 2015/07/06 08:25:43 martin Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib

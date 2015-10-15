@@ -79,12 +79,14 @@ struct context {
 static void context_init(struct context *, const atf_tc_t *, const char *);
 static void check_fatal_error(atf_error_t);
 static void report_fatal_error(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2)
     ATF_DEFS_ATTRIBUTE_NORETURN;
 static atf_error_t write_resfile(const int, const char *, const int,
                                  const atf_dynstr_t *);
 static void create_resfile(const char *, const char *, const int,
                            atf_dynstr_t *);
 static void error_in_expect(struct context *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3)
     ATF_DEFS_ATTRIBUTE_NORETURN;
 static void validate_expect(struct context *);
 static void expected_failure(struct context *, atf_dynstr_t *)
@@ -97,9 +99,11 @@ static void pass(struct context *)
 static void skip(struct context *, atf_dynstr_t *)
     ATF_DEFS_ATTRIBUTE_NORETURN;
 static void format_reason_ap(atf_dynstr_t *, const char *, const size_t,
-                             const char *, va_list);
+                             const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(4, 0);
 static void format_reason_fmt(atf_dynstr_t *, const char *, const size_t,
-                              const char *, ...);
+                              const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(4, 5);
 static void errno_test(struct context *, const char *, const size_t,
                        const int, const char *, const bool,
                        void (*)(struct context *, atf_dynstr_t *));
@@ -571,7 +575,7 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
     if (atf_is_error(err))
         goto err_vars;
 
-    err = atf_tc_set_md_var(tc, "ident", ident);
+    err = atf_tc_set_md_var(tc, "ident", "%s", ident);
     if (atf_is_error(err))
         goto err_map;
 
@@ -787,28 +791,35 @@ atf_tc_set_md_var(atf_tc_t *tc, const char *name, const char *fmt, ...)
  * --------------------------------------------------------------------- */
 
 static void _atf_tc_fail(struct context *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0)
     ATF_DEFS_ATTRIBUTE_NORETURN;
-static void _atf_tc_fail_nonfatal(struct context *, const char *, va_list);
+static void _atf_tc_fail_nonfatal(struct context *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
 static void _atf_tc_fail_check(struct context *, const char *, const size_t,
-    const char *, va_list);
+    const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(4, 0);
 static void _atf_tc_fail_requirement(struct context *, const char *,
-    const size_t, const char *, va_list) ATF_DEFS_ATTRIBUTE_NORETURN;
+    const size_t, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_NORETURN
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(4, 0);
 static void _atf_tc_pass(struct context *) ATF_DEFS_ATTRIBUTE_NORETURN;
 static void _atf_tc_require_prog(struct context *, const char *);
 static void _atf_tc_skip(struct context *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0)
     ATF_DEFS_ATTRIBUTE_NORETURN;
 static void _atf_tc_check_errno(struct context *, const char *, const size_t,
     const int, const char *, const bool);
 static void _atf_tc_require_errno(struct context *, const char *, const size_t,
     const int, const char *, const bool);
 static void _atf_tc_expect_pass(struct context *);
-static void _atf_tc_expect_fail(struct context *, const char *, va_list);
+static void _atf_tc_expect_fail(struct context *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
 static void _atf_tc_expect_exit(struct context *, const int, const char *,
-    va_list);
+    va_list) ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(3, 0);
 static void _atf_tc_expect_signal(struct context *, const int, const char *,
-    va_list);
+    va_list) ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(3, 0);
 static void _atf_tc_expect_death(struct context *, const char *,
-    va_list);
+    va_list) ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
 
 static void
 _atf_tc_fail(struct context *ctx, const char *fmt, va_list ap)
@@ -982,6 +993,7 @@ _atf_tc_expect_death(struct context *ctx, const char *reason, va_list ap)
     create_resfile(ctx->resfile, "expected_death", -1, &formatted);
 }
 
+ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0)
 static void
 _atf_tc_expect_timeout(struct context *ctx, const char *reason, va_list ap)
 {
@@ -1016,13 +1028,13 @@ atf_tc_run(const atf_tc_t *tc, const char *resfile)
     if (Current.fail_count > 0) {
         atf_dynstr_t reason;
 
-        format_reason_fmt(&reason, NULL, 0, "%d checks failed; see output for "
+        format_reason_fmt(&reason, NULL, 0, "%zu checks failed; see output for "
             "more details", Current.fail_count);
         fail_requirement(&Current, &reason);
     } else if (Current.expect_fail_count > 0) {
         atf_dynstr_t reason;
 
-        format_reason_fmt(&reason, NULL, 0, "%d checks failed as expected; "
+        format_reason_fmt(&reason, NULL, 0, "%zu checks failed as expected; "
             "see output for more details", Current.expect_fail_count);
         expected_failure(&Current, &reason);
     } else {

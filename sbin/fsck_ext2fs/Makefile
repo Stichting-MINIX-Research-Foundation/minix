@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2011/08/06 16:42:41 dholland Exp $
+#	$NetBSD: Makefile,v 1.17 2014/03/04 21:07:22 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -10,6 +10,13 @@ SRCS=	dir.c inode.c main.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 CPPFLAGS+= -I${FSCK}
 .PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
+
+CWARNFLAGS.clang+=	-Wno-error=tautological-pointer-compare
+
+.if defined(__MINIX)
+# To compile with clang 3.4
+NOCLANGERROR= yes
+.endif # defined(__MINIX)
 
 .include <bsd.prog.mk>
 

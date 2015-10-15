@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_unsetenv.c,v 1.3 2010/11/14 18:11:42 tron Exp $	*/
+/*	$NetBSD: compat_unsetenv.c,v 1.4 2015/01/20 18:31:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_unsetenv.c,v 1.3 2010/11/14 18:11:42 tron Exp $");
+__RCSID("$NetBSD: compat_unsetenv.c,v 1.4 2015/01/20 18:31:24 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: compat_unsetenv.c,v 1.3 2010/11/14 18:11:42 tron Exp $");
 #include <compat/include/stdlib.h>
 #include <string.h>
 #include <bitstring.h>
-#include "reentrant.h"
 #include "local.h"
 
 #ifdef __weak_alias

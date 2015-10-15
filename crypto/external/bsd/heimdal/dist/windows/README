@@ -58,10 +58,14 @@ work, but have not been tested.
 
       SetEnv.Cmd /xp /x64 /Debug
 
-  The build will produce debug binaries.
+  The build will produce debug binaries.  If you specify
 
-* Add any directories to `PATH` as necessary so that tools required by
-  the build can be found.  The build scripts will check for build
+      SetEnv.Cmd /xp /x64 /Release
+
+  the build will produce release binaries.
+
+* Add any directories to `PATH` as necessary for tools required by
+  the build to be found.  The build scripts will check for build
   tools at the start of the build and will indicate which ones are
   missing.  In general, adding Perl, Python, WiX, HTML Help Compiler and
   Cygwin binary directories to the path should be sufficient.
@@ -134,3 +138,10 @@ The build tree can be cleaned with:
 
     nmake /f NTMakefile clean
 
+It is recommended that both AMD64 and X86 builds take place on the
+same machine.  This permits a multi-platform installer package to
+be built.  First build for X86 and then build AMD64
+
+    nmake /f NTMakefile MULTIPLATFORM_INSTALLER=1
+
+The build must be executed under cmd.exe.

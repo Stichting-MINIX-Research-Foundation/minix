@@ -1,4 +1,4 @@
-/*	$NetBSD: agpio.h,v 1.10 2011/02/15 08:57:01 jmcneill Exp $	*/
+/*	$NetBSD: agpio.h,v 1.11 2015/09/06 06:01:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,6 +30,8 @@
 
 #ifndef _SYS_AGPIO_H_
 #define _SYS_AGPIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * The AGP gatt uses 4k pages irrespective of the host page size.

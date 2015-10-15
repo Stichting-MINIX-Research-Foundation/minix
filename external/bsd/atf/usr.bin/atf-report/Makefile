@@ -1,20 +1,17 @@
-# $NetBSD: Makefile,v 1.6 2012/06/16 17:02:33 joerg Exp $
+# $NetBSD: Makefile,v 1.9 2014/02/12 04:08:32 jmmv Exp $
 
-.include <bsd.own.mk>
+USE_ATF_LIBTOOLS=	yes
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/atf-report
+.include <bsd.init.mk>
+
+.PATH:		${SRCDIR}/tools
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-report
-SRCS=		atf-report.cpp reader.cpp
+SRCS=		atf-report.cpp
 MAN=		atf-report.1
 
-LDADD+=		-latf-c++ -latf-c
-DPADD+=		${LIBATF_CXX} ${LIBATF_C}
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR}
+CPPFLAGS+=	-I${SRCDIR}/tools
 
 WARNS?=		2
 

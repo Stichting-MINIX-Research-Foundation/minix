@@ -1,4 +1,4 @@
-/*	$NetBSD: v_mark.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: v_mark.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: v_mark.c,v 10.12 2001/06/25 15:19:32 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:32 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: v_mark.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -169,7 +174,7 @@ mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-	} else
+	}
 
 	/*
 	 * Yank cursor motion, when associated with marks as motion commands,

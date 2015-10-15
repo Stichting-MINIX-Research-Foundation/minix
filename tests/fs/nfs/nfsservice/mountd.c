@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.8 2013/10/19 17:45:00 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.9 2015/08/21 14:19:10 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.8 2013/10/19 17:45:00 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.9 2015/08/21 14:19:10 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -904,14 +904,12 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 	struct exportlist **ep;
 	struct statvfs *fsp;
 {
-	int error = 0;
-
 	if (!check_dirpath(line, lineno, cp))
 		return 0;
 
 	if (rump_sys_statvfs1(cp, fsp, ST_WAIT) == -1) {
-		syslog(LOG_ERR, "\"%s\", line %ld: statvfs for `%s' failed: %m %d",
-		    line, (unsigned long)lineno, cp, error);
+		syslog(LOG_ERR, "\"%s\", line %ld: statvfs for `%s' failed (%s)",
+		    line, (unsigned long)lineno, cp, strerror(errno));
 		return 0;
 	}
 
@@ -1011,8 +1009,8 @@ get_exportlist(n)
 		mel.mel_nexports = 0;
 		if (rump_sys_nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1 &&
 		    errno != EOPNOTSUPP)
-			syslog(LOG_ERR, "Can't delete exports for %s (%m)",
-			    fsp->f_mntonname);
+			syslog(LOG_ERR, "Can't delete exports for %s (%s)",
+			    fsp->f_mntonname, strerror(errno));
 
 		fsp++;
 	}
@@ -1997,13 +1995,13 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 
 		if (rump_sys_nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != 0) {
 			syslog(LOG_ERR,
-	    "\"%s\", line %ld: Can't change attributes for %s to %s: %m %d",
+	    "\"%s\", line %ld: Can't change attributes for %s to %s (%s)",
 			    line, (unsigned long)lineno,
 			    dirp, (grp->gr_type == GT_HOST) ?
 			    grp->gr_ptr.gt_addrinfo->ai_canonname :
 			    (grp->gr_type == GT_NET) ?
 			    grp->gr_ptr.gt_net.nt_name :
-			    "Unknown", errno);
+			    "Unknown", strerror(errno));
 			return (1);
 		}
 skip:
@@ -2258,7 +2256,8 @@ get_mountlist()
 	FILE *mlfile;
 
 	if ((mlfile = rumpfopen(_PATH_RMOUNTLIST, "r")) == NULL) {
-		syslog(LOG_ERR, "Can't open %s: %m", _PATH_RMOUNTLIST);
+		syslog(LOG_ERR, "Can't open %s (%s)", _PATH_RMOUNTLIST,
+		    strerror(errno));
 		return;
 	}
 	mlpp = &mlhead;
@@ -2330,8 +2329,8 @@ cont:
 	}
 	if (fnd) {
 		if ((mlfile = rumpfopen(_PATH_RMOUNTLIST, "w")) == NULL) {
-			syslog(LOG_ERR, "Can't update %s: %m",
-			    _PATH_RMOUNTLIST);
+			syslog(LOG_ERR, "Can't update %s (%s)",
+			    _PATH_RMOUNTLIST, strerror(errno));
 			return ret;
 		}
 		mlp = mlhead;
@@ -2370,7 +2369,8 @@ add_mlist(hostp, dirp, flags)
 	mlp->ml_next = NULL;
 	*mlpp = mlp;
 	if ((mlfile = rumpfopen(_PATH_RMOUNTLIST, "a")) == NULL) {
-		syslog(LOG_ERR, "Can't update %s: %m", _PATH_RMOUNTLIST);
+		syslog(LOG_ERR, "Can't update %s (%s)", _PATH_RMOUNTLIST,
+		    strerror(errno));
 		return;
 	}
 	(void)fprintf(mlfile, "%s %s\n", mlp->ml_host, mlp->ml_dirp);
@@ -2520,8 +2520,8 @@ check_dirpath(line, lineno, dirp)
 
 bad:
 	syslog(LOG_ERR,
-	    "\"%s\", line %ld: lstat for `%s' failed: %m",
-	    line, (unsigned long)lineno, dirp);
+	    "\"%s\", line %ld: lstat for `%s' failed (%s)",
+	    line, (unsigned long)lineno, dirp, strerror(errno));
 	if (cp)
 		*cp = '/';
 	return 0;
@@ -2563,7 +2563,8 @@ bind_resv_port(int sock, sa_family_t family, in_port_t port)
 		return;
 	}
 	if (bindresvport_sa(sock, sa) == -1)
-		syslog(LOG_ERR, "Cannot bind to reserved port %d (%m)", port);
+		syslog(LOG_ERR, "Cannot bind to reserved port %d (%s)", port,
+		    strerror(errno));
 }
 
 /* ARGSUSED */

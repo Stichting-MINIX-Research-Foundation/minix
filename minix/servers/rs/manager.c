@@ -1207,7 +1207,7 @@ static int run_script(struct rproc *rp)
 	else if (rp->r_flags & RS_NOPINGREPLY)
 		reason= "no-heartbeat";
 	else reason= "terminated";
-	sprintf(incarnation_str, "%d", rp->r_restarts);
+	snprintf(incarnation_str, sizeof(incarnation_str), "%d", rp->r_restarts);
 
  	if(rs_verbose) {
 		printf("RS: %s:\n", srv_to_string(rp));

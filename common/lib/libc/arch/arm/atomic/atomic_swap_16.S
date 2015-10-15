@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_16.S,v 1.1 2013/11/08 22:42:52 matt Exp $ */
+/*	$NetBSD: atomic_swap_16.S,v 1.4 2015/05/17 20:57:11 justin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,13 +50,16 @@ END(_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_16,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_short,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_ushort,_atomic_swap_16)
-STRONG_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
+CRT_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
+CRT_ALIAS(__atomic_exchange_2,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_short,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_ushort,_atomic_swap_16)
 
+#if (!defined(_KERNEL) || !defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_2)
 	mov	r1, #0
 	strh	r1, [r0]
 	RET
 END(__sync_lock_release_2)
+#endif
 #endif /* _ARM_ARCH_6 */

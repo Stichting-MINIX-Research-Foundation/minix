@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.141 2013/09/28 18:01:49 dholland Exp $
+$NetBSD: acronyms.comp,v 1.150 2015/08/22 19:18:10 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -53,6 +53,7 @@ AP	application processor
 API	application programming interface
 APIC	advanced programmable interrupt controller
 APIPA	automatic private IP addressing
+APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
@@ -575,6 +576,7 @@ INCITS	InterNational Committee for Information Technology Standards
 IO	input/output
 IOCTL	input/output control
 IOMMU	input/output memory management unit
+IOT	Internet of Things
 IP	Internet Protocol
 IP	intellectual property
 IPC	interprocess communication
@@ -658,6 +660,7 @@ LKML	Linux kernel mailing list
 LL	load linked
 LL/SC	load linked/store conditional
 LLC	logical link control
+LLDP	link layer discovery protocol
 LLF	low level format
 LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
@@ -680,6 +683,7 @@ LSN	Large Scale NAT
 LSN	log sequence number
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
+LTO	link time optimization
 LTR	left to right
 LTR	load task register
 LTR	letter(-sized paper)
@@ -736,6 +740,7 @@ MLC	multi-level cell
 MLHP	micro loop heat pipe
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
+MMORPG	massive multiplayer online role playing game
 MMU	memory management unit
 MMX	matrix math extension
 MMX	multimedia extension
@@ -767,6 +772,7 @@ MSS	maximum segment size
 MT	machine translation
 MTA	mail transfer agent
 MTBF	mean time between failures
+MTP	media transfer protocol
 MTRR	memory type range register
 MTTF	mean time to failure
 MTU	maximum transmission unit
@@ -882,6 +888,7 @@ PCI	peripheral component interconnect
 PCM	phase change memory
 PCM	pulse code modulation
 PCMCIA	Personal Computer Memory Card International Association
+PCP	Port Control Protocol
 PD	public domain
 PDA	personal digital assistant
 PDA	pushdown automaton
@@ -985,6 +992,7 @@ RA	router advertisement
 RAD	rapid application development
 RAID	redundant array of {independent,inexpensive} disks
 RAM	random access memory
+RAS	reliability, availability and serviceability
 RAS	remote access service
 RAS	restartable atomic sequence
 RAS	row address strobe
@@ -1353,6 +1361,7 @@ XIP	execute in place
 XML	Extensible Markup Language
 XOR	exclusive or
 XP	extreme programming
+XSI	X/Open System Interface
 XSL	extensible stylesheet language
 XSS	cross site scripting
 XT	extended technology

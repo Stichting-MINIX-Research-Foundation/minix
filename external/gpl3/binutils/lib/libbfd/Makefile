@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/09/29 14:20:35 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2015/03/28 07:03:23 matt Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -78,11 +78,19 @@ elf64-target.h: elfxx-target.h
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
-elf32-ia64.c: elfxx-ia64.c
+elf32-ia64.c: elfnn-ia64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
-elf64-ia64.c: elfxx-ia64.c
+elf64-ia64.c: elfnn-ia64.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/64/g < $> > $@
+
+elf32-riscv.c: elfnn-riscv.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/32/g < $> > $@
+
+elf64-riscv.c: elfnn-riscv.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 

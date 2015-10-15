@@ -1,4 +1,4 @@
-/*	$NetBSD: config_reg.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: config_reg.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2010, Secure Endpoints Inc.
@@ -37,7 +37,178 @@
 #error  config_reg.c is only for Windows
 #endif
 
-#define REGPATH "SOFTWARE\\Kerberos"
+#include <shlwapi.h>
+
+#ifndef MAX_DWORD
+#define MAX_DWORD 0xFFFFFFFF
+#endif
+
+#define REGPATH_KERBEROS "SOFTWARE\\Kerberos"
+#define REGPATH_HEIMDAL  "SOFTWARE\\Heimdal"
+
+/**
+ * Store a string as a registry value of the specified type
+ *
+ * The following registry types are handled:
+ *
+ * - REG_DWORD: The string is converted to a number.
+ *
+ * - REG_SZ: The string is stored as is.
+ *
+ * - REG_EXPAND_SZ: The string is stored as is.
+ *
+ * - REG_MULTI_SZ:
+ *
+ *   . If a separator is specified, the input string is broken
+ *     up into multiple strings and stored as a multi-sz.
+ *
+ *   . If no separator is provided, the input string is stored
+ *     as a multi-sz.
+ *
+ * - REG_NONE:
+ *
+ *   . If the string is all numeric, it will be stored as a
+ *     REG_DWORD.
+ *
+ *   . Otherwise, the string is stored as a REG_SZ.
+ *
+ * Other types are rejected.
+ *
+ * If cb_data is MAX_DWORD, the string pointed to by data must be nul-terminated
+ * otherwise a buffer overrun will occur.
+ *
+ * @param [in]valuename Name of the registry value to be modified or created
+ * @param [in]type      Type of the value. REG_NONE if unknown
+ * @param [in]data      The input string to be stored in the registry.
+ * @param [in]cb_data   Size of the input string in bytes. MAX_DWORD if unknown.
+ * @param [in]separator Separator character for parsing strings.
+ *
+ * @retval 0 if success or non-zero on error.
+ * If non-zero is returned, an error message has been set using
+ * krb5_set_error_message().
+ *
+ */
+int
+_krb5_store_string_to_reg_value(krb5_context context,
+                                HKEY key, const char * valuename,
+                                DWORD type, const char *data, DWORD cb_data,
+                                const char * separator)
+{
+    LONG        rcode;
+    DWORD       dwData;
+    BYTE        static_buffer[16384];
+    BYTE        *pbuffer = &static_buffer[0];
+
+    if (data == NULL)
+    {
+        if (context)
+            krb5_set_error_message(context, 0,
+                                   "'data' must not be NULL");
+        return -1;
+    }
+
+    if (cb_data == MAX_DWORD)
+    {
+        cb_data = (DWORD)strlen(data) + 1;
+    }
+    else if ((type == REG_MULTI_SZ && cb_data >= sizeof(static_buffer) - 1) ||
+             cb_data >= sizeof(static_buffer))
+    {
+        if (context)
+            krb5_set_error_message(context, 0, "cb_data too big");
+        return -1;
+    }
+    else if (data[cb_data-1] != '\0')
+    {
+        memcpy(static_buffer, data, cb_data);
+        static_buffer[cb_data++] = '\0';
+        if (type == REG_MULTI_SZ)
+            static_buffer[cb_data++] = '\0';
+        data = static_buffer;
+    }
+
+    if (type == REG_NONE)
+    {
+        /*
+         * If input is all numeric, convert to DWORD and save as REG_DWORD.
+         * Otherwise, store as REG_SZ.
+         */
+        if ( StrToIntExA( data, STIF_SUPPORT_HEX, &dwData) )
+        {
+            type = REG_DWORD;
+        } else {
+            type = REG_SZ;
+        }
+    }
+
+    switch (type) {
+    case REG_SZ:
+    case REG_EXPAND_SZ:
+        rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
+        if (rcode)
+        {
+            if (context)
+                krb5_set_error_message(context, 0,
+                                       "Unexpected error when setting registry value %s gle 0x%x",
+                                       valuename,
+                                       GetLastError());
+            return -1;
+        }
+        break;
+    case REG_MULTI_SZ:
+        if (separator && *separator)
+        {
+            int i;
+            char *cp;
+
+            if (data != static_buffer)
+                static_buffer[cb_data++] = '\0';
+
+            for ( cp = static_buffer; cp < static_buffer+cb_data; cp++)
+            {
+                if (*cp == *separator)
+                    *cp = '\0';
+            }
+
+            rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
+            if (rcode)
+            {
+                if (context)
+                    krb5_set_error_message(context, 0,
+                                           "Unexpected error when setting registry value %s gle 0x%x",
+                                           valuename,
+                                           GetLastError());
+                return -1;
+            }
+        }
+        break;
+    case REG_DWORD:
+        if ( !StrToIntExA( data, STIF_SUPPORT_HEX, &dwData) )
+        {
+            if (context)
+                krb5_set_error_message(context, 0,
+                                       "Unexpected error when parsing %s as number gle 0x%x",
+                                       data,
+                                       GetLastError());
+        }
+
+        rcode = RegSetValueEx(key, valuename, 0, type, dwData, sizeof(DWORD));
+        if (rcode)
+        {
+            if (context)
+                krb5_set_error_message(context, 0,
+                                       "Unexpected error when setting registry value %s gle 0x%x",
+                                       valuename,
+                                       GetLastError());
+            return -1;
+        }
+        break;
+    default:
+        return -1;
+    }
+
+    return 0;
+}
 
 /**
  * Parse a registry value as a string
@@ -422,6 +593,26 @@ parse_reg_root(krb5_context context,
     return parse_reg_subkeys(context, key, parent);
 }
 
+static krb5_error_code
+load_config_from_regpath(krb5_context context,
+                         HKEY hk_root,
+                         const char* key_path,
+                         krb5_config_section ** res)
+{
+    HKEY            key  = NULL;
+    LONG            rcode;
+    krb5_error_code code = 0;
+
+    rcode = RegOpenKeyEx(hk_root, key_path, 0, KEY_READ, &key);
+    if (rcode == ERROR_SUCCESS) {
+        code = parse_reg_root(context, key, res);
+        RegCloseKey(key);
+        key = NULL;
+    }
+
+    return code;
+}
+
 /**
  * Load configuration from registry
  *
@@ -438,29 +629,26 @@ krb5_error_code
 _krb5_load_config_from_registry(krb5_context context,
                                 krb5_config_section ** res)
 {
-    HKEY        key = NULL;
-    LONG        rcode;
-    krb5_error_code code = 0;
+    krb5_error_code code;
 
-    rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGPATH, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        code = parse_reg_root(context, key, res);
-        RegCloseKey(key);
-        key = NULL;
+    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                    REGPATH_KERBEROS, res);
+    if (code)
+        return code;
 
-        if (code)
-            return code;
-    }
+    code = load_config_from_regpath(context, HKEY_LOCAL_MACHINE,
+                                    REGPATH_HEIMDAL, res);
+    if (code)
+        return code;
 
-    rcode = RegOpenKeyEx(HKEY_CURRENT_USER, REGPATH, 0, KEY_READ, &key);
-    if (rcode == ERROR_SUCCESS) {
-        code = parse_reg_root(context, key, res);
-        RegCloseKey(key);
-        key = NULL;
+    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                    REGPATH_KERBEROS, res);
+    if (code)
+        return code;
 
-        if (code)
-            return code;
-    }
-
+    code = load_config_from_regpath(context, HKEY_CURRENT_USER,
+                                    REGPATH_HEIMDAL, res);
+    if (code)
+        return code;
     return 0;
 }

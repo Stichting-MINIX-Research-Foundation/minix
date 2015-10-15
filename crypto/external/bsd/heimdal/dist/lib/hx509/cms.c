@@ -1,4 +1,4 @@
-/*	$NetBSD: cms.c,v 1.1.1.1 2011/04/13 18:15:10 elric Exp $	*/
+/*	$NetBSD: cms.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
@@ -364,7 +364,8 @@ hx509_cms_unenvelope(hx509_context context,
     heim_octet_string *params, params_data;
     heim_octet_string ivec;
     size_t size;
-    int ret, i, matched = 0, findflags = 0;
+    int ret, matched = 0, findflags = 0;
+    size_t i;
 
 
     memset(&key, 0, sizeof(key));
@@ -474,7 +475,7 @@ hx509_cms_unenvelope(hx509_context context,
 	ret = hx509_crypto_init(context, NULL, &ai->algorithm, &crypto);
 	if (ret)
 	    goto out;
-	
+
 	if (flags & HX509_CMS_UE_ALLOW_WEAK)
 	    hx509_crypto_allow_weak(crypto);
 
@@ -494,7 +495,7 @@ hx509_cms_unenvelope(hx509_context context,
 				   "of EnvelopedData");
 	    goto out;
 	}
-	
+
 	ret = hx509_crypto_decrypt(crypto,
 				   enccontent->data,
 				   enccontent->length,
@@ -621,7 +622,7 @@ hx509_cms_envelope_1(hx509_context context,
 				   "Failed to set crypto oid "
 				   "for EnvelopedData");
 	    goto out;
-	}	
+	}
 	ALLOC(enc_alg->parameters, 1);
 	if (enc_alg->parameters == NULL) {
 	    ret = ENOMEM;
@@ -658,7 +659,7 @@ hx509_cms_envelope_1(hx509_context context,
 	ri->version = 2;
 	cmsidflag = CMS_ID_SKI;
     }
-	
+
     ret = fill_CMSIdentifier(cert, cmsidflag, &ri->rid);
     if (ret) {
 	hx509_set_error_string(context, 0, ret,
@@ -720,7 +721,8 @@ out:
 static int
 any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 {
-    int ret, i;
+    int ret;
+    size_t i;
 
     if (sd->certificates == NULL)
 	return 0;
@@ -746,7 +748,7 @@ any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 static const Attribute *
 find_attribute(const CMSAttributes *attr, const heim_oid *oid)
 {
-    int i;
+    size_t i;
     for (i = 0; i < attr->len; i++)
 	if (der_heim_oid_cmp(&attr->val[i].type, oid) == 0)
 	    return &attr->val[i];
@@ -792,7 +794,8 @@ hx509_cms_verify_signed(hx509_context context,
     hx509_certs certs = NULL;
     SignedData sd;
     size_t size;
-    int ret, i, found_valid_sig;
+    int ret, found_valid_sig;
+    size_t i;
 
     *signer_certs = NULL;
     content->data = NULL;
@@ -891,7 +894,7 @@ hx509_cms_verify_signed(hx509_context context,
 
 	if (signer_info->signedAttrs) {
 	    const Attribute *attr;
-	
+
 	    CMSAttributes sa;
 	    heim_octet_string os;
 
@@ -915,7 +918,7 @@ hx509_cms_verify_signed(hx509_context context,
 				       "messageDigest (signature)");
 		goto next_sigature;
 	    }
-	
+
 	    ret = decode_MessageDigest(attr->value.val[0].data,
 				       attr->value.val[0].length,
 				       &os,
@@ -1020,7 +1023,7 @@ hx509_cms_verify_signed(hx509_context context,
 	if (ret)
 	    goto next_sigature;
 
-	/** 
+	/**
 	 * If HX509_CMS_VS_NO_VALIDATE flags is set, do not verify the
 	 * signing certificates and leave that up to the caller.
 	 */
@@ -1115,7 +1118,7 @@ add_one_attribute(Attribute **attr,
 
     return 0;
 }
-	
+
 /**
  * Decode SignedData and verify that the signature is correct.
  *
@@ -1214,7 +1217,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
 	    hx509_clear_error_string(context);
     } else {
 	ret = hx509_crypto_select(context, HX509_SELECT_DIGEST,
-				  _hx509_cert_private_key(cert), 
+				  _hx509_cert_private_key(cert),
 				  sigctx->peer, &digest);
     }
     if (ret)
@@ -1242,7 +1245,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
     if (ret) {
 	hx509_clear_error_string(context);
 	goto out;
-    }			
+    }
 
     signer_info->signedAttrs = NULL;
     signer_info->unsignedAttrs = NULL;
@@ -1258,7 +1261,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
      */
 
     if (der_heim_oid_cmp(sigctx->eContentType, &asn1_oid_id_pkcs7_data) != 0) {
-	CMSAttributes sa;	
+	CMSAttributes sa;
 	heim_octet_string sig;
 
 	ALLOC(signer_info->signedAttrs, 1);
@@ -1324,7 +1327,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
 
 	sa.val = signer_info->signedAttrs->val;
 	sa.len = signer_info->signedAttrs->len;
-	
+
 	ASN1_MALLOC_ENCODE(CMSAttributes,
 			   sigdata.data,
 			   sigdata.length,
@@ -1411,7 +1414,7 @@ cert_process(hx509_context context, void *ctx, hx509_cert cert)
     const unsigned int i = sigctx->sd.certificates->len;
     void *ptr;
     int ret;
-    
+
     ptr = realloc(sigctx->sd.certificates->val,
 		  (i + 1) * sizeof(sigctx->sd.certificates->val[0]));
     if (ptr == NULL)
@@ -1505,7 +1508,7 @@ hx509_cms_create_signed(hx509_context context,
 	    ret = ENOMEM;
 	    goto out;
 	}
-	
+
 	sigctx.sd.encapContentInfo.eContent->data = malloc(length);
 	if (sigctx.sd.encapContentInfo.eContent->data == NULL) {
 	    hx509_clear_error_string(context);
@@ -1527,6 +1530,10 @@ hx509_cms_create_signed(hx509_context context,
     }
 
     if (sigctx.sd.signerInfos.len) {
+
+	/*
+	 * For each signerInfo, collect all different digest types.
+	 */
 	for (i = 0; i < sigctx.sd.signerInfos.len; i++) {
 	    AlgorithmIdentifier *di =
 		&sigctx.sd.signerInfos.val[i].digestAlgorithm;
@@ -1534,7 +1541,7 @@ hx509_cms_create_signed(hx509_context context,
 	    for (j = 0; j < sigctx.sd.digestAlgorithms.len; j++)
 		if (cmp_AlgorithmIdentifier(di, &sigctx.sd.digestAlgorithms.val[j]) == 0)
 		    break;
-	    if (j < sigctx.sd.digestAlgorithms.len) {
+	    if (j == sigctx.sd.digestAlgorithms.len) {
 		ret = add_DigestAlgorithmIdentifiers(&sigctx.sd.digestAlgorithms, di);
 		if (ret) {
 		    hx509_clear_error_string(context);
@@ -1544,6 +1551,9 @@ hx509_cms_create_signed(hx509_context context,
 	}
     }
 
+    /*
+     * Add certs we think are needed, build as part of sig_process
+     */
     if (sigctx.certs) {
 	ALLOC(sigctx.sd.certificates, 1);
 	if (sigctx.sd.certificates == NULL) {

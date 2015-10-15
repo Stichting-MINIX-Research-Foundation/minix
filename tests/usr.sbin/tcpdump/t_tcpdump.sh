@@ -1,4 +1,4 @@
-# $NetBSD: t_tcpdump.sh,v 1.3 2012/04/15 03:05:57 christos Exp $
+# $NetBSD: t_tcpdump.sh,v 1.4 2014/09/20 06:08:07 ozaki-r Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,13 @@ promiscuous_head() {
 promiscuous_body() {
 
 	for i in $(ifconfig -l); do
+		case $i in
+		bridge*)
+			echo "Skipping $i"
+			continue
+			;;
+		esac
+
 		echo "Testing $i"
 		prom $i
 	done

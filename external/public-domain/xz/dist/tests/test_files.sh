@@ -21,7 +21,7 @@ fi
 
 for I in "$srcdir"/files/good-*.xz
 do
-	if test -z "$XZ" || "$XZ" -dc "$I" > /dev/null 2>&1; then
+	if test -z "$XZ" || "$XZ" -dc "$I" > /dev/null; then
 		:
 	else
 		echo "Good file failed: $I"
@@ -29,7 +29,7 @@ do
 		exit 1
 	fi
 
-	if test -z "$XZDEC" || "$XZDEC" "$I" > /dev/null 2>&1; then
+	if test -z "$XZDEC" || "$XZDEC" "$I" > /dev/null; then
 		:
 	else
 		echo "Good file failed: $I"

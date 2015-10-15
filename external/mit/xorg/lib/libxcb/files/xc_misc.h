@@ -20,7 +20,7 @@ extern "C" {
 
 #define XCB_XCMISC_MAJOR_VERSION 1
 #define XCB_XCMISC_MINOR_VERSION 1
-  
+
 extern xcb_extension_t xcb_xc_misc_id;
 
 /**
@@ -125,20 +125,8 @@ typedef struct xcb_xc_misc_get_xid_list_reply_t {
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_version_cookie_t xcb_xc_misc_get_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          client_major_version
- ** @param uint16_t          client_minor_version
- ** @returns xcb_xc_misc_get_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_version_cookie_t
 xcb_xc_misc_get_version (xcb_connection_t *c  /**< */,
                          uint16_t          client_major_version  /**< */,
@@ -150,23 +138,11 @@ xcb_xc_misc_get_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_version_cookie_t xcb_xc_misc_get_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          client_major_version
- ** @param uint16_t          client_minor_version
- ** @returns xcb_xc_misc_get_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_version_cookie_t
 xcb_xc_misc_get_version_unchecked (xcb_connection_t *c  /**< */,
                                    uint16_t          client_major_version  /**< */,
@@ -179,25 +155,13 @@ xcb_xc_misc_get_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xc_misc_get_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_version_reply_t * xcb_xc_misc_get_version_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xc_misc_get_version_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xc_misc_get_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_version_reply_t *
 xcb_xc_misc_get_version_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xc_misc_get_version_cookie_t   cookie  /**< */,
@@ -209,18 +173,8 @@ xcb_xc_misc_get_version_reply (xcb_connection_t                  *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_range_cookie_t xcb_xc_misc_get_xid_range
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xc_misc_get_xid_range_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_range_cookie_t
 xcb_xc_misc_get_xid_range (xcb_connection_t *c  /**< */);
 
@@ -230,21 +184,11 @@ xcb_xc_misc_get_xid_range (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_range_cookie_t xcb_xc_misc_get_xid_range_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_xc_misc_get_xid_range_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_range_cookie_t
 xcb_xc_misc_get_xid_range_unchecked (xcb_connection_t *c  /**< */);
 
@@ -255,25 +199,13 @@ xcb_xc_misc_get_xid_range_unchecked (xcb_connection_t *c  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xc_misc_get_xid_range_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_range_reply_t * xcb_xc_misc_get_xid_range_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_xc_misc_get_xid_range_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_xc_misc_get_xid_range_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_range_reply_t *
 xcb_xc_misc_get_xid_range_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_xc_misc_get_xid_range_cookie_t   cookie  /**< */,
@@ -288,19 +220,8 @@ xcb_xc_misc_get_xid_list_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_list_cookie_t xcb_xc_misc_get_xid_list
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          count
- ** @returns xcb_xc_misc_get_xid_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_list_cookie_t
 xcb_xc_misc_get_xid_list (xcb_connection_t *c  /**< */,
                           uint32_t          count  /**< */);
@@ -311,62 +232,21 @@ xcb_xc_misc_get_xid_list (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_list_cookie_t xcb_xc_misc_get_xid_list_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          count
- ** @returns xcb_xc_misc_get_xid_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_list_cookie_t
 xcb_xc_misc_get_xid_list_unchecked (xcb_connection_t *c  /**< */,
                                     uint32_t          count  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_xc_misc_get_xid_list_ids
- ** 
- ** @param const xcb_xc_misc_get_xid_list_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_xc_misc_get_xid_list_ids (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xc_misc_get_xid_list_ids_length
- ** 
- ** @param const xcb_xc_misc_get_xid_list_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xc_misc_get_xid_list_ids_length (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xc_misc_get_xid_list_ids_end
- ** 
- ** @param const xcb_xc_misc_get_xid_list_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xc_misc_get_xid_list_ids_end (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */);
 
@@ -377,25 +257,13 @@ xcb_xc_misc_get_xid_list_ids_end (const xcb_xc_misc_get_xid_list_reply_t *R  /**
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xc_misc_get_xid_list_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xc_misc_get_xid_list_reply_t * xcb_xc_misc_get_xid_list_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_xc_misc_get_xid_list_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_xc_misc_get_xid_list_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xc_misc_get_xid_list_reply_t *
 xcb_xc_misc_get_xid_list_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_xc_misc_get_xid_list_cookie_t   cookie  /**< */,

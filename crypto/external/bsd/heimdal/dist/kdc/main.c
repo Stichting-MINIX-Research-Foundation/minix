@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -70,8 +70,12 @@ switch_environment(void)
     if ((runas_string || chroot_string) && geteuid() != 0)
 	errx(1, "no running as root, can't switch user/chroot");
 
-    if (chroot_string && chroot(chroot_string) != 0)
-	errx(1, "chroot(%s)", "chroot_string failed");
+    if (chroot_string) {
+	if (chroot(chroot_string))
+	    err(1, "chroot(%s) failed", chroot_string);
+	if (chdir("/"))
+	    err(1, "chdir(/) after chroot failed");
+    }
 
     if (runas_string) {
 	struct passwd *pw;
@@ -82,11 +86,11 @@ switch_environment(void)
 
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    err(1, "initgroups failed");
-	
+
 #ifndef HAVE_CAPNG
 	if (setgid(pw->pw_gid) < 0)
 	    err(1, "setgid(%s) failed", runas_string);
-	
+
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
 #else

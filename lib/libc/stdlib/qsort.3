@@ -1,4 +1,4 @@
-.\"	$NetBSD: qsort.3,v 1.13 2003/08/07 16:43:42 agc Exp $
+.\"	$NetBSD: qsort.3,v 1.14 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -161,6 +161,12 @@ return 0.
 Otherwise, they return \-1 and the global variable
 .Va errno
 is set to indicate the error.
+.Sh COMPATIBILITY
+Previous versions of
+.Fn qsort
+did not permit the comparison routine itself to call
+.Fn qsort .
+This is no longer true.
 .Sh ERRORS
 The
 .Fn heapsort
@@ -182,12 +188,6 @@ or
 .Fn mergesort
 were unable to allocate memory.
 .El
-.Sh COMPATIBILITY
-Previous versions of
-.Fn qsort
-did not permit the comparison routine itself to call
-.Fn qsort .
-This is no longer true.
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr radixsort 3

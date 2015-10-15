@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cipher.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_cipher.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -122,7 +122,7 @@ struct tests camellia128_tests[] = {
 };
 
 struct tests rc4_tests[] = {
-    { 
+    {
 	"rc4 8",
 	"\x01\x23\x45\x67\x89\xAB\xCD\xEF",
 	8,

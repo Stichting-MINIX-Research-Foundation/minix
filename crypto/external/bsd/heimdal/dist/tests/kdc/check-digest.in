@@ -131,20 +131,19 @@ export NTLM_USER_FILE
 
 echo "test_context --mech-type=ntlm"
 ${test_context} --mech-type=ntlm \
-	    --name-type=hostbased-service datan@TEST || \
-		{ echo "test_context 1 failed"; exit 1; }
+    --client-name=foo@TEST \
+    --name-type=hostbased-service datan@TEST || \
+    { echo "test_context 1 failed"; exit 1; }
 
 ${test_context} --mech-type=ntlm \
-	    --name-type=hostbased-service datan@host.TEST || \
-		{ echo "test_context 2 failed"; exit 1; }
+    --client-name=foo@TEST \
+    --name-type=hostbased-service datan@host.TEST || \
+    { echo "test_context 2 failed"; exit 1; }
 
 ${test_context} --mech-type=ntlm \
-	    --name-type=hostbased-service datan@host.test.domain2 || \
-		{ echo "test_context 3 failed"; exit 1; }
-
-${test_context} --mech-type=ntlm \
-	    --name-type=hostbased-service datan@host.foo 2>/dev/null && \
-		{ echo "test_context 4 failed"; exit 1; }
+    --client-name=foo@TEST \
+    --name-type=hostbased-service datan@host.test.domain2 || \
+    { echo "test_context 3 failed"; exit 1; }
 
 echo "Trying SL in NTLM"
 
@@ -158,6 +157,7 @@ for type in \
 
 	echo "Trying NTLM type: ${type}"
 	${test_context} --mech-type=ntlm ${type} \
+	    --client-name=foo@TEST \
 	    --name-type=hostbased-service datan@TEST || \
 	    { echo "test_context 1 failed"; exit 1; }
 

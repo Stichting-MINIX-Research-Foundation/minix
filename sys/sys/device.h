@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.144 2013/10/12 16:49:01 christos Exp $ */
+/* $NetBSD: device.h,v 1.147 2015/03/06 09:28:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -138,6 +138,11 @@ struct device_suspensor {
 
 #define	DEVICE_SUSPENSORS_MAX	16
 
+struct device_garbage {
+	device_t	*dg_devs;
+	int		dg_ndevs;
+};
+
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -182,10 +187,7 @@ struct device {
 	    *dv_bus_suspensors[DEVICE_SUSPENSORS_MAX],
 	    *dv_driver_suspensors[DEVICE_SUSPENSORS_MAX],
 	    *dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
-	struct device_garbage {
-		device_t	*dg_devs;
-		int		dg_ndevs;
-	} dv_garbage;
+	struct device_garbage dv_garbage;
 };
 
 /* dv_flags */
@@ -413,6 +415,7 @@ extern device_t booted_device;		/* the device we booted from */
 extern int booted_partition;		/* the partition on that device */
 extern daddr_t booted_startblk;		/* or the start of a wedge */
 extern uint64_t booted_nblks;		/* and the size of that wedge */
+extern char *bootspec;			/* and the device/wedge name */
 
 struct vnode *opendisk(device_t);
 int getdisksize(struct vnode *, uint64_t *, unsigned int *);
@@ -476,6 +479,7 @@ void	config_create_mountrootthreads(void);
 
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
+void	config_finalize_mountroot(void);
 
 void	config_twiddle_init(void);
 void	config_twiddle_fn(void *);

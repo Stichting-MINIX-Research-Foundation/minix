@@ -1,0 +1,3 @@
+#	$NetBSD: NetBSD.dist.xcompat.in,v 1.1 2015/06/24 22:20:25 matt Exp $
+./usr/X11R7/lib/@ARCH_SUBDIR@
+./usr/libdata/debug/usr/X11R7/lib/@ARCH_SUBDIR@

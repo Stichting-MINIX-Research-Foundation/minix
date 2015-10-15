@@ -331,10 +331,13 @@ static
 std::auto_ptr< atf::check::check_result >
 execute(const char* const* argv)
 {
+    // TODO: This should go to stderr... but fixing it now may be hard as test
+    // cases out there might be relying on stderr being silent.
     std::cout << "Executing command [ ";
     for (int i = 0; argv[i] != NULL; ++i)
         std::cout << argv[i] << " ";
     std::cout << "]\n";
+    std::cout.flush();
 
     atf::process::argv_array argva(argv);
     return atf::check::exec(argva);
@@ -721,7 +724,7 @@ const char* atf_check::m_description =
     "atf-check executes given command and analyzes its results.";
 
 atf_check::atf_check(void) :
-    app(m_description, "atf-check(1)", "atf(7)"),
+    app(m_description, "atf-check(1)"),
     m_xflag(false)
 {
 }

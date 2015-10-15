@@ -1,0 +1,45 @@
+# $NetBSD: Makefile.bsd,v 1.4 2015/02/05 01:26:54 agc Exp $
+
+PROG=netpgpverify
+
+SRCS= b64.c bignum.c bufgap.c digest.c
+SRCS+= libverify.c main.c misc.c
+SRCS+= pgpsum.c rsa.c
+
+SRCS+= bzlib.c zlib.c
+
+SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
+
+CPPFLAGS+=-I.
+
+.ifndef PRODUCTION
+CPPFLAGS+=-g -O0
+LDFLAGS+=-g -O0
+.endif
+
+MAN=	netpgpverify.1
+WARNS=	5
+
+.include <bsd.prog.mk>
+
+tst:
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.asc
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.gpg
+	./${PROG} -v
+	./${PROG} -S sshtest-20140202.pub data.gpg
+	./${PROG} -S sshtest-20140202.pub data.sig
+	@echo "expected failure, to check bad signatures fail to verify"
+	-sed -e 's|A|B|' data.gpg | ./${PROG} -S sshtest-20140202.pub 
+	@echo ""
+	@echo "expected failure, no valid key for verification"
+	-./${PROG} -k /dev/null NetBSD-6.0_RC1_hashes.gpg
+	@echo "dumping now"
+	./${PROG} -c dump -k pubring.gpg NetBSD-6.0_RC1_hashes.asc > /dev/null
+	@echo "dumping ssh now"
+	./${PROG} -c dump -S sshtest-20140202.pub data.gpg
+	@echo "testing pubring with one key"
+	uudecode 1keytest.gpg.uu
+	./${PROG} -k 1keypubring.gpg 1keytest.gpg
+	rm -f 1keytest.gpg
+	@echo "testing signing with a subkey"
+	./chk.sh -k joyent-pubring.gpg digest-20121220.tgz

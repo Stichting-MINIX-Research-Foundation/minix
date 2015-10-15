@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.11 2011/12/25 06:09:08 tsutsui Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.12 2014/03/20 03:13:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -115,11 +115,10 @@ null_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
-null_ls(struct open_file *f, const char *pattern,
-		void (*funcp)(char* arg), char* path)
+null_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by nullfs\n");
-	return;
+	lsunsup("nullfs");
 }
 #endif

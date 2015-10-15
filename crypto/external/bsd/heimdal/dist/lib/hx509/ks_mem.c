@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_mem.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: ks_mem.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -173,7 +173,7 @@ mem_getkeys(hx509_context context,
 	    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
 	    return ENOMEM;
 	}
-    }	
+    }
     (*keys)[i] = NULL;
     return 0;
 }

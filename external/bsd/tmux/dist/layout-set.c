@@ -1,4 +1,4 @@
-/* $Id: layout-set.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -260,8 +260,8 @@ layout_set_main_h(struct window *w)
 	 * If an other pane height was specified, honour it so long as it
 	 * doesn't shrink the main height to less than the main-pane-height
 	 */
-	if (otherheight > 1 && w->sx - otherheight > mainheight)
-		mainheight = w->sx - otherheight;
+	if (otherheight > 1 && w->sy - otherheight > mainheight)
+		mainheight = w->sy - otherheight;
 	if (mainheight < PANE_MINIMUM + 1)
 		mainheight = PANE_MINIMUM + 1;
 

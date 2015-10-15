@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.16 2014/08/02 11:19:01 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.16 2014/08/02 11:19:01 ryo Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.14 2013/08/08 22:18:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.16 2014/08/02 11:19:01 ryo Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -257,7 +257,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		}
 	}
 	l_len++;
-	if ((size_t)(++t_len) < buflen)
+	if (sep != '<' && (size_t)(++t_len) < buflen)
 		*bp++ = '>';
 terminate:
 	*bp++ = '\0';

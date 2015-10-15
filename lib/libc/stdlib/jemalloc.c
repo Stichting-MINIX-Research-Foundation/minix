@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.29 2013/09/12 15:35:15 joerg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.38 2015/07/26 17:21:55 martin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -97,7 +97,7 @@
 
 /* LINTLIBRARY */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__minix)
 #  define xutrace(a, b)		utrace("malloc", (a), (b))
 #  define __DECONST(x, y)	((x)__UNCONST(y))
 #  define NO_TLS
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.29 2013/09/12 15:35:15 joerg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.38 2015/07/26 17:21:55 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -216,6 +216,14 @@ __strerror_r(int e, char *s, size_t l)
 #define	STRERROR_BUF		64
 
 /* Minimum alignment of allocations is 2^QUANTUM_2POW_MIN bytes. */
+
+/*
+ * If you touch the TINY_MIN_2POW definition for any architecture, please
+ * make sure to adjust the corresponding definition for JEMALLOC_TINY_MIN_2POW
+ * in the gcc 4.8 tree in dist/gcc/tree-ssa-ccp.c and verify that a native
+ * gcc is still buildable!
+ */
+
 #ifdef __i386__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
@@ -225,32 +233,49 @@ __strerror_r(int e, char *s, size_t l)
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
 #endif
+#ifdef __aarch64__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	3
+#  define NO_TLS
+#endif
 #ifdef __alpha__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #  define NO_TLS
 #endif
 #ifdef __sparc64__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #  define NO_TLS
 #endif
 #ifdef __amd64__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #endif
 #ifdef __arm__
 #  define QUANTUM_2POW_MIN	3
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
+#  ifdef __ARM_EABI__
+#    define TINY_MIN_2POW	3
+#  endif
 #  define NO_TLS
 #endif
 #ifdef __powerpc__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
+#  define TINY_MIN_2POW		3
 #endif
 #if defined(__sparc__) && !defined(__sparc64__)
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	2
+#  define USE_BRK
+#endif
+#ifdef __or1k__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
@@ -270,10 +295,15 @@ __strerror_r(int e, char *s, size_t l)
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
 #endif
-#ifdef __mips__
-#  define QUANTUM_2POW_MIN	4
+#if defined(__mips__) || defined(__riscv__)
+# ifdef _LP64
+#  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
+# else
 #  define SIZEOF_PTR_2POW	2
-#  define USE_BRK
+# endif
+# define QUANTUM_2POW_MIN	4
+# define USE_BRK
 #endif
 #ifdef __hppa__                                                                                                                                         
 #  define QUANTUM_2POW_MIN     4                                                                                                                        
@@ -286,11 +316,6 @@ __strerror_r(int e, char *s, size_t l)
 /* sizeof(int) == (1 << SIZEOF_INT_2POW). */
 #ifndef SIZEOF_INT_2POW
 #  define SIZEOF_INT_2POW	2
-#endif
-
-/* We can't use TLS in non-PIC programs, since TLS relies on loader magic. */
-#if (!defined(PIC) && !defined(NO_TLS)) && defined(__minix)
-#  define NO_TLS
 #endif
 
 /*
@@ -308,7 +333,9 @@ __strerror_r(int e, char *s, size_t l)
 #define	CACHELINE		((size_t)(1 << CACHELINE_2POW))
 
 /* Smallest size class to support. */
-#define	TINY_MIN_2POW		1
+#ifndef TINY_MIN_2POW
+#define	TINY_MIN_2POW		2
+#endif
 
 /*
  * Maximum size class that is a multiple of the quantum, but not (necessarily)
@@ -365,8 +392,10 @@ static malloc_mutex_t init_lock = {_SPINLOCK_INITIALIZER};
 /* Set to true once the allocator has been initialized. */
 static bool malloc_initialized = false;
 
+#ifdef _REENTRANT
 /* Used to avoid initialization races. */
 static mutex_t init_lock = MUTEX_INITIALIZER;
+#endif
 #endif
 
 /******************************************************************************/
@@ -677,8 +706,10 @@ static size_t		arena_maxclass; /* Max size class for arenas. */
  * Chunks.
  */
 
+#ifdef _REENTRANT
 /* Protects chunk-related data structures. */
 static malloc_mutex_t	chunks_mtx;
+#endif
 
 /* Tree of chunks that are stand-alone huge allocations. */
 static chunk_tree_t	huge;
@@ -729,7 +760,9 @@ static void		*base_pages;
 static void		*base_next_addr;
 static void		*base_past_addr; /* Addr immediately past base_pages. */
 static chunk_node_t	*base_chunk_nodes; /* LIFO cache of chunk nodes. */
+#ifdef _REENTRANT
 static malloc_mutex_t	base_mtx;
+#endif
 #ifdef MALLOC_STATS
 static size_t		base_mapped;
 #endif
@@ -746,20 +779,62 @@ static size_t		base_mapped;
 static arena_t		**arenas;
 static unsigned		narenas;
 static unsigned		next_arena;
+#ifdef _REENTRANT
 static malloc_mutex_t	arenas_mtx; /* Protects arenas initialization. */
+#endif
 
-#ifndef NO_TLS
 /*
  * Map of pthread_self() --> arenas[???], used for selecting an arena to use
  * for allocations.
  */
-static __thread arena_t	*arenas_map;
-#define	get_arenas_map()	(arenas_map)
-#define	set_arenas_map(x)	(arenas_map = x)
+#ifndef NO_TLS
+static __thread arena_t	**arenas_map;
 #else
-static thread_key_t arenas_map_key;
-#define	get_arenas_map()	thr_getspecific(arenas_map_key)
-#define	set_arenas_map(x)	thr_setspecific(arenas_map_key, x)
+static arena_t	**arenas_map;
+#endif
+
+#if !defined(NO_TLS) || !defined(_REENTRANT)
+# define	get_arenas_map()	(arenas_map)
+# define	set_arenas_map(x)	(arenas_map = x)
+#else
+
+static thread_key_t arenas_map_key = -1;
+
+static inline arena_t **
+get_arenas_map(void)
+{
+	if (!__isthreaded)
+		return arenas_map;
+
+	if (arenas_map_key == -1) {
+		(void)thr_keycreate(&arenas_map_key, NULL);
+		if (arenas_map != NULL) {
+			thr_setspecific(arenas_map_key, arenas_map);
+			arenas_map = NULL;
+		}
+	}
+
+	return thr_getspecific(arenas_map_key);
+}
+
+static __inline void
+set_arenas_map(arena_t **a)
+{
+	if (!__isthreaded) {
+		arenas_map = a;
+		return;
+	}
+
+	if (arenas_map_key == -1) {
+		(void)thr_keycreate(&arenas_map_key, NULL);
+		if (arenas_map != NULL) {
+			_DIAGASSERT(arenas_map == a);
+			arenas_map = NULL;
+		}
+	}
+
+	thr_setspecific(arenas_map_key, a);
+}
 #endif
 
 #ifdef MALLOC_STATS
@@ -3617,11 +3692,6 @@ malloc_init_hard(void)
 		opt_narenas_lshift += 2;
 	}
 
-#ifdef NO_TLS
-	/* Initialize arena key. */
-	(void)thr_keycreate(&arenas_map_key, NULL);
-#endif
-
 	/* Determine how many arenas to use. */
 	narenas = ncpus;
 	if (opt_narenas_lshift > 0) {
@@ -3916,7 +3986,6 @@ _malloc_prefork(void)
 		if (arenas[i] != NULL)
 			malloc_mutex_lock(&arenas[i]->mtx);
 	}
-	malloc_mutex_unlock(&arenas_mtx);
 
 	malloc_mutex_lock(&base_mtx);
 
@@ -3934,7 +4003,6 @@ _malloc_postfork(void)
 
 	malloc_mutex_unlock(&base_mtx);
 
-	malloc_mutex_lock(&arenas_mtx);
 	for (i = 0; i < narenas; i++) {
 		if (arenas[i] != NULL)
 			malloc_mutex_unlock(&arenas[i]->mtx);

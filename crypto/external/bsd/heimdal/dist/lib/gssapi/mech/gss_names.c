@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_names.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_names.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -60,7 +60,7 @@ _gss_find_mn(OM_uint32 *minor_status, struct _gss_name *name, gss_OID mech,
 		mn = malloc(sizeof(struct _gss_mechanism_name));
 		if (!mn)
 			return GSS_S_FAILURE;
-		
+
 		major_status = m->gm_import_name(minor_status,
 		    &name->gn_value,
 		    (name->gn_type.elements

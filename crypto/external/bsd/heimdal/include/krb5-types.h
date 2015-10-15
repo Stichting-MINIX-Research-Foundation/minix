@@ -1,4 +1,5 @@
-/*	$NetBSD: krb5-types.h,v 1.5 2011/04/24 22:24:14 elric Exp $	*/
+/* krb5-types.h -- this file was generated for x86_64-unknown-netbsd6.99.40 by
+                   $Id: krb5-types.h,v 1.6 2014/04/24 13:50:53 pettai Exp $ */
 
 #ifndef __krb5_types_h__
 #define __krb5_types_h__
@@ -35,6 +36,13 @@ typedef int krb5_socket_t;
 #define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))
 #else
 #define HEIMDAL_NORETURN_ATTRIBUTE
+#endif
+#endif
+#ifndef HEIMDAL_UNUSED_ATTRIBUTE
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
+#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))
+#else
+#define HEIMDAL_UNUSED_ATTRIBUTE
 #endif
 #endif
 #endif /* __krb5_types_h__ */

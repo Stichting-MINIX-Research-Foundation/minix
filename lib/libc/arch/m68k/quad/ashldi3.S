@@ -1,4 +1,4 @@
-/*	$NetBSD: ashldi3.S,v 1.7 2013/07/18 21:18:36 matt Exp $	*/
+/*	$NetBSD: ashldi3.S,v 1.8 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -93,7 +93,7 @@ OPENSSL_cleanse:
 .Little:	mtctr	4
 	stb	0,0(3)
 	addi	3,3,1
-	bc	16,0,.-8
+	bc	16,0,$-8
 	blr	
 .Lot:	andi.	5,3,3
 	beq	.Laligned
@@ -106,7 +106,7 @@ OPENSSL_cleanse:
 	mtctr	5
 	stw	0,0(3)
 	addi	3,3,4
-	bc	16,0,.-8
+	bc	16,0,$-8
 	andi.	4,4,3
 	bne	.Little
 	blr	

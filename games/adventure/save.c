@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.13 2012/01/08 18:16:00 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.14 2014/03/22 22:04:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.13 2012/01/08 18:16:00 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.14 2014/03/22 22:04:40 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -58,7 +58,7 @@ struct savefile {
 	FILE *f;
 	const char *name;
 	bool warned;
-	unsigned bintextpos;
+	size_t bintextpos;
 	uint32_t key;
 	struct crcstate crc;
 	unsigned char pad[8];
@@ -343,7 +343,7 @@ hash(const void *data, size_t datalen, unsigned char *out, size_t outlen)
 	for (i=0; i<datalen; i++) {
 		val = val ^ 0xbadc0ffee;
 		val = (val << 4) | (val >> 60);
-		val += udata[i] ^ 0xbeef;
+		val += udata[i] ^ 0xbeefU;
 	}
 
 	uval = (unsigned char *)&val;
@@ -454,7 +454,7 @@ savefile_cwrite(struct savefile *sf, const void *data, size_t len)
 
 struct compat_saveinfo {
 	void   *address;
-	int     width;
+	size_t  width;
 };
 
 static const struct compat_saveinfo compat_savearray[] =
@@ -530,7 +530,7 @@ compat_restore(const char *infile)
 	const struct compat_saveinfo *p;
 	char   *s;
 	long    sum, cksum = 0;
-	int     i;
+	size_t  i;
 	struct crcstate crc;
 
 	if ((in = fopen(infile, "rb")) == NULL) {

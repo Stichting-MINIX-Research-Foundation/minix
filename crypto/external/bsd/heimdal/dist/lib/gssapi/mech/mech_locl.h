@@ -1,4 +1,4 @@
-/*	$NetBSD: mech_locl.h,v 1.1.1.2 2011/04/14 14:08:28 elric Exp $	*/
+/*	$NetBSD: mech_locl.h,v 1.1.1.3 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -64,6 +64,7 @@
 #include "mech_switch.h"
 #include "name.h"
 #include "utils.h"
+#include "compat.h"
 
 #define _mg_buffer_zero(buffer) \
 	do {					\

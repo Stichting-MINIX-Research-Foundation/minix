@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.36 2012/03/15 02:02:21 joerg Exp $	*/
+/*	$NetBSD: opdump.c,v 1.37 2014/10/31 13:56:04 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.36 2012/03/15 02:02:21 joerg Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.37 2014/10/31 13:56:04 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -117,6 +117,8 @@ const char *puffsdump_vnop_revmap[] = {
 	"PUFFS_VN_DELETEEXTATTR",
 	"PUFFS_VN_SETEXTATTR",
 	"PUFFS_VN_CLOSEEXTATTR",
+	"PUFFS_VN_FALLOCATE",
+	"PUFFS_VN_FDISCARD",
 };
 size_t puffsdump_vnop_count = __arraycount(puffsdump_vnop_revmap);
 

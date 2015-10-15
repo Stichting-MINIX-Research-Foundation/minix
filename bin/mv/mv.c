@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.43 2011/08/29 14:46:54 joerg Exp $ */
+/* $NetBSD: mv.c,v 1.44 2015/03/02 03:17:24 enami Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.43 2011/08/29 14:46:54 joerg Exp $");
+__RCSID("$NetBSD: mv.c,v 1.44 2015/03/02 03:17:24 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,11 @@ do_move(char *from, char *to)
 static int
 fastcopy(char *from, char *to, struct stat *sbp)
 {
+#if defined(__NetBSD__)
+	struct timespec ts[2];
+#else
 	struct timeval tval[2];
+#endif
 	static blksize_t blen;
 	static char *bp;
 	int nread, from_fd, to_fd;
@@ -298,8 +302,13 @@ err:		if (unlink(to))
 
 	(void)close(from_fd);
 #ifdef BSD4_4
+#if defined(__NetBSD__)
+	ts[0] = sbp->st_atimespec;
+	ts[1] = sbp->st_mtimespec;
+#else
 	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tval[1], &sbp->st_mtimespec);
+#endif
 #else
 	tval[0].tv_sec = sbp->st_atime;
 	tval[1].tv_sec = sbp->st_mtime;
@@ -309,7 +318,11 @@ err:		if (unlink(to))
 #ifdef __SVR4
 	if (utimes(to, tval))
 #else
+#if defined(__NetBSD__)
+	if (futimens(to_fd, ts))
+#else
 	if (futimes(to_fd, tval))
+#endif
 #endif
 		warn("%s: set times", to);
 	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {

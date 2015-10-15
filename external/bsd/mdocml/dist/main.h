@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.h,v 1.15 2011/10/06 22:29:12 kristaps Exp $ */
+/*	Id: main.h,v 1.15 2011/10/06 22:29:12 kristaps Exp  */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *

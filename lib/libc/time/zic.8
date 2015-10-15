@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.21 2013/09/20 19:06:54 christos Exp $
-.Dd September 20, 2013
+.\"	$NetBSD: zic.8,v 1.26 2015/08/13 11:21:18 christos Exp $
+.Dd August 13, 2015
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ You can use this option to generate SVVS-compatible files.
 .It Fl v
 Be more verbose, and complain about the following situations:
 .Bl -dash
-.It The input data specifies a link to a link.
+.It The input specifies a link to a link.
 .It A year that appears in a data file is outside the range
 .It A time of 24:00 or more appears in the input.
 Pre-1998 versions of
@@ -80,16 +80,39 @@ These compatibility issues affect only time stamps
 before 1970 or after the start of 2038.
 .It A time zone abbreviation has fewer than 3 characters.
 POSIX requires at least 3.
+.It An output file name contains a byte that is not an ASCII letter,
+.Dq - ,
+.Dq / ,
+or
+.Dq _ ;
+or it 
+or it contains a file name component that contains more than 14 bytes
+or that starts with
+.Dq - .
 .El
-.It Fl y Ar command
-Use the given
-.Ar command
-rather than
-.Em yearistype
-when checking year types (see below).
+.Pp
+Input files should be text files, that is, they should be a series of
+zero or more lines, each ending in a newline byte and containing at
+most 511 bytes, and without any
+.Dv NUL
+bytes.
+The input text's encoding
+is typically UTF-8 or ASCII; it should have a unibyte representation
+for the POSIX Portable Character Set (PPCS)
+.%U http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html
+and the encoding's non-unibyte characters should consist entirely of
+non-PPCS bytes.
+Non-PPCS characters typically occur only in comments:
+although output file names and time zone abbreviations can contain
+nearly any character, other software will work better if these are
+limited to the restricted syntax described under the
+.Op v
+option.
 .Pp
 Input lines are made up of fields.
 Fields are separated from one another by one or more white space characters.
+The white space characters are space, form feed, carriage return, newline,
+tab, and vertical tab.
 Leading and trailing white space on input lines is ignored.
 An unquoted sharp character (#) in the input introduces a comment which extends
 to the end of the line the sharp character appears on.
@@ -115,7 +138,7 @@ The fields that make up a rule line are:
 Gives the (arbitrary) name of the set of rules this rule is part of.
 .It FROM
 Gives the first year in which the rule applies.
-Any integer year can be supplied; the Gregorian calendar is assumed.
+Any integer year can be supplied; the proleptic Gregorian calendar is assumed.
 The word
 .Em minimum
 (or an abbreviation) means the minimum year representable as an integer.
@@ -139,27 +162,11 @@ may be used to repeat the value of the
 .Em FROM
 field.
 .It TYPE
-Gives the type of year in which the rule applies.
-If
-.Em TYPE
-is
-.Em \&-
-then the rule applies in all years between
-.Em FROM
-and
-.Em TO
-inclusive.
-If
-.Em TYPE
-is something else, then
+should be
+.Dq -
+and is present for compatibility with older versions of
 .Nm
-executes the command
-.Pp
-.Ic yearistype Ar year type
-.Pp
-to check the type of a year:
-an exit status of zero is taken to mean that the year is of the given type;
-an exit status of one is taken to mean that the year is not of the given type.
+in which it could contain year types.
 .It IN
 Names the month in which the rule takes effect.
 Month names may be abbreviated.
@@ -216,6 +223,10 @@ or
 if the given time is universal time;
 in the absence of an indicator,
 wall clock time is assumed.
+The intent is that a rule line describes the instants when a
+clock/calendar set to the type of time specified in the
+.Em AT
+field would show the specified date and time of day.
 .It SAVE
 Gives the amount of time to be added to local standard time when the rule is in
 effect.
@@ -227,6 +238,12 @@ field
 and
 .Em s
 suffixes are not used).
+Only the sum of standard time and this amount matters; for example,
+.Nm
+does not distinguish a 10:30 standard time plus an 0:30
+.Em SAVE
+from a 10:00 standard time plus a 1:00
+.Em SAVE .
 .It LETTER/S
 Gives the
 .Dq variable part
@@ -248,13 +265,19 @@ A zone line has the form
 .sp
 .Dl Zone	NAME			GMTOFF	RULES/SAVE	FORMAT	[UNTILYEAR [MONTH [DAY [TIME]]]]
 For example:
-.Dl Zone	Australia/Adelaide	9:30	Aus	CST	1971 Oct 31 2:00
+.Dl Zone	Australia/Adelaide	9:30	Aus	AC%sT	1971 Oct 31 2:00
 The fields that make up a zone line are:
 .Bl -tag -width "RULES/SAVE" -compact
 .It NAME
 The name of the time zone.
 This is the name used in creating the time conversion information file for the
 zone.
+It should not contain a file name component
+.Dq .
+or
+.Dq .. ;
+a file name component is a maximal substring that does not contain
+.Dq / .
 .It GMTOFF
 The amount of time to add to UT to get standard time in this zone.
 This field has the same format as the
@@ -269,6 +292,8 @@ alternatively, an amount of time to add to local standard time.
 If this field is
 .Em \&-
 then standard time always applies in the time zone.
+When an amount of time is given, only the sum of standard time and
+this amount matters.
 .It FORMAT
 The format for time zone abbreviations in this time zone.
 The pair of characters
@@ -276,16 +301,32 @@ The pair of characters
 is used to show where the
 .Dq variable part
 of the time zone abbreviation goes.
+Alternately, a format can use the pair of characters
+.Em %z
++to stand for the UTC offset in the form
+.Em \(+- hh ,
+.Em \(+- hhmm ,
+or
+.Em \(+- hhmmss ,
+using the shortest form that does not lose information, where
+.Em hh ,
+.Em mm ,
+and
+.Em ss
+are the hours, minutes, and seconds east (+) or west (\(mi) of UTC.
 Alternatively,
 a slash
 .Pq \&/
 separates standard and daylight abbreviations.
+To conform to POSIX, a time zone abbreviation should contain only
+alphanumeric ASCII characters, "+" and "\*-".
 .It UNTILYEAR [MONTH [DAY [TIME]]]
 The time at which the UT offset or the rule(s) change for a location.
 It is specified as a year, a month, a day, and a time of day.
 If this is specified,
 the time zone information is generated from the given UT offset
-and rule change until the time specified.
+and rule change until the time specified, which is interpreted using
+the rules in effect just before the transition.
 The month, day, and time of day have the same format as the IN, ON, and AT
 fields of a rule; trailing fields can be omitted, and default to the
 earliest possible value for the missing fields.
@@ -304,18 +345,26 @@ Continuation lines may contain
 information, just as zone lines do, indicating that the next line is a further
 continuation.
 .Pp
+If a zone changes at the same instant that a rule would otherwise take
+effect in the earlier zone or continuation line, the rule is ignored.
+In a single zone it is an error if two rules take effect at the same
+instant, or if two zone changes take effect at the same instant.
+.Pp
 A link line has the form
-.Dl Link	LINK-FROM	LINK-TO
+.Dl Link	TARGET	LINK-NAME
 For example:
 .Dl Link	Europe/Istanbul	Asia/Istanbul
 The
-.Em LINK-FROM
+.Em TARGET
 field should appear as the
 .Em NAME
-field in some zone line;
-the
-.Em LINK-TO
-field is used as an alternative name for that zone.
+field in some zone line.
+The
+.Em LINK-NAME
+field is used as an alternative name for that zone;
+it has the same syntax as a zone line's
+.Em NAME
+field.
 .Pp
 Except for continuation lines,
 lines may appear in any order in the input.
@@ -418,7 +467,7 @@ For purposes of
 display, "LMT" and "BMT" were initially used, respectively.
 Since
 Swiss rules and later EU rules were applied, the display name for the
-timezone has been CET for standard time and CEST for daylight saving
+time zone has been CET for standard time and CEST for daylight saving
 time.
 .Sh NOTES
 For areas with more than two types of local time,
@@ -438,6 +487,11 @@ produces a single transition to daylight saving at the new UT offset
 To get separate transitions
 use multiple zone continuation lines
 specifying transition instants using universal time.
+.Pp
+Time stamps well before the Big Bang are silently omitted from the output.
+This works around bugs in software that mishandles large negative time stamps.
+Call it sour grapes, but pre-Big-Bang time stamps are physically suspect anyway.
+The pre-Big-Bang cutoff time is approximate and may change in future versions.
 .Sh FILES
 .Pa /usr/share/zoneinfo
 - standard directory used for created files

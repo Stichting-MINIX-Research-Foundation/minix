@@ -1,4 +1,4 @@
-/*	$NetBSD: des.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: des.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -256,10 +256,10 @@ DES_set_key_unchecked(DES_cblock *key, DES_key_schedule *ks)
 
     for (i = 0; i < 16; i++) {
 	uint32_t kc, kd;
-	
+
 	ROTATE_LEFT28(c, shifts[i]);
 	ROTATE_LEFT28(d, shifts[i]);
-	
+
 	kc = pc2_c_1[(c >> 22) & 0x3f] |
 	    pc2_c_2[((c >> 16) & 0x30) | ((c >> 15) & 0xf)] |
 	    pc2_c_3[((c >> 9 ) & 0x3c) | ((c >> 8 ) & 0x3)] |
@@ -782,7 +782,7 @@ DES_cbc_cksum(const void *in, DES_cblock *output,
 	u[0] ^= uiv[0]; u[1] ^= uiv[1];
 	DES_encrypt(u, ks, 1);
 	uiv[0] = u[0]; uiv[1] = u[1];
-	
+
 	length -= DES_CBLOCK_LEN;
 	input += DES_CBLOCK_LEN;
     }

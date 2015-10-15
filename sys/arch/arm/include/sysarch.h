@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.10 2013/02/01 15:23:11 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.12 2015/03/09 11:03:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -38,11 +38,17 @@
 #include <sys/cdefs.h>
 
 /*
- * Pickup definition of uintptr_t
+ * Pickup definition of size_t and uintptr_t
  */
+#include <machine/ansi.h>
 #include <sys/stdint.h>
 #ifndef _KERNEL
 #include <stdbool.h>
+#endif
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_ size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 /*
@@ -70,7 +76,7 @@ struct arm_unaligned_faults_args {
 
 #ifndef _KERNEL
 __BEGIN_DECLS
-int	arm_sync_icache(u_int addr, int len);
+int	arm_sync_icache(uintptr_t, size_t);
 int	arm_drain_writebuf(void);
 int	sysarch(int, void *);
 __END_DECLS

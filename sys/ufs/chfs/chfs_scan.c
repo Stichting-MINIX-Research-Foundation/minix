@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.4 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.6 2015/02/07 04:19:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -443,15 +443,15 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 		memset(buf, 0 , CHFS_MAX_NODE_SIZE);
 		err = chfs_read_leb(chmp,
 		    lnr, buf, ofs, CHFS_NODE_HDR_SIZE, &retlen);
-		if (err) {
-			return err;
-		}
+		if (err)
+			goto err_return;
 
 		if (retlen != CHFS_NODE_HDR_SIZE) {
 			chfs_err("Error reading node header: "
 			    "read: %zu instead of: %zu\n",
 			    CHFS_NODE_HDR_SIZE, retlen);
-			return EIO;
+			err = EIO;
+			goto err_return;
 		}
 
 		/* first we check if the buffer we read is full with 0xff, if yes maybe
@@ -461,6 +461,7 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			read_free += CHFS_NODE_HDR_SIZE;
 			if (read_free >= MAX_READ_FREE(chmp)) {
 				dbg("rest of the block is free. Size: %d\n", cheb->free_size);
+				kmem_free(buf, CHFS_MAX_NODE_SIZE);
 				return chfs_scan_classify_cheb(chmp, cheb);
 			}
 			ofs += CHFS_NODE_HDR_SIZE;
@@ -476,9 +477,8 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 		if (err) {
 			dbg("node hdr error\n");
 			err = chfs_update_eb_dirty(chmp, cheb, 4);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			ofs += 4;
 			continue;
@@ -486,7 +486,8 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 		ofs += CHFS_NODE_HDR_SIZE;
 		if (ofs > chmp->chm_ebh->eb_size) {
 			chfs_err("Second part of node is on the next eraseblock.\n");
-			return EIO;
+			err = EIO;
+			goto err_return;
 		}
 		switch (le16toh(nhdr->type)) {
 		case CHFS_NODETYPE_VNODE:
@@ -496,21 +497,20 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			err = chfs_read_leb(chmp,
 			    lnr, buf + CHFS_NODE_HDR_SIZE,
 			    ofs, len,  &retlen);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			if (retlen != len) {
 				chfs_err("Error reading vnode: read: %zu instead of: %zu\n",
 				    len, retlen);
-				return EIO;
+				err = EIO;
+				goto err_return;
 			}
 			KASSERT(lnr == cheb->lnr);
 			err = chfs_scan_check_vnode(chmp,
 			    cheb, buf, ofs - CHFS_NODE_HDR_SIZE);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			break;
 		case CHFS_NODETYPE_DIRENT:
@@ -521,23 +521,22 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			err = chfs_read_leb(chmp,
 			    lnr, buf + CHFS_NODE_HDR_SIZE,
 			    ofs, len, &retlen);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			if (retlen != len) {
 				chfs_err("Error reading dirent node: read: %zu "
 				    "instead of: %zu\n", len, retlen);
-				return EIO;
+				err = EIO;
+				goto err_return;
 			}
 
 			KASSERT(lnr == cheb->lnr);
 
 			err = chfs_scan_check_dirent_node(chmp,
 			    cheb, buf, ofs - CHFS_NODE_HDR_SIZE);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			break;
 		case CHFS_NODETYPE_DATA:
@@ -547,20 +546,20 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			err = chfs_read_leb(chmp,
 			    lnr, buf + CHFS_NODE_HDR_SIZE,
 			    ofs, len, &retlen);
-			if (err) {
-				return err;
-			}
+			if (err)
+				goto err_return;
 
 			if (retlen != len) {
 				chfs_err("Error reading data node: read: %zu "
 				    "instead of: %zu\n", len, retlen);
-				return EIO;
+				err = EIO;
+				goto err_return;
 			}
 			KASSERT(lnr == cheb->lnr);
 			err = chfs_scan_check_data_node(chmp,
 			    cheb, buf, ofs - CHFS_NODE_HDR_SIZE);
 			if (err)
-				return err;
+				goto err_return;
 
 			break;
 		case CHFS_NODETYPE_PADDING:
@@ -573,7 +572,7 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			err = chfs_update_eb_dirty(chmp, cheb,
 			    le32toh(nhdr->length));
 			if (err)
-				return err;
+				goto err_return;
 
 			break;
 		default:
@@ -581,7 +580,7 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 			err = chfs_update_eb_dirty(chmp, cheb,
 			    le32toh(nhdr->length));
 			if (err)
-				return err;
+				goto err_return;
 
 			break;
 		}
@@ -591,5 +590,9 @@ chfs_scan_eraseblock(struct chfs_mount *chmp,
 	KASSERT(cheb->used_size + cheb->free_size + cheb->dirty_size +
 	    cheb->unchecked_size + cheb->wasted_size == chmp->chm_ebh->eb_size);
 
-	return chfs_scan_classify_cheb(chmp, cheb);
+	err = chfs_scan_classify_cheb(chmp, cheb);
+	/* FALLTHROUGH */
+    err_return:
+	kmem_free(buf, CHFS_MAX_NODE_SIZE);
+	return err;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_s_mp_exptmod.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_s_mp_exptmod.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_S_MP_EXPTMOD_C
@@ -56,7 +56,7 @@ int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
   /* init M array */
   /* init first cell */
   if ((err = mp_init(&M[1])) != MP_OKAY) {
-     return err; 
+     return err;
   }
 
   /* now init the second half of the array */
@@ -74,7 +74,7 @@ int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
   if ((err = mp_init (&mu)) != MP_OKAY) {
     goto LBL_M;
   }
-  
+
   if (redmode == 0) {
      if ((err = mp_reduce_setup (&mu, P)) != MP_OKAY) {
         goto LBL_MU;
@@ -85,22 +85,22 @@ int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
         goto LBL_MU;
      }
      redux = mp_reduce_2k_l;
-  }    
+  }
 
   /* create M table
    *
-   * The M table contains powers of the base, 
+   * The M table contains powers of the base,
    * e.g. M[x] = G**x mod P
    *
-   * The first half of the table is not 
+   * The first half of the table is not
    * computed though accept for M[0] and M[1]
    */
   if ((err = mp_mod (G, P, &M[1])) != MP_OKAY) {
     goto LBL_MU;
   }
 
-  /* compute the value at M[1<<(winsize-1)] by squaring 
-   * M[1] (winsize-1) times 
+  /* compute the value at M[1<<(winsize-1)] by squaring
+   * M[1] (winsize-1) times
    */
   if ((err = mp_copy (&M[1], &M[1 << (winsize - 1)])) != MP_OKAY) {
     goto LBL_MU;
@@ -108,7 +108,7 @@ int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode)
 
   for (x = 0; x < (winsize - 1); x++) {
     /* square it */
-    if ((err = mp_sqr (&M[1 << (winsize - 1)], 
+    if ((err = mp_sqr (&M[1 << (winsize - 1)],
                        &M[1 << (winsize - 1)])) != MP_OKAY) {
       goto LBL_MU;
     }
@@ -249,6 +249,6 @@ LBL_M:
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_s_mp_exptmod.c,v */
-/* Revision: 1.5 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_s_mp_exptmod.c,v  */
+/* Revision: 1.5  */
+/* Date: 2006/12/28 01:25:13  */

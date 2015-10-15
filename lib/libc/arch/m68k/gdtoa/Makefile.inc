@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2013/07/18 21:19:50 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2014/03/18 18:20:37 riastradh Exp $
 
 SRCS+=	strtof.c
 

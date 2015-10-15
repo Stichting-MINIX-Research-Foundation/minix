@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.80 2013/02/08 12:50:51 wiz Exp $
+.\"	$NetBSD: find.1,v 1.81 2014/05/17 11:31:40 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd August 26, 2012
+.Dd May 17, 2014
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -783,6 +783,8 @@ but do not print them.
 .It Li "find / \e( \-newer ttt \-or \-user wnj \e) \-ls \-exit 1"
 Same as above, but list the first file matching the criteria before exiting
 with a value of 1.
+.It Li "find . \-type f \-exec sh \-c 'file=\*[q]$1\*[q]; ...;' - {} \;"
+Perform an arbitrarily complex shell command for every file.
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,

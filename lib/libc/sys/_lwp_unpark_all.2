@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_unpark_all.2,v 1.6 2010/11/02 20:49:47 skrll Exp $
+.\"	$NetBSD: _lwp_unpark_all.2,v 1.7 2014/04/08 13:02:14 pooka Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In lwp.h
 .Ft ssize_t
-.Fn _lwp_unpark_all "lwpid_t *targets" "size_t ntargets" "const void *hint"
+.Fn _lwp_unpark_all "const lwpid_t *targets" "size_t ntargets" "const void *hint"
 .Sh DESCRIPTION
 .Fn _lwp_unpark_all
 resumes execution of one or more light-weight processes listed in

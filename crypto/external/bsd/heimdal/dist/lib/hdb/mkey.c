@@ -1,4 +1,4 @@
-/*	$NetBSD: mkey.c,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: mkey.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
@@ -155,7 +155,7 @@ read_master_mit(krb5_context context, const char *filename,
     krb5_storage *sp;
     int16_t enctype;
     krb5_keyblock key;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -202,7 +202,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     unsigned char buf[256];
     ssize_t len;
     size_t ret_len;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -230,7 +230,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
        should cover all cases, but will break if someone has hacked
        this code to really use des-cbc-md5 -- but then that's not my
        problem. */
-    if(key.keytype == KEYTYPE_DES || key.keytype == ETYPE_DES_CBC_MD5)
+    if(key.keytype == ETYPE_DES_CBC_CRC || key.keytype == ETYPE_DES_CBC_MD5)
 	key.keytype = ETYPE_DES_CFB64_NONE;
 
     ret = hdb_process_master_key(context, 0, &key, 0, mkey);
@@ -248,7 +248,7 @@ read_master_krb4(krb5_context context, const char *filename,
     krb5_error_code ret;
     unsigned char buf[256];
     ssize_t len;
-	
+
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
 	int save_errno = errno;
@@ -374,7 +374,7 @@ _hdb_find_master_key(uint32_t *mkvno, hdb_master_key mkey)
 	if(mkvno == NULL) {
 	    if(ret == NULL || mkey->keytab.vno > ret->keytab.vno)
 		ret = mkey;
-	} else if(mkey->keytab.vno == *mkvno)
+	} else if((uint32_t)mkey->keytab.vno == *mkvno)
 	    return mkey;
 	mkey = mkey->next;
     }
@@ -408,7 +408,7 @@ _hdb_mkey_encrypt(krb5_context context, hdb_master_key key,
 krb5_error_code
 hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 {
-	
+
     krb5_error_code ret;
     krb5_data res;
     size_t keysize;
@@ -417,7 +417,7 @@ hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 
     if(k->mkvno == NULL)
 	return 0;
-	
+
     key = _hdb_find_master_key(k->mkvno, mkey);
 
     if (key == NULL)
@@ -461,7 +461,7 @@ hdb_unseal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 krb5_error_code
 hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
-    int i;
+    size_t i;
 
     for(i = 0; i < ent->keys.len; i++){
 	krb5_error_code ret;
@@ -521,14 +521,14 @@ hdb_seal_key_mkey(krb5_context context, Key *k, hdb_master_key mkey)
 	    return ENOMEM;
     }
     *k->mkvno = key->keytab.vno;
-	
+
     return 0;
 }
 
 krb5_error_code
 hdb_seal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 {
-    int i;
+    size_t i;
     for(i = 0; i < ent->keys.len; i++){
 	krb5_error_code ret;
 

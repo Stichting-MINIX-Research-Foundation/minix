@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.25 2012/03/25 16:31:23 christos Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.26 2014/10/12 22:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.25 2012/03/25 16:31:23 christos Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.26 2014/10/12 22:32:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ foldcase(int ch, int flags)
 static const char *
 rangematch(const char *pattern, int test, int flags)
 {
-	int negate, ok;
+	int negate, ok, need;
 	char c, c2;
 
 	_DIAGASSERT(pattern != NULL);
@@ -88,7 +88,11 @@ rangematch(const char *pattern, int test, int flags)
 	if ((negate = (*pattern == '!' || *pattern == '^')) != 0)
 		++pattern;
 	
-	for (ok = 0; (c = FOLDCASE(*pattern++, flags)) != ']';) {
+	need = 1;
+	for (ok = 0; (c = FOLDCASE(*pattern++, flags)) != ']' || need;) {
+		need = 0;
+		if (c == '/')
+			return (void *)-1;
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = FOLDCASE(*pattern++, flags);
 		if (c == EOS)
@@ -113,7 +117,7 @@ rangematch(const char *pattern, int test, int flags)
 static int
 fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
 {
-	const char *stringstart;
+	const char *stringstart, *r;
 	char c, test;
 
 	_DIAGASSERT(pattern != NULL);
@@ -184,9 +188,14 @@ fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
 				return FNM_NOMATCH;
 			if (*string == '/' && flags & FNM_PATHNAME)
 				return FNM_NOMATCH;
-			if ((pattern = rangematch(pattern,
+			if ((r = rangematch(pattern,
 			    FOLDCASE(*string, flags), flags)) == NULL)
 				return FNM_NOMATCH;
+			if (r == (void *)-1) {
+				if (*string != '[')
+					return FNM_NOMATCH;
+			} else
+				pattern = r;
 			++string;
 			break;
 		case '\\':

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_free.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: gen_free.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("$NetBSD: gen_free.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $");
+__RCSID("NetBSD");
 
 static void
 free_primitive (const char *typename, const char *name)
@@ -181,12 +181,12 @@ void
 generate_type_free (const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
-   
+
     fprintf (codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
-   
+
     free_type ("data", s->type, preserve);
     fprintf (codefile, "}\n\n");
 }

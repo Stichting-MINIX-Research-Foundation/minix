@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.80 2013/08/14 10:14:45 jmcneill Exp $
+#	$NetBSD: configure.ac,v 1.84 2015/07/26 14:01:53 kamil Exp $
 #
 # Autoconf definition file for libnbcompat.
 #

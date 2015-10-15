@@ -1,4 +1,4 @@
-/* $Id: cmd-list.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,12 +18,14 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
 
 struct cmd_list *
-cmd_list_parse(int argc, char **argv, char **cause)
+cmd_list_parse(int argc, char **argv, const char* file, u_int line,
+    char **cause)
 {
 	struct cmd_list	*cmdlist;
 	struct cmd	*cmd;
@@ -33,7 +35,7 @@ cmd_list_parse(int argc, char **argv, char **cause)
 
 	copy_argv = cmd_copy_argv(argc, argv);
 
-	cmdlist = xmalloc(sizeof *cmdlist);
+	cmdlist = xcalloc(1, sizeof *cmdlist);
 	cmdlist->references = 1;
 	TAILQ_INIT(&cmdlist->list);
 
@@ -54,7 +56,7 @@ cmd_list_parse(int argc, char **argv, char **cause)
 		if (arglen != 1)
 			new_argc++;
 
-		cmd = cmd_parse(new_argc, new_argv, cause);
+		cmd = cmd_parse(new_argc, new_argv, file, line, cause);
 		if (cmd == NULL)
 			goto bad;
 		TAILQ_INSERT_TAIL(&cmdlist->list, cmd, qentry);
@@ -63,7 +65,8 @@ cmd_list_parse(int argc, char **argv, char **cause)
 	}
 
 	if (lastsplit != argc) {
-		cmd = cmd_parse(argc - lastsplit, copy_argv + lastsplit, cause);
+		cmd = cmd_parse(argc - lastsplit, copy_argv + lastsplit,
+		    file, line, cause);
 		if (cmd == NULL)
 			goto bad;
 		TAILQ_INSERT_TAIL(&cmdlist->list, cmd, qentry);
@@ -78,56 +81,22 @@ bad:
 	return (NULL);
 }
 
-int
-cmd_list_exec(struct cmd_list *cmdlist, struct cmd_ctx *ctx)
-{
-	struct cmd	*cmd;
-	int		 n, retval;
-
-	retval = 0;
-	TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
-		if ((n = cmd_exec(cmd, ctx)) == -1)
-			return (-1);
-
-		/*
-		 * A 1 return value means the command client is being attached
-		 * (sent MSG_READY).
-		 */
-		if (n == 1) {
-			retval = 1;
-
-			/*
-			 * The command client has been attached, so mangle the
-			 * context to treat any following commands as if they
-			 * were called from inside.
-			 */
-			if (ctx->curclient == NULL) {
-				ctx->curclient = ctx->cmdclient;
-				ctx->cmdclient = NULL;
-
-				ctx->error = key_bindings_error;
-				ctx->print = key_bindings_print;
-				ctx->info = key_bindings_info;
-			}
-		}
-	}
-	return (retval);
-}
-
 void
 cmd_list_free(struct cmd_list *cmdlist)
 {
-	struct cmd	*cmd;
+	struct cmd	*cmd, *cmd1;
 
 	if (--cmdlist->references != 0)
 		return;
 
-	while (!TAILQ_EMPTY(&cmdlist->list)) {
-		cmd = TAILQ_FIRST(&cmdlist->list);
+	TAILQ_FOREACH_SAFE(cmd, &cmdlist->list, qentry, cmd1) {
 		TAILQ_REMOVE(&cmdlist->list, cmd, qentry);
-		cmd_free(cmd);
+		args_free(cmd->args);
+		free(cmd->file);
+		free(cmd);
 	}
-	xfree(cmdlist);
+
+	free(cmdlist);
 }
 
 size_t

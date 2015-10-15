@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -52,18 +52,12 @@ static int require_preauth = -1; /* 1 == require preauth for all principals */
 static char *max_request_str;	/* `max_request' as a string */
 
 static int disable_des = -1;
-static int enable_v4 = -1;
-static int enable_kaserver = -1;
-static int enable_524 = -1;
-static int enable_v4_cross_realm = -1;
 
 static int builtin_hdb_flag;
 static int help_flag;
 static int version_flag;
 
 static struct getarg_strings addresses_str;	/* addresses to listen on */
-
-static char *v4_realm;
 
 char *runas_string;
 char *chroot_string;
@@ -76,31 +70,14 @@ static struct getargs args[] = {
     },
     {
 	"require-preauth",	'p',	arg_negative_flag, &require_preauth,
-	"don't require pa-data in as-reqs"
+	"don't require pa-data in as-reqs", NULL
     },
     {
 	"max-request",	0,	arg_string, &max_request_str,
 	"max size for a kdc-request", "size"
     },
-    { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support" },
-    {	"524",		0, 	arg_negative_flag, &enable_524,
-	"don't respond to 524 requests"
-    },
-    {
-	"kaserver", 'K', arg_flag,   &enable_kaserver,
-	"enable kaserver support"
-    },
-    {	"kerberos4",	0, 	arg_flag, &enable_v4,
-	"respond to kerberos 4 requests"
-    },
-    {
-	"v4-realm",	'r',	arg_string, &v4_realm,
-	"realm to serve v4-requests for"
-    },
-    {	"kerberos4-cross-realm",	0, 	arg_flag,
-	&enable_v4_cross_realm,
-	"respond to kerberos 4 requests from foreign realms"
-    },
+    { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support",
+   	 NULL },
     {	"ports",	'P', 	arg_string, rk_UNCONST(&port_str),
 	"ports to listen to", "portspec"
     },
@@ -108,29 +85,29 @@ static struct getargs args[] = {
 #if DETACH_IS_DEFAULT
     {
 	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console"
+	"don't detach from console", NULL
     },
 #else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
-	"detach from console"
+	"detach from console", NULL
     },
 #endif
 #endif
     {	"addresses",	0,	arg_strings, &addresses_str,
 	"addresses to listen on", "list of addresses" },
     {	"disable-des",	0,	arg_flag, &disable_des,
-	"disable DES" },
+	"disable DES", NULL },
     {	"builtin-hdb",	0,	arg_flag,   &builtin_hdb_flag,
-	"list builtin hdb backends"},
+	"list builtin hdb backends", NULL},
     {   "runas-user",	0,	arg_string, &runas_string,
-	"run as this user when connected to network"
+	"run as this user when connected to network", NULL
     },
     {   "chroot",	0,	arg_string, &chroot_string,
-	"chroot directory to run in"
+	"chroot directory to run in", NULL
     },
-    {	"help",		'h',	arg_flag,   &help_flag },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -205,7 +182,7 @@ configure(krb5_context context, int argc, char **argv)
 	ret = krb5_prepend_config_files_default(config_file, &files);
 	if (ret)
 	    krb5_err(context, 1, ret, "getting configuration files");
-	
+
 	ret = krb5_set_config_files(context, files);
 	krb5_free_config_files(files);
 	if(ret)
@@ -263,15 +240,6 @@ configure(krb5_context context, int argc, char **argv)
 	}
     }
 
-    if(enable_v4 != -1)
-	config->enable_v4 = enable_v4;
-
-    if(enable_v4_cross_realm != -1)
-	config->enable_v4_cross_realm = enable_v4_cross_realm;
-
-    if(enable_524 != -1)
-	config->enable_524 = enable_524;
-
     if(enable_http == -1)
 	enable_http = krb5_config_get_bool(context, NULL, "kdc",
 					   "enable-http", NULL);
@@ -287,9 +255,6 @@ configure(krb5_context context, int argc, char **argv)
 	krb5_errx(context, 1, "enforce-transited-policy deprecated, "
 		  "use [kdc]transited-policy instead");
 
-    if (enable_kaserver != -1)
-	config->enable_kaserver = enable_kaserver;
-
 #ifdef SUPPORT_DETACH
     if(detach_from_console == -1)
 	detach_from_console = krb5_config_get_bool_default(context, NULL,
@@ -297,7 +262,7 @@ configure(krb5_context context, int argc, char **argv)
 							   "kdc",
 							   "detach", NULL);
 #endif /* SUPPORT_DETACH */
-    
+
     if(max_request_tcp == 0)
 	max_request_tcp = 64 * 1024;
     if(max_request_udp == 0)
@@ -305,12 +270,6 @@ configure(krb5_context context, int argc, char **argv)
 
     if (port_str == NULL)
 	port_str = "+";
-
-    if (v4_realm)
-	config->v4_realm = v4_realm;
-
-    if(config->v4_realm == NULL && (config->enable_kaserver || config->enable_v4))
-	krb5_errx(context, 1, "Kerberos 4 enabled but no realm configured");
 
     if(disable_des == -1)
 	disable_des = krb5_config_get_bool_default(context, NULL,
@@ -324,13 +283,6 @@ configure(krb5_context context, int argc, char **argv)
 	krb5_enctype_disable(context, ETYPE_DES_CBC_NONE);
 	krb5_enctype_disable(context, ETYPE_DES_CFB64_NONE);
 	krb5_enctype_disable(context, ETYPE_DES_PCBC_NONE);
-
-	kdc_log(context, config,
-		0, "DES was disabled, turned off Kerberos V4, 524 "
-		"and kaserver");
-	config->enable_v4 = 0;
-	config->enable_524 = 0;
-	config->enable_kaserver = 0;
     }
 
     krb5_kdc_windc_init(context);

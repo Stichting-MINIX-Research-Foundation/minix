@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.169 2013/08/28 17:47:07 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.179 2015/09/10 14:05:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #define difftime	_difftime
 #define devname_r	_devname_r
 #define err		_err
+#define errc		_errc
 #define errx		_errx
 #ifdef _REENTRANT
 #define fileno		_fileno
@@ -64,12 +65,16 @@
 #define strtod_l	_strtod_l
 #define strtof		_strtof
 #define strtof_l	_strtof_l
+#define strtoi		_strtoi
+#define strtoi_l	_strtoi_l
 #define strtoimax	_strtoimax
 #define strtoimax_l	_strtoimax_l
 #define strtold		_strtold
 #define strtold_l	_strtold_l
 #define strtoll		_strtoll
 #define strtoll_l	_strtoll_l
+#define strtou		_strtou
+#define strtou_l	_strtou_l
 #define strtoull	_strtoull
 #define strtoull_l	_strtoull_l
 #define strtoumax	_strtoumax
@@ -80,10 +85,13 @@
 #define	sys_nsig	_sys_nsig
 #define sysconf		__sysconf
 #define verr		_verr
+#define verrc		_verrc
 #define verrx		_verrx
 #define vwarn		_vwarn
+#define vwarnc		_vwarnc
 #define vwarnx		_vwarnx
 #define warn		_warn
+#define warnc		_warnc
 #define warnx		_warnx
 
 #ifdef __weak_alias
@@ -162,6 +170,7 @@
 #define a64l			_a64l
 #define adjtime			_adjtime
 #define alarm			_alarm
+#define allocaddrinfo		_allocaddrinfo
 #define alphasort		_alphasort
 #define arc4random		_arc4random
 #define arc4random_addrandom	_arc4random_addrandom
@@ -171,6 +180,8 @@
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define asprintf_l		_asprintf_l
+#define asysctl			_asysctl
+#define asysctlbyname		_asysctlbyname
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
@@ -186,6 +197,7 @@
 #define cdbr_find		_cdbr_find
 #define cdbr_get		_cdbr_get
 #define cdbr_open		_cdbr_open
+#define cdbr_open_mem		_cdbr_open_mem
 #define cdbw_close		_cdbw_close
 #define cdbw_open		_cdbw_open
 #define cdbw_put		_cdbw_put
@@ -271,9 +283,12 @@
 #define execl			_execl
 #define execle			_execle
 #define execlp			_execlp
+#define execlpe			_execlpe
 #define execv			_execv
 #define execvp			_execvp
+#define execvpe			_execvpe
 #define explicit_memset		_explicit_memset
+#define fdiscard		_fdiscard
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
@@ -513,6 +528,7 @@
 #define pread			_pread
 #define printf_l		_printf_l
 #define pselect			_pselect
+#define posix_fallocate		_posix_fallocate
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
 #define ptree_init		ptree_init
@@ -536,6 +552,7 @@
 #define readdir			_readdir
 #define readdir_r		_readdir_r
 #define readlink		_readlink
+#define reallocarr		_reallocarr
 #define realpath		_realpath
 #define regcomp			_regcomp
 #define regerror		_regerror

@@ -1,4 +1,4 @@
-/*	$NetBSD: tommath_superclass.h,v 1.1.1.1 2011/04/13 18:15:06 elric Exp $	*/
+/*	$NetBSD: tommath_superclass.h,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 /* super class file for PK algos */
 
@@ -62,9 +62,9 @@
    #undef  BN_FAST_MP_INVMOD_C
 
    /* To safely undefine these you have to make sure your RSA key won't exceed the Comba threshold
-    * which is roughly 255 digits [7140 bits for 32-bit machines, 15300 bits for 64-bit machines] 
+    * which is roughly 255 digits [7140 bits for 32-bit machines, 15300 bits for 64-bit machines]
     * which means roughly speaking you can handle upto 2536-bit RSA keys with these defined without
-    * trouble.  
+    * trouble.
     */
    #undef  BN_S_MP_MUL_DIGS_C
    #undef  BN_S_MP_SQR_C
@@ -73,6 +73,6 @@
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/tommath_superclass.h,v */
-/* Revision: 1.3 */
-/* Date: 2005/05/14 13:29:17 */
+/* Source: /cvs/libtom/libtommath/tommath_superclass.h,v  */
+/* Revision: 1.3  */
+/* Date: 2005/05/14 13:29:17  */

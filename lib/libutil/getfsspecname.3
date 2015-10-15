@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfsspecname.3,v 1.3 2012/04/07 16:22:42 christos Exp $
+.\"	$NetBSD: getfsspecname.3,v 1.5 2015/06/13 19:52:58 dholland Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 6, 2012
+.Dd August 18, 2014
 .Dt GETFSSPECNAME 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ to the underlying
 device node, and places the resulting pathname in
 .Fa buf
 up to len
-.Fa bufsiz .
+.Fa buflen .
 .Pp
 If the
 .Fa spec
@@ -72,7 +72,7 @@ or the original
 argument.
 On failure
 .Dv NULL
-is return and
+is returned and
 .Fa buf
 contains the reason for the error.
 .Sh SEE ALSO

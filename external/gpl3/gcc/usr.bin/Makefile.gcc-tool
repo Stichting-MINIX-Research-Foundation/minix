@@ -1,0 +1,41 @@
+#	$NetBSD: Makefile.gcc-tool,v 1.2 2014/05/31 22:55:16 mrg Exp $
+
+PROG=	gcc-${GCC_TOOL}
+SRCS=	gcc-ar.c file-find.c
+
+CPPFLAGS= \
+	-DPERSONALITY=\"${GCC_TOOL}\" \
+	-DSTANDARD_EXEC_PREFIX=\"/usr/bin\" \
+	-DSTANDARD_LIBEXEC_PREFIX=\"/usr/lib\" \
+	-DSTANDARD_BINDIR_PREFIX=\"/usr/bin\" \
+	-DTOOLDIR_BASE_PREFIX=\"/usr/bin\" \
+	-DDEFAULT_TARGET_MACHINE=\"\" \
+	-DDEFAULT_TARGET_VERSION=\"\"
+
+# Skip these because we don't have them in paths.
+#	-DDEFAULT_TARGET_VERSION=\"${G_version}\"
+#	-DDEFAULT_TARGET_MACHINE=\"{GNU_MACHINE_ARCH}\"
+#
+# ${SRCS}: ${GCCARCH}/defs.mk
+
+CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+
+BINDIR=		/usr/bin
+NOMAN=		# defined
+
+.include <bsd.prog.mk>
+
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
+
+.include "../Makefile.common"
+.include "../Makefile.libcpp"
+.include "../Makefile.backtrace"
+.include "../Makefile.libiberty"
+.include "../Makefile.libdecnumber"
+
+COPTS+=		-Wno-stack-protector
+
+.PATH: ${DIST}/gcc

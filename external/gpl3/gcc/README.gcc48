@@ -1,0 +1,34 @@
+$Id: README.gcc48,v 1.6 2015/01/10 22:58:38 mrg Exp $
+
+usr.bin:
+	note:
+		-static-libstdc++ -static-libgcc
+		-rdynamic  -lz
+lib:
+
+	G_NOEXCEPTION_FLAGS -- need to use this
+
+new stuff:
+	cc1objcplus
+	collect2 -- need to re-introduce?
+
+	gcc-ar, -nm and -ranlib, for lto plugin stuff
+
+	- what is libitm?
+
+x86_64 port:
+- copied manually i386-builtin-types.inc instead of generating it.
+
+
+arch/feature list.  anything not here has been switched already:
+
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+------------	-----	-------	------	----------	------------	----	---
+coldfire	yes	N/A[9]	yes	yes		yes		?	?
+m68000		yes	?	yes	no[3]		
+m68k		yes	yes	yes	yes		yes
+powerpc64	yes[4]
+
+[3] relocations fail in libgcc
+[4] cc1 gets segv compiling libgcc.
+[9] no kernels in evbcf port yet

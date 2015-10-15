@@ -1,4 +1,4 @@
-/*	$NetBSD: evp.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
+/*	$NetBSD: evp.h,v 1.1.1.3 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2008 Kungliga Tekniska Högskolan
@@ -197,7 +197,7 @@ struct hc_evp_md {
 #ifndef HC_DEPRECATED
 #if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
 #define HC_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER) && (_MSC_VER>1200) 
+#elif defined(_MSC_VER) && (_MSC_VER>1200)
 #define HC_DEPRECATED __declspec(deprecated)
 #else
 #define HC_DEPRECATED

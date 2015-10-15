@@ -43,6 +43,7 @@ CLEANFILES= \
 	slapd.pid
 
 EXTRA_DIST = \
+	NTMakefile \
 	samba.schema \
 	slapd.conf \
 	slapd-stop \

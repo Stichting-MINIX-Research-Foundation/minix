@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs-test.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: getifaddrs-test.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -72,7 +72,7 @@ print_addr(const char *s, struct sockaddr *sa)
     for(i = 0; i < sa->sa_len - ((long)sa->sa_data - (long)&sa->sa_family); i++)
 	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
 #else
-    for(i = 0; i < sizeof(sa->sa_data); i++) 
+    for(i = 0; i < sizeof(sa->sa_data); i++)
 	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
 #endif
     printf("\n");
@@ -82,16 +82,16 @@ static void
 print_ifaddrs(struct ifaddrs *x)
 {
     struct ifaddrs *p;
-    
+
     for(p = x; p; p = p->ifa_next) {
 	if (verbose_counter) {
 	    printf("%s\n", p->ifa_name);
 	    printf("  flags=%x\n", p->ifa_flags);
 	    if(p->ifa_addr)
 		print_addr("addr", p->ifa_addr);
-	    if(p->ifa_dstaddr) 
+	    if(p->ifa_dstaddr)
 		print_addr("dstaddr", p->ifa_dstaddr);
-	    if(p->ifa_netmask) 
+	    if(p->ifa_netmask)
 		print_addr("netmask", p->ifa_netmask);
 	    printf("  %p\n", p->ifa_data);
 	}

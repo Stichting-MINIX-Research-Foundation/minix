@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.10 2013/03/23 16:15:57 christos Exp $
+.\"	$NetBSD: magic.5,v 1.14 2015/01/02 21:15:32 christos Exp $
 .\"
-.\" $File: magic.man,v 1.78 2013/01/09 13:04:30 christos Exp $
-.Dd January 7, 2013
+.\" $File: magic.man,v 1.85 2015/01/01 17:07:34 christos Exp $
+.Dd January 1, 2015
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 5.14.
+command, version 5.22.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -202,6 +202,11 @@ interpreted as a UNIX-style date, but interpreted as local time rather
 than UTC.
 .It Dv indirect
 Starting at the given offset, consult the magic database again.
+The offset of th
+.Dv indirect
+magic is by default absolute in the file, but one can specify
+.Dv /r
+to indicate that the offset is relative from the beginning of the entry.
 .It Dv name
 Define a
 .Dq named
@@ -230,19 +235,25 @@ Regular expressions can take exponential time to process, and their
 performance is hard to predict, so their use is discouraged.
 When used in production environments, their performance
 should be carefully checked.
-The type specification can be optionally followed by
-.Dv /[c][s] .
+The size of the string to search should also be limited by specifying
+.Dv /<length> ,
+to avoid performance issues scanning long files.
+The type specification can also be optionally followed by
+.Dv /[c][s][l] .
 The
 .Dq c
 flag makes the match case insensitive, while the
 .Dq s
 flag update the offset to the start offset of the match, rather than the end.
-The regular expression is tested against line
-.Dv N + 1
-onwards, where
-.Dv N
-is the given offset.
-Line endings are assumed to be in the machine's native format.
+The
+.Dq l
+modifier, changes the limit of length to mean number of lines instead of a
+byte count.
+Lines are delimited by the platforms native line delimiter.
+When a line count is specified, an implicit byte count also computed assuming
+each line is 80 characters long.
+If neither a byte or line count is specified, the search is limited automatically
+to 8KiB.
 .Dv ^
 and
 .Dv $
@@ -251,20 +262,28 @@ not beginning and end of file.
 .It Dv search
 A literal string search starting at the given offset.
 The same modifier flags can be used as for string patterns.
-The modifier flags (if any) must be followed by
-.Dv /number
-the range, that is, the number of positions at which the match will be
+The search expression must contain the range in the form
+.Dv /number,
+that is the number of positions at which the match will be
 attempted, starting from the start offset.
 This is suitable for
 searching larger binary expressions with variable offsets, using
 .Dv \e
 escapes for special characters.
-The offset works as for regex.
+The order of modifier and number is not relevant.
 .It Dv default
 This is intended to be used with the test
 .Em x
-(which is always true) and a message that is to be used if there are
-no other matches.
+(which is always true) and it has no type.
+It matches when no other test at that continuation level has matched before.
+Clearing that matched tests for a continuation level, can be done using the
+.Dv clear
+test.
+.It Dv clear
+This test is always true and clears the match flag for that continuation level.
+It is intended to be used with the
+.Dv default
+test.
 .El
 .Pp
 For compatibility with the Single
@@ -403,6 +422,9 @@ is octal, and
 .Dv 0x13
 is hexadecimal.
 .Pp
+Numeric operations are not performed on date types, instead the numeric
+value is interpreted as an offset.
+.Pp
 For string values, the string from the
 file must match the specified string.
 The operators
@@ -419,6 +441,9 @@ This means that a line can match any non-empty string (usually used to
 then print the string), with
 .Em \*[Gt]\e0
 (because all non-empty strings are greater than the empty string).
+.Pp
+Dates are treated as numerical values in the respective internal
+representation.
 .Pp
 The special test
 .Em x
@@ -607,7 +632,7 @@ Or even both!
 \*[Gt]\*[Gt]\*[Gt]\*[Am](\*[Am]0x54.l-3)  string  UNACE  \eb, ACE self-extracting archive
 .Ed
 .Pp
-Finally, if you have to deal with offset/length pairs in your file, even the
+If you have to deal with offset/length pairs in your file, even the
 second value in a parenthesized expression can be taken from the file itself,
 using another set of parentheses.
 Note that this additional indirect offset is always relative to the
@@ -621,6 +646,18 @@ start of the main indirect offset.
 # ...and go to the end of it, calculated from start+length;
 # these are located 14 and 10 bytes after the section name
 \*[Gt]\*[Gt]\*[Gt]\*[Gt](\*[Am]0xe.l+(-4)) string       PK\e3\e4 \eb, ZIP self-extracting archive
+.Ed
+.Pp
+If you have a list of known avalues at a particular continuation level,
+and you want to provide a switch-like default case:
+.Bd -literal -offset indent
+# clear that continuation level match
+\*[Gt]18	clear
+\*[Gt]18	lelong	1	one
+\*[Gt]18	lelong	2	two
+\*[Gt]18	default	x
+# print default match
+\*[Gt]\*[Gt]18	lelong	x	unmatched 0x%x
 .Ed
 .Sh SEE ALSO
 .Xr file 1

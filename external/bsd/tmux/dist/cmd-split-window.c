@@ -1,4 +1,4 @@
-/* $Id: cmd-split-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,7 +18,10 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -27,16 +30,16 @@
  * Split a window (add a new pane).
  */
 
-void	cmd_split_window_key_binding(struct cmd *, int);
-int	cmd_split_window_exec(struct cmd *, struct cmd_ctx *);
+void		 cmd_split_window_key_binding(struct cmd *, int);
+enum cmd_retval	 cmd_split_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_split_window_entry = {
 	"split-window", "splitw",
-	"dl:hp:Pt:v", 0, 1,
-	"[-dhvP] [-p percentage|-l size] [-t target-pane] [command]",
+	"c:dF:l:hp:Pt:v", 0, 1,
+	"[-dhvP] [-c start-directory] [-F format] [-p percentage|-l size] "
+	CMD_TARGET_PANE_USAGE " [command]",
 	0,
 	cmd_split_window_key_binding,
-	NULL,
 	cmd_split_window_exec
 };
 
@@ -48,8 +51,8 @@ cmd_split_window_key_binding(struct cmd *self, int key)
 		args_set(self->args, 'h', NULL);
 }
 
-int
-cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct session		*s;
@@ -57,16 +60,19 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct window		*w;
 	struct window_pane	*wp, *new_wp = NULL;
 	struct environ		 env;
-	char		 	*cmd, *cwd, *cause;
-	const char		*shell;
-	u_int			 hlimit, paneidx;
-	int			 size, percentage;
+	const char		*cmd, *shell, *template;
+	char			*cause, *new_cause, *cp;
+	u_int			 hlimit;
+	int			 size, percentage, cwd, fd = -1;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
+	struct client		*c;
+	struct format_tree	*ft;
 
-	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
+		return (CMD_RETURN_ERROR);
 	w = wl->window;
+	server_unzoom_window(w);
 
 	environ_init(&env);
 	environ_copy(&global_environ, &env);
@@ -77,13 +83,32 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		cmd = options_get_string(&s->options, "default-command");
 	else
 		cmd = args->argv[0];
-	cwd = options_get_string(&s->options, "default-path");
-	if (*cwd == '\0') {
-		if (ctx->cmdclient != NULL && ctx->cmdclient->cwd != NULL)
-			cwd = ctx->cmdclient->cwd;
-		else
-			cwd = s->cwd;
-	}
+
+	if (args_has(args, 'c')) {
+		ft = format_create();
+		if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
+			format_client(ft, c);
+		format_session(ft, s);
+		format_winlink(ft, s, s->curw);
+		format_window_pane(ft, s->curw->window->active);
+		cp = format_expand(ft, args_get(args, 'c'));
+		format_free(ft);
+
+		if (cp != NULL && *cp != '\0') {
+			fd = open(cp, O_RDONLY|O_DIRECTORY);
+			free(cp);
+			if (fd == -1) {
+				cmdq_error(cmdq, "bad working directory: %s",
+				    strerror(errno));
+				return (CMD_RETURN_ERROR);
+			}
+		} else if (cp != NULL)
+			free(cp);
+		cwd = fd;
+	} else if (cmdq->client != NULL && cmdq->client->session == NULL)
+		cwd = cmdq->client->cwd;
+	else
+		cwd = s->cwd;
 
 	type = LAYOUT_TOPBOTTOM;
 	if (args_has(args, 'h'))
@@ -93,16 +118,18 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (args_has(args, 'l')) {
 		size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			ctx->error(ctx, "size %s", cause);
-			xfree(cause);
-			return (-1);
+			xasprintf(&new_cause, "size %s", cause);
+			free(cause);
+			cause = new_cause;
+			goto error;
 		}
 	} else if (args_has(args, 'p')) {
 		percentage = args_strtonum(args, 'p', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			ctx->error(ctx, "percentage %s", cause);
-			xfree(cause);
-			return (-1);
+			xasprintf(&new_cause, "percentage %s", cause);
+			free(cause);
+			cause = new_cause;
+			goto error;
 		}
 		if (type == LAYOUT_TOPBOTTOM)
 			size = (wp->sy * percentage) / 100;
@@ -115,7 +142,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
 
-	if ((lc = layout_split_pane(wp, type, size)) == NULL) {
+	if ((lc = layout_split_pane(wp, type, size, 0)) == NULL) {
 		cause = xstrdup("pane too small");
 		goto error;
 	}
@@ -137,16 +164,35 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	environ_free(&env);
 
 	if (args_has(args, 'P')) {
-		paneidx = window_pane_index(wl->window, new_wp);
-		ctx->print(ctx, "%s:%u.%u", s->name, wl->idx, paneidx);
+		if ((template = args_get(args, 'F')) == NULL)
+			template = SPLIT_WINDOW_TEMPLATE;
+
+		ft = format_create();
+		if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
+			format_client(ft, c);
+		format_session(ft, s);
+		format_winlink(ft, s, wl);
+		format_window_pane(ft, new_wp);
+
+		cp = format_expand(ft, template);
+		cmdq_print(cmdq, "%s", cp);
+		free(cp);
+
+		format_free(ft);
 	}
-	return (0);
+	notify_window_layout_changed(w);
+
+	if (fd != -1)
+		close(fd);
+	return (CMD_RETURN_NORMAL);
 
 error:
 	environ_free(&env);
 	if (new_wp != NULL)
 		window_remove_pane(w, new_wp);
-	ctx->error(ctx, "create pane failed: %s", cause);
-	xfree(cause);
-	return (-1);
+	cmdq_error(cmdq, "create pane failed: %s", cause);
+	free(cause);
+	if (fd != -1)
+		close(fd);
+	return (CMD_RETURN_ERROR);
 }

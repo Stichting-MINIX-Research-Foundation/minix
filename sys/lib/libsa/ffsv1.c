@@ -10,11 +10,12 @@
 #define ufs_stat	ffsv1_stat
 #if defined(LIBSA_ENABLE_LS_OP)
 #define ufs_ls		ffsv1_ls
+#if defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP)
+#define ufs_load_mods	ffsv1_load_mods
+#endif /* defined(__minix) && defined(LIBSA_ENABLE_LOAD_MODS_OP) */
 #endif
 
 #define ufs_dinode	ufs1_dinode
 #define indp_t		int32_t
-
-#define	FSMOD		"ffs"
 
 #include "ufs.c"

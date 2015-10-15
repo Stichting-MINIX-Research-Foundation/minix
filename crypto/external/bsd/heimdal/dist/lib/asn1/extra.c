@@ -1,4 +1,4 @@
-/*	$NetBSD: extra.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: extra.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2005 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include "der_locl.h"
 #include <krb5/heim_asn1.h>
 
-__RCSID("$NetBSD: extra.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 int
 encode_heim_any(unsigned char *p, size_t len,
@@ -73,13 +73,13 @@ decode_heim_any(const unsigned char *p, size_t len,
 	if (len < length + len_len + l)
 	    return ASN1_OVERFLOW;
     }
-   
+
     data->data = malloc(length + len_len + l);
     if (data->data == NULL)
 	return ENOMEM;
     data->length = length + len_len + l;
     memcpy(data->data, p, length + len_len + l);
-   
+
     if (size)
 	*size = length + len_len + l;
 

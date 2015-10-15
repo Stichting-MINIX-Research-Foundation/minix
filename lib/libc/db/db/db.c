@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.16 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: db.c,v 1.18 2015/05/19 13:20:52 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -51,6 +51,10 @@ static int __dberr(void);
 __weak_alias(dbopen,_dbopen)
 #endif
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 DB *
 dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
     const void *openinfo)
@@ -60,11 +64,11 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 #if defined(__minix)
 #define USE_OPEN_FLAGS 							\
 	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
-	 O_RDWR | O_TRUNC)
+	 O_RDWR | O_TRUNC | O_CLOEXEC)
 #else
 #define	USE_OPEN_FLAGS							\
 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
-	 O_RDWR | O_SHLOCK | O_TRUNC)
+	 O_RDWR | O_SHLOCK | O_TRUNC | O_CLOEXEC)
 #endif  /* defined(__minix) */
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)

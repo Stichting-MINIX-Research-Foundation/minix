@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.5 2004/03/09 17:16:13 drochner Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.6 2014/05/22 15:01:56 uebayasi Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD
@@ -43,3 +43,8 @@ ENTRY(fpsetsticky)
 	ldmxcsr	-32(%rsp)
 	fldenv	-28(%rsp)
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetsticky)
+#else
+END(fpsetsticky)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: md2.c,v 1.2 2014/03/27 16:10:45 apb Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -132,5 +132,5 @@ MD2_Final (void *res, struct md2 *m)
     MD2_Update(m, pad, 16);
 
     memcpy(res, m->state, MD2_DIGEST_LENGTH);
-    memset(m, 0, sizeof(m));
+    memset(m, 0, sizeof(*m));
 }

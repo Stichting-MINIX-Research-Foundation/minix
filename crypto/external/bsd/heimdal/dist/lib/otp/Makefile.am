@@ -14,15 +14,18 @@ include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
 libotp_la_LDFLAGS = -version-info 1:5:1
-libotp_la_LIBADD  = $(LIB_hcrypto) $(LIB_roken) $(LIB_NDBM)
+libotp_la_LIBADD  = $(LIB_hcrypto) $(LIB_roken)
 
 if HAVE_DB1
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
+libotp_la_LIBADD += $(LIB_db_create)
 else
 if HAVE_DB3
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
+libotp_la_LIBADD += $(LIB_db_create)
 else
 ndbm_wrap =
+libotp_la_LIBADD += $(LIB_NDBM)
 endif
 endif
 
@@ -39,6 +42,8 @@ dist_libotp_la_SOURCES = \
 	roken_rename.h
 
 nodist_libotp_la_SOURCES = $(ndbm_wrap) $(ROKEN_SRCS)
+
+libotp_la_DEPENDENCIES = version-script.map
 
 if do_roken_rename
 ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
@@ -79,4 +84,4 @@ CLEANFILES = \
 	strlwr.c \
 	strncasecmp.c
 
-EXTRA_DIST = version-script.map
+EXTRA_DIST = NTMakefile version-script.map

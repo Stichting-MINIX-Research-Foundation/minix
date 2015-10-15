@@ -1,4 +1,4 @@
-/*	$NetBSD: kdestroy.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kdestroy.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000, 2003 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@ struct getargs args[] = {
     { "credential",	0,   arg_string, rk_UNCONST(&credential),
       "remove one credential", "principal" },
     { "cache",		'c', arg_string, rk_UNCONST(&cache), "cache to destroy", "cache" },
-    { "all",		'A', arg_flag, &all_flag, "destroy all caches" },
+    { "all",		'A', arg_flag, &all_flag, "destroy all caches", NULL },
 #ifndef NO_AFS
     { "unlog",		0,   arg_negative_flag, &unlog_flag,
       "do not destroy tokens", NULL },
@@ -109,7 +109,7 @@ main (int argc, char **argv)
 	    krb5_err(context, 1, ret, "krb5_cccol_cursor_new");
 
 	while (krb5_cccol_cursor_next (context, cursor, &ccache) == 0 && ccache != NULL) {
-	    
+
 	    ret = krb5_cc_destroy (context, ccache);
 	    if (ret) {
 		krb5_warn(context, ret, "krb5_cc_destroy");
@@ -134,25 +134,25 @@ main (int argc, char **argv)
 	if (ret == 0) {
 	    if (credential) {
 		krb5_creds mcred;
-		
+
 		krb5_cc_clear_mcred(&mcred);
-		
+
 		ret = krb5_parse_name(context, credential, &mcred.server);
 		if (ret)
 		    krb5_err(context, 1, ret,
 			     "Can't parse principal %s", credential);
-		
+
 		ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
 		if (ret)
 		    krb5_err(context, 1, ret,
 			     "Failed to remove principal %s", credential);
-		
+
 		krb5_cc_close(context, ccache);
 		krb5_free_principal(context, mcred.server);
 		krb5_free_context(context);
 		return 0;
 	    }
-	    
+
 	    ret = krb5_cc_destroy (context, ccache);
 	    if (ret) {
 		krb5_warn(context, ret, "krb5_cc_destroy");

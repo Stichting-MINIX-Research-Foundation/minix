@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.21 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.27 2014/08/30 14:24:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -89,21 +89,21 @@ const char hexdigits[16] = "0123456789abcdef";
 #define ZEROPAD		0x40
 #define NEGATIVE	0x80
 #define KPRINTN(base)	kprintn(put, ul, base, lflag, width)
-#define RZERO()							\
+#define RADJUSTZEROPAD()					\
 do {								\
 	if ((lflag & (ZEROPAD|LADJUST)) == ZEROPAD) {		\
 		while (width-- > 0)				\
 			put('0');				\
 	}							\
 } while (/*CONSTCOND*/0)
-#define RPAD()							\
+#define LADJUSTPAD()						\
 do {								\
 	if (lflag & LADJUST) {					\
 		while (width-- > 0)				\
 			put(' ');				\
 	}							\
 } while (/*CONSTCOND*/0)
-#define LPAD()							\
+#define RADJUSTPAD()						\
 do {								\
 	if ((lflag & (ZEROPAD|LADJUST)) == 0) {			\
 		while (width-- > 0)				\
@@ -112,9 +112,9 @@ do {								\
 } while (/*CONSTCOND*/0)
 #else	/* LIBSA_PRINTF_WIDTH_SUPPORT */
 #define KPRINTN(base)	kprintn(put, ul, base)
-#define RZERO()		/**/
-#define RPAD()		/**/
-#define LPAD()		/**/
+#define RADJUSTZEROPAD()	/**/
+#define LADJUSTPAD()		/**/
+#define RADJUSTPAD()		/**/
 #endif	/* LIBSA_PRINTF_WIDTH_SUPPORT */
 
 #ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
@@ -143,6 +143,7 @@ sputchar(int c)
 	scount++; /* increase scount regardless */
 	if (!sbuf) return; /* hanlde NULL sbuf  */
 #endif /* defined(__minix) */
+
 	if (sbuf < ebuf)
 		*sbuf++ = c;
 }
@@ -260,6 +261,15 @@ reswitch:
 #endif
 				lflag |= LONG;
 			goto reswitch;
+		case 'j':
+#ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
+			if (sizeof(intmax_t) == sizeof(long long))
+				lflag |= LLONG;
+			else
+#endif
+			if (sizeof(intmax_t) == sizeof(long))
+				lflag |= LONG;
+			goto reswitch;
 		case 't':
 			if (sizeof(PTRDIFF_T) == sizeof(long))
 				lflag |= LONG;
@@ -273,9 +283,9 @@ reswitch:
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 			--width;
 #endif
-			RPAD();
+			RADJUSTPAD();
 			put(ch & 0xFF);
-			LPAD();
+			LADJUSTPAD();
 			break;
 		case 's':
 			p = va_arg(ap, char *);
@@ -288,7 +298,7 @@ reswitch:
 #endif /* defined(__minix) */
 			width -= q - p;
 #endif
-			RPAD();
+			RADJUSTPAD();
 #if defined(LIBSA_PRINTF_WIDTH_SUPPORT) && defined(__minix)
 			while ((max < 0 || max-- > 0) &&
 			    (ch = (unsigned char)*p++))
@@ -296,7 +306,7 @@ reswitch:
 			while ((ch = (unsigned char)*p++))
 #endif /* !defined(LIBSA_PRINTF_WIDTH_SUPPORT) || !defined(__minix) */
 				put(ch);
-			LPAD();
+			LADJUSTPAD();
 			break;
 		case 'd':
 			ul =
@@ -388,15 +398,15 @@ kprintn(void (*put)(int), UINTMAX_T ul, int base)
 	else if (lflag & SPACE)
 		*p++ = ' ';
 	width -= p - buf;
-	if ((lflag & LADJUST) == 0) {
+	if (lflag & ZEROPAD) {
 		while (p > q)
 			put(*--p);
 	}
 #endif
-	RPAD();
-	RZERO();
+	RADJUSTPAD();
+	RADJUSTZEROPAD();
 	do {
 		put(*--p);
 	} while (p > buf);
-	LPAD();
+	LADJUSTPAD();
 }

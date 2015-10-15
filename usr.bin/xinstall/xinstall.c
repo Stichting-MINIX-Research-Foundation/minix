@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,10 @@ __RCSID("$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $");
 #include <util.h>
 #include <vis.h>
 
+#ifdef HAVE_POSIX_SPAWN
+#include <spawn.h>
+#endif
+
 #include <md5.h>
 #include <rmd160.h>
 #include <sha1.h>
@@ -79,8 +83,8 @@ __RCSID("$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $");
 
 #include "pathnames.h"
 #include "mtree.h"
+#include "metachar.h"
 
-#define STRIP_ARGS_MAX 32
 #define BACKUP_SUFFIX ".old"
 
 static int	dobackup, dodir, dostrip, dolink, dopreserve, dorename, dounpriv;
@@ -133,7 +137,8 @@ static void	makelink(char *, char *);
 static void	metadata_log(const char *, const char *, struct timeval *,
 	    const char *, const char *, off_t);
 static int	parseid(char *, id_t *);
-static void	strip(char *);
+static void 	run(const char *, const char *, const char *, int);
+static void	strip(const char *);
 __dead static void	usage(void);
 static char   *xbasename(char *);
 static char   *xdirname(char *);
@@ -156,7 +161,8 @@ main(int argc, char *argv[])
 		case 'a':
 			afterinstallcmd = strdup(optarg);
 			if (afterinstallcmd == NULL)
-				errx(1, "%s", strerror(ENOMEM));
+				err(EXIT_FAILURE,
+				    "Can't allocate after command");
 			break;
 		case 'B':
 			suffix = optarg;
@@ -225,14 +231,14 @@ main(int argc, char *argv[])
 					dolink |= LN_RELATIVE;
 					break;
 				default:
-					errx(1, "%c: invalid link type", *p);
+					errx(EXIT_FAILURE, "%c: invalid link type", *p);
 					/* NOTREACHED */
 				}
 			break;
 		case 'm':
 			haveopt_m = 1;
 			if (!(set = setmode(optarg)))
-				err(1, "Cannot set file mode `%s'", optarg);
+				err(EXIT_FAILURE, "Cannot set file mode `%s'", optarg);
 			mode = getmode(set, 0);
 			free(set);
 			break;
@@ -241,7 +247,7 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			if (! setup_getid(optarg))
-				errx(1,
+				errx(EXIT_FAILURE,
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
 			break;
@@ -258,7 +264,7 @@ main(int argc, char *argv[])
 		case 'S':
 			stripArgs = strdup(optarg);
 			if (stripArgs == NULL)
-				errx(1, "%s", strerror(ENOMEM));
+				err(EXIT_FAILURE, "Can't allocate options");
 			/* fall through; -S implies -s */
 			/*FALLTHROUGH*/
 		case 's':
@@ -316,7 +322,7 @@ main(int argc, char *argv[])
 		if (gid_from_group(group, &gid) == -1) {
 			id_t id;
 			if (!parseid(group, &id))
-				errx(1, "unknown group %s", group);
+				errx(EXIT_FAILURE, "unknown group %s", group);
 			gid = id;
 		}
 		iflags |= HASGID;
@@ -325,7 +331,7 @@ main(int argc, char *argv[])
 		if (uid_from_user(owner, &uid) == -1) {
 			id_t id;
 			if (!parseid(owner, &id))
-				errx(1, "unknown user %s", owner);
+				errx(EXIT_FAILURE, "unknown user %s", owner);
 			uid = id;
 		}
 		iflags |= HASUID;
@@ -334,7 +340,7 @@ main(int argc, char *argv[])
 #if ! HAVE_NBTOOL_CONFIG_H
 	if (fflags && !dounpriv) {
 		if (string_to_flags(&fflags, &fileflags, NULL))
-			errx(1, "%s: invalid flag", fflags);
+			errx(EXIT_FAILURE, "%s: invalid flag", fflags);
 		/* restore fflags since string_to_flags() changed it */
 		fflags = flags_to_string(fileflags, "-");
 		iflags |= SETFLAGS;
@@ -371,12 +377,12 @@ main(int argc, char *argv[])
 		/* makelink() handles checks for links */
 		if (!dolink) {
 			if (stat(*argv, &from_sb))
-				err(1, "%s: stat", *argv);
+				err(EXIT_FAILURE, "%s: stat", *argv);
 			if (!S_ISREG(to_sb.st_mode))
-				errx(1, "%s: not a regular file", to_name);
+				errx(EXIT_FAILURE, "%s: not a regular file", to_name);
 			if (to_sb.st_dev == from_sb.st_dev &&
 			    to_sb.st_ino == from_sb.st_ino)
-				errx(1, "%s and %s are the same file", *argv,
+				errx(EXIT_FAILURE, "%s and %s are the same file", *argv,
 				    to_name);
 		}
 		/*
@@ -432,7 +438,7 @@ do_link(char *from_name, char *to_name)
 		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		/* This usage is safe. */
 		if (mktemp(tmpl) == NULL)
-			err(1, "%s: mktemp", tmpl);
+			err(EXIT_FAILURE, "%s: mktemp", tmpl);
 		ret = link(from_name, tmpl);
 		if (ret == 0) {
 			ret = rename(tmpl, to_name);
@@ -461,18 +467,18 @@ do_symlink(char *from_name, char *to_name)
 		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		/* This usage is safe. */
 		if (mktemp(tmpl) == NULL)
-			err(1, "%s: mktemp", tmpl);
+			err(EXIT_FAILURE, "%s: mktemp", tmpl);
 
 		if (symlink(from_name, tmpl) == -1)
-			err(1, "symlink %s -> %s", from_name, tmpl);
+			err(EXIT_FAILURE, "symlink %s -> %s", from_name, tmpl);
 		if (rename(tmpl, to_name) == -1) {
 			/* remove temporary link before exiting */
 			(void)unlink(tmpl);
-			err(1, "%s: rename", to_name);
+			err(EXIT_FAILURE, "%s: rename", to_name);
 		}
 	} else {
 		if (symlink(from_name, to_name) == -1)
-			err(1, "symlink %s -> %s", from_name, to_name);
+			err(EXIT_FAILURE, "symlink %s -> %s", from_name, to_name);
 	}
 }
 
@@ -490,10 +496,10 @@ makelink(char *from_name, char *to_name)
 	if (dolink & (LN_HARD|LN_MIXED)) {
 		if (do_link(from_name, to_name) == -1) {
 			if ((dolink & LN_HARD) || errno != EXDEV)
-				err(1, "link %s -> %s", from_name, to_name);
+				err(EXIT_FAILURE, "link %s -> %s", from_name, to_name);
 		} else {
 			if (stat(to_name, &to_sb))
-				err(1, "%s: stat", to_name);
+				err(EXIT_FAILURE, "%s: stat", to_name);
 			if (S_ISREG(to_sb.st_mode)) {
 					/* XXX: hard links to anything
 					 * other than plain files are not
@@ -556,7 +562,7 @@ makelink(char *from_name, char *to_name)
 	if (dolink & LN_ABSOLUTE) {
 		/* Convert source path to absolute */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s: realpath", from_name);
+			err(EXIT_FAILURE, "%s: realpath", from_name);
 		do_symlink(src, to_name);
 			/* XXX: src may point outside of destdir */
 		metadata_log(to_name, "link", NULL, src, NULL, 0);
@@ -568,7 +574,7 @@ makelink(char *from_name, char *to_name)
 
 		/* Resolve pathnames */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s: realpath", from_name);
+			err(EXIT_FAILURE, "%s: realpath", from_name);
 
 		/*
 		 * The last component of to_name may be a symlink,
@@ -576,15 +582,15 @@ makelink(char *from_name, char *to_name)
 		 */
 		cp = xdirname(to_name);
 		if (realpath(cp, dst) == NULL)
-			err(1, "%s: realpath", cp);
+			err(EXIT_FAILURE, "%s: realpath", cp);
 		/* .. and add the last component */
 		if (strcmp(dst, "/") != 0) {
 			if (strlcat(dst, "/", sizeof(dst)) > sizeof(dst))
-				errx(1, "resolved pathname too long");
+				errx(EXIT_FAILURE, "resolved pathname too long");
 		}
 		cp = xbasename(to_name);
 		if (strlcat(dst, cp, sizeof(dst)) > sizeof(dst))
-			errx(1, "resolved pathname too long");
+			errx(EXIT_FAILURE, "resolved pathname too long");
 
 		/* trim common path components */
 		for (s = src, d = dst; *s == *d; s++, d++)
@@ -632,7 +638,7 @@ install(char *from_name, char *to_name, u_int flags)
 	if (!dolink) {
 			/* ensure that from_sb & tv are sane if !dolink */
 		if (stat(from_name, &from_sb))
-			err(1, "%s: stat", from_name);
+			err(EXIT_FAILURE, "%s: stat", from_name);
 		size = from_sb.st_size;
 #if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
@@ -649,7 +655,7 @@ install(char *from_name, char *to_name, u_int flags)
 		devnull = 0;
 		if (!dolink) {
 			if (!S_ISREG(from_sb.st_mode))
-				errx(1, "%s: not a regular file", from_name);
+				errx(EXIT_FAILURE, "%s: not a regular file", from_name);
 		}
 		/* Build the target path. */
 		if (flags & DIRECTORY) {
@@ -698,17 +704,17 @@ install(char *from_name, char *to_name, u_int flags)
 	/* Create target. */
 	if (dorename) {
 		if ((to_fd = mkstemp(to_name)) == -1)
-			err(1, "%s: mkstemp", to_name);
+			err(EXIT_FAILURE, "%s: mkstemp", to_name);
 	} else {
 		if ((to_fd = open(to_name,
 		    O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
-			err(1, "%s: open", to_name);
+			err(EXIT_FAILURE, "%s: open", to_name);
 	}
 	digestresult = NULL;
 	if (!devnull) {
 		if ((from_fd = open(from_name, O_RDONLY, 0)) < 0) {
 			(void)unlink(to_name);
-			err(1, "%s: open", from_name);
+			err(EXIT_FAILURE, "%s: open", from_name);
 		}
 		digestresult =
 		    copy(from_fd, from_name, to_fd, to_name, from_sb.st_size);
@@ -724,13 +730,13 @@ install(char *from_name, char *to_name, u_int flags)
 		 */
 		close(to_fd);
 		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
-			err(1, "stripping %s", to_name);
+			err(EXIT_FAILURE, "stripping %s", to_name);
 
 		/*
 		 * Recalculate size and digestresult after stripping.
 		 */
 		if (fstat(to_fd, &to_sb) != 0)
-			err(1, "%s: fstat", to_name);
+			err(EXIT_FAILURE, "%s: fstat", to_name);
 		size = to_sb.st_size;
 		digestresult =
 		    copy(to_fd, to_name, -1, NULL, size);
@@ -746,7 +752,7 @@ install(char *from_name, char *to_name, u_int flags)
 		 */
 		close(to_fd);
 		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
-			err(1, "running after install command on %s", to_name);
+			err(EXIT_FAILURE, "running after install command on %s", to_name);
 	}
 
 	/*
@@ -757,7 +763,7 @@ install(char *from_name, char *to_name, u_int flags)
 	    (flags & (HASUID | HASGID)) && fchown(to_fd, uid, gid) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
-		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
+		errc(EXIT_FAILURE, serrno, "%s: chown/chgrp", to_name);
 	}
 	tmpmode = mode;
 	if (dounpriv)
@@ -765,7 +771,7 @@ install(char *from_name, char *to_name, u_int flags)
 	if (fchmod(to_fd, tmpmode) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
-		errx(1, "%s: chmod: %s", to_name, strerror(serrno));
+		errc(EXIT_FAILURE, serrno, "%s: chmod", to_name);
 	}
 
 	/*
@@ -785,7 +791,7 @@ install(char *from_name, char *to_name, u_int flags)
 
 	if (dorename) {
 		if (rename(to_name, oto_name) == -1)
-			err(1, "%s: rename", to_name);
+			err(EXIT_FAILURE, "%s: rename", to_name);
 		to_name = oto_name;
 	}
 
@@ -874,14 +880,14 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 #if defined(MADV_SEQUENTIAL) && !defined(__APPLE__) && !defined(__minix)
 			if (madvise(p, (size_t)size, MADV_SEQUENTIAL) == -1
 			    && errno != EOPNOTSUPP)
-				warnx("madvise: %s", strerror(errno));
+				warn("madvise");
 #endif
 
 			if (to_fd >= 0 && write(to_fd, p, size) != size) {
 				serrno = errno;
 				(void)unlink(to_name);
-				errx(1, "%s: write: %s",
-				    to_name, strerror(serrno));
+				errc(EXIT_FAILURE, serrno, "%s: write",
+				    to_name);
 			}
 			switch (digesttype) {
 			case DIGEST_MD5:
@@ -913,8 +919,9 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				    (nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
-					errx(1, "%s: write: %s", to_name,
-					    strerror(nw > 0 ? EIO : serrno));
+					errc(EXIT_FAILURE,
+					    nw > 0 ? EIO : serrno,
+					    "%s: write", to_name);
 				}
 				switch (digesttype) {
 				case DIGEST_MD5:
@@ -942,7 +949,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 			if (nr != 0) {
 				serrno = errno;
 				(void)unlink(to_name);
-				errx(1, "%s: read: %s", from_name, strerror(serrno));
+				errc(EXIT_FAILURE, serrno, "%s: read",
+				    from_name);
 			}
 		}
 	}
@@ -964,17 +972,93 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 	}
 }
 
+static void
+run(const char *command, const char *flags, const char *to_name, int errunlink)
+{
+	char	*args[4];
+	char	*cmd;
+	int	status;
+	int	rv;
+	size_t	i;
+
+	i = 1;
+	status = 0;
+
+	if (needshell(command, 1)) {
+		rv = asprintf(&cmd, "%s %s%s%s", command, flags ? flags : "",
+		    flags ? " " : "", to_name);
+		if (rv < 0) {
+			warn("Cannot execute %s", command);
+			goto out;
+		}
+		command = _PATH_BSHELL;
+		flags = "-c";
+	} else
+		cmd = __UNCONST(to_name);
+
+	args[0] = __UNCONST(command);
+	if (flags)
+		args[i++] = __UNCONST(flags);
+	args[i++] = cmd;
+	args[i] = NULL;
+
+#ifdef HAVE_POSIX_SPAWN
+	if (*command == '/')
+		rv = posix_spawn(NULL, command, NULL, NULL, args, NULL);
+	else
+		rv = posix_spawnp(NULL, command, NULL, NULL, args, NULL);
+	if (rv != 0)
+		warnc(rv, "Cannot execute %s", command);
+	/*
+	 * the wait below will fail if we did not create a child it will
+	 * make rv negative.
+	 */
+#else
+	switch (vfork()) {
+	case -1:
+		rv = errno;
+		if (errunlink)
+			(void)unlink(to_name);
+		errc(EXIT_FAILURE, rv, "vfork");
+		/*NOTREACHED*/
+	case 0:
+		if (*command == '/')
+			execv(command, args);
+		else
+			execvp(command, args);
+		rv = errno;
+		const char *arr[] = {
+			getprogname(),
+			": exec failed for ",
+			command,
+			" (",
+			strerror(rv),
+			")\n",
+		};
+		for (i = 0; i < __arraycount(arr); i++)
+			write(STDERR_FILENO, arr[i], strlen(arr[i]));
+		_exit(1);
+		/*NOTREACHED*/
+	default:
+		break;
+	}
+#endif
+	rv = wait(&status);
+	if (cmd != to_name)
+		free(cmd);
+out:
+	if ((rv < 0 || status) && errunlink)
+		(void)unlink(to_name);
+}
+
 /*
  * strip --
  *	use strip(1) to strip the target file
  */
 static void
-strip(char *to_name)
+strip(const char *to_name)
 {
-	static const char exec_failure[] = ": exec of strip failed: ";
-	int	serrno, status;
-	const char * volatile stripprog, *progname;
-	char *cmd;
+	const char *stripprog;
 
 	if ((stripprog = getenv("STRIP")) == NULL || *stripprog == '\0') {
 #ifdef TARGET_STRIP
@@ -983,47 +1067,7 @@ strip(char *to_name)
 		stripprog = _PATH_STRIP;
 #endif
 	}
-
-	cmd = NULL;
-
-	if (stripArgs) {
-		/*
-		 * Build up a command line and let /bin/sh
-		 * parse the arguments.
-		 */
-		int ret = asprintf(&cmd, "%s %s %s", stripprog, stripArgs,
-		    to_name);
-
-		if (ret == -1 || cmd == NULL)
-			err(1, "asprintf failed");
-	}
-
-	switch (vfork()) {
-	case -1:
-		serrno = errno;
-		(void)unlink(to_name);
-		errx(1, "vfork: %s", strerror(serrno));
-		/*NOTREACHED*/
-	case 0:
-
-		if (stripArgs)
-			execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
-		else
-			execlp(stripprog, "strip", to_name, NULL);
-
-		progname = getprogname();
-		write(STDERR_FILENO, progname, strlen(progname));
-		write(STDERR_FILENO, exec_failure, strlen(exec_failure));
-		write(STDERR_FILENO, stripprog, strlen(stripprog));
-		write(STDERR_FILENO, "\n", 1);
-		_exit(1);
-		/*NOTREACHED*/
-	default:
-		if (wait(&status) == -1 || status)
-			(void)unlink(to_name);
-	}
-
-	free(cmd);
+	run(stripprog, stripArgs, to_name, 1);
 }
 
 /*
@@ -1034,39 +1078,7 @@ strip(char *to_name)
 static void
 afterinstall(const char *command, const char *to_name, int errunlink)
 {
-	int	serrno, status;
-	char	*cmd;
-
-	switch (vfork()) {
-	case -1:
-		serrno = errno;
-		if (errunlink)
-			(void)unlink(to_name);
-		errx(1, "vfork: %s", strerror(serrno));
-		/*NOTREACHED*/
-	case 0:
-		/*
-		 * build up a command line and let /bin/sh
-		 * parse the arguments
-		 */
-		cmd = (char*)malloc(sizeof(char)*
-					  (2+strlen(command)+
-					     strlen(to_name)));
-
-		if (cmd == NULL)
-			errx(1, "%s", strerror(ENOMEM));
-
-		sprintf(cmd, "%s %s", command, to_name);
-
-		execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
-
-		warn("%s: exec of after install command", command);
-		_exit(1);
-		/*NOTREACHED*/
-	default:
-		if ((wait(&status) == -1 || status) && errunlink)
-			(void)unlink(to_name);
-	}
+	run(command, NULL, to_name, errunlink);
 }
 
 /*
@@ -1126,10 +1138,10 @@ install_dir(char *path, u_int flags)
 				if (stat(path, &sb) < 0) {
 					/* Not there; use mkdir()s error */
 					errno = sverrno;
-					err(1, "%s: mkdir", path);
+					err(EXIT_FAILURE, "%s: mkdir", path);
 				}
 				if (!S_ISDIR(sb.st_mode)) {
-					errx(1,
+					errx(EXIT_FAILURE,
 					    "%s exists but is not a directory",
 					    path);
 				}
@@ -1167,9 +1179,9 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 
 	if (!metafp)	
 		return;
-	buf = (char *)malloc(4 * strlen(path) + 1);	/* buf for strsvis(3) */
+	buf = malloc(4 * strlen(path) + 1);	/* buf for strsvis(3) */
 	if (buf == NULL) {
-		warnx("%s", strerror(ENOMEM));
+		warn("Can't allocate metadata");
 		return;
 	}
 							/* lock log file */
@@ -1208,8 +1220,10 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	if (*type == 'f') /* type=file */
 		fprintf(metafp, " size=%lld", (long long)size);
 	if (tv != NULL && dopreserve)
-		fprintf(metafp, " time=%lld.%ld",
-			(long long)tv[1].tv_sec, (long)tv[1].tv_usec);
+		fprintf(metafp, " time=%lld.%0*lld",
+			(long long)tv[1].tv_sec,
+			(tv[1].tv_usec == 0 ? 1 : 9),
+			(long long)tv[1].tv_usec * 1000);
 	if (digestresult && digest)
 		fprintf(metafp, " %s=%s", digest, digestresult);
 	if (fflags)

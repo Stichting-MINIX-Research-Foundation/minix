@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.14 2012/06/15 13:57:59 yamt Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.15 2015/04/27 06:51:40 knakahara Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -60,7 +60,7 @@ struct mp_intr_map
 	int bus_pin;
 	struct pic *ioapic;	/* NULL for local apic */
 	int ioapic_pin;
-	int ioapic_ih;		/* int handle, see i82093var.h for encoding */
+	intr_handle_t ioapic_ih;	/* int handle, see i82093var.h for encoding */
 	int type;		/* from mp spec intr record */
  	int flags;		/* from mp spec intr record */
 	uint32_t redir;

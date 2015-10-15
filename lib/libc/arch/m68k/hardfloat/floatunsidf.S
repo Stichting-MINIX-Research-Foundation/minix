@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunsidf.S,v 1.1 2013/07/18 21:25:11 matt Exp $	*/
+/*	$NetBSD: floatunsidf.S,v 1.2 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: floatunsidf.S,v 1.1 2013/07/18 21:25:11 matt Exp $")
+RCSID("$NetBSD: floatunsidf.S,v 1.2 2014/03/18 18:20:37 riastradh Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __mcoldfire__

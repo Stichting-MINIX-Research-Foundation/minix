@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/02/04 15:00:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/05/30 18:28:14 joerg Exp $
 
 LIB=	LLVMAArch64Disassembler
 
@@ -9,7 +9,8 @@ CPPFLAGS+=	-I${AARCH64_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/AArch64
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/AArch64/Disassembler
 
-SRCS+=	AArch64Disassembler.cpp
+SRCS+=	AArch64Disassembler.cpp \
+	AArch64ExternalSymbolizer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

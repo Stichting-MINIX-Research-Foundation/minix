@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.12 2012/08/16 12:57:24 pgoyette Exp $
+#       $NetBSD: t_tcpip.sh,v 1.15 2015/08/26 09:19:20 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ http_head()
 http_body()
 {
 
-	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
+	atf_check -s exit:0 ${rumpnetsrv} -lrumpnet_netinet6 ${RUMP_SERVER}
 
 	# start bozo in daemon mode
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
@@ -53,8 +53,9 @@ http_body()
 	# check that we got what we wanted
 	atf_check -o match:'HTTP/1.0 200 OK' cat webfile
 	atf_check -o match:'Content-Length: 95' cat webfile
+	blank_line_re="$(printf '^\r$')" # matches a line with only <CR><LF>
 	atf_check -o file:"$(atf_get_srcdir)/index.html" \
-	    sed -n '1,/^$/!p' webfile
+	    sed -n "1,/${blank_line_re}/!p" webfile
 }
 
 http_cleanup()
@@ -121,6 +122,7 @@ ssh_head()
 
 ssh_body()
 {
+	atf_expect_fail "PR lib/50174"
 
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server

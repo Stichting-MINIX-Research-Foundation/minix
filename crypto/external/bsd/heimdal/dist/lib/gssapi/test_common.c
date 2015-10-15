@@ -1,4 +1,4 @@
-/*	$NetBSD: test_common.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: test_common.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -51,7 +51,7 @@ gssapi_err(OM_uint32 maj_stat, OM_uint32 min_stat, gss_OID mech)
 	maj_error_message.value = NULL;
 	min_error_message.length = 0;
 	min_error_message.value = NULL;
-	
+
 	disp_maj_stat = gss_display_status(&disp_min_stat, maj_stat,
 					   GSS_C_GSS_CODE,
 					   mech, &msg_ctx, &maj_error_message);

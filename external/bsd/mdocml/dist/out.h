@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.h,v 1.21 2011/07/17 15:24:25 kristaps Exp $ */
+/*	Id: out.h,v 1.21 2011/07/17 15:24:25 kristaps Exp  */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *

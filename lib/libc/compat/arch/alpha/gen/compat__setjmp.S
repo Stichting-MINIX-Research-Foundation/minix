@@ -1,4 +1,4 @@
-/* $NetBSD: compat__setjmp.S,v 1.1 2005/09/16 18:21:19 drochner Exp $ */
+/* $NetBSD: compat__setjmp.S,v 1.4 2014/01/24 10:19:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,7 +54,7 @@ LEAF(_setjmp, 1)
 	stq	s6, ((15 + 4) * 8)(a0)
 	stq	ra, ((26 + 4) * 8)(a0)
 	stq	sp, ((30 + 4) * 8)(a0)
-	ldiq	t0, 0xacedbadd			/* sigcontext magic number */
+	ldq	t0, magic			/* sigcontext magic number */
 	stq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
 	ldiq	t0, 1
@@ -83,12 +83,14 @@ LEAF(_setjmp, 1)
 
 	mov	zero, v0			/* return zero */
 	RET
+magic:
+	.quad 0xacedbadd
 END(_setjmp)
 
 LEAF(_longjmp, 2)
 	LDGP(pv)
 	ldq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
-	ldiq	t1, 0xacedbadd
+	ldq	t1, magic			/* sigcontext magic number */
 	cmpeq	t0, t1, t0
 	beq	t0, botch			/* If the magic was bad, punt */
 

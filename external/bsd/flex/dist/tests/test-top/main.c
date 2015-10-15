@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2009/10/26 00:29:29 christos Exp $	*/
-
 /*
  * This file is part of flex.
  * 

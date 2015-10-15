@@ -1,4 +1,4 @@
-/*	$NetBSD: calc3.y,v 1.1.1.4 2013/04/06 14:45:28 christos Exp $	*/
+/*	$NetBSD: calc3.y,v 1.1.1.5 2015/01/03 22:58:23 christos Exp $	*/
 
 %pure-parser
 
@@ -93,9 +93,13 @@ main (void)
     return 0;
 }
 
+#define UNUSED(x) ((void)(x))
+
 static void
 YYERROR_DECL()
 {
+    UNUSED(regs); /* %parse-param regs is not actually used here */
+    UNUSED(base); /* %parse-param base is not actually used here */
     fprintf(stderr, "%s\n", s);
 }
 

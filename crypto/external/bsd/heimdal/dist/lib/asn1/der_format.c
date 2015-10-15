@@ -1,4 +1,4 @@
-/*	$NetBSD: der_format.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_format.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "der_locl.h"
 #include <krb5/hex.h>
 
-__RCSID("$NetBSD: der_format.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 int
 der_parse_hex_heim_integer (const char *p, heim_integer *data)
@@ -110,7 +110,7 @@ int
 der_print_heim_oid (const heim_oid *oid, char delim, char **str)
 {
     struct rk_strpool *p = NULL;
-    int i;
+    size_t i;
 
     if (oid->length == 0)
 	return EINVAL;

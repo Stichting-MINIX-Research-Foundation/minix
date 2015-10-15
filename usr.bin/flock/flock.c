@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $");
 #include <errno.h>
 #include <getopt.h>
 #include <paths.h>
+#include <limits.h>
 #include <time.h>
 
 static struct option flock_longopts[] = {
@@ -63,7 +64,7 @@ static struct option flock_longopts[] = {
 
 static sig_atomic_t timeout_expired;
 
-static __dead void
+static __dead __printflike(1, 2) void
 usage(const char *fmt, ...) 
 {
 	if (fmt) {
@@ -155,15 +156,16 @@ main(int argc, char *argv[])
 	int fd = -1;
 	int debug = 0;
 	int verbose = 0;
+	long l;
 	char *mcargv[] = {
 	    __UNCONST(_PATH_BSHELL), __UNCONST("-c"), NULL, NULL
 	};
 	char **cmdargv = NULL, *v;
-#ifndef __minix
+#if !defined(__minix)
 	timer_t tm;
-#else /* __minix */
+#else
 	struct itimerval it;
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 	setprogname(argv[0]);
 
@@ -211,15 +213,21 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if ((lock & ~LOCK_NB) == 0)
-		usage("Missing lock type flag");
+		lock |= LOCK_EX;	/* default to exclusive like linux */
 
 	switch (argc) {
 	case 0:
 		usage("Missing lock file argument");
 	case 1:
 		if (cls)
-			usage("Close is valid only for descriptors");
-		fd = strtol(argv[0], NULL, 0);	// XXX: error checking
+			usage("Close is not valid for descriptors");
+		errno = 0;
+		l = strtol(argv[0], &v, 0);
+		if ((l == LONG_MIN || l == LONG_MAX) && errno == ERANGE)
+			err(EXIT_FAILURE, "Bad file descriptor `%s'", argv[0]);
+		if (l > INT_MAX || l < 0 || *v)
+			errx(EXIT_FAILURE, "Bad file descriptor `%s'", argv[0]);
+		fd = (int)l;
 		if (debug) {
 			fprintf(stderr, "descriptor %s lock %s\n",
 			    argv[0], lock2name(lock));
@@ -253,13 +261,13 @@ main(int argc, char *argv[])
 	}
 
 	if (timeout) {
-#ifndef __minix
+#if !defined(__minix)
 		struct sigevent ev;
 		struct itimerspec it;
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 		struct sigaction sa;
 
-#ifndef __minix
+#if !defined(__minix)
 		timespecclear(&it.it_interval);
 		it.it_value.tv_sec = timeout;
 		it.it_value.tv_nsec = (timeout - it.it_value.tv_sec) *
@@ -274,7 +282,7 @@ main(int argc, char *argv[])
 
 		if (timer_settime(tm, TIMER_RELTIME, &it, NULL) == -1)
 			err(EXIT_FAILURE, "timer_settime");
-#else /* __minix */
+#else 
 		memset(&it.it_interval, 0, sizeof(it.it_interval));
 		it.it_value.tv_sec = timeout;
 		it.it_value.tv_usec = (timeout - it.it_value.tv_sec) * 1000000;
@@ -283,7 +291,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "setitimer");
 
 		memset(&it, 0, sizeof(it)); /* for the reset later */
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_handler = sigalrm;
@@ -306,11 +314,11 @@ main(int argc, char *argv[])
 	}
 
 	if (timeout)
-#ifndef __minix
+#if !defined(__minix)
 		timer_delete(tm);
-#else /* __minix */
+#else
 		setitimer(ITIMER_REAL, &it, NULL);
-#endif /* __minix */
+#endif /* !defined(__minix) */
 
 	if (cls)
 		(void)close(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_gic.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_gic.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -60,7 +60,7 @@ test_get_init_creds(krb5_context context,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
-    
+
     ret = krb5_get_init_creds_opt_set_process_last_req(context,
 						       opt,
 						       lr_proc,

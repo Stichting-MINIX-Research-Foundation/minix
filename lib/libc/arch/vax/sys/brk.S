@@ -31,7 +31,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93" */
-RCSID("$NetBSD: brk.S,v 1.14 2013/07/18 12:27:01 matt Exp $")
+RCSID("$NetBSD: brk.S,v 1.15 2014/03/18 18:20:37 riastradh Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(__curbrk)

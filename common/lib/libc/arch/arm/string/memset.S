@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.7 2013/12/02 21:21:33 joerg Exp $	*/
+/*	$NetBSD: memset.S,v 1.8 2015/03/26 13:34:51 justin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <machine/asm.h>
 
-#if defined(__ARM_EABI__) && !defined(_BZERO)
+#if defined(__ARM_EABI__) && !defined(_BZERO) && !defined(_RUMPKERNEL)
 ENTRY(__aeabi_memset)
 	mov	r3, r1
 	mov	r1, r2

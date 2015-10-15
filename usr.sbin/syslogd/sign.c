@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.5 2012/06/06 00:33:45 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.5 2012/06/06 00:33:45 christos Exp $");
+__RCSID("$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -514,7 +514,7 @@ sign_send_certificate_block(struct signature_group_t *sg)
 		return false;
 
 	DPRINTF((D_CALL|D_SIGN), "sign_send_certificate_block(%p)\n", sg);
-	tstamp = make_timestamp(NULL, true);
+	tstamp = make_timestamp(NULL, true, (size_t)-1);
 
 	payload_len = snprintf(payload, sizeof(payload), "%s %c %s", tstamp,
 		GlobalSign.keytype, GlobalSign.pubkey_b64);
@@ -801,7 +801,7 @@ sign_msg_sign(struct buf_msg **bufferptr, char *sd, size_t linesize)
 
 	/* set up buffer */
 	buffer = buf_msg_new(0);
-	buffer->timestamp = strdup(make_timestamp(NULL, !BSDOutputFormat));
+	buffer->timestamp = make_timestamp(NULL, !BSDOutputFormat, 0);
 	buffer->prog = appname;
 	buffer->pid = include_pid;
 	buffer->recvhost = buffer->host = LocalFQDN;

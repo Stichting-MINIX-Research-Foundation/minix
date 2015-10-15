@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.63 2013/05/03 10:27:05 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.63 2013/05/03 10:27:05 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -101,7 +101,7 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)___tls_get_addr,
 #endif
 #endif
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 		(fptr_t)__gnu_Unwind_Find_exidx,	/* for gcc EHABI */
 #endif
 		NULL
@@ -260,7 +260,7 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
 		if (name[1] != strp[1] || strcmp(name, strp))
 			continue;
-#ifdef __mips__
+#if defined(__mips__) || defined(__vax__)
 		if (symp->st_shndx == SHN_UNDEF)
 			continue;
 #else

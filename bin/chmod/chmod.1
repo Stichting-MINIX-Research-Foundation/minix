@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.1,v 1.24 2012/10/22 17:47:06 christos Exp $
+.\"	$NetBSD: chmod.1,v 1.25 2013/12/17 09:54:08 apb Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,6 +106,9 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+The default is as if the
+.Fl P
+option had been specified.
 .Pp
 Only the owner of a file or the super-user is permitted to change
 the mode of a file.

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2012/08/20 15:38:59 tron Exp $
+# $NetBSD: mi,v 1.41 2015/08/23 18:28:41 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8827,3 +8827,4 @@
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-9		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-JISX0201.1976-0	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-KOI8-R		xfont	share,xorg,x11fonts
+./var/db/obsolete/xfont					xbase-sys-root	xorg

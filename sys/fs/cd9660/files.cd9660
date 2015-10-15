@@ -1,7 +1,8 @@
-#	$NetBSD: files.cd9660,v 1.1 2002/12/23 17:52:09 jdolecek Exp $
+#	$NetBSD: files.cd9660,v 1.2 2014/10/11 06:42:18 uebayasi Exp $
 
 deffs	CD9660
 
+define	cd9660: vfs
 file	fs/cd9660/cd9660_bmap.c		cd9660
 file	fs/cd9660/cd9660_lookup.c	cd9660
 file	fs/cd9660/cd9660_node.c		cd9660

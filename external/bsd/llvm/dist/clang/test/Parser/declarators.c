@@ -7,6 +7,7 @@ void f1(int [*]);
 void f2(int [const *]);
 void f3(int [volatile const*]);
 int f4(*XX)(void); /* expected-error {{cannot return}} expected-warning {{type specifier missing, defaults to 'int'}} */
+int f5(int [static]); /* expected-error {{'static' may not be used without an array size}} */
 
 char ((((*X))));
 
@@ -100,6 +101,7 @@ long struct X { int x; } test15(); // expected-error {{'long struct' is invalid}
 
 void test16(i) int i j; { } // expected-error {{expected ';' at end of declaration}}
 void test17(i, j) int i, j k; { } // expected-error {{expected ';' at end of declaration}}
+void knrNoSemi(i) int i { } // expected-error {{expected ';' at end of declaration}}
 
 
 // PR12595
@@ -111,5 +113,42 @@ enum E1 { e1 }: // expected-error {{expected ';'}}
 struct EnumBitfield { // expected-warning {{struct without named members is a GNU extension}}
   enum E2 { e2 } : 4; // ok
   struct S { int n; }: // expected-error {{expected ';'}}
+                       // expected-warning@-1 {{declaration does not declare anything}}
 
 };
+
+// PR10982
+enum E11 {
+  A1 = 1,
+};
+
+enum E12 {
+  ,  // expected-error{{expected identifier}}
+  A2
+};
+void func_E12(enum E12 *p) { *p = A2; }
+
+enum E13 {
+  1D,  // expected-error{{expected identifier}}
+  A3
+};
+void func_E13(enum E13 *p) { *p = A3; }
+
+enum E14 {
+  A4 12,  // expected-error{{expected '= constant-expression' or end of enumerator definition}}
+  A4a
+};
+void func_E14(enum E14 *p) { *p = A4a; }
+
+enum E15 {
+  A5=12 4,  // expected-error{{expected '}' or ','}}
+  A5a
+};
+void func_E15(enum E15 *p) { *p = A5a; }
+
+enum E16 {
+  A6;  // expected-error{{expected '= constant-expression' or end of enumerator definition}}
+  A6a
+};
+
+int PR20634 = sizeof(struct { int n; } [5]);

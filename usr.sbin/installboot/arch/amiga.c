@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $	*/
+/*	$NetBSD: amiga.c,v 1.9 2015/06/05 05:02:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.8 2013/06/14 03:54:43 msaitoh Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.9 2015/06/05 05:02:48 mlelstv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ amiga_setboot(ib_params *params)
 		}
 		(void)strncpy(dline, params->command, CMDLN_LEN-1);
 
-		block[1] = 0;
-		block[1] = 0xffffffff - chksum(block, sumlen);
+		block[1] = htobe32(0);
+		block[1] = htobe32(0xffffffff - chksum(block, sumlen));
 	}
 
 	if (params->flags & IB_NOWRITE) {
@@ -164,7 +164,7 @@ chksum(block, size)
 
 	for (i=0; i<size; i++) {
 		lastsum = sum;
-		sum += htobe32(block[i]);
+		sum += be32toh(block[i]);
 		if (sum < lastsum)
 			++sum;
 	}

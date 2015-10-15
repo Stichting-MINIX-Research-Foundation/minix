@@ -1,4 +1,4 @@
-/* $NetBSD: t_unlink.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_unlink.c,v 1.2 2014/04/21 18:05:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_unlink.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_unlink.c,v 1.2 2014/04/21 18:05:17 martin Exp $");
 
 #include <sys/stat.h>
 
@@ -129,9 +129,13 @@ ATF_TC_HEAD(unlink_perm, tc)
 
 ATF_TC_BODY(unlink_perm, tc)
 {
+	int rv;
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EACCES, unlink("/etc") == -1);
+	rv = unlink("/etc");
+	ATF_REQUIRE_MSG(rv == -1 && (errno == EACCES || errno == EPERM),
+	    "unlinking a directory did not fail with EPERM or EACCESS; "
+	    "unlink() returned %d, errno %d", rv, errno);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EACCES, unlink("/root/.profile") == -1);

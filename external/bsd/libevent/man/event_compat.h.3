@@ -1,4 +1,4 @@
-.TH "event2/event_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/event_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -33,6 +33,8 @@ Potentially non-threadsafe versions of the functions in \fBevent\&.h\fP: provide
 .PP
 .RI "\fBtimeout_* macros\fP"
 .br
+
+.PP
 \fBDeprecated\fP
 .RS 4
 These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evtimer_* macros instead\&.
@@ -62,6 +64,8 @@ These macros are deprecated because their naming is inconsistent with the rest o
 .PP
 .RI "\fBsignal_* macros\fP"
 .br
+
+.PP
 \fBDeprecated\fP
 .RS 4
 These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evsignal_* macros instead\&.
@@ -153,7 +157,7 @@ This function is deprecated because it is easily confused by multiple calls to \
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_dispatch()\fP, \fBevent_init()\fP 
 .RE
@@ -162,19 +166,21 @@ This function is deprecated because it is easily confused by multiple calls to \
 .SS "const char* event_get_method (void)"
 
 .PP
-Get the kernel event notification mechanism used by Libevent\&. \fBDeprecated\fP
+Get the kernel event notification mechanism used by Libevent\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is obsolete, and has been replaced by \fBevent_base_get_method()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&.
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_get_method()\fP 
 .RE
 .PP
 
-.SS "struct \fBevent_base\fP* event_init (void)\fC [read]\fP"
+.SS "struct \fBevent_base\fP* event_init (void)"
 
 .PP
 Initialize the event API\&. The event API needs to be initialized with \fBevent_init()\fP before it can be used\&. Sets the global current base that gets used for events that have no base associated with them\&.
@@ -185,7 +191,7 @@ This function is deprecated because it replaces the 'current' \fBevent_base\fP, 
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_set()\fP, \fBevent_base_new()\fP 
 .RE
@@ -202,7 +208,7 @@ This function is deprecated because it uses the event base from the last call to
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_loop()\fP, \fBevent_init()\fP 
 .RE
@@ -219,7 +225,7 @@ This function is deprecated because it uses the event base from the last call to
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_loopbreak()\fP, \fBevent_init()\fP 
 .RE
@@ -236,7 +242,7 @@ This function is deprecated because it uses the event base from the last call to
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_init\fP, \fBevent_base_loopexit()\fP 
 .RE
@@ -245,13 +251,15 @@ This function is deprecated because it uses the event base from the last call to
 .SS "int event_once (\fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *, const struct timeval *)"
 
 .PP
-Schedule a one-time event to occur\&. \fBDeprecated\fP
+Schedule a one-time event to occur\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. Its use is deprecated because it relies on the 'current' base configured by \fBevent_init()\fP\&.
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_once()\fP 
 .RE
@@ -260,13 +268,15 @@ This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. I
 .SS "int event_priority_init (int)"
 
 .PP
-Set the number of different event priorities\&. \fBDeprecated\fP
+Set the number of different event priorities\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_priority_init()\fP\&.
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevent_base_priority_init()\fP 
 .RE
@@ -275,7 +285,9 @@ This function is deprecated because it is easily confused by multiple calls to \
 .SS "void event_set (struct \fBevent\fP *, \fBevutil_socket_t\fP, short, void(*)(\fBevutil_socket_t\fP, short, void *), void *)"
 
 .PP
-Prepare an event structure to be added\&. \fBDeprecated\fP
+Prepare an event structure to be added\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 \fBevent_set()\fP is not recommended for new code, because it requires a subsequent call to \fBevent_base_set()\fP to be safe under most circumstances\&. Use \fBevent_assign()\fP or \fBevent_new()\fP instead\&. 
 .RE

@@ -53,7 +53,7 @@ clock_t tim;
 	}
 	else if (!curr_time)
 	{
-		DBLOCK(0x20, printf("set_time: new time %lu < prev_time %lu\n",
+		DBLOCK(0x20, printf("set_time: new time %u < prev_time %u\n",
 			tim, prev_time));
 	}
 }

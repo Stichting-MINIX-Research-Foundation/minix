@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.20 2009/03/11 13:39:14 joerg Exp $
+.\" $NetBSD: clock_settime.2,v 1.22 2014/03/28 15:35:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,6 +105,20 @@ error if it's the clock specified in a call to
 .Fn clock_settime .
 The origin of the clock is unspecified.
 .Pp
+A
+.Fa clock_id
+of
+.Dv CLOCK_VIRTUAL
+identifies a clock that increments only when the CPU is running in
+user mode on behalf of the calling process.
+.Pp
+A
+.Fa clock_id
+of
+.Dv CLOCK_PROF
+identifies a clock that increments when the CPU is running in user
+or kernel mode on behalf of the calling process.
+.Pp
 If the calling user is not the super-user, then the
 .Fn clock_settime
 function in the standard C library will try to use the
@@ -147,14 +161,12 @@ function will fail if:
 The
 .Fa tp
 argument is outside the range for the specified clock,
-.Fa clock_id .
-.It Bq Er EINVAL
-The
+.Fa clock_id ;
+or the
 .Fa tp
 argument specified a nanosecond value less than zero of greater than or equal
-1000 million.
-.It Bq Er EINVAL
-The
+1000 million;
+or the
 .Fa clock_id
 argument is a clock that can not be adjusted.
 .It Bq Er EPERM

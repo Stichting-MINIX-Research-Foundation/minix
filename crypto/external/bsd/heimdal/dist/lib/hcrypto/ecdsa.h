@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdsa.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: ecdsa.h,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -44,7 +44,7 @@
 
 int ECDSA_verify(int, const unsigned char *, unsigned int,
 		 unsigned char *, unsigned int, EC_KEY *);
-	     
+
 int ECDSA_sign(int, const unsigned char *, unsigned int,
 	       unsigned char *, unsigned int *, EC_KEY *);
 

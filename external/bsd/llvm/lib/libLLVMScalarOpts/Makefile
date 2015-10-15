@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/11/28 14:19:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -7,18 +7,19 @@ LIB=	LLVMScalarOpts
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Scalar
 
 SRCS+=	ADCE.cpp \
-	CodeGenPrepare.cpp \
+	AlignmentFromAssumptions.cpp \
+	ConstantHoisting.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
 	EarlyCSE.cpp \
 	FlattenCFGPass.cpp \
-	GlobalMerge.cpp \
 	GVN.cpp \
 	IndVarSimplify.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
+	LoadCombine.cpp \
 	LoopDeletion.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
@@ -29,6 +30,7 @@ SRCS+=	ADCE.cpp \
 	LoopUnswitch.cpp \
 	LowerAtomic.cpp \
 	MemCpyOptimizer.cpp \
+	MergedLoadStoreMotion.cpp \
 	PartiallyInlineLibCalls.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
@@ -37,6 +39,8 @@ SRCS+=	ADCE.cpp \
 	SampleProfile.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
+	Scalarizer.cpp \
+	SeparateConstOffsetFromGEP.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
 	StructurizeCFG.cpp \

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.19 2012/07/27 05:36:09 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.20 2014/02/04 18:51:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -69,10 +69,6 @@
 int raisespl	(int);
 int lowerspl	(int);
 void splx	(int);
-
-#ifdef __HAVE_FAST_SOFTINTS
-void _setsoftintr	(int si);
-#endif
 
 typedef uint8_t ipl_t;
 typedef struct {

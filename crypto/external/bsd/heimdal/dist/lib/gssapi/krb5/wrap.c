@@ -1,4 +1,4 @@
-/*	$NetBSD: wrap.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: wrap.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -176,8 +176,8 @@ _gsskrb5_wrap_size_limit (
       ret = GSS_S_FAILURE;
 #endif
       break;
-  case KEYTYPE_ARCFOUR:
-  case KEYTYPE_ARCFOUR_56:
+  case ENCTYPE_ARCFOUR_HMAC_MD5:
+  case ENCTYPE_ARCFOUR_HMAC_MD5_56:
       ret = _gssapi_wrap_size_arcfour(minor_status, ctx, context,
 				      conf_req_flag, qop_req,
 				      req_output_size, max_input_size, key);
@@ -216,7 +216,7 @@ wrap_des
   EVP_CIPHER_CTX des_ctx;
   DES_cblock deskey;
   DES_cblock zero;
-  int i;
+  size_t i;
   int32_t seq_number;
   size_t len, total_len, padlength, datalen;
 

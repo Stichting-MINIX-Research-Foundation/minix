@@ -34,6 +34,7 @@ RELDIR=include
 SUBDIRS=kadm5 hcrypto gssapi
 
 !include ../windows/NTMakefile.w32
+!include ../windows/NTMakefile.version
 !include ../windows/NTMakefile.config
 
 INCFILES=			\
@@ -50,7 +51,7 @@ $(OBJ)\bits.exe: $(OBJ)\bits.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(INCDIR)\config.h: config.h.w32 ..\windows\NTMakefile.config NTMakefile
+$(INCDIR)\config.h: config.h.w32 ..\windows\NTMakefile.config ..\windows\NTMakefile.version NTMakefile
 	$(PERL) << < config.h.w32 > $@
 
 while(<>) {
@@ -76,6 +77,7 @@ while(<>) {
     if ("$(HAVE_SCC)") { print "#define HAVE_SCC 1\n"; }
     if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
     if ("$(HAVE_MSLSA_CACHE)") { print "#define HAVE_MSLSA_CACHE 1\n"; }
+    if ("$(NO_LOCALNAME)") { print "#define NO_LOCALNAME 1\n"; }
 
   } elsif (m/\@VERSION_OPTDEFS\@/) {
 
@@ -104,7 +106,7 @@ while(<>) {
 
 <<
 
-$(INCDIR)\version.h: ..\windows\NTMakefile.config NTMakefile
+$(INCDIR)\version.h: ..\windows\NTMakefile.version NTMakefile
 	$(CP) << $@
 const char *heimdal_long_version = "@(#)$$Version: $(VER_PACKAGE_NAME) $(VER_PACKAGE_VERSION) by $(USERNAME) on $(COMPUTERNAME) ($(CPU)-pc-windows) $$";
 const char *heimdal_version = "$(VER_PACKAGE_NAME) $(VER_PACKAGE_VERSION)";

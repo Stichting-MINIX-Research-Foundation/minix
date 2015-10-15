@@ -5,6 +5,7 @@ USE_SHLIBDIR=yes
 
 LIB=event
 
+#__MINIX: Unsupported: kqueue.c
 SRCS= \
 buffer.c \
 bufferevent.c \
@@ -21,7 +22,6 @@ evthread.c \
 evutil.c \
 evutil_rand.c \
 http.c \
-kqueue.c \
 listener.c \
 log.c \
 poll.c \

@@ -1,5 +1,5 @@
-.\"	$NetBSD: time2posix.3,v 1.17 2010/12/17 01:30:14 wiz Exp $
-.Dd December 4, 2010
+.\"	$NetBSD: time2posix.3,v 1.19 2014/10/07 21:51:03 christos Exp $
+.Dd October 6, 2014
 .Dt TIME2POSIX 3
 .Os
 .Sh NAME
@@ -22,27 +22,31 @@
 .Fn posix2time_z "const timezone_t tz" "time_t t"
 .Sh DESCRIPTION
 .St -p1003.1
-legislates that a
-.Va time_t
-value of 536457599 shall correspond to
+requires the
+.Ft time_t
+value of
+.Dv 536457599
+to stand for
 .Dl Wed Dec 31 23:59:59 UTC 1986 .
 This effectively implies that POSIX
-.Va time_t Ns 's
-cannot include leap seconds and, therefore,
+.Ft time_t
+values cannot include leap seconds and, therefore,
 that the system time must be adjusted as each leap occurs.
 .Pp
 If the time package is configured with leap-second support
 enabled, however, no such adjustment is needed and
 .Va time_t
 values continue to increase over leap events
-(as a true `seconds since...' value).
+(as a true 
+.Dq "seconds since..."
+value).
 This means that these values will differ from those required by POSIX
 by the net number of leap seconds inserted since the Epoch.
 .Pp
 Typically this is not a problem as the type
 .Va time_t
 is intended to be (mostly)
-opaque \(em
+opaque \*(en
 .Va time_t
 values should only be obtained-from and
 passed-to functions such as

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-keytab.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: hdb-keytab.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -208,7 +208,7 @@ hdb_keytab_create(krb5_context context, HDB ** db, const char *arg)
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
-	
+
 
     (*db)->hdb_db = k;
 

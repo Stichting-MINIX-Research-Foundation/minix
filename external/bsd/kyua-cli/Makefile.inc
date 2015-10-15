@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2013/10/18 23:41:40 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.4 2014/07/05 19:22:41 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ KYUA_LIBS?=
 # Layout of installed files.
 KYUA_BINDIR=		/usr/bin
 KYUA_CONFDIR=		/etc/kyua
-KYUA_DOCDIR=		/usr/share/doc/kyua-cli
+KYUA_DOCDIR=		/usr/share/doc/reference/ref1/kyua/kyua-cli
 KYUA_EXAMPLESDIR=	/usr/share/examples/kyua-cli
 KYUA_MISCDIR=		/usr/share/kyua-cli/misc
 KYUA_STOREDIR=		/usr/share/kyua-cli/store
@@ -51,10 +51,10 @@ CPPFLAGS+=	-I${TOPDIR}		# For config.h.
 CPPFLAGS+=	-I${TOPDIR}/lib		# For utils/defs.hpp.
 CPPFLAGS+=	-I${SRCDIR}
 
-PRIVATELIBDIR!=	cd ${TOPDIR}/lib; ${PRINTOBJDIR}
 .for lib in ${KYUA_LIBS}
-LDADD+=		${PRIVATELIBDIR}/${lib}/lib${lib}.a
-DPADD+=		${PRIVATELIBDIR}/${lib}/lib${lib}.a
+LIBOBJDIR_${lib}!=	cd ${TOPDIR}/lib/${lib}; ${PRINTOBJDIR}
+LDADD+=			${LIBOBJDIR_${lib}}/lib${lib}.a
+DPADD+=			${LIBOBJDIR_${lib}}/lib${lib}.a
 .endfor
 
 .if !empty(KYUA_LIBS:Mutils)

@@ -1,16 +1,19 @@
-#	$NetBSD: bsd.endian.mk,v 1.19 2013/08/05 15:33:07 matt Exp $
+#	$NetBSD: bsd.endian.mk,v 1.22 2014/09/19 17:45:42 matt Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
 
 .include <bsd.init.mk>
 
-.if ${MACHINE_ARCH} == "alpha" || \
+.if ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     (!empty(MACHINE_ARCH:Mearm*) && empty(MACHINE_ARCH:Mearm*eb)) || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "vax" || \
+    ${MACHINE_ARCH} == "riscv32" || \
+    ${MACHINE_ARCH} == "riscv64" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH:C/^.*el$/el/} == "el"
 TARGET_ENDIANNESS=	1234
@@ -18,6 +21,7 @@ TARGET_ENDIANNESS=	1234
       ${MACHINE_ARCH} == "hppa" || \
       ${MACHINE_ARCH} == "m68000" || \
       ${MACHINE_ARCH} == "m68k" || \
+      ${MACHINE_ARCH} == "or1k" || \
       ${MACHINE_ARCH} == "powerpc" || \
       ${MACHINE_ARCH} == "powerpc64" || \
       ${MACHINE_ARCH} == "sparc" || \

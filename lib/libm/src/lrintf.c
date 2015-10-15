@@ -1,4 +1,4 @@
-/* $NetBSD: lrintf.c,v 1.5 2008/04/26 23:49:50 christos Exp $ */
+/* $NetBSD: lrintf.c,v 1.6 2015/07/09 06:17:13 nat Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -74,7 +74,8 @@ LRINTNAME(float x)
 		/* round, using current direction */
 		w = TWO23[s] + x;
 		x = w - TWO23[s];
-	}
+	} else
+		return x;
 
 	GET_FLOAT_WORD(i0, x);
 	e = ((i0 >> SNG_FRACBITS) & 0xff) - SNG_EXP_BIAS;

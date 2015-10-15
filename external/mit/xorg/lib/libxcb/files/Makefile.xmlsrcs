@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xmlsrcs,v 1.2 2013/05/31 10:56:16 mrg Exp $
+#	$NetBSD: Makefile.xmlsrcs,v 1.4 2015/07/23 01:06:32 mrg Exp $
 
 # list of the libxcb xml-generated .c files.
 
@@ -8,7 +8,9 @@ XMLSRCS= \
 	damage.c \
 	dpms.c \
 	dri2.c \
+	dri3.c \
 	glx.c \
+	present.c \
 	randr.c \
 	record.c \
 	render.c \
@@ -18,14 +20,6 @@ XMLSRCS= \
 	shm.c \
 	sync.c \
 	xc_misc.c \
-	xcb_auth.c \
-	xcb_conn.c \
-	xcb_ext.c \
-	xcb_in.c \
-	xcb_list.c \
-	xcb_out.c \
-	xcb_util.c \
-	xcb_xid.c \
 	xevie.c \
 	xf86dri.c \
 	xfixes.c \

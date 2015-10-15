@@ -1,4 +1,4 @@
-/*	$NetBSD: init_creds.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: init_creds.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -63,14 +63,14 @@ krb5_get_init_creds_opt_alloc(krb5_context context,
     *opt = NULL;
     o = calloc(1, sizeof(*o));
     if (o == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
+	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
 
     o->opt_private = calloc(1, sizeof(*o->opt_private));
     if (o->opt_private == NULL) {
-	krb5_set_error_message(context, ENOMEM, 
+	krb5_set_error_message(context, ENOMEM,
 			       N_("malloc: out of memory", ""));
 	free(o);
 	return ENOMEM;
@@ -404,9 +404,9 @@ krb5_get_init_creds_opt_set_process_last_req(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     memset (opt, 0, sizeof(*opt));
 }
@@ -418,11 +418,11 @@ krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_get_error(krb5_context context,
 				  krb5_get_init_creds_opt *opt,
 				  KRB_ERROR **error)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     *error = calloc(1, sizeof(**error));
     if (*error == NULL) {

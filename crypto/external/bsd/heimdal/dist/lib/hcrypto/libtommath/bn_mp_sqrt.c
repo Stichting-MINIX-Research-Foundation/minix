@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_sqrt.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_sqrt.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_SQRT_C
@@ -18,7 +18,7 @@
  */
 
 /* this function is less generic than mp_n_root, simpler and faster */
-int mp_sqrt(mp_int *arg, mp_int *ret) 
+int mp_sqrt(mp_int *arg, mp_int *ret)
 {
   int res;
   mp_int t1,t2;
@@ -45,7 +45,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
   /* First approx. (not very bad for large arg) */
   mp_rshd (&t1,t1.used/2);
 
-  /* t1 > 0  */ 
+  /* t1 > 0  */
   if ((res = mp_div(arg,&t1,&t2,NULL)) != MP_OKAY) {
     goto E1;
   }
@@ -56,7 +56,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
     goto E1;
   }
   /* And now t1 > sqrt(arg) */
-  do { 
+  do {
     if ((res = mp_div(arg,&t1,&t2,NULL)) != MP_OKAY) {
       goto E1;
     }
@@ -78,6 +78,6 @@ E2: mp_clear(&t1);
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_sqrt.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_sqrt.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

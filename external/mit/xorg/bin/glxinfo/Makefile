@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/09/12 17:14:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2014/12/18 06:24:28 mrg Exp $
 
 NOMAN=	# defined
 
@@ -10,13 +10,15 @@ PROG_CXX=	glxinfo
 PROG=		glxinfo
 .endif
 
+SRCS+=	glinfo_common.c glxinfo.c
+
 CPPFLAGS+=${X11FLAGS.THREADS} -DDO_GLU
 
-#LSC: No pthread on MINIX!
-LDADD+=	-lGLU -lGL -lXext -lX11 -lm
-DPADD+=	${LIBGLU} ${LIBGL} ${LIBXEXT} ${LIBX11} ${LIBM}
+#__MINIX: No pthread
+LDADD+=	-lGL -lXext -lX11 -lm
+DPADD+=	${LIBGL} ${LIBXEXT} ${LIBX11} ${LIBM}
 
-.PATH:	${X11SRCDIR.MesaDemos}/progs/xdemos
+.PATH:	${X11SRCDIR.mesa-demos}/src/xdemos
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

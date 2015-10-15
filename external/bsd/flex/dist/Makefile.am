@@ -39,9 +39,9 @@ m4 = @M4@
 indent = @INDENT@
 
 bin_PROGRAMS = flex
-lib_LIBRARIES = \
-	libfl.a \
-	libfl_pic.a
+lib_LTLIBRARIES = \
+	libfl.la \
+	libfl_pic.la
 
 flex_SOURCES = \
 	ccl.c \
@@ -67,19 +67,19 @@ flex_SOURCES = \
 	regex.c
 
 
-LDADD = lib/libcompat.a
+LDADD = lib/libcompat.la
 
-libfl_a_SOURCES = \
+libfl_la_SOURCES = \
 	libmain.c \
 	libyywrap.c
 
-libfl_pic_a_SOURCES = \
+libfl_la_LDFLAGS = -no-undefined -version-info @SHARED_VERSION_INFO@
+
+libfl_pic_la_SOURCES = \
 	libmain.c \
 	libyywrap.c
 
-libfl_pic_a_CFLAGS =  \
-	-fPIC         \
-	$(AM_CFLAGS)
+libfl_pic_la_LDFLAGS = -no-undefined -version-info @SHARED_VERSION_INFO@
 
 noinst_HEADERS = \
 	flexdef.h \
@@ -99,7 +99,6 @@ dist_doc_DATA = \
 	NEWS \
 	ONEWS \
 	README \
-	README.cvs \
 	TODO
 
 EXTRA_DIST = \
@@ -121,7 +120,6 @@ SUBDIRS = \
 	doc \
 	examples \
 	po \
-	tools \
 	tests
 
 localedir = $(datadir)/locale
@@ -210,7 +208,7 @@ indent:
 	fi
 
 install-exec-hook:
-	cd $(DESTDIR)/$(bindir) && \
+	cd $(DESTDIR)$(bindir) && \
 		$(LN_S) -f flex$(EXEEXT) flex++$(EXEEXT)
 
 .PHONY: ChangeLog tags indent

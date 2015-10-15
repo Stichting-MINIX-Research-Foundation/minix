@@ -25,6 +25,41 @@ int main () {
     
     return classA == classB  || classA == classC ||
            classC == classA ||
-           classA == classD; // expected-warning {{comparison of distinct pointer types ('Class<SomeProtocol> *' and 'Class<SomeProtocol1> *')}}
+           classA == classD; // expected-warning {{comparison of distinct pointer types ('Class<SomeProtocol>' and 'Class<SomeProtocol1>')}}
 }
 
+// rdar://18491222
+@protocol NSObject @end
+
+@interface NSObject @end
+@protocol ProtocolX <NSObject>
+@end
+
+@protocol ProtocolY <NSObject>
+@end
+
+@interface ClassA : NSObject
+@end
+
+@interface ClassB : ClassA <ProtocolY, ProtocolX>
+@end
+
+@interface OtherClass : NSObject
+@property (nonatomic, copy) ClassB<ProtocolX> *aProperty;
+- (ClassA<ProtocolY> *)aMethod;
+- (ClassA<ProtocolY> *)anotherMethod;
+@end
+
+@implementation OtherClass
+- (ClassA<ProtocolY> *)aMethod {
+    // This does not work, even though ClassB subclasses from A and conforms to Y
+    // because the property type explicity adds ProtocolX conformance
+    // even though ClassB already conforms to ProtocolX
+    return self.aProperty;
+}
+- (ClassA<ProtocolY> *)anotherMethod {
+    // This works, even though all it is doing is removing an explicit
+    // protocol conformance that ClassB already conforms to
+    return (ClassB *)self.aProperty;
+}
+@end

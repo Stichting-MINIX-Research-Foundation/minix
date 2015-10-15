@@ -89,6 +89,8 @@ dist_libhx509_la_SOURCES = \
 
 sel-lex.c: sel-gram.h
 
+libhx509_la_DEPENDENCIES = version-script.map
+
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
@@ -199,6 +201,9 @@ LDADD = libhx509.la
 test_soft_pkcs11_LDADD = libhx509.la
 test_soft_pkcs11_CPPFLAGS = -I$(srcdir)/ref
 
+test_name_CPPFLAGS = $(INCLUDE_hcrypto)
+test_name_LDADD = libhx509.la $(LIB_roken)
+
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 
 PROGRAM_TESTS = 		\
@@ -296,6 +301,9 @@ test_query: test_query.in Makefile
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \
+	NTMakefile \
+	hxtool-version.rc \
+	libhx509-exports.def \
 	version-script.map \
 	crmf.asn1 \
 	hx509_err.et \

@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.7 2011/11/19 22:51:21 tls Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.8 2015/04/13 16:03:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -23,7 +23,7 @@
 
 #if defined(_KERNEL)
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #include <sys/callout.h>
 #include <crypto/rijndael/rijndael.h>
 

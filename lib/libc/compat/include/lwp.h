@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.3 2013/03/29 02:09:58 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.4 2014/01/31 20:45:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ __BEGIN_DECLS
 struct timespec50;
 int	_lwp_park(const struct timespec50 *, lwpid_t, const void *, const void *);
 int	___lwp_park50(const struct timespec *, lwpid_t, const void *, const void *);
-int	___lwp_park60(clockid_t , int, const struct timespec *, lwpid_t,
+int	___lwp_park60(clockid_t, int, const struct timespec *, lwpid_t,
     const void *, const void *);
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.9 2009/11/24 13:34:20 tnozaki Exp $	*/
+/*	$NetBSD: basename.c,v 1.11 2014/07/16 10:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,11 +31,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.9 2009/11/24 13:34:20 tnozaki Exp $");
+__RCSID("$NetBSD: basename.c,v 1.11 2014/07/16 10:52:26 christos Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
+#include <sys/param.h>
 #include <libgen.h>
+#include <string.h>
 #include <limits.h>
 #include <string.h>
 
@@ -43,43 +45,57 @@ __RCSID("$NetBSD: basename.c,v 1.9 2009/11/24 13:34:20 tnozaki Exp $");
 __weak_alias(basename,_basename)
 #endif
 
-#if !HAVE_BASENAME
-char *
-basename(char *path)
+static size_t
+xbasename_r(const char *path, char *buf, size_t buflen)
 {
-	static char result[PATH_MAX];
-	const char *p, *lastp;
+	const char *startp, *endp;
 	size_t len;
 
 	/*
 	 * If `path' is a null pointer or points to an empty string,
 	 * return a pointer to the string ".".
 	 */
-	if ((path == NULL) || (*path == '\0')) {
-		result[0] = '.';
-		result[1] = '\0';
-
-		return (result);
+	if (path == NULL || *path == '\0') {
+		startp = ".";
+		len = 1;
+		goto out;
 	}
 
 	/* Strip trailing slashes, if any. */
-	lastp = path + strlen(path) - 1;
-	while (lastp != path && *lastp == '/')
-		lastp--;
+	endp = path + strlen(path) - 1;
+	while (endp != path && *endp == '/')
+		endp--;
+
+	/* Only slashes -> "/" */
+	if (endp == path && *endp == '/') {
+		startp = "/";
+		len = 1;
+		goto out;
+	}
 
 	/* Now find the beginning of this (final) component. */
-	p = lastp;
-	while (p != path && *(p - 1) != '/')
-		p--;
+	for (startp = endp; startp > path && *(startp - 1) != '/'; startp--)
+		continue;
 
 	/* ...and copy the result into the result buffer. */
-	len = (lastp - p) + 1 /* last char */;
-	if (len > (PATH_MAX - 1))
-		len = PATH_MAX - 1;
-
-	memcpy(result, p, len);
-	result[len] = '\0';
-
-	return (result);
+	len = (endp - startp) + 1 /* last char */;
+out:
+	if (buf != NULL && buflen != 0) {
+		buflen = MIN(len, buflen - 1);
+		memcpy(buf, startp, buflen);
+		buf[buflen] = '\0';
+	}
+	return len;
 }
+
+#if !HAVE_BASENAME
+
+char *
+basename(char *path) {
+	static char result[PATH_MAX];
+
+	(void)xbasename_r(path, result, sizeof(result));
+	return result;
+}
+
 #endif

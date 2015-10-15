@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.6 2013/03/12 19:38:20 martin Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.7 2014/01/23 03:08:50 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,7 +84,7 @@ LEAF(__setjmp14, 1)
 	mov	s0, a0
 	ldq	s0, (SC_REGS+_REG_S0)(a0)
 
-	ldiq	t0, 0xacedbade			/* sigcontext magic number */
+	ldq	t0, magic		 	/* sigcontext magic number */
 	stq	t0, (SC_REGS+_REG_UNIQUE)(a0)	/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
 	ldiq	t0, 1
@@ -118,4 +118,6 @@ LEAF(__setjmp14, 1)
 botch:
 	CALL(abort)
 	RET					/* "can't" get here... */
+magic:
+	.quad	0xacedbade		 	/* sigcontext magic number */
 END(__setjmp14)

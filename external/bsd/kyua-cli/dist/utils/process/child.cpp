@@ -275,9 +275,7 @@ process::child::fork_capture_aux(void)
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
         inhibiter.reset(NULL);  // Unblock signals.
-#if !defined(__minix)
         ::setpgid(::getpid(), ::getpid());
-#endif /*  !defined(__minix) */
 
         try {
             ::close(fds[0]);
@@ -332,9 +330,7 @@ process::child::fork_files_aux(const fs::path& stdout_file,
         throw process::system_error("fork(2) failed", errno);
     } else if (pid == 0) {
         inhibiter.reset(NULL);  // Unblock signals.
-#if !defined(__minix)
         ::setpgid(::getpid(), ::getpid());
-#endif /*  !defined(__minix) */
 
         try {
             if (stdout_file != fs::path("/dev/stdout")) {

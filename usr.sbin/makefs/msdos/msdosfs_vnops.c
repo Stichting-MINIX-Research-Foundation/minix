@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.15 2013/10/19 17:16:37 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.15 2013/10/19 17:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -192,7 +192,7 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 				break;
 			return (error);
 		}
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp);
 		if (error) {
 			return (error);
@@ -483,7 +483,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		    cn, (unsigned long long)bn,
 		    (unsigned long long)de_bn2kb(pmp, bn), blsize));
 		if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-		    NULL, 0, &bp)) != 0) {
+		    0, &bp)) != 0) {
 			DPRINTF(("bread %d\n", error));
 			goto out;
 		} 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2013/11/12 17:46:21 mbalmer Exp $
+# $NetBSD: mi,v 1.54 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -95,10 +95,17 @@
 ./usr/games/wump				games-games-bin
 ./usr/libexec/ching/castching			games-games-bin
 ./usr/libexec/ching/printching			games-games-bin
-./usr/share/doc/usd/30.rogue/Makefile		games-usd-doc		doc
-./usr/share/doc/usd/30.rogue/rogue.me		games-usd-doc		doc
-./usr/share/doc/usd/31.trek/Makefile		games-usd-doc		doc
-./usr/share/doc/usd/31.trek/trek.me		games-usd-doc		doc
+./usr/share/doc/reference/ref6/rogue/rogue.html		games-usd-doc		doc,html,groffhtmldoc
+./usr/share/doc/reference/ref6/rogue/rogue.ps.gz	games-usd-doc		doc
+./usr/share/doc/reference/ref6/rogue/rogue.txt		games-usd-doc		doc
+./usr/share/doc/reference/ref6/trek/trek.html		games-usd-doc		doc,html,groffhtmldoc
+./usr/share/doc/reference/ref6/trek/trek.ps.gz		games-usd-doc		doc
+./usr/share/doc/reference/ref6/trek/trek.txt		games-usd-doc		doc
+./usr/share/doc/usd/30.rogue/Makefile		games-obsolete		obsolete
+./usr/share/doc/usd/30.rogue/rogue.me		games-obsolete		obsolete
+./usr/share/doc/usd/31.trek/Makefile		games-obsolete		obsolete
+./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
+./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/games/atc/ATC_scores		games-obsolete		obsolete
 ./usr/share/games/atc/Atlantis			games-games-share	share
 ./usr/share/games/atc/Game_List			games-games-share	share
@@ -359,6 +366,7 @@
 ./usr/share/man/man8/dm.8			games-games-man		.man
 ./usr/share/man/man8/strfile.8			games-utils-man		.man
 ./usr/share/man/man8/unstr.8			games-utils-man		.man
+./var/db/obsolete/games				base-sys-root
 ./var/games/atc_scores				games-obsolete		obsolete
 ./var/games/hackdir/data			games-games-root
 ./var/games/hackdir/help			games-games-root

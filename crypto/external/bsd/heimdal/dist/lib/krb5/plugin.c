@@ -1,4 +1,4 @@
-/*	$NetBSD: plugin.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: plugin.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -65,7 +65,7 @@ static HEIMDAL_MUTEX plugin_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static struct plugin *registered = NULL;
 static int plugins_needs_scan = 1;
 
-static const char *sysplugin_dirs[] =  { 
+static const char *sysplugin_dirs[] =  {
     LIBDIR "/plugin/krb5",
 #ifdef __APPLE__
     "/System/Library/KerberosPlugins/KerberosFrameworkPlugins",
@@ -198,9 +198,9 @@ is_valid_plugin_filename(const char * n)
 
         return !stricmp(ext, ".dll");
     }
-#endif
-
+#else
     return 1;
+#endif
 }
 
 static void
@@ -307,7 +307,7 @@ static krb5_error_code
 add_symbol(krb5_context context, struct krb5_plugin **list, void *symbol)
 {
     struct krb5_plugin *e;
-    
+
     e = calloc(1, sizeof(*e));
     if (e == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
@@ -331,7 +331,7 @@ _krb5_plugin_find(krb5_context context,
     *list = NULL;
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
-    
+
     load_plugins(context);
 
     for (ret = 0, e = registered; e != NULL; e = e->next) {
@@ -381,7 +381,7 @@ _krb5_plugin_free(struct krb5_plugin *list)
 /*
  * module - dict of {
  *      ModuleName = [
- *          plugin = object{ 
+ *          plugin = object{
  *              array = { ptr, ctx }
  *          }
  *      ]
@@ -558,7 +558,7 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
 	    return;
 
 	pl = heim_alloc(sizeof(*pl), "struct-plug", plug_free);
-		
+
 	cpm = pl->dataptr = dlsym(p->dsohandle, s->name);
 	if (cpm) {
 	    int ret;
@@ -571,10 +571,10 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
     } else {
 	cpm = pl->dataptr;
     }
-	    
+
     if (cpm && cpm->version >= s->min_version)
 	heim_array_append_value(s->result, pl);
-    
+
     heim_release(pl);
 }
 
@@ -621,11 +621,11 @@ _krb5_plugin_run_f(krb5_context context,
     s.userctx = userctx;
 
     heim_dict_iterate_f(dict, search_modules, &s);
-    
+
     heim_release(dict);
-    
+
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
-    
+
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
     heim_array_iterate_f(s.result, eval_results, &s);

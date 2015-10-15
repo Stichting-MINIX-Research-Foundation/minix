@@ -1,4 +1,4 @@
-/*	$NetBSD: principal.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: principal.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -142,7 +142,7 @@ krb5_principal_get_realm(krb5_context context,
 			 krb5_const_principal principal)
 {
     return princ_realm(principal);
-}			
+}
 
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_principal_get_comp_string(krb5_context context,
@@ -428,7 +428,7 @@ unparse_name_fixed(krb5_context context,
 		   int flags)
 {
     size_t idx = 0;
-    int i;
+    size_t i;
     int short_form = (flags & KRB5_PRINCIPAL_UNPARSE_SHORT) != 0;
     int no_realm = (flags & KRB5_PRINCIPAL_UNPARSE_NO_REALM) != 0;
     int display = (flags & KRB5_PRINCIPAL_UNPARSE_DISPLAY) != 0;
@@ -551,7 +551,7 @@ unparse_name(krb5_context context,
 	     int flags)
 {
     size_t len = 0, plen;
-    int i;
+    size_t i;
     krb5_error_code ret;
     /* count length */
     if (princ_realm(principal)) {
@@ -919,7 +919,7 @@ krb5_principal_compare_any_realm(krb5_context context,
 				 krb5_const_principal princ1,
 				 krb5_const_principal princ2)
 {
-    int i;
+    size_t i;
     if(princ_num_comp(princ1) != princ_num_comp(princ2))
 	return FALSE;
     for(i = 0; i < princ_num_comp(princ1); i++){
@@ -934,7 +934,7 @@ _krb5_principal_compare_PrincipalName(krb5_context context,
 				      krb5_const_principal princ1,
 				      PrincipalName *princ2)
 {
-    int i;
+    size_t i;
     if (princ_num_comp(princ1) != princ2->name_string.len)
 	return FALSE;
     for(i = 0; i < princ_num_comp(princ1); i++){
@@ -1003,7 +1003,7 @@ krb5_principal_match(krb5_context context,
 		     krb5_const_principal princ,
 		     krb5_const_principal pattern)
 {
-    int i;
+    size_t i;
     if(princ_num_comp(princ) != princ_num_comp(pattern))
 	return FALSE;
     if(fnmatch(princ_realm(pattern), princ_realm(princ), 0) != 0)
@@ -1030,7 +1030,7 @@ krb5_principal_match(krb5_context context,
  *
  * @ingroup krb5_principal
  */
-			
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sname_to_principal (krb5_context context,
 			 const char *hostname,
@@ -1041,7 +1041,7 @@ krb5_sname_to_principal (krb5_context context,
     krb5_error_code ret;
     char localhost[MAXHOSTNAMELEN];
     char **realms, *host = NULL;
-	
+
     if(type != KRB5_NT_SRV_HST && type != KRB5_NT_UNKNOWN) {
 	krb5_set_error_message(context, KRB5_SNAME_UNSUPP_NAMETYPE,
 			       N_("unsupported name type %d", ""),
@@ -1055,7 +1055,7 @@ krb5_sname_to_principal (krb5_context context,
 	    krb5_set_error_message(context, ret,
 				   N_("Failed to get local hostname", ""));
 	    return ret;
-	}	
+	}
 	localhost[sizeof(localhost) - 1] = '\0';
 	hostname = localhost;
     }
@@ -1098,7 +1098,7 @@ static const struct {
     { "ENT_PRINCIPAL_AND_ID", KRB5_NT_ENT_PRINCIPAL_AND_ID },
     { "MS_PRINCIPAL", KRB5_NT_MS_PRINCIPAL },
     { "MS_PRINCIPAL_AND_ID", KRB5_NT_MS_PRINCIPAL_AND_ID },
-    { NULL }
+    { NULL, 0 }
 };
 
 /**

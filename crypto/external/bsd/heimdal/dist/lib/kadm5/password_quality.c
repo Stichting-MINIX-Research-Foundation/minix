@@ -1,4 +1,4 @@
-/*	$NetBSD: password_quality.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: password_quality.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2000, 2003-2005 Kungliga Tekniska Högskolan
@@ -35,8 +35,6 @@
 
 #include "kadm5_locl.h"
 #include "kadm5-pwcheck.h"
-
-__RCSID("$NetBSD: password_quality.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
 
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -95,10 +93,10 @@ char_class_passwd_quality (krb5_context context,
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	"abcdefghijklmnopqrstuvwxyz",
 	"1234567890",
-	"!@#$%^&*()/?<>,.{[]}\\|'~`\" "
+	" !\"#$%&'()*+,-./:;<=>?@\\]^_`{|}~"
     };
-    int i, counter = 0, req_classes;
-    size_t len;
+    int counter = 0, req_classes;
+    size_t i, len;
     char *pw;
 
     req_classes = krb5_config_get_int_default(context, NULL, 3,
@@ -124,11 +122,12 @@ char_class_passwd_quality (krb5_context context,
     if (counter < req_classes) {
 	snprintf(message, length,
 	    "Password doesn't meet complexity requirement.\n"
-	    "Add more characters from the following classes:\n"
+	    "Add more characters from at least %d of the\n"
+            "following classes:\n"
 	    "1. English uppercase characters (A through Z)\n"
 	    "2. English lowercase characters (a through z)\n"
 	    "3. Base 10 digits (0 through 9)\n"
-	    "4. Nonalphanumeric characters (e.g., !, $, #, %%)");
+	    "4. Nonalphanumeric characters (e.g., !, $, #, %%)", req_classes);
 	return 1;
     }
     return 0;
@@ -236,7 +235,7 @@ struct kadm5_pw_policy_check_func builtin_funcs[] = {
     { "minimum-length", min_length_passwd_quality },
     { "character-class", char_class_passwd_quality },
     { "external-check", external_passwd_quality },
-    { NULL }
+    { NULL, NULL }
 };
 struct kadm5_pw_policy_verifier builtin_verifier = {
     "builtin",
@@ -388,10 +387,10 @@ kadm5_add_passwd_quality_verifier(krb5_context context,
 				      "password_quality",
 				      "policy_libraries",
 				      NULL);
-	if(tmp == NULL)
+	if(tmp == NULL || *tmp == NULL)
 	    return 0;
 
-	while(tmp) {
+	while (*tmp) {
 	    ret = add_verifier(context, *tmp);
 	    if (ret)
 		return ret;
@@ -434,7 +433,7 @@ find_func(krb5_context context, const char *name)
 	if (module && strcmp(module, verifiers[i]->name) != 0)
 	    continue;
 	for (f = verifiers[i]->funcs; f->name ; f++)
-	    if (strcmp(name, f->name) == 0) {
+	    if (strcmp(func, f->name) == 0) {
 		if (module)
 		    free(module);
 		return f;
@@ -475,7 +474,8 @@ kadm5_check_password_quality (krb5_context context,
 				NULL);
     if (v == NULL) {
 	msg = (*passwd_quality_check) (context, principal, pwd_data);
-	krb5_set_error_message(context, 0, "password policy failed: %s", msg);
+	if (msg)
+	    krb5_set_error_message(context, 0, "password policy failed: %s", msg);
 	return msg;
     }
 
@@ -509,7 +509,7 @@ kadm5_check_password_quality (krb5_context context,
 	if (msg)
 	    krb5_set_error_message(context, 0, "(old) password policy "
 				   "failed with %s", msg);
-	
+
     }
     return msg;
 }

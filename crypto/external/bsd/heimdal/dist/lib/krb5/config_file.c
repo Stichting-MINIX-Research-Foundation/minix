@@ -1,4 +1,4 @@
-/*	$NetBSD: config_file.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: config_file.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -35,8 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#define KRB5_DEPRECATED
-
 #include "krb5_locl.h"
 
 #ifdef __APPLE__
@@ -65,7 +63,7 @@ config_fgets(char *str, size_t len, struct fileptr *ptr)
 	p = ptr->s + strcspn(ptr->s, "\n");
 	if(*p == '\n')
 	    p++;
-	l = min(len, p - ptr->s);
+	l = min(len, (size_t)(p - ptr->s));
 	if(len > 0) {
 	    memcpy(str, ptr->s, l);
 	    str[l] = '\0';
@@ -93,7 +91,7 @@ _krb5_config_get_entry(krb5_config_section **parent, const char *name, int type)
 
     for(q = parent; *q != NULL; q = &(*q)->next)
 	if(type == krb5_config_list &&
-	   type == (*q)->type &&
+	   (unsigned)type == (*q)->type &&
 	   strcmp(name, (*q)->name) == 0)
 	    return *q;
     *q = calloc(1, sizeof(**q));
@@ -252,7 +250,7 @@ cfstring2cstring(CFStringRef string)
 {
     CFIndex len;
     char *str;
-    
+
     str = (char *) CFStringGetCStringPtr(string, kCFStringEncodingUTF8);
     if (str)
 	return strdup(str);
@@ -262,7 +260,7 @@ cfstring2cstring(CFStringRef string)
     str = malloc(len);
     if (str == NULL)
 	return NULL;
-	
+
     if (!CFStringGetCString (string, str, len, kCFStringEncodingUTF8)) {
 	free (str);
 	return NULL;
@@ -301,7 +299,7 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
     CFReadStreamRef s;
     CFDictionaryRef d;
     CFURLRef url;
-    
+
     url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (UInt8 *)path, strlen(path), FALSE);
     if (url == NULL) {
 	krb5_clear_error_message(context);
@@ -323,7 +321,7 @@ parse_plist_config(krb5_context context, const char *path, krb5_config_section *
 
 #ifdef HAVE_CFPROPERTYLISTCREATEWITHSTREAM
     d = (CFDictionaryRef)CFPropertyListCreateWithStream(NULL, s, 0, kCFPropertyListImmutable, NULL, NULL);
-#else 
+#else
     d = (CFDictionaryRef)CFPropertyListCreateFromStream(NULL, s, 0, kCFPropertyListImmutable, NULL, NULL);
 #endif
     CFRelease(s);
@@ -443,7 +441,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    home = getenv("HOME");
 
 	if (home == NULL) {
-	    struct passwd *pw = getpwuid(getuid());	
+	    struct passwd *pw = getpwuid(getuid());
 	    if(pw != NULL)
 		home = pw->pw_dir;
 	}
@@ -457,7 +455,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    fname = newfname;
 	}
 #else  /* KRB5_USE_PATH_TOKENS */
-	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 || 
+	if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
 	    newfname == NULL)
 	{
 	    krb5_set_error_message(context, ENOMEM,
@@ -479,7 +477,7 @@ krb5_config_parse_file_multi (krb5_context context,
 	    return ret;
 	}
 #else
-	krb5_set_error_message(context, ENOENT, 
+	krb5_set_error_message(context, ENOENT,
 			       "no support for plist configuration files");
 	return ENOENT;
 #endif
@@ -493,7 +491,7 @@ krb5_config_parse_file_multi (krb5_context context,
 		free(newfname);
 	    return ret;
 	}
-	
+
 	if (newfname)
 	    free(newfname);
 	fname = newfname = exp_fname;
@@ -509,7 +507,7 @@ krb5_config_parse_file_multi (krb5_context context,
 		free(newfname);
 	    return ret;
 	}
-	
+
 	ret = krb5_config_parse_debug (&f, res, &lineno, &str);
 	fclose(f.f);
 	if (ret) {
@@ -637,7 +635,7 @@ vget_next(krb5_context context,
     const char *p = va_arg(args, const char *);
     while(b != NULL) {
 	if(strcmp(b->name, name) == 0) {
-	    if(b->type == type && p == NULL) {
+	    if(b->type == (unsigned)type && p == NULL) {
 		*pointer = b;
 		return b->u.generic;
 	    } else if(b->type == krb5_config_list && p != NULL) {
@@ -677,7 +675,7 @@ _krb5_config_vget_next (krb5_context context,
     /* we were called again, so just look for more entries with the
        same name and type */
     for (b = (*pointer)->next; b != NULL; b = b->next) {
-	if(strcmp(b->name, (*pointer)->name) == 0 && b->type == type) {
+	if(strcmp(b->name, (*pointer)->name) == 0 && b->type == (unsigned)type) {
 	    *pointer = b;
 	    return b->u.generic;
 	}
@@ -772,7 +770,7 @@ krb5_config_vget_list (krb5_context context,
  *
  * @ingroup krb5_support
  */
- 
+
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_config_get_string (krb5_context context,
 			const krb5_config_section *c,
@@ -867,7 +865,7 @@ krb5_config_get_string_default (krb5_context context,
 }
 
 static char *
-next_component_string(char * begin, char * delims, char **state)
+next_component_string(char * begin, const char * delims, char **state)
 {
     char * end;
 
@@ -1304,11 +1302,11 @@ krb5_config_get_int (krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_config_parse_string_multi(krb5_context context,
 			       const char *string,
 			       krb5_config_section **res)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     const char *str;
     unsigned lineno = 0;

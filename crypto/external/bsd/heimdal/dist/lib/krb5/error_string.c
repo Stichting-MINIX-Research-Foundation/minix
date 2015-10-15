@@ -1,4 +1,4 @@
-/*	$NetBSD: error_string.c,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: error_string.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2005 - 2006 Kungliga Tekniska Högskolan
@@ -61,6 +61,8 @@ krb5_clear_error_message(krb5_context context)
  * Set the context full error string for a specific error code.
  * The error that is stored should be internationalized.
  *
+ * The if context is NULL, no error string is stored.
+ *
  * @param context Kerberos 5 context
  * @param ret The error code
  * @param fmt Error string for the error code
@@ -84,6 +86,8 @@ krb5_set_error_message(krb5_context context, krb5_error_code ret,
 /**
  * Set the context full error string for a specific error code.
  *
+ * The if context is NULL, no error string is stored.
+ *
  * @param context Kerberos 5 context
  * @param ret The error code
  * @param fmt Error string for the error code
@@ -100,6 +104,9 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
 {
     int r;
 
+    if (context == NULL)
+	return;
+
     HEIMDAL_MUTEX_lock(context->mutex);
     if (context->error_string) {
 	free(context->error_string);
@@ -115,6 +122,8 @@ krb5_vset_error_message (krb5_context context, krb5_error_code ret,
 /**
  * Prepend the context full error string for a specific error code.
  * The error that is stored should be internationalized.
+ *
+ * The if context is NULL, no error string is stored.
  *
  * @param context Kerberos 5 context
  * @param ret The error code
@@ -139,6 +148,8 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
 /**
  * Prepend the contexts's full error string for a specific error code.
  *
+ * The if context is NULL, no error string is stored.
+ *
  * @param context Kerberos 5 context
  * @param ret The error code
  * @param fmt Error string for the error code
@@ -153,6 +164,10 @@ krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
     __attribute__ ((format (printf, 3, 0)))
 {
     char *str = NULL, *str2 = NULL;
+
+    if (context == NULL)
+	return;
+
     HEIMDAL_MUTEX_lock(context->mutex);
     if (context->error_code != ret) {
 	HEIMDAL_MUTEX_unlock(context->mutex);
@@ -228,29 +243,53 @@ krb5_have_error_string(krb5_context context)
 KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_get_error_message(krb5_context context, krb5_error_code code)
 {
-    char *str;
-
-    HEIMDAL_MUTEX_lock(context->mutex);
-    if (context->error_string &&
-	(code == context->error_code || context->error_code == 0))
-    {
-	str = strdup(context->error_string);
-	if (str) {
-	    HEIMDAL_MUTEX_unlock(context->mutex);
-	    return str;
-	}
-    }
-    HEIMDAL_MUTEX_unlock(context->mutex);
+    char *str = NULL;
+    const char *cstr = NULL;
+    char buf[128];
+    int free_context = 0;
 
     if (code == 0)
 	return strdup("Success");
+
+    /*
+     * The MIT version of this function ignores the krb5_context
+     * and several widely deployed applications call krb5_get_error_message()
+     * with a NULL context in order to translate an error code as a
+     * replacement for error_message().  Another reason a NULL context
+     * might be provided is if the krb5_init_context() call itself
+     * failed.
+     */
+    if (context)
     {
-	const char *msg;
-	char buf[128];
-	msg = com_right_r(context->et_list, code, buf, sizeof(buf));
-	if (msg)
-	    return strdup(msg);
+        HEIMDAL_MUTEX_lock(context->mutex);
+        if (context->error_string &&
+            (code == context->error_code || context->error_code == 0))
+        {
+            str = strdup(context->error_string);
+        }
+        HEIMDAL_MUTEX_unlock(context->mutex);
+
+        if (str)
+            return str;
     }
+    else
+    {
+        if (krb5_init_context(&context) == 0)
+            free_context = 1;
+    }
+
+    if (context)
+        cstr = com_right_r(context->et_list, code, buf, sizeof(buf));
+
+    if (free_context)
+        krb5_free_context(context);
+
+    if (cstr)
+        return strdup(cstr);
+
+    cstr = error_message(code);
+    if (cstr)
+        return strdup(cstr);
 
     if (asprintf(&str, "<unknown error: %d>", (int)code) == -1 || str == NULL)
 	return NULL;
@@ -290,9 +329,9 @@ krb5_free_error_message(krb5_context context, const char *msg)
  * @ingroup krb5
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_get_err_text(krb5_context context, krb5_error_code code)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     const char *p = NULL;
     if(context != NULL)

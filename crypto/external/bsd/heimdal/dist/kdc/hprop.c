@@ -1,4 +1,4 @@
-/*	$NetBSD: hprop.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: hprop.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -108,7 +108,7 @@ v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
 	    krb5_warn(context, ret, "hdb_unseal_keys_mkey");
 	    return ret;
 	}
-    }	
+    }
 
     ret = hdb_entry2value(context, &entry->entry, &data);
     if(ret) {
@@ -135,13 +135,13 @@ struct getargs args[] = {
 
     { "keytab",   'k',	arg_string, rk_UNCONST(&ktname),
       "keytab to use for authentication", "keytab" },
-    { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use" },
-    { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys" },
-    { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys" },
-    { "stdout",	  'n',  arg_flag,   &to_stdout, "dump to stdout" },
-    { "verbose",  'v',	arg_flag, &verbose_flag },
-    { "version",   0,	arg_flag, &version_flag },
-    { "help",     'h',	arg_flag, &help_flag }
+    { "v5-realm", 'R',  arg_string, &local_realm, "v5 realm to use", NULL },
+    { "decrypt",  'D',  arg_flag,   &decrypt_flag,   "decrypt keys", NULL },
+    { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys", NULL },
+    { "stdout",	  'n',  arg_flag,   &to_stdout, "dump to stdout", NULL },
+    { "verbose",  'v',	arg_flag, &verbose_flag, NULL, NULL },
+    { "version",   0,	arg_flag, &version_flag, NULL, NULL },
+    { "help",     'h',	arg_flag, &help_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -215,7 +215,7 @@ struct {
 static int
 parse_source_type(const char *s)
 {
-    int i;
+    size_t i;
     for(i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
 	if(strstr(types[i].name, s) == types[i].name)
 	    return types[i].type;
@@ -260,7 +260,7 @@ dump_database (krb5_context context, int type,
     pd.context      = context;
     pd.auth_context = NULL;
     pd.sock         = STDOUT_FILENO;
-	
+
     ret = iterate (context, database_name, db, type, &pd);
     if (ret)
 	krb5_errx(context, 1, "iterate failure");
@@ -346,7 +346,7 @@ propagate_database (krb5_context context, int type,
 	    close(fd);
 	    goto next_host;
 	}
-	
+
 	pd.context      = context;
 	pd.auth_context = auth_context;
 	pd.sock         = fd;
@@ -373,7 +373,7 @@ propagate_database (krb5_context context, int type,
 	    goto next_host;
 	} else
 	    krb5_data_free (&data);
-	
+
     next_host:
 	krb5_auth_con_free(context, auth_context);
 	close(fd);
@@ -467,7 +467,7 @@ main(int argc, char **argv)
 
     if(ccache != NULL)
 	krb5_cc_destroy(context, ccache);
-	
+
     if(db != NULL)
 	(*db->hdb_destroy)(context, db);
 

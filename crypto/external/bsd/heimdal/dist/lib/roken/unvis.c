@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: unvis.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*	NetBSD: unvis.c,v 1.19 2000/01/22 22:19:13 mycroft Exp	*/
 
@@ -185,7 +185,7 @@ rk_unvis(char *cp, int c, int *astate, int flag)
 		}
 		*astate = S_GROUND;
 		return (UNVIS_SYNBAD);
-		
+
 	case S_META:
 		if (c == '-')
 			*astate = S_META1;
@@ -196,12 +196,12 @@ rk_unvis(char *cp, int c, int *astate, int flag)
 			return (UNVIS_SYNBAD);
 		}
 		return (0);
-		
+
 	case S_META1:
 		*astate = S_GROUND;
 		*cp |= c;
 		return (UNVIS_VALID);
-		
+
 	case S_CTRL:
 		if (c == '?')
 			*cp |= 0177;
@@ -216,7 +216,7 @@ rk_unvis(char *cp, int c, int *astate, int flag)
 			 * yes - and maybe a third
 			 */
 			*cp = (*cp << 3) + (c - '0');
-			*astate = S_OCTAL3;	
+			*astate = S_OCTAL3;
 			return (0);
 		}
 		/*
@@ -235,8 +235,8 @@ rk_unvis(char *cp, int c, int *astate, int flag)
 		 * we were done, push back passed char
 		 */
 		return (UNVIS_VALIDPUSH);
-			
-	default:	
+
+	default:
 		/*
 		 * decoder in unknown state - (probably uninitialized)
 		 */

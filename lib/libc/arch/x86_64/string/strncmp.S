@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-        RCSID("$NetBSD: strncmp.S,v 1.3 2005/08/03 22:59:50 rpaulo Exp $")
+        RCSID("$NetBSD: strncmp.S,v 1.4 2014/05/22 15:01:57 uebayasi Exp $")
 #endif
 
 /*
@@ -105,3 +105,4 @@ L3:	movzbl	(%rdi),%eax		/* unsigned comparison */
 	ret
 L4:	xorl	%eax,%eax
 	ret
+END(strncmp)

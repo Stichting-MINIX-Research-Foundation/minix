@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -triple=powerpc-apple-darwin8 -faltivec -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple=powerpc64-unknown-linux-gnu -faltivec -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple=powerpc64le-unknown-linux-gnu -faltivec -fsyntax-only -verify -std=c++11 %s
 
 __vector char vv_c;
 __vector signed char vv_sc;
@@ -59,14 +61,14 @@ vector unsigned long v_ul;          // expected-warning {{Use of 'long' with '__
 vector long int v_li;               // expected-warning {{Use of 'long' with '__vector' is deprecated}}
 vector signed long int v_sli;       // expected-warning {{Use of 'long' with '__vector' is deprecated}}
 vector unsigned long int v_uli;     // expected-warning {{Use of 'long' with '__vector' is deprecated}}
-__vector long double  vv_ld;        // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
-vector long double  v_ld;           // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
+__vector long double  vv_ld;        // expected-error {{cannot use 'long double' with '__vector'}}
+vector long double  v_ld;           // expected-error {{cannot use 'long double' with '__vector'}}
 
 // These should have errors.
-__vector double vv_d1;               // expected-error {{cannot use 'double' with '__vector'}}
-vector double v_d2;                  // expected-error {{cannot use 'double' with '__vector'}}
-__vector long double  vv_ld3;        // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
-vector long double  v_ld4;           // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
+__vector double vv_d1;               // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
+vector double v_d2;                  // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
+__vector long double  vv_ld3;        // expected-error {{cannot use 'long double' with '__vector'}}
+vector long double  v_ld4;           // expected-error {{cannot use 'long double' with '__vector'}}
 vector bool v_b;                     // expected-error {{C++ requires a type specifier for all declarations}}
 vector bool float v_bf;              // expected-error {{cannot use 'float' with '__vector bool'}}
 vector bool double v_bd;             // expected-error {{cannot use 'double' with '__vector bool'}}
@@ -75,6 +77,11 @@ vector bool signed char v_bsc;       // expected-error {{cannot use 'signed' wit
 vector bool unsigned int v_bsc2;      // expected-error {{cannot use 'unsigned' with '__vector bool'}}
 vector bool long v_bl;               // expected-error {{cannot use 'long' with '__vector bool'}}
 vector bool long long v_bll;         // expected-error {{cannot use 'long long' with '__vector bool'}}
+
+// vector long is deprecated, but vector long long is not.
+vector long long v_ll;
+vector signed long long v_sll;
+vector unsigned long long v_ull;
 
 void f() {
   __vector unsigned int v = {0,0,0,0};
@@ -93,8 +100,8 @@ void f() {
   gccvector unsigned int gv = v;
   gccvector int gvi = (gccvector int)v;
   __attribute__((vector_size(8))) unsigned int gv8;
-  gv8 = gccv;     // expected-error {{assigning to '__attribute__((__vector_size__(2 * sizeof(unsigned int)))) unsigned int' from incompatible type '__attribute__((__vector_size__(4 * sizeof(unsigned int)))) unsigned int'}}
-  av = gv8;       // expected-error {{assigning to '__vector unsigned int' from incompatible type '__attribute__((__vector_size__(2 * sizeof(unsigned int)))) unsigned int'}}
+  gv8 = gccv;     // expected-error {{assigning to '__attribute__((__vector_size__(2 * sizeof(unsigned int)))) unsigned int' (vector of 2 'unsigned int' values) from incompatible type '__attribute__((__vector_size__(4 * sizeof(unsigned int)))) unsigned int' (vector of 4 'unsigned int' values)}}
+  av = gv8;       // expected-error {{assigning to '__vector unsigned int' (vector of 4 'unsigned int' values) from incompatible type '__attribute__((__vector_size__(2 * sizeof(unsigned int)))) unsigned int' (vector of 2 'unsigned int' values)}}
 
   v = gccv;
   __vector unsigned int tv = gccv;

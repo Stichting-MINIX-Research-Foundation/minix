@@ -263,6 +263,10 @@ void f0() {
   tmp_V4f = __builtin_ia32_cvtpi2ps(tmp_V4f, tmp_V2i);
   tmp_V2i = __builtin_ia32_cvtps2pi(tmp_V4f);
   tmp_i = __builtin_ia32_cvtss2si(tmp_V4f);
+
+  tmp_i = __builtin_ia32_rdtsc();
+  tmp_i = __builtin_ia32_rdtscp(&tmp_Ui);
+  tmp_LLi = __builtin_ia32_rdpmc(tmp_i);
 #ifdef USE_64
   tmp_LLi = __builtin_ia32_cvtss2si64(tmp_V4f);
 #endif
@@ -382,7 +386,7 @@ void f0() {
   tmp_V4f = __builtin_ia32_roundss(tmp_V4f, tmp_V4f, imm_i_0_16);
   tmp_V2d = __builtin_ia32_roundsd(tmp_V2d, tmp_V2d, imm_i_0_16);
   tmp_V2d = __builtin_ia32_roundpd(tmp_V2d, imm_i_0_16);
-  tmp_V4f = __builtin_ia32_insertps128(tmp_V4f, tmp_V4f, tmp_i);
+  tmp_V4f = __builtin_ia32_insertps128(tmp_V4f, tmp_V4f, imm_i_0_256);
 #endif
 
   tmp_V4d = __builtin_ia32_addsubpd256(tmp_V4d, tmp_V4d);
@@ -448,9 +452,6 @@ void f0() {
   tmp_i = __builtin_ia32_movmskps256(tmp_V8f);
   __builtin_ia32_vzeroall();
   __builtin_ia32_vzeroupper();
-  tmp_V4f = __builtin_ia32_vbroadcastss(tmp_fCp);
-  tmp_V4d = __builtin_ia32_vbroadcastsd256(tmp_dCp);
-  tmp_V8f = __builtin_ia32_vbroadcastss256(tmp_fCp);
   tmp_V4d = __builtin_ia32_vbroadcastf128_pd256(tmp_V2dCp);
   tmp_V8f = __builtin_ia32_vbroadcastf128_ps256(tmp_V4fCp);
   __builtin_ia32_storeupd256(tmp_dp, tmp_V4d);

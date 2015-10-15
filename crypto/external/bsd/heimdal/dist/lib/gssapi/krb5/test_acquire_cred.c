@@ -1,4 +1,4 @@
-/*	$NetBSD: test_acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: test_acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Kungliga Tekniska Högskolan
@@ -65,7 +65,7 @@ test_add(gss_cred_id_t cred_handle)
 				 NULL,
 				 &time_rec,
 				 NULL);
-			
+
     if (GSS_ERROR(major_status))
 	errx(1, "add_cred failed");
 
@@ -94,7 +94,7 @@ copy_cred(void)
 				    &time_rec);
     if (GSS_ERROR(major_status))
 	errx(1, "acquire_cred failed");
-	
+
     print_time(time_rec);
 
     test_add(cred_handle);
@@ -137,7 +137,7 @@ acquire_cred_service(const char *service)
 				    &time_rec);
     if (GSS_ERROR(major_status))
 	errx(1, "acquire_cred failed");
-	
+
     print_time(time_rec);
 
     major_status = gss_release_cred(&minor_status,

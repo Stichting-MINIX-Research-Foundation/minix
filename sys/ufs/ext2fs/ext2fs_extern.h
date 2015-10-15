@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.46 2012/11/21 23:11:23 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.48 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -128,7 +128,6 @@ int ext2fs_dirremove(struct vnode *, const struct ufs_lookup_results *,
 int ext2fs_dirrewrite(struct inode *, const struct ufs_lookup_results *,
 			   struct inode *, struct componentname *);
 int ext2fs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int ext2fs_checkpath(struct inode *, struct inode *, kauth_cred_t);
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
@@ -148,6 +147,8 @@ void ext2fs_set_inode_guid(struct inode *);
 /* ext2fs_readwrite.c */
 int ext2fs_read(void *);
 int ext2fs_write(void *);
+int ext2fs_bufrd(struct vnode *, struct uio *, int, kauth_cred_t);
+int ext2fs_bufwr(struct vnode *, struct uio *, int, kauth_cred_t);
 
 /* ext2fs_vnops.c */
 int ext2fs_create(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_bn.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_bn.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -350,7 +350,7 @@ test_BN_CTX(void)
 
     if ((c = BN_CTX_new()) == NULL)
 	return 1;
-    
+
     for (i = 0; i < testnum; i++) {
 	BN_CTX_start(c);
 	BN_CTX_end(c);

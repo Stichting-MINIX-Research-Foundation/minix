@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.12 2013/07/31 14:05:33 soren Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.21 2015/08/17 06:16:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,8 @@
 #ifndef XEN
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 #endif
+
+#include <sys/kcpuset.h>
 
 /*
  * x86-specific PCI structure and type definitions.
@@ -110,15 +112,53 @@ void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t);
 int		pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
+
+pci_intr_type_t	pci_intr_type(pci_intr_handle_t);
+
+/*
+ * If device drivers use MSI/MSI-X, they should use these API for INTx
+ * instead of pci_intr_map(), because of conforming the pci_intr_handle
+ * ownership to MSI/MSI-X.
+ */
+int		pci_intx_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **);
+
+/*
+ * Wrapper function for generally unitied allocation to fallback MSI-X/MSI/INTx
+ * automatically.
+ */
+int		pci_intr_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *, pci_intr_type_t);
+
 /* experimental MSI support */
-void *pci_msi_establish(struct pci_attach_args *, int, int (*)(void *), void *);
-void pci_msi_disestablish(void *);
+int		pci_msi_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msi_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+
+/* experimental MSI-X support */
+int		pci_msix_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msix_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+int		pci_msix_alloc_map(const struct pci_attach_args *,
+		    pci_intr_handle_t **, u_int *, int);
+
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *,
+		    int);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

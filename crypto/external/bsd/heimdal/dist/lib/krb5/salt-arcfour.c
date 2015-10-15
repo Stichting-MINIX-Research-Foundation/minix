@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-arcfour.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: salt-arcfour.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@ ARCFOUR_string_to_key(krb5_context context,
 {
     krb5_error_code ret;
     uint16_t *s = NULL;
-    size_t len, i;
+    size_t len = 0, i;
     EVP_MD_CTX *m;
 
     m = EVP_MD_CTX_create();

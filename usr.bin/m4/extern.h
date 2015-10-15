@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.16 2012/03/15 02:02:23 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2015/01/29 03:27:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -173,5 +173,3 @@ extern int  synch_lines;	/* line synchronisation directives */
 
 extern int mimic_gnu;		/* behaves like gnu-m4 */
 extern int prefix_builtins;	/* prefix builtin macros with m4_ */
-
-extern long long strtonum(const char *, long long, long long, const char **);

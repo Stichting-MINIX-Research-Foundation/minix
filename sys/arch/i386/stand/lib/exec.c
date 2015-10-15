@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.55 2013/11/27 18:29:45 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.59 2014/04/06 19:18:00 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ static struct btinfo_userconfcommands *btinfo_userconfcommands = NULL;
 static size_t btinfo_userconfcommands_size = 0;
 
 static void	module_init(const char *);
-static void	module_add_common(char *, uint8_t);
+static void	module_add_common(const char *, uint8_t);
 
 static void	userconf_init(void);
 
@@ -184,7 +184,7 @@ fs_add(char *name)
 }
 
 static void
-module_add_common(char *name, uint8_t type)
+module_add_common(const char *name, uint8_t type)
 {
 	boot_module_t *bm, *bmp;
 	size_t len;
@@ -305,11 +305,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add(fsmod);
-#if defined(__minix)
-	if (fsmod !=NULL && fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
-		module_add(fsmod2);
-#endif /* defined(__minix) */
+		module_add_common(fsmod, BM_TYPE_KMOD);
 
 	/*
 	 * Gather some information for the kernel. Do this after the
@@ -366,6 +362,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	howto = boothowto;
 
+	memset(marks, 0, sizeof(marks));
+
 	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
 		goto out;
 
@@ -388,7 +386,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	userconf_init();
 	if (btinfo_userconfcommands != NULL)
 		BI_ADD(btinfo_userconfcommands, BTINFO_USERCONFCOMMANDS,
-	btinfo_userconfcommands_size);
+		    btinfo_userconfcommands_size);
 
 #ifdef DEBUG
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
@@ -420,7 +418,7 @@ out:
 static void
 extract_device(const char *path, char *buf, size_t buflen)
 {
-	int i;
+	size_t i;
 
 	if (strchr(path, ':') != NULL) {
 		for (i = 0; i < buflen - 2 && path[i] != ':'; i++)
@@ -442,7 +440,7 @@ module_path(boot_module_t *bm, const char *kdev)
 	for (name2 = name; *name2; ++name2) {
 		if (*name2 == ' ' || *name2 == '\t') {
 			strlcpy(name_buf, name, sizeof(name_buf));
-			if (name2 - name < sizeof(name_buf))
+			if ((uintptr_t)name2 - (uintptr_t)name < sizeof(name_buf))
 				name_buf[name2 - name] = '\0';
 			name = name_buf;
 			break;
@@ -460,7 +458,7 @@ module_path(boot_module_t *bm, const char *kdev)
 		}
 	} else {
 		/* device not specified; load from kernel device if known */
- 		if (name[0] == '/')
+		if (name[0] == '/')
 			snprintf(buf, sizeof(buf), "%s%s", kdev, name);
 		else
 			snprintf(buf, sizeof(buf), "%s%s/%s/%s.kmod",
@@ -506,7 +504,7 @@ module_init(const char *kernel_path)
 	char kdev[64];
 	char *buf;
 	boot_module_t *bm;
-	size_t len;
+	ssize_t len;
 	off_t off;
 	int err, fd, nfail = 0;
 

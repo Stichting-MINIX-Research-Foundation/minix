@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.ioconf.mk,v 1.4 2013/09/20 16:39:14 pooka Exp $
+#	$NetBSD: bsd.ioconf.mk,v 1.5 2014/11/30 15:53:29 uebayasi Exp $
 #
 
 .include <bsd.own.mk>
@@ -18,7 +18,8 @@
 CONFIGDEP=${TOOL_CONFIG}
 .endif
 ioconf.c: ${IOCONF} ${CONFIGDEP}
-	${TOOL_CONFIG} -b ${.OBJDIR} -s ${S} ${IOCONFDIR:U${.CURDIR}}/${IOCONF}
+	${TOOL_CONFIG} ${CONFIGOPTS} -b ${.OBJDIR} -s ${S} \
+	    ${IOCONFDIR:U${.CURDIR}}/${IOCONF}
 	# config doesn't change the files if they're unchanged.  however,
 	# here we want to satisfy our make dependency, so force a
 	# timestamp update

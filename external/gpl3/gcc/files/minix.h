@@ -33,18 +33,15 @@ Boston, MA 02110-1301, USA.  */
 /* In case we need to know.  */
 #define USING_CONFIG_MINIX 1
 
-#undef  SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR) (MINIX_SWITCH_TAKES_ARG(CHAR))
-
-#undef  WORD_SWITCH_TAKES_ARG
-#define WORD_SWITCH_TAKES_ARG(STR) (MINIX_WORD_SWITCH_TAKES_ARG(STR))
-
 #undef  TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS() MINIX_TARGET_OS_CPP_BUILTINS()
 
-#if defined(NETBSD_NATIVE)
+#if defined(NETBSD_NATIVE) || defined(NETBSD_TOOLS)
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR MINIX_GPLUSPLUS_INCLUDE_DIR
+
+#undef GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT
+#define GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT MINIX_GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT
 
 #undef GPLUSPLUS_BACKWARD_INCLUDE_DIR
 #define GPLUSPLUS_BACKWARD_INCLUDE_DIR MINIX_GPLUSPLUS_BACKWARD_INCLUDE_DIR
@@ -52,9 +49,34 @@ Boston, MA 02110-1301, USA.  */
 #undef GCC_INCLUDE_DIR
 #define GCC_INCLUDE_DIR MINIX_GCC_INCLUDE_DIR
 
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS MINIX_INCLUDE_DEFAULTS
-#endif /* defined(NETBSD_NATIVE) */
+#undef GCC_INCLUDE_DIR_ADD_SYSROOT
+#define GCC_INCLUDE_DIR_ADD_SYSROOT MINIX_GCC_INCLUDE_DIR_ADD_SYSROOT
+
+#undef STANDARD_STARTFILE_PREFIX
+#define STANDARD_STARTFILE_PREFIX MINIX_STANDARD_STARTFILE_PREFIX
+
+#undef STANDARD_STARTFILE_PREFIX_1
+#define STANDARD_STARTFILE_PREFIX_1 MINIX_STANDARD_STARTFILE_PREFIX
+
+#endif /* defined(NETBSD_NATIVE) || defined(NETBSD_TOOLS) */
+
+#if defined(NETBSD_NATIVE)
+/* Under NetBSD, the normal location of the compiler back ends is the
+   /usr/libexec directory.  */
+
+#undef STANDARD_EXEC_PREFIX
+#define STANDARD_EXEC_PREFIX	MINIX_STANDARD_EXEC_PREFIX
+
+#undef TOOLDIR_BASE_PREFIX
+#define TOOLDIR_BASE_PREFIX	MINIX_TOOLDIR_BASE_PREFIX
+
+#undef STANDARD_BINDIR_PREFIX
+#define STANDARD_BINDIR_PREFIX	MINIX_STANDARD_BINDIR_PREFIX
+
+#undef STANDARD_LIBEXEC_PREFIX
+#define STANDARD_LIBEXEC_PREFIX	MINIX_STANDARD_EXEC_PREFIX
+
+#endif /* NETBSD_NATIVE */
 
 #undef  CPP_SPEC
 #define CPP_SPEC MINIX_CPP_SPEC
@@ -77,12 +99,6 @@ Boston, MA 02110-1301, USA.  */
 #undef	LINK_SPEC
 #define LINK_SPEC MINIX_LINK_SPEC
 
-#undef STANDARD_STARTFILE_PREFIX
-#define STANDARD_STARTFILE_PREFIX MINIX_STANDARD_STARTFILE_PREFIX
-
-#undef STANDARD_STARTFILE_PREFIX_1
-#define STANDARD_STARTFILE_PREFIX_1 MINIX_STANDARD_STARTFILE_PREFIX
-
 #undef LINK_GCC_C_SEQUENCE_SPEC
 #define LINK_GCC_C_SEQUENCE_SPEC MINIX_LINK_GCC_C_SEQUENCE_SPEC
 
@@ -101,35 +117,61 @@ Boston, MA 02110-1301, USA.  */
 #undef  OBJECT_FORMAT_ELF
 #define OBJECT_FORMAT_ELF
 
+#undef TARGET_UNWIND_TABLES_DEFAULT
+#define TARGET_UNWIND_TABLES_DEFAULT MINIX_TARGET_UNWIND_TABLES_DEFAULT
+
 /* Use periods rather than dollar signs in special g++ assembler names.
    This ensures the configuration knows our system correctly so we can link
    with libraries compiled with the native cc.  */
 #undef NO_DOLLAR_IN_LABEL
 
+/* We always use gas here, so we don't worry about ECOFF assembler
+   problems.  */
+#undef TARGET_GAS
+#define TARGET_GAS	1
+
+/* Default to pcc-struct-return, because this is the ELF abi and
+   we don't care about compatibility with older gcc versions.  */
+#undef DEFAULT_PCC_STRUCT_RETURN
+#define DEFAULT_PCC_STRUCT_RETURN 1
+
+/* When building shared libraries, the initialization and finalization 
+   functions for the library are .init and .fini respectively.  */
+
+#define COLLECT_SHARED_INIT_FUNC(STREAM,FUNC)				\
+  do {									\
+    fprintf ((STREAM), "void __init() __asm__ (\".init\");");		\
+    fprintf ((STREAM), "void __init() {\n\t%s();\n}\n", (FUNC));	\
+  } while (0)
+
+#define COLLECT_SHARED_FINI_FUNC(STREAM,FUNC)				\
+  do {									\
+    fprintf ((STREAM), "void __fini() __asm__ (\".fini\");");		\
+    fprintf ((STREAM), "void __fini() {\n\t%s();\n}\n", (FUNC));	\
+  } while (0)
+
+#undef TARGET_POSIX_IO
+#define TARGET_POSIX_IO
+
 /* Don't assume anything about the header files.  */
 #undef  NO_IMPLICIT_EXTERN_C
 #define NO_IMPLICIT_EXTERN_C	1
 
-/* Handle #pragma weak and #pragma pack.  */
-#undef HANDLE_SYSV_PRAGMA
-#define HANDLE_SYSV_PRAGMA 1
+/* Define some types that are the same on all NetBSD platforms,
+   making them agree with <machine/ansi.h>.  */
 
-/* Don't default to pcc-struct-return, we want to retain compatibility with
-   older gcc versions AND pcc-struct-return is nonreentrant.
-   (even though the SVR4 ABI for the i386 says that records and unions are
-   returned in memory).  */
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
 
-#undef  DEFAULT_PCC_STRUCT_RETURN
-#define DEFAULT_PCC_STRUCT_RETURN 0
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
+
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
 #endif
-
-#if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "--eh-frame-hdr "
-#endif
-
-#undef TARGET_UNWIND_TABLES_DEFAULT
-#define TARGET_UNWIND_TABLES_DEFAULT MINIX_TARGET_UNWIND_TABLES_DEFAULT

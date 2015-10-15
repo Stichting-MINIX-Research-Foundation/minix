@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2012/04/13 07:05:32 jruoho Exp $
+# $NetBSD: Makefile,v 1.11 2014/06/10 04:28:40 he Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ TESTSDIR=	${TESTSBASE}/modules
 TESTS_C=	t_modctl
 TESTS_C+=	t_builtin
 LDADD=		-lprop
-LDADD+=		-lrumpfs_kernfs -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD+=		-lrumpfs_kernfs -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 
 TESTS_SH=	t_abi_uvm
 TESTS_SH+=	t_modload

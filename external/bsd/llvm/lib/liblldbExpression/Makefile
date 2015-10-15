@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbExpression
 
@@ -14,6 +14,7 @@ SRCS+=	ASTDumper.cpp \
 	ClangExpressionParser.cpp \
 	ClangExpressionVariable.cpp \
 	ClangFunction.cpp \
+	ClangModulesDeclVendor.cpp \
 	ClangPersistentVariables.cpp \
 	ClangUserExpression.cpp \
 	ClangUtilityFunction.cpp \

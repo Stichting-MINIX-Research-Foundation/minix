@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1-common.h,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
+/*	$NetBSD: asn1-common.h,v 1.1.1.3 2014/04/24 12:45:28 pettai Exp $	*/
 
 /* Id */
 
@@ -77,5 +77,5 @@ typedef struct heim_octet_string heim_any_set;
 #define ASN1EXP
 #define ASN1CALL
 #endif
-	  
+
 #endif

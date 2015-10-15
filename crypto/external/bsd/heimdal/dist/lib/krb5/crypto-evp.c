@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-evp.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-evp.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -100,7 +100,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
 {
     size_t i, blocksize;
     struct _krb5_evp_schedule *ctx = key->schedule->data;
-    char tmp[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
+    unsigned char tmp[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *c;
     unsigned char *p;
 
@@ -144,7 +144,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	if (ivec)
 	    memcpy(ivec, p, blocksize);
     } else {
-	char tmp2[EVP_MAX_BLOCK_LENGTH], tmp3[EVP_MAX_BLOCK_LENGTH];
+	unsigned char tmp2[EVP_MAX_BLOCK_LENGTH], tmp3[EVP_MAX_BLOCK_LENGTH];
 
 	p = data;
 	if (len > blocksize * 2) {

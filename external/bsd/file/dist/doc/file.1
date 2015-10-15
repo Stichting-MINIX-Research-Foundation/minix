@@ -1,7 +1,7 @@
-.\"	$NetBSD: file.1,v 1.12 2013/03/23 16:15:57 christos Exp $
+.\"	$NetBSD: file.1,v 1.16 2015/01/02 21:15:32 christos Exp $
 .\"
-.\" $File: file.man,v 1.102 2013/01/04 15:39:22 christos Exp $
-.Dd October 25, 2012
+.\" $File: file.man,v 1.111 2014/12/16 23:18:40 christos Exp $
+.Dd December 16, 2014
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -10,7 +10,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl bchiklLNnprsvz0
+.Op Fl bcEhiklLNnprsvz0
 .Op Fl Fl apple
 .Op Fl Fl mime-encoding
 .Op Fl Fl mime-type
@@ -18,6 +18,7 @@
 .Op Fl F Ar separator
 .Op Fl f Ar namefile
 .Op Fl m Ar magicfiles
+.Op Fl P Ar name=value
 .Ar
 .Ek
 .Nm
@@ -26,7 +27,7 @@
 .Nm
 .Op Fl Fl help
 .Sh DESCRIPTION
-This manual page documents version 5.14 of the
+This manual page documents version 5.22 of the
 .Nm
 command.
 .Pp
@@ -166,6 +167,10 @@ in any of the character sets listed above is simply said to be
 .Dq data .
 .Sh OPTIONS
 .Bl -tag -width indent
+.It Fl Fl apple
+Causes the file command to output the file type and creator code as
+used by older MacOS versions. The code consists of eight letters,
+the first describing the file type, the latter the creator.
 .It Fl b , Fl Fl brief
 Do not prepend filenames to output lines (brief mode).
 .It Fl C , Fl Fl compile
@@ -177,6 +182,10 @@ Cause a checking printout of the parsed form of the magic file.
 This is usually used in conjunction with the
 .Fl m
 flag to debug a new magic file before installing it.
+.It Fl E
+On filesystem errors (file not found etc), instead of handling the error
+as regular output as POSIX mandates and keep going, issue an error message
+and exit.
 .It Fl e , Fl Fl exclude Ar testname
 Exclude the test named in
 .Ar testname
@@ -297,6 +306,16 @@ or
 attempt to preserve the access time of files analyzed, to pretend that
 .Nm
 never read them.
+.It Fl P , Fl Fl parameter Ar name=value
+Set various parameter limits.
+.Bl -column "elf_phnum" "Default" "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" -offset indent
+.It Sy "Name" Ta Sy "Default" Ta Sy "Explanation"
+.It Li indir Ta 15 Ta recursion limit for indirect magic
+.It Li name Ta 30 Ta use count limit for name/use magic
+.It Li elf_notes Ta 256 Ta max ELF notes processed
+.It Li elf_phnum Ta 128 Ta max ELF program sections processed
+.It Li elf_shnum Ta 32768 Ta max ELF sections processed
+.El
 .It Fl r , Fl Fl raw
 Don't translate unprintable characters to \eooo.
 Normally
@@ -333,7 +352,7 @@ after the end of the filename.
 Nice to
 .Xr cut 1
 the output.
-This does not affect the separator which is still printed.
+This does not affect the separator, which is still printed.
 .It Fl -help
 Print a help message and exit.
 .El
@@ -555,7 +574,10 @@ returns 0 on success, and non-zero on error.
 Please report bugs and send patches to the bug tracker at
 .Pa http://bugs.gw.com/
 or the mailing list at
-.Aq file@mx.gw.com .
+.Aq file@mx.gw.com
+(visit
+.Pa http://mx.gw.com/mailman/listinfo/file
+first to subscribe).
 .Sh TODO
 .Pp
 Fix output so that tests for MIME and APPLE flags are not needed all

@@ -89,4 +89,9 @@ add_random_users_LDADD = \
 
 test_util_LDADD = $(kadmin_LDADD)
 
-EXTRA_DIST = $(man_MANS) kadmin-commands.in
+EXTRA_DIST = \
+	NTMakefile \
+	kadmin-version.rc \
+	kadmind-version.rc \
+	$(man_MANS) \
+	kadmin-commands.in

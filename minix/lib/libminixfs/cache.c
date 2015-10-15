@@ -194,11 +194,8 @@ static void free_unused_blocks(void)
 
 static void lmfs_alloc_block(struct buf *bp, size_t block_size)
 {
-  int len;
   ASSERT(!bp->data);
   ASSERT(bp->lmfs_bytes == 0);
-
-  len = roundup(block_size, PAGE_SIZE);
 
   if((bp->data = mmap(0, block_size, PROT_READ|PROT_WRITE,
       MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {

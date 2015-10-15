@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.107 2014/08/25 20:40:52 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.107 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -186,7 +186,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		dbg(("doing non-PLT relocations"));
 		if (_rtld_relocate_nonplt_objects(obj) < 0)
 			ok = 0;
-
 #if !defined(__minix)
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,
@@ -230,4 +229,17 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 	}
 
 	return 0;
+}
+
+Elf_Addr
+_rtld_resolve_ifunc(const Obj_Entry *obj, const Elf_Sym *def)
+{
+	Elf_Addr target;
+
+	_rtld_shared_exit();
+	target = _rtld_call_function_addr(obj,
+	    (Elf_Addr)obj->relocbase + def->st_value);
+	_rtld_shared_enter();
+
+	return target;
 }

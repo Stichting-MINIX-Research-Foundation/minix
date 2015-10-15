@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.10 2009/04/12 11:09:49 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.11 2014/09/04 04:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: args.c,v 1.10 2009/04/12 11:09:49 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.11 2014/09/04 04:06:07 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -274,6 +274,9 @@ struct pro {
 		"nsc", PRO_BOOL, true, OFF, &star_comment_cont
 	},
 	{
+		"nut", PRO_BOOL, true, OFF, &use_tabs
+	},
+	{
 		"nsob", PRO_BOOL, false, OFF, &swallow_optional_blanklines
 	},
 	{
@@ -299,6 +302,9 @@ struct pro {
 	},
 	{
 		"troff", PRO_BOOL, false, ON, &troff
+	},
+	{
+		"ut", PRO_BOOL, true, ON, &use_tabs
 	},
 	{
 		"v", PRO_BOOL, false, ON, &verbose

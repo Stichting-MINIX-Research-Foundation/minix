@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_context.c,v 1.2 2011/04/14 18:00:30 elric Exp $	*/
+/*	$NetBSD: auth_context.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -60,7 +60,7 @@ krb5_auth_con_init(krb5_context context,
     p->remote_address = NULL;
     p->local_port     = 0;
     p->remote_port    = 0;
-    p->keytype        = KEYTYPE_NULL;
+    p->keytype        = ENCTYPE_NULL;
     p->cksumtype      = CKSUMTYPE_NONE;
     *auth_context     = p;
     return 0;
@@ -292,7 +292,7 @@ krb5_auth_con_getlocalsubkey(krb5_context context,
     return copy_key(context, auth_context->local_subkey, keyblock);
 }
 
-/* coverity[+alloc : arg-*2] */ 
+/* coverity[+alloc : arg-*2] */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_con_getremotesubkey(krb5_context context,
 			      krb5_auth_context auth_context,

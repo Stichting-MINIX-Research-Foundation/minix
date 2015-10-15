@@ -1,21 +1,21 @@
-/*	$NetBSD: getifaddrs_w32.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: getifaddrs_w32.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include<config.h>
@@ -85,7 +85,7 @@ rk_getifaddrs(struct ifaddrs **ifpp)
 
 	free (il);
 	il = NULL;
-	    
+
 	if (WSAGetLastError() == WSAEFAULT && cbret > il_len) {
 	    il_len = cbret;
 	} else {
@@ -136,7 +136,7 @@ rk_getifaddrs(struct ifaddrs **ifpp)
 
     if (il)
 	free (il);
-    
+
     return ret;
 }
 
@@ -144,15 +144,15 @@ void ROKEN_LIB_FUNCTION
 rk_freeifaddrs(struct ifaddrs *ifp)
 {
     struct ifaddrs *p, *q;
-    
+
     for(p = ifp; p; ) {
 	if (p->ifa_name)
 	    free(p->ifa_name);
 	if(p->ifa_addr)
 	    free(p->ifa_addr);
-	if(p->ifa_dstaddr) 
+	if(p->ifa_dstaddr)
 	    free(p->ifa_dstaddr);
-	if(p->ifa_netmask) 
+	if(p->ifa_netmask)
 	    free(p->ifa_netmask);
 	if(p->ifa_data)
 	    free(p->ifa_data);

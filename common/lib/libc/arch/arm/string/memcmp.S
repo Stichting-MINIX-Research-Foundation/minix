@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $ */
+/*      $NetBSD: memcmp.S,v 1.5 2015/03/26 13:34:51 justin Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.5 2015/03/26 13:34:51 justin Exp $")
 
 ENTRY(memcmp)
 	mov	ip, r0
@@ -179,3 +179,7 @@ ENTRY(memcmp)
 	RET
 #endif
 END(memcmp)
+
+#if defined(__ARM_EABI__) && !defined(_RUMPKERNEL)
+STRONG_ALIAS(__aeabi_memcmp, memcmp)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.1 2012/10/03 00:51:47 christos Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.2 2014/03/04 06:14:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,8 +46,10 @@
 #error this file should not be included by loadable kernel modules
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/mutex.h>
 

@@ -28,10 +28,11 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 # Minix specific syscalls / utils.
 SRCS+= kernel_utils.c sprofile.c stack_utils.c _mcontext.c
 
-# Emulation for missing lchown/lchmod
-OBJS+= lchown.o lchmod.o
-lchown.o lchown.pico lchown.bc: ${NETBSDSRCDIR}/tools/compat/lchown.c
+# Emulation for missing lchown/lchmod/lchflags
+OBJS+= lchflags.o lchmod.o lchown.o
+lchflags.o lchflags.pico lchflags.bc: ${NETBSDSRCDIR}/tools/compat/lchflags.c
 lchmod.o lchmod.pico lchmod.bc: ${NETBSDSRCDIR}/tools/compat/lchmod.c
+lchown.o lchown.pico lchown.bc: ${NETBSDSRCDIR}/tools/compat/lchown.c
 
 .include "${NETBSDSRCDIR}/minix/lib/libc/arch/${ARCHSUBDIR}/sys/Makefile.inc"
 .include "${NETBSDSRCDIR}/minix/lib/libc/arch/${ARCHSUBDIR}/Makefile.inc"

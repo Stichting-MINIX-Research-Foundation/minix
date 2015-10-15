@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.106 2013/04/26 18:07:43 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.115 2015/02/17 20:33:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -123,6 +123,10 @@ double	 strtod(const char * __restrict, char ** __restrict);
 long	 strtol(const char * __restrict, char ** __restrict, int);
 unsigned long
 	 strtoul(const char * __restrict, char ** __restrict, int);
+#ifdef _OPENBSD_SOURCE
+long long strtonum(const char *, long long, long long, const char **);
+void	*reallocarray(void *, size_t, size_t);
+#endif
 int	 system(const char *);
 
 /* These are currently just stubs. */
@@ -174,12 +178,16 @@ int	 putenv(char *) __RENAME(__putenv50);
 long	 a64l(const char *);
 char	*l64a(long);
 
-char	*initstate(unsigned long, char *, size_t);
 long	 random(void);
 char	*setstate(char *);
-void	 srandom(unsigned long);
+#ifndef __LIBC12_SOURCE__
+char	*initstate(unsigned int, char *, size_t) __RENAME(__initstate60);
+void	 srandom(unsigned int) __RENAME(__srandom60);
+#endif
 #ifdef _NETBSD_SOURCE
 #define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
+int	 mkostemp(char *, int);
+int	 mkostemps(char *, int, int);
 #endif
 
 char	*mkdtemp(char *);
@@ -304,6 +312,7 @@ void	 cfree(void *);
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t,
 	    int (*)(const void *, const void *));
+int	 ptsname_r(int, char *, size_t);
 int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 int	 sradixsort(const unsigned char **, int, const unsigned char *,
@@ -331,6 +340,8 @@ int	 l64a_r(long, char *, int);
 
 size_t	shquote(const char *, char *, size_t);
 size_t	shquotev(int, char * const *, char *, size_t);
+
+int	reallocarr(void *, size_t, size_t);
 #endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 

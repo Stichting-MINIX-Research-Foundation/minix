@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.15 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.16 2014/09/05 05:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ wapbl_vphaswapbl(struct vnode *vp)
 /* Replay support */
 
 #ifdef WAPBL_INTERNAL
+LIST_HEAD(wapbl_blk_head, wapbl_blk);
 struct wapbl_replay {
 	struct vnode *wr_logvp;
 	struct vnode *wr_devvp;
@@ -228,7 +229,7 @@ struct wapbl_replay {
 
 	void *wr_scratch;
 
-	LIST_HEAD(wapbl_blk_head, wapbl_blk) *wr_blkhash;
+	struct wapbl_blk_head *wr_blkhash;
 	u_long wr_blkhashmask;
 	int wr_blkhashcnt;
 

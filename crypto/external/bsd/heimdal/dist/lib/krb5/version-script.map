@@ -285,6 +285,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_free_creds_contents;
 		krb5_free_data;
 		krb5_free_data_contents;
+		krb5_free_default_realm;
 		krb5_free_error;
 		krb5_free_error_contents;
 		krb5_free_error_string;
@@ -384,7 +385,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_hmac;
 		krb5_init_context;
 		krb5_init_ets;
-		krb5_init_etype;
 		krb5_initlog;
 		krb5_is_config_principal;
 		krb5_is_thread_safe;
@@ -606,6 +606,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_storage_set_byteorder;
 		krb5_storage_set_eof_code;
 		krb5_storage_set_flags;
+		krb5_storage_set_max_alloc;
 		krb5_storage_to_data;
 		krb5_storage_truncate;
 		krb5_storage_write;

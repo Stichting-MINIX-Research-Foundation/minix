@@ -1301,7 +1301,7 @@ sha256_block_data_order:
 .align	6
 .LPICmeup:
 	mflr	0
-	bcl	20,31,.+4
+	bcl	20,31,$+4
 	mflr	7
 	addi	7,7,56
 	mtlr	0

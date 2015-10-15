@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.3 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.4 2014/08/23 02:24:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,3 +46,4 @@ ENTRY_NOPROFILE(__sigtramp_siginfo_2)
 	mr	%r3,%r30		/* restore ucontext pointer */
 	_DOSYSCALL(setcontext)		/* restore machine state */
 	_DOSYSCALL(exit)		/* or exit with errno if failed */
+END(__sigtramp_siginfo_2)

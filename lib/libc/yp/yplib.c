@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.45 2012/03/20 16:30:26 matt Exp $	 */
+/*	$NetBSD: yplib.c,v 1.46 2014/09/18 13:58:20 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.45 2012/03/20 16:30:26 matt Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.46 2014/09/18 13:58:20 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -115,7 +115,7 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 	/*
 	 * test if YP is running or not
 	 */
-	if ((fd = open(YPBINDLOCK, O_RDONLY)) == -1)
+	if ((fd = open(YPBINDLOCK, O_RDONLY | O_CLOEXEC)) == -1)
 		return YPERR_YPBIND;
 	if (!(flock(fd, LOCK_EX | LOCK_NB) == -1 && errno == EWOULDBLOCK)) {
 		(void)close(fd);
@@ -155,7 +155,7 @@ again:
 	if (ysd->dom_vers == 0) {
 		(void) snprintf(path, sizeof(path), "%s/%s.%d",
 				BINDINGDIR, dom, 2);
-		if ((fd = open(path, O_RDONLY)) == -1) {
+		if ((fd = open(path, O_RDONLY | O_CLOEXEC)) == -1) {
 			/*
 			 * no binding file, YP is dead, or not yet fully
 			 * alive.

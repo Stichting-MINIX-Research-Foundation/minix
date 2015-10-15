@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.12 2012/06/25 22:32:46 abs Exp $	*/
+/*	$NetBSD: bm.c,v 1.13 2014/06/23 10:43:25 shm Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.12 2012/06/25 22:32:46 abs Exp $");
+__RCSID("$NetBSD: bm.c,v 1.13 2014/06/23 10:43:25 shm Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
@@ -162,10 +162,8 @@ bm_free(bm_pat *pat)
 
 	_DIAGASSERT(pat != NULL);
 
-	if (pat->pat != NULL)
-		free(pat->pat);
-	if (pat->delta != NULL)
-		free(pat->delta);
+	free(pat->pat);
+	free(pat->delta);
 	free(pat);
 }
 
@@ -194,7 +192,7 @@ bm_exec(bm_pat *pat, u_char *base, size_t n)
 	e = base + n - 3 * pat->patlen;
 	while (s < e) {
 		k = d0[*s];		/* ufast skip loop */
-		while (k) {
+		while (k && s < e) {
 			k = d0[*(s += k)];
 			k = d0[*(s += k)];
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modautoload.c,v 1.1 2010/06/09 12:35:45 pooka Exp $	*/
+/*	$NetBSD: t_modautoload.c,v 1.2 2014/03/10 22:38:53 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -34,9 +34,8 @@ static void
 mountkernfs(void)
 {
 
-#ifndef HAVE_HOST_MODULES
-	atf_tc_skip("host kernel modules not supported on this architecture");
-#endif
+	if (!rump_nativeabi_p())
+		atf_tc_skip("host kernel modules not supported");
 
 	rump_init();
 

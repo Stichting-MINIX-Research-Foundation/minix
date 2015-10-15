@@ -1,0 +1,124 @@
+# $NetBSD: md.hppa,v 1.5 2015/08/10 03:21:44 mrg Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
+./usr/include/hp700				comp-obsolete		obsolete
+./usr/include/hp700/ansi.h			comp-obsolete		obsolete
+./usr/include/hp700/aout_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/asm.h			comp-obsolete		obsolete
+./usr/include/hp700/autoconf.h			comp-obsolete		obsolete
+./usr/include/hp700/bswap.h			comp-obsolete		obsolete
+./usr/include/hp700/bus.h			comp-obsolete		obsolete
+./usr/include/hp700/byte_swap.h			comp-obsolete		obsolete
+./usr/include/hp700/cdefs.h			comp-obsolete		obsolete
+./usr/include/hp700/cpu.h			comp-obsolete		obsolete
+./usr/include/hp700/cpufunc.h			comp-obsolete		obsolete
+./usr/include/hp700/db_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/disklabel.h			comp-obsolete		obsolete
+./usr/include/hp700/eisa_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/elf_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/endian.h			comp-obsolete		obsolete
+./usr/include/hp700/endian_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/exec.h			comp-obsolete		obsolete
+./usr/include/hp700/float.h			comp-obsolete		obsolete
+./usr/include/hp700/frame.h			comp-obsolete		obsolete
+./usr/include/hp700/ieee.h			comp-obsolete		obsolete
+./usr/include/hp700/ieeefp.h			comp-obsolete		obsolete
+./usr/include/hp700/int_const.h			comp-obsolete		obsolete
+./usr/include/hp700/int_fmtio.h			comp-obsolete		obsolete
+./usr/include/hp700/int_limits.h		comp-obsolete		obsolete
+./usr/include/hp700/int_mwgwtypes.h		comp-obsolete		obsolete
+./usr/include/hp700/int_types.h			comp-obsolete		obsolete
+./usr/include/hp700/intr.h			comp-obsolete		obsolete
+./usr/include/hp700/intrdefs.h			comp-obsolete		obsolete
+./usr/include/hp700/iomod.h			comp-obsolete		obsolete
+./usr/include/hp700/isa_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/kcore.h			comp-obsolete		obsolete
+./usr/include/hp700/limits.h			comp-obsolete		obsolete
+./usr/include/hp700/loadfile_machdep.h		comp-obsolete		obsolete
+./usr/include/hp700/lock.h			comp-obsolete		obsolete
+./usr/include/hp700/math.h			comp-obsolete		obsolete
+./usr/include/hp700/mcontext.h			comp-obsolete		obsolete
+./usr/include/hp700/mutex.h			comp-obsolete		obsolete
+./usr/include/hp700/nvm.h			comp-obsolete		obsolete
+./usr/include/hp700/param.h			comp-obsolete		obsolete
+./usr/include/hp700/pcb.h			comp-obsolete		obsolete
+./usr/include/hp700/pdc.h			comp-obsolete		obsolete
+./usr/include/hp700/pmap.h			comp-obsolete		obsolete
+./usr/include/hp700/pmc.h			comp-obsolete		obsolete
+./usr/include/hp700/proc.h			comp-obsolete		obsolete
+./usr/include/hp700/profile.h			comp-obsolete		obsolete
+./usr/include/hp700/psl.h			comp-obsolete		obsolete
+./usr/include/hp700/pte.h			comp-obsolete		obsolete
+./usr/include/hp700/ptrace.h			comp-obsolete		obsolete
+./usr/include/hp700/reg.h			comp-obsolete		obsolete
+./usr/include/hp700/reloc.h			comp-obsolete		obsolete
+./usr/include/hp700/rwlock.h			comp-obsolete		obsolete
+./usr/include/hp700/setjmp.h			comp-obsolete		obsolete
+./usr/include/hp700/signal.h			comp-obsolete		obsolete
+./usr/include/hp700/som.h			comp-obsolete		obsolete
+./usr/include/hp700/spinlock.h			comp-obsolete		obsolete
+./usr/include/hp700/stdarg.h			comp-obsolete		obsolete
+./usr/include/hp700/trap.h			comp-obsolete		obsolete
+./usr/include/hp700/types.h			comp-obsolete		obsolete
+./usr/include/hp700/varargs.h			comp-obsolete		obsolete
+./usr/include/hp700/vmparam.h			comp-obsolete		obsolete
+./usr/include/hp700/wchar_limits.h		comp-obsolete		obsolete
+./usr/include/hppa				comp-c-include
+./usr/include/hppa/ansi.h			comp-c-include
+./usr/include/hppa/aout_machdep.h		comp-c-include
+./usr/include/hppa/asm.h			comp-c-include
+./usr/include/hppa/autoconf.h			comp-c-include
+./usr/include/hppa/bswap.h			comp-c-include
+./usr/include/hppa/byte_swap.h			comp-c-include
+./usr/include/hppa/cdefs.h			comp-c-include
+./usr/include/hppa/cpu.h			comp-c-include
+./usr/include/hppa/cpufunc.h			comp-c-include
+./usr/include/hppa/disklabel.h			comp-c-include
+./usr/include/hppa/eisa_machdep.h		comp-c-include
+./usr/include/hppa/elf_machdep.h		comp-c-include
+./usr/include/hppa/endian.h			comp-c-include
+./usr/include/hppa/endian_machdep.h		comp-c-include
+./usr/include/hppa/exec.h			comp-c-include
+./usr/include/hppa/fenv.h			comp-c-include
+./usr/include/hppa/float.h			comp-c-include
+./usr/include/hppa/frame.h			comp-c-include
+./usr/include/hppa/ieee.h			comp-c-include
+./usr/include/hppa/ieeefp.h			comp-c-include
+./usr/include/hppa/int_const.h			comp-c-include
+./usr/include/hppa/int_fmtio.h			comp-c-include
+./usr/include/hppa/int_limits.h			comp-c-include
+./usr/include/hppa/int_mwgwtypes.h		comp-c-include
+./usr/include/hppa/int_types.h			comp-c-include
+./usr/include/hppa/intr.h			comp-c-include
+./usr/include/hppa/intrdefs.h			comp-c-include
+./usr/include/hppa/iomod.h			comp-c-include
+./usr/include/hppa/isa_machdep.h		comp-c-include
+./usr/include/hppa/kcore.h			comp-c-include
+./usr/include/hppa/limits.h			comp-c-include
+./usr/include/hppa/loadfile_machdep.h		comp-c-include
+./usr/include/hppa/lock.h			comp-c-include
+./usr/include/hppa/math.h			comp-c-include
+./usr/include/hppa/mcontext.h			comp-c-include
+./usr/include/hppa/mutex.h			comp-c-include
+./usr/include/hppa/nvm.h			comp-c-include
+./usr/include/hppa/param.h			comp-c-include
+./usr/include/hppa/pcb.h			comp-c-include
+./usr/include/hppa/pdc.h			comp-c-include
+./usr/include/hppa/pmap.h			comp-c-include
+./usr/include/hppa/pmc.h			comp-c-include
+./usr/include/hppa/proc.h			comp-c-include
+./usr/include/hppa/profile.h			comp-c-include
+./usr/include/hppa/psl.h			comp-c-include
+./usr/include/hppa/pte.h			comp-c-include
+./usr/include/hppa/ptrace.h			comp-c-include
+./usr/include/hppa/reg.h			comp-c-include
+./usr/include/hppa/reloc.h			comp-c-include
+./usr/include/hppa/rwlock.h			comp-c-include
+./usr/include/hppa/setjmp.h			comp-c-include
+./usr/include/hppa/signal.h			comp-c-include
+./usr/include/hppa/som.h			comp-c-include
+./usr/include/hppa/trap.h			comp-c-include
+./usr/include/hppa/types.h			comp-c-include
+./usr/include/hppa/vmparam.h			comp-c-include
+./usr/include/hppa/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include

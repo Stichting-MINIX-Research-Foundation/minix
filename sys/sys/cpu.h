@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2013/11/25 03:06:08 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2014/05/19 20:39:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -79,6 +79,8 @@ void	cpu_offline_md(void);
 
 struct lwp *cpu_switchto(struct lwp *, struct lwp *, bool);
 struct	cpu_info *cpu_lookup(u_int);
+int	cpu_setmodel(const char *fmt, ...)	__printflike(1, 2);
+const char *cpu_getmodel(void);
 int	cpu_setstate(struct cpu_info *, bool);
 int	cpu_setintr(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
@@ -99,7 +101,7 @@ extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 
 static inline u_int
-cpu_index(struct cpu_info *ci)
+cpu_index(const struct cpu_info *ci)
 {
 	return ci->ci_index;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/06/27 12:44:58 wiz Exp $
+#	$NetBSD: Makefile,v 1.17 2014/07/16 14:05:04 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -95,8 +95,9 @@ LIBDPLIBS=\
 	freetype	${.CURDIR}/../../freetype
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
+FONTCONFIG_PATH=/etc/fonts
 CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-DFONTCONFIG_PATH='"/etc/fonts"' \
+CPPFLAGS+=	-DFONTCONFIG_PATH='"${FONTCONFIG_PATH}"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"/var/cache/fontconfig"' \
 		-DHAVE_FT_BITMAP_SIZE_Y_PPEM \
@@ -124,6 +125,11 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 CLEANFILES+= fcarch.h
 
 PKGCONFIG=	fontconfig
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@sysconfdir@,${X11ETCDIR},; \
+	    s,@localstatedir@,/var,; \
+	    s,@BASECONFIGDIR@,/etc/fonts,; \
+	    s,@fc_cachedir@,${FONTCONFIG_PATH},"
 
 # XXX
 CPPFLAGS.fcxml.c=	-Wno-error

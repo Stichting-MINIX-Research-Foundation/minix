@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpdf2.S,v 1.2 2013/07/18 21:29:08 matt Exp $	*/
+/*	$NetBSD: cmpdf2.S,v 1.3 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)cmpdf2.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: cmpdf2.S,v 1.2 2013/07/18 21:29:08 matt Exp $")
+	RCSID("$NetBSD: cmpdf2.S,v 1.3 2014/03/18 18:20:37 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

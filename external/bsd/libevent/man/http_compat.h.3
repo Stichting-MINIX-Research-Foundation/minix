@@ -1,4 +1,4 @@
-.TH "event2/http_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/http_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -45,7 +45,7 @@ Potentially non-threadsafe versions of the functions in \fBhttp\&.h\fP: provided
 
 .SH "Function Documentation"
 .PP 
-.SS "struct evhttp_connection* evhttp_connection_new (const char *address, unsigned shortport)\fC [read]\fP"
+.SS "struct evhttp_connection* evhttp_connection_new (const char *address, unsigned shortport)"
 
 .PP
 A connection object that can be used to for making HTTP requests\&. The connection object tries to establish the connection when it is given an http request object\&.
@@ -59,16 +59,20 @@ It does not allow an event base to be specified
 .SS "void evhttp_connection_set_base (struct evhttp_connection *evcon, struct \fBevent_base\fP *base)"
 
 .PP
-Associates an event base with the connection - can only be called on a freshly created connection object that has not been used yet\&. \fBDeprecated\fP
+Associates an event base with the connection - can only be called on a freshly created connection object that has not been used yet\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 XXXX Why? 
 .RE
 .PP
 
-.SS "struct evhttp* evhttp_start (const char *address, unsigned shortport)\fC [read]\fP"
+.SS "struct evhttp* evhttp_start (const char *address, unsigned shortport)"
 
 .PP
-Start an HTTP server on the specified address and port\&. \fBDeprecated\fP
+Start an HTTP server on the specified address and port\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 It does not allow an event base to be specified
 .RE

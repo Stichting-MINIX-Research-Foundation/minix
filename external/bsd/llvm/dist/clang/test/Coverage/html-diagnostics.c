@@ -1,9 +1,8 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %t %s
-// RUN: cat %t/*.html | FileCheck %s
+// RUN: find %t -name "*.html" -exec cat "{}" ";" | FileCheck %s
 
-// Because of the glob (*.html)
-// REQUIRES: shell
+// REQUIRES: staticanalyzer
 
 // CHECK: <h3>Annotated Source Code</h3>
 

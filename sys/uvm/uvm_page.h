@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.76 2013/10/25 14:30:21 martin Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.80 2015/03/23 07:59:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -98,36 +98,71 @@
  *
  * Field markings and the corresponding locks:
  *
- * o:	page owner's lock (UVM object or amap/anon)
- * p:	lock on the page queues
- * o|p:	either lock can be acquired
- * o&p:	both locks are required
+ * f:	free page queue lock, uvm_fpageqlock
+ * o:	page owner (uvm_object::vmobjlock, vm_amap::am_lock, vm_anon::an_lock)
+ * p:	page queue lock, uvm_pageqlock
+ * o,p:	o|p for read, o&p for write
+ * w:	wired page queue or uvm_pglistalloc:
+ *	  => wired page queue: o&p to change, stable from wire to unwire
+ *		XXX What about concurrent or nested wire?
+ *	  => uvm_pglistalloc: owned by caller
  * ?:	locked by pmap or assumed page owner's lock
  *
  * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
  * page owner's lock is acquired.
+ *
+ * A page can have one of four identities:
+ *
+ * o free
+ *   => pageq.list is entry on global free page queue
+ *   => listq.list is entry on per-CPU free page queue
+ *   => uanon is unused (or (void *)0xdeadbeef for DEBUG)
+ *   => uobject is unused (or (void *)0xdeadbeef for DEBUG)
+ *   => PQ_FREE is set in pqflags
+ * o owned by a uvm_object
+ *   => pageq.queue is entry on wired page queue, if any
+ *   => listq.queue is entry on list of pages in object
+ *   => uanon is NULL or the vm_anon to which it has been O->A loaned
+ *   => uobject is owner
+ * o owned by a vm_anon
+ *   => pageq is unused (XXX correct?)
+ *   => listq is unused (XXX correct?)
+ *   => uanon is owner
+ *   => uobject is NULL
+ *   => PQ_ANON is set in pqflags
+ * o allocated by uvm_pglistalloc
+ *   => pageq.queue is entry on resulting pglist, owned by caller
+ *   => listq is unused (XXX correct?)
+ *   => uanon is unused
+ *   => uobject is unused
+ *
+ * The following transitions are allowed:
+ *
+ * - uvm_pagealloc: free -> owned by a uvm_object/vm_anon
+ * - uvm_pagefree: owned by a uvm_object/vm_anon -> free
+ * - uvm_pglistalloc: free -> allocated by uvm_pglistalloc
+ * - uvm_pglistfree: allocated by uvm_pglistalloc -> free
  */
 
 struct vm_page {
 	struct rb_node		rb_node;	/* o: tree of pages in obj */
 
 	union {
-		TAILQ_ENTRY(vm_page) queue;
-		LIST_ENTRY(vm_page) list;
-	} pageq;				/* p: queue info for FIFO
-						 * queue or free list */
+		TAILQ_ENTRY(vm_page) queue;	/* w: wired page queue
+						 * or uvm_pglistalloc output */
+		LIST_ENTRY(vm_page) list;	/* f: global free page queue */
+	} pageq;
+
 	union {
-		TAILQ_ENTRY(vm_page) queue;
-		LIST_ENTRY(vm_page) list;
-	} listq;				/* o: pages in same object */
+		TAILQ_ENTRY(vm_page) queue;	/* o: pages in same object */
+		LIST_ENTRY(vm_page) list;	/* f: CPU free page queue */
+	} listq;
 
 	struct vm_anon		*uanon;		/* o,p: anon */
 	struct uvm_object	*uobject;	/* o,p: object */
 	voff_t			offset;		/* o,p: offset into object */
 	uint16_t		flags;		/* o: object flags */
-	uint16_t		loan_count;	/* number of active loans
-						 * o|p: for reading
-						 * o&p: for modification */
+	uint16_t		loan_count;	/* o,p: num. active loans */
 	uint16_t		wire_count;	/* p: wired down map refs */
 	uint16_t		pqflags;	/* p: page queue flags */
 	paddr_t			phys_addr;	/* physical address of page */
@@ -149,9 +184,9 @@ struct vm_page {
  *
  * Locking notes:
  *
- * PG_, struct vm_page::flags	=> locked by the owner
- * PQ_, struct vm_page::pqflags	=> locked by the page-queue lock
- * PQ_FREE			=> additionally locked by free-queue lock
+ * PG_, struct vm_page::flags	=> locked by owner
+ * PQ_, struct vm_page::pqflags	=> locked by uvm_pageqlock
+ * PQ_FREE			=> additionally locked by uvm_fpageqlock
  *
  * Flag descriptions:
  *

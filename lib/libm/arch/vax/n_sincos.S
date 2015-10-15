@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.8 2003/08/07 16:44:45 agc Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.9 2014/10/10 22:06:33 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,10 @@ ENTRY(sinf, 0)
 	cvtdf	%r0,%r0
 	ret
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(_sinl, sin)
+#endif
+
 ENTRY(sin, 0xfc0)
 	movq	4(%ap),%r0
 	bicw3	$0x807f,%r0,%r2
@@ -86,6 +90,10 @@ ENTRY(cosf, 0)
 	calls	$2,_C_LABEL(cos)
 	cvtdf	%r0,%r0
 	ret
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(_cosl, cos)
+#endif
 
 ENTRY(cos, 0x0fc0)
 	movq	4(%ap),%r0

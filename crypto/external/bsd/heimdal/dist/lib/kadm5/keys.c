@@ -1,4 +1,4 @@
-/*	$NetBSD: keys.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: keys.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: keys.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 /*
  * free all the memory used by (len, keys)
@@ -72,7 +72,7 @@ _kadm5_init_keys (Key *keys, int len)
 int
 _kadm5_exists_keys(Key *keys1, int len1, Key *keys2, int len2)
 {
-    unsigned int i, j;
+    int i, j;
 
     for (i = 0; i < len1; ++i) {
 	for (j = 0; j < len2; j++) {

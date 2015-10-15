@@ -1,4 +1,4 @@
-# $NetBSD: md.sandpoint,v 1.8 2011/02/26 20:38:50 phx Exp $
+# $NetBSD: md.sandpoint,v 1.10 2014/08/06 12:15:01 martin Exp $
 ./dev/pms0					base-obsolete		obsolete
 ./usr/mdec/altboot				base-sysutil-bin
 ./usr/mdec/altboot.bin				base-sysutil-bin

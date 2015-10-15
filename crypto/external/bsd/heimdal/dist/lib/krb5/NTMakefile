@@ -160,6 +160,7 @@ libkrb5_gen_OBJS=	    \
 INCFILES=			\
 	$(INCDIR)\heim_err.h	\
 	$(INCDIR)\k524_err.h	\
+        $(INCDIR)\kcm.h         \
 	$(INCDIR)\krb_err.h	\
 	$(INCDIR)\krb5.h	\
 	$(INCDIR)\krb5_ccapi.h	\

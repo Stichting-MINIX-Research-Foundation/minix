@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/10/20 14:53:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2014/08/10 17:34:20 joerg Exp $
 
 PROG_CXX=	lldb
 NOMAN=		yes
@@ -8,9 +8,6 @@ NOMAN=		yes
 .PATH: ${LLDB_SRCDIR}/tools/driver
 
 SRCS=	Driver.cpp \
-	ELWrapper.cpp \
-	GetOptWrapper.cpp \
-	IOChannel.cpp \
 	Platform.cpp
 
 CPPFLAGS.Driver.cpp+=	-Dgetopt_long_only=getopt_long
@@ -19,6 +16,7 @@ LLDB_LIBS+= \
 	API \
 	Log \
 	PluginInstructionARM \
+	PluginInstructionARM64 \
 	PluginProcessGDBRemote \
 	PluginProcessMachCore \
 	PluginProcessPOSIX \
@@ -40,6 +38,7 @@ LLDB_LIBS+= \
 	Core \
 	DataFormatters \
 	PluginABIMacOSX_arm \
+	PluginABIMacOSX_arm64 \
 	PluginABIMacOSX_i386 \
 	PluginABISysV_x86_64 \
 	PluginAppleObjCRuntime \
@@ -48,13 +47,16 @@ LLDB_LIBS+= \
 	PluginDynamicLoaderMacOSXDYLD \
 	PluginDynamicLoaderPosixDYLD \
 	PluginDynamicLoaderStatic \
+	PluginJITLoaderGDB \
 	PluginObjectContainerBSDArchive \
 	PluginObjectContainerMachOArchive \
 	PluginObjectFileELF \
+	PluginObjectFileJIT \
 	PluginObjectFileMachO \
 	PluginObjectFilePECOFF \
 	PluginPlatformNetBSD \
 	PluginPlatformGDB \
+	PluginPlatformKalimba \
 	PluginPlatformLinux \
 	PluginPlatformMacOSX \
 	PluginPlatformPOSIX \
@@ -89,8 +91,6 @@ LLVM_LIBS+= \
 	ipo \
 	IRReader \
 	AsmParser \
-	BitReader \
-	BitWriter \
 	MCDisassembler \
 	AArch64CodeGen \
 	AArch64TargetInfo \
@@ -114,11 +114,15 @@ LLVM_LIBS+= \
 	PowerPCCodeGen \
 	PowerPCAsmParser \
 	PowerPCTargetInfo \
+	PowerPCDisassembler \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
 	SparcCodeGen \
 	SparcTargetInfo \
+	SparcDisassembler \
 	SparcMCTargetDesc \
+	SparcAsmParser \
+	SparcAsmPrinter \
 	X86CodeGen \
 	X86TargetInfo \
 	X86MCTargetDesc \
@@ -126,7 +130,6 @@ LLVM_LIBS+= \
 	X86Disassembler \
 	X86AsmPrinter \
 	X86Utils \
-	Object \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
@@ -138,16 +141,20 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	Object \
+	BitReader \
+	BitWriter \
 	Linker \
 	TransformsUtils \
 	Analysis \
 	ipa \
 	IR \
+	ProfileData \
 	Option \
 	Support
 
-LDADD+=	-ledit -lterminfo -lexecinfo
-DPADD+=	${LIBEDIT} ${LIBTERMINFO} ${LIBEXECINFO}
+LDADD+=	-ledit -lterminfo -lexecinfo -lz
+DPADD+=	${LIBEDIT} ${LIBTERMINFO} ${LIBEXECINFO} ${LIBZ}
 DBG=-g
 
 .include "${.PARSEDIR}/../../link.mk"

@@ -1,4 +1,4 @@
-/* $Id: key-bindings.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
 
 #include "tmux.h"
 
-SPLAY_GENERATE(key_bindings, key_binding, entry, key_bindings_cmp);
+RB_GENERATE(key_bindings, key_binding, entry, key_bindings_cmp);
 
 struct key_bindings	key_bindings;
 struct key_bindings	dead_key_bindings;
@@ -52,7 +52,7 @@ key_bindings_lookup(int key)
 	struct key_binding	bd;
 
 	bd.key = key;
-	return (SPLAY_FIND(key_bindings, &key_bindings, &bd));
+	return (RB_FIND(key_bindings, &key_bindings, &bd));
 }
 
 void
@@ -64,7 +64,7 @@ key_bindings_add(int key, int can_repeat, struct cmd_list *cmdlist)
 
 	bd = xmalloc(sizeof *bd);
 	bd->key = key;
-	SPLAY_INSERT(key_bindings, &key_bindings, bd);
+	RB_INSERT(key_bindings, &key_bindings, bd);
 
 	bd->can_repeat = can_repeat;
 	bd->cmdlist = cmdlist;
@@ -77,8 +77,8 @@ key_bindings_remove(int key)
 
 	if ((bd = key_bindings_lookup(key)) == NULL)
 		return;
-	SPLAY_REMOVE(key_bindings, &key_bindings, bd);
-	SPLAY_INSERT(key_bindings, &dead_key_bindings, bd);
+	RB_REMOVE(key_bindings, &key_bindings, bd);
+	RB_INSERT(key_bindings, &dead_key_bindings, bd);
 }
 
 void
@@ -86,11 +86,11 @@ key_bindings_clean(void)
 {
 	struct key_binding	*bd;
 
-	while (!SPLAY_EMPTY(&dead_key_bindings)) {
-		bd = SPLAY_ROOT(&dead_key_bindings);
-		SPLAY_REMOVE(key_bindings, &dead_key_bindings, bd);
+	while (!RB_EMPTY(&dead_key_bindings)) {
+		bd = RB_ROOT(&dead_key_bindings);
+		RB_REMOVE(key_bindings, &dead_key_bindings, bd);
 		cmd_list_free(bd->cmdlist);
-		xfree(bd);
+		free(bd);
 	}
 }
 
@@ -146,10 +146,11 @@ key_bindings_init(void)
 		{ 'p', 			  0, &cmd_previous_window_entry },
 		{ 'q',			  0, &cmd_display_panes_entry },
 		{ 'r', 			  0, &cmd_refresh_client_entry },
-		{ 's', 			  0, &cmd_choose_session_entry },
+		{ 's', 			  0, &cmd_choose_tree_entry },
 		{ 't', 			  0, &cmd_clock_mode_entry },
 		{ 'w', 			  0, &cmd_choose_window_entry },
 		{ 'x', 			  0, &cmd_confirm_before_entry },
+		{ 'z',			  0, &cmd_resize_pane_entry },
 		{ '{',			  0, &cmd_swap_pane_entry },
 		{ '}',			  0, &cmd_swap_pane_entry },
 		{ '~',			  0, &cmd_show_messages_entry },
@@ -179,14 +180,14 @@ key_bindings_init(void)
 	struct cmd	*cmd;
 	struct cmd_list	*cmdlist;
 
-	SPLAY_INIT(&key_bindings);
+	RB_INIT(&key_bindings);
 
 	for (i = 0; i < nitems(table); i++) {
-		cmdlist = xmalloc(sizeof *cmdlist);
-		TAILQ_INIT(&cmdlist->list);
+		cmdlist = xcalloc(1, sizeof *cmdlist);
 		cmdlist->references = 1;
+		TAILQ_INIT(&cmdlist->list);
 
-		cmd = xmalloc(sizeof *cmd);
+		cmd = xcalloc(1, sizeof *cmd);
 		cmd->entry = table[i].entry;
 		if (cmd->entry->key_binding != NULL)
 			cmd->entry->key_binding(cmd, table[i].key);
@@ -199,81 +200,21 @@ key_bindings_init(void)
 	}
 }
 
-void printflike2
-key_bindings_error(struct cmd_ctx *ctx, const char *fmt, ...)
-{
-	va_list	ap;
-	char   *msg;
-
-	va_start(ap, fmt);
-	xvasprintf(&msg, fmt, ap);
-	va_end(ap);
-
-	*msg = toupper((u_char) *msg);
-	status_message_set(ctx->curclient, "%s", msg);
-	xfree(msg);
-}
-
-void printflike2
-key_bindings_print(struct cmd_ctx *ctx, const char *fmt, ...)
-{
-	struct winlink	*wl = ctx->curclient->session->curw;
-	va_list		 ap;
-
-	if (wl->window->active->mode != &window_copy_mode) {
-		window_pane_reset_mode(wl->window->active);
-		window_pane_set_mode(wl->window->active, &window_copy_mode);
-		window_copy_init_for_output(wl->window->active);
-	}
-
-	va_start(ap, fmt);
-	window_copy_vadd(wl->window->active, fmt, ap);
-	va_end(ap);
-}
-
-void printflike2
-key_bindings_info(struct cmd_ctx *ctx, const char *fmt, ...)
-{
-	va_list	ap;
-	char   *msg;
-
-	if (options_get_number(&global_options, "quiet"))
-		return;
-
-	va_start(ap, fmt);
-	xvasprintf(&msg, fmt, ap);
-	va_end(ap);
-
-	*msg = toupper((u_char) *msg);
-	status_message_set(ctx->curclient, "%s", msg);
-	xfree(msg);
-}
-
 void
 key_bindings_dispatch(struct key_binding *bd, struct client *c)
 {
-	struct cmd_ctx	 ctx;
 	struct cmd	*cmd;
 	int		 readonly;
-
-	ctx.msgdata = NULL;
-	ctx.curclient = c;
-
-	ctx.error = key_bindings_error;
-	ctx.print = key_bindings_print;
-	ctx.info = key_bindings_info;
-
-	ctx.cmdclient = NULL;
 
 	readonly = 1;
 	TAILQ_FOREACH(cmd, &bd->cmdlist->list, qentry) {
 		if (!(cmd->entry->flags & CMD_READONLY))
 			readonly = 0;
 	}
-	if (!readonly && c->flags & CLIENT_READONLY) {
-		key_bindings_info(&ctx, "Client is read-only");
+	if (!readonly && (c->flags & CLIENT_READONLY)) {
+		cmdq_info(c->cmdq, "client is read-only");
 		return;
 	}
 
-	cmd_list_exec(bd->cmdlist, &ctx);
+	cmdq_run(c->cmdq, bd->cmdlist);
 }

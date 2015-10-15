@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.34 2014/01/20 14:11:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.34 2014/01/20 14:11:03 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -712,7 +712,10 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 #ifndef NARROW
 #define	PRINT(ptr, len)	do {			\
 	for (n3 = 0; n3 < (len); n3++)		\
-		__xfputwc((ptr)[n3], fp, loc);	\
+		if (__xfputwc((ptr)[n3], fp, loc) == END_OF_FILE) { \
+			fp->_flags |= __SERR;	\
+			goto error;		\
+		}				\
 } while (/*CONSTCOND*/0)
 #define FLUSH()
 #else

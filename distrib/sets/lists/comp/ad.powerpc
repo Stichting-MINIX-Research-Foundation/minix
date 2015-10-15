@@ -1,32 +1,35 @@
-# $NetBSD: ad.powerpc,v 1.64 2013/11/17 14:34:11 alnsn Exp $
+# $NetBSD: ad.powerpc,v 1.81 2015/08/10 03:21:44 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
-./usr/include/clang-3.0/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/altivec.h		comp-obsolete		obsolete
-./usr/include/clang-3.4/altivec.h		comp-c-include		llvm
-./usr/include/gcc-4.1/altivec.h			comp-c-include		gcccmds,gcc=4
-./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=45,obsolete
-./usr/include/gcc-4.1/altivec.h			comp-obsolete		gcc=48,obsolete
-./usr/include/gcc-4.5/altivec.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/paired.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/ppc-asm.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/si2vmx.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/spe.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/vec_types.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/paired.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/si2vmx.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/spe.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/spu2vmx.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/vec_types.h		comp-c-include		gcccmds,gcc=48
+./usr/include/clang-3.4/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-3.5/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-3.6/altivec.h		comp-c-include		llvm
+./usr/include/g++/bits/powerpc			comp-c-include		compat
+./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,gcc
+./usr/include/g++/bits/powerpc64		comp-c-include		compat
+./usr/include/g++/bits/powerpc64/c++config.h	comp-c-include		compat,gcc
+./usr/include/gcc-4.1/altivec.h			comp-obsolete		obsolete
+./usr/include/gcc-4.5/altivec.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/paired.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/ppc-asm.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/ppu_intrinsics.h		comp-c-include		obsolete
+./usr/include/gcc-4.5/si2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/spe.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/spu2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.5/vec_types.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/htmintrin.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/paired.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/si2vmx.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/spe.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/spu2vmx.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/vec_types.h		comp-c-include		gcccmds,gcc
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include
@@ -96,7 +99,8 @@
 ./usr/include/powerpc/rwlock.h			comp-c-include
 ./usr/include/powerpc/setjmp.h			comp-c-include
 ./usr/include/powerpc/signal.h			comp-c-include
-./usr/include/powerpc/sljitarch.h		comp-c-include
+./usr/include/powerpc/sljit_machdep.h		comp-c-include
+./usr/include/powerpc/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/powerpc/spr.h			comp-c-include
 ./usr/include/powerpc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/powerpc/trap.h			comp-c-include

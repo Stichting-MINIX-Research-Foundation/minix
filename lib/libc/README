@@ -1,0 +1,239 @@
+	$NetBSD: README,v 1.5 2015/07/11 15:23:57 riastradh Exp $
+
+libc: The C library.
+
+* ELF symbols and source names
+
+libc contains symbols for:
+
+(a) standard library routines in C and POSIX,
+(b) published NetBSD-specific nonstandard extensions,
+(c) internal symbols, and
+(d) old versions of any published library routines.
+
+** Standard library routines
+
+If a library routine is standard and its signature has never changed,
+it is provided as an ELF global symbol.  Its name is declared normally
+in the appropriate header file.
+
+=> Example: The names `malloc' and `free' are declared normally in
+   <stdlib.h> (src/include/stdlib.h):
+
+	void	*malloc(size_t);
+	void	 free(void *);
+
+   libc provides the following ELF symbols:
+
+	malloc		global
+	free		global
+
+   In the implementation of libc, malloc and free are defined normally
+   in src/lib/libc/stdlib/jemalloc.c:
+
+	void *
+	malloc(size_t size)
+	{
+	...
+
+	void
+	free(void *ptr)
+	{
+	...
+
+** NetBSD-specific nonstandard extensions
+
+If a library routine is nonstandard but published and its signature has
+never changed, it is provided as an ELF weak symbol aliasing an ELF
+global symbol of the same name with an underscore prefix.
+
+The name is declared normally in the appropriate header file, provided
+that the relevant feature macro, such as _NETBSD_SOURCE, is defined.
+
+Within libc, the name is defined in "namespace.h"
+(src/lib/libc/include/namespace.h) as a macro expanding to the
+underscored name, which is included before the relevant header file, so
+that
+
+(a) the definition in a .c file will define the underscored ELF global
+symbol, and
+
+(b) the declaration in the standard header file will match the
+definition in the .c file.
+
+Alongside the definition in the .c file is a __weak_alias directive to
+create the ELF weak symbol alias.
+
+=> Example: For the nonstandard extension consttime_memequal, the
+   header file <string.h> (src/include/string.h) declares
+   `consttime_memequal' normally, if the caller defines _NETBSD_SOURCE:
+
+	#if defined(_NETBSD_SOURCE)
+	...
+	int	consttime_memequal(const void *, const void *, size_t);
+	...
+	#endif	/* _NETBSD_SOURCE */
+
+   libc provides the following ELF symbols:
+
+	_consttime_memequal	global
+	consttime_memequal	weak alias for	_consttime_memequal
+
+   In the implementation of libc, the header file "namespace.h"
+   (src/lib/libc/include/namespace.h) defines `consttime_memequal' as a
+   macro expanding to `_consttime_memequal':
+
+	#define	consttime_memequal	_consttime_memequal
+
+   The source file src/common/lib/libc/string/consttime_memequal.c
+   includes "namespace.h" and <string.h>, and defines
+   `consttime_memequal' normally:
+
+	int
+	consttime_memequal(const void *b1, const void *b2, size_t len)
+	{
+	...
+
+   Macro expansion replaces `consttime_memequal' by
+   `_consttime_memequal', which is the ELF global symbol this defines.
+   Alongside the definition is
+
+	__weak_alias(consttime_memequal,_consttime_memequal)
+
+   to provide `consttime_memequal' as an ELF weak symbol aliasing
+   `_consttime_memequal'.
+
+** Internal symbols
+
+If a library routine is internal to libc, it is defined as an ELF
+global symbol with an underscore prefix.  Its name is declared in the
+appropriate internal header file.
+
+=> Example: The implementations of opendir and rewinddir use a common
+   subroutine _initdir, which is not part of the libc API or ABI -- it
+   is just an internal subroutine.
+
+   libc provides the following ELF symbols:
+
+	_initdir	global
+
+   The name `_initdir' is declared normally in
+   src/lib/libc/gen/dirent_private.h:
+
+	int	_initdir(DIR *, int, const char *);
+
+   The name `_initdir' is defined normally in
+   src/lib/libc/gen/initdir.c:
+
+	int
+	_initdir(DIR *dirp, int fd, const char *name)
+	{
+	...
+
+** Old versions of library routines
+
+If the signature or semantics of a library routine foo changed in (for
+example) NetBSD 6.0, then libc provides
+
+(1) an ELF global symbol `_foo' implementing its old signature,
+(2) an ELF weak symbol `foo' aliasing `_foo', and
+(3) an ELF global symbol `__foo50' implementing its new signature (yes,
+    `__foo50', not `__foo60').
+
+The name foo is declared in the appropriate header file, under any
+relevant feature macros, with a __RENAME directive so that for calls to
+foo, the compiler will generate relocations for __foo50.  Old programs,
+compiled with the old signature, will continue to use the old symbol.
+
+=> Example: In NetBSD 5.0, time_t was int32_t on every machine.  In
+   NetBSD 6.0 and onward, time_t is int64_t on every machine.
+   Consequently, the signature of time(3), written as
+
+	time_t	time(time_t *);
+
+   was effectively
+
+	int32_t	time(int32_t *);
+
+   before NetBSD 6.0.  In NetBSD 6.0, it changed to be effectively
+
+	int64_t time(int64_t *);
+
+   Before NetBSD 6.0, libc provided the following libc symbols:
+
+	_time		global (implementing the old signature)
+	time		weak alias for _time
+
+   In NetBSD 6.0 and later, libc provides the following ELF symbols:
+
+	_time		global (implementing the old signature)
+	time		weak alias for _time
+	__time50	global (implementing the new signature)
+
+   (Note that the only change is to add __time50, so that existing
+   programs linked against old versions of libc will see the same
+   semantics for the symbols that were already there.)
+
+   The header file <time.h> (src/include/time.h) declares
+
+	time_t	time(time_t *) __RENAME(__time50);
+
+   so that compiling C programs that call time will yield objects that
+   use the __time50 symbol from libc.  However, old programs that were
+   compiled against the 32-bit declaration will continue to use the
+   32-bit symbol from libc.
+
+   The header file "namespace.h" (src/lib/libc/include/namespace.h)
+   defines `time' as a macro expanding to `_time':
+
+	#define	time	_time
+
+   The source file src/lib/libc/gen/time.c includes "namespace.h" and
+   <time.h> and defines `time' normally:
+
+	time_t
+	time(time_t *t)
+	{
+	...
+
+   Macro expansion replaces `time' by `_time', but the
+   `__RENAME(__time50)' directive on the declaration <time.h> (to which
+   the "namespace.h" macro expansion also applies) means the ELF global
+   symbol defined here is actually `__time50'.
+
+   The header file <compat/include/time.h>
+   (src/lib/libc/compat/include/time.h) declares
+
+	int32_t	time(int32_t *);
+
+   The source file src/lib/libc/compat/gen/compat_time.c includes
+   "namespace.h", <compat/include/time.h>, and <time.h>, but suppresses
+   the normal declaration of `time' in <time.h> by defining
+   __LIBC12_SOURCE__.  Instead, <compat/include/time.h>
+   (src/lib/libc/compat/include/time.h) declares `time' with the
+   effective old signature:
+
+	int32_t	time(int32_t *);
+
+   Then compat_time.c defines `time' normally:
+
+	time_t
+	time(time_t *t)
+	{
+	...
+
+   Again, macro expansion replaces `time' by `_time', but since there
+   is no __RENAME directive in <compat/include/time.h>, the resulting
+   ELF global symbol is `_time'.
+
+   Finally, alongside the definition in compat_time.c is
+
+	__weak_alias(time,_time)
+
+   to define `time' as an ELF weak symbol aliasing `_time'.
+
+   The net effect is that NetBSD 6's libc provides the same definitions
+   as NetBSD 5's libc for the symbols `time' and `_time', so that old
+   programs that were compiled in NetBSD 5 will continue to work with
+   NetBSD 6's libc.  But programs compiled in NetBSD 6 will have 64-bit
+   time_t.

@@ -4,6 +4,10 @@
 
 TESTSDIR=	${TESTSBASE}/kyua-atf-compat
 
+.if defined(__MINIX)
+.PATH:	${SRCDIR}
+.endif # defined(__MINIX)
+
 .for test in atf-report_test atf-run_test atf2kyua_test
 TESTS_SH+=	${test}
 TESTS_SH_SRC_${test}=	${test}.tmp.sh

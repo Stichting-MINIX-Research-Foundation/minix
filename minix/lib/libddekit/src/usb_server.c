@@ -306,6 +306,8 @@ static void submit_urb(message *msg)
 	} else {
 
 		int res;
+		struct my_context *ctx = NULL;
+		struct ddekit_usb_urb *d_urb = NULL;
 		
 		struct usb_urb *mx_urb  = (struct usb_urb*) 
 		    my_malloc(msg->USB_GRANT_SIZE+sizeof(void *));
@@ -336,7 +338,7 @@ static void submit_urb(message *msg)
 		}
 		
 		/* create ddekit_usb_urb */
-		struct ddekit_usb_urb *d_urb = ddekit_usb_urb_from_mx_urb(mx_urb);
+		d_urb = ddekit_usb_urb_from_mx_urb(mx_urb);
 		d_urb->dev = _devices[drv->dev].dev;
 		/* submit urb */
 
@@ -345,8 +347,7 @@ static void submit_urb(message *msg)
 			goto out;
 		}
 		
-		struct my_context *ctx = (struct my_context *) 
-		    my_malloc(sizeof(struct my_context));
+		ctx = my_malloc(sizeof(struct my_context));
 
 		if(!ctx) {
 			res = ENOMEM;
@@ -782,7 +783,7 @@ static void _ddekit_usb_thread(void * unused)
 	int ipc_status;
 
 	/* create devman thread */
-	ddekit_thread_t * dmth;
+	ddekit_thread_t * __unused dmth;
 
 	dmth = ddekit_thread_create(devman_thread, NULL, "devman_thread");
 

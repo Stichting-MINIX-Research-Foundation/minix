@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.30 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.30 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland 
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_rrip.h>
 #include <fs/cd9660/cd9660_mount.h>
-
-struct	nchstats iso_nchstats;
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -94,7 +92,7 @@ struct	nchstats iso_nchstats;
 int
 cd9660_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -109,8 +107,7 @@ cd9660_lookup(void *v)
 	int saveoffset = -1;		/* offset of last directory entry in dir */
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by cd9660_vget_internal */
+	struct vnode *tdp;		/* returned by vcache_get */
 	u_long bmask;			/* block offset mask */
 	int error;
 	ino_t ino = 0;
@@ -191,7 +188,7 @@ cd9660_lookup(void *v)
 		    &bp)))
 				return (error);
 		numdirpasses = 2;
-		iso_nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	endsearch = dp->i_size;
 
@@ -343,7 +340,8 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		iso_nchstats.ncs_pass2++;
+		namecache_count_pass2();
+	brelse(bp, 0);
 
 	/*
 	 * Found component in pathname.
@@ -353,46 +351,12 @@ found:
 	if ((flags & ISLASTCN) && nameiop == LOOKUP)
 		dp->i_diroff = dp->i_offset;
 
-	/*
-	 * Step through the translation in the name.  We do not `iput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the `iget' for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-
-	/*
-	 * If ino is different from dp->i_ino,
-	 * it's a relocated directory.
-	 */
-	brelse(bp, 0);
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error)
-			return error;
-		*vpp = tdp;
-	} else if (dp->i_number == dp->i_ino) {
+	if (dp->i_number == dp->i_ino) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
+		error = vcache_get(vdp->v_mount,
+		    &dp->i_ino, sizeof(dp->i_ino), &tdp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -402,6 +366,7 @@ found:
 	 * Insert name into cache if appropriate.
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+
 	return 0;
 }
 
@@ -415,6 +380,7 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
 	struct iso_node *ip;
 	struct iso_mnt *imp;
+	struct vnode *devvp;
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
@@ -424,7 +390,11 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	lbn = cd9660_lblkno(imp, offset);
 	bsize = cd9660_blksize(imp, ip, lbn);
 
-	if ((error = bread(vp, lbn, bsize, NOCRED, 0, &bp)) != 0) {
+	if ((error = VOP_BMAP(vp, lbn, &devvp, &lbn, NULL)) != 0) {
+		*bpp = NULL;
+		return error;
+	}
+	if ((error = bread(devvp, lbn, bsize, 0, &bp)) != 0) {
 		*bpp = NULL;
 		return (error);
 	}

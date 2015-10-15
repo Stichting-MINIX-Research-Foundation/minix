@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.4 2010/05/25 08:35:47 pgoyette Exp $	*/
+/*	$NetBSD: pci.h,v 1.6 2014/09/21 14:32:37 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -52,9 +52,10 @@ int	pcibus_conf_write(int, u_int, u_int, u_int, u_int, pcireg_t);
 int	pcidev_conf_read(int, u_int, pcireg_t *);
 int	pcidev_conf_write(int, u_int, pcireg_t);
 
+/* pci_drvname.c */
+int	pci_drvname(int, u_int, u_int, char *, size_t);
+
 /* pci_subr.c */
-const char *pci_findvendor_real(pcireg_t);
-const char *pci_findproduct_real(pcireg_t);
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 void	pci_conf_print(int, u_int, u_int, u_int);
 

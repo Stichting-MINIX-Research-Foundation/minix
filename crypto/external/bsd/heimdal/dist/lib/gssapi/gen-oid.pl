@@ -110,7 +110,7 @@ while(<>) {
 	    printf "#define $name (&$store)\n\n";
 	} else {
 	    printf "/* $name - $oid */\n";
-	    printf "gss_OID_desc GSSAPI_LIB_VARIABLE $store = { $length, \"$data\" };\n\n";
+	    printf "gss_OID_desc GSSAPI_LIB_VARIABLE $store = { $length, rk_UNCONST(\"$data\") };\n\n";
 	}
     } elsif (/^desc\s+([\w]+)\s+(\w+)\s+(\"[^\"]*\")\s+(\"[^\"]*\")/) {
         my ($type, $oid, $short, $long) = ($1, $2, $3, $4);

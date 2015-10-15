@@ -140,7 +140,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_timevalfix;
 		rk_timevalsub;
 		rk_tdelete;
-		rx_tfind;
+		rk_tfind;
 		rk_tsearch;
 		rk_twalk;
 		rk_undumpdata;

@@ -294,12 +294,13 @@ void read_conf(void)
 				 * name, an underscore, and the instance
 				 * number.
 				 */
+				size_t len;
 				strncpy(buf, word, sizeof(buf)-1);
 				buf[sizeof(buf)-1]= 0;
 				token(1);
-				ecp->ec_label=
-					alloc(strlen(buf)+1+strlen(word)+1);
-				sprintf(ecp->ec_label, "%s_%s", buf, word);
+				len = strlen(buf)+1+strlen(word)+1;
+				ecp->ec_label= alloc(len);
+				snprintf(ecp->ec_label, len, "%s_%s", buf, word);
 				ecp->ec_port= 0;
 			}
 			ecp++;

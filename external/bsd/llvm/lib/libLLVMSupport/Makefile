@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2013/09/21 22:28:12 joerg Exp $
+#	$NetBSD: Makefile,v 1.30 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -11,13 +11,14 @@ NOGCCERROR=	yes
 SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
+	ARMBuildAttrs.cpp \
+	ARMWinEH.cpp \
 	Allocator.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
-	ConstantRange.cpp \
 	ConvertUTF.c \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
@@ -39,25 +40,29 @@ SRCS+=	APFloat.cpp \
 	IntrusiveRefCntPtr.cpp \
 	IsInf.cpp \
 	IsNAN.cpp \
+	LEB128.cpp \
+	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
 	MD5.cpp \
 	ManagedStatic.cpp \
+	MathExtras.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
+	Options.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	Regex.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
+	SpecialCaseList.cpp \
 	Statistic.cpp \
-	StreamableMemoryObject.cpp \
+	StreamingMemoryObject.cpp \
 	StringExtras.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
-	StringRefMemoryObject.cpp \
 	SystemUtils.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \
@@ -77,20 +82,19 @@ SRCS+=	APFloat.cpp \
 	regstrlcpy.c
 
 SRCS+=	Atomic.cpp \
-	Disassembler.cpp \
 	DynamicLibrary.cpp \
 	Errno.cpp \
 	Host.cpp \
-	IncludeFile.cpp \
 	Memory.cpp \
 	Mutex.cpp \
 	Path.cpp \
 	Process.cpp \
 	Program.cpp \
 	RWMutex.cpp \
+	RandomNumberGenerator.cpp \
+	ScaledNumber.cpp \
 	SearchForAddressOfSpecialSymbol.cpp \
 	Signals.cpp \
-	system_error.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
 	TimeValue.cpp \
@@ -107,7 +111,6 @@ SRCS+=	Host.inc \
 	RWMutex.inc \
 	Signals.inc \
 	Watchdog.inc \
-	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
 

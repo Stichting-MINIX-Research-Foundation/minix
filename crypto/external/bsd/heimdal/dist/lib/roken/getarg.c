@@ -1,4 +1,4 @@
-/*	$NetBSD: getarg.c,v 1.2 2011/04/14 18:12:08 elric Exp $	*/
+/*	$NetBSD: getarg.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -116,8 +116,7 @@ mandoc_template(struct getargs *args,
     printf(".Os OPERATING_SYSTEM\n");
     printf(".Sh NAME\n");
     printf(".Nm %s\n", p);
-    printf(".Nd\n");
-    printf("in search of a description\n");
+    printf(".Nd in search of a description\n");
     printf(".Sh SYNOPSIS\n");
     printf(".Nm\n");
     for(i = 0; i < num_args; i++){
@@ -135,7 +134,7 @@ mandoc_template(struct getargs *args,
 	    }
 	    if(args[i].long_name) {
 		print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);
-		printf("Fl -%s%s%s",
+		printf("Fl Fl %s%s%s",
 		       args[i].type == arg_negative_flag ? "no-" : "",
 		       args[i].long_name, buf);
 	    }
@@ -144,7 +143,7 @@ mandoc_template(struct getargs *args,
 	    print_arg(buf, sizeof(buf), 1, 0, args + i, i18n);
 	    printf(".Oo Fl %c%s \\*(Ba Xo\n", args[i].short_name, buf);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);
-	    printf(".Fl -%s%s\n.Xc\n.Oc\n", args[i].long_name, buf);
+	    printf(".Fl Fl %s%s\n.Xc\n.Oc\n", args[i].long_name, buf);
 	}
     /*
 	    if(args[i].type == arg_strings)
@@ -167,7 +166,7 @@ mandoc_template(struct getargs *args,
 	    printf("\n");
 	}
 	if(args[i].long_name){
-	    printf(".Fl -%s%s",
+	    printf(".Fl Fl %s%s",
 		   args[i].type == arg_negative_flag ? "no-" : "",
 		   args[i].long_name);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i, i18n);
@@ -351,7 +350,7 @@ static int
 arg_match_long(struct getargs *args, size_t num_args,
 	       char *argv, int argc, char **rargv, int *goptind)
 {
-    int i;
+    size_t i;
     char *goptarg = NULL;
     int negate = 0;
     int partial_match = 0;
@@ -476,7 +475,7 @@ static int
 arg_match_short (struct getargs *args, size_t num_args,
 		 char *argv, int argc, char **rargv, int *goptind)
 {
-    int j, k;
+    size_t j, k;
 
     for(j = 1; j > 0 && j < strlen(rargv[*goptind]); j++) {
 	for(k = 0; k < num_args; k++) {
@@ -499,9 +498,11 @@ arg_match_short (struct getargs *args, size_t num_args,
 		}
 		if(args[k].type == arg_collect) {
 		    struct getarg_collect_info *c = args[k].value;
+		    int a = (int)j;
 
-		    if((*c->func)(TRUE, argc, rargv, goptind, &j, c->data))
+		    if((*c->func)(TRUE, argc, rargv, goptind, &a, c->data))
 			return ARG_ERR_BAD_ARG;
+		    j = a;
 		    break;
 		}
 

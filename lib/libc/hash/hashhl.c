@@ -1,4 +1,4 @@
-/* $NetBSD: hashhl.c,v 1.4 2010/01/17 23:10:20 wiz Exp $ */
+/* $NetBSD: hashhl.c,v 1.7 2014/09/24 13:18:52 christos Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -60,7 +60,6 @@ WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
 #define	MIN(x,y)	((x)<(y)?(x):(y))
 #endif /* !MIN */
 
-
 char *
 FNPREFIX(End)(HASH_CTX *ctx, char *buf)
 {
@@ -97,7 +96,7 @@ FNPREFIX(FileChunk)(const char *filename, char *buf, off_t off, off_t len)
 
 	FNPREFIX(Init)(&ctx);
 
-	if ((fd = open(filename, O_RDONLY)) < 0)
+	if ((fd = open(filename, O_RDONLY | O_CLOEXEC)) < 0)
 		return (NULL);
 	if (len == 0) {
 		if (fstat(fd, &sb) == -1) {

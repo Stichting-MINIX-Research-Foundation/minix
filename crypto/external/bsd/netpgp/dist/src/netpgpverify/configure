@@ -1,0 +1,64 @@
+#! /bin/sh
+
+# $NetBSD: configure,v 1.1 2014/03/09 00:15:45 agc Exp $
+
+# Copyright (c) 2013 Alistair Crooks <agc@NetBSD.org>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# set up defs and paths, etc
+prefix=/usr/local
+mandir=${prefix}/man
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--prefix=*)	prefix=$(echo "$1" | sed -e 's|--prefix=||') ;;
+	--mandir=*)	mandir=$(echo "$1" | sed -e 's|--mandir=||') ;;
+	--build=*|--host=*|--infodir=*)	;;
+	*)		break ;;
+	esac
+	shift
+done
+
+rm -f config.h
+echo "#ifndef CONFIG_H_" > config.h
+echo "#define CONFIG_H_ $(date '+%Y%m%d')" >> config.h
+echo "" >> config.h
+
+# portability macros
+echo "#ifndef __UNCONST" >> config.h
+echo "#define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))" >> config.h
+echo "#endif /* __UNCONST */" >> config.h
+echo "" >> config.h
+echo "#ifndef USE_ARG" >> config.h
+echo "#define USE_ARG(x)       /*LINTED*/(void)&(x)" >> config.h
+echo "#endif /* USE_ARG */" >> config.h
+
+echo "" >> config.h
+echo "#endif /* CONFIG_H_ */" >> config.h
+
+for f in Makefile.in; do
+	sed	-e 's|@PREFIX@|'${prefix}'|g' \
+		-e 's|@MANDIR@|'${mandir}'|g' $f > $(basename $f .in)
+done
+
+exit 0

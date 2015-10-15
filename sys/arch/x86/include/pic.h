@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.h,v 1.7 2009/04/19 14:11:37 ad Exp $	*/
+/*	$NetBSD: pic.h,v 1.8 2015/04/27 07:03:58 knakahara Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
@@ -22,6 +22,7 @@ struct pic {
 	struct intrstub *pic_level_stubs;
 	struct intrstub *pic_edge_stubs;
 	struct ioapic_softc *pic_ioapic; /* if pic_type == PIC_IOAPIC */
+	struct msipic *pic_msipic; /* if (pic_type == PIC_MSI) || (pic_type == PIC_MSIX) */
 };
 
 /*
@@ -30,7 +31,9 @@ struct pic {
 #define PIC_I8259	0
 #define PIC_IOAPIC	1
 #define PIC_LAPIC	2
-#define PIC_SOFT	3
+#define PIC_MSI		3
+#define PIC_MSIX	4
+#define PIC_SOFT	5
 
 extern struct pic i8259_pic;
 extern struct pic local_pic;

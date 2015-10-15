@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.23 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: mtio.h,v 1.24 2015/09/06 06:01:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_MTIO_H_
 #define	_SYS_MTIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * Structures and definitions for mag tape io control commands

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.8 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.9 2014/06/14 08:18:24 apb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.8 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.9 2014/06/14 08:18:24 apb Exp $");
 #endif
 
 #include "namespace.h"
@@ -49,6 +49,7 @@ enum __e_fmtcheck_types {
 	FMTCHECK_INT,
 	FMTCHECK_LONG,
 	FMTCHECK_QUAD,
+	FMTCHECK_POINTER,
 	FMTCHECK_SHORTPOINTER,
 	FMTCHECK_INTPOINTER,
 	FMTCHECK_LONGPOINTER,
@@ -149,7 +150,7 @@ get_next_format_from_precision(const char **pf)
 	if (*f == 'p') {
 		if (sh + lg + quad + longdouble)
 			RETURN(pf,f,FMTCHECK_UNKNOWN);
-		RETURN(pf,f,FMTCHECK_LONG);
+		RETURN(pf,f,FMTCHECK_POINTER);
 	}
 	RETURN(pf,f,FMTCHECK_UNKNOWN);
 	/*NOTREACHED*/

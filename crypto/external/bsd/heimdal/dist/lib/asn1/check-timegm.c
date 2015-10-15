@@ -1,4 +1,4 @@
-/*	$NetBSD: check-timegm.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: check-timegm.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include <der_locl.h>
 
-__RCSID("$NetBSD: check-timegm.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 static int
 test_timegm(void)

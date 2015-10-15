@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.5 2011/01/15 07:31:13 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.6 2014/08/23 02:24:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getcontext.S,v 1.5 2011/01/15 07:31:13 matt Exp $")
+__RCSID("$NetBSD: getcontext.S,v 1.6 2014/08/23 02:24:22 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -45,9 +45,9 @@ ENTRY(_getcontext)
 	_DOSYSCALL(getcontext)
 	bso	1f
 	mflr	%r4
-	stw	%r4,UC_GREGS_PC(%r5)		# saved pc <- lr
-	stw	%r3,UC_GREGS_R3(%r5)		# arrange for return value 0
+	stptr	%r4,UC_GREGS_PC(%r5)		# saved pc <- lr
+	stint	%r3,UC_GREGS_R3(%r5)		# arrange for return value 0
 	blr
 1:
-	b	_C_LABEL(__cerror)
+	BRANCH_TO_CERROR()
 END(_getcontext)

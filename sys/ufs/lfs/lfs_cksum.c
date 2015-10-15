@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.29 2013/06/06 00:54:49 dholland Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.30 2015/08/02 18:18:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.29 2013/06/06 00:54:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.30 2015/08/02 18:18:10 dholland Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -100,10 +100,18 @@ cksum(void *str, size_t len)
 }
 
 u_int32_t
-lfs_sb_cksum(struct dlfs *fs)
+lfs_sb_cksum(struct lfs *fs)
 {
+	void *ptr;
 	size_t size;
 
-	size = (size_t)offsetof(struct dlfs, dlfs_cksum);
-	return cksum(fs, size);
+	if (fs->lfs_is64) {
+		ptr = &fs->lfs_dlfs_u.u_64;
+		size = (size_t)offsetof(struct dlfs64, dlfs_cksum);
+	} else {
+		ptr = &fs->lfs_dlfs_u.u_32;
+		size = (size_t)offsetof(struct dlfs64, dlfs_cksum);
+	}
+
+	return cksum(ptr, size);
 }

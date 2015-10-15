@@ -96,7 +96,7 @@ while read id verify cert arg1 arg2 arg3 arg4 arg5 ; do
     args="$args crl:FILE:$nistdir/crls/TrustAnchorRootCRL.crl"
     args="$args cert:FILE:$nistdir/certs/$cert"
 
-    if ${hxtool} verify $args > /dev/null; then
+    if ${hxtool} verify --time=2008-05-20 $args > /dev/null; then
 	if test "$verify" = "f"; then
 	    echo "verify passed on fail: $id $cert"
 	    exit 1

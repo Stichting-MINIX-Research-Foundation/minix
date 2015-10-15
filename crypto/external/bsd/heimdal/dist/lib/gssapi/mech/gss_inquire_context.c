@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_inquire_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_inquire_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -39,7 +39,7 @@ gss_inquire_context(OM_uint32 *minor_status,
     gss_OID *mech_type,
     OM_uint32 *ctx_flags,
     int *locally_initiated,
-    int *open)
+    int *xopen)
 {
 	OM_uint32 major_status;
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
@@ -49,8 +49,8 @@ gss_inquire_context(OM_uint32 *minor_status,
 
 	if (locally_initiated)
 	    *locally_initiated = 0;
-	if (open)
-	    *open = 0;
+	if (xopen)
+	    *xopen = 0;
 	if (lifetime_rec)
 	    *lifetime_rec = 0;
 
@@ -70,7 +70,7 @@ gss_inquire_context(OM_uint32 *minor_status,
 	    mech_type,
 	    ctx_flags,
 	    locally_initiated,
-	    open);
+	    xopen);
 
 	if (major_status != GSS_S_COMPLETE) {
 		_gss_mg_error(m, major_status, *minor_status);

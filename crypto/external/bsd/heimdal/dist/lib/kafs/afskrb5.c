@@ -1,4 +1,4 @@
-/*	$NetBSD: afskrb5.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: afskrb5.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -173,6 +173,10 @@ get_cred(struct kafs_data *data, const char *name, const char *inst,
 	krb5_enctype_enable(d->context, in_creds.session.keytype);
 
     ret = krb5_get_credentials(d->context, 0, d->id, &in_creds, &out_creds);
+    if (ret) {
+	in_creds.session.keytype = ETYPE_DES_CBC_MD5;
+	ret = krb5_get_credentials(d->context, 0, d->id, &in_creds, &out_creds);
+    }
 
     if (invalid)
 	krb5_enctype_disable(d->context, in_creds.session.keytype);

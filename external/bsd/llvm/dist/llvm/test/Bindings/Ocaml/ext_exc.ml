@@ -1,11 +1,13 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_executionengine.cmxa %t.builddir/ext_exc.ml -o %t
- * RUN: %t </dev/null
+(* RUN: cp %s %T/ext_exc.ml
+ * RUN: %ocamlc -g -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
+ * RUN: %t
+ * RUN: %ocamlopt -g -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
+ * RUN: %t
  * XFAIL: vg_leak
  *)
+
 let context = Llvm.global_context ()
+
 (* this used to crash, we must not use 'external' in .mli files, but 'val' if we
  * want the let _ bindings executed, see http://caml.inria.fr/mantis/view.php?id=4166 *)
 let _ =

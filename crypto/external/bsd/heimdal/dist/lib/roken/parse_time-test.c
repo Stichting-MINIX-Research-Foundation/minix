@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_time-test.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: parse_time-test.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	if  (sz != tests[i].size)
 	    errx(1, "sz (%lu) != tests[%d].size (%lu)",
 		 (unsigned long)sz, i, (unsigned long)tests[i].size);
-	
+
 	for (buf_sz = 0; buf_sz < tests[i].size + 2; buf_sz++) {
 
 	    buf = rk_test_mem_alloc(RK_TM_OVERRUN, "overrun",

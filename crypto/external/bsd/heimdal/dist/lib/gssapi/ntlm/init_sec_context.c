@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 static int
 from_file(const char *fn, const char *target_domain,
 	  char **username, struct ntlm_buf *key)
-{	
+{
     char *str, buf[1024];
     FILE *f;
 
@@ -188,7 +188,7 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
 static int
 _gss_copy_cred(ntlm_cred from, ntlm_cred *to)
 {
-    *to = calloc(1, sizeof(*to));
+    *to = calloc(1, sizeof(**to));
     if (*to == NULL)
 	return ENOMEM;
     (*to)->username = strdup(from->username);
@@ -249,7 +249,7 @@ _gss_ntlm_init_sec_context
 	struct ntlm_buf data;
 	uint32_t flags = 0;
 	int ret;
-	
+
 	ctx = calloc(1, sizeof(*ctx));
 	if (ctx == NULL) {
 	    *minor_status = EINVAL;
@@ -282,23 +282,23 @@ _gss_ntlm_init_sec_context
 	flags |= NTLM_NEG_KEYEX;
 
 	memset(&type1, 0, sizeof(type1));
-	
+
 	type1.flags = flags;
 	type1.domain = name->domain;
 	type1.hostname = NULL;
 	type1.os[0] = 0;
 	type1.os[1] = 0;
-	
+
 	ret = heim_ntlm_encode_type1(&type1, &data);
 	if (ret) {
 	    _gss_ntlm_delete_sec_context(minor_status, context_handle, NULL);
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	output_token->value = data.data;
 	output_token->length = data.length;
-	
+
 	return GSS_S_CONTINUE_NEEDED;
     } else {
 	krb5_error_code ret;
@@ -399,7 +399,7 @@ _gss_ntlm_init_sec_context
 	    struct ntlm_targetinfo ti;
 
 	    /* verify infotarget */
-	
+
 	    ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
 	    if(ret) {
 		_gss_ntlm_delete_sec_context(minor_status,
@@ -440,7 +440,7 @@ _gss_ntlm_init_sec_context
 		*minor_status = ret;
 		return GSS_S_FAILURE;
 	    }
-	
+
 	    ctx->flags |= NTLM_NEG_NTLM2_SESSION;
 
 	    ret = krb5_data_copy(&ctx->sessionkey,
@@ -471,7 +471,7 @@ _gss_ntlm_init_sec_context
 			ctx->sessionkey.length,
 			ctx->sessionkey.data);
 	}
-	
+
 
 
 	ret = heim_ntlm_encode_type3(&type3, &data);

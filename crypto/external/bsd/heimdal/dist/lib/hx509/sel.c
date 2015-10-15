@@ -1,4 +1,4 @@
-/*	$NetBSD: sel.c,v 1.1.1.1 2011/04/13 18:15:12 elric Exp $	*/
+/*	$NetBSD: sel.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -103,7 +103,7 @@ eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
 	if (expr->op == comp_TAILEQ) {
 	    size_t len1 = strlen(s1);
 	    size_t len2 = strlen(s2);
-	
+
 	    if (len1 < len2)
 		return 0;
 	    ret = strcmp(s1 + (len1 - len2), s2) == 0;
@@ -135,7 +135,7 @@ eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
 	    subenv = find_variable(context, env, subexpr);
 	    if (subenv == NULL)
 		return FALSE;
-	
+
 	    while (subenv) {
 		if (subenv->type != env_string)
 		    continue;
@@ -225,7 +225,7 @@ _hx509_expr_parse(const char *buf)
 }
 
 void
-_hx509_sel_yyerror (char *s)
+_hx509_sel_yyerror (const char *s)
 {
      if (_hx509_expr_input.error)
          free(_hx509_expr_input.error);

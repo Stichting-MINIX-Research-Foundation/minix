@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.gcc_path,v 1.2 2014/06/14 20:49:36 mrg Exp $
+
+# Define some commom paths
+
+.ifndef _EXTERNAL_GPL3_GCC_MAKEFILE_INC_
+_EXTERNAL_GPL3_GCC_MAKEFILE_INC_=1
+
+.include <bsd.own.mk>
+
+GCC_SUBDIR=	${NETBSDSRCDIR}/external/gpl3/${EXTERNAL_GCC_SUBDIR}
+
+#.if exists(${GCC_SUBDIR}/dist)
+GCCDIST=	${GCC_SUBDIR}/dist
+#.endif
+
+.endif	# _GPL3_GCC_MAKEFILE_INC_

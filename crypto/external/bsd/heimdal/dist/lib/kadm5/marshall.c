@@ -1,4 +1,4 @@
-/*	$NetBSD: marshall.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: marshall.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: marshall.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 kadm5_ret_t
 kadm5_store_key_data(krb5_storage *sp,
@@ -310,7 +310,7 @@ _kadm5_marshal_params(krb5_context context,
     krb5_storage *sp = krb5_storage_emem();
 
     krb5_store_int32(sp, params->mask & (KADM5_CONFIG_REALM));
-	
+
     if(params->mask & KADM5_CONFIG_REALM)
 	krb5_store_string(sp, params->realm);
     krb5_storage_to_data(sp, out);
@@ -336,7 +336,7 @@ _kadm5_unmarshal_params(krb5_context context,
     if (ret)
 	goto out;
     params->mask = mask;
-	
+
     if(params->mask & KADM5_CONFIG_REALM)
 	ret = krb5_ret_string(sp, &params->realm);
  out:

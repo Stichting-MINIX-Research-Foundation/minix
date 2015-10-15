@@ -50,7 +50,7 @@ CPPFLAGS.strtol.c+=	-I${NETBSDSRCDIR}/sys
 # Functions imported from libsa (StandAlone)
 #
 .for f in \
-	errno.o printf.o sprintf.o strerror.o subr_prf.o
+	errno.o printf.o strerror.o subr_prf.o
 ${f} ${f:C/\.o/.bc/}:	${LIBSADIR}/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -129,7 +129,7 @@ CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
 	udivdi3.o umoddi3.o umodsi3.o udivsi3.o \
 	udivmoddi4.o divsi3.o modsi3.o divmoddi4.o \
 	divmodsi4.o udivmodsi4.o #qdivrem.o lshldi3.o 
-${f} ${f:C/\.o/.bc/}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.bc/}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -163,7 +163,7 @@ CPPFLAGS.strtoul.c+=	-D_STANDALONE
 CPPFLAGS.strtoul.c+=	-I${NETBSDSRCDIR}/sys
 
 .for f in \
-	strcasecmp.o strncasecmp.o strnlen.o strlcat.o
+	strcasecmp.o strcspn.o strncasecmp.o strnlen.o strlcat.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -249,7 +249,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	abort.o atexit.o _env.o exit.o getenv.o \
 	ldiv.o malloc.o setenv.o \
-	_rand48.o lrand48.o srand48.o
+	reallocarr.o _rand48.o lrand48.o srand48.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/stdlib/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
@@ -270,18 +270,6 @@ CPPFLAGS.malloc.c+= -D_LIBSYS
 SECTIONIFY.malloc.c+= -sectionify-no-override \
 	-sectionify-data-section-map=.*/magic_malloc_data
 
-.for f in \
-	strcspn.o
-${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/string/${f:C/\.o/.c/}
-OBJS+=	${f}
-CLEANFILES+= ${f}
-
-.if ${USE_BITCODE:Uno} == "yes"
-OBJS+=	${f:C/\.o/.bc/}
-CLEANFILES+= ${f:C/\.o/.bc/}
-.endif # ${USE_BITCODE:Uno} == "yes"
-.endfor
-CPPFLAGS.strcspn.c+=	-D_LIBC
 
 .for f in \
 	access.o brk.o close.o environ.o execve.o fork.o fsync.o \

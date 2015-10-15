@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2013/09/12 17:14:20 joerg Exp $
+# $NetBSD: Makefile,v 1.24 2014/03/02 22:50:13 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -10,16 +10,10 @@ LIBISCXX=	yes
 LIBDPLIBS+=     atf-c	${.CURDIR}/../libatf-c
 LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
 
-
 .PATH:		${SRCDIR}
 .PATH:		${SRCDIR}/atf-c++
 .PATH:		${SRCDIR}/atf-c++/detail
-.PATH:		${TOPDIR}/lib/libatf-c  # For bconfig.h
-
-CPPFLAGS+=	-I${.CURDIR}/../libatf-c
-CPPFLAGS+=	-I.
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
+.PATH:		${TOPDIR}
 
 WARNS?=		2
 
@@ -29,20 +23,16 @@ SRCS=		application.cpp \
 		config.cpp \
 		env.cpp \
 		exceptions.cpp \
-		expand.cpp \
 		fs.cpp \
-		parser.cpp \
 		process.cpp \
 		tests.cpp \
 		text.cpp \
-		ui.cpp \
 		utils.cpp
 
 INCS=		build.hpp \
 		check.hpp \
 		config.hpp \
 		macros.hpp \
-		noncopyable.hpp \
 		tests.hpp \
 		utils.hpp
 INCSDIR=	/usr/include/atf-c++
@@ -57,8 +47,8 @@ FILES+=		atf-c++.pc
 FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
-atf-c++.pc: Makefile atf-c++.pc.in bconfig.h
-	${TOOL_SED} -e 's,__ATF_VERSION__,${ATF_VERSION},g' \
+atf-c++.pc: Makefile atf-c++.pc.in atf-version.txt
+	${TOOL_SED} -e "s,__ATF_VERSION__,$$(cat atf-version.txt),g" \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \

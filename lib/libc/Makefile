@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2013/10/14 16:00:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.169 2015/06/15 14:24:01 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -19,8 +19,6 @@
 
 .include "Makefile.inc"
 
-LIBC_MACHINE_ARCH?=	${MACHINE_ARCH}		# for MKCOMPAT
-
 LIB=		c
 CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR}
 
@@ -37,9 +35,9 @@ CLEANFILES+=	assym.h assym.h.tmp
 
 assym.h: ${ARCHDIR}/genassym.cf
 	${_MKTARGET_CREATE}
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,--fatal-warnings} \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} \
 		${CPPFLAGS} ${CPPFLAGS.assym.h} ${PROF} \
-		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
+		${GENASSYM_CPPFLAGS} < ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 .endif
 
@@ -57,7 +55,7 @@ COMPATDIR=${.CURDIR}/compat
 CPPFLAGS+=	-D__BUILD_LEGACY
 .endif
 
-.if defined(__MINIX)
+.if defined(__MINIX) && 0
 SUBDIR+= pkgconfig
 .include <bsd.subdir.mk>
 .endif # defined(__MINIX)
@@ -68,9 +66,7 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/citrus/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
-.if ${HAVE_LIBGCC} == "no" || defined(__MINIX)
 .include "${.CURDIR}/compiler_rt/Makefile.inc"
-.endif
 .include "${.CURDIR}/dlfcn/Makefile.inc"
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
@@ -78,7 +74,7 @@ SUBDIR+= pkgconfig
 # gmon needs profil()
 .else
 .include "${.CURDIR}/gmon/Makefile.inc"
-.endif
+.endif # defined(__MINIX)
 .include "${.CURDIR}/hash/Makefile.inc"
 .include "${.CURDIR}/iconv/Makefile.inc"
 .include "${.CURDIR}/inet/Makefile.inc"
@@ -89,9 +85,6 @@ SUBDIR+= pkgconfig
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha") && (${ARCHSUBDIR} != "sparc64") && !defined(__MINIX)
-.include "${.CURDIR}/quad/Makefile.inc"
-.endif
 .if (${USE_LIBTRE} == "yes")
 .include "${NETBSDSRCDIR}/external/bsd/tre/Makefile.inc"
 .else
@@ -102,7 +95,7 @@ SUBDIR+= pkgconfig
 # RPC needs pollts() and a reserved port allocator.
 .else
 .include "${.CURDIR}/rpc/Makefile.inc"
-.endif
+.endif # defined(__MINIX)
 .include "${.CURDIR}/ssp/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
@@ -113,13 +106,14 @@ SUBDIR+= pkgconfig
 .if defined(__MINIX)
 .include "${NETBSDSRCDIR}/minix/lib/libc/sys/Makefile.inc"
 .else
+.if ${RUMPRUN} != "yes"
 .include "${.CURDIR}/tls/Makefile.inc"
 .endif
+.endif # defined(__MINIX)
 .include "${.CURDIR}/sys/Makefile.inc"
-.if ${HAVE_LIBGCC} == "no" && ${MACHINE_ARCH} != "earm" && defined(__MINIX)
-# Currently unavailable on minix/arm - BJG
+.if ${HAVE_LIBGCC_EH} == "no"
 .include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
-.endif # ${HAVE_LIBGCC} == "no" && ${MACHINE_ARCH} != "earm" && defined(__MINIX)
+.endif
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"
@@ -151,16 +145,26 @@ NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 .if defined(__MINIX)
 realall: 
 .else
-realall: tags
+.if ${MKREPRO:Uno} == "yes"
+REGEX_SPECIALS=[][)(^$$.?*\\;]
+MKREPRO_SED=   -e 's;${NETBSDSRCDIR:C/${REGEX_SPECIALS}/\\\\&/g};/usr/src;'
 .endif
+
+.if !defined(MLIBDIR) && ${RUMPRUN} != "yes"
+realall: tags
 tags: ${SRCS}
 	${_MKTARGET_CREATE}
-	-${TOOL_CTAGS} -w ${.ALLSRC:M*.c}
+	-${TOOL_CTAGS} -f ${.TARGET}.tmp -w ${.ALLSRC:M*.c}
 	-egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
+           >> ${.TARGET}.tmp
+.if ${MKREPRO:Uno} == "yes"
+	sed ${MKREPRO_SED} <${.TARGET}.tmp | sort -o ${.TARGET}
+.else
+	sort -o ${.TARGET} ${.TARGET}.tmp
+.endif
+	rm -f ${.TARGET}.tmp
 
-.if !defined(__MINIX)
 FILES=		tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
@@ -170,9 +174,8 @@ FILESDIR=	/var/db
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
 # multibyte for libc.so.  the quirk should be removed when we support
 # dlopen() from within statically linked binaries.
-.if !defined(__MINIX)
 CSHLIBFLAGS+=	-D_I18N_DYNAMIC
-.endif
+.endif # defined(__MINIX)
 
 .include <bsd.lib.mk>
 

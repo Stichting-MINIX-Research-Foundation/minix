@@ -1,4 +1,4 @@
-/*	$NetBSD: slc-gram.y,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: slc-gram.y,v 1.1.1.2 2014/04/24 12:45:53 pettai Exp $	*/
 
 %{
 /*
@@ -246,7 +246,7 @@ check_command(struct assignment *as)
 		ex(as, "multiple max_args strings");
 		ret++;
 	}
-	
+
 	return ret;
 }
 
@@ -396,7 +396,7 @@ static void defval_neg_flag(const char *name, struct assignment *defval)
 static void defval_string(const char *name, struct assignment *defval)
 {
     if(defval != NULL)
-	cprint(1, "opt.%s = \"%s\";\n", name, defval->u.value);
+	cprint(1, "opt.%s = (char *)(unsigned long)\"%s\";\n", name, defval->u.value);
     else
 	cprint(1, "opt.%s = NULL;\n", name);
 }
@@ -474,7 +474,7 @@ gen_options(struct assignment *opt1, const char *name)
 	struct assignment *type;
 	struct type_handler *th;
 	char *s;
-	
+
 	s = make_name(tmp->u.assignment);
 	type = find(tmp->u.assignment, "type");
 	th = find_handler(type);
@@ -494,11 +494,14 @@ gen_wrapper(struct assignment *as)
     struct assignment *tmp;
     char *n, *f;
     int nargs = 0;
+    int narguments = 0;
 
     name = find(as, "name");
     n = strdup(name->u.value);
     gen_name(n);
     arg = find(as, "argument");
+    if (arg)
+        narguments++;
     opt1 = find(as, "option");
     function = find(as, "function");
     if(function)
@@ -532,7 +535,7 @@ gen_wrapper(struct assignment *as)
 	struct assignment *help = find(tmp->u.assignment, "help");
 
 	struct type_handler *th;
-	
+
 	cprint(2, "{ ");
 	if(lopt)
 	    fprintf(cfile, "\"%s\", ", lopt->u.value);
@@ -549,9 +552,10 @@ gen_wrapper(struct assignment *as)
 	    fprintf(cfile, "\"%s\", ", help->u.value);
 	else
 	    fprintf(cfile, "NULL, ");
-	if(aarg)
+	if(aarg) {
 	    fprintf(cfile, "\"%s\"", aarg->u.value);
-	else
+            narguments++;
+	} else
 	    fprintf(cfile, "NULL");
 	fprintf(cfile, " },\n");
     }
@@ -568,7 +572,7 @@ gen_wrapper(struct assignment *as)
 	struct assignment *defval = find(tmp->u.assignment, "default");
 
 	struct type_handler *th;
-	
+
 	s = make_name(tmp->u.assignment);
 	th = find_handler(type);
 	(*th->defval)(s, defval);
@@ -591,7 +595,7 @@ gen_wrapper(struct assignment *as)
 	int min_args = -1;
 	int max_args = -1;
 	char *end;
-	if(arg == NULL) {
+	if(narguments == 0) {
 	    max_args = 0;
 	} else {
 	    if((tmp = find(as, "min_args")) != NULL) {

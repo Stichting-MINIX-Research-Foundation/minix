@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.h,v 1.5 2003/08/07 09:37:34 agc Exp $	*/
+/*	$NetBSD: primes.h,v 1.6 2014/10/02 21:36:37 ast Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,14 +37,38 @@
 /*
  * primes - generate a table of primes between two values
  *
- * By: Landon Curt Noll chongo@toad.com, ...!{sun,tolsoft}!hoptoad!chongo
+ * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
- * chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
  */
 
-/* ubig is the type that holds a large unsigned value */
-typedef unsigned long ubig;		/* must be >=32 bit unsigned value */
-#define	BIG		ULONG_MAX	/* largest value will sieve */
+#include <stdint.h>
 
 /* bytes in sieve table (must be > 3*5*7*11) */
 #define	TABSIZE		256*1024
+
+/*
+ * prime[i] is the (i-1)th prime.
+ *
+ * We are able to sieve 2^32-1 because this byte table yields all primes
+ * up to 65537 and 65537^2 > 2^32-1.
+ */
+
+extern const uint64_t prime[];		/* must be >=32 bit unsigned values */
+extern const uint64_t *const pr_limit;	/* largest prime in the prime array */
+
+/* Maximum size sieving alone can handle. */
+#define	SIEVEMAX 4295098368ULL
+
+/*
+ * To avoid excessive sieves for small factors, we use the table below to
+ * setup our sieve blocks.  Each element represents an odd number starting
+ * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
+ */
+extern const char pattern[];
+extern const size_t pattern_size;	/* length of pattern array */
+
+/* Test for primality using strong pseudoprime tests. */
+int isprime(uint64_t);
+
+/* Maximum value which the SPSP code can handle. */
+#define	SPSPMAX 3825123056546413050ULL

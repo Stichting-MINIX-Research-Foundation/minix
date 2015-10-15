@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.16 2013/04/22 20:57:36 christos Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -29,9 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
+#include "gettemp.h"
 
 #if !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP || !HAVE_MKDTEMP
 
@@ -40,125 +38,119 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.16 2013/04/22 20:57:36 christos Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
+#include <sys/param.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
-#if HAVE_NBTOOL_CONFIG_H
-#define	GETTEMP		__nbcompat_gettemp
-#else
-#include "reentrant.h"
-#include "local.h"
-#define	GETTEMP		__gettemp
-#endif
+static const unsigned char padchar[] =
+"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 int
-GETTEMP(char *path, int *doopen, int domkdir)
+GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 {
-	char *start, *trv;
+	char *start, *trv, *suffp, *carryp;
+	char *pad;
 	struct stat sbuf;
-	u_int pid;
-
-	/* To guarantee multiple calls generate unique names even if
-	   the file is not created. 676 different possibilities with 7
-	   or more X's, 26 with 6 or less. */
-	static char xtra[2] = "aa";
-	int xcnt = 0;
+	int rval;
+	uint32_t r;
+	char carrybuf[MAXPATHLEN];
 
 	_DIAGASSERT(path != NULL);
 	/* doopen may be NULL */
-
-	pid = getpid();
-
-	/* Move to end of path and count trailing X's. */
-	for (trv = path; *trv; ++trv)
-		if (*trv == 'X')
-			xcnt++;
-		else
-			xcnt = 0;	
-
-	/* Use at least one from xtra.  Use 2 if more than 6 X's. */
-	if (*(trv - 1) == 'X')
-		*--trv = xtra[0];
-	if (xcnt > 6 && *(trv - 1) == 'X')
-		*--trv = xtra[1];
-
-	/* Set remaining X's to pid digits with 0's to the left. */
-	while (*--trv == 'X') {
-		*trv = (pid % 10) + '0';
-		pid /= 10;
+	if ((doopen != NULL && domkdir) || slen < 0 ||
+	    (oflags & ~(O_APPEND | O_DIRECT | O_SHLOCK | O_EXLOCK | O_SYNC |
+	    O_CLOEXEC)) != 0) {
+		errno = EINVAL;
+		return 0;
 	}
 
-	/* update xtra for next call. */
-	if (xtra[0] != 'z')
-		xtra[0]++;
-	else {
-		xtra[0] = 'a';
-		if (xtra[1] != 'z')
-			xtra[1]++;
-		else
-			xtra[1] = 'a';
+	for (trv = path; *trv != '\0'; ++trv)
+		continue;
+
+	if (trv - path >= MAXPATHLEN) {
+		errno = ENAMETOOLONG;
+		return 0;
 	}
+	trv -= slen;
+	suffp = trv;
+	--trv;
+	if (trv < path || NULL != strchr(suffp, '/')) {
+		errno = EINVAL;
+		return 0;
+	}
+
+	/* Fill space with random characters */
+	while (trv >= path && *trv == 'X') {
+		r = arc4random_uniform((unsigned int)(sizeof(padchar) - 1));
+		*trv-- = padchar[r];
+	}
+	start = trv + 1;
+
+	/* save first combination of random characters */
+	memcpy(carrybuf, start, (size_t)(suffp - start));
 
 	/*
-	 * check the target directory; if you have six X's and it
-	 * doesn't exist this runs for a *very* long time.
+	 * check the target directory.
 	 */
-	for (start = trv + 1;; --trv) {
-		if (trv <= path)
-			break;
-		if (*trv == '/') {
-			int e;
-			*trv = '\0';
-			e = stat(path, &sbuf);
-			*trv = '/';
-			if (e == -1)
-				return doopen == NULL && !domkdir;
-			if (!S_ISDIR(sbuf.st_mode)) {
-				errno = ENOTDIR;
-				return doopen == NULL && !domkdir;
+	if (doopen != NULL || domkdir) {
+		for (; trv > path; --trv) {
+			if (*trv == '/') {
+				*trv = '\0';
+				rval = stat(path, &sbuf);
+				*trv = '/';
+				if (rval != 0)
+					return 0;
+				if (!S_ISDIR(sbuf.st_mode)) {
+					errno = ENOTDIR;
+					return 0;
+				}
+				break;
 			}
-			break;
 		}
 	}
 
 	for (;;) {
 		if (doopen) {
-			if ((*doopen =
-			    open(path, O_CREAT | O_EXCL | O_RDWR, 0600)) >= 0)
+			if ((*doopen = open(path, O_CREAT|O_EXCL|O_RDWR|oflags,
+			    0600)) != -1)
 				return 1;
 			if (errno != EEXIST)
 				return 0;
 		} else if (domkdir) {
-			if (mkdir(path, 0700) >= 0)
+			if (mkdir(path, 0700) != -1)
 				return 1;
 			if (errno != EEXIST)
 				return 0;
 		} else if (lstat(path, &sbuf))
-			return errno == ENOENT ? 1 : 0;
+			return errno == ENOENT;
 
-		/* tricky little algorithm for backward compatibility */
-		for (trv = start;;) {
-			if (!*trv)
+		/*
+		 * If we have a collision,
+		 * cycle through the space of filenames
+		 */
+		for (trv = start, carryp = carrybuf;;) {
+			/* have we tried all possible permutations? */
+			if (trv == suffp)
+				return 0; /* yes - exit with EEXIST */
+			pad = strchr((const char *)padchar, *trv);
+			if (pad == NULL) {
+				/* this should never happen */
+				errno = EIO;
 				return 0;
-			if (*trv == 'z')
-				*trv++ = 'a';
-			else {
-				if (isdigit((unsigned char)*trv))
-					*trv = 'a';
-				else
-					++*trv;
+			}
+			/* increment character */
+			*trv = (*++pad == '\0') ? padchar[0] : *pad;
+			/* carry to next position? */
+			if (*trv == *carryp) {
+				/* increment position and loop */
+				++trv;
+				++carryp;
+			} else {
+				/* try with new name */
 				break;
 			}
 		}

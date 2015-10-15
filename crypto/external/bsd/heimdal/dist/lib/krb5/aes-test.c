@@ -1,4 +1,4 @@
-/*	$NetBSD: aes-test.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: aes-test.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -220,7 +220,7 @@ string_to_key_test(krb5_context context)
 	opaque.data = iter;
 	opaque.length = sizeof(iter);
 	_krb5_put_int(iter, keys[i].iterations, 4);
-	
+
 	if (keys[i].pbkdf2) {
 	    unsigned char keyout[32];
 
@@ -231,13 +231,13 @@ string_to_key_test(krb5_context context)
 				   salt.saltvalue.data, salt.saltvalue.length,
 				   keys[i].iterations,
 				   keys[i].keylen, keyout);
-	
+
 	    if (memcmp(keyout, keys[i].pbkdf2, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: pbkdf2", i);
 		val = 1;
 		continue;
 	    }
-	
+
 	    if (verbose) {
 		printf("PBKDF2:\n");
 		hex_dump_data(keyout, keys[i].keylen);
@@ -259,7 +259,7 @@ string_to_key_test(krb5_context context)
 		val = 1;
 		continue;
 	    }
-	
+
 	    if (key.keyvalue.length != keys[i].keylen) {
 		krb5_warnx(context, "%d: key wrong length (%lu/%lu)",
 			   i, (unsigned long)key.keyvalue.length,
@@ -267,13 +267,13 @@ string_to_key_test(krb5_context context)
 		val = 1;
 		continue;
 	    }
-	
+
 	    if (memcmp(key.keyvalue.data, keys[i].key, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: key wrong", i);
 		val = 1;
 		continue;
 	    }
-	
+
 	    if (verbose) {
 		printf("key:\n");
 		hex_dump_data(key.keyvalue.data, key.keyvalue.length);
@@ -382,7 +382,7 @@ krb_enc_iov2(krb5_context context,
 
     free(p);
 
-    /* 
+    /*
      * Now decrypt use iov
      */
 
@@ -395,7 +395,7 @@ krb_enc_iov2(krb5_context context,
 
     free(iov[1].data.data);
     free(iov[2].data.data);
-    
+
     iov[1].data.data = p;
     iov[1].data.length += iov[2].data.length;
 
@@ -609,9 +609,9 @@ krb_enc_test(krb5_context context)
 	cipher.data = krbencs[i].edata;
 	plain.length = krbencs[i].plen;
 	plain.data = krbencs[i].pdata;
-	
+
 	ret = krb_enc(context, crypto, krbencs[i].usage, &cipher, &plain);
-		
+
 	if (ret)
 	    errx(1, "krb_enc failed with %d for test %d", ret, i);
 
@@ -663,7 +663,7 @@ iov_test(krb5_context context)
     ret = krb5_crypto_length(context, crypto, KRB5_CRYPTO_TYPE_HEADER, &len);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_crypto_length");
-    
+
     signonly.data = "This should be signed";
     signonly.length = strlen(signonly.data);
     in.data = "inputdata";
@@ -684,7 +684,7 @@ iov_test(krb5_context context)
     iov[4].flags = KRB5_CRYPTO_TYPE_PADDING;
     iov[5].flags = KRB5_CRYPTO_TYPE_TRAILER;
 
-    ret = krb5_crypto_length_iov(context, crypto, iov, 
+    ret = krb5_crypto_length_iov(context, crypto, iov,
 				 sizeof(iov)/sizeof(iov[0]));
     if (ret)
 	krb5_err(context, 1, ret, "krb5_crypto_length_iov");
@@ -714,11 +714,11 @@ iov_test(krb5_context context)
      * Encrypt
      */
 
-    ret = krb5_encrypt_iov_ivec(context, crypto, 7, iov, 
+    ret = krb5_encrypt_iov_ivec(context, crypto, 7, iov,
 				sizeof(iov)/sizeof(iov[0]), NULL);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_encrypt_iov_ivec");
-    
+
     /*
      * Decrypt
      */
@@ -781,11 +781,11 @@ iov_test(krb5_context context)
      * Encrypt
      */
 
-    ret = krb5_encrypt_iov_ivec(context, crypto, 7, 
+    ret = krb5_encrypt_iov_ivec(context, crypto, 7,
 				iov, sizeof(iov)/sizeof(iov[0]), NULL);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_encrypt_iov_ivec");
-    
+
     /*
      * Decrypt
      */

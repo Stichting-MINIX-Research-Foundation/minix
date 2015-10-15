@@ -1,4 +1,4 @@
-/* $Id: cmd-new-session.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,85 +32,100 @@
  * Create a new session and attach to the current terminal unless -d is given.
  */
 
-int	cmd_new_session_check(struct args *);
-int	cmd_new_session_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_new_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_new_session_entry = {
 	"new-session", "new",
-	"dn:s:t:x:y:", 0, 1,
-	"[-d] [-n window-name] [-s session-name] [-t target-session] "
-	"[-x width] [-y height] [command]",
-	CMD_STARTSERVER|CMD_CANTNEST|CMD_SENDENVIRON,
+	"Ac:dDF:n:Ps:t:x:y:", 0, 1,
+	"[-AdDP] [-c start-directory] [-F format] [-n window-name] "
+	"[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] [-y height] "
+	"[command]",
+	CMD_STARTSERVER|CMD_CANTNEST,
 	NULL,
-	cmd_new_session_check,
 	cmd_new_session_exec
 };
 
-int
-cmd_new_session_check(struct args *args)
-{
-	if (args_has(args, 't') && (args->argc != 0 || args_has(args, 'n')))
-		return (-1);
-	return (0);
-}
-
-int
-cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct session		*s, *old_s, *groupwith;
+	struct client		*c = cmdq->client, *c0;
+	struct session		*s, *groupwith;
 	struct window		*w;
-	struct window_pane	*wp;
 	struct environ		 env;
 	struct termios		 tio, *tiop;
-	struct passwd		*pw;
-	const char		*newname, *target, *update, *cwd, *errstr;
-	char			*overrides, *cmd, *cause;
-	int			 detached, idx;
-	u_int			 sx, sy, i;
+	const char		*newname, *target, *update, *errstr, *template;
+	char			*cmd, *cause, *cp;
+	int			 detached, already_attached, idx, cwd, fd = -1;
+	u_int			 sx, sy;
+	struct format_tree	*ft;
+
+	if (args_has(args, 't') && (args->argc != 0 || args_has(args, 'n'))) {
+		cmdq_error(cmdq, "command or window name given with target");
+		return (CMD_RETURN_ERROR);
+	}
 
 	newname = args_get(args, 's');
 	if (newname != NULL) {
 		if (!session_check_name(newname)) {
-			ctx->error(ctx, "bad session name: %s", newname);
-			return (-1);
+			cmdq_error(cmdq, "bad session name: %s", newname);
+			return (CMD_RETURN_ERROR);
 		}
 		if (session_find(newname) != NULL) {
-			ctx->error(ctx, "duplicate session: %s", newname);
-			return (-1);
+			if (args_has(args, 'A')) {
+				return (cmd_attach_session(cmdq, newname,
+				    args_has(args, 'D'), 0, NULL));
+			}
+			cmdq_error(cmdq, "duplicate session: %s", newname);
+			return (CMD_RETURN_ERROR);
 		}
 	}
 
 	target = args_get(args, 't');
 	if (target != NULL) {
-		groupwith = cmd_find_session(ctx, target, 0);
+		groupwith = cmd_find_session(cmdq, target, 0);
 		if (groupwith == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 	} else
 		groupwith = NULL;
 
-	/*
-	 * There are three cases:
-	 *
-	 * 1. If cmdclient is non-NULL, new-session has been called from the
-	 *    command-line - cmdclient is to become a new attached, interactive
-	 *    client. Unless -d is given, the terminal must be opened and then
-	 *    the client sent MSG_READY.
-	 *
-	 * 2. If cmdclient is NULL, new-session has been called from an
-	 *    existing client (such as a key binding).
-	 *
-	 * 3. Both are NULL, the command was in the configuration file. Treat
-	 *    this as if -d was given even if it was not.
-	 *
-	 * In all cases, a new additional session needs to be created and
-	 * (unless -d) set as the current session for the client.
-	 */
-
 	/* Set -d if no client. */
 	detached = args_has(args, 'd');
-	if (ctx->cmdclient == NULL && ctx->curclient == NULL)
+	if (c == NULL)
 		detached = 1;
+
+	/* Is this client already attached? */
+	already_attached = 0;
+	if (c != NULL && c->session != NULL)
+		already_attached = 1;
+
+	/* Get the new session working directory. */
+	if (args_has(args, 'c')) {
+		ft = format_create();
+		if ((c0 = cmd_find_client(cmdq, NULL, 1)) != NULL)
+			format_client(ft, c0);
+		cp = format_expand(ft, args_get(args, 'c'));
+		format_free(ft);
+
+		if (cp != NULL && *cp != '\0') {
+			fd = open(cp, O_RDONLY|O_DIRECTORY);
+			free(cp);
+			if (fd == -1) {
+				cmdq_error(cmdq, "bad working directory: %s",
+				    strerror(errno));
+				return (CMD_RETURN_ERROR);
+			}
+		} else if (cp != NULL)
+			free(cp);
+		cwd = fd;
+	} else if (c != NULL && c->session == NULL)
+		cwd = c->cwd;
+	else if ((c0 = cmd_current_client(cmdq)) != NULL)
+		cwd = c0->session->cwd;
+	else {
+		fd = open(".", O_RDONLY);
+		cwd = fd;
+	}
 
 	/*
 	 * Save the termios settings, part of which is used for new windows in
@@ -119,66 +136,43 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	 * before opening the terminal as that calls tcsetattr() to prepare for
 	 * tmux taking over.
 	 */
-	if (ctx->cmdclient != NULL && ctx->cmdclient->tty.fd != -1) {
-		if (tcgetattr(ctx->cmdclient->tty.fd, &tio) != 0)
+	if (!detached && !already_attached && c->tty.fd != -1) {
+		if (tcgetattr(c->tty.fd, &tio) != 0)
 			fatal("tcgetattr failed");
 		tiop = &tio;
 	} else
 		tiop = NULL;
 
 	/* Open the terminal if necessary. */
-	if (!detached && ctx->cmdclient != NULL) {
-		if (!(ctx->cmdclient->flags & CLIENT_TERMINAL)) {
-			ctx->error(ctx, "not a terminal");
-			return (-1);
+	if (!detached && !already_attached) {
+		if (server_client_open(c, NULL, &cause) != 0) {
+			cmdq_error(cmdq, "open terminal failed: %s", cause);
+			free(cause);
+			goto error;
 		}
-
-		overrides =
-		    options_get_string(&global_s_options, "terminal-overrides");
-		if (tty_open(&ctx->cmdclient->tty, overrides, &cause) != 0) {
-			ctx->error(ctx, "open terminal failed: %s", cause);
-			xfree(cause);
-			return (-1);
-		}
-	}
-
-	/* Get the new session working directory. */
-	if (ctx->cmdclient != NULL && ctx->cmdclient->cwd != NULL)
-		cwd = ctx->cmdclient->cwd;
-	else {
-		pw = getpwuid(getuid());
-		if (pw->pw_dir != NULL && *pw->pw_dir != '\0')
-			cwd = pw->pw_dir;
-		else
-			cwd = "/";
 	}
 
 	/* Find new session size. */
-	if (detached) {
+	if (c != NULL) {
+		sx = c->tty.sx;
+		sy = c->tty.sy;
+	} else {
 		sx = 80;
 		sy = 24;
-		if (args_has(args, 'x')) {
-			sx = strtonum(
-			    args_get(args, 'x'), 1, USHRT_MAX, &errstr);
-			if (errstr != NULL) {
-				ctx->error(ctx, "width %s", errstr);
-				return (-1);
-			}
+	}
+	if (detached && args_has(args, 'x')) {
+		sx = strtonum(args_get(args, 'x'), 1, USHRT_MAX, &errstr);
+		if (errstr != NULL) {
+			cmdq_error(cmdq, "width %s", errstr);
+			goto error;
 		}
-		if (args_has(args, 'y')) {
-			sy = strtonum(
-			    args_get(args, 'y'), 1, USHRT_MAX, &errstr);
-			if (errstr != NULL) {
-				ctx->error(ctx, "height %s", errstr);
-				return (-1);
-			}
+	}
+	if (detached && args_has(args, 'y')) {
+		sy = strtonum(args_get(args, 'y'), 1, USHRT_MAX, &errstr);
+		if (errstr != NULL) {
+			cmdq_error(cmdq, "height %s", errstr);
+			goto error;
 		}
-	} else if (ctx->cmdclient != NULL) {
-		sx = ctx->cmdclient->tty.sx;
-		sy = ctx->cmdclient->tty.sy;
-	} else {
-		sx = ctx->curclient->tty.sx;
-		sy = ctx->curclient->tty.sy;
 	}
 	if (sy > 0 && options_get_number(&global_s_options, "status"))
 		sy--;
@@ -198,26 +192,23 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	/* Construct the environment. */
 	environ_init(&env);
 	update = options_get_string(&global_s_options, "update-environment");
-	if (ctx->cmdclient != NULL)
-		environ_update(update, &ctx->cmdclient->environ, &env);
+	if (c != NULL)
+		environ_update(update, &c->environ, &env);
 
 	/* Create the new session. */
 	idx = -1 - options_get_number(&global_s_options, "base-index");
 	s = session_create(newname, cmd, cwd, &env, tiop, idx, sx, sy, &cause);
 	if (s == NULL) {
-		ctx->error(ctx, "create session failed: %s", cause);
-		xfree(cause);
-		return (-1);
+		cmdq_error(cmdq, "create session failed: %s", cause);
+		free(cause);
+		goto error;
 	}
 	environ_free(&env);
 
 	/* Set the initial window name if one given. */
 	if (cmd != NULL && args_has(args, 'n')) {
 		w = s->curw->window;
-
-		xfree(w->name);
-		w->name = xstrdup(args_get(args, 'n'));
-
+		window_set_name(w, args_get(args, 'n'));
 		options_set_number(&w->options, "automatic-rename", 0);
 	}
 
@@ -236,23 +227,14 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	 * taking this session and needs to get MSG_READY and stay around.
 	 */
 	if (!detached) {
-		if (ctx->cmdclient != NULL) {
-			server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
-
-			old_s = ctx->cmdclient->session;
-			if (old_s != NULL)
-				ctx->cmdclient->last_session = old_s;
-			ctx->cmdclient->session = s;
-			session_update_activity(s);
-			server_redraw_client(ctx->cmdclient);
-		} else {
-			old_s = ctx->curclient->session;
-			if (old_s != NULL)
-				ctx->curclient->last_session = old_s;
-			ctx->curclient->session = s;
-			session_update_activity(s);
-			server_redraw_client(ctx->curclient);
-		}
+		if (!already_attached)
+			server_write_ready(c);
+		else if (c->session != NULL)
+			c->last_session = c->session;
+		c->session = s;
+		notify_attached_session_changed(c);
+		session_update_activity(s);
+		server_redraw_client(c);
 	}
 	recalculate_sizes();
 	server_update_socket();
@@ -261,17 +243,35 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	 * If there are still configuration file errors to display, put the new
 	 * session's current window into more mode and display them now.
 	 */
-	if (cfg_finished && !ARRAY_EMPTY(&cfg_causes)) {
-		wp = s->curw->window->active;
-		window_pane_set_mode(wp, &window_copy_mode);
-		window_copy_init_for_output(wp);
-		for (i = 0; i < ARRAY_LENGTH(&cfg_causes); i++) {
-			cause = ARRAY_ITEM(&cfg_causes, i);
-			window_copy_add(wp, "%s", cause);
-			xfree(cause);
-		}
-		ARRAY_FREE(&cfg_causes);
+	if (cfg_finished)
+		cfg_show_causes(s);
+
+	/* Print if requested. */
+	if (args_has(args, 'P')) {
+		if ((template = args_get(args, 'F')) == NULL)
+			template = NEW_SESSION_TEMPLATE;
+
+		ft = format_create();
+		if ((c0 = cmd_find_client(cmdq, NULL, 1)) != NULL)
+			format_client(ft, c0);
+		format_session(ft, s);
+
+		cp = format_expand(ft, template);
+		cmdq_print(cmdq, "%s", cp);
+		free(cp);
+
+		format_free(ft);
 	}
 
-	return (!detached);	/* 1 means don't tell command client to exit */
+	if (!detached)
+		cmdq->client_exit = 0;
+
+	if (fd != -1)
+		close(fd);
+	return (CMD_RETURN_NORMAL);
+
+error:
+	if (fd != -1)
+		close(fd);
+	return (CMD_RETURN_ERROR);
 }

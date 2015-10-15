@@ -1,9 +1,7 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -g -warn-error A llvm.cmxa llvm_target.cmxa llvm_executionengine.cmxa %t.builddir/target.ml -o %t
+(* RUN: cp %s %T/target.ml
+ * RUN: %ocamlc -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
+ * RUN: %ocamlopt -g -warn-error A -package llvm.target -package llvm.all_backends -linkpkg %T/target.ml -o %t
  * RUN: %t %t.bc
- * REQUIRES: native, object-emission
  * XFAIL: vg_leak
  *)
 
@@ -14,7 +12,7 @@
 open Llvm
 open Llvm_target
 
-let _ = Llvm_executionengine.initialize_native_target ()
+let () = Llvm_all_backends.initialize ()
 
 let context = global_context ()
 let i32_type = Llvm.i32_type context
@@ -43,12 +41,10 @@ let machine = TargetMachine.create (Target.default_triple ()) target
 
 let test_target_data () =
   let module DL = DataLayout in
-  let layout = "e-p:32:32:32-S32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-" ^
-               "f16:16:16-f32:32:32-f64:32:64-f128:128:128-v64:32:64-v128:32:128-" ^
-               "a0:0:64-n32" in
+  let layout = "e-p:32:32-f64:32:64-v64:32:64-v128:32:128-n32-S32" in
   let dl     = DL.of_string layout in
   let sty    = struct_type context [| i32_type; i64_type |] in
-  
+
   assert_equal (DL.as_string dl) layout;
   assert_equal (DL.byte_order dl) Endian.Little;
   assert_equal (DL.pointer_size dl) 4;
@@ -88,7 +84,10 @@ let test_target_machine () =
   assert_equal (TM.triple machine) (Target.default_triple ());
   assert_equal (TM.cpu machine) "";
   assert_equal (TM.features machine) "";
-  ignore (TM.data_layout machine)
+  ignore (TM.data_layout machine);
+  TM.set_verbose_asm true machine;
+  let pm = PassManager.create () in
+  TM.add_analysis_passes pm machine
 
 
 (*===-- Code Emission -----------------------------------------------------===*)
@@ -113,5 +112,5 @@ let _ =
   test_target_data ();
   test_target ();
   test_target_machine ();
-  (* test_code_emission (); *) (* broken without AsmParser support *)
+  test_code_emission ();
   dispose_module m

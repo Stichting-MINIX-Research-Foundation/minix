@@ -1,4 +1,4 @@
-/*	$NetBSD: tag.h,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
+/*	$NetBSD: tag.h,v 1.4 2014/08/22 21:28:20 aymeric Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -104,6 +104,7 @@ struct _tagq {			/* Tag queue. */
 	size_t	 tlen;		/* Tag string length. */
 
 #define	TAG_CSCOPE	0x01	/* Cscope tag. */
+#define	TAG_IS_LINKED	0x02	/* Tag was inserted into linked list */
 	u_int8_t flags;
 
 	char	 buf[1];	/* Variable length buffer. */

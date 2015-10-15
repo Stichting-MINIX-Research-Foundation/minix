@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: vorbis,v 1.16 2009/09/19 16:28:13 christos Exp $
+# $File: vorbis,v 1.20 2014/09/23 16:35:08 christos Exp $
 # vorbis:  file(1) magic for Ogg/Vorbis files
 #
 # From Felix von Leitner <leitner@fefe.de>
@@ -23,7 +23,6 @@
 # --- Ogg Framing ---
 #0		search/1000	OggS		Ogg data
 0		string	OggS		Ogg data
-!:mime		application/ogg
 >4		byte		!0		UNKNOWN REVISION %u
 ##>4		byte		0		revision 0
 >4		byte		0
@@ -31,9 +30,12 @@
 # non-Vorbis content: FLAC (Free Lossless Audio Codec, http://flac.sourceforge.net)
 >>28		string		\x7fFLAC	\b, FLAC audio
 # non-Vorbis content: Theora
+!:mime		audio/ogg
 >>28		string		\x80theora	\b, Theora video
+!:mime		video/ogg
 # non-Vorbis content: Kate
->>28		string		\x80kate\0\0\0\0	\b, Kate
+>>28		string		\x80kate\0\0\0\0	\b, Kate (Karaoke and Text)
+!:mime		application/ogg
 >>>37		ubyte		x		v%u
 >>>38		ubyte		x		\b.%u,
 >>>40		byte		0		utf8 encoding,
@@ -44,25 +46,29 @@
 >>>76		string		\0		no category set
 # non-Vorbis content: Skeleton
 >>28		string		fishead\0	\b, Skeleton
+!:mime		video/ogg
 >>>36		short		x		v%u
 >>>40		short		x		\b.%u
 # non-Vorbis content: Speex
 >>28		string		Speex\ \ \ 	\b, Speex audio
+!:mime		audio/ogg
 # non-Vorbis content: OGM
 >>28		string		\x01video\0\0\0	\b, OGM video
+!:mime		video/ogg
 >>>37		string/c	div3		(DivX 3)
 >>>37		string/c	divx		(DivX 4)
 >>>37		string/c	dx50		(DivX 5)
 >>>37		string/c	xvid		(XviD)
 # --- First vorbis packet - general header ---
 >>28		string		\x01vorbis	\b, Vorbis audio,
->>>35		lelong		!0		UNKNOWN VERSION %lu,
+!:mime		audio/ogg
+>>>35		lelong		!0		UNKNOWN VERSION %u,
 ##>>>35		lelong		0		version 0,
 >>>35		lelong		0
 >>>>39		ubyte		1		mono,
 >>>>39		ubyte		2		stereo,
 >>>>39		ubyte		>2		%u channels,
->>>>40		lelong		x		%lu Hz
+>>>>40		lelong		x		%u Hz
 # Minimal, nominal and maximal bitrates specified when encoding
 >>>>48		string		<\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff	\b,
 # The above tests if at least one of these is specified:
@@ -72,13 +78,13 @@
 # Vorbis 1.0 uses 0 instead of -1.
 >>>>>>52	lelong		!0
 >>>>>>>52	lelong		!-1000
->>>>>>>>52	lelong		x		<%lu
+>>>>>>>>52	lelong		x		<%u
 >>>>>48		lelong		!-1
->>>>>>48	lelong		x		~%lu
+>>>>>>48	lelong		x		~%u
 >>>>>44		lelong		!-1
 >>>>>>44	lelong		!-1000
 >>>>>>>44	lelong		!0
->>>>>>>>44	lelong		x		>%lu
+>>>>>>>>44	lelong		x		>%u
 >>>>>48		string		<\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff	bps
 # -- Second vorbis header packet - the comments
 # A kludge to read the vendor string.  It's a counted string, not a

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.322 2013/11/11 10:24:53 joerg Exp $
+#	$NetBSD: bsd.README,v 1.346 2015/07/23 08:03:26 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -136,6 +136,14 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 MKCOMPAT  	If "no", don't build or install the src/compat.
 		Default: yes on amd64/mips64/sparc64, no elsewhere.
 
+MKCOMPATTESTS  	If "yes", build and install the NetBSD test suite when
+		building and installing src/compat.
+		Default: no
+
+MKCOMPATX11  	If "yes", build and install the X11 libraries when
+		building and installing src/compat.
+		Default: no
+
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
 
@@ -144,6 +152,11 @@ MKCRYPTO	If "no", no cryptography support will be built into the system,
 		Default: yes
 
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
+		Default: no
+
+MKCTF		If "no", do not build and install CTF tools, and also
+		don't generate and manipulate CTF data of ELF binaries
+		during build.
 		Default: no
 
 MKCVS		If "no", don't build or install cvs(1).
@@ -193,6 +206,12 @@ MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
 MKGDB		If "no", don't build gdb(1).
 		Default: yes
 
+MKGROFFHTMLDOC	If "no", avoid trying to use groff to generate html for
+		miscellaneous articles, as this seems to sometimes want
+		to run software not in base. Does not affect html man
+		pages.
+		Default: no
+
 MKHESIOD	If "no", disables building of Hesiod infrastructure
 		(libraries and support programs).
 		Default: yes
@@ -228,6 +247,10 @@ MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
 MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
+
+MKKDEBUG	If "yes", force building of kernel symbol info and creation
+		of netbsd.gdb in all kernel builds, independently of the
+		settings for "makeoptions DEBUG" in the kernel config file.
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
@@ -380,22 +403,23 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		installed counterparts.
 		Default: no
 
-MKX11		If not "no", depending on the value of ${X11FLAVOUR},
-		'make build' also descends into either src/x11 (XFree86) or
-		src/external/mit/xorg (modular Xorg) to cross-build X11 and
-		automatically enables creation of X sets.
+MKX11		If not "no", 'make build' also descends into 
+		src/external/mit/xorg to cross-build X11 and automatically
+		enables creation of X sets.
 		Default: no
 
-MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
-		install the X fonts.  The xfont set is still created but
-		will be empty.
+MKX11FONTS	If not "no", do not build or install the X fonts.  The xfont
+		set is still created but will be empty.
 		Default: yes
 
-MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
-		libGLw with Motif stubs.  If Motif is not installed in the
-		default location /usr/pkg, the location can be specified
-		using the X11MOTIFPATH variable.
+MKX11MOTIF:	If "yes", build the native X11 libGLw with Motif stubs.  If
+		Motif is not installed in the default location /usr/pkg, the
+		location can be specified using the X11MOTIFPATH variable.
 		Default: no
+
+MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
+		which is necessary for the radeon DRM driver.
+		Default: yes on i386 and amd64, no elsewhere.
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
@@ -403,8 +427,9 @@ MKYP		If "no", disables building of YP (NIS)
 
 MKZFS		If "no", do not build and install utilities and libraries
 		used to manage ZFS file system. Do not build zfs and solaris
-		compatibility kernel modules.
-		Default: yes on i386/amd64, no elsewhere.
+		compatibility kernel modules.  Note: ZFS requires 64bit
+		atomic operations.
+		Default: yes on amd64, no elsewhere.
 
 MKRUMP		If "no", do not build and install rump related headers,
 		libraries, and programs.
@@ -463,14 +488,9 @@ USE_YP		If "no", disables building YP (NIS) support into
 		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
 USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
-		Otherwise, build tools/pigz and use nbpigz to compress
-		things.
+		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
+		and use nbpigz to compress things.
 		Default: "no".
-
-X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
-		XFree86 or modular Xorg.  Only matters if MKX11!=no.
-		Default: "Xorg" on amd64, i386, macppc, shark and sparc64,
-		"XFree86" on everything else.
 
 COPTS.lib<lib>
 OBJCOPTS.lib<lib>
@@ -600,14 +620,15 @@ LIBMODE		Library mode.  [${NONBINMODE}]
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
 	        installation.  [/usr/share/doc]
 
-HTMLDOCDIR	Base path for html system documentation installation.
-		[/usr/share/doc/html]
-
 DOCGRP		Documentation group.  [wheel]
 
 DOCOWN		Documentation owner.  [root]
 
 DOCMODE		Documentation mode.  [${NONBINMODE}]
+
+GZIP_N_FLAG	Flags to pass to TOOL_GZIP to prevent it from inserting
+		file names or timestamps in the compressed output.
+		[-n, or -nT when TOOL_GZIP is really TOOL_PIGZ]
 
 NLSDIR		Base path for Native Language Support files installation.
 		[/usr/share/nls]
@@ -620,8 +641,6 @@ NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 
 X11SRCDIR	The path to the xsrc tree.  [${NETBSDSRCDIR}/../xsrc,
 		if that exists; otherwise /usr/xsrc]
-
-X11SRCDIR.xc	The path to the (old) X11 xc src tree.  [${X11SRCDIR}/xfree/xc]
 
 X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
 
@@ -786,11 +805,18 @@ TOOL_GREP		Print lines matching a pattern.  [grep]
 
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
+TOOL_GZIP		Compression/decompression tool.  [gzip]
+
+TOOL_GZIP_N		Same as TOOL_GZIP, plus a command line option to
+			prevent it from inserting file names or timestamps
+			into the compressed output.
+			[${TOOL_GZIP} ${GZIP_N_FLAG}]
+
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
 
 TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
 
-TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
+TOOL_HPPAMKBOOT		Make bootable image for hppa.  [hppa-mkboot]
 
 TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
 
@@ -832,6 +858,8 @@ TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
 TOOL_MSGC		Simple message list compiler.  [msgc]
 
 TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_NCDCS		Turn ELF kernel into a NCD firmware image. [ncdcs]
 
 TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
@@ -879,6 +907,10 @@ TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
 TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
 
 TOOL_ZIC		Time zone compiler.  [zic]
+
+For each possible value of MACHINE_CPU, MACHINES.${MACHINE_CPU} contain a
+list of what ports can be built for it.  This keeps those definitions in
+centralized place.
 
 <bsd.own.mk> is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
@@ -1119,6 +1151,11 @@ kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
 Please see <bsd.kinc.mk> for more details, and keep the documentation
 in that file up to date.
 
+=-=-=-=-=   bsd.syscall.mk =-=-=-=-=
+
+The include file <bsd.syscall.mk> contains the logic to create syscall
+files for various emulations. It includes <bsd.kinc.mk> to handle the
+rest of the targets.
 
 =-=-=-=-=   bsd.lib.mk   =-=-=-=-=
 
@@ -1139,7 +1176,8 @@ LIBDIR		Target directory for libraries.
 MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions in files inside its archives to those of
 		the file it was fed. This leads to non-reproduceable
-		builds. If MKARZERO is set to "yes" (default is "no")
+		builds. If MKARZERO is set to "yes" (default is the
+		same as MKREPRO, or "no" if MKREPRO is not defined),
 		then the "D" flag is passed to ar, causing the
 		timestamp, uid and gid to be zeroed and the file
 		permissions to be set to 644. This allows .a files
@@ -1400,6 +1438,8 @@ BINMODE		Binary mode.
 CLEANDIRFILES	Additional files to remove for the cleandir target.
 
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
+
+CONFIGOPTS	Additional flags to config(1) when building kernels.
 
 COPTS		Additional flags to the compiler when creating C objects.
 
@@ -1740,11 +1780,81 @@ SUBDIR		For all of the directories listed in ${SUBDIR}, the
 		and other special sources.
 
 
+=-=-=-=-=   bsd.x11.mk   =-=-=-=-=
+
+The include file <bsd.x11.mk> contains parameters and targets for
+cross-building X11 from ${X11SRCDIR.<package>}.  It should be included
+after the general Makefile contents but before the include files such as
+<bsd.prog.mk> and <bsd.lib.mk>.
+
+It provides the following targets:
+	.man.1 .man.3 .man.4 .man.5 .man.7:
+		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
+		these rules convert from X11's manual page source
+		into an mdoc.old source file.
+
+It sets the following variables:
+
+BINDIR			Set to ${X11BINDIR}.
+			To override, define after including <bsd.x11.mk>
+
+LIBDIR			Set to ${X11USRLIBDIR}.
+			To override, define after including <bsd.x11.mk>
+
+MANDIR			Set to ${X11MANDIR}.
+			To override, define after including <bsd.x11.mk>
+
+CPPFLAGS		Appended with definitions to include from
+			${DESTDIR}${X11INCDIR}
+
+LDFLAGS			Appended with definitions to link from
+			${DESTDIR}${X11USRLIBDIR}
+
+X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
+
+X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
+
+X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
+
+X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
+
+X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
+
+X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
+
+X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
+
+X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+
+X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
+
+X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+
+It uses the following variables:
+
+APPDEFS			List of app-default files to install.
+
+CPPSCRIPTS		List of files/scripts to run through cpp(1)
+			and then ${X11TOOL_UNXCOMM}.  The source files
+			have a `.cpp' suffix, the generated files do not.
+
+CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
+
+CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The following files are described here for completion, but they are not
+supposed to be included directly from other Makefiles; they are used
+internally by other system files.
+
 =-=-=-=-=   bsd.sys.mk   =-=-=-=-=
 
-The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
-<bsd.lib.mk>.  It contains overrides that are used when building
-the NetBSD source tree.
+The include file <bsd.sys.mk> is used by other system mk files and
+it is not intended to be included standalone. It contains rules and
+system build variables. It requires bsd.own.mk to be included first.
+It contains overrides that are used when building the NetBSD source tree.
 
 The following variables control how various files are compiled/built.
 (Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
@@ -1802,7 +1912,7 @@ LDFLAGS		Options to ${CC} during the link process.  []
 
 LINT		C program verifier.  [lint]
 
-LINTFLAGS	Options to ${LINT}.  [-chapbxzFS]
+LINTFLAGS	Options to ${LINT}.  [-chapbxzgFS]
 
 LORDER		List dependencies for object files.  [lorder]
 
@@ -1831,7 +1941,11 @@ OBJDUMP		Display information from object files.  [objdump]
 
 RANLIB		Generate index to archive.  [ranlib]
 
+READELF		Display information from ELF object files.  [readelf]
+
 SIZE		List section sizes and total size.  [size]
+
+STRINGS		Display printable character sequences in files.  [strings]
 
 STRIP		Discard symbols from object files.  [strip]
 
@@ -1864,68 +1978,55 @@ WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=3
 			WARNS=4
 			WARNS=5
+			WARNS=6
 
-=-=-=-=-=   bsd.x11.mk   =-=-=-=-=
+=-=-=-=-=   bsd.host.mk  =-=-=-=-=
 
-The include file <bsd.x11.mk> contains parameters and targets for
-cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
-It should be included after the general Makefile contents but before
-the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
+This file is automatically included from bsd.own.mk. It contains settings
+for all the HOST_* variables that are used in host programs and libraries.
 
-It provides the following targets:
-	.man.1 .man.3 .man.4 .man.5 .man.7:
-		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
-		these rules convert from X11's manual page source
-		into an mdoc.old source file.
+HOST_AR			The host archive processing command
 
-It sets the following variables:
+HOST_CC			The host c compiler
 
-BINDIR			Set to ${X11BINDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_CFLAGS		The host c compiler flags
 
-LIBDIR			Set to ${X11USRLIBDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_COMPILE.c		The host c compiler line with flags
 
-MANDIR			Set to ${X11MANDIR}.
-			To override, define after including <bsd.x11.mk>
+HOST_COMPILE.cc		The host c++ compiler line with flags
 
-CPPFLAGS		Appended with definitions to include from
-			${DESTDIR}${X11INCDIR}
+HOST_CPP		The host c pre-processor
 
-LDFLAGS			Appended with definitions to link from
-			${DESTDIR}${X11USRLIBDIR}
+HOST_CPPFLAGS		The cost c pre-processor flags
 
-X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
+HOST_CXX		The host c++ compiler
 
-X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
+HOST_CXXFLAGS		The host c++ compiler flags
 
-X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
+HOST_INSTALL_DIR	The host command to install a directory
 
-X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
+HOST_INSTALL_FILE	The host command to install a file
 
-X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
+HOST_INSTALL_SYMLINK	The host command to install a symlink
 
-X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
+HOST_LD			The host linker command
 
-X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
+HOST_LDFLAGS		The host linker flags
 
-X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+HOST_LINK.c		The host c linker line with flags
 
-X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
+HOST_LINK.cc		The host c++ linker line with flags
 
-X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+HOST_LN			The host command to link two files
 
-It uses the following variables:
+HOST_MKDEP		The host command to create dependencies for c programs
 
-APPDEFS			List of app-default files to install.
+HOST_MKDEPCXX		The host command to create dependencies for c++ programs
 
-CPPSCRIPTS		List of files/scripts to run through cpp(1)
-			and then ${X11TOOL_UNXCOMM}.  The source files
-			have a `.cpp' suffix, the generated files do not.
+HOST_OSTYPE		The host OSNAME-RELEASE-ARCH tupple
 
-CPPSCRIPTFLAGS		Additional flags to cpp(1) when building CPPSCRIPTS.
+HOST_RANLIB		The host command to create random access archives
 
-CPPSCRIPTFLAGS_<fn>	Additional flags to cpp(1) when building CPPSCRIPT <fn>.
-
+HOST_SH			The host Bourne shell interpreter name (absolute path)
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

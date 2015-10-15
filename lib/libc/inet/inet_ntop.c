@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.9 2012/03/20 17:08:13 matt Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.11 2014/02/10 16:30:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_ntop.c,v 1.5 2005/11/03 22:59:52 marka Exp";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.9 2012/03/20 17:08:13 matt Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.11 2014/02/10 16:30:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,12 +74,12 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 
 	switch (af) {
 	case AF_INET:
-		return (inet_ntop4(src, dst, size));
+		return inet_ntop4(src, dst, size);
 	case AF_INET6:
-		return (inet_ntop6(src, dst, size));
+		return inet_ntop6(src, dst, size);
 	default:
 		errno = EAFNOSUPPORT;
-		return (NULL);
+		return NULL;
 	}
 	/* NOTREACHED */
 }
@@ -106,12 +106,10 @@ inet_ntop4(const u_char *src, char *dst, socklen_t size)
 
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
 	    src[0], src[1], src[2], src[3]);
-	if (l <= 0 || (socklen_t) l >= size) {
-		errno = ENOSPC;
-		return (NULL);
-	}
+	if (l <= 0 || (socklen_t) l >= size)
+		return NULL;
 	strlcpy(dst, tmp, size);
-	return (dst);
+	return dst;
 }
 
 /* const char *
@@ -189,7 +187,7 @@ inet_ntop6(const u_char *src, char *dst, socklen_t size)
 		/* Are we following an initial run of 0x00s or any real hex? */
 		if (i != 0) {
 			if (tp + 1 >= ep)
-				return (NULL);
+				goto out;
 			*tp++ = ':';
 		}
 		/* Is this address an encapsulated IPv4? */
@@ -197,36 +195,37 @@ inet_ntop6(const u_char *src, char *dst, socklen_t size)
 		    (best.len == 6 ||
 		    (best.len == 7 && words[7] != 0x0001) ||
 		    (best.len == 5 && words[5] == 0xffff))) {
-			if (!inet_ntop4(src+12, tp, (socklen_t)(ep - tp)))
-				return (NULL);
+			if (!inet_ntop4(src + 12, tp, (socklen_t)(ep - tp)))
+				goto out;
 			tp += strlen(tp);
 			break;
 		}
 		advance = snprintf(tp, (size_t)(ep - tp), "%x", words[i]);
 		if (advance <= 0 || advance >= ep - tp)
-			return (NULL);
+			goto out;
 		tp += advance;
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) == 
 	    (NS_IN6ADDRSZ / NS_INT16SZ)) {
 		if (tp + 1 >= ep)
-			return (NULL);
+			goto out;
 		*tp++ = ':';
 	}
 	if (tp + 1 >= ep)
-		return (NULL);
+		goto out;
 	*tp++ = '\0';
 
 	/*
 	 * Check for overflow, copy, and we're done.
 	 */
-	if ((size_t)(tp - tmp) > size) {
-		errno = ENOSPC;
-		return (NULL);
-	}
+	if ((size_t)(tp - tmp) > size)
+		goto out;
 	strlcpy(dst, tmp, size);
-	return (dst);
+	return dst;
+out:
+	errno = ENOSPC;
+	return NULL;
 }
 
 /*! \file */

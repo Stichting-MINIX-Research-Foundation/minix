@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_zero.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_mp_zero.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_ZERO_C
@@ -33,6 +33,6 @@ void mp_zero (mp_int * a)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_zero.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_zero.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

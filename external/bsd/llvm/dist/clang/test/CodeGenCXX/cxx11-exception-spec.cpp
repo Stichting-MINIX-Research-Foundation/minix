@@ -1,4 +1,5 @@
-// RUN: not %clang_cc1 -std=c++11 -emit-llvm %s -o - -verify -fexceptions -fcxx-exceptions -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -verify -fexceptions -fcxx-exceptions -triple x86_64-linux-gnu | FileCheck %s
+// expected-no-diagnostics
 
 void h();
 
@@ -121,3 +122,8 @@ void j() {
 
 // CHECK: attributes [[NONE]] = { {{.*}} }
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+
+namespace PR19190 {
+template <class T> struct DWFIterator { virtual void get() throw(int) = 0; };
+void foo(DWFIterator<int> *foo) { foo->get(); }
+}

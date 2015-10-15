@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.18 2012/10/28 17:11:33 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.20 2014/10/23 18:45:58 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.18 2012/10/28 17:11:33 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.20 2014/10/23 18:45:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ __weak_alias(asctime_r,_asctime_r)
 ** ??? ???-2147483648 -2147483648:-2147483648:-2147483648     -2147483648\n
 ** (two three-character abbreviations, five strings denoting integers,
 ** seven explicit spaces, two explicit colons, a newline,
-** and a trailing ASCII nul).
+** and a trailing NUL byte).
 ** The values above are for systems where an int is 32 bits and are provided
 ** as an example; the define below calculates the maximum for the system at
 ** hand.
@@ -126,11 +126,7 @@ asctime_r(const struct tm *timeptr, char *buf)
 	if (strlen(result) < STD_ASCTIME_BUF_SIZE || buf == buf_asctime)
 		return strcpy(buf, result);
 	else {
-#ifdef EOVERFLOW
 		errno = EOVERFLOW;
-#else /* !defined EOVERFLOW */
-		errno = EINVAL;
-#endif /* !defined EOVERFLOW */
 		return NULL;
 	}
 }

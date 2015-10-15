@@ -1,10 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.5 2011/09/10 21:29:04 christos Exp $	*/
-/* Id: lalr.c,v 1.9 2009/10/27 09:49:27 tom Exp */
+/*	$NetBSD: lalr.c,v 1.6 2015/01/03 23:22:52 christos Exp $	*/
 
 #include "defs.h"
+/* Id: lalr.c,v 1.11 2014/09/18 00:26:39 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.5 2011/09/10 21:29:04 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.6 2015/01/03 23:22:52 christos Exp $");
 
 typedef struct shorts
 {
@@ -38,6 +38,7 @@ Value_t *accessing_symbol;
 core **state_table;
 shifts **shift_table;
 reductions **reduction_table;
+Value_t *goto_base;
 Value_t *goto_map;
 Value_t *from_state;
 Value_t *to_state;
@@ -183,12 +184,16 @@ set_goto_map(void)
     int i;
     int symbol;
     int k;
+    Value_t *temp_base;
     Value_t *temp_map;
     Value_t state2;
     Value_t state1;
 
-    goto_map = NEW2(nvars + 1, Value_t) - ntokens;
-    temp_map = NEW2(nvars + 1, Value_t) - ntokens;
+    goto_base = NEW2(nvars + 1, Value_t);
+    temp_base = NEW2(nvars + 1, Value_t);
+
+    goto_map = goto_base - ntokens;
+    temp_map = temp_base - ntokens;
 
     ngotos = 0;
     for (sp = first_shift; sp; sp = sp->next)
@@ -200,7 +205,7 @@ set_goto_map(void)
 	    if (ISTOKEN(symbol))
 		break;
 
-	    if (ngotos == MAXSHORT)
+	    if (ngotos == MAXYYINT)
 		fatal("too many gotos");
 
 	    ngotos++;
@@ -241,7 +246,7 @@ set_goto_map(void)
 	}
     }
 
-    FREE(temp_map + ntokens);
+    FREE(temp_base);
 }
 
 /*  Map_goto maps a state/symbol pair into its numeric representation.	*/

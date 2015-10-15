@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_mul_2d.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_mul_2d.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_MUL_2D_C
@@ -71,7 +71,7 @@ int mp_mul_2d (mp_int * a, int b, mp_int * c)
       /* set the carry to the carry bits of the current word */
       r = rr;
     }
-    
+
     /* set final carry */
     if (r != 0) {
        c->dp[(c->used)++] = r;
@@ -82,6 +82,6 @@ int mp_mul_2d (mp_int * a, int b, mp_int * c)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_mul_2d.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_mul_2d.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

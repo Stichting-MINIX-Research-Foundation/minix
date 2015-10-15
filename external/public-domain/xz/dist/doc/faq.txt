@@ -26,7 +26,7 @@ Q:  There are many LZMA related projects. How does XZ Utils relate to them?
 A:  7-Zip and LZMA SDK are the original projects. LZMA SDK is roughly
     a subset of the 7-Zip source tree.
 
-    p7zip is 7-Zip's command line tools ported to POSIX-like systems.
+    p7zip is 7-Zip's command-line tools ported to POSIX-like systems.
 
     LZMA Utils provide a gzip-like lzma tool for POSIX-like systems.
     LZMA Utils are based on LZMA SDK. XZ Utils are the successor to
@@ -42,7 +42,7 @@ Q:  Why is liblzma named liblzma if its primary file format is .xz?
 A:  When the designing of the .xz format began, the idea was to replace
     the .lzma format and use the same .lzma suffix. It would have been
     quite OK to reuse the suffix when there were very few .lzma files
-    around. However, the old .lzma format become popular before the
+    around. However, the old .lzma format became popular before the
     new format was finished. The new format was renamed to .xz but the
     name of liblzma wasn't changed.
 
@@ -73,7 +73,7 @@ A:  For now, no. Since XZ Utils supports the .lzma format, it's usually
 
     Technically, there is a way to make the conversion relatively fast
     (roughly twice the time that normal decompression takes). Writing
-    such a tool would take quite a bit time though, and would probably
+    such a tool would take quite a bit of time though, and would probably
     be useful to only a few people. If you really want such a conversion
     tool, contact Lasse Collin and offer some money.
 
@@ -84,7 +84,7 @@ Q:  I have installed xz, but my tar doesn't recognize .tar.xz files.
 A:  xz -dc foo.tar.xz | tar xf -
 
 
-Q:  Can I recover parts of a broken .xz file (e.g. corrupted CD-R)?
+Q:  Can I recover parts of a broken .xz file (e.g. a corrupted CD-R)?
 
 A:  It may be possible if the file consists of multiple blocks, which
     typically is not the case if the file was created in single-threaded
@@ -94,7 +94,7 @@ A:  It may be possible if the file consists of multiple blocks, which
 Q:  Is (some part of) XZ Utils patented?
 
 A:  Lasse Collin is not aware of any patents that could affect XZ Utils.
-    However, due to nature of software patents, it's not possible to
+    However, due to the nature of software patents, it's not possible to
     guarantee that XZ Utils isn't affected by any third party patent(s).
 
 
@@ -105,8 +105,8 @@ A:  The .xz format is documented in xz-file-format.txt. It is a container
     filters.
 
     Documenting LZMA and LZMA2 is planned, but for now, there is no other
-    documentation that the source code. Before you begin, you should know
-    the basics of LZ77 and range coding algorithms. LZMA is based on LZ77,
+    documentation than the source code. Before you begin, you should know
+    the basics of LZ77 and range-coding algorithms. LZMA is based on LZ77,
     but LZMA is a lot more complex. Range coding is used to compress
     the final bitstream like Huffman coding is used in Deflate.
 
@@ -148,7 +148,7 @@ A:  See the documentation in XZ Embedded. In short, something like
 
         xz --check=crc32 --powerpc --lzma2=preset=6e,dict=64KiB
 
-    Adjust dictionary size to get a good compromise between
+    Adjust the dictionary size to get a good compromise between
     compression ratio and decompressor memory usage. Note that
     in single-call decompression mode of XZ Embedded, a big
     dictionary doesn't increase memory usage.
@@ -184,10 +184,10 @@ A:  It is planned and has been taken into account when designing
     The third method is pigz-style threading (I use that name, because
     pigz <http://www.zlib.net/pigz/> uses that method). It doesn't
     affect compression ratio significantly and scales to many cores.
-    The memory usage scales linearly when threads are added. It isn't
-    significant with pigz, because Deflate uses only 32 KiB dictionary,
+    The memory usage scales linearly when threads are added. This isn't
+    significant with pigz, because Deflate uses only a 32 KiB dictionary,
     but with LZMA2 the memory usage will increase dramatically just like
-    with the independent blocks method. There is also a constant
+    with the independent-blocks method. There is also a constant
     computational overhead, which may make pigz-method a bit dull on
     dual-core compared to the parallel match finder method, but with more
     cores the overhead is not a big deal anymore.
@@ -197,7 +197,7 @@ A:  It is planned and has been taken into account when designing
     can cut the memory usage by 50 %.
 
     It is possible that the single-threaded method will be modified to
-    create files indentical to the pigz-style method. We'll see once
+    create files identical to the pigz-style method. We'll see once
     pigz-style threading has been implemented in liblzma.
 
 

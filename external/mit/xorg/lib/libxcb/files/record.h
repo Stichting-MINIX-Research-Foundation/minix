@@ -20,7 +20,7 @@ extern "C" {
 
 #define XCB_RECORD_MAJOR_VERSION 1
 #define XCB_RECORD_MINOR_VERSION 13
-  
+
 extern xcb_extension_t xcb_record_id;
 
 typedef uint32_t xcb_record_context_t;
@@ -359,16 +359,6 @@ typedef struct xcb_record_free_context_request_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_context_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_context_next
- ** 
- ** @param xcb_record_context_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_context_next (xcb_record_context_iterator_t *i  /**< */);
 
@@ -381,16 +371,6 @@ xcb_record_context_next (xcb_record_context_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_context_end
- ** 
- ** @param xcb_record_context_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_context_end (xcb_record_context_iterator_t i  /**< */);
 
@@ -402,16 +382,6 @@ xcb_record_context_end (xcb_record_context_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_range_8_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_range_8_next
- ** 
- ** @param xcb_record_range_8_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_range_8_next (xcb_record_range_8_iterator_t *i  /**< */);
 
@@ -424,16 +394,6 @@ xcb_record_range_8_next (xcb_record_range_8_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_range_8_end
- ** 
- ** @param xcb_record_range_8_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_range_8_end (xcb_record_range_8_iterator_t i  /**< */);
 
@@ -445,16 +405,6 @@ xcb_record_range_8_end (xcb_record_range_8_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_range_16_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_range_16_next
- ** 
- ** @param xcb_record_range_16_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_range_16_next (xcb_record_range_16_iterator_t *i  /**< */);
 
@@ -467,16 +417,6 @@ xcb_record_range_16_next (xcb_record_range_16_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_range_16_end
- ** 
- ** @param xcb_record_range_16_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_range_16_end (xcb_record_range_16_iterator_t i  /**< */);
 
@@ -488,16 +428,6 @@ xcb_record_range_16_end (xcb_record_range_16_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_ext_range_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_ext_range_next
- ** 
- ** @param xcb_record_ext_range_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_ext_range_next (xcb_record_ext_range_iterator_t *i  /**< */);
 
@@ -510,16 +440,6 @@ xcb_record_ext_range_next (xcb_record_ext_range_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_ext_range_end
- ** 
- ** @param xcb_record_ext_range_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_ext_range_end (xcb_record_ext_range_iterator_t i  /**< */);
 
@@ -531,16 +451,6 @@ xcb_record_ext_range_end (xcb_record_ext_range_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_range_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_range_next
- ** 
- ** @param xcb_record_range_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_range_next (xcb_record_range_iterator_t *i  /**< */);
 
@@ -553,16 +463,6 @@ xcb_record_range_next (xcb_record_range_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_range_end
- ** 
- ** @param xcb_record_range_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_range_end (xcb_record_range_iterator_t i  /**< */);
 
@@ -574,16 +474,6 @@ xcb_record_range_end (xcb_record_range_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_element_header_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_element_header_next
- ** 
- ** @param xcb_record_element_header_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_element_header_next (xcb_record_element_header_iterator_t *i  /**< */);
 
@@ -596,16 +486,6 @@ xcb_record_element_header_next (xcb_record_element_header_iterator_t *i  /**< */
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_element_header_end
- ** 
- ** @param xcb_record_element_header_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_element_header_end (xcb_record_element_header_iterator_t i  /**< */);
 
@@ -617,16 +497,6 @@ xcb_record_element_header_end (xcb_record_element_header_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_client_spec_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_client_spec_next
- ** 
- ** @param xcb_record_client_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_client_spec_next (xcb_record_client_spec_iterator_t *i  /**< */);
 
@@ -639,58 +509,18 @@ xcb_record_client_spec_next (xcb_record_client_spec_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_client_spec_end
- ** 
- ** @param xcb_record_client_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_client_spec_end (xcb_record_client_spec_iterator_t i  /**< */);
 
 int
 xcb_record_client_info_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_record_range_t * xcb_record_client_info_ranges
- ** 
- ** @param const xcb_record_client_info_t *R
- ** @returns xcb_record_range_t *
- **
- *****************************************************************************/
- 
 xcb_record_range_t *
 xcb_record_client_info_ranges (const xcb_record_client_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_record_client_info_ranges_length
- ** 
- ** @param const xcb_record_client_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_record_client_info_ranges_length (const xcb_record_client_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_record_range_iterator_t xcb_record_client_info_ranges_iterator
- ** 
- ** @param const xcb_record_client_info_t *R
- ** @returns xcb_record_range_iterator_t
- **
- *****************************************************************************/
- 
 xcb_record_range_iterator_t
 xcb_record_client_info_ranges_iterator (const xcb_record_client_info_t *R  /**< */);
 
@@ -702,16 +532,6 @@ xcb_record_client_info_ranges_iterator (const xcb_record_client_info_t *R  /**< 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_record_client_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_record_client_info_next
- ** 
- ** @param xcb_record_client_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_record_client_info_next (xcb_record_client_info_iterator_t *i  /**< */);
 
@@ -724,16 +544,6 @@ xcb_record_client_info_next (xcb_record_client_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_client_info_end
- ** 
- ** @param xcb_record_client_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_client_info_end (xcb_record_client_info_iterator_t i  /**< */);
 
@@ -743,20 +553,8 @@ xcb_record_client_info_end (xcb_record_client_info_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_record_query_version_cookie_t xcb_record_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          major_version
- ** @param uint16_t          minor_version
- ** @returns xcb_record_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_query_version_cookie_t
 xcb_record_query_version (xcb_connection_t *c  /**< */,
                           uint16_t          major_version  /**< */,
@@ -768,23 +566,11 @@ xcb_record_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_record_query_version_cookie_t xcb_record_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          major_version
- ** @param uint16_t          minor_version
- ** @returns xcb_record_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_query_version_cookie_t
 xcb_record_query_version_unchecked (xcb_connection_t *c  /**< */,
                                     uint16_t          major_version  /**< */,
@@ -797,25 +583,13 @@ xcb_record_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_record_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_record_query_version_reply_t * xcb_record_query_version_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_record_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_record_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_record_query_version_reply_t *
 xcb_record_query_version_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_record_query_version_cookie_t   cookie  /**< */,
@@ -830,27 +604,11 @@ xcb_record_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_create_context_checked
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param xcb_record_element_header_t     element_header
- ** @param uint32_t                        num_client_specs
- ** @param uint32_t                        num_ranges
- ** @param const xcb_record_client_spec_t *client_specs
- ** @param const xcb_record_range_t       *ranges
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_create_context_checked (xcb_connection_t               *c  /**< */,
                                    xcb_record_context_t            context  /**< */,
@@ -866,24 +624,8 @@ xcb_record_create_context_checked (xcb_connection_t               *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_create_context
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param xcb_record_element_header_t     element_header
- ** @param uint32_t                        num_client_specs
- ** @param uint32_t                        num_ranges
- ** @param const xcb_record_client_spec_t *client_specs
- ** @param const xcb_record_range_t       *ranges
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_create_context (xcb_connection_t               *c  /**< */,
                            xcb_record_context_t            context  /**< */,
@@ -902,27 +644,11 @@ xcb_record_register_clients_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_register_clients_checked
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param xcb_record_element_header_t     element_header
- ** @param uint32_t                        num_client_specs
- ** @param uint32_t                        num_ranges
- ** @param const xcb_record_client_spec_t *client_specs
- ** @param const xcb_record_range_t       *ranges
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_register_clients_checked (xcb_connection_t               *c  /**< */,
                                      xcb_record_context_t            context  /**< */,
@@ -938,24 +664,8 @@ xcb_record_register_clients_checked (xcb_connection_t               *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_register_clients
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param xcb_record_element_header_t     element_header
- ** @param uint32_t                        num_client_specs
- ** @param uint32_t                        num_ranges
- ** @param const xcb_record_client_spec_t *client_specs
- ** @param const xcb_record_range_t       *ranges
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_register_clients (xcb_connection_t               *c  /**< */,
                              xcb_record_context_t            context  /**< */,
@@ -974,24 +684,11 @@ xcb_record_unregister_clients_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_unregister_clients_checked
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param uint32_t                        num_client_specs
- ** @param const xcb_record_client_spec_t *client_specs
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_unregister_clients_checked (xcb_connection_t               *c  /**< */,
                                        xcb_record_context_t            context  /**< */,
@@ -1004,21 +701,8 @@ xcb_record_unregister_clients_checked (xcb_connection_t               *c  /**< *
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_unregister_clients
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_record_context_t            context
- ** @param uint32_t                        num_client_specs
- ** @param const xcb_record_client_spec_t *client_specs
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_unregister_clients (xcb_connection_t               *c  /**< */,
                                xcb_record_context_t            context  /**< */,
@@ -1034,19 +718,8 @@ xcb_record_get_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_record_get_context_cookie_t xcb_record_get_context
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_record_get_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_get_context_cookie_t
 xcb_record_get_context (xcb_connection_t     *c  /**< */,
                         xcb_record_context_t  context  /**< */);
@@ -1057,49 +730,18 @@ xcb_record_get_context (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_record_get_context_cookie_t xcb_record_get_context_unchecked
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_record_get_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_get_context_cookie_t
 xcb_record_get_context_unchecked (xcb_connection_t     *c  /**< */,
                                   xcb_record_context_t  context  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_record_get_context_intercepted_clients_length
- ** 
- ** @param const xcb_record_get_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_record_get_context_intercepted_clients_length (const xcb_record_get_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_record_client_info_iterator_t xcb_record_get_context_intercepted_clients_iterator
- ** 
- ** @param const xcb_record_get_context_reply_t *R
- ** @returns xcb_record_client_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_record_client_info_iterator_t
 xcb_record_get_context_intercepted_clients_iterator (const xcb_record_get_context_reply_t *R  /**< */);
 
@@ -1110,25 +752,13 @@ xcb_record_get_context_intercepted_clients_iterator (const xcb_record_get_contex
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_record_get_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_record_get_context_reply_t * xcb_record_get_context_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_record_get_context_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_record_get_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_record_get_context_reply_t *
 xcb_record_get_context_reply (xcb_connection_t                 *c  /**< */,
                               xcb_record_get_context_cookie_t   cookie  /**< */,
@@ -1143,19 +773,8 @@ xcb_record_enable_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_record_enable_context_cookie_t xcb_record_enable_context
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_record_enable_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_enable_context_cookie_t
 xcb_record_enable_context (xcb_connection_t     *c  /**< */,
                            xcb_record_context_t  context  /**< */);
@@ -1166,62 +785,21 @@ xcb_record_enable_context (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_record_enable_context_cookie_t xcb_record_enable_context_unchecked
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_record_enable_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_record_enable_context_cookie_t
 xcb_record_enable_context_unchecked (xcb_connection_t     *c  /**< */,
                                      xcb_record_context_t  context  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_record_enable_context_data
- ** 
- ** @param const xcb_record_enable_context_reply_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_record_enable_context_data (const xcb_record_enable_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_record_enable_context_data_length
- ** 
- ** @param const xcb_record_enable_context_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_record_enable_context_data_length (const xcb_record_enable_context_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_record_enable_context_data_end
- ** 
- ** @param const xcb_record_enable_context_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_record_enable_context_data_end (const xcb_record_enable_context_reply_t *R  /**< */);
 
@@ -1232,25 +810,13 @@ xcb_record_enable_context_data_end (const xcb_record_enable_context_reply_t *R  
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_record_enable_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_record_enable_context_reply_t * xcb_record_enable_context_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_record_enable_context_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_record_enable_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_record_enable_context_reply_t *
 xcb_record_enable_context_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_record_enable_context_cookie_t   cookie  /**< */,
@@ -1262,22 +828,11 @@ xcb_record_enable_context_reply (xcb_connection_t                    *c  /**< */
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_disable_context_checked
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_disable_context_checked (xcb_connection_t     *c  /**< */,
                                     xcb_record_context_t  context  /**< */);
@@ -1288,19 +843,8 @@ xcb_record_disable_context_checked (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_disable_context
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_disable_context (xcb_connection_t     *c  /**< */,
                             xcb_record_context_t  context  /**< */);
@@ -1311,22 +855,11 @@ xcb_record_disable_context (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_free_context_checked
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_free_context_checked (xcb_connection_t     *c  /**< */,
                                  xcb_record_context_t  context  /**< */);
@@ -1337,19 +870,8 @@ xcb_record_free_context_checked (xcb_connection_t     *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_record_free_context
- ** 
- ** @param xcb_connection_t     *c
- ** @param xcb_record_context_t  context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_record_free_context (xcb_connection_t     *c  /**< */,
                          xcb_record_context_t  context  /**< */);

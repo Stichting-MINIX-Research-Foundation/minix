@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.168 2013/03/29 01:09:45 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.170 2015/03/31 01:10:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -49,6 +49,9 @@
 #include <sys/resource.h>
 
 #if defined(_KERNEL)
+struct lwp;
+/* forward declare this for <machine/cpu.h> so it can get l_cpu. */
+static inline struct cpu_info *lwp_getcpu(struct lwp *);
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 
@@ -129,7 +132,7 @@ struct lwp {
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
-	uint16_t	l_pcu_used[2];
+	uint32_t	l_pcu_valid;
 #endif
 
 	/* Process level and global state, misc. */
@@ -466,6 +469,16 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
 #define	curproc		(curlwp->l_proc)
+
+/*
+ * This provide a way for <machine/cpu.h> to get l_cpu for curlwp before
+ * struct lwp is defined.
+ */
+static inline struct cpu_info *
+lwp_getcpu(struct lwp *l)
+{
+	return l->l_cpu;
+}
 
 static inline bool
 CURCPU_IDLE_P(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: concat.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: concat.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -80,7 +80,7 @@ roken_vmconcat (char **s, size_t max_len, va_list args)
     len = 1;
     while ((a = va_arg(args, const char*))) {
 	size_t n = strlen (a);
-	
+
 	if(max_len && len + n > max_len){
 	    free(p);
 	    return 0;

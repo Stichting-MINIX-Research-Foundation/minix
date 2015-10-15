@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.80 2013/07/28 01:05:52 dholland Exp $
 
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
@@ -106,8 +107,8 @@ lfs_setup_resblks(struct lfs *fs)
 	int maxbpp;
 
 	ASSERT_NO_SEGLOCK(fs);
-	fs->lfs_resblk = (res_t *)malloc(LFS_N_TOTAL * sizeof(res_t), M_SEGMENT,
-					  M_WAITOK);
+	fs->lfs_resblk = malloc(LFS_N_TOTAL * sizeof(res_t), M_SEGMENT,
+				M_WAITOK);
 	for (i = 0; i < LFS_N_TOTAL; i++) {
 		fs->lfs_resblk[i].inuse = 0;
 		fs->lfs_resblk[i].p = NULL;
@@ -120,11 +121,11 @@ lfs_setup_resblks(struct lfs *fs)
 	 * so we can't use the pool subsystem for them.
 	 */
 	for (i = 0, j = 0; j < LFS_N_SUMMARIES; j++, i++)
-		fs->lfs_resblk[i].size = fs->lfs_sumsize;
+		fs->lfs_resblk[i].size = lfs_sb_getsumsize(fs);
 	for (j = 0; j < LFS_N_SBLOCKS; j++, i++)
 		fs->lfs_resblk[i].size = LFS_SBPAD;
 	for (j = 0; j < LFS_N_IBLOCKS; j++, i++)
-		fs->lfs_resblk[i].size = fs->lfs_bsize;
+		fs->lfs_resblk[i].size = lfs_sb_getbsize(fs);
 	for (j = 0; j < LFS_N_CLUSTERS; j++, i++)
 		fs->lfs_resblk[i].size = MAXPHYS;
 	for (j = 0; j < LFS_N_CLEAN; j++, i++)
@@ -144,8 +145,9 @@ lfs_setup_resblks(struct lfs *fs)
 		"lfsclpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
-	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, lfs_segsize(fs) / fs->lfs_fsize + 2);
+	/* XXX: should this int32 be 32/64? */
+	maxbpp = ((lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
+	maxbpp = MIN(maxbpp, lfs_segsize(fs) / lfs_sb_getfsize(fs) + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
 		"lfsbpppl", &pool_allocator_nointr, IPL_NONE);
 }
@@ -336,7 +338,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	 */
 	mutex_enter(&lfs_lock);
 	++fs->lfs_iocount;
-	fs->lfs_startseg = fs->lfs_curseg;
+	fs->lfs_startseg = lfs_sb_getcurseg(fs);
 	mutex_exit(&lfs_lock);
 	return 0;
 }
@@ -396,7 +398,7 @@ lfs_auto_segclean(struct lfs *fs)
 	 * XXX - do we really need to do them all at once?
 	 */
 	waited = 0;
-	for (i = 0; i < fs->lfs_nseg; i++) {
+	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		if ((fs->lfs_suflags[0][i] &
 		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
 		    (SEGUSE_DIRTY | SEGUSE_EMPTY) &&
@@ -450,7 +452,7 @@ lfs_segunlock(struct lfs *fs)
 		KASSERT(sp->cbpp == sp->bpp + 1);
 
 		/* Free allocated segment summary */
-		fs->lfs_offset -= lfs_btofsb(fs, fs->lfs_sumsize);
+		lfs_sb_suboffset(fs, lfs_btofsb(fs, lfs_sb_getsumsize(fs)));
 		bp = *sp->bpp;
 		lfs_freebuf(fs, bp);
 
@@ -522,8 +524,8 @@ lfs_segunlock(struct lfs *fs)
 			/* If we *know* everything's on disk, write both sbs */
 			/* XXX should wait for this one	 */
 			if (sync)
-				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
-			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
+				lfs_writesuper(fs, lfs_sb_getsboff(fs, fs->lfs_activesb));
+			lfs_writesuper(fs, lfs_sb_getsboff(fs, 1 - fs->lfs_activesb));
 			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT)) {
 				lfs_auto_segclean(fs);
 				/* If sync, we can clean the remainder too */
@@ -619,7 +621,8 @@ lfs_segunlock_relock(struct lfs *fs)
 
 	/* Tell cleaner */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->flags |= LFS_CLEANER_MUST_CLEAN;
+	lfs_ci_setflags(fs, cip,
+			lfs_ci_getflags(fs, cip) | LFS_CLEANER_MUST_CLEAN);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	/* Save segment flags for later */
@@ -633,7 +636,7 @@ lfs_segunlock_relock(struct lfs *fs)
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (LFS_STARVED_FOR_SEGS(fs))
-		mtsleep(&fs->lfs_avail, PRIBIO, "relock", 0,
+		mtsleep(&fs->lfs_availsleep, PRIBIO, "relock", 0,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
@@ -643,7 +646,8 @@ lfs_segunlock_relock(struct lfs *fs)
 
 	/* Cleaner can relax now */
 	LFS_CLEANERINFO(cip, fs, bp);
-	cip->flags &= ~LFS_CLEANER_MUST_CLEAN;
+	lfs_ci_setflags(fs, cip,
+			lfs_ci_getflags(fs, cip) & ~LFS_CLEANER_MUST_CLEAN);
 	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	return;
@@ -658,6 +662,6 @@ lfs_wakeup_cleaner(struct lfs *fs)
 	if (fs->lfs_nowrap > 0)
 		return;
 
-	wakeup(&fs->lfs_nextseg);
+	wakeup(&fs->lfs_nextsegsleep);
 	wakeup(&lfs_allclean_wakeup);
 }

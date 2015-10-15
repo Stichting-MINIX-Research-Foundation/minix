@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/04/04 10:59:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2015/02/25 20:01:39 snj Exp $
 
 .include <bsd.own.mk>
 .if defined(__MINIX)
@@ -29,11 +29,11 @@ SRCS=	ftenc.c ftfuncs.c fttools.c xttcap.c \
 	bitsource.c bufio.c catalogue.c decompress.c defaults.c \
 	dirfile.c fileio.c filewr.c fontdir.c fontencc.c fontfile.c \
 	fontscale.c gunzip.c register.c renderers.c bunzip2.c cauthgen.c \
-	csignal.c delfntcid.c errorf.c fatalerror.c findoldfnt.c \
+	csignal.c delfntcid.c errorf.c findoldfnt.c \
 	getcres.c getdefptsize.c getnewfntcid.c gettime.c initfshdl.c \
 	regfpefunc.c rmfshdl.c servclient.c setfntauth.c stfntcfnt.c \
 	atom.c fontaccel.c fontnames.c fontutil.c fontxlfd.c \
-	format.c miscutil.c patcache.c private.c utilbitmap.c
+	format.c miscutil.c patcache.c private.c utilbitmap.c stubsinit.c
 
 INCS=	bdfint.h bitmap.h bufio.h fntfil.h fntfilio.h fntfilst.h \
 	fontconf.h fontencc.h fontmisc.h fontshow.h \

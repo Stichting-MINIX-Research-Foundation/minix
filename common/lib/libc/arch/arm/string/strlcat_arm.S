@@ -29,17 +29,21 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_arm.S,v 1.5 2013/09/05 05:15:47 matt Exp $")
+RCSID("$NetBSD: strlcat_arm.S,v 1.6 2014/05/06 16:02:11 joerg Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
 	.fnstart
+# endif
 	.cfi_startproc
 #endif
 	push	{r4-r6, lr}
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
 	.save	{r4-r6, lr}
+# endif
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
 	.cfi_offset 6, -8
@@ -62,6 +66,8 @@ ENTRY(strlcat)
 	pop	{r4-r6, pc}		/* restore registers and return */
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
 	.fnend
+# endif
 #endif
 END(strlcat)

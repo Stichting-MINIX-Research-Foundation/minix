@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2011/01/23 06:27:32 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2014/09/17 11:37:28 joerg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -15,7 +15,7 @@ MLINKS+=moncontrol.3 monstartup.3
 # and mcount.c causes warnings from as(1).
 # mcount.c should be fixed and this test removed.
 #
-COPTS.mcount.c+=-Wa,--no-warn
+COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wa,--no-warn :}
 .endif
 
 

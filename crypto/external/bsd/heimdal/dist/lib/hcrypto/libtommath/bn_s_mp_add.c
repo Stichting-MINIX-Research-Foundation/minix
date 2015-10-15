@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_s_mp_add.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_s_mp_add.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_S_MP_ADD_C
@@ -76,8 +76,8 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
       *tmpc++ &= MP_MASK;
     }
 
-    /* now copy higher words if any, that is in A+B 
-     * if A or B has more digits add those in 
+    /* now copy higher words if any, that is in A+B
+     * if A or B has more digits add those in
      */
     if (min != max) {
       for (; i < max; i++) {
@@ -106,6 +106,6 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_s_mp_add.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_s_mp_add.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

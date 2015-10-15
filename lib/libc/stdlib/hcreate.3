@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.10 2011/09/15 09:14:54 wiz Exp $
+.\" 	$NetBSD: hcreate.3,v 1.13 2014/07/20 20:17:21 christos Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 14, 2011
+.Dd July 20, 2014
 .Dt HCREATE 3
 .Os
 .Sh NAME
 .Nm hcreate ,
 .Nm hcreate_r ,
 .Nm hdestroy ,
+.Nm hdestroy1 ,
 .Nm hdestroy_r ,
+.Nm hdestroy1_r ,
 .Nm hsearch ,
 .Nm hsearch_r
 .Nd manage hash search table
@@ -49,7 +51,11 @@
 .Ft void
 .Fn hdestroy "void"
 .Ft void
+.Fn hdestroy1 "void (*freekey)(void *)" "void (*freedata)(void *)"
+.Ft void
 .Fn hdestroy_r "struct hsearch_data *table"
+.Ft void
+.Fn hdestroy1_r "struct hsearch_data *table" "void (*freekey)(void *)" "void (*freedata)(void *)"
 .Ft ENTRY *
 .Fn hsearch "ENTRY item" "ACTION action"
 .Ft int
@@ -60,6 +66,8 @@ The
 .Fn hcreate_r ,
 .Fn hdestroy ,
 .Fn hdestroy_r
+.Fn hdestroy1 ,
+.Fn hdestroy1_r
 .Fn hsearch ,
 and
 .Fn hsearch_r
@@ -141,33 +149,45 @@ Search the hash table without inserting
 .Fa item .
 .El
 .Pp
-Note that the comparison
-.Fa key
-must be allocated using
-.Xr malloc 3
-or
-.Xr calloc 3
-if action is
-.Dv ENTER
+The traditional
+.Fn hdestroy
 and
-.Fn hdestroy
-will be called.
-This is because
-.Fn hdestroy
-will call
+.Fn hdestroy_r
+functions don't
 .Xr free 3
-for each comparison
+the data associated with the
 .Fa key
-(but not
-.Fa data ) .
-Typically the comparison
+and
+.Fa value
+of each entry, because they did not allocate them.
+Since there is no
+.Dq iterator
+function provided, the
+.Fn hdestroy1
+and
+.Fn hdestroy1_r
+allow controlling how the
 .Fa key
-is allocated by using
-.Xr strdup 3 .
+or
+.Fa value
+will be freed using the
+provided functions in the
+.Fa freekey
+and
+.Fa freedata
+arguments.
+If they are
+.Dv NULL ,
+then
+.Fa key
+and
+.Fa value
+are not freed.
 .Pp
 The
 .Fn hcreate_r ,
 .Fn hdestroy_r ,
+.Fn hdestroy1_r ,
 and
 .Fn hsearch_r
 functions are re-entrant versions of the above functions that can
@@ -264,6 +284,7 @@ given is not found.
 .El
 .Sh SEE ALSO
 .Xr bsearch 3 ,
+.Xr free 3 ,
 .Xr lsearch 3 ,
 .Xr malloc 3 ,
 .Xr strcmp 3
@@ -285,11 +306,18 @@ functions first appeared in
 .At V .
 The
 .Fn hcreate_r ,
-.Fn hdestroy_r
+.Fn hdestroy_r ,
 and
 .Fn hsearch_r
 functions are
 .Tn GNU
+extensions.
+The
+.Fn hdestroy1
+and
+.Fn hdestroy1_r
+are
+.Nx
 extensions.
 .Sh CAVEATS
 At least the following limitations can be mentioned:
@@ -301,20 +329,5 @@ interface permits the use of only one hash table at a time.
 .It
 Individual hash table entries can be added, but not deleted.
 .It
-The standard is indecipherable about the
-internal memory usage of the functions,
-mentioning only that
-.Do
-.Fn hcreate
-and
-.Fn hsearch
-functions may use
-.Fn malloc
-to allocate space
-.Dc .
-This limits the portability of the functions,
-given that other implementations may not
-.Xr free 3
-the buffer pointed by
-.Fa key .
+There is no iterator to scan for all entries in the table.
 .El

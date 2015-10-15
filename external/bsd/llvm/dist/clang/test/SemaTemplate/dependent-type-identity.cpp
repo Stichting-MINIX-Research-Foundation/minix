@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 // This test concerns the identity of dependent types within the
 // canonical type system. This corresponds to C++ [temp.type], which
@@ -97,4 +97,49 @@ namespace PR7460 {
 
   template <typename T>
   T TemplateClass2<T>::member[TemplateClass2<T>::SIZE];
+}
+
+namespace PR18275 {
+  template<typename T> struct A {
+    void f(const int);
+    void g(int);
+    void h(const T);
+    void i(T);
+  };
+
+  template<typename T>
+  void A<T>::f(int x) { x = 0; }
+
+  template<typename T>
+  void A<T>::g(const int x) { x = 0; } // expected-error {{not assignable}}
+
+  template<typename T>
+  void A<T>::h(T) {} // FIXME: Should reject this. Type is different from prior decl if T is an array type.
+
+  template<typename T>
+  void A<T>::i(const T) {} // FIXME: Should reject this. Type is different from prior decl if T is an array type.
+
+  template struct A<int>;
+  template struct A<int[1]>;
+}
+
+namespace PR21289 {
+  template<typename T> using X = int;
+  template<typename T, decltype(sizeof(0))> using Y = int;
+  template<typename ...Ts> struct S {};
+  template<typename ...Ts> void f() {
+    // This is a dependent type. It is *not* S<int>, even though it canonically
+    // contains no template parameters.
+    using Type = S<X<Ts>...>;
+    Type s;
+    using Type = S<int, int, int>;
+  }
+  void g() { f<void, void, void>(); }
+
+  template<typename ...Ts> void h(S<int>) {}
+  // Pending a core issue, it's not clear if these are redeclarations, but they
+  // are probably intended to be... even though substitution can succeed for one
+  // of them but fail for the other!
+  template<typename ...Ts> void h(S<X<Ts>...>) {} // expected-note {{previous}}
+  template<typename ...Ts> void h(S<Y<Ts, sizeof(Ts)>...>) {} // expected-error {{redefinition}}
 }

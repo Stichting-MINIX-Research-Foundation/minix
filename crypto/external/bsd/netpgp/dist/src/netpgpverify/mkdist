@@ -1,0 +1,11 @@
+#! /bin/sh
+
+version=$(awk '/^#define[ \t]+NETPGP_VERIFY_H_/ { print $3 }' verify.h)
+name=netpgpverify-${version}
+
+(cd .. &&
+	mv files ${name} &&
+	tar --exclude CVS -cvzf $HOME/${name}.tar.gz ${name} &&
+	ls -al $HOME/${name}.tar.gz &&
+	mv ${name} files)
+

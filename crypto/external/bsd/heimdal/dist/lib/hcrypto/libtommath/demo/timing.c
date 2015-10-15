@@ -1,4 +1,4 @@
-/*	$NetBSD: timing.c,v 1.1.1.1 2011/04/13 18:15:06 elric Exp $	*/
+/*	$NetBSD: timing.c,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
 
 #include <tommath.h>
 #include <time.h>
@@ -316,6 +316,6 @@ int main(void)
    return 0;
 }
 
-/* Source: /cvs/libtom/libtommath/demo/timing.c,v */
-/* Revision: 1.2 */
-/* Date: 2005/05/05 14:38:47 */
+/* Source: /cvs/libtom/libtommath/demo/timing.c,v  */
+/* Revision: 1.2  */
+/* Date: 2005/05/05 14:38:47  */

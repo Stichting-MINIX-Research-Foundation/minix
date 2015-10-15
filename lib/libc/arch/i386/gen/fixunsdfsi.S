@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.13 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.14 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.13 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.14 2014/05/23 02:34:19 uebayasi Exp $")
 #endif
 
 ENTRY(__fixunsdfsi)
@@ -71,5 +71,6 @@ ENTRY(__fixunsdfsi)
 	movl	4(%esp),%eax
 	orl	$0x80000000,%eax	/* restore bias */
 	ret
+END(__fixunsdfsi)
 
 fbiggestsigned:	.double	2147483648.0

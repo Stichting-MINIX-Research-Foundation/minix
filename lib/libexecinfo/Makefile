@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2013/04/30 01:41:01 matt Exp $
+# $NetBSD: Makefile,v 1.8 2014/10/24 22:42:16 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,11 +8,15 @@ WARNS?=4
 INCSDIR=/usr/include
 INCS=execinfo.h
 
+.if ${HAVE_LIBGCC_EH} == "yes"
+INCS+=	unwind.h
+.endif
+
 #CPPFLAGS+='-D__RCSID(a)=' -D_GNU_SOURCE '-D__printflike(a,b)='
 #CPPFLAGS+=-I/usr/include/libelf
 #COPTS+=-std=gnu99
 
-LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/libelf/lib
+LIBDPLIBS+= elf	${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
 
 LIB=execinfo
 SRCS=symtab.c backtrace.c

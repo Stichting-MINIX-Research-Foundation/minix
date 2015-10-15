@@ -35,10 +35,12 @@ int atomic(void) {
   // CHECK: atomicrmw xchg i32* %val, i32 8 seq_cst
   
   old = __sync_val_compare_and_swap(&val, 4, 1976);
-  // CHECK: cmpxchg i32* %val, i32 4, i32 1976 seq_cst
-  
+  // CHECK: [[PAIR:%[a-z0-9_.]+]] = cmpxchg i32* %val, i32 4, i32 1976 seq_cst
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 0
+
   old = __sync_bool_compare_and_swap(&val, 4, 1976);
-  // CHECK: cmpxchg i32* %val, i32 4, i32 1976 seq_cst
+  // CHECK: [[PAIR:%[a-z0-9_.]+]] = cmpxchg i32* %val, i32 4, i32 1976 seq_cst
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 1
 
   old = __sync_fetch_and_and(&val, 0x9);
   // CHECK: atomicrmw and i32* %val, i32 9 seq_cst
@@ -48,7 +50,10 @@ int atomic(void) {
 
   old = __sync_fetch_and_xor(&val, 0xb);
   // CHECK: atomicrmw xor i32* %val, i32 11 seq_cst
-  
+ 
+  old = __sync_fetch_and_nand(&val, 0xc);
+  // CHECK: atomicrmw nand i32* %val, i32 12 seq_cst
+ 
   old = __sync_add_and_fetch(&val, 1);
   // CHECK: atomicrmw add i32* %val, i32 1 seq_cst
 
@@ -63,12 +68,18 @@ int atomic(void) {
 
   old = __sync_xor_and_fetch(&valc, 5);
   // CHECK: atomicrmw xor i8* %valc, i8 5 seq_cst  
-  
+ 
+  old = __sync_nand_and_fetch(&valc, 6);
+  // CHECK: atomicrmw nand i8* %valc, i8 6 seq_cst  
+ 
   __sync_val_compare_and_swap((void **)0, (void *)0, (void *)0);
-  // CHECK: cmpxchg i32* null, i32 0, i32 0 seq_cst
+  // CHECK: [[PAIR:%[a-z0-9_.]+]] = cmpxchg i32* null, i32 0, i32 0 seq_cst
+  // CHECK: extractvalue { i32, i1 } [[PAIR]], 0
 
   if ( __sync_val_compare_and_swap(&valb, 0, 1)) {
-    // CHECK: cmpxchg i8* %valb, i8 0, i8 1 seq_cst
+    // CHECK: [[PAIR:%[a-z0-9_.]+]] = cmpxchg i8* %valb, i8 0, i8 1 seq_cst
+    // CHECK: [[VAL:%[a-z0-9_.]+]] = extractvalue { i8, i1 } [[PAIR]], 0
+    // CHECK: trunc i8 [[VAL]] to i1
     old = 42;
   }
   

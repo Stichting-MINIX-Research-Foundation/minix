@@ -6,6 +6,10 @@ FILES=		atf-report
 FILESDIR=	/usr/bin
 FILESMODE=	${BINMODE}
 
+.if defined(__MINIX)
+.PATH:	${SRCDIR}
+.endif # defined(__MINIX)
+
 realall: atf-report
 atf-report: atf-report.sh
 	src=atf-report.sh dst=atf-report; ${BUILD_SCRIPT}

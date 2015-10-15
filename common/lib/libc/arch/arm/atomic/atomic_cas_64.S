@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.5 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.10 2014/03/05 17:20:48 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,13 +36,13 @@
  * and kernel.
  */
 ENTRY_NP(_atomic_cas_64)
-	push	{r4, r5, r6}		/* save temporaries */
+	push	{r4-r7}			/* save temporaries */
 	mov	ip, r0			/* we need r0 for return value */
 #ifdef __ARM_EABI__
-	ldrd	r4, r5, [sp]		/* fetch new value */
+	ldrd	r4, r5, [sp, #16]	/* fetch new value */
 #else
-	ldr	r4, [sp, #0]		/* fetch new value */
-	ldr	r5, [sp, #4]		/* fetch new value */
+	ldr	r5, [sp, #16]		/* second word third argument */
+	mov	r4, r3			/* first word third argument */
 	mov	r3, r2			/* r2 will be overwritten by r1 which ... */
 	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
@@ -65,11 +65,11 @@ ENTRY_NP(_atomic_cas_64)
 	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
 #endif
 2:
-	pop	{r4, r5, r6}		/* restore temporaries */
+	pop	{r4-r7}			/* restore temporaries */
 	RET				/* return. */
 END(_atomic_cas_64)
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
-STRONG_ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
+CRT_ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
 
 #endif /* _ARM_ARCH_6 */

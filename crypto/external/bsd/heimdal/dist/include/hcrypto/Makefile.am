@@ -26,3 +26,5 @@ CLEANFILES =		\
 	rsa.h		\
 	sha.h		\
 	ui.h
+
+EXTRA_DIST = NTMakefile

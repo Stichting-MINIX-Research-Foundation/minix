@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbDataFormatters
 
@@ -14,13 +14,17 @@ SRCS+=	CF.cpp \
 	FormatClasses.cpp \
 	FormatManager.cpp \
 	LibCxx.cpp \
+	LibCxxInitializerList.cpp \
 	LibCxxList.cpp \
 	LibCxxMap.cpp \
 	LibCxxUnorderedMap.cpp \
+	LibCxxVector.cpp \
 	LibStdcpp.cpp \
 	NSArray.cpp \
 	NSDictionary.cpp \
+	NSIndexPath.cpp \
 	NSSet.cpp \
+	StringPrinter.cpp \
 	TypeCategory.cpp \
 	TypeCategoryMap.cpp \
 	TypeFormat.cpp \

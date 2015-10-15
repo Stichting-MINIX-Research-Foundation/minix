@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.21 2012/10/27 17:18:33 chs Exp $
+ * $NetBSD: if_lmc.h,v 1.22 2015/09/06 06:01:00 dholland Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -46,6 +46,9 @@
 
 #ifndef IF_LMC_H
 #define IF_LMC_H
+
+#include <sys/ioccom.h>
+
 
 #define DEVICE_NAME		"lmc"
 

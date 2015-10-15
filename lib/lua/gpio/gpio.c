@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.8 2013/10/26 09:18:00 mbalmer Exp $ */
+/*	$NetBSD: gpio.c,v 1.9 2014/07/19 18:38:34 lneto Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -288,13 +288,13 @@ luaopen_gpio(lua_State* L)
 	};
 	int n;
 
-	luaL_register(L, "gpio", methods);
-	luaL_register(L, NULL, gpio_methods);
+	luaL_newlib(L, methods);
+	luaL_setfuncs(L, gpio_methods, 0);
 	gpio_set_info(L);
 
 	/* The gpio metatable */
 	if (luaL_newmetatable(L, GPIO_METATABLE)) {
-		luaL_register(L, NULL, gpio_methods);
+		luaL_setfuncs(L, gpio_methods, 0);
 
 		lua_pushliteral(L, "__gc");
 		lua_pushcfunction(L, gpio_close);

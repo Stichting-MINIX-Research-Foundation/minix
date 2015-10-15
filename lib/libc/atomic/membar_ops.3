@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.3 2011/04/28 11:56:26 wiz Exp $
+.\"	$NetBSD: membar_ops.3,v 1.4 2015/01/08 22:27:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2007
+.Dd November 20, 2014
 .Dt MEMBAR_OPS 3
 .Os
 .Sh NAME
@@ -51,6 +51,8 @@
 .Fn membar_producer "void"
 .Ft void
 .Fn membar_consumer "void"
+.Ft void
+.Fn membar_datadep_consumer "void"
 .Ft void
 .Fn membar_sync "void"
 .Sh DESCRIPTION
@@ -83,6 +85,40 @@ before any stores after the memory barrier reach global visibility.
 .It Fn membar_consumer
 All loads preceding the memory barrier will complete before any loads
 after the memory barrier complete.
+.It Fn membar_datadep_consumer
+Same as
+.Fn membar_consumer ,
+but limited to loads of addresses dependent on prior loads, or
+.Sq data-dependent
+loads:
+.Bd -literal -offset indent
+int **pp, *p, v;
+
+p = *pp;
+membar_datadep_consumer();
+v = *p;
+consume(v);
+.Ed
+.Pp
+Does not guarantee ordering of loads in branches, or
+.Sq control-dependent
+loads -- you must use
+.Fn membar_consumer
+instead:
+.Bd -literal -offset indent
+int *ok, *p, v;
+
+if (*ok) {
+	membar_consumer();
+	v = *p;
+	consume(v);
+}
+.Ed
+.Pp
+Most CPUs do not reorder data-dependent loads (i.e., most CPUs
+guarantee that cached values are not stale in that case), so
+.Fn membar_datadep_consumer
+is a no-op on those CPUs.
 .It Fn membar_sync
 All loads and stores preceding the memory barrier will complete and
 reach global visibility before any loads and stores after the memory
@@ -95,3 +131,7 @@ The
 .Nm membar_ops
 functions first appeared in
 .Nx 5.0 .
+The data-dependent load barrier,
+.Fn membar_datadep_consumer ,
+first appeared in
+.Nx 7.0 .

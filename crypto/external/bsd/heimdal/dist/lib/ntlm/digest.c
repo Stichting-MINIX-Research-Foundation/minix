@@ -1,4 +1,4 @@
-/*	$NetBSD: digest.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: digest.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -137,13 +137,13 @@ build_A2_hash(heim_digest_t context, const char *method)
     unsigned char md[CC_MD5_DIGEST_LENGTH];
     CC_MD5_CTX ctx;
     char *A2;
-  
+
     CC_MD5_Init(&ctx);
     if (method)
 	CC_MD5_Update(&ctx, method, strlen(method));
     CC_MD5_Update(&ctx, ":", 1);
     CC_MD5_Update(&ctx, context->clientURI, strlen(context->clientURI));
-	
+
     /* conf|int */
     if (context->type != HEIM_DIGEST_TYPE_RFC2069) {
 	if (strcmp(context->clientQOP, "auth") != 0) {
@@ -154,7 +154,7 @@ build_A2_hash(heim_digest_t context, const char *method)
     } else {
 	/* support auth-int ? */
     }
-	
+
     CC_MD5_Final(md, &ctx);
 
     hex_encode(md, sizeof(md), &A2);
@@ -267,7 +267,7 @@ parse_values(const char *string, struct md5_value **val)
 	    goto error;
 	p2 += sz;
 	p1 = p2;
-		
+
 	if (*p2 == '"') {
 	    p1++;
 	    while (*p2 == '"') {
@@ -294,7 +294,7 @@ parse_values(const char *string, struct md5_value **val)
 	    goto nomem;
 	strncpy(v->mv_value, p1, p2 - p1);
 	v->mv_value[p2 - p1] = '\0';
-		
+
 	if (p2[0] == '\0')
 	    break;
 	if (p2[0] == '"')
@@ -420,7 +420,7 @@ heim_digest_parse_response(heim_digest_t context, const char *response)
     if (context->clientUsername == NULL) goto out;
 
     context->clientRealm = values_find(&val, "realm");
-    
+
     context->clientResponse = values_find(&val, "response");
     if (context->clientResponse == NULL) goto out;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.30 2013/11/27 17:33:03 jakllsch Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.31 2015/07/25 07:06:11 isaki Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -457,24 +457,24 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * table.
 		 */
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-		    	if (i == elf->e_shstrndx) {
-			    /* already loaded this section */
-			    continue;
+			if (i == elf->e_shstrndx) {
+				/* already loaded this section */
+				continue;
 			}
 			switch (shp[i].sh_type) {
 			case SHT_PROGBITS:
-			    	if (boot_load_ctf && shstr) {
+				if (boot_load_ctf && shstr) {
 					/* got a CTF section? */
 					if (strncmp(".SUNW_ctf",
-						    &shstr[shp[i].sh_name],
-						    10) == 0) {
-					    	goto havesym;
+					            &shstr[shp[i].sh_name],
+					            10) == 0) {
+						goto havesym;
 					}
 				}
 
 				/* Not loading this, so zero out the offset. */
 				shp[i].sh_offset = 0;
-			    	break;
+				break;
 			case SHT_STRTAB:
 				for (j = 0; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
@@ -535,8 +535,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				    ELF_NOTE_TYPE_NETBSD_TAG &&
 				    memcmp(note.name, ELF_NOTE_NETBSD_NAME,
 				    sizeof(note.name)) == 0) {
-				    	memcpy(&netbsd_version, &note.desc,
-				    	    sizeof(netbsd_version));
+					memcpy(&netbsd_version, &note.desc,
+					    sizeof(netbsd_version));
 				}
 				shp[i].sh_offset = 0;
 				break;

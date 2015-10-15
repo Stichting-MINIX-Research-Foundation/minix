@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: intel,v 1.11 2013/02/06 14:18:52 christos Exp $
+# $File: intel,v 1.12 2014/04/30 21:41:02 christos Exp $
 # intel:  file(1) magic for x86 Unix
 #
 # Various flavors of x86 UNIX executable/object (other than Xenix, which
@@ -16,24 +16,24 @@
 #
 0	leshort		0502		basic-16 executable
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+#>22	leshort		>0		- version %d
 0	leshort		0503		basic-16 executable (TV)
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+#>22	leshort		>0		- version %d
 0	leshort		0510		x86 executable
 >12	lelong		>0		not stripped
 0	leshort		0511		x86 executable (TV)
 >12	lelong		>0		not stripped
 0	leshort		=0512		iAPX 286 executable small model (COFF)
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+#>22	leshort		>0		- version %d
 0	leshort		=0522		iAPX 286 executable large model (COFF)
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+#>22	leshort		>0		- version %d
 # SGI labeled the next entry as "iAPX 386 executable" --Dan Quinlan
 0	leshort		=0514		80386 COFF executable
 >12	lelong		>0		not stripped
->22	leshort		>0		- version %ld
+>22	leshort		>0		- version %d
 
 # rom: file(1) magic for BIOS ROM Extensions found in intel machines
 #      mapped into memory between 0xC0000 and 0xFFFFF

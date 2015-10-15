@@ -1,4 +1,4 @@
-#	$NetBSD: md.emips,v 1.4 2013/08/11 22:29:02 joerg Exp $
+#	$NetBSD: md.emips,v 1.5 2014/07/19 14:35:10 alnsn Exp $
 #
 ./usr/include/emips				comp-c-include
 ./usr/include/emips/ansi.h			comp-c-include
@@ -48,7 +48,7 @@
 ./usr/include/emips/rwlock.h			comp-c-include
 ./usr/include/emips/setjmp.h			comp-c-include
 ./usr/include/emips/signal.h			comp-c-include
-./usr/include/emips/sljitarch.h			comp-c-include
+./usr/include/emips/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/emips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/emips/trap.h			comp-c-include
 ./usr/include/emips/types.h			comp-c-include

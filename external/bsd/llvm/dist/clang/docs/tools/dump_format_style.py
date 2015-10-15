@@ -17,6 +17,7 @@ def substitute(text, tag, contents):
   return re.sub(pattern, '%s', text, flags=re.S) % replacement
 
 def doxygen2rst(text):
+  text = re.sub(r'([^/\*])\*', r'\1\\*', text)
   text = re.sub(r'<tt>\s*(.*?)\s*<\/tt>', r'``\1``', text)
   text = re.sub(r'\\c ([^ ,;\.]+)', r'``\1``', text)
   text = re.sub(r'\\\w+ ', '', text)
@@ -98,7 +99,7 @@ def read_options(header):
         enum = Enum(name, comment)
       elif line.endswith(';'):
         state = State.InStruct
-        field_type, field_name = re.match(r'(\w+)\s+(\w+);', line).groups()
+        field_type, field_name = re.match(r'([<>:\w]+)\s+(\w+);', line).groups()
         option = Option(str(field_name), str(field_type), comment)
         options.append(option)
       else:
@@ -122,7 +123,8 @@ def read_options(header):
     raise Exception('Not finished by the end of file')
 
   for option in options:
-    if not option.type in ['bool', 'unsigned', 'int']:
+    if not option.type in ['bool', 'unsigned', 'int', 'std::string',
+                           'std::vector<std::string>']:
       if enums.has_key(option.type):
         option.enum = enums[option.type]
       else:

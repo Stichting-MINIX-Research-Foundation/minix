@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.111 2013/10/02 20:42:56 christos Exp $
+.\"	$NetBSD: sh.1,v 1.115 2015/05/26 21:35:15 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 2, 2013
+.Dd May 26, 2015
 .Dt SH 1
 .Os
 .Sh NAME
@@ -53,8 +53,8 @@
 .Nm
 .Fl c
 .Bk -words
-.Op Fl aCefnuvxIimqVEb
-.Op Cm +aCefnuvxIimqVEb
+.Op Fl abCEefnuvxIimpqV
+.Op Cm +abCEefnuvxIimpqV
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -67,8 +67,8 @@
 .Nm
 .Fl s
 .Bk -words
-.Op Fl aCefnuvxIimqVEb
-.Op Cm +aCefnuvxIimqVEb
+.Op Fl abCEefnuvxIimpqV
+.Op Cm +abCEefnuvxIimpqV
 .Ek
 .Bk -words
 .Op Fl o Ar option_name
@@ -299,6 +299,13 @@ section below.)
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
+.It Fl p Em nopriv
+Do not attempt to reset effective uid if it does not match uid.
+This is not set by default to help avoid incorrect usage by setuid
+root programs via
+.Xr system 3
+or
+.Xr popen 3 .
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
 changed by the
@@ -1157,6 +1164,15 @@ matches a
 .Dq \&[
 rather than introducing a character class.
 A character class matches any of the characters between the square brackets.
+A named class of characters (see
+.Xr wctype 3 )
+may be specified by surrounding the name with
+.Pq Dq [:
+and
+.Pq Dq :] .
+For example,
+.Pq Dq [[:alpha:]]
+is a shell pattern that matches a single letter.
 A range of characters may be specified using a minus sign
 .Pq Dq - .
 The character class may be complemented
@@ -1183,10 +1199,24 @@ be built in for efficiency (e.g.
 .Xr test 1 ,
 etc).
 .Bl -tag -width 5n
-.It :
+.It : [ Ar arg ... ]
 A null command that returns a 0 (true) exit value.
+Any arguments are ignored.
 .It \&. file
-The commands in the specified file are read and executed by the shell.
+The dot command reads and executes the commands from the specified
+.Ar file
+in the current shell environment.
+The file does not need to be executable and is looked up from the directories
+listed in the
+.Ev PATH
+variable if it does not contain a directory separator
+.Pq Sq / .
+The return command can be used for a premature return from the sourced file.
+.Pp
+The POSIX standard is unclear on how loop control keywords (break
+and continue) behave across a dot command boundary.
+This implementation allows them to control loops surrounding the dot command,
+but obviously such behavior should not be relied on.
 .It alias Op Ar name Ns Op Ar "=string ..."
 If
 .Ar name=string
@@ -1623,6 +1653,21 @@ With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
 .Pp
+.It return [ Ar n ]
+Stop executing the current function or a dot command with return value of
+.Ar n
+or the value of the last executed command, if not specified.
+For portability,
+.Ar n
+should be in the range from 0 to 255.
+.Pp
+The POSIX standard says that the results of
+.Sq return
+outside a function or a dot command are unspecified.
+This implementation treats such a return as a no-op with a return value of 0
+(success, true).
+Use the exit command instead, if you want to return from a script or exit
+your shell.
 .It set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set

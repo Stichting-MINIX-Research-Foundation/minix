@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.50 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.54 2014/04/21 19:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -74,42 +74,37 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#include <sys/signal.h>
-
 #include <machine/segments.h>
-#include <machine/tss.h>
-#include <i386/npx.h>
-#include <i386/sysarch.h>
+#include <x86/cpu_extended_state.h>
 
 struct pcb {
 	int	pcb_esp0;		/* ring0 esp */
 	int	pcb_esp;		/* kernel esp */
 	int	pcb_ebp;		/* kernel ebp */
-	int	pcb_unused;		/* unused */
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
 	int	pcb_cr3;		/* page directory pointer */
 	int	pcb_iopl;		/* i/o privilege level */
 
-	/* floating point state for FPU */
-	union	savefpu pcb_savefpu __aligned(16);
-
 	struct segment_descriptor pcb_fsd;	/* %fs descriptor */
 	struct segment_descriptor pcb_gsd; 	/* %gs descriptor */
-	void *	pcb_onfault;		/* copyin/out fault recovery */
+	void 	*pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
-	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	char	*pcb_iomap;		/* I/O permission bitmap */
-};
 
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
+	int	not_used[15];
+
+	/* floating point state */
+	struct cpu_info	*pcb_fpcpu;	/* cpu holding our fp state. */
+	union savefpu	pcb_savefpu __aligned(64);
+	/* **** DO NOT ADD ANYTHING HERE **** */
+
+};
+#ifndef __lint__
+/* This doesn't really matter, but there is a lot of implied padding */
+__CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) == 128);
+#endif
 
 #endif /* _I386_PCB_H_ */

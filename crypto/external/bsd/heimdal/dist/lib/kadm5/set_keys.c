@@ -1,4 +1,4 @@
-/*	$NetBSD: set_keys.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: set_keys.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: set_keys.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 /*
  * Set the keys of `ent' to the string-to-key of `password'
@@ -203,8 +203,8 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
 {
    krb5_keyblock *kblock = NULL;
    kadm5_ret_t ret = 0;
-   int i, des_keyblock;
-   size_t num_keys;
+   int des_keyblock;
+   size_t i, num_keys;
    Key *keys;
 
    ret = hdb_generate_key_set(context->context, ent->principal,

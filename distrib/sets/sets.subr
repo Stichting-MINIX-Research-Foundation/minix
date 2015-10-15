@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.156 2013/10/14 16:00:16 joerg Exp $
+#	$NetBSD: sets.subr,v 1.173 2015/07/23 08:03:25 mrg Exp $
 #
 
 #
@@ -13,7 +13,7 @@
 #	stlib			static library format (a.out, elf)
 #
 # The following <bsd.own.mk> variables are exported to the environment:
-#	MACHINE
+#	MACHINE	
 #	MACHINE_ARCH
 #	MACHINE_CPU
 #	HAVE_BINUTILS
@@ -142,9 +142,9 @@ fi
 if [ "${MKATF}" = "no" ]; then
 	testset=""
 else
-	testset="tests"
+	testset="tests minix-tests"
 fi
-if [ "${MKDEBUG}" = "no" ]; then
+if [ "${MKDEBUG}" = "no" -a "${MKDEBUGLIB}" = "no" ]; then
 	debugset=""
 	xdebugset=""
 else
@@ -163,7 +163,7 @@ if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
 # LSC for Minix
-nlists="minix-base minix-comp minix-games minix-kernel minix-man minix-tests $testset"
+nlists="minix-base minix-comp minix-games minix-kernel minix-man $testset"
 #nlists="base comp $debugset etc games man misc $modset $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
@@ -176,12 +176,12 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 
 #
 # list_set_files setfile [...]
-#
+# 
 # Produce a packing list for setfile(s).
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.156 2013/10/14 16:00:16 joerg Exp $
+# 	# $NetBSD: sets.subr,v 1.173 2015/07/23 08:03:25 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -198,7 +198,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # control if a record is printed; every keyword listed must be enabled
 # for the record to be printed.  The following keywords are available:
 #	dummy			dummy entry (ignored)
-#	obsolete		file is obsolete, and only printed if
+#	obsolete		file is obsolete, and only printed if 
 #				${obsolete} != 0
 #
 #	atf			${MKATF} != no
@@ -207,6 +207,8 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	bsdgrep			${MKBSDGREP} != no
 #	catpages		${MKCATPAGES} != no
 #	compat			${MKCOMPAT} != no
+#	compatmodules		${MKCOMPATMODULES} != no
+#	compattests		${MKCOMPATTESTS} != no
 #	crypto			${MKCRYPTO} != no
 #	crypto_rc5		${MKCRYPTO_RC5} != no
 #	cvs			${MKCVS} != no
@@ -231,7 +233,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
 #	libcxx			${MKLIBCXX} != no
-#	libgcc			${HAVE_LIBGCC} != no
+#	libgcc_eh		${HAVE_LIBGCC_EH} != no
 #	libstdcxx		${MKLIBSTDCXX} != no
 #	lld			${MKLLD} != no
 #	lldb			${MKLLDB} != no
@@ -249,6 +251,8 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	pcc			${MKPCC} != no
 #	pf			${MKPF} != no
 #	pic			${MKPIC} != no
+#	picinstall		${MKPICINSTALL} != no
+#	pigzgzip		${MKPIGZGZIP} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
 #	perfuse			${MKPERFUSE} != no
@@ -260,8 +264,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
 #	ssp			${HAVE_SSP} != no
 #	tpm			${MKTPM} != no
-#	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
-#	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
+#	xorg			${MKX11} != no
 #	xorg_server		${MKXORG_SERVER} != no
 #	yp			${MKYP} != no
 #	zfs			${MKZFS} != no
@@ -293,16 +296,49 @@ list_set_files()
 		BEGIN {
 			if (obsolete)
 				wanted["obsolete"] = 1
-
+		
 			split("'"${MKVARS}"'", needvars)
+			doingcompat = 0
+			doingcompattests = 0
+			ignoredkeywords["compatdir"] = 1
+			ignoredkeywords["compatfile"] = 1
+			ignoredkeywords["compattestdir"] = 1
+			ignoredkeywords["compattestfile"] = 1
+			ignoredkeywords["compatx11dir"] = 1
+			ignoredkeywords["compatx11file"] = 1
 			for (vi in needvars) {
 				nv = needvars[vi]
 				kw = tolower(nv)
 				sub(/^mk/, "", kw)
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
-				if (nv != "HAVE_GCC" && ENVIRON[nv] != "no")
-					wanted[kw] = 1
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
+					wanted[kw] = 1 
+				}
+			}
+
+			if ("compat" in wanted) {
+				doingcompat = 1;
+				split("'"${COMPATARCHDIRS}"'", compatarchdirs, ",");
+				compatdirkeywords["compatdir"] = 1
+				compatfilekeywords["compatfile"] = 1
+
+				if (wanted["compattests"]) {
+					doingcompattests = 1;
+					compatdirkeywords["compattestdir"] = 1
+					compatfilekeywords["compattestfile"] = 1
+				}
+				if (wanted["compatx11"]) {
+					doingcompatx11 = 1;
+					compatdirkeywords["compatx11dir"] = 1
+					compatfilekeywords["compatx11file"] = 1
+				}
+			}
+
+			if (("kmod" in wanted) && ("compatmodules" in wanted)) {
+				split("'"${KMODARCHDIRS}"'", kmodarchdirs, ",");
+				kmodpat = "./stand/" ENVIRON["MACHINE"]
+				l_kmodpat = length(kmodpat)
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
@@ -319,6 +355,12 @@ list_set_files()
 				wanted[".man"] = 1
 			if ("endian" in wanted)
 				wanted["endian=" "'"${TARGET_ENDIANNESS}"'"] = 1
+			if ("machine" in wanted)
+				wanted["machine=" "'"${MACHINE}"'"] = 1
+			if ("machine_arch" in wanted)
+				wanted["machine_arch=" "'"${MACHINE_ARCH}"'"] = 1
+			if ("machine_cpu" in wanted)
+				wanted["machine_cpu=" "'"${MACHINE_CPU}"'"] = 1
 		}
 
 		/^#/ {
@@ -330,7 +372,7 @@ list_set_files()
 			delete list [substr($1, 2)];
 			next;
 		}
-
+				
 
 		NF > 2 && $3 != "-" {
 			if (notwanted[$1] != "")
@@ -338,6 +380,9 @@ list_set_files()
 			split($3, keywords, ",")
 			show = 1
 			haveobs = 0
+			iscompatfile = 0
+			havekmod = 0
+			iscompatdir = 0
 			for (ki in keywords) {
 				kw = keywords[ki]
 				if (("manz" in wanted) &&
@@ -347,22 +392,65 @@ list_set_files()
 					kw = substr(kw, 2)
 					if (kw in wanted)
 						show = 0
-				} else {
-					if (! (kw in wanted))
-						show = 0
+				} else if (kw in compatdirkeywords) {
+					iscompatdir = 1
+				} else if (kw in compatfilekeywords) {
+					iscompatfile = 1
+				} else if (kw == "nocompatmodules") {
+					havekmod = -1
+				} else if (kw in ignoredkeywords) {
+					# ignore
+				} else if (! (kw in wanted)) {
+					show = 0
+				} else if (kw == "kmod" && havekmod == 0) {
+					havekmod = 1
 				}
 				if (kw == "obsolete")
 					haveobs = 1
 			}
 			if (obsolete && ! haveobs)
 				next
-			if (show)
-				list[$1] = $0
+			if (!show)
+				next
+
+			list[$1] = $0
+			if (havekmod > 0 && substr($1,1,l_kmodpat) == kmodpat) {
+				for (d in kmodarchdirs) {
+					xd = "./stand/" kmodarchdirs[d]
+					xfile = xd substr($1, l_kmodpat+1)
+					tmp = xd substr($0, l_kmodpat+1)
+					list[xfile] = tmp;
+				}
+				next
+			}
+
+			if (!doingcompat || !(iscompatfile || iscompatdir))
+				next
+
+			if (iscompatfile) {
+				emitcompat[$1] = 1;
+				next
+			}
+			for (d in cpaths) {
+				if (cpaths[d] == $1 "/")
+					next
+			}
+			cpaths[ncpaths++] = $1 "/"
+			for (d in compatarchdirs) {
+				tmp = $0
+				xfile = $1 "/" compatarchdirs[d]
+				tmp = xfile substr(tmp, length($1) + 1)
+				if (xfile in notwanted)
+					continue;
+				sub("compatdir","compat",tmp);
+				sub("compattestdir","compat",tmp);
+				list[xfile] = tmp
+			}
 			next
 		}
 
 		{
-			if (notwanted[$1] != "")
+			if ($1 in notwanted)
 				next;
 			if (! obsolete)
 				list[$1] = $0
@@ -371,6 +459,31 @@ list_set_files()
 		END {
 			for (i in list) {
 				print list[i]
+				if (! (i in emitcompat))
+					continue;
+				l_i = length(i)
+				l = 0
+				for (j in cpaths) {
+					lx = length(cpaths[j])
+					if (lx >= l_i || cpaths[j] != substr(i, 1, lx)) {
+						continue;
+					}
+					if (lx > l) {
+						l = lx;
+						cpath = cpaths[j];
+					}
+				}
+				for (d in compatarchdirs) {
+					tmp = list[i]
+					extrapath = compatarchdirs[d] "/"
+					xfile = cpath extrapath substr(i, l + 1)
+					if (xfile in notwanted)
+						continue;
+					sub("compatfile","compat",tmp);
+					sub("compattestfile","compat",tmp);
+					tmp = xfile substr(tmp, l_i + 1)
+					print tmp;
+				}
 			}
 		}'
 
@@ -378,7 +491,7 @@ list_set_files()
 
 #
 # list_set_lists setname
-#
+# 
 # Print to stdout a list of files, one filename per line, which
 # concatenate to create the packing list for setname. E.g.,
 #

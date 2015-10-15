@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.13 2013/10/14 16:00:16 joerg Exp $
+# $NetBSD: mkvars.mk,v 1.24 2015/07/23 08:03:25 mrg Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -6,7 +6,7 @@ MKEXTRAVARS= \
 	MACHINE_CPU \
 	HAVE_GCC \
 	HAVE_GDB \
-	HAVE_LIBGCC \
+	HAVE_LIBGCC_EH \
 	HAVE_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
@@ -14,6 +14,7 @@ MKEXTRAVARS= \
 	MKMANZ \
 	MKBFD \
 	MKCOMPAT \
+	MKCOMPATTESTS \
 	MKCOMPATMODULES \
 	MKDYNAMICROOT \
 	MKMANPAGES \
@@ -21,7 +22,7 @@ MKEXTRAVARS= \
 	MKSOFTFLOAT \
 	MKXORG \
 	MKXORG_SERVER \
-	X11FLAVOR \
+	MKRADEONFIRMWARE \
 	USE_INET6 \
 	USE_KERBEROS \
 	USE_LDAP \
@@ -35,7 +36,6 @@ MKEXTRAVARS= \
 #####
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 .include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
@@ -44,13 +44,23 @@ MKMANPAGES=no
 MKMANPAGES=yes
 .endif
 
+.if ${MKCOMPAT} != "no"
+ARCHDIR_SUBDIR:=
+.include "${NETBSDSRCDIR}/compat/archdirs.mk"
+COMPATARCHDIRS:=${ARCHDIR_SUBDIR:T}
+.endif
+
+.if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
+ARCHDIR_SUBDIR:=
+.include "${NETBSDSRCDIR}/sys/modules/arch/archdirs.mk"
+KMODARCHDIRS:=${ARCHDIR_SUBDIR:T}
+.endif
+
 .if ${MKX11} != "no"
-. if ${X11FLAVOUR} == "Xorg"
 MKXORG:=yes
+# We have to force this off, because "MKX11" is still an option
+# that is in _MKVARS.
 MKX11:=no
-. else
-MKXORG:=no
-. endif
 .endif
 
 .if (!empty(MACHINE_ARCH:Mearm*))
@@ -81,6 +91,16 @@ mkextravars: .PHONY
 .for i in ${MKEXTRAVARS}
 	@echo $i="${$i}"
 .endfor
+.if ${MKCOMPAT} != "no"
+	@echo COMPATARCHDIRS=${COMPATARCHDIRS} | ${TOOL_SED} -e's/ /,/g'
+.else
+	@echo COMPATARCHDIRS=
+.endif
+.if ${MKKMOD} != "no" && ${MKCOMPATMODULES} != "no"
+	@echo KMODARCHDIRS=${KMODARCHDIRS} | ${TOOL_SED} -e's/ /,/g'
+.else
+	@echo KMODARCHDIRS=
+.endif
 
 mksolaris: .PHONY
 .if (${MKDTRACE} != "no" || ${MKZFS} != "no")
@@ -88,3 +108,5 @@ mksolaris: .PHONY
 .else
 	@echo MKSOLARIS="no"
 .endif
+
+.include <bsd.files.mk>

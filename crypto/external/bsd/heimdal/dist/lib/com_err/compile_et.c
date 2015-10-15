@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: compile_et.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
@@ -39,6 +39,7 @@
 
 #include "compile_et.h"
 #include <getarg.h>
+#include <libgen.h>
 
 #include <roken.h>
 #include <err.h>
@@ -47,7 +48,7 @@
 int numerror;
 extern FILE *yyin;
 
-extern void yyparse(void);
+int yyparse(void);
 
 long base_id;
 int number;
@@ -77,7 +78,7 @@ generate_c(void)
     if(c_file == NULL)
 	return 1;
 
-    fprintf(c_file, "/* Generated from %s */\n", filename);
+    fprintf(c_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
@@ -95,7 +96,7 @@ generate_c(void)
 	    fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
 		    n, name, n);
 	    n++;
-	
+
 	}
 	fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
 		ec->number, ec->string);
@@ -142,7 +143,7 @@ generate_h(void)
 	if(!isalnum((unsigned char)*p))
 	    *p = '_';
 
-    fprintf(h_file, "/* Generated from %s */\n", filename);
+    fprintf(h_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(h_file, "/* %s */\n", id_str);
     fprintf(h_file, "\n");
@@ -222,7 +223,7 @@ main(int argc, char **argv)
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);
-	
+
 
     p = strrchr(filename, rk_PATH_DELIM);
     if(p)

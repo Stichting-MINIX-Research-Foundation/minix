@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.2 2011/04/20 10:10:32 drochner Exp $
+.\"	$NetBSD: awk.1,v 1.4 2015/04/06 14:36:41 wiz Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd May 25, 2008
+.Dd April 6, 2015
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -419,8 +419,8 @@ supported by GNU
 are
 .Em not
 supported at this moment.
-.It Fn gsub r t "[s]"
-same as
+.It Fn gsub r s "[t]"
+Same as
 .Fn sub
 except that all occurrences of the regular expression
 are replaced;
@@ -477,15 +477,15 @@ according to the
 .Xr printf 3
 format
 .Ar fmt .
-.It Fn sub r t "[s]"
+.It Fn sub r s "[t]"
 substitutes
-.Ar t
+.Ar s
 for the first occurrence of the regular expression
 .Ar r
-in the string
-.Ar s .
+in the target string
+.Ar t .
 If
-.Ar s
+.Ar t
 is not given,
 .Va $0
 is used.

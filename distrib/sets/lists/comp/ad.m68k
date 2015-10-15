@@ -1,9 +1,7 @@
-# $NetBSD: ad.m68k,v 1.49 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: ad.m68k,v 1.51 2015/08/10 03:21:44 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
-./usr/include/gcc-4.5/math-68881.h		comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
-./usr/include/gcc-4.8/math-68881.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/math-68881.h		comp-c-include		gcccmds,gcc
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
 ./usr/include/m68k				comp-c-include
 ./usr/include/m68k/ansi.h			comp-c-include
 ./usr/include/m68k/aout_machdep.h		comp-c-include

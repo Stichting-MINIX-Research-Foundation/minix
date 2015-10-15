@@ -1,15 +1,12 @@
-# $NetBSD: Makefile,v 1.3 2013/02/15 17:08:35 jmmv Exp $
+# $NetBSD: Makefile,v 1.6 2014/02/15 04:15:20 jmmv Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/test-programs
 ATFFILE=	yes
+KYUAFILE=	yes
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/test-programs
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR}/libs -I${SRCDIR}
 
 TESTS_C=	c_helpers
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2013/07/02 02:15:14 jnemeth Exp $
+# $NetBSD: mi,v 1.45 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -39,39 +39,67 @@
 ./usr/bin/troff					text-groff-bin		groff
 ./usr/bin/vgrind				text-groff-bin
 ./usr/libexec/vfontedpr				text-groff-bin
-./usr/share/doc/groff				text-groff-doc
-./usr/share/doc/groff/mom			text-groff-doc
-./usr/share/doc/groff/mom/README.txt		text-groff-doc		share,groff
-./usr/share/doc/groff/mom/elvis_syntax		text-groff-doc		share,groff
-./usr/share/doc/groff/mom/elvis_syntax.new	text-groff-doc		share,groff
-./usr/share/doc/groff/mom/letter.mom		text-groff-doc		share,groff
+./usr/share/doc/groff				text-obsolete		obsolete
+./usr/share/doc/groff/mom			text-obsolete		obsolete
+./usr/share/doc/groff/mom/README.txt		text-obsolete		obsolete
+./usr/share/doc/groff/mom/elvis_syntax		text-obsolete		obsolete
+./usr/share/doc/groff/mom/elvis_syntax.new	text-obsolete		obsolete
+./usr/share/doc/groff/mom/letter.mom		text-obsolete		obsolete
 ./usr/share/doc/groff/mom/letter.ps		text-obsolete		obsolete
-./usr/share/doc/groff/mom/penguin.ps		text-groff-doc		share,groff
-./usr/share/doc/groff/mom/sample_docs.mom	text-groff-doc		share,groff
+./usr/share/doc/groff/mom/penguin.ps		text-obsolete		obsolete
+./usr/share/doc/groff/mom/sample_docs.mom	text-obsolete		obsolete
 ./usr/share/doc/groff/mom/sample_docs.ps	text-obsolete		obsolete
-./usr/share/doc/groff/mom/typesetting.mom	text-groff-doc		share,groff
+./usr/share/doc/groff/mom/typesetting.mom	text-obsolete		obsolete
 ./usr/share/doc/groff/mom/typesetting.ps	text-obsolete		obsolete
-./usr/share/doc/html/groff			text-groff-doc
-./usr/share/doc/html/groff/mom			text-groff-doc
-./usr/share/doc/html/groff/mom/appendices.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/color.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/cover.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/definitions.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/docelement.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/docprocessing.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/goodies.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/headfootpage.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/inlines.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/intro.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/letters.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/macrolist.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/rectoverso.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/refer.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/reserved.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/toc.html		text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/typemacdoc.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/typesetting.html	text-groff-doc		share,groff
-./usr/share/doc/html/groff/mom/using.html	text-groff-doc		share,groff
+./usr/share/doc/html/groff			text-obsolete		obsolete
+./usr/share/doc/html/groff/mom			text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/appendices.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/color.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/cover.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/definitions.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/docelement.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/docprocessing.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/goodies.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/headfootpage.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/inlines.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/intro.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/letters.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/macrolist.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/rectoverso.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/refer.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/reserved.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/toc.html		text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/typemacdoc.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/typesetting.html	text-obsolete		obsolete
+./usr/share/doc/html/groff/mom/using.html	text-obsolete		obsolete
+./usr/share/doc/reference/ref1/roff/mom					text-groff-doc
+./usr/share/doc/reference/ref1/roff/mom/appendices.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/color.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/cover.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/definitions.html		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/docelement.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/docprocessing.html		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/goodies.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/headfootpage.html		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/inlines.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/intro.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/letters.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/macrolist.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/rectoverso.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/refer.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/reserved.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/toc.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/typemacdoc.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/typesetting.html		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom/using.html			text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples			text-groff-doc
+./usr/share/doc/reference/ref1/roff/mom_examples/README.txt		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/elvis_syntax		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/elvis_syntax.new	text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/letter.mom		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/penguin.ps		text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/sample_docs.mom	text-groff-doc		share,groff
+./usr/share/doc/reference/ref1/roff/mom_examples/typesetting.mom	text-groff-doc		share,groff
 ./usr/share/groff_font/devX100-12/CB		text-groff-font		share,groff
 ./usr/share/groff_font/devX100-12/CBI		text-groff-font		share,groff
 ./usr/share/groff_font/devX100-12/CI		text-groff-font		share,groff
@@ -719,3 +747,4 @@
 ./usr/share/tmac/unicode.tmac			text-groff-share	share,groff
 ./usr/share/tmac/vgrind.tmac			text-groff-share	share
 ./usr/share/tmac/www.tmac			text-groff-share	share,groff
+./var/db/obsolete/text				base-sys-root

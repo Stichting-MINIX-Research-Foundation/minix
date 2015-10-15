@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.1 2012/03/17 16:33:16 jruoho Exp $
+# $NetBSD: t_integration.sh,v 1.4 2014/04/21 19:10:41 christos Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,6 +82,7 @@ test_case check_valid gcc_variable_array_init "Checks GCC variable array" \
     "initializers"
 test_case check_valid c9x_array_init "Checks C9X array initializers"
 test_case check_valid c99_decls_after_stmt "Checks C99 decls after statements"
+test_case check_valid c99_decls_after_stmt3 "Checks C99 decls after statements"
 test_case check_valid nolimit_init "Checks no limit initializers"
 test_case check_valid zero_sized_arrays "Checks zero sized arrays"
 
@@ -92,11 +93,14 @@ test_case check_valid gcc_compound_statements2 "Checks GCC compound" \
     "statements with non-expressions"
 test_case check_valid gcc_compound_statements3 "Checks GCC compound" \
     "statements with void type"
+# XXX: Because of polymorphic __builtin_isnan and expression has null effect
+# test_case check_valid gcc_extension "Checks GCC __extension__ and __typeof__"
 
 test_case check_valid cvt_in_ternary "Checks CVT nodes handling in ?" \
-    "operator"
+test_case check_valid cvt_constant "Checks constant conversion"
 test_case check_valid ellipsis_in_switch "Checks ellipsis in switch()"
 test_case check_valid c99_complex_num "Checks C99 complex numbers"
+test_case check_valid c99_complex_split "Checks C99 complex access"
 test_case check_valid c99_for_loops "Checks C99 for loops"
 test_case check_valid alignof "Checks __alignof__"
 test_case check_valid shift_to_narrower_type "Checks that type shifts that" \

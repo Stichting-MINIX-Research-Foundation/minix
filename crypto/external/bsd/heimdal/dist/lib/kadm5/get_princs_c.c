@@ -1,4 +1,4 @@
-/*	$NetBSD: get_princs_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: get_princs_c.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: get_princs_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 kadm5_ret_t
 kadm5_c_get_principals(void *server_handle,

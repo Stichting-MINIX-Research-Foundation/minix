@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.75 2013/10/19 15:44:29 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.85 2015/08/07 08:11:33 ozaki-r Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -357,11 +357,11 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_uptime - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_pltime)
 #define IFA6_IS_INVALID(a) \
 	((a)->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((time_uptime - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
@@ -384,6 +384,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_MULTICAST_IF	9  /* u_int; set/get IP6 multicast i/f  */
 #define IPV6_MULTICAST_HOPS	10 /* int; set/get IP6 multicast hops */
 #define IPV6_MULTICAST_LOOP	11 /* u_int; set/get IP6 multicast loopback */
+/* The join and leave membership option numbers need to match with the v4 ones */
 #define IPV6_JOIN_GROUP		12 /* ip6_mreq; join a group membership */
 #define IPV6_LEAVE_GROUP	13 /* ip6_mreq; leave a group membership */
 #define IPV6_PORTRANGE		14 /* int; range to choose for unspec port */
@@ -404,9 +405,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
 #define IPV6_V6ONLY		27 /* bool; make AF_INET6 sockets v6 only */
 
-#if 1 /* IPSEC */
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
-#endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
 
 /* new socket options introduced in RFC3542 */
@@ -440,6 +439,8 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #define IPV6_TCLASS		61 /* int; send traffic class value */
 #define IPV6_DONTFRAG		62 /* bool; disable IPv6 fragmentation */
+#define IPV6_PREFER_TEMPADDR	63 /* int; prefer temporary address as
+				    * the sorce address */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
@@ -574,11 +575,13 @@ struct ip6_mtuinfo {
 #define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */
 #define IPV6CTL_LOWPORTMIN	30	/* minimum reserved port */
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
-/* 32 to 38: reserved */
+/* 32 to 34: reserved */
+#define IPV6CTL_AUTO_LINKLOCAL	35	/* automatic link-local addr assign */
+/* 36 to 38: reserved */
 #define IPV6CTL_USE_DEFAULTZONE	39	/* use default scope zone */
 /* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
-#define IPV6CTL_IFQ		42	/* ip6intrq node */
+#define IPV6CTL_IFQ		42	/* IPv6 packet input queue */
 #define IPV6CTL_RTADV_MAXROUTES 43	/* maximum number of routes */
 					/* via router advertisement */
 #define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
@@ -703,6 +706,7 @@ int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
 extern void in6_if_link_up(struct ifnet *);
 extern void in6_if_link_down(struct ifnet *);
+extern void in6_if_link_state_change(struct ifnet *, int);
 extern void in6_if_up(struct ifnet *);
 extern void in6_if_down(struct ifnet *);
 #ifndef __FreeBSD__
@@ -768,7 +772,7 @@ __BEGIN_DECLS
 struct cmsghdr;
 
 void	in6_sin6_2_sin(struct sockaddr_in *, struct sockaddr_in6 *);
-void	in6_sin_2_v4mapsin6(struct sockaddr_in *, struct sockaddr_in6 *);
+void	in6_sin_2_v4mapsin6(const struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);
 void	in6_sin_2_v4mapsin6_in_sock(struct sockaddr **);
 
@@ -817,6 +821,12 @@ extern int inet6_rth_segments(const void *);
 extern struct in6_addr *inet6_rth_getaddr(const void *, int);
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
+
+#if defined(_KERNEL) || defined(_TEST)
+int	in6_print(char *, size_t, const struct in6_addr *);
+#define IN6_PRINT(b, a) (in6_print((b), sizeof(b), (a)), (b))
+int	sin6_print(char *, size_t, const void *);
+#endif
 #endif /* !defined(__minix) */
 
 #endif /* !_NETINET6_IN6_H_ */

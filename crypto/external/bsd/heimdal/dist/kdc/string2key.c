@@ -1,4 +1,4 @@
-/*	$NetBSD: string2key.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: string2key.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
@@ -47,15 +47,17 @@ int version;
 int help;
 
 struct getargs args[] = {
-    { "version5", '5', arg_flag,   &version5, "Output Kerberos v5 string-to-key" },
-    { "version4", '4', arg_flag,   &version4, "Output Kerberos v4 string-to-key" },
-    { "afs",      'a', arg_flag,   &afs, "Output AFS string-to-key" },
+    { "version5", '5', arg_flag,   &version5, "Output Kerberos v5 string-to-key",
+	NULL },
+    { "version4", '4', arg_flag,   &version4, "Output Kerberos v4 string-to-key",
+	NULL },
+    { "afs",      'a', arg_flag,   &afs, "Output AFS string-to-key", NULL },
     { "cell",     'c', arg_string, &cell, "AFS cell to use", "cell" },
     { "password", 'w', arg_string, &password, "Password to use", "password" },
     { "principal",'p', arg_string, &principal, "Kerberos v5 principal to use", "principal" },
-    { "keytype",  'k', arg_string, rk_UNCONST(&keytype_str), "Keytype" },
-    { "version",    0, arg_flag,   &version, "print version" },
-    { "help",       0, arg_flag,   &help, NULL }
+    { "keytype",  'k', arg_string, rk_UNCONST(&keytype_str), "Keytype", NULL },
+    { "version",    0, arg_flag,   &version, "print version", NULL },
+    { "help",       0, arg_flag,   &help, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);
@@ -75,7 +77,7 @@ tokey(krb5_context context,
       const char *label)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
     krb5_keyblock key;
     char *e;
 
@@ -161,7 +163,7 @@ main(int argc, char **argv)
 	    return 1;
 	password = buf;
     }
-	
+
     if(version5){
 	krb5_parse_name(context, principal, &princ);
 	krb5_get_pw_salt(context, princ, &salt);

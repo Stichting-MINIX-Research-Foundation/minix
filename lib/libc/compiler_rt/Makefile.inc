@@ -1,26 +1,23 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/07/04 22:14:43 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.27 2014/09/03 19:29:14 matt Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
-.if ${MACHINE_ARCH} == "powerpc"
-COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/ppc
-COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/ppc
+.if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
-COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_CPU}
-COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_CPU}
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${LIBC_MACHINE_ARCH}
 .endif
 
 .if defined(__MINIX)
 LIBC_MACHINE_CPU?=      ${MACHINE_CPU}
-.endif # defined(__MINIX) 
+.endif # defined(__MINIX)
 
-.if !empty(LIBC_MACHINE_ARCH:Mearm*) && defined(__MINIX)
-# BJG - we skip these for minix/x86 as the .S versions give problems
-# for dynamic binaries.
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
-.endif # .if !empty(LIBC_MACHINE_ARCH:Mearm*) && defined(__MINIX)
-.PATH: ${COMPILER_RT_SRCDIR}/lib
+.PATH: ${COMPILER_RT_SRCDIR}/lib/builtins
+.PATH: ${COMPILER_RT_SRCDIR}/lib/profile
 
 # Complex support needs parts of libm
 #GENERIC_SRCS+=
@@ -33,7 +30,7 @@ LIBC_MACHINE_CPU?=      ${MACHINE_CPU}
 # Implemented on top of our atomic interface.
 #GENERIC_SRCS+= atomic.c
 
-.if ${HAVE_LIBGCC_EH:Uyes} == "no"
+.if ${HAVE_LIBGCC_EH} == "no"
 GENERIC_SRCS+= \
 	gcc_personality_v0.c
 .endif
@@ -213,6 +210,13 @@ GENERIC_SRCS+= \
 	umoddi3.c
 .endif
 
+GENERIC_SRCS+= \
+	GCDAProfiling.c \
+	InstrProfiling.c \
+	InstrProfilingBuffer.c \
+	InstrProfilingFile.c \
+	InstrProfilingPlatformOther.c
+
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 GENERIC_SRCS+= \
 	fixtfdi.c \
@@ -249,7 +253,6 @@ GENERIC_SRCS+= \
 #	bswapsi2.S
 .endif
 
-.if !defined(__MINIX)
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
       exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
@@ -265,20 +268,3 @@ COPTS.${src}+=	-Wno-missing-prototypes \
 .    endif
 .  endif
 .endfor
-.else
-# For MINIX: do not pull in the assembly symbols, as they are not PIC ready
-.for src in ${GENERIC_SRCS}
-SRCS+=	${src}
-.    if ${src:E} != "cc"
-COPTS.${src}+=	-Wno-missing-prototypes \
-		-Wno-old-style-definition \
-		-Wno-strict-prototypes \
-		-Wno-uninitialized \
-		-Wno-cast-qual
-.    endif
-.endfor
-
-.for src in muldc3.c
-COPTS.${src}+=	-fbuiltin
-.endfor
-.endif # !defined(__MINIX)

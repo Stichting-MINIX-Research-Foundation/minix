@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.103 2012/04/29 01:26:56 wiz Exp $	*/
+/*	$NetBSD: login.c,v 1.105 2014/11/12 22:23:38 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.103 2012/04/29 01:26:56 wiz Exp $");
+__RCSID("$NetBSD: login.c,v 1.105 2014/11/12 22:23:38 aymeric Exp $");
 #endif /* not lint */
 
 /*
@@ -138,11 +138,13 @@ main(int argc, char *argv[])
 	struct group *gr;
 	struct stat st;
 	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
-	int Fflag;
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
-	char *domain, *p, *ttyn;
+#ifdef notdef
+	char *domain;
+#endif
+	char *p, *ttyn;
 	const char *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
@@ -152,6 +154,7 @@ main(int argc, char *argv[])
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
 	char *loginname = NULL;
 #ifdef KERBEROS5
+	int Fflag;
 	krb5_error_code kerror;
 #endif
 #if defined(KERBEROS5)
@@ -185,16 +188,19 @@ main(int argc, char *argv[])
 	 *    server address.
 	 * -s is used to force use of S/Key or equivalent.
 	 */
-	domain = NULL;
-	if (gethostname(localhost, sizeof(localhost)) < 0)
+	if (gethostname(localhost, sizeof(localhost)) < 0) {
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
-	else
-		domain = strchr(localhost, '.');
+		strcpy(hostname, "amnesiac");
+	}
+#ifdef notdef
+	domain = strchr(localhost, '.');
+#endif
 	localhost[sizeof(localhost) - 1] = '\0';
 
-	Fflag = fflag = hflag = pflag = sflag = 0;
+	fflag = hflag = pflag = sflag = 0;
 	have_ss = 0;
 #ifdef KERBEROS5
+	Fflag = 0;
 	have_forward = 0;
 #endif
 	uid = getuid();
@@ -210,7 +216,9 @@ main(int argc, char *argv[])
 #endif
 			break;
 		case 'F':
+#ifdef KERBEROS5
 			Fflag = 1;
+#endif
 			/* FALLTHROUGH */
 		case 'f':
 			fflag = 1;
@@ -238,9 +246,7 @@ main(int argc, char *argv[])
 			break;
 		}
 
-#if !defined(__minix)
 	setproctitle(NULL);
-#endif /* !defined(__minix) */
 	argc -= optind;
 	argv += optind;
 
@@ -632,9 +638,6 @@ main(int argc, char *argv[])
 	if (krb5tkfile_env)
 		(void)setenv("KRB5CCNAME", krb5tkfile_env, 1);
 #endif
-
-	if (tty[sizeof("tty")-1] == 'd')
-		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {

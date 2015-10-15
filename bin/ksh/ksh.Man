@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.23 2011/10/18 12:36:31 reed Exp $
+.\" $NetBSD: ksh.Man,v 1.24 2015/04/12 17:05:03 jmcneill Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -19,10 +19,10 @@
 .\"}}}
 .\"{{{  Title
 .ksh(
-.TH KSH 1 "August 19, 1996" "" "User commands"
+.TH KSH 1 "April 12, 2015" "" "User commands"
 .ksh)
 .sh(
-.TH SH 1 "August 19, 1996" "" "User commands"
+.TH SH 1 "April 12, 2015" "" "User commands"
 .sh)
 .\"}}}
 .\"{{{  Name
@@ -2602,8 +2602,8 @@ Exported functions are not implemented yet.
 T}
 .TE
 .\"}}}
-.\"{{{  ulimit [-abcdfHlmnpsStvw] [value]
-.IP "\fBulimit\fP [\fB\-abcdfHlmnpsStvw\fP] [\fIvalue\fP]"
+.\"{{{  ulimit [-abcdfHlmnprsStvw] [value]
+.IP "\fBulimit\fP [\fB\-abcdfHlmnprsStvw\fP] [\fIvalue\fP]"
 Display or set process limits.
 If no options are used, the file size limit (\fB\-f\fP) is assumed.
 \fBvalue\fP, if specified, may be either be an arithmetic expression or the
@@ -2637,6 +2637,9 @@ memory.
 Impose a limit of \fIn\fP kbytes on the amount of physical memory used.
 .IP \fB\-n\fP
 Impose a limit of \fIn\fP file descriptors that can be open at once.
+.IP \fB\-r\fP
+Impose a limit of \fIn\fP threads that can be run by the user at any one
+time.
 .IP \fB\-p\fP
 Impose a limit of \fIn\fP processes that can be run by the user at any one
 time.

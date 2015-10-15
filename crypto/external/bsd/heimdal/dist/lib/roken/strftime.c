@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: strftime.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
@@ -288,7 +288,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 				"%02d:%02d",
 				tm->tm_hour,
 				tm->tm_min);
-		
+		break;
 	    case 's' :
 		ret = snprintf (buf, maxsize - n,
 				"%d", (int)mktime(rk_UNCONST(tm)));
@@ -394,6 +394,6 @@ strftime (char *buf, size_t maxsize, const char *format,
 	    ++n;
 	}
     }
-    *buf++ = '\0';
+    *buf = '\0';
     return n;
 }

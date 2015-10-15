@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_cas.c,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_add_64_cas.c,v 1.9 2014/06/23 21:53:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,8 +35,11 @@
 
 #ifdef __HAVE_ATOMIC64_OPS
 
-void
-atomic_add_64(volatile uint64_t *addr, int64_t val)
+uint64_t fetch_and_add_8(volatile uint64_t *, uint64_t, ...)
+    asm("__sync_fetch_and_add_8");
+
+uint64_t
+fetch_and_add_8(volatile uint64_t *addr, uint64_t val, ...)
 {
 	uint64_t old, new;
 
@@ -44,7 +47,16 @@ atomic_add_64(volatile uint64_t *addr, int64_t val)
 		old = *addr;
 		new = old + val;
 	} while (atomic_cas_64(addr, old, new) != old);
+	return old;
 }
+
+void
+atomic_add_64(volatile uint64_t *addr, int64_t val)
+{
+   (void) fetch_and_add_8(addr, val);
+}
+
+__strong_alias(__atomic_fetch_add_8,__sync_fetch_and_add_8)
 
 #undef atomic_add_64
 atomic_op_alias(atomic_add_64,_atomic_add_64)

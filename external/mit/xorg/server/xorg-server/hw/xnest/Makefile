@@ -71,7 +71,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.glx} \
 	-lXfont -lXext -lfontenc \
 	-lpixman-1 -lX11 -lXau \
-	-lXdmcp -lfreetype -lm #MINIX -lcrypto
+	-lXdmcp -lfreetype -lm -lcrypto
 
 DPADD+=	${LDADD.dix} \
 	${DPADD.fb} \
@@ -95,14 +95,13 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.glx} \
 	${LIBXFONT} ${LIBXEXT} ${LIBFONTENC} \
 	${LIBPIXMAN-1} ${LIBX11} ${LIBXAU} \
-	${LIBXDMCP} ${LIBFREETYPE} ${LIBM} #MINIX ${LIBCRYPTO}
+	${LIBXDMCP} ${LIBFREETYPE} ${LIBM} ${LIBCRYPTO}
 
 .if !defined(__MINIX)
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif
-.endif # !defined(__MINIX)
 
 .if ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
@@ -113,6 +112,7 @@ DPADD+=	${LIBX86_64}
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
 .endif
+.endif # !defined(__MINIX)
 
 COPTS.miinitext.c+=	-Wno-error	# XXX xf86bigfstr.h
 

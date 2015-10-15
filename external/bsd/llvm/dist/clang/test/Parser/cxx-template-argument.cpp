@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -fdelayed-template-parsing
 
 template<typename T> struct A {};
 
@@ -104,4 +105,9 @@ namespace pr16225add {
     UnknownBase<2<N1,N2<4> // expected-error {{unknown template name 'UnknownBase'}}
   { };
 
+}
+
+namespace PR18793 {
+  template<typename T, T> struct S {};
+  template<typename T> int g(S<T, (T())> *);
 }

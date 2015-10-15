@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: tsearch.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -115,7 +115,7 @@ rk_twalk(const void *vroot,
  * compar: function to carry out node comparisons
  */
 ROKEN_LIB_FUNCTION void *
-rk_tdelete(const void * __restrict vkey, void ** __restrict vrootp,
+rk_tdelete(const void * vkey, void ** vrootp,
 	int (*compar)(const void *, const void *))
 {
 	node_t **rootp = (node_t **)vrootp;

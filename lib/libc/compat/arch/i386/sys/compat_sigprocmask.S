@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.2 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.3 2014/05/23 02:34:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.2 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.3 2014/05/23 02:34:33 uebayasi Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -71,3 +71,4 @@ err:
 #else
 	jmp	CERROR
 #endif
+END(sigprocmask)

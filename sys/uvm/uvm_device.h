@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.12 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.13 2014/12/14 23:48:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@ struct uvm_device {
  * prototypes
  */
 
-struct uvm_object *udv_attach(void *, vm_prot_t, voff_t, vsize_t);
+struct uvm_object *udv_attach(dev_t, vm_prot_t, voff_t, vsize_t);
 
 #endif /* _KERNEL */
 

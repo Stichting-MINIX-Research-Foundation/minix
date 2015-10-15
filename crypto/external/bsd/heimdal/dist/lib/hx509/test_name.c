@@ -1,4 +1,4 @@
-/*	$NetBSD: test_name.c,v 1.1.1.1 2011/04/13 18:15:13 elric Exp $	*/
+/*	$NetBSD: test_name.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -338,7 +338,7 @@ test_compare(hx509_context context)
     if (ret) return 1;
     ret = compare_subject(c2, c3, &l3);
     if (ret) return 1;
-    
+
     if (l0 != 0) return 1;
     if (l2 < l1) return 1;
     if (l3 < l2) return 1;

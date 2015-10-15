@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_div.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_div.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_DIV_C
@@ -42,7 +42,7 @@ int mp_div(mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     }
     return res;
   }
-	
+
   /* init our temps */
   if ((res = mp_init_multi(&ta, &tb, &tq, &q, NULL) != MP_OKAY)) {
      return res;
@@ -52,7 +52,7 @@ int mp_div(mp_int * a, mp_int * b, mp_int * c, mp_int * d)
   mp_set(&tq, 1);
   n = mp_count_bits(a) - mp_count_bits(b);
   if (((res = mp_abs(a, &ta)) != MP_OKAY) ||
-      ((res = mp_abs(b, &tb)) != MP_OKAY) || 
+      ((res = mp_abs(b, &tb)) != MP_OKAY) ||
       ((res = mp_mul_2d(&tb, n, &tb)) != MP_OKAY) ||
       ((res = mp_mul_2d(&tq, n, &tq)) != MP_OKAY)) {
       goto LBL_ERR;
@@ -89,17 +89,17 @@ LBL_ERR:
 
 #else
 
-/* integer signed division. 
+/* integer signed division.
  * c*b + d == a [e.g. a/b, c=quotient, d=remainder]
  * HAC pp.598 Algorithm 14.20
  *
- * Note that the description in HAC is horribly 
- * incomplete.  For example, it doesn't consider 
- * the case where digits are removed from 'x' in 
- * the inner loop.  It also doesn't consider the 
+ * Note that the description in HAC is horribly
+ * incomplete.  For example, it doesn't consider
+ * the case where digits are removed from 'x' in
+ * the inner loop.  It also doesn't consider the
  * case that y has fewer than three digits, etc..
  *
- * The overall algorithm is as described as 
+ * The overall algorithm is as described as
  * 14.20 from HAC but fixed to treat these cases.
 */
 int mp_div (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
@@ -189,7 +189,7 @@ int mp_div (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
       continue;
     }
 
-    /* step 3.1 if xi == yt then set q{i-t-1} to b-1, 
+    /* step 3.1 if xi == yt then set q{i-t-1} to b-1,
      * otherwise set q{i-t-1} to (xi*b + x{i-1})/yt */
     if (x.dp[i] == y.dp[t]) {
       q.dp[i - t - 1] = ((((mp_digit)1) << DIGIT_BIT) - 1);
@@ -203,10 +203,10 @@ int mp_div (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
       q.dp[i - t - 1] = (mp_digit) (tmp & (mp_word) (MP_MASK));
     }
 
-    /* while (q{i-t-1} * (yt * b + y{t-1})) > 
-             xi * b**2 + xi-1 * b + xi-2 
-     
-       do q{i-t-1} -= 1; 
+    /* while (q{i-t-1} * (yt * b + y{t-1})) >
+             xi * b**2 + xi-1 * b + xi-2
+
+       do q{i-t-1} -= 1;
     */
     q.dp[i - t - 1] = (q.dp[i - t - 1] + 1) & MP_MASK;
     do {
@@ -257,10 +257,10 @@ int mp_div (mp_int * a, mp_int * b, mp_int * c, mp_int * d)
     }
   }
 
-  /* now q is the quotient and x is the remainder 
-   * [which we have to normalize] 
+  /* now q is the quotient and x is the remainder
+   * [which we have to normalize]
    */
-  
+
   /* get sign before writing to c */
   x.sign = x.used == 0 ? MP_ZPOS : a->sign;
 
@@ -289,6 +289,6 @@ LBL_Q:mp_clear (&q);
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_div.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_div.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

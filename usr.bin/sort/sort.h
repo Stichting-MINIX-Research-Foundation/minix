@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.34 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: sort.h,v 1.35 2015/08/05 07:10:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -103,9 +103,9 @@
 		err(2, "%p", file);					\
 }
 
-#define	EWRITE(ptr, size, n, f) {					\
+#define	EWRITE(ptr, size, n, f, fmt) {					\
 	if (!fwrite(ptr, size, n, f))					\
-		 err(2, NULL);						\
+		 err(2, fmt);						\
 }
 
 /* Records are limited to MAXBUFSIZE (8MB) and less if you want to sort

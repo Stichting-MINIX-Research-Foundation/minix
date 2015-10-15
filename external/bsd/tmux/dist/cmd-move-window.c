@@ -1,4 +1,4 @@
-/* $Id: cmd-move-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,41 +26,50 @@
  * Move a window.
  */
 
-int	cmd_move_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_move_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_move_window_entry = {
 	"move-window", "movew",
-	"dks:t:", 0, 0,
-	"[-dk] " CMD_SRCDST_WINDOW_USAGE,
+	"dkrs:t:", 0, 0,
+	"[-dkr] " CMD_SRCDST_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_move_window_exec
 };
 
-int
-cmd_move_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_move_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct session	*src, *dst;
+	struct session	*src, *dst, *s;
 	struct winlink	*wl;
 	char		*cause;
 	int		 idx, kflag, dflag;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 's'), &src)) == NULL)
-		return (-1);
-	if ((idx = cmd_find_index(ctx, args_get(args, 't'), &dst)) == -2)
-		return (-1);
+	if (args_has(args, 'r')) {
+		if ((s = cmd_find_session(cmdq, args_get(args, 't'), 0)) == NULL)
+			return (CMD_RETURN_ERROR);
+
+		session_renumber_windows(s);
+		recalculate_sizes();
+
+		return (CMD_RETURN_NORMAL);
+	}
+
+	if ((wl = cmd_find_window(cmdq, args_get(args, 's'), &src)) == NULL)
+		return (CMD_RETURN_ERROR);
+	if ((idx = cmd_find_index(cmdq, args_get(args, 't'), &dst)) == -2)
+		return (CMD_RETURN_ERROR);
 
 	kflag = args_has(self->args, 'k');
 	dflag = args_has(self->args, 'd');
 	if (server_link_window(src, wl, dst, idx, kflag, !dflag, &cause) != 0) {
-		ctx->error(ctx, "can't move window: %s", cause);
-		xfree(cause);
-		return (-1);
+		cmdq_error(cmdq, "can't move window: %s", cause);
+		free(cause);
+		return (CMD_RETURN_ERROR);
 	}
 	server_unlink_window(src, wl);
 	recalculate_sizes();
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

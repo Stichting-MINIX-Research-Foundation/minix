@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/02/24 13:53:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2015/01/08 03:50:56 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,7 +22,8 @@ LDADD+=-lrumpfs_ffs -lrumpvfs                                   # ffs
 LDADD+=-lrumpdev_disk -lrumpdev                                 # disk device
 LDADD+=-lrumpnet_shmif 						# shmif
 LDADD+=-lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=-lrump -lrumpuser -lpthread                    		# base
+LDADD+=-lrumpkern_sysproxy -lrump -lrumpuser 			# base
+LDADD+=-lpthread
 
 LDADD+=-lutil
 

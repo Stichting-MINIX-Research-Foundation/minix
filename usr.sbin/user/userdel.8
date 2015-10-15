@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.32 2006/05/29 01:38:33 hubertf Exp $ */
+.\" $NetBSD: userdel.8,v 1.33 2014/09/19 16:02:59 wiz Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -138,12 +138,12 @@ at very large sites could take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Sh EXIT STATUS
-.Ex -std userdel
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .El
+.Sh EXIT STATUS
+.Ex -std userdel
 .Sh SEE ALSO
 .Xr passwd 5 ,
 .Xr usermgmt.conf 5 ,

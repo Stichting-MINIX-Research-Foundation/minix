@@ -41,10 +41,10 @@
 extern pthread_mutex_t pu_lock;
 #define PU_LOCK() pthread_mutex_lock(&pu_lock)
 #define PU_UNLOCK() pthread_mutex_unlock(&pu_lock)
-#else /* defined(__minix) */
+#else
 #define PU_LOCK() /* nothing */
 #define PU_UNLOCK()  /* nothing */
-#endif /* defined(__minix) */
+#endif /* !defined(__minix) */
 
 #define PU_CMAP(pu, c) (pu->pu_cmap ? pu->pu_cmap(pu,c) : (struct puffs_node*)c)
 
@@ -266,12 +266,12 @@ void	puffs__fsframe_gotframe(struct puffs_usermount *,
 
 uint64_t	puffs__nextreq(struct puffs_usermount *pu);
 
-#ifdef __minix
+#if defined(__minix)
 int lpuffs_pump(void);
 void lpuffs_init(struct puffs_usermount *);
 void lpuffs_debug(const char *format, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 __END_DECLS
 

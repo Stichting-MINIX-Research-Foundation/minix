@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2013\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.2 2013/02/28 20:41:21 martin Exp $");
+__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.3 2014/04/28 08:34:16 martin Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -38,6 +38,48 @@ __RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.2 2013/02/28 20:41:21 martin Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <atf-c.h>
+
+/*
+ * helper function
+ */
+static const char curtain_name[] = "security.models.bsd44.curtain";
+static const char securelevel_name[] = "security.models.bsd44.securelevel";
+
+static bool may_lower_curtain(void);
+static int get_curtain(void);
+static void set_curtain(int newval);
+
+static bool
+may_lower_curtain(void)
+{
+	int seclevel;
+	size_t len = sizeof(seclevel);
+
+	if (sysctlbyname(securelevel_name, &seclevel, &len, NULL, 0) != 0)
+		atf_tc_fail("failed to read %s", securelevel_name);
+
+	return seclevel <= 0;
+}
+
+static int
+get_curtain(void)
+{
+	int curtain;
+	size_t len = sizeof(curtain);
+
+	if (sysctlbyname(curtain_name, &curtain, &len, NULL, 0) != 0)
+		atf_tc_fail("failed to read %s", curtain_name);
+
+	return curtain;
+}
+
+static void
+set_curtain(int newval)
+{
+
+	if (sysctlbyname(curtain_name, NULL, 0, &newval, sizeof(newval)) != 0)
+		atf_tc_fail("failed to set %s to %d", curtain_name, newval);
+}
 
 /*
  * PR kern/47598: if security.models.extensions.curtain = 1 we crash when
@@ -59,19 +101,20 @@ ATF_TC_HEAD(kauth_curtain, tc)
 
 ATF_TC_BODY(kauth_curtain, tc)
 {
-	static const char curtain_name[] = "security.models.bsd44.curtain";
 
-	int old_curtain, new_curtain = 1, s, s2, err;
-	size_t old_curtain_len = sizeof(old_curtain);
+	int old_curtain, s, s2, err;
 	socklen_t slen;
 	struct sockaddr_in sa;
 
 	/*
 	 * save old value of "curtain" and enable it
 	 */
-	if (sysctlbyname(curtain_name, &old_curtain, &old_curtain_len,
-	    &new_curtain, sizeof(new_curtain)) != 0)
-		atf_tc_fail("failed to enable %s", curtain_name);
+	old_curtain = get_curtain();
+	if (old_curtain < 1 && !may_lower_curtain())
+		atf_tc_skip("curtain is not enabled and we would not be able"
+		    " to drop it later due to securelevel settings");
+
+	set_curtain(1);
 
 	/*
 	 * create a socket and bind it to some arbitray free port
@@ -113,9 +156,7 @@ ATF_TC_BODY(kauth_curtain, tc)
 	/*
 	 * restore old value of curtain
 	 */
-	if (sysctlbyname(curtain_name, NULL, 0,
-	    &old_curtain, sizeof(old_curtain)) != 0)
-		atf_tc_fail("failed to restore %s", curtain_name);
+	set_curtain(old_curtain);
 }
 
 ATF_TP_ADD_TCS(tp)

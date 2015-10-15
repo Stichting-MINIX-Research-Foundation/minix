@@ -37,7 +37,12 @@ check_PROGRAMS = test_ntlm
 
 LDADD = libheimntlm.la $(LIB_roken)
 
-EXTRA_DIST = version-script.map ntlm_err.et
+EXTRA_DIST = \
+	NTMakefile \
+	libheimntlm-version.rc \
+	libheimntlm-exports.def \
+	version-script.map \
+	ntlm_err.et
 
 CLEANFILES = \
 	ntlm_err.c ntlm_err.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.41 2013/06/09 13:25:40 christos Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.42 2014/05/23 20:50:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -445,7 +445,7 @@ config(char *dev, char *file, char *geom, int action)
 #if defined(__minix)
 		if (rv && stop)
 			stop_service(fd, rdev);
-#endif /* !defined(__minix) */
+#endif /* defined(__minix) */
 		if (rv != 0)
 			errx(1, "invalid geometry: %s", geom);
 		vndio.vnd_flags = VNDIOF_HASGEOM;
@@ -497,14 +497,15 @@ config(char *dev, char *file, char *geom, int action)
 		int	ffd;
 
 		ffd = open(file, readonly ? O_RDONLY : O_RDWR);
-		if (ffd < 0)
+		if (ffd < 0) {
 			warn("%s", file);
-		else {
+			rv = -1;
+		} else {
 #if !defined(__minix)
 			(void) close(ffd);
 #else
 			vndio.vnd_fildes = ffd;
-#endif /* defined(__minix) */
+#endif /* !defined(__minix) */
 
 			rv = ioctl(fd, VNDIOCSET, &vndio);
 #ifdef VNDIOOCSET

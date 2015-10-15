@@ -916,19 +916,19 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
 
-#ifdef _REENTRANT
+#if defined(__minix) && defined(_REENTRANT)
 	if (!locked)
 		_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
-#endif
+#endif /* defined(__minix) && defined(_REENTRANT) */
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
 		_PROP_ASSERT(pde->pde_objref != NULL);
 		po = pde->pde_objref;
 	}
-#ifdef _REENTRANT
+#if defined(__minix) && defined(_REENTRANT)
 	if (!locked)
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-#endif
+#endif /* defined(__minix) && defined(_REENTRANT) */
 	return (po);
 }
 /*

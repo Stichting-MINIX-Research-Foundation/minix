@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.141 2012/03/11 06:53:18 riz Exp $
+# $NetBSD: md.i386,v 1.143 2014/08/06 12:15:01 martin Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete

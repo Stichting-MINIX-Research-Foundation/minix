@@ -1,4 +1,4 @@
-/*	$NetBSD: rand-egd.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: rand-egd.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -146,7 +146,7 @@ egd_seed(const void *indata, int size)
 	    break;
 	indata = ((unsigned char *)indata) + len;
 	size -= len;
-    }	
+    }
     close(fd);
 }
 
@@ -172,7 +172,7 @@ get_bytes(const char *path, unsigned char *outdata, int size)
 	    break;
 	outdata += len;
 	size -= len;
-    }	
+    }
     close(fd);
 
     return ret;

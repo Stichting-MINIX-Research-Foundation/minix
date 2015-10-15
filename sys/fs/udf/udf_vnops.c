@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.87 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.87 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.87 2013/10/18 19:56:55 christos Exp 
 
 #define VTOI(vnode) ((struct udf_node *) (vnode)->v_data)
 
+/* forward declarations */
+static int udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
+	uint8_t *targetbuf, int *length);
 
 /* externs */
 extern int prtactive;
@@ -94,9 +97,7 @@ udf_inactive(void *v)
 	}
 
 	/*
-	 * Optionally flush metadata to disc. If the file has not been
-	 * referenced anymore in a directory we ought to free up the resources
-	 * on disc if applicable.
+	 * Optionally flush metadata to disc.
 	 */
 	if (udf_node->fe) {
 		refcnt = udf_rw16(udf_node->fe->link_cnt);
@@ -113,10 +114,7 @@ udf_inactive(void *v)
 
 	*ap->a_recycle = false;
 	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
-	 	/* remove this file's allocation */
-		DPRINTF(NODE, ("udf_inactive deleting unlinked file\n"));
 		*ap->a_recycle = true;
-		udf_delete_node(udf_node);
 		VOP_UNLOCK(vp);
 		return 0;
 	}
@@ -131,8 +129,6 @@ udf_inactive(void *v)
 
 /* --------------------------------------------------------------------- */
 
-int udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *lwp);
-
 int
 udf_reclaim(void *v)
 {
@@ -141,6 +137,7 @@ udf_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *udf_node = VTOI(vp);
+	int refcnt;
 
 	DPRINTF(NODE, ("udf_reclaim called for node %p\n", udf_node));
 	if (prtactive && vp->v_usecount > 1)
@@ -151,6 +148,23 @@ udf_reclaim(void *v)
 		return 0;
 	}
 
+	/*
+	 * If the file has not been referenced anymore in a directory
+	 * we ought to free up the resources on disc if applicable.
+	 */
+	if (udf_node->fe) {
+		refcnt = udf_rw16(udf_node->fe->link_cnt);
+	} else {
+		assert(udf_node->efe);
+		refcnt = udf_rw16(udf_node->efe->link_cnt);
+	}
+
+	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
+	 	/* remove this file's allocation */
+		DPRINTF(NODE, ("udf_inactive deleting unlinked file\n"));
+		udf_delete_node(udf_node);
+	}
+
 	/* update note for closure */
 	udf_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
@@ -159,6 +173,9 @@ udf_reclaim(void *v)
 		vprint("udf_reclaim(): waiting for writeout\n", vp);
 		tsleep(&udf_node->outstanding_nodedscr, PRIBIO, "recl wait", hz/8);
 	}
+
+	vcache_remove(vp->v_mount, &udf_node->loc.loc, 
+	    sizeof(udf_node->loc.loc));
 
 	/* dispose all node knowledge */
 	udf_dispose_node(udf_node);
@@ -248,8 +265,13 @@ udf_read(void *v)
 	/* note access time unless not requested */
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		udf_node->i_flags |= IN_ACCESS;
-		if ((ioflag & IO_SYNC) == IO_SYNC)
-			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
+		if ((ioflag & IO_SYNC) == IO_SYNC) {
+			int uerror;
+
+			uerror = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
+			if (error == 0)
+				error = uerror;
+		}
 	}
 
 	return error;
@@ -487,6 +509,7 @@ udf_vfsstrategy(void *v)
 
 	/* check assertions: we OUGHT to always get multiples of this */
 	assert(sectors * lb_size == bp->b_bcount);
+	__USE(sectors);
 
 	/* issue buffer */
 	if (bp->b_flags & B_READ) {
@@ -639,7 +662,7 @@ udf_readdir(void *v)
 int
 udf_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -834,6 +857,8 @@ done:
 			    cnp->cn_flags);
 
 out:
+	if (error == 0 && *vpp != dvp)
+		VOP_UNLOCK(*vpp);
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
 
 	return error;
@@ -862,10 +887,10 @@ udf_getattr(void *v)
 	uint64_t filesize, blkssize;
 	uint32_t nlink;
 	uint32_t offset, a_l;
-	uint8_t *filedata;
+	uint8_t *filedata, *targetbuf;
 	uid_t uid;
 	gid_t gid;
-	int error;
+	int length, error;
 
 	DPRINTF(CALL, ("udf_getattr called\n"));
 
@@ -935,6 +960,22 @@ udf_getattr(void *v)
 	 */
 	if (vap->va_type == VDIR)
 		vap->va_nlink++;
+
+	/*
+	 * BUG-ALERT: Posix requires the va_size to be pathlength for symbolic
+	 * links.
+	 */
+	if (vap->va_type == VLNK) {
+		/* claim temporary buffers for translation */
+		targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
+		error = udf_do_readlink(udf_node, filesize, targetbuf, &length);
+		if (!error) {
+			vap->va_size = length;
+			KASSERT(length == strlen(targetbuf));
+		}
+		free(targetbuf, M_UDFTEMP);
+		/* XXX return error? */
+	}
 
 	/* access times */
 	udf_timestamp_to_timespec(ump, atime,    &vap->va_atime);
@@ -1017,8 +1058,6 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1056,8 +1095,6 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 
 	/* mark node changed */
 	udf_node->i_flags |= IN_CHANGE;
-	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		udf_node->i_flags |= IN_ACCESS;
 
 	return 0;
 }
@@ -1453,7 +1490,7 @@ udf_access(void *v)
 int
 udf_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1468,7 +1505,6 @@ udf_create(void *v)
 	DPRINTF(CALL, ("udf_create called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1477,7 +1513,7 @@ udf_create(void *v)
 int
 udf_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1492,7 +1528,6 @@ udf_mknod(void *v)
 	DPRINTF(CALL, ("udf_mknod called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1501,7 +1536,7 @@ udf_mknod(void *v)
 int
 udf_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1516,7 +1551,6 @@ udf_mkdir(void *v)
 	DPRINTF(CALL, ("udf_mkdir called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1559,7 +1593,7 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 int
 udf_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1575,7 +1609,6 @@ udf_link(void *v)
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
 
 	return error;
 }
@@ -1699,7 +1732,7 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 int
 udf_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1725,59 +1758,40 @@ udf_symlink(void *v)
 		error = udf_do_symlink(udf_node, ap->a_target);
 		if (error) {
 			/* remove node */
-			udf_shrink_node(udf_node, 0);
 			udf_dir_detach(udf_node->ump, dir_node, udf_node, cnp);
+			vrele(*vpp);
+			*vpp = NULL;
 		}
 	}
-	vput(dvp);
 	return error;
 }
 
 /* --------------------------------------------------------------------- */
 
-int
-udf_readlink(void *v)
+static int
+udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
+	uint8_t *targetbuf, int *length)
 {
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct uio *uio = ap->a_uio;
-	kauth_cred_t cred = ap->a_cred;
-	struct udf_node *udf_node;
 	struct pathcomp pathcomp;
-	struct vattr vattr;
-	uint8_t *pathbuf, *targetbuf, *tmpname;
+	uint8_t *pathbuf, *tmpname;
 	uint8_t *pathpos, *targetpos;
 	char *mntonname;
 	int pathlen, targetlen, namelen, mntonnamelen, len, l_ci;
 	int first, error;
 
-	DPRINTF(CALL, ("udf_readlink called\n"));
-
-	udf_node = VTOI(vp);
-	error = VOP_GETATTR(vp, &vattr, cred);
-	if (error)
-		return error;
-
-	/* claim temporary buffers for translation */
 	pathbuf   = malloc(UDF_SYMLINKBUFLEN, M_UDFTEMP, M_WAITOK);
-	targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
 	tmpname   = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
 	memset(pathbuf, 0, UDF_SYMLINKBUFLEN);
 	memset(targetbuf, 0, PATH_MAX);
 
 	/* read contents of file in our temporary buffer */
 	error = vn_rdwr(UIO_READ, udf_node->vnode,
-		pathbuf, vattr.va_size, 0,
+		pathbuf, filesize, 0,
 		UIO_SYSSPACE, IO_NODELOCKED | IO_ALTSEMANTICS,
 		FSCRED, NULL, NULL);
 	if (error) {
 		/* failed to read in symlink contents */
 		free(pathbuf, M_UDFTEMP);
-		free(targetbuf, M_UDFTEMP);
 		free(tmpname, M_UDFTEMP);
 		return error;
 	}
@@ -1792,7 +1806,7 @@ udf_readlink(void *v)
 
 	error = 0;
 	first = 1;
-	while (vattr.va_size - pathlen >= UDF_PATH_COMP_SIZE) {
+	while (filesize - pathlen >= UDF_PATH_COMP_SIZE) {
 		len = UDF_PATH_COMP_SIZE;
 		memcpy(&pathcomp, pathpos, len);
 		l_ci = pathcomp.l_ci;
@@ -1813,7 +1827,7 @@ udf_readlink(void *v)
 			}
 			memcpy(targetpos, mntonname, mntonnamelen);
 			targetpos += mntonnamelen; targetlen -= mntonnamelen;
-			if (vattr.va_size-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
+			if (filesize-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
 				/* more follows, so must be directory */
 				*targetpos++ = '/'; targetlen--;
 			}
@@ -1854,7 +1868,7 @@ udf_readlink(void *v)
 			}
 			memcpy(targetpos, tmpname, namelen);
 			targetpos += namelen; targetlen -= namelen;
-			if (vattr.va_size-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
+			if (filesize-pathlen > UDF_PATH_COMP_SIZE+l_ci) {
 				/* more follows, so must be directory */
 				*targetpos++ = '/'; targetlen--;
 			}
@@ -1871,17 +1885,54 @@ udf_readlink(void *v)
 
 	}
 	/* all processed? */
-	if (vattr.va_size - pathlen > 0)
+	if (filesize - pathlen > 0)
 		error = EINVAL;
+
+	free(pathbuf, M_UDFTEMP);
+	free(tmpname, M_UDFTEMP);
+
+	*length = PATH_MAX - targetlen;
+	return error;
+}
+
+
+int
+udf_readlink(void *v)
+{
+	struct vop_readlink_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct udf_node *udf_node = VTOI(vp);
+	struct file_entry    *fe  = udf_node->fe;
+	struct extfile_entry *efe = udf_node->efe;
+	struct uio *uio = ap->a_uio;
+	uint64_t filesize;
+	uint8_t *targetbuf;
+	int length;
+	int error;
+
+	DPRINTF(CALL, ("udf_readlink called\n"));
+
+	if (fe) {
+		filesize = udf_rw64(fe->inf_len);
+	} else {
+		assert(udf_node->efe);
+		filesize = udf_rw64(efe->inf_len);
+	}
+
+	/* claim temporary buffers for translation */
+	targetbuf = malloc(PATH_MAX+1, M_UDFTEMP, M_WAITOK);
+
+	error = udf_do_readlink(udf_node, filesize, targetbuf, &length);
 
 	/* uiomove() to destination */
 	if (!error)
-		uiomove(targetbuf, PATH_MAX - targetlen, uio);
+		uiomove(targetbuf, length, uio);
 
-	free(pathbuf, M_UDFTEMP);
 	free(targetbuf, M_UDFTEMP);
-	free(tmpname, M_UDFTEMP);
-
 	return error;
 }
 
@@ -2144,6 +2195,8 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_setattr_desc, udf_setattr },	/* setattr */	/* TODO chflags */
 	{ &vop_read_desc, udf_read },		/* read */
 	{ &vop_write_desc, udf_write },		/* write */	/* WRITE */
+	{ &vop_fallocate_desc, genfs_eopnotsupp }, /* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp }, /* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

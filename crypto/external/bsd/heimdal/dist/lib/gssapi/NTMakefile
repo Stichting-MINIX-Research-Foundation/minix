@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009-2011, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ krb5src = \
 	krb5/address_to_krb5addr.c \
 	krb5/aeap.c \
 	krb5/arcfour.c \
+        krb5/authorize_localname.c \
 	krb5/canonicalize_name.c \
 	krb5/creds.c \
 	krb5/ccache_name.c \
@@ -73,6 +74,7 @@ krb5src = \
 	krb5/inquire_mechs_for_name.c \
 	krb5/inquire_names_for_mech.c \
 	krb5/inquire_sec_context_by_oid.c \
+        krb5/pname_to_uid.c \
 	krb5/process_context_token.c \
 	krb5/prf.c \
 	krb5/release_buffer.c \
@@ -93,9 +95,13 @@ mechsrc = \
 	mech/cred.h \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
+	mech/gss_acquire_cred_ext.c \
+	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
+	mech/gss_add_cred_with_password.c \
 	mech/gss_add_oid_set_member.c \
 	mech/gss_aeap.c \
+        mech/gss_authorize_localname.c \
 	mech/gss_buffer_set.c \
 	mech/gss_canonicalize_name.c \
 	mech/gss_compare_name.c \
@@ -103,15 +109,19 @@ mechsrc = \
 	mech/gss_create_empty_oid_set.c \
 	mech/gss_cred.c \
 	mech/gss_decapsulate_token.c \
+	mech/gss_delete_name_attribute.c \
 	mech/gss_delete_sec_context.c \
 	mech/gss_display_name.c \
+	mech/gss_display_name_ext.c \
 	mech/gss_display_status.c \
 	mech/gss_duplicate_name.c \
 	mech/gss_duplicate_oid.c \
 	mech/gss_encapsulate_token.c \
 	mech/gss_export_name.c \
+	mech/gss_export_name_composite.c \
 	mech/gss_export_sec_context.c \
 	mech/gss_get_mic.c \
+	mech/gss_get_name_attribute.c \
 	mech/gss_import_name.c \
 	mech/gss_import_sec_context.c \
 	mech/gss_indicate_mechs.c \
@@ -121,6 +131,7 @@ mechsrc = \
 	mech/gss_inquire_cred_by_mech.c \
 	mech/gss_inquire_cred_by_oid.c \
 	mech/gss_inquire_mechs_for_name.c \
+	mech/gss_inquire_name.c \
 	mech/gss_inquire_names_for_mech.c \
 	mech/gss_krb5.c \
 	mech/gss_mech_switch.c \
@@ -129,6 +140,7 @@ mechsrc = \
 	mech/gss_oid.c \
 	mech/gss_oid_equal.c \
 	mech/gss_oid_to_str.c \
+	mech/gss_pname_to_uid.c \
 	mech/gss_process_context_token.c \
 	mech/gss_pseudo_random.c \
 	mech/gss_release_buffer.c \
@@ -138,6 +150,7 @@ mechsrc = \
 	mech/gss_release_oid_set.c \
 	mech/gss_seal.c \
 	mech/gss_set_cred_option.c \
+	mech/gss_set_name_attribute.c \
 	mech/gss_set_sec_context_option.c \
 	mech/gss_sign.c \
 	mech/gss_store_cred.c \
@@ -172,6 +185,7 @@ ntlmsrc = \
 	ntlm/canonicalize_name.c \
 	ntlm/compare_name.c \
 	ntlm/context_time.c \
+        ntlm/creds.c \
 	ntlm/crypto.c \
 	ntlm/delete_sec_context.c \
 	ntlm/display_name.c \
@@ -186,10 +200,11 @@ ntlmsrc = \
 	ntlm/indicate_mechs.c \
 	ntlm/init_sec_context.c \
 	ntlm/inquire_context.c \
-	ntlm/inquire_cred.c \
 	ntlm/inquire_cred_by_mech.c \
 	ntlm/inquire_mechs_for_name.c \
 	ntlm/inquire_names_for_mech.c \
+        ntlm/inquire_sec_context_by_oid.c \
+        ntlm/iter_cred.c \
 	ntlm/process_context_token.c \
 	ntlm/release_cred.c \
 	ntlm/release_name.c \
@@ -257,6 +272,7 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/acquire_cred.obj \
 	$(OBJ)\krb5/add_cred.obj \
 	$(OBJ)\krb5/address_to_krb5addr.obj \
+        $(OBJ)\krb5/authorize_localname.obj \
 	$(OBJ)\krb5/aeap.obj \
 	$(OBJ)\krb5/arcfour.obj \
 	$(OBJ)\krb5/canonicalize_name.obj \
@@ -289,6 +305,7 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/inquire_mechs_for_name.obj \
 	$(OBJ)\krb5/inquire_names_for_mech.obj \
 	$(OBJ)\krb5/inquire_sec_context_by_oid.obj \
+        $(OBJ)\krb5/pname_to_uid.obj \
 	$(OBJ)\krb5/process_context_token.obj \
 	$(OBJ)\krb5/prf.obj \
 	$(OBJ)\krb5/release_buffer.obj \
@@ -305,9 +322,13 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/context.obj \
 	$(OBJ)\mech/gss_accept_sec_context.obj \
 	$(OBJ)\mech/gss_acquire_cred.obj \
+	$(OBJ)\mech/gss_acquire_cred_ext.obj \
+	$(OBJ)\mech/gss_acquire_cred_with_password.obj \
 	$(OBJ)\mech/gss_add_cred.obj \
+	$(OBJ)\mech/gss_add_cred_with_password.obj \
 	$(OBJ)\mech/gss_add_oid_set_member.obj \
 	$(OBJ)\mech/gss_aeap.obj \
+	$(OBJ)\mech/gss_authorize_localname.obj \
 	$(OBJ)\mech/gss_buffer_set.obj \
 	$(OBJ)\mech/gss_canonicalize_name.obj \
 	$(OBJ)\mech/gss_compare_name.obj \
@@ -315,15 +336,19 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_create_empty_oid_set.obj \
 	$(OBJ)\mech/gss_cred.obj \
 	$(OBJ)\mech/gss_decapsulate_token.obj \
+	$(OBJ)\mech/gss_delete_name_attribute.obj \
 	$(OBJ)\mech/gss_delete_sec_context.obj \
 	$(OBJ)\mech/gss_display_name.obj \
+	$(OBJ)\mech/gss_display_name_ext.obj \
 	$(OBJ)\mech/gss_display_status.obj \
 	$(OBJ)\mech/gss_duplicate_name.obj \
 	$(OBJ)\mech/gss_duplicate_oid.obj \
 	$(OBJ)\mech/gss_encapsulate_token.obj \
 	$(OBJ)\mech/gss_export_name.obj \
+	$(OBJ)\mech/gss_export_name_composite.obj \
 	$(OBJ)\mech/gss_export_sec_context.obj \
 	$(OBJ)\mech/gss_get_mic.obj \
+	$(OBJ)\mech/gss_get_name_attribute.obj \
 	$(OBJ)\mech/gss_import_name.obj \
 	$(OBJ)\mech/gss_import_sec_context.obj \
 	$(OBJ)\mech/gss_indicate_mechs.obj \
@@ -333,6 +358,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_inquire_cred_by_mech.obj \
 	$(OBJ)\mech/gss_inquire_cred_by_oid.obj \
 	$(OBJ)\mech/gss_inquire_mechs_for_name.obj \
+	$(OBJ)\mech/gss_inquire_name.obj \
 	$(OBJ)\mech/gss_inquire_names_for_mech.obj \
 	$(OBJ)\mech/gss_krb5.obj \
 	$(OBJ)\mech/gss_mech_switch.obj \
@@ -341,6 +367,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_oid.obj \
 	$(OBJ)\mech/gss_oid_equal.obj \
 	$(OBJ)\mech/gss_oid_to_str.obj \
+	$(OBJ)\mech/gss_pname_to_uid.obj \
 	$(OBJ)\mech/gss_process_context_token.obj \
 	$(OBJ)\mech/gss_pseudo_random.obj \
 	$(OBJ)\mech/gss_release_buffer.obj \
@@ -350,6 +377,7 @@ libgssapi_OBJs = \
 	$(OBJ)\mech/gss_release_oid_set.obj \
 	$(OBJ)\mech/gss_seal.obj \
 	$(OBJ)\mech/gss_set_cred_option.obj \
+	$(OBJ)\mech/gss_set_name_attribute.obj \
 	$(OBJ)\mech/gss_set_sec_context_option.obj \
 	$(OBJ)\mech/gss_sign.obj \
 	$(OBJ)\mech/gss_store_cred.obj \
@@ -374,6 +402,7 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/canonicalize_name.obj \
 	$(OBJ)\ntlm/compare_name.obj \
 	$(OBJ)\ntlm/context_time.obj \
+        $(OBJ)\ntlm/creds.obj \
 	$(OBJ)\ntlm/crypto.obj \
 	$(OBJ)\ntlm/delete_sec_context.obj \
 	$(OBJ)\ntlm/display_name.obj \
@@ -387,10 +416,11 @@ libgssapi_OBJs = \
 	$(OBJ)\ntlm/indicate_mechs.obj \
 	$(OBJ)\ntlm/init_sec_context.obj \
 	$(OBJ)\ntlm/inquire_context.obj \
-	$(OBJ)\ntlm/inquire_cred.obj \
 	$(OBJ)\ntlm/inquire_cred_by_mech.obj \
 	$(OBJ)\ntlm/inquire_mechs_for_name.obj \
 	$(OBJ)\ntlm/inquire_names_for_mech.obj \
+        $(OBJ)\ntlm/inquire_sec_context_by_oid.obj \
+        $(OBJ)\ntlm/iter_cred.obj \
 	$(OBJ)\ntlm/process_context_token.obj \
 	$(OBJ)\ntlm/release_cred.obj \
 	$(OBJ)\ntlm/release_name.obj \
@@ -450,6 +480,7 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 	$(CP) $** $@
 
 LIBGSSAPI_LIBS=\
+        $(LIBHEIMBASE)  \
 	$(LIBROKEN)	\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\

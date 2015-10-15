@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_export_sec_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_export_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -44,7 +44,7 @@ gss_export_sec_context(OM_uint32 *minor_status,
 
 	major_status = m->gm_export_sec_context(minor_status,
 	    &ctx->gc_ctx, &buf);
-	
+
 	if (major_status == GSS_S_COMPLETE) {
 		unsigned char *p;
 

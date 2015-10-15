@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.12 2013/10/30 08:41:38 mrg Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.13 2015/10/06 08:57:34 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.12 2013/10/30 08:41:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.13 2015/10/06 08:57:34 hannken Exp $");
 #endif /* not lint */
 
 
@@ -118,8 +118,6 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
-	/* unreference the vnode so it can be recycled */
-	holdrele(udf_node->vnode);
 
 	putiobuf(buf);
 }
@@ -208,9 +206,6 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 	if (error)
 		goto out;
 
-	/* add reference to the vnode to prevent recycling */
-	vhold(udf_node->vnode);
-
 	if (waitfor) {
 		DPRINTF(WRITE, ("udf_write_nodedscr: sync write\n"));
 
@@ -224,8 +219,6 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 		/* will be UNLOCKED in call back */
 		return error;
 	}
-
-	holdrele(udf_node->vnode);
 out:
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {

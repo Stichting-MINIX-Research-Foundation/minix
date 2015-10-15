@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: cl_main.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: cl_main.c,v 10.54 2001/07/29 19:07:27 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:27 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: cl_main.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -239,11 +244,11 @@ cl_end(CL_PRIVATE *clp)
 static void
 term_init(const char *name, const char *ttype)
 {
-	int err;
+	int error;
 
 	/* Set up the terminal database information. */
-	setupterm(__UNCONST(ttype), STDOUT_FILENO, &err);
-	switch (err) {
+	setupterm(__UNCONST(ttype), STDOUT_FILENO, &error);
+	switch (error) {
 	case -1:
 		(void)fprintf(stderr,
 		    "%s: No terminal database found\n", name);

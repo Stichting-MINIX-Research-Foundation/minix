@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/02/04 15:00:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/08/10 17:34:21 joerg Exp $
 
 LIB=	LLVMAArch64MCTargetDesc
 
@@ -15,7 +15,9 @@ SRCS+=	AArch64AsmBackend.cpp \
 	AArch64MCAsmInfo.cpp \
 	AArch64MCCodeEmitter.cpp \
 	AArch64MCExpr.cpp \
-	AArch64MCTargetDesc.cpp
+	AArch64MCTargetDesc.cpp \
+	AArch64MachObjectWriter.cpp \
+	AArch64TargetStreamer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

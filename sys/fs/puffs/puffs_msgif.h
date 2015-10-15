@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.80 2012/08/10 16:49:35 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.84 2015/02/15 20:21:29 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -88,11 +88,12 @@ enum {
 	PUFFS_VN_ADVLOCK,	PUFFS_VN_LEASE,		PUFFS_VN_WHITEOUT,
 	PUFFS_VN_GETPAGES,	PUFFS_VN_PUTPAGES,	PUFFS_VN_GETEXTATTR,
 	PUFFS_VN_LISTEXTATTR,	PUFFS_VN_OPENEXTATTR,	PUFFS_VN_DELETEEXTATTR,
-	PUFFS_VN_SETEXTATTR,	PUFFS_VN_CLOSEEXTATTR
+	PUFFS_VN_SETEXTATTR,	PUFFS_VN_CLOSEEXTATTR,	PUFFS_VN_FALLOCATE,
+	PUFFS_VN_FDISCARD,
 	/* NOTE: If you add an op, decrement PUFFS_VN_SPARE accordingly */
 };
-#define PUFFS_VN_MAX PUFFS_VN_CLOSEEXTATTR
-#define PUFFS_VN_SPARE 32
+#define PUFFS_VN_MAX PUFFS_VN_FDISCARD
+#define PUFFS_VN_SPARE 30
 
 /*
  * These signal invalid parameters the file system returned.
@@ -164,7 +165,8 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_NOCACHE_ATTR	0x040	/* no attrib cache (unused) */
 #define PUFFS_KFLAG_CACHE_FS_TTL	0x080	/* cache use TTL from FS    */
 #define PUFFS_KFLAG_CACHE_DOTDOT	0x100	/* don't send lookup for .. */
-#define PUFFS_KFLAG_MASK		0x1bf
+#define PUFFS_KFLAG_NOFLUSH_META	0x200	/* don't flush metadata cache*/
+#define PUFFS_KFLAG_MASK		0x3bf
 
 #define PUFFS_FHFLAG_DYNAMIC		0x01
 #define PUFFS_FHFLAG_NFSV2		0x02
@@ -343,6 +345,9 @@ struct puffs_vfsmsg_suspend {
 
 #define PUFFS_EXTATTRCTL_HASNODE	0x01
 #define PUFFS_EXTATTRCTL_HASATTRNAME	0x02
+
+#define	PUFFS_OPEN_IO_DIRECT	0x01
+
 struct puffs_vfsmsg_extattrctl {
 	struct puffs_req	pvfsr_pr;
 
@@ -403,6 +408,7 @@ struct puffs_vnmsg_open {
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
+	int			pvnr_oflags;		/* IN	*/
 };
 
 struct puffs_vnmsg_close {
@@ -664,6 +670,19 @@ struct puffs_vnmsg_deleteextattr {
 	char			pvnr_attrname[PUFFS_EXTNAMELEN];/* OUT	  */
 
 	struct puffs_kcred	pvnr_cred;			/* OUT	*/
+};
+
+#define PUFFS_HAVE_FALLOCATE 1
+struct puffs_vnmsg_fallocate {
+	struct puffs_req	pvn_pr;
+	off_t			pvnr_off;			/* OUT    */
+	off_t			pvnr_len;			/* OUT    */
+};
+
+struct puffs_vnmsg_fdiscard {
+	struct puffs_req	pvn_pr;
+	off_t			pvnr_off;			/* OUT    */
+	off_t			pvnr_len;			/* OUT    */
 };
 
 /*

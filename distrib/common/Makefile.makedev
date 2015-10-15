@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.18 2012/08/10 05:22:22 matt Exp $
+#	$NetBSD: Makefile.makedev,v 1.19 2014/08/10 05:56:36 matt Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy .OBJDIR-of-etc/MAKEDEV to ./dev
@@ -41,12 +41,18 @@ CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 #
 MTREECONF+=	${MAKEDEVSPEC}
 
+.if exists(${NETBSDSRCDIR}/etc/etc.${MACHINE_CPU}/MAKEDEV.conf)
+MAKEDEV_MACHINE=${MACHINE_CPU}
+.else
+MAKEDEV_MACHINE=${MACHINE}
+.endif
+
 ${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} Makefile \
-		${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV.conf
+		${NETBSDSRCDIR}/etc/etc.${MAKEDEV_MACHINE}/MAKEDEV.conf
 		
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET} ${.TARGET}.tmp
-	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	MACHINE=${MAKEDEV_MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    ${HOST_SH} ${MAKEDEVSCRIPT} -s ${MAKEDEVTARGETS} \
 	    > ${.TARGET}.tmp
 	${TOOL_SED} -e '/^\. type=dir/d' -e 's,^\.,./dev,' ${.TARGET}.tmp \

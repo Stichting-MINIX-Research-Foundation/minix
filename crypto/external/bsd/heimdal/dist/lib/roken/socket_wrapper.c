@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_wrapper.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: socket_wrapper.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (C) Jelmer Vernooij 2005 <jelmer@samba.org>
@@ -298,7 +298,7 @@ static int convert_un_in(const struct sockaddr_un *un, struct sockaddr *in, sock
 	case SOCKET_TYPE_CHAR_TCP:
 	case SOCKET_TYPE_CHAR_UDP: {
 		struct sockaddr_in *in2 = (struct sockaddr_in *)in;
-		
+
 		if ((*len) < sizeof(*in2)) {
 		    errno = EINVAL;
 		    return -1;
@@ -316,7 +316,7 @@ static int convert_un_in(const struct sockaddr_un *un, struct sockaddr *in, sock
 	case SOCKET_TYPE_CHAR_TCP_V6:
 	case SOCKET_TYPE_CHAR_UDP_V6: {
 		struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)in;
-		
+
 		if ((*len) < sizeof(*in2)) {
 			errno = EINVAL;
 			return -1;
@@ -410,7 +410,7 @@ static int convert_in_un_remote(struct socket_info *si, const struct sockaddr *i
 
 		prt = ntohs(in->sin6_port);
 		iface = SW_IPV6_ADDRESS;
-		
+
 		break;
 	}
 #endif
@@ -517,7 +517,7 @@ static int convert_in_un_alloc(struct socket_info *si, const struct sockaddr *in
 
 		prt = ntohs(in->sin6_port);
 		iface = SW_IPV6_ADDRESS;
-		
+
 		break;
 	}
 #endif
@@ -585,7 +585,7 @@ static int sockaddr_convert_to_un(struct socket_info *si, const struct sockaddr 
 	default:
 		break;
 	}
-	
+
 	errno = EAFNOSUPPORT;
 	return -1;
 }
@@ -650,7 +650,7 @@ enum swrap_packet_type {
 
 struct swrap_file_hdr {
 	unsigned long	magic;
-	unsigned short	version_major;	
+	unsigned short	version_major;
 	unsigned short	version_minor;
 	long		timezone;
 	unsigned long	sigfigs;
@@ -913,7 +913,7 @@ static int swrap_get_pcap_fd(const char *fname)
 	if (fd != -1) {
 		struct swrap_file_hdr file_hdr;
 		file_hdr.magic		= 0xA1B2C3D4;
-		file_hdr.version_major	= 0x0002;	
+		file_hdr.version_major	= 0x0002;
 		file_hdr.version_minor	= 0x0004;
 		file_hdr.timezone	= 0x00000000;
 		file_hdr.sigfigs	= 0x00000000;
@@ -1458,7 +1458,7 @@ static int swrap_auto_bind(struct socket_info *si)
 			 "%s/"SOCKET_FORMAT, socket_wrapper_dir(),
 			 type, socket_wrapper_default_iface(), port);
 		if (stat(un_addr.sun_path, &st) == 0) continue;
-		
+
 		ret = real_bind(si->fd, (struct sockaddr *)&un_addr, sizeof(un_addr));
 		if (ret == -1) return ret;
 
@@ -1685,32 +1685,32 @@ _PUBLIC_ ssize_t swrap_sendto(int s, const void *buf, size_t len, int flags, con
 			ret = swrap_auto_bind(si);
 			if (ret == -1) return -1;
 		}
-		
+
 		ret = sockaddr_convert_to_un(si, to, tolen, &un_addr, 0, &bcast);
 		if (ret == -1) return -1;
-		
+
 		if (bcast) {
 			struct stat st;
 			unsigned int iface;
 			unsigned int prt = ntohs(((const struct sockaddr_in *)to)->sin_port);
 			char type;
-			
+
 			type = SOCKET_TYPE_CHAR_UDP;
-			
+
 			for(iface=0; iface <= MAX_WRAPPED_INTERFACES; iface++) {
 				snprintf(un_addr.sun_path, sizeof(un_addr.sun_path), "%s/"SOCKET_FORMAT,
 					 socket_wrapper_dir(), type, iface, prt);
 				if (stat(un_addr.sun_path, &st) != 0) continue;
-				
+
 				/* ignore the any errors in broadcast sends */
 				real_sendto(s, buf, len, flags, (struct sockaddr *)&un_addr, sizeof(un_addr));
 			}
-			
+
 			swrap_dump_packet(si, to, SWRAP_SENDTO, buf, len);
-			
+
 			return len;
 		}
-		
+
 		ret = real_sendto(s, buf, len, flags, (struct sockaddr *)&un_addr, sizeof(un_addr));
 		break;
 	default:
@@ -1718,7 +1718,7 @@ _PUBLIC_ ssize_t swrap_sendto(int s, const void *buf, size_t len, int flags, con
 		errno = EHOSTUNREACH;
 		break;
 	}
-		
+
 	/* to give better errors */
 	if (ret == -1 && errno == ENOENT) {
 		errno = EHOSTUNREACH;

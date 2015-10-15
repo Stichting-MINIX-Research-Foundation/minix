@@ -1,4 +1,4 @@
-/*	$NetBSD: store-int.h,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: store-int.h,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2002 Kungliga Tekniska Högskolan
@@ -45,6 +45,7 @@ struct krb5_storage_data {
     void (*free)(struct krb5_storage_data*);
     krb5_flags flags;
     int eof_code;
+    size_t max_alloc;
 };
 
 #endif /* __store_int_h__ */

@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.11 2011/02/24 08:40:06 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.12 2014/08/30 12:14:17 gson Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,16 @@ basic()
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_simplecli
+}
+
+stress_short_head()
+{
+	atf_set "require.memory" "64M"
+}
+
+stress_long_head()
+{
+	atf_set "require.memory" "64M"
 }
 
 stress()

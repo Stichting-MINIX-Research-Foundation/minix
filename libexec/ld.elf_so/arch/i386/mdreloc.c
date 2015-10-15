@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.35 2012/11/07 07:24:46 apb Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2014/08/31 20:06:22 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.35 2012/11/07 07:24:46 apb Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2014/08/31 20:06:22 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if defined(__minix) && defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		case R_TYPE(TLS_TPOFF):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
@@ -176,7 +176,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)*where));
 
 			break;
-#endif
+#endif /* defined(__minix) && defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II) */
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
@@ -232,7 +232,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
 
-	target = (Elf_Addr)(defobj->relocbase + def->st_value);
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		target = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		target = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
+
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, 
 	    (void *)target));
@@ -276,7 +283,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 	return err;
 }
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if defined(__minix) && defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 /*
  * i386 specific GNU variant of __tls_get_addr using register based
  * argument passing.
@@ -298,4 +305,4 @@ ___tls_get_addr(void *arg_)
 
 	return _rtld_tls_get_addr(tcb, idx, offset);
 }
-#endif
+#endif /* defined(__minix) && defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II) */

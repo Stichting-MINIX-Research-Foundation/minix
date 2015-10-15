@@ -1,4 +1,4 @@
-.TH "event2/dns.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/dns.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -325,12 +325,8 @@ Searching appears to be a single lookup from the point of view of the API, altho
 To disable searching:
 .IP "1." 4
 Never set it up\&. If you never call evdns_resolv_conf_parse or evdns_search_add then no searching will occur\&.
-.PP
-.PP
 .IP "2." 4
 If you do call evdns_resolv_conf_parse then don't pass DNS_OPTION_SEARCH (or DNS_OPTIONS_ALL, which implies it)\&.
-.PP
-.PP
 .IP "3." 4
 When calling evdns_resolve, pass the DNS_QUERY_NO_SEARCH flag\&.
 .PP
@@ -369,7 +365,8 @@ The request was canceled because the DNS subsystem was shut down\&.
 .SS "typedef void(* evdns_callback_type)(int result, char type, int count, int ttl, void *addresses, void *arg)"
 
 .PP
-The callback that contains the results from a lookup\&. .IP "\(bu" 2
+The callback that contains the results from a lookup\&. 
+.IP "\(bu" 2
 result is one of the DNS_ERR_* values (DNS_ERR_NONE for success)
 .IP "\(bu" 2
 type is either DNS_IPv4_A or DNS_PTR or DNS_IPv6_AAAA
@@ -384,7 +381,9 @@ addresses needs to be cast according to type\&. It will be an array of 4-byte se
 .SS "typedef void(* evdns_debug_log_fn_type)(int is_warning, const char *msg)"
 
 .PP
-A callback that is invoked when a log message is generated\&. \fBParameters:\fP
+A callback that is invoked when a log message is generated\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIis_warning\fP indicates if the log message is a 'warning' 
 .br
@@ -411,10 +410,12 @@ A callback to implement a DNS server\&. The callback function receives a DNS req
 
 .SH "Function Documentation"
 .PP 
-.SS "struct evdns_server_port* evdns_add_server_port_with_base (struct \fBevent_base\fP *base, \fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)\fC [read]\fP"
+.SS "struct evdns_server_port* evdns_add_server_port_with_base (struct \fBevent_base\fP *base, \fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)"
 
 .PP
-Create a new DNS server port\&. \fBParameters:\fP
+Create a new DNS server port\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP The event base to handle events for the server port\&. 
 .br
@@ -448,7 +449,7 @@ Remove all configured nameservers, and suspend all pending resolves\&. Resolves 
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_resume()\fP 
 .RE
@@ -469,7 +470,7 @@ Get the number of configured nameservers\&. This returns the number of configure
 the number of configured nameservers 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_nameserver_add()\fP 
 .RE
@@ -487,7 +488,7 @@ Shut down the asynchronous DNS resolver and terminate all active requests\&. If 
 \fIfail_requests\fP if zero, active requests will be aborted; if non-zero, active requests will return DNS_ERR_SHUTDOWN\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_new()\fP 
 .RE
@@ -518,7 +519,7 @@ Add a nameserver\&. The address should be an IPv4 address in network byte order\
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_nameserver_ip_add()\fP 
 .RE
@@ -552,13 +553,13 @@ If no port is specified, it defaults to 53\&.
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_nameserver_add()\fP 
 .RE
 .PP
 
-.SS "struct evdns_base* evdns_base_new (struct \fBevent_base\fP *event_base, intinitialize_nameservers)\fC [read]\fP"
+.SS "struct evdns_base* evdns_base_new (struct \fBevent_base\fP *event_base, intinitialize_nameservers)"
 
 .PP
 Initialize the asynchronous DNS library\&. This function initializes support for non-blocking name resolution by calling \fBevdns_resolv_conf_parse()\fP on UNIX and evdns_config_windows_nameservers() on Windows\&.
@@ -575,7 +576,7 @@ Initialize the asynchronous DNS library\&. This function initializes support for
 evdns_base object if successful, or NULL if an error occurred\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_free()\fP 
 .RE
@@ -594,7 +595,7 @@ If this function encounters an error, the possible return values are: 1 = failed
 .RS 4
 \fIbase\fP the evdns_base to which to apply this operation 
 .br
-\fIflags\fP any of DNS_OPTION_NAMESERVERS|DNS_OPTION_SEARCH|DNS_OPTION_MISC| DNS_OPTIONS_HOSTSFILE|DNS_OPTIONS_ALL 
+\fIflags\fP any of DNS_OPTION_NAMESERVERS|DNS_OPTION_SEARCH|DNS_OPTION_MISC| DNS_OPTION_HOSTSFILE|DNS_OPTIONS_ALL 
 .br
 \fIfilename\fP the path to the resolv\&.conf file 
 .RE
@@ -604,16 +605,18 @@ If this function encounters an error, the possible return values are: 1 = failed
 0 if successful, or various positive error codes if an error occurred (see above) 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 resolv\&.conf(3), evdns_config_windows_nameservers() 
 .RE
 .PP
 
-.SS "struct evdns_request* evdns_base_resolve_ipv4 (struct evdns_base *base, const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)\fC [read]\fP"
+.SS "struct evdns_request* evdns_base_resolve_ipv4 (struct evdns_base *base, const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup an A record for a given name\&. \fBParameters:\fP
+Lookup an A record for a given name\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the evdns_base to which to apply this operation 
 .br
@@ -631,16 +634,18 @@ Lookup an A record for a given name\&. \fBParameters:\fP
 an evdns_request object if successful, or NULL if an error occurred\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_ipv6()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP, \fBevdns_cancel_request()\fP 
 .RE
 .PP
 
-.SS "struct evdns_request* evdns_base_resolve_ipv6 (struct evdns_base *base, const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)\fC [read]\fP"
+.SS "struct evdns_request* evdns_base_resolve_ipv6 (struct evdns_base *base, const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup an AAAA record for a given name\&. \fBParameters:\fP
+Lookup an AAAA record for a given name\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the evdns_base to which to apply this operation 
 .br
@@ -658,16 +663,18 @@ Lookup an AAAA record for a given name\&. \fBParameters:\fP
 an evdns_request object if successful, or NULL if an error occurred\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_ipv4()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP, \fBevdns_cancel_request()\fP 
 .RE
 .PP
 
-.SS "struct evdns_request* evdns_base_resolve_reverse (struct evdns_base *base, const struct in_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)\fC [read]\fP"
+.SS "struct evdns_request* evdns_base_resolve_reverse (struct evdns_base *base, const struct in_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup a PTR record for a given IP address\&. \fBParameters:\fP
+Lookup a PTR record for a given IP address\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the evdns_base to which to apply this operation 
 .br
@@ -685,16 +692,18 @@ Lookup a PTR record for a given IP address\&. \fBParameters:\fP
 an evdns_request object if successful, or NULL if an error occurred\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_reverse_ipv6()\fP, \fBevdns_cancel_request()\fP 
 .RE
 .PP
 
-.SS "struct evdns_request* evdns_base_resolve_reverse_ipv6 (struct evdns_base *base, const struct in6_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)\fC [read]\fP"
+.SS "struct evdns_request* evdns_base_resolve_reverse_ipv6 (struct evdns_base *base, const struct in6_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup a PTR record for a given IPv6 address\&. \fBParameters:\fP
+Lookup a PTR record for a given IPv6 address\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the evdns_base to which to apply this operation 
 .br
@@ -712,7 +721,7 @@ Lookup a PTR record for a given IPv6 address\&. \fBParameters:\fP
 an evdns_request object if successful, or NULL if an error occurred\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_reverse_ipv6()\fP, \fBevdns_cancel_request()\fP 
 .RE
@@ -733,7 +742,7 @@ Resume normal operation and continue any suspended resolve requests\&. Re-attemp
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_clear_nameservers_and_suspend()\fP 
 .RE
@@ -742,7 +751,9 @@ Resume normal operation and continue any suspended resolve requests\&. Re-attemp
 .SS "void evdns_base_search_add (struct evdns_base *base, const char *domain)"
 
 .PP
-Add a domain to the list of search domains\&. \fBParameters:\fP
+Add a domain to the list of search domains\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIdomain\fP the domain to be added to the search list 
 .RE
@@ -758,7 +769,7 @@ Obtain nameserver information using the Windows API\&. Attempt to configure a se
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolv_conf_parse()\fP Clear the list of search domains\&. 
 .RE
@@ -802,14 +813,16 @@ In versions before Libevent 2\&.0\&.3-alpha, the option name needed to end with 
 .SS "void evdns_cancel_request (struct evdns_base *base, struct evdns_request *req)"
 
 .PP
-Cancels a pending DNS resolution request\&. \fBParameters:\fP
+Cancels a pending DNS resolution request\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the evdns_base that was used to make the request 
 .br
 \fIreq\fP the evdns_request that was returned by calling a resolve function 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_base_resolve_ipv4()\fP, \fBevdns_base_resolve_ipv6\fP, \fBevdns_base_resolve_reverse\fP 
 .RE
@@ -822,7 +835,9 @@ Close down a DNS server port, and free associated structures\&.
 .SS "const char* evdns_err_to_string (interr)"
 
 .PP
-Convert a DNS error code to a string\&. \fBParameters:\fP
+Convert a DNS error code to a string\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIerr\fP the DNS error code 
 .RE
@@ -833,7 +848,7 @@ a string containing an explanation of the error code
 .RE
 .PP
 
-.SS "struct evdns_getaddrinfo_request* evdns_getaddrinfo (struct evdns_base *dns_base, const char *nodename, const char *servname, const struct \fBevutil_addrinfo\fP *hints_in, \fBevdns_getaddrinfo_cb\fPcb, void *arg)\fC [read]\fP"
+.SS "struct evdns_getaddrinfo_request* evdns_getaddrinfo (struct evdns_base *dns_base, const char *nodename, const char *servname, const struct \fBevutil_addrinfo\fP *hints_in, \fBevdns_getaddrinfo_cb\fPcb, void *arg)"
 
 .PP
 Make a non-blocking getaddrinfo request using the dns_base in 'dns_base'\&. If we can answer the request immediately (with an error or not!), then we invoke cb immediately and return NULL\&. Otherwise we return an evdns_getaddrinfo_request and invoke cb later\&.

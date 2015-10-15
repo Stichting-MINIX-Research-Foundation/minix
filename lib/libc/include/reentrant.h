@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.17 2013/04/12 18:12:58 joerg Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.18 2015/01/20 18:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -278,31 +278,38 @@ __END_DECLS
 
 #else /* _REENTRANT */
 
-#define	mutex_init(m, a)
-#define	mutex_lock(m)
-#define	mutex_trylock(m)
-#define	mutex_unlock(m)
-#define	mutex_destroy(m)
+#ifndef __empty
+#define __empty do {} while (/*CONSTCOND*/0)
+#endif
+#define	mutex_init(m, a) __empty
+#define	mutex_lock(m) __empty
+#define	mutex_trylock(m) __empty
+#define	mutex_unlock(m)	__empty
+#define	mutex_destroy(m) __empty
 
-#define	cond_init(c, t, a)
-#define	cond_signal(c)
-#define	cond_broadcast(c)
-#define	cond_wait(c, m)
-#define	cond_timedwait(c, m, t)
-#define	cond_destroy(c)
+#define	cond_init(c, t, a) __empty
+#define	cond_signal(c) __empty
+#define	cond_broadcast(c) __empty
+#define	cond_wait(c, m) __empty
+#define	cond_timedwait(c, m, t) __empty
+#define	cond_destroy(c) __empty
 
-#define	rwlock_init(l, a)
-#define	rwlock_rdlock(l)
-#define	rwlock_wrlock(l)
-#define	rwlock_tryrdlock(l)
-#define	rwlock_trywrlock(l)
-#define	rwlock_unlock(l)
-#define	rwlock_destroy(l)
+#define	rwlock_init(l, a) __empty
+#define	rwlock_rdlock(l) __empty
+#define	rwlock_wrlock(l) __empty
+#define	rwlock_tryrdlock(l) __empty
+#define	rwlock_trywrlock(l) __empty
+#define	rwlock_unlock(l) __empty
+#define	rwlock_destroy(l) __empty
 
-#define	thr_keycreate(k, d)
-#define	thr_setspecific(k, p)
-#define	thr_getspecific(k)
-#define	thr_keydelete(k)
+#define	thr_keycreate(k, d) /*LINTED*/0
+#define	thr_setspecific(k, p) __empty
+#define	thr_getspecific(k) /*LINTED*/0
+#define	thr_keydelete(k) __empty
+
+#define	mutexattr_init(ma) __empty
+#define	mutexattr_settype(ma, t) __empty
+#define	mutexattr_destroy(ma) __empty
 
 #if !defined(__minix)
 static inline int
@@ -315,12 +322,12 @@ thr_once(once_t *once_control, void (*routine)(void))
 	return 0;
 }
 #endif /* defined(__minix) */
-#define	thr_sigsetmask(f, n, o)
-#define	thr_self()
-#define	thr_errno()
+#define	thr_sigsetmask(f, n, o)	__empty
+#define	thr_self() __empty
+#define	thr_errno() __empty
 #define	thr_curcpu()		((unsigned int)0)
 
-#define	FLOCKFILE(fp)		
-#define	FUNLOCKFILE(fp)		
+#define	FLOCKFILE(fp) __empty
+#define	FUNLOCKFILE(fp) __empty
 
 #endif /* _REENTRANT */

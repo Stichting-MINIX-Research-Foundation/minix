@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.4 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.5 2014/02/19 13:01:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,16 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/errno.h>
-#include <machine/mcontext.h>
 #include "SYS.h"
+#include "assym.h"
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(getcontext, _getcontext)
 #endif
-
-#define _OFFSETOF_UC_GREGS (10 * 4)
-#define SZREG 4
 
 ENTRY(_getcontext, 0)
 	SYSCALL(getcontext)

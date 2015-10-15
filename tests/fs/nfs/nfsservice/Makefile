@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/03/06 13:35:22 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2015/01/08 04:00:31 pooka Exp $
 #
 
 NOMAN=	1
@@ -23,7 +23,7 @@ LDADD+=	-lrumpdev_disk -lrumpdev				# disk devices
 LDADD+=	-lrumpfs_ffs -lrumpvfs					# FFS
 LDADD+=	-lrumpnet_netinet -lrumpnet_net -lrumpnet_local		# TCP/IP
 LDADD+=	-lrumpnet_shmif						# shmif
-LDADD+=	-lrumpnet -lrump -lrumpuser				# base
+LDADD+=	-lrumpnet -lrumpkern_sysproxy -lrump -lrumpuser		# base
 LDADD+=	-lpthread -lutil
 
 CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -D_REENTRANT

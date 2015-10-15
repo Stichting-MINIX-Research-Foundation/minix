@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa-tfm.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rsa-tfm.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007, 2010 Kungliga Tekniska Högskolan
@@ -144,7 +144,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     memcpy(p, from, flen);
     p += flen;
     assert((p - p0) == size - 1);
-    
+
     fp_init_multi(&enc, &dec, NULL);
     fp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);

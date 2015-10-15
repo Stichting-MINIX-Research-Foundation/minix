@@ -365,13 +365,11 @@ ATF_TC_BODY(fork_exec_wait__enoent, tc)
 ATF_TC_WITHOUT_HEAD(fork_wait__core_size);
 ATF_TC_BODY(fork_wait__core_size, tc)
 {
-#if !defined(__minix)
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) == -1)
         atf_tc_skip("Failed to lower the core size limit");
-#endif /* !defined(__minix) */
 
     kyua_run_params_t run_params;
     kyua_run_params_init(&run_params);

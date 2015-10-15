@@ -1,4 +1,4 @@
-# $NetBSD: xorg.conf.C3x00,v 1.1 2012/02/10 11:25:43 tsutsui Exp $
+# $NetBSD: xorg.conf.C3x00,v 1.2 2014/06/20 08:08:58 wiz Exp $
 
 Section "ServerLayout"
 	Identifier	"wsfb"
@@ -8,7 +8,7 @@ Section "ServerLayout"
 EndSection
 	
 Section "Files"
-#	FontPath	"/usr/pkg/lib/X11/fonts/TTF/"
+#	FontPath	"/usr/pkg/share/fonts/X11/TTF/"
 EndSection
 
 Section "InputDevice"

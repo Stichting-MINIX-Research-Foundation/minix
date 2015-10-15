@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.18 2006/10/13 20:52:57 wiz Exp $
+.\"	$NetBSD: minherit.2,v 1.20 2014/08/05 15:01:03 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)minherit.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 7, 2006
+.Dd August 5, 2014
 .Dt MINHERIT 2
 .Os
 .Sh NAME
@@ -44,33 +44,43 @@
 .Sh DESCRIPTION
 The
 .Fn minherit
-system call
-changes the specified range of virtual addresses to have the specified
-fork-time inheritance characteristic
+system call changes the specified range of virtual addresses to have
+the inheritance characteristic
 .Fa inherit ,
-which can be set to
-.Dv MAP_INHERIT_NONE ,
+which determines how
+.Xr fork 2
+will map the region in the child process.
+The supported inheritance characteristics are:
+.Bl -tag -offset abcd -width MAP_INHERIT_DEFAULT
+.It MAP_INHERIT_COPY
+The child is given a private copy of the region: writes from parent or
+child are not seen by the other.
+.It MAP_INHERIT_NONE
+The region is unmapped in the child.
+.It MAP_INHERIT_SHARE
+The child is shares the region with the parent: writes from parent and
+child are seen by both.
+.It MAP_INHERIT_ZERO
+The region is mapped in the child to anonymous pages filled with
+zeros.
+.El
+.Pp
+Normally, the parent's virtual address space is copied for the child
+as if with
 .Dv MAP_INHERIT_COPY ,
-or
-.Dv MAP_INHERIT_SHARE .
-Also possible is
-.Dv MAP_INHERIT_DEFAULT ,
-which defaults to
-.Dv MAP_INHERIT_COPY .
+for which the alias
+.Dv MAP_INHERIT_DEFAULT
+is provided.
+Regions in the parent mapped using
+.Xr mmap 2
+with the
+.Dv MAP_SHARED
+flag are by default shared with the child as if with
+.Dv MAP_INHERIT_SHARED .
+.Pp
 Not all implementations will guarantee that the inheritance characteristic
 can be set on a page basis;
 the granularity of changes may be as large as an entire region.
-.Pp
-Normally, the entire address space is marked
-.Dv MAP_INHERIT_COPY ;
-when the process calls
-.Fn fork ,
-the child receives a (virtual) copy of the entire address space.
-Pages or regions marked
-.Dv MAP_INHERIT_SHARE
-are shared between the address spaces, while pages or regions marked
-.Dv MAP_INHERIT_NONE
-will be unmapped in the child.
 .Sh RETURN VALUES
 .Rv -std minherit
 .Sh ERRORS
@@ -84,6 +94,7 @@ An invalid region or invalid parameters were specified.
 .Xr fork 2 ,
 .Xr madvise 2 ,
 .Xr mincore 2 ,
+.Xr mmap 2 ,
 .Xr mprotect 2 ,
 .Xr msync 2 ,
 .Xr munmap 2

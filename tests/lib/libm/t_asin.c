@@ -1,4 +1,4 @@
-/* $NetBSD: t_asin.c,v 1.2 2013/04/09 12:11:04 isaki Exp $ */
+/* $NetBSD: t_asin.c,v 1.3 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,12 +57,10 @@ ATF_TC_HEAD(asin_nan, tc)
 
 ATF_TC_BODY(asin_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	if (isnan(asin(x)) == 0)
 		atf_tc_fail_nonfatal("asin(NaN) != NaN");
-#endif
 }
 
 ATF_TC(asin_inf_neg);
@@ -73,12 +71,10 @@ ATF_TC_HEAD(asin_inf_neg, tc)
 
 ATF_TC_BODY(asin_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	if (isnan(asin(x)) == 0)
 		atf_tc_fail_nonfatal("asin(-Inf) != NaN");
-#endif
 }
 
 ATF_TC(asin_inf_pos);
@@ -89,12 +85,10 @@ ATF_TC_HEAD(asin_inf_pos, tc)
 
 ATF_TC_BODY(asin_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 
 	if (isnan(asin(x)) == 0)
 		atf_tc_fail_nonfatal("asin(+Inf) != NaN");
-#endif
 }
 
 ATF_TC(asin_range);
@@ -105,7 +99,6 @@ ATF_TC_HEAD(asin_range, tc)
 
 ATF_TC_BODY(asin_range, tc)
 {
-#ifndef __vax__
 	const double x[] = { -1.1, -1.000000001, 1.1, 1.000000001 };
 	size_t i;
 
@@ -114,7 +107,6 @@ ATF_TC_BODY(asin_range, tc)
 		if (isnan(asin(x[i])) == 0)
 			atf_tc_fail_nonfatal("asin(%f) != NaN", x[i]);
 	}
-#endif
 }
 
 ATF_TC(asin_inrange);
@@ -125,7 +117,6 @@ ATF_TC_HEAD(asin_inrange, tc)
 
 ATF_TC_BODY(asin_inrange, tc)
 {
-#ifndef __vax__
 	const double eps = 1.0e-15;
 	double y;
 	size_t i;
@@ -136,7 +127,6 @@ ATF_TC_BODY(asin_inrange, tc)
 			atf_tc_fail_nonfatal("asin(%g) != %g",
 				values[i].x, values[i].y);
 	}
-#endif
 }
 
 ATF_TC(asin_zero_neg);
@@ -147,13 +137,11 @@ ATF_TC_HEAD(asin_zero_neg, tc)
 
 ATF_TC_BODY(asin_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = asin(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("asin(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(asin_zero_pos);
@@ -164,13 +152,11 @@ ATF_TC_HEAD(asin_zero_pos, tc)
 
 ATF_TC_BODY(asin_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = asin(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("asin(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -184,12 +170,10 @@ ATF_TC_HEAD(asinf_nan, tc)
 
 ATF_TC_BODY(asinf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	if (isnan(asinf(x)) == 0)
 		atf_tc_fail_nonfatal("asinf(NaN) != NaN");
-#endif
 }
 
 ATF_TC(asinf_inf_neg);
@@ -200,12 +184,10 @@ ATF_TC_HEAD(asinf_inf_neg, tc)
 
 ATF_TC_BODY(asinf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (isnan(asinf(x)) == 0)
 		atf_tc_fail_nonfatal("asinf(-Inf) != NaN");
-#endif
 }
 
 ATF_TC(asinf_inf_pos);
@@ -216,12 +198,10 @@ ATF_TC_HEAD(asinf_inf_pos, tc)
 
 ATF_TC_BODY(asinf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
 	if (isnan(asinf(x)) == 0)
 		atf_tc_fail_nonfatal("asinf(+Inf) != NaN");
-#endif
 }
 
 ATF_TC(asinf_range);
@@ -232,7 +212,6 @@ ATF_TC_HEAD(asinf_range, tc)
 
 ATF_TC_BODY(asinf_range, tc)
 {
-#ifndef __vax__
 	const float x[] = { -1.1, -1.0000001, 1.1, 1.0000001 };
 	size_t i;
 
@@ -241,7 +220,6 @@ ATF_TC_BODY(asinf_range, tc)
 		if (isnan(asinf(x[i])) == 0)
 			atf_tc_fail_nonfatal("asinf(%f) != NaN", x[i]);
 	}
-#endif
 }
 
 ATF_TC(asinf_inrange);
@@ -252,7 +230,6 @@ ATF_TC_HEAD(asinf_inrange, tc)
 
 ATF_TC_BODY(asinf_inrange, tc)
 {
-#ifndef __vax__
 	const float eps = 1.0e-6;
 	float x;
 	float y;
@@ -264,7 +241,6 @@ ATF_TC_BODY(asinf_inrange, tc)
 		if (fabs(asinf(x) - y) > eps)
 			atf_tc_fail_nonfatal("asinf(%g) != %g", x, y);
 	}
-#endif
 }
 
 ATF_TC(asinf_zero_neg);
@@ -275,13 +251,11 @@ ATF_TC_HEAD(asinf_zero_neg, tc)
 
 ATF_TC_BODY(asinf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = asinf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("asinf(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(asinf_zero_pos);
@@ -292,13 +266,11 @@ ATF_TC_HEAD(asinf_zero_pos, tc)
 
 ATF_TC_BODY(asinf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = asinf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("asinf(+0.0) != +0.0");
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

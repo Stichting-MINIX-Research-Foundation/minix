@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo_hostspec.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: getaddrinfo_hostspec.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 2000 Kungliga Tekniska Högskolan
@@ -59,15 +59,15 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     } *hstp, hst[] = {
 	{ "http://", SOCK_STREAM, IPPROTO_TCP, 80 },
 	{ "http/", SOCK_STREAM, IPPROTO_TCP, 80 },
-	{ "tcp/", SOCK_STREAM, IPPROTO_TCP },
-	{ "udp/", SOCK_DGRAM, IPPROTO_UDP },
-	{ NULL }
+	{ "tcp/", SOCK_STREAM, IPPROTO_TCP, 0 },
+	{ "udp/", SOCK_DGRAM, IPPROTO_UDP, 0 },
+	{ NULL, 0, 0, 0 }
     };
 
     memset(&hints, 0, sizeof(hints));
 
     hints.ai_socktype = socktype;
-	
+
     for(hstp = hst; hstp->prefix; hstp++) {
 	if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
 	    hints.ai_socktype = hstp->socktype;

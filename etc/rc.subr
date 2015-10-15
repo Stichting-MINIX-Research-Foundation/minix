@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.92 2012/12/17 18:17:27 apb Exp $
+# $NetBSD: rc.subr,v 1.96 2014/10/07 19:09:45 roy Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,10 +42,10 @@ nl='
 
 #
 # checkyesno var
-#	Test $1 variable, and warn if not set to YES or NO.
-#	Return 0 if it's "yes" (et al), nonzero otherwise.
+#	Test $1 variable.
+#	Return 0 if it's "yes" (et al), 1 if it's "no" (et al), 2 otherwise.
 #
-checkyesno()
+checkyesnox()
 {
 	eval _value=\$${1}
 	case $_value in
@@ -60,10 +60,25 @@ checkyesno()
 		return 1
 		;;
 	*)
-		warn "\$${1} is not set properly - see ${rcvar_manpage}."
-		return 1
+		return 2
 		;;
 	esac
+}
+
+#
+# checkyesno var
+#	Test $1 variable, and warn if not set to YES or NO.
+#	Return 0 if it's "yes" (et al), nonzero otherwise.
+#
+checkyesno()
+{
+	local var
+
+	checkyesnox $1
+	var=$?
+	[ $var = 0 -o $var = 1 ] && return $var
+	warn "\$${1} is not set properly - see ${rcvar_manpage}."
+	return 1
 }
 
 #
@@ -112,7 +127,7 @@ stop_boot()
 
 #
 # mount_critical_filesystems type
-#	Go through the list of critical filesystems as provided in
+#	Go through the list of critical file systems as provided in
 #	the rc.conf(5) variable $critical_filesystems_${type}, checking
 #	each one to see if it is mounted, and if it is not, mounting it.
 #	It's not an error if file systems prefixed with "OPTIONAL:"
@@ -307,10 +322,13 @@ wait_for_pids()
 		if [ -z "$_nlist" ]; then
 			break
 		fi
-		_list=$_nlist
-		echo -n ${_prefix:-"Waiting for PIDS: "}$_list
-		_prefix=", "
-		sleep 2
+		if [ "$_list" != "$_nlist" ]; then
+			_list=$_nlist
+			echo -n ${_prefix:-"Waiting for PIDS: "}$_list
+			_prefix=", "
+		fi
+		# We want this to be a tight loop for a fast exit
+		sleep 0.05
 	done
 	if [ -n "$_prefix" ]; then
 		echo "."
@@ -786,6 +804,35 @@ $command $rc_flags $command_args"
 }
 
 #
+# _have_rc_postprocessor
+#	Test whether the current script is running in a context that
+#	was invoked from /etc/rc with a postprocessor.
+#
+#	If the test fails, some variables may be unset to make
+#	such tests more efficient in future.
+#
+_have_rc_postprocessor()
+{
+	# Cheap tests that fd and pid are set, fd is writable.
+	[ -n "${_rc_postprocessor_fd}" ] || return 1
+	[ -n "${_rc_pid}" ] || return 1
+	eval ": >&${_rc_postprocessor_fd}" 2>/dev/null || return 1
+
+	# More expensive test that pid is running.
+	# Unset _rc_pid if this fails.
+	kill -0 "${_rc_pid}" 2>/dev/null \
+	|| { unset _rc_pid; return 1; }
+
+	# More expensive test that pid appears to be
+	# a shell running an rc script.
+	# Unset _rc_pid if this fails.
+	expr "$(ps -p "${_rc_pid}" -o command=)" : ".*sh .*/rc.*" >/dev/null \
+	|| { unset _rc_pid; return 1; }
+
+	return 0
+}
+
+#
 # run_rc_script file arg
 #	Start the script `file' with `arg', and correctly handle the
 #	return value from the script.  If `file' ends with `.sh', it's
@@ -794,9 +841,8 @@ $command $rc_flags $command_args"
 #	executable run as a child process.
 #
 #	If `file' contains "KEYWORD: interactive" and if we are
-#	running inside /etc/rc with postprocessing (as signified by
-#	_rc_postprocessor_fd being defined) then the script's stdout
-#	and stderr are redirected to $_rc_original_stdout_fd and
+#	running inside /etc/rc with postprocessing, then the script's
+#	stdout and stderr are redirected to $_rc_original_stdout_fd and
 #	$_rc_original_stderr_fd, so the output will be displayed on the
 #	console but not intercepted by /etc/rc's postprocessor.
 #
@@ -816,7 +862,7 @@ run_rc_script()
 	eval unset ${_arg}_cmd ${_arg}_precmd ${_arg}_postcmd
 
 	_must_redirect=false
-	if [ -n "${_rc_postprocessor_fd}" ] \
+	if _have_rc_postprocessor \
 	    && _has_rcorder_keyword interactive $_file
 	then
 		_must_redirect=true
@@ -1047,7 +1093,7 @@ handle_fsck_error()
 		echo "File system still has errors; re-run fsck manually!"
 		;;
 	4)	# Root modified
-		echo "Root filesystem was modified, rebooting ..."
+		echo "Root file system was modified, rebooting ..."
 		reboot -n
 		echo "Reboot failed; help!"
 		;;
@@ -1114,7 +1160,7 @@ print_rc_metadata()
 	# _rc_postprocessor fd, if defined, is the fd to which we must
 	# print, prefixing the output with $_rc_metadata_prefix.
 	#
-	if [ -n "$_rc_postprocessor_fd" ]; then
+	if _have_rc_postprocessor; then
 		command printf "%s%s\n" "$rc_metadata_prefix" "$1" \
 			>&${_rc_postprocessor_fd}
 	fi
@@ -1154,10 +1200,11 @@ _flush_rc_output()
 #
 print_rc_normal()
 {
-	# If _rc_postprocessor_fd is defined, then it is the fd
-	# to which we must print; otherwise print to stdout.
+	# print to stdout or _rc_postprocessor_fd, depending on
+	# whether not we have an rc postprocessor.
 	#
-	local fd="${_rc_postprocessor_fd:-1}"
+	local fd=1
+	_have_rc_postprocessor && fd="${_rc_postprocessor_fd}"
 	case "$1" in
 	"-n")
 		command printf "%s" "$2" >&${fd}
@@ -1186,7 +1233,7 @@ print_rc_normal()
 #
 no_rc_postprocess()
 {
-	if [ -n "${_rc_postprocessor_fd}" ]; then
+	if _have_rc_postprocessor; then
 		"$@" >&${_rc_original_stdout_fd} 2>&${_rc_original_stderr_fd}
 	else
 		"$@"

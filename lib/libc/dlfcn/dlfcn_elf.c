@@ -191,9 +191,9 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 		 * and smaller and such stores are atomic.
 		 */
 		dl_iterate_phdr_setup();
-#ifndef __minix
+#if !defined(__minix)
 		membar_producer();
-#endif
+#endif /* !defined(__minix) */
 		setup_done = true;
 	}
 

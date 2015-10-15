@@ -1,4 +1,4 @@
-/*	$NetBSD: timegm.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: timegm.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: timegm.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $");
+#define ASN1_MAX_YEAR	2000
 
 static int
 is_leap(unsigned y)
@@ -58,13 +58,19 @@ time_t
 _der_timegm (struct tm *tm)
 {
   time_t res = 0;
-  unsigned i;
+  int i;
+
+  /*
+   * See comment in _der_gmtime
+   */
+  if (tm->tm_year > ASN1_MAX_YEAR)
+      return 0;
 
   if (tm->tm_year < 0)
       return -1;
   if (tm->tm_mon < 0 || tm->tm_mon > 11)
       return -1;
-  if (tm->tm_mday < 1 || tm->tm_mday > ndays[is_leap(tm->tm_year)][tm->tm_mon])
+  if (tm->tm_mday < 1 || tm->tm_mday > (int)ndays[is_leap(tm->tm_year)][tm->tm_mon])
       return -1;
   if (tm->tm_hour < 0 || tm->tm_hour > 23)
       return -1;
@@ -99,6 +105,15 @@ _der_gmtime(time_t t, struct tm *tm)
     tm->tm_sec = secday % 60;
     tm->tm_min = (secday % 3600) / 60;
     tm->tm_hour = secday / 3600;
+
+    /*
+     * Refuse to calculate time ~ 2000 years into the future, this is
+     * not possible for systems where time_t is a int32_t, however,
+     * when time_t is a int64_t, that can happen, and this becomes a
+     * denial of sevice.
+     */
+    if (days > (ASN1_MAX_YEAR * 365))
+	return NULL;
 
     tm->tm_year = 70;
     while(1) {

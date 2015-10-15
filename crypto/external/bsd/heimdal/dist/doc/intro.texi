@@ -1,5 +1,5 @@
 @c Id
-@c $NetBSD: intro.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
+@c $NetBSD: intro.texi,v 1.1.1.3 2014/04/24 12:45:26 pettai Exp $
 
 @node Introduction, What is Kerberos?, Top, Top
 @c @node Introduction, What is Kerberos?, Top, Top
@@ -58,8 +58,7 @@ a library @file{libkafs} for authenticating to AFS and a program
 @item
 some simple test programs
 @item
-a KDC that supports most things; optionally, it may also support
-Kerberos V4 and kaserver,
+a KDC that supports most things,
 @item
 simple programs for distributing databases between a KDC master and
 slaves

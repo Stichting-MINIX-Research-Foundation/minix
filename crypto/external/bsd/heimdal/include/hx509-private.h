@@ -425,7 +425,7 @@ hx509_revoke_ctx
 _hx509_revoke_ref (hx509_revoke_ctx /*ctx*/);
 
 void
-_hx509_sel_yyerror (char */*s*/);
+_hx509_sel_yyerror (const char */*s*/);
 
 int
 _hx509_self_signed_valid (

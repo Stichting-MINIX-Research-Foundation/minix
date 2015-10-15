@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_ingest.c,v 1.4 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_ingest.c,v 1.5 2014/09/05 05:19:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct _prop_ingest_context {
  *	Allocate and initialize an ingest context.
  */
 prop_ingest_context_t
-prop_ingest_context_alloc(void *private)
+prop_ingest_context_alloc(void *xprivate)
 {
 	prop_ingest_context_t ctx;
 
@@ -53,7 +53,7 @@ prop_ingest_context_alloc(void *private)
 		ctx->pic_error = PROP_INGEST_ERROR_NO_ERROR;
 		ctx->pic_type = PROP_TYPE_UNKNOWN;
 		ctx->pic_key = NULL;
-		ctx->pic_private = private;
+		ctx->pic_private = xprivate;
 	}
 	return (ctx);
 }

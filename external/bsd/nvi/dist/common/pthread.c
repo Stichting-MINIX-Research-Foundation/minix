@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.3 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.
@@ -8,9 +8,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: pthread.c,v 1.4 2000/07/22 14:52:37 skimo Exp  (Berkeley) Date: 2000/07/22 14:52:37 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: pthread.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

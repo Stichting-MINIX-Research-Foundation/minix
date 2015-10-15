@@ -1,14 +1,15 @@
-/*	$NetBSD: defs.h,v 1.6 2013/04/06 14:52:24 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2015/01/04 01:34:20 christos Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-/* Id: defs.h,v 1.37 2012/05/26 15:23:00 tom Exp  */
+/* Id: defs.h,v 1.51 2014/10/02 22:38:13 tom Exp  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -35,14 +36,14 @@
 
 #define VERSION VSTRING(YYMAJOR, YYMINOR)
 
-/*  machine-dependent definitions			*/
-/*  the following definitions are for the Tahoe		*/
-/*  they might have to be changed for other machines	*/
+/*  machine-dependent definitions:			*/
 
 /*  MAXCHAR is the largest unsigned character value	*/
-/*  MAXSHORT is the largest value of a C short		*/
-/*  MINSHORT is the most negative value of a C short	*/
 /*  MAXTABLE is the maximum table size			*/
+/*  YYINT is the smallest C integer type that can be	*/
+/*	used to address a table of size MAXTABLE	*/
+/*  MAXYYINT is the largest value of a YYINT		*/
+/*  MINYYINT is the most negative value of a YYINT	*/
 /*  BITS_PER_WORD is the number of bits in a C unsigned	*/
 /*  WORDSIZE computes the number of words needed to	*/
 /*	store n bits					*/
@@ -50,14 +51,26 @@
 /*	from r (0-indexed)				*/
 /*  SETBIT sets the n-th bit starting from r		*/
 
-#define	MAXCHAR		255
-#define	MAXSHORT	32767
-#define MINSHORT	-32768
+#define	MAXCHAR		UCHAR_MAX
+#ifndef MAXTABLE
 #define MAXTABLE	32500
-#define BITS_PER_WORD	32
-#define	WORDSIZE(n)	(((n)+(BITS_PER_WORD-1))/BITS_PER_WORD)
-#define	BIT(r, n)	((((r)[(n)>>5])>>((n)&31))&1)
-#define	SETBIT(r, n)	((r)[(n)>>5]|=((unsigned)1<<((n)&31)))
+#endif
+#if MAXTABLE <= SHRT_MAX
+#define YYINT		short
+#define MAXYYINT	SHRT_MAX
+#define MINYYINT	SHRT_MIN
+#elif MAXTABLE <= INT_MAX
+#define YYINT		int
+#define MAXYYINT	INT_MAX
+#define MINYYINT	INT_MIN
+#else
+#error "MAXTABLE is too large for this machine architecture!"
+#endif
+
+#define BITS_PER_WORD	((int) sizeof (unsigned) * CHAR_BIT)
+#define WORDSIZE(n)	(((n)+(BITS_PER_WORD-1))/BITS_PER_WORD)
+#define BIT(r, n)	((((r)[(n)/BITS_PER_WORD])>>((n)&(BITS_PER_WORD-1)))&1)
+#define SETBIT(r, n)	((r)[(n)/BITS_PER_WORD]|=((unsigned)1<<((n)&(BITS_PER_WORD-1))))
 
 /*  character names  */
 
@@ -109,12 +122,23 @@
 #define PARSE_PARAM 13
 #define LEX_PARAM 14
 #define POSIX_YACC 15
+#define TOKEN_TABLE 16
+#define ERROR_VERBOSE 17
+#define XXXDEBUG 18
+
+#if defined(YYBTYACC)
+#define LOCATIONS 19
+#define DESTRUCTOR 20
+#define INITIAL_ACTION 21
+#endif
 
 /*  symbol classes  */
 
 #define UNKNOWN 0
 #define TERM 1
 #define NONTERM 2
+#define ACTION 3
+#define ARGUMENT 4
 
 /*  the undefined value  */
 
@@ -141,6 +165,7 @@
 #define CALLOC(k,n)	(calloc((size_t)(k),(size_t)(n)))
 #define	FREE(x)		(free((char*)(x)))
 #define MALLOC(n)	(malloc((size_t)(n)))
+#define TCMALLOC(t,n)	((t*) calloc((size_t)(n), sizeof(t)))
 #define TMALLOC(t,n)	((t*) malloc((size_t)(n) * sizeof(t)))
 #define	NEW(t)		((t*)allocate(sizeof(t)))
 #define	NEW2(n,t)	((t*)allocate(((size_t)(n)*sizeof(t))))
@@ -154,10 +179,20 @@
 /* messages */
 #define PLURAL(n) ((n) > 1 ? "s" : "")
 
+/*
+ * Features which depend indirectly on the btyacc configuration, but are not
+ * essential.
+ */
+#if defined(YYBTYACC)
+#define USE_HEADER_GUARDS 1
+#else
+#define USE_HEADER_GUARDS 0
+#endif
+
 typedef char Assoc_t;
 typedef char Class_t;
-typedef short Index_t;
-typedef short Value_t;
+typedef YYINT Index_t;
+typedef YYINT Value_t;
 
 /*  the structure of a symbol table entry  */
 
@@ -168,6 +203,12 @@ struct bucket
     struct bucket *next;
     char *name;
     char *tag;
+#if defined(YYBTYACC)
+    char **argnames;
+    char **argtags;
+    int  args;
+    char *destructor;
+#endif
     Value_t value;
     Index_t index;
     Value_t prec;
@@ -253,6 +294,14 @@ extern int lineno;
 extern int outline;
 extern int exit_code;
 extern int pure_parser;
+extern int token_table;
+extern int error_verbose;
+#if defined(YYBTYACC)
+extern int locations;
+extern int backtrack;
+extern int destructor;
+extern char *initial_action;
+#endif
 
 extern const char *const banner[];
 extern const char *const xdecls[];
@@ -266,7 +315,6 @@ extern const char *const body_vars[];
 extern const char *const body_2[];
 extern const char *const body_3[];
 extern const char *const trailer[];
-extern const char *const trailer_2[];
 
 extern char *code_file_name;
 extern char *input_file_name;
@@ -284,11 +332,11 @@ extern FILE *union_file;
 extern FILE *verbose_file;
 extern FILE *graph_file;
 
-extern int nitems;
-extern int nrules;
-extern int nsyms;
-extern int ntokens;
-extern int nvars;
+extern Value_t nitems;
+extern Value_t nrules;
+extern Value_t nsyms;
+extern Value_t ntokens;
+extern Value_t nvars;
 extern int ntags;
 
 extern char unionized;
@@ -300,6 +348,12 @@ extern char **symbol_pname;
 extern Value_t *symbol_value;
 extern Value_t *symbol_prec;
 extern char *symbol_assoc;
+
+#if defined(YYBTYACC)
+extern Value_t *symbol_pval;
+extern char **symbol_destructor;
+extern char **symbol_type_tag;
+#endif
 
 extern Value_t *ritem;
 extern Value_t *rlhs;
@@ -324,6 +378,7 @@ extern reductions **reduction_table;
 extern unsigned *LA;
 extern Value_t *LAruleno;
 extern Value_t *lookaheads;
+extern Value_t *goto_base;
 extern Value_t *goto_map;
 extern Value_t *from_state;
 extern Value_t *to_state;
@@ -349,9 +404,6 @@ extern param *parse_param;
 
 /* global functions */
 
-extern bucket *lookup(const char *);
-extern bucket *make_bucket(const char *);
-
 #ifndef GCC_NORETURN
 #if defined(__dead2)
 #define GCC_NORETURN		__dead2
@@ -370,13 +422,28 @@ extern bucket *make_bucket(const char *);
 #endif
 #endif
 
+#ifndef GCC_PRINTFLIKE
+#define GCC_PRINTFLIKE(fmt,var) /*nothing*/
+#endif
+
 /* closure.c */
 extern void closure(Value_t * nucleus, int n);
 extern void finalize_closure(void);
 extern void set_first_derives(void);
 
 /* error.c */
+extern void arg_number_disagree_warning(int a_lineno, char *a_name);
+extern void arg_type_disagree_warning(int a_lineno, int i, char *a_name);
+extern void at_error(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
+extern void at_warning(int a_lineno, int i);
+extern void bad_formals(void) GCC_NORETURN;
 extern void default_action_warning(void);
+struct ainfo {
+	int a_lineno;
+	char *a_line;
+	char *a_cptr;
+};
+extern void destructor_redeclared_warning(const struct ainfo *);
 extern void dollar_error(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
 extern void dollar_warning(int a_lineno, int i);
 extern void fatal(const char *msg) GCC_NORETURN;
@@ -392,6 +459,7 @@ extern void reprec_warning(char *s);
 extern void restarted_warning(void);
 extern void retyped_warning(char *s);
 extern void revalued_warning(char *s);
+extern void start_requires_args(char *a_name);
 extern void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
 extern void terminal_lhs(int s_lineno) GCC_NORETURN;
 extern void terminal_start(char *s) GCC_NORETURN;
@@ -399,23 +467,24 @@ extern void tokenized_start(char *s) GCC_NORETURN;
 extern void undefined_goal(char *s) GCC_NORETURN;
 extern void undefined_symbol_warning(char *s);
 extern void unexpected_EOF(void) GCC_NORETURN;
+extern void unknown_arg_warning(int d_lineno, const char *dlr_opt, const char *d_arg, const char *d_line, const char *d_cptr);
 extern void unknown_rhs(int i) GCC_NORETURN;
-extern void unterminated_action(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
-extern void unterminated_comment(int c_lineno, char *c_line, char *c_cptr) GCC_NORETURN;
-extern void unterminated_string(int s_lineno, char *s_line, char *s_cptr) GCC_NORETURN;
-extern void unterminated_text(int t_lineno, char *t_line, char *t_cptr) GCC_NORETURN;
-extern void unterminated_union(int u_lineno, char *u_line, char *u_cptr) GCC_NORETURN;
+extern void unsupported_flag_warning(const char *flag, const char *details);
+extern void unterminated_action(const struct ainfo *);
+extern void unterminated_comment(const struct ainfo *) GCC_NORETURN;
+extern void unterminated_string(const struct ainfo *) GCC_NORETURN;
+extern void unterminated_text(const struct ainfo *) GCC_NORETURN;
+extern void unterminated_union(const struct ainfo *) GCC_NORETURN;
+extern void untyped_arg_warning(int a_lineno, const char *dlr_opt, const char *a_name);
 extern void untyped_lhs(void) GCC_NORETURN;
 extern void untyped_rhs(int i, char *s) GCC_NORETURN;
 extern void used_reserved(char *s) GCC_NORETURN;
+extern void unterminated_arglist(const struct ainfo *) GCC_NORETURN;
+extern void wrong_number_args_warning(const char *which, const char *a_name);
+extern void wrong_type_for_arg_warning(int i, char *a_name);
 
 /* graph.c */
 extern void graph(void);
-
-/* lalr.c */
-extern void create_symbol_table(void);
-extern void free_symbol_table(void);
-extern void free_symbols(void);
 
 /* lalr.c */
 extern void lalr(void);
@@ -435,14 +504,38 @@ extern void done(int k) GCC_NORETURN;
 extern void free_parser(void);
 extern void make_parser(void);
 
+/* mstring.c */
+struct mstring
+{
+    char *base, *ptr, *end;
+};
+
+extern void msprintf(struct mstring *, const char *, ...) GCC_PRINTFLIKE(2,3);
+extern int mputchar(struct mstring *, int);
+extern struct mstring *msnew(void);
+extern char *msdone(struct mstring *);
+extern int strnscmp(const char *, const char *);
+extern unsigned int strnshash(const char *);
+
+#define mputc(m, ch)	(((m)->ptr == (m)->end) \
+			 ? mputchar(m,ch) \
+			 : (*(m)->ptr++ = (char) (ch)))
+
 /* output.c */
 extern void output(void);
 
 /* reader.c */
 extern void reader(void);
 
-/* skeleton.c */
+/* skeleton.c (generated by skel2c) */
 extern void write_section(FILE * fp, const char *const section[]);
+
+/* symtab.c */
+extern bucket *make_bucket(const char *);
+extern bucket *lookup(const char *);
+extern void create_symbol_table(void);
+extern void free_symbol_table(void);
+extern void free_symbols(void);
 
 /* verbose.c */
 extern void verbose(void);
@@ -450,10 +543,20 @@ extern void verbose(void);
 /* warshall.c */
 extern void reflexive_transitive_closure(unsigned *R, int n);
 
+#ifdef DEBUG
+    /* closure.c */
+extern void print_closure(int n);
+extern void print_EFF(void);
+extern void print_first_derives(void);
+    /* lr0.c */
+extern void print_derives(void);
+#endif
+
 #ifdef NO_LEAKS
 extern void lr0_leaks(void);
 extern void lalr_leaks(void);
 extern void mkpar_leaks(void);
 extern void output_leaks(void);
+extern void mstring_leaks(void);
 extern void reader_leaks(void);
 #endif

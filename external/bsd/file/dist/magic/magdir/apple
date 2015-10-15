@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: apple,v 1.27 2013/03/09 22:36:00 christos Exp $
+# $File: apple,v 1.29 2014/04/30 21:41:02 christos Exp $
 # apple:  file(1) magic for Apple file formats
 #
 0	search/1/t	FiLeStArTfIlEsTaRt	binscii (apple ][) text
@@ -204,15 +204,15 @@
 #  purposes in YellowStep/Cocoa, including some nib files.
 # From: David Remahl <dremahl@apple.com>
 2		string		typedstream	NeXT/Apple typedstream data, big endian
->0		byte		x		\b, version %hhd
+>0		byte		x		\b, version %d
 >0		byte		<5		\b
 >>13	byte		0x81	\b
->>>14	ubeshort	x		\b, system %hd
+>>>14	ubeshort	x		\b, system %d
 2		string		streamtyped NeXT/Apple typedstream data, little endian
->0		byte		x		\b, version %hhd
+>0		byte		x		\b, version %d
 >0		byte		<5		\b
 >>13	byte		0x81	\b
->>>14	uleshort	x		\b, system %hd
+>>>14	uleshort	x		\b, system %d
 
 #------------------------------------------------------------------------------
 # CAF: Apple CoreAudio File Format

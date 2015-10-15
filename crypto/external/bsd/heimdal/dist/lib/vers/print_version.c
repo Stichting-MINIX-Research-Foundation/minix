@@ -1,4 +1,4 @@
-/*	$NetBSD: print_version.c,v 1.2 2011/04/14 18:23:23 elric Exp $	*/
+/*	$NetBSD: print_version.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2006 Kungliga Tekniska Högskolan

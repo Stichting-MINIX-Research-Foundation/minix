@@ -1,12 +1,12 @@
-/*	$NetBSD: bn_mp_isprime.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_isprime.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 /* TomsFastMath, a fast ISO C bignum library.
- * 
+ *
  * This project is meant to fill in where LibTomMath
  * falls short.  That is speed ;-)
  *
  * This project is public domain and free for all purposes.
- * 
+ *
  * Tom St Denis, tomstdenis@gmail.com
  */
 #include <tommath.h>

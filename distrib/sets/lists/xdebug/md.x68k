@@ -1,3 +1,4 @@
-# $NetBSD: md.x68k,v 1.1 2013/01/16 21:11:19 christos Exp $
-./usr/libdata/debug/usr/X11R6/bin/X68k.debug	-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug	-unknown-	debug
+# $NetBSD: md.x68k,v 1.2 2014/08/07 08:58:55 martin Exp $
+./usr/libdata/debug/usr/X11R6/bin/X68k.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R7/bin/X68k.debug	-unknown-	debug,xorg

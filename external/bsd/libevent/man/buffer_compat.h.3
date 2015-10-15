@@ -1,4 +1,4 @@
-.TH "event2/buffer_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/buffer_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -78,7 +78,9 @@ If a callback adds or removes data from the buffer or from another buffer, this 
 .SS "unsigned char* evbuffer_find (struct \fBevbuffer\fP *buffer, const unsigned char *what, size_tlen)"
 
 .PP
-Find a string within an evbuffer\&. \fBParameters:\fP
+Find a string within an evbuffer\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbuffer\fP the evbuffer to be searched 
 .br
@@ -96,7 +98,9 @@ a pointer to the beginning of the search string, or NULL if the search failed\&.
 .SS "char* evbuffer_readline (struct \fBevbuffer\fP *buffer)"
 
 .PP
-Obsolete alias for evbuffer_readln(buffer, NULL, EOL_STYLE_ANY)\&. \fBDeprecated\fP
+Obsolete alias for evbuffer_readln(buffer, NULL, EOL_STYLE_ANY)\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because its behavior is not correct for almost any protocol, and also because it's wholly subsumed by \fBevbuffer_readln()\fP\&.
 .RE

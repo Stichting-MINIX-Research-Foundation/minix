@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.2 2014/05/12 15:25:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -46,7 +46,7 @@ verify_mic_des
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
 	    krb5_keyblock *key,
-	    char *type
+	    const char *type
 	    )
 {
   u_char *p;
@@ -144,7 +144,7 @@ verify_mic_des3
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
 	    krb5_keyblock *key,
-	    char *type
+	    const char *type
 	    )
 {
   u_char *p;
@@ -253,6 +253,15 @@ retry:
   csum.checksum.length = 20;
   csum.checksum.data   = p + 8;
 
+  krb5_crypto_destroy (context, crypto);
+  ret = krb5_crypto_init(context, key,
+			 ETYPE_DES3_CBC_SHA1, &crypto);
+  if (ret) {
+      free (tmp);
+      *minor_status = ret;
+      return GSS_S_FAILURE;
+  }
+
   ret = krb5_verify_checksum (context, crypto,
 			      KRB5_KU_USAGE_SIGN,
 			      tmp, message_buffer->length + 8,
@@ -278,7 +287,7 @@ _gsskrb5_verify_mic_internal
             const gss_buffer_t message_buffer,
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
-	    char * type
+	    const char * type
 	    )
 {
     krb5_keyblock *key;
@@ -350,7 +359,7 @@ _gsskrb5_verify_mic
 				       (gsskrb5_ctx)context_handle,
 				       context,
 				       message_buffer, token_buffer,
-				       qop_state, "\x01\x01");
+				       qop_state, (void *)(intptr_t)"\x01\x01");
 
     return ret;
 }

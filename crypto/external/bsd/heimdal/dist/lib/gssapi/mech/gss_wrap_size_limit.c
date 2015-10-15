@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_wrap_size_limit.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_wrap_size_limit.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -40,7 +40,7 @@ gss_wrap_size_limit(OM_uint32 *minor_status,
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
 	gssapi_mech_interface m;
-	
+
 	*max_input_size = 0;
 	if (ctx == NULL) {
 	    *minor_status = 0;

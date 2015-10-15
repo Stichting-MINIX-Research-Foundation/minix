@@ -1,8 +1,10 @@
-.\"	$NetBSD: arc4random.3,v 1.9 2011/02/05 00:24:08 wiz Exp $
-.\" $OpenBSD: arc4random.3,v 1.17 2000/12/21 14:07:41 aaron Exp $
+.\"	$NetBSD: arc4random.3,v 1.19 2014/11/17 18:41:29 riastradh Exp $
 .\"
-.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Taylor R. Campbell.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -12,122 +14,304 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Niels Provos.
-.\" 4. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" Manual page, using -mandoc macros
-.\"
-.Dd February 4, 2011
+.Dd November 16, 2014
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
 .Nm arc4random ,
-.Nm arc4random_buf ,
 .Nm arc4random_uniform ,
+.Nm arc4random_buf ,
 .Nm arc4random_stir ,
 .Nm arc4random_addrandom
-.Nd arc4 random number generator
+.Nd random number generator
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft uint32_t
 .Fn arc4random "void"
-.Ft void
-.Fn arc4random_buf "void *buffer" "size_t length"
 .Ft uint32_t
-.Fn arc4random_uniform "uint32_t upper_bound"
+.Fn arc4random_uniform "uint32_t bound"
+.Ft void
+.Fn arc4random_buf "void *buf" "size_t len"
 .Ft void
 .Fn arc4random_stir "void"
 .Ft void
-.Fn arc4random_addrandom "u_char *dat" "int datlen"
+.Fn arc4random_addrandom "unsigned char *buf" "int len"
 .Sh DESCRIPTION
 The
-.Fn arc4random
-function provides a high quality 32-bit pseudo-random
-number very quickly.
-.Fn arc4random
-seeds itself on a regular basis from the kernel strong random number
-subsystem described in
-.Xr rnd 4 .
-On each call, an ARC4 generator is used to generate a new result.
-The
-.Fn arc4random
-function uses the ARC4 cipher key stream generator,
-which uses 8*8 8 bit S-Boxes.
-The S-Boxes can be in about (2**1700) states.
-.Pp
-.Fn arc4random
-fits into a middle ground not covered by other subsystems such as
-the strong, slow, and resource expensive random
-devices described in
-.Xr rnd 4
-versus the fast but poor quality interfaces described in
-.Xr rand 3 ,
-.Xr random 3 ,
+.Nm
+family of functions provides a cryptographic pseudorandom number
+generator automatically seeded from the system entropy pool and safe to
+use from multiple threads.
+.Nm
+is designed to prevent an adversary from guessing outputs,
+unlike
+.Xr rand 3
 and
-.Xr drand48 3 .
-.Pp
-The
-.Fn arc4random_buf
-function fills the
-.Fa buffer
-with
-.Fa length
-bytes of ARC4-derived random data.
-.Pp
-The
-.Fn arc4random_uniform
-function returns a uniformly distributed random number less than
-.Fa upper_bound
-avoiding modulo bias when the upper bound is not a power of two.
-.Pp
-The
-.Fn arc4random_stir
-function reads data from
+.Xr random 3 ,
+and is faster and more convenient than reading from
 .Pa /dev/urandom
-and uses it to permute the S-Boxes via
-.Fn arc4random_addrandom .
+directly.
 .Pp
-There is no need to call
-.Fn arc4random_stir
-before using
-.Fn arc4random ,
-since
 .Fn arc4random
-automatically initializes itself.
+returns an integer in [0, 2^32) chosen independently with uniform
+distribution.
+.Pp
+.Fn arc4random_uniform
+returns an integer in [0,
+.Fa bound )
+chosen independently with uniform distribution.
+.Pp
+.Fn arc4random_buf
+stores
+.Fa len
+bytes into the memory pointed to by
+.Fa buf ,
+each byte chosen independently from [0, 256) with uniform
+distribution.
+.Pp
+.Fn arc4random_stir
+draws entropy from the operating system and incorporates it into the
+library's PRNG state to influence future outputs.
+.Pp
+.Fn arc4random_addrandom
+incorporates
+.Fa len
+bytes, which must be nonnegative, from the buffer
+.Fa buf ,
+into the library's PRNG state to influence future outputs.
+.Pp
+It is not necessary for an application to call
+.Fn arc4random_stir
+or
+.Fn arc4random_addrandom
+before calling other
+.Nm
+functions.
+The first call to any
+.Nm
+function will initialize the PRNG state unpredictably from the system
+entropy pool.
+.Sh SECURITY MODEL
+The
+.Nm
+functions provide the following security properties against three
+different classes of attackers, assuming enough entropy is provided by
+the operating system:
+.Bl -bullet -offset abcd
+.It
+An attacker who has seen some outputs of any of the
+.Nm
+functions cannot predict past or future unseen outputs.
+.It
+An attacker who has seen the library's PRNG state in memory cannot
+predict past outputs.
+.It
+An attacker who has seen one process's PRNG state cannot predict past
+or future outputs in other processes, particularly its parent or
+siblings.
+.El
+.Pp
+One
+.Sq output
+means the result of any single request to an
+.Nm
+function, no matter how short it is.
+.Sh IMPLEMENTATION NOTES
+The
+.Nm
+functions are currently implemented using the ChaCha20 pseudorandom
+function family.
+For any 32-byte string
+.Fa s ,
+.Pf ChaCha20_ Fa s
+is a function from 16-byte strings to 64-byte strings.
+It is conjectured that if
+.Fa s
+is chosen with uniform distribution, then the distribution on
+.Pf ChaCha20_ Fa s
+is indistinguishable to a computationally bounded adversary from a
+uniform distribution on all functions from 16-byte strings to 64-byte
+strings.
+.Pp
+The PRNG state is a 32-byte ChaCha20 key
+.Fa s .
+Each request to
+an
+.Nm
+function
+.Bl -bullet -offset abcd -compact
+.It
+computes the 64-byte quantity
+.Fa x
+=
+.Pf ChaCha20_ Fa s Ns (0),
+.It
+splits
+.Fa x
+into two 32-byte quantities
+.Fa s'
+and
+.Fa k ,
+.It
+replaces
+.Fa s
+by
+.Fa s' ,
+and
+.It
+uses
+.Fa k
+as output.
+.El
+.Pp
+.Fn arc4random
+yields the first four bytes of
+.Fa k
+as output directly.
+.Fn arc4random_buf
+either yields up to 32 bytes of
+.Fa k
+as output directly, or, for longer
+requests, uses
+.Fa k
+as a ChaCha20 key and yields the concatenation
+.Pf ChaCha20_ Fa k Ns (0)
+||
+.Pf ChaCha20_ Fa k Ns (1)
+|| ... as output.
+.Fn arc4random_uniform
+repeats
+.Fn arc4random
+until it obtains an integer in [2^32 %
+.Fa bound ,
+2^32), and reduces that modulo
+.Fa bound .
+.Pp
+The PRNG state is per-thread, unless memory allocation fails inside the
+library, in which case some threads may share global PRNG state with a
+mutex.
+The global PRNG state is zeroed on fork in the parent via
+.Xr pthread_atfork 3 ,
+and the per-thread PRNG state is zeroed on fork in the child via
+.Xr minherit 2
+with
+.Dv MAP_INHERIT_ZERO ,
+so that the child cannot reuse or see the parent's PRNG state.
+The PRNG state is reseeded automatically from the system entropy pool
+on the first use of an
+.Nm
+function after zeroing.
+.Pp
+The first use of an
+.Nm
+function may abort the process in the highly unlikely event that
+library initialization necessary to implement the security model fails.
+Additionally,
+.Fn arc4random_stir
+and
+.Fn arc4random_addrandom
+may abort the process in the highly unlikely event that the operating
+system fails to provide entropy.
 .Sh SEE ALSO
 .Xr rand 3 ,
-.Xr rand48 3 ,
-.Xr random 3
-.Sh HISTORY
-An algorithm called
-.Pa RC4
-was designed by RSA Data Security, Inc.
-It was considered a trade secret, but not trademarked.
-Because it was a trade secret, it obviously could not be patented.
-A clone of this was posted anonymously to USENET and confirmed to
-be equivalent by several sources who had access to the original cipher.
-Because of the trade secret situation, RSA Data Security, Inc. can do
-nothing about the release of the ARC4 algorithm.
-Since
-.Pa RC4
-used to be a trade secret, the cipher is now referred to as
-.Pa ARC4 .
+.Xr random 3 ,
+.Xr rnd 4 ,
+.Xr cprng 9
+.Rs
+.%A Daniel J. Bernstein
+.%T ChaCha, a variant of Salsa20
+.%D 2008-01-28
+.%O Document ID: 4027b5256e17b9796842e6d0f68b0b5e
+.%U http://cr.yp.to/papers.html#chacha
+.Re
+.Sh BUGS
+There is no way to get deterministic, reproducible results out of
+.Nm
+for testing purposes.
 .Pp
-These functions first appeared in
-.Ox 2.1 .
+The name
+.Sq arc4random
+was chosen for hysterical raisins -- it was originally implemented
+using the RC4 stream cipher, which has been known since shortly after
+it was published in 1994 to have observable biases in the output, and
+is now known to be broken badly enough to admit practical attacks in
+the real world.
+.\" Bob Jenkins, sci.crypt post dated 1994-09-16, message-id
+.\" <359qjg$55v$1@mhadg.production.compuserve.com>,
+.\" https://groups.google.com/d/msg/sci.crypt/JsO3xEATGFA/-wO4ttv7BCYJ
+.\"
+.\" Andrew Roos, `A Class of Weak Keys in the RC4 Stream Cipher',
+.\" sci.crypt posts dated 1995-09-22, message-ids
+.\" <43u1eh$1j3@hermes.is.co.za> and <44ebge$llf@hermes.is.co.za>.
+.\"
+.\" Paul Crowley, `Small bias in RC4 experimentally verified', March
+.\" 1998, http://www.ciphergoth.org/crypto/rc4/
+Unfortunately, the library found widespread adoption and the name stuck
+before anyone recognized that it was silly.
+.Pp
+The signature of
+.Fn arc4random_addrandom
+is silly.
+There is no reason to require casts or accept negative lengths:
+it should take a
+.Vt void *
+buffer and a
+.Vt size_t
+length.
+But it's too late to change that now.
+.Pp
+.Fn arc4random_uniform
+does not help to choose integers in [0,
+.Fa n )
+uniformly at random when
+.Fa n
+> 2^32.
+.Pp
+The security model of
+.Nm
+is stronger than many applications need, and stronger than other
+operating systems provide.
+For example, applications encrypting messages with random, but not
+secret, initialization vectors need only prevent an adversary from
+guessing future outputs, since past outputs will have been published
+already.
+.Pp
+On the one hand,
+.Nm
+could be marginally faster if it were not necessary to prevent an
+adversary who sees the state from predicting past outputs.
+On the other hand, there are applications in the wild that use
+.Nm
+to generate key material, such as OpenSSH, so for the sake of
+.Nx
+users it would be imprudent to weaken the security model.
+On the third hand, relying on the security model of
+.Nm
+in
+.Nx
+may lead you to an unpleasant surprise on another operating system
+whose implementation of
+.Nm
+has a weaker security model.
+.Pp
+One may be tempted to create new APIs to accommodate different
+security models and performance constraints without unpleasant
+surprises on different operating systems.
+This should not be done lightly, though, because there are already too
+many different choices, and too many opportunities for programmers to
+reach for one and pick the wrong one.

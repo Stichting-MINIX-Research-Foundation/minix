@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.242 2013/12/01 00:59:34 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.256 2015/07/12 08:11:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -199,15 +199,16 @@ typedef struct vnode vnode_t;
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
-#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
-#define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
-#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
-#define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
-#define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #ifdef _VFS_VNODE_PRIVATE
-#define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
-#define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
+#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
+#endif	/* _VFS_VNODE_PRIVATE */
+#define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
+#ifdef _VFS_VNODE_PRIVATE
+#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
+#endif	/* _VFS_VNODE_PRIVATE */
+#ifdef _VFS_VNODE_PRIVATE
+#define	VI_CLEAN	0x00080000	/* has been reclaimed */
+#define	VI_CHANGING	0x00100000	/* vnode changes state */
 #endif	/* _VFS_VNODE_PRIVATE */
 
 /*
@@ -218,8 +219,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\26INACTREDO" \
-    "\30INACTNOW\31DIROP"
+    "\24CLEAN\25CHANGING\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -332,6 +332,8 @@ extern const int	vttoif_tab[];
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 #define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
+#define VDEAD_NOWAIT	0x0001		/* vdead_check: do not sleep */
+
 void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
@@ -363,13 +365,6 @@ vhold(struct vnode *vp)
 	mutex_exit(vp->v_interlock);
 }
 
-static __inline bool
-vismarker(struct vnode *vp)
-{
-
-	return (vp->v_iflag & VI_MARKER) != 0;
-}
-
 #define	NULLVP	((struct vnode *)NULL)
 
 static __inline void
@@ -387,12 +382,6 @@ VN_KNOTE(struct vnode *vp, long hint)
 extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
 extern u_int		numvnodes;	/* current number of vnodes */
-
-/*
- * Macro/function to check for client cache inconsistency w.r.t. leasing.
- */
-#define	LEASE_READ	0x1		/* Check lease for readers */
-#define	LEASE_WRITE	0x2		/* Check lease for modifiers */
 
 #endif /* _KERNEL */
 
@@ -533,35 +522,37 @@ struct vnode;
 void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
-int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
-	    kmutex_t *, struct vnode **);
-void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 int	vflushbuf(struct vnode *, int);
-int 	vget(struct vnode *, int);
+int 	vget(struct vnode *, int, bool);
 void 	vgone(struct vnode *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, kmutex_t *);
+bool	vrecycle(struct vnode *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
 void	vrele_flush(void);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
-void	vwait(struct vnode *, int);
+int	vdead_check(struct vnode *, int);
 void	vrevoke(struct vnode *);
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
-void	vmark(struct vnode *, struct vnode *);
-struct vnode *
-	vunmark(struct vnode *);
 void	vremfree(struct vnode *);
+int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
+int	vcache_new(struct mount *, struct vnode *,
+	    struct vattr *, kauth_cred_t, struct vnode **);
+int	vcache_rekey_enter(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
+void	vcache_rekey_exit(struct mount *, struct vnode *,
+	    const void *, size_t, const void *, size_t);
+void	vcache_remove(struct mount *, const void *, size_t);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
@@ -591,9 +582,9 @@ int	vn_fifo_bypass(void *);
 void	vntblinit(void);
 
 /* misc stuff */
+void	sched_sync(void *);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
-int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
 int	rawdev_mounted(struct vnode *, struct vnode **);
 uint8_t	vtype2dt(enum vtype);

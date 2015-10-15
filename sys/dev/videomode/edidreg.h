@@ -1,4 +1,4 @@
-/*	$NetBSD: edidreg.h,v 1.3 2011/03/30 18:49:56 jdc Exp $	*/
+/*	$NetBSD: edidreg.h,v 1.4 2014/11/17 00:46:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -249,5 +249,7 @@
 
 #define	EDID_DESC_STD_TIMING_START		5
 #define	EDID_DESC_STD_TIMING_COUNT		6
+
+#define	EDID_EXT_BLOCK_COUNT(ptr)		((ptr)[126])
 
 #endif /* _DEV_VIDEOMODE_EDIDREG_H */

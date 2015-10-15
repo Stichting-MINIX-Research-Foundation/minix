@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_units.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: parse_units.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -269,7 +269,7 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_units_table (const struct units *units, FILE *f)
 {
     const struct units *u, *u2;
-    int max_sz = 0;
+    size_t max_sz = 0;
 
     for (u = units; u->name; ++u) {
 	max_sz = max(max_sz, strlen(u->name));
@@ -290,7 +290,7 @@ print_units_table (const struct units *units, FILE *f)
 	    if (u2->name == NULL)
 		--u2;
 	    unparse_units (u->mult, u2, buf, sizeof(buf));
-	    fprintf (f, "1 %*s = %s\n", max_sz, u->name, buf);
+	    fprintf (f, "1 %*s = %s\n", (int)max_sz, u->name, buf);
 	} else {
 	    fprintf (f, "1 %s\n", u->name);
 	}

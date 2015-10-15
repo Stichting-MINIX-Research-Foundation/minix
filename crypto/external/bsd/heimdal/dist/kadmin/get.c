@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.2 2011/04/21 17:58:56 christos Exp $	*/
+/*	$NetBSD: get.c,v 1.3 2014/04/24 13:45:33 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -173,23 +173,23 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
     case KADM5_PRINC_EXPIRE_TIME:
 	time_t2str(princ->princ_expire_time, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_PW_EXPIRATION:
 	time_t2str(princ->pw_expiration, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_LAST_PWD_CHANGE:
 	time_t2str(princ->last_pwd_change, buf, buf_len, !condensed);
 	break;
-	
+
     case KADM5_MAX_LIFE:
 	deltat2str(princ->max_life, buf, buf_len);
 	break;
-	
+
     case KADM5_MAX_RLIFE:
 	deltat2str(princ->max_renewable_life, buf, buf_len);
 	break;
-	
+
     case KADM5_MOD_TIME:
 	time_t2str(princ->mod_date, buf, buf_len, !condensed);
 	break;
@@ -491,7 +491,7 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
 	    ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
     } else
 	ret = setup_columns(&data, opt->column_info_string);
-	
+
     if(ret != 0) {
 	if(data.table != NULL)
 	    rtbl_destroy(data.table);

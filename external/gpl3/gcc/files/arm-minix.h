@@ -105,6 +105,13 @@
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS
 
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES 0
+#undef ARM_UNWIND_INFO
+#define ARM_UNWIND_INFO 0
+#undef ARM_DWARF_UNWIND_TABLES
+#define ARM_DWARF_UNWIND_TABLES 1
+
 /* LSC: FIXME: When activated, some programs crash on qemu with an illegal 
  *             instruction.
  *             The cause is unknown (Missing support on MINIX, missing support
@@ -141,10 +148,3 @@
 
 #undef  SUBTARGET_CPU_DEFAULT
 #define SUBTARGET_CPU_DEFAULT	TARGET_CPU_cortexa8
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (MINIX/arm ELF EABI)", stderr);
-
-#undef ARM_EABI_UNWIND_TABLES
-#define ARM_EABI_UNWIND_TABLES \
-	((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)

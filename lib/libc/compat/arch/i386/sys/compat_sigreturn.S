@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigreturn.S,v 1.2 2011/01/12 23:12:11 joerg Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.3 2014/05/23 02:03:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_sigreturn.S,v 1.2 2011/01/12 23:12:11 joerg Exp $")
+	RCSID("$NetBSD: compat_sigreturn.S,v 1.3 2014/05/23 02:03:41 uebayasi Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -46,6 +46,7 @@
  */
 #ifdef GPROF
 #undef ENTRY
+#undef END
 #ifdef __ELF__
 #define MCOUNT_SYMBOL	__mcount
 #else
@@ -54,6 +55,8 @@
 #define	ENTRY(x) \
 	.globl _ ## x; _ALIGN_TEXT; _ ## x:  pusha ; \
 	.data; 1:; .long 0; .text; movl $1b,%eax; call MCOUNT_SYMBOL; popa ; nop
+#define	END(x) \
+	.size _ ## x, . - _ ## x
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \

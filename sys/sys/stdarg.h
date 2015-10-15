@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 2014/08/15 11:58:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,7 @@
 #ifndef _SYS_STDARG_H_
 #define	_SYS_STDARG_H_
 
+#include <sys/cdefs.h>
 #include <sys/ansi.h>
 #include <sys/featuretest.h>
 

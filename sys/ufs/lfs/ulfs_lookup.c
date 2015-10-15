@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.34 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.34 2015/09/21 01:24:23 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp 
 #include <sys/proc.h>
 #include <sys/kmem.h>
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_inode.h>
@@ -113,7 +115,7 @@ int	lfs_dirchk = 0;
 int
 ulfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -121,7 +123,7 @@ ulfs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;	/* vnode for directory being searched */
 	struct inode *dp = VTOI(vdp);	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	struct lfs_direct *ep;		/* the current directory entry */
+	LFS_DIRHEADER *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {
 		NONE,		/* need to search a slot for our new entry */
@@ -138,8 +140,7 @@ ulfs_lookup(void *v)
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
 	doff_t prevoff;			/* previous value of ulr_offset */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by VFS_VGET */
+	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot.
 					   used for directory truncation. */
 	u_long bmask;			/* block offset mask */
@@ -150,7 +151,6 @@ ulfs_lookup(void *v)
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	struct lfs *fs = dp->i_lfs;
-	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int dirblksiz = fs->um_dirblksiz;
 	ino_t foundino;
 	struct ulfs_lookup_results *results;
@@ -221,7 +221,7 @@ ulfs_lookup(void *v)
 	slotfreespace = slotsize = slotneeded = 0;
 	if ((nameiop == CREATE || nameiop == RENAME) && (flags & ISLASTCN)) {
 		slotstatus = NONE;
-		slotneeded = LFS_DIRECTSIZ(cnp->cn_namelen);
+		slotneeded = LFS_DIRECTSIZ(fs, cnp->cn_namelen);
 	}
 
 	/*
@@ -263,7 +263,7 @@ ulfs_lookup(void *v)
 		switch (ulfsdirhash_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
 		    &results->ulr_offset, &bp, nameiop == DELETE ? &prevoff : NULL)) {
 		case 0:
-			ep = (struct lfs_direct *)((char *)bp->b_data +
+			ep = (LFS_DIRHEADER *)((char *)bp->b_data +
 			    (results->ulr_offset & bmask));
 			goto foundentry;
 		case ENOENT:
@@ -288,7 +288,7 @@ ulfs_lookup(void *v)
 		    NULL, &bp, false)))
 			goto out;
 		numdirpasses = 2;
-		nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	prevoff = results->ulr_offset;
 	endsearch = roundup(dp->i_size, dirblksiz);
@@ -327,8 +327,8 @@ searchloop:
 		 * "lfs_dirchk" to be true.
 		 */
 		KASSERT(bp != NULL);
-		ep = (struct lfs_direct *)((char *)bp->b_data + entryoffsetinblock);
-		if (ep->d_reclen == 0 ||
+		ep = (LFS_DIRHEADER *)((char *)bp->b_data + entryoffsetinblock);
+		if (lfs_dir_getreclen(fs, ep) == 0 ||
 		    (lfs_dirchk && ulfs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
 
@@ -346,16 +346,15 @@ searchloop:
 		 * compaction is viable.
 		 */
 		if (slotstatus != FOUND) {
-			int size = ulfs_rw16(ep->d_reclen, needswap);
+			int size = lfs_dir_getreclen(fs, ep);
 
-			if (ep->d_ino != 0)
-				size -= LFS_DIRSIZ(FSFMT(vdp), ep, needswap);
+			if (lfs_dir_getino(fs, ep) != 0)
+				size -= LFS_DIRSIZ(fs, ep);
 			if (size > 0) {
 				if (size >= slotneeded) {
 					slotstatus = FOUND;
 					slotoffset = results->ulr_offset;
-					slotsize = ulfs_rw16(ep->d_reclen,
-					    needswap);
+					slotsize = lfs_dir_getreclen(fs, ep);
 				} else if (slotstatus == NONE) {
 					slotfreespace += size;
 					if (slotoffset == -1)
@@ -363,8 +362,7 @@ searchloop:
 					if (slotfreespace >= slotneeded) {
 						slotstatus = COMPACT;
 						slotsize = results->ulr_offset +
-						    ulfs_rw16(ep->d_reclen,
-							     needswap) -
+						    lfs_dir_getreclen(fs, ep) -
 						    slotoffset;
 					}
 				}
@@ -374,22 +372,12 @@ searchloop:
 		/*
 		 * Check for a name match.
 		 */
-		if (ep->d_ino) {
+		if (lfs_dir_getino(fs, ep)) {
 			int namlen;
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (FSFMT(vdp) && needswap == 0)
-				namlen = ep->d_type;
-			else
-				namlen = ep->d_namlen;
-#else
-			if (FSFMT(vdp) && needswap != 0)
-				namlen = ep->d_type;
-			else
-				namlen = ep->d_namlen;
-#endif
+			namlen = lfs_dir_getnamlen(fs, ep);
 			if (namlen == cnp->cn_namelen &&
-			    !memcmp(cnp->cn_nameptr, ep->d_name,
+			    !memcmp(cnp->cn_nameptr, lfs_dir_nameptr(fs, ep),
 			    (unsigned)namlen)) {
 #ifdef LFS_DIRHASH
 foundentry:
@@ -398,11 +386,10 @@ foundentry:
 				 * Save directory entry's inode number and
 				 * reclen, and release directory buffer.
 				 */
-				if (!FSFMT(vdp) && ep->d_type == LFS_DT_WHT) {
+				if (!FSFMT(vdp) && lfs_dir_gettype(fs, ep) == LFS_DT_WHT) {
 					slotstatus = FOUND;
 					slotoffset = results->ulr_offset;
-					slotsize = ulfs_rw16(ep->d_reclen,
-					    needswap);
+					slotsize = lfs_dir_getreclen(fs, ep);
 					results->ulr_reclen = slotsize;
 					/*
 					 * This is used to set
@@ -426,16 +413,15 @@ foundentry:
 					numdirpasses--;
 					goto notfound;
 				}
-				foundino = ulfs_rw32(ep->d_ino, needswap);
-				results->ulr_reclen =
-				    ulfs_rw16(ep->d_reclen, needswap);
+				foundino = lfs_dir_getino(fs, ep);
+				results->ulr_reclen = lfs_dir_getreclen(fs, ep);
 				goto found;
 			}
 		}
 		prevoff = results->ulr_offset;
-		results->ulr_offset += ulfs_rw16(ep->d_reclen, needswap);
-		entryoffsetinblock += ulfs_rw16(ep->d_reclen, needswap);
-		if (ep->d_ino)
+		results->ulr_offset += lfs_dir_getreclen(fs, ep);
+		entryoffsetinblock += lfs_dir_getreclen(fs, ep);
+		if (lfs_dir_getino(fs, ep))
 			enduseful = results->ulr_offset;
 	}
 notfound:
@@ -524,15 +510,15 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		nchstats.ncs_pass2++;
+		namecache_count_pass2();
 	/*
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (results->ulr_offset + LFS_DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
+	if (results->ulr_offset + LFS_DIRSIZ(fs, ep) > dp->i_size) {
 		ulfs_dirbad(dp, results->ulr_offset, "i_size too small");
 		dp->i_size =
-		    results->ulr_offset + LFS_DIRSIZ(FSFMT(vdp), ep, needswap);
+		    results->ulr_offset + LFS_DIRSIZ(fs, ep);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
@@ -566,11 +552,8 @@ found:
 			vref(vdp);
 			tdp = vdp;
 		} else {
-			if (flags & ISDOTDOT)
-				VOP_UNLOCK(vdp); /* race to get the inode */
-			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-			if (flags & ISDOTDOT)
-				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			error = vcache_get(vdp->v_mount,
+			    &foundino, sizeof(foundino), &tdp);
 			if (error)
 				goto out;
 		}
@@ -579,10 +562,7 @@ found:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error) {
-			if (dp->i_number == foundino)
-				vrele(tdp);
-			else
-				vput(tdp);
+			vrele(tdp);
 			goto out;
 		}
 		/*
@@ -596,10 +576,7 @@ found:
 			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
-				if (dp->i_number == foundino)
-					vrele(tdp);
-				else
-					vput(tdp);
+				vrele(tdp);
 				error = EPERM;
 				goto out;
 			}
@@ -627,11 +604,8 @@ found:
 			error = EISDIR;
 			goto out;
 		}
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -639,39 +613,12 @@ found:
 		goto out;
 	}
 
-	/*
-	 * Step through the translation in the name.  We do not `vput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the VFS_VGET for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			goto out;
-		}
-		*vpp = tdp;
-	} else if (dp->i_number == foundino) {
+	if (dp->i_number == foundino) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = vcache_get(vdp->v_mount,
+		    &foundino, sizeof(foundino), &tdp);
 		if (error)
 			goto out;
 		*vpp = tdp;
@@ -697,7 +644,7 @@ ulfs_dirbad(struct inode *ip, doff_t offset, const char *how)
 	printf("%s: bad dir ino %llu at offset %d: %s\n",
 	    mp->mnt_stat.f_mntonname, (unsigned long long)ip->i_number,
 	    offset, how);
-	if ((mp->mnt_stat.f_flag & MNT_RDONLY) == 0)
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		panic("bad dir");
 }
 
@@ -710,50 +657,40 @@ ulfs_dirbad(struct inode *ip, doff_t offset, const char *how)
  *	name must be as long as advertised, and null terminated
  */
 int
-ulfs_dirbadentry(struct vnode *dp, struct lfs_direct *ep, int entryoffsetinblock)
+ulfs_dirbadentry(struct vnode *dp, LFS_DIRHEADER *ep, int entryoffsetinblock)
 {
 	int i;
 	int namlen;
+	unsigned reclen;
 	struct ulfsmount *ump = VFSTOULFS(dp->v_mount);
 	struct lfs *fs = ump->um_lfs;
-	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int dirblksiz = fs->um_dirblksiz;
+	const char *name;
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	if (FSFMT(dp) && needswap == 0)
-		namlen = ep->d_type;
-	else
-		namlen = ep->d_namlen;
-#else
-	if (FSFMT(dp) && needswap != 0)
-		namlen = ep->d_type;
-	else
-		namlen = ep->d_namlen;
-#endif
-	if ((ulfs_rw16(ep->d_reclen, needswap) & 0x3) != 0 ||
-	    ulfs_rw16(ep->d_reclen, needswap) >
-		dirblksiz - (entryoffsetinblock & (dirblksiz - 1)) ||
-	    ulfs_rw16(ep->d_reclen, needswap) <
-		LFS_DIRSIZ(FSFMT(dp), ep, needswap) ||
-	    namlen > LFS_MAXNAMLEN) {
+	namlen = lfs_dir_getnamlen(fs, ep);
+	reclen = lfs_dir_getreclen(fs, ep);
+	if ((reclen & 0x3) != 0 ||
+	    reclen > dirblksiz - (entryoffsetinblock & (dirblksiz - 1)) ||
+	    reclen < LFS_DIRSIZ(fs, ep) || namlen > LFS_MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%#x, DIRSIZ=%lu, namlen=%d, "
 			"flags=%#x, entryoffsetinblock=%d, dirblksiz = %d\n",
-			ulfs_rw16(ep->d_reclen, needswap),
-			(u_long)LFS_DIRSIZ(FSFMT(dp), ep, needswap),
+			lfs_dir_getreclen(fs, ep),
+			(u_long)LFS_DIRSIZ(fs, ep),
 			namlen, dp->v_mount->mnt_flag, entryoffsetinblock,
 			dirblksiz);
 		goto bad;
 	}
-	if (ep->d_ino == 0)
+	if (lfs_dir_getino(fs, ep) == 0)
 		return (0);
+	name = lfs_dir_nameptr(fs, ep);
 	for (i = 0; i < namlen; i++)
-		if (ep->d_name[i] == '\0') {
+		if (name[i] == '\0') {
 			/*return (1); */
 			printf("Second bad\n");
 			goto bad;
 	}
-	if (ep->d_name[i])
+	if (name[i])
 		goto bad;
 	return (0);
 bad:
@@ -761,22 +698,29 @@ bad:
 }
 
 /*
- * Construct a new directory entry after a call to namei, using the
- * name in the componentname argument cnp. The argument ip is the
- * inode to which the new directory entry will refer.
+ * Assign the contents of directory entry DIRP, on volume FS.
+ *
+ * NAME/NAMLEN is the name, which is not necessarily null terminated.
+ * INUM is the inode number, and DTYPE is the type code (LFS_DT_*).
+ *
+ * Note that these values typically come from:
+ *    cnp->cn_nameptr
+ *    cnp->cn_namelen
+ *    ip->i_number
+ *    LFS_IFTODT(ip->i_mode)
+ *
+ * Does not set d_reclen.
  */
-void
-ulfs_makedirentry(struct inode *ip, struct componentname *cnp,
-    struct lfs_direct *newdirp)
+static void
+ulfs_direntry_assign(struct lfs *fs, LFS_DIRHEADER *dirp,
+		     const char *name, size_t namlen,
+		     ino_t inum, unsigned dtype)
 {
-	newdirp->d_ino = ip->i_number;
-	newdirp->d_namlen = cnp->cn_namelen;
-	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);
-	newdirp->d_name[cnp->cn_namelen] = '\0';
-	if (FSFMT(ITOV(ip)))
-		newdirp->d_type = 0;
-	else
-		newdirp->d_type = LFS_IFTODT(ip->i_mode);
+	lfs_dir_setino(fs, dirp, inum);
+	lfs_dir_setnamlen(fs, dirp, namlen);
+	lfs_dir_settype(fs, dirp, dtype);
+	memcpy(lfs_dir_nameptr(fs, dirp), name, namlen);
+	lfs_dir_nameptr(fs, dirp)[namlen] = '\0';
 }
 
 /*
@@ -786,8 +730,9 @@ ulfs_makedirentry(struct inode *ip, struct componentname *cnp,
  * DVP is the directory to be updated. It must be locked.
  * ULR is the ulfs_lookup_results structure from the final lookup step.
  * TVP is not used. (XXX: why is it here? remove it)
- * DIRP is the new directory entry contents.
  * CNP is the componentname from the final lookup step.
+ * INUM is the inode number to insert into the new directory entry.
+ * DTYPE is the type code (LFS_DT_*) to insert into the new directory entry.
  * NEWDIRBP is not used and (XXX) should be removed. The previous
  * comment here said it was used by the now-removed softupdates code.
  *
@@ -810,28 +755,35 @@ ulfs_makedirentry(struct inode *ip, struct componentname *cnp,
  */
 int
 ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
-    struct vnode *tvp, struct lfs_direct *dirp,
-    struct componentname *cnp, struct buf *newdirbp)
+    struct vnode *tvp,
+    struct componentname *cnp, ino_t inum, unsigned dtype,
+    struct buf *newdirbp)
 {
 	kauth_cred_t cr;
 	int newentrysize;
 	struct inode *dp;
 	struct buf *bp;
 	u_int dsize;
-	struct lfs_direct *ep, *nep;
+	LFS_DIRHEADER *ep, *nep;
 	int error, ret, lfs_blkoff, loc, spacefree;
 	char *dirbuf;
 	struct timespec ts;
 	struct ulfsmount *ump = VFSTOULFS(dvp->v_mount);
 	struct lfs *fs = ump->um_lfs;
-	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int dirblksiz = fs->um_dirblksiz;
+	const char *name;
+	unsigned namlen, reclen;
+#ifdef LFS_DIRHASH
+	int dohashadd;
+#endif
 
 	error = 0;
+	name = cnp->cn_nameptr; /* note: not null-terminated */
+	namlen = cnp->cn_namelen;
 	cr = cnp->cn_cred;
 
 	dp = VTOI(dvp);
-	newentrysize = LFS_DIRSIZ(0, dirp, 0);
+	newentrysize = LFS_DIRECTSIZ(fs, namlen);
 
 	if (ulr->ulr_count == 0) {
 		/*
@@ -850,25 +802,14 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_size);
-		dirp->d_reclen = ulfs_rw16(dirblksiz, needswap);
-		dirp->d_ino = ulfs_rw32(dirp->d_ino, needswap);
-		if (FSFMT(dvp)) {
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (needswap == 0) {
-#else
-			if (needswap != 0) {
-#endif
-				u_char tmp = dirp->d_namlen;
-				dirp->d_namlen = dirp->d_type;
-				dirp->d_type = tmp;
-			}
-		}
 		lfs_blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
-		memcpy((char *)bp->b_data + lfs_blkoff, dirp, newentrysize);
+		ep = (LFS_DIRHEADER *)((char *)bp->b_data + lfs_blkoff);
+		ulfs_direntry_assign(fs, ep, name, namlen, inum, dtype);
+		lfs_dir_setreclen(fs, ep, dirblksiz);
 #ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
 			ulfsdirhash_newblk(dp, ulr->ulr_offset);
-			ulfsdirhash_add(dp, dirp, ulr->ulr_offset);
+			ulfsdirhash_add(dp, ep, ulr->ulr_offset);
 			ulfsdirhash_checkblock(dp, (char *)bp->b_data + lfs_blkoff,
 			    ulr->ulr_offset);
 		}
@@ -919,21 +860,19 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 * arranged that compacting the region ulr_offset to
 	 * ulr_offset + ulr_count would yield the space.
 	 */
-	ep = (struct lfs_direct *)dirbuf;
-	dsize = (ep->d_ino != 0) ? LFS_DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
-	spacefree = ulfs_rw16(ep->d_reclen, needswap) - dsize;
-	for (loc = ulfs_rw16(ep->d_reclen, needswap); loc < ulr->ulr_count; ) {
-		uint16_t reclen;
-
-		nep = (struct lfs_direct *)(dirbuf + loc);
+	ep = (LFS_DIRHEADER *)dirbuf;
+	dsize = (lfs_dir_getino(fs, ep) != 0) ? LFS_DIRSIZ(fs, ep) : 0;
+	spacefree = lfs_dir_getreclen(fs, ep) - dsize;
+	for (loc = lfs_dir_getreclen(fs, ep); loc < ulr->ulr_count; ) {
+		nep = (LFS_DIRHEADER *)(dirbuf + loc);
 
 		/* Trim the existing slot (NB: dsize may be zero). */
-		ep->d_reclen = ulfs_rw16(dsize, needswap);
-		ep = (struct lfs_direct *)((char *)ep + dsize);
+		lfs_dir_setreclen(fs, ep, dsize);
+		ep = LFS_NEXTDIR(fs, ep);
 
-		reclen = ulfs_rw16(nep->d_reclen, needswap);
+		reclen = lfs_dir_getreclen(fs, nep);
 		loc += reclen;
-		if (nep->d_ino == 0) {
+		if (lfs_dir_getino(fs, nep) == 0) {
 			/*
 			 * A mid-block unused entry. Such entries are
 			 * never created by the kernel, but fsck_ffs
@@ -943,11 +882,11 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 			 * relocated entry since we don't memcpy it.
 			 */
 			spacefree += reclen;
-			ep->d_ino = 0;
+			lfs_dir_setino(fs, ep, 0);
 			dsize = 0;
 			continue;
 		}
-		dsize = LFS_DIRSIZ(FSFMT(dvp), nep, needswap);
+		dsize = LFS_DIRSIZ(fs, nep);
 		spacefree += reclen - dsize;
 #ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL)
@@ -966,39 +905,31 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 * Update the pointer fields in the previous entry (if any),
 	 * copy in the new entry, and write out the block.
 	 */
-	if (ep->d_ino == 0 ||
-	    (ulfs_rw32(ep->d_ino, needswap) == ULFS_WINO &&
-	     memcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
+	if (lfs_dir_getino(fs, ep) == 0 ||
+	    (lfs_dir_getino(fs, ep) == ULFS_WINO &&
+	     memcmp(lfs_dir_nameptr(fs, ep), name, namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
 			panic("ulfs_direnter: compact1");
-		dirp->d_reclen = spacefree + dsize;
+		reclen = spacefree + dsize;
+#ifdef LFS_DIRHASH
+		dohashadd = (lfs_dir_getino(fs, ep) == 0);
+#endif
 	} else {
 		if (spacefree < newentrysize)
 			panic("ulfs_direnter: compact2");
-		dirp->d_reclen = spacefree;
-		ep->d_reclen = ulfs_rw16(dsize, needswap);
-		ep = (struct lfs_direct *)((char *)ep + dsize);
-	}
-	dirp->d_reclen = ulfs_rw16(dirp->d_reclen, needswap);
-	dirp->d_ino = ulfs_rw32(dirp->d_ino, needswap);
-	if (FSFMT(dvp)) {
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (needswap == 0) {
-#else
-		if (needswap != 0) {
-#endif
-			u_char tmp = dirp->d_namlen;
-			dirp->d_namlen = dirp->d_type;
-			dirp->d_type = tmp;
-		}
-	}
+		reclen = spacefree;
+		lfs_dir_setreclen(fs, ep, dsize);
+		ep = LFS_NEXTDIR(fs, ep);
 #ifdef LFS_DIRHASH
-	if (dp->i_dirhash != NULL && (ep->d_ino == 0 ||
-	    dirp->d_reclen == spacefree))
-		ulfsdirhash_add(dp, dirp, ulr->ulr_offset + ((char *)ep - dirbuf));
+		dohashadd = 1;
 #endif
-	memcpy((void *)ep, (void *)dirp, (u_int)newentrysize);
+	}
+
+	ulfs_direntry_assign(fs, ep, name, namlen, inum, dtype);
+	lfs_dir_setreclen(fs, ep, reclen);
 #ifdef LFS_DIRHASH
+	if (dp->i_dirhash != NULL && dohashadd)
+		ulfsdirhash_add(dp, ep, ulr->ulr_offset + ((char *)ep - dirbuf));
 	if (dp->i_dirhash != NULL)
 		ulfsdirhash_checkblock(dp, dirbuf -
 		    (ulr->ulr_offset & (dirblksiz - 1)),
@@ -1063,10 +994,10 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	      struct inode *ip, int flags, int isrmdir)
 {
 	struct inode *dp = VTOI(dvp);
-	struct lfs_direct *ep;
+	struct lfs *fs = dp->i_lfs;
+	LFS_DIRHEADER *ep;
 	struct buf *bp;
 	int error;
-	const int needswap = ULFS_MPNEEDSWAP(dp->i_lfs);
 
 	if (flags & DOWHITEOUT) {
 		/*
@@ -1076,8 +1007,8 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 				     &bp, true);
 		if (error)
 			return (error);
-		ep->d_ino = ulfs_rw32(ULFS_WINO, needswap);
-		ep->d_type = LFS_DT_WHT;
+		lfs_dir_setino(fs, ep, ULFS_WINO);
+		lfs_dir_settype(fs, ep, LFS_DT_WHT);
 		goto out;
 	}
 
@@ -1092,22 +1023,20 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 */
 	if (dp->i_dirhash != NULL)
 		ulfsdirhash_remove(dp, (ulr->ulr_count == 0) ? ep :
-		   (struct lfs_direct *)((char *)ep +
-		   ulfs_rw16(ep->d_reclen, needswap)), ulr->ulr_offset);
+		   LFS_NEXTDIR(fs, ep), ulr->ulr_offset);
 #endif
 
 	if (ulr->ulr_count == 0) {
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
-		ep->d_ino = 0;
+		lfs_dir_setino(fs, ep, 0);
 	} else {
 		/*
 		 * Collapse new free space into previous entry.
 		 */
-		ep->d_reclen =
-		    ulfs_rw16(ulfs_rw16(ep->d_reclen, needswap) + ulr->ulr_reclen,
-			needswap);
+		lfs_dir_setreclen(fs, ep,
+			lfs_dir_getreclen(fs, ep) + ulr->ulr_reclen);
 	}
 
 #ifdef LFS_DIRHASH
@@ -1166,17 +1095,17 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
     struct inode *oip, ino_t newinum, int newtype,
     int isrmdir, int iflags)
 {
+	struct lfs *fs = dp->i_lfs;
 	struct buf *bp;
-	struct lfs_direct *ep;
+	LFS_DIRHEADER *ep;
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
 	error = ulfs_blkatoff(vdp, offset, (void *)&ep, &bp, true);
 	if (error)
 		return (error);
-	ep->d_ino = ulfs_rw32(newinum, ULFS_IPNEEDSWAP(dp));
-	if (!FSFMT(vdp))
-		ep->d_type = newtype;
+	lfs_dir_setino(fs, ep, newinum);
+	lfs_dir_settype(fs, ep, newtype);
 	oip->i_nlink--;
 	DIP_ASSIGN(oip, nlink, oip->i_nlink);
 	oip->i_flag |= IN_CHANGE;
@@ -1204,18 +1133,19 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 int
 ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
+	struct lfs *fs = ip->i_lfs;
 	doff_t off;
-	struct lfs_dirtemplate dbuf;
-	struct lfs_direct *dp = (struct lfs_direct *)&dbuf;
+	union lfs_dirtemplate dbuf;
+	LFS_DIRHEADER *dp = (LFS_DIRHEADER *)&dbuf;
 	int error, namlen;
+	const char *name;
 	size_t count;
-	const int needswap = ULFS_IPNEEDSWAP(ip);
-#define	MINDIRSIZ (sizeof (struct lfs_dirtemplate) / 2)
+/* XXX this should probably use LFS_DIRECTSIZ(fs, 2) */
+#define	MINDIRSIZ (sizeof (struct lfs_dirtemplate64) / 2)
 
-	for (off = 0; off < ip->i_size;
-	    off += ulfs_rw16(dp->d_reclen, needswap)) {
-		error = vn_rdwr(UIO_READ, ITOV(ip), (void *)dp, MINDIRSIZ, off,
-		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, NULL);
+	for (off = 0; off < ip->i_size; off += lfs_dir_getreclen(fs, dp)) {
+		error = ulfs_bufio(UIO_READ, ITOV(ip), (void *)dp, MINDIRSIZ,
+		    off, IO_NODELOCKED, cred, &count, NULL);
 		/*
 		 * Since we read MINDIRSIZ, residual must
 		 * be 0 unless we're at end of file.
@@ -1223,239 +1153,31 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		if (error || count != 0)
 			return (0);
 		/* avoid infinite loops */
-		if (dp->d_reclen == 0)
+		if (lfs_dir_getreclen(fs, dp) == 0)
 			return (0);
 		/* skip empty entries */
-		if (dp->d_ino == 0 || ulfs_rw32(dp->d_ino, needswap) == ULFS_WINO)
+		if (lfs_dir_getino(fs, dp) == 0 ||
+		    lfs_dir_getino(fs, dp) == ULFS_WINO)
 			continue;
 		/* accept only "." and ".." */
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (FSFMT(ITOV(ip)) && needswap == 0)
-			namlen = dp->d_type;
-		else
-			namlen = dp->d_namlen;
-#else
-		if (FSFMT(ITOV(ip)) && needswap != 0)
-			namlen = dp->d_type;
-		else
-			namlen = dp->d_namlen;
-#endif
+		namlen = lfs_dir_getnamlen(fs, dp);
+		name = lfs_dir_nameptr(fs, dp);
 		if (namlen > 2)
 			return (0);
-		if (dp->d_name[0] != '.')
+		if (name[0] != '.')
 			return (0);
 		/*
 		 * At this point namlen must be 1 or 2.
 		 * 1 implies ".", 2 implies ".." if second
 		 * char is also "."
 		 */
-		if (namlen == 1 &&
-		    ulfs_rw32(dp->d_ino, needswap) == ip->i_number)
+		if (namlen == 1 && lfs_dir_getino(fs, dp) == ip->i_number)
 			continue;
-		if (dp->d_name[1] == '.' &&
-		    ulfs_rw32(dp->d_ino, needswap) == parentino)
+		if (name[1] == '.' && lfs_dir_getino(fs, dp) == parentino)
 			continue;
 		return (0);
 	}
 	return (1);
-}
-
-/*
- * Check if source directory is in the path of the target directory.
- * Target is supplied locked, source is unlocked.
- * The target is always vput before returning.
- */
-int
-ulfs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
-{
-	struct vnode *nextvp, *vp;
-	int error, rootino, namlen;
-	struct lfs_dirtemplate dirbuf;
-	const int needswap = ULFS_IPNEEDSWAP(target);
-
-	vp = ITOV(target);
-	if (target->i_number == source->i_number) {
-		error = EEXIST;
-		goto out;
-	}
-	rootino = ULFS_ROOTINO;
-	error = 0;
-	if (target->i_number == rootino)
-		goto out;
-
-	for (;;) {
-		if (vp->v_type != VDIR) {
-			error = ENOTDIR;
-			break;
-		}
-		error = vn_rdwr(UIO_READ, vp, (void *)&dirbuf,
-		    sizeof (struct lfs_dirtemplate), (off_t)0, UIO_SYSSPACE,
-		    IO_NODELOCKED, cred, NULL, NULL);
-		if (error != 0)
-			break;
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (FSFMT(vp) && needswap == 0)
-			namlen = dirbuf.dotdot_type;
-		else
-			namlen = dirbuf.dotdot_namlen;
-#else
-		if (FSFMT(vp) && needswap != 0)
-			namlen = dirbuf.dotdot_type;
-		else
-			namlen = dirbuf.dotdot_namlen;
-#endif
-		if (namlen != 2 ||
-		    dirbuf.dotdot_name[0] != '.' ||
-		    dirbuf.dotdot_name[1] != '.') {
-			error = ENOTDIR;
-			break;
-		}
-		if (ulfs_rw32(dirbuf.dotdot_ino, needswap) == source->i_number) {
-			error = EINVAL;
-			break;
-		}
-		if (ulfs_rw32(dirbuf.dotdot_ino, needswap) == rootino)
-			break;
-		VOP_UNLOCK(vp);
-		error = VFS_VGET(vp->v_mount,
-		    ulfs_rw32(dirbuf.dotdot_ino, needswap), &nextvp);
-		vrele(vp);
-		if (error) {
-			vp = NULL;
-			break;
-		}
-		vp = nextvp;
-	}
-
-out:
-	if (error == ENOTDIR)
-		printf("checkpath: .. not a directory\n");
-	if (vp != NULL)
-		vput(vp);
-	return (error);
-}
-
-/*
- * Extract the inode number of ".." from a directory.
- * Helper for ulfs_parentcheck.
- */
-static int
-ulfs_readdotdot(struct vnode *vp, int needswap, kauth_cred_t cred, ino_t *result)
-{
-	struct lfs_dirtemplate dirbuf;
-	int namlen, error;
-
-	error = vn_rdwr(UIO_READ, vp, &dirbuf,
-		    sizeof (struct lfs_dirtemplate), (off_t)0, UIO_SYSSPACE,
-		    IO_NODELOCKED, cred, NULL, NULL);
-	if (error) {
-		return error;
-	}
-
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	if (FSFMT(vp) && needswap == 0)
-		namlen = dirbuf.dotdot_type;
-	else
-		namlen = dirbuf.dotdot_namlen;
-#else
-	if (FSFMT(vp) && needswap != 0)
-		namlen = dirbuf.dotdot_type;
-	else
-		namlen = dirbuf.dotdot_namlen;
-#endif
-	if (namlen != 2 ||
-	    dirbuf.dotdot_name[0] != '.' ||
-	    dirbuf.dotdot_name[1] != '.') {
-		printf("ulfs_readdotdot: directory %llu contains "
-		       "garbage instead of ..\n",
-		       (unsigned long long) VTOI(vp)->i_number);
-		return ENOTDIR;
-	}
-	*result = ulfs_rw32(dirbuf.dotdot_ino, needswap);
-	return 0;
-}
-
-/*
- * Check if LOWER is a descendent of UPPER. If we find UPPER, return
- * nonzero in FOUND and return a reference to the immediate descendent
- * of UPPER in UPPERCHILD. If we don't find UPPER (that is, if we
- * reach the volume root and that isn't UPPER), return zero in FOUND
- * and null in UPPERCHILD.
- *
- * Neither UPPER nor LOWER should be locked.
- *
- * On error (such as a permissions error checking up the directory
- * tree) fail entirely.
- *
- * Note that UPPER and LOWER must be on the same volume, and because
- * we inspect only that volume NEEDSWAP can be constant.
- */
-int
-ulfs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
-		int *found_ret, struct vnode **upperchild_ret)
-{
-	const int needswap = ULFS_IPNEEDSWAP(VTOI(lower));
-	ino_t upper_ino, found_ino;
-	struct vnode *current, *next;
-	int error;
-
-	if (upper == lower) {
-		vref(upper);
-		*found_ret = 1;
-		*upperchild_ret = upper;
-		return 0;
-	}
-	if (VTOI(lower)->i_number == ULFS_ROOTINO) {
-		*found_ret = 0;
-		*upperchild_ret = NULL;
-		return 0;
-	}
-
-	upper_ino = VTOI(upper)->i_number;
-
-	current = lower;
-	vref(current);
-	vn_lock(current, LK_EXCLUSIVE | LK_RETRY);
-
-	for (;;) {
-		error = ulfs_readdotdot(current, needswap, cred, &found_ino);
-		if (error) {
-			vput(current);
-			return error;
-		}
-		if (found_ino == upper_ino) {
-			VOP_UNLOCK(current);
-			*found_ret = 1;
-			*upperchild_ret = current;
-			return 0;
-		}
-		if (found_ino == ULFS_ROOTINO) {
-			vput(current);
-			*found_ret = 0;
-			*upperchild_ret = NULL;
-			return 0;
-		}
-		VOP_UNLOCK(current);
-		error = VFS_VGET(current->v_mount, found_ino, &next);
-		if (error) {
-			vrele(current);
-			return error;
-		}
-		KASSERT(VOP_ISLOCKED(next));
-		if (next->v_type != VDIR) {
-			printf("ulfs_parentcheck: inode %llu reached via .. of "
-			       "inode %llu is not a directory\n",
-			    (unsigned long long)VTOI(next)->i_number,
-			    (unsigned long long)VTOI(current)->i_number);
-			vput(next);
-			vrele(current);
-			return ENOTDIR;
-		}
-		vrele(current);
-		current = next;
-	}
-
-	return 0;
 }
 
 #define	ULFS_DIRRABLKS 0
@@ -1509,7 +1231,7 @@ ulfs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
 	}
 	KASSERT(run >= 1);
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
-	    run - 1, NOCRED, (modify ? B_MODIFY : 0), &bp);
+	    run - 1, (modify ? B_MODIFY : 0), &bp);
 	if (error != 0) {
 		*bpp = NULL;
 		goto out;

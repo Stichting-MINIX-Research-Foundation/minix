@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_rep.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: rd_rep.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ krb5_rd_rep(krb5_context context,
     if (ret)
 	goto out;
     ret = krb5_decrypt_EncryptedData (context,
-				      crypto,	
+				      crypto,
 				      KRB5_KU_AP_REQ_ENC_PART,
 				      &ap_rep.enc_part,
 				      &data);

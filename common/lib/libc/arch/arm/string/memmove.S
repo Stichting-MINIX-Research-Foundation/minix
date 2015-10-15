@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.7 2013/11/30 20:20:42 joerg Exp $	*/
+/*	$NetBSD: memmove.S,v 1.9 2015/03/26 13:34:51 justin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -585,6 +585,8 @@ END(memmove)
 END(bcopy)
 #endif
 
-#if defined(__ARM_EABI__) && !defined(BCOPY)
+#if defined(__ARM_EABI__) && !defined(BCOPY) && !defined(_RUMPKERNEL)
 STRONG_ALIAS(__aeabi_memmove, memmove)
+STRONG_ALIAS(__aeabi_memmove4, memmove)
+STRONG_ALIAS(__aeabi_memmove8, memmove)
 #endif

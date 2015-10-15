@@ -1,4 +1,4 @@
-/*	$NetBSD: sendauth.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: sendauth.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -213,7 +213,7 @@ krb5_sendauth(krb5_context context,
 
     if (ap_req_options & AP_OPTS_MUTUAL_REQUIRED) {
 	krb5_data ap_rep;
-	krb5_ap_rep_enc_part *ignore;
+	krb5_ap_rep_enc_part *ignore = NULL;
 
 	krb5_data_zero (&ap_rep);
 	ret = krb5_read_message (context,

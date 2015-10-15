@@ -1,4 +1,4 @@
-/* $Id: cmd-select-pane.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,8 +24,8 @@
  * Select pane.
  */
 
-void	cmd_select_pane_key_binding(struct cmd *, int);
-int	cmd_select_pane_exec(struct cmd *, struct cmd_ctx *);
+void		 cmd_select_pane_key_binding(struct cmd *, int);
+enum cmd_retval	 cmd_select_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_pane_entry = {
 	"select-pane", "selectp",
@@ -33,7 +33,6 @@ const struct cmd_entry cmd_select_pane_entry = {
 	"[-lDLRU] " CMD_TARGET_PANE_USAGE,
 	0,
 	cmd_select_pane_key_binding,
-	NULL,
 	cmd_select_pane_exec
 };
 
@@ -42,7 +41,6 @@ const struct cmd_entry cmd_last_pane_entry = {
 	"t:", 0, 0,
 	CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_select_pane_exec
 };
@@ -63,36 +61,38 @@ cmd_select_pane_key_binding(struct cmd *self, int key)
 		args_set(self->args, 't', ":.+");
 }
 
-int
-cmd_select_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
 	struct window_pane	*wp;
 
 	if (self->entry == &cmd_last_pane_entry || args_has(args, 'l')) {
-		wl = cmd_find_window(ctx, args_get(args, 't'), NULL);
+		wl = cmd_find_window(cmdq, args_get(args, 't'), NULL);
 		if (wl == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 
 		if (wl->window->last == NULL) {
-			ctx->error(ctx, "no last pane");
-			return (-1);
+			cmdq_error(cmdq, "no last pane");
+			return (CMD_RETURN_ERROR);
 		}
 
+		server_unzoom_window(wl->window);
 		window_set_active_pane(wl->window, wl->window->last);
 		server_status_window(wl->window);
 		server_redraw_window_borders(wl->window);
 
-		return (0);
+		return (CMD_RETURN_NORMAL);
 	}
 
-	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp)) == NULL)
+		return (CMD_RETURN_ERROR);
 
+	server_unzoom_window(wp->window);
 	if (!window_pane_visible(wp)) {
-		ctx->error(ctx, "pane not visible");
-		return (-1);
+		cmdq_error(cmdq, "pane not visible");
+		return (CMD_RETURN_ERROR);
 	}
 
 	if (args_has(self->args, 'L'))
@@ -104,13 +104,13 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else if (args_has(self->args, 'D'))
 		wp = window_pane_find_down(wp);
 	if (wp == NULL) {
-		ctx->error(ctx, "pane not found");
-		return (-1);
+		cmdq_error(cmdq, "pane not found");
+		return (CMD_RETURN_ERROR);
 	}
 
 	window_set_active_pane(wl->window, wp);
 	server_status_window(wl->window);
 	server_redraw_window_borders(wl->window);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

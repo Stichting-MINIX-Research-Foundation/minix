@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2013/09/19 21:18:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2015/08/28 11:45:02 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -34,14 +34,20 @@ USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
 
+# build libc suitable for rumprun software stack, i.e. are system calls
+# rump kernel function calls instead of kernel traps?
+RUMPRUN?=	no
+
 WARNS=5
-.if defined(__MINIX)
-CPPFLAGS+=	-D_LIBC
-CPPFLAGS+=	-DMLIBDIR=\"${MLIBDIR}\"
-.else
+.if !defined(__MINIX)
 CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
-CPPFLAGS+=	-D_DIAGNOSTIC -DMLIBDIR=\"${MLIBDIR}\"
+CPPFLAGS+=	-D_DIAGNOSTIC
+.else
+CPPFLAGS+=	-D_LIBC
+.if defined(MLIBDIR)
+CPPFLAGS+=	-DMLIBDIR=\"${MLIBDIR}\"
 .endif
+.endif # !defined(__minix)
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=	-DHESIOD

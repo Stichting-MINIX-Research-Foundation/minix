@@ -71,6 +71,7 @@ CLEANFILES= \
 	messages.log
 
 EXTRA_DIST = \
+	NTMakefile \
 	check-aliases.in \
 	check-dbinfo.in \
 	loaddump-db.in \

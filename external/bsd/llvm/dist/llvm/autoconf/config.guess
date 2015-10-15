@@ -861,8 +861,11 @@ EOF
 	# other systems with GNU libc and userland
 	echo ${UNAME_MACHINE}-unknown-`echo ${UNAME_SYSTEM} | sed 's,^[^/]*/,,' | tr '[A-Z]' '[a-z]'``echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`-gnu
 	exit ;;
-    i*86:Minix:*:*)
-	echo ${UNAME_MACHINE}-pc-minix
+    *:Minix:*:*)
+	echo ${UNAME_MACHINE}-elf32-minix
+	exit ;;
+    aarch64*:Linux:*)
+	    echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit ;;
     alpha:Linux:*:*)
 	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in

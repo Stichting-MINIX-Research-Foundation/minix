@@ -1,4 +1,4 @@
-/*	$NetBSD: example_evp_cipher.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: example_evp_cipher.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -119,7 +119,7 @@ main(int argc, char **argv)
      */
     EVP_CIPHER_CTX_init(&ctx);
     EVP_CipherInit_ex(&ctx, c, NULL, key, ivec, encryptp);
-	
+
     /* read in buffer */
     while ((ilen = fread(ibuf, 1, block_size, in)) > 0) {
 	/* encrypto/decrypt */

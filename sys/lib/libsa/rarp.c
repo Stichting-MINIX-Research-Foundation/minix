@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.31 2011/05/11 16:23:40 zoltan Exp $	*/
+/*	$NetBSD: rarp.c,v 1.32 2014/03/29 14:30:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -122,8 +122,8 @@ rarp_getipaddress(int sock)
 	ap->arp_hln = sizeof(ap->arp_sha); /* hardware address length */
 	ap->arp_pln = sizeof(ap->arp_spa); /* protocol address length */
 	ap->arp_op = htons(ARPOP_REVREQUEST);
-	(void)memcpy(ap->arp_sha, d->myea, 6);
-	(void)memcpy(ap->arp_tha, d->myea, 6);
+	(void)memcpy(ap->arp_sha, d->myea, ETHER_ADDR_LEN);
+	(void)memcpy(ap->arp_tha, d->myea, ETHER_ADDR_LEN);
 
 	if (sendrecv(d,
 	    rarpsend, &wbuf.data, sizeof(wbuf.data),
@@ -223,7 +223,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	}
 
 	/* Is the reply for our Ethernet address? */
-	if (memcmp(ap->arp_tha, d->myea, 6)) {
+	if (memcmp(ap->arp_tha, d->myea, ETHER_ADDR_LEN)) {
 #ifdef RARP_DEBUG
 		if (debug)
 			printf("unwanted address\n");

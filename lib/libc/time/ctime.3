@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.48 2013/09/20 19:06:54 christos Exp $
+.\" $NetBSD: ctime.3,v 1.51 2014/10/07 21:51:03 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd September 20, 2013
+.Dd October 7, 2014
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -19,10 +19,7 @@
 .Nm localtime_rz ,
 .Nm mktime ,
 .Nm mktime_z ,
-.Nm tzalloc ,
-.Nm tzgetname ,
-.Nm tzfree ,
-.Nd convert date and time to ASCII
+.Nd convert date and time
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -37,7 +34,7 @@
 .Ft char *
 .Fn ctime_r "const time_t *clock"  "char *buf"
 .Ft char *
-.Fn ctime_rz "const timezone_t tz" "const time_t *clock"  "char *buf"
+.Fn ctime_rz "timezone_t restrict tz" "const time_t *clock"  "char *buf"
 .Ft double
 .Fn difftime "time_t time1" "time_t time0"
 .Ft struct tm *
@@ -49,17 +46,11 @@
 .Ft struct tm *
 .Fn localtime_r "const time_t * restrict clock" "struct tm * restrict result"
 .Ft struct tm *
-.Fn localtime_rz "const timezone_t tz" "const time_t * restrict clock" "struct tm * restrict result"
+.Fn localtime_rz "timezone_t restrict tz" "const time_t * restrict clock" "struct tm * restrict result"
 .Ft time_t
 .Fn mktime "struct tm *tm"
 .Ft time_t
-.Fn mktime_z "const timezone_t tz" "struct tm *tm"
-.Ft timezone_t
-.Fn tzalloc "const char *zone"
-.Ft void
-.Fn tzfree "const timezone_t tz"
-.Ft const char *
-.Fn tzgetname "const timezone_t tz" "int isdst"
+.Fn mktime_z "timezone_t restrict tz" "struct tm *restrict tm"
 .Sh DESCRIPTION
 The
 .Nm
@@ -133,10 +124,12 @@ The
 function is similar to
 .Fn ctime_r ,
 but it also takes a
-.Ft "const timezone_t"
+.Ft "timezone_t"
 argument, as returned by a previous call to
 .Fn tzalloc ,
-or a null pointer denoting
+or a
+.Dv NULL
+pointer denoting
 Coordinated Universal Time
 .Pq Tn UTC .
 .It Fn difftime "time1" "time2"
@@ -145,6 +138,40 @@ The
 function returns the difference between two calendar times,
 .Fa ( time1 No - Fa time0 ) ,
 expressed in seconds.
+.Pp
+The
+.Fn ctime_r ,
+.Fn localtime_r ,
+.Fn gmtime_r ,
+and
+.Fn asctime_r
+functions
+are like their unsuffixed counterparts, except that they accept an
+additional argument specifying where to store the result if successful.
+.Pp
+The
+.Fn ctime_rz ,
+.Fn localtime_rz ,
+and
+.Fn mktime_z
+functions
+are like their unsuffixed counterparts, except that they accept an
+extra initial
+.Ar zone
+argument specifying the time zone to be used for conversion.
+If
+.Fa zone
+is
+.Dv NULL ,
+UTC is used; otherwise,
+.Fa zone
+should be have been allocated by
+.Fn tzalloc
+and should not be freed until after all uses (e.g., by calls to
+.Fn strftime )
+of the filled-in
+.Fn tm_zone
+fields.
 .It Fn gmtime "clock"
 The
 .Fn gmtime
@@ -200,11 +227,12 @@ The
 function is similar to
 .Fn localtime_r ,
 but it also takes a
-.Ft "const timezone_t"
+.Ft "timezone_t"
 argument, returned by a previous call to
 .Fn tzalloc ,
-or a null pointer denoting
-Coordinated Universal Time
+or a
+.Dv NULL
+pointer denoting Coordinated Universal Time
 .Pq Tn UTC .
 .It Fn mktime "tm"
 The
@@ -286,58 +314,6 @@ argument, returned by a previous call to
 or a null pointer denoting
 Coordinated Universal Time
 .Pq Tn UTC .
-.It Fn tzalloc "zone"
-The
-.Fn tzalloc
-function takes as an argument a timezone name and returns a
-.Ft timezone_t
-object suitable to be used in the
-.Fn ctime_rz ,
-.Fn localtime_rz ,
-and
-.Fn mktime_z
-functions.
-.Pp
-A null pointer may be passed to
-.Fn tzalloc
-instead of a timezone name, to refer to
-Coordinated Universal Time
-.Pq Tn UTC .
-.Pp
-Note that instead of setting the environment variable
-.Va TZ ,
-and globally changing the behavior of the calling program, one can use
-multiple timezones at the same time by using separate
-.Ft timezone_t
-objects allocated by
-.Fn tzalloc
-and calling the
-.Dq z
-variants of the functions.
-.It Fn tzfree "tz"
-The
-.Fn tzfree
-function deallocates
-.Fa tz ,
-which was previously allocated by
-.Fn tzalloc .
-.It Fn "tzgetname"
-Finally,
-.Fn tzgetname
-returns the name for the given
-.Fa tz .
-If
-.Fa isdst
-is
-.Va 0 ,
-the call is equivalent to
-.Va tzname[0] .
-If
-.Fa isdst
-is set to
-.Va 1
-the call is equivalent to
-.Va tzname[1] .
 .El
 .Pp
 Declarations of all the functions and externals, and the 
@@ -538,23 +514,24 @@ points to data allocated by
 .Fn tzalloc .
 .Pp
 The
-.Fn asctime
+.Fn asctime ,
+.Fn asctime_r ,
+.Fn ctime ,
+.Fn ctime_r ,
 and
-.Fn ctime
+.Fn ctime_rz ,
 functions behave strangely for years before 1000 or after 9999.
 The 1989 and 1999 editions of the C Standard say
 that years from \-99 through 999 are converted without
 extra spaces, but this conflicts with longstanding
 tradition and with this implementation.
+The 2011 edition says that the behavior
+is undefined if the year is before 1000 or after 9999.
 Traditional implementations of these two functions are
 restricted to years in the range 1900 through 2099.
 To avoid this portability mess, new programs should use
 .Fn strftime
 instead.
-.Pp
-Avoid using out-of-range values with
-.Fn mktime
-when setting up lunch with promptness sticklers in Riyadh.
 .\" @(#)newctime.3	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.

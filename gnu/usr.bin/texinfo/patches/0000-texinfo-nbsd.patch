@@ -1,15 +1,109 @@
-diff -r -x CVS -N -U 3 texinfo.orig/AUTHORS texinfo.nbsd/AUTHORS
+diff -rNU3 texinfo.orig/AUTHORS texinfo/AUTHORS
 --- texinfo.orig/AUTHORS	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/AUTHORS	2013-04-10 22:45:11.330839295 +0200
++++ texinfo/AUTHORS	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -$Id: AUTHORS,v 1.10 2004/04/11 17:56:45 karl Exp $
 +Id: AUTHORS,v 1.10 2004/04/11 17:56:45 karl Exp
  Texinfo authors.
  
    Copyright (C) 2003 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/config.guess texinfo.nbsd/config.guess
+diff -rNU3 texinfo.orig/INSTALL texinfo/INSTALL
+--- texinfo.orig/INSTALL	2004-11-19 14:08:47.000000000 +0100
++++ texinfo/INSTALL	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: INSTALL,v 1.5 2004/11/19 13:08:47 karl Exp $
++Id: INSTALL,v 1.5 2004/11/19 13:08:47 karl Exp
+ 
+      Copying and distribution of this file, with or without modification,
+      are permitted in any medium without royalty provided the copyright
+diff -rNU3 texinfo.orig/INTRODUCTION texinfo/INTRODUCTION
+--- texinfo.orig/INTRODUCTION	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/INTRODUCTION	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: INTRODUCTION,v 1.3 2004/04/11 17:56:45 karl Exp $
++Id: INTRODUCTION,v 1.3 2004/04/11 17:56:45 karl Exp
+ Getting started with Texinfo.
+ 
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+diff -rNU3 texinfo.orig/Makefile.am texinfo/Makefile.am
+--- texinfo.orig/Makefile.am	2004-12-15 19:14:56.000000000 +0100
++++ texinfo/Makefile.am	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ # Makefile.am for texinfo.
+-# $Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp $
++# Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp
+ # Process this file with automake to produce Makefile.in in all directories.
+ #
+ # This file is free software; as a special exception the author gives
+diff -rNU3 texinfo.orig/Makefile.in texinfo/Makefile.in
+--- texinfo.orig/Makefile.in	2004-12-31 19:01:49.000000000 +0100
++++ texinfo/Makefile.in	2015-10-18 11:13:23.000000000 +0200
+@@ -15,7 +15,7 @@
+ @SET_MAKE@
+ 
+ # Makefile.am for texinfo.
+-# $Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp $
++# Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp
+ # Process this file with automake to produce Makefile.in in all directories.
+ #
+ # This file is free software; as a special exception the author gives
+@@ -230,7 +230,7 @@
+ # This is to prevent texinfo.tex from being included in the top-level
+ # distribution directory.
+ TEXINFO_TEX = doc/texinfo.tex
+-@TOOLS_ONLY_FALSE@SUBDIRS = $(native_tools) intl m4 lib info makeinfo po util doc
++@TOOLS_ONLY_FALSE@SUBDIRS = $(native_tools) intl m4 lib makeinfo po util doc
+ @TOOLS_ONLY_TRUE@SUBDIRS = lib info makeinfo util
+ 
+ # for gettext.
+diff -rNU3 texinfo.orig/NEWS texinfo/NEWS
+--- texinfo.orig/NEWS	2004-12-31 19:01:29.000000000 +0100
++++ texinfo/NEWS	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: NEWS,v 1.103 2004/12/24 16:43:58 karl Exp $
++Id: NEWS,v 1.103 2004/12/24 16:43:58 karl Exp
+ This file records noteworthy changes, very tersely.
+ See the manual for detailed information.
+ 
+diff -rNU3 texinfo.orig/README texinfo/README
+--- texinfo.orig/README	2004-12-13 14:36:32.000000000 +0100
++++ texinfo/README	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README,v 1.16 2004/12/13 13:36:32 karl Exp $
++Id: README,v 1.16 2004/12/13 13:36:32 karl Exp
+ This is the README file for the GNU Texinfo distribution.  Texinfo is
+ the preferred documentation format for GNU software.
+ 
+diff -rNU3 texinfo.orig/README.dev texinfo/README.dev
+--- texinfo.orig/README.dev	2003-11-24 16:11:06.000000000 +0100
++++ texinfo/README.dev	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README.dev,v 1.7 2003/11/24 15:11:06 karl Exp $
++Id: README.dev,v 1.7 2003/11/24 15:11:06 karl Exp
+ README.dev - Texinfo developer information.
+ 
+   Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/TODO texinfo/TODO
+--- texinfo.orig/TODO	2004-11-23 00:57:32.000000000 +0100
++++ texinfo/TODO	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: TODO,v 1.26 2004/11/22 23:57:32 karl Exp $
++Id: TODO,v 1.26 2004/11/22 23:57:32 karl Exp
+ This is the todo list for GNU Texinfo.
+ If you are interested in working on any of these, email bug-texinfo@gnu.org.
+ 
+diff -rNU3 texinfo.orig/config.guess texinfo/config.guess
 --- texinfo.orig/config.guess	2004-11-14 14:10:31.000000000 +0100
-+++ texinfo.nbsd/config.guess	2013-04-10 22:45:11.334172695 +0200
++++ texinfo/config.guess	2015-10-18 11:13:23.000000000 +0200
+@@ -780,7 +780,7 @@
+     *:FreeBSD:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+ 	exit 0 ;;
+-    i*:CYGWIN*:*)
++    i*:CYGWIN*:* | x86*:CYGWIN*:*)
+ 	echo ${UNAME_MACHINE}-pc-cygwin
+ 	exit 0 ;;
+     i*:MINGW*:*)
 @@ -923,6 +923,9 @@
      sparc:Linux:*:* | sparc64:Linux:*:*)
  	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -20,9 +114,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/config.guess texinfo.nbsd/config.guess
      x86_64:Linux:*:*)
  	echo x86_64-unknown-linux-gnu
  	exit 0 ;;
-diff -r -x CVS -N -U 3 texinfo.orig/configure texinfo.nbsd/configure
+diff -rNU3 texinfo.orig/configure texinfo/configure
 --- texinfo.orig/configure	2004-12-31 19:01:50.000000000 +0100
-+++ texinfo.nbsd/configure	2013-04-10 22:45:11.334172695 +0200
++++ texinfo/configure	2015-10-18 11:13:23.000000000 +0200
 @@ -1771,6 +1771,30 @@
  
  
@@ -54,9 +148,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/configure texinfo.nbsd/configure
  
  # When the Texinfo source is imported into other repositories
  # (NetBSD and TeX Live), timestamps are generally not preserved.  This
-diff -r -x CVS -N -U 3 texinfo.orig/configure.ac texinfo.nbsd/configure.ac
+diff -rNU3 texinfo.orig/configure.ac texinfo/configure.ac
 --- texinfo.orig/configure.ac	2004-12-31 19:00:48.000000000 +0100
-+++ texinfo.nbsd/configure.ac	2013-04-10 22:45:11.334172695 +0200
++++ texinfo/configure.ac	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  # Process this file with autoconf to produce a configure script.
 -# $Id: configure.ac,v 1.50 2004/12/22 13:29:44 karl Exp $
@@ -64,381 +158,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/configure.ac texinfo.nbsd/configure.ac
  #
  # This file is free software; as a special exception the author gives
  # unlimited permission to copy and/or distribute it, with or without
-diff -r -x CVS -N -U 3 texinfo.orig/djgpp/config.bat texinfo.nbsd/djgpp/config.bat
---- texinfo.orig/djgpp/config.bat	2004-12-17 23:47:55.000000000 +0100
-+++ texinfo.nbsd/djgpp/config.bat	1970-01-01 01:00:00.000000000 +0100
-@@ -1,240 +0,0 @@
--@echo off
--
--echo Configuring GNU Texinfo for DJGPP v2.x...
--
--Rem The small_env tests protect against fixed and too small size
--Rem of the environment in stock DOS shell.
--
--Rem Find out if NLS is wanted or not, if dependency-tracking is
--Rem wanted or not, if cache is wanted or not, and where the sources are.
--set ARGS=
--set NLS=disabled
--if not "%NLS%" == "disabled" goto small_env
--set CACHE=enabled
--if not "%CACHE%" == "enabled" goto small_env
--set DEPTRAK=disabled
--if not "%DEPTRAK%" == "disabled" goto small_env
--set XSRC=.
--if not "%XSRC%" == "." goto small_env
--
--Rem Loop over all arguments.
--Rem Special arguments are: NLS, XSRC CACHE and DEPS.
--Rem All other arguments are stored into ARGS.
--:arg_loop
--set SPECARG=0
--if not "%SPECARG%" == "0" goto small_env
--if not "%1" == "NLS" if not "%1" == "nls" goto cache_opt
--if "%1" == "nls" set NLS=enabled
--if "%1" == "NLS" set NLS=enabled
--if not "%NLS%" == "enabled" goto small_env
--set SPECARG=1
--if not "%SPECARG%" == "1" goto small_env
--shift
--:cache_opt
--set SPECARG=0
--if not "%SPECARG%" == "0" goto small_env
--if "%1" == "no-cache" goto cache_off
--if "%1" == "no-CACHE" goto cache_off
--if not "%1" == "NO-CACHE" goto dependency_opt
--:cache_off
--if "%1" == "no-cache" set CACHE=disabled
--if "%1" == "no-CACHE" set CACHE=disabled
--if "%1" == "NO-CACHE" set CACHE=disabled
--if not "%CACHE%" == "disabled" goto small_env
--set SPECARG=1
--if not "%SPECARG%" == "1" goto small_env
--shift
--:dependency_opt
--set SPECARG=0
--if not "%SPECARG%" == "0" goto small_env
--if "%1" == "dep" goto dep_off
--if not "%1" == "DEP" goto src_dir_opt
--:dep_off
--if "%1" == "dep" set DEPTRAK=enabled
--if "%1" == "DEP" set DEPTRAK=enabled
--if not "%DEPTRAK%" == "enabled" goto small_env
--set SPECARG=1
--if not "%SPECARG%" == "1" goto small_env
--shift
--:src_dir_opt
--set SPECARG=0
--if not "%SPECARG%" == "0" goto small_env
--echo %1 | grep -q "/"
--if errorlevel 1 goto collect_arg
--set XSRC=%1
--if not "%XSRC%" == "%1" goto small_env
--set SPECARG=1
--if not "%SPECARG%" == "1" goto small_env
--:collect_arg
--if "%SPECARG%" == "0" set _ARGS=%ARGS% %1
--if "%SPECARG%" == "0" if not "%_ARGS%" == "%ARGS% %1" goto small_env
--echo %_ARGS% | grep -q "[^ ]"
--if not errorlevel 0 set ARGS=%_ARGS%
--set _ARGS=
--shift
--if not "%1" == "" goto arg_loop
--set SPECARG=
--
--Rem Create a response file for the configure script.
--echo --srcdir=%XSRC% > arguments
--if "%CACHE%" == "enabled"    echo --config-cache >>arguments
--if "%DEPTRAK%" == "enabled"  echo --enable-dependency-tracking >>arguments
--if "%DEPTRAK%" == "disabled" echo --disable-dependency-tracking >>arguments
--if not "%ARGS%" == ""        echo %ARGS% >>arguments
--set ARGS=
--set CACHE=
--set DEPTRAK=
--
--if "%XSRC%" == "." goto in_place
--
--:not_in_place
--redir -e /dev/null update %XSRC%/configure.orig ./configure
--test -f ./configure
--if errorlevel 1 update %XSRC%/configure ./configure
--
--:in_place
--Rem Update configuration files
--echo Updating configuration scripts...
--test -f ./configure.orig
--if errorlevel 1 update configure configure.orig
--sed -f %XSRC%/djgpp/config.sed configure.orig > configure
--if errorlevel 1 goto sed_error
--
--Rem Make sure they have a config.site file
--set CONFIG_SITE=%XSRC%/djgpp/config.site
--if not "%CONFIG_SITE%" == "%XSRC%/djgpp/config.site" goto small_env
--
--Rem Make sure crucial file names are not munged by unpacking
--test -f %XSRC%/po/Makefile.in.in
--if not errorlevel 1 mv -f %XSRC%/po/Makefile.in.in %XSRC%/po/Makefile.in-in
--test -f %XSRC%/po/Makefile.am.in
--if not errorlevel 1 mv -f %XSRC%/po/Makefile.am.in %XSRC%/po/Makefile.am-in
--
--Rem This is required because DOS/Windows are case-insensitive
--Rem to file names, and "make install" will do nothing if Make
--Rem finds a file called `install'.
--if exist INSTALL ren INSTALL INSTALL.txt
--
--Rem Set HOME to a sane default so configure stops complaining.
--if not "%HOME%" == "" goto host_name
--set HOME=%XSRC%/djgpp
--if not "%HOME%" == "%XSRC%/djgpp" goto small_env
--echo No HOME found in the environment, using default value
--
--:host_name
--Rem Set HOSTNAME so it shows in config.status
--if not "%HOSTNAME%" == "" goto hostdone
--if "%windir%" == "" goto msdos
--set OS=MS-Windows
--if not "%OS%" == "MS-Windows" goto small_env
--goto haveos
--:msdos
--set OS=MS-DOS
--if not "%OS%" == "MS-DOS" goto small_env
--:haveos
--if not "%USERNAME%" == "" goto haveuname
--if not "%USER%" == "" goto haveuser
--echo No USERNAME and no USER found in the environment, using default values
--set HOSTNAME=Unknown PC
--if not "%HOSTNAME%" == "Unknown PC" goto small_env
--goto userdone
--:haveuser
--set HOSTNAME=%USER%'s PC
--if not "%HOSTNAME%" == "%USER%'s PC" goto small_env
--goto userdone
--:haveuname
--set HOSTNAME=%USERNAME%'s PC
--if not "%HOSTNAME%" == "%USERNAME%'s PC" goto small_env
--:userdone
--set _HOSTNAME=%HOSTNAME%, %OS%
--if not "%_HOSTNAME%" == "%HOSTNAME%, %OS%" goto small_env
--set HOSTNAME=%_HOSTNAME%
--:hostdone
--set _HOSTNAME=
--set OS=
--
--Rem install-sh is required by the configure script but clashes with the
--Rem various Makefile install-foo targets, so we MUST have it before the
--Rem script runs and rename it afterwards
--test -f %XSRC%/install-sh
--if not errorlevel 1 goto no_ren0
--test -f %XSRC%/install-sh.sh
--if not errorlevel 1 mv -f %XSRC%/install-sh.sh %XSRC%/install-sh
--:no_ren0
--
--if "%NLS%" == "disabled" goto without_NLS
--
--:with_NLS
--Rem Check for the needed libraries and binaries.
--test -x /dev/env/DJDIR/bin/msgfmt.exe
--if not errorlevel 0 goto missing_NLS_tools
--test -x /dev/env/DJDIR/bin/xgettext.exe
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/include/libcharset.h
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/lib/libcharset.a
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/include/iconv.h
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/lib/libiconv.a
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/include/libintl.h
--if not errorlevel 0 goto missing_NLS_tools
--test -f /dev/env/DJDIR/lib/libintl.a
--if not errorlevel 0 goto missing_NLS_tools
--
--Rem Recreate the files in the %XSRC%/po subdir with our ported tools.
--redir -e /dev/null rm %XSRC%/po/*.gmo
--redir -e /dev/null rm %XSRC%/po/diffutil*.pot
--redir -e /dev/null rm %XSRC%/po/cat-id-tbl.c
--redir -e /dev/null rm %XSRC%/po/stamp-cat-id
--
--Rem Update the arguments file for the configure script.
--Rem We prefer without-included-gettext because libintl.a from gettext package
--Rem is the only one that is guaranteed to have been ported to DJGPP.
--echo --enable-nls --without-included-gettext >> arguments
--goto configure_package
--
--:missing_NLS_tools
--echo Needed libs/tools for NLS not found.  Configuring without NLS.
--:without_NLS
--Rem Update the arguments file for the configure script.
--echo --disable-nls >> arguments
--
--:configure_package
--echo Running the ./configure script...
--sh ./configure @arguments
--if errorlevel 1 goto cfg_error
--rm arguments
--
--Rem Remove files created by the gl_FUNC_MKSTEMP test.
--rm co*.tmp
--echo Done.
--goto End
--
--:sed_error
--echo ./configure script editing failed!
--goto End
--
--:cfg_error
--echo ./configure script exited abnormally!
--goto End
--
--:small_env
--echo Your environment size is too small.  Enlarge it and run me again.
--echo Configuration NOT done!
--
--:End
--test -f %XSRC%/install-sh.sh
--if not errorlevel 1 goto no_ren1
--test -f %XSRC%/install-sh
--if not errorlevel 1 mv -f %XSRC%/install-sh %XSRC%/install-sh.sh
--:no_ren1
--if "%HOME%" == "%XSRC%/djgpp" set HOME=
--set ARGS=
--set CONFIG_SITE=
--set HOSTNAME=
--set NLS=
--set CACHE=
--set DEPTRAK=
--set XSRC=
-diff -r -x CVS -N -U 3 texinfo.orig/djgpp/config.sed texinfo.nbsd/djgpp/config.sed
---- texinfo.orig/djgpp/config.sed	2004-12-15 15:59:22.000000000 +0100
-+++ texinfo.nbsd/djgpp/config.sed	1970-01-01 01:00:00.000000000 +0100
-@@ -1,67 +0,0 @@
--# Additional editing of configure and Makefiles for DJGPP
--
--/(echo[ 	]*':t/ a\
--# DJGPP specific Makefile changes.\
--  /^aliaspath *	*=/s,:,";",g;t t\
--  /TEXINPUTS=/s,:,";",g;t t\
--  /PATH=/s,:,";",g;t t\
--  s,\\.deps,_deps,g;t t\
--  s,\\.new\\.,_new.,g;t t\
--  s,\\.old\\.,_old.,g;t t\
--  s,\\.tab\\.,_tab.,g;t t\
--  s,Makefile\\.in\\.in,Makefile.in-in,g;t t\
--  s,Makefile\\.am\\.in,Makefile.am-in,g;t t\
--  /^install-info-am:/,/^$/ {\
--    /@list=.\\\$(INFO_DEPS)\[^ \]/s,DEPS),& texinf- texin- info-stn.i info.inf,\
--    s,\\(\\\$\\\$d/\\\$\\\$file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$d/\\$\\$file[0-9] \\$\\$d/\\$\\$file[0-9][0-9]\\2,\
--    s,\\( \\\$\\\$file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$file[0-9] \\$\\$file[0-9][0-9]\\2,\
--  }\
--  /^uninstall-info-am:/,/^$/ {\
--    /@list=.\\\$(INFO_DEPS)\[^ \]/s,DEPS),& texinf- texin- info-stn.i info.inf,\
--    s,\\(file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$file[0-9] \\$\\$file[0-9][0-9]\\2,\
--  }
--
--# Makefile.in.in is renamed to Makefile.in-in.
--/ac_config_files=/,/_ACEOF/ {
--  s|po/Makefile\.in|&:po/Makefile.in-in|
--}
--/CONFIG_FILES=/ s|po/Makefile\.in|&:po/Makefile.in-in|2
--
--# We always use _deps instead of .deps, because the latter is an
--# invalid name on 8+3 MS-DOS filesystem.  This makes the generated
--# Makefiles good for every DJGPP installation, not only the one
--# where the package was configured (which could happen to be a
--# Windows box, where leading dots in file names are allowed).
--s,\.deps,_deps,g
--
--# The following two items are changes needed for configuring
--# and compiling across partitions.
--# The given srcdir value is always translated from the
--# "x:" syntax into "/dev/x" syntax while we run configure.
--/^[ 	]*-srcdir=\*.*$/ a\
--    ac_optarg=`echo "$ac_optarg" | sed "s,^\\([A-Za-z]\\):,/dev/\\1,"`
--/set X `ls -Lt \$srcdir/ i\
--   if `echo $srcdir | grep "^/dev/" - > /dev/null`; then\
--     srcdir=`echo "$srcdir" | sed -e "s%^/dev/%%" -e "s%/%:/%"`\
--   fi
--
--# Autoconf 2.52e generated configure scripts
--# write absolute paths into Makefiles making
--# them useless for DJGPP installations for which
--# the package has not been configured for.
--/MISSING=/,/^$/ {
--  /^fi$/ a\
--am_missing_run=`echo "$am_missing_run" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
--}
--/^install_sh=/a\
--install_sh=`echo "$install_sh" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
--
--# The following makes sure we are not going to remove a directory
--# which is the cwd on its drive (DOS doesn't allow to remove such
--# a directory).  The trick is to chdir to the root directory on
--# temp directory's drive before removing $tmp.
--/^ *trap 'exit_status=\$\?; rm -rf/s%rm -rf%cd $tmp; cd /; &%
--
--# AC_CONFIG_LINKS fails if the source and destination are on
--# different file systems and symlinks don't work.
--/^    ln \$srcdir/s%||%|| cp -pf $srcdir/$ac_source $ac_dest ||%
-diff -r -x CVS -N -U 3 texinfo.orig/djgpp/config.site texinfo.nbsd/djgpp/config.site
---- texinfo.orig/djgpp/config.site	2002-09-27 00:01:10.000000000 +0200
-+++ texinfo.nbsd/djgpp/config.site	1970-01-01 01:00:00.000000000 +0100
-@@ -1,53 +0,0 @@
--#! /bin/sh
--# Site defaults for the DJGPP configuration
--
--# These two variables are required, otherwise looking for
--# programs along the PATH will not work.
--PATH_SEPARATOR=:
--PATH_EXPAND=y
--
--# This is required in for "test -f foo" to find foo.exe.
--export TEST_FINDS_EXE=y
--
--# The root of the DJGPP tree serves as the default prefix
--# for all paths that are hardcoded in the binaries.
--# When installing the installation prefix must be supplied.
--test "x$prefix" = xNONE && prefix='/dev/env/DJDIR'
--
--# This is required for config.status script to be run, since
--# ./configure runs it by invoking ${CONFIG_SHELL-/bin/sh}
--# CONFIG_SHELL=${CONFIG_SHELL='sh'}
--
--# These are set here so the generated Makefile's will be good
--# for every DJGPP installation, not only the one where the
--# package was configured.
--# $INSTALL must be an absolute path name, otherwise config.status
--# will try to prepend ./ and ../ to it when it goes into subdirs.
--INSTALL=${INSTALL='/dev/env/DJDIR/bin/ginstall -c'}
--RANLIB=${RANLIB='ranlib'}
--GMSGFMT=${GMSGFMT='/dev/env/DJDIR/bin/msgfmt'}
--MSGFMT=${MSGFMT='/dev/env/DJDIR/bin/msgfmt'}
--XGETTEXT=${XGETTEXT='/dev/env/DJDIR/bin/xgettext'}
--
--# Sane defaults for standard programs used by the build process.
--# We force the values of these variables so that the resultant
--# Makefile's will work on any DJGPP platform, not only on the
--# machine where the package was configured.
--ac_cv_prog_AWK=${AWK='gawk'}
--ac_cv_prog_INTLBISON=${INTLBISON='bison'}
--ac_cv_prog_CC=${CC='gcc'}
--
--# These are set here so the generated libtool/Makefile's will
--# be good for every DJGPP installation, not only the one where
--# the package was configured.
--NM=${NM='nm'}
--LD=${LD='ld'}
--MAKEINFO=${MAKEINFO='makeinfo'}
--
--# Force the test for 'ln -s' to report 'cp -pf'.
--ac_cv_prog_LN_S='cp -pf'
--
--# We have `fork', but it always fails.  Don't trust Autoconf to be
--# smart enough to detect that...
--ac_cv_func_fork=no
--ac_cv_func_vfork=no
-diff -r -x CVS -N -U 3 texinfo.orig/djgpp/README texinfo.nbsd/djgpp/README
+diff -rNU3 texinfo.orig/djgpp/README texinfo/djgpp/README
 --- texinfo.orig/djgpp/README	2002-09-27 00:01:10.000000000 +0200
-+++ texinfo.nbsd/djgpp/README	1970-01-01 01:00:00.000000000 +0100
++++ texinfo/djgpp/README	1970-01-01 01:00:00.000000000 +0100
 @@ -1,431 +0,0 @@
 -Building and installing GNU Texinfo with DJGPP v2.x
 -===================================================
@@ -871,86 +593,390 @@ diff -r -x CVS -N -U 3 texinfo.orig/djgpp/README texinfo.nbsd/djgpp/README
 -   Enjoy,
 -
 -				Eli Zaretskii <eliz@is.elta.co.il>
-diff -r -x CVS -N -U 3 texinfo.orig/doc/fdl.texi texinfo.nbsd/doc/fdl.texi
---- texinfo.orig/doc/fdl.texi	2003-03-19 02:29:34.000000000 +0100
-+++ texinfo.nbsd/doc/fdl.texi	2013-04-10 22:45:11.337506095 +0200
-@@ -1,4 +1,5 @@
- 
-+@c $NetBSD: fdl.texi,v 1.1.1.3 2003/07/03 14:58:45 wiz Exp $
- @node GNU Free Documentation License
- @appendixsec GNU Free Documentation License
- 
-diff -r -x CVS -N -U 3 texinfo.orig/doc/info.1 texinfo.nbsd/doc/info.1
---- texinfo.orig/doc/info.1	2004-12-31 19:02:15.000000000 +0100
-+++ texinfo.nbsd/doc/info.1	2013-04-10 22:45:11.337506095 +0200
-@@ -1,3 +1,5 @@
-+.\"	$NetBSD: info.1,v 1.1.1.6 2008/09/02 07:51:56 christos Exp $
-+.\"
- .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
- .TH INFO "1" "December 2004" "info 4.8" "User Commands"
- .SH NAME
-diff -r -x CVS -N -U 3 texinfo.orig/doc/info.5 texinfo.nbsd/doc/info.5
---- texinfo.orig/doc/info.5	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/info.5	2013-04-10 22:45:11.337506095 +0200
-@@ -1,5 +1,7 @@
-+.\"	$NetBSD: info.5,v 1.1.1.4 2008/09/02 07:51:56 christos Exp $
-+.\"
- .\" info(5)
--.\" $Id: info.5,v 1.2 2004/04/11 17:56:45 karl Exp $
-+.\" Id: info.5,v 1.2 2004/04/11 17:56:45 karl Exp
- .\"
- .\" Copyright (C) 1998 Free Software Foundation, Inc.
- .\"
-diff -r -x CVS -N -U 3 texinfo.orig/doc/infokey.1 texinfo.nbsd/doc/infokey.1
---- texinfo.orig/doc/infokey.1	2004-12-31 19:02:16.000000000 +0100
-+++ texinfo.nbsd/doc/infokey.1	2013-04-10 22:45:11.337506095 +0200
-@@ -1,3 +1,5 @@
-+.\"	$NetBSD: infokey.1,v 1.1.1.2 2008/09/02 07:51:56 christos Exp $
-+.\"
- .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
- .TH INFOKEY "1" "December 2004" "infokey 4.8" "User Commands"
- .SH NAME
-diff -r -x CVS -N -U 3 texinfo.orig/doc/info-stnd.texi texinfo.nbsd/doc/info-stnd.texi
---- texinfo.orig/doc/info-stnd.texi	2004-12-14 17:58:15.000000000 +0100
-+++ texinfo.nbsd/doc/info-stnd.texi	2013-04-10 22:45:11.337506095 +0200
-@@ -1,5 +1,6 @@
- \input texinfo.tex    @c -*-texinfo-*-
--@comment $Id: info-stnd.texi,v 1.9 2004/12/14 16:58:15 karl Exp $
-+@c $NetBSD: info-stnd.texi,v 1.1.1.6 2008/09/02 07:51:41 christos Exp $
-+@comment Id: info-stnd.texi,v 1.9 2004/12/14 16:58:15 karl Exp
- @c We must \input texinfo.tex instead of texinfo, otherwise make
- @c distcheck in the Texinfo distribution fails, because the texinfo Info
- @c file is made first, and texi2dvi must include . first in the path.
-diff -r -x CVS -N -U 3 texinfo.orig/doc/info.texi texinfo.nbsd/doc/info.texi
---- texinfo.orig/doc/info.texi	2004-10-06 23:29:48.000000000 +0200
-+++ texinfo.nbsd/doc/info.texi	2013-04-10 22:45:11.337506095 +0200
-@@ -1,4 +1,5 @@
- \input texinfo.tex    @c -*-texinfo-*-
-+@c $NetBSD: info.texi,v 1.1.1.5 2008/09/02 07:51:43 christos Exp $
- @c We must \input texinfo.tex instead of texinfo, otherwise make
- @c distcheck in the Texinfo distribution fails, because the texinfo Info
- @c file is made first, and texi2dvi must include . first in the path.
-diff -r -x CVS -N -U 3 texinfo.orig/doc/install-info.1 texinfo.nbsd/doc/install-info.1
---- texinfo.orig/doc/install-info.1	2004-12-31 19:02:16.000000000 +0100
-+++ texinfo.nbsd/doc/install-info.1	2013-04-10 22:45:11.337506095 +0200
-@@ -1,3 +1,5 @@
-+.\"	$NetBSD: install-info.1,v 1.1.1.6 2008/09/02 07:51:46 christos Exp $
-+.\"
- .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
- .TH INSTALL-INFO "1" "December 2004" "install-info 4.8" "User Commands"
- .SH NAME
-diff -r -x CVS -N -U 3 texinfo.orig/doc/Makefile.am texinfo.nbsd/doc/Makefile.am
+diff -rNU3 texinfo.orig/djgpp/config.bat texinfo/djgpp/config.bat
+--- texinfo.orig/djgpp/config.bat	2004-12-17 23:47:55.000000000 +0100
++++ texinfo/djgpp/config.bat	1970-01-01 01:00:00.000000000 +0100
+@@ -1,240 +0,0 @@
+-@echo off
+-
+-echo Configuring GNU Texinfo for DJGPP v2.x...
+-
+-Rem The small_env tests protect against fixed and too small size
+-Rem of the environment in stock DOS shell.
+-
+-Rem Find out if NLS is wanted or not, if dependency-tracking is
+-Rem wanted or not, if cache is wanted or not, and where the sources are.
+-set ARGS=
+-set NLS=disabled
+-if not "%NLS%" == "disabled" goto small_env
+-set CACHE=enabled
+-if not "%CACHE%" == "enabled" goto small_env
+-set DEPTRAK=disabled
+-if not "%DEPTRAK%" == "disabled" goto small_env
+-set XSRC=.
+-if not "%XSRC%" == "." goto small_env
+-
+-Rem Loop over all arguments.
+-Rem Special arguments are: NLS, XSRC CACHE and DEPS.
+-Rem All other arguments are stored into ARGS.
+-:arg_loop
+-set SPECARG=0
+-if not "%SPECARG%" == "0" goto small_env
+-if not "%1" == "NLS" if not "%1" == "nls" goto cache_opt
+-if "%1" == "nls" set NLS=enabled
+-if "%1" == "NLS" set NLS=enabled
+-if not "%NLS%" == "enabled" goto small_env
+-set SPECARG=1
+-if not "%SPECARG%" == "1" goto small_env
+-shift
+-:cache_opt
+-set SPECARG=0
+-if not "%SPECARG%" == "0" goto small_env
+-if "%1" == "no-cache" goto cache_off
+-if "%1" == "no-CACHE" goto cache_off
+-if not "%1" == "NO-CACHE" goto dependency_opt
+-:cache_off
+-if "%1" == "no-cache" set CACHE=disabled
+-if "%1" == "no-CACHE" set CACHE=disabled
+-if "%1" == "NO-CACHE" set CACHE=disabled
+-if not "%CACHE%" == "disabled" goto small_env
+-set SPECARG=1
+-if not "%SPECARG%" == "1" goto small_env
+-shift
+-:dependency_opt
+-set SPECARG=0
+-if not "%SPECARG%" == "0" goto small_env
+-if "%1" == "dep" goto dep_off
+-if not "%1" == "DEP" goto src_dir_opt
+-:dep_off
+-if "%1" == "dep" set DEPTRAK=enabled
+-if "%1" == "DEP" set DEPTRAK=enabled
+-if not "%DEPTRAK%" == "enabled" goto small_env
+-set SPECARG=1
+-if not "%SPECARG%" == "1" goto small_env
+-shift
+-:src_dir_opt
+-set SPECARG=0
+-if not "%SPECARG%" == "0" goto small_env
+-echo %1 | grep -q "/"
+-if errorlevel 1 goto collect_arg
+-set XSRC=%1
+-if not "%XSRC%" == "%1" goto small_env
+-set SPECARG=1
+-if not "%SPECARG%" == "1" goto small_env
+-:collect_arg
+-if "%SPECARG%" == "0" set _ARGS=%ARGS% %1
+-if "%SPECARG%" == "0" if not "%_ARGS%" == "%ARGS% %1" goto small_env
+-echo %_ARGS% | grep -q "[^ ]"
+-if not errorlevel 0 set ARGS=%_ARGS%
+-set _ARGS=
+-shift
+-if not "%1" == "" goto arg_loop
+-set SPECARG=
+-
+-Rem Create a response file for the configure script.
+-echo --srcdir=%XSRC% > arguments
+-if "%CACHE%" == "enabled"    echo --config-cache >>arguments
+-if "%DEPTRAK%" == "enabled"  echo --enable-dependency-tracking >>arguments
+-if "%DEPTRAK%" == "disabled" echo --disable-dependency-tracking >>arguments
+-if not "%ARGS%" == ""        echo %ARGS% >>arguments
+-set ARGS=
+-set CACHE=
+-set DEPTRAK=
+-
+-if "%XSRC%" == "." goto in_place
+-
+-:not_in_place
+-redir -e /dev/null update %XSRC%/configure.orig ./configure
+-test -f ./configure
+-if errorlevel 1 update %XSRC%/configure ./configure
+-
+-:in_place
+-Rem Update configuration files
+-echo Updating configuration scripts...
+-test -f ./configure.orig
+-if errorlevel 1 update configure configure.orig
+-sed -f %XSRC%/djgpp/config.sed configure.orig > configure
+-if errorlevel 1 goto sed_error
+-
+-Rem Make sure they have a config.site file
+-set CONFIG_SITE=%XSRC%/djgpp/config.site
+-if not "%CONFIG_SITE%" == "%XSRC%/djgpp/config.site" goto small_env
+-
+-Rem Make sure crucial file names are not munged by unpacking
+-test -f %XSRC%/po/Makefile.in.in
+-if not errorlevel 1 mv -f %XSRC%/po/Makefile.in.in %XSRC%/po/Makefile.in-in
+-test -f %XSRC%/po/Makefile.am.in
+-if not errorlevel 1 mv -f %XSRC%/po/Makefile.am.in %XSRC%/po/Makefile.am-in
+-
+-Rem This is required because DOS/Windows are case-insensitive
+-Rem to file names, and "make install" will do nothing if Make
+-Rem finds a file called `install'.
+-if exist INSTALL ren INSTALL INSTALL.txt
+-
+-Rem Set HOME to a sane default so configure stops complaining.
+-if not "%HOME%" == "" goto host_name
+-set HOME=%XSRC%/djgpp
+-if not "%HOME%" == "%XSRC%/djgpp" goto small_env
+-echo No HOME found in the environment, using default value
+-
+-:host_name
+-Rem Set HOSTNAME so it shows in config.status
+-if not "%HOSTNAME%" == "" goto hostdone
+-if "%windir%" == "" goto msdos
+-set OS=MS-Windows
+-if not "%OS%" == "MS-Windows" goto small_env
+-goto haveos
+-:msdos
+-set OS=MS-DOS
+-if not "%OS%" == "MS-DOS" goto small_env
+-:haveos
+-if not "%USERNAME%" == "" goto haveuname
+-if not "%USER%" == "" goto haveuser
+-echo No USERNAME and no USER found in the environment, using default values
+-set HOSTNAME=Unknown PC
+-if not "%HOSTNAME%" == "Unknown PC" goto small_env
+-goto userdone
+-:haveuser
+-set HOSTNAME=%USER%'s PC
+-if not "%HOSTNAME%" == "%USER%'s PC" goto small_env
+-goto userdone
+-:haveuname
+-set HOSTNAME=%USERNAME%'s PC
+-if not "%HOSTNAME%" == "%USERNAME%'s PC" goto small_env
+-:userdone
+-set _HOSTNAME=%HOSTNAME%, %OS%
+-if not "%_HOSTNAME%" == "%HOSTNAME%, %OS%" goto small_env
+-set HOSTNAME=%_HOSTNAME%
+-:hostdone
+-set _HOSTNAME=
+-set OS=
+-
+-Rem install-sh is required by the configure script but clashes with the
+-Rem various Makefile install-foo targets, so we MUST have it before the
+-Rem script runs and rename it afterwards
+-test -f %XSRC%/install-sh
+-if not errorlevel 1 goto no_ren0
+-test -f %XSRC%/install-sh.sh
+-if not errorlevel 1 mv -f %XSRC%/install-sh.sh %XSRC%/install-sh
+-:no_ren0
+-
+-if "%NLS%" == "disabled" goto without_NLS
+-
+-:with_NLS
+-Rem Check for the needed libraries and binaries.
+-test -x /dev/env/DJDIR/bin/msgfmt.exe
+-if not errorlevel 0 goto missing_NLS_tools
+-test -x /dev/env/DJDIR/bin/xgettext.exe
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/include/libcharset.h
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/lib/libcharset.a
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/include/iconv.h
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/lib/libiconv.a
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/include/libintl.h
+-if not errorlevel 0 goto missing_NLS_tools
+-test -f /dev/env/DJDIR/lib/libintl.a
+-if not errorlevel 0 goto missing_NLS_tools
+-
+-Rem Recreate the files in the %XSRC%/po subdir with our ported tools.
+-redir -e /dev/null rm %XSRC%/po/*.gmo
+-redir -e /dev/null rm %XSRC%/po/diffutil*.pot
+-redir -e /dev/null rm %XSRC%/po/cat-id-tbl.c
+-redir -e /dev/null rm %XSRC%/po/stamp-cat-id
+-
+-Rem Update the arguments file for the configure script.
+-Rem We prefer without-included-gettext because libintl.a from gettext package
+-Rem is the only one that is guaranteed to have been ported to DJGPP.
+-echo --enable-nls --without-included-gettext >> arguments
+-goto configure_package
+-
+-:missing_NLS_tools
+-echo Needed libs/tools for NLS not found.  Configuring without NLS.
+-:without_NLS
+-Rem Update the arguments file for the configure script.
+-echo --disable-nls >> arguments
+-
+-:configure_package
+-echo Running the ./configure script...
+-sh ./configure @arguments
+-if errorlevel 1 goto cfg_error
+-rm arguments
+-
+-Rem Remove files created by the gl_FUNC_MKSTEMP test.
+-rm co*.tmp
+-echo Done.
+-goto End
+-
+-:sed_error
+-echo ./configure script editing failed!
+-goto End
+-
+-:cfg_error
+-echo ./configure script exited abnormally!
+-goto End
+-
+-:small_env
+-echo Your environment size is too small.  Enlarge it and run me again.
+-echo Configuration NOT done!
+-
+-:End
+-test -f %XSRC%/install-sh.sh
+-if not errorlevel 1 goto no_ren1
+-test -f %XSRC%/install-sh
+-if not errorlevel 1 mv -f %XSRC%/install-sh %XSRC%/install-sh.sh
+-:no_ren1
+-if "%HOME%" == "%XSRC%/djgpp" set HOME=
+-set ARGS=
+-set CONFIG_SITE=
+-set HOSTNAME=
+-set NLS=
+-set CACHE=
+-set DEPTRAK=
+-set XSRC=
+diff -rNU3 texinfo.orig/djgpp/config.sed texinfo/djgpp/config.sed
+--- texinfo.orig/djgpp/config.sed	2004-12-15 15:59:22.000000000 +0100
++++ texinfo/djgpp/config.sed	1970-01-01 01:00:00.000000000 +0100
+@@ -1,67 +0,0 @@
+-# Additional editing of configure and Makefiles for DJGPP
+-
+-/(echo[ 	]*':t/ a\
+-# DJGPP specific Makefile changes.\
+-  /^aliaspath *	*=/s,:,";",g;t t\
+-  /TEXINPUTS=/s,:,";",g;t t\
+-  /PATH=/s,:,";",g;t t\
+-  s,\\.deps,_deps,g;t t\
+-  s,\\.new\\.,_new.,g;t t\
+-  s,\\.old\\.,_old.,g;t t\
+-  s,\\.tab\\.,_tab.,g;t t\
+-  s,Makefile\\.in\\.in,Makefile.in-in,g;t t\
+-  s,Makefile\\.am\\.in,Makefile.am-in,g;t t\
+-  /^install-info-am:/,/^$/ {\
+-    /@list=.\\\$(INFO_DEPS)\[^ \]/s,DEPS),& texinf- texin- info-stn.i info.inf,\
+-    s,\\(\\\$\\\$d/\\\$\\\$file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$d/\\$\\$file[0-9] \\$\\$d/\\$\\$file[0-9][0-9]\\2,\
+-    s,\\( \\\$\\\$file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$file[0-9] \\$\\$file[0-9][0-9]\\2,\
+-  }\
+-  /^uninstall-info-am:/,/^$/ {\
+-    /@list=.\\\$(INFO_DEPS)\[^ \]/s,DEPS),& texinf- texin- info-stn.i info.inf,\
+-    s,\\(file-\\[0-9\\]\\[0-9\\]\\)\\(\[^ \]\\),\\1 \\$\\$file[0-9] \\$\\$file[0-9][0-9]\\2,\
+-  }
+-
+-# Makefile.in.in is renamed to Makefile.in-in.
+-/ac_config_files=/,/_ACEOF/ {
+-  s|po/Makefile\.in|&:po/Makefile.in-in|
+-}
+-/CONFIG_FILES=/ s|po/Makefile\.in|&:po/Makefile.in-in|2
+-
+-# We always use _deps instead of .deps, because the latter is an
+-# invalid name on 8+3 MS-DOS filesystem.  This makes the generated
+-# Makefiles good for every DJGPP installation, not only the one
+-# where the package was configured (which could happen to be a
+-# Windows box, where leading dots in file names are allowed).
+-s,\.deps,_deps,g
+-
+-# The following two items are changes needed for configuring
+-# and compiling across partitions.
+-# The given srcdir value is always translated from the
+-# "x:" syntax into "/dev/x" syntax while we run configure.
+-/^[ 	]*-srcdir=\*.*$/ a\
+-    ac_optarg=`echo "$ac_optarg" | sed "s,^\\([A-Za-z]\\):,/dev/\\1,"`
+-/set X `ls -Lt \$srcdir/ i\
+-   if `echo $srcdir | grep "^/dev/" - > /dev/null`; then\
+-     srcdir=`echo "$srcdir" | sed -e "s%^/dev/%%" -e "s%/%:/%"`\
+-   fi
+-
+-# Autoconf 2.52e generated configure scripts
+-# write absolute paths into Makefiles making
+-# them useless for DJGPP installations for which
+-# the package has not been configured for.
+-/MISSING=/,/^$/ {
+-  /^fi$/ a\
+-am_missing_run=`echo "$am_missing_run" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
+-}
+-/^install_sh=/a\
+-install_sh=`echo "$install_sh" | sed 's%/dev.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%;s%.:.*/texinfo-\\{0,1\\}4\\.[0-9][a-z]\\{0,1\\}%${top_srcdir}%'`
+-
+-# The following makes sure we are not going to remove a directory
+-# which is the cwd on its drive (DOS doesn't allow to remove such
+-# a directory).  The trick is to chdir to the root directory on
+-# temp directory's drive before removing $tmp.
+-/^ *trap 'exit_status=\$\?; rm -rf/s%rm -rf%cd $tmp; cd /; &%
+-
+-# AC_CONFIG_LINKS fails if the source and destination are on
+-# different file systems and symlinks don't work.
+-/^    ln \$srcdir/s%||%|| cp -pf $srcdir/$ac_source $ac_dest ||%
+diff -rNU3 texinfo.orig/djgpp/config.site texinfo/djgpp/config.site
+--- texinfo.orig/djgpp/config.site	2002-09-27 00:01:10.000000000 +0200
++++ texinfo/djgpp/config.site	1970-01-01 01:00:00.000000000 +0100
+@@ -1,53 +0,0 @@
+-#! /bin/sh
+-# Site defaults for the DJGPP configuration
+-
+-# These two variables are required, otherwise looking for
+-# programs along the PATH will not work.
+-PATH_SEPARATOR=:
+-PATH_EXPAND=y
+-
+-# This is required in for "test -f foo" to find foo.exe.
+-export TEST_FINDS_EXE=y
+-
+-# The root of the DJGPP tree serves as the default prefix
+-# for all paths that are hardcoded in the binaries.
+-# When installing the installation prefix must be supplied.
+-test "x$prefix" = xNONE && prefix='/dev/env/DJDIR'
+-
+-# This is required for config.status script to be run, since
+-# ./configure runs it by invoking ${CONFIG_SHELL-/bin/sh}
+-# CONFIG_SHELL=${CONFIG_SHELL='sh'}
+-
+-# These are set here so the generated Makefile's will be good
+-# for every DJGPP installation, not only the one where the
+-# package was configured.
+-# $INSTALL must be an absolute path name, otherwise config.status
+-# will try to prepend ./ and ../ to it when it goes into subdirs.
+-INSTALL=${INSTALL='/dev/env/DJDIR/bin/ginstall -c'}
+-RANLIB=${RANLIB='ranlib'}
+-GMSGFMT=${GMSGFMT='/dev/env/DJDIR/bin/msgfmt'}
+-MSGFMT=${MSGFMT='/dev/env/DJDIR/bin/msgfmt'}
+-XGETTEXT=${XGETTEXT='/dev/env/DJDIR/bin/xgettext'}
+-
+-# Sane defaults for standard programs used by the build process.
+-# We force the values of these variables so that the resultant
+-# Makefile's will work on any DJGPP platform, not only on the
+-# machine where the package was configured.
+-ac_cv_prog_AWK=${AWK='gawk'}
+-ac_cv_prog_INTLBISON=${INTLBISON='bison'}
+-ac_cv_prog_CC=${CC='gcc'}
+-
+-# These are set here so the generated libtool/Makefile's will
+-# be good for every DJGPP installation, not only the one where
+-# the package was configured.
+-NM=${NM='nm'}
+-LD=${LD='ld'}
+-MAKEINFO=${MAKEINFO='makeinfo'}
+-
+-# Force the test for 'ln -s' to report 'cp -pf'.
+-ac_cv_prog_LN_S='cp -pf'
+-
+-# We have `fork', but it always fails.  Don't trust Autoconf to be
+-# smart enough to detect that...
+-ac_cv_func_fork=no
+-ac_cv_func_vfork=no
+diff -rNU3 texinfo.orig/doc/Makefile.am texinfo/doc/Makefile.am
 --- texinfo.orig/doc/Makefile.am	2004-11-18 02:10:59.000000000 +0100
-+++ texinfo.nbsd/doc/Makefile.am	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/Makefile.am	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -# $Id: Makefile.am,v 1.20 2004/11/18 01:10:59 karl Exp $
 +# Id: Makefile.am,v 1.20 2004/11/18 01:10:59 karl Exp
  # Makefile.am for texinfo/doc.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/doc/Makefile.in texinfo.nbsd/doc/Makefile.in
+diff -rNU3 texinfo.orig/doc/Makefile.in texinfo/doc/Makefile.in
 --- texinfo.orig/doc/Makefile.in	2004-12-31 19:01:47.000000000 +0100
-+++ texinfo.nbsd/doc/Makefile.in	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/Makefile.in	2015-10-18 11:13:23.000000000 +0200
 @@ -14,7 +14,7 @@
  
  @SET_MAKE@
@@ -960,9 +986,86 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/Makefile.in texinfo.nbsd/doc/Makefile.in
  # Makefile.am for texinfo/doc.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/doc/makeinfo.1 texinfo.nbsd/doc/makeinfo.1
+diff -rNU3 texinfo.orig/doc/README texinfo/doc/README
+--- texinfo.orig/doc/README	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/doc/README	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README,v 1.4 2004/04/11 17:56:45 karl Exp $
++Id: README,v 1.4 2004/04/11 17:56:45 karl Exp
+ texinfo/doc/README
+ 
+   Copyright (C) 2002 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/doc/fdl.texi texinfo/doc/fdl.texi
+--- texinfo.orig/doc/fdl.texi	2003-03-19 02:29:34.000000000 +0100
++++ texinfo/doc/fdl.texi	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,5 @@
+ 
++@c $NetBSD: fdl.texi,v 1.1.1.3 2003/07/03 14:58:45 wiz Exp $
+ @node GNU Free Documentation License
+ @appendixsec GNU Free Documentation License
+ 
+diff -rNU3 texinfo.orig/doc/info-stnd.texi texinfo/doc/info-stnd.texi
+--- texinfo.orig/doc/info-stnd.texi	2004-12-14 17:58:15.000000000 +0100
++++ texinfo/doc/info-stnd.texi	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,6 @@
+ \input texinfo.tex    @c -*-texinfo-*-
+-@comment $Id: info-stnd.texi,v 1.9 2004/12/14 16:58:15 karl Exp $
++@c $NetBSD: info-stnd.texi,v 1.1.1.6 2008/09/02 07:51:41 christos Exp $
++@comment Id: info-stnd.texi,v 1.9 2004/12/14 16:58:15 karl Exp
+ @c We must \input texinfo.tex instead of texinfo, otherwise make
+ @c distcheck in the Texinfo distribution fails, because the texinfo Info
+ @c file is made first, and texi2dvi must include . first in the path.
+diff -rNU3 texinfo.orig/doc/info.1 texinfo/doc/info.1
+--- texinfo.orig/doc/info.1	2004-12-31 19:02:15.000000000 +0100
++++ texinfo/doc/info.1	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++.\"	$NetBSD: info.1,v 1.1.1.6 2008/09/02 07:51:56 christos Exp $
++.\"
+ .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
+ .TH INFO "1" "December 2004" "info 4.8" "User Commands"
+ .SH NAME
+diff -rNU3 texinfo.orig/doc/info.5 texinfo/doc/info.5
+--- texinfo.orig/doc/info.5	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/doc/info.5	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++.\"	$NetBSD: info.5,v 1.1.1.4 2008/09/02 07:51:56 christos Exp $
++.\"
+ .\" info(5)
+-.\" $Id: info.5,v 1.2 2004/04/11 17:56:45 karl Exp $
++.\" Id: info.5,v 1.2 2004/04/11 17:56:45 karl Exp
+ .\"
+ .\" Copyright (C) 1998 Free Software Foundation, Inc.
+ .\"
+diff -rNU3 texinfo.orig/doc/info.texi texinfo/doc/info.texi
+--- texinfo.orig/doc/info.texi	2004-10-06 23:29:48.000000000 +0200
++++ texinfo/doc/info.texi	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,5 @@
+ \input texinfo.tex    @c -*-texinfo-*-
++@c $NetBSD: info.texi,v 1.1.1.5 2008/09/02 07:51:43 christos Exp $
+ @c We must \input texinfo.tex instead of texinfo, otherwise make
+ @c distcheck in the Texinfo distribution fails, because the texinfo Info
+ @c file is made first, and texi2dvi must include . first in the path.
+diff -rNU3 texinfo.orig/doc/infokey.1 texinfo/doc/infokey.1
+--- texinfo.orig/doc/infokey.1	2004-12-31 19:02:16.000000000 +0100
++++ texinfo/doc/infokey.1	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++.\"	$NetBSD: infokey.1,v 1.1.1.2 2008/09/02 07:51:56 christos Exp $
++.\"
+ .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
+ .TH INFOKEY "1" "December 2004" "infokey 4.8" "User Commands"
+ .SH NAME
+diff -rNU3 texinfo.orig/doc/install-info.1 texinfo/doc/install-info.1
+--- texinfo.orig/doc/install-info.1	2004-12-31 19:02:16.000000000 +0100
++++ texinfo/doc/install-info.1	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++.\"	$NetBSD: install-info.1,v 1.1.1.6 2008/09/02 07:51:46 christos Exp $
++.\"
+ .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
+ .TH INSTALL-INFO "1" "December 2004" "install-info 4.8" "User Commands"
+ .SH NAME
+diff -rNU3 texinfo.orig/doc/makeinfo.1 texinfo/doc/makeinfo.1
 --- texinfo.orig/doc/makeinfo.1	2004-12-31 19:02:16.000000000 +0100
-+++ texinfo.nbsd/doc/makeinfo.1	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/makeinfo.1	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +.\"	$NetBSD: makeinfo.1,v 1.2 2009/02/28 19:14:15 joerg Exp $
 +.\"
@@ -979,27 +1082,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/makeinfo.1 texinfo.nbsd/doc/makeinfo.1
  \fB\-\-number\-sections\fR
  output chapter and sectioning numbers.
  .TP
-diff -r -x CVS -N -U 3 texinfo.orig/doc/README texinfo.nbsd/doc/README
---- texinfo.orig/doc/README	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/README	2013-04-10 22:45:11.337506095 +0200
-@@ -1,4 +1,4 @@
--$Id: README,v 1.4 2004/04/11 17:56:45 karl Exp $
-+Id: README,v 1.4 2004/04/11 17:56:45 karl Exp
- texinfo/doc/README
- 
-   Copyright (C) 2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/doc/texi2dvi.1 texinfo.nbsd/doc/texi2dvi.1
+diff -rNU3 texinfo.orig/doc/texi2dvi.1 texinfo/doc/texi2dvi.1
 --- texinfo.orig/doc/texi2dvi.1	2004-12-31 19:03:11.000000000 +0100
-+++ texinfo.nbsd/doc/texi2dvi.1	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/texi2dvi.1	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +.\"	$NetBSD: texi2dvi.1,v 1.1.1.6 2008/09/02 07:51:56 christos Exp $
 +.\"
  .\" DO NOT MODIFY THIS FILE!  It was generated by help2man 1.34.
  .TH TEXI2DVI "1" "December 2004" "texi2dvi 1.34" "User Commands"
  .SH NAME
-diff -r -x CVS -N -U 3 texinfo.orig/doc/texindex.1 texinfo.nbsd/doc/texindex.1
+diff -rNU3 texinfo.orig/doc/texindex.1 texinfo/doc/texindex.1
 --- texinfo.orig/doc/texindex.1	2004-12-31 19:02:16.000000000 +0100
-+++ texinfo.nbsd/doc/texindex.1	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/texindex.1	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +.\"	$NetBSD: texindex.1,v 1.3 2008/09/02 08:00:24 christos Exp $
 +.\"
@@ -1019,9 +1113,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/texindex.1 texinfo.nbsd/doc/texindex.1
  \fB\-o\fR, \fB\-\-output\fR FILE
  send output to FILE
  .TP
-diff -r -x CVS -N -U 3 texinfo.orig/doc/texinfo.5 texinfo.nbsd/doc/texinfo.5
+diff -rNU3 texinfo.orig/doc/texinfo.5 texinfo/doc/texinfo.5
 --- texinfo.orig/doc/texinfo.5	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/texinfo.5	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/texinfo.5	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +.\"	$NetBSD: texinfo.5,v 1.1.1.4 2008/09/02 07:51:56 christos Exp $
 +.\"
@@ -1031,9 +1125,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/texinfo.5 texinfo.nbsd/doc/texinfo.5
  .\"
  .\" Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
  .\"
-diff -r -x CVS -N -U 3 texinfo.orig/doc/texinfo.txi texinfo.nbsd/doc/texinfo.txi
+diff -rNU3 texinfo.orig/doc/texinfo.txi texinfo/doc/texinfo.txi
 --- texinfo.orig/doc/texinfo.txi	2004-12-29 16:06:41.000000000 +0100
-+++ texinfo.nbsd/doc/texinfo.txi	2013-04-10 22:45:11.337506095 +0200
++++ texinfo/doc/texinfo.txi	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  \input texinfo.tex    @c -*-texinfo-*-
 -@c $Id: texinfo.txi,v 1.128 2004/12/29 15:06:41 karl Exp $
@@ -1068,18 +1162,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/texinfo.txi texinfo.nbsd/doc/texinfo.txi
  @comment %**start of header
  @setfilename sample.info
  @include version.texi
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-cs.tex texinfo.nbsd/doc/txi-cs.tex
+diff -rNU3 texinfo.orig/doc/txi-cs.tex texinfo/doc/txi-cs.tex
 --- texinfo.orig/doc/txi-cs.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-cs.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-cs.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -% $Id: txi-cs.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
 +% Id: txi-cs.tex,v 1.3 2004/04/11 17:56:45 karl Exp
  % Czech translation for texinfo.tex.
  %
  % Copyright (C) 1999, 2000 Free Software Foundation.
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-de.tex texinfo.nbsd/doc/txi-de.tex
+diff -rNU3 texinfo.orig/doc/txi-de.tex texinfo/doc/txi-de.tex
 --- texinfo.orig/doc/txi-de.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-de.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-de.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  % txi-de.tex -- adaptation to German for texinfo.tex.
 -% $Id: txi-de.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
@@ -1087,9 +1181,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-de.tex texinfo.nbsd/doc/txi-de.tex
  %
  % Copyright (C) 1999 Free Software Foundation, Inc.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-en.tex texinfo.nbsd/doc/txi-en.tex
+diff -rNU3 texinfo.orig/doc/txi-en.tex texinfo/doc/txi-en.tex
 --- texinfo.orig/doc/txi-en.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-en.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-en.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,7 +1,7 @@
  % English non-translation for texinfo.tex.  This is read when a source
  % document says @documentlanguage en (which might happen after another
@@ -1099,9 +1193,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-en.tex texinfo.nbsd/doc/txi-en.tex
  %
  % Copyright (C) 1999 Free Software Foundation.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-fr.tex texinfo.nbsd/doc/txi-fr.tex
+diff -rNU3 texinfo.orig/doc/txi-fr.tex texinfo/doc/txi-fr.tex
 --- texinfo.orig/doc/txi-fr.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-fr.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-fr.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  % txi-fr.tex -- TeX macros to handle French language for texinfo.tex documents.
 -% $Id: txi-fr.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
@@ -1109,9 +1203,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-fr.tex texinfo.nbsd/doc/txi-fr.tex
  %
  % Copyright (C) 1999 Free Software Foundation.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-it.tex texinfo.nbsd/doc/txi-it.tex
+diff -rNU3 texinfo.orig/doc/txi-it.tex texinfo/doc/txi-it.tex
 --- texinfo.orig/doc/txi-it.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-it.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-it.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,7 +1,7 @@
  % English non-translation for texinfo.tex.  This is read when a source
  % document says @documentlanguage en (which might happen after another
@@ -1121,9 +1215,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-it.tex texinfo.nbsd/doc/txi-it.tex
  %
  % Copyright (C) 1999 Free Software Foundation.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-nl.tex texinfo.nbsd/doc/txi-nl.tex
+diff -rNU3 texinfo.orig/doc/txi-nl.tex texinfo/doc/txi-nl.tex
 --- texinfo.orig/doc/txi-nl.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-nl.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-nl.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  % Dutch translation for texinfo.tex.  
 -% $Id: txi-nl.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
@@ -1131,9 +1225,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-nl.tex texinfo.nbsd/doc/txi-nl.tex
  %
  % Copyright (C) 1999 Free Software Foundation.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-pl.tex texinfo.nbsd/doc/txi-pl.tex
+diff -rNU3 texinfo.orig/doc/txi-pl.tex texinfo/doc/txi-pl.tex
 --- texinfo.orig/doc/txi-pl.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-pl.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-pl.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  % txi-pl.tex -- adaptation to Polish for texinfo.tex.
 -% $Id: txi-pl.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
@@ -1141,9 +1235,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-pl.tex texinfo.nbsd/doc/txi-pl.tex
  %
  % Copyright (C) 2003 Free Software Foundation.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-tr.tex texinfo.nbsd/doc/txi-tr.tex
+diff -rNU3 texinfo.orig/doc/txi-tr.tex texinfo/doc/txi-tr.tex
 --- texinfo.orig/doc/txi-tr.tex	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/doc/txi-tr.tex	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/txi-tr.tex	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  % txi-en.tex -- adaptation to Turkish for texinfo.tex.
 -% $Id: txi-tr.tex,v 1.3 2004/04/11 17:56:45 karl Exp $
@@ -1151,27 +1245,57 @@ diff -r -x CVS -N -U 3 texinfo.orig/doc/txi-tr.tex texinfo.nbsd/doc/txi-tr.tex
  %
  % Copyright (C) 2003 Free Software Foundation, Inc.
  %
-diff -r -x CVS -N -U 3 texinfo.orig/doc/version-stnd.texi texinfo.nbsd/doc/version-stnd.texi
+diff -rNU3 texinfo.orig/doc/version-stnd.texi texinfo/doc/version-stnd.texi
 --- texinfo.orig/doc/version-stnd.texi	2004-12-31 19:02:15.000000000 +0100
-+++ texinfo.nbsd/doc/version-stnd.texi	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/version-stnd.texi	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,5 @@
  @set UPDATED 14 December 2004
 +@c $NetBSD: version-stnd.texi,v 1.1.1.5 2008/09/02 07:51:36 christos Exp $
  @set UPDATED-MONTH December 2004
  @set EDITION 4.8
  @set VERSION 4.8
-diff -r -x CVS -N -U 3 texinfo.orig/doc/version.texi texinfo.nbsd/doc/version.texi
+diff -rNU3 texinfo.orig/doc/version.texi texinfo/doc/version.texi
 --- texinfo.orig/doc/version.texi	2004-12-31 19:02:15.000000000 +0100
-+++ texinfo.nbsd/doc/version.texi	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/doc/version.texi	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,5 @@
  @set UPDATED 29 December 2004
 +@c $NetBSD: version.texi,v 1.1.1.6 2008/09/02 07:51:46 christos Exp $
  @set UPDATED-MONTH December 2004
  @set EDITION 4.8
  @set VERSION 4.8
-diff -r -x CVS -N -U 3 texinfo.orig/info/dir.c texinfo.nbsd/info/dir.c
+diff -rNU3 texinfo.orig/info/Makefile.am texinfo/info/Makefile.am
+--- texinfo.orig/info/Makefile.am	2004-10-28 16:03:27.000000000 +0200
++++ texinfo/info/Makefile.am	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-# $Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp $
++# Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp
+ # Makefile.am for texinfo/info.
+ # Run automake in .. to produce Makefile.in from this.
+ #
+diff -rNU3 texinfo.orig/info/Makefile.in texinfo/info/Makefile.in
+--- texinfo.orig/info/Makefile.in	2004-12-31 19:01:48.000000000 +0100
++++ texinfo/info/Makefile.in	2015-10-18 11:13:23.000000000 +0200
+@@ -14,7 +14,7 @@
+ 
+ @SET_MAKE@
+ 
+-# $Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp $
++# Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp
+ # Makefile.am for texinfo/info.
+ # Run automake in .. to produce Makefile.in from this.
+ #
+diff -rNU3 texinfo.orig/info/README texinfo/info/README
+--- texinfo.orig/info/README	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/info/README	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README,v 1.3 2004/04/11 17:56:45 karl Exp $
++Id: README,v 1.3 2004/04/11 17:56:45 karl Exp
+ texinfo/info/README
+ 
+   Copyright (C) 2002 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/info/dir.c texinfo/info/dir.c
 --- texinfo.orig/info/dir.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/dir.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/dir.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: dir.c,v 1.1.1.5 2008/09/02 07:49:33 christos Exp $	*/
 +
@@ -1181,9 +1305,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/dir.c texinfo.nbsd/info/dir.c
  
     Copyright (C) 1993, 1997, 1998, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/display.c texinfo.nbsd/info/display.c
+diff -rNU3 texinfo.orig/info/display.c texinfo/info/display.c
 --- texinfo.orig/info/display.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/display.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/display.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: display.c,v 1.1.1.5 2008/09/02 07:49:34 christos Exp $	*/
 +
@@ -1193,9 +1317,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/display.c texinfo.nbsd/info/display.c
  
     Copyright (C) 1993, 1997, 2003, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/display.h texinfo.nbsd/info/display.h
+diff -rNU3 texinfo.orig/info/display.h texinfo/info/display.h
 --- texinfo.orig/info/display.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/display.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/display.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: display.h,v 1.1.1.4 2008/09/02 07:49:34 christos Exp $	*/
 +
@@ -1205,9 +1329,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/display.h texinfo.nbsd/info/display.h
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/doc.h texinfo.nbsd/info/doc.h
+diff -rNU3 texinfo.orig/info/doc.h texinfo/info/doc.h
 --- texinfo.orig/info/doc.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/doc.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/doc.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: doc.h,v 1.1.1.4 2008/09/02 07:49:34 christos Exp $	*/
 +
@@ -1217,9 +1341,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/doc.h texinfo.nbsd/info/doc.h
  
     Copyright (C) 1993, 2001, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/dribble.c texinfo.nbsd/info/dribble.c
+diff -rNU3 texinfo.orig/info/dribble.c texinfo/info/dribble.c
 --- texinfo.orig/info/dribble.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/dribble.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/dribble.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: dribble.c,v 1.1.1.5 2008/09/02 07:49:34 christos Exp $	*/
 +
@@ -1229,18 +1353,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/dribble.c texinfo.nbsd/info/dribble.c
  
     Copyright (C) 1993, 1998, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/dribble.h texinfo.nbsd/info/dribble.h
+diff -rNU3 texinfo.orig/info/dribble.h texinfo/info/dribble.h
 --- texinfo.orig/info/dribble.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/dribble.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/dribble.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: dribble.h,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
 +
  /* dribble.h -- Functions and vars declared in dribble.c. */
  
  /* This file is part of GNU Info, a program for reading online documentation
-diff -r -x CVS -N -U 3 texinfo.orig/info/echo-area.c texinfo.nbsd/info/echo-area.c
+diff -rNU3 texinfo.orig/info/echo-area.c texinfo/info/echo-area.c
 --- texinfo.orig/info/echo-area.c	2004-12-14 01:15:36.000000000 +0100
-+++ texinfo.nbsd/info/echo-area.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/echo-area.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: echo-area.c,v 1.4 2008/09/02 08:41:51 christos Exp $	*/
 +
@@ -1259,9 +1383,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/echo-area.c texinfo.nbsd/info/echo-area
  				NULL, NULL);
  
        /* Find the maximum length of a label. */
-diff -r -x CVS -N -U 3 texinfo.orig/info/echo-area.h texinfo.nbsd/info/echo-area.h
+diff -rNU3 texinfo.orig/info/echo-area.h texinfo/info/echo-area.h
 --- texinfo.orig/info/echo-area.h	2004-08-08 00:03:08.000000000 +0200
-+++ texinfo.nbsd/info/echo-area.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/echo-area.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: echo-area.h,v 1.1.1.4 2008/09/02 07:49:37 christos Exp $	*/
 +
@@ -1271,9 +1395,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/echo-area.h texinfo.nbsd/info/echo-area
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/filesys.c texinfo.nbsd/info/filesys.c
+diff -rNU3 texinfo.orig/info/filesys.c texinfo/info/filesys.c
 --- texinfo.orig/info/filesys.c	2004-07-30 19:17:40.000000000 +0200
-+++ texinfo.nbsd/info/filesys.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/filesys.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: filesys.c,v 1.1.1.6 2008/09/02 07:49:37 christos Exp $	*/
 +
@@ -1283,9 +1407,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/filesys.c texinfo.nbsd/info/filesys.c
  
     Copyright (C) 1993, 1997, 1998, 2000, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/filesys.h texinfo.nbsd/info/filesys.h
+diff -rNU3 texinfo.orig/info/filesys.h texinfo/info/filesys.h
 --- texinfo.orig/info/filesys.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/filesys.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/filesys.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: filesys.h,v 1.1.1.5 2008/09/02 07:49:38 christos Exp $	*/
 +
@@ -1295,9 +1419,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/filesys.h texinfo.nbsd/info/filesys.h
  
     Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/footnotes.c texinfo.nbsd/info/footnotes.c
+diff -rNU3 texinfo.orig/info/footnotes.c texinfo/info/footnotes.c
 --- texinfo.orig/info/footnotes.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/footnotes.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/footnotes.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: footnotes.c,v 1.1.1.5 2008/09/02 07:49:38 christos Exp $	*/
 +
@@ -1307,9 +1431,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/footnotes.c texinfo.nbsd/info/footnotes
  
     Copyright (C) 1993, 1997, 1998, 1999, 2002, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/footnotes.h texinfo.nbsd/info/footnotes.h
+diff -rNU3 texinfo.orig/info/footnotes.h texinfo/info/footnotes.h
 --- texinfo.orig/info/footnotes.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/footnotes.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/footnotes.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: footnotes.h,v 1.1.1.5 2008/09/02 07:49:38 christos Exp $	*/
 +
@@ -1319,9 +1443,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/footnotes.h texinfo.nbsd/info/footnotes
  
     Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/gc.c texinfo.nbsd/info/gc.c
+diff -rNU3 texinfo.orig/info/gc.c texinfo/info/gc.c
 --- texinfo.orig/info/gc.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/gc.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/gc.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: gc.c,v 1.1.1.4 2008/09/02 07:49:38 christos Exp $	*/
 +
@@ -1331,9 +1455,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/gc.c texinfo.nbsd/info/gc.c
  
     Copyright (C) 1993, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/gc.h texinfo.nbsd/info/gc.h
+diff -rNU3 texinfo.orig/info/gc.h texinfo/info/gc.h
 --- texinfo.orig/info/gc.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/gc.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/gc.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: gc.h,v 1.1.1.4 2008/09/02 07:49:38 christos Exp $	*/
 +
@@ -1343,9 +1467,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/gc.h texinfo.nbsd/info/gc.h
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/indices.c texinfo.nbsd/info/indices.c
+diff -rNU3 texinfo.orig/info/indices.c texinfo/info/indices.c
 --- texinfo.orig/info/indices.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/indices.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/indices.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: indices.c,v 1.1.1.6 2008/09/02 07:49:40 christos Exp $	*/
 +
@@ -1355,9 +1479,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/indices.c texinfo.nbsd/info/indices.c
  
     Copyright (C) 1993, 1997, 1998, 1999, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/indices.h texinfo.nbsd/info/indices.h
+diff -rNU3 texinfo.orig/info/indices.h texinfo/info/indices.h
 --- texinfo.orig/info/indices.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/indices.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/indices.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: indices.h,v 1.1.1.4 2008/09/02 07:49:40 christos Exp $	*/
 +
@@ -1367,9 +1491,33 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/indices.h texinfo.nbsd/info/indices.h
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/info.c texinfo.nbsd/info/info.c
+diff -rNU3 texinfo.orig/info/info-utils.c texinfo/info/info-utils.c
+--- texinfo.orig/info/info-utils.c	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/info/info-utils.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: info-utils.c,v 1.1.1.6 2008/09/02 07:49:40 christos Exp $	*/
++
+ /* info-utils.c -- miscellanous.
+-   $Id: info-utils.c,v 1.4 2004/04/11 17:56:45 karl Exp $
++   Id: info-utils.c,v 1.4 2004/04/11 17:56:45 karl Exp
+ 
+    Copyright (C) 1993, 1998, 2003, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/info/info-utils.h texinfo/info/info-utils.h
+--- texinfo.orig/info/info-utils.h	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/info/info-utils.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: info-utils.h,v 1.1.1.6 2008/09/02 07:49:40 christos Exp $	*/
++
+ /* info-utils.h -- Exported functions and variables from info-utils.c.
+-   $Id: info-utils.h,v 1.4 2004/04/11 17:56:45 karl Exp $   
++   Id: info-utils.h,v 1.4 2004/04/11 17:56:45 karl Exp   
+ 
+    Copyright (C) 1993, 1996, 1998, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/info/info.c texinfo/info/info.c
 --- texinfo.orig/info/info.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/info.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/info.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: info.c,v 1.12 2010/02/18 14:00:39 wiz Exp $	*/
 +
@@ -1388,21 +1536,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/info.c texinfo.nbsd/info/info.c
    initial_node = info_get_node (user_filename,
                                  user_nodenames ? user_nodenames[0] : 0);
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/infodoc.c texinfo.nbsd/info/infodoc.c
---- texinfo.orig/info/infodoc.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/infodoc.c	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: infodoc.c,v 1.1.1.6 2008/09/02 07:49:44 christos Exp $	*/
-+
- /* infodoc.c -- functions which build documentation nodes.
--   $Id: infodoc.c,v 1.8 2004/04/11 17:56:45 karl Exp $
-+   Id: infodoc.c,v 1.8 2004/04/11 17:56:45 karl Exp
- 
-    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/info.h texinfo.nbsd/info/info.h
+diff -rNU3 texinfo.orig/info/info.h texinfo/info/info.h
 --- texinfo.orig/info/info.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/info.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/info.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: info.h,v 1.1.1.6 2008/09/02 07:49:43 christos Exp $	*/
 +
@@ -1412,9 +1548,21 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/info.h texinfo.nbsd/info/info.h
  
     Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/infokey.c texinfo.nbsd/info/infokey.c
+diff -rNU3 texinfo.orig/info/infodoc.c texinfo/info/infodoc.c
+--- texinfo.orig/info/infodoc.c	2004-04-11 19:56:45.000000000 +0200
++++ texinfo/info/infodoc.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: infodoc.c,v 1.1.1.6 2008/09/02 07:49:44 christos Exp $	*/
++
+ /* infodoc.c -- functions which build documentation nodes.
+-   $Id: infodoc.c,v 1.8 2004/04/11 17:56:45 karl Exp $
++   Id: infodoc.c,v 1.8 2004/04/11 17:56:45 karl Exp
+ 
+    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/info/infokey.c texinfo/info/infokey.c
 --- texinfo.orig/info/infokey.c	2004-12-14 01:15:36.000000000 +0100
-+++ texinfo.nbsd/info/infokey.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/infokey.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: infokey.c,v 1.4 2008/09/02 08:41:51 christos Exp $	*/
 +
@@ -1442,9 +1590,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/infokey.c texinfo.nbsd/info/infokey.c
  		  error = 1;
  		}
  	      else
-diff -r -x CVS -N -U 3 texinfo.orig/info/infokey.h texinfo.nbsd/info/infokey.h
+diff -rNU3 texinfo.orig/info/infokey.h texinfo/info/infokey.h
 --- texinfo.orig/info/infokey.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/infokey.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/infokey.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: infokey.h,v 1.1.1.3 2008/09/02 07:50:15 christos Exp $	*/
 +
@@ -1454,9 +1602,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/infokey.h texinfo.nbsd/info/infokey.h
  
     Copyright (C) 1999, 2002 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/infomap.c texinfo.nbsd/info/infomap.c
+diff -rNU3 texinfo.orig/info/infomap.c texinfo/info/infomap.c
 --- texinfo.orig/info/infomap.c	2004-07-30 22:43:40.000000000 +0200
-+++ texinfo.nbsd/info/infomap.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/infomap.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: infomap.c,v 1.1.1.7 2008/09/02 07:49:47 christos Exp $	*/
 +
@@ -1466,9 +1614,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/infomap.c texinfo.nbsd/info/infomap.c
  
     Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/infomap.h texinfo.nbsd/info/infomap.h
+diff -rNU3 texinfo.orig/info/infomap.h texinfo/info/infomap.h
 --- texinfo.orig/info/infomap.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/infomap.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/infomap.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: infomap.h,v 1.1.1.4 2008/09/02 07:49:47 christos Exp $	*/
 +
@@ -1478,99 +1626,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/infomap.h texinfo.nbsd/info/infomap.h
  
     Copyright (C) 1993, 2001, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/info-utils.c texinfo.nbsd/info/info-utils.c
---- texinfo.orig/info/info-utils.c	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/info-utils.c	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: info-utils.c,v 1.1.1.6 2008/09/02 07:49:40 christos Exp $	*/
-+
- /* info-utils.c -- miscellanous.
--   $Id: info-utils.c,v 1.4 2004/04/11 17:56:45 karl Exp $
-+   Id: info-utils.c,v 1.4 2004/04/11 17:56:45 karl Exp
- 
-    Copyright (C) 1993, 1998, 2003, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/info/info-utils.h texinfo.nbsd/info/info-utils.h
---- texinfo.orig/info/info-utils.h	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/info-utils.h	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: info-utils.h,v 1.1.1.6 2008/09/02 07:49:40 christos Exp $	*/
-+
- /* info-utils.h -- Exported functions and variables from info-utils.c.
--   $Id: info-utils.h,v 1.4 2004/04/11 17:56:45 karl Exp $   
-+   Id: info-utils.h,v 1.4 2004/04/11 17:56:45 karl Exp   
- 
-    Copyright (C) 1993, 1996, 1998, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/key.h texinfo.nbsd/info/key.h
+diff -rNU3 texinfo.orig/info/key.h texinfo/info/key.h
 --- texinfo.orig/info/key.h	2002-08-26 01:38:38.000000000 +0200
-+++ texinfo.nbsd/info/key.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/key.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: key.h,v 1.1.1.1 2003/01/17 14:54:34 wiz Exp $	*/
 +
  /* key.h -- Structure associating function names with numeric codes. */
  
  /* This file is part of GNU Info, a program for reading online documentation
-diff -r -x CVS -N -U 3 texinfo.orig/info/makedoc.c texinfo.nbsd/info/makedoc.c
---- texinfo.orig/info/makedoc.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/makedoc.c	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: makedoc.c,v 1.1.1.6 2008/09/02 07:50:15 christos Exp $	*/
-+
- /* makedoc.c -- make doc.c and funs.h from input files.
--   $Id: makedoc.c,v 1.4 2004/04/11 17:56:46 karl Exp $
-+   Id: makedoc.c,v 1.4 2004/04/11 17:56:46 karl Exp
- 
-    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/Makefile.am texinfo.nbsd/info/Makefile.am
---- texinfo.orig/info/Makefile.am	2004-10-28 16:03:27.000000000 +0200
-+++ texinfo.nbsd/info/Makefile.am	2013-04-10 22:45:11.340839495 +0200
-@@ -1,4 +1,4 @@
--# $Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp $
-+# Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp
- # Makefile.am for texinfo/info.
- # Run automake in .. to produce Makefile.in from this.
- #
-diff -r -x CVS -N -U 3 texinfo.orig/info/Makefile.in texinfo.nbsd/info/Makefile.in
---- texinfo.orig/info/Makefile.in	2004-12-31 19:01:48.000000000 +0100
-+++ texinfo.nbsd/info/Makefile.in	2013-04-10 22:45:11.340839495 +0200
-@@ -14,7 +14,7 @@
- 
- @SET_MAKE@
- 
--# $Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp $
-+# Id: Makefile.am,v 1.8 2004/10/28 14:03:27 karl Exp
- # Makefile.am for texinfo/info.
- # Run automake in .. to produce Makefile.in from this.
- #
-diff -r -x CVS -N -U 3 texinfo.orig/info/man.c texinfo.nbsd/info/man.c
---- texinfo.orig/info/man.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/man.c	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: man.c,v 1.1.1.6 2008/09/02 07:49:49 christos Exp $	*/
-+
- /*  man.c: How to read and format man files.
--    $Id: man.c,v 1.4 2004/04/11 17:56:46 karl Exp $
-+    Id: man.c,v 1.4 2004/04/11 17:56:46 karl Exp
- 
-    Copyright (C) 1995, 1997, 1998, 1999, 2000, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/man.h texinfo.nbsd/info/man.h
---- texinfo.orig/info/man.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/man.h	2013-04-10 22:45:11.340839495 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: man.h,v 1.1.1.4 2008/09/02 07:49:49 christos Exp $	*/
-+
- /* man.h: Defines and external function declarations for man.c.
--   $Id: man.h,v 1.3 2004/04/11 17:56:46 karl Exp $
-+   Id: man.h,v 1.3 2004/04/11 17:56:46 karl Exp
- 
-    This file is part of GNU Info, a program for reading online documentation
-    stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/m-x.c texinfo.nbsd/info/m-x.c
+diff -rNU3 texinfo.orig/info/m-x.c texinfo/info/m-x.c
 --- texinfo.orig/info/m-x.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/m-x.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/m-x.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: m-x.c,v 1.1.1.5 2008/09/02 07:49:47 christos Exp $	*/
 +
@@ -1580,9 +1647,45 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/m-x.c texinfo.nbsd/info/m-x.c
  
     Copyright (C) 1993, 1997, 1998, 2001, 2002, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/nodemenu.c texinfo.nbsd/info/nodemenu.c
+diff -rNU3 texinfo.orig/info/makedoc.c texinfo/info/makedoc.c
+--- texinfo.orig/info/makedoc.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/info/makedoc.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: makedoc.c,v 1.1.1.6 2008/09/02 07:50:15 christos Exp $	*/
++
+ /* makedoc.c -- make doc.c and funs.h from input files.
+-   $Id: makedoc.c,v 1.4 2004/04/11 17:56:46 karl Exp $
++   Id: makedoc.c,v 1.4 2004/04/11 17:56:46 karl Exp
+ 
+    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/info/man.c texinfo/info/man.c
+--- texinfo.orig/info/man.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/info/man.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: man.c,v 1.1.1.6 2008/09/02 07:49:49 christos Exp $	*/
++
+ /*  man.c: How to read and format man files.
+-    $Id: man.c,v 1.4 2004/04/11 17:56:46 karl Exp $
++    Id: man.c,v 1.4 2004/04/11 17:56:46 karl Exp
+ 
+    Copyright (C) 1995, 1997, 1998, 1999, 2000, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/info/man.h texinfo/info/man.h
+--- texinfo.orig/info/man.h	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/info/man.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: man.h,v 1.1.1.4 2008/09/02 07:49:49 christos Exp $	*/
++
+ /* man.h: Defines and external function declarations for man.c.
+-   $Id: man.h,v 1.3 2004/04/11 17:56:46 karl Exp $
++   Id: man.h,v 1.3 2004/04/11 17:56:46 karl Exp
+ 
+    This file is part of GNU Info, a program for reading online documentation
+    stored in Info format.
+diff -rNU3 texinfo.orig/info/nodemenu.c texinfo/info/nodemenu.c
 --- texinfo.orig/info/nodemenu.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/nodemenu.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/nodemenu.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: nodemenu.c,v 1.1.1.6 2008/09/02 07:49:49 christos Exp $	*/
 +
@@ -1592,9 +1695,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/nodemenu.c texinfo.nbsd/info/nodemenu.c
  
     Copyright (C) 1993, 1997, 1998, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/nodes.c texinfo.nbsd/info/nodes.c
+diff -rNU3 texinfo.orig/info/nodes.c texinfo/info/nodes.c
 --- texinfo.orig/info/nodes.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/nodes.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/nodes.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: nodes.c,v 1.7 2008/09/02 08:00:24 christos Exp $	*/
 +
@@ -1604,9 +1707,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/nodes.c texinfo.nbsd/info/nodes.c
  
     Copyright (C) 1993, 1998, 1999, 2000, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/nodes.h texinfo.nbsd/info/nodes.h
+diff -rNU3 texinfo.orig/info/nodes.h texinfo/info/nodes.h
 --- texinfo.orig/info/nodes.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/nodes.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/nodes.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: nodes.h,v 1.1.1.5 2008/09/02 07:49:51 christos Exp $	*/
 +
@@ -1616,9 +1719,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/nodes.h texinfo.nbsd/info/nodes.h
  
     Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/pcterm.c texinfo.nbsd/info/pcterm.c
+diff -rNU3 texinfo.orig/info/pcterm.c texinfo/info/pcterm.c
 --- texinfo.orig/info/pcterm.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/pcterm.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/pcterm.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: pcterm.c,v 1.1.1.5 2008/09/02 07:50:19 christos Exp $	*/
 +
@@ -1628,18 +1731,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/pcterm.c texinfo.nbsd/info/pcterm.c
  
     Copyright (C) 1998, 1999, 2003, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/README texinfo.nbsd/info/README
---- texinfo.orig/info/README	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/info/README	2013-04-10 22:45:11.340839495 +0200
-@@ -1,4 +1,4 @@
--$Id: README,v 1.3 2004/04/11 17:56:45 karl Exp $
-+Id: README,v 1.3 2004/04/11 17:56:45 karl Exp
- texinfo/info/README
- 
-   Copyright (C) 2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/search.c texinfo.nbsd/info/search.c
+diff -rNU3 texinfo.orig/info/search.c texinfo/info/search.c
 --- texinfo.orig/info/search.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/search.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/search.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: search.c,v 1.1.1.5 2008/09/02 07:49:51 christos Exp $	*/
 +
@@ -1649,9 +1743,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/search.c texinfo.nbsd/info/search.c
  
     Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/search.h texinfo.nbsd/info/search.h
+diff -rNU3 texinfo.orig/info/search.h texinfo/info/search.h
 --- texinfo.orig/info/search.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/search.h	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/search.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: search.h,v 1.1.1.5 2008/09/02 07:49:53 christos Exp $	*/
 +
@@ -1661,11 +1755,11 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/search.h texinfo.nbsd/info/search.h
  
     Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/session.c texinfo.nbsd/info/session.c
+diff -rNU3 texinfo.orig/info/session.c texinfo/info/session.c
 --- texinfo.orig/info/session.c	2004-12-14 01:15:36.000000000 +0100
-+++ texinfo.nbsd/info/session.c	2013-04-10 22:45:11.340839495 +0200
++++ texinfo/info/session.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
-+/*	$NetBSD: session.c,v 1.5 2008/09/02 08:41:51 christos Exp $	*/
++/*	$NetBSD: session.c,v 1.6 2014/02/27 18:09:18 joerg Exp $	*/
 +
  /* session.c -- user windowing interface to Info.
 -   $Id: session.c,v 1.16 2004/12/14 00:15:36 karl Exp $
@@ -1700,9 +1794,27 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/session.c texinfo.nbsd/info/session.c
  
    info_free_references (menu);
    return;
-diff -r -x CVS -N -U 3 texinfo.orig/info/session.h texinfo.nbsd/info/session.h
+@@ -2018,7 +2020,7 @@
+       /* See how far POS is from this xref.  Take into account the
+          `*Note' that begins the xref, since as far as the user is
+          concerned, that's where it starts.  */
+-      delta = MIN (labs (pos - (xref->start - strlen (INFO_XREF_LABEL))),
++      delta = MIN (labs (pos - (xref->start - (long)strlen (INFO_XREF_LABEL))),
+                    labs (pos - xref->end));
+       
+       /* It's the <= instead of < that makes us choose the forward xref
+@@ -2245,7 +2247,7 @@
+                 {
+                   /* ref->end is more accurate estimate of position
+                      for menus than ref->start.  Go figure.  */
+-                  int dist = abs (window->point - ref->end);
++                  int dist = labs (window->point - ref->end);
+ 
+                   if (dist < min_dist)
+                     {
+diff -rNU3 texinfo.orig/info/session.h texinfo/info/session.h
 --- texinfo.orig/info/session.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/session.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/session.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: session.h,v 1.1.1.5 2008/09/02 07:50:07 christos Exp $	*/
 +
@@ -1712,9 +1824,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/session.h texinfo.nbsd/info/session.h
  
     Copyright (C) 1993, 1998, 1999, 2001, 2002, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/signals.c texinfo.nbsd/info/signals.c
+diff -rNU3 texinfo.orig/info/signals.c texinfo/info/signals.c
 --- texinfo.orig/info/signals.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/signals.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/signals.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: signals.c,v 1.1.1.6 2008/09/02 07:50:08 christos Exp $	*/
 +
@@ -1724,9 +1836,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/signals.c texinfo.nbsd/info/signals.c
  
     Copyright (C) 1993, 1994, 1995, 1998, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/signals.h texinfo.nbsd/info/signals.h
+diff -rNU3 texinfo.orig/info/signals.h texinfo/info/signals.h
 --- texinfo.orig/info/signals.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/signals.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/signals.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: signals.h,v 1.1.1.4 2008/09/02 07:50:08 christos Exp $	*/
 +
@@ -1736,9 +1848,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/signals.h texinfo.nbsd/info/signals.h
  
     Copyright (C) 1993, 1994, 1995, 1997, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/termdep.h texinfo.nbsd/info/termdep.h
+diff -rNU3 texinfo.orig/info/termdep.h texinfo/info/termdep.h
 --- texinfo.orig/info/termdep.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/termdep.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/termdep.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: termdep.h,v 1.1.1.5 2008/09/02 07:50:08 christos Exp $	*/
 +
@@ -1748,9 +1860,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/termdep.h texinfo.nbsd/info/termdep.h
  
     Copyright (C) 1993, 1996, 1997, 1998, 2001, 2002 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/terminal.c texinfo.nbsd/info/terminal.c
+diff -rNU3 texinfo.orig/info/terminal.c texinfo/info/terminal.c
 --- texinfo.orig/info/terminal.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/terminal.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/terminal.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: terminal.c,v 1.11 2011/05/15 14:35:47 christos Exp $	*/
 +
@@ -1768,9 +1880,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/terminal.c texinfo.nbsd/info/terminal.c
  #include <signal.h>
  
  /* The Unix termcap interface code. */
-diff -r -x CVS -N -U 3 texinfo.orig/info/terminal.h texinfo.nbsd/info/terminal.h
+diff -rNU3 texinfo.orig/info/terminal.h texinfo/info/terminal.h
 --- texinfo.orig/info/terminal.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/terminal.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/terminal.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: terminal.h,v 1.1.1.4 2008/09/02 07:50:09 christos Exp $	*/
 +
@@ -1780,9 +1892,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/terminal.h texinfo.nbsd/info/terminal.h
  
     Copyright (C) 1993, 1996, 1997, 2001, 2002, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/tilde.c texinfo.nbsd/info/tilde.c
+diff -rNU3 texinfo.orig/info/tilde.c texinfo/info/tilde.c
 --- texinfo.orig/info/tilde.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/tilde.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/tilde.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: tilde.c,v 1.1.1.5 2008/09/02 07:50:09 christos Exp $	*/
 +
@@ -1792,9 +1904,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/tilde.c texinfo.nbsd/info/tilde.c
  
     Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1996, 1998, 1999,
     2002, 2004 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/tilde.h texinfo.nbsd/info/tilde.h
+diff -rNU3 texinfo.orig/info/tilde.h texinfo/info/tilde.h
 --- texinfo.orig/info/tilde.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/tilde.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/tilde.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: tilde.h,v 1.1.1.4 2008/09/02 07:50:10 christos Exp $	*/
 +
@@ -1804,9 +1916,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/tilde.h texinfo.nbsd/info/tilde.h
  
     This file has appeared in prior works by the Free Software Foundation;
     thus it carries copyright dates from 1988 through 1993.
-diff -r -x CVS -N -U 3 texinfo.orig/info/variables.c texinfo.nbsd/info/variables.c
+diff -rNU3 texinfo.orig/info/variables.c texinfo/info/variables.c
 --- texinfo.orig/info/variables.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/variables.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/variables.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: variables.c,v 1.1.1.5 2008/09/02 07:50:10 christos Exp $	*/
 +
@@ -1816,9 +1928,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/variables.c texinfo.nbsd/info/variables
  
     Copyright (C) 1993, 1997, 2001, 2002, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/info/variables.h texinfo.nbsd/info/variables.h
+diff -rNU3 texinfo.orig/info/variables.h texinfo/info/variables.h
 --- texinfo.orig/info/variables.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/variables.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/variables.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: variables.h,v 1.1.1.4 2008/09/02 07:50:10 christos Exp $	*/
 +
@@ -1828,9 +1940,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/variables.h texinfo.nbsd/info/variables
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/info/window.c texinfo.nbsd/info/window.c
+diff -rNU3 texinfo.orig/info/window.c texinfo/info/window.c
 --- texinfo.orig/info/window.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/window.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/window.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: window.c,v 1.1.1.6 2008/09/02 07:50:14 christos Exp $	*/
 +
@@ -1840,9 +1952,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/window.c texinfo.nbsd/info/window.c
  
     Copyright (C) 1993, 1997, 1998, 2001, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/info/window.h texinfo.nbsd/info/window.h
+diff -rNU3 texinfo.orig/info/window.h texinfo/info/window.h
 --- texinfo.orig/info/window.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/info/window.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/info/window.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: window.h,v 1.1.1.4 2008/09/02 07:50:14 christos Exp $	*/
 +
@@ -1852,216 +1964,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/info/window.h texinfo.nbsd/info/window.h
  
     This file is part of GNU Info, a program for reading online documentation
     stored in Info format.
-diff -r -x CVS -N -U 3 texinfo.orig/INSTALL texinfo.nbsd/INSTALL
---- texinfo.orig/INSTALL	2004-11-19 14:08:47.000000000 +0100
-+++ texinfo.nbsd/INSTALL	2013-04-10 22:45:11.334172695 +0200
-@@ -1,4 +1,4 @@
--$Id: INSTALL,v 1.5 2004/11/19 13:08:47 karl Exp $
-+Id: INSTALL,v 1.5 2004/11/19 13:08:47 karl Exp
- 
-      Copying and distribution of this file, with or without modification,
-      are permitted in any medium without royalty provided the copyright
-diff -r -x CVS -N -U 3 texinfo.orig/intl/bindtextdom.c texinfo.nbsd/intl/bindtextdom.c
---- texinfo.orig/intl/bindtextdom.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/bindtextdom.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: bindtextdom.c,v 1.1.1.5 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Implementation of the bindtextdomain(3) function
-    Copyright (C) 1995-1998, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/dcgettext.c texinfo.nbsd/intl/dcgettext.c
---- texinfo.orig/intl/dcgettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/dcgettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: dcgettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of the dcgettext(3) function.
-    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/dcigettext.c texinfo.nbsd/intl/dcigettext.c
---- texinfo.orig/intl/dcigettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/dcigettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: dcigettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of the internal dcigettext function.
-    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/dcngettext.c texinfo.nbsd/intl/dcngettext.c
---- texinfo.orig/intl/dcngettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/dcngettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: dcngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of the dcngettext(3) function.
-    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/dgettext.c texinfo.nbsd/intl/dgettext.c
---- texinfo.orig/intl/dgettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/dgettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: dgettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of the dgettext(3) function.
-    Copyright (C) 1995-1997, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/dngettext.c texinfo.nbsd/intl/dngettext.c
---- texinfo.orig/intl/dngettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/dngettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: dngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of the dngettext(3) function.
-    Copyright (C) 1995-1997, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/eval-plural.h texinfo.nbsd/intl/eval-plural.h
---- texinfo.orig/intl/eval-plural.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/eval-plural.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: eval-plural.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Plural expression evaluation.
-    Copyright (C) 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/explodename.c texinfo.nbsd/intl/explodename.c
---- texinfo.orig/intl/explodename.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/explodename.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: explodename.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Copyright (C) 1995-1998, 2000-2001, 2003 Free Software Foundation, Inc.
-    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/finddomain.c texinfo.nbsd/intl/finddomain.c
---- texinfo.orig/intl/finddomain.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/finddomain.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: finddomain.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Handle list of needed message catalogs
-    Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
-    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/gettext.c texinfo.nbsd/intl/gettext.c
---- texinfo.orig/intl/gettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/gettext.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: gettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Implementation of gettext(3) function.
-    Copyright (C) 1995, 1997, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/gettextP.h texinfo.nbsd/intl/gettextP.h
---- texinfo.orig/intl/gettextP.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/gettextP.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: gettextP.h,v 1.1.1.5 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Header describing internals of libintl library.
-    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
-    Written by Ulrich Drepper <drepper@cygnus.com>, 1995.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/gmo.h texinfo.nbsd/intl/gmo.h
---- texinfo.orig/intl/gmo.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/gmo.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: gmo.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Description of GNU message catalog format: general file layout.
-    Copyright (C) 1995, 1997, 2000-2002, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/hash-string.h texinfo.nbsd/intl/hash-string.h
---- texinfo.orig/intl/hash-string.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/hash-string.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: hash-string.h,v 1.1.1.4 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Description of GNU message catalog format: string hashing function.
-    Copyright (C) 1995, 1997-1998, 2000-2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/intl-compat.c texinfo.nbsd/intl/intl-compat.c
---- texinfo.orig/intl/intl-compat.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/intl-compat.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: intl-compat.c,v 1.1.1.4 2004/07/12 23:27:15 wiz Exp $	*/
-+
- /* intl-compat.c - Stub functions to call gettext functions from GNU gettext
-    Library.
-    Copyright (C) 1995, 2000-2003 Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/l10nflist.c texinfo.nbsd/intl/l10nflist.c
---- texinfo.orig/intl/l10nflist.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/l10nflist.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: l10nflist.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
-    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/loadinfo.h texinfo.nbsd/intl/loadinfo.h
---- texinfo.orig/intl/loadinfo.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/loadinfo.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: loadinfo.h,v 1.1.1.4 2004/07/12 23:27:17 wiz Exp $	*/
-+
- /* Copyright (C) 1996-1999, 2000-2003 Free Software Foundation, Inc.
-    This file is part of the GNU C Library.
-    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/loadmsgcat.c texinfo.nbsd/intl/loadmsgcat.c
---- texinfo.orig/intl/loadmsgcat.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/loadmsgcat.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: loadmsgcat.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Load needed message catalogs.
-    Copyright (C) 1995-1999, 2000-2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/localcharset.c texinfo.nbsd/intl/localcharset.c
---- texinfo.orig/intl/localcharset.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/localcharset.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: localcharset.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Determine a canonical name for the current locale's character encoding.
- 
-    Copyright (C) 2000-2003 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/localcharset.h texinfo.nbsd/intl/localcharset.h
---- texinfo.orig/intl/localcharset.h	2003-11-06 15:36:16.000000000 +0100
-+++ texinfo.nbsd/intl/localcharset.h	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: localcharset.h,v 1.1.1.1 2003/07/03 14:59:13 wiz Exp $	*/
-+
- /* Determine a canonical name for the current locale's character encoding.
-    Copyright (C) 2000-2003 Free Software Foundation, Inc.
-    This file is part of the GNU CHARSET Library.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/localealias.c texinfo.nbsd/intl/localealias.c
---- texinfo.orig/intl/localealias.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/localealias.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: localealias.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Handle aliases for locale names.
-    Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/localename.c texinfo.nbsd/intl/localename.c
---- texinfo.orig/intl/localename.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/localename.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: localename.c,v 1.1.1.2 2004/07/12 23:27:16 wiz Exp $	*/
-+
- /* Determine the current selected locale.
-    Copyright (C) 1995-1999, 2000-2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/log.c texinfo.nbsd/intl/log.c
---- texinfo.orig/intl/log.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/log.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: log.c,v 1.1.1.2 2004/07/12 23:27:15 wiz Exp $	*/
-+
- /* Log file output.
-    Copyright (C) 2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/Makefile.in texinfo.nbsd/intl/Makefile.in
+diff -rNU3 texinfo.orig/intl/Makefile.in texinfo/intl/Makefile.in
 --- texinfo.orig/intl/Makefile.in	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/Makefile.in	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/Makefile.in	2015-10-18 11:13:23.000000000 +0200
 @@ -19,7 +19,7 @@
  PACKAGE = @PACKAGE@
  VERSION = @VERSION@
@@ -2071,282 +1976,405 @@ diff -r -x CVS -N -U 3 texinfo.orig/intl/Makefile.in texinfo.nbsd/intl/Makefile.
  
  srcdir = @srcdir@
  top_srcdir = @top_srcdir@
-diff -r -x CVS -N -U 3 texinfo.orig/intl/ngettext.c texinfo.nbsd/intl/ngettext.c
+diff -rNU3 texinfo.orig/intl/bindtextdom.c texinfo/intl/bindtextdom.c
+--- texinfo.orig/intl/bindtextdom.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/bindtextdom.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: bindtextdom.c,v 1.1.1.5 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Implementation of the bindtextdomain(3) function
+    Copyright (C) 1995-1998, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/dcgettext.c texinfo/intl/dcgettext.c
+--- texinfo.orig/intl/dcgettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/dcgettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: dcgettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of the dcgettext(3) function.
+    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/dcigettext.c texinfo/intl/dcigettext.c
+--- texinfo.orig/intl/dcigettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/dcigettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: dcigettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of the internal dcigettext function.
+    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/dcngettext.c texinfo/intl/dcngettext.c
+--- texinfo.orig/intl/dcngettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/dcngettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: dcngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of the dcngettext(3) function.
+    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/dgettext.c texinfo/intl/dgettext.c
+--- texinfo.orig/intl/dgettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/dgettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: dgettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of the dgettext(3) function.
+    Copyright (C) 1995-1997, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/dngettext.c texinfo/intl/dngettext.c
+--- texinfo.orig/intl/dngettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/dngettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: dngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of the dngettext(3) function.
+    Copyright (C) 1995-1997, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/eval-plural.h texinfo/intl/eval-plural.h
+--- texinfo.orig/intl/eval-plural.h	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/eval-plural.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: eval-plural.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Plural expression evaluation.
+    Copyright (C) 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/explodename.c texinfo/intl/explodename.c
+--- texinfo.orig/intl/explodename.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/explodename.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: explodename.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Copyright (C) 1995-1998, 2000-2001, 2003 Free Software Foundation, Inc.
+    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
+ 
+diff -rNU3 texinfo.orig/intl/finddomain.c texinfo/intl/finddomain.c
+--- texinfo.orig/intl/finddomain.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/finddomain.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: finddomain.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Handle list of needed message catalogs
+    Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
+    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
+diff -rNU3 texinfo.orig/intl/gettext.c texinfo/intl/gettext.c
+--- texinfo.orig/intl/gettext.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/gettext.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: gettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Implementation of gettext(3) function.
+    Copyright (C) 1995, 1997, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/gettextP.h texinfo/intl/gettextP.h
+--- texinfo.orig/intl/gettextP.h	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/gettextP.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: gettextP.h,v 1.1.1.5 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Header describing internals of libintl library.
+    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
+    Written by Ulrich Drepper <drepper@cygnus.com>, 1995.
+diff -rNU3 texinfo.orig/intl/gmo.h texinfo/intl/gmo.h
+--- texinfo.orig/intl/gmo.h	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/intl/gmo.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: gmo.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Description of GNU message catalog format: general file layout.
+    Copyright (C) 1995, 1997, 2000-2002, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/hash-string.h texinfo/intl/hash-string.h
+--- texinfo.orig/intl/hash-string.h	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/hash-string.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: hash-string.h,v 1.1.1.4 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Description of GNU message catalog format: string hashing function.
+    Copyright (C) 1995, 1997-1998, 2000-2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/intl-compat.c texinfo/intl/intl-compat.c
+--- texinfo.orig/intl/intl-compat.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/intl-compat.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: intl-compat.c,v 1.1.1.4 2004/07/12 23:27:15 wiz Exp $	*/
++
+ /* intl-compat.c - Stub functions to call gettext functions from GNU gettext
+    Library.
+    Copyright (C) 1995, 2000-2003 Software Foundation, Inc.
+diff -rNU3 texinfo.orig/intl/l10nflist.c texinfo/intl/l10nflist.c
+--- texinfo.orig/intl/l10nflist.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/l10nflist.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: l10nflist.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
+    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
+ 
+diff -rNU3 texinfo.orig/intl/loadinfo.h texinfo/intl/loadinfo.h
+--- texinfo.orig/intl/loadinfo.h	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/loadinfo.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: loadinfo.h,v 1.1.1.4 2004/07/12 23:27:17 wiz Exp $	*/
++
+ /* Copyright (C) 1996-1999, 2000-2003 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
+diff -rNU3 texinfo.orig/intl/loadmsgcat.c texinfo/intl/loadmsgcat.c
+--- texinfo.orig/intl/loadmsgcat.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/intl/loadmsgcat.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: loadmsgcat.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Load needed message catalogs.
+    Copyright (C) 1995-1999, 2000-2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/localcharset.c texinfo/intl/localcharset.c
+--- texinfo.orig/intl/localcharset.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/localcharset.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: localcharset.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Determine a canonical name for the current locale's character encoding.
+ 
+    Copyright (C) 2000-2003 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/intl/localcharset.h texinfo/intl/localcharset.h
+--- texinfo.orig/intl/localcharset.h	2003-11-06 15:36:16.000000000 +0100
++++ texinfo/intl/localcharset.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: localcharset.h,v 1.1.1.1 2003/07/03 14:59:13 wiz Exp $	*/
++
+ /* Determine a canonical name for the current locale's character encoding.
+    Copyright (C) 2000-2003 Free Software Foundation, Inc.
+    This file is part of the GNU CHARSET Library.
+diff -rNU3 texinfo.orig/intl/localealias.c texinfo/intl/localealias.c
+--- texinfo.orig/intl/localealias.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/localealias.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: localealias.c,v 1.1.1.5 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Handle aliases for locale names.
+    Copyright (C) 1995-1999, 2000-2001, 2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/localename.c texinfo/intl/localename.c
+--- texinfo.orig/intl/localename.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/intl/localename.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: localename.c,v 1.1.1.2 2004/07/12 23:27:16 wiz Exp $	*/
++
+ /* Determine the current selected locale.
+    Copyright (C) 1995-1999, 2000-2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/log.c texinfo/intl/log.c
+--- texinfo.orig/intl/log.c	2003-12-24 16:12:48.000000000 +0100
++++ texinfo/intl/log.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: log.c,v 1.1.1.2 2004/07/12 23:27:15 wiz Exp $	*/
++
+ /* Log file output.
+    Copyright (C) 2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/intl/ngettext.c texinfo/intl/ngettext.c
 --- texinfo.orig/intl/ngettext.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/ngettext.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/ngettext.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: ngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
 +
  /* Implementation of ngettext(3) function.
     Copyright (C) 1995, 1997, 2000-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/os2compat.c texinfo.nbsd/intl/os2compat.c
+diff -rNU3 texinfo.orig/intl/os2compat.c texinfo/intl/os2compat.c
 --- texinfo.orig/intl/os2compat.c	2002-09-21 02:41:16.000000000 +0200
-+++ texinfo.nbsd/intl/os2compat.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/os2compat.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: os2compat.c,v 1.1.1.1 2003/01/17 14:54:20 wiz Exp $	*/
 +
  /* OS/2 compatibility functions.
     Copyright (C) 2001-2002 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/os2compat.h texinfo.nbsd/intl/os2compat.h
+diff -rNU3 texinfo.orig/intl/os2compat.h texinfo/intl/os2compat.h
 --- texinfo.orig/intl/os2compat.h	2002-09-21 02:41:16.000000000 +0200
-+++ texinfo.nbsd/intl/os2compat.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/os2compat.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: os2compat.h,v 1.1.1.1 2003/01/17 14:54:19 wiz Exp $	*/
 +
  /* OS/2 compatibility defines.
     This file is intended to be included from config.h
     Copyright (C) 2001-2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/osdep.c texinfo.nbsd/intl/osdep.c
+diff -rNU3 texinfo.orig/intl/osdep.c texinfo/intl/osdep.c
 --- texinfo.orig/intl/osdep.c	2002-09-03 17:51:40.000000000 +0200
-+++ texinfo.nbsd/intl/osdep.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/osdep.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: osdep.c,v 1.1.1.1 2003/01/17 14:54:20 wiz Exp $	*/
 +
  /* OS dependent parts of libintl.
     Copyright (C) 2001-2002 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/plural.c texinfo.nbsd/intl/plural.c
---- texinfo.orig/intl/plural.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/plural.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: plural.c,v 1.1.1.3 2004/07/12 23:27:15 wiz Exp $	*/
-+
- /* A Bison parser, made from plural.y
-    by GNU bison 1.35.  */
- 
-diff -r -x CVS -N -U 3 texinfo.orig/intl/plural-exp.c texinfo.nbsd/intl/plural-exp.c
+diff -rNU3 texinfo.orig/intl/plural-exp.c texinfo/intl/plural-exp.c
 --- texinfo.orig/intl/plural-exp.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/plural-exp.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/plural-exp.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: plural-exp.c,v 1.1.1.2 2004/07/12 23:27:16 wiz Exp $	*/
 +
  /* Expression parsing for plural form selection.
     Copyright (C) 2000-2001, 2003 Free Software Foundation, Inc.
     Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/plural-exp.h texinfo.nbsd/intl/plural-exp.h
+diff -rNU3 texinfo.orig/intl/plural-exp.h texinfo/intl/plural-exp.h
 --- texinfo.orig/intl/plural-exp.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/plural-exp.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/plural-exp.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: plural-exp.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Expression parsing and evaluation for plural form selection.
     Copyright (C) 2000-2003 Free Software Foundation, Inc.
     Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/plural.y texinfo.nbsd/intl/plural.y
+diff -rNU3 texinfo.orig/intl/plural.c texinfo/intl/plural.c
+--- texinfo.orig/intl/plural.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/intl/plural.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: plural.c,v 1.1.1.3 2004/07/12 23:27:15 wiz Exp $	*/
++
+ /* A Bison parser, made from plural.y
+    by GNU bison 1.35.  */
+ 
+diff -rNU3 texinfo.orig/intl/plural.y texinfo/intl/plural.y
 --- texinfo.orig/intl/plural.y	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/plural.y	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/plural.y	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: plural.y,v 1.1.1.2 2004/07/12 23:27:16 wiz Exp $	*/
 +
  %{
  /* Expression parsing for plural form selection.
     Copyright (C) 2000-2001, 2003 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/printf-args.c texinfo.nbsd/intl/printf-args.c
+diff -rNU3 texinfo.orig/intl/printf-args.c texinfo/intl/printf-args.c
 --- texinfo.orig/intl/printf-args.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/printf-args.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/printf-args.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: printf-args.c,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Decomposed printf argument list.
     Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/printf-args.h texinfo.nbsd/intl/printf-args.h
+diff -rNU3 texinfo.orig/intl/printf-args.h texinfo/intl/printf-args.h
 --- texinfo.orig/intl/printf-args.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/printf-args.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/printf-args.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: printf-args.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Decomposed printf argument list.
     Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/printf.c texinfo.nbsd/intl/printf.c
---- texinfo.orig/intl/printf.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/printf.c	2013-04-10 22:45:11.344172895 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: printf.c,v 1.1.1.1 2004/07/12 23:27:15 wiz Exp $	*/
-+
- /* Formatted output to strings, using POSIX/XSI format strings with positions.
-    Copyright (C) 2003 Free Software Foundation, Inc.
-    Written by Bruno Haible <bruno@clisp.org>, 2003.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/printf-parse.c texinfo.nbsd/intl/printf-parse.c
+diff -rNU3 texinfo.orig/intl/printf-parse.c texinfo/intl/printf-parse.c
 --- texinfo.orig/intl/printf-parse.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/printf-parse.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/printf-parse.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: printf-parse.c,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Formatted output to strings.
     Copyright (C) 1999-2000, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/printf-parse.h texinfo.nbsd/intl/printf-parse.h
+diff -rNU3 texinfo.orig/intl/printf-parse.h texinfo/intl/printf-parse.h
 --- texinfo.orig/intl/printf-parse.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/printf-parse.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/printf-parse.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: printf-parse.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Parse printf format string.
     Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/relocatable.c texinfo.nbsd/intl/relocatable.c
+diff -rNU3 texinfo.orig/intl/printf.c texinfo/intl/printf.c
+--- texinfo.orig/intl/printf.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/intl/printf.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: printf.c,v 1.1.1.1 2004/07/12 23:27:15 wiz Exp $	*/
++
+ /* Formatted output to strings, using POSIX/XSI format strings with positions.
+    Copyright (C) 2003 Free Software Foundation, Inc.
+    Written by Bruno Haible <bruno@clisp.org>, 2003.
+diff -rNU3 texinfo.orig/intl/relocatable.c texinfo/intl/relocatable.c
 --- texinfo.orig/intl/relocatable.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/relocatable.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/relocatable.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: relocatable.c,v 1.1.1.2 2004/07/12 23:27:15 wiz Exp $	*/
 +
  /* Provide relocatable packages.
     Copyright (C) 2003 Free Software Foundation, Inc.
     Written by Bruno Haible <bruno@clisp.org>, 2003.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/relocatable.h texinfo.nbsd/intl/relocatable.h
+diff -rNU3 texinfo.orig/intl/relocatable.h texinfo/intl/relocatable.h
 --- texinfo.orig/intl/relocatable.h	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/relocatable.h	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/relocatable.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: relocatable.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Provide relocatable packages.
     Copyright (C) 2003 Free Software Foundation, Inc.
     Written by Bruno Haible <bruno@clisp.org>, 2003.
-diff -r -x CVS -N -U 3 texinfo.orig/intl/textdomain.c texinfo.nbsd/intl/textdomain.c
+diff -rNU3 texinfo.orig/intl/textdomain.c texinfo/intl/textdomain.c
 --- texinfo.orig/intl/textdomain.c	2003-12-24 16:12:48.000000000 +0100
-+++ texinfo.nbsd/intl/textdomain.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/textdomain.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: textdomain.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
 +
  /* Implementation of the textdomain(3) function.
     Copyright (C) 1995-1998, 2000-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/vasnprintf.c texinfo.nbsd/intl/vasnprintf.c
+diff -rNU3 texinfo.orig/intl/vasnprintf.c texinfo/intl/vasnprintf.c
 --- texinfo.orig/intl/vasnprintf.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/vasnprintf.c	2013-04-10 22:45:11.344172895 +0200
++++ texinfo/intl/vasnprintf.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: vasnprintf.c,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* vsprintf with automatic memory allocation.
     Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/vasnprintf.h texinfo.nbsd/intl/vasnprintf.h
+diff -rNU3 texinfo.orig/intl/vasnprintf.h texinfo/intl/vasnprintf.h
 --- texinfo.orig/intl/vasnprintf.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/vasnprintf.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/intl/vasnprintf.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: vasnprintf.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* vsprintf with automatic memory allocation.
     Copyright (C) 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/vasnwprintf.h texinfo.nbsd/intl/vasnwprintf.h
+diff -rNU3 texinfo.orig/intl/vasnwprintf.h texinfo/intl/vasnwprintf.h
 --- texinfo.orig/intl/vasnwprintf.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/vasnwprintf.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/intl/vasnwprintf.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: vasnwprintf.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* vswprintf with automatic memory allocation.
     Copyright (C) 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/wprintf-parse.h texinfo.nbsd/intl/wprintf-parse.h
+diff -rNU3 texinfo.orig/intl/wprintf-parse.h texinfo/intl/wprintf-parse.h
 --- texinfo.orig/intl/wprintf-parse.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/wprintf-parse.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/intl/wprintf-parse.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: wprintf-parse.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* Parse printf format string.
     Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/intl/xsize.h texinfo.nbsd/intl/xsize.h
+diff -rNU3 texinfo.orig/intl/xsize.h texinfo/intl/xsize.h
 --- texinfo.orig/intl/xsize.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/intl/xsize.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/intl/xsize.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: xsize.h,v 1.1.1.1 2004/07/12 23:27:17 wiz Exp $	*/
 +
  /* xsize.h -- Checked size_t computations.
  
     Copyright (C) 2003 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/INTRODUCTION texinfo.nbsd/INTRODUCTION
---- texinfo.orig/INTRODUCTION	2004-04-11 19:56:45.000000000 +0200
-+++ texinfo.nbsd/INTRODUCTION	2013-04-10 22:45:11.334172695 +0200
-@@ -1,4 +1,4 @@
--$Id: INTRODUCTION,v 1.3 2004/04/11 17:56:45 karl Exp $
-+Id: INTRODUCTION,v 1.3 2004/04/11 17:56:45 karl Exp
- Getting started with Texinfo.
- 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
-diff -r -x CVS -N -U 3 texinfo.orig/lib/alloca.c texinfo.nbsd/lib/alloca.c
---- texinfo.orig/lib/alloca.c	2004-05-17 14:59:20.000000000 +0200
-+++ texinfo.nbsd/lib/alloca.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: alloca.c,v 1.1.1.5 2008/09/02 07:49:28 christos Exp $	*/
-+
- /* alloca.c -- allocate automatically reclaimed memory
-    (Mostly) portable public-domain implementation -- D A Gwyn
- 
-diff -r -x CVS -N -U 3 texinfo.orig/lib/getopt1.c texinfo.nbsd/lib/getopt1.c
---- texinfo.orig/lib/getopt1.c	2004-09-10 14:43:21.000000000 +0200
-+++ texinfo.nbsd/lib/getopt1.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: getopt1.c,v 1.1.1.6 2008/09/02 07:49:29 christos Exp $	*/
-+
- /* getopt_long and getopt_long_only entry points for GNU getopt.
-    Copyright (C) 1987,88,89,90,91,92,93,94,96,97,98,2004
-      Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/lib/getopt.c texinfo.nbsd/lib/getopt.c
---- texinfo.orig/lib/getopt.c	2004-09-10 14:43:21.000000000 +0200
-+++ texinfo.nbsd/lib/getopt.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: getopt.c,v 1.7 2008/09/02 08:00:24 christos Exp $	*/
-+
- /* Getopt for GNU.
-    NOTE: getopt is now part of the C library, so if you don't know what
-    "Keep this file name-space clean" means, talk to drepper@gnu.org
-diff -r -x CVS -N -U 3 texinfo.orig/lib/getopt_.h texinfo.nbsd/lib/getopt_.h
---- texinfo.orig/lib/getopt_.h	2004-09-14 14:36:00.000000000 +0200
-+++ texinfo.nbsd/lib/getopt_.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: getopt_.h,v 1.1.1.1 2008/09/02 07:49:31 christos Exp $	*/
-+
- /* Declarations for getopt.
-    Copyright (C) 1989-1994,1996-1999,2001,2003,2004
-    Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/lib/getopt.h texinfo.nbsd/lib/getopt.h
---- texinfo.orig/lib/getopt.h	2004-09-14 14:36:00.000000000 +0200
-+++ texinfo.nbsd/lib/getopt.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: getopt.h,v 1.1.1.6 2008/09/02 07:49:28 christos Exp $	*/
-+
- /* getopt.h -- wrapper for gnulib getopt_.h.
--   $Id: getopt.h,v 1.6 2004/09/14 12:36:00 karl Exp $
-+   Id: getopt.h,v 1.6 2004/09/14 12:36:00 karl Exp
-    Copyright (C) 2004 Free Software Foundation, Inc.
- 
-    Copying and distribution of this file, with or without modification,
-diff -r -x CVS -N -U 3 texinfo.orig/lib/getopt_int.h texinfo.nbsd/lib/getopt_int.h
---- texinfo.orig/lib/getopt_int.h	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/lib/getopt_int.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: getopt_int.h,v 1.1.1.1 2004/07/12 23:26:57 wiz Exp $	*/
-+
- /* Internal declarations for getopt.
-    Copyright (C) 1989-1994,1996-1999,2001,2003,2004
-    Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/lib/gettext.h texinfo.nbsd/lib/gettext.h
---- texinfo.orig/lib/gettext.h	2003-07-17 15:11:25.000000000 +0200
-+++ texinfo.nbsd/lib/gettext.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: gettext.h,v 1.1.1.2 2004/07/12 23:26:56 wiz Exp $	*/
-+
- /* Convenience header for conditional use of GNU <libintl.h>.
-    Copyright (C) 1995-1998, 2000-2002 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/lib/Makefile.am texinfo.nbsd/lib/Makefile.am
+diff -rNU3 texinfo.orig/lib/Makefile.am texinfo/lib/Makefile.am
 --- texinfo.orig/lib/Makefile.am	2004-11-06 23:05:59.000000000 +0100
-+++ texinfo.nbsd/lib/Makefile.am	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/Makefile.am	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -# $Id: Makefile.am,v 1.7 2004/11/06 22:05:59 karl Exp $
 +# Id: Makefile.am,v 1.7 2004/11/06 22:05:59 karl Exp
  # Makefile.am for texinfo/lib.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/lib/Makefile.in texinfo.nbsd/lib/Makefile.in
+diff -rNU3 texinfo.orig/lib/Makefile.in texinfo/lib/Makefile.in
 --- texinfo.orig/lib/Makefile.in	2004-12-31 19:01:48.000000000 +0100
-+++ texinfo.nbsd/lib/Makefile.in	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/Makefile.in	2015-10-18 11:13:23.000000000 +0200
 @@ -14,7 +14,7 @@
  
  @SET_MAKE@
@@ -2356,98 +2384,164 @@ diff -r -x CVS -N -U 3 texinfo.orig/lib/Makefile.in texinfo.nbsd/lib/Makefile.in
  # Makefile.am for texinfo/lib.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/lib/memcpy.c texinfo.nbsd/lib/memcpy.c
---- texinfo.orig/lib/memcpy.c	2003-09-10 15:17:12.000000000 +0200
-+++ texinfo.nbsd/lib/memcpy.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: memcpy.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
-+
- /* Copyright (C) 1995, 1997, 2000, 2003 Free Software Foundation, Inc.
- 
-    This program is free software; you can redistribute it and/or modify
-diff -r -x CVS -N -U 3 texinfo.orig/lib/memmove.c texinfo.nbsd/lib/memmove.c
---- texinfo.orig/lib/memmove.c	2003-09-10 15:17:12.000000000 +0200
-+++ texinfo.nbsd/lib/memmove.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: memmove.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
-+
- /* memmove.c -- copy memory.
-    Copy LENGTH bytes from SOURCE to DEST.  Does not null-terminate.
-    In the public domain.
-diff -r -x CVS -N -U 3 texinfo.orig/lib/mkstemp.c texinfo.nbsd/lib/mkstemp.c
---- texinfo.orig/lib/mkstemp.c	2003-07-17 15:11:25.000000000 +0200
-+++ texinfo.nbsd/lib/mkstemp.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,3 +1,5 @@
-+/*	$NetBSD: mkstemp.c,v 1.1.1.2 2004/07/12 23:26:57 wiz Exp $	*/
-+
- /* Copyright (C) 1998, 1999, 2001 Free Software Foundation, Inc.
-    This file is derived from the one in the GNU C Library.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/lib/README texinfo.nbsd/lib/README
+diff -rNU3 texinfo.orig/lib/README texinfo/lib/README
 --- texinfo.orig/lib/README	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/lib/README	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/README	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -$Id: README,v 1.3 2004/04/11 17:56:46 karl Exp $
 +Id: README,v 1.3 2004/04/11 17:56:46 karl Exp
  texinfo/lib/README
  
    Copyright (C) 2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strcasecmp.c texinfo.nbsd/lib/strcasecmp.c
---- texinfo.orig/lib/strcasecmp.c	2003-06-06 14:19:59.000000000 +0200
-+++ texinfo.nbsd/lib/strcasecmp.c	2013-04-10 22:45:11.347506295 +0200
+diff -rNU3 texinfo.orig/lib/alloca.c texinfo/lib/alloca.c
+--- texinfo.orig/lib/alloca.c	2004-05-17 14:59:20.000000000 +0200
++++ texinfo/lib/alloca.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
-+/*	$NetBSD: strcasecmp.c,v 1.1.1.3 2003/07/03 14:58:58 wiz Exp $	*/
++/*	$NetBSD: alloca.c,v 1.1.1.5 2008/09/02 07:49:28 christos Exp $	*/
 +
- /* strcasecmp.c -- case insensitive string comparator
-    Copyright (C) 1998, 1999 Free Software Foundation, Inc.
+ /* alloca.c -- allocate automatically reclaimed memory
+    (Mostly) portable public-domain implementation -- D A Gwyn
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strcase.h texinfo.nbsd/lib/strcase.h
+diff -rNU3 texinfo.orig/lib/getopt.c texinfo/lib/getopt.c
+--- texinfo.orig/lib/getopt.c	2004-09-10 14:43:21.000000000 +0200
++++ texinfo/lib/getopt.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: getopt.c,v 1.7 2008/09/02 08:00:24 christos Exp $	*/
++
+ /* Getopt for GNU.
+    NOTE: getopt is now part of the C library, so if you don't know what
+    "Keep this file name-space clean" means, talk to drepper@gnu.org
+diff -rNU3 texinfo.orig/lib/getopt.h texinfo/lib/getopt.h
+--- texinfo.orig/lib/getopt.h	2004-09-14 14:36:00.000000000 +0200
++++ texinfo/lib/getopt.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: getopt.h,v 1.1.1.6 2008/09/02 07:49:28 christos Exp $	*/
++
+ /* getopt.h -- wrapper for gnulib getopt_.h.
+-   $Id: getopt.h,v 1.6 2004/09/14 12:36:00 karl Exp $
++   Id: getopt.h,v 1.6 2004/09/14 12:36:00 karl Exp
+    Copyright (C) 2004 Free Software Foundation, Inc.
+ 
+    Copying and distribution of this file, with or without modification,
+diff -rNU3 texinfo.orig/lib/getopt1.c texinfo/lib/getopt1.c
+--- texinfo.orig/lib/getopt1.c	2004-09-10 14:43:21.000000000 +0200
++++ texinfo/lib/getopt1.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: getopt1.c,v 1.1.1.6 2008/09/02 07:49:29 christos Exp $	*/
++
+ /* getopt_long and getopt_long_only entry points for GNU getopt.
+    Copyright (C) 1987,88,89,90,91,92,93,94,96,97,98,2004
+      Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/lib/getopt_.h texinfo/lib/getopt_.h
+--- texinfo.orig/lib/getopt_.h	2004-09-14 14:36:00.000000000 +0200
++++ texinfo/lib/getopt_.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: getopt_.h,v 1.1.1.1 2008/09/02 07:49:31 christos Exp $	*/
++
+ /* Declarations for getopt.
+    Copyright (C) 1989-1994,1996-1999,2001,2003,2004
+    Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/lib/getopt_int.h texinfo/lib/getopt_int.h
+--- texinfo.orig/lib/getopt_int.h	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/lib/getopt_int.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: getopt_int.h,v 1.1.1.1 2004/07/12 23:26:57 wiz Exp $	*/
++
+ /* Internal declarations for getopt.
+    Copyright (C) 1989-1994,1996-1999,2001,2003,2004
+    Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/lib/gettext.h texinfo/lib/gettext.h
+--- texinfo.orig/lib/gettext.h	2003-07-17 15:11:25.000000000 +0200
++++ texinfo/lib/gettext.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: gettext.h,v 1.1.1.2 2004/07/12 23:26:56 wiz Exp $	*/
++
+ /* Convenience header for conditional use of GNU <libintl.h>.
+    Copyright (C) 1995-1998, 2000-2002 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/lib/memcpy.c texinfo/lib/memcpy.c
+--- texinfo.orig/lib/memcpy.c	2003-09-10 15:17:12.000000000 +0200
++++ texinfo/lib/memcpy.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: memcpy.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
++
+ /* Copyright (C) 1995, 1997, 2000, 2003 Free Software Foundation, Inc.
+ 
+    This program is free software; you can redistribute it and/or modify
+diff -rNU3 texinfo.orig/lib/memmove.c texinfo/lib/memmove.c
+--- texinfo.orig/lib/memmove.c	2003-09-10 15:17:12.000000000 +0200
++++ texinfo/lib/memmove.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: memmove.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
++
+ /* memmove.c -- copy memory.
+    Copy LENGTH bytes from SOURCE to DEST.  Does not null-terminate.
+    In the public domain.
+diff -rNU3 texinfo.orig/lib/mkstemp.c texinfo/lib/mkstemp.c
+--- texinfo.orig/lib/mkstemp.c	2003-07-17 15:11:25.000000000 +0200
++++ texinfo/lib/mkstemp.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: mkstemp.c,v 1.1.1.2 2004/07/12 23:26:57 wiz Exp $	*/
++
+ /* Copyright (C) 1998, 1999, 2001 Free Software Foundation, Inc.
+    This file is derived from the one in the GNU C Library.
+ 
+diff -rNU3 texinfo.orig/lib/strcase.h texinfo/lib/strcase.h
 --- texinfo.orig/lib/strcase.h	2004-04-11 20:13:34.000000000 +0200
-+++ texinfo.nbsd/lib/strcase.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/strcase.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: strcase.h,v 1.1.1.1 2008/09/02 07:49:31 christos Exp $	*/
 +
  /* Case-insensitive string comparison functions.
     Copyright (C) 1995-1996, 2001, 2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strdup.c texinfo.nbsd/lib/strdup.c
+diff -rNU3 texinfo.orig/lib/strcasecmp.c texinfo/lib/strcasecmp.c
+--- texinfo.orig/lib/strcasecmp.c	2003-06-06 14:19:59.000000000 +0200
++++ texinfo/lib/strcasecmp.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,3 +1,5 @@
++/*	$NetBSD: strcasecmp.c,v 1.1.1.3 2003/07/03 14:58:58 wiz Exp $	*/
++
+ /* strcasecmp.c -- case insensitive string comparator
+    Copyright (C) 1998, 1999 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/lib/strdup.c texinfo/lib/strdup.c
 --- texinfo.orig/lib/strdup.c	2004-09-14 14:36:50.000000000 +0200
-+++ texinfo.nbsd/lib/strdup.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/strdup.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: strdup.c,v 1.1.1.5 2008/09/02 07:49:28 christos Exp $	*/
 +
  /* Copyright (C) 1991, 1996, 1997, 1998, 2002, 2003, 2004 Free Software
     Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strdup.h texinfo.nbsd/lib/strdup.h
+diff -rNU3 texinfo.orig/lib/strdup.h texinfo/lib/strdup.h
 --- texinfo.orig/lib/strdup.h	2004-04-11 20:13:34.000000000 +0200
-+++ texinfo.nbsd/lib/strdup.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/strdup.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: strdup.h,v 1.1.1.1 2008/09/02 07:49:31 christos Exp $	*/
 +
  /* strdup.h -- duplicate a string
     Copyright (C) 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strerror.c texinfo.nbsd/lib/strerror.c
+diff -rNU3 texinfo.orig/lib/strerror.c texinfo/lib/strerror.c
 --- texinfo.orig/lib/strerror.c	2003-08-03 15:09:35.000000000 +0200
-+++ texinfo.nbsd/lib/strerror.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/strerror.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: strerror.c,v 1.1.1.3 2004/07/12 23:26:57 wiz Exp $	*/
 +
  /* strerror.c --- ANSI C compatible system error routine
  
     Copyright (C) 1986, 1988, 1989, 1991, 2002, 2003 Free Software
-diff -r -x CVS -N -U 3 texinfo.orig/lib/strncasecmp.c texinfo.nbsd/lib/strncasecmp.c
+diff -rNU3 texinfo.orig/lib/strncasecmp.c texinfo/lib/strncasecmp.c
 --- texinfo.orig/lib/strncasecmp.c	2002-09-03 17:51:40.000000000 +0200
-+++ texinfo.nbsd/lib/strncasecmp.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/strncasecmp.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,2 +1,4 @@
 +/*	$NetBSD: strncasecmp.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
 +
  #define LENGTH_LIMIT
  #include "strcasecmp.c"
-diff -r -x CVS -N -U 3 texinfo.orig/lib/substring.c texinfo.nbsd/lib/substring.c
+diff -rNU3 texinfo.orig/lib/substring.c texinfo/lib/substring.c
 --- texinfo.orig/lib/substring.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/lib/substring.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/substring.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: substring.c,v 1.1.1.4 2008/09/02 07:49:29 christos Exp $	*/
 +
@@ -2457,9 +2551,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/lib/substring.c texinfo.nbsd/lib/substring.c
  
     Copyright (C) 1999, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/system.h texinfo.nbsd/lib/system.h
+diff -rNU3 texinfo.orig/lib/system.h texinfo/lib/system.h
 --- texinfo.orig/lib/system.h	2004-04-26 15:56:57.000000000 +0200
-+++ texinfo.nbsd/lib/system.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/system.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: system.h,v 1.11 2009/03/06 17:03:48 apb Exp $	*/
 +
@@ -2480,27 +2574,27 @@ diff -r -x CVS -N -U 3 texinfo.orig/lib/system.h texinfo.nbsd/lib/system.h
  /* Our library routines not included in any system library.  */
  extern void *xmalloc (size_t), *xrealloc (void *, size_t);
  extern char *xstrdup (const char *);
-diff -r -x CVS -N -U 3 texinfo.orig/lib/tempname.c texinfo.nbsd/lib/tempname.c
+diff -rNU3 texinfo.orig/lib/tempname.c texinfo/lib/tempname.c
 --- texinfo.orig/lib/tempname.c	2003-09-15 15:25:45.000000000 +0200
-+++ texinfo.nbsd/lib/tempname.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/tempname.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: tempname.c,v 1.1.1.4 2004/07/12 23:26:57 wiz Exp $	*/
 +
  /* tempname.c - generate the name of a temporary file.
  
     Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-diff -r -x CVS -N -U 3 texinfo.orig/lib/xalloc.h texinfo.nbsd/lib/xalloc.h
+diff -rNU3 texinfo.orig/lib/xalloc.h texinfo/lib/xalloc.h
 --- texinfo.orig/lib/xalloc.h	2004-09-10 14:43:21.000000000 +0200
-+++ texinfo.nbsd/lib/xalloc.h	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/xalloc.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: xalloc.h,v 1.1.1.4 2008/09/02 07:49:31 christos Exp $	*/
 +
  /* xalloc.h -- malloc with out-of-memory checking
  
     Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-diff -r -x CVS -N -U 3 texinfo.orig/lib/xexit.c texinfo.nbsd/lib/xexit.c
+diff -rNU3 texinfo.orig/lib/xexit.c texinfo/lib/xexit.c
 --- texinfo.orig/lib/xexit.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/lib/xexit.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/xexit.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: xexit.c,v 1.1.1.5 2008/09/02 07:49:31 christos Exp $	*/
 +
@@ -2510,307 +2604,36 @@ diff -r -x CVS -N -U 3 texinfo.orig/lib/xexit.c texinfo.nbsd/lib/xexit.c
  
     Copyright (C) 1999, 2003, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/lib/xmalloc.c texinfo.nbsd/lib/xmalloc.c
+diff -rNU3 texinfo.orig/lib/xmalloc.c texinfo/lib/xmalloc.c
 --- texinfo.orig/lib/xmalloc.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/lib/xmalloc.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/xmalloc.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: xmalloc.c,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
 +
  /* xmalloc.c -- safe versions of malloc and realloc.
  
     Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 2004 Free Software
-diff -r -x CVS -N -U 3 texinfo.orig/lib/xstrdup.c texinfo.nbsd/lib/xstrdup.c
+diff -rNU3 texinfo.orig/lib/xstrdup.c texinfo/lib/xstrdup.c
 --- texinfo.orig/lib/xstrdup.c	2003-10-14 20:22:07.000000000 +0200
-+++ texinfo.nbsd/lib/xstrdup.c	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/lib/xstrdup.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: xstrdup.c,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
 +
  /* xstrdup.c -- copy a string with out of memory checking
     Copyright (C) 1990, 1996, 1998, 2001, 2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/Makefile.am texinfo.nbsd/Makefile.am
---- texinfo.orig/Makefile.am	2004-12-15 19:14:56.000000000 +0100
-+++ texinfo.nbsd/Makefile.am	2013-04-10 22:45:11.334172695 +0200
-@@ -1,5 +1,5 @@
- # Makefile.am for texinfo.
--# $Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp $
-+# Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp
- # Process this file with automake to produce Makefile.in in all directories.
- #
- # This file is free software; as a special exception the author gives
-diff -r -x CVS -N -U 3 texinfo.orig/Makefile.in texinfo.nbsd/Makefile.in
---- texinfo.orig/Makefile.in	2004-12-31 19:01:49.000000000 +0100
-+++ texinfo.nbsd/Makefile.in	2013-04-10 22:45:11.334172695 +0200
-@@ -15,7 +15,7 @@
- @SET_MAKE@
- 
- # Makefile.am for texinfo.
--# $Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp $
-+# Id: Makefile.am,v 1.13 2004/12/15 16:53:59 kasal Exp
- # Process this file with automake to produce Makefile.in in all directories.
- #
- # This file is free software; as a special exception the author gives
-@@ -230,7 +230,7 @@
- # This is to prevent texinfo.tex from being included in the top-level
- # distribution directory.
- TEXINFO_TEX = doc/texinfo.tex
--@TOOLS_ONLY_FALSE@SUBDIRS = $(native_tools) intl m4 lib info makeinfo po util doc
-+@TOOLS_ONLY_FALSE@SUBDIRS = $(native_tools) intl m4 lib makeinfo po util doc
- @TOOLS_ONLY_TRUE@SUBDIRS = lib info makeinfo util
- 
- # for gettext.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/cmds.c texinfo.nbsd/makeinfo/cmds.c
---- texinfo.orig/makeinfo/cmds.c	2004-12-14 01:15:36.000000000 +0100
-+++ texinfo.nbsd/makeinfo/cmds.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: cmds.c,v 1.3 2008/09/02 08:00:24 christos Exp $	*/
-+
- /* cmds.c -- Texinfo commands.
--   $Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp $
-+   Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp
- 
-    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/cmds.h texinfo.nbsd/makeinfo/cmds.h
---- texinfo.orig/makeinfo/cmds.h	2004-11-26 01:48:35.000000000 +0100
-+++ texinfo.nbsd/makeinfo/cmds.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: cmds.h,v 1.1.1.4 2008/09/02 07:50:24 christos Exp $	*/
-+
- /* cmds.h -- declarations for cmds.c.
--   $Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp $
-+   Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp
- 
-    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
-    Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/defun.c texinfo.nbsd/makeinfo/defun.c
---- texinfo.orig/makeinfo/defun.c	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/makeinfo/defun.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: defun.c,v 1.1.1.5 2008/09/02 07:50:24 christos Exp $	*/
-+
- /* defun.c -- @defun and friends.
--   $Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp $
-+   Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp
- 
-    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/defun.h texinfo.nbsd/makeinfo/defun.h
---- texinfo.orig/makeinfo/defun.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/defun.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: defun.h,v 1.1.1.4 2008/09/02 07:50:26 christos Exp $	*/
-+
- /* defun.h -- declaration for defuns.
--   $Id: defun.h,v 1.2 2004/04/11 17:56:47 karl Exp $
-+   Id: defun.h,v 1.2 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1999 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/files.c texinfo.nbsd/makeinfo/files.c
---- texinfo.orig/makeinfo/files.c	2004-07-27 02:06:31.000000000 +0200
-+++ texinfo.nbsd/makeinfo/files.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: files.c,v 1.9 2008/09/02 08:41:51 christos Exp $	*/
-+
- /* files.c -- file-related functions for makeinfo.
--   $Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp $
-+   Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp
- 
-    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/files.h texinfo.nbsd/makeinfo/files.h
---- texinfo.orig/makeinfo/files.h	2004-07-27 02:06:31.000000000 +0200
-+++ texinfo.nbsd/makeinfo/files.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: files.h,v 1.3 2008/09/02 08:00:24 christos Exp $	*/
-+
- /* files.h -- declarations for files.c.
--   $Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp $
-+   Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp
- 
-    Copyright (C) 1998, 2002, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/float.c texinfo.nbsd/makeinfo/float.c
---- texinfo.orig/makeinfo/float.c	2004-07-06 00:23:22.000000000 +0200
-+++ texinfo.nbsd/makeinfo/float.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: float.c,v 1.1.1.2 2008/09/02 07:50:28 christos Exp $	*/
-+
- /* float.c -- float environment functions.
--   $Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp $
-+   Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp
- 
-    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/float.h texinfo.nbsd/makeinfo/float.h
---- texinfo.orig/makeinfo/float.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/float.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: float.h,v 1.1.1.2 2008/09/02 07:50:28 christos Exp $	*/
-+
- /* float.h -- declarations for the float environment.
--   $Id: float.h,v 1.5 2004/04/11 17:56:47 karl Exp $
-+   Id: float.h,v 1.5 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/footnote.c texinfo.nbsd/makeinfo/footnote.c
---- texinfo.orig/makeinfo/footnote.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/footnote.c	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: footnote.c,v 1.1.1.4 2008/09/02 07:50:28 christos Exp $	*/
-+
- /* footnote.c -- footnotes for Texinfo.
--   $Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp $
-+   Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/footnote.h texinfo.nbsd/makeinfo/footnote.h
---- texinfo.orig/makeinfo/footnote.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/footnote.h	2013-04-10 22:45:11.347506295 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: footnote.h,v 1.1.1.4 2008/09/02 07:50:28 christos Exp $	*/
-+
- /* footnote.h -- declarations for footnote.c.
--   $Id: footnote.h,v 1.2 2004/04/11 17:56:47 karl Exp $
-+   Id: footnote.h,v 1.2 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/html.c texinfo.nbsd/makeinfo/html.c
---- texinfo.orig/makeinfo/html.c	2004-12-06 02:13:06.000000000 +0100
-+++ texinfo.nbsd/makeinfo/html.c	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: html.c,v 1.1.1.5 2008/09/02 07:50:29 christos Exp $	*/
-+
- /* html.c -- html-related utilities.
--   $Id: html.c,v 1.28 2004/12/06 01:13:06 karl Exp $
-+   Id: html.c,v 1.28 2004/12/06 01:13:06 karl Exp
- 
-    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/html.h texinfo.nbsd/makeinfo/html.h
---- texinfo.orig/makeinfo/html.h	2004-11-30 03:03:23.000000000 +0100
-+++ texinfo.nbsd/makeinfo/html.h	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: html.h,v 1.1.1.4 2008/09/02 07:50:29 christos Exp $	*/
-+
- /* html.h -- declarations for html-related utilities.
--   $Id: html.h,v 1.6 2004/11/30 02:03:23 karl Exp $
-+   Id: html.h,v 1.6 2004/11/30 02:03:23 karl Exp
- 
-    Copyright (C) 1999, 2000, 2002, 2004 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/index.c texinfo.nbsd/makeinfo/index.c
---- texinfo.orig/makeinfo/index.c	2004-11-30 03:03:23.000000000 +0100
-+++ texinfo.nbsd/makeinfo/index.c	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: index.c,v 1.1.1.6 2008/09/02 07:50:31 christos Exp $	*/
-+
- /* index.c -- indexing for Texinfo.
--   $Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp $
-+   Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp
- 
-    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
-    Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/index.h texinfo.nbsd/makeinfo/index.h
---- texinfo.orig/makeinfo/index.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/index.h	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: index.h,v 1.1.1.4 2008/09/02 07:50:31 christos Exp $	*/
-+
- /* index.h -- declarations for index.c.
--   $Id: index.h,v 1.2 2004/04/11 17:56:47 karl Exp $
-+   Id: index.h,v 1.2 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 99 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/insertion.c texinfo.nbsd/makeinfo/insertion.c
---- texinfo.orig/makeinfo/insertion.c	2004-11-11 19:34:28.000000000 +0100
-+++ texinfo.nbsd/makeinfo/insertion.c	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: insertion.c,v 1.1.1.6 2008/09/02 07:50:34 christos Exp $	*/
-+
- /* insertion.c -- insertions for Texinfo.
--   $Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp $
-+   Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp
- 
-    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/insertion.h texinfo.nbsd/makeinfo/insertion.h
---- texinfo.orig/makeinfo/insertion.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/insertion.h	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: insertion.h,v 1.1.1.4 2008/09/02 07:50:34 christos Exp $	*/
-+
- /* insertion.h -- declarations for insertion.c.
--   $Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp $
-+   Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/lang.c texinfo.nbsd/makeinfo/lang.c
---- texinfo.orig/makeinfo/lang.c	2004-11-23 00:57:33.000000000 +0100
-+++ texinfo.nbsd/makeinfo/lang.c	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: lang.c,v 1.1.1.5 2008/09/02 07:50:36 christos Exp $	*/
-+
- /* lang.c -- language-dependent support.
--   $Id: lang.c,v 1.14 2004/11/22 23:57:33 karl Exp $
-+   Id: lang.c,v 1.14 2004/11/22 23:57:33 karl Exp
- 
-    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
-    Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/lang.h texinfo.nbsd/makeinfo/lang.h
---- texinfo.orig/makeinfo/lang.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/lang.h	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: lang.h,v 1.1.1.5 2008/09/02 07:50:36 christos Exp $	*/
-+
- /* lang.h -- declarations for language codes etc.
--   $Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp $
-+   Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/macro.c texinfo.nbsd/makeinfo/macro.c
---- texinfo.orig/makeinfo/macro.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/macro.c	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: macro.c,v 1.1.1.5 2008/09/02 07:50:37 christos Exp $	*/
-+
- /* macro.c -- user-defined macros for Texinfo.
--   $Id: macro.c,v 1.6 2004/04/11 17:56:47 karl Exp $
-+   Id: macro.c,v 1.6 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 1999, 2002, 2003 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/macro.h texinfo.nbsd/makeinfo/macro.h
---- texinfo.orig/makeinfo/macro.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/macro.h	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,7 @@
-+/*	$NetBSD: macro.h,v 1.1.1.4 2008/09/02 07:50:37 christos Exp $	*/
-+
- /* macro.h -- declarations for macro.c.
--   $Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp $
-+   Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp
- 
-    Copyright (C) 1998, 99 Free Software Foundation, Inc.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/Makefile.am texinfo.nbsd/makeinfo/Makefile.am
+diff -rNU3 texinfo.orig/makeinfo/Makefile.am texinfo/makeinfo/Makefile.am
 --- texinfo.orig/makeinfo/Makefile.am	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/makeinfo/Makefile.am	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/makeinfo/Makefile.am	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -# $Id: Makefile.am,v 1.5 2004/04/11 17:56:46 karl Exp $
 +# Id: Makefile.am,v 1.5 2004/04/11 17:56:46 karl Exp
  # Makefile.am for texinfo/makeinfo.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/Makefile.in texinfo.nbsd/makeinfo/Makefile.in
+diff -rNU3 texinfo.orig/makeinfo/Makefile.in texinfo/makeinfo/Makefile.in
 --- texinfo.orig/makeinfo/Makefile.in	2004-12-31 19:01:48.000000000 +0100
-+++ texinfo.nbsd/makeinfo/Makefile.in	2013-04-10 22:45:11.347506295 +0200
++++ texinfo/makeinfo/Makefile.in	2015-10-18 11:13:23.000000000 +0200
 @@ -14,7 +14,7 @@
  
  @SET_MAKE@
@@ -2820,9 +2643,268 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/Makefile.in texinfo.nbsd/makeinfo/M
  # Makefile.am for texinfo/makeinfo.
  # Run automake in .. to produce Makefile.in from this.
  #
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/makeinfo.c texinfo.nbsd/makeinfo/makeinfo.c
+diff -rNU3 texinfo.orig/makeinfo/README texinfo/makeinfo/README
+--- texinfo.orig/makeinfo/README	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/makeinfo/README	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README,v 1.3 2004/04/11 17:56:46 karl Exp $
++Id: README,v 1.3 2004/04/11 17:56:46 karl Exp
+ texinfo/makeinfo/README
+ 
+   Copyright (C) 2002 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/cmds.c texinfo/makeinfo/cmds.c
+--- texinfo.orig/makeinfo/cmds.c	2004-12-14 01:15:36.000000000 +0100
++++ texinfo/makeinfo/cmds.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: cmds.c,v 1.3 2008/09/02 08:00:24 christos Exp $	*/
++
+ /* cmds.c -- Texinfo commands.
+-   $Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp $
++   Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/cmds.h texinfo/makeinfo/cmds.h
+--- texinfo.orig/makeinfo/cmds.h	2004-11-26 01:48:35.000000000 +0100
++++ texinfo/makeinfo/cmds.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: cmds.h,v 1.1.1.4 2008/09/02 07:50:24 christos Exp $	*/
++
+ /* cmds.h -- declarations for cmds.c.
+-   $Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp $
++   Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
+    Inc.
+diff -rNU3 texinfo.orig/makeinfo/defun.c texinfo/makeinfo/defun.c
+--- texinfo.orig/makeinfo/defun.c	2004-04-11 19:56:46.000000000 +0200
++++ texinfo/makeinfo/defun.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: defun.c,v 1.1.1.5 2008/09/02 07:50:24 christos Exp $	*/
++
+ /* defun.c -- @defun and friends.
+-   $Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp $
++   Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/defun.h texinfo/makeinfo/defun.h
+--- texinfo.orig/makeinfo/defun.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/defun.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: defun.h,v 1.1.1.4 2008/09/02 07:50:26 christos Exp $	*/
++
+ /* defun.h -- declaration for defuns.
+-   $Id: defun.h,v 1.2 2004/04/11 17:56:47 karl Exp $
++   Id: defun.h,v 1.2 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1999 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/files.c texinfo/makeinfo/files.c
+--- texinfo.orig/makeinfo/files.c	2004-07-27 02:06:31.000000000 +0200
++++ texinfo/makeinfo/files.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: files.c,v 1.10 2015/06/05 16:44:56 joerg Exp $	*/
++
+ /* files.c -- file-related functions for makeinfo.
+-   $Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp $
++   Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+@@ -456,8 +458,7 @@
+           temp_home = (char *) getenv ("HOME");
+           result = xmalloc (strlen (&filename[1])
+                                     + 1
+-                                    + temp_home ? strlen (temp_home)
+-                                    : 0);
++                                    + (temp_home ? strlen (temp_home) : 0));
+           *result = 0;
+ 
+           if (temp_home)
+diff -rNU3 texinfo.orig/makeinfo/files.h texinfo/makeinfo/files.h
+--- texinfo.orig/makeinfo/files.h	2004-07-27 02:06:31.000000000 +0200
++++ texinfo/makeinfo/files.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: files.h,v 1.3 2008/09/02 08:00:24 christos Exp $	*/
++
+ /* files.h -- declarations for files.c.
+-   $Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp $
++   Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp
+ 
+    Copyright (C) 1998, 2002, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/float.c texinfo/makeinfo/float.c
+--- texinfo.orig/makeinfo/float.c	2004-07-06 00:23:22.000000000 +0200
++++ texinfo/makeinfo/float.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: float.c,v 1.1.1.2 2008/09/02 07:50:28 christos Exp $	*/
++
+ /* float.c -- float environment functions.
+-   $Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp $
++   Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp
+ 
+    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/float.h texinfo/makeinfo/float.h
+--- texinfo.orig/makeinfo/float.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/float.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: float.h,v 1.1.1.2 2008/09/02 07:50:28 christos Exp $	*/
++
+ /* float.h -- declarations for the float environment.
+-   $Id: float.h,v 1.5 2004/04/11 17:56:47 karl Exp $
++   Id: float.h,v 1.5 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/footnote.c texinfo/makeinfo/footnote.c
+--- texinfo.orig/makeinfo/footnote.c	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/footnote.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: footnote.c,v 1.1.1.4 2008/09/02 07:50:28 christos Exp $	*/
++
+ /* footnote.c -- footnotes for Texinfo.
+-   $Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp $
++   Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/footnote.h texinfo/makeinfo/footnote.h
+--- texinfo.orig/makeinfo/footnote.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/footnote.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: footnote.h,v 1.1.1.4 2008/09/02 07:50:28 christos Exp $	*/
++
+ /* footnote.h -- declarations for footnote.c.
+-   $Id: footnote.h,v 1.2 2004/04/11 17:56:47 karl Exp $
++   Id: footnote.h,v 1.2 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/html.c texinfo/makeinfo/html.c
+--- texinfo.orig/makeinfo/html.c	2004-12-06 02:13:06.000000000 +0100
++++ texinfo/makeinfo/html.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: html.c,v 1.1.1.5 2008/09/02 07:50:29 christos Exp $	*/
++
+ /* html.c -- html-related utilities.
+-   $Id: html.c,v 1.28 2004/12/06 01:13:06 karl Exp $
++   Id: html.c,v 1.28 2004/12/06 01:13:06 karl Exp
+ 
+    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/html.h texinfo/makeinfo/html.h
+--- texinfo.orig/makeinfo/html.h	2004-11-30 03:03:23.000000000 +0100
++++ texinfo/makeinfo/html.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: html.h,v 1.1.1.4 2008/09/02 07:50:29 christos Exp $	*/
++
+ /* html.h -- declarations for html-related utilities.
+-   $Id: html.h,v 1.6 2004/11/30 02:03:23 karl Exp $
++   Id: html.h,v 1.6 2004/11/30 02:03:23 karl Exp
+ 
+    Copyright (C) 1999, 2000, 2002, 2004 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/index.c texinfo/makeinfo/index.c
+--- texinfo.orig/makeinfo/index.c	2004-11-30 03:03:23.000000000 +0100
++++ texinfo/makeinfo/index.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: index.c,v 1.1.1.6 2008/09/02 07:50:31 christos Exp $	*/
++
+ /* index.c -- indexing for Texinfo.
+-   $Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp $
++   Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
+    Inc.
+diff -rNU3 texinfo.orig/makeinfo/index.h texinfo/makeinfo/index.h
+--- texinfo.orig/makeinfo/index.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/index.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: index.h,v 1.1.1.4 2008/09/02 07:50:31 christos Exp $	*/
++
+ /* index.h -- declarations for index.c.
+-   $Id: index.h,v 1.2 2004/04/11 17:56:47 karl Exp $
++   Id: index.h,v 1.2 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 99 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/insertion.c texinfo/makeinfo/insertion.c
+--- texinfo.orig/makeinfo/insertion.c	2004-11-11 19:34:28.000000000 +0100
++++ texinfo/makeinfo/insertion.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: insertion.c,v 1.1.1.6 2008/09/02 07:50:34 christos Exp $	*/
++
+ /* insertion.c -- insertions for Texinfo.
+-   $Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp $
++   Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/insertion.h texinfo/makeinfo/insertion.h
+--- texinfo.orig/makeinfo/insertion.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/insertion.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: insertion.h,v 1.1.1.4 2008/09/02 07:50:34 christos Exp $	*/
++
+ /* insertion.h -- declarations for insertion.c.
+-   $Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp $
++   Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/lang.c texinfo/makeinfo/lang.c
+--- texinfo.orig/makeinfo/lang.c	2004-11-23 00:57:33.000000000 +0100
++++ texinfo/makeinfo/lang.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: lang.c,v 1.1.1.5 2008/09/02 07:50:36 christos Exp $	*/
++
+ /* lang.c -- language-dependent support.
+-   $Id: lang.c,v 1.14 2004/11/22 23:57:33 karl Exp $
++   Id: lang.c,v 1.14 2004/11/22 23:57:33 karl Exp
+ 
+    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+    Foundation, Inc.
+diff -rNU3 texinfo.orig/makeinfo/lang.h texinfo/makeinfo/lang.h
+--- texinfo.orig/makeinfo/lang.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/lang.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: lang.h,v 1.1.1.5 2008/09/02 07:50:36 christos Exp $	*/
++
+ /* lang.h -- declarations for language codes etc.
+-   $Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp $
++   Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/macro.c texinfo/makeinfo/macro.c
+--- texinfo.orig/makeinfo/macro.c	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/macro.c	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: macro.c,v 1.1.1.5 2008/09/02 07:50:37 christos Exp $	*/
++
+ /* macro.c -- user-defined macros for Texinfo.
+-   $Id: macro.c,v 1.6 2004/04/11 17:56:47 karl Exp $
++   Id: macro.c,v 1.6 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 1999, 2002, 2003 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/macro.h texinfo/makeinfo/macro.h
+--- texinfo.orig/makeinfo/macro.h	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/macro.h	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,7 @@
++/*	$NetBSD: macro.h,v 1.1.1.4 2008/09/02 07:50:37 christos Exp $	*/
++
+ /* macro.h -- declarations for macro.c.
+-   $Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp $
++   Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp
+ 
+    Copyright (C) 1998, 99 Free Software Foundation, Inc.
+ 
+diff -rNU3 texinfo.orig/makeinfo/makeinfo.c texinfo/makeinfo/makeinfo.c
 --- texinfo.orig/makeinfo/makeinfo.c	2004-12-19 18:15:42.000000000 +0100
-+++ texinfo.nbsd/makeinfo/makeinfo.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/makeinfo.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: makeinfo.c,v 1.16 2009/02/28 19:51:13 joerg Exp $	*/
 +
@@ -2858,9 +2940,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/makeinfo.c texinfo.nbsd/makeinfo/ma
      add_word_args (_("This is %s, produced by makeinfo version %s from %s.\n"),
                     output_filename, VERSION, input_filename);
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/makeinfo.h texinfo.nbsd/makeinfo/makeinfo.h
+diff -rNU3 texinfo.orig/makeinfo/makeinfo.h texinfo/makeinfo/makeinfo.h
 --- texinfo.orig/makeinfo/makeinfo.h	2004-11-30 03:03:23.000000000 +0100
-+++ texinfo.nbsd/makeinfo/makeinfo.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/makeinfo.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: makeinfo.h,v 1.2 2009/02/28 19:14:15 joerg Exp $	*/
 +
@@ -2881,9 +2963,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/makeinfo.h texinfo.nbsd/makeinfo/ma
  /* Nonzero means that we process @docbook and @ifdocbook.  (--ifdocbook) */
  DECLARE (int, process_docbook, 0);
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/multi.c texinfo.nbsd/makeinfo/multi.c
+diff -rNU3 texinfo.orig/makeinfo/multi.c texinfo/makeinfo/multi.c
 --- texinfo.orig/makeinfo/multi.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/multi.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/multi.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: multi.c,v 1.1.1.5 2008/09/02 07:50:44 christos Exp $	*/
 +
@@ -2893,9 +2975,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/multi.c texinfo.nbsd/makeinfo/multi
  
     Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/multi.h texinfo.nbsd/makeinfo/multi.h
+diff -rNU3 texinfo.orig/makeinfo/multi.h texinfo/makeinfo/multi.h
 --- texinfo.orig/makeinfo/multi.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/multi.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/multi.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: multi.h,v 1.1.1.2 2008/09/02 07:50:44 christos Exp $	*/
 +
@@ -2905,9 +2987,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/multi.h texinfo.nbsd/makeinfo/multi
  
     Copyright (C) 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/node.c texinfo.nbsd/makeinfo/node.c
+diff -rNU3 texinfo.orig/makeinfo/node.c texinfo/makeinfo/node.c
 --- texinfo.orig/makeinfo/node.c	2004-12-21 00:56:07.000000000 +0100
-+++ texinfo.nbsd/makeinfo/node.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/node.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: node.c,v 1.4 2008/09/02 08:00:24 christos Exp $	*/
 +
@@ -2917,9 +2999,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/node.c texinfo.nbsd/makeinfo/node.c
  
     Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/node.h texinfo.nbsd/makeinfo/node.h
+diff -rNU3 texinfo.orig/makeinfo/node.h texinfo/makeinfo/node.h
 --- texinfo.orig/makeinfo/node.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/node.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/node.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: node.h,v 1.1.1.4 2008/09/02 07:50:47 christos Exp $	*/
 +
@@ -2929,18 +3011,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/node.h texinfo.nbsd/makeinfo/node.h
  
     Copyright (C) 1996, 1997, 1998, 1999, 2002 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/README texinfo.nbsd/makeinfo/README
---- texinfo.orig/makeinfo/README	2004-04-11 19:56:46.000000000 +0200
-+++ texinfo.nbsd/makeinfo/README	2013-04-10 22:45:11.347506295 +0200
-@@ -1,4 +1,4 @@
--$Id: README,v 1.3 2004/04/11 17:56:46 karl Exp $
-+Id: README,v 1.3 2004/04/11 17:56:46 karl Exp
- texinfo/makeinfo/README
- 
-   Copyright (C) 2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/sectioning.c texinfo.nbsd/makeinfo/sectioning.c
+diff -rNU3 texinfo.orig/makeinfo/sectioning.c texinfo/makeinfo/sectioning.c
 --- texinfo.orig/makeinfo/sectioning.c	2004-07-06 00:23:23.000000000 +0200
-+++ texinfo.nbsd/makeinfo/sectioning.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/sectioning.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: sectioning.c,v 1.2 2011/05/11 23:20:46 joerg Exp $	*/
 +
@@ -2968,9 +3041,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/sectioning.c texinfo.nbsd/makeinfo/
        return xstrdup (s);
      }
  }
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/sectioning.h texinfo.nbsd/makeinfo/sectioning.h
+diff -rNU3 texinfo.orig/makeinfo/sectioning.h texinfo/makeinfo/sectioning.h
 --- texinfo.orig/makeinfo/sectioning.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/sectioning.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/sectioning.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: sectioning.h,v 1.1.1.4 2008/09/02 07:50:47 christos Exp $	*/
 +
@@ -2980,59 +3053,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/sectioning.h texinfo.nbsd/makeinfo/
  
     Copyright (C) 1999, 2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/copying texinfo.nbsd/makeinfo/tests/copying
---- texinfo.orig/makeinfo/tests/copying	2004-04-20 15:26:00.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/copying	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,5 @@
- #!/bin/sh
--# $Id: copying,v 1.2 2004/04/20 13:26:00 karl Exp $
-+# Id: copying,v 1.2 2004/04/20 13:26:00 karl Exp
- # Test @copying.  The configure script for tramp uses this to make sure
- # the makeinfo that is present supports @copying.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/html-manuals texinfo.nbsd/makeinfo/tests/html-manuals
---- texinfo.orig/makeinfo/tests/html-manuals	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/html-manuals	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,5 @@
- #!/bin/sh
--# $Id: html-manuals,v 1.3 2004/04/11 17:56:47 karl Exp $
-+# Id: html-manuals,v 1.3 2004/04/11 17:56:47 karl Exp
- # Test that all the distribution manuals can be converted to HTML.
- 
- : ${srcdir=.}
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/include-value texinfo.nbsd/makeinfo/tests/include-value
---- texinfo.orig/makeinfo/tests/include-value	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/include-value	2013-04-10 22:45:11.350839695 +0200
-@@ -1,5 +1,5 @@
- #!/bin/sh
--# $Id: include-value,v 1.3 2004/04/11 17:56:47 karl Exp $
-+# Id: include-value,v 1.3 2004/04/11 17:56:47 karl Exp
- # Test @value expansion in @include and @verbatiminclude names.
- 
- unset TEXINFO_OUTPUT
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/include-value.txi texinfo.nbsd/makeinfo/tests/include-value.txi
---- texinfo.orig/makeinfo/tests/include-value.txi	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/include-value.txi	2013-04-10 22:45:11.350839695 +0200
-@@ -1,6 +1,6 @@
- \input texinfo
- @setfilename include-value.info
--@c $Id: include-value.txi,v 1.2 2004/04/11 17:56:47 karl Exp $
-+@c Id: include-value.txi,v 1.2 2004/04/11 17:56:47 karl Exp
- 
- @set testvar incl-incl.txi
- 
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/Makefile.am texinfo.nbsd/makeinfo/tests/Makefile.am
+diff -rNU3 texinfo.orig/makeinfo/tests/Makefile.am texinfo/makeinfo/tests/Makefile.am
 --- texinfo.orig/makeinfo/tests/Makefile.am	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/Makefile.am	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/tests/Makefile.am	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -# $Id: Makefile.am,v 1.5 2004/04/11 17:56:47 karl Exp $
 +# Id: Makefile.am,v 1.5 2004/04/11 17:56:47 karl Exp
  # Makefile.am for texinfo/tests/makeinfo.
  #
  # This file is free software; as a special exception the author gives
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/Makefile.in texinfo.nbsd/makeinfo/tests/Makefile.in
+diff -rNU3 texinfo.orig/makeinfo/tests/Makefile.in texinfo/makeinfo/tests/Makefile.in
 --- texinfo.orig/makeinfo/tests/Makefile.in	2004-12-31 19:01:48.000000000 +0100
-+++ texinfo.nbsd/makeinfo/tests/Makefile.in	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/tests/Makefile.in	2015-10-18 11:13:23.000000000 +0200
 @@ -14,7 +14,7 @@
  
  @SET_MAKE@
@@ -3042,9 +3074,50 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/Makefile.in texinfo.nbsd/make
  # Makefile.am for texinfo/tests/makeinfo.
  #
  # This file is free software; as a special exception the author gives
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/twofiles texinfo.nbsd/makeinfo/tests/twofiles
+diff -rNU3 texinfo.orig/makeinfo/tests/copying texinfo/makeinfo/tests/copying
+--- texinfo.orig/makeinfo/tests/copying	2004-04-20 15:26:00.000000000 +0200
++++ texinfo/makeinfo/tests/copying	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ #!/bin/sh
+-# $Id: copying,v 1.2 2004/04/20 13:26:00 karl Exp $
++# Id: copying,v 1.2 2004/04/20 13:26:00 karl Exp
+ # Test @copying.  The configure script for tramp uses this to make sure
+ # the makeinfo that is present supports @copying.
+ 
+diff -rNU3 texinfo.orig/makeinfo/tests/html-manuals texinfo/makeinfo/tests/html-manuals
+--- texinfo.orig/makeinfo/tests/html-manuals	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/tests/html-manuals	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ #!/bin/sh
+-# $Id: html-manuals,v 1.3 2004/04/11 17:56:47 karl Exp $
++# Id: html-manuals,v 1.3 2004/04/11 17:56:47 karl Exp
+ # Test that all the distribution manuals can be converted to HTML.
+ 
+ : ${srcdir=.}
+diff -rNU3 texinfo.orig/makeinfo/tests/include-value texinfo/makeinfo/tests/include-value
+--- texinfo.orig/makeinfo/tests/include-value	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/tests/include-value	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ #!/bin/sh
+-# $Id: include-value,v 1.3 2004/04/11 17:56:47 karl Exp $
++# Id: include-value,v 1.3 2004/04/11 17:56:47 karl Exp
+ # Test @value expansion in @include and @verbatiminclude names.
+ 
+ unset TEXINFO_OUTPUT
+diff -rNU3 texinfo.orig/makeinfo/tests/include-value.txi texinfo/makeinfo/tests/include-value.txi
+--- texinfo.orig/makeinfo/tests/include-value.txi	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/makeinfo/tests/include-value.txi	2015-10-18 11:13:23.000000000 +0200
+@@ -1,6 +1,6 @@
+ \input texinfo
+ @setfilename include-value.info
+-@c $Id: include-value.txi,v 1.2 2004/04/11 17:56:47 karl Exp $
++@c Id: include-value.txi,v 1.2 2004/04/11 17:56:47 karl Exp
+ 
+ @set testvar incl-incl.txi
+ 
+diff -rNU3 texinfo.orig/makeinfo/tests/twofiles texinfo/makeinfo/tests/twofiles
 --- texinfo.orig/makeinfo/tests/twofiles	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/tests/twofiles	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/tests/twofiles	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  #!/bin/sh
 -# $Id: twofiles,v 1.3 2004/04/11 17:56:47 karl Exp $
@@ -3052,9 +3125,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/tests/twofiles texinfo.nbsd/makeinf
  # Test that an existing and nonexisting file doesn't cause a
  # segmentation fault.
  # From: Arkadiusz Miskiewicz <misiek@pld.ORG.PL>, 15 Feb 2003 13:22:49 +0100.
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/toc.c texinfo.nbsd/makeinfo/toc.c
+diff -rNU3 texinfo.orig/makeinfo/toc.c texinfo/makeinfo/toc.c
 --- texinfo.orig/makeinfo/toc.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/toc.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/toc.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: toc.c,v 1.1.1.4 2008/09/02 07:50:47 christos Exp $	*/
 +
@@ -3064,9 +3137,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/toc.c texinfo.nbsd/makeinfo/toc.c
  
     Copyright (C) 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/toc.h texinfo.nbsd/makeinfo/toc.h
+diff -rNU3 texinfo.orig/makeinfo/toc.h texinfo/makeinfo/toc.h
 --- texinfo.orig/makeinfo/toc.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/toc.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/toc.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: toc.h,v 1.1.1.4 2008/09/02 07:50:47 christos Exp $	*/
 +
@@ -3076,11 +3149,11 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/toc.h texinfo.nbsd/makeinfo/toc.h
  
     Copyright (C) 1999 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xml.c texinfo.nbsd/makeinfo/xml.c
+diff -rNU3 texinfo.orig/makeinfo/xml.c texinfo/makeinfo/xml.c
 --- texinfo.orig/makeinfo/xml.c	2004-12-19 18:02:23.000000000 +0100
-+++ texinfo.nbsd/makeinfo/xml.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/xml.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
-+/*	$NetBSD: xml.c,v 1.1.1.5 2008/09/02 07:50:51 christos Exp $	*/
++/*	$NetBSD: xml.c,v 1.2 2014/11/15 02:01:27 joerg Exp $	*/
 +
  /* xml.c -- xml output.
 -   $Id: xml.c,v 1.52 2004/12/19 17:02:23 karl Exp $
@@ -3088,9 +3161,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xml.c texinfo.nbsd/makeinfo/xml.c
  
     Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xml.h texinfo.nbsd/makeinfo/xml.h
+@@ -868,7 +870,7 @@
+       return;
+     }
+ 
+-  if (!xml_element_list[elt].name || !strlen (xml_element_list[elt].name))
++  if (!strlen (xml_element_list[elt].name))
+     {
+       /*printf ("Warning: Inserting empty element %d\n", elt);*/
+       return;
+diff -rNU3 texinfo.orig/makeinfo/xml.h texinfo/makeinfo/xml.h
 --- texinfo.orig/makeinfo/xml.h	2004-11-26 01:48:35.000000000 +0100
-+++ texinfo.nbsd/makeinfo/xml.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/xml.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: xml.h,v 1.1.1.3 2008/09/02 07:50:51 christos Exp $	*/
 +
@@ -3100,9 +3182,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xml.h texinfo.nbsd/makeinfo/xml.h
  
     Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xref.c texinfo.nbsd/makeinfo/xref.c
+diff -rNU3 texinfo.orig/makeinfo/xref.c texinfo/makeinfo/xref.c
 --- texinfo.orig/makeinfo/xref.c	2004-12-21 18:28:35.000000000 +0100
-+++ texinfo.nbsd/makeinfo/xref.c	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/xref.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: xref.c,v 1.1.1.2 2008/09/02 07:50:51 christos Exp $	*/
 +
@@ -3112,9 +3194,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xref.c texinfo.nbsd/makeinfo/xref.c
  
     Copyright (C) 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xref.h texinfo.nbsd/makeinfo/xref.h
+diff -rNU3 texinfo.orig/makeinfo/xref.h texinfo/makeinfo/xref.h
 --- texinfo.orig/makeinfo/xref.h	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/makeinfo/xref.h	2013-04-10 22:45:11.350839695 +0200
++++ texinfo/makeinfo/xref.h	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: xref.h,v 1.1.1.2 2008/09/02 07:50:51 christos Exp $	*/
 +
@@ -3124,18 +3206,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/makeinfo/xref.h texinfo.nbsd/makeinfo/xref.h
  
     Copyright (C) 2004 Free Software Foundation, Inc.
  
-diff -r -x CVS -N -U 3 texinfo.orig/NEWS texinfo.nbsd/NEWS
---- texinfo.orig/NEWS	2004-12-31 19:01:29.000000000 +0100
-+++ texinfo.nbsd/NEWS	2013-04-10 22:45:11.334172695 +0200
-@@ -1,4 +1,4 @@
--$Id: NEWS,v 1.103 2004/12/24 16:43:58 karl Exp $
-+Id: NEWS,v 1.103 2004/12/24 16:43:58 karl Exp
- This file records noteworthy changes, very tersely.
- See the manual for detailed information.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/po/Makefile.in.in texinfo.nbsd/po/Makefile.in.in
+diff -rNU3 texinfo.orig/po/Makefile.in.in texinfo/po/Makefile.in.in
 --- texinfo.orig/po/Makefile.in.in	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/po/Makefile.in.in	2013-04-10 22:45:11.354173095 +0200
++++ texinfo/po/Makefile.in.in	2015-10-18 11:13:23.000000000 +0200
 @@ -13,7 +13,7 @@
  PACKAGE = @PACKAGE@
  VERSION = @VERSION@
@@ -3145,27 +3218,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/po/Makefile.in.in texinfo.nbsd/po/Makefile.i
  @SET_MAKE@
  
  srcdir = @srcdir@
-diff -r -x CVS -N -U 3 texinfo.orig/README texinfo.nbsd/README
---- texinfo.orig/README	2004-12-13 14:36:32.000000000 +0100
-+++ texinfo.nbsd/README	2013-04-10 22:45:11.334172695 +0200
-@@ -1,4 +1,4 @@
--$Id: README,v 1.16 2004/12/13 13:36:32 karl Exp $
-+Id: README,v 1.16 2004/12/13 13:36:32 karl Exp
- This is the README file for the GNU Texinfo distribution.  Texinfo is
- the preferred documentation format for GNU software.
- 
-diff -r -x CVS -N -U 3 texinfo.orig/README.dev texinfo.nbsd/README.dev
---- texinfo.orig/README.dev	2003-11-24 16:11:06.000000000 +0100
-+++ texinfo.nbsd/README.dev	2013-04-10 22:45:11.334172695 +0200
-@@ -1,4 +1,4 @@
--$Id: README.dev,v 1.7 2003/11/24 15:11:06 karl Exp $
-+Id: README.dev,v 1.7 2003/11/24 15:11:06 karl Exp
- README.dev - Texinfo developer information.
- 
-   Copyright (C) 2002, 2003 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/texinfo2netbsd texinfo.nbsd/texinfo2netbsd
+diff -rNU3 texinfo.orig/texinfo2netbsd texinfo/texinfo2netbsd
 --- texinfo.orig/texinfo2netbsd	1970-01-01 01:00:00.000000000 +0100
-+++ texinfo.nbsd/texinfo2netbsd	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/texinfo2netbsd	2015-10-18 11:13:23.000000000 +0200
 @@ -0,0 +1,86 @@
 +#! /bin/sh
 +#
@@ -3253,27 +3308,48 @@ diff -r -x CVS -N -U 3 texinfo.orig/texinfo2netbsd texinfo.nbsd/texinfo2netbsd
 +echo Do not forget to update src/gnu/usr.bin/texinfo/common/config.h
 +echo and src/gnu/dist/texinfo/util/texinfo.cat!
 +exit 0
-diff -r -x CVS -N -U 3 texinfo.orig/TODO texinfo.nbsd/TODO
---- texinfo.orig/TODO	2004-11-23 00:57:32.000000000 +0100
-+++ texinfo.nbsd/TODO	2013-04-10 22:45:11.334172695 +0200
+diff -rNU3 texinfo.orig/util/Makefile.am texinfo/util/Makefile.am
+--- texinfo.orig/util/Makefile.am	2004-08-26 13:43:18.000000000 +0200
++++ texinfo/util/Makefile.am	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
--$Id: TODO,v 1.26 2004/11/22 23:57:32 karl Exp $
-+Id: TODO,v 1.26 2004/11/22 23:57:32 karl Exp
- This is the todo list for GNU Texinfo.
- If you are interested in working on any of these, email bug-texinfo@gnu.org.
+-# $Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp $
++# Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp
+ # Makefile.am for texinfo/util.
+ # Run automake in .. to produce Makefile.in from this.
+ #
+diff -rNU3 texinfo.orig/util/Makefile.in texinfo/util/Makefile.in
+--- texinfo.orig/util/Makefile.in	2004-12-31 19:01:49.000000000 +0100
++++ texinfo/util/Makefile.in	2015-10-18 11:13:23.000000000 +0200
+@@ -14,7 +14,7 @@
  
-diff -r -x CVS -N -U 3 texinfo.orig/util/deref.c texinfo.nbsd/util/deref.c
+ @SET_MAKE@
+ 
+-# $Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp $
++# Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp
+ # Makefile.am for texinfo/util.
+ # Run automake in .. to produce Makefile.in from this.
+ #
+diff -rNU3 texinfo.orig/util/README texinfo/util/README
+--- texinfo.orig/util/README	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/util/README	2015-10-18 11:13:23.000000000 +0200
+@@ -1,4 +1,4 @@
+-$Id: README,v 1.5 2004/04/11 17:56:47 karl Exp $
++Id: README,v 1.5 2004/04/11 17:56:47 karl Exp
+ texinfo/util/README
+ 
+   Copyright (C) 2002 Free Software Foundation, Inc.
+diff -rNU3 texinfo.orig/util/deref.c texinfo/util/deref.c
 --- texinfo.orig/util/deref.c	2002-08-26 01:38:39.000000000 +0200
-+++ texinfo.nbsd/util/deref.c	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/deref.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,3 +1,5 @@
 +/*	$NetBSD: deref.c,v 1.1.1.3 2003/01/17 14:54:37 wiz Exp $	*/
 +
  /*
   * deref.c
   *
-diff -r -x CVS -N -U 3 texinfo.orig/util/dir-example texinfo.nbsd/util/dir-example
+diff -rNU3 texinfo.orig/util/dir-example texinfo/util/dir-example
 --- texinfo.orig/util/dir-example	2004-12-30 14:42:54.000000000 +0100
-+++ texinfo.nbsd/util/dir-example	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/dir-example	2015-10-18 11:13:23.000000000 +0200
 @@ -10,7 +10,7 @@
  If you have dir entries for Texinfo manuals you'd like to be added here,
    please send them to karl@gnu.org.
@@ -3283,9 +3359,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/dir-example texinfo.nbsd/util/dir-examp
  
  File: dir,	Node: Top,	This is the top of the INFO tree.
  
-diff -r -x CVS -N -U 3 texinfo.orig/util/gen-dir-node texinfo.nbsd/util/gen-dir-node
+diff -rNU3 texinfo.orig/util/gen-dir-node texinfo/util/gen-dir-node
 --- texinfo.orig/util/gen-dir-node	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/gen-dir-node	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/gen-dir-node	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  #!/bin/sh
 -# $Id: gen-dir-node,v 1.3 2004/04/11 17:56:47 karl Exp $
@@ -3302,9 +3378,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/gen-dir-node texinfo.nbsd/util/gen-dir-
  This is the file .../info/dir, which contains the topmost node of the
  Info hierarchy.  The first time you invoke Info you start off
  looking at that node, which is (dir)Top.
-diff -r -x CVS -N -U 3 texinfo.orig/util/gendocs.sh texinfo.nbsd/util/gendocs.sh
+diff -rNU3 texinfo.orig/util/gendocs.sh texinfo/util/gendocs.sh
 --- texinfo.orig/util/gendocs.sh	2004-09-01 13:40:20.000000000 +0200
-+++ texinfo.nbsd/util/gendocs.sh	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/gendocs.sh	2015-10-18 11:13:23.000000000 +0200
 @@ -1,7 +1,7 @@
  #!/bin/sh
  # gendocs.sh -- generate a GNU manual in many formats.  This script is
@@ -3323,9 +3399,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/gendocs.sh texinfo.nbsd/util/gendocs.sh
  rcs_version=`set - $rcs_revision; echo $2`
  program=`echo $0 | sed -e 's!.*/!!'`
  version="gendocs.sh $rcs_version
-diff -r -x CVS -N -U 3 texinfo.orig/util/gendocs_template texinfo.nbsd/util/gendocs_template
+diff -rNU3 texinfo.orig/util/gendocs_template texinfo/util/gendocs_template
 --- texinfo.orig/util/gendocs_template	2004-09-23 15:16:19.000000000 +0200
-+++ texinfo.nbsd/util/gendocs_template	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/gendocs_template	2015-10-18 11:13:23.000000000 +0200
 @@ -1,7 +1,7 @@
  <?xml version="1.0" encoding="utf-8" ?>
  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -3344,9 +3420,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/gendocs_template texinfo.nbsd/util/gend
  <!-- timestamp end -->
  </p>
  </div>
-diff -r -x CVS -N -U 3 texinfo.orig/util/infosrch texinfo.nbsd/util/infosrch
+diff -rNU3 texinfo.orig/util/infosrch texinfo/util/infosrch
 --- texinfo.orig/util/infosrch	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/infosrch	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/infosrch	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  #!/usr/local/bin/perl -w
 -# $Id: infosrch,v 1.2 2004/04/11 17:56:47 karl Exp $
@@ -3354,9 +3430,19 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/infosrch texinfo.nbsd/util/infosrch
  # infosrch does a regex search on an info manual.
  # By Harry Putnam <reader@newsguy.com>.
  
-diff -r -x CVS -N -U 3 texinfo.orig/util/install-info.c texinfo.nbsd/util/install-info.c
+diff -rNU3 texinfo.orig/util/install-info-html texinfo/util/install-info-html
+--- texinfo.orig/util/install-info-html	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/util/install-info-html	2015-10-18 11:13:23.000000000 +0200
+@@ -1,5 +1,5 @@
+ #!@BASH@
+-# $Id: install-info-html,v 1.3 2004/04/11 17:56:47 karl Exp $
++# Id: install-info-html,v 1.3 2004/04/11 17:56:47 karl Exp
+ 
+ name=install-info-html
+ version=1.0
+diff -rNU3 texinfo.orig/util/install-info.c texinfo/util/install-info.c
 --- texinfo.orig/util/install-info.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/install-info.c	2013-04-10 22:45:11.360839895 +0200
++++ texinfo/util/install-info.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: install-info.c,v 1.9 2008/09/02 08:00:24 christos Exp $	*/
 +
@@ -3366,49 +3452,21 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/install-info.c texinfo.nbsd/util/instal
  
     Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
     Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/util/install-info-html texinfo.nbsd/util/install-info-html
---- texinfo.orig/util/install-info-html	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/install-info-html	2013-04-10 22:45:11.360839895 +0200
-@@ -1,5 +1,5 @@
- #!@BASH@
--# $Id: install-info-html,v 1.3 2004/04/11 17:56:47 karl Exp $
-+# Id: install-info-html,v 1.3 2004/04/11 17:56:47 karl Exp
- 
- name=install-info-html
- version=1.0
-diff -r -x CVS -N -U 3 texinfo.orig/util/Makefile.am texinfo.nbsd/util/Makefile.am
---- texinfo.orig/util/Makefile.am	2004-08-26 13:43:18.000000000 +0200
-+++ texinfo.nbsd/util/Makefile.am	2013-04-10 22:45:11.360839895 +0200
-@@ -1,4 +1,4 @@
--# $Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp $
-+# Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp
- # Makefile.am for texinfo/util.
- # Run automake in .. to produce Makefile.in from this.
- #
-diff -r -x CVS -N -U 3 texinfo.orig/util/Makefile.in texinfo.nbsd/util/Makefile.in
---- texinfo.orig/util/Makefile.in	2004-12-31 19:01:49.000000000 +0100
-+++ texinfo.nbsd/util/Makefile.in	2013-04-10 22:45:11.360839895 +0200
-@@ -14,7 +14,7 @@
- 
- @SET_MAKE@
- 
--# $Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp $
-+# Id: Makefile.am,v 1.14 2004/08/26 11:43:18 karl Exp
- # Makefile.am for texinfo/util.
- # Run automake in .. to produce Makefile.in from this.
- #
-diff -r -x CVS -N -U 3 texinfo.orig/util/README texinfo.nbsd/util/README
---- texinfo.orig/util/README	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/README	2013-04-10 22:45:11.360839895 +0200
-@@ -1,4 +1,4 @@
--$Id: README,v 1.5 2004/04/11 17:56:47 karl Exp $
-+Id: README,v 1.5 2004/04/11 17:56:47 karl Exp
- texinfo/util/README
- 
-   Copyright (C) 2002 Free Software Foundation, Inc.
-diff -r -x CVS -N -U 3 texinfo.orig/util/texi2dvi texinfo.nbsd/util/texi2dvi
+diff -rNU3 texinfo.orig/util/texi-docstring-magic.el texinfo/util/texi-docstring-magic.el
+--- texinfo.orig/util/texi-docstring-magic.el	2004-04-11 19:56:47.000000000 +0200
++++ texinfo/util/texi-docstring-magic.el	2015-10-18 11:13:23.000000000 +0200
+@@ -5,7 +5,7 @@
+ ;; Copyright (C) 1998 David Aspinall
+ ;; Maintainer:  David Aspinall <da@dcs.ed.ac.uk>
+ ;;
+-;; $Id: texi-docstring-magic.el,v 1.2 2004/04/11 17:56:47 karl Exp $
++;; Id: texi-docstring-magic.el,v 1.2 2004/04/11 17:56:47 karl Exp
+ ;;
+ ;; This package is distributed under the terms of the 
+ ;; GNU General Public License, Version 2.   
+diff -rNU3 texinfo.orig/util/texi2dvi texinfo/util/texi2dvi
 --- texinfo.orig/util/texi2dvi	2004-12-31 19:03:05.000000000 +0100
-+++ texinfo.nbsd/util/texi2dvi	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/texi2dvi	2015-10-18 11:13:23.000000000 +0200
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # texi2dvi --- produce DVI (or PDF) files from Texinfo (or LaTeX) sources.
@@ -3426,6 +3484,21 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/texi2dvi texinfo.nbsd/util/texi2dvi
  rcs_version=`set - $rcs_revision; echo $2`
  program=`echo $0 | sed -e 's!.*/!!'`
  version="texi2dvi (GNU Texinfo 4.8) $rcs_version
+@@ -605,10 +605,10 @@
+   # If this is a Texinfo file with a specified input encoding, and
+   # recode is available, then recode to plain 7 bit Texinfo.
+   if test $language = texinfo; then
+-    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/  
+-	t found                                                
+-	d                                                     
+-	:found                                               
++    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/
++	t found
++	d
++	:found
+ 	q'
+     encoding=`sed -e "$pgm" "$filename_input"`
+     if $recode && test -n "$encoding" && findprog recode; then
 @@ -691,8 +691,13 @@
  
      # Finally, run TeX.
@@ -3441,9 +3514,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/texi2dvi texinfo.nbsd/util/texi2dvi
        echo "$0: $tex exited with bad status, quitting." >&2
        echo "$0: see $filename_noext.log for errors." >&2
        test "$clean" = t \
-diff -r -x CVS -N -U 3 texinfo.orig/util/texi2pdf texinfo.nbsd/util/texi2pdf
+diff -rNU3 texinfo.orig/util/texi2pdf texinfo/util/texi2pdf
 --- texinfo.orig/util/texi2pdf	2004-07-11 03:02:35.000000000 +0200
-+++ texinfo.nbsd/util/texi2pdf	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/texi2pdf	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  #!/bin/sh
 -# $Id: texi2pdf,v 1.1 2004/07/11 01:02:35 karl Exp $
@@ -3451,21 +3524,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/texi2pdf texinfo.nbsd/util/texi2pdf
  # Written by Thomas Esser.  Public domain.
  # Execute texi2dvi --pdf.
  
-diff -r -x CVS -N -U 3 texinfo.orig/util/texi-docstring-magic.el texinfo.nbsd/util/texi-docstring-magic.el
---- texinfo.orig/util/texi-docstring-magic.el	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/texi-docstring-magic.el	2013-04-10 22:45:11.364173295 +0200
-@@ -5,7 +5,7 @@
- ;; Copyright (C) 1998 David Aspinall
- ;; Maintainer:  David Aspinall <da@dcs.ed.ac.uk>
- ;;
--;; $Id: texi-docstring-magic.el,v 1.2 2004/04/11 17:56:47 karl Exp $
-+;; Id: texi-docstring-magic.el,v 1.2 2004/04/11 17:56:47 karl Exp
- ;;
- ;; This package is distributed under the terms of the 
- ;; GNU General Public License, Version 2.   
-diff -r -x CVS -N -U 3 texinfo.orig/util/texindex.c texinfo.nbsd/util/texindex.c
+diff -rNU3 texinfo.orig/util/texindex.c texinfo/util/texindex.c
 --- texinfo.orig/util/texindex.c	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/texindex.c	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/texindex.c	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,7 @@
 +/*	$NetBSD: texindex.c,v 1.11 2008/09/02 08:00:24 christos Exp $	*/
 +
@@ -4066,18 +4127,18 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/texindex.c texinfo.nbsd/util/texindex.c
  
    return result;
  }
-diff -r -x CVS -N -U 3 texinfo.orig/util/texinfo.dtd texinfo.nbsd/util/texinfo.dtd
+diff -rNU3 texinfo.orig/util/texinfo.dtd texinfo/util/texinfo.dtd
 --- texinfo.orig/util/texinfo.dtd	2004-12-19 16:08:55.000000000 +0100
-+++ texinfo.nbsd/util/texinfo.dtd	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/texinfo.dtd	2015-10-18 11:13:23.000000000 +0200
 @@ -1,4 +1,4 @@
 -<!-- $Id: texinfo.dtd,v 1.4 2004/12/19 15:08:55 karl Exp $
 +<!-- Id: texinfo.dtd,v 1.4 2004/12/19 15:08:55 karl Exp
     Document Type Definition for Texinfo.
  
     Author: Philippe Martin (feloy@free.fr)
-diff -r -x CVS -N -U 3 texinfo.orig/util/texinfo.xsl texinfo.nbsd/util/texinfo.xsl
+diff -rNU3 texinfo.orig/util/texinfo.xsl texinfo/util/texinfo.xsl
 --- texinfo.orig/util/texinfo.xsl	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/texinfo.xsl	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/texinfo.xsl	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  <?xml version='1.0'?>
 -<!-- $Id: texinfo.xsl,v 1.1 2004/04/11 17:56:47 karl Exp $ -->
@@ -4085,9 +4146,9 @@ diff -r -x CVS -N -U 3 texinfo.orig/util/texinfo.xsl texinfo.nbsd/util/texinfo.x
  <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                  version="1.0">
  
-diff -r -x CVS -N -U 3 texinfo.orig/util/txitextest texinfo.nbsd/util/txitextest
+diff -rNU3 texinfo.orig/util/txitextest texinfo/util/txitextest
 --- texinfo.orig/util/txitextest	2004-04-11 19:56:47.000000000 +0200
-+++ texinfo.nbsd/util/txitextest	2013-04-10 22:45:11.364173295 +0200
++++ texinfo/util/txitextest	2015-10-18 11:13:23.000000000 +0200
 @@ -1,5 +1,5 @@
  #!/bin/sh
 -# $Id: txitextest,v 1.5 2004/04/11 17:56:47 karl Exp $

@@ -29,11 +29,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: find_exidx.c,v 1.3 2013/05/03 10:27:06 skrll Exp $");
+__RCSID("$NetBSD: find_exidx.c,v 1.4 2014/08/10 23:35:27 matt Exp $");
 #endif /* not lint */
 
 #include "debug.h"
 #include "rtld.h"
+
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 
 _Unwind_Ptr
 __gnu_Unwind_Find_exidx(_Unwind_Ptr pc, int * pcount)
@@ -84,3 +86,5 @@ __gnu_Unwind_Find_exidx(_Unwind_Ptr pc, int * pcount)
 	*pcount = count;
 	return start;
 }
+
+#endif

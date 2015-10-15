@@ -1,4 +1,4 @@
-/*	$NetBSD: cprojl.c,v 1.6 2011/11/02 02:34:56 christos Exp $	*/
+/*	$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojl.c,v 1.6 2011/11/02 02:34:56 christos Exp $");
+__RCSID("$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
@@ -57,7 +57,7 @@ cprojl(long double complex z)
 #else
 		REAL_PART(w) = INFINITY;
 #endif
-		IMAG_PART(w) = copysignl(0.0, cimagl(z));
+		IMAG_PART(w) = copysignl(0.0L, cimagl(z));
 	}
 
 	return (w.z);

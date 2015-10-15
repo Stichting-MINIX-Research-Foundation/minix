@@ -154,6 +154,9 @@ step_result DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
   // Therefore the SP is restored by setting it to the CFA.
   newRegisters.setSP(cfa);
   newRegisters.setIP(returnAddress + R::RETURN_OFFSET);
+  returnAddress += R::RETURN_OFFSET;
+  returnAddress &= ~R::RETURN_MASK;
+  newRegisters.setIP(returnAddress);
 
   // Now replace register set with the working copy.
   registers = newRegisters;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ank.c,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $	*/
+/*	$NetBSD: ank.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -41,21 +41,21 @@
  */
 
 static krb5_error_code
-get_default (kadm5_server_context *context,
+get_default (kadm5_server_context *contextp,
 	     krb5_principal princ,
 	     kadm5_principal_ent_t default_ent)
 {
     krb5_error_code ret;
     krb5_principal def_principal;
-    krb5_const_realm realm = krb5_principal_get_realm(context->context, princ);
+    krb5_const_realm realm = krb5_principal_get_realm(contextp->context, princ);
 
-    ret = krb5_make_principal (context->context, &def_principal,
+    ret = krb5_make_principal (contextp->context, &def_principal,
 			       realm, "default", NULL);
     if (ret)
 	return ret;
-    ret = kadm5_get_principal (context, def_principal, default_ent,
+    ret = kadm5_get_principal (contextp, def_principal, default_ent,
 			       KADM5_PRINCIPAL_NORMAL_MASK);
-    krb5_free_principal (context->context, def_principal);
+    krb5_free_principal (contextp->context, def_principal);
     return ret;
 }
 

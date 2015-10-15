@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.common-target,v 1.1 2014/03/01 10:00:49 mrg Exp $
+
+#.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_COMMON_TARGET_
+#_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_COMMON_TARGET_=1
+
+COMMONTARGETOBJ!=	cd ${.CURDIR}/../common-target && ${PRINTOBJDIR}
+DPADD+=			${COMMONTARGETOBJ}/libcommon-target.a
+LDADD+=			${COMMONTARGETOBJ}/libcommon-target.a
+
+#.endif

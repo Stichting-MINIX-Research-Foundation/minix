@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2012/02/18 16:29:37 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2015/02/23 20:34:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,11 +49,6 @@
 #else
 #define	KERNEL_BASE		0x80000000
 #endif
-
-/*
- * Override the default pager_map size, there's not enough KVA.
- */
-#define PAGER_MAP_DEFAULT_SIZE		(4 * 1024 * 1024)
 
 /*
  * Size of User Raw I/O map

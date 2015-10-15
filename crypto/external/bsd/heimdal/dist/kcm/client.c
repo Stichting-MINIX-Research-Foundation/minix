@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -116,7 +116,7 @@ kcm_ccache_new_client(krb5_context context,
 	if (bad && !CLIENT_IS_ROOT(client))
 	    return KRB5_CC_BADNAME;
     }
-	
+
     ret = kcm_ccache_resolve(context, name, &ccache);
     if (ret == 0) {
 	if ((ccache->uid != client->uid ||

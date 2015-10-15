@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.21 2013/02/03 03:21:21 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.22 2015/03/29 05:52:59 agc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.21 2013/02/03 03:21:21 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.22 2015/03/29 05:52:59 agc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -60,8 +60,8 @@ __RCSID("$NetBSD: buf.c,v 1.21 2013/02/03 03:21:21 christos Exp $");
 TAILQ_HEAD(buftailhead,buf) buftail;
 
 int
-bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *u1 __unused,
-   int u2 __unused, struct buf **bpp)
+bread(struct vnode *vp, daddr_t blkno, int size, int u2 __unused,
+	struct buf **bpp)
 {
 	off_t	offset;
 	ssize_t	rv;

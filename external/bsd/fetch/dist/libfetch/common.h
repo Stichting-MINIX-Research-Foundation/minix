@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.7 2010/03/24 20:51:42 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.2 2014/01/07 02:13:00 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -90,7 +90,7 @@ struct fetcherr {
 
 void		 fetch_seterr(struct fetcherr *, int);
 void		 fetch_syserr(void);
-void		 fetch_info(const char *, ...);
+void		 fetch_info(const char *, ...) __printflike(1, 2);
 int		 fetch_default_port(const char *);
 int		 fetch_default_proxy_port(const char *);
 int		 fetch_bind(int, int, const char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: t_tan.c,v 1.4 2011/09/15 11:05:50 he Exp $ */
+/* $NetBSD: t_tan.c,v 1.5 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -81,12 +81,10 @@ ATF_TC_HEAD(tan_nan, tc)
 
 ATF_TC_BODY(tan_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(tan(x)) != 0);
-#endif
 }
 
 ATF_TC(tan_inf_neg);
@@ -97,11 +95,9 @@ ATF_TC_HEAD(tan_inf_neg, tc)
 
 ATF_TC_BODY(tan_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	ATF_CHECK(isnan(tan(x)) != 0);
-#endif
 }
 
 ATF_TC(tan_inf_pos);
@@ -112,11 +108,9 @@ ATF_TC_HEAD(tan_inf_pos, tc)
 
 ATF_TC_BODY(tan_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 
 	ATF_CHECK(isnan(tan(x)) != 0);
-#endif
 }
 
 
@@ -128,11 +122,9 @@ ATF_TC_HEAD(tan_zero_neg, tc)
 
 ATF_TC_BODY(tan_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 
 	ATF_CHECK(tan(x) == x);
-#endif
 }
 
 ATF_TC(tan_zero_pos);
@@ -143,11 +135,9 @@ ATF_TC_HEAD(tan_zero_pos, tc)
 
 ATF_TC_BODY(tan_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 
 	ATF_CHECK(tan(x) == x);
-#endif
 }
 
 /*
@@ -161,7 +151,6 @@ ATF_TC_HEAD(tanf_angles, tc)
 
 ATF_TC_BODY(tanf_angles, tc)
 {
-#ifndef __vax__
 	const float eps = 1.0e-6;
 	float x, y;
 	size_t i;
@@ -175,7 +164,6 @@ ATF_TC_BODY(tanf_angles, tc)
 			atf_tc_fail_nonfatal("tanf(%d deg) != %0.01f",
 			    angles[i].angle, angles[i].y);
 	}
-#endif
 }
 
 ATF_TC(tanf_nan);
@@ -186,12 +174,10 @@ ATF_TC_HEAD(tanf_nan, tc)
 
 ATF_TC_BODY(tanf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(tanf(x)) != 0);
-#endif
 }
 
 ATF_TC(tanf_inf_neg);
@@ -202,14 +188,12 @@ ATF_TC_HEAD(tanf_inf_neg, tc)
 
 ATF_TC_BODY(tanf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (isnan(tanf(x)) == 0) {
 		atf_tc_expect_fail("PR lib/45362");
 		atf_tc_fail("tanf(-Inf) != NaN");
 	}
-#endif
 }
 
 ATF_TC(tanf_inf_pos);
@@ -220,14 +204,12 @@ ATF_TC_HEAD(tanf_inf_pos, tc)
 
 ATF_TC_BODY(tanf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
 	if (isnan(tanf(x)) == 0) {
 		atf_tc_expect_fail("PR lib/45362");
 		atf_tc_fail("tanf(+Inf) != NaN");
 	}
-#endif
 }
 
 
@@ -239,11 +221,9 @@ ATF_TC_HEAD(tanf_zero_neg, tc)
 
 ATF_TC_BODY(tanf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 
 	ATF_CHECK(tanf(x) == x);
-#endif
 }
 
 ATF_TC(tanf_zero_pos);
@@ -254,11 +234,9 @@ ATF_TC_HEAD(tanf_zero_pos, tc)
 
 ATF_TC_BODY(tanf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 
 	ATF_CHECK(tanf(x) == x);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

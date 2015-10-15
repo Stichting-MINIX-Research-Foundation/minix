@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_destroy_cred.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_destroy_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -43,9 +43,9 @@ gss_destroy_cred(void *status,
 	return GSS_S_CALL_INACCESSIBLE_READ;
     if (*cred_handle == GSS_C_NO_CREDENTIAL)
 	return GSS_S_COMPLETE;
-    
+
     cred = (struct _gss_cred *)*cred_handle;
-    
+
     while (HEIM_SLIST_FIRST(&cred->gc_mc)) {
 	mc = HEIM_SLIST_FIRST(&cred->gc_mc);
 	HEIM_SLIST_REMOVE_HEAD(&cred->gc_mc, gmc_link);

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.1.1.1 2009/10/26 00:26:28 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.3 2014/10/30 18:44:05 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -32,6 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include "flexdef.h"
+__RCSID("$NetBSD: options.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
 
 #include "options.h"
 

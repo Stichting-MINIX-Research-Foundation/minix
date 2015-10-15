@@ -1,4 +1,4 @@
-# $NetBSD: t_wait.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_wait.sh,v 1.3 2015/09/30 06:08:36 ozaki-r Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,28 +32,66 @@ individual_head() {
 individual_body() {
 	# atf-sh confuses wait for some reason; work it around by creating
 	# a helper script that executes /bin/sh directly.
-	cat >helper.sh <<EOF
+	cat >individualhelper.sh <<\EOF
 sleep 3 &
 sleep 1 &
 
 wait %1
-if [ \$? -ne 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Waiting of first job failed"
     exit 1
 fi
 
 wait %2
-if [ \$? -ne 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Waiting of second job failed"
     exit 1
 fi
 
 exit 0
 EOF
-	output=$(/bin/sh helper.sh)
+	output=$(/bin/sh individualhelper.sh)
 	[ $? -eq 0 ] || atf_fail "${output}"
+	rm -f individualhelper.sh
+}
+
+atf_test_case kill
+kill_head() {
+	atf_set "descr" "Tests that killing the shell while in wait calls trap"
+}
+kill_body() {
+	# atf-sh confuses wait for some reason; work it around by creating
+	# a helper script that executes /bin/sh directly.
+	local s=$PWD/killhelper.sh
+	local z=/tmp/killhelper.$$ 
+	local pid=
+
+	cat >$s <<\EOF
+#!/bin/sh
+trap "echo SIGHUP" 1
+sleep 10 &
+sl=$!
+wait
+echo $?
+EOF
+	chmod +x $s
+
+	$s > $z &
+	pid=$!
+	sleep 1
+
+	# XXX: built-in kill does not work?
+	/bin/kill -HUP $pid
+	sleep 1
+
+	output="$(cat $z | tr '\n' ' ')"
+	rm -f $s $z
+	if [ "$output" != "SIGHUP 129 " ]; then
+		atf_fail "${output} != 'SIGHUP 129 '"
+	fi
 }
 
 atf_init_test_cases() {
 	atf_add_test_case individual
+	atf_add_test_case kill
 }

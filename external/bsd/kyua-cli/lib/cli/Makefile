@@ -19,7 +19,6 @@ SRCS=		cmd_about.cpp \
 		cmd_list.cpp \
 		cmd_report.cpp \
 		cmd_report_html.cpp \
-		cmd_report_tap.cpp \
 		cmd_test.cpp \
 		common.cpp \
 		config.cpp \

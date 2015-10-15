@@ -66,6 +66,7 @@
 ./dev/pts                                               minix-base
 ./etc                                                   minix-base
 ./etc/X11                                               minix-base      xorg
+./etc/X11/ctwm                                          minix-base
 ./etc/X11/fs                                            minix-base      xorg
 ./etc/X11/lbxproxy                                      minix-base      xorg
 ./etc/X11/proxymngr                                     minix-base      xorg
@@ -98,6 +99,7 @@
 ./etc/group                                             minix-base
 ./etc/hostname.file                                     minix-base
 ./etc/inet.conf                                         minix-base
+./etc/kyua                                              minix-tests     kyua
 ./etc/man.conf                                          minix-base
 ./etc/master.passwd                                     minix-base
 ./etc/mk.conf                                           minix-base
@@ -107,6 +109,10 @@
 ./etc/mtree/NetBSD.dist                                 minix-base
 ./etc/mtree/set.minix-base                              minix-base
 ./etc/mtree/special                                     minix-base
+./etc/openssl                                           minix-base      crypto
+./etc/openssl/certs                                     minix-base      crypto
+./etc/openssl/misc                                      minix-base      crypto
+./etc/openssl/private                                   minix-base      crypto
 ./etc/passwd                                            minix-base
 ./etc/profile                                           minix-base
 ./etc/protocols                                         minix-base
@@ -114,6 +120,8 @@
 ./etc/rc                                                minix-base
 ./etc/rc.cd                                             minix-base
 ./etc/rc.conf                                           minix-base
+./etc/rc.d                                              minix-base
+./etc/rc.d/blacklistd                                   minix-base
 ./etc/rc.daemons.dist                                   minix-base
 ./etc/rc.shutdown                                       minix-base
 ./etc/rc.subr                                           minix-base
@@ -121,6 +129,11 @@
 ./etc/resolv.conf                                       minix-base
 ./etc/rs.inet                                           minix-base
 ./etc/rs.single                                         minix-base
+./etc/saslc.d                                           minix-base      crypto
+./etc/saslc.d/postfix                                   minix-base      crypto
+./etc/saslc.d/postfix/mech                              minix-base      crypto
+./etc/saslc.d/saslc                                     minix-base      crypto
+./etc/saslc.d/saslc/mech                                minix-base      crypto
 ./etc/services                                          minix-base
 ./etc/shells                                            minix-base
 ./etc/shrc                                              minix-base
@@ -158,6 +171,8 @@
 ./root/.profile                                         minix-base
 ./root/.shrc                                            minix-base
 ./sbin                                                  minix-base
+./sbin/blacklistctl                                     minix-base
+./sbin/blacklistd                                       minix-base
 ./sbin/chown                                            minix-base
 ./sbin/fsck                                             minix-base
 ./sbin/fsck_ext2fs                                      minix-base
@@ -224,6 +239,10 @@
 ./usr/bin/arp                                           minix-base
 ./usr/bin/asa                                           minix-base
 ./usr/bin/at                                            minix-base
+./usr/bin/atf-report                                    minix-base      atf
+./usr/bin/atf-run                                       minix-base      atf
+./usr/bin/atf-sh                                        minix-base      atf
+./usr/bin/atf2kyua                                      minix-base      kyua
 ./usr/bin/atnormalize                                   minix-base
 ./usr/bin/autopart                                      minix-base
 ./usr/bin/awk                                           minix-base
@@ -338,6 +357,7 @@
 ./usr/bin/isoread                                       minix-base
 ./usr/bin/join                                          minix-base
 ./usr/bin/jot                                           minix-base
+./usr/bin/kyua                                          minix-base      kyua
 ./usr/bin/lam                                           minix-base
 ./usr/bin/last                                          minix-base
 ./usr/bin/ld                                            minix-base      binutils
@@ -536,7 +556,7 @@
 ./usr/bin/zcat                                          minix-base
 ./usr/bin/zcmp                                          minix-base
 ./usr/bin/zdiff                                         minix-base
-./usr/bin/zdump                                         minix-base
+./usr/bin/zdump                                         minix-base      obsolete
 ./usr/bin/zegrep                                        minix-base
 ./usr/bin/zfgrep                                        minix-base
 ./usr/bin/zforce                                        minix-base
@@ -548,6 +568,10 @@
 ./usr/etc/daily                                         minix-base
 ./usr/etc/dhcptags.conf                                 minix-base
 ./usr/etc/rc                                            minix-base
+./usr/include/c++                                       minix-base      gcc=5
+./usr/include/c++/experimental                          minix-base      gcc=5
+./usr/include/c++/ext                                   minix-base      gcc=5
+./usr/include/clang-3.6                                 minix-base      gcc=5
 ./usr/lib                                               minix-base
 ./usr/lib/cawf                                          minix-base
 ./usr/lib/cawf/common                                   minix-base
@@ -567,8 +591,8 @@
 ./usr/lib/crtendS.o                                     minix-base
 ./usr/lib/crti.o                                        minix-base
 ./usr/lib/crtn.o                                        minix-base
-./usr/lib/dict                                          minix-base
-./usr/lib/flex                                          minix-base
+./usr/lib/dict                                          minix-base      obsolete
+./usr/lib/flex                                          minix-base      obsolete
 ./usr/lib/fonts                                         minix-base
 ./usr/lib/fonts/cp1251.fnt                              minix-base
 ./usr/lib/fonts/cp437.fnt                               minix-base
@@ -604,18 +628,34 @@
 ./usr/lib/libarchive.so                                 minix-base
 ./usr/lib/libarchive.so.3                               minix-base
 ./usr/lib/libarchive.so.3.1                             minix-base
+./usr/lib/libatf-c++.a                                  minix-base      atf
+./usr/lib/libatf-c++.so.1.0                             minix-base      atf
+./usr/lib/libatf-c++.so.1                               minix-base      atf
+./usr/lib/libatf-c++.so                                 minix-base      atf
+./usr/lib/libatf-c++_pic.a                              minix-base      atf
+./usr/lib/libatf-c.a                                    minix-base      atf
+./usr/lib/libatf-c.so.0.0                               minix-base      atf
+./usr/lib/libatf-c.so.0                                 minix-base      atf
+./usr/lib/libatf-c.so                                   minix-base      atf
+./usr/lib/libatf-c_pic.a                                minix-base      atf
 ./usr/lib/libbfd.so.13.0                                minix-base      binutils
 ./usr/lib/libbfd.so.13                                  minix-base      binutils
+./usr/lib/libblacklist.a                                minix-base
+./usr/lib/libblacklist.so                               minix-base
+./usr/lib/libblacklist.so.0                             minix-base
+./usr/lib/libblacklist.so.0.0                           minix-base
+./usr/lib/libblacklist_pic.a                            minix-base
 ./usr/lib/libbz2.so                                     minix-base
 ./usr/lib/libbz2.so.1                                   minix-base
 ./usr/lib/libbz2.so.1.1                                 minix-base
 ./usr/lib/libc++.so.1.0                                 minix-base      libcxx
 ./usr/lib/libc++.so.1                                   minix-base      libcxx
 ./usr/lib/libc++.so                                     minix-base      libcxx
-./usr/lib/libc.pc                                       minix-base
+./usr/lib/libc.pc                                       minix-base      obsolete
 ./usr/lib/libc.so                                       minix-base
 ./usr/lib/libc.so.12                                    minix-base
-./usr/lib/libc.so.12.187                                minix-base
+./usr/lib/libc.so.12.187                                minix-base      obsolete
+./usr/lib/libc.so.12.197                                minix-base
 ./usr/lib/libcompat_minix.so.0.0                        minix-base      obsolete
 ./usr/lib/libcompat_minix.so.0                          minix-base      obsolete
 ./usr/lib/libcompat_minix.so                            minix-base      obsolete
@@ -623,7 +663,8 @@
 ./usr/lib/libcrypt.so.1                                 minix-base
 ./usr/lib/libcrypt.so.1.0                               minix-base
 ./usr/lib/libcrypto.a                                   minix-base      crypto
-./usr/lib/libcrypto.so.8.1                              minix-base      crypto
+./usr/lib/libcrypto.so.8.1                              minix-base      crypto,obsolete
+./usr/lib/libcrypto.so.8.4                              minix-base      crypto
 ./usr/lib/libcrypto.so.8                                minix-base      crypto
 ./usr/lib/libcrypto.so                                  minix-base      crypto
 ./usr/lib/libcrypto_pic.a                               minix-base      crypto
@@ -631,7 +672,8 @@
 ./usr/lib/libcurses.so.7                                minix-base
 ./usr/lib/libcurses.so.7.0                              minix-base
 ./usr/lib/libdes.a                                      minix-base      crypto
-./usr/lib/libdes.so.8.1                                 minix-base      crypto
+./usr/lib/libdes.so.8.1                                 minix-base      crypto,obsolete
+./usr/lib/libdes.so.8.2                                 minix-base      crypto
 ./usr/lib/libdes.so.8                                   minix-base      crypto
 ./usr/lib/libdes.so                                     minix-base      crypto
 ./usr/lib/libdes_pic.a                                  minix-base      crypto
@@ -639,8 +681,10 @@
 ./usr/lib/libedit.so.3                                  minix-base
 ./usr/lib/libedit.so.3.1                                minix-base
 ./usr/lib/libelf.so                                     minix-base
-./usr/lib/libelf.so.0                                   minix-base
-./usr/lib/libelf.so.0.0                                 minix-base
+./usr/lib/libelf.so.0.0                                 minix-base      obsolete
+./usr/lib/libelf.so.0                                   minix-base      obsolete
+./usr/lib/libelf.so.1                                   minix-base
+./usr/lib/libelf.so.1.0                                 minix-base
 ./usr/lib/libevent.so                                   minix-base
 ./usr/lib/libevent.so.4                                 minix-base
 ./usr/lib/libevent.so.4.0                               minix-base
@@ -661,21 +705,34 @@
 ./usr/lib/libform.so                                    minix-base
 ./usr/lib/libform.so.6                                  minix-base
 ./usr/lib/libform.so.6.0                                minix-base
+./usr/lib/libgcc.a                                      minix-base      gcc=5
+./usr/lib/libgcc_eh.a                                   minix-base      gcc=5
 ./usr/lib/libgcc_s.so                                   minix-base
 ./usr/lib/libgcc_s.so.1                                 minix-base
 ./usr/lib/libgcc_s.so.1.0                               minix-base
 ./usr/lib/liblua.so                                     minix-base
-./usr/lib/liblua.so.1                                   minix-base
-./usr/lib/liblua.so.1.0                                 minix-base
+./usr/lib/liblua.so.1.0                                 minix-base      obsolete
+./usr/lib/liblua.so.1                                   minix-base      obsolete
+./usr/lib/liblua.so.5                                   minix-base
+./usr/lib/liblua.so.5.3                                 minix-base
+./usr/lib/liblutok.a                                    minix-base      kyua
+./usr/lib/liblutok.so.2.0                               minix-base      kyua
+./usr/lib/liblutok.so.2                                 minix-base      kyua
+./usr/lib/liblutok.so                                   minix-base      kyua
+./usr/lib/liblutok_pic.a                                minix-base      kyua
 ./usr/lib/liblzma.so                                    minix-base
-./usr/lib/liblzma.so.1                                  minix-base
-./usr/lib/liblzma.so.1.1                                minix-base
+./usr/lib/liblzma.so.1.1                                minix-base      obsolete
+./usr/lib/liblzma.so.1                                  minix-base      obsolete
+./usr/lib/liblzma.so.2                                  minix-base
+./usr/lib/liblzma.so.2.0                                minix-base
 ./usr/lib/libm.so                                       minix-base
 ./usr/lib/libm.so.0                                     minix-base
-./usr/lib/libm.so.0.10                                  minix-base
+./usr/lib/libm.so.0.10                                  minix-base      obsolete
+./usr/lib/libm.so.0.11                                  minix-base
 ./usr/lib/libmagic.so                                   minix-base
 ./usr/lib/libmagic.so.5                                 minix-base
-./usr/lib/libmagic.so.5.0                               minix-base
+./usr/lib/libmagic.so.5.0                               minix-base      obsolete
+./usr/lib/libmagic.so.5.1                               minix-base
 ./usr/lib/libmenu.so                                    minix-base
 ./usr/lib/libmenu.so.6                                  minix-base
 ./usr/lib/libmenu.so.6.0                                minix-base
@@ -700,14 +757,19 @@
 ./usr/lib/libnetpgpverify.so.4                          minix-base      crypto
 ./usr/lib/libnetpgpverify.so                            minix-base      crypto
 ./usr/lib/libnetpgpverify_pic.a                         minix-base      crypto
-./usr/lib/libobjc.so.3.0                                minix-base      gcc=45
-./usr/lib/libobjc.so.3                                  minix-base      gcc=45
-./usr/lib/libobjc.so                                    minix-base      gcc=45
+./usr/lib/libobjc.a                                     minix-base      gcc=5
+./usr/lib/libobjc.so.3.0                                minix-base      gcc=45,obsolete
+./usr/lib/libobjc.so.3                                  minix-base      gcc=45,obsolete
+./usr/lib/libobjc.so.4.0                                minix-base      gcc=5
+./usr/lib/libobjc.so.4                                  minix-base      gcc=5
+./usr/lib/libobjc.so                                    minix-base      gcc
+./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
 ./usr/lib/libopcodes.so.6.0                             minix-base      binutils
 ./usr/lib/libopcodes.so.6                               minix-base      binutils
 ./usr/lib/libpci.so                                     minix-base
 ./usr/lib/libpci.so.2                                   minix-base
-./usr/lib/libpci.so.2.0                                 minix-base
+./usr/lib/libpci.so.2.0                                 minix-base      obsolete
+./usr/lib/libpci.so.2.1                                 minix-base
 ./usr/lib/libprop.so                                    minix-base
 ./usr/lib/libprop.so.1                                  minix-base
 ./usr/lib/libprop.so.1.1                                minix-base
@@ -724,13 +786,16 @@
 ./usr/lib/libsaslc_pic.a                                minix-base      crypto
 ./usr/lib/libsqlite3.so                                 minix-base
 ./usr/lib/libsqlite3.so.1                               minix-base
-./usr/lib/libsqlite3.so.1.1                             minix-base
+./usr/lib/libsqlite3.so.1.1                             minix-base      obsolete
+./usr/lib/libsqlite3.so.1.2                             minix-base
 ./usr/lib/libssl.a                                      minix-base      crypto
-./usr/lib/libssl.so.10.1                                minix-base      crypto
+./usr/lib/libssl.so.10.1                                minix-base      crypto,obsolete
+./usr/lib/libssl.so.10.5                                minix-base      crypto
 ./usr/lib/libssl.so.10                                  minix-base      crypto
 ./usr/lib/libssl.so                                     minix-base      crypto
 ./usr/lib/libssl_pic.a                                  minix-base      crypto
-./usr/lib/libstdc++.so.6.1                              minix-base      libstdcxx
+./usr/lib/libstdc++.so.6.1                              minix-base      libstdcxx,obsolete
+./usr/lib/libstdc++.so.6.3                              minix-base      libstdcxx
 ./usr/lib/libstdc++.so.6                                minix-base      libstdcxx
 ./usr/lib/libstdc++.so                                  minix-base      libstdcxx
 ./usr/lib/libsys.so                                     minix-base
@@ -747,26 +812,55 @@
 ./usr/lib/libtermlib.so.0.6                             minix-base
 ./usr/lib/libutil.so                                    minix-base
 ./usr/lib/libutil.so.7                                  minix-base
-./usr/lib/libutil.so.7.21                               minix-base
+./usr/lib/libutil.so.7.21                               minix-base      obsolete
+./usr/lib/libutil.so.7.23                               minix-base
 ./usr/lib/libz.so                                       minix-base
 ./usr/lib/libz.so.1                                     minix-base
 ./usr/lib/libz.so.1.0                                   minix-base
 ./usr/lib/lua                                           minix-base
-./usr/lib/lua/5.1                                       minix-base
-./usr/lib/lua/5.1/gpio.so                               minix-base
-./usr/lib/lua/5.1/sqlite.so                             minix-base
-./usr/lib/lua/5.1/syslog.so                             minix-base
+./usr/lib/lua/5.1                                       minix-base      obsolete
+./usr/lib/lua/5.1/gpio.so                               minix-base      obsolete
+./usr/lib/lua/5.1/sqlite.so                             minix-base      obsolete
+./usr/lib/lua/5.1/syslog.so                             minix-base      obsolete
+./usr/lib/lua/5.3                                       minix-base
+./usr/lib/lua/5.3/gpio.so                               minix-base
+./usr/lib/lua/5.3/sqlite.so                             minix-base
+./usr/lib/lua/5.3/syslog.so                             minix-base
 ./usr/lib/minlib.pc                                     minix-base      obsolete
 ./usr/lib/pkgconfig                                     minix-base
+./usr/lib/pkgconfig/atf-c++.pc                          minix-base      atf
+./usr/lib/pkgconfig/atf-c.pc                            minix-base      atf
+./usr/lib/pkgconfig/atf-sh.pc                           minix-base      atf
+./usr/lib/pkgconfig/kyua-testers.pc                     minix-base      kyua
 ./usr/lib/pkgconfig/libcrypto.pc                        minix-base      crypto
 ./usr/lib/pkgconfig/libssl.pc                           minix-base      crypto
+./usr/lib/pkgconfig/lutok.pc                            minix-base      kyua
 ./usr/lib/pkgconfig/openssl.pc                          minix-base      crypto
 ./usr/lib/pkgconfig/sqlite3.pc                          minix-base
+./usr/lib/pkgconfig/zlib.pc                             minix-base
 ./usr/lib/pwdauth                                       minix-base
+./usr/lib/security                                      minix-base
+./usr/libdata                                           minix-base
+./usr/libdata/debug                                     minix-base
+./usr/libdata/debug/bin                                 minix-base
+./usr/libdata/debug/lib                                 minix-base
+./usr/libdata/debug/libexec                             minix-base
+./usr/libdata/debug/sbin                                minix-base
+./usr/libdata/debug/usr                                 minix-base
+./usr/libdata/debug/usr/bin                             minix-base
+./usr/libdata/debug/usr/games                           minix-base
+./usr/libdata/debug/usr/lib                             minix-base
+./usr/libdata/debug/usr/libexec                         minix-base
+./usr/libdata/debug/usr/mdec                            minix-base
+./usr/libdata/debug/usr/sbin                            minix-base
 ./usr/libexec                                           minix-base
+./usr/libexec/atf-check                                 minix-base      atf
+./usr/libexec/blacklistd-helper                         minix-base
 ./usr/libexec/fingerd                                   minix-base
 ./usr/libexec/ftpd                                      minix-base
 ./usr/libexec/getty                                     minix-base
+./usr/libexec/kyua-atf-tester                           minix-base      kyua
+./usr/libexec/kyua-plain-tester                         minix-base      kyua
 ./usr/libexec/ld.elf_so                                 minix-base
 ./usr/libexec/makewhatis                                minix-base
 ./usr/libexec/rshd                                      minix-base
@@ -822,6 +916,7 @@
 ./usr/sbin/vipw                                         minix-base
 ./usr/sbin/vnconfig                                     minix-base
 ./usr/sbin/vndconfig                                    minix-base
+./usr/sbin/zdump                                        minix-base
 ./usr/sbin/zic                                          minix-base
 ./usr/service                                           minix-base
 ./usr/service/asr                                       minix-base
@@ -838,58 +933,64 @@
 ./usr/share/calendar/calendar.netbsd                    minix-base
 ./usr/share/calendar/calendar.usholiday                 minix-base
 ./usr/share/doc                                         minix-base
-./usr/share/doc/html                                    minix-base
-./usr/share/doc/html/bzip2                              minix-base
-./usr/share/doc/html/bzip2/manual.html                  minix-base
+./usr/share/doc/html                                    minix-base      obsolete
+./usr/share/doc/html/bzip2                              minix-base      obsolete
+./usr/share/doc/html/bzip2/manual.html                  minix-base      obsolete
 ./usr/share/doc/psd                                     minix-base
-./usr/share/doc/psd/19.curses                           minix-base
-./usr/share/doc/psd/19.curses/Makefile                  minix-base
-./usr/share/doc/psd/19.curses/Master                    minix-base
-./usr/share/doc/psd/19.curses/appen.A                   minix-base
-./usr/share/doc/psd/19.curses/appen.B                   minix-base
-./usr/share/doc/psd/19.curses/appen.C                   minix-base
-./usr/share/doc/psd/19.curses/c_macros                  minix-base
-./usr/share/doc/psd/19.curses/doc.I                     minix-base
-./usr/share/doc/psd/19.curses/doc.II                    minix-base
-./usr/share/doc/psd/19.curses/doc.III                   minix-base
-./usr/share/doc/psd/19.curses/doc.IV                    minix-base
-./usr/share/doc/psd/19.curses/ex1.c                     minix-base
-./usr/share/doc/psd/19.curses/ex2.c                     minix-base
-./usr/share/doc/psd/19.curses/fns.doc                   minix-base
-./usr/share/doc/psd/19.curses/intro.0                   minix-base
-./usr/share/doc/psd/19.curses/intro.1                   minix-base
-./usr/share/doc/psd/19.curses/intro.2                   minix-base
-./usr/share/doc/psd/19.curses/intro.3                   minix-base
-./usr/share/doc/psd/19.curses/intro.4                   minix-base
-./usr/share/doc/psd/19.curses/intro.5                   minix-base
-./usr/share/doc/psd/19.curses/intro.6                   minix-base
-./usr/share/doc/psd/19.curses/life.c                    minix-base
-./usr/share/doc/psd/19.curses/macros                    minix-base
-./usr/share/doc/psd/19.curses/twinkle1.c                minix-base
-./usr/share/doc/psd/19.curses/twinkle2.c                minix-base
-./usr/share/doc/psd/19.curses/win_st.c                  minix-base
+./usr/share/doc/psd/19.curses                           minix-base      obsolete
+./usr/share/doc/psd/19.curses/Makefile                  minix-base      obsolete
+./usr/share/doc/psd/19.curses/Master                    minix-base      obsolete
+./usr/share/doc/psd/19.curses/appen.A                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/appen.B                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/appen.C                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/c_macros                  minix-base      obsolete
+./usr/share/doc/psd/19.curses/doc.I                     minix-base      obsolete
+./usr/share/doc/psd/19.curses/doc.II                    minix-base      obsolete
+./usr/share/doc/psd/19.curses/doc.III                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/doc.IV                    minix-base      obsolete
+./usr/share/doc/psd/19.curses/ex1.c                     minix-base      obsolete
+./usr/share/doc/psd/19.curses/ex2.c                     minix-base      obsolete
+./usr/share/doc/psd/19.curses/fns.doc                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.0                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.1                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.2                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.3                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.4                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.5                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/intro.6                   minix-base      obsolete
+./usr/share/doc/psd/19.curses/life.c                    minix-base      obsolete
+./usr/share/doc/psd/19.curses/macros                    minix-base      obsolete
+./usr/share/doc/psd/19.curses/twinkle1.c                minix-base      obsolete
+./usr/share/doc/psd/19.curses/twinkle2.c                minix-base      obsolete
+./usr/share/doc/psd/19.curses/win_st.c                  minix-base      obsolete
+./usr/share/doc/reference/ref1/bzip2                    minix-base
+./usr/share/doc/reference/ref1/bzip2/manual.html        minix-base
 ./usr/share/doc/usd                                     minix-base
-./usr/share/doc/usd/03.shell                            minix-base
-./usr/share/doc/usd/03.shell/Makefile                   minix-base
-./usr/share/doc/usd/03.shell/Rv7man                     minix-base
-./usr/share/doc/usd/03.shell/t.mac                      minix-base
-./usr/share/doc/usd/03.shell/t1                         minix-base
-./usr/share/doc/usd/03.shell/t2                         minix-base
-./usr/share/doc/usd/03.shell/t3                         minix-base
-./usr/share/doc/usd/03.shell/t4                         minix-base
-./usr/share/doc/usd/04.csh                              minix-base
-./usr/share/doc/usd/04.csh/Makefile                     minix-base
-./usr/share/doc/usd/04.csh/csh.1                        minix-base
-./usr/share/doc/usd/04.csh/csh.2                        minix-base
-./usr/share/doc/usd/04.csh/csh.3                        minix-base
-./usr/share/doc/usd/04.csh/csh.4                        minix-base
-./usr/share/doc/usd/04.csh/csh.ap                       minix-base
-./usr/share/doc/usd/04.csh/csh.g                        minix-base
-./usr/share/doc/usd/04.csh/tabs                         minix-base
-./usr/share/doc/usd/30.rogue                            minix-base
-./usr/share/doc/usd/30.rogue/Makefile                   minix-base
-./usr/share/doc/usd/30.rogue/rogue.me                   minix-base
+./usr/share/doc/usd/03.shell                            minix-base      obsolete
+./usr/share/doc/usd/03.shell/Makefile                   minix-base      obsolete
+./usr/share/doc/usd/03.shell/Rv7man                     minix-base      obsolete
+./usr/share/doc/usd/03.shell/t.mac                      minix-base      obsolete
+./usr/share/doc/usd/03.shell/t1                         minix-base      obsolete
+./usr/share/doc/usd/03.shell/t2                         minix-base      obsolete
+./usr/share/doc/usd/03.shell/t3                         minix-base      obsolete
+./usr/share/doc/usd/03.shell/t4                         minix-base      obsolete
+./usr/share/doc/usd/04.csh                              minix-base      obsolete
+./usr/share/doc/usd/04.csh/Makefile                     minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.1                        minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.2                        minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.3                        minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.4                        minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.ap                       minix-base      obsolete
+./usr/share/doc/usd/04.csh/csh.g                        minix-base      obsolete
+./usr/share/doc/usd/04.csh/tabs                         minix-base      obsolete
+./usr/share/doc/usd/30.rogue                            minix-base      obsolete
+./usr/share/doc/usd/30.rogue/Makefile                   minix-base      obsolete
+./usr/share/doc/usd/30.rogue/rogue.me                   minix-base      obsolete
 ./usr/share/examples                                    minix-base
+./usr/share/examples/blacklist                          minix-base
+./usr/share/examples/blacklist/blacklistd.conf          minix-base
+./usr/share/examples/blacklist/npf.conf                 minix-base
+./usr/share/examples/ftpd                               minix-base
 ./usr/share/examples/libsaslc                           minix-base
 ./usr/share/examples/libsaslc/README                    minix-base      crypto
 ./usr/share/examples/libsaslc/mech                      minix-base
@@ -901,6 +1002,8 @@
 ./usr/share/examples/libsaslc/mech/LOGIN.conf           minix-base      crypto
 ./usr/share/examples/libsaslc/mech/PLAIN.conf           minix-base      crypto
 ./usr/share/examples/libsaslc/saslc.conf                minix-base      crypto
+./usr/share/examples/lua                                minix-base
+./usr/share/examples/lutok                              minix-base      kyua
 ./usr/share/examples/openssl                            minix-base
 ./usr/share/examples/openssl/CA.pl                      minix-base      crypto
 ./usr/share/examples/openssl/CA.sh                      minix-base      crypto
@@ -918,10 +1021,14 @@
 ./usr/share/info/ld.info                                minix-base      binutils
 ./usr/share/info/texinfo.info                           minix-base
 ./usr/share/info/vi.info                                minix-base
+./usr/share/keymaps                                     minix-base
 ./usr/share/legal                                       minix-base
 ./usr/share/legal/COPYRIGHT                             minix-base
+./usr/share/lua                                         minix-base
+./usr/share/lua/5.3                                     minix-base
 ./usr/share/misc                                        minix-base
 ./usr/share/misc/NetBSD.el                              minix-base
+./usr/share/misc/acronyms-o                             minix-base
 ./usr/share/misc/acronyms                               minix-base
 ./usr/share/misc/acronyms.comp                          minix-base
 ./usr/share/misc/airport                                minix-base
@@ -961,6 +1068,7 @@
 ./usr/share/mk/bsd.endian.mk                            minix-base
 ./usr/share/mk/bsd.files.mk                             minix-base
 ./usr/share/mk/bsd.gcc.mk                               minix-base
+./usr/share/mk/bsd.host.mk                              minix-base
 ./usr/share/mk/bsd.hostlib.mk                           minix-base
 ./usr/share/mk/bsd.hostprog.mk                          minix-base
 ./usr/share/mk/bsd.inc.mk                               minix-base
@@ -983,6 +1091,7 @@
 ./usr/share/mk/bsd.shlib.mk                             minix-base
 ./usr/share/mk/bsd.subdir.mk                            minix-base
 ./usr/share/mk/bsd.sys.mk                               minix-base
+./usr/share/mk/bsd.syscall.mk                           minix-base
 ./usr/share/mk/bsd.test.mk                              minix-base
 ./usr/share/mk/bsd.x11.mk                               minix-base
 ./usr/share/mk/minix.gcov.mk                            minix-base
@@ -1236,6 +1345,7 @@
 ./usr/share/zoneinfo/Antarctica/Rothera                 minix-base
 ./usr/share/zoneinfo/Antarctica/South_Pole              minix-base
 ./usr/share/zoneinfo/Antarctica/Syowa                   minix-base
+./usr/share/zoneinfo/Antarctica/Troll                   minix-base
 ./usr/share/zoneinfo/Antarctica/Vostok                  minix-base
 ./usr/share/zoneinfo/Arctic                             minix-base
 ./usr/share/zoneinfo/Arctic/Longyearbyen                minix-base
@@ -1256,6 +1366,7 @@
 ./usr/share/zoneinfo/Asia/Bishkek                       minix-base
 ./usr/share/zoneinfo/Asia/Brunei                        minix-base
 ./usr/share/zoneinfo/Asia/Calcutta                      minix-base
+./usr/share/zoneinfo/Asia/Chita                         minix-base
 ./usr/share/zoneinfo/Asia/Choibalsan                    minix-base
 ./usr/share/zoneinfo/Asia/Chongqing                     minix-base
 ./usr/share/zoneinfo/Asia/Chungking                     minix-base
@@ -1307,15 +1418,16 @@
 ./usr/share/zoneinfo/Asia/Qyzylorda                     minix-base
 ./usr/share/zoneinfo/Asia/Rangoon                       minix-base
 ./usr/share/zoneinfo/Asia/Riyadh                        minix-base
-./usr/share/zoneinfo/Asia/Riyadh87                      minix-base
-./usr/share/zoneinfo/Asia/Riyadh88                      minix-base
-./usr/share/zoneinfo/Asia/Riyadh89                      minix-base
+./usr/share/zoneinfo/Asia/Riyadh87                      minix-base      obsolete
+./usr/share/zoneinfo/Asia/Riyadh88                      minix-base      obsolete
+./usr/share/zoneinfo/Asia/Riyadh89                      minix-base      obsolete
 ./usr/share/zoneinfo/Asia/Saigon                        minix-base
 ./usr/share/zoneinfo/Asia/Sakhalin                      minix-base
 ./usr/share/zoneinfo/Asia/Samarkand                     minix-base
 ./usr/share/zoneinfo/Asia/Seoul                         minix-base
 ./usr/share/zoneinfo/Asia/Shanghai                      minix-base
 ./usr/share/zoneinfo/Asia/Singapore                     minix-base
+./usr/share/zoneinfo/Asia/Srednekolymsk                 minix-base
 ./usr/share/zoneinfo/Asia/Taipei                        minix-base
 ./usr/share/zoneinfo/Asia/Tashkent                      minix-base
 ./usr/share/zoneinfo/Asia/Tbilisi                       minix-base
@@ -1529,10 +1641,10 @@
 ./usr/share/zoneinfo/Mexico/BajaNorte                   minix-base
 ./usr/share/zoneinfo/Mexico/BajaSur                     minix-base
 ./usr/share/zoneinfo/Mexico/General                     minix-base
-./usr/share/zoneinfo/Mideast                            minix-base
-./usr/share/zoneinfo/Mideast/Riyadh87                   minix-base
-./usr/share/zoneinfo/Mideast/Riyadh88                   minix-base
-./usr/share/zoneinfo/Mideast/Riyadh89                   minix-base
+./usr/share/zoneinfo/Mideast                            minix-base      obsolete
+./usr/share/zoneinfo/Mideast/Riyadh87                   minix-base      obsolete
+./usr/share/zoneinfo/Mideast/Riyadh88                   minix-base      obsolete
+./usr/share/zoneinfo/Mideast/Riyadh89                   minix-base      obsolete
 ./usr/share/zoneinfo/NZ-CHAT                            minix-base
 ./usr/share/zoneinfo/NZ                                 minix-base
 ./usr/share/zoneinfo/Navajo                             minix-base
@@ -1541,6 +1653,7 @@
 ./usr/share/zoneinfo/Pacific                            minix-base
 ./usr/share/zoneinfo/Pacific/Apia                       minix-base
 ./usr/share/zoneinfo/Pacific/Auckland                   minix-base
+./usr/share/zoneinfo/Pacific/Bougainville               minix-base
 ./usr/share/zoneinfo/Pacific/Chatham                    minix-base
 ./usr/share/zoneinfo/Pacific/Chuuk                      minix-base
 ./usr/share/zoneinfo/Pacific/Easter                     minix-base
@@ -1608,8 +1721,10 @@
 ./usr/share/zoneinfo/WET                                minix-base
 ./usr/share/zoneinfo/Zulu                               minix-base
 ./usr/share/zoneinfo/iso3166.tab                        minix-base
+./usr/share/zoneinfo/leapseconds                        minix-base
 ./usr/share/zoneinfo/posixrules                         minix-base
 ./usr/share/zoneinfo/zone.tab                           minix-base
+./usr/share/zoneinfo/zone1970.tab                       minix-base
 ./usr/spool                                             minix-base
 ./usr/spool/at                                          minix-base
 ./usr/spool/at/past                                     minix-base
@@ -1628,7 +1743,15 @@
 ./var/db/obsolete                                       minix-base
 ./var/db/obsolete/minix-base                            minix-base
 ./var/db/obsolete/minix                                 minix-base      obsolete
+./var/db/xdm                                            minix-base      xorg
+./var/db/xkb                                            minix-base      xorg
+./var/heimdal                                           minix-base      crypto
 ./var/log                                               minix-base
 ./var/mail                                              minix-base
 ./var/run                                               minix-base
+./var/spool                                             minix-base
+./var/spool/ftp                                         minix-base
+./var/spool/ftp/bin                                     minix-base
+./var/spool/ftp/etc                                     minix-base
+./var/spool/ftp/hidden                                  minix-base
 ./var/tmp                                               minix-base

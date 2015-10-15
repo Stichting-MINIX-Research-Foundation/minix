@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.6 2012/12/05 19:05:46 matt Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2015/09/25 16:05:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -51,3 +51,12 @@
 	"old PT_SETFPREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_pc
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
+#define PTRACE_REG_SP(r)	(r)->r_sp
+#define PTRACE_REG_INTRV(r)	(r)->r[0]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xff, 0xff })
+#define PTRACE_BREAKPOINT_SIZE	4

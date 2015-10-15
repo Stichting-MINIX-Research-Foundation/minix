@@ -1,6 +1,6 @@
-# $NetBSD: t_make.sh,v 1.1 2012/03/17 16:33:14 jruoho Exp $
+# $NetBSD: t_make.sh,v 1.7 2015/01/27 12:57:14 martin Exp $
 #
-# Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,62 +28,58 @@
 # Executes make and compares the output to a golden file.
 run_and_check()
 {
-	local name="${1}"; shift
+	local atfname="${1}"; shift
+	local makename="${1}"; shift
+
+	# these tests fail since the backout of the patch in PR
+	# 49085 - adjust for more concrete PR if there is one
+	case ${makename} in
+	escape)		atf_expect_fail "see PR toolchain/49085";;
+	impsrc)		atf_expect_fail "see PR toolchain/49085";;
+	phony*)		atf_expect_fail "see PR toolchain/49085";;
+	posix1)		atf_expect_fail "see PR toolchain/49085";;
+	suffixes)	atf_expect_fail "see PR toolchain/49085"
+			atf_fail "this uses up all memory and then fails";;
+	esac
 
 	local srcdir="$(atf_get_srcdir)"
-	atf_check -o file:"${srcdir}/d_${name}.out" -x \
-	    "make -k -f ${srcdir}/d_${name}.mk 2>&1 | sed -e 's,${srcdir}/d_,,'"
+
+	local testdir="$(atf_get_srcdir)/unit-tests"
+
+	atf_check -s exit:0 -o ignore -e ignore \
+	    make -f "${testdir}/Makefile" "${makename}.out"
+	atf_check -o file:"${testdir}/${makename}.exp" cat "${makename}.out"
 }
 
 # Defines a test case for make(1), parsing a given file and comparing the
 # output to prerecorded results.
 test_case()
 {
-	local name="${1}"; shift
+	local atfname="${1}"; shift	# e.g. foo_bar
+	local makename="${1}"; shift	# e.g. foo-bar
 	local descr="${1}"; shift
 
-	atf_test_case "${name}"
-	eval "${name}_head() { \
-		atf_set descr '${descr}'; \
+	atf_test_case "${atfname}"
+	eval "${atfname}_head() { \
+		if [ -n '${descr}' ]; then \
+		    atf_set descr '${descr}'; \
+		fi \
 	}"
-	eval "${name}_body() { \
-		run_and_check '${name}'; \
+	eval "${atfname}_body() { \
+		run_and_check '${atfname}' '${makename}'; \
 	}"
 }
 
-test_case comment "Checks comments (PR/17732, PR/30536)"
-test_case cond1 "Checks conditionals (PR/24420)"
-test_case dotwait "Checks .WAIT"
-test_case export "Checks .export of provided variables"
-test_case export_all "Checks .export of all global variables"
-test_case moderrs "Checks correct handling of errors in modifiers usage"
-test_case modmatch "Checks modifier :M"
-test_case modmisc "Checks modifiers specified in variables"
-test_case modorder "Checks modifier :Ox"
-test_case modts "Checks modifier :ts"
-test_case modword "Checks modifier :[]"
-test_case posix "Checks conformance to POSIX"
-test_case qequals "Checks operator ?="
-test_case ternary "Checks ternary modifier"
-test_case varcmd "Checks behavior of command line variable assignments"
-test_case unmatchedvarparen "Checks $ ( ) matches"
-
 atf_init_test_cases()
 {
-	atf_add_test_case comment
-	atf_add_test_case cond1
-	atf_add_test_case dotwait
-	atf_add_test_case export
-	atf_add_test_case export_all
-	atf_add_test_case moderrs
-	atf_add_test_case modmatch
-	atf_add_test_case modmisc
-	atf_add_test_case modorder
-	atf_add_test_case modts
-	atf_add_test_case modword
-	atf_add_test_case posix
-	atf_add_test_case qequals
-	atf_add_test_case ternary
-	atf_add_test_case varcmd
-	atf_add_test_case unmatchedvarparen
+	local filename basename atfname descr
+
+	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk ; do
+	    basename="${filename##*/}"
+	    basename="${basename%.mk}"
+	    atfname="$(echo "${basename}" | tr "x-" "x_")"
+	    descr='' # XXX
+            test_case "${atfname}" "${basename}" "${descr}"
+	    atf_add_test_case "${atfname}"
+	done
 }

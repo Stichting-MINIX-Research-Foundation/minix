@@ -1,4 +1,4 @@
-/*	$NetBSD: cred_stubs.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: cred_stubs.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -72,7 +72,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_acquire_cred
     OM_uint32 ret, tmp;
     gss_OID_set_desc actual_desired_mechs;
     gss_OID_set mechs;
-    int i, j;
+    size_t i, j;
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 

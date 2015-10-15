@@ -200,6 +200,14 @@ ${kinit} --password-file=${objdir}/foopassword foo@${R3} || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
+echo "Testing forwardable/renewable flag copying in TGS-REQ"
+${kinit} -f --renewable -r 5d --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist} -f | grep ${server} | grep FRA > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+
 echo "Specific enctype"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword \
     -e ${aesenctype} -e ${aesenctype} \

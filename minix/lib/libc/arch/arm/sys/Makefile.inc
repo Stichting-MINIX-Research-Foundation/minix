@@ -22,7 +22,8 @@ ucontextoffsets.h: ${NETBSDSRCDIR}/sys/sys/ucontext.h
 ucontextoffsets.h: ${NETBSDSRCDIR}/minix/include/arch/${MACHINE_ARCH}/include/stackframe.h
 ucontextoffsets.h: 
 	${_MKTARGET_CREATE}
-	cat ${CF} | \
-		${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$TMP && \
+	${TOOL_CAT} ${CF} | \
+		${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} \
+		${CPPFLAGS} ${PROF} ${GENASSYM_CPPFLAGS} >$TMP && \
 	mv -f $TMP $@
 

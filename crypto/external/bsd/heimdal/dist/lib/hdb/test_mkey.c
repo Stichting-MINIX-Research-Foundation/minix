@@ -1,4 +1,4 @@
-/*	$NetBSD: test_mkey.c,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: test_mkey.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 
 #include "hdb_locl.h"
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 	ret = hdb_read_master_key(context, mkey_file, &mkey);
 	if (ret)
 	    krb5_err(context, 1, ret, "failed to read master key %s", mkey_file);
-      
+
 	hdb_free_master_key(context, mkey);
     } else
       krb5_errx(context, 1, "no command option given");

@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_prime_rabin_miller_trials.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_prime_rabin_miller_trials.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_PRIME_RABIN_MILLER_TRIALS_C
@@ -49,6 +49,6 @@ int mp_prime_rabin_miller_trials(int size)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_prime_rabin_miller_trials.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_prime_rabin_miller_trials.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

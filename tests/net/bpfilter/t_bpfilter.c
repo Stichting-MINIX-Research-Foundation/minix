@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.6 2012/09/03 21:27:14 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.10 2015/02/11 23:39:07 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.6 2012/09/03 21:27:14 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.10 2015/02/11 23:39:07 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -101,6 +101,35 @@ static struct bpf_insn magic_echo_reply_prog[] = {
 	BPF_STMT(BPF_RET+BPF_K, SNAPLEN)
 };
 
+static struct bpf_insn badmem_prog[] = {
+	BPF_STMT(BPF_LD+BPF_MEM, 5),
+	BPF_STMT(BPF_RET+BPF_A, 0),
+};
+
+static struct bpf_insn noinitA_prog[] = {
+	BPF_STMT(BPF_RET+BPF_A, 0),
+};
+
+static struct bpf_insn noinitX_prog[] = {
+	BPF_STMT(BPF_MISC+BPF_TXA, 0),
+	BPF_STMT(BPF_RET+BPF_A, 0),
+};
+
+static struct bpf_insn badjmp_prog[] = {
+	BPF_STMT(BPF_JMP+BPF_JA, 5),
+	BPF_STMT(BPF_RET+BPF_A, 0),
+};
+
+static struct bpf_insn negjmp_prog[] = {
+	BPF_STMT(BPF_JMP+BPF_JA, 0),
+	BPF_STMT(BPF_JMP+BPF_JA, UINT32_MAX - 1), // -2
+	BPF_STMT(BPF_RET+BPF_A, 0),
+};
+
+static struct bpf_insn badret_prog[] = {
+	BPF_STMT(BPF_RET+BPF_A+0x8000, 0),
+};
+
 static uint16_t
 in_cksum(void *data, size_t len)
 {
@@ -164,8 +193,8 @@ pingtest(const char *dst, unsigned int wirelen, const char tail[7])
 
 	memcpy(pkt + pktsize - 7, tail, 7);
 	icmp->icmp_type = ICMP_ECHO;
-	icmp->icmp_id = htons(37); 
-	icmp->icmp_seq = htons(1); 
+	icmp->icmp_id = htons(37);
+	icmp->icmp_seq = htons(1);
 	icmp->icmp_cksum = in_cksum(pkt, pktsize);
 
 	slen = sizeof(sin);
@@ -266,6 +295,27 @@ magic_ping_test(const char *name, unsigned int wirelen)
 	kill(child, SIGKILL);
 }
 
+static int
+send_bpf_prog(const char *ifname, struct bpf_program *prog)
+{
+	struct ifreq ifr;
+	int bpfd, e, rv;
+
+	RZ(rump_init());
+	netcfg_rump_makeshmif(ifname, ifr.ifr_name);
+	netcfg_rump_if(ifr.ifr_name, "10.1.1.20", "255.0.0.0");
+
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDONLY));
+
+	rv = rump_sys_ioctl(bpfd, BIOCSETF, prog);
+	e = errno;
+
+	rump_sys_close(bpfd);
+	errno = e;
+
+	return rv;
+}
+
 ATF_TC(bpfiltercontig);
 ATF_TC_HEAD(bpfiltercontig, tc)
 {
@@ -298,11 +348,135 @@ ATF_TC_BODY(bpfiltermchain, tc)
 }
 
 
+ATF_TC(bpfilterbadmem);
+ATF_TC_HEAD(bpfilterbadmem, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "doesn't initialize memomy store is rejected by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilterbadmem, tc)
+{
+	struct bpf_program prog;
+
+	prog.bf_len = __arraycount(badmem_prog);
+	prog.bf_insns = badmem_prog;
+	ATF_CHECK_ERRNO(EINVAL, send_bpf_prog("bpfilterbadmem", &prog) == -1);
+}
+
+ATF_TC(bpfilternoinitA);
+ATF_TC_HEAD(bpfilternoinitA, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "doesn't initialize the A register is accepted by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilternoinitA, tc)
+{
+	struct bpf_program prog;
+
+	prog.bf_len = __arraycount(noinitA_prog);
+	prog.bf_insns = noinitA_prog;
+	RL(send_bpf_prog("bpfilternoinitA", &prog));
+}
+
+ATF_TC(bpfilternoinitX);
+ATF_TC_HEAD(bpfilternoinitX, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "doesn't initialize the X register is accepted by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilternoinitX, tc)
+{
+	struct bpf_program prog;
+
+	prog.bf_len = __arraycount(noinitX_prog);
+	prog.bf_insns = noinitX_prog;
+	RL(send_bpf_prog("bpfilternoinitX", &prog));
+}
+
+ATF_TC(bpfilterbadjmp);
+ATF_TC_HEAD(bpfilterbadjmp, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "jumps to invalid destination is rejected by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilterbadjmp, tc)
+{
+	struct bpf_program prog;
+
+	prog.bf_len = __arraycount(badjmp_prog);
+	prog.bf_insns = badjmp_prog;
+	ATF_CHECK_ERRNO(EINVAL, send_bpf_prog("bpfilterbadjmp", &prog) == -1);
+}
+
+ATF_TC(bpfilternegjmp);
+ATF_TC_HEAD(bpfilternegjmp, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "jumps backwards is rejected by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilternegjmp, tc)
+{
+	struct bpf_program prog;
+
+	prog.bf_len = __arraycount(negjmp_prog);
+	prog.bf_insns = negjmp_prog;
+	ATF_CHECK_ERRNO(EINVAL, send_bpf_prog("bpfilternegjmp", &prog) == -1);
+}
+
+ATF_TC(bpfilterbadret);
+ATF_TC_HEAD(bpfilterbadret, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program that "
+	    "ends with invalid BPF_RET instruction is rejected by the kernel");
+	atf_tc_set_md_var(tc, "timeout", "30");
+}
+
+ATF_TC_BODY(bpfilterbadret, tc)
+{
+	struct bpf_program prog;
+	struct bpf_insn *last;
+
+	prog.bf_len = __arraycount(badret_prog);
+	prog.bf_insns = badret_prog;
+
+	/*
+	 * The point of this test is checking a bad instruction of
+	 * a valid class and with a valid BPF_RVAL data.
+	 */
+	last = &prog.bf_insns[prog.bf_len - 1];
+	ATF_CHECK(BPF_CLASS(last->code) == BPF_RET &&
+	    (BPF_RVAL(last->code) == BPF_K || BPF_RVAL(last->code) == BPF_A));
+
+	ATF_CHECK_ERRNO(EINVAL, send_bpf_prog("bpfilterbadret", &prog) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, bpfiltercontig);
 	ATF_TP_ADD_TC(tp, bpfiltermchain);
+	ATF_TP_ADD_TC(tp, bpfilterbadmem);
+	ATF_TP_ADD_TC(tp, bpfilternoinitA);
+	ATF_TP_ADD_TC(tp, bpfilternoinitX);
+	ATF_TP_ADD_TC(tp, bpfilterbadjmp);
+	ATF_TP_ADD_TC(tp, bpfilternegjmp);
+	ATF_TP_ADD_TC(tp, bpfilterbadret);
 
 	return atf_no_error();
 }

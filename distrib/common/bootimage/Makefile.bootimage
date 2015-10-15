@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.6 2012/04/22 07:23:42 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.11 2015/05/08 17:46:03 riastradh Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -122,7 +122,6 @@
 #		(default: no)
 #
 
-.include <bsd.sys.mk>		# for HOST_SH
 .include <bsd.own.mk> 		#
 .include <bsd.endian.mk>	# for TARGET_ENDIANNESS
 
@@ -277,11 +276,11 @@ ${TARGETFS}: prepare_md_post
 	${RM} -f ${WORKSPEC}
 	cat ${WORKDIR}/etc/mtree/* |					\
 	    ${TOOL_SED} -e 's/ size=[0-9]*//' > ${WORKSPEC}
-	${HOST_SH} ${WORKDIR}/dev/MAKEDEV -s all |			\
+	${HOST_SH} ${WORKDIR}/dev/MAKEDEV -s all ipty |			\
 	    ${TOOL_SED} -e '/^\. type=dir/d' -e 's,^\.,./dev,' >> ${WORKSPEC}
 	cat ${SPEC_IN} >> ${WORKSPEC}
 .if defined(SECONDARY_BOOT)
-	echo "./${SECONDARY_BOOT} type=file uname=root gname=operator mode=0444" \
+	echo "./${SECONDARY_BOOT} type=file uname=root gname=wheel mode=0444" \
 	    >> ${WORKSPEC}
 .endif
 .if defined(SPEC_EXTRA)
@@ -382,7 +381,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 .endif
 	${TOOL_DISKLABEL} -R -F ${WORKIMG} ${WORKLABEL}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} != "no"
-	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTOINS} ${WORKIMG} \
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKIMG} \
 	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT}
 .endif
 	mv ${WORKIMG} ${.TARGET}
@@ -391,7 +390,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 CLEANFILES+=	${IMGBASE}.img.gz ${IMGBASE}.img.gz.tmp
 
 ${IMGBASE}.img.gz:	${IMGBASE}.img
-	${TOOL_GZIP} -9c ${IMGBASE}.img > ${.TARGET}.tmp
+	${TOOL_GZIP_N} -9c ${IMGBASE}.img > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
 clean:

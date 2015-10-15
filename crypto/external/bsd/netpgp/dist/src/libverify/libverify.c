@@ -50,6 +50,10 @@
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
+#ifndef __printflike
+#define __printflike(n, m)		__attribute__((format(printf,n,m)))
+#endif
+
 #define BITS_TO_BYTES(b)		(((b) + (CHAR_BIT - 1)) / CHAR_BIT)
 
 /* packet types */
@@ -145,7 +149,8 @@
 
 /* Forward declarations */
 static int read_all_packets(pgpv_t */*pgp*/, pgpv_mem_t */*mem*/, const char */*op*/);
-static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...);
+static int read_binary_file(pgpv_t */*pgp*/, const char */*op*/, const char */*fmt*/, ...)
+    __printflike(3, 4);
 static int read_binary_memory(pgpv_t */*pgp*/, const char */*op*/, const void */*memory*/, size_t /*size*/);
 static int pgpv_find_keyid(pgpv_t */*pgp*/, const char */*strkeyid*/, uint8_t */*keyid*/);
 
@@ -1604,7 +1609,9 @@ verify_dsa_sig(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_p
 	BIGNUM		 *t1;
 	int		  ret;
 
-	if (pubkey[DSA_P].bn == NULL || pubkey[DSA_Q].bn == NULL || pubkey[DSA_G].bn == NULL) {
+	if (pubkey->bn[DSA_P].bn == NULL ||
+	    pubkey->bn[DSA_Q].bn == NULL ||
+	    pubkey->bn[DSA_G].bn == NULL) {
 		return 0;
 	}
 	M = W = t1 = NULL;
@@ -1879,7 +1886,7 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 		if (is_armored(buf, sizeof(buf))) {
 			read_ascii_armor_file(cursor, p);
 		} else {
-			read_binary_file(pgp, "signature", "%s", p);
+			read_binary_file(pgp, "signature", "%s", (const char *)p);
 		}
 		fclose(fp);
 	} else {
@@ -2335,7 +2342,7 @@ pgpv_read_pubring(pgpv_t *pgp, const void *keyring, ssize_t size)
 	if (keyring) {
 		return (size > 0) ?
 			read_binary_memory(pgp, "pubring", keyring, (size_t)size) :
-			read_binary_file(pgp, "pubring", "%s", keyring);
+			read_binary_file(pgp, "pubring", "%s", (const char *)keyring);
 	}
 	return read_binary_file(pgp, "pubring", "%s/%s", nonnull_getenv("HOME"), ".gnupg/pubring.gpg");
 }

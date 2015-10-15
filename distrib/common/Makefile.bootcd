@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.22 2013/01/29 19:48:41 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.32 2015/05/29 06:28:50 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -25,11 +25,14 @@
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
 #	CDMAKEFSOPTIONS	Options for makefs, eg bootimage=i386;bootxx,no-emul-boot
+#	CDMAKEFSEXTRAOPTS additional options for makefs, e.g. -F specfile
 #	CDROMS_RELEASEDIR Where to install ${CDBASE}.iso
 #	CDINSTKERNEL	instkernel directory (relative to ${.CURDIR})
 #	CDKERNELS	couples of the form:
 #				source	name_on_cd
 #	CDRUNTIME	files/directories to copy from $DESTDIR onto the CD
+#	CD_SETS		sets to be extracted onto the CD
+#	SETS_DIR	where the CD_SETS are found (default provided)
 # source kernels are copied from ${CDINSTKERNEL} (or its obj dir)
 # note that as of yet, bootxx_cd9660 can't load kernel names of more than
 # 8 chars (though they can be in a sub-directory meaning the pathname is
@@ -55,18 +58,28 @@ CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
 CDRELEASE_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
 .endif
 
-.include <bsd.sys.mk>		# for HOST_SH
+SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
+
 .include <bsd.own.mk> 		# For PRINTOBJDIR
 .include <bsd.kernobj.mk>	# For KERNSRCDIR
 
 DISTRIBVER!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
+CUROBJDIR!=	cd ${.CURDIR} && ${PRINTOBJDIR}
 ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
 PUBLISHER?= The_NetBSD_Project
 .if defined(CDMAKEFSOPTIONS)
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
 .else
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
+.endif
+
+.if ${MKUNPRIVED} == "no"
+CD_METALOG.unpriv=
+mtunpriv=
+.else
+CD_METALOG.unpriv=-M ${METALOG}.sanitised
+mtunpriv="-U"
 .endif
 
 # Stuff that should come from elsewhere - XXX where? - HF
@@ -81,10 +94,36 @@ CDIMAGE=	${CDBASE}.iso
 .else
 CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
 .endif
+WORKSPEC=	fs.spec
 
 CLEANFILES+=	${CDIMAGE}
 CLEANFILES+=	bootxx.${MACHINE}
+CLEANFILES+=	${WORKSPEC}
 
+CDSETSENV=	DESTDIR=${DESTDIR:Q} \
+		MACHINE=${MACHINE:Q} \
+		MACHINE_ARCH=${MACHINE_ARCH:Q} \
+		AWK=${TOOL_AWK:Q} \
+		CKSUM=${TOOL_CKSUM:Q} \
+		DB=${TOOL_DB:Q} \
+		HOST_SH=${HOST_SH:Q} \
+		MAKE=${MAKE:Q} \
+		MKTEMP=${TOOL_MKTEMP:Q} \
+		MTREE=${TOOL_MTREE:Q} \
+		PAX=${TOOL_PAX:Q} \
+		COMPRESS_PROGRAM=${COMPRESS_PROGRAM:Q} \
+		GZIP=${GZIP_FLAGS:Q} \
+		PKG_CREATE=${TOOL_PKG_CREATE:Q} \
+		SED=${TOOL_SED:Q} \
+		TSORT=${TSORT:Q} \
+		MKRUMP=no \
+		MKCOMPAT=no \
+		MKDEBUG=no \
+		MKDEBUGLIB=no
+
+CDSETSCMD=	cd ${NETBSDSRCDIR}/distrib/sets && \
+		${CDSETSENV} \
+		${HOST_SH}
 
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
@@ -100,7 +139,7 @@ BOOT2=boot
 .endif
 
 prepare:
-	${MKDIR} cdrom
+	${MKDIR} "${CUROBJDIR}/cdrom"
 .if defined(CDKERNELS)
 .for kernel target in ${CDKERNELS}
 	${CP} ${_INSTKERNELNOBJDIR}/${kernel} cdrom/${target}
@@ -117,6 +156,12 @@ prepare:
 .endif
 .endif
 
+.if ${MAKEVERBOSE} >= 2
+PAX_v?= -v
+.else
+PAX_v?=
+.endif
+
 # Copy $RELEASEDIR/${MACHINE} in the CDROM dir
 #
 # XXX This could be done a lot easier if makefs(8) could
@@ -125,49 +170,45 @@ prepare:
 copy-releasedir:
 	${RM} -f ${RELEASEDIR}/${CDROMS_RELEASEDIR}/${CDIMAGE}
 	if ${CDRELEASE}; then 						\
-		if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
+		if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 	\
 			echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 			exit 1; 					\
 		fi; 							\
-		${MKDIR} cdrom/${MACHINE}; 				\
-		curdir=$$(pwd);						\
-		release_destdir=$$(pwd)/cdrom/${MACHINE}; 		\
+		${MKDIR} "${CUROBJDIR}/cdrom/${MACHINE}"; 		\
+		release_destdir="${CUROBJDIR}/cdrom/${MACHINE}";	\
 		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 			\
 		echo Copying $$(pwd) to $$release_destdir ...; 		\
 		${TOOL_PAX} 						\
-			-rw -pe -v 					\
+			-rw -pe ${PAX_v}				\
 			${CDRELEASE_EXCLUDE}				\
 			. $$release_destdir; 				\
-		cd $$curdir;						\
+		cd "${CUROBJDIR}";					\
 	fi
 	if ${CDSOURCE}; then 						\
 		if [ ! -d ${RELEASEDIR}/source ]; then	 		\
 			echo "Missing ${RELEASEDIR}/source, aborting"; 	\
 			exit 1; 					\
 		fi; 							\
-		${MKDIR} cdrom/source; 					\
-		curdir=$$(pwd);						\
-		release_destdir=$$(pwd)/cdrom/source;	 		\
+		${MKDIR} "${CUROBJDIR}/cdrom/source"; 			\
+		release_destdir="${CUROBJDIR}/cdrom/source";	 	\
 		cd ${RELEASEDIR}/source; 				\
 		echo Copying $$(pwd) to $$release_destdir ...;		\
 		${TOOL_PAX} 						\
-			-rw -pe -v 					\
+			-rw -pe ${PAX_v}				\
 			. $$release_destdir; 				\
-		cd $$curdir;						\
+		cd "${CUROBJDIR}";					\
 	fi
-	if [ "X${CDRUNTIME}}" != "X" ]; then				\
-		curdir=$$(pwd);						\
+	if [ "X${CDRUNTIME}" != "X" ]; then				\
 		release_destdir=$${curdir}/cdrom;			\
 		cd $$release_destdir;					\
 		cd ${DESTDIR};						\
 		for cde in ${CDRUNTIME};				\
 		do							\
-			${TOOL_PAX} -rw -pp -v $${cde} $$release_destdir;\
+			${TOOL_PAX} -rw -pp ${PAX_v} $${cde} $$release_destdir;\
 		done;							\
-		cd $$curdir;						\
+		cd "${CUROBJDIR}";					\
 	fi
 	if [ "X${CDEXTRA}${CDBUILDEXTRA}" != "X" ]; then		\
-		curdir=`pwd`;						\
 		skipflag="";						\
 		cdextra_skip="${CDEXTRA_SKIP}";				\
 		if [ "X$${cdextra_skip}" != "X" ]; then			\
@@ -176,13 +217,13 @@ copy-releasedir:
 			do						\
 				echo $${skip} >> cdskip;		\
 			done;						\
-			skipflag="-X $${curdir}/cdskip";		\
+			skipflag="-X ${CUROBJDIR:Q}/cdskip";		\
 		fi;							\
 		cdextra="${CDEXTRA}"; 					\
 		cdbuildextra="${CDBUILDEXTRA}"; 			\
 		for cde in $${cdextra} $${cdbuildextra};		\
 		do							\
-			release_destdir=$${curdir}/cdrom;		\
+			release_destdir="${CUROBJDIR}/cdrom";		\
 			if [ -f $${cde} ]; then				\
 				echo Copying $${cde} to $$release_destdir ...;	\
 				${CP} $${cde} $${release_destdir};	\
@@ -190,18 +231,57 @@ copy-releasedir:
 				cd $${cde};				\
 				echo Copying $$(pwd) to $$release_destdir ...;	\
 				${TOOL_MTREE} -c $${skipflag} |		\
-					${TOOL_PAX} -rw -pe -v -M	\
+					${TOOL_PAX} -rw -pe ${PAX_v} -M	\
 					$$release_destdir; 		\
 			else						\
 				echo "Missing $${cde}, aborting"; 	\
 				exit 1; 				\
 			fi; 						\
-			cd $$curdir;					\
+			cd "${CUROBJDIR}";				\
 		done;							\
 	fi
+.if !empty(CD_SETS)
+	${MKDIR} "${CUROBJDIR}/cdrom/etc/mtree"
+.for set in ${CD_SETS}
+	if [ -f ${CUROBJDIR:Q}/cdrom/etc/mtree/set.${set} ]; then	\
+		${CHMOD} +w ${CUROBJDIR:Q}/cdrom/etc/mtree/set.${set};	\
+	fi;								\
+	${CDSETSCMD} ./maketars -i "${CUROBJDIR}/cdrom"			\
+	    ${CD_METALOG.unpriv} ${mtunpriv} -N ${NETBSDSRCDIR}/etc	\
+	    -F "${CUROBJDIR}/cdrom/etc/mtree"				\
+	    -d "${DESTDIR:S,^$,/,}" ${set}
+.endfor
+	if [ -d "${CUROBJDIR}/cdrom/var/spool/ftp/hidden" ]; then	\
+		${CHMOD} +r "${CUROBJDIR}/cdrom/var/spool/ftp/hidden";	\
+	fi
+.endif
 
 image:
-	${TOOL_MAKEFS} -t cd9660 -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+	@echo Preparing spec files for makefs...
+	${RM} -f ${WORKSPEC}
+	if [ -d cdrom/etc/mtree ]; then				\
+		cat cdrom/etc/mtree/* |				\
+		    ${TOOL_SED} -e 's/ size=[0-9]*//'		\
+		     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC};	\
+	fi
+	if [ -r cdrom/dev/MAKEDEV ]; then			\
+		${HOST_SH} cdrom/dev/MAKEDEV -s init |		\
+		    ${TOOL_SED} -e '/^\. type=dir/d' 		\
+			-e 's,^\.,./dev,' >> ${WORKSPEC};	\
+	fi
+.if defined(SPEC_IN)
+	cat ${SPEC_IN} >> ${WORKSPEC}
+.endif
+.if defined(SECONDARY_BOOT)
+	echo "./${SECONDARY_BOOT} type=file uname=root gname=wheel mode=0444" \
+	    >> ${WORKSPEC}
+.endif
+.if defined(SPEC_EXTRA)
+	cat ${SPEC_EXTRA} >> ${WORKSPEC}
+.endif
+	if [ -s ${WORKSPEC} ]; then specarg="-F ${WORKSPEC}"; fi;	\
+	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 $${specarg} 	\
+		${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
 
 .if ${CDRELEASE} == false
 release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
@@ -218,6 +298,9 @@ iso_image: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pr
 .endif
 
 clean:
+	@if [ -d cdrom/var/spool/ftp/hidden ]; then 		\
+		${CHMOD} +r cdrom/var/spool/ftp/hidden;		\
+	fi	# XXX
 	${RM} -fr cdrom
 
 prepare_md_post: .PHONY

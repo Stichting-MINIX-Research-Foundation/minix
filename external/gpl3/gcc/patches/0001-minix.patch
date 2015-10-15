@@ -1,58 +1,72 @@
-diff -r -x CVS -N -U 3 dist.orig/gcc/config/t-minix dist/gcc/config/t-minix
---- dist.orig/gcc/config/t-minix	1970-01-01 01:00:00.000000000 +0100
-+++ dist/gcc/config/t-minix	2013-12-11 15:12:25.998875226 +0100
-@@ -0,0 +1,5 @@
-+# Compile crtbeginS.o and crtendS.o with pic.
-+CRTSTUFF_T_CFLAGS_S = $(CRTSTUFF_T_CFLAGS) -fPIC
-+
-+# Compile libgcc.a with pic.
-+TARGET_LIBGCC2_CFLAGS += -fPIC
-diff -r -x CVS -N -U 3 dist.orig/gcc/config.gcc dist/gcc/config.gcc
---- dist.orig/gcc/config.gcc	2013-12-11 14:53:00.134506110 +0100
-+++ dist/gcc/config.gcc	2013-12-11 23:21:36.316937279 +0100
-@@ -839,6 +839,22 @@
- 	tm_file="${tm_file} arm/aout.h arm/arm.h"
- 	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
+diff -rNU3 dist.nbsd/gcc/config.gcc dist/gcc/config.gcc
+--- dist.nbsd/gcc/config.gcc	2015-10-16 12:40:18.000000000 +0200
++++ dist/gcc/config.gcc	2015-10-16 13:35:51.000000000 +0200
+@@ -704,6 +704,12 @@
+   tmake_file="${tmake_file} t-glibc"
+   target_has_targetcm=yes
+   ;;
++*-*-minix*)
++  tmake_file="t-slibgcc"
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  ;;
+ *-*-netbsd*)
+   tmake_file="t-slibgcc"
+   gas=yes
+@@ -887,6 +893,34 @@
+ 	extra_options="${extra_options} arm/vxworks.opt"
+ 	tmake_file="${tmake_file} arm/t-arm arm/t-vxworks"
  	;;
 +arm*-*-minix*)
-+	# The BPABI long long divmod functions return a 128-bit value in
-+	# registers r0-r3.  Correctly modeling that requires the use of
-+	# TImode.
-+	need_64bit_hwint=yes
-+	default_use_cxa_atexit=yes
-+	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/bpabi.h"
-+	tmake_file="arm/t-arm arm/t-arm-elf"
++	tmake_file="${tmake_file} arm/t-arm arm/t-arm-elf"
++	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
++	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 +
++	    tm_file="$tm_file arm/bpabi.h"
++	    tmake_file="$tmake_file arm/t-bpabi t-minix"
++
++	    # The BPABI long long divmod functions return a 128-bit value in
++	    # registers r0-r3.  Correctly modeling that requires the use of
++	    # TImode.
++	    need_64bit_hwint=yes
++	    # The EABI requires the use of __cxa_atexit.
++	    default_use_cxa_atexit=yes
++	
++	case ${target} in
++	arm*-*-minix-*hf*)
++	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
++	    ;;
++	esac
++	case ${target} in
++	armv4*) with_cpu=${with_cpu:-strongarm};;
++	armv6*) with_cpu=${with_cpu:-arm1176jzf-s};;
++	armv7*) with_cpu=${with_cpu:-cortex-a8};;
++	esac
 +	tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h arm/minix.h minix.h"
-+	tmake_file="${tmake_file} arm/t-bpabi t-minix"
-+	#extra_options="${extra_options} arm/eabi.opt"
-+	#use_gcc_stdint=wrap
-+
-+	tmake_file="${tmake_file} arm/t-arm-softfp soft-fp/t-softfp"
-+ 	;;
- arm*-*-rtems*)
- 	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h arm/rtems-elf.h rtems.h newlib-stdint.h"
- 	tmake_file="arm/t-arm arm/t-arm-elf t-rtems arm/t-rtems"
-@@ -1163,6 +1179,13 @@
++	tmake_file="$tmake_file arm/t-arm-softfp soft-fp/t-softfp"
++	;;
+ arm*-*-netbsdelf*)
+ 	tmake_file="${tmake_file} arm/t-arm"
+ 	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h arm/aout.h arm/arm.h"
+@@ -1287,6 +1321,11 @@
+ x86_64-*-freebsd*)
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/x86-64.h i386/freebsd.h i386/freebsd64.h"
- 	tmake_file="${tmake_file} i386/t-crtstuff"
  	;;
 +i[34567]86-*-minix)
 +	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h minix-spec.h i386/minix.h minix.h"
-+	tmake_file="${tmake_file} t-minix"
-+	gas=yes
-+	gnu_ld=yes
-+	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
++	tmake_file="${tmake_file} i386/t-crtstuff"
++	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 +	;;
  i[34567]86-*-netbsdelf*)
- 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/netbsd-elf.h"
+ 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${nbsd_tm_file} i386/netbsd-elf.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
-diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
---- dist.orig/gcc/gcov.c	2013-12-11 14:53:22.194840755 +0100
-+++ dist/gcc/gcov.c	2013-12-11 15:12:25.988875073 +0100
-@@ -58,6 +58,10 @@
+diff -rNU3 dist.nbsd/gcc/gcov.c dist/gcc/gcov.c
+--- dist.nbsd/gcc/gcov.c	2015-10-16 12:40:18.000000000 +0200
++++ dist/gcc/gcov.c	2015-10-16 13:36:18.000000000 +0200
+@@ -62,6 +62,10 @@
  
- #define STRING_SIZE 200
+ /* This is the size of the buffer used to read in source file lines.  */
  
 +#if defined(__minix)
 +#define block_t gcc_block_t
@@ -61,10 +75,10 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/gcov.c dist/gcc/gcov.c
  struct function_info;
  struct block_info;
  struct source_info;
-diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.h
---- dist.orig/gcc/ginclude/stddef.h	2013-12-11 14:53:05.001246600 +0100
-+++ dist/gcc/ginclude/stddef.h	2013-12-11 19:48:19.010387258 +0100
-@@ -51,7 +51,7 @@
+diff -rNU3 dist.nbsd/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.h
+--- dist.nbsd/gcc/ginclude/stddef.h	2015-10-16 12:40:18.000000000 +0200
++++ dist/gcc/ginclude/stddef.h	2015-10-16 13:35:25.000000000 +0200
+@@ -48,7 +48,7 @@
  
  /* On 4.3bsd-net2, make sure ansi.h is included, so we have
     one less case to deal with in the following.  */
@@ -73,68 +87,26 @@ diff -r -x CVS -N -U 3 dist.orig/gcc/ginclude/stddef.h dist/gcc/ginclude/stddef.
  #ifndef inhibit_libc
  #include <machine/ansi.h>
  #endif
-diff -r -x CVS -N -U 3 dist.orig/gcc/libgcov.c dist/gcc/libgcov.c
---- dist.orig/gcc/libgcov.c	2013-12-11 14:53:05.064580896 +0100
-+++ dist/gcc/libgcov.c	2013-12-11 15:12:25.988875073 +0100
-@@ -40,6 +40,11 @@
- #define GCOV_LINKAGE /* nothing */
- #endif
- #endif
-+
-+#ifndef L_gcov_merge_add
-+#include "gcov-minix-fs-wrapper.h"
-+#endif
-+
- #include "gcov-io.h"
- 
- #if defined(inhibit_libc)
-@@ -152,7 +157,7 @@
-    in two separate programs, and we must keep the two program
-    summaries separate.  */
- 
--static void
-+void
- gcov_exit (void)
- {
-   struct gcov_info *gi_ptr;
-@@ -564,7 +569,7 @@
-       gcov_crc32 = crc32;
- 
-       if (!gcov_list)
--	atexit (gcov_exit);
-+	atexit (gcov_exit_wrapper);
- 
-       info->next = gcov_list;
-       gcov_list = info;
-diff -r -x CVS -N -U 3 dist.orig/libcpp/configure dist/libcpp/configure
---- dist.orig/libcpp/configure	2013-12-11 14:53:25.704893999 +0100
-+++ dist/libcpp/configure	2013-12-11 15:12:25.988875073 +0100
-@@ -6870,6 +6870,7 @@
- case $target in
- 	alpha*-*-* | \
- 	arm*-*-*eabi* | \
-+	arm*-*-minix* | \
- 	arm*-*-symbianelf* | \
- 	x86_64-*-* | \
- 	ia64-*-* | \
-diff -r -x CVS -N -U 3 dist.orig/libgcc/config.host dist/libgcc/config.host
---- dist.orig/libgcc/config.host	2013-12-11 14:54:49.009491158 +0100
-+++ dist/libgcc/config.host	2013-12-11 15:12:25.988875073 +0100
-@@ -203,6 +203,8 @@
- 	;;
- arm*-*-freebsd*)
+diff -rNU3 dist.nbsd/libgcc/config.host dist/libgcc/config.host
+--- dist.nbsd/libgcc/config.host	2015-10-16 12:40:19.000000000 +0200
++++ dist/libgcc/config.host	2015-10-16 13:36:44.000000000 +0200
+@@ -325,6 +325,10 @@
+ 	tmake_file="$tmake_file arm/t-arm arm/t-vxworks t-softfp-sfdf t-softfp-excl arm/t-softfp t-softfp"
+ 	extra_parts="$extra_parts crti.o crtn.o"
  	;;
 +arm*-*-minix*)
++	tmake_file="$tmake_file arm/t-arm"
++	unwind_header=config/arm/unwind-arm.h
 +	;;
  arm*-*-netbsdelf*)
- 	;;
- arm*-*-netbsd*)
-@@ -280,6 +282,8 @@
- 	;;
- x86_64-*-elf*)
+ 	tmake_file="$tmake_file arm/t-arm"
+ 	case ${host} in
+@@ -525,6 +529,8 @@
+ x86_64-*-freebsd*)
+ 	tmake_file="${tmake_file} i386/t-freebsd i386/t-crtstuff"
  	;;
 +i[34567]86-*-minix*)
 +	;;
- i[34567]86-*-freebsd*)
+ i[34567]86-*-netbsdelf*)
  	;;
- x86_64-*-freebsd*)
+ x86_64-*-netbsd*)

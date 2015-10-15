@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_sqr.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_sqr.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_SQR_C
@@ -28,18 +28,18 @@ mp_sqr (mp_int * a, mp_int * b)
   if (a->used >= TOOM_SQR_CUTOFF) {
     res = mp_toom_sqr(a, b);
   /* Karatsuba? */
-  } else 
+  } else
 #endif
 #ifdef BN_MP_KARATSUBA_SQR_C
 if (a->used >= KARATSUBA_SQR_CUTOFF) {
     res = mp_karatsuba_sqr (a, b);
-  } else 
+  } else
 #endif
   {
 #ifdef BN_FAST_S_MP_SQR_C
     /* can we use the fast comba multiplier? */
-    if ((a->used * 2 + 1) < MP_WARRAY && 
-         a->used < 
+    if ((a->used * 2 + 1) < MP_WARRAY &&
+         a->used <
          (1 << (sizeof(mp_word) * CHAR_BIT - 2*DIGIT_BIT - 1))) {
       res = fast_s_mp_sqr (a, b);
     } else
@@ -55,6 +55,6 @@ if (a->used >= KARATSUBA_SQR_CUTOFF) {
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_sqr.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_sqr.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

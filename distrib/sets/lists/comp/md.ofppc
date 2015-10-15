@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.15 2013/11/17 14:34:11 alnsn Exp $
+# $NetBSD: md.ofppc,v 1.17 2014/08/22 10:51:38 apb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ofppc				comp-c-include
 ./usr/include/ofppc/_G_config.h			comp-obsolete		obsolete
@@ -47,7 +47,8 @@
 ./usr/include/ofppc/rwlock.h			comp-c-include
 ./usr/include/ofppc/setjmp.h			comp-c-include
 ./usr/include/ofppc/signal.h			comp-c-include
-./usr/include/ofppc/sljitarch.h			comp-c-include
+./usr/include/ofppc/sljit_machdep.h		comp-c-include
+./usr/include/ofppc/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/ofppc/spr.h			comp-obsolete		obsolete
 ./usr/include/ofppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/ofppc/trap.h			comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: windc.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: windc.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -57,7 +57,7 @@ krb5_kdc_windc_init(krb5_context context)
 	windcft = _krb5_plugin_get_symbol(e);
 	if (windcft->minor_version < KRB5_WINDC_PLUGIN_MINOR)
 	    continue;
-	
+
 	(*windcft->init)(context, &windcctx);
 	break;
     }
@@ -86,6 +86,7 @@ _kdc_pac_generate(krb5_context context,
 krb5_error_code
 _kdc_pac_verify(krb5_context context,
 		const krb5_principal client_principal,
+		const krb5_principal delegated_proxy_principal,
 		hdb_entry_ex *client,
 		hdb_entry_ex *server,
 		hdb_entry_ex *krbtgt,
@@ -98,7 +99,9 @@ _kdc_pac_verify(krb5_context context,
 	return 0;
 
     ret = windcft->pac_verify(windcctx, context,
-			      client_principal, client, server, krbtgt, pac);
+			      client_principal,
+			      delegated_proxy_principal,
+			      client, server, krbtgt, pac);
     if (ret == 0)
 	*verified = 1;
     return ret;
@@ -118,9 +121,9 @@ _kdc_check_access(krb5_context context,
 				   server_ex, server_name,
 				   req->msg_type == krb_as_req);
 
-    return (windcft->client_access)(windcctx, 
-				    context, config, 
-				    client_ex, client_name, 
-				    server_ex, server_name, 
+    return (windcft->client_access)(windcctx,
+				    context, config,
+				    client_ex, client_name,
+				    server_ex, server_name,
 				    req, e_data);
 }

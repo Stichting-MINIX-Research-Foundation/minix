@@ -15,8 +15,8 @@
 #include <vector>
 #include <cassert>
 
-#include "../../test_allocator.h"
-#include "../../min_allocator.h"
+#include "test_allocator.h"
+#include "min_allocator.h"
 
 template <class C>
 void
@@ -26,6 +26,12 @@ test0()
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == typename C::allocator_type());
+#if __cplusplus >= 201103L
+    C c1 = {};
+    assert(c1.__invariants());
+    assert(c1.empty());
+    assert(c1.get_allocator() == typename C::allocator_type());
+#endif
 }
 
 template <class C>

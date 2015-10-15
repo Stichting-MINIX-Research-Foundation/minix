@@ -1,4 +1,4 @@
-/*	$NetBSD: FlexLexer.h,v 1.1.1.1 2009/10/26 00:24:46 christos Exp $	*/
+/*	$NetBSD: FlexLexer.h,v 1.2 2014/10/29 18:28:36 christos Exp $	*/
 
 // -*-C++-*-
 // FlexLexer.h -- define interfaces for lexical analyzer classes generated

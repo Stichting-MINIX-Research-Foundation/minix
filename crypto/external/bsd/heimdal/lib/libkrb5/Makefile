@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.8 2014/04/24 13:50:53 pettai Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -532,7 +532,7 @@ heimdal.texi: vars.texi
 vars.texi: vars.tin
 	< ${HEIMDIST}/doc/vars.tin > $@			\
 	sed -e 's,[@]dbdir[@],/var/heimdal,g'		\
-	    -e 's,[@]PACKAGE_VERSION[@],1.5pre1,g'
+	    -e 's,[@]PACKAGE_VERSION[@],1.5.3,g'
 
 CLEANFILES+=	vars.texi
 

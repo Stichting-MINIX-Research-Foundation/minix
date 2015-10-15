@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/01 01:25:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2015/07/19 07:55:07 mrg Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -21,6 +21,7 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c AsciiText.c \
 
 CPPFLAGS+=	-DHAVE_WCHAR_H -DHAVE_WCTYPE_H -DNO_WIDEC_H -DOLDXAW \
 		-DHAVE_GETPAGESIZE \
+		-DHAVE_UNISTD_H \
 		-DHAVE_ISWALNUM -DPROJECT_ROOT=\"${X11ROOTDIR}\"
 
 LIBDPLIBS=\

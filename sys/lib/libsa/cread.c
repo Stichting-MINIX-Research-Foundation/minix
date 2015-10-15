@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.26 2013/10/13 20:09:02 joerg Exp $	*/
+/*	$NetBSD: cread.c,v 1.27 2015/07/25 07:06:11 isaki Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -103,15 +103,15 @@ crc32(uint32_t crc, const uint8_t *const buf, size_t len)
 
 	crc = 0xffffffffU ^ crc;
 	for (i = 0; i < len; i++) {
-	    c = buf[i];
-	    for (j = 0; j < 8; j++) {
-		carry = ((crc & 0x01) ? 1 : 0) ^ (c & 0x01);
-		crc >>= 1;
-		c >>= 1;
-		if (carry) {
-			crc = (crc ^ ETHER_CRC_POLY_LE);
+		c = buf[i];
+		for (j = 0; j < 8; j++) {
+			carry = ((crc & 0x01) ? 1 : 0) ^ (c & 0x01);
+			crc >>= 1;
+			c >>= 1;
+			if (carry) {
+				crc = (crc ^ ETHER_CRC_POLY_LE);
+			}
 		}
-	    }
 	}
 	return (crc ^ 0xffffffffU);
 }

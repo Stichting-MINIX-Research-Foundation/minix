@@ -24,4 +24,8 @@ dist_libheimbase_la_SOURCES =	\
 	number.c		\
 	string.c
 
+libheimbase_la_DEPENDENCIES = version-script.map
+
 test_base_LDADD = $(LIB_heimbase)
+
+EXTRA_DIST = NTMakefile version-script.map

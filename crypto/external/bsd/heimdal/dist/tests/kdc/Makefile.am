@@ -189,6 +189,7 @@ CLEANFILES= \
 	test-rc-file.rc
 
 EXTRA_DIST = \
+	NTMakefile \
 	check-cc.in \
 	check-delegation.in \
 	check-des.in \

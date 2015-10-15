@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_reduce_is_2k_l.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_reduce_is_2k_l.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_REDUCE_IS_2K_L_C
@@ -21,7 +21,7 @@
 int mp_reduce_is_2k_l(mp_int *a)
 {
    int ix, iy;
-   
+
    if (a->used == 0) {
       return MP_NO;
    } else if (a->used == 1) {
@@ -34,13 +34,13 @@ int mp_reduce_is_2k_l(mp_int *a)
           }
       }
       return (iy >= (a->used/2)) ? MP_YES : MP_NO;
-      
+
    }
    return MP_NO;
 }
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_reduce_is_2k_l.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_reduce_is_2k_l.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.5 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.5 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -793,7 +793,7 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = -1;	/* XXX gcc 4.8.3: maybe-uninitialized */
 	int error;
 
 	KASSERT(mp != NULL);
@@ -846,20 +846,15 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		}
 
 		/* Neither -- keep ascending the family tree.  */
-
-		/*
-		 * Unlock vp so that we can lock the parent, but keep
-		 * vp referenced until after we have found the parent,
-		 * so that dotdot_ino will not be recycled.
-		 *
-		 * XXX This guarantees that vp's inode number will not
-		 * be recycled, but why can't dotdot_ino be recycled?
-		 */
-		VOP_UNLOCK(vp);
-		error = VFS_VGET(mp, dotdot_ino, &dvp);
-		vrele(vp);
-		if (error)
+		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_ino), &dvp);
+		vput(vp);
+		if (error)  
 			return error;
+		error = vn_lock(dvp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(dvp);
+			return error;
+		}
 
 		KASSERT(dvp != NULL);
 		KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
@@ -897,8 +892,8 @@ ext2fs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	KASSERT(ino_ret != NULL);
 	KASSERT(vp->v_type == VDIR);
 
-	error = vn_rdwr(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED, cred, NULL, NULL);
+	error = ufs_bufio(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
+	    IO_NODELOCKED, cred, NULL, NULL);
 	if (error)
 		return error;
 
@@ -929,8 +924,8 @@ ext2fs_rename_replace_dotdot(struct vnode *vp,
 	VTOI(fdvp)->i_e2fs_nlink--;
 	VTOI(fdvp)->i_flag |= IN_CHANGE;
 
-	error = vn_rdwr(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED, cred, NULL, NULL);
+	error = ufs_bufio(UIO_READ, vp, &dirbuf, sizeof dirbuf, (off_t)0,
+	    IO_NODELOCKED, cred, NULL, NULL);
 	if (error)
 		return error;
 
@@ -949,8 +944,8 @@ ext2fs_rename_replace_dotdot(struct vnode *vp,
 
 	dirbuf.dotdot_ino = h2fs32(VTOI(tdvp)->i_number);
 	/* XXX WTF?  Why not check error?  */
-	(void)vn_rdwr(UIO_WRITE, vp, &dirbuf, sizeof dirbuf, (off_t)0,
-	    UIO_SYSSPACE, (IO_NODELOCKED | IO_SYNC), cred, NULL, NULL);
+	(void)ufs_bufio(UIO_WRITE, vp, &dirbuf, sizeof dirbuf, (off_t)0,
+	    (IO_NODELOCKED | IO_SYNC), cred, NULL, NULL);
 
 	return 0;
 }

@@ -178,7 +178,32 @@ namespace PR7022 {
 namespace SameSignatureAfterInstantiation {
   template<typename T> struct S {
     void f(T *); // expected-note {{previous}}
-    void f(const T*); // expected-error {{multiple overloads of 'f' instantiate to the same signature 'void (const int *)'}}
+    void f(const T*); // expected-error-re {{multiple overloads of 'f' instantiate to the same signature 'void (const int *){{( __attribute__\(\(thiscall\)\))?}}'}}
   };
   S<const int> s; // expected-note {{instantiation}}
 }
+
+namespace PR22040 {
+  template <typename T> struct Foobar {
+    template <> void bazqux(typename T::type) {}  // expected-error {{cannot specialize a function 'bazqux' within class scope}} expected-error 2{{cannot be used prior to '::' because it has no members}}
+  };
+
+  void test() {
+    // FIXME: we should suppress the "no member" errors
+    Foobar<void>::bazqux();  // expected-error{{no member named 'bazqux' in }}  expected-note{{in instantiation of template class }}
+    Foobar<int>::bazqux();  // expected-error{{no member named 'bazqux' in }}  expected-note{{in instantiation of template class }}
+    Foobar<int>::bazqux(3);  // expected-error{{no member named 'bazqux' in }}
+  }
+}
+
+template <typename>
+struct SpecializationOfGlobalFnInClassScope {
+  template <>
+  void ::Fn(); // expected-error{{cannot have a qualified name}}
+};
+
+class AbstractClassWithGlobalFn {
+  template <typename>
+  void ::f(); // expected-error{{cannot have a qualified name}}
+  virtual void f1() = 0;
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: kswitch.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: kswitch.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2010 Kungliga Tekniska Högskolan
@@ -37,11 +37,11 @@
 #include "kcc-commands.h"
 
 #ifdef HAVE_READLINE
-char *readline(char *prompt);
+char *readline(const char *prompt);
 #else
 
 static char *
-readline(char *prompt)
+readline(const char *prompt)
 {
     char buf[BUFSIZ];
     printf ("%s", prompt);
@@ -77,9 +77,11 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 
 	ct = rtbl_create();
 
-	rtbl_add_column(ct, "", 0);
-	rtbl_add_column(ct, "Principal", 0);
-	rtbl_set_column_prefix(ct, "Principal", "    ");
+	rtbl_add_column_by_id(ct, 0, "#", 0);
+	rtbl_add_column_by_id(ct, 1, "Principal", 0);
+	rtbl_set_column_affix_by_id(ct, 1, "    ", "");
+        rtbl_add_column_by_id(ct, 2, "Type", 0);
+        rtbl_set_column_affix_by_id(ct, 2, "  ", "");
 
 	ret = krb5_cc_cache_get_first(kcc_context, NULL, &cursor);
 	if (ret)
@@ -88,7 +90,7 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	while (krb5_cc_cache_next(kcc_context, cursor, &id) == 0) {
 	    krb5_principal p;
 	    char num[10];
-	
+
 	    ret = krb5_cc_get_principal(kcc_context, id, &p);
 	    if (ret)
 		continue;
@@ -97,10 +99,11 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	    krb5_free_principal(kcc_context, p);
 
 	    snprintf(num, sizeof(num), "%d", (int)(len + 1));
-	    rtbl_add_column_entry(ct, "", num);
-	    rtbl_add_column_entry(ct, "Principal", name);
+	    rtbl_add_column_entry_by_id(ct, 0, num);
+	    rtbl_add_column_entry_by_id(ct, 1, name);
+            rtbl_add_column_entry_by_id(ct, 2, krb5_cc_get_type(kcc_context, id));
 	    free(name);
-	    
+
 	    ids = erealloc(ids, (len + 1) * sizeof(ids[0]));
 	    ids[len] = id;
 	    len++;
@@ -117,7 +120,7 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 		krb5_errx(kcc_context, 1, "Cache number '%s' is invalid", name);
 	    if (i > len)
 		krb5_errx(kcc_context, 1, "Cache number '%s' is too large", name);
-	    
+
 	    id = ids[i - 1];
 	    ids[i - 1] = NULL;
 	} else
@@ -149,15 +152,15 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	ops = krb5_cc_get_prefix_ops(kcc_context, opt->type_string);
 	if (ops == NULL)
 	    krb5_err(kcc_context, 1, 0, "krb5_cc_get_prefix_ops");
-	
+
 	asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
 	if (str == NULL)
 	    krb5_errx(kcc_context, 1, N_("out of memory", ""));
-	
+
 	ret = krb5_cc_resolve(kcc_context, str, &id);
 	if (ret)
 	    krb5_err(kcc_context, 1, ret, "krb5_cc_resolve: %s", str);
-	
+
 	free(str);
     } else {
 	krb5_errx(kcc_context, 1, "missing option for kswitch");

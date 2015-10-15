@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.37 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.38 2014/06/18 17:47:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,7 +60,7 @@ extern void	(*__cleanup)(void);
 extern void	__smakebuf(FILE *);
 extern int	__swhatbuf(FILE *, size_t *, int *);
 extern int	_fwalk(int (*)(FILE *));
-extern char	*_mktemp(char *);
+extern char    *_mktemp(char *);
 extern int	__swsetup(FILE *);
 extern int	__sflags(const char *, int *);
 extern int	__svfscanf(FILE * __restrict, const char * __restrict,
@@ -74,8 +74,6 @@ extern int	__vfprintf_unlocked_l(FILE * __restrict, locale_t,
 
 
 extern int	__sdidinit;
-
-extern int	__gettemp(char *, int *, int);
 
 extern wint_t	__fgetwc_unlock(FILE *);
 extern wint_t	__fputwc_unlock(wchar_t, FILE *);

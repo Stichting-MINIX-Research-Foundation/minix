@@ -1,8 +1,9 @@
-#	$NetBSD: bsd.rpc.mk,v 1.12 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.13 2013/12/15 00:28:45 christos Exp $
 
 .include <bsd.init.mk>
 
 RPC_XDIR?=	${.CURDIR}/
+RPCGEN_FLAGS?=	-B
 
 # We don't use implicit suffix rules here to avoid dependencies in the
 # Installed files.
@@ -12,7 +13,7 @@ RPC_XDIR?=	${.CURDIR}/
 .for I in ${RPC_INCS}
 ${I}: ${I:.h=.x}
 	${_MKTARGET_CREATE}
-	${TOOL_RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
+	${TOOL_RPCGEN} ${RPCGEN_FLAGS} -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
 .endfor
 
 DPSRCS+=	${RPC_INCS}
@@ -26,7 +27,7 @@ CLEANFILES+=	${RPC_INCS}
 .for I in ${RPC_XDRFILES}
 ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
 	${_MKTARGET_CREATE}
-	${TOOL_RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
+	${TOOL_RPCGEN} ${RPCGEN_FLAGS} -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
 DPSRCS+=	${RPC_XDRFILES}
@@ -45,7 +46,7 @@ _RPCS += -s ${I}
 
 ${I}: ${RPC_XDIR}${I:_svc.c=.x}
 	${_MKTARGET_CREATE}
-	${TOOL_RPCGEN} -C ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
+	${TOOL_RPCGEN} ${RPCGEN_FLAGS} ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
 		-o ${.TARGET}
 .endfor
 
@@ -60,7 +61,7 @@ CLEANFILES+=	${RPC_SVCFILES}
 
 ${I}: ${RPC_XDIR}${I:_clnt.c=.x}
 	${_MKTARGET_CREATE}
-	${TOOL_RPCGEN} -C -l ${_RPCS} ${RPC_CLNTFLAGS} \
+	${TOOL_RPCGEN} ${RPCGEN_FLAGS} -l ${_RPCS} ${RPC_CLNTFLAGS} \
 		${RPC_XDIR}${I:_clnt.c=.x} -o ${.TARGET}
 .endfor
 

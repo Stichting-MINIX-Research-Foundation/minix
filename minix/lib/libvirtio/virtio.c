@@ -502,7 +502,7 @@ clear_indirect_table(struct virtio_device *dev, struct vring_desc *vd)
 }
 
 
-static void inline
+inline static void
 use_vring_desc(struct vring_desc *vd, struct vumap_phys *vp)
 {
 	vd->addr = vp->vp_addr & ~1UL;
@@ -521,7 +521,10 @@ set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 	int i;
 	struct indirect_desc_table *desc;
 	struct vring *vring = &q->vring;
-	struct vring_desc *vd, *ivd;
+	struct vring_desc *vd, *ivd = NULL;
+
+	if (0 == num)
+		return;
 
 	/* Find the first unused indirect descriptor table */
 	for (i = 0; i < dev->num_indirect; i++) {
@@ -557,7 +560,8 @@ set_indirect_descriptors(struct virtio_device *dev, struct virtio_queue *q,
 	}
 
 	/* Unset the next bit of the last descriptor */
-	ivd->flags = ivd->flags & ~VRING_DESC_F_NEXT;
+	if (NULL != ivd)
+		ivd->flags = ivd->flags & ~VRING_DESC_F_NEXT;
 
 	/* Update queue, only a single descriptor was used */
 	q->free_num -= 1;
@@ -572,6 +576,9 @@ set_direct_descriptors(struct virtio_queue *q, struct vumap_phys *bufs,
 	size_t count;
 	struct vring *vring = &q->vring;
 	struct vring_desc *vd;
+
+	if (0 == num)
+		return;
 
 	for (i = q->free_head, count = 0; count < num; count++) {
 

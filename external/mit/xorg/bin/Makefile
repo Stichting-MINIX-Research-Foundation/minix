@@ -1,8 +1,5 @@
 #	$NetBSD: Makefile,v 1.13 2013/06/03 20:23:39 mrg Exp $
 
-# LSC: Skipped for now
-# xdm : uses network structures we still do not have (struct ifconf, struct ifreq)
-# xlsclients: depends on xcb-atom from xcb-utils
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	cleanlinks cxpm editres \
 	fc-cache fc-cat fc-list fc-match fc-pattern fc-query fc-scan \
@@ -13,10 +10,10 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap ccmakedep \
 	mkfontscale mkhtmlindex oclock proxymngr revpath \
 	rgb setxkbmap smproxy sxpm \
 	twm ucs2any viewres x11perf xauth xbiff xcalc \
-	xclipboard xclock xcmsdb xconsole xcutsel xditview  \
+	xclipboard xclock xcmsdb xconsole xcutsel xditview xdm \
 	xdpyinfo xedit xev xeyes xf86dga xfd xfindproxy xfontsel \
 	xfs xfsinfo xfwp xgamma xgc xhost xinit xinput xkbcomp \
-	xkbevd xkbprint xkbutils xkill xload xlogo xlsatoms  \
+	xkbevd xkbprint xkbutils xkill xload xlogo xlsatoms xlsclients \
 	xlsfonts xmag xman xmessage xmh xmkmf xmlwf xmodmap xmore \
 	xprop xrandr xrdb xrefresh xset xsetmode xsetpointer \
 	xsetroot xsm xstdcmap xterm xtrap xvidtune \

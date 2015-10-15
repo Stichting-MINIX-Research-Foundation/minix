@@ -1,24 +1,68 @@
-#	$NetBSD: Makefile,v 1.18 2012/03/22 23:46:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2014/12/18 06:24:30 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=		GL
+LIBISCXX=	yes
 
 SUBDIR=		internal
 
 # glx
 .PATH:		${X11SRCDIR.MesaLib}/src/glx
-SRCS.glx=	glcontextmodes.c clientattrib.c compsize.c eval.c glxcmds.c \
-		glxext.c glxextensions.c indirect.c indirect_init.c \
-		indirect_size.c indirect_window_pos.c \
-		indirect_transpose_matrix.c indirect_vertex_array.c \
-		indirect_vertex_program.c pixel.c pixelstore.c render2.c \
-		renderpix.c single2.c singlepix.c vertarr.c xfont.c \
-		glx_pbuffer.c glx_query.c \
-		glxcurrent.c indirect_texture_compression.c
+SRCS.glx=	\
+	clientattrib.c \
+	clientinfo.c \
+	compsize.c \
+	create_context.c \
+	eval.c \
+	glxconfig.c \
+	glxcmds.c \
+	glxcurrent.c \
+	glx_error.c \
+	glxext.c \
+	glxextensions.c \
+	indirect_glx.c \
+	MESAindirect.c \
+	MESAindirect_init.c \
+	MESAindirect_size.c \
+	MESAindirect_window_pos.c \
+	indirect_texture_compression.c \
+	indirect_transpose_matrix.c \
+	indirect_vertex_array.c \
+	indirect_vertex_program.c \
+	pixel.c \
+	pixelstore.c \
+	query_renderer.c \
+	render2.c \
+	renderpix.c \
+	single2.c \
+	singlepix.c \
+	vertarr.c \
+	glx_pbuffer.c \
+	glx_query.c \
+	glxhash.c
 
-.PATH:		${X11SRCDIR.MesaLib}/src/mesa/glapi
-SRCS.glx+=	glapi.c glapi_dispatch.c glapi_getproc.c glapi_nop.c glthread.c
+BUILDSYMLINKS+=     ${X11SRCDIR.MesaLib}/../src/mapi/glapi/indirect.c MESAindirect.c
+BUILDSYMLINKS+=     ${X11SRCDIR.MesaLib}/../src/mapi/glapi/indirect_init.c MESAindirect_init.c
+BUILDSYMLINKS+=     ${X11SRCDIR.MesaLib}/../src/mapi/glapi/indirect_size.c MESAindirect_size.c
+BUILDSYMLINKS+=     ${X11SRCDIR.MesaLib}/src/glx/indirect_window_pos.c MESAindirect_window_pos.c
+
+.for _f in ${SRCS.glx}
+CPPFLAGS.${_f}= -I${X11SRCDIR.MesaLib}/../src/mapi/glapi -DGLX_SHARED_GLAPI
+.endfor
+
+# glapi
+.PATH:		${X11SRCDIR.MesaLib}/src/mapi
+.PATH:		${X11SRCDIR.MesaLib}/../src/mapi/glapi
+SRCS.glapi=	\
+	entry.c \
+	glapi_gentable.c
+.for _f in ${SRCS.glapi}
+CPPFLAGS.${_f}= -DMAPI_MODE_BRIDGE \
+		-DMAPI_ABI_HEADER=\"glapi_glapi_mapi_tmp.h\" \
+		-I${X11SRCDIR.MesaLib}/src/mesa
+.endfor
+
 
 # XXX see TODO
 #.if ${MACHINE_ARCH} == "i386"
@@ -31,100 +75,113 @@ SRCS.glx+=	glapi.c glapi_dispatch.c glapi_getproc.c glapi_nop.c glthread.c
 
 .if ${X11DRI} != "no"
 # dri
-SRCS.dri=	XF86dri.c dri_glx.c drisw_glx.c dri_common.c \
-		glxhash.c dri2_glx.c dri2.c
+SRCS.dri=	\
+	  drisw_glx.c \
+          xfont.c \
+          dri_common.c \
+          dri_glx.c \
+          XF86dri.c \
+          dri2_glx.c \
+          dri2.c \
+          dri2_query_renderer.c
 .for fn in ${SRCS.dri}
 CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\"
 .endfor
 .endif
 
-MESA_SRC_MODULES=  main math vbo tnl shader swrast slang glapi common \
-                        osmesa ss
-
-.include "../libOSMesa/libmesa.mk"
-
+.include "../libloader.mk"
 
 .PATH:		${X11SRCDIR.MesaLib}/src/glw
 .PATH:		${X11SRCDIR.MesaLib}/include/GL
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/drivers/x11
-INCS=	GLwDrawA.h GLwDrawAP.h GLwMDrawA.h GLwMDrawAP.h gl.h gl_mangle.h \
-	glext.h glx.h glx_mangle.h glxext.h xmesa.h xmesa_x.h \
-	xmesa_xf86.h
+INCS=	gl.h gl_mangle.h glcorearb.h glext.h \
+	glx.h glx_mangle.h glxext.h \
+	osmesa.h wglext.h wmesa.h
 INCSDIR=${X11INCDIR}/GL
 
-SRCS+=	${SRCS.dri} ${SRCS.glx}
 
-.include "../../tools/glsl/Makefile.glslsrcs"
+SRCS+=	${SRCS.dri} ${SRCS.glx} ${SRCS.glapi}
 
-SRCS+=	${SRCS.pp} ${SRCS.cl}
+CPPFLAGS+= \
+	-I${X11SRCDIR.MesaLib}/include \
+	-I${X11SRCDIR.MesaLib}/include/GL/internal \
+	-I${X11SRCDIR.MesaLib}/src/loader \
+	-I${X11SRCDIR.MesaLib}/src/mapi \
+	-I${X11SRCDIR.MesaLib}/src/mapi/glapi \
+	-I${X11SRCDIR.MesaLib}/../src/mapi/glapi \
+	-I${X11SRCDIR.MesaLib}/src/glx \
+	-I${DESTDIR}${X11INCDIR}/libdrm \
+	-I${DESTDIR}${X11INCDIR}/GL \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${DESTDIR}${X11INCDIR}/X11/extensions
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/GL \
-		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${DESTDIR}${X11INCDIR}/libdrm \
-		-I${X11SRCDIR.MesaLib}/include \
-		-I${X11SRCDIR.MesaLib}/include/GL/internal \
-		-I${X11SRCDIR.MesaLib}/src/mesa/main \
-		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
-		-I${X11SRCDIR.MesaLib}/src/mesa \
-		${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-#		-I${X11SRCDIR.dri2proto}/src/mesa \
+#		-D_NETBSD_SOURCE \
 
+# old
+CPPFLAGS+=	-D__GLX_ALIGN64 \
+		-DXF86VIDMODE \
+		-DGLX_SHARED_GLAPI
+
+# new
+CPPFLAGS+=	\
+	-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 \
+	-DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 \
+	-DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 \
+	-DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DHAVE___BUILTIN_BSWAP32=1 \
+	-DHAVE___BUILTIN_BSWAP64=1 -DHAVE_DLADDR=1 -DHAVE_CLOCK_GETTIME=1 \
+	-DHAVE_POSIX_MEMALIGN -DHAVE_PTHREAD=1 -DHAVE_DLOPEN
+
+.include "../asm.mk"
+
+CPPFLAGS+=	\
+	-DHAVE_LIBDRM -DGLX_USE_DRM \
+	-DGLX_INDIRECT_RENDERING -DGLX_DIRECT_RENDERING \
+	-DHAVE_ALIAS -DMESA_EGL_NO_X11_HEADERS
+
+CPPFLAGS+=	\
+	-DUSE_EXTERNAL_DXTN_LIB=1 \
+	-DYYTEXT_POINTER=1
+
+CFLAGS+=	-fvisibility=hidden -fno-strict-aliasing -fno-builtin-memcmp
 .if !defined(__MINIX)
-CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread
-CPPFLAGS+=	-DUSE_SSE_SYSCTL_DETECTION \
-		-D__GLX_ALIGN64 \
-		-DMESA_EXECMEM_MMAP \
-		-DEXEC_HEAP_SIZE=10485760 \
-		-D_NETBSD_SOURCE \
-		-DUSE_NATIVE_LIBM_FUNCS \
-		-DPTHREADS \
-		-DUSE_EXTERNAL_DXTN_LIB=1 \
-		-DIN_DRI_DRIVER \
-		-DGLX_DIRECT_RENDERING \
-		-DGLX_INDIRECT_RENDERING \
-		-DHZ=100 \
-		-DHAVE_ALIAS \
-		-DXF86VIDMODE \
-		-UIN_DRI_DRIVER
+CFLAGS+=	-pthread
 .else
-CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden
-CPPFLAGS+=	-DUSE_SSE_SYSCTL_DETECTION \
-		-D__GLX_ALIGN64 \
-		-DMESA_EXECMEM_MMAP \
-		-DEXEC_HEAP_SIZE=10485760 \
-		-D_NETBSD_SOURCE \
-		-DUSE_NATIVE_LIBM_FUNCS \
-		-DUSE_EXTERNAL_DXTN_LIB=1 \
-		-DGLX_DIRECT_RENDERING \
-		-DGLX_INDIRECT_RENDERING \
-		-DHZ=100 \
-		-DHAVE_ALIAS \
-		-DXF86VIDMODE \
-		-UIN_DRI_DRIVER
+LDADD+= -lmthread
+DPADD+= ${LIBMTHREAD}
+CWARNFLAGS.clang+=	-Wno-\#warnings
 .endif # !defined(__MINIX)
 
-LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
-		X11	${.CURDIR}/../libX11/dynamic \
-		Xxf86vm	${.CURDIR}/../libXxf86vm \
-		Xfixes	${.CURDIR}/../libXfixes \
-		Xdamage	${.CURDIR}/../libXdamage \
-		drm	${.CURDIR}/../libdrm \
-		m	${.CURDIR}/../../../../../lib/libm
+LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
+		X11		${.CURDIR}/../libX11/dynamic \
+		Xxf86vm		${.CURDIR}/../libXxf86vm \
+		Xfixes		${.CURDIR}/../libXfixes \
+		Xdamage		${.CURDIR}/../libXdamage \
+		glapi		${.CURDIR}/../libglapi \
+		drm		${.CURDIR}/../libdrm \
+		X11-xcb		${.CURDIR}/../libX11/libX11-xcb \
+		xcb-dri2	${.CURDIR}/../libxcb/dri2 \
+		xcb-glx		${.CURDIR}/../libxcb/glx \
+		expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
+		m		${NETBSDSRCDIR}/lib/libm
 
-# XXX XXX
-COPTS.dri_glx.c=			-Wno-error
-COPTS.dri2_glx.c=			-Wno-error
-COPTS.drisw_glx.c=			-Wno-error
-COPTS.glxext.c=				-Wno-error
-COPTS.indirect_vertex_program.c=	-Wno-error
 MKLINT=no
 
 PKGCONFIG=	gl
 PKGDIST.gl=	${X11SRCDIR.MesaLib}/src/mesa
 .include "${.CURDIR}/../libGL/mesa-ver.mk"
 PKGCONFIG_VERSION.gl=	${MESA_VER}
+
+# XXX remove these from bsd.x11.mk
+# XXX enable GLX TLS?  it's enabled in the code, but not here..
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@GL_PC_REQ_PRIV@,x11 xext,; \
+	    s,@GL_LIB@,GL,; \
+	    s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
+	    s,@GL_PC_CFLAGS@,,; \
+	    s,@GLX_TLS@,no,"
+
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format -Wno-constant-conversion
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lrint.c,v 1.4 2008/04/26 23:49:50 christos Exp $ */
+/* $NetBSD: lrint.c,v 1.5 2015/07/09 06:17:13 nat Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -70,7 +70,8 @@ LRINTNAME(double x)
 		/* round, using current direction */
 		x += TWO52[s];
 		x -= TWO52[s];
-	}
+	} else
+		return x;
 
 	EXTRACT_WORDS(i0, i1, x);
 	e = ((i0 >> 20) & 0x7ff) - DBL_EXP_BIAS;

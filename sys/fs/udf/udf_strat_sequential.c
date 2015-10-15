@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.12 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.14 2015/10/06 08:57:34 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.12 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.14 2015/10/06 08:57:34 hannken Exp $");
 #endif /* not lint */
 
 
@@ -129,9 +129,6 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
 
-	/* unreference the vnode so it can be recycled */
-	holdrele(udf_node->vnode);
-
 	putiobuf(buf);
 }
 
@@ -219,9 +216,6 @@ udf_write_logvol_dscr_seq(struct udf_strat_args *args)
 			goto out;
 	}
 
-	/* add reference to the vnode to prevent recycling */
-	vhold(udf_node->vnode);
-
 	if (waitfor) {
 		DPRINTF(WRITE, ("udf_write_logvol_dscr: sync write\n"));
 
@@ -235,8 +229,6 @@ udf_write_logvol_dscr_seq(struct udf_strat_args *args)
 		/* will be UNLOCKED in call back */
 		return error;
 	}
-
-	holdrele(udf_node->vnode);
 out:
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
@@ -525,6 +517,7 @@ udf_doshedule(struct udf_mount *ump)
 					&ump->metadata_track);
 			assert(error == 0);
 			mutex_enter(&priv->discstrat_mutex);
+			__USE(error);
 		}
 	}
 

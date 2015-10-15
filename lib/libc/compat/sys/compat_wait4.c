@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_wait4.c,v 1.2 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: compat_wait4.c,v 1.3 2015/03/26 11:17:08 justin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_wait4.c,v 1.2 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: compat_wait4.c,v 1.3 2015/03/26 11:17:08 justin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -59,11 +59,11 @@ __weak_alias(wait3, _wait3)
 /*
  * libc12 compatible wait4 routine.
  */
-int
+pid_t
 wait3(int *status, int options, struct rusage50 *ru50)
 {
 	struct rusage ru;
-	int rv;
+	pid_t rv;
 
 	if ((rv = __wait350(status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;
@@ -72,11 +72,11 @@ wait3(int *status, int options, struct rusage50 *ru50)
 	return rv;
 }
 
-int
+pid_t
 wait4(pid_t wpid, int *status, int options, struct rusage50 *ru50)
 {
 	struct rusage ru;
-	int rv;
+	pid_t rv;
 
 	if ((rv = __wait450(wpid, status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.h,v 1.12 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: chio.h,v 1.13 2015/09/06 06:01:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 
 #ifndef _SYS_CHIO_H_
 #define _SYS_CHIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * Element types.  Used as "to" and "from" type indicators in move

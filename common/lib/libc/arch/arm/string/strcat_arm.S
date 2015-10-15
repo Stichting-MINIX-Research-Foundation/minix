@@ -34,12 +34,16 @@
  */
 ENTRY(strcat)
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
 	.fnstart
+# endif
 	.cfi_startproc
 #endif
 	push	{r3-r5, lr}		/* save registers */
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
+# if !defined(__ARM_DWARF_EH__)
 	.save	{r3-r5, lr}
+# endif
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
 	.cfi_offset 5, -8
@@ -60,6 +64,8 @@ ENTRY(strcat)
 	pop	{r3-r5, pc}		/* restore registers */
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
 	.fnend
+# endif
 #endif
 END(strcat)

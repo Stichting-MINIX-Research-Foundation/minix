@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_indicate_mechs.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_indicate_mechs.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -37,14 +37,14 @@ gss_indicate_mechs(OM_uint32 *minor_status,
 	struct _gss_mech_switch *m;
 	OM_uint32 major_status;
 	gss_OID_set set;
-	int i;
+	size_t i;
 
 	_gss_load_mech();
 
 	major_status = gss_create_empty_oid_set(minor_status, mech_set);
 	if (major_status)
 		return (major_status);
-	
+
 	HEIM_SLIST_FOREACH(m, &_gss_mechs, gm_link) {
 		if (m->gm_mech.gm_indicate_mechs) {
 			major_status = m->gm_mech.gm_indicate_mechs(

@@ -1,0 +1,71 @@
+diff -rNU3 dist.org/gcc/config.gcc dist/gcc/config.gcc
+--- dist.org/gcc/config.gcc	2015-12-11 12:26:57.000000000 +0100
++++ dist/gcc/config.gcc	2015-12-11 12:25:40.000000000 +0100
+@@ -895,10 +895,10 @@
+ 	;;
+ arm*-*-minix*)
+ 	tmake_file="${tmake_file} arm/t-arm arm/t-arm-elf"
+-	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
++	tm_file="dbxelf.h elfos.h netbsd-stdint.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
+ 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+ 
+-	    tm_file="$tm_file arm/bpabi.h"
++	    tm_file="$tm_file arm/bpabi.h minix-spec.h arm/minix.h minix.h"
+ 	    tmake_file="$tmake_file arm/t-bpabi t-minix"
+ 
+ 	    # The BPABI long long divmod functions return a 128-bit value in
+@@ -918,8 +918,7 @@
+ 	armv6*) with_cpu=${with_cpu:-arm1176jzf-s};;
+ 	armv7*) with_cpu=${with_cpu:-cortex-a8};;
+ 	esac
+-	tm_file="$tm_file arm/eabi.h newlib-stdint.h minix-spec.h arm/minix.h minix.h"
+-	tmake_file="$tmake_file arm/t-arm-softfp soft-fp/t-softfp"
++	#tmake_file="$tmake_file arm/t-arm-softfp soft-fp/t-softfp"
+ 	;;
+ arm*-*-netbsdelf*)
+ 	tmake_file="${tmake_file} arm/t-arm"
+@@ -1322,7 +1321,7 @@
+ 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/x86-64.h i386/freebsd.h i386/freebsd64.h"
+ 	;;
+ i[34567]86-*-minix)
+-	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h minix-spec.h i386/minix.h minix.h"
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd-stdint.h minix-spec.h i386/minix.h minix.h"
+ 	tmake_file="${tmake_file} i386/t-crtstuff"
+ 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+ 	;;
+diff -rNU3 dist.org/gcc/tree-ssa-ccp.c dist/gcc/tree-ssa-ccp.c
+--- dist.org/gcc/tree-ssa-ccp.c	2015-12-11 12:26:57.000000000 +0100
++++ dist/gcc/tree-ssa-ccp.c	2015-12-11 12:24:50.000000000 +0100
+@@ -2530,7 +2530,7 @@
+  }
+ };
+ 
+-#if defined(__NetBSD__) && defined(NETBSD_NATIVE)
++#if (defined(__NetBSD__) || defined(__minix)) && defined(NETBSD_NATIVE)
+ /*
+  * This is a big, ugly, temporary hack:
+  *    http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59958
+diff -rNU3 dist.org/libgcc/config/arm/unwind-arm.h dist/libgcc/config/arm/unwind-arm.h
+--- dist.org/libgcc/config/arm/unwind-arm.h	2013-02-04 20:06:20.000000000 +0100
++++ dist/libgcc/config/arm/unwind-arm.h	2015-12-11 12:25:05.000000000 +0100
+@@ -48,7 +48,7 @@
+       if (!tmp)
+ 	return 0;
+ 
+-#if (defined(linux) && !defined(__uClinux__)) || defined(__NetBSD__)
++#if (defined(linux) && !defined(__uClinux__)) || defined(__NetBSD__) || defined(__minix)
+       /* Pc-relative indirect.  */
+ #define _GLIBCXX_OVERRIDE_TTYPE_ENCODING (DW_EH_PE_pcrel | DW_EH_PE_indirect)
+       tmp += ptr;
+diff -rNU3 dist.org/libstdc++-v3/libsupc++/atexit_arm.cc dist/libstdc++-v3/libsupc++/atexit_arm.cc
+--- dist.org/libstdc++-v3/libsupc++/atexit_arm.cc	2015-12-11 12:26:57.000000000 +0100
++++ dist/libstdc++-v3/libsupc++/atexit_arm.cc	2015-12-11 12:25:13.000000000 +0100
+@@ -23,7 +23,7 @@
+ 
+ #include <cxxabi.h>
+ 
+-#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__NetBSD__)
++#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__NetBSD__) && !defined(__minix)
+ 
+ namespace __aeabiv1
+ {

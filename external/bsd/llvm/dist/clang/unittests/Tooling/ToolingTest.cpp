@@ -16,8 +16,10 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "gtest/gtest.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/llvm-config.h"
+#include "gtest/gtest.h"
+#include <algorithm>
 #include <string>
 
 namespace clang {
@@ -27,20 +29,20 @@ namespace {
 /// Takes an ast consumer and returns it from CreateASTConsumer. This only
 /// works with single translation unit compilations.
 class TestAction : public clang::ASTFrontendAction {
- public:
+public:
   /// Takes ownership of TestConsumer.
-  explicit TestAction(clang::ASTConsumer *TestConsumer)
-      : TestConsumer(TestConsumer) {}
+  explicit TestAction(std::unique_ptr<clang::ASTConsumer> TestConsumer)
+      : TestConsumer(std::move(TestConsumer)) {}
 
- protected:
-  virtual clang::ASTConsumer* CreateASTConsumer(
-      clang::CompilerInstance& compiler, StringRef dummy) {
+protected:
+  virtual std::unique_ptr<clang::ASTConsumer>
+  CreateASTConsumer(clang::CompilerInstance &compiler, StringRef dummy) {
     /// TestConsumer will be deleted by the framework calling us.
-    return TestConsumer;
+    return std::move(TestConsumer);
   }
 
- private:
-  clang::ASTConsumer * const TestConsumer;
+private:
+  std::unique_ptr<clang::ASTConsumer> TestConsumer;
 };
 
 class FindTopLevelDeclConsumer : public clang::ASTConsumer {
@@ -58,14 +60,11 @@ class FindTopLevelDeclConsumer : public clang::ASTConsumer {
 
 TEST(runToolOnCode, FindsNoTopLevelDeclOnEmptyCode) {
   bool FoundTopLevelDecl = false;
-  EXPECT_TRUE(runToolOnCode(
-      new TestAction(new FindTopLevelDeclConsumer(&FoundTopLevelDecl)), ""));
-#if !defined(_MSC_VER)
+  EXPECT_TRUE(
+      runToolOnCode(new TestAction(llvm::make_unique<FindTopLevelDeclConsumer>(
+                        &FoundTopLevelDecl)),
+                    ""));
   EXPECT_FALSE(FoundTopLevelDecl);
-#else
-  // FIXME: LangOpts.MicrosoftExt appends "class type_info;"
-  EXPECT_TRUE(FoundTopLevelDecl);
-#endif
 }
 
 namespace {
@@ -101,45 +100,49 @@ bool FindClassDeclX(ASTUnit *AST) {
 
 TEST(runToolOnCode, FindsClassDecl) {
   bool FoundClassDeclX = false;
-  EXPECT_TRUE(runToolOnCode(new TestAction(
-      new FindClassDeclXConsumer(&FoundClassDeclX)), "class X;"));
+  EXPECT_TRUE(
+      runToolOnCode(new TestAction(llvm::make_unique<FindClassDeclXConsumer>(
+                        &FoundClassDeclX)),
+                    "class X;"));
   EXPECT_TRUE(FoundClassDeclX);
 
   FoundClassDeclX = false;
-  EXPECT_TRUE(runToolOnCode(new TestAction(
-      new FindClassDeclXConsumer(&FoundClassDeclX)), "class Y;"));
+  EXPECT_TRUE(
+      runToolOnCode(new TestAction(llvm::make_unique<FindClassDeclXConsumer>(
+                        &FoundClassDeclX)),
+                    "class Y;"));
   EXPECT_FALSE(FoundClassDeclX);
 }
 
 TEST(buildASTFromCode, FindsClassDecl) {
-  OwningPtr<ASTUnit> AST(buildASTFromCode("class X;"));
+  std::unique_ptr<ASTUnit> AST = buildASTFromCode("class X;");
   ASSERT_TRUE(AST.get());
   EXPECT_TRUE(FindClassDeclX(AST.get()));
 
-  AST.reset(buildASTFromCode("class Y;"));
+  AST = buildASTFromCode("class Y;");
   ASSERT_TRUE(AST.get());
   EXPECT_FALSE(FindClassDeclX(AST.get()));
 }
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
-  OwningPtr<FrontendActionFactory> Factory(
+  std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory<SyntaxOnlyAction>());
-  OwningPtr<FrontendAction> Action(Factory->create());
-  EXPECT_TRUE(Action.get() != NULL);
+  std::unique_ptr<FrontendAction> Action(Factory->create());
+  EXPECT_TRUE(Action.get() != nullptr);
 }
 
 struct IndependentFrontendActionCreator {
-  ASTConsumer *newASTConsumer() {
-    return new FindTopLevelDeclConsumer(NULL);
+  std::unique_ptr<ASTConsumer> newASTConsumer() {
+    return llvm::make_unique<FindTopLevelDeclConsumer>(nullptr);
   }
 };
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
   IndependentFrontendActionCreator Creator;
-  OwningPtr<FrontendActionFactory> Factory(
+  std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Creator));
-  OwningPtr<FrontendAction> Action(Factory->create());
-  EXPECT_TRUE(Action.get() != NULL);
+  std::unique_ptr<FrontendAction> Action(Factory->create());
+  EXPECT_TRUE(Action.get() != nullptr);
 }
 
 TEST(ToolInvocation, TestMapVirtualFile) {
@@ -151,7 +154,7 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
-                                            Files.getPtr());
+                                            Files.get());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   EXPECT_TRUE(Invocation.run());
@@ -170,7 +173,7 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
-                                            Files.getPtr());
+                                            Files.get());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   // Add a module.map file in the include directory of our header, so we trigger
@@ -182,22 +185,22 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
 struct VerifyEndCallback : public SourceFileCallbacks {
   VerifyEndCallback() : BeginCalled(0), EndCalled(0), Matched(false) {}
   virtual bool handleBeginSource(CompilerInstance &CI,
-                                 StringRef Filename) LLVM_OVERRIDE {
+                                 StringRef Filename) override {
     ++BeginCalled;
     return true;
   }
-  virtual void handleEndSource() {
+  virtual void handleEndSource() override {
     ++EndCalled;
   }
-  ASTConsumer *newASTConsumer() {
-    return new FindTopLevelDeclConsumer(&Matched);
+  std::unique_ptr<ASTConsumer> newASTConsumer() {
+    return llvm::make_unique<FindTopLevelDeclConsumer>(&Matched);
   }
   unsigned BeginCalled;
   unsigned EndCalled;
   bool Matched;
 };
 
-#if !defined(_WIN32)
+#if !defined(LLVM_ON_WIN32)
 TEST(newFrontendActionFactory, InjectsSourceFileCallbacks) {
   VerifyEndCallback EndCallback;
 
@@ -210,7 +213,9 @@ TEST(newFrontendActionFactory, InjectsSourceFileCallbacks) {
   Tool.mapVirtualFile("/a.cc", "void a() {}");
   Tool.mapVirtualFile("/b.cc", "void b() {}");
 
-  Tool.run(newFrontendActionFactory(&EndCallback, &EndCallback));
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory(&EndCallback, &EndCallback));
+  Tool.run(Action.get());
 
   EXPECT_TRUE(EndCallback.Matched);
   EXPECT_EQ(2u, EndCallback.BeginCalled);
@@ -227,10 +232,10 @@ struct SkipBodyConsumer : public clang::ASTConsumer {
 };
 
 struct SkipBodyAction : public clang::ASTFrontendAction {
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &Compiler,
-                                         StringRef) {
+  virtual std::unique_ptr<ASTConsumer>
+  CreateASTConsumer(CompilerInstance &Compiler, StringRef) {
     Compiler.getFrontendOpts().SkipFunctionBodies = true;
-    return new SkipBodyConsumer;
+    return llvm::make_unique<SkipBodyConsumer>();
   }
 };
 
@@ -241,24 +246,20 @@ TEST(runToolOnCode, TestSkipFunctionBody) {
                              "int skipMeNot() { an_error_here }"));
 }
 
-struct CheckSyntaxOnlyAdjuster: public ArgumentsAdjuster {
-  bool &Found;
-  bool &Ran;
-
-  CheckSyntaxOnlyAdjuster(bool &Found, bool &Ran) : Found(Found), Ran(Ran) { }
-
-  virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
-    Ran = true;
-    for (unsigned I = 0, E = Args.size(); I != E; ++I) {
-      if (Args[I] == "-fsyntax-only") {
-        Found = true;
-        break;
-      }
-    }
-    return Args;
-  }
-};
+TEST(runToolOnCodeWithArgs, TestNoDepFile) {
+  llvm::SmallString<32> DepFilePath;
+  ASSERT_FALSE(
+      llvm::sys::fs::createTemporaryFile("depfile", "d", DepFilePath));
+  std::vector<std::string> Args;
+  Args.push_back("-MMD");
+  Args.push_back("-MT");
+  Args.push_back(DepFilePath.str());
+  Args.push_back("-MF");
+  Args.push_back(DepFilePath.str());
+  EXPECT_TRUE(runToolOnCodeWithArgs(new SkipBodyAction, "", Args));
+  EXPECT_FALSE(llvm::sys::fs::exists(DepFilePath.str()));
+  EXPECT_FALSE(llvm::sys::fs::remove(DepFilePath.str()));
+}
 
 TEST(ClangToolTest, ArgumentAdjusters) {
   FixedCompilationDatabase Compilations("/", std::vector<std::string>());
@@ -266,23 +267,33 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   ClangTool Tool(Compilations, std::vector<std::string>(1, "/a.cc"));
   Tool.mapVirtualFile("/a.cc", "void a() {}");
 
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+
   bool Found = false;
   bool Ran = false;
-  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  ArgumentsAdjuster CheckSyntaxOnlyAdjuster =
+      [&Found, &Ran](const CommandLineArguments &Args) {
+    Ran = true;
+    if (std::find(Args.begin(), Args.end(), "-fsyntax-only") != Args.end())
+      Found = true;
+    return Args;
+  };
+  Tool.appendArgumentsAdjuster(CheckSyntaxOnlyAdjuster);
+  Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_TRUE(Found);
 
   Ran = Found = false;
   Tool.clearArgumentsAdjusters();
-  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
-  Tool.appendArgumentsAdjuster(new ClangSyntaxOnlyAdjuster());
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  Tool.appendArgumentsAdjuster(CheckSyntaxOnlyAdjuster);
+  Tool.appendArgumentsAdjuster(getClangSyntaxOnlyAdjuster());
+  Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_FALSE(Found);
 }
 
-#ifndef _WIN32
+#ifndef LLVM_ON_WIN32
 TEST(ClangToolTest, BuildASTs) {
   FixedCompilationDatabase Compilations("/", std::vector<std::string>());
 
@@ -294,11 +305,9 @@ TEST(ClangToolTest, BuildASTs) {
   Tool.mapVirtualFile("/a.cc", "void a() {}");
   Tool.mapVirtualFile("/b.cc", "void b() {}");
 
-  std::vector<ASTUnit *> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   EXPECT_EQ(0, Tool.buildASTs(ASTs));
   EXPECT_EQ(2u, ASTs.size());
-
-  llvm::DeleteContainerPointers(ASTs);
 }
 
 struct TestDiagnosticConsumer : public DiagnosticConsumer {
@@ -316,7 +325,9 @@ TEST(ClangToolTest, InjectDiagnosticConsumer) {
   Tool.mapVirtualFile("/a.cc", "int x = undeclared;");
   TestDiagnosticConsumer Consumer;
   Tool.setDiagnosticConsumer(&Consumer);
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+  Tool.run(Action.get());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
 }
 
@@ -326,7 +337,7 @@ TEST(ClangToolTest, InjectDiagnosticConsumerInBuildASTs) {
   Tool.mapVirtualFile("/a.cc", "int x = undeclared;");
   TestDiagnosticConsumer Consumer;
   Tool.setDiagnosticConsumer(&Consumer);
-  std::vector<ASTUnit*> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   Tool.buildASTs(ASTs);
   EXPECT_EQ(1u, ASTs.size());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);

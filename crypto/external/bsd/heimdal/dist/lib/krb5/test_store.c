@@ -1,4 +1,4 @@
-/*	$NetBSD: test_store.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: test_store.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -195,8 +195,6 @@ test_storage(krb5_context context, krb5_storage *sp)
     test_uint8(context, sp);
     test_uint16(context, sp);
     test_uint32(context, sp);
-
-    krb5_storage_free(sp);
 }
 
 
@@ -207,22 +205,37 @@ test_truncate(krb5_context context, krb5_storage *sp, int fd)
 
     krb5_store_string(sp, "hej");
     krb5_storage_truncate(sp, 2);
-    
+
     if (fstat(fd, &sb) != 0)
 	krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 2)
 	krb5_errx(context, 1, "length not 2");
 
     krb5_storage_truncate(sp, 1024);
-    
+
     if (fstat(fd, &sb) != 0)
 	krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 1024)
 	krb5_errx(context, 1, "length not 2");
-
-    krb5_storage_free(sp);
 }
 
+static void
+check_too_large(krb5_context context, krb5_storage *sp)
+{
+    uint32_t too_big_sizes[] = { INT_MAX, INT_MAX / 2, INT_MAX / 4, INT_MAX / 8 + 1};
+    krb5_error_code ret;
+    krb5_data data;
+    size_t n;
+
+    for (n = 0; n < sizeof(too_big_sizes) / sizeof(too_big_sizes); n++) {
+	krb5_storage_truncate(sp, 0);
+	krb5_store_uint32(sp, too_big_sizes[n]);
+	krb5_storage_seek(sp, 0, SEEK_SET);
+	ret = krb5_ret_data(sp, &data);
+	if (ret != HEIM_ERR_TOO_BIG)
+	    errx(1, "not too big: %lu", (unsigned long)n);
+    }
+}
 
 /*
  *
@@ -286,10 +299,13 @@ main(int argc, char **argv)
 	krb5_errx(context, 1, "krb5_storage_emem: no mem");
 
     test_storage(context, sp);
+    check_too_large(context, sp);
+    krb5_storage_free(sp);
+
 
     fd = open(fn, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if (fd < 0)
-	krb5_err(context, 1, errno, "open(%s", fn);
+	krb5_err(context, 1, errno, "open(%s)", fn);
 
     sp = krb5_storage_from_fd(fd);
     close(fd);
@@ -297,6 +313,7 @@ main(int argc, char **argv)
 	krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
 
     test_storage(context, sp);
+    krb5_storage_free(sp);
     unlink(fn);
 
     /*
@@ -305,13 +322,14 @@ main(int argc, char **argv)
 
     fd = open(fn, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if (fd < 0)
-	krb5_err(context, 1, errno, "open(%s", fn);
+	krb5_err(context, 1, errno, "open(%s)", fn);
 
     sp = krb5_storage_from_fd(fd);
     if (sp == NULL)
 	krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
 
     test_truncate(context, sp, fd);
+    krb5_storage_free(sp);
     close(fd);
     unlink(fn);
 

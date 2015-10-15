@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.33 2013/08/14 10:15:14 jmcneill Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.37 2015/07/26 14:01:53 kamil Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -90,6 +90,10 @@
 /* Define to 1 if you have the declaration of `bswap64', and to 0 if you
    don't. */
 #undef HAVE_DECL_BSWAP64
+
+/* Define to 1 if you have the declaration of `errc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_ERRC
 
 /* Define to 1 if you have the declaration of `fstatvfs', and to 0 if you
    don't. */
@@ -203,6 +207,10 @@
    don't. */
 #undef HAVE_DECL_STRNDUP
 
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNLEN
+
 /* Define to 1 if you have the declaration of `strsuftoll', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRSUFTOLL
@@ -218,6 +226,18 @@
 /* Define to 1 if you have the declaration of `user_from_uid', and to 0 if you
    don't. */
 #undef HAVE_DECL_USER_FROM_UID
+
+/* Define to 1 if you have the declaration of `verrc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_VERRC
+
+/* Define to 1 if you have the declaration of `vwarnc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_VWARNC
+
+/* Define to 1 if you have the declaration of `warnc', and to 0 if you don't.
+   */
+#undef HAVE_DECL_WARNC
 
 /* Define if you have the `devname' function. */
 #undef HAVE_DEVNAME
@@ -399,6 +419,9 @@
 /* Define if you have the `random' function. */
 #undef HAVE_RANDOM
 
+/* Define if you have the `reallocarr' function. */
+#undef HAVE_REALLOCARR
+
 /* Define if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 
@@ -462,14 +485,23 @@
 /* Define if you have the `strndup' function. */
 #undef HAVE_STRNDUP
 
+/* Define if you have the `strnlen' function. */
+#undef HAVE_STRNLEN
+
 /* Define if you have the `strsep' function. */
 #undef HAVE_STRSEP
 
 /* Define if you have the `strsuftoll' function. */
 #undef HAVE_STRSUFTOLL
 
+/* Define if you have the `strtoi' function. */
+#undef HAVE_STRTOI
+
 /* Define if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
+
+/* Define if you have the `strtou' function. */
+#undef HAVE_STRTOU
 
 /* Define if `d_namlen' is member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_NAMLEN

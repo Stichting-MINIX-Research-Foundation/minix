@@ -1,0 +1,13 @@
+#	$NetBSD: NetBSD.dist.compat.in,v 1.1 2015/06/19 18:16:06 matt Exp $
+
+./lib/@ARCH_SUBDIR@
+./lib/@ARCH_SUBDIR@/npf
+./usr/lib/@ARCH_SUBDIR@
+./usr/lib/@ARCH_SUBDIR@/i18n
+./usr/lib/@ARCH_SUBDIR@/lua
+./usr/lib/@ARCH_SUBDIR@/lua/5.3
+./usr/lib/@ARCH_SUBDIR@/security
+./usr/libdata/debug/lib/@ARCH_SUBDIR@
+./usr/libdata/debug/lib/@ARCH_SUBDIR@/npf
+./usr/libdata/debug/usr/lib/@ARCH_SUBDIR@
+./usr/libdata/debug/usr/lib/@ARCH_SUBDIR@/i18n

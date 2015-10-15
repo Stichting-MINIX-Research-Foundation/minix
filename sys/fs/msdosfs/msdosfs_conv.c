@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.10 2014/09/01 09:09:47 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.10 2014/09/01 09:09:47 martin Exp $");
 
 /*
  * System include files.
@@ -66,9 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Ex
 #include <sys/vnode.h>
 #else
 #include <stdio.h>
+#include <string.h>
 #include <dirent.h>
 #include <sys/queue.h>
 #endif
+#include <dev/clock_subr.h>
 
 /*
  * MSDOSFS include files.
@@ -77,29 +79,15 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.9 2013/01/26 16:51:51 christos Ex
 #include <fs/msdosfs/denode.h>
 
 /*
- * Days in each month in a regular year.
+ * The number of seconds between Jan 1, 1970 and Jan 1, 1980. In that
+ * interval there were 8 regular years and 2 leap years.
  */
-u_short const regyear[] = {
-	31, 28, 31, 30, 31, 30,
-	31, 31, 30, 31, 30, 31
-};
-
+#define	DOSBIASYEAR	1980
+#define	SECONDSTO1980	(((8 * 365) + (2 * 366)) * (24 * 60 * 60))
 /*
- * Days in each month in a leap year.
+ * msdos fs can not store dates beyound the year 2234
  */
-u_short const leapyear[] = {
-	31, 29, 31, 30, 31, 30,
-	31, 31, 30, 31, 30, 31
-};
-
-/*
- * Variables used to remember parts of the last time conversion.  Maybe we
- * can avoid a full conversion.
- */
-u_long lasttime;
-u_long lastday;
-u_short lastddate;
-u_short lastdtime;
+#define DOSMAXYEAR	((DD_YEAR_MASK >> DD_YEAR_SHIFT) + DOSBIASYEAR)
 
 /*
  * Convert the unix version of time to dos's idea of time to be used in
@@ -109,72 +97,49 @@ void
 unix2dostime(const struct timespec *tsp, int gmtoff, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
 {
 	u_long t;
-	u_long days;
-	u_long inc;
-	u_long year;
-	u_long month;
-	const u_short *months;
+	struct clock_ymdhms ymd;
+
+	t = tsp->tv_sec + gmtoff; /* time zone correction */
 
 	/*
-	 * If the time from the last conversion is the same as now, then
-	 * skip the computations and use the saved result.
+	 * DOS timestamps can not represent dates before 1980.
 	 */
-	t = tsp->tv_sec + gmtoff; /* time zone correction */
-	t &= ~1;
-	if (lasttime != t) {
-		lasttime = t;
-		lastdtime = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
-		    + (((t / 60) % 60) << DT_MINUTES_SHIFT)
-		    + (((t / 3600) % 24) << DT_HOURS_SHIFT);
+	if (t < SECONDSTO1980)
+		goto invalid_dos_date;
 
-		/*
-		 * If the number of days since 1970 is the same as the last
-		 * time we did the computation then skip all this leap year
-		 * and month stuff.
-		 */
-		days = t / (24 * 60 * 60);
-		if (days != lastday) {
-			lastday = days;
-			for (year = 1970;; year++) {
-				inc = year & 0x03 ? 365 : 366;
-				if (days < inc)
-					break;
-				days -= inc;
-			}
-			months = year & 0x03 ? regyear : leapyear;
-			for (month = 0; month < 12; month++) {
-				if (days < months[month])
-					break;
-				days -= months[month];
-			}
-			lastddate = ((days + 1) << DD_DAY_SHIFT)
-			    + ((month + 1) << DD_MONTH_SHIFT);
-			/*
-			 * Remember dos's idea of time is relative to 1980.
-			 * unix's is relative to 1970.  If somehow we get a
-			 * time before 1980 then don't give totally crazy
-			 * results.
-			 */
-			if (year > 1980)
-				lastddate += (year - 1980) << DD_YEAR_SHIFT;
-		}
-	}
-	if (dtp)
-		*dtp = lastdtime;
+	/*
+	 * DOS granularity is 2 seconds
+	 */
+	t &= ~1;
+
+	/*
+	 * Convert to year/month/day/.. format
+	 */
+	clock_secs_to_ymdhms(t, &ymd);
+	if (ymd.dt_year > DOSMAXYEAR)
+		goto invalid_dos_date;
+
+	/*
+	 * Now transform to DOS format
+	 */
+	*ddp = (ymd.dt_day << DD_DAY_SHIFT)
+	    + (ymd.dt_mon << DD_MONTH_SHIFT)
+	    + ((ymd.dt_year - DOSBIASYEAR) << DD_YEAR_SHIFT);
 	if (dhp)
 		*dhp = (tsp->tv_sec & 1) * 100 + tsp->tv_nsec / 10000000;
+	if (dtp)
+		*dtp = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
+		    + (((t / 60) % 60) << DT_MINUTES_SHIFT)
+		    + (((t / 3600) % 24) << DT_HOURS_SHIFT);
+	return;
 
-	*ddp = lastddate;
+invalid_dos_date:
+	*ddp = 0;
+	if (dtp)
+		*dtp = 0;
+	if (dhp)
+		*dhp = 0;
 }
-
-/*
- * The number of seconds between Jan 1, 1970 and Jan 1, 1980. In that
- * interval there were 8 regular years and 2 leap years.
- */
-#define	SECONDSTO1980	(((8 * 365) + (2 * 366)) * (24 * 60 * 60))
-
-u_short lastdosdate;
-u_long lastseconds;
 
 /*
  * Convert from dos' idea of time to unix'. This will probably only be
@@ -184,11 +149,8 @@ u_long lastseconds;
 void
 dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
 {
-	u_long seconds;
-	u_long m, month;
-	u_long y, year;
-	u_long days;
-	const u_short *months;
+	time_t seconds;
+	struct clock_ymdhms ymd;
 
 	if (dd == 0) {
 		/*
@@ -198,37 +160,18 @@ dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
 		tsp->tv_nsec = 0;
 		return;
 	}
-	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2
-	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
-	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600
-	    + dh / 100;
-	/*
-	 * If the year, month, and day from the last conversion are the
-	 * same then use the saved value.
-	 */
-	if (lastdosdate != dd) {
-		lastdosdate = dd;
-		days = 0;
-		year = (dd & DD_YEAR_MASK) >> DD_YEAR_SHIFT;
-		for (y = 0; y < year; y++)
-			days += y & 0x03 ? 365 : 366;
-		months = year & 0x03 ? regyear : leapyear;
-		/*
-		 * Prevent going from 0 to 0xffffffff in the following
-		 * loop.
-		 */
-		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
-		if (month == 0) {
-			printf("%s: month value out of range (%ld)\n",
-			    __func__, month);
-			month = 1;
-		}
-		for (m = 0; m < month - 1; m++)
-			days += months[m];
-		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
-		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
-	}
-	tsp->tv_sec = seconds + lastseconds;
+
+	memset(&ymd, 0, sizeof(ymd));
+	ymd.dt_year = ((dd & DD_YEAR_MASK) >> DD_YEAR_SHIFT) + 1980 ;
+	ymd.dt_mon = ((dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT);
+	ymd.dt_day = ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT);
+	ymd.dt_hour = (dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT;
+	ymd.dt_min = (dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT;
+	ymd.dt_sec = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2;
+
+	seconds = clock_ymdhms_to_secs(&ymd);
+
+	tsp->tv_sec = seconds;
 	tsp->tv_sec -= gmtoff;	/* time zone correction */
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }

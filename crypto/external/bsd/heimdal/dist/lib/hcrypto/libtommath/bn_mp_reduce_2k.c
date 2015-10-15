@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_reduce_2k.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_reduce_2k.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_REDUCE_2K_C
@@ -22,35 +22,35 @@ int mp_reduce_2k(mp_int *a, mp_int *n, mp_digit d)
 {
    mp_int q;
    int    p, res;
-   
+
    if ((res = mp_init(&q)) != MP_OKAY) {
       return res;
    }
-   
-   p = mp_count_bits(n);    
+
+   p = mp_count_bits(n);
 top:
    /* q = a/2**p, a = a mod 2**p */
    if ((res = mp_div_2d(a, p, &q, a)) != MP_OKAY) {
       goto ERR;
    }
-   
+
    if (d != 1) {
       /* q = q * d */
-      if ((res = mp_mul_d(&q, d, &q)) != MP_OKAY) { 
+      if ((res = mp_mul_d(&q, d, &q)) != MP_OKAY) {
          goto ERR;
       }
    }
-   
+
    /* a = a + q */
    if ((res = s_mp_add(a, &q, a)) != MP_OKAY) {
       goto ERR;
    }
-   
+
    if (mp_cmp_mag(a, n) != MP_LT) {
       s_mp_sub(a, n, a);
       goto top;
    }
-   
+
 ERR:
    mp_clear(&q);
    return res;
@@ -58,6 +58,6 @@ ERR:
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_reduce_2k.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_reduce_2k.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

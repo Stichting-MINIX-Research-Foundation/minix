@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.7 2015/01/08 22:27:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -87,3 +87,5 @@ ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)
+ATOMIC_OP_ALIAS(membar_datadep_consumer,_membar_sync)
+STRONG_ALIAS(_membar_datadep_consumer,_membar_sync)

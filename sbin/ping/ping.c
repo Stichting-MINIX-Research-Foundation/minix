@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.107 2013/10/19 01:08:25 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.107 2013/10/19 01:08:25 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -197,9 +197,9 @@ static double tsum = 0.0;			/* sum of all times */
 static double tsumsq = 0.0;
 static double maxwait = 0.0;
 
-#ifndef __minix
+#if !defined(__minix)
 static int bufspace = IP_MAXPACKET;
-#endif
+#endif /* !defined(__minix) */
 
 static struct timespec now, clear_cache, last_tx, next_tx, first_tx;
 static struct timespec last_rx, first_rx;
@@ -254,24 +254,24 @@ main(int argc, char *argv[])
 #endif
 
 	if (prog_init && prog_init() == -1)
-		err(1, "init failed");
+		err(EXIT_FAILURE, "init failed");
 
 	if ((s = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		err(1, "Cannot create socket");
+		err(EXIT_FAILURE, "Cannot create socket");
 	if ((sloop = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		err(1, "Cannot create socket");
+		err(EXIT_FAILURE, "Cannot create socket");
 
-#ifndef __minix
+#if !defined(__minix)
 	/*
 	 * sloop is never read on.  This prevents packets from
 	 * queueing in its recv buffer.
 	 */
 	if (prog_shutdown(sloop, SHUT_RD) == -1)
 		warn("Cannot shutdown for read");
-#endif
+#endif /* !defined(__minix) */
 
 	if (prog_setuid(prog_getuid()) == -1)
-		err(1, "setuid");
+		err(EXIT_FAILURE, "setuid");
 
 	setprogname(argv[0]);
 
@@ -297,7 +297,9 @@ main(int argc, char *argv[])
 		case 'c':
 			npackets = strtol(optarg, &p, 0);
 			if (*p != '\0' || npackets <= 0)
-				errx(1, "Bad/invalid number of packets");
+				errx(EXIT_FAILURE,
+				    "Bad/invalid number of packets: %s",
+				    optarg);
 			break;
 		case 'D':
 			pingflags |= F_DF;
@@ -314,13 +316,14 @@ main(int argc, char *argv[])
 		case 'i':		/* wait between sending packets */
 			interval = strtod(optarg, &p);
 			if (*p != '\0' || interval <= 0)
-				errx(1, "Bad/invalid interval %s", optarg);
+				errx(EXIT_FAILURE, "Bad/invalid interval: %s",
+				    optarg);
 			break;
 		case 'l':
 			preload = strtol(optarg, &p, 0);
 			if (*p != '\0' || preload < 0)
-				errx(1, "Bad/invalid preload value %s",
-				     optarg);
+				errx(EXIT_FAILURE, "Bad/invalid preload value: "
+				    "%s", optarg);
 			break;
 		case 'n':
 			pingflags |= F_NUMERIC;
@@ -330,13 +333,15 @@ main(int argc, char *argv[])
 			break;
 		case 'p':		/* fill buffer with user pattern */
 			if (pingflags & F_PING_RANDOM)
-				errx(1, "Only one of -P and -p allowed");
+				errx(EXIT_FAILURE,
+				    "Only one of -P and -p allowed");
 			pingflags |= F_PING_FILLED;
 			fill_pat = optarg;
 			break;
 		case 'P':
 			if (pingflags & F_PING_FILLED)
-				errx(1, "Only one of -P and -p allowed");
+				errx(EXIT_FAILURE,
+				    "Only one of -P and -p allowed");
 			pingflags |= F_PING_RANDOM;
 			break;
 		case 'q':
@@ -351,9 +356,10 @@ main(int argc, char *argv[])
 		case 's':		/* size of packet to send */
 			l = strtol(optarg, &p, 0);
 			if (*p != '\0' || l < 0)
-				errx(1, "Bad/invalid packet size %s", optarg);
+				errx(EXIT_FAILURE,
+				    "Bad/invalid packet size: %s", optarg);
 			if (l > MAXPACKET)
-				errx(1, "packet size is too large");
+				errx(EXIT_FAILURE, "packet size is too large");
 			len = (int)l;
 			break;
 		case 'v':
@@ -368,12 +374,13 @@ main(int argc, char *argv[])
 		case 't':
 			tos = strtoul(optarg, &p, 0);
 			if (*p != '\0' ||  tos > 0xFF)
-				errx(1, "bad tos value: %s", optarg);
+				errx(EXIT_FAILURE, "bad tos value: %s", optarg);
 			break;
 		case 'T':
 			l = strtol(optarg, &p, 0);
 			if (*p != '\0' || l > 255 || l <= 0)
-				errx(1, "ttl out of range");
+				errx(EXIT_FAILURE, "ttl out of range: %s",
+				    optarg);
 			ttl = (u_char)l;    /* cannot check >255 otherwise */
 			break;
 		case 'I':
@@ -387,7 +394,8 @@ main(int argc, char *argv[])
 		case 'w':
 			maxwait = strtod(optarg, &p);
 			if (*p != '\0' || maxwait <= 0)
-				errx(1, "Bad/invalid maxwait time %s", optarg);
+				errx(EXIT_FAILURE, "Bad/invalid maxwait time: "
+				    "%s", optarg);
 			break;
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
@@ -396,13 +404,14 @@ main(int argc, char *argv[])
 			if (!strncmp("in", optarg, 2)) {
 				policy_in = strdup(optarg);
 				if (!policy_in)
-					err(1, "strdup");
+					err(EXIT_FAILURE, "strdup");
 			} else if (!strncmp("out", optarg, 3)) {
 				policy_out = strdup(optarg);
 				if (!policy_out)
-					err(1, "strdup");
+					err(EXIT_FAILURE, "strdup");
 			} else
-				errx(1, "invalid security policy");
+				errx(EXIT_FAILURE, "invalid security policy: "
+				    "%s", optarg);
 			break;
 #else
 		case 'A':
@@ -423,11 +432,12 @@ main(int argc, char *argv[])
 		interval = (pingflags & F_FLOOD) ? FLOOD_INTVL : 1.0;
 #ifndef sgi
 	if (pingflags & F_FLOOD && prog_getuid())
-		errx(1, "Must be superuser to use -f");
+		errx(EXIT_FAILURE, "Must be superuser to use -f");
 	if (interval < 1.0 && prog_getuid())
-		errx(1, "Must be superuser to use < 1 sec ping interval");
+		errx(EXIT_FAILURE, "Must be superuser to use < 1 sec "
+		    "ping interval");
 	if (preload > 0 && prog_getuid())
-		errx(1, "Must be superuser to use -l");
+		errx(EXIT_FAILURE, "Must be superuser to use -l");
 #endif
 	sec_to_timespec(interval, &interval_tv);
 
@@ -462,7 +472,7 @@ main(int argc, char *argv[])
 	if (len != -1)
 		datalen = len;
 	else
-		datalen = 64;
+		datalen = 64 - PHDR_LEN;
 	if (!compat && datalen >= (int)PHDR64_LEN) { /* can we time them? */
 		pingflags |= F_TIMING64;
 		phdrlen = PHDR64_LEN;
@@ -473,9 +483,8 @@ main(int argc, char *argv[])
 		phdrlen = 0;
 
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
-	datalen -= phdrlen;
 	if ((packet = malloc(packlen)) == NULL)
-		err(1, "Out of memory");
+		err(EXIT_FAILURE, "Can't allocate %d bytes", packlen);
 
 	if (pingflags & F_PING_FILLED) {
 		fill();
@@ -530,11 +539,11 @@ main(int argc, char *argv[])
 				 - optlen);
 	(void) memcpy(opack_ip + 1, optspace, optlen);
 
-#ifndef __minix
-	if (prog_setsockopt(s,IPPROTO_IP,IP_HDRINCL,
+#if !defined(__minix)
+	if (prog_setsockopt(s, IPPROTO_IP, IP_HDRINCL,
 	    (char *) &on, sizeof(on)) < 0)
-		err(1, "Can't set special IP header");
-#endif
+		err(EXIT_FAILURE, "Can't set special IP header");
+#endif /* !defined(__minix) */
 
 	opack_ip->ip_v = IPVERSION;
 	opack_ip->ip_hl = (sizeof(struct ip)+optlen) >> 2;
@@ -551,25 +560,25 @@ main(int argc, char *argv[])
 			if (prog_setsockopt(s, IPPROTO_IP,
 			    IP_MULTICAST_LOOP,
 			    (char *) &loop, 1) < 0)
-				err(1, "Can't disable multicast loopback");
+				err(EXIT_FAILURE, "Can't disable multicast loopback");
 		}
 
 		if (ttl != 0
 		    && prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL,
 		    (char *) &ttl, 1) < 0)
-			err(1, "Can't set multicast time-to-live");
+			err(EXIT_FAILURE, "Can't set multicast time-to-live");
 
 		if ((pingflags & F_SOURCE_ADDR)
 		    && prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 				  (char *) &src_addr.sin_addr,
 				  sizeof(src_addr.sin_addr)) < 0)
-			err(1, "Can't set multicast source interface");
+			err(EXIT_FAILURE, "Can't set multicast source interface");
 
 	} else if (pingflags & F_SOURCE_ADDR) {
 		if (prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 			       (char *) &src_addr.sin_addr,
 			       sizeof(src_addr.sin_addr)) < 0)
-			err(1, "Can't set source interface/address");
+			err(EXIT_FAILURE, "Can't set source interface/address");
 	}
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
@@ -579,27 +588,29 @@ main(int argc, char *argv[])
 		if (policy_in != NULL) {
 			buf = ipsec_set_policy(policy_in, strlen(policy_in));
 			if (buf == NULL)
-				errx(1, "%s", ipsec_strerror());
+				errx(EXIT_FAILURE, "%s", ipsec_strerror());
 			if (prog_setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
 					buf, ipsec_get_policylen(buf)) < 0) {
-				err(1, "ipsec policy cannot be configured");
+				err(EXIT_FAILURE, "ipsec policy cannot be "
+				    "configured");
 			}
 			free(buf);
 		}
 		if (policy_out != NULL) {
 			buf = ipsec_set_policy(policy_out, strlen(policy_out));
 			if (buf == NULL)
-				errx(1, "%s", ipsec_strerror());
+				errx(EXIT_FAILURE, "%s", ipsec_strerror());
 			if (prog_setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
 					buf, ipsec_get_policylen(buf)) < 0) {
-				err(1, "ipsec policy cannot be configured");
+				err(EXIT_FAILURE, "ipsec policy cannot be "
+				    "configured");
 			}
 			free(buf);
 		}
 	}
 	buf = ipsec_set_policy("out bypass", strlen("out bypass"));
 	if (buf == NULL)
-		errx(1, "%s", ipsec_strerror());
+		errx(EXIT_FAILURE, "%s", ipsec_strerror());
 	if (prog_setsockopt(sloop, IPPROTO_IP, IP_IPSEC_POLICY,
 			buf, ipsec_get_policylen(buf)) < 0) {
 #if 0
@@ -643,9 +654,9 @@ main(int argc, char *argv[])
 #endif /*IPSEC*/
 
 	(void)printf("PING %s (%s): %d data bytes\n", hostname,
-		     inet_ntoa(whereto.sin_addr), datalen + phdrlen);
+		     inet_ntoa(whereto.sin_addr), datalen);
 
-#ifndef __minix
+#if !defined(__minix)
 	/* When pinging the broadcast address, you can get a lot
 	 * of answers.  Doing something so evil is useful if you
 	 * are trying to stress the ethernet, or just want to
@@ -654,7 +665,7 @@ main(int argc, char *argv[])
 	while (0 > prog_setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 			      (char*)&bufspace, sizeof(bufspace))) {
 		if ((bufspace -= 4096) <= 0)
-			err(1, "Cannot set the receive buffer size");
+			err(EXIT_FAILURE, "Cannot set the receive buffer size");
 	}
 
 	/* make it possible to send giant probes, but do not worry now
@@ -662,7 +673,7 @@ main(int argc, char *argv[])
 	 */
 	(void)prog_setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 			 (char*)&bufspace, sizeof(bufspace));
-#endif
+#endif /* !defined(__minix) */
 
 	(void)signal(SIGINT, prefinish);
 
@@ -745,7 +756,7 @@ doit(void)
 				if (errno == EINTR)
 					continue;
 				jiggle_flush(1);
-				err(1, "poll");
+				err(EXIT_FAILURE, "poll");
 			}
 			continue;
 		}
@@ -755,7 +766,6 @@ doit(void)
 			      0, (struct sockaddr *)&from,
 			      &fromlen);
 		if (cc < 0) {
-			perror("recvfrom failed");
 			if (errno != EINTR) {
 				jiggle_flush(1);
 				warn("recvfrom");
@@ -844,16 +854,16 @@ static void
 pinger(void)
 {
 	struct tv32 tv32;
-#ifndef __minix
+#if !defined(__minix)
 	int i, cc, sw;
 #else
 	int i, cc;
-#endif
+#endif /* !defined(__minix) */
 
 	opack_icmp.icmp_code = 0;
 	opack_icmp.icmp_seq = htons((u_int16_t)(ntransmitted));
 
-#ifndef __minix
+#if !defined(__minix)
 	/* clear the cached route in the kernel after an ICMP
 	 * response such as a Redirect is seen to stop causing
 	 * more such packets.  Also clear the cached route
@@ -867,9 +877,9 @@ pinger(void)
 		opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp,
 		    phdrlen);
 		sw = 0;
-		if (prog_setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
-			       (char *)&sw,sizeof(sw)) < 0)
-			err(1, "Can't turn off special IP header");
+		if (prog_setsockopt(sloop, IPPROTO_IP, IP_HDRINCL,
+			       (char *)&sw, sizeof(sw)) < 0)
+			err(EXIT_FAILURE, "Can't turn off special IP header");
 		if (prog_sendto(sloop, (char *) &opack_icmp,
 			   ICMP_MINLEN, MSG_DONTROUTE,
 			   (struct sockaddr *)&loc_addr,
@@ -884,13 +894,13 @@ pinger(void)
 				warn("failed to clear cached route");
 		}
 		sw = 1;
-		if (prog_setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
+		if (prog_setsockopt(sloop, IPPROTO_IP, IP_HDRINCL,
 			       (char *)&sw, sizeof(sw)) < 0)
-			err(1, "Can't set special IP header");
+			err(EXIT_FAILURE, "Can't set special IP header");
 		
 		(void)clock_gettime(CLOCK_MONOTONIC, &clear_cache);
 	}
-#endif
+#endif /* !defined(__minix) */
 
 	opack_icmp.icmp_type = ICMP_ECHO;
 	opack_icmp.icmp_id = ident;
@@ -902,7 +912,7 @@ pinger(void)
 	} else if (pingflags & F_TIMING64)
 		(void) memcpy(&opack_icmp.icmp_data[0], &now, sizeof(now));
 
-	cc = MAX(datalen, ICMP_MINLEN) + phdrlen;
+	cc = MAX(datalen, ICMP_MINLEN) + PHDR_LEN;
 	opack_icmp.icmp_cksum = 0;
 	opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp, cc);
 
@@ -910,7 +920,6 @@ pinger(void)
 	opack_ip->ip_len = cc;
 	i = prog_sendto(s, (char *) opack_ip, cc, 0,
 		   (struct sockaddr *)&send_addr, sizeof(struct sockaddr_in));
-
 	if (i != cc) {
 		jiggle_flush(1);
 		if (i < 0)
@@ -1131,7 +1140,7 @@ pr_pack(u_char *buf,
 			}
 			PR_PACK_SUB();
 			(void)printf("\nwrong data byte #%d should have been"
-				     " %#x but was %#x", i,
+				     " %#x but was %#x", i - phdrlen,
 				     (u_char)opack_icmp.icmp_data[i],
 				     (u_char)icp->icmp_data[i]);
 			for (i = phdrlen; i < datalen; i++) {
@@ -1366,7 +1375,7 @@ summary(int header)
 		if (n>1)
 			variance = (tsumsq - n*avg*avg) /(n-1);
 
-		printf("round-trip min/avg/max/stddev = "
+		(void)printf("round-trip min/avg/max/stddev = "
 			"%.*f/%.*f/%.*f/%.*f ms\n",
 			prec, tmin * 1000.0,
 			prec, avg * 1000.0,
@@ -1814,7 +1823,7 @@ fill(void)
 	}
 	if (cp == fill_pat || *cp != '\0' || (cp-fill_pat) > 16*2) {
 		(void)fflush(stdout);
-		errx(1, "\"-p %s\": patterns must be specified with"
+		errx(EXIT_FAILURE, "\"-p %s\": patterns must be specified with"
 		     " 1-32 hex digits\n",
 		     fill_pat);
 	}
@@ -1826,7 +1835,7 @@ fill(void)
 		    &pat[8], &pat[9], &pat[10], &pat[11],
 		    &pat[12], &pat[13], &pat[14], &pat[15]);
 
-	for (k = phdrlen, j = 0; k <= datalen; k++) {
+	for (k = phdrlen, j = 0; k < datalen; k++) {
 		opack_icmp.icmp_data[k] = pat[j];
 		if (++j >= i)
 			j = 0;
@@ -1878,8 +1887,7 @@ gethost(const char *arg,
 				hp = 0;
 			else
 				hp = gethostbyaddr((char *)&sa->sin_addr,
-						   sizeof(sa->sin_addr),
-						   AF_INET);
+				    sizeof(sa->sin_addr), AF_INET);
 			(void)strlcpy(realname, hp ? hp->h_name : name,
 			    realname_len);
 		}
@@ -1888,10 +1896,11 @@ gethost(const char *arg,
 	
 	hp = gethostbyname(name);
 	if (!hp)
-		errx(1, "Cannot resolve \"%s\" (%s)",name,hstrerror(h_errno));
+		errx(EXIT_FAILURE, "Cannot resolve \"%s\" (%s)",
+		    name, hstrerror(h_errno));
 
 	if (hp->h_addrtype != AF_INET)
-		errx(1, "%s only supported with IP", arg);
+		errx(EXIT_FAILURE, "%s only supported with IP", arg);
 
 	(void)memcpy(&sa->sin_addr, hp->h_addr, sizeof(sa->sin_addr));
 

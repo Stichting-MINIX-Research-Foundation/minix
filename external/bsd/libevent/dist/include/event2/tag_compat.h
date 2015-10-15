@@ -1,4 +1,5 @@
-/*	$NetBSD: tag_compat.h,v 1.1.1.1 2013/04/11 16:43:35 christos Exp $	*/
+/*	$NetBSD: tag_compat.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
+/*	$NetBSD: tag_compat.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

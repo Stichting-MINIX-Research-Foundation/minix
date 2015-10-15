@@ -1,0 +1,65 @@
+# $NetBSD: genassym.cf,v 1.1 2014/08/10 05:47:36 matt Exp $
+
+#-
+# Copyright (c) 2014 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas of 3am Software Foundry.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <sys/types.h>
+include <ucontext.h>
+include <setjmp.h>
+
+define _UC_REGS_X0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_X0])
+define _UC_REGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
+define _UC_REGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+
+define _JB_MAGIC_AARCH64__SETJMP _JB_MAGIC_AARCH64__SETJMP
+define _JB_MAGIC_AARCH64_SETJMP _JB_MAGIC_AARCH64_SETJMP
+define _JB_MAGIC	sizeof(_BSD_JBSLOT_T_ [_JB_MAGIC])
+define _JB_SP		sizeof(_BSD_JBSLOT_T_ [_JB_SP])
+define _JB_X19		sizeof(_BSD_JBSLOT_T_ [_JB_X19])
+define _JB_X20		sizeof(_BSD_JBSLOT_T_ [_JB_X20])
+define _JB_X21		sizeof(_BSD_JBSLOT_T_ [_JB_X21])
+define _JB_X22		sizeof(_BSD_JBSLOT_T_ [_JB_X22])
+define _JB_X23		sizeof(_BSD_JBSLOT_T_ [_JB_X23])
+define _JB_X24		sizeof(_BSD_JBSLOT_T_ [_JB_X24])
+define _JB_X25		sizeof(_BSD_JBSLOT_T_ [_JB_X25])
+define _JB_X26		sizeof(_BSD_JBSLOT_T_ [_JB_X26])
+define _JB_X27		sizeof(_BSD_JBSLOT_T_ [_JB_X27])
+define _JB_X28		sizeof(_BSD_JBSLOT_T_ [_JB_X29])
+define _JB_X29		sizeof(_BSD_JBSLOT_T_ [_JB_X29])
+define _JB_X30		sizeof(_BSD_JBSLOT_T_ [_JB_X30])
+define _JB_TPIDR	sizeof(_BSD_JBSLOT_T_ [_JB_TPIDR])
+define _JB_D8		sizeof(_BSD_JBSLOT_T_ [_JB_D8])
+define _JB_D9		sizeof(_BSD_JBSLOT_T_ [_JB_D9])
+define _JB_D10		sizeof(_BSD_JBSLOT_T_ [_JB_D10])
+define _JB_D11		sizeof(_BSD_JBSLOT_T_ [_JB_D11])
+define _JB_D12		sizeof(_BSD_JBSLOT_T_ [_JB_D12])
+define _JB_D13		sizeof(_BSD_JBSLOT_T_ [_JB_D13])
+define _JB_D14		sizeof(_BSD_JBSLOT_T_ [_JB_D14])
+define _JB_D15		sizeof(_BSD_JBSLOT_T_ [_JB_D15])
+define _JB_SIGMASK	sizeof(_BSD_JBSLOT_T_ [_JB_SIGMASK])

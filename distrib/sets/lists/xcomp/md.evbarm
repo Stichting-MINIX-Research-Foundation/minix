@@ -1,0 +1,14 @@
+# $NetBSD: md.evbarm,v 1.2 2015/08/17 16:05:25 christos Exp $
+./usr/libdata/lint/llib-ldbe.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldri.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldri2.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lexa.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lextmod.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lfb.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lglx.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lrecord.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lshadow.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lshadowfb.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lvbe.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lvgahw.ln	-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxaa.ln		-unknown-	lint,xorg

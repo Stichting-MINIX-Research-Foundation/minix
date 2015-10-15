@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_reduce_is_2k.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_reduce_is_2k.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_REDUCE_IS_2K_C
@@ -22,7 +22,7 @@ int mp_reduce_is_2k(mp_int *a)
 {
    int ix, iy, iw;
    mp_digit iz;
-   
+
    if (a->used == 0) {
       return MP_NO;
    } else if (a->used == 1) {
@@ -31,7 +31,7 @@ int mp_reduce_is_2k(mp_int *a)
       iy = mp_count_bits(a);
       iz = 1;
       iw = 1;
-    
+
       /* Test every bit from the second digit up, must be 1 */
       for (ix = DIGIT_BIT; ix < iy; ix++) {
           if ((a->dp[iw] & iz) == 0) {
@@ -49,6 +49,6 @@ int mp_reduce_is_2k(mp_int *a)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_reduce_is_2k.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_reduce_is_2k.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: archive,v 1.79 2013/02/08 17:24:06 christos Exp $
+# $File: archive,v 1.88 2014/08/16 10:42:17 christos Exp $
 # archive:  file(1) magic for archive formats (see also "msdos" for self-
 #           extracting compressed archives)
 #
@@ -92,9 +92,10 @@
 # "debian".
 #
 0	string		=!<arch>\ndebian
-!:mime	application/x-debian-package
 >8	string		debian-split	part of multipart Debian package
+!:mime	application/vnd.debian.binary-package
 >8	string		debian-binary	Debian binary package
+!:mime	application/vnd.debian.binary-package
 >8	string		!debian
 >68	string		>\0		(format %s)
 # These next two lines do not work, because a bzip2 Debian archive
@@ -268,7 +269,7 @@
 >9	string	\0
 >>0	string	KWAJ
 >>>7	string	\321\003	MS Compress archive data
->>>>14	ulong	>0		\b, original size: %ld bytes
+>>>>14	ulong	>0		\b, original size: %d bytes
 >>>>18		ubyte	>0x65
 >>>>>18		string	x       \b, was %.8s
 >>>>>(10.b-4)	string	x       \b.%.3s
@@ -497,7 +498,7 @@
 # This is a really bad format. A file containing HAWAII will match this...
 #0	string		HA		HA archive data,
 #>2	leshort		=1		1 file,
-#>2	leshort		>1		%u files,
+#>2	leshort		>1		%hu files,
 #>4	byte&0x0f	=0		first is type CPY
 #>4	byte&0x0f	=1		first is type ASC
 #>4	byte&0x0f	=2		first is type HSC
@@ -679,7 +680,7 @@
 #  EPUB (OEBPS) books using OCF (OEBPS Container Format)
 #    http://www.idpf.org/ocf/ocf1.0/download/ocf10.htm, section 4.
 #    From: Ralf Brown <ralf.brown@gmail.com>
->0x1E	string	mimetypeapplication/epub+zip	EPUB document
+>>50	string	epub+zip	EPUB document
 !:mime application/epub+zip
 
 #  Catch other ZIP-with-mimetype formats
@@ -701,8 +702,8 @@
 !:mime	application/zip
 
 # Java Jar files
->(26.s+30)	leshort	0xcafe		Java Jar file data (zip)
-!:mime	application/jar
+>(26.s+30)	leshort	0xcafe		Java archive data (JAR)
+!:mime	application/java-archive
 
 # Generic zip archives (Greg Roelofs, c/o zip-bugs@wkuvx1.wku.edu)
 #   Next line excludes specialized formats:
@@ -873,7 +874,7 @@
 # From: Dirk Jagdmann <doj@cubic.org>
 # xar archive format: http://code.google.com/p/xar/
 0	string	xar!		xar archive
->6	beshort	x		- version %ld
+>6	beshort	x		- version %d
 
 # From: "Nelson A. de Oliveira" <naoliv@gmail.com>
 # .kgb
@@ -920,3 +921,36 @@
 >36	byte	16		\b, back-to-front
 >42	beshort	x		\b, (%dx,
 >44	beshort	x		%d)
+
+# Symantec GHOST image by Joerg Jenderek at May 2014
+# http://us.norton.com/ghost/
+# http://www.garykessler.net/library/file_sigs.html
+0		ubelong&0xFFFFf7f0	0xFEEF0100	Norton GHost image
+# *.GHO
+>2		ubyte&0x08		0x00		\b, first file
+# *.GHS or *.[0-9] with cns program option
+>2		ubyte&0x08		0x08		\b, split file
+# part of split index interesting for *.ghs
+>>4		ubyte			x		id=0x%x
+# compression tag minus one equals numeric compression command line switch z[1-9]
+>3		ubyte			0		\b, no compression
+>3		ubyte			2		\b, fast compression (Z1)
+>3		ubyte			3		\b, medium compression (Z2)
+>3		ubyte			>3		
+>>3		ubyte			<11		\b, compression (Z%d-1)
+>2		ubyte&0x08		0x00		
+# ~ 30 byte password field only for *.gho
+>>12		ubequad			!0		\b, password protected
+>>44		ubyte			!1		
+# 1~Image All, sector-by-sector only for *.gho
+>>>10		ubyte			1		\b, sector copy
+# 1~Image Boot track only for *.gho
+>>>43		ubyte			1		\b, boot track
+# 1~Image Disc only for *.gho implies Image Boot track and sector copy
+>>44		ubyte			1		\b, disc sector copy
+# optional image description only *.gho
+>>0xff		string			>\0		"%-.254s"
+# look for DOS sector end sequence
+>0xE08	search/7776		\x55\xAA	
+>>&-512	indirect		x		\b; contains 
+

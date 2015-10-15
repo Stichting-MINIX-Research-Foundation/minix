@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_reduce_setup.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_reduce_setup.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_REDUCE_SETUP_C
@@ -23,7 +23,7 @@
 int mp_reduce_setup (mp_int * a, mp_int * b)
 {
   int     res;
-  
+
   if ((res = mp_2expt (a, b->used * 2 * DIGIT_BIT)) != MP_OKAY) {
     return res;
   }
@@ -31,6 +31,6 @@ int mp_reduce_setup (mp_int * a, mp_int * b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_reduce_setup.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_reduce_setup.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.43 2011/08/01 10:42:23 drochner Exp $	*/
+/*	$NetBSD: intr.h,v 1.48 2015/08/17 06:16:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #include <sys/evcnt.h>
+#include <sys/queue.h>
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -71,6 +72,11 @@ struct intrstub {
 	void *ist_resume;
 };
 
+struct percpu_evcnt {
+	cpuid_t cpuid;
+	uint64_t count;
+};
+
 struct intrsource {
 	int is_maxlevel;		/* max. IPL for this source */
 	int is_pin;			/* IRQ for legacy; pin for IO APIC,
@@ -80,12 +86,17 @@ struct intrsource {
 	void *is_recurse;		/* entry for spllower */
 	void *is_resume;		/* entry for doreti */
 	lwp_t *is_lwp;			/* for soft interrupts */
-	struct evcnt is_evcnt;		/* interrupt counter */
+	struct evcnt is_evcnt;		/* interrupt counter per cpu */
 	int is_flags;			/* see below */
 	int is_type;			/* level, edge */
 	int is_idtvec;
 	int is_minlevel;
 	char is_evname[32];		/* event counter name */
+	char is_intrid[INTRIDBUF];	/* intrid created by create_intrid() */
+	char is_xname[INTRDEVNAMEBUF];	/* device names */
+	cpuid_t is_active_cpu;		/* active cpuid */
+	struct percpu_evcnt *is_saved_evcnt;	/* interrupt count of deactivated cpus */
+	SIMPLEQ_ENTRY(intrsource) is_list;	/* link of intrsources */
 };
 
 #define IS_LEGACY	0x0001		/* legacy ISA irq source */
@@ -171,22 +182,29 @@ struct cpu_info;
 
 struct pcibus_attach_args;
 
+typedef uint64_t intr_handle_t;
+
 void intr_default_setup(void);
 void x86_nmi(void);
+void *intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+			   void *, bool, const char *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);
-const char *intr_string(int);
+const char *intr_string(intr_handle_t, char *, size_t);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int, int, int *);
+int intr_find_mpmapping(int, int, intr_handle_t *);
 struct pic *intr_findpic(int);
 void intr_printconfig(void);
+
+struct intrsource *intr_allocate_io_intrsource(const char *);
+void intr_free_io_intrsource(const char *);
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
-extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
+extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);
 
 #endif /* _KERNEL */
 

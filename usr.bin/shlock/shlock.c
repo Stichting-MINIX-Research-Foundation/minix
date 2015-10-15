@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.12 2011/09/06 18:30:38 joerg Exp $	*/
+/*	$NetBSD: shlock.c,v 1.13 2015/04/10 09:34:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shlock.c,v 1.12 2011/09/06 18:30:38 joerg Exp $");
+__RCSID("$NetBSD: shlock.c,v 1.13 2015/04/10 09:34:43 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,7 +123,7 @@ xtmpfile(char *file, pid_t pid, int uucpstyle)
 	char	*cp, buf[BUFSIZ];
 	static char	tempname[BUFSIZ];
 
-	sprintf(buf, "shlock%ld", (u_long)getpid());
+	sprintf(buf, "shlock%ld", (long)getpid());
 	if ((cp = strrchr(strcpy(tempname, file), '/')) != NULL) {
 		*++cp = '\0';
 		(void) strcat(tempname, buf);
@@ -131,7 +131,7 @@ xtmpfile(char *file, pid_t pid, int uucpstyle)
 		(void) strcpy(tempname, buf);
 	dprintf("%s: temporary filename: %s\n", Pname, tempname);
 
-	sprintf(buf, "%ld\n", (u_long)pid);
+	sprintf(buf, "%ld\n", (long)pid);
 	len = strlen(buf);
 openloop:
 	if ((fd = open(tempname, O_RDWR|O_CREAT|O_EXCL, 0644)) < 0) {
@@ -165,7 +165,7 @@ openloop:
 		(write(fd, buf, len) < 0))
 	{
 		fprintf(stderr, "%s: write(%s,%ld): %s\n",
-			Pname, tempname, (u_long)pid, strerror(errno));
+			Pname, tempname, (long)pid, strerror(errno));
 		(void) close(fd);
 		if (unlink(tempname) < 0) {
 			fprintf(stderr, E_unlk,
@@ -184,7 +184,7 @@ openloop:
 static int
 p_exists(pid_t pid)
 {
-	dprintf("%s: process %ld is ", Pname, (u_long)pid);
+	dprintf("%s: process %ld is ", Pname, (long)pid);
 	if (pid <= 0) {
 		dprintf("invalid\n");
 		return(FALSE);
@@ -256,7 +256,7 @@ mklock(char *file, pid_t pid, int uucpstyle)
 	int	retcode = FALSE;
 
 	dprintf("%s: trying lock <%s> for process %ld\n", Pname, file,
-	    (u_long)pid);
+	    (long)pid);
 	if ((tmp = xtmpfile(file, pid, uucpstyle)) == NULL)
 		return(FALSE);
 

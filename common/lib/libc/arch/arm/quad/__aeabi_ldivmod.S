@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.12 2013/08/19 03:27:34 matt Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.13 2014/05/06 16:02:11 joerg Exp $")
 
 #ifdef __ARMEB__
 #define	ALO	r1	/* incoming numerator, outgoing quotient */
@@ -45,7 +45,9 @@ RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.12 2013/08/19 03:27:34 matt Exp $")
 
 ENTRY(__aeabi_ldivmod)
 #ifdef __ARM_EABI__
+# if !defined(__ARM_DWARF_EH__)
 	.fnstart
+# endif
 	.cfi_startproc
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -212,7 +214,9 @@ ENTRY(__aeabi_ldivmod)
 .Ldivbyzero:
 	push	{r0-r1,r4,lr}	
 #ifdef __ARM_EABI__
+# if !defined(__ARM_DWARF_EH__)
 	.save	{r0-r1,r4,lr}	
+# endif
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
 	.cfi_offset  4, -8
@@ -244,6 +248,8 @@ ENTRY(__aeabi_ldivmod)
 #endif	/* !_KERNEL && !_STANDALONE */
 #ifdef __ARM_EABI__
 	.cfi_endproc
+# if !defined(__ARM_DWARF_EH__)
 	.fnend
+# endif
 #endif
 END(__aeabi_ldivmod)

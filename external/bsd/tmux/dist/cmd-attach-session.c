@@ -1,4 +1,4 @@
-/* $Id: cmd-attach-session.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,47 +18,77 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "tmux.h"
 
 /*
  * Attach existing session to the current terminal.
  */
 
-int	cmd_attach_session_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	cmd_attach_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_attach_session_entry = {
 	"attach-session", "attach",
-	"drt:", 0, 0,
-	"[-dr] " CMD_TARGET_SESSION_USAGE,
-	CMD_CANTNEST|CMD_STARTSERVER|CMD_SENDENVIRON,
-	NULL,
+	"c:drt:", 0, 0,
+	"[-dr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
+	CMD_CANTNEST|CMD_STARTSERVER,
 	NULL,
 	cmd_attach_session_exec
 };
 
-int
-cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
+    const char *cflag)
 {
-	struct args	*args = self->args;
-	struct session	*s;
-	struct client	*c;
-	const char	*update;
-	char		*overrides, *cause;
-	u_int		 i;
+	struct session		*s;
+	struct client		*c;
+	struct winlink		*wl = NULL;
+	struct window		*w = NULL;
+	struct window_pane	*wp = NULL;
+	const char		*update;
+	char			*cause;
+	u_int			 i;
+	int			 fd;
+	struct format_tree	*ft;
+	char			*cp;
 
 	if (RB_EMPTY(&sessions)) {
-		ctx->error(ctx, "no sessions");
-		return (-1);
+		cmdq_error(cmdq, "no sessions");
+		return (CMD_RETURN_ERROR);
 	}
 
-	if ((s = cmd_find_session(ctx, args_get(args, 't'), 1)) == NULL)
-		return (-1);
+	if (tflag == NULL) {
+		if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+			return (CMD_RETURN_ERROR);
+	} else if (tflag[strcspn(tflag, ":.")] != '\0') {
+		if ((wl = cmd_find_pane(cmdq, tflag, &s, &wp)) == NULL)
+			return (CMD_RETURN_ERROR);
+	} else {
+		if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
+			return (CMD_RETURN_ERROR);
+		w = cmd_lookup_windowid(tflag);
+		if (w == NULL && (wp = cmd_lookup_paneid(tflag)) != NULL)
+			w = wp->window;
+		if (w != NULL)
+			wl = winlink_find_by_window(&s->windows, w);
+	}
 
-	if (ctx->cmdclient == NULL && ctx->curclient == NULL)
-		return (0);
+	if (cmdq->client == NULL)
+		return (CMD_RETURN_NORMAL);
 
-	if (ctx->cmdclient == NULL) {
-		if (args_has(self->args, 'd')) {
+	if (wl != NULL) {
+		if (wp != NULL)
+			window_set_active_pane(wp->window, wp);
+		session_set_current(s, wl);
+	}
+
+	if (cmdq->client->session != NULL) {
+		if (dflag) {
 			/*
 			 * Can't use server_write_session in case attaching to
 			 * the same session as currently attached to.
@@ -67,46 +97,99 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 				c = ARRAY_ITEM(&clients, i);
 				if (c == NULL || c->session != s)
 					continue;
-				if (c == ctx->curclient)
+				if (c == cmdq->client)
 					continue;
-				server_write_client(c, MSG_DETACH, NULL, 0);
+				server_write_client(c, MSG_DETACH,
+				    c->session->name,
+				    strlen(c->session->name) + 1);
 			}
 		}
 
-		ctx->curclient->session = s;
+		if (cflag != NULL) {
+			ft = format_create();
+			if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
+				format_client(ft, c);
+			format_session(ft, s);
+			format_winlink(ft, s, s->curw);
+			format_window_pane(ft, s->curw->window->active);
+			cp = format_expand(ft, cflag);
+			format_free(ft);
+
+			fd = open(cp, O_RDONLY|O_DIRECTORY);
+			free(cp);
+			if (fd == -1) {
+				cmdq_error(cmdq, "bad working directory: %s",
+				    strerror(errno));
+				return (CMD_RETURN_ERROR);
+			}
+			close(s->cwd);
+			s->cwd = fd;
+		}
+
+		cmdq->client->session = s;
+		notify_attached_session_changed(cmdq->client);
 		session_update_activity(s);
-		server_redraw_client(ctx->curclient);
+		server_redraw_client(cmdq->client);
+		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 	} else {
-		if (!(ctx->cmdclient->flags & CLIENT_TERMINAL)) {
-			ctx->error(ctx, "not a terminal");
-			return (-1);
+		if (server_client_open(cmdq->client, s, &cause) != 0) {
+			cmdq_error(cmdq, "open terminal failed: %s", cause);
+			free(cause);
+			return (CMD_RETURN_ERROR);
 		}
 
-		overrides =
-		    options_get_string(&s->options, "terminal-overrides");
-		if (tty_open(&ctx->cmdclient->tty, overrides, &cause) != 0) {
-			ctx->error(ctx, "terminal open failed: %s", cause);
-			xfree(cause);
-			return (-1);
+		if (cflag != NULL) {
+			ft = format_create();
+			if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
+				format_client(ft, c);
+			format_session(ft, s);
+			format_winlink(ft, s, s->curw);
+			format_window_pane(ft, s->curw->window->active);
+			cp = format_expand(ft, cflag);
+			format_free(ft);
+
+			fd = open(cp, O_RDONLY|O_DIRECTORY);
+			free(cp);
+			if (fd == -1) {
+				cmdq_error(cmdq, "bad working directory: %s",
+				    strerror(errno));
+				return (CMD_RETURN_ERROR);
+			}
+			close(s->cwd);
+			s->cwd = fd;
 		}
 
-		if (args_has(self->args, 'r'))
-			ctx->cmdclient->flags |= CLIENT_READONLY;
+		if (rflag)
+			cmdq->client->flags |= CLIENT_READONLY;
 
-		if (args_has(self->args, 'd'))
-			server_write_session(s, MSG_DETACH, NULL, 0);
-
-		ctx->cmdclient->session = s;
-		session_update_activity(s);
-		server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
+		if (dflag) {
+			server_write_session(s, MSG_DETACH, s->name,
+			    strlen(s->name) + 1);
+		}
 
 		update = options_get_string(&s->options, "update-environment");
-		environ_update(update, &ctx->cmdclient->environ, &s->environ);
+		environ_update(update, &cmdq->client->environ, &s->environ);
 
-		server_redraw_client(ctx->cmdclient);
+		cmdq->client->session = s;
+		notify_attached_session_changed(cmdq->client);
+		session_update_activity(s);
+		server_redraw_client(cmdq->client);
+		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+
+		server_write_ready(cmdq->client);
+		cmdq->client_exit = 0;
 	}
 	recalculate_sizes();
 	server_update_socket();
 
-	return (1);	/* 1 means don't tell command client to exit */
+	return (CMD_RETURN_NORMAL);
+}
+
+enum cmd_retval
+cmd_attach_session_exec(struct cmd *self, struct cmd_q *cmdq)
+{
+	struct args	*args = self->args;
+
+	return (cmd_attach_session(cmdq, args_get(args, 't'),
+	    args_has(args, 'd'), args_has(args, 'r'), args_get(args, 'c')));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: radioio.h,v 1.2 2005/12/26 18:41:36 perry Exp $ */
+/* $NetBSD: radioio.h,v 1.3 2015/09/06 06:01:02 dholland Exp $ */
 /* $OpenBSD: radioio.h,v 1.2 2001/12/05 10:27:05 mickey Exp $ */
 /* $RuOBSD: radioio.h,v 1.4 2001/10/18 16:51:36 pva Exp $ */
 
@@ -32,6 +32,7 @@
 #define _SYS_RADIOIO_H_
 
 #include <sys/param.h>
+#include <sys/ioccom.h>
 
 #define MIN_FM_FREQ	87500
 #define MAX_FM_FREQ	108000

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DIAGTOOL_DIAGTOOL_H
-#define DIAGTOOL_DIAGTOOL_H
+#ifndef LLVM_CLANG_TOOLS_DIAGTOOL_DIAGTOOL_H
+#define LLVM_CLANG_TOOLS_DIAGTOOL_DIAGTOOL_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -62,7 +62,7 @@ class CLSNAME : public diagtool::DiagTool {\
 public:\
   CLSNAME() : DiagTool(NAME, DESC) {}\
   virtual ~CLSNAME() {}\
-  virtual int run(unsigned argc, char *argv[], llvm::raw_ostream &out);\
+  int run(unsigned argc, char *argv[], llvm::raw_ostream &out) override;\
 };\
 diagtool::RegisterDiagTool<CLSNAME> Register##CLSNAME;\
 }

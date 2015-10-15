@@ -1,4 +1,4 @@
-/*	$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $	*/
+/*	$NetBSD: getdiskrawname.c,v 1.5 2014/09/17 23:54:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $");
+__RCSID("$NetBSD: getdiskrawname.c,v 1.5 2014/09/17 23:54:42 christos Exp $");
 
 #include <sys/stat.h>
 
@@ -37,17 +37,52 @@ __RCSID("$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $");
 #include <string.h>
 #include <errno.h>
 #include <util.h>
+#include <limits.h>
+#include <unistd.h>
+
+static const char *
+resolve_link(char *buf, size_t bufsiz, const char *name)
+{
+	const char *dp;
+	size_t nlen;
+	ssize_t dlen;
+
+	dlen = readlink(name, buf, bufsiz - 1);
+	if (dlen == -1)
+		return name;
+
+	buf[dlen] = '\0';
+
+	if (buf[0] != '/') {
+		dp = strrchr(name, '/');
+		if (dp != NULL) {
+			nlen = dp - name + 1;
+			if (nlen + 1 > bufsiz)
+				return NULL;
+			if (nlen + dlen + 1 > bufsiz)
+				return NULL;
+
+			memmove(buf + nlen, buf, (size_t)dlen + 1);
+			memcpy(buf, name, nlen);
+		}
+	}
+
+	return buf;
+}
 
 const char *
 getdiskrawname(char *buf, size_t bufsiz, const char *name)
 {
-	const char *dp = strrchr(name, '/');
+	const char *dp;
 	struct stat st;
+	char dest[PATH_MAX];
 
-	if (dp == NULL) {
+	if ((name = resolve_link(dest, sizeof(dest), name)) == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
+
+	dp = strrchr(name, '/');
 
 	if (stat(name, &st) == -1)
 		return NULL;
@@ -57,7 +92,10 @@ getdiskrawname(char *buf, size_t bufsiz, const char *name)
 		return NULL;
 	}
 
-	(void)snprintf(buf, bufsiz, "%.*s/r%s", (int)(dp - name), name, dp + 1);
+	if (dp != NULL)
+		(void)snprintf(buf, bufsiz, "%.*s/r%s", (int)(dp - name), name, dp + 1);
+	else
+		(void)snprintf(buf, bufsiz, "r%s", name);
 
 	return buf;
 }
@@ -67,11 +105,20 @@ getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 {
 	const char *dp;
 	struct stat st;
+	char dest[PATH_MAX];
 
-	if ((dp = strrchr(name, '/')) == NULL) {
+	if ((name = resolve_link(dest, sizeof(dest), name)) == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
+
+	dp = strrchr(name, '/');
+
+	if ((dp != NULL && dp[1] != 'r') || (dp == NULL && name[0] != 'r')) {
+		errno = EINVAL;
+		return NULL;
+	}
+
 	if (stat(name, &st) == -1)
 		return NULL;
 
@@ -79,11 +126,11 @@ getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 		errno = EFTYPE;
 		return NULL;
 	}
-	if (dp[1] != 'r') {
-		errno = EINVAL;
-		return NULL;
-	}
-	(void)snprintf(buf, bufsiz, "%.*s/%s", (int)(dp - name), name, dp + 2);
+
+	if (dp != NULL)
+		(void)snprintf(buf, bufsiz, "%.*s/%s", (int)(dp - name), name, dp + 2);
+	else
+		(void)snprintf(buf, bufsiz, "%s", name + 1);
 
 	return buf;
 }

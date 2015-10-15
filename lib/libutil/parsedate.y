@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.16 2013/06/12 01:46:07 yamt Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.20 2014/10/08 17:38:28 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: parsedate.y,v 1.16 2013/06/12 01:46:07 yamt Exp $");
 #define HOUR(x)		((time_t)(x) * 60)
 #define SECSPERDAY	(24L * 60L * 60L)
 
+#define USE_LOCAL_TIME	99999 /* special case for Convert() and yyTimezone */
 
 /*
 **  An entry in the lexical lookup table.
@@ -69,22 +70,24 @@ typedef enum _MERIDIAN {
 
 
 struct dateinfo {
-	DSTMODE	yyDSTmode;
+	DSTMODE	yyDSTmode;	/* DST on/off/maybe */
 	time_t	yyDayOrdinal;
 	time_t	yyDayNumber;
 	int	yyHaveDate;
+	int	yyHaveFullYear;	/* if true, year is not abbreviated. */
+				/* if false, need to call AdjustYear(). */
 	int	yyHaveDay;
 	int	yyHaveRel;
 	int	yyHaveTime;
 	int	yyHaveZone;
-	time_t	yyTimezone;
-	time_t	yyDay;
-	time_t	yyHour;
-	time_t	yyMinutes;
-	time_t	yyMonth;
-	time_t	yySeconds;
-	time_t	yyYear;
-	MERIDIAN	yyMeridian;
+	time_t	yyTimezone;	/* Timezone as minutes ahead/east of UTC */
+	time_t	yyDay;		/* Day of month [1-31] */
+	time_t	yyHour;		/* Hour of day [0-24] or [1-12] */
+	time_t	yyMinutes;	/* Minute of hour [0-59] */
+	time_t	yyMonth;	/* Month of year [1-12] */
+	time_t	yySeconds;	/* Second of minute [0-60] */
+	time_t	yyYear;		/* Year, see also yyHaveFullYear */
+	MERIDIAN yyMeridian;	/* Interpret yyHour as AM/PM/24 hour clock */
 	time_t	yyRelMonth;
 	time_t	yyRelSeconds;
 };
@@ -116,6 +119,10 @@ spec	: /* NULL */
 item	: time {
 	    param->yyHaveTime++;
 	}
+	| time_numericzone {
+	    param->yyHaveTime++;
+	    param->yyHaveZone++;
+	}
 	| zone {
 	    param->yyHaveZone++;
 	}
@@ -144,6 +151,7 @@ item	: time {
 cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER {
 	    param->yyYear = $1;
 	    if (param->yyYear < 100) param->yyYear += 1900;
+	    param->yyHaveFullYear = 1;
 	    param->yyMonth = $3;
 	    param->yyDay = $5;
 	    param->yyHour = $7;
@@ -174,6 +182,7 @@ epochdate: AT_SIGN at_number {
 		param->yyMinutes = 0;
 		param->yySeconds = 0;
 	    }
+	    param->yyHaveFullYear = 1;
 	    param->yyDSTmode = DSToff;
 	    param->yyTimezone = 0;
 	}
@@ -193,18 +202,27 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yySeconds = 0;
 	    param->yyMeridian = $4;
 	}
-	| tUNUMBER ':' tUNUMBER tSNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
-	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
 	    param->yyHour = $1;
 	    param->yyMinutes = $3;
 	    param->yySeconds = $5;
 	    param->yyMeridian = $6;
+	}
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = $5;
+	    param->yyMeridian = MER24;
+/* XXX: Do nothing with millis */
+	}
+	;
+
+time_numericzone : tUNUMBER ':' tUNUMBER tSNUMBER {
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yyMeridian = MER24;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
 	    param->yyHour = $1;
@@ -213,15 +231,6 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yyMeridian = MER24;
 	    param->yyDSTmode = DSToff;
 	    param->yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
-	}
-	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = $5;
-	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
-/* XXX: Do nothing with millis */
-/*	    param->yyTimezone = ($7 % 100 + ($7 / 100) * 60); */
 	}
 	;
 
@@ -272,6 +281,7 @@ date	: tUNUMBER '/' tUNUMBER {
 	| tUNUMBER tSNUMBER tSNUMBER {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */
 	    param->yyYear = $1;
+	    param->yyHaveFullYear = 1;
 	    param->yyMonth = -$2;
 	    param->yyDay = -$3;
 	}
@@ -581,26 +591,16 @@ yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 }
 
 
-/* Year is either
-   * A negative number, which means to use its absolute value (why?)
-   * A number from 0 to 99, which means a year from 1900 to 1999, or
-   * The actual year (>=100).  */
+/* Adjust year from a value that might be abbreviated, to a full value.
+ * e.g. convert 70 to 1970.
+ * Input Year is either:
+ *  - A negative number, which means to use its absolute value (why?)
+ *  - A number from 0 to 99, which means a year from 1900 to 1999, or
+ *  - The actual year (>=100).
+ * Returns the full year. */
 static time_t
-Convert(
-    time_t	Month,		/* month of year [1-12] */
-    time_t	Day,		/* day of month [1-31] */
-    time_t	Year,		/* year; see above comment */
-    time_t	Hours,		/* Hour of day [0-24] */
-    time_t	Minutes,	/* Minute of hour [0-59] */
-    time_t	Seconds,	/* Second of minute [0-60] */
-    time_t	Timezone,	/* Timezone as minutes east of UTC */
-    MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
-    DSTMODE	DSTmode		/* DST on/off/maybe */
-)
+AdjustYear(time_t Year)
 {
-    struct tm tm = {.tm_sec = 0};
-    time_t result;
-
     /* XXX Y2K */
     if (Year < 0)
 	Year = -Year;
@@ -608,6 +608,25 @@ Convert(
 	Year += 2000;
     else if (Year < 100)
 	Year += 1900;
+    return Year;
+}
+
+static time_t
+Convert(
+    time_t	Month,		/* month of year [1-12] */
+    time_t	Day,		/* day of month [1-31] */
+    time_t	Year,		/* year, not abbreviated in any way */
+    time_t	Hours,		/* Hour of day [0-24] */
+    time_t	Minutes,	/* Minute of hour [0-59] */
+    time_t	Seconds,	/* Second of minute [0-60] */
+    time_t	Timezone,	/* Timezone as minutes east of UTC,
+				 * or USE_LOCAL_TIME special case */
+    MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
+    DSTMODE	DSTmode		/* DST on/off/maybe */
+)
+{
+    struct tm tm = {.tm_sec = 0};
+    time_t result;
 
     tm.tm_sec = Seconds;
     tm.tm_min = Minutes;
@@ -621,9 +640,25 @@ Convert(
     default:     tm.tm_isdst = -1; break;
     }
 
-    /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
-    result = mktime_z(NULL, &tm);
-    result += Timezone * 60;
+    if (Timezone == USE_LOCAL_TIME) {
+	    result = mktime(&tm);
+    } else {
+	    /* We rely on mktime_z(NULL, ...) working in UTC */
+	    result = mktime_z(NULL, &tm);
+	    result += Timezone * 60;
+    }
+
+#if PARSEDATE_DEBUG
+    fprintf(stderr, "%s(M=%jd D=%jd Y=%jd H=%jd M=%jd S=%jd Z=%jd"
+		    " mer=%d DST=%d)",
+	__func__,
+	(intmax_t)Month, (intmax_t)Day, (intmax_t)Year,
+	(intmax_t)Hours, (intmax_t)Minutes, (intmax_t)Seconds,
+	(intmax_t)Timezone, (int)Meridian, (int)DSTmode);
+    fprintf(stderr, " -> %jd", (intmax_t)result);
+    fprintf(stderr, " %s", ctime(&result));
+#endif
+
     return result;
 }
 
@@ -861,31 +896,10 @@ yylex(YYSTYPE *yylval, const char **yyInput)
 
 #define TM_YEAR_ORIGIN 1900
 
-/* Yield A - B, measured in seconds.  */
-static time_t
-difftm (struct tm *a, struct tm *b)
-{
-  int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
-  int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
-  int days = (
-	      /* difference in day of year */
-	      a->tm_yday - b->tm_yday
-	      /* + intervening leap days */
-	      +  ((ay >> 2) - (by >> 2))
-	      -  (ay/100 - by/100)
-	      +  ((ay/100 >> 2) - (by/100 >> 2))
-	      /* + difference in years * 365 */
-	      +  (long)(ay-by) * 365
-	      );
-  return ((time_t)60*(60*(24*days + (a->tm_hour - b->tm_hour))
-	      + (a->tm_min - b->tm_min))
-	  + (a->tm_sec - b->tm_sec));
-}
-
 time_t
 parsedate(const char *p, const time_t *now, const int *zone)
 {
-    struct tm gmt, local, *gmt_ptr, *tm;
+    struct tm		local, *tm;
     time_t		nowt;
     int			zonet;
     time_t		Start;
@@ -896,29 +910,24 @@ parsedate(const char *p, const time_t *now, const int *zone)
     saved_errno = errno;
     errno = 0;
 
-    if (now == NULL || zone == NULL) {
+    if (now == NULL) {
         now = &nowt;
-	zone = &zonet;
 	(void)time(&nowt);
-
-	gmt_ptr = gmtime_r(now, &gmt);
+    }
+    if (zone == NULL) {
+	zone = &zonet;
+	zonet = USE_LOCAL_TIME;
 	if ((tm = localtime_r(now, &local)) == NULL)
 	    return -1;
-
-	if (gmt_ptr != NULL)
-	    zonet = difftm(&gmt, &local) / 60;
-	else
-	    /* We are on a system like VMS, where the system clock is
-	       in local time and the system has no concept of timezones.
-	       Hopefully we can fake this out (for the case in which the
-	       user specifies no timezone) by just saying the timezone
-	       is zero.  */
-	    zonet = 0;
-
-	if (local.tm_isdst)
-	    zonet += 60;
     } else {
-	if ((tm = localtime_r(now, &local)) == NULL)
+	/*
+	 * Should use the specified zone, not localtime.
+	 * Fake it using gmtime and arithmetic.
+	 * This is good enough because we use only the year/month/day,
+	 * not other fields of struct tm.
+	 */
+	time_t fake = *now + (*zone * 60);
+	if ((tm = gmtime_r(&fake, &local)) == NULL)
 	    return -1;
     }
     param.yyYear = tm->tm_year + 1900;
@@ -933,6 +942,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
     param.yyRelSeconds = 0;
     param.yyRelMonth = 0;
     param.yyHaveDate = 0;
+    param.yyHaveFullYear = 0;
     param.yyHaveDay = 0;
     param.yyHaveRel = 0;
     param.yyHaveTime = 0;
@@ -945,6 +955,10 @@ parsedate(const char *p, const time_t *now, const int *zone)
     }
 
     if (param.yyHaveDate || param.yyHaveTime || param.yyHaveDay) {
+	if (! param.yyHaveFullYear) {
+		param.yyYear = AdjustYear(param.yyYear);
+		param.yyHaveFullYear = 1;
+	}
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);

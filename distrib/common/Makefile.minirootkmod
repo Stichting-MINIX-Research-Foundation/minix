@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.minirootkmod,v 1.1 2012/10/16 08:19:36 apb Exp $
+#	$NetBSD: Makefile.minirootkmod,v 1.3 2014/08/05 15:40:58 apb Exp $
 #
 # Makefile snippet to build a miniroot kernel module (e.g. miniroot.kmod)
 #
@@ -46,7 +46,7 @@ ${MINIROOT}.kmod:	${RAMDISKFS} ${SRCMOD}
 		${OBJCOPY} --add-section miniroot=${RAMDISKFS} \
 		    --set-section-flags miniroot=alloc,contents,load,data \
 		    ${SRCMOD} ${DSTMOD}.tmp
-		gzip -9nc < ${DSTMOD}.tmp > ${DSTMOD}
+		${TOOL_GZIP_N} -9c < ${DSTMOD}.tmp > ${DSTMOD}
 		rm -f ${DSTMOD}.tmp
 
 .include <bsd.prog.mk>

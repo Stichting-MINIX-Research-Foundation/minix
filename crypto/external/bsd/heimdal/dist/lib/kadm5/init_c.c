@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: init_c.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
 #include <netdb.h>
 #endif
 
-__RCSID("$NetBSD: init_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -502,7 +502,7 @@ kadm_connect(kadm5_client_context *ctx)
 	    p.realm = ctx->realm;
 	}
 	ret = _kadm5_marshal_params(context, &p, &params);
-	
+
 	ret = krb5_write_priv_message(context, ctx->ac, &s, &params);
 	krb5_data_free(&params);
 	if(ret) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.36 2013/07/16 17:48:22 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.37 2015/06/16 22:54:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.36 2013/07/16 17:48:22 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.37 2015/06/16 22:54:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,7 +553,7 @@ mklong(const char *str, char ch)
 
 	len = strlen(str) + 2;
 	if (len > sizeof copy) {
-		warnx("format %s too complex\n", str);
+		warnx("format %s too complex", str);
 		len = 4;
 	}
 	(void)memmove(copy, str, len - 3);

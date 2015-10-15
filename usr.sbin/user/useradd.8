@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.42 2009/01/14 02:18:28 reed Exp $ */
+.\" $NetBSD: useradd.8,v 1.43 2014/09/19 16:02:59 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -280,14 +280,14 @@ at very large sites could take several minutes.
 Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
-.Sh EXIT STATUS
-.Ex -std useradd
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .It Pa /etc/skel/*
 .It Pa /etc/login.conf
 .El
+.Sh EXIT STATUS
+.Ex -std useradd
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr passwd 1 ,

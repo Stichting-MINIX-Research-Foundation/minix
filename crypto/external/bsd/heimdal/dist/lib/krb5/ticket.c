@@ -1,4 +1,4 @@
-/*	$NetBSD: ticket.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: ticket.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -197,7 +197,7 @@ find_type_in_ad(krb5_context context,
 		int level)
 {
     krb5_error_code ret = 0;
-    int i;
+    size_t i;
 
     if (level > 9) {
 	ret = ENOENT; /* XXX */
@@ -641,7 +641,7 @@ decrypt_tkt (krb5_context context,
 				   &size);
     krb5_data_free (&data);
     if (ret) {
-        krb5_set_error_message(context, ret, 
+        krb5_set_error_message(context, ret,
 			       N_("Failed to decode encpart in ticket", ""));
 	return ret;
     }
@@ -663,7 +663,7 @@ _krb5_extract_ticket(krb5_context context,
 {
     krb5_error_code ret;
     krb5_principal tmp_principal;
-    size_t len;
+    size_t len = 0;
     time_t tmp_time;
     krb5_timestamp sec_now;
 
@@ -750,7 +750,7 @@ _krb5_extract_ticket(krb5_context context,
 
     /* compare nonces */
 
-    if (nonce != rep->enc_part.nonce) {
+    if (nonce != (unsigned)rep->enc_part.nonce) {
 	ret = KRB5KRB_AP_ERR_MODIFIED;
 	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
 	goto out;
@@ -830,7 +830,7 @@ _krb5_extract_ticket(krb5_context context,
 	creds->addresses.val = NULL;
     }
     creds->flags.b = rep->enc_part.flags;
-	
+
     creds->authdata.len = 0;
     creds->authdata.val = NULL;
 

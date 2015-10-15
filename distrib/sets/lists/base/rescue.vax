@@ -1,2 +1,2 @@
-# $NetBSD: rescue.vax,v 1.2 2004/01/11 10:24:59 lukem Exp $
-./rescue/ldconfig				base-rescue-root
+# $NetBSD: rescue.vax,v 1.3 2014/04/20 13:41:21 abs Exp $
+./rescue/ldconfig				base-rescue-root	pic

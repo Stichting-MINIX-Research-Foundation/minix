@@ -1,4 +1,4 @@
-/* $Id: cmd-confirm-before.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -17,6 +17,7 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
@@ -25,11 +26,11 @@
  * Asks for confirmation before executing a command.
  */
 
-void	cmd_confirm_before_key_binding(struct cmd *, int);
-int	cmd_confirm_before_exec(struct cmd *, struct cmd_ctx *);
+void		 cmd_confirm_before_key_binding(struct cmd *, int);
+enum cmd_retval	 cmd_confirm_before_exec(struct cmd *, struct cmd_q *);
 
-int	cmd_confirm_before_callback(void *, const char *);
-void	cmd_confirm_before_free(void *);
+int		 cmd_confirm_before_callback(void *, const char *);
+void		 cmd_confirm_before_free(void *);
 
 const struct cmd_entry cmd_confirm_before_entry = {
 	"confirm-before", "confirm",
@@ -37,13 +38,12 @@ const struct cmd_entry cmd_confirm_before_entry = {
 	"[-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
 	0,
 	cmd_confirm_before_key_binding,
-	NULL,
 	cmd_confirm_before_exec
 };
 
 struct cmd_confirm_before_data {
-	struct client	*c;
 	char		*cmd;
+	struct client	*client;
 };
 
 void
@@ -64,8 +64,8 @@ cmd_confirm_before_key_binding(struct cmd *self, int key)
 	}
 }
 
-int
-cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_confirm_before_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
 	struct cmd_confirm_before_data	*cdata;
@@ -73,13 +73,8 @@ cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
 	char				*cmd, *copy, *new_prompt, *ptr;
 	const char			*prompt;
 
-	if (ctx->curclient == NULL) {
-		ctx->error(ctx, "must be run interactively");
-		return (-1);
-	}
-
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
-		return (-1);
+	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if ((prompt = args_get(args, 'p')) != NULL)
 		xasprintf(&new_prompt, "%s ", prompt);
@@ -87,53 +82,48 @@ cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ptr = copy = xstrdup(args->argv[0]);
 		cmd = strsep(&ptr, " \t");
 		xasprintf(&new_prompt, "Confirm '%s'? (y/n) ", cmd);
-		xfree(copy);
+		free(copy);
 	}
 
 	cdata = xmalloc(sizeof *cdata);
 	cdata->cmd = xstrdup(args->argv[0]);
-	cdata->c = c;
-	status_prompt_set(cdata->c, new_prompt, NULL,
+
+	cdata->client = c;
+	cdata->client->references++;
+
+	status_prompt_set(c, new_prompt, NULL,
 	    cmd_confirm_before_callback, cmd_confirm_before_free, cdata,
 	    PROMPT_SINGLE);
 
-	xfree(new_prompt);
-	return (1);
+	free(new_prompt);
+	return (CMD_RETURN_NORMAL);
 }
 
 int
 cmd_confirm_before_callback(void *data, const char *s)
 {
 	struct cmd_confirm_before_data	*cdata = data;
-	struct client			*c = cdata->c;
+	struct client			*c = cdata->client;
 	struct cmd_list			*cmdlist;
-	struct cmd_ctx	 	 	 ctx;
 	char				*cause;
+
+	if (c->flags & CLIENT_DEAD)
+		return (0);
 
 	if (s == NULL || *s == '\0')
 		return (0);
 	if (tolower((u_char) s[0]) != 'y' || s[1] != '\0')
 		return (0);
 
-	if (cmd_string_parse(cdata->cmd, &cmdlist, &cause) != 0) {
+	if (cmd_string_parse(cdata->cmd, &cmdlist, NULL, 0, &cause) != 0) {
 		if (cause != NULL) {
-			*cause = toupper((u_char) *cause);
-			status_message_set(c, "%s", cause);
-			xfree(cause);
+			cmdq_error(c->cmdq, "%s", cause);
+			free(cause);
 		}
 		return (0);
 	}
 
-	ctx.msgdata = NULL;
-	ctx.curclient = c;
-
-	ctx.error = key_bindings_error;
-	ctx.print = key_bindings_print;
-	ctx.info = key_bindings_info;
-
-	ctx.cmdclient = NULL;
-
-	cmd_list_exec(cmdlist, &ctx);
+	cmdq_run(c->cmdq, cmdlist);
 	cmd_list_free(cmdlist);
 
 	return (0);
@@ -143,8 +133,10 @@ void
 cmd_confirm_before_free(void *data)
 {
 	struct cmd_confirm_before_data	*cdata = data;
+	struct client			*c = cdata->client;
 
-	if (cdata->cmd != NULL)
-		xfree(cdata->cmd);
-	xfree(cdata);
+	c->references--;
+
+	free(cdata->cmd);
+	free(cdata);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.3 2013/11/29 16:36:11 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.4 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: trace.c,v 8.4 1997/08/03 15:04:23 bostic Exp  (Berkeley) Date: 1997/08/03 15:04:23 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: trace.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/queue.h>
 

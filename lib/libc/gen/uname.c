@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.11 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: uname.c,v 1.12 2014/06/14 13:09:37 apb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)uname.c	8.1 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: uname.c,v 1.11 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: uname.c,v 1.12 2014/06/14 13:09:37 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,8 +80,17 @@ uname(struct utsname *name)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_VERSION;
 	len = sizeof(name->version);
-	if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1)
-		goto error;
+	if (sysctl(mib, 2, &name->version, &len, NULL, 0) == -1) {
+		if (errno == ENOMEM) {
+			/*
+			 * string is too long for {struct utsname}.version.
+			 * Just use the truncated string.
+			 * XXX: We could mark the truncation with "..."
+			 */
+			name->version[sizeof(name->version) - 1] = '\0';
+		}
+		else goto error;
+	}
 
 	/* The version may have newlines in it, turn them into spaces. */
 	for (p = name->version; len--; ++p) {

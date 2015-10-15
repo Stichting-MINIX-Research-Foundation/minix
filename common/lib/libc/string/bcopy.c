@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.9 2009/03/18 12:25:06 tsutsui Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.11 2014/04/16 20:39:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.9 2009/03/18 12:25:06 tsutsui Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.11 2014/04/16 20:39:55 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: bcopy.c,v 1.9 2009/03/18 12:25:06 tsutsui Exp $");
 #endif
 #endif
 
-#ifdef _FORTIFY_SOURCE
+#if defined(_FORTIFY_SOURCE) || defined(_STANDALONE) || defined(_KERNEL)
 #undef bcopy
 #undef memcpy
 #undef memmove
@@ -89,8 +89,7 @@ bcopy(const void *src0, void *dst0, size_t length)
 	unsigned long u;
 
 #if !defined(_KERNEL)
-	_DIAGASSERT(dst0 != 0);
-	_DIAGASSERT(src0 != 0);
+	_DIAGASSERT((dst0 && src0) || length == 0);
 #endif
 
 	if (length == 0 || dst == src)		/* nothing to do */

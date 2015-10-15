@@ -1,4 +1,4 @@
-/*	$NetBSD: kafs.h,v 1.1.1.2 2011/04/14 14:09:18 elric Exp $	*/
+/*	$NetBSD: kafs.h,v 1.1.1.3 2014/04/24 12:45:49 pettai Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -91,8 +91,8 @@
 
 struct ViceIoctl {
   caddr_t in, out;
-  short in_size;
-  short out_size;
+  unsigned short in_size;
+  unsigned short out_size;
 };
 
 struct ClearToken {

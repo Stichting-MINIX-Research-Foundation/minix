@@ -1,4 +1,4 @@
-/*	$NetBSD: test_rand.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_rand.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 	else
 	    errx(1, "unknown method %s", rand_method);
     }
-	
+
     if (RAND_file_name(path, sizeof(path)) == NULL)
 	errx(1, "RAND_file_name failed");
 
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 		c = c >> 1;
 	    }
 	}
-	
+
 	for (bit = 0; bit < 8; bit++) {
 
 	    res = ((double)abs(len - bits[bit] * 2)) / (double)len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: transited.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: transited.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -57,7 +57,7 @@ free_realms(struct tr_realm *r)
 	r = r->next;
 	free(p->realm);
 	free(p);
-    }	
+    }
 }
 
 static int
@@ -73,7 +73,7 @@ make_path(krb5_context context, struct tr_realm *r,
 	from = to;
 	to = str;
     }
-	
+
     if(strcmp(from + strlen(from) - strlen(to), to) == 0){
 	p = from;
 	while(1){
@@ -86,20 +86,15 @@ make_path(krb5_context context, struct tr_realm *r,
 	    if(strcmp(p, to) == 0)
 		break;
 	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    tmp->next = r->next;
 	    r->next = tmp;
 	    tmp->realm = strdup(p);
 	    if(tmp->realm == NULL){
 		r->next = tmp->next;
 		free(tmp);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;;
+		return krb5_enomem(context);
 	    }
 	}
     }else if(strncmp(from, to, strlen(to)) == 0){
@@ -112,20 +107,15 @@ make_path(krb5_context context, struct tr_realm *r,
 	    if(strncmp(to, from, p - from) == 0)
 		break;
 	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    tmp->next = r->next;
 	    r->next = tmp;
 	    tmp->realm = malloc(p - from + 1);
 	    if(tmp->realm == NULL){
 		r->next = tmp->next;
 		free(tmp);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    memcpy(tmp->realm, from, p - from);
 	    tmp->realm[p - from] = '\0';
@@ -189,9 +179,7 @@ expand_realms(krb5_context context,
 	    tmp = realloc(r->realm, len);
 	    if(tmp == NULL){
 		free_realms(realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    r->realm = tmp;
 	    strlcat(r->realm, prev_realm, len);
@@ -204,9 +192,7 @@ expand_realms(krb5_context context,
 	    tmp = malloc(len);
 	    if(tmp == NULL){
 		free_realms(realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    strlcpy(tmp, prev_realm, len);
 	    strlcat(tmp, r->realm, len);
@@ -290,19 +276,14 @@ decode_realms(krb5_context context,
 	}
 	if(tr[i] == ','){
 	    tmp = malloc(tr + i - start + 1);
-	    if(tmp == NULL){
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
-	    }
+	    if(tmp == NULL)
+		return krb5_enomem(context);
 	    memcpy(tmp, start, tr + i - start);
 	    tmp[tr + i - start] = '\0';
 	    r = make_realm(tmp);
 	    if(r == NULL){
 		free_realms(*realms);
-		krb5_set_error_message(context, ENOMEM,
-				       N_("malloc: out of memory", ""));
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 	    *realms = append_realm(*realms, r);
 	    start = tr + i + 1;
@@ -311,18 +292,14 @@ decode_realms(krb5_context context,
     tmp = malloc(tr + i - start + 1);
     if(tmp == NULL){
 	free(*realms);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     memcpy(tmp, start, tr + i - start);
     tmp[tr + i - start] = '\0';
     r = make_realm(tmp);
     if(r == NULL){
 	free_realms(*realms);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *realms = append_realm(*realms, r);
 
@@ -372,14 +349,14 @@ krb5_domain_x500_decode(krb5_context context,
 	    (*num_realms)++;
 	}
     }
-    if (*num_realms < 0 || *num_realms + 1 > UINT_MAX/sizeof(**realms))
+    if (*num_realms + 1 > UINT_MAX/sizeof(**realms))
 	return ERANGE;
 
     {
 	char **R;
 	R = malloc((*num_realms + 1) * sizeof(*R));
 	if (R == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	*realms = R;
 	while(r){
 	    *R++ = r->realm;
@@ -412,7 +389,7 @@ krb5_domain_x500_encode(char **realms, unsigned int num_realms,
 	return ENOMEM;
     *s = '\0';
     for(i = 0; i < num_realms; i++){
-	if(i && i < num_realms - 1)
+	if(i)
 	    strlcat(s, ",", len + 1);
 	if(realms[i][0] == '/')
 	    strlcat(s, " ", len + 1);
@@ -433,7 +410,7 @@ krb5_check_transited(krb5_context context,
 {
     char **tr_realms;
     char **p;
-    int i;
+    size_t i;
 
     if(num_realms == 0)
 	return 0;
@@ -469,7 +446,7 @@ krb5_check_transited_realms(krb5_context context,
 			    unsigned int num_realms,
 			    int *bad_realm)
 {
-    int i;
+    size_t i;
     int ret = 0;
     char **bad_realms = krb5_config_get_strings(context, NULL,
 						"libdefaults",

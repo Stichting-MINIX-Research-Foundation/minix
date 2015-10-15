@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpgrp.2,v 1.23 2009/03/23 14:11:27 joerg Exp $
+.\"	$NetBSD: getpgrp.2,v 1.24 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,35 +69,6 @@ and
 .Fn tcsetpgrp
 calls
 are used to get/set the process group of the control terminal.
-.Sh ERRORS
-.Fn getpgrp
-always succeeds, however
-.Fn getpgid
-will succeed unless:
-.Bl -tag -width Er
-.It Bq Er ESRCH
-if there is no process with a process ID equal to
-.Fa pid .
-.El
-.Sh SEE ALSO
-.Xr setpgid 2 ,
-.Xr termios 4
-.Sh STANDARDS
-The
-.Fn getpgrp
-function conforms to
-.St -p1003.1-88 .
-.Sh HISTORY
-The
-.Fn getpgrp
-function call appeared in
-.Bx 4.0 .
-The
-.Fn getpgid
-function call is derived from its usage in
-.At V.4 ,
-and first appeared in
-.Nx 1.3 .
 .Sh COMPATIBILITY
 This version of
 .Fn getpgrp
@@ -127,3 +98,32 @@ has been omitted from POSIX.1.
 The old functionality is available from the
 .Fn getpgid
 function.
+.Sh ERRORS
+.Fn getpgrp
+always succeeds, however
+.Fn getpgid
+will succeed unless:
+.Bl -tag -width Er
+.It Bq Er ESRCH
+if there is no process with a process ID equal to
+.Fa pid .
+.El
+.Sh SEE ALSO
+.Xr setpgid 2 ,
+.Xr termios 4
+.Sh STANDARDS
+The
+.Fn getpgrp
+function conforms to
+.St -p1003.1-88 .
+.Sh HISTORY
+The
+.Fn getpgrp
+function call appeared in
+.Bx 4.0 .
+The
+.Fn getpgid
+function call is derived from its usage in
+.At V.4 ,
+and first appeared in
+.Nx 1.3 .

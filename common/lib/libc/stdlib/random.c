@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 2005/12/21 14:23:58 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.4 2014/06/12 20:59:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.3 2005/12/21 14:23:58 christos Exp $");
+__RCSID("$NetBSD: random.c,v 1.4 2014/06/12 20:59:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -302,11 +302,11 @@ srandom_unlocked(unsigned int x)
 }
 
 void
-srandom(unsigned long x)
+srandom(unsigned int x)
 {
 
 	mutex_lock(&random_mutex);
-	srandom_unlocked((unsigned int) x);
+	srandom_unlocked(x);
 	mutex_unlock(&random_mutex);
 }
 
@@ -335,7 +335,7 @@ srandom(unsigned long x)
  */
 char *
 initstate(
-	unsigned long seed,		/* seed for R.N.G. */
+	unsigned int seed,		/* seed for R.N.G. */
 	char *arg_state,		/* pointer to state array */
 	size_t n)			/* # bytes of state info */
 {
@@ -377,7 +377,7 @@ initstate(
 	}
 	state = (int *) (int_arg_state + 1); /* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
-	srandom_unlocked((unsigned int) seed);
+	srandom_unlocked(seed);
 	if (rand_type == TYPE_0)
 		int_arg_state[0] = rand_type;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_tbl.c,v 1.7 2003/08/07 09:37:33 agc Exp $	*/
+/*	$NetBSD: pr_tbl.c,v 1.8 2014/10/02 21:36:37 ast Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,24 +37,24 @@
 #if 0
 static char sccsid[] = "@(#)pr_tbl.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pr_tbl.c,v 1.7 2003/08/07 09:37:33 agc Exp $");
+__RCSID("$NetBSD: pr_tbl.c,v 1.8 2014/10/02 21:36:37 ast Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * prime - prime table
  *
- * By: Landon Curt Noll   chongo@toad.com,   ...!{sun,tolsoft}!hoptoad!chongo
+ * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
- *   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
- *
- * We are able to sieve 2^32-1 because this table has primes up to 65537 
+ * We are able to sieve 2^32-1 because this table has primes up to 65537
  * and 65537^2 > 2^32-1.
  */
 
+#include <stddef.h>
+
 #include "primes.h"
 
-const ubig prime[] = {
+const uint64_t prime[] = {
 2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,
 107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,
 211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,
@@ -546,4 +546,4 @@ const ubig prime[] = {
 };
 
 /* pr_limit - largest prime in the prime table */
-const ubig *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];
+const uint64_t *const pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];

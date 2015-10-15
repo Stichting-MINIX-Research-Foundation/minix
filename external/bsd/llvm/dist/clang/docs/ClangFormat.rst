@@ -96,8 +96,8 @@ This can be integrated by adding the following to your `.vimrc`:
 
 .. code-block:: vim
 
-  map <C-K> :pyf <path-to-this-file>/clang-format.py<CR>
-  imap <C-K> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
+  map <C-K> :pyf <path-to-this-file>/clang-format.py<cr>
+  imap <C-K> <c-o>:pyf <path-to-this-file>/clang-format.py<cr>
 
 The first line enables :program:`clang-format` for NORMAL and VISUAL mode, the
 second line adds support for INSERT mode. Change "C-K" to another binding if
@@ -146,7 +146,7 @@ shortcut in the BBEdit preferences, under Menus & Shortcuts.
 Visual Studio Integration
 =========================
 
-Download the latest Visual Studio plugin from the `alpha build site
+Download the latest Visual Studio extension from the `alpha build site
 <http://llvm.org/builds/>`_. The default key-binding is Ctrl-R,Ctrl-F.
 
 
@@ -158,21 +158,30 @@ a unified diff and reformats all contained lines with :program:`clang-format`.
 
 .. code-block:: console
 
-  usage: clang-format-diff.py [-h] [-p P] [-style STYLE]
+  usage: clang-format-diff.py [-h] [-i] [-p NUM] [-regex PATTERN] [-style STYLE]
 
-  Reformat changed lines in diff.
+  Reformat changed lines in diff. Without -i option just output the diff that
+  would be introduced.
 
   optional arguments:
-    -h, --help    show this help message and exit
-    -p P          strip the smallest prefix containing P slashes
-    -style STYLE  formatting style to apply (LLVM, Google, Chromium, Mozilla,
-                  WebKit)
+    -h, --help      show this help message and exit
+    -i              apply edits to files instead of displaying a diff
+    -p NUM          strip the smallest prefix containing P slashes
+    -regex PATTERN  custom pattern selecting file paths to reformat
+    -style STYLE    formatting style to apply (LLVM, Google, Chromium, Mozilla,
+                    WebKit)
 
 So to reformat all the lines in the latest :program:`git` commit, just do:
 
 .. code-block:: console
 
-  git diff -U0 HEAD^ | clang-format-diff.py -p1
+  git diff -U0 HEAD^ | clang-format-diff.py -i -p1
+
+In an SVN client, you can do:
+
+.. code-block:: console
+
+  svn diff --diff-cmd=diff -x-U0 | clang-format-diff.py -i
 
 The :option:`-U0` will create a diff without context lines (the script would format
 those as well).

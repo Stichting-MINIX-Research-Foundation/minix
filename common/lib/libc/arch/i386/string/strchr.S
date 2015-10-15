@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.3 2014/03/22 19:38:46 jakllsch Exp $")
 #endif
 
 ENTRY(strchr)
@@ -99,5 +99,6 @@ ENTRY(strchr)
 	popl	%ebx
 	popl	%esi
 	ret
+END(strchr)
 
 STRONG_ALIAS(index,strchr)

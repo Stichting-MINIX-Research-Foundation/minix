@@ -40,6 +40,7 @@ heimdal-gssapi.pc: heimdal-gssapi.pc.in
 	mv $@.new $@
 
 EXTRA_DIST = \
+	NTMakefile \
 	$(man_MANS) \
 	krb5-config.in \
 	heimdal-gssapi.pc.in \

@@ -1,4 +1,4 @@
-/* $Id: osdep-darwin.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -17,14 +17,15 @@
  */
 
 #include <sys/types.h>
-#include <sys/sysctl.h>
 
 #include <event.h>
+#include <libproc.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 char			*osdep_get_name(int, char *);
+char			*osdep_get_cwd(int);
 struct event_base	*osdep_event_init(void);
 
 #define unused __attribute__ ((unused))
@@ -32,20 +33,38 @@ struct event_base	*osdep_event_init(void);
 char *
 osdep_get_name(int fd, unused char *tty)
 {
-	int	mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, 0 };
-	size_t	size;
-	struct kinfo_proc kp;
+	struct proc_bsdinfo		bsdinfo;
+	pid_t				pgrp;
+	int				ret;
 
-	if ((mib[3] = tcgetpgrp(fd)) == -1)
+	if ((pgrp = tcgetpgrp(fd)) == -1)
 		return (NULL);
 
-	size = sizeof kp;
-	if (sysctl(mib, 4, &kp, &size, NULL, 0) == -1)
-		return (NULL);
-	if (*kp.kp_proc.p_comm == '\0')
+	ret = proc_pidinfo(pgrp, PROC_PIDTBSDINFO, 0,
+	    &bsdinfo, sizeof bsdinfo);
+	if (ret == sizeof bsdinfo && *bsdinfo.pbi_comm != '\0')
+		return (strdup(bsdinfo.pbi_comm));
+	return (NULL);
+}
+
+char *
+osdep_get_cwd(int fd)
+{
+	static char			wd[PATH_MAX];
+	struct proc_vnodepathinfo	pathinfo;
+	pid_t				pgrp;
+	int				ret;
+
+	if ((pgrp = tcgetpgrp(fd)) == -1)
 		return (NULL);
 
-	return (strdup(kp.kp_proc.p_comm));
+	ret = proc_pidinfo(pgrp, PROC_PIDVNODEPATHINFO, 0,
+	    &pathinfo, sizeof pathinfo);
+	if (ret == sizeof pathinfo) {
+		strlcpy(wd, pathinfo.pvi_cdir.vip_path, sizeof wd);
+		return (wd);
+	}
+	return (NULL);
 }
 
 struct event_base *

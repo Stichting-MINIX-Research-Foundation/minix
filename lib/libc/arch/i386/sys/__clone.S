@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.5 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: __clone.S,v 1.6 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,3 +101,4 @@ ENTRY(__clone)
 5:
 	popl	%ebp
 	jmp	CERROR
+END(__clone)

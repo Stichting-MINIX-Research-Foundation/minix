@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.63 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.pmax,v 1.66 2014/08/22 10:51:38 apb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -58,6 +58,8 @@
 ./usr/include/pmax/rwlock.h			comp-c-include
 ./usr/include/pmax/setjmp.h			comp-c-include
 ./usr/include/pmax/signal.h			comp-c-include
+./usr/include/pmax/sljit_machdep.h		comp-c-include
+./usr/include/pmax/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/pmax/stdarg.h			comp-obsolete		obsolete
 ./usr/include/pmax/tc_machdep.h			comp-c-include
 ./usr/include/pmax/trap.h			comp-c-include

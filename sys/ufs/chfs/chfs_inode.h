@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.7 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.10 2015/01/11 17:29:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -77,8 +77,6 @@ struct chfs_inode
 	struct genfs_node	gnode;
 	kmutex_t inode_lock;		/* lock the fields of chfs_inode */
 
-	LIST_ENTRY(chfs_inode) hash_entry;	/* hash chain */
-
 	struct ufsmount *ump;		/* ufs mount - TODO we should remove it */
 	struct chfs_mount *chmp;	/* chfs mount point - TODO we should remove it */
 
@@ -121,13 +119,13 @@ struct chfs_inode
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-#define	IN_RENAME	0x0020		/* Inode is being renamed. */
+/*	   unused	0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
-#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+/*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
+/*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
+/*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
 
 
 #ifdef VTOI

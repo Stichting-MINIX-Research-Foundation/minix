@@ -196,6 +196,7 @@ static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
 	char	*key;
+	char	*s;
 
 	switch (p->cmd) {
 	case LIST_KEYS:
@@ -211,8 +212,10 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 			key = netpgp_getvar(netpgp, "userid");
 		}
 		if (key) {
-			printf("%s", key);
-			return 1;
+			if ((s = netpgp_export_key(netpgp, key)) != NULL) {
+				printf("%s", s);
+				return 1;
+			}
 		}
 		(void) fprintf(stderr, "key '%s' not found\n", f);
 		return 0;

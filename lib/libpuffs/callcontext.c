@@ -188,9 +188,9 @@ slowccalloc(struct puffs_usermount *pu)
 	struct puffs_cc *volatile pcc;
 	void *sp;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
-#ifndef __minix
+#if !defined(__minix)
 	const long psize = sysconf(_SC_PAGESIZE);
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 	if (puffs_fakecc)
 		return &fakecc;
@@ -203,13 +203,13 @@ slowccalloc(struct puffs_usermount *pu)
 	pcc = sp;
 	memset(pcc, 0, sizeof(struct puffs_cc));
 
-#ifndef __minix
+#if !defined(__minix)
 #ifndef __MACHINE_STACK_GROWS_UP
 	mprotect((uint8_t *)sp + psize, (size_t)psize, PROT_NONE);
 #else
 	mprotect((uint8_t *)sp + stacksize - psize, (size_t)psize, PROT_NONE);
 #endif
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {

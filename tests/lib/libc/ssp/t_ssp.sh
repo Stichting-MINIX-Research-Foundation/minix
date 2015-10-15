@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.5 2011/06/12 21:12:46 plunky Exp $
+# $NetBSD: t_ssp.sh,v 1.7 2014/04/06 19:28:59 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -167,6 +167,19 @@ strcpy_body()
 	h_fail "$prog 0123456789"
 }
 
+atf_test_case stpcpy
+stpcpy_head()
+{
+	atf_set "descr" "Checks stpcpy(3)"
+}
+stpcpy_body()
+{
+	prog="$(atf_get_srcdir)/h_stpcpy"
+
+	h_pass "$prog 0123456"
+	h_fail "$prog 0123456789"
+}
+
 atf_test_case strcat
 strcat_head()
 {
@@ -177,7 +190,7 @@ strcat_body()
 	prog="$(atf_get_srcdir)/h_strcat"
 
 	h_pass "$prog 0123456"
-	h_fail "$prog 012345678"
+	h_fail "$prog 0123456789ABCDEF"
 }
 
 atf_test_case strncpy
@@ -188,6 +201,19 @@ strncpy_head()
 strncpy_body()
 {
 	prog="$(atf_get_srcdir)/h_strncpy"
+
+	h_pass "$prog 10"
+	h_fail "$prog 11"
+}
+
+atf_test_case stpncpy
+stpncpy_head()
+{
+	atf_set "descr" "Checks stpncpy(3)"
+}
+stpncpy_body()
+{
+	prog="$(atf_get_srcdir)/h_stpncpy"
 
 	h_pass "$prog 10"
 	h_fail "$prog 11"
@@ -269,6 +295,8 @@ atf_init_test_cases()
 	atf_add_test_case memcpy
 	atf_add_test_case memmove
 	atf_add_test_case memset
+	atf_add_test_case stpcpy
+	atf_add_test_case stpncpy
 	atf_add_test_case strcat
 	atf_add_test_case strcpy
 	atf_add_test_case strncat

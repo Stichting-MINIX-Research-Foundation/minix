@@ -12,6 +12,9 @@
 // they're sufficiently rare that it's not worth making sure that the semantics
 // are correct.
 
+// CHECK: @testStructGlobal = global {{.*}} { i16 1, i16 2, i16 3, i16 4 }
+// CHECK: @testPromotedStructGlobal = global {{.*}} { %{{.*}} { i16 1, i16 2, i16 3 }, [2 x i8] zeroinitializer }
+
 typedef int __attribute__((vector_size(16))) vector;
 
 _Atomic(_Bool) b;
@@ -54,7 +57,7 @@ void testinc(void)
 // CHECK: testdec
 void testdec(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   b--;
   // CHECK: atomicrmw sub i32* @i, i32 1 seq_cst
   i--;
@@ -62,7 +65,7 @@ void testdec(void)
   l--;
   // CHECK: atomicrmw sub i16* @s, i16 1 seq_cst
   s--;
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   --b;
   // CHECK: atomicrmw sub i32* @i, i32 1 seq_cst
   // CHECK: sub i32
@@ -77,7 +80,7 @@ void testdec(void)
 // CHECK: testaddeq
 void testaddeq(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   // CHECK: atomicrmw add i32* @i, i32 42 seq_cst
   // CHECK: atomicrmw add i64* @l, i64 42 seq_cst
   // CHECK: atomicrmw add i16* @s, i16 42 seq_cst
@@ -89,7 +92,7 @@ void testaddeq(void)
 // CHECK: testsubeq
 void testsubeq(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   // CHECK: atomicrmw sub i32* @i, i32 42 seq_cst
   // CHECK: atomicrmw sub i64* @l, i64 42 seq_cst
   // CHECK: atomicrmw sub i16* @s, i16 42 seq_cst
@@ -101,7 +104,7 @@ void testsubeq(void)
 // CHECK: testxoreq
 void testxoreq(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   // CHECK: atomicrmw xor i32* @i, i32 42 seq_cst
   // CHECK: atomicrmw xor i64* @l, i64 42 seq_cst
   // CHECK: atomicrmw xor i16* @s, i16 42 seq_cst
@@ -113,7 +116,7 @@ void testxoreq(void)
 // CHECK: testoreq
 void testoreq(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   // CHECK: atomicrmw or i32* @i, i32 42 seq_cst
   // CHECK: atomicrmw or i64* @l, i64 42 seq_cst
   // CHECK: atomicrmw or i16* @s, i16 42 seq_cst
@@ -125,7 +128,7 @@ void testoreq(void)
 // CHECK: testandeq
 void testandeq(void)
 {
-  // CHECK: cmpxchg i8* @b
+  // CHECK: call arm_aapcscc zeroext i1 @__atomic_compare_exchange(i32 1, i8* @b
   // CHECK: atomicrmw and i32* @i, i32 42 seq_cst
   // CHECK: atomicrmw and i64* @l, i64 42 seq_cst
   // CHECK: atomicrmw and i16* @s, i16 42 seq_cst
@@ -224,6 +227,7 @@ void testComplexFloat(_Atomic(_Complex float) *fp) {
 }
 
 typedef struct { short x, y, z, w; } S;
+_Atomic S testStructGlobal = (S){1, 2, 3, 4};
 // CHECK: define arm_aapcscc void @testStruct([[S:.*]]*
 void testStruct(_Atomic(S) *fp) {
 // CHECK:      [[FP:%.*]] = alloca [[S]]*, align 4
@@ -272,6 +276,7 @@ void testStruct(_Atomic(S) *fp) {
 }
 
 typedef struct { short x, y, z; } PS;
+_Atomic PS testPromotedStructGlobal = (PS){1, 2, 3};
 // CHECK: define arm_aapcscc void @testPromotedStruct([[APS:.*]]*
 void testPromotedStruct(_Atomic(PS) *fp) {
 // CHECK:      [[FP:%.*]] = alloca [[APS]]*, align 4

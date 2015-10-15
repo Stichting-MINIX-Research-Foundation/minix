@@ -1,7 +1,7 @@
-(* RUN: rm -rf %t.builddir
- * RUN: mkdir -p %t.builddir
- * RUN: cp %s %t.builddir
- * RUN: %ocamlopt -warn-error A unix.cmxa llvm.cmxa llvm_bitwriter.cmxa %t.builddir/bitwriter.ml -o %t
+(* RUN: cp %s %T/bitwriter.ml
+ * RUN: %ocamlc -g -w -3 -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
+ * RUN: %t %t.bc
+ * RUN: %ocamlopt -g -w -3 -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak
@@ -39,10 +39,11 @@ let temp_bitcode ?unbuffered m =
 
 let _ =
   let m = Llvm.create_module context "ocaml_test_module" in
-  
+
   test (Llvm_bitwriter.write_bitcode_file m Sys.argv.(1));
   let file_buf = read_file Sys.argv.(1) in
 
   test (file_buf = temp_bitcode m);
   test (file_buf = temp_bitcode ~unbuffered:false m);
-  test (file_buf = temp_bitcode ~unbuffered:true m)
+  test (file_buf = temp_bitcode ~unbuffered:true m);
+  test (file_buf = Llvm.MemoryBuffer.as_string (Llvm_bitwriter.write_bitcode_to_memory_buffer m))

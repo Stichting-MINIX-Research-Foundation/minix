@@ -22,6 +22,12 @@
 ./usr/man/man1/asa.1                                    minix-man
 ./usr/man/man1/ash.1                                    minix-man       obsolete
 ./usr/man/man1/at.1                                     minix-man
+./usr/man/man1/atf-check.1                              minix-man       atf
+./usr/man/man1/atf-report.1                             minix-man       atf
+./usr/man/man1/atf-run.1                                minix-man       atf
+./usr/man/man1/atf-sh.1                                 minix-man       atf
+./usr/man/man1/atf-test-program.1                       minix-man       atf
+./usr/man/man1/atf2kyua.1                               minix-man       kyua
 ./usr/man/man1/awk.1                                    minix-man
 ./usr/man/man1/banner.1                                 minix-man
 ./usr/man/man1/basename.1                               minix-man
@@ -149,6 +155,20 @@
 ./usr/man/man1/jot.1                                    minix-man
 ./usr/man/man1/kill.1                                   minix-man
 ./usr/man/man1/ksh.1                                    minix-man
+./usr/man/man1/kyua-about.1                             minix-man       kyua
+./usr/man/man1/kyua-atf-tester.1                        minix-man       kyua
+./usr/man/man1/kyua-config.1                            minix-man       kyua
+./usr/man/man1/kyua-db-exec.1                           minix-man       kyua
+./usr/man/man1/kyua-db-migrate.1                        minix-man       kyua
+./usr/man/man1/kyua-debug.1                             minix-man       kyua
+./usr/man/man1/kyua-help.1                              minix-man       kyua
+./usr/man/man1/kyua-list.1                              minix-man       kyua
+./usr/man/man1/kyua-plain-tester.1                      minix-man       kyua
+./usr/man/man1/kyua-report-html.1                       minix-man       kyua
+./usr/man/man1/kyua-report.1                            minix-man       kyua
+./usr/man/man1/kyua-test.1                              minix-man       kyua
+./usr/man/man1/kyua-tester.1                            minix-man       kyua
+./usr/man/man1/kyua.1                                   minix-man       kyua
 ./usr/man/man1/lam.1                                    minix-man
 ./usr/man/man1/last.1                                   minix-man
 ./usr/man/man1/ld.1                                     minix-man       binutils
@@ -724,6 +744,7 @@
 ./usr/man/man3/SSL_CTX_set_session_id_context.3         minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_ssl_version.3                minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_timeout.3                    minix-man       crypto
+./usr/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3       minix-man
 ./usr/man/man3/SSL_CTX_set_tmp_dh_callback.3            minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_tmp_rsa_callback.3           minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_verify.3                     minix-man       crypto
@@ -995,6 +1016,9 @@
 ./usr/man/man3/atanh.3                                  minix-man
 ./usr/man/man3/atanhf.3                                 minix-man
 ./usr/man/man3/atexit.3                                 minix-man
+./usr/man/man3/atf-c++-api.3                            minix-man       atf
+./usr/man/man3/atf-c-api.3                              minix-man       atf
+./usr/man/man3/atf-sh-api.3                             minix-man       atf
 ./usr/man/man3/atof.3                                   minix-man
 ./usr/man/man3/atoi.3                                   minix-man
 ./usr/man/man3/atol.3                                   minix-man
@@ -1086,6 +1110,12 @@
 ./usr/man/man3/beep.3                                   minix-man
 ./usr/man/man3/bkgd.3                                   minix-man
 ./usr/man/man3/bkgdset.3                                minix-man
+./usr/man/man3/blacklist.3                              minix-man
+./usr/man/man3/blacklist_close.3                        minix-man
+./usr/man/man3/blacklist_open.3                         minix-man
+./usr/man/man3/blacklist_r.3                            minix-man
+./usr/man/man3/blacklist_sa.3                           minix-man
+./usr/man/man3/blacklist_sa_r.3                         minix-man
 ./usr/man/man3/bm.3                                     minix-man
 ./usr/man/man3/bm_comp.3                                minix-man
 ./usr/man/man3/bm_exec.3                                minix-man
@@ -1106,22 +1136,30 @@
 ./usr/man/man3/bzero.3                                  minix-man
 ./usr/man/man3/cabs.3                                   minix-man
 ./usr/man/man3/cabsf.3                                  minix-man
+./usr/man/man3/cabsl.3                                  minix-man
 ./usr/man/man3/cacos.3                                  minix-man
 ./usr/man/man3/cacosf.3                                 minix-man
 ./usr/man/man3/cacosh.3                                 minix-man
 ./usr/man/man3/cacoshf.3                                minix-man
+./usr/man/man3/cacoshl.3                                minix-man
+./usr/man/man3/cacosl.3                                 minix-man
 ./usr/man/man3/calloc.3                                 minix-man
 ./usr/man/man3/can_change_color.3                       minix-man
 ./usr/man/man3/carg.3                                   minix-man
 ./usr/man/man3/cargf.3                                  minix-man
+./usr/man/man3/cargl.3                                  minix-man
 ./usr/man/man3/casin.3                                  minix-man
 ./usr/man/man3/casinf.3                                 minix-man
 ./usr/man/man3/casinh.3                                 minix-man
 ./usr/man/man3/casinhf.3                                minix-man
+./usr/man/man3/casinhl.3                                minix-man
+./usr/man/man3/casinl.3                                 minix-man
 ./usr/man/man3/catan.3                                  minix-man
 ./usr/man/man3/catanf.3                                 minix-man
 ./usr/man/man3/catanh.3                                 minix-man
 ./usr/man/man3/catanhf.3                                minix-man
+./usr/man/man3/catanhl.3                                minix-man
+./usr/man/man3/catanl.3                                 minix-man
 ./usr/man/man3/catclose.3                               minix-man
 ./usr/man/man3/catgets.3                                minix-man
 ./usr/man/man3/catopen.3                                minix-man
@@ -1133,6 +1171,8 @@
 ./usr/man/man3/ccosf.3                                  minix-man
 ./usr/man/man3/ccosh.3                                  minix-man
 ./usr/man/man3/ccoshf.3                                 minix-man
+./usr/man/man3/ccoshl.3                                 minix-man
+./usr/man/man3/ccosl.3                                  minix-man
 ./usr/man/man3/cdbr.3                                   minix-man
 ./usr/man/man3/cdbr_close.3                             minix-man
 ./usr/man/man3/cdbr_entries.3                           minix-man
@@ -1151,6 +1191,7 @@
 ./usr/man/man3/ceill.3                                  minix-man
 ./usr/man/man3/cexp.3                                   minix-man
 ./usr/man/man3/cexpf.3                                  minix-man
+./usr/man/man3/cexpl.3                                  minix-man
 ./usr/man/man3/cfgetispeed.3                            minix-man
 ./usr/man/man3/cfgetospeed.3                            minix-man
 ./usr/man/man3/cfmakeraw.3                              minix-man
@@ -1177,6 +1218,7 @@
 ./usr/man/man3/clock.3                                  minix-man
 ./usr/man/man3/clog.3                                   minix-man
 ./usr/man/man3/clogf.3                                  minix-man
+./usr/man/man3/clogl.3                                  minix-man
 ./usr/man/man3/closedir.3                               minix-man
 ./usr/man/man3/closefrom.3                              minix-man
 ./usr/man/man3/closelog.3                               minix-man
@@ -1200,6 +1242,7 @@
 ./usr/man/man3/coshf.3                                  minix-man
 ./usr/man/man3/cpow.3                                   minix-man
 ./usr/man/man3/cpowf.3                                  minix-man
+./usr/man/man3/cpowl.3                                  minix-man
 ./usr/man/man3/cproj.3                                  minix-man
 ./usr/man/man3/cprojf.3                                 minix-man
 ./usr/man/man3/cprojl.3                                 minix-man
@@ -1222,12 +1265,17 @@
 ./usr/man/man3/csinf.3                                  minix-man
 ./usr/man/man3/csinh.3                                  minix-man
 ./usr/man/man3/csinhf.3                                 minix-man
+./usr/man/man3/csinhl.3                                 minix-man
+./usr/man/man3/csinl.3                                  minix-man
 ./usr/man/man3/csqrt.3                                  minix-man
 ./usr/man/man3/csqrtf.3                                 minix-man
+./usr/man/man3/csqrtl.3                                 minix-man
 ./usr/man/man3/ctan.3                                   minix-man
 ./usr/man/man3/ctanf.3                                  minix-man
 ./usr/man/man3/ctanh.3                                  minix-man
 ./usr/man/man3/ctanhf.3                                 minix-man
+./usr/man/man3/ctanhl.3                                 minix-man
+./usr/man/man3/ctanl.3                                  minix-man
 ./usr/man/man3/ctermid.3                                minix-man
 ./usr/man/man3/ctime.3                                  minix-man
 ./usr/man/man3/ctime_r.3                                minix-man
@@ -1406,6 +1454,7 @@
 ./usr/man/man3/elf_errmsg.3                             minix-man
 ./usr/man/man3/elf_errno.3                              minix-man
 ./usr/man/man3/elf_fill.3                               minix-man
+./usr/man/man3/elf_flagarhdr.3                          minix-man
 ./usr/man/man3/elf_flagdata.3                           minix-man
 ./usr/man/man3/elf_flagehdr.3                           minix-man
 ./usr/man/man3/elf_flagelf.3                            minix-man
@@ -1417,8 +1466,11 @@
 ./usr/man/man3/elf_getbase.3                            minix-man
 ./usr/man/man3/elf_getdata.3                            minix-man
 ./usr/man/man3/elf_getident.3                           minix-man
+./usr/man/man3/elf_getphdrnum.3                         minix-man
 ./usr/man/man3/elf_getphnum.3                           minix-man
 ./usr/man/man3/elf_getscn.3                             minix-man
+./usr/man/man3/elf_getshdrnum.3                         minix-man
+./usr/man/man3/elf_getshdrstrndx.3                      minix-man
 ./usr/man/man3/elf_getshnum.3                           minix-man
 ./usr/man/man3/elf_getshstrndx.3                        minix-man
 ./usr/man/man3/elf_hash.3                               minix-man
@@ -1429,6 +1481,8 @@
 ./usr/man/man3/elf_newscn.3                             minix-man
 ./usr/man/man3/elf_next.3                               minix-man
 ./usr/man/man3/elf_nextscn.3                            minix-man
+./usr/man/man3/elf_open.3                               minix-man
+./usr/man/man3/elf_openmemory.3                         minix-man
 ./usr/man/man3/elf_rand.3                               minix-man
 ./usr/man/man3/elf_rawdata.3                            minix-man
 ./usr/man/man3/elf_rawfile.3                            minix-man
@@ -1454,17 +1508,23 @@
 ./usr/man/man3/erase.3                                  minix-man
 ./usr/man/man3/erasechar.3                              minix-man
 ./usr/man/man3/erealloc.3                               minix-man
+./usr/man/man3/ereallocarr.3                            minix-man
 ./usr/man/man3/erf.3                                    minix-man
 ./usr/man/man3/erfc.3                                   minix-man
 ./usr/man/man3/erfcf.3                                  minix-man
+./usr/man/man3/erfcl.3                                  minix-man
 ./usr/man/man3/erff.3                                   minix-man
+./usr/man/man3/erfl.3                                   minix-man
 ./usr/man/man3/err.3                                    minix-man
+./usr/man/man3/errc.3                                   minix-man
 ./usr/man/man3/errx.3                                   minix-man
 ./usr/man/man3/esetfunc.3                               minix-man
 ./usr/man/man3/estrdup.3                                minix-man
 ./usr/man/man3/estrlcat.3                               minix-man
 ./usr/man/man3/estrlcpy.3                               minix-man
 ./usr/man/man3/estrndup.3                               minix-man
+./usr/man/man3/estrtoi.3                                minix-man
+./usr/man/man3/estrtou.3                                minix-man
 ./usr/man/man3/ether_aton.3                             minix-man
 ./usr/man/man3/ether_hostton.3                          minix-man
 ./usr/man/man3/ether_line.3                             minix-man
@@ -1499,9 +1559,11 @@
 ./usr/man/man3/execl.3                                  minix-man
 ./usr/man/man3/execle.3                                 minix-man
 ./usr/man/man3/execlp.3                                 minix-man
+./usr/man/man3/execlpe.3                                minix-man
 ./usr/man/man3/exect.3                                  minix-man
 ./usr/man/man3/execv.3                                  minix-man
 ./usr/man/man3/execvp.3                                 minix-man
+./usr/man/man3/execvpe.3                                minix-man
 ./usr/man/man3/exit.3                                   minix-man
 ./usr/man/man3/exp.3                                    minix-man
 ./usr/man/man3/exp2.3                                   minix-man
@@ -1831,6 +1893,8 @@
 ./usr/man/man3/hcreate.3                                minix-man
 ./usr/man/man3/hcreate_r.3                              minix-man
 ./usr/man/man3/hdestroy.3                               minix-man
+./usr/man/man3/hdestroy1.3                              minix-man
+./usr/man/man3/hdestroy1_r.3                            minix-man
 ./usr/man/man3/hdestroy_r.3                             minix-man
 ./usr/man/man3/heapsort.3                               minix-man
 ./usr/man/man3/herror.3                                 minix-man
@@ -2001,6 +2065,7 @@
 ./usr/man/man3/lh_stats.3                               minix-man       crypto
 ./usr/man/man3/libarchive.3                             minix-man
 ./usr/man/man3/libarchive_internals.3                   minix-man
+./usr/man/man3/libblacklist.3                           minix-man
 ./usr/man/man3/libmagic.3                               minix-man
 ./usr/man/man3/libmj.3                                  minix-man       crypto
 ./usr/man/man3/libnetpgp.3                              minix-man       crypto
@@ -2129,11 +2194,16 @@
 ./usr/man/man3/meta.3                                   minix-man
 ./usr/man/man3/mi_vector_hash.3                         minix-man
 ./usr/man/man3/mkdtemp.3                                minix-man
+./usr/man/man3/mkostemp.3                               minix-man
+./usr/man/man3/mkostemps.3                              minix-man
 ./usr/man/man3/mkstemp.3                                minix-man
+./usr/man/man3/mkstemps.3                               minix-man
 ./usr/man/man3/mktemp.3                                 minix-man
 ./usr/man/man3/mktime.3                                 minix-man
 ./usr/man/man3/mktime_z.3                               minix-man
 ./usr/man/man3/modf.3                                   minix-man
+./usr/man/man3/modff.3                                  minix-man
+./usr/man/man3/modfl.3                                  minix-man
 ./usr/man/man3/move.3                                   minix-man
 ./usr/man/man3/move_field.3                             minix-man
 ./usr/man/man3/mpool.3                                  minix-man
@@ -2185,6 +2255,9 @@
 ./usr/man/man3/nanl.3                                   minix-man
 ./usr/man/man3/napms.3                                  minix-man
 ./usr/man/man3/ndbm.3                                   minix-man
+./usr/man/man3/nearbyint.3                              minix-man
+./usr/man/man3/nearbyintf.3                             minix-man
+./usr/man/man3/nearbyintl.3                             minix-man
 ./usr/man/man3/network.3                                minix-man
 ./usr/man/man3/new_field.3                              minix-man
 ./usr/man/man3/new_fieldtype.3                          minix-man
@@ -2199,6 +2272,7 @@
 ./usr/man/man3/nextafterf.3                             minix-man
 ./usr/man/man3/nextafterl.3                             minix-man
 ./usr/man/man3/nexttoward.3                             minix-man
+./usr/man/man3/nexttowardf.3                            minix-man
 ./usr/man/man3/nftw.3                                   minix-man
 ./usr/man/man3/nice.3                                   minix-man
 ./usr/man/man3/nl.3                                     minix-man
@@ -2219,6 +2293,8 @@
 ./usr/man/man3/nvis.3                                   minix-man
 ./usr/man/man3/offtime.3                                minix-man
 ./usr/man/man3/offtime_r.3                              minix-man
+./usr/man/man3/open_memstream.3                         minix-man
+./usr/man/man3/open_wmemstream.3                        minix-man
 ./usr/man/man3/opendir.3                                minix-man
 ./usr/man/man3/opendisk.3                               minix-man
 ./usr/man/man3/openlog.3                                minix-man
@@ -2278,6 +2354,7 @@
 ./usr/man/man3/popcountl.3                              minix-man
 ./usr/man/man3/popcountll.3                             minix-man
 ./usr/man/man3/popen.3                                  minix-man
+./usr/man/man3/popenve.3                                minix-man
 ./usr/man/man3/pos_form_cursor.3                        minix-man
 ./usr/man/man3/pos_menu_cursor.3                        minix-man
 ./usr/man/man3/posix2time.3                             minix-man
@@ -2475,7 +2552,9 @@
 ./usr/man/man3/proplib.3                                minix-man
 ./usr/man/man3/psiginfo.3                               minix-man
 ./usr/man/man3/psignal.3                                minix-man
+./usr/man/man3/pthread_atfork.3                         minix-man
 ./usr/man/man3/ptsname.3                                minix-man
+./usr/man/man3/ptsname_r.3                              minix-man
 ./usr/man/man3/puffs.3                                  minix-man
 ./usr/man/man3/puffs_cc.3                               minix-man
 ./usr/man/man3/puffs_cred.3                             minix-man
@@ -2534,6 +2613,8 @@
 ./usr/man/man3/readdir.3                                minix-man
 ./usr/man/man3/readdir_r.3                              minix-man
 ./usr/man/man3/realloc.3                                minix-man
+./usr/man/man3/reallocarr.3                             minix-man
+./usr/man/man3/reallocarray.3                           minix-man
 ./usr/man/man3/realpath.3                               minix-man
 ./usr/man/man3/recno.3                                  minix-man
 ./usr/man/man3/refresh.3                                minix-man
@@ -2585,6 +2666,7 @@
 ./usr/man/man3/rindex.3                                 minix-man
 ./usr/man/man3/rint.3                                   minix-man
 ./usr/man/man3/rintf.3                                  minix-man
+./usr/man/man3/rintl.3                                  minix-man
 ./usr/man/man3/rmd160.3                                 minix-man
 ./usr/man/man3/rmtops.3                                 minix-man
 ./usr/man/man3/round.3                                  minix-man
@@ -2797,6 +2879,7 @@
 ./usr/man/man3/strncpy.3                                minix-man
 ./usr/man/man3/strndup.3                                minix-man
 ./usr/man/man3/strnlen.3                                minix-man
+./usr/man/man3/strnstr.3                                minix-man
 ./usr/man/man3/strnunvis.3                              minix-man
 ./usr/man/man3/strnunvisx.3                             minix-man
 ./usr/man/man3/strnvis.3                                minix-man
@@ -2818,13 +2901,16 @@
 ./usr/man/man3/strsvisx.3                               minix-man
 ./usr/man/man3/strtod.3                                 minix-man
 ./usr/man/man3/strtof.3                                 minix-man
+./usr/man/man3/strtoi.3                                 minix-man
 ./usr/man/man3/strtoimax.3                              minix-man
 ./usr/man/man3/strtok.3                                 minix-man
 ./usr/man/man3/strtok_r.3                               minix-man
 ./usr/man/man3/strtol.3                                 minix-man
 ./usr/man/man3/strtold.3                                minix-man
 ./usr/man/man3/strtoll.3                                minix-man
+./usr/man/man3/strtonum.3                               minix-man
 ./usr/man/man3/strtoq.3                                 minix-man
+./usr/man/man3/strtou.3                                 minix-man
 ./usr/man/man3/strtoul.3                                minix-man
 ./usr/man/man3/strtoull.3                               minix-man
 ./usr/man/man3/strtoumax.3                              minix-man
@@ -2979,6 +3065,7 @@
 ./usr/man/man3/vasprintf.3                              minix-man
 ./usr/man/man3/vdprintf.3                               minix-man
 ./usr/man/man3/verr.3                                   minix-man
+./usr/man/man3/verrc.3                                  minix-man
 ./usr/man/man3/verrx.3                                  minix-man
 ./usr/man/man3/vfprintf.3                               minix-man
 ./usr/man/man3/vfscanf.3                                minix-man
@@ -2999,6 +3086,7 @@
 ./usr/man/man3/vsyslogp.3                               minix-man
 ./usr/man/man3/vsyslogp_r.3                             minix-man
 ./usr/man/man3/vwarn.3                                  minix-man
+./usr/man/man3/vwarnc.3                                 minix-man
 ./usr/man/man3/vwarnx.3                                 minix-man
 ./usr/man/man3/vwprintf.3                               minix-man
 ./usr/man/man3/vwscanf.3                                minix-man
@@ -3008,6 +3096,7 @@
 ./usr/man/man3/waddnstr.3                               minix-man
 ./usr/man/man3/waddstr.3                                minix-man
 ./usr/man/man3/warn.3                                   minix-man
+./usr/man/man3/warnc.3                                  minix-man
 ./usr/man/man3/warnx.3                                  minix-man
 ./usr/man/man3/wattr_get.3                              minix-man
 ./usr/man/man3/wattr_off.3                              minix-man
@@ -3114,6 +3203,7 @@
 ./usr/man/man4                                          minix-man
 ./usr/man/man4/aha1540.4                                minix-man
 ./usr/man/man4/at.4                                     minix-man
+./usr/man/man4/atf-test-case.4                          minix-man       atf
 ./usr/man/man4/bios.4                                   minix-man
 ./usr/man/man4/console.4                                minix-man
 ./usr/man/man4/controller.4                             minix-man
@@ -3135,6 +3225,8 @@
 ./usr/man/man4/uds.4                                    minix-man       obsolete
 ./usr/man/man5                                          minix-man
 ./usr/man/man5/TZ.5                                     minix-man
+./usr/man/man5/atf-formats.5                            minix-man       atf
+./usr/man/man5/blacklistd.conf.5                        minix-man
 ./usr/man/man5/boot.cfg.5                               minix-man
 ./usr/man/man5/cdb.5                                    minix-man
 ./usr/man/man5/configfile.5                             minix-man
@@ -3155,6 +3247,10 @@
 ./usr/man/man5/httpd.conf.5                             minix-man       obsolete
 ./usr/man/man5/info.5                                   minix-man
 ./usr/man/man5/keymap.5                                 minix-man
+./usr/man/man5/kyua-tester-list.5                       minix-man       kyua
+./usr/man/man5/kyua-tester-result.5                     minix-man       kyua
+./usr/man/man5/kyua.conf.5                              minix-man       kyua
+./usr/man/man5/kyuafile.5                               minix-man       kyua
 ./usr/man/man5/libarchive-formats.5                     minix-man
 ./usr/man/man5/magic.5                                  minix-man
 ./usr/man/man5/man.conf.5                               minix-man
@@ -3205,9 +3301,14 @@
 ./usr/man/man6/wargames.6                               minix-man
 ./usr/man/man7                                          minix-man
 ./usr/man/man7/ascii.7                                  minix-man
+./usr/man/man7/atf.7                                    minix-man       atf
 ./usr/man/man7/des_modes.7                              minix-man       crypto
 ./usr/man/man7/environ.7                                minix-man
 ./usr/man/man7/hier.7                                   minix-man
+./usr/man/man7/kyua-atf-interface.7                     minix-man       kyua
+./usr/man/man7/kyua-build-root.7                        minix-man       kyua
+./usr/man/man7/kyua-plain-interface.7                   minix-man       kyua
+./usr/man/man7/kyua-test-filters.7                      minix-man       kyua
 ./usr/man/man7/man.7                                    minix-man
 ./usr/man/man7/mandoc_char.7                            minix-man
 ./usr/man/man7/mandoc_eqn.7                             minix-man
@@ -3224,6 +3325,8 @@
 ./usr/man/man8/atnormalize.8                            minix-man
 ./usr/man/man8/autopart.8                               minix-man
 ./usr/man/man8/backup.8                                 minix-man
+./usr/man/man8/blacklistctl.8                           minix-man
+./usr/man/man8/blacklistd.8                             minix-man
 ./usr/man/man8/boot.8                                   minix-man
 ./usr/man/man8/btrace.8                                 minix-man
 ./usr/man/man8/cdprobe.8                                minix-man

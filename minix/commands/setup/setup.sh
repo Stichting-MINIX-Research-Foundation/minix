@@ -13,7 +13,9 @@ MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=128
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 BOOTXXSECTS=32
-USRKB="`du -sxk /usr | awk '{ print $1 }'`"
+#LSC: Slight over shoot, as files for / are taken into account, although
+#     metadata is not, all in all should be pretty accurate.
+USRKB=$(cat /i386/binary/sets/*.size | awk '{s+=$1} END{print (s/1024)}')
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 TOTALFILES="`find -x / | wc -l`"
 

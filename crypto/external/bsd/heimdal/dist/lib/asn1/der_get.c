@@ -1,4 +1,4 @@
-/*	$NetBSD: der_get.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_get.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -143,9 +143,9 @@ der_get_general_string (const unsigned char *p, size_t len,
 	 * an strings in the NEED_PREAUTH case that includes a
 	 * trailing NUL.
 	 */
-	while (p1 - p < len && *p1 == '\0')
+	while ((size_t)(p1 - p) < len && *p1 == '\0')
 	    p1++;
-       if (p1 - p != len)
+       if ((size_t)(p1 - p) != len)
 	    return ASN1_BAD_CHARACTER;
     }
     if (len > len + 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.31 2012/04/07 04:52:20 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.32 2015/06/21 04:01:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,9 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.31 2012/04/07 04:52:20 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.32 2015/06/21 04:01:40 dholland Exp $");
 #endif
 #endif /* not lint */
+
+/*
+ * used by sbin/fsck
+ * used by usr.sbin/quotacheck
+ */
 
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipropd_common.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: ipropd_common.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "iprop.h"
-__RCSID("$NetBSD: ipropd_common.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 sig_atomic_t exit_flag;
 

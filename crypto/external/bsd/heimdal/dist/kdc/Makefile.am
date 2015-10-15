@@ -115,7 +115,8 @@ kdc_CFLAGS = $(CAPNG_CFLAGS)
 
 digest_service_LDADD = \
 	libkdc.la \
-	../lib/ipc/libheim-ipcs.la \
+	$(top_builddir)/lib/ntlm/libheimntlm.la \
+	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 
@@ -127,4 +128,12 @@ krb5_HEADERS = windc_plugin.h
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 
-EXTRA_DIST = $(man_MANS) version-script.map
+EXTRA_DIST = \
+	hprop-version.rc \
+	hpropd-version.rc \
+	kdc-version.rc \
+	kstash-version.rc \
+	libkdc-version.rc \
+	string2key-version.rc \
+	libkdc-exports.def \
+	NTMakefile $(man_MANS) version-script.map

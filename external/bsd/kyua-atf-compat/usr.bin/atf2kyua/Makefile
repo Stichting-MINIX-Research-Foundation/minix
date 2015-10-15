@@ -6,6 +6,10 @@ FILES=		atf2kyua
 FILESDIR=	/usr/bin
 FILESMODE=	${BINMODE}
 
+.if defined(__MINIX)
+.PATH:	${SRCDIR}
+.endif # defined(__MINIX)
+
 realall: atf2kyua
 atf2kyua: atf2kyua.sh
 	src=atf2kyua.sh dst=atf2kyua; ${BUILD_SCRIPT}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.2 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.3 2014/01/28 01:29:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,6 +33,13 @@
 
 #ifndef _COMPAT_SYS_DIRENT_H_
 #define _COMPAT_SYS_DIRENT_H_
+
+struct dirent43 {
+	u_int32_t d_fileno;		/* file number of entry */
+	u_int16_t d_reclen;		/* length of this record */
+	u_int16_t d_namlen;		/* length of string in d_name */
+	char	d_name[255 + 1];	/* name must be no longer than this */
+};
 
 struct dirent12 {
 	u_int32_t d_fileno;		/* file number of entry */

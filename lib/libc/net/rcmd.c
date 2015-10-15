@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.71 2014/11/26 23:44:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.71 2014/11/26 23:44:21 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -196,11 +196,7 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 	struct addrinfo *r;
 	struct sockaddr_storage from;
 	struct pollfd reads[2];
-#if defined(__minix)
-	/* No support for OOB data in Minix. */
-#else
 	sigset_t nmask, omask;
-#endif /* defined(__minix) */
 	pid_t pid;
 	int s, lport, timo;
 	int pollr;
@@ -217,14 +213,10 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 	r = res;
 	refused = 0;
 	pid = getpid();
-#if !defined(__minix)
-	/* Minix has no support for OOB data, 
-	   no need to block SIGURG. */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGURG);
 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
 		return -1;
-#endif /* !defined(__minix) */
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
@@ -236,16 +228,11 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 				r = r->ai_next;
 				continue;
 			} else {
-#if !defined(__minix)
 				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !defined(__minix) */
 				return -1;
 			}
 		}
-#if !defined(__minix)
-		/* No OOB support in Minix. */
 		fcntl(s, F_SETOWN, pid);
-#endif /* !defined(__minix) */
 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
 			break;
 		(void)close(s);
@@ -284,10 +271,7 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
 		    strerror(errno));
-#if !defined(__minix)
-		/* No OOB support in Minix. */
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !defined(__minix) */
 		return -1;
 	}
 	lport--;
@@ -367,18 +351,14 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 		}
 		goto bad2;
 	}
-#if !defined(__minix)
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !defined(__minix) */
 	return s;
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
 	(void)close(s);
-#if !defined(__minix)
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif /* !defined(__minix) */
 	return -1;
 }
 
@@ -486,6 +466,9 @@ rshrcmd(int af, char **ahost, u_int32_t rport, const char *locuser,
 			const char *program;
 			program = strrchr(rshcmd, '/');
 			program = program ? program + 1 : rshcmd;
+			if (fd2p)
+				/* ask rcmd to relay signal information */
+				setenv("RCMD_RELAY_SIGNAL", "YES", 1);
 			switch (af) {
 			case AF_INET:
 				execlp(rshcmd, program, "-4", "-l", remuser,
@@ -692,7 +675,7 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 
 	__rcmd_errstr = NULL;
 
-	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
+	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "re");
 
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, sa, (socklen_t)rlen, luser,
@@ -720,9 +703,9 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 		uid = geteuid();
 		gid = getegid();
 		(void)setegid(pwd->pw_gid);
-		initgroups(pwd->pw_name, pwd->pw_gid);
+		(void)initgroups(pwd->pw_name, pwd->pw_gid);
 		(void)seteuid(pwd->pw_uid);
-		hostf = fopen(pbuf, "r");
+		hostf = fopen(pbuf, "re");
 
 		if (hostf != NULL) {
 			/*

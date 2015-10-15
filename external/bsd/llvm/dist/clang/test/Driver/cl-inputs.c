@@ -33,3 +33,30 @@
 // WARN: warning: overriding '/TC' option with '/TP'
 // WARN: note: The last /TC or /TP option takes precedence over earlier instances
 // WARN-NOT: note
+
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TP cl-test.lib -### 2>&1 | FileCheck -check-prefix=TPlib %s
+// TPlib: warning: cl-test.lib: 'linker' input unused
+// TPlib: warning: argument unused during compilation: '/TP'
+// TPlib-NOT: cl-test.lib
+
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl /c /TC cl-test.lib -### 2>&1 | FileCheck -check-prefix=TClib %s
+// TClib: warning: cl-test.lib: 'linker' input unused
+// TClib: warning: argument unused during compilation: '/TC'
+// TClib-NOT: cl-test.lib
+
+// RUN: not %clang_cl - 2>&1 | FileCheck -check-prefix=STDIN %s
+// STDIN: error: use /Tc or /Tp
+
+// RUN: %clang_cl -### /Tc - 2>&1 | FileCheck -check-prefix=STDINTc %s
+// STDINTc: "-x" "c"
+
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl -### -- %s cl-test.lib 2>&1 | FileCheck -check-prefix=LIBINPUT %s
+// LIBINPUT: link.exe"
+// LIBINPUT: "cl-test.lib"
+
+// RUN: env LIB=%S/Inputs/cl-libs %clang_cl -### -- %s cl-test2.lib 2>&1 | FileCheck -check-prefix=LIBINPUT2 %s
+// LIBINPUT2: error: no such file or directory: 'cl-test2.lib'
+// LIBINPUT2: link.exe"
+// LIBINPUT2-NOT: "cl-test2.lib"
+
+void f();

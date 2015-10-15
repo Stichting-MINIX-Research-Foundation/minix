@@ -7,12 +7,20 @@ kcm_dir = kcm
 endif
 
 SUBDIRS=  include base lib kuser kdc admin kadmin kpasswd 
-SUBDIRS+= $(kcm_dir) appl doc tools tests packages etc po
+SUBDIRS+= $(kcm_dir) appl tools tests packages etc po
+
+if HEIMDAL_DOCUMENTATION
+SUBDIRS+= doc
+endif
+
+
 
 ## ACLOCAL = @ACLOCAL@ -I cf
 ACLOCAL_AMFLAGS = -I cf
 
 EXTRA_DIST = \
+	NTMakefile \
+	windows \
 	TODO \
 	LICENSE \
 	README \

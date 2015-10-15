@@ -7,15 +7,15 @@ typedef __WCHAR_TYPE__ wchar_t;
 #if defined(_WIN32) || defined(_M_IX86) || defined(__CYGWIN__) \
   || defined(_M_X64) || defined(SHORT_WCHAR)
   #define WCHAR_T_TYPE unsigned short
-#elif defined(__sun) || defined(__AuroraUX__)
+#elif defined(__sun)
   #define WCHAR_T_TYPE long
-#else /* Solaris or AuroraUX. */
+#else /* Solaris. */
   #define WCHAR_T_TYPE int
 #endif
 
 
 // CHECK-DAR: private unnamed_addr constant [18 x i32] [i32 84,
-// CHECK-WIN: private unnamed_addr constant [18 x i16] [i16 84,
+// CHECK-WIN: linkonce_odr unnamed_addr constant [18 x i16] [i16 84,
 extern void foo(const wchar_t* p);
 int main (int argc, const char * argv[])
 {

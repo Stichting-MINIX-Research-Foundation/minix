@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.8 2012/12/30 17:37:13 dholland Exp $	*/
+/*	$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,11 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.8 2012/12/30 17:37:13 dholland Exp $");
+__RCSID("$NetBSD: efun.c,v 1.10 2015/07/26 02:20:30 kamil Exp $");
 #endif
 
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -127,6 +128,16 @@ erealloc(void *p, size_t n)
 	return q;
 }
 
+void
+ereallocarr(void *p, size_t n, size_t s)
+{
+	int rv = reallocarr(p, n, s);
+	if (rv != 0) {
+		errno = rv;
+		(*efunc)(1, "Cannot re-allocate %zu * %zu bytes", n, s);
+	}
+}
+
 FILE *
 efopen(const char *p, const char *m)
 {
@@ -154,5 +165,33 @@ evasprintf(char ** __restrict ret, const char * __restrict format, va_list ap)
 	int rv;
 	if ((rv = vasprintf(ret, format, ap)) == -1)
 		(*efunc)(1, "Cannot format string");
+	return rv;
+}
+
+intmax_t
+estrtoi(const char * nptr, int base, intmax_t lo, intmax_t hi)
+{
+	int e;
+	intmax_t rv = strtoi(nptr, NULL, base, lo, hi, &e);
+	if (e != 0) {
+		errno = e;
+		(*efunc)(1,
+		    "Cannot convert string value '%s' with base %d to a number in range [%jd .. %jd]",
+		    nptr, base, lo, hi);
+	}
+	return rv;
+}
+
+uintmax_t
+estrtou(const char * nptr, int base, uintmax_t lo, uintmax_t hi)
+{
+	int e;
+	uintmax_t rv = strtou(nptr, NULL, base, lo, hi, &e);
+	if (e != 0) {
+		errno = e;
+		(*efunc)(1,
+		    "Cannot convert string value '%s' with base %d to a number in range [%ju .. %ju]",
+		    nptr, base, lo, hi);
+	}
 	return rv;
 }

@@ -3,14 +3,14 @@
 // rdar://11979525
 // Check that we don't get stack overflow trying to annotate an extremely deep AST.
 
-// AddressSanitizer increases stack usage.
-// XFAIL: asan
+// AddressSanitizer and UndefinedBehaviorSanitizer increases stack usage.
+// REQUIRES: not_asan, not_ubsan
 
 struct S {
   S &operator()();
 };
 
-// CHECK: Identifier: "foo" [11:6 - 11:9] FunctionDecl=foo:11:6 (Definition)
+// CHECK: Identifier: "foo" {{\[}}[[@LINE+1]]:6 - [[@LINE+1]]:9] FunctionDecl=foo:[[@LINE+1]]:6 (Definition)
 void foo() {
   S s;
   s()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()

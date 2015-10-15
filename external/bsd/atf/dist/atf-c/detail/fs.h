@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#include <atf-c/defs.h>
 #include <atf-c/error_fwd.h>
 
 #include "dynstr.h"
@@ -50,8 +51,10 @@ struct atf_fs_path {
 typedef struct atf_fs_path atf_fs_path_t;
 
 /* Constructors/destructors. */
-atf_error_t atf_fs_path_init_ap(atf_fs_path_t *, const char *, va_list);
-atf_error_t atf_fs_path_init_fmt(atf_fs_path_t *, const char *, ...);
+atf_error_t atf_fs_path_init_ap(atf_fs_path_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
+atf_error_t atf_fs_path_init_fmt(atf_fs_path_t *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 atf_error_t atf_fs_path_copy(atf_fs_path_t *, const atf_fs_path_t *);
 void atf_fs_path_fini(atf_fs_path_t *);
 
@@ -63,8 +66,10 @@ bool atf_fs_path_is_absolute(const atf_fs_path_t *);
 bool atf_fs_path_is_root(const atf_fs_path_t *);
 
 /* Modifiers. */
-atf_error_t atf_fs_path_append_ap(atf_fs_path_t *, const char *, va_list);
-atf_error_t atf_fs_path_append_fmt(atf_fs_path_t *, const char *, ...);
+atf_error_t atf_fs_path_append_ap(atf_fs_path_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
+atf_error_t atf_fs_path_append_fmt(atf_fs_path_t *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 atf_error_t atf_fs_path_append_path(atf_fs_path_t *, const atf_fs_path_t *);
 atf_error_t atf_fs_path_to_absolute(const atf_fs_path_t *, atf_fs_path_t *);
 

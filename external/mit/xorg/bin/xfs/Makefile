@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/31 01:50:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2015/07/17 17:57:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -44,8 +44,8 @@ CPPFLAGS.config.c=	${CONN_DEFINES}
 # XXX
 CPPFLAGS.xfstrans.c+=	-Wno-error
 
-X11EXTRAMANDEFS+=	-e 's%__configfilepath__%${XFSCONFIGDIR}/config%g; \
-			s%__configfiledesc__%the default file,%g'
+X11EXTRAMANDEFS+=	-e 's%__configfilepath__%${XFSCONFIGDIR}/config%g' \
+			-e 's%__configfiledesc__%the default file,%g'
 
 
 .PATH:	${XFSDIR}/config

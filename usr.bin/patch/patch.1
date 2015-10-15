@@ -1,6 +1,6 @@
 .\"	$OpenBSD: patch.1,v 1.22 2008/06/06 20:44:00 jmc Exp $
 .\"	$DragonFly: src/usr.bin/patch/patch.1,v 1.10 2008/08/18 19:15:55 joerg Exp $
-.\"	$NetBSD: patch.1,v 1.16 2013/01/29 09:30:11 wiz Exp $
+.\"	$NetBSD: patch.1,v 1.19 2015/08/02 12:19:12 wiz Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 18, 2008
+.Dd August 2, 2015
 .Dt PATCH 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Op Fl o Ar out-file
 .Op Fl p Ar strip-count
 .Op Fl r Ar rej-name
-.Op Fl V Cm t | nil | never
+.Op Fl V Cm t | nil | never | none
 .Op Fl x Ar number
 .Op Fl z Ar backup-ext
 .Op Fl Fl posix
@@ -266,7 +266,7 @@ and assume that patches are reversed if they look like they are.
 Forces
 .Nm
 to interpret the patch file as a unified context diff (a unidiff).
-.It Fl V Cm t | nil | never , Fl Fl version-control Cm t | nil | never
+.It Fl V Cm t | nil | never | none , Fl Fl version-control Cm t | nil | never | none
 Causes the next argument to be interpreted as a method for creating
 backup file names.
 The type of backups made can also be given in the
@@ -445,9 +445,8 @@ the shortest basename, and the shortest total file name length (in that order).
 .It
 If no file exists,
 .Nm
-checks for the existence of the files in an SCCS or RCS directory
-(using the appropriate prefix or suffix) using the criteria specified
-above.
+checks for the existence of the files in an RCS directory using the criteria
+specified above.
 If found,
 .Nm
 will attempt to get or check out the file.

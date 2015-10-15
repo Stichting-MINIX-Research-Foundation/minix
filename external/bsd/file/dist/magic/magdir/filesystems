@@ -1,8 +1,189 @@
-
 #------------------------------------------------------------------------------
-# $File: filesystems,v 1.77 2013/03/14 01:38:30 christos Exp $
+# $File: filesystems,v 1.108 2015/01/01 17:43:47 christos Exp $
 # filesystems:  file(1) magic for different filesystems
 #
+0	name	partid  
+>0	ubyte	0x00	Unused
+>0	ubyte	0x01	12-bit FAT
+>0	ubyte	0x02	XENIX /
+>0	ubyte	0x03	XENIX /usr
+>0	ubyte	0x04	16-bit FAT, less than 32M
+>0	ubyte	0x05	extended partition
+>0	ubyte	0x06	16-bit FAT, more than 32M
+>0	ubyte	0x07	OS/2 HPFS, NTFS, QNX2, Adv. UNIX
+>0	ubyte	0x08	AIX or os, or etc.
+>0	ubyte	0x09	AIX boot partition or Coherent
+>0	ubyte	0x0a	O/2 boot manager or Coherent swap
+>0	ubyte	0x0b	32-bit FAT
+>0	ubyte	0x0c	32-bit FAT, LBA-mapped
+>0	ubyte	0x0d	7XXX, LBA-mapped
+>0	ubyte	0x0e	16-bit FAT, LBA-mapped
+>0	ubyte	0x0f	extended partition, LBA-mapped
+>0	ubyte	0x10	OPUS
+>0	ubyte	0x11 	OS/2 DOS 12-bit FAT
+>0	ubyte	0x12 	Compaq diagnostics
+>0	ubyte	0x14 	OS/2 DOS 16-bit FAT <32M
+>0	ubyte	0x16 	OS/2 DOS 16-bit FAT >=32M
+>0	ubyte	0x17 	OS/2 hidden IFS
+>0	ubyte	0x18 	AST Windows swapfile
+>0	ubyte	0x19 	Willowtech Photon coS
+>0	ubyte	0x1b 	hidden win95 fat 32
+>0	ubyte	0x1c 	hidden win95 fat 32 lba
+>0	ubyte	0x1d	hidden win95 fat 16 lba
+>0	ubyte	0x20 	Willowsoft OFS1
+>0	ubyte	0x21 	reserved
+>0	ubyte	0x23 	reserved
+>0	ubyte	0x24	NEC DOS
+>0	ubyte	0x26 	reserved
+>0	ubyte	0x31 	reserved
+>0	ubyte	0x32	Alien Internet Services NOS
+>0	ubyte	0x33 	reserved
+>0	ubyte	0x34 	reserved
+>0	ubyte	0x35 	JFS on OS2
+>0	ubyte	0x36 	reserved
+>0	ubyte	0x38 	Theos
+>0	ubyte	0x39 	Plan 9, or Theos spanned
+>0	ubyte	0x3a 	Theos ver 4 4gb partition
+>0	ubyte	0x3b 	Theos ve 4 extended partition
+>0	ubyte	0x3c 	PartitionMagic recovery
+>0	ubyte	0x3d 	Hidden Netware
+>0	ubyte	0x40 	VENIX 286 or LynxOS
+>0	ubyte	0x41	PReP
+>0	ubyte	0x42	linux swap sharing DRDOS disk
+>0	ubyte	0x43	linux sharing DRDOS disk
+>0	ubyte	0x44	GoBack change utility
+>0	ubyte	0x45	Boot US Boot manager
+>0	ubyte	0x46	EUMEL/Elan or Ergos 3
+>0	ubyte	0x47	EUMEL/Elan or Ergos 3
+>0	ubyte	0x48	EUMEL/Elan or Ergos 3
+>0	ubyte	0x4a	ALFX/THIN filesystem for DOS
+>0	ubyte	0x4c	Oberon partition
+>0	ubyte	0x4d 	QNX4.x
+>0	ubyte	0x4e 	QNX4.x 2nd part
+>0	ubyte	0x4f 	QNX4.x 3rd part
+>0	ubyte	0x50 	DM (disk manager)
+>0	ubyte	0x51 	DM6 Aux1 (or Novell)
+>0	ubyte	0x52 	CP/M or Microport SysV/AT
+>0	ubyte	0x53 	DM6 Aux3
+>0	ubyte	0x54	DM6 DDO
+>0	ubyte	0x55	EZ-Drive (disk manager)
+>0	ubyte	0x56	Golden Bow (disk manager)
+>0	ubyte	0x57	Drive PRO
+>0	ubyte	0x5c	Priam Edisk (disk manager)
+>0	ubyte	0x61	SpeedStor
+>0	ubyte	0x63	GNU HURD or Mach or Sys V/386
+>0	ubyte	0x64	Novell Netware 2.xx or Speedstore
+>0	ubyte	0x65	Novell Netware 3.xx
+>0	ubyte	0x66	Novell 386 Netware
+>0	ubyte	0x67	Novell
+>0	ubyte	0x68	Novell
+>0	ubyte	0x69	Novell
+>0	ubyte	0x70	DiskSecure Multi-Boot
+>0	ubyte	0x71	reserved
+>0	ubyte	0x73	reserved
+>0	ubyte	0x74	reserved
+>0	ubyte	0x75	PC/IX
+>0	ubyte	0x76	reserved
+>0	ubyte	0x77	M2FS/M2CS partition
+>0	ubyte	0x78	XOSL boot loader filesystem
+>0	ubyte	0x80	MINIX until 1.4a
+>0	ubyte	0x81	MINIX since 1.4b
+>0	ubyte	0x82	Linux swap or Solaris
+>0	ubyte	0x83	Linux native
+>0	ubyte	0x84	OS/2 hidden C: drive
+>0	ubyte	0x85	Linux extended partition
+>0	ubyte	0x86	NT FAT volume set
+>0	ubyte	0x87	NTFS volume set or HPFS mirrored
+>0	ubyte	0x8a	Linux Kernel AiR-BOOT partition
+>0	ubyte	0x8b	Legacy Fault tolerant FAT32
+>0	ubyte	0x8c	Legacy Fault tolerant FAT32 ext
+>0	ubyte	0x8d	Hidden free FDISK FAT12
+>0	ubyte	0x8e	Linux Logical Volume Manager
+>0	ubyte	0x90	Hidden free FDISK FAT16
+>0	ubyte	0x91	Hidden free FDISK DOS EXT
+>0	ubyte	0x92	Hidden free FDISK FAT16 Big
+>0	ubyte	0x93	Amoeba filesystem
+>0	ubyte	0x94	Amoeba bad block table
+>0	ubyte	0x95	MIT EXOPC native partitions
+>0	ubyte	0x97	Hidden free FDISK FAT32
+>0	ubyte	0x98	Datalight ROM-DOS Super-Boot
+>0	ubyte	0x99	Mylex EISA SCSI
+>0	ubyte	0x9a	Hidden free FDISK FAT16 LBA
+>0	ubyte	0x9b	Hidden free FDISK EXT LBA
+>0	ubyte	0x9f	BSDI?
+>0	ubyte	0xa0	IBM Thinkpad hibernation
+>0	ubyte	0xa1	HP Volume expansion (SpeedStor)
+>0	ubyte	0xa3	HP Volume expansion (SpeedStor)
+>0	ubyte	0xa4	HP Volume expansion (SpeedStor)
+>0	ubyte	0xa5	386BSD partition type
+>0	ubyte	0xa6	OpenBSD partition type
+>0	ubyte	0xa7	NeXTSTEP 486
+>0	ubyte	0xa8	Apple UFS
+>0	ubyte	0xa9	NetBSD partition type
+>0	ubyte	0xaa	Olivetty Fat12 1.44MB Service part
+>0	ubyte	0xab	Apple Boot
+>0	ubyte	0xae	SHAG OS filesystem
+>0	ubyte	0xaf	Apple HFS
+>0	ubyte	0xb0	BootStar Dummy
+>0	ubyte	0xb1	reserved
+>0	ubyte	0xb3	reserved
+>0	ubyte	0xb4	reserved
+>0	ubyte	0xb6	reserved
+>0	ubyte	0xb7	BSDI BSD/386 filesystem
+>0	ubyte	0xb8	BSDI BSD/386 swap
+>0	ubyte	0xbb	Boot Wizard Hidden
+>0	ubyte	0xbe	Solaris 8 partition type
+>0	ubyte	0xbf	Solaris partition type
+>0	ubyte	0xc0 	CTOS
+>0	ubyte	0xc1 	DRDOS/sec (FAT-12)
+>0	ubyte	0xc2 	Hidden Linux
+>0	ubyte	0xc3 	Hidden Linux swap
+>0	ubyte	0xc4 	DRDOS/sec (FAT-16, < 32M)
+>0	ubyte	0xc5 	DRDOS/sec (EXT)
+>0	ubyte	0xc6 	DRDOS/sec (FAT-16, >= 32M)
+>0	ubyte	0xc7 	Syrinx (Cyrnix?) or HPFS disabled
+>0	ubyte	0xc8 	Reserved for DR-DOS 8.0+
+>0	ubyte	0xc9 	Reserved for DR-DOS 8.0+
+>0	ubyte	0xca 	Reserved for DR-DOS 8.0+
+>0	ubyte	0xcb 	DR-DOS 7.04+ Secured FAT32 CHS
+>0	ubyte	0xcc 	DR-DOS 7.04+ Secured FAT32 LBA
+>0	ubyte	0xcd	CTOS Memdump
+>0	ubyte	0xce 	DR-DOS 7.04+ FAT16X LBA
+>0	ubyte	0xcf 	DR-DOS 7.04+ EXT LBA
+>0	ubyte	0xd0 	REAL/32 secure big partition
+>0	ubyte	0xd1 	Old Multiuser DOS FAT12
+>0	ubyte	0xd4 	Old Multiuser DOS FAT16 Small
+>0	ubyte	0xd5 	Old Multiuser DOS Extended
+>0	ubyte	0xd6 	Old Multiuser DOS FAT16 Big
+>0	ubyte	0xd8 	CP/M 86
+>0	ubyte	0xdb 	CP/M or Concurrent CP/M
+>0	ubyte	0xdd 	Hidden CTOS Memdump
+>0	ubyte	0xde 	Dell PowerEdge Server utilities
+>0	ubyte	0xdf 	DG/UX virtual disk manager
+>0	ubyte	0xe0 	STMicroelectronics ST AVFS
+>0	ubyte	0xe1 	DOS access or SpeedStor 12-bit
+>0	ubyte	0xe3 	DOS R/O or Storage Dimensions
+>0	ubyte	0xe4 	SpeedStor 16-bit FAT < 1024 cyl.
+>0	ubyte	0xe5	reserved
+>0	ubyte	0xe6	reserved
+>0	ubyte	0xeb 	BeOS
+>0	ubyte	0xee	GPT Protective MBR
+>0	ubyte	0xef	EFI system partition
+>0	ubyte	0xf0 	Linux PA-RISC boot loader
+>0	ubyte	0xf1 	SpeedStor or Storage Dimensions
+>0	ubyte	0xf2 	DOS 3.3+ Secondary
+>0	ubyte	0xf3	reserved
+>0	ubyte	0xf4	SpeedStor large partition
+>0	ubyte	0xf5	Prologue multi-volumen partition
+>0	ubyte	0xf6 	reserved
+>0	ubyte	0xf9 	pCache: ext2/ext3 persistent cache
+>0	ubyte	0xfa 	Bochs x86 emulator
+>0	ubyte	0xfb 	VMware File System
+>0	ubyte	0xfc 	VMware Swap
+>0	ubyte	0xfd 	Linux RAID partition persistent sb
+>0	ubyte	0xfe	LANstep or IBM PS/2 IML
+>0	ubyte	0xff 	Xenix Bad Block Table
+
 0	string	\366\366\366\366	PC formatted floppy with no filesystem
 # Sun disk labels
 # From /usr/include/sun/dklabel.h:
@@ -23,8 +204,8 @@
 >>0752	short		>0		%d alt cyls,
 >>0754	short		>0		%d heads/partition,
 >>0756	short		>0		%d sectors/track,
->>0764	long		>0		start cyl %ld,
->>0770	long		x		%ld blocks
+>>0764	long		>0		start cyl %d,
+>>0770	long		x		%d blocks
 # Is there a boot block written 1 sector in?
 >512    belong&077777777	0600407	\b, boot block present
 
@@ -57,23 +238,36 @@
 >>>>15	ulelong	>0		\b, %d cylinders
 >>>>128	indirect	x	\b; contains 
 
-# x86 boot sector updated by Joerg Jenderek at Sep 2007,May 2011
+# added by Joerg Jenderek at Nov 2012
+# http://www.thenakedpc.com/articles/v04/08/0408-05.html
+# Symantec (Peter Norton) Image.dat file consists of variable header, bootrecord, part of FAT and root directory data
+0	string	PNCIHISK\0		Norton Utilities disc image data
+# real x86 boot sector with jump instruction
+>509	search/1026	\x55\xAA\xeb	
+>>&-1	indirect	x		\b; contains 
+# http://file-extension.net/seeker/file_extension_dat
+0	string	PNCIUNDO		Norton Disk Doctor UnDo file
+#
+
+# DOS/MBR boot sector updated by Joerg Jenderek at Sep 2007,May 2011,2013
 # for any allowed sector sizes
 30		search/481	\x55\xAA	
-# to display x86 boot sector (40) before old one (strength=50+21),Syslinux bootloader (71),SYSLINUX MBR (37+36),NetBSD mbr (110),AdvanceMAME mbr (111)
+# to display DOS/MBR boot sector (40) before old one (strength=50+21),Syslinux bootloader (71),SYSLINUX MBR (37+36),NetBSD mbr (110),AdvanceMAME mbr (111)
 # DOS BPB information (70) and after DOS floppy (120) like in previous file version
-!:strength +72
+!:strength +65
 # for sector sizes < 512 Bytes
 >11		uleshort	<512		
->>(11.s-2)	uleshort	0xAA55		x86 boot sector
+>>(11.s-2)	uleshort	0xAA55		DOS/MBR boot sector
 # for sector sizes with 512 or more Bytes
->0x1FE		leshort		0xAA55		x86 boot sector
-# keep old x86 boot sector as dummy for mbr and bootloader displaying
+>0x1FE		leshort		0xAA55		DOS/MBR boot sector
+
+# keep old DOS/MBR boot sector as dummy for mbr and bootloader displaying
 # only for sector sizes with 512 or more Bytes
-0x1FE	leshort	0xAA55			
+0x1FE          leshort         0xAA55         	DOS/MBR boot sector
+#
 # to display information (50) before DOS BPB (strength=70) and after DOS floppy (120) like in old file version
-!:strength +21
->2	string	OSBS			\b, OS/BS MBR
+!:strength +65
+>2		string		OSBS		OS/BS MBR
 # added by Joerg Jenderek at Feb 2013 according to http://thestarman.pcministry.com/asm/mbr/
 # and http://en.wikipedia.org/wiki/Master_Boot_Record
 # test for nearly all MS-DOS Master Boot Record initial program loader (IPL) is now done by 
@@ -126,8 +320,8 @@
 # assembler instructions: rep;movsb;retf;mov si,07be;mov cl,04
 >>>24		ubequad	0xf3a4cbbebe07b104		9M
 # "Invalid partition table"				nn=0x10F for english version
-# "Ungültige Partitionstabelle"				nn=0x10F for german version
-# "Table de partition erronée"				nn=0x10F for french version
+# "Ung\201ltige Partitionstabelle"				nn=0x10F for german version
+# "Table de partition erron\202e"				nn=0x10F for french version
 # "\216\257\245\340\240\346\250\256\255\255\240\357 \341\250\341\342\245\254\240 \255\245 \255\240\251\244\245\255\240"	nn=0x10F for russian version
 >>>>(0x3C.b+0x0FF)	string	Invalid\ partition\ table		english
 >>>>(0x3C.b+0x0FF)	string	Ung\201ltige\ Partitionstabelle		german
@@ -137,13 +331,13 @@
 >>>>(0x3C.b+0x0FF)	string	>\0			"%s"
 # "Error loading operating system"			nn=0x127 for english version
 # "Fehler beim Laden des Betriebssystems"		nn=0x12b for german version
-# "Erreur lors du chargement du système d'exploitation"	nn=0x12a for french version
+# "Erreur lors du chargement du syst\212me d'exploitation"	nn=0x12a for french version
 # "\216\350\250\241\252\240 \257\340\250 \247\240\243\340\343\247\252\245 \256\257\245\340\240\346\250\256\255\255\256\251 \341\250\341\342\245\254\353"	nn=0x12d for russian version
 >>>>0xBD		ubyte	x			at offset 0x1%x
 >>>>(0xBD.b+0x100)	string	>\0			"%s"
 # "Missing operating system"				nn=0x146 for english version
 # "Betriebssystem fehlt"				nn=0x151 for german version
-# "Système d'exploitation manquant"			nn=0x15e for french version
+# "Syst\212me d'exploitation manquant"			nn=0x15e for french version
 # "\216\257\245\340\240\346\250\256\255\255\240\357 \341\250\341\342\245\254\240 \255\245 \255\240\251\244\245\255\240"	nn=0x156 for russian version
 >>>>0xA9		ubyte	x			at offset 0x1%x
 >>>>(0xA9.b+0x100)	string	>\0			"%s"
@@ -154,7 +348,7 @@
 >>>>0x1B4	ubelong&0x00FFFFFF	0x002c4463	english
 >>>>0x1B4	ubelong&0x00FFFFFF	0x002c486e	german
 # "Invalid partition table"				xx=0x12C for english version
-# "Ungültige Partitionstabelle"				xx=0x12C for german version
+# "Ung\201ltige Partitionstabelle"				xx=0x12C for german version
 >>>>0x1b5	ubyte		>0			at offset 0x1%x
 >>>>(0x1b5.b+0x100)	string	>\0			"%s"
 # "Error loading operating system"			yy=0x144 for english version
@@ -175,7 +369,7 @@
 >>>>0x1B4	ubelong&0x00FFFFFF	0x00627a99	english
 #>>>>0x1B4	ubelong&0x00FFFFFF	?		german
 # "Invalid partition table"				xx=0x162 for english version
-# "Ungültige Partitionstabelle"				xx=0x1?? for german version
+# "Ung\201ltige Partitionstabelle"				xx=0x1?? for german version
 >>>>0x1b5	ubyte		>0			at offset 0x1%x
 >>>>(0x1b5.b+0x100)	string	>\0			"%s"
 # "Error loading operating system"			yy=0x17a for english version
@@ -193,7 +387,7 @@
 >>>>0x1B4	ubelong&0x00FFFFFF	0x00637b9a	english
 #>>>>0x1B4	ubelong&0x00FFFFFF	?		german
 # "Invalid partition table"				xx=0x163 for english version
-# "Ungültige Partitionstabelle"				xx=0x1?? for german version
+# "Ung\201ltige Partitionstabelle"				xx=0x1?? for german version
 >>>>0x1b5	ubyte		>0			at offset 0x1%x
 >>>>(0x1b5.b+0x100)	string	>\0			"%s"
 # "Error loading operating system"			yy=0x17b for english version
@@ -326,7 +520,7 @@
 >>>>>379	string	GRUB\ \0		\b, GRUB version 0.95 or 0.96
 >>>>391		string	Geom\0Hard\ Disk\0Read\0\ Error\0
 >>>>>385	string	GRUB\ \0		\b, GRUB version 0.97
-#unkown version
+# unknown version
 >>>343		string	Geom\0Read\0\ Error\0	
 >>>>321		string	Loading\ stage1.5	\b, GRUB version x.y
 >>>380		string	Geom\0Hard\ Disk\0Read\0\ Error\0
@@ -336,76 +530,50 @@
 # http://www.bcdwb.de/bcdw/index_e.htm
 >3	string	BCDL				
 >>498	string	BCDL\ \ \ \ BIN			\b, Bootable CD Loader (1.50Z)
-# mbr partition table entries
-# OEM-ID does not contain MicroSoft,NEWLDR,DOS,SYSLINUX,or MTOOLs
->3			string		!MS
->>3			string		!SYSLINUX
->>>3			string		!MTOOL
->>>>3			string		!NEWLDR
->>>>>5			string		!DOS
-# not FAT (32 bit)
->>>>>>82		string		!FAT32
-#not Linux kernel
->>>>>>>514		string		!HdrS
-#not BeOS
->>>>>>>>422		string		!Be\ Boot\ Loader
-# active flag 0 or 0x80 and type > 0
->>>>>>>>>446		ubyte		<0x81	
->>>>>>>>>>446		ubyte&0x7F	0	
->>>>>>>>>>>450		ubyte		>0	\b; partition 1: ID=0x%x
->>>>>>>>>>>>446		ubyte		0x80	\b, active
->>>>>>>>>>>>447		ubyte		x	\b, starthead %u
-#>>>>>>>>>>>>448		ubyte		x	\b, start C_S: 0x%x
-#>>>>>>>>>>>>448		ubeshort&1023	x	\b, startcylinder? %d
->>>>>>>>>>>>454		ulelong		x	\b, startsector %u
->>>>>>>>>>>>458		ulelong		x	\b, %u sectors
-#
->>>>>>>>>462		ubyte		<0x81	
->>>>>>>>>>462		ubyte&0x7F	0		
->>>>>>>>>>>466		ubyte		>0	\b; partition 2: ID=0x%x
->>>>>>>>>>>>462		ubyte		0x80	\b, active
->>>>>>>>>>>>463		ubyte		x	\b, starthead %u
-#>>>>>>>>>>>>464		ubyte		x	\b, start C_S: 0x%x
-#>>>>>>>>>>>>464		ubeshort&1023	x	\b, startcylinder? %d
->>>>>>>>>>>>470		ulelong		x	\b, startsector %u
->>>>>>>>>>>>474		ulelong		x	\b, %u sectors
-#
->>>>>>>>>478		ubyte		<0x81		
->>>>>>>>>>478		ubyte&0x7F	0		
->>>>>>>>>>>482		ubyte		>0	\b; partition 3: ID=0x%x
->>>>>>>>>>>>478		ubyte		0x80	\b, active
->>>>>>>>>>>>479		ubyte		x	\b, starthead %u
-#>>>>>>>>>>>>480		ubyte		x	\b, start C_S: 0x%x
-#>>>>>>>>>>>>481		ubyte		x	\b, start C2S: 0x%x
-#>>>>>>>>>>>>480		ubeshort&1023	x	\b, startcylinder? %d
->>>>>>>>>>>>486		ulelong		x	\b, startsector %u
->>>>>>>>>>>>490		ulelong		x	\b, %u sectors
-#
->>>>>>>>>494		ubyte		<0x81	
->>>>>>>>>>494		ubyte&0x7F	0		
->>>>>>>>>>>498		ubyte		>0	\b; partition 4: ID=0x%x
->>>>>>>>>>>>494		ubyte		0x80	\b, active
->>>>>>>>>>>>495		ubyte		x	\b, starthead %u
-#>>>>>>>>>>>>496		ubyte		x	\b, start C_S: 0x%x
-#>>>>>>>>>>>>496		ubeshort&1023	x	\b, startcylinder? %d
->>>>>>>>>>>>502		ulelong		x	\b, startsector %u
->>>>>>>>>>>>506		ulelong		x	\b, %u sectors
+# mbr partition table entries updated by Joerg Jenderek at Sep 2013
+# skip Norton Utilities disc image data
+>3		string		!IHISK		
+# skip Linux style boot sector starting with assember instructions mov 0x7c0,ax;
+>>0		belong		!0xb8c0078e		
+# not Linux kernel 
+>>>514		string		!HdrS			
+# not BeOS
+>>>>422		string		!Be\ Boot\ Loader	
+>>>>>32769	string    CD001
+>>>>>>0	use cdrom
+# jump over BPB instruction implies DOS bootsector or AdvanceMAME mbr 
+>>>>>0		ubelong&0xFD000000	=0xE9000000	
+# AdvanceMAME mbr
+>>>>>>(1.b+2)	ubequad		0xfa31c08ed88ec08e	
+>>>>>>>446	use		partition-table
+# mbr, Norton Utilities disc image data, or 2nd,etc. sector of x86 bootloader
+>>>>>0		ubelong&0xFD000000	!0xE9000000	
+# skip FSInfosector
+>>>>>>0		string		!RRaA		
+# skip 3rd sector of MS x86 bootloader with assember instructions cli;MOVZX EAX,BYTE PTR [BP+10];MOV ECX,
+# http://thestarman.pcministry.com/asm/mbr/MSWIN41.htm
+>>>>>>>0	ubequad		!0xfa660fb64610668b	
+# skip 13rd sector of MS x86 bootloader
+>>>>>>>>0	ubequad		!0x660fb64610668b4e	
+# skip sector starting with DOS new line
+>>>>>>>>>0	string		!\r\n			
+# allowed active flag 0,80h-FFh
+>>>>>>>>>>446	ubyte		0			
+>>>>>>>>>>>446	use		partition-table
+>>>>>>>>>>446	ubyte		>0x7F			
+>>>>>>>>>>>446	use		partition-table
+# TODO: test for extended bootrecord (ebr) moved and merged with mbr partition table entries
 # mbr partition table entries end
 # http://www.acronis.de/
 #FAT label=ACRONIS\ SZ
 #OEM-ID=BOOTWIZ0
 >442	string	Non-system\ disk,\ 	
 >>459	string	press\ any\ key...\x7\0		\b, Acronis Startup Recovery Loader
-# updated by Joerg Jenderek at Nov 2012
+# updated by Joerg Jenderek at Nov 2012, Sep 2013
 # DOS names like F11.SYS or BOOTWIZ.SYS are 8 right space padded bytes+3 bytes
->>>477		ubyte&0xDF	>0		
->>>>477		string		x 		\b %-.3s
->>>>>480	ubyte&0xDF	>0		
->>>>>>480	string		x 		\b%-.4s
->>>>>>>484	ubyte&0xDF	>0		
->>>>>>>>484	string		x 		\b%-.1s
->>>>485		ubyte&0xDF	>0		
->>>>>485	string		x 		\b.%-.3s
+# display 1 space
+>>>447	ubyte	x		\b 
+>>>477	use	DOS-filename
 #
 >185	string	FDBOOT\ Version\ 			
 >>204	string	\rNo\ Systemdisk.\ 			
@@ -845,73 +1013,16 @@
 # It just looks for a program file name at the root directory
 # and loads corresponding file with following execution.
 # DOS names like STARTUP.BIN,STARTUPC.COM,STARTUPE.EXE are 8 right space padded bytes+3 bytes
->>>>499			ubyte&0xDF	>0		\b, COM/EXE Bootloader
->>>>>499		string		x 		\b %-.1s
->>>>>>500		ubyte&0xDF	>0		
->>>>>>>500		string		x 		\b%-.1s
->>>>>>>>501		ubyte&0xDF	>0		
->>>>>>>>>501		string		x 		\b%-.1s
->>>>>>>>>>502		ubyte&0xDF	>0		
->>>>>>>>>>>502		string		x 		\b%-.1s
->>>>>>>>>>>>503		ubyte&0xDF	>0		
->>>>>>>>>>>>>503	string		x 		\b%-.1s
->>>>>>>>>>>>>>504	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>504	string		x 		\b%-.1s
->>>>>>>>>>>>>>>>505	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>>>505	string		x 		\b%-.1s
->>>>>>>>>>>>>>>>>>506	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>>>>>506	string		x 		\b%-.1s
-#name extension
->>>>>507		ubyte&0xDF	>0		\b.
->>>>>>507		string		x 		\b%-.1s
->>>>>>>508		ubyte&0xDF	>0		
->>>>>>>>508		string		x 		\b%-.1s
->>>>>>>>>509		ubyte&0xDF	>0		
->>>>>>>>>>509		string		x 		\b%-.1s
+>>>>499			ubyte&0xDF	>0		\b, COM/EXE Bootloader 
+>>>>>499		use		DOS-filename
 #If the boot sector fails to read any other sector,
 #it prints a very short message ("RE") to the screen and hangs the computer.
 #If the boot sector fails to find needed program in the root directory,
 #it also hangs with another message ("NF").
 >>>>>492		string		RENF		\b, FAT (12 bit)
 >>>>>495		string		RENF		\b, FAT (16 bit)
-# http://alexfru.chat.ru/epm.html#bootprog
->494	ubyte	>0x4D					
->>495	string	>E					
->>>495	string	<S					
-#OEM-ID is not reliable
->>>>3	string	BootProg				
-# It just looks for a program file name at the root directory
-# and loads corresponding file with following execution.
-# DOS names like STARTUP.BIN,STARTUPC.COM,STARTUPE.EXE are 8 right space padded bytes+3 bytes
->>>>499			ubyte&0xDF	>0		\b, COM/EXE Bootloader
->>>>>499		string		x 		\b %-.1s
->>>>>>500		ubyte&0xDF	>0		
->>>>>>>500		string		x 		\b%-.1s
->>>>>>>>501		ubyte&0xDF	>0		
->>>>>>>>>501		string		x 		\b%-.1s
->>>>>>>>>>502		ubyte&0xDF	>0		
->>>>>>>>>>>502		string		x 		\b%-.1s
->>>>>>>>>>>>503		ubyte&0xDF	>0		
->>>>>>>>>>>>>503	string		x 		\b%-.1s
->>>>>>>>>>>>>>504	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>504	string		x 		\b%-.1s
->>>>>>>>>>>>>>>>505	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>>>505	string		x 		\b%-.1s
->>>>>>>>>>>>>>>>>>506	ubyte&0xDF	>0		
->>>>>>>>>>>>>>>>>>>506	string		x 		\b%-.1s
-#name extension
->>>>>507		ubyte&0xDF	>0		\b.
->>>>>>507		string		x 		\b%-.1s
->>>>>>>508		ubyte&0xDF	>0		
->>>>>>>>508		string		x 		\b%-.1s
->>>>>>>>>509		ubyte&0xDF	>0		
->>>>>>>>>>509		string		x 		\b%-.1s
 #If the boot sector fails to read any other sector,
 #it prints a very short message ("RE") to the screen and hangs the computer.
-#If the boot sector fails to find needed program in the root directory,
-#it also hangs with another message ("NF").
->>>>>492		string		RENF		\b, FAT (12 bit)
->>>>>495		string		RENF		\b, FAT (16 bit)
 # x86 bootloader end
 
 # added by Joerg Jenderek at Feb 2013 according to http://thestarman.pcministry.com/asm/mbr/MSWIN41.htm#FSINFO
@@ -921,17 +1032,6 @@
 #>>0x1FC	uleshort	=0		SHOULD BE ZERO
 >>>0x1E8	ulelong		<0xffffffff	\b, %u free clusters
 >>>0x1EC	ulelong		<0xffffffff	\b, last allocated cluster %u
-
-# added by Joerg Jenderek at Nov 2012
-# http://www.thenakedpc.com/articles/v04/08/0408-05.html
-# Symantec (Peter Norton) Image.dat file consists of variable header, bootrecord, part of FAT and root directory data
-0	string	PNCIHISK\0		Norton Utilities disc image data
-# real x86 boot sector with jump instruction
->509	search/1026	\x55\xAA\xeb	
->>&-1	indirect	x		\b; contains 
-# http://file-extension.net/seeker/file_extension_dat
-0	string	PNCIUNDO		Norton Disk Doctor UnDo file
-#
 
 # updated by Joerg Jenderek at Sep 2007
 >3	ubyte	0			
@@ -946,11 +1046,98 @@
 >>>>>>466	ubyte	<0x10			
 >>>>>>>466	ubyte	0x05			\b, extended partition table
 >>>>>>>466	ubyte	0x0F			\b, extended partition table (LBA)
->>>>>>>466	ubyte	0x0			\b, extended partition table (last)	
+>>>>>>>466	ubyte	0x0			\b, extended partition table (last)
 
-# DOS x86 sector separated and moved from "x86 boot sector" by Joerg Jenderek at May 2011
+# DOS x86 sector separated and moved from "DOS/MBR boot sector" by Joerg Jenderek at May 2011
 
 >0x200	lelong	0x82564557		\b, BSD disklabel
+
+# by Joerg Jenderek at Apr 2013
+#	Print the DOS filenames from directory entry form with 8 right space padded bytes + 3 bytes for extension
+#	like IO.SYS. MSDOS.SYS , KERNEL.SYS , DRBIO.SYS
+0	name			DOS-filename
+# space=0x20 (00100000b) means empty 
+>0			ubyte&0xDF	>0		
+>>0			ubyte		x 		\b%c
+>>>1			ubyte&0xDF	>0		
+>>>>1			ubyte		x 		\b%c
+>>>>>2			ubyte&0xDF	>0		
+>>>>>>2			ubyte		x 		\b%c
+>>>>>>>3		ubyte&0xDF	>0		
+>>>>>>>>3		ubyte		x 		\b%c
+>>>>>>>>>4		ubyte&0xDF	>0		
+>>>>>>>>>>4		ubyte		x 		\b%c
+>>>>>>>>>>>5		ubyte&0xDF	>0		
+>>>>>>>>>>>>5		ubyte		x 		\b%c
+>>>>>>>>>>>>>6		ubyte&0xDF	>0		
+>>>>>>>>>>>>>>6		ubyte		x 		\b%c
+>>>>>>>>>>>>>>>7	ubyte&0xDF	>0		
+>>>>>>>>>>>>>>>>7	ubyte		x 		\b%c
+# DOS filename extension
+>>8			ubyte&0xDF	>0		\b.
+>>>8			ubyte		x 		\b%c
+>>>>9			ubyte&0xDF	>0		
+>>>>>9			ubyte		x 		\b%c
+>>>>>>10		ubyte&0xDF	>0		
+>>>>>>>10		ubyte		x 		\b%c
+#	Print 2 following DOS filenames from directory entry form
+#	like IO.SYS+MSDOS.SYS or ibmbio.com+ibmdos.com
+0	name			2xDOS-filename
+# display 1 space
+>0			ubyte		x		\b 
+>0			use		DOS-filename
+>11			ubyte		x		\b+
+>11			use		DOS-filename
+
+# http://en.wikipedia.org/wiki/Master_boot_record#PTE
+# display standard partition table
+0	name				partition-table
+#>0		ubyte		x	PARTITION-TABLE
+# test and display 1st til 4th partition table entry
+>0		use			partition-entry-test
+>16		use			partition-entry-test
+>32		use			partition-entry-test
+>48		use			partition-entry-test
+#		test for entry of partition table
+0	name				partition-entry-test
+# partition type ID > 0
+>4		ubyte		>0
+# active flag 0
+>>0		ubyte		0	
+>>>0		use		partition-entry
+# active flag 0x80, 0x81, ... 
+>>0		ubyte		>0x7F	
+>>>0		use		partition-entry
+#		Print entry of partition table
+0	name				partition-entry
+# partition type ID > 0
+>4		ubyte		>0	\b; partition
+>>64		leshort		0xAA55	1
+>>48		leshort		0xAA55	2
+>>32		leshort		0xAA55	3
+>>16		leshort		0xAA55	4
+>>4		ubyte		x	: ID=0x%x
+>>0		ubyte&0x80	0x80	\b, active
+>>0		ubyte		>0x80	0x%x
+>>1		ubyte		x	\b, start-CHS (
+>>1		use		partition-chs
+>>5		ubyte		x	\b), end-CHS (
+>>5		use		partition-chs
+>>8		ulelong		x	\b), startsector %u
+>>12		ulelong		x	\b, %u sectors
+#		Print cylinder,head,sector (CHS) of partition entry
+0	name				partition-chs
+# cylinder
+>1		ubyte		x	\b0x
+>1		ubyte&0xC0	0x40	\b1
+>1		ubyte&0xC0	0x80	\b2
+>1		ubyte&0xC0	0xC0	\b3
+>2		ubyte		x	\b%x
+# head
+>0		ubyte		x	\b,%u
+# sector
+>1		ubyte&0x3F	x	\b,%u
+
 # FATX 
 0		string		FATX		FATX filesystem data
 
@@ -987,7 +1174,7 @@
 >12	string	x			(older version %-4.4s)
 0	string	\r\nSYSLINUX\ 		SYSLINUX loader
 >11	string	x			(version %-4.4s)
-# syslinux updated and separated from "x86 boot sector" by Joerg Jenderek at Sep 2012
+# syslinux updated and separated from "DOS/MBR boot sector" by Joerg Jenderek at Sep 2012
 # assembler instructions: jmp yy (yy=0x3c,0x58);nop;"SYSLINUX"
 0	ulelong&0x80909bEB	0x009018EB	
 # OEM-ID not always "SYSLINUX"
@@ -997,10 +1184,10 @@
 >>1	ubyte		0x58			Syslinux bootloader (version 3.0-3.9)
 >459	search/30	Boot\ error\r\n\0	
 >>1	ubyte		0x58			Syslinux bootloader (version 3.10 or newer)
-# SYSLINUX MBR updated and separated from "x86 boot sector" by Joerg Jenderek at Sep 2012
+# SYSLINUX MBR updated and separated from "DOS/MBR boot sector" by Joerg Jenderek at Sep 2012
 # assembler instructions: mov di,0600h;mov cx,0100h
 16	search/4	\xbf\x00\x06\xb9\x00\x01		
-# to display SYSLINUX MBR (36) before old x86 boot sector one with partition table (strength=50+21)
+# to display SYSLINUX MBR (36) before old DOS/MBR boot sector one with partition table (strength=50+21)
 !:strength +36
 >94	search/249	Missing\ operating\ system		
 # followed by \r for versions older 3.35 , .\r for versions newer 3.52 and point for other
@@ -1052,6 +1239,7 @@
 >>>>>181	search/166		Error\ \0			
 # "a: disk" , "Fn: diskn" or "NetBSD MBR boot"
 >>>>>>&3	string			x				\b,"%s"
+>>>446	use		partition-table
 # Andrea Mazzoleni AdvanceCD mbr loader of http://advancemame.sourceforge.net/boot-readme.html
 # added by Joerg Jenderek at Nov 2012 for versions 1.3 - 1.4
 # assembler instructions: jmp short 0x58;nop;ASCII
@@ -1084,7 +1272,7 @@
 #>>>(0x1BC.s+11)		ubyte		x			\b,cfg_def 0x%x
 # for older versions
 >>>(0x1BC.s+9)		ubyte		<2			
-#>>>>(0x1BC.s+12)	ubyte		18			\b,%u/18 seconds
+#>>>>(0x1BC.s+12)	ubyte		18			\b,%hhu/18 seconds
 >>>>(0x1BC.s+12)	ubyte		!18			\b,%u/18 seconds
 # floppy A: or B:
 >>>>(0x1BC.s+13)	ubyte		<2			\b,floppy 0x%x
@@ -1127,7 +1315,7 @@
 >>>>0x207	ubyte		x		\b.%u
 # module_size for 1.94
 >>>>0x208	ulelong		<0xffffff	\b, installed partition %u
-#>>>>0x208	ulelong		=0xffffff	\b, %u (default)
+#>>>>0x208	ulelong		=0xffffff	\b, %lu (default)
 >>>>0x208	ulelong		>0xffffff	\b, installed partition %u
 # GRUB 0.5.95 unofficial
 >>>>0x20C	ulelong&0x2E300000 0x2E300000	
@@ -1161,7 +1349,7 @@
 >>>>>0x217 	ulong		!0xffffffff	
 >>>>>>0x217 	string		>\0		\b, configuration file %-s
 
-# DOS x86 sector updated and separated from "x86 boot sector" by Joerg Jenderek at May 2011
+# DOS x86 sector updated and separated from "DOS/MBR boot sector" by Joerg Jenderek at May 2011
 # JuMP short     bootcodeoffset NOP assembler instructions will usually be EB xx 90
 # over BIOS parameter block (BPB)
 # http://thestarman.pcministry.com/asm/2bytejumps.htm#FWD
@@ -1169,18 +1357,19 @@
 # minimal short forward jump found 0x29 for bootloaders or 0x0
 # maximal short forward jump is 0x7f
 # OEM-ID is empty or contain readable bytes
-0		ulelong&0x804000E9	0x000000E9	
+0		ulelong&0x804000E9	0x000000E9
+!:strength	+60
 # mtools-3.9.8/msdos.h
 # usual values are marked with comments to get only informations of strange FAT systems
 # valid sectorsize must be a power of 2 from 32 to 32768
->11		uleshort&0xf001f	0	
+>11		uleshort&0x001f	0	
 >>11		uleshort	<32769		
 >>>11		uleshort	>31		
 >>>>21		ubyte&0xf0	0xF0		
->>>>>0		ubyte		0xEB		
+>>>>>0		ubyte		0xEB		DOS/MBR boot sector
 >>>>>>1		ubyte		x		\b, code offset 0x%x+2
 >>>>>0		ubyte		0xE9		
->>>>>>1		uleshort	x		\b, code offset 0x%x+2
+>>>>>>1		uleshort	x		\b, code offset 0x%x+3
 >>>>>3		string		>\0		\b, OEM-ID "%-.8s"
 #http://mirror.href.com/thestarman/asm/debug/debug2.htm#IHC
 >>>>>>8		string		IHC		\b cached by Windows 9M
@@ -1189,10 +1378,11 @@
 >>>>>11		uleshort	<512		\b, Bytes/sector %u
 >>>>>13		ubyte		>1		\b, sectors/cluster %u
 #>>>>>13	ubyte		=1		\b, sectors/cluster %u (usual on Floppies)
->>>>>82		string		FAT32		
+# for lazy FAT32 implementation like Transcend digital photo frame PF830
+>>>>>82		string/c	fat32		
 >>>>>>14	uleshort	!32		\b, reserved sectors %u
 #>>>>>>14	uleshort	=32		\b, reserved sectors %u (usual Fat32)
->>>>>82		string		!FAT32		
+>>>>>82		string/c	!fat32		
 >>>>>>14	uleshort	>1		\b, reserved sectors %u
 #>>>>>>14	uleshort	=1		\b, reserved sectors %u (usual FAT12,FAT16)
 #>>>>>>14	uleshort	0		\b, reserved sectors %u (usual NTFS)
@@ -1201,38 +1391,43 @@
 >>>>>16		ubyte		=1		\b, FAT  %u
 >>>>>16		ubyte		>0
 >>>>>17		uleshort	>0		\b, root entries %u
-#>>>>>17	uleshort	=0		\b, root entries %u=0 (usual Fat32)
+#>>>>>17	uleshort	=0		\b, root entries %hu=0 (usual Fat32)
 >>>>>19		uleshort	>0		\b, sectors %u (volumes <=32 MB) 
-#>>>>>19	uleshort	=0		\b, sectors %u=0 (usual Fat32)
+#>>>>>19	uleshort	=0		\b, sectors %hu=0 (usual Fat32)
 >>>>>21		ubyte		>0xF0		\b, Media descriptor 0x%x
 #>>>>>21	ubyte		=0xF0		\b, Media descriptor 0x%x (usual floppy)
 >>>>>21		ubyte		<0xF0		\b, Media descriptor 0x%x
 >>>>>22		uleshort	>0		\b, sectors/FAT %u
-#>>>>>22	uleshort	=0		\b, sectors/FAT %u=0 (usual Fat32)
+#>>>>>22	uleshort	=0		\b, sectors/FAT %hu=0 (usual Fat32)
 >>>>>24		uleshort	x		\b, sectors/track %u
 >>>>>26		ubyte		>2		\b, heads %u
 #>>>>>26	ubyte		=2		\b, heads %u (usual floppy)
 >>>>>26		ubyte		=1		\b, heads %u
 # valid only for sector sizes with more then 32 Bytes
 >>>>>11		uleshort	>32		
-# skip for Digital Research DOS (version 3.41) 1440 kB Bootdisk
->>>>>>38	ubyte		!0x70		
+# http://en.wikipedia.org/wiki/Design_of_the_FAT_file_system#Extended_BIOS_Parameter_Block
+# skip for values 2,2Ah,70h,73h,DFh
+# and continue for extended boot signature values 0,28h,29h,80h
+>>>>>>38	ubyte&0x56	=0		
 >>>>>>>28	ulelong		>0		\b, hidden sectors %u
 #>>>>>>>28	ulelong		=0		\b, hidden sectors %u (usual floppy)
 >>>>>>>32	ulelong		>0		\b, sectors %u (volumes > 32 MB) 
 #>>>>>>>32	ulelong		=0		\b, sectors %u (volumes > 32 MB)
 # FAT<32 bit specific 
->>>>>>>82	string		!FAT32
+>>>>>>>82	string/c	!fat32		
 #>>>>>>>>36	ubyte		0x80		\b, physical drive 0x%x=0x80 (usual harddisk)
 #>>>>>>>>36	ubyte		0		\b, physical drive 0x%x=0 (usual floppy)
 >>>>>>>>36	ubyte		!0x80		
 >>>>>>>>>36	ubyte		!0		\b, physical drive 0x%x
+# VGA-copy CRC or
+# in Windows NT bit 0 is a dirty flag to request chkdsk at boot time. bit 1 requests surface scan too
 >>>>>>>>37	ubyte		>0		\b, reserved 0x%x
 #>>>>>>>>37	ubyte		=0		\b, reserved 0x%x
-# value is 0x80 for NTFS
+# extended boot signatur value is 0x80 for NTFS, 0x28 or 0x29 for others
 >>>>>>>>38	ubyte		!0x29		\b, dos < 4.0 BootSector (0x%x)
->>>>>>>>38	ubyte		=0x29
+>>>>>>>>38	ubyte&0xFE	=0x28
 >>>>>>>>>39	ulelong		x		\b, serial number 0x%x
+>>>>>>>>38	ubyte		=0x29
 >>>>>>>>>43	string		<NO\ NAME	\b, label: "%11.11s"
 >>>>>>>>>43	string		>NO\ NAME	\b, label: "%11.11s"
 >>>>>>>>>43	string		=NO\ NAME	\b, unlabeled
@@ -1242,15 +1437,39 @@
 # if it is small enough FAT is 12 bit, if it is too big enough FAT is 32 bit,
 # otherwise FAT is 16 bit.
 # http://homepage.ntlworld.com/jonathan.deboynepollard/FGA/determining-fat-widths.html
->>>>>>54	string		FAT		\b, FAT
->>>>>>>54	string		FAT12		\b (12 bit)
->>>>>>>54	string		FAT16		\b (16 bit)
+>>>>>82		string/c	!fat32		
+>>>>>>54	string		FAT12		\b, FAT (12 bit)
+>>>>>>54	string		FAT16		\b, FAT (16 bit)
+>>>>>>54	default		x		
+# determinate FAT bit size by media descriptor
+# small floppies implies FAT12
+>>>>>>>21	ubyte		<0xF0		\b, FAT (12 bit by descriptor)
+# with media descriptor F0h floppy or maybe superfloppy with FAT16
+>>>>>>>21	ubyte		=0xF0		
+# superfloppy (many sectors) implies FAT16
+>>>>>>>>32	ulelong		>0xFFFF		\b, FAT (16 bit by descriptor+sectors)
+# no superfloppy with media descriptor F0h implies FAT12
+>>>>>>>>32	default		x		\b, FAT (12 bit by descriptor+sectors)
+# with media descriptor F8h floppy or hard disc with FAT12 or FAT16
+>>>>>>>21	ubyte		=0xF8		
+# 360 KiB with media descriptor F8h, 9 sectors per track ,single sided floppy implies FAT12
+>>>>>>>>19	ubequad	0xd002f80300090001	\b, FAT (12 bit by descriptor+geometry)
+# hard disc with FAT12 or FAT16
+>>>>>>>>19	default		x		\b, FAT (1Y bit by descriptor)
+# with media descriptor FAh floppy, RAM disc with FAT12 or FAT16 or Tandy hard disc
+>>>>>>>21	ubyte		=0xFA		
+# 320 KiB with media descriptor FAh, 8 sectors per track ,single sided floppy implies FAT12
+>>>>>>>>19	ubequad	0x8002fa0200080001	\b, FAT (12 bit by descriptor+geometry)
+# RAM disc with FAT12 or FAT16 or Tandy hard disc
+>>>>>>>>19	default		x		\b, FAT (1Y bit by descriptor)
+# others are floppy
+>>>>>>>21	default		x		\b, FAT (12 bit by descriptor)
 # FAT32 bit specific
->>>>>82		string		FAT32		\b, FAT (32 bit)
+>>>>>82		string/c	fat32		\b, FAT (32 bit)
 >>>>>>36	ulelong		x		\b, sectors/FAT %u
 # http://technet.microsoft.com/en-us/library/cc977221.aspx
 >>>>>>40	uleshort	>0		\b, extension flags 0x%x
-#>>>>>>40	uleshort	=0		\b, extension flags %u
+#>>>>>>40	uleshort	=0		\b, extension flags %hu
 >>>>>>42	uleshort	>0		\b, fsVersion %u
 #>>>>>>42	uleshort	=0		\b, fsVersion %u (usual)
 >>>>>>44	ulelong		>2		\b, rootdir cluster %u
@@ -1259,9 +1478,12 @@
 >>>>>>48	uleshort	>1		\b, infoSector %u
 #>>>>>>48	uleshort	=1		\b, infoSector %u (usual)
 >>>>>>48	uleshort	<1		\b, infoSector %u
->>>>>>50	uleshort	>6		\b, Backup boot sector %u
+# 0 or 0xFFFF instead of usual 6 means no backup sector
+>>>>>>50	uleshort	=0xFFFF		\b, no Backup boot sector
+>>>>>>50	uleshort	=0		\b, no Backup boot sector
 #>>>>>>50	uleshort	=6		\b, Backup boot sector %u (usual) 
->>>>>>50	uleshort	<6		\b, Backup boot sector %u
+>>>>>>50	default		x		
+>>>>>>>50	uleshort	x		\b, Backup boot sector %u
 # corrected by Joerg Jenderek at Feb 2011 according to http://thestarman.pcministry.com/asm/mbr/MSWIN41.htm#FSINFO
 >>>>>>52	ulelong		>0		\b, reserved1 0x%x
 >>>>>>56	ulelong		>0		\b, reserved2 0x%x
@@ -1309,13 +1531,13 @@
 # Values 128 to 255 represent MFT record sizes of 2^(256-N) bytes. 
 >>>>>>>>>64	lelong		<256		
 >>>>>>>>>>64	lelong		<128		\b, clusters/RecordSegment %d
->>>>>>>>>>64	ubyte		>127		\b, bytes/RecordSegment 2^(-1*%hhi)
+>>>>>>>>>>64	ubyte		>127		\b, bytes/RecordSegment 2^(-1*%i)
 # Values 0 to 127 represent index block sizes of 0 to 127 clusters.
 # Values 128 to 255 represent index block sizes of 2^(256-N) byte
 >>>>>>>>>68	ulelong		<256		
 >>>>>>>>>>68	ulelong		<128		\b, clusters/index block %d
 #>>>>>>>>>>68	ulelong		>127		\b, bytes/index block 2^(256-%d)
->>>>>>>>>>68	ubyte		>127		\b, bytes/index block 2^(-1*%hhi)
+>>>>>>>>>>68	ubyte		>127		\b, bytes/index block 2^(-1*%i)
 >>>>>>>>>72	ulequad		x		\b, serial number 0%llx
 >>>>>>>>>80	ulelong		>0		\b, checksum 0x%x
 #>>>>>>>>>80	ulelong		=0		\b, checksum 0x%x=0 (usual)
@@ -1363,7 +1585,7 @@
 >&-180	lelong		x		average file size %d,
 >&-176	lelong		x		average number of files in dir %d,
 >&-272	lequad		x		pending blocks to free %lld,
->&-264	lelong		x		pending inodes to free %ld,
+>&-264	lelong		x		pending inodes to free %d,
 >&-664	lequad		x		system-wide uuid %0llx,
 >&-1316	lelong		x		minimum percentage of free blocks %d,
 >&-1248	lelong		0		TIME optimization
@@ -1383,7 +1605,7 @@
 >&-180	lelong		x		average file size %d,
 >&-176	lelong		x		average number of files in dir %d,
 >&-272	lequad		x		pending blocks to free %lld,
->&-264	lelong		x		pending inodes to free %ld,
+>&-264	lelong		x		pending inodes to free %d,
 >&-664	lequad		x		system-wide uuid %0llx,
 >&-1316	lelong		x		minimum percentage of free blocks %d,
 >&-1248	lelong		0		TIME optimization
@@ -1423,7 +1645,7 @@
 >&-180	belong		x		average file size %d,
 >&-176	belong		x		average number of files in dir %d,
 >&-272	bequad		x		pending blocks to free %lld,
->&-264	belong		x		pending inodes to free %ld,
+>&-264	belong		x		pending inodes to free %d,
 >&-664	bequad		x		system-wide uuid %0llx,
 >&-1316	belong		x		minimum percentage of free blocks %d,
 >&-1248	belong		0		TIME optimization
@@ -1443,7 +1665,7 @@
 >&-180	belong		x		average file size %d,
 >&-176	belong		x		average number of files in dir %d,
 >&-272	bequad		x		pending blocks to free %lld,
->&-264	belong		x		pending inodes to free %ld,
+>&-264	belong		x		pending inodes to free %d,
 >&-664	bequad		x		system-wide uuid %0llx,
 >&-1316	belong		x		minimum percentage of free blocks %d,
 >&-1248	belong		0		TIME optimization
@@ -1553,25 +1775,33 @@
 ############################################################################
 # Minix-ST kernel floppy
 0x800	belong		0x46fc2700	Atari-ST Minix kernel image
->19	string		\240\5\371\5\0\011\0\2\0	\b, 720k floppy
->19	string		\320\2\370\5\0\011\0\1\0	\b, 360k floppy
+# http://en.wikipedia.org/wiki/BIOS_parameter_block
+# floppies with valid BPB and any instruction at beginning
+>19	string		\240\005\371\005\0\011\0\2\0	\b, 720k floppy
+>19	string		\320\002\370\005\0\011\0\1\0	\b, 360k floppy
 
 ############################################################################
 # Hmmm, is this a better way of detecting _standard_ floppy images ?
-19	string		\320\2\360\3\0\011\0\1\0	DOS floppy 360k
->0x1FE	leshort		0xAA55		\b, x86 hard disk boot sector
-19	string		\240\5\371\3\0\011\0\2\0	DOS floppy 720k
->0x1FE	leshort		0xAA55		\b, x86 hard disk boot sector
+19	string		\320\002\360\003\0\011\0\1\0	DOS floppy 360k
+>0x1FE	leshort		0xAA55		\b, DOS/MBR hard disk boot sector
+19	string		\240\005\371\003\0\011\0\2\0	DOS floppy 720k
+>0x1FE	leshort		0xAA55		\b, DOS/MBR hard disk boot sector
 19	string		\100\013\360\011\0\022\0\2\0	DOS floppy 1440k
->0x1FE	leshort		0xAA55		\b, x86 hard disk boot sector
+>0x1FE	leshort		0xAA55		\b, DOS/MBR hard disk boot sector
 
-19	string		\240\5\371\5\0\011\0\2\0	DOS floppy 720k, IBM
->0x1FE	leshort		0xAA55		\b, x86 hard disk boot sector
-19	string		\100\013\371\5\0\011\0\2\0	DOS floppy 1440k, mkdosfs
->0x1FE	leshort		0xAA55		\b, x86 hard disk boot sector
+19	string		\240\005\371\005\0\011\0\2\0	DOS floppy 720k, IBM
+>0x1FE	leshort		0xAA55		\b, DOS/MBR hard disk boot sector
+19	string		\100\013\371\005\0\011\0\2\0	DOS floppy 1440k, mkdosfs
+>0x1FE	leshort		0xAA55		\b, DOS/MBR hard disk boot sector
 
-19	string		\320\2\370\5\0\011\0\1\0	Atari-ST floppy 360k
-19	string		\240\5\371\5\0\011\0\2\0	Atari-ST floppy 720k
+19	string		\320\002\370\005\0\011\0\1\0	Atari-ST floppy 360k
+19	string		\240\005\371\005\0\011\0\2\0	Atari-ST floppy 720k
+#			|       |   |     |     |
+#			|       |   |     |     heads
+#			|       |   |     sectors/track
+#			|       |   sectors/FAT
+#			|       media descriptor
+#		BPB:	sectors
 
 #  Valid media descriptor bytes for MS-DOS:
 #
@@ -1614,12 +1844,85 @@
 #  11111000	Hard disk any format
 #
 
-# CDROM Filesystems
-# Modified for UDF by gerardo.cacciari@gmail.com
-32769	string    CD001     #
-!:mime	application/x-iso9660-image
+# all FAT12 (strength=70) floppies with sectorsize 512 added by Joerg Jenderek at Jun 2013
+# http://en.wikipedia.org/wiki/File_Allocation_Table#Exceptions
+# Too Weak.
+#512		ubelong&0xE0ffff00	0xE0ffff00		
+# without valid Media descriptor in place of BPB, cases with are done at other places
+#>21		ubyte			<0xE5			floppy with old FAT filesystem
+# but valid Media descriptor at begin of FAT
+#>>512		ubyte			=0xed			720k
+#>>512		ubyte			=0xf0			1440k
+#>>512		ubyte			=0xf8			720k
+#>>512		ubyte			=0xf9			1220k
+#>>512		ubyte			=0xfa			320k
+#>>512		ubyte			=0xfb			640k
+#>>512		ubyte			=0xfc			180k
+# look like an an old DOS directory entry
+#>>>0xA0E	ubequad			0			
+#>>>>0xA00	ubequad			!0			
+#!:mime application/x-ima
+#>>512		ubyte			=0xfd			
+# look for 2nd FAT at different location to distinguish between 360k and 500k
+#>>>0x600	ubelong&0xE0ffff00	0xE0ffff00		360k
+#>>>0x500	ubelong&0xE0ffff00	0xE0ffff00		500k
+#>>>0xA0E	ubequad			0			
+#!:mime application/x-ima
+#>>512		ubyte			=0xfe			
+#>>>0x400	ubelong&0xE0ffff00	0xE0ffff00		160k
+#>>>>0x60E	ubequad			0			
+#>>>>>0x600	ubequad			!0			
+#!:mime application/x-ima
+#>>>0xC00	ubelong&0xE0ffff00	0xE0ffff00		1200k
+#>>512		ubyte			=0xff			320k
+#>>>0x60E	ubequad			0			
+#>>>>0x600	ubequad			!0			
+#!:mime application/x-ima
+#>>512		ubyte			x			\b, Media descriptor 0x%x
+# without x86 jump instruction
+#>>0		ulelong&0x804000E9	!0x000000E9		
+# assembler instructions: CLI;MOV SP,1E7;MOV AX;07c0;MOV 	
+#>>>0	ubequad				0xfabce701b8c0078e	\b, MS-DOS 1.12 bootloader
+# IOSYS.COM+MSDOS.COM
+#>>>>0xc4	use			2xDOS-filename
+#>>0		ulelong&0x804000E9	=0x000000E9	
+# only x86 short jump instruction found
+#>>>0		ubyte			=0xEB
+#>>>>1		ubyte			x			\b, code offset 0x%x+2
+# http://thestarman.pcministry.com/DOS/ibm100/Boot.htm
+# assembler instructions: CLI;MOV AX,CS;MOV DS,AX;MOV DX,0		
+#>>>>(1.b+2)	ubequad			0xfa8cc88ed8ba0000	\b, PC-DOS 1.0 bootloader 
+# ibmbio.com+ibmdos.com
+#>>>>>0x176	use			DOS-filename
+#>>>>>0x181	ubyte			x			\b+
+#>>>>>0x182	use			DOS-filename
+# http://thestarman.pcministry.com/DOS/ibm110/Boot.htm
+# assembler instructions: CLI;MOV AX,CS;MOV DS,AX;XOR DX,DX;MOV		
+#>>>>(1.b+2)	ubequad			0xfa8cc88ed833d28e	\b, PC-DOS 1.1 bootloader 
+# ibmbio.com+ibmdos.com
+#>>>>>0x18b	use			DOS-filename
+#>>>>>0x196	ubyte			x			\b+
+#>>>>>0x197	use			DOS-filename
+# http://en.wikipedia.org/wiki/Zenith_Data_Systems
+# assembler instructions: MOV BX,07c0;MOV SS,BX;MOV SP,01c6		
+#>>>>(1.b+2)	ubequad			0xbbc0078ed3bcc601	\b, Zenith Data Systems MS-DOS 1.25 bootloader
+# IO.SYS+MSDOS.SYS
+#>>>>>0x20	use			2xDOS-filename
+# http://en.wikipedia.org/wiki/Corona_Data_Systems
+# assembler instructions: MOV AX,CS;MOV DS,AX;CLI;MOV SS,AX;		
+#>>>>(1.b+2)	ubequad			0x8cc88ed8fa8ed0bc	\b, MS-DOS 1.25 bootloader
+# IO.SYS+MSDOS.SYS
+#>>>>>0x69	use			2xDOS-filename
+# assembler instructions: CLI;PUSH CS;POP SS;MOV SP,7c00;		
+#>>>>(1.b+2)	ubequad			0xfa0e17bc007cb860	\b, MS-DOS 2.11 bootloader
+# defect IO.SYS+MSDOS.SYS ?
+#>>>>>0x162	use			2xDOS-filename
+
+0	name				cdrom
 >38913	string   !NSR0      ISO 9660 CD-ROM filesystem data
+!:mime	application/x-iso9660-image
 >38913	string    NSR0      UDF filesystem data
+!:mime	application/x-iso9660-image
 >>38917	string    1         (version 1.0)
 >>38917	string    2         (version 1.5)
 >>38917	string    3         (version 2.0)
@@ -1630,31 +1933,43 @@
 >34816	string    \000CD001\001EL\ TORITO\ SPECIFICATION    (bootable)
 37633	string    CD001     ISO 9660 CD-ROM filesystem data (raw 2352 byte sectors)
 !:mime	application/x-iso9660-image
-32776	string    CDROM     High Sierra CD-ROM filesystem data
+32777	string    CDROM     High Sierra CD-ROM filesystem data
+
+# CDROM Filesystems
+# https://en.wikipedia.org/wiki/ISO_9660
+# Modified for UDF by gerardo.cacciari@gmail.com
+32769	string    CD001
+# mime line at that position does not work
+# to display CD-ROM (70=81-11) after MBR (113=40+72+1), partition-table (71=50+21) and before Apple Driver Map (51)
+!:strength -11
+# to display CD-ROM (114=81+33) before MBR (113=40+72+1), partition-table (71=50+21) and Apple Driver Map (51)
+# does not work
+#!:strength +33
+>0	use cdrom
 
 # .cso files
 0    string    CISO	Compressed ISO CD image
 
 # cramfs filesystem - russell@coker.com.au
 0       lelong    0x28cd3d45      Linux Compressed ROM File System data, little endian
->4      lelong  x size %lu
+>4      lelong  x size %u
 >8      lelong  &1 version #2
 >8      lelong  &2 sorted_dirs
 >8      lelong  &4 hole_support
 >32     lelong  x CRC 0x%x,
->36     lelong  x edition %lu,
->40     lelong  x %lu blocks,
->44     lelong  x %lu files
+>36     lelong  x edition %u,
+>40     lelong  x %u blocks,
+>44     lelong  x %u files
 
 0       belong    0x28cd3d45      Linux Compressed ROM File System data, big endian
->4      belong  x size %lu
+>4      belong  x size %u
 >8      belong  &1 version #2
 >8      belong  &2 sorted_dirs
 >8      belong  &4 hole_support
 >32     belong  x CRC 0x%x,
->36     belong  x edition %lu,
->40     belong  x %lu blocks,
->44     belong  x %lu files
+>36     belong  x edition %u,
+>40     belong  x %u blocks,
+>44     belong  x %u files
 
 # reiserfs - russell@coker.com.au
 0x10034		string	ReIsErFs	ReiserFS V3.5
@@ -1814,6 +2129,7 @@
 #----------------------------------------------------------
 #delta ISO    Daniel Novotny (dnovotny@redhat.com)
 0	string  DISO	Delta ISO data
+!:strength +50
 >4	belong  x	version %d
 
 # VMS backup savesets - gerardo.cacciari@gmail.com
@@ -1865,7 +2181,6 @@
 # which is mapped to VBN 2 of [000000]INDEXF.SYS;1 - gerardo.cacciari@gmail.com
 #
 1008    string          DECFILE11       Files-11 On-Disk Structure
->525    byte            x               Level %d
 >525    byte            x               (ODS-%d);
 >1017   string          A               RSX-11, VAX/VMS or OpenVMS VAX file system;
 >1017   string          B
@@ -1919,8 +2234,8 @@
 >16	ulequad	>0	\b fblock table at %lld,
 >24	ulequad	>0	\b inode table at %lld,
 >32	ulequad	>0	\b root at %lld,
->40	ulelong	>0	\b fblock size = %ld,
->44	ulelong	>0	\b block size = %ld,
+>40	ulelong	>0	\b fblock size = %d,
+>44	ulelong	>0	\b block size = %d,
 >48	ulequad	>0	\b bytes = %lld
 
 # Type:	xfs metadump image
@@ -1988,3 +2303,43 @@
 0	beshort	0xAA5A		floppy image data (IBM SaveDskF, compressed)
 
 0	string	\074CPM_Disk\076	disk image data (YAZE)
+
+# ReFS
+# Richard W.M. Jones <rjones@redhat.com>
+0	string	\0\0\0ReFS\0	ReFS filesystem image
+
+# EFW encase image file format:
+# Gregoire Passault
+# http://www.forensicswiki.org/wiki/Encase_image_file_format
+0	string	EVF\x09\x0d\x0a\xff\x00	EWF/Expert Witness/EnCase image file format
+
+# UBIfs
+# Linux kernel sources: fs/ubifs/ubifs-media.h
+0	lelong	0x06101831
+>0x16	leshort	0		UBIfs image
+>0x08	lequad	x		\b, sequence number %llu
+>0x10	leshort x		\b, length %u
+>0x04	lelong	x		\b, CRC 0x%08x
+
+0	lelong	0x23494255
+>0x04	leshort	<2
+>0x05	string	\0\0\0
+>0x1c	string	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0
+>0x04	leshort	x		UBI image, version %u
+
+# NEC PC-88 2D disk image
+# From Fabio R. Schmidlin <sd-snatcher@users.sourceforge.net>
+0x20		ulelong&0xFFFFFEFF	0x2A0
+>0x10		string			\0\0\0\0\0\0\0\0\0\0
+>>0x280		string			\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0
+>>>0x1A		ubyte&0xEF		0
+>>>>0x1B	ubyte&0x8F		0
+>>>>>0x1B	ubyte&70		<0x40
+>>>>>>0x1C	ulelong			>0x21
+>>>>>>>0	regex	[[:print:]]*	NEC PC-88 disk image, name=%s
+>>>>>>>>0x1B	ubyte	0		\b, media=2D
+>>>>>>>>0x1B	ubyte	0x10		\b, media=2DD
+>>>>>>>>0x1B	ubyte	0x20		\b, media=2HD
+>>>>>>>>0x1B	ubyte	0x30		\b, media=1D
+>>>>>>>>0x1B	ubyte	0x40		\b, media=1DD
+>>>>>>>>0x1A	ubyte	0x10		\b, write-protected

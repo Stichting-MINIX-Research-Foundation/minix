@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/04/15 08:47:02 plunky Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/02 03:55:19 matt Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -8,9 +8,11 @@ MAN=	ldd.1
 
 .PATH: ${.CURDIR}/..
 
-.if (${MACHINE_ARCH} != "alpha")
+.if ${OBJECT_FMTS:Melf32} != ""
 LIB_ELF32DIR!=	cd ${.CURDIR}/../elf32 && ${PRINTOBJDIR}
 EXTRA_LIBS+=	${LIB_ELF32DIR}/libldd_elf32.a
+.else
+CPPFLAGS.ldd.c+= -DELF64_ONLY
 .endif
 
 .if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
@@ -18,14 +20,12 @@ LIB_ELF32COMPATDIR!=	cd ${.CURDIR}/../elf32_compat && ${PRINTOBJDIR}
 EXTRA_LIBS+=		${LIB_ELF32COMPATDIR}/libldd_elf32_compat.a
 .endif
 
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "x86_64") || (${MACHINE_ARCH} == "powerpc64") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+.if ${OBJECT_FMTS:Melf64} != ""
 LIB_ELF64DIR!=	cd ${.CURDIR}/../elf64 && ${PRINTOBJDIR}
 EXTRA_LIBS+=	${LIB_ELF64DIR}/libldd_elf64.a
-CPPFLAGS.ldd.c= -DELFSIZE=64
+CPPFLAGS.ldd.c+= -DELFSIZE=64
 .else
-CPPFLAGS.ldd.c= -DELFSIZE=32
+CPPFLAGS.ldd.c+= -DELFSIZE=32
 .endif
 
 LDADD+=	${EXTRA_LIBS}

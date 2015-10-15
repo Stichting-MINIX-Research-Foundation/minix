@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.9 2011/05/23 23:13:10 joerg Exp $	*/
+/*	$NetBSD: io.c,v 1.10 2014/03/23 05:06:42 dholland Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-__RCSID("$NetBSD: io.c,v 1.9 2011/05/23 23:13:10 joerg Exp $");
+__RCSID("$NetBSD: io.c,v 1.10 2014/03/23 05:06:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,13 +50,13 @@ read_file(char *fn, long n)
 	fp = (*fn == '!') ? popen(fn + 1, "r") : fopen(strip_escapes(fn), "r");
 	if (fp == NULL) {
 		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		sprintf(errmsg, "cannot open input file");
+		seterrmsg("cannot open input file");
 		return ERR;
 	} else if ((size = read_stream(fp, n)) < 0)
 		return ERR;
 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
 		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		sprintf(errmsg, "cannot close input file");
+		seterrmsg("cannot close input file");
 		return ERR;
 	}
 	if (!scripted)
@@ -136,7 +136,7 @@ get_stream_line(FILE *fp)
 		sbuf[i++] = c;
 	else if (ferror(fp)) {
 		fprintf(stderr, "%s\n", strerror(errno));
-		sprintf(errmsg, "cannot read input file");
+		seterrmsg("cannot read input file");
 		return ERR;
 	} else if (i) {
 		sbuf[i++] = '\n';
@@ -157,13 +157,13 @@ write_file(const char *fn, const char *mode, long n, long m)
 	fp = (*fn == '!') ? popen(fn+1, "w") : fopen(strip_escapes(fn), mode);
 	if (fp == NULL) {
 		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		sprintf(errmsg, "cannot open output file");
+		seterrmsg("cannot open output file");
 		return ERR;
 	} else if ((size = write_stream(fp, n, m)) < 0)
 		return ERR;
 	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
 		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
-		sprintf(errmsg, "cannot close output file");
+		seterrmsg("cannot close output file");
 		return ERR;
 	}
 	if (!scripted)
@@ -208,7 +208,7 @@ put_stream_line(FILE *fp, char *s, int len)
 	while (len--)
 		if ((des ? put_des_char(*s++, fp) : fputc(*s++, fp)) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
-			sprintf(errmsg, "cannot write file");
+			seterrmsg("cannot write file");
 			return ERR;
 		}
 	return 0;
@@ -239,7 +239,7 @@ get_extended_line(int *sizep, int nonl)
 		if ((n = get_tty_line()) < 0)
 			return NULL;
 		else if (n == 0 || ibuf[n - 1] != '\n') {
-			sprintf(errmsg, "unexpected end-of-file");
+			seterrmsg("unexpected end-of-file");
 			return NULL;
 		}
 		REALLOC(cvbuf, cvbufsz, l + n, NULL);
@@ -280,7 +280,7 @@ get_tty_line(void)
 		case EOF:
 			if (ferror(stdin)) {
 				fprintf(stderr, "stdin: %s\n", strerror(errno));
-				sprintf(errmsg, "cannot read stdin");
+				seterrmsg("cannot read stdin");
 				clearerr(stdin);
 				ibufp = NULL;
 				return ERR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.8 2013/08/24 07:12:12 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.9 2014/03/06 19:02:58 skrll Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -40,7 +40,7 @@
 #define	SYSCALL(x)				!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
-	ble	4(%sr7, %r1)			!\
+	ble	4(%sr2, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %t1		!\
 	.import __cerror, code			!\
 	comb,<>	%r0, %t1, __cerror		!\
@@ -57,7 +57,7 @@ SYSEXIT(x)
 SYSENTRY(x)					!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
-	ble	4(%sr7, %r1)			!\
+	ble	4(%sr2, %r1)			!\
 	ldi	__CONCAT(SYS_,y), %t1		!\
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	!\
 	bv	%r0(%rp)			!\

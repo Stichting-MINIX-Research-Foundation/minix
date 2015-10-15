@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.65 2011/10/27 16:12:52 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.70 2015/07/31 12:51:32 kamil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,13 +46,7 @@ struct timeval {
 	suseconds_t	tv_usec;	/* and microseconds */
 };
 
-/*
- * Structure defined by POSIX.1b to be like a timeval.
- */
-struct timespec {
-	time_t	tv_sec;		/* seconds */
-	long	tv_nsec;	/* and nanoseconds */
-};
+#include <sys/timespec.h>
 
 #if defined(_NETBSD_SOURCE)
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
@@ -145,6 +139,11 @@ bintime_sub(struct bintime *bt, const struct bintime *bt2)
 	bt->sec -= bt2->sec;
 }
 
+#define	bintimecmp(bta, btb, cmp)					\
+	(((bta)->sec == (btb)->sec) ?					\
+	    ((bta)->frac cmp (btb)->frac) :				\
+	    ((bta)->sec cmp (btb)->sec))
+
 /*-
  * Background information:
  *
@@ -174,7 +173,7 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
-	bt->frac = ts->tv_nsec * (uint64_t)18446744073LL; 
+	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL; 
 }
 
 static __inline void
@@ -192,7 +191,40 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 
 	bt->sec = tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
-	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
+	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
+}
+
+static __inline struct bintime
+ms2bintime(uint64_t ms)
+{
+	struct bintime bt;
+
+	bt.sec = ms / 1000U;
+	bt.frac = (((ms % 1000U) >> 32)/1000U) >> 32;
+
+	return bt;
+}
+
+static __inline struct bintime
+us2bintime(uint64_t us)
+{
+	struct bintime bt;
+
+	bt.sec = us / 1000000U;
+	bt.frac = (((us % 1000000U) >> 32)/1000000U) >> 32;
+
+	return bt;
+}
+
+static __inline struct bintime
+ns2bintime(uint64_t ns)
+{
+	struct bintime bt;
+
+	bt.sec = ns / 1000000000U;
+	bt.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32;
+
+	return bt;
 }
 #endif /* !defined(_STANDALONE) */
 

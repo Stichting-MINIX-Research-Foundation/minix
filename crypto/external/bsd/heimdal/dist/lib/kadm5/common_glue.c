@@ -1,4 +1,4 @@
-/*	$NetBSD: common_glue.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: common_glue.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: common_glue.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("NetBSD");
 
 #define __CALL(F, P) (*((kadm5_common_context*)server_handle)->funcs.F)P;
 

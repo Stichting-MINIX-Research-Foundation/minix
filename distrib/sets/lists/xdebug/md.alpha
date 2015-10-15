@@ -1,5 +1,5 @@
-# $NetBSD: md.alpha,v 1.2 2013/08/11 22:29:03 joerg Exp $
-./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
+# $NetBSD: md.alpha,v 1.4 2015/07/27 09:59:49 martin Exp $
+./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/libdata/debug/usr/X11R6/bin/XalphaNetBSD.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/XdecNetBSD.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
@@ -9,6 +9,35 @@
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mach64_drv.so.6.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3virge_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/savage_drv.so.2.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sis_drv.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tdfx_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	xorg,debug
@@ -18,7 +47,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libi2c.so.0.debug	-unknown-	xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	xorg,debug

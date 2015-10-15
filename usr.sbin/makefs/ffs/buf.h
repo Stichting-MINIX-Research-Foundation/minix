@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.9 2013/01/30 19:19:19 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.10 2015/03/29 05:52:59 agc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,8 +75,7 @@ struct buf {
 
 struct kauth_cred;
 void		bcleanup(void);
-int		bread(struct vnode *, daddr_t, int, struct kauth_cred *,
-    int, struct buf **);
+int		bread(struct vnode *, daddr_t, int, int, struct buf **);
 void		brelse(struct buf *, int);
 int		bwrite(struct buf *);
 struct buf *	getblk(struct vnode *, daddr_t, int, int, int);

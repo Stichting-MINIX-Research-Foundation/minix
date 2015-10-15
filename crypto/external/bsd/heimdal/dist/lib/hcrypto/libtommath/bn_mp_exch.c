@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_exch.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_exch.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_EXCH_C
@@ -17,7 +17,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* swap the elements of two integers, for cases where you can't simply swap the 
+/* swap the elements of two integers, for cases where you can't simply swap the
  * mp_int pointers around
  */
 void
@@ -31,6 +31,6 @@ mp_exch (mp_int * a, mp_int * b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_exch.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_exch.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

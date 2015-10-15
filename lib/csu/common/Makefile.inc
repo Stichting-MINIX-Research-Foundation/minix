@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2013/11/17 11:16:09 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2014/03/04 17:57:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,7 @@ crtbegin.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CFLAGS.crtbegin.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
@@ -57,7 +57,7 @@ crtbeginS.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PICFLAGS} -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
@@ -66,7 +66,7 @@ crtbeginS.o: crtbegin.c crtbegin.h
 crtend.o: crtend.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crtend.S -o ${.TARGET}.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
@@ -82,8 +82,9 @@ crt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
 	${COMPILE.c} ${MY_PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
-	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
+	${LD} -r -o ${.TARGET}.o ${.TARGET}.S.o ${.TARGET}.c.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
@@ -92,8 +93,9 @@ gcrt0.o: crt0.S crt0-common.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
 	${COMPILE.c} ${MY_PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.S.o ${.TARGET}.c.o
-	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
+	${LD} -r -o ${.TARGET}.o ${.TARGET}.S.o ${.TARGET}.c.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
+	rm -f ${.TARGET}.S.o ${.TARGET}.c.o ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
@@ -103,7 +105,7 @@ gcrt0.o: crt0.S crt0-common.c
 crtfm.o: crtfm.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.o ${.TARGET} 
 	rm -f ${.TARGET}.o
 .endif
 
@@ -112,7 +114,7 @@ sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} ${NETBSDSRCDIR}/sys/sys/pa
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
 	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    > sysident_assym.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} > sysident_assym.h.tmp && \
 	mv -f sysident_assym.h.tmp sysident_assym.h
 
 CLEANFILES+=	sysident_assym.h

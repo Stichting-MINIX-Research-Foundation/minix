@@ -1,50 +1,35 @@
-#	$NetBSD: Makefile.backend,v 1.3 2013/11/28 12:08:56 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.5 2014/04/04 01:19:14 christos Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
 
 NOMAN=		# defined
-.if defined(__MINIX)
-BINDIR=		/usr/bin
-.else
+NOCTF=		# defined
 BINDIR=		/usr/libexec
-.endif # defined(__MINIX)
+
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 .include <bsd.own.mk>
 
-DPADD=		${BACKENDOBJ}/libbackend.a ${LIBIBERTYOBJ}/libiberty.a
-LDADD=		-L${BACKENDOBJ} -lbackend -L${LIBIBERTYOBJ} -liberty
+DPADD+=			${BACKENDOBJ}/libbackend.a
+LDADD+=			${BACKENDOBJ}/libbackend.a
 
-CLEANFILES+=	${PROG}-checksum.c ${PROG}-dummy dummy-checksum.d \
-		dummy-checksum.o genchecksum genchecksum.lo
+.include "../Makefile.common"
+.include "../Makefile.libiberty"
+
+HOSTPROG_CXX=	1
 
 .include <bsd.prog.mk>
+
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
 
 # Don't auto-frob .y or .l files.
 .l.c .y.c .y.h:
 	@true
-
-CPPFLAGS.genchecksum.c+=	-DGENERATOR_FILE -I${GCCARCH} -I${DIST}/include -I${BACKENDOBJ}
-
-genchecksum.lo:
-genchecksum: genchecksum.lo
-	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
-# This is a copy of the ${PROG} target from bsd.prog.mk.
-DUMMYOBJS=	${SRCS:N${PROG}-checksum.c:.c=.o} dummy-checksum.o
-${PROG}-dummy: ${DUMMYOBJS}
-	${_MKTARGET_LINK}
-.if defined(DESTDIR)
-	${_CCLINK} -Wl,-nostdlib \
-	    ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} \
-	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
-	    ${DUMMYOBJS} ${LDADD} \
-	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
-.else
-	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${DUMMYOBJS} ${LDADD}
-.endif	# defined(DESTDIR)
-${PROG}-checksum.c: genchecksum ${PROG}-dummy
-	${_MKTARGET_CREATE}
-	./genchecksum ${PROG}-dummy >${.TARGET}
 
 # Find our (local) libraries
 LIBGMPDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
@@ -54,3 +39,5 @@ LIBMPCDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/mpc/lib/libmpc && ${PRINTOBJDIR}
 LIBGMP=		${LIBGMPDIR}/libgmp.a
 LIBMPFR=	${LIBMPFRDIR}/libmpfr.a
 LIBMPC=		${LIBMPCDIR}/libmpc.a
+
+.endif

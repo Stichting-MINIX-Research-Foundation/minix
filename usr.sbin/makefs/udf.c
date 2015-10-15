@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $ */
+/* $NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -881,6 +881,7 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		case S_IFLNK:
 		case S_IFREG:
 			/* create dummy FID to see how long name will become */
+			memset(&dummy_ref, 0, sizeof(dummy_ref));
 			udf_create_fid(ddoff, fid, cur->name, 0, &dummy_ref);
 
 			nentries++;
@@ -994,7 +995,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	while (chunk) {
 		rd = read(f, data, chunk);
 		if (rd != chunk) {
-			warn("Short read of file %s\n", cur->name);
+			warn("Short read of file %s", cur->name);
 			error = errno;
 			break;
 		}

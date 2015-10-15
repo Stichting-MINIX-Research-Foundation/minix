@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.3 2011/01/27 18:44:40 bouyer Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.4 2013/12/08 18:08:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -74,8 +74,6 @@
  * Some other defines, dealing with values returned by cpuid.
  */
 
-#define CPU_MAXMODEL	15	/* Models within family range 0-15 */
-#define CPU_DEFMODEL	16	/* Value for unknown model -> default  */
 #define CPU_MINFAMILY	 4	/* Lowest that cpuid can return (486) */
 #define CPU_MAXFAMILY	 7	/* Highest consecutive # we know (fake P4) */
 #define CPU_FAMILY_P4	15	/* Family number for Pentium 4 */

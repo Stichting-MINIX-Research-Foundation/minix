@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.200 2010/03/22 19:30:54 joerg Exp $
+.\"	$NetBSD: sysctl.3,v 1.202 2014/06/13 22:05:15 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,14 +29,16 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 26, 2009
+.Dd June 13, 2014
 .Dt SYSCTL 3
 .Os
 .Sh NAME
 .Nm sysctl ,
 .Nm sysctlbyname ,
 .Nm sysctlgetmibinfo ,
-.Nm sysctlnametomib
+.Nm sysctlnametomib ,
+.Nm asysctl ,
+.Nm asysctlbyname
 .Nd get or set system information
 .Sh LIBRARY
 .Lb libc
@@ -54,6 +56,10 @@
 "char *cname" "size_t *csz" "struct sysctlnode **rnode" "int v"
 .Ft int
 .Fn sysctlnametomib "const char *sname" "int *name" "size_t *namelenp"
+.Ft void *
+.Fn asysctl "const int *name" "size_t namelen" "size_t *len"
+.Ft void *
+.Fn asysctlbyname "const char *sname" "size_t *len"
 .Sh DESCRIPTION
 The
 .Nm
@@ -250,6 +256,18 @@ sysctl(mib, 2, NULL, \*[Am]len, NULL, 0);
 p = malloc(len);
 sysctl(mib, 2, p, \*[Am]len, NULL, 0);
 .Ed
+.Pp
+The
+.Fn asysctl
+and
+.Fn asysctlbyname
+functions are wrappers for
+.Fn sysctl
+and
+.Fn sysctlbyname .
+They return memory allocated with
+.Xr malloc 3
+and resize the buffer in a loop until all data fits.
 .Sh DYNAMIC OPERATIONS
 Several meta-identifiers are provided to perform operations on the
 .Nm
@@ -669,9 +687,9 @@ unavailable.
 .It Bq Er EINVAL
 The
 .Fa name
-array is zero or greater than CTL_MAXNAME.
-.It Bq Er EINVAL
-A non-null
+array is zero or greater than
+.Dv CTL_MAXNAME ;
+or a non-null
 .Fa newp
 is given and its specified length in
 .Fa newlen
@@ -684,9 +702,8 @@ array specifies an intermediate rather than terminal name.
 .It Bq Er ENOENT
 The
 .Fa name
-array specifies a node that does not exist in the tree.
-.It Bq Er ENOENT
-An attempt was made to destroy a node that does not exist, or to
+array specifies a node that does not exist in the tree;
+or an attempt was made to destroy a node that does not exist, or to
 create or destroy a node below a node that does not exist.
 .It Bq Er ENOMEM
 The length pointed to by
@@ -704,12 +721,10 @@ The
 array specifies a value that is unknown or a meta-operation was
 attempted that the requested node does not support.
 .It Bq Er EPERM
-An attempt is made to set a read-only value.
-.It Bq Er EPERM
-A process without appropriate privilege attempts to set a value or to
-create or destroy a node.
-.It Bq Er EPERM
-An attempt to change a value protected by the current kernel security
+An attempt is made to set a read-only value; or
+a process without appropriate privilege attempts to set a value or to
+create or destroy a node; or
+an attempt to change a value protected by the current kernel security
 level is made.
 .El
 .Sh SEE ALSO

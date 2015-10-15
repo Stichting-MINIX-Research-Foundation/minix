@@ -1,4 +1,12 @@
-# $NetBSD: Makefile,v 1.1 2012/03/17 16:33:14 jruoho Exp $
+# $NetBSD: Makefile,v 1.2 2014/08/22 16:45:32 apb Exp $
+
+# The tests for make(1) are maintained in src/usr.bin/make/unit-tests
+# (UNIT_TESTS_DISTDIR).  We copy them verbatim to ${FILESDIR}/unit-tests
+# (UNIT_TESTS_DIR) at install time.
+#
+# The t_make .sh script (installed as ${FILESDIR}/t_make) is the only
+# thing that knows about Atf.  At run time, the t_make simply invokes
+# the Makefile in UNIT_TESTS_DIR for each test.
 
 NOMAN=			# defined
 
@@ -9,37 +17,22 @@ TESTSDIR=		${TESTSBASE}/usr.bin/make
 TESTS_SH=		t_make
 
 FILESDIR=		${TESTSDIR}
-FILES=			d_comment.mk
-FILES+=			d_comment.out
-FILES+=			d_cond1.mk
-FILES+=			d_cond1.out
-FILES+=			d_dotwait.mk
-FILES+=			d_dotwait.out
-FILES+=			d_export.mk
-FILES+=			d_export.out
-FILES+=			d_export_all.mk
-FILES+=			d_export_all.out
-FILES+=			d_moderrs.mk
-FILES+=			d_moderrs.out
-FILES+=			d_modmatch.mk
-FILES+=			d_modmatch.out
-FILES+=			d_modmisc.mk
-FILES+=			d_modmisc.out
-FILES+=			d_modorder.mk
-FILES+=			d_modorder.out
-FILES+=			d_modts.mk
-FILES+=			d_modts.out
-FILES+=			d_modword.mk
-FILES+=			d_modword.out
-FILES+=			d_posix.mk
-FILES+=			d_posix.out
-FILES+=			d_qequals.mk
-FILES+=			d_qequals.out
-FILES+=			d_ternary.mk
-FILES+=			d_ternary.out
-FILES+=			d_unmatchedvarparen.mk
-FILES+=			d_unmatchedvarparen.out
-FILES+=			d_varcmd.mk
-FILES+=			d_varcmd.out
+
+# Where we install the copies of the files for the tests
+UNIT_TESTS_DIR=		${FILESDIR}/unit-tests
+
+# Where we obtain the original files for the tests
+UNIT_TESTS_DISTDIR=	${NETBSDSRCDIR}/usr.bin/make/unit-tests
+
+# Which original files to copy
+DISTFILES!=	(cd ${UNIT_TESTS_DISTDIR} && echo Makefile *.mk *.exp)
+
+# Instruct bsd.files.mk to make the copies
+.for f in ${DISTFILES}
+_file := ${UNIT_TESTS_DISTDIR}/${f}
+FILES+= ${UNIT_TESTS_DISTDIR}/${f}
+FILESNAME_${_file} := ${_file:T}
+FILESDIR_${_file} := ${UNIT_TESTS_DIR}
+.endfor
 
 .include <bsd.test.mk>

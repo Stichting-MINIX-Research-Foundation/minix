@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.35 2011/01/02 18:13:10 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.36 2014/02/17 07:39:19 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -286,8 +286,11 @@ write_parsed_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 			puts("Skipping...");
 			cbinfo->printstate.skipping = 1;
 		}
-		fwrite(content->unarmoured_text.data, 1,
-		       content->unarmoured_text.length, stdout);
+		if (fwrite(content->unarmoured_text.data, 1,
+		       content->unarmoured_text.length, stdout) != content->unarmoured_text.length) {
+			fprintf(stderr, "unable to write unarmoured text data\n");
+			cbinfo->printstate.skipping = 1;
+		}
 		break;
 
 	case PGP_PTAG_CT_PK_SESSION_KEY:

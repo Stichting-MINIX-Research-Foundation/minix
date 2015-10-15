@@ -1,4 +1,4 @@
-/* $NetBSD: ldbl_dummy.c,v 1.1 2013/11/12 17:36:14 joerg Exp $ */
+/* $NetBSD: ldbl_dummy.c,v 1.2 2014/11/13 21:43:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldbl_dummy.c,v 1.1 2013/11/12 17:36:14 joerg Exp $");
+__RCSID("$NetBSD: ldbl_dummy.c,v 1.2 2014/11/13 21:43:27 christos Exp $");
 
 #include "namespace.h"
 #include <math.h>
@@ -58,6 +58,8 @@ __weak_alias(atanl, _atanl)
 __weak_alias(acoshl, _acoshl)
 __weak_alias(asinhl, _asinhl)
 __weak_alias(atanhl, _atanhl)
+__weak_alias(erfl, _erfl)
+__weak_alias(erfcl, _erfcl)
 
 long double
 atan2l(long double y, long double x)
@@ -172,4 +174,16 @@ long double
 atanhl(long double x)
 {
 	return atanh(x);
+}
+
+long double
+erfl(long double x)
+{
+	return erf(x);
+}
+
+long double
+erfcl(long double x)
+{
+	return erfc(x);
 }

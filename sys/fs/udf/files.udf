@@ -1,7 +1,8 @@
-#	$NetBSD: files.udf,v 1.5 2013/07/10 15:10:56 reinoud Exp $
+#	$NetBSD: files.udf,v 1.6 2014/10/11 06:42:19 uebayasi Exp $
 
 deffs	UDF
 
+define	udf: vfs
 file	fs/udf/udf_osta.c		udf
 file	fs/udf/udf_vfsops.c		udf
 file	fs/udf/udf_vnops.c		udf

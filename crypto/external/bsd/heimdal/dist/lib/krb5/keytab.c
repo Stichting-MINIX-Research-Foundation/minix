@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keytab.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@
  *
  * A keytab name is on the form type:residual. The residual part is
  * specific to each keytab-type.
- * 
+ *
  * When a keytab-name is resolved, the type is matched with an internal
  * list of keytab types. If there is no matching keytab type,
  * the default keytab is used. The current default type is FILE.
@@ -62,7 +62,7 @@
  * [defaults]default_keytab_name.
  *
  * The keytab types that are implemented in Heimdal are:
- * - file 
+ * - file
  *   store the keytab in a file, the type's name is FILE .  The
  *   residual part is a filename. For compatibility with other
  *   Kerberos implemtation WRFILE and JAVA14 is also accepted.  WRFILE
@@ -439,7 +439,7 @@ krb5_kt_get_full_name(krb5_context context,
     char type[KRB5_KT_PREFIX_MAX_LEN];
     char name[MAXPATHLEN];
     krb5_error_code ret;
-	
+
     *str = NULL;
 
     ret = krb5_kt_get_type(context, keytab, type, sizeof(type));
@@ -568,16 +568,16 @@ _krb5_kt_principal_not_found(krb5_context context,
 {
     char princ[256], kvno_str[25], *kt_name;
     char *enctype_str = NULL;
-    
+
     krb5_unparse_name_fixed (context, principal, princ, sizeof(princ));
     krb5_kt_get_full_name (context, id, &kt_name);
     krb5_enctype_to_string(context, enctype, &enctype_str);
-    
+
     if (kvno)
 	snprintf(kvno_str, sizeof(kvno_str), "(kvno %d)", kvno);
     else
 	kvno_str[0] = '\0';
-    
+
     krb5_set_error_message (context, ret,
 			    N_("Failed to find %s%s in keytab %s (%s)",
 			       "principal, kvno, keytab file, enctype"),

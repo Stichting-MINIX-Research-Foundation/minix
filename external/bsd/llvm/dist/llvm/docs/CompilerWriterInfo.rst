@@ -74,14 +74,16 @@ R600
 * `AMD Evergreen shader ISA <http://developer.amd.com/wordpress/media/2012/10/AMD_Evergreen-Family_Instruction_Set_Architecture.pdf>`_
 * `AMD Cayman/Trinity shader ISA <http://developer.amd.com/wordpress/media/2012/10/AMD_HD_6900_Series_Instruction_Set_Architecture.pdf>`_
 * `AMD Southern Islands Series ISA <http://developer.amd.com/wordpress/media/2012/12/AMD_Southern_Islands_Instruction_Set_Architecture.pdf>`_
+* `AMD Sea Islands Series ISA <http://developer.amd.com/wordpress/media/2013/07/AMD_Sea_Islands_Instruction_Set_Architecture.pdf>`_
 * `AMD GPU Programming Guide <http://developer.amd.com/download/AMD_Accelerated_Parallel_Processing_OpenCL_Programming_Guide.pdf>`_
 * `AMD Compute Resources <http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/documentation/>`_
 
 SPARC
 -----
 
-* `SPARC resources <http://www.sparc.org/resource.htm>`_
-* `SPARC standards <http://www.sparc.org/standards.html>`_
+* `SPARC standards <http://sparc.org/standards>`_
+* `SPARC V9 ABI <http://sparc.org/standards/64.psabi.1.35.ps.Z>`_
+* `SPARC V8 ABI <http://sparc.org/standards/psABI3rd.pdf>`_
 
 SystemZ
 -------
@@ -107,6 +109,12 @@ Other x86-specific information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * `Calling conventions for different C++ compilers and operating systems  <http://www.agner.org/optimize/calling_conventions.pdf>`_
+
+XCore
+-----
+
+* `The XMOS XS1 Architecture (ISA) <https://www.xmos.com/en/download/public/The-XMOS-XS1-Architecture%28X7879A%29.pdf>`_
+* `Tools Development Guide (includes ABI) <https://www.xmos.com/download/public/Tools-Development-Guide%28X9114A%29.pdf>`_
 
 Other relevant lists
 --------------------

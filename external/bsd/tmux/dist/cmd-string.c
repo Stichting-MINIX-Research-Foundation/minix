@@ -1,4 +1,4 @@
-/* $Id: cmd-string.c,v 1.4 2011/10/07 10:38:02 joerg Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,11 +31,12 @@
  * Parse a command from a string.
  */
 
-int	cmd_string_getc(const char *, size_t *);
-void	cmd_string_ungetc(size_t *);
-char   *cmd_string_string(const char *, size_t *, char, int);
-char   *cmd_string_variable(const char *, size_t *);
-char   *cmd_string_expand_tilde(const char *, size_t *);
+int	 cmd_string_getc(const char *, size_t *);
+void	 cmd_string_ungetc(size_t *);
+void	 cmd_string_copy(char **, char *, size_t *);
+char	*cmd_string_string(const char *, size_t *, char, int);
+char	*cmd_string_variable(const char *, size_t *);
+char	*cmd_string_expand_tilde(const char *, size_t *);
 
 int
 cmd_string_getc(const char *s, size_t *p)
@@ -58,13 +59,14 @@ cmd_string_ungetc(size_t *p)
  * string, or NULL for empty command.
  */
 int
-cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
+cmd_string_parse(const char *s, struct cmd_list **cmdlist, const char *file,
+    u_int line, char **cause)
 {
 	size_t		p;
 	int		ch, i, argc, rval;
 	char	      **argv, *buf, *t;
 	const char     *whitespace, *equals;
-	size_t		len, len2;
+	size_t		len;
 
 	argv = NULL;
 	argc = 0;
@@ -84,29 +86,17 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 		case '\'':
 			if ((t = cmd_string_string(s, &p, '\'', 0)) == NULL)
 				goto error;
-			len2 = strlen(t);
-			buf = xrealloc(buf, 1, len + len2 + 1);
-			memcpy(buf + len, t, len2 + 1);
-			len += len2;
-			xfree(t);
+			cmd_string_copy(&buf, t, &len);
 			break;
 		case '"':
 			if ((t = cmd_string_string(s, &p, '"', 1)) == NULL)
 				goto error;
-			len2 = strlen(t);
-			buf = xrealloc(buf, 1, len + len2 + 1);
-			memcpy(buf + len, t, len2 + 1);
-			len += len2;
-			xfree(t);
+			cmd_string_copy(&buf, t, &len);
 			break;
 		case '$':
 			if ((t = cmd_string_variable(s, &p)) == NULL)
 				goto error;
-			len2 = strlen(t);
-			buf = xrealloc(buf, 1, len + len2 + 1);
-			strlcpy(buf + len, t, len2 + 1);
-			len += len2;
-			xfree(t);
+			cmd_string_copy(&buf, t, &len);
 			break;
 		case '#':
 			/* Comment: discard rest of line. */
@@ -142,7 +132,7 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 			if (argc == 0)
 				goto out;
 
-			*cmdlist = cmd_list_parse(argc, argv, cause);
+			*cmdlist = cmd_list_parse(argc, argv, file, line, cause);
 			if (*cmdlist == NULL)
 				goto out;
 
@@ -150,13 +140,10 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 			goto out;
 		case '~':
 			if (buf == NULL) {
-				if ((t = cmd_string_expand_tilde(s, &p)) == NULL)
+				t = cmd_string_expand_tilde(s, &p);
+				if (t == NULL)
 					goto error;
-				len2 = strlen(t);
-				buf = xrealloc(buf, 1, len + len2 + 1);
-				memcpy(buf + len, t, len2 + 1);
-				len += len2;
-				xfree(t);
+				cmd_string_copy(&buf, t, &len);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -174,16 +161,29 @@ error:
 	xasprintf(cause, "invalid or unknown command: %s", s);
 
 out:
-	if (buf != NULL)
-		xfree(buf);
+	free(buf);
 
 	if (argv != NULL) {
 		for (i = 0; i < argc; i++)
-			xfree(argv[i]);
-		xfree(argv);
+			free(argv[i]);
+		free(argv);
 	}
 
 	return (rval);
+}
+
+void
+cmd_string_copy(char **dst, char *src, size_t *len)
+{
+	size_t srclen;
+
+	srclen = strlen(src);
+
+	*dst = xrealloc(*dst, 1, *len + srclen + 1);
+	strlcpy(*dst + *len, src, srclen + 1);
+
+	*len += srclen;
+	free(src);
 }
 
 char *
@@ -191,7 +191,7 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 {
 	int	ch;
 	char   *buf, *t;
-	size_t	len, len2;
+	size_t	len;
 
 	buf = NULL;
 	len = 0;
@@ -225,11 +225,7 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 				break;
 			if ((t = cmd_string_variable(s, p)) == NULL)
 				goto error;
-			len2 = strlen(t);
-			buf = xrealloc(buf, 1, len + len2 + 1);
-			memcpy(buf + len, t, len2 + 1);
-			len += len2;
-			xfree(t);
+			cmd_string_copy(&buf, t, &len);
 			continue;
 		}
 
@@ -244,8 +240,7 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 	return (buf);
 
 error:
-	if (buf != NULL)
-		xfree(buf);
+	free(buf);
 	return (NULL);
 }
 
@@ -308,14 +303,13 @@ cmd_string_variable(const char *s, size_t *p)
 	buf[len] = '\0';
 
 	envent = environ_find(&global_environ, buf);
-	xfree(buf);
+	free(buf);
 	if (envent == NULL)
 		return (xstrdup(""));
 	return (xstrdup(envent->value));
 
 error:
-	if (buf != NULL)
-		xfree(buf);
+	free(buf);
 	return (NULL);
 }
 
@@ -324,10 +318,13 @@ cmd_string_expand_tilde(const char *s, size_t *p)
 {
 	struct passwd		*pw;
 	struct environ_entry	*envent;
-	char			*home, *path, *username;
+	char			*home, *path, *user, *cp;
+	int			 last;
 
 	home = NULL;
-	if (cmd_string_getc(s, p) == '/') {
+
+	last = cmd_string_getc(s, p);
+	if (last == EOF || last == '/' || last == ' '|| last == '\t') {
 		envent = environ_find(&global_environ, "HOME");
 		if (envent != NULL && *envent->value != '\0')
 			home = envent->value;
@@ -335,15 +332,27 @@ cmd_string_expand_tilde(const char *s, size_t *p)
 			home = pw->pw_dir;
 	} else {
 		cmd_string_ungetc(p);
-		if ((username = cmd_string_string(s, p, '/', 0)) == NULL)
-			return (NULL);
-		if ((pw = getpwnam(username)) != NULL)
+
+		cp = user = xmalloc(strlen(s));
+		for (;;) {
+			last = cmd_string_getc(s, p);
+			if (last == EOF || last == '/' || last == ' '|| last == '\t')
+				break;
+			*cp++ = last;
+		}
+		*cp = '\0';
+
+		if ((pw = getpwnam(user)) != NULL)
 			home = pw->pw_dir;
-		xfree(username);
+		free(user);
 	}
+
 	if (home == NULL)
 		return (NULL);
 
-	xasprintf(&path, "%s/", home);
+	if (last != EOF)
+		xasprintf(&path, "%s%c", home, last);
+	else
+		xasprintf(&path, "%s", home);
 	return (path);
 }

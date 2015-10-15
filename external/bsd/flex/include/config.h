@@ -1,5 +1,5 @@
 /* config.h.  Generated from conf.in by configure.  */
-/* conf.in.  Generated from configure.in by autoheader.  */
+/* conf.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
@@ -20,9 +20,20 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+/* #undef HAVE_CFLOCALECOPYCURRENT */
+
+/* Define to 1 if you have the MacOS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
+
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 /* #undef HAVE_DCGETTEXT */
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `dup2' function. */
 #define HAVE_DUP2 1
@@ -33,7 +44,7 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 /* #undef HAVE_GETTEXT */
 
-/* Define if you have the iconv() function. */
+/* Define if you have the iconv() function and it works. */
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -143,6 +154,10 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Define to the m4 executable name. */
 #ifndef M4
 #define M4 "/usr/bin/m4"
@@ -161,7 +176,7 @@
 #define PACKAGE_NAME "the fast lexical analyser generator"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "the fast lexical analyser generator 2.5.37"
+#define PACKAGE_STRING "the fast lexical analyser generator 2.5.39"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "flex"
@@ -170,7 +185,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.5.37"
+#define PACKAGE_VERSION "2.5.39"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -184,7 +199,7 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.5.37"
+#define VERSION "2.5.39"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

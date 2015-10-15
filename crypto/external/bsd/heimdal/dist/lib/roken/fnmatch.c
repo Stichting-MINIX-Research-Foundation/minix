@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*	NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp	*/
 
@@ -155,7 +155,7 @@ rangematch(const char *pattern, int test, int flags)
 	 */
 	if (negate = (*pattern == '!' || *pattern == '^'))
 		++pattern;
-	
+
 	for (ok = 0; (c = *pattern++) != ']';) {
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;

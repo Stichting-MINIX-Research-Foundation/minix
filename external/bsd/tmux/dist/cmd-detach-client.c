@@ -1,4 +1,4 @@
-/* $Id: cmd-detach-client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,31 +18,32 @@
 
 #include <sys/types.h>
 
+#include <string.h>
+
 #include "tmux.h"
 
 /*
  * Detach a client.
  */
 
-int	cmd_detach_client_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_detach_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_detach_client_entry = {
 	"detach-client", "detach",
-	"s:t:P", 0, 0,
-	"[-P] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
+	"as:t:P", 0, 0,
+	"[-P] [-a] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
 	CMD_READONLY,
-	NULL,
 	NULL,
 	cmd_detach_client_exec
 };
 
-int
-cmd_detach_client_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct client	*c;
-	struct session 	*s;
-	enum msgtype     msgtype;
+	struct client	*c, *c2;
+	struct session	*s;
+	enum msgtype	 msgtype;
 	u_int 		 i;
 
 	if (args_has(args, 'P'))
@@ -51,22 +52,37 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 		msgtype = MSG_DETACH;
 
 	if (args_has(args, 's')) {
-		s = cmd_find_session(ctx, args_get(args, 's'), 0);
+		s = cmd_find_session(cmdq, args_get(args, 's'), 0);
 		if (s == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 
 		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 			c = ARRAY_ITEM(&clients, i);
-			if (c != NULL && c->session == s)
-				server_write_client(c, msgtype, NULL, 0);
+			if (c == NULL || c->session != s)
+				continue;
+			server_write_client(c, msgtype, c->session->name,
+			    strlen(c->session->name) + 1);
 		}
 	} else {
-		c = cmd_find_client(ctx, args_get(args, 't'));
+		c = cmd_find_client(cmdq, args_get(args, 't'), 0);
 		if (c == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 
-		server_write_client(c, msgtype, NULL, 0);
+		if (args_has(args, 'a')) {
+			for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
+				c2 = ARRAY_ITEM(&clients, i);
+				if (c2 == NULL || c2->session == NULL ||
+				    c2 == c)
+					continue;
+				server_write_client(c2, msgtype,
+				    c2->session->name,
+				    strlen(c2->session->name) + 1);
+			}
+		} else {
+			server_write_client(c, msgtype, c->session->name,
+			    strlen(c->session->name) + 1);
+		}
 	}
 
-	return (0);
+	return (CMD_RETURN_STOP);
 }

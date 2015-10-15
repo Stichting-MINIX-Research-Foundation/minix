@@ -118,8 +118,10 @@
 /* Define to 1 if you have the <bzlib.h> header file. */
 #define HAVE_BZLIB_H 1
 
+#if !defined(__minix)
 /* Define to 1 if you have the `chflags' function. */
-/* #define HAVE_CHFLAGS 1 */
+#define HAVE_CHFLAGS 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the `chown' function. */
 #define HAVE_CHOWN 1
@@ -193,23 +195,27 @@
 /* Define to 1 if you have the <ext2fs/ext2_fs.h> header file. */
 /* #undef HAVE_EXT2FS_EXT2_FS_H */
 
+#if !defined(__minix)
 /* Define to 1 if you have the `extattr_get_file' function. */
-/* #define HAVE_EXTATTR_GET_FILE 1 */
+#define HAVE_EXTATTR_GET_FILE 1
 
 /* Define to 1 if you have the `extattr_list_file' function. */
-/* #define HAVE_EXTATTR_LIST_FILE 1 */
+#define HAVE_EXTATTR_LIST_FILE 1
 
 /* Define to 1 if you have the `extattr_set_fd' function. */
-/* #define HAVE_EXTATTR_SET_FD 1 */
+#define HAVE_EXTATTR_SET_FD 1
 
 /* Define to 1 if you have the `extattr_set_file' function. */
-/* #define HAVE_EXTATTR_SET_FILE 1 */
+#define HAVE_EXTATTR_SET_FILE 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the `fchdir' function. */
 #define HAVE_FCHDIR 1
 
+#if !defined(__minix)
 /* Define to 1 if you have the `fchflags' function. */
-/* #define HAVE_FCHFLAGS 1 */
+#define HAVE_FCHFLAGS 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the `fchmod' function. */
 #define HAVE_FCHMOD 1
@@ -280,14 +286,16 @@
 /* Define to 1 if you have the <langinfo.h> header file. */
 #define HAVE_LANGINFO_H 1
 
+#if !defined(__minix)
 /* Define to 1 if you have the `lchflags' function. */
-/* #define HAVE_LCHFLAGS 1 */
+#define HAVE_LCHFLAGS 1
 
 /* Define to 1 if you have the `lchmod' function. */
-/* #define HAVE_LCHMOD 1 */
+#define HAVE_LCHMOD 1
 
 /* Define to 1 if you have the `lchown' function. */
-/* #define HAVE_LCHOWN 1 */
+#define HAVE_LCHOWN 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the `lgetxattr' function. */
 /* #undef HAVE_LGETXATTR */

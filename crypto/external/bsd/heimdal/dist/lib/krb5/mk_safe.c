@@ -1,4 +1,4 @@
-/*	$NetBSD: mk_safe.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: mk_safe.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -46,7 +46,7 @@ krb5_mk_safe(krb5_context context,
     KRB_SAFE s;
     u_char *buf = NULL;
     size_t buf_size;
-    size_t len;
+    size_t len = 0;
     krb5_crypto crypto;
     krb5_keyblock *key;
     krb5_replay_data rdata;

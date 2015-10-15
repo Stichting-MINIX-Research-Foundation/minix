@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.39 2015/07/25 10:37:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,9 +35,10 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.39 2015/07/25 10:37:22 mlelstv Exp $");
 #endif	/* !__lint */
 
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 
@@ -50,6 +51,9 @@ __RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#if !HAVE_NBTOOL_CONFIG_H
+#include <util.h>
+#endif
 
 #include "installboot.h"
 
@@ -105,12 +109,19 @@ main(int argc, char *argv[])
 	char 		*p;
 	const char	*op;
 	ib_flags	unsupported_flags;
+#if !HAVE_NBTOOL_CONFIG_H && !defined(__minix)
+	char		specname[MAXPATHLEN];
+	char		rawname[MAXPATHLEN];
+	const char	*special, *raw;
+#endif
 
+#if defined(__minix)
 	/* XXX Temp stuff for MINIX until fdisk is ported */
 	if ((4 <= argc && argc <= 6) && isoption(argv[1], "-master")) {
 		install_master(argv[2], argv[3], argv + 4);
 		exit(0);
 	}
+#endif /* defined(__minix) */
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -192,11 +203,7 @@ main(int argc, char *argv[])
 	if (params->machine == NULL) {
 		if (uname(&utsname) == -1)
 			err(1, "Determine uname");
-#if !defined(__minix)
 		getmachine(params, utsname.machine, "uname()");
-#else
-		getmachine(params, utsname.arch, "uname()");
-#endif /* !defined(__minix) */
 	}
 
 	/* Check that options are supported by this system */
@@ -239,7 +246,18 @@ main(int argc, char *argv[])
 		params->stage2 = argv[2];
 	}
 
+#if !HAVE_NBTOOL_CONFIG_H && !defined(__minix)
+	special = getfsspecname(specname, sizeof(specname), argv[0]);
+	if (special == NULL)
+		err(1, "%s: %s", argv[0], specname);
+	raw = getdiskrawname(rawname, sizeof(rawname), special);
+	if (raw != NULL)
+		special = raw;
+	params->filesystem = special;
+#else
 	params->filesystem = argv[0];
+#endif
+
 	if (params->flags & IB_NOWRITE) {
 		op = "only";
 		mode = O_RDONLY;
@@ -247,7 +265,7 @@ main(int argc, char *argv[])
 		op = "write";
 		mode = O_RDWR;
 	}
-
+#if defined(__minix)
 	if (minixfs3_is_minix_partition(params)) {
 		/* Old setups has just 1 sector for bootblock,
 		 * but bootxx_minixfs is ~8Kb, so we require new setups
@@ -260,7 +278,7 @@ main(int argc, char *argv[])
 				params->filesystem);
 		}
 	}
-
+#endif /* defined(__minix) */
 	/* XXX should be specified via option */
 	params->sectorsize = DFL_SECSIZE;
 	if ((params->fsfd = open(params->filesystem, mode, 0600)) == -1)

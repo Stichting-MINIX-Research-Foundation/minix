@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2010/06/09 21:55:42 riz Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2015/02/10 20:38:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ extern struct event *allocev(void);
 extern void	send_queue(int __unused, short __unused, void *);
 extern void	schedule_event(struct event **, struct timeval *,
     void (*)(int, short, void *), void *);
-extern char    *make_timestamp(time_t *, bool);
+extern char    *make_timestamp(time_t *, bool, size_t);
 #ifndef DISABLE_TLS
 extern struct filed *get_f_by_conninfo(struct tls_conn_settings *conn_info);
 #endif

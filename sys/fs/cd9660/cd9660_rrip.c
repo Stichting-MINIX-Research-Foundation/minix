@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.17 2011/09/27 01:27:44 christos Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.18 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.17 2011/09/27 01:27:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.18 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,7 @@ cd9660_rrip_loop(struct iso_directory_record *isodir, ISO_RRIP_ANALYZE *ana,
 			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
 				     ana->iso_ce_blk << (ana->imp->im_bshift - DEV_BSHIFT),
-				     ana->imp->logical_block_size, NOCRED,
+				     ana->imp->logical_block_size,
 				     0, &bp))
 				/* what to do now? */
 				break;

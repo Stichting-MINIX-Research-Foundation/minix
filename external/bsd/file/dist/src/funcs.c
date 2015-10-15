@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.5 2013/01/03 23:05:38 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.10 2015/01/02 21:15:32 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,13 +30,14 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.61 2012/10/30 23:11:51 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.79 2014/12/16 20:52:49 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.5 2013/01/03 23:05:38 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.10 2015/01/02 21:15:32 christos Exp $");
 #endif
 #endif	/* lint */
 
 #include "magic.h"
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +65,8 @@ file_vprintf(struct magic_set *ms, const char *fmt, va_list ap)
 	int len;
 	char *buf, *newstr;
 
+	if (ms->event_flags & EVENT_HAD_ERR)
+		return 0;
 	len = vasprintf(&buf, fmt, ap);
 	if (len < 0)
 		goto out;
@@ -99,6 +102,7 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
  * error - print best error message possible
  */
 /*VARARGS*/
+__attribute__((__format__(__printf__, 3, 0)))
 private void
 file_error_core(struct magic_set *ms, int error, const char *f, va_list va,
     size_t lineno)
@@ -173,27 +177,22 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 	size_t ulen;
 	const char *code = NULL;
 	const char *code_mime = "binary";
-	const char *type = NULL;
-
-
+	const char *type = "application/octet-stream";
+	const char *def = "data";
+	const char *ftype = NULL;
 
 	if (nb == 0) {
-		if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-		    file_printf(ms, mime ? "application/x-empty" :
-		    "empty") == -1)
-			return -1;
-		return 1;
+		def = "empty";
+		type = "application/x-empty";
+		goto simple;
 	} else if (nb == 1) {
-		if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-		    file_printf(ms, mime ? "application/octet-stream" :
-		    "very short file (no magic)") == -1)
-			return -1;
-		return 1;
+		def = "very short file (no magic)";
+		goto simple;
 	}
 
 	if ((ms->flags & MAGIC_NO_CHECK_ENCODING) == 0) {
 		looks_text = file_encoding(ms, ubuf, nb, &u8buf, &ulen,
-		    &code, &code_mime, &type);
+		    &code, &code_mime, &ftype);
 	}
 
 #ifdef __EMX__
@@ -214,7 +213,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if ((m = file_zmagic(ms, fd, inname, ubuf, nb)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "zmagic %d\n", m);
-			goto done;
+			goto done_encoding;
 		}
 #endif
 	/* Check if we have a tar file */
@@ -235,7 +234,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 
 	/* try soft magic tests */
 	if ((ms->flags & MAGIC_NO_CHECK_SOFT) == 0)
-		if ((m = file_softmagic(ms, ubuf, nb, BINTEST,
+		if ((m = file_softmagic(ms, ubuf, nb, 0, NULL, BINTEST,
 		    looks_text)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "softmagic %d\n", m);
@@ -268,25 +267,13 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 				(void)fprintf(stderr, "ascmagic %d\n", m);
 			goto done;
 		}
-
-		/* try to discover text encoding */
-		if ((ms->flags & MAGIC_NO_CHECK_ENCODING) == 0) {
-			if (looks_text == 0)
-				if ((m = file_ascmagic_with_encoding( ms, ubuf,
-				    nb, u8buf, ulen, code, type, looks_text))
-				    != 0) {
-					if ((ms->flags & MAGIC_DEBUG) != 0)
-						(void)fprintf(stderr,
-						    "ascmagic/enc %d\n", m);
-					goto done;
-				}
-		}
 	}
 
+simple:
 	/* give up */
 	m = 1;
 	if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
-	    file_printf(ms, mime ? "application/octet-stream" : "data") == -1) {
+	    file_printf(ms, "%s", mime ? type : def) == -1) {
 	    rv = -1;
 	}
  done:
@@ -297,6 +284,9 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((__u
 		if (file_printf(ms, "%s", code_mime) == -1)
 			rv = -1;
 	}
+#if HAVE_FORK
+ done_encoding:
+#endif
 	free(u8buf);
 	if (rv)
 		return rv;
@@ -443,26 +433,133 @@ file_printedlen(const struct magic_set *ms)
 protected int
 file_replace(struct magic_set *ms, const char *pat, const char *rep)
 {
-	regex_t rx;
-	int rc;
+	file_regex_t rx;
+	int rc, rv = -1;
 
-	rc = regcomp(&rx, pat, REG_EXTENDED);
+	rc = file_regcomp(&rx, pat, REG_EXTENDED);
 	if (rc) {
-		char errmsg[512];
-		(void)regerror(rc, &rx, errmsg, sizeof(errmsg));
-		file_magerror(ms, "regex error %d, (%s)", rc, errmsg);
-		return -1;
+		file_regerror(&rx, rc, ms);
 	} else {
 		regmatch_t rm;
 		int nm = 0;
-		while (regexec(&rx, ms->o.buf, 1, &rm, 0) == 0) {
+		while (file_regexec(&rx, ms->o.buf, 1, &rm, 0) == 0) {
 			ms->o.buf[rm.rm_so] = '\0';
 			if (file_printf(ms, "%s%s", rep,
 			    rm.rm_eo != 0 ? ms->o.buf + rm.rm_eo : "") == -1)
-				return -1;
+				goto out;
 			nm++;
 		}
-		regfree(&rx);
-		return nm;
+		rv = nm;
 	}
+out:
+	file_regfree(&rx);
+	return rv;
+}
+
+protected int
+file_regcomp(file_regex_t *rx, const char *pat, int flags)
+{
+#ifdef USE_C_LOCALE
+	rx->c_lc_ctype = newlocale(LC_CTYPE_MASK, "C", 0);
+	assert(rx->c_lc_ctype != NULL);
+	rx->old_lc_ctype = uselocale(rx->c_lc_ctype);
+	assert(rx->old_lc_ctype != NULL);
+#endif
+	rx->pat = pat;
+
+	return rx->rc = regcomp(&rx->rx, pat, flags);
+}
+
+protected int
+file_regexec(file_regex_t *rx, const char *str, size_t nmatch,
+    regmatch_t* pmatch, int eflags)
+{
+	assert(rx->rc == 0);
+	return regexec(&rx->rx, str, nmatch, pmatch, eflags);
+}
+
+protected void
+file_regfree(file_regex_t *rx)
+{
+	if (rx->rc == 0)
+		regfree(&rx->rx);
+#ifdef USE_C_LOCALE
+	(void)uselocale(rx->old_lc_ctype);
+	freelocale(rx->c_lc_ctype);
+#endif
+}
+
+protected void
+file_regerror(file_regex_t *rx, int rc, struct magic_set *ms)
+{
+	char errmsg[512];
+
+	(void)regerror(rc, &rx->rx, errmsg, sizeof(errmsg));
+	file_magerror(ms, "regex error %d for `%s', (%s)", rc, rx->pat,
+	    errmsg);
+}
+
+protected file_pushbuf_t *
+file_push_buffer(struct magic_set *ms)
+{
+	file_pushbuf_t *pb;
+
+	if (ms->event_flags & EVENT_HAD_ERR)
+		return NULL;
+
+	if ((pb = (CAST(file_pushbuf_t *, malloc(sizeof(*pb))))) == NULL)
+		return NULL;
+
+	pb->buf = ms->o.buf;
+	pb->offset = ms->offset;
+
+	ms->o.buf = NULL;
+	ms->offset = 0;
+
+	return pb;
+}
+
+protected char *
+file_pop_buffer(struct magic_set *ms, file_pushbuf_t *pb)
+{
+	char *rbuf;
+
+	if (ms->event_flags & EVENT_HAD_ERR) {
+		free(pb->buf);
+		free(pb);
+		return NULL;
+	}
+
+	rbuf = ms->o.buf;
+
+	ms->o.buf = pb->buf;
+	ms->offset = pb->offset;
+
+	free(pb);
+	return rbuf;
+}
+
+/*
+ * convert string to ascii printable format.
+ */
+protected char *
+file_printable(char *buf, size_t bufsiz, const char *str)
+{
+	char *ptr, *eptr;
+	const unsigned char *s = (const unsigned char *)str;
+
+	for (ptr = buf, eptr = ptr + bufsiz - 1; ptr < eptr && *s; s++) {
+		if (isprint(*s)) {
+			*ptr++ = *s;
+			continue;
+		}
+		if (ptr >= eptr - 3)
+			break;
+		*ptr++ = '\\';
+		*ptr++ = ((CAST(unsigned int, *s) >> 6) & 7) + '0';
+		*ptr++ = ((CAST(unsigned int, *s) >> 3) & 7) + '0';
+		*ptr++ = ((CAST(unsigned int, *s) >> 0) & 7) + '0';
+	}
+	*ptr = '\0';
+	return buf;
 }

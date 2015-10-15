@@ -1,4 +1,4 @@
-/* $Id: cmd-suspend-client.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * Suspend client with SIGTSTP.
  */
 
-int	cmd_suspend_client_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_suspend_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_suspend_client_entry = {
 	"suspend-client", "suspendc",
@@ -35,22 +35,21 @@ const struct cmd_entry cmd_suspend_client_entry = {
 	CMD_TARGET_CLIENT_USAGE,
 	0,
 	NULL,
-	NULL,
 	cmd_suspend_client_exec
 };
 
-int
-cmd_suspend_client_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_suspend_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct client	*c;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
-		return (-1);
+	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	tty_stop_tty(&c->tty);
 	c->flags |= CLIENT_SUSPENDED;
 	server_write_client(c, MSG_SUSPEND, NULL, 0);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

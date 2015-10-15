@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: glob.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -386,14 +386,14 @@ globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
 	/* Copy the home directory */
 	for (b = patbuf; *h; *b++ = *h++)
 		continue;
-	
+
 	/* Append the rest of the pattern */
 	while ((*b++ = *p++) != CHAR_EOS)
 		continue;
 
 	return patbuf;
 }
-	
+
 
 /*
  * The main glob() routine: compiles the pattern (optionally processing
@@ -534,7 +534,7 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob,
 			*pathend = CHAR_EOS;
 			if (g_lstat(pathbuf, &sb, pglob))
 				return(0);
-		
+
 			if (((pglob->gl_flags & GLOB_MARK) &&
 			    pathend[-1] != CHAR_SEP) && (S_ISDIR(sb.st_mode)
 			    || (S_ISLNK(sb.st_mode) &&
@@ -587,7 +587,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 
 	*pathend = CHAR_EOS;
 	errno = 0;
-	
+
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {

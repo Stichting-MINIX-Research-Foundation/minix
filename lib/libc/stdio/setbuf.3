@@ -1,4 +1,4 @@
-.\"	$NetBSD: setbuf.3,v 1.13 2003/08/07 16:43:31 agc Exp $
+.\"	$NetBSD: setbuf.3,v 1.14 2015/07/15 19:08:43 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,6 +63,27 @@ when it is block buffered many characters are saved up and written as a block;
 when it is line buffered characters are saved up until a newline is
 output or input is read from any stream attached to a terminal device
 (typically stdin).
+.Pp
+The default buffer settings can be overwritten per descriptor
+.Dv ( STDBUFn )
+where
+.Dv n
+is the numeric value of the file descriptor represented by the stream, or
+for all descriptors
+.Dv ( STDBUF ) .
+The environment variable value is a letter followed by an optional numeric
+value indicating the size of the buffer.
+Valid sizes range from 0B to 1MB.
+Valid letters are:
+.Bl -tag -width X -indent
+.It Dv Li U
+Unbuffered.
+.It Dv Li L
+Line-buffered.
+.It Dv Li F
+Fully-buffered.
+.El
+.Pp
 The function
 .Xr fflush 3
 may be used to force the block out early.

@@ -1,4 +1,4 @@
-/* $Id: osdep-freebsd.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,9 +29,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libutil.h>
 
 struct kinfo_proc	*cmp_procs(struct kinfo_proc *, struct kinfo_proc *);
 char			*osdep_get_name(int, char *);
+char			*osdep_get_cwd(int);
 struct event_base	*osdep_event_init(void);
 
 #ifndef nitems
@@ -127,6 +129,32 @@ retry:
 
 error:
 	free(buf);
+	return (NULL);
+}
+
+char *
+osdep_get_cwd(int fd)
+{
+	static char		 wd[PATH_MAX];
+	struct kinfo_file	*info = NULL;
+	pid_t			 pgrp;
+	int			 nrecords, i;
+
+	if ((pgrp = tcgetpgrp(fd)) == -1)
+		return (NULL);
+
+	if ((info = kinfo_getfile(pgrp, &nrecords)) == NULL)
+		return (NULL);
+
+	for (i = 0; i < nrecords; i++) {
+		if (info[i].kf_fd == KF_FD_TYPE_CWD) {
+			strlcpy(wd, info[i].kf_path, sizeof wd);
+			free(info);
+			return (wd);
+		}
+	}
+
+	free(info);
 	return (NULL);
 }
 

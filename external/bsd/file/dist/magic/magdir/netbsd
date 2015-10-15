@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: netbsd,v 1.20 2013/01/09 22:37:24 christos Exp $
+# $File: netbsd,v 1.22 2014/12/08 20:53:52 christos Exp $
 # netbsd:  file(1) magic for NetBSD objects
 #
 # All new-style magic numbers are in network byte order.
@@ -100,25 +100,25 @@
 0	belong&0377777777	045200507	a.out NetBSD/powerpc core
 >12	string			>\0		from '%s'
 
-0	belong&0377777777	042400413	a.out NetBSD/sparc demand paged
+0	belong&0377777777	042400413	a.out NetBSD/SPARC demand paged
 >0	byte			&0x80		
 >>20	belong			<8192		shared library
 >>20	belong			=8192		dynamically linked executable
 >>20	belong			>8192		dynamically linked executable
 >0	byte			^0x80		executable
 >16	belong			>0		not stripped
-0	belong&0377777777	042400410	a.out NetBSD/sparc pure
+0	belong&0377777777	042400410	a.out NetBSD/SPARC pure
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80		executable
 >16	belong			>0		not stripped
-0	belong&0377777777	042400407	a.out NetBSD/sparc
+0	belong&0377777777	042400407	a.out NetBSD/SPARC
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
 >>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
-0	belong&0377777777	042400507	a.out NetBSD/sparc core
+0	belong&0377777777	042400507	a.out NetBSD/SPARC core
 >12	string			>\0		from '%s'
 >32	belong			!0		(signal %d)
 
@@ -247,14 +247,14 @@
 # Kernel core dump format
 0	belong&0x0000ffff 0x00008fca	NetBSD kernel core file
 >0	belong&0x03ff0000 0x00000000	\b, Unknown
->0	belong&0x03ff0000 0x00001000	\b, sun 68010/68020
+>0	belong&0x03ff0000 0x00010000	\b, sun 68010/68020
 >0	belong&0x03ff0000 0x00020000	\b, sun 68020
 >0	belong&0x03ff0000 0x00640000	\b, 386 PC
 >0	belong&0x03ff0000 0x00860000	\b, i386 BSD
 >0	belong&0x03ff0000 0x00870000	\b, m68k BSD (8K pages)
 >0	belong&0x03ff0000 0x00880000	\b, m68k BSD (4K pages)
 >0	belong&0x03ff0000 0x00890000	\b, ns32532 BSD
->0	belong&0x03ff0000 0x008a0000	\b, sparc/32 BSD
+>0	belong&0x03ff0000 0x008a0000	\b, SPARC/32 BSD
 >0	belong&0x03ff0000 0x008b0000	\b, pmax BSD
 >0	belong&0x03ff0000 0x008c0000	\b, vax BSD (1K pages)
 >0	belong&0x03ff0000 0x008d0000	\b, alpha BSD
@@ -262,20 +262,24 @@
 >0	belong&0x03ff0000 0x008f0000	\b, arm6 BSD
 >0	belong&0x03ff0000 0x00900000	\b, m68k BSD (2K pages)
 >0	belong&0x03ff0000 0x00910000	\b, sh3 BSD
->0	belong&0x03ff0000 0x00920000	\b, ppc BSD (Big Endian)
->0	belong&0x03ff0000 0x00930000	\b, vax BSD (4K pages)
->0	belong&0x03ff0000 0x00940000	\b, mips1 BSD
->0	belong&0x03ff0000 0x00950000	\b, mips2 BSD
->0	belong&0x03ff0000 0x00960000	\b, parisc BSD
->0	belong&0x03ff0000 0x00970000	\b, sh5/64 BSD
->0	belong&0x03ff0000 0x00980000	\b, sparc/64 BSD
->0	belong&0x03ff0000 0x00990000	\b, amd64 BSD
->0	belong&0x03ff0000 0x009a0000	\b, hp200 (68010) BSD
->0	belong&0x03ff0000 0x009b0000	\b, hp300 (68020+68881) BSD
->0	belong&0x03ff0000 0x009b0000	\b, hp300 (68020+68881) BSD
->0	belong&0x03ff0000 0x00c80000	\b, hp200
->0	belong&0x03ff0000 0x020b0000	\b, hp300 (68020+68881) HP-UX
->0	belong&0x03ff0000 0x020c0000	\b, hp300 (68020+68881) HP-UX
+>0	belong&0x03ff0000 0x00950000	\b, ppc BSD (Big Endian)
+>0	belong&0x03ff0000 0x00960000	\b, vax BSD (4K pages)
+>0	belong&0x03ff0000 0x00970000	\b, mips1 BSD
+>0	belong&0x03ff0000 0x00980000	\b, mips2 BSD
+>0	belong&0x03ff0000 0x00990000	\b, m88k BSD
+>0	belong&0x03ff0000 0x00920000	\b, parisc BSD
+>0	belong&0x03ff0000 0x009b0000	\b, sh5/64 BSD
+>0	belong&0x03ff0000 0x009c0000	\b, SPARC/64 BSD
+>0	belong&0x03ff0000 0x009d0000	\b, amd64 BSD
+>0	belong&0x03ff0000 0x009e0000	\b, sh5/32 BSD
+>0	belong&0x03ff0000 0x009f0000	\b, ia64 BSD
+>0	belong&0x03ff0000 0x00b70000	\b, aarch64 BSD
+>0	belong&0x03ff0000 0x00b80000	\b, or1k BSD
+>0	belong&0x03ff0000 0x00b90000	\b, Risk-V BSD
+>0	belong&0x03ff0000 0x00c80000	\b, hp200 BSD
+>0	belong&0x03ff0000 0x012c0000	\b, hp300 BSD
+>0	belong&0x03ff0000 0x020b0000	\b, hp800 HP-UX
+>0	belong&0x03ff0000 0x020c0000	\b, hp200/hp300 HP-UX
 >0	belong&0xfc000000 0x04000000	\b, CPU
 >0	belong&0xfc000000 0x08000000	\b, DATA
 >0	belong&0xfc000000 0x10000000	\b, STACK

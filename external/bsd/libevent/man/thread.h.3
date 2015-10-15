@@ -1,4 +1,4 @@
-.TH "event2/thread.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/thread.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -147,7 +147,9 @@ If you're going to call this function, you must do so before any locks are alloc
 .SS "int evthread_make_base_notifiable (struct \fBevent_base\fP *base)"
 
 .PP
-Make sure it's safe to tell an event base to wake up from another thread or a signal handler\&. \fBReturns:\fP
+Make sure it's safe to tell an event base to wake up from another thread or a signal handler\&. 
+.PP
+\fBReturns:\fP
 .RS 4
 0 on success, -1 on failure\&. 
 .RE
@@ -162,7 +164,9 @@ Note that if you're using Windows or the Pthreads threading library, you probabl
 .SS "void evthread_set_id_callback (unsigned long(*)(void)id_fn)"
 
 .PP
-Sets the function for determining the thread id\&. \fBParameters:\fP
+Sets the function for determining the thread id\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP the event base for which to set the id function 
 .br

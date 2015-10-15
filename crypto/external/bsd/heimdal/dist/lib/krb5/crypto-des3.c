@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des3.c,v 1.2 2011/07/01 02:10:19 joerg Exp $	*/
+/*	$NetBSD: crypto-des3.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -57,7 +57,7 @@ DES3_random_key(krb5_context context,
 
 #ifdef DES3_OLD_ENCTYPE
 static struct _krb5_key_type keytype_des3 = {
-    KEYTYPE_DES3,
+    ETYPE_OLD_DES3_CBC_SHA1,
     "des3",
     168,
     24,
@@ -72,7 +72,7 @@ static struct _krb5_key_type keytype_des3 = {
 #endif
 
 static struct _krb5_key_type keytype_des3_derived = {
-    KEYTYPE_DES3,
+    ETYPE_OLD_DES3_CBC_SHA1,
     "des3",
     168,
     24,
@@ -204,7 +204,7 @@ _krb5_DES3_random_to_key(krb5_context context,
     DES_cblock *k;
     int i, j;
 
-    memset(x, 0, 32);
+    memset(key->keyvalue.data, 0, key->keyvalue.length);
     for (i = 0; i < 3; ++i) {
 	unsigned char foo;
 	for (j = 0; j < 7; ++j) {

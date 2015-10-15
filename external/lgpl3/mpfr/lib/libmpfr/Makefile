@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/11/28 12:36:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2013/12/19 01:10:19 gdt Exp $
 
 .include <bsd.init.mk>
 
@@ -511,7 +511,7 @@ WITHOUT_MAN=	yes
 .include <bsd.lib.mk>
 
 mparam.h: mparam_h.in
-	cp ${.ALLSRC} ${.TARGET}
+	rm -f ${.TARGET} && cp ${.ALLSRC} ${.TARGET}
 
 ${SRCS}: mparam.h
 CLEANFILES+= mparam.h

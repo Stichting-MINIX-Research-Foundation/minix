@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/22 16:03:30 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2014/06/01 19:51:01 mrg Exp $
 
-SUBDIR=		backward ext bits debug decimal parallel tr1 tr1_impl
-#SUBDIR+=	pb_assoc
+SUBDIR=		backward ext bits debug decimal parallel pb profile
+SUBDIR+=	tr1 tr2
 
 .include <bsd.init.mk>
 .include <bsd.own.mk>
@@ -10,13 +10,11 @@ SUBDIR=		backward ext bits debug decimal parallel tr1 tr1_impl
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 # libsupc++
-INCS=		exception new typeinfo cxxabi.h cxxabi-forced.h
-INCS+=		exception_defines.h initializer_list exception_ptr.h
-INCS+=		nested_exception.h
+INCS=		exception new typeinfo cxxabi.h initializer_list
 
 # others
 INCS+=		cerrno
@@ -24,8 +22,9 @@ INCS+=		${G_std_headers} ${G_c_base_headers}
 INCS+=		${G_c_compatibility_headers_extra}
 INCSDIR=	/usr/include/g++
 
-.PATH: ${DIST}/libstdc++-v3 ${DIST}/libstdc++-v3/libsupc++
-.PATH: ${DIST}/libstdc++-v3/include/c_compatibility
+.PATH: ${DIST}/libstdc++-v3
+.PATH: ${DIST}/libstdc++-v3/libsupc++
+#.PATH: ${DIST}/libstdc++-v3/include/c_compatibility
 .PATH: ${DIST}/libstdc++-v3/include/c_global
 .PATH: ${DIST}/libstdc++-v3/include/std
 

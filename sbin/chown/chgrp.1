@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.5 2012/10/22 18:02:26 christos Exp $
+.\"	$NetBSD: chgrp.1,v 1.6 2013/12/17 09:54:08 apb Exp $
 .\"
 .Dd October 22, 2012
 .Dt CHGRP 1
@@ -118,6 +118,9 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+The default is as if the
+.Fl P
+option had been specified.
 .Pp
 The
 .Ar group

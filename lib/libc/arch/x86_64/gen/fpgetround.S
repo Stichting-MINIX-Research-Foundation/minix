@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.S,v 1.4 2011/09/30 17:42:34 christos Exp $	*/
+/*	$NetBSD: fpgetround.S,v 1.5 2014/05/22 15:01:56 uebayasi Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -22,3 +22,8 @@ ENTRY(fpgetround)
 	movl -4(%rsp), %eax
 	andl $0x00000c00, %eax
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetround)
+#else
+END(fpgetround)
+#endif

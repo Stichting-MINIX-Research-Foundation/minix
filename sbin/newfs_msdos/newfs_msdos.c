@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.42 2013/01/23 15:29:15 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.43 2015/04/23 13:27:14 abs Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.42 2013/01/23 15:29:15 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.43 2015/04/23 13:27:14 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,14 +168,13 @@ main(int argc, char *argv[])
 static u_int
 argtou(const char *arg, u_int lo, u_int hi, const char *msg)
 {
-    char *s;
-    u_long x;
+    off_t x;
 
     errno = 0;
-    x = strtoul(arg, &s, 0);
-    if (errno || !*arg || *s || x < lo || x > hi)
+    x = argtooff(arg, msg);
+    if (x < lo || x > hi)
 	errx(1, "%s: bad %s", arg, msg);
-    return x;
+    return (u_int)x;
 }
 
 /*

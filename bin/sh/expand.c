@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.90 2013/10/06 21:05:50 ast Exp $	*/
+/*	$NetBSD: expand.c,v 1.93 2015/08/27 07:46:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.90 2013/10/06 21:05:50 ast Exp $");
+__RCSID("$NetBSD: expand.c,v 1.93 2015/08/27 07:46:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: expand.c,v 1.90 2013/10/06 21:05:50 ast Exp $");
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <wctype.h>
 
 /*
  * Routines to expand arguments to commands.  We have to deal with
@@ -97,7 +98,7 @@ struct arglist exparg;		/* holds expanded arg list */
 STATIC void argstr(char *, int);
 STATIC char *exptilde(char *, int);
 STATIC void expbackq(union node *, int, int);
-STATIC int subevalvar(char *, char *, int, int, int, int);
+STATIC int subevalvar(char *, char *, int, int, int, int, int);
 STATIC char *evalvar(char *, int);
 STATIC int varisset(char *, int);
 STATIC void varvalue(char *, int, int, int);
@@ -450,7 +451,8 @@ expbackq(union node *cmd, int quoted, int flag)
 		if (--in.nleft < 0) {
 			if (in.fd < 0)
 				break;
-			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR);
+			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR)
+				continue;
 			TRACE(("expbackq: read returns %d\n", i));
 			if (i <= 0)
 				break;
@@ -493,7 +495,7 @@ expbackq(union node *cmd, int quoted, int flag)
 
 
 STATIC int
-subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varflags)
+subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varflags, int quotes)
 {
 	char *startp;
 	char *loc = NULL;
@@ -546,10 +548,10 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 		for (loc = startp; loc < str; loc++) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp, varflags & VSQUOTE))
+			if (patmatch(str, startp, quotes))
 				goto recordleft;
 			*loc = c;
-			if ((varflags & VSQUOTE) && *loc == CTLESC)
+			if (quotes && *loc == CTLESC)
 			        loc++;
 		}
 		return 0;
@@ -558,11 +560,11 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 		for (loc = str - 1; loc >= startp;) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp, varflags & VSQUOTE))
+			if (patmatch(str, startp, quotes))
 				goto recordleft;
 			*loc = c;
 			loc--;
-			if ((varflags & VSQUOTE) && loc > startp &&
+			if (quotes && loc > startp &&
 			    *(loc - 1) == CTLESC) {
 				for (q = startp; q < loc; q++)
 					if (*q == CTLESC)
@@ -575,10 +577,10 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 
 	case VSTRIMRIGHT:
 	        for (loc = str - 1; loc >= startp;) {
-			if (patmatch(str, loc, varflags & VSQUOTE))
+			if (patmatch(str, loc, quotes))
 				goto recordright;
 			loc--;
-			if ((varflags & VSQUOTE) && loc > startp &&
+			if (quotes && loc > startp &&
 			    *(loc - 1) == CTLESC) { 
 				for (q = startp; q < loc; q++)
 					if (*q == CTLESC)
@@ -591,9 +593,9 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 
 	case VSTRIMRIGHTMAX:
 		for (loc = startp; loc < str - 1; loc++) {
-			if (patmatch(str, loc, varflags & VSQUOTE))
+			if (patmatch(str, loc, quotes))
 				goto recordright;
-			if ((varflags & VSQUOTE) && *loc == CTLESC)
+			if (quotes && *loc == CTLESC)
 			        loc++;
 		}
 		return 0;
@@ -761,7 +763,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		STPUTC('\0', expdest);
 		patloc = expdest - stackblock();
 		if (subevalvar(p, NULL, patloc, subtype,
-			       startloc, varflags) == 0) {
+			       startloc, varflags, quotes) == 0) {
 			int amount = (expdest - stackblock() - patloc) + 1;
 			STADJUST(-amount, expdest);
 		}
@@ -774,7 +776,7 @@ again: /* jump here after setting a variable with ${var=text} */
 	case VSQUESTION:
 		if (set)
 			break;
-		if (subevalvar(p, var, 0, subtype, startloc, varflags)) {
+		if (subevalvar(p, var, 0, subtype, startloc, varflags, quotes)) {
 			varflags &= ~VSNUL;
 			/* 
 			 * Remove any recorded regions beyond 
@@ -1365,6 +1367,37 @@ msort(struct strlist *list, int len)
 }
 
 
+/*
+ * See if a character matches a character class, starting at the first colon
+ * of "[:class:]".
+ * If a valid character class is recognized, a pointer to the next character
+ * after the final closing bracket is stored into *end, otherwise a null
+ * pointer is stored into *end.
+ */
+static int
+match_charclass(char *p, wchar_t chr, char **end)
+{
+	char name[20];
+	char *nameend;
+	wctype_t cclass;
+
+	*end = NULL;
+	p++;
+	nameend = strstr(p, ":]");
+	if (nameend == NULL || (size_t)(nameend - p) >= sizeof(name) ||
+	    nameend == p)
+		return 0;
+	memcpy(name, p, nameend - p);
+	name[nameend - p] = '\0';
+	*end = nameend + 2;
+	cclass = wctype(name);
+	/* An unknown class matches nothing but is valid nevertheless. */
+	if (cclass == 0)
+		return 0;
+	return iswctype(chr, cclass);
+}
+
+
 
 /*
  * Returns true if the pattern matches the string.
@@ -1385,7 +1418,7 @@ patmatch(char *pattern, char *string, int squoted)
 STATIC int
 pmatch(char *pattern, char *string, int squoted)
 {
-	char *p, *q;
+	char *p, *q, *end;
 	char c;
 
 	p = pattern;
@@ -1465,6 +1498,11 @@ pmatch(char *pattern, char *string, int squoted)
 			do {
 				if (c == CTLQUOTEMARK)
 					continue;
+				if (c == '[' && *p == ':') {
+					found |= match_charclass(p, chr, &end);
+					if (end != NULL)
+						p = end;
+				}
 				if (c == CTLESC)
 					c = *p++;
 				if (*p == '-' && p[1] != ']') {

@@ -1,4 +1,3 @@
-# LSC: Workaround clang optimization for function calls from shared libraries.
-DBG+= -O0
-
+#__MINIX
 .include "../Makefile.inc"
+

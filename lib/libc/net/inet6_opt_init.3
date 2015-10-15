@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6_opt_init.3,v 1.1 2006/05/05 00:03:21 rpaulo Exp $
+.\"	$NetBSD: inet6_opt_init.3,v 1.2 2014/01/04 15:37:26 wiz Exp $
 .\"	$KAME: inet6_opt_init.3,v 1.7 2004/12/27 05:08:23 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -237,7 +237,7 @@ The option is returned in the arguments
 .Fa typep , lenp ,
 and
 .Fa databufp .
-.Fa typep, lenp,
+.Fa typep , lenp ,
 and
 .Fa databufp
 point to the 8-bit option type, the 8-bit option length and the option
@@ -299,17 +299,17 @@ by calculating
 which can be used when extracting option content with multiple fields.
 Robust receivers must verify alignment before calling this function.
 .\"
-.Sh DIAGNOSTICS
-All the functions return
-\-1
-on an error.
-.\"
 .Sh EXAMPLES
 RFC3542 gives comprehensive examples in Section 23.
 .Pp
 KAME also provides examples in the
 .Pa advapitest
 directory of its kit.
+.\"
+.Sh DIAGNOSTICS
+All the functions return
+\-1
+on an error.
 .\"
 .Sh SEE ALSO
 .Rs
@@ -328,10 +328,10 @@ directory of its kit.
 .%N RFC2460
 .%D December 1998
 .Re
-.Sh HISTORY
-The implementation first appeared in KAME advanced networking kit.
 .Sh STANDARDS
 The functions are documented in
 .Dq Advanced Sockets API for IPv6
 .Pq RFC3542 .
 .\"
+.Sh HISTORY
+The implementation first appeared in KAME advanced networking kit.

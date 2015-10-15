@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.7 2013/02/19 22:54:03 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.9 2014/03/30 15:53:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,6 +32,7 @@
 #define _SYS_KERNHIST_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_ddb.h"
 #include "opt_kernhist.h"
 #endif
 
@@ -100,7 +101,7 @@ LIST_HEAD(kern_history_head, kern_history);
 #define KERNHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLED(NAME)
 #define KERNHIST_FUNC(FNAME)
-#define kernhist_dump(NAME)
+#define KERNHIST_DUMP(NAME)
 #else
 #include <sys/kernel.h>		/* for "cold" variable */
 #include <sys/atomic.h>
@@ -122,6 +123,19 @@ do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
+#define KERNHIST_INITIALIZER(NAME,BUF) \
+{ \
+	.name = __STRING(NAME), \
+	.namelen = sizeof(__STRING(NAME)) - 1, \
+	.n = sizeof(BUF) / sizeof(struct kern_history_ent), \
+	.f = 0, \
+	.e = (struct kern_history_ent *) (BUF), \
+	/* BUF will inititalized to zeroes by being in .bss */ \
+}
+
+#define KERNHIST_LINK_STATIC(NAME) \
+	LIST_INSERT_HEAD(&kern_histories, &(NAME), list)
+
 #define KERNHIST_INIT_STATIC(NAME,BUF) \
 do { \
 	(NAME).name = __STRING(NAME); \
@@ -130,7 +144,7 @@ do { \
 	(NAME).f = 0; \
 	(NAME).e = (struct kern_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
-	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
+	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef KERNHIST_DELAY
@@ -195,6 +209,13 @@ do { \
 	static const char *const _kernhist_name = FNAME; \
 	unsigned int _kernhist_call = 0;
 
+#ifdef DDB
+#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME)
+#else
+#define KERNHIST_DUMP(NAME)
+#endif
+
+
 static inline void kernhist_entry_print(const struct kern_history_ent *);
 
 static inline void
@@ -207,6 +228,7 @@ kernhist_entry_print(const struct kern_history_ent *e)
 }
 
 #if defined(DDB)
+void	kernhist_dump(struct kern_history *);
 void	kernhist_print(void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
 

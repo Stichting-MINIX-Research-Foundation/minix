@@ -1,4 +1,4 @@
-.TH "event2/http.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/http.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -249,7 +249,7 @@ Basic support for HTTP serving\&.
 .br
 .RI "\fIReturns the connection object associated with the request or NULL\&. \fP"
 .ti -1c
-.RI "struct evhttp_uri * \fBevhttp_request_get_evhttp_uri\fP (const struct evhttp_request *req)"
+.RI "const struct evhttp_uri * \fBevhttp_request_get_evhttp_uri\fP (const struct evhttp_request *req)"
 .br
 .RI "\fIReturns the request URI (parsed) \fP"
 .ti -1c
@@ -476,13 +476,13 @@ Can be called multiple times to have the http server listen to multiple differen
 0 on success, -1 on failure\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_bind_socket()\fP 
 .RE
 .PP
 
-.SS "struct evhttp_bound_socket* evhttp_accept_socket_with_handle (struct evhttp *http, \fBevutil_socket_t\fPfd)\fC [read]\fP"
+.SS "struct evhttp_bound_socket* evhttp_accept_socket_with_handle (struct evhttp *http, \fBevutil_socket_t\fPfd)"
 
 .PP
 Like \fBevhttp_accept_socket()\fP, but returns a handle for referencing the socket\&. The returned pointer is not valid after \fIhttp\fP is freed\&.
@@ -499,7 +499,7 @@ Like \fBevhttp_accept_socket()\fP, but returns a handle for referencing the sock
 Handle for the socket on success, NULL on failure\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_accept_socket()\fP, \fBevhttp_del_accept_socket()\fP 
 .RE
@@ -508,7 +508,9 @@ Handle for the socket on success, NULL on failure\&.
 .SS "int evhttp_add_header (struct evkeyvalq *headers, const char *key, const char *value)"
 
 .PP
-Adds a header to a list of existing headers\&. \fBParameters:\fP
+Adds a header to a list of existing headers\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIheaders\fP the evkeyvalq object to which to add a header 
 .br
@@ -522,7 +524,7 @@ Adds a header to a list of existing headers\&. \fBParameters:\fP
 0 on success, -1 otherwise\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_find_header()\fP, \fBevhttp_clear_headers()\fP 
 .RE
@@ -540,7 +542,7 @@ Add a server alias to an http object\&. The http object can be a virtual host or
 \fIalias\fP the alias to add 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 evhttp_add_remove_alias() 
 .RE
@@ -569,13 +571,13 @@ It is possible to have hierarchical vhosts\&. For example: A vhost with the patt
 0 on success, -1 on failure 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_remove_virtual_host()\fP 
 .RE
 .PP
 
-.SS "struct evhttp_bound_socket* evhttp_bind_listener (struct evhttp *http, struct evconnlistener *listener)\fC [read]\fP"
+.SS "struct evhttp_bound_socket* evhttp_bind_listener (struct evhttp *http, struct evconnlistener *listener)"
 
 .PP
 The most low-level evhttp_bind/accept method: takes an evconnlistener, and returns an evhttp_bound_socket\&. The listener will be freed when the bound socket is freed\&. 
@@ -598,13 +600,13 @@ Binds an HTTP server on the specified address and port\&. Can be called multiple
 0 on success, -1 on failure\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_accept_socket()\fP 
 .RE
 .PP
 
-.SS "struct evhttp_bound_socket* evhttp_bind_socket_with_handle (struct evhttp *http, const char *address, ev_uint16_tport)\fC [read]\fP"
+.SS "struct evhttp_bound_socket* evhttp_bind_socket_with_handle (struct evhttp *http, const char *address, ev_uint16_tport)"
 
 .PP
 Like \fBevhttp_bind_socket()\fP, but returns a handle for referencing the socket\&. The returned pointer is not valid after \fIhttp\fP is freed\&.
@@ -623,7 +625,7 @@ Like \fBevhttp_bind_socket()\fP, but returns a handle for referencing the socket
 Handle for the socket on success, NULL on failure\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_bind_socket()\fP, \fBevhttp_del_accept_socket()\fP 
 .RE
@@ -632,7 +634,9 @@ Handle for the socket on success, NULL on failure\&.
 .SS "\fBevutil_socket_t\fP evhttp_bound_socket_get_fd (struct evhttp_bound_socket *bound_socket)"
 
 .PP
-Get the raw file descriptor referenced by an evhttp_bound_socket\&. \fBParameters:\fP
+Get the raw file descriptor referenced by an evhttp_bound_socket\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbound_socket\fP a handle returned by evhttp_{bind,accept}_socket_with_handle 
 .RE
@@ -642,7 +646,7 @@ Get the raw file descriptor referenced by an evhttp_bound_socket\&. \fBParameter
 the file descriptor used by the bound socket 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_bind_socket_with_handle()\fP, \fBevhttp_accept_socket_with_handle()\fP 
 .RE
@@ -664,13 +668,15 @@ A request cannot be canceled if its callback has executed already\&. A request m
 .SS "void evhttp_clear_headers (struct evkeyvalq *headers)"
 
 .PP
-Removes all headers from the header list\&. \fBParameters:\fP
+Removes all headers from the header list\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIheaders\fP the evkeyvalq object from which to remove all headers 
 .RE
 .PP
 
-.SS "struct evhttp_connection* evhttp_connection_base_new (struct \fBevent_base\fP *base, struct evdns_base *dnsbase, const char *address, unsigned shortport)\fC [read]\fP"
+.SS "struct evhttp_connection* evhttp_connection_base_new (struct \fBevent_base\fP *base, struct evdns_base *dnsbase, const char *address, unsigned shortport)"
 
 .PP
 A connection object that can be used to for making HTTP requests\&. The connection object tries to resolve address and establish the connection when it is given an http request object\&.
@@ -740,7 +746,7 @@ If you created this bound socket with evhttp_bind_socket_with_handle or evhttp_a
 \fIbound_socket\fP a handle returned by evhttp_{bind,accept}_socket_with_handle 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_bind_socket_with_handle()\fP, \fBevhttp_accept_socket_with_handle()\fP 
 .RE
@@ -767,7 +773,9 @@ a newly allocated URI-encoded string or NULL on failure
 .SS "const char* evhttp_find_header (const struct evkeyvalq *headers, const char *key)"
 
 .PP
-Finds the value belonging to a header\&. \fBParameters:\fP
+Finds the value belonging to a header\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIheaders\fP the evkeyvalq object in which to find the header 
 .br
@@ -779,7 +787,7 @@ Finds the value belonging to a header\&. \fBParameters:\fP
 a pointer to the value for the header or NULL if the header count not be found\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_add_header()\fP, \fBevhttp_remove_header()\fP 
 .RE
@@ -795,7 +803,7 @@ Free the previously created HTTP server\&. Works only if no requests are current
 \fIhttp\fP the evhttp server object to be freed 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_start()\fP 
 .RE
@@ -840,16 +848,18 @@ Make an HTTP request over the specified connection\&. The connection gets owners
 0 on success, -1 on failure 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_cancel_request()\fP 
 .RE
 .PP
 
-.SS "struct evhttp* evhttp_new (struct \fBevent_base\fP *base)\fC [read]\fP"
+.SS "struct evhttp* evhttp_new (struct \fBevent_base\fP *base)"
 
 .PP
-Create a new HTTP server\&. \fBParameters:\fP
+Create a new HTTP server\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIbase\fP (optional) the event base to receive the HTTP events 
 .RE
@@ -859,7 +869,7 @@ Create a new HTTP server\&. \fBParameters:\fP
 a pointer to a newly initialized evhttp server structure 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_free()\fP 
 .RE
@@ -922,7 +932,9 @@ The first entry is: key='q', value='test' The second entry is: key='s', value='s
 .SS "int evhttp_remove_header (struct evkeyvalq *headers, const char *key)"
 
 .PP
-Removes a header from a list of existing headers\&. \fBParameters:\fP
+Removes a header from a list of existing headers\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIheaders\fP the evkeyvalq object from which to remove a header 
 .br
@@ -934,7 +946,7 @@ Removes a header from a list of existing headers\&. \fBParameters:\fP
 0 if the header was removed, -1 otherwise\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_find_header()\fP, \fBevhttp_add_header()\fP 
 .RE
@@ -943,14 +955,16 @@ Removes a header from a list of existing headers\&. \fBParameters:\fP
 .SS "int evhttp_remove_server_alias (struct evhttp *http, const char *alias)"
 
 .PP
-Remove a server alias from an http object\&. \fBParameters:\fP
+Remove a server alias from an http object\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIhttp\fP the evhttp object 
 .br
 \fIalias\fP the alias to remove 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_add_server_alias()\fP 
 .RE
@@ -959,7 +973,9 @@ Remove a server alias from an http object\&. \fBParameters:\fP
 .SS "int evhttp_remove_virtual_host (struct evhttp *http, struct evhttp *vhost)"
 
 .PP
-Removes a virtual host from the http server\&. \fBParameters:\fP
+Removes a virtual host from the http server\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIhttp\fP the evhttp object from which to remove the virtual host 
 .br
@@ -971,7 +987,7 @@ Removes a virtual host from the http server\&. \fBParameters:\fP
 0 on success, -1 on failure 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_add_virtual_host()\fP 
 .RE
@@ -981,7 +997,7 @@ Removes a virtual host from the http server\&. \fBParameters:\fP
 
 .PP
 Frees the request object and removes associated events\&. 
-.SS "struct evhttp_connection* evhttp_request_get_connection (struct evhttp_request *req)\fC [read]\fP"
+.SS "struct evhttp_connection* evhttp_request_get_connection (struct evhttp_request *req)"
 
 .PP
 Returns the connection object associated with the request or NULL\&. The user needs to either free the request explicitly or call \fBevhttp_send_reply_end()\fP\&. 
@@ -989,7 +1005,7 @@ Returns the connection object associated with the request or NULL\&. The user ne
 
 .PP
 Returns the host associated with the request\&. If a client sends an absolute URI, the host part of that is preferred\&. Otherwise, the input headers are searched for a Host: header\&. NULL is returned if no absolute URI or Host: header is provided\&. 
-.SS "struct evhttp_request* evhttp_request_new (void(*)(struct evhttp_request *, void *)cb, void *arg)\fC [read]\fP"
+.SS "struct evhttp_request* evhttp_request_new (void(*)(struct evhttp_request *, void *)cb, void *arg)"
 
 .PP
 Creates a new request object that needs to be filled in with the request parameters\&. The callback is executed when the request completed or an error occurred\&. 
@@ -1000,7 +1016,9 @@ Takes ownership of the request object\&. Can be used in a request callback to ke
 .SS "void evhttp_request_set_chunked_cb (struct evhttp_request *, void(*)(struct evhttp_request *, void *)cb)"
 
 .PP
-Enable delivery of chunks to requestor\&. \fBParameters:\fP
+Enable delivery of chunks to requestor\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIcb\fP will be called after every read of data with the same argument as the completion callback\&. Will never be called on an empty response\&. May drain the input buffer; it will be drained automatically on return\&. 
 .RE
@@ -1009,7 +1027,9 @@ Enable delivery of chunks to requestor\&. \fBParameters:\fP
 .SS "void evhttp_send_error (struct evhttp_request *req, interror, const char *reason)"
 
 .PP
-Send an HTML error message to the client\&. \fBParameters:\fP
+Send an HTML error message to the client\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIreq\fP a request object 
 .br
@@ -1052,7 +1072,9 @@ Send another data chunk as part of an ongoing chunked reply\&. The reply chunk c
 .SS "void evhttp_send_reply_end (struct evhttp_request *req)"
 
 .PP
-Complete a chunked reply, freeing the request as appropriate\&. \fBParameters:\fP
+Complete a chunked reply, freeing the request as appropriate\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIreq\fP a request object 
 .RE
@@ -1093,7 +1115,9 @@ By default this includes the following methods: GET, POST, HEAD, PUT, DELETE
 .SS "int evhttp_set_cb (struct evhttp *http, const char *path, void(*)(struct evhttp_request *, void *)cb, void *cb_arg)"
 
 .PP
-Set a callback for a specified URI\&. \fBParameters:\fP
+Set a callback for a specified URI\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIhttp\fP the http sever on which to set the callback 
 .br
@@ -1136,7 +1160,9 @@ XXX Document\&.
 .SS "void evhttp_set_timeout (struct evhttp *http, inttimeout_in_secs)"
 
 .PP
-Set the timeout for an HTTP request\&. \fBParameters:\fP
+Set the timeout for an HTTP request\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIhttp\fP an evhttp object 
 .br
@@ -1154,7 +1180,7 @@ Free all memory allocated for a parsed uri\&. Only use this for URIs generated b
 \fIuri\fP container with parsed data 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_uri_parse()\fP 
 .RE
@@ -1193,13 +1219,13 @@ Join together the uri parts from parsed data to form a URI-Reference\&. Note tha
 an joined uri as string or NULL on error 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_uri_parse()\fP 
 .RE
 .PP
 
-.SS "struct evhttp_uri* evhttp_uri_parse_with_flags (const char *source_uri, unsignedflags)\fC [read]\fP"
+.SS "struct evhttp_uri* evhttp_uri_parse_with_flags (const char *source_uri, unsignedflags)"
 
 .PP
 Helper function to parse a URI-Reference as specified by RFC3986\&. This function matches the URI-Reference production from RFC3986, which includes both URIs like
@@ -1228,7 +1254,7 @@ Note also that most URI schemes will have additional constraints that this funct
 uri container to hold parsed data, or NULL if there is error 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevhttp_uri_free()\fP 
 .RE

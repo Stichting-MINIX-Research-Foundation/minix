@@ -42,6 +42,8 @@ $(code:.c=.lo): $(built)
 dist_libwind_la_SOURCES = $(code) $(built)
 nodist_libwind_la_SOURCES = wind_err.c wind_err.h
 
+libwind_la_DEPENDENCIES = version-script.map
+
 dist_include_HEADERS = wind.h
 nodist_include_HEADERS = wind_err.h
 
@@ -112,6 +114,8 @@ punycode_examples.h punycode_examples.c: gen-punycode-examples.py rfc3492.txt
 	$(PYTHON) $(srcdir)/gen-punycode-examples.py $(srcdir)/rfc3492.txt $(builddir)
 
 EXTRA_DIST = \
+	NTMakefile \
+	libwind-exports.def \
 	CompositionExclusions-3.2.0.txt \
 	DerivedNormalizationProps.txt \
 	NormalizationCorrections.txt \

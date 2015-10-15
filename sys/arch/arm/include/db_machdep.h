@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.18 2012/02/16 02:26:35 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.22 2014/09/13 18:08:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -48,8 +48,14 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;
 
-extern db_regs_t	ddb_regs;	/* register state */
+#ifndef MULTIPROCESSOR
+extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
+#else
+extern db_regs_t *ddb_regp;
+#define DDB_REGS	(ddb_regp)
+#define ddb_regs	(*ddb_regp)
+#endif
 
 #ifdef __PROG26
 #define	PC_REGS(regs)	((regs)->tf_r15 & R15_PC)
@@ -99,8 +105,8 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define inst_load(ins)		(0)
 #define inst_store(ins)		(0)
 #define inst_unconditional_flow_transfer(ins)	\
-	((((ins) & INSN_COND_MASK) == INSN_COND_AL) && \
-	 (inst_branch(ins) || inst_call(ins) || inst_return(ins)))
+	(__SHIFTOUT((ins), INSN_COND_MASK) == INSN_COND_AL \
+	 && (inst_branch(ins) || inst_call(ins) || inst_return(ins)))
 
 #define getreg_val			(0)
 #define next_instr_address(pc, bd)	((bd) ? (pc) : ((pc) + INSN_SIZE))
@@ -112,7 +118,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 u_int branch_taken(u_int insn, u_int pc, db_regs_t *db_regs);
 int kdb_trap(int, db_regs_t *);
 void db_machine_init(void);
-int db_validate_address(vm_offset_t addr);
+int db_validate_address(vaddr_t addr);
 
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
@@ -127,4 +133,9 @@ typedef register_t	kgdb_reg_t;
 #define KGDB_REGNUM_SPSR	16 + 8*3 + 1
 #define KGDB_BUFLEN		1024
 
+/*
+ * MP stuff
+ */
+extern volatile struct cpu_info *db_onproc;
+extern volatile struct cpu_info *db_newcpu;
 #endif	/* _ARM_DB_MACHDEP_H_ */

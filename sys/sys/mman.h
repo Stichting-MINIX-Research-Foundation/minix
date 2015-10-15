@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.44 2012/01/05 15:19:52 reinoud Exp $	*/
+/*	$NetBSD: mman.h,v 1.48 2014/08/03 19:14:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -94,7 +94,8 @@ typedef	__off_t		off_t;		/* file offset */
  * Mapping type
  */
 #define	MAP_FILE	0x0000	/* map from file (default) */
-#define	MAP_ANON	0x1000	/* allocated from memory, swap space */
+#define	MAP_ANONYMOUS	0x1000	/* allocated from memory, swap space */
+#define	MAP_ANON	MAP_ANONYMOUS
 #define	MAP_STACK	0x2000	/* allocated from memory, swap space (stack) */
 
 /*
@@ -143,7 +144,7 @@ typedef	__off_t		off_t;		/* file offset */
 
 /*
  * POSIX memory avissory values.
- * Note: keep consistent with the original defintions below.
+ * Note: keep consistent with the original definitions below.
  */
 #define	POSIX_MADV_NORMAL	0	/* No further special treatment */
 #define	POSIX_MADV_RANDOM	1	/* Expect random page references */
@@ -153,7 +154,7 @@ typedef	__off_t		off_t;		/* file offset */
 
 #if defined(_NETBSD_SOURCE)
 /*
- * Original advice values, equivalent to POSIX defintions,
+ * Original advice values, equivalent to POSIX definitions,
  * and few implementation-specific ones.
  */
 #define	MADV_NORMAL		POSIX_MADV_NORMAL
@@ -172,6 +173,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_INHERIT_NONE	2	/* absent from child */
 #define	MAP_INHERIT_DONATE_COPY	3	/* copy and delete -- not
 					   implemented in UVM */
+#define	MAP_INHERIT_ZERO	4	/* zero in child */
 #define	MAP_INHERIT_DEFAULT	MAP_INHERIT_COPY
 #endif
 
@@ -197,6 +199,8 @@ int	minherit(void *, size_t, int);
 void *	mremap(void *, size_t, void *, size_t, int);
 #endif
 int	posix_madvise(void *, size_t, int);
+int	shm_open(const char *, int, mode_t);
+int	shm_unlink(const char *);
 
 #if defined(__minix) && defined(_MINIX_SYSTEM)
 #include <minix/endpoint.h>

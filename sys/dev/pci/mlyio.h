@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyio.h,v 1.4 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mlyio.h,v 1.5 2015/09/06 06:01:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
 
 #ifndef _PCI_MLYIO_H_
 #define	_PCI_MLYIO_H_
+
+#include <sys/ioccom.h>
+
 
 struct mly_user_command {
 	unsigned char	ControllerNumber;

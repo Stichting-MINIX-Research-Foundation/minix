@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: v_search.c,v 1.6 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: v_search.c,v 10.30 2001/09/11 20:52:46 skimo Exp  (Berkeley) Date: 2001/09/11 20:52:46 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: v_search.c,v 1.6 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -70,7 +75,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	TEXT *tp;
 	db_recno_t s_lno;
 	size_t len, s_cno, tlen;
-	int err, nb, type;
+	int error, nb, type;
 	char buf[20];
 	CHAR_T *cmd, *t;
 	const CHAR_T *w;
@@ -174,7 +179,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	 * confused the parser.  We're not that compatible.
 	 */
 	cmdp = &wp->excmd;
-	if (ex_range(sp, cmdp, &err))
+	if (ex_range(sp, cmdp, &error))
 		return (1);
 	
 	/*
@@ -185,7 +190,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	len = cmdp->clen;
 	wp->excmd.clen = 0;
 
-	if (err)
+	if (error)
 		goto err2;
 
 	/* Copy out the new cursor position and make sure it's okay. */
@@ -525,7 +530,7 @@ v_correct(SCR *sp, VICMD *vp, int isdelta)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-	} else
+	}
 
 	/*
 	 * BACKWARD:

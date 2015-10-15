@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_init_size.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_init_size.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_INIT_SIZE_C
@@ -23,8 +23,8 @@ int mp_init_size (mp_int * a, int size)
   int x;
 
   /* pad size so there are always extra digits */
-  size += (MP_PREC * 2) - (size % MP_PREC);	
-  
+  size += (MP_PREC * 2) - (size % MP_PREC);
+
   /* alloc mem */
   a->dp = OPT_CAST(mp_digit) XMALLOC (sizeof (mp_digit) * size);
   if (a->dp == NULL) {
@@ -45,6 +45,6 @@ int mp_init_size (mp_int * a, int size)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_init_size.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_init_size.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

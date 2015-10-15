@@ -54,10 +54,10 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define _EVENT_HAVE_INTTYPES_H 1
 
+#if !defined(__minix)
 /* Define to 1 if you have the `kqueue' function. */
-#ifndef __minix
 #define _EVENT_HAVE_KQUEUE 1
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 /* #undef _EVENT_HAVE_LIBNSL */
@@ -200,10 +200,10 @@
 /* Define to 1 if you have the `vasprintf' function. */
 #define _EVENT_HAVE_VASPRINTF 1
 
+#if !defined(__minix)
 /* Define if kqueue works correctly with pipes */
-#ifndef __minix
 #define _EVENT_HAVE_WORKING_KQUEUE 1
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 /* Name of package */
 #define _EVENT_PACKAGE "libevent"

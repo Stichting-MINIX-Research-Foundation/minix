@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_oid.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: gssapi_oid.h,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
 
 /* Generated file */
 #ifndef GSSAPI_GSSAPI_OID
@@ -110,6 +110,13 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_mech_name_oid_desc;
 
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_ma_mech_description_oid_desc;
 #define GSS_C_MA_MECH_DESCRIPTION (&__gss_c_ma_mech_description_oid_desc)
+
+ /* credential types */
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_cred_password_oid_desc;
+#define GSS_C_CRED_PASSWORD (&__gss_c_cred_password_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_c_cred_certificate_oid_desc;
+#define GSS_C_CRED_CERTIFICATE (&__gss_c_cred_certificate_oid_desc)
 
 /* Heimdal mechanisms - 1.2.752.43.14 */
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_sasl_digest_md5_mechanism_oid_desc;

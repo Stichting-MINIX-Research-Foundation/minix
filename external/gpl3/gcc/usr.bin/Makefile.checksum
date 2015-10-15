@@ -1,0 +1,27 @@
+#	$NetBSD: Makefile.checksum,v 1.1 2014/03/01 10:00:49 mrg Exp $
+
+# Makefile fragment to build $PROG-checksum.  depends upon having
+# $PROG and $CHECKSUM_OBJS set before including.
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_CHECKSUM_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_CHECKSUM_=1
+
+CLEANFILES+=	${PROG}-checksum.c genchecksum genchecksum.lo checksum-options
+
+CPPFLAGS.genchecksum.c+=	-DGENERATOR_FILE -I${GCCARCH} -I${DIST}/include -I${BACKENDOBJ}
+
+genchecksum.lo:
+genchecksum: genchecksum.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+
+# Actual backend Makefile should define CHECKSUM_OBJS appropriately.
+${PROG}-checksum.c: genchecksum ${CHECKSUM_OBJS} checksum-options
+	${_MKTARGET_CREATE}
+	./genchecksum ${CHECKSUM_OBJS} checksum-options >${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+checksum-options:
+	#echo "${CXX} ${CXXFLAGS} ${LDFLAGS}" >${.TARGET}
+	echo "" >${.TARGET}
+
+.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.50 2013/11/09 15:57:15 christos Exp $	*/
+/*	$NetBSD: calendar.c,v 1.52 2015/07/01 06:48:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,15 +39,17 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.50 2013/11/09 15:57:15 christos Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.52 2015/07/01 06:48:25 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -112,12 +114,14 @@ static const char *months[] = {
 static void	 atodays(int, char *, unsigned short *);
 static void	 cal(void);
 static void	 closecal(FILE *);
+static void	 changeuser(void);
 static int	 getday(char *);
 static int	 getfield(char *, char **, int *);
 static void	 getmmdd(struct tm *, char *);
 static int	 getmonth(char *);
 static bool	 isnow(char *);
 static FILE	*opencal(FILE **);
+static int	 tryopen(const char *, int);
 static void	 settime(void);
 static void	 usage(void) __dead;
 
@@ -171,12 +175,24 @@ main(int argc, char **argv)
 		 * XXX - This ignores the user's CALENDAR_DIR variable.
 		 *       Run under user's login shell?
 		 */
+		if (setgroups(0, NULL) == -1) {
+			err(EXIT_FAILURE, "setgroups");
+		}
 		while ((pw = getpwent()) != NULL) {
-			(void)setegid(pw->pw_gid);
-			(void)seteuid(pw->pw_uid);
-			if (chdir(pw->pw_dir) != -1)
+			if (setegid(pw->pw_gid) == -1) {
+				warn("%s: setegid", pw->pw_name);
+				continue;
+			}
+			if (seteuid(pw->pw_uid) == -1) {
+				warn("%s: seteuid", pw->pw_name);
+				continue;
+			}
+			if (chdir(pw->pw_dir) != -1) {
 				cal();
-			(void)seteuid(0);
+			}
+			if (seteuid(0) == -1) {
+				warn("%s: seteuid back to 0", pw->pw_name);
+			}
 		}
 	} else if ((caldir = getenv("CALENDAR_DIR")) != NULL) {
 		if (chdir(caldir) != -1)
@@ -389,7 +405,7 @@ opencal(FILE **in)
 	/* open up calendar file as stdin */
 	if (fname == NULL) {
 		for (const char **name = defaultnames; *name != NULL; name++) {
-			if ((fd = open(*name, O_RDONLY)) == -1)
+			if ((fd = tryopen(*name, O_RDONLY)) == -1)
 				continue;
 			else
 				break;
@@ -399,7 +415,7 @@ opencal(FILE **in)
 				return NULL;
 			err(EXIT_FAILURE, "Cannot open calendar file");
 		}
-	} else if ((fd = open(fname, O_RDONLY)) == -1) {
+	} else if ((fd = tryopen(fname, O_RDONLY)) == -1) {
 		if (doall)
 			return NULL;
 		err(EXIT_FAILURE, "Cannot open `%s'", fname);
@@ -429,6 +445,10 @@ opencal(FILE **in)
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
+		if (doall) {
+			/* become the user properly */
+			changeuser();
+		}
 		/* tell CPP to only open regular files */
 		if(!cpp_restricted && setenv("CPP_RESTRICTED", "", 1) == -1)
 			err(EXIT_FAILURE, "Cannot restrict cpp");
@@ -464,6 +484,74 @@ opencal(FILE **in)
 	/*NOTREACHED*/
 }
 
+static int
+tryopen(const char *pathname, int flags)
+{
+	int fd, serrno, zero;
+	struct stat st;
+
+	/*
+	 * XXX: cpp_restricted has inverted sense; it is false by default,
+	 * and -x sets it to true. CPP_RESTRICTED is set in the environment
+	 * if cpp_restricted is false... go figure. This should be fixed
+	 * later.
+	 */
+	if (doall && cpp_restricted == false) {
+		/*
+		 * We are running with the user's euid, so they can't
+		 * cause any mayhem (e.g. opening rewinding tape
+		 * devices) that they couldn't do easily enough on
+		 * their own. All we really need to worry about is opens
+		 * that hang, because that would DoS the calendar run.
+		 */
+		fd = open(pathname, flags | O_NONBLOCK);
+		if (fd == -1) {
+			return -1;
+		}
+		if (fstat(fd, &st) == -1) {
+			serrno = errno;
+			close(fd);
+			errno = serrno;
+			return -1;
+		}
+		if (S_ISCHR(st.st_mode) ||
+		    S_ISBLK(st.st_mode) ||
+		    S_ISFIFO(st.st_mode)) {
+			close(fd);
+
+			/* Call shenanigans in the daily output */
+			errno = EPERM;
+			warn("%s: %s", pw->pw_name, pathname);
+
+			errno = EPERM;
+			return -1;
+		}
+		if (S_ISDIR(st.st_mode)) {
+			/* Don't warn about this */
+			close(fd);
+			errno = EISDIR;
+			return -1;
+		}
+		if (!S_ISREG(st.st_mode)) {
+			/* There shouldn't be other cases to go here */
+			close(fd);
+			errno = EINVAL;
+			return -1;
+		}
+		zero = 0;
+		if (ioctl(fd, FIONBIO, &zero) == -1) {
+			serrno = errno;
+			warn("%s: %s: FIONBIO", pw->pw_name, pathname);
+			close(fd);
+			errno = serrno;
+			return -1;
+		}
+		return fd;
+	} else {
+		return open(pathname, flags);
+	}
+}
+
 static void
 closecal(FILE *fp)
 {
@@ -495,6 +583,10 @@ closecal(FILE *fp)
 			(void)close(pdes[0]);
 		}
 		(void)close(pdes[1]);
+		if (doall) {
+			/* become the user properly */
+			changeuser();
+		}
 		(void)execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
 		    "\"Reminder Service\"", "-f", "root", NULL);
 		err(EXIT_FAILURE, "Cannot exec `%s'", _PATH_SENDMAIL);
@@ -516,6 +608,34 @@ done:	(void)fclose(fp);
 	(void)unlink(path);
 	while (wait(&status) != -1)
 		continue;
+}
+
+static void
+changeuser(void)
+{
+	uid_t uid;
+	gid_t gid;
+
+	uid = geteuid();
+	gid = getegid();
+	assert(uid == pw->pw_uid);
+	assert(gid == pw->pw_gid);
+
+	if (seteuid(0) == -1) {
+		err(EXIT_FAILURE, "%s: changing user: cannot reassert uid 0",
+		    pw->pw_name);
+	}
+	if (setgid(gid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot assume gid %d",
+		    pw->pw_name, (int)gid);
+	}
+	if (initgroups(pw->pw_name, gid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot initgroups", pw->pw_name);
+	}
+	if (setuid(uid) == -1) {
+		err(EXIT_FAILURE, "%s: cannot assume uid %d",
+		    pw->pw_name, (int)uid);
+	}
 }
 
 static int

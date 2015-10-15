@@ -1,30 +1,19 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.98 2013/08/11 03:53:12 dholland Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.120 2015/09/24 16:02:39 christos Exp $
 
-# LSC: Do not take for granted that the last thing done in the previous file 
-# was standard directories...
-/set type=dir uid=0 gid=0 mode=0755
-
-./etc/atf
-./usr/include/atf-c
-./usr/include/atf-c++
-./usr/include/lutok
-./usr/libdata
-./usr/libdata/debug
-./usr/libdata/debug/usr
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
 ./usr/libdata/debug/usr/tests/atf/atf-c
 ./usr/libdata/debug/usr/tests/atf/atf-c/detail
 ./usr/libdata/debug/usr/tests/atf/atf-c++
 ./usr/libdata/debug/usr/tests/atf/atf-c++/detail
-./usr/libdata/debug/usr/tests/atf/atf-report
-./usr/libdata/debug/usr/tests/atf/atf-run
 ./usr/libdata/debug/usr/tests/atf/formats
 ./usr/libdata/debug/usr/tests/atf/test-programs
+./usr/libdata/debug/usr/tests/atf/tools
 ./usr/libdata/debug/usr/tests/bin
 ./usr/libdata/debug/usr/tests/bin/df
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
+./usr/libdata/debug/usr/tests/crypto/opencrypto
 ./usr/libdata/debug/usr/tests/dev
 ./usr/libdata/debug/usr/tests/dev/audio
 ./usr/libdata/debug/usr/tests/dev/cgd
@@ -86,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
+./usr/libdata/debug/usr/tests/lib/libc/gen/execve
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/locale
@@ -119,6 +109,7 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2
 ./usr/libdata/debug/usr/tests/lib/libppath
+./usr/libdata/debug/usr/tests/lib/libproc
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen
@@ -138,11 +129,14 @@
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/bpf
 ./usr/libdata/debug/usr/tests/net/bpfilter
+./usr/libdata/debug/usr/tests/net/bpfjit
 ./usr/libdata/debug/usr/tests/net/carp
 ./usr/libdata/debug/usr/tests/net/fdpass
 ./usr/libdata/debug/usr/tests/net/icmp
 ./usr/libdata/debug/usr/tests/net/if
 ./usr/libdata/debug/usr/tests/net/if_loop
+./usr/libdata/debug/usr/tests/net/in_cksum
+./usr/libdata/debug/usr/tests/net/mcast
 ./usr/libdata/debug/usr/tests/net/net
 ./usr/libdata/debug/usr/tests/net/sys
 ./usr/libdata/debug/usr/tests/rump
@@ -153,37 +147,24 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
+./usr/libdata/debug/usr/tests/sys
+./usr/libdata/debug/usr/tests/sys/net
+./usr/libdata/debug/usr/tests/sys/netatalk
+./usr/libdata/debug/usr/tests/sys/netinet
+./usr/libdata/debug/usr/tests/sys/netinet6
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.bin/id
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
-./usr/share/atf
-./usr/share/doc/atf
-./usr/share/doc/kyua-atf-compat
-./usr/share/doc/kyua-cli
-./usr/share/doc/kyua-testers
-./usr/share/examples/atf
-./usr/share/examples/kyua-cli
-./usr/share/examples/lutok
-./usr/share/kyua-atf-compat
-./usr/share/kyua-cli
-./usr/share/kyua-cli/misc
-./usr/share/kyua-cli/store
-./usr/share/xml
-./usr/share/xml/atf
-./usr/share/xsl
-./usr/share/xsl/atf
 ./usr/tests
 ./usr/tests/atf
 ./usr/tests/atf/atf-c
 ./usr/tests/atf/atf-c/detail
 ./usr/tests/atf/atf-c++
 ./usr/tests/atf/atf-c++/detail
-./usr/tests/atf/atf-config
-./usr/tests/atf/atf-report
-./usr/tests/atf/atf-run
 ./usr/tests/atf/atf-sh
 ./usr/tests/atf/test-programs
+./usr/tests/atf/tools
 ./usr/tests/bin
 ./usr/tests/bin/cat
 ./usr/tests/bin/cp
@@ -194,9 +175,12 @@
 ./usr/tests/bin/ps
 ./usr/tests/bin/sleep
 ./usr/tests/bin/sh
+./usr/tests/bin/sh/dotcmd
+./usr/tests/bin/sh/dotcmd/out
 ./usr/tests/bin/tar
 ./usr/tests/crypto
 ./usr/tests/crypto/libcrypto
+./usr/tests/crypto/opencrypto
 ./usr/tests/dev
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
@@ -205,6 +189,7 @@
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
+./usr/tests/fs/cd9660
 ./usr/tests/fs/ffs
 ./usr/tests/fs/fifofs
 ./usr/tests/fs/hfs
@@ -264,6 +249,7 @@
 ./usr/tests/lib/libc/c063
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
+./usr/tests/lib/libc/gen/execve
 ./usr/tests/lib/libc/gen/posix_spawn
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/hash/data
@@ -303,6 +289,7 @@
 ./usr/tests/lib/libposix/posix1
 ./usr/tests/lib/libposix/posix2
 ./usr/tests/lib/libppath
+./usr/tests/lib/libproc
 ./usr/tests/lib/libprop
 ./usr/tests/lib/libpthread
 ./usr/tests/lib/libpthread/dlopen
@@ -322,15 +309,21 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2
 ./usr/tests/modules
 ./usr/tests/net
+./usr/tests/net/arp
 ./usr/tests/net/bpf
 ./usr/tests/net/bpfilter
+./usr/tests/net/bpfjit
 ./usr/tests/net/carp
 ./usr/tests/net/fdpass
 ./usr/tests/net/icmp
 ./usr/tests/net/if
+./usr/tests/net/if_bridge
 ./usr/tests/net/if_loop
+./usr/tests/net/in_cksum
+./usr/tests/net/mcast
 ./usr/tests/net/mpls
 ./usr/tests/net/net
+./usr/tests/net/ndp
 ./usr/tests/net/npf
 ./usr/tests/net/route
 ./usr/tests/net/sys
@@ -354,6 +347,10 @@
 ./usr/tests/share/examples/lutok
 ./usr/tests/share/mk
 ./usr/tests/sys
+./usr/tests/sys/net
+./usr/tests/sys/netatalk
+./usr/tests/sys/netinet
+./usr/tests/sys/netinet6
 ./usr/tests/sys/rc
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/awk
@@ -377,8 +374,10 @@
 ./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
+./usr/tests/usr.bin/ld
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
+./usr/tests/usr.bin/make/unit-tests
 ./usr/tests/usr.bin/mkdep
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/pr
@@ -390,6 +389,7 @@
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef
+./usr/tests/usr.bin/vmstat
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1
 ./usr/tests/usr.sbin
