@@ -1209,7 +1209,11 @@ fts_maxarglen(char * const *argv)
 }
 
 #if defined(__minix)
+#if ! HAVE_NBTOOL_CONFIG_H
 #include <minix/dmap.h>
+#else
+#define NONE_MAJOR 0
+#endif
 #endif /* defined(__minix) */
 
 /*
