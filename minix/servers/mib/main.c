@@ -32,6 +32,8 @@
  */
 static struct mib_node mib_table[] = {
 /* 1*/	[CTL_KERN]	= MIB_ENODE(_P | _RO, "kern", "High kernel"),
+/* 2*/	[CTL_VM]	= MIB_ENODE(_P | _RO, "vm", "Virtual memory"),
+/* 6*/	[CTL_HW]	= MIB_ENODE(_P | _RO, "hw", "Generic CPU, I/O"),
 /* 8*/	[CTL_USER]	= MIB_ENODE(_P | _RO, "user", "User-level"),
 /*11*/	[CTL_VENDOR]	= MIB_ENODE(_P | _RW, "vendor", "Vendor specific"),
 /*32*/	[CTL_MINIX]	= MIB_ENODE(_P | _RO, "minix", "MINIX3 specific"),
@@ -322,6 +324,8 @@ mib_init(int type __unused, sef_init_info_t * info __unused)
 	 * large enough to store the entry.
 	 */
 	mib_kern_init(&mib_table[CTL_KERN]);
+	mib_vm_init(&mib_table[CTL_VM]);
+	mib_hw_init(&mib_table[CTL_HW]);
 	mib_minix_init(&mib_table[CTL_MINIX]);
 
 	/*

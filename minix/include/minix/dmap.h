@@ -91,6 +91,9 @@
 #  define IMGRD_DEV   		   6	/* minor device for /dev/imgrd */
 #  define RAM_DEV_FIRST		   7	/* first minor device for /dev/ram* */
 
+/* Minor device numbers for the TTY driver. */
+#  define CONS_MINOR		   0	/* console device */
+
 #define CTRLR(n) ((n)==0 ? 3 : (8 + 2*((n)-1)))	/* magic formula */
 
 /* Minor device numbers for log driver. */
