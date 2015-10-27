@@ -4,7 +4,7 @@
 #include <minix/timers.h>
 
 /* First minor numbers for the various classes of TTY devices. */
-#define CONS_MINOR	   0
+/* CONS_MINOR is defined in minix/dmap.h */
 #define LOG_MINOR	  15
 #define RS232_MINOR	  16
 #define VIDEO_MINOR	 125

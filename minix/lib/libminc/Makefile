@@ -288,7 +288,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 	init.o kernel_utils.o link.o loadname.o lseek.o _mcontext.o mknod.o \
 	mmap.o nanosleep.o open.o pread.o pwrite.o read.o sbrk.o \
 	select.o setuid.o sigprocmask.o stack_utils.o stat.o stime.o \
-	syscall.o _ucontext.o umask.o unlink.o wait4.o write.o \
+	svrctl.o syscall.o _ucontext.o umask.o unlink.o wait4.o write.o \
 	kill.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/sys/${f:C/\.o/.c/}
 OBJS+=	${f}

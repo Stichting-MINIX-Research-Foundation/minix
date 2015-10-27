@@ -1,7 +1,10 @@
 
 #include "inc.h"
 
+#include <sys/time.h>
 #include <sys/sysctl.h>
+#include <sys/sched.h>
+#include <sys/resource.h>
 
 struct sysctl_tab {
 	int id;
@@ -13,13 +16,272 @@ struct sysctl_tab {
 #define NODE(i,t) { .id = i, .size = __arraycount(t), .tab = t }
 #define PROC(i,s,p) { .id = i, .size = s, .proc = p }
 
+/*
+ * Print CTL_KERN KERN_CLOCKRATE.
+ */
+static int
+put_kern_clockrate(struct trace_proc * proc, const char * name,
+	int type __unused, const void * ptr, vir_bytes addr __unused,
+	size_t size __unused)
+{
+	struct clockinfo *ci;
+
+	ci = (struct clockinfo *)ptr;
+
+	put_value(proc, "hz", "%d", ci->hz);
+	put_value(proc, "tick", "%d", ci->tick);
+	if (verbose > 0) {
+		put_value(proc, "tickadj", "%d", ci->tickadj);
+		put_value(proc, "stathz", "%d", ci->stathz);
+		put_value(proc, "profhz", "%d", ci->profhz);
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/*
+ * Print CTL_KERN KERN_PROC2.
+ */
+static int
+put_kern_proc2(struct trace_proc * proc, const char * name, int type,
+	const void * ptr, vir_bytes addr, size_t size)
+{
+	const int *mib;
+	const char *text;
+	int i;
+
+	if (type == ST_NAME) {
+		mib = (const int *)ptr;
+
+		for (i = 0; i < size; i++) {
+			text = NULL;
+
+			if (i == 0) {
+				switch (mib[i]) {
+				case KERN_PROC_ALL: text = "<all>"; break;
+				case KERN_PROC_PID: text = "<pid>"; break;
+				case KERN_PROC_PGRP: text = "<pgrp>"; break;
+				case KERN_PROC_SESSION:
+					text = "<session>"; break;
+				case KERN_PROC_TTY: text = "<tty>"; break;
+				case KERN_PROC_UID: text = "<uid>"; break;
+				case KERN_PROC_RUID: text = "<ruid>"; break;
+				case KERN_PROC_GID: text = "<gid>"; break;
+				case KERN_PROC_RGID: text = "<rgid>"; break;
+				}
+			} else if (i == 1 && mib[0] == KERN_PROC_TTY) {
+				switch ((dev_t)mib[i]) {
+				case KERN_PROC_TTY_NODEV:
+					text = "<nodev>"; break;
+				case KERN_PROC_TTY_REVOKE:
+					text = "<revoke>"; break;
+				}
+			}
+
+			if (!valuesonly && text != NULL)
+				put_field(proc, NULL, text);
+			else
+				put_value(proc, NULL, "%d", mib[i]);
+		}
+
+		/*
+		 * Save the requested structure length, so that we can later
+		 * determine how many elements were returned (see below).
+		 */
+		proc->sctl_arg = (size == 4) ? mib[2] : 0;
+
+		return 0;
+	}
+
+	if (proc->sctl_arg > 0) {
+		/* TODO: optionally dump struct kinfo_drivers array */
+		put_open(proc, name, 0, "[", ", ");
+		if (size > 0)
+			put_tail(proc, size / proc->sctl_arg, 0);
+		put_close(proc, "]");
+	} else
+		put_ptr(proc, name, addr);
+
+	return TRUE;
+}
+
+/*
+ * Print CTL_KERN KERN_PROC_ARGS.
+ */
+static int
+put_kern_proc_args(struct trace_proc * proc, const char * name, int type,
+	const void * ptr, vir_bytes addr, size_t size)
+{
+	const int *mib;
+	const char *text;
+	int i, v;
+
+	if (type == ST_NAME) {
+		mib = (const int *)ptr;
+
+		for (i = 0; i < size; i++) {
+			text = NULL;
+
+			if (i == 1) {
+				switch (mib[i]) {
+				case KERN_PROC_ARGV: text = "<argv>"; break;
+				case KERN_PROC_ENV: text = "<env>"; break;
+				case KERN_PROC_NARGV: text = "<nargv>"; break;
+				case KERN_PROC_NENV: text = "<nenv>"; break;
+				}
+			}
+
+			if (!valuesonly && text != NULL)
+				put_field(proc, NULL, text);
+			else
+				put_value(proc, NULL, "%d", mib[i]);
+		}
+
+		/* Save the subrequest, so that we can later print data. */
+		proc->sctl_arg = (size == 2) ? mib[1] : -999;
+
+		return 0;
+	}
+
+	if ((proc->sctl_arg == KERN_PROC_NARGV ||
+	    proc->sctl_arg == KERN_PROC_NENV) && size == sizeof(v) &&
+	    mem_get_data(proc->pid, addr, &v, sizeof(v)) >= 0) {
+		put_open(proc, name, PF_NONAME, "{", ", ");
+
+		put_value(proc, NULL, "%d", v);
+
+		put_close(proc, "}");
+	} else
+		put_ptr(proc, name, addr);
+
+	return TRUE;
+}
+
+/*
+ * Print CTL_KERN KERN_CP_TIME.
+ */
+static int
+put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
+	int type, const void * ptr, vir_bytes addr __unused, size_t size)
+{
+	uint64_t *p;
+	unsigned int i;
+	const int *mib;
+
+	if (type == ST_NAME) {
+		mib = (const int *)ptr;
+		for (i = 0; i < size; i++)
+			put_value(proc, NULL, "%d", mib[i]);
+
+		return 0;
+	}
+
+	p = (uint64_t *)ptr;
+
+	/* TODO: support for multi-CPU results */
+	for (i = 0; i < CPUSTATES; i++)
+		put_value(proc, NULL, "%"PRIu64, p[i]);
+
+	return TRUE;
+}
+
+/*
+ * Print CTL_KERN KERN_CONSDEV.
+ */
+static int
+put_kern_consdev(struct trace_proc * proc, const char * name,
+	int type __unused, const void * ptr, vir_bytes addr __unused,
+	size_t size __unused)
+{
+
+	put_dev(proc, NULL, *(dev_t *)ptr);
+
+	return TRUE;
+}
+
+/*
+ * Print CTL_KERN KERN_DRIVERS.
+ */
+static int
+put_kern_drivers(struct trace_proc * proc, const char * name,
+	int type __unused, const void * ptr __unused, vir_bytes addr __unused,
+	size_t size)
+{
+
+	/* TODO: optionally dump struct kinfo_drivers array */
+	put_open(proc, name, 0, "[", ", ");
+	if (size > 0)
+		put_tail(proc, size / sizeof(struct kinfo_drivers), 0);
+	put_close(proc, "]");
+
+	return TRUE;
+}
+
+/*
+ * Print CTL_KERN KERN_BOOTTIME.
+ */
+static int
+put_kern_boottime(struct trace_proc * proc, const char * name,
+	int type __unused, const void * ptr __unused, vir_bytes addr,
+	size_t size)
+{
+
+	if (size == sizeof(struct timeval))
+		put_struct_timeval(proc, name, 0, addr);
+	else
+		put_ptr(proc, name, addr);
+
+	return TRUE;
+}
+
 /* The CTL_KERN table. */
 static const struct sysctl_tab kern_tab[] = {
+	PROC(KERN_CLOCKRATE, sizeof(struct clockinfo), put_kern_clockrate),
+	PROC(KERN_PROC2, 0, put_kern_proc2),
+	PROC(KERN_PROC_ARGS, 0, put_kern_proc_args),
+	PROC(KERN_CP_TIME, sizeof(uint64_t) * CPUSTATES, put_kern_cp_time),
+	PROC(KERN_CONSDEV, sizeof(dev_t), put_kern_consdev),
+	PROC(KERN_DRIVERS, 0, put_kern_drivers),
+	PROC(KERN_BOOTTIME, 0, put_kern_boottime),
+};
+
+/*
+ * Print CTL_VM VM_LOADAVG.
+ */
+static int
+put_vm_loadavg(struct trace_proc * proc, const char * name __unused,
+	int type __unused, const void * ptr, vir_bytes addr __unused,
+	size_t size __unused)
+{
+	struct loadavg *loadavg;
+	unsigned int i;
+
+	loadavg = (struct loadavg *)ptr;
+
+	put_open(proc, "ldavg", 0, "{", ", ");
+
+	for (i = 0; i < __arraycount(loadavg->ldavg); i++)
+		put_value(proc, NULL, "%"PRIu32, loadavg->ldavg[i]);
+
+	put_close(proc, "}");
+
+	if (verbose > 0) {
+		put_value(proc, "fscale", "%ld", loadavg->fscale);
+
+		return TRUE;
+	} else
+		return FALSE;
+}
+
+/* The CTL_VM table. */
+static const struct sysctl_tab vm_tab[] = {
+	PROC(VM_LOADAVG, sizeof(struct loadavg), put_vm_loadavg),
 };
 
 /* The top-level table, which is indexed by identifier. */
 static const struct sysctl_tab root_tab[] = {
 	[CTL_KERN]	= NODE(0, kern_tab),
+	[CTL_VM]	= NODE(0, vm_tab),
 };
 
 /*

@@ -13,9 +13,12 @@ getuptime(clock_t * uptime, clock_t * realtime, time_t * boottime)
 	minix_kerninfo = get_minix_kerninfo();
 
 	/* We assume atomic 32-bit field retrieval.  TODO: 64-bit support. */
-	*uptime = minix_kerninfo->kclockinfo->uptime;
-	*realtime = minix_kerninfo->kclockinfo->realtime;
-	*boottime = minix_kerninfo->kclockinfo->boottime;
+	if (uptime != NULL)
+		*uptime = minix_kerninfo->kclockinfo->uptime;
+	if (realtime != NULL)
+		*realtime = minix_kerninfo->kclockinfo->realtime;
+	if (boottime != NULL)
+		*boottime = minix_kerninfo->kclockinfo->boottime;
 
 	return OK;
 }
