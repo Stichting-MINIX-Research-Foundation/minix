@@ -60,11 +60,7 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	size_t len;
-#if defined(__minix)
-	int ch;
-#else
 	int ch, mib[2];
-#endif /* defined(__minix) */
 	char *p, *std, path[MAXPATHLEN];
 	const char *t;
 	int which = strcmp(getprogname(), "which") == 0;
@@ -102,18 +98,6 @@ main(int argc, char *argv[])
  			errx(1, "PATH environment variable is not set");
 	} else {
 		/* Retrieve the standard path. */
-#if defined(__minix)
-		/*
-			Note: This path is currently defined here and should probably be defined
-			here, in "ash" or in "sh".
-			To minimize code changes, the path has been hard coded into this file.
-			However, if this path needs to be used in other ported programs, please
-			move this define to <minix/paths.h> and add the include to this file
-			and all files that use _PATH_USER_CS_PATH.
-		 */
-		#define _PATH_USER_CS_PATH "/usr/X11R7/sbin:/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:/usr/X11R7/bin:/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin:/usr/games"
-		std = strdup(_PATH_USER_CS_PATH);
-#else
 		mib[0] = CTL_USER;
 		mib[1] = USER_CS_PATH;
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
@@ -124,7 +108,6 @@ main(int argc, char *argv[])
 			err(1, NULL);
 		if (sysctl(mib, 2, std, &len, NULL, 0) == -1)
 			err(1, "sysctl: user.cs_path");
-#endif /* defined(__minix) */
 	}
 
 	/* For each path, for each program... */

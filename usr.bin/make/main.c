@@ -885,7 +885,7 @@ main(int argc, char **argv)
 	}
 
 	if (!machine_arch) {
-#if defined(MAKE_NATIVE) && !defined(__minix)
+#if defined(MAKE_NATIVE)
 	    static char machine_arch_buf[sizeof(utsname.machine)];
 	    const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 	    size_t len = sizeof(machine_arch_buf);

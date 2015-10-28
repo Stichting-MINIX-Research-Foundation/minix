@@ -401,6 +401,9 @@ start|autoboot)
 	trap 2
     fi
 
+    # Load the stored hostname into the sysctl database.
+    test -r /etc/hostname.file && hostname $(cat /etc/hostname.file)
+
     # Recover files being edited when the system crashed.
     test -f /usr/bin/elvprsv && elvprsv /usr/tmp/elv*
 

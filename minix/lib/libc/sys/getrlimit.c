@@ -27,7 +27,6 @@ int getrlimit(int resource, struct rlimit *rlp)
 		case RLIMIT_CORE:
 		case RLIMIT_RSS:
 		case RLIMIT_MEMLOCK:
-		case RLIMIT_NPROC:
 		case RLIMIT_SBSIZE:
 		case RLIMIT_AS:
 		/* case RLIMIT_VMEM: Same as RLIMIT_AS */
@@ -36,6 +35,10 @@ int getrlimit(int resource, struct rlimit *rlp)
 			 * may apply) 
 			 */	
 			limit = RLIM_INFINITY;
+			break;
+
+		case RLIMIT_NPROC:
+			limit = CHILD_MAX;
 			break;
 
 		case RLIMIT_NOFILE:

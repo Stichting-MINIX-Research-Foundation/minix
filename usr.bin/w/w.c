@@ -144,9 +144,7 @@ main(int argc, char **argv)
 	char *memf, *nlistf, *usrnp;
 	const char *options;
 	time_t then;
-#if !defined(__minix)
 	size_t len;
-#endif /* !defined(__minix) */
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
@@ -216,11 +214,9 @@ main(int argc, char **argv)
 	(void)time(&now);
 
 	if (use_sysctl) {
-#if !defined(__minix)
 		len = sizeof(curtain);
 		if (sysctlbyname("security.curtain", &curtain, &len, 
 		    NULL, 0) == -1)
-#endif /* !defined(__minix) */
 			curtain = 0;
 	}
 
@@ -482,12 +478,8 @@ pr_header(time_t *nowp, int nusers)
 	double avenrun[3];
 	time_t uptime;
 	int days, hrs, mins;
-#if !defined(__minix)
 	int mib[2];
 	size_t size, i;
-#else
-	size_t i;
-#endif /* !defined(__minix) */
 	char buf[256];
 
 	/*
@@ -504,16 +496,12 @@ pr_header(time_t *nowp, int nusers)
 	 * Print how long system has been up.
 	 * (Found by looking getting "boottime" from the kernel)
 	 */
-#if !defined(__minix)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
 	size = sizeof(boottime);
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 &&
 	    boottime.tv_sec != 0) {
 		uptime = now - boottime.tv_sec;
-#else
-	if (minix_getuptime(&uptime) != -1) {
-#endif /* !defined(__minix) */
 		uptime += 30;
 		if (uptime > SECSPERMIN) {
 			days = uptime / SECSPERDAY;
