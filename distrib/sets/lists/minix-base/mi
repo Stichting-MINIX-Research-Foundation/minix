@@ -38,6 +38,7 @@
 ./bin/pax                                               minix-base
 ./bin/printconfig                                       minix-base
 ./bin/printroot                                         minix-base
+./bin/ps                                                minix-base
 ./bin/pwd                                               minix-base
 ./bin/rcmd                                              minix-base
 ./bin/rcp                                               minix-base
@@ -437,7 +438,7 @@
 ./usr/bin/printf                                        minix-base
 ./usr/bin/profile                                       minix-base
 ./usr/bin/progressbar                                   minix-base
-./usr/bin/ps                                            minix-base
+./usr/bin/ps                                            minix-base      obsolete
 ./usr/bin/pwhash                                        minix-base
 ./usr/bin/ramdisk                                       minix-base
 ./usr/bin/rarpd                                         minix-base
