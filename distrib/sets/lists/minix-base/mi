@@ -711,6 +711,9 @@
 ./usr/lib/libgcc_s.so                                   minix-base
 ./usr/lib/libgcc_s.so.1                                 minix-base
 ./usr/lib/libgcc_s.so.1.0                               minix-base
+./usr/lib/libkvm.so                                     minix-base
+./usr/lib/libkvm.so.6                                   minix-base
+./usr/lib/libkvm.so.6.0                                 minix-base
 ./usr/lib/liblua.so                                     minix-base
 ./usr/lib/liblua.so.1.0                                 minix-base      obsolete
 ./usr/lib/liblua.so.1                                   minix-base      obsolete

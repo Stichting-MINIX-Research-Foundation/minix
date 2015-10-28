@@ -1,0 +1,102 @@
+.\"	$NetBSD: kvm_getlwps.3,v 1.6 2009/03/10 23:49:07 joerg Exp $
+.\"
+.\"Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\"All rights reserved.
+.\"
+.\"This code is derived from software contributed to The NetBSD Foundation
+.\"by Nathan J. Williams.
+.\"
+.\"Redistribution and use in source and binary forms, with or without
+.\"modification, are permitted provided that the following conditions
+.\"are met:
+.\"1. Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\"2. Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\"
+.\"THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\"``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\"TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\"PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\"BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\"INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\"CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\"ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\"POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 10, 2004
+.Dt KVM_GETLWPS 3
+.Os
+.Sh NAME
+.Nm kvm_getlwps
+.Nd access state of LWPs belonging to a user process
+.Sh LIBRARY
+.Lb libkvm
+.Sh SYNOPSIS
+.In kvm.h
+.In sys/param.h
+.In sys/sysctl.h
+.\" .Fa kvm_t *kd
+.Ft struct kinfo_lwp *
+.Fn kvm_getlwps "kvm_t *kd" "int pid" "u_long procaddr" "int *elemsize" "int *cnt"
+.Sh DESCRIPTION
+.Fn kvm_getlwps
+returns the set of LWPs belonging to the process specified by
+.Fa pid
+or
+.Fa procaddr
+in the kernel indicated by
+.Fa kd .
+The number of LWPs found is returned in the reference parameter
+.Fa cnt .
+The LWPs are returned as a contiguous array of
+.Sy kinfo_lwp
+structures.
+This memory is locally allocated, and subsequent calls to
+.Fn kvm_getlwps
+and
+.Fn kvm_close
+will overwrite this storage.
+.Pp
+Only the first
+.Fa elemsize
+bytes of each array entry are returned.
+If the size of the
+.Sy kinfo_lwp
+structure increases in size in a future release of
+.Nx
+the kernel will only return the requested amount of data for
+each array entry and programs that use
+.Fn kvm_getlwps
+will continue to function without the need for recompilation.
+.Pp
+If called against an active kernel, the
+.Fn kvm_getlwps
+function will use the
+.Xr sysctl 3
+interface and return information about the process identified by
+.Fa pid ;
+otherwise the kernel memory device file or swap device will be
+accessed and the process is identified by the location passed in
+.Fa paddr .
+.Sh RETURN VALUES
+.Fn kvm_getlwps
+returns
+.Dv NULL
+on failure.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_geterr 3 ,
+.Xr kvm_getproc2 3 ,
+.Xr kvm_getprocs 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3
+.Sh BUGS
+These routines do not belong in the kvm interface.

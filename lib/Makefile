@@ -78,7 +78,7 @@ SUBDIR+=	../minix/lib/libmagicrt
 SUBDIR+=	\
 		libbz2 \
 		libcrypt \
-		libm \
+		libkvm libm \
 		libpci libprop \
 		libpuffs librmt \
 		libterminfo \
