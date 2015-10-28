@@ -191,6 +191,7 @@
 ./sbin/poweroff                                         minix-base
 ./sbin/reboot                                           minix-base
 ./sbin/shutdown                                         minix-base
+./sbin/sysctl                                           minix-base
 ./service                                               minix-base
 ./service/asr                                           minix-base
 ./service/devman                                        minix-base

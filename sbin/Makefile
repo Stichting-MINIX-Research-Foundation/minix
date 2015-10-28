@@ -12,7 +12,7 @@ SUBDIR= \
 	mknod nologin \
 	ping \
 	reboot \
-	shutdown \
+	shutdown sysctl \
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs newfs_msdos newfs_udf newfs_v7fs

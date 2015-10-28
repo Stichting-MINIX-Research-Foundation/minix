@@ -28,8 +28,6 @@ else	echo "Can't find a compiler, skipping test"
 	exit 0
 fi
 
-ARCH=`uname -p`
-
 echo -n  "Shell test  2 "
 rm -rf $TESTDIR
 mkdir $TESTDIR			# all files are created here
@@ -113,7 +111,7 @@ if test -r x; then : ; else bomb "Error in du Test 1"; fi
 
 #Test od			
 head -1 $f |od >x		# see if od converts ascii to octal ok
-if [ $ARCH = i386 -o $ARCH = evbarm ]
+if [ $(/sbin/sysctl -n hw.byteorder) = "1234" ]
 then
 cat >answer <<END
 0000000   064124  020145  064564  062555  064040  071541  061440  066557
@@ -135,7 +133,7 @@ fi
 if cmp -s x answer; then : ; else bomb "Error in od test 1"; fi
 
 head -1 $f |od -d >x		# see if od converts ascii to decimal ok
-if [ $ARCH = i386 -o $ARCH = evbarm ]
+if [ $(/sbin/sysctl -n hw.byteorder) = "1234" ]
 then
 cat >answer <<END
 0000000    26708   08293   26996   25965   26656   29537   25376   28015

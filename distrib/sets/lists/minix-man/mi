@@ -3405,6 +3405,7 @@
 ./usr/man/man8/srccrc.8                                 minix-man
 ./usr/man/man8/strfile.8                                minix-man
 ./usr/man/man8/sync.8                                   minix-man
+./usr/man/man8/sysctl.8                                 minix-man
 ./usr/man/man8/syslogd.8                                minix-man
 ./usr/man/man8/tcpd.8                                   minix-man
 ./usr/man/man8/traceroute.8                             minix-man

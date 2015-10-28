@@ -1,0 +1,527 @@
+.\"	$NetBSD: sysctl.8,v 1.162 2011/08/03 01:47:40 christos Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
+.\"
+.Dd August 2, 2011
+.Dt SYSCTL 8
+.Os
+.Sh NAME
+.Nm sysctl
+.Nd get or set kernel state
+.Sh SYNOPSIS
+.Nm sysctl
+.Op Fl AdeMnq
+.Oo
+.Fl r |
+.Fl x
+.Oc
+.Op Ar name ...
+.Nm sysctl
+.Op Fl nq
+.Oo
+.Fl r |
+.Fl x
+.Oc
+.Fl w
+.Ar name Ns Li [?]= Ns Ar value ...
+.Nm sysctl
+.Op Fl en
+.Oo
+.Fl r |
+.Fl x
+.Oc
+.Fl a
+.Nm sysctl
+.Op Fl nq
+.Oo
+.Fl r |
+.Fl x
+.Oc
+.Fl f
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm sysctl
+utility retrieves kernel state and allows processes with
+appropriate privilege to set kernel state.
+The state to be retrieved or set is described using a
+``Management Information Base'' (``MIB'') style name,
+described as a dotted set of components.
+The
+.Sq /
+character may also be used as a separator and a leading separator
+character is accepted.
+If
+.Ar name
+specifies a non-leaf node in the MIB, all the nodes underneath
+.Ar name
+will be printed.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl A
+List all the known MIB names including tables, unless any MIB
+arguments or
+.Fl f Ar file
+are given.
+Those with string or integer values will be printed as with the
+.Fl a
+flag; for table or structure values that
+.Nm
+is not able to print,
+the name of the utility to retrieve them is given.
+Errors in retrieving or setting values will be directed to stdout
+instead of stderr.
+.It Fl a
+List all the currently available string or integer values.
+The use of a solitary separator character (either
+.Sq \&.
+or
+.Sq / )
+by
+itself has the same effect.
+Any given
+.Ar name
+arguments are ignored if this option is specified.
+.It Fl d
+Descriptions of each of the nodes selected will be printed instead of
+their values.
+.It Fl e
+Separate the name and the value of the variable(s) with
+.Ql = .
+This is useful for producing output which can be fed back to the
+.Nm
+utility.
+This option is ignored if
+.Fl n
+is specified or a variable is being set.
+.It Fl f
+Specifies the name of a file to read and process.
+Blank lines and comments (beginning with
+.Ql # )
+are ignored.
+Line continuations with
+.Ql \e
+are permitted.
+Remaining lines are processed similarly to
+command line arguments of the form
+.Ar name
+or
+.Ar name Ns Li = Ns Ar value .
+The
+.Fl w
+flag is implied by
+.Fl f .
+Any
+.Ar name
+arguments are ignored.
+.It Fl M
+Makes
+.Nm
+print the MIB instead of any of the actual values contained in the
+MIB.
+This causes the entire MIB to be printed unless specific MIB arguments
+or
+.Fl f Ar file
+are also given.
+.It Fl n
+Specifies that the printing of the field name should be
+suppressed and that only its value should be output.
+This flag is useful for setting shell variables.
+For example, to save the pagesize in variable psize, use:
+.Bd -literal -offset indent -compact
+set psize=`sysctl -n hw.pagesize`
+.Ed
+.It Fl q
+Used to indicate that nothing should be printed for reads or writes unless an
+error is detected.
+For reads, not finding a variable does not print an error, but exits with
+an error code.
+This is useful just for testing that a variable exists.
+.It Fl r
+Raw output form.
+Values printed are in their raw binary forms as retrieved directly
+from the kernel.
+Some additional nodes that
+.Nm
+cannot print directly can be retrieved with this flag.
+This option conflicts with the
+.Fl x
+option.
+.It Fl w
+Sets the MIB style name given to the value given.
+The MIB style name and value must be separated by
+.Ql =
+with no whitespace.
+To prevent an error if the MIB style name does not exist (as would be the
+case with optional kernel components), one can separate the MIB style name
+and the value with
+.Ql ?= .
+Only integral and string values can be set via this method.
+.It Fl x
+Makes
+.Nm
+print the requested value in a hexadecimal representation instead of
+its regular form.
+If specified more than once, the output for each value resembles that of
+.Xr hexdump 1
+when given the
+.Fl C
+flag.
+This option conflicts with the
+.Fl r
+option.
+.Pp
+.El
+The
+.Ql proc
+top-level MIB has a special semantic: it represent per-process values
+and as such may differ from one process to another.
+The second-level name is the pid of the process (in decimal form),
+or the special word
+.Ql curproc .
+For variables below
+.Ql proc. Ns Ao pid Ac Ns .rlimit ,
+the integer value may be replaced
+with the string
+.Ql unlimited
+if it matches the magic value used to disable
+a limit.
+.Pp
+The information available from
+.Nm sysctl
+consists of integers, strings, and tables.
+The tabular information can only be retrieved by special
+purpose programs such as
+.Nm ps ,
+.Nm systat ,
+and
+.Nm netstat .
+See
+.Xr sysctl 7
+for description of available MIBs.
+.Sh CREATION AND DELETION
+New nodes are allowed to be created by the superuser when the kernel
+is running at security level 0.
+These new nodes may refer to existing kernel data or to new data that
+is only instrumented by
+.Xr sysctl 3
+itself.
+.Pp
+The syntax for creating new nodes is
+.Dq //create=new.node.path
+followed by one or more of the following attributes separated by
+commas.
+The use of a double separator (both
+.Sq /
+and
+.Sq \&.
+can be used as
+separators) as the prefix tells sysctl that the first series of tokens
+is not a MIB name, but a command.
+It is recommended that the double separator preceding the command not
+be the same as the separator used in naming the MIB entry so as to
+avoid possible parse conflicts.
+The
+.Dq value
+assigned, if one is given, must be last.
+.Pp
+.Bl -bullet -compact
+.It
+.Ar type= Ns Aq Ar T
+where
+.Ar T
+must be one of
+.Dq node ,
+.Dq int ,
+.Dq string ,
+.Dq quad ,
+or
+.Dq struct .
+If the type is omitted, the
+.Dq node
+type is assumed.
+.It
+.Ar size= Ns Aq Ar S
+here,
+.Ar S
+asserts the size of the new node.
+Nodes of type
+.Dq node
+should not have a size set.
+The size may be omitted for nodes of types
+.Dq int
+or
+.Dq quad .
+If the size is omitted for a node of type
+.Dq string ,
+the size will be determined by the length of the given value, or by
+the kernel for kernel strings.
+Nodes of type
+.Dq struct
+must have their size explicitly set.
+.It
+.Ar addr= Ns Aq Ar A
+or
+.Ar symbol= Ns Aq Ar A
+The kernel address of the data being instrumented.
+If
+.Dq symbol
+is used, the symbol must be globally visible to the in-kernel
+.Xr ksyms 4
+driver.
+.It
+.Ar n= Ns Aq Ar N
+The MIB number to be assigned to the new node.
+If no number is specified, the kernel will assign a value.
+.It
+.Ar flags= Ns Aq Ar F
+A concatenated string of single letters that govern the behavior of
+the node.
+Flags currently available are:
+.Bl -tag -width www
+.It a
+Allow anyone to write to the node, if it is writable.
+.It h
+.Dq Hidden .
+.Nm
+must be invoked with
+.Fl A
+or the hidden node must be specifically requested in order to see it
+.It i
+.Dq Immediate .
+Makes the node store data in itself, rather than allocating new space
+for it.
+This is the default for nodes of type
+.Dq int
+and
+.Dq quad .
+This is the opposite of owning data.
+.It o
+.Dq Own .
+When the node is created, separate space will be allocated to store
+the data to be instrumented.
+This is the default for nodes of type
+.Dq string
+and
+.Dq struct
+where it is not possible to guarantee sufficient space to store the
+data in the node itself.
+.It p
+.Dq Private .
+Nodes that are marked private, and children of nodes so marked, are
+only viewable by the superuser.
+Be aware that the immediate data that some nodes may store is not
+necessarily protected by this.
+.It x
+.Dq Hexadecimal .
+Make
+.Nm
+default to hexadecimal display of the retrieved value
+.It r
+.Dq Read-only .
+The data instrumented by the given node is read-only.
+Note that other mechanisms may still exist for changing the data.
+This is the default for nodes that instrument data.
+.It w
+.Dq Writable .
+The data instrumented by the given node is writable at any time.
+This is the default for nodes that can have children.
+.El
+.Pp
+.It
+.Ar value= Ns Aq Ar V
+An initial starting value for a new node that does not reference
+existing kernel data.
+Initial values can only be assigned for nodes of the
+.Dq int ,
+.Dq quad ,
+and
+.Dq string
+types.
+.El
+.Pp
+New nodes must fit the following set of criteria:
+.Pp
+.Bl -bullet -compact
+.It
+If the new node is to address an existing kernel object, only one of the
+.Dq symbol
+or
+.Dq addr
+arguments may be given.
+.It
+The size for a
+.Dq struct
+type node must be specified; no initial value is expected or permitted.
+.It
+Either the size or the initial value for a
+.Dq string
+node must be given.
+.It
+The node which will be the parent of the new node must be writable.
+.El
+.Pp
+If any of the given parameters describes an invalid configuration,
+.Nm
+will emit a diagnostic message to the standard error and exit.
+.Pp
+Descriptions can be added by the super-user to any node that does not
+have one, provided that the node is not marked with the
+.Dq PERMANENT
+flag.
+The syntax is similar to the syntax for creating new nodes with the
+exception of the keyword that follows the double separator at the
+start of the command:
+.Dq //describe=new.node.path=new node description .
+Once a description has been added, it cannot be changed or removed.
+.Pp
+When destroying nodes, only the path to the node is necessary, i.e.,
+.Dq //destroy=old.node.path .
+No other parameters are expected or permitted.
+Nodes being destroyed must have no children, and their parent must be
+writable.
+Nodes that are marked with the
+.Dq Dv PERMANENT
+flag (as assigned by the kernel) may not be deleted.
+.Pp
+In all cases, the initial
+.Sq =
+that follows the command (eg,
+.Dq create ,
+.Dq destroy ,
+or
+.Dq describe )
+may be replaced with another instance of the separator character,
+provided that the same separator character is used for the length of
+the name specification.
+.Sh FILES
+.Bl -tag -width /etc/sysctl.conf -compact
+.It Pa /etc/sysctl.conf
+.Nm
+variables set at boot time
+.El
+.Sh EXAMPLES
+For example, to retrieve the maximum number of processes allowed
+in the system, one would use the following request:
+.Bd -literal -offset indent -compact
+sysctl kern.maxproc
+.Ed
+.Pp
+To set the maximum number of processes allowed
+in the system to 1000, one would use the following request:
+.Bd -literal -offset indent -compact
+sysctl -w kern.maxproc=1000
+.Ed
+.Pp
+Information about the system clock rate may be obtained with:
+.Bd -literal -offset indent -compact
+sysctl kern.clockrate
+.Ed
+.Pp
+Information about the load average history may be obtained with:
+.Bd -literal -offset indent -compact
+sysctl vm.loadavg
+.Ed
+.Pp
+To view the values of the per-process variables of the current shell,
+the request:
+.Bd -literal -offset indent -compact
+sysctl proc.$$
+.Ed
+can be used if the shell interpreter replaces $$ with its pid (this is true
+for most shells).
+.Pp
+To redirect core dumps to the
+.Pa /var/tmp/ Ns Aq username
+directory,
+.Bd -literal -offset indent -compact
+sysctl -w proc.$$.corename=/var/tmp/%u/%n.core
+.Ed
+should be used.
+.Bd -literal -offset indent -compact
+sysctl -w proc.curproc.corename=/var/tmp/%u/%n.core
+.Ed
+changes the value for the sysctl process itself, and will not have the desired
+effect.
+.Pp
+To create the root of a new sub-tree called
+.Dq local
+add some children to the new node, and some descriptions:
+.Bd -literal -offset indent -compact
+sysctl -w //create=local
+sysctl -w //describe=local=my local sysctl tree
+sysctl -w //create=local.esm_debug,type=int,symbol=esm_debug,flags=w
+sysctl -w //describe=local.esm_debug=esm driver debug knob
+sysctl -w //create=local.audiodebug,type=int,symbol=audiodebug,flags=w
+sysctl -w //describe=local.audiodebug=generic audio debug knob
+.Ed
+Note that the children are made writable so that the two debug
+settings in question can be tuned arbitrarily.
+.Pp
+To destroy that same subtree:
+.Bd -literal -offset indent -compact
+sysctl -w //destroy=local.esm_debug
+sysctl -w //destroy=local.audiodebug
+sysctl -w //destroy=local
+.Ed
+.Sh SEE ALSO
+.Xr sysctl 3 ,
+.Xr ksyms 4 ,
+.Xr sysctl 7
+.Sh HISTORY
+.Nm sysctl
+first appeared in
+.Bx 4.4 .
