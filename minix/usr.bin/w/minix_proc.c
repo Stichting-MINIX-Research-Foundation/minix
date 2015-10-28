@@ -251,23 +251,3 @@ minix_proc_compare(const struct minix_proc * p1, const struct minix_proc * p2)
 	 */
 	return p1->p_pid < p2->p_pid;
 }
-
-/*
- * Obtain the system uptime in seconds.  Return 0 on success, with the uptime
- * stored in the given time_t field.  Return -1 on failure.
- */
-int
-minix_getuptime(time_t *timep)
-{
-	FILE *fp;
-	int r;
-
-	if ((fp = fopen(_PATH_PROC "uptime", "r")) == NULL)
-		return -1;
-
-	r = fscanf(fp, "%llu", timep);
-
-	fclose(fp);
-
-	return (r == 1) ? 0 : -1;
-}

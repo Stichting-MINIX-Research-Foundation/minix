@@ -4025,10 +4025,6 @@ getLocalFQDN(void)
 	char *hostname;
 	size_t len;
 
-#ifdef __minix
-	len = MAXHOSTNAMELEN + 1;
-#endif /* __minix */
-
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_HOSTNAME;
 	sysctl(mib, 2, NULL, &len, NULL, 0);

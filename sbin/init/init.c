@@ -544,9 +544,6 @@ minixpowerdown(int sig)
 static int
 has_securelevel(void)
 {
-#if defined(__minix)
-	return 0;
-#else
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
 	size_t len;
@@ -563,7 +560,6 @@ has_securelevel(void)
 #else
 	return 0;
 #endif
-#endif /* defined(__minix) */
 }
 
 /*
@@ -1815,7 +1811,6 @@ do_setttyent(void)
 static int
 createsysctlnode(void)
 {
-#if !defined(__minix)
 	struct sysctlnode node;
 	int mib[2];
 	size_t len;
@@ -1857,7 +1852,6 @@ createsysctlnode(void)
 		warning("could not create init.root node: %m");
 		return -1;
 	}
-#endif /* !defined(__minix) */
 
 	return 0;
 }
@@ -1865,7 +1859,6 @@ createsysctlnode(void)
 static int
 shouldchroot(void)
 {
-#if !defined(__minix)
 	struct sysctlnode node;
 	size_t len, cnt;
 	int mib;
@@ -1904,9 +1897,6 @@ shouldchroot(void)
 		return 0;
 
 	return 1;
-#else
-	return 0;
-#endif /* !defined(__minix) */
 }
 
 #endif /* !LETS_GET_SMALL && CHROOT */

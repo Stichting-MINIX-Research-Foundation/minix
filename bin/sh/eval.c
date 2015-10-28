@@ -631,12 +631,9 @@ out:
 static const char *
 syspath(void)
 {
-#if !defined(__minix)
 	static char *sys_path = NULL;
 	static int mib[] = {CTL_USER, USER_CS_PATH};
-#endif /* !defined(__minix) */
 	static char def_path[] = "PATH=/usr/bin:/bin:/usr/sbin:/sbin";
-#if !defined(__minix)
 	size_t len;
 
 	if (sys_path == NULL) {
@@ -651,10 +648,6 @@ syspath(void)
 		}
 	}
 	return sys_path;
-#else
-	/* On Minix no support for CTL_USER. */
-	return def_path;
-#endif /* !defined(__minix) */
 }
 
 static int

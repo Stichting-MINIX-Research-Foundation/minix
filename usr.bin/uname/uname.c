@@ -44,11 +44,7 @@ __RCSID("$NetBSD: uname.c,v 1.11 2011/09/06 18:35:13 joerg Exp $");
 #include <unistd.h>
 #include <err.h>
 
-#if defined(__minix)
-#include <string.h>
-#else
 #include <sys/sysctl.h>
-#endif /* !defined(__minix) */
 #include <sys/utsname.h>
 
 __dead static void usage(void);
@@ -117,16 +113,12 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 	if (print_mask & PRINT_MACHINE_ARCH) {
-#if defined(__minix)
-		strlcpy(machine_arch, u.arch, sizeof(machine_arch));
-#else
 		int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 		size_t len = sizeof (machine_arch);
 
 		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
 		    &len, NULL, 0) < 0)
 			err(EXIT_FAILURE, "sysctl");
-#endif /* defined(__minix) */
 	}
 
 	if (print_mask & PRINT_SYSNAME) {

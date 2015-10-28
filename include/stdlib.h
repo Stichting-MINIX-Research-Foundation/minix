@@ -300,9 +300,7 @@ __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
 int	 dehumanize_number(const char *, int64_t *);
 
-#if !defined(__minix)
 devmajor_t getdevmajor(const char *, mode_t);
-#endif /* !defined(__minix) */
 int	 getloadavg(double [], int);
 
 int	 getenv_r(const char *, char *, size_t);

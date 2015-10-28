@@ -20,7 +20,7 @@ SRCS+=	_errno.c
 
 .if defined(__MINIX)
 # Unsupported by Minix.
-# 	closefrom.c confstr.c extattr.c getdevmajor.c \
+# 	closefrom.c confstr.c extattr.c \
 #	pthread_atfork.c
 #
 # To be ported
@@ -36,7 +36,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
-	getdomainname.c getgrent.c \
+	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
