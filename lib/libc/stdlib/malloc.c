@@ -818,8 +818,10 @@ imalloc(size_t size)
 
     if ((size + malloc_pagesize) < size)	/* Check for overflow */
 	result = NULL;
+#ifndef __minix
     else if ((size + malloc_pagesize) >= (uintptr_t)page_dir)
 	result = NULL;
+#endif /* !__minix */
     else if (size <= malloc_maxsize)
 	result = malloc_bytes(size);
     else
