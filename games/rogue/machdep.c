@@ -443,7 +443,13 @@ md_lock(boolean l)
 
 	if (l) {
 		setegid(egid);
+#if defined(__minix)
+		/* LSC: Minix flock implementation is a wrapper around fctl, which
+		 * requires writeable fds for LOCK_EX to succeed. */
+		if ((fd = open(_PATH_SCOREFILE, O_RDWR)) < 1) {
+#else
 		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
+#endif /* defined(__minix) */
 			setegid(gid);
 			messagef(0, "cannot lock score file");
 			return;
