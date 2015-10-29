@@ -330,6 +330,11 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	fi; \
 	${INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} ${sdir}${files} ${tdir};
 .endfor
+.if ${MKX11} == "yes"
+	${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/etc/X11
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 ${NETBSDSRCDIR}/etc/xorg.conf \
+		${DESTDIR}/etc/X11/xorg.conf
+.endif # ${MKX11} == "yes"
 # LSC: We need a safe install target for etc files, as this is expected from
 # our current user base. This safe version only leaves out the master.passwd
 # file in order not to loose any user account created.
