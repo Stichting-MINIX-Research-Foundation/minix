@@ -77,6 +77,7 @@
 ./etc/X11/twm                                           minix-base      xorg
 ./etc/X11/xdm                                           minix-base      xorg
 ./etc/X11/xinit                                         minix-base      xorg
+./etc/X11/xorg.conf                                     minix-base      xorg,optional
 ./etc/X11/xserver                                       minix-base      xorg
 ./etc/X11/xsm                                           minix-base      xorg
 ./etc/boot.cfg.default                                  minix-base
