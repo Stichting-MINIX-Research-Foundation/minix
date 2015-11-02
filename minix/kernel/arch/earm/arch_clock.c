@@ -28,6 +28,7 @@
 #include "bsp_intr.h"
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
+static unsigned tsc_per_tick[CONFIG_MAX_CPUS];
 static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES];
 
 int init_local_timer(unsigned freq)
@@ -41,6 +42,8 @@ int init_local_timer(unsigned freq)
 	} else {
 		panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);
 	};
+
+	tsc_per_tick[0] = tsc_per_ms[0] * 1000 / system_hz;
 
 	return 0;
 }
@@ -67,7 +70,7 @@ void context_stop(struct proc * p)
 {
 	u64_t tsc;
 	u32_t tsc_delta;
-	unsigned int counter;
+	unsigned int counter, tpt;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
 	read_tsc_64(&tsc);
@@ -83,6 +86,31 @@ void context_stop(struct proc * p)
 	if(kbill_kcall) {
 		kbill_kcall->p_kcall_cycles += tsc_delta;
 		kbill_kcall = NULL;
+	}
+
+	/*
+	 * Perform CPU average accounting here, rather than in the generic
+	 * clock handler.  Doing it here offers two advantages: 1) we can
+	 * account for time spent in the kernel, and 2) we properly account for
+	 * CPU time spent by a process that has a lot of short-lasting activity
+	 * such that it spends serious CPU time but never actually runs when a
+	 * clock tick triggers.  Note that clock speed inaccuracy requires that
+	 * the code below is a loop, but the loop will in by far most cases not
+	 * be executed more than once, and often be skipped at all.
+	 */
+	tpt = tsc_per_tick[0];
+
+	p->p_tick_cycles += tsc_delta;
+	while (tpt > 0 && p->p_tick_cycles >= tpt) {
+		p->p_tick_cycles -= tpt;
+
+		/*
+		 * The process has spent roughly a whole clock tick worth of
+		 * CPU cycles.  Update its per-process CPU utilization counter.
+		 * Some of the cycles may actually have been spent in a
+		 * previous second, but that is not a problem.
+		 */
+		cpuavg_increment(&p->p_cpuavg, kclockinfo.uptime, system_hz);
 	}
 
 	/*
@@ -169,11 +197,8 @@ short cpu_load(void)
 void
 get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES])
 {
-	unsigned int tsc_per_tick;
 	int i;
 
-	tsc_per_tick = tsc_per_ms[0] * 1000 / system_hz;
-
 	for (i = 0; i < CPUSTATES; i++)
-		ticks[i] = tsc_per_state[0][i] / tsc_per_tick;
+		ticks[i] = tsc_per_state[0][i] / tsc_per_tick[0];
 }

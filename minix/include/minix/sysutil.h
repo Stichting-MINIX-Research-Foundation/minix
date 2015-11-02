@@ -80,6 +80,12 @@ u32_t sqrt_approx(u32_t);
 
 int stime(time_t *_top);
 
+void cpuavg_init(struct cpuavg *);
+void cpuavg_increment(struct cpuavg *, clock_t, clock_t);
+uint32_t cpuavg_getstats(const struct cpuavg *, uint32_t *, uint32_t *,
+	clock_t, clock_t);
+uint32_t cpuavg_getccpu(void);
+
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 int asynsend3(endpoint_t ep, message *msg, int flags);
 int asyn_geterror(endpoint_t *dst, message *msg, int *err);
