@@ -108,6 +108,7 @@ int do_fork()
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
+  rmc->mp_started = getticks();		/* remember start time, for ps(1) */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -200,6 +201,7 @@ int do_srv_fork()
   rmc->mp_effgid = m_in.m_lsys_pm_srv_fork.gid;
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
+  rmc->mp_started = getticks();		/* remember start time, for ps(1) */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();

@@ -55,6 +55,7 @@ EXTERN struct mproc {
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
   minix_timer_t mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
   clock_t mp_interval[NR_ITIMERS];	/* setitimer(2) repetition intervals */
+  clock_t mp_started;		/* when the process was started, for ps(1) */
 
   unsigned mp_flags;		/* flag bits */
   unsigned mp_trace_flags;	/* trace options */
