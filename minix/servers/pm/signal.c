@@ -330,6 +330,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
   	break;
   }
   check_sig(id, signo, TRUE /* ksig */);
+  mp->mp_procgrp = 0;			/* restore proper PM process group */
 
   /* If SIGSNDELAY is set, an earlier sys_stop() failed because the process was
    * still sending, and the kernel hereby tells us that the process is now done
