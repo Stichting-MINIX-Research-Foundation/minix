@@ -64,6 +64,9 @@ struct proc {
   u64_t p_kcall_cycles;		/* kernel cycles caused by this proc (kcall) */
   u64_t p_kipc_cycles;		/* cycles caused by this proc (ipc) */
 
+  u64_t p_tick_cycles;		/* cycles accumulated for up to a clock tick */
+  struct cpuavg p_cpuavg;	/* running CPU average, for ps(1) */
+
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */

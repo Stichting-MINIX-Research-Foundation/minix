@@ -76,6 +76,14 @@ struct sigmsg {
   vir_bytes sm_stkptr;		/* user stack pointer */
 };
 
+/* Structure used for computing per-process average CPU utilization. */
+struct cpuavg {
+	clock_t ca_base;	/* start of current per-second slot, or 0 */
+	uint32_t ca_run;	/* running ticks since start of slot, FSCALE */
+	uint32_t ca_last;	/* running ticks during last second, FSCALE */
+	uint32_t ca_avg;	/* decaying CPU utilization average, FSCALE */
+};
+
 /* Load data accounted every this no. of seconds. */
 #define _LOAD_UNIT_SECS		 6 	/* Changing this breaks ABI. */
 

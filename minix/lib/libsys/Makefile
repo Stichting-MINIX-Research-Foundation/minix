@@ -16,6 +16,7 @@ SRCS+=  \
 	checkperms.c \
 	clock_time.c \
 	copyfd.c \
+	cpuavg.c \
 	ds.c	\
 	env_get_prm.c \
 	env_panic.c \
