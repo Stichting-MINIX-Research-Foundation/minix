@@ -1774,6 +1774,8 @@ void dequeue(struct proc *rp)
 	rp->p_accounting.enter_queue = 0;
   }
 
+  /* For ps(1), remember when the process was last dequeued. */
+  rp->p_dequeued = get_monotonic();
 
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());

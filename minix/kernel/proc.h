@@ -54,6 +54,8 @@ struct proc {
 	unsigned long preempted;
   } p_accounting;
 
+  clock_t p_dequeued;		/* uptime at which process was last dequeued */
+
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
 
