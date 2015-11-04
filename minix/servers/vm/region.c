@@ -1436,6 +1436,14 @@ void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
 		}
 		region_incr_iter(&v_iter);
 	}
+
+	/*
+	 * Also include getrusage resource information, so that the MIB service
+	 * need not make more than one call to VM for each process entry.
+	 */
+	vui->vui_maxrss = vmp->vm_total_max / 1024L;
+	vui->vui_minflt = vmp->vm_minor_page_fault;
+	vui->vui_majflt = vmp->vm_major_page_fault;
 }
 
 /*===========================================================================*

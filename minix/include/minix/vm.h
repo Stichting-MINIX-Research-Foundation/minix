@@ -54,6 +54,9 @@ struct vm_usage_info {
   vir_bytes vui_shared;		/* shared (non-COW) part of common memory */
   vir_bytes vui_virtual;	/* total size of virtual address space */
   vir_bytes vui_mvirtual;	/* idem but minus unmapped stack pages */
+  uint64_t vui_maxrss;		/* maximum resident set size (in KB) */
+  uint64_t vui_minflt;		/* minor page faults */
+  uint64_t vui_majflt;		/* major page faults */
 };
 
 struct vm_region_info {
