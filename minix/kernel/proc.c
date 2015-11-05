@@ -703,10 +703,11 @@ int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 /*===========================================================================*
  *				deadlock				     * 
  *===========================================================================*/
-static int deadlock(function, cp, src_dst_e) 
-int function;					/* trap number */
-register struct proc *cp;			/* pointer to caller */
-endpoint_t src_dst_e;				/* src or dst process */
+static int deadlock(
+  int function,				/* trap number */
+  register struct proc *cp,		/* pointer to caller */
+  endpoint_t src_dst_e			/* src or dst process */
+)
 {
 /* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
  * a cyclic dependency of blocking send and receive calls. The only cyclic 
@@ -1347,8 +1348,7 @@ static int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 /*===========================================================================*
  *				try_async				     * 
  *===========================================================================*/
-static int try_async(caller_ptr)
-struct proc *caller_ptr;
+static int try_async(struct proc * caller_ptr)
 {
   int r;
   struct priv *privp;
@@ -1831,15 +1831,11 @@ struct proc *endpoint_lookup(endpoint_t e)
  *				isokendpt_f				     *
  *===========================================================================*/
 #if DEBUG_ENABLE_IPC_WARNINGS
-int isokendpt_f(file, line, e, p, fatalflag)
-const char *file;
-int line;
+int isokendpt_f(const char * file, int line, endpoint_t e, int * p,
+	const int fatalflag)
 #else
-int isokendpt_f(e, p, fatalflag)
+int isokendpt_f(endpoint_t e, int * p, const int fatalflag)
 #endif
-endpoint_t e;
-int *p;
-const int fatalflag;
 {
 	int ok = 0;
 	/* Convert an endpoint number into a process number.
@@ -1974,7 +1970,7 @@ void release_fpu(struct proc * p) {
 		*fpu_owner_ptr = NULL;
 }
 
-void ser_dump_proc()
+void ser_dump_proc(void)
 {
         struct proc *pp;
 

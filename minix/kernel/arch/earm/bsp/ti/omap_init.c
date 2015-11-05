@@ -5,8 +5,9 @@
 #include "bsp_reset.h"
 
 void
-bsp_init()
+bsp_init(void)
 {
+
 	/* map memory for padconf */
 	bsp_padconf_init();
 

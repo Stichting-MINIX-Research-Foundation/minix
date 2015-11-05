@@ -89,7 +89,7 @@ int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
 
 /* start.c */
-void cstart();
+void cstart(void);
 char *env_get(const char *key);
 
 /* system.c */
@@ -169,8 +169,8 @@ void stop_profile_clock(void);
 #endif
 
 /* functions defined in architecture-dependent files. */
-void prot_init();
-void arch_post_init();
+void prot_init(void);
+void arch_post_init(void);
 void arch_set_secondary_ipc_return(struct proc *, u32_t val);
 phys_bytes phys_copy(phys_bytes source, phys_bytes dest, phys_bytes
 	count);

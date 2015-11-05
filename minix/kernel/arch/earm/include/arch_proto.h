@@ -115,7 +115,7 @@ int kern_phys_map_ptr( phys_bytes base_address, vir_bytes io_size,
 		       int vm_flags, kern_phys_map * priv, 
 		       vir_bytes ptr);
 
-void arch_ser_init();
+void arch_ser_init(void);
 
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"

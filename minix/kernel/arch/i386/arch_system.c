@@ -286,7 +286,7 @@ void arch_init(void)
 /*===========================================================================*
  *				do_ser_debug				     * 
  *===========================================================================*/
-void do_ser_debug()
+void do_ser_debug(void)
 {
 	u8_t c, lsr;
 
@@ -421,7 +421,7 @@ static void ser_debug(const int c)
 
 #if DEBUG_SERIAL
 
-static void ser_dump_vfs()
+static void ser_dump_vfs(void)
 {
 	/* Notify VFS it has to generate stack traces. Kernel can't do that as
 	 * it's not aware of user space threads.
