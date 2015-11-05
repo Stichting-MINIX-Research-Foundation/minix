@@ -44,7 +44,7 @@ static inline void barrier(void)
 
 
 /* Read CLIDR, Cache Level ID Register */
-static inline u32_t read_clidr(){
+static inline u32_t read_clidr(void){
 	u32_t clidr;
 	asm volatile("mrc p15, 1, %[clidr], c0, c0 , 1 @ READ CLIDR\n\t"
 				: [clidr] "=r" (clidr));
@@ -53,7 +53,7 @@ static inline u32_t read_clidr(){
 
 
 /* Read CSSELR, Cache Size Selection Register */
-static inline u32_t read_csselr(){
+static inline u32_t read_csselr(void){
 	u32_t csselr;
 	asm volatile("mrc p15, 2, %[csselr], c0, c0 , 0 @ READ CSSELR\n\t"
 				: [csselr] "=r" (csselr));
@@ -67,7 +67,7 @@ static inline void write_csselr(u32_t csselr){
 }
 
 /* Read Cache Size ID Register */
-static inline u32_t read_ccsidr()
+static inline u32_t read_ccsidr(void)
 {
 	u32_t ccsidr;
 	asm volatile("mrc p15, 1, %[ccsidr], c0, c0, 0 @ Read CCSIDR\n\t"
@@ -76,7 +76,7 @@ static inline u32_t read_ccsidr()
 }
 
 /* Read TLBTR, TLB Type Register */
-static inline u32_t read_tlbtr()
+static inline u32_t read_tlbtr(void)
 {
 	u32_t tlbtr;
 	asm volatile("mrc p15, 0, %[tlbtr], c0, c0, 3 @ Read TLBTR\n\t"
@@ -152,10 +152,10 @@ static inline void dcache_maint(int type){
 	isb();
 
 }
-static inline void dcache_clean(){
+static inline void dcache_clean(void){
 	dcache_maint(1);
 }
-static inline void dcache_invalidate (){
+static inline void dcache_invalidate(void){
 	dcache_maint(2);
 }
 
@@ -189,7 +189,7 @@ static inline void refresh_tlb(void)
 
 
 /* Read System Control Register */
-static inline u32_t read_sctlr()
+static inline u32_t read_sctlr(void)
 {
 	u32_t ctl;
 
@@ -208,7 +208,7 @@ static inline void write_sctlr(u32_t ctl)
 }
 
 /* Read Translation Table Base Register 0 */
-static inline u32_t read_ttbr0()
+static inline u32_t read_ttbr0(void)
 {
 	u32_t bar;
 
@@ -241,7 +241,7 @@ static inline void reload_ttbr0(void)
 }
 
 /* Read Translation Table Base Register 1 */
-static inline u32_t read_ttbr1()
+static inline u32_t read_ttbr1(void)
 {
 	u32_t bar;
 
@@ -271,7 +271,7 @@ static inline void reload_ttbr1(void)
 }
 
 /* Read Translation Table Base Control Register */
-static inline u32_t read_ttbcr()
+static inline u32_t read_ttbcr(void)
 {
 	u32_t bcr;
 
@@ -291,7 +291,7 @@ static inline void write_ttbcr(u32_t bcr)
 }
 
 /* Read Domain Access Control Register */
-static inline u32_t read_dacr()
+static inline u32_t read_dacr(void)
 {
 	u32_t dacr;
 
@@ -311,7 +311,7 @@ static inline void write_dacr(u32_t dacr)
 }
 
 /* Read Data Fault Status Register */
-static inline u32_t read_dfsr()
+static inline u32_t read_dfsr(void)
 {
 	u32_t fsr;
 
@@ -331,7 +331,7 @@ static inline void write_dfsr(u32_t fsr)
 }
 
 /* Read Instruction Fault Status Register */
-static inline u32_t read_ifsr()
+static inline u32_t read_ifsr(void)
 {
 	u32_t fsr;
 
@@ -351,7 +351,7 @@ static inline void write_ifsr(u32_t fsr)
 }
 
 /* Read Data Fault Address Register */
-static inline u32_t read_dfar()
+static inline u32_t read_dfar(void)
 {
 	u32_t far;
 
@@ -371,7 +371,7 @@ static inline void write_dfar(u32_t far)
 }
 
 /* Read Instruction Fault Address Register */
-static inline u32_t read_ifar()
+static inline u32_t read_ifar(void)
 {
 	u32_t far;
 
@@ -391,7 +391,7 @@ static inline void write_ifar(u32_t far)
 }
 
 /* Read Vector Base Address Register */
-static inline u32_t read_vbar()
+static inline u32_t read_vbar(void)
 {
 	u32_t vbar;
 
@@ -411,7 +411,7 @@ static inline void write_vbar(u32_t vbar)
 }
 
 /* Read the Main ID Register  */
-static inline u32_t read_midr()
+static inline u32_t read_midr(void)
 {
 	u32_t id;
 
@@ -422,7 +422,7 @@ static inline u32_t read_midr()
 }
 
 /* Read Auxiliary Control Register */
-static inline u32_t read_actlr()
+static inline u32_t read_actlr(void)
 {
 	u32_t ctl;
 
@@ -443,7 +443,7 @@ static inline void write_actlr(u32_t ctl)
 }
 
 /* Read Current Program Status Register */
-static inline u32_t read_cpsr()
+static inline u32_t read_cpsr(void)
 {
 	u32_t status;
 

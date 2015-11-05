@@ -74,7 +74,7 @@ multiboot_module_t *bootmod(int pnr)
 
 int booting_cpu = 0;
 
-void prot_init()
+void prot_init(void)
 {
 	/* tell the HW where we stored our vector table */
 	write_vbar((reg_t)&exc_vector_table);

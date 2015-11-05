@@ -44,7 +44,7 @@ void init_profile_clock(u32_t freq)
 /*===========================================================================*
  *			profile_clock_stop				     *
  *===========================================================================*/
-void stop_profile_clock()
+void stop_profile_clock(void)
 {
   arch_stop_profile_clock();
 

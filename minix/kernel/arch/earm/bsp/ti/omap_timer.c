@@ -258,7 +258,7 @@ omap3_frclock_init(void)
 }
 
 void
-omap3_frclock_stop()
+omap3_frclock_stop(void)
 {
 	mmio_clear(fr_timer->base + fr_timer->regs->TCLR, OMAP3_TCLR_ST);
 }
@@ -328,7 +328,7 @@ bsp_timer_init(unsigned freq)
 }
 
 void
-bsp_timer_stop()
+bsp_timer_stop(void)
 {
 	mmio_clear(timer->base + timer->regs->TCLR, OMAP3_TCLR_ST);
 }
@@ -369,7 +369,7 @@ frc_overflow_check(u32_t cur_frc)
 }
 
 void
-bsp_timer_int_handler()
+bsp_timer_int_handler(void)
 {
 	/* Clear all interrupts */
 	u32_t tisr, now;
