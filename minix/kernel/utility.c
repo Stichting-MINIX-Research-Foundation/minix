@@ -51,8 +51,9 @@ void panic(const char *fmt, ...)
 /*===========================================================================*
  *				kputc				     	     *
  *===========================================================================*/
-void kputc(c)
-int c;					/* character to append */
+void kputc(
+  int c					/* character to append */
+)
 {
 /* Accumulate a single character for a kernel message. Send a notification
  * to the output drivers if an END_OF_KMESS is encountered.
@@ -83,8 +84,9 @@ int c;					/* character to append */
 /*===========================================================================*
  *				_exit				     	     *
  *===========================================================================*/
-void _exit(e)
-int e;					/* error code */
+void _exit(
+  int e					/* error code */
+)
 {
   panic("_exit called from within the kernel, should not happen. (err %i)", e);
 }

@@ -252,11 +252,12 @@ static u32_t phys_get32(phys_bytes addr)
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
-phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
-register struct proc *rp;       /* pointer to proc table entry for process */
-int seg;                        /* T, D, or S segment */
-vir_bytes vir_addr;             /* virtual address in bytes within the seg */
-vir_bytes bytes;                /* # of bytes to be copied */
+phys_bytes umap_virtual(
+  register struct proc *rp,		/* pointer to proc table entry for process */
+  int seg,				/* T, D, or S segment */
+  vir_bytes vir_addr,			/* virtual address in bytes within the seg */
+  vir_bytes bytes			/* # of bytes to be copied */
+)
 {
 	phys_bytes phys = 0;
 
@@ -489,12 +490,13 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
-struct proc * caller;
-struct vir_addr *src_addr;	/* source virtual address */
-struct vir_addr *dst_addr;	/* destination virtual address */
-vir_bytes bytes;		/* # of bytes to copy  */
-int vmcheck;			/* if nonzero, can return VMSUSPEND */
+int virtual_copy_f(
+  struct proc * caller,
+  struct vir_addr *src_addr,		/* source virtual address */
+  struct vir_addr *dst_addr,		/* destination virtual address */
+  vir_bytes bytes,			/* # of bytes to copy  */
+  int vmcheck				/* if nonzero, can return VMSUSPEND */
+)
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */

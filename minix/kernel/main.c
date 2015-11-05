@@ -403,7 +403,7 @@ void minix_shutdown(minix_timer_t *tp)
 /*===========================================================================*
  *				cstart					     *
  *===========================================================================*/
-void cstart()
+void cstart(void)
 {
 /* Perform system initializations prior to calling main(). Most settings are
  * determined with help of the environment strings passed by MINIX' loader.

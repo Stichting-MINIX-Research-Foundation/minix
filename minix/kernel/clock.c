@@ -227,10 +227,11 @@ time_t get_boottime(void)
 /*===========================================================================*
  *				set_kernel_timer			     *
  *===========================================================================*/
-void set_kernel_timer(tp, exp_time, watchdog)
-minix_timer_t *tp;		/* pointer to timer structure */
-clock_t exp_time;		/* expiration monotonic time */
-tmr_func_t watchdog;		/* watchdog to be called */
+void set_kernel_timer(
+  minix_timer_t *tp,			/* pointer to timer structure */
+  clock_t exp_time,			/* expiration monotonic time */
+  tmr_func_t watchdog			/* watchdog to be called */
+)
 {
 /* Insert the new timer in the active timers list. Always update the 
  * next timeout time by setting it to the front of the active list.
@@ -242,8 +243,9 @@ tmr_func_t watchdog;		/* watchdog to be called */
 /*===========================================================================*
  *				reset_kernel_timer			     *
  *===========================================================================*/
-void reset_kernel_timer(tp)
-minix_timer_t *tp;		/* pointer to timer structure */
+void reset_kernel_timer(
+  minix_timer_t *tp			/* pointer to timer structure */
+)
 {
 /* The timer pointed to by 'tp' is no longer needed. Remove it from both the
  * active and expired lists. Always update the next timeout time by setting

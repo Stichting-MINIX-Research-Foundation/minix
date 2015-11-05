@@ -240,7 +240,7 @@ void vm_enable_paging(void)
 	write_sctlr(sctlr);
 }
 
-phys_bytes pg_load()
+phys_bytes pg_load(void)
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
 	write_ttbr0(phpagedir);

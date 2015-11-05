@@ -239,7 +239,7 @@ void vm_enable_paging(void)
         write_cr4(cr4);
 }
 
-phys_bytes pg_load()
+phys_bytes pg_load(void)
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
         write_cr3(phpagedir);
