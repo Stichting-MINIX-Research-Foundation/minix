@@ -12,6 +12,11 @@
 
 #include <assert.h>
 
+#include <sys/sched.h> /* for CP_*, CPUSTATES */
+#if CPUSTATES != MINIX_CPUSTATES
+/* If this breaks, the code in this file may have to be adapted accordingly. */
+#error "MINIX_CPUSTATES value is out of sync with NetBSD's!"
+#endif
 
 #include "kernel/spinlock.h"
 
@@ -23,6 +28,7 @@
 #include "bsp_intr.h"
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
+static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES];
 
 int init_local_timer(unsigned freq)
 {
@@ -61,6 +67,7 @@ void context_stop(struct proc * p)
 {
 	u64_t tsc;
 	u32_t tsc_delta;
+	unsigned int counter;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
 	read_tsc_64(&tsc);
@@ -81,9 +88,17 @@ void context_stop(struct proc * p)
 	/*
 	 * deduct the just consumed cpu cycles from the cpu time left for this
 	 * process during its current quantum. Skip IDLE and other pseudo kernel
-	 * tasks
+	 * tasks, except for accounting purposes.
 	 */
 	if (p->p_endpoint >= 0) {
+		/* On MINIX3, the "system" counter covers system processes. */
+		if (p->p_priv != priv_addr(USER_PRIV_ID))
+			counter = CP_SYS;
+		else if (p->p_misc_flags & MF_NICED)
+			counter = CP_NICE;
+		else
+			counter = CP_USER;
+
 #if DEBUG_RACE
 		p->p_cpu_time_left = 0;
 #else
@@ -91,6 +106,13 @@ void context_stop(struct proc * p)
 			p->p_cpu_time_left -= tsc_delta;
 		} else p->p_cpu_time_left = 0;
 #endif
+	} else {
+		/* On MINIX3, the "interrupts" counter covers the kernel. */
+		if (p->p_endpoint == IDLE)
+			counter = CP_IDLE;
+		else
+			counter = CP_INTR;
+
 	}
 
 	*__tsc_ctr_switch = tsc;
@@ -138,4 +160,20 @@ unsigned cpu_time_2_ms(u64_t cpu_time)
 short cpu_load(void)
 {
 	return 0;
+}
+
+/*
+ * Return the number of clock ticks spent in each of a predefined number of
+ * CPU states.
+ */
+void
+get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES])
+{
+	unsigned int tsc_per_tick;
+	int i;
+
+	tsc_per_tick = tsc_per_ms[0] * 1000 / system_hz;
+
+	for (i = 0; i < CPUSTATES; i++)
+		ticks[i] = tsc_per_state[0][i] / tsc_per_tick;
 }

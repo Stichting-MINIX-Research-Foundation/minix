@@ -189,6 +189,17 @@ int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &idl->p_cycles;
         break;
     }
+    case GET_CPUTICKS: {
+	uint64_t ticks[MINIX_CPUSTATES];
+	unsigned int cpu;
+	cpu = (unsigned int)m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
+	if (cpu >= CONFIG_MAX_CPUS)
+		return EINVAL;
+	get_cpu_ticks(cpu, ticks);
+	length = sizeof(ticks);
+	src_vir = (vir_bytes)ticks;
+	break;
+    }
     default:
 	printf("do_getinfo: invalid request %d\n",
 		m_ptr->m_lsys_krn_sys_getinfo.request);

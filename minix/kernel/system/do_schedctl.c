@@ -34,7 +34,7 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 		cpu = m_ptr->m_lsys_krn_schedctl.cpu;
 
 		/* Try to schedule the process. */
-		if((r = sched_proc(p, priority, quantum, cpu) != OK))
+		if((r = sched_proc(p, priority, quantum, cpu, FALSE) != OK))
 			return r;
 		p->p_scheduler = NULL;
 	} else {

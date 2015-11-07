@@ -37,8 +37,8 @@ int sys_clear(endpoint_t proc_ep);
 int sys_exit(void);
 int sys_trace(int req, endpoint_t proc_ep, long addr, long *data_p);
 
-int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int
-	cpu);
+int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int cpu,
+	int niced);
 int sys_schedctl(unsigned flags, endpoint_t proc_ep, int priority, int
 	quantum, int cpu);
 
@@ -190,6 +190,7 @@ int sys_diagctl(int ctl, char *arg1, int arg2);
 #define sys_getpriv(dst, nr)	sys_getinfo(GET_PRIV, dst, 0,0, nr)
 #define sys_getidletsc(dst)	sys_getinfo(GET_IDLETSC, dst, 0,0,0)
 #define sys_getregs(dst,nr)	sys_getinfo(GET_REGS, dst, 0,0, nr)
+#define sys_getcputicks(dst,nr)	sys_getinfo(GET_CPUTICKS, dst, 0,0, nr)
 int sys_getinfo(int request, void *val_ptr, int val_len, void *val_ptr2,
 	int val_len2);
 int sys_whoami(endpoint_t *ep, char *name, int namelen, int

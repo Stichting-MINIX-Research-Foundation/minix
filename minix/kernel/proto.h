@@ -38,6 +38,7 @@ void cycles_accounting_init(void);
 void context_stop(struct proc * p);
 /* this is a wrapper to make calling it from assembly easier */
 void context_stop_idle(void);
+void get_cpu_ticks(unsigned int cpu, uint64_t ticks[MINIX_CPUSTATES]);
 int restore_fpu(struct proc *);
 void save_fpu(struct proc *);
 void save_local_fpu(struct proc *, int retain);
@@ -105,7 +106,7 @@ void system_init(void);
 void clear_endpoint(struct proc *rc);
 void clear_ipc_refs(struct proc *rc, int caller_ret);
 void kernel_call_resume(struct proc *p);
-int sched_proc(struct proc *rp, int priority, int quantum, int cpu);
+int sched_proc(struct proc *rp, int priority, int quantum, int cpu, int niced);
 int add_ipc_filter(struct proc *rp, int type,
     vir_bytes address, size_t length);
 void clear_ipc_filters(struct proc *rp);

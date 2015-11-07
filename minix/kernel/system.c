@@ -639,10 +639,7 @@ void kernel_call_resume(struct proc *caller)
 /*===========================================================================*
  *                               sched_proc                                  *
  *===========================================================================*/
-int sched_proc(struct proc *p,
-			int priority,
-			int quantum,
-			int cpu)
+int sched_proc(struct proc *p, int priority, int quantum, int cpu, int niced)
 {
 	/* Make sure the values given are within the allowed range.*/
 	if ((priority < TASK_Q && priority != -1) || priority > NR_SCHED_QUEUES)
@@ -690,6 +687,11 @@ int sched_proc(struct proc *p,
 	if (cpu != -1)
 		p->p_cpu = cpu;
 #endif
+
+	if (niced)
+		p->p_misc_flags |= MF_NICED;
+	else
+		p->p_misc_flags &= ~MF_NICED;
 
 	/* Clear the scheduling bit and enqueue the process */
 	RTS_UNSET(p, RTS_NO_QUANTUM);
