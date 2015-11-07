@@ -12,6 +12,11 @@
 #include "glo.h"
 #include "kernel/profile.h"
 
+#include <sys/sched.h> /* for CP_*, CPUSTATES */
+#if CPUSTATES != MINIX_CPUSTATES
+/* If this breaks, the code in this file may have to be adapted accordingly. */
+#error "MINIX_CPUSTATES value is out of sync with NetBSD's!"
+#endif
 
 #ifdef USE_APIC
 #include "apic.h"
@@ -40,6 +45,8 @@ static u64_t tsc0, tsc1;
 #define PROBE_TICKS	(system_hz / 10)
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
+static unsigned tsc_per_tick[CONFIG_MAX_CPUS];
+static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES];
 
 /*===========================================================================*
  *				init_8235A_timer			     *
@@ -133,7 +140,8 @@ int init_local_timer(unsigned freq)
 	/* if we know the address, lapic is enabled and we should use it */
 	if (lapic_addr) {
 		unsigned cpu = cpuid;
-		tsc_per_ms[cpu] = (unsigned long)(cpu_get_freq(cpu) / 1000);
+		tsc_per_ms[cpu] = (unsigned)(cpu_get_freq(cpu) / 1000);
+		tsc_per_tick[cpu] = (unsigned)(cpu_get_freq(cpu) / system_hz);
 		lapic_set_timer_one_shot(1000000 / system_hz);
 	} else {
 		DEBUGBASIC(("Initiating legacy i8253 timer\n"));
@@ -144,6 +152,7 @@ int init_local_timer(unsigned freq)
 		estimate_cpu_freq();
 		/* always only 1 cpu in the system */
 		tsc_per_ms[0] = (unsigned long)(cpu_get_freq(0) / 1000);
+		tsc_per_tick[0] = (unsigned)(cpu_get_freq(0) / system_hz);
 	}
 
 	return 0;
@@ -206,9 +215,11 @@ void context_stop(struct proc * p)
 {
 	u64_t tsc, tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
+	unsigned int cpu, counter;
 #ifdef CONFIG_SMP
-	unsigned cpu = cpuid;
 	int must_bkl_unlock = 0;
+
+	cpu = cpuid;
 
 	/*
 	 * This function is called only if we switch from kernel to user or idle
@@ -261,6 +272,7 @@ void context_stop(struct proc * p)
 #else
 	read_tsc_64(&tsc);
 	p->p_cycles = p->p_cycles + tsc - *__tsc_ctr_switch;
+	cpu = 0;
 #endif
 	
 	tsc_delta = tsc - *__tsc_ctr_switch;
@@ -280,9 +292,17 @@ void context_stop(struct proc * p)
 	/*
 	 * deduct the just consumed cpu cycles from the cpu time left for this
 	 * process during its current quantum. Skip IDLE and other pseudo kernel
-	 * tasks
+	 * tasks, except for global accounting purposes.
 	 */
 	if (p->p_endpoint >= 0) {
+		/* On MINIX3, the "system" counter covers system processes. */
+		if (p->p_priv != priv_addr(USER_PRIV_ID))
+			counter = CP_SYS;
+		else if (p->p_misc_flags & MF_NICED)
+			counter = CP_NICE;
+		else
+			counter = CP_USER;
+
 #if DEBUG_RACE
 		p->p_cpu_time_left = 0;
 #else
@@ -295,7 +315,15 @@ void context_stop(struct proc * p)
 			p->p_cpu_time_left = 0;
 		}
 #endif
+	} else {
+		/* On MINIX3, the "interrupts" counter covers the kernel. */
+		if (p->p_endpoint == IDLE)
+			counter = CP_IDLE;
+		else
+			counter = CP_INTR;
 	}
+
+	tsc_per_state[cpu][counter] += tsc_delta;
 
 	*__tsc_ctr_switch = tsc;
 
@@ -383,3 +411,16 @@ void busy_delay_ms(int ms)
 	return;
 }
 
+/*
+ * Return the number of clock ticks spent in each of a predefined number of
+ * CPU states.
+ */
+void
+get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES])
+{
+	int i;
+
+	/* TODO: make this inter-CPU safe! */
+	for (i = 0; i < CPUSTATES; i++)
+		ticks[i] = tsc_per_state[cpu][i] / tsc_per_tick[cpu];
+}

@@ -68,8 +68,11 @@ void bsp_finish_booting(void)
 	RTS_UNSET(proc_addr(i), RTS_PROC_STOP);
   }
   /*
-   * enable timer interrupts and clock task on the boot CPU
+   * Enable timer interrupts and clock task on the boot CPU.  First reset the
+   * CPU accounting values, as the timer initialization (indirectly) uses them.
    */
+  cycles_accounting_init();
+
   if (boot_cpu_init_timer(system_hz)) {
 	  panic("FATAL : failed to initialize timer interrupts, "
 			  "cannot continue without any clock source!");
@@ -90,10 +93,6 @@ void bsp_finish_booting(void)
 #if DEBUG_PROC_CHECK
   FIXME("PROC check enabled");
 #endif
-
-  DEBUGEXTRA(("cycles_accounting_init()... "));
-  cycles_accounting_init();
-  DEBUGEXTRA(("done\n"));
 
 #ifdef CONFIG_SMP
   cpu_set_flag(bsp_cpu_id, CPU_IS_READY);

@@ -167,4 +167,12 @@
 #define MKF_I386_INTEL_SYSENTER	(1L << 0) /* SYSENTER available and supported */
 #define MKF_I386_AMD_SYSCALL	(1L << 1) /* SYSCALL available and supported */
 
+/*
+ * Number of per-CPU states for which time will be accounted.  This *must* be
+ * the same value as NetBSD's CPUSTATES, which is defined in a rather
+ * unfortunate location (sys/sched.h).  If the NetBSD value changes, our kernel
+ * must be adapted accordingly.
+ */
+#define MINIX_CPUSTATES	5
+
 #endif /* _MINIX_CONST_H */

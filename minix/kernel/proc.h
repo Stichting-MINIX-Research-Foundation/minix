@@ -254,6 +254,7 @@ struct proc {
 				    space*/
 #define MF_STEP		 0x40000 /* Single-step process */
 #define MF_MSGFAILED	 0x80000
+#define MF_NICED	0x100000 /* user has lowered max process priority */
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

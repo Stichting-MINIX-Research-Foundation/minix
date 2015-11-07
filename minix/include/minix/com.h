@@ -334,6 +334,7 @@
 #   define GET_IDLETSC	  21	/* get cumulative idle time stamp counter */
 #   define GET_CPUINFO    23    /* get information about cpus */
 #   define GET_REGS	  24	/* get general process registers */
+#   define GET_CPUTICKS	  25	/* get per-state ticks for a cpu */
 
 /* Subfunctions for SYS_PRIVCTL */
 #define SYS_PRIV_ALLOW		1	/* Allow process to run */
