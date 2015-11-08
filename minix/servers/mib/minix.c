@@ -52,6 +52,15 @@ static struct mib_node mib_minix_mib_table[] = {
 				    "dynamically allocated MIB objects"),
 };
 
+static struct mib_node mib_minix_proc_table[] = {
+/* 1*/	[PROC_LIST]		= MIB_FUNC(_P | _RO | CTLTYPE_STRUCT, 0,
+				    mib_minix_proc_list, "list",
+				    "Process list"),
+/* 2*/	[PROC_DATA]		= MIB_FUNC(_P | _RO | CTLTYPE_NODE, 0,
+				    mib_minix_proc_data, "data",
+				    "Process data"),
+};
+
 static struct mib_node mib_minix_table[] = {
 #if MINIX_TEST_SUBTREE
 /* 0*/	[MINIX_TEST]		= MIB_NODE(_RW | CTLFLAG_HIDDEN,
@@ -60,6 +69,8 @@ static struct mib_node mib_minix_table[] = {
 #endif /* MINIX_TEST_SUBTREE */
 /* 1*/	[MINIX_MIB]		= MIB_NODE(_P | _RO, mib_minix_mib_table,
 				    "mib", "MIB service information"),
+/* 2*/	[MINIX_PROC]		= MIB_NODE(_P | _RO, mib_minix_proc_table,
+				    "proc", "Process information for ProcFS"),
 };
 
 /*

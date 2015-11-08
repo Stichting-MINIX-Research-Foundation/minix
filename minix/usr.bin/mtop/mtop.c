@@ -1,6 +1,5 @@
 
 /* Author: Ben Gras <beng@few.vu.nl>  17 march 2006 */
-/* Modified for ProcFS by Alen Stojanov and David van Moolenbroek */
 
 #define _MINIX_SYSTEM 1
 
@@ -78,7 +77,7 @@ struct proc {
 	u64_t p_cpucycles[CPUTIMENAMES];
 	int p_priority;
 	endpoint_t p_blocked;
-	time_t p_user_time;
+	clock_t p_user_time;
 	vir_bytes p_memory;
 	uid_t p_effuid;
 	int p_nice;
@@ -87,15 +86,14 @@ struct proc {
 
 struct proc *proc = NULL, *prev_proc = NULL;
 
-static void parse_file(pid_t pid)
+static void
+parse_file(pid_t pid)
 {
 	char path[PATH_MAX], name[256], type, state;
-	int version, endpt, effuid;
-	unsigned long cycles_hi, cycles_lo;
+	int version, endpt;
 	FILE *fp;
 	struct proc *p;
 	int slot;
-	int i;
 
 	sprintf(path, "%d/psinfo", pid);
 
@@ -119,8 +117,9 @@ static void parse_file(pid_t pid)
 
 	slot = SLOT_NR(endpt);
 
-	if(slot < 0 || slot >= nr_total) {
-		fprintf(stderr, "top: unreasonable endpoint number %d\n", endpt);
+	if (slot < 0 || slot >= nr_total) {
+		fprintf(stderr, "top: unreasonable endpoint number %d\n",
+		    endpt);
 		fclose(fp);
 		return;
 	}
@@ -135,48 +134,19 @@ static void parse_file(pid_t pid)
 	p->p_endpoint = endpt;
 	p->p_pid = pid;
 
-	if (fscanf(fp, " %255s %c %d %d %llu %*u %lu %lu",
-		name, &state, &p->p_blocked, &p->p_priority,
-		&p->p_user_time, &cycles_hi, &cycles_lo) != 7) {
-
+	if (fscanf(fp, " %255s %c %d %d %u %*u %"PRIu64" %"PRIu64" %"PRIu64
+	    " %lu %d %u",
+	    name, &state, &p->p_blocked, &p->p_priority, &p->p_user_time,
+	    &p->p_cpucycles[0], &p->p_cpucycles[1], &p->p_cpucycles[2],
+	    &p->p_memory, &p->p_nice, &p->p_effuid) != 11) {
 		fclose(fp);
 		return;
 	}
 
-	strncpy(p->p_name, name, sizeof(p->p_name)-1);
-	p->p_name[sizeof(p->p_name)-1] = 0;
+	strlcpy(p->p_name, name, sizeof(p->p_name));
 
 	if (state != STATE_RUN)
 		p->p_flags |= BLOCKED;
-	p->p_cpucycles[0] = make64(cycles_lo, cycles_hi);
-	p->p_memory = 0L;
-
-	if (!(p->p_flags & IS_TASK)) {
-		int j;
-		if ((j=fscanf(fp, " %lu %*u %*u %*c %*d %*u %u %*u %d %*c %*d %*u",
-			&p->p_memory, &effuid, &p->p_nice)) != 3) {
-
-			fclose(fp);
-			return;
-		}
-
-		p->p_effuid = effuid;
-	} else p->p_effuid = 0;
-
-	for(i = 1; i < CPUTIMENAMES; i++) {
-		if(fscanf(fp, " %lu %lu",
-			&cycles_hi, &cycles_lo) == 2) {
-			p->p_cpucycles[i] = make64(cycles_lo, cycles_hi);
-		} else	{
-			p->p_cpucycles[i] = 0;
-		}
-	}
-
-	if ((p->p_flags & IS_TASK)) {
-		if(fscanf(fp, " %lu", &p->p_memory) != 1) {
-			p->p_memory = 0;
-		}
-	}
 
 	p->p_flags |= USED;
 
@@ -558,8 +528,15 @@ static void showtop(int cputimemode, int r)
 	}
 
 	get_procs();
-	if (prev_proc == NULL)
+	if (prev_proc == NULL) {
+		/*
+		 * A delay short enough to be unnoticable but long enough to
+		 * allow for accumulation of sufficient data for the initial
+		 * display not to show wildly inaccurate numbers.
+		 */
+		usleep(100000);
 		get_procs();
+	}
 
 	if((nloads = getloadavg(loads, NLOADS)) != NLOADS) {
 		fprintf(stderr, "getloadavg() failed - %d loads\n", nloads);
@@ -694,7 +671,7 @@ int main(int argc, char *argv[])
 						putchar('\r');
 						return 0;
 						break;
-					case 'o':
+					case ORDERKEY:
 						order++;
 						if(order > ORDER_HIGHEST)
 							order = 0;

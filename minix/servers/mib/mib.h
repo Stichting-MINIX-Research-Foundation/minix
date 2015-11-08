@@ -276,6 +276,10 @@ ssize_t mib_kern_proc2(struct mib_call *, struct mib_node *, struct mib_oldp *,
 	struct mib_newp *);
 ssize_t mib_kern_proc_args(struct mib_call *, struct mib_node *,
 	struct mib_oldp *, struct mib_newp *);
+ssize_t mib_minix_proc_list(struct mib_call *, struct mib_node *,
+	struct mib_oldp *, struct mib_newp *);
+ssize_t mib_minix_proc_data(struct mib_call *, struct mib_node *,
+	struct mib_oldp *, struct mib_newp *);
 
 /* subtree modules */
 void mib_kern_init(struct mib_node *);

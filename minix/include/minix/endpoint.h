@@ -2,8 +2,6 @@
 #ifndef _MINIX_ENDPOINT_H
 #define _MINIX_ENDPOINT_H 1
 
-#ifdef _MINIX_SYSTEM
-
 #include <minix/sys_config.h>
 #include <minix/com.h>
 #include <limits.h>
@@ -69,7 +67,5 @@
 #define _ENDPOINT_G(e) (((e)+MAX_NR_TASKS) >> _ENDPOINT_GENERATION_SHIFT)
 #define _ENDPOINT_P(e) \
 	((((e)+MAX_NR_TASKS) & (_ENDPOINT_GENERATION_SIZE - 1)) - MAX_NR_TASKS)
-
-#endif /* _MINIX_SYSTEM */
 
 #endif
