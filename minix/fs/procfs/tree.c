@@ -2,36 +2,27 @@
 
 #include "inc.h"
 
-typedef struct proc ixfer_proc_t;
-typedef struct fproc ixfer_fproc_t;
-typedef struct mproc ixfer_mproc_t;
-
-ixfer_proc_t proc[NR_PROCS + NR_TASKS];
-ixfer_mproc_t mproc[NR_PROCS];
-ixfer_fproc_t fproc[NR_PROCS];
+struct minix_proc_list proc_list[NR_PROCS];
 
 static int nr_pid_entries;
 
 /*
- * Return whether the given slot is in use by a process.
+ * Return a PID for the given slot, or 0 if the slot is not in use.
  */
-static int
-slot_in_use(int slot)
+pid_t
+pid_from_slot(int slot)
 {
 
-	/*
-	 * For kernel tasks, check only the kernel slot.  Tasks do not have a
-	 * PM/VFS process slot.
-	 */
+	/* All kernel tasks are always present.*/
 	if (slot < NR_TASKS)
-		return (proc[slot].p_rts_flags != RTS_SLOT_FREE);
+		return (pid_t)(slot - NR_TASKS);
 
-	/* For regular processes, check only the PM slot.  Do not check the
-	 * kernel slot, because that would skip zombie processes.  The PID
-	 * check should be redundant, but if it fails, procfs could crash.
-	 */
-	return ((mproc[slot - NR_TASKS].mp_flags & IN_USE) &&
-	    mproc[slot - NR_TASKS].mp_pid != 0);
+	/* For regular processes, check the process list. */
+	if (proc_list[slot - NR_TASKS].mpl_flags & MPLF_IN_USE)
+		return proc_list[slot - NR_TASKS].mpl_pid;
+	else
+		return 0;
+
 }
 
 /*
@@ -47,8 +38,8 @@ check_owner(struct inode * node, int slot)
 
 	get_inode_stat(node, &stat);
 
-	return (stat.uid == mproc[slot - NR_TASKS].mp_effuid &&
-	    stat.gid == mproc[slot - NR_TASKS].mp_effgid);
+	return (stat.uid == proc_list[slot - NR_TASKS].mpl_uid &&
+	    stat.gid == proc_list[slot - NR_TASKS].mpl_gid);
 }
 
 /*
@@ -68,8 +59,8 @@ make_stat(struct inode_stat * stat, int slot, int index)
 		stat->uid = SUPER_USER;
 		stat->gid = SUPER_USER;
 	} else {
-		stat->uid = mproc[slot - NR_TASKS].mp_effuid;
-		stat->gid = mproc[slot - NR_TASKS].mp_effgid;
+		stat->uid = proc_list[slot - NR_TASKS].mpl_uid;
+		stat->gid = proc_list[slot - NR_TASKS].mpl_gid;
 	}
 
 	stat->size = 0;
@@ -88,72 +79,18 @@ dir_is_pid(struct inode *node)
 }
 
 /*
- * Get the process table from the kernel.  Check the magic number in the table
- * entries.
+ * Get the process listing from the MIB service.
  */
 static int
-update_proc_table(void)
+update_list(void)
 {
-	int r, slot;
-
-	if ((r = sys_getproctab(proc)) != OK) return r;
-
-	for (slot = 0; slot < NR_PROCS + NR_TASKS; slot++) {
-		if (proc[slot].p_magic != PMAGIC) {
-			printf("PROCFS: system version mismatch!\n");
-
-			return EINVAL;
-		}
-	}
-
-	return OK;
-}
-
-/*
- * Get the process table from PM.  Check the magic number in the table entries.
- */
-static int
-update_mproc_table(void)
-{
-	int r, slot;
-
-	r = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc, sizeof(mproc));
-	if (r != OK) return r;
-
-	for (slot = 0; slot < NR_PROCS; slot++) {
-		if (mproc[slot].mp_magic != MP_MAGIC) {
-			printf("PROCFS: PM version mismatch!\n");
-
-			return EINVAL;
-		}
-	}
-
-	return OK;
-}
-
-/*
- * Get the process table from VFS.
- */
-static int
-update_fproc_table(void)
-{
-
-	return getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc, sizeof(fproc));
-}
-
-/*
- * Get the process tables from the kernel, PM, and VFS.
- */
-static int
-update_tables(void)
-{
+	const int mib[] = { CTL_MINIX, MINIX_PROC, PROC_LIST };
+	size_t size;
 	int r;
 
-	if ((r = update_proc_table()) != OK) return r;
-
-	if ((r = update_mproc_table()) != OK) return r;
-
-	if ((r = update_fproc_table()) != OK) return r;
+	size = sizeof(proc_list);
+	if (__sysctl(mib, __arraycount(mib), proc_list, &size, NULL, 0) != 0)
+		printf("ProcFS: unable to obtain process list (%d)\n", -errno);
 
 	return OK;
 }
@@ -168,7 +105,7 @@ init_tree(void)
 {
 	int i, r;
 
-	if ((r = update_tables()) != OK)
+	if ((r = update_list()) != OK)
 		return r;
 
 	/*
@@ -232,19 +169,13 @@ construct_pid_dirs(void)
 
 		/*
 		 * If the process slot is not in use, delete the associated
-		 * inode.
+		 * inode.  Otherwise, get the process ID.
 		 */
-		if (!slot_in_use(i)) {
+		if ((pid = pid_from_slot(i)) == 0) {
 			delete_inode(node);
 
 			continue;
 		}
-
-		/* Otherwise, get the process ID. */
-		if (i < NR_TASKS)
-			pid = (pid_t)(i - NR_TASKS);
-		else
-			pid = mproc[i - NR_TASKS].mp_pid;
 
 		/*
 		 * If there is an old entry, see if the pid matches the current
@@ -262,7 +193,7 @@ construct_pid_dirs(void)
 	/* Second pass: add new entries. */
 	for (i = 0; i < NR_PROCS + NR_TASKS; i++) {
 		/* If the process slot is not in use, skip this slot. */
-		if (!slot_in_use(i))
+		if ((pid = pid_from_slot(i)) == 0)
 			continue;
 
 		/*
@@ -276,7 +207,7 @@ construct_pid_dirs(void)
 		if (i < NR_TASKS)
 			pid = (pid_t)(i - NR_TASKS);
 		else
-			pid = mproc[i - NR_TASKS].mp_pid;
+			pid = proc_list[i - NR_TASKS].mpl_pid;
 
 		/* Add the entry for the process slot. */
 		snprintf(name, PNAME_MAX + 1, "%d", pid);
@@ -360,7 +291,7 @@ construct_pid_entries(struct inode * parent, char * name)
 	assert(slot >= 0 && slot < NR_TASKS + NR_PROCS);
 
 	/* If this process is already gone, delete the directory now. */
-	if (!slot_in_use(slot)) {
+	if (pid_from_slot(slot) == 0) {
 		delete_inode(parent);
 
 		return;
@@ -434,7 +365,7 @@ lookup_hook(struct inode * parent, char * name, cbdata_t __unused cbdata)
 	now = getticks();
 
 	if (last_update != now) {
-		update_tables();
+		update_list();
 
 		last_update = now;
 	}
@@ -473,7 +404,7 @@ getdents_hook(struct inode * node, cbdata_t __unused cbdata)
 {
 
 	if (node == get_root_inode()) {
-		update_tables();
+		update_list();
 
 		construct_pid_dirs();
 	} else if (dir_is_pid(node))

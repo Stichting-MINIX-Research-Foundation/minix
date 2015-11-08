@@ -1167,3 +1167,119 @@ mib_kern_proc_args(struct mib_call * call, struct mib_node * node __unused,
 	assert(off <= oldlen);
 	return off;
 }
+
+/*
+ * Implementation of CTL_MINIX MINIX_PROC PROC_LIST.
+ */
+ssize_t
+mib_minix_proc_list(struct mib_call * call __unused,
+	struct mib_node * node __unused, struct mib_oldp * oldp,
+	struct mib_newp * newp __unused)
+{
+	struct minix_proc_list mpl[NR_PROCS];
+	struct minix_proc_list *mplp;
+	struct mproc *mp;
+	unsigned int mslot;
+
+	if (oldp == NULL)
+		return sizeof(mpl);
+
+	if (!update_tables())
+		return EINVAL;
+
+	memset(&mpl, 0, sizeof(mpl));
+
+	mplp = mpl;
+	mp = mproc_tab;
+
+	for (mslot = 0; mslot < NR_PROCS; mslot++, mplp++, mp++) {
+		if (!(mp->mp_flags & IN_USE) || mp->mp_pid <= 0)
+			continue;
+
+		mplp->mpl_flags = MPLF_IN_USE;
+		if (mp->mp_flags & (TRACE_ZOMBIE | ZOMBIE))
+			mplp->mpl_flags |= MPLF_ZOMBIE;
+		mplp->mpl_pid = mp->mp_pid;
+		mplp->mpl_uid = mp->mp_effuid;
+		mplp->mpl_gid = mp->mp_effgid;
+	}
+
+	return mib_copyout(oldp, 0, &mpl, sizeof(mpl));
+}
+
+/*
+ * Implementation of CTL_MINIX MINIX_PROC PROC_DATA.
+ */
+ssize_t
+mib_minix_proc_data(struct mib_call * call, struct mib_node * node __unused,
+	struct mib_oldp * oldp, struct mib_newp * newp __unused)
+{
+	struct minix_proc_data mpd;
+	struct proc *kp;
+	int kslot, mslot = 0;
+	unsigned int mflags;
+	pid_t pid;
+
+	/*
+	 * It is currently only possible to retrieve the process data for a
+	 * particular PID, which must be given as the last name component.
+	 */
+	if (call->call_namelen != 1)
+		return EINVAL;
+
+	pid = (pid_t)call->call_name[0];
+
+	if (!update_tables())
+		return EINVAL;
+
+	/*
+	 * Unlike the CTL_KERN nodes, we use the ProcFS semantics here: if the
+	 * given PID is negative, it is a kernel task; otherwise, it identifies
+	 * a user process.  A request for PID 0 will result in ESRCH.
+	 */
+	if (pid < 0) {
+		if (pid < -NR_TASKS)
+			return ESRCH;
+
+		kslot = pid + NR_TASKS;
+		assert(kslot < NR_TASKS);
+	} else {
+		if ((mslot = get_mslot(pid)) == NO_SLOT)
+			return ESRCH;
+
+		kslot = NR_TASKS + mslot;
+	}
+
+	if (oldp == NULL)
+		return sizeof(mpd);
+
+	kp = &proc_tab[kslot];
+
+	mflags = (pid > 0) ? mproc_tab[mslot].mp_flags : 0;
+
+	memset(&mpd, 0, sizeof(mpd));
+	mpd.mpd_endpoint = kp->p_endpoint;
+	if (mflags & PRIV_PROC)
+		mpd.mpd_flags |= MPDF_SYSTEM;
+	if (mflags & (TRACE_ZOMBIE | ZOMBIE))
+		mpd.mpd_flags |= MPDF_ZOMBIE;
+	else if ((mflags & TRACE_STOPPED) || RTS_ISSET(kp, RTS_P_STOP))
+		mpd.mpd_flags |= MPDF_STOPPED;
+	else if (proc_is_runnable(kp))
+		mpd.mpd_flags |= MPDF_RUNNABLE;
+	mpd.mpd_blocked_on = P_BLOCKEDON(kp);
+	mpd.mpd_priority = kp->p_priority;
+	mpd.mpd_user_time = kp->p_user_time;
+	mpd.mpd_sys_time = kp->p_sys_time;
+	mpd.mpd_cycles = kp->p_cycles;
+	mpd.mpd_kipc_cycles = kp->p_kipc_cycles;
+	mpd.mpd_kcall_cycles = kp->p_kcall_cycles;
+	if (kslot >= NR_TASKS) {
+		mpd.mpd_nice = mproc_tab[mslot].mp_nice;
+		strlcpy(mpd.mpd_name, mproc_tab[mslot].mp_name,
+		    sizeof(mpd.mpd_name));
+	} else
+		strlcpy(mpd.mpd_name, kp->p_name, sizeof(mpd.mpd_name));
+
+	return mib_copyout(oldp, 0, &mpd, sizeof(mpd));
+}
