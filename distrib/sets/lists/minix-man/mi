@@ -367,6 +367,7 @@
 ./usr/man/man1/tic.1                                    minix-man
 ./usr/man/man1/time.1                                   minix-man
 ./usr/man/man1/tmux.1                                   minix-man
+./usr/man/man1/top.1                                    minix-man
 ./usr/man/man1/touch.1                                  minix-man
 ./usr/man/man1/tput.1                                   minix-man
 ./usr/man/man1/tr.1                                     minix-man

@@ -1,0 +1,6 @@
+.SH "SCO UNIX NOTES"
+The SCO OpenServer5 port is a modification of the SCO Unix port
+done by Mike Hopkirk (hops@sco.com).
+OpenServer5 is a more normal Unix although the proc variables are still
+somewhat funky.  No easy access to RSS memory and CPUTICKS.
+Added support for ordering and enabled use of setpriority().

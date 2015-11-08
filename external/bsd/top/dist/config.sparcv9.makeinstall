@@ -1,0 +1,10 @@
+# Install rule specific to sparcv7/sparcv9 for sunos5
+install: all install-man
+	mkdir -p $(DESTDIR)$(bindir)/sparcv7
+	mkdir -p $(DESTDIR)$(bindir)/sparcv9
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		sparcv7/$(PROGRAM) $(DESTDIR)$(bindir)/sparcv7/$(PROGRAM)
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		sparcv9/$(PROGRAM) $(DESTDIR)$(bindir)/sparcv9/$(PROGRAM)
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		$(PROGRAM) $(DESTDIR)$(bindir)/$(PROGRAM)

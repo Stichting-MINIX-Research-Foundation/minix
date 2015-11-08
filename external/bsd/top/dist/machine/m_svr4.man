@@ -1,0 +1,6 @@
+.SH "SVR4 CREDITS"
+The SVR4 port was initially written by Andrew Herbert.  He was guided by a SVR4
+port of top version 2.1 which was done by Andy Crump (andyc@bucky.intel.com).
+Robert Boucher (boucher@sofkin.ca) adapted it to top version 3.1.
+Ported to System 3000 Release 2.03 by 
+Jeff Janvrin (jeff.janvrinColumbiaSC.NCR.COM)

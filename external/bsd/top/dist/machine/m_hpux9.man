@@ -1,0 +1,9 @@
+.SH "HPUX 9 INFORMATION"
+Under HP/UX 9, the kernel symbol _ccpu was eliminated.  The author
+believe that _cexp is a suitable substitute, but cannot be positive.
+This seems to be confirmed by the fact that information produced using
+this assumption correlates well with that produced by HP's version of top.
+
+This port was adapted from the port for HP/UX version 8 (written by
+Christos Zoulas).  The adaptation was performed by Kevin Schmidt
+<kevin@mcl.ucsb.edu>.

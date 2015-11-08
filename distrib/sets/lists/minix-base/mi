@@ -406,6 +406,7 @@
 ./usr/bin/more                                          minix-base
 ./usr/bin/msgc                                          minix-base
 ./usr/bin/mt                                            minix-base
+./usr/bin/mtop                                          minix-base
 ./usr/bin/nbperf                                        minix-base
 ./usr/bin/netpgp                                        minix-base      crypto
 ./usr/bin/netpgpkeys                                    minix-base      crypto

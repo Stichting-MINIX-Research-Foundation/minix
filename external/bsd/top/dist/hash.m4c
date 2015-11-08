@@ -1,0 +1,666 @@
+/*
+ * Copyright (c) 1984 through 2008, William LeFebvre
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ * 
+ *     * Neither the name of William LeFebvre nor the names of other
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* hash.m4c */
+
+/* The file hash.c is generated from hash.m4c via the preprocessor M4 */
+
+/*
+ * Hash table functions:  init, add, lookup, first, next, sizeinfo.
+ * This is a conventional "bucket hash".  The key is hashed in to a number
+ * less than or equal to the number of buckets and the result is used
+ * to index in to the array of buckets.  Each bucket is a linked list
+ * that contains all the key/value pairs which hashed to that index.
+ */
+
+#include "config.h"
+
+#if STDC_HEADERS
+#include <string.h>
+#include <stdlib.h>
+#define memzero(a, b)		memset((a), 0, (b))
+#else /* !STDC_HEADERS */
+#ifdef HAVE_MEMCPY
+#define memzero(a, b)		memset((a), 0, (b))
+#else
+#define memcpy(a, b, c)		bcopy((b), (a), (c))
+#define memzero(a, b)		bzero((a), (b))
+#define memcmp(a, b, c)		bcmp((a), (b), (c))
+#endif /* HAVE_MEMCPY */
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#else
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#endif
+void *malloc();
+void free();
+char *strdup();
+#endif /* !STDC_HEADERS */
+
+/* After all that there are still some systems that don't have NULL defined */
+#ifndef NULL
+#define NULL 0
+#endif
+
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
+
+#if !HAVE_PID_T
+typedef long pid_t;
+#endif
+#if !HAVE_ID_T
+typedef long id_t;
+#endif
+
+#include "hash.h"
+
+dnl # The m4 code uses MALLOC, FREE, and STRDUP for dynamic allocation.
+dnl # You can change what these get mapped to here:
+
+define(`MALLOC', `malloc($1)')
+define(`FREE', `free($1)')
+define(`STRDUP', `strdup($1)')
+
+static int
+next_prime(int x)
+
+{
+    double i, j;
+    int f;
+
+    i = x;
+    while (i++)
+    {
+	f=1;
+	for (j=2; j<i; j++)
+	{
+	    if ((i/j)==floor(i/j))
+	    {
+		f=0;
+		break;
+	    }
+	}
+	if (f)
+	{
+	    return (int)i;
+	}
+    }
+    return 1;
+}
+
+/* string hashes */
+
+static int
+string_hash(hash_table *ht, char *key)
+
+{
+    unsigned long s = 0;
+    unsigned char ch;
+    int shifting = 24;
+
+    while ((ch = (unsigned char)*key++) != '\0')
+    {
+	if (shifting == 0)
+	{
+	    s = s + ch;
+	    shifting = 24;
+	}
+	else
+	{
+	    s = s + (ch << shifting);
+	    shifting -= 8;
+	}
+    }
+
+    return (s % ht->num_buckets);
+}
+
+void ll_init(llist *q)
+
+{
+    q->head = NULL;
+    q->count = 0;
+}
+
+llistitem *ll_newitem(int size)
+
+{
+    llistitem *qi;
+
+    qi = (llistitem *)MALLOC(sizeof(llistitem) + size);
+    qi->datum = ((void *)qi + sizeof(llistitem));
+    return qi;
+}
+
+void ll_freeitem(llistitem *li)
+
+{
+    FREE(li);
+}
+
+void ll_add(llist *q, llistitem *new)
+
+{
+    new->next = q->head;
+    q->head = new;
+    q->count++;
+}
+
+void ll_extract(llist *q, llistitem *qi, llistitem *last)
+
+{
+    if (last == NULL)
+    {
+	q->head = qi->next;
+    }
+    else
+    {
+	last->next = qi->next;
+    }
+    qi->next = NULL;
+    q->count--;
+}
+
+#define LL_FIRST(q) ((q)->head)
+llistitem *
+ll_first(llist *q)
+
+{
+    return q->head;
+}
+
+#define LL_NEXT(q, qi)  ((qi) != NULL ? (qi)->next : NULL)
+llistitem *
+ll_next(llist *q, llistitem *qi)
+
+{
+    return (qi != NULL ? qi->next : NULL);
+}
+
+#define LL_ISEMPTY(ll)  ((ll)->count == 0)
+int
+ll_isempty(llist *ll)
+
+{
+    return (ll->count == 0);
+}
+
+/*
+ * hash_table *hash_create(int num)
+ *
+ * Creates a hash table structure with at least "num" buckets.
+ */
+
+hash_table *
+hash_create(int num)
+
+{
+    hash_table *result;
+    bucket_t *b;
+    int bytes;
+    int i;
+
+    /* create the resultant structure */
+    result = (hash_table *)MALLOC(sizeof(hash_table));
+
+    /* adjust bucket count to be prime */
+    num = next_prime(num);
+
+    /* create the buckets */
+    bytes = sizeof(bucket_t) * num;
+    result->buckets = b = (bucket_t *)MALLOC(bytes);
+    result->num_buckets = num;
+
+    /* create each bucket as a linked list */
+    i = num;
+    while (--i >= 0)
+    {
+	ll_init(&(b->list));
+	b++;
+    }
+
+    return result;
+}
+
+/*
+ * unsigned int hash_count(hash_table *ht)
+ *
+ * Return total number of elements contained in hash table.
+ */
+
+unsigned int
+hash_count(hash_table *ht)
+
+{
+    register int i = 0;
+    register int cnt = 0;
+    register bucket_t *bucket;
+
+    bucket = ht->buckets;
+    while (i++ < ht->num_buckets)
+    {
+	cnt += bucket->list.count;
+	bucket++;
+    }
+
+    return cnt;
+}
+
+/*
+ * void hash_sizeinfo(unsigned int *sizes, int max, hash_table *ht)
+ *
+ * Fill in "sizes" with information about bucket lengths in hash
+ * table "max".
+ */
+
+void 
+hash_sizeinfo(unsigned int *sizes, int max, hash_table *ht)
+
+{
+    register int i;
+    register int idx;
+    register bucket_t *bucket;
+
+    memzero(sizes, max * sizeof(unsigned int));
+
+    bucket = ht->buckets;
+    i = 0;
+    while (i++ < ht->num_buckets)
+    {
+	idx = bucket->list.count;
+	sizes[idx >= max ? max-1 : idx]++;
+	bucket++;
+    }
+}
+
+dnl # HASH_TABLE_TMPL(suffix, keytype, to_hash, to_cmp, to_alloc, to_free)
+dnl #
+dnl # This generates hash table functions suitable for keys
+dnl # of type "keytype".  The function names all end with "suffix".
+dnl # "to_hash" is an expression that generates a hash index (this
+dnl # expression can include key and ht).  "to_cmp" is an expression
+dnl # that compares "key" to "k1".  "to_alloc" is an expression that
+dnl # allocates space for "key", or empty if no allocation is needed.
+dnl # "to_free" is an expression that frees "key", or empty if no
+dnl # allocation is needed.
+
+define(`HASH_TABLE_TMPL', `
+
+/*
+ * void hash_add_$1(hash_table *ht, $2 key, void *value)
+ *
+ * Add an element to table "ht".  The element is described by
+ * "key" and "value".  Return NULL on success.  If the key
+ * already exists in the table, then no action is taken and
+ * the data for the existing element is returned.
+ * Key type is $2
+ */
+
+void *
+hash_add_$1(hash_table *ht, $2 key, void *value)
+
+{
+    bucket_t *bucket;
+    hash_item_$1 *hi;
+    hash_item_$1 *h;
+    llist *ll;
+    llistitem *li;
+    llistitem *newli;
+    $2 k1;
+
+    /* allocate the space we will need */
+    newli = ll_newitem(sizeof(hash_item_$1));
+    hi = (hash_item_$1 *)newli->datum;
+
+    /* fill in the values */
+    hi->key = ifelse($5, , key, $5);
+    hi->value = value;
+
+    /* hash to the bucket */
+    bucket = &(ht->buckets[$3]);
+
+    /* walk the list to make sure we do not have a duplicate */
+    ll = &(bucket->list);
+    li = LL_FIRST(ll);
+    while (li != NULL)
+    {
+	h = (hash_item_$1 *)li->datum;
+	k1 = h->key;
+	if ($4)
+	{
+	    /* found one */
+	    break;
+	}
+	li = LL_NEXT(ll, li);
+    }
+    li = NULL;
+
+    /* is there already one there? */
+    if (li == NULL)
+    {
+	/* add the unique element to the buckets list */
+	ll_add(&(bucket->list), newli);
+	return NULL;
+    }
+    else
+    {
+	/* free the stuff we just allocated */
+	ll_freeitem(newli);
+	return ((hash_item_$1 *)(li->datum))->value;
+    }
+}
+
+/*
+ * void *hash_replace_$1(hash_table *ht, $2 key, void *value)
+ *
+ * Replace an existing value in the hash table with a new one and
+ * return the old value.  If the key does not already exist in
+ * the hash table, add a new element and return NULL.
+ * Key type is $2
+ */
+
+void *
+hash_replace_$1(hash_table *ht, $2 key, void *value)
+
+{
+    bucket_t *bucket;
+    hash_item_$1 *hi;
+    llist *ll;
+    llistitem *li;
+    void *result = NULL;
+    $2 k1;
+
+    /* find the bucket */
+    bucket = &(ht->buckets[$3]);
+
+    /* walk the list until we find the existing item */
+    ll = &(bucket->list);
+    li = LL_FIRST(ll);
+    while (li != NULL)
+    {
+	hi = (hash_item_$1 *)li->datum;
+	k1 = hi->key;
+	if ($4)
+	{
+	    /* found it: now replace the value with the new one */
+	    result = hi->value;
+	    hi->value = value;
+	    break;
+	}
+	li = LL_NEXT(ll, li);
+    }
+
+    /* if the element wasnt found, add it */
+    if (result == NULL)
+    {
+	li = ll_newitem(sizeof(hash_item_$1));
+	hi = (hash_item_$1 *)li->datum;
+	hi->key = ifelse($5, , key, $5);
+	hi->value = value;
+	ll_add(&(bucket->list), li);
+    }
+
+    /* return the old value (so it can be freed) */
+    return result;
+}
+
+/*
+ * void *hash_lookup_$1(hash_table *ht, $2 key)
+ *
+ * Look up "key" in "ht" and return the associated value.  If "key"
+ * is not found, return NULL.  Key type is $2
+ */
+
+void *
+hash_lookup_$1(hash_table *ht, $2 key)
+
+{
+    bucket_t *bucket;
+    llist *ll;
+    llistitem *li;
+    hash_item_$1 *h;
+    void *result;
+    $2 k1;
+
+    result = NULL;
+    if ((bucket = &(ht->buckets[$3])) != NULL)
+    {
+	ll = &(bucket->list);
+	li = LL_FIRST(ll);
+	while (li != NULL)
+	{
+	    h = (hash_item_$1 *)li->datum;
+	    k1 = h->key;
+	    if ($4)
+	    {
+		result = h->value;
+		break;
+	    }
+	    li = LL_NEXT(ll, li);
+	}
+    }
+    return result;
+}
+
+/*
+ * void *hash_remove_$1(hash_table *ht, $2 key)
+ *
+ * Remove the element associated with "key" from the hash table
+ * "ht".  Return the value or NULL if the key was not found.
+ */
+
+void *
+hash_remove_$1(hash_table *ht, $2 key)
+
+{
+    bucket_t *bucket;
+    llist *ll;
+    llistitem *li;
+    llistitem *lilast;
+    hash_item_$1 *hi;
+    void *result;
+    $2 k1;
+
+    result = NULL;
+    if ((bucket = &(ht->buckets[$3])) != NULL)
+    {
+	ll = &(bucket->list);
+	li = LL_FIRST(ll);
+	lilast = NULL;
+	while (li != NULL)
+	{
+	    hi = (hash_item_$1 *)li->datum;
+	    k1 = hi->key;
+	    if ($4)
+	    {
+		ll_extract(ll, li, lilast);
+		result = hi->value;
+		key = hi->key;
+		$6;
+		ll_freeitem(li);
+		break;
+	    }
+	    lilast = li;
+	    li = LL_NEXT(ll, li);
+	}
+    }
+    return result;
+}
+
+/*
+ * hash_item_$1 *hash_first_$1(hash_table *ht, hash_pos *pos)
+ *
+ * First function to call when iterating through all items in the hash
+ * table.  Returns the first item in "ht" and initializes "*pos" to track
+ * the current position.
+ */
+
+hash_item_$1 *
+hash_first_$1(hash_table *ht, hash_pos *pos)
+
+{
+    /* initialize pos for first item in first bucket */
+    pos->num_buckets = ht->num_buckets;
+    pos->hash_bucket = ht->buckets;
+    pos->curr = 0;
+    pos->ll_last = NULL;
+
+    /* find the first non-empty bucket */
+    while(pos->hash_bucket->list.count == 0)
+    {
+	pos->hash_bucket++;
+	if (++pos->curr >= pos->num_buckets)
+	{
+	    return NULL;
+	}
+    }
+
+    /* set and return the first item */
+    pos->ll_item = LL_FIRST(&(pos->hash_bucket->list));
+    return (hash_item_$1 *)pos->ll_item->datum;
+}
+
+
+/*
+ * hash_item_$1 *hash_next_$1(hash_pos *pos)
+ *
+ * Return the next item in the hash table, using "pos" as a description
+ * of the present position in the hash table.  "pos" also identifies the
+ * specific hash table.  Return NULL if there are no more elements.
+ */
+
+hash_item_$1 *
+hash_next_$1(hash_pos *pos)
+
+{
+    llistitem *li;
+
+    /* move item to last and check for NULL */
+    if ((pos->ll_last = pos->ll_item) == NULL)
+    {
+	/* are we really at the end of the hash table? */
+	if (pos->curr >= pos->num_buckets)
+	{
+	    /* yes: return NULL */
+	    return NULL;
+	}
+	/* no: regrab first item in current bucket list (might be NULL) */
+	li = LL_FIRST(&(pos->hash_bucket->list));
+    }
+    else
+    {
+	/* get the next item in the llist */
+	li = LL_NEXT(&(pos->hash_bucket->list), pos->ll_item);
+    }
+
+    /* if its NULL we have to find another bucket */
+    while (li == NULL)
+    {
+	/* locate another bucket */
+	pos->ll_last = NULL;
+
+	/* move to the next one */
+	pos->hash_bucket++;
+	if (++pos->curr >= pos->num_buckets)
+	{
+	    /* at the end of the hash table */
+	    pos->ll_item = NULL;
+	    return NULL;
+	}
+
+	/* get the first element (might be NULL) */
+	li = LL_FIRST(&(pos->hash_bucket->list));
+    }
+
+    /* li is the next element to dish out */
+    pos->ll_item = li;
+    return (hash_item_$1 *)li->datum;
+}
+
+/*
+ * void *hash_remove_pos_$1(hash_pos *pos)
+ *
+ * Remove the hash table entry pointed to by position marker "pos".
+ * The data from the entry is returned upon success, otherwise NULL.
+ */
+
+
+void *
+hash_remove_pos_$1(hash_pos *pos)
+
+{
+    llistitem *li;
+    void *ans;
+    hash_item_$1 *hi;
+    $2 key;
+
+    /* sanity checks */
+    if (pos == NULL || pos->ll_last == pos->ll_item)
+    {
+	return NULL;
+    }
+
+    /* at this point pos contains the item to remove (ll_item)
+       and its predecesor (ll_last) */
+    /* extract the item from the llist */
+    li = pos->ll_item;
+    ll_extract(&(pos->hash_bucket->list), li, pos->ll_last);
+
+    /* retain the data */
+    hi = (hash_item_$1 *)li->datum;
+    ans = hi->value;
+
+    /* free up the space */
+    key = hi->key;
+    $6;
+    ll_freeitem(li);
+
+    /* back up to previous item */
+    /* its okay for ll_item to be null: hash_next will detect it */
+    pos->ll_item = pos->ll_last;
+
+    return ans;
+}
+')
+
+dnl # create hash talbe functions for unsigned int and for strings */
+
+HASH_TABLE_TMPL(`uint', `unsigned int', `(key % ht->num_buckets)', `key == k1', ,)
+HASH_TABLE_TMPL(`pid', `pid_t', `(key % ht->num_buckets)', `key == k1', ,)
+HASH_TABLE_TMPL(`string', `char *', `string_hash(ht, key)', `strcmp(key, k1) == 0', `STRDUP(key)', `FREE(key)')
+HASH_TABLE_TMPL(`pidthr', `pidthr_t', `((key.k_thr * 10000 + key.k_pid) % ht->num_buckets)', `(key.k_pid == k1.k_pid && key.k_thr == k1.k_thr)', ,)
+#if HAVE_LWPID_T
+HASH_TABLE_TMPL(`lwpid', `lwpid_t', `(key % ht->num_buckets)', `key == k1', ,)
+#endif

@@ -1,0 +1,23 @@
+.SH "SUNOS 4 DIFFERENCES"
+On multiprocessor machines, the amount of time the processors spend in
+a spin lock is displayed along with the other processor state
+percentages.  The percentages shown for processor states are averages
+across all processors.  A process in run state also has its current
+processor displayed in the STATE column, for example "run/2" indicates
+running on processor 2.  There is an extra column in the process
+display indicating which processor each running process is assigned
+to.  Information about physical memory is displayed on the memory
+status line, but information about virtual memory is not available.
+
+Due to incompatabilities in kernel data structures, a top executable
+compiled on a Sun 4 multiprocessor architecture machine (sun4m) will
+not run correctly on a uniprocessor architecture machine (sun4), and
+vice versa.  You will have to compile and maintain separate executables
+for these architectures.  Yeah, I don't like it either.
+
+Some processes may show up with a resident set size (RES column) larger
+than total virtual memory size (SIZE column).  This seems odd at first,
+but is a consequence of shared libraries:  shared memory is counted as
+resident but is not counted in total size.
+
+The SunOS 4 port was written by William LeFebvre.
