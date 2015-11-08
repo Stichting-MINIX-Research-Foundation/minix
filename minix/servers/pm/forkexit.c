@@ -84,6 +84,8 @@ int do_fork()
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
+  rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
+  memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
@@ -182,6 +184,8 @@ int do_srv_fork()
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
+  rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
+  memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */

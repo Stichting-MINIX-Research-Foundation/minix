@@ -71,4 +71,16 @@ EXTERN struct fproc {
 #define REVIVING           0xDEEAD	/* process is being revived from suspension */
 #define PID_FREE	   0	/* process slot free */
 
+/*
+ * Upon request from the MIB service, this table is filled with a relatively
+ * small subset of per-process fields, so that the MIB service can avoid
+ * pulling in the entire fproc table.  Other fields may be added to this
+ * structure as required by the MIB service.
+ */
+EXTERN struct fproc_light {
+  dev_t fpl_tty;		/* copy of fproc.fp_tty */
+  int fpl_blocked_on;		/* copy of fproc.fp_blocked_on */
+  endpoint_t fpl_task;		/* copy of fproc.fp_task */
+} fproc_light[NR_PROCS];
+
 #endif /* __VFS_FPROC_H__ */
