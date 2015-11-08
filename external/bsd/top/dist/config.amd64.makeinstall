@@ -1,0 +1,10 @@
+# Install rule specific to i386/amd64 for sunos5
+install: all install-man
+	mkdir -p $(DESTDIR)$(bindir)/i386
+	mkdir -p $(DESTDIR)$(bindir)/amd64
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		i386/$(PROGRAM) $(DESTDIR)$(bindir)/i386/$(PROGRAM)
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		amd64/$(PROGRAM) $(DESTDIR)$(bindir)/amd64/$(PROGRAM)
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		$(PROGRAM) $(DESTDIR)$(bindir)/$(PROGRAM)

@@ -1,0 +1,340 @@
+                                        TOP
+                                  Version 3.8beta1
+
+                                  William LeFebvre
+                             with much help from others
+
+                    Frequently Asked Questions and their Answers
+
+
+
+     GENERAL
+
+ 1.  What is top? 
+
+     Top provies the user with a regularly updated display showing
+     information about the system and its top cpu-using processes. Think
+     of it as a full-screen "ps" output that gets updated at regular
+     intervals.
+
+ 2.  Where do I get the latest version of top? 
+
+     The official site for top is "ftp.unixtop.org" in the directory
+     "/pub/top". Top is also a SourceForge project, and the most recent
+     releases are available on any of the SourceForge mirrors. The
+     SourceForge project page is at
+     http://sourceforge.net/projects/unixtop.
+
+ 3.  Is there a web page for top? 
+
+     Yes. Point your browser at http://www.unixtop.org. It includes all
+     documentation, a nice interactive display which describes the various
+     components of the output of top, web-based retrieval of the package,
+     year 2000 information, and other neat stuff.
+
+ 4.  Is there a mailing list or on-line bulletin board for top? 
+
+     There is a mailing list used for general announcements regarding top,
+     including new releases. This mailing list is available to sourceforge
+     members and can be accessed from the unixtop sourceforge project
+     page. Visit SourceForge and search for the project "unixtop", then
+     click on "mailing lists". There are also on-line forums available
+     through SourceForge where members can post questions and comments.
+
+ 5.  What about Year 2000 compliance? 
+
+     Top did not experience any problems with the transition to the year
+     2000. A full statement concerning top and the year 2000 can be found
+     in the file "Y2K" included with the distribution.
+
+ 6.  Will there be another major release of top? Will there be a top
+     version 4? 
+
+     I have some great ideas for the next major release of top, and I very
+     much want to make those ideas a reality. What I don't have much of
+     these days is free time. But I will keep poking at it and I hope to
+     have top version 4.0 ready by the fall of 2006.
+
+ 7.  Does top really support multi-processor systems? 
+
+     On platforms that support multiple processors, top is able to detect
+     and correctly summarize the information about those processors. What
+     top does not do is break down the cpu states summary (the third line
+     of the display) by cpu. Instead it collects the cpu state information
+     from all processors and combines them in to a single line. Some
+     vendors  include a modified version of top that presents this
+     information for each cpu. Top 3.7 may have this functionality but it
+     is not present in the standard top 3.6 release.
+
+ 8.  Is top under CVS control? Can I access the sources via SourceForge
+     CVS or Subversion? 
+
+     I maintain top using subversion, not CVS. Although I utilize my own
+     private subversion repository, it is regularly mirrored in to the
+     SourceForge Subversion repository. You can access the SourceForge
+     repository here: https://svn.unixtop.org/unixtop/top-3.
+
+
+     COMPILING
+
+ 9.  We just upgraded our operating system to a new version and top broke.
+     What should we do? 
+
+     Recompile it. Top is very sensitive to changes in internal kernel
+     data structures. It is not uncommon for a new version of the
+     operating system to include changes to kernel data structures.
+
+
+     RUNNING
+
+10.  I just finished compiling top and it works fine for root, but when I
+     try to run it as a regular user it either complains about files it
+     can't open or it doesn't display all the information it should. Did I
+     do something wrong? 
+
+     Well, you're just not done. On many operating systems today, access
+     to many of the kernel memory devices and other system files is
+     restricted to either root or a particular group. The configure script
+     figures this out (usually) and makes sure that the "install" rule in
+     the Makefile will install top so that anyone can run it successfully.
+     However, you have to *install* it first. Do this with the command
+     "make install".
+
+11.  Top is (not) displaying idle processes and I don't (do) want it to. 
+
+     This default has only changed about a dozen times, and I finally got
+     tired of people whining about it. Go read the manual page for the
+     current version and pay special attention to the description of the
+     "TOP" environment variable.
+
+12.  We have so much memory in our machine that the memory status display
+     (the fourth line) ends up being longer than 80 characters. This
+     completely messes up top's output. Is there a patch? 
+
+     Most modules have been changed to use new memory formatting functions
+     which will display large values in terms of megabytes instead of
+     kilobytes. This should fix all occurences of this problem. Also note
+     that newer versions of top can use columns beyond 79, and understand
+     window resizes. So you can always make your window wider.
+
+13.  I tried to compile top with gcc and it doesn't work. I get
+     compilation errors in the include files, or I get an executable that
+     dumps core, or top displays incorrect numbers in some of the
+     displays. What's wrong? 
+
+     Gnu CC likes very much to use its own include files. Not being a gcc
+     expert, I can't explain why it does this. But I can tell you that if
+     you upgrade your operating system (say from Solaris 2.6 to Solaris
+     2.7) after installing gcc, then the include files that gcc uses will
+     be incorrect, especially those found in the "sys" directory. Your
+     choices are: (1) rebuild and reinstall the "standard" include files
+     for gcc (look for scripts in the distribution called "fixincludes"
+     and "fixinc.svr4"), (2) compile machine.c with
+     "CFLAGS=-I/usr/include" then make the rest of the object files
+     normally, or (3) use a different compiler.
+
+14.  The cpu state percentages are all wrong, indicating that my machine
+     is using 95% system time when it is clearly idle. What's wrong? 
+
+     This can happen if you compiled with gcc using the wrong include
+     files. See the previous question.
+
+
+     FREEBSD PROBLEMS
+
+15.  This version of top does not show individual threads with the "t" or
+     "H" commands. Instead it says "command not available." Why? 
+
+     Previous versions of top attempted to support the display of
+     individual threads under FreeBSD through the use of the "t" command.
+     However,  the FreeBSD kernel does not supply sufficient or correct
+     information on the individual threads within a process. So the data
+     that was being displayed was incorrect and misleading. Therefore, top
+     version 3.8 disables the use of this command to prevent the display
+     of incorrect information. FreeBSD 8.0 will correctly report
+     per-thread information and top version 3.8 supports the use of the
+     "t" command for version 8.0.
+
+16.  The "f" command (to display full command lines for the processes)
+     does not work and instead says "command not available". Why? 
+
+     The current version of top is able to use sysctl to retrieve almost
+     all of the information it needs without having to open /dev/kmem. The
+     one piece of information not available via sysctl is the full command
+     line of each argument. If you run top as a regular user and it cannot
+     open /dev/kmem (in other words, it is not installed set-gid to the
+     kmem group) then it will disable the "f" command. Make sure the top
+     binary is installed with a group ownership of "kmem" and with the
+     set-gid bit on if you want the "f" command to work properly.
+
+
+     MACOSX PROBLEMS
+
+17.  I tried to configure top on my Mac OSX system and I got an error
+     claiming "macosx not supported". What up? 
+
+     Since I don't have full time root access to a Mac OSX system I cannot
+     provide effective support for the platform. MacOSX uses Mach, and it
+     is very difficult to extract accurate system and process information
+     from the system. It takes a lot of trial and error, along with root
+     access. I have included the most up-to-date version of the macosx
+     module in the distribution, but I do not claim that it works. If you
+     want to try to use it, you can configure with "./configure
+     --with-module=macosx".
+
+
+     SUNOS PROBLEMS
+
+18.  I tried compiling top under SunOS version 4.1.x and it got compile
+     time errors or run time errors. Is there a patch? 
+
+     If you try compiling top in a "System V environment" under SunOS
+     (that is, /usr/5bin is before /usr/bin on your path) then the
+     compilation may fail. This is mostly due to the fact that top thinks
+     its being compiled on a System V machine when it really isn't. The
+     only solution is to put /usr/bin and /usr/ucb before /usr/5bin on
+     your path and try again.
+
+
+     SOLARIS PROBLEMS
+
+
+     NOTE: the most common source of problems with top under Solaris is
+     the result of compiling it with the wrong front end. Make sure that
+     /usr/ucb is not on your path before attempting to compile top under
+     Solaris.
+
+19.  Is there somewhere I can get a pre-compiled package? 
+
+     Yes. Although I don't provide pre-compiled binaries, you can get a
+     Sun-style package from www.sunfreeware.com.
+
+20.  Under Solaris 2, when I type "make", the system says "language
+     optional software package not installed." What's going on? 
+
+     You tried to compile with /usr/ucb/cc. Make sure /usr/ucb is not on
+     your path. Furthermore, you do not have a Sun compiler installed on
+     your system. You need a compiler to make top. Either Sun's C compiler
+     or the Gnu C compiler will work fine.
+
+21.  Under Solaris 2, when I run top as root it only shows root processes,
+     or it only shows processes with a PID less than 1000. It refuses to
+     show anything else. What do I do? 
+
+     You probably compiled it with /usr/ucb/cc instead of the real C
+     compiler. /usr/ucb/cc is a cc front end that compiles programs in BSD
+     source-level compatability mode. You do not want that. Make sure that
+     /usr/ucb is not on your path and try compiling top again.
+
+22.  Under Solaris 2, I compiled top using what I am sure is the correct
+     compiler but when I try to run it it complains about missing dynamic
+     libraries. What is wrong? 
+
+     Check to see if you have LD_LIBRARY_PATH defined in your shell. If
+     you do, make sure that /usr/ucblib is not on the path anywhere. Then
+     try compiling top again.
+
+23.  Under Solaris 2, when I try to run top it complains that it can't
+     open the library "libucb.so.1". So I changed the LIBS line in
+     m_sunos5.c to include -R/usr/ucblib to make sure that the dynamic
+     linker will look there when top runs. I figured this was just an
+     oversight. Was I right? 
+
+     No, you were not right. As distributed, top requires no alterations
+     for successful compilation and operations under any release of
+     Solaris 2. You probably compiled top with /usr/ucb/cc instead of the
+     real C compiler. See FAQ 22 for more details.
+
+24.  On my 64-bit system some processes show up with incorrect information
+     (such as zero memory). 
+
+     If you are running a 64-bit system, then you need to make sure that
+     you are running the 64-bit top binary. Top's configure script
+     attempts to detect 64-bit systems, and will automatically generate
+     both 32-bit and 64-bit binaries on such systems. If you use or
+     install the 32-bit binary on a 64-bit system top will still run but
+     will not produce the correct results. This will also happen if you
+     configure your distribution on a 32-bit system then compile with that
+     configuration on a 64-bit system. You must configure and compile on
+     the same system. For Sparc systems the 32-bit binary will be created
+     in the subdirectory "sparcv7" and the 64-bit binary will be created
+     in the subdirectory "sparcv9". For Intel systems the directories will
+     be "i386" (32-bit) and "amd64" (64-bit). In all cases a copy of 
+     /usr/lib/isaexec is made in the main directory and called "top". This
+     program will choose the correct binary to run from one of these
+     subdirectories. See isaexec(3c) for more details.
+
+25.  Can I install both 32-bit and 64-bit binaries on a central file
+     server and have machines which mount it automatically use the correct
+     one? 
+
+     Yes. If you configure and compile on a 64-bit system, top's configure
+     script and makefile will automatically create both 32-bit and 64-bit
+     binaries. The "install" rule in the makefile will install these
+     binaries in subdirectories of /usr/local/bin appropriate to the
+     architecture (sparcv7/sparcv9 or i386/amd64) then create a copy of
+     /usr/lib/isaexec named "top" in /usr/local/bin to ensure that the
+     appropriate is run when a user types "top". If you make sure that you
+     configure and compile on a 64-bit system, then "make install" will do
+     the right thing.
+
+26.  This version of top show less available swap space than previous
+     versions. Why does it no longer match the output of the swap summary
+     produced with "swap -s"? 
+
+     Starting with version 3.6 of top, the amount of swap space reported
+     by top has been changed to reflect only disk-based swap space. The 
+     swap summary produced with "swap -s" also includes memory-based swap
+     space. This changed was made for several reasons. It makes the
+     display under Solaris more like those of other operating systems. The
+     display is more what users expect (except those used to previous
+     versions of top). Most importantly, "swap -s" gets its data via an
+     undocumented system interface. Now that top no longer displays that
+     data it can use publically documented and maintained system
+     interfaces to retrieve its data.
+
+
+     SVR4-DERIVED PROBLEMS
+
+27.  When I run top on my SVR4-derived operating system, it displays all
+     the system information at the top but does not display any process
+     information (or only displays process information for my own
+     processes). Yet when I run it as root, everything works fine. What's
+     wrong? 
+
+     Your system probably uses the pseudo file system "/proc", which is by
+     default only accessible by root. Top needs to be installed setuid
+     root on such systems if it is going to function correctly for normal
+     users.
+
+
+     SVR42 PROBLEMS
+
+28.  The memory display doesn't work right. Why? 
+
+     This is a known bug with the svr42 module. The problem has been
+     traced down to a potential bug in the "mem" driver. The author of the
+     svr42 module is working on a fix.
+
+
+     STILL STUCK
+
+29.  I'm still stuck. To whom do I report problems with top? 
+
+     The most common problems are caused by top's sensitivity to internal
+     kernel data structures. So make sure that you are using the right
+     include files, and make sure that you test out top on the same
+     machine where you compiled it. Sun's BSD Source Compatability Mode is
+     also a common culprit. Make sure you aren't using either /usr/ucb/cc
+     or any of the libraries in /usr/ucblib. Finally, make sure you are
+     using the correct module. If there does not appear to be one
+     appropriate for your computer, then top probably will not work on
+     your system.
+
+     If after reading all of this file and checking everything you can you
+     are still stuck, then please use SourceForge to submit a support
+     request or a bug. Top is supported by the SourceForge project  named
+     "unixtop". On SourceForge you will find defect tracking, a mailing
+     list, and on-line forums. You can also contact the author through
+     SourceForge.
+

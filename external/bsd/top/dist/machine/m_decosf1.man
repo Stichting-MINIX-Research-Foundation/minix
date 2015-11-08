@@ -1,0 +1,14 @@
+.SH "DEC OSF/1 NOTES"
+Original author was Anthony Baxter, <anthony@aaii.oz.au>.
+Derived originally from m_ultrix, by David S. Comay <dsc@seismo.css.gov>, 
+although by now there is hardly any of the code from m_ultrix left.
+Helped a lot by having the source for syd(1), by Claus Kalle, and
+from several people at DEC who helped with providing information on
+some of the less-documented bits of the kernel interface.
+Patches from Rainer Orth <ro@TechFak.Uni-Bielefeld.DE>
+
+Theory of operation:
+Use Mach calls to build up a structure that contains all the sorts
+of stuff normally found in a struct proc in a BSD system. Then
+everything else uses this structure. This has major performance wins,
+and also should work for future versions of the O/S.

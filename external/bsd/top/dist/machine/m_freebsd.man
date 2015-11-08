@@ -1,0 +1,134 @@
+.SH "FreeBSD NOTES"
+Priorities are shown the same as they exist in process data structures,
+ranging from 0 to 255.  Note that this is not the same as the ps(1) 
+\*(lqpri\*(rq column, which subtracts 84 from each number before displaying
+it. Priority numbers fall in to priority classes as follows:
+.TP 15
+0 \- 63
+Interrupt threads
+.TP 15
+64 \- 127
+Top half kernel threads
+.TP 15
+128 \- 159
+Realtime user threads
+.TP 15
+160 \- 223
+Time sharing user threads
+.TP 15
+224 \- 255
+Idle user threads
+
+.SH "FreeBSD THREADS"
+Starting with FreeBSD 8.0 the display of individual threads can be
+toggled with the synonymous commands
+.B t
+and
+.BR H.
+Information about state, flags, CPU time and percent cpu are shown
+for each individual thread.  Other information is identical for all
+threads in the same process.
+
+.SH "FreeBSD ALTERNATE DISPLAY"
+FreeBSD supports an alternate process display which shows i/o 
+information.  Since this information is tracked per process and not
+per thread, the per-thread display is not supported in this mode.
+All fields calculate the number of operations observed since the
+last update and are displayed as a per-second rate.
+The fields in this display are as follows:
+.TP
+.B VCSW
+Voluntary context switches
+.TP
+.B IVCSW
+Involuntary context switches
+.TP
+.B READ
+Number of blocks read
+.TP
+.B WRITE
+Number of blocks written
+.TP
+.B FAULT
+Number of page faults
+.TP
+.B TOTAL
+Total number of i/o operations
+.TP
+.B PERCENT
+Percentage of total i/o attributed to this process.  If no i/o occured
+then this field is 0 for all processes.
+
+.SH "FreeBSD KERNEL SUMMARY"
+All rates are shown per-second.
+.TP
+.B Ctx
+Number of context switches.
+.TP
+.B Trap
+Number of kernel traps.
+.TP
+.B Intr
+Number of device interrupts.
+.TP
+.B Soft
+Number of software interrupts.
+.TP
+.B Fork
+Number of forks, vforks, and rforks.
+.TP
+.B Flt
+Total number of page faults.
+.TP
+.B Pgin
+Number of pages paged or swapped in to physical memory.
+.TP
+.B Pgout
+Number of pages paged or swapped out from physical memory.
+.TP
+.B Fr
+Total number of pages freed.
+.SH "FreeBSD MEMORY SUMMARY"
+Memory: 10M Act 1208K Inact 3220K Wired 132K Free 25% Swap, 2924Kin 2604Kout
+.TP
+.B K: 
+Kilobyte
+.TP
+.B M: 
+Megabyte
+.TP
+.B G:
+Gigabyte
+.TP
+.B %: 
+1/100
+
+.TP
+.B Act: 
+number of pages active
+.TP
+.B Inact: 
+number of pages inactive
+.TP
+.B Wired: 
+number of pages wired down
+.TP
+.B Free: 
+number of pages free
+.TP
+.B Swap: 
+swap usage
+.TP 
+.B Kin: 
+kilobytes swap pager pages paged in (last interval)
+.TP
+.B Kout: 
+kilobytes swap pager pages paged out  (last interval)
+.PP
+
+See /usr/include/sys/vmmeter.h and  /sys/vm/vm_meter.c.
+.PP
+Contributors: Christos Zoulas, Steven Wallace, Wolfram Schneider,
+Monte Mitzelfelt.
+.PP
+This module was retrofitted from FreeBSD 4.6.2 sources.

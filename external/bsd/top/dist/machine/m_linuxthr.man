@@ -1,0 +1,30 @@
+.SH "LINUX NOTES"
+The Linux port was written by Richard Henderson <rth@tamu.edu>.
+The CPU% calculation was brazenly stolen from the Solaris 2
+port and should be attributed to one of the many names listed
+in its man page.
+
+The order support was stolen from the SunOS 5 port by
+Alexey Klimkin <kad@klon.tme.mcst.ru>
+
+Made to work under 2.4 by William LeFebvre.
+
+This version of the Linux port includes automatic thread "eliding".
+In Linux, a thread is treated as another process sharing the memory
+space (as well as file table and other resources).  Thus
+multiple threads appear as separate processes in most system
+utilities (see
+.IR clone (2)).
+This version of top detects child thread processes and does not
+display them separately.  Instead of displaying threads individually,
+an extra column "THR" shows the number of thread processes for a
+parent process.  The cpu time and percentages are added to the
+parent.  This gives a display much closer to other thread-capable Unix
+systems.  However, threads are still counted as separate processes in
+the process summary line.
+A process is considered a thread of its parent if the
+following values are identical to its parent: address space size,
+resident set size, code start and end program counters, and stack
+start.  This heuristic can mistake a recently forked child as a thread,
+until the child has either called exec or allocated space on its own.
+

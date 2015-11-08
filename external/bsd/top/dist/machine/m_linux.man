@@ -1,0 +1,10 @@
+.SH "LINUX NOTES"
+The Linux port was written by Richard Henderson <rth@tamu.edu>.
+The CPU% calculation was brazenly stolen from the Solaris 2
+port and should be attributed to one of the many names listed
+in its man page.
+
+The order support was stolen from SUNOS 5 port by
+Alexey Klimkin <kad@klon.tme.mcst.ru>
+
+Made to work under 2.4 by William LeFebvre.
