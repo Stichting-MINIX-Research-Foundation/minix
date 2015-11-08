@@ -13,7 +13,13 @@
 /* Needs to be included here, for 'ps' etc */
 #include "const.h"
 
+/*
+ * The per-process sigaction structures are stored outside of the mproc table,
+ * so that the MIB service can avoid pulling them in, as they account for
+ * roughly 80% of the per-process state.
+ */
 typedef struct sigaction ixfer_sigaction;
+EXTERN ixfer_sigaction mpsigact[NR_PROCS][_NSIG];
 
 EXTERN struct mproc {
   char mp_exitstatus;		/* storage for status when process exits */
@@ -48,10 +54,7 @@ EXTERN struct mproc {
   sigset_t mp_sigpending;	/* pending signals to be handled */
   sigset_t mp_ksigpending;	/* bitmap for pending signals from the kernel */
   sigset_t mp_sigtrace;		/* signals to hand to tracer first */
-  ixfer_sigaction mp_sigact[_NSIG]; /* as in sigaction(2) */
-#ifdef __ACK__
-  char mp_padding[60];		/* align structure with new libc */
-#endif
+  ixfer_sigaction *mp_sigact;	/* as in sigaction(2), pointer into mpsigact */
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
   minix_timer_t mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
   clock_t mp_interval[NR_ITIMERS];	/* setitimer(2) repetition intervals */

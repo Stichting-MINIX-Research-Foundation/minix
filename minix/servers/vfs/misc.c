@@ -51,6 +51,8 @@ static void free_proc(int flags);
  *===========================================================================*/
 int do_getsysinfo(void)
 {
+  struct fproc *rfp;
+  struct fproc_light *rfpl;
   vir_bytes src_addr, dst_addr;
   size_t len, buf_size;
   int what;
@@ -74,6 +76,17 @@ int do_getsysinfo(void)
     case SI_DMAP_TAB:
 	src_addr = (vir_bytes) dmap;
 	len = sizeof(struct dmap) * NR_DEVICES;
+	break;
+    case SI_PROCLIGHT_TAB:
+	/* Fill the light process table for the MIB service upon request. */
+	rfpl = &fproc_light[0];
+	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++, rfpl++) {
+		rfpl->fpl_tty = rfp->fp_tty;
+		rfpl->fpl_blocked_on = rfp->fp_blocked_on;
+		rfpl->fpl_task = rfp->fp_task;
+	}
+	src_addr = (vir_bytes) fproc_light;
+	len = sizeof(fproc_light);
 	break;
 #if ENABLE_SYSCALL_STATS
     case SI_CALL_STATS:

@@ -145,6 +145,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   for (rmp=&mproc[0]; rmp<&mproc[NR_PROCS]; rmp++) {
 	init_timer(&rmp->mp_timer);
 	rmp->mp_magic = MP_MAGIC;
+	rmp->mp_sigact = mpsigact[rmp - mproc];
   }
 
   /* Build the set of signals which cause core dumps, and the set of signals

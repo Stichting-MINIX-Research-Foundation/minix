@@ -14,11 +14,10 @@
 
 typedef struct proc ixfer_proc_t;
 typedef struct mproc ixfer_mproc_t;
-typedef struct fproc ixfer_fproc_t;
 
 static ixfer_proc_t proc_tab[NR_TASKS + NR_PROCS];
 static ixfer_mproc_t mproc_tab[NR_PROCS];
-static ixfer_fproc_t fproc_tab[NR_PROCS];
+static struct fproc_light fproc_tab[NR_PROCS];
 
 /*
  * The number of processes added to the current number of processes when doing
@@ -103,8 +102,9 @@ update_tables(void)
 		}
 	}
 
-	/* Retrieve the VFS process table, which has no magic number. */
-	r = getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc_tab, sizeof(fproc_tab));
+	/* Retrieve an extract of the VFS process table. */
+	r = getsysinfo(VFS_PROC_NR, SI_PROCLIGHT_TAB, fproc_tab,
+	    sizeof(fproc_tab));
 	if (r != OK) {
 		printf("MIB: unable to obtain VFS process table (%d)\n", r);
 
@@ -226,7 +226,7 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 	int32_t * flag)
 {
 	struct mproc *mp;
-	struct fproc *fp;
+	struct fproc_light *fp;
 	struct proc *kp;
 	const char *wmesg;
 	uint64_t wchan;
@@ -290,9 +290,9 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 	} else if (mp->mp_flags & SIGSUSPENDED) {
 		wchan = 0x202;
 		wmesg = "pause";
-	} else if (fp->fp_blocked_on != FP_BLOCKED_ON_NONE) {
-		wchan = (fp->fp_blocked_on << 8) | 0x03;
-		switch (fp->fp_blocked_on) {
+	} else if (fp->fpl_blocked_on != FP_BLOCKED_ON_NONE) {
+		wchan = (fp->fpl_blocked_on << 8) | 0x03;
+		switch (fp->fpl_blocked_on) {
 		case FP_BLOCKED_ON_PIPE:
 			wmesg = "pipe";
 			break;
@@ -311,8 +311,8 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 			 * wchan value, and use the driver's process name,
 			 * without parentheses, as wmesg text.
 			 */
-			wchan |= (uint64_t)fp->fp_task << 16;
-			fill_wmesg(wmptr, wmsz, fp->fp_task, FALSE /*ipc*/);
+			wchan |= (uint64_t)fp->fpl_task << 16;
+			fill_wmesg(wmptr, wmsz, fp->fpl_task, FALSE /*ipc*/);
 			break;
 		default:
 			/* A newly added flag we don't yet know about? */
@@ -687,7 +687,7 @@ static void
 fill_proc2_user(struct kinfo_proc2 * p, int mslot)
 {
 	struct mproc *mp;
-	struct fproc *fp;
+	struct fproc_light *fp;
 	time_t boottime;
 	dev_t tty;
 	struct timeval tv;
@@ -703,7 +703,7 @@ fill_proc2_user(struct kinfo_proc2 * p, int mslot)
 	fp = &fproc_tab[mslot];
 
 	zombie = (mp->mp_flags & (TRACE_ZOMBIE | ZOMBIE));
-	tty = (!zombie) ? fp->fp_tty : NO_DEV;
+	tty = (!zombie) ? fp->fpl_tty : NO_DEV;
 
 	p->p_eflag = 0;
 	if (tty != NO_DEV)
@@ -869,7 +869,7 @@ mib_kern_proc2(struct mib_call * call, struct mib_node * node __unused,
 				continue; /* TODO: revoke(2) support */
 			/* Do not access the fproc_tab slot of zombies. */
 			zombie = (mp->mp_flags & (TRACE_ZOMBIE | ZOMBIE));
-			tty = (zombie) ? fproc_tab[mslot].fp_tty : NO_DEV;
+			tty = (zombie) ? fproc_tab[mslot].fpl_tty : NO_DEV;
 			if ((dev_t)arg == KERN_PROC_TTY_NODEV) {
 				if (tty != NO_DEV)
 					continue;
