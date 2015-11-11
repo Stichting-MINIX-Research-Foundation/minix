@@ -55,7 +55,10 @@ shift $(($OPTIND - 1))
 if [ $# -eq 0 ]; then
 	services=$(echo /proc/service/*)
 else
-	services="$@"
+	services=
+	for label in $@; do
+		services="$services /proc/service/$label"
+	done
 fi
 
 for service in $services; do
