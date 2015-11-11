@@ -3,6 +3,7 @@
 
 #include <magic_def.h>
 #include <magic_common.h>
+#include <magic_extern.h>
 #include <magic_structs.h>
 #include <magic_sentry.h>
 #include <magic_selement.h>
@@ -573,7 +574,7 @@
             magic_type_walk_root((E)->sentry->type, 0,                         \
                 (unsigned long) ((char*)(E)->address -                         \
                 (char*)(E)->sentry->address), magic_selement_name_print_cb,    \
-                (void*)(E));                                                   \
+                (void*)__UNCONST((E)));                                        \
         }                                                                      \
         else {                                                                 \
             _magic_printf("???");                                              \
@@ -937,8 +938,8 @@ EXTERN struct _magic_vars_t *_magic_vars;
 FUNCTION_BLOCK(
 
 /* Magic vars wrappers. */
-PUBLIC void *_magic_vars_addr();
-PUBLIC size_t _magic_vars_size();
+PUBLIC void *_magic_vars_addr(void);
+PUBLIC size_t _magic_vars_size(void);
 
 /* Magic printf. */
 PUBLIC int magic_null_printf(const char* format, ...);
@@ -949,7 +950,7 @@ PUBLIC void magic_assert_failed(const char *assertion, const char *file,
     const char *function, const int line);
 
 /* Magic utility functions. */
-PUBLIC unsigned long magic_get_sys_pagesize();
+PUBLIC unsigned long magic_get_sys_pagesize(void);
 
 /* Magic lock primitives. */
 typedef int (*magic_lock_t)(void*);
@@ -1017,49 +1018,49 @@ EXTERN unsigned long magic_sys_pagesize;
 
 /* Initialization functions. */
 PUBLIC void magic_init(void);
-PUBLIC void magic_stack_init();
+PUBLIC void magic_stack_init(void);
 
 /* Dfunction functions. */
 PUBLIC int magic_check_dfunction(struct _magic_dfunction *ptr, int flags);
-PUBLIC int magic_check_dfunctions();
-PUBLIC int magic_check_dfunctions_safe();
+PUBLIC int magic_check_dfunctions(void);
+PUBLIC int magic_check_dfunctions_safe(void);
 PUBLIC void magic_print_dfunction(struct _magic_dfunction *dfunction);
-PUBLIC void magic_print_dfunctions();
-PUBLIC void magic_print_dfunctions_safe();
+PUBLIC void magic_print_dfunctions(void);
+PUBLIC void magic_print_dfunctions_safe(void);
 PUBLIC void magic_copy_dfunction(struct _magic_dfunction *dfunction,
     struct _magic_dfunction *dst_dfunction);
 
 /* Dsindex functions. */
 PUBLIC void magic_print_dsindex(struct _magic_dsindex *dsindex);
-PUBLIC void magic_print_dsindexes();
+PUBLIC void magic_print_dsindexes(void);
 
 /* Dsentry functions. */
 PUBLIC int magic_check_dsentry(struct _magic_dsentry *ptr, int flags);
-PUBLIC int magic_check_dsentries();
-PUBLIC int magic_check_dsentries_safe();
+PUBLIC int magic_check_dsentries(void);
+PUBLIC int magic_check_dsentries_safe(void);
 PUBLIC void magic_print_dsentry(struct _magic_dsentry *dsentry);
-PUBLIC void magic_print_dsentries();
-PUBLIC void magic_print_dsentries_safe();
+PUBLIC void magic_print_dsentries(void);
+PUBLIC void magic_print_dsentries_safe(void);
 PUBLIC void magic_copy_dsentry(struct _magic_dsentry *dsentry,
     struct _magic_dsentry *dst_dsentry);
 
 /* Sodesc functions. */
 PUBLIC void magic_print_sodesc(struct _magic_sodesc *sodesc);
-PUBLIC void magic_print_sodescs();
+PUBLIC void magic_print_sodescs(void);
 
 /* Dsodesc functions. */
 PUBLIC void magic_print_dsodesc(struct _magic_dsodesc *dsodesc);
-PUBLIC void magic_print_dsodescs();
-PUBLIC void magic_print_dsodescs_safe();
+PUBLIC void magic_print_dsodescs(void);
+PUBLIC void magic_print_dsodescs_safe(void);
 
 /* Section functions. */
-PUBLIC void magic_print_sections();
+PUBLIC void magic_print_sections(void);
 
 /* Lookup functions. */
 PUBLIC struct _magic_sentry* magic_mempool_sentry_lookup_by_range(void *addr,
     struct _magic_dsentry *dsentry_buff);
-PUBLIC struct _magic_dsindex* magic_dsindex_lookup_by_name(char *parent_name,
-    char *name);
+PUBLIC struct _magic_dsindex*
+    magic_dsindex_lookup_by_name(const char *parent_name, const char *name);
 PUBLIC struct _magic_dsentry*
     magic_dsentry_prev_lookup(struct _magic_dsentry* dsentry);
 PUBLIC struct _magic_dsentry*
@@ -1068,16 +1069,16 @@ PUBLIC struct _magic_function* magic_function_lookup_by_id(_magic_id_t id,
     struct _magic_dfunction *dfunction_buff);
 PUBLIC struct _magic_function* magic_function_lookup_by_addr(void *addr,
     struct _magic_dfunction *dfunction_buff);
-PUBLIC struct _magic_function* magic_function_lookup_by_name(char *parent_name,
-    char *name);
-PUBLIC struct _magic_type* magic_type_lookup_by_name(char *name);
+PUBLIC struct _magic_function*
+    magic_function_lookup_by_name(const char *parent_name, const char *name);
+PUBLIC struct _magic_type* magic_type_lookup_by_name(const char *name);
 PUBLIC struct _magic_dsodesc* magic_dsodesc_lookup_by_handle(void *handle);
 PUBLIC int magic_selement_lookup_by_name(char* name,
     _magic_selement_t *selement, struct _magic_dsentry *dsentry_buff);
 
 /* Magic state function functions. */
 PUBLIC void magic_print_function(struct _magic_function *function);
-PUBLIC void magic_print_functions();
+PUBLIC void magic_print_functions(void);
 
 /* Magic state function lookup hash functions. */
 PUBLIC void magic_function_hash_build(void *buff, size_t buff_size);
@@ -1090,9 +1091,9 @@ PUBLIC void magic_function_hash_dealloc(void *object, size_t size);
 
 /* Magic state type functions. */
 PUBLIC void magic_print_type(const struct _magic_type* type);
-PUBLIC void magic_print_types();
+PUBLIC void magic_print_types(void);
 PUBLIC void magic_type_str_set_print_style(const int style);
-PUBLIC int magic_type_str_get_print_style();
+PUBLIC int magic_type_str_get_print_style(void);
 PUBLIC void magic_type_str_print(const struct _magic_type* type);
 PUBLIC void magic_type_values_print(const struct _magic_type* type);
 PUBLIC void magic_type_names_print(const struct _magic_type* type);

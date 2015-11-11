@@ -29,7 +29,7 @@ struct vartable {
 };
 
 /* creates a new variable table (NULL if no memory) */
-struct vartable *create_vartable();
+struct vartable *create_vartable(void);
 
 /* frees a variable table */
 void free_vartable(struct vartable *vt);

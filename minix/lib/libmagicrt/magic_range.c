@@ -224,7 +224,7 @@ PUBLIC void magic_ranges_init(void)
 {
     int i,j;
     void *start_address, *end_address;
-    void* linker_vars[] = { MAGIC_LINKER_VAR_NAMES };
+    const char* linker_vars[] = { MAGIC_LINKER_VAR_NAMES };
 
     /* Init sentry and data range. */
     MAGIC_RANGE_INIT(magic_data_range);

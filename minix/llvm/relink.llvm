@@ -56,27 +56,18 @@ function build_llvm_libs()
 	local LIBS=""
 	for a in $*
 	do
-		LIBS="$LIBS `find $INSTALL_DIR -maxdepth 1 -name ${a}\*.bcc | xargs`"
+		LIBS="$LIBS `find $INSTALL_DIR -maxdepth 2 -name ${a}\*.bcc | xargs`"
 	done
 	echo $LIBS
 }
 
 function find_static_libs()
 {
-	local stat_libs_llvmapps=
 	local stat_libs_minix=
-	local install_dir_save=
 
-	stat_libs_llvmapps=`build_llvm_libs $*`
-	
-	install_dir_save=${INSTALL_DIR}
-
-	INSTALL_DIR=${MINIX_LLVM_BIN_DIR}
 	stat_libs_minix=`build_llvm_libs $*`
 
-	INSTALL_DIR=${install_dir_save}
-
-	echo "${stat_libs_llvmapps} ${stat_libs_minix}"
+	echo "${stat_libs_minix}"
 }
 
 #Make sure we are running from the right directory
@@ -90,10 +81,10 @@ fi
 
 . ${MINIX_LLVM_DIR}/minix.inc
 
+INSTALL_DIR=${DESTDIR}/minix/lib
+
 echo ".so and .bcc binaries of LLVM passes set to be picked up from:"
 echo "	${INSTALL_DIR}"
-echo " 	     and"
-echo "  ${MINIX_LLVM_BIN_DIR}"
 echo 
 
 # Picking up the selected modules

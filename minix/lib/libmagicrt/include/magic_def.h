@@ -55,7 +55,7 @@
 #define MAGIC_FUNC PUBLIC USED __attribute__((noinline))
 #define MAGIC_FUNC_BODY() __asm__("")
 #define MAGIC_HOOK PUBLIC USED __attribute__((always_inline)) inline
-#define MAGIC_MACRO_FUNC __attribute__((always_inline))
+#define MAGIC_MACRO_FUNC static __attribute__((always_inline))
 
 #define TRUE  1
 #define FALSE 0
@@ -74,10 +74,13 @@
 #ifdef __MINIX
 #define _MAGIC_CAS(P, O, N) (*(P) == (O) ? *(P)=(N) : (N)+1)
 #define MAGIC_CAS(P, O, N)  (_MAGIC_CAS(P, O, N) == (N) ? (O) : *(P))
+#define _MAGIC_PCAS(P, O, N) (*(P) == (O) ? *(P)=(N) : (void *)((intptr_t)(N)+1))
+#define MAGIC_PCAS(P, O, N)  (_MAGIC_PCAS(P, O, N) == (N) ? (O) : *(P))
 #define MAGIC_FAA(P, V) (((*P)+=V)-V)
 #define MAGIC_FAS(P, V) (((*P)-=V)+V)
 #else
 #define MAGIC_CAS(P, O, N) __sync_val_compare_and_swap((P), (O), (N))
+#define MAGIC_PCAS(P, O, N) MAGIC_CAS(P, O, N)
 #define MAGIC_FAA(P, V) __sync_fetch_and_add(P, V)
 #define MAGIC_FAS(P, V) __sync_fetch_and_sub(P, V)
 #endif

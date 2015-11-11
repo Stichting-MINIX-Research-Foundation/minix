@@ -1949,6 +1949,7 @@
 ./usr/lib/libm_pic.a                                    minix-comp
 ./usr/lib/libmagic.a                                    minix-comp
 ./usr/lib/libmagic_pic.a                                minix-comp
+./usr/lib/libmagicrt.bcc                                minix-comp      magic
 ./usr/lib/libmenu.a                                     minix-comp
 ./usr/lib/libmenu_pic.a                                 minix-comp
 ./usr/lib/libminc.a                                     minix-comp

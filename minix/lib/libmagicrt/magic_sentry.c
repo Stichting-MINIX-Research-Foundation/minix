@@ -115,7 +115,7 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_id(_magic_id_t id,
 
     /* O(1) ID lookup for sentries. */
 #if MAGIC_LOOKUP_SENTRY
-    if (id <= _magic_sentries_num) {
+    if ((int)id <= _magic_sentries_num) {
         return &_magic_sentries[id - 1];
     }
 #endif
@@ -203,8 +203,9 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_addr(void *addr,
 /*===========================================================================*
  *                       magic_sentry_lookup_by_name                         *
  *===========================================================================*/
-PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name(char *parent_name,
-    char *name, _magic_id_t site_id, struct _magic_dsentry *dsentry_buff)
+PUBLIC struct _magic_sentry *
+    magic_sentry_lookup_by_name(const char *parent_name, const char *name,
+    _magic_id_t site_id, struct _magic_dsentry *dsentry_buff)
 {
     int i;
     struct _magic_sentry *entry = NULL;
@@ -397,7 +398,7 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_min_off_by_n(void *addr,
 /*===========================================================================*
  *                       magic_sentry_lookup_by_string                       *
  *===========================================================================*/
-PUBLIC struct _magic_sentry *magic_sentry_lookup_by_string(char *string)
+PUBLIC struct _magic_sentry *magic_sentry_lookup_by_string(const char *string)
 {
     int i;
     struct _magic_sentry *entry = NULL;
@@ -873,7 +874,7 @@ PUBLIC void magic_sentry_hash_dealloc(UNUSED(void *object), UNUSED(size_t sz))
  *                      magic_sentry_lookup_by_name_hash                     *
  *===========================================================================*/
 PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name_hash(
-    char *parent_name, char *name, _magic_id_t site_id,
+    const char *parent_name, const char *name, _magic_id_t site_id,
     struct _magic_dsentry *dsentry_buff)
 {
     /*
@@ -897,7 +898,7 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name_hash(
  *                    magic_sentry_list_lookup_by_name_hash                  *
  *===========================================================================*/
 PUBLIC struct _magic_sentry_list *magic_sentry_list_lookup_by_name_hash(
-    char *parent_name, char *name, _magic_id_t site_id,
+    const char *parent_name, const char *name, _magic_id_t site_id,
     struct _magic_dsentry *dsentry_buff)
 {
     /*

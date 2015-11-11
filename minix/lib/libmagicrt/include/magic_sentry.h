@@ -34,7 +34,7 @@
         _magic_printf("SENTRY: (id=%5lu, name=%s, parent=%s, address=0x%08x, " \
             "flags(RLDCdeTAOSNrwxtpbEZIiP)="                                   \
             "%c%c%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d, type=",               \
-            (unsigned long) MAGIC_SENTRY_ID(E), (E)->name,                     \
+            (unsigned long)MAGIC_SENTRY_ID(E), (E)->name,                      \
             MAGIC_SENTRY_PARENT(E), (unsigned) (E)->address,                   \
             MAGIC_STATE_REGION_C(E), MAGIC_STATE_LIBSPEC_C(E),                 \
             MAGIC_STATE_FLAG(E,MAGIC_STATE_DIRTY),                             \
@@ -136,13 +136,15 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_id(_magic_id_t id,
     struct _magic_dsentry *dsentry_buff);
 PUBLIC struct _magic_sentry *magic_sentry_lookup_by_addr(void *addr,
     struct _magic_dsentry *dsentry_buff);
-PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name(char *parent_name,
-    char *name, _magic_id_t site_id, struct _magic_dsentry *dsentry_buff);
+PUBLIC struct _magic_sentry *
+    magic_sentry_lookup_by_name(const char *parent_name, const char *name,
+    _magic_id_t site_id, struct _magic_dsentry *dsentry_buff);
 PUBLIC struct _magic_sentry *magic_sentry_lookup_by_range(void *addr,
     struct _magic_dsentry *dsentry_buff);
 PUBLIC struct _magic_sentry *magic_sentry_lookup_by_min_off_by_n(void *addr,
     int flags, long *min_n_ptr, struct _magic_dsentry *dsentry_buff);
-PUBLIC struct _magic_sentry *magic_sentry_lookup_by_string(char *string);
+PUBLIC struct _magic_sentry *
+    magic_sentry_lookup_by_string(const char *string);
 
 /* Lookup index functions. */
 PUBLIC void magic_sentry_rl_build_index(void *buff, size_t buff_size);
@@ -160,22 +162,24 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_range_index(void *addr,
 PUBLIC void magic_sentry_hash_build(void *buff, size_t buff_size);
 PUBLIC void magic_sentry_hash_destroy(void);
 PUBLIC size_t magic_sentry_hash_estimate_buff_size(int sentries_num);
-PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name_hash(char *parent_name,
-    char *name, _magic_id_t site_id, struct _magic_dsentry *dsentry_buff);
+PUBLIC struct _magic_sentry *
+    magic_sentry_lookup_by_name_hash(const char *parent_name,
+    const char *name, _magic_id_t site_id,
+    struct _magic_dsentry *dsentry_buff);
 PUBLIC void *magic_sentry_hash_alloc(size_t size);
 PUBLIC void magic_sentry_hash_dealloc(void *object, size_t size);
 PUBLIC struct _magic_sentry_list *magic_sentry_list_lookup_by_name_hash(
-    char *parent_name, char *name, _magic_id_t site_id,
+    const char *parent_name, const char *name, _magic_id_t site_id,
     struct _magic_dsentry *dsentry_buff);
 
 /* Magic state entry functions. */
 PUBLIC int magic_check_sentry(struct _magic_sentry *entry);
-PUBLIC int magic_check_sentries();
+PUBLIC int magic_check_sentries(void);
 PUBLIC void magic_print_sentry(struct _magic_sentry* entry);
 PUBLIC void magic_print_sentry_abs_name(struct _magic_sentry *sentry);
-PUBLIC void magic_print_sentries();
-PUBLIC void magic_print_nonstr_sentries();
-PUBLIC void magic_print_str_sentries();
+PUBLIC void magic_print_sentries(void);
+PUBLIC void magic_print_nonstr_sentries(void);
+PUBLIC void magic_print_str_sentries(void);
 PUBLIC long magic_sentry_get_off_by_n(struct _magic_sentry* sentry,
     void *addr, int flags);
 

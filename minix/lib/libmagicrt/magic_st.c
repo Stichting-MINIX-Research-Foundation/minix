@@ -21,7 +21,7 @@ EXTERN endpoint_t sef_self_endpoint;
 #define DO_SKIP_INVARIANTS_VIOLATIONS 0
 
 PRIVATE st_alloc_pages *st_alloc_pages_current = NULL;
-PRIVATE int st_alloc_buff_available = 0;
+PRIVATE size_t st_alloc_buff_available = 0;
 PRIVATE char *st_alloc_buff_pt = NULL;
 PRIVATE char *st_pre_allocated_page_pt = NULL;
 PRIVATE struct _magic_dsentry *st_dsentry_buff = NULL;
@@ -173,17 +173,17 @@ PRIVATE int __st_before_receive_sc_max_violations;
 
 /* Typedef registration and lookup */
 
-int st_strcmp_wildcard(char *with_wildcard, char *without_wildcard)
+int st_strcmp_wildcard(const char *with_wildcard, const char *without_wildcard)
 {
     /* Note: this implementation only supports basic regexes with a '*'
      * at the beginning or the end of the string.
      */
-    char *star = strchr(with_wildcard, '*');
+    const char *star = strchr(with_wildcard, '*');
     if (star) {
         if (star == with_wildcard) {
             size_t len = strlen(with_wildcard+1);
             size_t len_without_wildcard = strlen(without_wildcard);
-            char *match_without_wildcard = without_wildcard+
+            const char *match_without_wildcard = without_wildcard+
                 len_without_wildcard-len;
             if (match_without_wildcard < without_wildcard) {
                 return -1;
@@ -195,17 +195,17 @@ int st_strcmp_wildcard(char *with_wildcard, char *without_wildcard)
     return strcmp(with_wildcard, without_wildcard);
 }
 
-char *st_typename_noxfers[] =   { ST_TYPENAME_NO_TRANSFER_NAMES, NULL         };
-char *st_typename_ixfers[] =    { ST_TYPENAME_IDENTITY_TRANSFER_NAMES, NULL   };
-char *st_typename_cixfers[] =   { ST_TYPENAME_CIDENTITY_TRANSFER_NAMES, NULL  };
-char *st_typename_pxfers[] =    { ST_TYPENAME_PTR_TRANSFER_NAMES, NULL        };
-char *st_typename_sxfers[] =    { ST_TYPENAME_STRUCT_TRANSFER_NAMES, NULL     };
-char *st_sentryname_ixfers[] =  { ST_SENTRYNAME_IDENTITY_TRANSFER_NAMES, NULL };
-char *st_sentryname_cixfers[] = { ST_SENTRYNAME_CIDENTITY_TRANSFER_NAMES, NULL};
-char *st_sentryname_pxfers[] =  { ST_SENTRYNAME_PTR_TRANSFER_NAMES, NULL      };
+const char *st_typename_noxfers[] =   { ST_TYPENAME_NO_TRANSFER_NAMES, NULL         };
+const char *st_typename_ixfers[] =    { ST_TYPENAME_IDENTITY_TRANSFER_NAMES, NULL   };
+const char *st_typename_cixfers[] =   { ST_TYPENAME_CIDENTITY_TRANSFER_NAMES, NULL  };
+const char *st_typename_pxfers[] =    { ST_TYPENAME_PTR_TRANSFER_NAMES, NULL        };
+const char *st_typename_sxfers[] =    { ST_TYPENAME_STRUCT_TRANSFER_NAMES, NULL     };
+const char *st_sentryname_ixfers[] =  { ST_SENTRYNAME_IDENTITY_TRANSFER_NAMES, NULL };
+const char *st_sentryname_cixfers[] = { ST_SENTRYNAME_CIDENTITY_TRANSFER_NAMES, NULL};
+const char *st_sentryname_pxfers[] =  { ST_SENTRYNAME_PTR_TRANSFER_NAMES, NULL      };
 
 /* Exclude stack references in addition to the default sentry names from state transfer. */
-char *st_sentryname_noxfers[] = {
+const char *st_sentryname_noxfers[] = {
     ST_SENTRYNAME_NO_TRANSFER_NAMES,
 #define __X(R) #R   /* Stringify the symbol names. */
     ST_STACK_REFS_INT_LIST,
@@ -214,20 +214,20 @@ char *st_sentryname_noxfers[] = {
 #endif
 #undef __X
     NULL };
-char *st_sentryname_noxfers_mem[] = { ST_SENTRYNAME_NO_TRANSFER_MEM_NAMES, NULL };
+const char *st_sentryname_noxfers_mem[] = { ST_SENTRYNAME_NO_TRANSFER_MEM_NAMES, NULL };
 
 /* Exclude the data segments of certain libs from state transfer. */
-char *st_dsentry_lib_noxfer[] = {
+const char *st_dsentry_lib_noxfer[] = {
 #ifdef ST_DSENTRYLIB_NO_TRANSFER_NAMES
     ST_DSENTRYLIB_NO_TRANSFER_NAMES,
 #endif
     NULL };
 
-char *st_typename_key_registrations[MAX_NUM_TYPENAMES];
+const char *st_typename_key_registrations[MAX_NUM_TYPENAMES];
 
-int is_typename(char *search_key, struct _magic_type *type)
+static int is_typename(const char *search_key, struct _magic_type *type)
 {
-    int i;
+    unsigned int i;
     /* We can't use a cached lookup result */
     if (!st_strcmp_wildcard(search_key, type->name)) {
         /* The name matches */
@@ -243,7 +243,7 @@ int is_typename(char *search_key, struct _magic_type *type)
     return FALSE;
 }
 
-PUBLIC void st_register_typename_key(char *key)
+PUBLIC void st_register_typename_key(const char *key)
 {
     int i, is_registered = FALSE;
     for(i = 0 ; i < MAX_NUM_TYPENAMES ; i++) {
@@ -256,7 +256,7 @@ PUBLIC void st_register_typename_key(char *key)
     assert(is_registered && "Error, number of typename registrations > MAX_NUM_TYPENAMES.\n");
 }
 
-PUBLIC void st_register_typename_keys(char **keys)
+PUBLIC void st_register_typename_keys(const char **keys)
 {
     int i = 0;
     while (keys[i] != NULL) {
@@ -267,7 +267,7 @@ PUBLIC void st_register_typename_keys(char **keys)
 
 PRIVATE void set_typename_key(struct _magic_type *type)
 {
-    char **registration = st_typename_key_registrations;
+    const char **registration = st_typename_key_registrations;
 
     while (*registration != NULL) {
         if (is_typename(*registration, type)) {
@@ -278,7 +278,7 @@ PRIVATE void set_typename_key(struct _magic_type *type)
     }
 }
 
-PUBLIC void register_typenames()
+PRIVATE void register_typenames(void)
 {
 
     int i;
@@ -296,7 +296,7 @@ PUBLIC void register_typenames()
 
 }
 
-PRIVATE INLINE void register_typenames_and_callbacks()
+PRIVATE INLINE void register_typenames_and_callbacks(void)
 {
 
     static int st_is_registered = FALSE;
@@ -313,8 +313,8 @@ PRIVATE INLINE void register_typenames_and_callbacks()
 
 }
 
-PUBLIC int st_type_name_match_any(char **registered_type_name_keys,
-    char *key)
+PRIVATE int st_type_name_match_any(const char **registered_type_name_keys,
+    const char *key)
 {
     int i = 0;
     while (registered_type_name_keys[i] != NULL) {
@@ -326,8 +326,8 @@ PUBLIC int st_type_name_match_any(char **registered_type_name_keys,
     return FALSE;
 }
 
-PUBLIC int st_sentry_name_match_any(char **sentry_wildcard_names,
-    char *name)
+PRIVATE int st_sentry_name_match_any(const char **sentry_wildcard_names,
+    const char *name)
 {
     int i = 0;
     while (sentry_wildcard_names[i] != NULL) {
@@ -339,8 +339,8 @@ PUBLIC int st_sentry_name_match_any(char **sentry_wildcard_names,
     return FALSE;
 }
 
-PUBLIC int st_dsentry_parent_name_match_any(char **wildcard_names,
-    char *name)
+PRIVATE int st_dsentry_parent_name_match_any(const char **wildcard_names,
+    const char *name)
 {
     int i = 0;
     while (wildcard_names[i] != NULL) {
@@ -353,7 +353,7 @@ PUBLIC int st_dsentry_parent_name_match_any(char **wildcard_names,
 }
 
 /* Utilities. */
-PUBLIC void st_cb_print(int level, char *msg, _magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info)
+PUBLIC void st_cb_print(int level, const char *msg, _magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info)
 {
     if (ST_CB_PRINT_LEVEL(level)) {
         _magic_printf("[%s] %s. Current state element:\n",
@@ -568,7 +568,7 @@ PRIVATE int transfer_ptr_sel_with_trg_cb(_magic_selement_t *selement, _magic_sel
     else if(trg_extf_flags & ST_ON_PTRXFER_SET_DEFAULT) {
         ST_CB_PRINT(ST_CB_DBG, "ptr lookup results in forcefully setting ptr to default value", selement, sel_analyzed, sel_stats, cb_info);
         if (trg_flags & MAGIC_STATE_STRING) {
-            *((char**)local_selement_address) = "";
+            *((char**)local_selement_address) = __UNCONST("");
         }
         else {
             *local_selement_address = NULL;
@@ -713,7 +713,7 @@ PRIVATE INLINE int default_transfer_selement_sel_cb(_magic_selement_t *selement,
 
 PUBLIC int st_cb_transfer_sentry_default(_magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info)
 {
-    char *sentry_name = selement->sentry->name;
+    const char *sentry_name = selement->sentry->name;
 
 #if ST_ASSUME_RAW_COPY_BEFORE_TRANSFER
     if (MAGIC_STATE_FLAGS(selement->sentry, MAGIC_STATE_DYNAMIC)) {
@@ -763,7 +763,7 @@ PUBLIC int st_cb_transfer_sentry_default(_magic_selement_t *selement, _magic_sel
 
 PUBLIC int st_cb_transfer_typename_default(_magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info)
 {
-    char *typename_key = ST_TYPE_NAME_KEY(selement->type);
+    const char *typename_key = ST_TYPE_NAME_KEY(selement->type);
     if (ST_TYPE_NAME_MATCH_ANY(st_typename_ixfers, typename_key)) {
         return transfer_identity_sel_cb(selement, sel_analyzed, sel_stats, cb_info);
     }
@@ -908,7 +908,7 @@ PRIVATE INLINE void st_map_sel_analyzed_from_target(_magic_sel_analyzed_t *cache
         local_sel_analyzed->u.ptr.num_trg_types = 1;
     }
     else {
-        int i;
+        unsigned int i;
         void *address = NULL;
         local_sel_analyzed->u.ptr.num_trg_types = 0;
         for (i = cached_sel_analyzed->u.ptr.first_legal_trg_type ; i < cached_sel_analyzed->u.ptr.num_trg_types ; i++) {
@@ -1027,8 +1027,8 @@ PUBLIC void st_cb_map_child_union_selement_generic(_magic_selement_t *cached_sel
 
 PUBLIC void st_cb_map_from_parent_struct_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping)
 {
-    int i;
-    char *cached_member_name;
+    unsigned int i;
+    const char *cached_member_name;
     /* Match struct/unions with struct/unions. */
     assert(cached_selement->parent_type->type_id == MAGIC_TYPE_STRUCT || cached_selement->parent_type->type_id == MAGIC_TYPE_UNION);
     if (local_selement->parent_type->type_id != MAGIC_TYPE_STRUCT && local_selement->parent_type->type_id != MAGIC_TYPE_UNION) {
@@ -1048,7 +1048,7 @@ PUBLIC void st_cb_map_from_parent_struct_selement_generic(_magic_selement_t *cac
 
 PUBLIC void st_cb_map_child_struct_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping)
 {
-    int i, j;
+    unsigned int i, j;
     const struct _magic_type *cached_type = cached_selement->type;
     const struct _magic_type *local_type = local_selement->type;
     assert(cached_type->type_id == MAGIC_TYPE_STRUCT || cached_type->type_id == MAGIC_TYPE_UNION);
@@ -1251,10 +1251,12 @@ PUBLIC int st_state_transfer(st_init_info_t *info)
     return OK;
 }
 
+#if APPARENTLY_UNUSED
 PUBLIC void st_set_policies(int policies)
 {
     st_policies = policies;
 }
+#endif
 
 #if MAGIC_LOOKUP_SENTRY_ALLOW_RANGE_INDEX
 PRIVATE void st_init_rl_index(st_init_info_t *info,
@@ -1349,7 +1351,7 @@ PRIVATE void st_vars_clear_ptrs(struct _magic_vars_t *magic_vars)
 #define __X(x) offsetof(struct _magic_vars_t, x)
     size_t offset_list[] = { ST_MAGIC_VARS_PTR_CLEAR_LIST };
 #undef __X
-    int i;
+    unsigned int i;
 
     for (i = 0 ; i < sizeof(offset_list) / sizeof(size_t) ; i++)
         *((void **)(((char *)magic_vars) + offset_list[i])) = NULL;
@@ -1378,7 +1380,8 @@ PRIVATE void st_unmap_mem(struct _magic_vars_t *magic_vars)
 
 PUBLIC int st_init(st_init_info_t *info)
 {
-    int r, max_buff_sz = 0, dsentries_num;
+    size_t max_buff_sz = 0;
+    int r, dsentries_num;
     int allow_unpaired_types = TRUE;
     if (st_init_done) {
         return OK;
@@ -1573,7 +1576,7 @@ PUBLIC void st_map_str_sentries(struct _magic_sentry **cached_sentry_ptr, struct
     else {
         int i;
         for(i = 0 ; i < st_cached_magic_vars.sentries_num ; i++) {
-            struct _magic_sentry *sentry = &st_cached_magic_vars.sentries[i];
+            sentry = &st_cached_magic_vars.sentries[i];
             if (MAGIC_SENTRY_IS_STRING(sentry) && !strcmp(st_lookup_str_local_data(sentry), (char*)local_sentry->address)) {
                 cached_sentry = sentry;
                 break;
@@ -1760,7 +1763,7 @@ PUBLIC void st_lookup_function_pair(struct _magic_function **cached_function_ptr
     assert((cached_function == NULL) ^ (local_function == NULL));
 
     if (cached_function) {
-        if (cached_function->id - 1 >= st_counterparts.functions_size) {
+        if ((int)cached_function->id - 1 >= st_counterparts.functions_size) {
             /*
              * Try to check if this is a function
              * from an external shared object.
@@ -1812,7 +1815,7 @@ PUBLIC void st_add_function_pair(struct _magic_function *cached_function, struct
 
 PUBLIC int st_sentry_equals(struct _magic_sentry *cached_sentry, struct _magic_sentry *local_sentry)
 {
-    char *cached_parent_name = "", *local_parent_name = "";
+    const char *cached_parent_name = "", *local_parent_name = "";
     int cached_flags = MAGIC_STATE_FLAGS_TO_NONEXTF(cached_sentry->flags) & (~MAGIC_STATE_ADDR_NOT_TAKEN);
     int local_flags = MAGIC_STATE_FLAGS_TO_NONEXTF(local_sentry->flags) & (~MAGIC_STATE_ADDR_NOT_TAKEN);
     if (cached_flags != local_flags) {
@@ -2235,7 +2238,8 @@ PUBLIC int st_set_status_by_sentry_ids(int status_flags, int status_op, _magic_i
 }
 
 PUBLIC int st_set_status_by_names(int status_flags, int status_op,
-    char **parent_names, char **names, _magic_id_t *dsentry_site_ids)
+    const char **parent_names, const char **names,
+    _magic_id_t *dsentry_site_ids)
 {
     int r, i = 0;
     while (names[i] != NULL) {
@@ -2284,7 +2288,7 @@ PUBLIC void st_set_status_by_function(int status_flags, int status_op,
 }
 
 PUBLIC int st_set_status_by_name(int status_flags, int status_op,
-    char *parent_name, char *name, _magic_id_t dsentry_site_id)
+    const char *parent_name, const char *name, _magic_id_t dsentry_site_id)
 {
     struct _magic_sentry *cached_sentry = NULL;
     struct _magic_function *cached_function = NULL;
@@ -2358,7 +2362,7 @@ PUBLIC int st_set_status_by_sentry_id(int status_flags, int status_op,
 PUBLIC int st_set_status_by_local_addr(int status_flags, int status_op,
     void *addr)
 {
-    char *parent_name, *name;
+    const char *parent_name, *name;
     _magic_id_t dsentry_site_id = MAGIC_DSENTRY_SITE_ID_NULL;
     struct _magic_sentry *sentry = NULL;
     struct _magic_function *function = NULL;
@@ -2800,7 +2804,7 @@ PRIVATE int transfer_metadata_type_members(st_init_info_t *info, struct _magic_t
     if (type->names != NULL && type->num_names > 0) {
         /* transfer array of name pointers */
         MD_TRANSFER(info, type->names, (void **)&type->names, type->num_names * sizeof(char *));
-        for (i = 0 ; i < type->num_names ; i++) {
+        for (i = 0 ; (unsigned int)i < type->num_names ; i++) {
             /* transfer individual name */
             MD_TRANSFER_STR(info, &type->names[i]);
         }
@@ -2868,7 +2872,7 @@ PRIVATE int transfer_metadata_type_members(st_init_info_t *info, struct _magic_t
 
 PRIVATE int transfer_metadata_sentries(st_init_info_t *info, struct _magic_vars_t *cached_magic_vars
     , struct _magic_vars_t *remote_magic_vars, st_counterparts_t *counterparts
-    , int *max_buff_sz)
+    , size_t *max_buff_sz)
 {
 
     int i;
@@ -2933,7 +2937,7 @@ PRIVATE int transfer_metadata_sentry_members(st_init_info_t *info, struct _magic
 }
 
 PUBLIC int st_transfer_metadata_dsentries(st_init_info_t *info, struct _magic_vars_t *cached_magic_vars
-    , struct _magic_vars_t *remote_magic_vars, st_counterparts_t *counterparts, int *max_buff_sz, int *dsentries_num)
+    , struct _magic_vars_t *remote_magic_vars, st_counterparts_t *counterparts, size_t *max_buff_sz, int *dsentries_num)
 {
 
     struct _magic_dsentry **dsentry_ptr;
@@ -3667,7 +3671,7 @@ PRIVATE int allocate_local_dsentry(st_init_info_t *info, struct _magic_dsindex *
 {
     struct _magic_dsentry *local_dsentry = NULL;
     struct _magic_sentry *cached_sentry = NULL;
-    char *name, *parent_name;
+    const char *name, *parent_name;
     struct _magic_type *type;
     int region;
     size_t size;
@@ -3701,7 +3705,7 @@ PRIVATE int allocate_local_dsentry(st_init_info_t *info, struct _magic_dsindex *
             MAGIC_DSODESC_LOCK();
             MAGIC_SODESC_ITER(_magic_first_sodesc, sodesc,
                 if (!strcmp(cached_dsentry->parent_name, sodesc->lib.name)) {
-                    parent_name = (char *)sodesc->lib.name;
+                    parent_name = (const char *)sodesc->lib.name;
                     found_parent_name = 1;
                     break;
                 }
@@ -3709,7 +3713,7 @@ PRIVATE int allocate_local_dsentry(st_init_info_t *info, struct _magic_dsindex *
             if (!found_parent_name) {
                 MAGIC_DSODESC_ITER(_magic_first_dsodesc, dsodesc,
                     if (!strcmp(cached_dsentry->parent_name, dsodesc->lib.name)) {
-                        parent_name = (char *)dsodesc->lib.name;
+                        parent_name = (const char *)dsodesc->lib.name;
                         found_parent_name = 1;
                         break;
                     }

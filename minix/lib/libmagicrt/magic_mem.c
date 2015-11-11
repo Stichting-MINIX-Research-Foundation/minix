@@ -46,8 +46,8 @@ PUBLIC THREAD_LOCAL short magic_mem_wrapper_active = 0;
 PUBLIC THREAD_LOCAL short magic_mempool_mgmt_active_level = 0;
 PUBLIC THREAD_LOCAL short magic_mempool_ids[MAGIC_MEMPOOL_MAX_FUNC_RECURSIONS];
 
-char* const MAGIC_MEMPOOL_NAME_UNKNOWN = "_magic_mempool_unknown#";
-char* const MAGIC_MEMPOOL_NAME_DETACHED = "_magic_mempool_detached#";
+const char* const MAGIC_MEMPOOL_NAME_UNKNOWN = "_magic_mempool_unknown#";
+const char* const MAGIC_MEMPOOL_NAME_DETACHED = "_magic_mempool_detached#";
 
 __attribute__((weak)) int magic_mempool_allow_reset = 1;
 __attribute__((weak)) int magic_mempool_allow_reuse = 1;
@@ -130,7 +130,7 @@ PUBLIC void *(*magic_real_vm_map_cacheblock)(dev_t dev, off_t dev_offset,
 /*===========================================================================*
  *                       magic_mempool_alloc_id                              *
  *===========================================================================*/
-MAGIC_MACRO_FUNC short magic_mempool_alloc_id()
+MAGIC_MACRO_FUNC short magic_mempool_alloc_id(void)
 {
     short i, id = -1;
 
@@ -197,7 +197,7 @@ MAGIC_MACRO_FUNC short magic_mempool_lookup_by_addr(void* addr)
 /*===========================================================================*
  *                       magic_mempool_reset                                 *
  *===========================================================================*/
-MAGIC_MACRO_FUNC void magic_mempool_reset(char* mempool_name, int reset_name)
+MAGIC_MACRO_FUNC void magic_mempool_reset(const char* mempool_name, int reset_name)
 {
     struct _magic_dsentry *prev_dsentry, *dsentry, *block_dsentry;
     struct _magic_sentry* sentry;
@@ -207,11 +207,13 @@ MAGIC_MACRO_FUNC void magic_mempool_reset(char* mempool_name, int reset_name)
         if (sentry->name == mempool_name) {
             block_dsentry = MAGIC_DSENTRY_NEXT_MEMBLOCK(dsentry);
             if (block_dsentry != NULL) {
-                struct _magic_dsentry *tmp_block_dsentry = MAGIC_CAS(&MAGIC_DSENTRY_NEXT_MEMBLOCK(dsentry), block_dsentry, NULL);
+                struct _magic_dsentry *tmp_block_dsentry =
+                  MAGIC_PCAS(&MAGIC_DSENTRY_NEXT_MEMBLOCK(dsentry), block_dsentry, NULL);
                 assert(tmp_block_dsentry == block_dsentry && "New blocks have been allocated from a reseted mempool!");
             }
             if (reset_name) {
-                char *tmp_name = MAGIC_CAS(&sentry->name, mempool_name, MAGIC_MEMPOOL_NAME_UNKNOWN);
+                const char *tmp_name =
+                  MAGIC_PCAS(&sentry->name, mempool_name, MAGIC_MEMPOOL_NAME_UNKNOWN);
                 assert(tmp_name == mempool_name && "The name of the mempool has changed while being reseted!");
             }
             MAGIC_MEM_DEBUG_RESET((char*)dsentry);
@@ -294,9 +296,10 @@ MAGIC_HOOK void magic_mempool_reset_begin(void* addr)
 /*===========================================================================*
  *                       magic_mempool_dsentry_set_name                      *
  *===========================================================================*/
-MAGIC_MACRO_FUNC void magic_mempool_dsentry_set_name(struct _magic_dsentry* dsentry, char* name)
+MAGIC_MACRO_FUNC void magic_mempool_dsentry_set_name(struct _magic_dsentry* dsentry,
+	const char* name)
 {
-    char *old_name, *ret;
+    const char *old_name, *ret;
 
     if ((name == MAGIC_MEMPOOL_NAME_UNKNOWN) || (name == MAGIC_MEMPOOL_NAME_DETACHED)) {
         do {
@@ -318,7 +321,8 @@ MAGIC_MACRO_FUNC void magic_mempool_dsentry_set_name(struct _magic_dsentry* dsen
 /*===========================================================================*
  *                       magic_mempool_dsentry_update                        *
  *===========================================================================*/
-MAGIC_MACRO_FUNC void magic_mempool_dsentry_update(struct _magic_dsentry* dsentry, char* name)
+MAGIC_MACRO_FUNC void magic_mempool_dsentry_update(struct _magic_dsentry* dsentry,
+	const char* name)
 {
     struct _magic_sentry* sentry = MAGIC_DSENTRY_TO_SENTRY(dsentry);
     struct _magic_dsentry* next_mempool_dsentry;
@@ -414,7 +418,7 @@ PUBLIC void *magic_mempool_block_alloc_template(__MA_ARGS__ void* addr, size_t s
  *===========================================================================*/
 PUBLIC int magic_create_dsentry(struct _magic_dsentry *dsentry,
     void *data_ptr, struct _magic_type *type, size_t size, int flags,
-    char *name, char *parent_name)
+    const char *name, const char *parent_name)
 {
     /* This function does not require any dsentry locking. */
     struct _magic_sentry *sentry = MAGIC_DSENTRY_TO_SENTRY(dsentry);
@@ -540,7 +544,7 @@ PUBLIC int magic_create_dsentry(struct _magic_dsentry *dsentry,
  *===========================================================================*/
 PUBLIC struct _magic_obdsentry* magic_create_obdsentry(void *data_ptr,
     struct _magic_type *type, size_t size, int flags,
-    const char *name, char *parent_name)
+    const char *name, const char *parent_name)
 {
     struct _magic_obdsentry *obdsentry = NULL;
     int i, ret;
@@ -992,14 +996,14 @@ PUBLIC void magic_stack_init()
  *===========================================================================*/
 PUBLIC void magic_stack_dsentries_create(
     struct _magic_dsentry **prev_last_stack_dsentry, int num_dsentries,
-    /* struct _magic_dsentry *dsentry, struct _magic_type *type, void* data_ptr, char* function_name, char* name, */ ...)
+    /* struct _magic_dsentry *dsentry, struct _magic_type *type, void* data_ptr, const char* function_name, const char* name, */ ...)
 {
     int i;
     struct _magic_dsentry *dsentry;
     struct _magic_type *type;
     void* data_ptr;
-    char* function_name;
-    char* name;
+    const char* function_name;
+    const char* name;
     char *min_data_ptr = NULL, *max_data_ptr = NULL;
     va_list va;
 
@@ -1013,8 +1017,8 @@ PUBLIC void magic_stack_dsentries_create(
         dsentry = va_arg(va, struct _magic_dsentry *);
         type = va_arg(va, struct _magic_type *);
         data_ptr = va_arg(va, void *);
-        function_name = va_arg(va, char *);
-        name = va_arg(va, char *);
+        function_name = va_arg(va, const char *);
+        name = va_arg(va, const char *);
         if (i == num_dsentries - 1) {
             /* Return address. */
             int *value_set = (void*) type;
@@ -1091,7 +1095,7 @@ PUBLIC void magic_stack_dsentries_destroy(
  *===========================================================================*/
 PUBLIC int magic_create_dfunction(struct _magic_dfunction *dfunction,
     void *data_ptr, struct _magic_type *type, int flags,
-    char *name, char *parent_name)
+    const char *name, const char *parent_name)
 {
     struct _magic_function *function = MAGIC_DFUNCTION_TO_FUNCTION(dfunction);
 
@@ -2071,9 +2075,9 @@ PUBLIC void *magic_vm_map_cacheblock(__MA_ARGS__ dev_t dev, off_t dev_offset,
         alloc_length = length + (length % page_size == 0 ? 0 : page_size-(length % page_size));
         data_ptr = vm_map_cacheblock(dev, dev_offset, ino, ino_offset, flags, length);
         if (data_ptr != MAP_FAILED) {
-            ptr = mmap(data_ptr-page_size, page_size, magic_mmap_dsentry_header_prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-            MAGIC_MEM_PRINTF("vm_map_cacheblock: ptr = mmap(start, length, prot, flags, fd, offset) <-> 0x%08x = mmap(0x%08x, %d, 0x%08x, 0x%08x, %d, %d)\n", (unsigned) ptr, data_ptr-page_size, page_size, magic_mmap_dsentry_header_prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-            assert(ptr == data_ptr-page_size); /* Ensured by VM. */
+            ptr = mmap((char *)data_ptr-page_size, page_size, magic_mmap_dsentry_header_prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+            MAGIC_MEM_PRINTF("vm_map_cacheblock: ptr = mmap(start, length, prot, flags, fd, offset) <-> 0x%08x = mmap(0x%08x, %d, 0x%08x, 0x%08x, %d, %d)\n", (unsigned) ptr, (char *)data_ptr-page_size, page_size, magic_mmap_dsentry_header_prot, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+            assert(ptr == (char *)data_ptr-page_size); /* Ensured by VM. */
             aligned_ptr = ptr;
             ptr = ((char*)ptr) + page_size - MAGIC_SIZE_TO_REAL(0);
         }

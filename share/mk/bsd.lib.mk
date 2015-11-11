@@ -213,6 +213,17 @@ SHLIB_SHFLAGS+= -Wl,-plugin=${GOLD_PLUGIN} \
 		-Wl,-plugin-opt=-disable-opt
 
 SECTIONIFYPASS?=${NETBSDSRCDIR}/minix/llvm/bin/sectionify.so
+# dcvmoole: the following construction is a hack for libmagicrt.  For reasons
+# not entirely under our control, clang refuses to take .bc objects even when
+# using the gold linker, saying that LLVM IR code cannot be linked.  In order
+# to sidestep this, libmagicrt uses the name "foo.bc.o" instead of "foo.bc" to
+# link the its LLVM IR objects.  As all libmagicrt modules use the sectionify
+# pass below, and this step needs temporary files, we give the temporary files
+# the .o suffix (while anything would do!), and allow the libmagicrt makefile
+# to override the rename to the real file name to perform a copy instead.  As
+# a result, libmagicrt ends up with both the .bc and .bc.o objects, and it can
+# pass the latter set to clang, bypassing clang's overly strict checks.
+SECTIONIFYMV?=mv -f
 
 .S.bc: ${.TARGET:.bc=.o}
 	rm -f ${.TARGET}
@@ -220,8 +231,8 @@ SECTIONIFYPASS?=${NETBSDSRCDIR}/minix/llvm/bin/sectionify.so
 .c.bc:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET} -flto
-	if [ -n '${SECTIONIFY.${.IMPSRC:T}}' ]; then \
-		${OPT} -load ${SECTIONIFYPASS} -sectionify ${SECTIONIFY.${.IMPSRC:T}} -o ${.TARGET}.tmp ${.TARGET} && mv -f ${.TARGET}.tmp ${.TARGET}; \
+	if [ -n '${SECTIONIFY.${.IMPSRC:T}:U${SECTIONIFY}}' ]; then \
+		${OPT} -load ${SECTIONIFYPASS} -sectionify ${SECTIONIFY.${.IMPSRC:T}:U${SECTIONIFY}} -o ${.TARGET}.o ${.TARGET} && ${SECTIONIFYMV} ${.TARGET}.o ${.TARGET}; \
 	fi
 
 .cc.bc .cxx.bc .cpp.bc:
@@ -545,7 +556,9 @@ SOBJS=
 _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if ${USE_BITCODE:Uno} == "yes"
+.if defined(LIB)
 _LIBS+=${_LIB_bc.a}
+.endif
 .endif # ${USE_BITCODE:Uno} == "yes"
 
 .NOPATH: ${ALLOBJS} ${_LIBS} ${_YLSRCS}
