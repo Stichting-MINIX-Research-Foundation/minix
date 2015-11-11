@@ -43,6 +43,7 @@ __RCSID("$NetBSD: abort.c,v 1.15 2012/06/08 11:15:26 abs Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#if !defined(__minix) || !defined(_LIBMINC)
 extern void (*__cleanup)(void);
 static int aborting = 0;
 
@@ -82,3 +83,13 @@ abort(void)
 	(void)raise(SIGABRT);
 	_exit(1);
 }
+
+#else /* defined(__minix) && defined(_LIBMINC) */
+void
+abort(void)
+{
+
+	/* We cannot use signals from system services. */
+	exit(1);
+}
+#endif /* defined(__minix) && defined(_LIBMINC) */

@@ -75,7 +75,7 @@ CPPFLAGS+= -D_NLS_PRIVATE=1
 .endif # ${HOST_OSTYPE:C/\-.*//} == "Minix"
 .endif # !defined(__MINIX)
 
-LLVM_CONFIGURE_ARGS=	\
+LLVM_CONFIGURE_ARGS+=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \

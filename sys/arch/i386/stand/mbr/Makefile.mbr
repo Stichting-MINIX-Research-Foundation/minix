@@ -14,6 +14,10 @@ PIE_CFLAGS=
 PIE_LDFLAGS=
 PIE_AFLAGS=
 
+.if defined(__MINIX)
+USE_BITCODE=no
+.endif # defined(__MINIX)
+
 .include <bsd.own.mk>
 
 STRIPFLAG=	# override

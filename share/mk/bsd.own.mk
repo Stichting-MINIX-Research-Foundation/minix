@@ -69,7 +69,7 @@ GOLD_PLUGIN?=${NETBSDSRCDIR}/minix/llvm/bin/LLVMgold.so
 #  -  run the passe which allows assembly weak symbols to be
 #     overriden by bitcode functions
 OPTFLAGS?=	-disable-opt \
-		-disable-internalize -disable-inlining \
+		-disable-inlining \
 		-load ${WEAKALIASOVERRIDEPASS} -weak-alias-module-override
 
 BITCODE_LD_FLAGS_1ST?= \

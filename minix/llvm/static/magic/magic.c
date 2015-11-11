@@ -453,7 +453,7 @@ PUBLIC void magic_init(void)
 
   /* Initialize memory pool descriptors. */
   for (i = 0; i < MAGIC_MAX_MEMPOOLS; i++) {
-      sprintf(_magic_mpdescs[i].name, "%s%d%s", MAGIC_MEMPOOL_NAME_PREFIX, i, MAGIC_ALLOC_NAME_SUFFIX);
+      snprintf(_magic_mpdescs[i].name, sizeof(_magic_mpdescs[i].name), "%s%d%s", MAGIC_MEMPOOL_NAME_PREFIX, i, MAGIC_ALLOC_NAME_SUFFIX);
   }
 
   /* Initialize special types. */

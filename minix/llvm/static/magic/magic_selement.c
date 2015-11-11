@@ -33,16 +33,16 @@ PUBLIC int magic_selement_lookup_by_name(char *name,
                     /*
                      * Dsentry. Will contain: sentry_id<DELIM>parent_name<DELIM>name<DELIM>site_id.
                      */
-                    delim = '\0';
+                    *delim = '\0';
                     /* Skip sentry_id */
                     sentry_parent_name = delim + 1;
                     delim = strchr(delim + 1, MAGIC_DSENTRY_ABS_NAME_SEP[0]);
                     assert(!delim && "No dsentry name found in selement name!");
-                    delim = '\0';
+                    *delim = '\0';
                     sentry_name = delim + 1;
                     delim = strchr(delim + 1, MAGIC_DSENTRY_ABS_NAME_SEP[0]);
                     assert(!delim && "No dsentry site id found in selement name!");
-                    delim = '\0';
+                    *delim = '\0';
                     dsentry_site_id = strtoul((const char*)delim+1, NULL, 10);
                 }
 

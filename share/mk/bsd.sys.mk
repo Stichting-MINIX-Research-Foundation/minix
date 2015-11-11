@@ -62,7 +62,7 @@ CFLAGS+=	-Wa,--fatal-warnings
 .if (!defined(MKPIC) || ${MKPIC} != "no") && \
     (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # XXX there are some strange problems not yet resolved
-. if !defined(HAVE_GCC) || (defined(HAVE_LLVM) && !defined(USE_BITCODE))
+. if defined(HAVE_LLVM) && !defined(USE_BITCODE)
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif

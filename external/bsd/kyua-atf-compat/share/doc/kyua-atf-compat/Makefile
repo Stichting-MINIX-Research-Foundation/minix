@@ -2,6 +2,10 @@
 
 .include <bsd.init.mk>
 
+.if defined(__MINIX)
+.PATH:		${SRCDIR}
+.endif # defined(__MINIX)
+
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/doc/reference/ref1/kyua/kyua-atf-compat
 FILESMODE=	444

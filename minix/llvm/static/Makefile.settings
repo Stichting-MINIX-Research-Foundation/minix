@@ -57,7 +57,7 @@ LLVMGOLD_RANLIB=$(LLVMGOLD_AR) -s
 LLVMGOLD_AR_FLAGS=--plugin $(LLVMGOLD_PLUGIN) -cru
 LLVMGOLD_CFLAGS=-fasynchronous-unwind-tables -g -D_MINIX -D_POSIX_SOURCE -D_SYSTEM -Wno-long-long --sysroot=$(_MINIX_SYSROOT) -I$(LLVMINC) -I$(_MINIX_OBJ_LLVM_DIR)/include/llvm -I$(_MINIX_ROOT)/external/bsd/llvm/dist/llvm/include -I$(_MINIX_OBJ_LLVM_DIR)/include -I$(_MINIX_SYSROOT)/usr/include
 LLVMGOLD_LINK=-Wl,--plugin -Wl,$(LLVMGOLD_PLUGIN)
-LLVMGOLD_LINKFLAGS=-Wl,-plugin-opt=-disable-fp-elim -Wl,-plugin-opt=-disable-inlining -Wl,-plugin-opt=also-emit-llvm
+LLVMGOLD_LINKFLAGS=-Wl,-plugin-opt=-disable-fp-elim -Wl,-plugin-opt=save-temps
 LLVMGOLD_LINKCOMMONFLAGS=-L$(_MINIX_OBJ_DIR)/destdir.$(_MINIX_ARCH)/usr/lib -rdynamic
 LLVMGOLD_LIBS=
 LLVMGOLD_LDFLAGS=$(LLVMGOLD_LINK) $(LLVMGOLD_LINKFLAGS) $(LLVMGOLD_LINKCOMMONFLAGS) $(LLVMGOLD_LIBS)

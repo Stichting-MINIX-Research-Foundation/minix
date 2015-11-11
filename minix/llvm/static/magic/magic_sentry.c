@@ -882,7 +882,7 @@ PUBLIC struct _magic_sentry *magic_sentry_lookup_by_name_hash(
     char key[MAGIC_SENTRY_NAME_MAX_KEY_LEN];
     struct _magic_sentry_hash *res, *head;
     key[0] = 0;
-    sprintf(key, "%s%s%s%s" MAGIC_ID_FORMAT, parent_name,
+    snprintf(key, sizeof(key), "%s%s%s%s" MAGIC_ID_FORMAT, parent_name,
         MAGIC_DSENTRY_ABS_NAME_SEP, name, MAGIC_DSENTRY_ABS_NAME_SEP, site_id);
     head = (struct _magic_sentry_hash *) magic_sentry_hash_head;
 
@@ -906,7 +906,7 @@ PUBLIC struct _magic_sentry_list *magic_sentry_list_lookup_by_name_hash(
     char key[MAGIC_SENTRY_NAME_MAX_KEY_LEN];
     struct _magic_sentry_hash *res, *head;
     key[0] = 0;
-    sprintf(key, "%s%s%s%s" MAGIC_ID_FORMAT, parent_name,
+    snprintf(key, sizeof(key), "%s%s%s%s" MAGIC_ID_FORMAT, parent_name,
         MAGIC_DSENTRY_ABS_NAME_SEP, name, MAGIC_DSENTRY_ABS_NAME_SEP, site_id);
     head = (struct _magic_sentry_hash *) magic_sentry_hash_head;
 

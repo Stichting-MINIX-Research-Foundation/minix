@@ -6,6 +6,8 @@ AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .if defined(__MINIX)
 # LSC: Still required by our old binutils
 AFLAGS.cdboot.S+= -Wa,--divide
+
+USE_BITCODE=no
 .endif # defined(__MINIX)
 
 PIE_CFLAGS=
