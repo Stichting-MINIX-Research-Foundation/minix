@@ -148,7 +148,22 @@ bool TypeUtil::isArrayAsStructTy(TYPECONST Type *type) {
    if(!type->isStructTy()) {
        return false;
    }
-   return type->getNumContainedTypes() == 1 || type->getContainedType(0) == type->getContainedType(1);
+   if (type->getNumContainedTypes() == 1) {
+       return true;
+   }
+   /*
+    * This check is no longer used, because it may wrongly fail in the case of
+    * an array of instances of a structure that contains a union that is
+    * initialized in different ways for array element 0 and 1.  What we really
+    * need is a check to see whether the elements are *compatible*, but we do
+    * not appear to have the means to do that here.  We warn if the check fails
+    * so as to make sure that its removal is not the source of new problems.
+    */
+   if (type->getContainedType(0) != type->getContainedType(1)) {
+       TypeUtilLog("strict isArrayAsStructTy test failed");
+       //return false;
+   }
+   return true;
 }
 
 unsigned TypeUtil::getHash(TYPECONST Type* type) {
