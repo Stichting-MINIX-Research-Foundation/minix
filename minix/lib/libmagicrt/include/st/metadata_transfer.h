@@ -18,7 +18,7 @@ PRIVATE int transfer_metadata_type_members(st_init_info_t *info,
 PRIVATE int transfer_metadata_sentries(st_init_info_t *info,
     struct _magic_vars_t *cached_magic_vars,
     struct _magic_vars_t *remote_magic_vars, st_counterparts_t *counterparts,
-    int *max_buff_sz);
+    size_t *max_buff_sz);
 PRIVATE int transfer_metadata_sentry_members(st_init_info_t *info,
     struct _magic_sentry *sentry);
 
@@ -41,7 +41,7 @@ PRIVATE int allocate_pair_metadata_dsentries_from_raw_copy(st_init_info_t *info,
 PRIVATE int md_transfer_str(st_init_info_t *info, char **str_pt);
 #define MD_TRANSFER_STR(INFO, STR_PT)                                          \
     do {                                                                       \
-        if (md_transfer_str(INFO, STR_PT)) {                                   \
+        if (md_transfer_str(INFO, __UNCONST(STR_PT))) {                        \
             printf("%s, line %d. md_transfer_str(): ERROR transferring.\n",    \
                 __FILE__, __LINE__);                                           \
             return EGENERIC;                                                   \

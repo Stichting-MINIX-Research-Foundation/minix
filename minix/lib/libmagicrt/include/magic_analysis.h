@@ -6,7 +6,7 @@
 
 /* Special convenience types. */
 #define MAGIC_TYPE_SPECIAL_INIT(STR) { 0, STR, NULL, 0, STR, 0, 0, 0, 0, 0, 0, \
-    0, MAGIC_TYPE_FUNCTION, MAGIC_TYPE_EXTERNAL, 0 }
+    0, MAGIC_TYPE_FUNCTION, MAGIC_TYPE_EXTERNAL, 0, NULL }
 EXTERN char magic_ne_str[];
 EXTERN char magic_enf_str[];
 EXTERN char magic_bo_str[];
@@ -296,7 +296,7 @@ typedef struct _magic_sel_stats_s _magic_sel_stats_t;
     ((V) && !MAGIC_PTR_IS_LIKELY_INT((void*)V))
 
 /* Magic callbacks. */
-typedef int (*magic_cb_sentries_analyze_pre_t)();
+typedef int (*magic_cb_sentries_analyze_pre_t)(void);
 PUBLIC void magic_setcb_sentries_analyze_pre(magic_cb_sentries_analyze_pre_t cb);
 
 /* Magic state entry functions. */

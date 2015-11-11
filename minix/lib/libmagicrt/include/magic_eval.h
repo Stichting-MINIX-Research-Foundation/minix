@@ -5,7 +5,7 @@
 
 typedef long (*magic_eval_func_t) (long arg);
 
-PUBLIC void magic_eval_init();
+PUBLIC void magic_eval_init(void);
 
 /* Eval frontends. */
 PUBLIC int magic_eval_int(char *expr, long *result);

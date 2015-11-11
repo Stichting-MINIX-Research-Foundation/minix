@@ -23,7 +23,7 @@ PUBLIC int magic_selement_lookup_by_name(char *name,
             token_buff[len] = '\0';
             if (token_start == name) {
                 struct _magic_sentry *sentry;
-                char *sentry_parent_name = "", *sentry_name = NULL;
+                const char *sentry_parent_name = "", *sentry_name = NULL;
                 char *delim = NULL;
                 _magic_id_t dsentry_site_id = MAGIC_DSENTRY_SITE_ID_NULL;
                 if (!(delim = strchr(token_buff, MAGIC_DSENTRY_ABS_NAME_SEP[0]))) {
@@ -896,13 +896,13 @@ PUBLIC _magic_selement_t* magic_selement_from_relative_name(
 
         case MAGIC_TYPE_STRUCT:
         case MAGIC_TYPE_UNION:
-            for(i=0;i<parent_type->num_child_types;i++) {
+            for(i=0; (unsigned int)i<parent_type->num_child_types;i++) {
                 if(!strcmp(parent_type->member_names[i], name)) {
                     child_num = i;
                     break;
                 }
             }
-            if(i == parent_type->num_child_types) {
+            if((unsigned int)i == parent_type->num_child_types) {
                 return NULL;
             }
         break;

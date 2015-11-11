@@ -79,8 +79,8 @@ typedef struct {
     __X(function_hash_buff), __X(function_hash_head)
 
 /* Public utility functions. */
-PUBLIC int st_strcmp_wildcard(char *with_wildcard, char *without_wildcard);
-PUBLIC void st_cb_print(int level, char *msg, _magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info);
+PUBLIC int st_strcmp_wildcard(const char *with_wildcard, const char *without_wildcard);
+PUBLIC void st_cb_print(int level, const char *msg, _magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info);
 PUBLIC void st_map_str_sentries(struct _magic_sentry **cached_sentry_ptr, struct _magic_sentry **local_sentry_ptr);
 PUBLIC void st_map_sentries(struct _magic_sentry **cached_sentry_ptr, struct _magic_sentry **local_sentry_ptr);
 PUBLIC void st_lookup_sentry_pair(struct _magic_sentry **cached_sentry_ptr, struct _magic_sentry **local_sentry_ptr);
@@ -151,7 +151,7 @@ PUBLIC int st_transfer_metadata_types(st_init_info_t *info,
 PUBLIC int st_transfer_metadata_dsentries(st_init_info_t *info,
     struct _magic_vars_t *cached_magic_vars,
     struct _magic_vars_t *remote_magic_vars, st_counterparts_t *counterparts,
-    int *max_buff_sz, int *dsentries_num);
+    size_t *max_buff_sz, int *dsentries_num);
 
 /* Public functions for state transfer. */
 PUBLIC int st_state_transfer(st_init_info_t *info);
@@ -174,13 +174,13 @@ PUBLIC void st_print_state_diff(st_init_info_t *info, int raw_diff, int print_ch
 PUBLIC void st_set_status_by_state_flags(int status_flags, int status_op, int match_state_flags, int skip_state_flags);
 PUBLIC int st_set_status_by_function_ids(int status_flags, int status_op, unsigned long *ids);
 PUBLIC int st_set_status_by_sentry_ids(int status_flags, int status_op, unsigned long *ids);
-PUBLIC int st_set_status_by_names(int status_flags, int status_op, char **parent_names, char **names, _magic_id_t *dsentry_site_ids);
+PUBLIC int st_set_status_by_names(int status_flags, int status_op, const char **parent_names, const char **names, _magic_id_t *dsentry_site_ids);
 PUBLIC int st_set_status_by_local_addrs(int status_flags, int status_op, void **addrs);
 PUBLIC void st_set_status_by_sentry(int status_flags, int status_op, void *cached_sentry);
 PUBLIC void st_set_status_by_function(int status_flags, int status_op, void *cached_function);
 PUBLIC int st_set_status_by_function_id(int status_flags, int status_op, unsigned long id);
 PUBLIC int st_set_status_by_sentry_id(int status_flags, int status_op, unsigned long id);
-PUBLIC int st_set_status_by_name(int status_flags, int status_op, char *parent_name, char *name, _magic_id_t dsentry_site_id);
+PUBLIC int st_set_status_by_name(int status_flags, int status_op, const char *parent_name, const char *name, _magic_id_t dsentry_site_id);
 PUBLIC int st_set_status_by_local_addr(int status_flags, int status_op, void *addr);
 
 PUBLIC int st_pair_by_function_ids(unsigned long *cached_ids, unsigned long *local_ids, int status_flags, int status_op);
@@ -332,16 +332,16 @@ PUBLIC int st_state_checking_before_receive_set_enabled(int enabled, int max_cyc
 
 #define ST_CHECK_INIT() assert(st_init_done && "st_init() should be called first!")
 
-#define ST_SENTRY_IS_CACHED(E) (MAGIC_SENTRY_ID(E) >= 1 && MAGIC_SENTRY_ID(E) <= st_cached_magic_vars.sentries_num && st_cached_magic_vars.sentries[MAGIC_SENTRY_ID(E)-1].address == (E)->address)
+#define ST_SENTRY_IS_CACHED(E) (MAGIC_SENTRY_ID(E) >= 1 && (int)MAGIC_SENTRY_ID(E) <= st_cached_magic_vars.sentries_num && st_cached_magic_vars.sentries[MAGIC_SENTRY_ID(E)-1].address == (E)->address)
 #define ST_GET_CACHED_COUNTERPART(CE,T,CT,LE) do {           \
-        int i = (CE)->id - 1;                                \
-        assert(i >= 0 && i < st_counterparts.T##_size);      \
-        LE = st_counterparts.CT[i].counterpart;              \
+        int _i = (CE)->id - 1;                               \
+        assert(_i >= 0 && _i < st_counterparts.T##_size);    \
+        LE = st_counterparts.CT[_i].counterpart;             \
     } while(0)
 #define ST_SET_CACHED_COUNTERPART(CE,T,CT,LE) do {           \
-        int i = (CE)->id - 1;                                \
-        assert(i >= 0 && i < st_counterparts.T##_size);      \
-        st_counterparts.CT[i].counterpart = LE;              \
+        int _i = (CE)->id - 1;                               \
+        assert(_i >= 0 && _i < st_counterparts.T##_size);    \
+        st_counterparts.CT[_i].counterpart = LE;             \
     } while(0)
 #define ST_HAS_CACHED_COUNTERPART(CE,CT) (st_counterparts.CT[(CE)->id - 1].counterpart != NULL)
 

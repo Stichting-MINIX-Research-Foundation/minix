@@ -70,6 +70,7 @@ PUBLIC void st_cb_map_child_array_selement_generic(_magic_selement_t *cached_sel
 PUBLIC void st_cb_map_from_parent_union_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
 PUBLIC void st_cb_map_child_union_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
 PUBLIC void st_cb_map_from_parent_struct_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
+PUBLIC void st_cb_map_child_nonaggr_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
 PUBLIC void st_cb_map_child_struct_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
 PUBLIC void st_cb_map_child_primitive_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
 PUBLIC void st_cb_map_child_ptr_selement_generic(_magic_selement_t *cached_selement, _magic_selement_t *local_selement, struct st_cb_info *cb_info, int is_trg_mapping);
@@ -89,7 +90,7 @@ PUBLIC void st_cb_map_selement_generic(_magic_selement_t *cached_selement, _magi
 
 #define ST_CB_PRINT st_cb_print
 
-#define ST_TYPE_NAME_KEY(TYPE) ((char *) (TYPE)->ext)
+#define ST_TYPE_NAME_KEY(TYPE) ((const char *) (TYPE)->ext)
 
 #define ST_TYPE_NAME_MATCH(REGISTERED_TYPE_NAME_KEY, KEY)                      \
     (REGISTERED_TYPE_NAME_KEY == KEY)

@@ -9,7 +9,7 @@
 #include <magic_analysis.h>
 #include <st/state_transfer.h>
 
-char* sef_sf_typename_keys[] = { "dsi_u", NULL };
+const char* sef_sf_typename_keys[] = { "dsi_u", NULL };
 #define dsi_u_idx 0
 
 /*===========================================================================*
@@ -61,7 +61,7 @@ static int sef_cb_sf_transfer_dsi_u(_magic_selement_t *selement, _magic_sel_anal
 /*===========================================================================*
  *		         sef_cb_sf_transfer_typename                         *
  *===========================================================================*/
-int sef_cb_sf_transfer_typename(_magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info) {
+static int sef_cb_sf_transfer_typename(_magic_selement_t *selement, _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats, struct st_cb_info *cb_info) {
     const char *typename_key = ST_TYPE_NAME_KEY(selement->type);
 	if(ST_TYPE_NAME_MATCH(sef_sf_typename_keys[dsi_u_idx],typename_key))
 	{

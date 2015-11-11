@@ -83,7 +83,7 @@ PUBLIC int magic_sentry_analyze(struct _magic_sentry* sentry, int flags,
     int selement_num = 0, sel_analyzed_num = 0;
     void* args_array[7];
     args_array[0] = (void*) &flags;
-    args_array[1] = (void*) &cb;
+    args_array[1] = (void*) __UNCONST(&cb);
     args_array[2] = (void*) cb_args;
     args_array[3] = (void*) sentry;
     args_array[4] = (void*) sentry_stats;
@@ -687,7 +687,8 @@ PUBLIC int magic_selement_analyze_ptr_type_invs(_magic_selement_t *selement,
     _magic_sel_analyzed_t *sel_analyzed, _magic_sel_stats_t *sel_stats)
 {
     const struct _magic_type* ptr_type = selement->type;
-    int i, ret = 0;
+    unsigned int i;
+    int ret = 0;
     int trg_flags;
     const struct _magic_type *trg_type;
     _magic_trg_stats_t trg_stats;

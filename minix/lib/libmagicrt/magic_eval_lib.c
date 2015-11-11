@@ -14,7 +14,7 @@
 
 #ifdef __MINIX
 /* FIXME: due to the current linker command line ordering, parts of lib(min)c
- * that are used exclusively by libmagic end up not being instrumented, which
+ * that are used exclusively by libmagicrt end up not being instrumented, which
  * then causes problems transferring pointers such as _ctype_tab_ and
  * _tolower_tab_. As a temporary workaround, we redefine the macros that use
  * those pointers. This code is currently never triggered so it is not
@@ -103,7 +103,7 @@ char scantable[UCHAR_MAX+1];
 int scantable_ok = 0;
 
 /* table of function names */
-char *functable[] = {
+const char *functable[] = {
     "acos", "asin", "atan", "cos", "cosh", "exp", "ln", "log",
     "sin", "sinh", "sqr", "sqrt", "tan", "tanh", NULL
 };
@@ -127,7 +127,7 @@ void eval_set_cb_get_func_result(get_func_result_cb_t cb) {
 int same_str(const char *a, const char *b);
 int same_str_len(const char *a, const char *b, int len);
 
-void init_scantable();
+void init_scantable(void);
 int tokenize(struct memh *mh, char **string, struct tok **listptr);
 int scan_number(char **stringptr, struct val *valptr);
 int precedence(struct tok *t);
@@ -172,7 +172,7 @@ int evaluate(char *expr, struct val *result, struct vartable *vartable) {
 
 /**** TOKENIZATION ***/
 
-void init_scantable() {
+void init_scantable(void) {
     int i;
 
     if (scantable_ok) return;
@@ -464,8 +464,8 @@ int tokenize(struct memh *mh, char **string, struct tok **listptr) {
                     tok->funcid = 0;
                     /* look for matching function */
                     for (i = 0; functable[i]; i++) {
-                        char *fname = functable[i];
-                        if (same_str_len(name, fname, len) && strlen(fname) == len) {
+                        const char *fname = functable[i];
+                        if (same_str_len(name, fname, len) && strlen(fname) == (size_t)len) {
                             tok->funcid = i+1;
                             break;
                         }
@@ -981,33 +981,14 @@ void prt_tok(struct tok *t) {
     }
 }
 
-void prt_stk(struct tok *stk, int depth) {
-    do { prt_tok(&stk[depth]); } while (depth-- > 0);
-    printf("\n");
-}
-
 void prt_lst(struct tok *t) {
     for (; t; t=t->next) prt_tok(t);
     printf("\n");
 }
 
-/* variables dumper */
-void dump_vars(struct vartable *vt) {
-    struct var *v;
-    if (!vt) printf("no vars\n");
-    else for (v=vt->first; v; v=v->next) {
-        if (v->val.type == T_INT)
-            printf("'%s'=%ld ", v->name, v->val.ival);
-        else
-            printf("'%s'=%g ", v->name, v->val.rval);
-    }
-    printf("\n");
-}
 #else
 void prt_tok(struct tok *t) {}
-void prt_stk(struct tok *stk, int depth) {}
 void prt_lst(struct tok *t) {}
-void dump_vars(struct vartable *vt) {}
 #endif
 
 

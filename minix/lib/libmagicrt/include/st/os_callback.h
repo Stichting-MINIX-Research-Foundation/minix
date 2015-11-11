@@ -14,7 +14,7 @@ DEFINE_DECL_CALLBACK(int, old_state_table_lookup, (void *state_info_opaque, void
 DEFINE_DECL_CALLBACK(int, copy_state_region, (void *state_info_opaque, uint32_t address, size_t size, uint32_t dst_address));
 DEFINE_DECL_CALLBACK(void *, alloc_contig, (size_t len, int flags, uint32_t *phys));
 DEFINE_DECL_CALLBACK(int, free_contig, (void *ptr, size_t length));
-DEFINE_DECL_CALLBACK(char *, debug_header, (void));
+DEFINE_DECL_CALLBACK(const char *, debug_header, (void));
 
 /* Default callback values. */
 #define ST_CB_OS_PANIC_EMPTY                    NULL

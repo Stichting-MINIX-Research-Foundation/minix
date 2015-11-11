@@ -9,27 +9,27 @@
 /* Magic state type struct. */
 struct _magic_type {
     _magic_id_t id;
-    char *name;
-    char **names;
+    const char *name;
+    const char **names;
     unsigned num_names;
-    char *type_str;
+    const char *type_str;
     unsigned size;
     unsigned num_child_types;
     struct _magic_type **contained_types;
     struct _magic_type **compatible_types;
-    char **member_names;
+    const char **member_names;
     unsigned *member_offsets;
     void *value_set;
     unsigned type_id;
     int flags;
     unsigned bit_width;
-    void *ext;
+    const void *ext;
 };
 
 /* Magic state entry struct. */
 struct _magic_sentry {
     _magic_id_t id;
-    char *name;
+    const char *name;
     struct _magic_type *type;
     int flags;
     void *address;
@@ -53,7 +53,7 @@ struct _magic_sentry_hash {
 /* Magic state function struct. */
 struct _magic_function {
     _magic_id_t id;
-    char *name;
+    const char *name;
     struct _magic_type *type;
     int flags;
     void *address;
@@ -69,7 +69,7 @@ struct _magic_function_hash {
 /* Magic dynamic function struct. */
 struct _magic_dfunction {
     unsigned long magic_number;
-    char *parent_name;
+    const char *parent_name;
     struct _magic_function function;
     struct _magic_dfunction *prev;
     struct _magic_dfunction *next;
@@ -78,8 +78,8 @@ struct _magic_dfunction {
 /* Magic dynamic state index struct. */
 struct _magic_dsindex {
     struct _magic_type *type;
-    char *name;
-    char *parent_name;
+    const char *name;
+    const char *parent_name;
     int flags;
 };
 
@@ -95,7 +95,7 @@ struct _magic_dsindex {
 
 struct _magic_dsentry {
     unsigned long magic_number;
-    char *parent_name;
+    const char *parent_name;
     char name_ext_buff[MAGIC_DSENTRY_EXT_NAME_BUFF_SIZE];
     struct _magic_sentry sentry;
     struct _magic_type type;
@@ -153,8 +153,8 @@ EXTERN struct _magic_obdsentry _magic_obdsentries[MAGIC_MAX_OBDSENTRIES];
 #define MAGIC_MAX_MEMPOOLS                  1024
 #define MAGIC_MAX_MEMPOOL_NAME_LEN          32
 #define MAGIC_MEMPOOL_NAME_PREFIX           "_magic_mempool_"
-EXTERN char *const MAGIC_MEMPOOL_NAME_UNKNOWN;
-EXTERN char *const MAGIC_MEMPOOL_NAME_DETACHED;
+EXTERN const char *const MAGIC_MEMPOOL_NAME_UNKNOWN;
+EXTERN const char *const MAGIC_MEMPOOL_NAME_DETACHED;
 
 struct _magic_mpdesc {
     int is_alive;

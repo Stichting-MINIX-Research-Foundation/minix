@@ -62,6 +62,10 @@ SUBDIR+=	../minix/lib/libclkconf \
 		../minix/lib/libi2cdriver
 .endif
 
+.if (${MKMAGIC} == "yes")
+SUBDIR+=	../minix/lib/libmagicrt
+.endif
+
 .endif # defined(__MINIX)
 #
 # The SUBDIRs above are included here for completeness but should be built

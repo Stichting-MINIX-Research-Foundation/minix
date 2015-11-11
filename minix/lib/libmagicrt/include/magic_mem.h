@@ -3,7 +3,7 @@
 
 #include <magic.h>
 
-#define __MA_ARGS__             struct _magic_type *type, char *name, char *parent_name,
+#define __MA_ARGS__             struct _magic_type *type, const char *name, const char *parent_name,
 #define __MA_VALUES__           type, name, parent_name,
 #define __MA_VALUES_EXT__       MAGIC_VOID_TYPE, MAGIC_ALLOC_EXT_NAME, MAGIC_ALLOC_EXT_PARENT_NAME,
 
@@ -13,7 +13,7 @@
 #define __MD_VALUES_DEFAULT__
 
 /* External callbacks. */
-typedef void *(*magic_mem_heap_alloc_cb_t)(size_t size, char *name, char *parent_name);
+typedef void *(*magic_mem_heap_alloc_cb_t)(size_t size, const char *name, const char *parent_name);
 typedef void (*magic_mem_create_dsentry_cb_t)(struct _magic_dsentry *dsentry);
 typedef int (*magic_mem_heap_free_cb_t)(struct _magic_dsentry *dsentry);
 extern magic_mem_heap_alloc_cb_t magic_mem_heap_alloc_cb;
@@ -24,13 +24,13 @@ extern magic_mem_heap_free_cb_t magic_mem_heap_free_cb;
 typedef void (*magic_dsentry_cb_t)(struct _magic_dsentry*);
 PUBLIC int magic_create_dsentry(struct _magic_dsentry *dsentry,
     void *data_ptr, struct _magic_type *type, size_t size, int flags,
-    char *name, char *parent_name);
+    const char *name, const char *parent_name);
 PUBLIC struct _magic_obdsentry* magic_create_obdsentry(void *data_ptr,
     struct _magic_type *type, size_t size, int flags,
-    const char *name, char *parent_name);
+    const char *name, const char *parent_name);
 PUBLIC int magic_update_dsentry_state(struct _magic_dsentry *dsentry,
     unsigned long mstate);
-PUBLIC void magic_free_dead_dsentries();
+PUBLIC void magic_free_dead_dsentries(void);
 PUBLIC void magic_destroy_dsentry(struct _magic_dsentry *dsentry,
     struct _magic_dsentry *prev_dsentry);
 PUBLIC void magic_destroy_dsentry_set_ext_cb(const magic_dsentry_cb_t cb);
@@ -38,7 +38,7 @@ PUBLIC int magic_destroy_obdsentry_by_addr(void *data_ptr);
 PUBLIC int magic_update_dsentry(void* addr, struct _magic_type *type);
 PUBLIC void magic_stack_dsentries_create(
     struct _magic_dsentry **prev_last_stack_dsentry, int num_dsentries,
-    /* struct _magic_dsentry *dsentry, struct _magic_type *type, void* data_ptr, char* function_name, char* name, */ ...);
+    /* struct _magic_dsentry *dsentry, struct _magic_type *type, void* data_ptr, const char* function_name, const char* name, */ ...);
 PUBLIC void magic_stack_dsentries_destroy(
     struct _magic_dsentry **prev_last_stack_dsentry, int num_dsentries,
     /* struct _magic_dsentry *dsentry, */ ...);
@@ -46,7 +46,7 @@ PUBLIC void magic_stack_dsentries_destroy(
 /* Public dfunction functions. */
 PUBLIC int magic_create_dfunction(struct _magic_dfunction *dfunction,
     void *data_ptr, struct _magic_type *type, int flags,
-    char *name, char *parent_name);
+    const char *name, const char *parent_name);
 PUBLIC void magic_destroy_dfunction(struct _magic_dfunction *dfunction);
 
 /* Public sodesc functions. */
@@ -257,7 +257,7 @@ EXTERN int magic_mempool_allow_reuse;
 
 /* Pass call site information when logging is activated. */
 #if (MAGIC_MEM_USAGE_OUTPUT_CTL == 1)
-#define __MDEBUG_ARGS__             char* name
+#define __MDEBUG_ARGS__             const char* name
 #else
 #define __MDEBUG_ARGS__
 #endif
@@ -267,14 +267,14 @@ MAGIC_HOOK void magic_mempool_create_end(void* addr, int indirection);
 
 /* Specific wrappers for the memory pool destruction. */
 MAGIC_HOOK void magic_mempool_destroy_begin(void* addr, int memory_reuse);
-MAGIC_HOOK void magic_mempool_destroy_end();
+MAGIC_HOOK void magic_mempool_destroy_end(void);
 
 /* Specific wrappers for the memory pool resetting */
 MAGIC_HOOK void magic_mempool_reset_begin(void* addr);
 
 /* Generic wrappers for the rest of the memory pool management functions. */
 MAGIC_HOOK void magic_mempool_mgmt_begin(void* addr);
-MAGIC_HOOK void magic_mempool_mgmt_end();
+MAGIC_HOOK void magic_mempool_mgmt_end(void);
 
 /* Pool block allocation template function and magic wrapper. */
 MAGIC_FUNC void *mempool_block_alloc_template(void* addr, size_t size);

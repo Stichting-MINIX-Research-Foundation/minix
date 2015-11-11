@@ -195,7 +195,7 @@ PRIVATE THREAD_LOCAL struct _magic_dfunction magic_dfunction_buff;
 
 /* Magic default stubs. */
 PUBLIC struct _magic_type magic_default_type = {
-    0, "", NULL, 0, "", 0, 0, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_OPAQUE, 0, 0
+    0, "", NULL, 0, "", 0, 0, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_OPAQUE, 0, 0, NULL
 };
 
 PUBLIC struct _magic_dsentry magic_default_dsentry = {
@@ -203,7 +203,7 @@ PUBLIC struct _magic_dsentry magic_default_dsentry = {
     "", /* parent_name */
     { 0 }, /* name_ext_buff */
     { 0, "", NULL, MAGIC_STATE_DYNAMIC, NULL, NULL }, /* sentry */
-    { 0, "", NULL, 0, "", 0, 0, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_ARRAY, MAGIC_TYPE_IS_ROOT|MAGIC_TYPE_DYNAMIC, 0 }, /* type */
+    { 0, "", NULL, 0, "", 0, 0, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_ARRAY, MAGIC_TYPE_IS_ROOT|MAGIC_TYPE_DYNAMIC, 0, NULL }, /* type */
     { NULL }, /* type_array */
 #if MAGIC_DSENTRY_ALLOW_PREV
     NULL, /* prev */
@@ -230,7 +230,7 @@ PUBLIC struct _magic_dfunction magic_default_dfunction = {
 };
 
 PUBLIC struct _magic_type magic_default_ret_addr_type = {
-    0, "", NULL, 0, "", sizeof(void*), 1, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_POINTER, MAGIC_TYPE_IS_ROOT|MAGIC_TYPE_DYNAMIC|MAGIC_TYPE_INT_CAST|MAGIC_TYPE_STRICT_VALUE_SET, 0
+    0, "", NULL, 0, "", sizeof(void*), 1, NULL, NULL, NULL, NULL, NULL, MAGIC_TYPE_POINTER, MAGIC_TYPE_IS_ROOT|MAGIC_TYPE_DYNAMIC|MAGIC_TYPE_INT_CAST|MAGIC_TYPE_STRICT_VALUE_SET, 0, NULL
 };
 
 /* Magic code reentrant flag. */
@@ -311,7 +311,7 @@ PUBLIC void magic_reentrant_disable(void)
 /*===========================================================================*
  *                          magic_assert_failed                              *
  *===========================================================================*/
-PUBLIC void magic_assert_failed(const char *assertion, const char *file,
+PUBLIC void __dead magic_assert_failed(const char *assertion, const char *file,
     const char *function, const int line)
 {
     _magic_printf("Assertion '%s' failed in file %s, function %s(), line %d, pid %d\n",
@@ -391,7 +391,7 @@ PRIVATE void magic_types_init()
     static struct _magic_type _magic_void_array_type_buff;
     static struct _magic_type *_magic_void_array_type_contained_types[1];
     static struct _magic_type _magic_ptrint_type_buff;
-    static char* _magic_ptrint_type_name = "ptrint";
+    static const char* _magic_ptrint_type_name = "ptrint";
     static char _magic_ptrint_type_str_buff[8];
     static struct _magic_type _magic_ptrint_array_type_buff;
     static struct _magic_type *_magic_ptrint_array_type_contained_types[1];
@@ -423,7 +423,7 @@ PRIVATE void magic_types_init()
 /*===========================================================================*
  *                           magic_data_init                                 *
  *===========================================================================*/
-MAGIC_FUNC void magic_data_init()
+MAGIC_FUNC void magic_data_init(void)
 {
     MAGIC_FUNC_BODY();
 }
@@ -886,8 +886,8 @@ PUBLIC struct _magic_sentry* magic_mempool_sentry_lookup_by_range(void *addr, st
 /*===========================================================================*
  *                   magic_dsindex_lookup_by_name                            *
  *===========================================================================*/
-PUBLIC struct _magic_dsindex* magic_dsindex_lookup_by_name(char *parent_name,
-    char *name)
+PUBLIC struct _magic_dsindex*
+magic_dsindex_lookup_by_name(const char *parent_name, const char *name)
 {
     int i;
     struct _magic_dsindex* index = NULL;
@@ -967,7 +967,7 @@ PUBLIC struct _magic_function* magic_function_lookup_by_id(_magic_id_t id,
 
     /* O(1) ID lookup for functions. */
 #if MAGIC_LOOKUP_FUNCTION
-    if(id <= _magic_functions_num) {
+    if((int)id <= _magic_functions_num) {
         return &_magic_functions[id - 1];
     }
 #endif
@@ -1047,7 +1047,8 @@ PUBLIC struct _magic_function* magic_function_lookup_by_addr(void *addr,
 /*===========================================================================*
  *                       magic_function_lookup_by_name                       *
  *===========================================================================*/
-PUBLIC struct _magic_function* magic_function_lookup_by_name(char *parent_name, char *name)
+PUBLIC struct _magic_function*
+magic_function_lookup_by_name(const char *parent_name, const char *name)
 {
     int i;
     struct _magic_function* entry = NULL;
@@ -1243,9 +1244,10 @@ PUBLIC struct _magic_function *magic_function_lookup_by_addr_hash(
 /*===========================================================================*
  *                         magic_type_lookup_by_name                         *
  *===========================================================================*/
-PUBLIC struct _magic_type* magic_type_lookup_by_name(char *name)
+PUBLIC struct _magic_type* magic_type_lookup_by_name(const char *name)
 {
-    int i, j;
+    int i;
+    unsigned int j;
     struct _magic_type* entry = NULL;
 
     /* Scan all the entries and return the one matching the provided name. */
@@ -1575,7 +1577,7 @@ PUBLIC void magic_type_values_print(const struct _magic_type* type)
  *===========================================================================*/
 PUBLIC void magic_type_names_print(const struct _magic_type* type)
 {
-    int i;
+    unsigned int i;
 
     for(i=0;i<type->num_names;i++) {
         _magic_printf("%s%s", (i==0 ? "" : "|"), type->names[i]);
@@ -1723,7 +1725,7 @@ PUBLIC int magic_type_compatible(const struct _magic_type* type, const struct _m
             return FALSE;
         }
         if(type->num_names > 1) {
-            for(i=0; i<type->num_names; i++){
+            for(i=0; (unsigned int)i<type->num_names; i++){
                 if(strcmp(type->names[i], other_type->names[i])) {
                     return FALSE;
                 }
@@ -1738,14 +1740,14 @@ PUBLIC int magic_type_compatible(const struct _magic_type* type, const struct _m
 
     if(type->type_id == MAGIC_TYPE_STRUCT) {
         if(flags & MAGIC_TYPE_COMPARE_MEMBER_NAMES) {
-            for(i=0; i<type->num_child_types; i++){
+            for(i=0; (unsigned int)i<type->num_child_types; i++){
                 if(strcmp(type->member_names[i], other_type->member_names[i])) {
                     return FALSE;
                 }
             }
         }
         if(flags & MAGIC_TYPE_COMPARE_MEMBER_OFFSETS) {
-            for(i=0; i<type->num_child_types; i++){
+            for(i=0; (unsigned int)i<type->num_child_types; i++){
                 if(type->member_offsets[i] != other_type->member_offsets[i]) {
                     return FALSE;
                 }
@@ -2240,7 +2242,7 @@ PUBLIC size_t magic_type_get_size(struct _magic_type *type, int flags)
     }
     if(flags & MAGIC_SIZE_TYPE_NAMES) {
         size += sizeof(type->num_names) + sizeof(type->names) + sizeof(*(type->names))*(type->num_names);
-        for(i=0;i<type->num_names;i++) {
+        for(i=0;(unsigned int)i<type->num_names;i++) {
             size += strlen(type->names[i])+1;
         }
     }

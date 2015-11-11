@@ -44,5 +44,9 @@ SUBDIR+=	libgpio
 SUBDIR+=	libi2cdriver
 .endif
 
+.if (${MKMAGIC} == "yes")
+SUBDIR+=	libmagicrt
+.endif
+
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
