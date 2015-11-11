@@ -31,7 +31,7 @@
 #define DATA_LAYOUT_TY 		      DataLayout
 #define ATTRIBUTE_SET_RET_IDX         ATTRIBUTE_SET_TY::ReturnIndex
 #define ATTRIBUTE_SET_FN_IDX          ATTRIBUTE_SET_TY::FunctionIndex
-#include <llvm/DebugInfo.h>
+#include <llvm/IR/DebugInfo.h>
 #if LLVM_VERSION == 32
 #include <llvm/DataLayout.h>
 #include <llvm/IRBuilder.h>
@@ -145,15 +145,17 @@ class PassUtil {
   public:
       static void writeTypeSymbolic(raw_string_ostream &OS, TYPECONST Type *type, const Module *M);
       static const std::string getTypeDescription(TYPECONST Type* type);
-      static Value *findDbgGlobalDeclare(GlobalVariable *V);
-      static Value *findDbgSubprogramDeclare(const Function *F);
+      static MDNode *findDbgGlobalDeclare(GlobalVariable *V);
+      static MDNode *findDbgSubprogramDeclare(const Function *F);
       static void getDbgLocationInfoRelPath(const std::string &baseDir, const std::string &filename, const std::string &directory, std::string &relPath);
       static void getDbgLocationInfo(DIDescriptor &DID, const std::string &baseDir, std::string *filename, std::string *directory, std::string *relPath);
       static bool getInstrDbgLocationInfo(Instruction *I, const std::string &baseDir, std::string *filename, std::string *directory, std::string *relPath, unsigned int *lineNum, bool expand=true);
       static unsigned getDbgSubrangeNumElements(const DISubrange &subrange);
       static bool isDbgVectorTy(const DIType &type);
       static DIType getDITypeDerivedFrom(const DIDerivedType &type);
+      static DIType getDITypeFromRef(const DITypeRef &ref);
       static bool isOpaqueTy(TYPECONST Type *type);
+      static bool isPrimitiveTy(TYPECONST Type *type);
       static Constant* getGetElementPtrConstant(Constant *constant, std::vector<Value*> &indexes);
       static GetElementPtrInst* createGetElementPtrInstruction(Value *ptr, std::vector<Value*> &indexes, const Twine &NameStr="", Instruction *InsertBefore=0);
       static GetElementPtrInst* createGetElementPtrInstruction(Value *ptr, std::vector<Value*> &indexes, const Twine &NameStr="", BasicBlock *InsertAtEnd=0);
@@ -210,7 +212,7 @@ inline const std::string PassUtil::getTypeDescription(TYPECONST Type* type) {
     return string;
 }
 
-inline Value *PassUtil::findDbgGlobalDeclare(GlobalVariable *V) {
+inline MDNode *PassUtil::findDbgGlobalDeclare(GlobalVariable *V) {
 #if LLVM_VERSION >= 30
   const Module *M = V->getParent();
   NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.cu");
@@ -244,7 +246,7 @@ inline Value *PassUtil::findDbgGlobalDeclare(GlobalVariable *V) {
 #endif
 }
 
-inline Value *PassUtil::findDbgSubprogramDeclare(const Function *V) {
+inline MDNode *PassUtil::findDbgSubprogramDeclare(const Function *V) {
 #if LLVM_VERSION >= 30
   const Module *M = V->getParent();
   NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.cu");
@@ -428,12 +430,30 @@ inline DIType PassUtil::getDITypeDerivedFrom(const DIDerivedType &type) {
 #endif
 }
 
+inline DIType PassUtil::getDITypeFromRef(const DITypeRef &ref) {
+    static DITypeIdentifierMap TypeIdentifierMap;
+    static bool TypeMapInitialized = false;
+    if (!TypeMapInitialized) {
+        /* TODO: generate the type identifier map only once! */
+        assert(PassUtil::M && "Set module first!");
+        if (NamedMDNode *CU_Nodes = PassUtil::M->getNamedMetadata("llvm.dbg.cu")) {
+          TypeIdentifierMap = generateDITypeIdentifierMap(CU_Nodes);
+          TypeMapInitialized = true;
+        }
+    }
+    return ref.resolve(TypeIdentifierMap);
+}
+
 inline bool PassUtil::isOpaqueTy(TYPECONST Type *type) {
 #if LLVM_VERSION >= 30
     return type->isStructTy() && (((TYPECONST StructType*)type)->isOpaque() || type->getNumContainedTypes() == 0);
 #else
     return type->isOpaqueTy();
 #endif
+}
+
+inline bool PassUtil::isPrimitiveTy(TYPECONST Type *type) {
+    return type->isVoidTy() || type->isFloatingPointTy() || type->isLabelTy() || type->isMetadataTy() || type->isX86_MMXTy();
 }
 
 inline Constant* PassUtil::getGetElementPtrConstant(Constant *constant, std::vector<Value*> &indexes) {

@@ -88,7 +88,7 @@ inline Function* MagicMmapCtlFunction::getFunction() const {
 
 /* This assumes in-band metadata of 1 page before every mmapped region. */
 inline void MagicMmapCtlFunction::fixCalls(Module &M, Function *magicGetPageSizeFunc) const {
-    std::vector<User*> Users(function->use_begin(), function->use_end());
+    std::vector<User*> Users(function->user_begin(), function->user_end());
     while (!Users.empty()) {
         User *U = Users.back();
         Users.pop_back();

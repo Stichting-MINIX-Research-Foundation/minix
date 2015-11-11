@@ -56,11 +56,16 @@ const EDIType& EDIType::getContainedType(unsigned i, bool norm) const {
         }
         return subType;
     }
-    DIArray aDIArray = getTypeArray();
-    unsigned numContainedTypes = aDIArray.getNumElements();
-    assert(i < numContainedTypes);
-    EDIType tmpType((const DIType) aDIArray.getElement(i), norm);
-    subType = tmpType;
+    if (isFunctionTy()) {
+        DITypeArray DTA = ((const DISubroutineType)aDIType).getTypeArray();
+        subType = PassUtil::getDITypeFromRef(DTA.getElement(i));
+    } else {
+        DIArray aDIArray = getTypeArray();
+        unsigned numContainedTypes = aDIArray.getNumElements();
+        assert(i < numContainedTypes);
+        EDIType tmpType((const DIType) aDIArray.getElement(i), norm);
+        subType = tmpType;
+    }
     return subType;
 }
 
@@ -72,9 +77,7 @@ unsigned EDIType::getNumContainedTypes() const {
     if(isDerivedType() || isArrayOrVectorTy) {
         return 1;
     }
-    DIArray aDIArray = getTypeArray();
-    unsigned numContainedTypes = aDIArray.getNumElements();
-    return numContainedTypes;
+    return getTypeArrayNum();
 }
 
 const DIDerivedType& EDIType::getMember(unsigned i) const {
@@ -128,11 +131,23 @@ bool EDIType::hasInnerPointers() const {
    return false;
 }
 
+unsigned int EDIType::getTypeArrayNum() const {
+    EDIType_assert(isCompositeType());
+    /* This function is used from isOpaqueTy(), so do not use isFunctionTy() here. */
+    if (getTag() == dwarf::DW_TAG_subroutine_type) {
+        DITypeArray DTA = ((const DISubroutineType)aDIType).getTypeArray();
+        return DTA.getNumElements();
+    } else {
+        return getTypeArray().getNumElements();
+    }
+}
+
 DIArray EDIType::getTypeArray() const {
     static std::set<std::string> nonOpaqueEmptyTypes;
     static std::set<std::string>::iterator nonOpaqueEmptyTypesIt;
     EDIType_assert(isCompositeType());
-    DIArray aDIArray = ((const DICompositeType)aDIType).getTypeArray();
+    EDIType_assert(getTag() != dwarf::DW_TAG_subroutine_type); /* as above, no isFunctionTy() */
+    DIArray aDIArray = ((const DICompositeType)aDIType).getElements();
     if(aDIArray.getNumElements() == 0 && checkOpaqueTypes && myNames.size() > 0) {
         const EDIType *aType = NULL;
         std::string name;
@@ -144,7 +159,7 @@ DIArray EDIType::getTypeArray() const {
             }
         }
         if(aType) {
-            aDIArray = ((const DICompositeType *)aType->getDIType())->getTypeArray();
+            aDIArray = ((const DICompositeType *)aType->getDIType())->getElements();
             nonOpaqueEmptyTypesIt = nonOpaqueEmptyTypes.find(name);
             if(nonOpaqueEmptyTypesIt == nonOpaqueEmptyTypes.end()) {
                 EDITypeLog("Found a non-opaque composite type with 0 members! Name is: " << name);
@@ -390,9 +405,8 @@ bool EDIType::equals(const EDIType *other) const {
 
 std::string EDIType::lookupTypedefName(std::string &typedefName) {
     static std::string noName;
-    for (DebugInfoFinder::iterator I = DIFinder.type_begin(),
-        E = DIFinder.type_end(); I != E; ++I) {
-        DIType aDIType(*I);
+    for (const DIType aDITypeIt : DIFinder.types()) {
+        DIType aDIType(aDITypeIt);
         if(aDIType.getTag() == dwarf::DW_TAG_typedef && aDIType.getName().compare(typedefName)) {
             while(aDIType.getTag() == dwarf::DW_TAG_typedef) {
                 aDIType = PassUtil::getDITypeDerivedFrom((const DIDerivedType)aDIType);
@@ -426,9 +440,7 @@ std::string EDIType::lookupUnionMemberName(TYPECONST Type* type) {
 const EDIType* EDIType::getStructEDITypeByName(std::string &typeName) {
     static EDIType aEDIType;
     assert(module);
-    for (DebugInfoFinder::iterator I = DIFinder.type_begin(),
-        E = DIFinder.type_end(); I != E; ++I) {
-        const DIType aDIType(*I);
+    for (const DIType aDIType : DIFinder.types()) {
         //skip zero-element stuct types, necessary to avoid infinite recursion during opaque type lookup
         //xxx opaque type lookup should not be necessary but is there a bug in the frontend that leaves certain concrete types unnecessarily opaque?
         const EDIType tmpEDIType(aDIType, NORMALIZE, DO_NOT_CHECK_OPAQUE_TYPES);

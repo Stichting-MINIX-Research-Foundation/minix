@@ -5,7 +5,7 @@
 #
 LLVMPREFIX?=../../../../../obj_llvm.i386/Release+Asserts
 
-CFLAGS += -D__MINIX -D_MINIX_SYSTEM
+CFLAGS += -D__MINIX -D_MINIX_SYSTEM -DDEBUG_TYPE=\""$PASSNAME"\"
 INCLUDES += -I../../include
 
 QUIET=@

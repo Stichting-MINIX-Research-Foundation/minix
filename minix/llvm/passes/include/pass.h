@@ -14,12 +14,11 @@
 #include <llvm/ADT/Statistic.h>
 
 #include <llvm/Support/Regex.h>
-#include <llvm/Assembly/Writer.h>
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Analysis/LoopInfo.h>
 
-#include <llvm/Support/InstIterator.h>
+#include <llvm/IR/InstIterator.h>
 #include <llvm/Transforms/Utils/Local.h>
 
 #include <llvm/Transforms/Scalar.h>

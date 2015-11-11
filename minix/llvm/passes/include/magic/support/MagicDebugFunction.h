@@ -122,7 +122,7 @@ inline void MagicDebugFunction::fixCalls(Module &M, const std::string &baseDir) 
 	bool ret = MagicDebugFunction::inlineHookCalls(debugFunction, hooks, flags, argsMapping, trailingArgs);
 	assert(ret && "Unable to inline the calls to the hook functions.");
 
-	std::vector<User*> Users(function->use_begin(), function->use_end());
+	std::vector<User*> Users(function->user_begin(), function->user_end());
 	std::vector<Value*> EqPointers;
 	while (!Users.empty()) {
 		User *U = Users.back();
@@ -153,11 +153,11 @@ inline void MagicDebugFunction::fixCalls(Module &M, const std::string &baseDir) 
 				MagicUtil::replaceCallInst(I, newInst, 1);
 			}
 		} else if (GlobalValue * GV = dyn_cast<GlobalValue>(U)) {
-			Users.insert(Users.end(), GV->use_begin(), GV->use_end());
+			Users.insert(Users.end(), GV->user_begin(), GV->user_end());
 			EqPointers.push_back(GV);
 		} else if (ConstantExpr * CE = dyn_cast<ConstantExpr>(U)) {
 			if (CE->isCast()) {
-				Users.insert(Users.end(), CE->use_begin(), CE->use_end());
+				Users.insert(Users.end(), CE->user_begin(), CE->user_end());
 				EqPointers.push_back(CE);
 			}
 		}

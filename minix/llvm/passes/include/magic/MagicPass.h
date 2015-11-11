@@ -4,7 +4,6 @@
 
 #include <pass.h>
 #include <magic/magic.h>
-#include <magic/support/Backports.h>
 #include <magic/support/MagicUtil.h>
 #include <magic/support/SmartType.h>
 #include <magic/support/TypeInfo.h>

@@ -37,6 +37,7 @@ class EDIType {
       const DIDerivedType& getMember(unsigned i) const;
       bool isUnionOrStructTy(bool isStruct=true, bool isUnion=true) const;
       bool hasInnerPointers() const;
+      unsigned int getTypeArrayNum() const;
       DIArray getTypeArray() const;
       const EDIType* getTopStructType(unsigned index) const;
 
@@ -262,7 +263,7 @@ inline bool EDIType::isPointerTy() const {
 }
 
 inline bool EDIType::isOpaqueTy() const {
-    return (isCompositeType() && getTypeArray().getNumElements() == 0);
+    return (isCompositeType() && getTypeArrayNum() == 0);
 }
 
 inline void EDIType::writeTypeSymbolic(raw_string_ostream &OS, TYPECONST Type *type, const Module *M) {
