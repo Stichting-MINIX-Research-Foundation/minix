@@ -3,7 +3,7 @@
 #include <magic/support/MagicUtil.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
-#define MAGIC_IS_MAGIC_FUNC(M, F) (!(F)->getSection().compare(MAGIC_STATIC_FUNCTIONS_SECTION))
+#define MAGIC_IS_MAGIC_FUNC(M, F) (!StringRef((F)->getSection()).compare(MAGIC_STATIC_FUNCTIONS_SECTION))
 
 using namespace llvm;
 
@@ -392,7 +392,7 @@ bool ASRPass::runOnModule(Module &M) {
                      * (last found allocation instruction will be at the front), and remove it from the basic block.
                      * */
                     int hasAddressTaken = 0;
-                    for (Value::use_iterator UI = allocaInst->use_begin(), E = allocaInst->use_end(); UI != E; ++UI) {
+                    for (Value::user_iterator UI = allocaInst->user_begin(), E = allocaInst->user_end(); UI != E; ++UI) {
 
                         /* Loop through all the Uses of this allocation function. */
 
@@ -555,7 +555,7 @@ bool ASRPass::runOnModule(Module &M) {
                 assert(ret);
 
                 if(stackframe_caller_padding && max_offset > 0) {
-                    std::vector<User*> Users(F->use_begin(), F->use_end());
+                    std::vector<User*> Users(F->user_begin(), F->user_end());
                     while (!Users.empty()) {
                         User *U = Users.back();
                         Users.pop_back();

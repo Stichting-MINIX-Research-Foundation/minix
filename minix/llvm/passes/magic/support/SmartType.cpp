@@ -1,3 +1,4 @@
+#include <magic_common.h>
 #include <magic/support/SmartType.h>
 #include <limits.h>
 
@@ -341,12 +342,12 @@ const SmartType* SmartType::getSmartTypeFromGV(Module &M, GlobalVariable *GV, DI
     if(GV->getName().startswith(".str")) {
         return NULL;
     }
-    Value *DIGV = Backports::findDbgGlobalDeclare(GV);
+    MDNode *DIGV = PassUtil::findDbgGlobalDeclare(GV);
     if (!DIGV) {
         return NULL;
     }
-    DIGlobalVariable Var(cast<MDNode>(DIGV));
-    DIType aDIType = Var.getType();
+    DIGlobalVariable Var(DIGV);
+    DIType aDIType = PassUtil::getDITypeFromRef(Var.getType());
     const SmartType* retSmartType = new SmartType(GV->getType()->getElementType(), &aDIType);
     if(DIG) {
         *DIG = Var;
@@ -355,7 +356,7 @@ const SmartType* SmartType::getSmartTypeFromGV(Module &M, GlobalVariable *GV, DI
 }
 
 const SmartType* SmartType::getSmartTypeFromLV(Module &M, AllocaInst *AI, DIVariable *DIV) {
-    const DbgDeclareInst *DDI = Backports::FindAllocaDbgDeclare(AI);
+    const DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
     if (!DDI) {
         return NULL;
     }
@@ -363,7 +364,7 @@ const SmartType* SmartType::getSmartTypeFromLV(Module &M, AllocaInst *AI, DIVari
         return (const SmartType*)-1;
     }
     DIVariable Var(cast<MDNode>(DDI->getVariable()));
-    DIType aDIType = Var.getType();
+    DIType aDIType = PassUtil::getDITypeFromRef(Var.getType());
     if(DIV) {
         *DIV = Var;
     }
@@ -372,11 +373,11 @@ const SmartType* SmartType::getSmartTypeFromLV(Module &M, AllocaInst *AI, DIVari
 }
 
 const SmartType* SmartType::getSmartTypeFromFunction(Module &M, Function *F, DISubprogram *DIS) {
-    Value *DIF = Backports::findDbgSubprogramDeclare(F);
+    MDNode *DIF = PassUtil::findDbgSubprogramDeclare(F);
     if (!DIF) {
         return NULL;
     }
-    DISubprogram Sub(cast<MDNode>(DIF));
+    DISubprogram Sub(DIF);
     DIType aDIType = Sub.getType();
     const SmartType* retSmartType = new SmartType(F->getType()->getElementType(), &aDIType);
     if(DIS) {

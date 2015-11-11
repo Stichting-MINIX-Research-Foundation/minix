@@ -65,7 +65,7 @@
 /* 0=disabled, 1=force no debug output, 2=force no output (for perf. testing).*/
 #define MAGIC_CHECK_LEVEL                   1
 /* 2=extra checks, 1=standard checks, 0=no checks (for perf. testing). */
-#define MAGIC_FLATTEN_FUNCTION_ARGS         1
+#define MAGIC_FLATTEN_FUNCTION_ARGS         0 /* XXX was 1 but header was not included, seems to break on variadic functions */
 #define MAGIC_CHECK_INVARIANTS              1
 #define MAGIC_SHRINK_TYPE_STR               1
 #define MAGIC_MAX_NAME_LEN                  64

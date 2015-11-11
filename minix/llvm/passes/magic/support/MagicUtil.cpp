@@ -27,9 +27,9 @@ unsigned getModuleHash(DIDescriptor DID, const std::string &baseDir, StringRef e
 
 StringRef MagicUtil::getGVSourceName(Module &M, GlobalVariable *GV, DIGlobalVariable **DIGVP, const std::string &baseDir) {
     static DIGlobalVariable Var;
-    Value *DIGV = Backports::findDbgGlobalDeclare(GV);
+    MDNode *DIGV = PassUtil::findDbgGlobalDeclare(GV);
     if(DIGV) {
-        Var = DIGlobalVariable(cast<MDNode>(DIGV));
+        Var = DIGlobalVariable(DIGV);
         if(DIGVP) *DIGVP = &Var;
         if(GV->getLinkage() == GlobalValue::InternalLinkage){
             /* static variable */
@@ -50,9 +50,9 @@ StringRef MagicUtil::getGVSourceName(Module &M, GlobalVariable *GV, DIGlobalVari
                 Module::GlobalListType &globalList = M.getGlobalList();
                 for (Module::global_iterator it = globalList.begin(); it != globalList.end(); ++it) {
                     GlobalVariable *OtherGV = &(*it);
-                    Value *OtherDIGV = Backports::findDbgGlobalDeclare(OtherGV);
+                    MDNode *OtherDIGV = PassUtil::findDbgGlobalDeclare(OtherGV);
                     if(OtherDIGV) {
-                        DIGlobalVariable OtherVar(cast<MDNode>(OtherDIGV));
+                        DIGlobalVariable OtherVar(OtherDIGV);
 
                         DIScope otherScope = OtherVar.getContext();
                         if(otherScope.isLexicalBlock()){
@@ -101,7 +101,7 @@ StringRef MagicUtil::getGVSourceName(Module &M, GlobalVariable *GV, DIGlobalVari
 
 StringRef MagicUtil::getLVSourceName(Module &M, AllocaInst *V, DIVariable **DIVP) {
     static DIVariable Var;
-    const DbgDeclareInst *DDI = Backports::FindAllocaDbgDeclare(V);
+    const DbgDeclareInst *DDI = FindAllocaDbgDeclare(V);
     if(DDI && DDI != (const DbgDeclareInst *) -1){
         Var = DIVariable(cast<MDNode>(DDI->getVariable()));
         if(DIVP) *DIVP = &Var;
@@ -136,9 +136,9 @@ StringRef MagicUtil::getLVSourceName(Module &M, AllocaInst *V, DIVariable **DIVP
 
 StringRef MagicUtil::getFunctionSourceName(Module &M, Function *F, DISubprogram **DISP, const std::string &baseDir) {
     static DISubprogram Func;
-    Value *DIF = Backports::findDbgSubprogramDeclare(F);
+    MDNode *DIF = PassUtil::findDbgSubprogramDeclare(F);
     if(DIF) {
-        Func = DISubprogram(cast<MDNode>(DIF));
+        Func = DISubprogram(DIF);
         if(DISP) *DISP = &Func;
         if(F->getLinkage() == GlobalValue::InternalLinkage){
             std::stringstream stm;
@@ -709,9 +709,8 @@ bool MagicUtil::hasAddressTaken(const GlobalValue *GV, bool includeMembers) {
   std::vector<const User*> sourceUsers;
   sourceUsers.push_back(GV);
   if(includeMembers && isa<GlobalVariable>(GV)) {
-      for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end();
-          UI != E; ++UI) {
-          const User *U = *UI;
+      for (const Use &UI : GV->uses()) {
+          const User *U = UI.getUser();
           const ConstantExpr *constantExpr = dyn_cast<ConstantExpr>(U);
           if(isa<GetElementPtrInst>(U)) {
               sourceUsers.push_back(U);
@@ -723,16 +722,15 @@ bool MagicUtil::hasAddressTaken(const GlobalValue *GV, bool includeMembers) {
   }
 
   for(unsigned i=0;i<sourceUsers.size();i++) {
-      for (Value::const_use_iterator UI = sourceUsers[i]->use_begin(), E = sourceUsers[i]->use_end();
-           UI != E; ++UI) {
-        const User *U = *UI;
+      for (const Use &UI : sourceUsers[i]->uses()) {
+        const User *U = UI.getUser();
         if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
           if (SI->getOperand(0) == sourceUsers[i] || SI->isVolatile())
             return true;  // Storing addr of sourceUsers[i].
         } else if (isa<InvokeInst>(U) || isa<CallInst>(U)) {
           // Make sure we are calling the function, not passing the address.
           ImmutableCallSite CS(cast<Instruction>(U));
-          if (!CS.isCallee(UI))
+          if (!CS.isCallee(&UI))
             return true;
         } else if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
           if (LI->isVolatile())
@@ -764,7 +762,7 @@ bool MagicUtil::lookupValueSet(const GlobalVariable *GV, std::vector<int> &value
   GV->removeDeadConstantUsers();
 
   std::set<int> set;
-  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end();
+  for (Value::const_user_iterator UI = GV->user_begin(), E = GV->user_end();
       UI != E; ++UI) {
       const User *U = *UI;
       if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
@@ -811,7 +809,7 @@ Value* MagicUtil::getStringOwner(GlobalVariable *GV)
 
   std::vector<User*> sourceUsers;
   sourceUsers.push_back(GV);
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
+  for (Value::user_iterator UI = GV->user_begin(), E = GV->user_end();
       UI != E; ++UI) {
       User *U = *UI;
       ConstantExpr *constantExpr = dyn_cast<ConstantExpr>(U);
@@ -825,7 +823,7 @@ Value* MagicUtil::getStringOwner(GlobalVariable *GV)
 
   Value *stringOwner = NULL;
   for(unsigned i=0;i<sourceUsers.size();i++) {
-      for (Value::use_iterator UI = sourceUsers[i]->use_begin(), E = sourceUsers[i]->use_end();
+      for (Value::user_iterator UI = sourceUsers[i]->user_begin(), E = sourceUsers[i]->user_end();
            UI != E; ++UI) {
           User *U = *UI;
           Value *V = U;

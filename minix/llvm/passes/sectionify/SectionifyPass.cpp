@@ -127,7 +127,7 @@ bool SectionifyPass::runOnModule(Module &M) {
     return sectionified;
 }
 
-bool SectionifyPass::sectionifyFromRegex(GlobalValue *value, Regex *regex, std::string &section)
+bool SectionifyPass::sectionifyFromRegex(GlobalObject *value, Regex *regex, std::string &section)
 {
     bool returnValue = false;
 
@@ -142,7 +142,7 @@ bool SectionifyPass::sectionifyFromRegex(GlobalValue *value, Regex *regex, std::
 	DEBUG(errs() << "Sectionified " << valueStrPrefix << (isa<Function>(value) ? "Function " : "GlobalVariable ") << value->getName() << " with section " << trgSection << "\n");
         value->setSection(trgSection);
         if (value->hasCommonLinkage()) {
-            value->setLinkage(GlobalValue::WeakAnyLinkage);
+            value->setLinkage(GlobalObject::WeakAnyLinkage);
         }
         returnValue = true;
     }
@@ -167,7 +167,7 @@ bool SectionifyPass::sectionifyFromRegex(GlobalValue *value, Regex *regex, std::
     return returnValue;
 }
 
-bool SectionifyPass::sectionify(GlobalValue *value, std::vector<Regex*> &regexList, std::map<Regex*, std::string> &regexMap)
+bool SectionifyPass::sectionify(GlobalObject *value, std::vector<Regex*> &regexList, std::map<Regex*, std::string> &regexMap)
 {
     std::map<Regex*, std::string>::iterator regexMapIt;
     for (std::vector<Regex*>::iterator it = regexList.begin(); it != regexList.end(); ++it) {

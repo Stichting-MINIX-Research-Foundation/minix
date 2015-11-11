@@ -2,7 +2,6 @@
 #define SMART_TYPE_H
 
 #include <pass.h>
-#include <magic/support/Backports.h>
 #include <magic/support/EDIType.h>
 #include <magic/support/TypeUtil.h>
 #include <magic/support/BitFieldAggregation.h>
@@ -144,7 +143,7 @@ inline bool SmartType::isPrimitiveTy() const {
         assert(type->isStructTy());
         return true;
     }
-    return isTy(type->isPrimitiveType(), aEDIType.isPrimitiveType(), "isPrimitiveTy");
+    return isTy(PassUtil::isPrimitiveTy(type), aEDIType.isPrimitiveType(), "isPrimitiveTy");
 }
 
 inline bool SmartType::isAggregateType() const {

@@ -977,7 +977,7 @@ bool MagicPass::runOnModule(Module &M) {
         while(!magicMemFunctions.empty()) {
             MagicMemFunction magicMemFunction = magicMemFunctions.front();
             magicMemFunctions.erase(magicMemFunctions.begin());
-            std::vector<User*> Users(magicMemFunction.getFunction()->use_begin(), magicMemFunction.getFunction()->use_end());
+            std::vector<User*> Users(magicMemFunction.getFunction()->user_begin(), magicMemFunction.getFunction()->user_end());
             std::vector<Value*> EqPointers;
             while (!Users.empty()) {
               int annotation;
@@ -1139,11 +1139,11 @@ bool MagicPass::runOnModule(Module &M) {
                   }
                 }
               } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
-                Users.insert(Users.end(), GV->use_begin(), GV->use_end());
+                Users.insert(Users.end(), GV->user_begin(), GV->user_end());
                 EqPointers.push_back(GV);
               } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
                 if (CE->isCast()) {
-                  Users.insert(Users.end(), CE->use_begin(), CE->use_end());
+                  Users.insert(Users.end(), CE->user_begin(), CE->user_end());
                   EqPointers.push_back(CE);
                 }
               }
@@ -1962,7 +1962,7 @@ void MagicPass::findPointerVariables(Function* function, Value *value, std::vect
         DEBUG_VALUE(" ************************************************************ findPointerVariables: Unknown value: ", value);
         RETURN_IF(true);
     }
-    for (Value::use_iterator i = value->use_begin(), e = value->use_end(); i != e; ++i) {
+    for (Value::user_iterator i = value->user_begin(), e = value->user_end(); i != e; ++i) {
         User *user = *i;
         Instruction *instruction = dyn_cast<Instruction>(user);
         if(!instruction || instruction->getParent()->getParent() != function) {
@@ -2789,7 +2789,7 @@ void MagicPass::fillStackInstrumentedFunctions(std::vector<Function*> &stackIntr
         }
     }
     stackIntrumentedFuncs.push_back(deepestLLFunction);
-    for (Value::use_iterator i = deepestLLFunction->use_begin(), e = deepestLLFunction->use_end(); i != e; ++i) {
+    for (Value::user_iterator i = deepestLLFunction->user_begin(), e = deepestLLFunction->user_end(); i != e; ++i) {
         User *user = *i;
         if(Instruction *I = dyn_cast<Instruction>(user)) {
             fillStackInstrumentedFunctions(stackIntrumentedFuncs, I->getParent()->getParent());
@@ -2944,7 +2944,7 @@ bool MagicPass::isMagicGV(Module &M, GlobalVariable *GV)
     if (GV->isThreadLocal() && (GV->getName().startswith(MAGIC_PREFIX_STR) || GV->getName().startswith("rcu"))) {
         return true;
     }
-    if (!GV->getSection().compare(MAGIC_LLVM_METADATA_SECTION)) {
+    if (!StringRef(GV->getSection()).compare(MAGIC_LLVM_METADATA_SECTION)) {
 	return true;
     }
     if (GV->getName().startswith("__start") || GV->getName().startswith("__stop") || GV->getName().startswith("llvm.")) {
