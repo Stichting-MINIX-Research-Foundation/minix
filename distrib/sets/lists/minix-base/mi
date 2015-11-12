@@ -195,7 +195,6 @@
 ./service/asr                                           minix-base
 ./service/devman                                        minix-base
 ./service/ds                                            minix-base
-./service/emmc                                          minix-base
 ./service/ext2                                          minix-base
 ./service/hello                                         minix-base
 ./service/inet                                          minix-base
@@ -207,7 +206,6 @@
 ./service/lwip                                          minix-base
 ./service/memory                                        minix-base
 ./service/mfs                                           minix-base
-./service/mmc                                           minix-base
 ./service/pfs                                           minix-base
 ./service/pm                                            minix-base
 ./service/procfs                                        minix-base
