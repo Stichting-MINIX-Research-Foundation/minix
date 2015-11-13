@@ -6,8 +6,6 @@ SERVICE_PATH=/service
 
 # The path to the alternative, ASR-rerandomized system service binaries.
 # The path used here is typically a symlink into /usr for size reasons.
-# As of writing, the only way to create these sets of binaries is by means
-# of the host-side "minix/llvm/clientctl buildasr" command.
 SERVICE_ASR_PATH=$SERVICE_PATH/asr
 
 # A space-separated list of labels not to update in any case.  The list
@@ -84,7 +82,7 @@ for service in $services; do
 	# we avoid potential problems with gaps between the numbers by
 	# stopping at the first number for which no binary is present.
 	total=1
-	while [ -f $SERVICE_ASR_PATH/$total/$filename ]; do
+	while [ -f $SERVICE_ASR_PATH/$filename-$total ]; do
 		total=$(($total + 1))
 	done
 
@@ -99,7 +97,7 @@ for service in $services; do
 	if [ $count -eq 0 ]; then
 		binary=$SERVICE_PATH/$filename
 	else
-		binary=$SERVICE_ASR_PATH/$count/$filename
+		binary=$SERVICE_ASR_PATH/$filename-$count
 	fi
 
 	# Check whether the live update should use a state other than the
@@ -124,8 +122,8 @@ for service in $services; do
 	# Perform the live update.  The update may legitimately fail if the
 	# service is not in the right state.  TODO: report transient errors
 	# as debugging output only.
-	service -a update $binary -label $label -asr-count $count \
-		$state $maxtime
+	service -a update $binary -progname $filename -label $label \
+		-asr-count $count $state $maxtime
 	error=$?
 	if [ $error -eq 0 ]; then
 		debug "updated $label to number $count, total $total"

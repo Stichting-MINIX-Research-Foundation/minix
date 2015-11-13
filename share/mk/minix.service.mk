@@ -51,6 +51,46 @@ BITCODE_LD_FLAGS_1ST.${_P}?= ${LIBMAGICST}
 
 MAGICFLAGS?=
 OPTFLAGS+= -load ${MAGICPASS} -magic ${MAGICFLAGS}
+
+# For MKASR builds, generate an additional set of rerandomized service
+# binaries.
+.if ${USE_ASR:Uno} == "yes"
+ASRPASS?= ${NETBSDSRCDIR}/minix/llvm/bin/asr.so
+ASRCOUNT?= 3
+ASRDIR?= /usr/service/asr
+
+DPADD+= ${ASRPASS}
+
+OPTFLAGS+= -load ${ASRPASS} -asr
+
+# Produce a variable _RANGE that contains "1 2 3 .. ${ASRCOUNT}".  We do not
+# want to invoke a shell command to do this; what if the host platform does not
+# have seq(1) ?  So, we do it with built-in BSD make features instead.  There
+# are probably substantially better ways to do this, though.  Right now the
+# maximum ASRCOUNT is 65536 (16**4), which should be plenty.  An ASRCOUNT of 0
+# is not supported, nor would it be very useful.
+_RANGE= 0
+_G0= xxxxxxxxxxxxxxxx
+_G= ${_G0:S/x/${_G0}/g:S/x/${_G0}/g:S/x/${_G0}/g}
+.for _X in ${_G:C/^(.{${ASRCOUNT}}).*/\1/:S/x/x /g}
+_RANGE:= ${_RANGE} ${_RANGE:[#]}
+.endfor
+_RANGE:= ${_RANGE:[2..-1]}
+
+# Add progname-1, progname-2, progname-3 (etc) to the list of programs to
+# generate, and install (just) these to ASRDIR.
+PROGS?= ${PROG}
+_PROGLIST:= ${PROGS}
+.for _N in ${_RANGE}
+.for _P in ${_PROGLIST}
+PROGS+= ${_P}-${_N}
+SRCS.${_P}-${_N}= ${SRCS.${_P}:U${SRCS}}
+BITCODE_LD_FLAGS_1ST.${_P}-${_N}:= ${BITCODE_LD_FLAGS_1ST.${_P}}
+BINDIR.${_P}-${_N}= ${ASRDIR}
+.endfor
+.endfor
+
+.endif # ${USE_ASR:Uno} == "yes"
 .endif # ${USE_BITCODE:Uno} == "yes" && ${USE_MAGIC:Uno} == "yes"
 
 .include <bsd.prog.mk>
