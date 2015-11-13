@@ -123,6 +123,7 @@ static int known_request_types[] = {
 					 * system service
 					 */
 #define ARG_LABELNAME	"-label"	/* custom label name */
+#define ARG_PROGNAME	"-progname"	/* custom program name */
 #define ARG_CONFIG	"-config"	/* name of the file with the resource
 					 * configuration 
 					 */
@@ -149,6 +150,7 @@ static char *req_label = NULL;
 static char *req_trg_label = NULL;
 static char *req_path = NULL;
 static char *req_path_self = SELF_REQ_PATH;
+static char *req_progname = NULL;
 static char *req_args = "";
 static int req_major = 0;
 static int devman_id = 0;
@@ -177,14 +179,14 @@ static void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <count>] [%s <restarts>]\n",
+      "    %s [%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <name>] [%s <path>] [%s <state value|eval_expression>] [%s <time>] [%s <bytes>] [%s <bytes>] [%s <name>] [(%s|%s <src_label1,src_type1:src_label2,:,src_type3:...>)*] [%s <count>] [%s <restarts>]\n",
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, OPT_NO_BIN_EXP,
 	OPT_BATCH, OPT_ASR_LU, OPT_PREPARE_ONLY_LU, OPT_FORCE_SELF_LU,
 	OPT_FORCE_INIT_CRASH, OPT_FORCE_INIT_FAIL, OPT_FORCE_INIT_TIMEOUT,
 	OPT_FORCE_INIT_DEFCB, OPT_NOMMAP_LU, OPT_DETACH,
 	OPT_NORESTART, OPT_FORCE_INIT_ST, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD,
-	ARG_SCRIPT, ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME,
+	ARG_SCRIPT, ARG_LABELNAME, ARG_PROGNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME,
 	ARG_HEAP_PREALLOC, ARG_MAP_PREALLOC, ARG_TRG_LABELNAME, ARG_LU_IPC_BL, ARG_LU_IPC_WL,
 	ARG_ASR_COUNT, ARG_RESTARTS);
   fprintf(stderr, "    %s down <label>\n", app_name);
@@ -564,6 +566,9 @@ static int parse_arguments(int argc, char **argv, u32_t *rss_flags)
           else if (strcmp(argv[i], ARG_TRG_LABELNAME)==0) {
               req_trg_label = argv[i+1];
           }
+          else if (strcmp(argv[i], ARG_PROGNAME)==0) {
+              req_progname = argv[i+1];
+          }
           else if (strcmp(argv[i], ARG_CONFIG)==0) {
               req_config = argv[i+1];
  	      custom_config_file = 1;
@@ -734,9 +739,13 @@ int main(int argc, char **argv)
   case RS_UP:
   case RS_EDIT:
       /* Build space-separated command string to be passed to RS server. */
-      progname = strrchr(req_path, '/');
-      assert(progname);	/* an absolute path was required */
-      progname++;	/* skip last slash */
+      if (req_progname != NULL) {
+        progname = req_progname;
+      } else {
+        progname = strrchr(req_path, '/');
+        assert(progname);	/* an absolute path was required */
+        progname++;	/* skip last slash */
+      }
       strcpy(command, req_path);
       command[strlen(req_path)] = ' ';
       strcpy(command+strlen(req_path)+1, req_args);
@@ -753,6 +762,8 @@ int main(int argc, char **argv)
       /* Set specifics */
       config.rs_start.rss_cmd= command;
       config.rs_start.rss_cmdlen= strlen(command);
+      config.rs_start.rss_progname= progname;
+      config.rs_start.rss_prognamelen= strlen(progname);
       config.rs_start.rss_major= req_major;
       config.rs_start.rss_period= req_period;
       config.rs_start.rss_script= req_script;

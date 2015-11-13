@@ -5,8 +5,8 @@ struct rproc;
 struct rprocupd;
 
 /* exec.c */
-int srv_execve(int proc_e, char *exec, size_t exec_len, char *argv[],
-	char **env);
+int srv_execve(int proc_e, char *exec, size_t exec_len, char *progname,
+	char *argv[], char **env);
 
 /* main.c */
 int main(void);

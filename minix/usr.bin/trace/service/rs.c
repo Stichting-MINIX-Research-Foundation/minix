@@ -27,6 +27,8 @@ put_struct_rs_start(struct trace_proc * proc, const char * name,
 		put_flags(proc, "rss_flags", rss_flags, COUNT(rss_flags),
 		    "0x%x", buf.rss_flags);
 	put_buf(proc, "rss_cmd", 0, (vir_bytes)buf.rss_cmd, buf.rss_cmdlen);
+	put_buf(proc, "rss_progname", 0, (vir_bytes)buf.rss_progname,
+	    buf.rss_prognamelen);
 	put_buf(proc, "rss_label", 0, (vir_bytes)buf.rss_label.l_addr,
 	    buf.rss_label.l_len);
 	if (verbose > 0 || buf.rss_major != 0)
