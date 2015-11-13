@@ -37,4 +37,20 @@ LDFLAGS+= ${${ACTIVE_CC} == "gcc":? -lgcc_eh:}
 # Get (more) internal minix definitions and declarations.
 CPPFLAGS += -D_MINIX_SYSTEM=1
 
+# For MKMAGIC builds, link services against libmagicrt and run the magic pass
+# on them, unless they have specifically requested to be built without bitcode.
+.if ${USE_BITCODE:Uno} == "yes" && ${USE_MAGIC:Uno} == "yes"
+LIBMAGICST?= ${DESTDIR}${LIBDIR}/libmagicrt.bcc
+MAGICPASS?= ${NETBSDSRCDIR}/minix/llvm/bin/magic.so
+
+DPADD+= ${LIBMAGICST} ${MAGICPASS}
+
+.for _P in ${PROGS:U${PROG}}
+BITCODE_LD_FLAGS_1ST.${_P}?= ${LIBMAGICST}
+.endfor
+
+MAGICFLAGS?=
+OPTFLAGS+= -load ${MAGICPASS} -magic ${MAGICFLAGS}
+.endif # ${USE_BITCODE:Uno} == "yes" && ${USE_MAGIC:Uno} == "yes"
+
 .include <bsd.prog.mk>
