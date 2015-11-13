@@ -305,10 +305,12 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
        */
       rpub->dev_nr = boot_image_dev->dev_nr;          /* major device number */
 
-      /* Build command settings. This will also set the process name. */
+      /* Build command settings. Also set the process name. */
       strlcpy(rp->r_cmd, ip->proc_name, sizeof(rp->r_cmd));
       rp->r_script[0]= '\0';
       build_cmd_dep(rp);
+
+      strlcpy(rpub->proc_name, ip->proc_name, sizeof(rpub->proc_name));
 
       /* Initialize vm call mask bitmap. */
       calls = SRV_OR_USR(rp, SRV_VC, USR_VC) == ALL_C ? all_c : no_c;

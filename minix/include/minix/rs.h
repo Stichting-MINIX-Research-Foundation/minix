@@ -135,6 +135,8 @@ struct rs_start
 	struct rss_label rss_control[RS_NR_CONTROL];
 	struct rs_state_data rss_state_data;
 	int devman_id;
+	char *rss_progname;
+	size_t rss_prognamelen;
 	/*
 	 * SMP specific data
 	 *

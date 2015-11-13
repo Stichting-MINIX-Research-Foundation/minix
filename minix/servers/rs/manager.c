@@ -320,18 +320,6 @@ void build_cmd_dep(struct rproc *rp)
   assert(arg_count < ARGV_ELEMENTS);
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
-  
-  /* Build process name. */
-  cmd_ptr = strrchr(rp->r_argv[0], '/');
-  if (cmd_ptr)
-  	cmd_ptr++;
-  else
-  	cmd_ptr= rp->r_argv[0];
-  len= strlen(cmd_ptr);
-  if (len > RS_MAX_LABEL_LEN-1)
-  	len= RS_MAX_LABEL_LEN-1;	/* truncate name */
-  memcpy(rpub->proc_name, cmd_ptr, len);
-  rpub->proc_name[len]= '\0';
 }
 
 /*===========================================================================*
@@ -642,8 +630,8 @@ struct rproc *rp;
   }
   if(rs_verbose)
         printf("RS: execing child with srv_execve()...\n");
-  s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
-        environ);
+  s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rpub->proc_name,
+        rp->r_argv, environ);
   vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN, 0, 0);
   if (s != OK) {
         printf("RS: srv_execve failed: %d\n", s);
@@ -1588,8 +1576,15 @@ endpoint_t source;
   rp->r_cmd[rs_start->rss_cmdlen] = '\0';	/* ensure it is terminated */
   if (rp->r_cmd[0] != '/') return(EINVAL);	/* insist on absolute path */
 
-  /* Build cmd dependencies: argv and program name. */
+  /* Build cmd dependencies (argv). */
   build_cmd_dep(rp);
+
+  /* Copy in the program name. */
+  if (rs_start->rss_prognamelen > sizeof(rpub->proc_name)-1) return(E2BIG);
+  s=sys_datacopy(source, (vir_bytes) rs_start->rss_progname, 
+      SELF, (vir_bytes) rpub->proc_name, rs_start->rss_prognamelen);
+  if (s != OK) return(s);
+  rpub->proc_name[rs_start->rss_prognamelen] = '\0';
 
   /* Update label if not already set. */
   if(!strcmp(rpub->label, "")) {
