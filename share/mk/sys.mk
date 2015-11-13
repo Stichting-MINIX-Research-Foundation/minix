@@ -22,7 +22,7 @@ CPPFLAGS+= -DNDEBUG
 DBG=	-Os
 .endif
 
-.if ${MKMAGIC:Uno} == "yes"
+.if ${MKMAGIC:Uno} == "yes" || ${MKASR:Uno} == "yes"
 CPPFLAGS+= -D_MINIX_MAGIC=1
 STRIPFLAG= -s
 DBG=-g

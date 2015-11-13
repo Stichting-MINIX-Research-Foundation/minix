@@ -154,9 +154,8 @@ create_input_spec()
 	if [ ${ASR_HACK} -eq 1 ]
 	then
 		# Hacky workaround for ASR-randomized service binaries since they don't get nicely packaged in a tarball
-		# add any generated ASR-randomized service binaries (but not their root directory, which is already there)
+		# add any generated ASR-randomized service binaries
 		# TODO: apply stricter file permissions for both these and the base /service binaries, against local attacks
-		(cd ${DESTDIR} && find ./usr/service/asr -type d | sed '1d;s/$/ type=dir uid=0 gid=0 mode=0755/') >> ${WORK_DIR}/input
 		(cd ${DESTDIR} && find ./usr/service/asr -type f | sed 's/$/ type=file uid=0 gid=0 mode=0755/') >> ${WORK_DIR}/input
 		cp -r ${DESTDIR}/usr/service/asr ${ROOT_DIR}/usr/service
 	fi
