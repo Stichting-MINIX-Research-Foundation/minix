@@ -22,6 +22,12 @@ CPPFLAGS+= -DNDEBUG
 DBG=	-Os
 .endif
 
+.if ${MKMAGIC:Uno} == "yes"
+CPPFLAGS+= -D_MINIX_MAGIC=1
+STRIPFLAG= -s
+DBG=-g
+.endif
+
 #LSC: Be a bit smarter about the default compiler
 .if exists(/usr/pkg/bin/clang) || exists(/usr/bin/clang)
 CC?=	clang

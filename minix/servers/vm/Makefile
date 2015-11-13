@@ -23,11 +23,7 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/minix
 # data. For VM, we need to do the exact opposite, since for VM, the malloc
 # state is transferred as is. Thus, if the magic pass is enabled, tell it
 # to skip the regular malloc instrumentation features.
-.if !empty(OPTFLAGS:M*-magic*)
-OPTFLAGS.vm?= ${OPTFLAGS} \
-	-magic-disable-mem-functions \
-	-magic-disable-malloc-skip
-.endif
+MAGICFLAGS= -magic-disable-mem-functions -magic-disable-malloc-skip
 
 .include "arch/${MACHINE_ARCH}/Makefile.inc"
 .include <minix.service.mk>

@@ -100,4 +100,7 @@ kernel: kernel.bcl.o
 		-Wl,--allow-multiple-definition
 .endif
 
+# Disable magic and ASR passes for the kernel.
+USE_MAGIC=no
+
 .include <minix.service.mk>

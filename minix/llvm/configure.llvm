@@ -85,7 +85,7 @@ fi
 ########################
 # Build Minix
 ########################
-export BUILDVARS=$(echo "${BUILDVARS} -V MKBITCODE=yes"| sed -e 's,-V MKMAGIC=yes,-V MKMAGIC=yes -V DBG=-g -V STRIPFLAG=-s -V CPPFLAGS=-D_MINIX_MAGIC=1,')
+export BUILDVARS
 
 if [ "${REBUILD_MINIX}" == "yes" ]; then
 
