@@ -287,8 +287,8 @@ do
 			BUILDVARS="$BUILDVARS -X $OPTARG";;
 
 		b)      # bitcode build: increase partition sizes
-			ROOT_SIZE="$((${ROOT_SIZE} + 192*(2**20) / 512))"
-			USR_SIZE="$((${USR_SIZE} + 256*(2**20) / 512))"
+			ROOT_SIZE="$((${ROOT_SIZE} + 192*(2**20)))"
+			USR_SIZE="$((${USR_SIZE} + 256*(2**20)))"
 			ASR_HACK=1;;
 
 		h)	usage
