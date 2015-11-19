@@ -278,6 +278,7 @@
 ./usr/man/man1/openssl_x509.1                           minix-man       crypto
 ./usr/man/man1/openssl_x509v3_config.1                  minix-man       crypto
 ./usr/man/man1/page.1                                   minix-man
+./usr/man/man1/pagesize.1                               minix-man
 ./usr/man/man1/passwd.1                                 minix-man
 ./usr/man/man1/paste.1                                  minix-man
 ./usr/man/man1/patch.1                                  minix-man

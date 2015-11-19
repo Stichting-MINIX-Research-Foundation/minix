@@ -420,6 +420,7 @@
 ./usr/bin/od                                            minix-base
 ./usr/bin/openssl                                       minix-base      crypto
 ./usr/bin/page                                          minix-base
+./usr/bin/pagesize                                      minix-base
 ./usr/bin/part                                          minix-base
 ./usr/bin/partition                                     minix-base
 ./usr/bin/passwd                                        minix-base
