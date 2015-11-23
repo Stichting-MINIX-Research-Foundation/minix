@@ -286,6 +286,7 @@ int do_semctl(message *m)
 	unsigned short *buf;
 	struct semid_ds *ds, tmp_ds;
 	struct sem_struct *sem;
+	struct seminfo sinfo;
 
 	id = m->m_lc_ipc_semctl.id;
 	num = m->m_lc_ipc_semctl.num;
@@ -296,12 +297,23 @@ int do_semctl(message *m)
 		cmd == SETALL || cmd == SETVAL)
 		opt = m->m_lc_ipc_semctl.opt;
 
-	if (!(sem = sem_find_id(id))) {
-		return EINVAL;
+	switch (cmd) {
+	case IPC_INFO:
+	case SEM_INFO:
+		sem = NULL;
+		break;
+	case SEM_STAT:
+		if (id < 0 || id >= sem_list_nr)
+			return EINVAL;
+		sem = &sem_list[id];
+		break;
+	default:
+		if (!(sem = sem_find_id(id)))
+			return EINVAL;
 	}
 
 	/* IPC_SET and IPC_RMID as its own permission check */
-	if (cmd != IPC_SET && cmd != IPC_RMID) {
+	if (sem != NULL && cmd != IPC_SET && cmd != IPC_RMID) {
 		/* check read permission */
 		if (!check_perm(&sem->semid_ds.sem_perm, who_e, 0444))
 			return EACCES;
@@ -309,13 +321,11 @@ int do_semctl(message *m)
 
 	switch (cmd) {
 	case IPC_STAT:
-		ds = (struct semid_ds *) opt;
-		if (!ds)
-			return EFAULT;
-		r = sys_datacopy(SELF, (vir_bytes) &sem->semid_ds,
-			who_e, (vir_bytes) ds, sizeof(struct semid_ds));
-		if (r != OK)
-			return EINVAL;
+	case SEM_STAT:
+		if ((r = sys_datacopy(SELF, (vir_bytes)&sem->semid_ds, who_e,
+		    (vir_bytes)opt, sizeof(sem->semid_ds))) != OK)
+			return r;
+		m->m_lc_ipc_semctl.ret = sem->id;
 		break;
 	case IPC_SET:
 		uid = getnuid(who_e);
@@ -346,10 +356,42 @@ int do_semctl(message *m)
 		update_one_semaphore(sem, 1);
 		break;
 	case IPC_INFO:
-		break;
 	case SEM_INFO:
-		break;
-	case SEM_STAT:
+		memset(&sinfo, 0, sizeof(sinfo));
+		sinfo.semmap = SEMMNI;
+		sinfo.semmni = SEMMNI;
+		sinfo.semmns = SEMMNI * SEMMSL;
+		sinfo.semmnu = 0; /* TODO: support for SEM_UNDO */
+		sinfo.semmsl = SEMMSL;
+		sinfo.semopm = SEMOPM;
+		sinfo.semume = 0; /* TODO: support for SEM_UNDO */
+		if (cmd == SEM_INFO) {
+			/*
+			 * For SEM_INFO the semusz field is expected to contain
+			 * the number of semaphore sets currently in use.
+			 */
+			sinfo.semusz = sem_list_nr;
+		} else
+			sinfo.semusz = 0; /* TODO: support for SEM_UNDO */
+		sinfo.semvmx = SEMVMX;
+		if (cmd == SEM_INFO) {
+			/*
+			 * For SEM_INFO the semaem field is expected to contain
+			 * the total number of allocated semaphores.
+			 */
+			for (i = 0; i < sem_list_nr; i++)
+				sinfo.semaem += sem_list[i].semid_ds.sem_nsems;
+		} else
+			sinfo.semaem = 0; /* TODO: support for SEM_UNDO */
+
+		if ((r = sys_datacopy(SELF, (vir_bytes)&sinfo, who_e,
+		    (vir_bytes)opt, sizeof(sinfo))) != OK)
+			return r;
+		/* Return the highest in-use slot number if any, or zero. */
+		if (sem_list_nr > 0)
+			m->m_lc_ipc_semctl.ret = sem_list_nr - 1;
+		else
+			m->m_lc_ipc_semctl.ret = 0;
 		break;
 	case GETALL:
 		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);
