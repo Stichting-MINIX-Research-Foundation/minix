@@ -365,7 +365,7 @@ typedef struct {
 	int		id;
 	int		num;
 	int		cmd;
-	int		opt;
+	vir_bytes	opt;
 	int		ret;
 	uint8_t		padding[36];
 } mess_lc_ipc_semctl;

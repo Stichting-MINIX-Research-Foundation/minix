@@ -215,12 +215,12 @@ struct shm_info
        unsigned long int swap_successes;
 };
 
-#define SHMMNI 4096
+#define SHMMNI 1024
 #define SHMSEG 32              /* max shared segs per process */
 
-/* shm_mode upper byte flags */
-#define SHM_DEST 01000                 /* segment will be destroyed on last detach */
-#define SHM_LOCKED 02000               /* segment will not be swapped */
+/* Public shm_perm.mode flags, synchronized with NetBSD kernel values above */
+#define SHM_DEST	0x0400	/* destroy on last detach (SHMSEG_REMOVED) */
+#define SHM_LOCKED	0x4000	/* pages will not be swapped (SHMSEG_WIRED) */
 
 #endif /* defined(__minix) */
 

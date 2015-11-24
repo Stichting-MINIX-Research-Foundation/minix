@@ -9,4 +9,6 @@ FILES=ipc.conf
 FILESNAME=ipc
 FILESDIR= /etc/system.conf.d
 
+WARNS?=	5
+
 .include <minix.service.mk>

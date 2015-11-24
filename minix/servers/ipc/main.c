@@ -1,24 +1,18 @@
 #include "inc.h"
 
-int identifier = 0x1234;
 endpoint_t who_e;
-int call_type;
+static unsigned int call_type;
 
-static struct {
-	int type;
-	int (*func)(message *);
-	int reply;	/* whether the reply action is passed through */
-} ipc_calls[] = {
-	{ IPC_SHMGET,	do_shmget,	0 },
-	{ IPC_SHMAT,	do_shmat,	0 },
-	{ IPC_SHMDT,	do_shmdt,	0 },
-	{ IPC_SHMCTL,	do_shmctl,	0 },
-	{ IPC_SEMGET,	do_semget,	0 },
-	{ IPC_SEMCTL,	do_semctl,	0 },
-	{ IPC_SEMOP,	do_semop,	1 },
+#define CALL(n) [((n) - IPC_BASE)]
+static int (* const call_vec[])(message *) = {
+	CALL(IPC_SHMGET)	= do_shmget,
+	CALL(IPC_SHMAT)		= do_shmat,
+	CALL(IPC_SHMDT)		= do_shmdt,
+	CALL(IPC_SHMCTL)	= do_shmctl,
+	CALL(IPC_SEMGET)	= do_semget,
+	CALL(IPC_SEMCTL)	= do_semctl,
+	CALL(IPC_SEMOP)		= do_semop,
 };
-
-#define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 static int verbose = 0;
 
@@ -30,15 +24,14 @@ static void sef_cb_signal_handler(int signo);
 int main(int argc, char *argv[])
 {
 	message m;
+	unsigned int ipc_number;
+	int r;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
 	sef_local_startup();
 
 	while (TRUE) {
-		int r;
-		int ipc_number;
-
 		if ((r = sef_receive(ANY, &m)) != OK)
 			printf("sef_receive failed %d.\n", r);
 		who_e = m.m_source;
@@ -61,22 +54,11 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		/*
-		 * The ipc number in the table can be obtained
-		 * with a simple equation because the values of
-		 * IPC system calls are consecutive and begin
-		 * at ( IPC_BASE + 1 )
-		 */
-
-		ipc_number = call_type - (IPC_BASE + 1);
+		ipc_number = (unsigned int)(call_type - IPC_BASE);
 
 		/* dispatch message */
-		if (ipc_number >= 0 && ipc_number < SIZE(ipc_calls)) {
-			int result;
-
-			if (ipc_calls[ipc_number].type != call_type)
-				panic("IPC: call table order mismatch");
-
+		if (ipc_number < __arraycount(call_vec) &&
+		    call_vec[ipc_number] != NULL) {
 			/* If any process does an IPC call,
 			 * we have to know about it exiting.
 			 * Tell VM to watch it for us.
@@ -85,19 +67,18 @@ int main(int argc, char *argv[])
 				printf("IPC: watch failed on %d\n", m.m_source);
 			}
 
-			result = ipc_calls[ipc_number].func(&m);
+			r = call_vec[ipc_number](&m);
 
 			/*
 			 * The handler of the IPC call did not
 			 * post a reply.
 			 */
-			if (!ipc_calls[ipc_number].reply) {
+			if (r != SUSPEND) {
+				m.m_type = r;
 
-				m.m_type = result;
-
-				if(verbose && result != OK)
+				if(verbose && r != OK)
 					printf("IPC: error for %d: %d\n",
-						call_type, result);
+						call_type, r);
 
 				if ((r = ipc_sendnb(who_e, &m)) != OK)
 					printf("IPC send error %d.\n", r);
@@ -117,7 +98,7 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -152,7 +133,8 @@ static void sef_cb_signal_handler(int signo)
   if (signo != SIGTERM) return;
 
   /* Checkout if there are still IPC keys. Inform the user in that case. */
-  if (!is_sem_nil() || !is_shm_nil())
-      printf("IPC: exit with un-clean states.\n");
-}
+  if (is_sem_nil() && is_shm_nil())
+	sef_exit(0);
 
+  printf("IPC: exit with un-clean states.\n");
+}

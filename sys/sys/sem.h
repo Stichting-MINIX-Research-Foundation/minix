@@ -187,11 +187,13 @@ struct sem_sysctl_info {
 /* actual size of an undo structure */
 #define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct sem_undo_entry)*SEMUME)
 
+#ifndef __minix
 /*
  * Structures allocated in machdep.c
  */
 extern struct seminfo seminfo;
 extern struct semid_ds *sema;		/* semaphore id pool */
+#endif /* !__minix */
 
 /*
  * Parameters to the semconfig system call
