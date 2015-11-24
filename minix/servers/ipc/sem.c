@@ -1,7 +1,3 @@
-#define __USE_MISC
-
-#include <minix/vm.h>
-
 #include "inc.h"
 
 struct waiting {
@@ -19,33 +15,43 @@ struct semaphore {
 };
 
 struct sem_struct {
-	key_t key;
-	int id;
 	struct semid_ds semid_ds;
 	struct semaphore sems[SEMMSL];
 };
 
 static struct sem_struct sem_list[SEMMNI];
-static int sem_list_nr = 0;
+static unsigned int sem_list_nr = 0; /* highest in-use slot number plus one */
 
 static struct sem_struct *sem_find_key(key_t key)
 {
-	int i;
+	unsigned int i;
+
 	if (key == IPC_PRIVATE)
 		return NULL;
-	for (i = 0; i < sem_list_nr; i++)
-		if (sem_list[i].key == key)
-			return sem_list+i;
+	for (i = 0; i < sem_list_nr; i++) {
+		if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
+			continue;
+		if (sem_list[i].semid_ds.sem_perm._key == key)
+			return &sem_list[i];
+	}
 	return NULL;
 }
 
 static struct sem_struct *sem_find_id(int id)
 {
-	int i;
-	for (i = 0; i < sem_list_nr; i++)
-		if (sem_list[i].id == id)
-			return sem_list+i;
-	return NULL;
+	struct sem_struct *sem;
+	unsigned int i;
+
+	i = IPCID_TO_IX(id);
+	if (i >= sem_list_nr)
+		return NULL;
+
+	sem = &sem_list[i];
+	if (!(sem->semid_ds.sem_perm.mode & SEM_ALLOC))
+		return NULL;
+	if (sem->semid_ds.sem_perm._seq != IPCID_TO_SEQ(id))
+		return NULL;
+	return sem;
 }
 
 /*===========================================================================*
@@ -53,9 +59,10 @@ static struct sem_struct *sem_find_id(int id)
  *===========================================================================*/
 int do_semget(message *m)
 {
-	key_t key;
-	int nsems, flag, id;
 	struct sem_struct *sem;
+	unsigned int i, seq;
+	key_t key;
+	int nsems, flag;
 
 	key = m->m_lc_ipc_semget.key;
 	nsems = m->m_lc_ipc_semget.nr;
@@ -68,33 +75,41 @@ int do_semget(message *m)
 			return EACCES;
 		if (nsems > sem->semid_ds.sem_nsems)
 			return EINVAL;
-		id = sem->id;
+		i = sem - sem_list;
 	} else {
 		if (!(flag & IPC_CREAT))
 			return ENOENT;
 		if (nsems < 0 || nsems >= SEMMSL)
 			return EINVAL;
-		if (sem_list_nr == SEMMNI)
+
+		/* Find a free entry. */
+		for (i = 0; i < __arraycount(sem_list); i++)
+			if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
+				break;
+		if (i == __arraycount(sem_list))
 			return ENOSPC;
 
-		/* create a new semaphore set */
-		sem = &sem_list[sem_list_nr];
+		/* Initialize the entry. */
+		sem = &sem_list[i];
+		seq = sem->semid_ds.sem_perm._seq;
 		memset(sem, 0, sizeof(struct sem_struct));
+		sem->semid_ds.sem_perm._key = key;
 		sem->semid_ds.sem_perm.cuid =
 			sem->semid_ds.sem_perm.uid = getnuid(who_e);
 		sem->semid_ds.sem_perm.cgid =
 			sem->semid_ds.sem_perm.gid = getngid(who_e);
-		sem->semid_ds.sem_perm.mode = flag & 0777;
+		sem->semid_ds.sem_perm.mode = SEM_ALLOC | (flag & ACCESSPERMS);
+		sem->semid_ds.sem_perm._seq = (seq + 1) & 0x7fff;
 		sem->semid_ds.sem_nsems = nsems;
 		sem->semid_ds.sem_otime = 0;
-		sem->semid_ds.sem_ctime = time(NULL);
-		sem->id = id = identifier++;
-		sem->key = key;
+		sem->semid_ds.sem_ctime = clock_time(NULL);
 
-		sem_list_nr++;
+		assert(i <= sem_list_nr);
+		if (i == sem_list_nr)
+			sem_list_nr++;
 	}
 
-	m->m_lc_ipc_semget.retid = id;
+	m->m_lc_ipc_semget.retid = IXSEQ_TO_IPCID(i, sem->semid_ds.sem_perm);
 	return OK;
 }
 
@@ -119,22 +134,29 @@ static void remove_semaphore(struct sem_struct *sem)
 			free(sem->sems[i].nlist);
 	}
 
-	for (i = 0; i < sem_list_nr; i++) {
-		if (&sem_list[i] == sem)
-			break;
-	}
+	/* Mark the entry as free. */
+	sem->semid_ds.sem_perm.mode &= ~SEM_ALLOC;
 
-	if (i < sem_list_nr && --sem_list_nr != i)
-		sem_list[i] = sem_list[sem_list_nr];
+	/*
+	 * This may have been the last in-use slot in the list.  Ensure that
+	 * sem_list_nr again equals the highest in-use slot number plus one.
+	 */
+	while (sem_list_nr > 0 &&
+	    !(sem_list[sem_list_nr - 1].semid_ds.sem_perm.mode & SEM_ALLOC))
+		sem_list_nr--;
 }
 
 #if 0
 static void show_semaphore(void)
 {
-	int i, j, k;
+	unsigned int i;
+	int j, k, nr;
 
 	for (i = 0; i < sem_list_nr; i++) {
-		int nr = sem_list[i].semid_ds.sem_nsems;
+		if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
+			continue;
+
+		nr = sem_list[i].semid_ds.sem_nsems;
 
 		printf("===== [%d] =====\n", i);
 		for (j = 0; j < nr; j++) {
@@ -166,13 +188,16 @@ static void show_semaphore(void)
 
 static void remove_process(endpoint_t pt)
 {
-	int i;
+	struct sem_struct *sem;
+	unsigned int i;
+	int j, nr;
 
 	for (i = 0; i < sem_list_nr; i++) {
-		struct sem_struct *sem = &sem_list[i];
-		int nr = sem->semid_ds.sem_nsems;
-		int j;
+		sem = &sem_list[i];
+		if (!(sem->semid_ds.sem_perm.mode & SEM_ALLOC))
+			continue;
 
+		nr = sem->semid_ds.sem_nsems;
 		for (j = 0; j < nr; j++) {
 			struct semaphore *semaphore = &sem->sems[j];
 			int k;
@@ -268,10 +293,13 @@ static void update_one_semaphore(struct sem_struct *sem, int is_remove)
 
 static void update_semaphores(void)
 {
-	int i;
+	unsigned int i;
 
-	for (i = 0; i < sem_list_nr; i++)
-		update_one_semaphore(sem_list+i, 0 /* not remove */);
+	for (i = 0; i < sem_list_nr; i++) {
+		if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
+			continue;
+		update_one_semaphore(&sem_list[i], FALSE /*is_remove*/);
+	}
 }
 
 /*===========================================================================*
@@ -279,10 +307,10 @@ static void update_semaphores(void)
  *===========================================================================*/
 int do_semctl(message *m)
 {
-	int r, i;
-	long opt = 0;
+	unsigned int i;
+	vir_bytes opt;
 	uid_t uid;
-	int id, num, cmd, val;
+	int r, id, num, cmd, val;
 	unsigned short *buf;
 	struct semid_ds *ds, tmp_ds;
 	struct sem_struct *sem;
@@ -291,11 +319,7 @@ int do_semctl(message *m)
 	id = m->m_lc_ipc_semctl.id;
 	num = m->m_lc_ipc_semctl.num;
 	cmd = m->m_lc_ipc_semctl.cmd;
-
-	if (cmd == IPC_STAT || cmd == IPC_SET || cmd == IPC_INFO ||
-		cmd == SEM_INFO || cmd == SEM_STAT || cmd == GETALL ||
-		cmd == SETALL || cmd == SETVAL)
-		opt = m->m_lc_ipc_semctl.opt;
+	opt = m->m_lc_ipc_semctl.opt;
 
 	switch (cmd) {
 	case IPC_INFO:
@@ -303,13 +327,16 @@ int do_semctl(message *m)
 		sem = NULL;
 		break;
 	case SEM_STAT:
-		if (id < 0 || id >= sem_list_nr)
+		if (id < 0 || (unsigned int)id >= sem_list_nr)
 			return EINVAL;
 		sem = &sem_list[id];
+		if (!(sem->semid_ds.sem_perm.mode & SEM_ALLOC))
+			return EINVAL;
 		break;
 	default:
 		if (!(sem = sem_find_id(id)))
 			return EINVAL;
+		break;
 	}
 
 	/* IPC_SET and IPC_RMID as its own permission check */
@@ -325,7 +352,9 @@ int do_semctl(message *m)
 		if ((r = sys_datacopy(SELF, (vir_bytes)&sem->semid_ds, who_e,
 		    (vir_bytes)opt, sizeof(sem->semid_ds))) != OK)
 			return r;
-		m->m_lc_ipc_semctl.ret = sem->id;
+		if (cmd == SEM_STAT)
+			m->m_lc_ipc_semctl.ret =
+			    IXSEQ_TO_IPCID(id, sem->semid_ds.sem_perm);
 		break;
 	case IPC_SET:
 		uid = getnuid(who_e);
@@ -334,15 +363,15 @@ int do_semctl(message *m)
 			uid != 0)
 			return EPERM;
 		ds = (struct semid_ds *) opt;
-		r = sys_datacopy(who_e, (vir_bytes) ds,
-			SELF, (vir_bytes) &tmp_ds, sizeof(struct semid_ds));
-		if (r != OK)
-			return EINVAL;
+		if ((r = sys_datacopy(who_e, (vir_bytes)ds, SELF,
+		    (vir_bytes)&tmp_ds, sizeof(struct semid_ds))) != OK)
+			return r;
 		sem->semid_ds.sem_perm.uid = tmp_ds.sem_perm.uid;
 		sem->semid_ds.sem_perm.gid = tmp_ds.sem_perm.gid;
-		sem->semid_ds.sem_perm.mode &= ~0777;
-		sem->semid_ds.sem_perm.mode |= tmp_ds.sem_perm.mode & 0666;
-		sem->semid_ds.sem_ctime = time(NULL);
+		sem->semid_ds.sem_perm.mode &= ~ACCESSPERMS;
+		sem->semid_ds.sem_perm.mode |=
+		    tmp_ds.sem_perm.mode & ACCESSPERMS;
+		sem->semid_ds.sem_ctime = clock_time(NULL);
 		break;
 	case IPC_RMID:
 		uid = getnuid(who_e);
@@ -353,7 +382,7 @@ int do_semctl(message *m)
 		/* awaken all processes block in semop
 		 * and remove the semaphore set.
 		 */
-		update_one_semaphore(sem, 1);
+		update_one_semaphore(sem, TRUE /*is_remove*/);
 		break;
 	case IPC_INFO:
 	case SEM_INFO:
@@ -395,16 +424,15 @@ int do_semctl(message *m)
 		break;
 	case GETALL:
 		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (!buf)
+		if (buf == NULL)
 			return ENOMEM;
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
 			buf[i] = sem->sems[i].semval;
-		r = sys_datacopy(SELF, (vir_bytes) buf,
-			who_e, (vir_bytes) opt,
-			sizeof(unsigned short) * sem->semid_ds.sem_nsems);
+		r = sys_datacopy(SELF, (vir_bytes)buf, who_e, (vir_bytes)opt,
+		    sizeof(unsigned short) * sem->semid_ds.sem_nsems);
+		free(buf);
 		if (r != OK)
 			return EINVAL;
-		free(buf);
 		break;
 	case GETNCNT:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
@@ -428,13 +456,14 @@ int do_semctl(message *m)
 		break;
 	case SETALL:
 		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (!buf)
+		if (buf == NULL)
 			return ENOMEM;
-		r = sys_datacopy(who_e, (vir_bytes) opt,
-			SELF, (vir_bytes) buf,
-			sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (r != OK)
+		r = sys_datacopy(who_e, (vir_bytes)opt, SELF, (vir_bytes)buf,
+		    sizeof(unsigned short) * sem->semid_ds.sem_nsems);
+		if (r != OK) {
+			free(buf);
 			return EINVAL;
+		}
 #ifdef DEBUG_SEM
 		printf("SEMCTL: SETALL: opt: %lu\n", (vir_bytes) opt);
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
@@ -465,7 +494,7 @@ int do_semctl(message *m)
 #ifdef DEBUG_SEM
 		printf("SEMCTL: SETVAL: %d %d\n", num, val);
 #endif
-		sem->semid_ds.sem_ctime = time(NULL);
+		sem->semid_ds.sem_ctime = clock_time(NULL);
 		/* awaken if possible */
 		update_semaphores();
 		break;
@@ -481,7 +510,8 @@ int do_semctl(message *m)
  *===========================================================================*/
 int do_semop(message *m)
 {
-	int id, i, j, r;
+	unsigned int i, j, mask;
+	int id, r;
 	struct sembuf *sops;
 	unsigned int nsops;
 	struct sem_struct *sem;
@@ -490,34 +520,23 @@ int do_semop(message *m)
 	id = m->m_lc_ipc_semop.id;
 	nsops = m->m_lc_ipc_semop.size;
 
-	r = EINVAL;
 	if (!(sem = sem_find_id(id)))
-		goto out;
+		return EINVAL;
 
 	if (nsops <= 0)
-		goto out;
-
-	r = E2BIG;
+		return EINVAL;
 	if (nsops > SEMOPM)
-		goto out;
-
-	/* check for read permission */
-	r = EACCES;
-	if (!check_perm(&sem->semid_ds.sem_perm, who_e, 0444))
-		goto out;
+		return E2BIG;
 
 	/* get the array from user application */
-	r = ENOMEM;
 	sops = malloc(sizeof(struct sembuf) * nsops);
 	if (!sops)
-		goto out_free;
+		return ENOMEM;
 	r = sys_datacopy(who_e, (vir_bytes) m->m_lc_ipc_semop.ops,
 			SELF, (vir_bytes) sops,
 			sizeof(struct sembuf) * nsops);
-	if (r != OK) {
-		r = EINVAL;
+	if (r != OK)
 		goto out_free;
-	}
 
 #ifdef DEBUG_SEM
 	for (i = 0; i < nsops; i++)
@@ -530,6 +549,18 @@ int do_semop(message *m)
 		if (sops[i].sem_num >= sem->semid_ds.sem_nsems)
 			goto out_free;
 
+	/* check for permissions */
+	r = EACCES;
+	mask = 0;
+	for (i = 0; i < nsops; i++) {
+		if (sops[i].sem_op != 0)
+			mask |= 0222; /* check for write permission */
+		else
+			mask |= 0444; /* check for read permission */
+	}
+	if (mask && !check_perm(&sem->semid_ds.sem_perm, who_e, mask))
+		goto out_free;
+
 	/* check for duplicate number */
 	r = EINVAL;
 	for (i = 0; i < nsops; i++)
@@ -537,7 +568,7 @@ int do_semop(message *m)
 			if (sops[i].sem_num == sops[j].sem_num)
 				goto out_free;
 
-	/* check for EAGAIN error */
+	/* check for nonblocking operations */
 	r = EAGAIN;
 	for (i = 0; i < nsops; i++) {
 		int op_n, val;
@@ -550,8 +581,8 @@ int do_semop(message *m)
 				 (op_n < 0 &&
 				  -op_n > val)))
 			goto out_free;
-
 	}
+
 	/* there will be no errors left, so we can go ahead */
 	for (i = 0; i < nsops; i++) {
 		struct semaphore *s;
@@ -563,20 +594,16 @@ int do_semop(message *m)
 		s->sempid = getnpid(who_e);
 
 		if (op_n > 0) {
-			/* check for alter permission */
-			r = EACCES;
-			if (!check_perm(&sem->semid_ds.sem_perm, who_e, 0222))
-				goto out_free;
 			s->semval += sops[i].sem_op;
 		} else if (!op_n) {
 			if (s->semval) {
 				/* put the process asleep */
 				s->semzcnt++;
-				s->zlist = realloc(s->zlist, sizeof(struct waiting) * s->semzcnt);
-				if (!s->zlist) {
-					printf("IPC: zero waiting list lost...\n");
-					break;
-				}
+				s->zlist = realloc(s->zlist,
+				    sizeof(struct waiting) * s->semzcnt);
+				/* continuing if NULL would lead to disaster */
+				if (s->zlist == NULL)
+					panic("out of memory");
 				s->zlist[s->semzcnt-1].who = who_e;
 				s->zlist[s->semzcnt-1].val = op_n;
 
@@ -586,20 +613,16 @@ int do_semop(message *m)
 				no_reply++;
 			}
 		} else {
-			/* check for alter permission */
-			r = EACCES;
-			if (!check_perm(&sem->semid_ds.sem_perm, who_e, 0222))
-				goto out_free;
 			if (s->semval >= -op_n)
 				s->semval += op_n;
 			else {
 				/* put the process asleep */
 				s->semncnt++;
-				s->nlist = realloc(s->nlist, sizeof(struct waiting) * s->semncnt);
-				if (!s->nlist) {
-					printf("IPC: increase waiting list lost...\n");
-					break;
-				}
+				s->nlist = realloc(s->nlist,
+				    sizeof(struct waiting) * s->semncnt);
+				/* continuing if NULL would lead to disaster */
+				if (s->nlist == NULL)
+					panic("out of memory");
 				s->nlist[s->semncnt-1].who = who_e;
 				s->nlist[s->semncnt-1].val = -op_n;
 
@@ -608,23 +631,14 @@ int do_semop(message *m)
 		}
 	}
 
-	r = OK;
+	r = no_reply ? SUSPEND : OK;
 out_free:
 	free(sops);
-out:
-	/* if we reach here by errors
-	 * or with no errors but we should reply back.
-	 */
-	if (r != OK || !no_reply) {
-		m->m_type = r;
-
-		ipc_sendnb(who_e, m);
-	}
 
 	/* awaken process if possible */
 	update_semaphores();
 
-	return 0;
+	return r;
 }
 
 /*===========================================================================*

@@ -326,7 +326,7 @@ ipc_semctl_out(struct trace_proc * proc, const message * m_out)
 		return CT_DONE;
 
 	case SETVAL:
-		put_value(proc, "val", "%d", m_out->m_lc_ipc_semctl.opt);
+		put_value(proc, "val", "%lu", m_out->m_lc_ipc_semctl.opt);
 
 		return CT_DONE;
 
