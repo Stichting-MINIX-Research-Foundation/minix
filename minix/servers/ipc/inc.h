@@ -14,6 +14,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <machine/param.h>
 #include <machine/vm.h>
@@ -27,6 +28,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <assert.h>
+
+/*
+ * On NetBSD, these macros are only defined when _KERNEL is set.  However,
+ * since ipcs(1) uses IXSEQ_TO_IPCID, NetBSD cannot change these macros without
+ * breaking the userland API.  Thus, having a copy of them here is not risky.
+ */
+#define IPCID_TO_IX(id)		((id) & 0xffff)
+#define IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
 int do_shmget(message *);
 int do_shmat(message *);
@@ -41,6 +51,4 @@ int is_sem_nil(void);
 int is_shm_nil(void);
 void sem_process_vm_notify(void);
 
-EXTERN int identifier;
 EXTERN endpoint_t who_e;
-EXTERN int call_type;
