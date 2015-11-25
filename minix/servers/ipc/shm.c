@@ -11,22 +11,26 @@ struct shm_struct {
 static struct shm_struct shm_list[SHMMNI];
 static unsigned int shm_list_nr = 0; /* highest in-use slot number plus one */
 
-static struct shm_struct *shm_find_key(key_t key)
+static struct shm_struct *
+shm_find_key(key_t key)
 {
 	unsigned int i;
 
 	if (key == IPC_PRIVATE)
 		return NULL;
+
 	for (i = 0; i < shm_list_nr; i++) {
 		if (!(shm_list[i].shmid_ds.shm_perm.mode & SHM_ALLOC))
 			continue;
 		if (shm_list[i].shmid_ds.shm_perm._key == key)
 			return &shm_list[i];
 	}
+
 	return NULL;
 }
 
-static struct shm_struct *shm_find_id(int id)
+static struct shm_struct *
+shm_find_id(int id)
 {
 	struct shm_struct *shm;
 	unsigned int i;
@@ -43,10 +47,8 @@ static struct shm_struct *shm_find_id(int id)
 	return shm;
 }
 
-/*===========================================================================*
- *				do_shmget		     		     *
- *===========================================================================*/
-int do_shmget(message *m)
+int
+do_shmget(message * m)
 {
 	struct shm_struct *shm;
 	unsigned int i, seq;
@@ -59,8 +61,8 @@ int do_shmget(message *m)
 	old_size = size = m->m_lc_ipc_shmget.size;
 	flag = m->m_lc_ipc_shmget.flag;
 
-	if ((shm = shm_find_key(key))) {
-		if (!check_perm(&shm->shmid_ds.shm_perm, who_e, flag))
+	if ((shm = shm_find_key(key)) != NULL) {
+		if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, flag))
 			return EACCES;
 		if ((flag & IPC_CREAT) && (flag & IPC_EXCL))
 			return EEXIST;
@@ -72,9 +74,7 @@ int do_shmget(message *m)
 			return ENOENT;
 		if (size <= 0)
 			return EINVAL;
-		/* round up to a multiple of PAGE_SIZE */
-		if (size % PAGE_SIZE)
-			size += PAGE_SIZE - size % PAGE_SIZE;
+		size = roundup(size, PAGE_SIZE);
 		if (size <= 0)
 			return EINVAL;
 
@@ -98,20 +98,20 @@ int do_shmget(message *m)
 		/* Initialize the entry. */
 		shm = &shm_list[i];
 		seq = shm->shmid_ds.shm_perm._seq;
-		memset(shm, 0, sizeof(struct shm_struct));
+		memset(shm, 0, sizeof(*shm));
 
 		shm->shmid_ds.shm_perm._key = key;
 		shm->shmid_ds.shm_perm.cuid =
-			shm->shmid_ds.shm_perm.uid = getnuid(who_e);
+			shm->shmid_ds.shm_perm.uid = getnuid(m->m_source);
 		shm->shmid_ds.shm_perm.cgid =
-			shm->shmid_ds.shm_perm.gid = getngid(who_e);
+			shm->shmid_ds.shm_perm.gid = getngid(m->m_source);
 		shm->shmid_ds.shm_perm.mode = SHM_ALLOC | (flag & ACCESSPERMS);
 		shm->shmid_ds.shm_perm._seq = (seq + 1) & 0x7fff;
 		shm->shmid_ds.shm_segsz = old_size;
 		shm->shmid_ds.shm_atime = 0;
 		shm->shmid_ds.shm_dtime = 0;
 		shm->shmid_ds.shm_ctime = clock_time(NULL);
-		shm->shmid_ds.shm_cpid = getnpid(who_e);
+		shm->shmid_ds.shm_cpid = getnpid(m->m_source);
 		shm->shmid_ds.shm_lpid = 0;
 		shm->shmid_ds.shm_nattch = 0;
 		shm->page = (vir_bytes)page;
@@ -126,10 +126,8 @@ int do_shmget(message *m)
 	return OK;
 }
 
-/*===========================================================================*
- *				do_shmat		     		     *
- *===========================================================================*/
-int do_shmat(message *m)
+int
+do_shmat(message * m)
 {
 	int id, flag;
 	vir_bytes addr;
@@ -137,45 +135,42 @@ int do_shmat(message *m)
 	struct shm_struct *shm;
 
 	id = m->m_lc_ipc_shmat.id;
-	addr = (vir_bytes) m->m_lc_ipc_shmat.addr;
+	addr = (vir_bytes)m->m_lc_ipc_shmat.addr;
 	flag = m->m_lc_ipc_shmat.flag;
 
-	if (addr && (addr % PAGE_SIZE)) {
+	if (addr % PAGE_SIZE) {
 		if (flag & SHM_RND)
-			addr -= (addr % PAGE_SIZE);
+			addr -= addr % PAGE_SIZE;
 		else
 			return EINVAL;
 	}
 
-	if (!(shm = shm_find_id(id)))
+	if ((shm = shm_find_id(id)) == NULL)
 		return EINVAL;
 
 	if (flag & SHM_RDONLY)
 		flag = 0444;
 	else
 		flag = 0666;
-	if (!check_perm(&shm->shmid_ds.shm_perm, who_e, flag))
+	if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, flag))
 		return EACCES;
 
-	ret = vm_remap(who_e, sef_self(), (void *)addr, (void *)shm->page,
-	    shm->shmid_ds.shm_segsz);
+	ret = vm_remap(m->m_source, sef_self(), (void *)addr,
+	    (void *)shm->page, shm->shmid_ds.shm_segsz);
 	if (ret == MAP_FAILED)
 		return ENOMEM;
 
 	shm->shmid_ds.shm_atime = clock_time(NULL);
-	shm->shmid_ds.shm_lpid = getnpid(who_e);
-	/* nattach is updated lazily */
+	shm->shmid_ds.shm_lpid = getnpid(m->m_source);
+	/* nattch is updated lazily */
 
 	m->m_lc_ipc_shmat.retaddr = ret;
 	return OK;
 }
 
-/*===========================================================================*
- *				update_refcount_and_destroy		     *
- *===========================================================================*/
-void update_refcount_and_destroy(void)
+void
+update_refcount_and_destroy(void)
 {
-	size_t size;
 	u8_t rc;
 	unsigned int i;
 
@@ -183,8 +178,8 @@ void update_refcount_and_destroy(void)
 		if (!(shm_list[i].shmid_ds.shm_perm.mode & SHM_ALLOC))
 			continue;
 
-		rc = vm_getrefcount(sef_self(), (void *) shm_list[i].page);
-		if (rc == (u8_t) -1) {
+		rc = vm_getrefcount(sef_self(), (void *)shm_list[i].page);
+		if (rc == (u8_t)-1) {
 			printf("IPC: can't find physical region.\n");
 			continue;
 		}
@@ -192,10 +187,9 @@ void update_refcount_and_destroy(void)
 
 		if (shm_list[i].shmid_ds.shm_nattch == 0 &&
 		    (shm_list[i].shmid_ds.shm_perm.mode & SHM_DEST)) {
-			size = shm_list[i].shmid_ds.shm_segsz;
-			if (size % PAGE_SIZE)
-				size += PAGE_SIZE - size % PAGE_SIZE;
-			munmap((void *)shm_list[i].page, size);
+			munmap((void *)shm_list[i].page,
+			    roundup(shm_list[i].shmid_ds.shm_segsz,
+			    PAGE_SIZE));
 			/* Mark the entry as free. */
 			shm_list[i].shmid_ds.shm_perm.mode &= ~SHM_ALLOC;
 		}
@@ -210,19 +204,17 @@ void update_refcount_and_destroy(void)
 		shm_list_nr--;
 }
 
-/*===========================================================================*
- *				do_shmdt		     		     *
- *===========================================================================*/
-int do_shmdt(message *m)
+int
+do_shmdt(message * m)
 {
 	struct shm_struct *shm;
 	vir_bytes addr;
 	phys_bytes vm_id;
 	unsigned int i;
 
-	addr = (vir_bytes) m->m_lc_ipc_shmdt.addr;
+	addr = (vir_bytes)m->m_lc_ipc_shmdt.addr;
 
-	if ((vm_id = vm_getphys(who_e, (void *) addr)) == 0)
+	if ((vm_id = vm_getphys(m->m_source, (void *)addr)) == 0)
 		return EINVAL;
 
 	for (i = 0; i < shm_list_nr; i++) {
@@ -233,39 +225,36 @@ int do_shmdt(message *m)
 
 		if (shm->vm_id == vm_id) {
 			shm->shmid_ds.shm_atime = clock_time(NULL);
-			shm->shmid_ds.shm_lpid = getnpid(who_e);
+			shm->shmid_ds.shm_lpid = getnpid(m->m_source);
 			/* nattch is updated lazily */
 
-			vm_unmap(who_e, (void *) addr);
+			vm_unmap(m->m_source, (void *)addr);
 			break;
 		}
 	}
 	if (i == shm_list_nr)
-		printf("IPC: do_shmdt impossible error! could not find id %lu to unmap\n",
-			vm_id);
+		printf("IPC: do_shmdt: ID %lu not found\n", vm_id);
 
 	update_refcount_and_destroy();
 
 	return OK;
 }
 
-/*===========================================================================*
- *				do_shmctl		     		     *
- *===========================================================================*/
-int do_shmctl(message *m)
+int
+do_shmctl(message * m)
 {
-	struct shmid_ds *ds;
 	struct shmid_ds tmp_ds;
 	struct shm_struct *shm;
 	struct shminfo sinfo;
 	struct shm_info s_info;
+	vir_bytes buf;
 	unsigned int i;
 	uid_t uid;
 	int r, id, cmd;
 
 	id = m->m_lc_ipc_shmctl.id;
 	cmd = m->m_lc_ipc_shmctl.cmd;
-	ds = (struct shmid_ds *)m->m_lc_ipc_shmctl.buf;
+	buf = (vir_bytes)m->m_lc_ipc_shmctl.buf;
 
 	/*
 	 * For stat calls, sure that all information is up-to-date.  Since this
@@ -287,7 +276,7 @@ int do_shmctl(message *m)
 			return EINVAL;
 		break;
 	default:
-		if (!(shm = shm_find_id(id)))
+		if ((shm = shm_find_id(id)) == NULL)
 			return EINVAL;
 		break;
 	}
@@ -296,23 +285,22 @@ int do_shmctl(message *m)
 	case IPC_STAT:
 	case SHM_STAT:
 		/* Check whether the caller has read permission. */
-		if (!check_perm(&shm->shmid_ds.shm_perm, who_e, 0444))
+		if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, 0444))
 			return EACCES;
-		if ((r = sys_datacopy(SELF, (vir_bytes)&shm->shmid_ds, who_e,
-		    (vir_bytes)ds, sizeof(struct shmid_ds))) != OK)
+		if ((r = sys_datacopy(SELF, (vir_bytes)&shm->shmid_ds,
+		    m->m_source, buf, sizeof(shm->shmid_ds))) != OK)
 			return r;
 		if (cmd == SHM_STAT)
 			m->m_lc_ipc_shmctl.ret =
 			    IXSEQ_TO_IPCID(id, shm->shmid_ds.shm_perm);
 		break;
 	case IPC_SET:
-		uid = getnuid(who_e);
+		uid = getnuid(m->m_source);
 		if (uid != shm->shmid_ds.shm_perm.cuid &&
-			uid != shm->shmid_ds.shm_perm.uid &&
-			uid != 0)
+		    uid != shm->shmid_ds.shm_perm.uid && uid != 0)
 			return EPERM;
-		if ((r = sys_datacopy(who_e, (vir_bytes)ds, SELF,
-		    (vir_bytes)&tmp_ds, sizeof(struct shmid_ds))) != OK)
+		if ((r = sys_datacopy(m->m_source, buf, SELF,
+		    (vir_bytes)&tmp_ds, sizeof(tmp_ds))) != OK)
 			return r;
 		shm->shmid_ds.shm_perm.uid = tmp_ds.shm_perm.uid;
 		shm->shmid_ds.shm_perm.gid = tmp_ds.shm_perm.gid;
@@ -322,13 +310,12 @@ int do_shmctl(message *m)
 		shm->shmid_ds.shm_ctime = clock_time(NULL);
 		break;
 	case IPC_RMID:
-		uid = getnuid(who_e);
+		uid = getnuid(m->m_source);
 		if (uid != shm->shmid_ds.shm_perm.cuid &&
-			uid != shm->shmid_ds.shm_perm.uid &&
-			uid != 0)
+		    uid != shm->shmid_ds.shm_perm.uid && uid != 0)
 			return EPERM;
 		shm->shmid_ds.shm_perm.mode |= SHM_DEST;
-		/* destroy if possible */
+		/* Destroy if possible. */
 		update_refcount_and_destroy();
 		break;
 	case IPC_INFO:
@@ -338,8 +325,8 @@ int do_shmctl(message *m)
 		sinfo.shmmni = __arraycount(shm_list);
 		sinfo.shmseg = (unsigned long) -1;
 		sinfo.shmall = (unsigned long) -1;
-		if ((r = sys_datacopy(SELF, (vir_bytes)&sinfo, who_e,
-		    (vir_bytes)ds, sizeof(sinfo))) != OK)
+		if ((r = sys_datacopy(SELF, (vir_bytes)&sinfo, m->m_source,
+		    buf, sizeof(sinfo))) != OK)
 			return r;
 		if (shm_list_nr > 0)
 			m->m_lc_ipc_shmctl.ret = shm_list_nr - 1;
@@ -352,13 +339,13 @@ int do_shmctl(message *m)
 		s_info.shm_tot = 0;
 		for (i = 0; i < shm_list_nr; i++)
 			s_info.shm_tot +=
-				shm_list[i].shmid_ds.shm_segsz/PAGE_SIZE;
+			    shm_list[i].shmid_ds.shm_segsz / PAGE_SIZE;
 		s_info.shm_rss = s_info.shm_tot;
 		s_info.shm_swp = 0;
 		s_info.swap_attempts = 0;
 		s_info.swap_successes = 0;
-		if ((r = sys_datacopy(SELF, (vir_bytes)&s_info, who_e,
-		    (vir_bytes)ds, sizeof(s_info))) != OK)
+		if ((r = sys_datacopy(SELF, (vir_bytes)&s_info, m->m_source,
+		    buf, sizeof(s_info))) != OK)
 			return r;
 		if (shm_list_nr > 0)
 			m->m_lc_ipc_shmctl.ret = shm_list_nr - 1;
@@ -372,25 +359,26 @@ int do_shmctl(message *m)
 }
 
 #if 0
-static void list_shm_ds(void)
+static void
+list_shm_ds(void)
 {
 	unsigned int i;
+
 	printf("key\tid\tpage\n");
 	for (i = 0; i < shm_list_nr; i++) {
 		if (!(shm_list[i].shmid_ds.shm_perm.mode & SHM_ALLOC))
 			continue;
 		printf("%ld\t%d\t%lx\n",
-			shm_list[i].shmid_ds.shm_perm._key,
-			IXSEQ_TO_IPCID(i, shm_list[i].shmid_ds.shm_perm),
-			shm_list[i].page);
+		    shm_list[i].shmid_ds.shm_perm._key,
+		    IXSEQ_TO_IPCID(i, shm_list[i].shmid_ds.shm_perm),
+		    shm_list[i].page);
 	}
 }
 #endif
 
-/*===========================================================================*
- *				is_shm_nil		     		     *
- *===========================================================================*/
-int is_shm_nil(void)
+int
+is_shm_nil(void)
 {
+
 	return (shm_list_nr == 0);
 }

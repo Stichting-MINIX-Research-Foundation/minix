@@ -11,6 +11,7 @@
 #include <minix/syslib.h>
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
@@ -38,17 +39,20 @@
 #define IPCID_TO_IX(id)		((id) & 0xffff)
 #define IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
+/* shm.c */
 int do_shmget(message *);
 int do_shmat(message *);
 int do_shmdt(message *);
 int do_shmctl(message *);
-int check_perm(struct ipc_perm *, endpoint_t, int);
+int is_shm_nil(void);
 void update_refcount_and_destroy(void);
+
+/* sem.c */
 int do_semget(message *);
 int do_semctl(message *);
 int do_semop(message *);
 int is_sem_nil(void);
-int is_shm_nil(void);
 void sem_process_vm_notify(void);
 
-EXTERN endpoint_t who_e;
+/* utility.c */
+int check_perm(struct ipc_perm *, endpoint_t, int);
