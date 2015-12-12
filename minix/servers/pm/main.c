@@ -86,6 +86,8 @@ int main()
 		handle_vfs_reply();
 
 		result = SUSPEND;		/* don't reply */
+	} else if (call_nr == PROC_EVENT_REPLY) {
+		result = do_proc_event_reply();
 	} else if (IS_PM_CALL(call_nr)) {
 		/* If the system call number is valid, perform the call. */
 		call_index = (unsigned int) (call_nr - PM_BASE);
@@ -146,6 +148,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	init_timer(&rmp->mp_timer);
 	rmp->mp_magic = MP_MAGIC;
 	rmp->mp_sigact = mpsigact[rmp - mproc];
+	rmp->mp_eventsub = NO_EVENTSUB;
   }
 
   /* Build the set of signals which cause core dumps, and the set of signals
@@ -345,18 +348,18 @@ static void handle_vfs_reply()
 
 	break;
 
-  case VFS_PM_EXIT_REPLY:
-	exit_restart(rmp, FALSE /*dump_core*/);
-
-	break;
-
   case VFS_PM_CORE_REPLY:
 	if (m_in.VFS_PM_STATUS == OK)
 		rmp->mp_sigstatus |= WCOREFLAG;
 
-	exit_restart(rmp, TRUE /*dump_core*/);
+	/* FALLTHROUGH */
+  case VFS_PM_EXIT_REPLY:
+	assert(rmp->mp_flags & EXITING);
 
-	break;
+	/* Publish the exit event. Continue exiting the process after that. */
+	publish_event(rmp);
+
+	return; /* do not take the default action */
 
   case VFS_PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
@@ -401,7 +404,10 @@ static void handle_vfs_reply()
 	/* Process is now unpaused */
 	rmp->mp_flags |= UNPAUSED;
 
-	break;
+	/* Publish the signal event. Continue with signals only after that. */
+	publish_event(rmp);
+
+	return; /* do not take the default action */
 
   default:
 	panic("handle_vfs_reply: unknown reply code: %d", call_nr);

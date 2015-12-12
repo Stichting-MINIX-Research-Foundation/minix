@@ -10,6 +10,8 @@
 
 #define NO_TRACER	   0	/* process is not being traced */
 
+#define NO_EVENTSUB	((char)-1) /* no current process event subscriber */
+
 #define MAX_CLOCK_T	((unsigned long) 1 << ((sizeof(clock_t) * 8) - 1))
 #define MAX_SECS	( (clock_t) (MAX_CLOCK_T/system_hz) )
 				/* max.secs for setitimer() ((2^31-1)/HZ) */

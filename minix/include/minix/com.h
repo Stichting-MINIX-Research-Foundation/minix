@@ -593,6 +593,7 @@
  *===========================================================================*/
 
 #define COMMON_RQ_BASE		0xE00
+#define COMMON_RS_BASE		0xE80
 
 /* Field names for system signals (sent by a signal manager). */
 #define SIGS_SIGNAL_RECEIVED (COMMON_RQ_BASE+0)
@@ -602,6 +603,12 @@
 
 /* Common fault injection ctl request to all processes. */
 #define COMMON_REQ_FI_CTL (COMMON_RQ_BASE+2)
+
+/* Process event message from PM. */
+#define PROC_EVENT		(COMMON_RQ_BASE+3)
+
+/* Reply to process event message to PM. */
+#define PROC_EVENT_REPLY	(COMMON_RS_BASE+0)
 
 /*===========================================================================*
  *                Messages for VM server				     *
@@ -708,12 +715,6 @@
 #	define VM_RS_BUF		m2_l1
 #	define VM_RS_SYS		m2_i2
 
-#define VM_QUERY_EXIT		(VM_RQ_BASE+38)
-
-#define VM_NOTIFY_SIG		(VM_RQ_BASE+39)
-#	define VM_NOTIFY_SIG_ENDPOINT	m1_i1
-#	define VM_NOTIFY_SIG_IPC	m1_i2
-
 #define VM_INFO			(VM_RQ_BASE+40)
 
 /* VM_INFO 'what' values. */
@@ -733,8 +734,6 @@
 #		define VM_RS_MEM_GET_PREALLOC_MAP  4 /* get preallocated mmaped regions */
 #	define VM_RS_CTL_ADDR		m2_p1
 #	define VM_RS_CTL_LEN		m2_i3
-
-#define VM_WATCH_EXIT		(VM_RQ_BASE+43)
 
 #define VM_REMAP_RO		(VM_RQ_BASE+44)
 /* same args as VM_REMAP */

@@ -23,6 +23,18 @@ static int
 sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
 {
 
+	/*
+	 * Subscribe to PM process events.  While it might be tempting to
+	 * implement a system that subscribes to events only from processes
+	 * that are actually blocked (or using the SysV IPC facilities at all),
+	 * this would result in race conditions where subscription could happen
+	 * "too late" for an ongoing signal delivery, causing the affected
+	 * process to deadlock.  By issuing this one blocking subscription call
+	 * at startup, we eliminate all possibilities of such race conditions,
+	 * at the cost of receiving notifications for literally all processes.
+	 */
+	proceventmask(PROC_EVENT_EXIT | PROC_EVENT_SIGNAL);
+
 	return OK;
 }
 
@@ -78,19 +90,24 @@ main(int argc, char ** argv)
 			printf("IPC: got %d from %d\n", m.m_type, m.m_source);
 
 		if (is_ipc_notify(ipc_status)) {
-			switch (m.m_source) {
-			case VM_PROC_NR:
-				/*
-				 * Currently, only semaphore handling needs
-				 * to know about processes exiting.
-				 */
-				sem_process_vm_notify();
-				break;
-			default:
-				printf("IPC: ignoring notification from %d\n",
-				    m.m_source);
-				break;
-			}
+			printf("IPC: ignoring notification from %d\n",
+			    m.m_source);
+			continue;
+		}
+
+		if (m.m_source == PM_PROC_NR && m.m_type == PROC_EVENT) {
+			/*
+			 * Currently, only semaphore handling needs to know
+			 * about processes being signaled and exiting.
+			 */
+			sem_process_event(m.m_pm_lsys_proc_event.endpt,
+			    m.m_pm_lsys_proc_event.event == PROC_EVENT_EXIT);
+
+			/* Echo the request as a reply back to PM. */
+			m.m_type = PROC_EVENT_REPLY;
+			if ((r = asynsend3(m.m_source, &m, AMF_NOREPLY)) != OK)
+				printf("IPC: replying to PM process event "
+				    "failed (%d)\n", r);
 			continue;
 		}
 
@@ -99,16 +116,6 @@ main(int argc, char ** argv)
 
 		if (call_index < __arraycount(call_vec) &&
 		    call_vec[call_index] != NULL) {
-			/*
-			 * If any process does an IPC call, we have to know
-			 * about it exiting.  Tell VM to watch it for us.
-			 * TODO: this is not true; limit to affected processes.
-			 */
-			if (vm_watch_exit(m.m_source) != OK) {
-				printf("IPC: watch failed on %d\n",
-				    m.m_source);
-			}
-
 			r = call_vec[call_index](&m);
 		} else
 			r = ENOSYS;

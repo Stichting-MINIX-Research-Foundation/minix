@@ -197,12 +197,6 @@ int do_rs_prepare(message *m);
 int do_rs_update(message *m);
 int do_rs_memctl(message *m);
 
-/* queryexit.c */
-int do_query_exit(message *m);
-int do_watch_exit(message *m);
-int do_notify_sig(message *m);
-void init_query_exit(void);
-
 /* pb.c */
 struct phys_block *pb_new(phys_bytes phys);
 void pb_free(struct phys_block *);

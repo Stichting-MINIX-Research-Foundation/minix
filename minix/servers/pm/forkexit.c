@@ -112,6 +112,8 @@ int do_fork()
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
   rmc->mp_started = getticks();		/* remember start time, for ps(1) */
 
+  assert(rmc->mp_eventsub == NO_EVENTSUB);
+
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
@@ -206,6 +208,8 @@ int do_srv_fork()
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
   rmc->mp_started = getticks();		/* remember start time, for ps(1) */
+
+  assert(rmc->mp_eventsub == NO_EVENTSUB);
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -306,6 +310,11 @@ int dump_core;			/* flag indicating whether to dump core */
   /* If the process is not yet stopped, we force a stop here. This means that
    * the process may still have a delay call pending. For this reason, the main
    * message loop discards requests from exiting processes.
+   *
+   * TODO: make the kernel discard delayed calls upon forced stops for exits,
+   * so that no service needs to deal with this.  Right now it appears that the
+   * only thing preventing problems with other services is the fact that
+   * regular messages are prioritized over asynchronous messages.
    */
   if (!(rmp->mp_flags & PROC_STOPPED)) {
 	if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
@@ -316,7 +325,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic("exit_proc: vm_willexit failed: %d", r);
   }
-  vm_notify_sig_wrapper(rmp->mp_endpoint);
+
   if (proc_nr_e == INIT_PROC_NR)
   {
 	printf("PM: INIT died with exit status %d; showing stacktrace\n", exit_status);
@@ -328,7 +337,9 @@ int dump_core;			/* flag indicating whether to dump core */
 	panic("exit_proc: VFS died: %d", r);
   }
 
-  /* Tell VFS about the exiting process. */
+  /* Tell VFS, and after that any matching process event subscribers, about the
+   * exiting process.
+   */
   memset(&m, 0, sizeof(m));
   m.m_type = dump_core ? VFS_PM_DUMPCORE : VFS_PM_EXIT;
   m.VFS_PM_ENDPT = rmp->mp_endpoint;
@@ -397,9 +408,7 @@ int dump_core;			/* flag indicating whether to dump core */
 /*===========================================================================*
  *				exit_restart				     *
  *===========================================================================*/
-void exit_restart(rmp, dump_core)
-struct mproc *rmp;		/* pointer to the process being terminated */
-int dump_core;			/* flag indicating whether to dump core */
+void exit_restart(struct mproc *rmp)
 {
 /* VFS replied to our exit or coredump request. Perform the second half of the
  * exit code.
@@ -425,7 +434,7 @@ int dump_core;			/* flag indicating whether to dump core */
   rmp->mp_scheduler = NONE;
 
   /* For core dumps, now is the right time to try to contact the parent. */
-  if (dump_core)
+  if (!(rmp->mp_flags & (TRACE_ZOMBIE | ZOMBIE | TOLD_PARENT)))
 	zombify(rmp);
 
   if (!(rmp->mp_flags & PRIV_PROC))
@@ -522,7 +531,8 @@ int do_wait4()
 			/* This child meets the pid test and has exited. */
 			waited_for = tell_parent(rp, addr);
 
-			if (waited_for && !(rp->mp_flags & VFS_CALL))
+			if (waited_for &&
+			    !(rp->mp_flags & (VFS_CALL | EVENT_CALL)))
 				cleanup(rp);
 			return(SUSPEND);
 		}
@@ -633,7 +643,7 @@ int try_cleanup;			/* clean up the child when done? */
 	/* The 'try_cleanup' flag merely saves us from having to be really
 	 * careful with statement ordering in exit_proc() and exit_restart().
 	 */
-	if (try_cleanup && !(child->mp_flags & VFS_CALL))
+	if (try_cleanup && !(child->mp_flags & (VFS_CALL | EVENT_CALL)))
 		cleanup(child);
   }
   else {
