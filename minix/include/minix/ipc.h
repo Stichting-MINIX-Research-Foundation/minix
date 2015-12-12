@@ -1274,6 +1274,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_pm_getprocnr);
 
 typedef struct {
+	unsigned int mask;
+
+	uint8_t padding[52];
+} mess_lsys_pm_proceventmask;
+_ASSERT_MSG_SIZE(mess_lsys_pm_proceventmask);
+
+typedef struct {
 	uid_t uid;
 	gid_t gid;
 
@@ -1362,13 +1369,6 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_vm_map_phys);
 
 typedef struct {
-	endpoint_t	ret_pt;
-	int		is_more;
-	uint8_t		padding[48];
-} mess_lsys_vm_query_exit;
-_ASSERT_MSG_SIZE(mess_lsys_vm_query_exit);
-
-typedef struct {
 	endpoint_t	endpt;
 	vir_bytes	addr;
 	int		children;
@@ -1402,12 +1402,6 @@ typedef struct {
 	uint8_t		padding[32];
 } mess_lsys_vm_vmremap;
 _ASSERT_MSG_SIZE(mess_lsys_vm_vmremap);
-
-typedef struct {
-	endpoint_t	ep;
-	uint8_t		padding[52];
-} mess_lsys_vm_watch_exit;
-_ASSERT_MSG_SIZE(mess_lsys_vm_watch_exit);
 
 typedef struct {
 	size_t		oldlen;
@@ -1563,6 +1557,14 @@ typedef struct {
 	uint8_t padding[52];
 } mess_pm_lsys_getprocnr;
 _ASSERT_MSG_SIZE(mess_pm_lsys_getprocnr);
+
+typedef struct {
+	endpoint_t endpt;
+	unsigned int event;
+
+	uint8_t padding[48];
+} mess_pm_lsys_proc_event;
+_ASSERT_MSG_SIZE(mess_pm_lsys_proc_event);
 
 typedef struct {
 	int num;
@@ -2186,6 +2188,7 @@ typedef struct noxfer_message {
 		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
+		mess_lsys_pm_proceventmask m_lsys_pm_proceventmask;
 		mess_lsys_pm_srv_fork	m_lsys_pm_srv_fork;
 		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
 		mess_lsys_sched_scheduling_stop m_lsys_sched_scheduling_stop;
@@ -2196,12 +2199,10 @@ typedef struct noxfer_message {
 		mess_lsys_vm_getref	m_lsys_vm_getref;
 		mess_lsys_vm_info	m_lsys_vm_info;
 		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
-		mess_lsys_vm_query_exit	m_lsys_vm_query_exit;
 		mess_lsys_vm_rusage	m_lsys_vm_rusage;
 		mess_lsys_vm_unmap_phys	m_lsys_vm_unmap_phys;
 		mess_lsys_vm_update	m_lsys_vm_update;
 		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
-		mess_lsys_vm_watch_exit	m_lsys_vm_watch_exit;
 		mess_mib_lc_sysctl	m_mib_lc_sysctl;
 		mess_mmap		m_mmap;
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
@@ -2222,6 +2223,7 @@ typedef struct noxfer_message {
 		mess_pm_lexec_exec_new	m_pm_lexec_exec_new;
 		mess_pm_lsys_getepinfo	m_pm_lsys_getepinfo;
 		mess_pm_lsys_getprocnr	m_pm_lsys_getprocnr;
+		mess_pm_lsys_proc_event	m_pm_lsys_proc_event;
 		mess_pm_lsys_sigs_signal m_pm_lsys_sigs_signal;
 		mess_pm_sched_scheduling_set_nice m_pm_sched_scheduling_set_nice;
 		mess_pty_ptyfs_req	m_pty_ptyfs_req;

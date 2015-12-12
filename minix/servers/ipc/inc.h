@@ -52,7 +52,7 @@ int do_semget(message *);
 int do_semctl(message *);
 int do_semop(message *);
 int is_sem_nil(void);
-void sem_process_vm_notify(void);
+void sem_process_event(endpoint_t, int);
 
 /* utility.c */
 int check_perm(struct ipc_perm *, endpoint_t, int);

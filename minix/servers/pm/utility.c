@@ -128,7 +128,7 @@ message *m_ptr;
  */
   int r;
 
-  if (rmp->mp_flags & VFS_CALL)
+  if (rmp->mp_flags & (VFS_CALL | EVENT_CALL))
 	panic("tell_vfs: not idle: %d", m_ptr->m_type);
 
   r = asynsend3(VFS_PROC_NR, m_ptr, AMF_NOREPLY);
