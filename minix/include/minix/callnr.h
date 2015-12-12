@@ -50,7 +50,7 @@
 #define PM_REBOOT		(PM_BASE + 37)
 #define PM_SVRCTL		(PM_BASE + 38)
 #define PM_SPROF		(PM_BASE + 39)
-/* PM call number 40 is currently unused. */
+#define PM_PROCEVENTMASK	(PM_BASE + 40)
 #define PM_SRV_FORK		(PM_BASE + 41)
 #define PM_SRV_KILL		(PM_BASE + 42)
 #define PM_EXEC_NEW		(PM_BASE + 43)

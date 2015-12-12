@@ -4,7 +4,7 @@
 PROG=	vm
 SRCS=	main.c alloc.c utility.c exit.c fork.c break.c \
 	mmap.c slaballoc.c region.c pagefaults.c pagetable.c \
-	rs.c queryexit.c pb.c regionavl.c \
+	rs.c pb.c regionavl.c \
 	mem_anon.c mem_directphys.c mem_anon_contig.c mem_shared.c	\
 	mem_cache.c cache.c vfs.c mem_file.c fdref.c acl.c
 

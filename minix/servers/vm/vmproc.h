@@ -34,7 +34,6 @@ struct vmproc {
 /* Bits for vm_flags */
 #define VMF_INUSE	0x001	/* slot contains a process */
 #define VMF_EXITING	0x002	/* PM is cleaning up this process */
-#define VMF_WATCHEXIT	0x008	/* Store in queryexit table */
 #define VMF_VM_INSTANCE 0x010   /* This is a VM process instance */
 
 #endif

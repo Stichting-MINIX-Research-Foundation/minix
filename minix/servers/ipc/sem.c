@@ -637,19 +637,18 @@ is_sem_nil(void)
 	return (sem_list_nr == 0);
 }
 
+/*
+ * Check whether processes have terminated and/or are about to have a signal
+ * caught, in which case any pending blocking operation must be cancelled.
+ */
 void
-sem_process_vm_notify(void)
+sem_process_event(endpoint_t endpt, int has_exited __unused)
 {
-	endpoint_t endpt;
-	int r;
 
-	/* For each endpoint, check whether it is waiting. */
-	while ((r = vm_query_exit(&endpt)) >= 0) {
-		remove_process(endpt);
-
-		if (r == 0)
-			break;
-	}
-	if (r < 0)
-		printf("IPC: query exit error (%d)\n", r);
+	/*
+	 * As long as we do not support SEM_UNDO, it does not matter whether
+	 * the process has exited or has a signal delivered: in both cases, we
+	 * need to cancel any blocking semop(2) call.
+	 */
+	remove_process(endpt);
 }

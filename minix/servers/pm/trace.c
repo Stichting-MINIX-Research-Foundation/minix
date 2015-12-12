@@ -145,8 +145,8 @@ int do_trace()
   case T_EXIT:		/* exit */
 	child->mp_flags |= TRACE_EXIT;
 
-	/* Defer the exit if the traced process has an VFS call pending. */
-	if (child->mp_flags & VFS_CALL)
+	/* Defer the exit if the traced process has a call pending. */
+	if (child->mp_flags & (VFS_CALL | EVENT_CALL))
 		child->mp_exitstatus = m_in.m_lc_pm_ptrace.data; /* save it */
 	else
 		exit_proc(child, m_in.m_lc_pm_ptrace.data,

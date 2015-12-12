@@ -545,7 +545,6 @@ void init_vm(void)
 	CALLMAP(VM_FORK, do_fork);
 	CALLMAP(VM_BRK, do_brk);
 	CALLMAP(VM_WILLEXIT, do_willexit);
-	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
 
 	CALLMAP(VM_PROCCTL, do_procctl_notrans);
 
@@ -566,8 +565,6 @@ void init_vm(void)
 	CALLMAP(VM_SHM_UNMAP, do_munmap);
 	CALLMAP(VM_GETREF, do_get_refcount);
 	CALLMAP(VM_INFO, do_info);
-	CALLMAP(VM_QUERY_EXIT, do_query_exit);
-	CALLMAP(VM_WATCH_EXIT, do_watch_exit);
 
 	/* Cache blocks. */
 	CALLMAP(VM_MAPCACHEPAGE, do_mapcache);
@@ -577,9 +574,6 @@ void init_vm(void)
 
 	/* getrusage */
 	CALLMAP(VM_GETRUSAGE, do_getrusage);
-
-	/* Initialize the structures for queryexit */
-	init_query_exit();
 
 	/* Mark VM instances. */
 	num_vm_instances = 1;

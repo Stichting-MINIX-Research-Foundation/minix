@@ -276,5 +276,13 @@ int copyfd(endpoint_t endpt, int fd, int what);
 #define COPYFD_TO	1	/* copy file descriptor to remote process */
 #define COPYFD_CLOSE	2	/* close file descriptor in remote process */
 
+/*
+ * These are also the event numbers used in PROC_EVENT messages, but in order
+ * to allow for subscriptions to multiple events, they form a bit mask.
+ */
+#define PROC_EVENT_EXIT		0x01	/* process has exited */
+#define PROC_EVENT_SIGNAL	0x02	/* process has caught signal */
+int proceventmask(unsigned int mask);
+
 #endif /* _SYSLIB_H */
 

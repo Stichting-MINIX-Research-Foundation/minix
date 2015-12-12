@@ -16,13 +16,10 @@ int vm_getdma(endpoint_t *procp, phys_bytes *basep, phys_bytes *sizep);
 void *vm_map_phys(endpoint_t who, void *physaddr, size_t len);
 int vm_unmap_phys(endpoint_t who, void *vaddr, size_t len);
 
-int vm_notify_sig(endpoint_t ep, endpoint_t ipc_ep);
 int vm_set_priv(endpoint_t ep, void *buf, int sys_proc);
 int vm_update(endpoint_t src_e, endpoint_t dst_e, int flags);
 int vm_memctl(endpoint_t ep, int req, void** addr, size_t *len);
 int vm_prepare(endpoint_t src_e, endpoint_t dst_e, int flags);
-int vm_query_exit(endpoint_t *endpt);
-int vm_watch_exit(endpoint_t ep);
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
         dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);

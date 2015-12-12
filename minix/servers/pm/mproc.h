@@ -24,6 +24,7 @@ EXTERN ixfer_sigaction mpsigact[NR_PROCS][_NSIG];
 EXTERN struct mproc {
   char mp_exitstatus;		/* storage for status when process exits */
   char mp_sigstatus;		/* storage for signal # for killed procs */
+  char mp_eventsub;		/* process event subscriber, or NO_EVENTSUB */
   pid_t mp_pid;			/* process id */
   endpoint_t mp_endpoint;	/* kernel endpoint id */
   pid_t mp_procgrp;		/* pid of process group (used for signals) */
@@ -98,5 +99,6 @@ EXTERN struct mproc {
 #define TRACE_ZOMBIE	0x10000	/* waiting for tracer to issue WAIT4 call */
 #define DELAY_CALL	0x20000	/* waiting for call before sending signal */
 #define TAINTED		0x40000 /* process is 'tainted' */
+#define EVENT_CALL	0x80000	/* waiting for process event subscriber */
 
 #define MP_MAGIC	0xC0FFEE0
