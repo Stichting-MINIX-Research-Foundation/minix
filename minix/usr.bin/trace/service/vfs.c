@@ -596,7 +596,6 @@ put_struct_flock(struct trace_proc * proc, const char * name, int flags,
 static int
 vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
 {
-	int full;
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fcntl.fd);
 	put_fcntl_cmd(proc, "cmd", m_out->m_lc_vfs_fcntl.cmd);
@@ -793,9 +792,9 @@ put_dirent_array(struct trace_proc * proc, const char * name, int flags,
 	count = 0;
 	for (off = 0; off < size; off += chunk) {
 		chunk = size - off;
-		if (chunk > sizeof(dirent))
-			chunk = sizeof(dirent);
-		if (chunk < _DIRENT_MINSIZE(&dirent))
+		if ((size_t)chunk > sizeof(dirent))
+			chunk = (ssize_t)sizeof(dirent);
+		if ((size_t)chunk < _DIRENT_MINSIZE(&dirent))
 			break;
 
 		if (mem_get_data(proc->pid, addr + off, &dirent, chunk) < 0) {

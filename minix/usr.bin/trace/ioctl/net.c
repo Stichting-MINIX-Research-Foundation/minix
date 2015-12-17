@@ -290,7 +290,7 @@ put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
 	size_t len;
-	int i;
+	unsigned int i;
 
 	if (ptr->msg_controllen > sizeof(ptr->msg_control)) {
 		put_field(proc, NULL, "..");
