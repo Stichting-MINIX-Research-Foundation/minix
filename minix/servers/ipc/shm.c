@@ -129,7 +129,7 @@ do_shmget(message * m)
 int
 do_shmat(message * m)
 {
-	int id, flag;
+	int id, flag, mask;
 	vir_bytes addr;
 	void *ret;
 	struct shm_struct *shm;
@@ -148,11 +148,12 @@ do_shmat(message * m)
 	if ((shm = shm_find_id(id)) == NULL)
 		return EINVAL;
 
+	mask = 0;
 	if (flag & SHM_RDONLY)
-		flag = 0444;
+		mask = IPC_R;
 	else
-		flag = 0666;
-	if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, flag))
+		mask = IPC_R | IPC_W;
+	if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, mask))
 		return EACCES;
 
 	ret = vm_remap(m->m_source, sef_self(), (void *)addr,
@@ -285,7 +286,7 @@ do_shmctl(message * m)
 	case IPC_STAT:
 	case SHM_STAT:
 		/* Check whether the caller has read permission. */
-		if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, 0444))
+		if (!check_perm(&shm->shmid_ds.shm_perm, m->m_source, IPC_R))
 			return EACCES;
 		if ((r = sys_datacopy(SELF, (vir_bytes)&shm->shmid_ds,
 		    m->m_source, buf, sizeof(shm->shmid_ds))) != OK)
