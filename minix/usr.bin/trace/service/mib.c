@@ -24,9 +24,9 @@ put_kern_clockrate(struct trace_proc * proc, const char * name,
 	int type __unused, const void * ptr, vir_bytes addr __unused,
 	size_t size __unused)
 {
-	struct clockinfo *ci;
+	const struct clockinfo *ci;
 
-	ci = (struct clockinfo *)ptr;
+	ci = (const struct clockinfo *)ptr;
 
 	put_value(proc, "hz", "%d", ci->hz);
 	put_value(proc, "tick", "%d", ci->tick);
@@ -48,7 +48,7 @@ put_kern_proc2(struct trace_proc * proc, const char * name, int type,
 {
 	const int *mib;
 	const char *text;
-	int i;
+	unsigned int i;
 
 	if (type == ST_NAME) {
 		mib = (const int *)ptr;
@@ -114,7 +114,8 @@ put_kern_proc_args(struct trace_proc * proc, const char * name, int type,
 {
 	const int *mib;
 	const char *text;
-	int i, v;
+	unsigned int i;
+	int v;
 
 	if (type == ST_NAME) {
 		mib = (const int *)ptr;
@@ -164,7 +165,7 @@ static int
 put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
 	int type, const void * ptr, vir_bytes addr __unused, size_t size)
 {
-	uint64_t *p;
+	const uint64_t *p;
 	unsigned int i;
 	const int *mib;
 
@@ -176,7 +177,7 @@ put_kern_cp_time(struct trace_proc * proc, const char * name __unused,
 		return 0;
 	}
 
-	p = (uint64_t *)ptr;
+	p = (const uint64_t *)ptr;
 
 	/* TODO: support for multi-CPU results */
 	for (i = 0; i < CPUSTATES; i++)
@@ -194,7 +195,7 @@ put_kern_consdev(struct trace_proc * proc, const char * name,
 	size_t size __unused)
 {
 
-	put_dev(proc, NULL, *(dev_t *)ptr);
+	put_dev(proc, NULL, *(const dev_t *)ptr);
 
 	return TRUE;
 }
@@ -243,7 +244,7 @@ put_kern_sysvipc_info(struct trace_proc * proc, const char * name,
 {
 	const int *mib;
 	const char *text;
-	int i;
+	unsigned int i;
 
 	/*
 	 * TODO: print the obtained structure(s).  For now we are just
@@ -302,10 +303,10 @@ put_vm_loadavg(struct trace_proc * proc, const char * name __unused,
 	int type __unused, const void * ptr, vir_bytes addr __unused,
 	size_t size __unused)
 {
-	struct loadavg *loadavg;
+	const struct loadavg *loadavg;
 	unsigned int i;
 
-	loadavg = (struct loadavg *)ptr;
+	loadavg = (const struct loadavg *)ptr;
 
 	put_open(proc, "ldavg", 0, "{", ", ");
 
@@ -374,7 +375,7 @@ static const struct flags sysctl_flags[] = {
 static void
 put_sysctl_imm(struct trace_proc * proc, struct sysctlnode * scn, int use_name)
 {
-	char *name;
+	const char *name;
 
 	name = NULL;
 
@@ -569,9 +570,6 @@ put_sysctl_generic(struct trace_proc * proc, const char * name, int type,
 {
 	struct sysctlnode scn;
 	void *ptr;
-	int i;
-	bool b;
-	u_quad_t q;
 	size_t len;
 
 	switch (SYSCTL_TYPE(proc->sctl_flags)) {
@@ -837,7 +835,6 @@ put_sysctl_name(struct trace_proc * proc, const char * name, int flags,
 	vir_bytes addr, unsigned int namelen)
 {
 	const struct sysctl_tab *sct = NULL;
-	const char *namestr;
 	int r, all, namebuf[CTL_MAXNAME];
 	unsigned int n;
 

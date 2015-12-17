@@ -21,17 +21,17 @@ static const struct calls *call_table[] = {
 static const struct call_handler *
 find_handler(endpoint_t endpt, int call_nr)
 {
-	int i, index;
+	unsigned int i, index;
 
 	for (i = 0; i < COUNT(call_table); i++) {
 		if (call_table[i]->endpt != ANY &&
 		    call_table[i]->endpt != endpt)
 			continue;
 
-		if (call_nr < call_table[i]->base)
+		if ((unsigned int)call_nr < call_table[i]->base)
 			continue;
 
-		index = call_nr - call_table[i]->base;
+		index = (unsigned int)call_nr - call_table[i]->base;
 
 		if (index >= call_table[i]->count)
 			continue;

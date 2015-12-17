@@ -10,6 +10,8 @@ SRCS+=	block.o char.o net.o svrctl.o
 
 CPPFLAGS+=	-D_MINIX_SYSTEM=1 -I${.CURDIR} -I${NETBSDSRCDIR}/minix
 
+COPTS.format.c+=	-Wno-format-nonliteral
+
 error.c: error.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
@@ -17,5 +19,7 @@ signal.c: signal.awk ${NETBSDSRCDIR}/sys/sys/signal.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	error.c signal.c
+
+WARNS?=	5
 
 .include <bsd.prog.mk>
