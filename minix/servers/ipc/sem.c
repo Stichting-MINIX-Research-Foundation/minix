@@ -139,8 +139,16 @@ do_semget(message * m)
 		TAILQ_INIT(&sem->waiters);
 
 		assert(i <= sem_list_nr);
-		if (i == sem_list_nr)
+		if (i == sem_list_nr) {
+			/*
+			 * If no semaphore sets were allocated before,
+			 * subscribe to process events now.
+			 */
+			if (sem_list_nr == 0)
+				update_sem_sub(TRUE /*want_events*/);
+
 			sem_list_nr++;
+		}
 	}
 
 	m->m_lc_ipc_semget.retid = IXSEQ_TO_IPCID(i, sem->semid_ds.sem_perm);
@@ -264,6 +272,12 @@ remove_set(struct sem_struct * sem)
 	while (sem_list_nr > 0 &&
 	    !(sem_list[sem_list_nr - 1].semid_ds.sem_perm.mode & SEM_ALLOC))
 		sem_list_nr--;
+
+	/*
+	 * If this was our last semaphore set, unsubscribe from process events.
+	 */
+	if (sem_list_nr == 0)
+		update_sem_sub(FALSE /*want_events*/);
 }
 
 /*

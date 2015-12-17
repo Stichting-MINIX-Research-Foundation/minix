@@ -40,6 +40,9 @@
 #define IPCID_TO_IX(id)		((id) & 0xffff)
 #define IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
+/* main.c */
+void update_sem_sub(int);
+
 /* shm.c */
 int do_shmget(message *);
 int do_shmat(message *);
