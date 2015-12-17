@@ -1,34 +1,58 @@
 #include "inc.h"
 
-struct waiting {
-	endpoint_t who;			/* who is waiting */
-	int val;			/* value he/she is waiting for */
-};
+struct sem_struct;
+
+/* IPC-server process table, currently used for semaphores only. */
+struct iproc {
+	struct sem_struct *ip_sem;	/* affected semaphore set, or NULL */
+	struct sembuf *ip_sops;		/* pending operations (malloc'ed) */
+	unsigned int ip_nsops;		/* number of pending operations */
+	struct sembuf *ip_blkop;	/* pointer to operation that blocked */
+	endpoint_t ip_endpt;		/* process endpoint */
+	pid_t ip_pid;			/* process PID */
+	TAILQ_ENTRY(iproc) ip_next;	/* next waiting process */
+} iproc[NR_PROCS];
 
 struct semaphore {
 	unsigned short semval;		/* semaphore value */
 	unsigned short semzcnt;		/* # waiting for zero */
 	unsigned short semncnt;		/* # waiting for increase */
-	struct waiting *zlist;		/* process waiting for zero */
-	struct waiting *nlist;		/* process waiting for increase */
 	pid_t sempid;			/* process that did last op */
 };
 
+/*
+ * For the list of waiting processes, we use a doubly linked tail queue.  In
+ * order to maintain a basic degree of fairness, we keep the pending processes
+ * in FCFS (well, at least first tested) order, which means we need to be able
+ * to add new processes at the end of the list.  In order to remove waiting
+ * processes O(1) instead of O(n) we need a doubly linked list; in the common
+ * case we do have the element's predecessor, but STAILQ_REMOVE is O(n) anyway
+ * and NetBSD has no STAILQ_REMOVE_AFTER yet.
+ *
+ * We use one list per semaphore set: semop(2) affects only one semaphore set,
+ * but it may involve operations on multiple semaphores within the set.  While
+ * it is possible to recheck only semaphores that were affected by a particular
+ * operation, and associate waiting lists to individual semaphores, the number
+ * of expected waiting processes is currently not high enough to justify the
+ * extra complexity of such an implementation.
+ */
 struct sem_struct {
 	struct semid_ds semid_ds;
 	struct semaphore sems[SEMMSL];
+	TAILQ_HEAD(waiters, iproc) waiters;
 };
 
 static struct sem_struct sem_list[SEMMNI];
 static unsigned int sem_list_nr = 0; /* highest in-use slot number plus one */
 
+/*
+ * Find a semaphore set by key.  The given key must not be IPC_PRIVATE.  Return
+ * a pointer to the semaphore set if found, or NULL otherwise.
+ */
 static struct sem_struct *
 sem_find_key(key_t key)
 {
 	unsigned int i;
-
-	if (key == IPC_PRIVATE)
-		return NULL;
 
 	for (i = 0; i < sem_list_nr; i++) {
 		if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
@@ -40,6 +64,10 @@ sem_find_key(key_t key)
 	return NULL;
 }
 
+/*
+ * Find a semaphore set by identifier.  Return a pointer to the semaphore set
+ * if found, or NULL otherwise.
+ */
 static struct sem_struct *
 sem_find_id(int id)
 {
@@ -58,6 +86,9 @@ sem_find_id(int id)
 	return sem;
 }
 
+/*
+ * Implementation of the semget(2) system call.
+ */
 int
 do_semget(message * m)
 {
@@ -70,7 +101,7 @@ do_semget(message * m)
 	nsems = m->m_lc_ipc_semget.nr;
 	flag = m->m_lc_ipc_semget.flag;
 
-	if ((sem = sem_find_key(key)) != NULL) {
+	if (key != IPC_PRIVATE && (sem = sem_find_key(key)) != NULL) {
 		if ((flag & IPC_CREAT) && (flag & IPC_EXCL))
 			return EEXIST;
 		if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, flag))
@@ -79,9 +110,9 @@ do_semget(message * m)
 			return EINVAL;
 		i = sem - sem_list;
 	} else {
-		if (!(flag & IPC_CREAT))
+		if (key != IPC_PRIVATE && !(flag & IPC_CREAT))
 			return ENOENT;
-		if (nsems < 0 || nsems >= SEMMSL)
+		if (nsems <= 0 || nsems > SEMMSL)
 			return EINVAL;
 
 		/* Find a free entry. */
@@ -105,6 +136,7 @@ do_semget(message * m)
 		sem->semid_ds.sem_nsems = nsems;
 		sem->semid_ds.sem_otime = 0;
 		sem->semid_ds.sem_ctime = clock_time(NULL);
+		TAILQ_INIT(&sem->waiters);
 
 		assert(i <= sem_list_nr);
 		if (i == sem_list_nr)
@@ -115,6 +147,54 @@ do_semget(message * m)
 	return OK;
 }
 
+/*
+ * Increase the proper suspension count (semncnt or semzcnt) of the semaphore
+ * on which the given process is blocked.
+ */
+static void
+inc_susp_count(struct iproc * ip)
+{
+	struct sembuf *blkop;
+	struct semaphore *sp;
+
+	blkop = ip->ip_blkop;
+	sp = &ip->ip_sem->sems[blkop->sem_num];
+
+	if (blkop->sem_op != 0) {
+		assert(sp->semncnt < USHRT_MAX);
+		sp->semncnt++;
+	} else {
+		assert(sp->semncnt < USHRT_MAX);
+		sp->semzcnt++;
+	}
+}
+
+/*
+ * Decrease the proper suspension count (semncnt or semzcnt) of the semaphore
+ * on which the given process is blocked.
+ */
+static void
+dec_susp_count(struct iproc * ip)
+{
+	struct sembuf *blkop;
+	struct semaphore *sp;
+
+	blkop = ip->ip_blkop;
+	sp = &ip->ip_sem->sems[blkop->sem_num];
+
+	if (blkop->sem_op != 0) {
+		assert(sp->semncnt > 0);
+		sp->semncnt--;
+	} else {
+		assert(sp->semzcnt > 0);
+		sp->semzcnt--;
+	}
+}
+
+/*
+ * Send a reply for a semop(2) call suspended earlier, thus waking up the
+ * process.
+ */
 static void
 send_reply(endpoint_t who, int ret)
 {
@@ -126,31 +206,52 @@ send_reply(endpoint_t who, int ret)
 	ipc_sendnb(who, &m);
 }
 
+/*
+ * Satisfy or cancel the semop(2) call on which the given process is blocked,
+ * and send the given reply code (OK or a negative error code) to wake it up,
+ * unless the given code is EDONTREPLY.
+ */
 static void
-remove_semaphore(struct sem_struct * sem)
+complete_semop(struct iproc * ip, int code)
 {
-	int i, j, nr;
-	struct semaphore *semaphore;
+	struct sem_struct *sem;
 
-	nr = sem->semid_ds.sem_nsems;
+	sem = ip->ip_sem;
 
-	/* Deal with processes waiting for this semaphore set. */
-	for (i = 0; i < nr; i++) {
-		semaphore = &sem->sems[i];
+	assert(sem != NULL);
 
-		for (j = 0; j < semaphore->semzcnt; j++)
-			send_reply(semaphore->zlist[j].who, EIDRM);
-		for (j = 0; j < semaphore->semncnt; j++)
-			send_reply(semaphore->nlist[j].who, EIDRM);
+	TAILQ_REMOVE(&sem->waiters, ip, ip_next);
 
-		if (semaphore->zlist != NULL) {
-			free(semaphore->zlist);
-			semaphore->zlist = NULL;
-		}
-		if (semaphore->nlist != NULL) {
-			free(semaphore->nlist);
-			semaphore->nlist = NULL;
-		}
+	dec_susp_count(ip);
+
+	assert(ip->ip_sops != NULL);
+	free(ip->ip_sops);
+
+	ip->ip_sops = NULL;
+	ip->ip_blkop = NULL;
+	ip->ip_sem = NULL;
+
+	if (code != EDONTREPLY)
+		send_reply(ip->ip_endpt, code);
+}
+
+/*
+ * Free up the given semaphore set.  This includes cancelling any blocking
+ * semop(2) calls on any of its semaphores.
+ */
+static void
+remove_set(struct sem_struct * sem)
+{
+	struct iproc *ip;
+
+	/*
+	 * Cancel all semop(2) operations on this semaphore set, with an EIDRM
+	 * reply code.
+	 */
+	while (!TAILQ_EMPTY(&sem->waiters)) {
+		ip = TAILQ_FIRST(&sem->waiters);
+
+		complete_semop(ip, EIDRM);
 	}
 
 	/* Mark the entry as free. */
@@ -165,158 +266,159 @@ remove_semaphore(struct sem_struct * sem)
 		sem_list_nr--;
 }
 
-#if 0
-static void
-show_semaphore(void)
+/*
+ * Try to perform a set of semaphore operations, as given by semop(2), on a
+ * semaphore set.  The entire action must be atomic, i.e., either succeed in
+ * its entirety or fail without making any changes.  Return OK on success, in
+ * which case the PIDs of all affected semaphores will be updated to the given
+ * 'pid' value, and the semaphore set's sem_otime will be updated as well.
+ * Return SUSPEND if the call should be suspended, in which case 'blkop' will
+ * be set to a pointer to the operation causing the call to block.  Return an
+ * error code if the call failed altogether.
+ */
+static int
+try_semop(struct sem_struct *sem, struct sembuf *sops, unsigned int nsops,
+	pid_t pid, struct sembuf ** blkop)
 {
+	struct semaphore *sp;
+	struct sembuf *op;
 	unsigned int i;
-	int j, k, nr;
+	int r;
 
-	for (i = 0; i < sem_list_nr; i++) {
-		if (!(sem_list[i].semid_ds.sem_perm.mode & SEM_ALLOC))
-			continue;
+	/*
+	 * The operation must be processed atomically.  However, it must also
+	 * be processed "in array order," which we assume to mean that while
+	 * processing one operation, the changes of the previous operations
+	 * must be taken into account.  This is relevant for cases where the
+	 * same semaphore is referenced by more than one operation, for example
+	 * to perform an atomic increase-if-zero action on a single semaphore.
+	 * As a result, we must optimistically modify semaphore values and roll
+	 * back on suspension or failure afterwards.
+	 */
+	r = OK;
+	op = NULL;
+	for (i = 0; i < nsops; i++) {
+		sp = &sem->sems[sops[i].sem_num];
+		op = &sops[i];
 
-		nr = sem_list[i].semid_ds.sem_nsems;
-
-		printf("===== [%d] =====\n", i);
-		for (j = 0; j < nr; j++) {
-			struct semaphore *semaphore = &sem_list[i].sems[j];
-
-			if (!semaphore->semzcnt && !semaphore->semncnt)
-				continue;
-
-			printf("  (%d): ", semaphore->semval);
-			if (semaphore->semzcnt) {
-				printf("zero(");
-				for (k = 0; k < semaphore->semzcnt; k++)
-					printf("%d,", semaphore->zlist[k].who);
-				printf(")    ");
+		if (op->sem_op > 0) {
+			if (SEMVMX - sp->semval < op->sem_op) {
+				r = ERANGE;
+				break;
 			}
-			if (semaphore->semncnt) {
-				printf("incr(");
-				for (k = 0; k < semaphore->semncnt; k++)
-					printf("%d-%d,",
-					    semaphore->nlist[k].who,
-					    semaphore->nlist[k].val);
-				printf(")");
+			sp->semval += op->sem_op;
+		} else if (op->sem_op < 0) {
+			/*
+			 * No SEMVMX check; if the process wants to deadlock
+			 * itself by supplying -SEMVMX it is free to do so..
+			 */
+			if ((int)sp->semval < -(int)op->sem_op) {
+				r = (op->sem_flg & IPC_NOWAIT) ? EAGAIN :
+				    SUSPEND;
+				break;
 			}
-			printf("\n");
+			sp->semval += op->sem_op;
+		} else /* (op->sem_op == 0) */ {
+			if (sp->semval != 0) {
+				r = (op->sem_flg & IPC_NOWAIT) ? EAGAIN :
+				    SUSPEND;
+				break;
+			}
 		}
 	}
-	printf("\n");
-}
-#endif
 
+	/*
+	 * If we did not go through all the operations, then either an error
+	 * occurred or the user process is to be suspended.  In that case we
+	 * must roll back any progress we have made so far, and return the
+	 * operation that caused the call to block.
+	 */
+	if (i < nsops) {
+		assert(op != NULL);
+		*blkop = op;
+
+		/* Roll back all changes made so far. */
+		while (i-- > 0)
+			sem->sems[sops[i].sem_num].semval -= sops[i].sem_op;
+
+		assert(r != OK);
+		return r;
+	}
+
+	/*
+	 * The operation has completed successfully.  Also update all affected
+	 * semaphores' PID values, and the semaphore set's last-semop time.
+	 * The caller must do everything else.
+	 */
+	for (i = 0; i < nsops; i++)
+		sem->sems[sops[i].sem_num].sempid = pid;
+
+	sem->semid_ds.sem_otime = clock_time(NULL);
+
+	return OK;
+}
+
+/*
+ * Check whether any blocked operations can now be satisfied on any of the
+ * semaphores in the given semaphore set.  Do this repeatedly as necessary, as
+ * any unblocked operation may in turn allow other operations to be resumed.
+ */
 static void
-remove_process(endpoint_t endpt)
+check_set(struct sem_struct * sem)
 {
-	struct sem_struct *sem;
-	struct semaphore *semaphore;
-	endpoint_t who_waiting;
-	unsigned int i;
-	int j, k, nr;
+	struct iproc *ip, *nextip;
+	struct sembuf *blkop;
+	int r, woken_up;
 
-	for (i = 0; i < sem_list_nr; i++) {
-		sem = &sem_list[i];
-		if (!(sem->semid_ds.sem_perm.mode & SEM_ALLOC))
-			continue;
+	/*
+	 * Go through all the waiting processes in FIFO order, which is our
+	 * best attempt at providing at least some fairness.  Keep trying as
+	 * long as we woke up at least one process, which means we made actual
+	 * progress.
+	 */
+	do {
+		woken_up = FALSE;
 
-		nr = sem->semid_ds.sem_nsems;
-		for (j = 0; j < nr; j++) {
-			semaphore = &sem->sems[j];
+		TAILQ_FOREACH_SAFE(ip, &sem->waiters, ip_next, nextip) {
+			/* Retry the entire semop(2) operation, atomically. */
+			r = try_semop(ip->ip_sem, ip->ip_sops, ip->ip_nsops,
+			    ip->ip_pid, &blkop);
 
-			for (k = 0; k < semaphore->semzcnt; k++) {
-				who_waiting = semaphore->zlist[k].who;
+			if (r != SUSPEND) {
+				/* Success or failure. */
+				complete_semop(ip, r);
 
-				if (who_waiting == endpt) {
-					/* Remove this slot first. */
-					memmove(semaphore->zlist + k,
-					    semaphore->zlist + k + 1,
-					    sizeof(struct waiting) *
-					    (semaphore->semzcnt - k - 1));
-					semaphore->semzcnt--;
+				/* No changes are made on failure. */
+				if (r == OK)
+					woken_up = TRUE;
+			} else if (blkop != ip->ip_blkop) {
+				/*
+				 * The process stays suspended, but it is now
+				 * blocked on a different semaphore.  As a
+				 * result, we need to adjust the semaphores'
+				 * suspension counts.
+				 */
+				dec_susp_count(ip);
 
-					/* Then send message to the process. */
-					send_reply(who_waiting, EINTR);
+				ip->ip_blkop = blkop;
 
-					break;
-				}
-			}
-
-			for (k = 0; k < semaphore->semncnt; k++) {
-				who_waiting = semaphore->nlist[k].who;
-
-				if (who_waiting == endpt) {
-					/* Remove it first. */
-					memmove(semaphore->nlist + k,
-					    semaphore->nlist + k + 1,
-					    sizeof(struct waiting) *
-					    (semaphore->semncnt-k-1));
-					semaphore->semncnt--;
-
-					/* Send the message to the process. */
-					send_reply(who_waiting, EINTR);
-
-					break;
-				}
+				inc_susp_count(ip);
 			}
 		}
-	}
+	} while (woken_up);
 }
 
-static void
-check_semaphore(struct sem_struct * sem)
-{
-	int i, j, nr;
-	struct semaphore *semaphore;
-	endpoint_t who;
-
-	nr = sem->semid_ds.sem_nsems;
-
-	for (i = 0; i < nr; i++) {
-		semaphore = &sem->sems[i];
-
-		if (semaphore->zlist && !semaphore->semval) {
-			/* Choose one process, policy: FIFO. */
-			who = semaphore->zlist[0].who;
-
-			memmove(semaphore->zlist, semaphore->zlist + 1,
-			    sizeof(struct waiting) * (semaphore->semzcnt - 1));
-			semaphore->semzcnt--;
-
-			send_reply(who, OK);
-		}
-
-		if (semaphore->nlist) {
-			for (j = 0; j < semaphore->semncnt; j++) {
-				if (semaphore->nlist[j].val <=
-				    semaphore->semval) {
-					semaphore->semval -=
-					    semaphore->nlist[j].val;
-					who = semaphore->nlist[j].who;
-
-					memmove(semaphore->nlist + j,
-					    semaphore->nlist + j + 1,
-					    sizeof(struct waiting) *
-					    (semaphore->semncnt-j-1));
-					semaphore->semncnt--;
-
-					send_reply(who, OK);
-					break;
-				}
-			}
-		}
-	}
-}
-
+/*
+ * Implementation of the semctl(2) system call.
+ */
 int
 do_semctl(message * m)
 {
+	static unsigned short valbuf[SEMMSL];
 	unsigned int i;
 	vir_bytes opt;
 	uid_t uid;
 	int r, id, num, cmd, val;
-	unsigned short *buf;
 	struct semid_ds tmp_ds;
 	struct sem_struct *sem;
 	struct seminfo sinfo;
@@ -326,6 +428,12 @@ do_semctl(message * m)
 	cmd = m->m_lc_ipc_semctl.cmd;
 	opt = m->m_lc_ipc_semctl.opt;
 
+	/*
+	 * Look up the target semaphore set.  The IPC_INFO and SEM_INFO
+	 * commands have no associated semaphore set.  The SEM_STAT command
+	 * takes an array index into the semaphore set table.  For all other
+	 * commands, look up the semaphore set by its given identifier.
+	 * */
 	switch (cmd) {
 	case IPC_INFO:
 	case SEM_INFO:
@@ -345,12 +453,33 @@ do_semctl(message * m)
 	}
 
 	/*
-	 * IPC_SET and IPC_RMID have their own permission checks.  IPC_INFO and
-	 * SEM_INFO are free for general use.
+	 * Check if the caller has the appropriate permissions on the target
+	 * semaphore set.  SETVAL and SETALL require write permission.  IPC_SET
+	 * and IPC_RMID require ownership permission, and return EPERM instead
+	 * of EACCES on failure.  IPC_INFO and SEM_INFO are free for general
+	 * use.  All other calls require read permission.
 	 */
-	if (sem != NULL && cmd != IPC_SET && cmd != IPC_RMID) {
-		/* Check read permission. */
-		if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, 0444))
+	switch (cmd) {
+	case SETVAL:
+	case SETALL:
+		assert(sem != NULL);
+		if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, IPC_W))
+			return EACCES;
+		break;
+	case IPC_SET:
+	case IPC_RMID:
+		assert(sem != NULL);
+		uid = getnuid(m->m_source);
+		if (uid != sem->semid_ds.sem_perm.cuid &&
+		    uid != sem->semid_ds.sem_perm.uid && uid != 0)
+			return EPERM;
+		break;
+	case IPC_INFO:
+	case SEM_INFO:
+		break;
+	default:
+		assert(sem != NULL);
+		if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, IPC_R))
 			return EACCES;
 	}
 
@@ -365,10 +494,6 @@ do_semctl(message * m)
 			    IXSEQ_TO_IPCID(id, sem->semid_ds.sem_perm);
 		break;
 	case IPC_SET:
-		uid = getnuid(m->m_source);
-		if (uid != sem->semid_ds.sem_perm.cuid &&
-		    uid != sem->semid_ds.sem_perm.uid && uid != 0)
-			return EPERM;
 		if ((r = sys_datacopy(m->m_source, opt, SELF,
 		    (vir_bytes)&tmp_ds, sizeof(tmp_ds))) != OK)
 			return r;
@@ -380,15 +505,11 @@ do_semctl(message * m)
 		sem->semid_ds.sem_ctime = clock_time(NULL);
 		break;
 	case IPC_RMID:
-		uid = getnuid(m->m_source);
-		if (uid != sem->semid_ds.sem_perm.cuid &&
-		    uid != sem->semid_ds.sem_perm.uid && uid != 0)
-			return EPERM;
 		/*
 		 * Awaken all processes blocked in semop(2) on any semaphore in
 		 * this set, and remove the semaphore set itself.
 		 */
-		remove_semaphore(sem);
+		remove_set(sem);
 		break;
 	case IPC_INFO:
 	case SEM_INFO:
@@ -429,16 +550,13 @@ do_semctl(message * m)
 			m->m_lc_ipc_semctl.ret = 0;
 		break;
 	case GETALL:
-		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (buf == NULL)
-			return ENOMEM;
+		assert(sem->semid_ds.sem_nsems <= __arraycount(valbuf));
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
-			buf[i] = sem->sems[i].semval;
-		r = sys_datacopy(SELF, (vir_bytes)buf, m->m_source,
+			valbuf[i] = sem->sems[i].semval;
+		r = sys_datacopy(SELF, (vir_bytes)valbuf, m->m_source,
 		    opt, sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		free(buf);
 		if (r != OK)
-			return EINVAL;
+			return r;
 		break;
 	case GETNCNT:
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
@@ -461,36 +579,26 @@ do_semctl(message * m)
 		m->m_lc_ipc_semctl.ret = sem->sems[num].semzcnt;
 		break;
 	case SETALL:
-		buf = malloc(sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (buf == NULL)
-			return ENOMEM;
-		r = sys_datacopy(m->m_source, opt, SELF, (vir_bytes)buf,
+		assert(sem->semid_ds.sem_nsems <= __arraycount(valbuf));
+		r = sys_datacopy(m->m_source, opt, SELF, (vir_bytes)valbuf,
 		    sizeof(unsigned short) * sem->semid_ds.sem_nsems);
-		if (r != OK) {
-			free(buf);
-			return EINVAL;
-		}
-		for (i = 0; i < sem->semid_ds.sem_nsems; i++) {
-			if (buf[i] > SEMVMX) {
-				free(buf);
+		if (r != OK)
+			return r;
+		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
+			if (valbuf[i] > SEMVMX)
 				return ERANGE;
-			}
-		}
 #ifdef DEBUG_SEM
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
-			printf("SEMCTL: SETALL val: [%d] %d\n", i, buf[i]);
+			printf("SEMCTL: SETALL val: [%d] %d\n", i, valbuf[i]);
 #endif
 		for (i = 0; i < sem->semid_ds.sem_nsems; i++)
-			sem->sems[i].semval = buf[i];
-		free(buf);
+			sem->sems[i].semval = valbuf[i];
+		sem->semid_ds.sem_ctime = clock_time(NULL);
 		/* Awaken any waiting parties if now possible. */
-		check_semaphore(sem);
+		check_set(sem);
 		break;
 	case SETVAL:
 		val = (int)opt;
-		/* Check write permission. */
-		if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, 0222))
-			return EACCES;
 		if (num < 0 || num >= sem->semid_ds.sem_nsems)
 			return EINVAL;
 		if (val < 0 || val > SEMVMX)
@@ -501,7 +609,7 @@ do_semctl(message * m)
 #endif
 		sem->semid_ds.sem_ctime = clock_time(NULL);
 		/* Awaken any waiting parties if now possible. */
-		check_semaphore(sem);
+		check_set(sem);
 		break;
 	default:
 		return EINVAL;
@@ -510,16 +618,19 @@ do_semctl(message * m)
 	return OK;
 }
 
+/*
+ * Implementation of the semop(2) system call.
+ */
 int
 do_semop(message * m)
 {
-	unsigned int i, mask;
+	unsigned int i, mask, slot;
 	int id, r;
-	struct sembuf *sops;
+	struct sembuf *sops, *blkop;
 	unsigned int nsops;
 	struct sem_struct *sem;
-	struct semaphore *s;
-	int op_n, val, no_reply;
+	struct iproc *ip;
+	pid_t pid;
 
 	id = m->m_lc_ipc_semop.id;
 	nsops = m->m_lc_ipc_semop.size;
@@ -527,14 +638,14 @@ do_semop(message * m)
 	if ((sem = sem_find_id(id)) == NULL)
 		return EINVAL;
 
-	if (nsops <= 0)
-		return EINVAL;
+	if (nsops == 0)
+		return OK; /* nothing to do */
 	if (nsops > SEMOPM)
 		return E2BIG;
 
 	/* Get the array from the user process. */
 	sops = malloc(sizeof(sops[0]) * nsops);
-	if (!sops)
+	if (sops == NULL)
 		return ENOMEM;
 	r = sys_datacopy(m->m_source, (vir_bytes)m->m_lc_ipc_semop.ops, SELF,
 	    (vir_bytes)sops, sizeof(sops[0]) * nsops);
@@ -546,90 +657,101 @@ do_semop(message * m)
 		printf("SEMOP: num:%d  op:%d  flg:%d\n",
 			sops[i].sem_num, sops[i].sem_op, sops[i].sem_flg);
 #endif
+	/*
+	 * Check for permissions.  We do this only once, even though the call
+	 * might suspend and the semaphore set's permissions might be changed
+	 * before the call resumes.  The specification is not clear on this.
+	 * Either way, perform the permission check before checking on the
+	 * validity of semaphore numbers, since obtaining the semaphore set
+	 * size itself requires read permission (except through sysctl(2)..).
+	 */
+	mask = 0;
+	for (i = 0; i < nsops; i++) {
+		if (sops[i].sem_op != 0)
+			mask |= IPC_W; /* check for write permission */
+		else
+			mask |= IPC_R; /* check for read permission */
+	}
+	r = EACCES;
+	if (!check_perm(&sem->semid_ds.sem_perm, m->m_source, mask))
+		goto out_free;
+
 	/* Check that all given semaphore numbers are within range. */
 	r = EFBIG;
 	for (i = 0; i < nsops; i++)
 		if (sops[i].sem_num >= sem->semid_ds.sem_nsems)
 			goto out_free;
 
-	/* Check for permissions. */
-	r = EACCES;
-	mask = 0;
-	for (i = 0; i < nsops; i++) {
-		if (sops[i].sem_op != 0)
-			mask |= 0222; /* check for write permission */
-		else
-			mask |= 0444; /* check for read permission */
-	}
-	if (mask && !check_perm(&sem->semid_ds.sem_perm, m->m_source, mask))
-		goto out_free;
+	/*
+	 * Do not check if the same semaphore is referenced more than once
+	 * (there was such a check here originally), because that is actually
+	 * a valid case.  The result is however that it is possible to
+	 * construct a semop(2) request that will never complete, and thus,
+	 * care must be taken that such requests do not create potential
+	 * deadlock situations etc.
+	 */
 
-	/* Check for nonblocking operations. */
-	r = EAGAIN;
-	for (i = 0; i < nsops; i++) {
-		op_n = sops[i].sem_op;
-		val = sem->sems[sops[i].sem_num].semval;
+	pid = getnpid(m->m_source);
 
-		if ((sops[i].sem_flg & IPC_NOWAIT) &&
-		    ((op_n == 0 && val != 0) || (op_n < 0 && -op_n > val)))
+	/*
+	 * We do not yet support SEM_UNDO at all, so we better not give the
+	 * caller the impression that we do.  For now, print a warning so that
+	 * we know when an application actually fails for that reason.
+	 */
+	for (i = 0; i < nsops; i++) {
+		if (sops[i].sem_flg & SEM_UNDO) {
+			/* Print a warning only if this isn't the test set.. */
+			if (sops[i].sem_flg != SHRT_MAX)
+				printf("IPC: pid %d tried to use SEM_UNDO\n",
+				    pid);
+			r = EINVAL;
 			goto out_free;
-	}
-
-	/* There will be no errors left, so we can go ahead. */
-	no_reply = 0;
-	for (i = 0; i < nsops; i++) {
-		s = &sem->sems[sops[i].sem_num];
-		op_n = sops[i].sem_op;
-
-		s->sempid = getnpid(m->m_source);
-
-		if (op_n > 0) {
-			/* XXX missing ERANGE check */
-			s->semval += sops[i].sem_op;
-		} else if (op_n == 0) {
-			if (s->semval) {
-				/* Put the process to sleep. */
-				s->semzcnt++;
-				s->zlist = realloc(s->zlist,
-				    sizeof(struct waiting) * s->semzcnt);
-				/* continuing if NULL would lead to disaster */
-				if (s->zlist == NULL)
-					panic("out of memory");
-				s->zlist[s->semzcnt - 1].who = m->m_source;
-				s->zlist[s->semzcnt - 1].val = op_n;
-
-				no_reply++;
-			}
-		} else /* (op_n < 0) */ {
-			if (s->semval >= -op_n)
-				s->semval += op_n;
-			else {
-				/* Put the process to sleep. */
-				s->semncnt++;
-				s->nlist = realloc(s->nlist,
-				    sizeof(struct waiting) * s->semncnt);
-				/* continuing if NULL would lead to disaster */
-				if (s->nlist == NULL)
-					panic("out of memory");
-				s->nlist[s->semncnt - 1].who = m->m_source;
-				s->nlist[s->semncnt - 1].val = -op_n;
-
-				no_reply++;
-			}
 		}
 	}
 
-	r = no_reply ? SUSPEND : OK;
+	/* Try to perform the operation now. */
+	r = try_semop(sem, sops, nsops, pid, &blkop);
 
-	/* Awaken any other waiting parties if now possible. */
-	check_semaphore(sem);
+	if (r == SUSPEND) {
+		/*
+		 * The operation ended up blocking on a particular semaphore
+		 * operation.  Save all details in the slot for the user
+		 * process, and add it to the list of processes waiting for
+		 * this semaphore set.
+		 */
+		slot = _ENDPOINT_P(m->m_source);
+		assert(slot < __arraycount(iproc));
+
+		ip = &iproc[slot];
+		assert(ip->ip_sem == NULL); /* can't already be in use */
+
+		ip->ip_endpt = m->m_source;
+		ip->ip_pid = pid;
+		ip->ip_sem = sem;
+		ip->ip_sops = sops;
+		ip->ip_nsops = nsops;
+		ip->ip_blkop = blkop;
+
+		TAILQ_INSERT_TAIL(&sem->waiters, ip, ip_next);
+
+		inc_susp_count(ip);
+
+		return r;
+	}
 
 out_free:
 	free(sops);
 
+	/* Awaken any other waiting parties if now possible. */
+	if (r == OK)
+		check_set(sem);
+
 	return r;
 }
 
+/*
+ * Return TRUE iff no semaphore sets are allocated.
+ */
 int
 is_sem_nil(void)
 {
@@ -638,17 +760,31 @@ is_sem_nil(void)
 }
 
 /*
- * Check whether processes have terminated and/or are about to have a signal
- * caught, in which case any pending blocking operation must be cancelled.
+ * Check if the given endpoint is blocked on a semop(2) call.  If so, cancel
+ * the call, because either it is interrupted by a signal or the process was
+ * killed.  In the former case, unblock the process by replying with EINTR.
  */
 void
-sem_process_event(endpoint_t endpt, int has_exited __unused)
+sem_process_event(endpoint_t endpt, int has_exited)
 {
+	unsigned int slot;
+	struct iproc *ip;
+
+	slot = _ENDPOINT_P(endpt);
+	assert(slot < __arraycount(iproc));
+
+	ip = &iproc[slot];
+
+	/* Was the process blocked on a semop(2) call at all? */
+	if (ip->ip_sem == NULL)
+		return;
+
+	assert(ip->ip_endpt == endpt);
 
 	/*
-	 * As long as we do not support SEM_UNDO, it does not matter whether
-	 * the process has exited or has a signal delivered: in both cases, we
-	 * need to cancel any blocking semop(2) call.
+	 * It was; cancel the semop(2) call.  If the process is being removed
+	 * because its call was interrupted by a signal, then we must wake it
+	 * up with EINTR.
 	 */
-	remove_process(endpt);
+	complete_semop(ip, has_exited ? EDONTREPLY : EINTR);
 }

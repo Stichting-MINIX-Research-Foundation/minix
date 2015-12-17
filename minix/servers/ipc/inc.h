@@ -16,6 +16,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 #include <sys/mman.h>
 #include <machine/param.h>
 #include <machine/vm.h>
