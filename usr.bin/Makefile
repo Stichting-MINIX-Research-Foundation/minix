@@ -13,7 +13,7 @@ SUBDIR= asa \
 	false find finger flock fold fpr from \
 	fsplit ftp genassym \
 	getopt \
-	head hexdump id indent infocmp ipcs join jot \
+	head hexdump id indent infocmp ipcrm ipcs join jot \
 	lam last ldd leave \
 	lock login logname lorder m4 \
 	machine make man menuc mesg \
