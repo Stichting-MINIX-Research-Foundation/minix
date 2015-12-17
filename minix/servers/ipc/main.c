@@ -1,5 +1,10 @@
 #include "inc.h"
 
+#define SEM_EVENTS	0x01	/* semaphore code wants process events */
+static unsigned int event_mask = 0;
+
+static int verbose = 0;
+
 /*
  * The call table for this service.
  */
@@ -14,8 +19,6 @@ static int (* const call_vec[])(message *) = {
 	CALL(IPC_SEMOP)		= do_semop,
 };
 
-static int verbose = 0;
-
 /*
  * Initialize the IPC server.
  */
@@ -23,21 +26,13 @@ static int
 sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
 {
 
-	/*
-	 * Subscribe to PM process events.  While it might be tempting to
-	 * implement a system that subscribes to events only from processes
-	 * that are actually blocked (or using the SysV IPC facilities at all),
-	 * this would result in race conditions where subscription could happen
-	 * "too late" for an ongoing signal delivery, causing the affected
-	 * process to deadlock.  By issuing this one blocking subscription call
-	 * at startup, we eliminate all possibilities of such race conditions,
-	 * at the cost of receiving notifications for literally all processes.
-	 */
-	proceventmask(PROC_EVENT_EXIT | PROC_EVENT_SIGNAL);
-
+	/* Nothing to do. */
 	return OK;
 }
 
+/*
+ * The service has received a signal.
+ */
 static void
 sef_cb_signal_handler(int signo)
 {
@@ -55,6 +50,9 @@ sef_cb_signal_handler(int signo)
 	printf("IPC: exit with unclean state\n");
 }
 
+/*
+ * Perform SEF initialization.
+ */
 static void
 sef_local_startup(void)
 {
@@ -70,6 +68,83 @@ sef_local_startup(void)
 	sef_startup();
 }
 
+/*
+ * Update the process event subscription mask if necessary, after one of the
+ * modules has changed its subscription needs.  This code is set up so that
+ * support for SysV IPC message queues can be added easily later.
+ */
+static void
+update_sub(unsigned int new_mask)
+{
+
+	/* If the old and new mask are not both zero or nonzero, update. */
+	if (!event_mask != !new_mask) {
+		/*
+		 * Subscribe to PM process events, or unsubscribe.  While it
+		 * might be tempting to implement a system that subscribes to
+		 * events only from processes that are actually blocked (or
+		 * using the SysV IPC facilities at all), this would result in
+		 * race conditions where subscription could happen "too late"
+		 * for an ongoing signal delivery, causing the affected process
+		 * to deadlock.  Subscribing to events from any other call is
+		 * safe however, and we exploit that to limit the kernel-level
+		 * message passing overhead in the common case (which is that
+		 * the IPC servier is not being used at all).  After we have
+		 * unsubscribed, we may still get a few leftover events for the
+		 * previous subscription, and we must properly reply to those.
+		 */
+		if (new_mask)
+			proceventmask(PROC_EVENT_EXIT | PROC_EVENT_SIGNAL);
+		else
+			proceventmask(0);
+	}
+
+	event_mask = new_mask;
+}
+
+/*
+ * Update the process event subscription mask for the semaphore code.
+ */
+void
+update_sem_sub(int want_events)
+{
+	unsigned int new_mask;
+
+	new_mask = event_mask & ~SEM_EVENTS;
+	if (want_events)
+		new_mask |= SEM_EVENTS;
+
+	update_sub(new_mask);
+}
+
+/*
+ * PM sent us a process event message.  Handle it, and reply.
+ */
+static void
+got_proc_event(message * m)
+{
+	endpoint_t endpt;
+	int r, has_exited;
+
+	endpt = m->m_pm_lsys_proc_event.endpt;
+	has_exited = (m->m_pm_lsys_proc_event.event == PROC_EVENT_EXIT);
+
+	/*
+	 * Currently, only semaphore handling needs to know about processes
+	 * being signaled and exiting.
+	 */
+	if (event_mask & SEM_EVENTS)
+		sem_process_event(endpt, has_exited);
+
+	/* Echo the request as a reply back to PM. */
+	m->m_type = PROC_EVENT_REPLY;
+	if ((r = asynsend3(m->m_source, m, AMF_NOREPLY)) != OK)
+		printf("IPC: replying to PM process event failed (%d)\n", r);
+}
+
+/*
+ * The System V IPC server.
+ */
 int
 main(int argc, char ** argv)
 {
@@ -95,19 +170,10 @@ main(int argc, char ** argv)
 			continue;
 		}
 
+		/* Process event messages from PM are handled separately. */
 		if (m.m_source == PM_PROC_NR && m.m_type == PROC_EVENT) {
-			/*
-			 * Currently, only semaphore handling needs to know
-			 * about processes being signaled and exiting.
-			 */
-			sem_process_event(m.m_pm_lsys_proc_event.endpt,
-			    m.m_pm_lsys_proc_event.event == PROC_EVENT_EXIT);
+			got_proc_event(&m);
 
-			/* Echo the request as a reply back to PM. */
-			m.m_type = PROC_EVENT_REPLY;
-			if ((r = asynsend3(m.m_source, &m, AMF_NOREPLY)) != OK)
-				printf("IPC: replying to PM process event "
-				    "failed (%d)\n", r);
 			continue;
 		}
 
