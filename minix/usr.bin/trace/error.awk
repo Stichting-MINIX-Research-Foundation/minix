@@ -19,7 +19,7 @@ BEGIN {
 END {
 	printf("};\n\n");
 	printf("const char *\nget_error_name(int err)\n{\n\n");
-	printf("\tif (err >= 0 && err < sizeof(errors) / sizeof(errors[0]) &&\n");
+	printf("\tif (err >= 0 && (unsigned int)err < __arraycount(errors) &&\n");
 	printf("\t    errors[err] != NULL)\n");
 	printf("\t\treturn errors[err];\n");
 	printf("\telse\n");

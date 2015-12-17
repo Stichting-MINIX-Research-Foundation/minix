@@ -1,5 +1,5 @@
 
-#define COUNT(s) (sizeof(s) / sizeof(s[0]))
+#define COUNT(s) (__arraycount(s))
 
 struct call_handler {
 	const char *name;
