@@ -12,7 +12,7 @@ SUBDIR=	add_route arp at backup \
 	fix format fsck.mfs \
 	gcov-pull host \
 	hostaddr ifconfig ifdef \
-	intr ipcrm irdpd isoread \
+	intr irdpd isoread \
 	loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mount mt netconf \

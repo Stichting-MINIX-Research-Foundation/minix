@@ -147,6 +147,7 @@
 ./usr/man/man1/infokey.1                                minix-man
 ./usr/man/man1/install-info.1                           minix-man
 ./usr/man/man1/install.1                                minix-man
+./usr/man/man1/ipcrm.1                                  minix-man
 ./usr/man/man1/ipcs.1                                   minix-man
 ./usr/man/man1/isodir.1                                 minix-man
 ./usr/man/man1/isoinfo.1                                minix-man
