@@ -234,6 +234,54 @@ put_kern_boottime(struct trace_proc * proc, const char * name,
 	return TRUE;
 }
 
+/*
+ * Print CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.
+ */
+static int
+put_kern_sysvipc_info(struct trace_proc * proc, const char * name,
+	int type, const void * ptr __unused, vir_bytes addr, size_t size)
+{
+	const int *mib;
+	const char *text;
+	int i;
+
+	/*
+	 * TODO: print the obtained structure(s).  For now we are just
+	 * concerned with the name components.
+	 */
+	if (type != ST_NAME) {
+		put_ptr(proc, name, addr);
+
+		return TRUE;
+	}
+
+	mib = (const int *)ptr;
+
+	for (i = 0; i < size; i++) {
+		text = NULL;
+
+		if (i == 0) {
+			switch (mib[i]) {
+			case KERN_SYSVIPC_SEM_INFO: text = "<sem>"; break;
+			case KERN_SYSVIPC_SHM_INFO: text = "<shm>"; break;
+			case KERN_SYSVIPC_MSG_INFO: text = "<msg>"; break;
+			}
+		}
+
+		if (!valuesonly && text != NULL)
+			put_field(proc, NULL, text);
+		else
+			put_value(proc, NULL, "%d", mib[i]);
+	}
+
+	return 0;
+}
+
+/* The CTL_KERN KERN_SYSVIPC table. */
+static const struct sysctl_tab kern_sysvipc_tab[] = {
+	PROC(KERN_SYSVIPC_INFO, 0, put_kern_sysvipc_info),
+};
+
 /* The CTL_KERN table. */
 static const struct sysctl_tab kern_tab[] = {
 	PROC(KERN_CLOCKRATE, sizeof(struct clockinfo), put_kern_clockrate),
@@ -242,6 +290,7 @@ static const struct sysctl_tab kern_tab[] = {
 	PROC(KERN_CP_TIME, sizeof(uint64_t) * CPUSTATES, put_kern_cp_time),
 	PROC(KERN_CONSDEV, sizeof(dev_t), put_kern_consdev),
 	PROC(KERN_DRIVERS, 0, put_kern_drivers),
+	NODE(KERN_SYSVIPC, kern_sysvipc_tab),
 	PROC(KERN_BOOTTIME, 0, put_kern_boottime),
 };
 
