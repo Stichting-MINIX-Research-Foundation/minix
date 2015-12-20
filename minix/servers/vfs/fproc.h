@@ -46,7 +46,7 @@ EXTERN struct fproc {
 
   mutex_t fp_lock;		/* mutex to lock fproc object */
   struct worker_thread *fp_worker;/* active worker thread, or NULL */
-  void (*fp_func)();		/* handler function for pending work */
+  void (*fp_func)(void);		/* handler function for pending work */
   message fp_msg;		/* pending or active message from process */
   message fp_pm_msg;		/* pending/active postponed PM request */
 
