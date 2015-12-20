@@ -1,4 +1,3 @@
-
 /* i386-specific clock functions. */
 
 #include <machine/ports.h>
@@ -9,7 +8,7 @@
 #include "kernel/clock.h"
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
-#include "glo.h"
+#include "kernel/glo.h"
 #include "kernel/profile.h"
 
 #include <sys/sched.h> /* for CP_*, CPUSTATES */
@@ -207,8 +206,8 @@ void cycles_accounting_init(void)
 
 	read_tsc_64(get_cpu_var_ptr(cpu, tsc_ctr_switch));
 
-       get_cpu_var(cpu, cpu_last_tsc) = 0;
-       get_cpu_var(cpu, cpu_last_idle) = 0;
+	get_cpu_var(cpu, cpu_last_tsc) = 0;
+	get_cpu_var(cpu, cpu_last_idle) = 0;
 }
 
 void context_stop(struct proc * p)
@@ -274,18 +273,16 @@ void context_stop(struct proc * p)
 	p->p_cycles = p->p_cycles + tsc - *__tsc_ctr_switch;
 	cpu = 0;
 #endif
-	
+
 	tsc_delta = tsc - *__tsc_ctr_switch;
 
 	if (kbill_ipc) {
-		kbill_ipc->p_kipc_cycles =
-			kbill_ipc->p_kipc_cycles + tsc_delta;
+		kbill_ipc->p_kipc_cycles += tsc_delta;
 		kbill_ipc = NULL;
 	}
 
 	if (kbill_kcall) {
-		kbill_kcall->p_kcall_cycles =
-			kbill_kcall->p_kcall_cycles + tsc_delta;
+		kbill_kcall->p_kcall_cycles += tsc_delta;
 		kbill_kcall = NULL;
 	}
 
@@ -331,12 +328,9 @@ void context_stop(struct proc * p)
 #if DEBUG_RACE
 		p->p_cpu_time_left = 0;
 #else
-		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
-		if (ex64hi(tsc_delta) < ex64hi(p->p_cpu_time_left) ||
-				(ex64hi(tsc_delta) == ex64hi(p->p_cpu_time_left) &&
-				 ex64lo(tsc_delta) < ex64lo(p->p_cpu_time_left)))
-			p->p_cpu_time_left = p->p_cpu_time_left - tsc_delta;
-		else {
+		if (tsc_delta < p->p_cpu_time_left) {
+			p->p_cpu_time_left -= tsc_delta;
+		} else {
 			p->p_cpu_time_left = 0;
 		}
 #endif
@@ -365,7 +359,7 @@ void context_stop_idle(void)
 #ifdef CONFIG_SMP
 	unsigned cpu = cpuid;
 #endif
-	
+
 	is_idle = get_cpu_var(cpu, cpu_is_idle);
 	get_cpu_var(cpu, cpu_is_idle) = 0;
 
@@ -421,7 +415,7 @@ short cpu_load(void)
 			load = 100;
 	} else
 		load = 0;
-	
+
 	*last_tsc = current_tsc;
 	*last_idle = *current_idle;
 	return load;
