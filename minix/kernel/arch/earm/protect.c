@@ -42,7 +42,7 @@ int tss_init(unsigned cpu, void * kernel_stack)
 	t->sp0 = ((unsigned) kernel_stack) - ARM_STACK_TOP_RESERVED;
 	/*
 	 * set the cpu id at the top of the stack so we know on which cpu is
-	 * this stak in use when we trap to kernel
+	 * this stack in use when we trap to kernel
 	 */
 	*((reg_t *)(t->sp0 + 1 * sizeof(reg_t))) = cpu;
 
