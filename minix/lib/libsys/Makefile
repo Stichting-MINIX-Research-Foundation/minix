@@ -13,7 +13,6 @@ SRCS+=  \
 	alloc_util.c \
 	assert.c \
 	asynsend.c \
-	checkperms.c \
 	clock_time.c \
 	closenb.c \
 	copyfd.c \
@@ -49,6 +48,7 @@ SRCS+=  \
 	sef_ping.c \
 	sef_signal.c \
 	sef_st.c \
+	socketpath.c \
 	sqrt_approx.c \
 	srv_fork.c \
 	srv_kill.c \

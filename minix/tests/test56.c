@@ -1390,13 +1390,196 @@ static void
 test_file(void)
 {
 	struct sockaddr_un addr;
-	int sd;
+#if NOT_YET
+	struct sockaddr_un saddr, saddr2;
+	char buf[1];
+	socklen_t len;
+	struct stat st;
+	mode_t omask;
+	int, csd, fd;
+#endif
+	int sd, sd2;
 
+	/*
+	 * If the provided socket path exists on the file system, the bind(2)
+	 * call must fail, regardless of whether there is a socket that is
+	 * bound to that address.
+	 */
 	UNLINK(TEST_SUN_PATH);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 	strlcpy(addr.sun_path, TEST_SUN_PATH, sizeof(addr.sun_path));
+
+	if ((sd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		test_fail("Can't bind socket");
+
+	if ((sd2 = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd2, (struct sockaddr *)&addr, sizeof(addr)) != -1)
+		test_fail("Binding socket unexpectedly succeeded");
+	if (errno != EADDRINUSE)
+		test_fail("Binding socket failed with wrong error");
+
+	CLOSE(sd);
+
+#if NOT_YET
+	if (bind(sd2, (struct sockaddr *)&addr, sizeof(addr)) != -1)
+		test_fail("Binding socket unexpectedly succeeded");
+	if (errno != EADDRINUSE)
+		test_fail("Binding socket failed with wrong error");
+
+	CLOSE(sd2);
+
+	UNLINK(TEST_SUN_PATH);
+
+	/*
+	 * If the socket is removed from the file system while there is still a
+	 * socket bound to it, it should be possible to bind a new socket to
+	 * the address.  The old socket should then become unreachable in terms
+	 * of connections and data directed to the address, even though it
+	 * should still appear to be bound to the same address.
+	 */
+	if ((sd = socket(PF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		test_fail("Can't bind socket");
+	memset(&saddr, 0, sizeof(saddr));
+	len = sizeof(saddr);
+	if (getsockname(sd, (struct sockaddr *)&saddr, &len) != 0)
+		test_fail("Can't get socket address");
+
+	if ((csd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open client socket");
+
+	memset(buf, 'X', sizeof(buf));
+	if (sendto(csd, buf, sizeof(buf), 0, (struct sockaddr *)&addr,
+	    sizeof(addr)) != sizeof(buf))
+		test_fail("Can't send to socket");
+	if (recvfrom(sd, buf, sizeof(buf), 0, NULL, 0) != sizeof(buf))
+		test_fail("Can't receive from socket");
+	if (buf[0] != 'X')
+		test_fail("Transmission failure");
+
+	if (unlink(TEST_SUN_PATH) != 0)
+		test_fail("Can't unlink socket");
+
+	if ((sd2 = socket(PF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd2, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		test_fail("Can't bind socket");
+	memset(&saddr2, 0, sizeof(saddr2));
+	len = sizeof(saddr2);
+	if (getsockname(sd2, (struct sockaddr *)&saddr2, &len) != 0)
+		test_fail("Can't get socket address");
+	if (memcmp(&saddr, &saddr2, sizeof(saddr)))
+		test_fail("Unexpected socket address");
+
+	memset(buf, 'Y', sizeof(buf));
+	if (sendto(csd, buf, sizeof(buf), 0, (struct sockaddr *)&addr,
+	    sizeof(addr)) != sizeof(buf))
+		test_fail("Can't send to socket");
+	if (recvfrom(sd, buf, sizeof(buf), 0, NULL, 0) != -1)
+		test_fail("Unexpectedly received from old socket");
+	if (errno != EWOULDBLOCK)
+		test_fail("Wrong receive failure from old socket");
+	if (recvfrom(sd2, buf, sizeof(buf), 0, NULL, 0) != sizeof(buf))
+		test_fail("Can't receive from new socket");
+	if (buf[0] != 'Y')
+		test_fail("Transmission failure");
+
+	len = sizeof(saddr2);
+	if (getsockname(sd, (struct sockaddr *)&saddr2, &len) != 0)
+		test_fail("Can't get old socket address");
+	if (memcmp(&saddr, &saddr2, sizeof(saddr)))
+		test_fail("Unexpected old socket address");
+
+	/*
+	 * Currently, our implementation "hides" the old socket even if the new
+	 * socket is closed, but since this is not standard behavior and may be
+	 * changed later, we do not test for it.  However, in any case,
+	 * rebinding the hidden socket should make it "visible" again.
+	 */
+	strlcpy(saddr2.sun_path, TEST_SUN_PATHB, sizeof(saddr2.sun_path));
+	if (bind(sd, (struct sockaddr *)&saddr2, sizeof(saddr2)) != 0)
+		test_fail("Can't rebind socket");
+
+	memset(buf, 'Z', sizeof(buf));
+	if (sendto(csd, buf, sizeof(buf), 0, (struct sockaddr *)&saddr2,
+	    sizeof(saddr2)) != sizeof(buf))
+		test_fail("Can't send to socket");
+	if (recvfrom(sd, buf, sizeof(buf), 0, NULL, 0) != sizeof(buf))
+		test_fail("Can't receive from socket");
+	if (buf[0] != 'Z')
+		test_fail("Transmission failure");
+
+	if (unlink(TEST_SUN_PATH) != 0)
+		test_fail("Can't unlink socket");
+	if (unlink(TEST_SUN_PATHB) != 0)
+		test_fail("Can't unlink other socket");
+
+	CLOSE(sd);
+	CLOSE(sd2);
+	CLOSE(csd);
+
+	/*
+	 * If the socket path identifies a file that is not a socket, bind(2)
+	 * should still fail with EADDRINUSE, but connect(2) and sendto(2)
+	 * should fail with ENOTSOCK (the latter is not specified by POSIX, so
+	 * we follow NetBSD here).
+	 */
+	if ((fd = open(TEST_SUN_PATH, O_WRONLY | O_CREAT | O_EXCL, 0700)) < 0)
+		test_fail("Can't create regular file");
+	CLOSE(fd);
+
+	if ((sd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != -1)
+		test_fail("Binding socket unexpectedly succeeded");
+	if (errno != EADDRINUSE)
+		test_fail("Binding socket failed with wrong error");
+	if (sendto(sd, buf, sizeof(buf), 0, (struct sockaddr *)&addr,
+	    sizeof(addr)) != -1)
+		test_fail("Sending to socket unexpectedly succeeded");
+	if (errno != ENOTSOCK)
+		test_fail("Sending to socket failed with wrong error");
+	CLOSE(sd);
+
+	if ((sd = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (connect(sd, (struct sockaddr *)&addr, sizeof(addr)) != -1)
+		test_fail("Connecting socket unexpectedly succeeded");
+	if (errno != ENOTSOCK)
+		test_fail("Connecting socket failed with wrong error");
+	CLOSE(sd);
+
+	UNLINK(TEST_SUN_PATH);
+
+	/*
+	 * The created socket file should have an access mode of 0777 corrected
+	 * with the calling process's file mode creation mask.
+	 */
+	omask = umask(045123);
+
+	if ((sd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		test_fail("Can't bind socket");
+
+	if (stat(TEST_SUN_PATH, &st) != 0)
+		test_fail("Can't stat socket");
+	if (!S_ISSOCK(st.st_mode))
+		test_fail("File is not a socket");
+	if ((st.st_mode & ALLPERMS) != (ACCESSPERMS & ~0123))
+		test_fail("Unexpected file permission mask");
+
+	CLOSE(sd);
+	UNLINK(TEST_SUN_PATH);
+
+	umask(omask);
+#endif
 
 	/*
 	 * Only socket(2), socketpair(2), and accept(2) may be used to obtain

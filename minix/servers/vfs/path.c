@@ -33,8 +33,6 @@
 
 static int lookup(struct vnode *dirp, struct lookup *resolve,
 	node_details_t *node, struct fproc *rfp);
-static int check_perms(endpoint_t ep, cp_grant_id_t io_gr, size_t
-	pathlen);
 
 /*===========================================================================*
  *				advance					     *
@@ -801,64 +799,145 @@ canonical_path(char orig_path[PATH_MAX], struct fproc *rfp)
 }
 
 /*===========================================================================*
- *				check_perms				     *
+ *				do_socketpath				     *
  *===========================================================================*/
-static int check_perms(ep, io_gr, pathlen)
-endpoint_t ep;
-cp_grant_id_t io_gr;
-size_t pathlen;
+int do_socketpath(void)
 {
-  int r, slot;
-  struct vnode *vp;
-  struct vmnt *vmp;
+/*
+ * Perform a path action on an on-disk socket file.  This call may be performed
+ * by the UDS service only.  The action is always on behalf of a user process
+ * that is currently making a socket call to the UDS service, and thus, VFS may
+ * rely on the fact that the user process is blocked.  TODO: there should be
+ * checks in place to prevent (even accidental) abuse of this function, though.
+ */
+  int r, what, slot;
+  endpoint_t ep;
+  cp_grant_id_t io_gr;
+  size_t pathlen;
+  struct vnode *dirp, *vp;
+  struct vmnt *vmp, *vmp2;
   struct fproc *rfp;
-  char canon_path[PATH_MAX];
-  struct lookup resolve;
+  char path[PATH_MAX];
+  struct lookup resolve, resolve2;
   struct sockaddr_un sun;
+  mode_t bits;
+
+  /* This should be replaced by an ACL check. */
+  if (!super_user) return EPERM;
+
+  ep = job_m_in.m_lsys_vfs_socketpath.endpt;
+  io_gr = job_m_in.m_lsys_vfs_socketpath.grant;
+  pathlen = job_m_in.m_lsys_vfs_socketpath.count;
+  what = job_m_in.m_lsys_vfs_socketpath.what;
 
   if (isokendpt(ep, &slot) != OK) return(EINVAL);
   if (pathlen < sizeof(sun.sun_path) || pathlen >= PATH_MAX) return(EINVAL);
 
   rfp = &(fproc[slot]);
-  r = sys_safecopyfrom(who_e, io_gr, (vir_bytes) 0, (vir_bytes) canon_path,
-	pathlen);
+  r = sys_safecopyfrom(who_e, io_gr, (vir_bytes)0, (vir_bytes)path, pathlen);
   if (r != OK) return(r);
-  canon_path[pathlen] = '\0';
+  path[pathlen] = '\0';
 
-  /* Turn path into canonical path to the socket file */
-  if ((r = canonical_path(canon_path, rfp)) != OK) return(r);
-  if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
+  /* If requested, turn path into canonical path to the socket file */
+  if (what & SPATH_CANONIZE) {
+	if ((r = canonical_path(path, rfp)) != OK) return(r);
+	if (strlen(path) >= pathlen) return(ENAMETOOLONG);
 
-  /* copy canon_path back to the caller */
-  r = sys_safecopyto(who_e, (cp_grant_id_t) io_gr, (vir_bytes) 0,
-	(vir_bytes) canon_path, pathlen);
-  if (r != OK) return(r);
+	/* copy path back to the caller */
+	r = sys_safecopyto(who_e, (cp_grant_id_t)io_gr, (vir_bytes)0,
+	    (vir_bytes)path, pathlen);
+	if (r != OK) return(r);
+  }
 
-  /* Now do permissions checking */
-  lookup_init(&resolve, canon_path, PATH_NOFLAGS, &vmp, &vp);
-  resolve.l_vmnt_lock = VMNT_READ;
-  resolve.l_vnode_lock = VNODE_READ;
-  if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
+  /* Now perform the requested action.  For the SPATH_CHECK action, a socket
+   * file is expected to exist already, and we should check whether the given
+   * user process has access to it.  For the SPATH_CREATE action, no file is
+   * expected to exist yet, and a socket file should be created on behalf of
+   * the user process.  In both cases, on success, return the socket file's
+   * device and inode numbers to the caller.
+   *
+   * Since the above canonicalization releases all locks once done, we need to
+   * recheck absolutely everything now.  TODO: do not release locks in between.
+   */
+  switch (what & ~SPATH_CANONIZE) {
+  case SPATH_CHECK:
+	lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_READ;
+	if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
-  /* check permissions */
-  r = forbidden(rfp, vp, (R_BIT | W_BIT));
+	/* Check file type and permissions. */
+	if (!S_ISSOCK(vp->v_mode))
+		r = ENOTSOCK; /* not in POSIX spec; this is what NetBSD does */
+	else
+		r = forbidden(rfp, vp, R_BIT | W_BIT);
 
-  unlock_vnode(vp);
-  unlock_vmnt(vmp);
+	if (r == OK) {
+		job_m_out.m_vfs_lsys_socketpath.device = vp->v_dev;
+		job_m_out.m_vfs_lsys_socketpath.inode = vp->v_inode_nr;
+	}
 
-  put_vnode(vp);
+	unlock_vnode(vp);
+	unlock_vmnt(vmp);
+	put_vnode(vp);
+	break;
+
+  case SPATH_CREATE:
+	/* This is effectively simulating a mknod(2) call by the user process,
+	 * including the application of its umask to the file permissions.
+	 */
+	lookup_init(&resolve, path, PATH_RET_SYMLINK, &vmp, &dirp);
+	resolve.l_vmnt_lock = VMNT_WRITE;
+	resolve.l_vnode_lock = VNODE_WRITE;
+
+	if ((dirp = last_dir(&resolve, rfp)) == NULL) return(err_code);
+
+	bits = S_IFSOCK | (ACCESSPERMS & rfp->fp_umask);
+
+	if (!S_ISDIR(dirp->v_mode))
+		r = ENOTDIR;
+	else if ((r = forbidden(rfp, dirp, W_BIT | X_BIT)) == OK) {
+		r = req_mknod(dirp->v_fs_e, dirp->v_inode_nr, path,
+		    rfp->fp_effuid, rfp->fp_effgid, bits, NO_DEV);
+		if (r == OK) {
+			/* Now we need to find out the device and inode number
+			 * of the socket file we just created.  The vmnt lock
+			 * should prevent any trouble here.
+			 */
+			lookup_init(&resolve2, resolve.l_path,
+			    PATH_RET_SYMLINK, &vmp2, &vp);
+			resolve2.l_vmnt_lock = VMNT_READ;
+			resolve2.l_vnode_lock = VNODE_READ;
+			vp = advance(dirp, &resolve2, rfp);
+			assert(vmp2 == NULL);
+			if (vp != NULL) {
+				job_m_out.m_vfs_lsys_socketpath.device =
+				    vp->v_dev;
+				job_m_out.m_vfs_lsys_socketpath.inode =
+				    vp->v_inode_nr;
+				unlock_vnode(vp);
+				put_vnode(vp);
+			} else {
+				/* Huh.  This should never happen.  If it does,
+				 * we assume the socket file has somehow been
+				 * lost, so we do not try to unlink it.
+				 */
+				printf("VFS: socketpath did not find created "
+				    "node at %s (%d)\n", path, err_code);
+				r = err_code;
+			}
+		} else if (r == EEXIST)
+			r = EADDRINUSE;
+	}
+
+	unlock_vnode(dirp);
+	unlock_vmnt(vmp);
+	put_vnode(dirp);
+	break;
+
+  default:
+	r = ENOSYS;
+  }
+
   return(r);
-}
-
-/*===========================================================================*
- *				do_checkperms				     *
- *===========================================================================*/
-int do_checkperms(void)
-{
-  /* This should be replaced by an ACL check. */
-  if (!super_user) return EPERM;
-
-  return check_perms(job_m_in.m_lsys_vfs_checkperms.endpt,
-	job_m_in.m_lsys_vfs_checkperms.grant,
-	job_m_in.m_lsys_vfs_checkperms.count);
 }

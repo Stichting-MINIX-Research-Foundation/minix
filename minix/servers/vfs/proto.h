@@ -170,7 +170,7 @@ void lookup_init(struct lookup *resolve, char *path, int flags, struct
 	vmnt **vmp, struct vnode **vp);
 int get_name(struct vnode *dirp, struct vnode *entry, char *_name);
 int canonical_path(char *orig_path, struct fproc *rfp);
-int do_checkperms(void);
+int do_socketpath(void);
 
 /* pipe.c */
 int do_pipe2(void);

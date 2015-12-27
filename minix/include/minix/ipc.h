@@ -1453,15 +1453,6 @@ _ASSERT_MSG_SIZE(mess_lsys_tty_fkey_ctl);
 
 typedef struct {
 	endpoint_t endpt;
-	cp_grant_id_t grant;
-	size_t count;
-
-	uint8_t padding[44];
-} mess_lsys_vfs_checkperms;
-_ASSERT_MSG_SIZE(mess_lsys_vfs_checkperms);
-
-typedef struct {
-	endpoint_t endpt;
 	int fd;
 	int what;
 
@@ -1479,6 +1470,16 @@ typedef struct {
 	uint8_t padding[8];
 } mess_lsys_vfs_mapdriver;
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
+
+typedef struct {
+	endpoint_t endpt;
+	cp_grant_id_t grant;
+	size_t count;
+	int what;
+
+	uint8_t padding[40];
+} mess_lsys_vfs_socketpath;
+_ASSERT_MSG_SIZE(mess_lsys_vfs_socketpath);
 
 typedef struct {
 	endpoint_t	endpt;
@@ -2267,6 +2268,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lsys_gcov);
 
 typedef struct {
+	dev_t device;
+	ino_t inode;
+
+	uint8_t padding[40];
+} mess_vfs_lsys_socketpath;
+_ASSERT_MSG_SIZE(mess_vfs_lsys_socketpath);
+
+typedef struct {
 	time_t atime;
 	time_t mtime;
 	long ansec;
@@ -2481,9 +2490,9 @@ typedef struct noxfer_message {
 		mess_lsys_sched_scheduling_start m_lsys_sched_scheduling_start;
 		mess_lsys_sched_scheduling_stop m_lsys_sched_scheduling_stop;
 		mess_lsys_tty_fkey_ctl	m_lsys_tty_fkey_ctl;
-		mess_lsys_vfs_checkperms m_lsys_vfs_checkperms;
 		mess_lsys_vfs_copyfd	m_lsys_vfs_copyfd;
 		mess_lsys_vfs_mapdriver	m_lsys_vfs_mapdriver;
+		mess_lsys_vfs_socketpath m_lsys_vfs_socketpath;
 		mess_lsys_vm_getref	m_lsys_vm_getref;
 		mess_lsys_vm_info	m_lsys_vm_info;
 		mess_lsys_vm_map_phys	m_lsys_vm_map_phys;
@@ -2567,6 +2576,7 @@ typedef struct noxfer_message {
 		mess_vfs_lsockdriver_simple	m_vfs_lsockdriver_simple;
 		mess_vfs_lsockdriver_socket	m_vfs_lsockdriver_socket;
 		mess_vfs_lsys_gcov	m_vfs_lsys_gcov;
+		mess_vfs_lsys_socketpath	m_vfs_lsys_socketpath;
 		mess_vfs_utimens	m_vfs_utimens;
 		mess_vm_vfs_mmap	m_vm_vfs_mmap;
 		mess_vmmcp		m_vmmcp;

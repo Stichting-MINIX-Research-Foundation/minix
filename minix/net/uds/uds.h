@@ -121,8 +121,14 @@ struct uds_fd {
 	 */
 	struct sockaddr_un source;
 
-	/* Flag (1 or 0) - listening for incoming connections.
-	 * Default to 0. Set to 1 by do_listen()
+	/* Flag (TRUE or FALSE) - address overridden by newer socket.
+	 * Default to FALSE.  Set to TRUE by do_bind() on another socket with
+	 * the same path but its on-disk socket file removed in the meantime.
+	 */
+	int stale;
+
+	/* Flag (TRUE or FALSE) - listening for incoming connections.
+	 * Default to FALSE.  Set to TRUE by do_listen().
 	 */
 	int listening;
 

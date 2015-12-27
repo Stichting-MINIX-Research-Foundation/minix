@@ -94,7 +94,8 @@ uds_open(devminor_t UNUSED(orig_minor), int access,
 	for (i = 0; i < OPEN_MAX; i++)
 		uds_fd_table[minor].ancillary_data.fds[i] = -1;
 
-	uds_fd_table[minor].listening = 0;
+	uds_fd_table[minor].stale = FALSE;
+	uds_fd_table[minor].listening = FALSE;
 	uds_fd_table[minor].peer = -1;
 	uds_fd_table[minor].child = -1;
 
@@ -203,7 +204,7 @@ uds_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 		bytes = uds_perform_read(minor, NONE, GRANT_INVALID, 1, 1);
 		if (bytes > 0) {
 			ready_ops |= CDEV_OP_RD;	/* data available */
-		} else if (uds_fd_table[minor].listening == 1) {
+		} else if (uds_fd_table[minor].listening == TRUE) {
 			/* Check for pending connections. */
 			for (i = 0; i < uds_fd_table[minor].backlog_size; i++)
 			{
@@ -389,6 +390,7 @@ uds_perform_write(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant,
 			 * the target address.
 			 */
 			if (uds_fd_table[i].type == SOCK_DGRAM &&
+			    uds_fd_table[i].stale == FALSE &&
 			    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 			    !strncmp(uds_fd_table[minor].target.sun_path,
 			    uds_fd_table[i].addr.sun_path,

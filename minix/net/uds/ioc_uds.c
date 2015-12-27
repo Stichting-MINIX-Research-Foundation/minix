@@ -67,10 +67,11 @@ do_accept(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 
 	/* Locate the server socket. */
 	for (i = 0; i < NR_FDS; i++) {
-		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
+		if (uds_fd_table[i].stale == FALSE &&
+		    uds_fd_table[i].listening == TRUE &&
+		    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
-		    sizeof(uds_fd_table[i].addr.sun_path)) &&
-			uds_fd_table[i].listening == 1)
+		    sizeof(uds_fd_table[i].addr.sun_path)))
 			break;
 	}
 
@@ -146,6 +147,8 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	int child, peer;
 	struct sockaddr_un addr;
 	int rc, i, j;
+	dev_t dev;
+	ino_t ino;
 
 	dprintf(("UDS: do_connect(%d)\n", minor));
 
@@ -167,8 +170,8 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    sizeof(struct sockaddr_un))) != OK)
 		return rc;
 
-	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    sizeof(addr.sun_path))) != OK)
+	if ((rc = socketpath(uds_fd_table[minor].owner, addr.sun_path,
+	    sizeof(addr.sun_path), SPATH_CHECK, &dev, &ino)) != OK)
 		return rc;
 
 	/*
@@ -178,7 +181,9 @@ do_connect(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	for (i = 0; i < NR_FDS; i++) {
 		if (uds_fd_table[minor].type != uds_fd_table[i].type)
 			continue;
-		if (!uds_fd_table[i].listening)
+		if (uds_fd_table[i].listening == FALSE)
+			continue;
+		if (uds_fd_table[i].stale == TRUE)
 			continue;
 		if (uds_fd_table[i].addr.sun_family != AF_UNIX)
 			continue;
@@ -276,7 +281,7 @@ do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	    sizeof(backlog_size))) != OK)
 		return rc;
 
-	if (uds_fd_table[minor].listening == 0) {
+	if (uds_fd_table[minor].listening == FALSE) {
 		/* Set the backlog size to a reasonable value. */
 		if (backlog_size <= 0 || backlog_size > UDS_SOMAXCONN)
 			backlog_size = UDS_SOMAXCONN;
@@ -295,7 +300,7 @@ do_listen(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	}
 
 	/* This socket is now listening. */
-	uds_fd_table[minor].listening = 1;
+	uds_fd_table[minor].listening = TRUE;
 
 	return OK;
 }
@@ -334,6 +339,8 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	struct sockaddr_un addr;
 	int rc, i;
+	dev_t dev;
+	ino_t ino;
 
 	dprintf(("UDS: do_bind(%d)\n", minor));
 
@@ -356,21 +363,41 @@ do_bind(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_path[0] == '\0')
 		return ENOENT;
 
-	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-		sizeof(addr.sun_path))) != OK)
+	/* Attempt to create the socket file. */
+	if ((rc = socketpath(uds_fd_table[minor].owner, addr.sun_path,
+#if NOT_YET
+	    sizeof(addr.sun_path), SPATH_CREATE, &dev, &ino)) != OK)
+#else
+	    sizeof(addr.sun_path), SPATH_CHECK, &dev, &ino)) != OK)
+#endif
 		return rc;
 
-	/* Make sure the address isn't already in use by another socket. */
+	/*
+	 * It is possible that the socket path name was already in use as
+	 * address by another socket.  This means that the socket file was
+	 * prematurely unlinked.  In that case, mark the old socket as stale,
+	 * so that its path name will not be matched and only the newly bound
+	 * socket will be found in address-based searches.  For now, we leave
+	 * the old socket marked as stale for as long as it is bound to the
+	 * same address.  A more advanced implementation could establish an
+	 * order between the sockets so that the most recently bound socket is
+	 * found at any time, but it is doubtful whether that would be useful.
+	 */
 	for (i = 0; i < NR_FDS; i++) {
-		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
+		if (uds_fd_table[i].stale == FALSE &&
+		    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 		    !strncmp(addr.sun_path, uds_fd_table[i].addr.sun_path,
 		    sizeof(uds_fd_table[i].addr.sun_path))) {
-			/* Another socket is bound to this sun_path. */
+#if NOT_YET
+			uds_fd_table[i].stale = TRUE;
+#else
 			return EADDRINUSE;
+#endif
 		}
 	}
 
 	/* Looks good, perform the bind(). */
+	uds_fd_table[minor].stale = FALSE;
 	memcpy(&uds_fd_table[minor].addr, &addr, sizeof(struct sockaddr_un));
 
 	return OK;
@@ -597,6 +624,8 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 {
 	int rc;
 	struct sockaddr_un addr;
+	dev_t dev;
+	ino_t ino;
 
 	dprintf(("UDS: do_sendto(%d)\n", minor));
 
@@ -612,8 +641,8 @@ do_sendto(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0')
 		return EINVAL;
 
-	if ((rc = checkperms(uds_fd_table[minor].owner, addr.sun_path,
-	    sizeof(addr.sun_path))) != OK)
+	if ((rc = socketpath(uds_fd_table[minor].owner, addr.sun_path,
+	    sizeof(addr.sun_path), SPATH_CHECK, &dev, &ino)) != OK)
 		return rc;
 
 	memcpy(&uds_fd_table[minor].target, &addr, sizeof(struct sockaddr_un));
@@ -825,6 +854,7 @@ do_sendmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 			 * target address.
 			 */
 			if (uds_fd_table[i].type == SOCK_DGRAM &&
+			    uds_fd_table[i].stale == FALSE &&
 			    uds_fd_table[i].addr.sun_family == AF_UNIX &&
 			    !strncmp(uds_fd_table[minor].target.sun_path,
 			    uds_fd_table[i].addr.sun_path,
