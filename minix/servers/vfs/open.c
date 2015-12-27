@@ -263,6 +263,14 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode, int for_exec)
 				}
 			}
 			break;
+		   case S_IFSOCK:
+			r = EOPNOTSUPP;
+			break;
+		   default:
+			printf("VFS: attempt to open file <%llu,%llu> of "
+			    "type 0%o\n", vp->v_dev, vp->v_inode_nr,
+			    vp->v_mode & S_IFMT);
+			r = EIO;
 		}
 	}
   }

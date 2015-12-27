@@ -1379,6 +1379,51 @@ static void test_fchmod(void)
 	close(socks[1]);
 }
 
+/*
+ * Test various aspects related to the socket files on the file system.
+ * This subtest is woefully incomplete and currently only attempts to test
+ * aspects that have recently been affected by code changes.  In the future,
+ * there should be tests for path canonicalization and the entire range of file
+ * system path and access related error codes (TODO).
+ */
+static void
+test_file(void)
+{
+	struct sockaddr_un addr;
+	int sd;
+
+	UNLINK(TEST_SUN_PATH);
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strlcpy(addr.sun_path, TEST_SUN_PATH, sizeof(addr.sun_path));
+
+	/*
+	 * Only socket(2), socketpair(2), and accept(2) may be used to obtain
+	 * new file descriptors to sockets (or "sockets"); open(2) on a socket
+	 * file is expected to fail with EOPNOTSUPP (Austin Group Issue #943),
+	 * regardless of whether the socket is in use.
+	 */
+	if ((sd = socket(PF_UNIX, SOCK_DGRAM, 0)) == -1)
+		test_fail("Can't open socket");
+	if (bind(sd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		test_fail("Can't bind socket");
+
+	if (open(TEST_SUN_PATH, O_RDWR) != -1)
+		test_fail("Unexpectedly opened socket file");
+	if (errno != EOPNOTSUPP)
+		test_fail("Open failed with wrong error");
+
+	CLOSE(sd);
+
+	if (open(TEST_SUN_PATH, O_RDONLY) != -1)
+		test_fail("Unexpectedly opened socket file");
+	if (errno != EOPNOTSUPP)
+		test_fail("Open failed with wrong error");
+
+	UNLINK(TEST_SUN_PATH);
+}
+
 int main(int argc, char *argv[])
 {
 	int i;
@@ -1463,6 +1508,7 @@ int main(int argc, char *argv[])
 	test_connect_close(&info);
 	test_listen_close(&info);
 	test_listen_close_nb(&info);
+	test_file();
 
 	quit();
 
