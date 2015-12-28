@@ -23,7 +23,8 @@
    }
 
 #define GID_CHECK(gid) {					\
-	if(!GRANT_VALID(gid) || (gid) < 0 || (gid) >= ngrants) {\
+	if(!GRANT_VALID(gid) || GRANT_IDX(gid) >= ngrants ||	\
+	    GRANT_SEQ(gid) != grants[GRANT_IDX(gid)].cp_seq) {	\
 		errno = EINVAL;					\
 		return -1;					\
 	}							\
@@ -31,17 +32,10 @@
 
 #define GID_CHECK_USED(gid) {					\
 	GID_CHECK(gid);						\
-	if(!(grants[gid].cp_flags & CPF_USED)) {		\
+	if(!(grants[GRANT_IDX(gid)].cp_flags & CPF_USED)) {	\
 		errno = EINVAL;					\
 		return -1;					\
 	}							\
-   }
-
-#define CLICK_ALIGNMENT_CHECK(addr, bytes) {				      \
-	if(((vir_bytes)(addr) % CLICK_SIZE != 0)			      \
-		|| ((vir_bytes)(bytes) % CLICK_SIZE != 0)) {		      \
-		return EINVAL;						      \
-	}								      \
    }
 
 #define NR_STATIC_GRANTS 3
@@ -54,8 +48,7 @@ cpf_grow(void)
 {
 /* Grow the grants table if possible. */
 	cp_grant_t *new_grants;
-	cp_grant_id_t g;
-	int new_size;
+	int g, new_size;
 
 	if(!ngrants) {
 		/* Use statically allocated grants the first time. */
@@ -63,7 +56,12 @@ cpf_grow(void)
 		new_grants = static_grants;
 	}
 	else {
+		/* Double(ish) the size, up to the maximum number of slots. */
+		if (ngrants >= GRANT_MAX_IDX)
+			return;
 		new_size = (1+ngrants)*2;
+		if (new_size >= GRANT_MAX_IDX)
+			new_size = GRANT_MAX_IDX;
 		assert(new_size > ngrants);
 
 		/* Allocate a block of new size. */
@@ -76,9 +74,15 @@ cpf_grow(void)
 	if(grants && ngrants > 0)
 		memcpy(new_grants, grants, ngrants * sizeof(grants[0]));
 
-	/* Make sure new slots are marked unused (CPF_USED is clear). */
-	for(g = ngrants; g < new_size; g++)
+	/*
+	 * Make sure new slots are marked unused (CPF_USED is clear).
+	 * Also start with a zero sequence number, for consistency; since the
+	 * grant table is never shrunk, this introduces no issues by itself.
+	 */
+	for(g = ngrants; g < new_size; g++) {
 		new_grants[g].cp_flags = 0;
+		new_grants[g].cp_seq = 0;
+	}
 
 	/* Inform kernel about new size (and possibly new location). */
 	if((sys_setgrant(new_grants, new_size))) {
@@ -92,14 +96,14 @@ cpf_grow(void)
 	ngrants = new_size;
 }
 
-static cp_grant_id_t
+static int
 cpf_new_grantslot(void)
 {
 /* Find a new, free grant slot in the grant table, grow it if
  * necessary. If no free slot is found and the grow failed,
  * return -1. Otherwise, return grant slot number.
  */
-	cp_grant_id_t g;
+	int g;
 
 	/* Find free slot. */
 	for(g = 0; g < ngrants && (grants[g].cp_flags & CPF_USED); g++)
@@ -121,7 +125,6 @@ cpf_new_grantslot(void)
 	/* Basic sanity checks - if we get this far, g must be a valid,
 	 * free slot.
 	 */
-	assert(GRANT_VALID(g));
 	assert(g >= 0);
 	assert(g < ngrants);
 	assert(!(grants[g].cp_flags & CPF_USED));
@@ -132,24 +135,22 @@ cpf_new_grantslot(void)
 cp_grant_id_t
 cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
 {
-	cp_grant_id_t g;
-	int r;
+	int g;
  
+	ACCESS_CHECK(access);
+
 	/* Get new slot to put new grant in. */
 	if((g = cpf_new_grantslot()) < 0)
-		return(GRANT_INVALID);
+		return -1;
 
-	assert(GRANT_VALID(g));
-	assert(g >= 0);
-	assert(g < ngrants);
-	assert(!(grants[g].cp_flags & CPF_USED));
+	/* Fill in new slot data. */
+	grants[g].cp_u.cp_direct.cp_who_to = who_to;
+	grants[g].cp_u.cp_direct.cp_start = addr;
+	grants[g].cp_u.cp_direct.cp_len = bytes;
+	__insn_barrier();
+	grants[g].cp_flags = access | CPF_DIRECT | CPF_USED | CPF_VALID;
 
-	if((r=cpf_setgrant_direct(g, who_to, addr, bytes, access)) < 0) {
-		cpf_revoke(g);
-		return(GRANT_INVALID);
-	}
-
-	return g;
+	return GRANT_ID(g, grants[g].cp_seq);
 }
 
 cp_grant_id_t
@@ -158,26 +159,20 @@ cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from, cp_grant_id_t gr)
 /* Grant process A access into process B. B has granted us access as grant
  * id 'gr'.
  */
-	cp_grant_id_t g;
-	int r;
+	int g;
 
 	/* Obtain new slot. */
 	if((g = cpf_new_grantslot()) < 0)
 		return -1;
 
-	/* Basic sanity checks. */
-	assert(GRANT_VALID(g));
-	assert(g >= 0);
-	assert(g < ngrants);
-	assert(!(grants[g].cp_flags & CPF_USED));
-
 	/* Fill in new slot data. */
-	if((r=cpf_setgrant_indirect(g, who_to, who_from, gr)) < 0) {
-		cpf_revoke(g);
-		return GRANT_INVALID;
-	}
+	grants[g].cp_u.cp_indirect.cp_who_to = who_to;
+	grants[g].cp_u.cp_indirect.cp_who_from = who_from;
+	grants[g].cp_u.cp_indirect.cp_grant = gr;
+	__insn_barrier();
+	grants[g].cp_flags = CPF_USED | CPF_INDIRECT | CPF_VALID;
 
-	return g;
+	return GRANT_ID(g, grants[g].cp_seq);
 }
 
 cp_grant_id_t
@@ -185,8 +180,7 @@ cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
 	vir_bytes addr, size_t bytes, int access)
 {
 /* Grant process A access into process B. Not everyone can do this. */
-	cp_grant_id_t g;
-	int r;
+	int g;
 
 	ACCESS_CHECK(access);
 
@@ -194,52 +188,56 @@ cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
 	if((g = cpf_new_grantslot()) < 0)
 		return -1;
 
-	/* Basic sanity checks. */
-	assert(GRANT_VALID(g));
-	assert(g >= 0);
-	assert(g < ngrants);
-	assert(!(grants[g].cp_flags & CPF_USED));
+	/* Fill in new slot data. */
+	grants[g].cp_u.cp_magic.cp_who_to = who_to;
+	grants[g].cp_u.cp_magic.cp_who_from = who_from;
+	grants[g].cp_u.cp_magic.cp_start = addr;
+	grants[g].cp_u.cp_magic.cp_len = bytes;
+	__insn_barrier();
+	grants[g].cp_flags = CPF_USED | CPF_MAGIC | CPF_VALID | access;
 
-	if((r=cpf_setgrant_magic(g, who_to, who_from, addr,
-		bytes, access)) < 0) {
-		cpf_revoke(g);
-		return -1;
-	}
-
-	return g;
+	return GRANT_ID(g, grants[g].cp_seq);
 }
 
 int
-cpf_revoke(cp_grant_id_t g)
+cpf_revoke(cp_grant_id_t grant)
 {
 /* Revoke previously granted access, identified by grant id. */
-	GID_CHECK_USED(g);
+	int g;
+
+	GID_CHECK_USED(grant);
+
+	g = GRANT_IDX(grant);
 
 	/* Make grant invalid by setting flags to 0, clearing CPF_USED.
 	 * This invalidates the grant.
 	 */
 	grants[g].cp_flags = 0;
+	__insn_barrier();
+
+	/*
+	 * Increase the grant slot's sequence number now, rather than on
+	 * allocation, because live update relies on the first allocated grant
+	 * having a zero ID (SEF_STATE_TRANSFER_GID) and thus a zero sequence
+	 * number.
+	 */
+	if (grants[g].cp_seq < GRANT_MAX_SEQ - 1)
+		grants[g].cp_seq++;
+	else
+		grants[g].cp_seq = 0;
 
 	return 0;
 }
 
-int
-cpf_lookup(cp_grant_id_t g, endpoint_t *granter, endpoint_t *grantee)
-{
-	/* First check slot validity, and if it's in use currently. */
-	GID_CHECK_USED(g);
-
-	if(grants[g].cp_flags & CPF_DIRECT) {
-		if(granter) *granter = SELF;
-		if(grantee) *grantee = grants[g].cp_u.cp_direct.cp_who_to;
-	} else if(grants[g].cp_flags & CPF_MAGIC) {
-		if(granter) *granter = grants[g].cp_u.cp_magic.cp_who_from;
-		if(grantee) *grantee = grants[g].cp_u.cp_magic.cp_who_to;
-	} else	return -1;
-
-	return 0;
-}
-
+/*
+ * START OF DEPRECATED API
+ *
+ * The grant preallocation and (re)assignment API below imposes that grant IDs
+ * stay the same across reuse, thus disallowing that the grants' sequence
+ * numbers be updated as a part of reassignment.  As a result, this API does
+ * not offer the same protection against accidental reuse of an old grant by a
+ * remote party as the regular API does, and is therefore deprecated.
+ */
 int
 cpf_getgrants(cp_grant_id_t *grant_ids, int n)
 {
@@ -249,6 +247,7 @@ cpf_getgrants(cp_grant_id_t *grant_ids, int n)
 	  if((grant_ids[i] = cpf_new_grantslot()) < 0)
 		break;
 	  grants[grant_ids[i]].cp_flags = CPF_USED;
+	  grants[grant_ids[i]].cp_seq = 0;
 	}
 
 	/* return however many grants were assigned. */
@@ -324,6 +323,9 @@ cp_grant_id_t gid;
 
 	return 0;
 }
+/*
+ * END OF DEPRECATED API
+ */
 
 void
 cpf_reload(void)
@@ -334,4 +336,3 @@ cpf_reload(void)
 	if (grants)
 		sys_setgrant(grants, ngrants);	/* Do we need error checking? */
 }
-

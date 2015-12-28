@@ -44,9 +44,10 @@ int verify_grant(
   u32_t *flags			/* CPF_* */
 )
 {
-	static cp_grant_t g;
-	static int proc_nr;
-	static const struct proc *granter_proc;
+	cp_grant_t g;
+	int proc_nr;
+	const struct proc *granter_proc;
+	int grant_idx, grant_seq;
 	int depth = 0;
 
 	do {
@@ -93,23 +94,26 @@ int verify_grant(
 			return(EPERM);
 		}
 
-		if(priv(granter_proc)->s_grant_entries <= grant) {
+		grant_idx = GRANT_IDX(grant);
+		grant_seq = GRANT_SEQ(grant);
+
+		if(priv(granter_proc)->s_grant_entries <= grant_idx) {
 				printf(
 				"verify_grant: grant verify failed in ep %d "
-				"proc %d: grant %d out of range "
+				"proc %d: grant 0x%x (#%d) out of range "
 				"for table size %d\n",
-					granter, proc_nr, grant,
+					granter, proc_nr, grant, grant_idx,
 					priv(granter_proc)->s_grant_entries);
 			return(EPERM);
 		}
 
-		/* Copy the grant entry corresponding to this id to see what it
-		 * looks like. If it fails, hide the fact that granter has
-		 * (presumably) set an invalid grant table entry by returning
-		 * EPERM, just like with an invalid grant id.
+		/* Copy the grant entry corresponding to this ID's index to see
+		 * what it looks like. If it fails, hide the fact that granter
+		 * has (presumably) set an invalid grant table entry by
+		 * returning EPERM, just like with an invalid grant id.
 		 */
-		if(data_copy(granter,
-			priv(granter_proc)->s_grant_table + sizeof(g)*grant,
+		if(data_copy(granter, priv(granter_proc)->s_grant_table +
+			sizeof(g) * grant_idx,
 			KERNEL, (vir_bytes) &g, sizeof(g)) != OK) {
 			printf(
 			"verify_grant: grant verify: data_copy failed\n");
@@ -118,12 +122,17 @@ int verify_grant(
 
 		if(flags) *flags = g.cp_flags;
 
-		/* Check validity. */
+		/* Check validity: flags and sequence number. */
 		if((g.cp_flags & (CPF_USED | CPF_VALID)) !=
 			(CPF_USED | CPF_VALID)) {
-			printf(
-			"verify_grant: grant failed: invalid (%d flags 0x%lx)\n",
-				grant, g.cp_flags);
+			printf("verify_grant: grant failed: invalid flags "
+			    "(0x%x, 0x%lx)\n", grant, g.cp_flags);
+			return EPERM;
+		}
+
+		if (g.cp_seq != grant_seq) {
+			printf("verify_grant: grant failed: invalid sequence "
+			    "(0x%x, %d vs %d)\n", grant, grant_seq, g.cp_seq);
 			return EPERM;
 		}
 
