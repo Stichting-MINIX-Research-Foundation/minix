@@ -42,6 +42,7 @@
 static cp_grant_t static_grants[NR_STATIC_GRANTS];
 static cp_grant_t *grants = NULL;
 static int ngrants = 0;
+static int freelist = -1;
 
 static void
 cpf_grow(void)
@@ -78,10 +79,16 @@ cpf_grow(void)
 	 * Make sure new slots are marked unused (CPF_USED is clear).
 	 * Also start with a zero sequence number, for consistency; since the
 	 * grant table is never shrunk, this introduces no issues by itself.
+	 * Finally, form a new free list, in ascending order so that the lowest
+	 * IDs get allocated first.  Both the zeroed sequence number and the
+	 * ascending order are necessary so that the first grant to be
+	 * allocated has a zero ID (see the live update comment below).
 	 */
 	for(g = ngrants; g < new_size; g++) {
 		new_grants[g].cp_flags = 0;
 		new_grants[g].cp_seq = 0;
+		new_grants[g].cp_u.cp_free.cp_next =
+		    (g < new_size - 1) ? (g + 1) : freelist;
 	}
 
 	/* Inform kernel about new size (and possibly new location). */
@@ -92,6 +99,7 @@ cpf_grow(void)
 
 	/* Update internal data. */
 	if(grants && ngrants > 0 && grants != static_grants) free(grants);
+	freelist = ngrants;
 	grants = new_grants;
 	ngrants = new_size;
 }
@@ -105,17 +113,11 @@ cpf_new_grantslot(void)
  */
 	int g;
 
-	/* Find free slot. */
-	for(g = 0; g < ngrants && (grants[g].cp_flags & CPF_USED); g++)
-		;
-
-	assert(g <= ngrants);
-
-	/* No free slot found? */
-	if(g == ngrants) {
+	/* Obtain a free slot. */
+	if ((g = freelist) == -1) {
+		/* Table full - try to make the table larger. */
 		cpf_grow();
-		assert(g <= ngrants); /* ngrants can't shrink. */
-		if(g == ngrants) {
+		if ((g = freelist) == -1) {
 			/* ngrants hasn't increased. */
 			errno = ENOSPC;
 			return -1;
@@ -128,6 +130,9 @@ cpf_new_grantslot(void)
 	assert(g >= 0);
 	assert(g < ngrants);
 	assert(!(grants[g].cp_flags & CPF_USED));
+
+	/* Take the slot off the free list, and return its slot number. */
+	freelist = grants[g].cp_u.cp_free.cp_next;
 
 	return g;
 }
@@ -225,6 +230,14 @@ cpf_revoke(cp_grant_id_t grant)
 		grants[g].cp_seq++;
 	else
 		grants[g].cp_seq = 0;
+
+	/*
+	 * Put the grant back on the free list.  The list is single-headed, so
+	 * the last freed grant will be the first to be reused.  Especially
+	 * given the presence of sequence numbers, this is not a problem.
+	 */
+	grants[g].cp_u.cp_free.cp_next = freelist;
+	freelist = g;
 
 	return 0;
 }
