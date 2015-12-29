@@ -193,9 +193,13 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		/* Set up 1MB ranges. */
 		srcptr = createpde(srcproc, srclinaddr, &chunk, 0, &changed);
 		dstptr = createpde(dstproc, dstlinaddr, &chunk, 1, &changed);
-		if(changed) {
+		if(changed)
 			reload_ttbr0();
-		}
+
+		/* Check for overflow. */
+		if (srcptr + chunk < srcptr) return EFAULT_SRC;
+		if (dstptr + chunk < dstptr) return EFAULT_DST;
+
 		/* Copy pages. */
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
 
