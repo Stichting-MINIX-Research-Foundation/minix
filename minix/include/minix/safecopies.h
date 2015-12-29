@@ -31,6 +31,10 @@ typedef struct {
 			size_t		cp_len;		/* size in bytes */
 			char		cp_reserved[8]; /* future use */
 		} cp_magic;
+		struct {
+			/* (free slot) */
+			int		cp_next;	/* next free or -1 */
+		} cp_free;
 	} cp_u;
 	int cp_seq;					/* sequence number */
 	char cp_reserved[4];				/* future use */
