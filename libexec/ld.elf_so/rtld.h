@@ -472,9 +472,6 @@ __dso_public extern void *___tls_get_addr(void *)
 /* map_object.c */
 struct stat;
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
-#if defined(__minix)
-Obj_Entry *_rtld_map_object_fallback(const char *, int, const struct stat *);
-#endif /* defined(__minix) */
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
