@@ -49,7 +49,9 @@ static int req_breadwrite_actual(endpoint_t fs_e, endpoint_t user_e, dev_t dev, 
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
+
+  if (cpf_revoke(grant_id) == GRANT_FAULTED) return(ERESTART);
+
   if (r != OK) return(r);
 
   /* Fill in response structure */
@@ -68,7 +70,7 @@ int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,
 	r = req_breadwrite_actual(fs_e, user_e, dev, pos, num_of_bytes,
 		user_addr, rw_flag, new_pos, cum_iop, CPF_TRY);
 
-	if(r == EFAULT) {
+	if (r == ERESTART) {
 		if((r=vm_vfs_procctl_handlemem(user_e, user_addr, num_of_bytes,
 			rw_flag == READING)) != OK) {
 			return r;
@@ -324,7 +326,8 @@ static int req_getdents_actual(
   }
 
   r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
+
+  if (cpf_revoke(grant_id) == GRANT_FAULTED) return(ERESTART);
 
   if (r == OK) {
 	*new_pos = m.m_fs_vfs_getdents.seek_pos;
@@ -351,7 +354,9 @@ int req_getdents(
 	r = req_getdents_actual(fs_e, inode_nr, pos, buf, size, new_pos,
 		direct, CPF_TRY);
 
-	if(r == EFAULT && !direct) {
+	if (r == ERESTART) {
+		assert(!direct);
+
 		if((r=vm_vfs_procctl_handlemem(who_e, buf, size, 1)) != OK) {
 			return r;
 		}
@@ -736,7 +741,8 @@ static int req_rdlink_actual(endpoint_t fs_e, ino_t inode_nr,
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
+
+  if (cpf_revoke(grant_id) == GRANT_FAULTED) return(ERESTART);
 
   if (r == OK) r = m.m_fs_vfs_rdlink.nbytes;
 
@@ -756,7 +762,9 @@ int req_rdlink(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 	r = req_rdlink_actual(fs_e, inode_nr, proc_e, buf, len, direct,
 		CPF_TRY);
 
-	if(r == EFAULT && !direct) {
+	if (r == ERESTART) {
+		assert(!direct);
+
 		if((r=vm_vfs_procctl_handlemem(proc_e, buf, len, 1)) != OK) {
 			return r;
 		}
@@ -854,7 +862,8 @@ static int req_readwrite_actual(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
+
+  if (cpf_revoke(grant_id) == GRANT_FAULTED) return(ERESTART);
 
   if (r == OK) {
 	/* Fill in response structure */
@@ -877,9 +886,9 @@ int req_readwrite(endpoint_t fs_e, ino_t inode_nr, off_t pos,
 	r = req_readwrite_actual(fs_e, inode_nr, pos, rw_flag, user_e,
 		user_addr, num_of_bytes, new_posp, cum_iop, CPF_TRY);
 
-	if(r == EFAULT) {
-		if((r=vm_vfs_procctl_handlemem(user_e, (vir_bytes) user_addr, num_of_bytes,
-			rw_flag == READING)) != OK) {
+	if (r == ERESTART) {
+		if ((r=vm_vfs_procctl_handlemem(user_e, (vir_bytes) user_addr,
+		    num_of_bytes, rw_flag == READING)) != OK) {
 			return r;
 		}
 
@@ -1034,8 +1043,9 @@ static int req_slink_actual(
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
+
   cpf_revoke(gid_name);
-  cpf_revoke(gid_buf);
+  if (cpf_revoke(gid_buf) == GRANT_FAULTED) return(ERESTART);
 
   return(r);
 }
@@ -1059,7 +1069,7 @@ int req_slink(
 	r = req_slink_actual(fs_e, inode_nr, lastc, proc_e, path_addr,
 		path_length, uid, gid, CPF_TRY);
 
-	if(r == EFAULT) {
+	if (r == ERESTART) {
 		if((r=vm_vfs_procctl_handlemem(proc_e, (vir_bytes) path_addr,
 			path_length, 0)) != OK) {
 			return r;
@@ -1096,7 +1106,8 @@ int req_stat_actual(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
-  cpf_revoke(grant_id);
+
+  if (cpf_revoke(grant_id) == GRANT_FAULTED) return(ERESTART);
 
   return(r);
 }
@@ -1112,7 +1123,7 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e,
 
 	r = req_stat_actual(fs_e, inode_nr, proc_e, buf, CPF_TRY);
 
-	if(r == EFAULT) {
+	if (r == ERESTART) {
 		if((r=vm_vfs_procctl_handlemem(proc_e, (vir_bytes) buf,
 			sizeof(struct stat), 1)) != OK) {
 			return r;
