@@ -152,6 +152,7 @@ cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
 	grants[g].cp_u.cp_direct.cp_who_to = who_to;
 	grants[g].cp_u.cp_direct.cp_start = addr;
 	grants[g].cp_u.cp_direct.cp_len = bytes;
+	grants[g].cp_faulted = GRANT_INVALID;
 	__insn_barrier();
 	grants[g].cp_flags = access | CPF_DIRECT | CPF_USED | CPF_VALID;
 
@@ -174,6 +175,7 @@ cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from, cp_grant_id_t gr)
 	grants[g].cp_u.cp_indirect.cp_who_to = who_to;
 	grants[g].cp_u.cp_indirect.cp_who_from = who_from;
 	grants[g].cp_u.cp_indirect.cp_grant = gr;
+	grants[g].cp_faulted = GRANT_INVALID;
 	__insn_barrier();
 	grants[g].cp_flags = CPF_USED | CPF_INDIRECT | CPF_VALID;
 
@@ -198,23 +200,39 @@ cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
 	grants[g].cp_u.cp_magic.cp_who_from = who_from;
 	grants[g].cp_u.cp_magic.cp_start = addr;
 	grants[g].cp_u.cp_magic.cp_len = bytes;
+	grants[g].cp_faulted = GRANT_INVALID;
 	__insn_barrier();
 	grants[g].cp_flags = CPF_USED | CPF_MAGIC | CPF_VALID | access;
 
 	return GRANT_ID(g, grants[g].cp_seq);
 }
 
+/*
+ * Revoke previously granted access, identified by grant ID.  Return -1 on
+ * error, with errno set as appropriate.  Return 0 on success, with one
+ * exception: return GRANT_FAULTED (1) if a grant was created with CPF_TRY and
+ * during its lifetime, a copy from or to the grant experienced a soft fault.
+ */
 int
 cpf_revoke(cp_grant_id_t grant)
 {
-/* Revoke previously granted access, identified by grant id. */
-	int g;
+	int r, g;
 
 	GID_CHECK_USED(grant);
 
 	g = GRANT_IDX(grant);
 
-	/* Make grant invalid by setting flags to 0, clearing CPF_USED.
+	/*
+	 * If a safecopy action on a (direct or magic) grant with the CPF_TRY
+	 * flag failed on a soft fault, the kernel will have set the cp_faulted
+	 * field to the grant identifier.  Here, we test this and return
+	 * GRANT_FAULTED (1) on a match.
+	 */
+	r = ((grants[g].cp_flags & CPF_TRY) &&
+	    grants[g].cp_faulted == grant) ? GRANT_FAULTED : 0;
+
+	/*
+	 * Make grant invalid by setting flags to 0, clearing CPF_USED.
 	 * This invalidates the grant.
 	 */
 	grants[g].cp_flags = 0;
@@ -239,7 +257,7 @@ cpf_revoke(cp_grant_id_t grant)
 	grants[g].cp_u.cp_free.cp_next = freelist;
 	freelist = g;
 
-	return 0;
+	return r;
 }
 
 /*

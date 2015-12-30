@@ -483,7 +483,7 @@ void revive(endpoint_t proc_e, int returned)
 		 * it again now that I/O is done.
 		 */
 		if (GRANT_VALID(rfp->fp_grant)) {
-			if(cpf_revoke(rfp->fp_grant)) {
+			if(cpf_revoke(rfp->fp_grant) == -1) {
 				panic("VFS: revoke failed for grant: %d",
 					rfp->fp_grant);
 			}

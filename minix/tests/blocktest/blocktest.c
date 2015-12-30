@@ -318,7 +318,7 @@ static void raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 
 	r = sendrec_driver(&m, exp, res);
 
-	if (cpf_revoke(grant) != OK)
+	if (cpf_revoke(grant) == -1)
 		panic("unable to revoke grant");
 
 	if (r != RESULT_OK)
@@ -359,7 +359,7 @@ static void vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
 	for (i = 0; i < nr_req; i++) {
 		iovec[i].iov_size = iov_s[i].iov_size;
 
-		if (cpf_revoke(iov_s[i].iov_grant) != OK)
+		if (cpf_revoke(iov_s[i].iov_grant) == -1)
 			panic("unable to revoke grant");
 	}
 }
@@ -1181,7 +1181,7 @@ static int vir_ioctl(dev_t minor, unsigned long req, void *ptr, ssize_t exp,
 
 	r = sendrec_driver(&m, exp, res);
 
-	if (cpf_revoke(grant) != OK)
+	if (cpf_revoke(grant) == -1)
 		panic("unable to revoke grant");
 
 	return r;

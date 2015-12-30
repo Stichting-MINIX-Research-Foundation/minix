@@ -791,6 +791,90 @@ hole_regression(void)
 	close(fd);
 }
 
+/*
+ * Test that soft faults during file system I/O do not cause functions to
+ * return partial I/O results.
+ *
+ * We refer to the faults that are caused internally within the operating
+ * system as a result of the deadlock mitigation described at the top of this
+ * file, as a particular class of "soft faults".  Such soft faults may occur in
+ * the middle of an I/O operation, and general I/O semantics dictate that upon
+ * partial success, the partial success is returned (and *not* an error).  As a
+ * result, these soft faults, if not handled as special cases, may cause even
+ * common file system operations such as read(2) on a regular file to return
+ * fewer bytes than requested.  Such unexpected short reads are typically not
+ * handled well by userland, and the OS must prevent them from occurring if it
+ * can.  Note that read(2) is the most problematic, but certainly not the only,
+ * case where this problem can occur.
+ *
+ * Unfortunately, several file system services are not following the proper
+ * general I/O semantics - and this includes MFS.  Therefore, for now, we have
+ * to test this case using block device I/O, which does do the right thing.
+ * In this test we hope that the root file system is mounted on a block device
+ * usable for (read-only!) testing purposes.
+ */
+static void
+softfault_partial(void)
+{
+	struct statvfs stf;
+	struct stat st;
+	char *buf, *buf2;
+	ssize_t size;
+	int fd;
+
+	if (statvfs("/", &stf) != 0) e(0);
+
+	/*
+	 * If the root file system is not mounted off a block device, or if we
+	 * cannot open that device ourselves, simply skip this subtest.
+	 */
+	if (stat(stf.f_mntfromname, &st) != 0 || !S_ISBLK(st.st_mode))
+		return; /* skip subtest */
+
+	if ((fd = open(stf.f_mntfromname, O_RDONLY)) == -1)
+		return; /* skip subtest */
+
+	/*
+	 * See if we can read in the first two full blocks, or two pages worth
+	 * of data, whichever is larger.  If that fails, there is no point in
+	 * continuing the test.
+	 */
+	size = MAX(stf.f_bsize, PAGE_SIZE) * 2;
+
+	if ((buf = mmap(NULL, size, PROT_READ | PROT_READ,
+	    MAP_ANON | MAP_PRIVATE | MAP_PREALLOC, -1, 0)) == MAP_FAILED) e(0);
+
+	if (read(fd, buf, size) != size) {
+		munmap(buf, size);
+		close(fd);
+		return; /* skip subtest */
+	}
+
+	lseek(fd, 0, SEEK_SET);
+
+	/*
+	 * Now attempt a read to a partially faulted-in buffer.  The first time
+	 * around, the I/O transfer will generate a fault and return partial
+	 * success.  In that case, the entire I/O transfer should be retried
+	 * after faulting in the missing page(s), thus resulting in the read
+	 * succeeding in full.
+	 */
+	if ((buf2 = mmap(NULL, size, PROT_READ | PROT_READ,
+	    MAP_ANON | MAP_PRIVATE, -1, 0)) == MAP_FAILED) e(0);
+	buf2[0] = '\0'; /* fault in the first page */
+
+	if (read(fd, buf2, size) != size) e(0);
+
+	/* The result should be correct, too. */
+	if (memcmp(buf, buf2, size)) e(0);
+
+	/* Clean up. */
+	munmap(buf2, size);
+	munmap(buf, size);
+
+	close(fd);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -813,6 +897,8 @@ main(int argc, char *argv[])
 	hole_regression();
 
 	test_memory_types_vs_operations();
+
+	softfault_partial();
 
 	makefiles(MAXFILES);
 

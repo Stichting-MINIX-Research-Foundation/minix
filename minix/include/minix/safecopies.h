@@ -7,21 +7,20 @@
 #include <stdint.h>
 
 typedef struct {
-	int cp_flags;	/* CPF_* below */
-	union ixfer_cp_u{
+	int cp_flags;					/* CPF_* below */
+	int cp_seq;					/* sequence number */
+	union ixfer_cp_u {
 		struct {
 			/* CPF_DIRECT */
 			endpoint_t	cp_who_to;	/* grantee */
 			vir_bytes	cp_start;	/* memory */
 			size_t		cp_len;		/* size in bytes */
-			char		cp_reserved[8]; /* future use */
 		} cp_direct;
 		struct {
 			/* CPF_INDIRECT */
 			endpoint_t	cp_who_to;	/* grantee */
 			endpoint_t	cp_who_from;	/* previous granter */
 			cp_grant_id_t	cp_grant;	/* previous grant */
-			char		cp_reserved[8];/* future use */
 		} cp_indirect;
 		struct {
 			/* CPF_MAGIC */
@@ -29,15 +28,13 @@ typedef struct {
 			endpoint_t	cp_who_to;	/* grantee */
 			vir_bytes	cp_start;	/* memory */
 			size_t		cp_len;		/* size in bytes */
-			char		cp_reserved[8]; /* future use */
 		} cp_magic;
 		struct {
 			/* (free slot) */
 			int		cp_next;	/* next free or -1 */
 		} cp_free;
 	} cp_u;
-	int cp_seq;					/* sequence number */
-	char cp_reserved[4];				/* future use */
+	cp_grant_id_t cp_faulted;	/* soft fault marker (CPF_TRY only) */
 } cp_grant_t;
 
 /* Vectored safecopy. */
@@ -45,7 +42,6 @@ struct vscp_vec {
         /* Exactly one of the following must be SELF. */
         endpoint_t      v_from;         /* source */
         endpoint_t      v_to;           /* destination */
-  
         cp_grant_id_t   v_gid;          /* grant id of other process */
         size_t          v_offset;       /* offset in other grant */
         vir_bytes       v_addr;         /* address in copier's space */
@@ -77,6 +73,9 @@ struct vscp_vec {
 #define CPF_INDIRECT	0x000400 /* Grant from grant to another. */
 #define CPF_MAGIC	0x000800 /* Grant from any to any. */
 #define CPF_VALID	0x001000 /* Grant slot contains valid grant. */
+
+/* Special cpf_revoke() return values. */
+#define GRANT_FAULTED	1	/* CPF_TRY: a soft fault occurred */
 
 /* Prototypes for functions in libsys. */
 cp_grant_id_t cpf_grant_direct(endpoint_t, vir_bytes, size_t, int);
