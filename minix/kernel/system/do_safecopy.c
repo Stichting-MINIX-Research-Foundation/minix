@@ -29,6 +29,13 @@ static int safecopy(struct proc *, endpoint_t, endpoint_t,
 #define HASGRANTTABLE(gr) \
 	(priv(gr) && priv(gr)->s_grant_table)
 
+struct cp_sfinfo {		/* information for handling soft faults */
+	int try;		/* if nonzero, try copy only, stop on fault */
+	endpoint_t endpt;	/* endpoint owning grant with CPF_TRY flag */
+	vir_bytes addr;		/* address to write mark upon soft fault */
+	cp_grant_id_t value;	/* grant ID to use as mark value to write */
+};
+
 /*===========================================================================*
  *				verify_grant				     *
  *===========================================================================*/
@@ -41,7 +48,7 @@ int verify_grant(
   vir_bytes offset_in,		/* copy offset within grant */
   vir_bytes *offset_result,	/* copy offset within virtual address space */
   endpoint_t *e_granter,	/* new granter (magic grants) */
-  u32_t *flags			/* CPF_* */
+  struct cp_sfinfo *sfinfo	/* storage for soft fault information */
 )
 {
 	cp_grant_t g;
@@ -119,8 +126,6 @@ int verify_grant(
 			"verify_grant: grant verify: data_copy failed\n");
 			return EPERM;
 		}
-
-		if(flags) *flags = g.cp_flags;
 
 		/* Check validity: flags and sequence number. */
 		if((g.cp_flags & (CPF_USED | CPF_VALID)) !=
@@ -250,6 +255,14 @@ int verify_grant(
 		return EPERM;
 	}
 
+	/* If requested, store information regarding soft faults. */
+	if (sfinfo != NULL && (sfinfo->try = !!(g.cp_flags & CPF_TRY))) {
+		sfinfo->endpt = granter;
+		sfinfo->addr = priv(granter_proc)->s_grant_table +
+		    sizeof(g) * grant_idx + offsetof(cp_grant_t, cp_faulted);
+		sfinfo->value = grant;
+	}
+
 	return OK;
 }
 
@@ -274,7 +287,7 @@ static int safecopy(
 	endpoint_t new_granter, *src, *dst;
 	struct proc *granter_p;
 	int r;
-	u32_t flags;
+	struct cp_sfinfo sfinfo;
 #if PERF_USE_COW_SAFECOPY
 	vir_bytes size;
 #endif
@@ -295,7 +308,7 @@ static int safecopy(
 
 	/* Verify permission exists. */
 	if((r=verify_grant(granter, grantee, grantid, bytes, access,
-	    g_offset, &v_offset, &new_granter, &flags)) != OK) {
+	    g_offset, &v_offset, &new_granter, &sfinfo)) != OK) {
 		if(r == ENOTREADY) return r;
 			printf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
@@ -325,11 +338,39 @@ static int safecopy(
 	}
 
 	/* Do the regular copy. */
-	if(flags & CPF_TRY) {
-		int r;
-		/* Try copy without transparently faulting in pages. */
+	if (sfinfo.try) {
+		/*
+		 * Try copying without transparently faulting in pages.
+		 * TODO: while CPF_TRY is meant to protect against deadlocks on
+		 * memory-mapped files in file systems, it seems that this case
+		 * triggers faults a whole lot more often, resulting in extra
+		 * overhead due to retried file system operations.  It might be
+		 * a good idea to go through VM even in this case, and have VM
+		 * fail (only) if the affected page belongs to a file mapping.
+		 */
 		r = virtual_copy(&v_src, &v_dst, bytes);
-		if(r == EFAULT_SRC || r == EFAULT_DST) return EFAULT;
+		if (r == EFAULT_SRC || r == EFAULT_DST) {
+			/*
+			 * Mark the magic grant as having experienced a soft
+			 * fault during its lifetime.  The exact value does not
+			 * matter, but we use the grant ID (including its
+			 * sequence number) as a form of protection in the
+			 * light of CPU concurrency.
+			 */
+			r = data_copy(KERNEL, (vir_bytes)&sfinfo.value,
+			    sfinfo.endpt, sfinfo.addr, sizeof(sfinfo.value));
+			/*
+			 * Failure means the creator of the magic grant messed
+			 * up, which can only be unintentional, so report..
+			 */
+			if (r != OK)
+				printf("Kernel: writing soft fault marker %d "
+				    "into %d at 0x%lx failed (%d)\n",
+				    sfinfo.value, sfinfo.endpt, sfinfo.addr,
+				    r);
+
+			return EFAULT;
+		}
 		return r;
 	}
 	return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
