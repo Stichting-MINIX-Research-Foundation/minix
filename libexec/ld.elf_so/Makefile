@@ -76,10 +76,6 @@ SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c \
 		tls.c symver.c diagassert.c
 
-.if defined(__MINIX)
-SRCS+=		map_object_fallback.c
-.endif # defined(__MINIX)
-
 .if ${USE_FORT} == "yes"
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/misc
 SRCS+=		stack_protector.c
