@@ -206,16 +206,11 @@ static bool
 _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
     int flags)
 {
-#if !defined(__minix)
 	Library_Xform *x = _rtld_xforms;
-#endif /* !defined(__minix) */
 	Obj_Entry *o;
-#if !defined(__minix)
 	size_t j;
 	ssize_t i;
-#endif /* !defined(__minix) */
 	bool got = false;
-#if !defined(__minix)
 	union {
 		int i;
 		u_quad_t q;
@@ -223,7 +218,6 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 	} val;
 
 	dbg(("load by name %s %p", name, x));
-#endif /* !defined(__minix) */
 	for (o = _rtld_objlist->next; o != NULL; o = o->next)
 		if (_rtld_object_match_name(o, name)) {
 			++o->refcount;
@@ -231,7 +225,6 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 			return true;
 		}
 
-#if !defined(__minix)
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
 			continue;
@@ -297,7 +290,6 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed,
 		}
 
 	}
-#endif /* !defined(__minix) */
 
 	if (got)
 		return true;
