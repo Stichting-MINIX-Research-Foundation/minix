@@ -7,8 +7,8 @@
 TESTSDIR=	${TESTSBASE}
 
 # LSC: Unsupported on MINIX:
-# kernel net
-TESTS_SUBDIRS=		bin dev games include lib libexec
+# net
+TESTS_SUBDIRS=		bin dev games include kernel lib libexec
 TESTS_SUBDIRS+=		sbin sys usr.bin usr.sbin
 
 . if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)

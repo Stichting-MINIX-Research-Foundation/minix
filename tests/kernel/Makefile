@@ -6,13 +6,17 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/kernel
 
+.if !defined(__MINIX)
 TESTS_SUBDIRS=	kqueue
+.endif # !defined(__MINIX)
 TESTS_C=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_pty
+.if !defined(__MINIX)
 TESTS_C+=	t_mqueue
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
+.endif # !defined(__MINIX)
 TESTS_C+=	t_kauth_pr_47598
 TESTS_C+=	t_sysctl
 
@@ -42,6 +46,7 @@ LDADD.t_rnd+=  -lrump -lpthread
 .endif
 
 
+.if !defined(__MINIX)
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
 SRCS.t_extent=		t_extent.c subr_extent.c
@@ -53,5 +58,6 @@ t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
 
 CLEANFILES+=	t_subr_prf.c
+.endif # !defined(__MINIX)
 
 .include <bsd.test.mk>
