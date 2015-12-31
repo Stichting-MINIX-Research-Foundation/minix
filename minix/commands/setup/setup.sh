@@ -298,9 +298,9 @@ done	# while step3 != ok
 root=${primary}s0
 home=${primary}s1
 usr=${primary}s2
-umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
 umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
+umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 
 devsizemb="`expr $devsize / 1024 / 2`"
 maxhome="`expr $devsizemb - $TOTALMB - 1`"
