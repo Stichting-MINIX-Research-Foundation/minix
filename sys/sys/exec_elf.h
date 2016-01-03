@@ -908,18 +908,17 @@ typedef struct {
  * descsz: 4
  */
 #define ELF_NOTE_TYPE_NETBSD_TAG	1
+#if defined(__minix)
 /* NetBSD-specific note name and description sizes */
 #define ELF_NOTE_NETBSD_NAMESZ		7
 #define ELF_NOTE_NETBSD_DESCSZ		4
 /* NetBSD-specific note name */
 #define ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
-
-#if defined(__minix)
-#define ELF_NOTE_TYPE_MINIX_TAG		1
+#else
 /* MINIX3-specific note name and description sizes */
-#define ELF_NOTE_MINIX_NAMESZ		6
-#define ELF_NOTE_MINIX_DESCSZ		4
-#define ELF_NOTE_MINIX_NAME		"Minix\0\0\0"
+#define ELF_NOTE_NETBSD_NAMESZ		6
+#define ELF_NOTE_NETBSD_DESCSZ		4
+#define ELF_NOTE_NETBSD_NAME		"Minix\0\0\0"
 #endif /* defined(__minix) */
 
 /* NetBSD-specific note type: Checksum. 

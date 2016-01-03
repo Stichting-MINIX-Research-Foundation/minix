@@ -58,21 +58,16 @@
 
 #include "sysident_assym.h"
 
-#if defined(__minix)
-	.section ".note.minix.ident", "a"
-	.p2align 2
-	.long	ELF_NOTE_MINIX_NAMESZ
-	.long	ELF_NOTE_MINIX_DESCSZ
-	.long	ELF_NOTE_TYPE_MINIX_TAG
-	.ascii	"Minix\0\0\0"	/* ELF_NOTE_NETBSD_NAME */
-	.long	300300000 /* Minix version as in "%d%03d%03d", MAJ-MIN-TEENY */
-#else
 	.section ".note.netbsd.ident", "a"
 	.p2align 2
 
 	.long	ELF_NOTE_NETBSD_NAMESZ
 	.long	ELF_NOTE_NETBSD_DESCSZ
 	.long	ELF_NOTE_TYPE_NETBSD_TAG
+#if defined(__minix)
+	.ascii	"Minix\0\0\0"	/* ELF_NOTE_NETBSD_NAME */
+	.long	300400000 /* Minix version as in "%d%03d%03d", MAJ-MIN-TEENY */
+#else
 	.ascii	"NetBSD\0\0"	/* ELF_NOTE_NETBSD_NAME */
 	.long	__NetBSD_Version__
 #endif /* defined(__minix) */
