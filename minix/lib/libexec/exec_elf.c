@@ -39,7 +39,7 @@ static int elf_sane(Elf_Ehdr *hdr)
   if ((hdr->e_phoff > SECTOR_SIZE) ||
       (hdr->e_phoff + hdr->e_phentsize * hdr->e_phnum) > SECTOR_SIZE) {
 #if ELF_DEBUG
-	printf("peculiar phoff\n");
+	printf("libexec: peculiar phoff\n");
 #endif
      return 0;
   }
@@ -178,6 +178,10 @@ int libexec_load_elf(struct exec_info *execi)
 		int pagechunk;
 		int mmap_prot = PROT_READ;
 
+#if ELF_DEBUG
+			printf("libexec: -------------------\n");
+			printf("libexec: phdr %x (%d)\n", (uint32_t)ph, i);
+#endif
 		if(!(ph->p_flags & PF_R)) {
 			printf("libexec: warning: unreadable segment\n");
 		}
@@ -264,7 +268,7 @@ int libexec_load_elf(struct exec_info *execi)
 			}
 
 #if ELF_DEBUG
-			printf("mmapped 0x%lx-0x%lx\n", vaddr, vaddr+seg_membytes);
+			printf("libexec: mmapped 0x%lx-0x%lx\n", vaddr, vaddr+seg_membytes);
 #endif
 
 			/* Copy executable section into it */
@@ -274,21 +278,21 @@ int libexec_load_elf(struct exec_info *execi)
 			}
 
 #if ELF_DEBUG
-			printf("copied 0x%lx-0x%lx\n", p_vaddr, p_vaddr+ph->p_filesz);
+			printf("libexec: copied 0x%lx-0x%lx\n", p_vaddr, p_vaddr+ph->p_filesz);
 #endif
 
 			/* Clear remaining bits */
 			vmemend = vaddr + seg_membytes;
 			if((chunk = p_vaddr - vaddr) > 0) {
 #if ELF_DEBUG
-				printf("start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
+				printf("libexec: start clearing 0x%lx-0x%lx\n", vaddr, vaddr+chunk);
 #endif
 				execi->clearmem(execi, vaddr, chunk);
 			}
 	
 			if((chunk = vmemend - vfileend) > 0) {
 #if ELF_DEBUG
-				printf("end clearing 0x%lx-0x%lx\n", vfileend, vfileend+chunk);
+				printf("libexec: end clearing 0x%lx-0x%lx\n", vfileend, vfileend+chunk);
 #endif
 				execi->clearmem(execi, vfileend, chunk);
 			}
@@ -302,7 +306,7 @@ int libexec_load_elf(struct exec_info *execi)
 	}
 
 #if ELF_DEBUG
-	printf("stack mmapped 0x%lx-0x%lx\n", stacklow, stacklow+execi->stack_size);
+	printf("libexec: stack mmapped 0x%lx-0x%lx\n", stacklow, stacklow+execi->stack_size);
 #endif
 
 	/* record entry point and lowest load vaddr for caller */
