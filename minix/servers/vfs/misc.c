@@ -83,7 +83,10 @@ int do_getsysinfo(void)
 	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++, rfpl++) {
 		rfpl->fpl_tty = rfp->fp_tty;
 		rfpl->fpl_blocked_on = rfp->fp_blocked_on;
-		rfpl->fpl_task = rfp->fp_task;
+		if (rfp->fp_blocked_on == FP_BLOCKED_ON_CDEV)
+			rfpl->fpl_task = rfp->fp_cdev.endpt;
+		else
+			rfpl->fpl_task = NONE;
 	}
 	src_addr = (vir_bytes) fproc_light;
 	len = sizeof(fproc_light);
@@ -110,20 +113,19 @@ int do_getsysinfo(void)
 int do_fcntl(void)
 {
 /* Perform the fcntl(fd, cmd, ...) system call. */
-
-  register struct filp *f;
-  int new_fd, fl, r = OK, fcntl_req, fcntl_argx;
+  struct filp *f;
+  int fd, new_fd, fl, r = OK, fcntl_req, fcntl_argx;
+  vir_bytes addr;
   tll_access_t locktype;
 
-  fp->fp_fd = job_m_in.m_lc_vfs_fcntl.fd;
-  fp->fp_io_buffer = job_m_in.m_lc_vfs_fcntl.arg_ptr;
-  fp->fp_io_nbytes = job_m_in.m_lc_vfs_fcntl.cmd;
+  fd = job_m_in.m_lc_vfs_fcntl.fd;
   fcntl_req = job_m_in.m_lc_vfs_fcntl.cmd;
   fcntl_argx = job_m_in.m_lc_vfs_fcntl.arg_int;
+  addr = job_m_in.m_lc_vfs_fcntl.arg_ptr;
 
   /* Is the file descriptor valid? */
   locktype = (fcntl_req == F_FREESP) ? VNODE_WRITE : VNODE_READ;
-  if ((f = get_filp(fp->fp_fd, locktype)) == NULL)
+  if ((f = get_filp(fd, locktype)) == NULL)
 	return(err_code);
 
   switch (fcntl_req) {
@@ -144,16 +146,16 @@ int do_fcntl(void)
     case F_GETFD:
 	/* Get close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	r = 0;
-	if (FD_ISSET(fp->fp_fd, &fp->fp_cloexec_set))
+	if (FD_ISSET(fd, &fp->fp_cloexec_set))
 		r = FD_CLOEXEC;
 	break;
 
     case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	if (fcntl_argx & FD_CLOEXEC)
-		FD_SET(fp->fp_fd, &fp->fp_cloexec_set);
+		FD_SET(fd, &fp->fp_cloexec_set);
 	else
-		FD_CLR(fp->fp_fd, &fp->fp_cloexec_set);
+		FD_CLR(fd, &fp->fp_cloexec_set);
 	break;
 
     case F_GETFL:
@@ -172,7 +174,7 @@ int do_fcntl(void)
     case F_SETLK:
     case F_SETLKW:
 	/* Set or clear a file lock. */
-	r = lock_op(f, fcntl_req);
+	r = lock_op(fd, fcntl_req, addr);
 	break;
 
     case F_FREESP:
@@ -186,8 +188,8 @@ int do_fcntl(void)
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else {
 		/* Copy flock data from userspace. */
-		r = sys_datacopy_wrapper(who_e, fp->fp_io_buffer,
-			SELF, (vir_bytes) &flock_arg, sizeof(flock_arg));
+		r = sys_datacopy_wrapper(who_e, addr, SELF,
+		    (vir_bytes)&flock_arg, sizeof(flock_arg));
 	}
 
 	if (r != OK) break;
@@ -294,11 +296,11 @@ int do_fsync(void)
   struct filp *rfilp;
   struct vmnt *vmp;
   dev_t dev;
-  int r = OK;
+  int fd, r = OK;
 
-  fp->fp_fd = job_m_in.m_lc_vfs_fsync.fd;
+  fd = job_m_in.m_lc_vfs_fsync.fd;
 
-  if ((rfilp = get_filp(fp->fp_fd, VNODE_READ)) == NULL)
+  if ((rfilp = get_filp(fd, VNODE_READ)) == NULL)
 	return(err_code);
 
   dev = rfilp->filp_vno->v_dev;
@@ -574,7 +576,6 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
  * The parent and child parameters tell who forked off whom. The file
  * system uses the same slot numbers as the kernel.  Only PM makes this call.
  */
-
   struct fproc *cp, *pp;
   int i, parentno, childno;
   mutex_t c_fp_lock;
@@ -609,16 +610,8 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
   cp->fp_pid = cpid;
   cp->fp_endpoint = cproc;
 
-  /* A forking process never has an outstanding grant, as it isn't blocking on
-   * I/O. */
-  if (GRANT_VALID(pp->fp_grant)) {
-	panic("VFS: fork: pp (endpoint %d) has grant %d\n", pp->fp_endpoint,
-	       pp->fp_grant);
-  }
-  if (GRANT_VALID(cp->fp_grant)) {
-	panic("VFS: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint,
-	       cp->fp_grant);
-  }
+  /* A forking process cannot possibly be suspended on anything. */
+  assert(pp->fp_blocked_on == FP_BLOCKED_ON_NONE);
 
   /* A child is not a process leader, not being revived, etc. */
   cp->fp_flags = FP_NOFLAGS;
@@ -907,10 +900,12 @@ int pm_dumpcore(int csig, vir_bytes exe_name)
   char core_path[PATH_MAX];
   char proc_name[PROC_NAME_LEN];
 
-  /* If a process is blocked, fp->fp_fd holds the fd it's blocked on. Free it
-   * up for use by common_open(). This step is the reason we cannot use this
-   * function to generate a core dump of a process while it is still running
-   * (i.e., without terminating it), as it changes the state of the process.
+  /* In effect, the coredump is generated through the use of calls as if made
+   * by the process itself.  As such, the process must not be doing anything
+   * else.  Therefore, if the process was blocked on anything, unblock it
+   * first.  This step is the reason we cannot use this function to generate a
+   * core dump of a process while it is still running (i.e., without
+   * terminating it), as it changes the state of the process.
    */
   if (fp_is_blocked(fp))
           unpause();

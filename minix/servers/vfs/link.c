@@ -329,16 +329,16 @@ int do_ftruncate(void)
 /* As with do_truncate(), truncate_vnode() does the actual work. */
   struct filp *rfilp;
   struct vnode *vp;
-  int r;
+  int r, fd;
   off_t length;
 
-  fp->fp_fd = job_m_in.m_lc_vfs_truncate.fd;
+  fd = job_m_in.m_lc_vfs_truncate.fd;
 
   length = job_m_in.m_lc_vfs_truncate.offset;
   if (length < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
-  if ((rfilp = get_filp(fp->fp_fd, VNODE_WRITE)) == NULL)
+  if ((rfilp = get_filp(fd, VNODE_WRITE)) == NULL)
 	return(err_code);
 
   vp = rfilp->filp_vno;

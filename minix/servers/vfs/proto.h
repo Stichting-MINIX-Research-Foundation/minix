@@ -30,13 +30,13 @@ void send_work(void);
 int vm_vfs_procctl_handlemem(endpoint_t ep, vir_bytes mem, vir_bytes len, int flags);
 
 /* device.c */
-int cdev_open(dev_t dev, int flags);
+int cdev_open(int fd, dev_t dev, int flags);
 int cdev_close(dev_t dev);
 int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
 	unsigned long bytes, int flags);
 dev_t cdev_map(dev_t dev, struct fproc *rfp);
 int cdev_select(dev_t dev, int ops);
-int cdev_cancel(dev_t dev);
+int cdev_cancel(dev_t dev, endpoint_t endpt, cp_grant_id_t grant);
 void cdev_reply(void);
 int bdev_open(dev_t dev, int access);
 int bdev_close(dev_t dev);
@@ -94,7 +94,7 @@ int truncate_vnode(struct vnode *vp, off_t newsize);
 int rdlink_direct(char *orig_path, char *link_path, struct fproc *rfp);
 
 /* lock.c */
-int lock_op(struct filp *f, int req);
+int lock_op(int fd, int req, vir_bytes arg);
 void lock_revive(void);
 
 /* main.c */
@@ -169,9 +169,9 @@ int pipe_check(struct filp *filp, int rw_flag, int oflags, int bytes,
 void release(struct vnode *vp, int op, int count);
 void revive(endpoint_t proc_e, int returned);
 void suspend(int why);
-void pipe_suspend(struct filp *rfilp, vir_bytes buf, size_t size);
+void pipe_suspend(int callnr, int fd, vir_bytes buf, size_t size,
+	size_t cum_io);
 void unsuspend_by_endpt(endpoint_t proc_e);
-void wait_for(endpoint_t proc_e);
 
 /* protect.c */
 int do_access(void);
@@ -189,12 +189,12 @@ void lock_bsf(void);
 void unlock_bsf(void);
 void check_bsf_lock(void);
 int do_read_write_peek(int rw_flag, int fd, vir_bytes buf, size_t bytes);
-int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd, vir_bytes buf,
-	size_t bytes);
-int read_write(struct fproc *rfp, int rw_flag, struct filp *f, vir_bytes buffer,
-	size_t nbytes, endpoint_t for_e);
-int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, vir_bytes buf,
-	size_t req_size);
+int actual_read_write_peek(struct fproc *rfp, int rw_flag, int fd,
+	vir_bytes buf, size_t bytes);
+int read_write(struct fproc *rfp, int rw_flag, int fd, struct filp *f,
+	vir_bytes buffer, size_t nbytes, endpoint_t for_e);
+int rw_pipe(int rw_flag, endpoint_t usr, struct filp *f, int callnr, int fd,
+	vir_bytes buf, size_t nbytes, size_t cum_io);
 
 /* request.c */
 int req_breadwrite(endpoint_t fs_e, endpoint_t user_e, dev_t dev, off_t pos,

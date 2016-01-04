@@ -294,53 +294,37 @@ int notouch		/* check only */
  *===========================================================================*/
 void suspend(int why)
 {
-/* Take measures to suspend the processing of the present system call.
- * Store the parameters to be used upon resuming in the process table.
- * (Actually they are not used when a process is waiting for an I/O device,
- * but they are needed for pipes, and it is not worth making the distinction.)
- * The SUSPEND pseudo error should be returned after calling suspend().
+/* Take measures to suspend the processing of the present system call.  The
+ * caller must store the parameters to be used upon resuming in the process
+ * table as appropriate.  The SUSPEND pseudo error should be returned after
+ * calling suspend().
  */
+
+  assert(fp->fp_blocked_on == FP_BLOCKED_ON_NONE);
 
   if (why == FP_BLOCKED_ON_POPEN || why == FP_BLOCKED_ON_PIPE)
 	/* #procs susp'ed on pipe*/
 	susp_count++;
 
   fp->fp_blocked_on = why;
-  assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
-  fp->fp_block_callnr = job_call_nr;
-}
-
-/*===========================================================================*
- *				wait_for				     *
- *===========================================================================*/
-void wait_for(endpoint_t who)
-{
-  if(who == NONE || who == ANY)
-	panic("suspend on NONE or ANY");
-  suspend(FP_BLOCKED_ON_OTHER);
-  fp->fp_task = who;
 }
 
 
 /*===========================================================================*
  *				pipe_suspend				     *
  *===========================================================================*/
-void pipe_suspend(struct filp * filp __unused, vir_bytes buf, size_t size)
+void pipe_suspend(int callnr, int fd, vir_bytes buf, size_t size,
+	size_t cum_io)
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
  */
 
-  /* We can only get here through an I/O call, which comes with a file
-   * descriptor, and that file descriptor must therefore correspond to the
-   * target file pointer of the I/O request. The process is blocked on the I/O
-   * call, and thus, the file descriptor will remain valid. Therefore, we can,
-   * and will, use the file descriptor to get the file pointer again later.
-   */
-  assert(fp->fp_filp[fp->fp_fd] == filp);
-
-  fp->fp_io_buffer = buf;
-  fp->fp_io_nbytes = size;
+  fp->fp_pipe.callnr = callnr;
+  fp->fp_pipe.fd = fd;
+  fp->fp_pipe.buf = buf;
+  fp->fp_pipe.nbytes = size;
+  fp->fp_pipe.cum_io = cum_io;
   suspend(FP_BLOCKED_ON_PIPE);
 }
 
@@ -350,14 +334,15 @@ void pipe_suspend(struct filp * filp __unused, vir_bytes buf, size_t size)
  *===========================================================================*/
 void unsuspend_by_endpt(endpoint_t proc_e)
 {
-/* Revive processes waiting for drivers (SUSPENDed) that have disappeared with
- * return code EAGAIN.
+/* Revive processes waiting for drivers (SUSPENDed) that have disappeared, with
+ * return code EIO.
  */
   struct fproc *rp;
 
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
 	if (rp->fp_pid == PID_FREE) continue;
-	if (rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e)
+	if (rp->fp_blocked_on == FP_BLOCKED_ON_CDEV &&
+	    rp->fp_cdev.endpt == proc_e)
 		revive(rp->fp_endpoint, EIO);
   }
 
@@ -371,18 +356,18 @@ void unsuspend_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				release					     *
  *===========================================================================*/
-void release(vp, op, count)
-register struct vnode *vp;	/* inode of pipe */
-int op;				/* VFS_READ, VFS_WRITE, or VFS_OPEN */
-int count;			/* max number of processes to release */
+void release(struct vnode * vp, int op, int count)
 {
-/* Check to see if any process is hanging on vnode 'vp'. If one is, and it
- * was trying to perform the call indicated by 'op', release it.
+/* Check to see if any process is hanging on pipe vnode 'vp'. If one is, and it
+ * was trying to perform the call indicated by 'op' - one of VFS_OPEN,
+ * VFS_READ, or VFS_WRITE - release it.  The 'count' parameter indicates the
+ * maximum number of processes to release, which allows us to stop searching
+ * early in some cases.
  */
 
   register struct fproc *rp;
   struct filp *f;
-  int selop;
+  int fd, selop;
 
   /* Trying to perform the call also includes SELECTing on it with that
    * operation.
@@ -406,22 +391,27 @@ int count;			/* max number of processes to release */
 
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS] && count > 0; rp++) {
+	/* Just to make sure:
+	 * - FP_BLOCKED_ON_POPEN implies the original request was VFS_OPEN;
+	 * - FP_BLOCKED_ON_PIPE may be the result of VFS_READ and VFS_WRITE,
+	 *   and one of those two numbers is stored in fp_pipe.callnr.
+	 */
 	if (rp->fp_pid != PID_FREE && fp_is_blocked(rp) &&
-	    !(rp->fp_flags & FP_REVIVED) && rp->fp_block_callnr == op) {
+	    !(rp->fp_flags & FP_REVIVED) &&
+	    ((op == VFS_OPEN && rp->fp_blocked_on == FP_BLOCKED_ON_POPEN) ||
+	     (op != VFS_OPEN && rp->fp_blocked_on == FP_BLOCKED_ON_PIPE &&
+	      op == rp->fp_pipe.callnr))) {
 		/* Find the vnode. Depending on the reason the process was
 		 * suspended, there are different ways of finding it.
 		 */
-
-		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN ||
-		    rp->fp_blocked_on == FP_BLOCKED_ON_PIPE ||
-		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
-		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
-			f = rp->fp_filp[rp->fp_fd];
-			if (f == NULL || f->filp_mode == FILP_CLOSED)
-				continue;
-			if (f->filp_vno != vp)
-				continue;
-		} else
+		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN)
+			fd = rp->fp_popen.fd;
+		else
+			fd = rp->fp_pipe.fd;
+		f = rp->fp_filp[fd];
+		if (f == NULL || f->filp_mode == FILP_CLOSED)
+			continue;
+		if (f->filp_vno != vp)
 			continue;
 
 		/* We found the vnode. Revive process. */
@@ -442,53 +432,44 @@ void revive(endpoint_t proc_e, int returned)
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
  * is the way it is eventually released. For processes blocked on _SELECT and
- * _OTHER, this function MUST NOT block its calling thread.
+ * _CDEV, this function MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   int blocked_on;
-  int fd_nr, slot;
+  int slot;
 
   if (proc_e == NONE || isokendpt(proc_e, &slot) != OK) return;
 
   rfp = &fproc[slot];
   if (!fp_is_blocked(rfp) || (rfp->fp_flags & FP_REVIVED)) return;
 
-  /* The 'reviving' flag only applies to pipes.  Processes waiting for TTY get
-   * a message right away.  The revival process is different for TTY and pipes.
-   * For select and TTY revival, the work is already done, for pipes it is not:
-   * the proc must be restarted so it can try again.
+  /* The 'reviving' flag applies to pipe I/O and file locks.  Processes waiting
+   * on those suspension types need more processing, and will be unblocked from
+   * the main loop later.  Processes suspended for other reasons get a reply
+   * right away, and as such, have their suspension cleared right here as well.
    */
   blocked_on = rfp->fp_blocked_on;
-  fd_nr = rfp->fp_fd;
-  if (blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK) {
+  if (blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_FLOCK) {
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_flags |= FP_REVIVED;
 	reviving++;		/* process was waiting on pipe or lock */
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	/* TODO: we could reset rfp->fp_fd to (e.g.) -1 here, but since its
-	 * value is not always bounds checked elsewhere, this might do more
-	 * harm than good right now.
-	 */
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
-		replycode(proc_e, fd_nr);
+		replycode(proc_e, rfp->fp_popen.fd);
 	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
 		replycode(proc_e, returned);
 	} else {
-		/* Revive a process suspended on TTY or other device.
-		 * Pretend it wants only what there is.
-		 */
-		rfp->fp_io_nbytes = returned;
+		assert(blocked_on == FP_BLOCKED_ON_CDEV);
 		/* If a grant has been issued by FS for this I/O, revoke
 		 * it again now that I/O is done.
 		 */
-		if (GRANT_VALID(rfp->fp_grant)) {
-			if(cpf_revoke(rfp->fp_grant) == -1) {
+		if (GRANT_VALID(rfp->fp_cdev.grant)) {
+			if (cpf_revoke(rfp->fp_cdev.grant) == -1) {
 				panic("VFS: revoke failed for grant: %d",
-					rfp->fp_grant);
+				    rfp->fp_cdev.grant);
 			}
-			rfp->fp_grant = GRANT_INVALID;
 		}
 		replycode(proc_e, returned);/* unblock the process */
 	}
@@ -504,9 +485,7 @@ void unpause(void)
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
  */
-  int blocked_on, fild, status = EINTR;
-  struct filp *f;
-  dev_t dev;
+  int blocked_on, status = EINTR;
   int wasreviving = 0;
 
   if (!fp_is_blocked(fp)) return;
@@ -527,17 +506,13 @@ void unpause(void)
   switch (blocked_on) {
 	case FP_BLOCKED_ON_PIPE:/* process trying to read or write a pipe */
 		/* If the operation succeeded partially, return the bytes
-		 * processed so far, and clear the remembered state. Otherwise,
-		 * return EINTR as usual.
+		 * processed so far.  Otherwise, return EINTR as usual.
 		 */
-		if (fp->fp_cum_io_partial > 0) {
-			status = fp->fp_cum_io_partial;
-
-			fp->fp_cum_io_partial = 0;
-		}
+		if (fp->fp_pipe.cum_io > 0)
+			status = fp->fp_pipe.cum_io;
 		break;
 
-	case FP_BLOCKED_ON_LOCK:/* process trying to set a lock with FCNTL */
+	case FP_BLOCKED_ON_FLOCK:/* process trying to set a lock with FCNTL */
 		break;
 
 	case FP_BLOCKED_ON_SELECT:/* process blocking on select() */
@@ -547,19 +522,9 @@ void unpause(void)
 	case FP_BLOCKED_ON_POPEN:	/* process trying to open a fifo */
 		break;
 
-	case FP_BLOCKED_ON_OTHER:/* process trying to do device I/O (e.g. tty)*/
-		fild = fp->fp_fd;
-		if (fild < 0 || fild >= OPEN_MAX)
-			panic("file descriptor out-of-range");
-		f = fp->fp_filp[fild];
-		if(!f) {
-			sys_diagctl_stacktrace(fp->fp_endpoint);
-			panic("process %d blocked on empty fd %d",
-				fp->fp_endpoint, fild);
-		}
-		dev = f->filp_vno->v_sdev;	/* device hung on */
-
-		status = cdev_cancel(dev);
+	case FP_BLOCKED_ON_CDEV: /* process blocked on character device I/O */
+		status = cdev_cancel(fp->fp_cdev.dev, fp->fp_cdev.endpt,
+		    fp->fp_cdev.grant);
 
 		break;
 	default :

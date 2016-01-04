@@ -296,8 +296,8 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 		case FP_BLOCKED_ON_PIPE:
 			wmesg = "pipe";
 			break;
-		case FP_BLOCKED_ON_LOCK:
-			wmesg = "lock";
+		case FP_BLOCKED_ON_FLOCK:
+			wmesg = "flock";
 			break;
 		case FP_BLOCKED_ON_POPEN:
 			wmesg = "popen";
@@ -305,7 +305,7 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 		case FP_BLOCKED_ON_SELECT:
 			wmesg = "select";
 			break;
-		case FP_BLOCKED_ON_OTHER:
+		case FP_BLOCKED_ON_CDEV:
 			/*
 			 * Add the task (= character driver) endpoint to the
 			 * wchan value, and use the driver's process name,

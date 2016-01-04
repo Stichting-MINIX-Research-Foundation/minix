@@ -27,14 +27,29 @@ EXTERN struct fproc {
   dev_t fp_tty;			/* major/minor of controlling tty */
 
   int fp_blocked_on;		/* what is it blocked on */
-  int fp_block_callnr;		/* blocked call if rd/wr can't finish */
-  size_t fp_cum_io_partial;	/* partial byte count if write can't finish */
-  endpoint_t fp_task;		/* which task is proc suspended on */
-  cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
-
-  int fp_fd;			/* file descriptor for blocking call */
-  vir_bytes fp_io_buffer;	/* user buffer address for ongoing I/O */
-  size_t fp_io_nbytes;		/* number of bytes left for ongoing I/O */
+  union ixfer_fp_u {		/* state per blocking type */
+	struct {			/* FP_BLOCKED_ON_PIPE */
+		int callnr;		/* user call: VFS_READ or VFS_WRITE */
+		int fd;			/* file descriptor for blocking call */
+		vir_bytes buf;		/* user buffer address */
+		size_t nbytes;		/* number of bytes left */
+		size_t cum_io;		/* partial (write) result byte count */
+	} u_pipe;
+	struct {			/* FP_BLOCKED_ON_POPEN */
+		int fd;			/* file descriptor for blocking call */
+	} u_popen;
+	struct {			/* FP_BLOCKED_ON_FLOCK */
+		int fd;			/* file descriptor for blocking call */
+		int cmd;		/* fcntl command, always F_SETLKW */
+		vir_bytes arg;		/* user address of flock structure */
+	} u_flock;
+	/* nothing for FP_BLOCKED_ON_SELECT for now */
+	struct {			/* FP_BLOCKED_ON_CDEV */
+		dev_t dev;		/* device number for blocking call */
+		endpoint_t endpt;	/* driver endpoint */
+		cp_grant_id_t grant;	/* data grant */
+	} u_cdev;
+  } fp_u;
 
   uid_t fp_realuid;		/* real user id */
   uid_t fp_effuid;		/* effective user id */
@@ -56,6 +71,12 @@ EXTERN struct fproc {
   int fp_vmnt_rdlocks;		/* number of read-only locks on vmnts */
 #endif
 } fproc[NR_PROCS];
+
+/* Shortcuts for block state union substructures. */
+#define fp_pipe		fp_u.u_pipe
+#define fp_popen	fp_u.u_popen
+#define fp_flock	fp_u.u_flock
+#define fp_cdev		fp_u.u_cdev
 
 /* fp_flags */
 #define FP_NOFLAGS	 0000

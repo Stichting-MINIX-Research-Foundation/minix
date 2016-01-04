@@ -32,7 +32,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-static int cdev_opcl(int op, dev_t dev, int flags);
+static int cdev_opcl(int op, int fd, dev_t dev, int flags);
 static int block_io(endpoint_t driver_e, message *mess_ptr);
 static cp_grant_id_t make_grant(endpoint_t driver_e, endpoint_t user_e, int op,
 	vir_bytes buf, unsigned long size);
@@ -318,9 +318,10 @@ int cdev_io(
 	panic("VFS: asynsend in cdev_io failed: %d", r);
 
   /* Suspend the calling process until a reply arrives. */
-  wait_for(dp->dmap_driver);
-  assert(!GRANT_VALID(fp->fp_grant));
-  fp->fp_grant = gid;	/* revoke this when unsuspended. */
+  fp->fp_cdev.dev = dev;
+  fp->fp_cdev.endpt = dp->dmap_driver;
+  fp->fp_cdev.grant = gid;	/* revoke this when unsuspended */
+  suspend(FP_BLOCKED_ON_CDEV);
 
   return SUSPEND;
 }
@@ -329,7 +330,7 @@ int cdev_io(
 /*===========================================================================*
  *				cdev_clone				     *
  *===========================================================================*/
-static int cdev_clone(dev_t dev, devminor_t new_minor)
+static int cdev_clone(int fd, dev_t dev, devminor_t new_minor)
 {
 /* A new minor device number has been returned. Request PFS to create a
  * temporary device file to hold it.
@@ -338,6 +339,8 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
   struct node_details res;
   int r;
 
+  assert(fd != -1);
+
   /* Device number of the new device. */
   dev = makedev(major(dev), new_minor);
 
@@ -345,21 +348,21 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
   r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
       RWX_MODES | I_CHAR_SPECIAL, dev, &res);
   if (r != OK) {
-	(void) cdev_opcl(CDEV_CLOSE, dev, 0);
+	(void)cdev_opcl(CDEV_CLOSE, -1, dev, 0);
 	return r;
   }
 
   /* Drop old node and use the new values */
   if ((vp = get_free_vnode()) == NULL) {
 	req_putnode(PFS_PROC_NR, res.inode_nr, 1); /* is this right? */
-	(void) cdev_opcl(CDEV_CLOSE, dev, 0);
+	(void)cdev_opcl(CDEV_CLOSE, -1, dev, 0);
 	return(err_code);
   }
   lock_vnode(vp, VNODE_OPCL);
 
-  assert(fp->fp_filp[fp->fp_fd] != NULL);
-  unlock_vnode(fp->fp_filp[fp->fp_fd]->filp_vno);
-  put_vnode(fp->fp_filp[fp->fp_fd]->filp_vno);
+  assert(fp->fp_filp[fd] != NULL);
+  unlock_vnode(fp->fp_filp[fd]->filp_vno);
+  put_vnode(fp->fp_filp[fd]->filp_vno);
 
   vp->v_fs_e = res.fs_e;
   vp->v_vmnt = NULL;
@@ -370,7 +373,7 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
   vp->v_sdev = dev;
   vp->v_fs_count = 1;
   vp->v_ref_count = 1;
-  fp->fp_filp[fp->fp_fd]->filp_vno = vp;
+  fp->fp_filp[fd]->filp_vno = vp;
 
   return OK;
 }
@@ -381,6 +384,7 @@ static int cdev_clone(dev_t dev, devminor_t new_minor)
  *===========================================================================*/
 static int cdev_opcl(
   int op,			/* operation, CDEV_OPEN or CDEV_CLOSE */
+  int fd,			/* file descriptor (open) or -1 (close) */
   dev_t dev,			/* device to open or close */
   int flags			/* mode bits and flags */
 )
@@ -392,7 +396,14 @@ static int cdev_opcl(
   message dev_mess;
   int r, r2;
 
+  /*
+   * We need the a descriptor for CDEV_OPEN, because if the driver returns a
+   * cloned device, we need to replace what the fd points to.  For CDEV_CLOSE
+   * however, we may be closing a device for which the calling process has no
+   * file descriptor, and thus we expect no meaningful fd value in that case.
+   */
   assert(op == CDEV_OPEN || op == CDEV_CLOSE);
+  assert(fd != -1 || op == CDEV_CLOSE);
 
   /* Determine task dmap. */
   if ((dp = cdev_get(dev, &minor_dev)) == NULL)
@@ -439,7 +450,6 @@ static int cdev_opcl(
 	panic("VFS: asynsend in cdev_opcl failed: %d", r);
 
   /* Block the thread waiting for a reply. */
-  fp->fp_task = dp->dmap_driver;
   self->w_task = dp->dmap_driver;
   self->w_drv_sendrec = &dev_mess;
 
@@ -460,7 +470,7 @@ static int cdev_opcl(
 	 */
 	if (r & CDEV_CLONED) {
 		new_minor = r & ~(CDEV_CLONED | CDEV_CTTY);
-		if ((r2 = cdev_clone(dev, new_minor)) < 0)
+		if ((r2 = cdev_clone(fd, dev, new_minor)) < 0)
 			return(r2);
 	}
 
@@ -481,11 +491,11 @@ static int cdev_opcl(
 /*===========================================================================*
  *				cdev_open				     *
  *===========================================================================*/
-int cdev_open(dev_t dev, int flags)
+int cdev_open(int fd, dev_t dev, int flags)
 {
 /* Open a character device. */
 
-  return cdev_opcl(CDEV_OPEN, dev, flags);
+  return cdev_opcl(CDEV_OPEN, fd, dev, flags);
 }
 
 
@@ -496,7 +506,7 @@ int cdev_close(dev_t dev)
 {
 /* Close a character device. */
 
-  return cdev_opcl(CDEV_CLOSE, dev, 0);
+  return cdev_opcl(CDEV_CLOSE, -1, dev, 0);
 }
 
 
@@ -507,17 +517,17 @@ int do_ioctl(void)
 {
 /* Perform the ioctl(2) system call. */
   unsigned long ioctlrequest;
-  int r = OK;
+  int fd, r = OK;
   struct filp *f;
   register struct vnode *vp;
   dev_t dev;
   vir_bytes argx;
 
-  fp->fp_fd = job_m_in.m_lc_vfs_ioctl.fd;
+  fd = job_m_in.m_lc_vfs_ioctl.fd;
   ioctlrequest = job_m_in.m_lc_vfs_ioctl.req;
   argx = (vir_bytes)job_m_in.m_lc_vfs_ioctl.arg;
 
-  if ((f = get_filp(fp->fp_fd, VNODE_READ)) == NULL)
+  if ((f = get_filp(fd, VNODE_READ)) == NULL)
 	return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
   if (!S_ISCHR(vp->v_mode) && !S_ISBLK(vp->v_mode)) {
@@ -535,7 +545,7 @@ int do_ioctl(void)
 		f->filp_ioctl_fp = NULL;
 	} else
 		r = cdev_io(CDEV_IOCTL, dev, who_e, argx, 0, ioctlrequest,
-			f->filp_flags);
+		    f->filp_flags);
   }
 
   unlock_filp(f);
@@ -583,7 +593,7 @@ int cdev_select(dev_t dev, int ops)
 /*===========================================================================*
  *				cdev_cancel				     *
  *===========================================================================*/
-int cdev_cancel(dev_t dev)
+int cdev_cancel(dev_t dev, endpoint_t endpt __unused, cp_grant_id_t grant)
 {
 /* Cancel an I/O request, blocking until it has been cancelled. */
   devminor_t minor_dev;
@@ -607,7 +617,6 @@ int cdev_cancel(dev_t dev)
 	panic("VFS: asynsend in cdev_cancel failed: %d", r);
 
   /* Suspend this thread until we have received the response. */
-  fp->fp_task = dp->dmap_driver;
   self->w_task = dp->dmap_driver;
   self->w_drv_sendrec = &dev_mess;
 
@@ -616,12 +625,11 @@ int cdev_cancel(dev_t dev)
   self->w_task = NONE;
   assert(self->w_drv_sendrec == NULL);
 
-  /* Clean up and return the result (note: the request may have completed). */
-  if (GRANT_VALID(fp->fp_grant)) {
-	(void) cpf_revoke(fp->fp_grant);
-	fp->fp_grant = GRANT_INVALID;
-  }
+  /* Clean up. */
+  if (GRANT_VALID(grant))
+	(void)cpf_revoke(grant);
 
+  /* Return the result (note: the request may have completed). */
   r = dev_mess.m_lchardriver_vfs_reply.status;
   return (r == EAGAIN) ? EINTR : r;
 }
@@ -771,8 +779,8 @@ static void cdev_generic_reply(message *m_ptr)
 	*wp->w_drv_sendrec = *m_ptr;
 	wp->w_drv_sendrec = NULL;
 	worker_signal(wp);	/* Continue open/close/cancel */
-  } else if (rfp->fp_blocked_on != FP_BLOCKED_ON_OTHER ||
-		rfp->fp_task != m_ptr->m_source) {
+  } else if (rfp->fp_blocked_on != FP_BLOCKED_ON_CDEV ||
+    rfp->fp_cdev.endpt != m_ptr->m_source) {
 	/* This would typically be caused by a protocol error, i.e. a driver
 	 * not properly following the character driver protocol rules.
 	 */

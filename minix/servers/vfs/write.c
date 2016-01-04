@@ -15,6 +15,11 @@
 int do_write(void)
 {
 /* Perform the write(fd, buffer, nbytes) system call. */
+
+  /* See the comment in do_read(). */
+  if (job_m_in.m_lc_vfs_readwrite.cum_io != 0)
+	return(EINVAL);
+
   return(do_read_write_peek(WRITING, job_m_in.m_lc_vfs_readwrite.fd,
 	job_m_in.m_lc_vfs_readwrite.buf, job_m_in.m_lc_vfs_readwrite.len));
 }

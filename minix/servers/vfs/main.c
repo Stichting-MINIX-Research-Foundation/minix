@@ -213,18 +213,32 @@ static void do_reply(struct worker_thread *wp)
  *===========================================================================*/
 static void do_pending_pipe(void)
 {
-  int r, op;
+  vir_bytes buf;
+  size_t nbytes, cum_io;
+  int r, op, fd;
   struct filp *f;
   tll_access_t locktype;
 
-  f = fp->fp_filp[fp->fp_fd];
+  assert(fp->fp_blocked_on == FP_BLOCKED_ON_NONE);
+
+  /*
+   * We take all our needed resumption state from the m_in message, which is
+   * filled by unblock().  Since this is an internal resumption, there is no
+   * need to perform extensive checks on the message fields.
+   */
+  fd = job_m_in.m_lc_vfs_readwrite.fd;
+  buf = job_m_in.m_lc_vfs_readwrite.buf;
+  nbytes = job_m_in.m_lc_vfs_readwrite.len;
+  cum_io = job_m_in.m_lc_vfs_readwrite.cum_io;
+
+  f = fp->fp_filp[fd];
   assert(f != NULL);
 
   locktype = (job_call_nr == VFS_READ) ? VNODE_READ : VNODE_WRITE;
   op = (job_call_nr == VFS_READ) ? READING : WRITING;
   lock_filp(f, locktype);
 
-  r = rw_pipe(op, who_e, f, fp->fp_io_buffer, fp->fp_io_nbytes);
+  r = rw_pipe(op, who_e, f, job_call_nr, fd, buf, nbytes, cum_io);
 
   if (r != SUSPEND) { /* Do we have results to report? */
 	/* Process is writing, but there is no reader. Send a SIGPIPE signal.
@@ -409,7 +423,6 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	rfp->fp_flags = FP_NOFLAGS;
 	rfp->fp_pid = mess.VFS_PM_PID;
 	rfp->fp_endpoint = mess.VFS_PM_ENDPT;
-	rfp->fp_grant = GRANT_INVALID;
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	rfp->fp_realuid = (uid_t) SYS_UID;
 	rfp->fp_effuid = (uid_t) SYS_UID;
@@ -917,33 +930,31 @@ struct fproc *rfp;
   /* Reconstruct the original request from the saved data. */
   memset(&m_in, 0, sizeof(m_in));
   m_in.m_source = rfp->fp_endpoint;
-  m_in.m_type = rfp->fp_block_callnr;
-  switch (m_in.m_type) {
-  case VFS_READ:
-  case VFS_WRITE:
-	assert(blocked_on == FP_BLOCKED_ON_PIPE);
-	m_in.m_lc_vfs_readwrite.fd = rfp->fp_fd;
-	m_in.m_lc_vfs_readwrite.buf = rfp->fp_io_buffer;
-	m_in.m_lc_vfs_readwrite.len = rfp->fp_io_nbytes;
+  switch (blocked_on) {
+  case FP_BLOCKED_ON_PIPE:
+	assert(rfp->fp_pipe.callnr == VFS_READ ||
+	    rfp->fp_pipe.callnr == VFS_WRITE);
+	m_in.m_type = rfp->fp_pipe.callnr;
+	m_in.m_lc_vfs_readwrite.fd = rfp->fp_pipe.fd;
+	m_in.m_lc_vfs_readwrite.buf = rfp->fp_pipe.buf;
+	m_in.m_lc_vfs_readwrite.len = rfp->fp_pipe.nbytes;
+	m_in.m_lc_vfs_readwrite.cum_io = rfp->fp_pipe.cum_io;
 	break;
-  case VFS_FCNTL:
-	assert(blocked_on == FP_BLOCKED_ON_LOCK);
-	m_in.m_lc_vfs_fcntl.fd = rfp->fp_fd;
-	m_in.m_lc_vfs_fcntl.cmd = rfp->fp_io_nbytes;
-	m_in.m_lc_vfs_fcntl.arg_ptr = rfp->fp_io_buffer;
-	assert(m_in.m_lc_vfs_fcntl.cmd == F_SETLKW);
+  case FP_BLOCKED_ON_FLOCK:
+	assert(rfp->fp_flock.cmd == F_SETLKW);
+	m_in.m_type = VFS_FCNTL;
+	m_in.m_lc_vfs_fcntl.fd = rfp->fp_flock.fd;
+	m_in.m_lc_vfs_fcntl.cmd = rfp->fp_flock.cmd;
+	m_in.m_lc_vfs_fcntl.arg_ptr = rfp->fp_flock.arg;
 	break;
   default:
-	panic("unblocking call %d blocked on %d ??", m_in.m_type, blocked_on);
+	panic("unblocking call blocked on %d ??", blocked_on);
   }
 
   rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;	/* no longer blocked */
   rfp->fp_flags &= ~FP_REVIVED;
   reviving--;
   assert(reviving >= 0);
-
-  /* This should not be device I/O. If it is, it'll 'leak' grants. */
-  assert(!GRANT_VALID(rfp->fp_grant));
 
   /* Pending pipe reads/writes cannot be repeated as is, and thus require a
    * special resumption procedure.

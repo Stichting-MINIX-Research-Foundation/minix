@@ -48,8 +48,8 @@ void fproc_dmp()
 		!!(fp->fp_flags & FP_SESLDR), nfds,
 		fp->fp_blocked_on, !!(fp->fp_flags & FP_REVIVED)
 	);
-	if (fp->fp_blocked_on == FP_BLOCKED_ON_OTHER)
-		printf("%4d\n", fp->fp_task);
+	if (fp->fp_blocked_on == FP_BLOCKED_ON_CDEV)
+		printf("%4d\n", fp->fp_cdev.endpt);
 	else
 		printf(" nil\n");
   }

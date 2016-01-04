@@ -17,5 +17,6 @@ ssize_t read(int fd, void *buffer, size_t nbytes)
   m.m_lc_vfs_readwrite.fd = fd;
   m.m_lc_vfs_readwrite.len = nbytes;
   m.m_lc_vfs_readwrite.buf = (vir_bytes)buffer;
+  m.m_lc_vfs_readwrite.cum_io = 0;
   return(_syscall(VFS_PROC_NR, VFS_READ, &m));
 }

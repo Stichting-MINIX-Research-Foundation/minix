@@ -10,6 +10,7 @@
 #include <minix/u64.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <assert.h>
 #include "file.h"
 #include "lock.h"
 #include "vnode.h"
@@ -17,21 +18,24 @@
 /*===========================================================================*
  *				lock_op					     *
  *===========================================================================*/
-int lock_op(f, req)
-struct filp *f;
-int req;			/* either F_SETLK or F_SETLKW */
+int lock_op(int fd, int req, vir_bytes arg)
 {
 /* Perform the advisory locking required by POSIX. */
-
   int r, ltype, i, conflict = 0, unlocking = 0;
   mode_t mo;
   off_t first, last;
+  struct filp *f;
   struct flock flock;
   struct file_lock *flp, *flp2, *empty;
 
+  assert(req == F_GETLK || req == F_SETLK || req == F_SETLKW);
+
+  f = fp->fp_filp[fd];
+  assert(f != NULL);
+
   /* Fetch the flock structure from user space. */
-  r = sys_datacopy_wrapper(who_e, fp->fp_io_buffer, VFS_PROC_NR,
-		   (vir_bytes) &flock, sizeof(flock));
+  r = sys_datacopy_wrapper(who_e, arg, VFS_PROC_NR, (vir_bytes)&flock,
+      sizeof(flock));
   if (r != OK) return(EINVAL);
 
   /* Make some error checks. */
@@ -86,7 +90,10 @@ int req;			/* either F_SETLK or F_SETLKW */
 			return(EAGAIN);
 		} else {
 			/* For F_SETLKW, suspend the process. */
-			suspend(FP_BLOCKED_ON_LOCK);
+			fp->fp_flock.fd = fd;
+			fp->fp_flock.cmd = req;
+			fp->fp_flock.arg = arg;
+			suspend(FP_BLOCKED_ON_FLOCK);
 			return(SUSPEND);
 		}
 	}
@@ -140,8 +147,8 @@ int req;			/* either F_SETLK or F_SETLKW */
 	}
 
 	/* Copy the flock structure back to the caller. */
-	r = sys_datacopy_wrapper(VFS_PROC_NR, (vir_bytes) &flock, who_e,
-		fp->fp_io_buffer, sizeof(flock));
+	r = sys_datacopy_wrapper(VFS_PROC_NR, (vir_bytes)&flock, who_e, arg,
+	    sizeof(flock));
 	return(r);
   }
 
@@ -177,7 +184,7 @@ void lock_revive()
 
   for (fptr = &fproc[0]; fptr < &fproc[NR_PROCS]; fptr++){
 	if (fptr->fp_pid == PID_FREE) continue;
-	if (fptr->fp_blocked_on == FP_BLOCKED_ON_LOCK) {
+	if (fptr->fp_blocked_on == FP_BLOCKED_ON_FLOCK) {
 		revive(fptr->fp_endpoint, 0);
 	}
   }
