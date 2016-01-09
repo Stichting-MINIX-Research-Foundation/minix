@@ -19,6 +19,7 @@
 #include <net/gen/udp_io.h>
 
 #include <net/gen/ip_hdr.h>
+#include <net/gen/ip_io.h>
 
 #define DEBUG 0
 
@@ -42,6 +43,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	int r;
 	nwio_tcpconf_t tcpconf;
 	nwio_udpopt_t udpopt;
+	nwio_ipopt_t ipopt;
 	struct sockaddr_un uds_addr;
 	int uds_sotype = -1;
 
@@ -85,10 +87,16 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 		}
 	}
 
+	r= ioctl(sock, NWIOGIPOPT, &ipopt);
+	if (r != -1 || errno != ENOTTY)
 	{
 		ip_hdr_t *ip_hdr;
 		int rd;
 		struct sockaddr_in sin;
+
+		if (r == -1) {
+			return r;
+		}
 
 		rd = read(sock, buffer, length);
 

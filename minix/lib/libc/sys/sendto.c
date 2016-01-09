@@ -13,6 +13,7 @@
 
 #include <net/gen/in.h>
 #include <net/gen/ip_hdr.h>
+#include <net/gen/ip_io.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
@@ -37,6 +38,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	int r;
 	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
+	nwio_ipopt_t ipopt;
 	int uds_sotype = -1;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
@@ -75,11 +77,17 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 		}
 	}
 
+	r= ioctl(sock, NWIOGIPOPT, &ipopt);
+	if (r != -1 || errno != ENOTTY)
 	{
 		ip_hdr_t *ip_hdr;
 		const struct sockaddr_in *sinp;
 		ssize_t retval;
 		int saved_errno;
+
+		if (r == -1) {
+			return r;
+		}
 
 		sinp = (const struct sockaddr_in *)dest_addr;
 		if (sinp->sin_family != AF_INET)
