@@ -20,6 +20,23 @@ struct lookup;
 struct worker_thread;
 struct job;
 
+/* bdev.c */
+int bdev_open(dev_t dev, int access);
+int bdev_close(dev_t dev);
+int bdev_ioctl(dev_t dev, endpoint_t proc_e, unsigned long req, vir_bytes buf);
+void bdev_reply(void);
+void bdev_up(devmajor_t major);
+
+/* cdev.c */
+dev_t cdev_map(dev_t dev, struct fproc *rfp);
+int cdev_open(int fd, dev_t dev, int flags);
+int cdev_close(dev_t dev);
+int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
+	unsigned long bytes, int flags);
+int cdev_select(dev_t dev, int ops);
+int cdev_cancel(dev_t dev, endpoint_t endpt, cp_grant_id_t grant);
+void cdev_reply(void);
+
 /* comm.c */
 int drv_sendrec(endpoint_t drv_e, message *reqm);
 void fs_cancel(struct vmnt *vmp);
@@ -30,19 +47,9 @@ void send_work(void);
 int vm_vfs_procctl_handlemem(endpoint_t ep, vir_bytes mem, vir_bytes len, int flags);
 
 /* device.c */
-int cdev_open(int fd, dev_t dev, int flags);
-int cdev_close(dev_t dev);
-int cdev_io(int op, dev_t dev, endpoint_t proc_e, vir_bytes buf, off_t pos,
-	unsigned long bytes, int flags);
-dev_t cdev_map(dev_t dev, struct fproc *rfp);
-int cdev_select(dev_t dev, int ops);
-int cdev_cancel(dev_t dev, endpoint_t endpt, cp_grant_id_t grant);
-void cdev_reply(void);
-int bdev_open(dev_t dev, int access);
-int bdev_close(dev_t dev);
-void bdev_reply(void);
-void bdev_up(devmajor_t major);
 int do_ioctl(void);
+cp_grant_id_t make_ioctl_grant(endpoint_t driver_e, endpoint_t user_e,
+	vir_bytes buf, unsigned long request);
 
 /* dmap.c */
 void lock_dmap(struct dmap *dp);
@@ -300,8 +307,8 @@ int copy_path(char *dest, size_t size);
 int fetch_name(vir_bytes path, size_t len, char *dest);
 int isokendpt_f(const char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
-int sys_datacopy_wrapper(endpoint_t src, vir_bytes srcv, endpoint_t dst, vir_bytes dstv,
-	size_t len);
+int sys_datacopy_wrapper(endpoint_t src, vir_bytes srcv, endpoint_t dst,
+	vir_bytes dstv, size_t len);
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
 #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)
