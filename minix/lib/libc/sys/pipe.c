@@ -16,10 +16,11 @@ pipe2(int fild[2], int flags)
 
 	memset(&m, 0, sizeof(m));
 	m.m_lc_vfs_pipe2.flags = flags;
+	m.m_lc_vfs_pipe2.oflags = flags;	/* backward compatibility */
 
 	if (_syscall(VFS_PROC_NR, VFS_PIPE2, &m) < 0) return(-1);
-	fild[0] = m.m_lc_vfs_pipe2.fd0;
-	fild[1] = m.m_lc_vfs_pipe2.fd1;
+	fild[0] = m.m_vfs_lc_fdpair.fd0;
+	fild[1] = m.m_vfs_lc_fdpair.fd1;
 	return(0);
 }
 

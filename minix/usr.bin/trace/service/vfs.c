@@ -678,8 +678,8 @@ vfs_pipe2_in(struct trace_proc * proc, const message * m_out,
 
 	if (!failed) {
 		put_open(proc, "fd", PF_NONAME, "[", ", ");
-		put_fd(proc, "rfd", m_in->m_lc_vfs_pipe2.fd0);
-		put_fd(proc, "wfd", m_in->m_lc_vfs_pipe2.fd1);
+		put_fd(proc, "rfd", m_in->m_vfs_lc_fdpair.fd0);
+		put_fd(proc, "wfd", m_in->m_vfs_lc_fdpair.fd1);
 		put_close(proc, "]");
 	} else
 		put_field(proc, "fd", "&..");

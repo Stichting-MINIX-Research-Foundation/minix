@@ -760,9 +760,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_path);
 
 typedef struct {
-	int fd0;
-	int fd1;
+	/*
+	 * We are in the process of cleaning up this message, by moving the
+	 * flags value from the third integer into the first.  Once enough time
+	 * has passed, we can get rid of the second and third integer fields.
+	 */
 	int flags;
+	int _unused;
+	int oflags;
 
 	uint8_t padding[44];
 } mess_lc_vfs_pipe2;
@@ -1950,6 +1955,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_fs_utime);
 
 typedef struct {
+	int fd0;
+	int fd1;
+
+	uint8_t padding[48];
+} mess_vfs_lc_fdpair;
+_ASSERT_MSG_SIZE(mess_vfs_lc_fdpair);
+
+typedef struct {
 	off_t offset;
 
 	uint8_t padding[48];
@@ -2262,6 +2275,7 @@ typedef struct noxfer_message {
 		mess_vfs_fs_statvfs	m_vfs_fs_statvfs;
 		mess_vfs_fs_unlink	m_vfs_fs_unlink;
 		mess_vfs_fs_utime	m_vfs_fs_utime;
+		mess_vfs_lc_fdpair	m_vfs_lc_fdpair;
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
