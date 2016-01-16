@@ -11,6 +11,7 @@
 /* The following are so basic, all the lib files get them automatically. */
 #include <minix/config.h>	/* must be first */
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <limits.h>
 #include <errno.h>
 
@@ -40,5 +41,12 @@ int _syscall(endpoint_t _who, int _syscallnr, message *_msgptr);
 void _loadname(const char *_name, message *_msgptr);
 int _len(const char *_s);
 void _begsig(int _dummy);
+
+#define _VECTORIO_READ	1
+#define _VECTORIO_WRITE	2
+ssize_t _vectorio_setup(const struct iovec * iov, int iovcnt, char ** ptr,
+	int op);
+void _vectorio_cleanup(const struct iovec * iov, int iovcnt, char * buffer,
+	ssize_t r, int op);
 
 #endif /* _LIB_H */
