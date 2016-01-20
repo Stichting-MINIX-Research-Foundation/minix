@@ -150,6 +150,8 @@
 ./usr/pkg
 ./usr/pkg/etc
 ./usr/pkg/etc/rc.d
+./usr/pkg/var
+./usr/pkg/var/run
 ./usr/preserve
 ./usr/run
 ./usr/sbin
