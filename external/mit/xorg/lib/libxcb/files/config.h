@@ -28,8 +28,10 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+#if !defined(__minix)
 /* Define if your platform supports sendmsg */
 #define HAVE_SENDMSG 1
+#endif /* !defined(__minix) */
 
 /* Have the sockaddr_un.sun_len member. */
 #define HAVE_SOCKADDR_SUN_LEN 1
