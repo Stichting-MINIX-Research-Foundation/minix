@@ -878,6 +878,8 @@
 ./usr/pkg                                               minix-base
 ./usr/pkg/etc                                           minix-base
 ./usr/pkg/etc/rc.d                                      minix-base
+./usr/pkg/var                                           minix-base
+./usr/pkg/var/run                                       minix-base
 ./usr/preserve                                          minix-base
 ./usr/run                                               minix-base
 ./usr/sbin                                              minix-base
