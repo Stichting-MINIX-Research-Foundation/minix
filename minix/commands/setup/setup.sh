@@ -464,8 +464,8 @@ then
 			rm -rf /mnt/usr/tmp/root_backup
 			# umount shouldn't fail here, but if it will, next
 			# "rm -rf" will serve for user's pleasure.
-			umount /mnt/root >/dev/null || exit
 			umount /mnt/usr >/dev/null || exit
+			umount /mnt/root >/dev/null || exit
 			rm -rf /mnt/root /mnt/usr
 			exit 1
 		fi
@@ -769,8 +769,8 @@ if [ -e "$PACKAGES_DIR" ]
 then
 	echo "Installing pkgin..."
 
-	sh -c "cp $PACKAGES_DIR/pkgin-* $PACKAGES_DIR/pkg_install-* $PACKAGES_DIR/openssl-* /mnt/tmp &&
-	 chroot /mnt pkg_add /tmp/openssl-* /tmp/pkg_install-* /tmp/pkgin-*"
+	sh -c "cp $PACKAGES_DIR/pkgin-* $PACKAGES_DIR/pkg_install-* $PACKAGES_DIR/libarchive-* /mnt/tmp &&
+	 chroot /mnt pkg_add /tmp/pkgin-*"
 	rm -f /mnt/tmp/*
 
 	if [ -f "$PACKAGES_DIR/pkg_summary.bz2" ]
@@ -786,11 +786,11 @@ then
 	fi
 fi
 
-umount /dev/$usr && echo Unmounted $usr
-umount /dev/$root && echo Unmounted $root
 if [ "$nohome" = 0 ]; then
 	umount /dev/$home && echo Unmounted $home
 fi
+umount /dev/$usr && echo Unmounted $usr
+umount /dev/$root && echo Unmounted $root
 
 echo "
 Please type 'shutdown -r now' to exit MINIX 3 and reboot. To boot into
