@@ -301,14 +301,21 @@ static
 void
 replace_contents(atf_fs_path_t *p, const char *buf)
 {
+#if !defined(NDEBUG) && defined(__minix)
     atf_error_t err;
 
     PRE(atf_dynstr_length(&p->m_data) == strlen(buf));
 
+#endif /* !defined(NDEBUG) && defined(__minix) */
     atf_dynstr_clear(&p->m_data);
-    err = atf_dynstr_append_fmt(&p->m_data, "%s", buf);
+#if !defined(NDEBUG) && defined(__minix)
+    err =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+    	atf_dynstr_append_fmt(&p->m_data, "%s", buf);
 
+#if !defined(NDEBUG) && defined(__minix)
     INV(!atf_is_error(err));
+#endif /* !defined(NDEBUG) && defined(__minix) */
 }
 
 static

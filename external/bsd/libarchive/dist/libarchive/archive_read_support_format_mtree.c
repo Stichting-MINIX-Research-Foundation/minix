@@ -393,6 +393,9 @@ read_mtree(struct archive_read *a, struct mtree *mtree)
 	struct mtree_entry *last_entry;
 	int r;
 
+#if defined(__minix)
+	p = NULL; /* LSC: Fix -Os compilation: -Werror=maybe-uninitialized */
+#endif /* defined(__minix) */
 	mtree->archive_format = ARCHIVE_FORMAT_MTREE;
 	mtree->archive_format_name = "mtree";
 

@@ -103,7 +103,7 @@ int devman_add_device(struct devman_dev *dev)
 {
 	message msg;
 	int res;
-	size_t grant_size;
+	size_t grant_size = 0;
 	void *buf = serialize_dev(dev, &grant_size);
 
 	if (buf == NULL)

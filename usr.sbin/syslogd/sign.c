@@ -504,7 +504,11 @@ sign_send_certificate_block(struct signature_group_t *sg)
 	char *tstamp;
 	char payload[SIGN_MAX_PAYLOAD_LENGTH];
 	char sd[SIGN_MAX_SD_LENGTH];
+#if !defined(NDEBUG) && defined(__minix)
 	size_t payload_len, sd_len, fragment_len;
+#else
+	size_t payload_len, fragment_len;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 	size_t payload_index = 0;
 
 	/* do nothing if CBs already sent or if there was no message in SG */
@@ -529,8 +533,11 @@ sign_send_certificate_block(struct signature_group_t *sg)
 		else
 			fragment_len = SIGN_MAX_FRAG_LENGTH;
 
+#if !defined(NDEBUG) && defined(__minix)
 		/* format SD */
-		sd_len = snprintf(sd, sizeof(sd), "[ssign-cert "
+		sd_len =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+		    snprintf(sd, sizeof(sd), "[ssign-cert "
 		    "VER=\"%s\" RSID=\"%" PRIuFAST64 "\" SG=\"%d\" "
 		    "SPRI=\"%d\" TBPL=\"%zu\" INDEX=\"%zu\" "
 		    "FLEN=\"%zu\" FRAG=\"%.*s\" "

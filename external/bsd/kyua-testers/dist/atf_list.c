@@ -257,6 +257,10 @@ parse_test_case(FILE* input, FILE* output, char* name)
            fgets_no_newline(line, sizeof(line), input) != NULL &&
            strcmp(line, "") != 0) {
         char* key; char* value;
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, with -O3 */
+	key = value = NULL;
+#endif /* defined(__minix) */
         error = parse_property(line, &key, &value);
         if (!kyua_error_is_set(error)) {
             const char* out_key = rewrite_property(key);
@@ -301,6 +305,10 @@ parse_tests(FILE* input, FILE* output)
 
     do {
         char* key; char* value;
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, with -O3 */
+	key = value = NULL;
+#endif /* defined(__minix) */
         error = parse_property(line, &key, &value);
         if (kyua_error_is_set(error))
             break;

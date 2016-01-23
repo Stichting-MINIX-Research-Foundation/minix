@@ -187,6 +187,10 @@ onecol(int argc, char *argv[])
 	int mor;
 	int error = 1;
 
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, when compiling with -O3 */
+	mor = 0;
+#endif /* defined(__minix) */
 	if (nmwd)
 		num = nmwd + 1;
 	else

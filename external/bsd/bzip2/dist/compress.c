@@ -258,6 +258,10 @@ void sendMTFValues ( EState* s )
    UInt16 cost[BZ_N_GROUPS];
    Int32  fave[BZ_N_GROUPS];
 
+#if defined(__minix)
+   /* LSC: Fix -Os compilation: -Werror=maybe-uninitialized */
+   memset(cost, 0, sizeof(cost));
+#endif /* defined(__minix) */
    UInt16* mtfv = s->mtfv;
 
    if (s->verbosity >= 3)

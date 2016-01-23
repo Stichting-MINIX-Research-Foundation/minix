@@ -281,6 +281,10 @@ screen_redraw_draw_borders(struct client *c, int status, u_int top)
 	struct grid_cell	 active_gc, other_gc;
 	u_int		 	 i, j, type;
 
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized while compiling with -O3 */
+	wp = NULL;
+#endif /* defined(__minix) */
 	style_apply(&other_gc, oo, "pane-border-style");
 	style_apply(&active_gc, oo, "pane-active-border-style");
 	active_gc.attr = other_gc.attr = GRID_ATTR_CHARSET;

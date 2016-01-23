@@ -593,14 +593,28 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	/* calculate free space */
 	free_space = context.sector_size - (l_ea + l_ad) - desc_size;
 	if (udf_datablocks(size)) {
+#if !defined(NDEBUG) && defined(__minix)
 		assert(free_space < size);
+#else
+		if (!(free_space < size)) {
+		    printf("%s:%d not enough free space\n", __FILE__, __LINE__);
+		    abort();
+		}
+#endif /* !defined(NDEBUG) && defined(__minix) */
 		return 1;
 	}
 
 	/* going internal */
 	assert(l_ad == 0);
+#if !defined(NDEBUG) && defined(__minix)
 	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
 			UDF_ICB_INTERN_ALLOC);
+#else
+	if (!((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) == UDF_ICB_INTERN_ALLOC)) {
+		printf("%s:%d: allocation flags mismatch\n", __FILE__, __LINE__);
+		abort();
+	}
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 	// assert(free_space >= size);
 	pos = data + l_ea + l_ad;
@@ -690,7 +704,14 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	last_long     = NULL;
 	if (l_ad != 0) {
 		if (use_shorts) {
+#if !defined(NDEBUG) && defined(__minix)
 			assert(cur_alloc == UDF_ICB_SHORT_ALLOC);
+#else
+			if (!(cur_alloc == UDF_ICB_SHORT_ALLOC)) {
+			    printf("%s:%d: Expecting UDF_ICB_SHORT_ALLOC allocation\n", __FILE__, __LINE__);
+			    abort();
+			}
+#endif /* !defined(NDEBUG) && defined(__minix) */
 			pos += l_ad - short_len;
 			last_short   = (struct short_ad *) pos;
 			last_lb_num  = udf_rw32(last_short->lb_num);
@@ -698,7 +719,14 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 			last_len     = UDF_EXT_LEN(udf_rw32(last_short->len));
 			last_flags   = UDF_EXT_FLAGS(udf_rw32(last_short->len));
 		} else {
+#if !defined(NDEBUG) && defined(__minix)
 			assert(cur_alloc == UDF_ICB_LONG_ALLOC);
+#else
+			if (!(cur_alloc == UDF_ICB_LONG_ALLOC)) {
+			    printf("%s:%d: Expecting UDF_ICB_LONG_ALLOC allocation\n", __FILE__, __LINE__);
+			    abort();
+			}
+#endif /* !defined(NDEBUG) && defined(__minix) */
 			pos += l_ad - long_len;
 			last_long    = (struct long_ad *) pos;
 			last_lb_num  = udf_rw32(last_long->loc.lb_num);

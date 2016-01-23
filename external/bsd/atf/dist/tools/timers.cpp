@@ -113,12 +113,18 @@ impl::timer::timer(const unsigned int seconds) :
 
 impl::timer::~timer(void)
 {
+#if !defined(NDEBUG) && defined(__minix)
     int ret;
 
-    ret = ::timer_delete(m_pimpl->m_timer);
+    ret =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+    	::timer_delete(m_pimpl->m_timer);
     assert(ret != -1);
 
-    ret = ::sigaction(SIGALRM, &m_pimpl->m_old_sa, NULL);
+#if !defined(NDEBUG) && defined(__minix)
+    ret =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+    	::sigaction(SIGALRM, &m_pimpl->m_old_sa, NULL);
     assert(ret != -1);
 }
 

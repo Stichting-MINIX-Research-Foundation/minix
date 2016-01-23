@@ -115,7 +115,10 @@ detail::do_exec(void *v)
     if (ea->m_prehook != NULL)
         ea->m_prehook();
 
-    const int ret = const_execvp(ea->m_prog.c_str(), ea->m_argv.exec_argv());
+#if !defined(NDEBUG) && defined(__minix)
+    const int ret =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+    	const_execvp(ea->m_prog.c_str(), ea->m_argv.exec_argv());
     const int errnocopy = errno;
     assert(ret == -1);
     std::cerr << "exec(" << ea->m_prog.str() << ") failed: "

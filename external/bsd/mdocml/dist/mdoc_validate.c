@@ -597,9 +597,12 @@ pre_bl(PRE_ARGS)
 	int		  i, comp, dup;
 	const char	 *offs, *width;
 	enum mdoc_list	  lt;
+#if !defined(NDEBUG) && defined(__minix)
 	struct mdoc_node *np;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 	if (MDOC_BLOCK != n->type) {
+#if !defined(NDEBUG) && defined(__minix)
 		if (ENDBODY_NOT != n->end) {
 			assert(n->pending);
 			np = n->pending->parent;
@@ -609,6 +612,7 @@ pre_bl(PRE_ARGS)
 		assert(np);
 		assert(MDOC_BLOCK == np->type);
 		assert(MDOC_Bl == np->tok);
+#endif /* !defined(NDEBUG) && defined(__minix) */
 		return(1);
 	}
 
@@ -783,9 +787,12 @@ pre_bd(PRE_ARGS)
 	int		  i, dup, comp;
 	enum mdoc_disp 	  dt;
 	const char	 *offs;
+#if !defined(NDEBUG) && defined(__minix)
 	struct mdoc_node *np;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 	if (MDOC_BLOCK != n->type) {
+#if !defined(NDEBUG) && defined(__minix)
 		if (ENDBODY_NOT != n->end) {
 			assert(n->pending);
 			np = n->pending->parent;
@@ -795,6 +802,7 @@ pre_bd(PRE_ARGS)
 		assert(np);
 		assert(MDOC_BLOCK == np->type);
 		assert(MDOC_Bd == np->tok);
+#endif /* !defined(NDEBUG) && defined(__minix) */
 		return(1);
 	}
 

@@ -254,7 +254,10 @@ static
 void
 prepare_child(const tools::fs::path& workdir)
 {
-    const int ret = ::setpgid(::getpid(), 0);
+#if !defined(NDEBUG) && defined(__minix)
+    const int ret =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+    	::setpgid(::getpid(), 0);
     assert(ret != -1);
 
     ::umask(S_IWGRP | S_IWOTH);

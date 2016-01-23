@@ -241,7 +241,8 @@ static void sef_lu_state_change(int state, int flags)
   sef_lu_flags = flags;
   if(sef_lu_state == SEF_LU_STATE_NULL) {
       r = sys_statectl(SYS_STATE_CLEAR_IPC_FILTERS, 0, 0);
-      assert(r == OK);
+      if(r != OK)
+          panic("%s:%d: SYS_STATE_CLEAR_IPC_FILTERS failed\n", __func__, __LINE__);
   }
   if(old_state != sef_lu_state) {
       sef_lu_cbs.sef_cb_lu_state_changed(old_state, sef_lu_state);

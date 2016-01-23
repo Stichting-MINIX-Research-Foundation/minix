@@ -450,6 +450,9 @@ parse_pkg_vuln(const char *input, size_t input_len, int check_sum)
 	size_t allocated_vulns;
 	int in_pgp_msg;
 
+#if defined(__minix)
+	next = NULL; /* LSC: Fix -Os compilation: -Werror=maybe-uninitialized */
+#endif /* defined(__minix) */
 	pv = xmalloc(sizeof(*pv));
 
 	allocated_vulns = pv->entries = 0;

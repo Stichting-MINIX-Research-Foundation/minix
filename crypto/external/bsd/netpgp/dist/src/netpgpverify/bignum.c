@@ -4065,6 +4065,9 @@ fast_exponent_modulo(mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
 	*/
 	int     (*redux)(mp_int*,mp_int*,mp_digit);
 
+#if defined(__minix)
+	mp = 0; /* LSC: Fix -Os compilation: -Werror=maybe-uninitialized */
+#endif /* defined(__minix) */
 	winsize = find_window_size(X);
 
 	/* init M array */

@@ -582,6 +582,10 @@ vs_sm_up(SCR *sp, MARK *rp, db_recno_t count, scroll_t scmd, SMAP *smp)
 {
 	int cursor_set, echanged, zset;
 	SMAP *ssmp, s1, s2;
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, with -O3 */
+	ssmp = NULL;
+#endif /* defined(__minix) */
 
 	/*
 	 * Check to see if movement is possible.

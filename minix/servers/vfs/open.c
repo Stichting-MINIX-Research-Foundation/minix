@@ -645,7 +645,7 @@ int actual_lseek(struct fproc *rfp, int seekfd, int seekwhence, off_t offset,
 int do_lseek(void)
 {
   /* Perform the lseek(2) system call. */
-  off_t newpos;
+  off_t newpos = 0;
   int r;
 
   if ((r = actual_lseek(fp, job_m_in.m_lc_vfs_lseek.fd,

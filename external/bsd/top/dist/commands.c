@@ -477,6 +477,10 @@ renice_procs(char *str)
     int procnum;
     int uid;
 
+#if defined(__minix)
+    /* LSC: -Werror=maybe-uninitialized while compiling with -O3. */
+    prio = 0;
+#endif /* defined(__minix) */
     ERR_RESET;
     uid = getuid();
 

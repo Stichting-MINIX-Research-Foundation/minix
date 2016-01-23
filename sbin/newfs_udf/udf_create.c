@@ -1743,7 +1743,14 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 	extattrhdr = (struct extattrhdr_desc *) data;
 	l_ea = udf_rw32(*l_eap);
 	if (l_ea == 0) {
+#if !defined(NDEBUG) && defined(__minix)
 		assert(l_ad == 0);
+#else
+		if (l_ad != 0) {
+		    printf("%s:%d: l_ad != 0\n", __func__, __LINE__);
+		    abort();
+		}
+#endif /* !defined(NDEBUG) && defined(__minix) */
 		/* create empty extended attribute header */
 		exthdr_len = sizeof(struct extattrhdr_desc);
 
@@ -2157,6 +2164,10 @@ udf_create_new_rootdir(union dscrptr **dscr)
 	struct long_ad root_icb;
 	int filetype, error;
 
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized when compiling with -O3 */
+	fe = NULL;
+#endif /*defined(__minix) */
 	memset(&root_icb, 0, sizeof(root_icb));
 	root_icb.len          = udf_rw32(context.sector_size);
 	root_icb.loc.lb_num   = udf_rw32(layout.rootdir);

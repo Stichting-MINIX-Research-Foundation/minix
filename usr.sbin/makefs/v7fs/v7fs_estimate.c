@@ -132,6 +132,10 @@ estimate_size_walk(fsnode *root, char *dir, struct v7fs_geometry *geom)
 	int n;
 	off_t sz;
 
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, when compiling with -O3. */
+	nblk = 0;
+#endif /* defined(__minix) */
 	for (cur = root, nentries = 0; cur != NULL; cur = cur->next,
 		 nentries++, geom->ninode++) {
 		switch (cur->type & S_IFMT) {
@@ -257,6 +261,10 @@ v7fs_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	v7fs_daddr_t nblk;
 	struct v7fs_geometry geom;
 
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, when compiling with -O3. */
+	nblk = 0;
+#endif /* defined(__minix) */
 	memset(&geom , 0, sizeof(geom));
 	strncpy(path, dir, sizeof(path));
 

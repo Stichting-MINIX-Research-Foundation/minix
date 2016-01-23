@@ -386,7 +386,10 @@ int do_vm_call(void)
 	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
 	int result = OK;
 	int slot;
-	struct fproc *rfp, *vmf;
+	struct fproc *rfp;
+#if !defined(NDEBUG)
+	struct fproc *vmf;
+#endif /* !defined(NDEBUG) */
 	struct filp *f = NULL;
 	int r;
 
@@ -396,7 +399,9 @@ int do_vm_call(void)
 	if(isokendpt(ep, &slot) != OK) rfp = NULL;
 	else rfp = &fproc[slot];
 
+#if !defined(NDEBUG)
 	vmf = fproc_addr(VM_PROC_NR);
+#endif /* !defined(NDEBUG) */
 	assert(fp == vmf);
 	assert(rfp != vmf);
 

@@ -165,7 +165,8 @@ static int tcp_op_close(struct socket * sock)
 		}
 
 		err = tcp_close(sock->pcb);
-		assert(err == ERR_OK);
+		if(err != ERR_OK)
+		    panic("tcp_close failed\n");
 		sock->pcb = NULL;
 	}
 	debug_tcp_print("freed pcb");
