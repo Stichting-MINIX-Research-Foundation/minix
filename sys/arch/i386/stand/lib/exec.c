@@ -303,9 +303,11 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	close(fd);
 
+#if !defined(__minix) /* this just gives us a cd9660-not-found warning.. */
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
 		module_add_common(fsmod, BM_TYPE_KMOD);
+#endif /* !defined(__minix) */
 
 	/*
 	 * Gather some information for the kernel. Do this after the
