@@ -28,11 +28,23 @@
 #define dprintf(x)
 #endif
 
+/*
+ * A light version of the "uucred" credentials structure.  We basically do not
+ * support passing around groups lists, and by not using struct uucred as
+ * storage, we save memory for those groups lists as well.  Note that the
+ * original Linux uucred structure has a 'cr_pid' field as well, but this is
+ * unsupported in NetBSD's version of the structure (and rightly so).
+ */
+struct luucred {
+	uid_t uid;
+	gid_t gid;
+};
+
 /* ancillary data to be sent */
 struct ancillary {
 	int fds[OPEN_MAX];
 	int nfiledes;
-	struct uucred cred;
+	struct luucred cred;
 };
 
 #define UDS_R	0x1

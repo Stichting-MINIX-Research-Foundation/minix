@@ -476,7 +476,7 @@
 ./usr/man/man2/fstatvfs1.2                              minix-man
 ./usr/man/man2/getgid.2                                 minix-man
 ./usr/man/man2/getitimer.2                              minix-man
-./usr/man/man2/getnucred.2                              minix-man
+./usr/man/man2/getnucred.2                              minix-man       obsolete
 ./usr/man/man2/getpeereid.2                             minix-man
 ./usr/man/man2/getpeername.2                            minix-man
 ./usr/man/man2/getpid.2                                 minix-man

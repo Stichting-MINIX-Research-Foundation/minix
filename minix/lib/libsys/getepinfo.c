@@ -4,7 +4,7 @@
 
 #include <sys/ucred.h>
 
-static pid_t
+pid_t
 getepinfo(endpoint_t proc_ep, uid_t *uid, gid_t *gid)
 {
 	message m;
@@ -51,25 +51,4 @@ getngid(endpoint_t proc_ep)
 		return (gid_t) r;
 
 	return gid;
-}
-
-int
-getnucred(endpoint_t proc_ep, struct uucred *ucred)
-{
-	uid_t uid;
-	gid_t gid;
-	int r;
-
-	if (ucred == NULL)
-		return EFAULT;
-
-	if ((r = getepinfo(proc_ep, &uid, &gid)) < 0)
-		return r;
-
-	/* Only two fields are used for now; ensure the rest is zeroed out. */
-	memset(ucred, 0, sizeof(struct uucred));
-	ucred->cr_uid = uid;
-	ucred->cr_gid = gid;
-
-	return r;
 }

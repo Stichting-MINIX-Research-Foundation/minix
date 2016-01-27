@@ -266,6 +266,7 @@ int srv_kill(pid_t pid, int sig);
 int getprocnr(pid_t pid, endpoint_t *proc_ep);
 int mapdriver(const char *label, devmajor_t major, const int *domains,
 	int nr_domains);
+pid_t getepinfo(endpoint_t proc_ep, uid_t *uidp, gid_t *gidp);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);

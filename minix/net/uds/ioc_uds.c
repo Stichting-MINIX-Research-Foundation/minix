@@ -549,9 +549,15 @@ do_getsockopt_peercred(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 
 	peer_minor = uds_fd_table[minor].peer;
 
-	/* Obtain the peer's credentials and copy them out. */
-	if ((rc = getnucred(uds_fd_table[peer_minor].owner, &cred)) < 0)
-		return rc;
+	/*
+	 * Obtain the peer's credentials and copy them out.  Ignore failures;
+	 * in that case, the caller will simply get no credentials.
+	 */
+	memset(&cred, 0, sizeof(cred));
+	cred.cr_uid = -1;
+	cred.cr_gid = -1;
+	(void)getepinfo(uds_fd_table[peer_minor].owner, &cred.cr_uid,
+	    &cred.cr_gid);
 
 	return sys_safecopyto(endpt, grant, 0, (vir_bytes) &cred,
 	    sizeof(struct uucred));
@@ -674,10 +680,10 @@ send_fds(devminor_t minor, struct msg_control *msg_ctrl,
 	from_ep = uds_fd_table[minor].owner;
 
 	/* Obtain this socket's credentials. */
-	if ((rc = getnucred(from_ep, &data->cred)) < 0)
+	if ((rc = getepinfo(from_ep, &data->cred.uid, &data->cred.gid)) < 0)
 		return rc;
 
-	dprintf(("UDS: minor=%d cred={%d,%d,%d}\n", minor, data->cred.pid,
+	dprintf(("UDS: minor=%d cred={%d,%d}\n", minor,
 	    data->cred.uid, data->cred.gid));
 
 	totalfds = data->nfiledes;
@@ -809,6 +815,7 @@ recv_cred(devminor_t minor, struct ancillary *data,
 {
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg;
+	struct uucred *cred;
 
 	dprintf(("UDS: recv_cred(%d)\n", minor));
 
@@ -822,7 +829,10 @@ recv_cred(devminor_t minor, struct ancillary *data,
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct uucred));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_CREDS;
-	memcpy(CMSG_DATA(cmsg), &data->cred, sizeof(struct uucred));
+	cred = (struct uucred *)CMSG_DATA(cmsg);
+	memset(cred, 0, sizeof(*cred));
+	cred->cr_uid = data->cred.uid;
+	cred->cr_gid = data->cred.gid;
 
 	return OK;
 }
@@ -893,8 +903,7 @@ do_recvmsg(devminor_t minor, endpoint_t endpt, cp_grant_id_t grant)
 	socklen_t clen_desired = 0;
 
 	dprintf(("UDS: do_recvmsg(%d)\n", minor));
-	dprintf(("UDS: minor=%d credentials={pid:%d,uid:%d,gid:%d}\n", minor,
-	    uds_fd_table[minor].ancillary_data.cred.pid,
+	dprintf(("UDS: minor=%d credentials={uid:%d,gid:%d}\n", minor,
 	    uds_fd_table[minor].ancillary_data.cred.uid,
 	    uds_fd_table[minor].ancillary_data.cred.gid));
 

@@ -1,6 +1,6 @@
 MAN=	accept.2 access.2 bind.2 brk.2 chdir.2 chmod.2 chown.2 \
 	chroot.2 close.2 connect.2 creat.2 dup.2 execve.2 exit.2 fcntl.2 \
-	fork.2 getgid.2 getitimer.2 getnucred.2 getpeereid.2 \
+	fork.2 getgid.2 getitimer.2 getpeereid.2 \
 	getpeername.2 getpid.2 getpriority.2 getsockname.2 getsockopt.2 \
 	gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 link.2 listen.2 \
 	lseek.2 mkdir.2 mknod.2 mount.2 open.2 ptrace.2 \
