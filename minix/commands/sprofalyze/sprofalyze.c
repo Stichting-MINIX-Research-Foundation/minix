@@ -20,10 +20,29 @@
 static const char *default_binaries[] = {
 	"kernel/kernel",
 	"servers/",
-	"drivers/",
+	/* XXX this should not be necessary */
+	"drivers/audio/",
+	"drivers/bus/",
+	"drivers/clock/",
+	"drivers/eeprom/",
+	"drivers/examples/",
+	"drivers/hid/",
+	"drivers/iommu/",
+	"drivers/net/",
+	"drivers/power/",
+	"drivers/printer/",
+	"drivers/sensors/",
+	"drivers/storage/",
+	"drivers/system/",
+	"drivers/tty/",
+	"drivers/usb/",
+	"drivers/video/",
+	"drivers/vmm_guest/",
+	"fs/",
+	"net/",
 };
 
-static const char *src_path = "/usr/src";
+static const char *src_path = "/usr/src/minix";
 
 /* types */
 

@@ -11,8 +11,8 @@ int size;				/* available profiling memory */
 int freq;				/* sample frequency */
 int type;
 endpoint_t endpt;			/* caller endpoint */
-void *ctl_ptr;				/* location of info struct */
-void *mem_ptr;				/* location of profiling memory */
+vir_bytes ctl_ptr;			/* location of info struct */
+vir_bytes mem_ptr;			/* location of profiling memory */
 {
   message m;
 
