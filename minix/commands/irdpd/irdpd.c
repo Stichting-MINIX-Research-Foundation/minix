@@ -33,6 +33,7 @@
 #include <net/gen/udp.h>
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
+#include <arpa/inet.h>
 
 #define MAX_SOLICITATIONS	    3	/* # router solicitations. */
 #define SOLICITATION_INTERVAL	    3	/* Secs between solicitate retries. */
@@ -127,7 +128,7 @@ char *addr2name(ipaddr_t host)
 	return hostent == nil ? inet_ntoa(host) : hostent->h_name;
 }
 #else
-#define addr2name(host)	inet_ntoa(host)
+#define addr2name(host)	inet_ntoa(*(struct in_addr *)&(host))
 #endif
 
 void print_table(void)

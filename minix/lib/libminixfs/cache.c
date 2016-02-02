@@ -66,6 +66,8 @@ static fsblkcnt_t fs_btotal = 0, fs_bused = 0;
 
 static int quiet = 0;
 
+typedef struct buf *noxfer_buf_ptr_t; /* annotation for temporary buf ptrs */
+
 void lmfs_setquiet(int q) { quiet = q; }
 
 static int fs_bufs_heuristic(int minbufs, fsblkcnt_t btotal,
@@ -192,11 +194,8 @@ static void free_unused_blocks(void)
 
 static void lmfs_alloc_block(struct buf *bp, size_t block_size)
 {
-  int len;
   ASSERT(!bp->data);
   ASSERT(bp->lmfs_bytes == 0);
-
-  len = roundup(block_size, PAGE_SIZE);
 
   if((bp->data = mmap(0, block_size, PROT_READ|PROT_WRITE,
       MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
@@ -221,11 +220,10 @@ int lmfs_get_block(struct buf **bpp, dev_t dev, block64_t block, int how)
 
 static void munmap_t(void *a, int len)
 {
-	vir_bytes av = (vir_bytes) a;
 	assert(a);
 	assert(a != MAP_FAILED);
+	assert(!((vir_bytes)a % PAGE_SIZE));
 	assert(len > 0);
-	assert(!(av % PAGE_SIZE));
 
 	len = roundup(len, PAGE_SIZE);
 
@@ -237,8 +235,7 @@ static void munmap_t(void *a, int len)
 
 static void raisecount(struct buf *bp)
 {
-  assert(bufs_in_use >= 0);
-  ASSERT(bp->lmfs_count >= 0);
+  ASSERT(bp->lmfs_count < CHAR_MAX);
   bp->lmfs_count++;
   if(bp->lmfs_count == 1) bufs_in_use++;
   assert(bufs_in_use > 0);
@@ -250,7 +247,6 @@ static void lowercount(struct buf *bp)
   ASSERT(bp->lmfs_count > 0);
   bp->lmfs_count--;
   if(bp->lmfs_count == 0) bufs_in_use--;
-  assert(bufs_in_use >= 0);
 }
 
 static void freeblock(struct buf *bp)
@@ -850,10 +846,13 @@ static void rw_scattered(
   static iovec_t iovec[NR_IOREQS];
   off_t pos;
   unsigned int i, iov_per_block;
+#if !defined(NDEBUG)
   unsigned int start_in_use = bufs_in_use, start_bufqsize = bufqsize;
+#endif /* !defined(NDEBUG) */
 
   if(bufqsize == 0) return;
 
+#if !defined(NDEBUG)
   /* for READING, check all buffers on the list are obtained and held
    * (count > 0)
    */
@@ -872,7 +871,8 @@ static void rw_scattered(
   assert(dev != NO_DEV);
   assert(fs_block_size > 0);
   assert(howmany(fs_block_size, PAGE_SIZE) <= NR_IOREQS);
-  
+#endif /* !defined(NDEBUG) */
+
   /* For WRITING, (Shell) sort buffers on lmfs_blocknr.
    * For READING, the buffers are already sorted.
    */
@@ -966,12 +966,14 @@ static void rw_scattered(
 	}
   }
 
+#if !defined(NDEBUG)
   if(rw_flag == READING) {
   	assert(start_in_use >= start_bufqsize);
 
 	/* READING callers assume all bufs are released. */
 	assert(start_in_use - start_bufqsize == bufs_in_use);
   }
+#endif /* !defined(NDEBUG) */
 }
 
 /*===========================================================================*
@@ -988,7 +990,7 @@ void lmfs_readahead(dev_t dev, block64_t base_block, unsigned int nblocks,
  * However, the caller must also not rely on all or even any of the blocks to
  * be present in the cache afterwards--failures are (deliberately!) ignored.
  */
-  static struct buf *bufq[LMFS_MAX_PREFETCH]; /* static because of size only */
+  static noxfer_buf_ptr_t bufq[LMFS_MAX_PREFETCH]; /* static for size only */
   struct buf *bp;
   unsigned int count;
   int r;
@@ -1131,7 +1133,7 @@ void lmfs_flushdev(dev_t dev)
 /* Flush all dirty blocks for one device. */
 
   register struct buf *bp;
-  static struct buf **dirty;
+  static noxfer_buf_ptr_t *dirty;
   static unsigned int dirtylistsize = 0;
   unsigned int ndirty;
 

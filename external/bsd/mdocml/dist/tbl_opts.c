@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tbl_opts.c,v 1.12 2011/09/18 14:14:15 schwarze Exp $ */
+/*	Id: tbl_opts.c,v 1.12 2011/09/18 14:14:15 schwarze Exp  */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *

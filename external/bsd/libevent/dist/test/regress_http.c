@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.3 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.4 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -34,7 +34,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.3 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.4 2015/01/29 07:26:02 spz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2008,7 +2008,7 @@ http_parse_uri_test(void *ptr)
 	tt_want(ret == url_tmp);					\
 	if (strcmp(ret,want) != 0)					\
 		TT_FAIL(("\"%s\" != \"%s\"",ret,want));			\
-	} while (/*CONSTCOND*/0)
+	} while(/*CONSTCOND*/0)
 
 	tt_want(evhttp_uri_join(NULL, 0, 0) == NULL);
 	tt_want(evhttp_uri_join(NULL, url_tmp, 0) == NULL);
@@ -2018,7 +2018,7 @@ http_parse_uri_test(void *ptr)
 #define BAD(s) do {							\
 		if (URI_PARSE(s) != NULL)				\
 			TT_FAIL(("Expected error parsing \"%s\"",s));	\
-	} while (/*CONSTCOND*/0)
+	} while(/*CONSTCOND*/0)
 	/* Nonconformant URIs we can parse: parsing */
 #define NCF(s) do {							\
 		uri = URI_PARSE(s);					\
@@ -2033,7 +2033,7 @@ http_parse_uri_test(void *ptr)
 				sizeof(url_tmp)));			\
 			evhttp_uri_free(uri);				\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while(/*CONSTCOND*/0)
 
 	NCF("http://www.test.com/ why hello");
 	NCF("http://www.test.com/why-hello\x01");
@@ -3017,16 +3017,21 @@ http_stream_in_cancel_test(void *arg)
 static void
 http_connection_fail_done(struct evhttp_request *req, void *arg)
 {
+       struct evhttp_connection *evcon = arg;
+       struct event_base *base = evhttp_connection_get_base(evcon);
+
        /* An ENETUNREACH error results in an unrecoverable
         * evhttp_connection error (see evhttp_connection_fail()).  The
         * connection will be reset, and the user will be notified with a NULL
         * req parameter. */
        tt_assert(!req);
 
+       evhttp_connection_free(evcon);
+
        test_ok = 1;
 
  end:
-       event_base_loopexit(arg, NULL);
+       event_base_loopexit(base, NULL);
 }
 
 /* Test unrecoverable evhttp_connection errors by generating an ENETUNREACH
@@ -3057,7 +3062,7 @@ http_connection_fail_test(void *arg)
         * server using our make request method.
         */
 
-       req = evhttp_request_new(http_connection_fail_done, data->base);
+       req = evhttp_request_new(http_connection_fail_done, evcon);
        tt_assert(req);
 
        if (evhttp_make_request(evcon, req, EVHTTP_REQ_GET, "/") == -1) {
@@ -3069,8 +3074,7 @@ http_connection_fail_test(void *arg)
        tt_int_op(test_ok, ==, 1);
 
  end:
-       if (evcon)
-               evhttp_connection_free(evcon);
+        ;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: t_io.c,v 1.2 2013/03/17 05:02:13 jmmv Exp $ */
+/* $NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_io.c,v 1.2 2013/03/17 05:02:13 jmmv Exp $");
+__RCSID("$NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -53,10 +53,11 @@ ATF_TC_HEAD(bad_big5_wprintf, tc)
 
 ATF_TC_BODY(bad_big5_wprintf, tc)
 {
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf10, 0 };
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	atf_tc_expect_fail("PR lib/47660");
-	ATF_REQUIRE_EQ(wprintf(L"%ls\n", ibuf), -1);
+	ATF_REQUIRE_ERRNO(EILSEQ, wprintf(L"%ls\n", ibuf) < 0);
+	ATF_REQUIRE(ferror(stdout));
 }
 
 ATF_TC(bad_big5_swprintf);
@@ -67,10 +68,12 @@ ATF_TC_HEAD(bad_big5_swprintf, tc)
 
 ATF_TC_BODY(bad_big5_swprintf, tc)
 {
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf10, 0 };
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	ATF_REQUIRE_EQ(swprintf(obuf, sizeof(obuf), L"%ls\n", ibuf), -1);
+	ATF_REQUIRE_ERRNO(EILSEQ,
+			  swprintf(obuf, sizeof(obuf), L"%ls\n", ibuf) < 0);
 }
 
 ATF_TC(good_big5_wprintf);
@@ -81,9 +84,9 @@ ATF_TC_HEAD(good_big5_wprintf, tc)
 
 ATF_TC_BODY(good_big5_wprintf, tc)
 {
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf40, 0 };
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	// WTF? swprintf() fails, wprintf succeeds?
 	ATF_REQUIRE_EQ(wprintf(L"%ls\n", ibuf), 2);
 }
 
@@ -95,15 +98,28 @@ ATF_TC_HEAD(good_big5_swprintf, tc)
 
 ATF_TC_BODY(good_big5_swprintf, tc)
 {
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	wchar_t ibuf[] = { 0xcf40, 0 };
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_EQ(swprintf(obuf, sizeof(obuf), L"%ls\n", ibuf), 2);
 }
 
-static int readfn(void *p, char *buf, int len) {
-	memcpy(buf, p, MIN(len, 2));
-	return 2;
+struct ibuf {
+	off_t off;
+	size_t buflen;
+	const char *buf;
+};
+
+static int
+readfn(void *vp, char *buf, int len)
+{
+	struct ibuf *ib = vp;
+	size_t todo = MIN((size_t)len, ib->buflen - ib->off);
+
+	memcpy(buf, ib->buf + ib->off, todo);
+	ib->off += todo;
+	return todo;
 }
 
 ATF_TC(good_big5_getwc);
@@ -114,11 +130,16 @@ ATF_TC_HEAD(good_big5_getwc, tc)
 
 ATF_TC_BODY(good_big5_getwc, tc)
 {
-	char ibuf[] = { 0xcf, 0x40 };
-	FILE *fp = funopen(ibuf, readfn, NULL, NULL, NULL);
+	const char buf[] = { 0xcf, 0x40 };
+	struct ibuf ib = {
+		.buf = buf,
+		.buflen = sizeof(buf),
+	};
+	FILE *fp = funopen(&ib, readfn, NULL, NULL, NULL);
 
 	ATF_REQUIRE(fp != NULL);
 	setlocale(LC_CTYPE, "zh_TW.Big5");
+	/* XXX implementation detail knowledge (wchar_t encoding) */
 	ATF_REQUIRE_EQ(getwc(fp), 0xcf40);
 	fclose(fp);
 }
@@ -131,31 +152,15 @@ ATF_TC_HEAD(bad_big5_getwc, tc)
 
 ATF_TC_BODY(bad_big5_getwc, tc)
 {
-	char ibuf[] = { 0xcf, 0x20 };
-	FILE *fp = funopen(ibuf, readfn, NULL, NULL, NULL);
+	const char buf[] = { 0xcf, 0x20 };
+	struct ibuf ib = {
+		.buf = buf,
+		.buflen = sizeof(buf),
+	};
+	FILE *fp = funopen(&ib, readfn, NULL, NULL, NULL);
 
 	ATF_REQUIRE(fp != NULL);
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	ATF_REQUIRE_EQ(getwc(fp), WEOF);
-	fclose(fp);
-}
-
-ATF_TC(bad_eucJP_getwc);
-ATF_TC_HEAD(bad_eucJP_getwc, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test bad eucJP wchar getwc");
-}
-
-ATF_TC_BODY(bad_eucJP_getwc, tc)
-{
-	char ibuf[] = { 0xcf, 0x20 };
-	FILE *fp = funopen(ibuf, readfn, NULL, NULL, NULL);
-
-	ATF_REQUIRE(fp != NULL);
-	setlocale(LC_CTYPE, "ja_JP.eucJP");
-	// WTF? Not even returning what it read?
-	ATF_CHECK_EQ(getwc(fp), 0xcf20);
-	atf_tc_expect_fail("PR lib/47660");
 	ATF_REQUIRE_EQ(getwc(fp), WEOF);
 	fclose(fp);
 }
@@ -168,7 +173,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, good_big5_swprintf);
 	ATF_TP_ADD_TC(tp, good_big5_getwc);
 	ATF_TP_ADD_TC(tp, bad_big5_getwc);
-	ATF_TP_ADD_TC(tp, bad_eucJP_getwc);
 
 	return atf_no_error();
 }

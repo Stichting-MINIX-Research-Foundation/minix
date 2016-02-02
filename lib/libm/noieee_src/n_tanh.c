@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tanh.c,v 1.6 2003/08/07 16:44:52 agc Exp $	*/
+/*	$NetBSD: n_tanh.c,v 1.7 2014/03/06 10:59:00 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -96,4 +96,10 @@ tanh(double x)
 	    return (sign+1.0E-37); /* raise the INEXACT flag */
 	else
 	    return(sign);	/* x is +- INF */
+}
+
+float
+tanhf(float x)
+{
+	return tanh(x);
 }

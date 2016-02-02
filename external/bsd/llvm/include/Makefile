@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/11/11 23:51:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.37 2015/05/29 17:40:41 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -7,15 +7,23 @@
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS=	__wmmintrin_aes.h \
 	__wmmintrin_pclmul.h \
+	adxintrin.h \
 	ammintrin.h \
 	avx2intrin.h \
+	avx512bwintrin.h \
+	avx512fintrin.h \
+	avx512erintrin.h \
+	avx512vlbwintrin.h \
+	avx512vlintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
+	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
 	fmaintrin.h \
 	fma4intrin.h \
+	ia32intrin.h \
 	immintrin.h \
 	lzcntintrin.h \
 	mm3dnow.h \
@@ -35,27 +43,21 @@ INCS=	__wmmintrin_aes.h \
 	x86intrin.h \
 	xmmintrin.h \
 	xopintrin.h
-.elif ${MACHINE_ARCH} == "powerpc"
+.elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
 INCS=	altivec.h
+.elif ${MACHINE_CPU} == "arm"
+INCS=	arm_acle.h \
+	arm_neon.h
 .endif
-INCSDIR=	/usr/include/clang-${CLANG_VERSION}
-
-HEADER=	\
-  float.h \
-  iso646.h \
-  limits.h \
-  stdarg.h \
-  stdbool.h \
-  stddef.h \
-  stdint.h \
-  tgmath.h
+INCS+=	stdatomic.h
+INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
 	${CLANG_SRCDIR}/include/clang/AST \
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
 
-TABLEGEN_SRC=	Intrinsics.td Options.td CC1AsOptions.td 
+TABLEGEN_SRC=	Intrinsics.td Options.td
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/Intrinsics.gen|-gen-intrinsic
@@ -69,11 +71,10 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/AST/Attrs.inc|-gen-clang-attr-classes \
 	clang/AST/AttrDump.inc|-gen-clang-attr-dump \
 	clang/AST/AttrImpl.inc|-gen-clang-attr-impl \
+	clang/AST/AttrVisitor.inc|-gen-clang-attr-ast-visitor \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
-	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
-	clang/Parse/AttrIdentifierArg.inc|-gen-clang-attr-identifier-arg-list \
-	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
-	clang/Parse/AttrTypeArg.inc|-gen-clang-attr-type-arg-list \
+	clang/Basic/AttrHasAttributeImpl.inc|-gen-clang-attr-has-attribute-impl \
+	clang/Parse/AttrParserStringSwitches.inc|-gen-clang-attr-parser-string-switches \
 	clang/Sema/AttrParsedAttrImpl.inc|-gen-clang-attr-parsed-attr-impl \
 	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \
 	clang/Sema/AttrParsedAttrList.inc|-gen-clang-attr-parsed-attr-list \
@@ -119,15 +120,11 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 
 CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
-	arm_neon.h.inc|-gen-arm-neon
+	arm_neon.h|-gen-arm-neon
 
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
-
-TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-TABLEGEN_OUTPUT.CC1AsOptions.td= \
-	clang/Driver/CC1AsOptions.inc|-gen-opt-parser-defs
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
@@ -137,9 +134,25 @@ CLEANFILES+=	clang/Basic/Version.inc
 clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	mkdir -p ${.TARGET:H}
 	printf '#define CLANG_VERSION ${CLANG_VERSION}\n' > ${.TARGET}.tmp
-	printf '#define CLANG_VERSION_MAJOR ${CLANG_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
-	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_MAJOR ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
+
+lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+
+.if ${MKLLD} != "no"
+DPSRCS+=	lld/Config/Version.inc
+CLEANFILES+=	lld/Config/Version.inc
+
+lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define LLD_VERSION ${LLD_VERSION}\n' > ${.TARGET}.tmp
+	printf '#define LLD_VERSION_MAJOR ${LLD_VERSION:R:R}\n' >> ${.TARGET}.tmp
+	printf '#define LLD_VERSION_MINOR ${LLD_VERSION:R:E}\n' >> ${.TARGET}.tmp
+	printf '#define LLD_REVISION_STRING "r${LLD_REVISION}"\n' >> ${.TARGET}.tmp
+	printf '#define LLD_REPOSITORY_STRING "${SVN_ROOT}/lld/${SVN_BRANCH}"\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+.endif
 
 .ifndef HOST_BUILD
 
@@ -149,27 +162,25 @@ CLEANFILES+=	llvm/Config/config.h llvm/Config/llvm-config.h
 llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
-	    -e /^\#endif/d \
+	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#endif\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
 llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
-	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
-	    -e /\#endif/d \
+	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d -e 'x' \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
-	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	printf '#endif\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 

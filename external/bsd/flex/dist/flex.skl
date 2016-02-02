@@ -509,9 +509,17 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
                     if ( yytext[yyl] == '\n' )\
                         --yylineno;\
             }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
+                        --yylineno;\
+            }while(0)
     ]],
     [[
     #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     ]])
 ]])
 
@@ -732,6 +740,11 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 ]])
 
 %% [1.0] yytext/yyin/yyout/yy_state_type/yylineno etc. def's & init go here
+
+m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
+[[
+%% [1.5] DFA
+]])
 
 %if-c-only Standard (non-C++) definition
 
@@ -1283,8 +1296,6 @@ m4_ifdef( [[M4_YY_NOT_REENTRANT]],
     ]])
 ]])
 
-%% [7.0] user's declarations go here
-
 m4_ifdef( [[M4_YY_BISON_LVAL]],
 [[
     yylval = yylval_param;
@@ -1339,6 +1350,9 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 
 		yy_load_buffer_state( M4_YY_CALL_ONLY_ARG );
 		}
+
+	{
+%% [7.0] user's declarations go here
 
 	while (/*CONSTCOND*/ 1 )		/* loops until end-of-file is reached */
 		{
@@ -1497,6 +1511,7 @@ do_action:	/* This label is used only to access EOF actions. */
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of yylex */
 %ok-for-header
 
@@ -1618,7 +1633,7 @@ int yyFlexLexer::yy_get_next_buffer()
     M4_YY_DECL_GUTS_VAR();
 	register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
 	register char *source = YY_G(yytext_ptr);
-	register int number_to_move, i;
+	register yy_size_t number_to_move, i;
 	int ret_val;
 
 	if ( YY_G(yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[YY_G(yy_n_chars) + 1] )
@@ -1647,7 +1662,7 @@ int yyFlexLexer::yy_get_next_buffer()
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (int) (YY_G(yy_c_buf_p) - YY_G(yytext_ptr)) - 1;
+	number_to_move = (yy_size_t)((YY_G(yy_c_buf_p) - YY_G(yytext_ptr)) - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -1888,7 +1903,8 @@ m4_ifdef( [[M4_YY_USE_LINENO]],
 
 		else
 			{ /* need more input */
-			yy_size_t offset = YY_G(yy_c_buf_p) - YY_G(yytext_ptr);
+			yy_size_t offset = (yy_size_t)
+			    (YY_G(yy_c_buf_p) - YY_G(yytext_ptr));
 			++YY_G(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer( M4_YY_CALL_ONLY_ARG ) )
@@ -2042,7 +2058,7 @@ static void yy_load_buffer_state  YYFARGS0(void)
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
-	b->yy_buf_size = size;
+	b->yy_buf_size = (yy_size_t)size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
@@ -2275,7 +2291,7 @@ void yyFlexLexer::yyensure_buffer_stack(void)
 	if (YY_G(yy_buffer_stack_top) >= (YY_G(yy_buffer_stack_max)) - 1){
 
 		/* Increase the buffer to prepare for a possible push. */
-		int grow_size = 8 /* arbitrary grow size */;
+		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = YY_G(yy_buffer_stack_max) + grow_size;
 		YY_G(yy_buffer_stack) = (struct yy_buffer_state**)yyrealloc
@@ -2372,7 +2388,8 @@ YY_BUFFER_STATE yy_scan_bytes  YYFARGS2( yyconst char *,yybytes, yy_size_t ,_yyb
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t i, n;
+	yy_size_t n;
+	yy_size_t i;
     m4_dnl M4_YY_DECL_GUTS_VAR();
 
 	/* Get memory for full buffer, including space for trailing EOB's. */

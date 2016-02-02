@@ -1,0 +1,31 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+.                                                       minix-kernel
+./boot                                                  minix-kernel
+./boot/minix                                            minix-kernel
+./boot/minix/.temp                                      minix-kernel
+./boot/minix/.temp/kernel                               minix-kernel
+./boot/minix/.temp/mod01_ds                             minix-kernel
+./boot/minix/.temp/mod02_rs                             minix-kernel
+./boot/minix/.temp/mod03_pm                             minix-kernel
+./boot/minix/.temp/mod04_sched                          minix-kernel
+./boot/minix/.temp/mod05_vfs                            minix-kernel
+./boot/minix/.temp/mod06_memory                         minix-kernel
+./boot/minix/.temp/mod07_tty                            minix-kernel
+./boot/minix/.temp/mod08_mib                            minix-kernel
+./boot/minix/.temp/mod09_vm                             minix-kernel
+./boot/minix/.temp/mod10_pfs                            minix-kernel
+./boot/minix/.temp/mod11_mfs                            minix-kernel
+./boot/minix/.temp/mod12_init                           minix-kernel
+./etc                                                   minix-kernel
+./etc/mtree                                             minix-kernel
+./etc/mtree/set.minix-kernel                            minix-kernel
+./var                                                   minix-kernel
+./var/db                                                minix-kernel
+./var/db/obsolete                                       minix-kernel
+./var/db/obsolete/minix-kernel                          minix-kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap16.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: bswap16.S,v 1.6 2014/03/18 18:20:35 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.

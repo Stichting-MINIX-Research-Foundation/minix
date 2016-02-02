@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.45 2013/03/28 22:54:25 njoly Exp $
+.\"	$NetBSD: cksum.1,v 1.47 2014/08/31 07:23:53 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd June 24, 2012
+.Dd August 31, 2014
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -47,32 +47,32 @@
 .Sh SYNOPSIS
 .Nm cksum
 .Op Fl n
-.Op Fl a Ar algorithm Oo Fl ptx Oc Oo Fl s Ar string Oc
+.Op Fl a Ar algorithm Oo Fl pqtx Oc Oo Fl s Ar string Oc
 .Op Fl o Ar 1 Ns | Ns Ar 2
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm sum
 .Op Fl n
-.Op Fl a Ar algorithm Oo Fl ptx Oc Oo Fl s Ar string Oc
+.Op Fl a Ar algorithm Oo Fl pqtx Oc Oo Fl s Ar string Oc
 .Op Fl o Ar 1 Ns | Ns Ar 2
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm md2
-.Op Fl nptx
+.Op Fl npqtx
 .Op Fl s Ar string
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm md4
-.Op Fl nptx
+.Op Fl npqtx
 .Op Fl s Ar string
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm md5
-.Op Fl nptx
+.Op Fl npqtx
 .Op Fl s Ar string
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm rmd160
-.Op Fl nptx
+.Op Fl npqtx
 .Op Fl s Ar string
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Nm sha1
-.Op Fl nptx
+.Op Fl npqtx
 .Op Fl s Ar string
 .Op Ar Li \&| Fl c Oo Fl w Oc Oo Ar sumfile Oc
 .Sh DESCRIPTION
@@ -191,6 +191,11 @@ the hash at the left and the filename following on the right.
 .It Fl p
 Echo input from standard input to standard output, and append the
 selected message digest.
+.It Fl q
+Quiet mode \(em only the checksum is printed out.
+Overrides the
+.Fl n
+option.
 .It Fl s Ar string
 Print the hash of the given string
 .Ar string .
@@ -323,6 +328,10 @@ The functionality to verify checksum stored in a file
 .Pq Fl c
 first appeared in
 .Nx 4.0 .
+Quiet mode
+.Pq Fl q
+was added in
+.Nx 7.0 .
 .\" .Pp
 .\" The
 .\" .Nm sum

@@ -4,6 +4,7 @@
  */
 
 #include <errno.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -11,6 +12,7 @@
 #include <stdio.h>
 #include <sys/statvfs.h>
 #include <sys/syslimits.h>
+#include <sys/wait.h>
 
 #include "common.h"
 
@@ -90,7 +92,7 @@ int test_nr;
   char buf[128];
 
   sprintf(buf, "rm -rf DIR_%02d >/dev/null 2>&1", test_nr);
-  if (system(buf) != 0) printf("Warning: system(\"%s\") failed\n", buf);
+  if (system_p(buf) != 0) printf("Warning: system(\"%s\") failed\n", buf);
 }
 
 void rm_rf_ppdir(test_nr)
@@ -222,3 +224,31 @@ int get_setting_use_network(void)
 	 */
 	return get_setting("USENETWORK", 0);
 }
+
+int
+system_p(const char *command)
+{
+	extern char **environ;
+	pid_t pid;
+	int pstat;
+	const char *argp[] = {"sh", "-c", "-p", NULL, NULL};
+	argp[3] = command;
+
+	switch(pid = vfork()) {
+	case -1:			/* error */
+		return -1;
+	case 0:				/* child */
+		execve(_PATH_BSHELL, __UNCONST(argp), environ);
+		_exit(127);
+	}
+
+	while (waitpid(pid, &pstat, 0) == -1) {
+		if (errno != EINTR) {
+			pstat = -1;
+			break;
+		}
+	}
+
+	return (pstat);
+}
+

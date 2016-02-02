@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.15 2010/12/17 08:50:26 wiz Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.16 2015/07/03 10:19:29 joerg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,6 +88,11 @@ This is defined at shared object link time.
 The list of default paths which is set to
 .Pa /usr/lib .
 .El
+.Pp
+Dynamic loading via
+.Xr dlopen 3
+uses the DT_RPATH entries of the main binary, independently of which object
+the call came from.
 .Pp
 .Nm
 will expand the following variables if present in the paths:

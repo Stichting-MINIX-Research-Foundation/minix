@@ -1,6 +1,8 @@
+import ctypes
 import gc
 
 from clang.cindex import CursorKind
+from clang.cindex import TemplateArgumentKind
 from clang.cindex import TranslationUnit
 from clang.cindex import TypeKind
 from .util import get_cursor
@@ -8,9 +10,6 @@ from .util import get_cursors
 from .util import get_tu
 
 kInput = """\
-// FIXME: Find nicer way to drop builtins and other cruft.
-int start_decl;
-
 struct s0 {
   int a;
   int b;
@@ -33,11 +32,7 @@ void f0(int a0, int a1) {
 def test_get_children():
     tu = get_tu(kInput)
 
-    # Skip until past start_decl.
     it = tu.cursor.get_children()
-    while it.next().spelling != 'start_decl':
-        pass
-
     tu_nodes = list(it)
 
     assert len(tu_nodes) == 3
@@ -49,7 +44,7 @@ def test_get_children():
     assert tu_nodes[0].spelling == 's0'
     assert tu_nodes[0].is_definition() == True
     assert tu_nodes[0].location.file.name == 't.c'
-    assert tu_nodes[0].location.line == 4
+    assert tu_nodes[0].location.line == 1
     assert tu_nodes[0].location.column == 8
     assert tu_nodes[0].hash > 0
     assert tu_nodes[0].translation_unit is not None
@@ -251,6 +246,48 @@ def test_get_arguments():
     assert arguments[0].spelling == "i"
     assert arguments[1].spelling == "j"
 
+kTemplateArgTest = """\
+        template <int kInt, typename T, bool kBool>
+        void foo();
+
+        template<>
+        void foo<-7, float, true>();
+    """
+
+def test_get_num_template_arguments():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_num_template_arguments() == 3
+
+def test_get_template_argument_kind():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_kind(0) == TemplateArgumentKind.INTEGRAL
+    assert foos[1].get_template_argument_kind(1) == TemplateArgumentKind.TYPE
+    assert foos[1].get_template_argument_kind(2) == TemplateArgumentKind.INTEGRAL
+
+def test_get_template_argument_type():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_type(1).kind == TypeKind.FLOAT
+
+def test_get_template_argument_value():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_value(0) == -7
+    assert foos[1].get_template_argument_value(2) == True
+
+def test_get_template_argument_unsigned_value():
+    tu = get_tu(kTemplateArgTest, lang='cpp')
+    foos = get_cursors(tu, 'foo')
+
+    assert foos[1].get_template_argument_unsigned_value(0) == 2 ** 32 - 7
+    assert foos[1].get_template_argument_unsigned_value(2) == True
+
 def test_referenced():
     tu = get_tu('void foo(); void bar() { foo(); }')
     foo = get_cursor(tu, 'foo')
@@ -259,3 +296,17 @@ def test_referenced():
         if c.kind == CursorKind.CALL_EXPR:
             assert c.referenced.spelling == foo.spelling
             break
+
+def test_mangled_name():
+    kInputForMangling = """\
+    int foo(int, int);
+    """
+    tu = get_tu(kInputForMangling, lang='cpp')
+    foo = get_cursor(tu, 'foo')
+
+    # Since libclang does not link in targets, we cannot pass a triple to it
+    # and force the target. To enable this test to pass on all platforms, accept
+    # all valid manglings.
+    # [c-index-test handles this by running the source through clang, emitting
+    #  an AST file and running libclang on that AST file]
+    assert foo.mangled_name in ('_Z3fooii', '__Z3fooii', '?foo@@YAHHH')

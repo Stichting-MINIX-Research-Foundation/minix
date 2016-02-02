@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <sys/exec.h>
 #include <libexec.h>
-#include <minix/param.h>
 #include <machine/vmparam.h>
 
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
@@ -19,8 +18,8 @@ static struct exec_loaders {
 	{ NULL }
 };
 
-int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
-	char **envp)
+int srv_execve(int proc_e, char *exec, size_t exec_len, char *progname,
+	char **argv, char **envp)
 {
 	size_t frame_size = 0;	/* Size of the new initial stack. */
 	int argc = 0;		/* Argument count. */
@@ -30,7 +29,6 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	struct ps_strings *psp;
 	int vsp = 0;	/* (virtual) Stack pointer in new address space. */
 
-	char *progname;
 	int r;
 
 	minix_stack_params(argv[0], argv, envp, &frame_size, &overflow,
@@ -50,8 +48,6 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 
 	minix_stack_fill(argv[0], argc, argv, envc, envp, frame_size, frame,
 		&vsp, &psp);
-
-	(progname=strrchr(argv[0], '/')) ? progname++ : (progname=argv[0]);
 
 	r = do_exec(proc_e, exec, exec_len, progname, frame, frame_size,
 		vsp + ((char *)psp - frame));
@@ -73,7 +69,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 
 	memset(&execi, 0, sizeof(execi));
 
-	execi.stack_high = kinfo.user_sp;
+	execi.stack_high = minix_get_user_sp();
 	execi.stack_size = DEFAULT_STACK_LIMIT;
 	execi.proc_e = proc_e;
 	execi.hdr = exec;

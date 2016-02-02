@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.18 2013/05/16 07:43:02 martin Exp $
+# $NetBSD: t_nat_exec.sh,v 1.21 2014/12/01 19:46:29 martin Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,13 +67,13 @@ test_case n4 nattest text text
 test_case n5 nattest text text
 test_case n6 nattest text text
 test_case n7 nattest text text
-failing_test_case_be n8 nattest "See PR kern/47665" hex hex -T update_ipid=0
-failing_test_case_be n9 nattest "See PR kern/47665" hex hex -T update_ipid=0
+test_case n8 nattest hex hex -T update_ipid=0
+test_case n9 nattest hex hex -T update_ipid=0
 test_case n10 nattest hex hex -T update_ipid=0
 test_case n11 nattest text text
 failing_test_case n12 nattest "Known to be broken" hex hex -T update_ipid=0 -v
 test_case n13 nattest text text
-failing_test_case_be n14 nattest "See PR kern/47665" text text
+test_case n14 nattest text text
 test_case n15 nattest text text -T update_ipid=0
 test_case n16 nattest hex hex -D
 test_case n17 nattest hex hex -D
@@ -97,7 +97,6 @@ failing_test_case_be n9_6 nattest "See PR kern/47665" hex hex -6
 test_case n11_6 nattest text text -6
 test_case n12_6 nattest hex hex -6
 test_case n15_6 nattest text text -6
-failing_test_case n17_6 nattest "Test golden output file missing" hex hex -6
 
 atf_init_test_cases()
 {
@@ -138,6 +137,4 @@ atf_init_test_cases()
 	atf_add_test_case n11_6
 	atf_add_test_case n12_6
 	atf_add_test_case n15_6
-	atf_add_test_case n17_6
-
 }

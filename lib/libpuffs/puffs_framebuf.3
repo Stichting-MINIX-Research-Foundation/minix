@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.29 2010/04/01 09:57:00 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.30 2015/02/16 10:48:50 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -584,6 +584,10 @@ It is useful for file systems such as
 .Xr mount_psshfs 8
 which depend on a single connection.
 .El
+.Sh RETURN VALUES
+These functions generally return \-1 to signal error and set
+.Er errno
+to indicate the type of error.
 .Sh CODE REFERENCES
 The current users of
 .Nm
@@ -596,10 +600,6 @@ See
 and
 .Pa src/usr.sbin/puffs/mount_9p
 for the respective usage examples.
-.Sh RETURN VALUES
-These functions generally return \-1 to signal error and set
-.Er errno
-to indicate the type of error.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs_cc 3 ,

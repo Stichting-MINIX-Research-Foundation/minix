@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.18 2011/03/15 03:52:38 erh Exp $	*/
+/*	$NetBSD: ls.h,v 1.19 2014/02/20 18:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,6 +53,8 @@ extern int f_statustime;	/* use time of last mode change */
 extern int f_type;		/* add type character for non-regular files */
 extern int f_typedir;		/* add type character for directories */
 extern int f_nonprint;		/* show unprintables as ? */
+extern int f_fullpath;		/* print full pathname, not filename */
+extern int f_leafonly;		/* when recursing, print leaf names only */
 
 typedef struct {
 	FTSENT *list;

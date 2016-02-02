@@ -7,6 +7,10 @@
 /* How many MiB of RAM to assume if the real amount cannot be determined. */
 #define ASSUME_RAM 128
 
+/* Define to 1 if translation of program messages to the user's native
+   language is requested. */
+/* #undef ENABLE_NLS */
+
 /* Define to 1 if bswap_16 is available. */
 /* #undef HAVE_BSWAP_16 */
 
@@ -19,6 +23,20 @@
 /* Define to 1 if you have the <byteswap.h> header file. */
 /* #undef HAVE_BYTESWAP_H */
 
+/* Define to 1 if the system has the type `CC_SHA256_CTX'. */
+/* #undef HAVE_CC_SHA256_CTX */
+
+/* Define to 1 if you have the `CC_SHA256_Init' function. */
+/* #undef HAVE_CC_SHA256_INIT */
+
+/* Define to 1 if you have the MacOS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+/* #undef HAVE_CFLOCALECOPYCURRENT */
+
+/* Define to 1 if you have the MacOS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+/* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
+
 /* Define to 1 if crc32 integrity check is enabled. */
 #define HAVE_CHECK_CRC32 1
 
@@ -27,6 +45,24 @@
 
 /* Define to 1 if sha256 integrity check is enabled. */
 #define HAVE_CHECK_SHA256 1
+
+#if !defined(__minix)
+/* Define to 1 if you have the `clock_gettime' function. */
+#define HAVE_CLOCK_GETTIME 1
+#endif /* !defined(__minix) */
+
+/* Define to 1 if you have the <CommonCrypto/CommonDigest.h> header file. */
+/* #undef HAVE_COMMONCRYPTO_COMMONDIGEST_H */
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+/* #undef HAVE_DCGETTEXT */
+
+#if !defined(__minix)
+/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+   you don't. */
+#define HAVE_DECL_CLOCK_MONOTONIC 1
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the declaration of `program_invocation_name', and
    to 0 if you don't. */
@@ -59,6 +95,9 @@
 /* Define to 1 if x86 decoder is enabled. */
 #define HAVE_DECODER_X86 1
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
+
 /* Define to 1 if arm encoder is enabled. */
 #define HAVE_ENCODER_ARM 1
 
@@ -90,13 +129,32 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `futimens' function. */
-/* #undef HAVE_FUTIMENS */
+#define HAVE_FUTIMENS 1
 
 /* Define to 1 if you have the `futimes' function. */
-#define HAVE_FUTIMES 1
+/* #undef HAVE_FUTIMES */
 
 /* Define to 1 if you have the `futimesat' function. */
 /* #undef HAVE_FUTIMESAT */
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#define HAVE_GETOPT_H 1
+
+/* Define to 1 if you have the `getopt_long' function. */
+#define HAVE_GETOPT_LONG 1
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+/* #undef HAVE_GETTEXT */
+
+#if !defined(__minix)
+/* Define if you have the iconv() function and it works. */
+#define HAVE_ICONV 1
+
+/* Define to 1 if you have the <immintrin.h> header file. */
+#if defined(__i386__) || defined(__x86_64__)
+#define HAVE_IMMINTRIN_H 1
+#endif
+#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -124,6 +182,44 @@
 
 /* Define to 1 to enable hc4 match finder. */
 #define HAVE_MF_HC4 1
+
+/* Define to 1 if you have the <minix/sha2.h> header file. */
+/* #undef HAVE_MINIX_SHA2_H */
+
+/* Define to 1 if getopt.h declares extern int optreset. */
+#define HAVE_OPTRESET 1
+
+/* Define to 1 if you have the `pipe2' function. */
+#define HAVE_PIPE2 1
+
+#if !defined(__minix)
+/* Define to 1 if you have the `posix_fadvise' function. */
+#define HAVE_POSIX_FADVISE 1
+
+/* Define to 1 if you have the `pthread_condattr_setclock' function. */
+#define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
+#endif /* !defined(__minix) */
+
+/* Have PTHREAD_PRIO_INHERIT. */
+/* #undef HAVE_PTHREAD_PRIO_INHERIT */
+
+/* Define to 1 if you have the `SHA256Init' function. */
+/* #undef HAVE_SHA256INIT */
+
+/* Define to 1 if the system has the type `SHA256_CTX'. */
+#define HAVE_SHA256_CTX 1
+
+/* Define to 1 if you have the <sha256.h> header file. */
+/* #undef HAVE_SHA256_H */
+
+/* Define to 1 if you have the `SHA256_Init' function. */
+#define HAVE_SHA256_INIT 1
+
+/* Define to 1 if the system has the type `SHA2_CTX'. */
+/* #undef HAVE_SHA2_CTX */
+
+/* Define to 1 if you have the <sha2.h> header file. */
+#define HAVE_SHA2_H 1
 
 /* Define to 1 if optimizing for size. */
 /* #undef HAVE_SMALL */
@@ -153,7 +249,7 @@
 /* #undef HAVE_STRUCT_STAT_ST_ATIM_ST__TIM_TV_NSEC */
 
 /* Define to 1 if `st_atim.tv_nsec' is a member of `struct stat'. */
-/* #undef HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC */
+#define HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC 1
 
 /* Define to 1 if `st_uatime' is a member of `struct stat'. */
 /* #undef HAVE_STRUCT_STAT_ST_UATIME */
@@ -188,20 +284,51 @@
 /* Define to 1 if you have the `utimes' function. */
 /* #undef HAVE_UTIMES */
 
+/* Define to 1 or 0, depending whether the compiler supports simple visibility
+   declarations. */
+#define HAVE_VISIBILITY 1
+
 /* Define to 1 if you have the `wcwidth' function. */
 #define HAVE_WCWIDTH 1
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
 
+#if !defined(__minix)
+/* Define to 1 if _mm_movemask_epi8 is available. */
+#define HAVE__MM_MOVEMASK_EPI8 1
+#endif /* !defined(__minix) */
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#define LT_OBJDIR ".libs/"
+
+#if !defined(__minix)
+/* Define to 1 when using POSIX threads (pthreads). */
+#define MYTHREAD_POSIX 1
+#endif /* !defined(__minix) */
+
+/* Define to 1 when using Windows Vista compatible threads. This uses features
+   that are not available on Windows XP. */
+/* #undef MYTHREAD_VISTA */
+
+/* Define to 1 when using Windows 95 (and thus XP) compatible threads. This
+   avoids use of features that were added in Windows Vista. */
+/* #undef MYTHREAD_WIN95 */
+
+/* Define to 1 to disable debugging code. */
+#define NDEBUG 1
+
+/* Name of package */
+#define PACKAGE "xz"
+
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "joerg@NetBSD.org"
+#define PACKAGE_BUGREPORT "lasse.collin@tukaani.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "XZ Utils"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "XZ Utils 5.0.0"
+#define PACKAGE_STRING "XZ Utils 5.2.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xz"
@@ -210,13 +337,21 @@
 #define PACKAGE_URL "http://tukaani.org/xz/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.0.0"
+#define PACKAGE_VERSION "5.2.1"
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+/* #undef PTHREAD_CREATE_JOINABLE */
 
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+/* Define to 1 if the number of available CPU cores can be detected with
+   cpuset(2). */
+/* #undef TUKLIB_CPUCORES_CPUSET */
 
 /* Define to 1 if the number of available CPU cores can be detected with
    pstat_getdynamic(). */
@@ -228,11 +363,14 @@
 
 /* Define to 1 if the number of available CPU cores can be detected with
    sysctl(). */
-/* #undef TUKLIB_CPUCORES_SYSCTL */
+#define TUKLIB_CPUCORES_SYSCTL 1
 
 /* Define to 1 if the system supports fast unaligned access to 16-bit and
    32-bit integers. */
-/* #undef TUKLIB_FAST_UNALIGNED_ACCESS */
+#include <machine/types.h>
+#ifdef __NO_STRICT_ALIGNMENT
+# define TUKLIB_FAST_UNALIGNED_ACCESS 1
+#endif
 
 /* Define to 1 if the amount of physical memory can be detected with
    _system_configuration.physmem. */
@@ -252,7 +390,7 @@
 
 /* Define to 1 if the amount of physical memory can be detected with
    sysconf(_SC_PAGESIZE) and sysconf(_SC_PHYS_PAGES). */
-/* #undef TUKLIB_PHYSMEM_SYSCONF */
+#define TUKLIB_PHYSMEM_SYSCONF 1
 
 /* Define to 1 if the amount of physical memory can be detected with sysctl().
    */
@@ -284,11 +422,31 @@
 #endif
 
 
+/* Version number of package */
+#define VERSION "5.2.1"
+
+#if !defined(__NetBSD__) && !defined(__minix)
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#include <sys/endian.h>
-#if BYTE_ORDER == BIG_ENDIAN
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+#else
+# include <sys/endian.h>
+# if BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+# endif
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
@@ -297,6 +455,7 @@
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 
+#if !defined(__minix)
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
 
@@ -306,7 +465,11 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
-
+#else
+#define _MINIX 1
+#define _POSIX_1_SOURCE 2
+#define _POSIX_SOURCE 1
+#endif /* !defined(__minix) */
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
@@ -321,6 +484,10 @@
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 /* #undef _UINT8_T */
+
+/* Define to rpl_ if the getopt replacement functions and variables should be
+   used. */
+/* #undef __GETOPT_PREFIX */
 
 /* Define to the type of a signed integer type of width exactly 32 bits if
    such a type exists and the standard includes do not define it. */

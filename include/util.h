@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.65 2013/05/02 07:17:35 matt Exp $	*/
+/*	$NetBSD: util.h,v 1.68 2015/09/24 14:39:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -83,6 +83,7 @@ const char     *getdiskrawname(char *, size_t, const char *);
 const char     *getdiskcookedname(char *, size_t, const char *);
 const char     *getfstypename(int);
 const char     *getfsspecname(char *, size_t, const char *);
+struct kinfo_vmentry *kinfo_getvmmap(pid_t, size_t *);
 #ifndef __LIBC12_SOURCE__
 void		login(const struct utmp *) __RENAME(__login50);
 void		loginx(const struct utmpx *) __RENAME(__loginx50);
@@ -147,9 +148,12 @@ size_t 		estrlcpy(char *, const char *, size_t);
 size_t 		estrlcat(char *, const char *, size_t);
 char 		*estrdup(const char *);
 char 		*estrndup(const char *, size_t);
+intmax_t	estrtoi(const char *, int, intmax_t, intmax_t);
+uintmax_t	estrtou(const char *, int, uintmax_t, uintmax_t);
 void 		*ecalloc(size_t, size_t);
 void 		*emalloc(size_t);
 void 		*erealloc(void *, size_t);
+void 		ereallocarr(void *, size_t, size_t);
 struct __sFILE	*efopen(const char *, const char *);
 int	 	easprintf(char ** __restrict, const char * __restrict, ...)
 			__printflike(2, 3);

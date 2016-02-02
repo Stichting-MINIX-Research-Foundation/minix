@@ -1,0 +1,122 @@
+An open source library and command-line tools, licensed under the BSD
+licence, written in C, using the OpenSSL library and providing
+approximately the functionality specified below.
+
+The libraries and tools will compile and run on the following
+operating systems:
+
+FreeBSD
+Linux (Debian and Red Hat)
+Solaris
+
+but will be written such that porting to other operating systems
+supported by OpenSSL will be possible.
+
+As is usual with software, there will be no guarantee of 100% correct
+functionality, but the software will be written to professional
+standards. This specification does not constitute a commitment to
+fixing bugs or adding enhancements once the initial version is
+complete.
+
+The library will comply with the IETF specification currently known as
+RFC2440bis.
+
+API
+---
+
+* Load keyring
+
+* Save keyring
+
+* Generate key
+
+* Add key to keyring
+
+* Find key in loaded keyring (by key ID, by UID)
+
+* Generate subkey
+
+* Revoke subkey
+
+* Delete subkey
+
+* Update subkey
+
+* Delete key from keyring
+
+* Add/remove UID
+
+* Certify UID
+
+* Revoke certification
+
+* Sign message
+
+* Verify, using any key in the keyring
+
+* Verify, using specified key
+
+* Encrypt, using a key
+
+* Decrypt, using a key
+
+* Import any object to GPG/PGP (key, keyring)
+
+* Export any object
+
+* (?)Query keyservers for keys
+
+* (?)Export keys to keyservers
+
+Keyserver stuff will be done if time/budget permits, otherwise will be
+a to-do item, since we can always use GPG externally to do it.
+
+Also, "save/load/find/add/import/export keyring" will be pluggable, so
+we can use databases instead of flat files and in-memory keyrings.
+
+We will support verification of signatures using v3 keys, and
+decryption of messages encrypted to v3 keys, but not signing or
+encryption.
+
+Command-line
+------------
+
+* List keys
+
+* Find key
+
+* Export key/keyring
+
+* Import key/keyring
+
+* Generate key
+
+* Delete key
+
+* Generate subkey
+
+* Revoke subkey
+
+* Delete subkey
+
+* Update subkey
+
+* Add UID
+
+* Remove UID
+
+* Certify UID
+
+* Revoke certification
+
+* Encrypt
+
+* Decrypt
+
+* Sign
+
+* Verify
+
+Note that at least the first phase is not aiming at super-smooth
+command-line utilities - these will be good enough for testing, rather
+than for general use.

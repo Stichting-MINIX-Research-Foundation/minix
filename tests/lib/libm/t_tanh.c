@@ -1,4 +1,4 @@
-/* $NetBSD: t_tanh.c,v 1.6 2011/09/12 17:45:51 jruoho Exp $ */
+/* $NetBSD: t_tanh.c,v 1.7 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tanh.c,v 1.6 2011/09/12 17:45:51 jruoho Exp $");
+__RCSID("$NetBSD: t_tanh.c,v 1.7 2014/03/03 10:39:08 martin Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -45,12 +45,10 @@ ATF_TC_HEAD(tanh_nan, tc)
 
 ATF_TC_BODY(tanh_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(tanh(x)) != 0);
-#endif
 }
 
 ATF_TC(tanh_inf_neg);
@@ -61,11 +59,9 @@ ATF_TC_HEAD(tanh_inf_neg, tc)
 
 ATF_TC_BODY(tanh_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	ATF_CHECK(tanh(x) == -1.0);
-#endif
 }
 
 ATF_TC(tanh_inf_pos);
@@ -76,11 +72,9 @@ ATF_TC_HEAD(tanh_inf_pos, tc)
 
 ATF_TC_BODY(tanh_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 
 	ATF_CHECK(tanh(x) == 1.0);
-#endif
 }
 
 ATF_TC(tanh_zero_neg);
@@ -91,7 +85,6 @@ ATF_TC_HEAD(tanh_zero_neg, tc)
 
 ATF_TC_BODY(tanh_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = tanh(x);
 
@@ -100,7 +93,6 @@ ATF_TC_BODY(tanh_zero_neg, tc)
 
 	ATF_REQUIRE_MSG(signbit(y) != 0,
 	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
-#endif
 }
 
 ATF_TC(tanh_zero_pos);
@@ -111,14 +103,12 @@ ATF_TC_HEAD(tanh_zero_pos, tc)
 
 ATF_TC_BODY(tanh_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = tanh(x);
 
 	ATF_CHECK(x == y);
 	ATF_CHECK(signbit(x) == 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 /*
@@ -132,12 +122,10 @@ ATF_TC_HEAD(tanhf_nan, tc)
 
 ATF_TC_BODY(tanhf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(tanhf(x)) != 0);
-#endif
 }
 
 ATF_TC(tanhf_inf_neg);
@@ -148,11 +136,9 @@ ATF_TC_HEAD(tanhf_inf_neg, tc)
 
 ATF_TC_BODY(tanhf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	ATF_CHECK(tanhf(x) == -1.0);
-#endif
 }
 
 ATF_TC(tanhf_inf_pos);
@@ -163,11 +149,9 @@ ATF_TC_HEAD(tanhf_inf_pos, tc)
 
 ATF_TC_BODY(tanhf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
 	ATF_CHECK(tanhf(x) == 1.0);
-#endif
 }
 
 ATF_TC(tanhf_zero_neg);
@@ -178,7 +162,6 @@ ATF_TC_HEAD(tanhf_zero_neg, tc)
 
 ATF_TC_BODY(tanhf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = tanh(x);
 
@@ -187,7 +170,6 @@ ATF_TC_BODY(tanhf_zero_neg, tc)
 
 	ATF_REQUIRE_MSG(signbit(y) != 0,
 	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
-#endif
 }
 
 ATF_TC(tanhf_zero_pos);
@@ -198,14 +180,12 @@ ATF_TC_HEAD(tanhf_zero_pos, tc)
 
 ATF_TC_BODY(tanhf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = tanhf(x);
 
 	ATF_CHECK(x == y);
 	ATF_CHECK(signbit(x) == 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

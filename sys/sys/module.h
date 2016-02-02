@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.34 2013/10/23 18:57:40 mbalmer Exp $	*/
+/*	$NetBSD: module.h,v 1.38 2015/06/22 16:35:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -101,17 +101,45 @@ typedef struct module {
  * containing only one entry, pointing to the module's modinfo_t record.
  * For the kernel, `link_set_modules' can contain multiple entries and
  * records all modules built into the kernel at link time.
+ *
+ * Alternatively, in some environments rump kernels use
+ * __attribute__((constructor)) due to link sets being
+ * difficult (impossible?) to implement (e.g. GNU gold, OS X, etc.)
  */
+
+#ifdef RUMP_USE_CTOR
+struct modinfo_chain {
+	const struct modinfo	*mc_info;
+	LIST_ENTRY(modinfo_chain) mc_entries;
+};
+LIST_HEAD(modinfo_boot_chain, modinfo_chain);
+#define _MODULE_REGISTER(name)						\
+static void __CONCAT(modctor_,name)(void) __attribute__((__constructor__));\
+static void __CONCAT(modctor_,name)(void)				\
+{									\
+	static struct modinfo_chain mc = {				\
+		.mc_info = &__CONCAT(name,_modinfo),			\
+	};								\
+	extern struct modinfo_boot_chain modinfo_boot_chain;		\
+	LIST_INSERT_HEAD(&modinfo_boot_chain, &mc, mc_entries);		\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _MODULE_REGISTER(name) __link_set_add_rodata(modules, __CONCAT(name,_modinfo));
+
+#endif /* RUMP_USE_CTOR */
+
 #define	MODULE(class, name, required)				\
-static int name##_modcmd(modcmd_t, void *);			\
-static const modinfo_t name##_modinfo = {			\
+static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
+static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
-	.mi_modcmd = name##_modcmd,				\
-	.mi_name = #name,					\
+	.mi_modcmd = __CONCAT(name,_modcmd),			\
+	.mi_name = __STRING(name),				\
 	.mi_required = (required)				\
 }; 								\
-__link_set_add_rodata(modules, name##_modinfo);
+_MODULE_REGISTER(name)
 
 TAILQ_HEAD(modlist, module);
 
@@ -157,7 +185,7 @@ void	module_print(const char *, ...) __printflike(1, 2);
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
-extern char	*module_machine;
+extern const char	*module_machine;
 
 #else	/* _KERNEL */
 
@@ -199,5 +227,11 @@ typedef struct modstat {
 } modstat_t;
 
 int	modctl(int, void *);
+
+#ifdef _KERNEL
+/* attention: pointers passed are userland pointers!,
+   see modctl_load_t */
+int	handle_modctl_load(const char *, int, const char *, size_t);
+#endif
 
 #endif	/* !_SYS_MODULE_H_ */

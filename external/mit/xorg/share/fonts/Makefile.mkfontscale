@@ -14,6 +14,7 @@ _MAKEFILE_MKFONTSCALE_=1
 MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/mkfontscale && ${PRINTOBJDIR}
 MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
 
+#__MINIX: gname=operator instead of wheel
 afterinstall: create.fonts.dir create.fonts.scale
 .if ${MKUNPRIVED} != "no"
 	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=operator" \

@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $
+ * $NetBSD: pch.c,v 1.28 2015/07/30 21:47:51 christos Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.25 2013/01/29 09:30:11 wiz Exp $");
+__RCSID("$NetBSD: pch.c,v 1.28 2015/07/30 21:47:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -455,6 +455,28 @@ malformed(void)
 	/* about as informative as "Syntax error" in C */
 }
 
+static LINENUM
+getlinenum(const char *s)
+{
+	LINENUM l = (LINENUM)atol(s);
+	if (l < 0) {
+		l = 0;
+		malformed();
+	}
+	return l;
+}
+
+static LINENUM
+getskiplinenum(char **p)
+{
+	char *s = *p;
+	LINENUM l = getlinenum(s);
+	while (isdigit((unsigned char)*s))
+		s++;
+	*p = s;
+	return l;
+}
+
 /*
  * True if the line has been discarded (i.e., it is a line saying
  *  "\ No newline at end of file".)
@@ -582,21 +604,24 @@ another_hunk(void)
 					malformed();
 				if (strnEQ(s, "0,0", 3))
 					memmove(s, s + 2, strlen(s + 2) + 1);
-				p_first = (LINENUM) atol(s);
-				while (isdigit((unsigned char)*s))
-					s++;
+				p_first = getskiplinenum(&s);
 				if (*s == ',') {
 					for (; *s && !isdigit((unsigned char)*s); s++)
 						;
 					if (!*s)
 						malformed();
-					p_ptrn_lines = ((LINENUM) atol(s)) - p_first + 1;
+					p_ptrn_lines = (getlinenum(s)) - p_first + 1;
+					if (p_ptrn_lines < 0)
+						malformed();
 				} else if (p_first)
 					p_ptrn_lines = 1;
 				else {
 					p_ptrn_lines = 0;
 					p_first = 1;
 				}
+				if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+				    p_ptrn_lines >= LINENUM_MAX - 6)
+					malformed();
 
 				/* we need this much at least */
 				p_max = p_ptrn_lines + 6;
@@ -649,22 +674,25 @@ another_hunk(void)
 						;
 					if (!*s)
 						malformed();
-					p_newfirst = (LINENUM) atol(s);
-					while (isdigit((unsigned char)*s))
-						s++;
+					p_newfirst = getskiplinenum(&s);
 					if (*s == ',') {
 						for (; *s && !isdigit((unsigned char)*s); s++)
 							;
 						if (!*s)
 							malformed();
-						p_repl_lines = ((LINENUM) atol(s)) -
+						p_repl_lines = (getlinenum(s)) -
 						    p_newfirst + 1;
+						if (p_repl_lines < 0)
+							malformed();
 					} else if (p_newfirst)
 						p_repl_lines = 1;
 					else {
 						p_repl_lines = 0;
 						p_newfirst = 1;
 					}
+					if (p_newfirst >= LINENUM_MAX - p_repl_lines ||
+					    p_repl_lines >= LINENUM_MAX - p_end)
+						malformed();
 					p_max = p_repl_lines + p_end;
 					if (p_max > MAXHUNKSIZE)
 						fatal("hunk too large (%ld lines) at line %ld: %s",
@@ -857,31 +885,31 @@ hunk_done:
 		s = buf + 4;
 		if (!*s)
 			malformed();
-		p_first = (LINENUM) atol(s);
-		while (isdigit((unsigned char)*s))
-			s++;
+		p_first = getskiplinenum(&s);
 		if (*s == ',') {
-			p_ptrn_lines = (LINENUM) atol(++s);
-			while (isdigit((unsigned char)*s))
-				s++;
+			s++;
+			p_ptrn_lines = getskiplinenum(&s);
 		} else
 			p_ptrn_lines = 1;
+		if (p_first >= LINENUM_MAX - p_ptrn_lines)
+			malformed();
 		if (*s == ' ')
 			s++;
 		if (*s != '+' || !*++s)
 			malformed();
-		p_newfirst = (LINENUM) atol(s);
-		while (isdigit((unsigned char)*s))
-			s++;
+		p_newfirst = getskiplinenum(&s);
 		if (*s == ',') {
-			p_repl_lines = (LINENUM) atol(++s);
-			while (isdigit((unsigned char)*s))
-				s++;
+			s++;
+			p_repl_lines = getskiplinenum(&s);
 		} else
 			p_repl_lines = 1;
 		if (*s == ' ')
 			s++;
 		if (*s != '@')
+			malformed();
+		if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+		    p_newfirst > LINENUM_MAX - p_repl_lines ||
+		    p_ptrn_lines >= LINENUM_MAX - p_repl_lines - 1)
 			malformed();
 		if (!p_ptrn_lines)
 			p_first++;	/* do append rather than insert */
@@ -1022,35 +1050,39 @@ hunk_done:
 			next_intuit_at(line_beginning, p_input_line);
 			return false;
 		}
-		p_first = (LINENUM) atol(buf);
-		for (s = buf; isdigit((unsigned char)*s); s++)
-			;
+		s = buf;
+		p_first = getskiplinenum(&s);
 		if (*s == ',') {
-			p_ptrn_lines = (LINENUM) atol(++s) - p_first + 1;
-			while (isdigit((unsigned char)*s))
-				s++;
+			s++;
+			p_ptrn_lines = getskiplinenum(&s) - p_first + 1;
 		} else
 			p_ptrn_lines = (*s != 'a');
-		hunk_type = *s;
+		if (p_first >= LINENUM_MAX - p_ptrn_lines)
+			malformed();
+		hunk_type = *s++;
 		if (hunk_type == 'a')
 			p_first++;	/* do append rather than insert */
-		min = (LINENUM) atol(++s);
-		for (; isdigit((unsigned char)*s); s++)
-			;
+		min = getskiplinenum(&s);
 		if (*s == ',')
-			max = (LINENUM) atol(++s);
+			max = getlinenum(++s);
 		else
 			max = min;
+		if (min < 0 || min > max || max - min == LINENUM_MAX)
+			malformed();
 		if (hunk_type == 'd')
 			min++;
 		p_end = p_ptrn_lines + 1 + max - min + 1;
+		p_newfirst = min;
+		p_repl_lines = max - min + 1;
+		if (p_newfirst > LINENUM_MAX - p_repl_lines ||
+		    p_ptrn_lines >= LINENUM_MAX - p_repl_lines - 1)
+			malformed();
+		p_end = p_ptrn_lines + p_repl_lines + 1;
 		if (p_end > MAXHUNKSIZE)
 			fatal("hunk too large (%ld lines) at line %ld: %s",
 			    p_end, p_input_line, buf);
 		while (p_end >= hunkmax)
 			grow_hunkmax();
-		p_newfirst = min;
-		p_repl_lines = max - min + 1;
 		snprintf(buf, buf_len, "*** %ld,%ld\n", p_first,
 		    p_first + p_ptrn_lines - 1);
 		p_line[0] = savestr(buf);
@@ -1375,6 +1407,7 @@ do_ed_script(void)
 	char	*t;
 	long	beginning_of_this_line;
 	FILE	*pipefp = NULL;
+	int	continuation;
 
 	if (!skip_rest_of_patch) {
 		if (copy_file(filearg[0], TMPOUTNAME) < 0) {
@@ -1399,7 +1432,19 @@ do_ed_script(void)
 		    *t == 'd' || *t == 'i' || *t == 's')) {
 			if (pipefp != NULL)
 				fputs(buf, pipefp);
-			if (*t != 'd') {
+			if (*t == 's') {
+				for (;;) {
+					continuation = 0;
+					t = strchr(buf, '\0') - 1;
+					while (--t >= buf && *t == '\\')
+						continuation = !continuation;
+					if (!continuation ||
+					    pgets(buf, sizeof buf, pfp) == NULL)
+						break;
+					if (pipefp != NULL)
+						fputs(buf, pipefp);
+				}
+			} else if (*t != 'd') {
 				while (pgets(buf, buf_len, pfp) != NULL) {
 					p_input_line++;
 					if (pipefp != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.4 2013/10/19 17:45:00 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.5 2015/08/21 14:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.4 2013/10/19 17:45:00 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.5 2015/08/21 14:19:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,8 @@ int	debug = 1;
 int	debug = 0;
 #endif
 
-int	main __P((int, char **));
-void	nonfs __P((int));
-void	usage __P((void));
+void	nonfs(int);
+void	usage(void);
 
 static void *
 child(void *arg)
@@ -108,7 +107,7 @@ child(void *arg)
 	memset(&nsd, 0, sizeof(nsd));
 	while (rump_sys_nfssvc(nfssvc_flag, &nsd) < 0) {
 		if (errno != ENEEDAUTH) {
-			syslog(LOG_ERR, "nfssvc: %m %d", errno);
+			syslog(LOG_ERR, "nfssvc (%s)", strerror(errno));
 			exit(1);
 		}
 		nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
@@ -153,7 +152,6 @@ nfsd_main(argc, argv)
 	int nfsdcnt, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, udpflag, ecode, s;
-	int error = 0;
 
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
@@ -377,11 +375,12 @@ nfsd_main(argc, argv)
 		if (rump_sys_setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
 		    &on, sizeof on) < 0) {
 			syslog(LOG_ERR, "can't set v6-only binding for udp6 "
-					"socket: %m");
+			    "socket (%s)", strerror(errno));
 			exit(1);
 		}
 		if (rump_sys_bind(sock, ai_udp6->ai_addr, ai_udp6->ai_addrlen) < 0) {
-			syslog(LOG_ERR, "can't bind udp addr");
+			syslog(LOG_ERR, "can't bind udp addr (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 		if (!rpcb_set(RPCPROG_NFS, 2, nconf_udp6, &nb_udp6) ||
@@ -393,7 +392,8 @@ nfsd_main(argc, argv)
 		nfsdargs.name = NULL;
 		nfsdargs.namelen = 0;
 		if (rump_sys_nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
-			syslog(LOG_ERR, "can't add UDP6 socket");
+			syslog(LOG_ERR, "can't add UDP6 socket (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 		(void)rump_sys_close(sock);
@@ -410,7 +410,8 @@ nfsd_main(argc, argv)
 		}
 		if (setsockopt(tcpsock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
+			syslog(LOG_ERR, "setsockopt SO_REUSEADDR (%s)",
+			    strerror(errno));
 		if (bind(tcpsock, ai_tcp->ai_addr, ai_tcp->ai_addrlen) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
 			exit(1);
@@ -433,24 +434,27 @@ nfsd_main(argc, argv)
 	if (tcpflag && ip6flag) {
 		if ((tcp6sock = socket(ai_tcp6->ai_family, ai_tcp6->ai_socktype,
 		    ai_tcp6->ai_protocol)) < 0) {
-			syslog(LOG_ERR, "can't create tcp socket");
+			syslog(LOG_ERR, "can't create tcp socket (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 		if (setsockopt(tcp6sock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
+			syslog(LOG_ERR, "setsockopt SO_REUSEADDR (%s)",
+			    strerror(errno));
 		if (setsockopt(tcp6sock, IPPROTO_IPV6, IPV6_V6ONLY,
 		    &on, sizeof on) < 0) {
 			syslog(LOG_ERR, "can't set v6-only binding for tcp6 "
-					"socket: %m");
+			    "socket (%s)", strerror(errno));
 			exit(1);
 		}
 		if (bind(tcp6sock, ai_tcp6->ai_addr, ai_tcp6->ai_addrlen) < 0) {
-			syslog(LOG_ERR, "can't bind tcp6 addr");
+			syslog(LOG_ERR, "can't bind tcp6 addr (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 		if (listen(tcp6sock, 5) < 0) {
-			syslog(LOG_ERR, "listen failed");
+			syslog(LOG_ERR, "listen failed (%s)", strerror(errno));
 			exit(1);
 		}
 		if (!rpcb_set(RPCPROG_NFS, 2, nconf_tcp6, &nb_tcp6) ||
@@ -478,39 +482,43 @@ nfsd_main(argc, argv)
 	 */
 	for (;;) {
 		if (rump_sys_poll(set, 4, INFTIM) < 1) {
-			syslog(LOG_ERR, "poll failed: %m");
+			syslog(LOG_ERR, "poll failed (%s)", strerror(errno));
 			exit(1);
 		}
 
-			len = sizeof(inetpeer);
-			if ((msgsock = accept(tcpsock,
-			    (struct sockaddr *)&inetpeer, &len)) < 0) {
-				syslog(LOG_ERR, "accept failed: %d", error);
-				exit(1);
-			}
-			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
-			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
-				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %m");
-			nfsdargs.sock = msgsock;
-			nfsdargs.name = (caddr_t)&inetpeer;
-			nfsdargs.namelen = sizeof(inetpeer);
-			rump_sys_nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
-			(void)rump_sys_close(msgsock);
+		len = sizeof(inetpeer);
+		if ((msgsock = accept(tcpsock,
+		    (struct sockaddr *)&inetpeer, &len)) < 0) {
+			syslog(LOG_ERR, "accept failed (%s)",
+			    strerror(errno));
+			exit(1);
+		}
+		memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
+		if (setsockopt(msgsock, SOL_SOCKET,
+		    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
+			syslog(LOG_ERR, "setsockopt SO_KEEPALIVE (%s)",
+			    strerror(errno));
+		nfsdargs.sock = msgsock;
+		nfsdargs.name = (caddr_t)&inetpeer;
+		nfsdargs.namelen = sizeof(inetpeer);
+		rump_sys_nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
+		(void)rump_sys_close(msgsock);
 
 #ifdef notyet
+		int error = 0;
 		if (set[1].revents & POLLIN) {
 			len = sizeof(inet6peer);
 			if ((msgsock = rump_sys_accept(tcp6sock,
 			    (struct sockaddr *)&inet6peer, &len, &error)) < 0) {
-				syslog(LOG_ERR, "accept failed: %m");
+				syslog(LOG_ERR, "accept failed (%s)",
+					strerror(error));
 				exit(1);
 			}
 			if (rump_sys_setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, (char *)&on, sizeof(on), &error) < 0)
 				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %m");
+				    "setsockopt SO_KEEPALIVE (%s)",
+					strerror(error));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&inet6peer;
 			nfsdargs.namelen = sizeof(inet6peer);
@@ -522,13 +530,14 @@ nfsd_main(argc, argv)
 			len = sizeof(isopeer);
 			if ((msgsock = rump_sys_accept(tp4sock,
 			    (struct sockaddr *)&isopeer, &len, &error)) < 0) {
-				syslog(LOG_ERR, "accept failed: %m");
+				syslog(LOG_ERR, "accept failed (%s)",
+				    strerror(error));
 				exit(1);
 			}
 			if (rump_sys_setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, (char *)&on, sizeof(on), &error) < 0)
-				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %m");
+				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE (%s)",
+				    strerror(error));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&isopeer;
 			nfsdargs.namelen = len;
@@ -540,12 +549,14 @@ nfsd_main(argc, argv)
 			len = sizeof(inetpeer);
 			if ((msgsock = rump_sys_accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
-				syslog(LOG_ERR, "accept failed: %m");
+				syslog(LOG_ERR, "accept failed (%s)",
+				    strerror(errno));
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
-				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE: %m");
+				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE (%s)",
+				    strerror(errno));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&inetpeer;
 			nfsdargs.namelen = len;

@@ -6,6 +6,8 @@
 #include "inc.h"
 #include <sys/stat.h>
 
+#ifdef ISO9660_OPTION_ROCKRIDGE
+
 int parse_susp(struct rrii_dir_record *dir, char *buffer)
 {
 	/* Parse fundamental SUSP entries */
@@ -127,3 +129,4 @@ void parse_susp_buffer(struct rrii_dir_record *dir, char *buffer, u32_t size)
 	}
 }
 
+#endif

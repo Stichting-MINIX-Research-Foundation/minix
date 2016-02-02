@@ -14,7 +14,7 @@
 int (* const call_vec[NR_PM_CALLS])(void) = {
 	CALL(PM_EXIT)		= do_exit,		/* _exit(2) */
 	CALL(PM_FORK)		= do_fork,		/* fork(2) */
-	CALL(PM_WAITPID)	= do_waitpid,		/* waitpid(2) */
+	CALL(PM_WAIT4)		= do_wait4,		/* wait4(2) */
 	CALL(PM_GETPID)		= do_get,		/* get[p]pid(2) */
 	CALL(PM_SETUID)		= do_set,		/* setuid(2) */
 	CALL(PM_GETUID)		= do_get,		/* get[e]uid(2) */
@@ -51,6 +51,7 @@ int (* const call_vec[NR_PM_CALLS])(void) = {
 	CALL(PM_REBOOT)		= do_reboot,		/* reboot(2) */
 	CALL(PM_SVRCTL)		= do_svrctl,		/* svrctl(2) */
 	CALL(PM_SPROF)		= do_sprofile,		/* sprofile(2) */
+	CALL(PM_PROCEVENTMASK)	= do_proceventmask,	/* proceventmask(2) */
 	CALL(PM_SRV_FORK)	= do_srv_fork,		/* srv_fork(2) */
 	CALL(PM_SRV_KILL)	= do_srv_kill,		/* srv_kill(2) */
 	CALL(PM_EXEC_NEW)	= do_newexec,

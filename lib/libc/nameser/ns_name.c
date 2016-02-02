@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.9 2012/03/13 21:13:39 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.11 2014/03/07 01:07:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.9 2012/03/13 21:13:39 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.11 2014/03/07 01:07:01 christos Exp $");
 #endif
 #endif
 
@@ -473,11 +473,12 @@ ns_name_unpack2(const u_char *msg, const u_char *eom, const u_char *src,
 				_DIAGASSERT(__type_fit(int, srcp - src + 1));
 				len = (int)(srcp - src + 1);
 			}
-			srcp = msg + (((n & 0x3f) << 8) | (*srcp & 0xff));
-			if (srcp < msg || srcp >= eom) {  /*%< Out of range. */
+			n = ((n & 0x3f) << 8) | (*srcp & 0xff);
+			if (n >= eom - msg) {  /*%< Out of range. */
 				errno = EMSGSIZE;
 				return (-1);
 			}
+			srcp = msg + n;
 			checked += 2;
 			/*
 			 * Check for loops in the compressed name;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2012/12/12 15:12:11 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2015/09/06 15:34:55 uebayasi Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -56,6 +56,7 @@ ${SALIB}:		.NOTMAIN .MAKE __always_make_salib
 .else
 	@${SAMAKE} libsa.o
 .endif
+	@echo done
 
 ${SALIB_PROF}:		.NOTMAIN .MAKE __always_make_salib
 	@echo making sure the profiled sa library is up to date...
@@ -64,21 +65,25 @@ ${SALIB_PROF}:		.NOTMAIN .MAKE __always_make_salib
 .else
 	@${SAMAKE} libsa.po
 .endif
+	@echo done
 
 clean:			.NOTMAIN cleansalib
 cleansalib:		.NOTMAIN
 	@echo cleaning the sa library objects
 	@if [ -d "${SADST}" ]; then ${SAMAKE} clean; fi
+	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirsalib
 cleandirsalib:		.NOTMAIN
 	@echo cleandiring the sa library objects
 	@if [ -d "${SADST}" ]; then ${SAMAKE} cleandir; fi
+	@echo done
 
 dependall depend:	.NOTMAIN dependsalib
 dependsalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo depending the sa library objects
 	@${SAMAKE} depend
+	@echo done
 
 __always_make_salib:	.NOTMAIN
 	@mkdir -p ${SADST}

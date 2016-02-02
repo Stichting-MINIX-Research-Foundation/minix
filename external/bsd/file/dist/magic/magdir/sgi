@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: sgi,v 1.19 2013/01/12 03:09:51 christos Exp $
+# $File: sgi,v 1.21 2014/04/30 21:41:02 christos Exp $
 # sgi:  file(1) magic for Silicon Graphics operating systems and applications
 #
 # Executable images are handled either in aout (for old-style a.out
@@ -17,16 +17,16 @@
 
 0	beshort	0x0506		IRIS Showcase file
 >2	byte	0x49		-
->3	byte	x		- version %ld
+>3	byte	x		- version %d
 0	beshort	0x0226		IRIS Showcase template
 >2	byte	0x63		-
->3	byte	x		- version %ld
+>3	byte	x		- version %d
 0	belong	0x5343464d	IRIS Showcase file
->4	byte	x		- version %ld
+>4	byte	x		- version %d
 0	belong	0x5443464d	IRIS Showcase template
->4	byte	x		- version %ld
+>4	byte	x		- version %d
 0	belong	0xdeadbabe	IRIX Parallel Arena
->8	belong	>0		- version %ld
+>8	belong	>0		- version %d
 
 # core files
 #
@@ -49,7 +49,7 @@
 # Trusted IRIX info
 0	string	SGIAUDIT	SGI Audit file
 >8	byte	x		- version %d
->9	byte	x		\b.%ld
+>9	byte	x		\b.%d
 #
 0	string	WNGZWZSC	Wingz compiled script
 0	string	WNGZWZSS	Wingz spreadsheet
@@ -82,11 +82,11 @@
 #>20	lelong	-2				temporal index
 #>20	lelong	-1				metadata
 #>20	lelong	0				log volume #0
-#>20	lelong	>0				log volume #%ld
+#>20	lelong	>0				log volume #%d
 >20	belong	-2				temporal index
 >20	belong	-1				metadata
 >20	belong	0				log volume #0
->20	belong	>0				log volume #%ld
+>20	belong	>0				log volume #%d
 >24	string	>\0				host: %s
 0	string	PCPFolio			PCP
 >9	string	Version:			Archive Folio
@@ -128,7 +128,7 @@
 >11	byte	x				dataformat %d
 
 # Alias Maya files
-0	string/t	//Maya ASCII	Alias Maya Ascii File,
+0	string/t	//Maya\040ASCII	Alias Maya Ascii File,
 >13	string	>\0	version %s
 8	string	MAYAFOR4	Alias Maya Binary File,
 >32	string	>\0	version %s scene

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.c,v 1.5 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: fmtmsg.c,v 1.6 2014/09/18 13:58:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtmsg.c,v 1.5 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: fmtmsg.c,v 1.6 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <fmtmsg.h>
@@ -213,7 +213,7 @@ fmtmsg(long classification, const char *label, int severity,
 	}
 	/* Similar to MM_PRINT but ignoring $MSGVERB. */
 	if (classification & MM_CONSOLE) {
-		if ((console = fopen(_PATH_CONSOLE, "w")) != NULL) {
+		if ((console = fopen(_PATH_CONSOLE, "we")) != NULL) {
 			if (writeit(console, MM_VERBALL,
 			    label, sevstr, text, action, tag) < 0)
 				result |= MM_NOCON;

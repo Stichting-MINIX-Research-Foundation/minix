@@ -1,26 +1,112 @@
-.\"	$NetBSD: tzset.3,v 1.26 2013/09/20 19:06:54 christos Exp $
-.Dd September 20, 2013
+.\"	$NetBSD: tzset.3,v 1.32 2015/04/05 08:36:38 pgoyette Exp $
+.Dd October 23, 2014
 .Dt TZSET 3
 .Os
 .Sh NAME
-.Nm tzset
+.Nm tzset ,
+.Nm tzalloc ,
+.Nm tzgetname ,
+.Nm tzfree
 .Nd initialize time conversion information
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In time.h
+.Ft timezone_t
+.Fn tzalloc "const char *zone"
+.Ft void
+.Fn tzfree "timezone_t restrict tz"
+.Ft const char *
+.Fn tzgetname "timezone_t restrict tz" "int isdst"
 .Ft void
 .Fn tzset "void"
 .Sh DESCRIPTION
 The
+.Fn tzalloc
+function takes as an argument a timezone name and returns a
+.Ft timezone_t
+object suitable to be used in the
+.Fn ctime_rz ,
+.Fn localtime_rz ,
+and
+.Fn mktime_z
+functions.
+.Pp
+If
+.Ar tz
+is not a valid time zone description, or if the object cannot be allocated,
+.Fn tzalloc
+returns a
+.Dv NULL
+pointer and sets
+.Va errno .
+.Pp
+A
+.Dv NULL
+pointer may be passed to
+.Fn tzalloc
+instead of a timezone name, to refer to the current system timezone.
+An empty timezone string indicates Coordinated Universal Time
+.Pq Tn UTC .
+.Pp
+Note that instead of setting the environment variable
+.Va TZ ,
+and globally changing the behavior of the calling program, one can use
+multiple timezones at the same time by using separate
+.Ft timezone_t
+objects allocated by
+.Fn tzalloc
+and calling the
+.Dq z
+variants of the functions.
+The
+.Fn tzfree
+function deallocates
+.Fa tz ,
+which was previously allocated by
+.Fn tzalloc .
+This invalidates any
+.Ft tm_zone
+pointers that
+.Fa tz
+was used to set.
+Finally,
+.Fn tzgetname
+returns the name for the given
+.Fa tz .
+If
+.Fa isdst
+is
+.Va 0 ,
+the call is equivalent to
+.Va tzname[0] .
+If
+.Fa isdst
+is set to
+.Va 1
+the call is equivalent to
+.Va tzname[1] .
+The
 .Fn tzset
-function uses the value of the environment variable
-.Ev TZ
-to set time conversion information used by
-.Xr localtime 3 .
+function acts like
+.Dv tzalloc(getenv("TZ")) ,
+except it saves any resulting time zone object into internal
+storage that is accessed by
+.Fn localtime ,
+.Fn localtime_r ,
+and
+.Fn mktime .
+The anonymous shared time zone object is freed by the next call to
+.Fn tzset .
+If the implied call to
+.Fn tzalloc
+fails,
+.Fn tzset
+falls back on UTC.
 If
 .Ev TZ
-does not appear in the environment,
+is
+.Dv NULL ,
 the best available approximation to local wall clock time, as
 specified by the
 .Xr tzfile 5
@@ -30,14 +116,14 @@ is used by
 .Xr localtime 3 .
 If
 .Ev TZ
-appears in the environment but its value is a null string,
+appears in the environment but its value is the empty string,
 Universal Time (UT) is used, with the abbreviation
 .Dq UTC
 and without leap second correction; please see
 .Xr ctime 3 .
 If
 .Ev TZ
-appears in the environment and its value is not a null string:
+is nonnull and nonempty:
 .Bl -dash
 .It
 if the value begins with a colon, it is used as a pathname of a file
@@ -85,7 +171,7 @@ is required; if
 is missing, then summer time does not apply in this locale.
 Upper- and lowercase letters are explicitly allowed.
 Any characters except a leading colon (:), digits, comma (,), minus (-),
-plus (+), and ASCII NUL are allowed.
+plus (+), and NUL bytes are allowed.
 .It Cm offset
 Indicates the value one must add to the local time to arrive at
 Coordinated Universal Time.
@@ -121,7 +207,7 @@ summer time is assumed to be one hour ahead of standard time.
 One or more digits may be used; the value is always interpreted as a
 decimal number.
 The hour must be between zero and 24, and the minutes (and
-seconds) \(em if present \(em between zero and 59.
+seconds) \*(en if present \*(en between zero and 59.
 If preceded by a
 .Dq -
 the time zone shall be east of the Prime Meridian; otherwise it shall be
@@ -167,8 +253,8 @@ The Julian day
 (1 \*[Le]
 .Ar n
 \*[Le] 365).
-Leap days are not counted; that is, in all years \(em including leap
-years \(em February 28 is day 59 and March 1 is day 60.
+Leap days are not counted; that is, in all years \*(en including leap
+years \*(en February 28 is day 59 and March 1 is day 60.
 It is impossible to explicitly refer to the occasional February 29.
 .It Ar n
 The zero-based Julian day (0\ \*[Le]
@@ -212,7 +298,7 @@ or
 is allowed.
 As an extension to POSIX, the hours part of
 .Cm time
-can range from \(mi167 through 167; this allows for unusual rules such as
+can range from \-167 through 167; this allows for unusual rules such as
 .Dq the Saturday before the first Sunday of March .
 The default, if
 .Cm time
@@ -226,18 +312,17 @@ values that directly specify the time zone rules; they use some of the
 extensions to POSIX.
 .Bl -tag
 .It EST5
-stands for US eastern
-time (EST), 5 hours behind UTC, without daylight saving.
-.It FJT\(mi12FJST,M10.3.1/146,M1.3.4/75
+stands for US Eastern Standard
+Time (EST), 5 hours behind UTC, without daylight saving.
+.It FJT\-12FJST,M11.1.0,M1.3.4/75
 stands for Fiji Time (FJT) and Fiji Summer Time (FJST), 12 hours ahead
-of UTC, springing forward on October's third Monday at
-146:00 (i.e., 02:00 on the first Sunday on or after October 21), and
+of UTC, springing forward on November's first Sunday at 02:00, and
 falling back on January's third Thursday at 75:00 (i.e., 03:00 on the
 first Sunday on or after January 18).
-.It IST\(mi2IDT,M3.4.4/26,M10.5.0
+.It IST\-2IDT,M3.4.4/26,M10.5.0
 stands for Israel Standard Time (IST) and Israel Daylight Time (IDT),
 2 hours ahead of UTC, springing forward on March's fourth
-Tuesday at 26:00 (i.e., 02:00 on the first Friday on or after March
+Thursday at 26:00 (i.e., 02:00 on the first Friday on or after March
 23), and falling back on October's last Sunday at 02:00.
 .It WART4WARST,J1/0,J365/25
 stands for Western Argentina Summer Time (WARST), 3 hours behind UTC.
@@ -248,12 +333,12 @@ January 1 at 00:00 standard time, so daylight saving time is in effect
 all year and the initial
 .Em WART
 is a placeholder.
-.It WGT3WGST,M3.5.0/\(mi2,M10.5.0/\(mi1
-stands for Western Greenland time (WGT) and Western Greenland Summer
+.It WGT3WGST,M3.5.0/\-2,M10.5.0/\-1
+stands for Western Greenland Time (WGT) and Western Greenland Summer
 Time (WGST), 3 hours behind UTC, where clocks follow the EU rules of
-springing forward on March's last Sunday at 01:00 UTC (\(mi02:00 local
+springing forward on March's last Sunday at 01:00 UTC (\-02:00 local
 time) and falling back on October's last Sunday at 01:00 UTC
-(\(mi01:00 local time).
+(\-01:00 local time).
 .El
 .Pp
 If no
@@ -276,13 +361,6 @@ For compatibility with System V Release 3.1, a semicolon (;) may be
 used to separate the
 .Cm rule
 from the rest of the specification.
-.Pp
-If the
-.Ev TZ
-environment variable does not specify a
-.Xr tzfile 5
-format file and cannot be interpreted as a direct specification, UTC
-is used.
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime

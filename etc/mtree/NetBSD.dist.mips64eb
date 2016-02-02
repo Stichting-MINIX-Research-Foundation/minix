@@ -1,0 +1,5 @@
+#	$NetBSD: NetBSD.dist.mips64eb,v 1.9 2015/06/19 18:16:06 matt Exp $
+
+./usr/include/g++/bits/mips64
+./usr/include/g++/bits/mips32
+./usr/include/g++/bits/mipso32

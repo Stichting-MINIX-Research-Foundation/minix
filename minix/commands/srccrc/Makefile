@@ -1,4 +1,4 @@
 SCRIPTS= srccrc.sh
-MAN=
+MAN= srccrc.8
 
 .include <bsd.prog.mk>

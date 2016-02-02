@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.15 2013/10/18 19:45:40 christos Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.21 2015/07/28 05:09:35 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.15 2013/10/18 19:45:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.21 2015/07/28 05:09:35 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.15 2013/10/18 19:45:40 christos Ex
 #include <sys/quota.h>
 #include <sys/quotactl.h>
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_quota2.h>
@@ -149,8 +151,7 @@ getq2h(struct ulfsmount *ump, int type,
 	struct quota2_header *q2h;
 
 	KASSERT(mutex_owned(&lfs_dqlock));
-	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize, flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) 
@@ -176,8 +177,7 @@ getq2e(struct ulfsmount *ump, int type, daddr_t lblkno, int blkoffset,
 		panic("dq2get: %s quota file corrupted",
 		    lfs_quotatypes[type]);
 	}
-	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize,
-	    ump->um_cred[type], flags, &bp);
+	error = bread(ump->um_quotas[type], lblkno, ump->umq2_bsize, flags, &bp);
 	if (error)
 		return error;
 	if (bp->b_resid != 0) {
@@ -218,8 +218,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 			bp = obp;
 		} else {
 			ret = bread(ump->um_quotas[type], lblkno, 
-			    ump->umq2_bsize,
-			    ump->um_cred[type], flags, &bp);
+			    ump->umq2_bsize, flags, &bp);
 			if (ret)
 				return ret;
 			if (bp->b_resid != 0) {
@@ -672,7 +671,7 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
 	return 0;
 }
 int
-lfsquota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
+lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 {
 	int idtype;
 	id_t id;
@@ -1274,7 +1273,7 @@ lfsquota2_handle_cmd_cursorget(struct ulfsmount *ump, struct quotakcursor *qkc,
 	struct q2cursor_state state;
 	struct quota2_entry default_q2e;
 	int idtype;
-	int quota2_hash_size;
+	int quota2_hash_size = 0; /* XXXuninit */
 
 	/*
 	 * Convert and validate the cursor.
@@ -1565,8 +1564,8 @@ lfs_quota2_mount(struct mount *mp)
 		return 0;
 
 	fs->um_flags |= ULFS_QUOTA2;
-	ump->umq2_bsize = fs->lfs_bsize;
-	ump->umq2_bmask = fs->lfs_bmask;
+	ump->umq2_bsize = lfs_sb_getbsize(fs);
+	ump->umq2_bmask = lfs_sb_getbmask(fs);
 	if (fs->lfs_quota_magic != Q2_HEAD_MAGIC) {
 		printf("%s: Invalid quota magic number\n",
 		    mp->mnt_stat.f_mntonname);

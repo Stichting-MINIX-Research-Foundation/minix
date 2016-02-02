@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds_softfloat.S,v 1.5 2013/07/18 21:36:08 matt Exp $	*/
+/*	$NetBSD: flt_rounds_softfloat.S,v 1.6 2014/03/18 18:20:37 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995

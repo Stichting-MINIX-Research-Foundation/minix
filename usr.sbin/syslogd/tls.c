@@ -56,6 +56,7 @@ __RCSID("$NetBSD: tls.c,v 1.11 2013/05/27 23:15:51 christos Exp $");
 
 static unsigned getVerifySetting(const char *x509verifystring);
 
+#if !defined(NDEBUG) && defined(__minix)
 /* to output SSL error codes */
 static const char *SSL_ERRCODE[] = {
 	"SSL_ERROR_NONE",
@@ -80,6 +81,7 @@ static const char *TLS_CONN_STATES[] = {
 	"ST_CLOSING0",
 	"ST_CLOSING1",
 	"ST_CLOSING2"};
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 DH *get_dh1024(void);
 /* DH parameter precomputed with "openssl dhparam -C -2 1024" */
@@ -852,6 +854,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 			continue;
 		}
 		s->af = r->ai_family;
+#if defined(__minix) && defined(INET6)
 		if (r->ai_family == AF_INET6
 		 && setsockopt(s->fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			&on, sizeof(on)) == -1) {
@@ -860,6 +863,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 			close(s->fd);
 			continue;
 		}
+#endif /* defined(__minix) && defined(INET6) */
 		if (setsockopt(s->fd, SOL_SOCKET, SO_REUSEADDR,
 			&on, sizeof(on)) == -1) {
 			DPRINTF(D_NET, "Unable to setsockopt(): %s\n",

@@ -1694,6 +1694,9 @@ int input(char *inbuf, FLAG clearfl)
   			}
   			else
   				ring_bell();
+
+			if (ptr - inbuf >= LINE_LEN - 1)
+				return FINE;
   	}
   }
   quit = FALSE;

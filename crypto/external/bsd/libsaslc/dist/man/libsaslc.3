@@ -1,0 +1,824 @@
+.\"	$NetBSD: libsaslc.3,v 1.16 2015/07/13 13:57:44 shm Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Mateusz Kocielski.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.	IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 3, 2015
+.Dt LIBSASLC 3
+.Os
+.Sh NAME
+.Nm libsaslc ,
+.Nm saslc.d ,
+.Nm saslc_alloc ,
+.Nm saslc_end ,
+.Nm saslc_init ,
+.Nm saslc_sess_init ,
+.Nm saslc_sess_end ,
+.Nm saslc_sess_getprop ,
+.Nm saslc_sess_setprop ,
+.Nm saslc_sess_cont ,
+.Nm saslc_sess_decode ,
+.Nm saslc_sess_encode ,
+.Nm saslc_sess_getmech ,
+.Nm saslc_sess_strerror ,
+.Nm saslc_strerror
+.Nd Simple Authentication and Security Layer client library
+.Sh LIBRARY
+.Lb libsaslc
+.Sh SYNOPSIS
+.In saslc.h
+.Ft saslc_t *
+.Fn saslc_alloc "void"
+.Ft int
+.Fn saslc_end "saslc_t *ctx"
+.Ft int
+.Fn saslc_init "saslc_t *ctx" "const char *appname" "const char *cfgpath"
+.Ft saslc_sess_t *
+.Fn saslc_sess_init "saslc_t *ctx" "const char *mechs" "const char *secopts"
+.Ft void
+.Fn saslc_sess_end "saslc_sess_t *sess"
+.Ft const char *
+.Fn saslc_sess_getprop "saslc_sess_t *sess" "const char *key"
+.Ft int
+.Fn saslc_sess_setprop "saslc_sess_t *sess" "const char *key" \
+"const char *value"
+.Ft int
+.Fn saslc_sess_cont "saslc_sess_t *sess" "const void *in" "size_t inlen" \
+"void* *out" "size_t *outlen"
+.Ft ssize_t
+.Fn saslc_sess_decode "saslc_sess_t *sess" "const void *in" "size_t inlen" \
+"void* *out" "size_t *outlen"
+.Ft ssize_t
+.Fn saslc_sess_encode "saslc_sess_t *sess" "const void *in" "size_t inlen" \
+"void* *out" "size_t *outlen"
+.Ft const char *
+.Fn saslc_sess_getmech "saslc_sess_t *sess"
+.Ft const char *
+.Fn saslc_sess_strerror "saslc_sess_t *sess"
+.Ft const char *
+.Fn saslc_strerror "saslc_t *ctx"
+.Sh DESCRIPTION
+The
+.Nm libsaslc
+library offers a client interface for the
+Simple Authentication and Security Layer
+.Pq Tn SASL .
+The library is heavily influenced by its use with
+.Xr postfix 1 .
+.Sh FUNCTIONS
+The following functions are available in the library.
+.Bl -tag -width compact
+.It Fn saslc_alloc ""
+The
+.Fn saslc_alloc
+function allocates and returns a new saslc context.
+The context is uninitialized: see
+.Fn saslc_init .
+Returns
+.Dv NULL
+on error.
+.It Fn saslc_end "ctx"
+The
+.Fn saslc_end
+function destroys and deallocate resources used by the context
+.Ar ctx .
+The context shouldn't have any sessions assigned to it.
+Returns 0 on success and \-1 if the context has active sessions and
+cannot be deallocated.
+.It Fn saslc_init "ctx" "appname" "cfgpath"
+The
+.Fn saslc_init
+function initializes the saslc context
+.Ar ctx .
+Based on the application name
+.Ar appname ,
+it also parses the configuration files as indicated by
+.Ar cfgpath ,
+sets up the context and mechanism dictionaries, and creates mechanism
+list for the context.
+If
+.Ar cfgpath
+is
+.Dv NULL ,
+it checks the environment variable
+.Ev SASLC_CONFIG
+for a location and if that is not found it uses the default path
+.Pa /etc/saslc.d .
+Returns 0 on success and \-1 on failure.
+.It Fn saslc_sess_init "ctx" "mechs" "secopts"
+The
+.Fn saslc_sess_init
+function creates new session assigned to the
+.Ar ctx
+context.
+The function chooses the mechanism to use for authentication from the
+.Ar mechs
+list taking into account the requirements from the
+.Ar secopts
+list.
+Both lists may be space or comma delimited.
+The first matching mechanism from the
+.Ar mechs
+list is used.
+See
+.Sx CONFIGURATION
+below for the supported mechanisms.
+The valid security options are
+.Pp
+.Bl -tag -width "nodictionaryxxx" -offset indent -compact
+.It Qo noanonymous Qc
+reject anonymous mechanisms
+.It Qo noplaintext Qc
+reject plaintext mechanisms
+.It Qo nodictionary Qc
+reject mechanisms prone to dictionary attack
+.It Qo noactive Qc
+reject mechanisms prone to active non-dictionary attacks
+.It Qo mutual Qc
+require mutual authentication mechanisms
+.El
+.Pp
+Unknown security options are ignored.
+Returns a session handle or
+.Dv NULL
+on error or no match.
+.It Fn saslc_sess_end "sess"
+The
+.Fn saslc_sess_end
+function ends the sasl session
+.Ar sess .
+It destroys and deallocates all internal resources.
+This does not fail.
+.It Fn saslc_sess_getprop "sess" "key"
+The
+.Fn saslc_sess_getprop
+function gets the property indicated by the
+.Ar key
+from the saslc dictionaries.
+Dictionaries are searched in following order: session
+.Ar sess
+dictionary,
+context dictionary (global configuration), and mechanism dictionary.
+Returns the property value or
+.Dv NULL
+if the property is not found.
+.It Fn saslc_sess_setprop "sess" "key" "value"
+The
+.Fn saslc_sess_setprop
+function sets the property indexed by
+.Ar key
+to the value
+.Ar value
+in the session
+.Ar sess
+dictionary.
+If the property already exists in the session dictionary, then the
+previous value is replaced by the new value.
+If
+.Ar value
+is
+.Dv NULL ,
+then any previous value in the session dictionary is removed.
+Returns 0 on success or \-1 on failure.
+.It Fn saslc_sess_cont "sess" "in" "inlen" "out" "outlen"
+The
+.Fn saslc_sess_cont
+function performs one step of the sasl authentication.
+It reads
+.Ar inlen
+bytes of input data
+.Pq from the server
+from the
+.Ar in
+buffer and stores
+.Ar outlen
+bytes of output data in
+.Ar out
+.Pq for the server .
+The user is responsible for freeing memory allocated for
+.Ar out .
+It returns 0 if the authentication process is completed, 1 if another
+step is required, and \-1 on error.
+Note that the completion of authentication process does not mean the
+client is authenticated; that is determined by the server.
+.It Fn saslc_sess_decode "sess" "in" "inlen" "out" "outlen"
+The
+.Fn saslc_sess_encode
+and
+.Fn saslc_sess_decode
+functions are used to provide the integrity
+.Pq Qq auth-int
+and  confidentiality
+.Pq Qq auth-conf
+layers for mechanisms that provide them.
+They encode and, respectively, decode
+.Ar inlen
+bytes of data from the
+.Ar in
+buffer using the method negotiated during authentication.
+On error they return \-1.
+Otherwise, they return the number of bytes consumed from
+.Ar in
+and output
+.Ar outlen
+bytes of data in the
+.Ar out
+buffer.
+The user is responsible for freeing memory allocated for
+.Ar out .
+If
+.Ar outlen
+is 0, more data is needed before anything can be output.
+Unused input data is stored internally for use in subsequent calls.
+.Pp
+When decoding, the internal buffers can only be flushed by providing
+the missing packet data and it is an error to call
+.Fn ssalc_sess_decode
+with
+.Ar inlen
+= 0.
+The first call of
+.Fn saslc_sess_decode
+in a session must begin at the start of a packet.
+Subsequent calls need not be aligned on packet boundaries.
+.It Fn saslc_sess_encode "sess" "in" "inlen" "out" "outlen"
+As described above,
+.Fn saslc_sess_encode
+encodes
+.Ar inlen
+bytes of data from the
+.Ar in
+buffer.
+Note that unlike when decoding,
+the internal buffer may be flushed through the encoder
+by calling
+.Fn saslc_sess_encode
+with
+.Ar inlen
+= 0.
+In this case,
+.Fn saslc_sess_encode
+returns the number of bytes that were flushed from the internal buffer.
+.It Fn saslc_sess_getmech "sess"
+The
+.Fn saslc_sess_getmech
+function returns the name of the mechanism used in the session
+.Fa sess .
+The function does not fail.
+.It Fn saslc_sess_strerror "sess"
+The
+.Fn saslc_sess_strerror
+returns the error message associated with the session
+.Fa sess .
+.It Fn saslc_strerror "ctx"
+The
+.Fn saslc_strerror
+function operates as
+.Fn saslc_sess_strerror ,
+but instead returns the error message string for the last error in the context
+.Fa ctx .
+Neither function will ever return
+.Dv NULL .
+.El
+.Sh CONFIGURATION
+The library uses three types of dictionaries: context (or global),
+session, and mechanism, and they are searched in that order by
+.Fn saslc_getprop
+and the first matching entry is taken.
+The context and mechanism dictionaries are loaded from configuration
+files, while the session dictionary is loaded by the caller via
+.Fn saslc_setprop .
+.Pp
+The configuration file
+.Pa <cfgpath>/<appname>/saslc.conf
+is used for the context configuration.
+The
+.Pa <cfgpath>/<appname>/mech/<mechanism>.conf
+file is used for the mechanism configuration.
+The
+.Pa <cfgpath>
+is
+.Pa /etc/saslc.d
+by default, but this may be overridden by the environment variable
+.Ev SASLC_CONFIG ,
+which in turn may be overridden by
+.Fn saslc_init .
+The
+.Pa <appname>
+is
+.Pa saslc
+by default, but may also be overridden by
+.Fn saslc_init .
+Finally, the
+.Pa <mechanism>
+is the mechanism in use by the session as returned by
+.Fn saslc_sess_getmech .
+Note that this name is case sensitive.
+The currently supported mechanisms are
+.Bl -tag -width DIGEST-MD5 -offset indent
+.It ANONYMOUS
+See RFC 2245 and RFC 4505.
+.It CRAM-MD5
+See RFC 2195.
+.It DIGEST-MD5
+See RFC 2831.
+.It EXTERNAL
+See RFC 2222 section 7.4 and RFC 4422 appendix A.
+.It GSSAPI
+See RFC 2222 section 7.2 and RFC 4752.
+This requires GSS, Heimdal, or MIT Kerberos.
+.It LOGIN
+Non-standard, but common.
+.It PLAIN
+See RFC 2595 and RFC 4616.
+.El
+.Pp
+If any of the mechanism files are missing they are silently ignored,
+unless debugging is enabled.
+.Pp
+The configuration files consists of lines of the form:
+.Bd -literal -offset indent
+\fB#\fP comment line
+.Ao key Ac \~\~ Ao value Ac \~\~ Bo \fB#\fP comment Bc
+.Ed
+.Pp
+The
+.Aq key
+is a string beginning with an alpha character
+.Pq Xr isalpha 3
+followed by any number of alpha numeric
+.Pq Xr isalnum 3
+or underscore
+.Sq _
+characters; this is case sensitive.
+The
+.Aq value
+is a number or a quoted string.
+More than one
+.Aq key
+and
+.Aq value
+pair may occur on a single line, but they may not be broken across
+lines.
+A
+.Sq \fB#\fP
+character
+.Pq outside a quoted string
+indicates that the rest of the line is a comment.
+.Pp
+NOTE: Currently, no escaping is supported in strings, so they may not
+contain quotes.
+Numbers must be between 0 and
+.Dv LLONG_MAX ,
+inclusive.
+Any base supported by
+.Xr strtoll 3
+is allowed.
+.Sh PROPERTIES
+Most of the control of the library
+behavior is done via setting various properties in the context or
+mechanism dictionaries via the configuration files or in the session
+dictionary with
+.Fn saslc_setprop .
+The following properties are currently used, as defined in
+.Pa saslc.h :
+.Bl -tag -width indent
+.It SASLC_PROP_AUTHCID Po Qo AUTHCID Qc Pc
+The authentication name
+.Pq or username
+to authenticate with.
+Used by all mechanisms except EXTERNAL.
+.It SASLC_PROP_AUTHZID Po Qo AUTHZID Qc Pc
+The authorization string to use.
+By default, this string is empty.
+Used by the DIGEST-MD5, EXTERNAL, and PLAIN mechanisms.
+.It SASLC_PROP_BASE64IO Po Qo BASE64IO Qc Pc
+If true ("true", "yes", or nonzero), then input and output strings are
+base64 encoded.
+Any other value is false and the input and output strings are not
+base64 encoded.
+By default, this is assumed true.
+Used by all mechanisms.
+.It SASLC_PROP_CIPHERMASK Po Qo CIPHERMASK Qc Pc
+The mask of ciphers to use with the DIGEST-MD5 mechanism when using
+the
+.Qq auth-conf
+QOP.
+By default all supported ciphers are used, but they may be limited by
+a comma delimited list of cipher names.
+The recognized cipher names for DIGEST-MD5 are:
+.Pp
+.Bl -tag -offset indent -compact
+.It Li "3des"
+Triple-DES Cipher in CBC "two keys" mode with 112 bit key
+.It Li "aes"
+AES Cipher in CBC mode with 128 bit key
+.It Li "des"
+DES Cipher in CBC mode with 56 bit key
+.It Li "rc4"
+RC4 Cipher with 128 bit key
+.It Li "rc4-40"
+RC4 Cipher with 40 bit key
+.It Li "rc4-56"
+RC4 Cipher with 56 bit key
+.El
+.Pp
+The default value is
+.Qq des,3des,rc4,rc4_40,rc4_56,aes .
+.Po
+Note that
+.Qq aes
+is not part of the official standard.
+.Pc
+Used by the DIGEST-MD5 mechanism.
+.It SASLC_PROP_DEBUG Po Qo DEBUG Qc Pc
+If true, then enable debug messages.
+This is implemented as a global variable so it will affect all
+sessions.
+If set via
+.Fn saslc_sess_setprop ,
+it should be set before the first call to
+.Fn saslc_sess_cont .
+.Po
+Also see the environment variable
+.Ev SASLC_ENV_DEBUG
+in the
+.Sx ENVIRONMENT
+section below.
+.Pc
+.It SASLC_PROP_HOSTNAME Po Qo HOSTNAME Qc Pc
+The fully qualified domain name of the server host.
+Used by the DIGEST-MD5 and GSSAPI mechanisms.
+.It SASLC_PROP_MAXBUF Po Qo MAXBUF Qc Pc
+The size of the decode buffer.
+This info is sent to the server so that it doesn't send packets that
+won't fit in the decode buffer when decoded.
+Used by the DIGEST-MD5 and GSSAPI mechanisms.
+.It SASLC_PROP_PASSWD Po Qo PASSWD Qc Pc
+The password to authenticate with.
+Used by the CRAM-MD5, DIGEST-MD5, LOGIN, and PLAIN mechanisms.
+.It SASLC_PROP_QOPMASK Po Qo QOPMASK Qc Pc
+The mask of QOP (quality of protection) to use with the DIGEST-MD5
+and GSSAPI mechanisms.
+By default all supported QOP values are allowed, but they may be
+limited by a comma delimited list of QOP values.
+The recognized QOP values are:
+.Pp
+.Bl -tag -offset indent -compact
+.It Li "auth"
+authentication only
+.It Li "auth-int"
+authentication with integrity
+.It Li "auth-conf"
+authentication with confidentiality
+.El
+.Pp
+so the default value of the mask is
+.Qq auth,auth-int,auth-conf .
+Used by the DIGEST-MD5 and GSSAPI mechanisms.
+.It SASLC_PROP_REALM Po Qo REALM Qc Pc
+A comma delimited list of possible realms to use for authentication.
+The format of each element in the list is
+.Qq Oo Ao hostname Ac : Oc Ns Ao realm Ac .
+The user specified realm is the first realm in the list with a
+matching hostname or, if none is found, the first realm in the list
+with no hostname.
+If the server provides a list of realms, the one matching the user
+specified realm is selected.
+If no match is found or if the user didn't provide a realm, the first
+realm provided by the server is selected.
+If the server doesn't provide any realms, use the user specified realm
+if there is one, or the hostname if not.
+This is useful when the server provides multiple realms or no realm.
+Used by the DIGEST-MD5 mechanism.
+.It SASLC_PROP_SECURITY Po Qo SECURITY Qc Pc
+A comma delimited list of extra security option flags that will be
+.Qo or Qc Ns -ed
+together with those passed to
+.Fn saslc_sess_init .
+Since these flags are used to choose the session mechanism, they are
+only effective if they are in the context configuration file.
+.Po
+See the
+.Sx CONFIGURATION
+section and the
+.Fn saslc_sess_init
+function.
+.Pc
+.It SASLC_PROP_SERVICE Po Qo SERVICE Qc Pc
+The service being used, e.g., smtp, imap, etc.
+Used by the DIGEST-MD5 and GSSAPI mechanisms.
+.It SASLC_PROP_SERVNAME Po Qo SERVNAME Qc Pc
+A comma delimited list of possible service names with elements of the
+form
+.Qq Oo Ao hostname Ac : Oc Ns Ao serv-name Ac
+and with the same rules as for the SASLC_PROP_REALM list.
+This should only be used if the client uses a DNS name for the service
+that is different from the FQDN of the server.
+For example, the service name
+.Em example.com
+might resolve
+.Pq via SRV or MX records
+into a set of other DNS names, one of which,
+.Em mail3.example.com ,
+is the FQDN of the server.
+.Po
+See RFC 2831 section 2.1.2
+.Qq serv-name .
+.Pc
+Used by the DIGEST-MD5 mechanism.
+.El
+.Pp
+The defines in
+.Pa saslc.h
+should be used in code, but their values need to be used in the config
+files.
+.Sh ENVIRONMENT
+The following environment variables
+.Pq defined in Pa saslc.h
+affect the behavior of the library:
+.Bl -tag -width indent
+.It Ev SASLC_ENV_CONFIG Po Qo SASLC_CONFIG Qc Pc
+If the environment variable
+.Ev SASLC_CONFIG
+is set it overrides the default configuration file location of
+.Pa /etc/saslc.d .
+This may be overridden by
+.Fn saslc_init .
+.It Ev SASLC_ENV_DEBUG Po Qo SASLC_DEBUG Qc Pc
+If set, turn on debugging messages.
+This turns on debugging as early as possible and is a global setting.
+.El
+.Sh GSSAPI AND KERBEROS
+The following is a minimal
+.Pq Heimdal
+Kerberos 5 setup for use with an smtp server that has been configured
+to support
+.Em SASL
+with the
+.Em GSSAPI
+mechanism.
+It assumes that Kerberos and the smtp server will both run on
+.Em server.my.domain
+and that the client is on
+.Em client.my.domain .
+It also assumes that the smtp server runs as user
+.Em postfix
+and group
+.Em mail ,
+and that it is not chrooted.
+.Pp
+On
+.Em server.my.domain
+run the following script as
+.Em root
+and then start the Kerberos server
+.Xr kdc 8 .
+You will be prompted for a master password for Kerberos and a password
+for the
+.Em postfix
+principal.
+.Bd -literal -offset indent
+#/bin/sh
+.Pp
+cat <<- EOF >> /etc/krb5.conf
+[libdefaults]
+	default_realm = MY.DOMAIN
+[realms]
+	MY.DOMAIN = {
+		kdc = server.my.domain
+		admin_servers = server.my.domain
+	}
+[domain_realm]
+	.my.domain = MY.DOMAIN
+EOF
+.Pp
+mkdir /var/heimdal
+chown root:wheel /var/heimdal
+chmod 755 /var/heimdal
+.Pp
+kstash
+kadmin -l init --realm-max-ticket-life=unlimited \\
+               --realm-max-renewable-life=unlimited \\
+               MY.DOMAIN
+kadmin -l add  --max-ticket-life="1 day" \\
+               --max-renewable-life="1 week" \\
+               --expiration-time=never \\
+               --pw-expiration-time=never \\
+               --attributes="" \\
+               postfix
+kadmin -l add  --random-key \\
+               --max-ticket-life="1 day" \\
+               --max-renewable-life="1 week" \\
+               --expiration-time=never \\
+               --pw-expiration-time=never \\
+               --attributes="" \\
+               smtp/server.my.domain
+kadmin -l ext -k /etc/krb5.keytab smtp/server.my.domain
+chown root:mail /etc/krb5.keytab
+chmod 640 /etc/krb5.keytab
+.Ed
+.Pp
+Note that the keytab
+.Pa /etc/krb5.keytab
+must be readable by the smtp server or authentication will fail.
+The location of this keytab file may be changed with the environment
+variable
+.Ev KRB5_KTNAME .
+If postfix is the smtp server, note the
+.Em import_environment
+parameter
+.Pq see Xr postconf 5 .
+.Pp
+On
+.Em client.my.domain
+copy the keytab file from
+.Pa server.my.domain:/etc/krb5.keytab
+to
+.Pa /etc/krb5.keytab .
+Setup the
+.Pa /etc/saslc.d
+configuration directory
+.Po see Sx CONFIGURATION
+above
+.Pc .
+Add the line
+.Bd -literal -offset indent
+AUTHCID		"postfix"
+.Ed
+.Pp
+to the file
+.Pa /etc/saslc.d/postfix/mech/GSSAPI.conf
+so that the
+.Em postfix
+principal will be used for authentication.
+Enable
+.Em SASL
+in the smtp client.
+Assuming the smtp client is postfix, you will need to add the
+following to the
+.Pa /etc/postfix/main.cf
+file to do this:
+.Bd -literal -offset indent
+smtp_sasl_auth_enable = yes
+smtp_sasl_type = saslc
+smtp_sasl_mechanism_filter = GSSAPI
+relayhost = [server.my.domain]:submission
+.Ed
+.Pp
+Here we have assumed the
+.Em submission
+port is the port the server is listening to.
+Finally, as
+.Em root ,
+run the command
+.Bd -literal -offset indent
+su -m postfix -c kinit
+.Ed
+.Pp
+to obtain a ticket for the postfix user with the postfix credential
+and you should be good to go!
+.Sh FILES
+.Bl -tag -width /etc/saslc.d
+.It Pa /etc/saslc.d
+.El
+.Sh EXAMPLES
+The following code fragments illustrate the possible use of the
+functions described above.
+.Bd -literal
+int
+decode_stream(saslc_sess_t *sess, int fdin, int fdout)
+{
+	uint8_t buf[BUFSIZE];
+	uint8_t *in;
+	void *out;
+	size_t inlen, outlen;
+	ssize_t n, rval;
+.Pp
+	for (;;) {
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
+		if (rval == 0)
+			break;
+		in = buf;
+		inlen = rval;
+		while (inlen > 0) {
+			rval = saslc_sess_decode(sess, in, inlen, &out,
+			    &outlen);
+			if (rval == \-1)
+				return \-1;
+			if (outlen > 0) {
+				n = write(fdout, out, outlen);
+				free(out);
+				if (n == \-1)
+					return \-1;
+			}
+			in += rval;
+			inlen -= rval;
+		}
+	}
+	return 0;
+}
+.Pp
+int
+encode_stream(saslc_sess_t *sess, int fdin, int fdout)
+{
+	uint8_t buf[BUFSIZE];
+	uint8_t *in;
+	void *out;
+	size_t inlen, outlen;
+	ssize_t n, rval;
+.Pp
+	for (;;) {
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
+		if (rval == 0)
+			break;
+		in = buf;
+		inlen = rval;
+		while (inlen > 0) {
+			rval = saslc_sess_encode(sess, in, inlen, &out,
+			    &outlen);
+			if (rval == \-1)
+				return \-1;
+			if (outlen > 0) {
+				n = write(fdout, out, outlen);
+				free(out);
+				if (n == \-1)
+					return \-1;
+			}
+			in += rval;
+			inlen -= rval;
+		}
+	}
+	/* flush internal encoder buffer */
+	if (saslc_sess_encode(sess, NULL, 0, &out, &outlen) == \-1)
+		return \-1;
+	if (outlen > 0)
+		if (write(fdout, out, outlen) == \-1)
+			return \-1;
+	return 0;
+}
+.Ed
+.Sh COMPATIBILITY
+There exist other SASL client library implementations including Cyrus SASL
+(http://asg.web.cmu.edu/sasl/sasl-library.html) and GNU SASL
+(http://www.gnu.org/software/gsasl/).
+.Sh STANDARDS
+RFC 2195, RFC 2222, RFC 2245, RFC 2595, RFC 2831, RFC 4422, RFC 4505,
+RFC 4616, RFC 4752.
+.Sh HISTORY
+The
+.Nm
+library appeared in
+.Nx 6.0 .
+.Sh CAVEATS
+The API was heavily influenced by its use with
+.Xr postfix 1 .
+.Pp
+Currently the ANONYMOUS, LOGIN, PLAIN, CRAM-MD5, DIGEST-MD5, and
+GSSAPI mechanisms have been tested and shown to work for
+authentication with a
+.Xr postfix 1
+SMTP server using the cyrus-sasl library.
+LOGIN, PLAIN, CRAM-MD5, and DIGEST-MD5 have also been tested and shown
+to work with a
+.Xr postfix 1
+SMTP server using a dovecot backend for authentication.
+The DIGEST-MD5 and GSSAPI specs also provide for integrity and
+confidentiality layers via the
+.Fn saslc_sess_encode
+and
+.Fn saslc_sess_decode
+routines, but these have not yet been tested against any servers.

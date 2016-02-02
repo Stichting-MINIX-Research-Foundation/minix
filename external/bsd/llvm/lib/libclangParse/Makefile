@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/04/25 13:59:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/08/10 17:34:22 joerg Exp $
 
 LIB=	clangParse
 
@@ -17,6 +17,7 @@ SRCS+=	ParseAST.cpp \
 	ParseOpenMP.cpp \
 	ParsePragma.cpp \
 	ParseStmt.cpp \
+	ParseStmtAsm.cpp \
 	ParseTemplate.cpp \
 	ParseTentative.cpp \
 	Parser.cpp

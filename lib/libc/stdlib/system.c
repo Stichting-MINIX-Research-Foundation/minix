@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.24 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: system.c,v 1.25 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.24 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: system.c,v 1.25 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: system.c,v 1.24 2012/06/25 22:32:45 abs Exp $");
 #include <paths.h>
 
 #include "env.h"
-#include "reentrant.h"
 
 int
 system(const char *command)

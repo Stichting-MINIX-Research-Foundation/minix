@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2012/02/11 23:31:24 martin Exp $
+#	$NetBSD: Makefile,v 1.141 2015/07/29 00:10:26 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -8,7 +8,7 @@ NOOBJ=		# defined
 # Missing: mp.h
 
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
-	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
+	bitstring.h bm.h cdbw.h complex.h cpio.h ctype.h \
 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
 	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
@@ -18,7 +18,7 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
 	paths.h pwd.h quota.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
 	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
-	string.h sgtty.h signal.h spawn.h stab.h stdbool.h stddef.h stdio.h \
+	string.h sgtty.h signal.h spawn.h stab.h stddef.h stdio.h \
 	stdlib.h strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h uuid.h vis.h wchar.h wctype.h wordexp.h

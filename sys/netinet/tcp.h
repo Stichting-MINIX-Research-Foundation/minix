@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.30 2012/01/07 20:20:22 christos Exp $	*/
+/*	$NetBSD: tcp.h,v 1.31 2015/02/14 12:57:53 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -127,7 +127,80 @@ struct tcphdr {
 #ifdef notyet
 #define	TCP_NOOPT	8	/* reserved for FreeBSD compat */
 #endif
+#define	TCP_INFO	9	/* retrieve tcp_info structure */
 #define	TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
 #define	TCP_CONGCTL	0x20	/* selected congestion control */
+
+#define	TCPI_OPT_TIMESTAMPS	0x01
+#define	TCPI_OPT_SACK		0x02
+#define	TCPI_OPT_WSCALE		0x04
+#define	TCPI_OPT_ECN		0x08
+#define	TCPI_OPT_TOE		0x10
+
+/*
+ * The TCP_INFO socket option comes from the Linux 2.6 TCP API, and permits
+ * the caller to query certain information about the state of a TCP
+ * connection.  We provide an overlapping set of fields with the Linux
+ * implementation, but since this is a fixed size structure, room has been
+ * left for growth.  In order to maximize potential future compatibility with
+ * the Linux API, the same variable names and order have been adopted, and
+ * padding left to make room for omitted fields in case they are added later.
+ *
+ * XXX: This is currently an unstable ABI/API, in that it is expected to
+ * change.
+ */
+struct tcp_info {
+	uint8_t		tcpi_state; /* TCP FSM state. */
+	uint8_t		__tcpi_ca_state;
+	uint8_t		__tcpi_retransmits;
+	uint8_t		__tcpi_probes;
+	uint8_t		__tcpi_backoff;
+	uint8_t		tcpi_options;	       /* Options enabled on conn. */
+	uint8_t		tcpi_snd_wscale:4,	/* RFC1323 send shift value. */
+			tcpi_rcv_wscale:4; /* RFC1323 recv shift value. */
+
+	uint32_t	tcpi_rto;		/* Retransmission timeout (usec). */
+	uint32_t	__tcpi_ato;
+	uint32_t	tcpi_snd_mss;		/* Max segment size for send. */
+	uint32_t	tcpi_rcv_mss;		/* Max segment size for receive. */
+
+	uint32_t	__tcpi_unacked;
+	uint32_t	__tcpi_sacked;
+	uint32_t	__tcpi_lost;
+	uint32_t	__tcpi_retrans;
+	uint32_t	__tcpi_fackets;
+
+	/* Times; measurements in usecs. */
+	uint32_t	__tcpi_last_data_sent;
+	uint32_t	__tcpi_last_ack_sent;	/* Also unimpl. on Linux? */
+	uint32_t	tcpi_last_data_recv;	/* Time since last recv data. */
+	uint32_t	__tcpi_last_ack_recv;
+
+	/* Metrics; variable units. */
+	uint32_t	__tcpi_pmtu;
+	uint32_t	__tcpi_rcv_ssthresh;
+	uint32_t	tcpi_rtt;		/* Smoothed RTT in usecs. */
+	uint32_t	tcpi_rttvar;		/* RTT variance in usecs. */
+	uint32_t	tcpi_snd_ssthresh;	/* Slow start threshold. */
+	uint32_t	tcpi_snd_cwnd;		/* Send congestion window. */
+	uint32_t	__tcpi_advmss;
+	uint32_t	__tcpi_reordering;
+
+	uint32_t	__tcpi_rcv_rtt;
+	uint32_t	tcpi_rcv_space;		/* Advertised recv window. */
+
+	/* FreeBSD/NetBSD extensions to tcp_info. */
+	uint32_t	tcpi_snd_wnd;		/* Advertised send window. */
+	uint32_t	tcpi_snd_bwnd;		/* No longer used. */
+	uint32_t	tcpi_snd_nxt;		/* Next egress seqno */
+	uint32_t	tcpi_rcv_nxt;		/* Next ingress seqno */
+	uint32_t	tcpi_toe_tid;		/* HWTID for TOE endpoints */
+	uint32_t	tcpi_snd_rexmitpack;	/* Retransmitted packets */
+	uint32_t	tcpi_rcv_ooopack;	/* Out-of-order packets */
+	uint32_t	tcpi_snd_zerowin;	/* Zero-sized windows sent */
+	
+	/* Padding to grow without breaking ABI. */
+	uint32_t	__tcpi_pad[26];		/* Padding. */
+};
 
 #endif /* !_NETINET_TCP_H_ */

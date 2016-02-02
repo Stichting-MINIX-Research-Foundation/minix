@@ -32,8 +32,13 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-DNO_MODULE_EXTS \
 		-UGLXEXT
 
+.if !defined(__MINIX)
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
 		-DHAS_SHM -DHAS_MMAP -UXFree86LOADER
+.else
+CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
+		-DHAS_SHM -UXFree86LOADER
+.endif # !defined(__MINIX)
 
 .include "../../Makefile.common"
 
@@ -114,6 +119,7 @@ DPADD+=	${DPADD.dix} \
 	${LIBM} \
 	${LIBCRYPTO}
 
+.if !defined(__MINIX)
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
@@ -128,6 +134,7 @@ DPADD+=	${LIBX86_64}
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
 .endif
+.endif # !defined(__MINIX)
 
 COPTS.miinitext.c+=	-Wno-error	# XXX xf86bigfstr.h
 

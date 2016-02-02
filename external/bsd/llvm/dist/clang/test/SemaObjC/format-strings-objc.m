@@ -116,6 +116,9 @@ NSString *test_literal_propagation(void) {
   NSLog(ns2); // expected-warning {{more '%' conversions than data arguments}}
   NSString * ns3 = ns1;
   NSLog(ns3); // expected-warning {{format string is not a string literal}}}
+
+  NSString * const ns6 = @"split" " string " @"%s"; // expected-note {{format string is defined here}}
+  NSLog(ns6); // expected-warning {{more '%' conversions than data arguments}}
 }
 
 // Do not emit warnings when using NSLocalizedString
@@ -240,7 +243,7 @@ void testByValueObjectInFormat(Foo *obj) {
 
 // <rdar://problem/13557053>
 void testTypeOf(NSInteger dW, NSInteger dH) {
-  NSLog(@"dW %d  dH %d",({ __typeof__(dW) __a = (dW); __a < 0 ? -__a : __a; }),({ __typeof__(dH) __a = (dH); __a < 0 ? -__a : __a; })); // expected-warning 2 {{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+  NSLog(@"dW %d  dH %d",({ __typeof__(dW) __a = (dW); __a < 0 ? -__a : __a; }),({ __typeof__(dH) __a = (dH); __a < 0 ? -__a : __a; })); // expected-warning 2 {{format specifies type 'int' but the argument has type 'long'}}
 }
 
 void testUnicode() {

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2013/06/04 22:45:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/08/16 17:48:24 macallan Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
 
 SRCS=		ffb_accel.c ffb_dac.c ffb_driver.c ffb_wid.c ffb_attr.c \
-		ffb_ddc.c ffb_cursor.c ffb_dga.c \
+		ffb_ddc.c ffb_cursor.c ffb_dga.c ffb_exa.c \
+		ffb_accel_common.c \
 		VISmoveImage.s ffb_asm.s
 
 .if ${MACHINE_ARCH} == "sparc64"

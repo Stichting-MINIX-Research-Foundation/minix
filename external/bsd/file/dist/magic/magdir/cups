@@ -1,12 +1,12 @@
 
 #------------------------------------------------------------------------------
-# $File: cups,v 1.2 2012/11/02 21:50:29 christos Exp $
+# $File: cups,v 1.3 2014/05/28 19:50:41 christos Exp $
 # Cups: file(1) magic for the cups raster file format
 # From: Laurent Martelli <martellilaurent@gmail.com>
 # http://www.cups.org/documentation.php/spec-raster.html
 #
 
-0	name		cups-be
+0	name		cups-le
 >280	lelong		x		\b, %d
 >284	lelong		x		\bx%d dpi
 >376	lelong		x		\b, %dx
@@ -44,7 +44,7 @@
 >3	string		2		Cups Raster version 2, Big Endian
 >3	string		3		Cups Raster version 3, Big Endian
 !:mime	application/vnd.cups-raster
->0	use		^cups-be
+>0	use		^cups-le
 
 
 # Cups Raster image format, Little Endian
@@ -53,4 +53,4 @@
 >0	string		2		Cups Raster version 2, Little Endian
 >0	string		3		Cups Raster version 3, Little Endian
 !:mime	application/vnd.cups-raster
->0	use		\^cups-be
+>0	use		cups-le

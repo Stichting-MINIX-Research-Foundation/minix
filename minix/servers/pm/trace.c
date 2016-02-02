@@ -145,8 +145,8 @@ int do_trace()
   case T_EXIT:		/* exit */
 	child->mp_flags |= TRACE_EXIT;
 
-	/* Defer the exit if the traced process has an VFS call pending. */
-	if (child->mp_flags & VFS_CALL)
+	/* Defer the exit if the traced process has a call pending. */
+	if (child->mp_flags & (VFS_CALL | EVENT_CALL))
 		child->mp_exitstatus = m_in.m_lc_pm_ptrace.data; /* save it */
 	else
 		exit_proc(child, m_in.m_lc_pm_ptrace.data,
@@ -265,10 +265,12 @@ int signo;
  
   rmp->mp_flags |= TRACE_STOPPED;
   if (wait_test(rpmp, rmp)) {
+	/* TODO: rusage support */
+
 	sigdelset(&rmp->mp_sigtrace, signo);
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
-	rpmp->mp_reply.m_pm_lc_waitpid.status = W_STOPCODE(signo);
+	rpmp->mp_reply.m_pm_lc_wait4.status = W_STOPCODE(signo);
 	reply(rmp->mp_tracer, rmp->mp_pid);
   }
 }

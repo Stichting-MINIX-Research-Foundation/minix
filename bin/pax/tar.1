@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.33 2012/03/22 07:58:17 wiz Exp $
+.\" $NetBSD: tar.1,v 1.35 2015/04/11 16:22:07 wiz Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd June 18, 2011
+.Dd April 11, 2015
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl 014578befHhjklmOoPpqSvwXZz
+.Oo \&- Oc {crtux} Op Fl 014578befHhJjklmOoPpqSvwXZz
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -107,6 +107,9 @@ then the archive will be processed using
 .It Fl h , Fl Fl dereference
 Follow symbolic links as if they were normal files
 or directories.
+.It Fl J, Fl Fl xz
+Compress/decompress archive using
+.Xr xz 1 .
 .It Fl j, Fl Fl bzip2, Fl Fl bunzip2
 Use
 .Xr bzip2 1
@@ -209,9 +212,6 @@ This option causes
 .Nm
 to prompt the user for the filename to use when storing or
 extracting files in an archive.
-.It Fl Fl xz
-Compress/decompress archive using 
-.Xr xz 1 .
 .It Fl z , Fl Fl gzip , Fl Fl gunzip
 Compress/decompress archive using
 .Xr gzip 1 .
@@ -355,4 +355,5 @@ A
 command first appeared in
 .At v7 .
 .Sh AUTHORS
-Keith Muller at the University of California, San Diego.
+.An Keith Muller
+at the University of California, San Diego.

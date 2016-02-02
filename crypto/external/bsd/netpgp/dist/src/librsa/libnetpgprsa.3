@@ -1,0 +1,113 @@
+.\" $NetBSD: libnetpgprsa.3,v 1.5 2014/03/18 18:20:35 riastradh Exp $
+.\"
+.\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 13, 2012
+.Dt LIBNETPGPRSA 3
+.Os
+.Sh NAME
+.Nm libnetpgprsa
+.Nd BIGNUM library of multi-precision integers
+.Sh LIBRARY
+.Lb libnetpgprsa
+.Sh SYNOPSIS
+.In netpgp/rsa.h
+.Ft RSA *
+.Fo RSA_new
+.Fa "void"
+.Fc
+.Ft int
+.Fo RSA_size
+.Fa "const RSA *rsa"
+.Fc
+.Ft void
+.Fo RSA_free
+.Fa "RSA *rsa"
+.Fc
+.Ft int
+.Fo RSA_check_key
+.Fa "RSA *rsa"
+.Fc
+.Ft RSA *
+.Fo RSA_generate_key
+.Fa "int num" "unsigned long e" "void (*callback)(int, int, void *)" "void *callbackarg"
+.Fc
+.Ft int
+.Fo RSA_public_encrypt
+.Fa "int siglen" "const uint8_t *signature" "uint8_t *to" "RSA *rsa" "int padding"
+.Fc
+.Ft int
+.Fo RSA_private_encrypt
+.Fa "int siglen" "const uint8_t *signature" "uint8_t *to" "RSA *rsa" "int padding"
+.Fc
+.Ft int
+.Fo RSA_private_decrypt
+.Fa "int siglen" "const uint8_t *signature" "uint8_t *to" "RSA *rsa" "int padding"
+.Fc
+.Pp
+.Ft DSA *
+.Fo DSA_new
+.Fa "void"
+.Fc
+.Ft int
+.Fo DSA_size
+.Fa "const DSA *dsa"
+.Fc
+.Ft void
+.Fo DSA_free
+.Fa "DSA *dsa"
+.Fc
+.Ft DSA_SIG *
+.Fo DSA_SIG_new
+.Fa "void"
+.Fc
+.Ft void
+.Fo DSA_SIG_free
+.Fa "DSA_SIG *sig"
+.Fc
+.Ft int
+.Fo DSA_do_verify
+.Fa "const unsigned char *digest" "int digestlen" "DSA_SIG *sig" "DSA *dsa"
+.Fc
+.Ft int
+.Fo DSA_do_sign
+.Fa "const unsigned char *digest" "int digestlen" "DSA *dsa"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a small library which provides RSA signing,
+encryption and decryption, and DSA signing.
+RSA and DSA verification are provided by the
+.Xr libnetpgpverify 3
+library.
+.Sh SEE ALSO
+.Xr libnetpgpbn 3 ,
+.Xr libnetpgpverify 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org

@@ -596,7 +596,6 @@ put_struct_flock(struct trace_proc * proc, const char * name, int flags,
 static int
 vfs_fcntl_out(struct trace_proc * proc, const message * m_out)
 {
-	int full;
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_fcntl.fd);
 	put_fcntl_cmd(proc, "cmd", m_out->m_lc_vfs_fcntl.cmd);
@@ -793,9 +792,9 @@ put_dirent_array(struct trace_proc * proc, const char * name, int flags,
 	count = 0;
 	for (off = 0; off < size; off += chunk) {
 		chunk = size - off;
-		if (chunk > sizeof(dirent))
-			chunk = sizeof(dirent);
-		if (chunk < _DIRENT_MINSIZE(&dirent))
+		if ((size_t)chunk > sizeof(dirent))
+			chunk = (ssize_t)sizeof(dirent);
+		if ((size_t)chunk < _DIRENT_MINSIZE(&dirent))
 			break;
 
 		if (mem_get_data(proc->pid, addr + off, &dirent, chunk) < 0) {
@@ -1328,40 +1327,6 @@ vfs_fstatvfs1_out(struct trace_proc * proc, const message * m_out)
 }
 
 static int
-vfs_getrusage_out(struct trace_proc * __unused proc,
-	const message * __unused m_out)
-{
-
-	return CT_NOTDONE;
-}
-
-static void
-vfs_getrusage_in(struct trace_proc * proc, const message * m_out,
-	const message * __unused m_in, int failed)
-{
-	struct rusage buf;
-
-	/* Inline; we will certainly not be reusing this anywhere else. */
-	if (put_open_struct(proc, "rusage", failed,
-	    m_out->m_lc_vfs_rusage.addr, &buf, sizeof(buf))) {
-		/* Reason for hiding these two better: they're always zero. */
-		if (verbose > 1) {
-			put_value(proc, "ru_inblock", "%ld", buf.ru_inblock);
-			put_value(proc, "ru_oublock", "%ld", buf.ru_oublock);
-		}
-		if (verbose > 0) {
-			put_value(proc, "ru_ixrss", "%ld", buf.ru_ixrss);
-			put_value(proc, "ru_idrss", "%ld", buf.ru_idrss);
-			put_value(proc, "ru_isrss", "%ld", buf.ru_isrss);
-		}
-
-		put_close_struct(proc, verbose > 1);
-	}
-	put_equals(proc);
-	put_result(proc);
-}
-
-static int
 vfs_svrctl_out(struct trace_proc * proc, const message * m_out)
 {
 
@@ -1442,8 +1407,6 @@ static const struct call_handler vfs_map[] = {
 	    vfs_statvfs1_in),
 	VFS_CALL(FSTATVFS1) = HANDLER("fstatvfs1", vfs_fstatvfs1_out,
 	    vfs_statvfs1_in),
-	VFS_CALL(GETRUSAGE) = HANDLER("vfs_getrusage", vfs_getrusage_out,
-	    vfs_getrusage_in),
 	VFS_CALL(SVRCTL) = HANDLER("vfs_svrctl", vfs_svrctl_out,
 	    vfs_svrctl_in),
 	VFS_CALL(GCOV_FLUSH) = HANDLER("gcov_flush", vfs_gcov_flush_out,

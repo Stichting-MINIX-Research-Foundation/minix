@@ -1,4 +1,4 @@
-.\"	$NetBSD: msync.2,v 1.24 2011/10/15 21:35:50 rmind Exp $
+.\"	$NetBSD: msync.2,v 1.25 2014/05/09 17:25:11 njoly Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)msync.2	8.2 (Berkeley) 6/21/94
 .\"
-.Dd October 17, 2005
+.Dd May 9, 2014
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -105,10 +105,6 @@ parameter was not page aligned.
 The
 .Fa addr
 parameter did not specify an address part of a mapped region.
-.It Bq Er EINVAL
-The
-.Fa len
-parameter was negative.
 .It Bq Er EIO
 An I/O error occurred while writing to the file system.
 .It Bq Er ENOMEM

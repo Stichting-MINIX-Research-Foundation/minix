@@ -20,7 +20,7 @@ INCS+=	ansi.h aout_machdep.h asm.h \
 	wchar_limits.h
 .else
 INCS+=	disklabel.h \
-
+	intr.h
 .endif
 
 .include <bsd.kinc.mk>

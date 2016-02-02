@@ -88,43 +88,12 @@ vm_munmap_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
-static int
-vm_getrusage_out(struct trace_proc * __unused proc,
-	const message * __unused m_out)
-{
-
-	return CT_NOTDONE;
-}
-
-static void
-vm_getrusage_in(struct trace_proc * proc, const message * m_out,
-	const message * __unused m_in, int failed)
-{
-	struct rusage buf;
-
-	/* Inline; we will certainly not be reusing this anywhere else. */
-	if (put_open_struct(proc, "rusage", failed,
-	    m_out->m_lc_vm_rusage.addr, &buf, sizeof(buf))) {
-		if (verbose > 0) {
-			put_value(proc, "ru_maxrss", "%ld", buf.ru_maxrss);
-			put_value(proc, "ru_minflt", "%ld", buf.ru_minflt);
-			put_value(proc, "ru_majflt", "%ld", buf.ru_majflt);
-		}
-
-		put_close_struct(proc, verbose > 0);
-	}
-	put_equals(proc);
-	put_result(proc);
-}
-
 #define VM_CALL(c) [((VM_ ## c) - VM_RQ_BASE)]
 
 static const struct call_handler vm_map[] = {
 	VM_CALL(BRK) = HANDLER("brk", vm_brk_out, default_in),
 	VM_CALL(MMAP) = HANDLER("mmap", vm_mmap_out, vm_mmap_in),
 	VM_CALL(MUNMAP) = HANDLER("munmap", vm_munmap_out, default_in),
-	VM_CALL(GETRUSAGE) = HANDLER("vm_getrusage", vm_getrusage_out,
-	    vm_getrusage_in),
 };
 
 const struct calls vm_calls = {

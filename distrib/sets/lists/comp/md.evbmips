@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.17 2012/11/24 14:00:35 alnsn Exp $
+# $NetBSD: md.evbmips,v 1.19 2014/08/22 10:51:38 apb Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -52,7 +52,8 @@
 ./usr/include/evbmips/rwlock.h			comp-c-include
 ./usr/include/evbmips/setjmp.h			comp-c-include
 ./usr/include/evbmips/signal.h			comp-c-include
-./usr/include/evbmips/sljitarch.h		comp-c-include
+./usr/include/evbmips/sljit_machdep.h		comp-c-include
+./usr/include/evbmips/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/evbmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbmips/trap.h			comp-c-include
 ./usr/include/evbmips/types.h			comp-c-include

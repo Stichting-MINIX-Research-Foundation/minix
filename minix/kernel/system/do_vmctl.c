@@ -20,7 +20,7 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
-  struct proc *p, *rp, *target;
+  struct proc *p, *rp, **rpp, *target;
 
   if(ep == SELF) { ep = caller->p_endpoint; }
 
@@ -37,17 +37,28 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 		RTS_UNSET(p, RTS_PAGEFAULT);
 		return OK;
 	case VMCTL_MEMREQ_GET:
-		/* Send VM the information about the memory request.  */
-		if(!(rp = vmrequest))
-			return ESRCH;
-		assert(RTS_ISSET(rp, RTS_VMREQUEST));
+		/* Send VM the information about the memory request. We can
+		 * not simply send the first request on the list, because IPC
+		 * filters may forbid VM from getting requests for particular
+		 * sources. However, IPC filters are used only in rare cases.
+		 */
+		for (rpp = &vmrequest; *rpp != NULL;
+		    rpp = &(*rpp)->p_vmrequest.nextrequestor) {
+			rp = *rpp;
 
-		okendpt(rp->p_vmrequest.target, &proc_nr);
-		target = proc_addr(proc_nr);
+			assert(RTS_ISSET(rp, RTS_VMREQUEST));
 
-		/* Reply with request fields. */
-		switch(rp->p_vmrequest.req_type) {
-		case VMPTYPE_CHECK:
+			okendpt(rp->p_vmrequest.target, &proc_nr);
+			target = proc_addr(proc_nr);
+
+			/* Check against IPC filters. */
+			if (!allow_ipc_filtered_memreq(rp, target))
+				continue;
+
+			/* Reply with request fields. */
+			if (rp->p_vmrequest.req_type != VMPTYPE_CHECK)
+				panic("VMREQUEST wrong type");
+
 			m_ptr->SVMCTL_MRG_TARGET	=
 				rp->p_vmrequest.target;
 			m_ptr->SVMCTL_MRG_ADDR		=
@@ -58,17 +69,17 @@ int do_vmctl(struct proc * caller, message * m_ptr)
 				rp->p_vmrequest.params.check.writeflag;
 			m_ptr->SVMCTL_MRG_REQUESTOR	=
 				(void *) rp->p_endpoint;
-			break;
-		default:
-			panic("VMREQUEST wrong type");
+
+			rp->p_vmrequest.vmresult = VMSUSPEND;
+
+			/* Remove from request chain. */
+			*rpp = rp->p_vmrequest.nextrequestor;
+
+			return rp->p_vmrequest.req_type;
 		}
 
-		rp->p_vmrequest.vmresult = VMSUSPEND;
+		return ENOENT;
 
-		/* Remove from request chain. */
-		vmrequest = vmrequest->p_vmrequest.nextrequestor;
-
-		return rp->p_vmrequest.req_type;
 	case VMCTL_MEMREQ_REPLY:
 		assert(RTS_ISSET(p, RTS_VMREQUEST));
 		assert(p->p_vmrequest.vmresult == VMSUSPEND);

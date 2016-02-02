@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile.libcpp,v 1.1 2011/06/21 06:03:13 mrg Exp $
+#	$NetBSD: Makefile.libcpp,v 1.2 2014/03/01 10:00:49 mrg Exp $
 
-DPADD+=		${LIBCPPOBJ}/libcpp.a
-LDADD+=		${LIBCPPOBJ}/libcpp.a
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCPP_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCPP_=1
+
+LIBCPPOBJ!=		cd ${.CURDIR}/../libcpp && ${PRINTOBJDIR}
+DPADD+=			${LIBCPPOBJ}/libcpp.a
+LDADD+=			${LIBCPPOBJ}/libcpp.a
+
+.endif

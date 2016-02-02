@@ -1,27 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.12 2013/06/10 05:09:34 mrg Exp $
-
-# LSC Do not take for granted that the last thing done in the previous file 
-# was standard directories...
-/set type=dir uid=0 gid=0 mode=0755
-
-./etc/fonts
-./etc/fonts/conf.avail
-./etc/X11
-./etc/X11/fs
-./etc/X11/lbxproxy
-./etc/X11/proxymngr
-./etc/X11/rstart
-./etc/X11/rstart/commands
-./etc/X11/rstart/commands/x11r6
-./etc/X11/rstart/contexts
-./etc/X11/twm
-./etc/X11/xdm
-./etc/X11/xinit
-./etc/X11/xserver
-./etc/X11/xsm
-./usr/libdata
-./usr/libdata/debug
-./usr/libdata/debug/usr
+#	$NetBSD: NetBSD.dist.Xorg,v 1.16 2015/09/19 23:00:44 wiz Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -29,7 +6,6 @@
 ./usr/X11R7/include/GL
 ./usr/X11R7/include/GL/internal
 ./usr/X11R7/include/X11
-./usr/X11R7/include/X11/dri
 ./usr/X11R7/include/X11/ICE
 ./usr/X11R7/include/X11/PM
 ./usr/X11R7/include/X11/SM
@@ -39,18 +15,20 @@
 ./usr/X11R7/include/X11/Xmu
 ./usr/X11R7/include/X11/Xtrans
 ./usr/X11R7/include/X11/bitmaps
+./usr/X11R7/include/X11/dri
 ./usr/X11R7/include/X11/extensions
 ./usr/X11R7/include/X11/fonts
 ./usr/X11R7/include/X11/pixmaps
-./usr/X11R7/include/libdrm
-./usr/X11R7/include/libkms
+./usr/X11R7/include/X11/pixmaps/ctwm
 ./usr/X11R7/include/fontconfig
 ./usr/X11R7/include/freetype2
-./usr/X11R7/include/freetype2/freetype
-./usr/X11R7/include/freetype2/freetype/cache
-./usr/X11R7/include/freetype2/freetype/config
-./usr/X11R7/include/freetype2/freetype/internal
-./usr/X11R7/include/freetype2/freetype/internal/services
+./usr/X11R7/include/freetype2
+./usr/X11R7/include/freetype2/cache
+./usr/X11R7/include/freetype2/config
+./usr/X11R7/include/freetype2/internal
+./usr/X11R7/include/freetype2/internal/services
+./usr/X11R7/include/libdrm
+./usr/X11R7/include/libkms
 ./usr/X11R7/include/pixman-1
 ./usr/X11R7/include/xcb
 ./usr/X11R7/include/xorg
@@ -103,6 +81,7 @@
 ./usr/X11R7/lib/X11/locale/ja.JIS
 ./usr/X11R7/lib/X11/locale/ja.SJIS
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8
 ./usr/X11R7/lib/X11/locale/ko
 ./usr/X11R7/lib/X11/locale/ko_KR.UTF-8
 ./usr/X11R7/lib/X11/locale/koi8-c
@@ -116,6 +95,8 @@
 ./usr/X11R7/lib/X11/locale/mulelao-1
 ./usr/X11R7/lib/X11/locale/nokhchi-1
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8
 ./usr/X11R7/lib/X11/locale/tatar-cyr
 ./usr/X11R7/lib/X11/locale/th_TH
 ./usr/X11R7/lib/X11/locale/th_TH.UTF-8
@@ -161,9 +142,9 @@
 ./usr/X11R7/lib/X11/xkb/types
 ./usr/X11R7/lib/modules
 ./usr/X11R7/lib/modules/dri
+./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/extensions
 ./usr/X11R7/lib/modules/fonts
-./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/input
 ./usr/X11R7/lib/pkgconfig
 ./usr/X11R7/lib/xorg
@@ -172,16 +153,19 @@
 ./usr/X11R7/man/cat1
 ./usr/X11R7/man/cat3
 ./usr/X11R7/man/cat4
+./usr/X11R7/man/cat4/x86
 ./usr/X11R7/man/cat5
 ./usr/X11R7/man/cat7
 ./usr/X11R7/man/html1
 ./usr/X11R7/man/html3
 ./usr/X11R7/man/html4
+./usr/X11R7/man/html4/x86
 ./usr/X11R7/man/html5
 ./usr/X11R7/man/html7
 ./usr/X11R7/man/man1
 ./usr/X11R7/man/man3
 ./usr/X11R7/man/man4
+./usr/X11R7/man/man4/x86
 ./usr/X11R7/man/man5
 ./usr/X11R7/man/man7
 ./usr/X11R7/share

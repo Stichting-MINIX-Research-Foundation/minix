@@ -1,0 +1,206 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+.                                                       minix-tests
+./etc                                                   minix-tests
+./etc/atf                                               minix-tests     atf
+./etc/mtree                                             minix-tests
+./etc/mtree/set.minix-tests                             minix-tests
+./usr                                                   minix-tests
+./usr/lib                                               minix-tests     atf,kyua
+./usr/lib/bc                                            minix-tests     bitcode,atf
+./usr/lib/bc/libatf-c++.a                               minix-tests     bitcode,atf
+./usr/lib/bc/libatf-c.a                                 minix-tests     bitcode,atf
+./usr/lib/bc/liblutok.a                                 minix-tests     bitcode,atf
+./usr/share/atf                                         minix-tests
+./usr/share/atf/libatf-sh.subr                          minix-tests
+./usr/share/doc/reference                               minix-tests
+./usr/share/doc/reference/ref1                          minix-tests
+./usr/share/doc/reference/ref1/atf                      minix-tests
+./usr/share/doc/reference/ref1/atf/AUTHORS              minix-tests
+./usr/share/doc/reference/ref1/atf/COPYING              minix-tests
+./usr/share/doc/reference/ref1/atf/NEWS                 minix-tests
+./usr/share/doc/reference/ref1/atf/README               minix-tests
+./usr/share/doc/reference/ref1/kyua                     minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat     minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat/AUTHORS minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat/COPYING minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat/NEWS minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-atf-compat/README minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-cli            minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-cli/AUTHORS    minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-cli/COPYING    minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-cli/NEWS       minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-cli/README     minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-testers        minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-testers/AUTHORS minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-testers/COPYING minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-testers/NEWS   minix-tests
+./usr/share/doc/reference/ref1/kyua/kyua-testers/README minix-tests
+./usr/share/examples/atf                                minix-tests
+./usr/share/examples/kyua-cli                           minix-tests
+./usr/share/examples/kyua-cli/Kyuafile.top              minix-tests
+./usr/share/examples/kyua-cli/kyua.conf                 minix-tests
+./usr/share/examples/lutok                              minix-tests     minix-tests
+./usr/share/examples/lutok/bindings.cpp                 minix-tests
+./usr/share/examples/lutok/hello.cpp                    minix-tests
+./usr/share/examples/lutok/interpreter.cpp              minix-tests
+./usr/share/examples/lutok/raii.cpp                     minix-tests
+./usr/share/kyua-atf-compat                             minix-tests
+./usr/share/kyua-atf-compat/lib.subr                    minix-tests
+./usr/share/kyua-atf-compat/tests_lib.subr              minix-tests
+./usr/share/kyua-cli                                    minix-tests
+./usr/share/kyua-cli/misc                               minix-tests
+./usr/share/kyua-cli/misc/context.html                  minix-tests
+./usr/share/kyua-cli/misc/index.html                    minix-tests
+./usr/share/kyua-cli/misc/report.css                    minix-tests
+./usr/share/kyua-cli/misc/test_result.html              minix-tests
+./usr/share/kyua-cli/store                              minix-tests
+./usr/share/kyua-cli/store/migrate_v1_v2.sql            minix-tests
+./usr/share/kyua-cli/store/schema_v2.sql                minix-tests
+./usr/tests                                             minix-tests
+./usr/tests/lib                                         minix-tests     bitcode
+./usr/tests/lib/csu                                     minix-tests     bitcode
+./usr/tests/lib/csu/bc                                  minix-tests     bitcode
+./usr/tests/lib/csu/bc/h_initfini3_dso.a                minix-tests     bitcode,atf
+./usr/tests/lib/libc                                    minix-tests     bitcode
+./usr/tests/lib/libc/tls                                minix-tests     bitcode
+./usr/tests/lib/libc/tls/bc                             minix-tests     bitcode
+./usr/tests/lib/libc/tls/bc/libh_tls_dynamic.a          minix-tests     bitcode,atf
+./usr/tests/minix-posix                                 minix-tests
+./usr/tests/minix-posix/blocktest                       minix-tests
+./usr/tests/minix-posix/blocktest/README                minix-tests
+./usr/tests/minix-posix/blocktest/blocktest             minix-tests
+./usr/tests/minix-posix/blocktest/support.sh            minix-tests
+./usr/tests/minix-posix/blocktest/system.conf           minix-tests
+./usr/tests/minix-posix/blocktest/test.sh               minix-tests
+./usr/tests/minix-posix/check-install                   minix-tests
+./usr/tests/minix-posix/ddekit                          minix-tests
+./usr/tests/minix-posix/ddekit/ddekittest               minix-tests
+./usr/tests/minix-posix/ddekit/ddekittest_driver        minix-tests
+./usr/tests/minix-posix/ddekit/system.conf              minix-tests
+./usr/tests/minix-posix/mod                             minix-tests     pic
+./usr/tests/minix-posix/run                             minix-tests
+./usr/tests/minix-posix/t10a                            minix-tests
+./usr/tests/minix-posix/t11a                            minix-tests
+./usr/tests/minix-posix/t11b                            minix-tests
+./usr/tests/minix-posix/t40a                            minix-tests
+./usr/tests/minix-posix/t40b                            minix-tests
+./usr/tests/minix-posix/t40c                            minix-tests
+./usr/tests/minix-posix/t40d                            minix-tests
+./usr/tests/minix-posix/t40e                            minix-tests
+./usr/tests/minix-posix/t40f                            minix-tests
+./usr/tests/minix-posix/t40g                            minix-tests
+./usr/tests/minix-posix/t60a                            minix-tests
+./usr/tests/minix-posix/t60b                            minix-tests
+./usr/tests/minix-posix/t67a                            minix-tests
+./usr/tests/minix-posix/t67b                            minix-tests
+./usr/tests/minix-posix/t68a                            minix-tests
+./usr/tests/minix-posix/t68b                            minix-tests
+./usr/tests/minix-posix/t84_h_nonexec.sh                minix-tests
+./usr/tests/minix-posix/t84_h_spawn                     minix-tests
+./usr/tests/minix-posix/t84_h_spawnattr                 minix-tests
+./usr/tests/minix-posix/test1                           minix-tests
+./usr/tests/minix-posix/test1.c                         minix-tests
+./usr/tests/minix-posix/test10                          minix-tests
+./usr/tests/minix-posix/test11                          minix-tests
+./usr/tests/minix-posix/test12                          minix-tests
+./usr/tests/minix-posix/test13                          minix-tests
+./usr/tests/minix-posix/test14                          minix-tests
+./usr/tests/minix-posix/test15                          minix-tests
+./usr/tests/minix-posix/test16                          minix-tests
+./usr/tests/minix-posix/test17                          minix-tests
+./usr/tests/minix-posix/test18                          minix-tests
+./usr/tests/minix-posix/test19                          minix-tests
+./usr/tests/minix-posix/test2                           minix-tests
+./usr/tests/minix-posix/test20                          minix-tests
+./usr/tests/minix-posix/test21                          minix-tests
+./usr/tests/minix-posix/test22                          minix-tests
+./usr/tests/minix-posix/test23                          minix-tests
+./usr/tests/minix-posix/test24                          minix-tests
+./usr/tests/minix-posix/test25                          minix-tests
+./usr/tests/minix-posix/test26                          minix-tests
+./usr/tests/minix-posix/test27                          minix-tests
+./usr/tests/minix-posix/test28                          minix-tests
+./usr/tests/minix-posix/test29                          minix-tests
+./usr/tests/minix-posix/test3                           minix-tests
+./usr/tests/minix-posix/test30                          minix-tests
+./usr/tests/minix-posix/test31                          minix-tests
+./usr/tests/minix-posix/test32                          minix-tests
+./usr/tests/minix-posix/test33                          minix-tests
+./usr/tests/minix-posix/test34                          minix-tests
+./usr/tests/minix-posix/test35                          minix-tests
+./usr/tests/minix-posix/test36                          minix-tests
+./usr/tests/minix-posix/test37                          minix-tests
+./usr/tests/minix-posix/test38                          minix-tests
+./usr/tests/minix-posix/test39                          minix-tests
+./usr/tests/minix-posix/test4                           minix-tests
+./usr/tests/minix-posix/test40                          minix-tests
+./usr/tests/minix-posix/test41                          minix-tests
+./usr/tests/minix-posix/test42                          minix-tests
+./usr/tests/minix-posix/test43                          minix-tests
+./usr/tests/minix-posix/test44                          minix-tests
+./usr/tests/minix-posix/test45                          minix-tests
+./usr/tests/minix-posix/test46                          minix-tests
+./usr/tests/minix-posix/test48                          minix-tests
+./usr/tests/minix-posix/test49                          minix-tests
+./usr/tests/minix-posix/test5                           minix-tests
+./usr/tests/minix-posix/test50                          minix-tests
+./usr/tests/minix-posix/test52                          minix-tests
+./usr/tests/minix-posix/test53                          minix-tests
+./usr/tests/minix-posix/test54                          minix-tests
+./usr/tests/minix-posix/test55                          minix-tests
+./usr/tests/minix-posix/test56                          minix-tests
+./usr/tests/minix-posix/test58                          minix-tests
+./usr/tests/minix-posix/test59                          minix-tests
+./usr/tests/minix-posix/test6                           minix-tests
+./usr/tests/minix-posix/test60                          minix-tests
+./usr/tests/minix-posix/test61                          minix-tests
+./usr/tests/minix-posix/test63                          minix-tests     pic
+./usr/tests/minix-posix/test64                          minix-tests
+./usr/tests/minix-posix/test65                          minix-tests
+./usr/tests/minix-posix/test66                          minix-tests
+./usr/tests/minix-posix/test67                          minix-tests
+./usr/tests/minix-posix/test68                          minix-tests
+./usr/tests/minix-posix/test69                          minix-tests
+./usr/tests/minix-posix/test7                           minix-tests
+./usr/tests/minix-posix/test70                          minix-tests
+./usr/tests/minix-posix/test71                          minix-tests
+./usr/tests/minix-posix/test72                          minix-tests
+./usr/tests/minix-posix/test73                          minix-tests
+./usr/tests/minix-posix/test74                          minix-tests
+./usr/tests/minix-posix/test75                          minix-tests
+./usr/tests/minix-posix/test76                          minix-tests
+./usr/tests/minix-posix/test77                          minix-tests
+./usr/tests/minix-posix/test78                          minix-tests
+./usr/tests/minix-posix/test79                          minix-tests
+./usr/tests/minix-posix/test8                           minix-tests
+./usr/tests/minix-posix/test80                          minix-tests
+./usr/tests/minix-posix/test81                          minix-tests
+./usr/tests/minix-posix/test82                          minix-tests
+./usr/tests/minix-posix/test83                          minix-tests
+./usr/tests/minix-posix/test84                          minix-tests
+./usr/tests/minix-posix/test85                          minix-tests
+./usr/tests/minix-posix/test86                          minix-tests
+./usr/tests/minix-posix/test87                          minix-tests
+./usr/tests/minix-posix/test88                          minix-tests
+./usr/tests/minix-posix/test9                           minix-tests
+./usr/tests/minix-posix/testinterp                      minix-tests
+./usr/tests/minix-posix/testisofs                       minix-tests
+./usr/tests/minix-posix/testkyua                        minix-tests
+./usr/tests/minix-posix/testmfs                         minix-tests
+./usr/tests/minix-posix/testrelpol                      minix-tests
+./usr/tests/minix-posix/testsh1                         minix-tests
+./usr/tests/minix-posix/testsh2                         minix-tests
+./usr/tests/minix-posix/testvm                          minix-tests
+./usr/tests/minix-posix/testvm.conf                     minix-tests
+./usr/tests/minix-posix/testvnd                         minix-tests
+./usr/tests/minix-posix/tvnd                            minix-tests
+./var                                                   minix-tests
+./var/db                                                minix-tests
+./var/db/obsolete                                       minix-tests
+./var/db/obsolete/minix-tests                           minix-tests

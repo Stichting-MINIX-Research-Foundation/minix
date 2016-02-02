@@ -49,6 +49,12 @@
 #define USR_F     (BILLABLE | PREEMPTIBLE)         /* user processes */
 #define IMM_F     (ROOT_SYS_PROC | VM_SYS_PROC | PREEMPTIBLE) /* immutable */
 
+/* init flags */
+#define TSK_I     0                               /* all kernel tasks */
+#define SRV_I     0                               /* system services */
+#define DSRV_I    0                               /* dynamic system services */
+#define USR_I     0                               /* user processes */
+
 /* allowed traps */
 #define CSK_T     (1 << RECEIVE)                   /* clock and system */
 #define TSK_T     0                                /* other kernel tasks */

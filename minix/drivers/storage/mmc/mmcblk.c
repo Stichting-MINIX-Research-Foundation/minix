@@ -544,7 +544,6 @@ sef_local_startup()
 	 *  Use the same function for all event types
 	 */
 	sef_setcb_init_fresh(block_system_event_cb);
-	sef_setcb_init_lu(block_system_event_cb);
 
 	/* Register a signal handler */
 	sef_setcb_signal_handler(block_signal_handler_cb);

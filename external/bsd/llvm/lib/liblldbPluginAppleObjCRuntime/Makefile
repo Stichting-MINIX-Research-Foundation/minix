@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbPluginAppleObjCRuntime
 
@@ -6,11 +6,11 @@ LIB=	lldbPluginAppleObjCRuntime
 
 .PATH: ${LLDB_SRCDIR}/source/Plugins/LanguageRuntime/ObjC/AppleObjCRuntime
 
-SRCS+=	AppleObjCRuntime.cpp \
+SRCS+=	AppleObjCDeclVendor.cpp \
+	AppleObjCRuntime.cpp \
 	AppleObjCRuntimeV1.cpp \
 	AppleObjCRuntimeV2.cpp \
 	AppleObjCTrampolineHandler.cpp \
-	AppleObjCTypeVendor.cpp \
 	AppleThreadPlanStepThroughObjCTrampoline.cpp
 
 .if defined(HOSTLIB)

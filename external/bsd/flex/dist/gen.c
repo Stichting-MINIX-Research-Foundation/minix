@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.8 2013/04/06 20:05:40 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.11 2014/10/30 18:44:05 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -32,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: gen.c,v 1.11 2014/10/30 18:44:05 christos Exp $");
+
 #include "tables.h"
 
 
@@ -72,6 +73,26 @@ static const char *get_int32_decl (void)
 		: "static yyconst flex_int32_t * %s = 0;\n";
 }
 
+static const char *get_uint16_decl (void)
+{
+	return (gentables)
+		? "static yyconst flex_uint16_t %s[%d] =\n    {   0,\n"
+		: "static yyconst flex_uint16_t * %s = 0;\n";
+}
+
+static const char *get_uint32_decl (void)
+{
+	return (gentables)
+		? "static yyconst flex_uint32_t %s[%d] =\n    {   0,\n"
+		: "static yyconst flex_uint32_t * %s = 0;\n";
+}
+
+static const char *get_yy_char_decl (void)
+{
+	return (gentables)
+		? "static yyconst YY_CHAR %s[%d] =\n    {   0,\n"
+		: "static yyconst YY_CHAR * %s = 0;\n";
+}
 static const char *get_state_decl (void)
 {
 	return (gentables)
@@ -454,7 +475,7 @@ static struct yytbl_data *mkecstbl (void)
 
 	buf_prints (&yydmap_buf,
 		    "\t{YYTD_ID_EC, (void**)&yy_ec, sizeof(%s)},\n",
-		    "flex_int32_t");
+		    "YY_CHAR");
 
 	return tbl;
 }
@@ -466,7 +487,7 @@ void genecs ()
 	register int i, j;
 	int     numrows;
 
-	out_str_dec (get_int32_decl (), "yy_ec", csize);
+	out_str_dec (get_yy_char_decl (), "yy_ec", csize);
 
 	for (i = 1; i < csize; ++i) {
 		ecgroup[i] = ABS (ecgroup[i]);
@@ -879,7 +900,7 @@ void gen_next_state (worry_about_NULs)
 
 	else
 		strcpy (char_map, useecs ?
-			"yy_ec[YY_SC_TO_UI(*yy_cp)]" :
+			"yy_ec[YY_SC_TO_UI(*yy_cp)] " :
 			"YY_SC_TO_UI(*yy_cp)");
 
 	if (worry_about_NULs && nultrans) {
@@ -1276,10 +1297,10 @@ void gentabs ()
 			fputs (_("\n\nMeta-Equivalence Classes:\n"),
 			       stderr);
 
-		out_str_dec (get_int32_decl (), "yy_meta", numecs + 1);
+		out_str_dec (get_yy_char_decl (), "yy_meta", numecs + 1);
 		buf_prints (&yydmap_buf,
 			    "\t{YYTD_ID_META, (void**)&yy_meta, sizeof(%s)},\n",
-			    "flex_int32_t");
+			    "YY_CHAR");
 
 		for (i = 1; i <= numecs; ++i) {
 			if (trace)
@@ -1306,13 +1327,13 @@ void gentabs ()
 
 	/* Begin generating yy_base */
 	out_str_dec ((tblend >= INT16_MAX || long_align) ?
-		     get_int32_decl () : get_int16_decl (),
+		     get_uint32_decl () : get_uint16_decl (),
 		     "yy_base", total_states + 1);
 
 	buf_prints (&yydmap_buf,
 		    "\t{YYTD_ID_BASE, (void**)&yy_base, sizeof(%s)},\n",
 		    (tblend >= INT16_MAX
-		     || long_align) ? "flex_int32_t" : "flex_int16_t");
+		     || long_align) ? "flex_uint32_t" : "flex_uint16_t");
 	yybase_tbl =
 		(struct yytbl_data *) calloc (1,
 					      sizeof (struct yytbl_data));
@@ -1399,13 +1420,13 @@ void gentabs ()
 
 	/* Begin generating yy_nxt */
 	out_str_dec ((total_states >= INT16_MAX || long_align) ?
-		     get_int32_decl () : get_int16_decl (), "yy_nxt",
+		     get_uint32_decl () : get_uint16_decl (), "yy_nxt",
 		     tblend + 1);
 
 	buf_prints (&yydmap_buf,
 		    "\t{YYTD_ID_NXT, (void**)&yy_nxt, sizeof(%s)},\n",
 		    (total_states >= INT16_MAX
-		     || long_align) ? "flex_int32_t" : "flex_int16_t");
+		     || long_align) ? "flex_uint32_t" : "flex_uint16_t");
 
 	yynxt_tbl =
 		(struct yytbl_data *) calloc (1,

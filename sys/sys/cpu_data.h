@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.36 2013/11/25 03:02:30 christos Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.38 2014/09/05 05:45:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct lwp;
 #include <sys/percpu_types.h>
 #include <sys/queue.h>
 #include <sys/kcpuset.h>
+#include <sys/ipi.h>
 
 /*
  * MI per-cpu data
@@ -71,6 +72,7 @@ struct cpu_data {
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
+	uint32_t	cpu_ipipend[IPI_BITWORDS];	/* pending IPIs */
 
 	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;
@@ -96,7 +98,7 @@ struct cpu_data {
 	uint64_t	cpu_nintr;		/* interrupt count */
 	uint64_t	cpu_nsoft;		/* soft interrupt count */
 	uint64_t	cpu_nfault;		/* pagefault counter */
-	void		*cpu_uvm;		/* uvm per-cpu data */
+	struct uvm_cpu	*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
@@ -123,6 +125,7 @@ struct cpu_data {
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 #define	ci_pcu_curlwp		ci_data.cpu_pcu_curlwp
 #define	ci_kcpuset		ci_data.cpu_kcpuset
+#define	ci_ipipend		ci_data.cpu_ipipend
 
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id

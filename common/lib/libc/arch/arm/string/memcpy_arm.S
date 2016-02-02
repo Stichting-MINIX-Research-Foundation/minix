@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.4 2013/08/11 04:56:32 matt Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.5 2013/12/02 21:21:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,10 +30,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(__ARM_EABI__)
-STRONG_ALIAS(__aeabi_memcpy, memcpy)
-#endif
 
 /*
  * This is one fun bit of code ...

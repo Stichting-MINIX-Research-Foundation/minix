@@ -5,10 +5,6 @@
 #include <sys/mman.h>
 #include <minix/vm.h>
 
-#define S_FRAME_SIZE	4096		/* use malloc if larger than this */
-static char s_frame[S_FRAME_SIZE];	/* static storage for process frame */
-static char *frame;			/* pointer to process frame buffer */
-
 static void pid_psinfo(int slot);
 static void pid_cmdline(int slot);
 static void pid_environ(int slot);
@@ -34,214 +30,106 @@ static int
 is_zombie(int slot)
 {
 
-	return (slot >= NR_TASKS && 
-		(mproc[slot - NR_TASKS].mp_flags & (TRACE_ZOMBIE | ZOMBIE)));
+	return (slot >= NR_TASKS &&
+	    (proc_list[slot - NR_TASKS].mpl_flags & MPLF_ZOMBIE));
 }
 
 /*
- * Print information used by ps(1) and top(1).
+ * Get MINIX3-specific process data for the process identified by the given
+ * kernel slot.  Return OK or a negative error code.
+ */
+int
+get_proc_data(pid_t pid, struct minix_proc_data * mpd)
+{
+	int mib[4] = { CTL_MINIX, MINIX_PROC, PROC_DATA, pid };
+	size_t oldlen;
+
+	oldlen = sizeof(*mpd);
+	if (__sysctl(mib, __arraycount(mib), mpd, &oldlen, NULL, 0) != 0)
+		return -errno;
+
+	return OK;
+}
+
+/*
+ * Print process information.  This feature is now used only by mtop(1), and as
+ * a result, we only provide information that mtop(1) actually uses.  In the
+ * future, this file may be extended with additional fields again.
  */
 static void
-pid_psinfo(int i)
+pid_psinfo(int slot)
 {
-	int pi, task, state, type, p_state, f_state;
-	char name[PROC_NAME_LEN+1], *p;
+	struct minix_proc_data mpd;
 	struct vm_usage_info vui;
-	pid_t ppid;
+	pid_t pid;
+	uid_t uid;
+	char *p;
+	int task, type, state;
 
-	pi = i - NR_TASKS;
-	task = proc[i].p_nr < 0;
+	if ((pid = pid_from_slot(slot)) == 0)
+		return;
 
-	/* Get the name of the process. Spaces would mess up the format.. */
-	if (task || mproc[i].mp_name[0] == 0)
-		strncpy(name, proc[i].p_name, sizeof(name) - 1);
-	else
-		strncpy(name, mproc[pi].mp_name, sizeof(name) - 1);
-	name[sizeof(name) - 1] = 0;
-	if ((p = strchr(name, ' ')) != NULL)
-		p[0] = 0;
+	if (get_proc_data(pid, &mpd) != OK)
+		return;
+
+	task = (slot < NR_TASKS);
 
 	/* Get the type of the process. */
 	if (task)
 		type = TYPE_TASK;
-	else if (mproc[i].mp_flags & PRIV_PROC)
+	else if (mpd.mpd_flags & MPDF_SYSTEM)
 		type = TYPE_SYSTEM;
 	else
 		type = TYPE_USER;
 
-	/* Get the state of the process. */
-	if (!task) {
-		if (is_zombie(i))
-			state = STATE_ZOMBIE;	/* zombie */
-		else if (mproc[pi].mp_flags & TRACE_STOPPED)
-			state = STATE_STOP;	/* stopped (traced) */
-		else if (proc[i].p_rts_flags == 0)
-			state = STATE_RUN;	/* in run-queue */
-		else if (fp_is_blocked(&fproc[pi]) ||
-		    (mproc[pi].mp_flags & (WAITING | SIGSUSPENDED)))
-			state = STATE_SLEEP;	/* sleeping */
-		else
-			state = STATE_WAIT;	/* waiting */
-	} else {
-		if (proc[i].p_rts_flags == 0)
-			state = STATE_RUN;	/* in run-queue */
-		else
-			state = STATE_WAIT;	/* other i.e. waiting */
-	}
-
-	/* We assume that even if a process has become a zombie, its kernel
-	 * proc entry still contains the old (although valid) information.
-	 * Currently this is true, but in the future we may have to filter some
-	 * fields.
+	/*
+	 * Get the (rudimentary) state of the process.  The zombie flag is also
+	 * in the proc_list entry but it just may be set since we obtained that
+	 * entry, in which case we'd end up with the wrong state here.
 	 */
-	buf_printf("%d %c %d %s %c %d %d %lu %lu %lu %lu",
+	if (mpd.mpd_flags & MPDF_ZOMBIE)
+		state = STATE_ZOMBIE;
+	else if (mpd.mpd_flags & MPDF_RUNNABLE)
+		state = STATE_RUN;
+	else if (mpd.mpd_flags & MPDF_STOPPED)
+		state = STATE_STOP;
+	else
+		state = STATE_SLEEP;
+
+	/* Get the process's effective user ID. */
+	if (!task)
+		uid = proc_list[slot - NR_TASKS].mpl_uid;
+	else
+		uid = 0;
+
+	/* Get memory usage.  We do not care if this fails. */
+	memset(&vui, 0, sizeof(vui));
+	if (!(mpd.mpd_flags & MPDF_ZOMBIE))
+		(void)vm_info_usage(mpd.mpd_endpoint, &vui);
+
+	/* Spaces in the process name would mess up the output format. */
+	if ((p = strchr(mpd.mpd_name, ' ')) != NULL)
+		*p = '\0';
+
+	/* Print all the information. */
+	buf_printf("%d %c %d %s %c %d %d %u %u "
+	    "%"PRIu64" %"PRIu64" %"PRIu64" %lu %d %u\n",
 	    PSINFO_VERSION,			/* information version */
 	    type,				/* process type */
-	    (int)proc[i].p_endpoint,		/* process endpoint */
-	    name,				/* process name */
+	    mpd.mpd_endpoint,			/* process endpoint */
+	    mpd.mpd_name,			/* process name */
 	    state,				/* process state letter */
-	    (int)P_BLOCKEDON(&proc[i]),		/* endpt blocked on, or NONE */
-	    (int)proc[i].p_priority,		/* process priority */
-	    (long)proc[i].p_user_time,		/* user time */
-	    (long)proc[i].p_sys_time,		/* system time */
-	    ex64hi(proc[i].p_cycles),		/* execution cycles */
-	    ex64lo(proc[i].p_cycles)
+	    mpd.mpd_blocked_on,			/* endpt blocked on, or NONE */
+	    mpd.mpd_priority,			/* process priority */
+	    mpd.mpd_user_time,			/* user time */
+	    mpd.mpd_sys_time,			/* system time */
+	    mpd.mpd_cycles,			/* execution cycles */
+	    mpd.mpd_kipc_cycles,		/* kernel IPC cycles */
+	    mpd.mpd_kcall_cycles,		/* kernel call cycles */
+	    vui.vui_total,			/* total memory */
+	    mpd.mpd_nice,			/* nice value */
+	    uid					/* effective user ID */
 	);
-
-	memset(&vui, 0, sizeof(vui));
-
-	if (!is_zombie(i)) {
-		/* We don't care if this fails.  */
-		(void)vm_info_usage(proc[i].p_endpoint, &vui);
-	}
-
-	/* If the process is not a kernel task, we add some extra info. */
-	if (!task) {
-		if (mproc[pi].mp_flags & WAITING)
-			p_state = PSTATE_WAITING;
-		else if (mproc[pi].mp_flags & SIGSUSPENDED)
-			p_state = PSTATE_SIGSUSP;
-		else
-			p_state = '-';
-
-		if (mproc[pi].mp_parent == pi)
-			ppid = NO_PID;
-		else
-			ppid = mproc[mproc[pi].mp_parent].mp_pid;
-
-		switch (fproc[pi].fp_blocked_on) {
-		case FP_BLOCKED_ON_NONE:	f_state = FSTATE_NONE; break;
-		case FP_BLOCKED_ON_PIPE:	f_state = FSTATE_PIPE; break;
-		case FP_BLOCKED_ON_LOCK:	f_state = FSTATE_LOCK; break;
-		case FP_BLOCKED_ON_POPEN:	f_state = FSTATE_POPEN; break;
-		case FP_BLOCKED_ON_SELECT:	f_state = FSTATE_SELECT; break;
-		case FP_BLOCKED_ON_OTHER:	f_state = FSTATE_TASK; break;
-		default:			f_state = FSTATE_UNKNOWN;
-		}
-
-		buf_printf(" %lu %lu %lu %c %d %u %u %u %d %c %d %llu",
-		    vui.vui_total,			/* total memory */
-		    vui.vui_common,			/* common memory */
-		    vui.vui_shared,			/* shared memory */
-		    p_state,				/* sleep state */
-		    ppid,				/* parent PID */
-		    mproc[pi].mp_realuid,		/* real UID */
-		    mproc[pi].mp_effuid,		/* effective UID */
-		    mproc[pi].mp_procgrp,		/* process group */
-		    mproc[pi].mp_nice,			/* nice value */
-		    f_state,				/* VFS block state */
-		    (int)(fproc[pi].fp_blocked_on == FP_BLOCKED_ON_OTHER) ?
-			fproc[pi].fp_task : NONE,	/* block proc */
-		    fproc[pi].fp_tty			/* controlling tty */
-		);
-	}
-
-	/* Always add kernel cycles. */
-	buf_printf(" %lu %lu %lu %lu",
-	    ex64hi(proc[i].p_kipc_cycles),
-	    ex64lo(proc[i].p_kipc_cycles),
-	    ex64hi(proc[i].p_kcall_cycles),
-	    ex64lo(proc[i].p_kcall_cycles));
-
-	/* Add total memory for tasks at the end. */
-	if (task)
-		buf_printf(" %lu", vui.vui_total);
-
-	/* Newline at the end of the file. */
-	buf_printf("\n");
-}
-
-/*
- * If we allocated memory dynamically during a call to get_frame(), free it up
- * here.
- */
-static void
-put_frame(void)
-{
-
-	if (frame != s_frame)
-		free(frame);
-}
-
-/*
- * Get the execution frame from the top of the given process's stack.  It may
- * be very large, in which case we temporarily allocate memory for it (up to a
- * certain size).
- */
-static int
-get_frame(int slot, vir_bytes * basep, vir_bytes * sizep, size_t * nargsp)
-{
-	vir_bytes base, size;
-	size_t nargs;
-
-	if (proc[slot].p_nr < 0 || is_zombie(slot))
-		return FALSE;
-
-	/*
-	 * Get the frame base address and size.  Limit the size to whatever we
-	 * can handle.  If our static buffer is not sufficiently large to store
-	 * the entire frame, allocate memory dynamically.  It is then later
-	 * freed by put_frame().
-	 */
-	base = mproc[slot - NR_TASKS].mp_frame_addr;
-	size = mproc[slot - NR_TASKS].mp_frame_len;
-
-	if (size < sizeof(size_t)) return FALSE;
-
-	if (size > ARG_MAX) size = ARG_MAX;
-
-	if (size > sizeof(s_frame)) {
-		frame = malloc(size);
-
-		if (frame == NULL)
-			return FALSE;
-	} else
-		frame = s_frame;
-
-	/* Copy in the complete process frame. */
-	if (sys_datacopy(proc[slot].p_endpoint, base, SELF, (vir_bytes)frame,
-	    (phys_bytes)size) != OK) {
-		put_frame();
-
-		return FALSE;
-	}
-
-	frame[size] = 0; /* terminate any last string */
-
-	nargs = *(size_t *)frame;
-	if (nargs < 1 ||
-	    sizeof(size_t) + sizeof(char *) * (nargs + 1) > size) {
-		put_frame();
-
-		return FALSE;
-	}
-
-	*basep = base;
-	*sizep = size;
-	*nargsp = nargs;
-
-	/* The caller now has to called put_frame() to clean up. */
-	return TRUE;
 }
 
 /*
@@ -251,28 +139,24 @@ get_frame(int slot, vir_bytes * basep, vir_bytes * sizep, size_t * nargsp)
 static void
 pid_cmdline(int slot)
 {
-	vir_bytes base, size, ptr;
-	size_t i, len, nargs;
-	char **argv;
+	char buf[BUF_SIZE];
+	int mib[] = { CTL_KERN, KERN_PROC_ARGS, 0, KERN_PROC_ARGV };
+	size_t oldlen;
+	pid_t pid;
 
-	if (!get_frame(slot, &base, &size, &nargs))
+	/* Kernel tasks and zombies have no memory. */
+	if ((pid = pid_from_slot(slot)) <= 0 || is_zombie(slot))
 		return;
 
-	argv = (char **)&frame[sizeof(size_t)];
+	mib[2] = proc_list[slot - NR_TASKS].mpl_pid;
 
-	for (i = 0; i < nargs; i++) {
-		ptr = (vir_bytes)argv[i] - base;
+	/* TODO: zero-copy into the main output buffer */
+	oldlen = sizeof(buf);
 
-		/* Check for bad pointers. */
-		if ((long)ptr < 0L || ptr >= size)
-			break;
+	if (__sysctl(mib, __arraycount(mib), buf, &oldlen, NULL, 0) != 0)
+		return;
 
-		len = strlen(&frame[ptr]) + 1;
-
-		buf_append(&frame[ptr], len);
-	}
-
-	put_frame();
+	buf_append(buf, oldlen);
 }
 
 /*
@@ -282,59 +166,51 @@ pid_cmdline(int slot)
 static void
 pid_environ(int slot)
 {
-	vir_bytes base, size, ptr;
-	size_t nargs, off, len;
-	char **envp;
+	char buf[BUF_SIZE];
+	int mib[] = { CTL_KERN, KERN_PROC_ARGS, 0, KERN_PROC_ENV };
+	size_t oldlen;
+	pid_t pid;
 
-	if (!get_frame(slot, &base, &size, &nargs))
+	/* Kernel tasks and zombies have no memory. */
+	if ((pid = pid_from_slot(slot)) <= 0 || is_zombie(slot))
 		return;
 
-	off = sizeof(size_t) + sizeof(char *) * (nargs + 1);
-	envp = (char **)&frame[off];
+	mib[2] = proc_list[slot - NR_TASKS].mpl_pid;
 
-	for (;;) {
-		/* Make sure there is no buffer overrun. */
-		if (off + sizeof(char *) > size)
-			break;
+	/* TODO: zero-copy into the main output buffer */
+	oldlen = sizeof(buf);
 
-		ptr = (vir_bytes) *envp;
+	if (__sysctl(mib, __arraycount(mib), buf, &oldlen, NULL, 0) != 0)
+		return;
 
-		/* Stop at the terminating NULL pointer. */
-		if (ptr == 0L)
-			break;
-
-		ptr -= base;
-
-		/* Check for bad pointers. */
-		if ((long)ptr < 0L || ptr >= size)
-			break;
-
-		len = strlen(&frame[ptr]) + 1;
-
-		buf_append(&frame[ptr], len);
-
-		off += sizeof(char *);
-		envp++;
-	}
-
-	put_frame();
+	buf_append(buf, oldlen);
 }
 
 /*
  * Print the virtual memory regions of a process.
  */
 static void
-dump_regions(int slot)
+pid_map(int slot)
 {
+	struct minix_proc_data mpd;
 	struct vm_region_info vri[MAX_VRI_COUNT];
 	vir_bytes next;
+	pid_t pid;
 	int i, r, count;
+
+	/* Kernel tasks and zombies have no memory. */
+	if ((pid = pid_from_slot(slot)) <= 0 || is_zombie(slot))
+		return;
+
+	/* Get the process endpoint. */
+	if (get_proc_data(pid, &mpd) != OK)
+		return;
 
 	count = 0;
 	next = 0;
 
 	do {
-		r = vm_info_region(proc[slot].p_endpoint, vri, MAX_VRI_COUNT,
+		r = vm_info_region(mpd.mpd_endpoint, vri, MAX_VRI_COUNT,
 		    &next);
 
 		if (r <= 0)
@@ -351,20 +227,4 @@ dump_regions(int slot)
 			count++;
 		}
 	} while (r == MAX_VRI_COUNT);
-}
-
-/*
- * Print a memory map of the process.  Obtain the information from VM.
- */
-static void
-pid_map(int slot)
-{
-
-	/* Zombies have no memory. */
-	if (is_zombie(slot))
-		return;
-
-	/* Kernel tasks also have no memory. */
-	if (proc[slot].p_nr >= 0)
-		dump_regions(slot);
 }

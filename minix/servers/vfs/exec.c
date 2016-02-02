@@ -21,6 +21,7 @@
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <lib.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -213,11 +214,8 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 
   /* passed from exec() libc code */
   execi.userflags = 0;
-  execi.args.stack_high = kinfo.user_sp;
+  execi.args.stack_high = minix_get_user_sp();
   execi.args.stack_size = DEFAULT_STACK_LIMIT;
-
-  fp->text_size = 0;
-  fp->data_size = 0;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &execi.vmp, &execi.vp);
 
@@ -277,8 +275,12 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
    * executable instead. But open the current executable in an
    * fd for the current process.
    */
-  if(elf_has_interpreter(execi.args.hdr, execi.args.hdr_len,
-	elf_interpreter, sizeof(elf_interpreter))) {
+  r = elf_has_interpreter(execi.args.hdr, execi.args.hdr_len,
+	elf_interpreter, sizeof(elf_interpreter));
+  if (0 > r)
+	FAILCHECK(r);
+
+  if (0 < r) {
 	/* Switch the executable vnode to the interpreter */
 	execi.is_dyn = 1;
 
@@ -380,8 +382,6 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 
   /* Remember the new name of the process */
   strlcpy(fp->fp_name, execi.args.progname, PROC_NAME_LEN);
-  fp->text_size = execi.args.text_size;
-  fp->data_size = execi.args.data_size;
 
 pm_execfinal:
   if(newfilp) unlock_filp(newfilp);
@@ -738,7 +738,12 @@ static int map_header(struct vfs_exec_info *execi)
   int r;
   size_t cum_io;
   off_t pos, new_pos;
-  static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
+  /* Assume that header is not larger than a page. Align the buffer reasonably
+   * well, because libexec casts it to a structure directly and therefore
+   * expects it to be aligned appropriately. From here we can only guess the
+   * proper alignment, but 64 bits should work for all versions of ELF..
+   */
+  static char hdr[10*PAGE_SIZE] __aligned(8);
 
   pos = 0;	/* Read from the start of the file */
 

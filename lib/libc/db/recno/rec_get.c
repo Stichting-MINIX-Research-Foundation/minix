@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_get.c,v 1.16 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: rec_get.c,v 1.18 2013/12/25 19:42:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_get.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: rec_get.c,v 1.18 2013/12/25 19:42:23 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -127,11 +127,10 @@ __rec_fpipe(BTREE *t, recno_t top)
 	uint8_t *p;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		t->bt_rdata.data = t->bt_rdata.data == NULL ?
-		    malloc(t->bt_reclen) :
-		    realloc(t->bt_rdata.data, t->bt_reclen);
-		if (t->bt_rdata.data == NULL)
+		void *np = realloc(t->bt_rdata.data, t->bt_reclen);
+		if (np == NULL)
 			return (RET_ERROR);
+		t->bt_rdata.data = np;
 		t->bt_rdata.size = t->bt_reclen;
 	}
 	data.data = t->bt_rdata.data;
@@ -176,7 +175,6 @@ __rec_vpipe(BTREE *t, recno_t top)
 {
 	DBT data;
 	recno_t nrec;
-	ptrdiff_t len;
 	size_t sz;
 	int bval, ch;
 	uint8_t *p;
@@ -196,13 +194,13 @@ __rec_vpipe(BTREE *t, recno_t top)
 				break;
 			}
 			if (sz == 0) {
-				len = p - (uint8_t *)t->bt_rdata.data;
-				t->bt_rdata.size += (sz = 256);
-				t->bt_rdata.data = t->bt_rdata.data == NULL ?
-				    malloc(t->bt_rdata.size) :
-				    realloc(t->bt_rdata.data, t->bt_rdata.size);
-				if (t->bt_rdata.data == NULL)
+				ptrdiff_t len = p - (uint8_t *)t->bt_rdata.data;
+				size_t tot = t->bt_rdata.size + (sz = 256);
+				void *np = realloc(t->bt_rdata.data, tot);
+				if (np == NULL)
 					return (RET_ERROR);
+				t->bt_rdata.size = tot;
+				t->bt_rdata.data = np;
 				p = (uint8_t *)t->bt_rdata.data + len;
 			}
 		}
@@ -235,11 +233,10 @@ __rec_fmap(BTREE *t, recno_t top)
 	size_t len;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		t->bt_rdata.data = t->bt_rdata.data == NULL ?
-		    malloc(t->bt_reclen) :
-		    realloc(t->bt_rdata.data, t->bt_reclen);
-		if (t->bt_rdata.data == NULL)
+		void *np = realloc(t->bt_rdata.data, t->bt_reclen);
+		if (np == NULL)
 			return (RET_ERROR);
+		t->bt_rdata.data = np;
 		t->bt_rdata.size = t->bt_reclen;
 	}
 	data.data = t->bt_rdata.data;

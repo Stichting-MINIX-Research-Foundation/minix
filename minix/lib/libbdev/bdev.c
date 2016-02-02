@@ -58,7 +58,7 @@ static int bdev_retry(int *driver_tries, int *transfer_tries, int *result)
   return FALSE;
 }
 
-static int bdev_opcl(int req, dev_t dev, int access)
+static int bdev_opcl(int req, dev_t dev, int bits)
 {
 /* Open or close the given minor device.
  */
@@ -69,7 +69,7 @@ static int bdev_opcl(int req, dev_t dev, int access)
 	memset(&m, 0, sizeof(m));
 	m.m_type = req;
 	m.m_lbdev_lblockdriver_msg.minor = minor(dev);
-	m.m_lbdev_lblockdriver_msg.access = access;
+	m.m_lbdev_lblockdriver_msg.access = bits;
 
 	r = bdev_sendrec(dev, &m);
   } while (bdev_retry(&driver_tries, NULL, &r));
@@ -77,17 +77,17 @@ static int bdev_opcl(int req, dev_t dev, int access)
   return r;
 }
 
-int bdev_open(dev_t dev, int access)
+int bdev_open(dev_t dev, int bits)
 {
 /* Open the given minor device.
  * File system usage note: typically called from mount, after bdev_driver.
  */
   int r;
 
-  r = bdev_opcl(BDEV_OPEN, dev, access);
+  r = bdev_opcl(BDEV_OPEN, dev, bits);
 
   if (r == OK)
-	bdev_minor_add(dev, access);
+	bdev_minor_add(dev, bits);
 
   return r;
 }
@@ -116,16 +116,16 @@ static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf,
  */
   endpoint_t endpt;
   cp_grant_id_t grant;
-  int access;
+  int perm;
 
   assert((ssize_t) count >= 0);
 
   if ((endpt = bdev_driver_get(dev)) == NONE)
 	return EDEADSRCDST;
 
-  access = (req == BDEV_READ) ? CPF_WRITE : CPF_READ;
+  perm = (req == BDEV_READ) ? CPF_WRITE : CPF_READ;
 
-  grant = cpf_grant_direct(endpt, (vir_bytes) buf, count, access);
+  grant = cpf_grant_direct(endpt, (vir_bytes) buf, count, perm);
 
   if (!GRANT_VALID(grant)) {
 	printf("bdev: unable to allocate grant!\n");
@@ -179,19 +179,19 @@ static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
   ssize_t size;
   endpoint_t endpt;
   cp_grant_id_t grant;
-  int i, access;
+  int i, perm;
 
   assert(count <= NR_IOREQS);
 
   if ((endpt = bdev_driver_get(dev)) == NONE)
 	return EDEADSRCDST;
 
-  access = (req == BDEV_GATHER) ? CPF_WRITE : CPF_READ;
+  perm = (req == BDEV_GATHER) ? CPF_WRITE : CPF_READ;
   size = 0;
 
   for (i = 0; i < count; i++) {
 	grant = cpf_grant_direct(endpt, vec[i].iov_addr, vec[i].iov_size,
-		access);
+		perm);
 
 	if (!GRANT_VALID(grant)) {
 		printf("bdev: unable to allocate grant!\n");
@@ -311,7 +311,7 @@ static int bdev_ioctl_setup(dev_t dev, unsigned long request, void *buf,
   endpoint_t endpt;
   size_t size;
   cp_grant_id_t grant;
-  int access;
+  int perm;
 
   if ((endpt = bdev_driver_get(dev)) == NONE)
 	return EDEADSRCDST;
@@ -321,12 +321,12 @@ static int bdev_ioctl_setup(dev_t dev, unsigned long request, void *buf,
   else
 	size = _MINIX_IOCTL_SIZE(request);
 
-  access = 0;
-  if (_MINIX_IOCTL_IOR(request)) access |= CPF_WRITE;
-  if (_MINIX_IOCTL_IOW(request)) access |= CPF_READ;
+  perm = 0;
+  if (_MINIX_IOCTL_IOR(request)) perm |= CPF_WRITE;
+  if (_MINIX_IOCTL_IOW(request)) perm |= CPF_READ;
 
   /* The size may be 0, in which case 'buf' need not be a valid pointer. */
-  grant = cpf_grant_direct(endpt, (vir_bytes) buf, size, access);
+  grant = cpf_grant_direct(endpt, (vir_bytes) buf, size, perm);
 
   if (!GRANT_VALID(grant)) {
 	printf("bdev: unable to allocate grant!\n");

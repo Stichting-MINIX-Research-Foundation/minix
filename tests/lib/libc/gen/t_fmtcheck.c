@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fmtcheck.c,v 1.2 2011/07/07 09:49:59 jruoho Exp $	*/
+/*	$NetBSD: t_fmtcheck.c,v 1.3 2014/06/14 08:19:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,9 @@ struct test_fmt {
 	{ "%#o %u %#-d", "%x %#x %X", 1 },
 	{ "%qd", "%llx", 1 },
 	{ "%%", "%llx", 1 },
-	{ "%p %30s %#llx %-10.*e", "This number %lu%% and string %s has %qd numbers and %.*g floats", 1 },
+	{ "%ld %30s %#llx %-10.*e", "This number %lu%% and string %s has %qd numbers and %.*g floats", 1 },
+	{ "%o", "%lx", 2 },
+	{ "%p", "%lu", 2 },
 };
 
 ATF_TC(fmtcheck_basic);

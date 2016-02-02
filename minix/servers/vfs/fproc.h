@@ -5,6 +5,7 @@
 
 #include <sys/select.h>
 #include <minix/safecopies.h>
+#include <minix/sef.h>
 
 /* This is the per-process information.  A slot is reserved for each potential
  * process. Thus NR_PROCS must be the same as in the kernel. It is not
@@ -45,7 +46,7 @@ EXTERN struct fproc {
 
   mutex_t fp_lock;		/* mutex to lock fproc object */
   struct worker_thread *fp_worker;/* active worker thread, or NULL */
-  void (*fp_func)();		/* handler function for pending work */
+  void (*fp_func)(void);		/* handler function for pending work */
   message fp_msg;		/* pending or active message from process */
   message fp_pm_msg;		/* pending/active postponed PM request */
 
@@ -54,9 +55,6 @@ EXTERN struct fproc {
   int fp_vp_rdlocks;		/* number of read-only locks on vnodes */
   int fp_vmnt_rdlocks;		/* number of read-only locks on vmnts */
 #endif
-
-  vir_bytes text_size;		/* text segment size of current process */
-  vir_bytes data_size;		/* data segment size of current process */
 } fproc[NR_PROCS];
 
 /* fp_flags */
@@ -72,5 +70,17 @@ EXTERN struct fproc {
 #define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */
 #define REVIVING           0xDEEAD	/* process is being revived from suspension */
 #define PID_FREE	   0	/* process slot free */
+
+/*
+ * Upon request from the MIB service, this table is filled with a relatively
+ * small subset of per-process fields, so that the MIB service can avoid
+ * pulling in the entire fproc table.  Other fields may be added to this
+ * structure as required by the MIB service.
+ */
+EXTERN struct fproc_light {
+  dev_t fpl_tty;		/* copy of fproc.fp_tty */
+  int fpl_blocked_on;		/* copy of fproc.fp_blocked_on */
+  endpoint_t fpl_task;		/* copy of fproc.fp_task */
+} fproc_light[NR_PROCS];
 
 #endif /* __VFS_FPROC_H__ */

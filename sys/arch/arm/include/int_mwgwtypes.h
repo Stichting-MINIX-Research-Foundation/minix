@@ -1,11 +1,11 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.4 2008/04/28 20:23:14 martin Exp $	*/
+/* $NetBSD: int_mwgwtypes.h,v 1.7 2014/07/25 21:43:13 joerg Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,55 +32,96 @@
 #ifndef _ARM_INT_MWGWTYPES_H_
 #define _ARM_INT_MWGWTYPES_H_
 
+#ifdef __UINT_FAST64_TYPE__
+#include <sys/common_int_mwgwtypes.h>
+#else
 /*
  * 7.18.1 Integer types
  */
 
 /* 7.18.1.2 Minimum-width integer types */
 
-typedef	signed char		  int_least8_t;
-typedef	unsigned char		 uint_least8_t;
-typedef	short int		 int_least16_t;
-typedef	unsigned short int	uint_least16_t;
-typedef	int			 int_least32_t;
-typedef	unsigned int		uint_least32_t;
-#ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	 int_least64_t;
-typedef	__COMPILER_UINT64__	uint_least64_t;
-#else
-/* LONGLONG */
-typedef	long long int		 int_least64_t;
-/* LONGLONG */
-typedef	unsigned long long int	uint_least64_t;
+#ifndef __INT_LEAST8_TYPE__
+# define __INT_LEAST8_TYPE__	signed char
+#endif
+#ifndef __UINT_LEAST8_TYPE__
+# define __UINT_LEAST8_TYPE__	unsigned char
+#endif
+#ifndef __INT_LEAST16_TYPE__
+# define __INT_LEAST16_TYPE__	short int
+#endif
+#ifndef __UINT_LEAST16_TYPE__
+# define __UINT_LEAST16_TYPE__	short unsigned int
+#endif
+#ifndef __INT_LEAST32_TYPE__
+# define __INT_LEAST32_TYPE__	int
+#endif
+#ifndef __UINT_LEAST32_TYPE__
+# define __UINT_LEAST32_TYPE__	unsigned int
+#endif
+#ifndef __INT_LEAST64_TYPE__
+# define __INT_LEAST64_TYPE__	long long int
+#endif
+#ifndef __UINT_LEAST64_TYPE__
+# define __UINT_LEAST64_TYPE__	long long unsigned int
 #endif
 
+typedef	__INT_LEAST8_TYPE__	  int_least8_t;
+typedef	__UINT_LEAST8_TYPE__	 uint_least8_t;
+typedef	__INT_LEAST16_TYPE__	 int_least16_t;
+typedef	__UINT_LEAST16_TYPE__	uint_least16_t;
+typedef	__INT_LEAST32_TYPE__	 int_least32_t;
+typedef	__UINT_LEAST32_TYPE__	uint_least32_t;
+typedef	__INT_LEAST64_TYPE__	 int_least64_t;
+typedef	__UINT_LEAST64_TYPE__	uint_least64_t;
+
 /* 7.18.1.3 Fastest minimum-width integer types */
-typedef	int			   int_fast8_t;
-typedef	unsigned int		  uint_fast8_t;
-typedef	int			  int_fast16_t;
-typedef	unsigned int		 uint_fast16_t;
-typedef	int			  int_fast32_t;
-typedef	unsigned int		 uint_fast32_t;
-#ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	  int_fast64_t;
-typedef	__COMPILER_UINT64__	 uint_fast64_t;
-#else
-/* LONGLONG */
-typedef	long long int		  int_fast64_t;
-/* LONGLONG */
-typedef	unsigned long long int	 uint_fast64_t;
+
+#ifndef __INT_FAST8_TYPE__
+# define __INT_FAST8_TYPE__	int
 #endif
+#ifndef __UINT_FAST8_TYPE__
+# define __UINT_FAST8_TYPE__	unsigned int
+#endif
+#ifndef __INT_FAST16_TYPE__
+# define __INT_FAST16_TYPE__	int
+#endif
+#ifndef __UINT_FAST16_TYPE__
+# define __UINT_FAST16_TYPE__	unsigned int
+#endif
+#ifndef __INT_FAST32_TYPE__
+# define __INT_FAST32_TYPE__	int
+#endif
+#ifndef __UINT_FAST32_TYPE__
+# define __UINT_FAST32_TYPE__	unsigned int
+#endif
+#ifndef __INT_FAST64_TYPE__
+# define __INT_FAST64_TYPE__	long long int
+#endif
+#ifndef __UINT_FAST64_TYPE__
+# define __UINT_FAST64_TYPE__	long long unsigned int
+#endif
+
+typedef	__INT_FAST8_TYPE__	   int_fast8_t;
+typedef	__UINT_FAST8_TYPE__	  uint_fast8_t;
+typedef	__INT_FAST16_TYPE__	  int_fast16_t;
+typedef	__UINT_FAST16_TYPE__	 uint_fast16_t;
+typedef	__INT_FAST32_TYPE__	  int_fast32_t;
+typedef	__UINT_FAST32_TYPE__	 uint_fast32_t;
+typedef	__INT_FAST64_TYPE__	  int_fast64_t;
+typedef	__UINT_FAST64_TYPE__	 uint_fast64_t;
 
 /* 7.18.1.5 Greatest-width integer types */
 
-#ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	      intmax_t;
-typedef	__COMPILER_UINT64__	     uintmax_t;
-#else
-/* LONGLONG */
-typedef	long long int		      intmax_t;
-/* LONGLONG */
-typedef	unsigned long long int	     uintmax_t;
+#ifndef __INTMAX_TYPE__
+# define __INTMAX_TYPE__	long long int
+#endif
+#ifndef __UINTMAX_TYPE__
+# define __UINTMAX_TYPE__	unsigned __INTMAX_TYPE__
+#endif
+
+typedef	__INTMAX_TYPE__	     	      intmax_t;
+typedef	__UINTMAX_TYPE__	     uintmax_t;
 #endif
 
 #endif /* !_ARM_INT_MWGWTYPES_H_ */

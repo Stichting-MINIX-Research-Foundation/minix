@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/10/14 01:37:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	clangAST
 
@@ -40,7 +40,6 @@ SRCS+=	APValue.cpp \
 	ItaniumCXXABI.cpp \
 	ItaniumMangle.cpp \
 	Mangle.cpp \
-	MangleNumberingContext.cpp \
 	MicrosoftCXXABI.cpp \
 	MicrosoftMangle.cpp \
 	NSAPI.cpp \

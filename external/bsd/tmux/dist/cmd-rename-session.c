@@ -1,4 +1,4 @@
-/* $Id: cmd-rename-session.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,7 +26,7 @@
  * Change session name.
  */
 
-int	cmd_rename_session_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_rename_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_rename_session_entry = {
 	"rename-session", "rename",
@@ -34,12 +34,11 @@ const struct cmd_entry cmd_rename_session_entry = {
 	CMD_TARGET_SESSION_USAGE " new-name",
 	0,
 	NULL,
-	NULL,
 	cmd_rename_session_exec
 };
 
-int
-cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_rename_session_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct session	*s;
@@ -47,23 +46,24 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	newname = args->argv[0];
 	if (!session_check_name(newname)) {
-		ctx->error(ctx, "bad session name: %s", newname);
-		return (-1);
+		cmdq_error(cmdq, "bad session name: %s", newname);
+		return (CMD_RETURN_ERROR);
 	}
 	if (session_find(newname) != NULL) {
-		ctx->error(ctx, "duplicate session: %s", newname);
-		return (-1);
+		cmdq_error(cmdq, "duplicate session: %s", newname);
+		return (CMD_RETURN_ERROR);
 	}
 
-	if ((s = cmd_find_session(ctx, args_get(args, 't'), 0)) == NULL)
-		return (-1);
+	if ((s = cmd_find_session(cmdq, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	RB_REMOVE(sessions, &sessions, s);
-	xfree(s->name);
+	free(s->name);
 	s->name = xstrdup(newname);
 	RB_INSERT(sessions, &sessions, s);
 
 	server_status_session(s);
+	notify_session_renamed(s);
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

@@ -1,0 +1,7 @@
+#	$NetBSD: NetBSD.dist.x86_64,v 1.10 2015/06/19 18:16:06 matt Exp $
+
+./usr/include/amd64
+./usr/include/g++/bits/i386
+./usr/include/g++/bits/x86_64
+./usr/include/i386
+./usr/include/x86

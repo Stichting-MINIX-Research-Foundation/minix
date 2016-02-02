@@ -1,8 +1,6 @@
 PROG=	readclock
 SRCS=	readclock.c
+MAN=	readclock.8
 BINDIR= /bin
-
-# no man page here, it's handled in ../man/man8/
-MAN=
 
 .include <bsd.prog.mk>

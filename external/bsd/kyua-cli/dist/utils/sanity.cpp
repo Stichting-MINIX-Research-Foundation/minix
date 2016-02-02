@@ -183,12 +183,16 @@ utils::sanity_failure(const assert_type type, const char* file,
 void
 utils::install_crash_handlers(const std::string& logfile_)
 {
+#if !defined(NDEBUG) && defined(__minix)
     static bool installed = false;
+#endif /* !defined(NDEBUG) && defined(__minix) */
     PRE(!installed);
     logfile = logfile_;
 
     for (const int* iter = &fatal_signals[0]; *iter != 0; iter++)
         install_one_crash_handler(*iter);
 
+#if !defined(NDEBUG) && defined(__minix)
     installed = true;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 }

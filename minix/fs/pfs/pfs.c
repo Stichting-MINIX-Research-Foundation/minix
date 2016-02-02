@@ -198,8 +198,10 @@ pfs_putnode(ino_t ino_nr, unsigned int count)
 		return EINVAL;
 
 	/* For pipes, free the inode data buffer. */
-	if (rip->i_data != NULL)
+	if (rip->i_data != NULL) {
 		free(rip->i_data);
+		rip->i_data = NULL;
+	}
 
 	/* Return the inode to the free list. */
 	rip->i_free = TRUE;
@@ -408,9 +410,7 @@ pfs_startup(void)
 
 	/* Register initialization callbacks. */
 	sef_setcb_init_fresh(pfs_init);
-	sef_setcb_init_restart(sef_cb_init_fail);
-
-	/* No live update support for now. */
+	sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(pfs_signal);

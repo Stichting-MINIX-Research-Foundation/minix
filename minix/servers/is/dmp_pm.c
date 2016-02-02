@@ -81,7 +81,7 @@ void sigaction_dmp()
 	printf("Error obtaining table from PM. Perhaps recompile IS?\n");
 	return;
   }
-  getticks(&uptime);
+  uptime = getticks();
 
   printf("Process manager (PM) signal action dump\n");
   printf("-process- -nr- --ignore- --catch- --block- -pending- -alarm---\n");

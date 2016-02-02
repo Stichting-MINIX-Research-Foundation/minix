@@ -1,15 +1,19 @@
-# $NetBSD: Makefile.inc,v 1.15 2012/02/16 22:56:12 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.16 2014/01/05 19:49:57 joerg Exp $
 
 .include <bsd.own.mk>
 
-VERSION!=	cd ${.PARSEDIR}/dist && ${MAKE} -V VERSION
-
-CPPFLAGS+=	-DVERSION=\"${VERSION}\" -DUGLY
-CPPFLAGS+=	-UOSNAME -DOSNAME=\"Minix\"
 
 .if (${HOSTPROG:U} == "")
-# Minix mmap not yet up to the task
-CPPFLAGS+=	-DHAVE_STRLCAT -DHAVE_STRLCPY -DHAVE_STRPTIME #-DHAVE_MMAP
+# Minix: #-DHAVE_MMAP
+CPPFLAGS+=	-DHAVE_FGETLN -DHAVE_GETSUBOPT \
+		-DHAVE_STRCASESTR -DHAVE_STRLCAT -DHAVE_STRLCPY \
+		-DHAVE_STRNLEN -DHAVE_STRPTIME -DHAVE_STRSEP
+VERSION!=	cd ${.PARSEDIR}/dist && ${MAKE} -V VERSION
+CPPFLAGS+=	-DVERSION=\"${VERSION}\"
+
+.if defined(__MINIX)
+CPPFLAGS+=	-UOSNAME -DOSNAME=\"Minix\"
+.endif # defined(__MINIX)
 .endif
 
 DISTDIR:=	${.PARSEDIR}/dist

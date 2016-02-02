@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.55 2011/08/27 18:54:39 joerg Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.56 2014/03/28 18:27:14 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.55 2011/08/27 18:54:39 joerg Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.56 2014/03/28 18:27:14 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -331,7 +331,7 @@ timewarn(time_t timeleft)
 		(void)fprintf(pf, "System going down IMMEDIATELY\n\n");
 
 	if (mbuflen)
-		(void)fwrite(mbuf, sizeof(*mbuf), mbuflen, pf);
+		(void)fwrite(mbuf, 1, mbuflen, pf);
 
 	/*
 	 * play some games, just in case wall doesn't come back

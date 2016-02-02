@@ -1,4 +1,4 @@
-/*	$NetBSD: nfa.c,v 1.1.1.1 2009/10/26 00:26:28 christos Exp $	*/
+/*	$NetBSD: nfa.c,v 1.3 2014/10/30 18:44:05 christos Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -32,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: nfa.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
+
 
 
 /* declare functions that have forward references */
@@ -259,12 +260,23 @@ void    finish_rule (mach, variable_trail_rule, headcnt, trailcnt,
 				("*yy_cp = YY_G(yy_hold_char); /* undo effects of setting up yytext */\n");
 
 			if (headcnt > 0) {
+				if (rule_has_nl[num_rules]) {
+					snprintf (action_text, sizeof(action_text),
+						"YY_LINENO_REWIND_TO(%s + %d);\n", scanner_bp, headcnt);
+					add_action (action_text);
+				}
 				snprintf (action_text, sizeof(action_text), "%s = %s + %d;\n",
 					 scanner_cp, scanner_bp, headcnt);
 				add_action (action_text);
 			}
 
 			else {
+				if (rule_has_nl[num_rules]) {
+					snprintf (action_text, sizeof(action_text),
+						 "YY_LINENO_REWIND_TO(yy_cp - %d);\n", trailcnt);
+					add_action (action_text);
+				}
+
 				snprintf (action_text, sizeof(action_text), "%s -= %d;\n",
 					 scanner_cp, trailcnt);
 				add_action (action_text);

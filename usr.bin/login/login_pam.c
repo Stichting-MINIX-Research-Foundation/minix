@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.23 2013/10/18 20:47:06 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.24 2014/11/12 22:23:38 aymeric Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.23 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.24 2014/11/12 22:23:38 aymeric Exp $");
 #endif /* not lint */
 
 /*
@@ -466,10 +466,6 @@ skip_auth:
 		pam_end(pamh, PAM_SUCCESS);
 		exit(EXIT_FAILURE);
 	}
-
-	if (tty[sizeof("tty")-1] == 'd')
-		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
-
 
 	/*
 	 * Establish groups

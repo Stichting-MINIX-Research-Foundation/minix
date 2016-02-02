@@ -29,3 +29,4 @@ void getmem(uint32_t *total, uint32_t *free, uint32_t *cached);
 int get_setting_use_network(void);
 
 extern int common_test_nr, errct, subtest;
+int system_p(const char *command);

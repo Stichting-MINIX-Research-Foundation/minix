@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/31 23:28:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/07/11 19:19:16 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ FILES=	af al altwin am apl ara at az \
 	ba bd be bg br brai bt bw by \
 	ca capslock cd ch cm cn compose ctrl cz \
 	de dk \
-	ee empty epo es et eurosign \
+	ee empty epo es et eu eurosign \
 	fi fo fr \
 	gb ge gh gn gr group \
 	hr hu \

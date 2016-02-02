@@ -1,8 +1,6 @@
 # Makefile for libsys
 .include <bsd.own.mk>
 
-NOGCCERROR=yes
-
 CPPFLAGS+= -D_MINIX_SYSTEM -D_SYSTEM
 
 LIB=		sys
@@ -18,6 +16,7 @@ SRCS+=  \
 	checkperms.c \
 	clock_time.c \
 	copyfd.c \
+	cpuavg.c \
 	ds.c	\
 	env_get_prm.c \
 	env_panic.c \
@@ -36,6 +35,7 @@ SRCS+=  \
 	mapdriver.c \
 	optset.c \
 	panic.c \
+	proceventmask.c \
 	safecopies.c \
 	sched_start.c \
 	sched_stop.c \
@@ -43,8 +43,10 @@ SRCS+=  \
 	sef_fi.c \
 	sef_init.c \
 	sef_liveupdate.c \
+	sef_llvm.c \
 	sef_ping.c \
 	sef_signal.c \
+	sef_st.c \
 	sqrt_approx.c \
 	srv_fork.c \
 	srv_kill.c \
@@ -94,12 +96,12 @@ SRCS+=  \
 	vm_cache.c \
 	vm_exit.c \
 	vm_fork.c \
+	vm_getrusage.c \
 	vm_info.c \
 	vm_map_phys.c \
 	vm_memctl.c \
-	vm_notify_sig.c \
+	vm_prepare.c \
 	vm_procctl.c \
-	vm_query_exit.c \
 	vm_set_priv.c \
 	vm_update.c
 
@@ -139,5 +141,6 @@ CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 CPPFLAGS.sched_start.c+=	-I${NETBSDSRCDIR}/minix
+CPPFLAGS.sef_st.c+=		-I${NETBSDSRCDIR}/minix
 
 .include <bsd.lib.mk>

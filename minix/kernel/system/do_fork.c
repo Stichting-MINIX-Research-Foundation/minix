@@ -94,7 +94,9 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_cycles = 0;
   rpc->p_kcall_cycles = 0;
   rpc->p_kipc_cycles = 0;
-  rpc->p_signal_received = 0;
+
+  rpc->p_tick_cycles = 0;
+  cpuavg_init(&rpc->p_cpuavg);
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.

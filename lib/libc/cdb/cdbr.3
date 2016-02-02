@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbr.3,v 1.3 2013/07/20 21:39:56 wiz Exp $
+.\"	$NetBSD: cdbr.3,v 1.4 2013/12/05 21:17:23 joerg Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,12 +28,13 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd March 3, 2010
+.Dd December 5, 2013
 .Dt CDBR 3
 .Os
 .Sh NAME
 .Nm cdbr
 .Nm cdbr_open ,
+.Nm cdbr_open_mem ,
 .Nm cdbr_entries ,
 .Nm cdbr_get ,
 .Nm cdbr_find ,
@@ -43,6 +44,13 @@
 .Sh SYNOPSIS
 .Ft "struct cdbr *"
 .Fn cdbr_open "const char *path" "int flags"
+.Ft "struct cdbr *"
+.Fo cdbr_open_mem
+.Fa "void *base"
+.Fa "size_t size"
+.Fa "void (*unmap)(void *, void *, size_t)"
+.Fa "void *cookie"
+.Fc
 .Ft uint32_t
 .Fn cdbr_entries "struct cdbr *cdbr"
 .Ft int
@@ -78,6 +86,25 @@ returned by
 and
 .Fn cdbr_find
 is invalidated.
+.Fn cdbr_open_mem
+works like
+.Fn cdbr_open ,
+but takes a memory reference to the content of the database file.
+If
+.Va unmap
+is not
+.Dv NULL ,
+it is called by
+.Fn cdbr_close
+with
+.Va cookie ,
+.Va base
+and
+.Va size
+as arguments.
+It is not called by
+.Fn cdbr_open_mem
+on error.
 .Pp
 The number of records in the database can be obtained by calling
 .Fn cdbr_entries .

@@ -1216,9 +1216,7 @@ j_waitj(j, flags, where)
 	j->flags &= ~(JF_WAITING|JF_W_ASYNCNOTIFY);
 
 	if (j->flags & JF_FG) {
-#ifdef JOBS
 		WAIT_T	status;
-#endif
 
 		j->flags &= ~JF_FG;
 #ifdef TTY_PGRP

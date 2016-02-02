@@ -36,8 +36,9 @@ public:
 
 class PrintFunctionNamesAction : public PluginASTAction {
 protected:
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI, llvm::StringRef) {
-    return new PrintFunctionsConsumer();
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 llvm::StringRef) {
+    return llvm::make_unique<PrintFunctionsConsumer>();
   }
 
   bool ParseArgs(const CompilerInstance &CI,
@@ -48,9 +49,9 @@ protected:
       // Example error handling.
       if (args[i] == "-an-error") {
         DiagnosticsEngine &D = CI.getDiagnostics();
-        unsigned DiagID = D.getCustomDiagID(
-          DiagnosticsEngine::Error, "invalid argument '" + args[i] + "'");
-        D.Report(DiagID);
+        unsigned DiagID = D.getCustomDiagID(DiagnosticsEngine::Error,
+                                            "invalid argument '%0'");
+        D.Report(DiagID) << args[i];
         return false;
       }
     }

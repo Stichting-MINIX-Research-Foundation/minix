@@ -12,7 +12,6 @@ SUBDIR+=	libchardriver
 SUBDIR+=	libddekit
 SUBDIR+=	libdevman
 SUBDIR+=	libexec
-SUBDIR+=	libfetch
 SUBDIR+=	libfsdriver
 SUBDIR+=	libinputdriver
 SUBDIR+=	libminc
@@ -43,6 +42,10 @@ SUBDIR+=	libvirtio
 SUBDIR+=	libclkconf
 SUBDIR+=	libgpio
 SUBDIR+=	libi2cdriver
+.endif
+
+.if (${MKMAGIC} == "yes")
+SUBDIR+=	libmagicrt
 .endif
 
 .include <bsd.buildinstall.mk>

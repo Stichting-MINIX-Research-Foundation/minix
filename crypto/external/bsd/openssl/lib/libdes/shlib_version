@@ -1,0 +1,9 @@
+#	$NetBSD: shlib_version,v 1.2 2014/01/11 18:34:37 christos Exp $
+#	Remember to update distrib/sets/lists/base/shl.* when changing
+#
+#	This library is currently only a symbolic link to libcrypto, so
+#	make sure you update the version numbers here whenever you
+#	change them there.
+#
+major=8
+minor=2

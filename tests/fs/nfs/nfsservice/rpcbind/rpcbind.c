@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.4 2013/10/19 17:45:00 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.5 2015/08/21 14:19:10 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -199,12 +199,14 @@ rpcbind_main(void *arg)
 	if (runasdaemon) {
 		struct passwd *p;
 
-		if((p = getpwnam(RUN_AS)) == NULL) {
-			syslog(LOG_ERR, "cannot get uid of daemon: %m");
+		if ((p = getpwnam(RUN_AS)) == NULL) {
+			syslog(LOG_ERR, "cannot get uid of daemon (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 		if (setuid(p->pw_uid) == -1) {
-			syslog(LOG_ERR, "setuid to daemon failed: %m");
+			syslog(LOG_ERR, "setuid to daemon failed: (%s)",
+			    strerror(errno));
 			exit(1);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
+/*	$NetBSD: v_ex.c,v 1.7 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: v_ex.c,v 10.60 2003/07/19 21:04:00 skimo Exp  (Berkeley) Date: 2003/07/19 21:04:00 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: v_ex.c,v 1.7 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -516,7 +521,7 @@ v_ecl(SCR *sp)
 	if (screen_init(gp, sp, &new))
 		return (1);
 	if (vs_split(sp, new, 1)) {
-		(void)screen_end(new);
+		(void)screen_fini(new);
 		return (1);
 	}
 
@@ -651,7 +656,7 @@ v_ecl_init(SCR *sp)
 		return (1);
 	conv_enc(wp->ccl_sp, O_FILEENCODING, "WCHAR_T");
 	if (file_init(wp->ccl_sp, frp, NULL, 0)) {
-		(void)screen_end(wp->ccl_sp);
+		(void)screen_fini(wp->ccl_sp);
 		wp->ccl_sp = 0;
 		return (1);
 	}

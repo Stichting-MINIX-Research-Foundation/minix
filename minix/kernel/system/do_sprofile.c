@@ -77,7 +77,7 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 			break;
 		case PROF_NMI:
 			err = nmi_watchdog_start_profiling(
-				_ptr->m_lsys_krn_sys_sprof.freq);
+				m_ptr->m_lsys_krn_sys_sprof.freq);
 			if (err)
 				return err;
 			break;

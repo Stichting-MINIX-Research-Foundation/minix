@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.27 2011/10/03 12:32:28 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.30 2015/07/07 22:53:25 nat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,6 +90,24 @@ moveto(int r, int c)
 	char *buf;
 
 	buf = tiparm(cursor_address, r, c);
+	if (buf != NULL)
+		putpad(buf);
+}
+
+static void
+setcolor(int c)
+{
+	char *buf;
+	char monochrome[] = "\033[0m";
+	if (nocolor == 1)
+		return;
+	if (set_a_foreground == NULL)
+		return;
+
+	if (c == 0 || c == 7)
+		buf = monochrome;
+	else
+		buf = tiparm(set_a_foreground, c);
 	if (buf != NULL)
 		putpad(buf);
 }
@@ -289,6 +307,7 @@ scr_update(void)
 			putpad(cursor_home);
 		else
 			moveto(0, 0);
+		setcolor(0);
 		(void) printf("Score: %d", score);
 		curscore = score;
 	}
@@ -312,6 +331,7 @@ scr_update(void)
 						
 		/* draw */
 		putpad(enter_standout_mode);
+		setcolor(nextshape->color);
 		moveto(r, 2*c);
 		putstr("  ");
 		for(i=0; i<3; i++) {
@@ -344,12 +364,19 @@ scr_update(void)
 			}
 			if (enter_standout_mode) {
 				if (so != cur_so) {
+					setcolor(so);
 					putpad(so ?
 					    enter_standout_mode :
 					    exit_standout_mode);
 					cur_so = so;
 				}
+#ifdef DEBUG
+				char buf[3];
+				snprintf(buf, sizeof(buf), "%d%d", so, so);
+				putstr(buf);
+#else
 				putstr("  ");
+#endif
 			} else
 				putstr(so ? "XX" : "  ");
 			ccol = i + 1;

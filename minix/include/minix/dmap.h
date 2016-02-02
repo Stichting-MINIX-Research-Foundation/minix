@@ -91,6 +91,18 @@
 #  define IMGRD_DEV   		   6	/* minor device for /dev/imgrd */
 #  define RAM_DEV_FIRST		   7	/* first minor device for /dev/ram* */
 
+/* Minor device numbers for the TTY driver. */
+#  define CONS_MINOR		   0	/* console device */
+
+/* Minor device numbers for the PTY driver. */
+#  define UNIX98_MINOR		  256	/* Base number of UNIX98 PTYs, which
+					 * are allocated in (master,slave)
+					 * pairs: 256=master#0, 257=slave#0,
+					 * 258=master#1, 259=slave#1, etc.
+					 * This logic is shared between the
+					 * PTY service and libc devname(3).
+					 */
+
 #define CTRLR(n) ((n)==0 ? 3 : (8 + 2*((n)-1)))	/* magic formula */
 
 /* Minor device numbers for log driver. */
@@ -101,4 +113,3 @@
 #  define DEV_IMGRD   ((dev_t) 0x0106)	/* device number of /dev/imgrd */
 
 #endif /* _DMAP_H */
-

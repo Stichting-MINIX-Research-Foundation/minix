@@ -1,0 +1,536 @@
+.\" $NetBSD: netpgp.1,v 1.19 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to
+.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt NETPGP 1
+.Os
+.Sh NAME
+.Nm netpgp
+.Nd signing, verification, encryption, and decryption utility
+.Sh SYNOPSIS
+.Nm
+.Fl Fl encrypt
+.Op Fl Fl output Ns = Ns Ar filename
+.Op options
+.Ar file ...
+.Nm
+.Fl Fl decrypt
+.Op Fl Fl output Ns = Ns Ar filename
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
+.Op Fl Fl num\-tries Ns = Ns Ar attempts
+.Op options
+.Ar file ...
+.Pp
+.Nm
+.Fl Fl sign
+.Op Fl Fl armor
+.Op Fl Fl detach
+.Op Fl Fl hash Ns = Ns Ar algorithm
+.Op Fl Fl output Ns = Ns Ar filename
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
+.Op Fl Fl from Ns = Ns Ar sig-valid-from
+.Op Fl Fl num\-tries Ns = Ns Ar attempts
+.Op Fl Fl duration Ns = Ns Ar sig-valid-duration
+.Op options
+.Ar file ...
+.Nm
+.Fl Fl verify
+.Op options
+.Ar file ...
+.Nm
+.Fl Fl cat
+.Op Fl Fl output Ns = Ns Ar filename
+.Op options
+.Ar file ...
+.Nm
+.Fl Fl clearsign
+.Op Fl Fl output Ns = Ns Ar filename
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
+.Op options
+.Ar file ...
+.Nm
+.Fl Fl list\-packets
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
+.Ar file ...
+.Nm
+.Fl Fl version
+.Nm
+.Op Fl Vdesv
+.Op Fl olong-option Ns = Ns value
+.Ar file ...
+.Pp
+where the long options for all commands are:
+.Pp
+.Op Fl Fl cipher Ns = Ns Ar ciphername
+.br
+.Op Fl Fl coredumps
+.br
+.Op Fl Fl homedir Ns = Ns Ar home\-directory
+.br
+.Op Fl Fl keyring Ns = Ns Ar keyring
+.br
+.Op Fl Fl results Ns = Ns Ar filename
+.br
+.Op Fl Fl ssh\-keys
+.br
+.Op Fl Fl userid Ns = Ns Ar userid
+.br
+.Op Fl Fl verbose
+.Sh DESCRIPTION
+The
+.Nm
+command can digitally sign files and verify that the signatures
+attached to files were signed by a given user identifier.
+.Nm
+can also encrypt files using the public or private keys of
+users and, in the same manner, decrypt files which were encrypted.
+.Pp
+For signing and encryption, a unique identity is needed.
+This identity is made up of a private and public key.
+The public key part is made available and known to everyone.
+The private key is kept secret, and known only to the user
+who created the identity.
+The secret key is protected with a passphrase.
+.Pp
+In rough terms, a digital signature
+is a digest of a file's contents,
+encrypted with the user's private key.
+Since together, the private and public keys identify the user
+uniquely, the signature can be used to identify the exact version
+of the file, and any changes made to the file will mean that the
+signature no longer matches.
+.Pp
+As a corollary, the file can be transformed using a user's public key,
+into text such that the contents can only be viewed by someone
+with the corresponding private key.
+This is called encryption.
+.Pp
+To manipulate keys themselves, a separate utility is provided, called
+.Xr netpgpkeys 1 .
+.Pp
+Keyrings are collections of public keys belonging to other users.
+By using other means of identification, it is possible to establish
+the bona fides of other users.
+Once trust has been established, the public key of the other
+user will be signed.
+The other user's public key can be added to our keyring.
+The other user will add our public key to their keyring.
+.Pp
+Keys can be listed, exported (i.e. made available to others),
+and imported (i.e. users who have signed our public key).
+.Pp
+The
+.Fl Fl list\-packets
+command can be used for debugging purposes.
+.Pp
+The following commands are used to sign and verify signatures:
+.Bl -tag -width Ar
+.It Fl Fl cat
+The signature of the signed file named on the command line
+is verified against the contents of the file itself.
+If the two match, then the original contents
+are sent to standard out.
+If the signature does not match, no output is generated.
+.It Fl Fl clearsign
+The signature of the file named on the command line is calculated
+in the same manner as the
+.Fl Fl sign
+command, but the text is added to the file such that
+the text itself is not in binary format, but can be read by mere mortals.
+.It Fl Fl sign
+The private key is used to digitally sign the files named on the
+command line.
+The file and its attached signature are created with a
+.Dq Pa .gpg
+extension to the original file name.
+The user will be prompted for their pass phrase using
+.Xr getpass 3 .
+.It Fl Fl verify
+For each of the files named on the command line, the signature of the file
+is verified, checking the contents against the user's public signature.
+.El
+.Pp
+The following commands can be used to encrypt and decrypt files:
+.Bl -tag -width Ar
+.It Fl Fl decrypt
+Decrypt the file using the user's private key.
+The pass phrase will be obtained by prompting the user
+to type it in, using
+.Xr getpass 3 .
+.It Fl Fl encrypt
+Use the user's public key to encrypt the files named on the command line.
+.It Fl Fl list\-packets
+List all the
+.Dq packets
+in an encrypted or signed file.
+Internally,
+.Nm
+splits an encrypted or signed file into separate packets, and
+this option is used to give a verbose representation
+of these packets on standard output.
+.It Fl Fl version
+Print the version information from the
+.Xr libnetpgp 3
+library.
+.El
+.Pp
+In addition to one of the preceding commands, a number of qualifiers
+or options may be given.
+.Bl -tag -width Ar
+.It Fl Fl armour , Fl armor
+This option, however it is spelled, wraps the signature as an
+ASCII-encoded piece of text, for ease of use.
+.It Fl Fl cipher Ar ciphername
+can be used to specify the symmetric encryption algorithm (or
+cipher) which is used when encrypting data.
+To decrypt this data, the same cipher will be needed,
+so care should be taken at encryption time to make sure
+that the person who decrypts the data has
+access to the cipher used.
+The default cipher algorithm is the
+.Dq CAST5
+algorithm.
+.It Fl Fl detached
+When signing a file, place the resulting signature in a separate
+file from the one being signed.
+.It Fl Fl hash-alg Ar hash-algorithm
+can be used to specify the hash algorithm (sometimes called
+a digest algorithm) which is used with RSA keys when signing
+text.
+The default hash algorithm is the
+.Dq SHA256
+algorithm.
+At the present time,
+.Dq SHA1
+may also be used, although it is recommended that
+SHA256 be used, due to recent advances in generating
+collisions for the SHA1 hashing algorithm.
+.It Fl Fl homedir Ar home\-directory
+Keyrings are normally located, for historical reasons, within
+the user's home directory in a subdirectory called
+.Dq Pa .gnupg
+and this option specifies an alternative location in which to
+find that sub-directory.
+.It Fl Fl keyring Ar keyring
+This option specifies an alternative keyring to be used.
+All keyring operations will be relative to this alternative keyring.
+.It Fl Fl output
+specifies a filename to which verified output from a signed file
+may be redirected.
+The default is to send the verified output to stdout,
+and this may also be specified using the
+.Dq -
+value.
+.It Fl Fl results Ar filename
+specifies a filename to which the results of the operation
+should be sent.
+The default is to send the results to stderr.
+.It Fl Fl ssh\-keys
+specifies that the public and private keys should be taken
+from the
+.Xr ssh 1
+host key files, usually found in
+.Pa /etc/ssh/ssh_host_rsa_key
+and
+.Pa /etc/ssh/ssh_host_rsa_key.pub
+for the private and public host keys.
+.It Fl Fl userid Ar userid
+This option specifies the user identity to be used for all operations.
+This identity can either be in the form of the full name, or as an
+email address.
+Care should be exercised with these ways of specifying the user identity,
+since the
+.Nm
+utility has no way of verifying that an email address is valid, or
+that a key belongs to a certain individual.
+The trust for a signed key is given by the other signers of that key.
+The 16 hexadecimal digit user identity should be used when specifying
+user identities \(ememail addresses and names are provided as aliases.
+.It Fl Fl pass\-fd Ns = Ns Ar fd
+This option is intended for the use of external programs which may
+like to use the
+.Xr libnetpgp 3
+library through the
+.Nm
+interface, but have their own ways of retrieving and caching
+the passphrase for the secret key.
+In this case, the
+.Nm
+utility will read a line of text from the file descriptor
+passed to it in the command line argument, rather than
+using its own methods of retrieving the passphrase from
+the user.
+.It Fl Fl num-tries Ns = Ns Ar attempts
+This option sets the maximum number of attempts to get the
+correct passphrase from the user.
+A value of
+.Dv unlimited
+means that there is no maximum number of attempts, and the
+utility will loop endlessly until the correct passphrase has been
+entered, or the utility is terminated.
+.It Fl Fl from Ns = Ns Ar signature-valid-from
+This option allows the signer to specify a time as the
+starting point for validity of the signature.
+In this way it is possible to prevent files from being verified
+until a specific point in time.
+The time can be specified either in
+.Dv YYYY-MM-DD
+format, or as the number of seconds since the epoch.
+.It Fl Fl duration Ns = Ns Ar signature-valid-to
+This option allows the signer to specify a time as the
+end point for validity of the signature.
+In this way it is possible to prevent files from being verified
+after a specific point in time.
+The time can be specified either
+in
+.Dv YYYY-MM-DD
+format, or as the number of seconds.
+.It Fl Fl verbose
+This option can be used to view information during
+the process of the
+.Nm
+requests.
+.It Fl Fl coredumps
+in normal processing,
+if an error occurs, the contents of memory are saved to disk, and can
+be read using tools to analyse behaviour.
+Unfortunately this can disclose information to people viewing
+the core dump, such as secret keys, and passphrases protecting
+those keys.
+In normal operation,
+.Nm
+will turn off the ability to save core dumps on persistent storage,
+but selecting this option will allow core dumps to be written to disk.
+This option should be used wisely, and any core dumps should
+be deleted in a secure manner when no longer needed.
+.El
+.Sh PASS PHRASES
+At the present time, the pass phrase cannot be changed by
+.Xr netpgpkeys 1
+once it has been chosen, and will
+be used for the life of the key, so a wise choice is advised.
+The pass phrase should not be an easily guessable word or phrase,
+or related to information that can be gained through
+.Dq social engineering
+using search engines, or other public information retrieval methods.
+.Pp
+.Xr getpass 3
+will be used to obtain the pass phrase from the user if it is
+needed,
+such as during signing or encryption, or key generation,
+so that any secret information cannot be viewed by other users
+using the
+.Xr ps 1
+or
+.Xr top 1
+commands, or by looking over the shoulder at the screen.
+.Pp
+Since the public and private key pair can be used to verify
+a person's identity, and since identity theft can have
+far-reaching consequences, users are strongly encouraged to
+enter their pass phrases only when prompted by the application.
+.Sh SIGNING AND VERIFICATION
+Signing and verification of a file is best viewed using the following example:
+.Bd -literal
+% netpgp --sign --userid=agc@netbsd.org a
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase:
+% netpgp --verify a.gpg
+Good signature for a.gpg made Thu Jan 29 03:06:00 2009
+using RSA (Encrypt or Sign) key 1B68DCFCC0596823
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+%
+.Ed
+.Pp
+In the example above, a signature is made on a single file called
+.Dq Pa a
+using a user identity corresponding to
+.Dq agc@netbsd.org
+The key located for the user identity is displayed, and
+the user is prompted to type in their passphrase.
+The resulting file, called
+.Dq Pa a.gpg
+is placed in the same directory.
+The second part of the example shows a verification of the signed file
+taking place.
+The time and user identity of the signatory is displayed, followed
+by a fuller description of the public key of the signatory.
+In both cases, the exit value from the utility was a successful one.
+.Pp
+If a detached signature of a file called
+.Dq Pa a
+is requested, the signature would be placed
+in a file called
+.Dq Pa a.sig .
+.Pp
+To encrypt a file, the user's public key is used.
+Subsequent decryption of the file requires that the secret
+key is known.
+When decrypting, the key is displayed,
+and the passphrase protecting
+the secret key must be typed in to access the data in the encrypted file.
+.Bd -literal
+% netpgp --encrypt --userid=c0596823 a
+% netpgp --decrypt a.gpg
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase:
+%
+.Ed
+.Pp
+If no file name is provided, the data will be read from standard input,
+and displayed on standard output:
+.Bd -literal
+% netpgp --encrypt \*[Lt] a | netpgp --decrypt \*[Gt] b
+netpgp: default key set to "C0596823"
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase:
+%
+.Ed
+.Pp
+This simple (and contrived) example shows that
+.Nm
+commands can be used together in a pipeline to produce the desired effect.
+.Bd -literal
+% netpgp --sign \*[Lt] a | netpgp --cat \*[Gt] b
+netpgp: default key set to "C0596823"
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+netpgp passphrase:
+Good signature for \*[Lt]stdin\*[Gt] made Mon Dec 21 18:25:02 2009
+using RSA (Encrypt or Sign) key 1b68dcfcc0596823
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+%
+.Ed
+.Pp
+For operations like signing and encrypting a file at the same time,
+the best way is to make use of pipelines:
+.Bd -literal
+% netpgp --sign \*[Lt] example | netpgp --encrypt --userid=c0596823 \*[Gt] example.gpg
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+netpgp passphrase:
+% netpgp --decrypt \*[Lt] example.gpg | netpgp --cat
+netpgp: default key set to "C0596823"
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+netpgp passphrase:
+Good signature for \*[Lt]stdin\*[Gt] made Mon Feb 22 07:21:19 2010
+using RSA (Encrypt or Sign) key 1b68dcfcc0596823
+pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
+\&...contents of original file...
+%
+.Ed
+.Sh EXIT STATUS
+The
+.Nm
+utility will return 0 for success,
+1 if the file's signature does not match what was expected,
+or 2 if any other error occurs.
+.Sh SEE ALSO
+.Xr netpgpkeys 1 ,
+.Xr ssh 1 ,
+.Xr getpass 3 ,
+.\" .Xr libbz2 3 ,
+.Xr libnetpgp 3 ,
+.Xr ssl 3 ,
+.Xr zlib 3
+.Sh STANDARDS
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+.An Ben Laurie ,
+.An Rachel Willmer ,
+and overhauled and rewritten by
+.An Alistair Crooks Aq Mt agc@NetBSD.org .
+This manual page was also written by
+.An Alistair Crooks .

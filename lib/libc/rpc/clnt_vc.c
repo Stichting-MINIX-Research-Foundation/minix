@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.24 2013/10/17 23:58:05 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.24 2013/10/17 23:58:05 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif
  
@@ -145,16 +145,16 @@ static cond_t   *vc_cv;
 #endif
 
 static __inline void
-htonlp(void *dst, const void *src)
+htonlp(void *dst, const void *src, uint32_t incr)
 {
 #if 0
 	uint32_t tmp;
 	memcpy(&tmp, src, sizeof(tmp));
-	tmp = htonl(tmp);
+	tmp = htonl(tmp + incr);
 	memcpy(dst, &tmp, sizeof(tmp));
 #else
 	/* We are aligned, so we think */
-	*(uint32_t *)dst = htonl(*(const uint32_t *)src);
+	*(uint32_t *)dst = htonl(*(const uint32_t *)src + incr);
 #endif
 }
 
@@ -609,9 +609,8 @@ clnt_vc_control(
 		break;
 	case CLSET_XID:
 		/* This will set the xid of the NEXT call */
-		htonlp(&ct->ct_u.ct_mcalli, (const char *)info +
-		    sizeof(uint32_t));
 		/* increment by 1 as clnt_vc_call() decrements once */
+		htonlp(&ct->ct_u.ct_mcalli, info, 1);
 		break;
 	case CLGET_VERS:
 		/*
@@ -624,7 +623,7 @@ clnt_vc_control(
 		break;
 
 	case CLSET_VERS:
-		htonlp(ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT, info);
+		htonlp(ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT, info, 0);
 		break;
 
 	case CLGET_PROG:
@@ -638,7 +637,7 @@ clnt_vc_control(
 		break;
 
 	case CLSET_PROG:
-		htonlp(ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT, info);
+		htonlp(ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT, info, 0);
 		break;
 
 	default:
@@ -663,12 +662,12 @@ clnt_vc_destroy(CLIENT *cl)
 	_DIAGASSERT(cl != NULL);
 
 	ct = (struct ct_data *) cl->cl_private;
-	ct_fd = ct->ct_fd;
 
 	__clnt_sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
 	mutex_lock(&clnt_fd_lock);
 #ifdef _REENTRANT
+	ct_fd = ct->ct_fd;
 	while (vc_fd_locks[ct_fd])
 		cond_wait(&vc_cv[ct_fd], &clnt_fd_lock);
 #endif

@@ -26,8 +26,8 @@ put_ioctl_req(struct trace_proc * proc, const char * name, unsigned long req,
 {
 	const char *text;
 	size_t size;
-	unsigned int group, cmd;
-	int i, r, w, big;
+	unsigned int i, group, cmd;
+	int r, w, big;
 
 	proc->ioctl_index = -1;
 
@@ -124,7 +124,7 @@ put_ioctl_arg_out(struct trace_proc * proc, const char * name,
 	}
 
 	assert(proc->ioctl_index >= 0);
-	assert(proc->ioctl_index < COUNT(ioctl_table));
+	assert((unsigned int)proc->ioctl_index < COUNT(ioctl_table));
 	assert(ioctl_table[proc->ioctl_index].is_svrctl == is_svrctl);
 
 	proc->ioctl_flags =
@@ -193,7 +193,7 @@ put_ioctl_arg_in(struct trace_proc * proc, const char * name, int failed,
 	}
 
 	assert(proc->ioctl_index >= 0);
-	assert(proc->ioctl_index < COUNT(ioctl_table));
+	assert((unsigned int)proc->ioctl_index < COUNT(ioctl_table));
 	assert(ioctl_table[proc->ioctl_index].is_svrctl == is_svrctl);
 	assert(proc->ioctl_flags != 0);
 

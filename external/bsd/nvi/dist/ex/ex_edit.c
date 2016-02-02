@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_edit.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
+/*	$NetBSD: ex_edit.c,v 1.7 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: ex_edit.c,v 10.14 2001/08/28 13:29:15 skimo Exp  (Berkeley) Date: 2001/08/28 13:29:15 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: ex_edit.c,v 1.7 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -120,7 +125,7 @@ ex_N_edit(SCR *sp, EXCMD *cmdp, FREF *frp, int attach)
 		return (1);
 	if ((cmdp->cmd == &cmds[C_VSPLIT] && vs_vsplit(sp, new)) ||
 	    (cmdp->cmd != &cmds[C_VSPLIT] && vs_split(sp, new, 0))) {
-		(void)screen_end(new);
+		(void)screen_fini(new);
 		return (1);
 	}
 

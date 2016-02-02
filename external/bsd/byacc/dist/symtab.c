@@ -1,11 +1,11 @@
-/*	$NetBSD: symtab.c,v 1.7 2013/04/06 14:52:24 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.8 2015/01/03 23:22:52 christos Exp $	*/
 
-/* Id: symtab.c,v 1.10 2012/05/26 15:16:12 tom Exp  */
+/* Id: symtab.c,v 1.11 2014/03/26 00:17:09 Tom.Shields Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.7 2013/04/06 14:52:24 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.8 2015/01/03 23:22:52 christos Exp $");
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */
@@ -53,6 +53,12 @@ make_bucket(const char *name)
     bp->prec = 0;
     bp->class = UNKNOWN;
     bp->assoc = TOKEN;
+#if defined(YYBTYACC)
+    bp->args = -1;
+    bp->argnames = 0;
+    bp->argtags = 0;
+    bp->destructor = 0;
+#endif
     strcpy(bp->name, name);
 
     return (bp);

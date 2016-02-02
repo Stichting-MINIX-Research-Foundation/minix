@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.h,v 1.1 2012/05/26 22:02:29 christos Exp $	*/
+/*	$NetBSD: unwind.h,v 1.3 2014/10/22 16:30:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -28,12 +28,24 @@
 #ifndef _UNWIND_H_
 #define _UNWIND_H_
 
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 struct _Unwind_Context;
 struct _Unwind_Exception;
 typedef int _Unwind_Reason_Code;
 typedef void *_Unwind_Ptr;
 typedef long _Unwind_Word;
+
+#define	_URC_NO_REASON			0
+#define	_URC_FOREIGN_EXCEPTION_CAUGHT	1
+#define	_URC_FATAL_PHASE2_ERROR		2
+#define	_URC_FATAL_PHASE1_ERROR		3
+#define	_URC_NORMAL_STOP		4
+#define	_URC_END_OF_STACK		5
+#define	_URC_HANDLER_FOUND		6
+#define	_URC_INSTALL_CONTEXT		7
+#define	_URC_CONTINUE_UNWIND		8
 
 typedef _Unwind_Reason_Code
     (*_Unwind_Trace_Fn)(struct _Unwind_Context *, void *);
@@ -54,7 +66,7 @@ _Unwind_Ptr		 _Unwind_GetDataRelBase(struct _Unwind_Context *);
 _Unwind_Word 		 _Unwind_GetGR(struct _Unwind_Context *, int);
 _Unwind_Ptr		 _Unwind_GetIP(struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetIPInfo(struct _Unwind_Context *, int *);
-void 			*_Unwind_GetLanguageSpecificData(
+_Unwind_Ptr		 _Unwind_GetLanguageSpecificData(
     struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetRegionStart(struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetTextRelBase(struct _Unwind_Context *);

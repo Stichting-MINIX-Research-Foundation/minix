@@ -1,0 +1,218 @@
+.\" $NetBSD: tiger.3,v 1.4 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 30, 2011
+.Dt TIGER 3
+.Os
+.Sh NAME
+.Nm TIGER_Init ,
+.Nm TIGER_Update ,
+.Nm TIGER_Final ,
+.Nm TIGER_End ,
+.Nm TIGER_File ,
+.Nm TIGER_Data
+.Nd calculate TIGER message digests
+.Sh SYNOPSIS
+.In tiger.h
+.Ft void
+.Fo TIGER_Init
+.Fa "TIGER_CTX *context"
+.Fc
+.Ft void
+.Fo TIGER_Update
+.Fa "TIGER_CTX *context" "const uint8_t *data" "u_int len"
+.Fc
+.Ft void
+.Fo TIGER_Final
+.Fa "uint8_t digest[20]" "TIGER_CTX *context"
+.Fc
+.Ft "char *"
+.Fo TIGER_End
+.Fa "TIGER_CTX *context" "char *buf"
+.Fc
+.Ft "char *"
+.Fo TIGER_File
+.Fa "char *filename" "char *buf"
+.Fc
+.Ft "char *"
+.Fo TIGER_Data
+.Fa "uint8_t *data" "size_t len" "char *buf"
+.Fc
+.Sh DESCRIPTION
+The TIGER functions calculate TIGER message digest functions,
+as defined by Ross Anderson and Eli Biham.
+The algorithm takes a
+message less than 2^64 bits as input and produces a 192-bit digest
+suitable for use as a digital signature.
+.Pp
+At the time of writing,
+May 2011,
+no attacks or pre-imaging have been discovered against the
+.Nm
+message digests, whilst the same cannot be said of
+.Xr md5 3
+or
+.Xr sha1 3 .
+.Pp
+The
+.Fn TIGER_Init
+function initializes a TIGER_CTX
+.Ar context
+for use with
+.Fn TIGER_Update ,
+and
+.Fn TIGER_Final .
+The
+.Fn TIGER_Update
+function adds
+.Ar data
+of length
+.Ar len
+to the TIGER_CTX specified by
+.Ar context .
+.Fn TIGER_Final
+is called when all data has been added via
+.Fn TIGER_Update
+and stores a message digest in the
+.Ar digest
+parameter.
+When a
+.Dv NULL
+pointer is passed to
+.Fn TIGER_Final
+as first argument only the final padding will be applied and the
+current context can still be used with
+.Fn TIGER_Update .
+.Pp
+The core of the TIGER message digest is performed by
+.Fn TIGER_Update .
+Most programs should use the interface provided by
+.Fn TIGER_Init ,
+.Fn TIGER_Update ,
+and
+.Fn TIGER_Final .
+.Pp
+The
+.Fn TIGER_End
+function is a frontend for
+.Fn TIGER_Final
+which converts the digest into an
+.Tn ASCII
+representation of the 160 bit digest in hexadecimal.
+.Pp
+The
+.Fn TIGER_File
+function calculates the digest for a file and returns the result via
+.Fn TIGER_End .
+If
+.Fn TIGER_File
+is unable to open the file a
+.Dv NULL
+pointer is returned.
+.Pp
+The
+.Fn TIGER_Data
+function
+calculates the digest of an arbitrary string and returns the result via
+.Fn TIGER_End .
+.Pp
+For each of the
+.Fn TIGER_End ,
+.Fn TIGER_File ,
+and
+.Fn TIGER_Data
+functions the
+.Ar buf
+parameter should either be a string of at least 41 characters in
+size or a
+.Dv NULL
+pointer.
+In the latter case, space will be dynamically allocated via
+.Xr malloc 3
+and should be freed using
+.Xr free 3
+when it is no longer needed.
+.Sh EXAMPLES
+The follow code fragment will calculate the digest for the string
+.Dq The quick brown fox jumps over the lazy dog ,
+which is
+.Dq 6d12a41e72e644f017b6f0e2f7b44c6285f06dd5d2c5b075 .
+.Bd -literal -offset indent
+TIGER_CTX tiger;
+uint8_t results[24];
+char *buf;
+int n;
+
+buf = "The quick brown fox jumps over the lazy dog";
+n = strlen(buf);
+TIGER_Init(\*[Am]tiger);
+TIGER_Update(\*[Am]tiger, (uint8_t *)buf, n);
+TIGER_Final(results, \*[Am]tiger);
+
+/* Print the digest as one long hex value */
+printf("0x");
+for (n = 0; n \*[Lt] 24; n++)
+	printf("%02x", results[n]);
+putchar('\en');
+.Ed
+.Pp
+Alternately, the helper functions could be used in the following way:
+.Bd -literal -offset indent
+TIGER_CTX tiger;
+uint8_t output[49];
+char *buf = "The quick brown fox jumps over the lazy dog";
+
+printf("0x%s", TIGER_Data(buf, strlen(buf), output));
+.Ed
+.Sh SEE ALSO
+.Xr md5 3 ,
+.Xr sha1 3
+.Rs
+.%A Ross Anderson
+.%A Eli Biham
+.%T "Tiger \- A Fast New Hash Function"
+.%B Proceedings of Fast Software Encryption 3, Cambridge
+.%D 1996
+.Re
+.Sh HISTORY
+The TIGER functions appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+This implementation of TIGER was adapted by
+.An Alistair Crooks Aq Mt agc@NetBSD.org
+from the original reference code.
+.Pp
+The
+.Fn TIGER_End ,
+.Fn TIGER_File ,
+and
+.Fn TIGER_Data
+helper functions are derived from code written by Poul-Henning Kamp.
+.Sh BUGS
+All attempts have been made to optimise for the underlying hardware,
+as well as to format the digest properly in an endian-neutral manner.
+The author has no VAX hardware on which to test, and so it is not known
+whether that platform is supported.

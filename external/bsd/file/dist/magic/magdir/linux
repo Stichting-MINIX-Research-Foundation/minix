@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: linux,v 1.47 2013/02/06 14:18:52 christos Exp $
+# $File: linux,v 1.59 2014/11/03 21:03:36 christos Exp $
 # linux:  file(1) magic for Linux files
 #
 # Values for Linux/i386 binaries, from Daniel Quinlan <quinlan@yggdrasil.com>
@@ -40,6 +40,7 @@
 >28	long		!0		not stripped
 # core dump file, from Bill Reynolds <bill@goshawk.lanl.gov>
 216	lelong		0421		Linux/i386 core file
+!:strength / 2
 >220	string		>\0		of '%s'
 >200	lelong		>0		(signal %d)
 #
@@ -48,7 +49,10 @@
 2	string		LILO		Linux/i386 LILO boot/chain loader
 #
 # Linux make config build file, from Ole Aamot <oka@oka.no>
-28 	string		make\ config	Linux make config build file
+# Updated by Ken Sharp
+28	string		make\ config		Linux make config build file (old)
+49	search/70	Kernel\ Configuration	Linux make config build file
+
 #
 # PSF fonts, from H. Peter Anvin <hpa@yggdrasil.com>
 # Updated by Adam Buchbinder <adam.buchbinder@gmail.com>
@@ -98,12 +102,13 @@
 # All known start with: b8 c0 07 8e d8 b8 00 90 8e c0 b9 00 01 29 f6 29
 # Linux kernel boot images (i386 arch) (Wolfram Kleff)
 514	string		HdrS		Linux kernel
-!:strength + 5
+!:strength + 55
 >510	leshort		0xAA55		x86 boot executable
 >>518	leshort		>0x1ff
 >>>529	byte		0		zImage,
 >>>529	byte		1		bzImage,
->>>(526.s+0x200) string	>\0		version %s,
+>>>526	lelong		>0
+>>>>(526.s+0x200) string	>\0	version %s,
 >>498	leshort		1		RO-rootFS,
 >>498	leshort		0		RW-rootFS,
 >>508	leshort		>0		root_dev 0x%X,
@@ -344,3 +349,86 @@
 #>2	regex		\(name\ [^)]*\)		%s
 >20	search/256	(name			(name
 >>&1	string		x			%s...)
+
+# Systemd journald files
+# See http://www.freedesktop.org/wiki/Software/systemd/journal-files/.
+# From: Zbigniew Jedrzejewski-Szmek <zbyszek@in.waw.pl>
+
+# check magic
+0	string	LPKSHHRH
+# check that state is one of known values
+>16		ubyte&252	0
+# check that each half of three unique id128s is non-zero
+>>24		ubequad		>0
+>>>32		ubequad		>0
+>>>>40		ubequad		>0
+>>>>>48		ubequad		>0
+>>>>>>56	ubequad		>0
+>>>>>>>64	ubequad		>0	Journal file
+!:mime application/octet-stream
+# provide more info
+>>>>>>>>184	leqdate		0	empty
+>>>>>>>>16	ubyte		0	\b, offline
+>>>>>>>>16	ubyte		1	\b, online
+>>>>>>>>16	ubyte		2	\b, archived
+>>>>>>>>8	ulelong&1	1	\b, sealed
+>>>>>>>>12	ulelong&1	1	\b, compressed
+
+# BCache backing and cache devices
+# From: Gabriel de Perthuis <g2p.code@gmail.com>
+0x1008		lequad		8
+>0x1018		string		\xc6\x85\x73\xf6\x4e\x1a\x45\xca\x82\x65\xf5\x7f\x48\xba\x6d\x81	BCache
+>>0x1010	ulequad		0	cache device
+>>0x1010	ulequad		1	backing device
+>>0x1010	ulequad		3	cache device
+>>0x1010	ulequad		4	backing device
+>>0x1048	string		>0	\b, label "%.32s"
+>>0x1028	ubelong		x	\b, uuid %08x
+>>0x102c	ubeshort	x	\b-%04x
+>>0x102e	ubeshort	x	\b-%04x
+>>0x1030	ubeshort	x	\b-%04x
+>>0x1032	ubelong		x	\b-%08x
+>>0x1036	ubeshort	x	\b%04x
+>>0x1038	ubelong		x	\b, set uuid %08x
+>>0x103c	ubeshort	x	\b-%04x
+>>0x103e	ubeshort	x	\b-%04x
+>>0x1040	ubeshort	x	\b-%04x
+>>0x1042	ubelong		x	\b-%08x
+>>0x1046	ubeshort	x	\b%04x
+
+# Linux device tree:
+# File format description can be found in the Linux kernel sources at 
+# Documentation/devicetree/booting-without-of.txt
+# From Christoph Biedl
+0		belong		0xd00dfeed
+# structure and strings must be within blob
+>&(8.L)		byte		x
+>>&(12.L)	byte		x
+>>>20		belong		>1	Device Tree Blob version %d
+>>>>4		belong		x	\b, size=%d
+>>>>20		belong		>1
+>>>>>28		belong		x	\b, boot CPU=%d
+>>>>20		belong		>2
+>>>>>32		belong		x	\b, string block size=%d
+>>>>20		belong		>16
+>>>>>36		belong		x	\b, DT structure block size=%d
+
+# glibc locale archive as defined in glibc locale/locarchive.h
+0		lelong		0xde020109	locale archive
+>24		lelong		x		%d strings
+
+# Summary:     Database file for mlocate
+# Description: A database file as used by mlocate, a fast implementation
+#              of locate/updatedb. It uses merging to reuse the existing
+#              database and avoid rereading most of the filesystem. It's
+#              the default version of locate on Arch Linux (and others).
+# File path:   /var/lib/mlocate/mlocate.db by default (but configurable)
+# Site:        https://fedorahosted.org/mlocate/
+# Format docs: http://linux.die.net/man/5/mlocate.db
+# Type: mlocate database file
+# URL:  https://fedorahosted.org/mlocate/
+# From: Wander Nauta <info@wandernauta.nl>
+0		string		\0mlocate	mlocate database
+>12		byte		x		\b, version %d
+>13		byte		1		\b, require visibility
+>16		string		x		\b, root %s

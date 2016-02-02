@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term_ps.c,v 1.54 2011/10/16 12:20:34 schwarze Exp $ */
+/*	Id: term_ps.c,v 1.55 2014/01/05 19:10:56 joerg Exp  */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -97,6 +97,9 @@ static	void		  ps_growbuf(struct termp *, size_t);
 static	void		  ps_letter(struct termp *, int);
 static	void		  ps_pclose(struct termp *);
 static	void		  ps_pletter(struct termp *, int);
+#if __GNUC__ - 0 >= 4
+__attribute__((__format__ (__printf__, 2, 3)))
+#endif
 static	void		  ps_printf(struct termp *, const char *, ...);
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
@@ -824,7 +827,7 @@ ps_begin(struct termp *p)
 			ps_printf(p, "<<\n");
 			ps_printf(p, "/Type /Font\n");
 			ps_printf(p, "/Subtype /Type1\n");
-			ps_printf(p, "/Name /F%zu\n", i);
+			ps_printf(p, "/Name /F%d\n", i);
 			ps_printf(p, "/BaseFont /%s\n", fonts[i].name);
 			ps_printf(p, ">>\n");
 		}

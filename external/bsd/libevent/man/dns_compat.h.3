@@ -1,4 +1,4 @@
-.TH "event2/dns_compat.h" 3 "Wed Apr 10 2013" "libevent" \" -*- nroff -*-
+.TH "event2/dns_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -97,10 +97,12 @@ Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided 
 
 .SH "Function Documentation"
 .PP 
-.SS "struct evdns_server_port* evdns_add_server_port (\fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)\fC [read]\fP"
+.SS "struct evdns_server_port* evdns_add_server_port (\fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)"
 
 .PP
-As evdns_server_new_with_base\&. \fBDeprecated\fP
+As evdns_server_new_with_base\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which even_base it uses\&. The recommended function is \fBevdns_add_server_port_with_base()\fP\&.
 .RE
@@ -122,7 +124,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resume()\fP 
 .RE
@@ -144,16 +146,18 @@ This function is deprecated because it does not allow the caller to specify whic
 the number of configured nameservers 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_nameserver_add()\fP 
 .RE
 .PP
 
-.SS "struct evdns_base* evdns_get_global_base (void)\fC [read]\fP"
+.SS "struct evdns_base* evdns_get_global_base (void)"
 
 .PP
-Return the global evdns_base created by \fBevent_init()\fP and used by the other deprecated functions\&. \fBDeprecated\fP
+Return the global evdns_base created by \fBevent_init()\fP and used by the other deprecated functions\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because use of the global evdns_base is error-prone\&. 
 .RE
@@ -175,7 +179,7 @@ This function is deprecated because it always uses the current event base, and i
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_shutdown()\fP 
 .RE
@@ -202,7 +206,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_nameserver_ip_add()\fP 
 .RE
@@ -224,7 +228,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_nameserver_add()\fP 
 .RE
@@ -257,7 +261,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or various positive error codes if an error occurred (see above) 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 resolv\&.conf(3), evdns_config_windows_nameservers() 
 .RE
@@ -266,7 +270,9 @@ resolv\&.conf(3), evdns_config_windows_nameservers()
 .SS "int evdns_resolve_ipv4 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup an A record for a given name\&. \fBDeprecated\fP
+Lookup an A record for a given name\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_ipv4()\fP\&.
 .RE
@@ -288,7 +294,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_ipv6()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP 
 .RE
@@ -297,7 +303,9 @@ This function is deprecated because it does not allow the caller to specify whic
 .SS "int evdns_resolve_ipv6 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup an AAAA record for a given name\&. \fBParameters:\fP
+Lookup an AAAA record for a given name\&. 
+.PP
+\fBParameters:\fP
 .RS 4
 \fIname\fP a DNS hostname 
 .br
@@ -313,7 +321,7 @@ Lookup an AAAA record for a given name\&. \fBParameters:\fP
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_ipv4()\fP, \fBevdns_resolve_reverse()\fP, \fBevdns_resolve_reverse_ipv6()\fP 
 .RE
@@ -322,7 +330,9 @@ Lookup an AAAA record for a given name\&. \fBParameters:\fP
 .SS "int evdns_resolve_reverse (const struct in_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup a PTR record for a given IP address\&. \fBDeprecated\fP
+Lookup a PTR record for a given IP address\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse()\fP\&.
 .RE
@@ -344,7 +354,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_reverse_ipv6()\fP 
 .RE
@@ -353,7 +363,9 @@ This function is deprecated because it does not allow the caller to specify whic
 .SS "int evdns_resolve_reverse_ipv6 (const struct in6_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
 
 .PP
-Lookup a PTR record for a given IPv6 address\&. \fBDeprecated\fP
+Lookup a PTR record for a given IPv6 address\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_resolve_reverse_ipv6()\fP\&.
 .RE
@@ -375,7 +387,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_resolve_reverse_ipv6()\fP 
 .RE
@@ -397,7 +409,7 @@ This function is deprecated because it does not allow the caller to specify whic
 0 if successful, or -1 if an error occurred 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_clear_nameservers_and_suspend()\fP 
 .RE
@@ -406,7 +418,9 @@ This function is deprecated because it does not allow the caller to specify whic
 .SS "void evdns_search_add (const char *domain)"
 
 .PP
-Add a domain to the list of search domains\&. \fBDeprecated\fP
+Add a domain to the list of search domains\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_add()\fP\&.
 .RE
@@ -421,7 +435,9 @@ This function is deprecated because it does not allow the caller to specify whic
 .SS "void evdns_search_clear (void)"
 
 .PP
-Clear the list of search domains\&. \fBDeprecated\fP
+Clear the list of search domains\&. 
+.PP
+\fBDeprecated\fP
 .RS 4
 This function is deprecated because it does not allow the caller to specify which evdns_base it applies to\&. The recommended function is \fBevdns_base_search_clear()\fP\&. 
 .RE
@@ -488,7 +504,7 @@ This function is deprecated because it does not allow the caller to specify whic
 \fIfail_requests\fP if zero, active requests will be aborted; if non-zero, active requests will return DNS_ERR_SHUTDOWN\&. 
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also:\fP
 .RS 4
 \fBevdns_init()\fP 
 .RE

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.37 2014/12/20 00:28:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.37 2014/12/20 00:28:05 christos Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -255,6 +255,7 @@ ufsdirhash_build(struct inode *ip)
 	return (0);
 
 fail:
+	ip->i_dirhash = NULL;
 	DIRHASH_UNLOCK(dh);
 	if (dh->dh_hash != NULL) {
 		for (i = 0; i < narrays; i++)
@@ -266,7 +267,6 @@ fail:
 		kmem_free(dh->dh_blkfree, dh->dh_blkfreesz);
 	mutex_destroy(&dh->dh_lock);
 	pool_cache_put(ufsdirhash_cache, dh);
-	ip->i_dirhash = NULL;
 	atomic_add_int(&ufs_dirhashmem, -memreqd);
 	return (-1);
 }
@@ -282,6 +282,8 @@ ufsdirhash_free(struct inode *ip)
 
 	if ((dh = ip->i_dirhash) == NULL)
 		return;
+
+	ip->i_dirhash = NULL;
 
 	if (dh->dh_onlist) {
 		DIRHASHLIST_LOCK();
@@ -303,7 +305,6 @@ ufsdirhash_free(struct inode *ip)
 	}
 	mutex_destroy(&dh->dh_lock);
 	pool_cache_put(ufsdirhash_cache, dh);
-	ip->i_dirhash = NULL;
 
 	atomic_add_int(&ufs_dirhashmem, -mem);
 }
@@ -1099,16 +1100,10 @@ ufsdirhash_sysctl_init(void)
 
 	sysctl_createv(&ufsdirhash_sysctl_log, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ufs",
 		       SYSCTL_DESCR("ufs"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

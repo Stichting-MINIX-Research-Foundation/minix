@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn.3,v 1.4 2013/07/20 21:39:57 wiz Exp $
+.\" $NetBSD: posix_spawn.3,v 1.6 2014/02/02 16:59:06 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/gen/posix_spawn.3,v 1.2.2.1.4.1 2010/06/14 02:09:06 kensmith Exp $
 .\"
-.Dd December 20, 2011
+.Dd February 2, 2014
 .Dt POSIX_SPAWN 3
 .Os
 .Sh NAME
@@ -181,6 +181,12 @@ flag set (see
 .Fn fcntl )
 is closed.
 .El
+.Pp
+The maximum number of
+.Fa file_actions
+objects is limited to the
+.Dv RLIMIT_NOFILE
+rlimit times 2.
 .Pp
 The
 .Vt posix_spawnattr_t
@@ -420,6 +426,11 @@ or
 .Fn dup2 ,
 in addition to those described by
 .Fn open .
+Finally, if the number of
+.Fa file_actions
+objects exceeds the allowed limit,
+.Er EINVAL
+is returned.
 .El
 .Sh SEE ALSO
 .Xr close 2 ,

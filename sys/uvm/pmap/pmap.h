@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2013/07/17 23:15:20 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2015/06/11 05:27:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,6 +148,7 @@ struct pmap_kernel {
 struct pmap_limits {
 	paddr_t avail_start;
 	paddr_t avail_end;
+	vaddr_t virtual_start;
 	vaddr_t virtual_end;
 };
 

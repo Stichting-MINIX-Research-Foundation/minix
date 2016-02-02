@@ -1,10 +1,26 @@
-# $NetBSD: shl.mi,v 1.8 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: shl.mi,v 1.10 2015/06/22 06:02:02 matt Exp $
 #
-./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
-./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/libh_initfini3_dso.so	tests-obsolete		obsolete
 ./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-obsolete		obsolete
-./usr/tests/lib/libc/tls/libh_tls_dynamic.so	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/libh_tls_dynamic.so.1	tests-lib-tests		atf
+./usr/tests/lib/libc/tls/h_tls_dlopen.so	tests-lib-tests		compattestfile,atf,minix-false
+./usr/tests/lib/libc/tls/h_tls_dlopen.so.1	tests-lib-tests		compattestfile,atf,minix-false
+./usr/tests/lib/libc/tls/libh_tls_dynamic.so	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/tls/libh_tls_dynamic.so.1	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/tls/t_tls_dlopen		tests-lib-tests		compattestfile,atf,minix-false
+./usr/tests/lib/libc/tls/t_tls_dynamic		tests-lib-tests		compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so				tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1				tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so				tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1				tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so				tests-libexec-tests	compattestfile,atf,minix-false
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1			tests-libexec-tests	compattestfile,atf,minix-false
 ./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
 ./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete

@@ -1,0 +1,191 @@
+                             TOP
+                       Version 3.8beta1
+
+                       William LeFebvre
+		     and a cast of dozens
+
+
+If you do not want to read this entire file, then at least read
+the section at the end entitled "KNOWN PROBLEMS".
+
+If you are having any problems getting top to work, please read the
+file "FAQ" *before* contacting me.  Thank you.
+
+"top" is a program that will give continual reports about the state of
+the system, including a list of the top cpu using processes.  Version 3
+of "top" has three primary design goals: provide an accurate snapshot of
+the system and process state, not be one of the top processes itself, be
+as portable as possible.
+
+Version 3 has many bug fixes from version 2.5, and it has also been
+reorganized in a major way to make it easy to port to other platforms.
+All system dependent code is now contained in one file.
+
+Starting with version 3.6, top includes a "configure" script generated
+by Gnu's autoconf.  This script MUST be run before attempting to
+compile top.  It will explore the system and generate approriate
+contents for Makefile, config.h, and top.1.
+
+On some systems, top requires read access to the memory files
+"/dev/kmem" and "/dev/mem" as well as the system's kernel image.  Most
+installations have these files protected from general access.  These
+sites would have to install this program in the same way that programs
+such as "ps" are installed.  On most systems with a /proc file system,
+top will try to read everything it can from /proc, but may need extra
+permissions to do so.  The configure script will determine the
+permissions needed by the top binary, and a "make install" as root
+will get the binary installed correctly.  Sometimes this requires that
+the binary be installed with set-group-id privileges and, in rare
+cases, set-user-id to root.
+
+CAVEAT: version 3 of top has internal commands that kill and renice
+processes.  Although I have taken steps to insure that top makes
+appropriate checks with these commands, I cannot guarantee that these
+internal commands are totally secure.  IF YOU INSTALL top SET-USER-ID
+TO ROOT, YOU DO SO AT YOUR OWN RISK!  I realize that some operating
+systems will require top to run setuid root, and I will do everything
+I can to make sure that top is a secure setuid program.
+
+System support now takes the form of "modules".  Adding support for a
+different architecture requires only adding a module.  These modules
+are contained in the subdirectory "machine".  The "configure" script
+automatically determines which module is approproate.  However, it may
+not be able to determine what the correct module is.  This can happen
+either because it doesn't know about the system or there is no module
+to support the system.  In the former case, if you know which module
+to use, you can force "configure" to choose a particular module with
+the option "--with-module".  For example, if you want to force the use
+of the svr4 module (which appears as "machine/m_svr4.c") then use
+"configure --with-module=svr4" to generate the correct Makefile.  See
+the file "Porting" for a description of how to write your own module.
+
+To compile and install "top", read the file "INSTALL" and follow the
+directions and advice contained therein.
+
+If you make any kind of change to "top" that you feel would be
+beneficial to others who use this program, or if you find and fix a bug,
+please send me the change.
+
+Be sure to read the FAQ enclosed with the distrubution.  It contains
+answers to the most commonly asked questions about the configuration,
+installation, and operation of top.
+
+COLOR
+
+Version 3.6 incorporated the idea of using ANSI color sequences to
+enhance information on the screen.  By default, no color is used.  But
+you can configure the use of color through the environment variable
+TOPCOLORS (or, for compatibility, TOPCOLOURS).  The interface is
+identical to the one first implemented by chris@spang.uk.eu.org, but
+the implementation is entirely different.  The option -C can be used
+to diable the feature entirely.
+
+Any information at the top of the screen can be enhanced with color.
+However, due to implementation difficulties, the per-process area
+cannot be color-enhanced.  A complete description of color support can
+be found in the man page.  References for ANSI color codes can be
+found all over the Internet, but if you want a handy reference, look
+in color.h.
+
+
+AVAILABILITY
+
+Note that top is now a sourceforge project!  Its project name is
+"unixtop" and you can access its project page here:
+
+http://sourceforge.net/projects/unixtop
+
+On the project page you can find more information and access the
+official bug and feature request trackers.  If you find a bug,
+want to request a feature, or need help, please submit a request
+to the appropriate tracker on sourceforge.  Thank you.
+
+Subversion access is also provided by Sourceforge.  If Subversion is
+installed on your system you can check out the project with the
+following command:
+
+	svn co https://svn.sourceforge.net/svnroot/unixtop unixtop
+
+There is also a web site dedicated to the project, and it is here:
+
+http://www.unixtop.org
+
+The latest version of "top" is available as a download through
+sourceforge.  Start here to access the downloadable files:
+
+http://sourceforge.net/project/showfiles.php?group_id=72892
+
+
+KNOWN PROBLEMS:
+
+Gnu CC
+
+Compiling via Gnu CC continued to be the source of most of the
+questions I receive.  By far the most common mistake made by those
+attempting to compile top with Gnu CC is out of date include files.
+When the operating system is upgraded, the include files that are part
+of the gcc package MUST also be updated.  Gcc maintains its own
+include files.  Even a minor OS upgrade can involve changes to some of
+the kernel's internal data structures, which are defined in include
+files in "sys".  Top is very sensitive to these changes.  If you are
+compiling with gcc and experience any sort of strange problems, please
+make sure the include files you are using are up to date BEFORE
+sending me a bug report.  Look in the gcc source distribution for the
+shell script "fixincludes".
+
+MacOS X
+
+Since I don't have full time root access to a MacOS X system I cannot
+provide effective support for the platform.  MacOS X uses Mach, and it
+is very difficult to extract accurate system and process information
+from the system.  It takes a lot of trial and error, along with root
+access.  I have included the most up-to-date version of the macosx module
+in the distribution, but I do not claim that it works.  If you want to
+try to use it, you can configure with "./configure --with-module=macosx".
+
+HP/UX 10.10
+
+In their infinite wisdom, the folks at HP have decided that mere mortals
+such as you and I don't need to know what the kernel's proc structure looks
+like.  To that end, they have removed all useful content from the include
+file <sys/proc.h> in version 10.10.  As a result, top will not compile
+under 10.10.  What HP is trying to accomplish with this move is to force
+iconoclasts such as myself to use "pstat" for collecting all process
+information.  I have no immediate solution for this problem, but hope to
+obtain a sufficiently complete definition of "struct proc" at some point in
+the near future.  Stay tuned.
+
+
+GRATITUDE
+
+My perpetual thanks to all the people who have helped me support top
+on so many platforms.  Without these people, top would not be what it
+is.  Here is a partial list of contributors and other individuals.
+
+	Robert Boucher, Marc Cohen, David Cutter, Casper Dik,
+	Charles Hedrick, Andrew Herbert, Jeff Janvrin, Torsten Kasch,
+	Petri Kutvonen, William L. Jones, Tim Pugh, Steve Scherf,
+	Phillip Wu
+
+(My apologies if I missed anyone.)
+
+
+LICENSE
+
+Top is distributed free of charge under the same terms as the BSD
+license.  For an official statement, please refer to the file "LICENSE"
+which should be included with the source distribution.
+
+
+AUTHOR
+
+If you wish to contact me, please send a message to the sourceforge
+username "wnl".
+
+		William LeFebvre
+
+		U.S. Mail address:
+		    William LeFebvre
+		    11585 Jones Bridge Road
+		    Suite 420 PMB 139
+		    Alpharetta, GA  30202

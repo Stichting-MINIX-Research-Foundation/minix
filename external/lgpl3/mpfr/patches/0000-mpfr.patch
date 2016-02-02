@@ -1,6 +1,6 @@
 diff -rNU3 dist.orig/Makefile.in dist.nbsd/Makefile.in
 --- dist.orig/Makefile.in	2013-03-13 16:38:22.000000000 +0100
-+++ dist.nbsd/Makefile.in	2013-12-06 20:13:14.174967585 +0100
++++ dist.nbsd/Makefile.in	2015-10-16 08:31:48.000000000 +0200
 @@ -337,8 +337,12 @@
  	$(SHELL) ./config.status --recheck
  
@@ -16,7 +16,7 @@ diff -rNU3 dist.orig/Makefile.in dist.nbsd/Makefile.in
  
 diff -rNU3 dist.orig/PATCHES dist.nbsd/PATCHES
 --- dist.orig/PATCHES	2013-03-13 16:37:38.000000000 +0100
-+++ dist.nbsd/PATCHES	2013-12-06 20:13:14.171634202 +0100
++++ dist.nbsd/PATCHES	2015-10-16 08:31:48.000000000 +0200
 @@ -0,0 +1,4 @@
 +texp-zero
 +atan-expo-range
@@ -24,7 +24,7 @@ diff -rNU3 dist.orig/PATCHES dist.nbsd/PATCHES
 +asin_exprange
 diff -rNU3 dist.orig/src/Makefile.in dist.nbsd/src/Makefile.in
 --- dist.orig/src/Makefile.in	2013-03-13 16:38:21.000000000 +0100
-+++ dist.nbsd/src/Makefile.in	2013-12-06 20:13:14.181634352 +0100
++++ dist.nbsd/src/Makefile.in	2015-10-16 08:31:48.000000000 +0200
 @@ -921,6 +921,8 @@
  # should not be a problem in practice, in particular because "make dist"
  # automatically rebuilds get_patches.c before generating the archives.
@@ -34,3 +34,42 @@ diff -rNU3 dist.orig/src/Makefile.in dist.nbsd/src/Makefile.in
  	(cd $(top_srcdir) && ./tools/get_patches.sh) > $@ || rm -f $@
  
  # Do not add get_patches.c to CLEANFILES so that this file doesn't
+diff -rNU3 dist.orig/src/mpfr-longlong.h dist.nbsd/src/mpfr-longlong.h
+--- dist.orig/src/mpfr-longlong.h	2013-03-13 16:37:32.000000000 +0100
++++ dist.nbsd/src/mpfr-longlong.h	2014-03-25 16:28:15.000000000 +0100
+@@ -1022,7 +1022,7 @@
+ #endif /* __m88000__ */
+ 
+ #if defined (__mips) && W_TYPE_SIZE == 32
+-#if __GMP_GNUC_PREREQ (4,4)
++#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
+ #define umul_ppmm(w1, w0, u, v) \
+   do {									\
+     UDItype __ll = (UDItype)(u) * (v);					\
+@@ -1044,7 +1044,7 @@
+ #endif /* __mips */
+ 
+ #if (defined (__mips) && __mips >= 3) && W_TYPE_SIZE == 64
+-#if __GMP_GNUC_PREREQ (4,4)
++#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
+ #define umul_ppmm(w1, w0, u, v) \
+   do {									\
+     typedef unsigned int __ll_UTItype __attribute__((mode(TI)));	\
+@@ -1160,7 +1160,7 @@
+   __asm__ ("{cntlz|cntlzw} %0,%1" : "=r" (count) : "r" (x))
+ #define COUNT_LEADING_ZEROS_0 32
+ #if HAVE_HOST_CPU_FAMILY_powerpc
+-#if __GMP_GNUC_PREREQ (4,4)
++#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
+ #define umul_ppmm(w1, w0, u, v) \
+   do {									\
+     UDItype __ll = (UDItype)(u) * (v);					\
+@@ -1259,7 +1259,7 @@
+ #define count_leading_zeros(count, x) \
+   __asm__ ("cntlzd %0,%1" : "=r" (count) : "r" (x))
+ #define COUNT_LEADING_ZEROS_0 64
+-#if __GMP_GNUC_PREREQ (4,4)
++#if __GMP_GNUC_PREREQ (4,4) || defined(__clang__)
+ #define umul_ppmm(w1, w0, u, v) \
+   do {									\
+     typedef unsigned int __ll_UTItype __attribute__((mode(TI)));	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_smap.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: vs_smap.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: vs_smap.c,v 10.30 2002/01/19 21:59:07 skimo Exp  (Berkeley) Date: 2002/01/19 21:59:07 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: vs_smap.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -577,6 +582,10 @@ vs_sm_up(SCR *sp, MARK *rp, db_recno_t count, scroll_t scmd, SMAP *smp)
 {
 	int cursor_set, echanged, zset;
 	SMAP *ssmp, s1, s2;
+#if defined(__minix)
+	/* LSC: -Werror=maybe-uninitialized, with -O3 */
+	ssmp = NULL;
+#endif /* defined(__minix) */
 
 	/*
 	 * Check to see if movement is possible.

@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# $NetBSD: tzcode2netbsd,v 1.5 2004/05/27 20:33:31 kleink Exp $
+# $NetBSD: tzcode2netbsd,v 1.6 2015/07/11 16:09:15 christos Exp $
 #
 # Convert an extracted tzcode distribution into the format suitable
 # for importing it into the NetBSD source tree.
@@ -23,11 +23,10 @@ NOIMPORT="Makefile
 	zdump.8.txt
 	zic.8.txt"
 
-NEWTONORMAL="ctime.3
-	tzset.3"
+#rm -f ${NOIMPORT}
+#mv tzfile.h ../../../include
 
-rm -f ${NOIMPORT}
-
-for f in ${NEWTONORMAL}; do
-	mv new${f} ${f};
-done
+echo remember to check tzfile.h in ../../../include
+echo you can find the current version in the Makefile
+echo we don't use this script anymore to import, but diff against the
+echo current version and apply patches.

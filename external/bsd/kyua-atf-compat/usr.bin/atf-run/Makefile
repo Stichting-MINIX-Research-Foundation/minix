@@ -6,6 +6,10 @@ FILES=		atf-run
 FILESDIR=	/usr/bin
 FILESMODE=	${BINMODE}
 
+.if defined(__MINIX)
+.PATH:	${SRCDIR}
+.endif # defined(__MINIX)
+
 realall: atf-run
 atf-run: atf-run.sh
 	src=atf-run.sh dst=atf-run; ${BUILD_SCRIPT}

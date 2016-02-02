@@ -38,9 +38,7 @@ __RCSID("$NetBSD: requests.c,v 1.24 2013/01/23 20:22:34 riastradh Exp $");
 #include <sys/queue.h>
 #include <sys/socket.h>
 
-#if !defined(__minix)
 #include <dev/putter/putter.h>
-#endif /* !defined(__minix) */
 
 #include <assert.h>
 #include <errno.h>

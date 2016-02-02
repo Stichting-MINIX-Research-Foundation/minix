@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.4 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.5 2014/06/14 07:39:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.4 2008/02/27 19:43:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.5 2014/06/14 07:39:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -74,7 +74,7 @@ cd9660_bmap(void *v)
 	 * to physical mapping is requested.
 	 */
 	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ip->i_devvp;
+		*ap->a_vpp = ip->i_mnt->im_devvp;
 	if (ap->a_bnp == NULL)
 		return (0);
 

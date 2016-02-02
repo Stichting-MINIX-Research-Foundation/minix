@@ -1,4 +1,4 @@
-/* $Id: cfg.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,125 +19,148 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
 
-/*
- * Config file parser. Pretty quick and simple, each line is parsed into a
- * argv array and executed as a command.
- */
+struct cmd_q		*cfg_cmd_q;
+int			 cfg_finished;
+int			 cfg_references;
+struct causelist	 cfg_causes;
+struct client		*cfg_client;
 
-void printflike2 cfg_print(struct cmd_ctx *, const char *, ...);
-void printflike2 cfg_error(struct cmd_ctx *, const char *, ...);
-
-char	 	       *cfg_cause;
-int     	 	cfg_finished;
-struct causelist	cfg_causes = ARRAY_INITIALIZER;
-
-/* ARGSUSED */
-void printflike2
-cfg_print(unused struct cmd_ctx *ctx, unused const char *fmt, ...)
-{
-}
-
-/* ARGSUSED */
-void printflike2
-cfg_error(unused struct cmd_ctx *ctx, const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	xvasprintf(&cfg_cause, fmt, ap);
-	va_end(ap);
-}
-
-void printflike2
-cfg_add_cause(struct causelist *causes, const char *fmt, ...)
-{
-	char	*cause;
-	va_list	 ap;
-
-	va_start(ap, fmt);
-	xvasprintf(&cause, fmt, ap);
-	va_end(ap);
-
-	ARRAY_ADD(causes, cause);
-}
-
-/*
- * Load configuration file. Returns -1 for an error with a list of messages in
- * causes. Note that causes must be initialised by the caller!
- */
 int
-load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
+load_cfg(const char *path, struct cmd_q *cmdq, char **cause)
 {
 	FILE		*f;
-	u_int		 n;
-	char		*buf, *line, *cause;
-	size_t		 len;
+	u_int		 n, found;
+	char		*buf, *copy, *line, *cause1, *msg;
+	size_t		 len, oldlen;
 	struct cmd_list	*cmdlist;
-	struct cmd_ctx	 ctx;
-	int		 retval;
 
+	log_debug("loading %s", path);
 	if ((f = fopen(path, "rb")) == NULL) {
-		cfg_add_cause(causes, "%s: %s", path, strerror(errno));
+		xasprintf(cause, "%s: %s", path, strerror(errno));
 		return (-1);
 	}
-	n = 0;
 
+	n = found = 0;
 	line = NULL;
-	retval = 0;
 	while ((buf = fgetln(f, &len))) {
+		/* Trim \n. */
 		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			line = xrealloc(line, 1, len + 1);
-			memcpy(line, buf, len);
-			line[len] = '\0';
-			buf = line;
+			len--;
+		log_debug("%s: %.*s", path, (int)len, buf);
+
+		/* Current line is the continuation of the previous one. */
+		if (line != NULL) {
+			oldlen = strlen(line);
+			line = xrealloc(line, 1, oldlen + len + 1);
+		} else {
+			oldlen = 0;
+			line = xmalloc(len + 1);
 		}
+
+		/* Append current line to the previous. */
+		memcpy(line + oldlen, buf, len);
+		line[oldlen + len] = '\0';
 		n++;
 
-		if (cmd_string_parse(buf, &cmdlist, &cause) != 0) {
-			if (cause == NULL)
+		/* Continuation: get next line? */
+		len = strlen(line);
+		if (len > 0 && line[len - 1] == '\\') {
+			line[len - 1] = '\0';
+
+			/* Ignore escaped backslash at EOL. */
+			if (len > 1 && line[len - 2] != '\\')
 				continue;
-			cfg_add_cause(causes, "%s: %u: %s", path, n, cause);
-			xfree(cause);
+		}
+		copy = line;
+		line = NULL;
+
+		/* Skip empty lines. */
+		buf = copy;
+		while (isspace((u_char)*buf))
+			buf++;
+		if (*buf == '\0') {
+			free(copy);
 			continue;
 		}
+
+		/* Parse and run the command. */
+		if (cmd_string_parse(buf, &cmdlist, path, n, &cause1) != 0) {
+			free(copy);
+			if (cause1 == NULL)
+				continue;
+			xasprintf(&msg, "%s:%u: %s", path, n, cause1);
+			ARRAY_ADD(&cfg_causes, msg);
+			free(cause1);
+			continue;
+		}
+		free(copy);
+
 		if (cmdlist == NULL)
 			continue;
-		cfg_cause = NULL;
-
-		if (ctxin == NULL) {
-			ctx.msgdata = NULL;
-			ctx.curclient = NULL;
-			ctx.cmdclient = NULL;
-		} else {
-			ctx.msgdata = ctxin->msgdata;
-			ctx.curclient = ctxin->curclient;
-			ctx.cmdclient = ctxin->cmdclient;
-		}
-
-		ctx.error = cfg_error;
-		ctx.print = cfg_print;
-		ctx.info = cfg_print;
-
-		cfg_cause = NULL;
-		if (cmd_list_exec(cmdlist, &ctx) == 1)
-			retval = 1;
+		cmdq_append(cmdq, cmdlist);
 		cmd_list_free(cmdlist);
-		if (cfg_cause != NULL) {
-			cfg_add_cause(causes, "%s: %d: %s", path, n, cfg_cause);
-			xfree(cfg_cause);
-		}
+		found++;
 	}
 	if (line != NULL)
-		xfree(line);
+		free(line);
 	fclose(f);
 
-	return (retval);
+	return (found);
+}
+
+void
+cfg_default_done(unused struct cmd_q *cmdq)
+{
+	if (--cfg_references != 0)
+		return;
+	cfg_finished = 1;
+
+	if (!RB_EMPTY(&sessions))
+		cfg_show_causes(RB_MIN(sessions, &sessions));
+
+	cmdq_free(cfg_cmd_q);
+	cfg_cmd_q = NULL;
+
+	if (cfg_client != NULL) {
+		/*
+		 * The client command queue starts with client_exit set to 1 so
+		 * only continue if not empty (that is, we have been delayed
+		 * during configuration parsing for long enough that the
+		 * MSG_COMMAND has arrived), else the client will exit before
+		 * the MSG_COMMAND which might tell it not to.
+		 */
+		if (!TAILQ_EMPTY(&cfg_client->cmdq->queue))
+			cmdq_continue(cfg_client->cmdq);
+		cfg_client->references--;
+		cfg_client = NULL;
+	}
+}
+
+void
+cfg_show_causes(struct session *s)
+{
+	struct window_pane	*wp;
+	char			*cause;
+	u_int			 i;
+
+	if (s == NULL || ARRAY_EMPTY(&cfg_causes))
+		return;
+	wp = s->curw->window->active;
+
+	window_pane_set_mode(wp, &window_copy_mode);
+	window_copy_init_for_output(wp);
+	for (i = 0; i < ARRAY_LENGTH(&cfg_causes); i++) {
+		cause = ARRAY_ITEM(&cfg_causes, i);
+		window_copy_add(wp, "%s", cause);
+		free(cause);
+	}
+	ARRAY_FREE(&cfg_causes);
 }

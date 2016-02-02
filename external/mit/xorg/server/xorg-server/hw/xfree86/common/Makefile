@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 2011/04/13 16:18:14 macallan Exp $
+#	$NetBSD: Makefile,v 1.21 2014/01/16 01:15:33 christos Exp $
 
-.include <bsd.own.mk> # MINIX: for __MINIX
-.include <bsd.sys.mk> # for HOST_SH
+.include <bsd.own.mk>
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"

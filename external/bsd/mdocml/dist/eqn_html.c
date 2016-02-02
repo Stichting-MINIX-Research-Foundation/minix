@@ -1,4 +1,4 @@
-/*	$Vendor-Id: eqn_html.c,v 1.2 2011/07/24 10:09:03 kristaps Exp $ */
+/*	Id: eqn_html.c,v 1.2 2011/07/24 10:09:03 kristaps Exp  */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *

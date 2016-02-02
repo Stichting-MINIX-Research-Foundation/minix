@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $	*/
+/*	$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,23 +42,23 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $");
+__RCSID("$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * primes - generate a table of primes between two values
  *
- * By: Landon Curt Noll chongo@toad.com, ...!{sun,tolsoft}!hoptoad!chongo
- *
- * chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
+ * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
  * usage:
- *	primes [start [stop]]
+ *	primes [-dh] [start [stop]]
  *
  *	Print primes >= start and < stop.  If stop is omitted,
- *	the value 4294967295 (2^32-1) is assumed.  If start is
+ *	the value SPSPMAX is assumed.  If start is
  *	omitted, start is read from standard input.
+ *		-d: print difference to previous prime, e.g. 3 (1)
+ *		-h: print primes in hexadecimal
  *
  * validation check: there are 664579 primes between 0 and 10^7
  */
@@ -66,11 +66,12 @@ __RCSID("$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <math.h>
-#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "primes.h"
@@ -80,47 +81,34 @@ __RCSID("$NetBSD: primes.c,v 1.19 2011/08/30 02:58:04 jakllsch Exp $");
  *
  * We only sieve the odd numbers.  The base of our sieve windows are always
  * odd.  If the base of table is 1, table[i] represents 2*i-1.  After the
- * sieve, table[i] == 1 if and only iff 2*i-1 is prime.
+ * sieve, table[i] == 1 if and only if 2*i-1 is prime.
  *
  * We make TABSIZE large to reduce the overhead of inner loop setup.
  */
 static char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
 
-/*
- * prime[i] is the (i-1)th prime.
- *
- * We are able to sieve 2^32-1 because this byte table yields all primes 
- * up to 65537 and 65537^2 > 2^32-1.
- */
-extern const ubig prime[];
-extern const ubig *pr_limit;		/* largest prime in the prime array */
+static int dflag, hflag;
 
-/*
- * To avoid excessive sieves for small factors, we use the table below to 
- * setup our sieve blocks.  Each element represents a odd number starting 
- * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
- */
-extern const char pattern[];
-extern const int pattern_size;	/* length of pattern array */
-
-static int dflag;
-
-static void primes(ubig, ubig);
-static ubig read_num_buf(void);
+static void primes(uint64_t, uint64_t);
+static uint64_t read_num_buf(void);
 static void usage(void) __dead;
+
 
 int
 main(int argc, char *argv[])
 {
-	ubig start;		/* where to start generating */
-	ubig stop;		/* don't generate at or above this value */
+	uint64_t start;		/* where to start generating */
+	uint64_t stop;		/* don't generate at or above this value */
 	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "d")) != -1)
+	while ((ch = getopt(argc, argv, "dh")) != -1)
 		switch (ch) {
 		case 'd':
 			dflag++;
+			break;
+		case 'h':
+			hflag++;
 			break;
 		case '?':
 		default:
@@ -130,10 +118,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	start = 0;
-	stop = BIG;
+	stop = SPSPMAX;
 
 	/*
-	 * Convert low and high args.  Strtoul(3) sets errno to
+	 * Convert low and high args.  Strtoumax(3) sets errno to
 	 * ERANGE if the number is too large, but, if there's
 	 * a leading minus sign it returns the negation of the
 	 * result of the conversion, which we'd rather disallow.
@@ -145,18 +133,21 @@ main(int argc, char *argv[])
 			errx(1, "negative numbers aren't permitted.");
 
 		errno = 0;
-		start = strtoul(argv[0], &p, 10);
+		start = strtoumax(argv[0], &p, 0);
 		if (errno)
 			err(1, "%s", argv[0]);
 		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", argv[0]);
 
 		errno = 0;
-		stop = strtoul(argv[1], &p, 10);
+		stop = strtoumax(argv[1], &p, 0);
 		if (errno)
 			err(1, "%s", argv[1]);
 		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", argv[1]);
+		if (stop > SPSPMAX)
+			errx(1, "%s: stop value too large (>%" PRIu64 ").",
+				argv[1], (uint64_t) SPSPMAX);
 		break;
 	case 1:
 		/* Start on the command line. */
@@ -164,7 +155,7 @@ main(int argc, char *argv[])
 			errx(1, "negative numbers aren't permitted.");
 
 		errno = 0;
-		start = strtoul(argv[0], &p, 10);
+		start = strtoumax(argv[0], &p, 0);
 		if (errno)
 			err(1, "%s", argv[0]);
 		if (*p != '\0')
@@ -180,18 +171,18 @@ main(int argc, char *argv[])
 	if (start > stop)
 		errx(1, "start value must be less than stop value.");
 	primes(start, stop);
-	exit(0);
+	return (0);
 }
 
 /*
  * read_num_buf --
- *	This routine returns a number n, where 0 <= n && n <= BIG.
+ *	This routine returns a number n, where 0 <= n && n <= ULONG_MAX.
  */
-ubig
+static uint64_t
 read_num_buf(void)
 {
-	ubig val;
-	char *p, buf[100];		/* > max number of digits. */
+	uint64_t val;
+	char *p, buf[LINE_MAX];		/* > max number of digits. */
 
 	for (;;) {
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
@@ -205,7 +196,7 @@ read_num_buf(void)
 		if (*p == '-')
 			errx(1, "negative numbers aren't permitted.");
 		errno = 0;
-		val = strtoul(buf, &p, 10);
+		val = strtoumax(buf, &p, 0);
 		if (errno)
 			err(1, "%s", buf);
 		if (*p != '\n')
@@ -216,31 +207,28 @@ read_num_buf(void)
 
 /*
  * primes - sieve and print primes from start up to and but not including stop
- *
- *	start	where to start generating
- *	stop	don't generate at or above this value
  */
-void
-primes(ubig start, ubig stop)
+static void
+primes(uint64_t start, uint64_t stop)
 {
 	char *q;		/* sieve spot */
-	ubig factor;		/* index and factor */
+	uint64_t factor;	/* index and factor */
 	char *tab_lim;		/* the limit to sieve on the table */
-	const ubig *p;		/* prime table pointer */
-	ubig fact_lim;		/* highest prime for current block */
-	ubig mod;		/* temp storage for mod */
-	ubig prev = 0;
+	const uint64_t *p;	/* prime table pointer */
+	uint64_t fact_lim;	/* highest prime for current block */
+	uint64_t mod;		/* temp storage for mod */
+	uint64_t prev = 0;
 
 	/*
 	 * A number of systems can not convert double values into unsigned
 	 * longs when the values are larger than the largest signed value.
-	 * We don't have this problem, so we can go all the way to BIG.
+	 * We don't have this problem, so we can go all the way to ULONG_MAX.
 	 */
 	if (start < 3) {
-		start = (ubig)2;
+		start = 2;
 	}
 	if (stop < 3) {
-		stop = (ubig)2;
+		stop = 2;
 	}
 	if (stop <= start) {
 		return;
@@ -264,10 +252,9 @@ primes(ubig start, ubig stop)
 		for (p = &prime[0], factor = prime[0];
 		    factor < stop && p <= pr_limit; factor = *(++p)) {
 			if (factor >= start) {
-				printf("%lu", (unsigned long) factor);
+				printf(hflag ? "%" PRIx64 : "%" PRIu64, factor);
 				if (dflag) {
-					printf(" (%lu)",
-					    (unsigned long) factor - prev);
+					printf(" (%" PRIu64 ")", factor - prev);
 				}
 				putchar('\n');
 			}
@@ -305,10 +292,10 @@ primes(ubig start, ubig stop)
 		/* note highest useful factor and sieve spot */
 		if (stop-start > TABSIZE+TABSIZE) {
 			tab_lim = &table[TABSIZE]; /* sieve it all */
-			fact_lim = sqrt((double)(start)+TABSIZE+TABSIZE+1.0);
+			fact_lim = sqrt(start+1.0+TABSIZE+TABSIZE);
 		} else {
 			tab_lim = &table[(stop-start)/2]; /* partial sieve */
-			fact_lim = sqrt((double)(stop)+1.0);
+			fact_lim = sqrt(stop+1.0);
 		}
 		/* sieve for factors >= 17 */
 		factor = 17;	/* 17 is first prime to use */
@@ -325,28 +312,32 @@ primes(ubig start, ubig stop)
 			for ( ; q < tab_lim; q += factor) {
 				*q = '\0'; /* sieve out a spot */
 			}
-		} while ((factor=(ubig)(*(p++))) <= fact_lim);
+			factor = *p++;
+		} while (factor <= fact_lim);
 
 		/*
 		 * print generated primes
 		 */
 		for (q = table; q < tab_lim; ++q, start+=2) {
 			if (*q) {
-				printf("%lu", (unsigned long) start);
-				if (dflag) {
-					printf(" (%lu)",
-					    (unsigned long) start - prev);
-					prev = start;
+				if (start > SIEVEMAX) {
+					if (!isprime(start))
+						continue;
+				}
+				printf(hflag ? "%" PRIx64 : "%" PRIu64, start);
+				if (dflag && (prev || (start <= *pr_limit))) {
+					printf(" (%" PRIu64 ")", start - prev);
 				}
 				putchar('\n');
+				prev = start;
 			}
 		}
 	}
 }
 
-void
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: primes [-d] [start [stop]]\n");
+	(void)fprintf(stderr, "usage: primes [-dh] [start [stop]]\n");
 	exit(1);
 }

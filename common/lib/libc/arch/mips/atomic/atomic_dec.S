@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.4 2012/03/14 16:50:34 christos Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.5 2015/06/01 23:16:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_dec.S,v 1.4 2012/03/14 16:50:34 christos Exp $")
+RCSID("$NetBSD: atomic_dec.S,v 1.5 2015/06/01 23:16:54 matt Exp $")
 
 	.text
 	.set	noreorder
@@ -45,12 +45,17 @@ RCSID("$NetBSD: atomic_dec.S,v 1.4 2012/03/14 16:50:34 christos Exp $")
 #endif /* _KERNEL_OPT */
 
 LEAF(_atomic_dec_32)
+#if defined(_MIPS_ARCH_OCTEONP) || defined(_MIPS_ARCH_OCTEON2)
+	li		t0, -1
+	saa		t0, (a0)
+#else
 1:	INT_LL		t0, 0(a0)
 	 nop
 	INT_ADDU	t0, -1
 	INT_SC		t0, 0(a0)
 	beq		t0, zero, 1b
  	 nop
+#endif
 	j		ra
 	 nop
 END(_atomic_dec_32)
@@ -71,12 +76,17 @@ ATOMIC_OP_ALIAS(atomic_dec_32_nv, _atomic_dec_32_nv)
 
 #if !defined(__mips_o32)
 LEAF(_atomic_dec_64)
+#if defined(_MIPS_ARCH_OCTEONP) || defined(_MIPS_ARCH_OCTEON2)
+	li		t0, -1
+	saad		t0, (a0)
+#else
 1:	REG_LL		t0, 0(a0)
 	 nop
 	REG_ADDU	t0, -1
 	REG_SC		t0, 0(a0)
 	beq		t0, zero, 1b
  	 nop
+#endif
 	j		ra
 	 nop
 END(_atomic_dec_64)

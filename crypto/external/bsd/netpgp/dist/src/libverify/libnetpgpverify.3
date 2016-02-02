@@ -1,0 +1,146 @@
+.\" $NetBSD: libnetpgpverify.3,v 1.6 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt LIBNETPGPVERIFY 3
+.Os
+.Sh NAME
+.Nm libnetpgpverify
+.Nd library to verify digital signatures
+.Sh LIBRARY
+.Lb libnetpgpverify
+.Sh SYNOPSIS
+.In netpgp/verify.h
+.Ft int
+.Fo pgpv_read_pubring
+.Fa "pgpv_t *pgp" "const void *keyring" "ssize_t size"
+.Fc
+.Ft size_t
+.Fo pgpv_verify
+.Fa "pgpv_cursor_t *cursor" "pgpv_t *pgp" "const void *ptr" "ssize_t size"
+.Fc
+.Ft size_t
+.Fo pgpv_get_verified
+.Fa "pgpv_cursor_t *cursor" "size_t cookie" "char **ret"
+.Fc
+.Ft size_t
+.Fo pgpv_get_entry
+.Fa "pgpv_t *pgp" "unsigned ent" "char **ret"
+.Fc
+.Ft int
+.Fo pgpv_close
+.Fa "pgpv_t *pgp"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a small library which will verify a digital signature on a text or
+binary document.
+It has been kept deliberately small and only uses compression libraries
+to function.
+.Pp
+PGP messages, including key rings, are made up of PGP packets, defined
+in RFC 4880.
+To match a digital signature, the public key of the signer must be
+located in a public key ring.
+This library has enough functionality to parse a pubkey keyring,
+using
+.Fn pgpv_read_pubring
+to read the public keys of trusted identities,
+and to read files or memory which has already been signed.
+The
+.Fn pgpv_verify
+function is used to verify the signature, either on data, or on memory.
+To signal to
+.Fn pgpv_verify
+to read a file and verify it, the
+.Dv size
+argument should be set to
+.Dv -1
+whilst a positive size signals that the pointer value should be that
+of signed memory.
+.Fn pgpv_verify
+returns a cookie if the ignature was verified, or 0 if it did not.
+This cookie can subsequently be used to retrieve the data which
+was verified.
+.Pp
+If the signature does match, then the file or memory can be considered as being
+verified as being unmodified and unchanged, integrally sound.
+.Pp
+Signatures have validity dates on them, and it is possible for a signature to
+have expired when it is being checked.
+If for any reason the signature does not match, then the reason for not
+verifying the signature will be stored in the
+.Dv why
+buffer in the
+.Dv pgpv_cursor_t
+structure.
+.Pp
+Occasionally, the memory or contents of the file which matched the signature
+will be needed, rather than a boolean value of whether it was verified.
+To do this, the
+.Fn pgpv_get_verified
+function is used.
+Arguments to
+.Fn pgpv_get_verified
+are the cookie returned from the verification, and a buffer
+allocated for the returned data and its size.
+If an error occurs, or the signature is not verified, a zero value is returned
+for the size.
+.Nm
+stores the starts of the data of all verified matches, and so the entry
+number argument is the index of the occurrence of verification.
+The first match will have an entry number of 0, the second 1, and so on.
+.Pp
+The
+.Fn pgpv_close
+function is used to clean up after all matching and verification has taken place.
+It frees and de-allocates all resources used in the verification of the signature.
+.Pp
+The program used for signing may encode into base64 encoding, and it may also
+use embedded compression to make the output smaller than it would otherwise be.
+This is handled automatically by
+.Nm .
+.Sh SEE ALSO
+.Xr bn 3 ,
+.\" .Xr bzlib2 3 ,
+.Xr zlib 3
+.Sh STANDARDS
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org

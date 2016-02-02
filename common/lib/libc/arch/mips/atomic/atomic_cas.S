@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.3 2012/03/14 16:50:34 christos Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4 2015/06/01 23:16:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_cas.S,v 1.3 2012/03/14 16:50:34 christos Exp $")
+RCSID("$NetBSD: atomic_cas.S,v 1.4 2015/06/01 23:16:54 matt Exp $")
 
 	.text
 	.set	noat
@@ -46,6 +46,9 @@ LEAF(_atomic_cas_32)
 	beq		t0, zero, 1b
  	 nop
 	move		v0, a1
+#ifdef _MIPS_ARCH_OCTEONP
+	syncw
+#endif
 2:
 	j		ra
 	 nop
@@ -63,6 +66,9 @@ LEAF(_atomic_cas_64)
 	beq		t0, zero, 1b
  	 nop
 	move		v0, a1
+#ifdef _MIPS_ARCH_OCTEONP
+	syncw
+#endif
 2:
 	j		ra
 	 nop

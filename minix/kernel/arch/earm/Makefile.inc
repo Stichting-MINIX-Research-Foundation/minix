@@ -19,7 +19,7 @@ MINC_OBJS_UNPAGED= atoi.o \
 	strcmp.o strcpy.o strlen.o strncmp.o \
 	memcpy.o memmove.o memset.o 
 MINC_OBJS_UNPAGED+= divmodsi4.o divsi3.o udivsi3.o umodsi3.o \
-	umoddi3.o udivmoddi4.o aeabi_idivmod.o aeabi_uidivmod.o \
+	umoddi3.o udivmoddi4.o __aeabi_idiv0.o aeabi_idivmod.o aeabi_uidivmod.o \
 	udivmodsi4.o aeabi_uldivmod.o
 atoi.o:		${NETBSDSRCDIR}/minix/lib/libminc/atoi.c
 printf.o:	${NETBSDSRCDIR}/sys/lib/libsa/printf.c
@@ -30,17 +30,19 @@ memset.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/memset.S
 strlen.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strlen.S
 strcpy.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strcpy.S
 strcmp.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/string/strcmp.S
+__aeabi_idiv0.o:	${NETBSDSRCDIR}/common/lib/libc/arch/arm/gen/__aeabi_idiv0.c
+CPPFLAGS.__aeabi_idiv0.c+= -D_STANDALONE -I${NETBSDSRCDIR}/sys
 
-divsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/divsi3.c
-udivsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/udivsi3.c
-umodsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/umodsi3.c
-umoddi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/umoddi3.c
-udivmoddi4.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/udivmoddi4.c
-divmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/divmodsi4.S
-udivmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/udivmodsi4.S
-aeabi_idivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_idivmod.S
-aeabi_uidivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_uidivmod.S
-aeabi_uldivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/aeabi_uldivmod.S
+divsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/divsi3.c
+udivsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/udivsi3.c
+umodsi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/umodsi3.c
+umoddi3.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/umoddi3.c
+udivmoddi4.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/udivmoddi4.c
+divmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/divmodsi4.S
+udivmodsi4.o:		${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/udivmodsi4.S
+aeabi_idivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_idivmod.S
+aeabi_uidivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_uidivmod.S
+aeabi_uldivmod.o:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_uldivmod.S
 
 # the following is required by pre_init.c
 strncmp.o:	${NETBSDSRCDIR}/common/lib/libc/string/strncmp.c
@@ -86,7 +88,9 @@ PROCOFFSETSCF=procoffsets.cf
 procoffsets.h: ${PROCOFFSETSCF} kernel.h proc.h stackframe.h archtypes.h
 	${_MKTARGET_CREATE}
 	${TOOL_CAT} ${HERE}/${PROCOFFSETSCF} | \
-	  ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} >$@.tmp && \
+		${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} \
+		${CPPFLAGS} ${PROF} ${${USE_BITCODE:Uno} == "yes":? -fno-lto:} \
+		${GENASSYM_CPPFLAGS} >$@.tmp && \
 	  mv -f $@.tmp $@ 
 
 sconst.h: procoffsets.h

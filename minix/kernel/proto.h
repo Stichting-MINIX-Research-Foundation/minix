@@ -13,12 +13,16 @@
 
 /* Struct declarations. */
 struct proc;
+struct ipc_filter_s;
 
 /* clock.c */
+void init_clock(void);
 clock_t get_realtime(void);
 void set_realtime(clock_t);
 void set_adjtime_delta(int32_t);
 clock_t get_monotonic(void);
+void set_boottime(time_t);
+time_t get_boottime(void);
 void set_kernel_timer(minix_timer_t *tp, clock_t t, tmr_func_t f);
 void reset_kernel_timer(minix_timer_t *tp);
 void ser_dump_proc(void);
@@ -34,6 +38,7 @@ void cycles_accounting_init(void);
 void context_stop(struct proc * p);
 /* this is a wrapper to make calling it from assembly easier */
 void context_stop_idle(void);
+void get_cpu_ticks(unsigned int cpu, uint64_t ticks[MINIX_CPUSTATES]);
 int restore_fpu(struct proc *);
 void save_fpu(struct proc *);
 void save_local_fpu(struct proc *, int retain);
@@ -58,6 +63,9 @@ int has_pending_notify(struct proc * caller, int src_p);
 int has_pending_asend(struct proc * caller, int src_p);
 void unset_notify_pending(struct proc * caller, int src_p);
 int mini_notify(const struct proc *src, endpoint_t dst);
+void vm_suspend(struct proc *caller, const struct proc *target,
+        const vir_bytes linaddr, const vir_bytes len, const int type,
+        const int writeflag);
 void enqueue(struct proc *rp);
 void dequeue(struct proc *rp);
 void switch_to_user(void);
@@ -76,13 +84,12 @@ int isokendpt_f(endpoint_t e, int *p, int f);
 #endif
 void proc_no_time(struct proc *p);
 void reset_proc_accounting(struct proc *p);
-void increase_proc_signals(struct proc *p);
 void flag_account(struct proc *p, int flag);
 int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
 	size);
 
 /* start.c */
-void cstart();
+void cstart(void);
 char *env_get(const char *key);
 
 /* system.c */
@@ -99,7 +106,17 @@ void system_init(void);
 void clear_endpoint(struct proc *rc);
 void clear_ipc_refs(struct proc *rc, int caller_ret);
 void kernel_call_resume(struct proc *p);
-int sched_proc(struct proc *rp, int priority, int quantum, int cpu);
+int sched_proc(struct proc *rp, int priority, int quantum, int cpu, int niced);
+int add_ipc_filter(struct proc *rp, int type,
+    vir_bytes address, size_t length);
+void clear_ipc_filters(struct proc *rp);
+int check_ipc_filter(struct ipc_filter_s *ipcf, int fill_flags);
+int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
+    vir_bytes m_src_v, message *m_src_p);
+int allow_ipc_filtered_memreq(struct proc *src_rp, struct proc *dst_rp);
+int priv_add_irq(struct proc *rp, int irq);
+int priv_add_io(struct proc *rp, struct io_range *ior);
+int priv_add_mem(struct proc *rp, struct minix_mem_range *memr);
 
 /* system/do_vtimer.c */
 void vtimer_check(struct proc *rp);
@@ -128,6 +145,8 @@ char *schedulerstr(struct proc *scheduler);
 void print_proc(struct proc *pp);
 /* prints the given process and recursively all processes it depends on */
 void print_proc_recursive(struct proc *pp);
+void printmsg(message *msg, struct proc *src, struct proc *dst,
+    char operation, int printparams);
 #if DEBUG_IPC_HOOK
 void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst);
 void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst);
@@ -137,8 +156,9 @@ void hook_ipc_clear(struct proc *proc);
 #endif
 
 /* system/do_safecopy.c */
+struct cp_sfinfo; /* external callers may only provide NULL */
 int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
-	vir_bytes, vir_bytes *, endpoint_t *, u32_t *);
+	vir_bytes, vir_bytes *, endpoint_t *, struct cp_sfinfo *);
 
 /* system/do_diagctl.c */
 int do_diagctl(struct proc * caller, message *m);
@@ -150,8 +170,8 @@ void stop_profile_clock(void);
 #endif
 
 /* functions defined in architecture-dependent files. */
-void prot_init();
-void arch_post_init();
+void prot_init(void);
+void arch_post_init(void);
 void arch_set_secondary_ipc_return(struct proc *, u32_t val);
 phys_bytes phys_copy(phys_bytes source, phys_bytes dest, phys_bytes
 	count);
@@ -203,7 +223,6 @@ int vm_lookup(const struct proc *proc, vir_bytes virtual, phys_bytes
 	*result, u32_t *ptent);
 size_t vm_lookup_range(const struct proc *proc,
        vir_bytes vir_addr, phys_bytes *phys_addr, size_t bytes);
-void delivermsg(struct proc *target);
 void arch_do_syscall(struct proc *proc);
 int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int
 	*flags);

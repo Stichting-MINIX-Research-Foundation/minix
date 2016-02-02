@@ -7,6 +7,7 @@
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
  *   do_getsetpriority: get/set process priority
  *   do_svrctl: process manager control
+ *   do_getrusage: obtain process resource usage information
  */
 
 #include "pm.h"
@@ -27,6 +28,7 @@
 #include "mproc.h"
 #include "kernel/proc.h"
 
+/* START OF COMPATIBILITY BLOCK */
 struct utsname uts_val = {
   OS_NAME,		/* system name */
   "noname",		/* node/network name */
@@ -34,17 +36,19 @@ struct utsname uts_val = {
   OS_VERSION,		/* O.S. version (e.g. Minix 3.3.0 (GENERIC)) */
 #if defined(__i386__)
   "i386",		/* machine (cpu) type */
-  "i386",		/* architecture */
 #elif defined(__arm__)
-  "arm",		/* machine (cpu) type */
-  "arm",		/* architecture */
+  "evbarm",		/* machine (cpu) type */
 #else
 #error			/* oops, no 'uname -mk' */
 #endif
 };
 
 static char *uts_tbl[] = {
-  uts_val.arch,
+#if defined(__i386__)
+  "i386",		/* architecture */
+#elif defined(__arm__)
+  "evbarm",		/* architecture */
+#endif
   NULL,			/* No kernel architecture */
   uts_val.machine,
   NULL,			/* No hostname */
@@ -54,11 +58,13 @@ static char *uts_tbl[] = {
   uts_val.sysname,
   NULL,			/* No bus */			/* No bus */
 };
+/* END OF COMPATIBILITY BLOCK */
 
 #if ENABLE_SYSCALL_STATS
 unsigned long calls_stats[NR_PM_CALLS];
 #endif
 
+/* START OF COMPATIBILITY BLOCK */
 /*===========================================================================*
  *				do_sysuname				     *
  *===========================================================================*/
@@ -68,28 +74,15 @@ int do_sysuname()
   int r;
   size_t n;
   char *string;
-#if 0 /* for updates */
-  char tmp[sizeof(uts_val.nodename)];
-  static short sizes[] = {
-	0,	/* arch, (0 = read-only) */
-	0,	/* kernel */
-	0,	/* machine */
-	0,	/* sizeof(uts_val.hostname), */
-	sizeof(uts_val.nodename),
-	0,	/* release */
-	0,	/* version */
-	0,	/* sysname */
-  };
-#endif
 
-  if (m_in.m_lc_pm_sysuname.field >= _UTS_MAX) return(EINVAL);
+  if (m_in.m_lc_pm_sysuname.field >= __arraycount(uts_tbl)) return(EINVAL);
 
   string = uts_tbl[m_in.m_lc_pm_sysuname.field];
   if (string == NULL)
 	return EINVAL;	/* Unsupported field */
 
   switch (m_in.m_lc_pm_sysuname.req) {
-  case _UTS_GET:
+  case 0:
 	/* Copy an uname string to the user. */
 	n = strlen(string) + 1;
 	if (n > m_in.m_lc_pm_sysuname.len) n = m_in.m_lc_pm_sysuname.len;
@@ -98,27 +91,13 @@ int do_sysuname()
 	if (r < 0) return(r);
 	break;
 
-#if 0	/* no updates yet */
-  case _UTS_SET:
-	/* Set an uname string, needs root power. */
-	len = sizes[m_in.m_lc_pm_sysuname.field];
-	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
-	n = len < m_in.m_lc_pm_sysuname.len ? len : m_in.m_lc_pm_sysuname.len;
-	if (n <= 0) return(EINVAL);
-	r = sys_datacopy(mp->mp_endpoint, m_in.m_lc_pm_sysuname.value, SELF,
-		(phys_bytes)tmp, (phys_bytes)n);
-	if (r < 0) return(r);
-	tmp[n-1] = 0;
-	strcpy(string, tmp);
-	break;
-#endif
-
   default:
 	return(EINVAL);
   }
   /* Return the number of bytes moved. */
   return(n);
 }
+/* END OF COMPATIBILITY BLOCK */
 
 
 /*===========================================================================*
@@ -404,28 +383,51 @@ int do_svrctl(void)
 /*===========================================================================*
  *				do_getrusage				     *
  *===========================================================================*/
-int do_getrusage()
+int
+do_getrusage(void)
 {
-	int res = 0;
-	clock_t user_time = 0;
-	clock_t sys_time = 0;
+	clock_t user_time, sys_time;
 	struct rusage r_usage;
-	u64_t usec;
-	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
-		m_in.m_lc_pm_rusage.who != RUSAGE_CHILDREN)
-		return EINVAL;
-	if ((res = sys_getrusage(&r_usage, who_e)) < 0)
-		return res;
+	int r, children;
 
-	if (m_in.m_lc_pm_rusage.who == RUSAGE_CHILDREN) {
-		usec = mp->mp_child_utime * 1000000 / sys_hz();
-		r_usage.ru_utime.tv_sec = usec / 1000000;
-		r_usage.ru_utime.tv_usec = usec % 1000000;
-		usec = mp->mp_child_stime * 1000000 / sys_hz();
-		r_usage.ru_stime.tv_sec = usec / 1000000;
-		r_usage.ru_stime.tv_usec = usec % 1000000;
+	if (m_in.m_lc_pm_rusage.who != RUSAGE_SELF &&
+	    m_in.m_lc_pm_rusage.who != RUSAGE_CHILDREN)
+		return EINVAL;
+
+	/*
+	 * TODO: first relay the call to VFS.  As is, VFS does not have any
+	 * fields it can fill with meaningful values, but this may change in
+	 * the future.  In that case, PM would first have to use the tell_vfs()
+	 * system to get those values from VFS, and do the rest here upon
+	 * getting the response.
+	 */
+
+	memset(&r_usage, 0, sizeof(r_usage));
+
+	children = (m_in.m_lc_pm_rusage.who == RUSAGE_CHILDREN);
+
+	/*
+	 * Get system times.  For RUSAGE_SELF, get the times for the calling
+	 * process from the kernel.  For RUSAGE_CHILDREN, we already have the
+	 * values we should return right here.
+	 */
+	if (!children) {
+		if ((r = sys_times(who_e, &user_time, &sys_time, NULL,
+		    NULL)) != OK)
+			return r;
+	} else {
+		user_time = mp->mp_child_utime;
+		sys_time = mp->mp_child_stime;
 	}
 
+	/* In both cases, convert from clock ticks to microseconds. */
+	set_rusage_times(&r_usage, user_time, sys_time);
+
+	/* Get additional fields from VM. */
+	if ((r = vm_getrusage(who_e, &r_usage, children)) != OK)
+		return r;
+
+	/* Finally copy the structure to the caller. */
 	return sys_datacopy(SELF, (vir_bytes)&r_usage, who_e,
-		m_in.m_lc_pm_rusage.addr, (vir_bytes) sizeof(r_usage));
+	    m_in.m_lc_pm_rusage.addr, (vir_bytes)sizeof(r_usage));
 }

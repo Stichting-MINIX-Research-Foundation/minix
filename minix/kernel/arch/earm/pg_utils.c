@@ -157,7 +157,7 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 
 void pg_identity(kinfo_t *cbi)
 {
-	int i;
+	uint32_t i;
 	phys_bytes phys;
 
 	/* We map memory that does not correspond to physical memory
@@ -240,7 +240,7 @@ void vm_enable_paging(void)
 	write_sctlr(sctlr);
 }
 
-phys_bytes pg_load()
+phys_bytes pg_load(void)
 {
 	phys_bytes phpagedir = vir2phys(pagedir);
 	write_ttbr0(phpagedir);

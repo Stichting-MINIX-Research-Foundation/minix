@@ -1,0 +1,32 @@
+# $NetBSD: userid.at,v 1.1 2009/06/13 05:25:09 agc Exp $
+
+AT_SETUP([tests with no default userid in gpg.conf])
+
+# Remove any previous testsuite run's $testhomedir
+AT_CHECK([rm -rf $testhomedir], [0], [ignore], [ignore])
+
+# Create $testhomedir as fake $HOME/.gnupg
+AT_CHECK([mkdir -m 700 -p $testhomedir], [0], [ignore], [ignore])
+
+# Import private key for tests
+# XXX: Use GPG until NetPGP's key management is overhauled
+AT_CHECK([gpg --batch --homedir $testhomedir --import < $testprivatekey],
+    [0], [ignore], [ignore])
+
+AT_CHECK([cp $abs_top_builddir/libtool file3], [0], [ignore], [ignore])
+
+# sign with an explicit userid, no default in gpg.conf
+AT_CHECK([netpgp --homedir $testhomedir --userid $testuserid --sign file3],
+    [0], [ignore], [ignore])
+
+# test with no userid
+AT_CHECK([netpgp --homedir $testhomedir --cat --output=file3.copy file3.gpg],
+    [0], [ignore], [ignore])
+
+AT_CHECK([diff file3 file3.copy])
+
+# Create a gpg.conf
+#AT_CHECK([echo "default-key $testuserid" > $testhomedir/gpg.conf],
+#    [0], [ignore], [ignore])
+
+AT_CLEANUP

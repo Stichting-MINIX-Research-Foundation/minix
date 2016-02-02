@@ -1,0 +1,256 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Support for debugging output */
+#undef DEBUG
+
+/* Default delay */
+#undef DEFAULT_DELAY
+
+/* Default number of processes to display */
+#undef DEFAULT_TOPN
+
+/* Enable color */
+#undef ENABLE_COLOR
+
+/* Enable dual architecture */
+#undef ENABLE_DUALARCH
+
+/* Enable kill and renice */
+#undef ENABLE_KILL
+
+/* Supports C99 style variadic macros */
+#undef HAVE_C99_VARIADIC_MACROS
+
+/* Define to 1 if you have the <curses.h> header file. */
+#undef HAVE_CURSES_H
+
+/* Define to 1 if you have the declaration of `sys_errlist', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SYS_ERRLIST
+
+/* Define to 1 if you have the declaration of `sys_signame', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SYS_SIGNAME
+
+/* Define to 1 if you have the declaration of `tgetent', and to 0 if you
+   don't. */
+#undef HAVE_DECL_TGETENT
+
+/* Define to 1 if you have the declaration of `tgetflag', and to 0 if you
+   don't. */
+#undef HAVE_DECL_TGETFLAG
+
+/* Define to 1 if you have the declaration of `tgetnum', and to 0 if you
+   don't. */
+#undef HAVE_DECL_TGETNUM
+
+/* Define to 1 if you have the declaration of `tgetstr', and to 0 if you
+   don't. */
+#undef HAVE_DECL_TGETSTR
+
+/* Define to 1 if you have the declaration of `tgoto', and to 0 if you don't.
+   */
+#undef HAVE_DECL_TGOTO
+
+/* Define to 1 if you have the declaration of `tputs', and to 0 if you don't.
+   */
+#undef HAVE_DECL_TPUTS
+
+/* Platform module */
+#undef HAVE_FORMAT_PROCESS_HEADER
+
+/* Define to 1 if you have the `getopt' function. */
+#undef HAVE_GETOPT
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Supports gnu style variadic macros */
+#undef HAVE_GNU_VARIADIC_MACROS
+
+/* Define to 1 if the system has the type `id_t'. */
+#undef HAVE_ID_T
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `elf' library (-lelf). */
+#undef HAVE_LIBELF
+
+/* Define to 1 if you have the `kstat' library (-lkstat). */
+#undef HAVE_LIBKSTAT
+
+/* Define to 1 if you have the `kvm' library (-lkvm). */
+#undef HAVE_LIBKVM
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `mach' library (-lmach). */
+#undef HAVE_LIBMACH
+
+/* Define to 1 if you have the `mas' library (-lmas). */
+#undef HAVE_LIBMAS
+
+/* Define to 1 if you have the `perfstat' library (-lperfstat). */
+#undef HAVE_LIBPERFSTAT
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if the system has the type `lwpid_t'. */
+#undef HAVE_LWPID_T
+
+/* Define to 1 if you have the <math.h> header file. */
+#undef HAVE_MATH_H
+
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if the system has the type `pid_t'. */
+#undef HAVE_PID_T
+
+/* Define to 1 if you have the `setbuffer' function. */
+#undef HAVE_SETBUFFER
+
+/* Define to 1 if you have the `setpriority' function. */
+#undef HAVE_SETPRIORITY
+
+/* Define to 1 if you have the `setvbuf' function. */
+#undef HAVE_SETVBUF
+
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
+/* Define to 1 if you have the `sighold' function. */
+#undef HAVE_SIGHOLD
+
+/* Define to 1 if you have the `sigprocmask' function. */
+#undef HAVE_SIGPROCMASK
+
+/* Define to 1 if you have the `sigrelse' function. */
+#undef HAVE_SIGRELSE
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strchr' function. */
+#undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/utsname.h> header file. */
+#undef HAVE_SYS_UTSNAME_H
+
+/* Define to 1 if you have the <termcap.h> header file. */
+#undef HAVE_TERMCAP_H
+
+/* Define to 1 if you have the <term.h> header file. */
+#undef HAVE_TERM_H
+
+/* Define to 1 if the system has the type `time_t'. */
+#undef HAVE_TIME_T
+
+/* Define to 1 if the system has the type `uid_t'. */
+#undef HAVE_UID_T
+
+/* Define to 1 if you have the `uname' function. */
+#undef HAVE_UNAME
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Platform module */
+#undef MODULE
+
+/* Default number of processes to display on non-terminals when topn is all */
+#undef NOMINAL_TOPN
+
+/* Define the major OS revision number. */
+#undef OSMAJOR
+
+/* Define the OS revision. */
+#undef OSREV
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define as the type for the argument to the putc function of tputs ('int' or
+   'char') */
+#undef TPUTS_PUTC_ARGTYPE
+
+/* Define the system hardware platform */
+#undef UNAME_HARDWARE
+
+/* Include code that utilizes extensions */
+#undef WITH_EXT

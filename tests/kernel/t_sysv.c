@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sysv.c,v 1.3 2013/07/24 11:44:10 skrll Exp $	*/
+/*	$NetBSD: t_sysv.c,v 1.4 2014/03/02 20:13:12 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -88,9 +88,6 @@ size_t	pgsize;
 #define	MTYPE_2		3
 #define	MTYPE_2_ACK	4
 
-int	sender_msqid = -1;
-int	sender_semid = -1;
-int	sender_shmid = -1;
 pid_t	child_pid;
 
 key_t	msgkey, semkey, shmkey;
@@ -102,6 +99,38 @@ union semun {
 	struct	semid_ds *buf;	/* buffer for IPC_{STAT,SET} */
 	u_short	*array;		/* array for GETALL & SETALL */
 };
+
+
+/* Writes an integer to a file.  To be used from the body of the test
+ * cases below to pass any global identifiers to the cleanup routine. */
+static void
+write_int(const char *path, const int value)
+{
+	int output;
+
+	output = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	ATF_REQUIRE_MSG(output != -1, "Failed to create %s", path);
+	write(output, &value, sizeof(value));
+	close(output);
+}
+
+
+/* Reads an integer from a file.  To be used from the cleanup routines
+ * of the test cases below. */
+static int
+read_int(const char *path)
+{
+	int input;
+
+	input = open(path, O_RDONLY);
+	if (input == -1)
+		return -1;
+	else {
+		int value;
+		read(input, &value, sizeof(value));
+		return value;
+	}
+}
 
 
 void
@@ -175,6 +204,7 @@ ATF_TC_BODY(msg, tc)
 	struct msqid_ds m_ds;
 	struct mymsg m;
 	sigset_t sigmask;
+	int sender_msqid;
 	int loop;
 	int c_status;
 
@@ -206,6 +236,7 @@ ATF_TC_BODY(msg, tc)
 
 	sender_msqid = msgget(msgkey, IPC_CREAT | 0640);
 	ATF_REQUIRE_MSG(sender_msqid != -1, "msgget: %d", errno);
+	write_int("sender_msqid", sender_msqid);
 
 	if (did_sigsys) {
 		atf_tc_skip("SYSV Message Queue not supported");
@@ -304,14 +335,15 @@ ATF_TC_BODY(msg, tc)
 
 ATF_TC_CLEANUP(msg, tc)
 {
+	int sender_msqid;
 
 	/*
 	 * Remove the message queue if it exists.
 	 */
+	sender_msqid = read_int("sender_msqid");
 	if (sender_msqid != -1)
-		ATF_REQUIRE_MSG(msgctl(sender_msqid, IPC_RMID, NULL) != -1,
-		    "msgctl IPC_RMID: %d", errno);
-	sender_msqid = -1;
+		if (msgctl(sender_msqid, IPC_RMID, NULL) == -1)
+			err(1, "msgctl IPC_RMID");
 }
 
 void
@@ -411,6 +443,7 @@ ATF_TC_BODY(sem, tc)
 	union semun sun;
 	struct semid_ds s_ds;
 	sigset_t sigmask;
+	int sender_semid;
 	int i;
 	int c_status;
 
@@ -442,6 +475,7 @@ ATF_TC_BODY(sem, tc)
 
 	sender_semid = semget(semkey, 1, IPC_CREAT | 0640);
 	ATF_REQUIRE_MSG(sender_semid != -1, "semget: %d", errno);
+	write_int("sender_semid", sender_semid);
 
 	if (did_sigsys) {
 		atf_tc_skip("SYSV Semaphore not supported");
@@ -542,14 +576,15 @@ ATF_TC_BODY(sem, tc)
 
 ATF_TC_CLEANUP(sem, tc)
 {
+	int sender_semid;
 
 	/*
 	 * Remove the semaphore if it exists
 	 */
+	sender_semid = read_int("sender_semid");
 	if (sender_semid != -1)
-		ATF_REQUIRE_MSG(semctl(sender_semid, 0, IPC_RMID) != -1,
-		    "semctl IPC_RMID: %d", errno);
-	sender_semid = -1;
+		if (semctl(sender_semid, 0, IPC_RMID) == -1)
+			err(1, "semctl IPC_RMID");
 }
 
 void
@@ -637,6 +672,7 @@ ATF_TC_BODY(shm, tc)
 	struct shmid_ds s_ds;
 	sigset_t sigmask;
 	char *shm_buf;
+	int sender_shmid;
 	int c_status;
 
 	/*
@@ -670,6 +706,7 @@ ATF_TC_BODY(shm, tc)
 	ATF_REQUIRE_MSG((sender_shmid = shmget(shmkey, pgsize,
 					       IPC_CREAT | 0640)) != -1,
 	    "shmget: %d", errno);
+	write_int("sender_shmid", sender_shmid);
 
 	ATF_REQUIRE_MSG(shmctl(sender_shmid, IPC_STAT, &s_ds) != -1,
 	    "shmctl IPC_STAT: %d", errno);
@@ -740,14 +777,15 @@ ATF_TC_BODY(shm, tc)
 
 ATF_TC_CLEANUP(shm, tc)
 {
+	int sender_shmid;
 
 	/*
 	 * Remove the shared memory area if it exists.
 	 */
+	sender_shmid = read_int("sender_shmid");
 	if (sender_shmid != -1)
-		ATF_REQUIRE_MSG(shmctl(sender_shmid, IPC_RMID, NULL) != -1,
-		    "shmctl IPC_RMID: %d", errno);
-	sender_shmid = -1;
+		if (shmctl(sender_shmid, IPC_RMID, NULL) == -1)
+			err(1, "shmctl IPC_RMID");
 }
 
 void

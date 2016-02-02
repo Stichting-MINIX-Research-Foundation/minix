@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.9 2011/06/12 05:44:36 matt Exp $ */
+/* $NetBSD: flt_rounds.c,v 1.10 2014/08/03 19:14:24 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.9 2011/06/12 05:44:36 matt Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.10 2014/08/03 19:14:24 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: flt_rounds.c,v 1.9 2011/06/12 05:44:36 matt Exp $");
 #include <machine/float.h>
 
 /*
- * These come from <float.h> defintion
+ * These come from <float.h> definition
  */
 #define	FLT_ROUND_MAP \
 	( (0 << (FP_RZ*2))	/* round to zero */			\

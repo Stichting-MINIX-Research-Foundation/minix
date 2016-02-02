@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.36 2009/11/11 09:48:51 rmind Exp $	*/
+/*	$NetBSD: select.h,v 1.37 2014/04/25 15:52:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@ void	selnotify(struct selinfo *, int, long);
 void	selsysinit(struct cpu_info *);
 void	selinit(struct selinfo *);
 void	seldestroy(struct selinfo *);
-int	pollsock(struct socket *, const struct timespec *, int);
 
 #else /* _KERNEL */
 

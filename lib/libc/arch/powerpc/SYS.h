@@ -1,24 +1,21 @@
-/*	$NetBSD: SYS.h,v 1.12 2011/01/15 07:31:12 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.13 2014/08/23 02:24:22 matt Exp $	*/
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef __STDC__
+#define	BRANCH_TO_CERROR()	b	_C_LABEL(__cerror)
+
 #define	_DOSYSCALL(x)		li	%r0,(SYS_ ## x)		;\
 				sc
-#else
-#define	_DOSYSCALL(x)		li	%r0,(SYS_/**/x)		;\
-				sc
-#endif /* __STDC__ */
 
 #define	_SYSCALL_NOERROR(x,y)	.text				;\
-				.align	2			;\
+				.p2align 2			;\
 			ENTRY(x)				;\
 				_DOSYSCALL(y)
 
 #define _SYSCALL(x,y)		.text				;\
-				.align	2			;\
-			2:	b	_C_LABEL(__cerror)	;\
+				.p2align 2			;\
+			2:	BRANCH_TO_CERROR()		;\
 				_SYSCALL_NOERROR(x,y)		;\
 				bso	2b
 
@@ -32,7 +29,7 @@
 
 #define PSEUDO(x,y)		_SYSCALL_NOERROR(x,y)		;\
 				bnslr				;\
-				b	_C_LABEL(__cerror)	;\
+				BRANCH_TO_CERROR()		;\
 				END(x)
 
 #define RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)

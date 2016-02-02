@@ -29,9 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: __aeabi_idiv0.c,v 1.2 2013/05/08 05:13:56 matt Exp $");
+__RCSID("$NetBSD: __aeabi_idiv0.c,v 1.3 2014/01/29 22:29:43 joerg Exp $");
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/systm.h>
+#else
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,8 +46,9 @@ __RCSID("$NetBSD: __aeabi_idiv0.c,v 1.2 2013/05/08 05:13:56 matt Exp $");
 int
 __aeabi_idiv0(int result)
 {
-/* MINIX: LSC: Changed || to &&. */
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
+	panic("divide by 0");
+#else
 #if !defined(__minix) /* LSC: No sigqueueinfo on Minix. */
 	siginfo_t info;
 	

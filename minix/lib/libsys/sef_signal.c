@@ -4,10 +4,10 @@
 #include <minix/sysutil.h>
 
 /* SEF Signal callbacks. */
-static struct sef_cbs {
+static struct sef_signal_cbs {
     sef_cb_signal_handler_t             sef_cb_signal_handler;
     sef_cb_signal_manager_t             sef_cb_signal_manager;
-} sef_cbs = {
+} sef_signal_cbs = {
     SEF_CB_SIGNAL_HANDLER_DEFAULT,
     SEF_CB_SIGNAL_MANAGER_DEFAULT
 };
@@ -28,12 +28,12 @@ static void process_sigmgr_signals(void)
 {
 /* A signal manager has pending signals in the kernel. Process them. */
   endpoint_t target;
-  sigset_t sigset;
+  sigset_t set;
   int signo, r;
 
   while (TRUE) {
       /* Get an arbitrary pending signal. */
-      if((r=sys_getksig(&target, &sigset)) != OK)
+      if((r=sys_getksig(&target, &set)) != OK)
           panic("SEF: sys_getksig failed: %d", r);
 
       if (target == NONE) {
@@ -43,14 +43,14 @@ static void process_sigmgr_signals(void)
           /* Process every signal in the signal set. */
           r = OK;
           for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
-              int s = sigismember(&sigset, signo);
+              int s = sigismember(&set, signo);
               assert(s >= 0);
               if(s) {
                   /* Let the callback code process the signal. */
-                  r = sef_cbs.sef_cb_signal_manager(target, signo);
+                  r = sef_signal_cbs.sef_cb_signal_manager(target, signo);
 
                   /* Stop if process is gone. */
-                  if(r == EDEADSRCDST) {
+                  if(r == EDEADEPT) {
                       break;
                   }
               }
@@ -67,17 +67,17 @@ static void process_sigmgr_signals(void)
 /*===========================================================================*
  *                         process_sigmgr_self_signals               	     *
  *===========================================================================*/
-static void process_sigmgr_self_signals(sigset_t sigset)
+static void process_sigmgr_self_signals(sigset_t set)
 {
 /* A signal manager has pending signals for itself. Process them. */
   int signo;
 
   for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
-      int s = sigismember(&sigset, signo);
+      int s = sigismember(&set, signo);
       assert(s >= 0);
       if(s) {
           /* Let the callback code process the signal. */
-          sef_cbs.sef_cb_signal_handler(signo);
+          sef_signal_cbs.sef_cb_signal_handler(signo);
       }
   }
 }
@@ -89,17 +89,17 @@ int do_sef_signal_request(message *m_ptr)
 {
 /* Handle a SEF Signal request. */
   int signo;
-  sigset_t sigset;
+  sigset_t set;
 
   if(m_ptr->m_source == SYSTEM) {
       /* Handle kernel signals. */
-      sigset = m_ptr->m_notify.sigset;
+      set = m_ptr->m_notify.sigset;
       for (signo = SIGK_FIRST; signo <= SIGK_LAST; signo++) {
-          int s = sigismember(&sigset, signo);
+          int s = sigismember(&set, signo);
           assert(s >= 0);
           if (s) {
               /* Let the callback code handle the kernel signal. */
-              sef_cbs.sef_cb_signal_handler(signo);
+              sef_signal_cbs.sef_cb_signal_handler(signo);
 
               /* Handle SIGKSIG for a signal manager. */
               if(signo == SIGKSIG) {
@@ -107,7 +107,7 @@ int do_sef_signal_request(message *m_ptr)
               }
               /* Handle SIGKSIGSM for a signal manager. */
               else if(signo == SIGKSIGSM) {
-                  process_sigmgr_self_signals(sigset);
+                  process_sigmgr_self_signals(set);
               }
           }
       }
@@ -125,7 +125,7 @@ int do_sef_signal_request(message *m_ptr)
 #endif
 
       /* Let the callback code handle the signal. */
-      sef_cbs.sef_cb_signal_handler(signo);
+      sef_signal_cbs.sef_cb_signal_handler(signo);
   }
 
   /* Return OK not to let anybody else intercept the request. */
@@ -138,7 +138,7 @@ int do_sef_signal_request(message *m_ptr)
 void sef_setcb_signal_handler(sef_cb_signal_handler_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_signal_handler = cb;
+  sef_signal_cbs.sef_cb_signal_handler = cb;
 }
 
 /*===========================================================================*
@@ -147,7 +147,7 @@ void sef_setcb_signal_handler(sef_cb_signal_handler_t cb)
 void sef_setcb_signal_manager(sef_cb_signal_manager_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_signal_manager = cb;
+  sef_signal_cbs.sef_cb_signal_manager = cb;
 }
 
 /*===========================================================================*

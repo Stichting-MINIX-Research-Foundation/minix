@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2012/06/11 18:32:59 njoly Exp $
+# $NetBSD: Makefile,v 1.4 2014/09/11 18:25:30 dholland Exp $
+#
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/bin/sh
+TESTSDIR = ${TESTSBASE}/bin/sh
+
+TESTS_SUBDIRS += dotcmd
 
 TESTS_SH=	t_compexit
 TESTS_SH+=	t_exit

@@ -80,10 +80,6 @@ static void sef_local_startup()
   sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
 

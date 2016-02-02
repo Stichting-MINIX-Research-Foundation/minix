@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.3 2013/10/20 03:13:44 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.5 2014/10/30 18:44:05 christos Exp $	*/
 
 /* filter - postprocessing of flex output through filters */
 
@@ -22,8 +22,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: filter.c,v 1.5 2014/10/30 18:44:05 christos Exp $");
+
 static const char * check_4_gnu_m4 =
     "m4_dnl ifdef(`__gnu__', ,"
     "`errprint(Flex requires GNU M4. Set the PATH or set the M4 environment variable to its path name.)"

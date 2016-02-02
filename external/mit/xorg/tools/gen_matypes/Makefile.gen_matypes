@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.gen_matypes,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
-
-GEN_MATYPESDIR!=cd ${NETBSDSRCDIR}/external/mit/xorg/tools/gen_matypes && ${PRINTOBJDIR}
-GEN_MATYPES=	${GEN_MATYPESDIR}/gen_matypes
-
-${GEN_MATYPES}:
-	(cd ${NETBSDSRCDIR}/external/mit/xorg/tools/gen_matypes && ${MAKE})

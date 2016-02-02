@@ -1,4 +1,4 @@
-/*	$NetBSD: t_snapshot.c,v 1.2 2013/02/06 09:05:01 hannken Exp $	*/
+/*	$NetBSD: t_snapshot.c,v 1.3 2014/06/10 13:15:18 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -40,9 +40,7 @@ mount_diskfs(const char *fspec, const char *path)
 static void
 begin(void)
 {
-	struct tmpfs_args targs;
-
-	targs.ta_version = TMPFS_ARGS_VERSION;
+	struct tmpfs_args targs = { .ta_version = TMPFS_ARGS_VERSION, };
 
 	if (rump_sys_mkdir("/stor", 0777) == -1)
 		atf_tc_fail_errno("mkdir /stor");

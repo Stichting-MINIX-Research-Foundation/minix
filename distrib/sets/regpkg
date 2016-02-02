@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.20 2012/11/03 07:59:46 mbalmer Exp $
+# $NetBSD: regpkg,v 1.22 2014/05/30 08:37:35 uebayasi Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -628,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.20 2012/11/03 07:59:46 mbalmer Exp $'
+		rcsid='$NetBSD: regpkg,v 1.22 2014/05/30 08:37:35 uebayasi Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -803,7 +803,12 @@ create_syspkg_tgz()
 			/^@/		{next}
 			/^\.\//		{print $0; next}
 			/./		{print "./" $0; next}' \
-			<"${PLIST}" >"${spec1}"
+			<"${PLIST}" |
+		# Escape some characters to match the new mtree(8) format.
+		# C.f. usr.sbin/mtree/spec.c:vispath()
+		# XXX escape only '[' for now
+		${SED} -e 's,\[,\\133,g' \
+		>"${spec1}"
 
 		# If metalog was specified, attributes from metalog override
 		# attributes in the file system.  We also fake up an

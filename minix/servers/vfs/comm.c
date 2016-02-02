@@ -161,7 +161,10 @@ int fs_sendrec(endpoint_t fs_e, message *reqmp)
 
   assert(self->w_sendrec == NULL);
 
-  return(reqmp->m_type);
+  r = reqmp->m_type;
+  if (r == ERESTART)	/* ERESTART is used internally, so make sure it is.. */
+	r = EIO;	/* ..not delivered as a result from a file system. */
+  return(r);
 }
 
 /*===========================================================================*

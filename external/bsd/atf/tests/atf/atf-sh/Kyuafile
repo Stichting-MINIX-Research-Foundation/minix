@@ -1,0 +1,11 @@
+syntax(2)
+
+test_suite("NetBSD")
+
+atf_test_program{name="atf-check_test"}
+atf_test_program{name="atf_check_test"}
+atf_test_program{name="config_test"}
+atf_test_program{name="integration_test"}
+atf_test_program{name="normalize_test"}
+atf_test_program{name="tc_test"}
+atf_test_program{name="tp_test"}

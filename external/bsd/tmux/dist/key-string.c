@@ -1,4 +1,4 @@
-/* $Id: key-string.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,7 +55,11 @@ const struct {
 	{ "Home",	KEYC_HOME },
 	{ "End",	KEYC_END },
 	{ "NPage",	KEYC_NPAGE },
+	{ "PageDown",	KEYC_NPAGE },
+	{ "PgDn",	KEYC_NPAGE },
 	{ "PPage",	KEYC_PPAGE },
+	{ "PageUp",	KEYC_PPAGE },
+	{ "PgUp",	KEYC_PPAGE },
 	{ "Tab",	'\011' },
 	{ "BTab",	KEYC_BTAB },
 	{ "Space",	' ' },
@@ -132,7 +136,17 @@ key_string_get_modifiers(const char **string)
 int
 key_string_lookup_string(const char *string)
 {
-	int	key, modifiers;
+	static const char	*other = "!#()+,-.0123456789:;<=>?'\r\t";
+	int			 key, modifiers;
+	u_short			 u;
+	int			 size;
+
+	/* Is this a hexadecimal value? */
+	if (string[0] == '0' && string[1] == 'x') {
+	        if (sscanf(string + 2, "%hx%n", &u, &size) != 1 || size > 4)
+	                return (KEYC_NONE);
+	        return (u);
+	}
 
 	/* Check for modifiers. */
 	modifiers = 0;
@@ -157,7 +171,7 @@ key_string_lookup_string(const char *string)
 	}
 
 	/* Convert the standard control keys. */
-	if (key < KEYC_BASE && (modifiers & KEYC_CTRL)) {
+	if (key < KEYC_BASE && (modifiers & KEYC_CTRL) && !strchr(other, key)) {
 		if (key >= 97 && key <= 122)
 			key -= 96;
 		else if (key >= 64 && key <= 95)
@@ -180,9 +194,13 @@ key_string_lookup_key(int key)
 {
 	static char	out[24];
 	char		tmp[8];
-	u_int	   	i;
+	u_int		i;
 
 	*out = '\0';
+
+	/* Handle no key. */
+	if (key == KEYC_NONE)
+		return ("none");
 
 	/*
 	 * Special case: display C-@ as C-Space. Could do this below in

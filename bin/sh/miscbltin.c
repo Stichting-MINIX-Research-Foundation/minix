@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.42 2012/06/11 18:28:10 njoly Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.43 2015/05/09 13:28:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.42 2012/06/11 18:28:10 njoly Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.43 2015/05/09 13:28:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,7 +427,8 @@ ulimitcmd(int argc, char **argv)
 		return 0;
 	}
 
-	getrlimit(l->cmd, &limit);
+	if (getrlimit(l->cmd, &limit) == -1)
+		error("error getting limit (%s)", strerror(errno));
 	if (set) {
 		if (how & HARD)
 			limit.rlim_max = val;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scanflags.c,v 1.1.1.2 2013/04/06 14:05:44 christos Exp $	*/
+/*	$NetBSD: scanflags.c,v 1.3 2014/10/30 18:44:05 christos Exp $	*/
 
 /* scanflags - flags used by scanning. */
 
@@ -32,8 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: scanflags.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
 
 scanflags_t* _sf_stk = NULL;
 size_t _sf_top_ix=0, _sf_max=0;

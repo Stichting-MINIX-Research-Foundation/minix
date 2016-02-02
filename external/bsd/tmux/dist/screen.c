@@ -1,4 +1,4 @@
-/* $Id: screen.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,10 +71,9 @@ screen_reinit(struct screen *s)
 void
 screen_free(struct screen *s)
 {
-	if (s->tabs != NULL)
-		xfree(s->tabs);
-	xfree(s->title);
-	xfree(s->ccolour);
+	free(s->tabs);
+	free(s->title);
+	free(s->ccolour);
 	grid_destroy(s->grid);
 }
 
@@ -84,8 +83,7 @@ screen_reset_tabs(struct screen *s)
 {
 	u_int	i;
 
-	if (s->tabs != NULL)
-		xfree(s->tabs);
+	free(s->tabs);
 
 	if ((s->tabs = bit_alloc(screen_size_x(s))) == NULL)
 		fatal("bit_alloc failed");
@@ -97,7 +95,7 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_cursor_style(struct screen *s, u_int style)
 {
-	if (style <= 4)
+	if (style <= 6)
 		s->cstyle = style;
 }
 
@@ -105,7 +103,7 @@ screen_set_cursor_style(struct screen *s, u_int style)
 void
 screen_set_cursor_colour(struct screen *s, const char *colour_string)
 {
-	xfree(s->ccolour);
+	free(s->ccolour);
 	s->ccolour = xstrdup(colour_string);
 }
 
@@ -113,18 +111,13 @@ screen_set_cursor_colour(struct screen *s, const char *colour_string)
 void
 screen_set_title(struct screen *s, const char *title)
 {
-	size_t	slen = strlen(title);
-	char	tmp[slen * 4 + 1];
-
-	strvisx(tmp, title, slen, VIS_OCTAL|VIS_TAB|VIS_NL);
-
-	xfree(s->title);
-	s->title = xstrdup(tmp);
+	free(s->title);
+	s->title = xstrdup(title);
 }
 
 /* Resize screen. */
 void
-screen_resize(struct screen *s, u_int sx, u_int sy)
+screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 {
 	if (sx < 1)
 		sx = 1;
@@ -144,6 +137,9 @@ screen_resize(struct screen *s, u_int sx, u_int sy)
 
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy);
+
+	if (reflow)
+		screen_reflow(s, sx);
 }
 
 void
@@ -359,4 +355,20 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 	}
 
 	return (1);
+}
+
+/* Reflow wrapped lines. */
+void
+screen_reflow(struct screen *s, u_int new_x)
+{
+	struct grid	*old = s->grid;
+	u_int		 change;
+
+	s->grid = grid_create(old->sx, old->sy, old->hlimit);
+
+	change = grid_reflow(s->grid, old, new_x);
+	if (change < s->cy)
+		s->cy -= change;
+	else
+		s->cy = 0;
 }

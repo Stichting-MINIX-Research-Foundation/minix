@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.114 2013/10/25 22:16:29 apb Exp $
+#	$NetBSD: bsd.man.mk,v 1.117 2014/12/19 22:25:39 christos Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -8,6 +8,17 @@
 .PHONY:		htmlinstall htmlpages htmllinks
 .PHONY:		lintmanpages
 realinstall:	${MANINSTALL}
+
+# If our install destination is case-preserving, but case-insensitive
+# then we do filesystem comparisons in lower case to make sure that
+# we always refresh the target when needed. In general we don't
+# want to do this, otherwise things like _exit.2 -> _Exit.2 get
+# installed on each build even when they don't need to. Note that
+# the CASE_INSENSITIVE_DEST macro is currently not defined anywhere,
+# and the expansion does not really work because of make(1).
+.if defined(CASE_INSENSITIVE_DEST)
+_FLATTEN?=tl:
+.endif
 
 ##### Default values
 .if ${USETOOLS} == "yes"
@@ -40,7 +51,7 @@ _MSECTIONREGEX=	${_MSECTIONS:ts|} # e.g. 1|2|3|...
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	${TOOL_GZIP} -ncf
+MANCOMPRESS?=	${TOOL_GZIP_N} -cf
 MANSUFFIX?=	.gz
 .endif
 
@@ -109,7 +120,7 @@ _t:=${DESTDIR}${MANDIR}/man${_dst:T:E}${MANSUBDIR}/${_dst}${MANSUFFIX}
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage
@@ -177,7 +188,7 @@ _t:=${DESTDIR}${MANDIR}/cat${_dst:T:E}${MANSUBDIR}/${_dst:R}.0${MANSUFFIX}
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage
@@ -249,7 +260,7 @@ _t:=${HTMLDIR}/html${_dst:T:E}${MANSUBDIR}/${_dst:R:S-/index$-/x&-}.html
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage

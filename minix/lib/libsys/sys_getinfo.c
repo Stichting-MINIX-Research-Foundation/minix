@@ -29,7 +29,7 @@ int len2;				/* length or process nr */
  *                                sys_whoami				     *
  *===========================================================================*/
 int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
-	int *priv_flags)
+	int *priv_flags, int *init_flags)
 {
 	message m;
 	int r;
@@ -49,6 +49,7 @@ int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
 	who_name[lenmin] = '\0';
 	*who_ep = m.m_krn_lsys_sys_getwhoami.endpt;
 	*priv_flags = m.m_krn_lsys_sys_getwhoami.privflags;
+	*init_flags = m.m_krn_lsys_sys_getwhoami.initflags;
 
 	return OK;
 }

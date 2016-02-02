@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.27 2012/05/26 19:34:16 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.29 2014/09/18 13:58:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.27 2012/05/26 19:34:16 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.29 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -107,7 +107,8 @@ getpassfd(const char *prompt, char *buf, size_t len, int *fd, int flags,
 		 * and write to stderr.
 		 */
 		fd = fdc;
-		if ((fd[0] = fd[1] = fd[2] = open(_PATH_TTY, O_RDWR)) == -1) {
+		if ((fd[0] = fd[1] = fd[2] = open(_PATH_TTY,
+		    O_RDWR | O_CLOEXEC)) == -1) {
 			fd[0] = STDIN_FILENO;
 			fd[1] = fd[2] = STDERR_FILENO;
 		} else
@@ -245,7 +246,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int *fd, int flags,
 		}
 
 		/* End of line */
-		if (c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('l')))
+		if (c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('m')))
 			c = '\0';
 add:
 		if (l >= len) {

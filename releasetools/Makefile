@@ -20,9 +20,10 @@ PROGRAMS+= ${PROGROOT}/minix/servers/sched/sched
 PROGRAMS+= ${PROGROOT}/minix/servers/vfs/vfs
 PROGRAMS+= ${PROGROOT}/minix/drivers/storage/memory/memory
 PROGRAMS+= ${PROGROOT}/minix/drivers/tty/tty/tty
-PROGRAMS+= ${PROGROOT}/minix/fs/mfs/mfs
+PROGRAMS+= ${PROGROOT}/minix/servers/mib/mib
 PROGRAMS+= ${PROGROOT}/minix/servers/vm/vm
 PROGRAMS+= ${PROGROOT}/minix/fs/pfs/pfs
+PROGRAMS+= ${PROGROOT}/minix/fs/mfs/mfs
 PROGRAMS+= ${PROGROOT}/sbin/init/init
 
 all usage help:

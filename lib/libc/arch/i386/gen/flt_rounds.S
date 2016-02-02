@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.9 2011/09/30 23:42:00 christos Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.10 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 #include <machine/asm.h>
 
@@ -19,3 +19,4 @@ ENTRY(__flt_rounds)
 	sarl	%cl, %eax	/* 0,1,2,3 -> 1,3,2,0 */
 	andl	$3, %eax
 	ret
+END(__flt_rounds)

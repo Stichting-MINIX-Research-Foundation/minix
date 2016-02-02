@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: regerror.c,v 1.5 2014/01/26 21:47:00 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -38,9 +38,14 @@
  *	@(#)regerror.c	8.3 (Berkeley) 3/19/94
  */
 
+#include <sys/cdefs.h>
+#if 0
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)regerror.c	8.3 (Berkeley) 3/19/94";
 #endif /* LIBC_SCCS and not lint */
+#else
+__RCSID("$NetBSD: regerror.c,v 1.5 2014/01/26 21:47:00 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -116,10 +121,10 @@ static struct rerr {
 size_t
 regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 {
-	register struct rerr *r;
-	register size_t len;
-	register int target = errcode &~ REG_ITOA;
-	register const char *s;
+	struct rerr *r;
+	size_t len;
+	int target = errcode &~ REG_ITOA;
+	const char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
@@ -161,9 +166,9 @@ static char *
 regatoi(const regex_t *preg, char *localbuf)
 {
 #if 0 /* we don't seem to use this and it gives a warning. */
-	register struct rerr *r;
-	register size_t siz;
-	register char *p;
+	struct rerr *r;
+	size_t siz;
+	char *p;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)

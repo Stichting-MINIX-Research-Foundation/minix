@@ -1,0 +1,48 @@
+#!/bin/sh
+#	$NetBSD: mkpc,v 1.4 2014/07/07 09:14:43 joerg Exp $
+
+getversion() {
+	(echo '#include "opensslv.h"'; echo OPENSSL_VERSION_TEXT) |
+	    $CPP $CPPFLAGS -I$1 | grep OpenSSL | cut -d ' ' -f 2
+}
+VERSION="$(getversion $1)"
+
+sed -e "s/@VERSION@/${VERSION}/g" < "$2"
+
+case "$2" in
+libcrypto.pc)
+	NAME="OpenSSL-libcrypto"
+	LIBS="-lcrypto"
+	DESCRIPTION="OpenSSL cryptography library"
+	;;
+libssl.pc)
+	NAME="OpenSSL"
+	LIBS="-lssl -lcrypto"
+	DESCRIPTION="Secure Sockets Layer and cryptography libraries"
+	;;
+openssl.pc)
+	NAME="OpenSSL"
+	LIBS="-lssl -lcrypto"
+	DESCRIPTION="Sockets Layer and cryptography libraries and tools"
+	;;
+*)
+	echo "$0: I don't know about $2" 1>&2
+	exit 1
+	;;
+esac
+
+cat << EOF > "$2"
+# \$NetBSD: mkpc,v 1.4 2014/07/07 09:14:43 joerg Exp $
+prefix=/usr
+exec_prefix=/usr
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: ${NAME}
+Description: ${DESCRIPTION}
+Version: ${VERSION}
+Requires: 
+Libs: ${LIBS}
+Libs.private:
+Cflags:
+EOF

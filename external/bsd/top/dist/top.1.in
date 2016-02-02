@@ -1,0 +1,477 @@
+.\" NOTE:  changes to the manual page for "top" should be made in the
+.\"        file "top.1.in" and NOT in the file "top.1".
+.nr N @DEFAULT_TOPN@
+.nr D @DEFAULT_DELAY@
+.nr L @HAVE_GETOPT_LONG@
+.nr K @ENABLE_KILL@
+.TH TOP 1 Local
+.UC 4
+.SH NAME
+top \- display and update information about the top cpu processes
+.SH SYNOPSIS
+.B top
+[
+.B \-1CISTabcinqtuv
+] [
+.BI \-d count
+] [
+.BI \-m mode
+] [
+.BI \-o field
+] [
+.BI \-p pid
+] [
+.BI \-s time
+] [
+.BI \-U username
+] [
+.I number
+]
+.SH DESCRIPTION
+.\" This defines appropriate quote strings for nroff and troff
+.ds lq \&"
+.ds rq \&"
+.if t .ds lq ``
+.if t .ds rq ''
+.\" Just in case these number registers aren't set yet...
+.if \nN==0 .nr N 10
+.if \nD==0 .nr D 5
+.I Top
+displays the top
+.if !\nN==-1 \nN
+processes on the system and periodically updates this information.
+.if \nN==-1 \
+\{\
+If standard output is an intelligent terminal (see below) then
+as many processes as will fit on the terminal screen are displayed
+by default.  Otherwise, a good number of them are shown (around 20).
+.\}
+Raw cpu percentage is used to rank the processes.  If
+.I number
+is given, then the top
+.I number
+processes will be displayed instead of the default.
+.PP
+.I Top
+makes a distinction between terminals that support advanced capabilities
+and those that do not.  This
+distinction affects the choice of defaults for certain options.  In the
+remainder of this document, an \*(lqintelligent\*(rq terminal is one that
+supports cursor addressing, clear screen, and clear to end of line.
+Conversely, a \*(lqdumb\*(rq terminal is one that does not support such
+features.  If the output of
+.I top
+is redirected to a file, it acts as if it were being run on a dumb
+terminal.
+.SH OPTIONS
+.if \nL==0 Long options are not available on this system.
+.TP
+.B "\-1, \-\-percpustates"
+Display per-cpu states on a multi-processor machine.
+.TP
+.B "\-C, \-\-color"
+Turn off the use of color in the display.
+.TP
+.B "\-I, \-\-idle-procs"
+Do not display idle processes.
+By default, top displays both active and idle processes.
+.TP
+.B "\-S, \-\-system-procs"
+Show system processes in the display.  Normally, system processes such as
+the pager and the swapper are not shown.  This option makes them visible.
+.TP
+.B "\-T, \-\-tag-names"
+List all available color tags and the current set of tests used for
+color highlighting, then exit.
+.TP
+.B "\-a, \-\-all"
+Show all processes for as long as possible.  This is shorthand for
+\*(lq-d all all\*(rq.  This option is especially handy in batch mode.
+.TP
+.B "\-b, \-n, \-\-batch"
+Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
+ignored.  Interrupt characters (such as ^C and ^\e) still have an effect.
+This is the default on a dumb terminal, or when the output is not a terminal.
+.TP
+.B "\-c, \-\-full-commands"
+Show the full command line for each process. Default is to show just the
+command name.  This option is not supported on all platforms.
+.TP
+.B "\-i, \-\-interactive"
+Use \*(lqinteractive\*(rq mode.  In this mode, any input is immediately
+read for processing.  See the section on \*(lqInteractive Mode\*(rq
+for an explanation of
+which keys perform what functions.  After the command is processed, the
+screen will immediately be updated, even if the command was not
+understood.  This mode is the default when standard output is an
+intelligent terminal.
+.TP
+.B "\-q, \-\-quick"
+Renice
+.I top
+to -20 so that it will run faster.  This can be used when the system is
+being very sluggish to improve the possibility of discovering the problem.
+This option can only be used by root.
+.TP
+.B "\-t, \-\-threads"
+Show individual threads on separate lines.  By default, on systems
+which support threading, each process is shown with a count of the number
+of threads. This option shows each thread on a separate line.  This option
+is not supported on all platforms.
+.TP
+.B "\-u, \-\-uids"
+Do not take the time to map uid numbers to usernames.  Normally,
+.I top
+will read as much of the file \*(lq/etc/passwd\*(rq as is necessary to map
+all the user id numbers it encounters into login names.  This option
+disables all that, while possibly decreasing execution time.  The uid
+numbers are displayed instead of the names.
+.TP
+.B "\-v, \-\-version"
+Write version number information to stderr then exit immediately.
+No other processing takes place when this option is used.  To see current
+revision information while top is running, use the help command \*(lq?\*(rq.
+.TP
+.B "\-d \fIcount\fP, \-\-displays \fIcount\fP"
+Show only
+.I count
+displays, then exit.  A display is considered to be one update of the
+screen.  This option allows the user to select the number of displays he
+wants to see before
+.I top
+automatically exits.  Any proper prefix of the words \*(lqinfinity\*(rq,
+\*(lqmaximum\*(rq,
+or
+\*(lqall\*(rq can be used to indicate an infinite number of displays.
+The default for intelligent terminals is infinity.
+The default for dumb terminals is 1.
+.TP
+.B "\-m \fImode\fP, \-\-mode=\fImode\fP"
+Start the display in an alternate mode.  Some platforms support multiple
+process displays to show additional process information.  The value
+\fImode\fP is a number indicating which mode to display.  The default is
+0.  On platforms that do not have multiple display modes this option has
+no effect.
+.TP
+.B "\-o \fIfield\fP, \-\-sort-order=\fIfield\fP"
+Sort the process display area on the specified field.  The field name is
+the name of the column as seen in the output, but in lower case.  Likely
+values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, and \*(lqtime\*(rq,
+but may vary on different operating systems.  Note that
+not all operating systems support this option.
+.TP
+.B "\-p \fIpid\fP, \-\-pid=\fIpid\fP"
+Only display the specified pid.
+.TP
+.B "\-s \fItime\fP, \-\-delay=\fItime\fP"
+Set the delay between screen updates to
+.I time
+seconds.  The default delay between updates is
+.af D 1 
+seconds.
+.TP
+.B "\-U \fIusername\fP, \-\-user=\fIusername\fP"
+Show only those processes owned by
+.IR username .
+This option currently only accepts usernames and will not understand
+uid numbers.
+.PP
+Both
+.I count
+and
+.I number
+fields can be specified as \*(lqinfinite\*(rq, indicating that they can
+stretch as far as possible.  This is accomplished by using any proper
+prefix of the keywords
+\*(lqinfinity\*(rq,
+\*(lqmaximum\*(rq,
+or
+\*(lqall\*(rq.
+The default for
+.I count
+on an intelligent terminal is, in fact,
+\fBinfinity\fP.
+.PP
+The environment variable
+.B TOP
+is examined for options before the command line is scanned.  This enables
+a user to set his or her own defaults.  The number of processes to display
+can also be specified in the environment variable
+.BR TOP .
+The options
+.BR \-C ,
+.BR \-I ,
+.BR \-S ,
+and
+.B \-u
+are actually toggles.  A second specification of any of these options
+will negate the first.  Thus a user who has the environment variable
+.B TOP
+set to \*(lq\-I\*(rq may use the command \*(lqtop \-I\*(rq to see idle processes.
+.SH "INTERACTIVE MODE"
+When
+.I top
+is running in \*(lqinteractive mode\*(rq, it reads commands from the
+terminal and acts upon them accordingly.  In this mode, the terminal is
+put in \*(lqCBREAK\*(rq, so that a character will be
+processed as soon as it is typed.  Almost always, a key will be
+pressed when
+.I top
+is between displays; that is, while it is waiting for
+.I time
+seconds to elapse.  If this is the case, the command will be
+processed and the display will be updated immediately thereafter
+(reflecting any changes that the command may have specified).  This
+happens even if the command was incorrect.  If a key is pressed while 
+.I top
+is in the middle of updating the display, it will finish the update and
+then process the command.  Some commands require additional information,
+and the user will be prompted accordingly.  While typing this information
+in, the user's erase and kill keys (as set up by the command
+.IR stty )
+are recognized, and a newline terminates the input.  Note that a control-L
+(^L) always redraws the current screen and a space forces an immediate
+update to the screen using new data.
+.PP
+These commands are currently recognized:
+.TP
+.I "\fBh\fP\ or\ \fB?\fP"
+Display a summary of the commands (help screen).  Version information
+is included in this display.
+.TP
+.B 1
+Toggle the display of per-cpu states.
+.TP
+.B C
+Toggle the use of color in the display.
+.TP
+.B c
+Display only processes whose commands match the specified string.  An empty
+string will display all processes.  This command is not supported on all 
+platforms.
+.TP
+.B d
+Change the number of displays to show (prompt for new number).
+Remember that the next display counts as one, so typing
+.B d1
+will make
+.I top
+show one final display and then immediately exit.
+.TP
+.B f
+Toggle the display of the full command line.
+.TP
+.B H
+Toggle the display of threads on separate lines.  By default, on systems
+which support threading, each process is shown with a count of the number
+of threads. This command shows each thread on a separate line.  This command
+is not supported on all platforms.
+.TP
+.B i
+(or
+.BR I )
+Toggle the display of idle processes.
+.if \nK==1 \{\
+.TP
+.B k
+Send a signal (\*(lqkill\*(rq by default) to a list of processes.  This
+acts similarly to the command
+.IR kill (1)).
+.\}
+.TP
+.B M
+Sort display by memory usage.  Shorthand for \*(lqo size\*(rq.
+.TP
+.B m
+Change to a different process display mode.  Some systems provide multiple
+display modes for the process display which shows different information.
+This command toggles between the available modes.  This command is not 
+supported on all platforms.
+.TP
+.B N
+Sort by process id.  Shorthand for \*(lqo pid\*(rq.
+.TP
+.B n or #
+Change the number of processes to display (prompt for new number).
+.TP
+.B o
+Change the order in which the display is sorted.  This command is not
+available on all systems.  The sort key names vary fron system to system
+but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq, \*(lqsize\*(rq,
+\*(lqtime\*(rq.  The default is cpu.
+.TP
+.B P
+Sort by CPU usage.  Shorthand for \*(lqo cpu\*(rq.
+.TP
+.B q
+Quit
+.IR top.
+.if \nK==1 \{\
+.TP
+.B r
+Change the priority (the \*(lqnice\*(rq) of a list of processes.
+This acts similarly to the command
+.IR renice (8)).
+.\}
+.TP
+.B s
+Change the number of seconds to delay between displays
+(prompt for new number).
+.TP
+.B T
+Sort by CPU time.  Shorthand for \*(lqo time\*(rq.
+.TP
+.B U
+Toggle between displaying usernames and uids.
+.TP
+.B u
+Display only processes owned by a specific username (prompt for username).
+If the username specified is simply \*(lq+\*(rq, then processes belonging
+to all users will be displayed.
+.SH "THE DISPLAY"
+The actual display varies depending on the specific variant of Unix
+that the machine is running.  This description may not exactly match
+what is seen by top running on this particular machine.  Differences
+are listed at the end of this manual entry.
+.PP
+The top lines of the display show general information
+about the state of the system.  The first line shows
+(on some systems) the last process id assigned to a process,
+the three load averages,
+the system uptime, and the current time.
+The second line displays the total number of processes followed
+by a breakdown of processes per state.  Examples of states common
+to Unix systems are sleeping, running, starting, stopped, and zombie.
+The next line displays a percentage of time spent in each of the
+processor states (typically user, nice, system, idle, and iowait).
+These percentages show the processor activity during the time since
+the last update.  For multi-processor systems, this information is 
+a summation of time across all processors.  The next line shows
+kernel-related activity (not available on all systems).  The numbers
+shown on this line are per-second rates sampled since the last update.
+The exact
+information displayed varies between systems, but some examples are:
+context switches, interrupts, traps, forks, and page faults.  The last
+one or two lines show a summary of memory and swap activity.  These lines
+vary between systems.
+.PP
+The remainder of the screen displays information about individual
+processes.  This display is similar in spirit to
+.IR ps (1)
+but it is not exactly the same.  The columns displayed by top will
+differ slightly between operating systems.  Generally, the following
+fields are displayed:
+.TP
+.B PID
+The process id.
+.TP
+.B USERNAME
+Username of the process's owner (if
+.B \-u
+is specified, a UID column will be substituted for USERNAME).
+.TP
+.B THR
+The number of threads in the processes (this column may also
+be labeled NLWP).
+.TP
+.B PRI
+Current priority of the process.
+.TP
+.B NICE
+Nice amount in the range \-20 to 20, as established by the use of
+the command
+.IR nice .
+.TP
+.B SIZE
+Total size of the process (text, data, and stack) given in kilobytes.
+.TP
+.B RES
+Resident memory: current amount of process memory that resides in physical
+memory, given in kilobytes.
+.TP
+.B STATE
+Current state (typically one of \*(lqsleep\*(rq,
+\*(lqrun\*(rq, \*(lqidl\*(rq, \*(lqzomb\*(rq, or \*(lqstop\*(rq).
+.TP
+.B TIME
+Number of system and user cpu seconds that the process has used.
+.TP
+.B CPU
+Percentage of available cpu time used by this process.
+.TP
+.B COMMAND
+Name of the command that the process is currently running.
+.SH COLOR
+Top supports the use of ANSI color in its output. By default, color is
+available but not used.  The environment variable
+.B TOPCOLORS
+specifies colors to use and conditions for which they should be used.
+At the present time, only numbers in the summay display area can be 
+colored. In a future version it will be possible to highlight numbers
+in the process display area as well.  The environment variable is the
+only way to specify color: there is no equivalent command line option.
+Note that the environment variable
+.B TOPCOLOURS
+is also understood. The British spelling takes precedence.  The use of
+color only works on terminals that understand and process ANSI color
+escape sequences.
+.PP
+The environment variable is a sequence of color specifications, separated
+by colons. Each specification takes the form tag=min,max#code where
+.I tag
+is the name of the value to check,
+.I min
+and
+.I max
+specify a range for the value, and
+.I code
+is an ANSI color code.  Multiple color codes can be listed and separated
+with semi-colons.  A missing
+.I min
+implies the lowest possible value (usually 0)
+and a missing
+.I max
+implies infinity. The comma must always be present. When specifying numbers
+for load averages, they should be multiplied by 100.
+For example, the specification
+.B 1min=500,1000#31
+indicates that a 1 minute load average between
+5 and 10 should be displayed in red. Color attributes can be combined.
+For example, the specification
+.B 5min=1000,#37;41
+indicates that a 5 minute load average higher than 10 should be displayed
+with white characters on a red background. A special tag named
+.I header
+is used to control the color of the header for process display.  It should
+be specified with no lower and upper limits, specifically
+.B header=,#
+followed by the ANSI color code.
+.PP
+You can see a list of color codes recognized by this installation of top
+with the
+.B \-T
+option.  This will also show the current set of tests used for
+color highligting, as specified in the environment.
+.SH AUTHOR
+William LeFebvre
+.SH ENVIRONMENT
+.DT
+TOP		user-configurable defaults for options.
+TOPCOLORS	color specification
+.SH BUGS
+As with
+.IR ps (1),
+things can change while
+.I top
+is collecting information for an update.  The picture it gives is only a
+close approximation to reality.
+.SH "SEE ALSO"
+kill(1),
+ps(1),
+stty(1),
+mem(4),
+renice(8)
+@MAN_SUPPLEMENT@
+.SH COPYRIGHT
+Copyright (C) 1984-2007 William LeFebvre. For additional licensing
+information, see http://www.unixtop.org/license/

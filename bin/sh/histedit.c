@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.45 2012/03/20 18:42:29 matt Exp $	*/
+/*	$NetBSD: histedit.c,v 1.47 2014/06/18 18:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.45 2012/03/20 18:42:29 matt Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.47 2014/06/18 18:17:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: histedit.c,v 1.45 2012/03/20 18:42:29 matt Exp $");
 #include "mystring.h"
 #include "myhistedit.h"
 #include "error.h"
+#include "alias.h"
 #ifndef SMALL
 #include "eval.h"
 #include "memalloc.h"
@@ -135,6 +136,7 @@ histedit(void)
 					el_set(el, EL_HIST, history, hist);
 				el_set(el, EL_PROMPT, getprompt);
 				el_set(el, EL_SIGNAL, 1);
+				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
 				el_set(el, EL_ADDFN, "rl-complete",
 				    "ReadLine compatible completion function",
 				    _el_fn_complete);
@@ -432,10 +434,12 @@ histcmd(int argc, char **argv)
 	}
 	if (editor) {
 		char *editcmd;
+		size_t cmdlen;
 
 		fclose(efp);
-		editcmd = stalloc(strlen(editor) + strlen(editfile) + 2);
-		sprintf(editcmd, "%s %s", editor, editfile);
+		cmdlen = strlen(editor) + strlen(editfile) + 2;
+		editcmd = stalloc(cmdlen);
+		snprintf(editcmd, cmdlen, "%s %s", editor, editfile);
 		evalstring(editcmd, 0);	/* XXX - should use no JC command */
 		INTON;
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */

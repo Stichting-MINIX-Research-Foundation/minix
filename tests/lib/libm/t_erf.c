@@ -1,4 +1,4 @@
-/* $NetBSD: t_erf.c,v 1.1 2011/09/17 12:00:50 jruoho Exp $ */
+/* $NetBSD: t_erf.c,v 1.2 2014/03/03 10:39:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_erf.c,v 1.1 2011/09/17 12:00:50 jruoho Exp $");
+__RCSID("$NetBSD: t_erf.c,v 1.2 2014/03/03 10:39:08 martin Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -45,11 +45,9 @@ ATF_TC_HEAD(erf_nan, tc)
 
 ATF_TC_BODY(erf_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(erf(x)) != 0);
-#endif
 }
 
 ATF_TC(erf_inf_neg);
@@ -60,12 +58,10 @@ ATF_TC_HEAD(erf_inf_neg, tc)
 
 ATF_TC_BODY(erf_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	if (erf(x) != -1.0)
 		atf_tc_fail_nonfatal("erf(-Inf) != -1.0");
-#endif
 }
 
 ATF_TC(erf_inf_pos);
@@ -76,12 +72,10 @@ ATF_TC_HEAD(erf_inf_pos, tc)
 
 ATF_TC_BODY(erf_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 
 	if (erf(x) != 1.0)
 		atf_tc_fail_nonfatal("erf(+Inf) != 1.0");
-#endif
 }
 
 ATF_TC(erf_zero_neg);
@@ -92,13 +86,11 @@ ATF_TC_HEAD(erf_zero_neg, tc)
 
 ATF_TC_BODY(erf_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = erf(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("erf(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(erf_zero_pos);
@@ -109,13 +101,11 @@ ATF_TC_HEAD(erf_zero_pos, tc)
 
 ATF_TC_BODY(erf_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = erf(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("erf(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -129,11 +119,9 @@ ATF_TC_HEAD(erff_nan, tc)
 
 ATF_TC_BODY(erff_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(erff(x)) != 0);
-#endif
 }
 
 ATF_TC(erff_inf_neg);
@@ -144,12 +132,10 @@ ATF_TC_HEAD(erff_inf_neg, tc)
 
 ATF_TC_BODY(erff_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (erff(x) != -1.0)
 		atf_tc_fail_nonfatal("erff(-Inf) != -1.0");
-#endif
 }
 
 ATF_TC(erff_inf_pos);
@@ -160,12 +146,10 @@ ATF_TC_HEAD(erff_inf_pos, tc)
 
 ATF_TC_BODY(erff_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 
 	if (erff(x) != 1.0)
 		atf_tc_fail_nonfatal("erff(+Inf) != 1.0");
-#endif
 }
 
 ATF_TC(erff_zero_neg);
@@ -176,13 +160,11 @@ ATF_TC_HEAD(erff_zero_neg, tc)
 
 ATF_TC_BODY(erff_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = erff(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("erff(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(erff_zero_pos);
@@ -193,13 +175,11 @@ ATF_TC_HEAD(erff_zero_pos, tc)
 
 ATF_TC_BODY(erff_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = erff(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("erff(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -213,11 +193,9 @@ ATF_TC_HEAD(erfc_nan, tc)
 
 ATF_TC_BODY(erfc_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(erfc(x)) != 0);
-#endif
 }
 
 ATF_TC(erfc_inf_neg);
@@ -228,12 +206,10 @@ ATF_TC_HEAD(erfc_inf_neg, tc)
 
 ATF_TC_BODY(erfc_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 
 	if (erfc(x) != 2.0)
 		atf_tc_fail_nonfatal("erfc(-Inf) != 2.0");
-#endif
 }
 
 ATF_TC(erfc_inf_pos);
@@ -244,13 +220,11 @@ ATF_TC_HEAD(erfc_inf_pos, tc)
 
 ATF_TC_BODY(erfc_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = erfc(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("erfc(+Inf) != +0.0");
-#endif
 }
 
 /*
@@ -264,11 +238,9 @@ ATF_TC_HEAD(erfcf_nan, tc)
 
 ATF_TC_BODY(erfcf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(erfcf(x)) != 0);
-#endif
 }
 
 ATF_TC(erfcf_inf_neg);
@@ -279,12 +251,10 @@ ATF_TC_HEAD(erfcf_inf_neg, tc)
 
 ATF_TC_BODY(erfcf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 
 	if (erfcf(x) != 2.0)
 		atf_tc_fail_nonfatal("erfcf(-Inf) != 2.0");
-#endif
 }
 
 ATF_TC(erfcf_inf_pos);
@@ -295,13 +265,11 @@ ATF_TC_HEAD(erfcf_inf_pos, tc)
 
 ATF_TC_BODY(erfcf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = erfcf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("erfcf(+Inf) != +0.0");
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)

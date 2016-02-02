@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.10 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.11 2014/01/05 20:49:20 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -150,9 +150,9 @@ computc_d(int c, int combase)
 
 	/* check for new XOFF */
 	if (comstatus_d(combase)) {
-		int c = comgetc_d(combase);	/* XOFF handled in comgetc_d */
+		int x = comgetc_d(combase);	/* XOFF handled in comgetc_d */
 		/* stuff char into preread buffer */
-		serbuf[serbuf_write++] = c;
+		serbuf[serbuf_write++] = x;
 		if (serbuf_write >= SERBUFSIZE)
 			serbuf_write = 0;
 	}

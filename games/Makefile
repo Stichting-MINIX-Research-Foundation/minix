@@ -7,6 +7,7 @@
 
 .include <bsd.own.mk>
 
+#MINIX: Not everything yet
 SUBDIR=	adventure arithmetic \
 	banner bcd \
 	colorbars caesar \

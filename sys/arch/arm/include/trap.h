@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8 2008/01/19 13:11:09 chris Exp $	*/
+/*	$NetBSD: trap.h,v 1.9 2014/03/15 05:54:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -61,6 +61,14 @@
 #define GDB5_BREAKPOINT		0xe7ffdefe	/* Used by GDB 5.0 */
 #define GDB_THUMB_BREAKPOINT	0xdefe		/* Thumb in GDB */
 #define KERNEL_BREAKPOINT	0xe7ffffff	/* Used by DDB */
+
+/*
+ * DTrace uses 0xe7fffef0 to 0xe7fffeff as breakpoints.
+ * The first byte is used to encode a cond value.
+ */
+#define DTRACE_BREAKPOINT	0xe7fffef0
+#define DTRACE_BREAKPOINT_MASK	0xfffffff0
+#define DTRACE_IS_BREAKPOINT(insn)	((insn & DTRACE_BREAKPOINT_MASK) == DTRACE_BREAKPOINT)
 
 #define KBPT_ASM		".word 0xe7ffdefe"
 

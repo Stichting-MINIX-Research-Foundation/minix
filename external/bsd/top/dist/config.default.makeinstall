@@ -1,0 +1,5 @@
+# Standard install rule
+install: $(PROGRAM) install-man
+	mkdir -p $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) $(INSTALL_OPTS_PROG) \
+		$(PROGRAM) $(DESTDIR)$(bindir)/$(PROGRAM)

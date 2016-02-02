@@ -1,4 +1,4 @@
-.\"     $NetBSD: efun.3,v 1.10 2010/05/03 05:40:37 jruoho Exp $
+.\"     $NetBSD: efun.3,v 1.14 2015/07/26 17:37:38 kamil Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 3, 2010
+.Dd July 26, 2015
 .Dt EFUN 3
 .Os
 .Sh NAME
@@ -37,10 +37,13 @@
 .Nm emalloc ,
 .Nm ecalloc ,
 .Nm erealloc ,
+.Nm ereallocarr ,
 .Nm estrdup ,
 .Nm estrndup ,
 .Nm estrlcat ,
 .Nm estrlcpy ,
+.Nm estrtoi ,
+.Nm estrtou ,
 .Nm evasprintf
 .Nd error-checked utility functions
 .Sh LIBRARY
@@ -54,11 +57,13 @@
 .Ft FILE *
 .Fn efopen "const char *p" "const char *m"
 .Ft void *
-.Fn ecalloc "size_t n" "size_t c"
+.Fn ecalloc "size_t n" "size_t s"
 .Ft void *
 .Fn emalloc "size_t n"
 .Ft void *
 .Fn erealloc "void *p" "size_t n"
+.Ft void
+.Fn ereallocarr "void *p" "size_t n" "size_t s"
 .Ft char *
 .Fn estrdup "const char *s"
 .Ft char *
@@ -67,6 +72,10 @@
 .Fn estrlcat "char *dst" "const char *src" "size_t len"
 .Ft size_t
 .Fn estrlcpy "char *dst" "const char *src" "size_t len"
+.Ft intmax_t
+.Fn estrtoi "const char * nptr" "int base" "intmax_t lo" "intmax_t hi"
+.Ft uintmax_t
+.Fn estrtou "const char * nptr" "int base" "uintmax_t lo" "uintmax_t hi"
 .Ft int
 .Fn evasprintf "char ** restrict str" "const char * restrict fmt" "..."
 .Sh DESCRIPTION
@@ -76,10 +85,13 @@ The
 .Fn ecalloc ,
 .Fn emalloc ,
 .Fn erealloc ,
+.Fn ereallocarr ,
 .Fn estrdup ,
 .Fn estrndup ,
 .Fn estrlcat ,
 .Fn estrlcpy ,
+.Fn estrtoi ,
+.Fn estrtou ,
 and
 .Fn evasprintf
 functions
@@ -110,8 +122,19 @@ error handler will just call
 .Xr fopen 3 ,
 .Xr malloc 3 ,
 .Xr realloc 3 ,
+.Xr reallocarr 3 ,
 .Xr strdup 3 ,
 .Xr strlcat 3 ,
 .Xr strlcpy 3 ,
 .Xr strndup 3 ,
+.Xr strtoi 3 ,
+.Xr strtou 3 ,
 .Xr vasprintf 3
+.Sh HISTORY
+The
+.Fn estrtoi ,
+.Fn estrtou
+and
+.Fn ereallocarr
+functions were added in
+.Nx 8 .

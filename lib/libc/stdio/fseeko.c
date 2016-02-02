@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.13 2014/10/19 11:17:43 justin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.13 2014/10/19 11:17:43 justin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -115,11 +115,21 @@ fseeko(FILE *fp, off_t offset, int whence)
 			curoff += fp->_p - fp->_bf._base;
 
 		offset += curoff;
+		if (offset < 0) {
+			errno = EINVAL;
+			FUNLOCKFILE(fp);
+			return -1;
+		}	
 		whence = SEEK_SET;
 		havepos = 1;
 		break;
 
 	case SEEK_SET:
+		if (offset < 0) {
+			errno = EINVAL;
+			FUNLOCKFILE(fp);
+			return -1;
+		}
 	case SEEK_END:
 		curoff = 0;		/* XXX just to keep gcc quiet */
 		havepos = 0;

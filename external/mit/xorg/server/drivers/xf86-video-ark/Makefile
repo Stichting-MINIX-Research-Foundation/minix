@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/10 01:59:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2015/07/23 02:04:09 mrg Exp $
 
 DRIVER=		xf86-video-ark
 DRIVER_NAME=	ark_drv
@@ -6,6 +6,7 @@ DRIVER_NAME=	ark_drv
 SRCS=		ark_accel.c ark_driver.c
 
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
+CPPFLAGS+=	-DHAVE_XAA_H
 
 #LSC: Clang/Minix3
 NOCLANGERROR?=	yes

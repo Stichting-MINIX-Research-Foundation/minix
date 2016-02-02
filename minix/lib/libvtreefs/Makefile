@@ -1,7 +1,5 @@
 # Makefile for libvtreefs
 
-NOGCCERROR=yes
-
 CPPFLAGS+= -D_MINIX_SYSTEM
 
 LIB=	vtreefs

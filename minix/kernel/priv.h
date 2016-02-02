@@ -17,17 +17,20 @@
 #include <minix/priv.h>
 #include "kernel/const.h"
 #include "kernel/type.h"
+#include "kernel/ipc_filter.h"
 
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
   sys_id_t s_id;		/* index of this system structure */
   short s_flags;		/* PREEMTIBLE, BILLABLE, etc. */
+  int s_init_flags;             /* initialization flags given to the process. */
 
   /* Asynchronous sends */
   vir_bytes s_asyntab;		/* addr. of table in process' address space */
   size_t s_asynsize;		/* number of elements in table. 0 when not in
 				 * use
 				 */
+  endpoint_t s_asynendpoint;    /* the endpoint the asyn table belongs to. */
 
   short s_trap_mask;		/* allowed system call traps */
   sys_map_t s_ipc_to;		/* allowed destination processes */
@@ -41,6 +44,7 @@ struct priv {
   sys_map_t s_asyn_pending;	/* bit map with pending asyn messages */
   irq_id_t s_int_pending;	/* pending hardware interrupts */
   sigset_t s_sig_pending;	/* pending signals */
+  ipc_filter_t *s_ipcf;         /* ipc filter (NULL when no filter is set) */
 
   minix_timer_t s_alarm_timer;	/* synchronous alarm timer */
   reg_t *s_stack_guard;		/* stack guard word for kernel tasks */
@@ -57,6 +61,9 @@ struct priv {
   int s_irq_tab[NR_IRQ];
   vir_bytes s_grant_table;	/* grant table address of process, or 0 */
   int s_grant_entries;		/* no. of entries, or 0 */
+  endpoint_t s_grant_endpoint;  /* the endpoint the grant table belongs to */
+  vir_bytes s_state_table;	/* state table address of process, or 0 */
+  int s_state_entries;		/* no. of entries, or 0 */
 };
 
 /* Guard word for task stacks. */
@@ -78,6 +85,7 @@ struct priv {
 #define nr_to_id(nr)    priv(proc_addr(nr))->s_id
 
 #define may_send_to(rp, nr) (get_sys_bit(priv(rp)->s_ipc_to, nr_to_id(nr)))
+#define may_asynsend_to(rp, nr) (may_send_to(rp, nr) || (rp)->p_nr == nr)
 
 /* The system structures table and pointers to individual table slots. The 
  * pointers allow faster access because now a process entry can be found by 

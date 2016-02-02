@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 06:24:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2015/07/19 19:49:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ SRCS=		xedit.c commands.c util.c ispell.c options.c hook.c lisp.c \
 		tags.c hash.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xedit}/lisp/re
+CPPFLAGS+=	-DHAVE_GETPAGESIZE
 
 APPDEFS=	Xedit Xedit-color
 

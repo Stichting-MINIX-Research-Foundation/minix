@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.2 2013/06/25 16:47:47 matt Exp $ */
+/* $NetBSD: crt0.S,v 1.3 2013/12/08 06:32:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.2 2013/06/25 16:47:47 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.3 2013/12/08 06:32:36 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -53,6 +53,8 @@ NESTED_NOPROFILE(__start, CALLFRAME_SIZ, ra)
 	SETUP_GP64(t3, __start)
 	move	a0, a1		/* cleanup */
 	move	a1, a2		/* Obj_Entry */
-	move	a2, a3		/* ps_strings */
-	j	_C_LABEL(___start)
+	PTR_L	t9,%call16(_C_LABEL(___start))(gp)
+	 move	a2, a3		/* ps_strings */
+	.reloc  1f,R_MIPS_JALR,___start
+1:	jr	t9
 END(__start)

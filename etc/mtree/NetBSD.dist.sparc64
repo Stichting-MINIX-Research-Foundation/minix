@@ -1,0 +1,4 @@
+#	$NetBSD: NetBSD.dist.sparc64,v 1.10 2015/06/19 18:16:06 matt Exp $
+
+./usr/include/g++/bits/sparc
+./usr/include/g++/bits/sparc64

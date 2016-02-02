@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.8 2013/10/20 17:18:38 christos Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.9 2014/09/01 16:31:17 he Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -801,8 +801,10 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 	buf = kmem_alloc(len, KM_SLEEP);
 
 	dnode = kmem_alloc(len, KM_SLEEP);
-	if (!dnode)
+	if (!dnode) {
+		kmem_free(buf, len);
 		return ENOMEM;
+	}
 
 	nref = chfs_first_valid_data_ref(ip->chvc->dnode);
 

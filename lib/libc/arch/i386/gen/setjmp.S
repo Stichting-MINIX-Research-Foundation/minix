@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.15 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.17 2014/05/23 03:05:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setjmp.S,v 1.15 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.17 2014/05/23 03:05:56 uebayasi Exp $")
 #endif
 
 /*
@@ -76,6 +76,7 @@ ENTRY(__setjmp14)
 
 	xorl	%eax,%eax
 	ret
+END(__setjmp14)
 
 ENTRY(__longjmp14)
 	/* Restore the signal mask. */
@@ -107,3 +108,4 @@ ENTRY(__longjmp14)
 	incl	%eax
 1:	movl	%ecx,0(%esp)
 	ret
+END(__longjmp14)

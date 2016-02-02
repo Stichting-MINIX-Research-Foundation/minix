@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execthr.c,v 1.2 2011/03/08 15:35:28 pooka Exp $	*/
+/*	$NetBSD: h_execthr.c,v 1.3 2014/08/13 00:03:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -50,6 +50,11 @@ static int canreturn = 0;
  * MAXWORKER-1.
  */
 #define NTHR 63
+
+#define P1_0 3
+#define P1_1 4
+#define P2_0 5
+#define P2_1 6
 
 static void *
 wrk(void *arg)
@@ -110,14 +115,14 @@ main(int argc, char *argv[], char *envp[])
 	if (execd) {
 		canreturn = 1;
 		if (pthread_create(&pt, NULL,
-		    wrk, (void *)(uintptr_t)2) != 0)
+		    wrk, (void *)(uintptr_t)P2_0) != 0)
 			errx(1, "exec pthread_create");
 
 		i = 37;
-		rump_sys_write(3, &i, sizeof(i));
+		rump_sys_write(P2_1, &i, sizeof(i));
 		pthread_join(pt, NULL);
 
-		n = rump_sys_read(0, &i, sizeof(i));
+		n = rump_sys_read(P1_0, &i, sizeof(i));
 		if (n != -1 || errno != EBADF)
 			errx(1, "post-exec cloexec works");
 
@@ -129,17 +134,17 @@ main(int argc, char *argv[], char *envp[])
 		if (execd > 10)
 			exit(0);
 
-		rump_sys_close(2);
-		rump_sys_close(3);
+		rump_sys_close(P2_0);
+		rump_sys_close(P2_1);
 	}
 
 	if (rump_sys_pipe(p1) == -1)
 		err(1, "pipe1");
-	if (p1[0] != 0 || p1[1] != 1)
+	if (p1[0] != P1_0 || p1[1] != P1_1)
 		errx(1, "p1 assumptions failed %d %d", p1[0], p1[1]);
 	if (rump_sys_pipe(p2) == -1)
 		err(1, "pipe1");
-	if (p2[0] != 2 || p2[1] != 3)
+	if (p2[0] != P2_0 || p2[1] != P2_1)
 		errx(1, "p2 assumptions failed");
 	if (rump_sys_fcntl(p1[0], F_SETFD, FD_CLOEXEC) == -1)
 		err(1, "cloexec");

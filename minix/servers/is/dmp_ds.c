@@ -3,7 +3,7 @@
 
 #define LINES 22
 
-static struct data_store ds_store[NR_DS_KEYS];
+static struct data_store noxfer_ds_store[NR_DS_KEYS];
 
 void data_store_dmp()
 {
@@ -11,7 +11,7 @@ void data_store_dmp()
   static int prev_i = 0;
   int i, n = 0;
 
-  if (getsysinfo(DS_PROC_NR, SI_DATA_STORE, ds_store, sizeof(ds_store)) != OK) {
+  if (getsysinfo(DS_PROC_NR, SI_DATA_STORE, noxfer_ds_store, sizeof(noxfer_ds_store)) != OK) {
 	printf("Error obtaining table from DS. Perhaps recompile IS?\n");
 	return;
   }
@@ -19,7 +19,7 @@ void data_store_dmp()
   printf("Data store contents:\n");
   printf("-slot- -----------key----------- -----owner----- ---type--- ----value---\n");
   for(i = prev_i; i < NR_DS_KEYS && n < LINES; i++) {
-	p = &ds_store[i];
+	p = &noxfer_ds_store[i];
 	if(!(p->flags & DSF_IN_USE))
 		continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.33 2013/03/29 01:09:45 christos Exp $	*/
+/*	$NetBSD: timevar.h,v 1.34 2015/08/07 08:11:33 ozaki-r Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -187,5 +187,17 @@ bool	time_wraps(struct timespec *, struct timespec *);
 
 extern volatile time_t time_second;	/* current second in the epoch */
 extern volatile time_t time_uptime;	/* system uptime in seconds */
+
+static inline time_t time_mono_to_wall(time_t t)
+{
+
+	return t - time_uptime + time_second;
+}
+
+static inline time_t time_wall_to_mono(time_t t)
+{
+
+	return t - time_second + time_uptime;
+}
 
 #endif /* !_SYS_TIMEVAR_H_ */

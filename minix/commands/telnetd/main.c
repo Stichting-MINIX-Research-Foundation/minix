@@ -35,6 +35,7 @@
 #include <net/gen/socket.h>
 #include <netdb.h>
 #include <net/gen/inet.h>
+#include <arpa/inet.h>
 #include "telnetd.h"
 
 #if 0
@@ -92,7 +93,7 @@ char *hostname;
 			sizeof(tcpconf.nwtc_remaddr), AF_INET)) != NULL) {
 	hostname = hostent->h_name;
    } else {
-	hostname = inet_ntoa(tcpconf.nwtc_remaddr);
+	hostname = inet_ntoa(*(struct in_addr *)&tcpconf.nwtc_remaddr);
    }
 
    /* Try allocating a PTY. */

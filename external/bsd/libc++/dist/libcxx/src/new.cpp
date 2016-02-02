@@ -17,7 +17,7 @@
 #define __has_include(inc) 0
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(LIBCXXRT)
     #include <cxxabi.h>
 
     #ifndef _LIBCPPABI_VERSION
@@ -38,7 +38,7 @@
 #ifndef __GLIBCXX__
 
 // Implement all new and delete operators as weak definitions
-// in this shared library, so that they can be overriden by programs
+// in this shared library, so that they can be overridden by programs
 // that define non-weak copies of the functions.
 
 _LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
@@ -133,14 +133,28 @@ operator delete(void* ptr, const std::nothrow_t&) _NOEXCEPT
 
 _LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
 void
+operator delete(void* ptr, size_t) _NOEXCEPT
+{
+    ::operator delete(ptr);
+}
+
+_LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
+void
 operator delete[] (void* ptr) _NOEXCEPT
 {
-    ::operator delete (ptr);
+    ::operator delete(ptr);
 }
 
 _LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
 void
 operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
+{
+    ::operator delete[](ptr);
+}
+
+_LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
+void
+operator delete[] (void* ptr, size_t) _NOEXCEPT
 {
     ::operator delete[](ptr);
 }
@@ -167,7 +181,7 @@ set_new_handler(new_handler handler) _NOEXCEPT
 new_handler
 get_new_handler() _NOEXCEPT
 {
-    return __sync_fetch_and_add(&__new_handler, (new_handler)0);
+    return __sync_fetch_and_add(&__new_handler, nullptr);
 }
 
 #endif // !__GLIBCXX__
@@ -192,8 +206,6 @@ bad_alloc::what() const _NOEXCEPT
 
 #endif // !__GLIBCXX__
 
-#endif //LIBCXXRT
-
 bad_array_new_length::bad_array_new_length() _NOEXCEPT
 {
 }
@@ -201,6 +213,14 @@ bad_array_new_length::bad_array_new_length() _NOEXCEPT
 bad_array_new_length::~bad_array_new_length() _NOEXCEPT
 {
 }
+
+const char*
+bad_array_new_length::what() const _NOEXCEPT
+{
+    return "bad_array_new_length";
+}
+
+#endif //LIBCXXRT
 
 const char*
 bad_array_length::what() const _NOEXCEPT
@@ -214,12 +234,6 @@ bad_array_length::bad_array_length() _NOEXCEPT
 
 bad_array_length::~bad_array_length() _NOEXCEPT
 {
-}
-
-const char*
-bad_array_new_length::what() const _NOEXCEPT
-{
-    return "bad_array_new_length";
 }
 
 #endif // _LIBCPPABI_VERSION

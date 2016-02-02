@@ -11,6 +11,7 @@
  * Upon return of the GETWHOAMI request the following parameters are used:
  *   m_krn_lsys_sys_getwhoami.endpt	(the caller endpoint)
  *   m_krn_lsys_sys_getwhoami.privflags	(the caller priviledes)
+ *   m_krn_lsys_sys_getwhoami.initflags (the caller initflags)
  *   m_krn_lsys_sys_getwhoami.name	(the caller process name)
  *
  */
@@ -136,6 +137,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	strncpy(m_ptr->m_krn_lsys_sys_getwhoami.name, caller->p_name, len);
 	m_ptr->m_krn_lsys_sys_getwhoami.name[len] = '\0';
 	m_ptr->m_krn_lsys_sys_getwhoami.privflags = priv(caller)->s_flags;
+        m_ptr->m_krn_lsys_sys_getwhoami.initflags = priv(caller)->s_init_flags;
 	return OK;
     }
     case GET_MONPARAMS: {
@@ -187,30 +189,15 @@ int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &idl->p_cycles;
         break;
     }
-    case GET_RUSAGE: {
-	struct proc *target = NULL;
-	int target_slot = 0;
-	u64_t usec;
-        nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
-            caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
-
-	if (!isokendpt(nr_e, &target_slot))
+    case GET_CPUTICKS: {
+	uint64_t ticks[MINIX_CPUSTATES];
+	unsigned int cpu;
+	cpu = (unsigned int)m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
+	if (cpu >= CONFIG_MAX_CPUS)
 		return EINVAL;
-
-	target = proc_addr(target_slot);
-	if (isemptyp(target))
-		return EINVAL;
-
-	length = sizeof(r_usage);
-	memset(&r_usage, 0, sizeof(r_usage));
-	usec = target->p_user_time * 1000000 / system_hz;
-	r_usage.ru_utime.tv_sec = usec / 1000000;
-	r_usage.ru_utime.tv_usec = usec % 1000000;
-	usec = target->p_sys_time * 1000000 / system_hz;
-	r_usage.ru_stime.tv_sec = usec / 1000000;
-	r_usage.ru_stime.tv_usec = usec % 1000000;
-	r_usage.ru_nsignals = target->p_signal_received;
-	src_vir = (vir_bytes) &r_usage;
+	get_cpu_ticks(cpu, ticks);
+	length = sizeof(ticks);
+	src_vir = (vir_bytes)ticks;
 	break;
     }
     default:

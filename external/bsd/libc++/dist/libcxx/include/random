@@ -1634,9 +1634,10 @@ class piecewise_linear_distribution
 
 #include <__config>
 #include <cstddef>
+#include <cstdint>
+#include <cmath>
 #include <type_traits>
 #include <initializer_list>
-#include <cstdint>
 #include <limits>
 #include <algorithm>
 #include <numeric>
@@ -1644,7 +1645,6 @@ class piecewise_linear_distribution
 #include <string>
 #include <istream>
 #include <ostream>
-#include <cmath>
 
 #include <__undef_min_max>
 
@@ -3475,9 +3475,9 @@ typedef shuffle_order_engine<minstd_rand0, 256>                         knuth_b;
 
 class _LIBCPP_TYPE_VIS random_device
 {
-#if !defined(_WIN32)
+#ifdef _LIBCPP_USING_DEV_RANDOM
     int __f_;
-#endif // defined(_WIN32)
+#endif // defined(_LIBCPP_USING_DEV_RANDOM)
 public:
     // types
     typedef unsigned result_type;
@@ -4009,6 +4009,8 @@ binomial_distribution<_IntType>::param_type::param_type(result_type __t, double 
     }
 }
 
+// Reference: Kemp, C.D. (1986). `A modal method for generating binomial
+//           variables', Commun. Statist. - Theor. Meth. 15(3), 805-813.
 template<class _IntType>
 template<class _URNG>
 _IntType
@@ -4035,7 +4037,8 @@ binomial_distribution<_IntType>::operator()(_URNG& __g, const param_type& __pr)
             if (__u < 0)
                 return __rd - 1;
         }
-        --__rd;
+        if ( __rd != 0 )
+            --__rd;
         ++__ru;
         if (__ru <= __pr.__t_)
         {
@@ -6041,9 +6044,6 @@ basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
            discrete_distribution<_IT>& __x)
 {
-    typedef discrete_distribution<_IT> _Eng;
-    typedef typename _Eng::result_type result_type;
-    typedef typename _Eng::param_type param_type;
     __save_flags<_CharT, _Traits> __lx(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
     size_t __n;
@@ -6355,7 +6355,6 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 {
     typedef piecewise_constant_distribution<_RT> _Eng;
     typedef typename _Eng::result_type result_type;
-    typedef typename _Eng::param_type param_type;
     __save_flags<_CharT, _Traits> __lx(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
     size_t __n;
@@ -6695,7 +6694,6 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 {
     typedef piecewise_linear_distribution<_RT> _Eng;
     typedef typename _Eng::result_type result_type;
-    typedef typename _Eng::param_type param_type;
     __save_flags<_CharT, _Traits> __lx(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
     size_t __n;

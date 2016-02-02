@@ -1,7 +1,8 @@
-# $NetBSD: mi,v 1.23 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: mi,v 1.26 2015/09/03 22:24:02 youri Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./etc/drirc						-unknown-	xorg
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg
@@ -22,6 +23,7 @@
 ./etc/X11/rstart/contexts/x				-unknown-	x11
 ./etc/X11/rstart/contexts/x11				-unknown-	x11
 ./etc/X11/rstart/contexts/x11r6				-unknown-	x11
+./etc/X11/ctwm/system.ctwmrc				-unknown-	xorg
 ./etc/X11/twm/system.twmrc				-unknown-	x11
 ./etc/X11/twm/system.twmrc				-unknown-	xorg
 ./etc/X11/xdm/GiveConsole				-unknown-	x11
@@ -30,24 +32,24 @@
 ./etc/X11/xdm/TakeConsole				-unknown-	xorg
 ./etc/X11/xdm/Xaccess					-unknown-	x11
 ./etc/X11/xdm/Xaccess					-unknown-	xorg
-./etc/X11/xdm/Xreset					-unknown-	xorg,minix-false
+./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xresources				-unknown-	x11
-./etc/X11/xdm/Xresources				-unknown-	xorg,minix-false
+./etc/X11/xdm/Xresources				-unknown-	xorg
 ./etc/X11/xdm/Xservers					-unknown-	x11
 ./etc/X11/xdm/Xservers					-unknown-	xorg
 ./etc/X11/xdm/Xservers.fs				-unknown-	x11
 ./etc/X11/xdm/Xservers.fs				-unknown-	xorg
 ./etc/X11/xdm/Xservers.ws				-unknown-	x11
-./etc/X11/xdm/Xservers.ws				-unknown-	xorg,minix-false
+./etc/X11/xdm/Xservers.ws				-unknown-	xorg
 ./etc/X11/xdm/Xsession					-unknown-	x11
-./etc/X11/xdm/Xsession					-unknown-	xorg,minix-false
+./etc/X11/xdm/Xsession					-unknown-	xorg
 ./etc/X11/xdm/Xsetup_0					-unknown-	x11
 ./etc/X11/xdm/Xsetup_0					-unknown-	xorg
-./etc/X11/xdm/Xstartup					-unknown-	xorg,minix-false
+./etc/X11/xdm/Xstartup					-unknown-	xorg
 ./etc/X11/xdm/Xwilling					-unknown-	x11
 ./etc/X11/xdm/Xwilling					-unknown-	xorg
 ./etc/X11/xdm/xdm-config				-unknown-	x11
-./etc/X11/xdm/xdm-config				-unknown-	xorg,minix-false
+./etc/X11/xdm/xdm-config				-unknown-	xorg
 ./etc/X11/xdm/xorg-bw.xpm				xetc-obsolete	obsolete
 ./etc/X11/xdm/xorg.xpm					xetc-obsolete	obsolete
 ./etc/X11/xinit/xinitrc					-unknown-	x11
@@ -113,3 +115,4 @@
 ./etc/rc.d/xdm						etc-x11-rc	xorg,minix-false
 ./etc/rc.d/xfs						etc-x11-rc	x11
 ./etc/rc.d/xfs						etc-x11-rc	xorg,minix-false
+./var/db/obsolete/xetc					xbase-sys-root	xorg

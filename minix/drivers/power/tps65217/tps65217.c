@@ -109,12 +109,6 @@ static int intr_enable(void);
 static int intr_handler(void);
 static void do_shutdown(int how);
 
-/* SEF Related Function Prototypes */
-static void sef_local_startup(void);
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-
 static int
 check_revision(void)
 {
@@ -244,7 +238,7 @@ intr_handler(void)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
@@ -340,11 +334,6 @@ sef_local_startup(void)
 	/*
 	 * Register live update callbacks.
 	 */
-	/* Agree to update immediately when LU is requested in a valid state. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	/* Support live update starting from any standard state. */
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-	/* Register a custom routine to save the state. */
 	sef_setcb_lu_state_save(sef_cb_lu_state_save);
 
 	/* Let SEF perform startup. */

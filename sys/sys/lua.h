@@ -1,6 +1,7 @@
-/*	$NetBSD: lua.h,v 1.3 2013/10/29 17:35:40 mbalmer Exp $ */
+/*	$NetBSD: lua.h,v 1.8 2015/09/06 06:01:02 dholland Exp $ */
 
 /*
+ * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
@@ -30,6 +31,9 @@
 
 #ifndef _SYS_LUA_H_
 #define _SYS_LUA_H_
+
+#include <sys/param.h>
+#include <sys/ioccom.h>
 
 #include <lua.h>		/* for lua_State */
 
@@ -79,25 +83,22 @@ struct lua_load {
 #define LUALOAD		_IOWR('l', 4, struct lua_load)
 
 #ifdef _KERNEL
-extern int lua_mod_register(const char *, int (*)(void *));
-extern int lua_mod_unregister(const char *);
+extern int klua_mod_register(const char *, lua_CFunction);
+extern int klua_mod_unregister(const char *);
 
 typedef struct _klua_State {
 	lua_State	*L;
 	kmutex_t	 ks_lock;
-	kcondvar_t	 ks_inuse_cv;
-	int		 ks_inuse;
 	bool		 ks_user;	/* state created by user (ioctl) */
 } klua_State;
 
-extern int klua_lock(klua_State *);
+extern void klua_lock(klua_State *);
 extern void klua_unlock(klua_State *);
 
 extern void klua_close(klua_State *);
-extern klua_State *klua_newstate(lua_Alloc, void *, const char *, const char *);
-
-extern void *lua_alloc(void *, void *, size_t, size_t);
-
+extern klua_State *klua_newstate(lua_Alloc, void *, const char *, const char *,
+		int);
+extern klua_State *kluaL_newstate(const char *, const char *, int);
 #endif
 
 #endif /* _SYS_LUA_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_mkexrc.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_mkexrc.c,v 1.4 2014/11/27 20:00:09 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: ex_mkexrc.c,v 10.13 2001/06/25 15:19:17 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:17 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: ex_mkexrc.c,v 1.4 2014/11/27 20:00:09 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -47,7 +52,7 @@ ex_mkexrc(SCR *sp, EXCMD *cmdp)
 	size_t flen;
 
 	switch (cmdp->argc) {
-	case 0:
+	case 1:
 		fname = _PATH_EXRC;
 		INT2CHAR(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len + 1, 
 			    fname, flen);

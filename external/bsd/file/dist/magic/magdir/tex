@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: tex,v 1.18 2011/02/08 13:45:15 christos Exp $
+# $File: tex,v 1.20 2014/03/16 02:53:03 christos Exp $
 # tex:  file(1) magic for TeX files
 #
 # XXX - needs byte-endian stuff (big-endian and little-endian DVI?)
@@ -38,6 +38,9 @@
 
 # TeX documents, from Daniel Quinlan (quinlan@yggdrasil.com)
 0	search/4096	\\input		TeX document text
+!:mime	text/x-tex
+!:strength + 15
+0	search/4096	\\begin		LaTeX document text
 !:mime	text/x-tex
 !:strength + 15
 0	search/4096	\\section	LaTeX document text
@@ -103,3 +106,34 @@
 0	search/1	@c\ @mapfile{	TeX font aliases text file
 
 0	string		#LyX		LyX document text
+
+# ConTeXt documents
+#	http://wiki.contextgarden.net/
+0	search/4096	\\setupcolors[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\definecolor[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupinteraction[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\useURL[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setuppapersize[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\setuplayout[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupfooter[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupfootertexts[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\setuppagenumbering[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupbodyfont[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\setuphead[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupitemize[		ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupwhitespace[	ConTeXt document text
+!:strength + 15
+0	search/4096	\\setupindenting[	ConTeXt document text
+!:strength + 15

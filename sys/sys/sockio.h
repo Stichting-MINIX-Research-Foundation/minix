@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.32 2013/10/05 23:16:54 christos Exp $	*/
+/*	$NetBSD: sockio.h,v 1.33 2015/05/02 14:41:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -72,6 +72,7 @@
 
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
 #define	SIOCGIFALIAS	_IOWR('i', 27, struct ifaliasreq)/* get IF alias */
+#define	SIOCGIFAFLAG_IN _IOWR('i', 39, struct ifreq)	 /* get addr flags */
 
 #define	SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
 #define	SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */

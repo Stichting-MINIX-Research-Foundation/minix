@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.31 2012/03/19 00:17:08 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.35 2015/09/26 20:28:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -175,8 +175,13 @@ extern const int *const uvmexp_pageshift;
 #define	VM_ANONMAX	11
 #define	VM_EXECMAX	12
 #define	VM_FILEMAX	13
+#define	VM_MINADDRESS	14
+#define	VM_MAXADDRESS	15
+#define	VM_PROC		16		/* process information */
 
-#define	VM_MAXID	14		/* number of valid vm ids */
+#define	VM_MAXID	17		/* number of valid vm ids */
+
+#define VM_PROC_MAP	1		/* struct kinfo_vmentry */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -193,6 +198,9 @@ extern const int *const uvmexp_pageshift;
 	{ "anonmax", CTLTYPE_INT }, \
 	{ "execmax", CTLTYPE_INT }, \
 	{ "filemax", CTLTYPE_INT }, \
+	{ "minaddress", CTLTYPE_LONG }, \
+	{ "maxaddress", CTLTYPE_LONG }, \
+	{ "proc", CTLTYPE_STRUCT }, \
 }
 
 #ifndef ASSEMBLER
@@ -211,43 +219,15 @@ extern const int *const uvmexp_pageshift;
 #define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
-/*
- * Set up the default mapping address (VM_DEFAULT_ADDRESS) according to:
- *
- * USE_TOPDOWN_VM:	a kernel option to enable on a per-kernel basis
- *			which only be used on ports that define...
- * __HAVE_TOPDOWN_VM:	a per-port option to offer the topdown option
- *
- * __USE_TOPDOWN_VM:	a per-port option to unconditionally use it
- *
- * if __USE_TOPDOWN_VM is defined, the port can specify a default vm
- * address, or we will use the topdown default from below.  If it is
- * NOT defined, then the port can offer topdown as an option, but it
- * MUST define the VM_DEFAULT_ADDRESS macro itself.
- */
-#if defined(USE_TOPDOWN_VM) || defined(__USE_TOPDOWN_VM)
-# if !defined(__HAVE_TOPDOWN_VM) && !defined(__USE_TOPDOWN_VM)
-#  error "Top down memory allocation not enabled for this system"
-# else /* !__HAVE_TOPDOWN_VM && !__USE_TOPDOWN_VM */
-#  define __USING_TOPDOWN_VM
-#  if !defined(VM_DEFAULT_ADDRESS)
-#   if !defined(__USE_TOPDOWN_VM)
-#    error "Top down memory allocation not configured for this system"
-#   else /* !__USE_TOPDOWN_VM */
-#    define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
-#   endif /* !__USE_TOPDOWN_VM */
-#  endif /* !VM_DEFAULT_ADDRESS */
-# endif /* !__HAVE_TOPDOWN_VM && !__USE_TOPDOWN_VM */
-#endif /* USE_TOPDOWN_VM || __USE_TOPDOWN_VM */
+#ifndef VM_DEFAULT_ADDRESS_BOTTOMUP
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+#endif
 
-#if !defined(__USING_TOPDOWN_VM)
-# if defined(VM_DEFAULT_ADDRESS)
-#  error "Default vm address should not be defined here"
-# else /* VM_DEFAULT_ADDRESS */
-#  define VM_DEFAULT_ADDRESS(da, sz) round_page((vaddr_t)(da) + (vsize_t)maxdmap)
-# endif /* VM_DEFAULT_ADDRESS */
-#endif /* !__USING_TOPDOWN_VM */
+#ifndef VM_DEFAULT_ADDRESS_TOPDOWN
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#endif
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */

@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.44 2009/04/21 16:09:22 tsutsui Exp $
+# $NetBSD: md.pmax,v 1.46 2014/08/06 12:15:01 martin Exp $
 ./boot.pmax					base-sysutil-bin
 ./etc/ld.so.conf				base-obsolete		obsolete
 ./sbin/ldconfig					base-obsolete		obsolete

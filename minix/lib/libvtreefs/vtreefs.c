@@ -36,10 +36,10 @@ init_server(int __unused type, sef_init_info_t * __unused info)
  * We received a signal.
  */
 static void
-got_signal(int signal)
+got_signal(int sig)
 {
 
-	if (signal != SIGTERM)
+	if (sig != SIGTERM)
 		return;
 
 	fsdriver_terminate();
@@ -51,13 +51,10 @@ got_signal(int signal)
 static void
 sef_local_startup(void)
 {
-
 	sef_setcb_init_fresh(init_server);
-	sef_setcb_init_restart(init_server);
+	sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
 	sef_setcb_signal_handler(got_signal);
-
-	/* No support for live update yet. */
 
 	sef_startup();
 }
@@ -89,7 +86,7 @@ fs_other(const message * m_ptr, int ipc_status)
  */
 void
 run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
-	size_t inode_extra, struct inode_stat * stat,
+	size_t inode_extra, struct inode_stat * istat,
 	index_t nr_indexed_entries, size_t bufsize)
 {
 
@@ -100,7 +97,7 @@ run_vtreefs(struct fs_hooks * hooks, unsigned int nr_inodes,
 	vtreefs_hooks = hooks;
 	inodes = nr_inodes;
 	extra_size = inode_extra;
-	root_stat = stat;
+	root_stat = istat;
 	root_entries = nr_indexed_entries;
 	buf_size = bufsize;
 

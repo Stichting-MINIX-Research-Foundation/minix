@@ -6,7 +6,7 @@ int fs_stat(ino_t ino_nr, struct stat *statbuf)
 {
 	struct inode *rip;
 
-	if ((rip = find_inode(ino_nr)) == NULL)
+	if ((rip = get_inode(ino_nr)) == NULL)
 		return EINVAL;
 
 	*statbuf = rip->i_stat;

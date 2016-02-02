@@ -23,10 +23,7 @@
 #if defined(__i386__)
 #include "kernel/arch/i386/include/archconst.h" /* for the KTS_ constants */
 #endif
-
-#include <minix/param.h>
-
-extern struct minix_kerninfo *_minix_kerninfo;
+#include <lib.h>
 
 /*
  * Working area.  By obtaining values from the kernel into these local process
@@ -156,7 +153,7 @@ vir_bytes
 kernel_get_stacktop(void)
 {
 
-	return _minix_kerninfo->kinfo->user_sp;
+	return minix_get_user_sp();
 }
 
 /*
@@ -256,12 +253,12 @@ kernel_get_nextframe(pid_t pid, reg_t fp, reg_t * next_pc, reg_t * next_fp)
  * processes being attached to, and not for exec calls using a relative path.
  */
 void
-kernel_put_stacktrace(struct trace_proc * proc)
+kernel_put_stacktrace(struct trace_proc * procp)
 {
 	unsigned int count, max;
 	reg_t pc, sp, fp, low, high;
 
-	if (kernel_get_context(proc->pid, &pc, &sp, &fp) < 0)
+	if (kernel_get_context(procp->pid, &pc, &sp, &fp) < 0)
 		return;
 
 	/*
@@ -278,15 +275,15 @@ kernel_put_stacktrace(struct trace_proc * proc)
 	 * the lines straight into tools such as addr2line.
 	 */
 	put_newline();
-	put_fmt(proc, "  0x%x", pc);
+	put_fmt(procp, "  0x%x", pc);
 
 	low = high = fp;
 
 	for (count = 1; count < max && fp != 0; count++) {
-		if (kernel_get_nextframe(proc->pid, fp, &pc, &fp) < 0)
+		if (kernel_get_nextframe(procp->pid, fp, &pc, &fp) < 0)
 			break;
 
-		put_fmt(proc, " 0x%x", pc);
+		put_fmt(procp, " 0x%x", pc);
 
 		/*
 		 * Stop if we see a frame pointer that falls within the range
@@ -302,6 +299,6 @@ kernel_put_stacktrace(struct trace_proc * proc)
 	}
 
 	if (fp != 0)
-		put_text(proc, " ..");
+		put_text(procp, " ..");
 	put_newline();
 }

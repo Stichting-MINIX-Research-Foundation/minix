@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: claris,v 1.6 2012/06/20 21:19:05 christos Exp $
+# $File: claris,v 1.7 2014/06/03 19:17:27 christos Exp $
 # claris:  file(1) magic for claris
 # "H. Nanosecond" <aldomel@ix.netcom.com>
 # Claris Works a word processor, etc.
@@ -20,7 +20,7 @@
 # .cwk
 0	string	\002\000\210\003\102\117\102\117\000\001\206 Claris works document
 # .plt
-0	string	\020\341\000\000\010\010	Claris Works pallete files .plt
+0	string	\020\341\000\000\010\010	Claris Works palette files .plt
 
 # .msp a dictionary file I am not sure about this I have only one .msp file
 0	string	\002\271\262\000\040\002\000\164	Claris works dictionary

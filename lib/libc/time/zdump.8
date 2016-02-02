@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.11 2013/09/20 19:06:54 christos Exp $
-.Dd September 20, 2013
+.\"	$NetBSD: zdump.8,v 1.14 2014/10/23 18:45:58 christos Exp $
+.Dd October 23, 2014
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Op Ar zonename ...
 .Nm zdump
 .Fl t
-.Ar [loyear,]highyear
+.Ar [lotime,]hightime
 .Op Ar zonename ...
 .Sh DESCRIPTION
 .Nm
@@ -35,19 +35,40 @@ the time one day after the lowest possible time value,
 the times both one second before and exactly at
 each detected time discontinuity,
 the time at one day less than the highest possible time value,
-and the time at the highest possible time value,
-Each line ends with
-.Dl isdst=1
-if the given time is Daylight Saving Time or
-.Dl isdst=0
-otherwise.
+and the time at the highest possible time value.
+Each line is followed by
+.Dl isdst= D
+where
+.Dl D
+is positive, zero, or negative depending on whether
+the given time is daylight saving time, standard time,
+or an unknown time type, respectively.
+Each line is also followed by
+.Dl gmtoff= N
+if the given local time is known to be
+.D N
+seconds east of Greenwich.
 .It Fl c Ar [loyear,]highyear
-Cut off the verbose output near the start of the given year(s).
-By default,
-the program cuts off verbose output near the starts of the years \-500 and 2500.
-.It Fl t Ar [loyear,]highyear
-Cut off verbose output at the start of the given time(s),
-given in decimal seconds since 1970-01-01 00:00:00 UTC.
+Cut off verbose output at the given year(s).
+Cutoff times are computed using the proleptic Gregorian calendar with year 0
+and with Universal Time (UT) ignoring leap seconds.
+The lower bound is exclusive and the upper is inclusive; for example, a
+.Dl loyear
+of 1970 excludes a transition occurring at 1970-01-01 00:00:00 UTC but a
+.Dl hiyear
+of 1970 includes the transition.
+The default cutoff is
+.Dl \*-500,2500 .
+.It Fl t Ar [lotime,]hightime
+Cut off verbose output at the given time(s),
+given in decimal seconds since 1970-01-01 00:00:00
+Coordinated Universal Time (UTC).
+The
+.Ar zonename
+determines whether the count includes leap seconds.
+As with
+.Fl c ,
+the cutoff's lower bound is exclusive and its upper bound is inclusive.
 .It Fl V
 Like
 .Fl v ,

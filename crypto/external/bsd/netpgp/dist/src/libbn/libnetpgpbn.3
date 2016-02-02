@@ -1,0 +1,304 @@
+.\" $NetBSD: libnetpgpbn.3,v 1.4 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2010 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt LIBNETPGPBN 3
+.Os
+.Sh NAME
+.Nm libnetpgpbn
+.Nd BIGNUM library of multi-precision integers
+.Sh LIBRARY
+.Lb libnetpgpbn
+.Sh SYNOPSIS
+.In netpgp/bn.h
+.Ft BIGNUM *
+.Fo BN_new
+.Fa "void"
+.Fc
+.Ft BIGNUM *
+.Fo BN_dup
+.Fa "const BIGNUM *orig"
+.Fc
+.Ft int
+.Fo BN_copy
+.Fa "BIGNUM *to" "const BIGNUM *from"
+.Fc
+.Ft void
+.Fo BN_swap
+.Fa "BIGNUM *a" "BIGNUM *b"
+.Fc
+.Pp
+.Ft void
+.Fo BN_init
+.Fa "BIGNUM *bn"
+.Fc
+.Ft void
+.Fo BN_free
+.Fa "BIGNUM *bn"
+.Fc
+.Ft void
+.Fo BN_clear
+.Fa "BIGNUM *bn"
+.Fc
+.Ft void
+.Fo BN_clear_free
+.Fa "BIGNUM *bn"
+.Fc
+.Pp
+.Ft void
+.Fo BN_clear_free
+.Fa "BIGNUM *bn"
+.Fc
+.Pp
+.Ft int
+.Fo BN_cmp
+.Fa "BIGNUM *lhs" "BIGNUM *rhs"
+.Fc
+.Ft int
+.Fo BN_is_negative
+.Fa "BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_is_zero
+.Fa "BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_is_odd
+.Fa "BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_is_even
+.Fa "BIGNUM *bn"
+.Fc
+.Pp
+.Ft BIGNUM *
+.Fo BN_bin2bn
+.Fa "const uint8_t *buf" "int size" "BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_bn2bin
+.Fa "BIGNUM *bn" "uint8_t *buf"
+.Fc
+.Ft int
+.Fo BN_bn2bin
+.Fa "BIGNUM *bn" "uint8_t *buf"
+.Fc
+.Ft char *
+.Fo BN_bn2hex
+.Fa "const BIGNUM *bn"
+.Fc
+.Ft char *
+.Fo BN_bn2dec
+.Fa "const BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_hex2bn
+.Fa "BIGNUM **bn" "const char *str"
+.Fc
+.Ft int
+.Fo BN_dec2bn
+.Fa "BIGNUM **bn" "const char *str"
+.Fc
+.Ft int
+.Fo BN_print_fp
+.Fa "FILE *fp" "const BIGNUM *bn"
+.Fc
+.Pp
+.Ft int
+.Fo BN_add
+.Fa "BIGNUM *sum" "const BIGNUM *a" "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_sub
+.Fa "BIGNUM *sum" "const BIGNUM *a" "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_mul
+.Fa "BIGNUM *product" "const BIGNUM *a" "const BIGNUM *b" "BN_CTX *context"
+.Fc
+.Ft int
+.Fo BN_div
+.Fa "BIGNUM *quotient" "BIGNUM *remainder" "const BIGNUM *a" "const BIGNUM *b" "BN_CTX *context"
+.Fc
+.Pp
+.Ft int
+.Fo BN_lshift
+.Fa "BIGNUM *result" "const BIGNUM *bn" "int n"
+.Fc
+.Ft int
+.Fo BN_lshift1
+.Fa "BIGNUM *result" "const BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_rshift
+.Fa "BIGNUM *result" "const BIGNUM *bn" "int n"
+.Fc
+.Ft int
+.Fo BN_rshift1
+.Fa "BIGNUM *result" "const BIGNUM *bn"
+.Fc
+.Pp
+.Ft int
+.Fo BN_set_word
+.Fa "BIGNUM *result" "unsigned long val"
+.Fc
+.Ft int
+.Fo BN_set_negative
+.Fa "BIGNUM *result" "int val"
+.Fc
+.Pp
+.Ft int
+.Fo BN_num_bytes
+.Fa "const BIGNUM *bn"
+.Fc
+.Ft int
+.Fo BN_num_bits
+.Fa "const BIGNUM *bn"
+.Fc
+.Pp
+.Ft int
+.Fo BN_mod_exp
+.Fa "BIGNUM *result" "BIGNUM *a" "BIGNUM *p" "BIGNUM *m" "BN_CTX *context"
+.Fc
+.Ft BIGNUM *
+.Fo BN_mod_inverse
+.Fa "BIGNUM *result" "BIGNUM *a" "BIGNUM *n" "BN_CTX *context"
+.Fc
+.Ft int
+.Fo BN_mod_mul
+.Fa "BIGNUM *result" "BIGNUM *a" "BIGNUM *b" "BIGNUM *m" "BN_CTX *context"
+.Fc
+.Ft int
+.Fo BN_mod_sub
+.Fa "BIGNUM *result" "BIGNUM *a" "BIGNUM *b" "BIGNUM *m" "BN_CTX *context"
+.Fc
+.Pp
+.Ft BN_CTX *
+.Fo BN_CTX_new
+.Fa "void"
+.Fc
+.Ft BIGNUM *
+.Fo BN_CTX_get
+.Fa "BN_CTX *context"
+.Fc
+.Ft void
+.Fo BN_CTX_start
+.Fa "BN_CTX *context"
+.Fc
+.Ft void
+.Fo BN_CTX_end
+.Fa "BN_CTX *context"
+.Fc
+.Ft void
+.Fo BN_CTX_init
+.Fa "BN_CTX *context"
+.Fc
+.Ft void
+.Fo BN_CTX_free
+.Fa "BN_CTX *context"
+.Fc
+.Ft int
+.Fo BN_rand
+.Fa "BIGNUM *result" "int bits" "int top" "int bottom"
+.Fc
+.Ft int
+.Fo BN_rand_range
+.Fa "BIGNUM *result" "BIGNUM *range"
+.Fc
+.Ft int
+.Fo BN_is_prime
+.Fa "const BIGNUM *bn" "int checks" "void (*callback)(int int void)"
+.Fa "BN_CTX *context" "void *callbackarg"
+.Fc
+.Pp
+.Ft const BIGNUM *
+.Fo BN_value_one
+.Fa "void"
+.Fc
+.Ft int
+.Fo BN_is_bit_set
+.Fa "const BIGNUM *bn" "int n"
+.Fc
+.Sh DESCRIPTION
+.Nm
+emulates the API of the openssl
+.Xr bn 3
+library.
+It is implemented using Tom St Denis's
+.Dq libtommath
+library.
+.Sh EXAMPLES
+The following code fragment will make a JSON object
+out of the string
+.Dq Hello <USERNAME>\en
+in the
+buffer called
+.Va buf
+where
+.Dq USERNAME
+is the name of the user taken from the runtime environment.
+The encoded text will be in an allocated buffer called
+.Va s .
+.Bd -literal -offset indent
+mj_t atom;
+char buf[BUFSIZ];
+char *s;
+int cc;
+
+(void) memset(\*[Am]atom, 0x0, sizeof(atom));
+cc = snprintf(buf, sizeof(buf), "Hello %s\en", getenv("USER"));
+mj_create(\*[Am]atom, "string", buf, cc);
+cc = mj_asprint(\*[Am]s, \*[Am]atom, MJ_JSON_ENCODE);
+.Ed
+.Pp
+Next, the following example will take the (binary) text which has been encoded into
+JSON and is in the buffer
+.Va buf ,
+such as in the previous example, and re-create the original text:
+.Bd -literal -offset indent
+int from, to, tok, cc;
+char *s;
+mj_t atom;
+
+(void) memset(\*[Am]atom, 0x0, sizeof(atom));
+from = to = tok = 0;
+mj_parse(\*[Am]atom, buf, \*[Am]from, \*[Am]to, \*[Am]tok);
+cc = mj_asprint(\*[Am]s, \*[Am]atom, MJ_HUMAN);
+printf("%.*s", cc, s);
+.Ed
+.Pp
+The
+.Va s
+pointer points to allocated storage with the original NUL-terminated string
+in it.
+.Sh SEE ALSO
+.Xr bn 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org .

@@ -62,8 +62,27 @@
 #define NO_MEM ((phys_clicks) MAP_NONE)  /* returned by alloc_mem() with mem is up */
 
 /* And what is the highest addressable piece of memory? */
-#define VM_DATATOP      kernel_boot_info.user_end
-#define VM_STACKTOP     kernel_boot_info.user_sp
+#define VM_DATATOP	kernel_boot_info.user_end
 
+#define VM_STACKTOP	kernel_boot_info.user_sp
+
+/* Live update will work only with magic instrumentation. Live update requires
+ * strict separation of regions within the process to succeed. Therefore,
+ * apply this strict separation only if magic instrumentation is used.
+ * Otherwise, do not place such limitations on processes.
+ */
+#ifdef _MINIX_MAGIC
+#define VM_MMAPTOP	(VM_STACKTOP-DEFAULT_STACK_LIMIT)
+#define VM_MMAPBASE	(VM_MMAPTOP/2)
+#else
+#define VM_MMAPTOP	VM_DATATOP
+#define VM_MMAPBASE	VM_PAGE_SIZE
 #endif
 
+extern char _end;
+#define VM_OWN_HEAPSTART ((vir_bytes) (&_end))
+#define VM_OWN_HEAPBASE   roundup(VM_OWN_HEAPSTART, VM_PAGE_SIZE)
+#define VM_OWN_MMAPBASE (VM_OWN_HEAPBASE+1024*1024*1024)
+#define VM_OWN_MMAPTOP   (VM_OWN_MMAPBASE+100 * 1024 * 1024)
+
+#endif

@@ -1,20 +1,35 @@
 
 #------------------------------------------------------------------------------
-# $File: flash,v 1.9 2009/11/08 01:30:01 christos Exp $
+# $File: flash,v 1.11 2014/05/02 00:26:49 christos Exp $
 # flash:	file(1) magic for Macromedia Flash file format
 #
 # See
 #
 #	http://www.macromedia.com/software/flash/open/
+#	http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/\
+#	en/devnet/swf/pdf/swf-file-format-spec.pdf page 27
 #
-0	string		FWS		Macromedia Flash data,
->3	byte		x		version %d
+
+0   name        swf-details
+>0	string		F		Macromedia Flash data
 !:mime	application/x-shockwave-flash
-0	string		CWS		Macromedia Flash data (compressed),
+>0	string		C		Macromedia Flash data (compressed)
 !:mime	application/x-shockwave-flash
->3	byte		x		version %d
+>0	string		Z		Macromedia Flash data (lzma compressed)
+!:mime	application/x-shockwave-flash
+>3   byte        x      \b, version %d
+
+1   string      WS
+>4  lelong      !0
+>>3 byte        255 Suspicious
+>>>0    use     swf-details
+
+>>3 ubyte       <32
+>>>3 ubyte      !0
+>>>>0   use     swf-details
+
 # From: Cal Peake <cp@absolutedigital.net>
-0	string		FLV		Macromedia Flash Video
+0	string		FLV\x01		Macromedia Flash Video
 !:mime	video/x-flv
 
 #

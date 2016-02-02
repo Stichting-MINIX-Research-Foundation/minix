@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.netbsd-gmp,v 1.3 2013/07/18 22:40:58 matt Exp $
+# $NetBSD: Makefile.netbsd-gmp,v 1.4 2014/03/18 18:20:36 riastradh Exp $
 
 # hack makefile to help build gmp ./configure
 

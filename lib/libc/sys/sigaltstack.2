@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.23 2012/03/02 18:07:17 joerg Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.24 2014/09/27 12:11:13 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,6 @@
 .Lb libc
 .Sh SYNOPSIS
 .In signal.h
-.Pp
 .Bd -literal
 typedef struct sigaltstack {
 	void   *ss_sp;
@@ -47,6 +46,7 @@ typedef struct sigaltstack {
 	int     ss_flags;
 } stack_t;
 .Ed
+.Pp
 .Ft int
 .Fn sigaltstack "const stack_t * restrict ss" "stack_t * restrict oss"
 .Sh DESCRIPTION
@@ -132,10 +132,7 @@ are not ``grown'' automatically as is done for the normal stack.
 If the stack overflows and this space is not protected
 unpredictable results may occur.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std
 .Sh ERRORS
 .Fn sigaltstack
 will fail and the signal stack context will remain unchanged

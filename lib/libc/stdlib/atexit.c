@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.26 2013/08/19 22:14:37 matt Exp $	*/
+/*	$NetBSD: atexit.c,v 1.29 2015/04/19 18:15:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.26 2013/08/19 22:14:37 matt Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.29 2015/04/19 18:15:26 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -120,12 +120,12 @@ atexit_handler_alloc(void *dso)
 void __section(".text.startup")
 __libc_atexit_init(void)
 {
-#ifdef _REENTRANT /* !__minix */
+#ifdef _REENTRANT
 	mutexattr_t atexit_mutex_attr;
 	mutexattr_init(&atexit_mutex_attr);
 	mutexattr_settype(&atexit_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
 	mutex_init(&__atexit_mutex, &atexit_mutex_attr);
-#endif /* _REENTRANT */
+#endif
 }
 
 /*
@@ -135,6 +135,17 @@ __libc_atexit_init(void)
  *
  *	http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
  */
+#if defined(__ARM_EABI__) && !defined(lint)
+int
+__aeabi_atexit(void *arg, void (*func)(void *), void *dso);
+
+int
+__aeabi_atexit(void *arg, void (*func)(void *), void *dso)
+{
+	return __cxa_atexit(func, arg, dso);
+}
+#endif
+
 int
 __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 {

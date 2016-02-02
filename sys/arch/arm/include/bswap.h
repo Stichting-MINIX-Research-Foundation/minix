@@ -1,11 +1,15 @@
-/*      $NetBSD: bswap.h,v 1.4 2006/01/31 07:49:18 dsl Exp $      */
+/*      $NetBSD: bswap.h,v 1.6 2014/01/29 01:36:43 matt Exp $      */
 
-#ifndef _MACHINE_BSWAP_H_
-#define	_MACHINE_BSWAP_H_
+#ifndef _ARM_BSWAP_H_
+#define	_ARM_BSWAP_H_
 
+#ifdef __aarch64__
+#include <aarch64/byte_swap.h>
+#else
 #include <arm/byte_swap.h>
+#endif
 
 #define __BSWAP_RENAME
 #include <sys/bswap.h>
 
-#endif /* !_MACHINE_BSWAP_H_ */
+#endif /* !_ARM_BSWAP_H_ */

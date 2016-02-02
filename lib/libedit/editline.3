@@ -1,6 +1,6 @@
-.\"	$NetBSD: editline.3,v 1.80 2013/07/12 17:48:29 christos Exp $
+.\"	$NetBSD: editline.3,v 1.84 2014/12/25 13:39:41 wiz Exp $
 .\"
-.\" Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This file was contributed to The NetBSD Foundation by Luke Mewburn.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 2013
+.Dd December 25, 2014
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -190,7 +190,9 @@ The following functions are available:
 .Bl -tag -width 4n
 .It Fn el_init
 Initialise the line editor, and return a data structure
-to be used by all other line editing functions.
+to be used by all other line editing functions, or
+.Dv NULL
+on failure.
 .Fa prog
 is the name of the invoking program, used when reading the
 .Xr editrc 5
@@ -290,6 +292,7 @@ parameters.
 .Fa op
 determines which parameter to set, and each operation has its
 own parameter list.
+Returns 0 on success, \-1 on failure.
 .Pp
 The following values for
 .Fa op
@@ -605,6 +608,8 @@ Refer to
 .Xr editrc 5
 for details on the format of
 .Fa file .
+.Fn el_source
+returns 0 on success and \-1 on error.
 .It Fn el_resize
 Must be called if the terminal size changes.
 If
@@ -665,7 +670,9 @@ The following functions are available:
 .Bl -tag -width 4n
 .It Fn history_init
 Initialise the history list, and return a data structure
-to be used by all other history list functions.
+to be used by all other history list functions, or
+.Dv NULL
+on failure.
 .It Fn history_end
 Clean up and finish with
 .Fa h ,
@@ -734,12 +741,12 @@ as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
 If
 .Dv H_SETUNIQUE
-was has been called with a non-zero arguments, the element
+has been called with a non-zero argument, the element
 will not be entered into the history if its contents match
 the ones of the current history element.
 If the element is entered
 .Fn history
-returns 1, if it is ignored as a duplicate returns 0.
+returns 1; if it is ignored as a duplicate returns 0.
 Finally
 .Fn history
 returns \-1 if an error occurred.
@@ -761,6 +768,11 @@ Load the history list stored in
 .It Dv H_SAVE , Fa "const char *file"
 Save the history list to
 .Fa file .
+.It Dv H_SAVE_FP , Fa "FILE *fp"
+Save the history list to the opened
+.Ft FILE
+pointer
+.Fa fp .
 .It Dv H_SETUNIQUE , Fa "int unique"
 Set flag that adjacent identical event strings should not be entered
 into the history.
@@ -881,17 +893,22 @@ and the readline emulation appeared in
 appeared in
 .Nx 1.5 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-library was written by Christos Zoulas.
-Luke Mewburn wrote this manual and implemented
+library was written by
+.An Christos Zoulas .
+.An Luke Mewburn
+wrote this manual and implemented
 .Dv CC_REDISPLAY ,
 .Dv CC_REFRESH_BEEP ,
 .Dv EL_EDITMODE ,
 and
 .Dv EL_RPROMPT .
-Jaromir Dolecek implemented the readline emulation.
-Johny Mattsson implemented wide-character support.
+.An Jaromir Dolecek
+implemented the readline emulation.
+.An Johny Mattsson
+implemented wide-character support.
 .Sh BUGS
 At this time, it is the responsibility of the caller to
 check the result of the

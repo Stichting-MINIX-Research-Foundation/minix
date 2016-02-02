@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.90 2013/02/02 14:00:37 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.95 2015/08/27 12:30:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -95,7 +95,7 @@ typedef	uint16_t	u_int16_t;
 typedef	uint32_t	u_int32_t;
 typedef	uint64_t	u_int64_t;
 
-#ifdef __minix
+#if defined(__minix)
 typedef uint8_t 	u8_t;
 #define u8_t		uint8_t
 typedef uint16_t	u16_t;
@@ -123,7 +123,7 @@ typedef uint32_t bit_t;       /* bit number in a bit map */
 typedef uint16_t zone1_t;     /* zone number for V1 file systems */
 typedef uint32_t bitchunk_t; /* collection of bits in a bitmap */
 #endif
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 #include <machine/endian.h>
 
@@ -229,16 +229,11 @@ typedef	unsigned long	cpuid_t;
 
 typedef	int		psetid_t;
 
+typedef volatile __cpu_simple_lock_nv_t __cpu_simple_lock_t;
+
 #if defined(_KERNEL) || defined(_STANDALONE)
-/*
- * Boolean type definitions for the kernel environment.  User-space
- * boolean definitions are found in <stdbool.h>.
- */
-#ifndef __cplusplus
-#define bool	_Bool
-#define true	1
-#define false	0
-#endif
+
+#include <sys/stdbool.h>
 
 /*
  * Deprecated Mach-style boolean_t type.  Should not be used by new code.
@@ -303,6 +298,11 @@ typedef int32_t __devmajor_t, __devminor_t;
 #ifdef	_BSD_CLOCK_T_
 typedef	_BSD_CLOCK_T_		clock_t;
 #undef	_BSD_CLOCK_T_
+#endif
+
+#ifdef	_BSD_PTRDIFF_T_
+typedef	_BSD_PTRDIFF_T_		ptrdiff_t;
+#undef	_BSD_PTRDIFF_T_
 #endif
 
 #ifdef	_BSD_SIZE_T_
@@ -379,13 +379,13 @@ struct	uio;
 #define	CLR(t, f)	((t) &= ~(f))
 #endif
 
-#ifndef __minix
+#if !defined(__minix)
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
 #include <pthread_types.h>
 #endif
 #endif
-#endif /* !__minix */
+#endif /* !defined(__minix) */
 
 #endif /* !_SYS_TYPES_H_ */

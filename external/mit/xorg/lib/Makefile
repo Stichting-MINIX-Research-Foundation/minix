@@ -1,15 +1,25 @@
-#	$NetBSD: Makefile,v 1.27 2013/06/05 02:51:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.35 2015/07/23 05:46:39 mrg Exp $
 
 # build libraries for xorg
 
-SUBDIR=	libfontenc freetype libFS libICE libOSMesa \
-	libXau libXdmcp libdrm libpciaccess .WAIT
+.include <bsd.own.mk>
+
+SUBDIR=	libfontenc freetype libFS libICE libglapi \
+	libXau libXdmcp libdrm libpciaccess libpthread-stubs .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
 .endif
-SUBDIR+=libdrm_radeon pixman xkeyboard-config libxcb \
-	.WAIT \
-	dri fontconfig libSM libX11 \
+SUBDIR+=libdrm_radeon pixman
+.if !defined(MLIBDIR)
+SUBDIR+=xkeyboard-config
+.endif
+SUBDIR+=libxcb \
+	.WAIT
+.if !defined(MLIBDIR)
+#__MINIX: gallium
+SUBDIR+=dri7 dri 
+.endif
+SUBDIR+=fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile \
@@ -30,9 +40,11 @@ SUBDIR+=libchromeXvMCPro
 SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXrandr \
 	.WAIT \
-	libXft libglut \
+	libXpresent libXft libglut \
 	.WAIT \
 	libXdmGreet \
-	#xcb-util #LSC: pthread_cancel stuff
-	
+	xcb-util
+SUBDIR+=libgbm
+
+.include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

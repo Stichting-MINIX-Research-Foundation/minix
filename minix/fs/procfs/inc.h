@@ -2,6 +2,8 @@
 #define _PROCFS_INC_H
 
 #include <minix/drivers.h>
+#include <minix/param.h>
+#include <minix/sysctl.h>
 #include <minix/sysinfo.h>
 #include <minix/vtreefs.h>
 #include <minix/procfs.h>
@@ -11,9 +13,7 @@
 #include "kernel/const.h"
 #include "kernel/type.h"
 #include "kernel/proc.h"
-#include "pm/mproc.h"
 #include "vfs/const.h"
-#include "vfs/fproc.h"
 #include "vfs/dmap.h"
 
 #include "const.h"

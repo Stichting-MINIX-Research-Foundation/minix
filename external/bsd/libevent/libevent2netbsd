@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: libevent2netbsd,v 1.1 2013/04/11 16:56:11 christos Exp $
+# $NetBSD: libevent2netbsd,v 1.2 2015/01/29 07:26:02 spz Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -41,6 +41,11 @@ if [ -f $d/configure ]; then
 #else\
 #define _EVENT_SIZEOF_SIZE_T 4\
 #endif
+	d
+}
+/_EVENT_SIZEOF_LONG_LONG/ {
+	a\
+#define _EVENT_SIZEOF_LONG_LONG 8
 	d
 }
 /_EVENT_SIZEOF_LONG/ {

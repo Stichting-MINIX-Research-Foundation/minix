@@ -83,8 +83,7 @@ static struct {
 	phys_bytes phys;
 } sparepagedirs[SPAREPAGEDIRS];
 
-extern char _end;	
-#define is_staticaddr(v) ((vir_bytes) (v) < (vir_bytes) &_end)
+#define is_staticaddr(v) ((vir_bytes) (v) < VM_OWN_HEAPSTART)
 
 #define MAX_KERNMAPPINGS 10
 static struct {
@@ -113,6 +112,17 @@ static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES]
 #if defined(__arm__)
 static char static_sparepagedirs[ARCH_PAGEDIR_SIZE*STATIC_SPAREPAGEDIRS + ARCH_PAGEDIR_SIZE] __aligned(ARCH_PAGEDIR_SIZE);
 #endif
+
+void pt_assert(pt_t *pt)
+{
+	char dir[4096];
+	pt_clearmapcache();
+	if((sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("VMCTL_FLUSHTLB failed");
+	}
+	sys_physcopy(NONE, pt->pt_dir_phys, SELF, (vir_bytes) dir, sizeof(dir), 0);
+	assert(!memcmp(dir, pt->pt_dir, sizeof(dir)));
+}
 
 #if SANITYCHECKS
 /*===========================================================================*
@@ -148,16 +158,14 @@ static u32_t findhole(int pages)
 /* Find a space in the virtual address space of VM. */
 	u32_t curv;
 	int pde = 0, try_restart;
-	static u32_t lastv = 0;
+	static void *lastv = 0;
 	pt_t *pt = &vmprocess->vm_pt;
 	vir_bytes vmin, vmax;
 	u32_t holev = NO_MEM;
 	int holesize = -1;
 
-	vmin = (vir_bytes) (&_end); /* marks end of VM BSS */
-	vmin += 1024*1024*1024;	/* reserve 1GB virtual address space for VM heap */
-	vmin &= ARCH_VM_ADDR_MASK; 
-	vmax = vmin + 100 * 1024 * 1024; /* allow 100MB of address space for VM */
+	vmin = VM_OWN_MMAPBASE;
+	vmax = VM_OWN_MMAPTOP;
 
 	/* Input sanity check. */
 	assert(vmin + VM_PAGE_SIZE >= vmin);
@@ -166,7 +174,7 @@ static u32_t findhole(int pages)
 	assert((vmax % VM_PAGE_SIZE) == 0);
 	assert(pages > 0);
 
-	curv = lastv;
+	curv = (u32_t) lastv;
 	if(curv < vmin || curv >= vmax)
 		curv = vmin;
 
@@ -201,7 +209,7 @@ static u32_t findhole(int pages)
 
 			/* if it's big enough, return it */
 			if(holesize == pages) {
-				lastv = curv + VM_PAGE_SIZE;
+				lastv = (void*) (curv + VM_PAGE_SIZE);
 				return holev;
 			}
 		}
@@ -258,7 +266,6 @@ static void *vm_getsparepage(phys_bytes *phys)
 {
 	void *ptr;
 	if(reservedqueue_alloc(spare_pagequeue, phys, &ptr) != OK) {
-		printf("vm_getsparepage: no spare found\n");
 		return NULL;
 	}
 	assert(ptr);
@@ -665,6 +672,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 
 		/* Transfer the mapping. */
 		dst_pt->pt_pt[pde][pte] = pt->pt_pt[pde][pte];
+		assert(dst_pt->pt_pt[pde]);
 
                 if(viraddr == VM_DATATOP) break;
 	}
@@ -678,8 +686,7 @@ int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
 int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
 /* Transfer mappings to page dir and page tables from source process and
- * destination process. Make sure all the mappings are above the stack, not
- * to corrupt valid mappings in the data segment of the destination process.
+ * destination process.
  */
 	int pde, r;
 	phys_bytes physaddr;
@@ -713,10 +720,12 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #endif
 
 	/* Scan all non-reserved page-directory entries. */
-	for(pde=0; pde < ARCH_VM_DIR_ENTRIES; pde++) {
+	for(pde=0; pde < kern_start_pde; pde++) {
 		if(!(pt->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
 			continue;
 		}
+
+		if(!pt->pt_pt[pde]) { panic("pde %d empty\n", pde); }
 
 		/* Transfer mapping to the page table. */
 		viraddr = (vir_bytes) pt->pt_pt[pde];
@@ -725,6 +734,7 @@ int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #elif defined(__arm__)
 		physaddr = pt->pt_dir[pde] & ARCH_VM_PDE_MASK;
 #endif
+		assert(viraddr);
 		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, VM_PAGE_SIZE,
 			ARCH_VM_PTE_PRESENT | ARCH_VM_PTE_USER | ARCH_VM_PTE_RW
 #ifdef __arm__
@@ -846,11 +856,6 @@ int pt_writemap(struct vmproc * vmp,
 		 */
 		assert(pt->pt_pt[pde]);
 
-#if SANITYCHECKS
-		/* We don't expect to overwrite a page. */
-		if(!(writemapflags & (WMF_OVERWRITE|WMF_VERIFY)))
-			assert(!(pt->pt_pt[pde][pte] & ARCH_VM_PTE_PRESENT));
-#endif
 		if(writemapflags & (WMF_WRITEFLAGSONLY|WMF_FREE)) {
 #if defined(__i386__)
 			physaddr = pt->pt_pt[pde][pte] & ARCH_VM_ADDR_MASK;
@@ -1028,13 +1033,64 @@ static int freepde(void)
 	return p;
 }
 
+void pt_allocate_kernel_mapped_pagetables(void)
+{
+	/* Reserve PDEs available for mapping in the page directories. */
+	int pd;
+	for(pd = 0; pd < MAX_PAGEDIR_PDES; pd++) {
+		struct pdm *pdm = &pagedir_mappings[pd];
+		if(!pdm->pdeno)  {
+			pdm->pdeno = freepde();
+			assert(pdm->pdeno);
+		}
+		phys_bytes ph;
+
+		/* Allocate us a page table in which to
+		 * remember page directory pointers.
+		 */
+		if(!(pdm->page_directories =
+			vm_allocpage(&ph, VMP_PAGETABLE))) {
+			panic("no virt addr for vm mappings");
+		}
+		memset(pdm->page_directories, 0, VM_PAGE_SIZE);
+		pdm->phys = ph;
+
+#if defined(__i386__)
+		pdm->val = (ph & ARCH_VM_ADDR_MASK) |
+			ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
+#elif defined(__arm__)
+		pdm->val = (ph & ARCH_VM_PDE_MASK)
+			| ARCH_VM_PDE_PRESENT
+			| ARM_VM_PTE_CACHED
+			| ARM_VM_PDE_DOMAIN; //LSC FIXME
+#endif
+	}
+}
+
+static void pt_copy(pt_t *dst, pt_t *src)
+{
+	int pde;
+	for(pde=0; pde < kern_start_pde; pde++) {
+		if(!(src->pt_dir[pde] & ARCH_VM_PDE_PRESENT)) {
+			continue;
+		}
+		assert(!(src->pt_dir[pde] & ARCH_VM_BIGPAGE));
+		if(!src->pt_pt[pde]) { panic("pde %d empty\n", pde); }
+		if(pt_ptalloc(dst, pde, 0) != OK)
+			panic("pt_ptalloc failed");
+		memcpy(dst->pt_pt[pde], src->pt_pt[pde],
+			ARCH_VM_PT_ENTRIES * sizeof(*dst->pt_pt[pde]));
+	}
+}
+
 /*===========================================================================*
  *                              pt_init                                      *
  *===========================================================================*/
 void pt_init(void)
 {
-        pt_t *newpt;
+        pt_t *newpt, newpt_dyn;
         int s, r, p;
+	phys_bytes phys;
 	vir_bytes sparepages_mem;
 #if defined(__arm__)
 	vir_bytes sparepagedirs_mem;
@@ -1185,35 +1241,7 @@ void pt_init(void)
 		}
 	}
 
-	/* Reserve PDEs available for mapping in the page directories. */
-	{
-		int pd;
-		for(pd = 0; pd < MAX_PAGEDIR_PDES; pd++) {
-			struct pdm *pdm = &pagedir_mappings[pd];
-			pdm->pdeno = freepde();
-			phys_bytes ph;
-
-			/* Allocate us a page table in which to
-			 * remember page directory pointers.
-			 */
-			if(!(pdm->page_directories =
-				vm_allocpage(&ph, VMP_PAGETABLE))) {
-				panic("no virt addr for vm mappings");
-			}
-			memset(pdm->page_directories, 0, VM_PAGE_SIZE);
-			pdm->phys = ph;
-
-#if defined(__i386__)
-			pdm->val = (ph & ARCH_VM_ADDR_MASK) |
-				ARCH_VM_PDE_PRESENT | ARCH_VM_PTE_RW;
-#elif defined(__arm__)
-			pdm->val = (ph & ARCH_VM_PDE_MASK)
-				| ARCH_VM_PDE_PRESENT
-				| ARM_VM_PTE_CACHED
-				| ARM_VM_PDE_DOMAIN; //LSC FIXME
-#endif
-		}
-	}
+	pt_allocate_kernel_mapped_pagetables();
 
 	/* Allright. Now. We have to make our own page directory and page tables,
 	 * that the kernel has already set up, accessible to us. It's easier to
@@ -1282,6 +1310,44 @@ void pt_init(void)
 	pt_bind(newpt, &vmproc[VM_PROC_NR]);
 
 	pt_init_done = 1;
+
+	/* VM is now fully functional in that it can dynamically allocate memory
+	 * for itself.
+	 *
+	 * We don't want to keep using the bootstrap statically allocated spare
+	 * pages though, as the physical addresses will change on liveupdate. So we
+	 * re-do part of the initialization now with purely dynamically allocated
+	 * memory. First throw out the static pool.
+	 *
+	 * Then allocate the kernel-shared-pagetables and VM pagetables with dynamic
+	 * memory.
+	 */
+
+	alloc_cycle();                          /* Make sure allocating works */
+	while(vm_getsparepage(&phys)) ;		/* Use up all static pages */
+	alloc_cycle();                          /* Refill spares with dynamic */
+	pt_allocate_kernel_mapped_pagetables(); /* Reallocate in-kernel pages */
+	pt_bind(newpt, &vmproc[VM_PROC_NR]);    /* Recalculate */
+	pt_mapkernel(newpt);                    /* Rewrite pagetable info */
+
+	/* Flush TLB just in case any of those mappings have been touched */
+	if((sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("VMCTL_FLUSHTLB failed");
+	}
+
+	/* Recreate VM page table with dynamic-only allocations */
+	memset(&newpt_dyn, 0, sizeof(newpt_dyn));
+	pt_new(&newpt_dyn);
+	pt_copy(&newpt_dyn, newpt);
+	memcpy(newpt, &newpt_dyn, sizeof(*newpt));
+
+	pt_bind(newpt, &vmproc[VM_PROC_NR]);    /* Recalculate */
+	pt_mapkernel(newpt);                    /* Rewrite pagetable info */
+
+	/* Flush TLB just in case any of those mappings have been touched */
+	if((sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("VMCTL_FLUSHTLB failed");
+	}
 
         /* All OK. */
         return;

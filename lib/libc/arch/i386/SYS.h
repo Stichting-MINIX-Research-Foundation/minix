@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.24 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: SYS.h,v 1.25 2014/05/23 02:17:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -126,13 +126,15 @@
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	ret
+	ret;								\
+	END(x)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2f;								\
 	ret;								\
-	2: _SYSCALL_ERR
+	2: _SYSCALL_ERR;						\
+	END(x)
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)

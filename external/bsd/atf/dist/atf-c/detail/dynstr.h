@@ -52,8 +52,10 @@ extern const size_t atf_dynstr_npos;
 
 /* Constructors and destructors */
 atf_error_t atf_dynstr_init(atf_dynstr_t *);
-atf_error_t atf_dynstr_init_ap(atf_dynstr_t *, const char *, va_list);
-atf_error_t atf_dynstr_init_fmt(atf_dynstr_t *, const char *, ...);
+atf_error_t atf_dynstr_init_ap(atf_dynstr_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
+atf_error_t atf_dynstr_init_fmt(atf_dynstr_t *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 atf_error_t atf_dynstr_init_raw(atf_dynstr_t *, const void *, size_t);
 atf_error_t atf_dynstr_init_rep(atf_dynstr_t *, size_t, char);
 atf_error_t atf_dynstr_init_substr(atf_dynstr_t *, const atf_dynstr_t *,
@@ -68,11 +70,15 @@ size_t atf_dynstr_length(const atf_dynstr_t *);
 size_t atf_dynstr_rfind_ch(const atf_dynstr_t *, char);
 
 /* Modifiers */
-atf_error_t atf_dynstr_append_ap(atf_dynstr_t *, const char *, va_list);
-atf_error_t atf_dynstr_append_fmt(atf_dynstr_t *, const char *, ...);
+atf_error_t atf_dynstr_append_ap(atf_dynstr_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
+atf_error_t atf_dynstr_append_fmt(atf_dynstr_t *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 void atf_dynstr_clear(atf_dynstr_t *);
-atf_error_t atf_dynstr_prepend_ap(atf_dynstr_t *, const char *, va_list);
-atf_error_t atf_dynstr_prepend_fmt(atf_dynstr_t *, const char *, ...);
+atf_error_t atf_dynstr_prepend_ap(atf_dynstr_t *, const char *, va_list)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 0);
+atf_error_t atf_dynstr_prepend_fmt(atf_dynstr_t *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
 
 /* Operators */
 bool atf_equal_dynstr_cstring(const atf_dynstr_t *, const char *);

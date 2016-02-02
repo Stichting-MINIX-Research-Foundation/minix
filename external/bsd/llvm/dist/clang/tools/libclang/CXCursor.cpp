@@ -34,7 +34,7 @@ using namespace cxcursor;
 
 CXCursor cxcursor::MakeCXCursorInvalid(CXCursorKind K, CXTranslationUnit TU) {
   assert(K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid);
-  CXCursor C = { K, 0, { 0, 0, TU } };
+  CXCursor C = { K, 0, { nullptr, nullptr, TU } };
   return C;
 }
 
@@ -50,6 +50,14 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     case attr::Annotate: return CXCursor_AnnotateAttr;
     case attr::AsmLabel: return CXCursor_AsmLabelAttr;
     case attr::Packed: return CXCursor_PackedAttr;
+    case attr::Pure: return CXCursor_PureAttr;
+    case attr::Const: return CXCursor_ConstAttr;
+    case attr::NoDuplicate: return CXCursor_NoDuplicateAttr;
+    case attr::CUDAConstant: return CXCursor_CUDAConstantAttr;
+    case attr::CUDADevice: return CXCursor_CUDADeviceAttr;
+    case attr::CUDAGlobal: return CXCursor_CUDAGlobalAttr;
+    case attr::CUDAHost: return CXCursor_CUDAHostAttr;
+    case attr::CUDAShared: return CXCursor_CUDASharedAttr;
   }
 
   return CXCursor_UnexposedAttr;
@@ -208,16 +216,20 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::SEHFinallyStmtClass:
     K = CXCursor_SEHFinallyStmt;
     break;
+
+  case Stmt::SEHLeaveStmtClass:
+    K = CXCursor_SEHLeaveStmt;
+    break;
   
   case Stmt::ArrayTypeTraitExprClass:
   case Stmt::AsTypeExprClass:
   case Stmt::AtomicExprClass:
   case Stmt::BinaryConditionalOperatorClass:
-  case Stmt::BinaryTypeTraitExprClass:
   case Stmt::TypeTraitExprClass:
   case Stmt::CXXBindTemporaryExprClass:
   case Stmt::CXXDefaultArgExprClass:
   case Stmt::CXXDefaultInitExprClass:
+  case Stmt::CXXFoldExprClass:
   case Stmt::CXXStdInitializerListExprClass:
   case Stmt::CXXScalarValueInitExprClass:
   case Stmt::CXXUuidofExprClass:
@@ -236,7 +248,6 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::ShuffleVectorExprClass:
   case Stmt::ConvertVectorExprClass:
   case Stmt::UnaryExprOrTypeTraitExprClass:
-  case Stmt::UnaryTypeTraitExprClass:
   case Stmt::VAArgExprClass:
   case Stmt::ObjCArrayLiteralClass:
   case Stmt::ObjCDictionaryLiteralClass:
@@ -459,6 +470,7 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::SubstNonTypeTemplateParmPackExprClass:
   case Stmt::FunctionParmPackExprClass:
   case Stmt::UnresolvedLookupExprClass:
+  case Stmt::TypoExprClass: // A typo could actually be a DeclRef or a MemberRef
     K = CXCursor_DeclRefExpr;
     break;
       
@@ -511,9 +523,68 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::OMPParallelDirectiveClass:
     K = CXCursor_OMPParallelDirective;
     break;
-  
+  case Stmt::OMPSimdDirectiveClass:
+    K = CXCursor_OMPSimdDirective;
+    break;
+  case Stmt::OMPForDirectiveClass:
+    K = CXCursor_OMPForDirective;
+    break;
+  case Stmt::OMPForSimdDirectiveClass:
+    K = CXCursor_OMPForSimdDirective;
+    break;
+  case Stmt::OMPSectionsDirectiveClass:
+    K = CXCursor_OMPSectionsDirective;
+    break;
+  case Stmt::OMPSectionDirectiveClass:
+    K = CXCursor_OMPSectionDirective;
+    break;
+  case Stmt::OMPSingleDirectiveClass:
+    K = CXCursor_OMPSingleDirective;
+    break;
+  case Stmt::OMPMasterDirectiveClass:
+    K = CXCursor_OMPMasterDirective;
+    break;
+  case Stmt::OMPCriticalDirectiveClass:
+    K = CXCursor_OMPCriticalDirective;
+    break;
+  case Stmt::OMPParallelForDirectiveClass:
+    K = CXCursor_OMPParallelForDirective;
+    break;
+  case Stmt::OMPParallelForSimdDirectiveClass:
+    K = CXCursor_OMPParallelForSimdDirective;
+    break;
+  case Stmt::OMPParallelSectionsDirectiveClass:
+    K = CXCursor_OMPParallelSectionsDirective;
+    break;
+  case Stmt::OMPTaskDirectiveClass:
+    K = CXCursor_OMPTaskDirective;
+    break;
+  case Stmt::OMPTaskyieldDirectiveClass:
+    K = CXCursor_OMPTaskyieldDirective;
+    break;
+  case Stmt::OMPBarrierDirectiveClass:
+    K = CXCursor_OMPBarrierDirective;
+    break;
+  case Stmt::OMPTaskwaitDirectiveClass:
+    K = CXCursor_OMPTaskwaitDirective;
+    break;
+  case Stmt::OMPFlushDirectiveClass:
+    K = CXCursor_OMPFlushDirective;
+    break;
+  case Stmt::OMPOrderedDirectiveClass:
+    K = CXCursor_OMPOrderedDirective;
+    break;
+  case Stmt::OMPAtomicDirectiveClass:
+    K = CXCursor_OMPAtomicDirective;
+    break;
+  case Stmt::OMPTargetDirectiveClass:
+    K = CXCursor_OMPTargetDirective;
+    break;
+  case Stmt::OMPTeamsDirectiveClass:
+    K = CXCursor_OMPTeamsDirective;
+    break;
   }
-  
+
   CXCursor C = { K, 0, { Parent, S, TU } };
   return C;
 }
@@ -652,7 +723,7 @@ cxcursor::getCursorMemberRef(CXCursor C) {
 
 CXCursor cxcursor::MakeCursorCXXBaseSpecifier(const CXXBaseSpecifier *B,
                                               CXTranslationUnit TU){
-  CXCursor C = { CXCursor_CXXBaseSpecifier, 0, { B, 0, TU } };
+  CXCursor C = { CXCursor_CXXBaseSpecifier, 0, { B, nullptr, TU } };
   return C;  
 }
 
@@ -681,7 +752,7 @@ SourceRange cxcursor::getCursorPreprocessingDirective(CXCursor C) {
 
 CXCursor cxcursor::MakeMacroDefinitionCursor(const MacroDefinition *MI,
                                              CXTranslationUnit TU) {
-  CXCursor C = { CXCursor_MacroDefinition, 0, { MI, 0, TU } };
+  CXCursor C = { CXCursor_MacroDefinition, 0, { MI, nullptr, TU } };
   return C;
 }
 
@@ -692,7 +763,7 @@ const MacroDefinition *cxcursor::getCursorMacroDefinition(CXCursor C) {
 
 CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI, 
                                             CXTranslationUnit TU) {
-  CXCursor C = { CXCursor_MacroExpansion, 0, { MI, 0, TU } };
+  CXCursor C = { CXCursor_MacroExpansion, 0, { MI, nullptr, TU } };
   return C;
 }
 
@@ -722,7 +793,7 @@ SourceRange cxcursor::MacroExpansionCursor::getSourceRange() const {
 
 CXCursor cxcursor::MakeInclusionDirectiveCursor(InclusionDirective *ID, 
                                                 CXTranslationUnit TU) {
-  CXCursor C = { CXCursor_InclusionDirective, 0, { ID, 0, TU } };
+  CXCursor C = { CXCursor_InclusionDirective, 0, { ID, nullptr, TU } };
   return C;
 }
 
@@ -805,7 +876,7 @@ const Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
   if (Cursor.kind == CXCursor_ObjCSuperClassRef ||
       Cursor.kind == CXCursor_ObjCProtocolRef ||
       Cursor.kind == CXCursor_ObjCClassRef)
-    return 0;
+    return nullptr;
 
   return static_cast<const Stmt *>(Cursor.data[1]);
 }
@@ -825,7 +896,7 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
 ASTUnit *cxcursor::getCursorASTUnit(CXCursor Cursor) {
   CXTranslationUnit TU = getCursorTU(Cursor);
   if (!TU)
-    return 0;
+    return nullptr;
   return cxtu::getASTUnit(TU);
 }
 
@@ -899,7 +970,7 @@ CXCursor cxcursor::getTypeRefCursor(CXCursor cursor) {
     return cursor;
 
   const Expr *E = getCursorExpr(cursor);
-  TypeSourceInfo *Type = 0;
+  TypeSourceInfo *Type = nullptr;
   if (const CXXUnresolvedConstructExpr *
         UnCtor = dyn_cast<CXXUnresolvedConstructExpr>(E)) {
     Type = UnCtor->getTypeSourceInfo();
@@ -982,11 +1053,11 @@ CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i) {
     const Decl *D = cxcursor::getCursorDecl(C);
     if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D)) {
       if (i < MD->param_size())
-        return cxcursor::MakeCXCursor(MD->param_begin()[i],
+        return cxcursor::MakeCXCursor(MD->parameters()[i],
                                       cxcursor::getCursorTU(C));
     } else if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
       if (i < FD->param_size())
-        return cxcursor::MakeCXCursor(FD->param_begin()[i],
+        return cxcursor::MakeCXCursor(FD->parameters()[i],
                                       cxcursor::getCursorTU(C));
     }
   }
@@ -1003,6 +1074,140 @@ CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i) {
   }
 
   return clang_getNullCursor();
+}
+
+int clang_Cursor_getNumTemplateArguments(CXCursor C) {
+  if (clang_getCursorKind(C) != CXCursor_FunctionDecl) {
+    return -1;
+  }
+
+  const FunctionDecl *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(
+      getCursorDecl(C));
+  if (!FD) {
+    return -1;
+  }
+
+  const FunctionTemplateSpecializationInfo* SpecInfo =
+      FD->getTemplateSpecializationInfo();
+  if (!SpecInfo) {
+    return -1;
+  }
+
+  return SpecInfo->TemplateArguments->size();
+}
+
+enum CXGetTemplateArgumentStatus {
+  /** \brief The operation completed successfully */
+  CXGetTemplateArgumentStatus_Success = 0,
+
+  /** \brief The specified cursor did not represent a FunctionDecl. */
+  CXGetTemplateArgumentStatus_CursorNotFunctionDecl = -1,
+
+  /** \brief The specified cursor was not castable to a FunctionDecl. */
+  CXGetTemplateArgumentStatus_BadFunctionDeclCast = -2,
+
+  /** \brief A NULL FunctionTemplateSpecializationInfo was retrieved. */
+  CXGetTemplateArgumentStatus_NullTemplSpecInfo = -3,
+
+  /** \brief An invalid (OOB) argument index was specified */
+  CXGetTemplateArgumentStatus_InvalidIndex = -4
+};
+
+static int clang_Cursor_getTemplateArgument(
+    CXCursor C, unsigned I, TemplateArgument *TA) {
+  if (clang_getCursorKind(C) != CXCursor_FunctionDecl) {
+    return CXGetTemplateArgumentStatus_CursorNotFunctionDecl;
+  }
+
+  const FunctionDecl *FD = llvm::dyn_cast_or_null<clang::FunctionDecl>(
+      getCursorDecl(C));
+  if (!FD) {
+    return CXGetTemplateArgumentStatus_BadFunctionDeclCast;
+  }
+
+  const FunctionTemplateSpecializationInfo* SpecInfo =
+      FD->getTemplateSpecializationInfo();
+  if (!SpecInfo) {
+    return CXGetTemplateArgumentStatus_NullTemplSpecInfo;
+  }
+
+  if (I >= SpecInfo->TemplateArguments->size()) {
+    return CXGetTemplateArgumentStatus_InvalidIndex;
+  }
+
+  *TA = SpecInfo->TemplateArguments->get(I);
+  return 0;
+}
+
+enum CXTemplateArgumentKind clang_Cursor_getTemplateArgumentKind(CXCursor C,
+                                                                 unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA)) {
+    return CXTemplateArgumentKind_Invalid;
+  }
+
+  switch (TA.getKind()) {
+    case TemplateArgument::Null: return CXTemplateArgumentKind_Null;
+    case TemplateArgument::Type: return CXTemplateArgumentKind_Type;
+    case TemplateArgument::Declaration:
+      return CXTemplateArgumentKind_Declaration;
+    case TemplateArgument::NullPtr: return CXTemplateArgumentKind_NullPtr;
+    case TemplateArgument::Integral: return CXTemplateArgumentKind_Integral;
+    case TemplateArgument::Template: return CXTemplateArgumentKind_Template;
+    case TemplateArgument::TemplateExpansion:
+      return CXTemplateArgumentKind_TemplateExpansion;
+    case TemplateArgument::Expression: return CXTemplateArgumentKind_Expression;
+    case TemplateArgument::Pack: return CXTemplateArgumentKind_Pack;
+  }
+
+  return CXTemplateArgumentKind_Invalid;
+}
+
+CXType clang_Cursor_getTemplateArgumentType(CXCursor C, unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    return cxtype::MakeCXType(QualType(), getCursorTU(C));
+  }
+
+  if (TA.getKind() != TemplateArgument::Type) {
+    return cxtype::MakeCXType(QualType(), getCursorTU(C));
+  }
+
+  return cxtype::MakeCXType(TA.getAsType(), getCursorTU(C));
+}
+
+long long clang_Cursor_getTemplateArgumentValue(CXCursor C, unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    assert(0 && "Unable to retrieve TemplateArgument");
+    return 0;
+  }
+
+  if (TA.getKind() != TemplateArgument::Integral) {
+    assert(0 && "Passed template argument is not Integral");
+    return 0;
+  }
+
+  return TA.getAsIntegral().getSExtValue();
+}
+
+unsigned long long clang_Cursor_getTemplateArgumentUnsignedValue(CXCursor C,
+                                                                 unsigned I) {
+  TemplateArgument TA;
+  if (clang_Cursor_getTemplateArgument(C, I, &TA) !=
+      CXGetTemplateArgumentStatus_Success) {
+    assert(0 && "Unable to retrieve TemplateArgument");
+    return 0;
+  }
+
+  if (TA.getKind() != TemplateArgument::Integral) {
+    assert(0 && "Passed template argument is not Integral");
+    return 0;
+  }
+
+  return TA.getAsIntegral().getZExtValue();
 }
 
 } // end: extern "C"
@@ -1100,7 +1305,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
                                  false);
     return String;
   }
-  return NULL;
+  return nullptr;
 }
 } // end: extern C.
 
@@ -1132,7 +1337,7 @@ void clang_getOverriddenCursors(CXCursor cursor,
                                 CXCursor **overridden,
                                 unsigned *num_overridden) {
   if (overridden)
-    *overridden = 0;
+    *overridden = nullptr;
   if (num_overridden)
     *num_overridden = 0;
   
@@ -1146,9 +1351,9 @@ void clang_getOverriddenCursors(CXCursor cursor,
     
   OverridenCursorsPool &pool =
     *static_cast<OverridenCursorsPool*>(TU->OverridenCursorsPool);
-  
-  OverridenCursorsPool::CursorVec *Vec = 0;
-  
+
+  OverridenCursorsPool::CursorVec *Vec = nullptr;
+
   if (!pool.AvailableCursors.empty()) {
     Vec = pool.AvailableCursors.back();
     pool.AvailableCursors.pop_back();
@@ -1206,16 +1411,24 @@ void clang_disposeOverriddenCursors(CXCursor *overridden) {
 }
 
 int clang_Cursor_isDynamicCall(CXCursor C) {
-  const Expr *E = 0;
+  const Expr *E = nullptr;
   if (clang_isExpression(C.kind))
     E = getCursorExpr(C);
   if (!E)
     return 0;
 
-  if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(E))
-    return MsgE->getReceiverKind() == ObjCMessageExpr::Instance;
+  if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(E)) {
+    if (MsgE->getReceiverKind() != ObjCMessageExpr::Instance)
+      return false;
+    if (auto *RecE = dyn_cast<ObjCMessageExpr>(
+            MsgE->getInstanceReceiver()->IgnoreParenCasts())) {
+      if (RecE->getMethodFamily() == OMF_alloc)
+        return false;
+    }
+    return true;
+  }
 
-  const MemberExpr *ME = 0;
+  const MemberExpr *ME = nullptr;
   if (isa<MemberExpr>(E))
     ME = cast<MemberExpr>(E);
   else if (const CallExpr *CE = dyn_cast<CallExpr>(E))
@@ -1232,7 +1445,7 @@ int clang_Cursor_isDynamicCall(CXCursor C) {
 
 CXType clang_Cursor_getReceiverType(CXCursor C) {
   CXTranslationUnit TU = cxcursor::getCursorTU(C);
-  const Expr *E = 0;
+  const Expr *E = nullptr;
   if (clang_isExpression(C.kind))
     E = getCursorExpr(C);
 

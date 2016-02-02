@@ -190,7 +190,7 @@ Multilibs
 
 When you want to cross-compile to more than one configuration, for
 example hard-float-ARM and soft-float-ARM, you'll have to have multiple
-copies of you libraries and (possibly) headers.
+copies of your libraries and (possibly) headers.
 
 Some Linux distributions have support for Multilib, which handle that
 for you in an easier way, but if you're not careful and, for instance,
@@ -201,4 +201,3 @@ uses hard-float), Clang will pick the ``armv7l-linux-gnueabi-ld``
 The same is true if you're compiling for different ABIs, like ``gnueabi``
 and ``androideabi``, and might even link and run, but produce run-time
 errors, which are much harder to track down and fix.
-

@@ -1,4 +1,4 @@
-// REQUIRES: ppc32-registered-target
+// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -triple powerpc-apple-macosx10.4.0 -emit-llvm -o - %s -O2 -disable-llvm-optzns | FileCheck %s
 
 int boolsize = sizeof(_Bool);
@@ -15,4 +15,4 @@ void f(_Bool *x, _Bool *y) {
 // CHECK: store i32 [[TOMEM]]
 // CHECK: ret void
 
-// CHECK: metadata !{i32 0, i32 2}
+// CHECK:  i32 0, i32 2}

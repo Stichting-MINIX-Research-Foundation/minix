@@ -2,6 +2,7 @@
 #define _TYPE_H
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <machine/multiboot.h>
 
@@ -12,6 +13,7 @@
 #include <sys/sigtypes.h>
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* Type definitions. */
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
@@ -74,6 +76,14 @@ struct sigmsg {
   vir_bytes sm_stkptr;		/* user stack pointer */
 };
 
+/* Structure used for computing per-process average CPU utilization. */
+struct cpuavg {
+	clock_t ca_base;	/* start of current per-second slot, or 0 */
+	uint32_t ca_run;	/* running ticks since start of slot, FSCALE */
+	uint32_t ca_last;	/* running ticks during last second, FSCALE */
+	uint32_t ca_avg;	/* decaying CPU utilization average, FSCALE */
+};
+
 /* Load data accounted every this no. of seconds. */
 #define _LOAD_UNIT_SECS		 6 	/* Changing this breaks ABI. */
 
@@ -89,6 +99,24 @@ struct loadinfo {
   u16_t proc_load_history[_LOAD_HISTORY];	/* history of proc_s_cur */
   u16_t proc_last_slot;
   clock_t last_clock;
+};
+
+struct kclockinfo {
+  time_t boottime;		/* number of seconds since UNIX epoch */
+#if BYTE_ORDER == LITTLE_ENDIAN
+  clock_t uptime;		/* number of clock ticks since system boot */
+  uint32_t _rsvd1;		/* reserved for 64-bit uptime */
+  clock_t realtime;		/* real time in clock ticks since boot */
+  uint32_t _rsvd2;		/* reserved for 64-bit real time */
+#elif BYTE_ORDER == BIG_ENDIAN
+  uint32_t _rsvd1;		/* reserved for 64-bit uptime */
+  clock_t uptime;		/* number of clock ticks since system boot */
+  uint32_t _rsvd2;		/* reserved for 64-bit real time */
+  clock_t realtime;		/* real time in clock ticks since boot */
+#else
+#error "unknown endianness"
+#endif
+  uint32_t hz;			/* clock frequency in ticks per second */
 };
 
 struct machine {
@@ -165,27 +193,57 @@ struct k_randomness {
   } bin[RANDOM_SOURCES];
 };
 
+/* ARM free-running timer information. */
+struct arm_frclock {
+	u64_t hz;		/* tcrr frequency */
+	u32_t tcrr;		/* tcrr address */
+};
+
+/* The userland ABI portion of general information exposed by the kernel.
+ * This structure may only ever be extended with new fields!
+ */
+struct kuserinfo {
+	size_t kui_size;	/* size of this structure, for ABI testing */
+	vir_bytes kui_user_sp;	/* initial stack pointer for exec'd process */
+};
+
+/* If MINIX_KIF_USERINFO is set, use this to check for a particular field. */
+#define KUSERINFO_HAS_FIELD(kui,f) \
+	(kui->kui_size >= offsetof(struct kuserinfo, f) + sizeof(kui->f))
+
 struct minix_kerninfo {
-	/* Binaries will depend on the offsets etc. in this
-	 * structure, so it can't be changed willy-nilly. In
-	 * other words, it is ABI-restricted.
+	/* Binaries will depend on the offsets etc. in this structure, so it
+	 * can't be changed willy-nilly. In other words, it is ABI-restricted.
+	 * However, various fields are to be used by services only, and are not
+	 * to be used by userland directly. For pointers to non-userland-ABI
+	 * structures, these structures themselves may be changed without
+	 * breaking the userland ABI.
+	 *
+	 * There is currently one important legacy exception: the 'kinfo'
+	 * structure should not be part of the userland ABI, but one of its
+	 * fields, "user_sp" at offset 2440, is used by legacy user binaries.
+	 * This field has since been moved into the 'kuserinfo' structure, but
+	 * it will take another major release before we can start changing the
+	 * layout of the 'kinfo' structure.
 	 */
 #define KERNINFO_MAGIC 0xfc3b84bf
 	u32_t kerninfo_magic;
 	u32_t minix_feature_flags;	/* features in minix kernel */
 	u32_t ki_flags;			/* what is present in this struct */
-	u32_t minix_frclock_tcrr;
+	u32_t flags_unused2;
 	u32_t flags_unused3;
 	u32_t flags_unused4;
-	struct kinfo		*kinfo;
-	struct machine		*machine;
-	struct kmessages	*kmessages;
-	struct loadinfo		*loadinfo;
-	struct minix_ipcvecs	*minix_ipcvecs;
-	u64_t minix_arm_frclock_hz;	/* minix_frclock_tcrr frequency */
-} __packed;
+	struct kinfo		*kinfo;			/* see note above! */
+	struct machine		*machine;		/* NOT userland ABI */
+	struct kmessages	*kmessages;		/* NOT userland ABI */
+	struct loadinfo		*loadinfo;		/* NOT userland ABI */
+	struct minix_ipcvecs	*minix_ipcvecs;		/* userland ABI */
+	struct kuserinfo	*kuserinfo;		/* userland ABI */
+	struct arm_frclock	*arm_frclock;		/* NOT userland ABI */
+	volatile struct kclockinfo	*kclockinfo;	/* NOT userland ABI */
+};
 
-#define MINIX_KIF_IPCVECS	(1L << 0)
+#define MINIX_KIF_IPCVECS	(1L << 0)	/* minix_ipcvecs is valid */
+#define MINIX_KIF_USERINFO	(1L << 1)	/* kuserinfo is valid */
 
 #endif /* _TYPE_H */
-

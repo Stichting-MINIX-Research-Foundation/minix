@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 1984 through 2008, William LeFebvre
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ * 
+ *     * Neither the name of William LeFebvre nor the names of other
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* hash.m4h */
+
+/* Interface definition for hash.c */
+
+/* The file hash.h is generated from hash.m4h via the preprocessor M4 */
+
+#ifndef _HASH_H
+#define _HASH_H
+
+#include <sys/types.h>
+
+typedef struct pidthr_t {
+    pid_t k_pid;
+    id_t k_thr;
+} pidthr_t;
+
+typedef struct llistitem {
+    void *datum;
+    struct llistitem *next;
+} llistitem;
+
+typedef struct llist {
+    llistitem *head;
+    unsigned int count;
+} llist;
+
+typedef struct bucket {
+    llist list;
+} bucket_t;
+
+typedef struct hash_table {
+    int num_buckets;
+    bucket_t *buckets;
+} hash_table;
+
+typedef struct hash_pos {
+    int num_buckets;
+    int curr;
+    bucket_t *hash_bucket;
+    llistitem *ll_item;
+    llistitem *ll_last;
+} hash_pos;
+
+hash_table *hash_create(int num);
+void hash_sizeinfo(unsigned int *sizes, int max, hash_table *ht);
+
+define(`HASH_TYPE_TMPL', `
+typedef struct hash_item_$1 {
+    $2 key;
+    void *value;
+} hash_item_$1;
+
+void *hash_add_$1(hash_table *ht, $2 key, void *value);
+void *hash_replace_$1(hash_table *ht, $2 key, void *value);
+void *hash_lookup_$1(hash_table *ht, $2 key);
+void *hash_remove_$1(hash_table *ht, $2 key);
+hash_item_$1 *hash_first_$1(hash_table *ht, hash_pos *pos);
+hash_item_$1 *hash_next_$1(hash_pos *pos);
+void *hash_remove_pos_$1(hash_pos *pos);
+')
+
+HASH_TYPE_TMPL(`uint', `unsigned int')
+HASH_TYPE_TMPL(`pid', `pid_t')
+HASH_TYPE_TMPL(`string', `char *')
+HASH_TYPE_TMPL(`pidthr', `pidthr_t')
+#if HAVE_LWPID_T
+HASH_TYPE_TMPL(`lwpid', `lwpid_t')
+#endif
+
+
+#endif

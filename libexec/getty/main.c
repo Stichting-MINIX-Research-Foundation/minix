@@ -304,16 +304,20 @@ main(int argc, char *argv[], char *envp[])
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
+#if !defined(__minix)
 		int off;
+#endif /* !defined(__minix) */
 
 		rval = 0;
 		gettable(tname, tabent);
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();
+#if !defined(__minix)
 		off = 0;
+#endif /* !defined(__minix) */
 		(void)tcflush(0, TCIOFLUSH);	/* clear out the crap */
-#ifndef  __minix
+#if !defined(__minix)
 		(void)ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		(void)ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 #endif /* !defined(__minix) */

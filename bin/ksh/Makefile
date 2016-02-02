@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.30 2011/10/16 17:12:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2015/01/29 20:46:31 joerg Exp $
 
 WARNS=3
+CWARNFLAGS.clang+=	-Wno-error=cast-qual
 
 .include <bsd.own.mk>
 

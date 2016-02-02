@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgget.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $ */
+/* $NetBSD: t_msgget.c,v 1.2 2014/02/27 00:59:50 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgget.c,v 1.1 2011/11/05 07:45:41 jruoho Exp $");
+__RCSID("$NetBSD: t_msgget.c,v 1.2 2014/02/27 00:59:50 joerg Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -178,7 +178,7 @@ ATF_TC_BODY(msgget_init, tc)
 	ATF_CHECK(msgds.msg_perm.cgid == gid);
 	ATF_CHECK(msgds.msg_perm.mode == 0600);
 
-	if (abs(t - msgds.msg_ctime) > 5)
+	if (llabs(t - msgds.msg_ctime) > 5)
 		atf_tc_fail("msgget(2) initialized current time incorrectly");
 
 	ATF_REQUIRE(msgctl(id, IPC_RMID, 0) == 0);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2014/01/05 16:38:07 joerg Exp $
 
 LIB=	lldReaderWriter
 
@@ -7,9 +7,9 @@ LIB=	lldReaderWriter
 .PATH: ${LLD_SRCDIR}/lib/ReaderWriter
 
 SRCS+=	CoreLinkingContext.cpp \
+	FileArchive.cpp \
 	LinkerScript.cpp \
 	Reader.cpp \
-	ReaderLinkerScript.cpp \
 	Writer.cpp
 
 .if defined(HOSTLIB)

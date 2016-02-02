@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 #===- clang-format-diff.py - ClangFormat Diff Reformatter ----*- python -*--===#
 #
@@ -15,9 +15,10 @@ ClangFormat Diff Reformatter
 
 This script reads input from a unified diff and reformats all the changed
 lines. This is useful to reformat all the lines touched by a specific patch.
-Example usage for git users:
+Example usage for git/svn users:
 
   git diff -U0 HEAD^ | clang-format-diff.py -p1 -i
+  svn diff --diff-cmd=diff -x-U0 | clang-format-diff.py -i
 
 """
 
@@ -37,12 +38,22 @@ binary = 'clang-format'
 def main():
   parser = argparse.ArgumentParser(description=
                                    'Reformat changed lines in diff. Without -i '
-                                   'option just output the diff that would be'
+                                   'option just output the diff that would be '
                                    'introduced.')
   parser.add_argument('-i', action='store_true', default=False,
                       help='apply edits to files instead of displaying a diff')
-  parser.add_argument('-p', default=0,
+  parser.add_argument('-p', metavar='NUM', default=0,
                       help='strip the smallest prefix containing P slashes')
+  parser.add_argument('-regex', metavar='PATTERN', default=None,
+                      help='custom pattern selecting file paths to reformat '
+                      '(case sensitive, overrides -iregex)')
+  parser.add_argument('-iregex', metavar='PATTERN', default=
+                      r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hpp|m|mm|inc|js|proto'
+                      r'|protodevel|java)',
+                      help='custom pattern selecting file paths to reformat '
+                      '(case insensitive, overridden by -regex)')
+  parser.add_argument('-v', '--verbose', action='store_true',
+                      help='be more verbose, ineffective without -i')
   parser.add_argument(
       '-style',
       help=
@@ -59,10 +70,12 @@ def main():
     if filename == None:
       continue
 
-    # FIXME: Add other types containing C++/ObjC code.
-    if not (filename.endswith(".cpp") or filename.endswith(".cc") or
-            filename.endswith(".h")):
-      continue
+    if args.regex is not None:
+      if not re.match('^%s$' % args.regex, filename):
+        continue
+    else:
+      if not re.match('^%s$' % args.iregex, filename, re.IGNORECASE):
+        continue
 
     match = re.search('^@@.*\+(\d+)(,(\d+))?', line)
     if match:
@@ -78,6 +91,8 @@ def main():
 
   # Reformat files containing changes in place.
   for filename, lines in lines_by_file.iteritems():
+    if args.i and args.verbose:
+      print 'Formatting', filename
     command = [binary, filename]
     if args.i:
       command.append('-i')
@@ -85,11 +100,8 @@ def main():
     if args.style:
       command.extend(['-style', args.style])
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         stdin=subprocess.PIPE)
+                         stderr=None, stdin=subprocess.PIPE)
     stdout, stderr = p.communicate()
-    if stderr:
-      print stderr
     if p.returncode != 0:
       sys.exit(p.returncode);
 
@@ -102,7 +114,7 @@ def main():
                                   '(before formatting)', '(after formatting)')
       diff_string = string.join(diff, '')
       if len(diff_string) > 0:
-        print diff_string
+        sys.stdout.write(diff_string)
 
 if __name__ == '__main__':
   main()

@@ -7,9 +7,14 @@
  * See the LICENSE file for redistribution information.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: perlsfio.c,v 8.3 2000/04/30 17:00:15 skimo Exp  (Berkeley) Date: 2000/04/30 17:00:15 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: perlsfio.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -39,7 +39,7 @@ int do_times(struct proc * caller, message * m_ptr)
   }
   m_ptr->m_krn_lsys_sys_times.boot_ticks = get_monotonic();
   m_ptr->m_krn_lsys_sys_times.real_ticks = get_realtime();
-  m_ptr->m_krn_lsys_sys_times.boot_time = boottime;
+  m_ptr->m_krn_lsys_sys_times.boot_time = get_boottime();
   return(OK);
 }
 

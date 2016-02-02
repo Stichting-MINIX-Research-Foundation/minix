@@ -1,0 +1,81 @@
+#	$NetBSD: genassym.cf,v 1.2 2015/03/27 23:22:20 matt Exp $
+
+#
+# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas <matt@3am-sfotware.com>.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <sys/types.h>
+include <sys/queue.h>
+include <sys/cpu.h>
+include <sys/signal.h>
+include <sys/ucontext.h>
+
+include <machine/setjmp.h>
+
+define UC_GREGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
+define UC_GREGS_RV	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_RV])
+define UC_GREGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+
+define SIG_BLOCK	SIG_BLOCK
+define SIG_SETMASK	SIG_SETMASK
+define SIGINFO_SIZE	(sizeof(siginfo_t) + __ALIGNBYTES) & ~__ALIGNBYTES
+
+define JBLEN		_JBLEN * sizeof(_BSD_JBSLOT_T_)
+define JB_MAGIC		_JB_MAGIC * sizeof(_BSD_JBSLOT_T_)
+define JB_RA		_JB_RA * sizeof(_BSD_JBSLOT_T_)
+define JB_S0		_JB_S0 * sizeof(_BSD_JBSLOT_T_)
+define JB_S1		_JB_S1 * sizeof(_BSD_JBSLOT_T_)
+define JB_S2		_JB_S2 * sizeof(_BSD_JBSLOT_T_)
+define JB_S3		_JB_S3 * sizeof(_BSD_JBSLOT_T_)
+define JB_S4		_JB_S4 * sizeof(_BSD_JBSLOT_T_)
+define JB_S5		_JB_S5 * sizeof(_BSD_JBSLOT_T_)
+define JB_S6		_JB_S6 * sizeof(_BSD_JBSLOT_T_)
+define JB_S7		_JB_S7 * sizeof(_BSD_JBSLOT_T_)
+define JB_S8		_JB_S8 * sizeof(_BSD_JBSLOT_T_)
+define JB_S9		_JB_S9 * sizeof(_BSD_JBSLOT_T_)
+define JB_S10		_JB_S10 * sizeof(_BSD_JBSLOT_T_)
+define JB_S11		_JB_S11 * sizeof(_BSD_JBSLOT_T_)
+define JB_SP		_JB_SP * sizeof(_BSD_JBSLOT_T_)
+define JB_TP		_JB_TP * sizeof(_BSD_JBSLOT_T_)
+define JB_GP		_JB_GP * sizeof(_BSD_JBSLOT_T_)
+define JB_FCSR		_JB_FCSR * sizeof(_BSD_JBSLOT_T_)
+
+define JB_FS0		_JB_FS0 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS1		_JB_FS1 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS2		_JB_FS2 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS3		_JB_FS3 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS4		_JB_FS4 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS5		_JB_FS5 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS6		_JB_FS6 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS7		_JB_FS7 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS8		_JB_FS8 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS9		_JB_FS9 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS10		_JB_FS10 * sizeof(_BSD_JBSLOT_T_)
+define JB_FS11		_JB_FS11 * sizeof(_BSD_JBSLOT_T_)
+
+define JB_SIGMASK	_JB_SIGMASK * sizeof(_BSD_JBSLOT_T_)

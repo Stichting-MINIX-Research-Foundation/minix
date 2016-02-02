@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: motorola,v 1.10 2009/09/19 16:28:11 christos Exp $
+# $File: motorola,v 1.11 2014/04/30 21:41:02 christos Exp $
 # motorola:  file(1) magic for Motorola 68K and 88K binaries
 #
 # 68K
@@ -40,27 +40,27 @@
 # not larger than 1 MB (which is a lot on ST).
 # The additional 0x601b distinction I took from Doug Lee's magic.
 0	belong&0xFFFFFFF0	0x601A0000	Atari ST M68K contiguous executable
->2	belong			x		(txt=%ld,
->6	belong			x		dat=%ld,
->10	belong			x		bss=%ld,
->14	belong			x		sym=%ld)
+>2	belong			x		(txt=%d,
+>6	belong			x		dat=%d,
+>10	belong			x		bss=%d,
+>14	belong			x		sym=%d)
 0	belong&0xFFFFFFF0	0x601B0000	Atari ST M68K non-contig executable
->2	belong			x		(txt=%ld,
->6	belong			x		dat=%ld,
->10	belong			x		bss=%ld,
->14	belong			x		sym=%ld)
+>2	belong			x		(txt=%d,
+>6	belong			x		dat=%d,
+>10	belong			x		bss=%d,
+>14	belong			x		sym=%d)
 
 # Atari ST/TT... program format (sent by Wolfram Kleff <kleff@cs.uni-bonn.de>)
 0       beshort         0x601A          Atari 68xxx executable,
->2      belong          x               text len %lu,
->6      belong          x               data len %lu,
->10     belong          x               BSS len %lu,
->14     belong          x               symboltab len %lu,
+>2      belong          x               text len %u,
+>6      belong          x               data len %u,
+>10     belong          x               BSS len %u,
+>14     belong          x               symboltab len %u,
 >18     belong          0
 >22     belong          &0x01           fastload flag,
 >22     belong          &0x02           may be loaded to alternate RAM,
 >22     belong          &0x04           malloc may be from alternate RAM,
->22     belong          x               flags: 0x%lX,
+>22     belong          x               flags: 0x%X,
 >26     beshort         0               no relocation tab
 >26     beshort         !0              + relocation tab
 >30     string          SFX             [Self-Extracting LZH SFX archive]
@@ -68,4 +68,4 @@
 >44     string          ZIP!            [Self-Extracting ZIP SFX archive]
 
 0       beshort         0x0064          Atari 68xxx CPX file
->8      beshort         x               (version %04lx)
+>8      beshort         x               (version %04x)

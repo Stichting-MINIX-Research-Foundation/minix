@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <limits.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <assert.h>
 
 #ifdef __minix
@@ -191,7 +192,8 @@ void show_part(struct part_entry *p)
 	printf("%3d ", (n-1) / 2);
 	show_chs(p->lowsec);
 	show_chs(p->lowsec + p->size - 1);
-	printf("  %8lu  %8lu  %7lu\n", p->lowsec, p->size, p->size / 2);
+	printf("  %8"PRIu32"  %8"PRIu32"  %7"PRIu32"\n",
+	    p->lowsec, p->size, p->size / 2);
 }
 
 void usage(void)
@@ -373,7 +375,7 @@ void distribute(void)
 			if (pe->bootind & EXIST_FLAG) {
 				if (base > pe->lowsec) {
 					fprintf(stderr,
-	"%s: fixed partition %ld is preceded by too big partitions/holes\n",
+	"%s: fixed partition %u is preceded by too big partitions/holes\n",
 						arg0, ((pe - table) - 1) / 2);
 					exit(1);
 				}

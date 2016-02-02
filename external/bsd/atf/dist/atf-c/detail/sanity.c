@@ -36,8 +36,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <atf-c/defs.h>
 #include "sanity.h"
 
+ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2)
 static
 void
 fail(const char *fmt, ...)

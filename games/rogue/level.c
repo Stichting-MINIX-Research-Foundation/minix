@@ -540,6 +540,10 @@ fill_it(int rn, boolean do_rec_de)
 	static short offsets[4] = {-1, 1, 3, -3};
 	boolean did_this = 0;
 
+#if defined(__minix)
+	/* LSC: maybe-uninitialized, when compiling with -O3 */
+	drow = dcol = 0;
+#endif /* defined(__minix)*/
 	for (i = 0; i < 10; i++) {
 		srow = get_rand(0, 3);
 		scol = get_rand(0, 3);

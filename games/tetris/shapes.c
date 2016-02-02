@@ -1,4 +1,4 @@
-/*	$NetBSD: shapes.c,v 1.8 2009/05/25 04:33:53 dholland Exp $	*/
+/*	$NetBSD: shapes.c,v 1.9 2014/06/11 16:47:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,25 +53,25 @@
 #define	BR	B_COLS+1	/* bottom right */
 
 const struct shape shapes[] = {
-	/* 0*/	{ 7,	{ TL, TC, MR, } },
-	/* 1*/	{ 8,	{ TC, TR, ML, } },
-	/* 2*/	{ 9,	{ ML, MR, BC, } },
-	/* 3*/	{ 3,	{ TL, TC, ML, } },
-	/* 4*/	{ 12,	{ ML, BL, MR, } },
-	/* 5*/	{ 15,	{ ML, BR, MR, } },
-	/* 6*/	{ 18,	{ ML, MR, 2   } },	/* sticks out */
-	/* 7*/	{ 0,	{ TC, ML, BL, } },
-	/* 8*/	{ 1,	{ TC, MR, BR, } },
-	/* 9*/	{ 10,	{ TC, MR, BC, } },
-	/*10*/	{ 11,	{ TC, ML, MR, } },
-	/*11*/	{ 2,	{ TC, ML, BC, } },
-	/*12*/	{ 13,	{ TC, BC, BR, } },
-	/*13*/	{ 14,	{ TR, ML, MR, } },
-	/*14*/	{ 4,	{ TL, TC, BC, } },
-	/*15*/	{ 16,	{ TR, TC, BC, } },
-	/*16*/	{ 17,	{ TL, MR, ML, } },
-	/*17*/	{ 5,	{ TC, BC, BL, } },
-	/*18*/	{ 6,	{ TC, BC, 2*B_COLS } }	/* sticks out */
+	/* 0*/	{ 7,  7,	{ TL, TC, MR, } },
+	/* 1*/	{ 1,  8,	{ TC, TR, ML, } },
+	/* 2*/	{ 2,  9,	{ ML, MR, BC, } },
+	/* 3*/	{ 3,  3,	{ TL, TC, ML, } },
+	/* 4*/	{ 4, 12,	{ ML, BL, MR, } },
+	/* 5*/	{ 5, 15,	{ ML, BR, MR, } },
+	/* 6*/	{ 6, 18,	{ ML, MR, 2   } },	/* sticks out */
+	/* 7*/	{ 7,  0,	{ TC, ML, BL, } },
+	/* 8*/	{ 1,  1,	{ TC, MR, BR, } },
+	/* 9*/	{ 2, 10,	{ TC, MR, BC, } },
+	/*10*/	{ 2, 11,	{ TC, ML, MR, } },
+	/*11*/	{ 2,  2,	{ TC, ML, BC, } },
+	/*12*/	{ 4, 13,	{ TC, BC, BR, } },
+	/*13*/	{ 4, 14,	{ TR, ML, MR, } },
+	/*14*/	{ 4,  4,	{ TL, TC, BC, } },
+	/*15*/	{ 5, 16,	{ TR, TC, BC, } },
+	/*16*/	{ 5, 17,	{ TL, MR, ML, } },
+	/*17*/	{ 5,  5,	{ TC, BC, BL, } },
+	/*18*/	{ 6,  6,	{ TC, BC, 2*B_COLS } }	/* sticks out */
 };
 
 /*
@@ -97,6 +97,7 @@ void
 place(const struct shape *shape, int pos, int onoff)
 {
 	const int *o = shape->off;
+	onoff = onoff ? shape->color : 0;
 
 	board[pos] = onoff;
 	board[pos + *o++] = onoff;

@@ -56,6 +56,14 @@ typedef _Unwind_Reason_Code (*__personality_routine)(int, _Unwind_Action,
                                                      struct _Unwind_Exception *,
                                                      struct _Unwind_Context *);
 
+#ifdef _UNWIND_GCC_EXTENSIONS
+struct dwarf_eh_bases {
+  void *tbase;
+  void *dbase;
+  void *func;
+};
+#endif
+
 __BEGIN_DECLS
 
 _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *);
@@ -84,6 +92,10 @@ void __register_frame(const void *);
 void __register_frame_info(const void *, void *);
 void __deregister_frame(const void *);
 void *__deregister_frame_info(const void *);
+
+#ifdef _UNWIND_GCC_EXTENSIONS
+void *_Unwind_Find_FDE(void *, struct dwarf_eh_bases *);
+#endif
 
 __END_DECLS
 

@@ -193,9 +193,13 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		/* Set up 1MB ranges. */
 		srcptr = createpde(srcproc, srclinaddr, &chunk, 0, &changed);
 		dstptr = createpde(dstproc, dstlinaddr, &chunk, 1, &changed);
-		if(changed) {
+		if(changed)
 			reload_ttbr0();
-		}
+
+		/* Check for overflow. */
+		if (srcptr + chunk < srcptr) return EFAULT_SRC;
+		if (dstptr + chunk < dstptr) return EFAULT_DST;
+
 		/* Copy pages. */
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
 
@@ -252,11 +256,12 @@ static u32_t phys_get32(phys_bytes addr)
 /*===========================================================================*
  *                              umap_virtual                                 *
  *===========================================================================*/
-phys_bytes umap_virtual(rp, seg, vir_addr, bytes)
-register struct proc *rp;       /* pointer to proc table entry for process */
-int seg;                        /* T, D, or S segment */
-vir_bytes vir_addr;             /* virtual address in bytes within the seg */
-vir_bytes bytes;                /* # of bytes to be copied */
+phys_bytes umap_virtual(
+  register struct proc *rp,		/* pointer to proc table entry for process */
+  int seg,				/* T, D, or S segment */
+  vir_bytes vir_addr,			/* virtual address in bytes within the seg */
+  vir_bytes bytes			/* # of bytes to be copied */
+)
 {
 	phys_bytes phys = 0;
 
@@ -395,35 +400,6 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 }
 
 /*===========================================================================*
- *                              vm_suspend                                *
- *===========================================================================*/
-static void vm_suspend(struct proc *caller, const struct proc *target,
-	const vir_bytes linaddr, const vir_bytes len, const int type,
-	const int writeflag)
-{
-	/* This range is not OK for this process. Set parameters  
-	 * of the request and notify VM about the pending request. 
-	 */								
-	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
-	assert(!RTS_ISSET(target, RTS_VMREQUEST));
-
-	RTS_SET(caller, RTS_VMREQUEST);
-
-	caller->p_vmrequest.req_type = VMPTYPE_CHECK;
-	caller->p_vmrequest.target = target->p_endpoint;
-	caller->p_vmrequest.params.check.start = linaddr;
-	caller->p_vmrequest.params.check.length = len;
-	caller->p_vmrequest.params.check.writeflag = writeflag;
-	caller->p_vmrequest.type = type;
-							
-	/* Connect caller on vmrequest wait queue. */	
-	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		if(OK != send_sig(VM_PROC_NR, SIGKMEM))
-			panic("send_sig failed");
-	vmrequest = caller;
-}
-
-/*===========================================================================*
  *				vm_check_range				     *
  *===========================================================================*/
 int vm_check_range(struct proc *caller, struct proc *target,
@@ -447,35 +423,6 @@ int vm_check_range(struct proc *caller, struct proc *target,
 		writeflag);
 
 	return VMSUSPEND;
-}
-
-/*===========================================================================*
- *                              delivermsg                                *
- *===========================================================================*/
-void delivermsg(struct proc *rp)
-{
-	int r = OK;
-
-	assert(rp->p_misc_flags & MF_DELIVERMSG);
-	assert(rp->p_delivermsg.m_source != NONE);
-
-	if (copy_msg_to_user(&rp->p_delivermsg,
-				(message *) rp->p_delivermsg_vir)) {
-		printf("WARNING wrong user pointer 0x%08lx from "
-				"process %s / %d\n",
-				rp->p_delivermsg_vir,
-				rp->p_name,
-				rp->p_endpoint);
-		r = EFAULT;
-	}
-
-	/* Indicate message has been delivered; address is 'used'. */
-	rp->p_delivermsg.m_source = NONE;
-	rp->p_misc_flags &= ~MF_DELIVERMSG;
-
-	if(!(rp->p_misc_flags & MF_CONTEXT_SET)) {
-		rp->p_reg.retreg = r;
-	}
 }
 
 /*===========================================================================*
@@ -547,12 +494,13 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
-struct proc * caller;
-struct vir_addr *src_addr;	/* source virtual address */
-struct vir_addr *dst_addr;	/* destination virtual address */
-vir_bytes bytes;		/* # of bytes to copy  */
-int vmcheck;			/* if nonzero, can return VMSUSPEND */
+int virtual_copy_f(
+  struct proc * caller,
+  struct vir_addr *src_addr,		/* source virtual address */
+  struct vir_addr *dst_addr,		/* destination virtual address */
+  vir_bytes bytes,			/* # of bytes to copy  */
+  int vmcheck				/* if nonzero, can return VMSUSPEND */
+)
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
@@ -772,6 +720,9 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		ASSIGN(machine);
 		ASSIGN(kmessages);
 		ASSIGN(loadinfo);
+		ASSIGN(kuserinfo);
+		ASSIGN(arm_frclock);
+		ASSIGN(kclockinfo);
 
 		/* adjust the pointers of the functions and the struct
 		 * itself to the user-accessible mapping
@@ -779,6 +730,9 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 		minix_kerninfo.kerninfo_magic = KERNINFO_MAGIC;
 		minix_kerninfo.minix_feature_flags = minix_feature_flags;
 		minix_kerninfo_user = (vir_bytes) FIXEDPTR(&minix_kerninfo);
+
+		minix_kerninfo.ki_flags |= MINIX_KIF_USERINFO;
+
 		return OK;
 	}
 

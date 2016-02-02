@@ -9,8 +9,11 @@ listed in the BUGS section of the man page had been fixed!)
 
 It would be nice to simplify file considerably. For example,
 reimplement the apprentice and non-pattern magic methods in Python,
-and compile the magic patterns to a giant regex (or something similar)
-so that only a small amount of C is needed (because fast execution is
-typically only required for soft magic, not the more detailed
-information given by hard-wired routines). In this regard, note that
-hplip, which is BSD-licensed, has a magic reimplementation in Python.
+and compile the magic patterns to a giant regex (or something similar;
+maybe using Ragel (http://www.complang.org/ragel/)) so that only a
+small amount of C is needed (because fast execution is typically only
+required for soft magic, not the more detailed information given by
+hard-wired routines). In this regard, note that hplip, which is
+BSD-licensed, has a magic reimplementation in Python.
+
+Read the kerberos magic entry for more ideas.

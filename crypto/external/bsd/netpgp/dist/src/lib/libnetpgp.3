@@ -1,0 +1,343 @@
+.\" $NetBSD: libnetpgp.3,v 1.16 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to The
+.\" NetBSD Foundation by Alistair Crooks (agc@NetBSD.org)
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt LIBNETPGP 3
+.Os
+.Sh NAME
+.Nm libnetpgp
+.Nd digital signing and verification, encryption and decryption
+.Sh LIBRARY
+.Lb libnetpgp
+.Sh SYNOPSIS
+.In netpgp.h
+.Pp
+The following functions relate to initialisations and finalisations:
+.Ft int
+.Fo netpgp_init
+.Fa "netpgp_t *netpgp"
+.Fc
+.Ft int
+.Fo netpgp_end
+.Fa "netpgp_t *netpgp"
+.Fc
+.Pp
+The following functions are for debugging, reflection and information:
+.Ft int
+.Fo netpgp_set_debug
+.Fa "const char *filename"
+.Fc
+.Ft int
+.Fo netpgp_get_debug
+.Fa "const char *filename"
+.Fc
+.Ft int
+.Fo netpgp_get_info
+.Fa "const char *type"
+.Fc
+.Ft int
+.Fo netpgp_list_packets
+.Fa "netpgp_t *netpgp" "char *filename" "int armour" "char *pubringname"
+.Fc
+.Pp
+The following functions are for variable management:
+.Ft int
+.Fo netpgp_setvar
+.Fa "netpgp_t *netpgp" "const char *name" "const char *value"
+.Fc
+.Ft char *
+.Fo netpgp_getvar
+.Fa "netpgp_t *netpgp" "const char *name"
+.Fc
+.Ft int
+.Fo netpgp_incvar
+.Fa "netpgp_t *netpgp" "const char *name" "const int delta"
+.Fc
+.Pp
+The following function sets the home directory:
+.Ft int
+.Fo netpgp_set_homedir
+.Fa "netpgp_t *netpgp" "char *homedir" "char *subdir" "const int quiet"
+.Fc
+.Pp
+The following functions are used for key management:
+.Ft int
+.Fo netpgp_list_keys
+.Fa "netpgp_t *netpgp" "const int printsigs"
+.Fc
+.Ft int
+.Fo netpgp_match_list_keys
+.Fa "netpgp_t *netpgp" "char *pattern"
+.Fc
+.Ft int
+.Fo netpgp_find_key
+.Fa "netpgp_t *netpgp" "char *userid"
+.Fc
+.Ft char *
+.Fo netpgp_get_key
+.Fa "netpgp_t *netpgp" "const char *id"
+.Fc
+.Ft int
+.Fo netpgp_export_key
+.Fa "netpgp_t *netpgp" "char *userid"
+.Fc
+.Ft int
+.Fo netpgp_import_key
+.Fa "netpgp_t *netpgp" "char *file"
+.Fc
+.Ft int
+.Fo netpgp_generate_key
+.Fa "netpgp_t *netpgp" "char *userid" "int numbits"
+.Fc
+.Pp
+The following functions are used for file management:
+.Ft int
+.Fo netpgp_encrypt_file
+.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "int armored"
+.Fc
+.Ft int
+.Fo netpgp_decrypt_file
+.Fa "netpgp_t *netpgp" "char *filename" "char *out" "int armored"
+.Fc
+.Ft int
+.Fo netpgp_sign_file
+.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "int armored" "int cleartext" "int detached"
+.Fc
+.Ft int
+.Fo netpgp_verify_file
+.Fa "netpgp_t *netpgp" "char *f" "int armored"
+.Fc
+.Pp
+The following functions are used for memory signing and encryption:
+.Ft int
+.Fo netpgp_encrypt_memory
+.Fa "netpgp_t *netpgp" "char *userid" "void *in" "const size_t insize"
+.Fa "char *out" "size_t outsize" "int armored"
+.Fc
+.Ft int
+.Fo netpgp_decrypt_memory
+.Fa "netpgp_t *netpgp" "const void *input" "const size_t insize"
+.Fa "char *out" "size_t outsize" "const int armored"
+.Fc
+.Ft int
+.Fo netpgp_sign_memory
+.Fa "netpgp_t *netpgp" "const char *userid" "char *mem"
+.Fa "size_t size" "char *out" "size_t outsize"
+.Fa "const unsigned armored" "const unsigned cleartext"
+.Fc
+.Ft int
+.Fo netpgp_verify_memory
+.Fa "netpgp_t *netpgp" "const void *in" "const size_t insize"
+.Fa "void *out" "size_t outsize" "const int armored"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a library interface to enable digital signatures to be created and
+verified, and also for files and memory to be encrypted and decrypted.
+Functions are also provided for management of user keys.
+.Pp
+The library uses functions from the openssl library for multi-precision
+integer arithmetic, and for RSA and DSA key signing and verification,
+encryption and decryption.
+.Pp
+Normal operation sees the
+.Nm
+process be initialised using the
+.Fn netpgp_init
+function, which will set up the public and private keyrings, and set the
+user identity to the
+.Ar userid
+argument passed stored in the
+.Dv netpgp_t
+structure, and set using the
+.Fn netpgp_setvar
+function.
+If no public key ring file is set, initial values will be taken from those
+in the
+.Pa .gnupg/pubring.gpg
+file in the user's home directory.
+Similarly, if no secret key ring file is set,
+initial values will be taken from those
+in the
+.Pa .gnupg/secring.gpg
+file in the user's home directory.
+The
+.Fn netpgp_init
+function returns 1 on success, 0 on failure.
+.Pp
+To list all the keys in a keyring, the
+.Fn netpgp_list_keys
+function is used.
+The signature subkey fields can also be displayed
+using this function.
+The
+.Fn netpgp_match_list_keys
+function is used to match (via regular expression)
+a subset of the keys in the keyring.
+If the expression to match is NULL,
+the search will degenerate into a
+listing of all keys in the keyring.
+.Pp
+The home directory is specified as an internal variable,
+and its existence is checked using the
+.Fn netpgp_set_homedir
+function.
+This function can operate in a verbose or quiet
+manner, depending on the value of the argument provided.
+If the subdirectory argument is provided, this subdirectory
+is appended to the home directory in order to search for
+the keyrings.
+.Pp
+To export a key, the
+.Fn netpgp_export_key
+function is used.
+Output is sent to the standard output.
+.Pp
+To import a key onto the public keyring, the
+.Fn netpgp_import_key
+is used.
+The name of the file containing the key to be imported is provided
+as the filename argument.
+.Pp
+To generate a key, the
+.Fn netpgp_generate_key
+is used.
+It takes an argument of the number of bits to use in the key.
+At the time that this manual page was created (April 2009),
+the recommendations are that the bare minimum key size
+of at least 2048 bits is used, and it would be much better
+to use at least 4096 or 8192 bits.
+This situation should be monitored to ensure that it does
+not go out of date.
+.Pp
+Encryption, decryption, signing and verification of
+files are the lifeblood of the
+.Nm
+library.
+To encrypt a file, the
+.Fn netpgp_encrypt_file
+function is used, and the
+.Fn netpgp_decrypt_file
+function is used to decrypt the results of the encryption.
+To sign a file, the
+.Fn netpgp_sign_file
+function is used, and the resulting signed file can be verified
+using the
+.Fn netpgp_verify_file
+function.
+.Pp
+.Fn netpgp_sign_memory
+is a function which can sign an area
+of memory, and
+.Fn netpgp_verify_memory
+verifies the digital signature produced.
+.Pp
+Internally, an encrypted or signed file
+is made up of
+.Dq packets
+which hold information pertaining to the signature,
+encryption method, and the data which is being protected.
+This information can be displayed in a verbose manner using
+the
+.Fn netpgp_list_packets
+function.
+.Pp
+The
+.Fn netpgp_setvar
+and
+.Fn netpgp_getvar
+functions are used to manage the hash algorithm that
+is used with RSA signatures.
+These functions are general purpose functions, and
+are used to set and retrieve values for internal variables.
+For example, they
+can be used to set and to retrieve the
+value of the user id
+which has been set,
+the home directory from which to find the keyrings,
+the verbosity settings, and many more.
+The
+.Fn netpgp_incvar
+function is used to add a numeric increment to the
+internal variable.
+This incremental value can be negative.
+It is primarily used to increase the verbosity settings.
+.Pp
+In
+.Nm
+files are encrypted using the public key of the userid.
+The secret key is used to decrypt the results of that encryption.
+Files are signed using the secret key of the userid.
+The public key is used to verify that the file was signed,
+who signed the file, and the date and time at which it was signed.
+.Pp
+Some utility functions are also provided for debugging, and for
+finding out version and maintainer information from calling programs.
+These are the
+.Fn netpgp_set_debug
+and the
+.Fn netpgp_get_debug
+functions (for getting verbose debugging information on a per-source
+file basis).
+.Pp
+The
+.Fn netpgp_get_info
+function returns the version or maintainer information depending upon the
+.Ar type
+argument.
+At the present time, two types are defined:
+.Dq version
+and
+.Dq maintainer .
+A failure to present a known
+.Ar type
+argument to
+.Fn netpgp_get_info
+will result in the string
+.Dq [unknown]
+being returned.
+.Sh SEE ALSO
+.Xr netpgp 1 ,
+.Xr ssl 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+.An Ben Laurie ,
+.An Rachel Willmer .
+.An Alistair Crooks Aq Mt agc@NetBSD.org
+wrote this high-level interface.
+.Pp
+This manual page was written by
+.An Alistair Crooks .

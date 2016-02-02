@@ -4,7 +4,7 @@
 int env_argc = 0;
 char **env_argv = NULL;
 
-static char *find_key(const char *params, const char *key);
+static const char *find_key(const char *params, const char *key);
 
 /*===========================================================================*
  *				env_setargs				     *
@@ -22,7 +22,7 @@ int env_get_param(const char *key, char *value, int max_len)
 {
   message m;
   static char mon_params[MULTIBOOT_PARAM_BUF_SIZE]; /* copy parameters here */
-  char *key_value;
+  const char *key_value;
   int i, s;
   size_t keylen;
 
@@ -73,14 +73,13 @@ int env_get_param(const char *key, char *value, int max_len)
 
 
 /*==========================================================================*
- *				find_key					    *
+ *				find_key				    *
  *==========================================================================*/
-static char *find_key(const char *params, const char *name)
+static const char *find_key(const char *params, const char *name)
 {
-  const char *namep;
-  char *envp;
+  const char *namep, *envp;
 
-  for (envp = (char *) params; *envp != 0;) {
+  for (envp = params; *envp != 0;) {
 	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
 		;
 	if (*namep == '\0' && *envp == '=') 

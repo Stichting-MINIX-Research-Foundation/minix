@@ -1,0 +1,35 @@
+# $NetBSD: Makefile.in,v 1.8 2014/03/09 00:15:45 agc Exp $
+
+PROG=netpgpverify
+
+OBJS= b64.o bignum.o bufgap.o digest.o
+OBJS+= libverify.o main.o misc.o
+OBJS+= pgpsum.o rsa.o
+
+OBJS+= bzlib.o zlib.o
+
+OBJS+= sha1.o sha2.o md5c.o rmd160.o tiger.o
+
+PREFIX=@PREFIX@
+MANDIR=@MANDIR@
+
+all: ${PROG}
+
+${PROG}: ${OBJS}
+	${CC} ${OBJS} -o ${PROG}
+
+install:
+	install -c -s ${PROG} ${DESTDIR}${PREFIX}/bin
+	install -c netpgpverify.1 ${DESTDIR}${MANDIR}/man1
+
+tst:
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.asc
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.gpg
+	./${PROG} -v
+	./${PROG} -S testkey.pub data.gpg
+	./${PROG} -S testkey.pub data.sig
+
+clean:
+	rm -rf *.core ${OBJS} ${PROG}
+cleandist:
+	rm -rf *.core ${OBJS} ${PROG} Makefile

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.8 2014/05/23 02:34:19 uebayasi Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -68,3 +68,4 @@ ENTRY(swapcontext)
 	PIC_EPILOGUE
 	/* No need to error-check: setcontext() must have failed. */
 2:	ret	
+END(swapcontext)

@@ -21,14 +21,15 @@
 int flock(int fd, int mode)
 {
   struct flock lck;
-  register int retcode;
 
   memset((void *) &lck, 0, sizeof(struct flock));
-  lck.l_type = mode & ~LOCK_NB;
-  lck.l_pid = getpid();
-  if ((retcode = fcntl(fd, mode & LOCK_NB ? F_SETLK : F_SETLKW, &lck)) < 0 && errno == EAGAIN)
-	errno = EWOULDBLOCK;
-  return retcode;
+  switch (mode & ~LOCK_NB) {
+  case LOCK_SH: lck.l_type = F_RDLCK; break;
+  case LOCK_EX: lck.l_type = F_WRLCK; break;
+  case LOCK_UN: lck.l_type = F_UNLCK; break;
+  default: errno = EINVAL; return -1;
+  }
+  return fcntl(fd, mode & LOCK_NB ? F_SETLK : F_SETLKW, &lck);
 }
 
 /** flock.c **/

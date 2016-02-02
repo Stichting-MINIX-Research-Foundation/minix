@@ -1,4 +1,4 @@
-/* $Id: cmd-kill-window.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,29 +24,35 @@
  * Destroy window.
  */
 
-int	cmd_kill_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_kill_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_kill_window_entry = {
 	"kill-window", "killw",
-	"t:", 0, 0,
-	CMD_TARGET_WINDOW_USAGE,
+	"at:", 0, 0,
+	"[-a] " CMD_TARGET_WINDOW_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_kill_window_exec
 };
 
-int
-cmd_kill_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_kill_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct winlink	*wl;
+	struct winlink	*wl, *wl2, *wl3;
+	struct session	*s;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
+		return (CMD_RETURN_ERROR);
 
-	server_kill_window(wl->window);
+	if (args_has(args, 'a')) {
+		RB_FOREACH_SAFE(wl2, winlinks, &s->windows, wl3) {
+			if (wl != wl2)
+				server_kill_window(wl2->window);
+		}
+	} else
+		server_kill_window(wl->window);
+
 	recalculate_sizes();
-
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

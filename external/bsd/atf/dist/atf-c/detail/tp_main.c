@@ -88,6 +88,7 @@ enum tc_part {
         snprintf(buf, buflen, "%s", data->m_what); \
     } \
     \
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2) \
     static \
     atf_error_t \
     name ## _error(const char *fmt, ...) \

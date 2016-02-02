@@ -54,6 +54,8 @@ struct proc {
 	unsigned long preempted;
   } p_accounting;
 
+  clock_t p_dequeued;		/* uptime at which process was last dequeued */
+
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
 
@@ -63,6 +65,9 @@ struct proc {
   u64_t p_cycles;		/* how many cycles did the process use */
   u64_t p_kcall_cycles;		/* kernel cycles caused by this proc (kcall) */
   u64_t p_kipc_cycles;		/* cycles caused by this proc (ipc) */
+
+  u64_t p_tick_cycles;		/* cycles accumulated for up to a clock tick */
+  struct cpuavg p_cpuavg;	/* running CPU average, for ps(1) */
 
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
@@ -96,7 +101,7 @@ struct proc {
 #define VMSTYPE_MAP		3
 
 	int		type;		/* suspended operation */
-	union {
+	union ixfer_saved{
 		/* VMSTYPE_SYS_MESSAGE */
 		message		reqmsg;	/* suspended request message */
 	} saved;
@@ -104,7 +109,7 @@ struct proc {
 	/* Parameters of request to VM */
 	int		req_type;
 	endpoint_t	target;
-	union {
+	union ixfer_params{
 		struct {
 			vir_bytes 	start, length;	/* memory range */
 			u8_t		writeflag;	/* nonzero for write access */
@@ -125,8 +130,6 @@ struct proc {
    * do_ipc() arguments that are still to be executed
    */
   struct { reg_t r1, r2, r3; } p_defer;
-
-  u64_t p_signal_received;
 
 #if DEBUG_TRACE
   int p_schedules;
@@ -255,6 +258,8 @@ struct proc {
 				    because of VM modifying the sender's address
 				    space*/
 #define MF_STEP		 0x40000 /* Single-step process */
+#define MF_MSGFAILED	 0x80000
+#define MF_NICED	0x100000 /* user has lowered max process priority */
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

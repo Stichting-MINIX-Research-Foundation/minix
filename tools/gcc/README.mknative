@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.17 2013/11/28 12:08:57 mrg Exp $
+$NetBSD: README.mknative,v 1.20 2014/06/14 20:49:37 mrg Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -18,6 +18,9 @@ cross-generated.  Though a $MACHINE_ARCH all uses the same config files, you
 must pick a specific $MACHINE so that building the requisite bits below will
 work.
 
+0. Note that example paths like src/external/gpl3/gcc/lib/libgcc/arch will
+   really be src/external/gpl3/gcc.old/lib/libgcc/arch for the previous GCC.
+
 1. Set MKMAINTAINERTOOLS=yes in mk.conf.  (Needed so that src/tools/gettext
    gets built, eliciting proper HAVE_*GETTEXT* defns in config.h files.)
 
@@ -26,7 +29,7 @@ work.
    to build.sh. Use -M instead. (The differences are in layout and pathname
    prefixes in the object directory pointed to by each option.)
 
-3. In src/tools/gcc, do "nbmake-MACHINE HAVE_GCC=45 bootstrap-libgcc".
+3. In src/tools/gcc, do "nbmake-MACHINE HAVE_GCC=48 bootstrap-libgcc".
 
    This will create just enough glue in src/external/gpl3/gcc/lib/libgcc/arch
    to make it possible to build, based on the toolchain built in
@@ -36,28 +39,24 @@ work.
    will regenerate the "proper" libgcc config files.
 
 4. At top level, do
-   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no HAVE_GCC=45", and
-   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no HAVE_GCC=45".
-   (Note: replace 45 [for gcc 4.5.x] with the appropriate version you are
+   "nbmake-MACHINE obj do-distrib-dirs MKGCC=no MKBINUTILS=no HAVE_GCC=48", and
+   "nbmake-MACHINE includes HAVE_GCC= MKGCC=no MKBINUTILS=no HAVE_GCC=48".
+   (Note: replace 48 [for gcc 4.8.x] with the appropriate version you are
    going to mknative-for, the MKGCC=no prevents the standard makefiles from
    picking up any gcc version info automatically)
 
 5. In src/lib/csu, do
    "nbmake-MACHINE dependall". and "nbmake-MACHINE install".
 
-6. If the platform sets USE_COMPILERCRTSTUFF=yes, then in
-   src/external/gpl3/gcc/lib/crtstuff/ do
-   "nbmake-MACHINE obj dependall install"
-
-7. In src/external/gpl3/gcc/lib/libgcc, do
+6. In src/external/gpl3/gcc/lib/libgcc, do
    "nbmake-MACHINE obj includes dependall install".
 
-8. In each of src/external/lgpl3/gmp/lib/libgmp,
+7. In each of src/external/lgpl3/gmp/lib/libgmp,
    src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl3/mpc/lib/libmpc
    do "nbmake-MACHINE obj dependall".
 
-9. In src/lib, do
-   "nbmake-MACHINE dependall install MKGCC=no HAVE_GCC=45".
+8. In src/lib, do
+   "nbmake-MACHINE dependall install MKGCC=no HAVE_GCC=48".
 
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be
@@ -71,7 +70,7 @@ work.
    MKSHARE=no
    MKRUMP=no
 
-10. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
+9. In src/tools/gcc, do "nbmake-MACHINE native-gcc".
 
    This will do a full configury in ${.OBJDIR}/.native that is a "Canadian"
    cross toolchain (--build reflects the host platform, but --host and
@@ -79,7 +78,7 @@ work.
    native-to-NetBSD compiler on a cross host, and mknative pulls glue data
    from this.
 
-11. Try out a full build using "nbmake-MACHINE"; the result should include
+10. Try out a full build using "nbmake-MACHINE"; the result should include
    a native compiler.
 
-12. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.
+11. If all is well, commit the glue files added to src/gnu/{lib,usr.bin}/*.

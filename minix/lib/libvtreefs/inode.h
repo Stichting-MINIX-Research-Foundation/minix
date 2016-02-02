@@ -2,6 +2,13 @@
 #define _VTREEFS_INODE_H
 
 /*
+ * Callback data can be a pointer or a (cast) integer value.  For now, we
+ * instruct the state transfer framework that it should translate only
+ * recognized pointers.
+ */
+typedef cbdata_t cixfer_cbdata_t;
+
+/*
  * The inodes that are active, form a fully connected tree.  Each node except
  * the root node has a parent and a tail queue of children, where each child
  * inode points to the "next" and "previous" inode with a common parent.
@@ -27,7 +34,7 @@ struct inode {
 	unsigned int i_count;		/* reference count */
 	index_t i_index;		/* index number in parent / NO_INDEX */
 	int i_indexed;			/* number of indexed entries */
-	cbdata_t i_cbdata;		/* callback data */
+	cixfer_cbdata_t i_cbdata;	/* callback data */
 	unsigned short i_flags;		/* I_DELETED or 0 */
 
 	/* Tree structure */

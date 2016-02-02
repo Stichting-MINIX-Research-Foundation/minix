@@ -93,7 +93,8 @@ bool atf_tc_has_config_var(const atf_tc_t *, const char *);
 bool atf_tc_has_md_var(const atf_tc_t *, const char *);
 
 /* Modifiers. */
-atf_error_t atf_tc_set_md_var(atf_tc_t *, const char *, const char *, ...);
+atf_error_t atf_tc_set_md_var(atf_tc_t *, const char *, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(3, 4);
 
 /* ---------------------------------------------------------------------
  * Free functions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil_rand.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
+/*	$NetBSD: evutil_rand.c,v 1.4 2015/02/01 10:19:00 njoly Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil_rand.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
+__RCSID("$NetBSD: evutil_rand.c,v 1.4 2015/02/01 10:19:00 njoly Exp $");
 
 #include <limits.h>
 
@@ -46,21 +46,29 @@ __RCSID("$NetBSD: evutil_rand.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 int
+evutil_secure_rng_set_urandom_device_file(char *fname)
+{
+	(void) fname;
+	return -1;
+}
+int
 evutil_secure_rng_init(void)
 {
 	/* call arc4random() now to force it to self-initialize */
 	(void) arc4random();
 	return 0;
 }
+#if defined(__minix) && !defined(_EVENT_DISABLE_THREAD_SUPPORT)
 int
 /*ARGSUSED*/
 evutil_secure_rng_global_setup_locks_(const int enable_locks)
 {
 	return 0;
 }
+#endif /* defined(__minix) && !defined(_EVENT_DISABLE_THREAD_SUPPORT) */
 
 static void
-/*ARGSUED*/
+/*ARGSUSED*/
 ev_arc4random_buf(void *buf, size_t n)
 {
 #if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !defined(__APPLE__)
@@ -76,8 +84,13 @@ ev_arc4random_buf(void *buf, size_t n)
 	 * and fall back otherwise.  (OSX does this using some linker
 	 * trickery.)
 	 */
-	if (arc4random_buf != NULL) {
-		return arc4random_buf(buf, n);
+	{
+		void (*tptr)(void *,size_t) =
+		    (void (*)(void*,size_t))arc4random_buf;
+		if (tptr != NULL) {
+			arc4random_buf(buf, n);
+			return;
+		}
 	}
 #endif
 	/* Make sure that we start out with b at a 4-byte alignment; plenty
@@ -128,6 +141,18 @@ evutil_secure_rng_global_setup_locks_(const int enable_locks)
 	return 0;
 }
 #endif
+
+int
+/*ARGSUSED*/
+evutil_secure_rng_set_urandom_device_file(char *fname)
+{
+#ifdef TRY_SEED_URANDOM
+	_ARC4_LOCK();
+	arc4random_urandom_filename = fname;
+	_ARC4_UNLOCK();
+#endif
+	return 0;
+}
 
 int
 evutil_secure_rng_init(void)

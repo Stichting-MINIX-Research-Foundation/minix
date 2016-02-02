@@ -1,4 +1,4 @@
-/* $Id: osdep-linux.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,10 +40,10 @@ osdep_get_name(int fd, unused char *tty)
 
 	xasprintf(&path, "/proc/%lld/cmdline", (long long) pgrp);
 	if ((f = fopen(path, "r")) == NULL) {
-		xfree(path);
+		free(path);
 		return (NULL);
 	}
-	xfree(path);
+	free(path);
 
 	len = 0;
 	buf = NULL;
@@ -60,17 +60,31 @@ osdep_get_name(int fd, unused char *tty)
 	return (buf);
 }
 
+char *
+osdep_get_cwd(int fd)
+{
+	static char	 target[MAXPATHLEN + 1];
+	char		*path;
+	pid_t		 pgrp;
+	ssize_t		 n;
+
+	if ((pgrp = tcgetpgrp(fd)) == -1)
+		return (NULL);
+
+	xasprintf(&path, "/proc/%lld/cwd", (long long) pgrp);
+	n = readlink(path, target, MAXPATHLEN);
+	free(path);
+	if (n > 0) {
+		target[n] = '\0';
+		return (target);
+	}
+	return (NULL);
+}
+
 struct event_base *
 osdep_event_init(void)
 {
-	/*
-	 * On Linux, epoll doesn't work on /dev/null (yes, really).
-	 *
-	 * This has been commented because libevent versions up until the very
-	 * latest (1.4 git or 2.0.10) do not handle signals properly when using
-	 * poll or select, causing hangs.
-	 * 
-	 */
-	/* setenv("EVENT_NOEPOLL", "1", 1); */
+	/* On Linux, epoll doesn't work on /dev/null (yes, really). */
+	setenv("EVENT_NOEPOLL", "1", 1);
 	return (event_init());
 }

@@ -173,7 +173,7 @@ int ftype;			 /* used when ENTER and INCOMPAT_FILETYPE */
 				if (dp->d_name_len >= sizeof(ino_t)) {
 					/* Save d_ino for recovery. */
 					t = dp->d_name_len - sizeof(ino_t);
-					*((ino_t *) &dp->d_name[t])= dp->d_ino;
+					memcpy(&dp->d_name[t], &dp->d_ino, sizeof(dp->d_ino));
 				}
 				dp->d_ino = NO_ENTRY;	/* erase entry */
 				lmfs_markdirty(bp);

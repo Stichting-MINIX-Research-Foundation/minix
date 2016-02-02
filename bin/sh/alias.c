@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.14 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.14 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ struct alias *atab[ATABSIZE];
 
 STATIC void setalias(char *, char *);
 STATIC int unalias(char *);
-STATIC struct alias **hashalias(char *);
+STATIC struct alias **hashalias(const char *);
 
 STATIC
 void
@@ -178,7 +178,7 @@ rmaliases(void)
 }
 
 struct alias *
-lookupalias(char *name, int check)
+lookupalias(const char *name, int check)
 {
 	struct alias *ap = *hashalias(name);
 
@@ -193,8 +193,8 @@ lookupalias(char *name, int check)
 	return (NULL);
 }
 
-char *
-get_alias_text(char *name)
+const char *
+alias_text(void *dummy __unused, const char *name)
 {
 	struct alias *ap;
 
@@ -264,7 +264,7 @@ unaliascmd(int argc, char **argv)
 }
 
 STATIC struct alias **
-hashalias(char *p)
+hashalias(const char *p)
 {
 	unsigned int hashval;
 

@@ -31,8 +31,8 @@ OBJS+=	${f}
 CLEANFILES+= ${f}
 .endfor
 
-CPPFLAGS.__aeabi_idiv0.c+= -D_STANDALONE
-CPPFLAGS.__aeabi_ldiv0.c+= -D_STANDALONE
+CPPFLAGS.__aeabi_idiv0.c+= -D_STANDALONE -I${NETBSDSRCDIR}/sys
+CPPFLAGS.__aeabi_ldiv0.c+= -D_STANDALONE -I${NETBSDSRCDIR}/sys
 
 #.for f in \
 #	__aeabi_ldivmod.o __aeabi_uldivmod.o
@@ -79,7 +79,7 @@ CLEANFILES+= ${f}
 
 .for f in \
 	aeabi_uidivmod.o aeabi_ldivmod.o aeabi_uldivmod.o aeabi_idivmod.o
-${f}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/arm/${f:C/\.o/.S/}
+${f}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/arm/${f:C/\.o/.S/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 .endfor

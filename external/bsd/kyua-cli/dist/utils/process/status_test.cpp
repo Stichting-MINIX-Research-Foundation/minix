@@ -150,13 +150,11 @@ ATF_TEST_CASE_BODY(integration__signaled)
 ATF_TEST_CASE_WITHOUT_HEAD(integration__coredump);
 ATF_TEST_CASE_BODY(integration__coredump)
 {
-#if !defined(__minix)
     struct rlimit rl;
     rl.rlim_cur = RLIM_INFINITY;
     rl.rlim_max = RLIM_INFINITY;
     if (::setrlimit(RLIMIT_CORE, &rl) == -1)
         skip("Cannot unlimit the core file size; check limits manually");
-#endif /* !defined(__minix) */
 
     const status coredump = fork_and_wait(child_signal< SIGQUIT >);
     ATF_REQUIRE(!coredump.exited());

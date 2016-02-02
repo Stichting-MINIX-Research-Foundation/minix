@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2013/02/25 00:33:19 jmmv Exp $
+# $NetBSD: Makefile,v 1.45 2015/06/22 00:05:23 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,11 +7,11 @@
 TESTSDIR=	${TESTSBASE}
 
 # LSC: Unsupported on MINIX:
-# kernel net
-TESTS_SUBDIRS=		bin dev games include lib libexec
+# net
+TESTS_SUBDIRS=		bin dev games include kernel lib libexec
 TESTS_SUBDIRS+=		sbin sys usr.bin usr.sbin
 
-. if (${MKRUMP} != "no")
+. if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_SUBDIRS+=		fs rump
 
 . if ${MKKMOD} != "no"

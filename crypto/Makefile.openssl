@@ -1,0 +1,18 @@
+#	$NetBSD: Makefile.openssl,v 1.10 2009/09/23 04:02:28 tls Exp $
+
+.ifndef _MAKEFILE_OPENSSL_INCLUDED
+_MAKEFILE_OPENSSL_INCLUDED=1
+
+.include <bsd.own.mk>
+
+OPENSSLSRC=	${CRYPTODIST}/external/bsd/openssl/dist
+CPPFLAGS+=	-DOPENSSLDIR=\"/etc/openssl\"
+CPPFLAGS+=	-DENGINESDIR=\"/usr/lib/openssl\"
+CPPFLAGS+=	-DDSO_DLFCN -DHAVE_DLFCN_H
+
+.if defined(__MINIX)
+CPPFLAGS+=	-DOPENSSL_NO_SCTP
+CPPFLAGS+=	-DOPENSSL_DISABLE_OLD_DES_SUPPORT
+.endif # defined(__MINIX)
+
+.endif

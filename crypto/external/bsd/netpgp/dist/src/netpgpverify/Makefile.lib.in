@@ -1,0 +1,29 @@
+# $NetBSD: Makefile.lib.in,v 1.1 2014/03/09 00:15:45 agc Exp $
+
+LIB=	libnetpgpverify.a
+
+OBJS= b64.o bignum.o bufgap.o digest.o
+OBJS+= libverify.o misc.o
+OBJS+= pgpsum.o rsa.o
+
+OBJS+= bzlib.o zlib.o
+
+OBJS+= sha1.o sha2.o md5c.o rmd160.o tiger.o
+
+PREFIX=@PREFIX@
+MANDIR=@MANDIR@
+
+all: ${LIB}
+
+${LIB}: ${OBJS}
+	ar crv ${LIB} ${OBJS}
+
+install:
+	${BSD_INSTALL_LIB} ${LIB} ${DESTDIR}${PREFIX}/lib
+	${BSD_INSTALL_DATA} verify.h ${DESTDIR}${PREFIX}/include/netpgp
+	${BSD_INSTALL_DATA} libnetpgpverify.3 ${DESTDIR}${PREFIX}/${PKGMANDIR}/man3
+
+clean:
+	rm -rf *.core ${OBJS} ${LIB}
+cleandist:
+	rm -rf *.core ${OBJS} ${LIB} Makefile

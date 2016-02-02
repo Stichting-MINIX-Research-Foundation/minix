@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.28 2013/01/28 00:17:18 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.29 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.28 2013/01/28 00:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.29 2015/03/28 19:24:05 maxv Exp $");
 
 /*
  * kernel include files.
@@ -279,7 +279,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			if (bp)
 				brelse(bp, 0);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				DPRINTF(("%s(bread, %d)\n", __func__, error));
 				return (error);
@@ -414,7 +414,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, u_long fatbn)
 		 *      padded at the end or in the middle?
 		 */
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, B_MODIFY, &bpn) != 0) {
+		    pmp->pm_BytesPerSec, B_MODIFY, &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
@@ -583,7 +583,7 @@ fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents,
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 	    0, &bp)) != 0) {
 		return (error);
 	}
@@ -660,7 +660,7 @@ fatchain(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
 		    B_MODIFY, &bp);
 		if (error) {
 			return (error);
@@ -883,7 +883,7 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 			if (bp)
 				updatefats(pmp, bp, lbn);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, B_MODIFY, &bp);
+			    B_MODIFY, &bp);
 			if (error) {
 				return (error);
 			}
@@ -956,7 +956,7 @@ fillinusemap(struct msdosfsmount *pmp)
 				brelse(bp, 0);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				return (error);
 			}

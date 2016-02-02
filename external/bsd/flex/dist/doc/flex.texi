@@ -1,5 +1,4 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $NetBSD: flex.texi,v 1.1.1.2 2013/04/06 14:05:50 christos Exp $
 @c %**start of header
 @setfilename flex.info
 @include version.texi

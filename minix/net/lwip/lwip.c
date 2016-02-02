@@ -141,8 +141,6 @@ static void sef_local_startup(void)
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_restart(sef_cb_init_fresh);
 
-	/* No live update support for now. */
-
 	/* Let SEF perform startup. */
 	sef_startup();
 }

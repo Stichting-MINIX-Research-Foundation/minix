@@ -1,4 +1,6 @@
-/* $NetBSD: cpuio.h,v 1.4 2012/08/29 17:13:22 drochner Exp $ */
+/* $NetBSD: cpuio.h,v 1.5 2015/09/06 06:00:59 dholland Exp $ */
+
+#include <sys/ioccom.h>
 
 struct compat6_cpu_ucode {
 	uint64_t version;

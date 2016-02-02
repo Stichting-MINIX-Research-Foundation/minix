@@ -21,13 +21,13 @@ extern "C" {
 
 #define XCB_SCREENSAVER_MAJOR_VERSION 1
 #define XCB_SCREENSAVER_MINOR_VERSION 1
-  
+
 extern xcb_extension_t xcb_screensaver_id;
 
 typedef enum xcb_screensaver_kind_t {
-    XCB_SCREENSAVER_KIND_BLANKED,
-    XCB_SCREENSAVER_KIND_INTERNAL,
-    XCB_SCREENSAVER_KIND_EXTERNAL
+    XCB_SCREENSAVER_KIND_BLANKED = 0,
+    XCB_SCREENSAVER_KIND_INTERNAL = 1,
+    XCB_SCREENSAVER_KIND_EXTERNAL = 2
 } xcb_screensaver_kind_t;
 
 typedef enum xcb_screensaver_event_t {
@@ -36,10 +36,10 @@ typedef enum xcb_screensaver_event_t {
 } xcb_screensaver_event_t;
 
 typedef enum xcb_screensaver_state_t {
-    XCB_SCREENSAVER_STATE_OFF,
-    XCB_SCREENSAVER_STATE_ON,
-    XCB_SCREENSAVER_STATE_CYCLE,
-    XCB_SCREENSAVER_STATE_DISABLED
+    XCB_SCREENSAVER_STATE_OFF = 0,
+    XCB_SCREENSAVER_STATE_ON = 1,
+    XCB_SCREENSAVER_STATE_CYCLE = 2,
+    XCB_SCREENSAVER_STATE_DISABLED = 3
 } xcb_screensaver_state_t;
 
 /**
@@ -184,17 +184,14 @@ typedef struct xcb_screensaver_suspend_request_t {
  **/
 typedef struct xcb_screensaver_notify_event_t {
     uint8_t         response_type; /**<  */
-    uint8_t         code; /**<  */
-    uint16_t        sequence; /**<  */
     uint8_t         state; /**<  */
-    uint8_t         pad0; /**<  */
-    uint16_t        sequence_number; /**<  */
+    uint16_t        sequence; /**<  */
     xcb_timestamp_t time; /**<  */
     xcb_window_t    root; /**<  */
     xcb_window_t    window; /**<  */
     uint8_t         kind; /**<  */
     uint8_t         forced; /**<  */
-    uint8_t         pad1[14]; /**<  */
+    uint8_t         pad0[14]; /**<  */
 } xcb_screensaver_notify_event_t;
 
 /**
@@ -203,20 +200,8 @@ typedef struct xcb_screensaver_notify_event_t {
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_version_cookie_t xcb_screensaver_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major_version
- ** @param uint8_t           client_minor_version
- ** @returns xcb_screensaver_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_version_cookie_t
 xcb_screensaver_query_version (xcb_connection_t *c  /**< */,
                                uint8_t           client_major_version  /**< */,
@@ -228,23 +213,11 @@ xcb_screensaver_query_version (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_version_cookie_t xcb_screensaver_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           client_major_version
- ** @param uint8_t           client_minor_version
- ** @returns xcb_screensaver_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_version_cookie_t
 xcb_screensaver_query_version_unchecked (xcb_connection_t *c  /**< */,
                                          uint8_t           client_major_version  /**< */,
@@ -257,25 +230,13 @@ xcb_screensaver_query_version_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_screensaver_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_version_reply_t * xcb_screensaver_query_version_reply
- ** 
- ** @param xcb_connection_t                        *c
- ** @param xcb_screensaver_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                    **e
- ** @returns xcb_screensaver_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_version_reply_t *
 xcb_screensaver_query_version_reply (xcb_connection_t                        *c  /**< */,
                                      xcb_screensaver_query_version_cookie_t   cookie  /**< */,
@@ -287,19 +248,8 @@ xcb_screensaver_query_version_reply (xcb_connection_t                        *c 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_info_cookie_t xcb_screensaver_query_info
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @returns xcb_screensaver_query_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_info_cookie_t
 xcb_screensaver_query_info (xcb_connection_t *c  /**< */,
                             xcb_drawable_t    drawable  /**< */);
@@ -310,22 +260,11 @@ xcb_screensaver_query_info (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_info_cookie_t xcb_screensaver_query_info_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @returns xcb_screensaver_query_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_info_cookie_t
 xcb_screensaver_query_info_unchecked (xcb_connection_t *c  /**< */,
                                       xcb_drawable_t    drawable  /**< */);
@@ -337,25 +276,13 @@ xcb_screensaver_query_info_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_screensaver_query_info_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_screensaver_query_info_reply_t * xcb_screensaver_query_info_reply
- ** 
- ** @param xcb_connection_t                     *c
- ** @param xcb_screensaver_query_info_cookie_t   cookie
- ** @param xcb_generic_error_t                 **e
- ** @returns xcb_screensaver_query_info_reply_t *
- **
- *****************************************************************************/
- 
 xcb_screensaver_query_info_reply_t *
 xcb_screensaver_query_info_reply (xcb_connection_t                     *c  /**< */,
                                   xcb_screensaver_query_info_cookie_t   cookie  /**< */,
@@ -367,23 +294,11 @@ xcb_screensaver_query_info_reply (xcb_connection_t                     *c  /**< 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_select_input_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @param uint32_t          event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_select_input_checked (xcb_connection_t *c  /**< */,
                                       xcb_drawable_t    drawable  /**< */,
@@ -395,20 +310,8 @@ xcb_screensaver_select_input_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_select_input
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @param uint32_t          event_mask
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_select_input (xcb_connection_t *c  /**< */,
                               xcb_drawable_t    drawable  /**< */,
@@ -423,32 +326,11 @@ xcb_screensaver_set_attributes_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_set_attributes_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @param int16_t           x
- ** @param int16_t           y
- ** @param uint16_t          width
- ** @param uint16_t          height
- ** @param uint16_t          border_width
- ** @param uint8_t           _class
- ** @param uint8_t           depth
- ** @param xcb_visualid_t    visual
- ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_set_attributes_checked (xcb_connection_t *c  /**< */,
                                         xcb_drawable_t    drawable  /**< */,
@@ -469,29 +351,8 @@ xcb_screensaver_set_attributes_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_set_attributes
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @param int16_t           x
- ** @param int16_t           y
- ** @param uint16_t          width
- ** @param uint16_t          height
- ** @param uint16_t          border_width
- ** @param uint8_t           _class
- ** @param uint8_t           depth
- ** @param xcb_visualid_t    visual
- ** @param uint32_t          value_mask
- ** @param const uint32_t   *value_list
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_set_attributes (xcb_connection_t *c  /**< */,
                                 xcb_drawable_t    drawable  /**< */,
@@ -512,22 +373,11 @@ xcb_screensaver_set_attributes (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_unset_attributes_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_unset_attributes_checked (xcb_connection_t *c  /**< */,
                                           xcb_drawable_t    drawable  /**< */);
@@ -538,19 +388,8 @@ xcb_screensaver_unset_attributes_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_unset_attributes
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_drawable_t    drawable
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_unset_attributes (xcb_connection_t *c  /**< */,
                                   xcb_drawable_t    drawable  /**< */);
@@ -561,22 +400,11 @@ xcb_screensaver_unset_attributes (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_suspend_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           suspend
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_suspend_checked (xcb_connection_t *c  /**< */,
                                  uint8_t           suspend  /**< */);
@@ -587,19 +415,8 @@ xcb_screensaver_suspend_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_screensaver_suspend
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           suspend
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_screensaver_suspend (xcb_connection_t *c  /**< */,
                          uint8_t           suspend  /**< */);

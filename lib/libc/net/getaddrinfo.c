@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.105 2013/05/13 17:54:55 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.109 2015/09/10 14:05:06 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,10 +55,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.105 2013/05/13 17:54:55 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.109 2015/09/10 14:05:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef RUMP_ACTION
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -90,10 +92,13 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.105 2013/05/13 17:54:55 christos Exp $");
 
 #include "servent.h"
 
+#ifndef RUMP_ACTION
 #ifdef __weak_alias
 __weak_alias(getaddrinfo,_getaddrinfo)
+__weak_alias(allocaddrinfo,_allocaddrinfo)
 __weak_alias(freeaddrinfo,_freeaddrinfo)
 __weak_alias(gai_strerror,_gai_strerror)
+#endif
 #endif
 
 #define SUCCESS 0
@@ -939,12 +944,7 @@ allocaddrinfo(socklen_t addrlen)
 	ai = calloc(sizeof(struct addrinfo) + addrlen, 1);
 	if (ai) {
 		ai->ai_addr = (void *)(ai+1);
-#if !defined(__minix)
 		ai->ai_addrlen = ai->ai_addr->sa_len = addrlen;
-#else
-		ai->ai_addrlen = addrlen;
-#endif /* !defined(__minix) */
-
 	}
 
 	return ai;
@@ -2126,6 +2126,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 	const char *cp, * const *domain;
 	HEADER *hp;
 	u_int dots;
+	char buf[MAXHOSTNAMELEN];
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
@@ -2146,7 +2147,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 	/*
 	 * if there aren't any dots, it could be a user-level alias
 	 */
-	if (!dots && (cp = __hostalias(name)) != NULL) {
+	if (!dots && (cp = res_hostalias(res, name, buf, sizeof(buf))) != NULL) {
 		ret = res_queryN(cp, target, res);
 		return ret;
 	}

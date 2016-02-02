@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.35 2015/06/22 21:16:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.33 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.35 2015/06/22 21:16:02 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -690,6 +690,27 @@ found:
 	case HASH_DELETE:
 		if (__delpair(hashp, rbufp, ndx))
 			return (ERROR);
+		/*
+		 * Our index lags 2 behind on the same page when we are
+		 * deleting the element pointed to by the index; otherwise
+		 * deleting randomly from an iterated hash produces undefined
+		 * results.
+		 */
+		if (ndx != hashp->cndx - 2 || rbufp != hashp->cpage)
+			break;
+
+		if (hashp->cndx > 1) {
+			/* Move back one element */
+			hashp->cndx -= 2;
+		} else {
+			/*
+			 * Move back one page, and indicate to go to the last
+			 * element of the previous page by setting cndx to -1
+			 */
+			hashp->cbucket--;
+			hashp->cpage = NULL;
+			hashp->cndx = -1;
+		}
 		break;
 	default:
 		abort();
@@ -720,11 +741,12 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 		hashp->cpage = NULL;
 	}
 
+next_bucket:
 	for (bp = NULL; !bp || !bp[0]; ) {
 		if (!(bufp = hashp->cpage)) {
 			for (bucket = hashp->cbucket;
 			    bucket <= (uint32_t)hashp->MAX_BUCKET;
-			    bucket++, hashp->cndx = 1) {
+			    bucket++) {
 				bufp = __get_buf(hashp, bucket, NULL, 0);
 				if (!bufp)
 					return (ERROR);
@@ -738,8 +760,27 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 				hashp->cbucket = -1;
 				return (ABNORMAL);
 			}
-		} else
+			if (hashp->cndx == -1) {
+				/* move to the last element of the page */
+				hashp->cndx = 1;
+				while (bp[hashp->cndx - 1] != 0)
+					hashp->cndx += 2;
+			} else {
+				/* start on the first element */
+				hashp->cndx = 1;
+			}
+		} else {
 			bp = (uint16_t *)(void *)hashp->cpage->page;
+			if (flag == R_NEXT || flag == 0) {
+				if (hashp->cndx > bp[0]) {
+					hashp->cpage = NULL;
+					hashp->cbucket++;
+					hashp->cndx = 1;
+					goto next_bucket;
+				}
+			}
+		}
+
 
 		_DIAGASSERT(bp != NULL);
 		_DIAGASSERT(bufp != NULL);
@@ -768,14 +809,8 @@ hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
 		data->data = (uint8_t *)hashp->cpage->page + bp[ndx + 1];
 		data->size = bp[ndx] - bp[ndx + 1];
-		ndx += 2;
-		if (ndx > bp[0]) {
-			hashp->cpage = NULL;
-			hashp->cbucket++;
-			hashp->cndx = 1;
-		} else
-			hashp->cndx = ndx;
 	}
+	hashp->cndx += 2;
 	return (SUCCESS);
 }
 

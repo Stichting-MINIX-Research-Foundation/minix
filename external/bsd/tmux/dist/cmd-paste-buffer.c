@@ -1,4 +1,4 @@
-/* $Id: cmd-paste-buffer.c,v 1.3 2011/08/17 18:48:35 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,23 +27,22 @@
  * Paste paste buffer if present.
  */
 
-int	cmd_paste_buffer_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_paste_buffer_exec(struct cmd *, struct cmd_q *);
 
-void	cmd_paste_buffer_filter(
-	    struct window_pane *, const char *, size_t, const char *);
+void	cmd_paste_buffer_filter(struct window_pane *,
+	    const char *, size_t, const char *, int);
 
 const struct cmd_entry cmd_paste_buffer_entry = {
 	"paste-buffer", "pasteb",
-	"db:rs:t:", 0, 0,
-	"[-dr] [-s separator] [-b buffer-index] [-t target-pane]",
+	"db:prs:t:", 0, 0,
+	"[-dpr] [-s separator] [-b buffer-index] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_paste_buffer_exec
 };
 
-int
-cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct window_pane	*wp;
@@ -52,18 +51,19 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	const char		*sepstr;
 	char			*cause;
 	int			 buffer;
+	int			 pflag;
 
-	if (cmd_find_pane(ctx, args_get(args, 't'), &s, &wp) == NULL)
-		return (-1);
+	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if (!args_has(args, 'b'))
 		buffer = -1;
 	else {
 		buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			ctx->error(ctx, "buffer %s", cause);
-			xfree(cause);
-			return (-1);
+			cmdq_error(cmdq, "buffer %s", cause);
+			free(cause);
+			return (CMD_RETURN_ERROR);
 		}
 	}
 
@@ -72,8 +72,8 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else {
 		pb = paste_get_index(&global_buffers, buffer);
 		if (pb == NULL) {
-			ctx->error(ctx, "no buffer %d", buffer);
-			return (-1);
+			cmdq_error(cmdq, "no buffer %d", buffer);
+			return (CMD_RETURN_ERROR);
 		}
 	}
 
@@ -85,7 +85,8 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 			else
 				sepstr = "\r";
 		}
-		cmd_paste_buffer_filter(wp, pb->data, pb->size, sepstr);
+		pflag = (wp->screen->mode & MODE_BRACKETPASTE);
+		paste_send_pane(pb, wp, sepstr, args_has(args, 'p') && pflag);
 	}
 
 	/* Delete the buffer if -d. */
@@ -96,26 +97,5 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 			paste_free_index(&global_buffers, buffer);
 	}
 
-	return (0);
-}
-
-/* Add bytes to a buffer and filter '\n' according to separator. */
-void
-cmd_paste_buffer_filter(
-    struct window_pane *wp, const char *data, size_t size, const char *sep)
-{
-	const char	*end = data + size;
-	const char	*lf;
-	size_t		 seplen;
-
-	seplen = strlen(sep);
-	while ((lf = memchr(data, '\n', end - data)) != NULL) {
-		if (lf != data)
-			bufferevent_write(wp->event, data, lf - data);
-		bufferevent_write(wp->event, sep, seplen);
-		data = lf + 1;
-	}
-
-	if (end != data)
-		bufferevent_write(wp->event, data, end - data);
+	return (CMD_RETURN_NORMAL);
 }

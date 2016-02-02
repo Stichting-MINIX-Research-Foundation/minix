@@ -36,9 +36,10 @@ static void setcr3(struct proc *p, u32_t cr3, u32_t *v)
 /*===========================================================================*
  *				arch_do_vmctl				     *
  *===========================================================================*/
-int arch_do_vmctl(m_ptr, p)
-register message *m_ptr;	/* pointer to request message */
-struct proc *p;
+int arch_do_vmctl(
+  register message *m_ptr,	/* pointer to request message */
+  struct proc *p
+)
 {
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_GET_PDBR:

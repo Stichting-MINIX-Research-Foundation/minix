@@ -1,0 +1,4 @@
+#!/bin/sh
+pid=`ps ax | grep fxp | grep usr.sbin | sed 's,^[ 	]*,,;s,[ 	].*,,`
+echo "pid = $pid"
+swifi -f /usr/build/drivers/fxp/fxp $pid 8 100 4

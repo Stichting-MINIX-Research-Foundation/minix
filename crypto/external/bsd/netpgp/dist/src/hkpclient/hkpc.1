@@ -1,0 +1,129 @@
+.\" $NetBSD: hkpc.1,v 1.3 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to
+.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt HKPC 1
+.Os
+.Sh NAME
+.Nm hkpc
+.Nd retrieve public key information via HKP
+.Sh SYNOPSIS
+.Nm
+.Op Fl f address-family
+.Op Fl h hostname
+.Op Fl p port
+.Cm [get|index|vindex]
+userid...
+.Sh DESCRIPTION
+The
+.Nm
+command retrieves public key information from the key server daemon
+using the HKP protocol.
+The
+.Xr hkpd 8
+is normally used to retrieve public key information.
+.Pp
+Three types of information can be retrieved from the server:
+.Bl -tag -width vindex
+.It get
+The public key, base64-encoded, corresponding to the given userid
+is returned.
+The userid can be a numeric value, a unique part of the human
+identifier, or left blank.
+The first matching key will be returned, in a format suitable for
+importing to a keyring via the
+.Xr netpgpkeys 1
+command.
+.It index
+the information returned from this command is the same as
+provided by the
+.Xr netpgpkeys 1
+command, using the
+.Dv --list-keys
+modifier.
+.It vindex
+the information returned from this command is the same as
+provided by the
+.Xr netpgpkeys 1
+command, using the
+.Dv --list-sigs
+modifier.
+.El
+.Pp
+For this utility to provide the correct results, an hkpd
+server must be listening using the correct protocol family,
+on the provided port on the appropriate server.
+The default port for the HKP server is
+.Dv 11371 ,
+whilst the hostname defaults to
+.Dv localhost .
+.Pp
+The
+.Dv netpgp
+suite of libraries and commands provides a convenient client in
+.Xr hkpd 1 .
+.Pp
+The information is sent to the server in the form of
+an HTTP
+.Dv GET
+command, and is returned as a JSON-encoded
+HKP packet.
+.Xr libmj 3
+is used to decode the JSON in the returned HKP packet.
+.Sh EXIT STATUS
+The
+.Nm
+utility will return 0 for success,
+or 1 for failure.
+Output will be printed on stdout.
+.Sh SEE ALSO
+.Xr hkpd 1 ,
+.Xr netpgpkeys 1 ,
+.Xr ssh 1 ,
+.\" .Xr libbz2 3 ,
+.Xr libmj 3 ,
+.Xr libnetpgp 3
+.Sh STANDARDS
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org .

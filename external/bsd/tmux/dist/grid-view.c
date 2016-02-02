@@ -1,4 +1,4 @@
-/* $Id: grid-view.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -52,28 +52,6 @@ grid_view_set_cell(
 	grid_set_cell(gd, grid_view_x(gd, px), grid_view_y(gd, py), gc);
 }
 
-/* Get UTF-8 for reading. */
-const struct grid_utf8 *
-grid_view_peek_utf8(struct grid *gd, u_int px, u_int py)
-{
-	return (grid_peek_utf8(gd, grid_view_x(gd, px), grid_view_y(gd, py)));
-}
-
-/* Get UTF-8 for writing. */
-struct grid_utf8 *
-grid_view_get_utf8(struct grid *gd, u_int px, u_int py)
-{
-	return (grid_get_utf8(gd, grid_view_x(gd, px), grid_view_y(gd, py)));
-}
-
-/* Set UTF-8. */
-void
-grid_view_set_utf8(
-    struct grid *gd, u_int px, u_int py, const struct grid_utf8 *gu)
-{
-	grid_set_utf8(gd, grid_view_x(gd, px), grid_view_y(gd, py), gu);
-}
-
 /* Clear into history. */
 void
 grid_view_clear_history(struct grid *gd)
@@ -87,15 +65,17 @@ grid_view_clear_history(struct grid *gd)
 	last = 0;
 	for (yy = 0; yy < gd->sy; yy++) {
 		gl = &gd->linedata[grid_view_y(gd, yy)];
-		if (gl->cellsize != 0 || gl->utf8size != 0)
+		if (gl->cellsize != 0)
 			last = yy + 1;
 	}
 	if (last == 0)
 		return;
 
 	/* Scroll the lines into the history. */
-	for (yy = 0; yy < last; yy++)
+	for (yy = 0; yy < last; yy++) {
+		grid_collect_history(gd);
 		grid_scroll_history(gd);
+	}
 }
 
 /* Clear area. */
@@ -254,5 +234,5 @@ grid_view_string_cells(struct grid *gd, u_int px, u_int py, u_int nx)
 	px = grid_view_x(gd, px);
 	py = grid_view_y(gd, py);
 
-	return (grid_string_cells(gd, px, py, nx));
+	return (grid_string_cells(gd, px, py, nx, NULL, 0, 0, 0));
 }

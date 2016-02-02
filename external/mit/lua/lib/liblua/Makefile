@@ -1,23 +1,24 @@
-# $NetBSD: Makefile,v 1.5 2013/09/11 09:59:52 joerg Exp $
+# $NetBSD: Makefile,v 1.8 2015/02/09 20:41:01 christos Exp $
 
 LIB=		lua
-SRCS=		lapi.c lauxlib.c lbaselib.c lcode.c ldblib.c ldebug.c ldo.c \
-		ldump.c lfunc.c lgc.c linit.c liolib.c llex.c lmathlib.c \
-		lmem.c loadlib.c lobject.c lopcodes.c loslib.c lparser.c \
-		lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c \
-		lundump.c lvm.c lzio.c
+LUA_CORE=	lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c lfunc.c lgc.c \
+		llex.c lmem.c lobject.c lopcodes.c lparser.c lstate.c \
+		lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
+LUA_LIB=	lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c \
+		lmathlib.c loslib.c lstrlib.c ltablib.c lutf8lib.c loadlib.c \
+		linit.c
+SRCS=		${LUA_CORE} ${LUA_LIB}
 
 .include <bsd.own.mk>
 
 INCS=		lauxlib.h lua.h lua.hpp luaconf.h lualib.h
 INCSDIR=	/usr/include
 
-CFLAGS+=	-DLUA_USE_POSIX -DLUA_USE_DLOPEN
+CPPFLAGS+=	-DLUA_USE_POSIX -DLUA_USE_DLOPEN -DLUA_C89_NUMBERS
 CWARNFLAGS.clang+=	-Wno-empty-body
 
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 
-.PATH:		${NETBSDSRCDIR}/external/mit/lua/dist/etc
 .PATH:		${NETBSDSRCDIR}/external/mit/lua/dist/src
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.13 2012/03/13 21:13:43 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.15 2015/02/24 17:56:20 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -29,11 +29,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,7 +72,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.13 2012/03/13 21:13:43 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.15 2015/02/24 17:56:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -251,7 +247,9 @@ res_nopt(res_state statp,
 	*cp++ = 0;				/*%< "." */
 	ns_put16(ns_t_opt, cp);			/*%< TYPE */
 	cp += INT16SZ;
-	ns_put16(anslen & 0xffff, cp);		/*%< CLASS = UDP payload size */
+	if (anslen > 0xffff)
+		anslen = 0xffff;
+	ns_put16(anslen, cp);			/*%< CLASS = UDP payload size */
 	cp += INT16SZ;
 	*cp++ = NOERROR;			/*%< extended RCODE */
 	*cp++ = 0;				/*%< EDNS version */

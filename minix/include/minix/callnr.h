@@ -13,7 +13,7 @@
 /* Message type 0 is traditionally reserved. */
 #define PM_EXIT			(PM_BASE + 1)
 #define PM_FORK			(PM_BASE + 2)
-#define PM_WAITPID		(PM_BASE + 3)
+#define PM_WAIT4		(PM_BASE + 3)
 #define PM_GETPID		(PM_BASE + 4)
 #define PM_SETUID		(PM_BASE + 5)
 #define PM_GETUID		(PM_BASE + 6)
@@ -35,7 +35,7 @@
 #define PM_SIGPENDING		(PM_BASE + 22)
 #define PM_SIGPROCMASK		(PM_BASE + 23)
 #define PM_SIGRETURN		(PM_BASE + 24)
-#define PM_SYSUNAME		(PM_BASE + 25)
+#define PM_SYSUNAME		(PM_BASE + 25)		/* obsolete */
 #define PM_GETPRIORITY		(PM_BASE + 26)
 #define PM_SETPRIORITY		(PM_BASE + 27)
 #define PM_GETTIMEOFDAY		(PM_BASE + 28)
@@ -50,7 +50,7 @@
 #define PM_REBOOT		(PM_BASE + 37)
 #define PM_SVRCTL		(PM_BASE + 38)
 #define PM_SPROF		(PM_BASE + 39)
-/* PM call number 40 is currently unused. */
+#define PM_PROCEVENTMASK	(PM_BASE + 40)
 #define PM_SRV_FORK		(PM_BASE + 41)
 #define PM_SRV_KILL		(PM_BASE + 42)
 #define PM_EXEC_NEW		(PM_BASE + 43)
@@ -111,7 +111,7 @@
 #define VFS_GETVFSSTAT		(VFS_BASE + 39)
 #define VFS_STATVFS1 	 	(VFS_BASE + 40)
 #define VFS_FSTATVFS1		(VFS_BASE + 41)
-#define VFS_GETRUSAGE		(VFS_BASE + 42)
+#define VFS_GETRUSAGE		(VFS_BASE + 42)		/* obsolete */
 #define VFS_SVRCTL		(VFS_BASE + 43)
 #define VFS_GCOV_FLUSH		(VFS_BASE + 44)
 #define VFS_MAPDRIVER		(VFS_BASE + 45)

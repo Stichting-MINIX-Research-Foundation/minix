@@ -140,8 +140,6 @@ static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 static void sef_cb_signal_handler(int signo);
 
-extern struct minix_kerninfo *_minix_kerninfo;
-
 /*===========================================================================*
  *				tty_task				     *
  *===========================================================================*/
@@ -296,9 +294,7 @@ static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
-
-  /* No live update support for now. */
+  sef_setcb_init_restart(SEF_CB_INIT_RESTART_STATEFUL);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -399,8 +395,7 @@ do_new_kmess(void)
 	int next, bytes, copy, restore = 0;
 	tty_t *tp, rtp;
 
-	assert(_minix_kerninfo);
-	kmess_ptr = _minix_kerninfo->kmessages;
+	kmess_ptr = get_minix_kerninfo()->kmessages;
 
 	/* The kernel buffer is circular; print only the new part. Determine
 	 * how many new bytes there are with the help of current and

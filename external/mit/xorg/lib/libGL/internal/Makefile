@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2010/05/22 08:52:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/12/18 06:24:30 mrg Exp $
 
 .include <bsd.own.mk>
 
 .PATH:		${X11SRCDIR.MesaLib}/include/GL/internal
 
-INCS=	dri_interface.h sarea.h
+INCS=	dri_interface.h
 INCSDIR=${X11INCDIR}/GL/internal
 
 NOOBJ=	# defined

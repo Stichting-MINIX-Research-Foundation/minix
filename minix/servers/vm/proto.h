@@ -47,7 +47,10 @@ int vm_isokendpt(endpoint_t ep, int *proc);
 int get_stack_ptr(int proc_nr, vir_bytes *sp);
 int do_info(message *);
 int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp);
-int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp);
+int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+    int sys_upd_flags);
+int map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp);
+void adjust_proc_refs(void);
 int do_getrusage(message *m);
 
 /* exit.c */
@@ -116,6 +119,7 @@ void vm_pagelock(void *vir, int lockflag);
 int vm_addrok(void *vir, int write);
 int get_vm_self_pages(void);
 int pt_writable(struct vmproc *vmp, vir_bytes v);
+void pt_assert(pt_t *pt);
 
 #if SANITYCHECKS
 void pt_sanitycheck(pt_t *pt, const char *file, int line);
@@ -149,8 +153,8 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *vr,
 int map_unmap_range(struct vmproc *vmp, vir_bytes, vir_bytes);
 int map_free_proc(struct vmproc *vmp);
 int map_proc_copy(struct vmproc *dst, struct vmproc *src);
-int map_proc_copy_from(struct vmproc *dst, struct vmproc *src, struct
-	vir_region *start_src_vr);
+int map_proc_copy_range(struct vmproc *dst, struct vmproc *src, struct
+	vir_region *start_src_vr, struct vir_region *end_src_vr);
 struct vir_region *map_lookup(struct vmproc *vmp, vir_bytes addr,
 	struct phys_region **pr);
 int map_pf(struct vmproc *vmp, struct vir_region *region, vir_bytes
@@ -172,10 +176,7 @@ void physblock_set(struct vir_region *region, vir_bytes offset,
 int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
         struct phys_region *pr);
 
-struct vir_region * map_region_lookup_tag(struct vmproc *vmp, u32_t
-	tag);
-void map_region_set_tag(struct vir_region *vr, u32_t tag);
-u32_t map_region_get_tag(struct vir_region *vr);
+struct vir_region* map_region_lookup_type(struct vmproc *vmp, u32_t flags);
 int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r);
 int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt);
 unsigned int physregions(struct vir_region *vr);
@@ -192,14 +193,9 @@ void map_sanitycheck(const char *file, int line);
 
 /* rs.c */
 int do_rs_set_priv(message *m);
+int do_rs_prepare(message *m);
 int do_rs_update(message *m);
 int do_rs_memctl(message *m);
-
-/* queryexit.c */
-int do_query_exit(message *m);
-int do_watch_exit(message *m);
-int do_notify_sig(message *m);
-void init_query_exit(void);
 
 /* pb.c */
 struct phys_block *pb_new(phys_bytes phys);

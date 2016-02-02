@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.30 2007/07/20 12:41:07 yamt Exp $	*/
+/*	$NetBSD: execvp.c,v 1.31 2014/09/26 19:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.30 2007/07/20 12:41:07 yamt Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.31 2014/09/26 19:28:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,12 +51,11 @@ __RCSID("$NetBSD: execvp.c,v 1.30 2007/07/20 12:41:07 yamt Exp $");
 
 #ifdef __weak_alias
 __weak_alias(execvp,_execvp)
+__weak_alias(execvpe,_execvpe)
 #endif
 
-extern char **environ;
-
 int
-execvp(const char *name, char * const *argv)
+execvpe(const char *name, char * const *argv, char * const * envp)
 {
 	const char **memp;
 	int cnt;
@@ -116,7 +115,7 @@ execvp(const char *name, char * const *argv)
 		memcpy(buf + lp + 1, name, ln);
 		buf[lp + ln + 1] = '\0';
 
-retry:		(void)execve(bp, argv, environ);
+retry:		(void)execve(bp, argv, envp);
 		switch (errno) {
 		case EACCES:
 			eacces = 1;
@@ -136,7 +135,7 @@ retry:		(void)execve(bp, argv, environ);
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
 			(void)memcpy(&memp[2], &argv[1], cnt * sizeof(*memp));
-			(void)execve(_PATH_BSHELL, __UNCONST(memp), environ);
+			(void)execve(_PATH_BSHELL, __UNCONST(memp), envp);
 			goto done;
 		case ETXTBSY:
 			if (etxtbsy < 3)
@@ -152,4 +151,12 @@ retry:		(void)execve(bp, argv, environ);
 		errno = ENOENT;
 done:
 	return (-1);
+}
+
+extern char **environ;
+
+int
+execvp(const char *name, char * const *argv)
+{
+	return execvpe(name, argv, environ);
 }

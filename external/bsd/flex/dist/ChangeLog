@@ -1,3 +1,342 @@
+2014-02-16  Translation Project <coordinator@translationproject.org>
+
+	* po/ru.po: update ru translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated da translation in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/da.po: update da translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated es translation in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/es.po: update es translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated ko translation in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/ko.po: update ko translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated ro translation in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/ro.po: update ro translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated ru translation in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/ru.po: update ru translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated sv translation in news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/sv.po: update sv translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated tr translation in news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/tr.po: update tr translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated zh_CN in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/zh_CN.po: update zh_CN translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS, po/LINGUAS, po/zh_TW.po, po/zh_tw.po: rename zh_tw
+	translation to its proper zh_TW name
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention updated nl, vi translations in release news
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/vi.po: update vi translation from the translation project
+
+2014-02-14  Translation Project <coordinator@translationproject.org>
+
+	* po/nl.po: update nl translation from the translation project
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* TODO: remove some unneeded entries from the todo list
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* doc/Makefile.am: list more generated files in CLEANFILES
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* doc/flex.xml: remove unmaintained xml documentation
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* configure.ac: bump AM_GNU_GETTEXT_VERSION to 0.18.1
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* README: list new location of flex git repo
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* po/.gitignore: git ignore generated files from english quoting
+	variant translations
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: name english quoting variants correctly
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* Makefile.am, configure.ac, tools/Makefile.am: removed tools/
+	subdirectory from distribution Since it is not possible to rebuild the ChangeLog file without being
+	in a git working directory of flex, distributing the tools directory
+	is misleading. In particular, git2cl will always fail.
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: removed unneeded blank line from translation list
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: added en quoting variants to translation list
+
+2014-02-11  Will Estes <westes575@gmail.com>
+
+	* configure.ac: use gnu automake option instead of gnits option
+
+2014-02-11  Will Estes <westes575@gmail.com>
+
+	* README-alpha: remove README_alpha file since it is no longer
+	needed
+
+2014-02-10  Will Estes <westes575@gmail.com>
+
+	* configure.ac: increment version to 2.5.38
+
+2013-11-27  Will Estes <westes575@gmail.com>
+
+	* NEWS: flesh out internationalization section of NEWS file; mention
+	pt_BR translation
+
+2013-11-27  Translation Project <coordinator@translationproject.org>
+
+	* po/pt_BR.po: update pt_BR translation from the translation project
+
+2013-10-31  Will Estes <westes575@gmail.com>
+
+	* NEWS: begin listing 2.5.38 version in NEWS; list new sr
+	translation
+
+2013-10-31  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: list new sr translation in list of translations
+
+2013-10-31  Will Estes <westes575@gmail.com>
+
+	* po/sr.po: add sr translation from the translation project
+
+2013-07-02  Till Varoquaux <till.varoquaux@gmail.com>
+
+	* configure.ac, flex.skl, nfa.c, tests/Makefile.am,
+	tests/test-lineno-trailing/.gitignore,
+	tests/test-lineno-trailing/Makefile.am,
+	tests/test-lineno-trailing/scanner.l,
+	tests/test-lineno-trailing/test.input: Adjust yylineno properly when
+	rewinding trailing contexts.
+
+2013-05-28  Will Estes <westes575@gmail.com>
+
+	* Makefile.am: Remove incorrect / in install-exec-hook target
+
+2013-02-16  Translation Project <coordinators@translationproject.org>
+
+	* po/LINGUAS, po/zh_tw.po: add zh_tw translation from the
+	translation project
+
+2012-12-06  Christoph Junghans <ottxor@gentoo.org>
+
+	* Makefile.am, configure.ac: add version information to shared
+	library Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-12-04  Christoph Junghans <ottxor@gentoo.org>
+
+	* .gitignore, Makefile.am, configure.ac, lib/Makefile.am: Build
+	libfl and libcompat using libtool; resolves #3586814 Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-12-04  Translation Project <coordinator@translationproject.org>
+
+	* po/ca.po: update ca translation
+
+2012-10-31  Hugh Sasse <hgs@dmu.ac.uk>
+
+	* tests/test-extended/Makefile.am, tests/test-quotes/Makefile.am: 
+	use cmp instead of diff in some tests for portability reasons Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-10-31  Dennis Clarke <dclarke@blastwave.org>
+
+	* tests/TEMPLATE/Makefile.am, tests/test-alloc-extra/Makefile.am,
+	tests/test-array-nr/Makefile.am, tests/test-array-r/Makefile.am,
+	tests/test-basic-nr/Makefile.am, tests/test-basic-r/Makefile.am,
+	tests/test-bison-nr/Makefile.am,
+	tests/test-bison-yylloc/Makefile.am,
+	tests/test-bison-yylval/Makefile.am,
+	tests/test-c++-basic/Makefile.am,
+	tests/test-c++-multiple-scanners/Makefile.am,
+	tests/test-c++-yywrap/Makefile.am, tests/test-c-cpp-nr/Makefile.am,
+	tests/test-c-cpp-r/Makefile.am, tests/test-ccl/Makefile.am,
+	tests/test-debug-nr/Makefile.am, tests/test-debug-r/Makefile.am,
+	tests/test-extended/Makefile.am, tests/test-header-nr/Makefile.am,
+	tests/test-header-r/Makefile.am,
+	tests/test-include-by-buffer/Makefile.am,
+	tests/test-include-by-push/Makefile.am,
+	tests/test-include-by-reentrant/Makefile.am,
+	tests/test-linedir-r/Makefile.am, tests/test-lineno-nr/Makefile.am,
+	tests/test-lineno-r/Makefile.am, tests/test-mem-nr/Makefile.am,
+	tests/test-mem-r/Makefile.am,
+	tests/test-multiple-scanners-nr/Makefile.am,
+	tests/test-multiple-scanners-r/Makefile.am,
+	tests/test-noansi-nr/Makefile.am, tests/test-noansi-r/Makefile.am,
+	tests/test-posix/Makefile.am,
+	tests/test-posixly-correct/Makefile.am,
+	tests/test-prefix-nr/Makefile.am, tests/test-prefix-r/Makefile.am,
+	tests/test-pthread/Makefile.am, tests/test-quotes/Makefile.am,
+	tests/test-reject/Makefile.am, tests/test-rescan-nr/Makefile.am,
+	tests/test-rescan-r/Makefile.am, tests/test-string-nr/Makefile.am,
+	tests/test-string-r/Makefile.am, tests/test-table-opts/Makefile.am,
+	tests/test-top/Makefile.am, tests/test-yyextra/Makefile.am: add
+	CFLAGS and CXXFLAGS options as appropriate to testsuite Makefile.am
+	files Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-10-25  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: add hr to list of translations
+
+2012-10-25  Translation Project <coordinator@translationproject.org>
+
+	* po/hr.po: add hr translation from the translation project
+
+2012-10-25  Translation Project <coordinator@translationproject.org>
+
+	* po/fr.po: new fr translation project from the translation project
+
+2012-09-08  Will Estes <westes575@gmail.com>
+
+	* po/LINGUAS: update languages list to include esperanto translation
+
+2012-09-08  Translation Project <coordinator@translationproject.org>
+
+	* po/eo.po: add eo translation from the translation project
+
+2012-08-26  Will Estes <westes575@gmail.com>
+
+	* configure.ac: add dist-xz to automake options; resolves #3561837
+
+2012-08-26  Will Estes <westes575@gmail.com>
+
+	* autogen.sh, configure.ac: require gettext 0.18; force autoreconf
+	in autogen.sh; resolves #3561759 Autoconf had trouble finding the shared libraries for gettext. Using
+	gettext 0.18 fixes that.  When updating the gettext version number, autoreconf could fail to
+	update files, since autopoint would assume the gettext-related files
+	had been locally modified. Passing --force prevents that from
+	happening.
+
+2012-08-15  Will Estes <westes575@gmail.com>
+
+	* Makefile.am: remove README.cvs from dist_doc_DATA in Makefile.am
+
+2012-08-13  Will Estes <westes575@gmail.com>
+
+	* : commit 9256a268e2a1000cb410766e95487912a7d66d61 Author: Will
+	Estes <westes575@gmail.com> Date:   Mon Aug 13 16:23:35 2012 -0400
+
+2012-08-08  Will Estes <westes575@gmail.com>
+
+	* README, README.cvs: append README.cvs contents to README
+
+2012-08-08  Will Estes <westes575@gmail.com>
+
+	* gen.c: fix m4 error when useecs and nultrans are true; resolves
+	#1816878
+
+2012-08-08  Robert Minsk <rminsk@users.sourceforge.net>
+
+	* flex.skl: put user code after yyguts init; resolves #1744516 Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-08-08  Robert Minsk <rminsk@users.sourceforge.net>
+
+	* flex.skl, main.c: do not output yy_nxt to header with %option
+	full; resolves #1739922 Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-08-07  Will Estes <westes575@gmail.com>
+
+	* main.c: let flex decide if yymore and  reject are needed in lex
+	compatible mode This resolves bug #3510440.
+
+2012-08-06  Translation Project <coordinator@translationproject.org>
+
+	* po/vi.po: new vi translation from the translation project
+
+2012-08-06  Will Estes <westes575@gmail.com>
+
+	* .gitignore: add more patterns to .gitignore Undersome circumstances, the build process will generate conf.in~,
+	which we want to ignore. Also, some patch files will apply but not
+	cleanly and *.orig and *.rej files are generated. We want to ignore
+	them as well.
+
+2012-08-06  Will Estes <westes575@gmail.com>
+
+	* configure.ac, configure.in: rename configure.in to configure.ac to
+	prep for upcoming automake changes
+
+2012-08-06  Elias Pipping <pipping@users.sourceforge.net>
+
+	* tests/test-bison-yylloc/main.c, tests/test-bison-yylloc/parser.y,
+	tests/test-bison-yylval/main.c, tests/test-bison-yylval/parser.y: 
+	Fix two tests to pass under bison 2.6 Given that bison is moving forward with the %parse-param instead of
+	YYPARSE_PARAM syntax, it makes sense to switch over to using the new
+	style declaration. In particular, this means that flex scanners that
+	use bison features will now require bison 2.6 or higher.  Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-08-04  Will Estes <westes575@gmail.com>
+
+	* po/nl.po: new nl translation from the translation project
+
+2012-08-04  Mike Frysinger <vapier@gentoo.org>
+
+	* flexdef.h: add prototype for lerrsf_fatal to flexdef.h Signed-off-by: Will Estes <westes575@gmail.com>
+
+2012-08-04  nomis52 <nomis52@users.sourceforge.net>
+
+	* flex.skl, gen.c: Change variable types to silence compiler
+	warnings; resolves #3552806 Signed-off-by: Will Estes <westes575@gmail.com>
+
 2012-08-03  Will Estes <westes575@gmail.com>
 
 	* NEWS: update NEWS to reflect changes in 2.5.37

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.8 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs.h,v 1.9 2015/01/11 17:29:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -570,18 +570,6 @@ int chfs_read_data(struct chfs_mount*, struct vnode *,
 
 /* chfs_erase.c */
 int chfs_remap_leb(struct chfs_mount *);
-
-/* chfs_ihash.c */
-void chfs_ihashinit(void);
-void chfs_ihashreinit(void);
-void chfs_ihashdone(void);
-struct vnode *chfs_ihashlookup(dev_t, ino_t);
-struct vnode *chfs_ihashget(dev_t, ino_t, int);
-void chfs_ihashins(struct chfs_inode *);
-void chfs_ihashrem(struct chfs_inode *);
-
-extern kmutex_t	chfs_ihash_lock;
-extern kmutex_t	chfs_hashlock;
 
 /* chfs_gc.c */
 void chfs_gc_trigger(struct chfs_mount *);

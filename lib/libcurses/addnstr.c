@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.13 2012/09/28 06:07:05 blymn Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.14 2014/07/13 01:58:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.13 2012/09/28 06:07:05 blymn Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.14 2014/07/13 01:58:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -147,16 +147,11 @@ waddnstr(WINDOW *win, const char *s, int n)
 	 * ncurses: if (n >= 0) then "at most n", else "len = strlen(s)"
 	 * XCURSES: if (n != -1) then "at most n", else "len = strlen(s)"
 	 * 
-	 * Also SUSv2 says these functions do not wrap nor change the
-	 * cursor position.
 	 */
 	if (n >= 0)
 		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = strlen(s);
 	
-	if (len > (win->maxx - win->curx))
-		len = win->maxx - win->curx;
-
 	return(waddbytes(win, s, (int) len));
 }

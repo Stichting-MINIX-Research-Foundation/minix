@@ -1,0 +1,11 @@
+diff -rNU3 dist.orig/gas/config/tc-i386.c dist/gas/config/tc-i386.c
+--- dist.orig/gas/config/tc-i386.c	2012-11-09 14:32:04.000000000 +0100
++++ dist/gas/config/tc-i386.c	2015-10-17 16:40:27.000000000 +0200
+@@ -317,6 +317,7 @@
+ 	 && !defined (TE_NETWARE)			\
+ 	 && !defined (TE_FreeBSD)			\
+ 	 && !defined (TE_DragonFly)			\
++	 && !defined (TE_MINIX)				\
+ 	 && !defined (TE_NetBSD)))
+ /* This array holds the chars that always start a comment.  If the
+    pre-processor is disabled, these aren't very useful.  The option

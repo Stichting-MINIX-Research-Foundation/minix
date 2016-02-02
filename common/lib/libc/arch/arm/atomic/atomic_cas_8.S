@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_8.S,v 1.6 2013/11/08 22:42:52 matt Exp $ */
+/* $NetBSD: atomic_cas_8.S,v 1.7 2014/03/04 16:15:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,6 +60,6 @@ ENTRY_NP(_atomic_cas_8)
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_char,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
-STRONG_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
+CRT_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
 
 #endif /* _ARM_ARCH_6 */

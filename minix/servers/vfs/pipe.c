@@ -324,7 +324,7 @@ void wait_for(endpoint_t who)
 /*===========================================================================*
  *				pipe_suspend				     *
  *===========================================================================*/
-void pipe_suspend(struct filp * __unused filp, vir_bytes buf, size_t size)
+void pipe_suspend(struct filp * filp __unused, vir_bytes buf, size_t size)
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
@@ -483,7 +483,7 @@ void revive(endpoint_t proc_e, int returned)
 		 * it again now that I/O is done.
 		 */
 		if (GRANT_VALID(rfp->fp_grant)) {
-			if(cpf_revoke(rfp->fp_grant)) {
+			if(cpf_revoke(rfp->fp_grant) == -1) {
 				panic("VFS: revoke failed for grant: %d",
 					rfp->fp_grant);
 			}

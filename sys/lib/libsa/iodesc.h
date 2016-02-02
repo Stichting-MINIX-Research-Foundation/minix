@@ -1,4 +1,4 @@
-/*	$NetBSD: iodesc.h,v 1.9 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.10 2014/03/29 14:30:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -41,6 +41,8 @@
 #ifndef __SYS_LIBNETBOOT_IODESC_H
 #define __SYS_LIBNETBOOT_IODESC_H
 
+#include <net/if_ether.h>		/* for ETHER_ADDR_LEN */
+
 #ifdef _STANDALONE
 /*
  * libsa code uses the following types to avoid 64 bit time_t:
@@ -66,7 +68,7 @@ struct iodesc {
 	u_short	destport;		/* dest. port, net order */
 	u_short	myport;			/* local port, net order */
 	u_long	xid;			/* transaction identification */
-	u_char	myea[6];		/* my ethernet address */
+	u_char	myea[ETHER_ADDR_LEN];	/* my ethernet address */
 	void	*io_netif;
 };
 

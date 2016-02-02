@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
+/*	$NetBSD: evrpc.c,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evrpc.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
+__RCSID("$NetBSD: evrpc.c,v 1.3 2015/01/29 07:26:02 spz Exp $");
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -96,16 +96,16 @@ evrpc_free(struct evrpc_base *base)
 {
 	struct evrpc *rpc;
 	struct evrpc_hook *hook;
-	struct evrpc_hook_ctx *paused;
+	struct evrpc_hook_ctx *pause;
 	int r;
 
 	while ((rpc = TAILQ_FIRST(&base->registered_rpcs)) != NULL) {
 		r = evrpc_unregister_rpc(base, rpc->uri);
 		EVUTIL_ASSERT(r == 0);
 	}
-	while ((paused = TAILQ_FIRST(&base->paused_requests)) != NULL) {
-		TAILQ_REMOVE(&base->paused_requests, paused, next);
-		mm_free(paused);
+	while ((pause = TAILQ_FIRST(&base->paused_requests)) != NULL) {
+		TAILQ_REMOVE(&base->paused_requests, pause, next);
+		mm_free(pause);
 	}
 	while ((hook = TAILQ_FIRST(&base->input_hooks)) != NULL) {
 		r = evrpc_remove_hook(base, EVRPC_INPUT, hook);
@@ -544,7 +544,7 @@ evrpc_pool_free(struct evrpc_pool *pool)
 {
 	struct evhttp_connection *connection;
 	struct evrpc_request_wrapper *request;
-	struct evrpc_hook_ctx *paused;
+	struct evrpc_hook_ctx *pause;
 	struct evrpc_hook *hook;
 	int r;
 
@@ -553,9 +553,9 @@ evrpc_pool_free(struct evrpc_pool *pool)
 		evrpc_request_wrapper_free(request);
 	}
 
-	while ((paused = TAILQ_FIRST(&pool->paused_requests)) != NULL) {
-		TAILQ_REMOVE(&pool->paused_requests, paused, next);
-		mm_free(paused);
+	while ((pause = TAILQ_FIRST(&pool->paused_requests)) != NULL) {
+		TAILQ_REMOVE(&pool->paused_requests, pause, next);
+		mm_free(pause);
 	}
 
 	while ((connection = TAILQ_FIRST(&pool->connections)) != NULL) {
@@ -769,14 +769,14 @@ evrpc_pause_request(void *vbase, void *ctx,
     void (*cb)(void *, enum EVRPC_HOOK_RESULT))
 {
 	struct _evrpc_hooks *base = vbase;
-	struct evrpc_hook_ctx *paused = mm_malloc(sizeof(*paused));
-	if (paused == NULL)
+	struct evrpc_hook_ctx *pause = mm_malloc(sizeof(*pause));
+	if (pause == NULL)
 		return (-1);
 
-	paused->ctx = ctx;
-	paused->cb = cb;
+	pause->ctx = ctx;
+	pause->cb = cb;
 
-	TAILQ_INSERT_TAIL(&base->pause_requests, paused, next);
+	TAILQ_INSERT_TAIL(&base->pause_requests, pause, next);
 	return (0);
 }
 
@@ -785,19 +785,19 @@ evrpc_resume_request(void *vbase, void *ctx, enum EVRPC_HOOK_RESULT res)
 {
 	struct _evrpc_hooks *base = vbase;
 	struct evrpc_pause_list *head = &base->pause_requests;
-	struct evrpc_hook_ctx *paused;
+	struct evrpc_hook_ctx *pause;
 
-	TAILQ_FOREACH(paused, head, next) {
-		if (paused->ctx == ctx)
+	TAILQ_FOREACH(pause, head, next) {
+		if (pause->ctx == ctx)
 			break;
 	}
 
-	if (paused == NULL)
+	if (pause == NULL)
 		return (-1);
 
-	(*paused->cb)(paused->ctx, res);
-	TAILQ_REMOVE(head, paused, next);
-	mm_free(paused);
+	(*pause->cb)(pause->ctx, res);
+	TAILQ_REMOVE(head, pause, next);
+	mm_free(pause);
 	return (0);
 }
 

@@ -19,18 +19,20 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	vectorio.c shutdown.c sigaction.c sigpending.c sigreturn.c sigsuspend.c\
 	sigprocmask.c socket.c socketpair.c stat.c statvfs.c svrctl.c \
 	symlink.c \
-	sync.c syscall.c sysuname.c truncate.c umask.c unlink.c write.c \
+	sync.c syscall.c truncate.c umask.c unlink.c \
+	wait4.c write.c \
 	utimensat.c utimes.c futimes.c lutimes.c futimens.c \
 	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c \
-	getrusage.c setrlimit.c setpgid.c
+	getrusage.c setrlimit.c setpgid.c __sysctl.c
 
 # Minix specific syscalls / utils.
-SRCS+= sprofile.c stack_utils.c _mcontext.c
+SRCS+= kernel_utils.c sprofile.c stack_utils.c _mcontext.c
 
-# Emulation for missing lchown/lchmod
-OBJS+= lchown.o lchmod.o
-lchown.o lchown.pico lchown.bc: ${NETBSDSRCDIR}/tools/compat/lchown.c
+# Emulation for missing lchown/lchmod/lchflags
+OBJS+= lchflags.o lchmod.o lchown.o
+lchflags.o lchflags.pico lchflags.bc: ${NETBSDSRCDIR}/tools/compat/lchflags.c
 lchmod.o lchmod.pico lchmod.bc: ${NETBSDSRCDIR}/tools/compat/lchmod.c
+lchown.o lchown.pico lchown.bc: ${NETBSDSRCDIR}/tools/compat/lchown.c
 
 .include "${NETBSDSRCDIR}/minix/lib/libc/arch/${ARCHSUBDIR}/sys/Makefile.inc"
 .include "${NETBSDSRCDIR}/minix/lib/libc/arch/${ARCHSUBDIR}/Makefile.inc"

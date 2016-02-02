@@ -7,7 +7,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.4 2009/07/20 15:21:00 christos Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.5 2014/03/22 19:16:34 jakllsch Exp $")
 #endif
 
 ENTRY(ffs)
@@ -18,3 +18,4 @@ ENTRY(ffs)
 
 1:	xorl	%eax,%eax		/* clear result */
 	ret
+END(ffs)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/17 23:43:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/03/17 07:25:34 mrg Exp $
 
 SUBDIR=	libxcb .WAIT
 
@@ -7,7 +7,9 @@ SUBDIR+= \
 	damage \
 	dpms \
 	dri2 \
+	dri3 \
 	glx \
+	present \
 	randr \
 	record \
 	render \
@@ -20,6 +22,7 @@ SUBDIR+= \
 	xf86dri \
 	xfixes \
 	xinerama \
+	xkb \
 	xtest \
 	xv \
 	xvmc \

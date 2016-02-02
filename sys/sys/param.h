@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.437 2013/11/25 03:03:41 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.486 2015/08/29 14:07:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,10 @@
 #ifndef _SYS_PARAM_H_
 #define	_SYS_PARAM_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
+
 /*
  * Historic BSD #defines -- probably will remain untouched for all time.
  */
@@ -63,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	699002800	/* NetBSD 6.99.28 */
+#define	__NetBSD_Version__	799002100	/* NetBSD 7.99.21 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -129,6 +133,10 @@
 #error MAXUPRC less than CHILD_MAX.  See options(4) for details.
 #endif /* (MAXUPRC - 0) < CHILD_MAX */
 #endif /* !defined(MAXUPRC) */
+
+/* Macros for min/max. */
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
@@ -370,12 +378,26 @@
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define	rounddown(x,y)	(((x)/(y))*(y))
-#define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
-#define	powerof2(x)	((((x)-1)&(x))==0)
 
-/* Macros for min/max. */
-#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
-#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
+/*
+ * Rounding to powers of two.  The naive definitions of roundup2 and
+ * rounddown2,
+ *
+ *	#define	roundup2(x,m)	(((x) + ((m) - 1)) & ~((m) - 1))
+ *	#define	rounddown2(x,m)	((x) & ~((m) - 1)),
+ *
+ * exhibit a quirk of integer arithmetic in C because the complement
+ * happens in the type of m, not in the type of x.  So if unsigned int
+ * is 32-bit, and m is an unsigned int while x is a uint64_t, then
+ * roundup2 and rounddown2 would have the unintended effect of clearing
+ * the upper 32 bits of the result(!).  These definitions avoid the
+ * pitfalls of C arithmetic depending on the types of x and m, and
+ * additionally avoid multiply evaluating their arguments.
+ */
+#define	roundup2(x,m)	((((x) - 1) | ((m) - 1)) + 1)
+#define	rounddown2(x,m)	((x) & ~((__typeof__(x))((m) - 1)))
+
+#define	powerof2(x)	((((x)-1)&(x))==0)
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.

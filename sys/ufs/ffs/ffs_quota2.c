@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp $ */
+/* $NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,14 +26,13 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/file.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kauth.h>
@@ -44,13 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp $")
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ffs/fs.h>
 
-
 int
 ffs_quota2_mount(struct mount *mp)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int error = 0;
+	int error;
 	struct vnode *vp;
 	struct lwp *l = curlwp;
 
@@ -61,26 +59,24 @@ ffs_quota2_mount(struct mount *mp)
 	ump->umq2_bsize = fs->fs_bsize;
 	ump->umq2_bmask = fs->fs_qbmask;
 	if (fs->fs_quota_magic != Q2_HEAD_MAGIC) {
-		printf("%s: Invalid quota magic number\n",
+		printf("%s: invalid quota magic number\n",
 		    mp->mnt_stat.f_mntonname);
 		return EINVAL;
 	}
-        if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA)) &&
-            fs->fs_quotafile[USRQUOTA] == 0) {
-                printf("%s: no user quota inode\n",
+	if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA)) &&
+	    fs->fs_quotafile[USRQUOTA] == 0) {
+		printf("%s: no user quota inode\n",
 		    mp->mnt_stat.f_mntonname); 
-                error = EINVAL;
-        }
-        if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA)) &&
-            fs->fs_quotafile[GRPQUOTA] == 0) {
-                printf("%s: no group quota inode\n",
+		return EINVAL;
+	}
+	if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA)) &&
+	    fs->fs_quotafile[GRPQUOTA] == 0) {
+		printf("%s: no group quota inode\n",
 		    mp->mnt_stat.f_mntonname);
-                error = EINVAL;
-        }
-	if (error)
-		return error;
+		return EINVAL;
+	}
 
-        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA) &&
+	if (fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA) &&
 	    ump->um_quotas[USRQUOTA] == NULLVP) {
 		error = VFS_VGET(mp, fs->fs_quotafile[USRQUOTA], &vp);
 		if (error) {
@@ -95,7 +91,7 @@ ffs_quota2_mount(struct mount *mp)
 		mutex_exit(vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
-        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA) &&
+	if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA) &&
 	    ump->um_quotas[GRPQUOTA] == NULLVP) {
 		error = VFS_VGET(mp, fs->fs_quotafile[GRPQUOTA], &vp);
 		if (error) {
@@ -113,6 +109,7 @@ ffs_quota2_mount(struct mount *mp)
 		mutex_exit(vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
+
 	mp->mnt_flag |= MNT_QUOTA;
 	return 0;
 }

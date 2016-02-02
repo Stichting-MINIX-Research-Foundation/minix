@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.9 2013/03/14 07:10:07 jmmv Exp $
+# $NetBSD: Makefile,v 1.12 2014/03/02 22:50:13 jmmv Exp $
 
 .include <bsd.init.mk>
 
 .PATH:		${SRCDIR}/atf-sh
-.PATH:		${TOPDIR}/lib/libatf-c  # For bconfig.h.
+.PATH:		${TOPDIR}
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-sh
@@ -12,9 +12,6 @@ MAN=		atf-sh.1 atf-sh-api.3
 
 LDADD+=		-latf-c++ -latf-c
 DPADD+=		${LIBATF_CXX} ${LIBATF_C}
-
-CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-I${SRCDIR}
 
 WARNS?=		2
 
@@ -28,8 +25,8 @@ FILES+=			atf-sh.pc
 FILESDIR_atf-sh.pc=	/usr/lib/pkgconfig
 
 realall: atf-sh.pc
-atf-sh.pc: Makefile atf-sh.pc.in bconfig.h
-	${TOOL_SED} -e 's,__ATF_VERSION__,${ATF_VERSION},g' \
+atf-sh.pc: Makefile atf-sh.pc.in atf-version.txt
+	${TOOL_SED} -e "s,__ATF_VERSION__,$$(cat atf-version.txt),g" \
 	    -e 's,__EXEC_PREFIX__,/usr,g' \
 	    <${SRCDIR}/atf-sh/atf-sh.pc.in >atf-sh.pc
 CLEANFILES+=	atf-sh.pc

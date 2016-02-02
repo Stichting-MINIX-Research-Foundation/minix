@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: wordprocessors,v 1.17 2013/02/06 14:18:52 christos Exp $
+# $File: wordprocessors,v 1.18 2013/06/03 19:07:29 christos Exp $
 # wordprocessors:  file(1) magic fo word processors.
 #
 ####### PWP file format used on Smith Corona Personal Word Processors:
@@ -155,6 +155,11 @@
 # From: Jamie Thompson <debian-bugs@jamie-thompson.co.uk>
 0	string/w	\<map\ version	Freemind document
 !:mime	application/x-freemind
+
+# Type: Freeplane mindmap documents
+# From: Felix Natter <fnatter@gmx.net>
+0       string/w        \<map\ version="freeplane  Freeplane document
+!:mime  application/x-freeplane
 
 # Type:        Scribus
 # From:        Werner Fink <werner@suse.de>

@@ -1,4 +1,5 @@
-/*	$NetBSD: bufferevent.h,v 1.1.1.1 2013/04/11 16:43:34 christos Exp $	*/
+/*	$NetBSD: bufferevent.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
+/*	$NetBSD: bufferevent.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -45,10 +46,10 @@
   with bufferevent_enable() and bufferevent_disable().
 
   When reading is enabled, the bufferevent will try to read from the
-  file descriptor onto its input buffer, and and call the read callback.
+  file descriptor onto its input buffer, and call the read callback.
   When writing is enabled, the bufferevent will try to write data onto its
-  file descriptor when writing is enabled, and call the write callback
-  when the output buffer is sufficiently drained.
+  file descriptor when the output buffer has enough data, and call the write
+  callback when the output buffer is sufficiently drained.
 
   Bufferevents come in several flavors, including:
 

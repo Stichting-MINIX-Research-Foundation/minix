@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.26 2006/03/17 14:37:14 rumble Exp $	*/
+/*	$NetBSD: buf.c,v 1.27 2014/03/23 05:06:42 dholland Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.26 2006/03/17 14:37:14 rumble Exp $");
+__RCSID("$NetBSD: buf.c,v 1.27 2014/03/23 05:06:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ get_sbuf_line(line_t *lp)
 		sfseek = lp->seek;
 		if (fseek(sfp, sfseek, SEEK_SET) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
-			sprintf(errmsg, "cannot seek temp file");
+			seterrmsg("cannot seek temp file");
 			return NULL;
 		}
 	}
@@ -78,7 +78,7 @@ get_sbuf_line(line_t *lp)
 	REALLOC(sfbuf, sfbufsz, len + 1, NULL);
 	if ((ct = fread(sfbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
 		fprintf(stderr, "%s\n", strerror(errno));
-		sprintf(errmsg, "cannot read temp file");
+		seterrmsg("cannot read temp file");
 		return NULL;
 	}
 	sfseek += len;				/* update file position */
@@ -98,14 +98,14 @@ put_sbuf_line(char *cs)
 
 	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
 		fprintf(stderr, "%s\n", strerror(errno));
-		sprintf(errmsg, "out of memory");
+		seterrmsg("out of memory");
 		return NULL;
 	}
 	/* assert: cs is '\n' terminated */
 	for (s = cs; *s != '\n'; s++)
 		;
 	if (s - cs >= LINECHARS) {
-		sprintf(errmsg, "line too long");
+		seterrmsg("line too long");
 		free(lp);
 		return NULL;
 	}
@@ -114,7 +114,7 @@ put_sbuf_line(char *cs)
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
 			fprintf(stderr, "%s\n", strerror(errno));
-			sprintf(errmsg, "cannot seek temp file");
+			seterrmsg("cannot seek temp file");
 			free(lp);
 			return NULL;
 		}
@@ -125,7 +125,7 @@ put_sbuf_line(char *cs)
 	if ((ct = fwrite(cs, sizeof(char), len, sfp)) < 0 || ct != len) {
 		sfseek = -1;
 		fprintf(stderr, "%s\n", strerror(errno));
-		sprintf(errmsg, "cannot write temp file");
+		seterrmsg("cannot write temp file");
 		free(lp);
 		return NULL;
 	}
@@ -160,7 +160,7 @@ get_line_node_addr(line_t *lp)
 	while (cp != lp && (cp = cp->q_forw) != &buffer_head)
 		n++;
 	if (n && cp == &buffer_head) {
-		sprintf(errmsg, "invalid address");
+		seterrmsg("invalid address");
 		return ERR;
 	}
 	return n;
@@ -222,7 +222,7 @@ open_sbuf(void)
 		(void)asprintf(&sfn, "%s/ed.XXXXXX", tmp);
 	if (sfn == NULL) {
 		warn(NULL);
-		sprintf(errmsg, "could not allocate memory");
+		seterrmsg("could not allocate memory");
 		umask(u);
 		return ERR;
 	}
@@ -232,7 +232,7 @@ open_sbuf(void)
 		if (fd != -1)
 			close(fd);
 		warn("%s", sfn);
-		sprintf(errmsg, "cannot open temp file");
+		seterrmsg("cannot open temp file");
 		umask(u);
 		return ERR;
 	}
@@ -248,7 +248,7 @@ close_sbuf(void)
 	if (sfp) {
 		if (fclose(sfp) < 0) {
 			fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
-			sprintf(errmsg, "cannot close temp file");
+			seterrmsg("cannot close temp file");
 			return ERR;
 		}
 		sfp = NULL;

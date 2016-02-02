@@ -29,7 +29,7 @@ typedef struct ip_port
 {
 	int ip_flags, ip_dl_type;
 	int ip_port;
-	union
+	union sxfer_ip_dl_u
 	{
 		struct
 		{
@@ -45,9 +45,11 @@ typedef struct ip_port
 		} dl_eth;
 		struct
 		{
+			int dummy_int[3];
 			int ps_port;
 			acc_t *ps_send_head;
 			acc_t *ps_send_tail;
+			void* dummy_ptr[3];
 		} dl_ps;
 	} ip_dl;
 	ipaddr_t ip_ipaddr;

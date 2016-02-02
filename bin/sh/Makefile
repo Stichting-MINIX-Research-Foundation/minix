@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2012/12/02 12:55:27 apb Exp $
+#	$NetBSD: Makefile,v 1.101 2015/05/10 20:30:54 joerg Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -42,6 +42,9 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL
+.endif
+.ifdef TINYPROG
+CPPFLAGS+=-DTINY
 .else
 SRCS+=printf.c
 .endif
@@ -77,9 +80,9 @@ nodes.c nodes.h: mknodes.sh nodetypes nodes.c.pat
 NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
-.if make(install)
+.if !defined(__MINIX)
 SUBDIR+=USD.doc
-.endif
+.endif # !defined(__MINIX)
 
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.jobs.c = -Wno-format-nonliteral

@@ -1,4 +1,4 @@
-/* $Id: osdep-sunos.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Todd Carson <toc@daybefore.net>
@@ -41,16 +41,15 @@ osdep_get_name(int fd, char *tty)
 	if ((f = open(tty, O_RDONLY)) < 0)
 		return (NULL);
 
-	if ((fstat(f, &st) != 0) ||
-	    (ioctl(f, TIOCGPGRP, &pgrp) != 0)) {
+	if (fstat(f, &st) != 0 || ioctl(f, TIOCGPGRP, &pgrp) != 0) {
 		close(f);
 		return (NULL);
 	}
 	close(f);
 
-	xasprintf(&path, "/proc/%hu/psinfo", pgrp);
+	xasprintf(&path, "/proc/%u/psinfo", (u_int) pgrp);
 	f = open(path, O_RDONLY);
-	xfree(path);
+	free(path);
 	if (f < 0)
 		return (NULL);
 
@@ -63,6 +62,27 @@ osdep_get_name(int fd, char *tty)
 		return (NULL);
 
 	return (xstrdup(p.pr_fname));
+}
+
+char *
+osdep_get_cwd(int fd)
+{
+	static char	 target[MAXPATHLEN + 1];
+	char		*path;
+	ssize_t		 n;
+	pid_t		 pgrp;
+
+	if ((pgrp = tcgetpgrp(fd)) == -1)
+		return (NULL);
+
+	xasprintf(&path, "/proc/%u/path/cwd", (u_int) pgrp);
+	n = readlink(path, target, MAXPATHLEN);
+	free(path);
+	if (n > 0) {
+		target[n] = '\0';
+		return (target);
+	}
+	return (NULL);
 }
 
 struct event_base *

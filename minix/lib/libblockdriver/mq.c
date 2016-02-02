@@ -71,6 +71,19 @@ int mq_enqueue(device_id_t device_id, const message *mess,
 }
 
 /*===========================================================================*
+ *				mq_isempty				     *
+ *===========================================================================*/
+int mq_isempty(device_id_t device_id)
+{
+/* Return whether the message queue for the given device is empty.
+ */
+
+  assert(device_id >= 0 && device_id < MAX_DEVICES);
+
+  return STAILQ_EMPTY(&queue[device_id]);
+}
+
+/*===========================================================================*
  *				mq_dequeue				     *
  *===========================================================================*/
 int mq_dequeue(device_id_t device_id, message *mess, int *ipc_status)
@@ -80,9 +93,7 @@ int mq_dequeue(device_id_t device_id, message *mess, int *ipc_status)
  */
   struct mq_cell *cell;
 
-  assert(device_id >= 0 && device_id < MAX_DEVICES);
-
-  if (STAILQ_EMPTY(&queue[device_id]))
+  if (mq_isempty(device_id))
 	return FALSE;
 
   cell = STAILQ_FIRST(&queue[device_id]);

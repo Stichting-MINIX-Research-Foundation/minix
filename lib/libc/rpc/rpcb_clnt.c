@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.29 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.29 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $");
 #endif
 #endif
 
@@ -578,9 +578,12 @@ rpcb_set(rpcprog_t program, rpcvers_t version,
 	(void) snprintf(uidbuf, sizeof uidbuf, "%d", geteuid());
 	parms.r_owner = uidbuf;
 
-	CLNT_CALL(client, (rpcproc_t)RPCBPROC_SET, (xdrproc_t) xdr_rpcb,
+	if (CLNT_CALL(client, (rpcproc_t)RPCBPROC_SET, (xdrproc_t) xdr_rpcb,
 	    (char *)(void *)&parms, (xdrproc_t) xdr_bool,
-	    (char *)(void *)&rslt, tottimeout);
+	    (char *)(void *)&rslt, tottimeout) != RPC_SUCCESS) {
+		rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+		clnt_geterr(client, &rpc_createerr.cf_error);
+	}
 
 	CLNT_DESTROY(client);
 	free(parms.r_addr);
@@ -617,9 +620,12 @@ rpcb_unset(rpcprog_t program, rpcvers_t version, const struct netconfig *nconf)
 	(void) snprintf(uidbuf, sizeof uidbuf, "%d", geteuid());
 	parms.r_owner = uidbuf;
 
-	CLNT_CALL(client, (rpcproc_t)RPCBPROC_UNSET, (xdrproc_t) xdr_rpcb,
+	if (CLNT_CALL(client, (rpcproc_t)RPCBPROC_UNSET, (xdrproc_t) xdr_rpcb,
 	    (char *)(void *)&parms, (xdrproc_t) xdr_bool,
-	    (char *)(void *)&rslt, tottimeout);
+	    (char *)(void *)&rslt, tottimeout) != RPC_SUCCESS) {
+		rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+		clnt_geterr(client, &rpc_createerr.cf_error);
+	}
 
 	CLNT_DESTROY(client);
 	return (rslt);
@@ -977,8 +983,8 @@ done:
  *
  * Assuming that the address is all properly allocated
  */
-int
-rpcb_getaddr(rpcprog_t program, rpcvers_t version,
+bool_t
+rpcb_getaddr(const rpcprog_t program, const rpcvers_t version,
 	const struct netconfig *nconf, struct netbuf *address,
 	const char *host)
 {
@@ -1218,9 +1224,13 @@ rpcb_taddr2uaddr(struct netconfig *nconf, struct netbuf *taddr)
 		return (NULL);
 	}
 
-	CLNT_CALL(client, (rpcproc_t)RPCBPROC_TADDR2UADDR,
+	if (CLNT_CALL(client, (rpcproc_t)RPCBPROC_TADDR2UADDR,
 	    (xdrproc_t) xdr_netbuf, (char *)(void *)taddr,
-	    (xdrproc_t) xdr_wrapstring, (char *)(void *)&uaddr, tottimeout);
+	    (xdrproc_t) xdr_wrapstring, (char *)(void *)&uaddr, tottimeout) 
+	    != RPC_SUCCESS) {
+		rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+		clnt_geterr(client, &rpc_createerr.cf_error);
+	}
 	CLNT_DESTROY(client);
 	return (uaddr);
 }
@@ -1259,6 +1269,8 @@ rpcb_uaddr2taddr(struct netconfig *nconf, char *uaddr)
 	    (xdrproc_t) xdr_wrapstring, (char *)(void *)&uaddr,
 	    (xdrproc_t) xdr_netbuf, (char *)(void *)taddr,
 	    tottimeout) != RPC_SUCCESS) {
+		rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+		clnt_geterr(client, &rpc_createerr.cf_error);
 		free(taddr);
 		taddr = NULL;
 	}

@@ -1,0 +1,106 @@
+.\" $NetBSD: pgp2ssh.1,v 1.4 2014/02/17 07:23:19 agc Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to
+.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt PGP2SSH 1
+.Os
+.Sh NAME
+.Nm pgp2ssh
+.Nd convert a PGP public key to an SSHv2 key
+.Sh SYNOPSIS
+.Nm
+.Op Fl f address-family
+.Op Fl h hostname
+.Op Fl p port
+.Ar userid ...
+.Sh DESCRIPTION
+The
+.Nm
+command retrieves PGP public key information from the key server daemon
+using the HKP protocol, and converts the PGP public
+key to a format suitable for use by
+.Xr ssh 1 .
+The
+.Xr hkpd 1
+is normally used to serve public key information.
+The
+.Nm
+utility is similar to the
+.Xr hkpc 1
+utility in that it retrieves keys in the same way.
+In addition,
+.Nm
+will convert the format of the key.
+.Pp
+At the present time, only RSA keys are supported.
+There is no intention, at the time of writing, to
+support DSA keys, due to their limitations.
+.Pp
+It is quite possible to serve ssh public keys
+across a network using
+.Xr hkpd 1
+to serve the key, and
+.Nm
+to retrieve the key using the HKP protocol,
+and to save the key in ssh format on the remote computer,
+allowing users to login to the remote computer using
+.Xr ssh 1 .
+.Sh EXIT STATUS
+The
+.Nm
+utility will return 0 for success,
+or 1 for failure.
+Output will be printed on stdout.
+It can be redirected to a file for use by
+.Xr ssh 1 .
+.Sh SEE ALSO
+.Xr hkpc 1 ,
+.Xr hkpd 1 ,
+.Xr netpgpkeys 1 ,
+.Xr ssh 1 ,
+.\" .Xr libbz2 3 ,
+.Xr libnetpgp 3
+.Sh STANDARDS
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org .

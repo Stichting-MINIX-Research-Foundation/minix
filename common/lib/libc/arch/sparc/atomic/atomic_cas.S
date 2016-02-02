@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.12 2013/09/12 15:36:14 joerg Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.13 2014/02/21 16:21:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)

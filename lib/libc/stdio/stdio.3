@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.24 2010/05/05 04:13:16 jruoho Exp $
+.\"	$NetBSD: stdio.3,v 1.26 2015/09/06 04:20:50 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stdio.3	8.7 (Berkeley) 4/19/94
 .\"
-.Dd May 5, 2010
+.Dd September 6, 2015
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -228,7 +228,11 @@ library conforms to
 .Sh LIST OF FUNCTIONS
 .Bl -column "putchar_unlocked" "Description"
 .It Sy Function	Description
+.It asprintf	formatted output conversion with allocation
+.It asprintf_l	formatted output conversion with allocation
 .It clearerr	check and reset stream status
+.It dprintf	formatted output conversion
+.It dprintf_l	formatted output conversion
 .It fclose	close a stream
 .It fdopen	stream open functions
 .It feof	check and reset stream status
@@ -241,8 +245,10 @@ library conforms to
 .It fgetwc	get next wide character from input stream
 .It fileno	check and reset stream status
 .It flockfile	lock a stream
+.It fmemopen	open a stream that points to a memory buffer
 .It fopen	stream open functions
 .It fprintf	formatted output conversion
+.It fprintf_l	formatted output conversion
 .It fpurge	flush a stream
 .It fputc	output a character or word to a stream
 .It fputs	output a line to a stream
@@ -251,12 +257,16 @@ library conforms to
 .It freopen	stream open functions
 .It fropen	open a stream
 .It fscanf	input format conversion
+.It fscanf_l	input format conversion
 .It fseek	reposition a stream
+.It fseeko	reposition a stream
 .It fsetpos	reposition a stream
 .It ftell	reposition a stream
+.It ftello	reposition a stream
 .It ftrylockfile	lock a stream (non-blocking)
 .It funlockfile	unlock a stream
 .It funopen	open a stream
+.It funopen2	open a stream, with flush support
 .It fwide	set/get orientation of a stream
 .It fwopen	open a stream
 .It fwrite	binary stream input/output
@@ -274,8 +284,13 @@ library conforms to
 .It getwchar	get next wide character from input stream
 .It mkstemp	create unique temporary file
 .It mktemp	create unique temporary file
+.It open_memstream	open memory as a stream
+.It popen	open a program as a stream
+.It popenve	open a program as a stream
+.It pclose	close an opened program stream
 .It perror	system error messages
 .It printf	formatted output conversion
+.It printf_l	formatted output conversion
 .It putc	output a character or word to a stream
 .It putc_unlocked	output a character or word to a stream
 .It             Ta (no implicit locking)
@@ -289,13 +304,16 @@ library conforms to
 .It remove	remove directory entry
 .It rewind	reposition a stream
 .It scanf	input format conversion
+.It scanf_l	input format conversion
 .It setbuf	stream buffering operations
 .It setbuffer	stream buffering operations
 .It setlinebuf	stream buffering operations
 .It setvbuf	stream buffering operations
 .It snprintf	formatted output conversion
+.It snprintf_l	formatted output conversion
 .It sprintf	formatted output conversion
 .It sscanf	input format conversion
+.It sscanf_l	input format conversion
 .It strerror	system error messages
 .It sys_errlist	system error messages
 .It sys_nerr	system error messages
@@ -304,13 +322,24 @@ library conforms to
 .It tmpnam	temporary file routines
 .It ungetc	un-get character from input stream
 .It ungetwc	un-get wide character from input stream
+.It vasprintf	formatted output conversion with allocation
+.It vasprintf_l	formatted output conversion with allocation
+.It vdprintf	formatted output conversion
+.It vdprintf_l	formatted output conversion
 .It vfprintf	formatted output conversion
+.It vfprintf_l	formatted output conversion
 .It vfscanf	input format conversion
+.It vfscanf_l	input format conversion
 .It vprintf	formatted output conversion
+.It vprintf_l	formatted output conversion
 .It vscanf	input format conversion
+.It vscanf_l	input format conversion
 .It vsnprintf	formatted output conversion
+.It vsnprintf_l	formatted output conversion
 .It vsprintf	formatted output conversion
+.It vsprintf_l	formatted output conversion
 .It vsscanf	input format conversion
+.It vsscanf_l	input format conversion
 .El
 .Sh BUGS
 The standard buffered functions do not interact well with certain other

@@ -74,12 +74,9 @@ root_loadavg(void)
 static void
 root_uptime(void)
 {
-	clock_t ticks;
 	ldiv_t division;
 
-	if (getticks(&ticks) != OK)
-		return;
-	division = ldiv(100L * ticks / sys_hz(), 100L);
+	division = ldiv(100L * getticks() / sys_hz(), 100L);
 
 	buf_printf("%ld.%0.2ld\n", division.quot, division.rem);
 }
@@ -183,7 +180,6 @@ root_dmap(void)
 static void
 root_ipcvecs(void)
 {
-	extern struct minix_kerninfo *_minix_kerninfo;
 	extern struct minix_ipcvecs _minix_ipcvecs;
 
 	/*
@@ -191,8 +187,7 @@ root_ipcvecs(void)
 	 * will be using their own in-libc vectors that are normal symbols in
 	 * the binary.
 	 */
-	if (!_minix_kerninfo ||
-	    !(_minix_kerninfo->ki_flags & MINIX_KIF_IPCVECS))
+	if (!(get_minix_kerninfo()->ki_flags & MINIX_KIF_IPCVECS))
 		return;
 
 	/*

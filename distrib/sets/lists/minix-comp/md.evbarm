@@ -1,0 +1,90 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./usr/include/arm                                       minix-comp
+./usr/include/arm/aeabi.h                               minix-comp
+./usr/include/arm/ansi.h                                minix-comp
+./usr/include/arm/aout_machdep.h                        minix-comp
+./usr/include/arm/apmvar.h                              minix-comp
+./usr/include/arm/archconst.h                           minix-comp
+./usr/include/arm/archtypes.h                           minix-comp
+./usr/include/arm/arm26                                 minix-comp
+./usr/include/arm/arm26/types.h                         minix-comp
+./usr/include/arm/arm32                                 minix-comp
+./usr/include/arm/arm32/frame.h                         minix-comp
+./usr/include/arm/arm32/katelib.h                       minix-comp      obsolete
+./usr/include/arm/arm32/param.h                         minix-comp
+./usr/include/arm/arm32/pmap.h                          minix-comp
+./usr/include/arm/arm32/psl.h                           minix-comp
+./usr/include/arm/arm32/pte.h                           minix-comp
+./usr/include/arm/arm32/rtc.h                           minix-comp
+./usr/include/arm/arm32/types.h                         minix-comp
+./usr/include/arm/arm32/vmparam.h                       minix-comp
+./usr/include/arm/armreg.h                              minix-comp
+./usr/include/arm/asm.h                                 minix-comp
+./usr/include/arm/atomic.h                              minix-comp
+./usr/include/arm/bswap.h                               minix-comp
+./usr/include/arm/byte_swap.h                           minix-comp
+./usr/include/arm/cdefs.h                               minix-comp
+./usr/include/arm/compat_jmp_buf.h                      minix-comp      obsolete
+./usr/include/arm/cpu.h                                 minix-comp
+./usr/include/arm/cpuconf.h                             minix-comp
+./usr/include/arm/disklabel.h                           minix-comp
+./usr/include/arm/diskparm.h                            minix-comp
+./usr/include/arm/elf.h                                 minix-comp
+./usr/include/arm/elf_machdep.h                         minix-comp
+./usr/include/arm/endian.h                              minix-comp
+./usr/include/arm/endian_machdep.h                      minix-comp
+./usr/include/arm/fenv.h                                minix-comp
+./usr/include/arm/float.h                               minix-comp
+./usr/include/arm/frame.h                               minix-comp
+./usr/include/arm/ieee.h                                minix-comp
+./usr/include/arm/ieeefp.h                              minix-comp
+./usr/include/arm/int_const.h                           minix-comp
+./usr/include/arm/int_fmtio.h                           minix-comp
+./usr/include/arm/int_limits.h                          minix-comp
+./usr/include/arm/int_mwgwtypes.h                       minix-comp
+./usr/include/arm/int_types.h                           minix-comp
+./usr/include/arm/interrupt.h                           minix-comp
+./usr/include/arm/ipcconst.h                            minix-comp
+./usr/include/arm/joystick.h                            minix-comp
+./usr/include/arm/kcore.h                               minix-comp
+./usr/include/arm/limits.h                              minix-comp
+./usr/include/arm/lock.h                                minix-comp
+./usr/include/arm/math.h                                minix-comp
+./usr/include/arm/mcontext.h                            minix-comp
+./usr/include/arm/memory.h                              minix-comp
+./usr/include/arm/multiboot.h                           minix-comp
+./usr/include/arm/mutex.h                               minix-comp
+./usr/include/arm/param.h                               minix-comp
+./usr/include/arm/partition.h                           minix-comp
+./usr/include/arm/pcb.h                                 minix-comp
+./usr/include/arm/pmc.h                                 minix-comp
+./usr/include/arm/proc.h                                minix-comp
+./usr/include/arm/profile.h                             minix-comp
+./usr/include/arm/ptrace.h                              minix-comp
+./usr/include/arm/reg.h                                 minix-comp
+./usr/include/arm/rwlock.h                              minix-comp
+./usr/include/arm/setjmp.h                              minix-comp
+./usr/include/arm/signal.h                              minix-comp
+./usr/include/arm/sljit_machdep.h                       minix-comp
+./usr/include/arm/stackframe.h                          minix-comp
+./usr/include/arm/swi.h                                 minix-comp
+./usr/include/arm/sysarch.h                             minix-comp
+./usr/include/arm/trap.h                                minix-comp
+./usr/include/arm/types.h                               minix-comp
+./usr/include/arm/vfpreg.h                              minix-comp
+./usr/include/arm/vm.h                                  minix-comp
+./usr/include/arm/vmparam.h                             minix-comp
+./usr/include/arm/wchar_limits.h                        minix-comp
+./usr/include/evbarm                                    minix-comp
+./usr/include/evbarm/disklabel.h                        minix-comp
+./usr/include/evbarm/intr.h                             minix-comp
+./usr/include/evbarm/sljit_machdep.h                    minix-comp
+./usr/include/gcc-4.5/arm_neon.h                        minix-comp      gcc=45,gcccmds,obsolete
+./usr/include/gcc-4.8/arm_neon.h                        minix-comp      gcc=5,gcccmds
+./usr/include/gcc-4.8/unwind-arm-common.h               minix-comp      gcc=5,gcccmds

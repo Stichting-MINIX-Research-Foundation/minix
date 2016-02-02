@@ -1,0 +1,122 @@
+#!/bin/sh
+
+LABEL=es1371
+EXEDIR=/service/es1371
+#LABEL=fxp
+#EXEDIR=/usr/build/drivers/fxp
+EXE=$EXEDIR/$LABEL
+DEV="-dev /dev/audio"
+
+:>log
+
+do_one()
+{
+	# $1 = test-nr, $2 = count, $3 = seed
+	pid=''
+	while [ X"$pid" = X ]
+	do
+		ps ax | grep $LABEL | grep -v grep
+		pid=`ps ax | grep $LABEL | grep -v grep |
+			sort -n | tail -1 |
+			sed 's,^[ 	]*,,;s,[ 	].*,,'`
+		if [ X"$pid" != X ]
+		then
+			break
+		fi
+		sleep 10
+	done
+	echo pid = $pid
+	swifi -f $EXE $pid $1 $2 $3 >/tmp/out
+	sleep 1
+	kill -0 $pid &&
+		echo "driver failed to die, params: test $1, count $2, seed $3"
+}
+
+one_round()
+{
+	# $1 = count, $2 = seed
+	count=$1
+	seed=$2
+	echo "Seed: $seed" >> log
+	sync
+	do_one 6 $count $seed	# Source fault
+	do_one 5 $count $seed	# Destination fault
+	do_one 8 $count $seed	# Pointer fault
+	do_one 14 $count $seed	# Interface fault
+	do_one 12 $count $seed	# Loop fault
+	do_one 0 $count $seed	# Text fault
+	do_one 4 $count $seed	# Nop fault
+}
+
+usage()
+{
+	echo "Usage: run_t1 <count> <type> <seed>" >&2
+	echo \
+"Valid types are: source destination pointer interface loop text nop random" >&2
+	exit 1
+}
+
+select_from()
+{
+	# $1 = index, $2... = choices
+	index="$1"
+	index=`expr "$index" + 1`
+	shift
+	v=`eval echo '$'$index`
+	echo "$v"
+}
+
+random_type()
+{
+	# $1 = seed
+	seed="$1"
+	r=`./rnd -m 7 -s "$seed"`
+	select_from "$r" 6 5 8 14 12 0 4
+}
+
+if [ $# -ne 3 ]; then usage; fi
+count="$1"
+type="$2"
+seed="$3"
+
+case "$type" in
+source)		type_arg=6
+;;
+destination)	type_arg=5
+;;
+pointer)	type_arg=8
+;;
+interface)	type_arg=14
+;;
+loop)		type_arg=12
+;;
+text)		type_arg=0
+;;
+nop)		type_arg=4
+;;
+random)
+;;
+*)
+	usage
+esac
+
+# Start our own driver.
+service down $LABEL
+sleep 2	# Allow driver to die
+service up $EXE -script `pwd`/rs.restart_imm -period 3HZ $DEV
+
+i=0
+while [ $i -lt "$count" ]
+do
+	echo "Seed: $seed"
+	if [ "$type" = "random" ]
+	then
+		type_arg=`random_type $seed`
+	fi
+	do_one "$type_arg" 100 $seed
+	i=`expr $i + 1`
+	seed=`expr $seed + 1`
+done
+
+# Restart the driver
+service refresh $LABEL

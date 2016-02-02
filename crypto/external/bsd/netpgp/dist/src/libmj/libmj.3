@@ -1,0 +1,283 @@
+.\" $NetBSD: libmj.3,v 1.7 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2010 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 16, 2014
+.Dt LIBMJ 3
+.Os
+.Sh NAME
+.Nm libmj
+.Nd minimalist JSON lightweight data interchange library
+.Sh LIBRARY
+.Lb libmj
+.Sh SYNOPSIS
+.In mj.h
+.Ft int
+.Fo mj_create
+.Fa "mj_t *atom" "const char *text" "..."
+.Fc
+.Ft int
+.Fo mj_parse
+.Fa "mj_t *atom" "const char *text" "int *tokfrom" "int *tokto" "int *toktype"
+.Fc
+.Ft int
+.Fo mj_append
+.Fa "mj_t *atom" "const char *text" "..."
+.Fc
+.Ft int
+.Fo mj_append_field
+.Fa "mj_t *atom" "const char *fieldname" "const char *text" "..."
+.Fc
+.Ft int
+.Fo mj_deepcopy
+.Fa "mj_t *dest" "mj_t *src"
+.Fc
+.Ft void
+.Fo mj_delete
+.Fa "mj_t *atom"
+.Fc
+.Pp
+Access to objects and array entries is made using the following functions:
+.Ft int
+.Fo mj_arraycount
+.Fa "mj_t *atom"
+.Fc
+.Ft int
+.Fo mj_object_find
+.Fa "mj_t *atom" "const char *name" "const unsigned startpoint"
+.Fa "const unsigned incr"
+.Fc
+.Ft mj_t *
+.Fo mj_get_atom
+.Fa "mj_t *atom" "..."
+.Fc
+.Pp
+JSON object output functions:
+.Ft int
+.Fo mj_snprint
+.Fa "char *buffer" "size_t size" "mj_t *atom"
+.Fc
+.Ft int
+.Fo mj_asprint
+.Fa "char **buffer" "mj_t *atom"
+.Fc
+.Ft int
+.Fo mj_string_size
+.Fa "mj_t *atom"
+.Fc
+.Ft int
+.Fo mj_pretty
+.Fa "mj_t *atom" "void *stream" "unsigned depth" "const char *trailer"
+.Fc
+.Ft const char *
+.Fo mj_string_rep
+.Fa "mj_t *atom"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a small library interface to allow JSON text to be created and parsed.
+JSON is the Java Script Object Notation,
+a lightweight data-interchange format, standardised by the ECMA.
+The library name
+.Nm
+is derived from a further acronym of
+.Dq minimalist JSON .
+.\" Hey, Mary!
+.Pp
+The
+.Nm
+library can be used to create a string in memory which contains a textual
+representation of a number of objects, arbitrarily structured.
+The library can also be used to reconstruct the structure.
+Data can thus be serialised easily and efficiently, and data structures
+rebuilt to produce the original structure of the data.
+.Pp
+JSON contains basic units called atoms, the two
+basic atoms being strings and numbers.
+Three other useful atomic values are provided:
+.Dq null ,
+.Dq false ,
+and
+.Dq true .
+Atoms can be grouped together as key/value pairs in an
+.Dq object ,
+and as individual, ordered atoms, in an
+.Dq array .
+.Pp
+To create a new object, the
+.Fn mj_create
+function is used.
+It can be deleted using the
+.Fn mj_delete
+function.
+.Pp
+Atoms, objects and arrays can be appended
+to arrays and objects using the
+.Fn mj_append
+function.
+.Pp
+Objects can be printed out
+by using the
+.Fn mj_snprint
+function.
+The size of a string of JSON text can be calculated
+using the
+.Fn mj_string_size
+function.
+A utility function
+.Fn mj_asprint
+is provided which will allocate space dynamically,
+using
+.Xr calloc 3 ,
+and the JSON serialised text is copied into it.
+This memory can later be de-allocated using
+.Xr free 3 .
+For formatted output to a
+.Vt FILE *
+stream, the
+.Fn mj_pretty
+function is used.
+The calling interface gives the ability to indent the
+output to a given
+.Fa depth
+and for the formatted output to be followed by a
+.Fa trailer
+string, which is usually
+.Dv NULL
+for external calls, but can be any valid string.
+Output is sent to the
+.Fa stream
+file stream.
+.Pp
+The
+.Fa type
+argument given to the
+.Fn mj_create ,
+.Fn mj_append ,
+and
+.Fn mj_append_field
+functions is taken from a list of
+.Dq false
+.Dq true
+.Dq null
+.Dq number
+.Dq integer
+.Dq string
+.Dq array
+and
+.Dq object
+types.
+An integer differs from a number in that it cannot take on
+any floating point values.
+It is implemented internally using a signed 64-bit integer type.
+This restriction of values for an integer type may be removed at a later date.
+.Pp
+Within a JSON object, the key values can be iterated over using an integer
+index to access the individual JSON objects.
+The index can also be found using the
+.Fn mj_object_find
+function.
+.Pp
+The way objects arrays are implemented in
+.Nm
+is by using varying-sized arrays internally.
+Objects have the field name as the even entry in this internal array,
+with the value being the odd entry.
+Arrays are implemented as a simple array.
+Thus, to find an object in an array using
+.Fn mj_object_find ,
+a value of 1 should be used as the increment value.
+This means that every entry in the internal array will be examined,
+and the first match after the starting point will be returned.
+For objects, an incremental value of 2 should be used,
+and an even start value should be specified.
+.Pp
+String values should be created and appended using two parameters in
+the stdarg fields, that of the string itself, and its length in bytes
+immediately after the string.
+A value of
+.Dv \-1
+may be used if the string length is not known.
+.Sh EXAMPLES
+The following code fragment will make a JSON object
+out of the string
+.Dq Hello <USERNAME>\en
+in the
+buffer called
+.Va buf
+where
+.Dq USERNAME
+is the name of the user taken from the runtime environment.
+The encoded text will be in an allocated buffer called
+.Va s
+.Bd -literal -offset indent
+mj_t atom;
+char buf[BUFSIZ];
+char *s;
+int cc;
+
+(void) memset(\*[Am]atom, 0x0, sizeof(atom));
+cc = snprintf(buf, sizeof(buf), "Hello %s\en", getenv("USER"));
+mj_create(\*[Am]atom, "string", buf, cc);
+cc = mj_asprint(\*[Am]s, \*[Am]atom, MJ_JSON_ENCODE);
+.Ed
+.Pp
+Next, the following example will take the (binary) text which has been encoded into
+JSON and is in the buffer
+.Va buf ,
+such as in the previous example, and re-create the original text:
+.Bd -literal -offset indent
+int from, to, tok, cc;
+char *s;
+mj_t atom;
+
+(void) memset(\*[Am]atom, 0x0, sizeof(atom));
+from = to = tok = 0;
+mj_parse(\*[Am]atom, buf, \*[Am]from, \*[Am]to, \*[Am]tok);
+cc = mj_asprint(\*[Am]s, \*[Am]atom, MJ_HUMAN);
+printf("%.*s", cc, s);
+.Ed
+.Pp
+The
+.Va s
+pointer points to allocated storage with the original NUL-terminated string
+in it.
+.Sh SEE ALSO
+.Xr calloc 3 ,
+.Xr free 3
+.Rs
+.%Q Ecma International
+.%D December 2009
+.%T ECMA-262: ECMAScript Language Specification
+.%U http://www.ecma-international.org/publications/files/ecma-st/ECMA-262.pdf
+.%O 5th Edition
+.Re
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org
+wrote this implementation and manual page.

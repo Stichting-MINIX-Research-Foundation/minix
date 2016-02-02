@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.1 2013/05/02 03:56:40 matt Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.2 2014/02/24 16:57:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -25,10 +25,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __ZAURUS_APMVAR_H__
-#define __ZAURUS_APMVAR_H__
+#ifndef _ARM_APMVAR_H_
+#define _ARM_APMVAR_H_
 
 #include <dev/apm/apmbios.h>
 #include <dev/apm/apmio.h>
 
-#endif /* __ZAURUS_APMVAR_H__ */
+#endif /* _ARM_APMVAR_H_ */

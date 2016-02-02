@@ -1,4 +1,4 @@
-/*	$NetBSD: pcq.h,v 1.1 2008/11/11 20:17:27 matt Exp $	*/
+/*	$NetBSD: pcq.h,v 1.2 2014/06/09 12:44:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,12 +37,16 @@
 typedef struct pcq pcq_t;
 
 #ifdef _KERNEL
+
+#define	PCQ_MAXLEN	(0xffffU)
+
 bool	pcq_put(pcq_t *, void *);
 void *	pcq_peek(pcq_t *);
 void *	pcq_get(pcq_t *);
 size_t	pcq_maxitems(pcq_t *);
 pcq_t *	pcq_create(size_t, km_flag_t);
 void	pcq_destroy(pcq_t *);
+
 #endif /* _KERNEL */
 
 #endif /* _SYS_PCQ_H_ */

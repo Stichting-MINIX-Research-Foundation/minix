@@ -38,7 +38,7 @@ typedef struct arp46
 	ether_addr_t a46_dstaddr;
 	ether_addr_t a46_srcaddr;
 	ether_type_t a46_ethtype;
-	union
+	union ixfer_arp46_u
 	{
 		struct
 		{

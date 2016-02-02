@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.21 2013/11/18 01:31:42 chs Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.22 2014/01/25 02:28:31 christos Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,6 +58,9 @@ int do_sys_utimens(struct lwp *, struct vnode *, const char *, int,
     const struct timespec *, enum uio_seg);
 int do_sys_utimensat(struct lwp *, int, struct vnode *, const char *, int,
     const struct timespec *, enum uio_seg);
+
+struct pathbuf;
+int do_open(struct lwp *, struct vnode *, struct pathbuf *, int, int, int *);
 
 int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.ref,v 1.1 2013/11/22 16:00:45 christos Exp $
+.\"	$NetBSD: vi.ref,v 1.2 2014/09/10 21:44:22 christos Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,7 @@ Engineers, Inc.
 The financial support of UUNET Communications Services is gratefully
 acknowledged.
 .)q
-.sy echo -n >index
+.if \n[.U]==0 .sy echo -n >index
 .oh 'Vi/Ex Reference''USD:13-%'
 .eh 'USD:13-%''Vi/Ex Reference'
 .bp 4

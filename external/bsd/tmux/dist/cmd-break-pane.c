@@ -1,4 +1,4 @@
-/* $Id: cmd-break-pane.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,38 +26,44 @@
  * Break pane off into a window.
  */
 
-int	cmd_break_pane_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_break_pane_entry = {
 	"break-pane", "breakp",
-	"dt:", 0, 0,
-	"[-d] " CMD_TARGET_PANE_USAGE,
+	"dPF:t:", 0, 0,
+	"[-dP] [-F format] " CMD_TARGET_PANE_USAGE,
 	0,
-	NULL,
 	NULL,
 	cmd_break_pane_exec
 };
 
-int
-cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
 	struct session		*s;
 	struct window_pane	*wp;
 	struct window		*w;
+	char			*name;
 	char			*cause;
 	int			 base_idx;
+	struct client		*c;
+	struct format_tree	*ft;
+	const char		*template;
+	char			*cp;
 
-	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp)) == NULL)
-		return (-1);
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if (window_count_panes(wl->window) == 1) {
-		ctx->error(ctx, "can't break with only one pane");
-		return (-1);
+		cmdq_error(cmdq, "can't break with only one pane");
+		return (CMD_RETURN_ERROR);
 	}
 
 	w = wl->window;
+	server_unzoom_window(w);
+
 	TAILQ_REMOVE(&w->panes, wp, entry);
 	if (wp == w->active) {
 		w->active = w->last;
@@ -74,8 +80,10 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	w = wp->window = window_create1(s->sx, s->sy);
 	TAILQ_INSERT_HEAD(&w->panes, wp, entry);
 	w->active = wp;
-	w->name = default_window_name(w);
-	layout_init(w);
+	name = default_window_name(w);
+	window_set_name(w, name);
+	free(name);
+	layout_init(w, wp);
 
 	base_idx = options_get_number(&s->options, "base-index");
 	wl = session_attach(s, w, -1 - base_idx, &cause); /* can't fail */
@@ -85,5 +93,22 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	server_redraw_session(s);
 	server_status_session_group(s);
 
-	return (0);
+	if (args_has(args, 'P')) {
+		if ((template = args_get(args, 'F')) == NULL)
+			template = BREAK_PANE_TEMPLATE;
+
+		ft = format_create();
+		if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
+			format_client(ft, c);
+		format_session(ft, s);
+		format_winlink(ft, s, wl);
+		format_window_pane(ft, wp);
+
+		cp = format_expand(ft, template);
+		cmdq_print(cmdq, "%s", cp);
+		free(cp);
+
+		format_free(ft);
+	}
+	return (CMD_RETURN_NORMAL);
 }

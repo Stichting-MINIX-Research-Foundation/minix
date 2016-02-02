@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.60 2013/05/02 12:09:40 kiyohara Exp $
+$NetBSD: README,v 1.62 2014/03/31 11:25:48 martin Exp $
 
 acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
@@ -22,7 +22,7 @@ evbppc	powerpc,powerpc64	20021209	PowerPC-based eval boards
 evbsh3	sh3eb,sh3el	20010206	Hitachi SuperH(TM) sh3 and sh4 eval boards
 ews4800mips	mipseb	20051229	NEC's MIPS based EWS4800 workstations
 hp300	m68k	19930512	Hewlett Packard 300- and 400-series machines
-hp700	hppa	20020606	Hewlett Packard 700-series machines
+hppa	hppa	20020606	Hewlett Packard 700-series machines
 hpcarm	arm	20010220	ARM based handheld PCs
 hpcmips	mipsel	19990925	MIPS based handheld PCs
 hpcsh	sh3el	20010117	Hitachi SuperH(TM) based handheld PCs
@@ -43,6 +43,7 @@ news68k	m68k	19991209	Sony's m68k based NET WORK STATION
 newsmips	mipseb	19980218	Sony's MIPS based NET WORK STATION
 next68k	m68k	19980609	NeXT Computer's cubes and slabs
 ofppc	powerpc,powerpc64	19980528	Open Firmware based PowerPC machines
+playstation2	mipsel	20011016	Sony PlayStation 2
 pmax	mipsel,mips64el	19931012	Digital Equipment Corp. MIPS based machines
 prep	powerpc	20000229	PowerPC Reference Platform machines
 rs6000	powerpc	20071217	MCA-based IBM RS/6000 wokstations

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.88 2013/08/21 15:24:27 matt Exp $
+#	$NetBSD: Makefile.booters,v 1.90 2015/03/08 19:47:17 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ STRIPFLAG=
 BINMODE=444
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -13,7 +14,7 @@ LIBC=		# nothing
 # Make sure we override any optimization options specified by the
 # user.
 .if ${MACHINE_ARCH} == "x86_64"
-CPUFLAGS= -m32
+CPUFLAGS= -m32 -march=i386 -mtune=i386
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/08/10 17:34:22 joerg Exp $
 
 LIB=	LLVMObject
 NOGCCERROR=	yes
@@ -15,11 +15,13 @@ SRCS+=	Archive.cpp \
 	ELFObjectFile.cpp \
 	ELFYAML.cpp \
 	Error.cpp \
+	IRObjectFile.cpp \
 	MachOObjectFile.cpp \
 	MachOUniversal.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
-	YAML.cpp
+	RecordStreamer.cpp \
+	SymbolicFile.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

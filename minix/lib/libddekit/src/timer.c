@@ -43,7 +43,6 @@ static  ddekit_lock_t lock;
 
 static void lock_timer(void);
 static void unlock_timer(void);
-static clock_t get_current_clock(void);
 static void remove_timer(int id);
 static int insert_timer(struct ddekit_timer_s *t);
 static struct ddekit_timer_s * get_next( myclock_t exp );
@@ -67,17 +66,6 @@ static void lock_timer()
 static void unlock_timer() 
 {
 	ddekit_lock_unlock(&lock);
-}
-
-/*****************************************************************************
- *    get_current_clock                                                      *
- ****************************************************************************/
-static myclock_t get_current_clock()
-{ 
-	/* returns the current clock tick */
-	myclock_t ret;
-	getticks(&ret);
-	return ret;
 }
 
 /*****************************************************************************
@@ -251,7 +239,7 @@ void ddekit_init_timers(void)
 	if (!first_time)
 	{
 		ddekit_lock_init(&lock);
-		jiffies = get_current_clock();
+		jiffies = getticks();
 		HZ = sys_hz(); 
 		pending_timer_ints = ddekit_sem_init(0);	
 		th = ddekit_thread_create(ddekit_timer_thread, 0, "timer");
@@ -277,7 +265,7 @@ ddekit_thread_t *ddekit_get_timer_thread(void)
  ****************************************************************************/
 void _ddekit_timer_interrupt(void)
 {
-	jiffies = get_current_clock(); 
+	jiffies = getticks();
 	DDEBUG_MSG_VERBOSE("now: %d", jiffies);
 	ddekit_sem_up(pending_timer_ints);
 }

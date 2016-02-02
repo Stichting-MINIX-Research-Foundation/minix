@@ -1,59 +1,47 @@
-/*	$NetBSD: tzfile.h,v 1.7 2003/08/07 09:44:11 agc Exp $	*/
-
-/*
- * Copyright (c) 1988, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Arthur David Olson of the National Cancer Institute.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)tzfile.h	8.1 (Berkeley) 6/2/93
- */
+/*	$NetBSD: tzfile.h,v 1.8 2015/07/11 16:40:53 christos Exp $	*/
 
 #ifndef _TZFILE_H_
-#define	_TZFILE_H_
+#define _TZFILE_H_
 
 /*
- * Information about time zone files.
- */
-			/* Time zone object file directory */
+** This file is in the public domain, so clarified as of
+** 1996-06-05 by Arthur David Olson.
+*/
+
+/*
+** This header is for use ONLY with the time conversion code.
+** There is no guarantee that it will remain unchanged,
+** or that it will remain at all.
+** Do NOT copy it to any system include directory.
+** Thank you!
+*/
+
+/*
+** Information about time zone files.
+*/
+
+#ifndef TZDIR		/* Time zone object file directory */
 #define TZDIR		"/usr/share/zoneinfo"
+#endif /* !defined TZDIR */
+
+#ifndef TZDEFAULT
 #define TZDEFAULT	"/etc/localtime"
+#endif /* !defined TZDEFAULT */
+
+#ifndef TZDEFRULES
 #define TZDEFRULES	"posixrules"
+#endif /* !defined TZDEFRULES */
 
 /*
 ** Each file begins with. . .
 */
 
-#define TZ_MAGIC	"TZif"
+#define	TZ_MAGIC	"TZif"
 
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
-	char	tzh_reserved[16];	/* reserved for future use */
+	char	tzh_version[1];		/* '\0' or '2' or '3' as of 2013 */
+	char	tzh_reserved[15];	/* reserved; must be zero */
 	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
 	char	tzh_leapcnt[4];		/* coded number of leap seconds */
@@ -68,23 +56,40 @@ struct tzhead {
 **	tzh_timecnt (char [4])s		coded transition times a la time(2)
 **	tzh_timecnt (unsigned char)s	types of local time starting at above
 **	tzh_typecnt repetitions of
-**		one (char [4])		coded UTC offset in seconds
+**		one (char [4])		coded UT offset in seconds
 **		one (unsigned char)	used to set tm_isdst
 **		one (unsigned char)	that's an abbreviation list index
 **	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
 **	tzh_leapcnt repetitions of
 **		one (char [4])		coded leap second transition times
 **		one (char [4])		total correction after above
-**	tzh_ttisstdcnt (char)s		indexed by type; if TRUE, transition
-**					time is standard time, if FALSE,
+**	tzh_ttisstdcnt (char)s		indexed by type; if 1, transition
+**					time is standard time, if 0,
 **					transition time is wall clock time
 **					if absent, transition times are
 **					assumed to be wall clock time
-**	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
-**					time is UTC, if FALSE,
-**					transition time is wall clock time
+**	tzh_ttisgmtcnt (char)s		indexed by type; if 1, transition
+**					time is UT, if 0,
+**					transition time is local time
 **					if absent, transition times are
 **					assumed to be local time
+*/
+
+/*
+** If tzh_version is '2' or greater, the above is followed by a second instance
+** of tzhead and a second instance of the data in which each coded transition
+** time uses 8 rather than 4 chars,
+** then a POSIX-TZ-environment-variable-style string for use in handling
+** instants after the last transition time stored in the file
+** (with nothing between the newlines if there is no POSIX representation for
+** such instants).
+**
+** If tz_version is '3' or greater, the above is extended as follows.
+** First, the POSIX TZ string's hour offset may range from -167
+** through 167 as compared to the POSIX-required 0 through 24.
+** Second, its DST start time may be January 1 at 00:00 and its stop
+** time December 31 at 24:00 plus the difference between DST and
+** standard time, indicating DST all year.
 */
 
 /*
@@ -92,25 +97,23 @@ struct tzhead {
 ** exceed any of the limits below.
 */
 
-/*
-** The TZ_MAX_TIMES value below is enough to handle a bit more than a
-** year's worth of solar time (corrected daily to the nearest second) or
-** 138 years of Pacific Presidential Election time
-** (where there are three time zone transitions every fourth year).
-*/
-#define TZ_MAX_TIMES	370
+#ifndef TZ_MAX_TIMES
+#define TZ_MAX_TIMES	2000
+#endif /* !defined TZ_MAX_TIMES */
 
-#define NOSOLAR			/* 4BSD doesn't currently handle solar time */
+#ifndef TZ_MAX_TYPES
+/* This must be at least 17 for Europe/Samara and Europe/Vilnius.  */
+#define TZ_MAX_TYPES	256 /* Limited by what (unsigned char)'s can hold */
+#endif /* !defined TZ_MAX_TYPES */
 
-#ifndef NOSOLAR
-#define TZ_MAX_TYPES	256	/* Limited by what (unsigned char)'s can hold */
-#else
-#define TZ_MAX_TYPES	10	/* Maximum number of local time types */
-#endif
-
+#ifndef TZ_MAX_CHARS
 #define TZ_MAX_CHARS	50	/* Maximum number of abbreviation characters */
+				/* (limited by what unsigned chars can hold) */
+#endif /* !defined TZ_MAX_CHARS */
 
-#define	TZ_MAX_LEAPS	50	/* Maximum number of leap second corrections */
+#ifndef TZ_MAX_LEAPS
+#define TZ_MAX_LEAPS	50	/* Maximum number of leap second corrections */
+#endif /* !defined TZ_MAX_LEAPS */
 
 #define SECSPERMIN	60
 #define MINSPERHOUR	60
@@ -119,7 +122,7 @@ struct tzhead {
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
 #define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
 #define MONSPERYEAR	12
 
 #define TM_SUNDAY	0
@@ -148,11 +151,20 @@ struct tzhead {
 #define EPOCH_YEAR	1970
 #define EPOCH_WDAY	TM_THURSDAY
 
+#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+
 /*
-** Accurate only for the past couple of centuries;
-** that will probably do.
+** Since everything in isleap is modulo 400 (or a factor of 400), we know that
+**	isleap(y) == isleap(y % 400)
+** and so
+**	isleap(a + b) == isleap((a + b) % 400)
+** or
+**	isleap(a + b) == isleap(a % 400 + b % 400)
+** This is true even if % means modulo rather than Fortran remainder
+** (which is allowed by C89 but not C99).
+** We use this to avoid addition overflow problems.
 */
 
-#define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
+#define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
 
-#endif /* !_TZFILE_H_ */
+#endif /* !defined _TZFILE_H_ */

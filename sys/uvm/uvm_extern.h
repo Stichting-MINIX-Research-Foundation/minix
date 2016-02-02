@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.185 2013/11/14 12:07:11 martin Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.194 2015/03/20 15:41:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -175,19 +175,23 @@
 /*
  * flags for ubc_alloc()
  */
-#define UBC_READ	0x001
-#define UBC_WRITE	0x002
-#define UBC_FAULTBUSY	0x004
+#define UBC_READ	0x001	/* reading from object */
+#define UBC_WRITE	0x002	/* writing to object */
+#define UBC_FAULTBUSY	0x004	/* nobody else is using these pages, so busy
+				 * them at alloc and unbusy at release (e.g.,
+				 * for writes extending a file) */
 
 /*
  * flags for ubc_release()
  */
-#define UBC_UNMAP	0x010
+#define UBC_UNMAP	0x010	/* unmap pages now -- don't leave the
+				 * mappings cached indefinitely */
 
 /*
- * flags for ubc_uiomve()
+ * flags for ubc_uiomove()
  */
-#define	UBC_PARTIALOK	0x100
+#define	UBC_PARTIALOK	0x100	/* return early on error; otherwise, zero all
+				 * remaining bytes after error */
 
 /*
  * flags for uvn_findpages().
@@ -232,7 +236,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
@@ -540,11 +543,13 @@ void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
+void			uao_set_pgfl(struct uvm_object *, int);
 void			uao_detach(struct uvm_object *);
 void			uao_reference(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
+void			ubchist_init(void);
 void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
@@ -591,9 +596,8 @@ void			uvm_proc_fork(struct proc *, struct proc *, bool);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
 int			uvm_coredump_walkmap(struct proc *,
-			    void *,
-			    int (*)(struct proc *, void *,
-				    struct uvm_coredump_state *), void *);
+			    int (*)(struct uvm_coredump_state *), void *);
+int			uvm_coredump_count_segs(struct proc *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
@@ -668,9 +672,9 @@ int			uvm_pctparam_createsysctlnode(struct uvm_pctparam *,
 			    const char *, const char *);
 
 /* uvm_mmap.c */
-int			uvm_mmap(struct vm_map *, vaddr_t *, vsize_t,
-			    vm_prot_t, vm_prot_t, int,
-			    void *, voff_t, vsize_t);
+int			uvm_mmap_dev(struct proc *, void **, size_t, dev_t,
+			    off_t);
+int			uvm_mmap_anon(struct proc *, void **, size_t);
 vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
 
 /* uvm_mremap.c */
@@ -741,7 +745,6 @@ bool			uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);
-void			kmeminit(void);
 extern int		nkmempages;
 
 #endif /* _KERNEL */

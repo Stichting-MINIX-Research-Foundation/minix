@@ -12,7 +12,9 @@
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #ifndef HOSTTOOL
-/* #undef ENABLE_NLS */
+#if !defined(__minix)
+#define ENABLE_NLS 1
+#endif /* !defined(__minix) */
 #endif
 
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */

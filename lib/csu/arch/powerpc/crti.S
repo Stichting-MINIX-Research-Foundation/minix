@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2011/02/08 02:02:25 matt Exp $ */
+/* $NetBSD: crti.S,v 1.4 2014/03/06 19:05:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,20 +31,28 @@
 
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2011/02/08 02:02:25 matt Exp $")
+RCSID("$NetBSD: crti.S,v 1.4 2014/03/06 19:05:59 matt Exp $")
 
 #include "sysident.S"
 
 	.section ".init", "ax", @progbits
-	.align 2; .globl _init; .type _init,@function
-_init:
+_XENTRY(_init)
 	mflr	%r0
+#ifdef _LP64
+	stdu	%r1, -(6*SZREG)(%r1)
+	std	%r0, (2*SZREG)(%r1)
+#else
 	stw	%r0, (1*SZREG)(%r1)
 	stwu	%r1, -(4*SZREG)(%r1)
+#endif
 
 	.section ".fini", "ax", @progbits
-	.align 2; .globl _fini; .type _fini,@function
-_fini:
+_XENTRY(_fini)
 	mflr	%r0
+#ifdef _LP64
+	stdu	%r1, -(6*SZREG)(%r1)
+	std	%r0, (2*SZREG)(%r1)
+#else
 	stw	%r0, (1*SZREG)(%r1)
 	stwu	%r1, -(4*SZREG)(%r1)
+#endif

@@ -2,11 +2,13 @@ add_llvm_library(LLVMCodeGen
   AggressiveAntiDepBreaker.cpp
   AllocationOrder.cpp
   Analysis.cpp
+  AtomicExpandPass.cpp
   BasicTargetTransformInfo.cpp
   BranchFolding.cpp
   CalcSpillWeights.cpp
   CallingConvLower.cpp
   CodeGen.cpp
+  CodeGenPrepare.cpp
   CriticalAntiDepBreaker.cpp
   DFAPacketizer.cpp
   DeadMachineInstructionElim.cpp
@@ -17,14 +19,16 @@ add_llvm_library(LLVMCodeGen
   ExecutionDepsFix.cpp
   ExpandISelPseudos.cpp
   ExpandPostRAPseudos.cpp
+  ForwardControlFlowIntegrity.cpp
   GCMetadata.cpp
   GCMetadataPrinter.cpp
   GCStrategy.cpp
+  GlobalMerge.cpp
   IfConversion.cpp
   InlineSpiller.cpp
   InterferenceCache.cpp
   IntrinsicLowering.cpp
-  JITCodeEmitter.cpp
+  JumpInstrTables.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp
   LexicalScopes.cpp
@@ -35,7 +39,7 @@ add_llvm_library(LLVMCodeGen
   LiveRangeCalc.cpp
   LiveRangeEdit.cpp
   LiveRegMatrix.cpp
-  LiveRegUnits.cpp
+  LivePhysRegs.cpp
   LiveStackAnalysis.cpp
   LiveVariables.cpp
   LocalStackSlotAllocation.cpp
@@ -44,9 +48,10 @@ add_llvm_library(LLVMCodeGen
   MachineBlockPlacement.cpp
   MachineBranchProbabilityInfo.cpp
   MachineCSE.cpp
-  MachineCodeEmitter.cpp
+  MachineCombiner.cpp
   MachineCopyPropagation.cpp
   MachineDominators.cpp
+  MachineDominanceFrontier.cpp
   MachineFunction.cpp
   MachineFunctionAnalysis.cpp
   MachineFunctionPass.cpp
@@ -60,6 +65,7 @@ add_llvm_library(LLVMCodeGen
   MachinePassRegistry.cpp
   MachinePostDominators.cpp
   MachineRegisterInfo.cpp
+  MachineRegionInfo.cpp
   MachineSSAUpdater.cpp
   MachineScheduler.cpp
   MachineSink.cpp
@@ -92,12 +98,13 @@ add_llvm_library(LLVMCodeGen
   SjLjEHPrepare.cpp
   SlotIndexes.cpp
   SpillPlacement.cpp
-  Spiller.cpp
   SplitKit.cpp
   StackColoring.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
+  StackMapLivenessAnalysis.cpp
   StackMaps.cpp
+  StatepointExampleGC.cpp
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
   TargetInstrInfo.cpp

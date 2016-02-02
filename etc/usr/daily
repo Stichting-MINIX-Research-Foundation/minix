@@ -3,7 +3,7 @@
 # daily - daily cleanup of the system.
 
 # Doesn't make sense when running from CD
-if [ -f /CD ]
+if [ ! -z $(sysenv bootcd) ]
 then	exit
 fi
 
@@ -50,8 +50,8 @@ cycle()
     fi
 }
 
-cycle 100 wtmp 
-cycle 100 log 
+cycle 100 wtmp
+cycle 100 log
 cycle  20 ftplog
 cycle 200 aftplog
 

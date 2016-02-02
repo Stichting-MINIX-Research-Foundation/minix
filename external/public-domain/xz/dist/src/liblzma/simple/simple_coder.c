@@ -18,7 +18,7 @@
 
 /// Copied or encodes/decodes more data to out[].
 static lzma_ret
-copy_or_code(lzma_coder *coder, lzma_allocator *allocator,
+copy_or_code(lzma_coder *coder, const lzma_allocator *allocator,
 		const uint8_t *restrict in, size_t *restrict in_pos,
 		size_t in_size, uint8_t *restrict out,
 		size_t *restrict out_pos, size_t out_size, lzma_action action)
@@ -35,9 +35,6 @@ copy_or_code(lzma_coder *coder, lzma_allocator *allocator,
 
 	} else {
 		// Call the next coder in the chain to provide us some data.
-		// We don't care about uncompressed_size here, because
-		// the next filter in the chain will do it for us (since
-		// we don't change the size of the data).
 		const lzma_ret ret = coder->next.code(
 				coder->next.coder, allocator,
 				in, in_pos, in_size,
@@ -69,7 +66,7 @@ call_filter(lzma_coder *coder, uint8_t *buffer, size_t size)
 
 
 static lzma_ret
-simple_code(lzma_coder *coder, lzma_allocator *allocator,
+simple_code(lzma_coder *coder, const lzma_allocator *allocator,
 		const uint8_t *restrict in, size_t *restrict in_pos,
 		size_t in_size, uint8_t *restrict out,
 		size_t *restrict out_pos, size_t out_size, lzma_action action)
@@ -110,7 +107,7 @@ simple_code(lzma_coder *coder, lzma_allocator *allocator,
 	// filtered if the buffer sizes used by the application are reasonable.
 	const size_t out_avail = out_size - *out_pos;
 	const size_t buf_avail = coder->size - coder->pos;
-	if (out_avail > buf_avail) {
+	if (out_avail > buf_avail || buf_avail == 0) {
 		// Store the old position so that we know from which byte
 		// to start filtering.
 		const size_t out_start = *out_pos;
@@ -201,7 +198,7 @@ simple_code(lzma_coder *coder, lzma_allocator *allocator,
 
 
 static void
-simple_coder_end(lzma_coder *coder, lzma_allocator *allocator)
+simple_coder_end(lzma_coder *coder, const lzma_allocator *allocator)
 {
 	lzma_next_end(&coder->next, allocator);
 	lzma_free(coder->simple, allocator);
@@ -211,7 +208,7 @@ simple_coder_end(lzma_coder *coder, lzma_allocator *allocator)
 
 
 static lzma_ret
-simple_coder_update(lzma_coder *coder, lzma_allocator *allocator,
+simple_coder_update(lzma_coder *coder, const lzma_allocator *allocator,
 		const lzma_filter *filters_null lzma_attribute((__unused__)),
 		const lzma_filter *reversed_filters)
 {
@@ -222,7 +219,7 @@ simple_coder_update(lzma_coder *coder, lzma_allocator *allocator,
 
 
 extern lzma_ret
-lzma_simple_coder_init(lzma_next_coder *next, lzma_allocator *allocator,
+lzma_simple_coder_init(lzma_next_coder *next, const lzma_allocator *allocator,
 		const lzma_filter_info *filters,
 		size_t (*filter)(lzma_simple *simple, uint32_t now_pos,
 			bool is_encoder, uint8_t *buffer, size_t size),

@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile.libdecnumber,v 1.1 2011/06/28 10:15:15 mrg Exp $
+#	$NetBSD: Makefile.libdecnumber,v 1.2 2014/03/01 10:00:49 mrg Exp $
 
-DPADD+=		${LIBDECNUMBEROBJ}/libdecnumber.a
-LDADD+=		${LIBDECNUMBEROBJ}/libdecnumber.a
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_DECNUMBER_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_DECNUMBER_=1
+
+LIBDECNUMBEROBJ!=	cd ${.CURDIR}/../libdecnumber && ${PRINTOBJDIR}
+DPADD+=			${LIBDECNUMBEROBJ}/libdecnumber.a
+LDADD+=			${LIBDECNUMBEROBJ}/libdecnumber.a
+
+.endif

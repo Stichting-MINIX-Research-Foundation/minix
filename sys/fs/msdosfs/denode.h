@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.23 2013/01/26 19:45:02 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.24 2014/07/08 09:21:52 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -153,15 +153,21 @@ struct fatcache {
  * This is the in memory variant of a dos directory entry.  It is usually
  * contained within a vnode.
  */
+struct denode_key {
+	u_long dk_dirclust;	/* cluster of the directory file containing this entry */
+	u_long dk_diroffset;	/* offset of this entry in the directory cluster */
+	void *dk_dirgen;	/* non zero and unique for unlinked nodes */
+};
 struct denode {
 	struct genfs_node de_gnode;
-	LIST_ENTRY(denode) de_hash;
 	struct vnode *de_vnode;	/* addr of vnode we are part of */
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
 	u_long de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
-	u_long de_dirclust;	/* cluster of the directory file containing this entry */
-	u_long de_diroffset;	/* offset of this entry in the directory cluster */
+	struct denode_key de_key;
+#define de_dirclust de_key.dk_dirclust
+#define de_diroffset de_key.dk_diroffset
+#define de_dirgen de_key.dk_dirgen
 	u_long de_fndoffset;	/* offset of found dir entry */
 	int de_fndcnt;		/* number of slots before de_fndoffset */
 	long de_refcnt;		/* reference count */
@@ -303,7 +309,11 @@ int msdosfs_update(struct vnode *, const struct timespec *,
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
 int deextend(struct denode *, u_long, struct kauth_cred *);
+#ifdef MAKEFS
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
+#else
+int deget(struct msdosfsmount *, u_long, u_long, struct vnode **);
+#endif
 int detrunc(struct denode *, u_long, int, struct kauth_cred *);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
@@ -311,7 +321,6 @@ int dosdirempty(struct denode *);
 int readde(struct denode *, struct buf **, struct direntry **);
 int readep(struct msdosfsmount *, u_long, u_long,
 		struct buf **, struct direntry **);
-void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);

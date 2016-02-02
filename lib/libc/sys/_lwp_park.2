@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_park.2,v 1.7 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_park.2,v 1.9 2014/01/31 21:11:05 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 25, 2007
+.Dd March 28, 2013
 .Dt _LWP_PARK 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In lwp.h
 .Ft int
-.Fn _lwp_park "const struct timespec *abstime" "lwpid_t unpark" "const void *hint" "const void *unparkhint"
+.Fn _lwp_park "clockid_t clock_id" "int flags" "const struct timespec *ts" "lwpid_t unpark" "const void *hint" "const void *unparkhint"
 .Sh DESCRIPTION
 .Fn _lwp_park
 can be used to synchronize access to resources among multiple light-weight
@@ -48,8 +48,24 @@ of the following conditions is met:
 .Bl -bullet
 .It
 The
-.Fa abstime
-argument is non-NULL, and the absolute UTC time it specifies has passed.
+.Fa ts
+argument is
+.Pf non- Dv NULL ,
+and the time it specifies has passed.
+The
+.Fa ts
+time can be an relative interval to wait if the
+.Ar flags
+argument does not contain
+.Dv TIMER_ABSTIME
+or it can be an absolute time compared to
+.Dv CLOCK_REALTIME
+or
+.Dv CLOCK_MONOTONIC
+depending on the value
+of the
+.Ar clock_id
+argument.
 .It
 The LWP receives a directed signal posted using
 .Fn _lwp_kill ,
@@ -125,14 +141,14 @@ following functions:
 .Fn _lwp_wakeup .
 .It Bq Er EINVAL
 The time value specified by
-.Fa abstime
+.Fa ts
 is invalid.
 .It Bq Er ESRCH
 No LWP can be found in the current process corresponding to
 .Fa unpark .
 .It Bq Er ETIMEDOUT
 The UTC time specified by
-.Fa abstime
+.Fa ts
 has passed.
 .El
 .Sh SEE ALSO

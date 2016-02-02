@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2012/03/21 10:08:31 matt Exp $
+#	$NetBSD: Makefile,v 1.22 2014/01/30 06:49:16 wiz Exp $
 
 WARNS=	3
 
@@ -21,6 +21,12 @@ CLEANFILES+=	minigzip
 
 INCS=		zconf.h zlib.h
 INCSDIR=	/usr/include
+
+FILES+=			zlib.pc
+FILESOWN_zlib.pc=	${BINOWN}
+FILESGRP_zlib.pc=	${BINGRP}
+FILESMODE_zlib.pc=	${NONBINMODE}
+FILESDIR_zlib.pc=	/usr/lib/pkgconfig
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.16 2013/08/15 22:34:59 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.18 2015/03/24 08:38:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -94,10 +94,12 @@ typedef struct {
 		__fpregset_t __fpregs;
 		__vfpregset_t __vfpregs;
 	} __fpu;
-	__greg_t	_mc_tlsbase;
 #if defined(__minix)
 	int mc_flags;
 	int mc_magic;
+#else
+	__greg_t	_mc_tlsbase;
+	__greg_t	_mc_user_tpid;
 #endif /* defined(__minix) */
 } mcontext_t, mcontext32_t;
 
@@ -110,7 +112,7 @@ typedef struct {
 
 #define	_UC_TLSBASE	0x00080000
 
-#define _UC_MACHINE_PAD	2		/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	1		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
@@ -150,6 +152,7 @@ typedef struct {
 #define	__UCONTEXT_SIZE	256
 #endif
 
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
@@ -182,5 +185,6 @@ int setmcontext(const mcontext_t *mcp);
 int getmcontext(mcontext_t *mcp);
 #define MCF_MAGIC 0xc0ffee
 #endif /* defined(__minix) */
+__END_DECLS
 
 #endif	/* !_ARM_MCONTEXT_H_ */

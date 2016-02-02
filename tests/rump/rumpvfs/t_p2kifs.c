@@ -1,4 +1,4 @@
-/*	$NetBSD: t_p2kifs.c,v 1.3 2011/01/02 12:58:17 pooka Exp $	*/
+/*	$NetBSD: t_p2kifs.c,v 1.4 2014/02/07 15:29:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@ ATF_TC_BODY(makecn, tc)
 	cn = rump_pub_makecn(RUMP_NAMEI_LOOKUP, 0, pathstr, strlen(pathstr),
 	    rump_pub_cred_create(0, 0, 0, NULL), rump_pub_lwproc_curlwp());
 	RZ(RUMP_VOP_LOOKUP(rumpns_rootvnode, &vp, cn));
-	RUMP_VOP_UNLOCK(vp);
 	rump_pub_freecn(cn, RUMPCN_FREECRED);
 
 	/* and then with modification-in-the-middle */
@@ -81,7 +80,6 @@ ATF_TC_BODY(makecn, tc)
 	    rump_pub_cred_create(0, 0, 0, NULL), rump_pub_lwproc_curlwp());
 	strcpy(pathstr, "/muuta");
 	RZ(RUMP_VOP_LOOKUP(rumpns_rootvnode, &vp, cn));
-	RUMP_VOP_UNLOCK(vp);
 	rump_pub_freecn(cn, RUMPCN_FREECRED);
 }
 

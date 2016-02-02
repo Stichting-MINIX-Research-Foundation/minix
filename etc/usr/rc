@@ -178,6 +178,11 @@ start|autoboot)
     	cat < $RANDOM_FILE >/dev/random
     	# overwrite $RANDOM_FILE. We don't want to use this data again
     	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1 2> /dev/null
+    else
+	# We couldn't find the old state to restart from, so use a binary
+	# file and the current date instead, even if this is less than ideal.
+	cat /bin/sh >> /dev/urandom
+	date >> /dev/urandom
     fi
 
     # start network driver instances for all configured ethernet devices
@@ -388,6 +393,15 @@ start|autoboot)
 	fi
     fi
 
+    # Now that all device files should be created, see if we need to update the
+    # device file database.  This code is butchered from NetBSD etc/rc.d/sysdb.
+    DEVDIR=/dev
+    DEVDB=/var/run/dev.cdb
+    if [ ! -f "$DEVDB" -o "$DEVDIR" -nt "$DEVDB" ]
+    then
+	dev_mkdb
+    fi
+
     if [ "$net" ]
     then
 	# Get the nodename from the DNS and set it.
@@ -395,6 +409,9 @@ start|autoboot)
 	intr -t 20 hostaddr -h
 	trap 2
     fi
+
+    # Load the stored hostname into the sysctl database.
+    test -r /etc/hostname.file && hostname $(cat /etc/hostname.file)
 
     # Recover files being edited when the system crashed.
     test -f /usr/bin/elvprsv && elvprsv /usr/tmp/elv*

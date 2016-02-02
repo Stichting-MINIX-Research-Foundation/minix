@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.32 2013/05/24 21:34:19 christos Exp $
+#	$NetBSD: Makefile.image,v 1.38 2014/08/12 11:48:22 martin Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -13,6 +13,7 @@
 #
 # Optional variables:
 #	IMAGE		name of target image
+#	IMAGEPREBUILD	additional operations to run pre image creation
 #	IMAGEPOSTBUILD	operation to run on ${IMAGE} ${.TARGET} after its built
 #			(if this returns non zero, ${.TARGET} is removed)
 #	CRUNCHBIN	name of crunchgen(1)ed binary
@@ -38,6 +39,7 @@ WORKBUILT?=	work.built
 
 PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
+GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
 .if !target(${WORKBUILT})					# {
 ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
@@ -84,6 +86,9 @@ CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 .if defined(IMAGE)						# {
 IMGMAKEFSOPTIONS?= -o bsize=4096,fsize=512
 ${IMAGE}: ${WORKBUILT}
+.if defined(IMAGEPREBUILD)
+	${IMAGEPREBUILD}
+.endif
 	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
 	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
@@ -103,7 +108,7 @@ fsimage: ${IMAGE}
 ${IMAGE}.gz: ${IMAGE}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
-	gzip -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP} ${GZIP_FLAGS} -c ${.ALLSRC} > ${.TARGET}
 
 realall: ${IMAGE}
 
@@ -121,7 +126,9 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	${_MKTARGET_CREATE}
 	( cd ${WORKDIR}; \
-	  GZIP=-9n ${TOOL_PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
+	  GZIP=${GZIP_FLAGS:Q} \
+	  ${TOOL_PAX} --use-compress-program=${TOOL_GZIP:Q} \
+	      -ON ${NETBSDSRCDIR}/etc -wdM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 

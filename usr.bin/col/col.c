@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.17 2011/08/31 16:24:57 plunky Exp $	*/
+/*	$NetBSD: col.c,v 1.18 2014/10/18 14:56:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: col.c,v 1.17 2011/08/31 16:24:57 plunky Exp $");
+__RCSID("$NetBSD: col.c,v 1.18 2014/10/18 14:56:14 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -368,7 +368,7 @@ flush_blanks(void)
 		PUTC('\n');
 	if (half) {
 		PUTC('\033');
-		PUTC('9');
+		PUTC('\011');
 		if (!nb)
 			PUTC('\r');
 	}

@@ -1,16 +1,32 @@
-#	$NetBSD: Makefile.frontend,v 1.2 2011/06/29 02:14:28 mrg Exp $
+#	$NetBSD: Makefile.frontend,v 1.4 2014/04/04 01:19:14 christos Exp $
 
 BINDIR=		/usr/bin
 
 CPPFLAGS+=	-I${GCCARCH} -I${FRONTENDOBJ} \
-		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
+		-DIN_GCC_FRONTEND
 
+NOCTF=	# defined
 .include <bsd.own.mk>
 
-DPADD=		${FRONTENDOBJ}/libfrontend.a ${LIBIBERTYOBJ}/libiberty.a
-LDADD=		-L${FRONTENDOBJ} -lfrontend -L${LIBIBERTYOBJ} -liberty
+DPADD+=			${FRONTENDOBJ}/libfrontend.a
+LDADD+=			-L${FRONTENDOBJ} -lfrontend
+
+.include "../Makefile.common"
+.include "../Makefile.common-target"
+.include "../Makefile.libcpp"
+.include "../Makefile.backtrace"
+.include "../Makefile.libiberty"
+.include "../Makefile.libdecnumber"
+
+HOSTPROG_CXX=	1
 
 .include <bsd.prog.mk>
+
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
 
 gcc-vers.texi:
 	(echo "@set version-GCC $(BASEVER)"; \

@@ -1,13 +1,13 @@
-/*	$NetBSD: mdreloc.c,v 1.29 2011/11/22 15:25:28 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.30 2014/08/25 20:40:52 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.29 2011/11/22 15:25:28 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.30 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.29 2011/11/22 15:25:28 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.30 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -223,8 +223,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		return 0;
 
 	assert(rela->r_addend == 0);
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
-	    rela->r_addend);
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		new_value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
+	}
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)

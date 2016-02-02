@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.8 2008/03/20 18:49:39 mhitch Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.9 2014/10/10 20:58:09 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,6 +84,7 @@ ENTRY(_atan2f, 0)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(atan2, _atan2)
+WEAK_ALIAS(_atan2l, _atan2)
 #endif
 
 ENTRY(_atan2, 0x0fc0)

@@ -759,7 +759,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 
@@ -787,7 +787,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 
@@ -815,7 +815,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 		return;
 	}
 
-	if (rc < strlen(buf)) {
+	if (rc < strlen((char *)buf)) {
 		test_fail("[server] write didn't write all the bytes");
 	}
 
@@ -1637,12 +1637,12 @@ test_nonblock(const struct socket_test_info *info)
 		test_fail("recv() should have yielded EAGAIN");
 
 	/* This may be an implementation aspect, or even plain wrong (?). */
-	if (send(client_sd, buf, sizeof(buf), 0) != -1) {
-		if (!info->ignore_send_waiting) {
+	if (!info->ignore_send_waiting) {
+		if (send(client_sd, buf, sizeof(buf), 0) != -1) {
 			test_fail("send() should have failed");
+		} else if (errno != EAGAIN) {
+			test_fail("send() should have yielded EAGAIN");
 		}
-	} else if (errno != EAGAIN) {
-		test_fail("send() should have yielded EAGAIN");
 	}
 
 	switch (fork()) {

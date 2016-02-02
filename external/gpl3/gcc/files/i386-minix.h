@@ -23,20 +23,6 @@
    Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#undef  MINIX_TARGET_CPU_CPP_BUILTINS
-#define MINIX_TARGET_CPU_CPP_BUILTINS()          \
-  do                                            \
-    {                                           \
-		builtin_define ("__i386");	\
-		builtin_define_with_int_value ("_EM_WSIZE", 4);	\
-		builtin_define_with_int_value ("_EM_PSIZE", 4);	\
-		builtin_define_with_int_value ("_EM_SSIZE", 2);	\
-		builtin_define_with_int_value ("_EM_LSIZE", 4);	\
-		builtin_define_with_int_value ("_EM_FSIZE", 4);	\
-		builtin_define_with_int_value ("_EM_DSIZE", 8);	\
-    }                                           \
-  while (0)
-
 /* Define the actual types of some ANSI-mandated types.
    Needs to agree with <machine/ansi.h>.  GCC defaults come from c-decl.c,
    c-common.c, and config/<arch>/<arch>.h. */
@@ -45,9 +31,6 @@
  
 #undef  PTRDIFF_TYPE
 #define PTRDIFF_TYPE	(TARGET_64BIT ? "long int" : "int")
-  
-#undef  WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE	(TARGET_64BIT ? 32 : BITS_PER_WORD)
 
 /* Override the default comment-starter of "/".  */
 #undef  ASM_COMMENT_START
@@ -77,8 +60,8 @@
    This is used to align code labels according to Intel recommendations.  */
 #ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
 #undef  ASM_OUTPUT_MAX_SKIP_ALIGN
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE, LOG, MAX_SKIP)					\
-  if ((LOG) != 0) {														\
+#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE, LOG, MAX_SKIP)			\
+  if ((LOG) != 0) {							\
     if ((MAX_SKIP) == 0) fprintf ((FILE), "\t.p2align %d\n", (LOG));	\
     else fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP));	\
   }
@@ -87,5 +70,6 @@
 #undef SUBTARGET32_DEFAULT_CPU
 #define SUBTARGET32_DEFAULT_CPU "i586"
 
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (MINIX/i586 ELF)");
+#undef X87_ENABLE_ARITH
+#define X87_ENABLE_ARITH(MODE) \
+  (flag_excess_precision == EXCESS_PRECISION_FAST || (MODE) == DFmode)

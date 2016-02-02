@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.6 2014/08/25 10:25:53 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -13,9 +13,9 @@ INCS=	Xcursor.h
 INCSDIR=${X11INCDIR}/X11/Xcursor
 
 MAN=	Xcursor.3
-X11EXTRAMANDEFS+=	-e 's%__XCURSORPATH__%~/.icons, \
-			   /usr/share/icons, /usr/share/pixmaps, \
-			   ${X11LIBDIR}/icons%g'
+__XCURSORPATH__	= ~/.icons, /usr/share/icons, /usr/share/pixmaps, \
+		${X11LIBDIR}/icons
+X11EXTRAMANDEFS+= -e s%__XCURSORPATH__%${__XCURSORPATH__:Q}%g
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DICONDIR=\"${X11LIBDIR}/icons\"

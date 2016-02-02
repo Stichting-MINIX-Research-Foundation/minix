@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 2013/12/01 02:34:54 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.8 2014/01/26 21:43:45 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: screen.c,v 10.22 2001/06/25 15:19:12 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:12 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: screen.c,v 1.8 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -121,7 +126,7 @@ mem:				msgq(orig, M_SYSERR, NULL);
 	*spp = sp;
 	return (0);
 
-err:	screen_end1(sp, 0);
+err:	screen_fini(sp);
 	return (1);
 }
 
@@ -139,9 +144,14 @@ screen_end1(SCR *sp, int init)
 	 *
 	 * If a created screen failed during initialization, it may not
 	 * be linked into the chain.
+	 *
+	 * XXX screen_end can be called multiple times, abuse the tqe_prev pointer
+	 * to signal wether the tailq node is on-list.
 	 */
-	if (init)
+	if (init && sp->q.tqe_prev) {
 		TAILQ_REMOVE(&sp->wp->scrq, sp, q);
+		sp->q.tqe_prev = NULL;
+	}
 
 	/* The screen is no longer real. */
 	F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
@@ -197,9 +207,20 @@ screen_end1(SCR *sp, int init)
 }
 
 /*
+ * screen_fini --
+ *	Release a screen, that has not been chained to the screen queues.
+ *
+ * PUBLIC: int screen_fini __P((SCR *));
+ */
+int
+screen_fini(SCR *sp)
+{
+	return screen_end1(sp, 0);
+}
+
+/*
  * screen_end --
- *	Release a screen, no matter what had (and had not) been
- *	initialized.
+ *	Release a screen, that has been chained to the screen queues.
  *
  * PUBLIC: int screen_end __P((SCR *));
  */
@@ -208,7 +229,6 @@ screen_end(SCR *sp)
 {
 	return screen_end1(sp, 1);
 }
-
 /*
  * screen_next --
  *	Return the next screen in the queue.

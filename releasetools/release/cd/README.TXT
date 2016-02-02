@@ -44,9 +44,11 @@ CD CONTENTS:
 
 This CD contains:
 
-   - README.TXT      This file
-
-There are also many invisible files used for installing MINIX 3.
+   - README.TXT              This file
+   - i386/                   Base system distribution files, for
+                             installation
+   - usr/packages/           Extra packages, if bundled with this CD
+   - Everything else         MINIX 3 files
 
 ------------------------------------------------------------------------
 

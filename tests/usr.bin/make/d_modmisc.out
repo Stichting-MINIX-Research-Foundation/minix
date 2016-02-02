@@ -1,8 +1,0 @@
-path=':/bin:/usr/bin::/sbin:/usr/sbin:.:/home/user/bin:.'
-path='/bin:/usr/bin:/sbin:/usr/sbin:/home/user/bin'
-path='/bin:/usr/bin:/sbin:/usr/sbin:/homes/user/bin'
-path='/bin':'/usr/bin':'/sbin':'/usr/sbin':'/home/user/bin'
-path='/bin':'/usr/bin':'/sbin':'/usr/sbin':'/homes/user/bin'
-path_/usr/xbin=/opt/xbin/
-paths=/bin /usr/bin /sbin /usr/sbin /homes/user/bin /opt/xbin
-PATHS=/BIN /USR/BIN /SBIN /USR/SBIN /HOMES/USER/BIN /OPT/XBIN

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.65 2013/06/09 17:55:46 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.71 2014/05/26 19:16:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -93,7 +93,6 @@ struct lfs_inode_ext;
  */
 struct inode {
 	struct genfs_node i_gnode;
-	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ufsmount *i_ump; /* Mount point associated with this inode. */
@@ -239,14 +238,14 @@ struct inode {
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* #define	IN_UNUSED	0x0020 */	/* unused, was IN_RENAME */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
-#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+/*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
+/*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
-#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+/*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
+/*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
 #if defined(_KERNEL)
 
 /*
@@ -296,8 +295,8 @@ struct indir {
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	u_int32_t ufid_ino;	/* File number (ino). */
 	int32_t	  ufid_gen;	/* Generation number. */
+	ino_t     ufid_ino;	/* File number (ino). */
 };
 #endif /* _KERNEL */
 

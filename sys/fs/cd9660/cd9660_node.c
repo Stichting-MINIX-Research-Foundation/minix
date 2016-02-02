@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.34 2014/11/10 18:46:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.34 2014/11/10 18:46:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
 
@@ -58,15 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.29 2011/06/12 03:35:52 rmind Exp $
 #include <fs/cd9660/cd9660_mount.h>
 #include <fs/cd9660/iso_rrip.h>
 
-/*
- * Structures associated with iso_node caching.
- */
-LIST_HEAD(ihashhead, iso_node) *isohashtbl;
-u_long isohash;
-#define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & isohash)
-kmutex_t cd9660_ihash_lock;
-kmutex_t cd9660_hashlock;
-
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 struct pool cd9660_node_pool;
@@ -74,7 +64,7 @@ struct pool cd9660_node_pool;
 static u_int cd9660_chars2ui(const u_char *, int);
 
 /*
- * Initialize hash links for inodes and dnodes.
+ * Initialize pool for nodes.
  */
 void
 cd9660_init(void)
@@ -83,113 +73,26 @@ cd9660_init(void)
 	malloc_type_attach(M_ISOFSMNT);
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
 	    "cd9660nopl", &pool_allocator_nointr, IPL_NONE);
-	isohashtbl = hashinit(desiredvnodes, HASH_LIST, true, &isohash);
-	mutex_init(&cd9660_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&cd9660_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
- * Reinitialize inode hash table.
+ * Reinitialize.
  */
 
 void
 cd9660_reinit(void)
 {
-	struct iso_node *ip;
-	struct ihashhead *oldhash1, *hash1;
-	u_long oldmask1, mask1, val;
-	u_int i;
 
-	hash1 = hashinit(desiredvnodes, HASH_LIST, true, &mask1);
-
-	mutex_enter(&cd9660_ihash_lock);
-	oldhash1 = isohashtbl;
-	oldmask1 = isohash;
-	isohashtbl = hash1;
-	isohash = mask1;
-	for (i = 0; i <= oldmask1; i++) {
-		while ((ip = LIST_FIRST(&oldhash1[i])) != NULL) {
-			LIST_REMOVE(ip, i_hash);
-			val = INOHASH(ip->i_dev, ip->i_number);
-			LIST_INSERT_HEAD(&hash1[val], ip, i_hash);
-		}
-	}
-	mutex_exit(&cd9660_ihash_lock);
-	hashdone(oldhash1, HASH_LIST, oldmask1);
 }
 
 /*
- * Destroy node pool and hash table.
+ * Destroy node pool.
  */
 void
 cd9660_done(void)
 {
-	hashdone(isohashtbl, HASH_LIST, isohash);
 	pool_destroy(&cd9660_node_pool);
-	mutex_destroy(&cd9660_ihash_lock);
-	mutex_destroy(&cd9660_hashlock);
 	malloc_type_detach(M_ISOFSMNT);
-}
-
-/*
- * Use the device/inum pair to find the incore inode, and return a pointer
- * to it. If it is in core, but locked, wait for it.
- */
-struct vnode *
-cd9660_ihashget(dev_t dev, ino_t inum, int flags)
-{
-	struct iso_node *ip;
-	struct vnode *vp;
-
-loop:
-	mutex_enter(&cd9660_ihash_lock);
-	LIST_FOREACH(ip, &isohashtbl[INOHASH(dev, inum)], i_hash) {
-		if (inum == ip->i_number && dev == ip->i_dev) {
-			vp = ITOV(ip);
-			if (flags == 0) {
-				mutex_exit(&cd9660_ihash_lock);
-			} else {
-				mutex_enter(vp->v_interlock);
-				mutex_exit(&cd9660_ihash_lock);
-				if (vget(vp, flags))
-					goto loop;
-			}
-			return (vp);
-		}
-	}
-	mutex_exit(&cd9660_ihash_lock);
-	return (NULL);
-}
-
-/*
- * Insert the inode into the hash table, and return it locked.
- *
- * ip->i_vnode must be initialized first.
- */
-void
-cd9660_ihashins(struct iso_node *ip)
-{
-	struct ihashhead *ipp;
-
-	KASSERT(mutex_owned(&cd9660_hashlock));
-
-	mutex_enter(&cd9660_ihash_lock);
-	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	LIST_INSERT_HEAD(ipp, ip, i_hash);
-	mutex_exit(&cd9660_ihash_lock);
-
-	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
-}
-
-/*
- * Remove the inode from the hash table.
- */
-void
-cd9660_ihashrem(struct iso_node *ip)
-{
-	mutex_enter(&cd9660_ihash_lock);
-	LIST_REMOVE(ip, i_hash);
-	mutex_exit(&cd9660_ihash_lock);
 }
 
 /*
@@ -233,16 +136,12 @@ cd9660_reclaim(void *v)
 	if (prtactive && vp->v_usecount > 1)
 		vprint("cd9660_reclaim: pushing active", vp);
 	/*
-	 * Remove the inode from its hash chain.
+	 * Remove the inode from the vnode cache.
 	 */
-	cd9660_ihashrem(ip);
+	vcache_remove(vp->v_mount, &ip->i_number, sizeof(ip->i_number));
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
-	if (ip->i_devvp) {
-		vrele(ip->i_devvp);
-		ip->i_devvp = 0;
-	}
 	genfs_node_destroy(vp);
 	pool_put(&cd9660_node_pool, vp->v_data);
 	vp->v_data = NULL;
@@ -438,7 +337,14 @@ isodirino(struct iso_directory_record *isodir, struct iso_mnt *imp)
 {
 	ino_t ino;
 
-	ino = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
-	      << imp->im_bshift;
-	return (ino);
+	/*
+	 * Note there is an inverse calculation in
+	 * cd9660_vfsops.c:cd9660_loadvnode():
+	 *   ip->iso_start = ino >> imp->im_bshift;
+	 * and also a calculation of the isodir pointer
+	 * from an inode in cd9660_vnops.c:cd9660_readlink()
+	 */
+	ino = ((ino_t)isonum_733(isodir->extent) +
+		isonum_711(isodir->ext_attr_length)) << imp->im_bshift;
+	return ino;
 }

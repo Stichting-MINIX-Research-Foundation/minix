@@ -1,4 +1,4 @@
-/* $Id: osdep-openbsd.c,v 1.1.1.2 2011/08/17 18:40:06 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/stat.h>
 
@@ -37,6 +38,7 @@
 
 struct kinfo_proc	*cmp_procs(struct kinfo_proc *, struct kinfo_proc *);
 char			*osdep_get_name(int, char *);
+char			*osdep_get_cwd(int);
 struct event_base	*osdep_event_init(void);
 
 struct kinfo_proc *
@@ -131,6 +133,20 @@ retry:
 error:
 	free(buf);
 	return (NULL);
+}
+
+char *
+osdep_get_cwd(int fd)
+{
+	int		name[] = { CTL_KERN, KERN_PROC_CWD, 0 };
+	static char	path[MAXPATHLEN];
+	size_t		pathlen = sizeof path;
+
+	if ((name[2] = tcgetpgrp(fd)) == -1)
+		return (NULL);
+	if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0)
+		return (NULL);
+	return (path);
 }
 
 struct event_base *

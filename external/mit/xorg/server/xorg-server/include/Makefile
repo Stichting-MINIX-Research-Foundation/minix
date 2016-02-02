@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2011/08/02 07:56:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2014/11/05 14:30:00 prlw1 Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
-XORGINC_SUBDIR=	Xext dbe exa fb include mi \
+XORGINC_SUBDIR=	Xext composite dbe exa fb include mi \
 		miext/damage miext/shadow randr render xkb record
 XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
@@ -24,12 +24,13 @@ INCSDIR=${X11INCDIR}/xorg
 INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	bt829.h \
 	callback.h closestr.h closure.h colormap.h \
-	colormapst.h compiler.h cursor.h cursorstr.h damage.h damagestr.h \
+	colormapst.h compiler.h compositeext.h cursor.h cursorstr.h \
+	damage.h damagestr.h \
 	dbestruct.h dgaproc.h dix.h dixevents.h dixfont.h dixfontstr.h \
 	dixgrabs.h dixstruct.h dri.h dristruct.h edid.h exa.h exevents.h \
 	eventconvert.h events.h eventstr.h list.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
-	fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
+	fbpict.h fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
 	glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
 	mi.h mibstore.h micmap.h micoord.h mifillarc.h mifpoly.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
@@ -38,7 +39,8 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	protocol-versions.h \
 	propertyst.h randrstr.h region.h regionstr.h resource.h \
 	rgb.h sarea.h screenint.h scrnintstr.h selection.h servermd.h \
-	shadow.h shadowfb.h site.h swaprep.h swapreq.h tda8425.h tda9850.h \
+	shadow.h shadowfb.h shmint.h site.h swaprep.h swapreq.h \
+	tda8425.h tda9850.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
 	window.h windowstr.h xaa.h xaalocal.h xaarop.h \
 	xkbDflts.h xkb.h set.h \

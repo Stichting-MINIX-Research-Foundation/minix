@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.106 2013/10/16 19:59:29 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.107 2015/06/08 12:38:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -480,7 +480,7 @@ extern int	 TABSIZE;		/* Size of a tab. */
 #define	mvaddstr(y, x, s)		mvwaddstr(stdscr, y, x, s)
 #define	mvdelch(y, x)			mvwdelch(stdscr, y, x)
 #define	mvgetch(y, x)			mvwgetch(stdscr, y, x)
-#define	mvgetnstr(y, x, s)		mvwgetnstr(stdscr, y, x, s, n)
+#define	mvgetnstr(y, x, s, n)		mvwgetnstr(stdscr, y, x, s, n)
 #define	mvgetstr(y, x, s)		mvwgetstr(stdscr, y, x, s)
 #define	mvinch(y, x)			mvwinch(stdscr, y, x)
 #define	mvinchnstr(y, x, c, n)		mvwinchnstr(stdscr, y, x, c, n)

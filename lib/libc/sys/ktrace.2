@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.2,v 1.17 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: ktrace.2,v 1.18 2014/11/11 08:10:02 njoly Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -152,8 +152,12 @@ A component of the path prefix is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded
+.Brq Dv NAME_MAX
+characters,
+or an entire path name exceeded
+.Brq Dv PATH_MAX
+characters.
 .It Bq Er ENOENT
 The named tracefile does not exist.
 .It Bq Er EACCES

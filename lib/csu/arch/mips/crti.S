@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.2 2013/06/30 08:00:34 matt Exp $ */
+/* $NetBSD: crti.S,v 1.3 2015/05/01 21:35:56 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.2 2013/06/30 08:00:34 matt Exp $")
+RCSID("$NetBSD: crti.S,v 1.3 2015/05/01 21:35:56 matt Exp $")
 
 #include "sysident.S"
 
 	.section ".init", "ax", @progbits
+	.p2align 2
 NESTED_NOPROFILE(_init, CALLFRAME_SIZ, ra)
         SETUP_GP
         PTR_SUBU sp, sp, CALLFRAME_SIZ	# allocate stack frame
@@ -48,6 +49,7 @@ NESTED_NOPROFILE(_init, CALLFRAME_SIZ, ra)
 END(_init)
 
 	.section ".fini", "ax", @progbits
+	.p2align 2
 NESTED_NOPROFILE(_fini, CALLFRAME_SIZ, ra)
         SETUP_GP
         PTR_SUBU sp, sp, CALLFRAME_SIZ	# allocate stack frame

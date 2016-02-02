@@ -1,5 +1,3 @@
-/*	$NetBSD: dfa.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
-
 /* dfa - DFA construction routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,8 +28,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: dfa.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
+
 #include "tables.h"
 
 /* declare functions that have forward references */

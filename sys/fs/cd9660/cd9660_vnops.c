@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.45 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.52 2015/04/20 23:03:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.45 2013/06/23 07:28:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.52 2015/04/20 23:03:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,9 +262,9 @@ cd9660_read(void *v)
 		if (cd9660_lblktosize(imp, rablock) < ip->i_size) {
 			rasize = cd9660_blksize(imp, ip, rablock);
 			error = breadn(vp, lbn, size, &rablock,
-				       &rasize, 1, NOCRED, 0, &bp);
+				       &rasize, 1, 0, &bp);
 		} else {
-			error = bread(vp, lbn, size, NOCRED, 0, &bp);
+			error = bread(vp, lbn, size, 0, &bp);
 		}
 		if (error) {
 			return (error);
@@ -600,7 +600,7 @@ cd9660_readlink(void *v)
 	error = bread(imp->im_devvp,
 		      (ip->i_number >> imp->im_bshift) <<
 		      (imp->im_bshift - DEV_BSHIFT),
-		      imp->logical_block_size, NOCRED, 0, &bp);
+		      imp->logical_block_size, 0, &bp);
 	if (error) {
 		return (EINVAL);
 	}
@@ -664,21 +664,20 @@ cd9660_readlink(void *v)
 int
 cd9660_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
 int
 cd9660_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -687,7 +686,6 @@ cd9660_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -724,7 +722,7 @@ cd9660_strategy(void *v)
 		biodone(bp);
 		return (0);
 	}
-	vp = ip->i_devvp;
+	vp = ip->i_mnt->im_devvp;
 	return (VOP_STRATEGY(vp, bp));
 }
 
@@ -860,6 +858,8 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, cd9660_read },		/* read */
 	{ &vop_write_desc, cd9660_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
 	{ &vop_poll_desc, cd9660_poll },		/* poll */
@@ -910,6 +910,8 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -958,6 +960,8 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */
 	{ &vop_write_desc, vn_fifo_bypass },		/* write */
+	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
+	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */

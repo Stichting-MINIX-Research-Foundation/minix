@@ -1,4 +1,4 @@
-.\"	$NetBSD: frexp.3,v 1.2 2010/04/29 08:35:03 joerg Exp $
+.\"	$NetBSD: frexp.3,v 1.4 2015/09/10 12:30:08 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)frexp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 21, 2006
+.Dd September 10, 2015
 .Dt FREXP 3
 .Os
 .Sh NAME
@@ -47,6 +47,8 @@
 .Fn frexp "double value" "int *exp"
 .Ft float
 .Fn frexpf "float value" "int *exp"
+.Ft long double
+.Fn frexpl "long double value" "int *exp"
 .Sh DESCRIPTION
 The
 .Fn frexp

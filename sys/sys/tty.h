@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.91 2013/02/24 06:20:24 matt Exp $	*/
+/*	$NetBSD: tty.h,v 1.93 2014/11/15 19:17:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,9 @@ struct tty {
 	void	*t_softc;		/* pointer to driver's softc. */
 };
 
+#ifdef TTY_ALLOW_PRIVATE
 #define	t_cc		t_termios.c_cc
+#endif
 #define	t_cflag		t_termios.c_cflag
 #define	t_iflag		t_termios.c_iflag
 #define	t_ispeed	t_termios.c_ispeed
@@ -172,6 +174,12 @@ struct tty {
 #define	TTMAXLOWAT	(tp->t_qsize >> 2)
 #define	TTMINLOWAT	(tp->t_qsize >> 5)
 #define	TTROUND		64
+#define	TTDIALOUT_MASK	0x80000		/* dialout=524288 in MAKEDEV.tmpl */
+#define	TTCALLUNIT_MASK	0x40000		/* XXX: compat */
+#define	TTUNIT_MASK	0x3ffff
+#define	TTDIALOUT(d)	(minor(d) & TTDIALOUT_MASK)
+#define	TTCALLUNIT(d)	(minor(d) & TTCALLUNIT_MASK)
+#define	TTUNIT(d)	(minor(d) & TTUNIT_MASK)
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
@@ -302,6 +310,10 @@ int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
 extern int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+
+unsigned char tty_getctrlchar(struct tty *, unsigned /*which*/);
+void tty_setctrlchar(struct tty *, unsigned /*which*/, unsigned char /*val*/);
+int tty_try_xonxoff(struct tty *, unsigned char /*c*/);
 
 #endif /* _KERNEL */
 

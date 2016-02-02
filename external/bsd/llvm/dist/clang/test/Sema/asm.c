@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -Wno-private-extern -triple i386-pc-linux-gnu -verify -fsyntax-only
 
+
+
 void f() {
   int i;
 
@@ -13,6 +15,9 @@ void f() {
   asm ("foo\n" : "=a" (i) : "[" (i)); // expected-error {{invalid input constraint '[' in asm}}
   asm ("foo\n" : "=a" (i) : "[foo" (i)); // expected-error {{invalid input constraint '[foo' in asm}}
   asm ("foo\n" : "=a" (i) : "[symbolic_name]" (i)); // expected-error {{invalid input constraint '[symbolic_name]' in asm}}
+
+  asm ("foo\n" : : "" (i)); // expected-error {{invalid input constraint '' in asm}}
+  asm ("foo\n" : "=a" (i) : "" (i)); // expected-error {{invalid input constraint '' in asm}}
 }
 
 void clobbers() {
@@ -92,8 +97,6 @@ void test9(int i) {
   asm("" : [foo] "=r" (i), "=r"(i) : "[foo]1"(i)); // expected-error{{invalid input constraint '[foo]1' in asm}}
 }
 
-register int g asm("dx"); // expected-error{{global register variables are not supported}}
-
 void test10(void){
   static int g asm ("g_asm") = 0;
   extern int gg asm ("gg_asm");
@@ -104,6 +107,7 @@ void test10(void){
 
   register int r asm ("cx");
   register int rr asm ("rr_asm"); // expected-error{{unknown register name 'rr_asm' in asm}}
+  register int rrr asm ("%"); // expected-error{{unknown register name '%' in asm}}
 }
 
 // This is just an assert because of the boolean conversion.
@@ -145,4 +149,58 @@ double test15() {
   __asm("0.0":"=,g"(ret)); // no-error
   __asm("0.0":"=g"(ret)); // no-error
   return ret;
+}
+
+// PR19837
+struct foo {
+  int a;
+  char b;
+};
+register struct foo bar asm("sp"); // expected-error {{bad type for named register variable}}
+register float baz asm("sp"); // expected-error {{bad type for named register variable}}
+
+double f_output_constraint(void) {
+  double result;
+  __asm("foo1": "=f" (result)); // expected-error {{invalid output constraint '=f' in asm}}
+  return result;
+}
+
+void fn1() {
+  int l;
+  __asm__(""
+          : [l] "=r"(l)
+          : "[l],m"(l)); // expected-error {{asm constraint has an unexpected number of alternatives: 1 vs 2}}
+}
+
+void fn2() {
+  int l;
+ __asm__(""
+          : "+&m"(l)); // expected-error {{invalid output constraint '+&m' in asm}}
+}
+
+void fn3() {
+  int l;
+ __asm__(""
+          : "+#r"(l)); // expected-error {{invalid output constraint '+#r' in asm}}
+}
+
+void fn4() {
+  int l;
+ __asm__(""
+          : "=r"(l)
+          : "m#"(l));
+}
+
+void fn5() {
+  int l;
+    __asm__(""
+          : [g] "+r"(l)
+          : "[g]"(l)); // expected-error {{invalid input constraint '[g]' in asm}}
+}
+
+void fn6() {
+    int a;
+  __asm__(""
+            : "=rm"(a), "=rm"(a)
+            : "11m"(a)) // expected-error {{invalid input constraint '11m' in asm}}
 }

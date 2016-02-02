@@ -25,7 +25,7 @@ void fn1 () {
   non_const_copy ncc2 = ncc;
   ncc = ncc2;
   const non_const_copy cncc{};
-  const non_const_copy cncc1; // expected-error {{default initialization of an object of const type 'const non_const_copy' requires a user-provided default constructor}}
+  const non_const_copy cncc1; // expected-error {{default initialization of an object of const type 'const non_const_copy' without a user-provided default constructor}} expected-note {{add an explicit initializer to initialize 'cncc1'}}
   non_const_copy ncc3 = cncc; // expected-error {{no matching}}
   ncc = cncc; // expected-error {{no viable overloaded}}
 };
@@ -80,3 +80,7 @@ struct except_spec_d_match : except_spec_a, except_spec_b {
 // (but not normal definitions)
 struct S { S(); };
 S::S() __attribute((pure)) = default;
+
+using size_t = decltype(sizeof(0));
+void *operator new(size_t) = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}
+void operator delete(void *) noexcept = delete; // expected-error {{deleted definition must be first declaration}} expected-note {{implicit}}

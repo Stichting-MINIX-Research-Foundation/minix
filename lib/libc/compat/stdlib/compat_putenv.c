@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_putenv.c,v 1.2 2012/04/22 15:55:41 christos Exp $	*/
+/*	$NetBSD: compat_putenv.c,v 1.3 2015/01/20 18:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_putenv.c,v 1.2 2012/04/22 15:55:41 christos Exp $");
+__RCSID("$NetBSD: compat_putenv.c,v 1.3 2015/01/20 18:31:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: compat_putenv.c,v 1.2 2012/04/22 15:55:41 christos Exp $");
 #include <compat/include/stdlib.h>
 
 #include "env.h"
-#include "reentrant.h"
 #include "local.h"
 
 #ifdef __weak_alias

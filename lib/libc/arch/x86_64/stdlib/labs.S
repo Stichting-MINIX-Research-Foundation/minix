@@ -1,4 +1,4 @@
-/*	$NetBSD: labs.S,v 1.2 2008/08/04 20:21:26 matt Exp $	*/
+/*	$NetBSD: labs.S,v 1.3 2014/05/22 15:01:56 uebayasi Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: labs.S,v 1.2 2008/08/04 20:21:26 matt Exp $")
+	RCSID("$NetBSD: labs.S,v 1.3 2014/05/22 15:01:56 uebayasi Exp $")
 #endif
 
 #ifdef WEAK_ALIAS
@@ -29,3 +29,10 @@ ENTRY(labs)
         jns     1f
         negq    %rax
 1:      ret
+#ifdef WEAK_ALIAS
+END(_llabs)
+END(_labs)
+#else
+END(llabs)
+END(labs)
+#endif

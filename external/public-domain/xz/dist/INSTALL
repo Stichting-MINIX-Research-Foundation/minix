@@ -6,13 +6,14 @@ XZ Utils Installation
     1. Supported platforms
        1.1. Compilers
        1.2. Platform-specific notes
-            1.2.1. IRIX
-            1.2.2. MINIX 3
-            1.2.3. OpenVMS
-            1.2.4. Solaris, OpenSolaris, and derivatives
-            1.2.5. Tru64
-            1.2.6. Windows
-            1.2.7. DOS
+            1.2.1. AIX
+            1.2.2. IRIX
+            1.2.3. MINIX 3
+            1.2.4. OpenVMS
+            1.2.5. Solaris, OpenSolaris, and derivatives
+            1.2.6. Tru64
+            1.2.7. Windows
+            1.2.8. DOS
        1.3. Adding support for new platforms
     2. configure options
        2.1. Static vs. dynamic linking of liblzma
@@ -25,6 +26,8 @@ XZ Utils Installation
        4.2. "No POSIX conforming shell (sh) was found."
        4.3. configure works but build fails at crc32_x86.S
        4.4. Lots of warnings about symbol visibility
+       4.5. "make check" fails
+       4.6. liblzma.so (or similar) not found when running xz
 
 
 0. Preface
@@ -63,7 +66,14 @@ XZ Utils Installation
 
 1.2. Platform-specific notes
 
-1.2.1. IRIX
+1.2.1. AIX
+
+    If you use IBM XL C compiler, pass CC=xlc_r to configure. If
+    you use CC=xlc instead, you must disable threading support
+    with --disable-threads (usually not recommended).
+
+
+1.2.2. IRIX
 
     MIPSpro 7.4.4m has been reported to produce broken code if using
     the -O2 optimization flag ("make check" fails). Using -O1 should
@@ -74,15 +84,17 @@ XZ Utils Installation
     putting "-64" to CFLAGS to build a 64-bit version might help too.
 
 
-1.2.2. MINIX 3
+1.2.3. MINIX 3
 
     The default install of MINIX 3 includes Amsterdam Compiler Kit (ACK),
     which doesn't support C99. Install GCC to compile XZ Utils.
 
-    MINIX 3.1.8 (and possibly some other versions too) has bugs in
-    /usr/include/stdint.h, which has to be patched before XZ Utils
-    can be compiled correctly. See
+    MINIX 3.1.8 and older have bugs in /usr/include/stdint.h, which has
+    to be patched before XZ Utils can be compiled correctly. See
     <http://gforge.cs.vu.nl/gf/project/minix/tracker/?action=TrackerItemEdit&tracker_item_id=537>.
+
+    MINIX 3.2.0 and later use a different libc and aren't affected by
+    the above bug.
 
     XZ Utils doesn't have code to detect the amount of physical RAM and
     number of CPU cores on MINIX 3.
@@ -91,7 +103,7 @@ XZ Utils Installation
     may want to pass gl_cv_cc_visibility=no to configure).
 
 
-1.2.3. OpenVMS
+1.2.4. OpenVMS
 
     XZ Utils can be built for OpenVMS, but the build system files
     are not included in the XZ Utils source package. The required
@@ -101,7 +113,7 @@ XZ Utils Installation
         http://nchrem.tnw.tudelft.nl/openvms/software2.html#xzutils
 
 
-1.2.4. Solaris, OpenSolaris, and derivatives
+1.2.5. Solaris, OpenSolaris, and derivatives
 
     The following linker error has been reported on some x86 systems:
 
@@ -110,15 +122,19 @@ XZ Utils Installation
     This can be worked around by passing gl_cv_cc_visibility=no
     as an argument to the configure script.
 
+    test_scripts.sh in "make check" may fail if good enough tools are
+    missing from PATH (/usr/xpg4/bin or /usr/xpg6/bin). See sections
+    4.5 and 3.2 for more information.
 
-1.2.5. Tru64
+
+1.2.6. Tru64
 
     If you try to use the native C compiler on Tru64 (passing CC=cc to
     configure), you may need the workaround mention in section 4.1 in
     this file (pass also ac_cv_prog_cc_c99= to configure).
 
 
-1.2.6. Windows
+1.2.7. Windows
 
     Building XZ Utils on Windows is supported under MinGW + MSYS,
     MinGW-w64 + MSYS, and Cygwin. There is windows/build.bash to
@@ -126,19 +142,22 @@ XZ Utils Installation
     redistributable .zip or .7z file. See windows/INSTALL-Windows.txt
     for more information.
 
-    It might be possible to build liblzma with a non-GNU toolchain too,
-    but that will probably require writing a separate makefile. Building
+    It may be possible to build liblzma with other toolchains too, but
+    that will probably require writing a separate makefile. Building
     the command line tools with non-GNU toolchains will be harder than
     building only liblzma.
 
-    Even if liblzma is built with MinGW, the resulting DLL or static
-    library can be used by other compilers and linkers, including MSVC.
-    Thus, it shouldn't be a problem to use MinGW to build liblzma even
-    if you cannot use MinGW to build the rest of your project. See
+    Starting with XZ Utils 5.2.0, building liblzma (not the whole
+    XZ Utils) should work with MSVC 2013 update 2 or later using
+    windows/config.h. No project files or makefiles are included yet,
+    so the build process isn't as convenient yet as it could be.
+
+    Even if liblzma is built with MinGW(-w64), the resulting DLL can
+    be used by other compilers and linkers, including MSVC. See
     windows/README-Windows.txt for details.
 
 
-1.2.7. DOS
+1.2.8. DOS
 
     There is an experimental Makefile in the "dos" directory to build
     XZ Utils on DOS using DJGPP. Support for long file names (LFN) is
@@ -241,6 +260,12 @@ XZ Utils Installation
                 Don't install the scripts xzdiff, xzgrep, xzmore, xzless,
                 and their symlinks.
 
+    --disable-doc
+                Don't install the documentation files to $docdir
+                (often /usr/doc/xz or /usr/local/doc/xz). Man pages
+                will still be installed. The $docdir can be changed
+                with --docdir=DIR.
+
     --disable-assembler
                 liblzma includes some assembler optimizations. Currently
                 there is only assembler code for CRC32 and CRC64 for
@@ -297,16 +322,42 @@ XZ Utils Installation
                 the amount of RAM on the operating system you use. See
                 src/common/tuklib_physmem.c for details.
 
-    --disable-threads
-                Disable threading support. This makes some things
-                thread-unsafe, meaning that if multithreaded application
-                calls liblzma functions from more than one thread,
-                something bad may happen.
+    --enable-threads=METHOD
+                Threading support is enabled by default so normally there
+                is no need to specify this option.
 
-                Use this option if threading support causes you trouble,
-                or if you know that you will use liblzma only from
-                single-threaded applications and want to avoid dependency
-                on libpthread.
+                Supported values for METHOD:
+
+                        yes     Autodetect the threading method. If none
+                                is found, configure will give an error.
+
+                        posix   Use POSIX pthreads. This is the default
+                                except on Windows outside Cygwin.
+
+                        win95   Use Windows 95 compatible threads. This
+                                is compatible with Windows XP and later
+                                too. This is the default for 32-bit x86
+                                Windows builds. The `win95' threading is
+                                incompatible with --enable-small.
+
+                        vista   Use Windows Vista compatible threads. The
+                                resulting binaries won't run on Windows XP
+                                or older. This is the default for Windows
+                                excluding 32-bit x86 builds (that is, on
+                                x86-64 the default is `vista').
+
+                        no      Disable threading support. This is the
+                                same as using --disable-threads.
+                                NOTE: If combined with --enable-small, the
+                                resulting liblzma won't be thread safe,
+                                that is, if a multi-threaded application
+                                calls any liblzma functions from more than
+                                one thread, something bad may happen.
+
+    --enable-symbol-versions
+                Use symbol versioning for liblzma. This is enabled by
+                default on GNU/Linux, other GNU-based systems, and
+                FreeBSD.
 
     --enable-debug
                 This enables the assert() macro and possibly some other
@@ -377,11 +428,16 @@ XZ Utils Installation
     gl_cv_posix_shell=/path/to/posix-sh as an argument to the configure
     script.
 
-    Some of the scripts require also mktemp. The original mktemp can be
-    found from <http://www.mktemp.org/>. On GNU, most will use the mktemp
-    program from GNU coreutils instead of the original implementation.
-    Both mktemp versions are fine for XZ Utils (and practically for
-    everything else too).
+    xzdiff (xzcmp/lzdiff/lzcmp) may use mktemp if it is available. As
+    a fallback xzdiff will use mkdir to securely create a temporary
+    directory. Having mktemp available is still recommended since the
+    mkdir fallback method isn't as robust as mktemp is. The original
+    mktemp can be found from <http://www.mktemp.org/>. On GNU, most will
+    use the mktemp program from GNU coreutils instead of the original
+    implementation. Both mktemp versions are fine.
+
+    In addition to using xz to decompress .xz files, xzgrep and xzdiff
+    use gzip, bzip2, and lzop to support .gz, bz2, and .lzo files.
 
 
 3.2. PATH
@@ -422,7 +478,8 @@ XZ Utils Installation
     to POSIX. The configure script tries to find such a shell. If
     it fails, you can force the shell to be used by passing
     gl_cv_posix_shell=/path/to/posix-sh as an argument to the configure
-    script.
+    script. Alternatively you can omit the installation of scripts and
+    this error by passing --disable-scripts to configure.
 
 
 4.3. configure works but build fails at crc32_x86.S
@@ -452,4 +509,37 @@ XZ Utils Installation
     argument to the configure script. This has no effect on the
     resulting binaries, but fewer warnings looks nicer and may allow
     using --enable-werror.
+
+
+4.5. "make check" fails
+
+    If the other tests pass but test_scripts.sh fails, then the problem
+    is in the scripts in src/scripts. Comparing the contents of
+    tests/xzgrep_test_output to tests/xzgrep_expected_output might
+    give a good idea about problems in xzgrep. One possibility is that
+    some tools are missing from the current PATH or the tools lack
+    support for some POSIX features. This can happen at least on
+    Solaris where the tools in /bin may be ancient but good enough
+    tools are available in /usr/xpg4/bin or /usr/xpg6/bin. One fix
+    for this problem is described in section 3.2 of this file.
+
+    If tests other than test_scripts.sh fail, a likely reason is that
+    libtool links the test programs against an installed version of
+    liblzma instead of the version that was just built. This is
+    obviously a bug which seems to happen on some platforms.
+    A workaround is to uninstall the old liblzma versions first.
+
+    If the problem isn't any of those described above, then it's likely
+    a bug in XZ Utils or in the compiler. See the platform-specific
+    notes in this file for possible known problems. Please report
+    a bug if you cannot solve the problem. See README for contact
+    information.
+
+
+4.6. liblzma.so (or similar) not found when running xz
+
+    If you installed the package with "make install" and get an error
+    about liblzma.so (or a similarly named file) being missing, try
+    running "ldconfig" to update the run-time linker cache (if your
+    operating system has such a command).
 

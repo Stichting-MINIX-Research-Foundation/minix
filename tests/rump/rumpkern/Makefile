@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2011/01/14 13:23:15 pooka Exp $
+# $NetBSD: Makefile,v 1.15 2014/06/10 04:28:40 he Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ TESTS_SH=	t_sp
 
 SUBDIR+=	h_client h_server
 
-ADD_TO_LD=	-lrumpvfs -lrump -lrumpuser -lpthread
+ADD_TO_LD=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread
 LDADD.t_modlinkset+=	-lukfs -lrumpdev_disk -lrumpdev -lrumpfs_msdos 
 LDADD.t_modlinkset+=	-lrumpfs_cd9660 ${ADD_TO_LD}
 LDADD+=			${ADD_TO_LD}

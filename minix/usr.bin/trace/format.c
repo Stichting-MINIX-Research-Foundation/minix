@@ -249,7 +249,8 @@ put_buf(struct trace_proc * proc, const char * name, int flags, vir_bytes addr,
 {
 	const char *escaped;
 	size_t len, off, max, chunk;
-	int i, cutoff;
+	unsigned int i;
+	int cutoff;
 	char *p;
 
 	if ((flags & PF_FAILED) || valuesonly || addr == 0 || size < 0) {

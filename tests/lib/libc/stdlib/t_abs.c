@@ -1,4 +1,4 @@
-/* $NetBSD: t_abs.c,v 1.1 2012/03/29 06:16:56 jruoho Exp $ */
+/* $NetBSD: t_abs.c,v 1.3 2014/03/01 22:38:13 joerg Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,17 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_abs.c,v 1.1 2012/03/29 06:16:56 jruoho Exp $");
+__RCSID("$NetBSD: t_abs.c,v 1.3 2014/03/01 22:38:13 joerg Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
-
-struct test {
-	int64_t val;
-	int64_t res;
-};
 
 ATF_TC(abs_basic);
 ATF_TC_HEAD(abs_basic, tc)
@@ -49,7 +44,10 @@ ATF_TC_HEAD(abs_basic, tc)
 
 ATF_TC_BODY(abs_basic, tc)
 {
-	static const struct test table[] = {
+	static const struct {
+		int val;
+		int res;
+	} table[] = {
 		{ 0,		0		},
 		{ +0,		0		},
 		{ -0,		0		},
@@ -59,7 +57,7 @@ ATF_TC_BODY(abs_basic, tc)
 	};
 
 	for (size_t i = 0; i < __arraycount(table); i++)
-		ATF_CHECK(abs(table[i].val) == (int)table[i].res);
+		ATF_CHECK(abs(table[i].val) == table[i].res);
 }
 
 ATF_TC(imaxabs_basic);
@@ -70,14 +68,23 @@ ATF_TC_HEAD(imaxabs_basic, tc)
 
 ATF_TC_BODY(imaxabs_basic, tc)
 {
-	static const struct test table[] = {
+	static const struct {
+		intmax_t val;
+		intmax_t res;
+	} table[] = {
 		{ 0,		0		},
+		{ INT_MAX,	INT_MAX		},
+		{ -INT_MAX,	INT_MAX		},
+		{ LONG_MAX,	LONG_MAX	},
+		{ -LONG_MAX,	LONG_MAX	},
+		{ LLONG_MAX,	LLONG_MAX	},
+		{ -LLONG_MAX,	LLONG_MAX	},
 		{ INT_MAX,	INT_MAX		},
 		{ -INT_MAX,	INT_MAX		},
 	};
 
 	for (size_t i = 0; i < __arraycount(table); i++)
-		ATF_CHECK(imaxabs(table[i].val) == (intmax_t)table[i].res);
+		ATF_CHECK(imaxabs(table[i].val) == table[i].res);
 }
 
 ATF_TC(labs_basic);
@@ -88,18 +95,22 @@ ATF_TC_HEAD(labs_basic, tc)
 
 ATF_TC_BODY(labs_basic, tc)
 {
-	static const struct test table[] = {
+	static const struct {
+		long val;
+		long res;
+	} table[] = {
 		{ 0,		0		},
 		{ +0,		0		},
 		{ -0,		0		},
 		{ -1,		1		},
 		{ LONG_MAX,	LONG_MAX	},
 		{ -LONG_MAX,	LONG_MAX	},
-		{ -0x100000000,	0x100000000	},
+		{ INT_MAX,	INT_MAX		},
+		{ -INT_MAX,	INT_MAX		},
 	};
 
 	for (size_t i = 0; i < __arraycount(table); i++)
-		ATF_CHECK(labs(table[i].val) == (long int)table[i].res);
+		ATF_CHECK(labs(table[i].val) == table[i].res);
 }
 
 ATF_TC(llabs_basic);
@@ -110,18 +121,25 @@ ATF_TC_HEAD(llabs_basic, tc)
 
 ATF_TC_BODY(llabs_basic, tc)
 {
-	static const struct test table[] = {
+	static const struct {
+		long long val;
+		long long res;
+	} table[] = {
 		{ 0,		0		},
 		{ +0,		0		},
 		{ -0,		0		},
 		{ -1,		1		},
+		{ INT_MAX,	INT_MAX		},
+		{ -INT_MAX,	INT_MAX		},
+		{ LONG_MAX,	LONG_MAX	},
+		{ -LONG_MAX,	LONG_MAX	},
 		{ LLONG_MAX,	LLONG_MAX	},
 		{ -LLONG_MAX,	LLONG_MAX	},
-		{ -0x100000000,	0x100000000	},
+		{ -0x100000000LL,	0x100000000LL	},
 	};
 
 	for (size_t i = 0; i < __arraycount(table); i++)
-		ATF_CHECK(llabs(table[i].val) == (long long int)table[i].res);
+		ATF_CHECK(llabs(table[i].val) == table[i].res);
 }
 
 ATF_TP_ADD_TCS(tp)

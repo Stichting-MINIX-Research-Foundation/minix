@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $	*/
+/*	$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 #else
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $");
+__RCSID("$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.11 2011/06/20 09:11:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.13 2014/08/22 17:19:48 matt Exp $");
 #endif
 
 #ifdef _LIBC
@@ -145,7 +145,7 @@ rb_tree_find_node_geq(struct rb_tree *rbt, const void *key)
 		parent = parent->rb_nodes[diff < 0];
 	}
 
-	return RB_NODETOITEM(rbto, last);
+	return last == NULL ? NULL : RB_NODETOITEM(rbto, last);
 }
 
 void *
@@ -166,7 +166,7 @@ rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 		parent = parent->rb_nodes[diff < 0];
 	}
 
-	return RB_NODETOITEM(rbto, last);
+	return last == NULL ? NULL : RB_NODETOITEM(rbto, last);
 }
 
 void *

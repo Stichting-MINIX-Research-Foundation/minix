@@ -51,8 +51,16 @@ init_hook(void)
 {
 	static int first_time = TRUE;
 	struct inode *root;
+	int r;
 
 	if (first_time) {
+		/*
+		 * Initialize some state.  If we are incompatible with the kernel,
+		 * exit immediately.
+		 */
+		if ((r = init_tree()) != OK)
+			panic("init_tree failed!");
+
 		root = get_root_inode();
 
 		construct_tree(root, root_files);
@@ -68,15 +76,7 @@ init_hook(void)
  */
 int main(void)
 {
-	struct inode_stat stat;
-	int r;
-
-	/*
-	 * Initialize some state.  If we are incompatible with the kernel, exit
-	 * immediately.
-	 */
-	if ((r = init_tree()) != OK)
-		return r;
+	static struct inode_stat stat;
 
 	/* Properties of the root directory. */
 	stat.mode 	= DIR_ALL_MODE;

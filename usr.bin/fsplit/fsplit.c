@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.29 2013/01/23 20:39:46 riastradh Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.30 2015/06/16 22:54:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,7 @@ get_name(char *name, int letters)
 			*ptr = '0';
 		}
 		if (ptr < name + letters) {
-			errx(1, "Ran out of file names.\n");
+			errx(1, "Ran out of file names.");
 		}
 	}
 }

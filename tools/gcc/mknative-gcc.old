@@ -1,0 +1,746 @@
+#!/bin/sh
+#	$NetBSD: mknative-gcc.old,v 1.1 2014/02/26 09:54:34 mrg Exp $
+#
+# was: NetBSD: mknative-gcc,v 1.75 2014/02/16 11:26:31 skrll Exp
+#
+# Shell script for generating all the constants needed for a native
+# platform build of gcc.
+#
+
+# XXX split out GCC 4.1 support
+
+# initialise
+
+_TMPDIR=$2
+_TOP=$3
+_SRC=$4
+_PLATFORM=$5
+_DESTDIR=$6
+_ABI=$7
+_VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
+_GNU_DIST=`cd ${_VPATH}; pwd`
+
+if [ -z "$_DESTDIR" ]; then
+	echo "\$_DESTDIR is empty" 2>&1
+	exit 1
+fi
+
+. $_TOP/tools/gcc/mknative.common
+
+# default to GCC 4.1 for now
+_OUTDIR="$_TOP/gnu"
+_OUTDIRBASE="gnu"
+
+sanitise_includes () {
+	sed \
+		-e "s,-I$_DESTDIR/usr/include,,g" \
+		-e "s,-I$_SRC/external/lgpl3/mpfr/dist/src,,g" \
+		-e "s,-I$_SRC/external/lgpl3/mpc/dist/src,,g" \
+		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
+		-e "s,-I/usr/include/[^ 	]*,,"
+}
+
+##### gnu/lib/crtstuff #####
+
+get_crtstuff () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/lib/$_subdir/arch
+
+	getvars gcc/Makefile \
+		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS CRTSTUFF_T_CFLAGS_S \
+		tm_defines xm_file xm_defines \
+		| sanitise_includes \
+		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH.mk
+}
+
+##### gnu/lib/libg2c #####
+
+get_libg2c () {
+	mkdir -p $_OUTDIR/lib/libg2c3/arch/$MACHINE_ARCH
+
+	write_c $_OUTDIRBASE/lib/libg2c3/arch/$MACHINE_ARCH/config.h <$_TMPDIR/$_PLATFORM/libf2c/libU77/config.h
+	write_c $_OUTDIRBASE/lib/libg2c3/arch/$MACHINE_ARCH/g2c.h <$_TMPDIR/$_PLATFORM/libf2c/g2c.h
+
+	{
+		getvars $_PLATFORM/libf2c/Makefile \
+			F2CEXT
+		getvars $_PLATFORM/libf2c/libF77/Makefile \
+			ALL_CFLAGS OBJS
+		getvars $_PLATFORM/libf2c/libI77/Makefile \
+			ALL_CFLAGS OBJS | sed 's,=,+=,'
+		getvars $_PLATFORM/libf2c/libU77/Makefile \
+			ALL_CFLAGS OBJS | sed 's,=,+=,'
+	} | write_mk $_OUTDIRBASE/lib/libg2c3/arch/$MACHINE_ARCH/defs.mk
+}
+
+##### gnu/lib/libgcc #####
+
+get_libgcc_list_funcs_asm () {
+	{
+		getvars gcc/Makefile LIB1ASMFUNCS | {
+			# print newline separated list
+			sed -e '
+				s,^.*=,,
+				s, *$,,
+				s,  *, ,g
+				s, ,\
+,g'
+		}
+		getvars gcc/Makefile LIB2FUNCS_EXTRA | {
+			# print newline separated list
+			sed -e '
+				s,^.*=,,
+				s, *$,,
+				s,  *, ,g
+				s, ,\
+,g' | \
+			sed -ne '
+				/\.S$/ { s,^.*/,,; s,\.S$,,; p; }
+				/\.asm$/ { s,^.*/,,; s,\.asm$,,; p; }
+			'
+		}
+	} | {
+		# print foo and foo_s
+		sed -ne '
+			/./ {
+				p
+				s,$,_s,
+				p
+			}
+		'
+	} | sort
+}
+
+get_libgcc_list_funcs_lib () {
+	local _lib=$1
+	local _lib_prefix=${_lib%.*}
+	local _lib_suffix=${_lib#*.}
+	local _abi=${2:-'\.'}
+
+	cat build/gcc/libgcc.mk | \
+	grep '/'${_abi}'/' | \
+	sed -ne '
+		/^'${_abi}'\/'${_lib_prefix}'\.'${_lib_suffix}': .*\.o$/ {
+			s,^.*/,,
+			s,\.o$,,
+			p
+		}
+	' | sort
+}
+
+get_libgcc_list_objs_libs () {
+	local _abi=${1:-'\.'}
+
+	cat build/gcc/libgcc.mk | \
+	grep '/'${_abi}'/' | \
+	egrep '^'${_abi}'\/(libgcc_s\.so|libgcc\.a|libgcc_eh\.a|libgcov\.a): (libgcc_s|libgcc|libgcc_eh|libgcov)\/.*\.o$' | \
+	sed -e '
+		s,^'${_abi}'\/,,
+		s,: .*/,	,
+		s,^\(.*\)	\(.*\)$,\2	\1,
+	' | sort
+}
+
+get_libgcc_list_objs_srcs () {
+	local _abi=${1:-'\.'}	# XXX not used
+
+	if [ -e $_TOP/${libgcc_db_funcs}.S ]; then
+		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
+		comm -23 /dev/stdin $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,\(.*\),\1.o	\1.c,'
+
+		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
+		comm -12 /dev/stdin $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,\(.*\),\1.o	\1.S,'
+	else
+		cut -f1 $_TOP/${libgcc_db_objs_libs} | sed -e 's,\.o$,,' | \
+		sed -e 's,\(.*\),\1.o	\1.c,'
+	fi | sort
+}
+
+get_libgcc_list_objs_tmplsrcs () {
+	local _abi=${1:-'\.'}
+
+	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
+	grep '/'${_abi}'/' | \
+	sed -ne '
+		s,^.* -c \([^ ]*\).* -o .*/\([^ ]*\.o\)$,\2	\1,
+		# basename
+		/\$/ { s,\$.*/,,; }
+		/\// { s,\/.*/,,; }
+		p
+	' | sort -u
+}
+
+get_libgcc_list_objs_xflags () {
+	local _flags=$1
+	local _abi=${2:-'\.'}
+
+	grep 'GCC_FOR_TARGET.*\.o$' build/gcc/libgcc.mk | \
+	grep '/'${_abi}'/' | \
+	sed -n '
+		x
+	:loop
+		g
+		s/^\(.*\) \(-['${_flags}'][^ ][^ ]*\) \(.*\) \(-o .*\)\/\(.*\.o\)$/\5	\2/p
+		g
+		s/^\(.*\) \(-['${_flags}'][^ ][^ ]*\) \(.*\) \(-o .*\)\/\(.*\.o\)$/\1 \3 \4\/\5/
+		h
+		t loop
+	' | sort
+}
+
+get_libgcc_list_objs_cppflags () {
+	get_libgcc_list_objs_xflags D $1
+}
+
+get_libgcc_list_objs_copts () {
+	get_libgcc_list_objs_xflags fmx $1
+}
+
+get_libgcc_list_tmplsrcs () {
+	local _lib=$1
+	local _abi=$2	# XXX not used
+	local _tmplallsrcs=$( mktemp /tmp/mknative-gcc._tmplallsrcs.XXXXXX )
+
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
+	touch $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*}
+
+	# all files
+	local _lib_prefix=${_lib%.*}
+	local _lib_suffix=${_lib#*.}
+	join $_TOP/$libgcc_db_objs_libs $_TOP/$libgcc_db_objs_tmplsrcs | \
+	grep ${_lib_prefix}'\.'${_lib_suffix} | cut -d' ' -f 3 | sort -u > \
+	$_tmplallsrcs
+
+	# TMPLFPSRCS = [fdp]p-bit.c
+	grep '[fdt]p-bit\.c' <$_tmplallsrcs | sort -u | \
+	writefile ${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
+
+	# TMPLASMSRCS = $(LIB1ASMSRC)
+	grep '\$(LIB1ASMSRC)' <$_tmplallsrcs | sort -u | \
+	writefile ${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*}
+
+	# TMPLSRCS is anything else; exclude TMPLFPSRCS and TMPLASMSRCS
+	cat $_tmplallsrcs | \
+	comm -23 /dev/stdin $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*} | \
+	comm -23 /dev/stdin $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*} | \
+	writefile ${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
+
+	rm -f $_tmplallsrcs
+}
+
+get_libgcc_new_analyze () {
+	local _abi=$1
+
+	mkdir -p $_TOP/${_machine_arch_subdir}
+
+	touch $_TOP/${libgcc_db_funcs}.S
+	get_libgcc_list_funcs_asm | \
+	writefile ${libgcc_db_funcs}.S
+
+	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		touch $_TOP/${libgcc_db_funcs}.${_lib%.*}
+		get_libgcc_list_funcs_lib $_lib $_abi | \
+		writefile ${libgcc_db_funcs}.${_lib%.*}
+	done
+
+	get_libgcc_list_objs_libs $_abi | writefile ${libgcc_db_objs_libs}
+	get_libgcc_list_objs_srcs $_abi | writefile ${libgcc_db_objs_srcs}
+	get_libgcc_list_objs_tmplsrcs $_abi | writefile ${libgcc_db_objs_tmplsrcs}
+	get_libgcc_list_objs_cppflags $_abi | writefile ${libgcc_db_objs_cppflags}
+	get_libgcc_list_objs_copts $_abi | writefile ${libgcc_db_objs_copts}
+
+	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		get_libgcc_list_tmplsrcs $_lib $_abi
+	done
+}
+
+#####
+
+get_libgcc_gen_tmplsrcs_tmplsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPLSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplsrcs.${_lib%.*}
+}
+
+get_libgcc_gen_tmplsrcs_tmplfpsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPLFPSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplfpsrcs.${_lib%.*}
+}
+
+get_libgcc_gen_tmplsrcs_tmplasmsrcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'TMPLASMSRCS.%s = \\\n' $_lib
+	sed -e 's,^,	,; s,$, \\,' $_TOP/${libgcc_db_tmplsrcs}.tmplasmsrcs.${_lib%.*} | \
+	sed -e 's,LIB1ASMSRC,G_&,'
+}
+
+get_libgcc_gen_srcs () {
+	local _lib=$1
+
+	printf '\n'
+	printf 'SRCS.%s = \\\n' $_lib
+	if [ -e $_TOP/${libgcc_db_funcs}.S ]; then
+		comm -23 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,$,.c,; s,^,tmp_,'
+		comm -12 $_TOP/${libgcc_db_funcs}.${_lib%.*} $_TOP/${libgcc_db_funcs}.S | \
+		sed -e 's,$,.S,; s,^,tmp_,'
+	else
+		cat $_TOP/${libgcc_db_funcs}.${_lib%.*} | \
+		sed -e 's,$,.c,; s,^,tmp_,'
+	fi | sort | \
+	sed -e 's,^,	,; s,$, \\,'
+}
+
+_lookup_objs () {
+	local _obj=$1; local _key=$2
+
+	eval grep \^$_obj\\\	 \$_TOP/\${libgcc_db_objs_${_key}} | cut -f2
+}
+
+get_libgcc_gen_srcs_tmplsrcs () {
+	cut -f1 $_TOP/${libgcc_db_objs_libs} | \
+	while read _obj; do
+		printf 'SRCS.tmp_%s=%s\n' \
+			"$( _lookup_objs $_obj srcs )" \
+			"$( _lookup_objs $_obj tmplsrcs )"
+	done | \
+	sed -e 's,\$(\(.*\)),${G_\1},'
+}
+
+get_libgcc_gen_srcs_cppflags () {
+	cut -f1 $_TOP/${libgcc_db_objs_libs} | \
+	while read _obj; do
+		printf '_CPPFLAGS.tmp_%s=%s\n' \
+			"$( _lookup_objs $_obj srcs )" \
+			"$( _lookup_objs $_obj cppflags | xargs )"
+	done
+}
+
+get_libgcc_gen_srcs_copts () {
+	cut -f1 $_TOP/${libgcc_db_objs_libs} | \
+	while read _obj; do
+		printf 'COPTS.tmp_%s=%s\n' \
+			"$( _lookup_objs $_obj srcs )" \
+			"$( _lookup_objs $_obj copts | xargs )"
+	done
+}
+
+get_libgcc_new_generate () {
+	local _abi=$1
+
+	for _lib in libgcc_s.so libgcc.a libgcc_eh.a libgcov.a; do
+		for _tmpl in tmplsrcs tmplfpsrcs tmplasmsrcs; do
+			eval get_libgcc_gen_tmplsrcs_${_tmpl} $_lib | \
+			write_mk ${libgcc_libs_mk}.${_lib%.*}.tmplsrcs.${_tmpl}.mk
+		done
+
+		get_libgcc_gen_srcs $_lib | \
+		write_mk ${libgcc_libs_mk}.${_lib%.*}.srcs.mk
+	done
+
+	for _arg in tmplsrcs cppflags copts; do
+		eval get_libgcc_gen_srcs_${_arg} | \
+		eval writefile \$libgcc_srcs_mk_${_arg}
+	done
+}
+
+#####
+
+get_libgcc_new () {
+	_subdir="$1"
+	_abi="$2"
+
+	# List of generated files.
+
+	_machine_arch_subdir=$_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH/$_abi
+
+	libgcc_db_funcs=${_machine_arch_subdir}/funcs
+	libgcc_db_tmplsrcs=${_machine_arch_subdir}/tmplsrcs
+	libgcc_db_objs_libs=${_machine_arch_subdir}/objs.libs
+	libgcc_db_objs_srcs=${_machine_arch_subdir}/objs.srcs
+	libgcc_db_objs_tmplsrcs=${_machine_arch_subdir}/objs.tmplsrcs
+	libgcc_db_objs_cppflags=${_machine_arch_subdir}/objs.cppflags
+	libgcc_db_objs_copts=${_machine_arch_subdir}/objs.copts
+
+	get_libgcc_new_analyze $_abi
+
+	libgcc_libs_mk=${_machine_arch_subdir}/libs
+	libgcc_srcs_mk=${_machine_arch_subdir}/srcs.mk
+	libgcc_srcs_mk_tmplsrcs=${_machine_arch_subdir}/srcs.tmplsrcs.mk
+	libgcc_srcs_mk_cppflags=${_machine_arch_subdir}/srcs.cppflags.mk
+	libgcc_srcs_mk_copts=${_machine_arch_subdir}/srcs.copts.mk
+
+	get_libgcc_new_generate $_abi
+}
+
+get_libgcc () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/lib/lib$_subdir/arch
+
+	case "$_subdir" in
+	gcc4|gcc)
+		_extravars="COLLECT2 UNWIND_H xm_include_list"
+		_archsubdir=""
+		;;
+	esac
+
+	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
+	# XXX we should probably grab everything Just In Case for
+	# the future.
+	{
+		getvars gcc/Makefile \
+			INCLUDES LIB2ADD LIB2ADDEH LIB2ADD_ST \
+			LIB1ASMFUNCS LIB1ASMSRC \
+			LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
+			LIB2FUNCS_EXTRA \
+			LIBGCC2_CFLAGS \
+			SHLIB_MKMAP SHLIB_MKMAP_OPTS \
+			SHLIB_MAPFILES SHLIB_NM_FLAGS \
+			EXTRA_HEADERS xm_defines \
+			tm_defines ${_extravars}
+	}	| sanitise_includes \
+		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
+
+	# Generate new style files.
+	if [ -n "${MKNATIVE_LIBGCC_NEW}" ]; then
+		get_libgcc_new $_subdir $_ABI
+	fi
+}
+
+##### gnu/lib/libgcov #####
+
+get_libgcov () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH
+
+	{
+		getvars gcc/Makefile \
+			LIBGCOV
+	} | write_mk $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/defs.mk
+
+	write_c $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/gcov-iov.h \
+	   <$_TMPDIR/gcc/gcov-iov.h
+
+}
+
+##### gnu/usr.bin/gcc[34]/libiberty #####
+
+get_gcc_libiberty () {
+	_subdir="$1"
+	case "$_subdir" in
+	gcc4)
+		_libibertydir="usr.bin/$_subdir/libiberty"
+		;;
+	gcc)
+		_libibertydir="lib/libiberty"
+		;;
+	esac
+	mkdir -p $_OUTDIR/$_libibertydir/arch/$MACHINE_ARCH
+
+	getvars libiberty/Makefile \
+		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
+		| write_mk $_OUTDIRBASE/$_libibertydir/defs.mk
+
+	write_c $_OUTDIRBASE/$_libibertydir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/libiberty/config.h
+}
+
+##### lib/libdecnumber #####
+
+get_libdecnumber () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/libdecnumber/config.h
+}
+
+##### lib/libgomp #####
+
+get_libgomp () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/config.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp_f.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/libgomp_f.h
+	write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp.spec \
+		<$_TMPDIR/$_PLATFORM/libgomp/libgomp.spec
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/omp.h \
+		<$_TMPDIR/$_PLATFORM/libgomp/omp.h
+}
+
+##### gnu/lib/libobjc #####
+
+get_libobjc () {
+	_subdir="$1/arch/$MACHINE_ARCH"
+	_options="ALL_OPT_FILES"
+	_unwind="UNWIND_H"
+
+	mkdir -p $_OUTDIR/lib/$_subdir
+
+	{
+		if [ -n "$_options" ]; then
+			getvars gcc/Makefile $_options
+		fi
+		getvars $_PLATFORM/libobjc/Makefile \
+			ALL_CFLAGS INCLUDES OBJS OBJC_H \
+			| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g"
+		if [ -n "$_unwind" ]; then
+			getvars gcc/Makefile $_unwind
+		fi
+	} | write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
+
+	write_c $_OUTDIRBASE/lib/$_subdir/config.h \
+		<$_TMPDIR/$_PLATFORM/libobjc/config.h
+}
+
+##### gnu/lib/libstdc++-v3 #####
+
+get_libstdcxx_v3 () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+
+	case ${_subdir} in
+	*)
+		_src_CC_files="atomicity_file CCODECVT_CC CCOLLATE_CC CCTYPE_CC CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC CLOCALE_CC BASIC_FILE_CC"
+		_headers1="host_headers debug_headers tr1_headers c_compatibility_headers_extra tr1_impl_headers parallel_headers decimal_headers"
+		_headers2="thread_host_headers host_headers_extra"
+		_build_headers="c++allocator.h c++config.h cxxabi_tweaks.h gthr-default.h gthr-posix.h gthr-single.h gthr-tpf.h gthr.h"
+		_unwind="UNWIND_H"
+		;;
+	esac
+
+	# build files
+	for h in $_build_headers; do
+		write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/$h \
+			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
+	done
+
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
+		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
+		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
+
+	{
+		# libsupc++
+		getvars $_PLATFORM/libstdc++-v3/libsupc++/Makefile \
+			sources | sed 's/^G_sources=/G_LIBSUPCXX_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/libsupc++/Makefile \
+			c_sources | sed 's/^G_c_sources=/G_LIBSUPCXX_C_SOURCES=/'
+
+		# src
+		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
+			sources $_src_CC_files SECTION_FLAGS | sed 's/^G_sources=/G_SRC_SOURCES=/'
+
+		# include
+		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
+			c_base_headers std_headers | sed -e 's#/[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
+		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
+			bits_headers backward_headers ext_headers c_base_headers_extra \
+			$_headers1 | sed -e 's#/[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
+		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
+			$_headers2 | sed -e 's#\./[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
+
+		if [ -n "$_unwind" ]; then
+			getvars gcc/Makefile $_unwind
+		fi
+	} | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
+}
+
+##### gnu/usr.bin/gcc* #####
+
+get_gcc_bootstrap () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	for f in auto-host tm config gthr-default; do
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+	done
+}
+
+get_gcc () {
+	_subdir="$1"
+	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	mkdir -p $_OUTDIR/usr.bin/libcpp/arch/$MACHINE_ARCH
+	case ${_subdir} in
+	gcc4)
+		_buildname="BUILD_"
+		_libcppsubdir=""
+		_extravars="TM_H ALL_OPT_FILES"
+		_hconfig_h=""
+		_extravars2="tm_file_list build_xm_include_list"
+		_extravars3="tm_p_include_list"
+		;;
+
+	gcc)
+		_buildname="BUILD_"
+		_libcppsubdir=""
+		_extravars="TM_H ALL_OPT_FILES"
+		_hconfig_h=""
+		_extravars2="tm_file_list build_xm_include_list"
+		_extravars3="tm_p_include_list"
+		;;
+	esac
+
+	{
+		getvars gcc/Makefile \
+			${_buildname}EARLY_SUPPORT ${_buildname}ERRORS ${_buildname}PRINT \
+			${_buildname}RTL ${_buildname}SUPPORT ${_buildname}VARRAY | \
+		    sed -e 's#build/errors.o#build-errors.o#g' \
+			-e 's#build/print-rtl.o#build-print-rtl.o#g' \
+			-e 's#build/rtl.o#build-rtl.o#g' \
+			-e 's#build/varray.o#build-varray.o#g' \
+			-e 's#build/ggc-none.o#build-ggc-none.o#g' \
+			-e 's#build/##g'
+		getvars gcc/Makefile \
+			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
+			GCOV_OBJS PROTO_OBJS ${_extravars1} \
+			INCLUDES md_file OBJC_OBJS OBJS out_file version \
+			BUILD_PREFIX RTL_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
+			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
+			GTFILES GTFILES_LANG_DIR_NAMES \
+			tm_defines host_xm_file host_xm_defines tm_p_file \
+			target_cpu_default ${_extravars} ${_extravars2} \
+			lang_specs_files ${_extravars3} \
+				| sanitise_includes
+		getvars gcc/Makefile \
+			LIB2ADDEHDEP | sed 's/unwind.inc//'
+		getvars gcc/Makefile \
+			CXX_OBJS CXX_C_OBJS | sed 's/cp\///g'
+		getvars gcc/Makefile \
+			F77_OBJS | sed 's/f\///g'
+		case ${_subdir} in
+		gcc4 | gcc)
+			getvars libcpp/Makefile \
+				libcpp_a_OBJS
+			;;
+		esac
+		getvars gcc/Makefile \
+			ENABLE_SHARED
+		case ${_subdir} in
+		gcc4 | gcc)
+			echo G_SHLIB_LINK="$CC -shared"
+			echo G_SHLIB_MULTILIB=.
+			;;
+		esac
+	} | write_mk $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/defs.mk
+
+	case "$_subdir" in
+	gcc4)
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
+		hfiles='auto-host gencheck configargs gthr-default tm bconfig config multilib'
+		;;
+	gcc)
+		write_c $_OUTDIRBASE/usr.bin/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
+		hfiles='auto-host configargs gthr-default tm bconfig config multilib bversion plugin-version'
+		;;
+	esac
+	for f in $hfiles; do
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+		if [ "${MACHINE_ARCH}" = "powerpc" -a "${f}" = "configargs" ]
+		then
+			ex <<__EOF__ $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
+/configuration_arguments/ s/$//
+ya
+i
+#ifdef _SOFT_FLOAT
+.
+pu
+s/";$/ -with-float=soft";/
+a
+#else
+#endif
+.
+. m +1
+/configure_default_options/ s/{ NULL.*$//
+a
+#ifdef _SOFT_FLOAT
+  { "float", "soft" },
+#endif
+  { NULL, NULL }
+};
+.
+wq
+__EOF__
+		fi
+	done
+
+	# keep identical
+	for f in all-tree.def; do
+		cp $_TMPDIR/gcc/$f $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
+	done
+
+	# special transforms
+	for f in gtyp-input.list; do
+		sed -e 's/^.*external\/gpl3\/gcc\.old\/dist/SRCDIR/' < $_TMPDIR/gcc/$f > $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f
+	done
+
+	# special platforms
+	if [ "${MACHINE_ARCH}" = "sh3el" -o "${MACHINE_ARCH}" = "sh3eb" ]; then
+		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/sysroot-suffix.h <$_TMPDIR/gcc/sysroot-suffix.h
+	fi
+}
+
+##### main #####
+
+case "$1" in
+# .mk and .h files for libgcc bootstrap (from host build)
+
+libgcc4)
+	get_libgcc gcc4
+	get_crtstuff crtstuff4
+	exit 0
+	;;
+
+libgcc45)
+	_OUTDIR="$_TOP/external/gpl3/gcc.old"
+	_OUTDIRBASE="external/gpl3/gcc.old"
+	get_libgcc gcc
+	get_crtstuff crtstuff
+	get_libgcov gcc
+	get_gcc_bootstrap gcc
+	exit 0
+	;;
+
+# gcc files
+gcc4)
+	get_gcc gcc4
+	get_libgcc gcc4
+	get_libgcov gcc4
+	get_crtstuff crtstuff4
+	get_gcc_libiberty gcc4
+	get_libobjc libobjc4
+	get_libstdcxx_v3 libstdc++-v3_4
+	exit 0
+	;;
+
+gcc45)
+	_OUTDIR="$_TOP/external/gpl3/gcc.old"
+	_OUTDIRBASE="external/gpl3/gcc.old"
+	get_gcc gcc
+	get_libgcc gcc
+	get_libgcov gcc
+	get_crtstuff crtstuff
+	get_gcc_libiberty gcc
+	get_libobjc libobjc
+	get_libstdcxx_v3 libstdc++-v3
+	get_libdecnumber libdecnumber
+	get_libgomp libgomp
+	exit 0
+	;;
+
+
+*)	echo invalid arguments; exit 1;;
+esac

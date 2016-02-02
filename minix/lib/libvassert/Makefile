@@ -1,7 +1,5 @@
 # Makefile for libvassert library
 
-NOGCCERROR=yes
-
 MKPIC?=	no
 LIB=    vassert
 SRCS=	backdoor.S vassert.c

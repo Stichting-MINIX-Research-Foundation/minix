@@ -8,6 +8,7 @@
 
 int vm_exit(endpoint_t ep);
 int vm_fork(endpoint_t ep, int slotno, endpoint_t *child_ep);
+int vm_getrusage(endpoint_t endpt, void *addr, int children);
 int vm_willexit(endpoint_t ep);
 int vm_adddma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
 int vm_deldma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
@@ -15,12 +16,10 @@ int vm_getdma(endpoint_t *procp, phys_bytes *basep, phys_bytes *sizep);
 void *vm_map_phys(endpoint_t who, void *physaddr, size_t len);
 int vm_unmap_phys(endpoint_t who, void *vaddr, size_t len);
 
-int vm_notify_sig(endpoint_t ep, endpoint_t ipc_ep);
 int vm_set_priv(endpoint_t ep, void *buf, int sys_proc);
-int vm_update(endpoint_t src_e, endpoint_t dst_e);
-int vm_memctl(endpoint_t ep, int req);
-int vm_query_exit(endpoint_t *endpt);
-int vm_watch_exit(endpoint_t ep);
+int vm_update(endpoint_t src_e, endpoint_t dst_e, int flags);
+int vm_memctl(endpoint_t ep, int req, void** addr, size_t *len);
+int vm_prepare(endpoint_t src_e, endpoint_t dst_e, int flags);
 int minix_vfs_mmap(endpoint_t who, off_t offset, size_t len,
         dev_t dev, ino_t ino, int fd, u32_t vaddr, u16_t clearend, u16_t
 	flags);
@@ -47,9 +46,14 @@ struct vm_stats_info {
 };
 
 struct vm_usage_info {
-  vir_bytes vui_total;		/* total amount of process memory */
+  vir_bytes vui_total;		/* total amount of mapped process memory */
   vir_bytes vui_common;		/* part of memory mapped in more than once */
   vir_bytes vui_shared;		/* shared (non-COW) part of common memory */
+  vir_bytes vui_virtual;	/* total size of virtual address space */
+  vir_bytes vui_mvirtual;	/* idem but minus unmapped stack pages */
+  uint64_t vui_maxrss;		/* maximum resident set size (in KB) */
+  uint64_t vui_minflt;		/* minor page faults */
+  uint64_t vui_majflt;		/* major page faults */
 };
 
 struct vm_region_info {

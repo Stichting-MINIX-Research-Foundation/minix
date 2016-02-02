@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137 2012/11/06 12:25:56 skrll Exp $
+#	$NetBSD: Makefile,v 1.139 2014/08/08 19:38:47 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SUBDIR+=	texinfo
 .else
 SUBDIR+=	bc
 SUBDIR+=	c89 c99
-SUBDIR+=	dc diffutils gkermit
+SUBDIR+=	dc diffutils
 SUBDIR+=	rcs send-pr texinfo
 
 .if ${MKBSDGREP} == "no"
@@ -19,14 +19,6 @@ SUBDIR+=	groff
 .endif
 
 SUBDIR+=	gettext
-
-.if ${MKGCC} != "no"
-.if ${HAVE_GCC} == 4
-.if ${MKGCCCMDS} != "no"
-SUBDIR+=	gcc4
-.endif
-.endif
-.endif
 .endif # defined(__MINIX)
 
 .include <bsd.subdir.mk>

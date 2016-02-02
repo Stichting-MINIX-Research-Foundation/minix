@@ -39,11 +39,11 @@ namespace out_of_line {
   template<typename T> CONST T B1::right<T,int> = T(5);
 
   class B2 {
-    template<typename T, typename T0> static CONST T right = T(100);  // expected-note {{previous definition is here}}
-    template<typename T> static CONST T right<T,int> = T(5);          // expected-note {{previous definition is here}}
+    template<typename T, typename T0> static CONST T right = T(100);  // expected-note {{previous initialization is here}}
+    template<typename T> static CONST T right<T,int> = T(5);          // expected-note {{previous initialization is here}}
   };
-  template<typename T, typename T0> CONST T B2::right = T(100);   // expected-error {{redefinition of 'right'}}
-  template<typename T> CONST T B2::right<T,int> = T(5);           // expected-error {{redefinition of 'right'}}
+  template<typename T, typename T0> CONST T B2::right = T(100);   // expected-error {{static data member 'right' already has an initializer}}
+  template<typename T> CONST T B2::right<T,int> = T(5);           // expected-error {{static data member 'right' already has an initializer}}
 
   class B3 {
     template<typename T, typename T0> static CONST T right = T(100);
@@ -58,13 +58,13 @@ namespace out_of_line {
     template<typename T, typename T0> static CONST T b = T(100);
     template<typename T> static CONST T b<T,int>;
   };
-  template<typename T, typename T0> CONST T B4::a; // expected-error {{default initialization of an object of const type 'const int'}}
+  template<typename T, typename T0> CONST T B4::a; // expected-error {{default initialization of an object of const type 'const int'}} expected-note {{add an explicit initializer to initialize 'a<int, char>'}}
   template<typename T> CONST T B4::a<T,int>;
   template CONST int B4::a<int,char>; // expected-note {{in instantiation of}}
   template CONST int B4::a<int,int>;
 
   template<typename T, typename T0> CONST T B4::b;
-  template<typename T> CONST T B4::b<T,int>; // expected-error {{default initialization of an object of const type 'const int'}}
+  template<typename T> CONST T B4::b<T,int>; // expected-error {{default initialization of an object of const type 'const int'}} expected-note {{add an explicit initializer to initialize 'b<int, int>'}}
   template CONST int B4::b<int,char>;
   template CONST int B4::b<int,int>; // expected-note {{in instantiation of}}
 }
@@ -291,9 +291,39 @@ namespace in_class_template {
     template<typename T> template<typename...U> T A<T>::y<tuple<U...> >[] = { U()... };
     static_assert(sizeof(A<int>::y<tuple<char, char, char> >) == 12, "");
   }
+
+  namespace bad_reference {
+    struct S {
+      template<typename T> static int A; // expected-note 4{{here}}
+    };
+
+    template<typename T> void f() {
+      typename T::template A<int> a; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+    template<typename T> void g() {
+      T::template A<int>::B = 0; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+    template<typename T> void h() {
+      class T::template A<int> c; // expected-error {{template name refers to non-type template 'S::A'}}
+    }
+
+    template<typename T>
+    struct X : T::template A<int> {}; // expected-error {{template name refers to non-type template 'S::A'}}
+
+    template void f<S>(); // expected-note {{in instantiation of}}
+    template void g<S>(); // expected-note {{in instantiation of}}
+    template void h<S>(); // expected-note {{in instantiation of}}
+    template struct X<S>; // expected-note {{in instantiation of}}
+  }
 }
 
 namespace in_nested_classes {
   // TODO:
 }
 
+namespace bitfield {
+struct S {
+  template <int I>
+  static int f : I; // expected-error {{static member 'f' cannot be a bit-field}}
+};
+}

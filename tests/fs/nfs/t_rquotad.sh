@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.3 2012/08/13 18:02:32 pgoyette Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.4 2014/03/13 12:45:14 gson Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -57,9 +57,9 @@ get_nfs_quota()
 #start a a nfs server
 
 	atf_check -s exit:0 rump_server -lrumpvfs -lrumpdev -lrumpnet   \
-	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_local             \
-	    -lrumpnet_shmif -lrumpdev_disk -lrumpfs_ffs -lrumpfs_nfs    \
-	    -lrumpfs_nfsserver                                          \
+	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6          \
+	    -lrumpnet_local -lrumpnet_shmif -lrumpdev_disk -lrumpfs_ffs \
+	    -lrumpfs_nfs -lrumpfs_nfsserver                             \
 	    -d key=/dk,hostpath=${IMG},size=host ${RUMP_SERVER}
 
 	atf_check -s exit:0 rump.ifconfig shmif0 create

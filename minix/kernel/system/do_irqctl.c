@@ -141,8 +141,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *			       generic_handler				     *
  *===========================================================================*/
-static int generic_handler(hook)
-irq_hook_t *hook;	
+static int generic_handler(irq_hook_t * hook)
 {
 /* This function handles hardware interrupt in a simple and generic way. All
  * interrupts are transformed into messages to a driver. The IRQ line will be

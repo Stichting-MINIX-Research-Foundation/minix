@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -45,7 +45,7 @@
 #if 0
 FILE_RCSID("@(#)$File: is_tar.c,v 1.37 2010/11/30 14:58:53 rrt Exp $")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif
 

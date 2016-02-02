@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.29 2011/04/12 08:40:34 jruoho Exp $
+.\"	$NetBSD: strptime.3,v 1.31 2015/04/06 14:38:22 ginsbach Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 12, 2011
+.Dd April  6, 2015
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -221,7 +221,7 @@ with \&%C, specifies the year [0,99] within that century.
 .It Cm \&%Y
 the year, including the century (i.e., 1996).
 .It Cm \&%z
-an ISO 8601 or RFC-2822 timezone specification.
+an ISO 8601 or RFC-2822 time zone specification.
 This is one of the following:
 the offset from
 Coordinated Universal Time
@@ -240,7 +240,7 @@ specified as:
 or
 .Dq Z
 .Pq Ql Zulu Time ;
-a three character US timezone specified as:
+a three character US time zone specified as:
 .Dq EDT ,
 .Dq EST ,
 .Dq CDT ,
@@ -271,7 +271,7 @@ or
 .Ql Standard
 .Pq Dq S
 time;
-a single letter military timezone specified as:
+a single letter military time zone specified as:
 .Dq A
 through
 .Dq I
@@ -285,7 +285,7 @@ A
 extension.
 .Pc
 .It Cm \&%Z
-timezone name or no characters when time zone information is unavailable.
+time zone name or no characters when time zone information is unavailable.
 .Po
 A
 .Nx
@@ -333,11 +333,13 @@ function conforms to
 .Sh BUGS
 The
 .Cm \&%Z
-format specifier only accepts timezone
-abbreviations of the local timezone,
-or the value
-.Dq GMT .
+format specifier only accepts time zone
+abbreviations of the local time zone,
+or the values
+.Dq GMT
+or
+.Dq UTC .
 This limitation is caused by the ambiguity
-of overloaded timezone abbreviations,
+of overloaded time zone abbreviations,
 for example EST is both Eastern Standard
 Time and Eastern Australia Summer Time.

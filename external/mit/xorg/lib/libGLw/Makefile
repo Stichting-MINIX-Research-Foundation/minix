@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2013/06/02 11:02:40 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.4 2014/12/18 06:24:30 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	GLw
-.PATH:	${X11SRCDIR.MesaLib}/src/glw
+.PATH:	${X11SRCDIR.glw}
 
 SRCS=	GLwDrawA.c
 
@@ -19,17 +19,22 @@ SRCS+=		GLwMDrawA.c
 CPPFLAGS+=	-I${X11MOTIFPATH}/include
 .endif
 
-LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
-		X11	${.CURDIR}/../libX11/dynamic \
-		Xxf86vm	${.CURDIR}/../libXxf86vm \
-		Xfixes	${.CURDIR}/../libXfixes \
-		Xdamage	${.CURDIR}/../libXdamage \
-		m	${.CURDIR}/../../../../../lib/libm \
-		drm	${.CURDIR}/../libdrm \
-		GL	${.CURDIR}/../libGL \
-		ICE	${.CURDIR}/../libICE \
-		SM	${.CURDIR}/../libSM \
-		Xt	${.CURDIR}/../libXt
+.PATH:		${X11SRCDIR.glw}
+INCS=	GLwDrawA.h GLwDrawAP.h GLwMDrawA.h GLwMDrawAP.h
+INCSDIR=${X11INCDIR}/GL
+
+LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
+		X11		${.CURDIR}/../libX11/dynamic \
+		Xxf86vm		${.CURDIR}/../libXxf86vm \
+		Xfixes		${.CURDIR}/../libXfixes \
+		Xdamage		${.CURDIR}/../libXdamage \
+		m		${.CURDIR}/../../../../../lib/libm \
+		drm		${.CURDIR}/../libdrm \
+		GL		${.CURDIR}/../libGL \
+		ICE		${.CURDIR}/../libICE \
+		SM		${.CURDIR}/../libSM \
+		Xt		${.CURDIR}/../libXt \
+		xcb-dri2	${.CURDIR}/../libxcb/dri2
 
 PKGCONFIG=	glw
 PKGDIST.glw=	${X11SRCDIR.MesaLib}/src/glw

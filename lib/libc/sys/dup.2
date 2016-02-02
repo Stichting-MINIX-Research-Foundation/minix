@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.28 2012/01/25 00:28:35 christos Exp $
+.\"	$NetBSD: dup.2,v 1.30 2013/12/25 02:49:52 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 23, 2012
+.Dd December 24, 2013
 .Dt DUP 2
 .Os
 .Sh NAME
@@ -42,129 +42,190 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn dup "int oldd"
+.Fn dup "int oldfd"
 .Ft int
-.Fn dup2 "int oldd" "int newd"
+.Fn dup2 "int oldfd" "int newfd"
 .Ft int
-.Fn dup3 "int oldd" "int newd" "int flags"
+.Fn dup3 "int oldfd" "int newfd" "int flags"
 .Sh DESCRIPTION
+The
 .Fn dup
-duplicates an existing object descriptor and returns its value to
-the calling process
-.Fa ( newd
-=
-.Fn dup oldd ) .
-The argument
-.Fa oldd
-is a small non-negative integer index in
-the per-process descriptor table.
-The value must be less than the size of the table, which is returned by
-.Xr getdtablesize 3 .
-The new descriptor returned by the call
-is the lowest numbered descriptor currently not in use by the process.
-.Pp
-The object referenced by the descriptor does not distinguish
-between
-.Fa oldd
-and
-.Fa newd
-in any way.
-Thus if
-.Fa newd
-and
-.Fa oldd
-are duplicate references to an open
-file,
+family of calls duplicates an existing file descriptor
+.Fa oldfd .
+A new file descriptor is produced; it is a new reference to the same
+underlying system object.
+The object in question does not distinguish between the descriptors
+referencing it in any way.
+Thus for files,
 .Xr read 2 ,
 .Xr write 2
 and
 .Xr lseek 2
-calls all move a single pointer into the file,
-and append mode, non-blocking I/O and asynchronous I/O options
-are shared between the references.
-If a separate pointer into the file is desired, a different
-object reference to the file must be obtained by issuing an
-additional
+calls all move a single shared seek position.
+Similarly, all object modes, settings, properties, and behavior other
+than the close-on-exec flag are shared between references.
+This includes the setting of append mode, non-blocking I/O actions,
+asynchronous I/O operations in progress, socket options, and so forth.
+The close-on-exec flag, however, is a property of the descriptor
+rather than the object and can be set independently for each
+reference.
+.Pp
+To get an independent handle with its own seek position and settings,
+an additional
 .Xr open 2
-call.
-The close-on-exec flag on the new file descriptor is unset.
+call must be issued.
+(This is not generally possible for pipes and sockets.)
 .Pp
-In
-.Fn dup2 ,
-the value of the new descriptor
-.Fa newd
-is specified.
-If this descriptor is already
-in use, the descriptor is first deallocated as if a
-.Xr close 2
-call had been done first.
-If
-.Fa newd
+The
+.Nm dup
+call chooses the new descriptor: it is the lowest-numbered descriptor
+not currently in use.
+The
+.Nm dup2
 and
-.Fa oldd
-are the same, the call has no effect.
+.Nm dup3
+calls allow the caller to choose the new descriptor by passing
+.Fa newfd ,
+which must be within the range of valid descriptors.
+If
+.Fa newfd
+is the same as
+.Fa oldfd ,
+the call has no effect.
+Otherwise, if
+.Fa newfd
+is already in use, it is closed as if
+.Xr close 2
+had been called.
 .Pp
+File descriptors are small non-negative integers that index into the
+per-process file table.
+Values 0, 1, and 2 have the special property that they are treated as
+standard input, standard output, and standard error respectively.
+(The constants
+.Dv STDIN_FILENO ,
+.Dv STDOUT_FILENO ,
+and
+.Dv STDERR_FILENO
+are provided as symbolic forms for these values.)
+The maximum value for a file descriptor is one less than the file
+table size.
+The file table size can be interrogated with
+.Xr getdtablesize 3
+and can to some extent be adjusted with
+.Xr setrlimit 2 .
+.Pp
+The
 .Fn dup3
-behaves exactly like
-.Fn dup2
-only it allows extra
+call includs an additional
 .Fa flags
-to be set on the returned file descriptor.
-The following flags are valid:
-.Bl -tag -width O_NONBLOCK -offset indent
+argument supporting a subset of the
+.Xr open 2
+flags:
+.Bl -tag -width O_NOSIGPIPE -offset indent
 .It Dv O_CLOEXEC
-Set the
-.Dq close-on-exec
-property.
+Set the close-on-exec flag on
+.Fa newfd .
 .It Dv O_NONBLOCK
 Sets non-blocking I/O.
 .It Dv O_NOSIGPIPE
-Return
-.Er EPIPE
-instead of raising
-.Dv SIGPIPE .
+For pipes and sockets, do not raise
+.Dv SIGPIPE
+when a write is made to a broken pipe.
+Instead, the write will fail with
+.Er EPIPE .
 .El
+As described above, only the close-on-exec flag is
+per-file-descriptor, so passing any of the other
+.Fa flags
+will affect
+both
+.Fa oldfd
+and
+.Fa newfd .
+These settings are, however, applied atomically along with the rest of
+the
+.Fn dup3
+operation.
+.Pp
+In the case of
+.Fn dup
+and
+.Fn dup2
+the close-on-exec flag on the new file descriptor is always left
+unset and all the modes and settings of the underlying object are left
+unchanged.
+.Pp
+Functionality similar to
+.Fn dup
+with slightly different semantics is also available via
+.Xr fcntl 2 .
 .Sh RETURN VALUES
-The value \-1 is returned if an error occurs in either call.
-The external variable
+These calls return the new file descriptor value.
+In the case of
+.Fn dup2
+and
+.Fn dup3
+this is always the same as
+.Fa newfd .
+If an error occurs, the value \-1 is returned and
 .Va errno
-indicates the cause of the error.
+is set to indicate what happened.
+.Sh EXAMPLES
+A common use for these functions is to set up a pipe as the standard
+input or standard output of a subprocess.
+That is done approximately as follows (error handling omitted for
+clarity):
+.Bd -literal -offset indent
+#include \*[Lt]unistd.h\*[Gt]
+
+int fds[2];
+pid_t pid;
+
+pipe(fds);
+pid = fork();
+if (pid == 0) {
+	/* child; use read end of pipe to stdin */
+	dup2(fds[0], STDIN_FILENO);
+	close(fds[0]);
+	close(fds[1]);
+	execv("/some/program", args);
+}
+/* parent process; return write end of pipe */
+close(fds[0]);
+return fds[1];
+.Ed
 .Sh ERRORS
-All three functions may fail if:
+These functions fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa oldd
-is not a valid active descriptor
-or
-.Fa newd
+.Fa oldfd
+is not a valid active descriptor, or for
+.Fn dup2
+and
+.Fn dup3 ,
+.Fa newfd
 is not in the range of valid file descriptors.
-.El
-.Pp
-The
-.Fn dup
-function may also fail if:
-.Bl -tag -width Er
-.It Bq Er EMFILE
-Too many descriptors are active.
-.El
-.Pp
-The
-.Fn dup3
-function will also fail if:
-.Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa flags
-is other than
-.Dv O_NONBLOCK
-or
-.Dv O_CLOEXEC .
+contained an invalid value.
+Only
+.Fn dup3
+can generate this error.
+.It Bq Er EMFILE
+Too many descriptors are active.
+Only
+.Fn dup
+can generate this error.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr close 2 ,
 .Xr fcntl 2 ,
+.Xr getrlimit 2 ,
 .Xr open 2 ,
 .Xr pipe 2 ,
+.Xr setrlimit 2 ,
 .Xr socket 2 ,
 .Xr socketpair 2 ,
 .Xr getdtablesize 3
@@ -178,5 +239,5 @@ functions conform to
 .Sh HISTORY
 The
 .Fn dup3
-function is inspired from Linux and appeared in
+function originated in Linux and appeared in
 .Nx 6.0 .

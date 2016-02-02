@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.25 2013/10/18 18:26:20 martin Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.27 2014/09/05 05:19:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,19 +43,21 @@
 #include <stdlib.h>
 #endif
 
+struct _prop_number_value {
+	union {
+		int64_t  pnu_signed;
+		uint64_t pnu_unsigned;
+	} pnv_un;
+#define	pnv_signed	pnv_un.pnu_signed
+#define	pnv_unsigned	pnv_un.pnu_unsigned
+	unsigned int	pnv_is_unsigned	:1,
+					:31;
+};
+
 struct _prop_number {
 	struct _prop_object	pn_obj;
 	struct rb_node		pn_link;
-	struct _prop_number_value {
-		union {
-			int64_t  pnu_signed;
-			uint64_t pnu_unsigned;
-		} pnv_un;
-#define	pnv_signed	pnv_un.pnu_signed
-#define	pnv_unsigned	pnv_un.pnu_unsigned
-		unsigned int	pnv_is_unsigned	:1,
-						:31;
-	} pn_value;
+	struct _prop_number_value pn_value;
 };
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
@@ -199,9 +201,11 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	 * we output in decimal.
 	 */
 	if (pn->pn_value.pnv_is_unsigned)
-		sprintf(tmpstr, "0x%" PRIx64, pn->pn_value.pnv_unsigned);
+		snprintf(tmpstr, sizeof(tmpstr), "0x%" PRIx64,
+		    pn->pn_value.pnv_unsigned);
 	else
-		sprintf(tmpstr, "%" PRIi64, pn->pn_value.pnv_signed);
+		snprintf(tmpstr, sizeof(tmpstr), "%" PRIi64,
+		    pn->pn_value.pnv_signed);
 
 	if (_prop_object_externalize_start_tag(ctx, "integer") == false ||
 	    _prop_object_externalize_append_cstring(ctx, tmpstr) == false ||

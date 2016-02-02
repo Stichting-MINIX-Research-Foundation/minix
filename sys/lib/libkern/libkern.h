@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.108 2013/08/28 16:20:38 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.121 2015/08/30 07:55:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,10 @@
 #ifndef _LIB_LIBKERN_LIBKERN_H_
 #define _LIB_LIBKERN_LIBKERN_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_diagnostic.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/null.h>
@@ -52,14 +56,22 @@ LIBKERN_INLINE long lmin(long, long) __unused;
 LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
 LIBKERN_INLINE u_long ulmin(u_long, u_long) __unused;
 LIBKERN_INLINE int abs(int) __unused;
+LIBKERN_INLINE long labs(long) __unused;
+LIBKERN_INLINE long long llabs(long long) __unused;
+LIBKERN_INLINE intmax_t imaxabs(intmax_t) __unused;
 
 LIBKERN_INLINE int isspace(int) __unused;
 LIBKERN_INLINE int isascii(int) __unused;
 LIBKERN_INLINE int isupper(int) __unused;
 LIBKERN_INLINE int islower(int) __unused;
 LIBKERN_INLINE int isalpha(int) __unused;
+LIBKERN_INLINE int isalnum(int) __unused;
 LIBKERN_INLINE int isdigit(int) __unused;
 LIBKERN_INLINE int isxdigit(int) __unused;
+LIBKERN_INLINE int iscntrl(int) __unused;
+LIBKERN_INLINE int isgraph(int) __unused;
+LIBKERN_INLINE int isprint(int) __unused;
+LIBKERN_INLINE int ispunct(int) __unused;
 LIBKERN_INLINE int toupper(int) __unused;
 LIBKERN_INLINE int tolower(int) __unused;
 
@@ -111,6 +123,24 @@ abs(int j)
 	return(j < 0 ? -j : j);
 }
 
+LIBKERN_INLINE long
+labs(long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE long long
+llabs(long long j)
+{
+	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE intmax_t
+imaxabs(intmax_t j)
+{
+	return(j < 0 ? -j : j);
+}
+
 LIBKERN_INLINE int
 isspace(int ch)
 {
@@ -142,6 +172,12 @@ isalpha(int ch)
 }
 
 LIBKERN_INLINE int
+isalnum(int ch)
+{
+	return (isalpha(ch) || isdigit(ch));
+}
+
+LIBKERN_INLINE int
 isdigit(int ch)
 {
 	return (ch >= '0' && ch <= '9');
@@ -153,6 +189,30 @@ isxdigit(int ch)
 	return (isdigit(ch) ||
 	    (ch >= 'A' && ch <= 'F') ||
 	    (ch >= 'a' && ch <= 'f'));
+}
+
+LIBKERN_INLINE int
+iscntrl(int ch)
+{
+	return ((ch >= 0x00 && ch <= 0x1F) || ch == 0x7F);
+}
+
+LIBKERN_INLINE int
+isgraph(int ch)
+{
+	return (ch != ' ' && isprint(ch));
+}
+
+LIBKERN_INLINE int
+isprint(int ch)
+{
+	return (ch >= 0x20 && ch <= 0x7E);
+}
+
+LIBKERN_INLINE int
+ispunct(int ch)
+{
+	return (isprint(ch) && ch != ' ' && !isalnum(ch));
 }
 
 LIBKERN_INLINE int
@@ -189,9 +249,15 @@ tolower(int ch)
 #endif
 #endif
 
+#ifndef	CTASSERT
 #define	CTASSERT(x)		__CTASSERT(x)
+#endif
+#ifndef	CTASSERT_SIGNED
 #define	CTASSERT_SIGNED(x)	__CTASSERT(((typeof(x))-1) < 0)
+#endif
+#ifndef	CTASSERT_UNSIGNED
 #define	CTASSERT_UNSIGNED(x)	__CTASSERT(((typeof(x))-1) >= 0)
+#endif
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
@@ -247,6 +313,40 @@ tolower(int ch)
 #endif
 #endif
 
+/*
+ * Return the container of an embedded struct.  Given x = &c->f,
+ * container_of(x, T, f) yields c, where T is the type of c.  Example:
+ *
+ *	struct foo { ... };
+ *	struct bar {
+ *		int b_x;
+ *		struct foo b_foo;
+ *		...
+ *	};
+ *
+ *	struct bar b;
+ *	struct foo *fp = b.b_foo;
+ *
+ * Now we can get at b from fp by:
+ *
+ *	struct bar *bp = container_of(fp, struct bar, b_foo);
+ *
+ * The 0*sizeof((PTR) - ...) causes the compiler to warn if the type of
+ * *fp does not match the type of struct bar::b_foo.
+ * We skip the validation for coverity runs to avoid warnings.
+ */
+#ifdef __COVERITY__
+#define __validate_container_of(PTR, TYPE, FIELD) 0
+#else
+#define __validate_container_of(PTR, TYPE, FIELD)			\
+    (0 * sizeof((PTR) - &((TYPE *)(((char *)(PTR)) -			\
+    offsetof(TYPE, FIELD)))->FIELD))
+#endif
+
+#define	container_of(PTR, TYPE, FIELD)					\
+    ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))			\
+	+ __validate_container_of(PTR, TYPE, FIELD))
+
 #define	MTPRNG_RLEN		624
 struct mtprng_state {
 	unsigned int mt_idx; 
@@ -285,12 +385,15 @@ char	*strsep(char **, const char *);
 
 /* These exist in GCC 3.x, but we don't bother. */
 char	*strcat(char *, const char *);
+size_t	 strcspn(const char *, const char *);
 char	*strncpy(char *, const char *, size_t);
+char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
-
 char	*strstr(const char *, const char *);
+char	*strpbrk(const char *, const char *);
+size_t	 strspn(const char *, const char *);
 
 /*
  * ffs is an instruction on vax.
@@ -302,10 +405,6 @@ int	 ffs(int);
 
 void	 kern_assert(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-unsigned int
-	bcdtobin(unsigned int);
-unsigned int
-	bintobcd(unsigned int);
 u_int32_t
 	inet_addr(const char *);
 struct in_addr;
@@ -321,6 +420,8 @@ char	*initstate(unsigned long, char *, size_t);
 char	*setstate(char *);
 #endif /* SMALL_RANDOM */
 long	 random(void);
+void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
+	    uint32_t[3]);
 void	 mtprng_init32(struct mtprng_state *, uint32_t);
 void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
 uint32_t mtprng_rawrandom(struct mtprng_state *);
@@ -334,18 +435,53 @@ int	 strncasecmp(const char *, const char *, size_t);
 u_long	 strtoul(const char *, char **, int);
 long long strtoll(const char *, char **, int);
 unsigned long long strtoull(const char *, char **, int);
+intmax_t  strtoimax(const char *, char **, int);
 uintmax_t strtoumax(const char *, char **, int);
+intmax_t strtoi(const char * __restrict, char ** __restrict, int, intmax_t,
+    intmax_t, int *);
+uintmax_t strtou(const char * __restrict, char ** __restrict, int, uintmax_t,
+    uintmax_t, int *);
+
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
+#if __GNUC_PREREQ__(4, 5) \
+    && (defined(__alpha_cix__) || defined(__mips_popcount))
+#define	popcount	__builtin_popcount
+#define	popcountl	__builtin_popcountl
+#define	popcountll	__builtin_popcountll
+#define	popcount32	__builtin_popcount
+#define	popcount64	__builtin_popcountll
+#else
 unsigned int	popcount(unsigned int) __constfunc;
 unsigned int	popcountl(unsigned long) __constfunc;
 unsigned int	popcountll(unsigned long long) __constfunc;
 unsigned int	popcount32(uint32_t) __constfunc;
 unsigned int	popcount64(uint64_t) __constfunc;
+#endif
 
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
+
+#ifdef notyet
+/*
+ * LZF hashtable/state size: on uncompressible data and on a system with
+ * a sufficiently large d-cache, a larger table produces a considerable
+ * speed benefit.  On systems with small memory and caches, however...
+ */
+#if defined(__vax__) || defined(__m68k__)
+#define LZF_HLOG 14
+#else
+#define LZF_HLOG 15
+#endif
+typedef const uint8_t *LZF_STATE[1 << LZF_HLOG];
+
+unsigned int lzf_compress_r (const void *const, unsigned int, void *,
+			     unsigned int, LZF_STATE);
+unsigned int lzf_decompress (const void *const, unsigned int, void *,
+			     unsigned int);
+#endif
+
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

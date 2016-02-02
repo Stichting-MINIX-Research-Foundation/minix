@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.10 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.11 2014/05/14 06:38:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.10 2008/04/28 20:22:58 martin Exp $");
+__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.11 2014/05/14 06:38:09 uebayasi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.10 2008/04/28 20:22:58 martin Exp
 
 #include "extern.h"
 
- __weak_alias(__sigaction14, __libc_sigaction14)
+__weak_alias(__sigaction14, __libc_sigaction14)
 
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)

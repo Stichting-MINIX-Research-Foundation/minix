@@ -19,7 +19,7 @@ struct minix_ipcvecs _minix_ipcvecs = {
 
 void __minix_init(void)
 {
-	if((get_minix_kerninfo(&_minix_kerninfo) != 0) ||
+	if((ipc_minix_kerninfo(&_minix_kerninfo) != 0) ||
 		(_minix_kerninfo->kerninfo_magic != KERNINFO_MAGIC))
 	{
 		_minix_kerninfo = NULL;
@@ -30,4 +30,3 @@ void __minix_init(void)
 		_minix_ipcvecs = *_minix_kerninfo->minix_ipcvecs;
 	}
 }
-

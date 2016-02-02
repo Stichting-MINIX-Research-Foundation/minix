@@ -353,8 +353,8 @@ str_press_key:	.asciz	"\r\nPress any key to boot from CD"
 str_dot:	.asciz	"."
 str_read_error:	.asciz	"Can't read CD"
 str_no_pvd:	.asciz	"Can't find Primary Volume Descriptor"
-str_no_loader:	.asciz	"Can't find /boot"
-str_loader:	.asciz	"BOOT.;1"
+str_no_loader:	.asciz	"Can't find /minixboot"
+str_loader:	.asciz	"MINIXBOOT.;1"
 
 /* Used to calculate free bytes */
 free_space = end - .

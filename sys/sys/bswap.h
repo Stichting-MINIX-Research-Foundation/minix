@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.16 2009/08/08 21:23:15 christos Exp $      */
+/*      $NetBSD: bswap.h,v 1.19 2015/03/12 15:28:16 christos Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -6,8 +6,7 @@
 #define _SYS_BSWAP_H_
 
 #ifndef _LOCORE
-#include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 #include <machine/bswap.h>
 
@@ -23,7 +22,7 @@ uint32_t bswap32(uint32_t) __RENAME(__bswap32) __constfunc;
 uint64_t bswap64(uint64_t) __constfunc;
 __END_DECLS
 
-#if defined(__GNUC__) && defined(__OPTIMIZE__) && !defined(__lint__)
+#if defined(__GNUC__) && !defined(__lint__)
 
 /* machine/byte_swap.h might have defined inline versions */
 #ifndef __BYTE_SWAP_U64_VARIABLE
@@ -62,18 +61,18 @@ __END_DECLS
 	 (((x) & 0x00ff) << 8))))
 
 #define	bswap64(x) \
-	(__builtin_constant_p((x)) ? \
+	__CAST(uint64_t, __builtin_constant_p((x)) ? \
 	 __byte_swap_u64_constant(x) : __BYTE_SWAP_U64_VARIABLE(x))
 
 #define	bswap32(x) \
-	(__builtin_constant_p((x)) ? \
+	__CAST(uint32_t, __builtin_constant_p((x)) ? \
 	 __byte_swap_u32_constant(x) : __BYTE_SWAP_U32_VARIABLE(x))
 
 #define	bswap16(x) \
-	(__builtin_constant_p((x)) ? \
+	__CAST(uint16_t, __builtin_constant_p((x)) ? \
 	 __byte_swap_u16_constant(x) : __BYTE_SWAP_U16_VARIABLE(x))
 
-#endif /* __GNUC__ && __OPTIMIZE__ */
+#endif /* __GNUC__ && !__lint__ */
 #endif /* !_LOCORE */
 
 #endif /* !_SYS_BSWAP_H_ */

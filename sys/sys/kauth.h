@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.71 2013/03/18 19:35:46 plunky Exp $ */
+/* $NetBSD: kauth.h,v 1.73 2015/10/06 22:13:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -53,6 +53,38 @@ typedef uint32_t		kauth_action_t;
 typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 				      void *, void *, void *, void *, void *);
 typedef	struct kauth_key       *kauth_key_t;
+
+#ifdef __KAUTH_PRIVATE	/* For the debugger */
+/* 
+ * Credentials.
+ *
+ * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
+ * and should be synchronized with this structure when the update is
+ * relevant.
+ */
+struct kauth_cred {
+	/*
+	 * Ensure that the first part of the credential resides in its own
+	 * cache line.  Due to sharing there aren't many kauth_creds in a
+	 * typical system, but the reference counts change very often.
+	 * Keeping it separate from the rest of the data prevents false
+	 * sharing between CPUs.
+	 */
+	u_int cr_refcnt;		/* reference count */
+#if COHERENCY_UNIT > 4
+	uint8_t cr_pad[COHERENCY_UNIT - 4];
+#endif
+	uid_t cr_uid;			/* user id */
+	uid_t cr_euid;			/* effective user id */
+	uid_t cr_svuid;			/* saved effective user id */
+	gid_t cr_gid;			/* group id */
+	gid_t cr_egid;			/* effective group id */
+	gid_t cr_svgid;			/* saved effective group id */
+	u_int cr_ngroups;		/* number of groups */
+	gid_t cr_groups[NGROUPS];	/* group memberships */
+	specificdata_reference cr_sd;	/* specific data */
+};
+#endif
 
 /*
  * Possible return values for a listener.
@@ -111,6 +143,7 @@ enum {
 	KAUTH_SYSTEM_LFS,
 	KAUTH_SYSTEM_FS_EXTATTR,
 	KAUTH_SYSTEM_FS_SNAPSHOT,
+	KAUTH_SYSTEM_INTR,
 };
 
 /*
@@ -156,6 +189,7 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_LFS_FCNTL,
 	KAUTH_REQ_SYSTEM_MOUNT_UMAP,
 	KAUTH_REQ_SYSTEM_MOUNT_DEVICE,
+	KAUTH_REQ_SYSTEM_INTR_AFFINITY,
 };
 
 /*

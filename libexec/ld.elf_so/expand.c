@@ -62,23 +62,19 @@ static const struct {
 	ADD(PLATFORM)	/* uname -p */
 };
 
-#if !defined(__minix)
 static int mib[3][2] = {
 	{ CTL_KERN, KERN_OSTYPE },
 	{ CTL_KERN, KERN_OSRELEASE },
 	{ CTL_HW, HW_MACHINE_ARCH },
 };
-#endif /* !defined(__minix) */
 
 static size_t
 expand(char *buf, const char *execname, int what, size_t bl)
 {
 	const char *p, *ep;
 	char *bp = buf;
-#if !defined(__minix)
 	size_t len;
 	char name[32];
-#endif /* !defined(__minix) */
 
 	switch (what) {
 	case 0:	/* HWCAP XXX: Not yet */
@@ -92,7 +88,6 @@ expand(char *buf, const char *execname, int what, size_t bl)
 			xerr(1, "bad execname `%s' in AUX vector", execname);
 		break;
 
-#if !defined(__minix)
 	case 3:	/* OSNAME */
 	case 4:	/* OSREL */
 	case 5:	/* PLATFORM */
@@ -103,7 +98,6 @@ expand(char *buf, const char *execname, int what, size_t bl)
 		}
 		ep = (p = name) + len - 1;
 		break;
-#endif /* !defined(__minix) */
 	default:
 		return 0;
 	}

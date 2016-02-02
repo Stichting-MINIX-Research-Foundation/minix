@@ -56,6 +56,7 @@ enum flavor	flavor = F_NETBSD6;
 #else
 enum flavor	flavor = F_MTREE;
 #endif /* defined(__minix) */
+
 typedef struct _key {
 	const char	*name;		/* key name */
 	u_int		val;		/* value */

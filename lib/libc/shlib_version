@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.244 2013/11/10 20:59:27 joerg Exp $
+#	$NetBSD: shlib_version,v 1.258 2015/01/16 18:45:01 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -32,10 +32,14 @@
 # - kill sigcontext: never request version 0 or 1 signal trampoline.
 #   always request version 2 trampoline. (on vax, 3).
 # - remove gets(); it is finally dead in c11.
+#   (note: maybe it still needs to be kept in a compat lib; but not in libc)
 # - make __cerror (spelled CERROR) hidden again
 # - remove ruserok() and friends to libcompat (or entirely)
 # - remove alloca fallback and expect compiler to provide a builtin version.
 # - switch to DT_INIT_ARRAY on all platforms
 # - consolidate ownership with crt0.o and avoid common symbols
+# - redo stdin/stdout/stderr to not require copy relocations
+# - move gethostbyname to a compat library
+# - remove arc4random(3) API
 major=12
-minor=187
+minor=197

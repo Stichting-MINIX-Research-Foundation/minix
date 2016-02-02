@@ -16,7 +16,7 @@ static ssize_t hello_read(devminor_t minor, u64_t position, endpoint_t endpt,
 /* SEF functions and variables. */
 static void sef_local_startup(void);
 static int sef_cb_init(int type, sef_init_info_t *info);
-static int sef_cb_lu_state_save(int);
+static int sef_cb_lu_state_save(int, int);
 static int lu_state_restore(void);
 
 /* Entry points to the hello driver. */
@@ -73,7 +73,7 @@ static ssize_t hello_read(devminor_t UNUSED(minor), u64_t position,
     return size;
 }
 
-static int sef_cb_lu_state_save(int UNUSED(state)) {
+static int sef_cb_lu_state_save(int UNUSED(state), int UNUSED(flags)) {
 /* Save the state. */
     ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
 
@@ -103,11 +103,6 @@ static void sef_local_startup()
     /*
      * Register live update callbacks.
      */
-    /* - Agree to update immediately when LU is requested in a valid state. */
-    sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-    /* - Support live update starting from any standard state. */
-    sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-    /* - Register a custom routine to save the state. */
     sef_setcb_lu_state_save(sef_cb_lu_state_save);
 
     /* Let SEF perform startup. */

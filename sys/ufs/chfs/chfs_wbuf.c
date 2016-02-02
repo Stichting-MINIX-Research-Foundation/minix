@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.5 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.7 2014/10/18 08:33:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -181,7 +181,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 	/* adjust alignment offset */
 	if (chmp->chm_wbuf_len != PAGE_MOD(to)) {
 		chmp->chm_wbuf_len = PAGE_MOD(to);
-		/* take care of alignement to next page */
+		/* take care of alignment to next page */
 		if (!chmp->chm_wbuf_len) {
 			chmp->chm_wbuf_len += chmp->chm_wbuf_pagesize;
 			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
@@ -209,7 +209,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		donelen += wbuf_retlen;
 
 		/* if there is more residual data than the length of the wbuf
-		 * write it out directly until it's fit in the wbuf */
+		 * write it out directly until it fits in the wbuf */
 		if (vlen >= chmp->chm_wbuf_pagesize) {
 			ret = chfs_write_leb(chmp, lnr, v, outvec_to, PAGE_DIV(vlen), &wbuf_retlen);
 			vlen -= wbuf_retlen;

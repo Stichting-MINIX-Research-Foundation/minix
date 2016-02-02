@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/11/06 22:28:26 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2014/03/16 22:53:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ INCS=	XvMClib.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic

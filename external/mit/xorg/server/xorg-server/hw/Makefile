@@ -1,18 +1,17 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/14 10:46:06 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2014/03/01 19:45:29 tsutsui Exp $
 
 .include "../Makefile.common"
 
-#MINIX: vfb not yet supported
-SUBDIR= xnest
+SUBDIR= xnest vfb
 .if ${XSERVER_XFREE86} != "no"
 SUBDIR+= xfree86
 .endif
 
-.if 0
 .if ${XSERVER_X68K} != "no"
 SUBDIR+=netbsd/x68k
 .endif
 
+.if 0
 .if ${XSERVER_XALPHANETBSD} != "no"
 SUBDIR+=netbsd/alpha
 .endif

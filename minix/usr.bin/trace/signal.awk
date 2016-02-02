@@ -23,7 +23,7 @@ BEGIN {
 END {
 	printf("};\n\n");
 	printf("const char *\nget_signal_name(int sig)\n{\n\n");
-	printf("\tif (sig >= 0 && sig < sizeof(signals) / sizeof(signals[0]) &&\n");
+	printf("\tif (sig >= 0 && (unsigned int)sig < __arraycount(signals) &&\n");
 	printf("\t    signals[sig] != NULL)\n");
 	printf("\t\treturn signals[sig];\n");
 	printf("\telse\n");

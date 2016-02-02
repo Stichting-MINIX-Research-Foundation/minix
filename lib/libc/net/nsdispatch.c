@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.37 2012/03/13 21:13:42 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.38 2014/09/18 13:58:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.37 2012/03/13 21:13:42 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.38 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -519,7 +519,7 @@ _nsconfigure(void)
 	 */
 	rwlock_wrlock(&_nslock);
 
-	_nsyyin = fopen(_PATH_NS_CONF, "r");
+	_nsyyin = fopen(_PATH_NS_CONF, "re");
 	if (_nsyyin == NULL) {
 		/*
 		 * Unable to open nsswitch.conf; behave as though the

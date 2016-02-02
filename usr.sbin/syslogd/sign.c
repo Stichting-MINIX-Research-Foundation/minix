@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.5 2012/06/06 00:33:45 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.5 2012/06/06 00:33:45 christos Exp $");
+__RCSID("$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -504,7 +504,11 @@ sign_send_certificate_block(struct signature_group_t *sg)
 	char *tstamp;
 	char payload[SIGN_MAX_PAYLOAD_LENGTH];
 	char sd[SIGN_MAX_SD_LENGTH];
+#if !defined(NDEBUG) && defined(__minix)
 	size_t payload_len, sd_len, fragment_len;
+#else
+	size_t payload_len, fragment_len;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 	size_t payload_index = 0;
 
 	/* do nothing if CBs already sent or if there was no message in SG */
@@ -514,7 +518,7 @@ sign_send_certificate_block(struct signature_group_t *sg)
 		return false;
 
 	DPRINTF((D_CALL|D_SIGN), "sign_send_certificate_block(%p)\n", sg);
-	tstamp = make_timestamp(NULL, true);
+	tstamp = make_timestamp(NULL, true, (size_t)-1);
 
 	payload_len = snprintf(payload, sizeof(payload), "%s %c %s", tstamp,
 		GlobalSign.keytype, GlobalSign.pubkey_b64);
@@ -529,8 +533,11 @@ sign_send_certificate_block(struct signature_group_t *sg)
 		else
 			fragment_len = SIGN_MAX_FRAG_LENGTH;
 
+#if !defined(NDEBUG) && defined(__minix)
 		/* format SD */
-		sd_len = snprintf(sd, sizeof(sd), "[ssign-cert "
+		sd_len =
+#endif /* !defined(NDEBUG) && defined(__minix) */
+		    snprintf(sd, sizeof(sd), "[ssign-cert "
 		    "VER=\"%s\" RSID=\"%" PRIuFAST64 "\" SG=\"%d\" "
 		    "SPRI=\"%d\" TBPL=\"%zu\" INDEX=\"%zu\" "
 		    "FLEN=\"%zu\" FRAG=\"%.*s\" "
@@ -801,7 +808,7 @@ sign_msg_sign(struct buf_msg **bufferptr, char *sd, size_t linesize)
 
 	/* set up buffer */
 	buffer = buf_msg_new(0);
-	buffer->timestamp = strdup(make_timestamp(NULL, !BSDOutputFormat));
+	buffer->timestamp = make_timestamp(NULL, !BSDOutputFormat, 0);
 	buffer->prog = appname;
 	buffer->pid = include_pid;
 	buffer->recvhost = buffer->host = LocalFQDN;

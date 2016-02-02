@@ -79,6 +79,11 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	RTS_SET(rp, RTS_NO_PRIV);
 	return(OK);
 
+  case SYS_PRIV_CLEAR_IPC_REFS:
+	/* Clear pending IPC for the process. */
+	clear_ipc_refs(rp, EDEADSRCDST);
+	return(OK);
+
   case SYS_PRIV_SET_SYS:
 	/* Set a privilege structure of a blocked system process. */
 	if (! RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
@@ -115,16 +120,20 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_proc_nr = proc_nr;		/* reassociate process nr */
 
 	for (i=0; i< NR_SYS_CHUNKS; i++)		/* remove pending: */
+	      priv(rp)->s_asyn_pending.chunk[i] = 0;	/* - incoming asyn */
+	for (i=0; i< NR_SYS_CHUNKS; i++)		/*   messages */
 	      priv(rp)->s_notify_pending.chunk[i] = 0;	/* - notifications */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	(void) sigemptyset(&priv(rp)->s_sig_pending);	/* - signals */
 	reset_kernel_timer(&priv(rp)->s_alarm_timer);	/* - alarm */
 	priv(rp)->s_asyntab= -1;			/* - asynsends */
 	priv(rp)->s_asynsize= 0;
+	priv(rp)->s_asynendpoint = rp->p_endpoint;
 	priv(rp)->s_diag_sig = FALSE;		/* no request for diag sigs */
 
 	/* Set defaults for privilege bitmaps. */
 	priv(rp)->s_flags= DSRV_F;           /* privilege flags */
+	priv(rp)->s_init_flags= DSRV_I;      /* initialization flags */
 	priv(rp)->s_trap_mask= DSRV_T;       /* allowed traps */
 	memset(&map, 0, sizeof(map));
 	ipc_to_m = DSRV_M;                   /* allowed targets */
@@ -143,13 +152,17 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_bak_sig_mgr = NONE;
 
 	/* Set defaults for resources: no I/O resources, no memory resources,
-	 * no IRQs, no grant table
+	 * no IRQs, no grant table, no ipc filter
 	 */
 	priv(rp)->s_nr_io_range= 0;
 	priv(rp)->s_nr_mem_range= 0;
 	priv(rp)->s_nr_irq= 0;
 	priv(rp)->s_grant_table= 0;
 	priv(rp)->s_grant_entries= 0;
+	priv(rp)->s_grant_endpoint = rp->p_endpoint;
+	priv(rp)->s_state_table= 0;
+	priv(rp)->s_state_entries= 0;
+	priv(rp)->s_ipcf= 0;
 
 	/* Override defaults if the caller has supplied a privilege structure. */
 	if (m_ptr->m_lsys_krn_sys_privctl.arg_ptr)
@@ -188,26 +201,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 	/* Get the I/O range */
 	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &io_range, sizeof(io_range));
-	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
-
-	for (i = 0; i < priv(rp)->s_nr_io_range; i++) {
-		if (priv(rp)->s_io_tab[i].ior_base == io_range.ior_base &&
-			priv(rp)->s_io_tab[i].ior_limit == io_range.ior_limit)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_io_range;
-	if (i >= NR_IO_RANGE) {
-		printf("do_privctl: %d already has %d i/o ranges.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-
-	priv(rp)->s_io_tab[i].ior_base= io_range.ior_base;
-	priv(rp)->s_io_tab[i].ior_limit= io_range.ior_limit;
-	priv(rp)->s_nr_io_range++;
-
-	return OK;
+	/* Add the I/O range */
+	return priv_add_io(rp, &io_range);
 
   case SYS_PRIV_ADD_MEM:
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
@@ -218,27 +213,8 @@ int do_privctl(struct proc * caller, message * m_ptr)
 		m_ptr->m_lsys_krn_sys_privctl.arg_ptr, KERNEL,
 		(vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
-	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
-
-	/* When restarting a driver, check if it already has the permission */
-	for (i = 0; i < priv(rp)->s_nr_mem_range; i++) {
-		if (priv(rp)->s_mem_tab[i].mr_base == mem_range.mr_base &&
-			priv(rp)->s_mem_tab[i].mr_limit == mem_range.mr_limit)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_mem_range;
-	if (i >= NR_MEM_RANGE) {
-		printf("do_privctl: %d already has %d mem ranges.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-
-	priv(rp)->s_mem_tab[i].mr_base= mem_range.mr_base;
-	priv(rp)->s_mem_tab[i].mr_limit= mem_range.mr_limit;
-	priv(rp)->s_nr_mem_range++;
-
-	return OK;
+	/* Add the memory range */
+	return priv_add_mem(rp, &mem_range);
 
   case SYS_PRIV_ADD_IRQ:
 	if (RTS_ISSET(rp, RTS_NO_PRIV))
@@ -251,24 +227,9 @@ int do_privctl(struct proc * caller, message * m_ptr)
 #endif
 	data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_privctl.arg_ptr,
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
-	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
+	/* Add the IRQ. */
+	return priv_add_irq(rp, irq);
 
-	/* When restarting a driver, check if it already has the permission */
-	for (i = 0; i < priv(rp)->s_nr_irq; i++) {
-		if (priv(rp)->s_irq_tab[i] == irq)
-			return OK;
-	}
-
-	i= priv(rp)->s_nr_irq;
-	if (i >= NR_IRQ) {
-		printf("do_privctl: %d already has %d irq's.\n",
-			rp->p_endpoint, i);
-		return ENOMEM;
-	}
-	priv(rp)->s_irq_tab[i]= irq;
-	priv(rp)->s_nr_irq++;
-
-	return OK;
   case SYS_PRIV_QUERY_MEM:
   {
 	phys_bytes addr, limit;
@@ -323,8 +284,9 @@ static int update_priv(struct proc *rp, struct priv *priv)
 
   int i;
 
-  /* Copy s_flags and signal managers. */
+  /* Copy flags and signal managers. */
   priv(rp)->s_flags = priv->s_flags;
+  priv(rp)->s_init_flags = priv->s_init_flags;
   priv(rp)->s_sig_mgr = priv->s_sig_mgr;
   priv(rp)->s_bak_sig_mgr = priv->s_bak_sig_mgr;
 

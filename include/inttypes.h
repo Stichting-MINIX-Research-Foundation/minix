@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.10 2013/04/27 21:24:27 joerg Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.11 2015/01/16 18:35:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,21 @@ intmax_t	wcstoimax_l(const wchar_t * __restrict,
 uintmax_t	wcstoumax_l(const wchar_t * __restrict,
 		    wchar_t ** __restrict, int, locale_t);
 #endif
+
+
+#if defined(_NETBSD_SOURCE)
+intmax_t	strtoi(const char * __restrict, char ** __restrict, int,
+	               intmax_t, intmax_t, int *);
+uintmax_t	strtou(const char * __restrict, char ** __restrict, int,
+	               uintmax_t, uintmax_t, int *);
+
+/* i18n variations */
+intmax_t	strtoi_l(const char * __restrict, char ** __restrict, int,
+	                 intmax_t, intmax_t, int *, locale_t);
+uintmax_t	strtou_l(const char * __restrict, char ** __restrict, int,
+	                 uintmax_t, uintmax_t, int *, locale_t);
+#endif /* defined(_NETBSD_SOURCE) */
+
 __END_DECLS
 
 #endif /* !_INTTYPES_H_ */

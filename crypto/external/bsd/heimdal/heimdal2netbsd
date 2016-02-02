@@ -1,0 +1,244 @@
+#! /bin/sh
+#
+#	$NetBSD: heimdal2netbsd,v 1.6 2014/04/22 14:07:31 pettai Exp $
+#
+# Copyright (c) 2011 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# heimdal2netbsd:  convert a heimdal source tree into a
+# netbsd heimdal source tree, under src/crypto/external/bsd/heimdal/dist
+# based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
+#
+# Rough instructions for importing new heimdal release from their git
+# repository:
+#
+#	$ export SRCDIR=/usr/src
+#	$ export HEIMDAL_SRCDIR=src/crypto/external/bsd/heimdal
+#	$ cd /some/where/temporary
+#	$ git clone git@github.com:heimdal/heimdal.git
+#	$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal `pwd`
+#	$ cd $HEIMDAL_SRCDIR/dist
+#       $ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL head-20110317
+#	>>> if any conflicts, merge, fix and commit them.
+#	$ cd /some/where/temporary/heimdal
+#	$ autoreconf -f -i
+#	$ ./configure
+#	$ make
+#	>>> merge newly generated config.h
+#	>>> with $HEIMDAL_SRCDIR/include/config.h
+#	>>> and check out diffs in generated headers
+#	>>> and C files.
+#	$ cd ..
+#	$ rm -r src heimdal
+#	$ cd $SRCDIR/$HEIMDAL_SRCDIR
+#	$ cvs commit -m "Updated generated files for Heimdal head-20110317"
+#
+#	- check makefiles to see if any extra sources have been added.
+#	- update distrib/sets if necessary.
+
+prog="$(basename "$0")"
+r=$1
+d=$2/src/crypto/external/bsd/heimdal/dist
+
+if [ $# -ne 2 ]; then echo "${prog} src dest"; exit 1; fi
+
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d="$(pwd)/$d"
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=$(pwd)/$r
+		;;
+esac
+
+echo preparing directory $d
+rm -rf $d
+mkdir -p $d
+
+### Copy the files and directories
+echo copying $r to $d
+cd $r
+pax -rw * $d
+
+### Remove unneeded files
+#echo removing unneeded directories and files
+#find $d/po -name '*[0-9] XXX:
+find $d -name '*.cat[0-9]' | xargs rm -f && echo removed catman pages
+find $d -name '*.info' | xargs rm -f	 && echo removed info pages
+rm -rf $d/appl				 && echo removed appl
+rm -rf $d/lib/libedit			 && echo removed lib/libedit
+rm -rf $d/lib/sqlite			 && echo removed lib/sqlite
+rm -rf $d/doc/standardisation		 && echo removed doc/standardisation
+
+# Fix man pages
+find $d -type f -name '*.[1358]' -print | while read f; do
+	sed \
+	    -e 's,\.Os HEIMDAL,.Os,' \
+	    -e 's,\.Pa krb5.h,.Pa krb5/krb5.h,' \
+	    -e 's,\.In krb5.h,.In krb5/krb5.h,' \
+	    -e 's,\.Pa gssapi.h,.Pa gssapi/gssapi.h,' \
+	    -e 's,\.In gssapi.h,.In gssapi/gssapi.h,' \
+	    -e 's,#include <krb5.h>,#include <krb5/krb5.h>,' \
+	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
+	echo fixing man page $f
+done
+
+# Fix include usage
+
+KRB5_INCRE="asn1-common|asn1_err"
+KRB5_INCRE="$KRB5_INCRE|base64"
+KRB5_INCRE="$KRB5_INCRE|cms_asn1"
+KRB5_INCRE="$KRB5_INCRE|com_err"
+KRB5_INCRE="$KRB5_INCRE|com_right"
+KRB5_INCRE="$KRB5_INCRE|crmf_asn1"
+KRB5_INCRE="$KRB5_INCRE|der|der-protos"
+KRB5_INCRE="$KRB5_INCRE|digest_asn1"
+KRB5_INCRE="$KRB5_INCRE|getarg"
+KRB5_INCRE="$KRB5_INCRE|hdb|hdb_err|hdb-protos|hdb_asn1"
+KRB5_INCRE="$KRB5_INCRE|heim_asn1|heim_err"
+KRB5_INCRE="$KRB5_INCRE|heimbase"
+KRB5_INCRE="$KRB5_INCRE|heimntlm|heimntlm-protos"
+KRB5_INCRE="$KRB5_INCRE|hex"
+KRB5_INCRE="$KRB5_INCRE|hx509|hx509-protos|hx509_err"
+KRB5_INCRE="$KRB5_INCRE|k524_err"
+KRB5_INCRE="$KRB5_INCRE|kafs"
+KRB5_INCRE="$KRB5_INCRE|kcm|kcm-protos"
+KRB5_INCRE="$KRB5_INCRE|kdc|kdc-protos"
+KRB5_INCRE="$KRB5_INCRE|krb5|krb5-private|krb5-protos|krb5-types"
+KRB5_INCRE="$KRB5_INCRE|krb5_asn1|krb5_err|krb5_ccapi"
+KRB5_INCRE="$KRB5_INCRE|krb5-v4compat"
+KRB5_INCRE="$KRB5_INCRE|krb_err"
+KRB5_INCRE="$KRB5_INCRE|kx509_asn1"
+KRB5_INCRE="$KRB5_INCRE|ntlm_err"
+KRB5_INCRE="$KRB5_INCRE|ocsp_asn1"
+KRB5_INCRE="$KRB5_INCRE|parse_bytes|parse_time|parse_units"
+KRB5_INCRE="$KRB5_INCRE|pkcs8_asn1|pkcs9_asn1|pkcs10_asn1|pkcs12_asn1"
+KRB5_INCRE="$KRB5_INCRE|pkinit_asn1"
+KRB5_INCRE="$KRB5_INCRE|resolve"
+KRB5_INCRE="$KRB5_INCRE|rfc2459_asn1"
+KRB5_INCRE="$KRB5_INCRE|roken|roken-common"
+KRB5_INCRE="$KRB5_INCRE|rtbl"
+KRB5_INCRE="$KRB5_INCRE|sl|ss"
+KRB5_INCRE="$KRB5_INCRE|wind|wind_err"
+KRB5_INCRE="$KRB5_INCRE|xdbm"
+
+GSS_INCRE="gssapi|gssapi_krb5|gssapi_spnego|gssapi_ntlm|gssapi_oid"
+
+KADM5_INCRE="admin|kadm5-protos|kadm5-pwcheck|kadm5_err"
+
+find $d -type f -name '*.[ch]' -a ! -name compile_et.? -print | while read f; do
+	sed -E \
+	    -e "s,#include <($GSS_INCRE)\\.h>,#include <gssapi/\\1.h>,"	   \
+	    -e "s,#include \"($KRB5_INCRE)\\.h\",#include <krb5/\\1.h>,"   \
+	    -e "s,#include <($KRB5_INCRE)\\.h>,#include <krb5/\\1.h>,"	   \
+	    -e "s,#include <($KADM5_INCRE)\\.h>,#include <kadm5/\\1.h>,"   \
+	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
+	echo fixing include paths in $f
+done
+
+#
+# In these files, we want only to fix the paths in the generated files, not
+# in the file itself.  To do this, we search for "#include meaning that
+# it can't be on the left column.
+
+for f in $d/lib/sl/slc-gram.y $d/lib/com_err/compile_et.c; do
+	sed -E -e "s,(.#include <)($KRB5_INCRE)\\.h>,\\1krb5/\\2.h>," \
+	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
+	echo fixing include paths in $f
+done
+
+# Freeze imported NetBSD RCSID's.
+find $d -type f -print | xargs egrep -l '\$NetBSD:' | while read f; do
+	sed \
+	    -e 's/\$\(NetBSD.*\) \$/\1/' \
+	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
+	echo froze NetBSD RCSID for $f
+done
+
+# Convert unexpanded RCSID's to the NetBSD way.
+find $d -type f -print | xargs egrep -l 'RCSID\("\$Id\$"\)' | while read f; do
+	sed -e 's/RCSID("\$\Id\$")/__RCSID("\$NetBSD\$")/' \
+	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
+	echo converted RCSID to NetBSD for $f
+done
+
+### Remove the $'s around RCS tags
+cleantags $d
+
+### Add our NetBSD RCS Id
+find $d -type f -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/${prog}3n$$
+echo "" >>/tmp/${prog}3n$$
+cat $c  >> /tmp/${prog}3n$$
+mv /tmp/${prog}3n$$ $c && echo added NetBSD RCS tag to $c
+	)
+done
+
+find $d -type f -name '*.[0-9]' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/${prog}2m$$
+echo ".\\\"" >>/tmp/${prog}2m$$
+cat $m >> /tmp/${prog}2m$$
+mv /tmp/${prog}2m$$ $m && echo added NetBSD RCS tag to $m
+	)
+done
+
+find $d -type f -name '*.texi' -print | while read t; do
+        sed "2 s/^/@c \$NetBSD\$\\
+/" < $t > /tmp/${prog}4t$$
+	mv /tmp/${prog}4t$$ $t && echo added NetBSD RCS tag to $t
+done
+
+echo done
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $d
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+echo "cleaning up git residue."
+rm -rf $d/.git
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0

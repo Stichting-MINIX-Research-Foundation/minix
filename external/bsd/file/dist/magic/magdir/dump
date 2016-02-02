@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: dump,v 1.12 2012/11/01 04:26:40 christos Exp $
+# $File: dump,v 1.13 2014/04/30 21:41:02 christos Exp $
 # dump:  file(1) magic for dump file format--for new and old dump filesystems
 #
 # We specify both byte orders in order to recognize byte-swapped dumps.
@@ -8,7 +8,7 @@
 0	name	new-dump-be
 >4	bedate	x		Previous dump %s,
 >8	bedate	x		This dump %s,
->12	belong	>0		Volume %ld,
+>12	belong	>0		Volume %d,
 >692	belong	0		Level zero, type:
 >692	belong	>0		Level %d, type:
 >0	belong	1		tape header,
@@ -27,7 +27,7 @@
 0	name	old-dump-be
 #>4	bedate	x		Previous dump %s,
 #>8	bedate	x		This dump %s,
->12	belong	>0		Volume %ld,
+>12	belong	>0		Volume %d,
 >692	belong	0		Level zero, type:
 >692	belong	>0		Level %d, type:
 >0	belong	1		tape header,
@@ -46,7 +46,7 @@
 0	name	ufs2-dump-be
 >896	beqdate	x		Previous dump %s,
 >904	beqdate	x		This dump %s,
->12	belong	>0		Volume %ld,
+>12	belong	>0		Volume %d,
 >692	belong	0		Level zero, type:
 >692	belong	>0		Level %d, type:
 >0	belong	1		tape header,
@@ -84,7 +84,7 @@
 18	leshort	60011		old-fs dump file (16-bit, assuming PDP-11 endianness),
 >2	medate	x		Previous dump %s,
 >6	medate	x		This dump %s,
->10	leshort	>0		Volume %ld,
+>10	leshort	>0		Volume %d,
 >0	leshort	1		tape header.
 >0	leshort	2		beginning of file record.
 >0	leshort	3		map of inodes on tape.

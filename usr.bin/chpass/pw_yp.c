@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.22 2009/04/11 12:10:02 lukem Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.23 2015/06/17 00:01:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.22 2009/04/11 12:10:02 lukem Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.23 2015/06/17 00:01:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ pw_yp(struct passwd *pw, uid_t ypuid)
 	 */
 	if ((rpcport = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE,
 	    IPPROTO_UDP)) == 0) {
-		warnx("master YP server not running yppasswd daemon.\n\t%s\n",
+		warnx("master YP server not running yppasswd daemon.\n\t%s",
 		    "Can't change password.");
 		return (1);
 	}

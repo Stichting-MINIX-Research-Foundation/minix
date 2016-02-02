@@ -1,7 +1,7 @@
 #include "fs.h"
+#include <string.h>
 #include <assert.h>
 
-static void worker_get_work(void);
 static void *worker_main(void *arg);
 static void worker_sleep(void);
 static void worker_wake(struct worker_thread *worker);
@@ -11,7 +11,9 @@ static unsigned int pending;
 static unsigned int busy;
 static int block_all;
 
-#ifdef MKCOVERAGE
+#if defined(_MINIX_MAGIC)
+# define TH_STACKSIZE (64 * 1024)
+#elif defined(MKCOVERAGE)
 # define TH_STACKSIZE (40 * 1024)
 #else
 # define TH_STACKSIZE (28 * 1024)
@@ -24,7 +26,7 @@ static int block_all;
  *===========================================================================*/
 void worker_init(void)
 {
-/* Initialize worker thread */
+/* Initialize worker threads */
   struct worker_thread *wp;
   int i;
 
@@ -32,8 +34,7 @@ void worker_init(void)
 	panic("failed to initialize attribute");
   if (mthread_attr_setstacksize(&tattr, TH_STACKSIZE) != 0)
 	panic("couldn't set default thread stack size");
-  if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
-	panic("couldn't set default thread detach state");
+
   pending = 0;
   busy = 0;
   block_all = FALSE;
@@ -47,13 +48,69 @@ void worker_init(void)
 	if (mutex_init(&wp->w_event_mutex, NULL) != 0)
 		panic("failed to initialize mutex");
 	if (cond_init(&wp->w_event, NULL) != 0)
-		panic("failed to initialize conditional variable");
+		panic("failed to initialize condition variable");
 	if (mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) != 0)
 		panic("unable to start thread");
   }
 
   /* Let all threads get ready to accept work. */
-  yield_all();
+  worker_yield();
+}
+
+/*===========================================================================*
+ *				worker_cleanup				     *
+ *===========================================================================*/
+void worker_cleanup(void)
+{
+/* Clean up worker threads, reversing the actions of worker_init() such that
+ * we can safely call worker_init() again later. All worker threads are
+ * expected to be idle already. Used for live updates, because transferring
+ * the thread stacks from one version to another is currently not feasible.
+ */
+  struct worker_thread *wp;
+  int i;
+
+  assert(worker_idle());
+
+  /* First terminate all threads. */
+  for (i = 0; i < NR_WTHREADS; i++) {
+	wp = &workers[i];
+
+	assert(wp->w_fp == NULL);
+
+	/* Waking up the thread with no w_fp will cause it to exit. */
+	worker_wake(wp);
+  }
+
+  worker_yield();
+
+  /* Then clean up their resources. */
+  for (i = 0; i < NR_WTHREADS; i++) {
+	wp = &workers[i];
+
+	if (mthread_join(wp->w_tid, NULL) != 0)
+		panic("worker_cleanup: could not join thread %d", i);
+	if (cond_destroy(&wp->w_event) != 0)
+		panic("failed to destroy condition variable");
+	if (mutex_destroy(&wp->w_event_mutex) != 0)
+		panic("failed to destroy mutex");
+  }
+
+  /* Finally, clean up global resources. */
+  if (mthread_attr_destroy(&tattr) != 0)
+	panic("failed to destroy attribute");
+
+  memset(workers, 0, sizeof(workers));
+}
+
+/*===========================================================================*
+ *				worker_idle				     *
+ *===========================================================================*/
+int worker_idle(void)
+{
+/* Return whether all worker threads are idle. */
+
+  return (pending == 0 && busy == 0);
 }
 
 /*===========================================================================*
@@ -132,10 +189,11 @@ void worker_allow(int allow)
 /*===========================================================================*
  *				worker_get_work				     *
  *===========================================================================*/
-static void worker_get_work(void)
+static int worker_get_work(void)
 {
 /* Find new work to do. Work can be 'queued', 'pending', or absent. In the
- * latter case wait for new work to come in.
+ * latter case wait for new work to come in. Return TRUE if there is work to
+ * do, or FALSE if the current thread is requested to shut down.
  */
   struct fproc *rfp;
 
@@ -152,7 +210,7 @@ static void worker_get_work(void)
 			rfp->fp_flags &= ~FP_PENDING; /* No longer pending */
 			assert(pending > 0);
 			pending--;
-			return;
+			return TRUE;
 		}
 	}
 	panic("Pending work inconsistency");
@@ -160,6 +218,8 @@ static void worker_get_work(void)
 
   /* Wait for work to come to us */
   worker_sleep();
+
+  return (self->w_fp != NULL);
 }
 
 /*===========================================================================*
@@ -183,8 +243,7 @@ static void *worker_main(void *arg)
   self = (struct worker_thread *) arg;
   ASSERTW(self);
 
-  while(TRUE) {
-	worker_get_work();
+  while (worker_get_work()) {
 
 	fp = self->w_fp;
 	assert(fp->fp_worker == self);
@@ -227,7 +286,7 @@ static void *worker_main(void *arg)
 	busy--;
   }
 
-  return(NULL);	/* Unreachable */
+  return(NULL);
 }
 
 /*===========================================================================*
@@ -239,7 +298,7 @@ int worker_can_start(struct fproc *rfp)
  * This function is used to serialize invocation of "special" procedures, and
  * not entirely safe for other cases, as explained in the comments below.
  */
-  int is_pending, is_active, has_normal_work, has_pm_work;
+  int is_pending, is_active, has_normal_work, __unused has_pm_work;
 
   is_pending = (rfp->fp_flags & FP_PENDING);
   is_active = (rfp->fp_worker != NULL);
@@ -310,7 +369,7 @@ void worker_start(struct fproc *rfp, void (*func)(void), message *m_ptr,
  * message. Optionally, the last spare (deadlock-resolving) thread may be used
  * to execute the work immediately.
  */
-  int is_pm_work, is_pending, is_active, has_normal_work, has_pm_work;
+  int is_pm_work, is_pending, is_active, has_normal_work, __unused has_pm_work;
 
   assert(rfp != NULL);
 
@@ -365,6 +424,18 @@ void worker_start(struct fproc *rfp, void (*func)(void), message *m_ptr,
    */
   if (!is_pending && !is_active)
 	worker_try_activate(rfp, use_spare);
+}
+
+/*===========================================================================*
+ *				worker_yield				     *
+ *===========================================================================*/
+void worker_yield(void)
+{
+/* Yield to all worker threads. To be called from the main thread only. */
+
+  mthread_yield_all();
+
+  self = NULL;
 }
 
 /*===========================================================================*

@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: strptime.c,v 1.49 2015/10/09 17:21:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.38 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.49 2015/10/09 17:21:45 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include <sys/localedef.h>
+#include <sys/types.h>
 #include <ctype.h>
 #include <locale.h>
 #include <string.h>
@@ -49,6 +50,10 @@ __weak_alias(strptime,_strptime)
 __weak_alias(strptime_l, _strptime_l)
 #endif
 
+static const u_char *conv_num(const unsigned char *, int *, uint, uint);
+static const u_char *find_string(const u_char *, int *, const char * const *,
+	const char * const *, int);
+
 #define _TIME_LOCALE(loc) \
     ((_TimeLocale *)((loc)->part_impl[(size_t)LC_TIME]))
 
@@ -58,7 +63,21 @@ __weak_alias(strptime_l, _strptime_l)
  */
 #define ALT_E			0x01
 #define ALT_O			0x02
-#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
+#define LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
+
+#define S_YEAR			(1 << 0)
+#define S_MON			(1 << 1)
+#define S_YDAY			(1 << 2)
+#define S_MDAY			(1 << 3)
+#define S_WDAY			(1 << 4)
+#define S_HOUR			(1 << 5)
+
+#define HAVE_MDAY(s)		(s & S_MDAY)
+#define HAVE_MON(s)		(s & S_MON)
+#define HAVE_WDAY(s)		(s & S_WDAY)
+#define HAVE_YDAY(s)		(s & S_YDAY)
+#define HAVE_YEAR(s)		(s & S_YEAR)
+#define HAVE_HOUR(s)		(s & S_HOUR)
 
 static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
@@ -70,9 +89,30 @@ static const char * const nadt[5] = {
        "EDT",    "CDT",    "MDT",    "PDT",    "\0\0\0"
 };
 
-static const u_char *conv_num(const unsigned char *, int *, uint, uint);
-static const u_char *find_string(const u_char *, int *, const char * const *,
-	const char * const *, int);
+/*
+ * Table to determine the ordinal date for the start of a month.
+ * Ref: http://en.wikipedia.org/wiki/ISO_week_date
+ */
+static const int start_of_month[2][13] = {
+	/* non-leap year */
+	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
+	/* leap year */
+	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
+};
+
+/*
+ * Calculate the week day of the first day of a year. Valid for
+ * the Gregorian calendar, which began Sept 14, 1752 in the UK
+ * and its colonies. Ref:
+ * http://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week
+ */
+
+static int
+first_wday_of(int yr)
+{
+	return ((2 * (3 - (yr / 100) % 4)) + (yr % 100) + ((yr % 100) /  4) +
+	    (isleap(yr) ? 6 : 0) + 1) % 7;
+}
 
 char *
 strptime(const char *buf, const char *fmt, struct tm *tm)
@@ -85,7 +125,8 @@ strptime_l(const char *buf, const char *fmt, struct tm *tm, locale_t loc)
 {
 	unsigned char c;
 	const unsigned char *bp, *ep;
-	int alt_format, i, split_year = 0, neg = 0, offs;
+	int alt_format, i, split_year = 0, neg = 0, state = 0,
+	    day_offset = -1, week_offset = 0, offs;
 	const char *new_fmt;
 
 	bp = (const u_char *)buf;
@@ -133,16 +174,19 @@ literal:
 		 */
 		case 'c':	/* Date and time, using the locale's format. */
 			new_fmt = _TIME_LOCALE(loc)->d_t_fmt;
+			state |= S_WDAY | S_MON | S_MDAY | S_YEAR;
 			goto recurse;
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			new_fmt = "%m/%d/%y";
 			LEGAL_ALT(0);
+			state |= S_MON | S_MDAY | S_YEAR;
 			goto recurse;
 
 		case 'F':	/* The date as "%Y-%m-%d". */
 			new_fmt = "%Y-%m-%d";
 			LEGAL_ALT(0);
+			state |= S_MON | S_MDAY | S_YEAR;
 			goto recurse;
 
 		case 'R':	/* The time as "%H:%M". */
@@ -166,6 +210,7 @@ literal:
 
 		case 'x':	/* The date, using the locale's format. */
 			new_fmt = _TIME_LOCALE(loc)->d_fmt;
+			state |= S_MON | S_MDAY | S_YEAR;
 		    recurse:
 			bp = (const u_char *)strptime((const char *)bp,
 							    new_fmt, tm);
@@ -180,6 +225,7 @@ literal:
 			bp = find_string(bp, &tm->tm_wday,
 			    _TIME_LOCALE(loc)->day, _TIME_LOCALE(loc)->abday, 7);
 			LEGAL_ALT(0);
+			state |= S_WDAY;
 			continue;
 
 		case 'B':	/* The month, using the locale's form. */
@@ -189,6 +235,7 @@ literal:
 			    _TIME_LOCALE(loc)->mon, _TIME_LOCALE(loc)->abmon,
 			    12);
 			LEGAL_ALT(0);
+			state |= S_MON;
 			continue;
 
 		case 'C':	/* The century number. */
@@ -201,12 +248,14 @@ literal:
 			split_year = 1;
 			tm->tm_year = i;
 			LEGAL_ALT(ALT_E);
+			state |= S_YEAR;
 			continue;
 
 		case 'd':	/* The day of month. */
 		case 'e':
 			bp = conv_num(bp, &tm->tm_mday, 1, 31);
 			LEGAL_ALT(ALT_O);
+			state |= S_MDAY;
 			continue;
 
 		case 'k':	/* The hour (24-hour clock representation). */
@@ -215,6 +264,7 @@ literal:
 		case 'H':
 			bp = conv_num(bp, &tm->tm_hour, 0, 23);
 			LEGAL_ALT(ALT_O);
+			state |= S_HOUR;
 			continue;
 
 		case 'l':	/* The hour (12-hour clock representation). */
@@ -225,6 +275,7 @@ literal:
 			if (tm->tm_hour == 12)
 				tm->tm_hour = 0;
 			LEGAL_ALT(ALT_O);
+			state |= S_HOUR;
 			continue;
 
 		case 'j':	/* The day of year. */
@@ -232,6 +283,7 @@ literal:
 			bp = conv_num(bp, &i, 1, 366);
 			tm->tm_yday = i - 1;
 			LEGAL_ALT(0);
+			state |= S_YDAY;
 			continue;
 
 		case 'M':	/* The minute. */
@@ -244,12 +296,13 @@ literal:
 			bp = conv_num(bp, &i, 1, 12);
 			tm->tm_mon = i - 1;
 			LEGAL_ALT(ALT_O);
+			state |= S_MON;
 			continue;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			bp = find_string(bp, &i, _TIME_LOCALE(loc)->am_pm,
 			    NULL, 2);
-			if (tm->tm_hour > 11)
+			if (HAVE_HOUR(state) && tm->tm_hour > 11)
 				return NULL;
 			tm->tm_hour += i * 12;
 			LEGAL_ALT(0);
@@ -287,6 +340,9 @@ literal:
 
 				if (localtime_r(&sse, tm) == NULL)
 					bp = NULL;
+				else
+					state |= S_YDAY | S_WDAY |
+					    S_MON | S_MDAY | S_YEAR;
 			}
 			continue;
 
@@ -298,19 +354,26 @@ literal:
 			 * point to calculate a real value, so just check the
 			 * range for now.
 			 */
-			 bp = conv_num(bp, &i, 0, 53);
-			 LEGAL_ALT(ALT_O);
-			 continue;
+			bp = conv_num(bp, &i, 0, 53);
+			LEGAL_ALT(ALT_O);
+			if (c == 'U')
+				day_offset = TM_SUNDAY;
+			else
+				day_offset = TM_MONDAY;
+			week_offset = i;
+			continue;
 
 		case 'w':	/* The day of week, beginning on sunday. */
 			bp = conv_num(bp, &tm->tm_wday, 0, 6);
 			LEGAL_ALT(ALT_O);
+			state |= S_WDAY;
 			continue;
 
 		case 'u':	/* The day of week, monday = 1. */
 			bp = conv_num(bp, &i, 1, 7);
 			tm->tm_wday = i % 7;
 			LEGAL_ALT(ALT_O);
+			state |= S_WDAY;
 			continue;
 
 		case 'g':	/* The year corresponding to the ISO week
@@ -336,6 +399,7 @@ literal:
 			bp = conv_num(bp, &i, 0, 9999);
 			tm->tm_year = i - TM_YEAR_BASE;
 			LEGAL_ALT(ALT_E);
+			state |= S_YEAR;
 			continue;
 
 		case 'y':	/* The year within 100 years of the epoch. */
@@ -353,11 +417,13 @@ literal:
 					i = i + 1900 - TM_YEAR_BASE;
 			}
 			tm->tm_year = i;
+			state |= S_YEAR;
 			continue;
 
 		case 'Z':
 			tzset();
-			if (strncmp((const char *)bp, gmt, 3) == 0) {
+			if (strncmp((const char *)bp, gmt, 3) == 0 ||
+			    strncmp((const char *)bp, utc, 3) == 0) {
 				tm->tm_isdst = 0;
 #ifdef TM_GMTOFF
 				tm->TM_GMTOFF = 0;
@@ -467,7 +533,7 @@ literal:
 						tm->TM_GMTOFF = (int)*bp - 'M';
 #endif
 #ifdef TM_ZONE
-					tm->TM_ZONE = NULL; /* XXX */
+					tm->TM_ZONE = utc; /* XXX */
 #endif
 					bp++;
 					continue;
@@ -508,7 +574,7 @@ literal:
 			tm->TM_GMTOFF = offs;
 #endif
 #ifdef TM_ZONE
-			tm->TM_ZONE = NULL;	/* XXX */
+			tm->TM_ZONE = utc;	/* XXX */
 #endif
 			continue;
 
@@ -525,6 +591,68 @@ literal:
 
 		default:	/* Unknown/unsupported conversion. */
 			return NULL;
+		}
+	}
+
+	if (!HAVE_YDAY(state) && HAVE_YEAR(state)) {
+		if (HAVE_MON(state) && HAVE_MDAY(state)) {
+			/* calculate day of year (ordinal date) */
+			tm->tm_yday =  start_of_month[isleap_sum(tm->tm_year,
+			    TM_YEAR_BASE)][tm->tm_mon] + (tm->tm_mday - 1);
+			state |= S_YDAY;
+		} else if (day_offset != -1) {
+			/*
+			 * Set the date to the first Sunday (or Monday)
+			 * of the specified week of the year.
+			 */
+			if (!HAVE_WDAY(state)) {
+				tm->tm_wday = day_offset;
+				state |= S_WDAY;
+			}
+			tm->tm_yday = (7 -
+			    first_wday_of(tm->tm_year + TM_YEAR_BASE) +
+			    day_offset) % 7 + (week_offset - 1) * 7 +
+			    tm->tm_wday  - day_offset;
+			state |= S_YDAY;
+		}
+	}
+
+	if (HAVE_YDAY(state) && HAVE_YEAR(state)) {
+		int isleap;
+
+		if (!HAVE_MON(state)) {
+			/* calculate month of day of year */
+			i = 0;
+			isleap = isleap_sum(tm->tm_year, TM_YEAR_BASE);
+			while (tm->tm_yday >= start_of_month[isleap][i])
+				i++;
+			if (i > 12) {
+				i = 1;
+				tm->tm_yday -= start_of_month[isleap][12];
+				tm->tm_year++;
+			}
+			tm->tm_mon = i - 1;
+			state |= S_MON;
+		}
+
+		if (!HAVE_MDAY(state)) {
+			/* calculate day of month */
+			isleap = isleap_sum(tm->tm_year, TM_YEAR_BASE);
+			tm->tm_mday = tm->tm_yday -
+			    start_of_month[isleap][tm->tm_mon] + 1;
+			state |= S_MDAY;
+		}
+
+		if (!HAVE_WDAY(state)) {
+			/* calculate day of week */
+			i = 0;
+			week_offset = first_wday_of(tm->tm_year);
+			while (i++ <= tm->tm_yday) {
+				if (week_offset++ >= 6)
+					week_offset = 0;
+			}
+			tm->tm_wday = week_offset;
+			state |= S_WDAY;
 		}
 	}
 

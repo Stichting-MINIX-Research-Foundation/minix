@@ -1,0 +1,51 @@
+.Dd September 7, 2015
+.Dt UPDATE_ASR 8
+.Os
+.Sh NAME
+.Nm update_asr
+.Nd perform ASR rerandomization on system services
+.Sh SYNOPSYS
+.Nm
+.Op Fl v
+.Op Ar labels
+.Sh DESCRIPTION
+The
+.Nm
+utility performs one cycle of system service live
+ASR (Address Space Randomization) rerandomization.
+By default, the utility will attempt to update all system services.
+If a space-separated list of service
+.Ar labels
+is given, only those services are updated.
+.Pp
+Updates require the presence of at least two precreated ASR binaries for the
+service: the original service binary, and at least one rerandomized ASR binary
+for the service.
+The update consists of selecting the next on-disk ASR binary for the service,
+and performing a live update from the current service into the selected new
+version.
+The selection takes place in a round-robin fashion, so once the script has
+gone through all rerandomized ASR binaries, it will revert to the original
+service binary, and then continue with the first rerandomized ASR binary
+again, and so on.
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl v
+Enable verbose mode.
+.El
+.Sh SEE ALSO
+.Xr service 8
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An David van Moolenbroek
+.Aq david@minix3.org .
+.Sh BUGS
+Failures are silently ignored.
+Some failures are expected, since not all services are necessarily quiescent
+and therefore ready to be updated.
+.Pp
+As of writing, no infrastructure exists to perform ASR updates automatically,
+and no infrastructure exists to create new rerandomized binaries at runtime.

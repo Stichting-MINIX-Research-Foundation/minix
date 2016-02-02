@@ -38,7 +38,7 @@ __RCSID("$NetBSD: uuid_create.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
 
 #include <uuid.h>
 
-#ifdef __minix
+#if defined(__minix)
 #include <paths.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -63,7 +63,7 @@ int uuidgen(struct uuid *store, int count)
 
 	return 0;
 }
-#endif
+#endif /* defined(__minix) */
 
 /*
  * uuid_create() - create an UUID.

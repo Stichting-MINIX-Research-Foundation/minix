@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.12 2009/08/12 08:51:21 dholland Exp $	*/
+/*	$NetBSD: tetris.h,v 1.14 2014/07/13 16:23:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@ extern int	Rows, Cols;	/* current screen size */
  * rotated forms.
  */
 struct shape {
+	int	color;
 	int	rot;	/* index of rotated version of this shape */
 	int	off[3];	/* offsets to other blots if center is at (0,0) */
 };
@@ -167,6 +168,7 @@ extern gid_t	gid, egid;
 
 extern char	key_msg[100];
 extern int	showpreview;
+extern int	nocolor;
 
 int	fits_in(const struct shape *, int);
 void	place(const struct shape *, int, int);

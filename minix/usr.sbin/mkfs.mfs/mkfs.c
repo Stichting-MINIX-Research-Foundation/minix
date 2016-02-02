@@ -42,7 +42,7 @@
 
 
 #define MAX_TOKENS          10
-#define LINE_LEN           200
+#define LINE_LEN           300
 /* XXX why do we not use 0 / SU_ID ? */
 #define BIN                  2
 #define BINGRP               2
@@ -430,7 +430,7 @@ main(int argc, char *argv[])
 		    (int)next_inode-1, next_zone);
   }
 
-  if(insertmode) printf("%llu\n", written_fs_size);
+  if(insertmode) printf("%"PRIu64"\n", written_fs_size);
 
   return(0);
 

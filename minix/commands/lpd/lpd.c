@@ -142,7 +142,7 @@ int lp;
 char buf[BUFSIZ];
 int count, column, line, ncols = 80, nlines = 66;
 
-int flush(void)
+void flush(void)
 /* Copy the characters in the output buffer to the printer, with retries if
  * out of paper.
  */

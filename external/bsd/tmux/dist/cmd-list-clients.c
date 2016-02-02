@@ -1,4 +1,4 @@
-/* $Id: cmd-list-clients.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -27,51 +28,57 @@
  * List all clients.
  */
 
-int	cmd_list_clients_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_clients_entry = {
 	"list-clients", "lsc",
-	"t:", 0, 0,
-	CMD_TARGET_SESSION_USAGE,
-	0,
-	NULL,
+	"F:t:", 0, 0,
+	"[-F format] " CMD_TARGET_SESSION_USAGE,
+	CMD_READONLY,
 	NULL,
 	cmd_list_clients_exec
 };
 
-/* ARGSUSED */
-int
-cmd_list_clients_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args 	*args = self->args;
-	struct client	*c;
-	struct session  *s;
-	u_int		 i;
-	const char	*s_utf8;
+	struct args 		*args = self->args;
+	struct client		*c;
+	struct session		*s;
+	struct format_tree	*ft;
+	const char		*template;
+	u_int			 i;
+	char			*line;
 
 	if (args_has(args, 't')) {
-		s = cmd_find_session(ctx, args_get(args, 't'), 0);
+		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
 		if (s == NULL)
-			return (-1);
+			return (CMD_RETURN_ERROR);
 	} else
 		s = NULL;
+
+	if ((template = args_get(args, 'F')) == NULL)
+		template = LIST_CLIENTS_TEMPLATE;
 
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
 		if (c == NULL || c->session == NULL)
 			continue;
 
-		if (c->tty.flags & TTY_UTF8)
-			s_utf8 = " (utf8)";
-		else
-			s_utf8 = "";
-
 		if (s != NULL && s != c->session)
 			continue;
-		ctx->print(ctx, "%s: %s [%ux%u %s]%s", c->tty.path,
-		    c->session->name, c->tty.sx, c->tty.sy,
-		    c->tty.termname, s_utf8);
+
+		ft = format_create();
+		format_add(ft, "line", "%u", i);
+		format_session(ft, c->session);
+		format_client(ft, c);
+
+		line = format_expand(ft, template);
+		cmdq_print(cmdq, "%s", line);
+		free(line);
+
+		format_free(ft);
 	}
 
-	return (0);
+	return (CMD_RETURN_NORMAL);
 }

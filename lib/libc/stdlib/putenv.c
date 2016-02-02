@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.20 2013/04/25 07:08:56 matt Exp $	*/
+/*	$NetBSD: putenv.c,v 1.21 2015/01/20 18:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.20 2013/04/25 07:08:56 matt Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.21 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: putenv.c,v 1.20 2013/04/25 07:08:56 matt Exp $");
 #include <string.h>
 
 #include "env.h"
-#include "reentrant.h"
 #include "local.h"
 
 int

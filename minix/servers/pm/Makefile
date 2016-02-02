@@ -4,7 +4,7 @@
 PROG=	pm
 SRCS=	main.c forkexit.c exec.c time.c alarm.c \
 	signal.c utility.c table.c trace.c getset.c misc.c \
-	profile.c mcontext.c schedule.c
+	profile.c mcontext.c schedule.c event.c
 
 DPADD+=	${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lsys -ltimers

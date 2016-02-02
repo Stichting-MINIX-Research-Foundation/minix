@@ -168,6 +168,7 @@ void icmp_solicit(buf_t *bp)
 void icmp_advert(buf_t *bp, network_t *np)
 {
     /* Fill in a router advert to be sent to my own interface. */
+    u32_t *data;
     icmp_hdr_t *icmp= (icmp_hdr_t *) (bp->ip + 1);
 
     bp->ip->ih_vers_ihl= 0x45;
@@ -178,8 +179,9 @@ void icmp_advert(buf_t *bp, network_t *np)
     icmp->ih_hun.ihh_ram.iram_na= 1;
     icmp->ih_hun.ihh_ram.iram_aes= 2;
     icmp->ih_hun.ihh_ram.iram_lt= htons(DELTA_ADV);
-    ((u32_t *) icmp->ih_dun.uhd_data)[0] = np->gateway;
-    ((u32_t *) icmp->ih_dun.uhd_data)[1] = htonl((u32_t) -9999);
+    data = (u32_t *) icmp->ih_dun.uhd_data;
+    data[0] = np->gateway;
+    data[1] = htonl((u32_t) -9999);
     icmp->ih_chksum= 0;
     icmp->ih_chksum= ~oneC_sum(0, icmp, 16);
 }

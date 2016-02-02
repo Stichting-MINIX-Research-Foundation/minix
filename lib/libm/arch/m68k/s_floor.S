@@ -1,4 +1,4 @@
-/*	$NetBSD: s_floor.S,v 1.7 2003/08/07 16:44:41 agc Exp $	*/
+/*	$NetBSD: s_floor.S,v 1.9 2014/08/10 13:30:43 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_floor.S,v 1.7 2003/08/07 16:44:41 agc Exp $")
+RCSID("$NetBSD: s_floor.S,v 1.9 2014/08/10 13:30:43 isaki Exp $")
 
 | floor(x)
 | the largest integer no larger than x
@@ -46,13 +46,8 @@ ENTRY(floor)
 	fmovel	%fpcr,%d0	| save old FPCR
 	fmoved	%sp@(4),%fp0	| get argument
 	fbun	Lret		| if NaN, return NaN
-	fboge	Lrtz		| >=0, round to zero
-	fmovel	#0x20,%fpcr	| <0, round to -inf
-	jra	Ldoit
-Lrtz:
-	fmovel	#0x10,%fpcr
-Ldoit:
-	fintd	%sp@(4),%fp0	| truncate
+	fmovel	#0x20,%fpcr	| round to -inf
+	fintx	%fp0		| truncate
 	fmovel	%d0,%fpcr	| restore old FPCR
 Lret:
 #ifndef __SVR4_ABI__

@@ -3,8 +3,6 @@
 
 #define _SYSTEM		1
 
-#define brk _brk	/* get rid of no previous prototype warning */
-
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>
@@ -18,11 +16,13 @@
 #include <minix/syslib.h>
 #include <minix/type.h>
 #include <minix/bitmap.h>
+#include <minix/rs.h>
 #include <string.h>
 #include <errno.h>
 #include <env.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -141,6 +141,9 @@ int do_info(message *m)
 		break;
 
 	case VMIW_REGION:
+		if(m->m_lsys_vm_info.ep == SELF) {
+			m->m_lsys_vm_info.ep = m->m_source;
+		}
 		if (vm_isokendpt(m->m_lsys_vm_info.ep, &pr) != OK)
 			return EINVAL;
 
@@ -216,27 +219,122 @@ int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	return OK;
 }
 
+/*
+ * Transfer memory mapped regions, using CoW sharing, from 'src_vmp' to
+ * 'dst_vmp', for the source process's address range of 'start_addr'
+ * (inclusive) to 'end_addr' (exclusive).  Return OK or an error code.
+ * If the regions seem to have been transferred already, do nothing.
+ */
+static int
+transfer_mmap_regions(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+	vir_bytes start_addr, vir_bytes end_addr)
+{
+	struct vir_region *start_vr, *check_vr, *end_vr;
+
+	start_vr = region_search(&src_vmp->vm_regions_avl, start_addr,
+	    AVL_GREATER_EQUAL);
+
+	if (start_vr == NULL || start_vr->vaddr >= end_addr)
+		return OK; /* nothing to do */
+
+	/* In the case of multicomponent live update that includes VM, this
+	 * function may be called for the same process more than once, for the
+	 * sake of keeping code paths as little divergent as possible while at
+	 * the same time ensuring that the regions are copied early enough.
+	 *
+	 * To compensate for these multiple calls, we perform a very simple
+	 * check here to see if the region to transfer is already present in
+	 * the target process.  If so, we can safely skip copying the regions
+	 * again, because there is no other possible explanation for the
+	 * region being present already.  Things would go horribly wrong if we
+	 * tried copying anyway, but this check is not good enough to detect
+	 * all such problems, since we do a check on the base address only.
+	 */
+	check_vr = region_search(&dst_vmp->vm_regions_avl, start_vr->vaddr,
+	    AVL_EQUAL);
+	if (check_vr != NULL) {
+#if LU_DEBUG
+		printf("VM: transfer_mmap_regions: skipping transfer from "
+		    "%d to %d (0x%lx already present)\n",
+		    src_vmp->vm_endpoint, dst_vmp->vm_endpoint,
+		    start_vr->vaddr);
+#endif
+		return OK;
+	}
+
+	end_vr = region_search(&src_vmp->vm_regions_avl, end_addr, AVL_LESS);
+	assert(end_vr != NULL);
+	assert(start_vr->vaddr <= end_vr->vaddr);
+
+#if LU_DEBUG
+	printf("VM: transfer_mmap_regions: transferring memory mapped regions "
+	    "from %d to %d (0x%lx to 0x%lx)\n", src_vmp->vm_endpoint,
+	    dst_vmp->vm_endpoint, start_vr->vaddr, end_vr->vaddr);
+#endif
+
+	return map_proc_copy_range(dst_vmp, src_vmp, start_vr, end_vr);
+}
+
+/*
+ * Create copy-on-write mappings in process 'dst_vmp' for all memory-mapped
+ * regions present in 'src_vmp'.  Return OK on success, or an error otherwise.
+ * In the case of failure, successfully created mappings are not undone.
+ */
+int
+map_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+{
+	int r;
+
+#if LU_DEBUG
+	printf("VM: mapping dynamic data from %d to %d\n",
+	    src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
+#endif
+
+	/* Transfer memory mapped regions now. To sandbox the new instance and
+	 * prevent state corruption on rollback, we share all the regions
+	 * between the two instances as COW.
+	 */
+	r = transfer_mmap_regions(src_vmp, dst_vmp, VM_MMAPBASE, VM_MMAPTOP);
+
+	/* If the stack is not mapped at the VM_DATATOP, there might be some
+	 * more regions hiding above the stack.  We also have to transfer
+	 * those.
+	 */
+	if (r == OK && VM_STACKTOP < VM_DATATOP)
+		r = transfer_mmap_regions(src_vmp, dst_vmp, VM_STACKTOP,
+		    VM_DATATOP);
+
+	return r;
+}
+
 /*===========================================================================*
  *			      swap_proc_dyn_data	     		     *
  *===========================================================================*/
-int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+	int sys_upd_flags)
 {
 	int is_vm;
 	int r;
 
 	is_vm = (dst_vmp->vm_endpoint == VM_PROC_NR);
 
-        /* For VM, transfer memory regions above the stack first. */
+        /* For VM, transfer memory mapped regions first. */
         if(is_vm) {
 #if LU_DEBUG
-		printf("VM: swap_proc_dyn_data: tranferring regions above the stack from old VM (%d) to new VM (%d)\n",
+		printf("VM: swap_proc_dyn_data: tranferring memory mapped regions from old (%d) to new VM (%d)\n",
 			src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
 #endif
-		r = pt_map_in_range(src_vmp, dst_vmp, VM_STACKTOP, 0);
+		r = pt_map_in_range(src_vmp, dst_vmp, VM_OWN_HEAPBASE, VM_OWN_MMAPTOP);
 		if(r != OK) {
 			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
 			return r;
 		}
+		r = pt_map_in_range(src_vmp, dst_vmp, VM_STACKTOP, VM_DATATOP);
+		if(r != OK) {
+			printf("swap_proc_dyn_data: pt_map_in_range failed\n");
+			return r;
+		}
+
         }
 
 #if LU_DEBUG
@@ -249,27 +347,16 @@ int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	map_setparent(src_vmp);
 	map_setparent(dst_vmp);
 
-	/* For regular processes, transfer regions above the stack now.
-	 * In case of rollback, we need to skip this step. To sandbox the
-	 * new instance and prevent state corruption on rollback, we share all
-	 * the regions between the two instances as COW.
-	 */
-	if(!is_vm) {
-		struct vir_region *vr;
-		vr = map_lookup(dst_vmp, VM_STACKTOP, NULL);
-		if(vr && !map_lookup(src_vmp, VM_STACKTOP, NULL)) {
-#if LU_DEBUG
-			printf("VM: swap_proc_dyn_data: tranferring regions above the stack from %d to %d\n",
-				src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
-#endif
-			r = map_proc_copy_from(src_vmp, dst_vmp, vr);
-			if(r != OK) {
-				return r;
-			}
-		}
+	/* Don't transfer mmapped regions if not required. */
+	if(is_vm || (sys_upd_flags & (SF_VM_ROLLBACK|SF_VM_NOMMAP))) {
+		return OK;
 	}
 
-	return OK;
+	/* Make sure regions are consistent. */
+	assert(region_search_root(&src_vmp->vm_regions_avl) && region_search_root(&dst_vmp->vm_regions_avl));
+
+	/* Source and destination are intentionally swapped here! */
+	return map_proc_dyn_data(dst_vmp, src_vmp);
 }
 
 void *mmap(void *addr, size_t len, int f, int f2, int f3, off_t o)
@@ -293,7 +380,10 @@ int munmap(void * addr, size_t len)
 	return 0;
 }
 
-int brk(void *addr)
+#ifdef __weak_alias
+__weak_alias(brk, _brk)
+#endif
+int _brk(void *addr)
 {
 	/* brk is a special case function to allow vm itself to
 	   allocate memory in it's own (cacheable) HEAP */
@@ -339,19 +429,67 @@ int do_getrusage(message *m)
 	int res, slot;
 	struct vmproc *vmp;
 	struct rusage r_usage;
-	if ((res = vm_isokendpt(m->m_source, &slot)) != OK)
+
+	/* If the request is not from PM, it is coming directly from userland.
+	 * This is an obsolete construction. In the future, userland programs
+	 * should no longer be allowed to call vm_getrusage(2) directly at all.
+	 * For backward compatibility, we simply return success for now.
+	 */
+	if (m->m_source != PM_PROC_NR)
+		return OK;
+
+	/* Get the process for which resource usage is requested. */
+	if ((res = vm_isokendpt(m->m_lsys_vm_rusage.endpt, &slot)) != OK)
 		return ESRCH;
 
 	vmp = &vmproc[slot];
 
-	if ((res = sys_datacopy(m->m_source, m->m_lc_vm_rusage.addr,
+	/* We are going to change only a few fields, so copy in the rusage
+	 * structure first. The structure is still in PM's address space at
+	 * this point, so use the message source.
+	 */
+	if ((res = sys_datacopy(m->m_source, m->m_lsys_vm_rusage.addr,
 		SELF, (vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
 		return res;
 
-	r_usage.ru_maxrss = vmp->vm_total_max;
-	r_usage.ru_minflt = vmp->vm_minor_page_fault;
-	r_usage.ru_majflt = vmp->vm_major_page_fault;
+	if (!m->m_lsys_vm_rusage.children) {
+		r_usage.ru_maxrss = vmp->vm_total_max / 1024L; /* unit is KB */
+		r_usage.ru_minflt = vmp->vm_minor_page_fault;
+		r_usage.ru_majflt = vmp->vm_major_page_fault;
+	} else {
+		/* XXX TODO: return the fields for terminated, waited-for
+		 * children of the given process. We currently do not have this
+		 * information! In the future, rather than teaching VM about
+		 * the process hierarchy, PM should probably tell VM at process
+		 * exit time which other process should inherit its resource
+		 * usage fields. For now, we assume PM clears the fields before
+		 * making this call, so we don't zero the fields explicitly.
+		 */
+	}
 
+	/* Copy out the resulting structure back to PM. */
 	return sys_datacopy(SELF, (vir_bytes) &r_usage, m->m_source,
-		m->m_lc_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
+		m->m_lsys_vm_rusage.addr, (vir_bytes) sizeof(r_usage));
 }
+
+/*===========================================================================*
+ *                            adjust_proc_refs                              *
+ *===========================================================================*/
+void adjust_proc_refs()
+{
+       struct vmproc *vmp;
+       region_iter iter;
+
+       /* Fix up region parents. */
+       for(vmp = vmproc; vmp < &vmproc[VMP_NR]; vmp++) {
+               struct vir_region *vr;
+               if(!(vmp->vm_flags & VMF_INUSE))
+                       continue;
+               region_start_iter_least(&vmp->vm_regions_avl, &iter);
+               while((vr = region_get_iter(&iter))) {
+                       USE(vr, vr->parent = vmp;);
+                       region_incr_iter(&iter);
+               }
+       }
+}
+

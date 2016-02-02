@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.2 2011/01/16 12:07:26 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.4 2014/01/29 11:34:25 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,3 +44,27 @@ RAS_END_ASM_HIDDEN(_atomic_cas)
 	bv,n	%r0(%rp)
 
 EXIT(_atomic_cas_up)
+
+LEAF_ENTRY_NOPROFILE(_atomic_cas_16_up)
+	.hidden	_C_LABEL(_atomic_cas_16_up)
+
+RAS_START_ASM_HIDDEN(_atomic_cas_16)
+	ldh	0(%arg0),%ret0
+	comb,<>,n	%arg1, %ret0, 1f
+	sth	%arg2, 0(%arg0)
+RAS_END_ASM_HIDDEN(_atomic_cas_16)
+1:
+	bv,n	%r0(%rp)
+EXIT(_atomic_cas_16_up)
+
+LEAF_ENTRY_NOPROFILE(_atomic_cas_8_up)
+	.hidden	_C_LABEL(_atomic_cas_8_up)
+
+RAS_START_ASM_HIDDEN(_atomic_cas_8)
+	ldb	0(%arg0),%ret0
+	comb,<>,n	%arg1, %ret0, 1f
+	stb	%arg2, 0(%arg0)
+RAS_END_ASM_HIDDEN(_atomic_cas_8)
+1:
+	bv,n	%r0(%rp)
+EXIT(_atomic_cas_8_up)

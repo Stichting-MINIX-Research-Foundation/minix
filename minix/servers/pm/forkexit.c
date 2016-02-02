@@ -1,11 +1,11 @@
 /* This file deals with creating processes (via FORK) and deleting them (via
- * EXIT/WAITPID).  When a process forks, a new slot in the 'mproc' table is
+ * EXIT/WAIT4).  When a process forks, a new slot in the 'mproc' table is
  * allocated for it, and a copy of the parent's core image is made for the
  * child.  Then the kernel and file system are informed.  A process is removed
  * from the 'mproc' table when two events have occurred: (1) it has exited or
- * been killed by a signal, and (2) the parent has done a WAITPID.  If the
+ * been killed by a signal, and (2) the parent has done a WAIT4.  If the
  * process exits first, it continues to occupy a slot until the parent does a
- * WAITPID.
+ * WAIT4.
  *
  * The entry points into this file are:
  *   do_fork:		perform the FORK system call
@@ -13,7 +13,7 @@
  *   do_exit:		perform the EXIT system call (by calling exit_proc())
  *   exit_proc:		actually do the exiting, and tell VFS about it
  *   exit_restart:	continue exiting a process after VFS has replied
- *   do_waitpid:	perform the WAITPID system call
+ *   do_wait4:		perform the WAIT4 system call
  *   wait_test:		check whether a parent is waiting for a child
  */
 
@@ -33,7 +33,7 @@
 
 static void zombify(struct mproc *rmp);
 static void check_parent(struct mproc *child, int try_cleanup);
-static void tell_parent(struct mproc *child);
+static int tell_parent(struct mproc *child, vir_bytes addr);
 static void tell_tracer(struct mproc *child);
 static void tracer_died(struct mproc *child);
 static void cleanup(register struct mproc *rmp);
@@ -84,6 +84,8 @@ int do_fork()
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
+  rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
+  memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
@@ -108,6 +110,9 @@ int do_fork()
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
+  rmc->mp_started = getticks();		/* remember start time, for ps(1) */
+
+  assert(rmc->mp_eventsub == NO_EVENTSUB);
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -181,6 +186,8 @@ int do_srv_fork()
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
+  rmc->mp_sigact = mpsigact[next_child];	/* restore mp_sigact ptr */
+  memcpy(rmc->mp_sigact, rmp->mp_sigact, sizeof(mpsigact[next_child]));
   rmc->mp_parent = who_p;			/* record child's parent */
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
@@ -200,6 +207,9 @@ int do_srv_fork()
   rmc->mp_effgid = m_in.m_lsys_pm_srv_fork.gid;
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
+  rmc->mp_started = getticks();		/* remember start time, for ps(1) */
+
+  assert(rmc->mp_eventsub == NO_EVENTSUB);
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -261,7 +271,6 @@ int dump_core;			/* flag indicating whether to dump core */
   register int proc_nr, proc_nr_e;
   int r;
   pid_t procgrp;
-  struct mproc *p_mp;
   clock_t user_time, sys_time;
   message m;
 
@@ -284,13 +293,13 @@ int dump_core;			/* flag indicating whether to dump core */
   /* If the exited process has a timer pending, kill it. */
   if (rmp->mp_flags & ALARM_ON) set_alarm(rmp, (clock_t) 0);
 
-  /* Do accounting: fetch usage times and accumulate at parent. */
+  /* Do accounting: fetch usage times and save with dead child process.
+   * POSIX forbids accumulation at parent until child has been waited for.
+   */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL, NULL)) != OK)
   	panic("exit_proc: sys_times failed: %d", r);
-
-  p_mp = &mproc[rmp->mp_parent];			/* process' parent */
-  p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
-  p_mp->mp_child_stime += sys_time + rmp->mp_child_stime; /* add system time */
+  rmp->mp_child_utime += user_time;		/* add user time */
+  rmp->mp_child_stime += sys_time;		/* add system time */
 
   /* Tell the kernel the process is no longer runnable to prevent it from 
    * being scheduled in between the following steps. Then tell VFS that it 
@@ -301,6 +310,11 @@ int dump_core;			/* flag indicating whether to dump core */
   /* If the process is not yet stopped, we force a stop here. This means that
    * the process may still have a delay call pending. For this reason, the main
    * message loop discards requests from exiting processes.
+   *
+   * TODO: make the kernel discard delayed calls upon forced stops for exits,
+   * so that no service needs to deal with this.  Right now it appears that the
+   * only thing preventing problems with other services is the fact that
+   * regular messages are prioritized over asynchronous messages.
    */
   if (!(rmp->mp_flags & PROC_STOPPED)) {
 	if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
@@ -311,7 +325,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic("exit_proc: vm_willexit failed: %d", r);
   }
-  vm_notify_sig_wrapper(rmp->mp_endpoint);
+
   if (proc_nr_e == INIT_PROC_NR)
   {
 	printf("PM: INIT died with exit status %d; showing stacktrace\n", exit_status);
@@ -323,7 +337,9 @@ int dump_core;			/* flag indicating whether to dump core */
 	panic("exit_proc: VFS died: %d", r);
   }
 
-  /* Tell VFS about the exiting process. */
+  /* Tell VFS, and after that any matching process event subscribers, about the
+   * exiting process.
+   */
   memset(&m, 0, sizeof(m));
   m.m_type = dump_core ? VFS_PM_DUMPCORE : VFS_PM_EXIT;
   m.VFS_PM_ENDPT = rmp->mp_endpoint;
@@ -392,9 +408,7 @@ int dump_core;			/* flag indicating whether to dump core */
 /*===========================================================================*
  *				exit_restart				     *
  *===========================================================================*/
-void exit_restart(rmp, dump_core)
-struct mproc *rmp;		/* pointer to the process being terminated */
-int dump_core;			/* flag indicating whether to dump core */
+void exit_restart(struct mproc *rmp)
 {
 /* VFS replied to our exit or coredump request. Perform the second half of the
  * exit code.
@@ -420,7 +434,7 @@ int dump_core;			/* flag indicating whether to dump core */
   rmp->mp_scheduler = NONE;
 
   /* For core dumps, now is the right time to try to contact the parent. */
-  if (dump_core)
+  if (!(rmp->mp_flags & (TRACE_ZOMBIE | ZOMBIE | TOLD_PARENT)))
 	zombify(rmp);
 
   if (!(rmp->mp_flags & PRIV_PROC))
@@ -448,24 +462,26 @@ int dump_core;			/* flag indicating whether to dump core */
 }
 
 /*===========================================================================*
- *				do_waitpid				     *
+ *				do_wait4				     *
  *===========================================================================*/
-int do_waitpid()
+int do_wait4()
 {
 /* A process wants to wait for a child to terminate. If a child is already 
- * waiting, go clean it up and let this WAITPID call terminate.  Otherwise,
+ * waiting, go clean it up and let this WAIT4 call terminate.  Otherwise,
  * really wait. 
- * A process calling WAITPID never gets a reply in the usual way at the end
+ * A process calling WAIT4 never gets a reply in the usual way at the end
  * of the main loop (unless WNOHANG is set or no qualifying child exists).
  * If a child has already exited, the routine tell_parent() sends the reply
  * to awaken the caller.
  */
   register struct mproc *rp;
-  int i, pidarg, options, children;
+  vir_bytes addr;
+  int i, pidarg, options, children, waited_for;
 
   /* Set internal variables. */
-  pidarg  = m_in.m_lc_pm_waitpid.pid;		/* 1st param */
-  options = m_in.m_lc_pm_waitpid.options;	/* 3rd param */
+  pidarg  = m_in.m_lc_pm_wait4.pid;		/* 1st param */
+  options = m_in.m_lc_pm_wait4.options;		/* 3rd param */
+  addr    = m_in.m_lc_pm_wait4.addr;		/* 4th param */
   if (pidarg == 0) pidarg = -mp->mp_procgrp;	/* pidarg < 0 ==> proc grp */
 
   /* Is there a child waiting to be collected? At this point, pidarg != 0:
@@ -498,9 +514,12 @@ int do_waitpid()
 			 */
 			for (i = 1; i < _NSIG; i++) {
 				if (sigismember(&rp->mp_sigtrace, i)) {
+					/* TODO: rusage support */
+
 					sigdelset(&rp->mp_sigtrace, i);
 
-					mp->mp_reply.m_pm_lc_waitpid.status = W_STOPCODE(i);
+					mp->mp_reply.m_pm_lc_wait4.status =
+					    W_STOPCODE(i);
 					return(rp->mp_pid);
 				}
 			}
@@ -510,8 +529,10 @@ int do_waitpid()
 	if (rp->mp_parent == who_p) {
 		if (rp->mp_flags & ZOMBIE) {
 			/* This child meets the pid test and has exited. */
-			tell_parent(rp); /* this child has already exited */
-			if (!(rp->mp_flags & VFS_CALL))
+			waited_for = tell_parent(rp, addr);
+
+			if (waited_for &&
+			    !(rp->mp_flags & (VFS_CALL | EVENT_CALL)))
 				cleanup(rp);
 			return(SUSPEND);
 		}
@@ -526,6 +547,7 @@ int do_waitpid()
 	}
 	mp->mp_flags |= WAITING;	     /* parent wants to wait */
 	mp->mp_wpid = (pid_t) pidarg;	     /* save pid for later */
+	mp->mp_waddr = addr;		     /* save rusage addr for later */
 	return(SUSPEND);		     /* do not reply, let it wait */
   } else {
 	/* No child even meets the pid test.  Return error immediately. */
@@ -615,12 +637,13 @@ int try_cleanup;			/* clean up the child when done? */
 	 */
   }
   else if (wait_test(p_mp, child)) {
-	tell_parent(child);
+	if (!tell_parent(child, p_mp->mp_waddr))
+		try_cleanup = FALSE; /* child is still there */
 
 	/* The 'try_cleanup' flag merely saves us from having to be really
 	 * careful with statement ordering in exit_proc() and exit_restart().
 	 */
-	if (try_cleanup && !(child->mp_flags & VFS_CALL))
+	if (try_cleanup && !(child->mp_flags & (VFS_CALL | EVENT_CALL)))
 		cleanup(child);
   }
   else {
@@ -632,11 +655,19 @@ int try_cleanup;			/* clean up the child when done? */
 /*===========================================================================*
  *				tell_parent				     *
  *===========================================================================*/
-static void tell_parent(child)
-register struct mproc *child;	/* tells which process is exiting */
+static int tell_parent(struct mproc *child, vir_bytes addr)
 {
+/* Tell the parent of the given process that it has terminated, by satisfying
+ * the parent's ongoing wait4() call.  If the parent has requested the child
+ * tree's resource usage, copy that information out first.  The copy may fail;
+ * in that case, the parent's wait4() call will return with an error, but the
+ * child will remain a zombie.  Return TRUE if the child is cleaned up, or
+ * FALSE if the child is still a zombie.
+ */
+  struct rusage r_usage;
   int mp_parent;
   struct mproc *parent;
+  int r;
 
   mp_parent= child->mp_parent;
   if (mp_parent <= 0)
@@ -647,13 +678,39 @@ register struct mproc *child;	/* tells which process is exiting */
 	panic("tell_parent: telling parent again");
   parent = &mproc[mp_parent];
 
+  /* See if we need to report resource usage to the parent. */
+  if (addr) {
+	/* We report only user and system times for now. TODO: support other
+	 * fields, although this is tricky since the child process is already
+	 * gone as far as the kernel and other services are concerned..
+	 */
+	memset(&r_usage, 0, sizeof(r_usage));
+	set_rusage_times(&r_usage, child->mp_child_utime,
+	    child->mp_child_stime);
+
+	if ((r = sys_datacopy(SELF, (vir_bytes)&r_usage, parent->mp_endpoint,
+	    addr, sizeof(r_usage))) != OK) {
+		reply(child->mp_parent, r);
+
+		return FALSE; /* copy error - the child is still there */
+	}
+  }
+
   /* Wake up the parent by sending the reply message. */
-  parent->mp_reply.m_pm_lc_waitpid.status =
+  parent->mp_reply.m_pm_lc_wait4.status =
 	W_EXITCODE(child->mp_exitstatus, child->mp_sigstatus);
   reply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
+
+  /* Now that the child has been waited for, accumulate the times of the
+   * terminated child process at the parent.
+   */
+  parent->mp_child_utime += child->mp_child_utime;
+  parent->mp_child_stime += child->mp_child_stime;
+
+  return TRUE; /* child has been waited for */
 }
 
 /*===========================================================================*
@@ -672,7 +729,9 @@ struct mproc *child;			/* tells which process is exiting */
   	panic("tell_tracer: child not a zombie");
   tracer = &mproc[mp_tracer];
 
-  tracer->mp_reply.m_pm_lc_waitpid.status =
+  /* TODO: rusage support */
+
+  tracer->mp_reply.m_pm_lc_wait4.status =
 	W_EXITCODE(child->mp_exitstatus, (child->mp_sigstatus & 0377));
   reply(child->mp_tracer, child->mp_pid);
   tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */

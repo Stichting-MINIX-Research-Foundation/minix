@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.268 2013/11/28 22:34:44 christos Exp $
+#	$NetBSD: Makefile,v 1.271 2015/08/17 06:42:46 knakahara Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR= \
 	\
 	chroot \
-	\
+	dev_mkdb \
 	\
 	\
 	\
@@ -15,7 +15,7 @@ SUBDIR= \
 	\
 	\
 	link \
-	\
+	makefs \
 	mtree \
 	\
 	\
@@ -25,12 +25,13 @@ SUBDIR= \
 	rdate \
 	\
 	\
+	\
 	syslogd \
 	traceroute \
 	unlink user \
 	vipw vnconfig \
 	\
-	zic
+	zdump zic
 
 .if !defined(__MINIX)
 .if ${MKMAKEMANDB} != "no"
@@ -60,11 +61,11 @@ SUBDIR+=mld6query route6d rtadvd traceroute6
 .if !defined(__MINIX)
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl
-.endif
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= racoon racoonctl
 .endif
+.endif # !defined(__MINIX)
 
 # NPF
 .if (${MKNPF} != "no")

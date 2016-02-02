@@ -1,16 +1,21 @@
-# $NetBSD: Makefile.inc,v 1.12 2012/07/08 01:21:12 rmind Exp $
+# $NetBSD: Makefile.inc,v 1.16 2014/08/10 23:25:49 matt Exp $
+
+.include <bsd.own.mk>
 
 COMMON_DIR:=${.PARSEDIR}
 .if defined(__MINIX)
 COMMON_CODEDIRS=atomic gen inet md net stdlib string
 .else
-COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
+COMMON_CODEDIRS=atomic gen gmon inet md net stdlib string sys
 .endif
 COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160 hash/murmurhash
 
 .if defined(COMMON_MACHINE_ARCH) && !empty(COMMON_MACHINE_ARCH) && \
     exists(${COMMON_DIR}/arch/${COMMON_MACHINE_ARCH})
 COMMON_ARCHSUBDIR=	${COMMON_MACHINE_ARCH}
+.elif defined(COMMON_MACHINE_CPU) && !empty(COMMON_MACHINE_CPU) && \
+    exists(${COMMON_DIR}/arch/${COMMON_MACHINE_CPU})
+COMMON_ARCHSUBDIR=	${COMMON_MACHINE_CPU}
 .elif defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
     exists(${KERNDIR}/arch/${LIBKERN_ARCH})
 COMMON_ARCHSUBDIR=	${LIBKERN_ARCH}

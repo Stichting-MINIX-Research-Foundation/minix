@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.6 2009/07/20 15:21:00 christos Exp $	*/
+/*	$NetBSD: strchr.S,v 1.7 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.6 2009/07/20 15:21:00 christos Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.7 2014/03/22 19:16:34 jakllsch Exp $")
 #endif
 
 /*
@@ -132,6 +132,11 @@ ENTRY(strchr)
 	sar	%cl,%r10	/* top bytes 0xff */
 	and	%r10,%rax	/* clear lsb from unwanted low bytes */
 	jmp	21b
+#ifdef TEST_STRCHR
+END(test_strchr)
+#else
+END(strchr)
+#endif
 
 #ifdef TEST_STRCHR
 /* Trivial version for bug-fixing above */
@@ -148,6 +153,7 @@ ENTRY(strchr)
 	ret
 2:	lea	-1(%rsi),%rax
 	ret
+END(strchr)
 #endif
 
 STRONG_ALIAS(index,strchr)

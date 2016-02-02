@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.5 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.9 2015/02/25 13:52:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -40,14 +40,21 @@ struct krwlock {
 
 #define	__HAVE_SIMPLE_RW_LOCKS		1
 
+#ifdef MULTIPROCESSOR
+#ifdef _ARM_ARCH_7
+#define	RW_RECEIVE(rw)			__asm __volatile("dmb" ::: "memory")
+#define	RW_GIVE(rw)			__asm __volatile("dsb" ::: "memory")
+#else
+#define	RW_RECEIVE(rw)			membar_consumer()
+#define	RW_GIVE(rw)			membar_producer()
+#endif
+#else
 #define	RW_RECEIVE(rw)			/* nothing */
 #define	RW_GIVE(rw)			/* nothing */
-
-unsigned long	_lock_cas(volatile unsigned long *,
-    unsigned long, unsigned long);
+#endif
 
 #define	RW_CAS(p, o, n)			\
-    (_lock_cas((volatile unsigned long *)(p), (o), (n)) == (o))
+    (atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
 
 #endif	/* __RWLOCK_PRIVATE */
 

@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.1 2011/01/07 15:05:58 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2015/06/22 19:06:05 christos Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/db
 
 TESTS_SH+=	t_db
+
+TESTS_C+=	t_db_hash_seq
 
 BINDIR=		${TESTSDIR}
 MKMAN=		no

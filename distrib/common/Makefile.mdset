@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.38 2013/08/15 12:39:28 joerg Exp $
+#	$NetBSD: Makefile.mdset,v 1.40 2014/08/05 15:40:58 apb Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -110,7 +110,7 @@ KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
 ${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
-	gzip -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP_N} -9c ${.ALLSRC} > ${.TARGET}
 .endif							# }
 
 .endfor							# }
@@ -150,7 +150,7 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${TOOL_MDSETIMAGE} ${MDSETIMAGEFLAGS} ${.TARGET}.tmp ${_I}
 .endif
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
-	${NM} ${.TARGET}.tmp | gzip -9n > ${.TARGET}.symbols.gz
+	${NM} ${.TARGET}.tmp | ${TOOL_GZIP_N} -9 > ${.TARGET}.symbols.gz
 .endif
 .if !defined(MDSET_NOSTRIP.${_FILENAME}) && !defined(MDSET_NOSTRIP)
 	${STRIP} -R .eh_frame -R .eh_frame_hdr -R .comment -R .ident ${.TARGET}.tmp
@@ -168,7 +168,7 @@ KERNELS+=	${_KERNEL.${_K}.${_F}}.gz
 ${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET}
-	gzip -9nc ${.ALLSRC} > ${.TARGET}
+	${TOOL_GZIP_N} -9c ${.ALLSRC} > ${.TARGET}
 .endif							# }
 
 .endif

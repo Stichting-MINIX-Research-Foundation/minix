@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.128 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.128 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.128 2013/11/27 17:24:44 christos Exp $
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs_kernel.h>
 
@@ -196,19 +197,10 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 
 /*
  * Try to reserve some blocks, prior to performing a sensitive operation that
- * requires the vnode lock to be honored.  If there is not enough space, give
- * up the vnode lock temporarily and wait for the space to become available.
+ * requires the vnode lock to be honored.  If there is not enough space, wait
+ * for the space to become available.
  *
  * Called with vp locked.  (Note nowever that if fsb < 0, vp is ignored.)
- *
- * XXX YAMT - it isn't safe to unlock vp here
- * because the node might be modified while we sleep.
- * (eg. cached states like i_offset might be stale,
- *  the vnode might be truncated, etc..)
- * maybe we should have a way to restart the vnodeop (EVOPRESTART?)
- * or rearrange vnodeop interface to leave vnode locking to file system
- * specific code so that each file systems can have their own vnode locking and
- * vnode re-using strategies.
  */
 static int
 lfs_reserveavail(struct lfs *fs, struct vnode *vp,
@@ -228,10 +220,11 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 		mutex_exit(&lfs_lock);
 
 		if (!slept) {
-			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %d,"
-			      " est_bfree = %d)\n",
+			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %jd,"
+			      " est_bfree = %jd)\n",
 			      fsb + fs->lfs_ravail + fs->lfs_favail,
-			      fs->lfs_bfree, LFS_EST_BFREE(fs)));
+			      (intmax_t)lfs_sb_getbfree(fs),
+			      (intmax_t)LFS_EST_BFREE(fs)));
 		}
 		++slept;
 
@@ -245,8 +238,8 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 		if (lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail))
 			break;
 
-		error = mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
-				0, &lfs_lock);
+		error = mtsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+				"lfs_reserve", 0, &lfs_lock);
 		if (error) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -299,19 +292,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	mutex_exit(&lfs_lock);
 #endif
 
-	/*
-	 * XXX
-	 * vref vnodes here so that cleaner doesn't try to reuse them.
-	 * (see XXX comment in lfs_reserveavail)
-	 */
-	vhold(vp);
-	if (vp2 != NULL) {
-		vhold(vp2);
-	}
-
 	error = lfs_reserveavail(fs, vp, vp2, fsb);
 	if (error)
-		goto done;
+		return error;
 
 	/*
 	 * XXX just a guess. should be more precise.
@@ -319,12 +302,6 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	error = lfs_reservebuf(fs, vp, vp2, fsb, lfs_fsbtob(fs, fsb));
 	if (error)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
-
-done:
-	holdrele(vp);
-	if (vp2 != NULL) {
-		holdrele(vp2);
-	}
 
 	return error;
 }
@@ -355,19 +332,20 @@ lfs_bwrite(void *v)
 int
 lfs_fits(struct lfs *fs, int fsb)
 {
-	int needed;
+	int64_t needed;
 
 	ASSERT_NO_SEGLOCK(fs);
-	needed = fsb + lfs_btofsb(fs, fs->lfs_sumsize) +
-		 ((howmany(fs->lfs_uinodes + 1, LFS_INOPB(fs)) + fs->lfs_segtabsz +
-		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
+	needed = fsb + lfs_btofsb(fs, lfs_sb_getsumsize(fs)) +
+		 ((howmany(lfs_sb_getuinodes(fs) + 1, LFS_INOPB(fs)) +
+		   lfs_sb_getsegtabsz(fs) +
+		   1) << (lfs_sb_getbshift(fs) - lfs_sb_getffshift(fs)));
 
-	if (needed >= fs->lfs_avail) {
+	if (needed >= lfs_sb_getavail(fs)) {
 #ifdef DEBUG
 		DLOG((DLOG_AVAIL, "lfs_fits: no fit: fsb = %ld, uinodes = %ld, "
-		      "needed = %ld, avail = %ld\n",
-		      (long)fsb, (long)fs->lfs_uinodes, (long)needed,
-		      (long)fs->lfs_avail));
+		      "needed = %jd, avail = %jd\n",
+		      (long)fsb, (long)lfs_sb_getuinodes(fs), (intmax_t)needed,
+		      (intmax_t)lfs_sb_getavail(fs)));
 #endif
 		return 0;
 	}
@@ -411,7 +389,8 @@ lfs_availwait(struct lfs *fs, int fsb)
 		if (LFS_SEGLOCK_HELD(fs))
 			panic("lfs_availwait: deadlock");
 #endif
-		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", 0);
+		error = tsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+			       "cleaner", 0);
 		if (error)
 			return (error);
 	}
@@ -441,7 +420,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 *
 	 * In particular the cleaner can't write blocks either.
 	 */
-	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
+	if (fs->lfs_ronly || (lfs_sb_getpflags(fs) & LFS_PF_CLEAN)) {
 		bp->b_oflags &= ~BO_DELWRI;
 		bp->b_flags |= B_READ; /* XXX is this right? --ks */
 		bp->b_error = 0;
@@ -480,7 +459,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		}
 		mutex_exit(&lfs_lock);
-		fs->lfs_avail -= fsb;
+		lfs_sb_subavail(fs, fsb);
 
 		mutex_enter(&bufcache_lock);
 		mutex_enter(vp->v_interlock);
@@ -596,8 +575,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	wakeup(&lfs_writing);
 }
 
-#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, LFS_INOPB(fs))
-#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ulfs1_dinode))
+#define INOCOUNT(fs) howmany(lfs_sb_getuinodes(fs), LFS_INOPB(fs))
+#define INOBYTES(fs) (lfs_sb_getuinodes(fs) * DINOSIZE(fs))
 
 /*
  * make sure that we don't have too many locked buffers.

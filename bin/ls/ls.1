@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.72 2012/11/20 12:37:29 abs Exp $
+.\"	$NetBSD: ls.1,v 1.78 2014/10/18 01:49:01 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)ls.1	8.7 (Berkeley) 7/29/94
 .\"
-.Dd November 20, 2012
+.Dd October 17, 2014
 .Dt LS 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd list directory contents
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1AaBbCcdFfghikLlMmnopqRrSsTtuWwx
+.Op Fl 1AaBbCcdFfghikLlMmnOoPpqRrSsTtuWwXx
 .Op Ar
 .Sh DESCRIPTION
 For each
@@ -127,6 +127,8 @@ after each that is a
 .Tn FIFO .
 .It Fl f
 Output is not sorted.
+This option implies
+.Fl a .
 .It Fl g
 The same as
 .Fl l ,
@@ -161,8 +163,6 @@ for example.
 .Dq ell ) .
 List in long format.
 (See below.)
-A total sum for all the file sizes is output on a line before the long
-listing.
 .It Fl M
 Modifies the
 .Fl l
@@ -183,6 +183,10 @@ The same as
 except that
 the owner and group IDs are displayed numerically rather than converting
 to a owner or group name.
+.It Fl O
+Output only leaf files (not directories), eliding other
+.Nm
+output.
 .It Fl o
 Include the file flags in a long
 .Pq Fl l
@@ -193,6 +197,8 @@ is displayed.
 (See
 .Xr chflags 1
 for a list of possible flags and their meanings.)
+.It Fl P
+Print the full pathname for each file.
 .It Fl p
 Display a slash
 .Pq Sq \&/
@@ -248,6 +254,8 @@ Force raw printing of non-printable characters.
 This is the default when output is not to a terminal.
 .It Fl x
 Multi-column output sorted across the page rather than down the page.
+.It Fl X
+Don't cross mount points when recursing.
 .El
 .Pp
 The

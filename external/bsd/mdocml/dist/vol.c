@@ -1,4 +1,4 @@
-/*	$Vendor-Id: vol.c,v 1.9 2011/03/22 14:33:05 kristaps Exp $ */
+/*	Id: vol.c,v 1.9 2011/03/22 14:33:05 kristaps Exp  */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

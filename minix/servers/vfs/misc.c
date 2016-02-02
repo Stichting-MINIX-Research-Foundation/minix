@@ -51,6 +51,8 @@ static void free_proc(int flags);
  *===========================================================================*/
 int do_getsysinfo(void)
 {
+  struct fproc *rfp;
+  struct fproc_light *rfpl;
   vir_bytes src_addr, dst_addr;
   size_t len, buf_size;
   int what;
@@ -74,6 +76,17 @@ int do_getsysinfo(void)
     case SI_DMAP_TAB:
 	src_addr = (vir_bytes) dmap;
 	len = sizeof(struct dmap) * NR_DEVICES;
+	break;
+    case SI_PROCLIGHT_TAB:
+	/* Fill the light process table for the MIB service upon request. */
+	rfpl = &fproc_light[0];
+	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++, rfpl++) {
+		rfpl->fpl_tty = rfp->fp_tty;
+		rfpl->fpl_blocked_on = rfp->fp_blocked_on;
+		rfpl->fpl_task = rfp->fp_task;
+	}
+	src_addr = (vir_bytes) fproc_light;
+	len = sizeof(fproc_light);
 	break;
 #if ENABLE_SYSCALL_STATS
     case SI_CALL_STATS:
@@ -373,7 +386,10 @@ int do_vm_call(void)
 	u32_t length = job_m_in.VFS_VMCALL_LENGTH;
 	int result = OK;
 	int slot;
-	struct fproc *rfp, *vmf;
+	struct fproc *rfp;
+#if !defined(NDEBUG)
+	struct fproc *vmf;
+#endif /* !defined(NDEBUG) */
 	struct filp *f = NULL;
 	int r;
 
@@ -383,7 +399,9 @@ int do_vm_call(void)
 	if(isokendpt(ep, &slot) != OK) rfp = NULL;
 	else rfp = &fproc[slot];
 
+#if !defined(NDEBUG)
 	vmf = fproc_addr(VM_PROC_NR);
+#endif /* !defined(NDEBUG) */
 	assert(fp == vmf);
 	assert(rfp != vmf);
 
@@ -966,19 +984,10 @@ void panic_hook(void)
  *===========================================================================*/
 int do_getrusage(void)
 {
-	int res;
-	struct rusage r_usage;
-
-	if ((res = sys_datacopy_wrapper(who_e, m_in.m_lc_vfs_rusage.addr, SELF,
-		(vir_bytes) &r_usage, (vir_bytes) sizeof(r_usage))) < 0)
-		return res;
-
-	r_usage.ru_inblock = 0;
-	r_usage.ru_oublock = 0;
-	r_usage.ru_ixrss = fp->text_size;
-	r_usage.ru_idrss = fp->data_size;
-	r_usage.ru_isrss = DEFAULT_STACK_LIMIT;
-
-	return sys_datacopy_wrapper(SELF, (vir_bytes) &r_usage, who_e,
-		m_in.m_lc_vfs_rusage.addr, (phys_bytes) sizeof(r_usage));
+	/* Obsolete vfs_getrusage(2) call from userland. The getrusage call is
+	 * now fully handled by PM, and for any future fields that should be
+	 * supplied by VFS, VFS should be queried by PM rather than by the user
+	 * program directly.  TODO: remove this call after the next release.
+	 */
+	return OK;
 }

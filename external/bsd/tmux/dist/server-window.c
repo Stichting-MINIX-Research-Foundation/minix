@@ -1,4 +1,4 @@
-/* $Id: server-window.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <event.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -57,7 +58,6 @@ server_window_loop(void)
 			TAILQ_FOREACH(wp, &w->panes, entry)
 				server_window_check_content(s, wl, wp);
 		}
-		w->flags &= ~(WINDOW_BELL|WINDOW_ACTIVITY);
 	}
 }
 
@@ -72,48 +72,29 @@ server_window_check_bell(struct session *s, struct winlink *wl)
 
 	if (!(w->flags & WINDOW_BELL) || wl->flags & WINLINK_BELL)
 		return (0);
-	if (s->curw != wl)
+	if (s->curw != wl || s->flags & SESSION_UNATTACHED)
 		wl->flags |= WINLINK_BELL;
+	if (s->flags & SESSION_UNATTACHED)
+		return (0);
+	if (s->curw->window == w)
+		w->flags &= ~WINDOW_BELL;
 
+	visual = options_get_number(&s->options, "visual-bell");
 	action = options_get_number(&s->options, "bell-action");
-	switch (action) {
-	case BELL_ANY:
-		if (s->flags & SESSION_UNATTACHED)
-			break;
-		visual = options_get_number(&s->options, "visual-bell");
-		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-			c = ARRAY_ITEM(&clients, i);
-			if (c == NULL || c->session != s)
-				continue;
-			if (!visual) {
-				tty_putcode(&c->tty, TTYC_BEL);
-				continue;
-			}
-			if (c->session->curw->window == w) {
-				status_message_set(c, "Bell in current window");
-				continue;
-			}
-			status_message_set(c, "Bell in window %u",
-			    winlink_find_by_window(&s->windows, w)->idx);
+	if (action == BELL_NONE)
+		return (0);
+	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
+		c = ARRAY_ITEM(&clients, i);
+		if (c == NULL || c->session != s || (c->flags & CLIENT_CONTROL))
+			continue;
+		if (!visual) {
+			tty_bell(&c->tty);
+			continue;
 		}
-		break;
-	case BELL_CURRENT:
-		if (s->flags & SESSION_UNATTACHED)
-			break;
-		visual = options_get_number(&s->options, "visual-bell");
-		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-			c = ARRAY_ITEM(&clients, i);
-			if (c == NULL || c->session != s)
-				continue;
-			if (c->session->curw->window != w)
-				continue;
-			if (!visual) {
-				tty_putcode(&c->tty, TTYC_BEL);
-				continue;
-			}
+		if (c->session->curw->window == w)
 			status_message_set(c, "Bell in current window");
-		}
-		break;
+		else if (action == BELL_ANY)
+			status_message_set(c, "Bell in window %u", wl->idx);
 	}
 
 	return (1);
@@ -127,9 +108,12 @@ server_window_check_activity(struct session *s, struct winlink *wl)
 	struct window	*w = wl->window;
 	u_int		 i;
 
+	if (s->curw->window == w)
+		w->flags &= ~WINDOW_ACTIVITY;
+
 	if (!(w->flags & WINDOW_ACTIVITY) || wl->flags & WINLINK_ACTIVITY)
 		return (0);
-	if (s->curw == wl)
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED))
 		return (0);
 
 	if (!options_get_number(&w->options, "monitor-activity"))
@@ -144,8 +128,7 @@ server_window_check_activity(struct session *s, struct winlink *wl)
 			c = ARRAY_ITEM(&clients, i);
 			if (c == NULL || c->session != s)
 				continue;
-			status_message_set(c, "Activity in window %u",
-			    winlink_find_by_window(&s->windows, w)->idx);
+			status_message_set(c, "Activity in window %u", wl->idx);
 		}
 	}
 
@@ -165,7 +148,7 @@ server_window_check_silence(struct session *s, struct winlink *wl)
 	if (!(w->flags & WINDOW_SILENCE) || wl->flags & WINLINK_SILENCE)
 		return (0);
 
-	if (s->curw == wl) {
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED)) {
 		/*
 		 * Reset the timer for this window if we've focused it.  We
 		 * don't want the timer tripping as soon as we've switched away
@@ -196,8 +179,7 @@ server_window_check_silence(struct session *s, struct winlink *wl)
 			c = ARRAY_ITEM(&clients, i);
 			if (c == NULL || c->session != s)
 				continue;
-			status_message_set(c, "Silence in window %u",
-			    winlink_find_by_window(&s->windows, w)->idx);
+			status_message_set(c, "Silence in window %u", wl->idx);
 		}
 	}
 
@@ -215,9 +197,12 @@ server_window_check_content(
 	char		*found, *ptr;
 
 	/* Activity flag must be set for new content. */
+	if (s->curw->window == w)
+		w->flags &= ~WINDOW_ACTIVITY;
+
 	if (!(w->flags & WINDOW_ACTIVITY) || wl->flags & WINLINK_CONTENT)
 		return (0);
-	if (s->curw == wl)
+	if (s->curw == wl && !(s->flags & SESSION_UNATTACHED))
 		return (0);
 
 	ptr = options_get_string(&w->options, "monitor-content");
@@ -225,7 +210,7 @@ server_window_check_content(
 		return (0);
 	if ((found = window_pane_search(wp, ptr, NULL)) == NULL)
 		return (0);
-	xfree(found);
+	free(found);
 
 	if (options_get_number(&s->options, "bell-on-alert"))
 		ring_bell(s);
@@ -236,8 +221,7 @@ server_window_check_content(
 			c = ARRAY_ITEM(&clients, i);
 			if (c == NULL || c->session != s)
 				continue;
-			status_message_set(c, "Content in window %u",
-			    winlink_find_by_window(&s->windows, w)->idx);
+			status_message_set(c, "Content in window %u", wl->idx);
 		}
 	}
 
@@ -253,7 +237,7 @@ ring_bell(struct session *s)
 
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
-		if (c != NULL && c->session == s)
-			tty_putcode(&c->tty, TTYC_BEL);
+		if (c != NULL && c->session == s && !(c->flags & CLIENT_CONTROL))
+			tty_bell(&c->tty);
 	}
 }

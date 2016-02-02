@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+	<head>
+		<title>NetBSD &amp; Google's Summer of Code: Mateusz Kocielski - SASL client library (sasl_client_lib)</title>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	</head>
+
+
+<body>
+	<div style="text-align:center;">
+		<table style="margin-left: auto; margin-right: auto;">
+			<tr>
+        		<td><a href="http://www.NetBSD.org/"><img style="border: none; vertical-align: top;" src="../../NetBSD.png" alt="[NetBSD logo]"></a></td>
+        		<td><p style="font-size : 47px;">&nbsp;&nbsp;&nbsp;&amp;&nbsp;&nbsp;&nbsp;</p></td>
+        		<td><a href="http://www.google.com/"><img style="border: none; vertical-align: bottom;" src="http://www.google.com/intl/en/images/logo.gif" alt="[Google logo]"></a></td>
+			</tr>
+		</table>
+		
+	<h1>NetBSD-SoC: SASL client library</h1>
+	</div>
+
+	<div class="main" style="text-align:center;">
+		<a href="#whatisit">What is it</a> | 
+		<a href="#status">Status</a> | 
+		<a href="#repo">Repository</a> |
+		<a href="#deliverables">Deliverables</a> |
+		<a href="#doc">Documentation</a> |
+		<a href="#tech">Technical details</a> |
+		<a href="#contact">Contact</a>
+	</div>
+
+	<div class="main">
+		<a name="whatisit"></a>
+		<p class="header">What is it?</p>
+		This is the historical site of the project used during the Google Summer of Code 2010. For recent info check the <a href="index.html">main page</a>.
+	</div>
+
+	<div class="main">
+		<a name="status"></a>
+		<p class="header">Status</p>
+
+		<b>Project schedule:</b>
+		<ul>
+			<li> <b>April 26, 2010</b>: <a href="http://googlesummerofcode.blogspot.com/2007/04/so-what-is-this-community-bonding-all.html">Community Bonding Period</a> -- Students get to know mentors, read documentation, get up to speed to begin working on their projects.</li>
+			<li> <b>week 1, May 24 - May 31:</b>
+			<ul>
+					<li> <b>May 24, 2010</b>: Students begin coding for their GSoC projects; Google begins issuing initial student payments</li>
+					<li>implementing API</li>
+					<li>writing weekly report</li>
+					<li>writing manpages/documentation</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 2, May 31 - June 7:</b>
+			<ul>
+					<li>implementing API</li>
+					<li>implementing ANONYMOUS, EXTERNAL, PLAIN</li>
+					<li>writing example client</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 3, June 14 - June 21:</b>
+			<ul>
+					<li>implementing CRAM-MD5</li>
+					<li>writing example client</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 4, June 21 - June 28:</b>
+			<ul>
+					<li>implementing DIGEST-MD5</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 5, June 28 - July 5:</b>
+			<ul>
+					<li>implementing DIGEST-MD5</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 6, July 5 - July 12:</b>
+			<ul>
+					<li>implementing DIGEST-MD5</li>
+					<li>refactoring and fixing code</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+					<li>writing mid-term report</li>
+			</ul>
+			</li>
+			<li> <b>week 7, July 12 - July 19:</b>
+			<ul>
+					<li> <b>July 12, 2010</b>: Mentors and students can begin submitting mid-term evaluations.</li>
+					<li> <b>July 16, 2010</b>: Mid-term evaluation deadline; Google begins issuing mid-term student payments provided passing student survey is on file.</li>
+  					<li>implementing GSSAPI</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 8, July 19 - July 26:</b>
+			<ul>
+					<li>implementing GSSAPI</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>writing test cases</li>
+			</ul>
+			</li>
+			<li> <b>week 9, July 26 - August 2:</b>
+			<ul>
+					<li>implementing GSSAPI</li>
+					<li>writing manpages/documentation</li>
+					<li>writing weekly report</li>
+					<li>testing/fixing</li>
+			</ul>
+			</li>
+			<li> <b>week 10, August 2 - August 9:</b>
+			<ul>
+					<li>writing manpages/documentation</li>
+  					<li>writing weekly report</li>
+					<li>testing/fixing</li>
+			</ul>
+			</li>
+			<li> <b>week 11, August 9 - August 16:</b>
+			<ul>
+					<li> <b>August 9, 2010</b>: Suggested 'pencils down' date. Take a week to scrub code, write tests, improve documentation, etc.</li>
+					<li> <b>August 16, 2010</b>: Firm 'pencils down' date. Mentors, students and organization administrators can begin submitting final evaluations to Google.</li>
+					<li>writing weekly report</li>
+					<li>writing final report</li>
+					<li>vacations</li>
+			</ul>
+			</li>
+			<li> <b>August 20, 2010</b>: Final evaluation deadline; Google begins issuing student and mentoring organization payments provided forms and evaluations are on file.</li>
+		</ul>
+		<b>Major milestones:</b>
+		<ul>
+			<li><b>detailed library design</b></li>
+			<li><b>API with one mechanism</b></li>
+			<li><b>configuration files parser</b></li>
+			<li><b>PLAIN/EXTERNAL/LOGIN/ANONYMOUS mechanisms</b></li>
+			<li><b>example client (stdio/stdout)</b></li>
+			<li>example client (SMTP/IMAP)</li>
+			<li><b>CRAM-MD5 mechanism</b></li>
+			<li><b>DIGEST-MD5 mechanism</b></li>
+			<li><b>GSSAPI mechanism</b></li>
+			<li><b>manpages/documentation</b></li>
+		</ul>
+	</div>
+
+	<div class="main">
+		<a name="repo"></a>
+		<p class="header">Project's repository</p>
+
+		Project is aviliable via CVS, anonymous read-only access is provided. Run following command for accessing the repository:
+		<br><br>
+		<b>cvs -z3 -d:pserver:anonymous@netbsd-soc.cvs.sourceforge.net:/cvsroot/netbsd-soc checkout -P sasl_client_lib</b>
+	</div>
+
+	<div class="main">
+		<a name="deliverables"></a>
+		<p class="header">Deliverables</p>
+		
+		<b>Mandatory (must-have) components:</b>
+		<ul>
+			<li> library code:
+			<ul>
+				<li> API implementation</li>
+				<li> ANONYMOUS mechanism</li>
+				<li> CRAM-MD5 mechanism</li>
+				<li> DIGEST-MD5 mechanism</li>
+				<li> EXTERNAL mechanism</li>
+				<li> GSSAPI mechanism</li>
+				<li> LOGIN mechanism</li>
+				<li> PLAIN mechanism</li>
+			</ul>
+			</li>
+			<li> example usage (SMTP/IMAP client)</li>
+			<li> manpages for the library</li>
+			<li> test cases</li>
+		</ul>
+		<b>Optional component:</b>
+		<ul>
+		</ul>
+	</div>
+
+	<div class="main">
+		<a name="doc"></a>
+		<p class="header">Documentation</p>
+
+		<b>Standards:</b>
+		<ul>
+			<li><a href="http://www.ietf.org/rfc/rfc2195.txt">RFC2195</a> - IMAP/POP AUTHorize Extension for Simple Challenge/Response (CRAM-MD5)
+			<li><a href="http://www.ietf.org/rfc/rfc2222.txt">RFC2222</a> - Simple Authentication and Security Layer (SASL, GSSAPI, EXTERN)
+			<li><a href="http://www.ietf.org/rfc/rfc2245.txt">RFC2245</a> - Anonymous SASL Mechanism (ANONYMOUS)
+			<li><a href="http://www.ietf.org/rfc/rfc2595.txt">RFC2595</a> - Using TLS with IMAP, POP3 and ACAP (PLAIN)
+			<li><a href="http://www.ietf.org/rfc/rfc2831.txt">RFC2831</a> - Using Digest Authentication as a SASL Mechanism (DIGEST-MD5)
+		</ul>
+		<b>Related libraries:</b>
+		<ul>
+			<li><a href="http://asg.web.cmu.edu/sasl/sasl-library.html">Cyrus-SASL</a> - Cyrus Simple Authentication and Security Layer library
+			<li><a href="http://www.gnu.org/software/gsasl/">Libgsasl</a> - GNU Simple Authentication and Security Layer library
+		</ul>
+	</div>
+
+	<div class="main">
+		<a name="tech"></a>
+		<p class="header">Technical Details</p>
+		<b>Testing:</b>
+		<ul>
+			<li><a href="http://www.netbsd.org/~jmmv/atf/">ATF</a> - Automated Testing Framework
+		</ul>
+	</div>
+
+	<div class="main">
+		<a name="contact"></a>
+		<p class="header">Contact</p>
+	
+		<p class="paragraph">
+		If you've got any questions or suggestions, then feel free to
+		contact me by e-mail, my address is <b>m.kocielski@gmail.com</b>. You can also contact me
+		more interactively via IRC, my nickname is <b>shm</b> at the freenode network.
+		</p>
+	</div>
+
+	<hr>
+
+	<table border=0>
+		<tr>
+			<td>
+				<a href="http://sourceforge.net/projects/netbsd-soc"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=141771&amp;type=16" width="150" height="40" style="border: none;" alt="Get NetBSD Summer of Code projects at SourceForge.net. Fast, secure and Free Open Source software downloads"></a>
+			</td>
+			<td>
+			<table>
+  			<tr> <td> Mateusz Kocielski &lt;<tt>m.kocielski@gmail.com</tt>&gt; </td> </tr>
+			<tr> <td> $NetBSD: soc.html,v 1.3 2011/02/11 23:44:42 christos Exp $ </td> </tr>
+		    </table>
+			</td>
+		</tr>
+	</table>
+
+	</body>
+</html>

@@ -1,0 +1,375 @@
+# $NetBSD: tzdata2netbsd,v 1.7 2015/08/11 18:10:13 apb Exp $
+
+# For use by NetBSD developers when updating to new versions of tzdata.
+#
+# 0. Be in an up-to-date checkout of src/external/public-domain/tz
+#    from NetBSD-current.
+# 1. Edit OLDVER and NEWVER below.
+# 2. Run this script.  You will be prompted for confirmation before
+#    anything major (such as a cvs operation).
+# 3. If something fails, abort the script and fix it.
+# 4. Re-run this script until you are happy.  It's designed to
+#    be re-run over and over, and later runs will try not to
+#    redo non-trivial work done by earlier runs.
+#
+
+OLDVER=2015e
+NEWVER=2015f
+
+# Uppercase variants of OLDVER and NEWVER
+OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
+NEWVER_UC="$( echo "${NEWVER}" | tr '[a-z]' '[A-Z]' )"
+
+# Tags for use with version control systems
+CVSOLDTAG="TZDATA${OLDVER_UC}"
+CVSNEWTAG="TZDATA${NEWVER_UC}"
+CVSBRANCHTAG="TZDATA"
+GITHUBTAG="${NEWVER}"
+
+# URLs for fetching distribution files, etc.
+DISTURL="ftp://ftp.iana.org/tz/releases/tzdata${NEWVER}.tar.gz"
+SIGURL="${DISTURL}.asc"
+NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
+
+# Directories
+REPODIR="src/external/public-domain/tz/dist" # relative to the NetBSD CVS repo
+TZDISTDIR="$(pwd)/dist" # should be .../external/public-domain/tz/dist
+WORKDIR="$(pwd)/update-work/${NEWVER}"
+EXTRACTDIR="${WORKDIR}/extract"
+
+# Files in the work directory
+DISTFILE="${WORKDIR}/${DISTURL##*/}"
+SIGFILE="${DISTFILE}.sig"
+PGPVERIFYLOG="${WORKDIR}/pgpverify.log"
+NEWSFILE="${WORKDIR}/NEWS"
+NEWSTRIMFILE="${WORKDIR}/NEWS.trimmed"
+IMPORTMSGFILE="${WORKDIR}/import.msg"
+IMPORTDONEFILE="${WORKDIR}/import.done"
+MERGSMSGFILE="${WORKDIR}/merge.msg"
+MERGEDONEFILE="${WORKDIR}/merge.done"
+COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
+
+DOIT()
+{
+	local really_do_it=false
+	local reply
+
+	echo "In directory $(pwd)"
+	echo "ABOUT TO DO:" "$(shell_quote "$@")"
+	read -p "Really do it? [yes/no/quit] " reply
+	case "${reply}" in
+	[yY]*)	really_do_it=true ;;
+	[nN]*)	really_do_it=false ;;
+	[qQ]*)
+		echo "Aborting"
+		return 1
+		;;
+	esac
+	if $really_do_it; then
+		echo "REALLY DOING IT NOW..."
+		"$@"
+	else
+		echo "NOT REALLY DOING THE ABOVE COMMAND"
+	fi
+}
+
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+#
+shell_quote()
+{(
+	local result=''
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
+	for arg in "$@" ; do
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
+	done
+	printf "%s\n" "$result"
+)}
+
+findcvsroot()
+{
+	[ -n "${CVSROOT}" ] && return 0
+	CVSROOT="$( cat ./CVS/Root )"
+	[ -n "${CVSROOT}" ] && return 0
+	echo >&2 "Failed to set CVSROOT value"
+	return 1
+}
+
+mkworkdir()
+{
+	mkdir -p "${WORKDIR}"
+}
+
+fetch()
+{
+	[ -f "${DISTFILE}" ] || ftp -o "${DISTFILE}" "${DISTURL}"
+	[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}"
+	[ -f "${NEWSFILE}" ] || ftp -o "${NEWSFILE}" "${NEWSURL}"
+}
+
+checksig()
+{
+	{ gpg --verify "${SIGFILE}" "${DISTFILE}"
+	  echo gpg exit status $?
+	} 2>&1 | tee "${PGPVERIFYLOG}"
+
+	# The output should contain lines that match all the following regexps
+	#
+	while read line; do
+		if ! grep -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
+			echo >&2 "Failed to verify signature: ${line}"
+			return 1
+		fi
+	done <<'EOF'
+gpg: Signature made .* using RSA key ID 62AA7E34
+gpg: Good signature from "Paul Eggert <eggert@cs.ucla.edu>"
+Primary key fingerprint: 7E37 92A9 D8AC F7D6 33BC  1588 ED97 E90E 62AA 7E34
+gpg exit status 0
+EOF
+}
+
+extract()
+{
+	[ -f "${EXTRACTDIR}/zone.tab" ] && return
+	mkdir -p "${EXTRACTDIR}"
+	tar -z -xf "${DISTFILE}" -C "${EXTRACTDIR}"
+}
+
+addnews()
+{
+	[ -f "${EXTRACTDIR}/NEWS" ] && return
+	cp -p "${NEWSFILE}" "${EXTRACTDIR}"/NEWS
+}
+
+# Find the relevant part of the NEWS file for all releases between
+# OLDVER and NEWVER, and save them to NEWSTRIMFILE.
+#
+trimnews()
+{
+	[ -s "${NEWSTRIMFILE}" ] && return
+	awk -v oldver="${OLDVER}" -v newver="${NEWVER}" \
+	    '
+		BEGIN {inrange = 0}
+		/^Release [0-9]+[a-z]+ - .*/ {
+			# "Release <version> - <date>"
+			inrange = ($2 > oldver && $2 <= newver)
+		}
+		// { if (inrange) print; }
+		' \
+		<"${NEWSFILE}" >"${NEWSTRIMFILE}"
+}
+
+# Create IMPORTMSGFILE from NEWSTRIMFILE, by ignoring some sections,
+# keeping only the first sentence from paragraphs in other sections,
+# and changing the format.
+#
+# The result should be edited by hand before performing a cvs commit.
+# A message to that effect is inserted at the beginning of the file.
+#
+mkimportmsg()
+{
+	[ -s "${IMPORTMSGFILE}" ] && return
+	{ cat <<EOF
+EDIT ME: Edit this file and then delete the lines marked "EDIT ME".
+EDIT ME: This file will be used as a log message for the "cvs commit" that
+EDIT ME: imports tzdata${NEWVER}.  The initial contents of this file were
+EDIT ME: generated from ${NEWSFILE}.
+EDIT ME: 
+EOF
+	awk -v oldver="${OLDVER}" -v newver="${NEWVER}" \
+	    -v disturl="${DISTURL}" -v newsurl="${NEWSURL}" \
+	    '
+		BEGIN {
+			bullet = "  * ";
+			indent = "    ";
+			blankline = 0;
+			goodsection = 0;
+			havesentence = 0;
+			print "Import tzdata"newver" from "disturl;
+			#print "and NEWS file from "newsurl;
+		}
+		/^Release/ {
+			# "Release <version> - <date>"
+			ver = $2;
+			date = gensub(".* - ", "", 1, $0);
+			print "";
+			print "Summary of changes in tzdata"ver \
+				" ("date"):";
+		}
+		/^$/ { blankline = 1; havesentence = 0; }
+		/^  Changes affecting/ { goodsection = 0; }
+		/^  Changes affecting.*time/ { goodsection = 1; }
+		/^  Changes affecting.*data/ { goodsection = 1; }
+		/^  Changes affecting.*documentation/ || \
+		/^  Changes affecting.*commentary/ {
+			t = gensub("^ *", "", 1, $0);
+			t = gensub("\\.*$", ".", 1, t);
+			print bullet t;
+			goodsection = 0;
+		}
+		/^    .*/ && goodsection {
+			# In a paragraph in a "good" section.
+			# Ignore leading spaces, and ignore anything
+			# after the first sentence.
+			# First line of paragraph gets a bullet.
+			t = gensub("^ *", "", 1, $0);
+			t = gensub("\\. .*", ".", 1, t);
+			if (blankline) print bullet t;
+			else if (! havesentence) print indent t;
+			havesentence = (havesentence || (t ~ "\\.$"));
+		}
+		/./ { blankline = 0; }
+		' \
+		<"${NEWSTRIMFILE}"
+	} >"${IMPORTMSGFILE}"
+}
+
+editimportmsg()
+{
+	if [ -s "${IMPORTMSGFILE}" ] \
+	&& ! grep -q '^EDIT' "${IMPORTMSGFILE}"
+	then
+		return 0 # file has already been edited
+	fi
+	# Pass both IMPORTMSGFILE and NEWSFILE to the editor, so that the
+	# user can easily consult NEWSFILE while editing IMPORTMSGFILE.
+	vi "${IMPORTMSGFILE}" "${NEWSFILE}"
+}
+
+cvsimport()
+{
+	if [ -e "${IMPORTDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS import has already been performed.
+EOF
+		return 0
+	fi
+	if ! [ -s "${IMPORTMSGFILE}" ] \
+	|| grep -q '^EDIT' "${IMPORTMSGFILE}"
+	then
+		cat >&2 <<EOF
+The message file ${IMPORTMSGFILE}
+has not been properly edited.
+Not performing cvs import.
+EOF
+		return 1
+	fi
+	( cd "${EXTRACTDIR}" &&
+	  DOIT cvs -d "${CVSROOT}" import -m "$(cat "${IMPORTMSGFILE}")" \
+		"${REPODIR}" "${CVSBRANCHTAG}" "${CVSNEWTAG}"
+	) && touch "${IMPORTDONEFILE}"
+}
+
+cvsmerge()
+{
+
+	cd "${TZDISTDIR}" || exit 1
+	if [ -e "${MERGEDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS merge has already been performed.
+EOF
+		return 0
+	fi
+	DOIT cvs -d "${CVSROOT}" update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}" \
+	&& touch "${MERGEDONEFILE}"
+}
+
+resolveconflicts()
+{
+	cd "${TZDISTDIR}" || exit 1
+	if grep -l '^[<=>][<=>][<=>]' *
+	then
+		cat <<EOF
+There appear to be conflicts in the files listed above.
+Resolve conflicts, then re-run this script.
+EOF
+		return 1
+	fi
+}
+
+cvscommitmerge()
+{
+	cd "${TZDISTDIR}" || exit 1
+	if grep -l '^[<=>][<=>][<=>]' *
+	then
+		cat >&2 <<EOF
+There still appear to be conflicts in the files listed above.
+Not performing cvs commit.
+EOF
+		return 1
+	fi
+	if [ -e "${COMMITMERGEDONEFILE}" ]; then
+		cat >&2 <<EOF
+The CVS commmit (of the merge result) has already been performed.
+EOF
+		return 0
+	fi
+	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}" \
+	&& touch "${COMMITMERGEDONEFILE}"
+}
+
+extra()
+{
+	cat <<EOF
+Also do the following:
+ * Edit src/doc/3RDPARTY
+ * Edit src/doc/CHANGES
+ * Edit src/distrib/sets/base/mi if the set of installed files has changed.
+ * Submit pullup requests for all active release branches.
+ * rm -rf ${WORKDIR}
+EOF
+}
+
+main()
+{
+	set -e
+	findcvsroot
+	mkworkdir
+	fetch
+	checksig
+	extract
+	addnews
+	trimnews
+	mkimportmsg
+	editimportmsg
+	cvsimport
+	cvsmerge
+	resolveconflicts
+	cvscommitmerge
+	extra
+}
+
+main "$@"

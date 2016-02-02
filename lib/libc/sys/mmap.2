@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.47 2012/01/05 15:19:52 reinoud Exp $
+.\"	$NetBSD: mmap.2,v 1.48 2015/02/27 16:18:00 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd December 20, 2011
+.Dd February 27, 2015
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -138,6 +138,14 @@ regions, and must be specified as \-1.
 The mapped memory will be zero filled.
 .It Dv MAP_FILE
 Mapped from a regular file or character-special device memory.
+Read accesses beyond the end of of the file or device but less
+than the current page size will be zero-filled.
+Write accesses beyond the end of the file or device but less
+than the current page size will not affect the file or device.
+References beyond the end of file that are beyond the current
+page size will result in the delivery of
+.Dv SIGBUS
+signal.
 .It Dv MAP_FIXED
 Do not permit the system to select a different address than the one
 specified.

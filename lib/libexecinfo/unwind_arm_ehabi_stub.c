@@ -23,6 +23,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef __ARM_DWARF_EH__
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include "unwind.h"
@@ -59,3 +61,5 @@ _Unwind_SetGR(struct _Unwind_Context *context, int reg, _Unwind_Ptr val)
 	_Unwind_VRS_Set(context, 0 /*_UVRSC_CORE*/, reg, 0 /*_UVRSD_UINT32*/,
 		&val);
 }
+
+#endif /* __ARM_DWARF_EH__ */

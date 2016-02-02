@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2013/10/17 20:59:16 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.56 2015/04/03 01:04:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -243,8 +243,10 @@ extern long nkptp[PTP_LEVELS];
 void		pmap_activate(struct lwp *);
 void		pmap_bootstrap(vaddr_t);
 bool		pmap_clear_attrs(struct vm_page *, unsigned);
+bool		pmap_pv_clear_attrs(paddr_t, unsigned);
 void		pmap_deactivate(struct lwp *);
-void		pmap_page_remove (struct vm_page *);
+void		pmap_page_remove(struct vm_page *);
+void		pmap_pv_remove(paddr_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
@@ -257,6 +259,11 @@ void		pmap_kremove_local(vaddr_t, vsize_t);
 void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);
 void		pmap_emap_sync(bool);
+
+#define	__HAVE_PMAP_PV_TRACK	1
+void		pmap_pv_init(void);
+void		pmap_pv_track(paddr_t, psize_t);
+void		pmap_pv_untrack(paddr_t, psize_t);
 
 void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 		    pd_entry_t * const **);
@@ -354,6 +361,23 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
+		}
+	}
+}
+
+/*
+ * pmap_pv_protect: change the protection of all recorded mappings
+ *	of an unmanaged page
+ */
+
+__inline static void __unused
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+	if ((prot & VM_PROT_WRITE) == 0) {
+		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+			(void) pmap_pv_clear_attrs(pa, PG_RW);
+		} else {
+			pmap_pv_remove(pa);
 		}
 	}
 }

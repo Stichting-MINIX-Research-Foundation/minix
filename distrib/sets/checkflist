@@ -100,6 +100,7 @@ shift $((${OPTIND} - 1))
 # * ignore var/db/syspkg and its contents
 # * ignore METALOG and METALOG.*
 # * ignore etc/mtree/set.*
+# * MINIX3 only: ignore ASR service binaries
 #
 ignore_exceptions()
 {
@@ -107,12 +108,14 @@ IGNORE_REGEXP_SYSPKG="^\./var/db/syspkg(\$|/)"
 IGNORE_REGEXP_METALOG="^\./METALOG(\..*)?\$"
 IGNORE_REGEXP_SETS="^\./SETS\..*\$"
 IGNORE_REGEXP_MTREE="^\./etc/mtree/set\.[a-z]*\$"
+IGNORE_REGEXP_SERVICE_ASR="^\./usr/service/asr/"
 
 	${EGREP} -v \
 		-e "${IGNORE_REGEXP_SYSPKG}" \
 		-e "${IGNORE_REGEXP_METALOG}" \
 		-e "${IGNORE_REGEXP_SETS}" \
-		-e "${IGNORE_REGEXP_MTREE}"
+		-e "${IGNORE_REGEXP_MTREE}" \
+		-e "${IGNORE_REGEXP_SERVICE_ASR}"
 }
 
 #

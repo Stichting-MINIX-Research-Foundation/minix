@@ -7,10 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define	_LIBCPP_BUILDING_SYSTEM_ERROR
+#include "__config"
+
+#define _LIBCPP_BUILDING_SYSTEM_ERROR
 #include "system_error"
-#include "string"
+
+#include "include/config_elast.h"
 #include "cstring"
+#include "string"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -65,10 +69,10 @@ __generic_error_category::name() const _NOEXCEPT
 string
 __generic_error_category::message(int ev) const
 {
-#ifdef ELAST
-    if (ev > ELAST)
+#ifdef _LIBCPP_ELAST
+    if (ev > _LIBCPP_ELAST)
       return string("unspecified generic_category error");
-#endif  // ELAST
+#endif  // _LIBCPP_ELAST
     return __do_message::message(ev);
 }
 
@@ -97,20 +101,20 @@ __system_error_category::name() const _NOEXCEPT
 string
 __system_error_category::message(int ev) const
 {
-#ifdef ELAST
-    if (ev > ELAST)
+#ifdef _LIBCPP_ELAST
+    if (ev > _LIBCPP_ELAST)
       return string("unspecified system_category error");
-#endif  // ELAST
+#endif  // _LIBCPP_ELAST
     return __do_message::message(ev);
 }
 
 error_condition
 __system_error_category::default_error_condition(int ev) const _NOEXCEPT
 {
-#ifdef ELAST
-    if (ev > ELAST)
+#ifdef _LIBCPP_ELAST
+    if (ev > _LIBCPP_ELAST)
       return error_condition(ev, system_category());
-#endif  // ELAST
+#endif  // _LIBCPP_ELAST
     return error_condition(ev, generic_category());
 }
 
@@ -148,7 +152,7 @@ system_error::__init(const error_code& ec, string what_arg)
             what_arg += ": ";
         what_arg += ec.message();
     }
-    return _VSTD::move(what_arg);
+    return what_arg;
 }
 
 system_error::system_error(error_code ec, const string& what_arg)

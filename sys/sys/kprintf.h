@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.11 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.12 2014/08/10 16:44:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -57,6 +57,7 @@
 #define	NOLOCK		0x1000	/* don't acquire a tty lock */
 
 void	kprintf_init(void);
+void	kprintf_init_callout(void);
 void	kprintf_lock(void);
 void	kprintf_unlock(void);
 /*

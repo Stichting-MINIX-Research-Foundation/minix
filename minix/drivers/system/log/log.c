@@ -43,7 +43,7 @@ static struct chardriver log_dtab = {
 static void sef_local_startup(void);
 static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 EXTERN int sef_cb_lu_prepare(int state);
-EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state, int flags);
 EXTERN void sef_cb_lu_state_dump(int state);
 static void sef_cb_signal_handler(int signo);
 
@@ -68,7 +68,6 @@ static void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
 
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);

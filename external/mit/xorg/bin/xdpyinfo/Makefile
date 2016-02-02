@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/09/29 14:34:30 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2015/07/19 19:49:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ DPADD+= ${LIBXTST} ${LIBXI} ${LIBXRENDER} ${LIBXINERAMA} ${LIBXCOMPOSITE} \
 .PATH:	${X11SRCDIR.${PROG}}/man
 
 COPTS.xdpyinfo.c+=	-Wno-error	# xf86vmstr.h
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

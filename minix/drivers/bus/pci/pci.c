@@ -19,11 +19,16 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <machine/pci_via.h>
 #include <machine/vmparam.h>
 
+#include <dev/pci/pci_verbose.h>
+
 #include <pci.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "pci.h"
+
+#define PCI_VENDORSTR_LEN	64
+#define PCI_PRODUCTSTR_LEN	64
 
 #define irq_mode_pci(irq) ((void)0)
 
@@ -452,11 +457,10 @@ get_freebus(void)
 static const char *
 pci_vid_name(u16_t vid)
 {
-	const char *name = pci_findvendor_real(vid);
-	if (NULL == name)
-		return "unknown";
-	else
-		return name;
+	static char vendor[PCI_VENDORSTR_LEN];
+	pci_findvendor(vendor, sizeof(vendor), vid);
+
+	return vendor;
 }
 
 
@@ -1536,7 +1540,10 @@ complete_bars(void)
 static void
 probe_bus(int busind)
 {
-	u32_t dev, func, t3;
+	uint32_t dev, func;
+#if 0
+	uint32_t t3;
+#endif
 	u16_t vid, did, sts, sub_vid, sub_did;
 	u8_t headt;
 	u8_t baseclass, subclass, infclass;
@@ -1676,8 +1683,8 @@ probe_bus(int busind)
 			if (debug)
 				print_capabilities(devind);
 
-			t3= ((baseclass << 16) | (subclass << 8) | infclass);
 #if 0
+			t3= ((baseclass << 16) | (subclass << 8) | infclass);
 			if (t3 == PCI_T3_VGA || t3 == PCI_T3_VGA_OLD)
 				report_vga(devind);
 #endif
@@ -1746,10 +1753,10 @@ pcibr_via_rsts(int busind)
 static void
 pcibr_via_wsts(int busind, u16_t value)
 {
+#if 0
 	int devind;
 	devind= pcibus[busind].pb_devind;
 
-#if 0
 	printf("pcibr_via_wsts(%d, 0x%X), devind= %d (not implemented)\n",
 		busind, value, devind);
 #endif
@@ -1959,7 +1966,7 @@ do_pcibridge(int busind)
  *				pci_intel_init				     *
  *===========================================================================*/
 static void
-pci_intel_init()
+pci_intel_init(void)
 {
 	/* Try to detect a know PCI controller. Read the Vendor ID and
 	 * the Device ID for function 0 of device 0.
@@ -2471,8 +2478,9 @@ _pci_slot_name(int devind, char **cpp)
 const char *
 _pci_dev_name(u16_t vid, u16_t did)
 {
-
-	return pci_findproduct_real(did << 16 | vid);
+	static char product[PCI_PRODUCTSTR_LEN];
+	pci_findproduct(product, sizeof(product), vid, did);
+	return product;
 }
 
 /*===========================================================================*

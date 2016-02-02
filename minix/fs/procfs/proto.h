@@ -23,6 +23,7 @@ int getdents_hook(struct inode *inode, cbdata_t cbdata);
 ssize_t read_hook(struct inode *inode, char *ptr, size_t len, off_t off,
 	cbdata_t cbdata);
 int rdlink_hook(struct inode *inode, char *ptr, size_t max, cbdata_t cbdata);
+pid_t pid_from_slot(int slot);
 void out_of_inodes(void);
 
 /* util.c */

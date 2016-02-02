@@ -1,4 +1,4 @@
-/* $Id: layout-custom.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,7 +63,7 @@ layout_dump(struct window *w)
 	if (layout_append(w->layout_root, layout, sizeof layout) != 0)
 		return (NULL);
 
-	xasprintf(&out, "%4x,%s", layout_checksum(layout), layout);
+	xasprintf(&out, "%04x,%s", layout_checksum(layout), layout);
 	return (out);
 }
 
@@ -79,8 +79,13 @@ layout_append(struct layout_cell *lc, char *buf, size_t len)
 	if (len == 0)
 		return (-1);
 
-	tmplen = xsnprintf(tmp, sizeof tmp,
-	    "%ux%u,%u,%u", lc->sx, lc->sy, lc->xoff, lc->yoff);
+	if (lc->wp != NULL) {
+		tmplen = xsnprintf(tmp, sizeof tmp, "%ux%u,%u,%u,%u",
+		    lc->sx, lc->sy, lc->xoff, lc->yoff, lc->wp->id);
+	} else {
+		tmplen = xsnprintf(tmp, sizeof tmp, "%ux%u,%u,%u",
+		    lc->sx, lc->sy, lc->xoff, lc->yoff);
+	}
 	if (tmplen > (sizeof tmp) - 1)
 		return (-1);
 	if (strlcat(buf, tmp, len) >= len)
@@ -167,6 +172,8 @@ layout_parse(struct window *w, const char *layout)
 
 	layout_print_cell(lc, __func__, 0);
 
+	notify_window_layout_changed(w);
+
 	return (0);
 
 fail:
@@ -199,6 +206,7 @@ layout_construct(struct layout_cell *lcparent, const char **layout)
 {
 	struct layout_cell     *lc, *lcchild;
 	u_int			sx, sy, xoff, yoff;
+	const char	       *saved;
 
 	if (!isdigit((u_char) **layout))
 		return (NULL);
@@ -222,6 +230,14 @@ layout_construct(struct layout_cell *lcparent, const char **layout)
 	(*layout)++;
 	while (isdigit((u_char) **layout))
 		(*layout)++;
+	if (**layout == ',') {
+		saved = *layout;
+		(*layout)++;
+		while (isdigit((u_char) **layout))
+			(*layout)++;
+		if (**layout == 'x')
+			*layout = saved;
+	}
 
 	lc = layout_create_cell(lcparent);
 	lc->sx = sx;

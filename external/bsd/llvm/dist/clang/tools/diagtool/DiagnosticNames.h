@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_TOOLS_DIAGTOOL_DIAGNOSTICNAMES_H
+#define LLVM_CLANG_TOOLS_DIAGTOOL_DIAGNOSTICNAMES_H
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
@@ -48,7 +51,7 @@ namespace diagtool {
       friend struct GroupRecord;
       group_iterator(const short *Start) : CurrentID(Start) {
         if (CurrentID && *CurrentID == -1)
-          CurrentID = 0;
+          CurrentID = nullptr;
       }
 
     public:
@@ -70,7 +73,7 @@ namespace diagtool {
       group_iterator &operator++() {
         ++CurrentID;
         if (*CurrentID == -1)
-          CurrentID = 0;
+          CurrentID = nullptr;
         return *this;
       }
 
@@ -112,3 +115,4 @@ namespace diagtool {
   }
 } // end namespace diagtool
 
+#endif

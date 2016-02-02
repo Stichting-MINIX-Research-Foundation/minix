@@ -1,12 +1,14 @@
-; RUN: llc < %s -march=x86-64 -mcpu=knl | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 define i16 @mask16(i16 %x) {
   %m0 = bitcast i16 %x to <16 x i1>
   %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <16 x i1> %m1 to i16
   ret i16 %ret
-; CHECK: mask16
-; CHECK: knotw
+; CHECK-LABEL: mask16
+; CHECK: kmovw
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw
 ; CHECK: ret
 }
 
@@ -15,8 +17,38 @@ define i8 @mask8(i8 %x) {
   %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <8 x i1> %m1 to i8
   ret i8 %ret
-; CHECK: mask8
-; CHECK: knotw
+; CHECK-LABEL: mask8
+; CHECK: kmovw
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw
+; CHECK: ret
+}
+
+define void @mask16_mem(i16* %ptr) {
+  %x = load i16* %ptr, align 4
+  %m0 = bitcast i16 %x to <16 x i1>
+  %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
+  %ret = bitcast <16 x i1> %m1 to i16
+  store i16 %ret, i16* %ptr, align 4
+  ret void
+; CHECK-LABEL: mask16_mem
+; CHECK: kmovw ([[ARG1:%rdi|%rcx]]), %k{{[0-7]}}
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw %k{{[0-7]}}, ([[ARG1]])
+; CHECK: ret
+}
+
+define void @mask8_mem(i8* %ptr) {
+  %x = load i8* %ptr, align 4
+  %m0 = bitcast i8 %x to <8 x i1>
+  %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
+  %ret = bitcast <8 x i1> %m1 to i8
+  store i8 %ret, i8* %ptr, align 4
+  ret void
+; CHECK-LABEL: mask8_mem
+; CHECK: kmovw ([[ARG1]]), %k{{[0-7]}}
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw %k{{[0-7]}}, ([[ARG1]])
 ; CHECK: ret
 }
 
@@ -33,19 +65,6 @@ define i16 @mand16(i16 %x, i16 %y) {
   ret i16 %ret
 }
 
-; CHECK: unpckbw_test
-; CHECK: kunpckbw
-; CHECK:ret
-declare <16 x i1> @llvm.x86.kunpck.v16i1(<8 x i1>, <8 x i1>) nounwind readnone
-
-define i16 @unpckbw_test(i8 %x, i8 %y) {
-  %m0 = bitcast i8 %x to <8 x i1>
-  %m1 = bitcast i8 %y to <8 x i1>
-  %k = tail call <16 x i1> @llvm.x86.kunpck.v16i1(<8 x i1> %m0, <8 x i1> %m1)
-  %r = bitcast <16 x i1> %k to i16
-  ret i16 %r
-}
-
 ; CHECK: shuf_test1
 ; CHECK: kshiftrw        $8
 ; CHECK:ret
@@ -54,4 +73,40 @@ define i8 @shuf_test1(i16 %v) nounwind {
    %mask = shufflevector <16 x i1> %v1, <16 x i1> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
    %mask1 = bitcast <8 x i1> %mask to i8
    ret i8 %mask1
+}
+
+; CHECK: zext_test1
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i32 @zext_test1(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i32
+  ret i32 %res
+}
+
+; CHECK: zext_test2
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i16 @zext_test2(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i16
+  ret i16 %res
+}
+
+; CHECK: zext_test3
+; CHECK: kshiftlw
+; CHECK: kshiftrw
+; CHECK: kmovw
+; CHECK:ret
+define i8 @zext_test3(<16 x i32> %a, <16 x i32> %b) {
+  %cmp_res = icmp ugt <16 x i32> %a, %b
+  %cmp_res.i1 = extractelement <16 x i1> %cmp_res, i32 5
+  %res = zext i1 %cmp_res.i1 to i8
+  ret i8 %res
 }

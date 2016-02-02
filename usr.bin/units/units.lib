@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.17 2012/12/28 17:57:46 apb Exp $
+/	$NetBSD: units.lib,v 1.18 2015/09/20 15:09:06 martin Exp $
 
 / primitive units
 
@@ -345,6 +345,8 @@ kbyte			1024 byte
 megabyte		1024 kbyte
 gigabyte		1024 megabyte
 meg			megabyte
+terabyte		1024 gigabyte
+petabyte		1024 terabyte
 
 
 / Trivia

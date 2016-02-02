@@ -25,12 +25,12 @@ int global_namespace_variable = 1;
 // functions that belong to the namespace have it as a context, and the global
 // function has the file as a context.
 
-// CHECK: metadata !"_ZTS1C", metadata !"member_function"{{.*}} [ DW_TAG_subprogram ] [line 11] [def] [member_function]
+// CHECK: !"0x2e\00member_function\00{{.*}}", !{{[0-9]+}}, !"_ZTS1C"{{.*}} [ DW_TAG_subprogram ] [line 11] [def] [member_function]
 
-// CHECK: metadata !"_ZTS1C", metadata !"static_member_function"{{.*}}  [ DW_TAG_subprogram ] [line 13] [def] [static_member_function]
+// CHECK: !"0x2e\00static_member_function\00{{.*}}", !{{[0-9]+}}, !"_ZTS1C"{{.*}}  [ DW_TAG_subprogram ] [line 13] [def] [static_member_function]
 
-// CHECK: metadata !22, metadata !"global_function"{{.*}}  [ DW_TAG_subprogram ] [line 17] [def] [global_function]
-// CHECK: !22 = {{.*}} [ DW_TAG_file_type ]
+// CHECK: !"0x2e\00global_function\00{{[^,]+}}", !{{[0-9]+}}, [[FILE:![0-9]*]]{{.*}}  [ DW_TAG_subprogram ] [line 17] [def] [global_function]
+// CHECK: [[FILE]] = {{.*}} [ DW_TAG_file_type ]
 
-// CHECK: metadata !24, metadata !"global_namespace_function"{{.*}} [ DW_TAG_subprogram ] [line 20] [def] [global_namespace_function]
-// CHECK: !24 = {{.*}} [ DW_TAG_namespace ] [ns] [line 19]
+// CHECK: !"0x2e\00global_namespace_function\00{{[^,]+}}", !{{[0-9]+}}, [[NS:![0-9]*]]{{.*}} [ DW_TAG_subprogram ] [line 20] [def] [global_namespace_function]
+// CHECK: [[NS]] = {{.*}} [ DW_TAG_namespace ] [ns] [line 19]

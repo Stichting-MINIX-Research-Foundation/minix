@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.3 2013/01/03 16:27:51 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.5 2015/01/02 20:34:27 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.10 2012/08/09 16:40:04 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.13 2014/12/04 15:56:46 christos Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.3 2013/01/03 16:27:51 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.5 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -565,7 +565,7 @@ static int dispatch(xprintf_struct *s)
  */
 static int core(xprintf_struct *s)
 {
-  size_t len, save_len;
+  size_t save_len;
   char *dummy_base;
 
   /* basic checks */
@@ -590,8 +590,7 @@ static int core(xprintf_struct *s)
   for (;;) {
     /* up to end of source string */
     if (*(s->src_string) == 0) {
-      *(s->dest_string) = 0;    /* final 0 */
-      len = s->real_len + 1;
+      *(s->dest_string) = '\0';    /* final NUL */
       break;
     }
 
@@ -600,15 +599,13 @@ static int core(xprintf_struct *s)
 
     /* up to end of dest string */
     if (s->real_len >= s->maxlen) {
-      (s->buffer_base)[s->maxlen] = 0; /* final 0 */
-      len = s->maxlen + 1;
+      (s->buffer_base)[s->maxlen] = '\0'; /* final NUL */
       break;
     }
   }
 
   /* for (v)asnprintf */
   dummy_base = s->buffer_base;
-  save_len = 0;                 /* just to avoid a compiler warning */
 
   dummy_base = s->buffer_base + s->real_len;
   save_len = s->real_len;
@@ -642,11 +639,15 @@ int vasprintf(char **ptr, const char *format_string, va_list vargs)
 #ifdef va_copy
   va_copy (s.vargs, vargs);
 #else
-#ifdef __va_copy
+# ifdef __va_copy
   __va_copy (s.vargs, vargs);
-#else
-  memcpy (&s.vargs, vargs, sizeof (va_list));
-#endif /* __va_copy */
+# else
+#  ifdef WIN32
+  s.vargs = vargs;
+#  else
+  memcpy (&s.vargs, &vargs, sizeof (s.va_args));
+#  endif /* WIN32 */
+# endif /* __va_copy */
 #endif /* va_copy */
   s.maxlen = (size_t)INT_MAX;
 

@@ -32,12 +32,14 @@
 #define FROM_PROC 0
 #define TO_PROC   1
 
+typedef fd_set *ixfer_fd_set_ptr;
+
 static struct selectentry {
   struct fproc *requestor;	/* slot is free iff this is NULL */
   endpoint_t req_endpt;
   fd_set readfds, writefds, errorfds;
   fd_set ready_readfds, ready_writefds, ready_errorfds;
-  fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
+  ixfer_fd_set_ptr vir_readfds, vir_writefds, vir_errorfds;
   struct filp *filps[OPEN_MAX];
   int type[OPEN_MAX];
   int nfds, nreadyfds;
@@ -755,8 +757,10 @@ void select_timeout_check(minix_timer_t *timer)
   if (se->requestor == NULL) return;
   if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
-  if (is_deferred(se)) return;	/* Wait for initial replies to CDEV_SELECT */
-  select_return(se);
+  if (!is_deferred(se))
+	select_return(se);
+  else
+	se->block = 0;	/* timer triggered "too soon", treat as nonblocking */
 }
 
 

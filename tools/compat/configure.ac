@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.80 2013/08/14 10:14:45 jmcneill Exp $
+#	$NetBSD: configure.ac,v 1.84 2015/07/26 14:01:53 kamil Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -37,7 +37,7 @@ AC_DEFUN([AC_NETBSD],
       AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
       AC_MSG_CHECKING([for NetBSD or MINIX3])
       AC_EGREP_CPP(yes,
-      [#if defined(__NetBSD__) || ((__minix)
+      [#if defined(__NetBSD__) || defined(__minix)
 	yes
 	#endif
 	],
@@ -157,10 +157,10 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
-	pwrite raise_default_signal random setenv \
+	pwrite raise_default_signal random reallocarr setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strndup strsep strsuftoll strtoll \
+	strndup strnlen strsep strsuftoll strtoi strtoll strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -169,11 +169,17 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strndup],,,[#include <string.h>])
+AC_CHECK_DECLS([strndup, strnlen],,,[#include <string.h>])
 AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
 AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
 #include <sys/stat.h>
 #include <unistd.h>
+])
+
+AC_CHECK_DECLS([errc, verrc, warnc, vwarnc],,, [
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
 ])
 
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64,

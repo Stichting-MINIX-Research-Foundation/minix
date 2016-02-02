@@ -1,4 +1,4 @@
-/* $Id: resize.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,10 +49,12 @@ recalculate_sizes(void)
 	struct client		*c;
 	struct window		*w;
 	struct window_pane	*wp;
-	u_int		 	 i, j, ssx, ssy, has, limit;
-	int		 	 flag;
+	u_int			 i, j, ssx, ssy, has, limit;
+	int			 flag, has_status, is_zoomed;
 
 	RB_FOREACH(s, sessions, &sessions) {
+		has_status = options_get_number(&s->options, "status");
+
 		ssx = ssy = UINT_MAX;
 		for (j = 0; j < ARRAY_LENGTH(&clients); j++) {
 			c = ARRAY_ITEM(&clients, j);
@@ -61,7 +63,11 @@ recalculate_sizes(void)
 			if (c->session == s) {
 				if (c->tty.sx < ssx)
 					ssx = c->tty.sx;
-				if (c->tty.sy < ssy)
+				if (has_status &&
+				    !(c->flags & CLIENT_CONTROL) &&
+				    c->tty.sy > 1 && c->tty.sy - 1 < ssy)
+					ssy = c->tty.sy - 1;
+				else if (c->tty.sy < ssy)
 					ssy = c->tty.sy;
 			}
 		}
@@ -71,17 +77,14 @@ recalculate_sizes(void)
 		}
 		s->flags &= ~SESSION_UNATTACHED;
 
-		if (options_get_number(&s->options, "status")) {
-			if (ssy == 0)
-				ssy = 1;
-			else
-				ssy--;
-		}
+		if (has_status && ssy == 0)
+			ssy = 1;
+
 		if (s->sx == ssx && s->sy == ssy)
 			continue;
 
-		log_debug(
-		    "session size %u,%u (was %u,%u)", ssx, ssy, s->sx, s->sy);
+		log_debug("session size %u,%u (was %u,%u)", ssx, ssy, s->sx,
+		    s->sy);
 
 		s->sx = ssx;
 		s->sy = ssy;
@@ -89,7 +92,7 @@ recalculate_sizes(void)
 
 	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
 		w = ARRAY_ITEM(&windows, i);
-		if (w == NULL)
+		if (w == NULL || w->active == NULL)
 			continue;
 		flag = options_get_number(&w->options, "aggressive-resize");
 
@@ -120,12 +123,16 @@ recalculate_sizes(void)
 
 		if (w->sx == ssx && w->sy == ssy)
 			continue;
+		log_debug("window size %u,%u (was %u,%u)", ssx, ssy, w->sx,
+		    w->sy);
 
-		log_debug(
-		    "window size %u,%u (was %u,%u)", ssx, ssy, w->sx, w->sy);
-
+		is_zoomed = w->flags & WINDOW_ZOOMED;
+		if (is_zoomed)
+			window_unzoom(w);
 		layout_resize(w, ssx, ssy);
 		window_resize(w, ssx, ssy);
+		if (is_zoomed && window_pane_visible(w->active))
+			window_zoom(w->active);
 
 		/*
 		 * If the current pane is now not visible, move to the next
@@ -141,5 +148,6 @@ recalculate_sizes(void)
 		}
 
 		server_redraw_window(w);
+		notify_window_layout_changed(w);
 	}
 }

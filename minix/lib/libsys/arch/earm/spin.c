@@ -70,14 +70,14 @@ int spin_check(spin_t *s)
 
 		if (micro_delta >= TSC_SPIN) {
 			s->s_usecs -= micro_delta;
-			getticks(&s->s_base_uptime);
+			s->s_base_uptime = getticks();
 			s->s_state = STATE_UPTIME;
 		}
 
 		break;
 
 	case STATE_UPTIME:
-		getticks(&now);
+		now = getticks();
 
 		/* We assume that sys_hz() caches its return value. */
 		micro_delta = ((now - s->s_base_uptime) * 1000 / sys_hz()) *

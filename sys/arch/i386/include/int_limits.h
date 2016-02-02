@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.8 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.9 2014/07/25 21:43:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _I386_INT_LIMITS_H_
 #define _I386_INT_LIMITS_H_
+
+#ifdef __SIG_ATOMIC_MAX__
+#include <sys/common_int_limits.h>
+#else
 
 /*
  * 7.18.2 Limits of specified-width integer types
@@ -123,5 +127,7 @@
 
 /* limit of size_t */
 #define	SIZE_MAX	0xffffffffU			/* size_t	  */
+
+#endif
 
 #endif /* !_I386_INT_LIMITS_H_ */

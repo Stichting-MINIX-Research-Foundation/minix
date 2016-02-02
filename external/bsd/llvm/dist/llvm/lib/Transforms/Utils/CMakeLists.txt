@@ -1,4 +1,6 @@
 add_llvm_library(LLVMTransformUtils
+  ASanStackFrameLayout.cpp
+  AddDiscriminators.cpp
   BasicBlockUtils.cpp
   BreakCriticalEdges.cpp
   BuildLibCalls.cpp
@@ -7,7 +9,9 @@ add_llvm_library(LLVMTransformUtils
   CloneModule.cpp
   CmpInstAnalysis.cpp
   CodeExtractor.cpp
+  CtorUtils.cpp
   DemoteRegToStack.cpp
+  FlattenCFG.cpp
   GlobalStatus.cpp
   InlineFunction.cpp
   InstructionNamer.cpp
@@ -26,11 +30,10 @@ add_llvm_library(LLVMTransformUtils
   PromoteMemoryToRegister.cpp
   SSAUpdater.cpp
   SimplifyCFG.cpp
-  FlattenCFG.cpp
   SimplifyIndVar.cpp
   SimplifyInstructions.cpp
   SimplifyLibCalls.cpp
-  SpecialCaseList.cpp
+  SymbolRewriter.cpp
   UnifyFunctionExitNodes.cpp
   Utils.cpp
   ValueMapper.cpp

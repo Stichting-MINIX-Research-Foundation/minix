@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.232 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: mi,v 1.238 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -174,6 +174,7 @@
 ./etc/rc.d/altqd				etc-router-rc
 ./etc/rc.d/amd					etc-amd-rc
 ./etc/rc.d/apmd					etc-sys-rc
+./etc/rc.d/blacklistd				etc-sys-rc
 ./etc/rc.d/bluetooth				etc-sys-rc
 ./etc/rc.d/bootconf.sh				etc-sys-rc
 ./etc/rc.d/bootparams				etc-bootserver-rc
@@ -215,6 +216,7 @@
 ./etc/rc.d/ipsec				etc-net-rc
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
+./etc/rc.d/iscsid				etc-iscsi-rc
 ./etc/rc.d/isdnd				etc-isdn-rc
 ./etc/rc.d/isibootd				etc-bootserver-rc
 ./etc/rc.d/kdc					etc-krb5-rc
@@ -230,6 +232,7 @@
 ./etc/rc.d/makemandb				etc-man-rc
 ./etc/rc.d/mdnsd				etc-mdns-rc
 ./etc/rc.d/mixerctl				etc-audio-rc
+./etc/rc.d/modules				etc-sys-rc
 ./etc/rc.d/mopd					etc-bootserver-rc
 ./etc/rc.d/motd					etc-sys-rc
 ./etc/rc.d/mountall				etc-sys-rc
@@ -263,6 +266,7 @@
 ./etc/rc.d/random_seed				etc-sys-rc
 ./etc/rc.d/rarpd				etc-bootserver-rc
 ./etc/rc.d/rbootd				etc-bootserver-rc
+./etc/rc.d/resize_root				etc-sys-rc
 ./etc/rc.d/rndctl				etc-sys-rc
 ./etc/rc.d/root					etc-sys-rc
 ./etc/rc.d/route6d				etc-router-rc
@@ -270,7 +274,7 @@
 ./etc/rc.d/rpcbind				etc-rpcbind-rc
 ./etc/rc.d/rtadvd				etc-net-rc
 ./etc/rc.d/rtclocaltime				etc-sys-rc
-./etc/rc.d/rtsold				etc-net-rc
+./etc/rc.d/rtsold				etc-obsolete		obsolete
 ./etc/rc.d/rwho					etc-net-rc
 ./etc/rc.d/savecore				etc-sys-rc
 ./etc/rc.d/screenblank				etc-sys-rc
@@ -344,6 +348,7 @@
 ./var/crash/minfree				etc-sys-root
 ./var/cron/tabs/root				etc-cron-root
 ./var/db/locate.database			etc-sys-root
+./var/db/obsolete/etc				base-sys-root
 ./var/games/atc_score				etc-games-scores
 ./var/games/battlestar.log			etc-games-scores
 ./var/games/cfscores				etc-games-scores

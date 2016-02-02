@@ -1,0 +1,4 @@
+.PATH.S: ${.PARSEDIR}
+WHRLPOOL_SRCS = wp-x86_64.S
+WHRLPOOLCPPFLAGS+=	-DWHIRLPOOL_ASM
+.include "../../whrlpool.inc"

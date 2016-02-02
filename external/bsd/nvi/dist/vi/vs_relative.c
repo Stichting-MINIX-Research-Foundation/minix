@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: vs_relative.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: vs_relative.c,v 10.18 2001/07/08 13:02:48 skimo Exp  (Berkeley) Date: 2001/07/08 13:02:48 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: vs_relative.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

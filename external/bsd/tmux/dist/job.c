@@ -1,4 +1,4 @@
-/* $Id: job.c,v 1.3 2011/08/17 18:48:36 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -31,13 +32,14 @@
  */
 
 void	job_callback(struct bufferevent *, short, void *);
+void	job_write_callback(struct bufferevent *, void *);
 
 /* All jobs list. */
 struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 
 /* Start a job running, if it isn't already. */
 struct job *
-job_run(const char *cmd,
+job_run(const char *cmd, struct session *s,
     void (*callbackfn)(struct job *), void (*freefn)(void *), void *data)
 {
 	struct job	*job;
@@ -50,7 +52,9 @@ job_run(const char *cmd,
 
 	environ_init(&env);
 	environ_copy(&global_environ, &env);
-	server_fill_environ(NULL, &env);
+	if (s != NULL)
+		environ_copy(&s->environ, &env);
+	server_fill_environ(s, &env);
 
 	switch (pid = fork()) {
 	case -1:
@@ -62,20 +66,20 @@ job_run(const char *cmd,
 		environ_push(&env);
 		environ_free(&env);
 
+		if (dup2(out[1], STDIN_FILENO) == -1)
+			fatal("dup2 failed");
 		if (dup2(out[1], STDOUT_FILENO) == -1)
 			fatal("dup2 failed");
-		if (out[1] != STDOUT_FILENO)
+		if (out[1] != STDIN_FILENO && out[1] != STDOUT_FILENO)
 			close(out[1]);
 		close(out[0]);
 
 		nullfd = open(_PATH_DEVNULL, O_RDWR, 0);
 		if (nullfd < 0)
 			fatal("open failed");
-		if (dup2(nullfd, STDIN_FILENO) == -1)
-			fatal("dup2 failed");
 		if (dup2(nullfd, STDERR_FILENO) == -1)
 			fatal("dup2 failed");
-		if (nullfd != STDIN_FILENO && nullfd != STDERR_FILENO)
+		if (nullfd != STDERR_FILENO)
 			close(nullfd);
 
 		closefrom(STDERR_FILENO + 1);
@@ -102,8 +106,9 @@ job_run(const char *cmd,
 	job->fd = out[0];
 	setblocking(job->fd, 0);
 
-	job->event = bufferevent_new(job->fd, NULL, NULL, job_callback, job);
-	bufferevent_enable(job->event, EV_READ);
+	job->event = bufferevent_new(job->fd, NULL, job_write_callback,
+	    job_callback, job);
+	bufferevent_enable(job->event, EV_READ|EV_WRITE);
 
 	log_debug("run job %p: %s, pid %ld", job, job->cmd, (long) job->pid);
 	return (job);
@@ -116,23 +121,38 @@ job_free(struct job *job)
 	log_debug("free job %p: %s", job, job->cmd);
 
 	LIST_REMOVE(job, lentry);
-	xfree(job->cmd);
+	free(job->cmd);
 
 	if (job->freefn != NULL && job->data != NULL)
 		job->freefn(job->data);
 
 	if (job->pid != -1)
 		kill(job->pid, SIGTERM);
-	if (job->fd != -1)
-		close(job->fd);
 	if (job->event != NULL)
 		bufferevent_free(job->event);
+	if (job->fd != -1)
+		close(job->fd);
 
-	xfree(job);
+	free(job);
+}
+
+/* Called when output buffer falls below low watermark (default is 0). */
+void
+job_write_callback(unused struct bufferevent *bufev, void *data)
+{
+	struct job	*job = data;
+	size_t		 len = EVBUFFER_LENGTH(EVBUFFER_OUTPUT(job->event));
+
+	log_debug("job write %p: %s, pid %ld, output left %zu", job, job->cmd,
+	    (long) job->pid, len);
+
+	if (len == 0) {
+		shutdown(job->fd, SHUT_WR);
+		bufferevent_disable(job->event, EV_WRITE);
+	}
 }
 
 /* Job buffer error callback. */
-/* ARGSUSED */
 void
 job_callback(unused struct bufferevent *bufev, unused short events, void *data)
 {

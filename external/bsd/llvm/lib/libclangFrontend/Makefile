@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/02/28 17:09:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2015/01/29 20:41:37 joerg Exp $
 
 LIB=	clangFrontend
 
@@ -12,6 +12,7 @@ SRCS+=	ASTConsumers.cpp \
 	CacheTokens.cpp \
 	ChainedDiagnosticConsumer.cpp \
 	ChainedIncludesSource.cpp \
+	CodeGenOptions.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
 	CreateInvocationFromCommandLine.cpp \
@@ -27,14 +28,15 @@ SRCS+=	ASTConsumers.cpp \
 	LangStandards.cpp \
 	LayoutOverrideSource.cpp \
 	LogDiagnosticPrinter.cpp \
+	ModuleDependencyCollector.cpp \
 	MultiplexConsumer.cpp \
 	PrintPreprocessedOutput.cpp \
 	SerializedDiagnosticPrinter.cpp \
+	SerializedDiagnosticReader.cpp \
 	TextDiagnostic.cpp \
 	TextDiagnosticBuffer.cpp \
 	TextDiagnosticPrinter.cpp \
-	VerifyDiagnosticConsumer.cpp \
-	Warnings.cpp
+	VerifyDiagnosticConsumer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

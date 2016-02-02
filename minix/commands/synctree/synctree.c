@@ -1429,7 +1429,7 @@ int main(int argc, char **argv)
 		startprocess(slave, s_mach, s_dir, 0);
 	} else {
 		/* synctree machine1:dir1 machine2:dir2 */
-		if (pipe(m2m) < 0) perrx(pipe);
+		if (pipe(m2m) < 0) perrx("pipe");
 
 		switch (s_pid= fork()) {
 		case -1:

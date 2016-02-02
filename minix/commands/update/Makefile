@@ -1,4 +1,4 @@
 PROG=	update
-MAN=
+MAN=	update.8
 
 .include <bsd.prog.mk>

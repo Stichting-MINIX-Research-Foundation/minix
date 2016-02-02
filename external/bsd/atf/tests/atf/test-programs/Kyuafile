@@ -1,0 +1,9 @@
+syntax(2)
+
+test_suite("NetBSD")
+
+atf_test_program{name="config_test"}
+atf_test_program{name="expect_test"}
+atf_test_program{name="meta_data_test"}
+atf_test_program{name="result_test"}
+atf_test_program{name="srcdir_test"}

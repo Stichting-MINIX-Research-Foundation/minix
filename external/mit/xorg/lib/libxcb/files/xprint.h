@@ -21,7 +21,7 @@ extern "C" {
 
 #define XCB_XPRINT_MAJOR_VERSION 1
 #define XCB_XPRINT_MINOR_VERSION 0
-  
+
 extern xcb_extension_t xcb_x_print_id;
 
 typedef char xcb_x_print_string8_t;
@@ -472,13 +472,12 @@ typedef struct xcb_x_print_print_get_attributes_request_t {
  * @brief xcb_x_print_print_get_attributes_reply_t
  **/
 typedef struct xcb_x_print_print_get_attributes_reply_t {
-    uint8_t               response_type; /**<  */
-    uint8_t               pad0; /**<  */
-    uint16_t              sequence; /**<  */
-    uint32_t              length; /**<  */
-    uint32_t              stringLen; /**<  */
-    uint8_t               pad1[20]; /**<  */
-    xcb_x_print_string8_t attributes; /**<  */
+    uint8_t  response_type; /**<  */
+    uint8_t  pad0; /**<  */
+    uint16_t sequence; /**<  */
+    uint32_t length; /**<  */
+    uint32_t stringLen; /**<  */
+    uint8_t  pad1[20]; /**<  */
 } xcb_x_print_print_get_attributes_reply_t;
 
 /**
@@ -722,16 +721,6 @@ typedef struct xcb_x_print_bad_sequence_error_t {
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_x_print_string8_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_x_print_string8_next
- ** 
- ** @param xcb_x_print_string8_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_x_print_string8_next (xcb_x_print_string8_iterator_t *i  /**< */);
 
@@ -744,16 +733,6 @@ xcb_x_print_string8_next (xcb_x_print_string8_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_string8_end
- ** 
- ** @param xcb_x_print_string8_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_string8_end (xcb_x_print_string8_iterator_t i  /**< */);
 
@@ -770,81 +749,21 @@ xcb_x_print_printer_unserialize (const void              *_buffer  /**< */,
 int
 xcb_x_print_printer_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_x_print_string8_t * xcb_x_print_printer_name
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns xcb_x_print_string8_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_string8_t *
 xcb_x_print_printer_name (const xcb_x_print_printer_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_printer_name_length
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_printer_name_length (const xcb_x_print_printer_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_printer_name_end
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_printer_name_end (const xcb_x_print_printer_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_x_print_string8_t * xcb_x_print_printer_description
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns xcb_x_print_string8_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_string8_t *
 xcb_x_print_printer_description (const xcb_x_print_printer_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_printer_description_length
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_printer_description_length (const xcb_x_print_printer_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_printer_description_end
- ** 
- ** @param const xcb_x_print_printer_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_printer_description_end (const xcb_x_print_printer_t *R  /**< */);
 
@@ -856,16 +775,6 @@ xcb_x_print_printer_description_end (const xcb_x_print_printer_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_x_print_printer_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_x_print_printer_next
- ** 
- ** @param xcb_x_print_printer_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_x_print_printer_next (xcb_x_print_printer_iterator_t *i  /**< */);
 
@@ -878,16 +787,6 @@ xcb_x_print_printer_next (xcb_x_print_printer_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_printer_end
- ** 
- ** @param xcb_x_print_printer_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_printer_end (xcb_x_print_printer_iterator_t i  /**< */);
 
@@ -899,16 +798,6 @@ xcb_x_print_printer_end (xcb_x_print_printer_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_x_print_pcontext_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_x_print_pcontext_next
- ** 
- ** @param xcb_x_print_pcontext_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_x_print_pcontext_next (xcb_x_print_pcontext_iterator_t *i  /**< */);
 
@@ -921,16 +810,6 @@ xcb_x_print_pcontext_next (xcb_x_print_pcontext_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_pcontext_end
- ** 
- ** @param xcb_x_print_pcontext_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_pcontext_end (xcb_x_print_pcontext_iterator_t i  /**< */);
 
@@ -940,18 +819,8 @@ xcb_x_print_pcontext_end (xcb_x_print_pcontext_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_version_cookie_t xcb_x_print_print_query_version
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_version_cookie_t
 xcb_x_print_print_query_version (xcb_connection_t *c  /**< */);
 
@@ -961,21 +830,11 @@ xcb_x_print_print_query_version (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_version_cookie_t xcb_x_print_print_query_version_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_query_version_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_version_cookie_t
 xcb_x_print_print_query_version_unchecked (xcb_connection_t *c  /**< */);
 
@@ -986,25 +845,13 @@ xcb_x_print_print_query_version_unchecked (xcb_connection_t *c  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_query_version_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_version_reply_t * xcb_x_print_print_query_version_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_x_print_print_query_version_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_x_print_print_query_version_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_version_reply_t *
 xcb_x_print_print_query_version_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_x_print_print_query_version_cookie_t   cookie  /**< */,
@@ -1019,22 +866,8 @@ xcb_x_print_print_get_printer_list_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_printer_list_cookie_t xcb_x_print_print_get_printer_list
- ** 
- ** @param xcb_connection_t            *c
- ** @param uint32_t                     printerNameLen
- ** @param uint32_t                     localeLen
- ** @param const xcb_x_print_string8_t *printer_name
- ** @param const xcb_x_print_string8_t *locale
- ** @returns xcb_x_print_print_get_printer_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_printer_list_cookie_t
 xcb_x_print_print_get_printer_list (xcb_connection_t            *c  /**< */,
                                     uint32_t                     printerNameLen  /**< */,
@@ -1048,25 +881,11 @@ xcb_x_print_print_get_printer_list (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_printer_list_cookie_t xcb_x_print_print_get_printer_list_unchecked
- ** 
- ** @param xcb_connection_t            *c
- ** @param uint32_t                     printerNameLen
- ** @param uint32_t                     localeLen
- ** @param const xcb_x_print_string8_t *printer_name
- ** @param const xcb_x_print_string8_t *locale
- ** @returns xcb_x_print_print_get_printer_list_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_printer_list_cookie_t
 xcb_x_print_print_get_printer_list_unchecked (xcb_connection_t            *c  /**< */,
                                               uint32_t                     printerNameLen  /**< */,
@@ -1074,29 +893,9 @@ xcb_x_print_print_get_printer_list_unchecked (xcb_connection_t            *c  /*
                                               const xcb_x_print_string8_t *printer_name  /**< */,
                                               const xcb_x_print_string8_t *locale  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_get_printer_list_printers_length
- ** 
- ** @param const xcb_x_print_print_get_printer_list_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_get_printer_list_printers_length (const xcb_x_print_print_get_printer_list_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_x_print_printer_iterator_t xcb_x_print_print_get_printer_list_printers_iterator
- ** 
- ** @param const xcb_x_print_print_get_printer_list_reply_t *R
- ** @returns xcb_x_print_printer_iterator_t
- **
- *****************************************************************************/
- 
 xcb_x_print_printer_iterator_t
 xcb_x_print_print_get_printer_list_printers_iterator (const xcb_x_print_print_get_printer_list_reply_t *R  /**< */);
 
@@ -1107,25 +906,13 @@ xcb_x_print_print_get_printer_list_printers_iterator (const xcb_x_print_print_ge
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_printer_list_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_printer_list_reply_t * xcb_x_print_print_get_printer_list_reply
- ** 
- ** @param xcb_connection_t                             *c
- ** @param xcb_x_print_print_get_printer_list_cookie_t   cookie
- ** @param xcb_generic_error_t                         **e
- ** @returns xcb_x_print_print_get_printer_list_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_printer_list_reply_t *
 xcb_x_print_print_get_printer_list_reply (xcb_connection_t                             *c  /**< */,
                                           xcb_x_print_print_get_printer_list_cookie_t   cookie  /**< */,
@@ -1137,21 +924,11 @@ xcb_x_print_print_get_printer_list_reply (xcb_connection_t                      
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_rehash_printer_list_checked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_rehash_printer_list_checked (xcb_connection_t *c  /**< */);
 
@@ -1161,18 +938,8 @@ xcb_x_print_print_rehash_printer_list_checked (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_rehash_printer_list
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_rehash_printer_list (xcb_connection_t *c  /**< */);
 
@@ -1185,26 +952,11 @@ xcb_x_print_create_context_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_create_context_checked
- ** 
- ** @param xcb_connection_t            *c
- ** @param uint32_t                     context_id
- ** @param uint32_t                     printerNameLen
- ** @param uint32_t                     localeLen
- ** @param const xcb_x_print_string8_t *printerName
- ** @param const xcb_x_print_string8_t *locale
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_create_context_checked (xcb_connection_t            *c  /**< */,
                                     uint32_t                     context_id  /**< */,
@@ -1219,23 +971,8 @@ xcb_x_print_create_context_checked (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_create_context
- ** 
- ** @param xcb_connection_t            *c
- ** @param uint32_t                     context_id
- ** @param uint32_t                     printerNameLen
- ** @param uint32_t                     localeLen
- ** @param const xcb_x_print_string8_t *printerName
- ** @param const xcb_x_print_string8_t *locale
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_create_context (xcb_connection_t            *c  /**< */,
                             uint32_t                     context_id  /**< */,
@@ -1250,22 +987,11 @@ xcb_x_print_create_context (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_set_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_set_context_checked (xcb_connection_t *c  /**< */,
                                        uint32_t          context  /**< */);
@@ -1276,19 +1002,8 @@ xcb_x_print_print_set_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_set_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_set_context (xcb_connection_t *c  /**< */,
                                uint32_t          context  /**< */);
@@ -1299,18 +1014,8 @@ xcb_x_print_print_set_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_context_cookie_t xcb_x_print_print_get_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_get_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_context_cookie_t
 xcb_x_print_print_get_context (xcb_connection_t *c  /**< */);
 
@@ -1320,21 +1025,11 @@ xcb_x_print_print_get_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_context_cookie_t xcb_x_print_print_get_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_get_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_context_cookie_t
 xcb_x_print_print_get_context_unchecked (xcb_connection_t *c  /**< */);
 
@@ -1345,25 +1040,13 @@ xcb_x_print_print_get_context_unchecked (xcb_connection_t *c  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_context_reply_t * xcb_x_print_print_get_context_reply
- ** 
- ** @param xcb_connection_t                        *c
- ** @param xcb_x_print_print_get_context_cookie_t   cookie
- ** @param xcb_generic_error_t                    **e
- ** @returns xcb_x_print_print_get_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_context_reply_t *
 xcb_x_print_print_get_context_reply (xcb_connection_t                        *c  /**< */,
                                      xcb_x_print_print_get_context_cookie_t   cookie  /**< */,
@@ -1375,22 +1058,11 @@ xcb_x_print_print_get_context_reply (xcb_connection_t                        *c 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_destroy_context_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_destroy_context_checked (xcb_connection_t *c  /**< */,
                                            uint32_t          context  /**< */);
@@ -1401,19 +1073,8 @@ xcb_x_print_print_destroy_context_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_destroy_context
- ** 
- ** @param xcb_connection_t *c
- ** @param uint32_t          context
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_destroy_context (xcb_connection_t *c  /**< */,
                                    uint32_t          context  /**< */);
@@ -1424,18 +1085,8 @@ xcb_x_print_print_destroy_context (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_screen_of_context_cookie_t xcb_x_print_print_get_screen_of_context
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_get_screen_of_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_screen_of_context_cookie_t
 xcb_x_print_print_get_screen_of_context (xcb_connection_t *c  /**< */);
 
@@ -1445,21 +1096,11 @@ xcb_x_print_print_get_screen_of_context (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_screen_of_context_cookie_t xcb_x_print_print_get_screen_of_context_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_get_screen_of_context_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_screen_of_context_cookie_t
 xcb_x_print_print_get_screen_of_context_unchecked (xcb_connection_t *c  /**< */);
 
@@ -1470,25 +1111,13 @@ xcb_x_print_print_get_screen_of_context_unchecked (xcb_connection_t *c  /**< */)
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_screen_of_context_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_screen_of_context_reply_t * xcb_x_print_print_get_screen_of_context_reply
- ** 
- ** @param xcb_connection_t                                  *c
- ** @param xcb_x_print_print_get_screen_of_context_cookie_t   cookie
- ** @param xcb_generic_error_t                              **e
- ** @returns xcb_x_print_print_get_screen_of_context_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_screen_of_context_reply_t *
 xcb_x_print_print_get_screen_of_context_reply (xcb_connection_t                                  *c  /**< */,
                                                xcb_x_print_print_get_screen_of_context_cookie_t   cookie  /**< */,
@@ -1500,22 +1129,11 @@ xcb_x_print_print_get_screen_of_context_reply (xcb_connection_t                 
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_job_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           output_mode
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_job_checked (xcb_connection_t *c  /**< */,
                                      uint8_t           output_mode  /**< */);
@@ -1526,19 +1144,8 @@ xcb_x_print_print_start_job_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_job
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           output_mode
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_job (xcb_connection_t *c  /**< */,
                              uint8_t           output_mode  /**< */);
@@ -1549,22 +1156,11 @@ xcb_x_print_print_start_job (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_job_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_job_checked (xcb_connection_t *c  /**< */,
                                    uint8_t           cancel  /**< */);
@@ -1575,19 +1171,8 @@ xcb_x_print_print_end_job_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_job
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_job (xcb_connection_t *c  /**< */,
                            uint8_t           cancel  /**< */);
@@ -1598,22 +1183,11 @@ xcb_x_print_print_end_job (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_doc_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           driver_mode
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_doc_checked (xcb_connection_t *c  /**< */,
                                      uint8_t           driver_mode  /**< */);
@@ -1624,19 +1198,8 @@ xcb_x_print_print_start_doc_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_doc
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           driver_mode
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_doc (xcb_connection_t *c  /**< */,
                              uint8_t           driver_mode  /**< */);
@@ -1647,22 +1210,11 @@ xcb_x_print_print_start_doc (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_doc_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_doc_checked (xcb_connection_t *c  /**< */,
                                    uint8_t           cancel  /**< */);
@@ -1673,19 +1225,8 @@ xcb_x_print_print_end_doc_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_doc
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_doc (xcb_connection_t *c  /**< */,
                            uint8_t           cancel  /**< */);
@@ -1701,30 +1242,11 @@ xcb_x_print_print_put_document_data_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_put_document_data_checked
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_drawable_t               drawable
- ** @param uint32_t                     len_data
- ** @param uint16_t                     len_fmt
- ** @param uint16_t                     len_options
- ** @param const uint8_t               *data
- ** @param uint32_t                     doc_format_len
- ** @param const xcb_x_print_string8_t *doc_format
- ** @param uint32_t                     options_len
- ** @param const xcb_x_print_string8_t *options
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_put_document_data_checked (xcb_connection_t            *c  /**< */,
                                              xcb_drawable_t               drawable  /**< */,
@@ -1743,27 +1265,8 @@ xcb_x_print_print_put_document_data_checked (xcb_connection_t            *c  /**
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_put_document_data
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_drawable_t               drawable
- ** @param uint32_t                     len_data
- ** @param uint16_t                     len_fmt
- ** @param uint16_t                     len_options
- ** @param const uint8_t               *data
- ** @param uint32_t                     doc_format_len
- ** @param const xcb_x_print_string8_t *doc_format
- ** @param uint32_t                     options_len
- ** @param const xcb_x_print_string8_t *options
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_put_document_data (xcb_connection_t            *c  /**< */,
                                      xcb_drawable_t               drawable  /**< */,
@@ -1785,20 +1288,8 @@ xcb_x_print_print_get_document_data_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_document_data_cookie_t xcb_x_print_print_get_document_data
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint32_t                max_bytes
- ** @returns xcb_x_print_print_get_document_data_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_document_data_cookie_t
 xcb_x_print_print_get_document_data (xcb_connection_t       *c  /**< */,
                                      xcb_x_print_pcontext_t  context  /**< */,
@@ -1810,64 +1301,22 @@ xcb_x_print_print_get_document_data (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_document_data_cookie_t xcb_x_print_print_get_document_data_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint32_t                max_bytes
- ** @returns xcb_x_print_print_get_document_data_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_document_data_cookie_t
 xcb_x_print_print_get_document_data_unchecked (xcb_connection_t       *c  /**< */,
                                                xcb_x_print_pcontext_t  context  /**< */,
                                                uint32_t                max_bytes  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_x_print_print_get_document_data_data
- ** 
- ** @param const xcb_x_print_print_get_document_data_reply_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_x_print_print_get_document_data_data (const xcb_x_print_print_get_document_data_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_get_document_data_data_length
- ** 
- ** @param const xcb_x_print_print_get_document_data_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_get_document_data_data_length (const xcb_x_print_print_get_document_data_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_print_get_document_data_data_end
- ** 
- ** @param const xcb_x_print_print_get_document_data_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_print_get_document_data_data_end (const xcb_x_print_print_get_document_data_reply_t *R  /**< */);
 
@@ -1878,25 +1327,13 @@ xcb_x_print_print_get_document_data_data_end (const xcb_x_print_print_get_docume
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_document_data_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_document_data_reply_t * xcb_x_print_print_get_document_data_reply
- ** 
- ** @param xcb_connection_t                              *c
- ** @param xcb_x_print_print_get_document_data_cookie_t   cookie
- ** @param xcb_generic_error_t                          **e
- ** @returns xcb_x_print_print_get_document_data_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_document_data_reply_t *
 xcb_x_print_print_get_document_data_reply (xcb_connection_t                              *c  /**< */,
                                            xcb_x_print_print_get_document_data_cookie_t   cookie  /**< */,
@@ -1908,22 +1345,11 @@ xcb_x_print_print_get_document_data_reply (xcb_connection_t                     
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_page_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_page_checked (xcb_connection_t *c  /**< */,
                                       xcb_window_t      window  /**< */);
@@ -1934,19 +1360,8 @@ xcb_x_print_print_start_page_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_start_page
- ** 
- ** @param xcb_connection_t *c
- ** @param xcb_window_t      window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_start_page (xcb_connection_t *c  /**< */,
                               xcb_window_t      window  /**< */);
@@ -1957,22 +1372,11 @@ xcb_x_print_print_start_page (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_page_checked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_page_checked (xcb_connection_t *c  /**< */,
                                     uint8_t           cancel  /**< */);
@@ -1983,19 +1387,8 @@ xcb_x_print_print_end_page_checked (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_end_page
- ** 
- ** @param xcb_connection_t *c
- ** @param uint8_t           cancel
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_end_page (xcb_connection_t *c  /**< */,
                             uint8_t           cancel  /**< */);
@@ -2009,24 +1402,11 @@ xcb_x_print_print_select_input_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_select_input_checked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint32_t                event_mask
- ** @param const uint32_t         *event_list
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_select_input_checked (xcb_connection_t       *c  /**< */,
                                         xcb_x_print_pcontext_t  context  /**< */,
@@ -2039,21 +1419,8 @@ xcb_x_print_print_select_input_checked (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_select_input
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint32_t                event_mask
- ** @param const uint32_t         *event_list
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_select_input (xcb_connection_t       *c  /**< */,
                                 xcb_x_print_pcontext_t  context  /**< */,
@@ -2079,19 +1446,8 @@ xcb_x_print_print_input_selected_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_input_selected_cookie_t xcb_x_print_print_input_selected
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_input_selected_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_input_selected_cookie_t
 xcb_x_print_print_input_selected (xcb_connection_t       *c  /**< */,
                                   xcb_x_print_pcontext_t  context  /**< */);
@@ -2102,101 +1458,30 @@ xcb_x_print_print_input_selected (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_input_selected_cookie_t xcb_x_print_print_input_selected_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_input_selected_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_input_selected_cookie_t
 xcb_x_print_print_input_selected_unchecked (xcb_connection_t       *c  /**< */,
                                             xcb_x_print_pcontext_t  context  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_x_print_print_input_selected_event_list
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_x_print_print_input_selected_event_list (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_input_selected_event_list_length
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_input_selected_event_list_length (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_print_input_selected_event_list_end
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_print_input_selected_event_list_end (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint32_t * xcb_x_print_print_input_selected_all_events_list
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns uint32_t *
- **
- *****************************************************************************/
- 
 uint32_t *
 xcb_x_print_print_input_selected_all_events_list (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_input_selected_all_events_list_length
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_input_selected_all_events_list_length (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_print_input_selected_all_events_list_end
- ** 
- ** @param const xcb_x_print_print_input_selected_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_print_input_selected_all_events_list_end (const xcb_x_print_print_input_selected_reply_t *R  /**< */);
 
@@ -2207,29 +1492,20 @@ xcb_x_print_print_input_selected_all_events_list_end (const xcb_x_print_print_in
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_input_selected_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_input_selected_reply_t * xcb_x_print_print_input_selected_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_x_print_print_input_selected_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_x_print_print_input_selected_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_input_selected_reply_t *
 xcb_x_print_print_input_selected_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_x_print_print_input_selected_cookie_t   cookie  /**< */,
                                         xcb_generic_error_t                       **e  /**< */);
+
+int
+xcb_x_print_print_get_attributes_sizeof (const void  *_buffer  /**< */);
 
 /**
  *
@@ -2237,20 +1513,8 @@ xcb_x_print_print_input_selected_reply (xcb_connection_t                        
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_attributes_cookie_t xcb_x_print_print_get_attributes
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint8_t                 pool
- ** @returns xcb_x_print_print_get_attributes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_attributes_cookie_t
 xcb_x_print_print_get_attributes (xcb_connection_t       *c  /**< */,
                                   xcb_x_print_pcontext_t  context  /**< */,
@@ -2262,27 +1526,24 @@ xcb_x_print_print_get_attributes (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_attributes_cookie_t xcb_x_print_print_get_attributes_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint8_t                 pool
- ** @returns xcb_x_print_print_get_attributes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_attributes_cookie_t
 xcb_x_print_print_get_attributes_unchecked (xcb_connection_t       *c  /**< */,
                                             xcb_x_print_pcontext_t  context  /**< */,
                                             uint8_t                 pool  /**< */);
+
+xcb_x_print_string8_t *
+xcb_x_print_print_get_attributes_attributes (const xcb_x_print_print_get_attributes_reply_t *R  /**< */);
+
+int
+xcb_x_print_print_get_attributes_attributes_length (const xcb_x_print_print_get_attributes_reply_t *R  /**< */);
+
+xcb_generic_iterator_t
+xcb_x_print_print_get_attributes_attributes_end (const xcb_x_print_print_get_attributes_reply_t *R  /**< */);
 
 /**
  * Return the reply
@@ -2291,25 +1552,13 @@ xcb_x_print_print_get_attributes_unchecked (xcb_connection_t       *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_attributes_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_attributes_reply_t * xcb_x_print_print_get_attributes_reply
- ** 
- ** @param xcb_connection_t                           *c
- ** @param xcb_x_print_print_get_attributes_cookie_t   cookie
- ** @param xcb_generic_error_t                       **e
- ** @returns xcb_x_print_print_get_attributes_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_attributes_reply_t *
 xcb_x_print_print_get_attributes_reply (xcb_connection_t                           *c  /**< */,
                                         xcb_x_print_print_get_attributes_cookie_t   cookie  /**< */,
@@ -2324,22 +1573,8 @@ xcb_x_print_print_get_one_attributes_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_one_attributes_cookie_t xcb_x_print_print_get_one_attributes
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_x_print_pcontext_t       context
- ** @param uint32_t                     nameLen
- ** @param uint8_t                      pool
- ** @param const xcb_x_print_string8_t *name
- ** @returns xcb_x_print_print_get_one_attributes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_one_attributes_cookie_t
 xcb_x_print_print_get_one_attributes (xcb_connection_t            *c  /**< */,
                                       xcb_x_print_pcontext_t       context  /**< */,
@@ -2353,25 +1588,11 @@ xcb_x_print_print_get_one_attributes (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_one_attributes_cookie_t xcb_x_print_print_get_one_attributes_unchecked
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_x_print_pcontext_t       context
- ** @param uint32_t                     nameLen
- ** @param uint8_t                      pool
- ** @param const xcb_x_print_string8_t *name
- ** @returns xcb_x_print_print_get_one_attributes_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_one_attributes_cookie_t
 xcb_x_print_print_get_one_attributes_unchecked (xcb_connection_t            *c  /**< */,
                                                 xcb_x_print_pcontext_t       context  /**< */,
@@ -2379,42 +1600,12 @@ xcb_x_print_print_get_one_attributes_unchecked (xcb_connection_t            *c  
                                                 uint8_t                      pool  /**< */,
                                                 const xcb_x_print_string8_t *name  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_x_print_string8_t * xcb_x_print_print_get_one_attributes_value
- ** 
- ** @param const xcb_x_print_print_get_one_attributes_reply_t *R
- ** @returns xcb_x_print_string8_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_string8_t *
 xcb_x_print_print_get_one_attributes_value (const xcb_x_print_print_get_one_attributes_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_get_one_attributes_value_length
- ** 
- ** @param const xcb_x_print_print_get_one_attributes_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_get_one_attributes_value_length (const xcb_x_print_print_get_one_attributes_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_print_get_one_attributes_value_end
- ** 
- ** @param const xcb_x_print_print_get_one_attributes_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_print_get_one_attributes_value_end (const xcb_x_print_print_get_one_attributes_reply_t *R  /**< */);
 
@@ -2425,25 +1616,13 @@ xcb_x_print_print_get_one_attributes_value_end (const xcb_x_print_print_get_one_
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_one_attributes_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_one_attributes_reply_t * xcb_x_print_print_get_one_attributes_reply
- ** 
- ** @param xcb_connection_t                               *c
- ** @param xcb_x_print_print_get_one_attributes_cookie_t   cookie
- ** @param xcb_generic_error_t                           **e
- ** @returns xcb_x_print_print_get_one_attributes_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_one_attributes_reply_t *
 xcb_x_print_print_get_one_attributes_reply (xcb_connection_t                               *c  /**< */,
                                             xcb_x_print_print_get_one_attributes_cookie_t   cookie  /**< */,
@@ -2459,27 +1638,11 @@ xcb_x_print_print_set_attributes_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_set_attributes_checked
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_x_print_pcontext_t       context
- ** @param uint32_t                     stringLen
- ** @param uint8_t                      pool
- ** @param uint8_t                      rule
- ** @param uint32_t                     attributes_len
- ** @param const xcb_x_print_string8_t *attributes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_set_attributes_checked (xcb_connection_t            *c  /**< */,
                                           xcb_x_print_pcontext_t       context  /**< */,
@@ -2495,24 +1658,8 @@ xcb_x_print_print_set_attributes_checked (xcb_connection_t            *c  /**< *
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_x_print_print_set_attributes
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_x_print_pcontext_t       context
- ** @param uint32_t                     stringLen
- ** @param uint8_t                      pool
- ** @param uint8_t                      rule
- ** @param uint32_t                     attributes_len
- ** @param const xcb_x_print_string8_t *attributes
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_x_print_print_set_attributes (xcb_connection_t            *c  /**< */,
                                   xcb_x_print_pcontext_t       context  /**< */,
@@ -2528,19 +1675,8 @@ xcb_x_print_print_set_attributes (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_page_dimensions_cookie_t xcb_x_print_print_get_page_dimensions
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_get_page_dimensions_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_page_dimensions_cookie_t
 xcb_x_print_print_get_page_dimensions (xcb_connection_t       *c  /**< */,
                                        xcb_x_print_pcontext_t  context  /**< */);
@@ -2551,22 +1687,11 @@ xcb_x_print_print_get_page_dimensions (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_page_dimensions_cookie_t xcb_x_print_print_get_page_dimensions_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_get_page_dimensions_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_page_dimensions_cookie_t
 xcb_x_print_print_get_page_dimensions_unchecked (xcb_connection_t       *c  /**< */,
                                                  xcb_x_print_pcontext_t  context  /**< */);
@@ -2578,25 +1703,13 @@ xcb_x_print_print_get_page_dimensions_unchecked (xcb_connection_t       *c  /**<
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_page_dimensions_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_page_dimensions_reply_t * xcb_x_print_print_get_page_dimensions_reply
- ** 
- ** @param xcb_connection_t                                *c
- ** @param xcb_x_print_print_get_page_dimensions_cookie_t   cookie
- ** @param xcb_generic_error_t                            **e
- ** @returns xcb_x_print_print_get_page_dimensions_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_page_dimensions_reply_t *
 xcb_x_print_print_get_page_dimensions_reply (xcb_connection_t                                *c  /**< */,
                                              xcb_x_print_print_get_page_dimensions_cookie_t   cookie  /**< */,
@@ -2611,18 +1724,8 @@ xcb_x_print_print_query_screens_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_screens_cookie_t xcb_x_print_print_query_screens
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_query_screens_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_screens_cookie_t
 xcb_x_print_print_query_screens (xcb_connection_t *c  /**< */);
 
@@ -2632,60 +1735,20 @@ xcb_x_print_print_query_screens (xcb_connection_t *c  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_screens_cookie_t xcb_x_print_print_query_screens_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @returns xcb_x_print_print_query_screens_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_screens_cookie_t
 xcb_x_print_print_query_screens_unchecked (xcb_connection_t *c  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_window_t * xcb_x_print_print_query_screens_roots
- ** 
- ** @param const xcb_x_print_print_query_screens_reply_t *R
- ** @returns xcb_window_t *
- **
- *****************************************************************************/
- 
 xcb_window_t *
 xcb_x_print_print_query_screens_roots (const xcb_x_print_print_query_screens_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_x_print_print_query_screens_roots_length
- ** 
- ** @param const xcb_x_print_print_query_screens_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_x_print_print_query_screens_roots_length (const xcb_x_print_print_query_screens_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_x_print_print_query_screens_roots_end
- ** 
- ** @param const xcb_x_print_print_query_screens_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_x_print_print_query_screens_roots_end (const xcb_x_print_print_query_screens_reply_t *R  /**< */);
 
@@ -2696,25 +1759,13 @@ xcb_x_print_print_query_screens_roots_end (const xcb_x_print_print_query_screens
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_query_screens_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_query_screens_reply_t * xcb_x_print_print_query_screens_reply
- ** 
- ** @param xcb_connection_t                          *c
- ** @param xcb_x_print_print_query_screens_cookie_t   cookie
- ** @param xcb_generic_error_t                      **e
- ** @returns xcb_x_print_print_query_screens_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_query_screens_reply_t *
 xcb_x_print_print_query_screens_reply (xcb_connection_t                          *c  /**< */,
                                        xcb_x_print_print_query_screens_cookie_t   cookie  /**< */,
@@ -2726,20 +1777,8 @@ xcb_x_print_print_query_screens_reply (xcb_connection_t                         
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_set_image_resolution_cookie_t xcb_x_print_print_set_image_resolution
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint16_t                image_resolution
- ** @returns xcb_x_print_print_set_image_resolution_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_set_image_resolution_cookie_t
 xcb_x_print_print_set_image_resolution (xcb_connection_t       *c  /**< */,
                                         xcb_x_print_pcontext_t  context  /**< */,
@@ -2751,23 +1790,11 @@ xcb_x_print_print_set_image_resolution (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_set_image_resolution_cookie_t xcb_x_print_print_set_image_resolution_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @param uint16_t                image_resolution
- ** @returns xcb_x_print_print_set_image_resolution_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_set_image_resolution_cookie_t
 xcb_x_print_print_set_image_resolution_unchecked (xcb_connection_t       *c  /**< */,
                                                   xcb_x_print_pcontext_t  context  /**< */,
@@ -2780,25 +1807,13 @@ xcb_x_print_print_set_image_resolution_unchecked (xcb_connection_t       *c  /**
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_set_image_resolution_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_set_image_resolution_reply_t * xcb_x_print_print_set_image_resolution_reply
- ** 
- ** @param xcb_connection_t                                 *c
- ** @param xcb_x_print_print_set_image_resolution_cookie_t   cookie
- ** @param xcb_generic_error_t                             **e
- ** @returns xcb_x_print_print_set_image_resolution_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_set_image_resolution_reply_t *
 xcb_x_print_print_set_image_resolution_reply (xcb_connection_t                                 *c  /**< */,
                                               xcb_x_print_print_set_image_resolution_cookie_t   cookie  /**< */,
@@ -2810,19 +1825,8 @@ xcb_x_print_print_set_image_resolution_reply (xcb_connection_t                  
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_image_resolution_cookie_t xcb_x_print_print_get_image_resolution
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_get_image_resolution_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_image_resolution_cookie_t
 xcb_x_print_print_get_image_resolution (xcb_connection_t       *c  /**< */,
                                         xcb_x_print_pcontext_t  context  /**< */);
@@ -2833,22 +1837,11 @@ xcb_x_print_print_get_image_resolution (xcb_connection_t       *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_image_resolution_cookie_t xcb_x_print_print_get_image_resolution_unchecked
- ** 
- ** @param xcb_connection_t       *c
- ** @param xcb_x_print_pcontext_t  context
- ** @returns xcb_x_print_print_get_image_resolution_cookie_t
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_image_resolution_cookie_t
 xcb_x_print_print_get_image_resolution_unchecked (xcb_connection_t       *c  /**< */,
                                                   xcb_x_print_pcontext_t  context  /**< */);
@@ -2860,25 +1853,13 @@ xcb_x_print_print_get_image_resolution_unchecked (xcb_connection_t       *c  /**
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_x_print_print_get_image_resolution_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_x_print_print_get_image_resolution_reply_t * xcb_x_print_print_get_image_resolution_reply
- ** 
- ** @param xcb_connection_t                                 *c
- ** @param xcb_x_print_print_get_image_resolution_cookie_t   cookie
- ** @param xcb_generic_error_t                             **e
- ** @returns xcb_x_print_print_get_image_resolution_reply_t *
- **
- *****************************************************************************/
- 
 xcb_x_print_print_get_image_resolution_reply_t *
 xcb_x_print_print_get_image_resolution_reply (xcb_connection_t                                 *c  /**< */,
                                               xcb_x_print_print_get_image_resolution_cookie_t   cookie  /**< */,

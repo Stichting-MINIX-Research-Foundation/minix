@@ -28,9 +28,6 @@
  * Instruction disassembler.
  */
 
-#if 0
-#include <linux/kernel.h>
-#endif
 #include "ddb.h"
 
 #include "db_access.h"
@@ -861,12 +858,6 @@ static const int db_lengths[] = {
 	result = db_get_value((loc), (size), (is_signed)); \
 	(loc) += (size);
 
-/*static db_addr_t
-//		db_disasm_esc __P((db_addr_t loc, int inst, int short_addr,
-//				   int size, const char *seg));
-//static void	db_print_address __P((const char *seg, int size,
-//				      struct i_addr *addrp));
-*/
 static db_addr_t
 		db_read_address __P((db_addr_t loc, int short_addr,
 				     int regmodrm, struct i_addr *addrp));

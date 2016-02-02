@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.8 2013/06/29 16:50:51 rmind Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.11 2015/09/24 14:34:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,10 @@
 
 #ifndef _KERNEL
 #error nothing of interest to userspace here
+#endif
+
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_dtrace.h"
 #endif
 
 #include <sys/systm.h>
@@ -72,10 +76,15 @@ sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 	    (sy->sy_flags & SYCALL_INDIRECT) == 0;
 	int error;
 
-	if (__predict_true(!do_trace) || (error = trace_enter(code, uap,
-	    sy->sy_narg)) == 0) {
+#ifdef KDTRACE_HOOKS
+#define KDTRACE_ENTRY(a)	(a)
+#else
+#define KDTRACE_ENTRY(a)	(0)
+#endif
+	if (__predict_true(!(do_trace || KDTRACE_ENTRY(sy->sy_entry)))
+	    || (error = trace_enter(code, sy, uap)) == 0) {
 		rval[0] = 0;
-#if !defined(__mips__)
+#if !defined(__mips__) && !defined(__m68k__)
 		/*
 		 * Due to the mips userland code for SYS_break needing v1 to be
 		 * preserved, we can't clear this on mips. 
@@ -85,13 +94,14 @@ sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 		error = sy_call(sy, l, uap, rval);
 	}
 
-	if (__predict_false(do_trace)) {
-		trace_exit(code, rval, error);
+	if (__predict_false(do_trace || KDTRACE_ENTRY(sy->sy_return))) {
+		trace_exit(code, sy, uap, rval, error);
 	}
 	return error;
 }
 
 /* inclusion in the kernel currently depends on SYSCALL_DEBUG */
 extern const char * const syscallnames[];
+extern const char * const altsyscallnames[];
 
 #endif	/* _SYS_SYSCALLVAR_H_ */

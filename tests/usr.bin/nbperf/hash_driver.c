@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_driver.c,v 1.2 2012/09/25 20:53:46 joerg Exp $	*/
+/*	$NetBSD: hash_driver.c,v 1.3 2014/02/06 14:57:16 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@ main(void)
 	size_t buflen;
 	ssize_t len;
 
-	while ((len = getline(&line, &len, stdin)) > 0) {
+	while ((len = getline(&line, &buflen, stdin)) > 0) {
 		if (len && line[len - 1] == '\n')
 			--len;
 		printf("%" PRId32 "\n", hash(line, len));

@@ -14,13 +14,13 @@
 /*===========================================================================*
  *				do_statvfs				     *
  *===========================================================================*/
-int do_statvfs(struct statvfs *statvfs)
+int do_statvfs(struct statvfs *st)
 {
 /* Retrieve file system statistics.
  */
   struct inode *ino;
   char path[PATH_MAX];
-  u64_t free, total;
+  u64_t bfree, btotal;
   int r;
 
   /* Unfortunately, we cannot be any more specific than this, because we are
@@ -34,20 +34,20 @@ int do_statvfs(struct statvfs *statvfs)
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  if ((r = sffs_table->t_queryvol(path, &free, &total)) != OK)
+  if ((r = sffs_table->t_queryvol(path, &bfree, &btotal)) != OK)
 	return r;
 
   /* Returning zero for unknown values seems to be the convention. However, we
    * do have to use a nonzero block size, even though it is entirely arbitrary.
    */
-  statvfs->f_flag = ST_NOTRUNC;
-  statvfs->f_bsize = BLOCK_SIZE;
-  statvfs->f_frsize = BLOCK_SIZE;
-  statvfs->f_iosize = BLOCK_SIZE;
-  statvfs->f_blocks = (fsblkcnt_t)(total / BLOCK_SIZE);
-  statvfs->f_bfree = (fsblkcnt_t)(free / BLOCK_SIZE);
-  statvfs->f_bavail = statvfs->f_bfree;
-  statvfs->f_namemax = NAME_MAX;
+  st->f_flag = ST_NOTRUNC;
+  st->f_bsize = BLOCK_SIZE;
+  st->f_frsize = BLOCK_SIZE;
+  st->f_iosize = BLOCK_SIZE;
+  st->f_blocks = (fsblkcnt_t)(btotal / BLOCK_SIZE);
+  st->f_bfree = (fsblkcnt_t)(bfree / BLOCK_SIZE);
+  st->f_bavail = st->f_bfree;
+  st->f_namemax = NAME_MAX;
 
   return OK;
 }

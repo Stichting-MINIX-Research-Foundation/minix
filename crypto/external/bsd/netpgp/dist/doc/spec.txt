@@ -1,0 +1,37 @@
+Nominet's requirements
+----------------------
+
+We currently use the PGP APIs to do the following:
+- Load a key ring into memory.
+- Find a key in a key ring and store a reference to it.
+- Use a secure key to sign a message in clear text ascii armour
+  (equiv.  of pgp -sta)
+- Check the signature on a clear text signed message, giving back
+  the contents, the key that signed it and the time at which it was
+  signed. If the check fails, we need to know the reason why e.g. Was
+  the signature corrupt, did it match the text, was the message in
+  the correct format, has the key be revoked etc.
+- Add an ascii armoured key to a key ring held in memory.
+- Store a key ring held in memory back to disk.
+
+We may also want to use standard encryption and decryption in the future.
+
+Our requirements
+----------------
+
+- encrypting, signing, decrypting, verifying documents.
+- creating keys
+- issuing key certifications and revocations
+  - key signing
+  - user id: add, remove, revoke
+- keyring handling (on disk storage)
+- keyserver querying fu
+- trust handling (a la gpg)
+- export of <everything>
+- import of <everything>
+
+Specific non-requirements
+-------------------------
+
+X We will not use GPG slave processes to do keyserver queries - nor
+  any other slave process, this will be done entirely in-process.

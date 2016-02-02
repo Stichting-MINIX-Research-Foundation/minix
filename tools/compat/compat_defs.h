@@ -1,32 +1,34 @@
-/*	$NetBSD: compat_defs.h,v 1.93 2013/10/24 13:59:47 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.103 2015/09/21 21:50:16 pooka Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
 
-
-/* Work around some complete brain damage. */
 /*
- * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
- * program (not the OS) should do that.  Preload <features.h> to keep any
- * of this crap from being pulled in, and undefine _POSIX_SOURCE.
+ * On NetBSD, ensure that _NETBSD_SOURCE does not get defined, so that
+ * accidental attempts to use NetBSD-specific features instead of more
+ * portable features is likely to be noticed when the tools are built
+ * on NetBSD.  Define enough other feature test macros to expose the
+ * features we need.
  */
-
-#if defined(__linux__) && HAVE_FEATURES_H
-#include <features.h>
-#define __USE_ISOC99 1
-#endif
-
-/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
-   defs. Other platforms may need similiar defines. */
-#if defined(__NetBSD__) || defined(__minix)
+#ifdef __NetBSD__
 #define	_ISOC99_SOURCE
 #define _POSIX_SOURCE	1
 #define _POSIX_C_SOURCE	200112L
 #define _XOPEN_SOURCE 600
-#else
+#endif /* __NetBSD__ */
+
+/*
+ * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
+ * program (not the OS) should do that.  Preload <features.h> and
+ * then override some of the feature test macros.
+ */
+
+#if defined(__linux__) && HAVE_FEATURES_H
+#include <features.h>
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
-#endif
+#define __USE_ISOC99 1
+#endif	/* __linux__ && HAVE_FEATURES_H */
 
 /* System headers needed for (re)definitions below. */
 
@@ -75,6 +77,11 @@
 #undef __UNCONST
 #endif
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
+#ifdef __UNVOLATILE
+#undef __UNVOLATILE
+#endif
+#define __UNVOLATILE(a)        ((void *)(unsigned long)(volatile void *)(a))
+
 
 #undef __predict_false
 #define __predict_false(x) (x)
@@ -99,7 +106,7 @@ struct group;
 #define __END_DECLS
 #endif
 
-/* Some things usually in BSD <sys/cdefs.h>. */
+/* Some things in NetBSD <sys/cdefs.h>. */
 
 #ifndef __CONCAT
 #define	__CONCAT(x,y)	x ## y
@@ -135,6 +142,20 @@ struct group;
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 #undef __USE
 #define __USE(a) ((void)(a))
+#undef __type_min_s
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
+#undef __type_max_s
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#undef __type_min_u
+#define __type_min_u(t) ((t)0ULL)
+#undef __type_max_u
+#define __type_max_u(t) ((t)~0ULL)
+#undef __type_is_signed
+#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#undef __type_min
+#define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
+#undef __type_max
+#define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 /* Dirent support. */
 
@@ -257,6 +278,18 @@ void errx(int, const char *, ...);
 void warn(const char *, ...);
 void warnx(const char *, ...);
 void vwarnx(const char *, va_list);
+#endif
+#if !HAVE_DECL_WARNC
+void warnc(int, const char *, ...);
+#endif
+#if !HAVE_DECL_VWARNC
+void vwarnc(int, const char *, va_list);
+#endif
+#if !HAVE_DECL_ERRC
+void errc(int, int, const char *, ...);
+#endif
+#if !HAVE_DECL_VERRC
+void verrc(int, int, const char *, va_list);
 #endif
 
 #if !HAVE_ESETFUNC
@@ -415,6 +448,9 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
 #if !HAVE_DECL_STRNDUP
 char		*strndup(const char *, size_t);
 #endif
+#if !HAVE_DECL_STRNLEN
+size_t		strnlen(const char *, size_t);
+#endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);
 #endif
@@ -431,6 +467,10 @@ ssize_t pwrite(int, const void *, size_t, off_t);
 
 #if !HAVE_RAISE_DEFAULT_SIGNAL
 int raise_default_signal(int);
+#endif
+
+#if !HAVE_REALLOCARR
+int reallocarr(void *, size_t, size_t);
 #endif
 
 #if !HAVE_SETENV
@@ -487,6 +527,16 @@ long long strsuftollx(const char *, const char *,
 
 #if !HAVE_STRTOLL
 long long strtoll(const char *, char **, int);
+#endif
+
+#if !HAVE_STRTOI
+intmax_t strtoi(const char * __restrict, char ** __restrict, int,
+    intmax_t, intmax_t, int *);
+#endif
+
+#if !HAVE_STRTOU
+uintmax_t strtou(const char * __restrict, char ** __restrict, int,
+    uintmax_t, uintmax_t, int *);
 #endif
 
 #if !HAVE_USER_FROM_UID
@@ -561,6 +611,9 @@ void *setmode(const char *);
 #endif
 #ifndef O_SHLOCK
 #define O_SHLOCK 0
+#endif
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
 #endif
 
 /* <inttypes.h> */
@@ -857,6 +910,13 @@ void *setmode(const char *);
 #define LLONG_MIN ((long long)(~LLONG_MAX))
 #endif
 
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	4096
+#endif
+#ifndef PATH_MAX
+#define PATH_MAX	MAXPATHLEN
+#endif
+
 /* <paths.h> */
 
 /* The host's _PATH_BSHELL might be broken, so override it. */
@@ -1095,6 +1155,9 @@ __GEN_ENDIAN_DEC(64, le)
 #endif
 #ifndef MAXPHYS
 #define MAXPHYS (64 * 1024)
+#endif
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN	256
 #endif
 
 /* XXX needed by makefs; this should be done in a better way */

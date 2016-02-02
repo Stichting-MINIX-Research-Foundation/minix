@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.17 2012/10/20 14:42:20 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.18 2014/03/28 21:51:59 matt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -53,7 +53,7 @@ extern struct bootmem_info bootmem_info;
 extern char *booted_kernel;
 
 extern volatile uint32_t arm_cpu_hatched;
-extern uint32_t arm_cpu_mbox;
+extern volatile uint32_t arm_cpu_mbox;
 extern u_int arm_cpu_max;
 
 /* misc prototypes used by the many arm machdeps */

@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 
   if (argc < 2) return(-2);
   if ((newmode = atoi(argv[1])) > 0) {
-	snprintf(cmd, sizeof(cmd), "chmod %o %s", newmode, argv[0]);
+	snprintf(cmd, sizeof(cmd), "chmod %d %s", newmode, argv[0]);
 	system(cmd);
   }
 

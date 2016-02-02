@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.34 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.34 2015/09/21 01:24:23 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -97,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 
+#include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
+
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
@@ -104,55 +108,12 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
-#include <ufs/lfs/lfs_extern.h>
-#include <ufs/lfs/lfs.h>
 
 #include <uvm/uvm.h>
 
 static int ulfs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
     struct lwp *);
-
-/*
- * A virgin directory (no blushing please).
- */
-static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,			LFS_DT_DIR,	1,	".",
-	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
-};
-
-/*
- * Create a regular file
- */
-int
-ulfs_create(void *v)
-{
-	struct vop_create_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	int	error;
-	struct vnode *dvp = ap->a_dvp;
-	struct ulfs_lookup_results *ulr;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error =
-	    ulfs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			  dvp, ulr, ap->a_vpp, ap->a_cnp);
-	if (error) {
-		fstrans_done(dvp->v_mount);
-		return (error);
-	}
-	fstrans_done(dvp->v_mount);
-	VN_KNOTE(dvp, NOTE_WRITE);
-	return (0);
-}
 
 /*
  * Open called.
@@ -277,6 +238,7 @@ ulfs_setattr(void *v)
 	struct vattr	*vap;
 	struct vnode	*vp;
 	struct inode	*ip;
+	struct lfs	*fs;
 	kauth_cred_t	cred;
 	struct lwp	*l;
 	int		error;
@@ -286,6 +248,7 @@ ulfs_setattr(void *v)
 	vap = ap->a_vap;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	fs = ip->i_lfs;
 	cred = ap->a_cred;
 	l = curlwp;
 	action = KAUTH_VNODE_WRITE_FLAGS;
@@ -416,10 +379,9 @@ ulfs_setattr(void *v)
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
 				ip->i_flag |= IN_ACCESS;
 		}
-		if (vap->va_birthtime.tv_sec != VNOVAL &&
-		    ip->i_ump->um_fstype == ULFS2) {
-			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
-			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
+		if (vap->va_birthtime.tv_sec != VNOVAL) {
+			lfs_dino_setbirthtime(fs, ip->i_din,
+					      &vap->va_birthtime);
 		}
 		error = lfs_update(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
@@ -543,18 +505,21 @@ ulfs_remove(void *v)
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
+	struct mount	*mp;
 	int		error;
 	struct ulfs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
+	mp = dvp->v_mount;
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -569,7 +534,7 @@ ulfs_remove(void *v)
 	else
 		vput(vp);
 	vput(dvp);
-	fstrans_done(dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 
@@ -579,7 +544,7 @@ ulfs_remove(void *v)
 int
 ulfs_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -587,20 +552,20 @@ ulfs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
-	struct lfs_direct *newdir;
 	int error;
 	struct ulfs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(dvp->v_mount == vp->v_mount);
+	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
@@ -622,10 +587,8 @@ ulfs_link(void *v)
 	ip->i_flag |= IN_CHANGE;
 	error = lfs_update(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		ulfs_makedirentry(ip, cnp, newdir);
-		error = ulfs_direnter(dvp, ulr, vp, newdir, cnp, NULL);
-		pool_cache_put(ulfs_direct_cache, newdir);
+		error = ulfs_direnter(dvp, ulr, vp,
+				      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
 	}
 	if (error) {
 		ip->i_nlink--;
@@ -637,8 +600,7 @@ ulfs_link(void *v)
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	vput(dvp);
-	fstrans_done(dvp->v_mount);
+	fstrans_done(mp);
 	return (error);
 }
 
@@ -655,7 +617,6 @@ ulfs_whiteout(void *v)
 	} */ *ap = v;
 	struct vnode		*dvp = ap->a_dvp;
 	struct componentname	*cnp = ap->a_cnp;
-	struct lfs_direct		*newdir;
 	int			error;
 	struct ulfsmount	*ump = VFSTOULFS(dvp->v_mount);
 	struct lfs *fs = ump->um_lfs;
@@ -681,15 +642,8 @@ ulfs_whiteout(void *v)
 			panic("ulfs_whiteout: old format filesystem");
 #endif
 
-		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		newdir->d_ino = ULFS_WINO;
-		newdir->d_namlen = cnp->cn_namelen;
-		memcpy(newdir->d_name, cnp->cn_nameptr,
-		    (size_t)cnp->cn_namelen);
-		newdir->d_name[cnp->cn_namelen] = '\0';
-		newdir->d_type = LFS_DT_WHT;
-		error = ulfs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
-		pool_cache_put(ulfs_direct_cache, newdir);
+		error = ulfs_direnter(dvp, ulr, NULL,
+				      cnp, ULFS_WINO, LFS_DT_WHT,  NULL);
 		break;
 
 	case DELETE:
@@ -708,157 +662,6 @@ ulfs_whiteout(void *v)
 		/* NOTREACHED */
 	}
 	fstrans_done(dvp->v_mount);
-	return (error);
-}
-
-int
-ulfs_mkdir(void *v)
-{
-	struct vop_mkdir_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	struct vnode		*dvp = ap->a_dvp, *tvp;
-	struct vattr		*vap = ap->a_vap;
-	struct componentname	*cnp = ap->a_cnp;
-	struct inode		*ip, *dp = VTOI(dvp);
-	struct buf		*bp;
-	struct lfs_dirtemplate	dirtemplate;
-	struct lfs_direct		*newdir;
-	int			error, dmode;
-	struct ulfsmount	*ump = dp->i_ump;
-	struct lfs *fs = ump->um_lfs;
-	int dirblksiz = fs->um_dirblksiz;
-	struct ulfs_lookup_results *ulr;
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(dp);
-
-	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto out;
-	}
-	dmode = vap->va_mode & ACCESSPERMS;
-	dmode |= LFS_IFDIR;
-	/*
-	 * Must simulate part of ulfs_makeinode here to acquire the inode,
-	 * but not have it entered in the parent directory. The entry is
-	 * made later after writing "." and ".." entries.
-	 */
-	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
-		goto out;
-
-	tvp = *ap->a_vpp;
-	ip = VTOI(tvp);
-
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	DIP_ASSIGN(ip, uid, ip->i_uid);
-	ip->i_gid = dp->i_gid;
-	DIP_ASSIGN(ip, gid, ip->i_gid);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		lfs_vfree(tvp, ip->i_number, dmode);
-		fstrans_done(dvp->v_mount);
-		vput(tvp);
-		vput(dvp);
-		return (error);
-	}
-#endif
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = dmode;
-	DIP_ASSIGN(ip, mode, dmode);
-	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
-	ip->i_nlink = 2;
-	DIP_ASSIGN(ip, nlink, 2);
-	if (cnp->cn_flags & ISWHITEOUT) {
-		ip->i_flags |= UF_OPAQUE;
-		DIP_ASSIGN(ip, flags, ip->i_flags);
-	}
-
-	/*
-	 * Bump link count in parent directory to reflect work done below.
-	 * Should be done before reference is created so cleanup is
-	 * possible if we crash.
-	 */
-	dp->i_nlink++;
-	DIP_ASSIGN(dp, nlink, dp->i_nlink);
-	dp->i_flag |= IN_CHANGE;
-	if ((error = lfs_update(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
-		goto bad;
-
-	/*
-	 * Initialize directory with "." and ".." from static template.
-	 */
-	dirtemplate = mastertemplate;
-	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	if (fs->um_maxsymlinklen <= 0) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		if (ULFS_MPNEEDSWAP(fs) == 0)
-#else
-		if (ULFS_MPNEEDSWAP(fs) != 0)
-#endif
-		{
-			dirtemplate.dot_type = dirtemplate.dot_namlen;
-			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
-			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
-		} else
-			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
-	}
-	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
-	    B_CLRBUF, &bp)) != 0)
-		goto bad;
-	ip->i_size = dirblksiz;
-	DIP_ASSIGN(ip, size, dirblksiz);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	uvm_vnp_setsize(tvp, ip->i_size);
-	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
-
-	/*
-	 * Directory set up, now install it's entry in the parent directory.
-	 * We must write out the buffer containing the new directory body
-	 * before entering the new name in the parent.
-	 */
-	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
-		goto bad;
-	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
-		goto bad;
-	}
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
-	pool_cache_put(ulfs_direct_cache, newdir);
- bad:
-	if (error == 0) {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	} else {
-		dp->i_nlink--;
-		DIP_ASSIGN(dp, nlink, dp->i_nlink);
-		dp->i_flag |= IN_CHANGE;
-		/*
-		 * No need to do an explicit lfs_truncate here, vrele will
-		 * do this for us because we set the link count to 0.
-		 */
-		ip->i_nlink = 0;
-		DIP_ASSIGN(ip, nlink, 0);
-		ip->i_flag |= IN_CHANGE;
-		/* If IN_ADIROP, account for it */
-		lfs_unmark_vnode(tvp);
-		vput(tvp);
-	}
- out:
-	fstrans_done(dvp->v_mount);
-	vput(dvp);
 	return (error);
 }
 
@@ -954,58 +757,6 @@ ulfs_rmdir(void *v)
 }
 
 /*
- * symlink -- make a symbolic link
- */
-int
-ulfs_symlink(void *v)
-{
-	struct vop_symlink_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-		char			*a_target;
-	} */ *ap = v;
-	struct vnode	*vp, **vpp;
-	struct inode	*ip;
-	int		len, error;
-	struct ulfs_lookup_results *ulr;
-
-	vpp = ap->a_vpp;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(ap->a_dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
-
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(LFS_IFLNK | ap->a_vap->va_mode, ap->a_dvp, ulr,
-			      vpp, ap->a_cnp);
-	if (error)
-		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vp = *vpp;
-	len = strlen(ap->a_target);
-	ip = VTOI(vp);
-	if (len < ip->i_lfs->um_maxsymlinklen) {
-		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
-		ip->i_size = len;
-		DIP_ASSIGN(ip, size, len);
-		uvm_vnp_setsize(vp, ip->i_size);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		if (vp->v_mount->mnt_flag & MNT_RELATIME)
-			ip->i_flag |= IN_ACCESS;
-	} else
-		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
-		    ap->a_cnp->cn_cred, NULL, NULL);
-	if (error)
-		vput(vp);
-out:
-	fstrans_done(ap->a_dvp->v_mount);
-	return (error);
-}
-
-/*
  * Vnode op for reading directories.
  *
  * This routine handles converting from the on-disk directory format
@@ -1024,7 +775,7 @@ ulfs_readdir(void *v)
 		int		*ncookies;
 	} */ *ap = v;
 	struct vnode	*vp = ap->a_vp;
-	struct lfs_direct	*cdp, *ecdp;
+	LFS_DIRHEADER	*cdp, *ecdp;
 	struct dirent	*ndp;
 	char		*cdbuf, *ndbuf, *endp;
 	struct uio	auio, *uio;
@@ -1036,17 +787,11 @@ ulfs_readdir(void *v)
 	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
-	int nswap = ULFS_MPNEEDSWAP(fs);
-#if BYTE_ORDER == LITTLE_ENDIAN
-	int needswap = fs->um_maxsymlinklen <= 0 && nswap == 0;
-#else
-	int needswap = fs->um_maxsymlinklen <= 0 && nswap != 0;
-#endif
 	uio = ap->a_uio;
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
 
-	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
+	if (rcount < LFS_DIRECTSIZ(fs, 0) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
 	startoff = uio->uio_offset & ~(fs->um_dirblksiz - 1);
@@ -1071,8 +816,8 @@ ulfs_readdir(void *v)
 
 	rcount -= auio.uio_resid;
 
-	cdp = (struct lfs_direct *)(void *)cdbuf;
-	ecdp = (struct lfs_direct *)(void *)&cdbuf[rcount];
+	cdp = (LFS_DIRHEADER *)(void *)cdbuf;
+	ecdp = (LFS_DIRHEADER *)(void *)&cdbuf[rcount];
 
 	ndbufsz = count;
 	ndbuf = kmem_alloc(ndbufsz, KM_SLEEP);
@@ -1081,7 +826,7 @@ ulfs_readdir(void *v)
 
 	off = uio->uio_offset;
 	if (ap->a_cookies) {
-		ccount = rcount / _DIRENT_RECLEN(cdp, 1);
+		ccount = rcount / _DIRENT_RECLEN(ndp, 1);
 		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
 		    M_TEMP, M_WAITOK);
 	} else {
@@ -1091,11 +836,10 @@ ulfs_readdir(void *v)
 	}
 
 	while (cdp < ecdp) {
-		cdp->d_reclen = ulfs_rw16(cdp->d_reclen, nswap);
 		if (skipbytes > 0) {
-			if (cdp->d_reclen <= skipbytes) {
-				skipbytes -= cdp->d_reclen;
-				cdp = _DIRENT_NEXT(cdp);
+			if (lfs_dir_getreclen(fs, cdp) <= skipbytes) {
+				skipbytes -= lfs_dir_getreclen(fs, cdp);
+				cdp = LFS_NEXTDIR(fs, cdp);
 				continue;
 			}
 			/*
@@ -1104,7 +848,7 @@ ulfs_readdir(void *v)
 			error = EINVAL;
 			goto out;
 		}
-		if (cdp->d_reclen == 0) {
+		if (lfs_dir_getreclen(fs, cdp) == 0) {
 			struct dirent *ondp = ndp;
 			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
 			ndp = _DIRENT_NEXT(ndp);
@@ -1112,28 +856,24 @@ ulfs_readdir(void *v)
 			cdp = ecdp;
 			break;
 		}
-		if (needswap) {
-			ndp->d_type = cdp->d_namlen;
-			ndp->d_namlen = cdp->d_type;
-		} else {
-			ndp->d_type = cdp->d_type;
-			ndp->d_namlen = cdp->d_namlen;
-		}
+		ndp->d_type = lfs_dir_gettype(fs, cdp);
+		ndp->d_namlen = lfs_dir_getnamlen(fs, cdp);
 		ndp->d_reclen = _DIRENT_RECLEN(ndp, ndp->d_namlen);
 		if ((char *)(void *)ndp + ndp->d_reclen +
 		    _DIRENT_MINSIZE(ndp) > endp)
 			break;
-		ndp->d_fileno = ulfs_rw32(cdp->d_ino, nswap);
-		(void)memcpy(ndp->d_name, cdp->d_name, ndp->d_namlen);
+		ndp->d_fileno = lfs_dir_getino(fs, cdp);
+		(void)memcpy(ndp->d_name, lfs_dir_nameptr(fs, cdp),
+			     ndp->d_namlen);
 		memset(&ndp->d_name[ndp->d_namlen], 0,
 		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
-		off += cdp->d_reclen;
+		off += lfs_dir_getreclen(fs, cdp);
 		if (ap->a_cookies) {
 			KASSERT(ccp - *(ap->a_cookies) < ccount);
 			*(ccp++) = off;
 		}
 		ndp = _DIRENT_NEXT(ndp);
-		cdp = _DIRENT_NEXT(cdp);
+		cdp = LFS_NEXTDIR(fs, cdp);
 	}
 
 	count = ((char *)(void *)ndp - ndbuf);
@@ -1178,7 +918,7 @@ ulfs_readlink(void *v)
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
-	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
+	return (lfs_bufrd(vp, ap->a_uio, 0, ap->a_cred));
 }
 
 /*
@@ -1381,11 +1121,12 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VBLK:
 		vp->v_op = specops;
 		ump = ip->i_ump;
+		// XXX clean this up
 		if (ump->um_fstype == ULFS1)
-			rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
+			rdev = (dev_t)ulfs_rw32(ip->i_din->u_32.di_rdev,
 			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		else
-			rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
+			rdev = (dev_t)ulfs_rw64(ip->i_din->u_64.di_rdev,
 			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		spec_node_init(vp, rdev);
 		break;
@@ -1415,41 +1156,26 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
  * Allocate a new inode.
  */
 int
-ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ulr,
+ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
+	const struct ulfs_lookup_results *ulr,
 	struct vnode **vpp, struct componentname *cnp)
 {
-	struct inode	*ip, *pdir;
-	struct lfs_direct	*newdir;
+	struct inode	*ip;
 	struct vnode	*tvp;
 	int		error;
 
-	pdir = VTOI(dvp);
-
-	if ((mode & LFS_IFMT) == 0)
-		mode |= LFS_IFREG;
-
-	if ((error = lfs_valloc(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		vput(dvp);
-		return (error);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	if (error)
+		return error;
+	error = vn_lock(tvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tvp);
+		return error;
 	}
-	tvp = *vpp;
+	lfs_mark_vnode(tvp);
+	*vpp = tvp;
 	ip = VTOI(tvp);
-	ip->i_gid = pdir->i_gid;
-	DIP_ASSIGN(ip, gid, ip->i_gid);
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	DIP_ASSIGN(ip, uid, ip->i_uid);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		lfs_vfree(tvp, ip->i_number, mode);
-		vput(tvp);
-		vput(dvp);
-		return (error);
-	}
-#endif
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_mode = mode;
-	DIP_ASSIGN(ip, mode, mode);
-	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
 
@@ -1457,7 +1183,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	if (ip->i_mode & ISGID) {
 		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
 		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
-		    ip->i_gid, mode));
+		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
 		if (error) {
 			ip->i_mode &= ~ISGID;
 			DIP_ASSIGN(ip, mode, ip->i_mode);
@@ -1474,13 +1200,10 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	 */
 	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);
-	pool_cache_put(ulfs_direct_cache, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
 	if (error)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1494,9 +1217,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
 	lfs_unmark_vnode(tvp);
-	tvp->v_type = VNON;		/* explodes later if VBLK */
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 
@@ -1567,4 +1288,46 @@ ulfs_gop_markupdate(struct vnode *vp, int flags)
 
 		ip->i_flag |= mask;
 	}
+}
+
+int
+ulfs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
+    int ioflg, kauth_cred_t cred, size_t *aresid, struct lwp *l)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	KASSERT(ISSET(ioflg, IO_NODELOCKED));
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+	iov.iov_base = buf;
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_resid = len;
+	uio.uio_offset = off;
+	uio.uio_rw = rw;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	switch (rw) {
+	case UIO_READ:
+		error = lfs_bufrd(vp, &uio, ioflg, cred);
+		break;
+	case UIO_WRITE:
+		error = lfs_bufwr(vp, &uio, ioflg, cred);
+		break;
+	default:
+		panic("invalid uio rw: %d", (int)rw);
+	}
+
+	if (aresid)
+		*aresid = uio.uio_resid;
+	else if (uio.uio_resid && error == 0)
+		error = EIO;
+
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	return error;
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: primes.6,v 1.3 2008/02/03 03:29:17 wiz Exp $
+.\"	$NetBSD: primes.6,v 1.5 2014/10/04 13:15:50 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,9 +33,7 @@
 .\"	@(#)factor.6	8.1 (Berkeley) 5/31/93
 .\"
 .\"
-.\" By: Landon Curt Noll   chongo@toad.com,   ...!{sun,tolsoft}!hoptoad!chongo
-.\"
-.\"   chongo <for a good prime call: 391581 * 2^216193 - 1> /\oo/\
+.\" By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
 .\"
 .Dd February 3, 2008
 .Dt PRIMES 6
@@ -45,7 +43,7 @@
 .Nd generate primes
 .Sh SYNOPSIS
 .Nm primes
-.Op Fl d
+.Op Fl dh
 .Op Ar start Op Ar stop
 .Sh DESCRIPTION
 The
@@ -61,18 +59,18 @@ value must be at least 0 and not greater than
 .Ar stop .
 The
 .Ar stop
-value must not be greater than 4294967295.
+value must not be greater than 3825123056546413050.
 The default value of
 .Ar stop
-is 4294967295.
+is 3825123056546413050.
 .Pp
 When the
 .Nm
 utility is invoked with no arguments,
 .Ar start
-is read from standard input.
+is read from standard input and
 .Ar stop
-is taken to be 4294967295.
+is taken to be 3825123056546413050.
 The
 .Ar start
 value may be preceded by a single
@@ -81,15 +79,35 @@ The
 .Ar start
 value is terminated by a non-digit character (such as a newline).
 The input line must not be longer than 255 characters.
+.Pp
 When given the
 .Fl d
 argument,
 .Nm
 prints the difference between the current and the previous prime.
+.Pp
+When given the
+.Fl h
+argument,
+.Nm
+prints the prime numbers in hexadecimal.
 .Sh DIAGNOSTICS
 Out of range or invalid input results in
-an appropriate error message
-being written to standard error.
-.Sh BUGS
+an appropriate error message to standard error.
+.Sh AUTHORS
+.An -nosplit
+Originally by
+.An Landon Curt Noll ,
+extended to some 64-bit primes by
+.An Colin Percival .
+.Sh CAVEATS
+This
 .Nm
-won't get you a world record.
+program won't get you a world record.
+.Pp
+The program is not able to list primes between
+3825123056546413050 and 18446744073709551615 (2^64
+- 1) as it relies on strong pseudoprime tests after
+sieving, and it is yet unknown how many of those
+tests are needed to prove primality for integers
+larger than 3825123056546413050.

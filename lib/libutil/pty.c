@@ -42,9 +42,9 @@ __RCSID("$NetBSD: pty.c,v 1.31 2009/02/20 16:44:06 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
-#ifdef __minix
+#if defined(__minix)
 #include <stdlib.h>
-#endif /* __minix */
+#endif /* defined(__minix) */
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -92,7 +92,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		}
 		(void)close(master);
 	}
-#else /* defined(__minix) */
+#else
 	/*
 	 * On MINIX3, we implement non-root openpty(3) using Unix98 PTYs.
 	 * If this fails, the fallback code below works for root only.
@@ -104,7 +104,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 			goto gotit;
 		(void)close(master);
 	}
-#endif /* defined(__minix) */
+#endif /* !defined(__minix) */
 
 	(void)getgrnam_r("tty", &grs, grbuf, sizeof(grbuf), &grp);
 	if (grp != NULL) {
@@ -120,11 +120,11 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		for (cp = cp2 = TTY_OLD_SUFFIX TTY_NEW_SUFFIX; *cp2; cp2++) {
 			line[5] = 'p';
 			line[9] = *cp2;
-#ifdef __minix
+#if defined(__minix)
 			if ((master = open(line, O_RDWR | O_NOCTTY, 0)) == -1) {
 #else
 			if ((master = open(line, O_RDWR, 0)) == -1) {
-#endif
+#endif /* defined(__minix) */
 				if (errno != ENOENT)
 					continue;	/* busy */
 				if ((size_t)(cp2 - cp + 1) < sizeof(TTY_OLD_SUFFIX))
@@ -139,11 +139,11 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 #if !defined(__minix)
 			    revoke(line) == 0 &&
 #endif /* !defined(__minix) */
-#ifdef __minix
+#if defined(__minix)
 			(slave = open(line, O_RDWR | O_NOCTTY, 0)) != -1) {
 #else
 			    (slave = open(line, O_RDWR, 0)) != -1) {
-#endif
+#endif /* defined(__minix) */
 gotit:
 				*amaster = master;
 				*aslave = slave;

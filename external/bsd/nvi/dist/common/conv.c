@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: conv.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp  (Berkeley) Date: 2001/08/18 21:41:41 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: conv.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -53,8 +58,10 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
     BINC_RETW(NULL, *tostr, *blen, len);
 
     *tolen = len;
-    for (i = 0; i < len; ++i)
-	(*tostr)[i] = (u_char) str[i];
+    for (i = 0; i < len; ++i) {
+	CHAR_T w = (u_char)str[i];
+	memcpy((*tostr) + i, &w, sizeof(**tostr));
+    }
 
     *dst = cw->bp1;
 
@@ -131,11 +138,15 @@ default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw,
 #endif
 
     for (i = 0, j = 0; j < len; ) {
-	n = mbrtowc((*tostr)+i, src+j, len-j, &mbs);
+	CHAR_T w;
+	n = mbrtowc(&w, src + j, len - j, &mbs);
+	memcpy((*tostr) + i, &w, sizeof(**tostr));
 	/* NULL character converted */
-	if (n == (size_t)-2) error = -(len-j);
-	if (n == (size_t)-1 || n == (size_t)-2)
-	    HANDLE_MBR_ERROR(n, mbs, (*tostr)[i], src[j]); 
+	if (n == (size_t)-2) error = -(len - j);
+	if (n == (size_t)-1 || n == (size_t)-2) {
+	    HANDLE_MBR_ERROR(n, mbs, w, src[j]); 
+	    memcpy((*tostr) + i, &w, sizeof(**tostr));
+	}
 	if (n == 0) n = 1;
 	j += n;
 	if (++i >= *blen) {
@@ -216,8 +227,11 @@ int2raw(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, size_t *tolen,
     BINC_RETC(NULL, *tostr, *blen, len);
 
     *tolen = len;
-    for (i = 0; i < len; ++i)
-	(*tostr)[i] = str[i];
+    for (i = 0; i < len; ++i) {
+	CHAR_T w;
+	memcpy(&w, str + i, sizeof(w));
+	(*tostr)[i] = w;
+    }
 
     *dst = cw->bp1;
 
@@ -282,9 +296,11 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 #endif
 
     for (i = 0, j = 0; i < (size_t)len; ++i) {
-	n = wcrtomb(dst+j, str[i], &mbs);
+	CHAR_T w;
+	memcpy(&w, str + i, sizeof(w));
+	n = wcrtomb(dst + j, w, &mbs);
 	if (n == (size_t)-1) 
-	   HANDLE_MBR_ERROR(n, mbs, dst[j], str[i]);
+	   HANDLE_MBR_ERROR(n, mbs, dst[j], w);
 	j += n;
 	if (buflen < j + MB_CUR_MAX) {
 	    if (id != (iconv_t)-1) {
@@ -297,7 +313,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 	}
     }
 
-    n = wcrtomb(dst+j, L'\0', &mbs);
+    n = wcrtomb(dst + j, L'\0', &mbs);
     j += n - 1;				/* don't count NUL at the end */
     *tolen = j;
 

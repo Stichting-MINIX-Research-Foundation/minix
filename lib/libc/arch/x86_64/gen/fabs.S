@@ -1,8 +1,8 @@
-/*	$NetBSD: fabs.S,v 1.3 2004/03/23 17:11:35 drochner Exp $	*/
+/*	$NetBSD: fabs.S,v 1.4 2014/05/22 15:01:56 uebayasi Exp $	*/
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fabs.S,v 1.3 2004/03/23 17:11:35 drochner Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.4 2014/05/22 15:01:56 uebayasi Exp $")
 #endif
 
 	.section .rodata
@@ -15,3 +15,4 @@ ENTRY(fabs)
 	movsd	__signmask(%rip),%xmm1
 	andpd	%xmm1,%xmm0
 	ret
+END(fabs)

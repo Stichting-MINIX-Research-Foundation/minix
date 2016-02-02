@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.19 2013/08/27 09:56:12 christos Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.20 2014/03/17 13:24:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp ";
 #else
-__RCSID("$NetBSD: sethostent.c,v 1.19 2013/08/27 09:56:12 christos Exp $");
+__RCSID("$NetBSD: sethostent.c,v 1.20 2014/03/17 13:24:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -223,6 +223,7 @@ _hf_gethtbyname2(const char *name, int af, struct getnamaddr *info)
 
 	if (num == 0) {
 		*info->he = HOST_NOT_FOUND;
+		free(buf);
 		return NULL;
 	}
 
@@ -247,9 +248,11 @@ _hf_gethtbyname2(const char *name, int af, struct getnamaddr *info)
 		HENT_SCOPY(hp->h_aliases[i], aliases[i], ptr, len);
 	hp->h_aliases[anum] = NULL;
 
+	free(buf);
 	return hp;
 nospc:
 	*info->he = NETDB_INTERNAL;
+	free(buf);
 	errno = ENOSPC;
 	return NULL;
 }

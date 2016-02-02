@@ -1,4 +1,4 @@
-/* $NetBSD: memcpy.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
+/* $NetBSD: memcpy.S,v 1.6 2014/03/04 17:05:14 macallan Exp $ */
 
 /* stropt/memcpy_440.S, pl_string_common, pl_linux 10/11/04 11:45:36
  * ==========================================================================
@@ -52,6 +52,9 @@
  */
 
 #include <machine/asm.h>
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 	.text
 	.align 4
@@ -62,6 +65,35 @@ ENTRY(memcpy)
 	 */
 	cmpwi	%r5,0
 	beqlr-
+
+#if defined(_KERNEL) && defined(PPC_OEA601)
+	/*
+	* 601 will generate alignment exceptions if operand crosses
+	 * 4k page boundary, so do byte copy when exception handler
+	 * not available.  Maybe want to have a different memcpy for 601
+	 * that checks for page boundaries/word alignment...
+	 */
+	mfspr   %r6, 287		/* mfpvbr %r6 PVR = 287        */
+	srwi    %r6, %r6, 0x10		/* get version field from PVR  */
+	cmpwi   %r6, 0x1		/* 601 CPU = 0x0001            */
+	bne     bnorm			/* skip byte-only unless 601   */
+
+	or	%r6, %r3, %r4		/* see if both source and dest */
+	andi.	%r6, %r6, 3		/* are 32bit aligned           */
+	beq	bnorm			/* skip byte-only if they are  */
+bcpy:
+	mtctr   %r5			/* byte copy everything */
+	li      %r6, 0
+bloop:		
+	lbzx    %r7, %r4, %r6
+	stbx    %r7, %r3, %r6
+	addi    %r6, %r6, 1
+	bdnz    bloop
+	blr
+
+bnorm:
+
+#endif	
 
 	mr	%r8, %r3		/* Copy dst (return value)	*/
 

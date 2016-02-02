@@ -69,12 +69,6 @@ static ssize_t tsl2550_read(devminor_t minor, u64_t position, endpoint_t endpt,
     cp_grant_id_t grant, size_t size, int flags, cdev_id_t id);
 static void tsl2550_other(message * m, int ipc_status);
 
-/* SEF functions */
-static int sef_cb_lu_state_save(int);
-static int lu_state_restore(void);
-static int sef_cb_init(int type, sef_init_info_t * info);
-static void sef_local_startup(void);
-
 /* Entry points to this driver from libchardriver. */
 static struct chardriver tsl2550_tab = {
 	.cdr_read	= tsl2550_read,
@@ -325,7 +319,7 @@ tsl2550_other(message * m, int ipc_status)
 }
 
 static int
-sef_cb_lu_state_save(int UNUSED(state))
+sef_cb_lu_state_save(int UNUSED(result), int UNUSED(flags))
 {
 	ds_publish_u32("bus", bus, DSF_OVERWRITE);
 	ds_publish_u32("address", address, DSF_OVERWRITE);
@@ -409,11 +403,6 @@ sef_local_startup(void)
 	/*
 	 * Register live update callbacks.
 	 */
-	/* Agree to update immediately when LU is requested in a valid state. */
-	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-	/* Support live update starting from any standard state. */
-	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
-	/* Register a custom routine to save the state. */
 	sef_setcb_lu_state_save(sef_cb_lu_state_save);
 
 	/* Let SEF perform startup. */

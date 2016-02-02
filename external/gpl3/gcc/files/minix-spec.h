@@ -38,23 +38,6 @@
 /* In case we need to know.  */
 #define USING_CONFIG_MINIX_SPEC 1
 
-/* This defines which switch letters take arguments.  On FreeBSD, most of
-   the normal cases (defined in gcc.c) apply, and we also have -h* and
-   -z* options (for the linker) (coming from SVR4).
-   We also have -R (alias --rpath), no -z, --soname (-h), --assert etc.  */
-#define MINIX_SWITCH_TAKES_ARG(CHAR)					\
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)					\
-    || (CHAR) == 'h'							\
-    || (CHAR) == 'z' /* ignored by ld */				\
-    || (CHAR) == 'R')
-
-/* This defines which multi-letter switches take arguments.  */
-#define MINIX_WORD_SWITCH_TAKES_ARG(STR)					\
-  (DEFAULT_WORD_SWITCH_TAKES_ARG (STR)					\
-   || !strcmp ((STR), "rpath") || !strcmp ((STR), "rpath-link")		\
-   || !strcmp ((STR), "soname") || !strcmp ((STR), "defsym") 		\
-   || !strcmp ((STR), "assert") || !strcmp ((STR), "dynamic-linker"))
-
 #define MINIX_TARGET_OS_CPP_BUILTINS()					\
   do									\
     {									\
@@ -77,28 +60,23 @@
 
 #define MINIX_GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
 
+#define MINIX_GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT 1
+
+#define MINIX_GCC_INCLUDE_DIR_ADD_SYSROOT 1
+
 /*
  * XXX figure out a better way to do this
  */
-#define MINIX_GCC_INCLUDE_DIR "/usr/include/gcc-4.5"
-
-#define MINIX_INCLUDE_DEFAULTS						\
-  {									\
-    { MINIX_GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 1 },			\
-    { MINIX_GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 1 },		\
-    { MINIX_GCC_INCLUDE_DIR, "GCC", 0, 0, 1 },				\
-    { "/usr/include", "GCC", 0, 0, 1 },					\
-    { 0, 0, 0, 0 }							\
-  }
+#define MINIX_GCC_INCLUDE_DIR "/usr/include/gcc-4.8"
 
 /* Provide a CPP_SPEC appropriate for MINIX.  We just deal with the GCC 
    option `-posix'.  */
 #define MINIX_CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
 
-#define MINIX_CC1_SPEC ""
-
-/* Pass -cxx-isystem to cc1plus.  */
+/* Pass -cxx-isystem to cc1/cc1plus.  */
 #define MINIX_CC1PLUS_SPEC "%{cxx-isystem}"
+#define MINIX_CC1_SPEC "%{cxx-isystem}"
+
 
 #define MINIX_SUBTARGET_CPP_SPEC ""
 #define MINIX_SUBTARGET_EXTRA_ASM_SPEC ""
@@ -109,6 +87,14 @@
 /* Under MINIX, just like on NetBSD, the normal location of the various 
  *    *crt*.o files is the /usr/lib directory.  */
 #define MINIX_STANDARD_STARTFILE_PREFIX	"/usr/lib/"
+
+/* Under NetBSD, the normal location of the compiler back ends is the
+   /usr/libexec directory.  */
+
+#define MINIX_STANDARD_EXEC_PREFIX		"/usr/libexec/"
+#define MINIX_TOOLDIR_BASE_PREFIX		"../"
+#define MINIX_STANDARD_BINDIR_PREFIX		"/usr/bin"
+#define MINIX_STANDARD_LIBEXEC_PREFIX		MINIX_STANDARD_EXEC_PREFIX
 
 #define MINIX_LINK_GCC_C_SEQUENCE_SPEC \
 	"%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"

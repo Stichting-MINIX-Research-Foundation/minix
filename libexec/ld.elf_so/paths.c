@@ -49,9 +49,7 @@ __RCSID("$NetBSD: paths.c,v 1.41 2013/05/06 08:02:20 skrll Exp $");
 #include <sys/gmon.h>
 #include <sys/socket.h>
 #include <sys/mount.h>
-#if !defined(__minix)
 #include <sys/mbuf.h>
-#endif /* !defined(__minix) */
 #include <sys/resource.h>
 #include <machine/cpu.h>
 
@@ -67,9 +65,7 @@ static char *exstrdup(const char *, const char *);
 static const char *getstr(const char **, const char *, const char *);
 static const char *getcstr(const char **, const char *, const char *);
 static const char *getword(const char **, const char *, const char *);
-#if !defined(__minix)
 static int matchstr(const char *, const char *, const char *);
-#endif /* !defined(__minix) */
 
 static const char WS[] = " \t\n";
 
@@ -146,7 +142,6 @@ getword(const char **p, const char *ep, const char *delim)
 	return (getstr(p, ep, delim));
 }
 
-#if !defined(__minix)
 /*
  * Match `bp' against NUL terminated string pointed by `p'.
  */
@@ -161,7 +156,6 @@ matchstr(const char *p, const char *bp, const char *ep)
 
 	return (*p == 0);
 }
-#endif /* !defined(__minix) */
 
 static Search_Path *
 _rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
@@ -414,7 +408,6 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 		(void)munmap(buf, sz);
 }
 
-#if !defined(__minix)
 /* Basic name -> sysctl MIB translation */
 int
 _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
@@ -483,4 +476,3 @@ bad:
 	xfree(result);
 	return (-1);
 }
-#endif /* !defined(__minix) */

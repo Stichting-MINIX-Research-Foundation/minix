@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-buffer.c,v 1.1.1.2 2011/08/17 18:40:04 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -26,118 +27,69 @@
  * Enter choice mode to choose a buffer.
  */
 
-int	cmd_choose_buffer_exec(struct cmd *, struct cmd_ctx *);
-
-void	cmd_choose_buffer_callback(void *, int);
-void	cmd_choose_buffer_free(void *);
+enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
 	"choose-buffer", NULL,
-	"t:", 0, 1,
-	CMD_TARGET_WINDOW_USAGE " [template]",
+	"F:t:", 0, 1,
+	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
 	0,
-	NULL,
 	NULL,
 	cmd_choose_buffer_exec
 };
 
-struct cmd_choose_buffer_data {
-	struct client   *client;
-	char            *template;
-};
-
-int
-cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
+enum cmd_retval
+cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
-	struct cmd_choose_buffer_data	*cdata;
+	struct client			*c;
+	struct window_choose_data	*cdata;
 	struct winlink			*wl;
 	struct paste_buffer		*pb;
+	char				*action, *action_data;
+	const char			*template;
 	u_int				 idx;
-	char				*tmp;
 
-	if (ctx->curclient == NULL) {
-		ctx->error(ctx, "must be run interactively");
-		return (-1);
+	if ((c = cmd_current_client(cmdq)) == NULL) {
+		cmdq_error(cmdq, "no client available");
+		return (CMD_RETURN_ERROR);
 	}
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
-		return (-1);
+	if ((template = args_get(args, 'F')) == NULL)
+		template = CHOOSE_BUFFER_TEMPLATE;
+
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if (paste_get_top(&global_buffers) == NULL)
-		return (0);
+		return (CMD_RETURN_NORMAL);
 
 	if (window_pane_set_mode(wl->window->active, &window_choose_mode) != 0)
-		return (0);
+		return (CMD_RETURN_NORMAL);
+
+	if (args->argc != 0)
+		action = xstrdup(args->argv[0]);
+	else
+		action = xstrdup("paste-buffer -b '%%'");
 
 	idx = 0;
 	while ((pb = paste_walk_stack(&global_buffers, &idx)) != NULL) {
-		tmp = paste_print(pb, 50);
-		window_choose_add(wl->window->active, idx - 1,
-		    "%u: %zu bytes: \"%s\"", idx - 1, pb->size, tmp);
-		xfree(tmp);
+		cdata = window_choose_data_create(TREE_OTHER, c, c->session);
+		cdata->idx = idx - 1;
+
+		cdata->ft_template = xstrdup(template);
+		format_add(cdata->ft, "line", "%u", idx - 1);
+		format_paste_buffer(cdata->ft, pb);
+
+		xasprintf(&action_data, "%u", idx - 1);
+		cdata->command = cmd_template_replace(action, action_data, 1);
+		free(action_data);
+
+		window_choose_add(wl->window->active, cdata);
 	}
+	free(action);
 
-	cdata = xmalloc(sizeof *cdata);
-	if (args->argc != 0)
-		cdata->template = xstrdup(args->argv[0]);
-	else
-		cdata->template = xstrdup("paste-buffer -b '%%'");
-	cdata->client = ctx->curclient;
-	cdata->client->references++;
+	window_choose_ready(wl->window->active, 0, NULL);
 
-	window_choose_ready(wl->window->active,
-	    0, cmd_choose_buffer_callback, cmd_choose_buffer_free, cdata);
-
-	return (0);
-}
-
-void
-cmd_choose_buffer_callback(void *data, int idx)
-{
-	struct cmd_choose_buffer_data	*cdata = data;
-	struct cmd_list			*cmdlist;
-	struct cmd_ctx			 ctx;
-	char				*template, *cause, tmp[16];
-
-	if (idx == -1)
-		return;
-	if (cdata->client->flags & CLIENT_DEAD)
-		return;
-
-	xsnprintf(tmp, sizeof tmp, "%u", idx);
-	template = cmd_template_replace(cdata->template, tmp, 1);
-
-	if (cmd_string_parse(template, &cmdlist, &cause) != 0) {
-		if (cause != NULL) {
-			*cause = toupper((u_char) *cause);
-			status_message_set(cdata->client, "%s", cause);
-			xfree(cause);
-		}
-		xfree(template);
-		return;
-	}
-	xfree(template);
-
-	ctx.msgdata = NULL;
-	ctx.curclient = cdata->client;
-
-	ctx.error = key_bindings_error;
-	ctx.print = key_bindings_print;
-	ctx.info = key_bindings_info;
-
-	ctx.cmdclient = NULL;
-
-	cmd_list_exec(cmdlist, &ctx);
-	cmd_list_free(cmdlist);
-}
-
-void
-cmd_choose_buffer_free(void *data)
-{
-	struct cmd_choose_buffer_data	*cdata = data;
-
-	cdata->client->references--;
-	xfree(cdata->template);
-	xfree(cdata);
+	return (CMD_RETURN_NORMAL);
 }

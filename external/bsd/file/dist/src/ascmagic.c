@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.4 2013/01/03 16:27:52 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.85 2012/08/09 16:33:15 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.91 2014/11/28 02:46:39 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.4 2013/01/03 16:27:52 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -78,7 +78,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes,
 	int text)
 {
 	unichar *ubuf = NULL;
-	size_t ulen;
+	size_t ulen = 0;
 	int rv = 1;
 
 	const char *code = NULL;
@@ -153,7 +153,8 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 		    == NULL)
 			goto done;
 		if ((rv = file_softmagic(ms, utf8_buf,
-		    (size_t)(utf8_end - utf8_buf), TEXTTEST, text)) == 0)
+		    (size_t)(utf8_end - utf8_buf), 0, NULL,
+		    TEXTTEST, text)) == 0)
 			rv = -1;
 	}
 
@@ -217,6 +218,7 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 				case 0:
 					if (file_printf(ms, ", ") == -1)
 						goto done;
+					break;
 				case -1:
 					goto done;
 				default:

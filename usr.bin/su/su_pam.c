@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.20 2015/08/09 09:39:21 shm Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.20 2015/08/09 09:39:21 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 		syslog(LOG_WARNING, "BAD SU %s to %s%s: %s",
 		    username, user, ontty(), safe_pam_strerror(pamh, pam_err));
 		(void)pam_end(pamh, pam_err);
-		errx(EXIT_FAILURE, "Sorry: %s", safe_pam_strerror(pamh, pam_err));
+		errx(EXIT_FAILURE, "Sorry: %s", safe_pam_strerror(NULL, pam_err));
 	}
 
 	/*

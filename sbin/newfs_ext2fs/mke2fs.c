@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.21 2013/10/19 13:42:10 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.21 2013/10/19 13:42:10 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,27 +202,27 @@ mke2fs(const char *fsys, int fi, int fo)
 	 */
 	if (!powerof2(bsize)) {
 		errx(EXIT_FAILURE,
-		    "block size must be a power of 2, not %u\n",
+		    "block size must be a power of 2, not %u",
 		    bsize);
 	}
 	if (!powerof2(fsize)) {
 		errx(EXIT_FAILURE,
-		    "fragment size must be a power of 2, not %u\n",
+		    "fragment size must be a power of 2, not %u",
 		    fsize);
 	}
 	if (fsize < sectorsize) {
 		errx(EXIT_FAILURE,
-		    "fragment size %u is too small, minimum is %u\n",
+		    "fragment size %u is too small, minimum is %u",
 		    fsize, sectorsize);
 	}
 	if (bsize < MINBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %u is too small, minimum is %u\n",
+		    "block size %u is too small, minimum is %u",
 		    bsize, MINBSIZE);
 	}
 	if (bsize > EXT2_MAXBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %u is too large, maximum is %u\n",
+		    "block size %u is too large, maximum is %u",
 		    bsize, MAXBSIZE);
 	}
 	if (bsize != fsize) {
@@ -233,14 +233,14 @@ mke2fs(const char *fsys, int fi, int fo)
 		 */
 		errx(EXIT_FAILURE,
 		    "block size (%u) can't be different from "
-		    "fragment size (%u)\n",
+		    "fragment size (%u)",
 		    bsize, fsize);
 	}
 
 	/* variable inodesize is REV1 feature */
 	if (Oflag == 0 && inodesize != EXT2_REV0_DINODE_SIZE) {
 		errx(EXIT_FAILURE, "GOOD_OLD_REV file system format"
-		    " doesn't support %d byte inode\n", inodesize);
+		    " doesn't support %d byte inode", inodesize);
 	}
 
 	sblock.e2fs.e2fs_log_bsize = ilog2(bsize) - LOG_MINBSIZE;
@@ -276,7 +276,7 @@ mke2fs(const char *fsys, int fi, int fo)
 
 	if (fssize < minfssize)
 		errx(EXIT_FAILURE, "Filesystem size %" PRId64
-		    " < minimum size of %" PRId64 "\n", fssize, minfssize);
+		    " < minimum size of %" PRId64, fssize, minfssize);
 
 	bcount = EXT2_DBTOFSB(&sblock, fssize);
 
@@ -410,7 +410,7 @@ mke2fs(const char *fsys, int fi, int fo)
 
 	uuid_create(&uuid, &uustat);
 	if (uustat != uuid_s_ok)
-		errx(EXIT_FAILURE, "Failed to generate uuid\n");
+		errx(EXIT_FAILURE, "Failed to generate uuid");
 	uuid_enc_le(sblock.e2fs.e2fs_uuid, &uuid);
 	if (volname != NULL) {
 		if (strlen(volname) > sizeof(sblock.e2fs.e2fs_vname))
@@ -543,7 +543,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	iobuf = mmap(0, iobufsize, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (iobuf == NULL)
-		errx(EXIT_FAILURE, "Cannot allocate I/O buffer\n");
+		errx(EXIT_FAILURE, "Cannot allocate I/O buffer");
 	memset(iobuf, 0, iobufsize);
 
 	/*
@@ -559,7 +559,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		 * Convert to file system fragment sized units.
 		 */
 		if (fssize <= 0)
-			errx(EXIT_FAILURE, "Preposterous size %" PRId64 "\n",
+			errx(EXIT_FAILURE, "Preposterous size %" PRId64,
 			    fssize);
 		wtfs(fssize - 1, sectorsize, iobuf);
 
@@ -1130,7 +1130,7 @@ init_resizeino(const struct timeval *tv)
 	     EXT2F_ROCOMPAT_LARGEFILE) == 0) {
 		/* XXX should enable it here and update all backups? */
 		errx(EXIT_FAILURE, "%s: large_file rocompat feature is "
-		    "required to enable resize feature for this filesystem\n",
+		    "required to enable resize feature for this filesystem",
 		    __func__);
 	}
 	/* upper 32bit is stored into e2di_dacl on REV1 feature */
@@ -1296,7 +1296,7 @@ alloc(uint32_t size, uint16_t mode)
 	
  gotit:
 	if (isset(bbp, bno))
-		errx(EXIT_FAILURE, "%s: inconsistent bitmap\n", __func__);
+		errx(EXIT_FAILURE, "%s: inconsistent bitmap", __func__);
 
 	setbit(bbp, bno);
 	wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
@@ -1326,7 +1326,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	bp = malloc(sblock.e2fs_bsize);
 	if (bp == NULL)
-		errx(EXIT_FAILURE, "%s: can't allocate buffer for inode\n",
+		errx(EXIT_FAILURE, "%s: can't allocate buffer for inode",
 		    __func__);
 
 	/*
@@ -1339,7 +1339,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		/* sanity check */
 		if (gd[c].ext2bgd_nifree == 0)
 			errx(EXIT_FAILURE,
-			    "%s: no free inode %" PRIu64 " in block group %u\n",
+			    "%s: no free inode %" PRIu64 " in block group %u",
 			    __func__, (uint64_t)ino, c);
 
 		/* update inode bitmap */
@@ -1349,7 +1349,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		/* more sanity */
 		if (isset(bp, EXT2_INO_INDEX(ino)))
 			errx(EXIT_FAILURE, "%s: inode %" PRIu64
-			    " already in use\n", __func__, (uint64_t)ino);
+			    " already in use", __func__, (uint64_t)ino);
 		setbit(bp, EXT2_INO_INDEX(ino));
 		wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_i_bitmap),
 		    sblock.e2fs_bsize, bp);
@@ -1359,7 +1359,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	if (ino >= sblock.e2fs.e2fs_ipg * sblock.e2fs_ncg)
 		errx(EXIT_FAILURE, "%s: inode value out of range (%" PRIu64
-		    ").\n", __func__, (uint64_t)ino);
+		    ")", __func__, (uint64_t)ino);
 
 	/* update an inode entry in the table */
 	d = EXT2_FSBTODB(&sblock, ino_to_fsba(&sblock, ino));
@@ -1419,7 +1419,7 @@ ilog2(uint val)
 {
 
 	if (val == 0 || !powerof2(val))
-		errx(EXIT_FAILURE, "%s: %u is not a power of 2\n",
+		errx(EXIT_FAILURE, "%s: %u is not a power of 2",
 		    __func__, val);
 
 	return ffs(val) - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos
 #include <sys/dirent.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/atomic.h>
 #else
 #include <ffs/buf.h>
 #endif /* _KERNEL */
@@ -94,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.29 2013/01/26 16:51:51 christos
 int
 msdosfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -113,9 +114,7 @@ msdosfs_lookup(void *v)
 	int blsize;
 	int isadir;		/* ~0 if found direntry is a directory	 */
 	u_long scn;		/* starting cluster number		 */
-	struct vnode *pdp;
 	struct denode *dp;
-	struct denode *tdp;
 	struct msdosfsmount *pmp;
 	struct buf *bp = 0;
 	struct direntry *dep;
@@ -217,7 +216,7 @@ msdosfs_lookup(void *v)
 	 * Search the directory pointed at by vdp for the name pointed at
 	 * by cnp->cn_nameptr.
 	 */
-	tdp = NULL;
+
 	/*
 	 * The outer loop ranges over the clusters that make up the
 	 * directory.  Note that the root directory is different from all
@@ -232,7 +231,7 @@ msdosfs_lookup(void *v)
 				break;
 			return (error);
 		}
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp);
 		if (error) {
 			return (error);
@@ -300,8 +299,10 @@ msdosfs_lookup(void *v)
 				 * Check for a checksum or name match
 				 */
 				chksum_ok = (chksum == winChksum(dep->deName));
-				if (!chksum_ok
-				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
+				if (!chksum_ok && (
+					!olddos ||
+					memcmp(&dosfilename[0],dep->deName,8) ||
+					memcmp(&dosfilename[8],dep->deExtension,3))) {
 					chksum = -1;
 					continue;
 				}
@@ -489,10 +490,8 @@ foundroot:
 			*vpp = vdp;
 			return (0);
 		}
-		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
-			return (error);
-		*vpp = DETOV(tdp);
-		return (0);
+		error = deget(pmp, cluster, blkoff, vpp);
+		return error;
 	}
 
 	/*
@@ -520,47 +519,15 @@ foundroot:
 		if (dp->de_StartCluster == scn && isadir)
 			return (EISDIR);
 
-		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
-			return (error);
-		*vpp = DETOV(tdp);
-		return (0);
+		error = deget(pmp, cluster, blkoff, vpp);
+		return error;
 	}
 
-	/*
-	 * Step through the translation in the name.  We do not `vput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the VFS_VGET for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = deget(pmp, cluster, blkoff, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			return error;
-		}
-		*vpp = DETOV(tdp);
-	} else if (dp->de_StartCluster == scn && isadir) {
+	if (dp->de_StartCluster == scn && isadir) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
-	} else {
-		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
-			return (error);
-		*vpp = DETOV(tdp);
+	} else if ((error = deget(pmp, cluster, blkoff, vpp)) != 0) {
+		return error;
 	}
 
 	/*
@@ -636,7 +603,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	clusoffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		clusoffset &= pmp->pm_crbomask;
-	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 	    B_MODIFY, &bp)) != 0) {
 		goto err_norollback;
 	}
@@ -674,7 +641,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 					goto rollback;
 
 				error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-				    blsize, NOCRED, B_MODIFY, &bp);
+				    blsize, B_MODIFY, &bp);
 				if (error) {
 					goto rollback;
 				}
@@ -700,6 +667,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 */
 	if (depp) {
 		u_long diroffset = clusoffset;
+
 		if (dep->de_Attributes & ATTR_DIRECTORY) {
 			dirclust = dep->de_StartCluster;
 			if (FAT32(pmp) && dirclust == pmp->pm_rootdirblk)
@@ -709,7 +677,18 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 			else
 				diroffset = 0;
 		}
-		return deget(pmp, dirclust, diroffset, depp);
+#ifdef MAKEFS
+		error = deget(pmp, dirclust, diroffset, depp);
+#else
+		struct vnode *vp;
+
+		error = deget(pmp, dirclust, diroffset, &vp);
+		if (error == 0)
+			*depp = VTODE(vp);
+		else
+			*depp = NULL;
+#endif
+		return error;
 	}
 
 	return 0;
@@ -725,7 +704,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	       &bn, NULL, &blsize);
 	if (rberror)
 		goto err_norollback;
-	if ((rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	if ((rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 	    B_MODIFY, &bp)) != 0) {
 		goto err_norollback;
 	}
@@ -753,7 +732,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				goto err_norollback;
 
 			rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-			    blsize, NOCRED, B_MODIFY, &bp);
+			    blsize, B_MODIFY, &bp);
 			if (rberror) {
 				goto err_norollback;
 			}
@@ -800,7 +779,7 @@ dosdirempty(struct denode *dep)
 				return (1);	/* it's empty */
 			return (0);
 		}
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp);
 		if (error) {
 			return (0);
@@ -892,7 +871,7 @@ doscheckpath(struct denode *source, struct denode *target)
 		}
 		scn = dep->de_StartCluster;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, cntobn(pmp, scn)),
-			      pmp->pm_bpcluster, NOCRED, 0, &bp);
+			      pmp->pm_bpcluster, 0, &bp);
 		if (error)
 			break;
 
@@ -923,9 +902,24 @@ doscheckpath(struct denode *source, struct denode *target)
 		vput(DETOV(dep));
 		brelse(bp, 0);
 		bp = NULL;
+#ifdef MAKEFS
 		/* NOTE: deget() clears dep on error */
 		if ((error = deget(pmp, scn, 0, &dep)) != 0)
 			break;
+#else
+		struct vnode *vp;
+
+		dep = NULL;
+		error = deget(pmp, scn, 0, &vp);
+		if (error)
+			break;
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
+			break;
+		}
+		dep = VTODE(vp);
+#endif
 	}
 out:
 	if (bp)
@@ -954,7 +948,7 @@ readep(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct buf *
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
-	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 	    0, bpp)) != 0) {
 		*bpp = NULL;
 		return (error);
@@ -1007,14 +1001,27 @@ removede(struct denode *pdep, struct denode *dep)
 	    dep->de_Name, dep, offset);
 #endif
 
-	dep->de_refcnt--;
+	if (--dep->de_refcnt == 0) {
+#ifndef MAKEFS
+		struct denode_key old_key = dep->de_key;
+		struct denode_key new_key = dep->de_key;
+
+		KASSERT(new_key.dk_dirgen == NULL);
+		new_key.dk_dirgen = dep;
+		vcache_rekey_enter(pmp->pm_mountp, DETOV(dep), &old_key,
+		    sizeof(old_key), &new_key, sizeof(new_key));
+		dep->de_key = new_key;
+		vcache_rekey_exit(pmp->pm_mountp, DETOV(dep), &old_key,
+		    sizeof(old_key), &dep->de_key, sizeof(dep->de_key));
+#endif
+	}
 	offset += sizeof(struct direntry);
 	do {
 		offset -= sizeof(struct direntry);
 		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
 		if (error)
 			return error;
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    B_MODIFY, &bp);
 		if (error) {
 			return error;
@@ -1088,7 +1095,7 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 				return error;
 			}
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				return error;
 			}
@@ -1138,7 +1145,7 @@ findwin95(struct denode *dep)
 	for (cn = 0;; cn++) {
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
 			return win95;
-		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp)) {
 			return win95;
 		}

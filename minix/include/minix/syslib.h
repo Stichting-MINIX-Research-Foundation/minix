@@ -37,8 +37,8 @@ int sys_clear(endpoint_t proc_ep);
 int sys_exit(void);
 int sys_trace(int req, endpoint_t proc_ep, long addr, long *data_p);
 
-int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int
-	cpu);
+int sys_schedule(endpoint_t proc_ep, int priority, int quantum, int cpu,
+	int niced);
 int sys_schedctl(unsigned flags, endpoint_t proc_ep, int priority, int
 	quantum, int cpu);
 
@@ -48,8 +48,8 @@ int sys_schedctl(unsigned flags, endpoint_t proc_ep, int priority, int
 #define sys_resume(proc_ep) sys_runctl(proc_ep, RC_RESUME, 0)
 int sys_runctl(endpoint_t proc_ep, int action, int flags);
 
-int sys_update(endpoint_t src_ep, endpoint_t dst_ep);
-int sys_statectl(int request);
+int sys_update(endpoint_t src_ep, endpoint_t dst_ep, int flags);
+int sys_statectl(int request, void* address, int length);
 int sys_privctl(endpoint_t proc_ep, int req, void *p);
 int sys_privquery_mem(endpoint_t proc_ep, phys_bytes physstart,
 	phys_bytes physlen);
@@ -190,11 +190,11 @@ int sys_diagctl(int ctl, char *arg1, int arg2);
 #define sys_getpriv(dst, nr)	sys_getinfo(GET_PRIV, dst, 0,0, nr)
 #define sys_getidletsc(dst)	sys_getinfo(GET_IDLETSC, dst, 0,0,0)
 #define sys_getregs(dst,nr)	sys_getinfo(GET_REGS, dst, 0,0, nr)
-#define sys_getrusage(dst, nr)  sys_getinfo(GET_RUSAGE, dst, 0,0, nr)
+#define sys_getcputicks(dst,nr)	sys_getinfo(GET_CPUTICKS, dst, 0,0, nr)
 int sys_getinfo(int request, void *val_ptr, int val_len, void *val_ptr2,
 	int val_len2);
 int sys_whoami(endpoint_t *ep, char *name, int namelen, int
-	*priv_flags);
+	*priv_flags, int* init_flags);
 
 /* Signal control. */
 int sys_kill(endpoint_t proc_ep, int sig);
@@ -253,7 +253,7 @@ int pci_get_bar(int devind, int port, u32_t *base, u32_t *size, int
 
 /* Profiling. */
 int sys_sprof(int action, int size, int freq, int type, endpoint_t
-	endpt, void *ctl_ptr, void *mem_ptr);
+	endpt, vir_bytes ctl_ptr, vir_bytes mem_ptr);
 
 /* machine context */
 int sys_getmcontext(endpoint_t proc, vir_bytes mcp);
@@ -275,6 +275,14 @@ int copyfd(endpoint_t endpt, int fd, int what);
 #define COPYFD_FROM	0	/* copy file descriptor from remote process */
 #define COPYFD_TO	1	/* copy file descriptor to remote process */
 #define COPYFD_CLOSE	2	/* close file descriptor in remote process */
+
+/*
+ * These are also the event numbers used in PROC_EVENT messages, but in order
+ * to allow for subscriptions to multiple events, they form a bit mask.
+ */
+#define PROC_EVENT_EXIT		0x01	/* process has exited */
+#define PROC_EVENT_SIGNAL	0x02	/* process has caught signal */
+int proceventmask(unsigned int mask);
 
 #endif /* _SYSLIB_H */
 

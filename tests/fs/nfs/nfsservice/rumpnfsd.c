@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.7 2011/02/28 21:21:14 pooka Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.8 2014/05/12 15:31:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -95,9 +95,10 @@ main(int argc, char *argv[])
 	}
 
 	/* mini-mtree for mountd */
-	rump_sys_mkdir("/var", 0777);
-	rump_sys_mkdir("/var/run", 0777);
-	rump_sys_mkdir("/var/db", 0777);
+	static const char *const dirs[] = { "/var", "/var/run", "/var/db" };
+	for (size_t i = 0; i < __arraycount(dirs); i++)
+		if (rump_sys_mkdir(dirs[i], 0777) == -1)
+			err(1, "can't mkdir `%s'", dirs[i]);
 
 	if (ffs_fstest_newfs(NULL, &fsarg,
 	    imagename, FSTEST_IMGSIZE, NULL) != 0)

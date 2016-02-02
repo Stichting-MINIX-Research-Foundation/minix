@@ -1,0 +1,17 @@
+#! /bin/sh
+
+case "$#" in
+0)
+	t=$(date +%Y%m%d)
+	;;
+*)
+	t=$1
+	;;
+esac
+ac=ac.$$
+awk -F, -v t=$t '/AC_INIT/ { printf("%s,[%s],%s\n", $1, t, $3); next} { print }' dist/configure.ac > $ac && mv $ac dist/configure.ac
+(cd dist && autoconf && autoheader)
+mv dist netpgp-$t
+tar --exclude CVS --exclude .libs --exclude autom4te.cache --exclude \*.lo --exclude \*.o --exclude \*.la -cvzf netpgp-$t.tar.gz netpgp-$t
+mv netpgp-$t dist
+

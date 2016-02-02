@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.33 2012/11/18 17:41:53 manu Exp $	*/
+/*	$NetBSD: limits.h,v 1.34 2015/05/29 07:37:31 manu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -75,18 +75,20 @@
  */
 
 /*
- * The following 3 are not part of the standard
- * but left here for compatibility
+ * The following 3 are defined in 
+ * Open Group Base Specifications Issue 7
  */
 #define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
-#define	_POSIX_THREAD_KEYS_MAX			256
+#define	_POSIX_THREAD_KEYS_MAX			128
 #define	_POSIX_THREAD_THREADS_MAX		64
 
 /*
  * These are the correct names, defined in terms of the above
+ * except for PTHREAD_KEYS_MAX which is bigger than standard 
+ * mandated minimum value _POSIX_THREAD_KEYS_MAX.
  */
 #define	PTHREAD_DESTRUCTOR_ITERATIONS 	_POSIX_THREAD_DESTRUCTOR_ITERATIONS
-#define	PTHREAD_KEYS_MAX		_POSIX_THREAD_KEYS_MAX
+#define	PTHREAD_KEYS_MAX		256
 /* Not yet: PTHREAD_STACK_MIN */
 #define	PTHREAD_THREADS_MAX		_POSIX_THREAD_THREADS_MAX
 

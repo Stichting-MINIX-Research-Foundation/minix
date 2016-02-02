@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: base64.c,v 1.16 2014/11/24 15:43:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 #if 0
 static const char rcsid[] = "Id: base64.c,v 1.4 2005/04/27 04:56:34 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $");
+__RCSID("$NetBSD: base64.c,v 1.16 2014/11/24 15:43:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -155,11 +155,11 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 		input[2] = *src++;
 		srclength -= 3;
 
-		output[0] = (u_int32_t)input[0] >> 2;
-		output[1] = ((u_int32_t)(input[0] & 0x03) << 4) +
-		    ((u_int32_t)input[1] >> 4);
-		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
-		    ((u_int32_t)input[2] >> 6);
+		output[0] = (uint32_t)input[0] >> 2;
+		output[1] = ((uint32_t)(input[0] & 0x03) << 4) +
+		    ((uint32_t)input[1] >> 4);
+		output[2] = ((uint32_t)(input[1] & 0x0f) << 2) +
+		    ((uint32_t)input[2] >> 6);
 		output[3] = input[2] & 0x3f;
 		Assert(output[0] < 64);
 		Assert(output[1] < 64);
@@ -167,7 +167,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 		Assert(output[3] < 64);
 
 		if (datalength + 4 > targsize)
-			return (-1);
+			return -1;
 		target[datalength++] = Base64[output[0]];
 		target[datalength++] = Base64[output[1]];
 		target[datalength++] = Base64[output[2]];
@@ -181,17 +181,17 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 		for (i = 0; i < srclength; i++)
 			input[i] = *src++;
 	
-		output[0] = (u_int32_t)input[0] >> 2;
-		output[1] = ((u_int32_t)(input[0] & 0x03) << 4) +
-		    ((u_int32_t)input[1] >> 4);
-		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
-		    ((u_int32_t)input[2] >> 6);
+		output[0] = (uint32_t)input[0] >> 2;
+		output[1] = ((uint32_t)(input[0] & 0x03) << 4) +
+		    ((uint32_t)input[1] >> 4);
+		output[2] = ((uint32_t)(input[1] & 0x0f) << 2) +
+		    ((uint32_t)input[2] >> 6);
 		Assert(output[0] < 64);
 		Assert(output[1] < 64);
 		Assert(output[2] < 64);
 
 		if (datalength + 4 > targsize)
-			return (-1);
+			return -1;
 		target[datalength++] = Base64[output[0]];
 		target[datalength++] = Base64[output[1]];
 		if (srclength == 1U)
@@ -201,7 +201,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 		target[datalength++] = Pad64;
 	}
 	if (datalength >= targsize)
-		return (-1);
+		return -1;
 	target[datalength] = '\0';	/*%< Returned value doesn't count \\0. */
 	_DIAGASSERT(__type_fit(int, datalength));
 	return (int)datalength;
@@ -218,6 +218,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	size_t tarindex;
 	int state, ch;
+	u_char nextbyte;
 	char *pos;
 
 	_DIAGASSERT(src != NULL);
@@ -234,41 +235,44 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			break;
 
 		pos = strchr(Base64, ch);
-		if (pos == 0) 		/*%< A non-base64 character. */
-			return (-1);
+		if (pos == NULL) 	/*%< A non-base64 character. */
+			return -1;
 
 		switch (state) {
 		case 0:
 			if (target) {
-				if ((size_t)tarindex >= targsize)
-					return (-1);
-				target[tarindex] =
-				    (unsigned char)(pos - Base64) << 2;
+				if (tarindex >= targsize)
+					return -1;
+				target[tarindex] = (u_char)(pos - Base64) << 2;
 			}
 			state = 1;
 			break;
 		case 1:
 			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
-					return (-1);
+				if (tarindex >= targsize)
+					return -1;
 				target[tarindex] |= 
-				    (u_int32_t)(pos - Base64) >> 4;
-				target[tarindex+1]  = 
-				    (unsigned char)
-				    (((pos - Base64) & 0x0f) << 4);
+				    (uint32_t)(pos - Base64) >> 4;
+				nextbyte = (u_char)((pos - Base64) & 0x0f) << 4;
+				if (tarindex + 1 < targsize)
+					target[tarindex + 1] = nextbyte;
+				else if (nextbyte)
+					return -1;
 			}
 			tarindex++;
 			state = 2;
 			break;
 		case 2:
 			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
-					return (-1);
+				if (tarindex >= targsize)
+					return -1;
 				target[tarindex] |= 
-					(u_int32_t)(pos - Base64) >> 2;
-				target[tarindex+1] =
-				    (unsigned char)
-				    (((pos - Base64) & 0x03) << 6);
+					(uint32_t)(pos - Base64) >> 2;
+				nextbyte = (u_char)((pos - Base64) & 0x03) << 6;
+				if (tarindex + 1 < targsize)
+					target[tarindex + 1] = nextbyte;
+				else if (nextbyte)
+					return -1;
 			}
 			tarindex++;
 			state = 3;
@@ -276,9 +280,8 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 		case 3:
 			if (target) {
 				if ((size_t)tarindex >= targsize)
-					return (-1);
-				target[tarindex] |=
-				    (unsigned char)(pos - Base64);
+					return -1;
+				target[tarindex] |= (u_char)(pos - Base64);
 			}
 			tarindex++;
 			state = 0;
@@ -298,7 +301,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 		switch (state) {
 		case 0:		/*%< Invalid = in first position */
 		case 1:		/*%< Invalid = in second position */
-			return (-1);
+			return -1;
 
 		case 2:		/*%< Valid, means one byte of info */
 			/* Skip any number of spaces. */
@@ -307,7 +310,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 					break;
 			/* Make sure there is another trailing = sign. */
 			if (ch != Pad64)
-				return (-1);
+				return -1;
 			ch = *src++;		/*%< Skip the = */
 			/* Fall through to "single trailing =" case. */
 			/* FALLTHROUGH */
@@ -319,7 +322,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			 */
 			for (; ch != '\0'; ch = (u_char) *src++)
 				if (!isspace(ch))
-					return (-1);
+					return -1;
 
 			/*
 			 * Now make sure for cases 2 and 3 that the "extra"
@@ -327,8 +330,9 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			 * zeros.  If we don't check them, they become a
 			 * subliminal channel.
 			 */
-			if (target && target[tarindex] != 0)
-				return (-1);
+			if (target && tarindex < targsize &&
+			    target[tarindex] != 0)
+				return -1;
 		}
 	} else {
 		/*
@@ -336,7 +340,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 		 * have no partial bytes lying around.
 		 */
 		if (state != 0)
-			return (-1);
+			return -1;
 	}
 
 	_DIAGASSERT(__type_fit(int, tarindex));

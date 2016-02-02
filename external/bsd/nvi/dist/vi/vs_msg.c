@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
+/*	$NetBSD: vs_msg.c,v 1.6 2014/01/26 21:43:45 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,9 +10,14 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char sccsid[] = "Id: vs_msg.c,v 10.85 2001/07/29 19:07:31 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:31 ";
 #endif /* not lint */
+#else
+__RCSID("$NetBSD: vs_msg.c,v 1.6 2014/01/26 21:43:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: menuutils.c,v 1.3 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: menuutils.c,v 1.4 2014/04/06 19:11:26 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -61,45 +61,12 @@ docommand(char *arg)
 	command_help(NULL);
 }
 
-void
-#if !defined(__minix)
+__dead void
 bootmenu(void)
-#else
-prompt(int allowreturn)
-#endif /* !defined(__minix) */
-{
-	char input[80];
-
-	for (;;) {
-		char *c = input;
-
-		input[0] = '\0';
-		printf("> ");
-#if !defined(__minix)
-		gets(input);
-#else
-		editline(input, sizeof(input), NULL);
-#endif /* !defined(__minix) */
-
-		/*
-		 * Skip leading whitespace.
-		 */
-		while (*c == ' ')
-			c++;
 #if defined(__minix)
-		if (allowreturn && !strcmp(c, "menu"))
-			break;
-#endif /* defined(__minix) */
-		if (*c)
-			docommand(c);
-	}
-}
-
-#if defined(__minix)
-void
-bootmenu(void)
 {
 	prompt(0);
+	while(1); /* This should never return. */
 }
 
 /* Derived from libsa gets(). */
@@ -207,4 +174,34 @@ editline(char *buf, size_t size, char *input)
 	}
 	/*NOTREACHED*/
 }
+
+void
+prompt(int allowreturn)
 #endif /* defined(__minix) */
+{
+	char input[80];
+
+	for (;;) {
+		char *c = input;
+
+		input[0] = '\0';
+		printf("> ");
+#if !defined(__minix)
+		gets(input);
+#else
+		editline(input, sizeof(input), NULL);
+#endif /* !defined(__minix) */
+
+		/*
+		 * Skip leading whitespace.
+		 */
+		while (*c == ' ')
+			c++;
+#if defined(__minix)
+		if (allowreturn && !strcmp(c, "menu"))
+			break;
+#endif /* defined(__minix) */
+		if (*c)
+			docommand(c);
+	}
+}

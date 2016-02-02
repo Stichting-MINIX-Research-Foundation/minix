@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.2 2014/03/22 19:38:46 jakllsch Exp $")
 #endif
 
 /*
@@ -14,7 +14,7 @@
  * source pointer is aligned to a word boundary, it then copies by
  * words until it finds a word containing a zero byte, and finally
  * copies by bytes until the end of the string is reached.
- *	
+ *
  * While this may result in unaligned stores if the source and
  * destination pointers are unaligned with respect to each other,
  * it is still faster than either byte copies or the overhead of
@@ -53,7 +53,7 @@ ENTRY(strcpy)
 	leal	-0x01010101(%ebx),%edx
 	testl	$0x80808080,%edx
 	je	.Lloop
-	
+
 	/*
 	 * In rare cases, the above loop may exit prematurely. We must
 	 * return to the loop if none of the bytes in the word equal 0.
@@ -84,3 +84,4 @@ ENTRY(strcpy)
 	movl	8(%esp),%eax
 	popl	%ebx
 	ret
+END(strcpy)

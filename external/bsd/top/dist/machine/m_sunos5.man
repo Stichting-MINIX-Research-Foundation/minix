@@ -1,0 +1,97 @@
+.SH "SUNOS 5 NOTES"
+CPU percentage is calculated as a fraction of total available computing
+resources.  Hence on a multiprocessor machine a single threaded process 
+can never consume cpu time in excess of 1 divided by the number of processors.
+For example, on a 4 processor machine, a single threaded process will 
+never show a cpu percentage higher than 25%.  The CPU percentage column
+will always total approximately 100, regardless of the number of processors.
+
+The kernel summary line shows the following information, all displayed
+as a per-second rate:
+.TP 9
+.B ctxsw
+Context switches.
+.TP 9
+.B trap
+Number of traps.
+.TP 9
+.B intr
+Number of interrupts.
+.TP 9
+.B syscall
+Number of system calls.
+.TP 9
+.B fork
+Number of forks and vforks.
+.TP 9
+.B flt
+Number of page faults.
+.TP 9
+.B pgin
+Number of kilobytes paged in to physical memory.
+.TP 9
+.B pgout
+Number of kilobytes paged out from physical memory.
+.PP
+The memory summary line displays the following: 
+.TP 14
+.B "phys mem" 
+Total amount of physical memory that can be allocated for use by processes
+(it does not include memory reserved for the kernel's use).
+.TP 14
+.B "free mem"
+The amount of unallocated physical memory.
+.TP 14
+.B "total swap"
+The total amount of swap area allocated on disk.
+.TP 14
+.B "free swap" 
+The amount of swap area on disk that is still available.
+.PP
+Unlike previous versions of
+.IR top ,
+the swap figures will differ from the summary output of
+.IR swap (1M)
+since the latter includes physical memory as well.
+.PP
+The column 
+.B NLWP
+indicates the number of lightweight processes in a process.
+This usually corresponds to the number of threads in that process.
+.PP
+The display of individual threads can be toggled with the
+synonymous commands
+.B t
+and
+.BR H.
+Information about state, priority, CPU time and percent CPU are
+shown for each individual thread.  Other information is identical
+for all threads in the same process.  In this display the column
+.B LWP
+replaces 
+.B NLWP
+and shows the lightweight process id.  The
+column names 
+.B LWP
+and
+.B NLWP
+are consistent with
+.IR ps (1).
+.PP
+In BSD Unix, process priority was represented internally as a signed
+offset from a zero value with an unsigned value.  The "zero" value
+was usually something like 20, allowing for a range of priorities
+from -20 to 20.  As implemented on SunOS 5, older versions of top
+continued to interpret process priority in this manner, even though
+it was no longer correct.  Starting with top version 3.5, this was
+changed to agree with the rest of the system.
+.PP
+Long options are not currently available in Solaris.
+.PP
+The SunOS 5 (Solaris 2) port was originally written by Torsten Kasch,
+<torsten@techfak.uni-bielefeld.de>.  Many contributions have been
+provided by Casper Dik <Casper.Dik@sun.com>.
+Support for multi-cpu, calculation of CPU% and memory stats provided by
+Robert Boucher <boucher@sofkin.ca>, Marc Cohen <marc@aai.com>, 
+Charles Hedrick <hedrick@geneva.rutgers.edu>, and
+William L. Jones <jones@chpc>.

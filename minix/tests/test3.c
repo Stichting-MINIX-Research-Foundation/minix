@@ -167,7 +167,8 @@ void test3d()
   if (strncmp(p, "/dev/tty", 8) != 0) e(3);	/* MINIX convention */
   
   if ( (p = ttyname(0)) == NULL) e(4);
-  if (strncmp(p, "/dev/tty", 8) != 0 && strcmp(p, "/dev/console") != 0) e(5);
+  if (strncmp(p, "/dev/tty", 8) != 0 && strcmp(p, "/dev/console") != 0 &&
+      strncmp(p, "/dev/pts/", 9) != 0) e(5);
   if ( (p = ttyname(3)) != NULL) e(6);
   if (ttyname(5000) != NULL) e(7);
   if ( (fd = creat("T3a", 0777)) < 0) e(8);

@@ -2,35 +2,35 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	add_route arp at backup btrace \
+SUBDIR=	add_route arp at backup \
 	cawf cdprobe \
-	ci cleantmp cmp co \
+	cleantmp \
 	compress crc cron crontab \
-	decomp16 DESCRIBE devmand devsize dhcpd \
-	dhrystone diff diskctl \
-	eject fbdctl \
-	find fix format fsck.mfs \
+	DESCRIBE devmand devsize dhcpd \
+	dhrystone \
+	eject \
+	fix format fsck.mfs \
 	gcov-pull host \
 	hostaddr ifconfig ifdef \
-	intr ipcrm ipcs irdpd isoread \
+	intr irdpd isoread \
 	loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	mount mt netconf \
 	nonamed \
 	postinstall prep printroot \
-	profile progressbar pr_routes ps pwdauth \
-	ramdisk rarpd rawspeed rcp readclock \
+	profile progressbar pr_routes pwdauth \
+	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
-	rotate rsh rshd service setup \
+	rotate service setup \
 	slip spell sprofalyze sprofdiff srccrc \
-	svclog svrctl swifi synctree sysenv \
+	svrctl swifi synctree sysenv \
 	tcpd tcpdp tcpstat telnet \
-	telnetd term termcap tget time \
+	telnetd term termcap tget \
 	truncate udpstat umount \
 	update version vol \
 	writeisofs fetch \
-	zdump zmodem pkgin_cd pkgin_all pkgin_sets \
-	worldstone updateboot update_bootcfg \
+	zmodem pkgin_cd pkgin_all pkgin_sets \
+	worldstone updateboot update_asr update_bootcfg \
 	atnormalize dosread fdisk loadfont \
 	autopart part partition playwave  \
 	recwave repartition screendump

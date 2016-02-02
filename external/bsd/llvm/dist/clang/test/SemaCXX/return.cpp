@@ -102,3 +102,21 @@ namespace return_has_expr {
     }
   };
 }
+
+// rdar://15366494
+// pr17759
+namespace ctor_returns_void {
+  void f() {}
+  struct S { 
+    S() { return f(); }; // expected-error {{constructor 'S' must not return void expression}}
+    ~S() { return f(); } // expected-error {{destructor '~S' must not return void expression}}
+  };
+}
+
+void cxx_unresolved_expr() {
+  // The use of an undeclared variable tricks clang into building a
+  // CXXUnresolvedConstructExpr, and the missing ')' gives it an invalid source
+  // location for its rparen.  Check that emitting a diag on the range of the
+  // expr doesn't assert.
+  return int(undeclared, 4; // expected-error {{expected ')'}} expected-note{{to match this '('}} expected-error {{void function 'cxx_unresolved_expr' should not return a value}} expected-error {{use of undeclared identifier 'undeclared'}}
+}

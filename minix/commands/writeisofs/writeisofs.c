@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <partition.h>
+#include <inttypes.h>
 
 #include <sys/stat.h>
 
@@ -309,7 +310,7 @@ maketree(struct node *thisdir, char *name, int level)
 	}
 
 	if(!(dirnodes = malloc(sizeof(*dirnodes)*reserved_dirnodes))) {
-		fprintf(stderr, "couldn't allocate dirnodes (%d bytes)\n",
+		fprintf(stderr, "couldn't allocate dirnodes (%zu bytes)\n",
 			sizeof(*dirnodes)*reserved_dirnodes);
 		exit(1);
 	}
@@ -508,7 +509,7 @@ makepathtables(struct node *root, int littleendian, int *bytes, int fd)
 	if(*bytes % ISO_SECTOR) {
 		ssize_t x;
 		x = ISO_SECTOR-(*bytes % ISO_SECTOR);
-		write(fd, block, x);
+		Write(fd, block, x);
 		*bytes += x;
 	}
 
@@ -595,7 +596,7 @@ write_direntry(struct node * n, char *origname, int fd)
 
 	if(total != entry.recordsize || (total % 2) != 0) {
 		printf("%2d, %2d!  ", total, entry.recordsize);
-		printf("%3d = %3d - %2d + %2d\n",
+		printf("%3d = %3zu - %2zu + %2d\n",
 		entry.recordsize, sizeof(entry), sizeof(entry.name), namelen);
 	}
 
@@ -833,7 +834,8 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 			exit(1);
 		}
 
-		fprintf(stderr, " * appended sector info: 0x%llx len 0x%x\n",
+		fprintf(stderr,
+			" * appended sector info: 0x%"PRIx64" len 0x%x\n",
 			bap[0].sector, bap[0].length);
 
 		addr = buf;
@@ -891,7 +893,8 @@ writebootrecord(int fd, int *currentsector, int bootcatalogsector)
 	w += Writefield(fd, bootrecord.zero2);
 
 	if(w != ISO_SECTOR) {
-		fprintf(stderr, "WARNING: something went wrong - boot record (%d) isn't a sector size (%d)\n",
+		fprintf(stderr, "WARNING: something went wrong - "
+			"boot record (%zd) isn't a sector size (%d)\n",
 			w, ISO_SECTOR);
 	}
 
@@ -926,8 +929,8 @@ main(int argc, char *argv[])
 
 	if(sizeof(struct pvd) != ISO_SECTOR) {
 		fprintf(stderr, "Something confusing happened at\n"
-			"compile-time; pvd should be a sector size. %d != %d\n",
-			sizeof(struct pvd), ISO_SECTOR);
+			"compile-time; pvd should be a sector size. "
+			"%zd != %d\n", sizeof(struct pvd), ISO_SECTOR);
 		return 1;
 	}
 

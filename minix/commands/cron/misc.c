@@ -21,7 +21,7 @@ void *allocate(size_t len)
 	void *mem;
 
 	if ((mem= malloc(len)) == nil) {
-		log(LOG_ALERT, "Out of memory, exiting\n");
+		cronlog(LOG_ALERT, "Out of memory, exiting\n");
 		exit(1);
 	}
 	alloc_count++;
@@ -44,7 +44,7 @@ void selectlog(enum logto where)
 	logto= where;
 }
 
-void log(int level, const char *fmt, ...)
+void cronlog(int level, const char *fmt, ...)
 /* Like syslog(), but may go to stderr. */
 {
 	va_list ap;

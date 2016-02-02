@@ -1,0 +1,65 @@
+#!/bin/sh
+
+LABEL=e1000_0
+NAME=e1000
+EXEDIR=/service
+EXE=$EXEDIR/$NAME
+
+:>log
+
+start_driver()
+{
+	service up $EXE -label $LABEL -script /etc/rs.single -period 3HZ
+}
+
+do_one()
+{
+	# $1 = test-nr, $2 = count, $3 = seed
+	pid=''
+	while [ X"$pid" = X ]
+	do
+		pid=`ps ax | grep $NAME | grep -v grep |
+			sed 's,^[ 	]*,,;s,[ 	].*,,'`
+		if [ X"$pid" != X ]
+		then
+			break
+		fi
+		sleep 10
+	done
+	echo pid = $pid
+	swifi -f $EXE $pid $1 $2 $3 >/tmp/out
+	sleep 1
+	kill -0 $pid &&
+		echo "driver survived, params: test $1, count $2, seed $3" ||
+		start_driver
+}
+
+one_round()
+{
+	# $1 = count, $2 = seed
+	count=$1
+	seed=$2
+	echo "Seed: $seed" >> log
+	sync
+	do_one 6 $count $seed	# Source fault
+	do_one 5 $count $seed	# Destination fault
+	do_one 8 $count $seed	# Pointer fault
+	do_one 14 $count $seed	# Interface fault
+	do_one 12 $count $seed	# Loop fault
+	do_one 0 $count $seed	# Text fault
+	do_one 4 $count $seed	# Nop fault
+}
+
+# Start our own driver.
+service down $LABEL
+sleep 10	# Allow driver to die
+start_driver
+
+i=0
+i=4000
+while [ $i -lt 10000 ]
+do
+	echo "Seed: $i"
+	one_round 100 $i
+	i=`expr $i + 1`
+done

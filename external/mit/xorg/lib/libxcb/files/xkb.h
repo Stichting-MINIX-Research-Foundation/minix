@@ -21,7 +21,7 @@ extern "C" {
 
 #define XCB_XKB_MAJOR_VERSION 1
 #define XCB_XKB_MINOR_VERSION 0
-  
+
 extern xcb_extension_t xcb_xkb_id;
 
 typedef enum xcb_xkb_const_t {
@@ -118,40 +118,20 @@ typedef enum xcb_xkb_control_t {
     XCB_XKB_CONTROL_CONTROLS_ENABLED = 2147483648
 } xcb_xkb_control_t;
 
-typedef enum xcb_xkb_axfb_opt_t {
-    XCB_XKB_AXFB_OPT_SK_PRESS_FB = 1,
-    XCB_XKB_AXFB_OPT_SK_ACCEPT_FB = 2,
-    XCB_XKB_AXFB_OPT_FEATURE_FB = 4,
-    XCB_XKB_AXFB_OPT_SLOW_WARN_FB = 8,
-    XCB_XKB_AXFB_OPT_INDICATOR_FB = 16,
-    XCB_XKB_AXFB_OPT_STICKY_KEYS_FB = 32,
-    XCB_XKB_AXFB_OPT_SK_RELEASE_FB = 64,
-    XCB_XKB_AXFB_OPT_SK_REJECT_FB = 128,
-    XCB_XKB_AXFB_OPT_BK_REJECT_FB = 256,
-    XCB_XKB_AXFB_OPT_DUMB_BELL = 512
-} xcb_xkb_axfb_opt_t;
-
-typedef enum xcb_xkb_axsk_opt_t {
-    XCB_XKB_AXSK_OPT_TWO_KEYS = 64,
-    XCB_XKB_AXSK_OPT_LATCH_TO_LOCK = 128
-} xcb_xkb_axsk_opt_t;
-
-/**
- * @brief xcb_xkb_ax_option_t
- **/
-typedef union xcb_xkb_ax_option_t {
-    uint16_t fbopt; /**<  */
-    uint16_t skopt; /**<  */
+typedef enum xcb_xkb_ax_option_t {
+    XCB_XKB_AX_OPTION_SK_PRESS_FB = 1,
+    XCB_XKB_AX_OPTION_SK_ACCEPT_FB = 2,
+    XCB_XKB_AX_OPTION_FEATURE_FB = 4,
+    XCB_XKB_AX_OPTION_SLOW_WARN_FB = 8,
+    XCB_XKB_AX_OPTION_INDICATOR_FB = 16,
+    XCB_XKB_AX_OPTION_STICKY_KEYS_FB = 32,
+    XCB_XKB_AX_OPTION_TWO_KEYS = 64,
+    XCB_XKB_AX_OPTION_LATCH_TO_LOCK = 128,
+    XCB_XKB_AX_OPTION_SK_RELEASE_FB = 256,
+    XCB_XKB_AX_OPTION_SK_REJECT_FB = 512,
+    XCB_XKB_AX_OPTION_BK_REJECT_FB = 1024,
+    XCB_XKB_AX_OPTION_DUMB_BELL = 2048
 } xcb_xkb_ax_option_t;
-
-/**
- * @brief xcb_xkb_ax_option_iterator_t
- **/
-typedef struct xcb_xkb_ax_option_iterator_t {
-    xcb_xkb_ax_option_t *data; /**<  */
-    int                  rem; /**<  */
-    int                  index; /**<  */
-} xcb_xkb_ax_option_iterator_t;
 
 typedef uint16_t xcb_xkb_device_spec_t;
 
@@ -170,6 +150,8 @@ typedef enum xcb_xkb_led_class_result_t {
 } xcb_xkb_led_class_result_t;
 
 typedef enum xcb_xkb_led_class_t {
+    XCB_XKB_LED_CLASS_KBD_FEEDBACK_CLASS = 0,
+    XCB_XKB_LED_CLASS_LED_FEEDBACK_CLASS = 4,
     XCB_XKB_LED_CLASS_DFLT_XI_CLASS = 768,
     XCB_XKB_LED_CLASS_ALL_XI_CLASSES = 1280
 } xcb_xkb_led_class_t;
@@ -191,6 +173,8 @@ typedef enum xcb_xkb_bell_class_result_t {
 } xcb_xkb_bell_class_result_t;
 
 typedef enum xcb_xkb_bell_class_t {
+    XCB_XKB_BELL_CLASS_KBD_FEEDBACK_CLASS = 0,
+    XCB_XKB_BELL_CLASS_BELL_FEEDBACK_CLASS = 5,
     XCB_XKB_BELL_CLASS_DFLT_XI_CLASS = 768
 } xcb_xkb_bell_class_t;
 
@@ -307,13 +291,13 @@ typedef enum xcb_xkb_explicit_t {
     XCB_XKB_EXPLICIT_KEY_TYPE_1 = 1
 } xcb_xkb_explicit_t;
 
-typedef enum xcb_xkb_sym_interpret_t {
-    XCB_XKB_SYM_INTERPRET_NONE_OF = 0,
-    XCB_XKB_SYM_INTERPRET_ANY_OF_OR_NONE = 1,
-    XCB_XKB_SYM_INTERPRET_ANY_OF = 2,
-    XCB_XKB_SYM_INTERPRET_ALL_OF = 3,
-    XCB_XKB_SYM_INTERPRET_EXACTLY = 4
-} xcb_xkb_sym_interpret_t;
+typedef enum xcb_xkb_sym_interpret_match_t {
+    XCB_XKB_SYM_INTERPRET_MATCH_NONE_OF = 0,
+    XCB_XKB_SYM_INTERPRET_MATCH_ANY_OF_OR_NONE = 1,
+    XCB_XKB_SYM_INTERPRET_MATCH_ANY_OF = 2,
+    XCB_XKB_SYM_INTERPRET_MATCH_ALL_OF = 3,
+    XCB_XKB_SYM_INTERPRET_MATCH_EXACTLY = 4
+} xcb_xkb_sym_interpret_match_t;
 
 typedef enum xcb_xkb_sym_interp_match_t {
     XCB_XKB_SYM_INTERP_MATCH_LEVEL_ONE_ONLY = 128,
@@ -436,7 +420,7 @@ typedef struct xcb_xkb_mod_def_iterator_t {
  * @brief xcb_xkb_key_name_t
  **/
 typedef struct xcb_xkb_key_name_t {
-    uint8_t name[4]; /**<  */
+    char name[4]; /**<  */
 } xcb_xkb_key_name_t;
 
 /**
@@ -452,8 +436,8 @@ typedef struct xcb_xkb_key_name_iterator_t {
  * @brief xcb_xkb_key_alias_t
  **/
 typedef struct xcb_xkb_key_alias_t {
-    uint8_t real[4]; /**<  */
-    uint8_t alias[4]; /**<  */
+    char real[4]; /**<  */
+    char alias[4]; /**<  */
 } xcb_xkb_key_alias_t;
 
 /**
@@ -466,27 +450,10 @@ typedef struct xcb_xkb_key_alias_iterator_t {
 } xcb_xkb_key_alias_iterator_t;
 
 /**
- * @brief xcb_xkb_counted_string_8_t
- **/
-typedef struct xcb_xkb_counted_string_8_t {
-    uint8_t length; /**<  */
-} xcb_xkb_counted_string_8_t;
-
-/**
- * @brief xcb_xkb_counted_string_8_iterator_t
- **/
-typedef struct xcb_xkb_counted_string_8_iterator_t {
-    xcb_xkb_counted_string_8_t *data; /**<  */
-    int                         rem; /**<  */
-    int                         index; /**<  */
-} xcb_xkb_counted_string_8_iterator_t;
-
-/**
  * @brief xcb_xkb_counted_string_16_t
  **/
 typedef struct xcb_xkb_counted_string_16_t {
     uint16_t length; /**<  */
-    uint8_t  pad0; /**<  */
 } xcb_xkb_counted_string_16_t;
 
 /**
@@ -503,8 +470,8 @@ typedef struct xcb_xkb_counted_string_16_iterator_t {
  **/
 typedef struct xcb_xkb_kt_map_entry_t {
     uint8_t  active; /**<  */
-    uint8_t  level; /**<  */
     uint8_t  mods_mask; /**<  */
+    uint8_t  level; /**<  */
     uint8_t  mods_mods; /**<  */
     uint16_t mods_vmods; /**<  */
     uint8_t  pad0[2]; /**<  */
@@ -629,38 +596,21 @@ typedef struct xcb_xkb_radio_group_behavior_iterator_t {
 } xcb_xkb_radio_group_behavior_iterator_t;
 
 /**
- * @brief xcb_xkb_overlay_1_behavior_t
+ * @brief xcb_xkb_overlay_behavior_t
  **/
-typedef struct xcb_xkb_overlay_1_behavior_t {
+typedef struct xcb_xkb_overlay_behavior_t {
     uint8_t       type; /**<  */
     xcb_keycode_t key; /**<  */
-} xcb_xkb_overlay_1_behavior_t;
+} xcb_xkb_overlay_behavior_t;
 
 /**
- * @brief xcb_xkb_overlay_1_behavior_iterator_t
+ * @brief xcb_xkb_overlay_behavior_iterator_t
  **/
-typedef struct xcb_xkb_overlay_1_behavior_iterator_t {
-    xcb_xkb_overlay_1_behavior_t *data; /**<  */
-    int                           rem; /**<  */
-    int                           index; /**<  */
-} xcb_xkb_overlay_1_behavior_iterator_t;
-
-/**
- * @brief xcb_xkb_overlay_2_behavior_t
- **/
-typedef struct xcb_xkb_overlay_2_behavior_t {
-    uint8_t type; /**<  */
-    uint8_t key; /**<  */
-} xcb_xkb_overlay_2_behavior_t;
-
-/**
- * @brief xcb_xkb_overlay_2_behavior_iterator_t
- **/
-typedef struct xcb_xkb_overlay_2_behavior_iterator_t {
-    xcb_xkb_overlay_2_behavior_t *data; /**<  */
-    int                           rem; /**<  */
-    int                           index; /**<  */
-} xcb_xkb_overlay_2_behavior_iterator_t;
+typedef struct xcb_xkb_overlay_behavior_iterator_t {
+    xcb_xkb_overlay_behavior_t *data; /**<  */
+    int                         rem; /**<  */
+    int                         index; /**<  */
+} xcb_xkb_overlay_behavior_iterator_t;
 
 /**
  * @brief xcb_xkb_permament_lock_behavior_t
@@ -697,38 +647,21 @@ typedef struct xcb_xkb_permament_radio_group_behavior_iterator_t {
 } xcb_xkb_permament_radio_group_behavior_iterator_t;
 
 /**
- * @brief xcb_xkb_permament_overlay_1_behavior_t
+ * @brief xcb_xkb_permament_overlay_behavior_t
  **/
-typedef struct xcb_xkb_permament_overlay_1_behavior_t {
+typedef struct xcb_xkb_permament_overlay_behavior_t {
     uint8_t       type; /**<  */
     xcb_keycode_t key; /**<  */
-} xcb_xkb_permament_overlay_1_behavior_t;
+} xcb_xkb_permament_overlay_behavior_t;
 
 /**
- * @brief xcb_xkb_permament_overlay_1_behavior_iterator_t
+ * @brief xcb_xkb_permament_overlay_behavior_iterator_t
  **/
-typedef struct xcb_xkb_permament_overlay_1_behavior_iterator_t {
-    xcb_xkb_permament_overlay_1_behavior_t *data; /**<  */
-    int                                     rem; /**<  */
-    int                                     index; /**<  */
-} xcb_xkb_permament_overlay_1_behavior_iterator_t;
-
-/**
- * @brief xcb_xkb_permament_overlay_2_behavior_t
- **/
-typedef struct xcb_xkb_permament_overlay_2_behavior_t {
-    uint8_t type; /**<  */
-    uint8_t key; /**<  */
-} xcb_xkb_permament_overlay_2_behavior_t;
-
-/**
- * @brief xcb_xkb_permament_overlay_2_behavior_iterator_t
- **/
-typedef struct xcb_xkb_permament_overlay_2_behavior_iterator_t {
-    xcb_xkb_permament_overlay_2_behavior_t *data; /**<  */
-    int                                     rem; /**<  */
-    int                                     index; /**<  */
-} xcb_xkb_permament_overlay_2_behavior_iterator_t;
+typedef struct xcb_xkb_permament_overlay_behavior_iterator_t {
+    xcb_xkb_permament_overlay_behavior_t *data; /**<  */
+    int                                   rem; /**<  */
+    int                                   index; /**<  */
+} xcb_xkb_permament_overlay_behavior_iterator_t;
 
 /**
  * @brief xcb_xkb_behavior_t
@@ -738,12 +671,12 @@ typedef union xcb_xkb_behavior_t {
     xcb_xkb_default_behavior_t               _default; /**<  */
     xcb_xkb_lock_behavior_t                  lock; /**<  */
     xcb_xkb_radio_group_behavior_t           radioGroup; /**<  */
-    xcb_xkb_overlay_1_behavior_t             overlay1; /**<  */
-    xcb_xkb_overlay_2_behavior_t             overlay2; /**<  */
+    xcb_xkb_overlay_behavior_t               overlay1; /**<  */
+    xcb_xkb_overlay_behavior_t               overlay2; /**<  */
     xcb_xkb_permament_lock_behavior_t        permamentLock; /**<  */
     xcb_xkb_permament_radio_group_behavior_t permamentRadioGroup; /**<  */
-    xcb_xkb_permament_overlay_1_behavior_t   permamentOverlay1; /**<  */
-    xcb_xkb_permament_overlay_2_behavior_t   permamentOverlay2; /**<  */
+    xcb_xkb_permament_overlay_behavior_t     permamentOverlay1; /**<  */
+    xcb_xkb_permament_overlay_behavior_t     permamentOverlay2; /**<  */
     uint8_t                                  type; /**<  */
 } xcb_xkb_behavior_t;
 
@@ -890,23 +823,6 @@ typedef struct xcb_xkb_string8_iterator_t {
 } xcb_xkb_string8_iterator_t;
 
 /**
- * @brief xcb_xkb_property_t
- **/
-typedef struct xcb_xkb_property_t {
-    uint16_t nameLength; /**<  */
-    uint16_t valueLength; /**<  */
-} xcb_xkb_property_t;
-
-/**
- * @brief xcb_xkb_property_iterator_t
- **/
-typedef struct xcb_xkb_property_iterator_t {
-    xcb_xkb_property_t *data; /**<  */
-    int                 rem; /**<  */
-    int                 index; /**<  */
-} xcb_xkb_property_iterator_t;
-
-/**
  * @brief xcb_xkb_outline_t
  **/
 typedef struct xcb_xkb_outline_t {
@@ -1043,210 +959,6 @@ typedef enum xcb_xkb_doodad_type_t {
     XCB_XKB_DOODAD_TYPE_INDICATOR = 4,
     XCB_XKB_DOODAD_TYPE_LOGO = 5
 } xcb_xkb_doodad_type_t;
-
-/**
- * @brief xcb_xkb_common_doodad_t
- **/
-typedef struct xcb_xkb_common_doodad_t {
-    xcb_atom_t name; /**<  */
-    uint8_t    type; /**<  */
-    uint8_t    priority; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    int16_t    angle; /**<  */
-} xcb_xkb_common_doodad_t;
-
-/**
- * @brief xcb_xkb_common_doodad_iterator_t
- **/
-typedef struct xcb_xkb_common_doodad_iterator_t {
-    xcb_xkb_common_doodad_t *data; /**<  */
-    int                      rem; /**<  */
-    int                      index; /**<  */
-} xcb_xkb_common_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_shape_doodad_t
- **/
-typedef struct xcb_xkb_shape_doodad_t {
-    xcb_atom_t name; /**<  */
-    uint8_t    type; /**<  */
-    uint8_t    priority; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    int16_t    angle; /**<  */
-    uint8_t    colorNdx; /**<  */
-    uint8_t    shapeNdx; /**<  */
-    uint8_t    pad0[6]; /**<  */
-} xcb_xkb_shape_doodad_t;
-
-/**
- * @brief xcb_xkb_shape_doodad_iterator_t
- **/
-typedef struct xcb_xkb_shape_doodad_iterator_t {
-    xcb_xkb_shape_doodad_t *data; /**<  */
-    int                     rem; /**<  */
-    int                     index; /**<  */
-} xcb_xkb_shape_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_text_doodad_t
- **/
-typedef struct xcb_xkb_text_doodad_t {
-    xcb_atom_t name; /**<  */
-    uint8_t    type; /**<  */
-    uint8_t    priority; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    int16_t    angle; /**<  */
-    uint16_t   width; /**<  */
-    uint16_t   height; /**<  */
-    uint8_t    colorNdx; /**<  */
-    uint8_t    pad0[3]; /**<  */
-} xcb_xkb_text_doodad_t;
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_text_doodad_text
- ** 
- ** @param const xcb_xkb_text_doodad_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_t *
-xcb_xkb_text_doodad_text (const xcb_xkb_text_doodad_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_text_doodad_font
- ** 
- ** @param const xcb_xkb_text_doodad_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_t *
-xcb_xkb_text_doodad_font (const xcb_xkb_text_doodad_t *R  /**< */);
-
-/**
- * @brief xcb_xkb_text_doodad_iterator_t
- **/
-typedef struct xcb_xkb_text_doodad_iterator_t {
-    xcb_xkb_text_doodad_t *data; /**<  */
-    int                    rem; /**<  */
-    int                    index; /**<  */
-} xcb_xkb_text_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_indicator_doodad_t
- **/
-typedef struct xcb_xkb_indicator_doodad_t {
-    xcb_atom_t name; /**<  */
-    uint8_t    type; /**<  */
-    uint8_t    priority; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    int16_t    angle; /**<  */
-    uint8_t    shapeNdx; /**<  */
-    uint8_t    onColorNdx; /**<  */
-    uint8_t    offColorNdx; /**<  */
-    uint8_t    pad0[5]; /**<  */
-} xcb_xkb_indicator_doodad_t;
-
-/**
- * @brief xcb_xkb_indicator_doodad_iterator_t
- **/
-typedef struct xcb_xkb_indicator_doodad_iterator_t {
-    xcb_xkb_indicator_doodad_t *data; /**<  */
-    int                         rem; /**<  */
-    int                         index; /**<  */
-} xcb_xkb_indicator_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_logo_doodad_t
- **/
-typedef struct xcb_xkb_logo_doodad_t {
-    xcb_atom_t name; /**<  */
-    uint8_t    type; /**<  */
-    uint8_t    priority; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    int16_t    angle; /**<  */
-    uint8_t    colorNdx; /**<  */
-    uint8_t    shapeNdx; /**<  */
-    uint8_t    pad0[6]; /**<  */
-} xcb_xkb_logo_doodad_t;
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_logo_doodad_logo_name
- ** 
- ** @param const xcb_xkb_logo_doodad_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_t *
-xcb_xkb_logo_doodad_logo_name (const xcb_xkb_logo_doodad_t *R  /**< */);
-
-/**
- * @brief xcb_xkb_logo_doodad_iterator_t
- **/
-typedef struct xcb_xkb_logo_doodad_iterator_t {
-    xcb_xkb_logo_doodad_t *data; /**<  */
-    int                    rem; /**<  */
-    int                    index; /**<  */
-} xcb_xkb_logo_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_doodad_t
- **/
-typedef union xcb_xkb_doodad_t {
-    xcb_xkb_common_doodad_t    common; /**<  */
-    xcb_xkb_shape_doodad_t     shape; /**<  */
-    xcb_xkb_text_doodad_t     *text; /**<  */
-    xcb_xkb_indicator_doodad_t indicator; /**<  */
-    xcb_xkb_logo_doodad_t     *logo; /**<  */
-} xcb_xkb_doodad_t;
-
-/**
- * @brief xcb_xkb_doodad_iterator_t
- **/
-typedef struct xcb_xkb_doodad_iterator_t {
-    xcb_xkb_doodad_t *data; /**<  */
-    int               rem; /**<  */
-    int               index; /**<  */
-} xcb_xkb_doodad_iterator_t;
-
-/**
- * @brief xcb_xkb_section_t
- **/
-typedef struct xcb_xkb_section_t {
-    xcb_atom_t name; /**<  */
-    int16_t    top; /**<  */
-    int16_t    left; /**<  */
-    uint16_t   width; /**<  */
-    uint16_t   height; /**<  */
-    int16_t    angle; /**<  */
-    uint8_t    priority; /**<  */
-    uint8_t    nRows; /**<  */
-    uint8_t    nDoodads; /**<  */
-    uint8_t    nOverlays; /**<  */
-    uint8_t    pad0[2]; /**<  */
-} xcb_xkb_section_t;
-
-/**
- * @brief xcb_xkb_section_iterator_t
- **/
-typedef struct xcb_xkb_section_iterator_t {
-    xcb_xkb_section_t *data; /**<  */
-    int                rem; /**<  */
-    int                index; /**<  */
-} xcb_xkb_section_iterator_t;
 
 /**
  * @brief xcb_xkb_listing_t
@@ -1548,7 +1260,7 @@ typedef struct xcb_xkb_sa_lock_ptr_btn_iterator_t {
 } xcb_xkb_sa_lock_ptr_btn_iterator_t;
 
 typedef enum xcb_xkb_sa_set_ptr_dflt_flag_t {
-    XCB_XKB_SA_SET_PTR_DFLT_FLAG_DFLT_BTN_ABSOLUTE = 2,
+    XCB_XKB_SA_SET_PTR_DFLT_FLAG_DFLT_BTN_ABSOLUTE = 4,
     XCB_XKB_SA_SET_PTR_DFLT_FLAG_AFFECT_DFLT_BUTTON = 1
 } xcb_xkb_sa_set_ptr_dflt_flag_t;
 
@@ -1792,6 +1504,7 @@ typedef struct xcb_xkb_sa_lock_device_btn_t {
     uint8_t pad0; /**<  */
     uint8_t button; /**<  */
     uint8_t device; /**<  */
+    uint8_t pad1[3]; /**<  */
 } xcb_xkb_sa_lock_device_btn_t;
 
 /**
@@ -1834,6 +1547,44 @@ typedef struct xcb_xkb_sa_device_valuator_iterator_t {
     int                           rem; /**<  */
     int                           index; /**<  */
 } xcb_xkb_sa_device_valuator_iterator_t;
+
+/**
+ * @brief xcb_xkb_si_action_t
+ **/
+typedef struct xcb_xkb_si_action_t {
+    uint8_t type; /**<  */
+    uint8_t data[7]; /**<  */
+} xcb_xkb_si_action_t;
+
+/**
+ * @brief xcb_xkb_si_action_iterator_t
+ **/
+typedef struct xcb_xkb_si_action_iterator_t {
+    xcb_xkb_si_action_t *data; /**<  */
+    int                  rem; /**<  */
+    int                  index; /**<  */
+} xcb_xkb_si_action_iterator_t;
+
+/**
+ * @brief xcb_xkb_sym_interpret_t
+ **/
+typedef struct xcb_xkb_sym_interpret_t {
+    xcb_keysym_t        sym; /**<  */
+    uint8_t             mods; /**<  */
+    uint8_t             match; /**<  */
+    uint8_t             virtualMod; /**<  */
+    uint8_t             flags; /**<  */
+    xcb_xkb_si_action_t action; /**<  */
+} xcb_xkb_sym_interpret_t;
+
+/**
+ * @brief xcb_xkb_sym_interpret_iterator_t
+ **/
+typedef struct xcb_xkb_sym_interpret_iterator_t {
+    xcb_xkb_sym_interpret_t *data; /**<  */
+    int                      rem; /**<  */
+    int                      index; /**<  */
+} xcb_xkb_sym_interpret_iterator_t;
 
 /**
  * @brief xcb_xkb_action_t
@@ -2040,6 +1791,7 @@ typedef struct xcb_xkb_latch_lock_state_request_t {
     uint8_t               groupLock; /**<  */
     uint8_t               affectModLatches; /**<  */
     uint8_t               pad0; /**<  */
+    uint8_t               pad1; /**<  */
     uint8_t               latchGroup; /**<  */
     uint16_t              groupLatch; /**<  */
 } xcb_xkb_latch_lock_state_request_t;
@@ -2069,38 +1821,38 @@ typedef struct xcb_xkb_get_controls_request_t {
  * @brief xcb_xkb_get_controls_reply_t
  **/
 typedef struct xcb_xkb_get_controls_reply_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             deviceID; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint8_t             mouseKeysDfltBtn; /**<  */
-    uint8_t             numGroups; /**<  */
-    uint8_t             groupsWrap; /**<  */
-    uint8_t             internalModsMask; /**<  */
-    uint8_t             ignoreLockModsMask; /**<  */
-    uint8_t             internalModsRealMods; /**<  */
-    uint8_t             ignoreLockModsRealMods; /**<  */
-    uint8_t             pad0; /**<  */
-    uint16_t            internalModsVmods; /**<  */
-    uint16_t            ignoreLockModsVmods; /**<  */
-    uint16_t            repeatDelay; /**<  */
-    uint16_t            repeatInterval; /**<  */
-    uint16_t            slowKeysDelay; /**<  */
-    uint16_t            debounceDelay; /**<  */
-    uint16_t            mouseKeysDelay; /**<  */
-    uint16_t            mouseKeysInterval; /**<  */
-    uint16_t            mouseKeysTimeToMax; /**<  */
-    uint16_t            mouseKeysMaxSpeed; /**<  */
-    int16_t             mouseKeysCurve; /**<  */
-    xcb_xkb_ax_option_t accessXOption; /**<  */
-    uint16_t            accessXTimeout; /**<  */
-    xcb_xkb_ax_option_t accessXTimeoutOptionsMask; /**<  */
-    xcb_xkb_ax_option_t accessXTimeoutOptionsValues; /**<  */
-    uint8_t             pad1[2]; /**<  */
-    uint32_t            accessXTimeoutMask; /**<  */
-    uint32_t            accessXTimeoutValues; /**<  */
-    uint32_t            enabledControls; /**<  */
-    uint8_t             perKeyRepeat[32]; /**<  */
+    uint8_t  response_type; /**<  */
+    uint8_t  deviceID; /**<  */
+    uint16_t sequence; /**<  */
+    uint32_t length; /**<  */
+    uint8_t  mouseKeysDfltBtn; /**<  */
+    uint8_t  numGroups; /**<  */
+    uint8_t  groupsWrap; /**<  */
+    uint8_t  internalModsMask; /**<  */
+    uint8_t  ignoreLockModsMask; /**<  */
+    uint8_t  internalModsRealMods; /**<  */
+    uint8_t  ignoreLockModsRealMods; /**<  */
+    uint8_t  pad0; /**<  */
+    uint16_t internalModsVmods; /**<  */
+    uint16_t ignoreLockModsVmods; /**<  */
+    uint16_t repeatDelay; /**<  */
+    uint16_t repeatInterval; /**<  */
+    uint16_t slowKeysDelay; /**<  */
+    uint16_t debounceDelay; /**<  */
+    uint16_t mouseKeysDelay; /**<  */
+    uint16_t mouseKeysInterval; /**<  */
+    uint16_t mouseKeysTimeToMax; /**<  */
+    uint16_t mouseKeysMaxSpeed; /**<  */
+    int16_t  mouseKeysCurve; /**<  */
+    uint16_t accessXOption; /**<  */
+    uint16_t accessXTimeout; /**<  */
+    uint16_t accessXTimeoutOptionsMask; /**<  */
+    uint16_t accessXTimeoutOptionsValues; /**<  */
+    uint8_t  pad1[2]; /**<  */
+    uint32_t accessXTimeoutMask; /**<  */
+    uint32_t accessXTimeoutValues; /**<  */
+    uint32_t enabledControls; /**<  */
+    uint8_t  perKeyRepeat[32]; /**<  */
 } xcb_xkb_get_controls_reply_t;
 
 /** Opcode for xcb_xkb_set_controls. */
@@ -2124,7 +1876,7 @@ typedef struct xcb_xkb_set_controls_request_t {
     uint16_t              ignoreLockVirtualMods; /**<  */
     uint8_t               mouseKeysDfltBtn; /**<  */
     uint8_t               groupsWrap; /**<  */
-    xcb_xkb_ax_option_t   accessXOptions; /**<  */
+    uint16_t              accessXOptions; /**<  */
     uint8_t               pad0[2]; /**<  */
     uint32_t              affectEnabledControls; /**<  */
     uint32_t              enabledControls; /**<  */
@@ -2141,8 +1893,8 @@ typedef struct xcb_xkb_set_controls_request_t {
     uint16_t              accessXTimeout; /**<  */
     uint32_t              accessXTimeoutMask; /**<  */
     uint32_t              accessXTimeoutValues; /**<  */
-    xcb_xkb_ax_option_t   accessXTimeoutOptionsMask; /**<  */
-    xcb_xkb_ax_option_t   accessXTimeoutOptionsValues; /**<  */
+    uint16_t              accessXTimeoutOptionsMask; /**<  */
+    uint16_t              accessXTimeoutOptionsValues; /**<  */
     uint8_t               perKeyRepeat[32]; /**<  */
 } xcb_xkb_set_controls_request_t;
 
@@ -2191,11 +1943,15 @@ typedef struct xcb_xkb_get_map_map_t {
     xcb_xkb_key_type_t      *types_rtrn; /**<  */
     xcb_xkb_key_sym_map_t   *syms_rtrn; /**<  */
     uint8_t                 *acts_rtrn_count; /**<  */
+    uint8_t                 *pad2; /**<  */
     xcb_xkb_action_t        *acts_rtrn_acts; /**<  */
     xcb_xkb_set_behavior_t  *behaviors_rtrn; /**<  */
     uint8_t                 *vmods_rtrn; /**<  */
+    uint8_t                 *pad3; /**<  */
     xcb_xkb_set_explicit_t  *explicit_rtrn; /**<  */
+    uint8_t                 *pad4; /**<  */
     xcb_xkb_key_mod_map_t   *modmap_rtrn; /**<  */
+    uint8_t                 *pad5; /**<  */
     xcb_xkb_key_v_mod_map_t *vmodmap_rtrn; /**<  */
 } xcb_xkb_get_map_map_t;
 
@@ -2478,6 +2234,7 @@ typedef struct xcb_xkb_get_named_indicator_reply_t {
     uint8_t    map_realMods; /**<  */
     uint16_t   map_vmod; /**<  */
     uint32_t   map_ctrls; /**<  */
+    uint8_t    supported; /**<  */
     uint8_t    pad0[3]; /**<  */
 } xcb_xkb_get_named_indicator_reply_t;
 
@@ -2544,6 +2301,7 @@ typedef struct xcb_xkb_get_names_value_list_t {
     xcb_atom_t           compatName; /**<  */
     xcb_atom_t          *typeNames; /**<  */
     uint8_t             *nLevelsPerType; /**<  */
+    uint8_t             *alignment_pad; /**<  */
     xcb_atom_t          *ktLevelNames; /**<  */
     xcb_atom_t          *indicatorNames; /**<  */
     xcb_atom_t          *virtualModNames; /**<  */
@@ -2625,76 +2383,6 @@ typedef struct xcb_xkb_set_names_request_t {
 } xcb_xkb_set_names_request_t;
 
 /**
- * @brief xcb_xkb_get_geometry_cookie_t
- **/
-typedef struct xcb_xkb_get_geometry_cookie_t {
-    unsigned int sequence; /**<  */
-} xcb_xkb_get_geometry_cookie_t;
-
-/** Opcode for xcb_xkb_get_geometry. */
-#define XCB_XKB_GET_GEOMETRY 19
-
-/**
- * @brief xcb_xkb_get_geometry_request_t
- **/
-typedef struct xcb_xkb_get_geometry_request_t {
-    uint8_t               major_opcode; /**<  */
-    uint8_t               minor_opcode; /**<  */
-    uint16_t              length; /**<  */
-    xcb_xkb_device_spec_t deviceSpec; /**<  */
-    uint8_t               pad0[2]; /**<  */
-    xcb_atom_t            name; /**<  */
-} xcb_xkb_get_geometry_request_t;
-
-/**
- * @brief xcb_xkb_get_geometry_reply_t
- **/
-typedef struct xcb_xkb_get_geometry_reply_t {
-    uint8_t    response_type; /**<  */
-    uint8_t    deviceID; /**<  */
-    uint16_t   sequence; /**<  */
-    uint32_t   length; /**<  */
-    xcb_atom_t name; /**<  */
-    uint8_t    found; /**<  */
-    uint8_t    pad0; /**<  */
-    uint16_t   widthMM; /**<  */
-    uint16_t   heightMM; /**<  */
-    uint16_t   nProperties; /**<  */
-    uint16_t   nColors; /**<  */
-    uint16_t   nShapes; /**<  */
-    uint16_t   nSections; /**<  */
-    uint16_t   nDoodads; /**<  */
-    uint16_t   nKeyAliases; /**<  */
-    uint8_t    baseColorNdx; /**<  */
-    uint8_t    labelColorNdx; /**<  */
-} xcb_xkb_get_geometry_reply_t;
-
-/** Opcode for xcb_xkb_set_geometry. */
-#define XCB_XKB_SET_GEOMETRY 20
-
-/**
- * @brief xcb_xkb_set_geometry_request_t
- **/
-typedef struct xcb_xkb_set_geometry_request_t {
-    uint8_t               major_opcode; /**<  */
-    uint8_t               minor_opcode; /**<  */
-    uint16_t              length; /**<  */
-    xcb_xkb_device_spec_t deviceSpec; /**<  */
-    uint8_t               nShapes; /**<  */
-    uint8_t               nSections; /**<  */
-    xcb_atom_t            name; /**<  */
-    uint16_t              widthMM; /**<  */
-    uint16_t              heightMM; /**<  */
-    uint16_t              nProperties; /**<  */
-    uint16_t              nColors; /**<  */
-    uint16_t              nDoodads; /**<  */
-    uint16_t              nKeyAliases; /**<  */
-    uint8_t               baseColorNdx; /**<  */
-    uint8_t               labelColorNdx; /**<  */
-    uint8_t               pad0[2]; /**<  */
-} xcb_xkb_set_geometry_request_t;
-
-/**
  * @brief xcb_xkb_per_client_flags_cookie_t
  **/
 typedef struct xcb_xkb_per_client_flags_cookie_t {
@@ -2754,12 +2442,6 @@ typedef struct xcb_xkb_list_components_request_t {
     uint16_t              length; /**<  */
     xcb_xkb_device_spec_t deviceSpec; /**<  */
     uint16_t              maxNames; /**<  */
-    uint8_t               keymapsSpecLen; /**<  */
-    uint8_t               keycodesSpecLen; /**<  */
-    uint8_t               typesSpecLen; /**<  */
-    uint8_t               compatMapSpecLen; /**<  */
-    uint8_t               symbolsSpecLen; /**<  */
-    uint8_t               geometrySpecLen; /**<  */
 } xcb_xkb_list_components_request_t;
 
 /**
@@ -2802,12 +2484,6 @@ typedef struct xcb_xkb_get_kbd_by_name_request_t {
     uint16_t              want; /**<  */
     uint8_t               load; /**<  */
     uint8_t               pad0; /**<  */
-    uint8_t               keymapsSpecLen; /**<  */
-    uint8_t               keycodesSpecLen; /**<  */
-    uint8_t               typesSpecLen; /**<  */
-    uint8_t               compatMapSpecLen; /**<  */
-    uint8_t               symbolsSpecLen; /**<  */
-    uint8_t               geometrySpecLen; /**<  */
 } xcb_xkb_get_kbd_by_name_request_t;
 
 /**
@@ -2824,36 +2500,6 @@ typedef struct xcb_xkb_get_kbd_by_name_replies_types_map_t {
     xcb_xkb_key_mod_map_t   *modmap_rtrn; /**<  */
     xcb_xkb_key_v_mod_map_t *vmodmap_rtrn; /**<  */
 } xcb_xkb_get_kbd_by_name_replies_types_map_t;
-
-/**
- * @brief xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t
- **/
-typedef struct xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t {
-    xcb_xkb_key_type_t      *types_rtrn; /**<  */
-    xcb_xkb_key_sym_map_t   *syms_rtrn; /**<  */
-    uint8_t                 *acts_rtrn_count; /**<  */
-    xcb_xkb_action_t        *acts_rtrn_acts; /**<  */
-    xcb_xkb_set_behavior_t  *behaviors_rtrn; /**<  */
-    uint8_t                 *vmods_rtrn; /**<  */
-    xcb_xkb_set_explicit_t  *explicit_rtrn; /**<  */
-    xcb_xkb_key_mod_map_t   *modmap_rtrn; /**<  */
-    xcb_xkb_key_v_mod_map_t *vmodmap_rtrn; /**<  */
-} xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t;
-
-/**
- * @brief xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t
- **/
-typedef struct xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t {
-    xcb_xkb_key_type_t      *types_rtrn; /**<  */
-    xcb_xkb_key_sym_map_t   *syms_rtrn; /**<  */
-    uint8_t                 *acts_rtrn_count; /**<  */
-    xcb_xkb_action_t        *acts_rtrn_acts; /**<  */
-    xcb_xkb_set_behavior_t  *behaviors_rtrn; /**<  */
-    uint8_t                 *vmods_rtrn; /**<  */
-    xcb_xkb_set_explicit_t  *explicit_rtrn; /**<  */
-    xcb_xkb_key_mod_map_t   *modmap_rtrn; /**<  */
-    xcb_xkb_key_v_mod_map_t *vmodmap_rtrn; /**<  */
-} xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t;
 
 /**
  * @brief xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t
@@ -2877,214 +2523,110 @@ typedef struct xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t {
 } xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t;
 
 /**
- * @brief xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t
- **/
-typedef struct xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t {
-    xcb_atom_t           keycodesName; /**<  */
-    xcb_atom_t           geometryName; /**<  */
-    xcb_atom_t           symbolsName; /**<  */
-    xcb_atom_t           physSymbolsName; /**<  */
-    xcb_atom_t           typesName; /**<  */
-    xcb_atom_t           compatName; /**<  */
-    xcb_atom_t          *typeNames; /**<  */
-    uint8_t             *nLevelsPerType; /**<  */
-    xcb_atom_t          *ktLevelNames; /**<  */
-    xcb_atom_t          *indicatorNames; /**<  */
-    xcb_atom_t          *virtualModNames; /**<  */
-    xcb_atom_t          *groups; /**<  */
-    xcb_xkb_key_name_t  *keyNames; /**<  */
-    xcb_xkb_key_alias_t *keyAliases; /**<  */
-    xcb_atom_t          *radioGroupNames; /**<  */
-} xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t;
-
-/**
  * @brief xcb_xkb_get_kbd_by_name_replies_t
  **/
 typedef struct xcb_xkb_get_kbd_by_name_replies_t {
     struct _types {
-        uint8_t                                                   getmap_type; /**<  */
-        uint8_t                                                   typeDeviceID; /**<  */
-        uint16_t                                                  getmap_sequence; /**<  */
-        uint32_t                                                  getmap_length; /**<  */
-        uint8_t                                                   pad0[2]; /**<  */
-        xcb_keycode_t                                             typeMinKeyCode; /**<  */
-        xcb_keycode_t                                             typeMaxKeyCode; /**<  */
-        uint16_t                                                  present; /**<  */
-        uint8_t                                                   firstType; /**<  */
-        uint8_t                                                   nTypes; /**<  */
-        uint8_t                                                   totalTypes; /**<  */
-        xcb_keycode_t                                             firstKeySym; /**<  */
-        uint16_t                                                  totalSyms; /**<  */
-        uint8_t                                                   nKeySyms; /**<  */
-        xcb_keycode_t                                             firstKeyAction; /**<  */
-        uint16_t                                                  totalActions; /**<  */
-        uint8_t                                                   nKeyActions; /**<  */
-        xcb_keycode_t                                             firstKeyBehavior; /**<  */
-        uint8_t                                                   nKeyBehaviors; /**<  */
-        uint8_t                                                   totalKeyBehaviors; /**<  */
-        xcb_keycode_t                                             firstKeyExplicit; /**<  */
-        uint8_t                                                   nKeyExplicit; /**<  */
-        uint8_t                                                   totalKeyExplicit; /**<  */
-        xcb_keycode_t                                             firstModMapKey; /**<  */
-        uint8_t                                                   nModMapKeys; /**<  */
-        uint8_t                                                   totalModMapKeys; /**<  */
-        xcb_keycode_t                                             firstVModMapKey; /**<  */
-        uint8_t                                                   nVModMapKeys; /**<  */
-        uint8_t                                                   totalVModMapKeys; /**<  */
-        uint8_t                                                   pad1; /**<  */
-        uint16_t                                                  virtualMods; /**<  */
-        xcb_xkb_get_kbd_by_name_replies_types_map_t               map; /**<  */
+        uint8_t                                                 getmap_type; /**<  */
+        uint8_t                                                 typeDeviceID; /**<  */
+        uint16_t                                                getmap_sequence; /**<  */
+        uint32_t                                                getmap_length; /**<  */
+        uint8_t                                                 pad1[2]; /**<  */
+        xcb_keycode_t                                           typeMinKeyCode; /**<  */
+        xcb_keycode_t                                           typeMaxKeyCode; /**<  */
+        uint16_t                                                present; /**<  */
+        uint8_t                                                 firstType; /**<  */
+        uint8_t                                                 nTypes; /**<  */
+        uint8_t                                                 totalTypes; /**<  */
+        xcb_keycode_t                                           firstKeySym; /**<  */
+        uint16_t                                                totalSyms; /**<  */
+        uint8_t                                                 nKeySyms; /**<  */
+        xcb_keycode_t                                           firstKeyAction; /**<  */
+        uint16_t                                                totalActions; /**<  */
+        uint8_t                                                 nKeyActions; /**<  */
+        xcb_keycode_t                                           firstKeyBehavior; /**<  */
+        uint8_t                                                 nKeyBehaviors; /**<  */
+        uint8_t                                                 totalKeyBehaviors; /**<  */
+        xcb_keycode_t                                           firstKeyExplicit; /**<  */
+        uint8_t                                                 nKeyExplicit; /**<  */
+        uint8_t                                                 totalKeyExplicit; /**<  */
+        xcb_keycode_t                                           firstModMapKey; /**<  */
+        uint8_t                                                 nModMapKeys; /**<  */
+        uint8_t                                                 totalModMapKeys; /**<  */
+        xcb_keycode_t                                           firstVModMapKey; /**<  */
+        uint8_t                                                 nVModMapKeys; /**<  */
+        uint8_t                                                 totalVModMapKeys; /**<  */
+        uint8_t                                                 pad2; /**<  */
+        uint16_t                                                virtualMods; /**<  */
+        xcb_xkb_get_kbd_by_name_replies_types_map_t             map; /**<  */
     } types;
     struct _compat_map {
-        uint8_t                                                   compatDeviceID; /**<  */
-        uint8_t                                                   groupsRtrn; /**<  */
-        uint8_t                                                   pad0; /**<  */
-        uint16_t                                                  firstSIRtrn; /**<  */
-        uint16_t                                                  nSIRtrn; /**<  */
-        uint16_t                                                  nTotalSI; /**<  */
-        uint8_t                                                   pad1[16]; /**<  */
-        uint8_t                                                  *si_rtrn; /**<  */
-        xcb_xkb_mod_def_t                                        *group_rtrn; /**<  */
+        uint8_t                                                 compatmap_type; /**<  */
+        uint8_t                                                 compatDeviceID; /**<  */
+        uint16_t                                                compatmap_sequence; /**<  */
+        uint32_t                                                compatmap_length; /**<  */
+        uint8_t                                                 groupsRtrn; /**<  */
+        uint8_t                                                 pad3; /**<  */
+        uint16_t                                                firstSIRtrn; /**<  */
+        uint16_t                                                nSIRtrn; /**<  */
+        uint16_t                                                nTotalSI; /**<  */
+        uint8_t                                                 pad4[16]; /**<  */
+        xcb_xkb_sym_interpret_t                                *si_rtrn; /**<  */
+        xcb_xkb_mod_def_t                                      *group_rtrn; /**<  */
     } compat_map;
-    struct _client_symbols {
-        uint8_t                                                   clientDeviceID; /**<  */
-        uint8_t                                                   pad0[2]; /**<  */
-        xcb_keycode_t                                             clientMinKeyCode; /**<  */
-        xcb_keycode_t                                             clientMaxKeyCode; /**<  */
-        uint16_t                                                  present; /**<  */
-        uint8_t                                                   firstType; /**<  */
-        uint8_t                                                   nTypes; /**<  */
-        uint8_t                                                   totalTypes; /**<  */
-        xcb_keycode_t                                             firstKeySym; /**<  */
-        uint16_t                                                  totalSyms; /**<  */
-        uint8_t                                                   nKeySyms; /**<  */
-        xcb_keycode_t                                             firstKeyAction; /**<  */
-        uint16_t                                                  totalActions; /**<  */
-        uint8_t                                                   nKeyActions; /**<  */
-        xcb_keycode_t                                             firstKeyBehavior; /**<  */
-        uint8_t                                                   nKeyBehaviors; /**<  */
-        uint8_t                                                   totalKeyBehaviors; /**<  */
-        xcb_keycode_t                                             firstKeyExplicit; /**<  */
-        uint8_t                                                   nKeyExplicit; /**<  */
-        uint8_t                                                   totalKeyExplicit; /**<  */
-        xcb_keycode_t                                             firstModMapKey; /**<  */
-        uint8_t                                                   nModMapKeys; /**<  */
-        uint8_t                                                   totalModMapKeys; /**<  */
-        xcb_keycode_t                                             firstVModMapKey; /**<  */
-        uint8_t                                                   nVModMapKeys; /**<  */
-        uint8_t                                                   totalVModMapKeys; /**<  */
-        uint8_t                                                   pad1; /**<  */
-        uint16_t                                                  virtualMods; /**<  */
-        xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t      map; /**<  */
-    } client_symbols;
-    struct _server_symbols {
-        uint8_t                                                   serverDeviceID; /**<  */
-        uint8_t                                                   pad0[2]; /**<  */
-        xcb_keycode_t                                             serverMinKeyCode; /**<  */
-        xcb_keycode_t                                             serverMaxKeyCode; /**<  */
-        uint16_t                                                  present; /**<  */
-        uint8_t                                                   firstType; /**<  */
-        uint8_t                                                   nTypes; /**<  */
-        uint8_t                                                   totalTypes; /**<  */
-        xcb_keycode_t                                             firstKeySym; /**<  */
-        uint16_t                                                  totalSyms; /**<  */
-        uint8_t                                                   nKeySyms; /**<  */
-        xcb_keycode_t                                             firstKeyAction; /**<  */
-        uint16_t                                                  totalActions; /**<  */
-        uint8_t                                                   nKeyActions; /**<  */
-        xcb_keycode_t                                             firstKeyBehavior; /**<  */
-        uint8_t                                                   nKeyBehaviors; /**<  */
-        uint8_t                                                   totalKeyBehaviors; /**<  */
-        xcb_keycode_t                                             firstKeyExplicit; /**<  */
-        uint8_t                                                   nKeyExplicit; /**<  */
-        uint8_t                                                   totalKeyExplicit; /**<  */
-        xcb_keycode_t                                             firstModMapKey; /**<  */
-        uint8_t                                                   nModMapKeys; /**<  */
-        uint8_t                                                   totalModMapKeys; /**<  */
-        xcb_keycode_t                                             firstVModMapKey; /**<  */
-        uint8_t                                                   nVModMapKeys; /**<  */
-        uint8_t                                                   totalVModMapKeys; /**<  */
-        uint8_t                                                   pad1; /**<  */
-        uint16_t                                                  virtualMods; /**<  */
-        xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t      map; /**<  */
-    } server_symbols;
     struct _indicator_maps {
-        uint8_t                                                   indicatorDeviceID; /**<  */
-        uint32_t                                                  which; /**<  */
-        uint32_t                                                  realIndicators; /**<  */
-        uint8_t                                                   nIndicators; /**<  */
-        uint8_t                                                   pad0[15]; /**<  */
-        xcb_xkb_indicator_map_t                                  *maps; /**<  */
+        uint8_t                                                 indicatormap_type; /**<  */
+        uint8_t                                                 indicatorDeviceID; /**<  */
+        uint16_t                                                indicatormap_sequence; /**<  */
+        uint32_t                                                indicatormap_length; /**<  */
+        uint32_t                                                which; /**<  */
+        uint32_t                                                realIndicators; /**<  */
+        uint8_t                                                 nIndicators; /**<  */
+        uint8_t                                                 pad5[15]; /**<  */
+        xcb_xkb_indicator_map_t                                *maps; /**<  */
     } indicator_maps;
     struct _key_names {
-        uint8_t                                                   keyDeviceID; /**<  */
-        uint32_t                                                  which; /**<  */
-        xcb_keycode_t                                             keyMinKeyCode; /**<  */
-        xcb_keycode_t                                             keyMaxKeyCode; /**<  */
-        uint8_t                                                   nTypes; /**<  */
-        uint8_t                                                   groupNames; /**<  */
-        uint16_t                                                  virtualMods; /**<  */
-        xcb_keycode_t                                             firstKey; /**<  */
-        uint8_t                                                   nKeys; /**<  */
-        uint32_t                                                  indicators; /**<  */
-        uint8_t                                                   nRadioGroups; /**<  */
-        uint8_t                                                   nKeyAliases; /**<  */
-        uint16_t                                                  nKTLevels; /**<  */
-        uint8_t                                                   pad0[4]; /**<  */
-        xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t    valueList; /**<  */
+        uint8_t                                                 keyname_type; /**<  */
+        uint8_t                                                 keyDeviceID; /**<  */
+        uint16_t                                                keyname_sequence; /**<  */
+        uint32_t                                                keyname_length; /**<  */
+        uint32_t                                                which; /**<  */
+        xcb_keycode_t                                           keyMinKeyCode; /**<  */
+        xcb_keycode_t                                           keyMaxKeyCode; /**<  */
+        uint8_t                                                 nTypes; /**<  */
+        uint8_t                                                 groupNames; /**<  */
+        uint16_t                                                virtualMods; /**<  */
+        xcb_keycode_t                                           firstKey; /**<  */
+        uint8_t                                                 nKeys; /**<  */
+        uint32_t                                                indicators; /**<  */
+        uint8_t                                                 nRadioGroups; /**<  */
+        uint8_t                                                 nKeyAliases; /**<  */
+        uint16_t                                                nKTLevels; /**<  */
+        uint8_t                                                 pad6[4]; /**<  */
+        xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t  valueList; /**<  */
     } key_names;
-    struct _other_names {
-        uint8_t                                                   otherDeviceID; /**<  */
-        uint32_t                                                  which; /**<  */
-        xcb_keycode_t                                             otherMinKeyCode; /**<  */
-        xcb_keycode_t                                             otherMaxKeyCode; /**<  */
-        uint8_t                                                   nTypes; /**<  */
-        uint8_t                                                   groupNames; /**<  */
-        uint16_t                                                  virtualMods; /**<  */
-        xcb_keycode_t                                             firstKey; /**<  */
-        uint8_t                                                   nKeys; /**<  */
-        uint32_t                                                  indicators; /**<  */
-        uint8_t                                                   nRadioGroups; /**<  */
-        uint8_t                                                   nKeyAliases; /**<  */
-        uint16_t                                                  nKTLevels; /**<  */
-        uint8_t                                                   pad0[4]; /**<  */
-        xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t  valueList; /**<  */
-    } other_names;
     struct _geometry {
-        uint8_t                                                   geometryDeviceID; /**<  */
-        xcb_atom_t                                                name; /**<  */
-        uint8_t                                                   geometryFound; /**<  */
-        uint8_t                                                   pad0; /**<  */
-        uint16_t                                                  widthMM; /**<  */
-        uint16_t                                                  heightMM; /**<  */
-        uint16_t                                                  nProperties; /**<  */
-        uint16_t                                                  nColors; /**<  */
-        uint16_t                                                  nShapes; /**<  */
-        uint16_t                                                  nSections; /**<  */
-        uint16_t                                                  nDoodads; /**<  */
-        uint16_t                                                  nKeyAliases; /**<  */
-        uint8_t                                                   baseColorNdx; /**<  */
-        uint8_t                                                   labelColorNdx; /**<  */
-        xcb_xkb_counted_string_16_t                              *labelFont; /**<  */
-        xcb_xkb_property_t                                       *properties; /**<  */
-        xcb_xkb_counted_string_16_t                              *colors; /**<  */
-        xcb_xkb_shape_t                                          *shapes; /**<  */
-        xcb_xkb_section_t                                        *sections; /**<  */
-        xcb_xkb_doodad_t                                         *doodads; /**<  */
-        xcb_xkb_key_alias_t                                      *keyAliases; /**<  */
+        uint8_t                                                 geometry_type; /**<  */
+        uint8_t                                                 geometryDeviceID; /**<  */
+        uint16_t                                                geometry_sequence; /**<  */
+        uint32_t                                                geometry_length; /**<  */
+        xcb_atom_t                                              name; /**<  */
+        uint8_t                                                 geometryFound; /**<  */
+        uint8_t                                                 pad7; /**<  */
+        uint16_t                                                widthMM; /**<  */
+        uint16_t                                                heightMM; /**<  */
+        uint16_t                                                nProperties; /**<  */
+        uint16_t                                                nColors; /**<  */
+        uint16_t                                                nShapes; /**<  */
+        uint16_t                                                nSections; /**<  */
+        uint16_t                                                nDoodads; /**<  */
+        uint16_t                                                nKeyAliases; /**<  */
+        uint8_t                                                 baseColorNdx; /**<  */
+        uint8_t                                                 labelColorNdx; /**<  */
+        xcb_xkb_counted_string_16_t                            *labelFont; /**<  */
     } geometry;
 } xcb_xkb_get_kbd_by_name_replies_t;
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_types_map_t * xcb_xkb_get_kbd_by_name_replies_types_map
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_types_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_replies_types_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
 
@@ -3490,7 +3032,7 @@ typedef struct xcb_xkb_extension_device_notify_event_t {
     uint8_t         pad0; /**<  */
     uint16_t        reason; /**<  */
     uint16_t        ledClass; /**<  */
-    uint8_t         ledID; /**<  */
+    uint16_t        ledID; /**<  */
     uint32_t        ledsDefined; /**<  */
     uint32_t        ledState; /**<  */
     uint8_t         firstButton; /**<  */
@@ -3502,65 +3044,12 @@ typedef struct xcb_xkb_extension_device_notify_event_t {
 
 /**
  * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_ax_option_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_ax_option_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_ax_option_next
- ** 
- ** @param xcb_xkb_ax_option_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_ax_option_next (xcb_xkb_ax_option_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_ax_option_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_ax_option_end
- ** 
- ** @param xcb_xkb_ax_option_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_ax_option_end (xcb_xkb_ax_option_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
  * @param i Pointer to a xcb_xkb_device_spec_iterator_t
  *
  * Get the next element in the iterator. The member rem is
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_device_spec_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_device_spec_next
- ** 
- ** @param xcb_xkb_device_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_device_spec_next (xcb_xkb_device_spec_iterator_t *i  /**< */);
 
@@ -3573,16 +3062,6 @@ xcb_xkb_device_spec_next (xcb_xkb_device_spec_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_spec_end
- ** 
- ** @param xcb_xkb_device_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_spec_end (xcb_xkb_device_spec_iterator_t i  /**< */);
 
@@ -3594,16 +3073,6 @@ xcb_xkb_device_spec_end (xcb_xkb_device_spec_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_led_class_spec_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_led_class_spec_next
- ** 
- ** @param xcb_xkb_led_class_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_led_class_spec_next (xcb_xkb_led_class_spec_iterator_t *i  /**< */);
 
@@ -3616,16 +3085,6 @@ xcb_xkb_led_class_spec_next (xcb_xkb_led_class_spec_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_led_class_spec_end
- ** 
- ** @param xcb_xkb_led_class_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_led_class_spec_end (xcb_xkb_led_class_spec_iterator_t i  /**< */);
 
@@ -3637,16 +3096,6 @@ xcb_xkb_led_class_spec_end (xcb_xkb_led_class_spec_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_bell_class_spec_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_bell_class_spec_next
- ** 
- ** @param xcb_xkb_bell_class_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_bell_class_spec_next (xcb_xkb_bell_class_spec_iterator_t *i  /**< */);
 
@@ -3659,16 +3108,6 @@ xcb_xkb_bell_class_spec_next (xcb_xkb_bell_class_spec_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_bell_class_spec_end
- ** 
- ** @param xcb_xkb_bell_class_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_bell_class_spec_end (xcb_xkb_bell_class_spec_iterator_t i  /**< */);
 
@@ -3680,16 +3119,6 @@ xcb_xkb_bell_class_spec_end (xcb_xkb_bell_class_spec_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_id_spec_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_id_spec_next
- ** 
- ** @param xcb_xkb_id_spec_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_id_spec_next (xcb_xkb_id_spec_iterator_t *i  /**< */);
 
@@ -3702,16 +3131,6 @@ xcb_xkb_id_spec_next (xcb_xkb_id_spec_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_id_spec_end
- ** 
- ** @param xcb_xkb_id_spec_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_id_spec_end (xcb_xkb_id_spec_iterator_t i  /**< */);
 
@@ -3723,16 +3142,6 @@ xcb_xkb_id_spec_end (xcb_xkb_id_spec_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_indicator_map_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_indicator_map_next
- ** 
- ** @param xcb_xkb_indicator_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_indicator_map_next (xcb_xkb_indicator_map_iterator_t *i  /**< */);
 
@@ -3745,16 +3154,6 @@ xcb_xkb_indicator_map_next (xcb_xkb_indicator_map_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_indicator_map_end
- ** 
- ** @param xcb_xkb_indicator_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_indicator_map_end (xcb_xkb_indicator_map_iterator_t i  /**< */);
 
@@ -3766,16 +3165,6 @@ xcb_xkb_indicator_map_end (xcb_xkb_indicator_map_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_mod_def_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_mod_def_next
- ** 
- ** @param xcb_xkb_mod_def_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_mod_def_next (xcb_xkb_mod_def_iterator_t *i  /**< */);
 
@@ -3788,16 +3177,6 @@ xcb_xkb_mod_def_next (xcb_xkb_mod_def_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_mod_def_end
- ** 
- ** @param xcb_xkb_mod_def_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_mod_def_end (xcb_xkb_mod_def_iterator_t i  /**< */);
 
@@ -3809,16 +3188,6 @@ xcb_xkb_mod_def_end (xcb_xkb_mod_def_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_name_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_name_next
- ** 
- ** @param xcb_xkb_key_name_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_name_next (xcb_xkb_key_name_iterator_t *i  /**< */);
 
@@ -3831,16 +3200,6 @@ xcb_xkb_key_name_next (xcb_xkb_key_name_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_name_end
- ** 
- ** @param xcb_xkb_key_name_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_name_end (xcb_xkb_key_name_iterator_t i  /**< */);
 
@@ -3852,16 +3211,6 @@ xcb_xkb_key_name_end (xcb_xkb_key_name_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_alias_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_alias_next
- ** 
- ** @param xcb_xkb_key_alias_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_alias_next (xcb_xkb_key_alias_iterator_t *i  /**< */);
 
@@ -3874,158 +3223,29 @@ xcb_xkb_key_alias_next (xcb_xkb_key_alias_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_alias_end
- ** 
- ** @param xcb_xkb_key_alias_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_alias_end (xcb_xkb_key_alias_iterator_t i  /**< */);
 
 int
-xcb_xkb_counted_string_8_sizeof (const void  *_buffer  /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_counted_string_8_string
- ** 
- ** @param const xcb_xkb_counted_string_8_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_counted_string_8_string (const xcb_xkb_counted_string_8_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_counted_string_8_string_length
- ** 
- ** @param const xcb_xkb_counted_string_8_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_counted_string_8_string_length (const xcb_xkb_counted_string_8_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_8_string_end
- ** 
- ** @param const xcb_xkb_counted_string_8_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_counted_string_8_string_end (const xcb_xkb_counted_string_8_t *R  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_counted_string_8_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_counted_string_8_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_counted_string_8_next
- ** 
- ** @param xcb_xkb_counted_string_8_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_counted_string_8_next (xcb_xkb_counted_string_8_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_counted_string_8_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_8_end
- ** 
- ** @param xcb_xkb_counted_string_8_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_counted_string_8_end (xcb_xkb_counted_string_8_iterator_t i  /**< */);
-
-int
 xcb_xkb_counted_string_16_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_counted_string_16_string
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
+char *
 xcb_xkb_counted_string_16_string (const xcb_xkb_counted_string_16_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_counted_string_16_string_length
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_counted_string_16_string_length (const xcb_xkb_counted_string_16_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_16_string_end
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_counted_string_16_string_end (const xcb_xkb_counted_string_16_t *R  /**< */);
 
+void *
+xcb_xkb_counted_string_16_alignment_pad (const xcb_xkb_counted_string_16_t *R  /**< */);
 
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_counted_string_16_pad_0
- ** 
- ** @param const xcb_xkb_counted_string_16_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_counted_string_16_pad_0 (const xcb_xkb_counted_string_16_t *R  /**< */);
+int
+xcb_xkb_counted_string_16_alignment_pad_length (const xcb_xkb_counted_string_16_t *R  /**< */);
+
+xcb_generic_iterator_t
+xcb_xkb_counted_string_16_alignment_pad_end (const xcb_xkb_counted_string_16_t *R  /**< */);
 
 /**
  * Get the next element of the iterator
@@ -4035,16 +3255,6 @@ xcb_xkb_counted_string_16_pad_0 (const xcb_xkb_counted_string_16_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_counted_string_16_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_counted_string_16_next
- ** 
- ** @param xcb_xkb_counted_string_16_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_counted_string_16_next (xcb_xkb_counted_string_16_iterator_t *i  /**< */);
 
@@ -4057,16 +3267,6 @@ xcb_xkb_counted_string_16_next (xcb_xkb_counted_string_16_iterator_t *i  /**< */
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_counted_string_16_end
- ** 
- ** @param xcb_xkb_counted_string_16_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_counted_string_16_end (xcb_xkb_counted_string_16_iterator_t i  /**< */);
 
@@ -4078,16 +3278,6 @@ xcb_xkb_counted_string_16_end (xcb_xkb_counted_string_16_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_kt_map_entry_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_kt_map_entry_next
- ** 
- ** @param xcb_xkb_kt_map_entry_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_kt_map_entry_next (xcb_xkb_kt_map_entry_iterator_t *i  /**< */);
 
@@ -4100,97 +3290,27 @@ xcb_xkb_kt_map_entry_next (xcb_xkb_kt_map_entry_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_kt_map_entry_end
- ** 
- ** @param xcb_xkb_kt_map_entry_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_kt_map_entry_end (xcb_xkb_kt_map_entry_iterator_t i  /**< */);
 
 int
 xcb_xkb_key_type_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_map_entry_t * xcb_xkb_key_type_map
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_kt_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_map_entry_t *
 xcb_xkb_key_type_map (const xcb_xkb_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_type_map_length
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_type_map_length (const xcb_xkb_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_map_entry_iterator_t xcb_xkb_key_type_map_iterator
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_kt_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_map_entry_iterator_t
 xcb_xkb_key_type_map_iterator (const xcb_xkb_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_key_type_preserve
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_key_type_preserve (const xcb_xkb_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_type_preserve_length
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_type_preserve_length (const xcb_xkb_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_key_type_preserve_iterator
- ** 
- ** @param const xcb_xkb_key_type_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_key_type_preserve_iterator (const xcb_xkb_key_type_t *R  /**< */);
 
@@ -4202,16 +3322,6 @@ xcb_xkb_key_type_preserve_iterator (const xcb_xkb_key_type_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_type_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_type_next
- ** 
- ** @param xcb_xkb_key_type_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_type_next (xcb_xkb_key_type_iterator_t *i  /**< */);
 
@@ -4224,58 +3334,18 @@ xcb_xkb_key_type_next (xcb_xkb_key_type_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_type_end
- ** 
- ** @param xcb_xkb_key_type_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_type_end (xcb_xkb_key_type_iterator_t i  /**< */);
 
 int
 xcb_xkb_key_sym_map_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_keysym_t * xcb_xkb_key_sym_map_syms
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns xcb_keysym_t *
- **
- *****************************************************************************/
- 
 xcb_keysym_t *
 xcb_xkb_key_sym_map_syms (const xcb_xkb_key_sym_map_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_key_sym_map_syms_length
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_key_sym_map_syms_length (const xcb_xkb_key_sym_map_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_sym_map_syms_end
- ** 
- ** @param const xcb_xkb_key_sym_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_sym_map_syms_end (const xcb_xkb_key_sym_map_t *R  /**< */);
 
@@ -4287,16 +3357,6 @@ xcb_xkb_key_sym_map_syms_end (const xcb_xkb_key_sym_map_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_sym_map_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_sym_map_next
- ** 
- ** @param xcb_xkb_key_sym_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_sym_map_next (xcb_xkb_key_sym_map_iterator_t *i  /**< */);
 
@@ -4309,16 +3369,6 @@ xcb_xkb_key_sym_map_next (xcb_xkb_key_sym_map_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_sym_map_end
- ** 
- ** @param xcb_xkb_key_sym_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_sym_map_end (xcb_xkb_key_sym_map_iterator_t i  /**< */);
 
@@ -4330,16 +3380,6 @@ xcb_xkb_key_sym_map_end (xcb_xkb_key_sym_map_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_common_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_common_behavior_next
- ** 
- ** @param xcb_xkb_common_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_common_behavior_next (xcb_xkb_common_behavior_iterator_t *i  /**< */);
 
@@ -4352,16 +3392,6 @@ xcb_xkb_common_behavior_next (xcb_xkb_common_behavior_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_common_behavior_end
- ** 
- ** @param xcb_xkb_common_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_common_behavior_end (xcb_xkb_common_behavior_iterator_t i  /**< */);
 
@@ -4373,16 +3403,6 @@ xcb_xkb_common_behavior_end (xcb_xkb_common_behavior_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_default_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_default_behavior_next
- ** 
- ** @param xcb_xkb_default_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_default_behavior_next (xcb_xkb_default_behavior_iterator_t *i  /**< */);
 
@@ -4395,16 +3415,6 @@ xcb_xkb_default_behavior_next (xcb_xkb_default_behavior_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_default_behavior_end
- ** 
- ** @param xcb_xkb_default_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_default_behavior_end (xcb_xkb_default_behavior_iterator_t i  /**< */);
 
@@ -4416,16 +3426,6 @@ xcb_xkb_default_behavior_end (xcb_xkb_default_behavior_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_lock_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_lock_behavior_next
- ** 
- ** @param xcb_xkb_lock_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_lock_behavior_next (xcb_xkb_lock_behavior_iterator_t *i  /**< */);
 
@@ -4438,16 +3438,6 @@ xcb_xkb_lock_behavior_next (xcb_xkb_lock_behavior_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_lock_behavior_end
- ** 
- ** @param xcb_xkb_lock_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_lock_behavior_end (xcb_xkb_lock_behavior_iterator_t i  /**< */);
 
@@ -4459,16 +3449,6 @@ xcb_xkb_lock_behavior_end (xcb_xkb_lock_behavior_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_radio_group_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_radio_group_behavior_next
- ** 
- ** @param xcb_xkb_radio_group_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_radio_group_behavior_next (xcb_xkb_radio_group_behavior_iterator_t *i  /**< */);
 
@@ -4481,104 +3461,31 @@ xcb_xkb_radio_group_behavior_next (xcb_xkb_radio_group_behavior_iterator_t *i  /
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_radio_group_behavior_end
- ** 
- ** @param xcb_xkb_radio_group_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_radio_group_behavior_end (xcb_xkb_radio_group_behavior_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_overlay_1_behavior_iterator_t
+ * @param i Pointer to a xcb_xkb_overlay_behavior_iterator_t
  *
  * Get the next element in the iterator. The member rem is
  * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_overlay_1_behavior_t)
+ * element. The member index is increased by sizeof(xcb_xkb_overlay_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_1_behavior_next
- ** 
- ** @param xcb_xkb_overlay_1_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
-xcb_xkb_overlay_1_behavior_next (xcb_xkb_overlay_1_behavior_iterator_t *i  /**< */);
+xcb_xkb_overlay_behavior_next (xcb_xkb_overlay_behavior_iterator_t *i  /**< */);
 
 /**
  * Return the iterator pointing to the last element
- * @param i An xcb_xkb_overlay_1_behavior_iterator_t
+ * @param i An xcb_xkb_overlay_behavior_iterator_t
  * @return  The iterator pointing to the last element
  *
  * Set the current element in the iterator to the last element.
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_1_behavior_end
- ** 
- ** @param xcb_xkb_overlay_1_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
-xcb_xkb_overlay_1_behavior_end (xcb_xkb_overlay_1_behavior_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_overlay_2_behavior_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_overlay_2_behavior_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_2_behavior_next
- ** 
- ** @param xcb_xkb_overlay_2_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_overlay_2_behavior_next (xcb_xkb_overlay_2_behavior_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_overlay_2_behavior_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_2_behavior_end
- ** 
- ** @param xcb_xkb_overlay_2_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_overlay_2_behavior_end (xcb_xkb_overlay_2_behavior_iterator_t i  /**< */);
+xcb_xkb_overlay_behavior_end (xcb_xkb_overlay_behavior_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
@@ -4588,16 +3495,6 @@ xcb_xkb_overlay_2_behavior_end (xcb_xkb_overlay_2_behavior_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_permament_lock_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_lock_behavior_next
- ** 
- ** @param xcb_xkb_permament_lock_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_permament_lock_behavior_next (xcb_xkb_permament_lock_behavior_iterator_t *i  /**< */);
 
@@ -4610,16 +3507,6 @@ xcb_xkb_permament_lock_behavior_next (xcb_xkb_permament_lock_behavior_iterator_t
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_lock_behavior_end
- ** 
- ** @param xcb_xkb_permament_lock_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_permament_lock_behavior_end (xcb_xkb_permament_lock_behavior_iterator_t i  /**< */);
 
@@ -4631,16 +3518,6 @@ xcb_xkb_permament_lock_behavior_end (xcb_xkb_permament_lock_behavior_iterator_t 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_permament_radio_group_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_radio_group_behavior_next
- ** 
- ** @param xcb_xkb_permament_radio_group_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_permament_radio_group_behavior_next (xcb_xkb_permament_radio_group_behavior_iterator_t *i  /**< */);
 
@@ -4653,104 +3530,31 @@ xcb_xkb_permament_radio_group_behavior_next (xcb_xkb_permament_radio_group_behav
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_radio_group_behavior_end
- ** 
- ** @param xcb_xkb_permament_radio_group_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_permament_radio_group_behavior_end (xcb_xkb_permament_radio_group_behavior_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_permament_overlay_1_behavior_iterator_t
+ * @param i Pointer to a xcb_xkb_permament_overlay_behavior_iterator_t
  *
  * Get the next element in the iterator. The member rem is
  * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_permament_overlay_1_behavior_t)
+ * element. The member index is increased by sizeof(xcb_xkb_permament_overlay_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_overlay_1_behavior_next
- ** 
- ** @param xcb_xkb_permament_overlay_1_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
-xcb_xkb_permament_overlay_1_behavior_next (xcb_xkb_permament_overlay_1_behavior_iterator_t *i  /**< */);
+xcb_xkb_permament_overlay_behavior_next (xcb_xkb_permament_overlay_behavior_iterator_t *i  /**< */);
 
 /**
  * Return the iterator pointing to the last element
- * @param i An xcb_xkb_permament_overlay_1_behavior_iterator_t
+ * @param i An xcb_xkb_permament_overlay_behavior_iterator_t
  * @return  The iterator pointing to the last element
  *
  * Set the current element in the iterator to the last element.
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_overlay_1_behavior_end
- ** 
- ** @param xcb_xkb_permament_overlay_1_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
-xcb_xkb_permament_overlay_1_behavior_end (xcb_xkb_permament_overlay_1_behavior_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_permament_overlay_2_behavior_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_permament_overlay_2_behavior_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_permament_overlay_2_behavior_next
- ** 
- ** @param xcb_xkb_permament_overlay_2_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_permament_overlay_2_behavior_next (xcb_xkb_permament_overlay_2_behavior_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_permament_overlay_2_behavior_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_permament_overlay_2_behavior_end
- ** 
- ** @param xcb_xkb_permament_overlay_2_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_permament_overlay_2_behavior_end (xcb_xkb_permament_overlay_2_behavior_iterator_t i  /**< */);
+xcb_xkb_permament_overlay_behavior_end (xcb_xkb_permament_overlay_behavior_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
@@ -4760,16 +3564,6 @@ xcb_xkb_permament_overlay_2_behavior_end (xcb_xkb_permament_overlay_2_behavior_i
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_behavior_next
- ** 
- ** @param xcb_xkb_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_behavior_next (xcb_xkb_behavior_iterator_t *i  /**< */);
 
@@ -4782,16 +3576,6 @@ xcb_xkb_behavior_next (xcb_xkb_behavior_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_behavior_end
- ** 
- ** @param xcb_xkb_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_behavior_end (xcb_xkb_behavior_iterator_t i  /**< */);
 
@@ -4803,16 +3587,6 @@ xcb_xkb_behavior_end (xcb_xkb_behavior_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_set_behavior_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_behavior_next
- ** 
- ** @param xcb_xkb_set_behavior_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_behavior_next (xcb_xkb_set_behavior_iterator_t *i  /**< */);
 
@@ -4825,16 +3599,6 @@ xcb_xkb_set_behavior_next (xcb_xkb_set_behavior_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_behavior_end
- ** 
- ** @param xcb_xkb_set_behavior_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_behavior_end (xcb_xkb_set_behavior_iterator_t i  /**< */);
 
@@ -4846,16 +3610,6 @@ xcb_xkb_set_behavior_end (xcb_xkb_set_behavior_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_set_explicit_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_explicit_next
- ** 
- ** @param xcb_xkb_set_explicit_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_explicit_next (xcb_xkb_set_explicit_iterator_t *i  /**< */);
 
@@ -4868,16 +3622,6 @@ xcb_xkb_set_explicit_next (xcb_xkb_set_explicit_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_explicit_end
- ** 
- ** @param xcb_xkb_set_explicit_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_explicit_end (xcb_xkb_set_explicit_iterator_t i  /**< */);
 
@@ -4889,16 +3633,6 @@ xcb_xkb_set_explicit_end (xcb_xkb_set_explicit_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_mod_map_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_mod_map_next
- ** 
- ** @param xcb_xkb_key_mod_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_mod_map_next (xcb_xkb_key_mod_map_iterator_t *i  /**< */);
 
@@ -4911,16 +3645,6 @@ xcb_xkb_key_mod_map_next (xcb_xkb_key_mod_map_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_mod_map_end
- ** 
- ** @param xcb_xkb_key_mod_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_mod_map_end (xcb_xkb_key_mod_map_iterator_t i  /**< */);
 
@@ -4932,16 +3656,6 @@ xcb_xkb_key_mod_map_end (xcb_xkb_key_mod_map_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_v_mod_map_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_v_mod_map_next
- ** 
- ** @param xcb_xkb_key_v_mod_map_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_v_mod_map_next (xcb_xkb_key_v_mod_map_iterator_t *i  /**< */);
 
@@ -4954,16 +3668,6 @@ xcb_xkb_key_v_mod_map_next (xcb_xkb_key_v_mod_map_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_v_mod_map_end
- ** 
- ** @param xcb_xkb_key_v_mod_map_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_v_mod_map_end (xcb_xkb_key_v_mod_map_iterator_t i  /**< */);
 
@@ -4975,16 +3679,6 @@ xcb_xkb_key_v_mod_map_end (xcb_xkb_key_v_mod_map_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_kt_set_map_entry_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_kt_set_map_entry_next
- ** 
- ** @param xcb_xkb_kt_set_map_entry_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_kt_set_map_entry_next (xcb_xkb_kt_set_map_entry_iterator_t *i  /**< */);
 
@@ -4997,97 +3691,27 @@ xcb_xkb_kt_set_map_entry_next (xcb_xkb_kt_set_map_entry_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_kt_set_map_entry_end
- ** 
- ** @param xcb_xkb_kt_set_map_entry_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_kt_set_map_entry_end (xcb_xkb_kt_set_map_entry_iterator_t i  /**< */);
 
 int
 xcb_xkb_set_key_type_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_t * xcb_xkb_set_key_type_entries
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_t *
 xcb_xkb_set_key_type_entries (const xcb_xkb_set_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_key_type_entries_length
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_key_type_entries_length (const xcb_xkb_set_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_iterator_t xcb_xkb_set_key_type_entries_iterator
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_iterator_t
 xcb_xkb_set_key_type_entries_iterator (const xcb_xkb_set_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_t * xcb_xkb_set_key_type_preserve_entries
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_t *
 xcb_xkb_set_key_type_preserve_entries (const xcb_xkb_set_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_key_type_preserve_entries_length
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_key_type_preserve_entries_length (const xcb_xkb_set_key_type_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_kt_set_map_entry_iterator_t xcb_xkb_set_key_type_preserve_entries_iterator
- ** 
- ** @param const xcb_xkb_set_key_type_t *R
- ** @returns xcb_xkb_kt_set_map_entry_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_kt_set_map_entry_iterator_t
 xcb_xkb_set_key_type_preserve_entries_iterator (const xcb_xkb_set_key_type_t *R  /**< */);
 
@@ -5099,16 +3723,6 @@ xcb_xkb_set_key_type_preserve_entries_iterator (const xcb_xkb_set_key_type_t *R 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_set_key_type_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_set_key_type_next
- ** 
- ** @param xcb_xkb_set_key_type_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_set_key_type_next (xcb_xkb_set_key_type_iterator_t *i  /**< */);
 
@@ -5121,16 +3735,6 @@ xcb_xkb_set_key_type_next (xcb_xkb_set_key_type_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_key_type_end
- ** 
- ** @param xcb_xkb_set_key_type_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_key_type_end (xcb_xkb_set_key_type_iterator_t i  /**< */);
 
@@ -5142,16 +3746,6 @@ xcb_xkb_set_key_type_end (xcb_xkb_set_key_type_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_string8_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_string8_next
- ** 
- ** @param xcb_xkb_string8_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_string8_next (xcb_xkb_string8_iterator_t *i  /**< */);
 
@@ -5164,192 +3758,18 @@ xcb_xkb_string8_next (xcb_xkb_string8_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_string8_end
- ** 
- ** @param xcb_xkb_string8_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_string8_end (xcb_xkb_string8_iterator_t i  /**< */);
 
 int
-xcb_xkb_property_serialize (void                     **_buffer  /**< */,
-                            const xcb_xkb_property_t  *_aux  /**< */,
-                            const xcb_xkb_string8_t   *name  /**< */,
-                            const xcb_xkb_string8_t   *value  /**< */);
-
-int
-xcb_xkb_property_unserialize (const void           *_buffer  /**< */,
-                              xcb_xkb_property_t  **_aux  /**< */);
-
-int
-xcb_xkb_property_sizeof (const void  *_buffer  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_property_name
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_string8_t *
-xcb_xkb_property_name (const xcb_xkb_property_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_property_name_length
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_property_name_length (const xcb_xkb_property_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_property_name_end
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_property_name_end (const xcb_xkb_property_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_property_value
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_string8_t *
-xcb_xkb_property_value (const xcb_xkb_property_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_property_value_length
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_property_value_length (const xcb_xkb_property_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_property_value_end
- ** 
- ** @param const xcb_xkb_property_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_property_value_end (const xcb_xkb_property_t *R  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_property_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_property_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_property_next
- ** 
- ** @param xcb_xkb_property_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_property_next (xcb_xkb_property_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_property_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_property_end
- ** 
- ** @param xcb_xkb_property_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_property_end (xcb_xkb_property_iterator_t i  /**< */);
-
-int
 xcb_xkb_outline_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_point_t * xcb_xkb_outline_points
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns xcb_point_t *
- **
- *****************************************************************************/
- 
 xcb_point_t *
 xcb_xkb_outline_points (const xcb_xkb_outline_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_outline_points_length
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_outline_points_length (const xcb_xkb_outline_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_point_iterator_t xcb_xkb_outline_points_iterator
- ** 
- ** @param const xcb_xkb_outline_t *R
- ** @returns xcb_point_iterator_t
- **
- *****************************************************************************/
- 
 xcb_point_iterator_t
 xcb_xkb_outline_points_iterator (const xcb_xkb_outline_t *R  /**< */);
 
@@ -5361,16 +3781,6 @@ xcb_xkb_outline_points_iterator (const xcb_xkb_outline_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_outline_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_outline_next
- ** 
- ** @param xcb_xkb_outline_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_outline_next (xcb_xkb_outline_iterator_t *i  /**< */);
 
@@ -5383,45 +3793,15 @@ xcb_xkb_outline_next (xcb_xkb_outline_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_outline_end
- ** 
- ** @param xcb_xkb_outline_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_outline_end (xcb_xkb_outline_iterator_t i  /**< */);
 
 int
 xcb_xkb_shape_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_shape_outlines_length
- ** 
- ** @param const xcb_xkb_shape_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_shape_outlines_length (const xcb_xkb_shape_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_outline_iterator_t xcb_xkb_shape_outlines_iterator
- ** 
- ** @param const xcb_xkb_shape_t *R
- ** @returns xcb_xkb_outline_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_outline_iterator_t
 xcb_xkb_shape_outlines_iterator (const xcb_xkb_shape_t *R  /**< */);
 
@@ -5433,16 +3813,6 @@ xcb_xkb_shape_outlines_iterator (const xcb_xkb_shape_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_shape_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_shape_next
- ** 
- ** @param xcb_xkb_shape_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_shape_next (xcb_xkb_shape_iterator_t *i  /**< */);
 
@@ -5455,16 +3825,6 @@ xcb_xkb_shape_next (xcb_xkb_shape_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_shape_end
- ** 
- ** @param xcb_xkb_shape_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_shape_end (xcb_xkb_shape_iterator_t i  /**< */);
 
@@ -5476,16 +3836,6 @@ xcb_xkb_shape_end (xcb_xkb_shape_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_key_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_key_next
- ** 
- ** @param xcb_xkb_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_key_next (xcb_xkb_key_iterator_t *i  /**< */);
 
@@ -5498,16 +3848,6 @@ xcb_xkb_key_next (xcb_xkb_key_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_key_end
- ** 
- ** @param xcb_xkb_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_key_end (xcb_xkb_key_iterator_t i  /**< */);
 
@@ -5519,16 +3859,6 @@ xcb_xkb_key_end (xcb_xkb_key_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_overlay_key_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_key_next
- ** 
- ** @param xcb_xkb_overlay_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_key_next (xcb_xkb_overlay_key_iterator_t *i  /**< */);
 
@@ -5541,58 +3871,18 @@ xcb_xkb_overlay_key_next (xcb_xkb_overlay_key_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_key_end
- ** 
- ** @param xcb_xkb_overlay_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_key_end (xcb_xkb_overlay_key_iterator_t i  /**< */);
 
 int
 xcb_xkb_overlay_row_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_key_t * xcb_xkb_overlay_row_keys
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns xcb_xkb_overlay_key_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_key_t *
 xcb_xkb_overlay_row_keys (const xcb_xkb_overlay_row_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_overlay_row_keys_length
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_overlay_row_keys_length (const xcb_xkb_overlay_row_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_key_iterator_t xcb_xkb_overlay_row_keys_iterator
- ** 
- ** @param const xcb_xkb_overlay_row_t *R
- ** @returns xcb_xkb_overlay_key_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_key_iterator_t
 xcb_xkb_overlay_row_keys_iterator (const xcb_xkb_overlay_row_t *R  /**< */);
 
@@ -5604,16 +3894,6 @@ xcb_xkb_overlay_row_keys_iterator (const xcb_xkb_overlay_row_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_overlay_row_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_row_next
- ** 
- ** @param xcb_xkb_overlay_row_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_row_next (xcb_xkb_overlay_row_iterator_t *i  /**< */);
 
@@ -5626,45 +3906,15 @@ xcb_xkb_overlay_row_next (xcb_xkb_overlay_row_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_row_end
- ** 
- ** @param xcb_xkb_overlay_row_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_row_end (xcb_xkb_overlay_row_iterator_t i  /**< */);
 
 int
 xcb_xkb_overlay_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_overlay_rows_length
- ** 
- ** @param const xcb_xkb_overlay_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_overlay_rows_length (const xcb_xkb_overlay_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_row_iterator_t xcb_xkb_overlay_rows_iterator
- ** 
- ** @param const xcb_xkb_overlay_t *R
- ** @returns xcb_xkb_overlay_row_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_overlay_row_iterator_t
 xcb_xkb_overlay_rows_iterator (const xcb_xkb_overlay_t *R  /**< */);
 
@@ -5676,16 +3926,6 @@ xcb_xkb_overlay_rows_iterator (const xcb_xkb_overlay_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_overlay_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_overlay_next
- ** 
- ** @param xcb_xkb_overlay_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_overlay_next (xcb_xkb_overlay_iterator_t *i  /**< */);
 
@@ -5698,58 +3938,18 @@ xcb_xkb_overlay_next (xcb_xkb_overlay_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_overlay_end
- ** 
- ** @param xcb_xkb_overlay_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_overlay_end (xcb_xkb_overlay_iterator_t i  /**< */);
 
 int
 xcb_xkb_row_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_t * xcb_xkb_row_keys
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns xcb_xkb_key_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_t *
 xcb_xkb_row_keys (const xcb_xkb_row_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_row_keys_length
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_row_keys_length (const xcb_xkb_row_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_iterator_t xcb_xkb_row_keys_iterator
- ** 
- ** @param const xcb_xkb_row_t *R
- ** @returns xcb_xkb_key_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_iterator_t
 xcb_xkb_row_keys_iterator (const xcb_xkb_row_t *R  /**< */);
 
@@ -5761,16 +3961,6 @@ xcb_xkb_row_keys_iterator (const xcb_xkb_row_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_row_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_row_next
- ** 
- ** @param xcb_xkb_row_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_row_next (xcb_xkb_row_iterator_t *i  /**< */);
 
@@ -5783,449 +3973,18 @@ xcb_xkb_row_next (xcb_xkb_row_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_row_end
- ** 
- ** @param xcb_xkb_row_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_row_end (xcb_xkb_row_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_common_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_common_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_common_doodad_next
- ** 
- ** @param xcb_xkb_common_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_common_doodad_next (xcb_xkb_common_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_common_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_common_doodad_end
- ** 
- ** @param xcb_xkb_common_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_common_doodad_end (xcb_xkb_common_doodad_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_shape_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_shape_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_shape_doodad_next
- ** 
- ** @param xcb_xkb_shape_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_shape_doodad_next (xcb_xkb_shape_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_shape_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_shape_doodad_end
- ** 
- ** @param xcb_xkb_shape_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_shape_doodad_end (xcb_xkb_shape_doodad_iterator_t i  /**< */);
-
-int
-xcb_xkb_text_doodad_sizeof (const void  *_buffer  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_text_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_text_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_text_doodad_next
- ** 
- ** @param xcb_xkb_text_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_text_doodad_next (xcb_xkb_text_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_text_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_text_doodad_end
- ** 
- ** @param xcb_xkb_text_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_text_doodad_end (xcb_xkb_text_doodad_iterator_t i  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_indicator_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_indicator_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_indicator_doodad_next
- ** 
- ** @param xcb_xkb_indicator_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_indicator_doodad_next (xcb_xkb_indicator_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_indicator_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_indicator_doodad_end
- ** 
- ** @param xcb_xkb_indicator_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_indicator_doodad_end (xcb_xkb_indicator_doodad_iterator_t i  /**< */);
-
-int
-xcb_xkb_logo_doodad_sizeof (const void  *_buffer  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_logo_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_logo_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_logo_doodad_next
- ** 
- ** @param xcb_xkb_logo_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_logo_doodad_next (xcb_xkb_logo_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_logo_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_logo_doodad_end
- ** 
- ** @param xcb_xkb_logo_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_logo_doodad_end (xcb_xkb_logo_doodad_iterator_t i  /**< */);
-
-int
-xcb_xkb_doodad_sizeof (const void  *_buffer  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_doodad_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_doodad_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_doodad_next
- ** 
- ** @param xcb_xkb_doodad_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_doodad_next (xcb_xkb_doodad_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_doodad_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_doodad_end
- ** 
- ** @param xcb_xkb_doodad_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_doodad_end (xcb_xkb_doodad_iterator_t i  /**< */);
-
-int
-xcb_xkb_section_sizeof (const void  *_buffer  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_section_rows_length
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_section_rows_length (const xcb_xkb_section_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_row_iterator_t xcb_xkb_section_rows_iterator
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns xcb_xkb_row_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_row_iterator_t
-xcb_xkb_section_rows_iterator (const xcb_xkb_section_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_section_doodads_length
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_section_doodads_length (const xcb_xkb_section_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_doodad_iterator_t xcb_xkb_section_doodads_iterator
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns xcb_xkb_doodad_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_doodad_iterator_t
-xcb_xkb_section_doodads_iterator (const xcb_xkb_section_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_section_overlays_length
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_section_overlays_length (const xcb_xkb_section_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_overlay_iterator_t xcb_xkb_section_overlays_iterator
- ** 
- ** @param const xcb_xkb_section_t *R
- ** @returns xcb_xkb_overlay_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_overlay_iterator_t
-xcb_xkb_section_overlays_iterator (const xcb_xkb_section_t *R  /**< */);
-
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_xkb_section_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_xkb_section_t)
- */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_section_next
- ** 
- ** @param xcb_xkb_section_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
-void
-xcb_xkb_section_next (xcb_xkb_section_iterator_t *i  /**< */);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_xkb_section_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_section_end
- ** 
- ** @param xcb_xkb_section_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_section_end (xcb_xkb_section_iterator_t i  /**< */);
 
 int
 xcb_xkb_listing_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_listing_string
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_string8_t *
 xcb_xkb_listing_string (const xcb_xkb_listing_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_listing_string_length
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_listing_string_length (const xcb_xkb_listing_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_listing_string_end
- ** 
- ** @param const xcb_xkb_listing_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_listing_string_end (const xcb_xkb_listing_t *R  /**< */);
 
@@ -6237,16 +3996,6 @@ xcb_xkb_listing_string_end (const xcb_xkb_listing_t *R  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_listing_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_listing_next
- ** 
- ** @param xcb_xkb_listing_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_listing_next (xcb_xkb_listing_iterator_t *i  /**< */);
 
@@ -6259,97 +4008,27 @@ xcb_xkb_listing_next (xcb_xkb_listing_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_listing_end
- ** 
- ** @param xcb_xkb_listing_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_listing_end (xcb_xkb_listing_iterator_t i  /**< */);
 
 int
 xcb_xkb_device_led_info_sizeof (const void  *_buffer  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_device_led_info_names
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_device_led_info_names (const xcb_xkb_device_led_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_device_led_info_names_length
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_device_led_info_names_length (const xcb_xkb_device_led_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_led_info_names_end
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_led_info_names_end (const xcb_xkb_device_led_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_device_led_info_maps
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_device_led_info_maps (const xcb_xkb_device_led_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_device_led_info_maps_length
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_device_led_info_maps_length (const xcb_xkb_device_led_info_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_device_led_info_maps_iterator
- ** 
- ** @param const xcb_xkb_device_led_info_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_device_led_info_maps_iterator (const xcb_xkb_device_led_info_t *R  /**< */);
 
@@ -6361,16 +4040,6 @@ xcb_xkb_device_led_info_maps_iterator (const xcb_xkb_device_led_info_t *R  /**< 
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_device_led_info_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_device_led_info_next
- ** 
- ** @param xcb_xkb_device_led_info_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_device_led_info_next (xcb_xkb_device_led_info_iterator_t *i  /**< */);
 
@@ -6383,16 +4052,6 @@ xcb_xkb_device_led_info_next (xcb_xkb_device_led_info_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_device_led_info_end
- ** 
- ** @param xcb_xkb_device_led_info_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_device_led_info_end (xcb_xkb_device_led_info_iterator_t i  /**< */);
 
@@ -6404,16 +4063,6 @@ xcb_xkb_device_led_info_end (xcb_xkb_device_led_info_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_no_action_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_no_action_next
- ** 
- ** @param xcb_xkb_sa_no_action_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_no_action_next (xcb_xkb_sa_no_action_iterator_t *i  /**< */);
 
@@ -6426,16 +4075,6 @@ xcb_xkb_sa_no_action_next (xcb_xkb_sa_no_action_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_no_action_end
- ** 
- ** @param xcb_xkb_sa_no_action_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_no_action_end (xcb_xkb_sa_no_action_iterator_t i  /**< */);
 
@@ -6447,16 +4086,6 @@ xcb_xkb_sa_no_action_end (xcb_xkb_sa_no_action_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_set_mods_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_mods_next
- ** 
- ** @param xcb_xkb_sa_set_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_mods_next (xcb_xkb_sa_set_mods_iterator_t *i  /**< */);
 
@@ -6469,16 +4098,6 @@ xcb_xkb_sa_set_mods_next (xcb_xkb_sa_set_mods_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_mods_end
- ** 
- ** @param xcb_xkb_sa_set_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_mods_end (xcb_xkb_sa_set_mods_iterator_t i  /**< */);
 
@@ -6490,16 +4109,6 @@ xcb_xkb_sa_set_mods_end (xcb_xkb_sa_set_mods_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_latch_mods_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_latch_mods_next
- ** 
- ** @param xcb_xkb_sa_latch_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_latch_mods_next (xcb_xkb_sa_latch_mods_iterator_t *i  /**< */);
 
@@ -6512,16 +4121,6 @@ xcb_xkb_sa_latch_mods_next (xcb_xkb_sa_latch_mods_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_latch_mods_end
- ** 
- ** @param xcb_xkb_sa_latch_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_latch_mods_end (xcb_xkb_sa_latch_mods_iterator_t i  /**< */);
 
@@ -6533,16 +4132,6 @@ xcb_xkb_sa_latch_mods_end (xcb_xkb_sa_latch_mods_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_lock_mods_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_mods_next
- ** 
- ** @param xcb_xkb_sa_lock_mods_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_mods_next (xcb_xkb_sa_lock_mods_iterator_t *i  /**< */);
 
@@ -6555,16 +4144,6 @@ xcb_xkb_sa_lock_mods_next (xcb_xkb_sa_lock_mods_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_mods_end
- ** 
- ** @param xcb_xkb_sa_lock_mods_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_mods_end (xcb_xkb_sa_lock_mods_iterator_t i  /**< */);
 
@@ -6576,16 +4155,6 @@ xcb_xkb_sa_lock_mods_end (xcb_xkb_sa_lock_mods_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_set_group_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_group_next
- ** 
- ** @param xcb_xkb_sa_set_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_group_next (xcb_xkb_sa_set_group_iterator_t *i  /**< */);
 
@@ -6598,16 +4167,6 @@ xcb_xkb_sa_set_group_next (xcb_xkb_sa_set_group_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_group_end
- ** 
- ** @param xcb_xkb_sa_set_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_group_end (xcb_xkb_sa_set_group_iterator_t i  /**< */);
 
@@ -6619,16 +4178,6 @@ xcb_xkb_sa_set_group_end (xcb_xkb_sa_set_group_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_latch_group_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_latch_group_next
- ** 
- ** @param xcb_xkb_sa_latch_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_latch_group_next (xcb_xkb_sa_latch_group_iterator_t *i  /**< */);
 
@@ -6641,16 +4190,6 @@ xcb_xkb_sa_latch_group_next (xcb_xkb_sa_latch_group_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_latch_group_end
- ** 
- ** @param xcb_xkb_sa_latch_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_latch_group_end (xcb_xkb_sa_latch_group_iterator_t i  /**< */);
 
@@ -6662,16 +4201,6 @@ xcb_xkb_sa_latch_group_end (xcb_xkb_sa_latch_group_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_lock_group_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_group_next
- ** 
- ** @param xcb_xkb_sa_lock_group_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_group_next (xcb_xkb_sa_lock_group_iterator_t *i  /**< */);
 
@@ -6684,16 +4213,6 @@ xcb_xkb_sa_lock_group_next (xcb_xkb_sa_lock_group_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_group_end
- ** 
- ** @param xcb_xkb_sa_lock_group_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_group_end (xcb_xkb_sa_lock_group_iterator_t i  /**< */);
 
@@ -6705,16 +4224,6 @@ xcb_xkb_sa_lock_group_end (xcb_xkb_sa_lock_group_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_move_ptr_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_move_ptr_next
- ** 
- ** @param xcb_xkb_sa_move_ptr_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_move_ptr_next (xcb_xkb_sa_move_ptr_iterator_t *i  /**< */);
 
@@ -6727,16 +4236,6 @@ xcb_xkb_sa_move_ptr_next (xcb_xkb_sa_move_ptr_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_move_ptr_end
- ** 
- ** @param xcb_xkb_sa_move_ptr_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_move_ptr_end (xcb_xkb_sa_move_ptr_iterator_t i  /**< */);
 
@@ -6748,16 +4247,6 @@ xcb_xkb_sa_move_ptr_end (xcb_xkb_sa_move_ptr_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_ptr_btn_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_ptr_btn_next
- ** 
- ** @param xcb_xkb_sa_ptr_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_ptr_btn_next (xcb_xkb_sa_ptr_btn_iterator_t *i  /**< */);
 
@@ -6770,16 +4259,6 @@ xcb_xkb_sa_ptr_btn_next (xcb_xkb_sa_ptr_btn_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_ptr_btn_end
- ** 
- ** @param xcb_xkb_sa_ptr_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_ptr_btn_end (xcb_xkb_sa_ptr_btn_iterator_t i  /**< */);
 
@@ -6791,16 +4270,6 @@ xcb_xkb_sa_ptr_btn_end (xcb_xkb_sa_ptr_btn_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_lock_ptr_btn_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_ptr_btn_next
- ** 
- ** @param xcb_xkb_sa_lock_ptr_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_ptr_btn_next (xcb_xkb_sa_lock_ptr_btn_iterator_t *i  /**< */);
 
@@ -6813,16 +4282,6 @@ xcb_xkb_sa_lock_ptr_btn_next (xcb_xkb_sa_lock_ptr_btn_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_ptr_btn_end
- ** 
- ** @param xcb_xkb_sa_lock_ptr_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_ptr_btn_end (xcb_xkb_sa_lock_ptr_btn_iterator_t i  /**< */);
 
@@ -6834,16 +4293,6 @@ xcb_xkb_sa_lock_ptr_btn_end (xcb_xkb_sa_lock_ptr_btn_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_set_ptr_dflt_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_ptr_dflt_next
- ** 
- ** @param xcb_xkb_sa_set_ptr_dflt_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_ptr_dflt_next (xcb_xkb_sa_set_ptr_dflt_iterator_t *i  /**< */);
 
@@ -6856,16 +4305,6 @@ xcb_xkb_sa_set_ptr_dflt_next (xcb_xkb_sa_set_ptr_dflt_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_ptr_dflt_end
- ** 
- ** @param xcb_xkb_sa_set_ptr_dflt_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_ptr_dflt_end (xcb_xkb_sa_set_ptr_dflt_iterator_t i  /**< */);
 
@@ -6877,16 +4316,6 @@ xcb_xkb_sa_set_ptr_dflt_end (xcb_xkb_sa_set_ptr_dflt_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_iso_lock_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_iso_lock_next
- ** 
- ** @param xcb_xkb_sa_iso_lock_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_iso_lock_next (xcb_xkb_sa_iso_lock_iterator_t *i  /**< */);
 
@@ -6899,16 +4328,6 @@ xcb_xkb_sa_iso_lock_next (xcb_xkb_sa_iso_lock_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_iso_lock_end
- ** 
- ** @param xcb_xkb_sa_iso_lock_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_iso_lock_end (xcb_xkb_sa_iso_lock_iterator_t i  /**< */);
 
@@ -6920,16 +4339,6 @@ xcb_xkb_sa_iso_lock_end (xcb_xkb_sa_iso_lock_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_terminate_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_terminate_next
- ** 
- ** @param xcb_xkb_sa_terminate_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_terminate_next (xcb_xkb_sa_terminate_iterator_t *i  /**< */);
 
@@ -6942,16 +4351,6 @@ xcb_xkb_sa_terminate_next (xcb_xkb_sa_terminate_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_terminate_end
- ** 
- ** @param xcb_xkb_sa_terminate_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_terminate_end (xcb_xkb_sa_terminate_iterator_t i  /**< */);
 
@@ -6963,16 +4362,6 @@ xcb_xkb_sa_terminate_end (xcb_xkb_sa_terminate_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_switch_screen_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_switch_screen_next
- ** 
- ** @param xcb_xkb_sa_switch_screen_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_switch_screen_next (xcb_xkb_sa_switch_screen_iterator_t *i  /**< */);
 
@@ -6985,16 +4374,6 @@ xcb_xkb_sa_switch_screen_next (xcb_xkb_sa_switch_screen_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_switch_screen_end
- ** 
- ** @param xcb_xkb_sa_switch_screen_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_switch_screen_end (xcb_xkb_sa_switch_screen_iterator_t i  /**< */);
 
@@ -7006,16 +4385,6 @@ xcb_xkb_sa_switch_screen_end (xcb_xkb_sa_switch_screen_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_set_controls_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_set_controls_next
- ** 
- ** @param xcb_xkb_sa_set_controls_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_set_controls_next (xcb_xkb_sa_set_controls_iterator_t *i  /**< */);
 
@@ -7028,16 +4397,6 @@ xcb_xkb_sa_set_controls_next (xcb_xkb_sa_set_controls_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_set_controls_end
- ** 
- ** @param xcb_xkb_sa_set_controls_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_set_controls_end (xcb_xkb_sa_set_controls_iterator_t i  /**< */);
 
@@ -7049,16 +4408,6 @@ xcb_xkb_sa_set_controls_end (xcb_xkb_sa_set_controls_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_lock_controls_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_controls_next
- ** 
- ** @param xcb_xkb_sa_lock_controls_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_controls_next (xcb_xkb_sa_lock_controls_iterator_t *i  /**< */);
 
@@ -7071,16 +4420,6 @@ xcb_xkb_sa_lock_controls_next (xcb_xkb_sa_lock_controls_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_controls_end
- ** 
- ** @param xcb_xkb_sa_lock_controls_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_controls_end (xcb_xkb_sa_lock_controls_iterator_t i  /**< */);
 
@@ -7092,16 +4431,6 @@ xcb_xkb_sa_lock_controls_end (xcb_xkb_sa_lock_controls_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_action_message_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_action_message_next
- ** 
- ** @param xcb_xkb_sa_action_message_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_action_message_next (xcb_xkb_sa_action_message_iterator_t *i  /**< */);
 
@@ -7114,16 +4443,6 @@ xcb_xkb_sa_action_message_next (xcb_xkb_sa_action_message_iterator_t *i  /**< */
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_action_message_end
- ** 
- ** @param xcb_xkb_sa_action_message_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_action_message_end (xcb_xkb_sa_action_message_iterator_t i  /**< */);
 
@@ -7135,16 +4454,6 @@ xcb_xkb_sa_action_message_end (xcb_xkb_sa_action_message_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_redirect_key_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_redirect_key_next
- ** 
- ** @param xcb_xkb_sa_redirect_key_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_redirect_key_next (xcb_xkb_sa_redirect_key_iterator_t *i  /**< */);
 
@@ -7157,16 +4466,6 @@ xcb_xkb_sa_redirect_key_next (xcb_xkb_sa_redirect_key_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_redirect_key_end
- ** 
- ** @param xcb_xkb_sa_redirect_key_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_redirect_key_end (xcb_xkb_sa_redirect_key_iterator_t i  /**< */);
 
@@ -7178,16 +4477,6 @@ xcb_xkb_sa_redirect_key_end (xcb_xkb_sa_redirect_key_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_device_btn_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_device_btn_next
- ** 
- ** @param xcb_xkb_sa_device_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_device_btn_next (xcb_xkb_sa_device_btn_iterator_t *i  /**< */);
 
@@ -7200,16 +4489,6 @@ xcb_xkb_sa_device_btn_next (xcb_xkb_sa_device_btn_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_device_btn_end
- ** 
- ** @param xcb_xkb_sa_device_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_device_btn_end (xcb_xkb_sa_device_btn_iterator_t i  /**< */);
 
@@ -7221,16 +4500,6 @@ xcb_xkb_sa_device_btn_end (xcb_xkb_sa_device_btn_iterator_t i  /**< */);
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_lock_device_btn_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_lock_device_btn_next
- ** 
- ** @param xcb_xkb_sa_lock_device_btn_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_lock_device_btn_next (xcb_xkb_sa_lock_device_btn_iterator_t *i  /**< */);
 
@@ -7243,16 +4512,6 @@ xcb_xkb_sa_lock_device_btn_next (xcb_xkb_sa_lock_device_btn_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_lock_device_btn_end
- ** 
- ** @param xcb_xkb_sa_lock_device_btn_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_lock_device_btn_end (xcb_xkb_sa_lock_device_btn_iterator_t i  /**< */);
 
@@ -7264,16 +4523,6 @@ xcb_xkb_sa_lock_device_btn_end (xcb_xkb_sa_lock_device_btn_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_sa_device_valuator_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_sa_device_valuator_next
- ** 
- ** @param xcb_xkb_sa_device_valuator_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_sa_device_valuator_next (xcb_xkb_sa_device_valuator_iterator_t *i  /**< */);
 
@@ -7286,18 +4535,54 @@ xcb_xkb_sa_device_valuator_next (xcb_xkb_sa_device_valuator_iterator_t *i  /**< 
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_sa_device_valuator_end
- ** 
- ** @param xcb_xkb_sa_device_valuator_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_sa_device_valuator_end (xcb_xkb_sa_device_valuator_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_xkb_si_action_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_xkb_si_action_t)
+ */
+void
+xcb_xkb_si_action_next (xcb_xkb_si_action_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_xkb_si_action_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_xkb_si_action_end (xcb_xkb_si_action_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_xkb_sym_interpret_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_xkb_sym_interpret_t)
+ */
+void
+xcb_xkb_sym_interpret_next (xcb_xkb_sym_interpret_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_xkb_sym_interpret_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_xkb_sym_interpret_end (xcb_xkb_sym_interpret_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
@@ -7307,16 +4592,6 @@ xcb_xkb_sa_device_valuator_end (xcb_xkb_sa_device_valuator_iterator_t i  /**< */
  * decreased by one. The member data points to the next
  * element. The member index is increased by sizeof(xcb_xkb_action_t)
  */
-
-/*****************************************************************************
- **
- ** void xcb_xkb_action_next
- ** 
- ** @param xcb_xkb_action_iterator_t *i
- ** @returns void
- **
- *****************************************************************************/
- 
 void
 xcb_xkb_action_next (xcb_xkb_action_iterator_t *i  /**< */);
 
@@ -7329,16 +4604,6 @@ xcb_xkb_action_next (xcb_xkb_action_iterator_t *i  /**< */);
  * The member rem is set to 0. The member data points to the
  * last element.
  */
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_action_end
- ** 
- ** @param xcb_xkb_action_iterator_t i
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_action_end (xcb_xkb_action_iterator_t i  /**< */);
 
@@ -7348,20 +4613,8 @@ xcb_xkb_action_end (xcb_xkb_action_iterator_t i  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_cookie_t xcb_xkb_use_extension
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          wantedMajor
- ** @param uint16_t          wantedMinor
- ** @returns xcb_xkb_use_extension_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_cookie_t
 xcb_xkb_use_extension (xcb_connection_t *c  /**< */,
                        uint16_t          wantedMajor  /**< */,
@@ -7373,23 +4626,11 @@ xcb_xkb_use_extension (xcb_connection_t *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_cookie_t xcb_xkb_use_extension_unchecked
- ** 
- ** @param xcb_connection_t *c
- ** @param uint16_t          wantedMajor
- ** @param uint16_t          wantedMinor
- ** @returns xcb_xkb_use_extension_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_cookie_t
 xcb_xkb_use_extension_unchecked (xcb_connection_t *c  /**< */,
                                  uint16_t          wantedMajor  /**< */,
@@ -7402,25 +4643,13 @@ xcb_xkb_use_extension_unchecked (xcb_connection_t *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_use_extension_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_use_extension_reply_t * xcb_xkb_use_extension_reply
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_use_extension_cookie_t   cookie
- ** @param xcb_generic_error_t            **e
- ** @returns xcb_xkb_use_extension_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_use_extension_reply_t *
 xcb_xkb_use_extension_reply (xcb_connection_t                *c  /**< */,
                              xcb_xkb_use_extension_cookie_t   cookie  /**< */,
@@ -7452,28 +4681,11 @@ xcb_xkb_select_events_details_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               affectWhich
- ** @param uint16_t               clear
- ** @param uint16_t               selectAll
- ** @param uint16_t               affectMap
- ** @param uint16_t               map
- ** @param const void            *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_checked (xcb_connection_t      *c  /**< */,
                                xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7490,25 +4702,8 @@ xcb_xkb_select_events_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               affectWhich
- ** @param uint16_t               clear
- ** @param uint16_t               selectAll
- ** @param uint16_t               affectMap
- ** @param uint16_t               map
- ** @param const void            *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events (xcb_connection_t      *c  /**< */,
                        xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7525,28 +4720,11 @@ xcb_xkb_select_events (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_aux_checked
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_device_spec_t                  deviceSpec
- ** @param uint16_t                               affectWhich
- ** @param uint16_t                               clear
- ** @param uint16_t                               selectAll
- ** @param uint16_t                               affectMap
- ** @param uint16_t                               map
- ** @param const xcb_xkb_select_events_details_t *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_aux_checked (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_device_spec_t                  deviceSpec  /**< */,
@@ -7563,25 +4741,8 @@ xcb_xkb_select_events_aux_checked (xcb_connection_t                      *c  /**
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_select_events_aux
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_device_spec_t                  deviceSpec
- ** @param uint16_t                               affectWhich
- ** @param uint16_t                               clear
- ** @param uint16_t                               selectAll
- ** @param uint16_t                               affectMap
- ** @param uint16_t                               map
- ** @param const xcb_xkb_select_events_details_t *details
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_select_events_aux (xcb_connection_t                      *c  /**< */,
                            xcb_xkb_device_spec_t                  deviceSpec  /**< */,
@@ -7598,31 +4759,11 @@ xcb_xkb_select_events_aux (xcb_connection_t                      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_bell_checked
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_device_spec_t      deviceSpec
- ** @param xcb_xkb_bell_class_spec_t  bellClass
- ** @param xcb_xkb_id_spec_t          bellID
- ** @param int8_t                     percent
- ** @param uint8_t                    forceSound
- ** @param uint8_t                    eventOnly
- ** @param int16_t                    pitch
- ** @param int16_t                    duration
- ** @param xcb_atom_t                 name
- ** @param xcb_window_t               window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_bell_checked (xcb_connection_t          *c  /**< */,
                       xcb_xkb_device_spec_t      deviceSpec  /**< */,
@@ -7642,28 +4783,8 @@ xcb_xkb_bell_checked (xcb_connection_t          *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_bell
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_device_spec_t      deviceSpec
- ** @param xcb_xkb_bell_class_spec_t  bellClass
- ** @param xcb_xkb_id_spec_t          bellID
- ** @param int8_t                     percent
- ** @param uint8_t                    forceSound
- ** @param uint8_t                    eventOnly
- ** @param int16_t                    pitch
- ** @param int16_t                    duration
- ** @param xcb_atom_t                 name
- ** @param xcb_window_t               window
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_bell (xcb_connection_t          *c  /**< */,
               xcb_xkb_device_spec_t      deviceSpec  /**< */,
@@ -7683,19 +4804,8 @@ xcb_xkb_bell (xcb_connection_t          *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_cookie_t xcb_xkb_get_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_cookie_t
 xcb_xkb_get_state (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -7706,22 +4816,11 @@ xcb_xkb_get_state (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_cookie_t xcb_xkb_get_state_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_cookie_t
 xcb_xkb_get_state_unchecked (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -7733,25 +4832,13 @@ xcb_xkb_get_state_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_state_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_state_reply_t * xcb_xkb_get_state_reply
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_xkb_get_state_cookie_t   cookie
- ** @param xcb_generic_error_t        **e
- ** @returns xcb_xkb_get_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_state_reply_t *
 xcb_xkb_get_state_reply (xcb_connection_t            *c  /**< */,
                          xcb_xkb_get_state_cookie_t   cookie  /**< */,
@@ -7763,29 +4850,11 @@ xcb_xkb_get_state_reply (xcb_connection_t            *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_latch_lock_state_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectModLocks
- ** @param uint8_t                modLocks
- ** @param uint8_t                lockGroup
- ** @param uint8_t                groupLock
- ** @param uint8_t                affectModLatches
- ** @param uint8_t                latchGroup
- ** @param uint16_t               groupLatch
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_latch_lock_state_checked (xcb_connection_t      *c  /**< */,
                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7803,26 +4872,8 @@ xcb_xkb_latch_lock_state_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_latch_lock_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectModLocks
- ** @param uint8_t                modLocks
- ** @param uint8_t                lockGroup
- ** @param uint8_t                groupLock
- ** @param uint8_t                affectModLatches
- ** @param uint8_t                latchGroup
- ** @param uint16_t               groupLatch
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_latch_lock_state (xcb_connection_t      *c  /**< */,
                           xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7840,19 +4891,8 @@ xcb_xkb_latch_lock_state (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_cookie_t xcb_xkb_get_controls
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_controls_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_cookie_t
 xcb_xkb_get_controls (xcb_connection_t      *c  /**< */,
                       xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -7863,22 +4903,11 @@ xcb_xkb_get_controls (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_cookie_t xcb_xkb_get_controls_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_controls_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_cookie_t
 xcb_xkb_get_controls_unchecked (xcb_connection_t      *c  /**< */,
                                 xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -7890,25 +4919,13 @@ xcb_xkb_get_controls_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_controls_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_controls_reply_t * xcb_xkb_get_controls_reply
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_get_controls_cookie_t   cookie
- ** @param xcb_generic_error_t           **e
- ** @returns xcb_xkb_get_controls_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_controls_reply_t *
 xcb_xkb_get_controls_reply (xcb_connection_t               *c  /**< */,
                             xcb_xkb_get_controls_cookie_t   cookie  /**< */,
@@ -7920,51 +4937,11 @@ xcb_xkb_get_controls_reply (xcb_connection_t               *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_controls_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectInternalRealMods
- ** @param uint8_t                internalRealMods
- ** @param uint8_t                affectIgnoreLockRealMods
- ** @param uint8_t                ignoreLockRealMods
- ** @param uint16_t               affectInternalVirtualMods
- ** @param uint16_t               internalVirtualMods
- ** @param uint16_t               affectIgnoreLockVirtualMods
- ** @param uint16_t               ignoreLockVirtualMods
- ** @param uint8_t                mouseKeysDfltBtn
- ** @param uint8_t                groupsWrap
- ** @param xcb_xkb_ax_option_t    accessXOptions
- ** @param uint32_t               affectEnabledControls
- ** @param uint32_t               enabledControls
- ** @param uint32_t               changeControls
- ** @param uint16_t               repeatDelay
- ** @param uint16_t               repeatInterval
- ** @param uint16_t               slowKeysDelay
- ** @param uint16_t               debounceDelay
- ** @param uint16_t               mouseKeysDelay
- ** @param uint16_t               mouseKeysInterval
- ** @param uint16_t               mouseKeysTimeToMax
- ** @param uint16_t               mouseKeysMaxSpeed
- ** @param int16_t                mouseKeysCurve
- ** @param uint16_t               accessXTimeout
- ** @param uint32_t               accessXTimeoutMask
- ** @param uint32_t               accessXTimeoutValues
- ** @param xcb_xkb_ax_option_t    accessXTimeoutOptionsMask
- ** @param xcb_xkb_ax_option_t    accessXTimeoutOptionsValues
- ** @param const uint8_t         *perKeyRepeat
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
                               xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -7978,7 +4955,7 @@ xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
                               uint16_t               ignoreLockVirtualMods  /**< */,
                               uint8_t                mouseKeysDfltBtn  /**< */,
                               uint8_t                groupsWrap  /**< */,
-                              xcb_xkb_ax_option_t    accessXOptions  /**< */,
+                              uint16_t               accessXOptions  /**< */,
                               uint32_t               affectEnabledControls  /**< */,
                               uint32_t               enabledControls  /**< */,
                               uint32_t               changeControls  /**< */,
@@ -7994,8 +4971,8 @@ xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
                               uint16_t               accessXTimeout  /**< */,
                               uint32_t               accessXTimeoutMask  /**< */,
                               uint32_t               accessXTimeoutValues  /**< */,
-                              xcb_xkb_ax_option_t    accessXTimeoutOptionsMask  /**< */,
-                              xcb_xkb_ax_option_t    accessXTimeoutOptionsValues  /**< */,
+                              uint16_t               accessXTimeoutOptionsMask  /**< */,
+                              uint16_t               accessXTimeoutOptionsValues  /**< */,
                               const uint8_t         *perKeyRepeat  /**< */);
 
 /**
@@ -8004,48 +4981,8 @@ xcb_xkb_set_controls_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_controls
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                affectInternalRealMods
- ** @param uint8_t                internalRealMods
- ** @param uint8_t                affectIgnoreLockRealMods
- ** @param uint8_t                ignoreLockRealMods
- ** @param uint16_t               affectInternalVirtualMods
- ** @param uint16_t               internalVirtualMods
- ** @param uint16_t               affectIgnoreLockVirtualMods
- ** @param uint16_t               ignoreLockVirtualMods
- ** @param uint8_t                mouseKeysDfltBtn
- ** @param uint8_t                groupsWrap
- ** @param xcb_xkb_ax_option_t    accessXOptions
- ** @param uint32_t               affectEnabledControls
- ** @param uint32_t               enabledControls
- ** @param uint32_t               changeControls
- ** @param uint16_t               repeatDelay
- ** @param uint16_t               repeatInterval
- ** @param uint16_t               slowKeysDelay
- ** @param uint16_t               debounceDelay
- ** @param uint16_t               mouseKeysDelay
- ** @param uint16_t               mouseKeysInterval
- ** @param uint16_t               mouseKeysTimeToMax
- ** @param uint16_t               mouseKeysMaxSpeed
- ** @param int16_t                mouseKeysCurve
- ** @param uint16_t               accessXTimeout
- ** @param uint32_t               accessXTimeoutMask
- ** @param uint32_t               accessXTimeoutValues
- ** @param xcb_xkb_ax_option_t    accessXTimeoutOptionsMask
- ** @param xcb_xkb_ax_option_t    accessXTimeoutOptionsValues
- ** @param const uint8_t         *perKeyRepeat
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
                       xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -8059,7 +4996,7 @@ xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
                       uint16_t               ignoreLockVirtualMods  /**< */,
                       uint8_t                mouseKeysDfltBtn  /**< */,
                       uint8_t                groupsWrap  /**< */,
-                      xcb_xkb_ax_option_t    accessXOptions  /**< */,
+                      uint16_t               accessXOptions  /**< */,
                       uint32_t               affectEnabledControls  /**< */,
                       uint32_t               enabledControls  /**< */,
                       uint32_t               changeControls  /**< */,
@@ -8075,349 +5012,99 @@ xcb_xkb_set_controls (xcb_connection_t      *c  /**< */,
                       uint16_t               accessXTimeout  /**< */,
                       uint32_t               accessXTimeoutMask  /**< */,
                       uint32_t               accessXTimeoutValues  /**< */,
-                      xcb_xkb_ax_option_t    accessXTimeoutOptionsMask  /**< */,
-                      xcb_xkb_ax_option_t    accessXTimeoutOptionsValues  /**< */,
+                      uint16_t               accessXTimeoutOptionsMask  /**< */,
+                      uint16_t               accessXTimeoutOptionsValues  /**< */,
                       const uint8_t         *perKeyRepeat  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_types_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                        const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_map_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_type_iterator_t
 xcb_xkb_get_map_map_types_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_syms_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                       const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_map_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_get_map_map_syms_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                         const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_map_map_acts_rtrn_count (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_acts_rtrn_count_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                             const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_map_map_acts_rtrn_count_end (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_map_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_map_map_acts_rtrn_acts (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_acts_rtrn_acts_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_map_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_map_map_acts_rtrn_acts_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                              const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_map_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_get_map_map_behaviors_rtrn (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_behaviors_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_map_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_get_map_map_behaviors_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                              const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_map_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_map_map_vmods_rtrn (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_vmods_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                        const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_map_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_map_map_vmods_rtrn_end (const xcb_xkb_get_map_reply_t *R  /**< */,
                                     const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_map_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_get_map_map_explicit_rtrn (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_explicit_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                           const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_map_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_get_map_map_explicit_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                             const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_map_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_get_map_map_modmap_rtrn (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_modmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                         const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_map_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_get_map_map_modmap_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                           const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_map_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_map_map_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_get_map_map_vmodmap_rtrn (const xcb_xkb_get_map_map_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_map_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_map_map_vmodmap_rtrn_length (const xcb_xkb_get_map_reply_t *R  /**< */,
                                          const xcb_xkb_get_map_map_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_map_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_map_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_get_map_map_vmodmap_rtrn_iterator (const xcb_xkb_get_map_reply_t *R  /**< */,
                                            const xcb_xkb_get_map_map_t *S /**< */);
@@ -8429,7 +5116,7 @@ xcb_xkb_get_map_map_serialize (void                        **_buffer  /**< */,
                                uint8_t                       nKeyActions  /**< */,
                                uint16_t                      totalActions  /**< */,
                                uint8_t                       totalKeyBehaviors  /**< */,
-                               uint8_t                       nVModMapKeys  /**< */,
+                               uint16_t                      virtualMods  /**< */,
                                uint8_t                       totalKeyExplicit  /**< */,
                                uint8_t                       totalModMapKeys  /**< */,
                                uint8_t                       totalVModMapKeys  /**< */,
@@ -8443,7 +5130,7 @@ xcb_xkb_get_map_map_unpack (const void             *_buffer  /**< */,
                             uint8_t                 nKeyActions  /**< */,
                             uint16_t                totalActions  /**< */,
                             uint8_t                 totalKeyBehaviors  /**< */,
-                            uint8_t                 nVModMapKeys  /**< */,
+                            uint16_t                virtualMods  /**< */,
                             uint8_t                 totalKeyExplicit  /**< */,
                             uint8_t                 totalModMapKeys  /**< */,
                             uint8_t                 totalVModMapKeys  /**< */,
@@ -8457,7 +5144,7 @@ xcb_xkb_get_map_map_sizeof (const void  *_buffer  /**< */,
                             uint8_t      nKeyActions  /**< */,
                             uint16_t     totalActions  /**< */,
                             uint8_t      totalKeyBehaviors  /**< */,
-                            uint8_t      nVModMapKeys  /**< */,
+                            uint16_t     virtualMods  /**< */,
                             uint8_t      totalKeyExplicit  /**< */,
                             uint8_t      totalModMapKeys  /**< */,
                             uint8_t      totalVModMapKeys  /**< */,
@@ -8469,36 +5156,8 @@ xcb_xkb_get_map_map_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_cookie_t xcb_xkb_get_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               full
- ** @param uint16_t               partial
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint16_t               virtualMods
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @returns xcb_xkb_get_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_cookie_t
 xcb_xkb_get_map (xcb_connection_t      *c  /**< */,
                  xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -8526,39 +5185,11 @@ xcb_xkb_get_map (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_cookie_t xcb_xkb_get_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               full
- ** @param uint16_t               partial
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint16_t               virtualMods
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @returns xcb_xkb_get_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_cookie_t
 xcb_xkb_get_map_unchecked (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -8580,16 +5211,6 @@ xcb_xkb_get_map_unchecked (xcb_connection_t      *c  /**< */,
                            xcb_keycode_t          firstVModMapKey  /**< */,
                            uint8_t                nVModMapKeys  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_map_t * xcb_xkb_get_map_map
- ** 
- ** @param const xcb_xkb_get_map_reply_t *R
- ** @returns xcb_xkb_get_map_map_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_map_map (const xcb_xkb_get_map_reply_t *R  /**< */);
 
@@ -8600,369 +5221,107 @@ xcb_xkb_get_map_map (const xcb_xkb_get_map_reply_t *R  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_map_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_map_reply_t * xcb_xkb_get_map_reply
- ** 
- ** @param xcb_connection_t          *c
- ** @param xcb_xkb_get_map_cookie_t   cookie
- ** @param xcb_generic_error_t      **e
- ** @returns xcb_xkb_get_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_map_reply_t *
 xcb_xkb_get_map_reply (xcb_connection_t          *c  /**< */,
                        xcb_xkb_get_map_cookie_t   cookie  /**< */,
                        xcb_generic_error_t      **e  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_types_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_types_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                      const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_key_type_iterator_t xcb_xkb_set_map_values_types_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_key_type_iterator_t
 xcb_xkb_set_map_values_types_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_syms_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_syms_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                     const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_set_map_values_syms_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_set_map_values_syms_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                       const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_map_values_actions_count
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_map_values_actions_count (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_actions_count_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_actions_count_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                              const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_map_values_actions_count_end
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_map_values_actions_count_end (const xcb_xkb_set_map_request_t *R  /**< */,
                                           const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_set_map_values_actions
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_set_map_values_actions (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_actions_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_actions_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_set_map_values_actions_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_set_map_values_actions_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_set_map_values_behaviors
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_set_map_values_behaviors (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_behaviors_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_behaviors_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_set_map_values_behaviors_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_set_map_values_behaviors_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                            const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_map_values_vmods
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_map_values_vmods (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_vmods_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_vmods_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                      const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_map_values_vmods_end
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_map_values_vmods_end (const xcb_xkb_set_map_request_t *R  /**< */,
                                   const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_set_map_values_explicit
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_set_map_values_explicit (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_explicit_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_explicit_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                         const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_set_map_values_explicit_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_set_map_values_explicit_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                           const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_set_map_values_modmap
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_set_map_values_modmap (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_modmap_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_modmap_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                       const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_set_map_values_modmap_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_set_map_values_modmap_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                         const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_set_map_values_vmodmap
- ** 
- ** @param const xcb_xkb_set_map_values_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_set_map_values_vmodmap (const xcb_xkb_set_map_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_map_values_vmodmap_length
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_map_values_vmodmap_length (const xcb_xkb_set_map_request_t *R  /**< */,
                                        const xcb_xkb_set_map_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_set_map_values_vmodmap_iterator
- ** 
- ** @param const xcb_xkb_set_map_values_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_set_map_values_vmodmap_iterator (const xcb_xkb_set_map_request_t *R  /**< */,
                                          const xcb_xkb_set_map_values_t *S /**< */);
@@ -8974,7 +5333,7 @@ xcb_xkb_set_map_values_serialize (void                           **_buffer  /**<
                                   uint8_t                          nKeyActions  /**< */,
                                   uint16_t                         totalActions  /**< */,
                                   uint8_t                          totalKeyBehaviors  /**< */,
-                                  uint8_t                          nVModMapKeys  /**< */,
+                                  uint16_t                         virtualMods  /**< */,
                                   uint8_t                          totalKeyExplicit  /**< */,
                                   uint8_t                          totalModMapKeys  /**< */,
                                   uint8_t                          totalVModMapKeys  /**< */,
@@ -8988,7 +5347,7 @@ xcb_xkb_set_map_values_unpack (const void                *_buffer  /**< */,
                                uint8_t                    nKeyActions  /**< */,
                                uint16_t                   totalActions  /**< */,
                                uint8_t                    totalKeyBehaviors  /**< */,
-                               uint8_t                    nVModMapKeys  /**< */,
+                               uint16_t                   virtualMods  /**< */,
                                uint8_t                    totalKeyExplicit  /**< */,
                                uint8_t                    totalModMapKeys  /**< */,
                                uint8_t                    totalVModMapKeys  /**< */,
@@ -9002,7 +5361,7 @@ xcb_xkb_set_map_values_sizeof (const void  *_buffer  /**< */,
                                uint8_t      nKeyActions  /**< */,
                                uint16_t     totalActions  /**< */,
                                uint8_t      totalKeyBehaviors  /**< */,
-                               uint8_t      nVModMapKeys  /**< */,
+                               uint16_t     virtualMods  /**< */,
                                uint8_t      totalKeyExplicit  /**< */,
                                uint8_t      totalModMapKeys  /**< */,
                                uint8_t      totalVModMapKeys  /**< */,
@@ -9014,48 +5373,11 @@ xcb_xkb_set_map_values_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               present
- ** @param uint16_t               flags
- ** @param xcb_keycode_t          minKeyCode
- ** @param xcb_keycode_t          maxKeyCode
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param uint16_t               totalSyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param uint16_t               totalActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint8_t                totalKeyBehaviors
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param uint8_t                totalKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param uint8_t                totalModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @param uint8_t                totalVModMapKeys
- ** @param uint16_t               virtualMods
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_checked (xcb_connection_t      *c  /**< */,
                          xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9092,45 +5414,8 @@ xcb_xkb_set_map_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               present
- ** @param uint16_t               flags
- ** @param xcb_keycode_t          minKeyCode
- ** @param xcb_keycode_t          maxKeyCode
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param xcb_keycode_t          firstKeySym
- ** @param uint8_t                nKeySyms
- ** @param uint16_t               totalSyms
- ** @param xcb_keycode_t          firstKeyAction
- ** @param uint8_t                nKeyActions
- ** @param uint16_t               totalActions
- ** @param xcb_keycode_t          firstKeyBehavior
- ** @param uint8_t                nKeyBehaviors
- ** @param uint8_t                totalKeyBehaviors
- ** @param xcb_keycode_t          firstKeyExplicit
- ** @param uint8_t                nKeyExplicit
- ** @param uint8_t                totalKeyExplicit
- ** @param xcb_keycode_t          firstModMapKey
- ** @param uint8_t                nModMapKeys
- ** @param uint8_t                totalModMapKeys
- ** @param xcb_keycode_t          firstVModMapKey
- ** @param uint8_t                nVModMapKeys
- ** @param uint8_t                totalVModMapKeys
- ** @param uint16_t               virtualMods
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map (xcb_connection_t      *c  /**< */,
                  xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9167,48 +5452,11 @@ xcb_xkb_set_map (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_aux_checked
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_device_spec_t           deviceSpec
- ** @param uint16_t                        present
- ** @param uint16_t                        flags
- ** @param xcb_keycode_t                   minKeyCode
- ** @param xcb_keycode_t                   maxKeyCode
- ** @param uint8_t                         firstType
- ** @param uint8_t                         nTypes
- ** @param xcb_keycode_t                   firstKeySym
- ** @param uint8_t                         nKeySyms
- ** @param uint16_t                        totalSyms
- ** @param xcb_keycode_t                   firstKeyAction
- ** @param uint8_t                         nKeyActions
- ** @param uint16_t                        totalActions
- ** @param xcb_keycode_t                   firstKeyBehavior
- ** @param uint8_t                         nKeyBehaviors
- ** @param uint8_t                         totalKeyBehaviors
- ** @param xcb_keycode_t                   firstKeyExplicit
- ** @param uint8_t                         nKeyExplicit
- ** @param uint8_t                         totalKeyExplicit
- ** @param xcb_keycode_t                   firstModMapKey
- ** @param uint8_t                         nModMapKeys
- ** @param uint8_t                         totalModMapKeys
- ** @param xcb_keycode_t                   firstVModMapKey
- ** @param uint8_t                         nVModMapKeys
- ** @param uint8_t                         totalVModMapKeys
- ** @param uint16_t                        virtualMods
- ** @param const xcb_xkb_set_map_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_aux_checked (xcb_connection_t               *c  /**< */,
                              xcb_xkb_device_spec_t           deviceSpec  /**< */,
@@ -9245,45 +5493,8 @@ xcb_xkb_set_map_aux_checked (xcb_connection_t               *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_map_aux
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_device_spec_t           deviceSpec
- ** @param uint16_t                        present
- ** @param uint16_t                        flags
- ** @param xcb_keycode_t                   minKeyCode
- ** @param xcb_keycode_t                   maxKeyCode
- ** @param uint8_t                         firstType
- ** @param uint8_t                         nTypes
- ** @param xcb_keycode_t                   firstKeySym
- ** @param uint8_t                         nKeySyms
- ** @param uint16_t                        totalSyms
- ** @param xcb_keycode_t                   firstKeyAction
- ** @param uint8_t                         nKeyActions
- ** @param uint16_t                        totalActions
- ** @param xcb_keycode_t                   firstKeyBehavior
- ** @param uint8_t                         nKeyBehaviors
- ** @param uint8_t                         totalKeyBehaviors
- ** @param xcb_keycode_t                   firstKeyExplicit
- ** @param uint8_t                         nKeyExplicit
- ** @param uint8_t                         totalKeyExplicit
- ** @param xcb_keycode_t                   firstModMapKey
- ** @param uint8_t                         nModMapKeys
- ** @param uint8_t                         totalModMapKeys
- ** @param xcb_keycode_t                   firstVModMapKey
- ** @param uint8_t                         nVModMapKeys
- ** @param uint8_t                         totalVModMapKeys
- ** @param uint16_t                        virtualMods
- ** @param const xcb_xkb_set_map_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_map_aux (xcb_connection_t               *c  /**< */,
                      xcb_xkb_device_spec_t           deviceSpec  /**< */,
@@ -9323,23 +5534,8 @@ xcb_xkb_get_compat_map_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_cookie_t xcb_xkb_get_compat_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                groups
- ** @param uint8_t                getAllSI
- ** @param uint16_t               firstSI
- ** @param uint16_t               nSI
- ** @returns xcb_xkb_get_compat_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_cookie_t
 xcb_xkb_get_compat_map (xcb_connection_t      *c  /**< */,
                         xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9354,26 +5550,11 @@ xcb_xkb_get_compat_map (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_cookie_t xcb_xkb_get_compat_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint8_t                groups
- ** @param uint8_t                getAllSI
- ** @param uint16_t               firstSI
- ** @param uint16_t               nSI
- ** @returns xcb_xkb_get_compat_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_cookie_t
 xcb_xkb_get_compat_map_unchecked (xcb_connection_t      *c  /**< */,
                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9382,81 +5563,21 @@ xcb_xkb_get_compat_map_unchecked (xcb_connection_t      *c  /**< */,
                                   uint16_t               firstSI  /**< */,
                                   uint16_t               nSI  /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_compat_map_si_rtrn
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
+xcb_xkb_sym_interpret_t *
 xcb_xkb_get_compat_map_si_rtrn (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_compat_map_si_rtrn_length
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_compat_map_si_rtrn_length (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
+xcb_xkb_sym_interpret_iterator_t
+xcb_xkb_get_compat_map_si_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_compat_map_si_rtrn_end
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_compat_map_si_rtrn_end (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_get_compat_map_group_rtrn
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_get_compat_map_group_rtrn (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_compat_map_group_rtrn_length
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_compat_map_group_rtrn_length (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_get_compat_map_group_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_compat_map_reply_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_get_compat_map_group_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t *R  /**< */);
 
@@ -9467,25 +5588,13 @@ xcb_xkb_get_compat_map_group_rtrn_iterator (const xcb_xkb_get_compat_map_reply_t
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_compat_map_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_compat_map_reply_t * xcb_xkb_get_compat_map_reply
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_get_compat_map_cookie_t   cookie
- ** @param xcb_generic_error_t             **e
- ** @returns xcb_xkb_get_compat_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_compat_map_reply_t *
 xcb_xkb_get_compat_map_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xkb_get_compat_map_cookie_t   cookie  /**< */,
@@ -9500,39 +5609,21 @@ xcb_xkb_set_compat_map_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_compat_map_checked
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint8_t                  recomputeActions
- ** @param uint8_t                  truncateSI
- ** @param uint8_t                  groups
- ** @param uint16_t                 firstSI
- ** @param uint16_t                 nSI
- ** @param const uint8_t           *si
- ** @param const xcb_xkb_mod_def_t *groupMaps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
-xcb_xkb_set_compat_map_checked (xcb_connection_t        *c  /**< */,
-                                xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                                uint8_t                  recomputeActions  /**< */,
-                                uint8_t                  truncateSI  /**< */,
-                                uint8_t                  groups  /**< */,
-                                uint16_t                 firstSI  /**< */,
-                                uint16_t                 nSI  /**< */,
-                                const uint8_t           *si  /**< */,
-                                const xcb_xkb_mod_def_t *groupMaps  /**< */);
+xcb_xkb_set_compat_map_checked (xcb_connection_t              *c  /**< */,
+                                xcb_xkb_device_spec_t          deviceSpec  /**< */,
+                                uint8_t                        recomputeActions  /**< */,
+                                uint8_t                        truncateSI  /**< */,
+                                uint8_t                        groups  /**< */,
+                                uint16_t                       firstSI  /**< */,
+                                uint16_t                       nSI  /**< */,
+                                const xcb_xkb_sym_interpret_t *si  /**< */,
+                                const xcb_xkb_mod_def_t       *groupMaps  /**< */);
 
 /**
  *
@@ -9540,36 +5631,18 @@ xcb_xkb_set_compat_map_checked (xcb_connection_t        *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_compat_map
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint8_t                  recomputeActions
- ** @param uint8_t                  truncateSI
- ** @param uint8_t                  groups
- ** @param uint16_t                 firstSI
- ** @param uint16_t                 nSI
- ** @param const uint8_t           *si
- ** @param const xcb_xkb_mod_def_t *groupMaps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
-xcb_xkb_set_compat_map (xcb_connection_t        *c  /**< */,
-                        xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                        uint8_t                  recomputeActions  /**< */,
-                        uint8_t                  truncateSI  /**< */,
-                        uint8_t                  groups  /**< */,
-                        uint16_t                 firstSI  /**< */,
-                        uint16_t                 nSI  /**< */,
-                        const uint8_t           *si  /**< */,
-                        const xcb_xkb_mod_def_t *groupMaps  /**< */);
+xcb_xkb_set_compat_map (xcb_connection_t              *c  /**< */,
+                        xcb_xkb_device_spec_t          deviceSpec  /**< */,
+                        uint8_t                        recomputeActions  /**< */,
+                        uint8_t                        truncateSI  /**< */,
+                        uint8_t                        groups  /**< */,
+                        uint16_t                       firstSI  /**< */,
+                        uint16_t                       nSI  /**< */,
+                        const xcb_xkb_sym_interpret_t *si  /**< */,
+                        const xcb_xkb_mod_def_t       *groupMaps  /**< */);
 
 /**
  *
@@ -9577,19 +5650,8 @@ xcb_xkb_set_compat_map (xcb_connection_t        *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_cookie_t xcb_xkb_get_indicator_state
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_indicator_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_cookie_t
 xcb_xkb_get_indicator_state (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -9600,22 +5662,11 @@ xcb_xkb_get_indicator_state (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_cookie_t xcb_xkb_get_indicator_state_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @returns xcb_xkb_get_indicator_state_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_cookie_t
 xcb_xkb_get_indicator_state_unchecked (xcb_connection_t      *c  /**< */,
                                        xcb_xkb_device_spec_t  deviceSpec  /**< */);
@@ -9627,25 +5678,13 @@ xcb_xkb_get_indicator_state_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_indicator_state_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_state_reply_t * xcb_xkb_get_indicator_state_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_get_indicator_state_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_get_indicator_state_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_state_reply_t *
 xcb_xkb_get_indicator_state_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_get_indicator_state_cookie_t   cookie  /**< */,
@@ -9660,20 +5699,8 @@ xcb_xkb_get_indicator_map_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_cookie_t xcb_xkb_get_indicator_map
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_indicator_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_cookie_t
 xcb_xkb_get_indicator_map (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -9685,64 +5712,22 @@ xcb_xkb_get_indicator_map (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_cookie_t xcb_xkb_get_indicator_map_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_indicator_map_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_cookie_t
 xcb_xkb_get_indicator_map_unchecked (xcb_connection_t      *c  /**< */,
                                      xcb_xkb_device_spec_t  deviceSpec  /**< */,
                                      uint32_t               which  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_get_indicator_map_maps
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_get_indicator_map_maps (const xcb_xkb_get_indicator_map_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_indicator_map_maps_length
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_indicator_map_maps_length (const xcb_xkb_get_indicator_map_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_get_indicator_map_maps_iterator
- ** 
- ** @param const xcb_xkb_get_indicator_map_reply_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_get_indicator_map_maps_iterator (const xcb_xkb_get_indicator_map_reply_t *R  /**< */);
 
@@ -9753,25 +5738,13 @@ xcb_xkb_get_indicator_map_maps_iterator (const xcb_xkb_get_indicator_map_reply_t
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_indicator_map_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_indicator_map_reply_t * xcb_xkb_get_indicator_map_reply
- ** 
- ** @param xcb_connection_t                    *c
- ** @param xcb_xkb_get_indicator_map_cookie_t   cookie
- ** @param xcb_generic_error_t                **e
- ** @returns xcb_xkb_get_indicator_map_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_indicator_map_reply_t *
 xcb_xkb_get_indicator_map_reply (xcb_connection_t                    *c  /**< */,
                                  xcb_xkb_get_indicator_map_cookie_t   cookie  /**< */,
@@ -9786,24 +5759,11 @@ xcb_xkb_set_indicator_map_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_indicator_map_checked
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint32_t                       which
- ** @param const xcb_xkb_indicator_map_t *maps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_indicator_map_checked (xcb_connection_t              *c  /**< */,
                                    xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -9816,21 +5776,8 @@ xcb_xkb_set_indicator_map_checked (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_indicator_map
- ** 
- ** @param xcb_connection_t              *c
- ** @param xcb_xkb_device_spec_t          deviceSpec
- ** @param uint32_t                       which
- ** @param const xcb_xkb_indicator_map_t *maps
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_indicator_map (xcb_connection_t              *c  /**< */,
                            xcb_xkb_device_spec_t          deviceSpec  /**< */,
@@ -9843,22 +5790,8 @@ xcb_xkb_set_indicator_map (xcb_connection_t              *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_cookie_t xcb_xkb_get_named_indicator
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @returns xcb_xkb_get_named_indicator_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_cookie_t
 xcb_xkb_get_named_indicator (xcb_connection_t         *c  /**< */,
                              xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -9872,25 +5805,11 @@ xcb_xkb_get_named_indicator (xcb_connection_t         *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_cookie_t xcb_xkb_get_named_indicator_unchecked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @returns xcb_xkb_get_named_indicator_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_cookie_t
 xcb_xkb_get_named_indicator_unchecked (xcb_connection_t         *c  /**< */,
                                        xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -9905,25 +5824,13 @@ xcb_xkb_get_named_indicator_unchecked (xcb_connection_t         *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_named_indicator_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_named_indicator_reply_t * xcb_xkb_get_named_indicator_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_get_named_indicator_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_get_named_indicator_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_named_indicator_reply_t *
 xcb_xkb_get_named_indicator_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_get_named_indicator_cookie_t   cookie  /**< */,
@@ -9935,36 +5842,11 @@ xcb_xkb_get_named_indicator_reply (xcb_connection_t                      *c  /**
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_named_indicator_checked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @param uint8_t                   setState
- ** @param uint8_t                   on
- ** @param uint8_t                   setMap
- ** @param uint8_t                   createMap
- ** @param uint8_t                   map_flags
- ** @param uint8_t                   map_whichGroups
- ** @param uint8_t                   map_groups
- ** @param uint8_t                   map_whichMods
- ** @param uint8_t                   map_realMods
- ** @param uint16_t                  map_vmods
- ** @param uint32_t                  map_ctrls
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_named_indicator_checked (xcb_connection_t         *c  /**< */,
                                      xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -9989,33 +5871,8 @@ xcb_xkb_set_named_indicator_checked (xcb_connection_t         *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_named_indicator
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @param xcb_atom_t                indicator
- ** @param uint8_t                   setState
- ** @param uint8_t                   on
- ** @param uint8_t                   setMap
- ** @param uint8_t                   createMap
- ** @param uint8_t                   map_flags
- ** @param uint8_t                   map_whichGroups
- ** @param uint8_t                   map_groups
- ** @param uint8_t                   map_whichMods
- ** @param uint8_t                   map_realMods
- ** @param uint16_t                  map_vmods
- ** @param uint32_t                  map_ctrls
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_named_indicator (xcb_connection_t         *c  /**< */,
                              xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -10034,371 +5891,112 @@ xcb_xkb_set_named_indicator (xcb_connection_t         *c  /**< */,
                              uint16_t                  map_vmods  /**< */,
                              uint32_t                  map_ctrls  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_type_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_type_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_type_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_type_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                 const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_type_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_type_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                              const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_names_value_list_n_levels_per_type
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_names_value_list_n_levels_per_type (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_n_levels_per_type_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_n_levels_per_type_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S /**< */);
 
+uint8_t *
+xcb_xkb_get_names_value_list_alignment_pad (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_kt_level_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
+int
+xcb_xkb_get_names_value_list_alignment_pad_length (const xcb_xkb_get_names_reply_t *R  /**< */,
+                                                   const xcb_xkb_get_names_value_list_t *S /**< */);
+
+xcb_generic_iterator_t
+xcb_xkb_get_names_value_list_alignment_pad_end (const xcb_xkb_get_names_reply_t *R  /**< */,
+                                                const xcb_xkb_get_names_value_list_t *S /**< */);
+
 xcb_atom_t *
 xcb_xkb_get_names_value_list_kt_level_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_kt_level_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_kt_level_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_kt_level_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_kt_level_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_indicator_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_indicator_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_indicator_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_indicator_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                      const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_indicator_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_indicator_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                   const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_virtual_mod_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_virtual_mod_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_virtual_mod_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_virtual_mod_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_groups
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_groups (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_groups_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_groups_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                             const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_groups_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_groups_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                          const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_get_names_value_list_key_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_get_names_value_list_key_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_key_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_key_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_get_names_value_list_key_names_iterator
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_get_names_value_list_key_names_iterator (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_names_value_list_key_aliases
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_get_names_value_list_key_aliases (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_key_aliases_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                  const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_names_value_list_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_get_names_value_list_key_aliases_iterator (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                    const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_names_value_list_radio_group_names
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_names_value_list_radio_group_names (const xcb_xkb_get_names_value_list_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_names_value_list_radio_group_names_length
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_names_value_list_radio_group_names_length (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                        const xcb_xkb_get_names_value_list_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_names_value_list_radio_group_names_end
- ** 
- ** @param const xcb_xkb_get_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_names_value_list_radio_group_names_end (const xcb_xkb_get_names_reply_t *R  /**< */,
                                                     const xcb_xkb_get_names_value_list_t *S /**< */);
@@ -10444,20 +6042,8 @@ xcb_xkb_get_names_value_list_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_cookie_t xcb_xkb_get_names
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_names_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_cookie_t
 xcb_xkb_get_names (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -10469,38 +6055,16 @@ xcb_xkb_get_names (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_cookie_t xcb_xkb_get_names_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               which
- ** @returns xcb_xkb_get_names_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_cookie_t
 xcb_xkb_get_names_unchecked (xcb_connection_t      *c  /**< */,
                              xcb_xkb_device_spec_t  deviceSpec  /**< */,
                              uint32_t               which  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_value_list_t * xcb_xkb_get_names_value_list
- ** 
- ** @param const xcb_xkb_get_names_reply_t *R
- ** @returns xcb_xkb_get_names_value_list_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_names_value_list (const xcb_xkb_get_names_reply_t *R  /**< */);
 
@@ -10511,395 +6075,113 @@ xcb_xkb_get_names_value_list (const xcb_xkb_get_names_reply_t *R  /**< */);
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_names_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_names_reply_t * xcb_xkb_get_names_reply
- ** 
- ** @param xcb_connection_t            *c
- ** @param xcb_xkb_get_names_cookie_t   cookie
- ** @param xcb_generic_error_t        **e
- ** @returns xcb_xkb_get_names_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_names_reply_t *
 xcb_xkb_get_names_reply (xcb_connection_t            *c  /**< */,
                          xcb_xkb_get_names_cookie_t   cookie  /**< */,
                          xcb_generic_error_t        **e  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_type_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_type_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_type_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_type_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                             const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_type_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_type_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                          const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_set_names_values_n_levels_per_type
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_set_names_values_n_levels_per_type (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_n_levels_per_type_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_n_levels_per_type_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_kt_level_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_kt_level_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_kt_level_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_kt_level_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_kt_level_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_kt_level_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_indicator_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_indicator_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_indicator_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_indicator_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                  const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_indicator_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_indicator_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                               const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_virtual_mod_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_virtual_mod_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_virtual_mod_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_virtual_mod_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_groups
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_groups (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_groups_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_groups_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                         const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_groups_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_groups_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                      const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_set_names_values_key_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_set_names_values_key_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_key_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_key_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                            const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_set_names_values_key_names_iterator
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_set_names_values_key_names_iterator (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_set_names_values_key_aliases
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_set_names_values_key_aliases (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_key_aliases_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_key_aliases_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                              const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_set_names_values_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_set_names_values_key_aliases_iterator (const xcb_xkb_set_names_request_t *R  /**< */,
                                                const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_set_names_values_radio_group_names
- ** 
- ** @param const xcb_xkb_set_names_values_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_set_names_values_radio_group_names (const xcb_xkb_set_names_values_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_set_names_values_radio_group_names_length
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_set_names_values_radio_group_names_length (const xcb_xkb_set_names_request_t *R  /**< */,
                                                    const xcb_xkb_set_names_values_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_set_names_values_radio_group_names_end
- ** 
- ** @param const xcb_xkb_set_names_values_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_set_names_values_radio_group_names_end (const xcb_xkb_set_names_request_t *R  /**< */,
                                                 const xcb_xkb_set_names_values_t *S /**< */);
@@ -10907,7 +6189,6 @@ xcb_xkb_set_names_values_radio_group_names_end (const xcb_xkb_set_names_request_
 int
 xcb_xkb_set_names_values_serialize (void                             **_buffer  /**< */,
                                     uint8_t                            nTypes  /**< */,
-                                    uint8_t                            nKTLevels  /**< */,
                                     uint32_t                           indicators  /**< */,
                                     uint16_t                           virtualMods  /**< */,
                                     uint8_t                            groupNames  /**< */,
@@ -10920,7 +6201,6 @@ xcb_xkb_set_names_values_serialize (void                             **_buffer  
 int
 xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
                                  uint8_t                      nTypes  /**< */,
-                                 uint8_t                      nKTLevels  /**< */,
                                  uint32_t                     indicators  /**< */,
                                  uint16_t                     virtualMods  /**< */,
                                  uint8_t                      groupNames  /**< */,
@@ -10933,7 +6213,6 @@ xcb_xkb_set_names_values_unpack (const void                  *_buffer  /**< */,
 int
 xcb_xkb_set_names_values_sizeof (const void  *_buffer  /**< */,
                                  uint8_t      nTypes  /**< */,
-                                 uint8_t      nKTLevels  /**< */,
                                  uint32_t     indicators  /**< */,
                                  uint16_t     virtualMods  /**< */,
                                  uint8_t      groupNames  /**< */,
@@ -10948,36 +6227,11 @@ xcb_xkb_set_names_values_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_checked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               virtualMods
- ** @param uint32_t               which
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param uint8_t                firstKTLevelt
- ** @param uint8_t                nKTLevels
- ** @param uint32_t               indicators
- ** @param uint8_t                groupNames
- ** @param uint8_t                nRadioGroups
- ** @param xcb_keycode_t          firstKey
- ** @param uint8_t                nKeys
- ** @param uint8_t                nKeyAliases
- ** @param uint16_t               totalKTLevelNames
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_checked (xcb_connection_t      *c  /**< */,
                            xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11002,33 +6256,8 @@ xcb_xkb_set_names_checked (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint16_t               virtualMods
- ** @param uint32_t               which
- ** @param uint8_t                firstType
- ** @param uint8_t                nTypes
- ** @param uint8_t                firstKTLevelt
- ** @param uint8_t                nKTLevels
- ** @param uint32_t               indicators
- ** @param uint8_t                groupNames
- ** @param uint8_t                nRadioGroups
- ** @param xcb_keycode_t          firstKey
- ** @param uint8_t                nKeys
- ** @param uint8_t                nKeyAliases
- ** @param uint16_t               totalKTLevelNames
- ** @param const void            *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names (xcb_connection_t      *c  /**< */,
                    xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11053,36 +6282,11 @@ xcb_xkb_set_names (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_aux_checked
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_device_spec_t             deviceSpec
- ** @param uint16_t                          virtualMods
- ** @param uint32_t                          which
- ** @param uint8_t                           firstType
- ** @param uint8_t                           nTypes
- ** @param uint8_t                           firstKTLevelt
- ** @param uint8_t                           nKTLevels
- ** @param uint32_t                          indicators
- ** @param uint8_t                           groupNames
- ** @param uint8_t                           nRadioGroups
- ** @param xcb_keycode_t                     firstKey
- ** @param uint8_t                           nKeys
- ** @param uint8_t                           nKeyAliases
- ** @param uint16_t                          totalKTLevelNames
- ** @param const xcb_xkb_set_names_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_aux_checked (xcb_connection_t                 *c  /**< */,
                                xcb_xkb_device_spec_t             deviceSpec  /**< */,
@@ -11107,33 +6311,8 @@ xcb_xkb_set_names_aux_checked (xcb_connection_t                 *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_names_aux
- ** 
- ** @param xcb_connection_t                 *c
- ** @param xcb_xkb_device_spec_t             deviceSpec
- ** @param uint16_t                          virtualMods
- ** @param uint32_t                          which
- ** @param uint8_t                           firstType
- ** @param uint8_t                           nTypes
- ** @param uint8_t                           firstKTLevelt
- ** @param uint8_t                           nKTLevels
- ** @param uint32_t                          indicators
- ** @param uint8_t                           groupNames
- ** @param uint8_t                           nRadioGroups
- ** @param xcb_keycode_t                     firstKey
- ** @param uint8_t                           nKeys
- ** @param uint8_t                           nKeyAliases
- ** @param uint16_t                          totalKTLevelNames
- ** @param const xcb_xkb_set_names_values_t *values
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_names_aux (xcb_connection_t                 *c  /**< */,
                        xcb_xkb_device_spec_t             deviceSpec  /**< */,
@@ -11152,423 +6331,14 @@ xcb_xkb_set_names_aux (xcb_connection_t                 *c  /**< */,
                        uint16_t                          totalKTLevelNames  /**< */,
                        const xcb_xkb_set_names_values_t *values  /**< */);
 
-int
-xcb_xkb_get_geometry_sizeof (const void  *_buffer  /**< */);
-
 /**
  *
  * @param c The connection
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_geometry_cookie_t xcb_xkb_get_geometry
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param xcb_atom_t             name
- ** @returns xcb_xkb_get_geometry_cookie_t
- **
- *****************************************************************************/
- 
-xcb_xkb_get_geometry_cookie_t
-xcb_xkb_get_geometry (xcb_connection_t      *c  /**< */,
-                      xcb_xkb_device_spec_t  deviceSpec  /**< */,
-                      xcb_atom_t             name  /**< */);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- * 
- * This form can be used only if the request will cause
- * a reply to be generated. Any returned error will be
- * placed in the event queue.
- */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_geometry_cookie_t xcb_xkb_get_geometry_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param xcb_atom_t             name
- ** @returns xcb_xkb_get_geometry_cookie_t
- **
- *****************************************************************************/
- 
-xcb_xkb_get_geometry_cookie_t
-xcb_xkb_get_geometry_unchecked (xcb_connection_t      *c  /**< */,
-                                xcb_xkb_device_spec_t  deviceSpec  /**< */,
-                                xcb_atom_t             name  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_get_geometry_label_font
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_t *
-xcb_xkb_get_geometry_label_font (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_properties_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_properties_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_property_iterator_t xcb_xkb_get_geometry_properties_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_property_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_property_iterator_t
-xcb_xkb_get_geometry_properties_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_colors_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_colors_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_iterator_t xcb_xkb_get_geometry_colors_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_counted_string_16_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_iterator_t
-xcb_xkb_get_geometry_colors_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_shapes_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_shapes_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_shape_iterator_t xcb_xkb_get_geometry_shapes_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_shape_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_shape_iterator_t
-xcb_xkb_get_geometry_shapes_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_sections_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_sections_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_section_iterator_t xcb_xkb_get_geometry_sections_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_section_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_section_iterator_t
-xcb_xkb_get_geometry_sections_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_doodads_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_doodads_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_doodad_iterator_t xcb_xkb_get_geometry_doodads_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_doodad_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_doodad_iterator_t
-xcb_xkb_get_geometry_doodads_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_geometry_key_aliases
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_t *
-xcb_xkb_get_geometry_key_aliases (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_geometry_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_geometry_key_aliases_length (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_geometry_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_geometry_reply_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_iterator_t
-xcb_xkb_get_geometry_key_aliases_iterator (const xcb_xkb_get_geometry_reply_t *R  /**< */);
-
-/**
- * Return the reply
- * @param c      The connection
- * @param cookie The cookie
- * @param e      The xcb_generic_error_t supplied
- *
- * Returns the reply of the request asked by
- * 
- * The parameter @p e supplied to this function must be NULL if
- * xcb_xkb_get_geometry_unchecked(). is used.
- * Otherwise, it stores the error if any.
- *
- * The returned value must be freed by the caller using free().
- */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_geometry_reply_t * xcb_xkb_get_geometry_reply
- ** 
- ** @param xcb_connection_t               *c
- ** @param xcb_xkb_get_geometry_cookie_t   cookie
- ** @param xcb_generic_error_t           **e
- ** @returns xcb_xkb_get_geometry_reply_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_get_geometry_reply_t *
-xcb_xkb_get_geometry_reply (xcb_connection_t               *c  /**< */,
-                            xcb_xkb_get_geometry_cookie_t   cookie  /**< */,
-                            xcb_generic_error_t           **e  /**< */);
-
-int
-xcb_xkb_set_geometry_sizeof (const void  *_buffer  /**< */);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- * 
- * This form can be used only if the request will not cause
- * a reply to be generated. Any returned error will be
- * saved for handling by xcb_request_check().
- */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_geometry_checked
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_device_spec_t              deviceSpec
- ** @param uint8_t                            nShapes
- ** @param uint8_t                            nSections
- ** @param xcb_atom_t                         name
- ** @param uint16_t                           widthMM
- ** @param uint16_t                           heightMM
- ** @param uint16_t                           nProperties
- ** @param uint16_t                           nColors
- ** @param uint16_t                           nDoodads
- ** @param uint16_t                           nKeyAliases
- ** @param uint8_t                            baseColorNdx
- ** @param uint8_t                            labelColorNdx
- ** @param xcb_xkb_counted_string_16_t       *labelFont
- ** @param const xcb_xkb_property_t          *properties
- ** @param const xcb_xkb_counted_string_16_t *colors
- ** @param const xcb_xkb_shape_t             *shapes
- ** @param const xcb_xkb_section_t           *sections
- ** @param const xcb_xkb_doodad_t            *doodads
- ** @param const xcb_xkb_key_alias_t         *keyAliases
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
-xcb_void_cookie_t
-xcb_xkb_set_geometry_checked (xcb_connection_t                  *c  /**< */,
-                              xcb_xkb_device_spec_t              deviceSpec  /**< */,
-                              uint8_t                            nShapes  /**< */,
-                              uint8_t                            nSections  /**< */,
-                              xcb_atom_t                         name  /**< */,
-                              uint16_t                           widthMM  /**< */,
-                              uint16_t                           heightMM  /**< */,
-                              uint16_t                           nProperties  /**< */,
-                              uint16_t                           nColors  /**< */,
-                              uint16_t                           nDoodads  /**< */,
-                              uint16_t                           nKeyAliases  /**< */,
-                              uint8_t                            baseColorNdx  /**< */,
-                              uint8_t                            labelColorNdx  /**< */,
-                              xcb_xkb_counted_string_16_t       *labelFont  /**< */,
-                              const xcb_xkb_property_t          *properties  /**< */,
-                              const xcb_xkb_counted_string_16_t *colors  /**< */,
-                              const xcb_xkb_shape_t             *shapes  /**< */,
-                              const xcb_xkb_section_t           *sections  /**< */,
-                              const xcb_xkb_doodad_t            *doodads  /**< */,
-                              const xcb_xkb_key_alias_t         *keyAliases  /**< */);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- * 
- */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_geometry
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_device_spec_t              deviceSpec
- ** @param uint8_t                            nShapes
- ** @param uint8_t                            nSections
- ** @param xcb_atom_t                         name
- ** @param uint16_t                           widthMM
- ** @param uint16_t                           heightMM
- ** @param uint16_t                           nProperties
- ** @param uint16_t                           nColors
- ** @param uint16_t                           nDoodads
- ** @param uint16_t                           nKeyAliases
- ** @param uint8_t                            baseColorNdx
- ** @param uint8_t                            labelColorNdx
- ** @param xcb_xkb_counted_string_16_t       *labelFont
- ** @param const xcb_xkb_property_t          *properties
- ** @param const xcb_xkb_counted_string_16_t *colors
- ** @param const xcb_xkb_shape_t             *shapes
- ** @param const xcb_xkb_section_t           *sections
- ** @param const xcb_xkb_doodad_t            *doodads
- ** @param const xcb_xkb_key_alias_t         *keyAliases
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
-xcb_void_cookie_t
-xcb_xkb_set_geometry (xcb_connection_t                  *c  /**< */,
-                      xcb_xkb_device_spec_t              deviceSpec  /**< */,
-                      uint8_t                            nShapes  /**< */,
-                      uint8_t                            nSections  /**< */,
-                      xcb_atom_t                         name  /**< */,
-                      uint16_t                           widthMM  /**< */,
-                      uint16_t                           heightMM  /**< */,
-                      uint16_t                           nProperties  /**< */,
-                      uint16_t                           nColors  /**< */,
-                      uint16_t                           nDoodads  /**< */,
-                      uint16_t                           nKeyAliases  /**< */,
-                      uint8_t                            baseColorNdx  /**< */,
-                      uint8_t                            labelColorNdx  /**< */,
-                      xcb_xkb_counted_string_16_t       *labelFont  /**< */,
-                      const xcb_xkb_property_t          *properties  /**< */,
-                      const xcb_xkb_counted_string_16_t *colors  /**< */,
-                      const xcb_xkb_shape_t             *shapes  /**< */,
-                      const xcb_xkb_section_t           *sections  /**< */,
-                      const xcb_xkb_doodad_t            *doodads  /**< */,
-                      const xcb_xkb_key_alias_t         *keyAliases  /**< */);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- * 
- */
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_cookie_t xcb_xkb_per_client_flags
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               change
- ** @param uint32_t               value
- ** @param uint32_t               ctrlsToChange
- ** @param uint32_t               autoCtrls
- ** @param uint32_t               autoCtrlsValues
- ** @returns xcb_xkb_per_client_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_cookie_t
 xcb_xkb_per_client_flags (xcb_connection_t      *c  /**< */,
                           xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11584,27 +6354,11 @@ xcb_xkb_per_client_flags (xcb_connection_t      *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_cookie_t xcb_xkb_per_client_flags_unchecked
- ** 
- ** @param xcb_connection_t      *c
- ** @param xcb_xkb_device_spec_t  deviceSpec
- ** @param uint32_t               change
- ** @param uint32_t               value
- ** @param uint32_t               ctrlsToChange
- ** @param uint32_t               autoCtrls
- ** @param uint32_t               autoCtrlsValues
- ** @returns xcb_xkb_per_client_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_cookie_t
 xcb_xkb_per_client_flags_unchecked (xcb_connection_t      *c  /**< */,
                                     xcb_xkb_device_spec_t  deviceSpec  /**< */,
@@ -11621,43 +6375,17 @@ xcb_xkb_per_client_flags_unchecked (xcb_connection_t      *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_per_client_flags_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_per_client_flags_reply_t * xcb_xkb_per_client_flags_reply
- ** 
- ** @param xcb_connection_t                   *c
- ** @param xcb_xkb_per_client_flags_cookie_t   cookie
- ** @param xcb_generic_error_t               **e
- ** @returns xcb_xkb_per_client_flags_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_per_client_flags_reply_t *
 xcb_xkb_per_client_flags_reply (xcb_connection_t                   *c  /**< */,
                                 xcb_xkb_per_client_flags_cookie_t   cookie  /**< */,
                                 xcb_generic_error_t               **e  /**< */);
-
-int
-xcb_xkb_list_components_serialize (void                                    **_buffer  /**< */,
-                                   const xcb_xkb_list_components_request_t  *_aux  /**< */,
-                                   const xcb_xkb_string8_t                  *keymapsSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *keycodesSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *typesSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *compatMapSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *symbolsSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *geometrySpec  /**< */);
-
-int
-xcb_xkb_list_components_unserialize (const void                          *_buffer  /**< */,
-                                     xcb_xkb_list_components_request_t  **_aux  /**< */);
 
 int
 xcb_xkb_list_components_sizeof (const void  *_buffer  /**< */);
@@ -11668,48 +6396,12 @@ xcb_xkb_list_components_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_cookie_t xcb_xkb_list_components
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint16_t                 maxNames
- ** @param uint8_t                  keymapsSpecLen
- ** @param const xcb_xkb_string8_t *keymapsSpec
- ** @param uint8_t                  keycodesSpecLen
- ** @param const xcb_xkb_string8_t *keycodesSpec
- ** @param uint8_t                  typesSpecLen
- ** @param const xcb_xkb_string8_t *typesSpec
- ** @param uint8_t                  compatMapSpecLen
- ** @param const xcb_xkb_string8_t *compatMapSpec
- ** @param uint8_t                  symbolsSpecLen
- ** @param const xcb_xkb_string8_t *symbolsSpec
- ** @param uint8_t                  geometrySpecLen
- ** @param const xcb_xkb_string8_t *geometrySpec
- ** @returns xcb_xkb_list_components_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_cookie_t
-xcb_xkb_list_components (xcb_connection_t        *c  /**< */,
-                         xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                         uint16_t                 maxNames  /**< */,
-                         uint8_t                  keymapsSpecLen  /**< */,
-                         const xcb_xkb_string8_t *keymapsSpec  /**< */,
-                         uint8_t                  keycodesSpecLen  /**< */,
-                         const xcb_xkb_string8_t *keycodesSpec  /**< */,
-                         uint8_t                  typesSpecLen  /**< */,
-                         const xcb_xkb_string8_t *typesSpec  /**< */,
-                         uint8_t                  compatMapSpecLen  /**< */,
-                         const xcb_xkb_string8_t *compatMapSpec  /**< */,
-                         uint8_t                  symbolsSpecLen  /**< */,
-                         const xcb_xkb_string8_t *symbolsSpec  /**< */,
-                         uint8_t                  geometrySpecLen  /**< */,
-                         const xcb_xkb_string8_t *geometrySpec  /**< */);
+xcb_xkb_list_components (xcb_connection_t      *c  /**< */,
+                         xcb_xkb_device_spec_t  deviceSpec  /**< */,
+                         uint16_t               maxNames  /**< */);
 
 /**
  *
@@ -11717,205 +6409,49 @@ xcb_xkb_list_components (xcb_connection_t        *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_cookie_t xcb_xkb_list_components_unchecked
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint16_t                 maxNames
- ** @param uint8_t                  keymapsSpecLen
- ** @param const xcb_xkb_string8_t *keymapsSpec
- ** @param uint8_t                  keycodesSpecLen
- ** @param const xcb_xkb_string8_t *keycodesSpec
- ** @param uint8_t                  typesSpecLen
- ** @param const xcb_xkb_string8_t *typesSpec
- ** @param uint8_t                  compatMapSpecLen
- ** @param const xcb_xkb_string8_t *compatMapSpec
- ** @param uint8_t                  symbolsSpecLen
- ** @param const xcb_xkb_string8_t *symbolsSpec
- ** @param uint8_t                  geometrySpecLen
- ** @param const xcb_xkb_string8_t *geometrySpec
- ** @returns xcb_xkb_list_components_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_cookie_t
-xcb_xkb_list_components_unchecked (xcb_connection_t        *c  /**< */,
-                                   xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                                   uint16_t                 maxNames  /**< */,
-                                   uint8_t                  keymapsSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *keymapsSpec  /**< */,
-                                   uint8_t                  keycodesSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *keycodesSpec  /**< */,
-                                   uint8_t                  typesSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *typesSpec  /**< */,
-                                   uint8_t                  compatMapSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *compatMapSpec  /**< */,
-                                   uint8_t                  symbolsSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *symbolsSpec  /**< */,
-                                   uint8_t                  geometrySpecLen  /**< */,
-                                   const xcb_xkb_string8_t *geometrySpec  /**< */);
+xcb_xkb_list_components_unchecked (xcb_connection_t      *c  /**< */,
+                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
+                                   uint16_t               maxNames  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_keymaps_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_keymaps_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_keymaps_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_keymaps_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_keycodes_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_keycodes_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_keycodes_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_keycodes_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_types_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_types_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_types_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_types_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_compat_maps_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_compat_maps_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_compat_maps_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_compat_maps_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_symbols_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_symbols_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_symbols_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_symbols_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_list_components_geometries_length
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_list_components_geometries_length (const xcb_xkb_list_components_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_listing_iterator_t xcb_xkb_list_components_geometries_iterator
- ** 
- ** @param const xcb_xkb_list_components_reply_t *R
- ** @returns xcb_xkb_listing_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_listing_iterator_t
 xcb_xkb_list_components_geometries_iterator (const xcb_xkb_list_components_reply_t *R  /**< */);
 
@@ -11926,386 +6462,107 @@ xcb_xkb_list_components_geometries_iterator (const xcb_xkb_list_components_reply
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_list_components_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_list_components_reply_t * xcb_xkb_list_components_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_list_components_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_list_components_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_list_components_reply_t *
 xcb_xkb_list_components_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_list_components_cookie_t   cookie  /**< */,
                                xcb_generic_error_t              **e  /**< */);
 
 int
-xcb_xkb_get_kbd_by_name_serialize (void                                    **_buffer  /**< */,
-                                   const xcb_xkb_get_kbd_by_name_request_t  *_aux  /**< */,
-                                   const xcb_xkb_string8_t                  *keymapsSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *keycodesSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *typesSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *compatMapSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *symbolsSpec  /**< */,
-                                   const xcb_xkb_string8_t                  *geometrySpec  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_unserialize (const void                          *_buffer  /**< */,
-                                     xcb_xkb_get_kbd_by_name_request_t  **_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_sizeof (const void  *_buffer  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
 xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_type_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_types_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_sym_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_syms_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_count_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_acts_rtrn_acts_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                    const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_behavior_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_behaviors_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                    const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_vmods_rtrn_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_explicit_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_explicit_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_mod_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_modmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_t *
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_types_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_v_mod_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_types_map_vmodmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
@@ -12317,7 +6574,7 @@ xcb_xkb_get_kbd_by_name_replies_types_map_serialize (void                       
                                                      uint8_t                                             nKeyActions  /**< */,
                                                      uint16_t                                            totalActions  /**< */,
                                                      uint8_t                                             totalKeyBehaviors  /**< */,
-                                                     uint8_t                                             nVModMapKeys  /**< */,
+                                                     uint16_t                                            virtualMods  /**< */,
                                                      uint8_t                                             totalKeyExplicit  /**< */,
                                                      uint8_t                                             totalModMapKeys  /**< */,
                                                      uint8_t                                             totalVModMapKeys  /**< */,
@@ -12331,7 +6588,7 @@ xcb_xkb_get_kbd_by_name_replies_types_map_unpack (const void                    
                                                   uint8_t                                       nKeyActions  /**< */,
                                                   uint16_t                                      totalActions  /**< */,
                                                   uint8_t                                       totalKeyBehaviors  /**< */,
-                                                  uint8_t                                       nVModMapKeys  /**< */,
+                                                  uint16_t                                      virtualMods  /**< */,
                                                   uint8_t                                       totalKeyExplicit  /**< */,
                                                   uint8_t                                       totalModMapKeys  /**< */,
                                                   uint8_t                                       totalVModMapKeys  /**< */,
@@ -12345,1145 +6602,107 @@ xcb_xkb_get_kbd_by_name_replies_types_map_sizeof (const void  *_buffer  /**< */,
                                                   uint8_t      nKeyActions  /**< */,
                                                   uint16_t     totalActions  /**< */,
                                                   uint8_t      totalKeyBehaviors  /**< */,
-                                                  uint8_t      nVModMapKeys  /**< */,
+                                                  uint16_t     virtualMods  /**< */,
                                                   uint8_t      totalKeyExplicit  /**< */,
                                                   uint8_t      totalModMapKeys  /**< */,
                                                   uint8_t      totalVModMapKeys  /**< */,
                                                   uint16_t     present  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_types_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_type_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_types_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_syms_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                     const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_sym_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_syms_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                       const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_count_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_action_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_action_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_acts_rtrn_acts_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_set_behavior_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_set_behavior_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_behaviors_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmods_rtrn_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_set_explicit_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_set_explicit_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_explicit_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_mod_map_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                       const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_mod_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_modmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_v_mod_map_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_v_mod_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_vmodmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_serialize (void                                                       **_buffer  /**< */,
-                                                              uint8_t                                                      nTypes  /**< */,
-                                                              uint8_t                                                      nKeySyms  /**< */,
-                                                              uint8_t                                                      nKeyActions  /**< */,
-                                                              uint16_t                                                     totalActions  /**< */,
-                                                              uint8_t                                                      totalKeyBehaviors  /**< */,
-                                                              uint8_t                                                      nVModMapKeys  /**< */,
-                                                              uint8_t                                                      totalKeyExplicit  /**< */,
-                                                              uint8_t                                                      totalModMapKeys  /**< */,
-                                                              uint8_t                                                      totalVModMapKeys  /**< */,
-                                                              uint16_t                                                     present  /**< */,
-                                                              const xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_unpack (const void                                            *_buffer  /**< */,
-                                                           uint8_t                                                nTypes  /**< */,
-                                                           uint8_t                                                nKeySyms  /**< */,
-                                                           uint8_t                                                nKeyActions  /**< */,
-                                                           uint16_t                                               totalActions  /**< */,
-                                                           uint8_t                                                totalKeyBehaviors  /**< */,
-                                                           uint8_t                                                nVModMapKeys  /**< */,
-                                                           uint8_t                                                totalKeyExplicit  /**< */,
-                                                           uint8_t                                                totalModMapKeys  /**< */,
-                                                           uint8_t                                                totalVModMapKeys  /**< */,
-                                                           uint16_t                                               present  /**< */,
-                                                           xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_sizeof (const void  *_buffer  /**< */,
-                                                           uint8_t      nTypes  /**< */,
-                                                           uint8_t      nKeySyms  /**< */,
-                                                           uint8_t      nKeyActions  /**< */,
-                                                           uint16_t     totalActions  /**< */,
-                                                           uint8_t      totalKeyBehaviors  /**< */,
-                                                           uint8_t      nVModMapKeys  /**< */,
-                                                           uint8_t      totalKeyExplicit  /**< */,
-                                                           uint8_t      totalModMapKeys  /**< */,
-                                                           uint8_t      totalVModMapKeys  /**< */,
-                                                           uint16_t     present  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_types_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_types_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_type_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_types_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_key_type_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_type_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_types_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_syms_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_syms_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                     const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_sym_map_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_syms_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_key_sym_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_sym_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_syms_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                       const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_count_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_action_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_action_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_acts_rtrn_acts_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_behavior_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_set_behavior_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_behavior_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_set_behavior_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_set_behavior_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_behaviors_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmods_rtrn_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_set_explicit_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_set_explicit_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_explicit_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_set_explicit_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_set_explicit_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_explicit_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_mod_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_mod_map_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                       const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_key_mod_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_mod_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_modmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_v_mod_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_v_mod_map_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_v_mod_map_iterator_t xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *R
- ** @returns xcb_xkb_key_v_mod_map_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_v_mod_map_iterator_t
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_vmodmap_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_serialize (void                                                       **_buffer  /**< */,
-                                                              uint8_t                                                      nTypes  /**< */,
-                                                              uint8_t                                                      nKeySyms  /**< */,
-                                                              uint8_t                                                      nKeyActions  /**< */,
-                                                              uint16_t                                                     totalActions  /**< */,
-                                                              uint8_t                                                      totalKeyBehaviors  /**< */,
-                                                              uint8_t                                                      nVModMapKeys  /**< */,
-                                                              uint8_t                                                      totalKeyExplicit  /**< */,
-                                                              uint8_t                                                      totalModMapKeys  /**< */,
-                                                              uint8_t                                                      totalVModMapKeys  /**< */,
-                                                              uint16_t                                                     present  /**< */,
-                                                              const xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_unpack (const void                                            *_buffer  /**< */,
-                                                           uint8_t                                                nTypes  /**< */,
-                                                           uint8_t                                                nKeySyms  /**< */,
-                                                           uint8_t                                                nKeyActions  /**< */,
-                                                           uint16_t                                               totalActions  /**< */,
-                                                           uint8_t                                                totalKeyBehaviors  /**< */,
-                                                           uint8_t                                                nVModMapKeys  /**< */,
-                                                           uint8_t                                                totalKeyExplicit  /**< */,
-                                                           uint8_t                                                totalModMapKeys  /**< */,
-                                                           uint8_t                                                totalVModMapKeys  /**< */,
-                                                           uint16_t                                               present  /**< */,
-                                                           xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_sizeof (const void  *_buffer  /**< */,
-                                                           uint8_t      nTypes  /**< */,
-                                                           uint8_t      nKeySyms  /**< */,
-                                                           uint8_t      nKeyActions  /**< */,
-                                                           uint16_t     totalActions  /**< */,
-                                                           uint8_t      totalKeyBehaviors  /**< */,
-                                                           uint8_t      nVModMapKeys  /**< */,
-                                                           uint8_t      totalKeyExplicit  /**< */,
-                                                           uint8_t      totalModMapKeys  /**< */,
-                                                           uint8_t      totalVModMapKeys  /**< */,
-                                                           uint16_t     present  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_type_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
 uint8_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_n_levels_per_type_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_kt_level_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_indicator_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_virtual_mod_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                     const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_groups_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                  const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_name_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_names_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_key_alias_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_key_aliases_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
 xcb_atom_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                                const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
@@ -13491,7 +6710,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_radio_group_names_end (cons
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void                                                         **_buffer  /**< */,
                                                                 uint8_t                                                        nTypes  /**< */,
-                                                                uint16_t                                                       nKTLevels  /**< */,
                                                                 uint32_t                                                       indicators  /**< */,
                                                                 uint16_t                                                       virtualMods  /**< */,
                                                                 uint8_t                                                        groupNames  /**< */,
@@ -13504,7 +6722,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_serialize (void            
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void                                              *_buffer  /**< */,
                                                              uint8_t                                                  nTypes  /**< */,
-                                                             uint16_t                                                 nKTLevels  /**< */,
                                                              uint32_t                                                 indicators  /**< */,
                                                              uint16_t                                                 virtualMods  /**< */,
                                                              uint8_t                                                  groupNames  /**< */,
@@ -13517,7 +6734,6 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_unpack (const void         
 int
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_sizeof (const void  *_buffer  /**< */,
                                                              uint8_t      nTypes  /**< */,
-                                                             uint16_t     nKTLevels  /**< */,
                                                              uint32_t     indicators  /**< */,
                                                              uint16_t     virtualMods  /**< */,
                                                              uint8_t      groupNames  /**< */,
@@ -13526,781 +6742,44 @@ xcb_xkb_get_kbd_by_name_replies_key_names_value_list_sizeof (const void  *_buffe
                                                              uint8_t      nRadioGroups  /**< */,
                                                              uint32_t     which  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_type_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                       const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_n_levels_per_type_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_kt_level_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_indicator_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_virtual_mod_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                      const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_groups_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                   const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_name_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_name_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_name_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_xkb_key_name_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_name_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_names_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_key_aliases_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_atom_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_atom_t *
- **
- *****************************************************************************/
- 
-xcb_atom_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_radio_group_names_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_serialize (void                                                           **_buffer  /**< */,
-                                                                  uint8_t                                                          nTypes  /**< */,
-                                                                  uint16_t                                                         nKTLevels  /**< */,
-                                                                  uint32_t                                                         indicators  /**< */,
-                                                                  uint16_t                                                         virtualMods  /**< */,
-                                                                  uint8_t                                                          groupNames  /**< */,
-                                                                  uint8_t                                                          nKeys  /**< */,
-                                                                  uint8_t                                                          nKeyAliases  /**< */,
-                                                                  uint8_t                                                          nRadioGroups  /**< */,
-                                                                  uint32_t                                                         which  /**< */,
-                                                                  const xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_unpack (const void                                                *_buffer  /**< */,
-                                                               uint8_t                                                    nTypes  /**< */,
-                                                               uint16_t                                                   nKTLevels  /**< */,
-                                                               uint32_t                                                   indicators  /**< */,
-                                                               uint16_t                                                   virtualMods  /**< */,
-                                                               uint8_t                                                    groupNames  /**< */,
-                                                               uint8_t                                                    nKeys  /**< */,
-                                                               uint8_t                                                    nKeyAliases  /**< */,
-                                                               uint8_t                                                    nRadioGroups  /**< */,
-                                                               uint32_t                                                   which  /**< */,
-                                                               xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t  *_aux  /**< */);
-
-int
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_sizeof (const void  *_buffer  /**< */,
-                                                               uint8_t      nTypes  /**< */,
-                                                               uint16_t     nKTLevels  /**< */,
-                                                               uint32_t     indicators  /**< */,
-                                                               uint16_t     virtualMods  /**< */,
-                                                               uint8_t      groupNames  /**< */,
-                                                               uint8_t      nKeys  /**< */,
-                                                               uint8_t      nKeyAliases  /**< */,
-                                                               uint8_t      nRadioGroups  /**< */,
-                                                               uint32_t     which  /**< */);
-
-
-/*****************************************************************************
- **
- ** uint8_t * xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns uint8_t *
- **
- *****************************************************************************/
- 
-uint8_t *
+xcb_xkb_sym_interpret_t *
 xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
+xcb_xkb_sym_interpret_iterator_t
+xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
+                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_end
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
-xcb_generic_iterator_t
-xcb_xkb_get_kbd_by_name_replies_compat_map_si_rtrn_end (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_t * xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_mod_def_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_t *
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_mod_def_iterator_t xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_mod_def_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_mod_def_iterator_t
 xcb_xkb_get_kbd_by_name_replies_compat_map_group_rtrn_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                                 const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t * xcb_xkb_get_kbd_by_name_replies_client_symbols_map
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map_t *
-xcb_xkb_get_kbd_by_name_replies_client_symbols_map (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t * xcb_xkb_get_kbd_by_name_replies_server_symbols_map
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map_t *
-xcb_xkb_get_kbd_by_name_replies_server_symbols_map (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_t * xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_indicator_map_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_t *
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_indicator_map_iterator_t xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_indicator_map_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_indicator_map_iterator_t
 xcb_xkb_get_kbd_by_name_replies_indicator_maps_maps_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t * xcb_xkb_get_kbd_by_name_replies_key_names_value_list
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list_t *
 xcb_xkb_get_kbd_by_name_replies_key_names_value_list (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t * xcb_xkb_get_kbd_by_name_replies_other_names_value_list
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list_t *
-xcb_xkb_get_kbd_by_name_replies_other_names_value_list (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_t * xcb_xkb_get_kbd_by_name_replies_geometry_label_font
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_counted_string_16_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_counted_string_16_t *
 xcb_xkb_get_kbd_by_name_replies_geometry_label_font (const xcb_xkb_get_kbd_by_name_replies_t *R  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_properties_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_properties_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_property_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_properties_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_property_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_property_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_properties_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                              const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_colors_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_colors_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_counted_string_16_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_colors_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_counted_string_16_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_counted_string_16_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_colors_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_shapes_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_shapes_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                        const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_shape_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_shapes_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_shape_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_shape_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_shapes_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_sections_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_sections_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                          const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_section_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_sections_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_section_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_section_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_sections_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                            const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_doodads_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_doodads_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                         const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_doodad_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_doodads_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_doodad_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_doodad_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_doodads_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                           const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_t * xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *S
- ** @returns xcb_xkb_key_alias_t *
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_t *
-xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases (const xcb_xkb_get_kbd_by_name_replies_t *S  /**< */);
-
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases_length
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
-int
-xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases_length (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                             const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
-
-
-/*****************************************************************************
- **
- ** xcb_xkb_key_alias_iterator_t xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases_iterator
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_replies_t *R
- ** @returns xcb_xkb_key_alias_iterator_t
- **
- *****************************************************************************/
- 
-xcb_xkb_key_alias_iterator_t
-xcb_xkb_get_kbd_by_name_replies_geometry_key_aliases_iterator (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */,
-                                                               const xcb_xkb_get_kbd_by_name_replies_t *S /**< */);
 
 int
 xcb_xkb_get_kbd_by_name_replies_serialize (void                                    **_buffer  /**< */,
@@ -14322,52 +6801,14 @@ xcb_xkb_get_kbd_by_name_replies_sizeof (const void  *_buffer  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_cookie_t xcb_xkb_get_kbd_by_name
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint16_t                 need
- ** @param uint16_t                 want
- ** @param uint8_t                  load
- ** @param uint8_t                  keymapsSpecLen
- ** @param const xcb_xkb_string8_t *keymapsSpec
- ** @param uint8_t                  keycodesSpecLen
- ** @param const xcb_xkb_string8_t *keycodesSpec
- ** @param uint8_t                  typesSpecLen
- ** @param const xcb_xkb_string8_t *typesSpec
- ** @param uint8_t                  compatMapSpecLen
- ** @param const xcb_xkb_string8_t *compatMapSpec
- ** @param uint8_t                  symbolsSpecLen
- ** @param const xcb_xkb_string8_t *symbolsSpec
- ** @param uint8_t                  geometrySpecLen
- ** @param const xcb_xkb_string8_t *geometrySpec
- ** @returns xcb_xkb_get_kbd_by_name_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_cookie_t
-xcb_xkb_get_kbd_by_name (xcb_connection_t        *c  /**< */,
-                         xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                         uint16_t                 need  /**< */,
-                         uint16_t                 want  /**< */,
-                         uint8_t                  load  /**< */,
-                         uint8_t                  keymapsSpecLen  /**< */,
-                         const xcb_xkb_string8_t *keymapsSpec  /**< */,
-                         uint8_t                  keycodesSpecLen  /**< */,
-                         const xcb_xkb_string8_t *keycodesSpec  /**< */,
-                         uint8_t                  typesSpecLen  /**< */,
-                         const xcb_xkb_string8_t *typesSpec  /**< */,
-                         uint8_t                  compatMapSpecLen  /**< */,
-                         const xcb_xkb_string8_t *compatMapSpec  /**< */,
-                         uint8_t                  symbolsSpecLen  /**< */,
-                         const xcb_xkb_string8_t *symbolsSpec  /**< */,
-                         uint8_t                  geometrySpecLen  /**< */,
-                         const xcb_xkb_string8_t *geometrySpec  /**< */);
+xcb_xkb_get_kbd_by_name (xcb_connection_t      *c  /**< */,
+                         xcb_xkb_device_spec_t  deviceSpec  /**< */,
+                         uint16_t               need  /**< */,
+                         uint16_t               want  /**< */,
+                         uint8_t                load  /**< */);
 
 /**
  *
@@ -14375,66 +6816,18 @@ xcb_xkb_get_kbd_by_name (xcb_connection_t        *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_cookie_t xcb_xkb_get_kbd_by_name_unchecked
- ** 
- ** @param xcb_connection_t        *c
- ** @param xcb_xkb_device_spec_t    deviceSpec
- ** @param uint16_t                 need
- ** @param uint16_t                 want
- ** @param uint8_t                  load
- ** @param uint8_t                  keymapsSpecLen
- ** @param const xcb_xkb_string8_t *keymapsSpec
- ** @param uint8_t                  keycodesSpecLen
- ** @param const xcb_xkb_string8_t *keycodesSpec
- ** @param uint8_t                  typesSpecLen
- ** @param const xcb_xkb_string8_t *typesSpec
- ** @param uint8_t                  compatMapSpecLen
- ** @param const xcb_xkb_string8_t *compatMapSpec
- ** @param uint8_t                  symbolsSpecLen
- ** @param const xcb_xkb_string8_t *symbolsSpec
- ** @param uint8_t                  geometrySpecLen
- ** @param const xcb_xkb_string8_t *geometrySpec
- ** @returns xcb_xkb_get_kbd_by_name_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_cookie_t
-xcb_xkb_get_kbd_by_name_unchecked (xcb_connection_t        *c  /**< */,
-                                   xcb_xkb_device_spec_t    deviceSpec  /**< */,
-                                   uint16_t                 need  /**< */,
-                                   uint16_t                 want  /**< */,
-                                   uint8_t                  load  /**< */,
-                                   uint8_t                  keymapsSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *keymapsSpec  /**< */,
-                                   uint8_t                  keycodesSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *keycodesSpec  /**< */,
-                                   uint8_t                  typesSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *typesSpec  /**< */,
-                                   uint8_t                  compatMapSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *compatMapSpec  /**< */,
-                                   uint8_t                  symbolsSpecLen  /**< */,
-                                   const xcb_xkb_string8_t *symbolsSpec  /**< */,
-                                   uint8_t                  geometrySpecLen  /**< */,
-                                   const xcb_xkb_string8_t *geometrySpec  /**< */);
+xcb_xkb_get_kbd_by_name_unchecked (xcb_connection_t      *c  /**< */,
+                                   xcb_xkb_device_spec_t  deviceSpec  /**< */,
+                                   uint16_t               need  /**< */,
+                                   uint16_t               want  /**< */,
+                                   uint8_t                load  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_replies_t * xcb_xkb_get_kbd_by_name_replies
- ** 
- ** @param const xcb_xkb_get_kbd_by_name_reply_t *R
- ** @returns xcb_xkb_get_kbd_by_name_replies_t *
- **
- *****************************************************************************/
- 
 void *
 xcb_xkb_get_kbd_by_name_replies (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< */);
 
@@ -14445,25 +6838,13 @@ xcb_xkb_get_kbd_by_name_replies (const xcb_xkb_get_kbd_by_name_reply_t *R  /**< 
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_kbd_by_name_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_kbd_by_name_reply_t * xcb_xkb_get_kbd_by_name_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_get_kbd_by_name_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_get_kbd_by_name_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_kbd_by_name_reply_t *
 xcb_xkb_get_kbd_by_name_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_get_kbd_by_name_cookie_t   cookie  /**< */,
@@ -14478,25 +6859,8 @@ xcb_xkb_get_device_info_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_cookie_t xcb_xkb_get_device_info
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param uint16_t                  wanted
- ** @param uint8_t                   allButtons
- ** @param uint8_t                   firstButton
- ** @param uint8_t                   nButtons
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @returns xcb_xkb_get_device_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_cookie_t
 xcb_xkb_get_device_info (xcb_connection_t         *c  /**< */,
                          xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -14513,28 +6877,11 @@ xcb_xkb_get_device_info (xcb_connection_t         *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_cookie_t xcb_xkb_get_device_info_unchecked
- ** 
- ** @param xcb_connection_t         *c
- ** @param xcb_xkb_device_spec_t     deviceSpec
- ** @param uint16_t                  wanted
- ** @param uint8_t                   allButtons
- ** @param uint8_t                   firstButton
- ** @param uint8_t                   nButtons
- ** @param xcb_xkb_led_class_spec_t  ledClass
- ** @param xcb_xkb_id_spec_t         ledID
- ** @returns xcb_xkb_get_device_info_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_cookie_t
 xcb_xkb_get_device_info_unchecked (xcb_connection_t         *c  /**< */,
                                    xcb_xkb_device_spec_t     deviceSpec  /**< */,
@@ -14545,107 +6892,27 @@ xcb_xkb_get_device_info_unchecked (xcb_connection_t         *c  /**< */,
                                    xcb_xkb_led_class_spec_t  ledClass  /**< */,
                                    xcb_xkb_id_spec_t         ledID  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_string8_t * xcb_xkb_get_device_info_name
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_string8_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_string8_t *
 xcb_xkb_get_device_info_name (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_name_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_name_length (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_generic_iterator_t xcb_xkb_get_device_info_name_end
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_generic_iterator_t
- **
- *****************************************************************************/
- 
 xcb_generic_iterator_t
 xcb_xkb_get_device_info_name_end (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_t * xcb_xkb_get_device_info_btn_actions
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_action_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_action_t *
 xcb_xkb_get_device_info_btn_actions (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_btn_actions_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_btn_actions_length (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_action_iterator_t xcb_xkb_get_device_info_btn_actions_iterator
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_action_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_action_iterator_t
 xcb_xkb_get_device_info_btn_actions_iterator (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** int xcb_xkb_get_device_info_leds_length
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns int
- **
- *****************************************************************************/
- 
 int
 xcb_xkb_get_device_info_leds_length (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
-
-/*****************************************************************************
- **
- ** xcb_xkb_device_led_info_iterator_t xcb_xkb_get_device_info_leds_iterator
- ** 
- ** @param const xcb_xkb_get_device_info_reply_t *R
- ** @returns xcb_xkb_device_led_info_iterator_t
- **
- *****************************************************************************/
- 
 xcb_xkb_device_led_info_iterator_t
 xcb_xkb_get_device_info_leds_iterator (const xcb_xkb_get_device_info_reply_t *R  /**< */);
 
@@ -14656,25 +6923,13 @@ xcb_xkb_get_device_info_leds_iterator (const xcb_xkb_get_device_info_reply_t *R 
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_get_device_info_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_get_device_info_reply_t * xcb_xkb_get_device_info_reply
- ** 
- ** @param xcb_connection_t                  *c
- ** @param xcb_xkb_get_device_info_cookie_t   cookie
- ** @param xcb_generic_error_t              **e
- ** @returns xcb_xkb_get_device_info_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_get_device_info_reply_t *
 xcb_xkb_get_device_info_reply (xcb_connection_t                  *c  /**< */,
                                xcb_xkb_get_device_info_cookie_t   cookie  /**< */,
@@ -14689,28 +6944,11 @@ xcb_xkb_set_device_info_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will not cause
  * a reply to be generated. Any returned error will be
  * saved for handling by xcb_request_check().
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_device_info_checked
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_device_spec_t            deviceSpec
- ** @param uint8_t                          firstBtn
- ** @param uint8_t                          nBtns
- ** @param uint16_t                         change
- ** @param uint16_t                         nDeviceLedFBs
- ** @param const xcb_xkb_action_t          *btnActions
- ** @param const xcb_xkb_device_led_info_t *leds
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_device_info_checked (xcb_connection_t                *c  /**< */,
                                  xcb_xkb_device_spec_t            deviceSpec  /**< */,
@@ -14727,25 +6965,8 @@ xcb_xkb_set_device_info_checked (xcb_connection_t                *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_void_cookie_t xcb_xkb_set_device_info
- ** 
- ** @param xcb_connection_t                *c
- ** @param xcb_xkb_device_spec_t            deviceSpec
- ** @param uint8_t                          firstBtn
- ** @param uint8_t                          nBtns
- ** @param uint16_t                         change
- ** @param uint16_t                         nDeviceLedFBs
- ** @param const xcb_xkb_action_t          *btnActions
- ** @param const xcb_xkb_device_led_info_t *leds
- ** @returns xcb_void_cookie_t
- **
- *****************************************************************************/
- 
 xcb_void_cookie_t
 xcb_xkb_set_device_info (xcb_connection_t                *c  /**< */,
                          xcb_xkb_device_spec_t            deviceSpec  /**< */,
@@ -14765,24 +6986,8 @@ xcb_xkb_set_debugging_flags_sizeof (const void  *_buffer  /**< */);
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_cookie_t xcb_xkb_set_debugging_flags
- ** 
- ** @param xcb_connection_t        *c
- ** @param uint16_t                 msgLength
- ** @param uint32_t                 affectFlags
- ** @param uint32_t                 flags
- ** @param uint32_t                 affectCtrls
- ** @param uint32_t                 ctrls
- ** @param const xcb_xkb_string8_t *message
- ** @returns xcb_xkb_set_debugging_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_cookie_t
 xcb_xkb_set_debugging_flags (xcb_connection_t        *c  /**< */,
                              uint16_t                 msgLength  /**< */,
@@ -14798,27 +7003,11 @@ xcb_xkb_set_debugging_flags (xcb_connection_t        *c  /**< */,
  * @return A cookie
  *
  * Delivers a request to the X server.
- * 
+ *
  * This form can be used only if the request will cause
  * a reply to be generated. Any returned error will be
  * placed in the event queue.
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_cookie_t xcb_xkb_set_debugging_flags_unchecked
- ** 
- ** @param xcb_connection_t        *c
- ** @param uint16_t                 msgLength
- ** @param uint32_t                 affectFlags
- ** @param uint32_t                 flags
- ** @param uint32_t                 affectCtrls
- ** @param uint32_t                 ctrls
- ** @param const xcb_xkb_string8_t *message
- ** @returns xcb_xkb_set_debugging_flags_cookie_t
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_cookie_t
 xcb_xkb_set_debugging_flags_unchecked (xcb_connection_t        *c  /**< */,
                                        uint16_t                 msgLength  /**< */,
@@ -14835,25 +7024,13 @@ xcb_xkb_set_debugging_flags_unchecked (xcb_connection_t        *c  /**< */,
  * @param e      The xcb_generic_error_t supplied
  *
  * Returns the reply of the request asked by
- * 
+ *
  * The parameter @p e supplied to this function must be NULL if
  * xcb_xkb_set_debugging_flags_unchecked(). is used.
  * Otherwise, it stores the error if any.
  *
  * The returned value must be freed by the caller using free().
  */
-
-/*****************************************************************************
- **
- ** xcb_xkb_set_debugging_flags_reply_t * xcb_xkb_set_debugging_flags_reply
- ** 
- ** @param xcb_connection_t                      *c
- ** @param xcb_xkb_set_debugging_flags_cookie_t   cookie
- ** @param xcb_generic_error_t                  **e
- ** @returns xcb_xkb_set_debugging_flags_reply_t *
- **
- *****************************************************************************/
- 
 xcb_xkb_set_debugging_flags_reply_t *
 xcb_xkb_set_debugging_flags_reply (xcb_connection_t                      *c  /**< */,
                                    xcb_xkb_set_debugging_flags_cookie_t   cookie  /**< */,

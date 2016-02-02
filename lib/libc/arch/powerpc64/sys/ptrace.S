@@ -1,46 +1,43 @@
-/*	$NetBSD: ptrace.S,v 1.2 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 2014/08/23 02:24:22 matt Exp $	*/
 
 #include "SYS.h"
 
 ENTRY(ptrace)
 #ifdef _REENTRANT
 	mflr	%r0
-	stwu	%r1,-32(%r1)
-	stw	%r0,36(%r1)
-	stw	%r3,8(%r1)
-	stw	%r4,12(%r1)
-	stw	%r5,16(%r1)
-	stw	%r6,20(%r1)
+	streg	%r0,SZREG(%r1)
+	stregu	%r1,-(SZREG*6)(%r1)
+	streg	%r3,(SZREG*2)(%r1)
+	streg	%r4,(SZREG*3)(%r1)
+	streg	%r5,(SZREG*4)(%r1)
+	streg	%r6,(SZREG*5)(%r1)
 
 	bl	PIC_PLT(_C_LABEL(__errno))
+	nop
 	li	%r7,0
-	stw	%r7,0(%r3)
+	stint	%r7,0(%r3)
 
-	lwz	%r3,8(%r1)
-	lwz	%r4,12(%r1)
-	lwz	%r5,16(%r1)
-	lwz	%r0,36(%r1)
-	lwz	%r6,20(%r1)
+	ldreg	%r3,(SZREG*2)(%r1)
+	ldreg	%r4,(SZREG*3)(%r1)
+	ldreg	%r5,(SZREG*4)(%r1)
+	ldreg	%r6,(SZREG*5)(%r1)
+	addi	%r1,%r1,SZREG*6
+	ldreg	%r0,SZREG(%r1)
 	mtlr	%r0
-	la	%r1,32(%r1)
 #else
-#ifdef __PIC__
-	mflr	%r0
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	%r7
-	lwz	%r7,_C_LABEL(errno)@got(%r7)
+	.pushsection ".toc","aw"
+.Lerrno:
+	.tc	errno[TC], errno
+	.popsection
+	addis	%r7,%r2,_C_LABEL(errno)@toc@ha
+	ldptr	%r7,_C_LABEL(errno)@toc@l(%r7)
 	li	%r8,0
-	stw	%r8,0(%r7)
+	stint	%r8,0(%r7)
 	mtlr	0
-#else
-	lis	%r7,_C_LABEL(errno)@ha
-	li	%r8,0
-	stw	%r8,_C_LABEL(errno)@l(%r7)
-#endif /* __PIC__ */
 #endif /* _REENTRANT */
-	li	%r0,SYS_ptrace
-	sc
+	_DOSYSCALL(ptrace)
 	bso	1f
 	blr
 1:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	BRANCH_TO_CERROR()
+END(ptrace)

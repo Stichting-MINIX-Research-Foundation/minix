@@ -1,13 +1,13 @@
-# $NetBSD: language,v 1.3 2003/09/13 21:53:19 kleink Exp $
+# $NetBSD: language,v 1.4 2014/03/10 18:22:54 mbalmer Exp $
 #
 # ISO 639-1 and 639-2 Language Codes
 #
 # The format of an entry is:
 # <Language name><TAB><ISO-639-2-code><TAB><ISO-639-1-code-optional>
 #
-# Further information can be found at the ISO 639/Joint Advisory Committee
-# (ISO 639/JAC) web site,
-# <http://lcweb.loc.gov/standards/iso639-2/iso639jac.html>.
+# Further information can be found at the ISO 639/Joint Advisory Committee (JAC)
+# web site, http://lcweb.loc.gov/standards/iso639-2/iso639jac.html.
+#
 # This list is up-to-date as of 2003-08-04.
 #
 Abkhazian	abk	ab

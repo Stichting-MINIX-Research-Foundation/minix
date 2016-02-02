@@ -1,4 +1,4 @@
-.\"	$NetBSD: cal.1,v 1.20 2007/12/24 13:56:00 wiz Exp $
+.\"	$NetBSD: cal.1,v 1.21 2015/01/08 03:56:33 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cal.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd December 21, 2007
+.Dd January 7, 2015
 .Dt CAL 1
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl 3hjry
 .Op Fl A Ar after
 .Op Fl B Ar before
+.Op Fl C Ar context
 .Op Fl d Ar day-of-week
 .Op Fl R Ar reform-spec
 .Op Oo Ar month Oc Ar year
@@ -64,6 +65,10 @@ months after the specified month.
 Display
 .Ar before
 months before the specified month.
+.It Fl C Ar context
+Display
+.Ar context
+months before and after the specified month.
 .It Fl d Ar day-of-week
 Specifies the day of the week on which the calendar should start.
 Valid values are 0 through 6, presenting Sunday through Saturday,

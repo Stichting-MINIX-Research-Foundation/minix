@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.c,v 1.4 2013/04/12 20:02:00 christos Exp $	*/
+/*	$NetBSD: evutil.c,v 1.5 2015/01/29 07:26:02 spz Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -27,7 +27,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil.c,v 1.4 2013/04/12 20:02:00 christos Exp $");
+__RCSID("$NetBSD: evutil.c,v 1.5 2015/01/29 07:26:02 spz Exp $");
 
 #define _GNU_SOURCE
 
@@ -262,7 +262,6 @@ evutil_ersatz_socketpair(int family, int type, int protocol,
 		goto tidy_up_and_fail;
 	if (size != sizeof(listen_addr))
 		goto abort_tidy_up_and_fail;
-	evutil_closesocket(listener);
 	/* Now check we are talking to ourself by matching port and host on the
 	   two sockets.	 */
 	if (getsockname(connector, (struct sockaddr *) &connect_addr, &size) == -1)
@@ -272,6 +271,7 @@ evutil_ersatz_socketpair(int family, int type, int protocol,
 		|| listen_addr.sin_addr.s_addr != connect_addr.sin_addr.s_addr
 		|| listen_addr.sin_port != connect_addr.sin_port)
 		goto abort_tidy_up_and_fail;
+	evutil_closesocket(listener);
 	fd[0] = connector;
 	fd[1] = acceptor;
 
@@ -1565,7 +1565,7 @@ evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap)
 	int r;
 	if (!buflen)
 		return 0;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(WIN32)
 	r = _vsnprintf(buf, buflen, format, ap);
 	if (r < 0)
 		r = _vscprintf(format, ap);
@@ -2110,6 +2110,18 @@ _evutil_weakrand(void)
 #else
 	return random();
 #endif
+}
+
+/**
+ * Volatile pointer to memset: we use this to keep the compiler from
+ * eliminating our call to memset.
+ */
+void * (*volatile evutil_memset_volatile_)(void *, int, size_t) = memset;
+
+void
+evutil_memclear_(void *mem, size_t len)
+{
+	evutil_memset_volatile_(mem, 0, len);
 }
 
 int

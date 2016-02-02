@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/22 00:17:48 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2015/01/07 02:05:41 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,7 +7,9 @@ LIBISPRIVATE=	yes
 
 LIB=		frontend
 
-SRCS=		gcc.c version.c intl.c prefix.c opts-common.c gcc-options.c
+SRCS=		gcc.c version.c prefix.c
+
+HOSTPROG_CXX=	1
 
 # XXX
 .if ${GCC_MACHINE_ARCH} == "x86_64" || ${GCC_MACHINE_ARCH} == "i386"
@@ -29,28 +31,28 @@ HOST_CPPFLAGS+=	-I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 DPSRCS+=	specs.h
 
+${SRCS}: ${GCCARCH}/defs.mk
+
 MKPIC:=		no
 MKPICLIB:=	no
 
 .include <bsd.lib.mk>
 
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
+
 CFLAGS+=	-Wno-stack-protector
 
-.PATH: ${DIST}/gcc
+# XXX print-objdir fix me
+CPPFLAGS+=	-I../backend
+
+.PATH: ${DIST}/gcc ${DIST}/gcc/common
 
 # Build the specs.h file
 CLEANFILES+=	specs.h
 specs.h: Makefile
-	for f in cp objc; do \
+	for f in cp lto objc objcp; do \
 		echo "#include \"$$f/lang-specs.h\""; \
 	done > specs.h
-
-# Build the options files
-optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
-	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
-
-CPPFLAGS.gcc-options.c=	-DGCC_DRIVER
-gcc-options.c: optionlist
-	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/optc-gen.awk \
-		-v header_name="config.h system.h coretypes.h tm.h" < optionlist > ${.TARGET}
-CLEANFILES+=	optionlist gcc-options.c

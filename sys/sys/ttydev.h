@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydev.h,v 1.9 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: ttydev.h,v 1.10 2014/05/21 04:24:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -31,7 +31,7 @@
  *	@(#)ttydev.h	8.2 (Berkeley) 1/4/94
  */
 
-/* COMPATABILITY HEADER FILE */
+/* COMPATIBILITY HEADER FILE */
 
 #ifndef _SYS_TTYDEV_H_
 #define	_SYS_TTYDEV_H_

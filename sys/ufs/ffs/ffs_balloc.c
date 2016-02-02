@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.60 2013/10/20 00:29:10 htodd Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.60 2013/10/20 00:29:10 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -174,7 +174,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 */
 
 			if (bpp != NULL) {
-				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
+				error = bread(vp, lbn, fs->fs_bsize,
 					      B_MODIFY, bpp);
 				if (error) {
 					return (error);
@@ -199,7 +199,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 
 				if (bpp != NULL) {
-					error = bread(vp, lbn, osize, NOCRED,
+					error = bread(vp, lbn, osize,
 						      B_MODIFY, bpp);
 					if (error) {
 						return (error);
@@ -297,7 +297,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 
 	for (i = 1;;) {
 		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->fs_bsize, NOCRED, 0, &bp);
+		    indirs[i].in_lbn, (int)fs->fs_bsize, 0, &bp);
 		if (error) {
 			goto fail;
 		}
@@ -415,7 +415,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		if (flags & B_CLRBUF) {
 			error = bread(vp, lbn, (int)fs->fs_bsize,
-			    NOCRED, B_MODIFY, &nbp);
+			    B_MODIFY, &nbp);
 			if (error) {
 				goto fail;
 			}
@@ -478,7 +478,7 @@ fail:
 			int r;
 
 			r = bread(vp, indirs[unwindidx].in_lbn,
-			    (int)fs->fs_bsize, NOCRED, 0, &bp);
+			    (int)fs->fs_bsize, 0, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
 			} else {
@@ -585,7 +585,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		nb = dp->di_extb[lbn];
 		if (nb != 0 && dp->di_extsize >= smalllblktosize(fs, lbn + 1)) {
 			error = bread(vp, -1 - lbn, fs->fs_bsize,
-			    NOCRED, 0, &bp);
+			    0, &bp);
 			if (error) {
 				return (error);
 			}
@@ -604,7 +604,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 				error = bread(vp, -1 - lbn, osize,
-				    NOCRED, 0, &bp);
+				    0, &bp);
 				if (error) {
 					return (error);
 				}
@@ -695,7 +695,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 */
 
 			if (bpp != NULL) {
-				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
+				error = bread(vp, lbn, fs->fs_bsize,
 					      B_MODIFY, bpp);
 				if (error) {
 					return (error);
@@ -720,7 +720,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 
 				if (bpp != NULL) {
-					error = bread(vp, lbn, osize, NOCRED,
+					error = bread(vp, lbn, osize,
 						      B_MODIFY, bpp);
 					if (error) {
 						return (error);
@@ -818,7 +818,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 
 	for (i = 1;;) {
 		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->fs_bsize, NOCRED, 0, &bp);
+		    indirs[i].in_lbn, (int)fs->fs_bsize, 0, &bp);
 		if (error) {
 			goto fail;
 		}
@@ -936,7 +936,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	if (bpp != NULL) {
 		if (flags & B_CLRBUF) {
 			error = bread(vp, lbn, (int)fs->fs_bsize,
-			    NOCRED, B_MODIFY, &nbp);
+			    B_MODIFY, &nbp);
 			if (error) {
 				goto fail;
 			}
@@ -1001,7 +1001,7 @@ fail:
 			int r;
 
 			r = bread(vp, indirs[unwindidx].in_lbn,
-			    (int)fs->fs_bsize, NOCRED, 0, &bp);
+			    (int)fs->fs_bsize, 0, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
 			} else {

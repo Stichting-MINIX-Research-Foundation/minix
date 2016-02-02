@@ -1,0 +1,117 @@
+.\" $NetBSD: libpaa.3,v 1.4 2014/03/18 18:20:35 riastradh Exp $
+.\"
+.\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to The
+.\" NetBSD Foundation by Alistair Crooks (agc@NetBSD.org)
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 9, 2010
+.Dt LIBPAA 3
+.Os
+.Sh NAME
+.Nm libpaa
+.Nd Public key Access Authentication Library
+.Sh LIBRARY
+.Lb libpaa
+.Sh SYNOPSIS
+.In libpaa.h
+.Ft int
+.Fo paa_server_init
+.Fa "paa_server_info_t *server" "unsigned secretsize"
+.Fc
+.Ft int
+.Fo paa_format_challenge
+.Fa "paa_challenge_t *challenge" "paa_server_info_t *server"
+.Fa "char *buf" "size_t size"
+.Fc
+.Ft int
+.Fo paa_format_response
+.Fa "paa_response_t *response" "netpgp_t *netpgp" "char *in"
+.Fa "char *out" "size_t outsize"
+.Fc
+.Ft int
+.Fo paa_check_response
+.Fa "paa_challenge_t *challenge" "paa_identity_t *id"
+.Fa "netpgp_t *netpgp" "char *response"
+.Fc
+.Ft int
+.Fo paa_print_identity
+.Fa "FILE *fp" "paa_identity_t *id"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a library interface which provides an authentication mechanism
+layered on top of
+.Xr libnetpgp 3 .
+This is targeted at web services, and allows authentication by
+means of digitally signing a generated challenge.
+By verifying the signed response from the client, the server
+can verify the identity of the user receiving the challenge,
+and producing the signed response.
+Random seeds and blinded secrets are used to protect against
+spoofed signatures.
+.Pp
+The main reason for writing this authentication mechanism is
+so that identities can be verified across a network without
+transferring any secret information across the wire.
+.Pp
+Binary information is transferred using internal base64
+functions.
+.Pp
+In the server
+process, the server information is initialised using the
+.Fn paa_server_init
+function, which will set up the random data and secrets.
+The challenge is generated using the
+.Fn paa_format_challenge
+function.
+This will format the challenge into the buffer provided,
+and can be transferred to the client using any means.
+.Pp
+The client reads the challenge, and produces a response
+using the
+.Fn paa_format_response
+function to format the response in the buffer provided.
+This response is given to the server.
+.Pp
+In the server, the response is verified using
+the
+.Fn paa_check_response
+function.
+If a positive verification has occurred, the identity of
+various fields in the response can be displayed
+using the
+.Fn paa_print_identity
+function.
+.Sh SEE ALSO
+.Xr libnetpgp 3 ,
+.Xr sha1 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq Mt agc@NetBSD.org

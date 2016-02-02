@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_hash.c,v 1.18 2011/07/24 18:15:14 kristaps Exp $ */
+/*	Id: mdoc_hash.c,v 1.18 2011/07/24 18:15:14 kristaps Exp  */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

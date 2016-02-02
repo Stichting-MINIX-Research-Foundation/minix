@@ -1,4 +1,4 @@
-/* $Id: window-clock.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* Id */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -69,7 +70,7 @@ window_clock_free(struct window_pane *wp)
 	struct window_clock_mode_data	*data = wp->modedata;
 
 	screen_free(&data->screen);
-	xfree(data);
+	free(data);
 }
 
 void
@@ -78,11 +79,10 @@ window_clock_resize(struct window_pane *wp, u_int sx, u_int sy)
 	struct window_clock_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
 
-	screen_resize(s, sx, sy);
+	screen_resize(s, sx, sy, 0);
 	window_clock_draw_screen(wp);
 }
 
-/* ARGSUSED */
 void
 window_clock_key(
     struct window_pane *wp, unused struct session *sess, unused int key)

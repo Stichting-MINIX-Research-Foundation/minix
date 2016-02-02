@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.5 2009/07/12 21:24:21 dsl Exp $	*/
+/*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.5 2009/07/12 21:24:21 dsl Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $")
 #endif
 
 /*
@@ -161,6 +161,11 @@ ENTRY(strlen)
 	dec	%rsi
 	or	%rsi,%rdx		/* low bytes now non-zero */
 	jmp	2b
+#ifdef TEST_STRLEN
+END(test_strlen)
+#else
+END(strlen)
+#endif
 
 #ifdef TEST_STRLEN
 /* trivial implementation when testing above! */
@@ -173,4 +178,5 @@ ENTRY(strlen)
 	jmp	1b
 2:	sub	%rdi,%rax
 	ret
+END(strlen)
 #endif

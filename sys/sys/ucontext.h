@@ -115,12 +115,12 @@ void	cpu_getmcontext(struct lwp *, mcontext_t *, unsigned int *);
 int	cpu_setmcontext(struct lwp *, const mcontext_t *, unsigned int);
 int	cpu_mcontext_validate(struct lwp *, const mcontext_t *);
 
-#if defined(__UCONTEXT_SIZE) && !defined(__minix)
+#ifdef __UCONTEXT_SIZE
 __CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
 #endif
 #endif /* _KERNEL */
 
-#ifdef __minix
+#if defined(__minix)
 __BEGIN_DECLS
 void resumecontext(ucontext_t *ucp);
  
@@ -129,6 +129,6 @@ void resumecontext(ucontext_t *ucp);
 int getuctx(ucontext_t *ucp);
 int setuctx(const ucontext_t *ucp);
 __END_DECLS
-#endif /* __minix */
+#endif /* defined(__minix) */
 
 #endif /* !_SYS_UCONTEXT_H_ */

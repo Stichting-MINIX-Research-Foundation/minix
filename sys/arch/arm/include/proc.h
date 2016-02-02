@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2013/09/11 04:24:48 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.17 2014/02/24 16:57:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PROC_H_
-#define	_ARM32_PROC_H_
+#ifndef _ARM_PROC_H_
+#define _ARM_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for arm.
@@ -61,4 +61,4 @@ struct mdproc {
 
 #define	PROC0_MD_INITIALIZERS .p_md = { .md_march = MACHINE_ARCH },
 
-#endif /* _ARM32_PROC_H_ */
+#endif /* _ARM_PROC_H_ */

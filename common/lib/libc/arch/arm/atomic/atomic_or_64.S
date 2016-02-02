@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64.S,v 1.9 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: atomic_or_64.S,v 1.10 2014/03/04 16:15:28 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,6 +57,6 @@ END(_atomic_or_64_nv)
 STRONG_ALIAS(_atomic_or_64,_atomic_or_64_nv)
 ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64_nv)
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
-STRONG_ALIAS(__sync_or_and_fetch_8,_atomic_or_64)
+CRT_ALIAS(__sync_or_and_fetch_8,_atomic_or_64)
 
 #endif /* _ARM_ARCH_6 */

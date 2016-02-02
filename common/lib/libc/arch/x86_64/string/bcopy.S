@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.4 2009/11/22 17:25:47 dsl Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.5 2014/03/22 19:16:34 jakllsch Exp $")
 #endif
 
 	/*
@@ -157,4 +157,14 @@ ENTRY(bcopy)
 	movsb
 	cld
 	ret
+#endif
+
+#ifdef MEMCOPY
+END(memcpy)
+#else
+#ifdef MEMMOVE
+END(memmove)
+#else
+END(bcopy)
+#endif
 #endif

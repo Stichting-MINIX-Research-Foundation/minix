@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.33 2013/06/03 16:42:32 christos Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.35 2015/09/06 06:00:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #ifndef _SYS_DEV_VNDVAR_H_
 #define _SYS_DEV_VNDVAR_H_
 
+#include <sys/ioccom.h>
 #if !defined(__minix)
 #include <sys/pool.h>
 #endif /* defined(__minix) */
@@ -115,7 +116,7 @@ struct vnode;
  * A vnode disk's state information.
  */
 struct vnd_softc {
-	device_t         sc_dev;
+	device_t	 sc_dev;
 	int		 sc_flags;	/* flags */
 	uint64_t	 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */

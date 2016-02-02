@@ -17,9 +17,9 @@
 
 #include <map>
 #include <cassert>
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../../test_compare.h"
-#include "../../../min_allocator.h"
+#include "min_allocator.h"
 
 int main()
 {

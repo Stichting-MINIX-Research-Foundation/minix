@@ -500,8 +500,7 @@ This boilerplate collector does nothing.  More specifically:
 
 * The stack map is not compiled into the executable.
 
-Using the LLVM makefiles (like the `sample project
-<http://llvm.org/viewvc/llvm-project/llvm/trunk/projects/sample/>`__), this code
+Using the LLVM makefiles, this code
 can be compiled as a plugin using a simple makefile:
 
 .. code-block:: make
@@ -634,7 +633,7 @@ Threaded
   Denotes a multithreaded mutator; the collector must still stop the mutator
   ("stop the world") before beginning reachability analysis.  Stopping a
   multithreaded mutator is a complicated problem.  It generally requires highly
-  platform specific code in the runtime, and the production of carefully
+  platform-specific code in the runtime, and the production of carefully
   designed machine code at safe points.
 
 Concurrent
@@ -924,7 +923,7 @@ a realistic example:
 
   void MyGCPrinter::finishAssembly(AsmPrinter &AP) {
     MCStreamer &OS = AP.OutStreamer;
-    unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
+    unsigned IntPtrSize = AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
     // Put this in the data section.
     OS.SwitchSection(AP.getObjFileLowering().getDataSection());

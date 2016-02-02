@@ -72,6 +72,8 @@ PROGRAMS+=		cdprobe
 dir.cdprobe:=	minix/commands/cdprobe
 PROGRAMS+=		pwd_mkdb
 dir.pwd_mkdb:=	usr.sbin/pwd_mkdb
+PROGRAMS+=		isofs
+dir.isofs:=	minix/fs/isofs
 
 .if ${MKSMALL} != "yes"
 PROGRAMS+=		ahci

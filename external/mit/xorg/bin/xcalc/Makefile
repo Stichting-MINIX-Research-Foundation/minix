@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 07:22:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/07/19 08:49:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ APPDEFS=XCalc XCalc-color
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+
+CPPFLAGS+=	-DHAVE_STRLCPY
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

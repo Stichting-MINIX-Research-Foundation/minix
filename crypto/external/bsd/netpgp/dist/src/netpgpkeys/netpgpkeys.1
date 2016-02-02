@@ -1,0 +1,403 @@
+.\" $NetBSD: netpgpkeys.1,v 1.20 2014/02/17 07:23:18 agc Exp $
+.\"
+.\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This manual page is derived from software contributed to
+.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 21, 2012
+.Dt NETPGPKEYS 1
+.Os
+.Sh NAME
+.Nm netpgpkeys
+.Nd PGP key management utility
+.Sh SYNOPSIS
+.Nm
+.Fl Fl export\-key
+.Op options
+.Ar
+.Nm
+.Fl Fl find\-key
+.Op options
+.Ar
+.Nm
+.Fl Fl generate\-key
+.Op options
+.Ar
+.Nm
+.Fl Fl import\-key
+.Op options
+.Ar
+.Nm
+.Fl Fl list\-keys
+.Op options
+.Ar
+.Nm
+.Fl Fl list\-sigs
+.Op options
+.Ar
+.Nm
+.Fl Fl trusted\-keys
+.Op options
+.Ar key ...
+.Nm
+.Fl Fl version
+.Nm
+.Op Fl Vgls
+.Op Fl olong-option Ns = Ns value
+.Ar
+.Pp
+where the long options for all commands are:
+.Pp
+.Op Fl Fl cipher Ns = Ns Ar cipher\-algorithm
+.br
+.Op Fl Fl coredumps
+.br
+.Op Fl Fl hash Ns = Ns Ar hash\-algorithm
+.br
+.Op Fl Fl homedir Ns = Ns Ar home\-directory
+.br
+.Op Fl Fl keyring Ns = Ns Ar keyring
+.br
+.Op Fl Fl ssh-keys
+.br
+.Op Fl Fl userid Ns = Ns Ar userid
+.br
+.Op Fl Fl verbose
+.Sh DESCRIPTION
+At the present time, the
+.Nm
+utility is still under development.
+Whilst the signing and verification, encryption and
+decryption parts of
+.Xr netpgp 1
+are considered mature,
+.Nm
+needs more work.
+Other key management utilities should be used in preference
+to this one.
+.Pp
+The
+.Nm
+command is used for all forms of PGP key management,
+from generation of new keys to propagation of public
+keys to key servers, and import of new public
+keys from other identities.
+.Pp
+The
+.Xr netpgp 1
+utility should be used for file management and transformation \(emencryption,
+decryption,
+signing and verification of files.
+.Pp
+For signing and encryption, a unique identity is needed.
+This identity is made up of a private and public key.
+The public key part is made available and known to everyone.
+The private key is kept secret, and known only to the user
+who created the identity.
+The secret key is protected with a passphrase.
+.Pp
+In rough terms, a digital signature
+is a digest of a file's contents,
+encrypted with the user's private key.
+Since together, the private and public keys identify the user
+uniquely, the signature can be used to identify the exact version
+of the file, and any changes made to the file will mean that the
+signature no longer matches.
+.Pp
+As a corollary, the file can be transformed using a user's public key,
+into text such that the contents can only be viewed by someone
+with the corresponding private key.
+This is called encryption.
+.Pp
+The
+.Nm
+utility can be used to generate a new key-pair for a user.
+As mentioned before,
+this key is in two parts, the public key (which is known
+by other people) and the private key.
+.Pp
+The other use of
+.Nm
+is to maintain keyrings.
+Key and keyring management commands available are:
+.Fl Fl export\-key ,
+.Fl Fl find\-key ,
+.Fl Fl generate\-key ,
+.Fl Fl import\-key ,
+and
+.Fl Fl list\-keys .
+Keyrings are collections of public keys belonging to other users.
+By using other means of identification, it is possible to establish
+the bona fides of other users.
+Once trust has been established, the public key of the other
+user will be signed.
+The other user's public key can be added to our keyring.
+The other user will add our public key to their keyring.
+.Pp
+Keys can be listed, exported (i.e. made available to others),
+and imported (i.e. users who have signed our public key).
+.Pp
+Key and keyring management can be done with the
+following commands:
+.Bl -tag -width Ar
+.It Fl Fl export\-key
+Display the current public key in a format suitable for export.
+This can be used to place the keyring on one of the
+public key servers, for example.
+.It Fl Fl find\-key
+Find the appropriate public key from the current keyring.
+If no keyring is provided, the user's public keyring is used.
+.It Fl Fl generate\-key
+This command is used to generate a new public and private key pair.
+If provided on the command line, the argument will be given to the
+key generation routine to be used as the identity of the key.
+This is usually the email address and full name, but can be
+any identification token.
+The newly-generated keys are placed in a sub-directory of the
+.Dq home directory
+which is created at key generation time.
+At present, only RSA keys can be generated.
+The hash algorithm and keysize can be specified on the command
+line.
+.It Fl Fl import\-key
+Import a public key as retrieved from one of the public key servers.
+This is in the form of a file which has previously been
+retrieved from elsewhere.
+.It Fl Fl list\-keys
+List all the public keys in the current keyring.
+If no keyring is provided, the user's public keyring is used.
+.It Fl Fl list\-sigs
+List all the public keys in the current keyring, along with
+the sub-key signatures which provide the key with trust.
+If no keyring is provided, the user's public keyring is used.
+.It Fl Fl trusted\-keys
+Prints a list of keys in a more machine-readble format than is
+normally used, which can be used as input to other parsing
+engines.
+The output from this command is sent to
+.Dv stdout .
+Normal key-matching rules apply.
+.It Fl Fl version
+Print the version information from the
+.Xr libnetpgp 3
+library.
+.El
+.Pp
+In addition to one of the preceding commands, a number of qualifiers
+or options may be given.
+.Bl -tag -width Ar
+.It Fl Fl cipher Ar cipher\-algorithm
+Specify the cipher to be used for symmetric encryption.
+The default cipher is
+.Dq CAST5 .
+.It Fl Fl hash Ar hash\-algorithm
+Specify the hash algorithm which is used during fingerprint calculation.
+For reference, at the present time,
+.Xr ssh-keygen 1
+uses
+.Dq MD5
+for its fingerprint values.
+.It Fl Fl homedir Ar home\-directory
+Keyrings are normally located, for historical reasons, within
+the user's home directory in a subdirectory called
+.Dq Pa .gnupg
+and this option specifies an alternative location in which to
+find that sub-directory.
+.It Fl Fl keyring Ar keyring
+This option specifies an alternative keyring to be used.
+All keyring operations will be relative to this alternative keyring.
+.It Fl Fl numbits Ar numbits
+specifies the number of bits to be used when generating a key.
+The default number of bits is 2048.
+This is considered the absolute
+minimum which should be chosen at the time of writing (2009).
+Due to advances in computing power every year, this number should
+be reviewed, and increased when it becomes easier to factor 2048
+bit numbers.
+.It Fl Fl userid Ar userid
+This option specifies the user identity to be used for all operations.
+This identity can either be in the form of the full name, or as an
+email address.
+Care should be exercised with these ways of specifying the user identity,
+since the
+.Nm
+utility has no way of verifying that an email address is valid, or
+that a key belongs to a certain individual.
+The trust for a signed key is given by the other signers of that key.
+The 16 hexadecimal digit user identity should be used when specifying
+user identities \(ememail addresses and names are provided as aliases.
+.It Fl Fl pass\-fd Ns = Ns Ar fd
+This option is intended for the use of external programs which may
+like to use the
+.Xr libnetpgp 3
+library through the
+.Nm
+interface, but have their own ways of retrieving and caching
+the passphrase for the secret key.
+In this case, the
+.Nm
+utility will read a line of text from the file descriptor
+passed to it in the command line argument, rather than
+using its own methods of retrieving the passphrase from
+the user.
+.It Fl Fl verbose
+This option can be used to view information during
+the process of the
+.Nm
+requests.
+.It Fl Fl ssh-keys
+specifies that the public and private keys should be taken
+from the
+.Xr ssh 1
+host key files, usually found in
+.Pa /etc/ssh/ssh_host_rsa_key
+and
+.Pa /etc/ssh/ssh_host_rsa_key.pub
+for the private and public host keys.
+.It Fl Fl coredumps
+in normal processing,
+if an error occurs, the contents of memory are saved to disk, and can
+be read using tools to analyse behaviour.
+Unfortunately this can disclose information to people viewing
+the core dump, such as secret keys, and passphrases protecting
+those keys.
+In normal operation,
+.Nm
+will turn off the ability to save core dumps on persistent storage,
+but selecting this option will allow core dumps to be written to disk.
+This option should be used wisely, and any core dumps should
+be deleted in a secure manner when no longer needed.
+.El
+.Pp
+It is often useful to be able to refer to another user's identity by
+using their
+.Nm
+.Dq fingerprint .
+This can be found in the output from normal
+.Fl Fl list\-keys
+and
+.Fl Fl list\-sigs
+commands.
+.Sh PASS PHRASES
+The pass phrase cannot be changed by
+.Nm
+once it has been chosen, and will
+be used for the life of the key, so a wise choice is advised.
+The pass phrase should not be an easily guessable word or phrase,
+or related to information that can be gained through
+.Dq social engineering
+using search engines, or other public information retrieval methods.
+.Pp
+.Xr getpass 3
+will be used to obtain the pass phrase from the user if it is
+needed,
+such as during signing or encryption, or key generation,
+so that any secret information cannot be viewed by other users
+using the
+.Xr ps 1
+or
+.Xr top 1
+commands, or by looking over the shoulder at the screen.
+.Pp
+Since the public and private key pair can be used to verify
+a person's identity, and since identity theft can have
+far-reaching consequences, users are strongly encouraged to
+enter their pass phrases only when prompted by the application.
+.Sh EXIT STATUS
+The
+.Nm
+utility will return 0 for success,
+1 if the file's signature does not match what was expected,
+or 2 if any other error occurs.
+.Sh EXAMPLES
+.Bd -literal
+% netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5
+1 key
+pub 1024/RSA (Encrypt or Sign) fcdd1c608bef4c4b 2008-08-11
+Key fingerprint: e935 902d ebf1 76ba fcdd 1c60 8bef 4c4b
+uid              osx-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) <root@osx-vm1.crowthorne.alistaircrooks.co.uk>
+
+% ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
+1024 e9:35:90:2d:eb:f1:76:ba:fc:dd:1c:60:8b:ef:4c:4b /etc/ssh/ssh_host_rsa_key.pub (RSA)
+%
+.Ed
+.Pp
+The following is an example of RSA key generation:
+.Bd -literal
+% netpgpkeys --generate\-key
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 5bc707d1b495aaf2 2010-04-14
+Key fingerprint: 08cb 4867 eeed 454c ce30 610d 5bc7 07d1 b495 aaf2
+uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
+netpgp: generated keys in directory /home/agc/.gnupg/5bc707d1b495aaf2
+% ls -al /home/agc/.gnupg/5bc707d1b495aaf2
+total 8
+drwx------  2 agc  agc   512 Apr 13 18:25 .
+drwx------  6 agc  agc   512 Apr 13 18:25 ..
+-rw-------  1 agc  agc   596 Apr 13 18:25 pubring.gpg
+-rw-------  1 agc  agc  1284 Apr 13 18:25 secring.gpg
+%
+% netpgpkeys --list-keys --home ~/.gnupg/5bc707d1b495aaf2
+1 key
+pub 2048/RSA (Encrypt or Sign) 5bc707d1b495aaf2 2010-04-14
+Key fingerprint: 08cb 4867 eeed 454c ce30 610d 5bc7 07d1 b495 aaf2
+uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
+
+%
+.Ed
+.Sh SEE ALSO
+.Xr netpgp 1 ,
+.Xr ssh 1 ,
+.Xr ssh-keygen 1 ,
+.Xr getpass 3 ,
+.\" .Xr libbz2 3 ,
+.Xr libnetpgp 3 ,
+.Xr ssl 3 ,
+.Xr zlib 3
+.Sh STANDARDS
+.Rs
+.%A J. Callas
+.%A L. Donnerhacke
+.%A H. Finney
+.%A D. Shaw
+.%A R. Thayer
+.%D November 2007
+.%R RFC 4880
+.%T OpenPGP Message Format
+.Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+.An Ben Laurie ,
+.An Rachel Willmer ,
+and overhauled and rewritten by
+.An Alistair Crooks Aq Mt agc@NetBSD.org .
+This manual page was also written by
+.An Alistair Crooks .

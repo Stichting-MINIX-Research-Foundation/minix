@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.7 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.ews4800mips,v 1.9 2014/08/22 10:51:38 apb Exp $
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
 ./usr/include/ews4800mips/aout_machdep.h	comp-c-include
@@ -47,7 +47,8 @@
 ./usr/include/ews4800mips/rwlock.h		comp-c-include
 ./usr/include/ews4800mips/setjmp.h		comp-c-include
 ./usr/include/ews4800mips/signal.h		comp-c-include
-./usr/include/ews4800mips/sljitarch.h		comp-c-include
+./usr/include/ews4800mips/sljit_machdep.h	comp-c-include
+./usr/include/ews4800mips/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/ews4800mips/stdarg.h		comp-obsolete		obsolete
 ./usr/include/ews4800mips/trap.h		comp-c-include
 ./usr/include/ews4800mips/types.h		comp-c-include

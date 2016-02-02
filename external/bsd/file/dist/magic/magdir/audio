@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: audio,v 1.66 2013/02/06 14:18:52 christos Exp $
+# $File: audio,v 1.71 2014/05/14 23:30:28 christos Exp $
 # audio:  file(1) magic for sound formats (see also "iff")
 #
 # Jan Nicolai Langfeldt (janl@ifi.uio.no), Dan Quinlan (quinlan@yggdrasil.com),
@@ -104,7 +104,7 @@
 
 # first entry is also the string "NTRK"
 0	belong		0x4e54524b	MultiTrack sound data
->4	belong		x		- version %ld
+>4	belong		x		- version %d
 
 # Extended MOD format (*.emd) (Greg Roelofs, newt@uchicago.edu); NOT TESTED
 # [based on posting 940824 by "Dirk/Elastik", husberg@lehtori.cc.tut.fi]
@@ -637,3 +637,66 @@
 # URL:  http://wiki.multimedia.cx/index.php?title=WavPack
 # From: Mike Melanson <mike@multimedia.cx>
 0	string	wvpk	WavPack Lossless Audio
+
+# From Fabio R. Schmidlin <frs@pop.com.br>
+# VGM music file
+0	string		Vgm\ 
+>9	ubyte		>0	VGM Video Game Music dump v
+>>9	ubyte/16	>0	\b%d
+>>9	ubyte&0x0F	x	\b%d
+>>8	ubyte/16	x	\b.%d
+>>8	ubyte&0x0F	>0	\b%d
+#Get soundchips
+>>8	ubyte		x	\b, soundchip(s)=
+>>0x0C	ulelong		>0	SN76489,
+>>0x10	ulelong		>0	YM2413,
+>>0x2C	ulelong		>0	YM2612,
+>>0x30	ulelong		>0	YM2151,
+>>0x38	ulelong		>0	Sega PCM,
+>>0x34	ulelong		>0xC
+>>>0x40	ulelong		>0	RF5C68,
+>>0x34	ulelong		>0x10
+>>>0x44	ulelong		>0	YM2203,
+>>0x34	ulelong		>0x14
+>>>0x48	ulelong		>0	YM2608,
+>>0x34	ulelong		>0x18
+>>>0x4C	lelong		>0	YM2610,
+>>>0x4C	lelong		<0	YM2610B,
+>>0x34	ulelong		>0x1C
+>>>0x50	ulelong		>0	YM3812,
+>>0x34	ulelong		>0x20
+>>>0x54	ulelong		>0	YM3526,
+>>0x34	ulelong		>0x24
+>>>0x58	ulelong		>0	Y8950,
+>>0x34	ulelong		>0x28
+>>>0x5C	ulelong		>0	YMF262,
+>>0x34	ulelong		>0x2C
+>>>0x60	ulelong		>0	YMF278B,
+>>0x34	ulelong		>0x30
+>>>0x64	ulelong		>0	YMF271,
+>>0x34	ulelong		>0x34
+>>>0x68	ulelong		>0	YMZ280B,
+>>0x34	ulelong		>0x38
+>>>0x6C	ulelong		>0	RF5C164,
+>>0x34	ulelong		>0x3C
+>>>0x70	ulelong		>0	PWM,
+>>0x34	ulelong		>0x40
+>>>0x74	ulelong		>0
+>>>>0x78 ubyte		0x00	AY-3-8910,
+>>>>0x78 ubyte		0x01	AY-3-8912,
+>>>>0x78 ubyte		0x02	AY-3-8913,
+>>>>0x78 ubyte		0x03	AY-3-8930,
+>>>>0x78 ubyte		0x10	YM2149,
+>>>>0x78 ubyte		0x11	YM3439,
+
+# GVOX Encore file format
+# Since this is a proprietary file format and there is no publicly available
+# format specification, this is just based on induction
+#
+0	string	SCOW
+>4	byte	0xc4	GVOX Encore music, version 5.0 or above
+>4	byte	0xc2	GVOX Encore music, version < 5.0
+
+0	string	ZBOT
+>4	byte	0xc5	GVOX Encore music, version < 5.0
+

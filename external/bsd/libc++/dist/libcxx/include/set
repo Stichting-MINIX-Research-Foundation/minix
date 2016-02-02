@@ -116,6 +116,7 @@ public:
     void insert(initializer_list<value_type> il);
 
     iterator  erase(const_iterator position);
+    iterator  erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
     void clear() noexcept;
@@ -297,6 +298,7 @@ public:
     void insert(initializer_list<value_type> il);
 
     iterator  erase(const_iterator position);
+    iterator  erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
     void clear() noexcept;
@@ -425,14 +427,22 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator> const_reverse_iterator;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit set(const value_compare& __comp = value_compare())
+    set()
         _NOEXCEPT_(
             is_nothrow_default_constructible<allocator_type>::value &&
             is_nothrow_default_constructible<key_compare>::value &&
             is_nothrow_copy_constructible<key_compare>::value)
-        : __tree_(__comp) {}
+        : __tree_(value_compare()) {}
+
     _LIBCPP_INLINE_VISIBILITY
-    set(const value_compare& __comp, const allocator_type& __a)
+    explicit set(const value_compare& __comp)
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<allocator_type>::value &&
+            is_nothrow_copy_constructible<key_compare>::value)
+        : __tree_(__comp) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit set(const value_compare& __comp, const allocator_type& __a)
         : __tree_(__comp, __a) {}
     template <class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
@@ -655,6 +665,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_type      count(const key_type& __k) const
         {return __tree_.__count_unique(__k);}
+#if _LIBCPP_STD_VER > 11
+    template <typename _K2>
+    _LIBCPP_INLINE_VISIBILITY
+    typename enable_if<__is_transparent<_Compare, _K2>::value,size_type>::type
+    count(const _K2& __k)                  {return __tree_.__count_unique(__k);}
+#endif
     _LIBCPP_INLINE_VISIBILITY
     iterator lower_bound(const key_type& __k)
         {return __tree_.lower_bound(__k);}
@@ -822,14 +838,22 @@ public:
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
-    explicit multiset(const value_compare& __comp = value_compare())
+    multiset()
         _NOEXCEPT_(
             is_nothrow_default_constructible<allocator_type>::value &&
             is_nothrow_default_constructible<key_compare>::value &&
             is_nothrow_copy_constructible<key_compare>::value)
-        : __tree_(__comp) {}
+        : __tree_(value_compare()) {}
+
     _LIBCPP_INLINE_VISIBILITY
-    multiset(const value_compare& __comp, const allocator_type& __a)
+    explicit multiset(const value_compare& __comp)
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<allocator_type>::value &&
+            is_nothrow_copy_constructible<key_compare>::value)
+        : __tree_(__comp) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit multiset(const value_compare& __comp, const allocator_type& __a)
         : __tree_(__comp, __a) {}
     template <class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
@@ -1050,6 +1074,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_type      count(const key_type& __k) const
         {return __tree_.__count_multi(__k);}
+#if _LIBCPP_STD_VER > 11
+    template <typename _K2>
+    _LIBCPP_INLINE_VISIBILITY
+    typename enable_if<__is_transparent<_Compare, _K2>::value,size_type>::type
+    count(const _K2& __k)                  {return __tree_.__count_multi(__k);}
+#endif
 
     _LIBCPP_INLINE_VISIBILITY
     iterator lower_bound(const key_type& __k)

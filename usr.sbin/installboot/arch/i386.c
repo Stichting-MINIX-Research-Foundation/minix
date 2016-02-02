@@ -90,8 +90,12 @@ struct ib_mach ib_mach_amd64 =
 	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
+#if !defined(__minix)
 		IB_MODULES | IB_BOOTCONF |
 		IB_STAGE1START };
+#else
+		IB_MODULES | IB_BOOTCONF };
+#endif /* !defined(__minix) */
 
 /*
  * Attempting to write the 'labelsector' (or a sector near it - within 8k?)

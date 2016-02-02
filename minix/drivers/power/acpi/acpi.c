@@ -100,7 +100,21 @@ void init_acpi(void)
 
 static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
+	int r;
+
 	init_acpi();
+
+	/* Let SEF know about ACPI special cache word. */
+	r = sef_llvm_add_special_mem_region((void*)0xCACACACA, 1,
+	    "%MMAP_CACHE_WORD");
+	if(r < 0) {
+	    printf("acpi: sef_llvm_add_special_mem_region failed %d\n", r);
+	}
+
+	/* XXX To-do: acpi requires custom state transfer handlers for
+	 * unions acpi_operand_object and acpi_generic_state (and nested unions)
+	 * for generic state transfer to work correctly.
+	 */
 
 	return OK;
 }
@@ -111,10 +125,6 @@ static void sef_local_startup()
   sef_setcb_init_fresh(sef_cb_init_fresh);
   sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
-
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();

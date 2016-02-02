@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.38 2015/05/20 04:37:45 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $");
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/ksyms.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -63,6 +62,8 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.35 2012/03/21 02:18:14 christos Exp $");
 #if defined(NLIST_ELF32) || defined(NLIST_ELF64)
 #include <sys/exec_elf.h>
 #endif
+
+#include <sys/ksyms.h>		/* after sys/exec_elf.h */
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
@@ -77,13 +78,14 @@ ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 {
 	struct stat st;
 	Elf_Ehdr ehdr;
-#if _LP64 || ELFSIZE == 32
+#if defined(_LP64) || ELFSIZE == 32 || defined(ELF64_MACHDEP_ID)
 #if (ELFSIZE == 32)
 	Elf32_Half nshdr;
 #elif (ELFSIZE == 64)
 	Elf64_Word nshdr;
 #endif
-	/* Only support 64+32 mode on LP64; no support for 64 mode on ILP32 */
+	/* Only support 64+32 mode on LP64 and those that have defined */
+	/* ELF64_MACHDEP_ID, otherwise no support for 64 mode on ILP32 */
 	Elf_Ehdr *ehdrp;
 	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
 	Elf_Sym *symp;
@@ -137,13 +139,13 @@ ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 	default:
 		BAD;
 	}
-#if _LP64 || ELFSIZE == 32
+#if defined(_LP64) || ELFSIZE == 32 || defined(ELF64_MACHDEP_ID)
 	symshdrp = symstrshdrp = NULL;
 
-	/* Only support 64+32 mode on LP64; no support for 64 mode on ILP32 */
+	/* Only support 64+32 mode on LP64 and those that have defined */
+	/* ELF64_MACHDEP_ID, otherwise no support for 64 mode on ILP32 */
 	if (S_ISCHR(st.st_mode)) {
 		const char *nlistname;
-		struct ksyms_gsymbol kg;
 		Elf_Sym sym;
 
 		/*
@@ -151,6 +153,8 @@ ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 		 */
 		nent = 0;
 		for (p = list; !ISLAST(p); ++p) {
+			struct ksyms_gsymbol kg;
+			int error;
 
 			p->n_other = 0;
 			p->n_desc = 0;
@@ -158,9 +162,32 @@ ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 			if (*nlistname == '_')
 				nlistname++;
 
+			memset(&kg, 0, sizeof(kg));
 			kg.kg_name = nlistname;
+#ifdef OKIOCGSYMBOL
+			struct ksyms_ogsymbol okg;
+			error = ioctl(fd, KIOCGSYMBOL, &kg);
+			if (error == 0) {
+				sym = kg.kg_sym;
+			} else if (error && errno == ENOTTY) {
+				memset(&okg, 0, sizeof(okg));
+				okg.kg_name = nlistname;
+				okg.kg_sym = &sym;
+				error = ioctl(fd, OKIOCGSYMBOL, &okg);
+			}
+#else
 			kg.kg_sym = &sym;
-			if (ioctl(fd, KIOCGSYMBOL, &kg) == 0) {
+			error = ioctl(fd, KIOCGSYMBOL, &kg);
+#endif
+			if (error == 0
+#if !defined(_LP64) && ELFSIZE == 64
+#if __mips__
+			    && (intptr_t)sym.st_value == (intmax_t)sym.st_value
+#else
+			    && (uintptr_t)sym.st_value == sym.st_value
+#endif
+#endif
+			    && 1) {
 				p->n_value = (uintptr_t)sym.st_value;
 				switch (ELF_ST_TYPE(sym.st_info)) {
 				case STT_NOTYPE:
@@ -308,7 +335,7 @@ done:
 	rv = nent;
 unmap:
 	munmap(mappedfile, mappedsize);
-#endif /* _LP64 || ELFSIZE == 32 */
+#endif /* _LP64 || ELFSIZE == 32 || ELF64_MACHDEP_ID */
 out:
 	return (rv);
 }

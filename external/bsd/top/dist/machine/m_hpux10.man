@@ -1,0 +1,18 @@
+.SH "HPUX 10 INFORMATION"
+The process information layout has changed slightly since previous
+versions.  The CPU percentage column reports weighted cpu as 
+calculated directly by the kernel.  The WCPU column is no longer
+present in the output and a TTY column has been added to indicate
+the name of the process's controlling terminal.
+The definition of an 
+idle process has been relaxed to include those processes that have only
+just gone to sleep.
+
+This version of top does not display a per-cpu breakdown of processor
+state.  Perhaps a later version will add this sophistication across
+all platforms.
+
+The HP/UX 10 port has greatly benefitted from the diligent efforts
+of the following individuals:  John Haxby <john_haxby@hp.com>,
+Rich Holland <holland@synopsys.com>, and <kevin@mcl.ucsb.edu>.
+

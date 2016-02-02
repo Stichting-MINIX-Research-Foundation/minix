@@ -8,10 +8,11 @@ import ctypes
 from ctypes import *
 from ctypes.util import find_library
 
+
 def _init():
     """
     Loads the shared library through ctypes and returns a library
-    L{ctypes.CDLL} instance 
+    L{ctypes.CDLL} instance
     """
     return ctypes.cdll.LoadLibrary(find_library('magic'))
 
@@ -45,6 +46,7 @@ MAGIC_NO_CHECK_TOKENS = NO_CHECK_TOKENS = 1048576
 MAGIC_NO_CHECK_ENCODING = NO_CHECK_ENCODING = 2097152
 
 MAGIC_NO_CHECK_BUILTIN = NO_CHECK_BUILTIN = 4173824
+
 
 class magic_set(Structure):
     pass
@@ -99,6 +101,7 @@ _errno = _libraries['magic'].magic_errno
 _errno.restype = c_int
 _errno.argtypes = [magic_t]
 
+
 class Magic(object):
     def __init__(self, ms):
         self._magic_t = ms
@@ -115,11 +118,14 @@ class Magic(object):
         as a filename or None if an error occurred and the MAGIC_ERROR flag
         is set.  A call to errno() will return the numeric error code.
         """
-        try: # attempt python3 approach first
-            bi = bytes(filename, 'utf-8')
+        try:  # attempt python3 approach first
+            if isinstance(filename, bytes):
+                bi = filename
+            else:
+                bi = bytes(filename, 'utf-8')
             return str(_file(self._magic_t, bi), 'utf-8')
         except:
-            return _file(self._magic_t, filename)
+            return _file(self._magic_t, filename.encode('utf-8'))
 
     def descriptor(self, fd):
         """
@@ -133,7 +139,7 @@ class Magic(object):
         as a buffer or None if an error occurred and the MAGIC_ERROR flag
         is set. A call to errno() will return the numeric error code.
         """
-        try: # attempt python3 approach first
+        try:  # attempt python3 approach first
             return str(_buffer(self._magic_t, buf, len(buf)), 'utf-8')
         except:
             return _buffer(self._magic_t, buf, len(buf))
@@ -143,16 +149,16 @@ class Magic(object):
         Returns a textual explanation of the last error or None
         if there was no error.
         """
-        try: # attempt python3 approach first
+        try:  # attempt python3 approach first
             return str(_error(self._magic_t), 'utf-8')
         except:
             return _error(self._magic_t)
-  
+
     def setflags(self, flags):
         """
-        Set flags on the magic object which determine how magic checking behaves;
-        a bitwise OR of the flags described in libmagic(3), but without the MAGIC_
-        prefix.
+        Set flags on the magic object which determine how magic checking
+        behaves; a bitwise OR of the flags described in libmagic(3), but
+        without the MAGIC_ prefix.
 
         Returns -1 on systems that don't support utime(2) or utimes(2)
         when PRESERVE_ATIME is set.
@@ -161,10 +167,10 @@ class Magic(object):
 
     def load(self, filename=None):
         """
-        Must be called to load entries in the colon separated list of database files
-        passed as argument or the default database file if no argument before
-        any magic queries can be performed.
-        
+        Must be called to load entries in the colon separated list of database
+        files passed as argument or the default database file if no argument
+        before any magic queries can be performed.
+
         Returns 0 on success and -1 on failure.
         """
         return _load(self._magic_t, filename)
@@ -196,7 +202,7 @@ class Magic(object):
         Returns 0 on success and -1 on failure.
         """
         return _list(self._magic_t, dbs)
-    
+
     def errno(self):
         """
         Returns a numeric error code. If return value is 0, an internal
@@ -205,6 +211,7 @@ class Magic(object):
         to provide detailed error information.
         """
         return _errno(self._magic_t)
+
 
 def open(flags):
     """
