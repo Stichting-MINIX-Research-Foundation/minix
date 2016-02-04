@@ -6,13 +6,22 @@
 # mv out mi
 #
 ./etc/system.conf.d/3c90x                               minix-base
+./etc/system.conf.d/amddev                              minix-base
 ./etc/system.conf.d/atl2                                minix-base
 ./etc/system.conf.d/dec21140A                           minix-base
+./etc/system.conf.d/dp8390                              minix-base
+./etc/system.conf.d/dpeth                               minix-base
+./etc/system.conf.d/es1370                              minix-base
+./etc/system.conf.d/es1371                              minix-base
 ./etc/system.conf.d/e1000                               minix-base
 ./etc/system.conf.d/fxp                                 minix-base
 ./etc/system.conf.d/lance                               minix-base
+./etc/system.conf.d/printer                             minix-base
 ./etc/system.conf.d/rtl8139                             minix-base
 ./etc/system.conf.d/rtl8169                             minix-base
+./etc/system.conf.d/ti1225                              minix-base
+./etc/system.conf.d/vbfs                                minix-base
+./etc/system.conf.d/vbox                                minix-base
 ./etc/system.conf.d/virtio_net                          minix-base
 ./service/3c90x                                         minix-base
 ./service/acpi                                          minix-base

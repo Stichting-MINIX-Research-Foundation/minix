@@ -149,7 +149,11 @@
 ./etc/syslog.conf                                       minix-base
 ./etc/system.conf                                       minix-base
 ./etc/system.conf.d                                     minix-base
+./etc/system.conf.d/hello                               minix-base
+./etc/system.conf.d/inet                                minix-base
 ./etc/system.conf.d/ipc                                 minix-base
+./etc/system.conf.d/lwip                                minix-base
+./etc/system.conf.d/random                              minix-base
 ./etc/system.conf.d/usb_hub                             minix-base
 ./etc/system.conf.d/usb_storage                         minix-base
 ./etc/termcap                                           minix-base

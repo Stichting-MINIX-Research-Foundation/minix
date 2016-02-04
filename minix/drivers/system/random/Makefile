@@ -2,6 +2,10 @@
 PROG=	random
 SRCS=	main.c random.c rijndael_api.c rijndael_alg.c
 
+FILES=$(PROG).conf
+FILESNAME=$(PROG)
+FILESDIR= /etc/system.conf.d
+
 .PATH:	${.CURDIR}/aes
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
