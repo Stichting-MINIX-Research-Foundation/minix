@@ -2,8 +2,8 @@
 PROG=	rtl8169
 SRCS=	rtl8169.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+=	${LIBNETDRIVER} ${LIBSYS}

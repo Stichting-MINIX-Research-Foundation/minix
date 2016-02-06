@@ -2,8 +2,8 @@
 PROG=usb_hub
 SRCS=usb_hub.c urb_helper.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR=/etc/system.conf.d
 
 DPADD+=${LIBDDEKIT_USB_CLIENT} ${LIBDDEKIT} ${LIBUSB} ${LIBSYS} ${LIBMINLIB}

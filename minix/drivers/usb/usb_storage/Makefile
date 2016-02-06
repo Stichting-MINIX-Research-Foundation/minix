@@ -2,8 +2,8 @@
 PROG= usb_storage
 SRCS= urb_helper.c bulk.c scsi.c usb_storage.c
 
-FILES= $(PROG).conf
-FILESNAME= $(PROG)
+FILES= ${PROG}.conf
+FILESNAME= ${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+= ${LIBBLOCKDRIVER} ${LIBDDEKIT_USB_CLIENT} ${LIBSYS} ${LIBDDEKIT} ${LIBUSB}

@@ -2,8 +2,8 @@
 PROG=	3c90x
 SRCS=	3c90x.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+=	${LIBNETDRIVER} ${LIBSYS}

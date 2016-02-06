@@ -2,8 +2,8 @@
 PROG=	dec21140A
 SRCS=	dec21140A.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+=	${LIBNETDRIVER} ${LIBSYS}

@@ -6,6 +6,6 @@ HERE=${.CURDIR}/arch/${MACHINE_ARCH}
 
 SRCS += omap_i2c.c omap_i2c.h omap_i2c_registers.h
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d

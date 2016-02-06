@@ -2,8 +2,8 @@
 PROG=   lan8710a
 SRCS=   lan8710a.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+=	${LIBNETDRIVER} ${LIBSYS}

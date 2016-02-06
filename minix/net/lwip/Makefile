@@ -10,8 +10,8 @@ SRCS=	lwip.c		\
 	inet_config.c	\
 	eth.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 .PATH:	${.CURDIR}/generic

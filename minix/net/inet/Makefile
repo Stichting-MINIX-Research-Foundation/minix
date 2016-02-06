@@ -11,8 +11,8 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 	queryparam.c version.c
 MAN=	inet.8
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 .PATH:	${.CURDIR}/generic

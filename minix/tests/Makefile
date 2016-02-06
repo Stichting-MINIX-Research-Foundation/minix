@@ -103,7 +103,7 @@ common.o: common.c
 PROGS+=		test63 mod
 .endif # ${MKPIC} == "yes"
 
-.for o in $(PROGS)
+.for o in ${PROGS}
 OBJS.${o} += common.o
 .endfor
 
