@@ -7,7 +7,12 @@
 #
 ./etc/rc.capes                                          minix-base
 ./etc/rc.capes/BB-BONE-WTHR-01                          minix-base
+./etc/system.conf.d/bmp085                              minix-base
+./etc/system.conf.d/gpio                                minix-base
+./etc/system.conf.d/i2c                                 minix-base
 ./etc/system.conf.d/lan8710a                            minix-base
+./etc/system.conf.d/sht21                               minix-base
+./etc/system.conf.d/tsl2550                             minix-base
 ./etc/system.conf.d/usbd                                minix-base
 ./service/bmp085                                        minix-base
 ./service/cat24c256                                     minix-base
