@@ -2,8 +2,8 @@
 PROG=	hello
 SRCS=	hello.c
 
-FILES=$(PROG).conf
-FILESNAME=$(PROG)
+FILES=${PROG}.conf
+FILESNAME=${PROG}
 FILESDIR= /etc/system.conf.d
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
