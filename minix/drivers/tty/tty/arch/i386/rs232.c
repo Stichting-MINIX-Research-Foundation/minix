@@ -11,6 +11,11 @@
 
 #if NR_RS_LINES > 0
 
+/* switch RTS/CTS on/off */
+#if !defined(UART_RTSCTS_OFF)
+#define UART_RTSCTS_OFF 0 /* 0: Use RTS/CTS, 1: Don't.*/
+#endif
+
 /* 8250 constants. */
 #define UART_FREQ         115200L	/* timer frequency */
 
@@ -86,6 +91,18 @@
  * dropped by close of the device).
  * OUT2 is also kept high all the time.
  */
+#if UART_RTSCTS_OFF
+#define istart(rs) \
+	(rs)->idevready = TRUE
+
+#define istop(rs) \
+		(rs)->idevready = FALSE
+
+/* Macro to tell if device is ready.  The rs->cts field is set to MS_CTS if
+ * CLOCAL is in effect for a line without a CTS wire.
+ */
+#define devready(rs) MS_CTS
+#else
 #define istart(rs) \
 	(sys_outb((rs)->modem_ctl_port, MC_OUT2 | MC_RTS | MC_DTR), \
 		(rs)->idevready = TRUE)
@@ -97,6 +114,8 @@
  * CLOCAL is in effect for a line without a CTS wire.
  */
 #define devready(rs) ((my_inb(rs->modem_status_port) | rs->cts) & MS_CTS)
+
+#endif
 
 /* Macro to tell if transmitter is ready. */
 #define txready(rs) (my_inb(rs->line_status_port) & LS_TRANSMITTER_READY)
@@ -507,9 +526,12 @@ void rs_init(tty_t *tp)
   }
 
   rs_irq_set |= (1 << irq);
-
+#if UART_RTSCTS_OFF
+  sys_outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_RECEIVER_READY | IE_TRANSMITTER_READY);
+#else
   sys_outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
 				| IE_RECEIVER_READY | IE_TRANSMITTER_READY);
+#endif
 
   /* Fill in TTY function hooks. */
   tp->tty_devread = rs_read;
