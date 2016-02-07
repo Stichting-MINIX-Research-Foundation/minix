@@ -757,11 +757,15 @@ void dohelp()
   FILE *fp;
   char buffer[80];
 
-  if ( (fp = fopen(HELPFILE, "r")) == NULL)
+  if ( (fp = fopen(HELPFILE, "r")) == NULL) {
 	fprintf(stdout, "can't open helpfile %s\n", HELPFILE);
-  else
-	while (fgets(buffer, 80, fp))
-		fputs(buffer, stdout);
+	return;
+  }
+
+  while (fgets(buffer, 80, fp))
+	fputs(buffer, stdout);
+
+  fclose(fp);
 }
 
 int filesize(name)
