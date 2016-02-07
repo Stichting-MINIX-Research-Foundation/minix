@@ -27,5 +27,5 @@ then
         tar -xjf make-3.81.tar.bz2 && \
         mv make-3.81 dist && \
         cd dist && \
-        cat ../patches/* | patch -p 1
+        cat ../patches/* | patch -p 1 || true
 fi

@@ -3,6 +3,11 @@
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
 
+.if defined(__MINIX)
+# Some tools do not compile warning free with newer toolchains.
+NOGCCERROR=	yes
+NOCLANGERROR=	yes
+.endif # defined(__MINIX)
 # Make sure that the ordered build/install processing applies when using
 # plain make.
 .MAIN: build_install

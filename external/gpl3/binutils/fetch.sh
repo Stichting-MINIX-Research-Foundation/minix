@@ -26,7 +26,7 @@ then
 	tar -oxjf binutils-2.23.2.tar.bz2 && \
 	mv binutils-2.23.2 dist && \
 	cd dist && \
-	cat ../patches/* | patch -p1 && \
+	cat ../patches/* | patch -p1
 	cp ../files/yyscript.h gold && \
 	cp ../files/yyscript.c gold && \
 	rm -f ld/configdoc.texi
