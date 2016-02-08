@@ -2,6 +2,10 @@
 PROG=	amddev
 SRCS=	amddev.c
 
+FILES=$(PROG).conf
+FILESNAME=$(PROG)
+FILESDIR= /etc/system.conf.d
+
 DPADD+= ${LIBSYS}
 LDADD+=	-lsys
 
