@@ -40,7 +40,7 @@ static struct pdm {
 	u32_t		val;
 	phys_bytes	phys;
 	u32_t		*page_directories;
-} pagedir_mappings[MAX_PAGEDIR_PDES];
+} pagedir_mappings[MAX_PAGEDIR_PDES] __aligned(ARCH_PAGEDIR_SIZE);
 
 static multiboot_module_t *kern_mb_mod = NULL;
 static size_t kern_size = 0;
@@ -80,7 +80,7 @@ int missing_sparedirs = SPAREPAGEDIRS;
 static struct {
 	void *pagedir;
 	phys_bytes phys;
-} sparepagedirs[SPAREPAGEDIRS];
+} sparepagedirs[SPAREPAGEDIRS] __aligned(ARCH_PAGEDIR_SIZE);
 
 #define is_staticaddr(v) ((vir_bytes) (v) < VM_OWN_HEAPSTART)
 
@@ -109,7 +109,10 @@ static char static_sparepages[VM_PAGE_SIZE*STATIC_SPAREPAGES]
 	__aligned(VM_PAGE_SIZE);
 
 #if defined(__arm__)
-static char static_sparepagedirs[ARCH_PAGEDIR_SIZE*STATIC_SPAREPAGEDIRS + ARCH_PAGEDIR_SIZE] __aligned(ARCH_PAGEDIR_SIZE);
+/* We need one ARCH_PAGEDIR_SIZE extra to be able to ensure the physical
+ * addresses are aligned on pagetables boundaries. Without this the MMU will
+ * fail to parse properly the L1 pagetables. */
+static char static_sparepagedirs[ARCH_PAGEDIR_SIZE*(STATIC_SPAREPAGEDIRS+1)];
 #endif
 
 void pt_assert(pt_t *pt)
@@ -1091,9 +1094,6 @@ void pt_init(void)
         int s, r, p;
 	phys_bytes phys;
 	vir_bytes sparepages_mem;
-#if defined(__arm__)
-	vir_bytes sparepagedirs_mem;
-#endif
 	static u32_t currentpagedir[ARCH_VM_DIR_ENTRIES];
 	int m = kernel_boot_info.kern_mod;
 #if defined(__i386__)
@@ -1117,12 +1117,6 @@ void pt_init(void)
         sparepages_mem = (vir_bytes) static_sparepages;
 	assert(!(sparepages_mem % VM_PAGE_SIZE));
 
-#if defined(__arm__)
-        /* Get ourselves spare pagedirs. */
-	sparepagedirs_mem = (vir_bytes) static_sparepagedirs;
-	assert(!(sparepagedirs_mem % ARCH_PAGEDIR_SIZE));
-#endif
-
 	/* Spare pages are used to allocate memory before VM has its own page
 	 * table that things (i.e. arbitrary physical memory) can be mapped into.
 	 * We get it by pre-allocating it in our bss (allocated and mapped in by
@@ -1132,20 +1126,40 @@ void pt_init(void)
 #if defined(__arm__)
         missing_sparedirs = 0;
         assert(STATIC_SPAREPAGEDIRS <= SPAREPAGEDIRS);
-        for(s = 0; s < SPAREPAGEDIRS; s++) {
-		vir_bytes v = (sparepagedirs_mem + s*ARCH_PAGEDIR_SIZE);;
-		phys_bytes ph;
-        	if((r=sys_umap(SELF, VM_D, (vir_bytes) v,
-	                ARCH_PAGEDIR_SIZE, &ph)) != OK)
+	{
+		phys_bytes sparepagedirs_phys_mem;
+		uint32_t offset;
+
+		/* Get ourselves spare pagedirs. */
+		vir_bytes sparepagedirs_mem = (vir_bytes) static_sparepagedirs;
+
+		if ((r = sys_umap(SELF, VM_D, sparepagedirs_mem,
+			ARCH_PAGEDIR_SIZE * (STATIC_SPAREPAGEDIRS + 1),
+			&sparepagedirs_phys_mem)) != OK) {
 				panic("pt_init: sys_umap failed: %d", r);
-        	if(s >= STATIC_SPAREPAGEDIRS) {
-        		sparepagedirs[s].pagedir = NULL;
-        		missing_sparedirs++;
-        		continue;
-        	}
-        	sparepagedirs[s].pagedir = (void *) v;
-        	sparepagedirs[s].phys = ph;
-        }
+		}
+		/* Align to ARCH_PAGEDIR_SIZE sparepagedirs_phys_mem &
+		 * sparepagedirs_mem. */
+		offset = ARCH_PAGEDIR_SIZE -
+			(sparepagedirs_phys_mem % ARCH_PAGEDIR_SIZE);
+		sparepagedirs_phys_mem += offset;
+		sparepagedirs_mem += offset;
+
+		for(s = 0; s < SPAREPAGEDIRS; s++) {
+			vir_bytes v = (sparepagedirs_mem + s*ARCH_PAGEDIR_SIZE);
+			phys_bytes ph = (sparepagedirs_phys_mem + s*ARCH_PAGEDIR_SIZE);
+#if 0
+			printf("sparepagedirs[%d] pagedir %p phys %p\n", s, v, ph);
+#endif
+			if(s >= STATIC_SPAREPAGEDIRS) {
+				sparepagedirs[s].pagedir = NULL;
+				missing_sparedirs++;
+				continue;
+			}
+			sparepagedirs[s].pagedir = (void *) v;
+			sparepagedirs[s].phys = ph;
+		}
+	}
 #endif
 
 	if(!(spare_pagequeue = reservedqueue_new(SPAREPAGES, 1, 1, 0)))
