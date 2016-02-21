@@ -18,6 +18,7 @@ SUBDIR+=	libminc
 SUBDIR+=	libminixfs
 SUBDIR+=	libnetdriver
 SUBDIR+=	libsffs
+SUBDIR+=	libsockdriver
 SUBDIR+=	libtimers
 SUBDIR+=	libusb
 SUBDIR+=	libvtreefs

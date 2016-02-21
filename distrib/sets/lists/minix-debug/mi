@@ -98,6 +98,7 @@
 ./usr/lib/librmt_g.a                                    minix-debug     debuglib
 ./usr/lib/libsaslc_g.a                                  minix-debug     debuglib
 ./usr/lib/libsffs_g.a                                   minix-debug     debuglib
+./usr/lib/libsockdriver_g.a                             minix-debug     debuglib
 ./usr/lib/libsqlite3_g.a                                minix-debug     debuglib
 ./usr/lib/libssl_g.a                                    minix-debug     debuglib
 ./usr/lib/libstdc++_g.a                                 minix-debug     libstdcxx,debuglib
