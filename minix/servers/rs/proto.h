@@ -84,6 +84,7 @@ void swap_slot(struct rproc **src_rpp, struct rproc **dst_rpp);
 struct rproc* lookup_slot_by_label(char *label);
 struct rproc* lookup_slot_by_pid(pid_t pid);
 struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr);
+struct rproc* lookup_slot_by_domain(int domain);
 struct rproc* lookup_slot_by_flags(int flags);
 int alloc_slot(struct rproc **rpp);
 void free_slot(struct rproc *rp);

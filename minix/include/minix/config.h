@@ -57,6 +57,9 @@
 /* Max. number of IRQs that can be assigned to a process */
 #define NR_IRQ	16
 
+/* Max. number of domains (protocol families) per socket driver */
+#define NR_DOMAIN	8
+
 /* Scheduling priorities. Values must start at zero (highest
  * priority) and increment.
  */

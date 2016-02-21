@@ -110,7 +110,7 @@ int do_mapdriver(void)
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
-  int r, slot;
+  int r, slot, ndomains;
   devmajor_t major;
   endpoint_t endpoint;
   vir_bytes label_vir;
@@ -124,6 +124,8 @@ int do_mapdriver(void)
   label_vir = job_m_in.m_lsys_vfs_mapdriver.label;
   label_len = job_m_in.m_lsys_vfs_mapdriver.labellen;
   major = job_m_in.m_lsys_vfs_mapdriver.major;
+  ndomains = job_m_in.m_lsys_vfs_mapdriver.ndomains;
+  /* domains = job_m_in.m_lsys_vfs_mapdriver.domains; */
 
   /* Get the label */
   if (label_len > sizeof(label)) { /* Can we store this label? */
@@ -157,7 +159,19 @@ int do_mapdriver(void)
   rfp->fp_flags |= FP_SRV_PROC;
 
   /* Try to update device mapping. */
-  return map_driver(label, major, endpoint);
+  if (major != NO_DEV) {
+	if ((r = map_driver(label, major, endpoint)) != OK)
+		return r;
+  }
+  if (ndomains != 0) {
+	r = EINVAL;	/* TODO: add support for mapping socket drivers */
+	if (r != OK) {
+		if (major != NO_DEV)
+			map_driver(NULL, major, NONE); /* undo */
+		return r;
+	}
+  }
+  return OK;
 }
 
 /*===========================================================================*

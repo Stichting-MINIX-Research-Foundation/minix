@@ -264,7 +264,8 @@ int tty_input_inject(int type, int code, int val);
 pid_t srv_fork(uid_t reuid, gid_t regid);
 int srv_kill(pid_t pid, int sig);
 int getprocnr(pid_t pid, endpoint_t *proc_ep);
-int mapdriver(char *label, devmajor_t major);
+int mapdriver(const char *label, devmajor_t major, const int *domains,
+	int nr_domains);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);

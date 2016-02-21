@@ -139,6 +139,8 @@ struct rs_start
 	int devman_id;
 	char *rss_progname;
 	size_t rss_prognamelen;
+	int rss_nr_domain;
+	int rss_domain[NR_DOMAIN];
 	/*
 	 * SMP specific data
 	 *
@@ -168,6 +170,8 @@ struct rprocpub {
   endpoint_t new_endpoint;	  /* new instance endpoint number (for VM, when updating) */
 
   devmajor_t dev_nr;		  /* major device number or NO_DEV */
+  int nr_domain;		  /* number of socket driver domains */
+  int domain[NR_DOMAIN];	  /* set of socket driver domains */
 
   char label[RS_MAX_LABEL_LEN];	  /* label of this service */
   char proc_name[RS_MAX_LABEL_LEN]; /* process name of this service */

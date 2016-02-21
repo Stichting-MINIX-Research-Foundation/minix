@@ -26,6 +26,7 @@
 #include <minix/priv.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <configfile.h>
 
 #include <machine/archtypes.h>
@@ -942,6 +943,87 @@ static void do_control(config_t *cpe, struct rs_start *rs_start)
 	}
 }
 
+static const struct {
+	const char *name;
+	int domain;
+} domain_tab[] = {
+	/* PF_UNSPEC should not be in this table. */
+	{ "LOCAL",	PF_LOCAL	},
+	{ "INET",	PF_INET		},
+	{ "IMPLINK",	PF_IMPLINK	},
+	{ "PUP",	PF_PUP		},
+	{ "CHAOS",	PF_CHAOS	},
+	{ "NS",		PF_NS		},
+	{ "ISO",	PF_ISO		},
+	{ "ECMA",	PF_ECMA		},
+	{ "DATAKIT",	PF_DATAKIT	},
+	{ "CCITT",	PF_CCITT	},
+	{ "SNA",	PF_SNA		},
+	{ "DECnet",	PF_DECnet	},
+	{ "DLI",	PF_DLI		},
+	{ "LAT",	PF_LAT		},
+	{ "HYLINK",	PF_HYLINK	},
+	{ "APPLETALK",	PF_APPLETALK	},
+	{ "OROUTE",	PF_OROUTE	},
+	{ "LINK",	PF_LINK		},
+	{ "XTP",	PF_XTP		},
+	{ "COIP",	PF_COIP		},
+	{ "CNT",	PF_CNT		},
+	{ "RTIP",	PF_RTIP		},
+	{ "IPX",	PF_IPX		},
+	{ "INET6",	PF_INET6	},
+	{ "PIP",	PF_PIP		},
+	{ "ISDN",	PF_ISDN		},
+	{ "NATM",	PF_NATM		},
+	{ "ARP",	PF_ARP		},
+	{ "KEY",	PF_KEY		},
+	{ "BLUETOOTH",	PF_BLUETOOTH	},
+	/* There is no PF_IEEE80211. */
+	{ "MPLS",	PF_MPLS		},
+	{ "ROUTE",	PF_ROUTE	},
+};
+
+/*
+ * Process a list of 'domain' protocol families for socket drivers.
+ */
+static void
+do_domain(config_t * cpe, struct rs_start * rs_start)
+{
+	unsigned int i;
+	int nr_domain, domain;
+
+	for (nr_domain = 0; cpe != NULL; cpe = cpe->next) {
+		if (cpe->flags & CFG_SUBLIST) {
+			fatal("do_domain: unexpected sublist at %s:%d",
+			    cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING) {
+			fatal("do_domain: unexpected string at %s:%d",
+			    cpe->file, cpe->line);
+		}
+		if (nr_domain >= __arraycount(rs_start->rss_domain)) {
+			fatal("do_domain: NR_DOMAIN is too small (%d needed)",
+			    nr_domain + 1);
+		}
+
+		for (i = 0; i < __arraycount(domain_tab); i++)
+			if (!strcmp(domain_tab[i].name, (char *)cpe->word))
+				break;
+		if (i < __arraycount(domain_tab))
+			domain = domain_tab[i].domain;
+		else
+			domain = atoi((char *)cpe->word);
+
+		if (domain <= 0 || domain >= PF_MAX) {
+			fatal("do_domain: unknown domain %s at %s:%d",
+			    (char *)cpe->word, cpe->file, cpe->line);
+		}
+
+		rs_start->rss_domain[nr_domain] = domain;
+		rs_start->rss_nr_domain = ++nr_domain;
+	}
+}
+
 static void do_service(config_t *cpe, config_t *config, struct rs_config *rs_config)
 {
 	struct rs_start *rs_start = &rs_config->rs_start;
@@ -1056,6 +1138,11 @@ static void do_service(config_t *cpe, config_t *config, struct rs_config *rs_con
 		if (strcmp(cpe->word, KW_CONTROL) == 0)
 		{
 			do_control(cpe->next, rs_start);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_DOMAIN) == 0)
+		{
+			do_domain(cpe->next, rs_start);
 			continue;
 		}
 	}

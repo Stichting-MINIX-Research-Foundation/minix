@@ -521,6 +521,7 @@ struct rproc *rp;
   rpub->sys_flags &= ~(SF_CORE_SRV|SF_DET_RESTART);
   rp->r_period = 0;
   rpub->dev_nr = 0;
+  rpub->nr_domain = 0;
   sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL);
 }
 
@@ -802,7 +803,7 @@ struct rproc *rp;				/* pointer to service slot */
   }
 
   /* If the service is a driver, map it. */
-  if (rpub->dev_nr > 0) {
+  if (rpub->dev_nr > 0 || rpub->nr_domain > 0) {
       /* The purpose of non-blocking forks is to avoid involving VFS in the
        * forking process, because VFS may be blocked on a ipc_sendrec() to a MFS
        * that is waiting for a endpoint update for a dead driver. We have just
@@ -816,7 +817,8 @@ struct rproc *rp;				/* pointer to service slot */
        */
       setuid(0);
 
-      if ((r = mapdriver(rpub->label, rpub->dev_nr)) != OK) {
+      if ((r = mapdriver(rpub->label, rpub->dev_nr, rpub->domain,
+        rpub->nr_domain)) != OK) {
           return kill_service(rp, "couldn't map driver", r);
       }
   }
@@ -1304,12 +1306,16 @@ struct rproc *rp;
 {
   struct rprocpub *def_rpub;
   struct rprocpub *rpub;
+  int i;
 
   def_rpub = def_rp->r_pub;
   rpub = rp->r_pub;
 
-  /* Device and PCI settings. These properties cannot change. */
+  /* Device, domain, and PCI settings. These properties cannot change. */
   rpub->dev_nr = def_rpub->dev_nr;
+  rpub->nr_domain = def_rpub->nr_domain;
+  for (i = 0; i < def_rpub->nr_domain; i++)
+	rpub->domain[i] = def_rpub->domain[i];
   rpub->pci_acl = def_rpub->pci_acl;
 
   /* Immutable system and privilege flags. */
@@ -1724,7 +1730,15 @@ endpoint_t source;
   rp->r_uid= rs_start->rss_uid;
 
   /* Initialize device driver settings. */
+  if (rs_start->rss_nr_domain < 0 || rs_start->rss_nr_domain > NR_DOMAIN) {
+      printf("RS: init_slot: too many domains\n");
+      return EINVAL;
+  }
+
   rpub->dev_nr = rs_start->rss_major;
+  rpub->nr_domain = rs_start->rss_nr_domain;
+  for (i = 0; i < rs_start->rss_nr_domain; i++)
+	rpub->domain[i] = rs_start->rss_domain[i];
   rpub->devman_id = rs_start->devman_id;
 
   /* Initialize pci settings. */
@@ -1988,6 +2002,34 @@ struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
       if (rpub->dev_nr == dev_nr) {
           return rp;
       }
+  }
+
+  return NULL;
+}
+
+/*===========================================================================*
+ *			   lookup_slot_by_domain			     *
+ *===========================================================================*/
+struct rproc* lookup_slot_by_domain(int domain)
+{
+/* Lookup a service slot matching the given protocol family. */
+  int i, slot_nr;
+  struct rproc *rp;
+  struct rprocpub *rpub;
+
+  if (domain <= 0) {
+      return NULL;
+  }
+
+  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+      rp = &rproc[slot_nr];
+      rpub = rp->r_pub;
+      if (!(rp->r_flags & RS_IN_USE)) {
+          continue;
+      }
+      for (i = 0; i < rpub->nr_domain; i++)
+	  if (rpub->domain[i] == domain)
+	      return rp;
   }
 
   return NULL;

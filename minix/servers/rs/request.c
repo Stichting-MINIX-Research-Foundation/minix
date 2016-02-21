@@ -18,7 +18,7 @@ message *m_ptr;					/* request message pointer */
 /* A request was made to start a new system service. */
   struct rproc *rp;
   struct rprocpub *rpub;
-  int r;
+  int i, r;
   struct rs_start rs_start;
   int noblock;
   int init_flags = 0;
@@ -77,6 +77,13 @@ message *m_ptr;					/* request message pointer */
       printf("RS: service with the same device number %d already exists\n",
           rpub->dev_nr);
       return EBUSY;
+  }
+  for (i = 0; i < rpub->nr_domain; i++) {
+      if (lookup_slot_by_domain(rpub->domain[i]) != NULL) {
+	  printf("RS: service with the same domain %d already exists\n",
+	      rpub->domain[i]);
+	  return EBUSY;
+      }
   }
 
   /* All information was gathered. Now try to start the system service. */

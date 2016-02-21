@@ -1426,8 +1426,10 @@ typedef struct {
 	devmajor_t major;
 	size_t labellen;
 	vir_bytes label;
+	int ndomains;
+	int domains[NR_DOMAIN];
 
-	uint8_t padding[44];
+	uint8_t padding[8];
 } mess_lsys_vfs_mapdriver;
 _ASSERT_MSG_SIZE(mess_lsys_vfs_mapdriver);
 
