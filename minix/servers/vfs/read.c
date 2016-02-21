@@ -199,6 +199,17 @@ int read_write(struct fproc *rfp, int rw_flag, int fd, struct filp *f,
 		 */
 		position += size;
 	}
+  } else if (S_ISSOCK(vp->v_mode)) {
+	if (rw_flag == PEEKING) {
+		printf("VFS: read_write tries to peek on sock dev\n");
+		return EINVAL;
+	}
+
+	if (vp->v_sdev == NO_DEV)
+		panic("VFS: read_write tries to access sock dev NO_DEV");
+
+	r = sdev_readwrite(vp->v_sdev, buf, size, 0, 0, 0, 0, 0, rw_flag,
+	    f->filp_flags, 0);
   } else if (S_ISBLK(vp->v_mode)) {	/* Block special files. */
 	if (vp->v_sdev == NO_DEV)
 		panic("VFS: read_write tries to access block dev NO_DEV");

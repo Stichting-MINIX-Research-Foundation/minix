@@ -51,6 +51,7 @@ fproc_dmp(void)
 	);
 	if (fp->fp_blocked_on == FP_BLOCKED_ON_CDEV)
 		printf("%4d\n", fp->fp_cdev.endpt);
+	/* TODO: for FP_BLOCKED_ON_SDEV we do not have the endpoint.. */
 	else
 		printf(" nil\n");
   }

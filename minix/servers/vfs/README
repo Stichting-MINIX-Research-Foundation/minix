@@ -47,9 +47,9 @@ spread out over the kernel, VM, PM, and VFS). For example, it maintains state
 for select(2) calls, file descriptors and file positions. Also, it cooperates
 with the Process Manager to handle the fork, exec, and exit system calls.
 Third, VFS keeps track of endpoints that are supposed to be drivers for
-character or block special files. File Servers can be regarded as drivers for
-block special files, although they are handled entirely different compared
-to other drivers.
+character or block special files, as well as for socket protocol families.
+File Servers can be regarded as drivers for block special files, although they
+are handled entirely different compared to other drivers.
 
 The following diagram depicts how a read() on a file in /home is being handled:
 {{{
@@ -88,10 +88,10 @@ fetches a message (internally referred to as a job in some cases), executes
 the request embedded in the message, returns a reply, and fetches the next
 job. There are several sources for new jobs: from user processes, from PM, from
 the kernel, and from suspended jobs inside VFS itself (suspended operations
-on pipes, locks, or character special files). File Servers are regarded as
-normal user processes in this case, but their abilities are limited. This
-is to prevent deadlocks. Once a job is received, a worker thread starts
-executing it. During the lifetime of a job, the worker thread might need
+on pipes, locks, character special files, or sockets). File Servers are
+regarded as normal user processes in this case, but their abilities are
+limited. This is to prevent deadlocks. Once a job is received, a worker thread
+starts executing it. During the lifetime of a job, the worker thread might need
 to talk to several File Servers. The protocol VFS speaks with File Servers
 is fully documented on the Wiki at [0]. The protocol fields are defined in
 <minix/vfsif.h>. If the job is an operation on a character or block special
@@ -122,10 +122,10 @@ Driver replies are processed directly from the main thread. As a consequence,
 these processing routines may not block their calling thread. In some cases,
 these routines may resume a thread that is blocked waiting for the reply. This
 is always the case for block driver replies, and may or may not be the case for
-character driver replies. The character driver reply processing routines may
-also unblock suspended processes which in turn generate new jobs to be handled
-by the main loop (e.g., suspended reads and writes on pipes). So depending
-on the reply a new thread may have to be started.
+character and socket driver replies. The character and socket driver reply
+processing routines may also unblock suspended processes which in turn generate
+new jobs to be handled by the main loop (e.g., suspended reads and writes on
+pipes). So depending on the reply a new thread may have to be started.
 
 Worker threads are strictly tied to a process, and each process can have at
 most one worker thread running for it. Generally speaking, there are two types
@@ -655,9 +655,9 @@ Table 7: VFS-FS requests locking guarantees
 
 == Recovery from driver crashes ==
 ## 5 Recovery from driver crashes
-VFS can recover from block special file and character special file driver
-crashes. It can recover to some degree from a crashed File Server (which we
-can regard as a driver).
+VFS can recover from block, character, and socket driver crashes. It can
+recover to some degree from a crashed File Server (which we can regard as a
+driver).
 
 === Recovery from block drivers crashes ===
 ## 5.1 Recovery from block drivers crashes
@@ -672,17 +672,18 @@ files can cause the block driver to crash again. When that happens, VFS will
 stop the recovery. A driver can return ERESTART to VFS to tell it to retry
 a request. VFS does this with an arbitrary maximum of 5 attempts.
 
-=== Recovery from character driver crashes ===
-## 5.2 Recovery from character driver crashes
+=== Recovery from character and socket driver crashes ===
+## 5.2 Recovery from character and socket driver crashes
 While VFS used to support minimal recovery from character driver crashes, the
 added complexity has so far proven to outweigh the benefits, especially since
 such crash recovery can never be fully transparent: it depends entirely on the
 character device as to whether repeating an I/O request makes sense at all.
 Currently, all operations except close(2) on a file descriptor that identifies
-a device on a crashed character driver, will result in an EIO error. It is up
-to the application to reopen the character device and retry whatever it was
-doing in the appropriate manner. In the future, automatic reopen and I/O
-restart may be reintroduced for a limited subset of character drivers.
+a device on a crashed character or socket driver, will result in an EIO error.
+It is up to the application to reopen the character device or socket and retry
+whatever it was doing in the appropriate manner. In the future, automatic
+reopen and I/O restart may be reintroduced for a limited subset of character
+drivers.
 
 === Recovery from File Server crashes ===
 ## 5.3 Recovery from File Server crashes

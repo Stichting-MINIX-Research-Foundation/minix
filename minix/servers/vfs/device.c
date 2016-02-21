@@ -45,6 +45,10 @@ do_ioctl(void)
 		    f->filp_flags);
 		break;
 
+	case S_IFSOCK:
+		r = sdev_ioctl(vp->v_sdev, request, arg, f->filp_flags);
+		break;
+
 	default:
 		r = ENOTTY;
 	}

@@ -28,8 +28,8 @@ EXTERN struct filp {
   int filp_select_flags;	/* Select flags for the filp */
 
   /* following are for fd-type-specific select() */
-  int filp_pipe_select_ops;
-  dev_t filp_char_select_dev;
+  int filp_pipe_select_ops;	/* used for pipes */
+  dev_t filp_select_dev;	/* used for character and socket devices */
 } filp[NR_FILPS];
 
 #define FILP_CLOSED	0	/* filp_mode: associated device closed/gone */

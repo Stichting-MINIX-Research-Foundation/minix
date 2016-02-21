@@ -101,7 +101,7 @@ int drv_sendrec(endpoint_t drv_e, message *reqmp)
 		return EIO;
 	}
 
-	if ((dp = get_dmap(drv_e)) == NULL)
+	if ((dp = get_dmap_by_endpt(drv_e)) == NULL)
 		panic("driver endpoint %d invalid", drv_e);
 
 	lock_dmap(dp);

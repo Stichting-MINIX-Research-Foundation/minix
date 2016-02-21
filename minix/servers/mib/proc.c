@@ -306,10 +306,11 @@ get_lwp_stat(int mslot, uint64_t * wcptr, char * wmptr, size_t wmsz,
 			wmesg = "select";
 			break;
 		case FP_BLOCKED_ON_CDEV:
+		case FP_BLOCKED_ON_SDEV:
 			/*
-			 * Add the task (= character driver) endpoint to the
-			 * wchan value, and use the driver's process name,
-			 * without parentheses, as wmesg text.
+			 * Add the task (= character or socket driver) endpoint
+			 * to the wchan value, and use the driver's process
+			 * name, without parentheses, as wmesg text.
 			 */
 			wchan |= (uint64_t)fp->fpl_task << 16;
 			fill_wmesg(wmptr, wmsz, fp->fpl_task, FALSE /*ipc*/);

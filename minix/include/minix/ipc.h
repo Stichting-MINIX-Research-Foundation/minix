@@ -1000,6 +1000,52 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_linputdriver_input_event);
 
 typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	int status;
+	unsigned int len;
+
+	uint8_t padding[40];
+} mess_lsockdriver_vfs_accept_reply;
+_ASSERT_MSG_SIZE(mess_lsockdriver_vfs_accept_reply);
+
+typedef struct {
+	int32_t req_id;
+	int status;
+	unsigned int ctl_len;
+	unsigned int addr_len;
+	int flags;
+
+	uint8_t padding[36];
+} mess_lsockdriver_vfs_recv_reply;
+_ASSERT_MSG_SIZE(mess_lsockdriver_vfs_recv_reply);
+
+typedef struct {
+	int32_t req_id;
+	int status;
+
+	uint8_t padding[48];
+} mess_lsockdriver_vfs_reply;
+_ASSERT_MSG_SIZE(mess_lsockdriver_vfs_reply);
+
+typedef struct {
+	int32_t sock_id;
+	int status;
+
+	uint8_t padding[48];
+} mess_lsockdriver_vfs_select_reply;
+_ASSERT_MSG_SIZE(mess_lsockdriver_vfs_select_reply);
+
+typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	int32_t sock_id2;
+
+	uint8_t padding[44];
+} mess_lsockdriver_vfs_socket_reply;
+_ASSERT_MSG_SIZE(mess_lsockdriver_vfs_socket_reply);
+
+typedef struct {
         cp_grant_id_t gid;
 	size_t size;
 	int subtype;
@@ -2132,6 +2178,86 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lchardriver_select);
 
 typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	cp_grant_id_t grant;
+	unsigned int len;
+	endpoint_t user_endpt;
+	int sflags;
+
+	uint8_t padding[32];
+} mess_vfs_lsockdriver_addr;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_addr);
+
+typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	int level;
+	int name;
+	cp_grant_id_t grant;
+	unsigned int len;
+
+	uint8_t padding[32];
+} mess_vfs_lsockdriver_getset;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_getset);
+
+typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	unsigned long request;
+	cp_grant_id_t grant;
+	endpoint_t user_endpt;
+	int sflags;
+
+	uint8_t padding[32];
+} mess_vfs_lsockdriver_ioctl;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_ioctl);
+
+typedef struct {
+	int32_t sock_id;
+	int ops;
+
+	uint8_t padding[48];
+} mess_vfs_lsockdriver_select;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_select);
+
+typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	cp_grant_id_t data_grant;
+	size_t data_len;
+	cp_grant_id_t ctl_grant;
+	unsigned int ctl_len;
+	cp_grant_id_t addr_grant;
+	unsigned int addr_len;
+	endpoint_t user_endpt;
+	int flags;
+
+	uint8_t padding[16];
+} mess_vfs_lsockdriver_sendrecv;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_sendrecv);
+
+typedef struct {
+	int32_t req_id;
+	int32_t sock_id;
+	int param;
+
+	uint8_t padding[44];
+} mess_vfs_lsockdriver_simple;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_simple);
+
+typedef struct {
+	int32_t req_id;
+	int domain;
+	int type;
+	int protocol;
+	endpoint_t user_endpt;
+
+	uint8_t padding[36];
+} mess_vfs_lsockdriver_socket;
+_ASSERT_MSG_SIZE(mess_vfs_lsockdriver_socket);
+
+typedef struct {
 	cp_grant_id_t grant;
 	size_t size;
 
@@ -2301,6 +2427,15 @@ typedef struct noxfer_message {
 		mess_li2cdriver_i2c_busc_i2c_exec m_li2cdriver_i2c_busc_i2c_exec;
 		mess_li2cdriver_i2c_busc_i2c_reserve m_li2cdriver_i2c_busc_i2c_reserve;
 		mess_linputdriver_input_event m_linputdriver_input_event;
+		mess_lsockdriver_vfs_accept_reply
+		    m_lsockdriver_vfs_accept_reply;
+		mess_lsockdriver_vfs_recv_reply
+		    m_lsockdriver_vfs_recv_reply;
+		mess_lsockdriver_vfs_reply	m_lsockdriver_vfs_reply;
+		mess_lsockdriver_vfs_select_reply
+		    m_lsockdriver_vfs_select_reply;
+		mess_lsockdriver_vfs_socket_reply
+		    m_lsockdriver_vfs_socket_reply;
 		mess_lsys_fi_ctl	m_lsys_fi_ctl;
 		mess_lsys_fi_reply	m_lsys_fi_reply;
 		mess_lsys_getsysinfo	m_lsys_getsysinfo;
@@ -2423,6 +2558,13 @@ typedef struct noxfer_message {
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
 		mess_vfs_lchardriver_readwrite	m_vfs_lchardriver_readwrite;
 		mess_vfs_lchardriver_select	m_vfs_lchardriver_select;
+		mess_vfs_lsockdriver_addr	m_vfs_lsockdriver_addr;
+		mess_vfs_lsockdriver_getset	m_vfs_lsockdriver_getset;
+		mess_vfs_lsockdriver_ioctl	m_vfs_lsockdriver_ioctl;
+		mess_vfs_lsockdriver_select	m_vfs_lsockdriver_select;
+		mess_vfs_lsockdriver_sendrecv	m_vfs_lsockdriver_sendrecv;
+		mess_vfs_lsockdriver_simple	m_vfs_lsockdriver_simple;
+		mess_vfs_lsockdriver_socket	m_vfs_lsockdriver_socket;
 		mess_vfs_lsys_gcov	m_vfs_lsys_gcov;
 		mess_vfs_utimens	m_vfs_utimens;
 		mess_vm_vfs_mmap	m_vm_vfs_mmap;

@@ -110,6 +110,7 @@ int do_mapdriver(void)
  * etc), and its label. This label is registered with DS, and allows us to
  * retrieve the driver's endpoint.
  */
+  const int *domains;
   int r, slot, ndomains;
   devmajor_t major;
   endpoint_t endpoint;
@@ -125,7 +126,7 @@ int do_mapdriver(void)
   label_len = job_m_in.m_lsys_vfs_mapdriver.labellen;
   major = job_m_in.m_lsys_vfs_mapdriver.major;
   ndomains = job_m_in.m_lsys_vfs_mapdriver.ndomains;
-  /* domains = job_m_in.m_lsys_vfs_mapdriver.domains; */
+  domains = job_m_in.m_lsys_vfs_mapdriver.domains;
 
   /* Get the label */
   if (label_len > sizeof(label)) { /* Can we store this label? */
@@ -164,8 +165,7 @@ int do_mapdriver(void)
 		return r;
   }
   if (ndomains != 0) {
-	r = EINVAL;	/* TODO: add support for mapping socket drivers */
-	if (r != OK) {
+	if ((r = smap_map(label, endpoint, domains, ndomains)) != OK) {
 		if (major != NO_DEV)
 			map_driver(NULL, major, NONE); /* undo */
 		return r;
@@ -314,7 +314,7 @@ void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 /*===========================================================================*
  *				get_dmap		 		     *
  *===========================================================================*/
-struct dmap *get_dmap(endpoint_t proc_e)
+struct dmap *get_dmap_by_endpt(endpoint_t proc_e)
 {
 /* See if 'proc_e' endpoint belongs to a valid dmap entry. If so, return a
  * pointer */

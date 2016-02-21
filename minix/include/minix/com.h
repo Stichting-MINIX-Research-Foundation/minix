@@ -30,6 +30,7 @@
  *   0x1600 - 0x16FF	VirtualBox (VBOX) requests (see vboxif.h)
  *   0x1700 - 0x17FF	PTYFS requests
  *   0x1800 - 0x18FF	Management Information Base (MIB) requests
+ *   0x1900 - 0x19FF	Socket device requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -1026,6 +1027,54 @@
 #define MIB_DEREGISTER		(MIB_BASE + 2)		/* unmount subtree */
 
 #define NR_MIB_CALLS		3	/* highest number from base plus one */
+
+/*===========================================================================*
+ *			Messages for socket devices			     *
+ *===========================================================================*/
+
+/* Base type for socket device requests and responses. */
+#define SDEV_RQ_BASE		0x1900
+#define SDEV_RS_BASE		0x1980
+
+#define IS_SDEV_RQ(type)	(((type) & ~0x7f) == SDEV_RQ_BASE)
+#define IS_SDEV_RS(type)	(((type) & ~0x7f) == SDEV_RS_BASE)
+
+/* Message types for socket device requests. */
+#define SDEV_SOCKET		(SDEV_RQ_BASE + 0)	/* create socket */
+#define SDEV_SOCKETPAIR		(SDEV_RQ_BASE + 1)	/* make socket pair */
+#define SDEV_BIND		(SDEV_RQ_BASE + 2)	/* bind to address */
+#define SDEV_CONNECT		(SDEV_RQ_BASE + 3)	/* start connection */
+#define SDEV_LISTEN		(SDEV_RQ_BASE + 4)	/* enter listen mode */
+#define SDEV_ACCEPT		(SDEV_RQ_BASE + 5)	/* accept connection */
+#define SDEV_SEND		(SDEV_RQ_BASE + 6)	/* send data */
+#define SDEV_RECV		(SDEV_RQ_BASE + 7)	/* receive data */
+#define SDEV_IOCTL		(SDEV_RQ_BASE + 8)	/* I/O control */
+#define SDEV_SETSOCKOPT		(SDEV_RQ_BASE + 9)	/* set socket option */
+#define SDEV_GETSOCKOPT		(SDEV_RQ_BASE + 10)	/* get socket option */
+#define SDEV_GETSOCKNAME	(SDEV_RQ_BASE + 11)	/* get socket name */
+#define SDEV_GETPEERNAME	(SDEV_RQ_BASE + 12)	/* get peer name */
+#define SDEV_SHUTDOWN		(SDEV_RQ_BASE + 13)	/* shut down I/O */
+#define SDEV_CLOSE		(SDEV_RQ_BASE + 14)	/* close socket */
+#define SDEV_CANCEL		(SDEV_RQ_BASE + 15)	/* cancel request */
+#define SDEV_SELECT		(SDEV_RQ_BASE + 16)	/* select on socket */
+
+/* Message types for socket device responses. */
+#define SDEV_REPLY		(SDEV_RS_BASE + 0)	/* generic reply */
+#define SDEV_SOCKET_REPLY	(SDEV_RS_BASE + 1)	/* socket reply */
+#define SDEV_ACCEPT_REPLY	(SDEV_RS_BASE + 2)	/* accept reply */
+#define SDEV_RECV_REPLY		(SDEV_RS_BASE + 3)	/* receive reply */
+#define SDEV_SELECT1_REPLY	(SDEV_RS_BASE + 4)	/* select reply 1 */
+#define SDEV_SELECT2_REPLY	(SDEV_RS_BASE + 5)	/* select reply 2 */
+
+/* Bits in the 'sflags' field of socket device transfer requests. */
+#  define SDEV_NOFLAGS		0x00	/* no flags are set */
+#  define SDEV_NONBLOCK		0x01	/* do not suspend I/O request */
+
+/* Bits in the 'ops', 'status' fields of socket device select messages. */
+#  define SDEV_OP_RD		0x01	/* selected for read operation */
+#  define SDEV_OP_WR		0x02	/* selected for write operation */
+#  define SDEV_OP_ERR		0x04	/* selected for error operation */
+#  define SDEV_NOTIFY		0x08	/* notification requested */
 
 /*===========================================================================*
  *		Internal codes used by several services			     *

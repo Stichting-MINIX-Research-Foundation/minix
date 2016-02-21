@@ -38,4 +38,14 @@ struct statvfs_cache {
   unsigned long	f_namemax;	/* maximum filename length */
 };
 
+struct smap {
+	unsigned int	smap_num;	/* one-based number into smap array */
+	endpoint_t	smap_endpt;	/* driver endpoint, NONE if free */
+	char		smap_label[LABEL_MAX];	/* driver label */
+	int		smap_sel_busy;	/* doing initial select on socket? */
+	struct filp *	smap_sel_filp;	/* socket being selected on */
+};
+
+typedef int32_t sockid_t;
+
 #endif

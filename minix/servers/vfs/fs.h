@@ -18,10 +18,14 @@
 #include <minix/dmap.h>
 #include <minix/ds.h>
 #include <minix/rs.h>
+#include <minix/callnr.h>
 
 #include <limits.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <assert.h>
 
 #include <minix/syslib.h>
 #include <minix/sysutil.h>

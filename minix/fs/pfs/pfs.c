@@ -132,7 +132,7 @@ pfs_newnode(mode_t mode, uid_t uid, gid_t gid, dev_t dev,
 
 	/* Check the file type.  Do we support it at all? */
 	isfifo = S_ISFIFO(mode);
-	isdev = S_ISBLK(mode) || S_ISCHR(mode);
+	isdev = S_ISBLK(mode) || S_ISCHR(mode) || S_ISSOCK(mode);
 
 	if (!isfifo && !isdev)
 		return EINVAL;	/* this means VFS is misbehaving.. */

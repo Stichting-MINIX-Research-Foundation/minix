@@ -195,7 +195,7 @@ bdev_reply(void)
 	struct worker_thread *wp;
 	struct dmap *dp;
 
-	if ((dp = get_dmap(who_e)) == NULL) {
+	if ((dp = get_dmap_by_endpt(who_e)) == NULL) {
 		printf("VFS: ignoring block dev reply from unknown driver "
 		    "%d\n", who_e);
 		return;

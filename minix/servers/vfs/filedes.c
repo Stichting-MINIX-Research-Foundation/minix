@@ -83,6 +83,28 @@ void init_filps(void)
 }
 
 /*===========================================================================*
+ *				check_fds				     *
+ *===========================================================================*/
+int check_fds(struct fproc *rfp, int nfds)
+{
+/* Check whether at least 'nfds' file descriptors can be created in the process
+ * 'rfp'.  Return OK on success, or otherwise an appropriate error code.
+ */
+  int i;
+
+  assert(nfds >= 1);
+
+  for (i = 0; i < OPEN_MAX; i++) {
+	if (rfp->fp_filp[i] == NULL) {
+		if (--nfds == 0)
+			return OK;
+	}
+  }
+
+  return EMFILE;
+}
+
+/*===========================================================================*
  *				get_fd					     *
  *===========================================================================*/
 int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
@@ -119,7 +141,7 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
-		f->filp_char_select_dev = NO_DEV;
+		f->filp_select_dev = NO_DEV;
 		f->filp_flags = 0;
 		f->filp_select_flags = 0;
 		f->filp_softlock = NULL;
@@ -202,6 +224,27 @@ struct filp *find_filp(struct vnode *vp, mode_t bits)
 }
 
 /*===========================================================================*
+ *				find_filp_by_sock_dev			     *
+ *===========================================================================*/
+struct filp *find_filp_by_sock_dev(dev_t dev)
+{
+/* See if there is a file pointer for a socket with the given socket device
+ * number.
+ */
+  struct filp *f;
+
+  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	if (f->filp_count != 0 && f->filp_vno != NULL &&
+	    S_ISSOCK(f->filp_vno->v_mode) && f->filp_vno->v_sdev == dev &&
+	    f->filp_mode != FILP_CLOSED) {
+		return f;
+	}
+  }
+
+  return NULL;
+}
+
+/*===========================================================================*
  *				invalidate_filp				     *
  *===========================================================================*/
 void invalidate_filp(struct filp *rfilp)
@@ -224,6 +267,27 @@ void invalidate_filp_by_char_major(devmajor_t major)
 		    S_ISCHR(f->filp_vno->v_mode)) {
 			invalidate_filp(f);
 		}
+	}
+  }
+}
+
+/*===========================================================================*
+ *			invalidate_filp_by_sock_drv			     *
+ *===========================================================================*/
+void invalidate_filp_by_sock_drv(unsigned int num)
+{
+/* Invalidate all file pointers for sockets owned by the socket driver with the
+ * smap number 'num'.
+ */
+  struct filp *f;
+  struct smap *sp;
+
+  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	if (f->filp_count != 0 && f->filp_vno != NULL) {
+		if (S_ISSOCK(f->filp_vno->v_mode) &&
+		    (sp = get_smap_by_dev(f->filp_vno->v_sdev, NULL)) != NULL
+		    && sp->smap_num == num)
+			invalidate_filp(f);
 	}
   }
 }
@@ -363,7 +427,8 @@ close_filp(struct filp *f)
 
   if (f->filp_count - 1 == 0 && f->filp_mode != FILP_CLOSED) {
 	/* Check to see if the file is special. */
-	if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode)) {
+	if (S_ISCHR(vp->v_mode) || S_ISBLK(vp->v_mode) ||
+	    S_ISSOCK(vp->v_mode)) {
 		dev = vp->v_sdev;
 		if (S_ISBLK(vp->v_mode))  {
 			lock_bsf();
@@ -377,8 +442,23 @@ close_filp(struct filp *f)
 			unlock_bsf();
 
 			(void) bdev_close(dev);	/* Ignore errors */
-		} else {
+		} else if (S_ISCHR(vp->v_mode)) {
 			(void) cdev_close(dev);	/* Ignore errors */
+		} else {
+			/*
+			 * TODO: this should be completely redone.  Sockets may
+			 * take a while to be closed (SO_LINGER etc), and thus,
+			 * we should be able to issue a suspending close to a
+			 * socket driver.  Getting this working for close(2) is
+			 * the easy case, but there's also eg dup2(2), which if
+			 * interrupted by a signal should fail without closing
+			 * the file descriptor.  Then there are cases where the
+			 * close should probably never block: close-on-exec,
+			 * exit, and UDS closing in-flight FDs (currently just
+			 * using close(2), but it could set the FD to non-
+			 * blocking) for instance.  There is much to do here.
+			 */
+			(void) sdev_close(dev);	/* Ignore errors */
 		}
 
 		f->filp_mode = FILP_CLOSED;

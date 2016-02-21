@@ -53,6 +53,7 @@ int do_getsysinfo(void)
 {
   struct fproc *rfp;
   struct fproc_light *rfpl;
+  struct smap *sp;
   vir_bytes src_addr, dst_addr;
   size_t len, buf_size;
   int what;
@@ -85,6 +86,9 @@ int do_getsysinfo(void)
 		rfpl->fpl_blocked_on = rfp->fp_blocked_on;
 		if (rfp->fp_blocked_on == FP_BLOCKED_ON_CDEV)
 			rfpl->fpl_task = rfp->fp_cdev.endpt;
+		else if (rfp->fp_blocked_on == FP_BLOCKED_ON_SDEV &&
+		    (sp = get_smap_by_dev(rfp->fp_sdev.dev, NULL)) != NULL)
+			rfpl->fpl_task = sp->smap_endpt;
 		else
 			rfpl->fpl_task = NONE;
 	}
@@ -656,10 +660,11 @@ static void free_proc(int flags)
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
    * (unmapping has to be done after the first step, because the
-   * dmap table is used in the first step.)
+   * dmap/smap tables are used in the first step.)
    */
   unsuspend_by_endpt(fp->fp_endpoint);
   dmap_unmap_by_endpt(fp->fp_endpoint);
+  smap_unmap_by_endpt(fp->fp_endpoint);
 
   worker_stop_by_endpt(fp->fp_endpoint); /* Unblock waiting threads */
   vmnt_unmap_by_endpt(fp->fp_endpoint); /* Invalidate open files if this
@@ -939,17 +944,20 @@ ds_event(void)
   char key[DS_MAX_KEYLEN];
   char *blkdrv_prefix = "drv.blk.";
   char *chrdrv_prefix = "drv.chr.";
+  char *sckdrv_prefix = "drv.sck.";
   u32_t value;
-  int type, r, is_blk;
+  int type, ftype, r;
   endpoint_t owner_endpoint;
 
   /* Get the event and the owner from DS. */
   while ((r = ds_check(key, &type, &owner_endpoint)) == OK) {
-	/* Only check for block and character driver up events. */
+	/* Only check for block, character, socket driver up events. */
 	if (!strncmp(key, blkdrv_prefix, strlen(blkdrv_prefix))) {
-		is_blk = TRUE;
+		ftype = S_IFBLK;
 	} else if (!strncmp(key, chrdrv_prefix, strlen(chrdrv_prefix))) {
-		is_blk = FALSE;
+		ftype = S_IFCHR;
+	} else if (!strncmp(key, sckdrv_prefix, strlen(sckdrv_prefix))) {
+		ftype = S_IFSOCK;
 	} else {
 		continue;
 	}
@@ -961,7 +969,10 @@ ds_event(void)
 	if (value != DS_DRIVER_UP) continue;
 
 	/* Perform up. */
-	dmap_endpt_up(owner_endpoint, is_blk);
+	if (ftype == S_IFBLK || ftype == S_IFCHR)
+		dmap_endpt_up(owner_endpoint, (ftype == S_IFBLK));
+	else
+		smap_endpt_up(owner_endpoint);
   }
 
   if (r != ENOENT) printf("VFS: ds_event: ds_check failed: %d\n", r);

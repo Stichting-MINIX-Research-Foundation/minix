@@ -49,6 +49,15 @@ EXTERN struct fproc {
 		endpoint_t endpt;	/* driver endpoint */
 		cp_grant_id_t grant;	/* data grant */
 	} u_cdev;
+	struct {			/* FP_BLOCKED_ON_SDEV */
+		dev_t dev;		/* socket number for blocking call */
+		int callnr;		/* user call: a VFS_ socket call */
+		cp_grant_id_t grant[3];	/* data grant(s) */
+		union ixfer_u_aux {
+			int fd;		/* listener file descr. (VFS_ACCEPT) */
+			vir_bytes buf;	/* user buffer address (VFS_RECVMSG) */
+		} aux;			/* call-specific auxiliary data */
+	} u_sdev;
   } fp_u;
 
   uid_t fp_realuid;		/* real user id */
@@ -77,6 +86,7 @@ EXTERN struct fproc {
 #define fp_popen	fp_u.u_popen
 #define fp_flock	fp_u.u_flock
 #define fp_cdev		fp_u.u_cdev
+#define fp_sdev		fp_u.u_sdev
 
 /* fp_flags */
 #define FP_NOFLAGS	 0000

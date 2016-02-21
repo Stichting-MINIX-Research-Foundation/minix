@@ -481,7 +481,7 @@ void
 cdev_reply(void)
 {
 
-	if (get_dmap(who_e) == NULL) {
+	if (get_dmap_by_endpt(who_e) == NULL) {
 		printf("VFS: ignoring char dev reply from unknown driver %d\n",
 		    who_e);
 		return;
@@ -492,11 +492,13 @@ cdev_reply(void)
 		cdev_generic_reply(&m_in);
 		break;
 	case CDEV_SEL1_REPLY:
-		select_reply1(m_in.m_source, m_in.m_lchardriver_vfs_sel1.minor,
+		select_cdev_reply1(m_in.m_source,
+		    m_in.m_lchardriver_vfs_sel1.minor,
 		    m_in.m_lchardriver_vfs_sel1.status);
 		break;
 	case CDEV_SEL2_REPLY:
-		select_reply2(m_in.m_source, m_in.m_lchardriver_vfs_sel2.minor,
+		select_cdev_reply2(m_in.m_source,
+		    m_in.m_lchardriver_vfs_sel2.minor,
 		    m_in.m_lchardriver_vfs_sel2.status);
 		break;
 	default:

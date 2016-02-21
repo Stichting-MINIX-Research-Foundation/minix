@@ -38,7 +38,6 @@ static void do_reply(struct worker_thread *wp);
 static void do_work(void);
 static void do_init_root(void);
 static void handle_work(void (*func)(void));
-static void reply(message *m_out, endpoint_t whom, int result);
 
 static int get_work(void);
 static void service_pm(void);
@@ -130,6 +129,9 @@ int main(void)
 	} else if (IS_CDEV_RS(call_nr)) {
 		/* We've got results for a character device request. */
 		cdev_reply();
+	} else if (IS_SDEV_RS(call_nr)) {
+		/* We've got results for a socket driver request. */
+		sdev_reply();
 	} else {
 		/* Normal syscall. This spawns a new thread. */
 		handle_work(do_work);
@@ -447,6 +449,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 	panic("VFS: couldn't initialize block special file lock");
 
   init_dmap();			/* Initialize device table. */
+  init_smap();			/* Initialize socket table. */
 
   /* Map all the services in the boot image. */
   if ((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
@@ -632,7 +635,7 @@ static int get_work(void)
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-static void reply(message *m_out, endpoint_t whom, int result)
+void reply(message *m_out, endpoint_t whom, int result)
 {
 /* Send a reply to a user process.  If the send fails, just ignore it. */
   int r;

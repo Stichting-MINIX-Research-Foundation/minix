@@ -337,12 +337,17 @@ void unsuspend_by_endpt(endpoint_t proc_e)
  * return code EIO.
  */
   struct fproc *rp;
+  struct smap *sp;
 
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
 	if (rp->fp_pid == PID_FREE) continue;
 	if (rp->fp_blocked_on == FP_BLOCKED_ON_CDEV &&
 	    rp->fp_cdev.endpt == proc_e)
 		revive(rp->fp_endpoint, EIO);
+	else if (rp->fp_blocked_on == FP_BLOCKED_ON_SDEV &&
+	    (sp = get_smap_by_dev(rp->fp_sdev.dev, NULL)) != NULL &&
+	    sp->smap_endpt == proc_e)
+		sdev_stop(rp);
   }
 
   /* Revive processes waiting in drivers on select()s with EAGAIN too */
@@ -430,8 +435,8 @@ void release(struct vnode * vp, int op, int count)
 void revive(endpoint_t proc_e, int returned)
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
- * is the way it is eventually released. For processes blocked on _SELECT and
- * _CDEV, this function MUST NOT block its calling thread.
+ * is the way it is eventually released. For processes blocked on _SELECT,
+ * _CDEV, or _SDEV, this function MUST NOT block its calling thread.
  */
   struct fproc *rfp;
   int blocked_on;
@@ -454,13 +459,15 @@ void revive(endpoint_t proc_e, int returned)
 	reviving++;		/* process was waiting on pipe or lock */
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	if (blocked_on == FP_BLOCKED_ON_POPEN) {
+	switch (blocked_on) {
+	case FP_BLOCKED_ON_POPEN:
 		/* process blocked in open or create */
 		replycode(proc_e, rfp->fp_popen.fd);
-	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
+		break;
+	case FP_BLOCKED_ON_SELECT:
 		replycode(proc_e, returned);
-	} else {
-		assert(blocked_on == FP_BLOCKED_ON_CDEV);
+		break;
+	case FP_BLOCKED_ON_CDEV:
 		/* If a grant has been issued by FS for this I/O, revoke
 		 * it again now that I/O is done.
 		 */
@@ -471,6 +478,15 @@ void revive(endpoint_t proc_e, int returned)
 			}
 		}
 		replycode(proc_e, returned);/* unblock the process */
+		break;
+	case FP_BLOCKED_ON_SDEV:
+		/*
+		 * Cleaning up socket requests is too complex to put here, and
+		 * neither sdev_reply() nor sdev_stop() call revive().
+		 */
+		panic("revive should not be used for socket calls");
+	default:
+		panic("unknown block state %d", blocked_on);
 	}
   }
 }
@@ -491,8 +507,9 @@ void unpause(void)
   blocked_on = fp->fp_blocked_on;
 
   /* Clear the block status now. The procedure below might make blocking calls
-   * and it is imperative that while at least cdev_cancel() is executing, other
-   * parts of VFS do not perceive this process as blocked on something.
+   * and it is imperative that while at least cdev_cancel() or sdev_cancel()
+   * are executing, other parts of VFS do not perceive this process as blocked
+   * on something.
    */
   fp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 
@@ -526,6 +543,11 @@ void unpause(void)
 		    fp->fp_cdev.grant);
 
 		break;
+
+	case FP_BLOCKED_ON_SDEV:	/* process blocked on socket I/O */
+		sdev_cancel();
+		return;			/* sdev_cancel() sends its own reply */
+
 	default :
 		panic("VFS: unknown block reason: %d", blocked_on);
   }

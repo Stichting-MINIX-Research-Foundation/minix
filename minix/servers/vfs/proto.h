@@ -9,6 +9,7 @@
 #include "request.h"
 #include "threads.h"
 #include "tll.h"
+#include "type.h"
 
 /* Structs used in prototypes must be declared as such first. */
 struct filp;
@@ -58,7 +59,7 @@ int do_mapdriver(void);
 void init_dmap(void);
 int dmap_driver_match(endpoint_t proc, devmajor_t major);
 void dmap_endpt_up(endpoint_t proc_nr, int is_blk);
-struct dmap *get_dmap(endpoint_t proc_e);
+struct dmap *get_dmap_by_endpt(endpoint_t proc_e);
 struct dmap *get_dmap_by_major(devmajor_t major);
 void dmap_unmap_by_endpt(endpoint_t proc_nr);
 int map_service(struct rprocpub *rpub);
@@ -75,6 +76,8 @@ void check_filp_locks(void);
 void check_filp_locks_by_me(void);
 void init_filps(void);
 struct filp *find_filp(struct vnode *vp, mode_t bits);
+struct filp *find_filp_by_sock_dev(dev_t dev);
+int check_fds(struct fproc *rfp, int nfds);
 int get_fd(struct fproc *rfp, int start, mode_t bits, int *k,
 	struct filp **fpt);
 struct filp *get_filp(int fild, tll_access_t locktype);
@@ -85,6 +88,7 @@ void unlock_filps(struct filp *filp1, struct filp *filp2);
 void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(devmajor_t major);
+void invalidate_filp_by_sock_drv(unsigned int num);
 void close_filp(struct filp *fp);
 int do_copyfd(void);
 
@@ -108,6 +112,7 @@ void lock_revive(void);
 int main(void);
 void lock_proc(struct fproc *rfp);
 void unlock_proc(struct fproc *rfp);
+void reply(message *m_out, endpoint_t whom, int result);
 void replycode(endpoint_t whom, int result);
 void service_pm_postponed(void);
 void thread_cleanup(void);
@@ -254,6 +259,45 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
 	struct timespec * modtv);
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
+/* sdev.c */
+int sdev_socket(int domain, int type, int protocol, dev_t *dev, int pair);
+int sdev_bind(dev_t dev, vir_bytes addr, unsigned int addr_len,
+	int filp_flags);
+int sdev_connect(dev_t dev, vir_bytes addr, unsigned int addr_len,
+	int filp_flags);
+int sdev_listen(dev_t dev, int backlog);
+int sdev_accept(dev_t dev, vir_bytes addr, unsigned int addr_len,
+	int filp_flags, int fd);
+int sdev_readwrite(dev_t dev, vir_bytes data_buf, size_t data_len,
+	vir_bytes ctl_buf, unsigned int ctl_len, vir_bytes addr_buf,
+	unsigned int addr_len, int flags, int rw_flag, int filp_flags,
+	vir_bytes user_buf);
+int sdev_ioctl(dev_t dev, unsigned long request, vir_bytes buf,
+	int filp_flags);
+int sdev_setsockopt(dev_t dev, int level, int name, vir_bytes addr,
+	unsigned int len);
+int sdev_getsockopt(dev_t dev, int level, int name, vir_bytes addr,
+	unsigned int *len);
+int sdev_getsockname(dev_t dev, vir_bytes addr, unsigned int *addr_len);
+int sdev_getpeername(dev_t dev, vir_bytes addr, unsigned int *addr_len);
+int sdev_shutdown(dev_t dev, int how);
+int sdev_close(dev_t dev);
+int sdev_select(dev_t dev, int ops);
+void sdev_stop(struct fproc *rfp);
+void sdev_cancel(void);
+void sdev_reply(void);
+
+/* smap.c */
+void init_smap(void);
+int smap_map(const char *label, endpoint_t endpt, const int *domains,
+	unsigned int ndomains);
+void smap_unmap_by_endpt(endpoint_t endpt);
+void smap_endpt_up(endpoint_t endpt);
+dev_t make_smap_dev(struct smap *sp, sockid_t sockid);
+struct smap *get_smap_by_endpt(endpoint_t endpt);
+struct smap *get_smap_by_domain(int domain);
+struct smap *get_smap_by_dev(dev_t dev, sockid_t * sockidp);
+
 /* socket.c */
 int do_socket(void);
 int do_socketpair(void);
@@ -356,8 +400,10 @@ int do_select(void);
 void init_select(void);
 void select_callback(struct filp *, int ops);
 void select_forget(void);
-void select_reply1(endpoint_t driver_e, devminor_t minor, int status);
-void select_reply2(endpoint_t driver_e, devminor_t minor, int status);
+void select_cdev_reply1(endpoint_t driver_e, devminor_t minor, int status);
+void select_cdev_reply2(endpoint_t driver_e, devminor_t minor, int status);
+void select_sdev_reply1(dev_t dev, int status);
+void select_sdev_reply2(dev_t dev, int status);
 void select_unsuspend_by_endpt(endpoint_t proc);
 void select_dump(void);
 
