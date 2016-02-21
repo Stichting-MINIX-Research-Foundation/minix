@@ -190,6 +190,27 @@ static const struct flags udpopt_flags[] = {
 };
 
 static void
+put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr)
+{
+	struct uucred cred;
+
+	if (!put_open_struct(proc, name, flags, addr, &cred, sizeof(cred)))
+		return;
+
+	put_value(proc, "cr_uid", "%u", cred.cr_uid);
+	if (verbose > 0) {
+		put_value(proc, "cr_gid", "%u", cred.cr_gid);
+		if (verbose > 1)
+			put_value(proc, "cr_ngroups", "%d", cred.cr_ngroups);
+		put_groups(proc, "cr_groups", PF_LOCADDR,
+		    (vir_bytes)&cred.cr_groups, cred.cr_ngroups);
+	}
+
+	put_close_struct(proc, verbose > 0);
+}
+
+static void
 put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
 {
 	struct msghdr msg;

@@ -201,7 +201,7 @@ start)
     # pty needs to know the "tty" group ID
     up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
 
-    up uds -dev /dev/uds
+    up uds
 
     up -n ipc
 

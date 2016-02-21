@@ -2,13 +2,6 @@
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
-.if defined(__MINIX)
-.PATH: ${NETBSDSRCDIR}/minix/lib/libc/net
-
-CPPFLAGS.getpeereid.c+= -D_MINIX_SYSTEM=1
-CPPFLAGS.getsockopt.c+= -D_MINIX_SYSTEM=1
-CPPFLAGS.setsockopt.c+= -D_MINIX_SYSTEM=1
-.endif
 .PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
 SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \

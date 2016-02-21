@@ -15,7 +15,6 @@
 #include <minix/vfsif.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/un.h>
 #include <sys/dirent.h>
 #include "vmnt.h"
 #include "vnode.h"
@@ -819,7 +818,6 @@ int do_socketpath(void)
   struct fproc *rfp;
   char path[PATH_MAX];
   struct lookup resolve, resolve2;
-  struct sockaddr_un sun;
   mode_t bits;
 
   /* This should be replaced by an ACL check. */
@@ -831,23 +829,15 @@ int do_socketpath(void)
   what = job_m_in.m_lsys_vfs_socketpath.what;
 
   if (isokendpt(ep, &slot) != OK) return(EINVAL);
-  if (pathlen < sizeof(sun.sun_path) || pathlen >= PATH_MAX) return(EINVAL);
+  rfp = &fproc[slot];
 
-  rfp = &(fproc[slot]);
+  /* Copy in the path name, which must not be empty.  It is typically not null
+   * terminated.
+   */
+  if (pathlen < 1 || pathlen >= sizeof(path)) return(EINVAL);
   r = sys_safecopyfrom(who_e, io_gr, (vir_bytes)0, (vir_bytes)path, pathlen);
   if (r != OK) return(r);
   path[pathlen] = '\0';
-
-  /* If requested, turn path into canonical path to the socket file */
-  if (what & SPATH_CANONIZE) {
-	if ((r = canonical_path(path, rfp)) != OK) return(r);
-	if (strlen(path) >= pathlen) return(ENAMETOOLONG);
-
-	/* copy path back to the caller */
-	r = sys_safecopyto(who_e, (cp_grant_id_t)io_gr, (vir_bytes)0,
-	    (vir_bytes)path, pathlen);
-	if (r != OK) return(r);
-  }
 
   /* Now perform the requested action.  For the SPATH_CHECK action, a socket
    * file is expected to exist already, and we should check whether the given
@@ -859,7 +849,7 @@ int do_socketpath(void)
    * Since the above canonicalization releases all locks once done, we need to
    * recheck absolutely everything now.  TODO: do not release locks in between.
    */
-  switch (what & ~SPATH_CANONIZE) {
+  switch (what) {
   case SPATH_CHECK:
 	lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 	resolve.l_vmnt_lock = VMNT_READ;

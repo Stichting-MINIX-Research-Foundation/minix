@@ -78,20 +78,6 @@ int max_error = 4;
 
 /* socket types supported */
 static int types[3] = {SOCK_STREAM, SOCK_SEQPACKET, SOCK_DGRAM};
-static char sock_fullpath[PATH_MAX + 1];
-
-/* Convert name to the full path of the socket. Assumes name is in cwd. */
-static char *fullpath(const char *name)
-{
-	char cwd[PATH_MAX + 1];
-
-	if (realpath(".", cwd) == NULL)
-		test_fail("Couldn't retrieve current working dir");
-
-	snprintf(sock_fullpath, PATH_MAX, "%s/%s", cwd, name);
-
-	return(sock_fullpath);
-}
 
 static void test_header(void)
 {
@@ -187,16 +173,16 @@ static void test_socketpair(void)
 
 static void test_ucred(void)
 {
-	struct uucred credentials;
+	struct unpcbid credentials;
 	socklen_t ucred_length;
 	uid_t euid = geteuid();
 	gid_t egid = getegid();
 	int sv[2];
 	int rc;
 
-	debug("Test credentials passing");
+	debug("Test peer credentials");
 
-	ucred_length = sizeof(struct uucred);
+	ucred_length = sizeof(credentials);
 
 	rc = socketpair(PF_UNIX, SOCK_STREAM, 0, sv);
 	if (rc == -1) {
@@ -204,22 +190,24 @@ static void test_ucred(void)
 	}
 
 	memset(&credentials, '\0', ucred_length);
-	rc = getsockopt(sv[0], SOL_SOCKET, SO_PEERCRED, &credentials, 
+	rc = getsockopt(sv[0], 0, LOCAL_PEEREID, &credentials,
 							&ucred_length);
 	if (rc == -1) {
-		test_fail("getsockopt(SO_PEERCRED) failed");
-	} else if (credentials.cr_ngroups != 0 ||
-			credentials.cr_uid != geteuid() ||
-			credentials.cr_gid != getegid()) {
-		/* printf("%d=%d %d=%d %d=%d",credentials.cr_ngroups, 0,
-		 credentials.cr_uid, geteuid(), credentials.cr_gid, getegid()); */
+		test_fail("getsockopt(LOCAL_PEEREID) failed");
+	} else if (credentials.unp_pid != getpid() ||
+			credentials.unp_euid != geteuid() ||
+			credentials.unp_egid != getegid()) {
+		printf("%d=%d %d=%d %d=%d",credentials.unp_pid, getpid(),
+		    credentials.unp_euid, geteuid(),
+		    credentials.unp_egid, getegid());
 		test_fail("Credential passing gave us the wrong cred");
 	}
 
 	rc = getpeereid(sv[0], &euid, &egid);
 	if (rc == -1) {
 		test_fail("getpeereid(sv[0], &euid, &egid) failed");
-	} else if (credentials.cr_uid != euid || credentials.cr_gid != egid) {
+	} else if (credentials.unp_euid != euid ||
+	    credentials.unp_egid != egid) {
 		test_fail("getpeereid() didn't give the correct euid/egid");
 	}
 
@@ -245,7 +233,7 @@ static void callback_check_sockaddr(const struct sockaddr *sockaddr,
 
 	if (!(sockaddr_un->sun_family == AF_UNIX &&
 			strncmp(sockaddr_un->sun_path,
-			fullpath(path),
+			path,
 			sizeof(sockaddr_un->sun_path) - 1) == 0)) {
 
 		snprintf(buf, sizeof(buf), "%s() didn't return the right addr",
@@ -293,12 +281,24 @@ static void test_bind_unix(void)
 	UNLINK(TEST_SYM_A);
 	UNLINK(TEST_SYM_B);
 
-	SYMLINK(TEST_SYM_A, TEST_SYM_B);
 	SYMLINK(TEST_SYM_B, TEST_SYM_A);
 
 	SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
 
 	strncpy(addr.sun_path, TEST_SYM_A, sizeof(addr.sun_path) - 1);
+	errno = 0;
+	rc = bind(sd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un));
+	if (!((rc == -1) && (errno == EADDRINUSE))) {
+		test_fail("bind() should have failed with EADDRINUSE");
+	}
+	CLOSE(sd);
+
+	SYMLINK(TEST_SYM_A, TEST_SYM_B);
+
+	SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+
+	strncpy(addr.sun_path, TEST_SYM_A, sizeof(addr.sun_path) - 1);
+	strlcat(addr.sun_path, "/x", sizeof(addr.sun_path));
 	errno = 0;
 	rc = bind(sd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un));
 	if (!((rc == -1) && (errno == ELOOP))) {
@@ -337,26 +337,47 @@ static void callback_xfer_prepclient(void) {
 }
 
 static void callback_xfer_peercred(int sd) {
-	struct uucred credentials;
+	struct unpcbid credentials;
 	int rc;
 	socklen_t ucred_length;
 
-	ucred_length = sizeof(struct uucred);
+	ucred_length = sizeof(credentials);
 
-	debug("Test passing the client credentials to the server");
+	debug("Test obtaining the peer credentials");
 
 	memset(&credentials, '\0', ucred_length);
-	rc = getsockopt(sd, SOL_SOCKET, SO_PEERCRED, &credentials,
-							&ucred_length);
+	rc = getsockopt(sd, 0, LOCAL_PEEREID, &credentials, &ucred_length);
 
 	if (rc == -1) {
 		test_fail("[client] getsockopt() failed");
-	}  else if (credentials.cr_uid != geteuid() ||
-					credentials.cr_gid != getegid()) {
-		printf("%d=%d=%d %d=%d=%d\n", credentials.cr_uid, getuid(),
-			geteuid(), credentials.cr_gid, getgid(), getegid());
+	} else if (credentials.unp_euid != geteuid() ||
+	    credentials.unp_egid != getegid()) {
+		printf("%d=* %d=%d %d=%d", credentials.unp_pid,
+		    credentials.unp_euid, geteuid(),
+		    credentials.unp_egid, getegid());
 		test_fail("[client] Credential passing gave us a bad UID/GID");
 	}
+}
+
+static void
+callback_set_listen_opt(int sd)
+{
+	int val;
+
+	/*
+	 * Several of the tests assume that a new connection to a server will
+	 * not be established (i.e., go from "connecting" to "connected" state)
+	 * until the server actually accepts the connection with an accept(2)
+	 * call.  With the new UDS implementation, this is no longer true: to
+	 * match the behavior of other systems, UDS now preemptively connects
+	 * the socket in anticipation of the accept(2) call.  We can change
+	 * back to the old behavior by setting LOCAL_CONNWAIT however, and
+	 * since the test effectively tests a larger set of socket transitions
+	 * that way, that is what we do for these tests.
+	 */
+	val = 1;
+	if (setsockopt(sd, 0, LOCAL_CONNWAIT, &val, sizeof(val)) != 0)
+		test_fail("setsockopt(LOCAL_CONNWAIT)");
 }
 
 static void test_vectorio(int type)
@@ -563,7 +584,11 @@ static void test_scm_credentials(void)
 	int rc;
 	int src;
 	int dst;
-	struct uucred cred;
+	int one;
+	union {
+		struct sockcred cred;
+		char buf[SOCKCREDSIZE(NGROUPS_MAX)];
+	} cred;
 	struct cmsghdr *cmsg = NULL;
 	struct sockaddr_un addr;
 	struct iovec iov[3];
@@ -573,7 +598,7 @@ static void test_scm_credentials(void)
 	char buf2[BUFSIZE];
 	char buf3[BUFSIZE];
 	char ctrl[BUFSIZE];
-	socklen_t addrlen = sizeof(struct sockaddr_un);
+	socklen_t len, addrlen = sizeof(struct sockaddr_un);
 
 	debug("test_scm_credentials");
 
@@ -615,6 +640,16 @@ static void test_scm_credentials(void)
 		test_fail("bind");
 	}
 
+	debug("request credential passing");
+
+	one = 1;
+	rc = setsockopt(dst, 0, LOCAL_CREDS, &one, sizeof(one));
+	if (rc == -1) {
+		test_fail("setsockopt(LOCAL_CREDS)");
+	}
+
+	debug("sending msg1");
+
 	memset(&buf1, '\0', BUFSIZE);
 	memset(&buf2, '\0', BUFSIZE);
 	memset(&buf3, '\0', BUFSIZE);
@@ -639,8 +674,6 @@ static void test_scm_credentials(void)
 	msg1.msg_control = NULL;
 	msg1.msg_controllen = 0;
 	msg1.msg_flags = 0;
-
-	debug("sending msg1");
 
 	rc = sendmsg(src, &msg1, 0);
 	if (rc == -1) {
@@ -684,27 +717,50 @@ static void test_scm_credentials(void)
 	 * because that is what is returned by recvmsg().
 	 */
 	if (addr.sun_family != AF_UNIX || strcmp(addr.sun_path,
-					fullpath(TEST_SUN_PATHB))) {
+					TEST_SUN_PATHB)) {
 		test_fail("recvmsg");
 	}
 
 	debug("looking for credentials");
 
-	memset(&cred, '\0', sizeof(struct uucred));
+	len = 0;
+
+	memset(&cred, 'x', sizeof(cred));
 	for (cmsg = CMSG_FIRSTHDR(&msg2); cmsg != NULL;
 					cmsg = CMSG_NXTHDR(&msg2, cmsg)) {
 
 		if (cmsg->cmsg_level == SOL_SOCKET &&
 				cmsg->cmsg_type == SCM_CREDS) {
+			/* Great, this alignment business!  But then at least
+			 * give me a macro to compute the actual data length..
+			 */
+			len = cmsg->cmsg_len - (socklen_t)
+			    ((char *)CMSG_DATA(cmsg) - (char *)cmsg);
 
-			memcpy(&cred, CMSG_DATA(cmsg), sizeof(struct uucred));
+			if (len < sizeof(struct sockcred))
+				test_fail("credentials too small");
+			else if (len > sizeof(cred))
+				test_fail("credentials too large");
+			memcpy(cred.buf, CMSG_DATA(cmsg), len);
 			break;
 		}
 	}
 
-	if (cred.cr_ngroups != 0 || cred.cr_uid != geteuid() ||
-						cred.cr_gid != getegid()) {
+	if (len == 0)
+		test_fail("no credentials found");
 
+	if (len != SOCKCREDSIZE(cred.cred.sc_ngroups))
+		test_fail("wrong credentials size");
+
+	/*
+	 * TODO: check supplementary groups.  This whole test is pretty much
+	 * pointless since we're running with very standard credentials anyway.
+	 */
+	if (cred.cred.sc_uid != getuid() ||
+	    cred.cred.sc_euid != geteuid() ||
+	    cred.cred.sc_gid != getgid() ||
+	    cred.cred.sc_egid != getegid() ||
+	    cred.cred.sc_ngroups < 0 || cred.cred.sc_ngroups > NGROUPS_MAX) {
 		test_fail("did no receive the proper credentials");
 	}
 
@@ -1384,22 +1440,18 @@ static void test_fchmod(void)
  * Test various aspects related to the socket files on the file system.
  * This subtest is woefully incomplete and currently only attempts to test
  * aspects that have recently been affected by code changes.  In the future,
- * there should be tests for path canonicalization and the entire range of file
- * system path and access related error codes (TODO).
+ * there should be tests for the entire range of file system path and access
+ * related error codes (TODO).
  */
 static void
 test_file(void)
 {
-	struct sockaddr_un addr;
-#if NOT_YET
-	struct sockaddr_un saddr, saddr2;
+	struct sockaddr_un addr, saddr, saddr2;
 	char buf[1];
 	socklen_t len;
 	struct stat st;
 	mode_t omask;
-	int, csd, fd;
-#endif
-	int sd, sd2;
+	int sd, sd2, csd, fd;
 
 	/*
 	 * If the provided socket path exists on the file system, the bind(2)
@@ -1426,7 +1478,6 @@ test_file(void)
 
 	CLOSE(sd);
 
-#if NOT_YET
 	if (bind(sd2, (struct sockaddr *)&addr, sizeof(addr)) != -1)
 		test_fail("Binding socket unexpectedly succeeded");
 	if (errno != EADDRINUSE)
@@ -1497,29 +1548,8 @@ test_file(void)
 	if (memcmp(&saddr, &saddr2, sizeof(saddr)))
 		test_fail("Unexpected old socket address");
 
-	/*
-	 * Currently, our implementation "hides" the old socket even if the new
-	 * socket is closed, but since this is not standard behavior and may be
-	 * changed later, we do not test for it.  However, in any case,
-	 * rebinding the hidden socket should make it "visible" again.
-	 */
-	strlcpy(saddr2.sun_path, TEST_SUN_PATHB, sizeof(saddr2.sun_path));
-	if (bind(sd, (struct sockaddr *)&saddr2, sizeof(saddr2)) != 0)
-		test_fail("Can't rebind socket");
-
-	memset(buf, 'Z', sizeof(buf));
-	if (sendto(csd, buf, sizeof(buf), 0, (struct sockaddr *)&saddr2,
-	    sizeof(saddr2)) != sizeof(buf))
-		test_fail("Can't send to socket");
-	if (recvfrom(sd, buf, sizeof(buf), 0, NULL, 0) != sizeof(buf))
-		test_fail("Can't receive from socket");
-	if (buf[0] != 'Z')
-		test_fail("Transmission failure");
-
 	if (unlink(TEST_SUN_PATH) != 0)
 		test_fail("Can't unlink socket");
-	if (unlink(TEST_SUN_PATHB) != 0)
-		test_fail("Can't unlink other socket");
 
 	CLOSE(sd);
 	CLOSE(sd2);
@@ -1580,7 +1610,6 @@ test_file(void)
 	UNLINK(TEST_SUN_PATH);
 
 	umask(omask);
-#endif
 
 	/*
 	 * Only socket(2), socketpair(2), and accept(2) may be used to obtain
@@ -1631,8 +1660,8 @@ int main(int argc, char *argv[])
 		.clientaddrsym            = (struct sockaddr *) &clientaddrsym,
 		.clientaddrsymlen         = sizeof(clientaddrsym),
 		.domain                   = PF_UNIX,
-		.expected_rcvbuf          = PIPE_BUF,
-		.expected_sndbuf          = PIPE_BUF,
+		.expected_rcvbuf          = 32768 - 5, /* no constants: */
+		.expected_sndbuf          = 32768 - 5, /* UDS internals */
 		.serveraddr               = (struct sockaddr *) &clientaddr,
 		.serveraddrlen            = sizeof(clientaddr),
 		.serveraddr2              = (struct sockaddr *) &clientaddr2,
@@ -1644,11 +1673,15 @@ int main(int argc, char *argv[])
 		.callback_cleanup         = callback_cleanup,
 		.callback_xfer_prepclient = callback_xfer_prepclient,
 		.callback_xfer_peercred   = callback_xfer_peercred,
+		.callback_set_listen_opt  = callback_set_listen_opt,
 	};
 
 	debug("entering main()");
 
 	start(56);
+
+	/* This test was written before UDS started supporting SIGPIPE. */
+	signal(SIGPIPE, SIG_IGN);
 
 	test_socket(&info);
 	test_bind(&info);

@@ -50,16 +50,19 @@ static char *get_timestamp(void)
 void test_fail_fl(char *msg, char *file, int line)
 {
 	char *timestamp;
+	int e;
+	e = errno;
 	timestamp = get_timestamp();
 	if (errct == 0) fprintf(stderr, "\n");
+	errno = e;
 	fprintf(stderr, "[ERROR][%s] (%s Line %d) %s [pid=%d:errno=%d:%s]\n",
-			timestamp, file, line, msg, getpid(),
-					errno, strerror(errno));
+	    timestamp, file, line, msg, getpid(), errno, strerror(errno));
 	fflush(stderr);
 	if (timestamp != NULL) {
 		free(timestamp);
 		timestamp = NULL;
 	}
+	errno = e;
 	e(7);
 }
 
@@ -317,7 +320,7 @@ void test_shutdown(const struct socket_test_info *info)
 		SOCKET(sd, info->domain, info->type, 0);
 		errno = 0;
 		rc = shutdown(sd, how[i]);
-		if (!(rc == -1 && errno == ENOTCONN) &&
+		if (rc != 0 && !(rc == -1 && errno == ENOTCONN) &&
 			!info->bug_shutdown_not_conn &&
 			!info->bug_shutdown) {
 			test_fail("shutdown() should have failed");
@@ -328,10 +331,10 @@ void test_shutdown(const struct socket_test_info *info)
 	SOCKET(sd, info->domain, info->type, 0);
 	errno = 0;
 	rc = shutdown(sd, -1);
-	if (!(rc == -1 && errno == ENOTCONN) &&
+	if (!(rc == -1 && errno == EINVAL) &&
 		!info->bug_shutdown_not_conn &&
 		!info->bug_shutdown) {
-		test_fail("shutdown(sd, -1) should have failed with ENOTCONN");
+		test_fail("shutdown(sd, -1) should have failed with EINVAL");
 	}
 	CLOSE(sd);
 
@@ -430,8 +433,6 @@ void test_sockopts(const struct socket_test_info *info)
 
 		CLOSE(sd);
 	}
-
-
 
 	SOCKET(sd, info->domain, info->type, 0);
 
@@ -901,9 +902,6 @@ static void test_xfer_client(const struct socket_test_info *info)
 		test_fail("[client] getpeername() should have worked");
 	}
 
-	/* we need to use the full path "/usr/src/test/DIR_56/test.sock"
-	 * because that is what is returned by getpeername().
-	 */
 
 	info->callback_check_sockaddr((struct sockaddr *) &peer_addr,
 		peer_addr_len, "getpeername", 1);
@@ -1299,8 +1297,8 @@ static void test_abort_client(const struct socket_test_info *info,
 			if (!info->ignore_write_conn_reset) {
 				test_fail("write should have failed\n");
 			}
-		} else if (errno != ECONNRESET) {
-			test_fail("errno should've been ECONNRESET\n");
+		} else if (errno != EPIPE && errno != ECONNRESET) {
+			test_fail("errno should've been EPIPE/ECONNRESET\n");
 		}
 	}
 
@@ -1353,7 +1351,7 @@ static void test_abort_server(const struct socket_test_info *info,
 	if (abort_type == 1) {
 		memset(buf, '\0', BUFSIZE);
 		rc = read(client_sd, buf, BUFSIZE);
-		if (rc != -1 && (rc != 0 || !info->ignore_read_conn_reset)) {
+		if (rc != 0 && rc != -1) {
 			test_fail("read should've failed or returned zero\n");
 		}
 		if (rc != 0 && errno != ECONNRESET) {
@@ -1518,9 +1516,6 @@ void test_msg_dgram(const struct socket_test_info *info)
 		test_fail("recvmsg");
 	}
 
-	/* we need to use the full path "/usr/src/test/DIR_56/testb.sock"
-	 * because that is what is returned by recvmsg().
-	 */
 	info->callback_check_sockaddr((struct sockaddr *) &addr,
 		msg2.msg_namelen, "recvmsg", 2);
 
@@ -1602,6 +1597,9 @@ test_nonblock(const struct socket_test_info *info)
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
+
+	if (info->callback_set_listen_opt != NULL)
+		info->callback_set_listen_opt(server_sd);
 
 	if (listen(server_sd, 8) == -1)
 		test_fail("listen() should have worked");
@@ -1813,6 +1811,9 @@ test_intr(const struct socket_test_info *info)
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
 
+	if (info->callback_set_listen_opt != NULL)
+		info->callback_set_listen_opt(server_sd);
+
 	if (listen(server_sd, 8) == -1)
 		test_fail("listen() should have worked");
 
@@ -1843,6 +1844,9 @@ test_intr(const struct socket_test_info *info)
 	case 0:
 		errct = 0;
 		close(client_sd);
+
+		/* Ensure that the parent is blocked on the send(). */
+		sleep(1);
 
 		check_select(server_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/);
 
@@ -1932,6 +1936,9 @@ test_connect_close(const struct socket_test_info *info)
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
 
+	if (info->callback_set_listen_opt != NULL)
+		info->callback_set_listen_opt(server_sd);
+
 	if (listen(server_sd, 8) == -1)
 		test_fail("listen() should have worked");
 
@@ -1989,6 +1996,9 @@ test_listen_close(const struct socket_test_info *info)
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
 
+	if (info->callback_set_listen_opt != NULL)
+		info->callback_set_listen_opt(server_sd);
+
 	if (listen(server_sd, 8) == -1)
 		test_fail("listen() should have worked");
 
@@ -2009,7 +2019,6 @@ test_listen_close(const struct socket_test_info *info)
 
 	byte = 0;
 	if (write(client_sd, &byte, 1) != -1 || errno != ENOTCONN)
-		/* Yes, you fucked up the fix for the FIXME below. */
 		test_fail("write() should have yielded ENOTCONN");
 
 	if (connect(client_sd, info->clientaddr, info->clientaddrlen) != -1) {
@@ -2021,14 +2030,16 @@ test_listen_close(const struct socket_test_info *info)
 	}
 
 	/*
-	 * FIXME: currently UDS cannot distinguish between sockets that have
-	 * not yet been connected, and sockets that have been disconnected.
-	 * Thus, we get the same error for both: ENOTCONN instead of EPIPE.
+	 * The error we get on the next write() depends on whether the socket
+	 * may be reused after a failed connect: for TCP/IP, it may not, so we
+	 * get EPIPE; for UDS, it may be reused, so we get ENOTCONN.
 	 */
-#if 0
-	if (write(client_sd, &byte, 1) != -1 || errno != EPIPE)
-		test_fail("write() should have yielded EPIPE");
-#endif
+	if (!info->bug_connect_after_close) {
+		if (write(client_sd, &byte, 1) != -1 ||
+		    (errno != EPIPE && errno != ENOTCONN))
+			test_fail("write() should have yielded "
+			    "EPIPE/ENOTCONN");
+	}
 
 	close(client_sd);
 
@@ -2058,6 +2069,9 @@ test_listen_close_nb(const struct socket_test_info *info)
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
+
+	if (info->callback_set_listen_opt != NULL)
+		info->callback_set_listen_opt(server_sd);
 
 	if (listen(server_sd, 8) == -1)
 		test_fail("listen() should have worked");
@@ -2096,16 +2110,6 @@ test_listen_close_nb(const struct socket_test_info *info)
 	} else if (errno != ECONNRESET) {
 		test_fail("write() should have yielded ECONNRESET");
 	}
-
-	/*
-	 * FIXME: currently UDS cannot distinguish between sockets that have
-	 * not yet been connected, and sockets that have been disconnected.
-	 * Thus, we get the same error for both: ENOTCONN instead of EPIPE.
-	 */
-#if 0
-	if (write(client_sd, &byte, 1) != -1 || errno != EPIPE)
-		test_fail("write() should have yielded EPIPE");
-#endif
 
 	check_select_cond(client_sd, 1 /*read*/, 1 /*write*/, 0 /*block*/,
 		!info->ignore_select_delay);

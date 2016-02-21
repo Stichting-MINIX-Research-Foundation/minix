@@ -133,12 +133,6 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 #define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
 
-#if defined(__minix) && defined(_MINIX_SYSTEM)
-/* Minixism which should go, so hide it from userland. */
-#define SO_PASSCRED    0x100000
-#define SO_PEERCRED    0x200000
-#endif /* defined(__minix) */
-
 /*
  * Additional options, not kept in so_options.
  */

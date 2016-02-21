@@ -535,9 +535,9 @@ int do_mknod(void)
   resolve.l_vnode_lock = VNODE_WRITE;
 
   /* Only the super_user may make nodes other than fifos. */
-  if (!super_user && (!S_ISFIFO(mode_bits) && !S_ISSOCK(mode_bits))) {
+  if (!super_user && !S_ISFIFO(mode_bits))
 	return(EPERM);
-  }
+
   bits = (mode_bits & S_IFMT) | (mode_bits & ACCESSPERMS & fp->fp_umask);
 
   /* Open directory that's going to hold the new node. */

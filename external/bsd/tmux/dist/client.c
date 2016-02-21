@@ -107,11 +107,7 @@ client_connect(char *path, int start_server)
 	}
 
 retry:
-#ifndef __minix
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-#else
-	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)
-#endif /* !defined(__minix) */
 		fatal("socket failed");
 
 	if (connect(fd, (struct sockaddr *) &sa, SUN_LEN(&sa)) == -1) {

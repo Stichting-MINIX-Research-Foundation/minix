@@ -88,7 +88,6 @@ struct socket_test_info {
 	int ignore_accept_delay; /* success from accept after aborted connect */
 	int ignore_connect_delay; /* nb connect not instant */
 	int ignore_connect_unaccepted; /* connect succeeds without accept */
-	int ignore_read_conn_reset; /* read does not guarantee ECONNRESET */
 	int ignore_select_delay; /* select delay reflecting other side nb op */
 	int ignore_send_waiting; /* can send while waiting for nb recv */
 	int ignore_write_conn_reset; /* write does not guarantee ECONNRESET */
@@ -98,6 +97,7 @@ struct socket_test_info {
 	void (* callback_cleanup)(void);
 	void (* callback_xfer_peercred)(int sd); /* can be NULL */
 	void (* callback_xfer_prepclient)(void); /* can be NULL */
+	void (* callback_set_listen_opt)(int sd); /* can be NULL */
 };
 
 void test_abort_client_server(const struct socket_test_info *info,

@@ -179,6 +179,7 @@
 ./etc/system.conf.d/ipc                                 minix-base
 ./etc/system.conf.d/lwip                                minix-base
 ./etc/system.conf.d/random                              minix-base
+./etc/system.conf.d/uds                                 minix-base
 ./etc/system.conf.d/usb_hub                             minix-base
 ./etc/system.conf.d/usb_storage                         minix-base
 ./etc/termcap                                           minix-base

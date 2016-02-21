@@ -244,6 +244,7 @@ static int _uds_getsockopt(int sock, int level, int option_name,
 		return 0;
 	}
 
+#ifdef SO_PEERCRED
 	if (level == SOL_SOCKET && option_name == SO_PEERCRED)
 	{
 		struct uucred cred;
@@ -257,6 +258,7 @@ static int _uds_getsockopt(int sock, int level, int option_name,
 							option_len);
 		return 0;
 	}
+#endif
 
 
 	if (level == SOL_SOCKET && option_name == SO_REUSEADDR)
@@ -269,12 +271,14 @@ static int _uds_getsockopt(int sock, int level, int option_name,
 		return 0;
 	}
 
+#ifdef SO_PASSCRED
 	if (level == SOL_SOCKET && option_name == SO_PASSCRED)
 	{
 		i = 1;	/* option is always 'on' */
 		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
+#endif
 
 #if DEBUG
 	fprintf(stderr, "_uds_getsocketopt: level %d, name %d\n",

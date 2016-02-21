@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
 		.ignore_accept_delay       = 1,
 		.ignore_connect_unaccepted = 1,
 		.ignore_connect_delay      = 1,
-		.ignore_read_conn_reset    = 1,
 		.ignore_select_delay       = 1,
 		.ignore_send_waiting       = 1,
 		.ignore_write_conn_reset   = 1,

@@ -59,10 +59,6 @@ __RCSID("$NetBSD: syslog.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
 #include "reentrant.h"
 #include "extern.h"
 
-#if defined(__minix)
-#include <sys/ioctl.h>
-#endif /* defined(__minix) */
-
 #ifdef __weak_alias
 __weak_alias(closelog,_closelog)
 __weak_alias(openlog,_openlog)
@@ -452,11 +448,7 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	 * to give syslogd a chance to empty its socket buffer.
 	 */
 	for (tries = 0; tries < MAXTRIES; tries++) {
-#if defined(__minix)
-		if (write(data->log_file, tbuf, cnt) != -1)
-#else
 		if (send(data->log_file, tbuf, cnt, 0) != -1)
-#endif /* defined(__minix) */
 			break;
 		if (errno != ENOBUFS) {
 			disconnectlog_r(data);
@@ -513,9 +505,7 @@ connectlog_r(struct syslog_data *data)
 	/* AF_UNIX address of local logger */
 	static const struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
-#if !defined(__minix)
 		.sun_len = sizeof(sun),
-#endif /* !defined(__minix) */
 		.sun_path = _PATH_LOG,
 	};
 
@@ -526,14 +516,9 @@ connectlog_r(struct syslog_data *data)
 		data->log_connected = 0;
 	}
 	if (!data->log_connected) {
-#if defined(__minix)
-		if(ioctl(data->log_file, NWIOSUDSTADDR, __UNCONST(&sun)) < 0)
-
-#else
 		if (connect(data->log_file,
 		    (const struct sockaddr *)(const void *)&sun,
 		    (socklen_t)sizeof(sun)) == -1)
-#endif /* defined(__minix) */
 		{
 			(void)close(data->log_file);
 			data->log_file = -1;

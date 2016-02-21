@@ -267,6 +267,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 		return 0;
 	}
 
+#ifdef SO_PASSCRED
 	if (level == SOL_SOCKET && option_name == SO_PASSCRED)
 	{
 		if (option_len != sizeof(i))
@@ -283,6 +284,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 		}
 		return 0;
 	}
+#endif
 
 #if DEBUG
 	fprintf(stderr, "_uds_setsocketopt: level %d, name %d\n",

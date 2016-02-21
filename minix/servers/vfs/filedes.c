@@ -525,7 +525,8 @@ int do_copyfd(void)
 {
 /* Copy a file descriptor between processes, or close a remote file descriptor.
  * This call is used as back-call by device drivers (UDS, VND), and is expected
- * to be used in response to an IOCTL to such device drivers.
+ * to be used in response to either an IOCTL to VND or a SEND or RECV socket
+ * request to UDS.
  */
   struct fproc *rfp;
   struct filp *rfilp;
@@ -548,9 +549,9 @@ int do_copyfd(void)
   rfp = &fproc[slot];
 
   /* FIXME: we should now check that the user process is indeed blocked on an
-   * IOCTL call, so that we can safely mess with its file descriptors.  We
-   * currently do not have the necessary state to verify this, so we assume
-   * that the call is always used in the right way.
+   * IOCTL or socket call, so that we can safely mess with its file
+   * descriptors.  We currently do not have the necessary state to verify this,
+   * so we assume that the call is always used in the right way.
    */
 
   /* Depending on the operation, get the file descriptor from the caller or the
@@ -566,7 +567,7 @@ int do_copyfd(void)
    * passes in the file descriptor to the device node on which it is performing
    * the IOCTL.  We do not allow manipulation of such device nodes.  In
    * practice, this only applies to block-special files (and thus VND), because
-   * character-special files (as used by UDS) are unlocked during the IOCTL.
+   * socket files (as used by UDS) are unlocked during the socket operation.
    */
   if (rfilp->filp_ioctl_fp == rfp)
 	return(EBADF);

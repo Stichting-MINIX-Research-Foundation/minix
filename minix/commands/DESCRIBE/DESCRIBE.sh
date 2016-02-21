@@ -192,9 +192,6 @@ do
     17,0)
 	des="hello" dev=hello
 	;;
-    18,0)
-	des="UNIX domain socket" dev=uds
-	;;
     5[6-9],0|6[0-3],0)
 	drive=`expr $major - 56`
 	des="vnode disk $drive" dev=vnd$drive

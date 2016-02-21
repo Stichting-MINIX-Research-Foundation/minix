@@ -1802,25 +1802,32 @@ put_struct_iovec(struct trace_proc * proc, const char * name, int flags,
 	put_close(proc, "]");
 }
 
-void
-put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
-	vir_bytes addr)
+static void
+put_struct_sockcred(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr, size_t left)
 {
-	struct uucred cred;
+	struct sockcred sc;
 
-	if (!put_open_struct(proc, name, flags, addr, &cred, sizeof(cred)))
+	if (!put_open_struct(proc, name, flags, addr, &sc, sizeof(sc)))
 		return;
 
-	put_value(proc, "cr_uid", "%u", cred.cr_uid);
+	put_value(proc, "sc_uid", "%u", sc.sc_uid);
+	if (verbose > 0)
+		put_value(proc, "sc_euid", "%u", sc.sc_euid);
+	put_value(proc, "sc_gid", "%u", sc.sc_gid);
 	if (verbose > 0) {
-		put_value(proc, "cr_gid", "%u", cred.cr_gid);
+		put_value(proc, "sc_egid", "%u", sc.sc_egid);
 		if (verbose > 1)
-			put_value(proc, "cr_ngroups", "%d", cred.cr_ngroups);
-		put_groups(proc, "cr_groups", PF_LOCADDR,
-		    (vir_bytes)&cred.cr_groups, cred.cr_ngroups);
+			put_value(proc, "sc_ngroups", "%d", sc.sc_ngroups);
+		if (left >= sizeof(sc.sc_groups[0]) * (sc.sc_ngroups - 1)) {
+			put_groups(proc, "sc_groups", flags,
+			    addr + offsetof(struct sockcred, sc_groups),
+			    sc.sc_ngroups);
+		} else
+			put_field(proc, "sc_groups", "..");
 	}
 
-	put_close_struct(proc, verbose > 0);
+	put_close_struct(proc, verbose > 1);
 }
 
 static void
@@ -1907,7 +1914,7 @@ put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
 	size_t len)
 {
 	struct cmsghdr cmsg;
-	char buf[CMSG_SPACE(sizeof(struct uucred))];
+	char buf[CMSG_SPACE(sizeof(struct sockcred))];
 	size_t off, chunk, datalen;
 
 	if (valuesonly > 1 || addr == 0 || len < CMSG_LEN(0)) {
@@ -1960,10 +1967,11 @@ put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
 			    addr + off + chunk, datalen);
 		} else if (cmsg.cmsg_level == SOL_SOCKET &&
 		    cmsg.cmsg_type == SCM_CREDS &&
-		    datalen >= sizeof(struct uucred) &&
+		    datalen >= sizeof(struct sockcred) &&
 		    chunk >= CMSG_LEN(datalen)) {
-			put_struct_uucred(proc, "cmsg_data", PF_LOCADDR,
-			    (vir_bytes)&buf[CMSG_LEN(0)]);
+			put_struct_sockcred(proc, "cmsg_data", PF_LOCADDR,
+			    (vir_bytes)&buf[CMSG_LEN(0)],
+			    datalen - sizeof(struct sockcred));
 		} else if (datalen > 0)
 			put_field(proc, "cmsg_data", "..");
 
@@ -2129,8 +2137,6 @@ put_sockopt_name(struct trace_proc * proc, const char * name, int level,
 		TEXT(SO_REUSEPORT);
 		TEXT(SO_NOSIGPIPE);
 		TEXT(SO_TIMESTAMP);
-		TEXT(SO_PASSCRED);
-		TEXT(SO_PEERCRED);
 		TEXT(SO_SNDBUF);
 		TEXT(SO_RCVBUF);
 		TEXT(SO_SNDLOWAT);
@@ -2157,7 +2163,6 @@ put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 	const char *text;
 	int i;
 	struct linger l;
-	struct uucred cr;
 	struct timeval tv;
 	void *ptr;
 	size_t size;
@@ -2183,7 +2188,6 @@ put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 	case SO_REUSEPORT:
 	case SO_NOSIGPIPE:
 	case SO_TIMESTAMP:
-	case SO_PASSCRED:
 	case SO_SNDBUF:
 	case SO_RCVBUF:
 	case SO_SNDLOWAT:
@@ -2198,10 +2202,6 @@ put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 	case SO_LINGER:
 		ptr = &l;
 		size = sizeof(l);
-		break;
-	case SO_PEERCRED:
-		ptr = &cr;
-		size = sizeof(cr);
 		break;
 	case SO_SNDTIMEO:
 	case SO_RCVTIMEO:
@@ -2228,9 +2228,6 @@ put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
 		put_value(proc, "l_onoff", "%d", l.l_onoff);
 		put_value(proc, "l_linger", "%d", l.l_linger);
 		put_close(proc, "}");
-		break;
-	case SO_PEERCRED:
-		put_struct_uucred(proc, name, PF_LOCADDR, (vir_bytes)&cr);
 		break;
 	case SO_ERROR:
 		put_open(proc, name, 0, "{", ", ");

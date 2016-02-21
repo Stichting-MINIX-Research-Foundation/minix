@@ -273,11 +273,10 @@ uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
 int getsockcred(endpoint_t proc_ep, struct sockcred * sockcred, gid_t * groups,
 	int ngroups);
-int socketpath(endpoint_t endpt, char *path, size_t size, int what, dev_t *dev,
-	ino_t *ino);
+int socketpath(endpoint_t endpt, const char *path, size_t size, int what,
+	dev_t *dev, ino_t *ino);
 #define SPATH_CHECK	0	/* check user permissions on socket path */
 #define SPATH_CREATE	1	/* create socket file at given path */
-#define SPATH_CANONIZE	0x8000	/* copy back canonized path (legacy support) */
 int copyfd(endpoint_t endpt, int fd, int what);
 #define COPYFD_FROM	0	/* copy file descriptor from remote process */
 #define COPYFD_TO	1	/* copy file descriptor to remote process */

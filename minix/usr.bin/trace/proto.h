@@ -115,8 +115,6 @@ void put_dev(struct trace_proc *proc, const char *name, dev_t dev);
 void put_in_addr(struct trace_proc *proc, const char *name, struct in_addr in);
 void put_socket_type(struct trace_proc *proc, const char *name, int type);
 void put_socket_family(struct trace_proc *proc, const char *name, int family);
-void put_struct_uucred(struct trace_proc *proc, const char *name, int flags,
-	vir_bytes addr);
 void put_cmsg_type(struct trace_proc *proc, const char *name, int type);
 void put_shutdown_how(struct trace_proc *proc, const char *name, int how);
 

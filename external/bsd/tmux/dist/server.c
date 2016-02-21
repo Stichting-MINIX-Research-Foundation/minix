@@ -84,11 +84,7 @@ server_create_socket(void)
 	}
 	unlink(sa.sun_path);
 
-#ifndef __minix
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-#else
-	if ((fd = socket(AF_UNIX, SOCK_SEQPACKET, 0)) == -1)
-#endif /* !defined(__minix) */
 		fatal("socket failed");
 
 	mask = umask(S_IXUSR|S_IXGRP|S_IRWXO);
@@ -114,11 +110,7 @@ server_start(int lockfd, char *lockfile)
 	char		*cause;
 
 	/* The first client is special and gets a socketpair; create it. */
-#ifndef __minix
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
-#else
-	if (socketpair(AF_UNIX, SOCK_SEQPACKET, PF_UNSPEC, pair) != 0)
-#endif /* !defined(__minix) */
 		fatal("socketpair failed");
 
 	switch (fork()) {

@@ -477,7 +477,7 @@
 ./usr/man/man2/getgid.2                                 minix-man
 ./usr/man/man2/getitimer.2                              minix-man
 ./usr/man/man2/getnucred.2                              minix-man       obsolete
-./usr/man/man2/getpeereid.2                             minix-man
+./usr/man/man2/getpeereid.2                             minix-man       obsolete
 ./usr/man/man2/getpeername.2                            minix-man
 ./usr/man/man2/getpid.2                                 minix-man
 ./usr/man/man2/getpriority.2                            minix-man
@@ -3463,7 +3463,7 @@
 ./usr/man/man8/syslogd.8                                minix-man
 ./usr/man/man8/tcpd.8                                   minix-man
 ./usr/man/man8/traceroute.8                             minix-man
-./usr/man/man8/uds.8                                    minix-man
+./usr/man/man8/uds.8                                    minix-man       obsolete
 ./usr/man/man8/unix.8                                   minix-man
 ./usr/man/man8/unlink.8                                 minix-man
 ./usr/man/man8/unstr.8                                  minix-man

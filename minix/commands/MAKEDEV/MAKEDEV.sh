@@ -49,7 +49,6 @@ STD_DEVICES="
 	ttypa ttypb ttypc ttypd ttype ttypf
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf
-	uds
 	vnd0 vnd0p0 vnd0p0s0 vnd1 vnd1p0 vnd1p0s0
 	vnd2 vnd3 vnd4 vnd5 vnd6 vnd7
 "
@@ -134,7 +133,6 @@ Where key is one of the following:
   klog                    # Make /dev/klog
   ptmx                    # Make /dev/ptmx
   random                  # Make /dev/random, /dev/urandom
-  uds                     # Make /dev/uds
   filter                  # Make /dev/filter
   fbd                     # Make /dev/fbd
   hello                   # Make /dev/hello
@@ -437,10 +435,6 @@ do
 		minor=`expr ${dev} : '....\\(.*\\)'`
 
 		makedev ${dev} c 4 ${minor} ${uname} tty ${permissions}
-		;;
-	uds)
-		# Unix domain sockets device
-		makedev ${dev} c 18 0 ${uname} ${gname} 666
 		;;
 	vnd[0-7])
 		# Whole vnode disk devices.

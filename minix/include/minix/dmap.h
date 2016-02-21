@@ -36,8 +36,8 @@
 #define LOG_MAJOR		  15	/* 15 = /dev/klog   (log driver)      */
 #define RANDOM_MAJOR		  16	/* 16 = /dev/random (random driver)   */
 #define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */
-#define UDS_MAJOR		  18	/* 18 = /dev/uds    (pfs)             */
-#define FB_MAJOR		  19	/* 18 = /dev/fb0    (fb driver)       */
+					/* 18 = (unused)                      */
+#define FB_MAJOR		  19	/* 19 = /dev/fb0    (fb driver)       */
 #define I2C0_MAJOR		  20	/* 20 = /dev/i2c-1  (i2c-dev)         */
 #define I2C1_MAJOR		  21	/* 21 = /dev/i2c-2  (i2c-dev)         */
 #define I2C2_MAJOR		  22	/* 22 = /dev/i2c-3  (i2c-dev)         */
