@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -14,11 +15,28 @@
 #include <net/gen/udp.h>
 #include <net/gen/udp_io.h>
 
-#define DEBUG 0
+/*
+ * Put a socket in listening mode.
+ */
+static int
+__listen(int fd, int backlog)
+{
+	message m;
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_listen.fd = fd;
+	m.m_lc_vfs_listen.backlog = backlog;
+
+	return _syscall(VFS_PROC_NR, VFS_LISTEN, &m);
+}
 
 int listen(int sock, int backlog)
 {
 	int r;
+
+	r = __listen(sock, backlog);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= ioctl(sock, NWIOTCPLISTENQ, &backlog);
 	if (r != -1 || errno != ENOTTY)
@@ -28,10 +46,6 @@ int listen(int sock, int backlog)
 	if (r != -1 || errno != ENOTTY)
 		return r;
 
-#if DEBUG
-	fprintf(stderr, "listen: not implemented for fd %d\n", sock);
-#endif
-	errno= ENOSYS;
+	errno = ENOTSOCK;
 	return -1;
 }
-

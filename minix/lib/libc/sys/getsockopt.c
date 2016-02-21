@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -30,6 +31,34 @@ static int _uds_getsockopt(int sock, int level, int option_name,
 static void getsockopt_copy(void *return_value, size_t return_len,
 	void *__restrict option_value, socklen_t *__restrict option_len);
 
+/*
+ * Get socket options.
+ */
+static int
+__getsockopt(int fd, int level, int option_name,
+	void * __restrict option_value, socklen_t * __restrict option_len)
+{
+	message m;
+
+	if (option_len == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sockopt.fd = fd;
+	m.m_lc_vfs_sockopt.level = level;
+	m.m_lc_vfs_sockopt.name = option_name;
+	m.m_lc_vfs_sockopt.buf = (vir_bytes)option_value;
+	m.m_lc_vfs_sockopt.len = *option_len;
+
+	if (_syscall(VFS_PROC_NR, VFS_GETSOCKOPT, &m) < 0)
+		return -1;
+
+	*option_len = m.m_vfs_lc_socklen.len;
+	return 0;
+}
+
 int getsockopt(int sock, int level, int option_name,
         void *__restrict option_value, socklen_t *__restrict option_len)
 {
@@ -37,6 +66,10 @@ int getsockopt(int sock, int level, int option_name,
 	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
 	struct sockaddr_un uds_addr;
+
+	r = __getsockopt(sock, level, option_name, option_value, option_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
 	if (r != -1 || errno != ENOTTY)
@@ -74,11 +107,7 @@ int getsockopt(int sock, int level, int option_name,
 			option_value, option_len);
 	}
 
-
-#if DEBUG
-	fprintf(stderr, "getsockopt: not implemented for fd %d\n", sock);
-#endif
-	errno= ENOTSOCK;
+	errno = ENOTSOCK;
 	return -1;
 }
 

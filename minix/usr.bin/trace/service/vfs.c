@@ -6,6 +6,13 @@
 #include <dirent.h>
 #include <sys/mount.h>
 #include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#if 0 /* not yet, header is missing */
+#include <netbt/bluetooth.h>
+#endif
+#include <arpa/inet.h>
 
 /*
  * This function should always be used when printing a file descriptor.  It
@@ -20,7 +27,7 @@ put_fd(struct trace_proc * proc, const char * name, int fd)
 }
 
 static int
-vfs_read_out(struct trace_proc * proc, const message *m_out)
+vfs_read_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_readwrite.fd);
@@ -29,8 +36,8 @@ vfs_read_out(struct trace_proc * proc, const message *m_out)
 }
 
 static void
-vfs_read_in(struct trace_proc * proc, const message *m_out,
-	const message *m_in, int failed)
+vfs_read_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
 {
 
 	put_buf(proc, "buf", failed, m_out->m_lc_vfs_readwrite.buf,
@@ -41,7 +48,7 @@ vfs_read_in(struct trace_proc * proc, const message *m_out,
 }
 
 static int
-vfs_write_out(struct trace_proc * proc, const message *m_out)
+vfs_write_out(struct trace_proc * proc, const message * m_out)
 {
 
 	put_fd(proc, "fd", m_out->m_lc_vfs_readwrite.fd);
@@ -1213,7 +1220,7 @@ put_statvfs_array(struct trace_proc * proc, const char * name, int flags,
 	struct statvfs buf;
 	int i, max;
 
-	if ((flags & PF_FAILED) || valuesonly || count < 0) {
+	if ((flags & PF_FAILED) || valuesonly > 1 || count < 0) {
 		put_ptr(proc, name, addr);
 
 		return;
@@ -1356,6 +1363,1008 @@ vfs_gcov_flush_out(struct trace_proc * proc, const message * m_out)
 	return CT_DONE;
 }
 
+void
+put_socket_family(struct trace_proc * proc, const char * name, int family)
+{
+	const char *text = NULL;
+
+	if (!valuesonly) {
+		/*
+		 * For socket(2) and socketpair(2) this should really be using
+		 * the prefix "PF_" since those functions take a protocol
+		 * family rather than an address family.  This rule is applied
+		 * fairly consistently within the system.  Here I caved because
+		 * I don't want to duplicate this entire function just for the
+		 * one letter.  There are exceptions however; some names only
+		 * exist as "PF_".
+		 */
+		switch (family) {
+		TEXT(AF_UNSPEC);
+		TEXT(AF_LOCAL);
+		TEXT(AF_INET);
+		TEXT(AF_IMPLINK);
+		TEXT(AF_PUP);
+		TEXT(AF_CHAOS);
+		TEXT(AF_NS);
+		TEXT(AF_ISO);
+		TEXT(AF_ECMA);
+		TEXT(AF_DATAKIT);
+		TEXT(AF_CCITT);
+		TEXT(AF_SNA);
+		TEXT(AF_DECnet);
+		TEXT(AF_DLI);
+		TEXT(AF_LAT);
+		TEXT(AF_HYLINK);
+		TEXT(AF_APPLETALK);
+		TEXT(AF_OROUTE);
+		TEXT(AF_LINK);
+		TEXT(PF_XTP);
+		TEXT(AF_COIP);
+		TEXT(AF_CNT);
+		TEXT(PF_RTIP);
+		TEXT(AF_IPX);
+		TEXT(AF_INET6);
+		TEXT(PF_PIP);
+		TEXT(AF_ISDN);
+		TEXT(AF_NATM);
+		TEXT(AF_ARP);
+		TEXT(PF_KEY);
+		TEXT(AF_BLUETOOTH);
+		TEXT(AF_IEEE80211);
+		TEXT(AF_MPLS);
+		TEXT(AF_ROUTE);
+		}
+	}
+
+	if (text != NULL)
+		put_field(proc, name, text);
+	else
+		put_value(proc, name, "%d", family);
+}
+
+static const struct flags socket_types[] = {
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_STREAM),
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_DGRAM),
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_RAW),
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_RDM),
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_SEQPACKET),
+	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_CONN_DGRAM),
+	FLAG(SOCK_CLOEXEC),
+	FLAG(SOCK_NONBLOCK),
+	FLAG(SOCK_NOSIGPIPE),
+};
+
+void
+put_socket_type(struct trace_proc * proc, const char * name, int type)
+{
+
+	put_flags(proc, name, socket_types, COUNT(socket_types), "%d", type);
+}
+
+static void
+put_socket_protocol(struct trace_proc * proc, const char * name, int family,
+	int type, int protocol)
+{
+	const char *text = NULL;
+
+	if (!valuesonly && (type == SOCK_RAW || protocol != 0)) {
+		switch (family) {
+		case PF_INET:
+		case PF_INET6:
+			/* TODO: is this all that is used in socket(2)? */
+			switch (protocol) {
+			TEXT(IPPROTO_IP);
+			TEXT(IPPROTO_ICMP);
+			TEXT(IPPROTO_IGMP);
+			TEXT(IPPROTO_TCP);
+			TEXT(IPPROTO_UDP);
+			TEXT(IPPROTO_ICMPV6);
+			TEXT(IPPROTO_RAW);
+			}
+			break;
+#if 0 /* not yet */
+		case PF_BLUETOOTH:
+			switch (protocol) {
+			TEXT(BTPROTO_HCI);
+			TEXT(BTPROTO_L2CAP);
+			TEXT(BTPROTO_RFCOMM);
+			TEXT(BTPROTO_SCO);
+			}
+			break;
+#endif
+		}
+	}
+
+	if (text != NULL)
+		put_field(proc, name, text);
+	else
+		put_value(proc, name, "%d", protocol);
+}
+
+static int
+vfs_socket_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_socket_family(proc, "domain", m_out->m_lc_vfs_socket.domain);
+	put_socket_type(proc, "type", m_out->m_lc_vfs_socket.type);
+	put_socket_protocol(proc, "protocol", m_out->m_lc_vfs_socket.domain,
+	    m_out->m_lc_vfs_socket.type & ~SOCK_FLAGS_MASK,
+	    m_out->m_lc_vfs_socket.protocol);
+
+	return CT_DONE;
+}
+
+static int
+vfs_socketpair_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_socket_family(proc, "domain", m_out->m_lc_vfs_socket.domain);
+	put_socket_type(proc, "type", m_out->m_lc_vfs_socket.type);
+	put_socket_protocol(proc, "protocol", m_out->m_lc_vfs_socket.domain,
+	    m_out->m_lc_vfs_socket.type & ~SOCK_FLAGS_MASK,
+	    m_out->m_lc_vfs_socket.protocol);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_socketpair_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	if (!failed) {
+		put_open(proc, "fd", PF_NONAME, "[", ", ");
+		put_fd(proc, "fd0", m_in->m_vfs_lc_fdpair.fd0);
+		put_fd(proc, "fd1", m_in->m_vfs_lc_fdpair.fd1);
+		put_close(proc, "]");
+	} else
+		put_field(proc, "fd", "&..");
+	put_equals(proc);
+	put_result(proc);
+}
+
+void
+put_in_addr(struct trace_proc * proc, const char * name, struct in_addr in)
+{
+
+	if (!valuesonly) {
+		/* Is this an acceptable encapsulation? */
+		put_value(proc, name, "[%s]", inet_ntoa(in));
+	} else
+		put_value(proc, name, "0x%08x", ntohl(in.s_addr));
+}
+
+static void
+put_in6_addr(struct trace_proc * proc, const char * name, struct in6_addr * in)
+{
+	char buf[INET6_ADDRSTRLEN];
+	const char *ptr;
+	unsigned int i, n;
+
+	if (!valuesonly &&
+	    (ptr = inet_ntop(AF_INET6, in, buf, sizeof(buf))) != NULL) {
+		put_value(proc, name, "[%s]", ptr);
+	} else {
+		for (i = n = 0; i < 16; i++)
+			n += snprintf(buf + n, sizeof(buf) - n, "%02x",
+			    ((unsigned char *)in)[i]);
+		put_value(proc, name, "0x%s", buf);
+	}
+}
+
+static void
+put_struct_sockaddr(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr, socklen_t addr_len)
+{
+	char buf[UCHAR_MAX + 1];
+	uint8_t len;
+	sa_family_t family;
+	struct sockaddr sa;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	int all, off, left;
+
+	/*
+	 * For UNIX domain sockets, make sure there's always room to add a
+	 * trailing NULL byte, because UDS paths are not necessarily null
+	 * terminated.
+	 */
+	if (addr_len < offsetof(struct sockaddr, sa_data) ||
+	    addr_len >= sizeof(buf)) {
+		put_ptr(proc, name, addr);
+
+		return;
+	}
+
+	if (!put_open_struct(proc, name, flags, addr, buf, addr_len))
+		return;
+
+	memcpy(&sa, buf, sizeof(sa));
+	len = sa.sa_len;
+	family = sa.sa_family;
+	all = (verbose > 1);
+
+	switch (family) {
+	case AF_LOCAL:
+		if (verbose > 1)
+			put_value(proc, "sun_len", "%u", len);
+		if (verbose > 0)
+			put_socket_family(proc, "sun_family", family);
+		off = (int)offsetof(struct sockaddr_un, sun_path);
+		left = addr_len - off;
+		if (left > 0) {
+			buf[addr_len] = 0; /* force null termination */
+			put_buf(proc, "sun_path", PF_LOCADDR | PF_PATH,
+			    (vir_bytes)&buf[off],
+			    left + 1 /* include null byte */);
+		}
+		break;
+	case AF_INET:
+		if (verbose > 1)
+			put_value(proc, "sin_len", "%u", len);
+		if (verbose > 0)
+			put_socket_family(proc, "sin_family", family);
+		if (addr_len == sizeof(sin)) {
+			memcpy(&sin, buf, sizeof(sin));
+			put_value(proc, "sin_port", "%u", ntohs(sin.sin_port));
+			put_in_addr(proc, "sin_addr", sin.sin_addr);
+		} else
+			all = FALSE;
+		break;
+	case AF_INET6:
+		if (verbose > 1)
+			put_value(proc, "sin6_len", "%u", len);
+		if (verbose > 0)
+			put_socket_family(proc, "sin6_family", family);
+		if (addr_len == sizeof(sin6)) {
+			memcpy(&sin6, buf, sizeof(sin6));
+			put_value(proc, "sin6_port", "%u",
+			    ntohs(sin6.sin6_port));
+			if (verbose > 1)
+				put_value(proc, "sin6_flowinfo", "%"PRIu32,
+				    sin6.sin6_flowinfo);
+			put_in6_addr(proc, "sin6_addr", &sin6.sin6_addr);
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
+			    IN6_IS_ADDR_SITELOCAL(&sin6.sin6_addr) ||
+			    verbose > 0)
+				put_value(proc, "sin6_scope_id", "%"PRIu32,
+				    sin6.sin6_scope_id);
+		} else
+			all = FALSE;
+		break;
+	/* TODO: support for other address families */
+	default:
+		if (verbose > 1)
+			put_value(proc, "sa_len", "%u", len);
+		put_socket_family(proc, "sa_family", family);
+		all = (verbose > 1 && family == AF_UNSPEC);
+	}
+
+	put_close_struct(proc, all);
+}
+
+/* This function is shared between bind and connect. */
+static int
+vfs_bind_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
+	put_struct_sockaddr(proc, "addr", 0, m_out->m_lc_vfs_sockaddr.addr,
+	    m_out->m_lc_vfs_sockaddr.addr_len);
+	put_value(proc, "addr_len", "%u", m_out->m_lc_vfs_sockaddr.addr_len);
+
+	return CT_DONE;
+}
+
+static int
+vfs_listen_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_listen.fd);
+	put_value(proc, "backlog", "%d", m_out->m_lc_vfs_listen.backlog);
+
+	return CT_DONE;
+}
+
+static int
+vfs_accept_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_accept_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	put_struct_sockaddr(proc, "addr", failed,
+	    m_out->m_lc_vfs_sockaddr.addr, m_in->m_vfs_lc_socklen.len);
+	/*
+	 * We print the resulting address length rather than the given buffer
+	 * size here, as we do in recvfrom, getsockname, getpeername, and (less
+	 * explicitly) recvmsg.  We could also print both, by adding the
+	 * resulting length after the call result.
+	 */
+	if (m_out->m_lc_vfs_sockaddr.addr == 0)
+		put_field(proc, "addr_len", "NULL");
+	else if (!failed)
+		put_value(proc, "addr_len", "{%u}",
+		    m_in->m_vfs_lc_socklen.len);
+	else
+		put_field(proc, "addr_len", "&..");
+
+	put_equals(proc);
+	put_result(proc);
+}
+
+static const struct flags msg_flags[] = {
+	FLAG(MSG_OOB),
+	FLAG(MSG_PEEK),
+	FLAG(MSG_DONTROUTE),
+	FLAG(MSG_EOR),
+	FLAG(MSG_TRUNC),
+	FLAG(MSG_CTRUNC),
+	FLAG(MSG_WAITALL),
+	FLAG(MSG_DONTWAIT),
+	FLAG(MSG_BCAST),
+	FLAG(MSG_MCAST),
+#ifdef MSG_NOSIGNAL
+	FLAG(MSG_NOSIGNAL),
+#endif
+	FLAG(MSG_CMSG_CLOEXEC),
+	FLAG(MSG_NBIO),
+	FLAG(MSG_WAITFORONE),
+};
+
+static int
+vfs_sendto_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sendrecv.fd);
+	put_buf(proc, "buf", 0, m_out->m_lc_vfs_sendrecv.buf,
+	    m_out->m_lc_vfs_readwrite.len);
+	put_value(proc, "len", "%zu", m_out->m_lc_vfs_sendrecv.len);
+	put_flags(proc, "flags", msg_flags, COUNT(msg_flags), "0x%x",
+	    m_out->m_lc_vfs_sendrecv.flags);
+	put_struct_sockaddr(proc, "addr", 0, m_out->m_lc_vfs_sendrecv.addr,
+	    m_out->m_lc_vfs_sendrecv.addr_len);
+	put_value(proc, "addr_len", "%u", m_out->m_lc_vfs_sendrecv.addr_len);
+
+	return CT_DONE;
+}
+
+static void
+put_struct_iovec(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr, int len, ssize_t bmax)
+{
+	struct iovec iov;
+	size_t bytes;
+	int i, imax;
+
+	/*
+	 * For simplicity and clarity reasons, we currently print the I/O
+	 * vector as an array of data elements rather than an array of
+	 * structures.  We also copy in each element separately, because as of
+	 * writing there is no system support for more than one element anyway.
+	 * All of this may be changed later.
+	 */
+	if ((flags & PF_FAILED) || valuesonly > 1 || addr == 0 || len < 0) {
+		put_ptr(proc, name, addr);
+
+		return;
+	}
+
+	if (len == 0 || bmax == 0) {
+		put_field(proc, name, "[]");
+
+		return;
+	}
+
+	/* As per logic below, 'imax' must be set to a nonzero value here. */
+	if (verbose == 0)
+		imax = 4;
+	else if (verbose == 1)
+		imax = 16;
+	else
+		imax = INT_MAX;
+
+	for (i = 0; i < len && bmax > 0; i++) {
+		if (mem_get_data(proc->pid, addr, &iov, sizeof(iov)) < 0) {
+			if (i == 0) {
+				put_ptr(proc, name, addr);
+
+				return;
+			}
+
+			len = imax = 0; /* make put_tail() print an error */
+			break;
+		}
+
+		if (i == 0)
+			put_open(proc, name, 0, "[", ", ");
+
+		bytes = MIN(iov.iov_len, (size_t)bmax);
+
+		if (len < imax)
+			put_buf(proc, NULL, 0, (vir_bytes)iov.iov_base, bytes);
+
+		addr += sizeof(struct iovec);
+		bmax -= bytes;
+	}
+
+	if (imax == 0 || imax < len)
+		put_tail(proc, len, imax);
+	put_close(proc, "]");
+}
+
+void
+put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr)
+{
+	struct uucred cred;
+
+	if (!put_open_struct(proc, name, flags, addr, &cred, sizeof(cred)))
+		return;
+
+	put_value(proc, "cr_uid", "%u", cred.cr_uid);
+	if (verbose > 0) {
+		put_value(proc, "cr_gid", "%u", cred.cr_gid);
+		if (verbose > 1)
+			put_value(proc, "cr_ngroups", "%d", cred.cr_ngroups);
+		put_groups(proc, "cr_groups", PF_LOCADDR,
+		    (vir_bytes)&cred.cr_groups, cred.cr_ngroups);
+	}
+
+	put_close_struct(proc, verbose > 0);
+}
+
+static void
+put_socket_level(struct trace_proc * proc, const char * name, int level)
+{
+
+	/*
+	 * Unfortunately, the level is a domain-specific protocol number.  That
+	 * means that without knowing how the socket was created, we cannot
+	 * tell what it means.  The only thing we can print is SOL_SOCKET,
+	 * which is the same across all domains.
+	 */
+	if (!valuesonly && level == SOL_SOCKET)
+		put_field(proc, name, "SOL_SOCKET");
+	else
+		put_value(proc, name, "%d", level);
+}
+
+void
+put_cmsg_type(struct trace_proc * proc, const char * name, int type)
+{
+	const char *text = NULL;
+
+	if (!valuesonly) {
+		switch (type) {
+		TEXT(SCM_RIGHTS);
+		TEXT(SCM_CREDS);
+		TEXT(SCM_TIMESTAMP);
+		}
+	}
+
+	if (text != NULL)
+		put_field(proc, name, text);
+	else
+		put_value(proc, name, "%d", type);
+}
+
+static void
+put_cmsg_rights(struct trace_proc * proc, const char * name, char * buf,
+	size_t size, char * cptr, size_t chunk, vir_bytes addr, size_t len)
+{
+	unsigned int i, nfds;
+	int *ptr;
+
+	put_open(proc, name, PF_NONAME, "[", ", ");
+
+	/*
+	 * Since file descriptors are important, we print them all, regardless
+	 * of the current verbosity level.  Start with the file descriptors
+	 * that are already copied into the local buffer.
+	 */
+	ptr = (int *)cptr;
+	chunk = MIN(chunk, len);
+
+	nfds = chunk / sizeof(int);
+	for (i = 0; i < nfds; i++)
+		put_fd(proc, NULL, ptr[i]);
+
+	/* Then do the remaining file descriptors, in chunks. */
+	size -= size % sizeof(int);
+
+	for (len -= chunk; len >= sizeof(int); len -= chunk) {
+		chunk = MIN(len, size);
+
+		if (mem_get_data(proc->pid, addr, buf, chunk) < 0) {
+			put_field(proc, NULL, "..");
+
+			break;
+		}
+
+		ptr = (int *)buf;
+		nfds = chunk / sizeof(int);
+		for (i = 0; i < nfds; i++)
+			put_fd(proc, NULL, ptr[i]);
+
+		addr += chunk;
+	}
+
+	put_close(proc, "]");
+}
+
+static void
+put_cmsg(struct trace_proc * proc, const char * name, vir_bytes addr,
+	size_t len)
+{
+	struct cmsghdr cmsg;
+	char buf[CMSG_SPACE(sizeof(struct uucred))];
+	size_t off, chunk, datalen;
+
+	if (valuesonly > 1 || addr == 0 || len < CMSG_LEN(0)) {
+		put_ptr(proc, name, addr);
+
+		return;
+	}
+
+	for (off = 0; off < len; off += CMSG_SPACE(datalen)) {
+		chunk = MIN(len - off, sizeof(buf));
+
+		if (chunk < CMSG_LEN(0))
+			break;
+
+		if (mem_get_data(proc->pid, addr + off, buf, chunk) < 0) {
+			if (off == 0) {
+				put_ptr(proc, name, addr);
+
+				return;
+			}
+			break;
+		}
+
+		if (off == 0)
+			put_open(proc, name, 0, "[", ", ");
+
+		memcpy(&cmsg, buf, sizeof(cmsg));
+
+		put_open(proc, NULL, 0, "{", ", ");
+		if (verbose > 0)
+			put_value(proc, "cmsg_len", "%u", cmsg.cmsg_len);
+		put_socket_level(proc, "cmsg_level", cmsg.cmsg_level);
+		if (cmsg.cmsg_level == SOL_SOCKET)
+			put_cmsg_type(proc, "cmsg_type", cmsg.cmsg_type);
+		else
+			put_value(proc, "cmsg_type", "%d", cmsg.cmsg_type);
+
+		if (cmsg.cmsg_len < CMSG_LEN(0) || off + cmsg.cmsg_len > len) {
+			put_tail(proc, 0, 0);
+			put_close(proc, "}");
+			break;
+		}
+
+		datalen = cmsg.cmsg_len - CMSG_LEN(0);
+
+		if (cmsg.cmsg_level == SOL_SOCKET &&
+		    cmsg.cmsg_type == SCM_RIGHTS) {
+			put_cmsg_rights(proc, "cmsg_data", buf, sizeof(buf),
+			    &buf[CMSG_LEN(0)], chunk - CMSG_LEN(0),
+			    addr + off + chunk, datalen);
+		} else if (cmsg.cmsg_level == SOL_SOCKET &&
+		    cmsg.cmsg_type == SCM_CREDS &&
+		    datalen >= sizeof(struct uucred) &&
+		    chunk >= CMSG_LEN(datalen)) {
+			put_struct_uucred(proc, "cmsg_data", PF_LOCADDR,
+			    (vir_bytes)&buf[CMSG_LEN(0)]);
+		} else if (datalen > 0)
+			put_field(proc, "cmsg_data", "..");
+
+		if (verbose == 0)
+			put_field(proc, NULL, "..");
+		put_close(proc, "}");
+	}
+
+	if (off < len)
+		put_field(proc, NULL, "..");
+	put_close(proc, "]");
+}
+
+static void
+put_struct_msghdr(struct trace_proc * proc, const char * name, int flags,
+	vir_bytes addr, ssize_t max)
+{
+	struct msghdr msg;
+	int all;
+
+	if (!put_open_struct(proc, name, flags, addr, &msg, sizeof(msg)))
+		return;
+
+	all = TRUE;
+
+	if (msg.msg_name != NULL || verbose > 1) {
+		put_struct_sockaddr(proc, "msg_name", 0,
+		    (vir_bytes)msg.msg_name, msg.msg_namelen);
+		if (verbose > 0)
+			put_value(proc, "msg_namelen", "%u", msg.msg_namelen);
+		else
+			all = FALSE;
+	} else
+		all = FALSE;
+
+	put_struct_iovec(proc, "msg_iov", 0, (vir_bytes)msg.msg_iov,
+	    msg.msg_iovlen, max);
+	if (verbose > 0)
+		put_value(proc, "msg_iovlen", "%d", msg.msg_iovlen);
+	else
+		all = FALSE;
+
+	if (msg.msg_control != NULL || verbose > 1) {
+		put_cmsg(proc, "msg_control", (vir_bytes)msg.msg_control,
+		    msg.msg_controllen);
+
+		if (verbose > 0)
+			put_value(proc, "msg_controllen", "%u",
+			    msg.msg_controllen);
+		else
+			all = FALSE;
+	} else
+		all = FALSE;
+
+	/* When receiving, print the flags field as well. */
+	if (flags & PF_ALT)
+		put_flags(proc, "msg_flags", msg_flags, COUNT(msg_flags),
+		    "0x%x", msg.msg_flags);
+
+	put_close_struct(proc, all);
+}
+
+static int
+vfs_sendmsg_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockmsg.fd);
+	put_struct_msghdr(proc, "msg", 0, m_out->m_lc_vfs_sockmsg.msgbuf,
+	    SSIZE_MAX);
+	put_flags(proc, "flags", msg_flags, COUNT(msg_flags), "0x%x",
+	    m_out->m_lc_vfs_sockmsg.flags);
+
+	return CT_DONE;
+}
+
+static int
+vfs_recvfrom_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sendrecv.fd);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_recvfrom_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	put_buf(proc, "buf", failed, m_out->m_lc_vfs_sendrecv.buf,
+	    m_in->m_type);
+	put_value(proc, "len", "%zu", m_out->m_lc_vfs_sendrecv.len);
+	put_flags(proc, "flags", msg_flags, COUNT(msg_flags), "0x%x",
+	    m_out->m_lc_vfs_sendrecv.flags);
+	put_struct_sockaddr(proc, "addr", failed,
+	    m_out->m_lc_vfs_sendrecv.addr, m_in->m_vfs_lc_socklen.len);
+	if (m_out->m_lc_vfs_sendrecv.addr == 0)
+		put_field(proc, "addr_len", "NULL");
+	else if (!failed)
+		put_value(proc, "addr_len", "{%u}",
+		    m_in->m_vfs_lc_socklen.len);
+	else
+		put_field(proc, "addr_len", "&..");
+
+	put_equals(proc);
+	put_result(proc);
+}
+
+static int
+vfs_recvmsg_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockmsg.fd);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_recvmsg_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	/*
+	 * We choose to print only the resulting structure in this case.  Doing
+	 * so is easier and less messy than printing both the original and the
+	 * result for the fields that are updated by the system (msg_namelen
+	 * and msg_controllen); also, this approach is stateless.  Admittedly
+	 * it is not entirely consistent with many other parts of the trace
+	 * output, though.
+	 */
+	put_struct_msghdr(proc, "msg", PF_ALT | failed,
+	    m_out->m_lc_vfs_sockmsg.msgbuf, m_in->m_type);
+	put_flags(proc, "flags", msg_flags, COUNT(msg_flags), "0x%x",
+	    m_out->m_lc_vfs_sockmsg.flags);
+
+	put_equals(proc);
+	put_result(proc);
+}
+
+static void
+put_sockopt_name(struct trace_proc * proc, const char * name, int level,
+	int optname)
+{
+	const char *text = NULL;
+
+	/*
+	 * The only level for which we can know names is SOL_SOCKET.  See also
+	 * put_socket_level().  Of course we could guess, but then we need a
+	 * proper guessing system, which should probably also take into account
+	 * the [gs]etsockopt option length.  TODO.
+	 */
+	if (!valuesonly && level == SOL_SOCKET) {
+		switch (optname) {
+		TEXT(SO_DEBUG);
+		TEXT(SO_ACCEPTCONN);
+		TEXT(SO_REUSEADDR);
+		TEXT(SO_KEEPALIVE);
+		TEXT(SO_DONTROUTE);
+		TEXT(SO_BROADCAST);
+		TEXT(SO_USELOOPBACK);
+		TEXT(SO_LINGER);
+		TEXT(SO_OOBINLINE);
+		TEXT(SO_REUSEPORT);
+		TEXT(SO_NOSIGPIPE);
+		TEXT(SO_TIMESTAMP);
+		TEXT(SO_PASSCRED);
+		TEXT(SO_PEERCRED);
+		TEXT(SO_SNDBUF);
+		TEXT(SO_RCVBUF);
+		TEXT(SO_SNDLOWAT);
+		TEXT(SO_RCVLOWAT);
+		TEXT(SO_ERROR);
+		TEXT(SO_TYPE);
+		TEXT(SO_OVERFLOWED);
+		TEXT(SO_NOHEADER);
+		TEXT(SO_SNDTIMEO);
+		TEXT(SO_RCVTIMEO);
+		}
+	}
+
+	if (text != NULL)
+		put_field(proc, name, text);
+	else
+		put_value(proc, name, "0x%x", optname);
+}
+
+static void
+put_sockopt_data(struct trace_proc * proc, const char * name, int flags,
+	int level, int optname, vir_bytes addr, socklen_t len)
+{
+	const char *text;
+	int i;
+	struct linger l;
+	struct uucred cr;
+	struct timeval tv;
+	void *ptr;
+	size_t size;
+
+	/* See above regarding ambiguity for levels other than SOL_SOCKET. */
+	if ((flags & PF_FAILED) || valuesonly > 1 || len == 0 ||
+	    level != SOL_SOCKET) {
+		put_ptr(proc, name, addr);
+
+		return;
+	}
+
+	/* Determine how much data to get, and where to put it. */
+	switch (optname) {
+	case SO_DEBUG:
+	case SO_ACCEPTCONN:
+	case SO_REUSEADDR:
+	case SO_KEEPALIVE:
+	case SO_DONTROUTE:
+	case SO_BROADCAST:
+	case SO_USELOOPBACK:
+	case SO_OOBINLINE:
+	case SO_REUSEPORT:
+	case SO_NOSIGPIPE:
+	case SO_TIMESTAMP:
+	case SO_PASSCRED:
+	case SO_SNDBUF:
+	case SO_RCVBUF:
+	case SO_SNDLOWAT:
+	case SO_RCVLOWAT:
+	case SO_ERROR:
+	case SO_TYPE:
+	case SO_OVERFLOWED:
+	case SO_NOHEADER:
+		ptr = &i;
+		size = sizeof(i);
+		break;
+	case SO_LINGER:
+		ptr = &l;
+		size = sizeof(l);
+		break;
+	case SO_PEERCRED:
+		ptr = &cr;
+		size = sizeof(cr);
+		break;
+	case SO_SNDTIMEO:
+	case SO_RCVTIMEO:
+		ptr = &tv;
+		size = sizeof(tv);
+		break;
+	default:
+		put_ptr(proc, name, addr);
+		return;
+	}
+
+	/* Get the data.  Do not bother with truncated values. */
+	if (len < size || mem_get_data(proc->pid, addr, ptr, size) < 0) {
+		put_ptr(proc, name, addr);
+
+		return;
+	}
+
+	/* Print the data according to the option name. */
+	switch (optname) {
+	case SO_LINGER:
+		/* This isn't going to appear anywhere else; do it inline. */
+		put_open(proc, name, 0, "{", ", ");
+		put_value(proc, "l_onoff", "%d", l.l_onoff);
+		put_value(proc, "l_linger", "%d", l.l_linger);
+		put_close(proc, "}");
+		break;
+	case SO_PEERCRED:
+		put_struct_uucred(proc, name, PF_LOCADDR, (vir_bytes)&cr);
+		break;
+	case SO_ERROR:
+		put_open(proc, name, 0, "{", ", ");
+		if (!valuesonly && (text = get_error_name(i)) != NULL)
+			put_field(proc, NULL, text);
+		else
+			put_value(proc, NULL, "%d", i);
+		put_close(proc, "}");
+		break;
+	case SO_TYPE:
+		put_open(proc, name, 0, "{", ", ");
+		put_socket_type(proc, NULL, i);
+		put_close(proc, "}");
+		break;
+	case SO_SNDTIMEO:
+	case SO_RCVTIMEO:
+		put_struct_timeval(proc, name, PF_LOCADDR, (vir_bytes)&tv);
+		break;
+	default:
+		/* All other options are integer values. */
+		put_value(proc, name, "{%d}", i);
+	}
+}
+
+static int
+vfs_setsockopt_out(struct trace_proc * proc, const message * m_out)
+{
+	int level, name;
+
+	level = m_out->m_lc_vfs_sockopt.level;
+	name = m_out->m_lc_vfs_sockopt.name;
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockopt.fd);
+	put_socket_level(proc, "level", level);
+	put_sockopt_name(proc, "name", level, name);
+	put_sockopt_data(proc, "buf", 0, level, name,
+	    m_out->m_lc_vfs_sockopt.buf, m_out->m_lc_vfs_sockopt.len);
+	put_value(proc, "len", "%u", m_out->m_lc_vfs_sockopt.len);
+
+	return CT_DONE;
+}
+
+static int
+vfs_getsockopt_out(struct trace_proc * proc, const message * m_out)
+{
+	int level;
+
+	level = m_out->m_lc_vfs_sockopt.level;
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockopt.fd);
+	put_socket_level(proc, "level", level);
+	put_sockopt_name(proc, "name", level, m_out->m_lc_vfs_sockopt.name);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_getsockopt_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	put_sockopt_data(proc, "buf", failed, m_out->m_lc_vfs_sockopt.level,
+	    m_out->m_lc_vfs_sockopt.name, m_out->m_lc_vfs_sockopt.buf,
+	    m_in->m_vfs_lc_socklen.len);
+	/*
+	 * For the length, we follow the same scheme as for addr_len pointers
+	 * in accept() et al., in that we print the result only.  We need not
+	 * take into account that the given buffer is NULL as it must not be.
+	 */
+	if (!failed)
+		put_value(proc, "len", "%u", m_out->m_lc_vfs_sockopt.len);
+	else
+		put_field(proc, "len", "&..");
+
+	put_equals(proc);
+	put_result(proc);
+}
+
+/* This function is shared between getsockname and getpeername. */
+static int
+vfs_getsockname_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_sockaddr.fd);
+
+	return CT_NOTDONE;
+}
+
+static void
+vfs_getsockname_in(struct trace_proc * proc, const message * m_out,
+	const message * m_in, int failed)
+{
+
+	put_struct_sockaddr(proc, "addr", failed,
+	    m_out->m_lc_vfs_sockaddr.addr, m_in->m_vfs_lc_socklen.len);
+	if (m_out->m_lc_vfs_sockaddr.addr == 0)
+		put_field(proc, "addr_len", "NULL");
+	else if (!failed)
+		put_value(proc, "addr_len", "{%u}",
+		    m_in->m_vfs_lc_socklen.len);
+	else
+		put_field(proc, "addr_len", "&..");
+
+	put_equals(proc);
+	put_result(proc);
+}
+
+void
+put_shutdown_how(struct trace_proc * proc, const char * name, int how)
+{
+	const char *text = NULL;
+
+	if (!valuesonly) {
+		switch (how) {
+		TEXT(SHUT_RD);
+		TEXT(SHUT_WR);
+		TEXT(SHUT_RDWR);
+		}
+	}
+
+	if (text != NULL)
+		put_field(proc, name, text);
+	else
+		put_value(proc, name, "%d", how);
+}
+
+static int
+vfs_shutdown_out(struct trace_proc * proc, const message * m_out)
+{
+
+	put_fd(proc, "fd", m_out->m_lc_vfs_shutdown.fd);
+	put_shutdown_how(proc, "how", m_out->m_lc_vfs_shutdown.how);
+
+	return CT_DONE;
+}
+
 #define VFS_CALL(c) [((VFS_ ## c) - VFS_BASE)]
 
 static const struct call_handler vfs_map[] = {
@@ -1411,6 +2420,28 @@ static const struct call_handler vfs_map[] = {
 	    vfs_svrctl_in),
 	VFS_CALL(GCOV_FLUSH) = HANDLER("gcov_flush", vfs_gcov_flush_out,
 	    default_in),
+	VFS_CALL(SOCKET) = HANDLER("socket", vfs_socket_out, default_in),
+	VFS_CALL(SOCKETPAIR) = HANDLER("socketpair", vfs_socketpair_out,
+	    vfs_socketpair_in),
+	VFS_CALL(BIND) = HANDLER("bind", vfs_bind_out, default_in),
+	VFS_CALL(CONNECT) = HANDLER("connect", vfs_bind_out, default_in),
+	VFS_CALL(LISTEN) = HANDLER("listen", vfs_listen_out, default_in),
+	VFS_CALL(ACCEPT) = HANDLER("accept", vfs_accept_out, vfs_accept_in),
+	VFS_CALL(SENDTO) = HANDLER("sendto", vfs_sendto_out, default_in),
+	VFS_CALL(SENDMSG) = HANDLER("sendmsg", vfs_sendmsg_out, default_in),
+	VFS_CALL(RECVFROM) = HANDLER("recvfrom", vfs_recvfrom_out,
+	    vfs_recvfrom_in),
+	VFS_CALL(RECVMSG) = HANDLER("recvmsg", vfs_recvmsg_out,
+	    vfs_recvmsg_in),
+	VFS_CALL(SETSOCKOPT) = HANDLER("setsockopt", vfs_setsockopt_out,
+	    default_in),
+	VFS_CALL(GETSOCKOPT) = HANDLER("getsockopt", vfs_getsockopt_out,
+	    vfs_getsockopt_in),
+	VFS_CALL(GETSOCKNAME) = HANDLER("getsockname", vfs_getsockname_out,
+	    vfs_getsockname_in),
+	VFS_CALL(GETPEERNAME) = HANDLER("getpeername", vfs_getsockname_out,
+	    vfs_getsockname_in),
+	VFS_CALL(SHUTDOWN) = HANDLER("shutdown", vfs_shutdown_out, default_in),
 };
 
 const struct calls vfs_calls = {

@@ -247,6 +247,27 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
 	struct timespec * modtv);
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
+/* socket.c */
+int do_socket(void);
+int do_socketpair(void);
+int do_bind(void);
+int do_connect(void);
+int do_listen(void);
+int do_accept(void);
+void resume_accept(struct fproc *rfp, int status, dev_t dev,
+	unsigned int addr_len, int listen_fd);
+int do_sendto(void);
+int do_recvfrom(void);
+void resume_recvfrom(struct fproc *rfp, int status, unsigned int addr_len);
+int do_sockmsg(void);
+void resume_recvmsg(struct fproc *rfp, int status, unsigned int ctl_len,
+	unsigned int addr_len, int flags, vir_bytes msg_buf);
+int do_setsockopt(void);
+int do_getsockopt(void);
+int do_getsockname(void);
+int do_getpeername(void);
+int do_shutdown(void);
+
 /* stadir.c */
 int do_chdir(void);
 int do_fchdir(void);

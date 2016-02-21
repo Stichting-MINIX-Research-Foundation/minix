@@ -1,13 +1,7 @@
-/*
-
-   getsockname()
-
-   from socket emulation library for Minix 2.0.x
-
-*/
-
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,9 +16,7 @@
 #include <net/gen/udp_io.h>
 #include <sys/un.h>
 
-/*
 #define DEBUG 0
-*/
 
 static int _tcp_getsockname(int fd, struct sockaddr *__restrict address,
    socklen_t *__restrict address_len, nwio_tcpconf_t *tcpconfp);
@@ -35,6 +27,32 @@ static int _udp_getsockname(int fd, struct sockaddr *__restrict address,
 static int _uds_getsockname(int fd, struct sockaddr *__restrict address,
    socklen_t *__restrict address_len, struct sockaddr_un *uds_addr);
 
+/*
+ * Get the local address of a socket.
+ */
+static int
+__getsockname(int fd, struct sockaddr * __restrict address,
+	socklen_t * __restrict address_len)
+{
+	message m;
+
+	if (address_len == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sockaddr.fd = fd;
+	m.m_lc_vfs_sockaddr.addr = (vir_bytes)address;
+	m.m_lc_vfs_sockaddr.addr_len = *address_len;
+
+	if (_syscall(VFS_PROC_NR, VFS_GETSOCKNAME, &m) < 0)
+		return -1;
+
+	*address_len = m.m_vfs_lc_socklen.len;
+	return 0;
+}
+
 int getsockname(int fd, struct sockaddr *__restrict address,
    socklen_t *__restrict address_len)
 {
@@ -43,7 +61,11 @@ int getsockname(int fd, struct sockaddr *__restrict address,
 	nwio_udpopt_t udpopt;
 	struct sockaddr_un uds_addr;
 
-#ifdef DEBUG
+	r = __getsockname(fd, address, address_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
+
+#if DEBUG
 	fprintf(stderr,"mnx_getsockname: ioctl fd %d.\n", fd);
 #endif
 
@@ -83,11 +105,7 @@ int getsockname(int fd, struct sockaddr *__restrict address,
 		return _uds_getsockname(fd, address, address_len, &uds_addr);
 	}
 
-#if DEBUG
-	fprintf(stderr, "getsockname: not implemented for fd %d\n", socket);
-#endif
-
-	errno= ENOSYS;
+	errno = ENOTSOCK;
 	return -1;
 }
 

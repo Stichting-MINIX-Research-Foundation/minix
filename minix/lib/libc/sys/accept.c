@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -18,19 +19,49 @@
 #include <net/gen/udp.h>
 #include <net/gen/udp_io.h>
 
-#define DEBUG 0
-
 static int _tcp_accept(int sock, struct sockaddr *__restrict address,
 	socklen_t *__restrict address_len);
 
 static int _uds_accept(int sock, struct sockaddr *__restrict address,
 	socklen_t *__restrict address_len);
 
+/*
+ * Accept a connection on a listening socket, creating a new socket.
+ */
+static int
+__accept(int fd, struct sockaddr * __restrict address,
+	socklen_t * __restrict address_len)
+{
+	message m;
+	int r;
+
+	if (address != NULL && address_len == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sockaddr.fd = fd;
+	m.m_lc_vfs_sockaddr.addr = (vir_bytes)address;
+	m.m_lc_vfs_sockaddr.addr_len = (address != NULL) ? *address_len : 0;
+
+	if ((r = _syscall(VFS_PROC_NR, VFS_ACCEPT, &m)) < 0)
+		return -1;
+
+	if (address != NULL)
+		*address_len = m.m_vfs_lc_socklen.len;
+	return r;
+}
+
 int accept(int sock, struct sockaddr *__restrict address,
 	socklen_t *__restrict address_len)
 {
 	int r;
 	nwio_udpopt_t udpopt;
+
+	r = __accept(sock, address, address_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= _tcp_accept(sock, address, address_len);
 	if (r != -1 || errno != ENOTTY)
@@ -45,19 +76,14 @@ int accept(int sock, struct sockaddr *__restrict address,
 	 * filedescriptors that do not refer to a socket.
 	 */
 	r= ioctl(sock, NWIOGUDPOPT, &udpopt);
-	if (r == 0)
-	{
+	if (r == 0 || (r == -1 && errno != ENOTTY)) {
 		/* UDP socket */
 		errno= EOPNOTSUPP;
 		return -1;
 	}
-	if (errno == ENOTTY)
-	{
-		errno= ENOTSOCK;
-		return -1;
-	}
 
-	return r;
+	errno = ENOTSOCK;
+	return -1;
 }
 
 static int _tcp_accept(int sock, struct sockaddr *__restrict address,

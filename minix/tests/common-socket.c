@@ -307,8 +307,9 @@ void test_shutdown(const struct socket_test_info *info)
 
 		errno = 0;
 		rc = shutdown(0, how[i]);
-		if (!(rc == -1 && errno == ENOSYS) && !info->bug_shutdown) {
-			test_fail("shutdown() should have failed with ENOSYS");
+		if (!(rc == -1 && errno == ENOTSOCK) && !info->bug_shutdown) {
+			test_fail("shutdown() should have failed with "
+			    "ENOTSOCK");
 		}
 
 		debug("test shutdown() with a socket that is not connected");

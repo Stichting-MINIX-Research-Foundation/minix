@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -36,6 +37,38 @@ static ssize_t _uds_recvfrom_dgram(int sock, void *__restrict buffer,
 	size_t length, int flags, struct sockaddr *__restrict address,
 	socklen_t *__restrict address_len);
 
+/*
+ * Receive a message from a socket.
+ */
+static ssize_t
+__recvfrom(int fd, void * __restrict buffer, size_t length, int flags,
+	struct sockaddr * __restrict address,
+	socklen_t * __restrict address_len)
+{
+	message m;
+	ssize_t r;
+
+	if (address != NULL && address_len == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sendrecv.fd = fd;
+	m.m_lc_vfs_sendrecv.buf = (vir_bytes)buffer;
+	m.m_lc_vfs_sendrecv.len = length;
+	m.m_lc_vfs_sendrecv.flags = flags;
+	m.m_lc_vfs_sendrecv.addr = (vir_bytes)address;
+	m.m_lc_vfs_sendrecv.addr_len = (address != NULL) ? *address_len : 0;
+
+	if ((r = _syscall(VFS_PROC_NR, VFS_RECVFROM, &m)) < 0)
+		return -1;
+
+	if (address != NULL)
+		*address_len = m.m_vfs_lc_socklen.len;
+	return r;
+}
+
 ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	int flags, struct sockaddr *__restrict address,
 	socklen_t *__restrict address_len)
@@ -46,6 +79,10 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	nwio_ipopt_t ipopt;
 	struct sockaddr_un uds_addr;
 	int uds_sotype = -1;
+
+	r = __recvfrom(sock, buffer, length, flags, address, address_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 #if DEBUG
 	fprintf(stderr, "recvfrom: for fd %d\n", sock);
@@ -121,12 +158,10 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 		}
 
 		return rd;
-       }
+	}
 
-#if DEBUG
-	fprintf(stderr, "recvfrom: not implemented for fd %d\n", sock);
-#endif
-	abort();
+	errno = ENOTSOCK;
+	return -1;
 }
 
 static ssize_t _tcp_recvfrom(int sock, void *__restrict buffer, size_t length,

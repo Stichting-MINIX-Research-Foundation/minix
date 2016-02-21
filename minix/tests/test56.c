@@ -317,7 +317,9 @@ static void test_bind_unix(void)
 	addr.sun_path[2] = 'o';
 	addr.sun_path[3] = '\0';
 	SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
-	rc = bind(sd, (struct sockaddr *) &addr, strlen(addr.sun_path) + 1);
+	rc = bind(sd, (struct sockaddr *) &addr,
+	    offsetof(struct sockaddr_un, sun_path) + strlen(addr.sun_path) +
+	    1);
 	if (rc == -1) {
 		test_fail("bind() should have worked");
 	}

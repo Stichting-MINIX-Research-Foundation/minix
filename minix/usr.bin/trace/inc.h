@@ -17,6 +17,8 @@
 #include <minix/endpoint.h>
 #include <machine/stackframe.h>
 
+#include <netinet/in.h>
+
 #include "proc.h"
 #include "type.h"
 #include "proto.h"
