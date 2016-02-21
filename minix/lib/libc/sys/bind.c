@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <unistd.h>
 #include <stdint.h>
@@ -33,12 +34,32 @@ static int _udp_bind(int sock, const struct sockaddr *address,
 static int _uds_bind(int sock, const struct sockaddr *address,
 	socklen_t address_len, struct sockaddr_un *uds_addr);
 
+/*
+ * Bind a socket to a local address.
+ */
+static int
+__bind(int fd, const struct sockaddr * address, socklen_t address_len)
+{
+	message m;
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sockaddr.fd = fd;
+	m.m_lc_vfs_sockaddr.addr = (vir_bytes)address;
+	m.m_lc_vfs_sockaddr.addr_len = address_len;
+
+	return _syscall(VFS_PROC_NR, VFS_BIND, &m);
+}
+
 int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 {
 	int r;
 	nwio_tcpconf_t tcpconf;
 	nwio_udpopt_t udpopt;
 	struct sockaddr_un uds_addr;
+
+	r = __bind(sock, address, address_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
 	if (r != -1 || errno != ENOTTY)
@@ -74,10 +95,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 		return _uds_bind(sock, address, address_len, &uds_addr);
 	}
 
-#if DEBUG
-	fprintf(stderr, "bind: not implemented for fd %d\n", sock);
-#endif
-	errno= ENOSYS;
+	errno = ENOTSOCK;
 	return -1;
 }
 

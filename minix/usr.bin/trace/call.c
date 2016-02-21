@@ -98,7 +98,7 @@ put_message(struct trace_proc * proc, const char * name, int flags,
 	if (flags & PF_ALT)
 		put_endpoint(proc, "m_source", m.m_source);
 
-	put_value(proc, "m_type", "%x", m.m_type);
+	put_value(proc, "m_type", "0x%x", m.m_type);
 
 	put_close_struct(proc, FALSE /*all*/);
 }

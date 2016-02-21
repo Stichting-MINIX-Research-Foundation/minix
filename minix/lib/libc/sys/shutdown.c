@@ -1,6 +1,8 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
+#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
@@ -16,11 +18,30 @@
 static int _tcp_shutdown(int sock, int how);
 static int _uds_shutdown(int sock, int how);
 
+/*
+ * Shut down socket send and receive operations.
+ */
+static int
+__shutdown(int fd, int how)
+{
+	message m;
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_shutdown.fd = fd;
+	m.m_lc_vfs_shutdown.how = how;
+
+	return _syscall(VFS_PROC_NR, VFS_SHUTDOWN, &m);
+}
+
 int shutdown(int sock, int how)
 {
 	int r;
 	struct sockaddr_un uds_addr;
 	nwio_tcpconf_t tcpconf;
+
+	r = __shutdown(sock, how);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);
 	if (r != -1 || errno != ENOTTY)
@@ -44,10 +65,7 @@ int shutdown(int sock, int how)
 		return _uds_shutdown(sock, how);
 	}
 
-#if DEBUG
-	fprintf(stderr, "shutdown: not implemented for fd %d\n", sock);
-#endif
-	errno= ENOSYS;
+	errno = ENOTSOCK;
 	return -1;
 }
 

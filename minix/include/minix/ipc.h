@@ -715,6 +715,14 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lc_vfs_link);
 
 typedef struct {
+	int fd;
+	int backlog;
+
+	u8_t padding[48];
+} mess_lc_vfs_listen;
+_ASSERT_MSG_SIZE(mess_lc_vfs_listen);
+
+typedef struct {
 	off_t offset;
 
 	int fd;
@@ -802,6 +810,64 @@ typedef struct {
 	uint8_t padding[36];
 } mess_lc_vfs_select;
 _ASSERT_MSG_SIZE(mess_lc_vfs_select);
+
+typedef struct {
+	int fd;
+	vir_bytes buf;		/* void * */
+	size_t len;
+	int flags;
+	vir_bytes addr;		/* struct sockaddr * */
+	unsigned int addr_len;	/* socklen_t */
+
+	uint8_t padding[32];
+} mess_lc_vfs_sendrecv;
+_ASSERT_MSG_SIZE(mess_lc_vfs_sendrecv);
+
+typedef struct {
+	int fd;
+	int how;
+
+	uint8_t padding[48];
+} mess_lc_vfs_shutdown;
+_ASSERT_MSG_SIZE(mess_lc_vfs_shutdown);
+
+typedef struct {
+	int fd;
+	vir_bytes addr;		/* struct sockaddr * */
+	unsigned int addr_len;	/* socklen_t */
+
+	uint8_t padding[44];
+} mess_lc_vfs_sockaddr;
+_ASSERT_MSG_SIZE(mess_lc_vfs_sockaddr);
+
+typedef struct {
+	int domain;
+	int type;
+	int protocol;
+
+	uint8_t padding[44];
+} mess_lc_vfs_socket;
+_ASSERT_MSG_SIZE(mess_lc_vfs_socket);
+
+typedef struct {
+	int fd;
+	vir_bytes msgbuf;	/* struct msghdr * */
+	int flags;
+
+	uint8_t padding[44];
+} mess_lc_vfs_sockmsg;
+_ASSERT_MSG_SIZE(mess_lc_vfs_sockmsg);
+
+typedef struct {
+	int fd;
+	int level;
+	int name;
+	vir_bytes buf;		/* void * */
+	unsigned int len;	/* socklen_t */
+
+	uint8_t padding[36];
+} mess_lc_vfs_sockopt;
+_ASSERT_MSG_SIZE(mess_lc_vfs_sockopt);
 
 typedef struct {
 	size_t len;
@@ -1970,6 +2036,13 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_vfs_lc_lseek);
 
 typedef struct {
+	unsigned int len;	/* socklen_t */
+
+	uint8_t padding[52];
+} mess_vfs_lc_socklen;
+_ASSERT_MSG_SIZE(mess_vfs_lc_socklen);
+
+typedef struct {
 	endpoint_t id;
 	devminor_t minor;
 
@@ -2141,6 +2214,7 @@ typedef struct noxfer_message {
 		mess_lc_vfs_getvfsstat	m_lc_vfs_getvfsstat;
 		mess_lc_vfs_ioctl	m_lc_vfs_ioctl;
 		mess_lc_vfs_link	m_lc_vfs_link;
+		mess_lc_vfs_listen	m_lc_vfs_listen;
 		mess_lc_vfs_lseek	m_lc_vfs_lseek;
 		mess_lc_vfs_mknod	m_lc_vfs_mknod;
 		mess_lc_vfs_mount	m_lc_vfs_mount;
@@ -2149,6 +2223,12 @@ typedef struct noxfer_message {
 		mess_lc_vfs_readlink	m_lc_vfs_readlink;
 		mess_lc_vfs_readwrite	m_lc_vfs_readwrite;
 		mess_lc_vfs_select	m_lc_vfs_select;
+		mess_lc_vfs_sendrecv	m_lc_vfs_sendrecv;
+		mess_lc_vfs_shutdown	m_lc_vfs_shutdown;
+		mess_lc_vfs_sockaddr	m_lc_vfs_sockaddr;
+		mess_lc_vfs_socket	m_lc_vfs_socket;
+		mess_lc_vfs_sockmsg	m_lc_vfs_sockmsg;
+		mess_lc_vfs_sockopt	m_lc_vfs_sockopt;
 		mess_lc_vfs_stat	m_lc_vfs_stat;
 		mess_lc_vfs_statvfs1	m_lc_vfs_statvfs1;
 		mess_lc_vfs_truncate	m_lc_vfs_truncate;
@@ -2277,6 +2357,7 @@ typedef struct noxfer_message {
 		mess_vfs_fs_utime	m_vfs_fs_utime;
 		mess_vfs_lc_fdpair	m_vfs_lc_fdpair;
 		mess_vfs_lc_lseek	m_vfs_lc_lseek;
+		mess_vfs_lc_socklen	m_vfs_lc_socklen;
 		mess_vfs_lchardriver_cancel	m_vfs_lchardriver_cancel;
 		mess_vfs_lchardriver_openclose	m_vfs_lchardriver_openclose;
 		mess_vfs_lchardriver_readwrite	m_vfs_lchardriver_readwrite;

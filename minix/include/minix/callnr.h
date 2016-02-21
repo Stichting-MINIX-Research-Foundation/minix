@@ -118,7 +118,22 @@
 #define VFS_COPYFD		(VFS_BASE + 46)
 #define VFS_CHECKPERMS		(VFS_BASE + 47)
 #define VFS_GETSYSINFO		(VFS_BASE + 48)
+#define VFS_SOCKET		(VFS_BASE + 49)
+#define VFS_SOCKETPAIR		(VFS_BASE + 50)
+#define VFS_BIND		(VFS_BASE + 51)
+#define VFS_CONNECT		(VFS_BASE + 52)
+#define VFS_LISTEN		(VFS_BASE + 53)
+#define VFS_ACCEPT		(VFS_BASE + 54)
+#define VFS_SENDTO		(VFS_BASE + 55)
+#define VFS_SENDMSG		(VFS_BASE + 56)
+#define VFS_RECVFROM		(VFS_BASE + 57)
+#define VFS_RECVMSG		(VFS_BASE + 58)
+#define VFS_SETSOCKOPT		(VFS_BASE + 59)
+#define VFS_GETSOCKOPT		(VFS_BASE + 60)
+#define VFS_GETSOCKNAME		(VFS_BASE + 61)
+#define VFS_GETPEERNAME		(VFS_BASE + 62)
+#define VFS_SHUTDOWN		(VFS_BASE + 63)
 
-#define NR_VFS_CALLS		49	/* highest number from base plus one */
+#define NR_VFS_CALLS		64	/* highest number from base plus one */
 
 #endif /* !_MINIX_CALLNR_H */

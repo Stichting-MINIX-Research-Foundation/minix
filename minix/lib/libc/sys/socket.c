@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #ifdef __weak_alias
 __weak_alias(socket, __socket30)
@@ -38,9 +39,29 @@ static int _uds_socket(int type, int protocol);
 static int _raw_socket(int type, int protocol);
 static void _socket_flags(int type, int *result);
 
+/*
+ * Create a socket.
+ */
+static int
+__socket(int domain, int type, int protocol)
+{
+	message m;
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_socket.domain = domain;
+	m.m_lc_vfs_socket.type = type;
+	m.m_lc_vfs_socket.protocol = protocol;
+
+	return _syscall(VFS_PROC_NR, VFS_SOCKET, &m);
+}
+
 int socket(int domain, int type, int protocol)
 {
-	int sock_type;
+	int r, sock_type;
+
+	r = __socket(domain, type, protocol);
+	if (r != -1 || errno != EAFNOSUPPORT)
+		return r;
 
 	sock_type = type & ~SOCK_FLAGS_MASK;
 
@@ -48,37 +69,25 @@ int socket(int domain, int type, int protocol)
 	fprintf(stderr, "socket: domain %d, type %d, protocol %d\n",
 		domain, type, protocol);
 #endif
-	if (domain != AF_INET && domain != AF_UNIX)
-	{
-#if DEBUG
-		fprintf(stderr, "socket: bad domain %d\n", domain);
-#endif
-		errno= EAFNOSUPPORT;
-		return -1;
-	}
 
-	if (domain == AF_UNIX && (sock_type == SOCK_STREAM ||
-				  sock_type == SOCK_DGRAM ||
-				  sock_type == SOCK_SEQPACKET))
+	if (domain == AF_UNIX)
 		return _uds_socket(type, protocol);
 
-	if (domain == AF_INET && sock_type == SOCK_STREAM)
-		return _tcp_socket(type, protocol);
+	if (domain == AF_INET) {
+		switch (sock_type) {
+		case SOCK_STREAM:
+			return _tcp_socket(type, protocol);
+		case SOCK_DGRAM:
+			return _udp_socket(type, protocol);
+		case SOCK_RAW:
+			return _raw_socket(type, protocol);
+		default:
+			errno = EPROTOTYPE;
+			return -1;
+		}
+	}
 
-	if (domain == AF_INET && sock_type == SOCK_DGRAM)
-		return _udp_socket(type, protocol);
-
-	if (domain == AF_INET && sock_type == SOCK_RAW && protocol == IPPROTO_ICMP)
-		return _raw_socket(type, protocol);
-
-	if (domain == AF_INET && sock_type == SOCK_RAW && protocol == IPPROTO_UDP)
-		return _raw_socket(type, protocol);
-
-#if DEBUG
-	fprintf(stderr, "socket: nothing for domain %d, type %d, protocol %d\n",
-		domain, type, protocol);
-#endif
-	errno= EPROTOTYPE;
+	errno = EAFNOSUPPORT;
 	return -1;
 }
 
@@ -194,6 +203,15 @@ static int _raw_socket(int type, int protocol)
 static int _uds_socket(int type, int protocol)
 {
 	int fd, r, flags = O_RDWR, sock_type;
+
+	sock_type = type & ~SOCK_FLAGS_MASK;
+	if (sock_type != SOCK_STREAM &&
+	    sock_type != SOCK_DGRAM &&
+	    sock_type != SOCK_SEQPACKET) {
+		errno = EPROTOTYPE;
+		return -1;
+	}
+
 	if (protocol != 0)
 	{
 #if DEBUG
@@ -212,7 +230,6 @@ static int _uds_socket(int type, int protocol)
 	/* set the type for the socket via ioctl (SOCK_DGRAM, 
 	 * SOCK_STREAM, SOCK_SEQPACKET, etc)
 	 */
-	sock_type = type & ~SOCK_FLAGS_MASK;
 	r= ioctl(fd, NWIOSUDSTYPE, &sock_type);
 	if (r == -1) {
 		int ioctl_errno;

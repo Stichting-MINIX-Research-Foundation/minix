@@ -108,13 +108,9 @@ put_ipaddr(struct trace_proc * proc, const char * name, ipaddr_t ipaddr)
 {
 	struct in_addr in;
 
-	if (!valuesonly) {
-		in.s_addr = ipaddr;
+	in.s_addr = ipaddr;
 
-		/* Is this an acceptable encapsulation? */
-		put_value(proc, name, "[%s]", inet_ntoa(in));
-	} else
-		put_value(proc, name, "0x%08x", ntohl(ipaddr));
+	put_in_addr(proc, name, in);
 }
 
 static void
@@ -192,97 +188,6 @@ static const struct flags udpopt_flags[] = {
 	FLAG(NWUO_EN_IPOPT),
 	FLAG(NWUO_DI_IPOPT),
 };
-
-static void
-put_family(struct trace_proc * proc, const char * name, int family)
-{
-	const char *text = NULL;
-
-	if (!valuesonly) {
-		/* TODO: add all the other protocols */
-		switch (family) {
-		TEXT(AF_UNSPEC);
-		TEXT(AF_LOCAL);
-		TEXT(AF_INET);
-		TEXT(AF_INET6);
-		}
-	}
-
-	if (text != NULL)
-		put_field(proc, name, text);
-	else
-		put_value(proc, name, "%d", family);
-}
-
-static const struct flags sock_type[] = {
-	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_STREAM),
-	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_DGRAM),
-	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_RAW),
-	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_RDM),
-	FLAG_MASK(~SOCK_FLAGS_MASK, SOCK_SEQPACKET),
-	FLAG(SOCK_CLOEXEC),
-	FLAG(SOCK_NONBLOCK),
-	FLAG(SOCK_NOSIGPIPE),
-};
-
-static void
-put_shutdown_how(struct trace_proc * proc, const char * name, int how)
-{
-	const char *text = NULL;
-
-	if (!valuesonly) {
-		switch (how) {
-		TEXT(SHUT_RD);
-		TEXT(SHUT_WR);
-		TEXT(SHUT_RDWR);
-		}
-	}
-
-	if (text != NULL)
-		put_field(proc, name, text);
-	else
-		put_value(proc, name, "%d", how);
-}
-
-static void
-put_struct_uucred(struct trace_proc * proc, const char * name, int flags,
-	vir_bytes addr)
-{
-	struct uucred cred;
-
-	if (!put_open_struct(proc, name, flags, addr, &cred, sizeof(cred)))
-		return;
-
-	put_value(proc, "cr_uid", "%u", cred.cr_uid);
-	if (verbose > 0) {
-		put_value(proc, "cr_gid", "%u", cred.cr_gid);
-		if (verbose > 1)
-			put_value(proc, "cr_ngroups", "%d", cred.cr_ngroups);
-		put_groups(proc, "cr_groups", PF_LOCADDR,
-		    (vir_bytes)&cred.cr_groups, cred.cr_ngroups);
-	}
-
-	put_close_struct(proc, verbose > 0);
-}
-
-static void
-put_cmsg_type(struct trace_proc * proc, const char * name, int type)
-{
-	const char *text = NULL;
-
-	if (!valuesonly) {
-		switch (type) {
-		TEXT(SCM_RIGHTS);
-		TEXT(SCM_CREDS);
-		TEXT(SCM_TIMESTAMP);
-		}
-	}
-
-	if (text != NULL)
-		put_field(proc, name, text);
-	else
-		put_value(proc, name, "%d", type);
-}
 
 static void
 put_msg_control(struct trace_proc * proc, struct msg_control * ptr)
@@ -497,7 +402,7 @@ net_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
 		if ((sun = (struct sockaddr_un *)ptr) == NULL)
 			return dir;
 
-		put_family(proc, "sun_family", sun->sun_family);
+		put_socket_family(proc, "sun_family", sun->sun_family);
 
 		/* This could be extended to a generic sockaddr printer.. */
 		if (sun->sun_family == AF_LOCAL) {
@@ -512,8 +417,7 @@ net_ioctl_arg(struct trace_proc * proc, unsigned long req, void * ptr, int dir)
 		if (ptr == NULL)
 			return dir;
 
-		put_flags(proc, NULL, sock_type, COUNT(sock_type), "0x%x",
-		    *(int *)ptr);
+		put_socket_type(proc, NULL, *(int *)ptr);
 		return IF_ALL;
 
 	case NWIOSUDSSHUT:

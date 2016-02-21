@@ -1,5 +1,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -32,6 +33,26 @@ static ssize_t _uds_sendto_conn(int sock, const void *message, size_t length,
 static ssize_t _uds_sendto_dgram(int sock, const void *message, size_t length,
 	int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 
+/*
+ * Send a message on a socket.
+ */
+static ssize_t
+__sendto(int fd, const void * buffer, size_t length, int flags,
+	const struct sockaddr * dest_addr, socklen_t dest_len)
+{
+	message m;
+
+	memset(&m, 0, sizeof(m));
+	m.m_lc_vfs_sendrecv.fd = fd;
+	m.m_lc_vfs_sendrecv.buf = (vir_bytes)buffer;
+	m.m_lc_vfs_sendrecv.len = length;
+	m.m_lc_vfs_sendrecv.flags = flags;
+	m.m_lc_vfs_sendrecv.addr = (vir_bytes)dest_addr;
+	m.m_lc_vfs_sendrecv.addr_len = dest_len;
+
+	return _syscall(VFS_PROC_NR, VFS_SENDTO, &m);
+}
+
 ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
@@ -40,6 +61,10 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	nwio_udpopt_t udpopt;
 	nwio_ipopt_t ipopt;
 	int uds_sotype = -1;
+
+	r = __sendto(sock, message, length, flags, dest_addr, dest_len);
+	if (r != -1 || errno != ENOTSOCK)
+		return r;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
 	if (r != -1 || errno != ENOTTY)
@@ -114,10 +139,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 		return retval;
 	}
 
-#if DEBUG
-	fprintf(stderr, "sendto: not implemented for fd %d\n", sock);
-#endif
-	errno= ENOSYS;
+	errno = ENOTSOCK;
 	return -1;
 }
 
