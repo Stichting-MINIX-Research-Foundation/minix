@@ -298,12 +298,11 @@ int worker_can_start(struct fproc *rfp)
  * This function is used to serialize invocation of "special" procedures, and
  * not entirely safe for other cases, as explained in the comments below.
  */
-  int is_pending, is_active, has_normal_work, __unused has_pm_work;
+  int is_pending, is_active, has_normal_work;
 
   is_pending = (rfp->fp_flags & FP_PENDING);
   is_active = (rfp->fp_worker != NULL);
   has_normal_work = (rfp->fp_func != NULL);
-  has_pm_work = (rfp->fp_flags & FP_PM_WORK);
 
   /* If there is no work scheduled for the process, we can start work. */
   if (!is_pending && !is_active) return TRUE;
@@ -369,7 +368,7 @@ void worker_start(struct fproc *rfp, void (*func)(void), message *m_ptr,
  * message. Optionally, the last spare (deadlock-resolving) thread may be used
  * to execute the work immediately.
  */
-  int is_pm_work, is_pending, is_active, has_normal_work, __unused has_pm_work;
+  int is_pm_work, is_pending, is_active, has_normal_work, has_pm_work;
 
   assert(rfp != NULL);
 
