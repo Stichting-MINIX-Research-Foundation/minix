@@ -8,8 +8,6 @@
 #    Dec 20, 1994   created  (Kees J. Bot)
 #						
 
-LOCALRC=/usr/etc/rc.local
-MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=128
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 BOOTXXSECTS=32
@@ -316,7 +314,7 @@ then	echo "Note: you can't have /home with that size partition."
 	maxhome=0
 fi
 
-TMPMP=/m
+TMPMP=/mnt
 mkdir $TMPMP >/dev/null 2>&1
 
 confirm=""
@@ -332,15 +330,13 @@ echo " --- Step 4: Reinstall choice ------------------------------------------"
 		echo "You have selected an existing MINIX 3 partition."
 		echo "Type F for full installation (to overwrite entire partition)"
 		echo "Type R for a reinstallation (existing /home will not be affected)"
-		echo "Type B to reinstall/upgrade bootloader (no data affected)"
 		echo ""
-		echo -n "(F)ull, (R)einstall or (B)ootloader install? [R] "
+		echo -n "(F)ull or (R)einstall? [R] "
 		read conf
 		case "$conf" in
 		"") 	confirm="ok"; auto="r"; ;;
 		[Rr]*)	confirm="ok"; auto="r"; ;;
 		[Ff]*)	confirm="ok"; auto="" ;;
-		[Bb]*)	confirm="ok"; bootreinstall="ok" ;;
 		esac
 
 	else	echo ""
@@ -350,188 +346,6 @@ echo " --- Step 4: Reinstall choice ------------------------------------------"
 	fi
 
 done
-
-if [ "$bootreinstall" = "ok" ]
-then
-	echo ""
-	echo " --- Step 5: Reinstall bootloader ----------------------------------"
-	echo ""
-
-	echo "WARNING: This procedure uses your current /usr to store your /."
-	echo "Once the procedure starts, it has to finish"
-	echo "to restore your / partition. Please make sure it is not interrupted."
-	echo ""
-
-	echo -n "It's recommended to run fsck before you continue, run? [Y/n] "
-	read ok
-	if [ "$ok" = "y" -o "$ok" = "Y" -o "$ok" = "" ]
-	then
-		fsck -t mfs -T mfs:-a "/dev/$root" >/dev/null
-		fsck -t mfs -T mfs:-a "/dev/$usr" >/dev/null
-	fi
-
-	# If there is no ELF stuff and not enough space after repartitioning,
-	# user will fall into trouble. So at first copy new stuff.
-	mount "/dev/$root" /mnt >/dev/null || exit
-
-	# grep, stat, etc in chroot
-	mount "/dev/$usr" /mnt/usr >/dev/null || exit
-
-	cp -pf /bin/update_bootcfg /mnt/bin/ && \
-		cp -pf /etc/boot.cfg.default /mnt/etc/ && \
-		cp -pf /usr/mdec/boot_monitor /mnt/ || exit
-
-	if [ ! -d /mnt/boot/minix_default -o ! -r /mnt/boot/minix_default/kernel ]
-	then
-		if [ -r /mnt/boot.cfg ]
-		then
-			echo ""
-			echo "There is no /boot/minix_default/, but /boot.cfg exists."
-			echo -n "Do you want to copy minix_default from CD? [Y/n] "
-		else
-			echo ""
-			echo -n "There is no /boot/minix_default/, do you want to copy it from CD? [Y/n] "
-		fi
-		read ok
-		if [ "$ok" = "y" -o "$ok" = "Y" -o "$ok" = "" ]
-		then
-			if [ -e /mnt/boot/minix_default ]
-			then
-				echo "Old /boot/minix_default moved to /boot/minix_default_old"
-				mv /mnt/boot/minix_default /mnt/boot/minix_default_old
-			fi
-
-			cp -rfp /boot/minix_default /mnt/boot/ || exit
-		fi
-	fi
-
-	echo " * Updating /boot.cfg"
-
-	chroot /mnt update_bootcfg
-
-	sync
-
-	# Get sizes and space availability while the file systems are still
-	# mounted. Otherwise we have to mount them again just for this.
-	required_root_space=`df -kP /dev/$root | awk '{print $3}' | tail -n 1`
-	free_root_space=`df -kP /dev/$root | awk '{print $4}' | tail -n 1`
-	free_usr_space=`df -kP /dev/$usr | awk '{print $4}' | tail -n 1`
-
-	umount /mnt/usr && umount /mnt || exit
-
-	# Check if enough space for new boot
-	bootspace=$((`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr`)) >/dev/null
-	if [ $bootspace -lt $BOOTXXSECTS ]
-	then
-		echo ""
-		echo "Root partition size will be reduced by up to 16Kb to fit new bootloader."
-		echo "This is not a problem."
-
-		# round 16 => 20
-		if [ "$free_root_space" -le 20 ]
-		then
-			echo ""
-			echo "Not enough space on /dev/$root, you need at least 20Kb to use new bootloader!"
-			exit 1
-		fi
-
-		ROOTSECTS=`expr \`devsize /dev/$root\` - $BOOTXXSECTS + $bootspace`
-
-		if [ "$required_root_space" -gt "$free_usr_space" ]
-		then
-			echo ""
-			echo "You don't have enough free space on /dev/$usr to backup /dev/$root!"
-			echo "${free_usr_space}Kb available, ${required_root_space} required."
-			exit 1
-		fi
-
-		mkdir /mnt/root && mkdir /mnt/usr || exit
-
-		echo "Re-mounting your current / and /usr"
-
-		mount "/dev/$root" /mnt/root || exit
-		mount "/dev/$usr" /mnt/usr || exit
-
-		mkdir /mnt/usr/tmp/root_backup || exit
-
-		echo " * Copying / contents"
-
-		cp -rfp /mnt/root/* /mnt/usr/tmp/root_backup
-		if [ $? -ne 0 ]
-		then
-			echo ""
-			echo "Failed to backup root partition, aborting!"
-			rm -rf /mnt/usr/tmp/root_backup
-			# umount shouldn't fail here, but if it will, next
-			# "rm -rf" will serve for user's pleasure.
-			umount /mnt/usr >/dev/null || exit
-			umount /mnt/root >/dev/null || exit
-			rm -rf /mnt/root /mnt/usr
-			exit 1
-		fi
-
-		echo " * Copying done"
-
-		umount /mnt/root 
-		umount /mnt/usr 
-
-		add_subpart=""
-		minix_subparts=`echo -n "" | fdisk /dev/$primary | grep "MINIX" | wc -l`
-		if [ "$minix_subparts" -gt 3 ]
-		then
-			echo ""
-			echo "You have additional subpartition except /, /usr and /home."
-			echo "Partition type will be set to MINIX (81), you can change it later using part."
-			echo -n "Do you want to continue? [Y/n] "
-			read ok
-			[ "$ok" = "n" -o "$ok" = "N" ] && exit
-			add_subpart="81:exist"
-		fi
-
-		echo " * Repartitioning"
-
-		partition /dev/$primary $BOOTXXSECTS 81:${ROOTSECTS}* 81:exist 81:exist $add_subpart || exit
-
-		echo " * mkfs on new /"
-
-		mkfs.mfs "/dev/$root" || exit
-
-		if [ $? -ne 0 ]
-		then
-			echo "Failed to repartition /dev/$primary"
-			rmdir /mnt/root
-			rmdir /mnt/usr
-			exit 1
-		fi
-
-		mount "/dev/$usr" /mnt/usr || exit
-		mount "/dev/$root" /mnt/root || exit
-
-		echo " * Filling new / filesystem"
-
-		mv /mnt/usr/tmp/root_backup/* /mnt/root/ || exit
-		if [ $? -ne 0 ]
-		then
-			echo "Failed to copy old root data! It is in /tmp/root_backup/"
-		fi
-
-		rmdir /mnt/usr/tmp/root_backup/
-
-		umount /mnt/root
-		umount /mnt/usr
-	fi
-
-	check_mbr
-	installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit 1
-
-	if [ $? -ne 0 ]
-	then
-		echo "Warning: failed to remove /tmp/root_backup!"
-	fi
-
-	echo "New boot installed successfully! You can reboot now."
-	exit
-fi
 
 rmdir $TMPMP
 
@@ -719,8 +533,6 @@ if [ "$nohome" = 0 ]; then
 	chown $(stat -f %u /home) /mnt/home
 	chgrp $(stat -f %g /home) /mnt/home
 fi
-
-cp /mnt/etc/motd.install /mnt/etc/motd
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
