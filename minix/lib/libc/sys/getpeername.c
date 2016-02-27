@@ -60,7 +60,7 @@ int getpeername(int sock, struct sockaddr *__restrict address,
 	struct sockaddr_un uds_addr;
 
 	r = __getpeername(sock, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);

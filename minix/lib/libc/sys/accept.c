@@ -60,7 +60,7 @@ int accept(int sock, struct sockaddr *__restrict address,
 	nwio_udpopt_t udpopt;
 
 	r = __accept(sock, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= _tcp_accept(sock, address, address_len);
