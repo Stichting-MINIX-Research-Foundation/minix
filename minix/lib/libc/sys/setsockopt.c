@@ -56,7 +56,7 @@ int setsockopt(int sock, int level, int option_name,
 	struct sockaddr_un uds_addr;
 
 	r = __setsockopt(sock, level, option_name, option_value, option_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);

@@ -185,7 +185,12 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
 	 * hard to debug problems (instruction executing being off by one)
 	 * and this assumption needs re-examining, hence the assert.
 	 */
+	if (*saved_lr != ifar)
+		printf("KERNEL: mismatch - LR 0x%"PRIx32" IFSR 0x%"PRIx32
+		    " IFAR 0x%"PRIx32"\n", *saved_lr, ifsr, ifar);
+#if 0
 	assert(*saved_lr == ifar);
+#endif
 	pagefault(saved_proc, saved_lr, is_nested, ifar, ifsr);
 	return;
   }

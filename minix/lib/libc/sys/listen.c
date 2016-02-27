@@ -35,7 +35,7 @@ int listen(int sock, int backlog)
 	int r;
 
 	r = __listen(sock, backlog);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOTCPLISTENQ, &backlog);
