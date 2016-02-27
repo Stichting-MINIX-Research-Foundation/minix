@@ -58,7 +58,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len)
 	struct sockaddr_un uds_addr;
 
 	r = __bind(sock, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);

@@ -81,7 +81,7 @@ ssize_t recvfrom(int sock, void *__restrict buffer, size_t length,
 	int uds_sotype = -1;
 
 	r = __recvfrom(sock, buffer, length, flags, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 #if DEBUG
