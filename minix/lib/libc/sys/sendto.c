@@ -63,7 +63,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	int uds_sotype = -1;
 
 	r = __sendto(sock, message, length, flags, dest_addr, dest_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);

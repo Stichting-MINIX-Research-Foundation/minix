@@ -62,7 +62,7 @@ int getsockname(int fd, struct sockaddr *__restrict address,
 	struct sockaddr_un uds_addr;
 
 	r = __getsockname(fd, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 #if DEBUG
