@@ -57,7 +57,7 @@ int connect(int sock, const struct sockaddr *address,
 	nwio_udpopt_t udpopt;
 
 	r = __connect(sock, address, address_len);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);

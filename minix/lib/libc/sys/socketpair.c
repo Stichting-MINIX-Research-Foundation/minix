@@ -45,7 +45,7 @@ socketpair(int domain, int type, int protocol, int sv[2])
 	int r;
 
 	r = __socketpair(domain, type, protocol, sv);
-	if (r != -1 || errno != EAFNOSUPPORT)
+	if (r != -1 || (errno != EAFNOSUPPORT && errno != ENOSYS))
 		return r;
 
 #if DEBUG

@@ -60,7 +60,7 @@ int socket(int domain, int type, int protocol)
 	int r, sock_type;
 
 	r = __socket(domain, type, protocol);
-	if (r != -1 || errno != EAFNOSUPPORT)
+	if (r != -1 || (errno != EAFNOSUPPORT && errno != ENOSYS))
 		return r;
 
 	sock_type = type & ~SOCK_FLAGS_MASK;

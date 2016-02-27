@@ -40,7 +40,7 @@ int shutdown(int sock, int how)
 	nwio_tcpconf_t tcpconf;
 
 	r = __shutdown(sock, how);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	r= ioctl(sock, NWIOGTCPCONF, &tcpconf);

@@ -88,7 +88,7 @@ ssize_t sendmsg(int sock, const struct msghdr *msg, int flags)
 	int uds_sotype;
 
 	r = __sendmsg(sock, msg, flags);
-	if (r != -1 || errno != ENOTSOCK)
+	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
 	if (msg == NULL) {
