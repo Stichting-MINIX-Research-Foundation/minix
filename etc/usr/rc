@@ -238,7 +238,7 @@ start|autoboot)
     fi
     # syslogd has not been started yet
     rm -f /var/run/syslogd.pid
-    daemonize syslogd
+    daemonize syslogd -s
     echo .
 
     # i2c only supported on ARM at the moment
