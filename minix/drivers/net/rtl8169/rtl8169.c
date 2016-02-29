@@ -752,6 +752,9 @@ static void rl_reset_hw(re_t *rep)
 	case RL_TCR_HWVER_RTL8105E:
 		rep->re_model = "RTL8105E";
 		break;
+        case RL_TCR_HWVER_RTL8111GS_CG:
+                rep->re_model = "RTL8111GS-GC";
+                break;
 	default:
 		rep->re_model = "Unknown";
 		rep->re_mac = t;
