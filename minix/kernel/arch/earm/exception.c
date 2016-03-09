@@ -176,6 +176,7 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
   }
 
   if (!is_nested && vector == PREFETCH_ABORT_VECTOR) {
+	static int warned = FALSE;
 	reg_t ifar = read_ifar(), ifsr = read_ifsr();
 
 	/* The saved_lr is the instruction we're going to execute after
@@ -183,9 +184,21 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
 	 * while fetching the instruction. As far as we know the two
 	 * should be the same, if not this assumption will lead to very
 	 * hard to debug problems (instruction executing being off by one)
-	 * and this assumption needs re-examining, hence the assert.
+	 * and this assumption needs re-examining.
+	 *
+	 * UPDATE: at least qemu-linaro does in fact sometimes generate faults
+	 * with LR and IFAR differing by as many as 64 bytes.  While the page
+	 * fault resolution code below handles this case just fine, the cause
+	 * of this behavior is unknown.  We have not yet seen the same on
+	 * actual hardware, which is why we warn about this problem once.
 	 */
-	assert(*saved_lr == ifar);
+	if (*saved_lr != ifar && !warned) {
+		printf("KERNEL: prefetch abort with differing IFAR and LR\n");
+		printf("KERNEL: IFSR %"PRIx32" IFAR %"PRIx32" LR %"PRIx32" in "
+		    "%s/%d\n", ifsr, ifar, *saved_lr, saved_proc->p_name,
+		    saved_proc->p_endpoint);
+		warned = TRUE;
+	}
 	pagefault(saved_proc, saved_lr, is_nested, ifar, ifsr);
 	return;
   }
