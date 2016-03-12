@@ -107,11 +107,28 @@ int do_set()
 
   switch(call_nr) {
 	case PM_SETUID:
-	case PM_SETEUID:
 		uid = m_in.m_lc_pm_setuid.uid;
+		/* NetBSD specific semantics: setuid(geteuid()) may fail. */
 		if (rmp->mp_realuid != uid && rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
-		if(call_nr == PM_SETUID) rmp->mp_realuid = uid;
+		/* BSD semantics: always update all three fields. */
+		rmp->mp_realuid = uid;
+		rmp->mp_effuid = uid;
+		rmp->mp_svuid = uid;
+
+		m.m_type = VFS_PM_SETUID;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
+		m.VFS_PM_EID = rmp->mp_effuid;
+		m.VFS_PM_RID = rmp->mp_realuid;
+
+		break;
+
+	case PM_SETEUID:
+		uid = m_in.m_lc_pm_setuid.uid;
+		/* BSD semantics: seteuid(geteuid()) may fail. */
+		if (rmp->mp_realuid != uid && rmp->mp_svuid != uid &&
+		    rmp->mp_effuid != SUPER_USER)
+			return(EPERM);
 		rmp->mp_effuid = uid;
 
 		m.m_type = VFS_PM_SETUID;
@@ -122,11 +139,25 @@ int do_set()
 		break;
 
 	case PM_SETGID:
-	case PM_SETEGID:
 		gid = m_in.m_lc_pm_setgid.gid;
 		if (rmp->mp_realgid != gid && rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
-		if(call_nr == PM_SETGID) rmp->mp_realgid = gid;
+		rmp->mp_realgid = gid;
+		rmp->mp_effgid = gid;
+		rmp->mp_svgid = gid;
+
+		m.m_type = VFS_PM_SETGID;
+		m.VFS_PM_ENDPT = rmp->mp_endpoint;
+		m.VFS_PM_EID = rmp->mp_effgid;
+		m.VFS_PM_RID = rmp->mp_realgid;
+
+		break;
+
+	case PM_SETEGID:
+		gid = m_in.m_lc_pm_setgid.gid;
+		if (rmp->mp_realgid != gid && rmp->mp_svgid != gid &&
+		    rmp->mp_effuid != SUPER_USER)
+			return(EPERM);
 		rmp->mp_effgid = gid;
 
 		m.m_type = VFS_PM_SETGID;
@@ -135,6 +166,7 @@ int do_set()
 		m.VFS_PM_RID = rmp->mp_realgid;
 
 		break;
+
 	case PM_SETGROUPS:
 		if (rmp->mp_effuid != SUPER_USER)
 			return(EPERM);

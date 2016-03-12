@@ -43,9 +43,7 @@ test_nonroot(void (* proc)(void))
 
 		if ((pw = getpwnam(NONROOT_USER)) == NULL) e(0);
 
-		/* FIXME: this may rely on a MINIXism. */
 		if (setuid(pw->pw_uid) != 0) e(0);
-		if (seteuid(pw->pw_uid) != 0) e(0);
 
 		proc();
 
