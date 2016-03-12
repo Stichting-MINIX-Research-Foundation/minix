@@ -750,6 +750,8 @@ fill_proc2_user(struct kinfo_proc2 * p, int mslot)
 	p->p_uctime_usec = tv.tv_usec;
 	p->p_realflag = p->p_flag;
 	p->p_nlwps = (zombie) ? 0 : 1;
+	p->p_svuid = mp->mp_svuid;
+	p->p_svgid = mp->mp_svgid;
 
 	p->p_stat = get_lwp_stat(mslot, &p->p_wchan, p->p_wmesg,
 	    sizeof(p->p_wmesg), &p->p_flag);

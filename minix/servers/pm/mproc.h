@@ -37,11 +37,13 @@ EXTERN struct mproc {
   clock_t mp_child_utime;	/* cumulative user time of children */
   clock_t mp_child_stime;	/* cumulative sys time of children */
 
-  /* Real and effective uids and gids. */
+  /* Real, effective, and saved user and group IDs. */
   uid_t mp_realuid;		/* process' real uid */
   uid_t mp_effuid;		/* process' effective uid */
+  uid_t mp_svuid;		/* process' saved uid */
   gid_t mp_realgid;		/* process' real gid */
   gid_t mp_effgid;		/* process' effective gid */
+  gid_t mp_svgid;		/* process' saved gid */
 
   /* Supplemental groups. */
   int mp_ngroups;		/* number of supplemental groups */
