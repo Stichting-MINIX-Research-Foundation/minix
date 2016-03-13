@@ -13,7 +13,7 @@ CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 LINTFLAGS+=-w
 SRCS+=	efun.c \
 	\
-	getfsspecname.c getmntopts.c \
+	getfsspecname.c getmntopts.c getmaxpartitions.c \
 	\
 	\
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
@@ -34,10 +34,6 @@ MAN=	efun.3 \
 	raise_default_signal.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 strpct.3 ttyaction.3 \
 	ttymsg.3 util.3
-
-.if defined(__MINIX)
-.include "${NETBSDSRCDIR}/minix/lib/libutil/Makefile.inc"
-.endif
 
 YPREFIX=__pd
 .PATH:	${NETBSDSRCDIR}/lib/libc/gen
