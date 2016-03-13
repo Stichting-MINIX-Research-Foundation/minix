@@ -40,7 +40,7 @@ char * netsock_user_name = NULL;
 							##__VA_ARGS__)
 
 
-struct socket socket[MAX_SOCKETS];
+struct socket socket_array[MAX_SOCKETS];
 
 static int netsock_open(devminor_t minor, int access, endpoint_t user_endpt);
 static int netsock_close(devminor_t minor);
@@ -249,10 +249,10 @@ struct socket * get_unused_sock(void)
 	int i;
 
 	for (i = SOCK_TYPES + MAX_DEVS; i < MAX_SOCKETS; i++) {
-		if (socket[i].ops == NULL) {
+		if (socket_array[i].ops == NULL) {
 			/* clear it all */
-			memset(&socket[i], 0, sizeof(struct socket));
-			return &socket[i];
+			memset(&socket_array[i], 0, sizeof(struct socket));
+			return &socket_array[i];
 		}
 	}
 

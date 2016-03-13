@@ -107,16 +107,16 @@ struct socket {
  */
 int socket_open(devminor_t minor);
 
-#define get_sock_num(x) ((long int) ((x) - socket))
+#define get_sock_num(x) ((long int) ((x) - socket_array))
 #define is_valid_sock_num(x) (x < MAX_SOCKETS)
-#define get_sock(x) &socket[x]
+#define get_sock(x) &socket_array[x]
 
 #define MAX_SOCKETS 255 /* FIXME as log as the sockets are identified by the
 			   minor device number 255 is ok */
 #define MAX_DEVS 5
 #define RESERVED (SOCK_TYPES + MAX_DEVS) /* rounded to 8 */
 
-extern struct socket socket[MAX_SOCKETS];
+extern struct socket socket_array[MAX_SOCKETS];
 
 void socket_request(message * m, int ipc_status);
 void mq_process(void);

@@ -42,6 +42,8 @@
 ./usr/include                                           minix-comp
 ./usr/include/a.out.h                                   minix-comp
 ./usr/include/aio.h                                     minix-comp
+./usr/include/altq                                      minix-comp
+./usr/include/altq/if_altq.h                            minix-comp
 ./usr/include/ar.h                                      minix-comp
 ./usr/include/archive.h                                 minix-comp
 ./usr/include/archive_entry.h                           minix-comp
@@ -1268,6 +1270,7 @@
 ./usr/include/msdosfs/msdosfsmount.h                    minix-comp
 ./usr/include/ndbm.h                                    minix-comp
 ./usr/include/net                                       minix-comp
+./usr/include/net/dlt.h                                 minix-comp
 ./usr/include/net/ethertypes.h                          minix-comp
 ./usr/include/net/gen                                   minix-comp
 ./usr/include/net/gen/arp_io.h                          minix-comp
@@ -1301,8 +1304,11 @@
 ./usr/include/net/gen/vjhc.h                            minix-comp
 ./usr/include/net/hton.h                                minix-comp
 ./usr/include/net/if.h                                  minix-comp
+./usr/include/net/if_arp.h                              minix-comp
+./usr/include/net/if_dl.h                               minix-comp
 ./usr/include/net/if_ether.h                            minix-comp
 ./usr/include/net/netlib.h                              minix-comp
+./usr/include/net/pfil.h                                minix-comp
 ./usr/include/net/radix.h                               minix-comp
 ./usr/include/net/route.h                               minix-comp
 ./usr/include/netconfig.h                               minix-comp

@@ -11,17 +11,16 @@ CPPFLAGS.setsockopt.c+= -D_MINIX_SYSTEM=1
 .endif
 .PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
-# Not supported by minix: iso_addr.c link_addr.c sockatmark.c
 SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getnetnamadr.c getnetent.c getpeereid.c \
 	getprotobyname.c getprotobynumber.c getprotoent.c \
 	getprotobyname_r.c getprotobynumber_r.c getprotoent_r.c \
 	getservbyname.c getservbyport.c getservent.c \
 	getservbyname_r.c getservbyport_r.c getservent_r.c \
-	\
+	iso_addr.c linkaddr.c \
 	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
 	rcmd.c recv.c send.c sethostent.c \
-#	sockatmark.c
+	sockatmark.c
 
 .if (${MKHESIOD} != "no")
 SRCS+=	hesiod.c
@@ -31,9 +30,7 @@ SRCS+=	getaddrinfo.c getnameinfo.c
 .if (${USE_INET6} != "no")
 SRCS+=	ip6opt.c rthdr.c vars6.c inet6_scopeid.c
 .endif
-.if !defined(__MINIX)
 SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
-.endif
 
 LPREFIX=_nsyy
 YPREFIX=_nsyy

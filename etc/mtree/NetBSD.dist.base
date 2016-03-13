@@ -71,6 +71,7 @@
 ./usr/games
 ./usr/games/hide		gname=games mode=0750
 ./usr/include
+./usr/include/altq
 ./usr/include/arpa
 ./usr/include/atf-c
 ./usr/include/atf-c++
