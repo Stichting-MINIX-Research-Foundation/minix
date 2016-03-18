@@ -1,5 +1,10 @@
 # /etc/rc - System startup script run by init before going multiuser.
 
+if sysenv bootramdisk >/dev/null
+then
+	/bin/sh /etc/rc.ramdisk
+fi
+
 # Are we booting from CD?
 bootcd="`/bin/sysenv bootcd`"
 
@@ -138,9 +143,12 @@ autoboot|start)
     fsck -x / $fflag $fsckopts
     mount -a
 
-    # Unmount and free now defunct ramdisk
-    umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
-    ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
+    if [ -z "`sysenv bootramdisk`" ]
+    then
+	# Unmount and free now defunct ramdisk
+	umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
+	ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
+    fi
 
     # Initialize files.
     >/var/run/utmp				# /etc/utmp keeps track of logins

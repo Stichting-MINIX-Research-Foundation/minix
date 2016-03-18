@@ -185,6 +185,20 @@ create_protos()
 }
 
 #
+# Create ramdisk image from root directory
+#
+# $1 : size of ramdisk
+create_ramdisk_image()
+{
+	PATH=$(cd ${CROSS_TOOLS}; pwd):$PATH
+
+	# Build image
+	_RAMDISKSIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d -b $1 -I 0 ${WORK_DIR}/imgrd.mfs ${WORK_DIR}/proto.root)
+	(cd ${WORK_DIR}; ${TOOLCHAIN_TRIPLET}objcopy -Ibinary -Bi386 -Oi586-elf32-minix imgrd.mfs imgrd.o)
+	${TOOLCHAIN_TRIPLET}clang --sysroot=${DESTDIR} -L ${DESTDIR}/usr/lib -static -o ${WORK_DIR}/mod06_memory ${OBJ}/minix/drivers/storage/memory/memory.o ${WORK_DIR}/imgrd.o -nodefaultlibs -lblockdriver -lchardriver -lsys -lminc
+}
+
+#
 # Bundle packages (won't preinstall them)
 #
 # $1 : packages to bundle
