@@ -365,7 +365,6 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
-#if !defined(__minix)
 /*
  * Options for use with [gs]etsockopt at the IPV6 level.
  * First word of comment is data type; bool is stored in int.
@@ -827,6 +826,5 @@ int	in6_print(char *, size_t, const struct in6_addr *);
 #define IN6_PRINT(b, a) (in6_print((b), sizeof(b), (a)), (b))
 int	sin6_print(char *, size_t, const void *);
 #endif
-#endif /* !defined(__minix) */
 
 #endif /* !_NETINET6_IN6_H_ */

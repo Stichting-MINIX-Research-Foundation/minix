@@ -2,14 +2,14 @@
 
 INCSDIR= /usr/include/netinet
 
-INCS=	\
-	in.h \
+INCS=	icmp6.h icmp_var.h if_ether.h if_inarp.h igmp.h \
+	igmp_var.h in.h in_pcb.h in_pcb_hdr.h \
 	in_systm.h \
-	ip.h \
-	ip_icmp.h ip_var.h \
-	tcp.h \
-	udp.h udp_var.h \
-	
+	in_var.h ip.h ip_carp.h ip6.h \
+	ip_icmp.h ip_mroute.h ip_var.h pim_var.h \
+	tcp.h tcp_debug.h tcp_fsm.h tcp_seq.h tcp_timer.h tcp_var.h \
+	tcpip.h udp.h udp_var.h \
+	tcp_vtw.h
 
 .if !defined(__MINIX)
 # ipfilter headers

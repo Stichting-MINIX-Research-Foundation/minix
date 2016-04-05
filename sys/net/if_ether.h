@@ -158,7 +158,6 @@ struct ethercom;
 
 typedef int (*ether_cb_t)(struct ethercom *);
 
-#if !defined(__minix)
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -188,14 +187,12 @@ struct ethercom {
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
 #endif
 };
-#endif /* !defined(__minix) */
 
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
 #define	ETHERCAP_MASK		0x00000007
 
-#if !defined(__minix)
 #define	ECCAPBITS		\
 	"\020"			\
 	"\1VLAN_MTU"		\
@@ -208,7 +205,6 @@ struct eccapreq {
 	int		eccr_capabilities;	/* supported capabiliites */
 	int		eccr_capenable;		/* capabilities enabled */
 };
-#endif /* !defined(__minix) */
 
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
@@ -224,7 +220,6 @@ int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
 void    ether_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 
-#if !defined(__minix)
 /*
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
@@ -243,7 +238,6 @@ struct ether_multi_sysctl {
 	uint8_t enm_addrlo[ETHER_ADDR_LEN];
 	uint8_t enm_addrhi[ETHER_ADDR_LEN];
 };
-#endif /* !defined(__minix) */
 
 /*
  * Structure used by macros below to remember position when stepping through

@@ -99,6 +99,11 @@
 ./usr/include/minix
 ./usr/include/msdosfs
 ./usr/include/net
+./usr/include/net80211
+./usr/include/netatalk
+./usr/include/netinet
+./usr/include/netinet6
+./usr/include/netmpls
 ./usr/include/netpgp
 ./usr/include/openssl
 ./usr/include/ppath

@@ -2,12 +2,12 @@
 
 INCSDIR= /usr/include/net
 
-INCS=	dlt.h ethertypes.h if.h if_arp.h \
+INCS=	bpf.h bpfdesc.h bpfjit.h dlt.h ethertypes.h if.h if_arp.h \
 	if_dl.h if_ether.h \
+	if_media.h \
 	\
-	\
-	\
-	pfil.h radix.h \
+	if_types.h \
+	pfil.h pfkeyv2.h radix.h \
 	route.h 
 
 .if !defined(__MINIX)

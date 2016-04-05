@@ -3,8 +3,8 @@
 .include <bsd.own.mk>
 
 SUBDIR=	altq arch dev fs \
-	net netinet netinet6 \
-        \
+	net net80211 netatalk netinet netinet6 \
+        netmpls \
 	sys ufs uvm
 
 .if !defined(__MINIX)
