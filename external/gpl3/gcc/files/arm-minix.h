@@ -133,8 +133,8 @@
 /* Default to full VFP if -mhard-float is specified.  */
 #undef MINIX_SUBTARGET_ASM_FLOAT_SPEC
 #define MINIX_SUBTARGET_ASM_FLOAT_SPEC					\
-	"%{mhard-float:{!mfpu=*:-mfpu=vfpv3-d16}}			\
-	 %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfpv3-d16}}"
+	"%{mhard-float:%{!mfpu=*:-mfpu=vfpv3-d16}}			\
+	 %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfpv3-d16}}"
 
 #undef MINIX_SUBTARGET_EXTRA_ASM_SPEC
 #define MINIX_SUBTARGET_EXTRA_ASM_SPEC					\
