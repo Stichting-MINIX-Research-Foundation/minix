@@ -22,6 +22,14 @@
  */
 #define MINIX_TEST_SUBTREE	1	/* include the minix.test subtree? */
 
+/*
+ * By default, mount request failures will be silently discarded, because the
+ * requests themselves are one-way.  For service authors, a bit more output may
+ * be helpful.  Set the following defininition to "printf s" in order to
+ * include more information about mount requests and failures.
+ */
+#define MIB_DEBUG_MOUNT(s)	/* printf s */
+
 struct mib_oldp;
 struct mib_newp;
 
@@ -42,8 +50,8 @@ struct mib_call {
 #define MIB_FLAG_NOAUTH		0x02	/* user verified to be regular user */
 
 /*
- * We reassign new meaning to two NetBSD node flags, because we do not use the
- * flags in the way NetBSD does:
+ * We reassign new meaning to three NetBSD node flags, because we do not use
+ * the flags in the way NetBSD does:
  *
  * - On NetBSD, CTLFLAG_ROOT is used to mark the root of the sysctl tree.  The
  *   entire root node is not exposed to userland, and thus, neither is this
@@ -52,13 +60,18 @@ struct mib_call {
  *   node, presumably to avoid having to duplicate entire subtrees.  We can
  *   simply have two nodes point to the same subtree instead, and thus, we do
  *   not need to support this functionality at all.
+ * - On NetBSD, CTLFLAG_MMAP is defined for future support for memory-mapping
+ *   node data with CTL_MMAP.  It is not yet clear where or why this feature
+ *   would be used in practice.  For as long as NetBSD does not actually use
+ *   this flag *for node-type nodes*, we can reuse it for our own purposes.
  *
  * The meaning of our replacement flags is explained further below.  We ensure
- * that neither of these flags are ever exposed to userland.  As such, our own
+ * that none of these flags are ever exposed to userland.  As such, our own
  * definitions can be changed as necessary without breaking anything.
  */
 #define CTLFLAG_PARENT	CTLFLAG_ROOT	/* node is a real parent node */
 #define CTLFLAG_VERIFY	CTLFLAG_ALIAS	/* node has verification function */
+#define CTLFLAG_REMOTE	CTLFLAG_MMAP	/* node is root of remote subtree */
 
 /*
  * The following node structure definition aims to meet several goals at once:
@@ -66,12 +79,14 @@ struct mib_call {
  * 1) it can be used for static and dynamic nodes;
  * 2) it can be used to point to both static and dynamic child arrays at once;
  * 3) it allows for embedded, pointed-to, and function-generated data;
- * 4) its unions are compatible with magic instrumentation;
- * 5) it is optimized for size, assuming many static and few dynamic nodes.
+ * 4) it allows both temporary and obscuring mount points for remote subtrees;
+ * 5) its unions are compatible with magic instrumentation;
+ * 6) it is optimized for size, assuming many static and few dynamic nodes.
  *
- * All nodes have flags, a size, a version, a name, and optionally a
- * description.  The use of the rest of the fields depends on the type of the
- * node, which is defined by part of the flags field.
+ * All nodes have flags, a size, a version, a parent (except the root node), a
+ * name, and optionally a description.  The use of the rest of the fields
+ * depends on the type of the node, which is defined as part of the node's
+ * flags field.
  *
  * Data nodes, that is, nodes of type CTLTYPE_{BOOL,INT,QUAD,STRING,STRUCT},
  * have associated data.  For types CTLTYPE_{BOOL,INT,QUAD}, the node may have
@@ -90,24 +105,61 @@ struct mib_call {
  * (size, immediate and/or pointer) data fields as it sees fit.
  *
  * Node-type nodes, of type CTLTYPE_NODE, behave differently.  Such nodes may
- * have either static and dynamic child nodes, or an associated function.  Such
- * a function handles all access to the entire subtree.  If no function is set,
- * the CTLFLAG_PARENT flag is set, to indicate that this node is the root of a
- * real subtree; CTLFLAG_PARENT must not be set if the node has an associated
- * function.  For real node-type nodes (with CTLFLAG_PARENT set), node_size is
- * the number (not size!) of the array of static child nodes, which is pointed
- * to by node_scptr and indexed by child identifier.  Within the static array,
- * child nodes with zeroed flags fields are not in use.  The node_dcptr field
- * points to a linked list of dynamic child nodes. The node_csize field is set
- * to the size of the static array plus the number of dynamic nodes; node_clen
- * is set to the number of valid entries in the static array plus the number of
- * dynamic nodes.  If a function is set, none of these fields are used, and the
- * node_size field is typically (but not necessarily) set to zero.
+ * have static and dynamic child nodes, or have an associated function, or be
+ * a mount point for a subtree handled by a remote process.  The exact case is
+ * defined by the combination of the CTLFLAG_PARENT and CTLFLAG_REMOTE flags,
+ * yielding four possible cases:
+ *
+ * CTLFLAG_PARENT  CTLFLAG_REMOTE  Meaning
+ *     not set         not set     The node has an associated function which
+ *                                 handles all access to the entire subtree.
+ *       set           not set     The node is the root of a real, local
+ *                                 subtree with static and/or dynamic children.
+ *     not set           set       The node is a temporarily created mount
+ *                                 point for a remote tree.  A remote service
+ *                                 handles all access to the entire subtree.
+ *                                 Unmounting the node also destroys the node.
+ *       set             set       The node is a mount point that obscures a
+ *                                 real, local subtree.  A remote service
+ *                                 handles all access to the entire subtree.
+ *                                 Unmounting makes the original node visible.
+ *
+ * If the CTLFLAG_PARENT flag is set, the node is the root of a real sutree.
+ * For such nodes, node_size is the number (not size!) of the array of static
+ * child nodes, which is pointed to by node_scptr and indexed by child
+ * identifier.  Within the static array, child nodes with zeroed flags fields
+ * are not in use.  The node_dcptr field points to a linked list of dynamic
+ * child nodes. The node_csize field is set to the size of the static array
+ * plus the number of dynamic nodes; node_clen is set to the number of valid
+ * entries in the static array plus the number of dynamic nodes.
+ *
+ * If a function is set, and thus neither CTLFLAG_PARENT and CTLFLAG_REMOTE are
+ * set, none of the aforementioned fields are used, and the node_size field is
+ * typically (but not necessarily) set to zero.
+ *
+ * A remote service can mount its own subtree into the central MIB tree.  The
+ * MIB service will then relay any requests for that subtree to the remote
+ * service.  Both the mountpoint and the root of the remote subtree must be of
+ * type CTLTYPE_NODE; thus, no individual leaf nodes may be mounted.  The mount
+ * point may either be created temporarily for the purpose of mounting (e.g.,
+ * net.inet), or it may override a preexisting node (e.g., kern.ipc).  In the
+ * first case, the parent node must exist and be a node type (net).  In the
+ * second case, the preexisting target node (the MIB service's kern.ipc) may
+ * not have an associated function and may only have static children.  While
+ * being used as a mountpoint (i.e., have CTLFLAG_REMOTE set), the local node's
+ * node_csize and node_clen fields must not be used.  Instead, the same space
+ * in the node structure is used to store information about the remote node:
+ * node_rid, node_tid, and the smaller node_rcsize and node_rclen which contain
+ * information about the root of the remote subtree.  Remote nodes are also
+ * part of a linked list for administration purposes, using the node_next
+ * field.  When a preexisting (CTLFLAG_PARENT) node is unmounted, its original
+ * node_csize and node_clen fields are recomputed.
  *
  * The structure uses unions for either only pointers or only non-pointers, to
  * simplify live update support.  However, this does not mean the structure is
- * not fully used: real node-type nodes use node_{flags,size,ver,csize,clen,
- * scptr,dcptr,name,desc}, which together add up to the full structure size.
+ * not fully used: real node-type nodes use node_{flags,size,ver,parent,csize,
+ * clen,scptr,dcptr,name,desc}, which together add up to the full structure
+ * size.
  */
 struct mib_node;
 struct mib_dynode;
@@ -117,47 +169,77 @@ typedef ssize_t (*mib_func_ptr)(struct mib_call *, struct mib_node *,
 typedef int (*mib_verify_ptr)(struct mib_call *, struct mib_node *, void *,
 	size_t);
 
+/*
+ * To save space for the maintenance of remote nodes, we split up one uint32_t
+ * field into three subfields:
+ * - node_eid ("endpoint ID"), which is an index into the table of endpoints;
+ * - node_rcsize ("child size"), the number of child slots of the remote root;
+ * - node_rclen ("child length"), the number of children of the remote root.
+ * These fields impose limits on the number of endpoints known in the MIB
+ * service, and the maximum size of the remote subtree root.
+ */
+#define MIB_EID_BITS	5	/* up to 32 services can set remote subtrees */
+#define MIB_RC_BITS	12	/* remote root may have up to 4096 children */
+
+#if MIB_EID_BITS + 2 * MIB_RC_BITS > 32
+#error "Sum of remote ID and remote children bit fields exceeds uint32_t size"
+#endif
+
 struct mib_node {
-	uint32_t node_flags;		/* CTLTYPE_ type and CTLFLAGS_ flags */
+	uint32_t node_flags;		/* CTLTYPE_ type and CTLFLAG_ flags */
 	size_t node_size;		/* size of associated data (bytes) */
 	uint32_t node_ver;		/* node version */
+	struct mib_node *node_parent;	/* pointer to parent node */
 	union ixfer_node_val_u {
 		struct {
 			uint32_t nvuc_csize;	/* number of child slots */
 			uint32_t nvuc_clen;	/* number of actual children */
 		} nvu_child;
-		int nvu_int;		/* immediate integer */
+		struct {
+			uint32_t nvur_eid:MIB_EID_BITS;	/* endpoint index */
+			uint32_t nvur_csize:MIB_RC_BITS;/* remote ch. slots */
+			uint32_t nvur_clen:MIB_RC_BITS;	/* remote children */
+			uint32_t nvur_rid;	/* opaque ID of remote root */
+		} nvu_remote;
 		bool nvu_bool;		/* immediate boolean */
+		int nvu_int;		/* immediate integer */
 		u_quad_t nvu_quad;	/* immediate quad */
 	} node_val_u;
 	union pxfer_node_ptr_u {
-		void *npu_data;	/* struct or string data pointer */
+		void *npu_data;		/* struct or string data pointer */
 		struct mib_node	*npu_scptr;	/* static child node array */
 	} node_ptr_u;
 	union pxfer_node_aux_u {
 		struct mib_dynode *nau_dcptr;	/* dynamic child node list */
 		mib_func_ptr nau_func;		/* handler function */
 		mib_verify_ptr nau_verify;	/* verification function */
+		struct mib_node *nau_next;	/* next remote node in list */
 	} node_aux_u;
 	const char *node_name;		/* node name string */
 	const char *node_desc;		/* node description (may be NULL) */
 };
 #define node_csize	node_val_u.nvu_child.nvuc_csize
 #define node_clen	node_val_u.nvu_child.nvuc_clen
-#define node_int	node_val_u.nvu_int
+#define node_eid	node_val_u.nvu_remote.nvur_eid
+#define node_rcsize	node_val_u.nvu_remote.nvur_csize
+#define node_rclen	node_val_u.nvu_remote.nvur_clen
+#define node_rid	node_val_u.nvu_remote.nvur_rid
 #define node_bool	node_val_u.nvu_bool
+#define node_int	node_val_u.nvu_int
 #define node_quad	node_val_u.nvu_quad
 #define node_data	node_ptr_u.npu_data
 #define node_scptr	node_ptr_u.npu_scptr
 #define node_dcptr	node_aux_u.nau_dcptr
 #define node_func	node_aux_u.nau_func
 #define node_verify	node_aux_u.nau_verify
+#define node_next	node_aux_u.nau_next
 
 /*
  * This structure is used for dynamically allocated nodes, that is, nodes
  * created by userland at run time.  It contains not only the fields below, but
  * also the full name and, for leaf nodes with non-immediate data, the actual
- * data area.
+ * data area, or, for temporary mount points for remote subtrees, the node's
+ * description.
  */
 struct mib_dynode {
 	struct mib_dynode *dynode_next;	/* next in linked dynamic node list */
@@ -179,17 +261,17 @@ struct mib_dynode {
 	.node_name = n,							\
 	.node_desc = d							\
 }
-#define MIB_INT(f,i,n,d) {						\
-	.node_flags = CTLTYPE_INT | CTLFLAG_IMMEDIATE | f,		\
-	.node_size = sizeof(int),					\
-	.node_int = i,							\
-	.node_name = n,							\
-	.node_desc = d							\
-}
 #define MIB_BOOL(f,b,n,d) {						\
 	.node_flags = CTLTYPE_BOOL | CTLFLAG_IMMEDIATE | f,		\
 	.node_size = sizeof(bool),					\
 	.node_bool = b,							\
+	.node_name = n,							\
+	.node_desc = d							\
+}
+#define MIB_INT(f,i,n,d) {						\
+	.node_flags = CTLTYPE_INT | CTLFLAG_IMMEDIATE | f,		\
+	.node_size = sizeof(int),					\
+	.node_int = i,							\
 	.node_name = n,							\
 	.node_desc = d							\
 }
@@ -200,16 +282,18 @@ struct mib_dynode {
 	.node_name = n,							\
 	.node_desc = d							\
 }
-#define MIB_DATA(f,s,n,d) {						\
+#define _MIB_DATA(f,s,p,n,d) {						\
 	.node_flags = f,						\
-	.node_size = sizeof(s),						\
-	.node_data = __UNCONST(s),					\
+	.node_size = s,							\
+	.node_data = __UNCONST(p),					\
 	.node_name = n,							\
 	.node_desc = d							\
 }
-#define MIB_STRING(f,p,n,d)	MIB_DATA(CTLTYPE_STRING | f, p, n, d)
-#define MIB_STRUCT(f,p,n,d)	MIB_DATA(CTLTYPE_STRUCT | f, p, n, d)
-#define MIB_INTPTR(f,p,n,d)	MIB_DATA(CTLTYPE_INT | f, p, n, d)
+#define MIB_BOOLPTR(f,p,n,d)  _MIB_DATA(CTLTYPE_BOOL | f, sizeof(*p), p, n, d)
+#define MIB_INTPTR(f,p,n,d)   _MIB_DATA(CTLTYPE_INT | f, sizeof(*p), p, n, d)
+#define MIB_QUADTR(f,p,n,d)   _MIB_DATA(CTLTYPE_QUAD | f, sizeof(*p), p, n, d)
+#define MIB_STRING(f,p,n,d)   _MIB_DATA(CTLTYPE_STRING | f, sizeof(p), p, n, d)
+#define MIB_STRUCT(f,s,p,n,d) _MIB_DATA(CTLTYPE_STRUCT | f, s, p, n, d)
 #define MIB_FUNC(f,s,fp,n,d) {						\
 	.node_flags = f,						\
 	.node_size = s,							\
@@ -258,16 +342,32 @@ size_t mib_getnewlen(struct mib_newp *);
 int mib_copyin(struct mib_newp * __restrict, void * __restrict, size_t);
 int mib_copyin_aux(struct mib_newp * __restrict, vir_bytes,
 	void * __restrict, size_t);
+int mib_relay_oldp(endpoint_t, struct mib_oldp * __restrict, cp_grant_id_t *,
+	size_t * __restrict);
+int mib_relay_newp(endpoint_t, struct mib_newp * __restrict, cp_grant_id_t *,
+	size_t * __restrict);
 int mib_authed(struct mib_call *);
+extern struct mib_node mib_root;
 
 /* tree.c */
 ssize_t mib_readwrite(struct mib_call *, struct mib_node *, struct mib_oldp *,
 	struct mib_newp *, mib_verify_ptr);
-ssize_t mib_dispatch(struct mib_call *, struct mib_node *, struct mib_oldp *,
-	struct mib_newp *);
-void mib_tree_init(struct mib_node *);
-extern unsigned int nodes;
-extern unsigned int objects;
+ssize_t mib_dispatch(struct mib_call *, struct mib_oldp *, struct mib_newp *);
+void mib_tree_init(void);
+int mib_mount(const int *, unsigned int, unsigned int, uint32_t, uint32_t,
+	unsigned int, unsigned int, struct mib_node **);
+void mib_unmount(struct mib_node *);
+extern unsigned int mib_nodes;
+extern unsigned int mib_objects;
+extern unsigned int mib_remotes;
+
+/* remote.c */
+void mib_remote_init(void);
+int mib_register(const message *, int);
+int mib_deregister(const message *, int);
+int mib_remote_info(unsigned int, uint32_t, char *, size_t, char *, size_t);
+ssize_t mib_remote_call(struct mib_call *, struct mib_node *,
+	struct mib_oldp *, struct mib_newp *);
 
 /* proc.c */
 ssize_t mib_kern_lwp(struct mib_call *, struct mib_node *, struct mib_oldp *,

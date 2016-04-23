@@ -607,8 +607,17 @@
 /* Process event message from PM. */
 #define PROC_EVENT		(COMMON_RQ_BASE+3)
 
+/* MIB information request for the root node of a registered subtree. */
+#define COMMON_MIB_INFO		(COMMON_RQ_BASE+4)
+
+/* MIB sysctl request on a registered subtree. */
+#define COMMON_MIB_CALL		(COMMON_RQ_BASE+5)
+
 /* Reply to process event message to PM. */
 #define PROC_EVENT_REPLY	(COMMON_RS_BASE+0)
+
+/* Reply to MIB information or sysctl request. */
+#define COMMON_MIB_REPLY	(COMMON_RS_BASE+1)
 
 /*===========================================================================*
  *                Messages for VM server				     *
@@ -1013,8 +1022,10 @@
 #define IS_MIB_CALL(type)	(((type) & ~0xff) == MIB_BASE)
 
 #define MIB_SYSCTL		(MIB_BASE + 0)		/* sysctl(2) */
+#define MIB_REGISTER		(MIB_BASE + 1)		/* mount subtree */
+#define MIB_DEREGISTER		(MIB_BASE + 2)		/* unmount subtree */
 
-#define NR_MIB_CALLS		1	/* highest number from base plus one */
+#define NR_MIB_CALLS		3	/* highest number from base plus one */
 
 /*===========================================================================*
  *		Internal codes used by several services			     *

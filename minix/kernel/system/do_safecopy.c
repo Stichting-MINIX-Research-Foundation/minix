@@ -216,13 +216,13 @@ int verify_grant(
 		*offset_result = g.cp_u.cp_direct.cp_start + offset_in;
 		*e_granter = granter;
 	} else if(g.cp_flags & CPF_MAGIC) {
-		/* Currently, it is hardcoded that only FS may do
-		 * magic grants.
+		/* Currently, it is hardcoded that only VFS and MIB may do
+		 * magic grants.  TODO: this should be a system.conf flag.
 		 */
-		if(granter != VFS_PROC_NR) {
+		if(granter != VFS_PROC_NR && granter != MIB_PROC_NR) {
 			printf(
 		"verify_grant: magic grant verify failed: granter (%d) "
-		"is not FS (%d)\n", granter, VFS_PROC_NR);
+		"not allowed\n", granter);
 			return EPERM;
 		}
 

@@ -51,6 +51,7 @@
 /* Identifiers for subnodes of MINIX_MIB. */
 #define MIB_NODES	1
 #define MIB_OBJECTS	2
+#define MIB_REMOTES	3
 
 /* Identifiers for subnodes of MINIX_PROC. */
 #define PROC_LIST	1

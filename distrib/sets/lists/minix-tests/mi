@@ -84,6 +84,9 @@
 ./usr/tests/minix-posix/ddekit/ddekittest_driver        minix-tests
 ./usr/tests/minix-posix/ddekit/system.conf              minix-tests
 ./usr/tests/minix-posix/mod                             minix-tests     pic
+./usr/tests/minix-posix/rmibtest                        minix-tests
+./usr/tests/minix-posix/rmibtest/rmibtest               minix-tests
+./usr/tests/minix-posix/rmibtest/rmibtest.conf          minix-tests
 ./usr/tests/minix-posix/run                             minix-tests
 ./usr/tests/minix-posix/t10a                            minix-tests
 ./usr/tests/minix-posix/t11a                            minix-tests
@@ -195,6 +198,7 @@
 ./usr/tests/minix-posix/testkyua                        minix-tests
 ./usr/tests/minix-posix/testmfs                         minix-tests
 ./usr/tests/minix-posix/testrelpol                      minix-tests
+./usr/tests/minix-posix/testrmib                        minix-tests
 ./usr/tests/minix-posix/testsh1                         minix-tests
 ./usr/tests/minix-posix/testsh2                         minix-tests
 ./usr/tests/minix-posix/testvm                          minix-tests

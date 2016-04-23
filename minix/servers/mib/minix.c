@@ -24,7 +24,8 @@ static struct mib_node mib_minix_test_table[] = {
 /* 2*/	[TEST_QUAD]		= MIB_QUAD(_RW, 0, "quad", "Quad test field"),
 /* 3*/	[TEST_STRING]		= MIB_STRING(_RW, test_string, "string",
 				    "String test field"),
-/* 4*/	[TEST_STRUCT]		= MIB_STRUCT(_RW, test_struct, "struct",
+/* 4*/	[TEST_STRUCT]		= MIB_STRUCT(_RW, sizeof(test_struct),
+				    test_struct, "struct",
 				    "Structure test field"),
 /* 5*/	[TEST_PRIVATE]		= MIB_INT(_RW | CTLFLAG_PRIVATE, -5375,
 				    "private", "Private test field"),
@@ -45,11 +46,14 @@ static struct mib_node mib_minix_test_table[] = {
 
 static struct mib_node mib_minix_mib_table[] = {
 /* 1*/	[MIB_NODES]		= MIB_INTPTR(_P | _RO | CTLFLAG_UNSIGNED,
-				    &nodes, "nodes",
+				    &mib_nodes, "nodes",
 				    "Number of nodes in the MIB tree"),
 /* 2*/	[MIB_OBJECTS]		= MIB_INTPTR(_P | _RO | CTLFLAG_UNSIGNED,
-				    &objects, "objects", "Number of "
+				    &mib_objects, "objects", "Number of "
 				    "dynamically allocated MIB objects"),
+/* 3*/	[MIB_REMOTES]		= MIB_INTPTR(_P | _RO | CTLFLAG_UNSIGNED,
+				    &mib_remotes, "remotes",
+				    "Number of mounted remote MIB subtrees"),
 };
 
 static struct mib_node mib_minix_proc_table[] = {
@@ -63,7 +67,7 @@ static struct mib_node mib_minix_proc_table[] = {
 
 static struct mib_node mib_minix_table[] = {
 #if MINIX_TEST_SUBTREE
-/* 0*/	[MINIX_TEST]		= MIB_NODE(_RW | CTLFLAG_HIDDEN,
+/* 0*/	[MINIX_TEST]		= MIB_NODE(_P | _RW | CTLFLAG_HIDDEN,
 				    mib_minix_test_table, "test",
 				    "Test87 testing ground"),
 #endif /* MINIX_TEST_SUBTREE */

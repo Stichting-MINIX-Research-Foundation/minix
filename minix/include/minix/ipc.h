@@ -1323,6 +1323,24 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_lsys_kern_vsafecopy);
 
 typedef struct {
+	uint32_t	root_id;
+	uint32_t	flags;
+	unsigned int	csize;
+	unsigned int	clen;
+	unsigned int	miblen;
+	int		mib[CTL_SHORTNAME];
+	uint8_t		padding[4];
+} mess_lsys_mib_register;
+_ASSERT_MSG_SIZE(mess_lsys_mib_register);
+
+typedef struct {
+	uint32_t	req_id;
+	ssize_t		status;
+	uint8_t		padding[48];
+} mess_lsys_mib_reply;
+_ASSERT_MSG_SIZE(mess_lsys_mib_reply);
+
+typedef struct {
 	int devind;
 	int port;
 
@@ -1479,6 +1497,34 @@ typedef struct {
 	uint8_t		padding[52];
 } mess_mib_lc_sysctl;
 _ASSERT_MSG_SIZE(mess_mib_lc_sysctl);
+
+typedef struct {
+	uint32_t	req_id;
+	uint32_t	root_id;
+	cp_grant_id_t	name_grant;
+	unsigned int	name_len;
+	cp_grant_id_t	oldp_grant;
+	size_t		oldp_len;
+	cp_grant_id_t	newp_grant;
+	size_t		newp_len;
+	endpoint_t	user_endpt;
+	uint32_t	flags;
+	uint32_t	root_ver;
+	uint32_t	tree_ver;
+	uint8_t		padding[8];
+} mess_mib_lsys_call;
+_ASSERT_MSG_SIZE(mess_mib_lsys_call);
+
+typedef struct {
+	uint32_t	req_id;
+	uint32_t	root_id;
+	cp_grant_id_t	name_grant;
+	size_t		name_size;
+	cp_grant_id_t	desc_grant;
+	size_t		desc_size;
+	uint8_t		padding[32];
+} mess_mib_lsys_info;
+_ASSERT_MSG_SIZE(mess_mib_lsys_info);
 
 typedef struct {
 	off_t offset;
@@ -2278,6 +2324,8 @@ typedef struct noxfer_message {
 		mess_lsys_krn_sys_vdevio m_lsys_krn_sys_vdevio;
 		mess_lsys_krn_sys_vumap m_lsys_krn_sys_vumap;
 		mess_lsys_kern_vsafecopy m_lsys_kern_vsafecopy;
+		mess_lsys_mib_register	m_lsys_mib_register;
+		mess_lsys_mib_reply	m_lsys_mib_reply;
 		mess_lsys_pci_busc_get_bar m_lsys_pci_busc_get_bar;
 		mess_lsys_pm_getepinfo	m_lsys_pm_getepinfo;
 		mess_lsys_pm_getprocnr	m_lsys_pm_getprocnr;
@@ -2297,6 +2345,8 @@ typedef struct noxfer_message {
 		mess_lsys_vm_update	m_lsys_vm_update;
 		mess_lsys_vm_vmremap	m_lsys_vm_vmremap;
 		mess_mib_lc_sysctl	m_mib_lc_sysctl;
+		mess_mib_lsys_call	m_mib_lsys_call;
+		mess_mib_lsys_info	m_mib_lsys_info;
 		mess_mmap		m_mmap;
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;

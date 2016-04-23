@@ -625,7 +625,7 @@ sub87b(void)
 	 */
 	if (scn[0].sysctl_num != TEST_INT) e(0);
 	if (SYSCTL_TYPE(scn[0].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[0].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[0].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READONLY | CTLFLAG_IMMEDIATE | CTLFLAG_HEX)) e(0);
 	if (SYSCTL_VERS(scn[0].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[0].sysctl_name, "int")) e(0);
@@ -638,7 +638,7 @@ sub87b(void)
 			break;
 	if (i == count) e(0);
 	if (SYSCTL_TYPE(scn[i].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[i].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[i].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READWRITE | CTLFLAG_PRIVATE | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[i].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[i].sysctl_name, "private")) e(0);
@@ -650,7 +650,7 @@ sub87b(void)
 			break;
 	if (i == count) e(0);
 	if (SYSCTL_TYPE(scn[i].sysctl_flags) != CTLTYPE_NODE) e(0);
-	if (SYSCTL_FLAGS(scn[i].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[i].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READONLY | CTLFLAG_PRIVATE)) e(0);
 	if (SYSCTL_VERS(scn[i].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[i].sysctl_name, "secret")) e(0);
@@ -747,11 +747,13 @@ test87b(void)
 	 * order for at least the static nodes.  We do not make assumptions
 	 * about whether dynamic nodes are merged in or (as is the case as of
 	 * writing) returned after the static nodes.  At this point there
-	 * should be no dynamic nodes here yet anyway.
+	 * should be no dynamic nodes here yet anyway.  We mostly ignore
+	 * CTLFLAG_PERMANENT in order to facilitate running this test on a
+	 * remotely mounted subtree.
 	 */
 	if (scn[0].sysctl_num != TEST_INT) e(0);
 	if (SYSCTL_TYPE(scn[0].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[0].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[0].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READONLY | CTLFLAG_IMMEDIATE | CTLFLAG_HEX)) e(0);
 	if (SYSCTL_VERS(scn[0].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[0].sysctl_name, "int")) e(0);
@@ -761,7 +763,7 @@ test87b(void)
 
 	if (scn[1].sysctl_num != TEST_BOOL) e(0);
 	if (SYSCTL_TYPE(scn[1].sysctl_flags) != CTLTYPE_BOOL) e(0);
-	if (SYSCTL_FLAGS(scn[1].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[1].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READWRITE | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[1].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[1].sysctl_name, "bool")) e(0);
@@ -771,7 +773,7 @@ test87b(void)
 
 	if (scn[2].sysctl_num != TEST_QUAD) e(0);
 	if (SYSCTL_TYPE(scn[2].sysctl_flags) != CTLTYPE_QUAD) e(0);
-	if (SYSCTL_FLAGS(scn[2].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[2].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READWRITE | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[2].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[2].sysctl_name, "quad")) e(0);
@@ -781,7 +783,8 @@ test87b(void)
 
 	if (scn[3].sysctl_num != TEST_STRING) e(0);
 	if (SYSCTL_TYPE(scn[3].sysctl_flags) != CTLTYPE_STRING) e(0);
-	if (SYSCTL_FLAGS(scn[3].sysctl_flags) != CTLFLAG_READWRITE) e(0);
+	if ((SYSCTL_FLAGS(scn[3].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
+	    CTLFLAG_READWRITE) e(0);
 	if (SYSCTL_VERS(scn[3].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[3].sysctl_name, "string")) e(0);
 	if (scn[3].sysctl_ver == 0) e(0);
@@ -789,7 +792,8 @@ test87b(void)
 
 	if (scn[4].sysctl_num != TEST_STRUCT) e(0);
 	if (SYSCTL_TYPE(scn[4].sysctl_flags) != CTLTYPE_STRUCT) e(0);
-	if (SYSCTL_FLAGS(scn[4].sysctl_flags) != CTLFLAG_READWRITE) e(0);
+	if ((SYSCTL_FLAGS(scn[4].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
+	    CTLFLAG_READWRITE) e(0);
 	if (SYSCTL_VERS(scn[4].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[4].sysctl_name, "struct")) e(0);
 	if (scn[4].sysctl_ver == 0) e(0);
@@ -797,7 +801,7 @@ test87b(void)
 
 	if (scn[5].sysctl_num != TEST_PRIVATE) e(0);
 	if (SYSCTL_TYPE(scn[5].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[5].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[5].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READWRITE | CTLFLAG_PRIVATE | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[5].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[5].sysctl_name, "private")) e(0);
@@ -807,7 +811,7 @@ test87b(void)
 
 	if (scn[6].sysctl_num != TEST_ANYWRITE) e(0);
 	if (SYSCTL_TYPE(scn[6].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[6].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[6].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READWRITE | CTLFLAG_ANYWRITE | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[6].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[6].sysctl_name, "anywrite")) e(0);
@@ -818,7 +822,7 @@ test87b(void)
 
 	if (scn[i].sysctl_num != TEST_SECRET) e(0);
 	if (SYSCTL_TYPE(scn[i].sysctl_flags) != CTLTYPE_NODE) e(0);
-	if (SYSCTL_FLAGS(scn[i].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[i].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READONLY | CTLFLAG_PRIVATE)) e(0);
 	if (SYSCTL_VERS(scn[i].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[i].sysctl_name, "secret")) e(0);
@@ -895,7 +899,7 @@ test87b(void)
 
 	if (scn[0].sysctl_num != SECRET_VALUE) e(0);
 	if (SYSCTL_TYPE(scn[0].sysctl_flags) != CTLTYPE_INT) e(0);
-	if (SYSCTL_FLAGS(scn[0].sysctl_flags) !=
+	if ((SYSCTL_FLAGS(scn[0].sysctl_flags) & ~CTLFLAG_PERMANENT) !=
 	    (CTLFLAG_READONLY | CTLFLAG_IMMEDIATE)) e(0);
 	if (SYSCTL_VERS(scn[0].sysctl_flags) != SYSCTL_VERSION) e(0);
 	if (strcmp(scn[0].sysctl_name, "value")) e(0);

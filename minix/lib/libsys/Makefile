@@ -36,6 +36,7 @@ SRCS+=  \
 	optset.c \
 	panic.c \
 	proceventmask.c \
+	rmib.c \
 	safecopies.c \
 	sched_start.c \
 	sched_stop.c \

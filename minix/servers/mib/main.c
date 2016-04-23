@@ -18,6 +18,17 @@
  * service needs superuser privileges because it may need to issue privileged
  * calls and obtain privileged information from other services.
  *
+ * While most of the sysctl tree is maintained locally, the MIB service also
+ * allows other services to register "remote" subtrees which are then handled
+ * entirely by those services.  This feature, which works much like file system
+ * mounting, allows 1) sysctl handling code to stay local to its corresponding
+ * service, and 2) parts of the sysctl tree to adapt and expand dynamically as
+ * optional services are started and stopped.  Compared to the MIB service's
+ * local handling, remotely handled subtrees are subject to several additional
+ * practical restrictions, hoever.  In the current implementation, the MIB
+ * service makes blocking calls to remote services as needed; in the future,
+ * these interactions could be made (more) asynchronous.
+ *
  * The MIB service was created by David van Moolenbroek <david@minix3.org>.
  */
 
@@ -25,14 +36,17 @@
 
 /*
  * Most of these initially empty nodes are filled in by their corresponding
- * modules' _init calls; see mib_init below.  However, CTL_USER stays empty:
- * the libc sysctl(3) wrapper code takes care of that subtree.  It must have
- * an entry here though, or sysctl(8) will not list it.  CTL_VENDOR is also
- * empty, but writable, so that it may be used by third parties.
+ * modules' _init calls; see mib_init below.  However, some subtrees are not
+ * populated by the MIB service itself.  CTL_NET is expected to be populated
+ * through registration of remote subtrees.  The libc sysctl(3) wrapper code
+ * takes care of the CTL_USER subtree.  It must have an entry here though, or
+ * sysctl(8) will not list it.  CTL_VENDOR is also empty, but writable, so that
+ * it may be used by third parties.
  */
 static struct mib_node mib_table[] = {
 /* 1*/	[CTL_KERN]	= MIB_ENODE(_P | _RO, "kern", "High kernel"),
 /* 2*/	[CTL_VM]	= MIB_ENODE(_P | _RO, "vm", "Virtual memory"),
+/* 4*/	[CTL_NET]	= MIB_ENODE(_P | _RO, "net", "Networking"),
 /* 6*/	[CTL_HW]	= MIB_ENODE(_P | _RO, "hw", "Generic CPU, I/O"),
 /* 8*/	[CTL_USER]	= MIB_ENODE(_P | _RO, "user", "User-level"),
 /*11*/	[CTL_VENDOR]	= MIB_ENODE(_P | _RW, "vendor", "Vendor specific"),
@@ -45,7 +59,7 @@ static struct mib_node mib_table[] = {
  * node is writable by default, so that programs such as init(8) may create
  * their own top-level entries.
  */
-static struct mib_node mib_root = MIB_NODE(_RW, mib_table, "", "");
+struct mib_node mib_root = MIB_NODE(_RW, mib_table, "", "");
 
 /*
  * Structures describing old and new data as provided by userland.  The primary
@@ -188,6 +202,56 @@ mib_copyin_aux(struct mib_newp * __restrict newp, vir_bytes addr,
 }
 
 /*
+ * Create a grant for a call's old data region, if not NULL, for the given
+ * endpoint.  On success, store the grant (or GRANT_INVALID) in grantp and the
+ * length in lenp, and return OK.  On error, return an error code that must not
+ * be ENOMEM.
+ */
+int
+mib_relay_oldp(endpoint_t endpt, struct mib_oldp * __restrict oldp,
+	cp_grant_id_t * grantp, size_t * __restrict lenp)
+{
+
+	if (oldp != NULL) {
+		*grantp = cpf_grant_magic(endpt, oldp->oldp_endpt,
+		    oldp->oldp_addr, oldp->oldp_len, CPF_WRITE);
+		if (!GRANT_VALID(*grantp))
+			return EINVAL;
+		*lenp = oldp->oldp_len;
+	} else {
+		*grantp = GRANT_INVALID;
+		*lenp = 0;
+	}
+
+	return OK;
+}
+
+/*
+ * Create a grant for a call's new data region, if not NULL, for the given
+ * endpoint.  On success, store the grant (or GRANT_INVALID) in grantp and the
+ * length in lenp, and return OK.  On error, return an error code that must not
+ * be ENOMEM.
+ */
+int
+mib_relay_newp(endpoint_t endpt, struct mib_newp * __restrict newp,
+	cp_grant_id_t * grantp, size_t * __restrict lenp)
+{
+
+	if (newp != NULL) {
+		*grantp = cpf_grant_magic(endpt, newp->newp_endpt,
+		    newp->newp_addr, newp->newp_len, CPF_READ);
+		if (!GRANT_VALID(*grantp))
+			return EINVAL;
+		*lenp = newp->newp_len;
+	} else {
+		*grantp = GRANT_INVALID;
+		*lenp = 0;
+	}
+
+	return OK;
+}
+
+/*
  * Check whether the user is allowed to perform privileged operations.  The
  * function returns a nonzero value if this is the case, and zero otherwise.
  * Authorization is performed only once per call.
@@ -211,7 +275,8 @@ mib_authed(struct mib_call * call)
  * Implement the sysctl(2) system call.
  */
 static int
-mib_sysctl(message * __restrict m_in, message * __restrict m_out)
+mib_sysctl(message * __restrict m_in, int ipc_status,
+	message * __restrict m_out)
 {
 	vir_bytes oldaddr, newaddr;
 	size_t oldlen, newlen;
@@ -222,6 +287,10 @@ mib_sysctl(message * __restrict m_in, message * __restrict m_out)
 	struct mib_newp newp, *newpp;
 	struct mib_call call;
 	ssize_t r;
+
+	/* Only handle blocking calls.  Ignore everything else. */
+	if (IPC_STATUS_CALL(ipc_status) != SENDREC)
+		return EDONTREPLY;
 
 	endpt = m_in->m_source;
 	oldaddr = m_in->m_lc_mib_sysctl.oldp;
@@ -281,7 +350,7 @@ mib_sysctl(message * __restrict m_in, message * __restrict m_out)
 	call.call_flags = 0;
 	call.call_reslen = 0;
 
-	r = mib_dispatch(&call, &mib_root, oldpp, newpp);
+	r = mib_dispatch(&call, oldpp, newpp);
 
 	/*
 	 * From NetBSD: we copy out as much as we can from the old data, while
@@ -332,7 +401,10 @@ mib_init(int type __unused, sef_init_info_t * info __unused)
 	 * Now that the static tree is complete, go through the entire tree,
 	 * initializing miscellaneous fields.
 	 */
-	mib_tree_init(&mib_root);
+	mib_tree_init();
+
+	/* Prepare for requests to mount remote subtrees. */
+	mib_remote_init();
 
 	return OK;
 }
@@ -385,19 +457,34 @@ main(void)
 
 		switch (m_in.m_type) {
 		case MIB_SYSCTL:
-			r = mib_sysctl(&m_in, &m_out);
+			r = mib_sysctl(&m_in, ipc_status, &m_out);
+
+			break;
+
+		case MIB_REGISTER:
+			r = mib_register(&m_in, ipc_status);
+
+			break;
+
+		case MIB_DEREGISTER:
+			r = mib_deregister(&m_in, ipc_status);
 
 			break;
 
 		default:
-			r = ENOSYS;
+			if (IPC_STATUS_CALL(ipc_status) == SENDREC)
+				r = ENOSYS;
+			else
+				r = EDONTREPLY;
 		}
 
-		/* Send the reply. */
-		m_out.m_type = r;
+		/* Send a reply, if applicable. */
+		if (r != EDONTREPLY) {
+			m_out.m_type = r;
 
-		if ((r = ipc_sendnb(m_in.m_source, &m_out)) != OK)
-			printf("MIB: ipc_sendnb failed (%d)\n", r);
+			if ((r = ipc_sendnb(m_in.m_source, &m_out)) != OK)
+				printf("MIB: ipc_sendnb failed (%d)\n", r);
+		}
 	}
 
 	/* NOTREACHED */

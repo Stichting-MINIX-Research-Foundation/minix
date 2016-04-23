@@ -261,6 +261,7 @@
 ./usr/tests/minix-posix
 ./usr/tests/minix-posix/blocktest
 ./usr/tests/minix-posix/ddekit
+./usr/tests/minix-posix/rmibtest
 
 # this one is for term(1)
 /set type=dir uid=0 gid=5 mode=775
