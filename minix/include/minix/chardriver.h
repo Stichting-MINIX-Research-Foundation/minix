@@ -24,11 +24,11 @@ struct chardriver {
 
 /* Functions defined by libchardriver. */
 void chardriver_announce(void);
-int chardriver_get_minor(message *m, devminor_t *minor);
-void chardriver_process(struct chardriver *cdp, message *m_ptr,
+int chardriver_get_minor(const message *m, devminor_t *minor);
+void chardriver_process(const struct chardriver *cdp, message *m_ptr,
 	int ipc_status);
 void chardriver_terminate(void);
-void chardriver_task(struct chardriver *cdp);
+void chardriver_task(const struct chardriver *cdp);
 
 void chardriver_reply_task(endpoint_t endpt, cdev_id_t id, int r);
 void chardriver_reply_select(endpoint_t endpt, devminor_t minor, int ops);
