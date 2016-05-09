@@ -96,6 +96,9 @@ ssize_t sendmsg(int sock, const struct msghdr *msg, int flags)
 		return -1;
 	}
 
+	/* For old socket driver implementations, this flag is the default. */
+	flags &= ~MSG_NOSIGNAL;
+
 	r= ioctl(sock, NWIOGUDSSOTYPE, &uds_sotype);
 	if (r != -1 || errno != ENOTTY) {
 		if (r == -1) {

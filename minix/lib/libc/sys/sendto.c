@@ -66,6 +66,9 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	if (r != -1 || (errno != ENOTSOCK && errno != ENOSYS))
 		return r;
 
+	/* For old socket driver implementations, this flag is the default. */
+	flags &= ~MSG_NOSIGNAL;
+
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);
 	if (r != -1 || errno != ENOTTY)
 	{
