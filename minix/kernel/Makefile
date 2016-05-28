@@ -17,7 +17,7 @@ SRCS+=	clock.c cpulocals.c interrupt.c main.c proc.c system.c \
 
 LDADD+=	-ltimers -lsys -lexec 
 
-LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel.lds
+LINKERSCRIPT= ${.CURDIR}/arch/${MACHINE_ARCH}/kernel-${BSP_NAME}.lds
 
 .if ${HAVE_GOLD:U} != ""
 CFLAGS+= -fno-common
