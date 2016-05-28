@@ -6,8 +6,8 @@ set -e
 # be replaced by the proper NetBSD infrastructure.
 #
 
+BSP_NAME=generic-pc
 : ${ARCH=i386}
-: ${OBJ=../obj.${ARCH}}
 : ${TOOLCHAIN_TRIPLET=i586-elf32-minix-}
 : ${BUILDSH=build.sh}
 

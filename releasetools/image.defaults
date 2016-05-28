@@ -1,4 +1,4 @@
-: ${OBJ=../obj.${ARCH}}
+: ${OBJ=../obj.${ARCH}-${BSP_NAME}}
 : ${CROSS_TOOLS=${OBJ}/"tooldir.`uname -s`-`uname -r`-`uname -m`"/bin}
 : ${CROSS_PREFIX=${CROSS_TOOLS}/${TOOLCHAIN_TRIPLET}}
 : ${JOBS=1}
@@ -20,6 +20,9 @@
 
 : ${RC=../local/rc.${ARCH}}
 : ${ASR_HACK=0}
+
+# add BSP to buildvars
+BUILDVARS="-V BSP_NAME=${BSP_NAME} ${BUILDVARS}"
 
 # where the kernel & boot modules will be
 MODDIR=${DESTDIR}/boot/minix/.temp
