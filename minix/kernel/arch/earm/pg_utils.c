@@ -8,6 +8,7 @@
 #include <arm/armreg.h>
 
 #include <string.h>
+#include <minix/board.h>
 #include <minix/type.h>
 
 /* These are set/computed in kernel.lds. */
@@ -20,6 +21,17 @@ static phys_bytes kern_kernlen = (phys_bytes) &_kern_size;
 
 /* page directory we can use to map things */
 static u32_t pagedir[4096]  __aligned(16384);
+
+void get_phys_mem_map(phys_bytes *start, phys_bytes *end)
+{
+	*start = 0x0;
+	*end = 0x0;
+
+	if (BOARD_IS_BB(machine.board_id) || BOARD_IS_BBXM(machine.board_id)) {
+		*start = 0x80000000;
+		*end = 0xbfffffff;
+	}
+}
 
 void print_memmap(kinfo_t *cbi)
 {
@@ -160,6 +172,9 @@ void pg_identity(kinfo_t *cbi)
 	uint32_t i;
 	phys_bytes phys;
 
+	phys_bytes phys_start, phys_end;
+	get_phys_mem_map(&phys_start, &phys_end);
+
 	/* We map memory that does not correspond to physical memory
 	 * as non-cacheable. Make sure we know what it is.
 	 */
@@ -173,7 +188,7 @@ void pg_identity(kinfo_t *cbi)
 
 		phys = i * ARM_SECTION_SIZE;
 		/* mark mormal memory as cacheable. TODO: fix hard coded values */
-		if (phys >= PHYS_MEM_BEGIN && phys <= PHYS_MEM_END) {
+		if (phys >= phys_start && phys <= phys_end) {
 			pagedir[i] =  phys | flags | ARM_VM_SECTION_CACHED;
 		} else {
 			pagedir[i] =  phys | flags | ARM_VM_SECTION_DEVICE;

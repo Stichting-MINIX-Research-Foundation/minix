@@ -45,6 +45,16 @@ extern u32_t _end;
 extern char _kern_unpaged_edata;
 extern char _kern_unpaged_end;
 
+/*
+ * During low level init many things are not supposed to work
+ * serial being one of them. We therefore can't rely on the
+ * serial to debug. POORMANS_FAILURE_NOTIFICATION can be used
+ * before we setup our own vector table and will result in calling
+ * the bootloader's debugging methods that will hopefully show some
+ * information like the currnet PC at on the serial.
+ */
+#define POORMANS_FAILURE_NOTIFICATION  asm volatile("svc #00\n")
+
 /**
  *
  * The following function combines a few things together
@@ -179,10 +189,6 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 
 /* XXX: hard-coded stuff for modules */
 #define MB_MODS_NR NR_BOOT_MODULES
-#define MB_MODS_BASE  0x82000000
-#define MB_MODS_ALIGN 0x00800000 /* 8 MB */
-#define MB_MMAP_START 0x80000000
-#define MB_MMAP_SIZE  0x10000000 /* 256 MB */
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
@@ -195,10 +201,23 @@ void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 	mbi->mi_mods_count = MB_MODS_NR;
 	mbi->mods_addr = (u32_t)&mb_modlist;
 
+	phys_bytes mb_mods_base;
+	phys_bytes mb_mods_align = 0x00800000;
+	phys_bytes mb_mmap_start;
+	phys_bytes mb_mmap_size;
+
+	if (BOARD_IS_BB(machine.board_id) || BOARD_IS_BBXM(machine.board_id)) {
+		mb_mods_base = 0x82000000;
+		mb_mmap_start = 0x80000000;
+		mb_mmap_size = 0x10000000; /* 256 MB */
+	}
+	else
+		POORMANS_FAILURE_NOTIFICATION;
+
 	int i;
 	for (i = 0; i < MB_MODS_NR; ++i) {
-		mb_modlist[i].mod_start = MB_MODS_BASE + i * MB_MODS_ALIGN;
-		mb_modlist[i].mod_end = mb_modlist[i].mod_start + MB_MODS_ALIGN
+		mb_modlist[i].mod_start = mb_mods_base + i * mb_mods_align;
+		mb_modlist[i].mod_end = mb_modlist[i].mod_start + mb_mods_align
 		    - ARM_PAGE_SIZE;
 		mb_modlist[i].cmdline = 0;
 	}
@@ -210,8 +229,8 @@ void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 	mbi->mmap_length = sizeof(mb_memmap);
 
 	mb_memmap.size = sizeof(multiboot_memory_map_t);
-	mb_memmap.mm_base_addr = MB_MMAP_START;
-	mb_memmap.mm_length  = MB_MMAP_SIZE;
+	mb_memmap.mm_base_addr = mb_mmap_start;
+	mb_memmap.mm_length  = mb_mmap_size;
 	mb_memmap.type = MULTIBOOT_MEMORY_AVAILABLE;
 }
 
@@ -339,16 +358,6 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 			cbi->module_list[m].mod_end);
 	}
 }
-
-/* 
- * During low level init many things are not supposed to work
- * serial being one of them. We therefore can't rely on the
- * serial to debug. POORMANS_FAILURE_NOTIFICATION can be used
- * before we setup our own vector table and will result in calling
- * the bootloader's debugging methods that will hopefully show some
- * information like the currnet PC at on the serial.
- */
-#define POORMANS_FAILURE_NOTIFICATION  asm volatile("svc #00\n")
 
 /* use the passed cmdline argument to determine the machine id */
 void set_machine_id(char *cmdline)
