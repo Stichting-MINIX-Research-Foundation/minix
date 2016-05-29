@@ -31,6 +31,10 @@ void get_phys_mem_map(phys_bytes *start, phys_bytes *end)
 		*start = 0x80000000;
 		*end = 0xbfffffff;
 	}
+	else if (BOARD_IS_RPI_2_B(machine.board_id) || BOARD_IS_RPI_3_B(machine.board_id)) {
+		*start = 0x00000000;
+		*end = 0x3effffff;
+	}
 }
 
 void print_memmap(kinfo_t *cbi)

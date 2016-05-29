@@ -211,6 +211,11 @@ void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 		mb_mmap_start = 0x80000000;
 		mb_mmap_size = 0x10000000; /* 256 MB */
 	}
+	else if (BOARD_IS_RPI_2_B(machine.board_id) || BOARD_IS_RPI_3_B(machine.board_id)) {
+		mb_mods_base = 0x02000000;
+		mb_mmap_start = 0x00008000; /* Don't overwrite bootcode for secondary CPUs */
+		mb_mmap_size = 0x3C000000 - 0x00008000; /* 960 MB */
+	}
 	else
 		POORMANS_FAILURE_NOTIFICATION;
 
