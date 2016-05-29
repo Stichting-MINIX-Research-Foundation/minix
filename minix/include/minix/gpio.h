@@ -9,6 +9,12 @@ struct gpio
 
 #define GPIO_MODE_INPUT 0
 #define GPIO_MODE_OUTPUT 1
+#define GPIO_MODE_ALT0 2
+#define GPIO_MODE_ALT1 3
+#define GPIO_MODE_ALT2 4
+#define GPIO_MODE_ALT3 5
+#define GPIO_MODE_ALT4 6
+#define GPIO_MODE_ALT5 7
 
 int gpio_init(void);
 
