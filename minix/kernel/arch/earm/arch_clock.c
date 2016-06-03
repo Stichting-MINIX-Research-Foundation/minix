@@ -40,7 +40,7 @@ int init_local_timer(unsigned freq)
 		tsc_per_ms[0] = 15000;
 	} else if (BOARD_IS_RPI_2_B(machine.board_id) ||
 	           BOARD_IS_RPI_3_B(machine.board_id)) {
-		tsc_per_ms[0] = read_cntfrq() / 1000;
+		tsc_per_ms[0] = 1000;
 	}
 	else {
 		panic("Can not do the clock setup. machine (0x%08x) is unknown\n",machine.board_id);
