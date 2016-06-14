@@ -287,7 +287,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 	getgid.o getpid.o geteuid.o getuid.o gettimeofday.o getvfsstat.o \
 	init.o kernel_utils.o kill.o link.o loadname.o lseek.o _mcontext.o \
 	minix_rs.o mknod.o mmap.o nanosleep.o open.o pread.o pwrite.o read.o \
-	sbrk.o select.o sem.o setuid.o shmctl.o sigprocmask.o stack_utils.o \
+	sbrk.o select.o setuid.o sigprocmask.o stack_utils.o \
 	stat.o stime.o svrctl.o syscall.o __sysctl.o _ucontext.o umask.o \
 	unlink.o wait4.o write.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/sys/${f:C/\.o/.c/}

@@ -5,8 +5,6 @@
 #include <sys/svrctl.h>
 #include <minix/sysinfo.h>
 #include <machine/partition.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 
 #include "servers/vfs/const.h"
 #include "servers/vfs/dmap.h"
@@ -301,183 +299,33 @@ mib_kern_boottime(struct mib_call * call __unused,
 }
 
 /*
- * Copy over an ipc_perm structure to an ipc_perm_sysctl structure.
- */
-static void
-prepare_ipc_perm(struct ipc_perm_sysctl * perms, const struct ipc_perm * perm)
-{
-
-	memset(perms, 0, sizeof(*perms));
-	perms->_key = perm->_key;
-	perms->uid = perm->uid;
-	perms->gid = perm->gid;
-	perms->cuid = perm->cuid;
-	perms->cgid = perm->cgid;
-	perms->mode = perm->mode;
-	perms->_seq = perm->_seq;
-}
-
-/*
- * Implementation of CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.
+ * Mock implementation of CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.  Normally,
+ * the IPC service overrides the entire "kern.ipc" subtree.  Therefore, this
+ * function will only ever be called when the IPC service is *not* running.
  */
 static ssize_t
 mib_kern_ipc_info(struct mib_call * call, struct mib_node * node __unused,
-	struct mib_oldp * oldp, struct mib_newp * newp __unused)
+	struct mib_oldp * oldp __unused, struct mib_newp * newp __unused)
 {
-	struct sem_sysctl_info semsi;
-	struct shm_sysctl_info shmsi;
-	struct semid_ds semds;
-	struct shmid_ds shmds;
-	ssize_t r, off;
-	int i, max;
 
+	/* The caller must always specify the resouce type (sem/shm/msg). */
 	if (call->call_namelen != 1)
 		return EINVAL;
 
-	/*
-	 * An important security note: according to the specification, IPC_STAT
-	 * (and therefore, logically, its SEM_STAT and SHM_STAT siblings)
-	 * performs read access checks on the caller, meaning that users other
-	 * than root may not obtain details about IPC objects for which they do
-	 * not have permission.  However, NetBSD's sysctl(2) interface to
-	 * obtain the same information, which we mimic here, does *not* perform
-	 * such permission checks.  For that reason, neither do we; the MIB
-	 * service is running as root, so it can freely make stat calls, and
-	 * expose the results to all users on the system.  If this is to be
-	 * changed in the future, we would probably be better off moving the
-	 * processing of this sysctl(2) node into the IPC server altogether.
-	 */
-	off = 0;
-
-	switch (call->call_name[0]) {
-	case KERN_SYSVIPC_SEM_INFO:
-		memset(&semsi, 0, sizeof(semsi));
-		if ((max = semctl(0, 0, IPC_INFO, &semsi.seminfo)) == -1)
-			return -errno;
-		/*
-		 * As a hackish exception, the requested size may imply that
-		 * just general information is to be returned, without throwing
-		 * an ENOMEM error because there is no space for full output.
-		 */
-		if (mib_getoldlen(oldp) == sizeof(semsi.seminfo))
-			return mib_copyout(oldp, 0, &semsi.seminfo,
-			    sizeof(semsi.seminfo));
-		/*
-		 * ipcs(1) blindly expects the returned array to be of size
-		 * seminfo.semmni, using the SEM_ALLOC mode flag to see whether
-		 * each entry is valid.  If we return a smaller size, ipcs(1)
-		 * will access arbitrary memory.
-		 */
-		if (semsi.seminfo.semmni <= 0)
-			return EINVAL;
-		if (oldp == NULL)
-			return sizeof(semsi) + sizeof(semsi.semids[0]) *
-			    (semsi.seminfo.semmni - 1);
-		/*
-		 * Copy out entries one by one.  For the first entry, copy out
-		 * the entire "semsi" structure.  For subsequent entries, reuse
-		 * the single embedded 'semids' element of "semsi", and copy
-		 * out only that element.
-		 */
-		for (i = 0; i < semsi.seminfo.semmni; i++) {
-			memset(&semsi.semids[0], 0, sizeof(semsi.semids[0]));
-			if (i <= max && semctl(i, 0, SEM_STAT, &semds) >= 0) {
-				prepare_ipc_perm(&semsi.semids[0].sem_perm,
-				    &semds.sem_perm);
-				semsi.semids[0].sem_nsems = semds.sem_nsems;
-				semsi.semids[0].sem_otime = semds.sem_otime;
-				semsi.semids[0].sem_ctime = semds.sem_ctime;
-			}
-			if (off == 0)
-				r = mib_copyout(oldp, off, &semsi,
-				    sizeof(semsi));
-			else
-				r = mib_copyout(oldp, off, &semsi.semids[0],
-				    sizeof(semsi.semids[0]));
-			if (r < 0)
-				return r;
-			off += r;
-		}
-		break;
-	case KERN_SYSVIPC_SHM_INFO:
-		memset(&shmsi, 0, sizeof(shmsi));
-		if ((max = shmctl(0, IPC_INFO,
-		    (struct shmid_ds *)&shmsi.shminfo)) == -1)
-			return -errno;
-		/*
-		 * As a hackish exception, the requested size may imply that
-		 * just general information is to be returned, without throwing
-		 * an ENOMEM error because there is no space for full output.
-		 */
-		if (mib_getoldlen(oldp) == sizeof(shmsi.shminfo))
-			return mib_copyout(oldp, 0, &shmsi.shminfo,
-			    sizeof(shmsi.shminfo));
-		/*
-		 * ipcs(1) blindly expects the returned array to be of size
-		 * shminfo.shmmni, using the SHMSEG_ALLOCATED (not exposed,
-		 * 0x0800) mode flag to see whether each entry is valid.  If we
-		 * return a smaller size, ipcs(1) will access arbitrary memory.
-		 */
-		if (shmsi.shminfo.shmmni <= 0)
-			return EINVAL;
-		if (oldp == NULL)
-			return sizeof(shmsi) + sizeof(shmsi.shmids[0]) *
-			    (shmsi.shminfo.shmmni - 1);
-		/*
-		 * Copy out entries one by one.  For the first entry, copy out
-		 * the entire "shmsi" structure.  For subsequent entries, reuse
-		 * the single embedded 'shmids' element of "shmsi", and copy
-		 * out only that element.
-		 */
-		for (i = 0; i < (int)shmsi.shminfo.shmmni; i++) {
-			memset(&shmsi.shmids[0], 0, sizeof(shmsi.shmids[0]));
-			if (i <= max && shmctl(i, SHM_STAT, &shmds) == 0) {
-				prepare_ipc_perm(&shmsi.shmids[0].shm_perm,
-				    &shmds.shm_perm);
-				shmsi.shmids[0].shm_perm.mode |= 0x0800;
-				shmsi.shmids[0].shm_segsz = shmds.shm_segsz;
-				shmsi.shmids[0].shm_lpid = shmds.shm_lpid;
-				shmsi.shmids[0].shm_cpid = shmds.shm_cpid;
-				shmsi.shmids[0].shm_atime = shmds.shm_atime;
-				shmsi.shmids[0].shm_dtime = shmds.shm_dtime;
-				shmsi.shmids[0].shm_ctime = shmds.shm_ctime;
-				shmsi.shmids[0].shm_nattch = shmds.shm_nattch;
-			}
-			if (off == 0)
-				r = mib_copyout(oldp, off, &shmsi,
-				    sizeof(shmsi));
-			else
-				r = mib_copyout(oldp, off, &shmsi.shmids[0],
-				    sizeof(shmsi.shmids[0]));
-			if (r < 0)
-				return r;
-			off += r;
-		}
-		break;
-	default:
-		return EOPNOTSUPP;
-	}
-
-	return off;
+	return EOPNOTSUPP;
 }
 
-/* The CTL_KERN KERN_SYSVIPC nodes. */
+/* The CTL_KERN KERN_SYSVIPC nodes, when not overridden by the IPC service. */
 static struct mib_node mib_kern_ipc_table[] = {
 /* 1*/	[KERN_SYSVIPC_INFO]	= MIB_FUNC(_P | _RO | CTLTYPE_NODE, 0,
 				    mib_kern_ipc_info, "sysvipc_info",
 				    "System V style IPC information"),
 /* 2*/	[KERN_SYSVIPC_MSG]	= MIB_INT(_P | _RO, 0, "sysvmsg", "System V "
 				    "style message support available"),
-/* 3*/	[KERN_SYSVIPC_SEM]	= MIB_INT(_P | _RO, 1, "sysvsem", "System V "
+/* 3*/	[KERN_SYSVIPC_SEM]	= MIB_INT(_P | _RO, 0, "sysvsem", "System V "
 				    "style semaphore support available"),
-/* 4*/	[KERN_SYSVIPC_SHM]	= MIB_INT(_P | _RO, 1, "sysvshm", "System V "
+/* 4*/	[KERN_SYSVIPC_SHM]	= MIB_INT(_P | _RO, 0, "sysvshm", "System V "
 				    "style shared memory support available"),
-/* 5*/	/* KERN_SYSVIPC_SHMMAX: not yet supported */
-/* 6*/	/* KERN_SYSVIPC_SHMMNI: not yet supported */
-/* 7*/	/* KERN_SYSVIPC_SHMSEG: not yet supported */
-/* 8*/	/* KERN_SYSVIPC_SHMMAXPGS: not yet supported */
-/* 9*/	/* KERN_SYSVIPC_SHMUSEPHYS: not yet supported */
-	/* In addition, NetBSD has a number of dynamic nodes here. */
 };
 
 /* The CTL_KERN nodes. */

@@ -423,6 +423,46 @@ check_set(struct sem_struct * sem)
 }
 
 /*
+ * Fill a seminfo structure with actual information.  The information returned
+ * depends on the given command, which may be either IPC_INFO or SEM_INFO.
+ */
+static void
+fill_seminfo(struct seminfo * sinfo, int cmd)
+{
+	unsigned int i;
+
+	assert(cmd == IPC_INFO || cmd == SEM_INFO);
+
+	memset(sinfo, 0, sizeof(*sinfo));
+
+	sinfo->semmap = SEMMNI;
+	sinfo->semmni = SEMMNI;
+	sinfo->semmns = SEMMNI * SEMMSL;
+	sinfo->semmnu = 0; /* TODO: support for SEM_UNDO */
+	sinfo->semmsl = SEMMSL;
+	sinfo->semopm = SEMOPM;
+	sinfo->semume = 0; /* TODO: support for SEM_UNDO */
+	if (cmd == SEM_INFO) {
+		/*
+		 * For SEM_INFO the semusz field is expected to contain the
+		 * number of semaphore sets currently in use.
+		 */
+		sinfo->semusz = sem_list_nr;
+	} else
+		sinfo->semusz = 0; /* TODO: support for SEM_UNDO */
+	sinfo->semvmx = SEMVMX;
+	if (cmd == SEM_INFO) {
+		/*
+		 * For SEM_INFO the semaem field is expected to contain
+		 * the total number of allocated semaphores.
+		 */
+		for (i = 0; i < sem_list_nr; i++)
+			sinfo->semaem += sem_list[i].semid_ds.sem_nsems;
+	} else
+		sinfo->semaem = 0; /* TODO: support for SEM_UNDO */
+}
+
+/*
  * Implementation of the semctl(2) system call.
  */
 int
@@ -527,32 +567,7 @@ do_semctl(message * m)
 		break;
 	case IPC_INFO:
 	case SEM_INFO:
-		memset(&sinfo, 0, sizeof(sinfo));
-		sinfo.semmap = SEMMNI;
-		sinfo.semmni = SEMMNI;
-		sinfo.semmns = SEMMNI * SEMMSL;
-		sinfo.semmnu = 0; /* TODO: support for SEM_UNDO */
-		sinfo.semmsl = SEMMSL;
-		sinfo.semopm = SEMOPM;
-		sinfo.semume = 0; /* TODO: support for SEM_UNDO */
-		if (cmd == SEM_INFO) {
-			/*
-			 * For SEM_INFO the semusz field is expected to contain
-			 * the number of semaphore sets currently in use.
-			 */
-			sinfo.semusz = sem_list_nr;
-		} else
-			sinfo.semusz = 0; /* TODO: support for SEM_UNDO */
-		sinfo.semvmx = SEMVMX;
-		if (cmd == SEM_INFO) {
-			/*
-			 * For SEM_INFO the semaem field is expected to contain
-			 * the total number of allocated semaphores.
-			 */
-			for (i = 0; i < sem_list_nr; i++)
-				sinfo.semaem += sem_list[i].semid_ds.sem_nsems;
-		} else
-			sinfo.semaem = 0; /* TODO: support for SEM_UNDO */
+		fill_seminfo(&sinfo, cmd);
 
 		if ((r = sys_datacopy(SELF, (vir_bytes)&sinfo, m->m_source,
 		    opt, sizeof(sinfo))) != OK)
@@ -761,6 +776,75 @@ out_free:
 		check_set(sem);
 
 	return r;
+}
+
+/*
+ * Return semaphore information for a remote MIB call on the sysvipc_info node
+ * in the kern.ipc subtree.  The particular semantics of this call are tightly
+ * coupled to the implementation of the ipcs(1) userland utility.
+ */
+ssize_t
+get_sem_mib_info(struct rmib_oldp * oldp)
+{
+	struct sem_sysctl_info semsi;
+	struct semid_ds *semds;
+	unsigned int i;
+	ssize_t r, off;
+
+	off = 0;
+
+	fill_seminfo(&semsi.seminfo, IPC_INFO);
+
+	/*
+	 * As a hackish exception, the requested size may imply that just
+	 * general information is to be returned, without throwing an ENOMEM
+	 * error because there is no space for full output.
+	 */
+	if (rmib_getoldlen(oldp) == sizeof(semsi.seminfo))
+		return rmib_copyout(oldp, 0, &semsi.seminfo,
+		    sizeof(semsi.seminfo));
+
+	/*
+	 * ipcs(1) blindly expects the returned array to be of size
+	 * seminfo.semmni, using the SEM_ALLOC mode flag to see whether each
+	 * entry is valid.  If we return a smaller size, ipcs(1) will access
+	 * arbitrary memory.
+	 */
+	assert(semsi.seminfo.semmni > 0);
+
+	if (oldp == NULL)
+		return sizeof(semsi) + sizeof(semsi.semids[0]) *
+		    (semsi.seminfo.semmni - 1);
+
+	/*
+	 * Copy out entries one by one.  For the first entry, copy out the
+	 * entire "semsi" structure.  For subsequent entries, reuse the single
+	 * embedded 'semids' element of "semsi" and copy out only that element.
+	 */
+	for (i = 0; i < (unsigned int)semsi.seminfo.semmni; i++) {
+		semds = &sem_list[i].semid_ds;
+
+		memset(&semsi.semids[0], 0, sizeof(semsi.semids[0]));
+		if (i < sem_list_nr && (semds->sem_perm.mode & SEM_ALLOC)) {
+			prepare_mib_perm(&semsi.semids[0].sem_perm,
+			    &semds->sem_perm);
+			semsi.semids[0].sem_nsems = semds->sem_nsems;
+			semsi.semids[0].sem_otime = semds->sem_otime;
+			semsi.semids[0].sem_ctime = semds->sem_ctime;
+		}
+
+		if (off == 0)
+			r = rmib_copyout(oldp, off, &semsi, sizeof(semsi));
+		else
+			r = rmib_copyout(oldp, off, &semsi.semids[0],
+			    sizeof(semsi.semids[0]));
+
+		if (r < 0)
+			return r;
+		off += r;
+	}
+
+	return off;
 }
 
 /*

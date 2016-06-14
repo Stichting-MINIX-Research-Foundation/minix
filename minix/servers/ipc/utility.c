@@ -30,3 +30,20 @@ check_perm(struct ipc_perm * req, endpoint_t who, int mode)
 
 	return (mode && ((mode & req_mode) == mode));
 }
+
+/*
+ * Copy over an ipc_perm structure to an ipc_perm_sysctl structure.
+ */
+void
+prepare_mib_perm(struct ipc_perm_sysctl * perms, const struct ipc_perm * perm)
+{
+
+	memset(perms, 0, sizeof(*perms));
+	perms->_key = perm->_key;
+	perms->uid = perm->uid;
+	perms->gid = perm->gid;
+	perms->cuid = perm->cuid;
+	perms->cgid = perm->cgid;
+	perms->mode = perm->mode;
+	perms->_seq = perm->_seq;
+}

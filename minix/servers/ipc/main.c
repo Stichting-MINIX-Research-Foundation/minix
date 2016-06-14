@@ -20,13 +20,77 @@ static int (* const call_vec[])(message *) = {
 };
 
 /*
+ * Remote MIB implementation of CTL_KERN KERN_SYSVIPC KERN_SYSVIPC_INFO.  This
+ * function handles all queries on the "kern.ipc.sysvipc_info" sysctl(2) node.
+ */
+static ssize_t
+kern_ipc_info(struct rmib_call * call, struct rmib_node * node __unused,
+	struct rmib_oldp * oldp, struct rmib_newp * newp __unused)
+{
+
+	if (call->call_namelen != 1)
+		return EINVAL;
+
+	/*
+	 * Let each IPC submodule provide information through it own function.
+	 * An important security note: unlike IPC_STAT and the like, access to
+	 * the sysvipc_info node does not require root privileges.  That is: on
+	 * NetBSD, any user can get a full listing of all IPC objects in the
+	 * system.  We therefore do not perform any security check here.
+	 */
+	switch (call->call_name[0]) {
+	case KERN_SYSVIPC_SEM_INFO:
+		return get_sem_mib_info(oldp);
+
+	case KERN_SYSVIPC_SHM_INFO:
+		return get_shm_mib_info(oldp);
+
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+/* The CTL_KERN KERN_SYSVIPC subtree. */
+static struct rmib_node kern_ipc_table[] = {
+/* 1*/	[KERN_SYSVIPC_INFO]	= RMIB_FUNC(RMIB_RO | CTLTYPE_NODE, 0,
+				    kern_ipc_info, "sysvipc_info",
+				    "System V style IPC information"),
+/* 2*/	[KERN_SYSVIPC_MSG]	= RMIB_INT(RMIB_RO, 0, "sysvmsg", "System V "
+				    "style message support available"),
+/* 3*/	[KERN_SYSVIPC_SEM]	= RMIB_INT(RMIB_RO, 1, "sysvsem", "System V "
+				    "style semaphore support available"),
+/* 4*/	[KERN_SYSVIPC_SHM]	= RMIB_INT(RMIB_RO, 1, "sysvshm", "System V "
+				    "style shared memory support available"),
+/* 5*/	/* KERN_SYSVIPC_SHMMAX: not yet supported */
+/* 6*/	/* KERN_SYSVIPC_SHMMNI: not yet supported */
+/* 7*/	/* KERN_SYSVIPC_SHMSEG: not yet supported */
+/* 8*/	/* KERN_SYSVIPC_SHMMAXPGS: not yet supported */
+/* 9*/	/* KERN_SYSVIPC_SHMUSEPHYS: not yet supported */
+	/* In addition, NetBSD has a number of dynamic nodes here. */
+};
+
+/* The CTL_KERN KERN_SYSVIPC node. */
+static struct rmib_node kern_ipc_node =
+    RMIB_NODE(RMIB_RO, kern_ipc_table, "ipc", "SysV IPC options");
+
+/*
  * Initialize the IPC server.
  */
 static int
 sef_cb_init_fresh(int type __unused, sef_init_info_t * info __unused)
 {
+	const int mib[] = { CTL_KERN, KERN_SYSVIPC };
+	int r;
 
-	/* Nothing to do. */
+	/*
+	 * Register our own "kern.ipc" subtree with the MIB service.
+	 *
+	 * This call only returns local failures.  Remote failures (in the MIB
+	 * service) are silently ignored.  So, we can safely panic on failure.
+	 */
+	if ((r = rmib_register(mib, __arraycount(mib), &kern_ipc_node)) != OK)
+		panic("unable to register remote MIB tree: %d", r);
+
 	return OK;
 }
 
@@ -44,8 +108,11 @@ sef_cb_signal_handler(int signo)
 	 * Check if there are still IPC keys around.  If not, we can safely
 	 * exit immediately.  Otherwise, warn the system administrator.
 	 */
-	if (is_sem_nil() && is_shm_nil())
+	if (is_sem_nil() && is_shm_nil()) {
+		rmib_deregister(&kern_ipc_node);
+
 		sef_exit(0);
+	}
 
 	printf("IPC: exit with unclean state\n");
 }
@@ -173,6 +240,13 @@ main(int argc, char ** argv)
 		/* Process event messages from PM are handled separately. */
 		if (m.m_source == PM_PROC_NR && m.m_type == PROC_EVENT) {
 			got_proc_event(&m);
+
+			continue;
+		}
+
+		/* Remote MIB messages from MIB are handled separately too. */
+		if (m.m_source == MIB_PROC_NR) {
+			rmib_process(&m, ipc_status);
 
 			continue;
 		}

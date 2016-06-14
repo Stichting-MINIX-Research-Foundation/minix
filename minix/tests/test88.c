@@ -8,6 +8,7 @@
 #include <sys/sem.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <signal.h>
 
 #include "common.h"
@@ -2765,12 +2766,187 @@ test88e(void)
 }
 
 /*
+ * Verify that non-root processes can use sysctl(2) to see semaphore sets
+ * created by root.
+ */
+static void
+test88f_child(struct link * parent)
+{
+	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_INFO,
+	    KERN_SYSVIPC_SEM_INFO };
+	struct sem_sysctl_info *semsi;
+	size_t len;
+	int id[2], id2, seen[2];
+	int32_t i;
+
+	id[0] = rcv(parent);
+	id[1] = rcv(parent);
+
+	if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) != 0) e(0);
+
+	if ((semsi = malloc(len)) == NULL) e(0);
+
+	if (sysctl(mib, __arraycount(mib), semsi, &len, NULL, 0) != 0) e(0);
+
+	seen[0] = seen[1] = 0;
+	for (i = 0; i < semsi->seminfo.semmni; i++) {
+		if (!(semsi->semids[i].sem_perm.mode & SEM_ALLOC))
+			continue;
+
+		id2 = IXSEQ_TO_IPCID(i, semsi->semids[i].sem_perm);
+		if (id2 == id[0])
+			seen[0]++;
+		else if (id2 == id[1])
+			seen[1]++;
+	}
+
+	free(semsi);
+
+	if (seen[0] != 1) e(0);
+	if (seen[1] != 1) e(0);
+}
+
+/*
+ * Test sysctl(2) based information retrieval.  This test aims to ensure that
+ * in particular ipcs(1) and ipcrm(1) will be able to do their jobs.
+ */
+static void
+test88f(void)
+{
+	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_INFO,
+	    KERN_SYSVIPC_SEM_INFO };
+	struct seminfo seminfo, seminfo2;
+	struct sem_sysctl_info *semsi;
+	struct semid_ds_sysctl *semds;
+	struct link child;
+	size_t len, size;
+	int id[2], id2;
+	int32_t i, slot[2];
+
+	/*
+	 * Verify that we can retrieve only the general semaphore information,
+	 * without any actual semaphore set entries.  This is actually a dirty
+	 * sysctl-level hack, as sysctl requests should not behave differently
+	 * based on the requested length.  However, ipcs(1) relies on this.
+	 */
+	len = sizeof(seminfo);
+	if (sysctl(mib, __arraycount(mib), &seminfo, &len, NULL, 0) != 0) e(0);
+	if (len != sizeof(seminfo)) e(0);
+
+	if (semctl(0, 0, IPC_INFO, &seminfo2) == -1) e(0);
+
+	if (memcmp(&seminfo, &seminfo2, sizeof(seminfo)) != 0) e(0);
+
+	/* Verify that the correct size estimation is returned. */
+	if (seminfo.semmni <= 0) e(0);
+	if (seminfo.semmni > SHRT_MAX) e(0);
+
+	size = sizeof(*semsi) +
+	    sizeof(semsi->semids[0]) * (seminfo.semmni - 1);
+
+	len = 0;
+	if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) != 0) e(0);
+	if (len != size) e(0);
+
+	/* Create two semaphore sets that should show up in the listing. */
+	if ((id[0] = semget(KEY_A, 5, IPC_CREAT | 0612)) < 0) e(0);
+
+	if ((id[1] = semget(IPC_PRIVATE, 3, 0650)) < 0) e(0);
+
+	/*
+	 * Retrieve the entire semaphore array, and verify that the general
+	 * semaphore information is still correct.
+	 */
+	if ((semsi = malloc(size)) == NULL) e(0);
+
+	len = size;
+	if (sysctl(mib, __arraycount(mib), semsi, &len, NULL, 0) != 0) e(0);
+	if (len != size) e(0);
+
+	if (sizeof(semsi->seminfo) != sizeof(seminfo)) e(0);
+	if (memcmp(&semsi->seminfo, &seminfo, sizeof(semsi->seminfo)) != 0)
+	    e(0);
+
+	/* Verify that our semaphore sets are each in the array once. */
+	slot[0] = slot[1] = -1;
+	for (i = 0; i < seminfo.semmni; i++) {
+		if (!(semsi->semids[i].sem_perm.mode & SEM_ALLOC))
+			continue;
+
+		id2 = IXSEQ_TO_IPCID(i, semsi->semids[i].sem_perm);
+		if (id2 == id[0]) {
+			if (slot[0] != -1) e(0);
+			slot[0] = i;
+		} else if (id2 == id[1]) {
+			if (slot[1] != -1) e(0);
+			slot[1] = i;
+		}
+	}
+
+	if (slot[0] < 0) e(0);
+	if (slot[1] < 0) e(0);
+
+	/* Check that the semaphore sets have the expected properties. */
+	semds = &semsi->semids[slot[0]];
+	if (semds->sem_perm.uid != geteuid()) e(0);
+	if (semds->sem_perm.gid != getegid()) e(0);
+	if (semds->sem_perm.cuid != geteuid()) e(0);
+	if (semds->sem_perm.cgid != getegid()) e(0);
+	if (semds->sem_perm.mode != (SEM_ALLOC | 0612)) e(0);
+	if (semds->sem_perm._key != KEY_A) e(0);
+	if (semds->sem_nsems != 5) e(0);
+	if (semds->sem_otime != 0) e(0);
+	if (semds->sem_ctime == 0) e(0);
+
+	semds = &semsi->semids[slot[1]];
+	if (semds->sem_perm.uid != geteuid()) e(0);
+	if (semds->sem_perm.gid != getegid()) e(0);
+	if (semds->sem_perm.cuid != geteuid()) e(0);
+	if (semds->sem_perm.cgid != getegid()) e(0);
+	if (semds->sem_perm.mode != (SEM_ALLOC | 0650)) e(0);
+	if (semds->sem_perm._key != IPC_PRIVATE) e(0);
+	if (semds->sem_nsems != 3) e(0);
+	if (semds->sem_otime != 0) e(0);
+	if (semds->sem_ctime == 0) e(0);
+
+	/* Make sure that non-root users can see them as well. */
+	spawn(&child, test88f_child, DROP_ALL);
+
+	snd(&child, id[0]);
+	snd(&child, id[1]);
+
+	collect(&child);
+
+	/* Clean up, and verify that the sets are no longer in the listing. */
+	if (semctl(id[0], 0, IPC_RMID) != 0) e(0);
+	if (semctl(id[1], 0, IPC_RMID) != 0) e(0);
+
+	len = size;
+	if (sysctl(mib, __arraycount(mib), semsi, &len, NULL, 0) != 0) e(0);
+	if (len != size) e(0);
+
+	for (i = 0; i < seminfo.semmni; i++) {
+		if (!(semsi->semids[i].sem_perm.mode & SEM_ALLOC))
+			continue;
+
+		id2 = IXSEQ_TO_IPCID(i, semsi->semids[i].sem_perm);
+		if (id2 == id[0]) e(0);
+		if (id2 == id[1]) e(0);
+	}
+
+	free(semsi);
+}
+
+/*
  * Initialize the test.
  */
 static void
 test88_init(void)
 {
+	static const int mib[] = { CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM };
 	struct group *gr;
+	size_t len;
+	int i;
 
 	/* Start with full root privileges. */
 	setuid(geteuid());
@@ -2780,6 +2956,21 @@ test88_init(void)
 	setgid(gr->gr_gid);
 	setegid(gr->gr_gid);
 
+	/*
+	 * Verify that the IPC service is running at all.  If not, there is
+	 * obviously no point in running this test.
+	 */
+	len = sizeof(i);
+	if (sysctl(mib, __arraycount(mib), &i, &len, NULL, 0) != 0) e(0);
+	if (len != sizeof(i)) e(0);
+
+	if (i == 0) {
+		printf("skipped\n");
+		cleanup();
+		exit(0);
+	}
+
+	/* Allocate a memory page followed by an unmapped page. */
 	page_size = getpagesize();
 	page_ptr = mmap(NULL, page_size * 2, PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -2811,6 +3002,7 @@ main(int argc, char ** argv)
 		if (m & 0x04) test88c();
 		if (m & 0x08) test88d();
 		if (m & 0x10) test88e();
+		if (m & 0x20) test88f();
 	}
 
 	quit();

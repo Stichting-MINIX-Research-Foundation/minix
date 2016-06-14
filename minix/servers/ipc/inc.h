@@ -9,6 +9,7 @@
 #include <minix/const.h>
 #include <minix/type.h>
 #include <minix/syslib.h>
+#include <minix/rmib.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +49,7 @@ int do_shmget(message *);
 int do_shmat(message *);
 int do_shmdt(message *);
 int do_shmctl(message *);
+int get_shm_mib_info(struct rmib_oldp *);
 int is_shm_nil(void);
 void update_refcount_and_destroy(void);
 
@@ -55,8 +57,10 @@ void update_refcount_and_destroy(void);
 int do_semget(message *);
 int do_semctl(message *);
 int do_semop(message *);
+int get_sem_mib_info(struct rmib_oldp *);
 int is_sem_nil(void);
 void sem_process_event(endpoint_t, int);
 
 /* utility.c */
 int check_perm(struct ipc_perm *, endpoint_t, int);
+void prepare_mib_perm(struct ipc_perm_sysctl *, const struct ipc_perm *);

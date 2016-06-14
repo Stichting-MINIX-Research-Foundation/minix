@@ -241,6 +241,22 @@ do_shmdt(message * m)
 	return OK;
 }
 
+/*
+ * Fill a shminfo structure with actual information.
+ */
+static void
+fill_shminfo(struct shminfo * sinfo)
+{
+
+	memset(sinfo, 0, sizeof(*sinfo));
+
+	sinfo->shmmax = (unsigned long)-1;
+	sinfo->shmmin = 1;
+	sinfo->shmmni = __arraycount(shm_list);
+	sinfo->shmseg = (unsigned long)-1;
+	sinfo->shmall = (unsigned long)-1;
+}
+
 int
 do_shmctl(message * m)
 {
@@ -320,12 +336,7 @@ do_shmctl(message * m)
 		update_refcount_and_destroy();
 		break;
 	case IPC_INFO:
-		memset(&sinfo, 0, sizeof(sinfo));
-		sinfo.shmmax = (unsigned long) -1;
-		sinfo.shmmin = 1;
-		sinfo.shmmni = __arraycount(shm_list);
-		sinfo.shmseg = (unsigned long) -1;
-		sinfo.shmall = (unsigned long) -1;
+		fill_shminfo(&sinfo);
 		if ((r = sys_datacopy(SELF, (vir_bytes)&sinfo, m->m_source,
 		    buf, sizeof(sinfo))) != OK)
 			return r;
@@ -357,6 +368,79 @@ do_shmctl(message * m)
 		return EINVAL;
 	}
 	return OK;
+}
+
+/*
+ * Return shared memory information for a remote MIB call on the sysvipc_info
+ * node in the kern.ipc subtree.  The particular semantics of this call are
+ * tightly coupled to the implementation of the ipcs(1) userland utility.
+ */
+ssize_t
+get_shm_mib_info(struct rmib_oldp * oldp)
+{
+	struct shm_sysctl_info shmsi;
+	struct shmid_ds *shmds;
+	unsigned int i;
+	ssize_t r, off;
+
+	off = 0;
+
+	fill_shminfo(&shmsi.shminfo);
+
+	/*
+	 * As a hackish exception, the requested size may imply that just
+	 * general information is to be returned, without throwing an ENOMEM
+	 * error because there is no space for full output.
+	 */
+	if (rmib_getoldlen(oldp) == sizeof(shmsi.shminfo))
+		return rmib_copyout(oldp, 0, &shmsi.shminfo,
+		    sizeof(shmsi.shminfo));
+
+	/*
+	 * ipcs(1) blindly expects the returned array to be of size
+	 * shminfo.shmmni, using the SHMSEG_ALLOCATED (aka SHM_ALLOC) mode flag
+	 * to see whether each entry is valid.  If we return a smaller size,
+	 * ipcs(1) will access arbitrary memory.
+	 */
+	assert(shmsi.shminfo.shmmni > 0);
+
+	if (oldp == NULL)
+		return sizeof(shmsi) + sizeof(shmsi.shmids[0]) *
+		    (shmsi.shminfo.shmmni - 1);
+
+	/*
+	 * Copy out entries one by one.  For the first entry, copy out the
+	 * entire "shmsi" structure.  For subsequent entries, reuse the single
+	 * embedded 'shmids' element of "shmsi" and copy out only that element.
+	 */
+	for (i = 0; i < shmsi.shminfo.shmmni; i++) {
+		shmds = &shm_list[i].shmid_ds;
+
+		memset(&shmsi.shmids[0], 0, sizeof(shmsi.shmids[0]));
+		if (i < shm_list_nr && (shmds->shm_perm.mode & SHM_ALLOC)) {
+			prepare_mib_perm(&shmsi.shmids[0].shm_perm,
+			    &shmds->shm_perm);
+			shmsi.shmids[0].shm_segsz = shmds->shm_segsz;
+			shmsi.shmids[0].shm_lpid = shmds->shm_lpid;
+			shmsi.shmids[0].shm_cpid = shmds->shm_cpid;
+			shmsi.shmids[0].shm_atime = shmds->shm_atime;
+			shmsi.shmids[0].shm_dtime = shmds->shm_dtime;
+			shmsi.shmids[0].shm_ctime = shmds->shm_ctime;
+			shmsi.shmids[0].shm_nattch = shmds->shm_nattch;
+		}
+
+		if (off == 0)
+			r = rmib_copyout(oldp, off, &shmsi, sizeof(shmsi));
+		else
+			r = rmib_copyout(oldp, off, &shmsi.shmids[0],
+			    sizeof(shmsi.shmids[0]));
+
+		if (r < 0)
+			return r;
+		off += r;
+	}
+
+	return off;
 }
 
 #if 0
