@@ -104,7 +104,7 @@ void Pass2(unsigned char *line) {
 		     * Output each word of the line as "<length> <word>".
 		     */
 			for (s1 = line;;) {
-				while (*s1 && *s1 == ' ')
+				while (*s1 == ' ')
 					s1++;
 				if (*s1 == '\0')
 					break;

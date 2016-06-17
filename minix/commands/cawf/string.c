@@ -43,7 +43,7 @@ int Asmname(unsigned char *s, unsigned char *c) {
  * code destination (c[3])
  */
 	c[1] = c[2] = '\0';
-	while (*s && *s == ' ')
+	while (*s == ' ')
 		s++;
 	if ((c[0] = *s) == '\0')
 		return(0);
