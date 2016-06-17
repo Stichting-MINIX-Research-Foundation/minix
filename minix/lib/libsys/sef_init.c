@@ -31,6 +31,7 @@ EXTERN char* sef_debug_header(void);
 EXTERN endpoint_t sef_self_endpoint;
 EXTERN endpoint_t sef_self_priv_flags;
 EXTERN endpoint_t sef_self_init_flags;
+EXTERN int sef_controlled_crash;
 
 #ifndef ST_STACK_REFS_BUFF_SIZE
 #define ST_STACK_REFS_BUFF_SIZE           1024
@@ -397,6 +398,12 @@ int sef_cb_init_identity_state_transfer(int type, sef_init_info_t *info)
 
   /* Restore stack refs. */
   sef_llvm_stack_refs_restore(stack_buff);
+
+  if (sef_controlled_crash == FALSE) {
+      printf("SEF(%d): crash was not controlled, "
+	"aborting transparent restart\n", sef_self_endpoint);
+      return EGENERIC; /* actual error code does not matter */
+  }
 
   return OK;
 }

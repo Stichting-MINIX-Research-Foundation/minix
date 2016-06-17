@@ -17,6 +17,7 @@ endpoint_t sef_self_proc_nr;
 int sef_self_priv_flags;
 int sef_self_init_flags;
 int sef_self_receiving;
+int sef_controlled_crash;
 
 /* Extern variables. */
 EXTERN int sef_lu_state;
@@ -84,6 +85,7 @@ void sef_startup()
   sef_self_priv_flags = priv_flags;
   sef_self_init_flags = init_flags;
   sef_lu_state = SEF_LU_STATE_NULL;
+  sef_controlled_crash = FALSE;
   old_endpoint = NONE;
   if(init_flags & SEF_LU_NOMMAP) {
       sys_upd_flags |= SF_VM_NOMMAP;
@@ -139,6 +141,7 @@ void sef_startup()
   sef_self_priv_flags = priv_flags;
   sef_self_init_flags = init_flags;
   sef_lu_state = SEF_LU_STATE_NULL;
+  sef_controlled_crash = FALSE;
 }
 
 /*===========================================================================*
