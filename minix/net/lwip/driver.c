@@ -102,6 +102,15 @@ static struct nic * lookup_nic_default(void)
 	return NULL;
 }
 
+struct nic * nic_get(int i)
+{
+
+	if (i < 0 || i >= MAX_DEVS || devices[i].drv_ep == NONE)
+		return NULL;
+
+	return &devices[i];
+}
+
 void nic_init_all(void)
 {
 	int i;

@@ -8,7 +8,8 @@ SRCS=	lwip.c		\
 	tcp.c		\
 	raw_ip.c	\
 	inet_config.c	\
-	eth.c
+	eth.c		\
+	rtinfo.c
 
 FILES=${PROG}.conf
 FILESNAME=${PROG}

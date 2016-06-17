@@ -240,7 +240,7 @@ put_kern_boottime(struct trace_proc * proc, const char * name,
  */
 static int
 put_kern_sysvipc_info(struct trace_proc * proc, const char * name,
-	int type, const void * ptr __unused, vir_bytes addr, size_t size)
+	int type, const void * ptr, vir_bytes addr, size_t size)
 {
 	const int *mib;
 	const char *text;
@@ -328,10 +328,78 @@ static const struct sysctl_tab vm_tab[] = {
 	PROC(VM_LOADAVG, sizeof(struct loadavg), put_vm_loadavg),
 };
 
+/*
+ * Print CTL_NET PF_ROUTE 0.
+ */
+static int
+put_net_route_rtable(struct trace_proc * proc, const char * name,
+	int type, const void * ptr, vir_bytes addr, size_t size)
+{
+	const int *mib;
+	const char *text;
+	unsigned int i;
+
+	/*
+	 * TODO: print the obtained structure(s).  For now we are just
+	 * concerned with the name components.
+	 */
+	if (type != ST_NAME) {
+		put_ptr(proc, name, addr);
+
+		return TRUE;
+	}
+
+	mib = (const int *)ptr;
+
+	for (i = 0; i < size; i++) {
+		text = NULL;
+
+		switch (i) {
+		case 0:
+			switch (mib[i]) {
+			case AF_UNSPEC: text = "<all>"; break;
+			case AF_LINK: text = "<link>"; break;
+			case AF_INET: text = "<inet>"; break;
+			case AF_INET6: text = "<inet6>"; break;
+			/* TODO: add more address families here */
+			}
+			break;
+		case 1:
+			switch (mib[i]) {
+			case NET_RT_DUMP: text = "<dump>"; break;
+			case NET_RT_FLAGS: text = "<flags>"; break;
+			case NET_RT_IFLIST: text = "<iflist>"; break;
+			}
+			break;
+		case 2:
+			if (mib[1] == NET_RT_IFLIST && mib[i] == 0)
+				text = "<all>";
+		}
+
+		if (!valuesonly && text != NULL)
+			put_field(proc, NULL, text);
+		else
+			put_value(proc, NULL, "%d", mib[i]);
+	}
+
+	return 0;
+}
+
+/* The CTL_NET PF_ROUTE table. */
+static const struct sysctl_tab net_route_tab[] = {
+	PROC(0, 0, put_net_route_rtable),
+};
+
+/* The CTL_NET table. */
+static const struct sysctl_tab net_tab[] = {
+	NODE(PF_ROUTE, net_route_tab),
+};
+
 /* The top-level table, which is indexed by identifier. */
 static const struct sysctl_tab root_tab[] = {
 	[CTL_KERN]	= NODE(0, kern_tab),
 	[CTL_VM]	= NODE(0, vm_tab),
+	[CTL_NET]	= NODE(0, net_tab),
 };
 
 /*

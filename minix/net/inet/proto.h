@@ -15,6 +15,10 @@ void clck_tick(message *mess);
 void eth_rec(message *m);
 void eth_check_driver(char *label, endpoint_t endpoint);
 
+/* rtinfo.c */
+
+void rtinfo_init(void);
+
 /* sr.c */
 
 void sr_rec(message *m, int ipc_status);

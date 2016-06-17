@@ -12,6 +12,7 @@ Copyright 1995 Philip Homburg
 #include <minix/endpoint.h>
 #include <minix/chardriver.h>
 #include <minix/rs.h>
+#include <minix/rmib.h>
 #include <sys/types.h>
 #include <pwd.h>
 
@@ -119,6 +120,10 @@ int main(int argc, char *argv[])
 				printf("inet: got unexpected notify from %d\n",
 					mess.m_source);
 			}
+		}
+		else if (mess.m_source == MIB_PROC_NR)
+		{
+			rmib_process(&mess, ipc_status);
 		}
 		else if (mess.m_type == DL_CONF_REPLY ||
 			mess.m_type == DL_TASK_REPLY ||
@@ -241,6 +246,9 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	 * any other character driver.
 	 */
 	chardriver_announce();
+
+	/* Register net.route RMIB subtree with the MIB service. */
+	rtinfo_init();
 
 	return(OK);
 }

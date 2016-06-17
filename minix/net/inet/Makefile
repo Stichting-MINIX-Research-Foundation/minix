@@ -8,7 +8,7 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 	ipr.c rand256.c tcp.c tcp_lib.c \
 	tcp_recv.c tcp_send.c ip_eth.c \
 	ip_ps.c psip.c \
-	queryparam.c version.c
+	queryparam.c version.c rtinfo.c
 MAN=	inet.8
 
 FILES=${PROG}.conf

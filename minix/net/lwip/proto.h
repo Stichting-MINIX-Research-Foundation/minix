@@ -24,6 +24,7 @@ void nic_assign_driver(const char * dev_type,
 			const char * driver_name,
 			unsigned int instance,
 			int is_default);
+struct nic *nic_get(int);
 void nic_init_all(void);
 void driver_request(message * m);
 void driver_up(const char * label, endpoint_t ep);
@@ -54,5 +55,8 @@ static inline int copy_to_user(endpoint_t proc,
 {
 	return sys_safecopyto(proc, gid, offset, (vir_bytes)src_ptr, size);
 }
+
+/* rtinfo.c */
+void rtinfo_init(void);
 
 #endif /* __LWIP_PROTO_H__ */

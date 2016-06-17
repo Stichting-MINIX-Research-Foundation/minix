@@ -12,6 +12,7 @@
 #include <minix/sysutil.h>
 #include <minix/timers.h>
 #include <minix/netsock.h>
+#include <minix/rmib.h>
 
 #include "proto.h"
 
@@ -131,6 +132,9 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 	 * any other character driver.
 	 */
 	chardriver_announce();
+
+	/* Register net.route RMIB subtree with the MIB service. */
+	rtinfo_init();
 
 	return(OK);
 }
@@ -276,7 +280,9 @@ int main(__unused int argc, __unused char ** argv)
 								m.m_source);
 				continue;
 			}
-		} else
+		} else if (m.m_source == MIB_PROC_NR)
+			rmib_process(&m, ipc_status);
+		else
 			/* all other request can be from drivers only */
 			driver_request(&m);
 	}
