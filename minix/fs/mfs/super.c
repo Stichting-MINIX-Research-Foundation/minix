@@ -176,6 +176,7 @@ static int rw_super(struct super_block *sp, int writing)
   dev_t save_dev = sp->s_dev;
   struct buf *bp;
   char *sbbuf;
+  int r;
 
 /* To keep the 1kb on disk clean, only read/write up to and including
  * this field.
@@ -202,8 +203,18 @@ static int rw_super(struct super_block *sp, int writing)
   assert(lmfs_fs_block_size() >= sizeof(struct super_block) + SUPER_BLOCK_BYTES);
   assert(SUPER_BLOCK_BYTES >= sizeof(struct super_block));
   assert(SUPER_BLOCK_BYTES >= ondisk_bytes);
-  if(!(bp = get_block(sp->s_dev, 0, NORMAL)))
-  	panic("get_block of superblock failed");
+
+  /* Unlike accessing any other block, failure to read the superblock is a
+   * somewhat legitimate use case: it may happen when trying to mount a
+   * zero-sized partition.  In that case, we'd rather faily cleanly than
+   * crash the MFS service.
+   */
+  if ((r = lmfs_get_block(&bp, sp->s_dev, 0, NORMAL)) != OK) {
+	if (writing)
+		panic("get_block of superblock failed: %d", r);
+	else
+		return r;
+  }
 
   /* sbbuf points to the disk block at the superblock offset */
   sbbuf = (char *) b_data(bp) + SUPER_BLOCK_BYTES;

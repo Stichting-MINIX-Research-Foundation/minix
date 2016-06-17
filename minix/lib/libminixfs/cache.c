@@ -758,8 +758,13 @@ static int read_block(struct buf *bp, size_t block_size)
 	r = bdev_read(dev, pos, bp->data, block_size, BDEV_NOFLAGS);
   }
   if (r != (ssize_t)block_size) {
-	printf("fs cache: I/O error on device %d/%d, block %"PRIu64" (%zd)\n",
-	    major(dev), minor(dev), bp->lmfs_blocknr, r);
+	/* Aesthetics: do not report EOF errors on superblock reads, because
+	 * this is a fairly common occurrence, e.g. during system installation.
+	 */
+	if (bp->lmfs_blocknr != 0 /*first block*/ || r != 0 /*EOF*/)
+		printf("fs cache: I/O error on device %d/%d, block %"PRIu64
+		    " (%zd)\n", major(dev), minor(dev), bp->lmfs_blocknr, r);
+
 	if (r >= 0)
 		r = EIO; /* TODO: retry retrieving (just) the remaining part */
 
