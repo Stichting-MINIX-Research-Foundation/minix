@@ -696,7 +696,7 @@ static int nic_op_write(struct socket * sock, struct sock_req * req,
 		return ret;
 	}
 
-	if ((ret = nic->netif.linkoutput(&nic->netif, pbuf) != ERR_OK)) {
+	if ((ret = nic->netif.linkoutput(&nic->netif, pbuf)) != ERR_OK) {
 		debug_print("raw linkoutput failed %d", ret);
 		ret = EIO;
 	} else

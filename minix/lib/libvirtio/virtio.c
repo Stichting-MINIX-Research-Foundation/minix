@@ -263,7 +263,7 @@ virtio_alloc_queues(struct virtio_device *dev, int num_queues)
 
 	memset(dev->queues, 0, num_queues * sizeof(dev->queues[0]));
 
-	if ((r = init_phys_queues(dev) != OK)) {
+	if ((r = init_phys_queues(dev)) != OK) {
 		printf("%s: Could not initialize queues (%d)\n", dev->name, r);
 		free(dev->queues);
 		dev->queues = NULL;
@@ -750,7 +750,7 @@ void
 virtio_irq_enable(struct virtio_device *dev)
 {
 	int r;
-	if ((r = sys_irqenable(&dev->irq_hook) != OK))
+	if ((r = sys_irqenable(&dev->irq_hook)) != OK)
 		panic("%s Unable to enable IRQ %d", dev->name, r);
 }
 
@@ -758,7 +758,7 @@ void
 virtio_irq_disable(struct virtio_device *dev)
 {
 	int r;
-	if ((r = sys_irqdisable(&dev->irq_hook) != OK))
+	if ((r = sys_irqdisable(&dev->irq_hook)) != OK)
 		panic("%s: Unable to disable IRQ %d", dev->name, r);
 }
 
@@ -790,7 +790,7 @@ static void
 virtio_irq_register(struct virtio_device *dev)
 {
 	int r;
-	if ((r = sys_irqsetpolicy(dev->irq, 0, &dev->irq_hook) != OK))
+	if ((r = sys_irqsetpolicy(dev->irq, 0, &dev->irq_hook)) != OK)
 		panic("%s: Unable to register IRQ %d", dev->name, r);
 }
 
@@ -798,7 +798,7 @@ static void
 virtio_irq_unregister(struct virtio_device *dev)
 {
 	int r;
-	if ((r = sys_irqrmpolicy(&dev->irq_hook) != OK))
+	if ((r = sys_irqrmpolicy(&dev->irq_hook)) != OK)
 		panic("%s: Unable to unregister IRQ %d", dev->name, r);
 }
 

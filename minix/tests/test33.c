@@ -349,7 +349,7 @@ void test33c()
   if (mkdir("nosearch", 0777) != 0) e(1000);
   if ( (i = creat("nosearch/file", 0666)) < 0) e(1001);
   if (close(i) < 0) e(1002);
-  if ( (i = creat("file", 0666) < 0)) e(1003);
+  if ( (i = creat("file", 0666)) < 0) e(1003);
   if (close(i) < 0) e(1004);
   if (chmod("nosearch/file", 05777) < 0) e(1005);
   if (chmod("file", 05777) < 0) e(1006);
@@ -359,7 +359,7 @@ void test33c()
   /* Test ToLongName and ToLongPath */
   does_truncate = does_fs_truncate();
   if (does_truncate) {
-  	if ((fd = creat(ToLongName, 0777)) != 0) e(18);
+	if ((fd = creat(ToLongName, 0777)) == -1) e(18);
   	if (close(fd) != 0) e(19);
 	if (access(ToLongName, F_OK) != 0) e(20);
   } else {

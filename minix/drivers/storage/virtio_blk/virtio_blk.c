@@ -669,7 +669,7 @@ virtio_blk_probe(int skip)
 	}
 
 	/* Allocate memory for headers and status */
-	if ((r = virtio_blk_alloc_requests() != OK)) {
+	if ((r = virtio_blk_alloc_requests()) != OK) {
 		virtio_free_queues(blk_dev);
 		virtio_free_device(blk_dev);
 		return r;

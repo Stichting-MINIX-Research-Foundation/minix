@@ -110,7 +110,7 @@ static int tcp_op_open(struct socket * sock)
 		return ENOMEM;
 	debug_tcp_print("new tcp pcb %p\n", pcb);
 	
-	if ((ret = tcp_fill_new_socket(sock, pcb) != OK))
+	if ((ret = tcp_fill_new_socket(sock, pcb)) != OK)
 		tcp_abandon(pcb, 0);
 	
 	return ret;
