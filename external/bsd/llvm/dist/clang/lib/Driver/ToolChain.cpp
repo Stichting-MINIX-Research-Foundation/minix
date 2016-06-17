@@ -275,7 +275,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
 #if defined(__minix) || 1
     // Minix/ARM-specific force to ARMv7 and EABI.
-    StringRef Suffix = "v7";
+    StringRef Suffix = "v7a";
     Triple.setEnvironment(llvm::Triple::EABI);
 #else
     StringRef Suffix = Triple.isOSBinFormatMachO()

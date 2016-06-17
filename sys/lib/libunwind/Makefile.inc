@@ -16,3 +16,9 @@ CPPFLAGS.libunwind.cxx+=-I${NETBSDSRCDIR}/sys/lib/libunwind
 .if ${LIBC_MACHINE_CPU} == "arm"
 AFLAGS.unwind_registers.S+=	${${ACTIVE_CC} == "clang":? -mfpu=vfp3 :}
 .endif
+
+.if defined(__MINIX)
+.PATH:	${NETBSDSRCDIR}/sys/lib/libkern/arch/arm
+SRCS+= unwind_stub.c
+CPPFLAGS.unwind_stub.c+=-I${NETBSDSRCDIR}/sys/arch/arm/include
+.endif # defined(__MINIX)

@@ -638,6 +638,8 @@ llvm::Optional<ProgramStateRef> MallocChecker::performKernelMalloc(
   if (!KernelZeroFlagVal.hasValue()) {
     if (OS == llvm::Triple::FreeBSD)
       KernelZeroFlagVal = 0x0100;
+    else if (OS == llvm::Triple::Minix)
+      KernelZeroFlagVal = 0x0002;
     else if (OS == llvm::Triple::NetBSD)
       KernelZeroFlagVal = 0x0002;
     else if (OS == llvm::Triple::OpenBSD)

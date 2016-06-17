@@ -665,6 +665,10 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
       }
       break;
 
+    case llvm::Triple::Minix:
+      FloatABI = "softfp";
+      break;
+
     default:
       switch(Triple.getEnvironment()) {
       case llvm::Triple::GNUEABIHF:
@@ -796,6 +800,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       ABIName = "aapcs";
       break;
     default:
+      if (Triple.getOS() == llvm::Triple::Minix)
+        ABIName = "apcs-gnu";
+
       if (Triple.getOS() == llvm::Triple::NetBSD)
         ABIName = "apcs-gnu";
       else
@@ -7733,6 +7740,11 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // Many NetBSD architectures support more than one ABI.
   // Determine the correct emulation for ld.
   switch (getToolChain().getArch()) {
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("armelf_minix");
+    break;
   case llvm::Triple::x86:
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf_i386_minix");

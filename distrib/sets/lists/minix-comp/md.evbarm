@@ -81,6 +81,9 @@
 ./usr/include/arm/vm.h                                  minix-comp
 ./usr/include/arm/vmparam.h                             minix-comp
 ./usr/include/arm/wchar_limits.h                        minix-comp
+./usr/include/clang-3.6/arm_acle.h                      minix-comp	llvm,llvmcmds
+./usr/include/clang-3.6/arm_neon.h                      minix-comp	llvm,llvmcmds
+./usr/include/clang-3.6/stdatomic.h                     minix-comp	llvm,llvmcmds
 ./usr/include/evbarm                                    minix-comp
 ./usr/include/evbarm/disklabel.h                        minix-comp
 ./usr/include/evbarm/intr.h                             minix-comp

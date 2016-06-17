@@ -3816,6 +3816,7 @@ class ARMTargetInfo : public TargetInfo {
       SizeType = UnsignedInt;
 
     switch (T.getOS()) {
+    case llvm::Triple::Minix:
     case llvm::Triple::NetBSD:
       WCharType = SignedInt;
       break;
