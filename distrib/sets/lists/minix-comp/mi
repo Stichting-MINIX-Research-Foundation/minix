@@ -1311,10 +1311,12 @@
 ./usr/include/net/if_dl.h                               minix-comp
 ./usr/include/net/if_ether.h                            minix-comp
 ./usr/include/net/if_media.h                            minix-comp
+./usr/include/net/if_pflog.h                            minix-comp
 ./usr/include/net/if_types.h                            minix-comp
 ./usr/include/net/netlib.h                              minix-comp
 ./usr/include/net/pfil.h                                minix-comp
 ./usr/include/net/pfkeyv2.h                             minix-comp
+./usr/include/net/pfvar.h                               minix-comp
 ./usr/include/net/radix.h                               minix-comp
 ./usr/include/net/route.h                               minix-comp
 ./usr/include/net80211                                  minix-comp
