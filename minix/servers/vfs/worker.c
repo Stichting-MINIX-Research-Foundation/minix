@@ -535,22 +535,17 @@ void worker_signal(struct worker_thread *worker)
 void worker_stop(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
-  if (worker->w_task != NONE) {
-	/* This thread is communicating with a driver or file server */
-	if (worker->w_drv_sendrec != NULL) {			/* Driver */
-		worker->w_drv_sendrec->m_type = EIO;
-		worker->w_drv_sendrec = NULL;
-	} else if (worker->w_sendrec != NULL) {		/* FS */
-		worker->w_sendrec->m_type = EIO;
-		worker->w_sendrec = NULL;
-	} else {
-		panic("reply storage consistency error");	/* Oh dear */
-	}
-  } else {
-	/* This shouldn't happen at all... */
-	printf("VFS: stopping worker not blocked on any task?\n");
-	util_stacktrace();
-  }
+  /* This thread is communicating with a driver or file server */
+  if (worker->w_drv_sendrec != NULL) {			/* Driver */
+	assert(worker->w_task != NONE);
+	worker->w_drv_sendrec->m_type = EIO;
+	worker->w_drv_sendrec = NULL;
+  } else if (worker->w_sendrec != NULL) {		/* FS */
+	/* worker->w_task may be NONE if the FS message was still queued */
+	worker->w_sendrec->m_type = EIO;
+	worker->w_sendrec = NULL;
+  } else
+	panic("reply storage consistency error");	/* Oh dear */
   worker_wake(worker);
 }
 
