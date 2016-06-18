@@ -1,3 +1,3 @@
 #include "kernel/kernel.h"
 
-DEFINE_CPULOCAL_VARS;
+struct __cpu_local_vars __cpu_local_vars CPULOCAL_ARRAY;
