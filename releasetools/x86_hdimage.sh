@@ -26,6 +26,7 @@ fi
 : ${ROOT_SIZE=$((  128*(2**20) - ${BOOTXX_SECS} * 512 ))}
 : ${HOME_SIZE=$((  128*(2**20) ))}
 : ${USR_SIZE=$((  1792*(2**20) ))}
+: ${EFI_SIZE=$((  0  ))}
 
 # set up disk creation environment
 . releasetools/image.defaults
@@ -93,14 +94,23 @@ echo " * HOME"
 _HOME_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${HOMESIZEARG} -I $((${HOME_START}*512)) ${IMG} ${WORK_DIR}/proto.home)
 _HOME_SIZE=$(($_HOME_SIZE / 512))
 
-#
-# Write the partition table using the natively compiled
-# minix partition utility
-#
-${CROSS_TOOLS}/nbpartition -m ${IMG} ${BOOTXX_SECS} 81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
+if [ ${EFI_SIZE} -ge 512 ]
+then
+	echo " * EFI"
+	dd if=/dev/zero bs=${EFI_SIZE} count=1 >> ${IMG} 
+	# Write the partition table using the natively compiled
+	# minix partition utility
+	${CROSS_TOOLS}/nbpartition -m ${IMG} ${BOOTXX_SECS} 81:${_ROOT_SIZE}* 81:${_USR_SIZE} 81:${_HOME_SIZE} EF:1+
+else
+	# Write the partition table using the natively compiled
+	# minix partition utility
+	${CROSS_TOOLS}/nbpartition -m ${IMG} ${BOOTXX_SECS} 81:${_ROOT_SIZE}* 81:${_USR_SIZE} 81:${_HOME_SIZE}
+fi
+
 ${CROSS_TOOLS}/nbinstallboot -f -m ${ARCH} ${IMG} ${DESTDIR}/usr/mdec/bootxx_minixfs3
 
 echo ""
+mods="`( cd ${MODDIR}; echo mod* | tr ' ' ',' )`"
 echo "Disk image at `pwd`/${IMG}"
 echo ""
 echo "To boot this image on kvm using the bootloader:"
