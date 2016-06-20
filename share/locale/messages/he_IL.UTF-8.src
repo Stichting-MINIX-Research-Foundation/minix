@@ -1,0 +1,25 @@
+# $NetBSD: he_IL.UTF-8.src,v 1.2 2013/06/17 11:05:42 mbalmer Exp $
+#
+# Hebrew Language Message Locale for Israel
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/msgdef/he_IL.UTF-8.src,v 1.1 2004/04/21 15:28:22 tjr Exp $
+#
+# Acceptable Affirmative Response Expression (yesexpr)
+#    NOTE: This must be a valid Extended Regular Expression.
+^[yYכ].*
+# Acceptable Negative Response Expression (noexpr)
+#    NOTE: This must be a valid Extended Regular Expression.
+^[nNל].*
+#
+# NOTE: The following were removed from the relevant standards:
+#       The Open Group Base Specifications Issue 6 (XPG6) and
+#       IEEE Std 1003.1, 2004 Edition (POSIX).
+#      The current NetBSD implementation still requires a value or blank line.
+#
+# Acceptable Affirmative Response (yesstr)
+
+# Acceptable Negative  Response (nostr)
+
+# EOF

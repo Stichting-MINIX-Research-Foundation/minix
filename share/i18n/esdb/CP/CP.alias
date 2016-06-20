@@ -1,0 +1,98 @@
+# $NetBSD: CP.alias,v 1.14 2009/11/14 01:56:23 tnozaki Exp $
+
+037	cp037 ibm037 ebcdic-cp-us ebcdic-cp-ca ebcdic-cp-wt ebcdic-cp-nl
+038	cp038 ibm038 ebcdic-int
+273	cp273 ibm273
+274	cp274 ibm274 ebcdic-be
+275	cp275 ibm275 ebcdic-br
+277	cp277 ibm277 ebcdic-cp-dk ebcdic-cp-no
+278	cp278 ibm278 ebcdic-cp-fi ebcdic-cp-se
+280	cp280 ibm280 ebcdic-cp-it
+281	cp281 ibm281 ebcdic-jp-e
+284	cp284 ibm284 ebcdic-cp-es
+285	cp285 ibm285 ebcdic-cp-gb
+290	cp290 ibm290 ebcdic-jp-kana
+297	cp297 ibm297 ebcdic-cp-fr
+420	cp420 ibm420 ebcdic-cp-ar1
+423	cp423 ibm423 ebcdic-cp-gr
+424	cp424 ibm424 ebcdic-cp-he
+437	cp437 ibm437 437
+500	cp500 ibm500 ebcdic-cp-be ebcdic-cp-ch
+50220	cp50220 mscp50220 windows-50220
+50221	cp50221 mscp50221 windows-50221
+50222	cp50222 mscp50222 windows-50222
+51932	cp51932 mscp51932 windows-51932
+737	cp737 mscp737
+775	cp775 mscp775
+850	cp850 ibm850 850
+851	cp851 ibm851 851
+852	cp852 ibm852 852
+853	cp853 ibm853 853
+855	cp855 ibm855 855
+856	cp856 mscp856
+857	cp857 ibm857 857
+858	cp858 ibm858 858
+860	cp860 ibm860 860
+861	cp861 ibm861 861 cp-is
+862	cp862 ibm862 862
+863	cp863 ibm863 863
+864	cp864 ibm864
+865	cp865 ibm865 865
+866	cp866 mscp866
+868	cp868 ibm868 cp-ar
+869	cp869 ibm869 869 cp-gr
+870	cp870 ibm870 ebcdic-cp-roece ebcdic-cp-yu
+871	cp871 ibm871 ebcdic-cp-is
+874	cp874 ibm874
+875	cp875 mscp875
+880	cp880 ibm880 ebcdic-cyrillic
+891	cp891 ibm891
+903	cp903 ibm903
+904	cp904 ibm904 904
+905	cp905 ibm905 ebcdic-cp-tr
+918	cp918 ibm918 ebcdic-cp-ar2
+922	cp922 ibm922
+932	cp932 ms932 windows-31j mscp932
+936	cp936 mscp936
+949	cp949 mscp949 uhc
+942	cp942
+942C	cp942c ibm932 ibm-932
+943	cp943
+943C	cp943c ibm943 ibm-943
+950	cp950 mscp950
+1006	cp1006 mscp1006
+1026	cp1026 ibm1026
+1046	cp1046 ibm1046
+1124	cp1124 ibm1124
+1125	cp1125 ibm1125
+1129	cp1129 ibm1129
+1131	cp1131 ibm1131
+1133	cp1133 ibm1133
+1140	cp1140 ibm1140
+1141	cp1141 ibm1141
+1142	cp1142 ibm1142
+1143	cp1143 ibm1143
+1144	cp1144 ibm1144
+1145	cp1145 ibm1145
+1146	cp1146 ibm1146
+1147	cp1147 ibm1147
+1148	cp1148 ibm1148
+1149	cp1149 ibm1149
+1161	cp1161 ibm1161
+1162	cp1162 ibm1162 mscp874 windows-874
+1163	cp1163 ibm1163
+1250	cp1250 mscp1250 windows-1250
+1251	cp1251 mscp1251 windows-1251
+1252	cp1252 mscp1252 windows-1252
+1253	cp1253 mscp1253 windows-1253
+1254	cp1254 mscp1254 windows-1254
+1255	cp1255 mscp1255 windows-1255
+1256	cp1256 mscp1256 windows-1256
+1257	cp1257 mscp1257 windows-1257
+1258	cp1258 mscp1258 windows-1258
+10000	cp10000 cp10000_MacRoman
+10006	cp10006 cp10006_MacGreek
+10007	cp10007 cp10007_MacCyrillic MS-MAC-CYRILLIC
+10029	cp10029 cp10029_MacLatin2
+10079	cp10079 cp10079_MacIcelandic
+10081	cp10081 cp10081_MacTurkish

@@ -1,0 +1,109 @@
+# $NetBSD: kk_KZ.PT154.src,v 1.2 2009/01/02 00:20:22 tnozaki Exp $
+#
+# Kazakh Language Monetary Locale for Kazakhstan
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/monetdef/kk_KZ.PT154.src,v 1.1 2004/01/29 16:28:20 ache Exp $
+#
+# International Currency Symbol (int_curr_symbol)
+#     NOTE: Last character is always SPACE
+#
+KZT 
+#
+# Currency Symbol (currency_symbol)
+#
+עד.
+#
+# Monetary Decimal Point (mon_decimal_point)
+#
+,
+#
+# Monetary Thousands Separator (mon_thousands_sep)
+#
+ 
+#
+# Monetary Grouping Sequence (mon_grouping)
+#    A sequence of integers separated by semi-colons ';'.
+#
+3;3
+#
+# Positive Sign (positive_sign)
+#
+
+#
+# Negative Sign (negative_sign)
+#
+-
+#
+# International Fractional Digits (int_frac_digits)
+#
+2
+#
+# Fractional Digits (frac_digits)
+#
+2
+#
+# Currency Symbol Precedes Positive Value (p_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of Currency Symbol, Sign, and Positive Value
+#	by a Space (p_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# Currency Symbol Precedes Negative Value (n_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of Currency Symbol, Sign, and Negative Value (n_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# Positive Sign Position (p_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# Negative Sign Position (n_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# International Currency Symbol Precedes	Positive Value (int_p_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of International Currency Symbol, Sign, and
+#	Positive Value (int_p_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# International Currency Symbol Precedes Negative Value (int_n_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of International Currency Symbol, Sign, and
+#	Negative Value (int_n_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# International Positive Sign Position (int_p_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# International Negative Sign Position (int_n_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+# EOF

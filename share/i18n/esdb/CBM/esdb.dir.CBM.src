@@ -1,0 +1,3 @@
+# $NetBSD: esdb.dir.CBM.src,v 1.1 2011/04/27 20:05:56 mbalmer Exp $
+
+CBMINT				CBM/CBMINT.esdb

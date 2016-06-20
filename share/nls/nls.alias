@@ -1,0 +1,74 @@
+# $NetBSD: nls.alias,v 1.3 2003/04/14 05:21:51 salo Exp $
+#
+# This file defines aliase names of nls catalogs.
+# Syntax is similar to X11's locale.alias.
+# (The first word is an alias name and the second
+# one is nls catalog name.)
+
+ca_ES.ISO8859-1	ca
+ca_ES.ISO8859-15	ca
+cs_CZ.ISO8859-2	cs
+#da_DK.ISO8859-1	da
+#da_DK.ISO8859-15	da
+de_AT.ISO8859-1	de
+de_AT.ISO8859-15	de
+de_CH.ISO8859-1	de
+de_CH.ISO8859-15	de
+de_DE.ISO8859-1	de
+de_DE.ISO8859-15	de
+#en_AU.ISO8859-1	en
+#en_AU.ISO8859-15	en
+#en_CA.ISO8859-1	en
+#en_CA.ISO8859-15	en
+#en_GB.ISO8859-1	en
+#en_GB.ISO8859-15	en
+#en_US.ISO8859-1	en
+#en_US.ISO8859-15	en
+#en_US.UTF-8	en
+es_ES.ISO8859-1	es
+es_ES.ISO8859-15	es
+fi_FI.ISO8859-1	fi
+fi_FI.ISO8859-15	fi
+fr_BE.ISO8859-1	fr
+fr_BE.ISO8859-15	fr
+fr_CA.ISO8859-1	fr
+fr_CA.ISO8859-15	fr
+fr_CH.ISO8859-1	fr
+fr_CH.ISO8859-15	fr
+fr_FR.ISO8859-1	fr
+fr_FR.ISO8859-15	fr
+#hr_HR.ISO8859-2	hr
+#hu_HU.ISO8859-2	hu
+#is_IS.ISO8859-1	is
+#is_IS.ISO8859-15	is
+#it_CH.ISO8859-1	it
+#it_CH.ISO8859-15	it
+#it_IT.ISO8859-1	it
+#it_IT.ISO8859-15	it
+#ja_JP.ISO2022-JP	ja
+#ja_JP.ISO2022-JP2	ja
+#ja_JP.SJIS	ja
+#ja_JP.ct	ja
+#ja_JP.eucJP	ja
+#ko_KR.eucKR	ko
+#lt_LT.ISO8859-4	lt
+nl_BE.ISO8859-1	nl
+nl_BE.ISO8859-15	nl
+nl_NL.ISO8859-1	nl
+nl_NL.ISO8859-15	nl
+no_NO.ISO8859-1	no
+no_NO.ISO8859-15	no
+pl_PL.ISO8859-2	pl
+#pt_PT.ISO8859-1	pt
+#pt_PT.ISO8859-15	pt
+#ru_RU.CP866	ru
+#ru_RU.ISO8859-5	ru
+#ru_RU.KOI8-R	ru
+#sl_SI.ISO8859-2	sl
+sk_SK.ISO8859-2	sk
+sv_SE.ISO8859-1	sv
+sv_SE.ISO8859-15	sv
+#uk_UA.KOI8-U	uk
+#zh_CN.eucCN	zh
+#zh_TW.Big5	zh
+#zh_TW.eucTW	zh

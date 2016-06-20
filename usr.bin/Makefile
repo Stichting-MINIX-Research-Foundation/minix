@@ -11,13 +11,13 @@ SUBDIR= asa \
 	deroff dirname du \
 	env expand \
 	false find finger flock fold fpr from \
-	fsplit ftp genassym \
+	fsplit ftp genassym gencat \
 	getopt \
 	head hexdump id indent infocmp ipcrm ipcs join jot \
 	lam last ldd leave \
-	lock login logname lorder m4 \
+	locale lock login logname lorder m4 \
 	machine make man menuc mesg \
-	mkdep mkfifo mkstr mktemp \
+	mkcsmapper mkdep mkesdb mkfifo mklocale mkstr mktemp \
 	msgc \
 	nbperf newgrp nice nl nohup \
 	pagesize passwd paste patch pathchk pr \

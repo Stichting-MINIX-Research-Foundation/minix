@@ -1,5 +1,6 @@
  /set type=dir uid=0 gid=0 mode=0755
 
+./usr/lib/i18n/bc
 ./usr/tests/lib
 ./usr/tests/lib/csu
 ./usr/tests/lib/csu/bc

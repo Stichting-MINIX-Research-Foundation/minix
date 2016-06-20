@@ -1,0 +1,4 @@
+# $NetBSD: esdb.dir.KAZAKH.src,v 1.2 2011/04/28 07:09:00 mbalmer Exp $
+
+KZ1048				KAZAKH/KZ1048.esdb
+PTCP154				KAZAKH/PTCP154.esdb

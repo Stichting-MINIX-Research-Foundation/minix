@@ -1,0 +1,54 @@
+# $NetBSD: Makefile.part,v 1.6 2008/10/25 22:35:36 apb Exp $
+
+.for code in ${CODE}  # XXX: immediately expand ${CODE}
+
+PARTFILE_${code}?=	${.CURDIR}/${code}/${code}.part
+ALIASFILE_${code}?=	${.CURDIR}/${code}/${code}.alias
+SEP_${code}?=		-
+SUBDIR_${code}?=	${code}
+${code}_PART!=		${TOOL_SED} '/^\#/d;/^ *$$/d' ${PARTFILE_${code}}
+CODESETS_${code}?=	${${code}_PART:C/^/${code}${SEP_${code}}/}
+ESDB_${code}?=		${CODESETS_${code}:C/$/.esdb/:S/:/@/}
+
+FILES+=		${ESDB_${code}}
+CLEANFILES+=	${ESDB_${code}}
+.for i in ${ESDB_${code}}
+FILESDIR_$i?=	${BINDIR}/${SUBDIR_${code}}
+.endfor
+
+# ----------------------------------------------------------------------
+# esdb.dir
+#
+esdb.dir.${code}: ${PARTFILE_${code}}
+	${_MKTARGET_CREATE}
+	echo "# ${code}" > $@
+.for i in ${${code}_PART}
+	printf "%-32s%s\n" "${code}${SEP_${code}}$i" \
+		"${SUBDIR_${code}}/${code}${SEP_${code}}${i:S/:/@/}.esdb" >> $@
+.endfor
+	echo >> $@
+SRC_esdb.dir+=	esdb.dir.${code}
+CLEANFILES+=	esdb.dir.${code}
+
+# ----------------------------------------------------------------------
+# esdb.alias
+#
+.for i in ${${code}_PART:S/:/@/}
+${code}_$i_aliases!= echo \
+	`${TOOL_SED} \
+	    '/^\#/d;/^ *$$/d;/^${i:S/@/:/}[ 	]/!d;s/^[^ 	]*[ 	]*//' \
+		${ALIASFILE_${code}}`
+.endfor
+esdb.alias.${code}: ${PARTFILE_${code}} ${ALIASFILE_${code}}
+	${_MKTARGET_CREATE}
+	echo "# ${code}" > $@
+.for i in ${${code}_PART:S/:/@/}
+.for j in ${${code}_$i_aliases}
+	printf "%-32s%s\n" "$j" "${code}${SEP_${code}}${i:S/@/:/}" >> $@
+.endfor
+.endfor
+	echo >> $@
+SRC_esdb.alias+=esdb.alias.${code}
+CLEANFILES+=	esdb.alias.${code}
+
+.endfor # code

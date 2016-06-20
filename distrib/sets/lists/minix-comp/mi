@@ -1126,6 +1126,7 @@
 ./usr/include/libelf.h                                  minix-comp
 ./usr/include/libexec.h                                 minix-comp
 ./usr/include/libgen.h                                  minix-comp
+./usr/include/libintl.h                                 minix-comp
 ./usr/include/libutil.h                                 minix-comp
 ./usr/include/limits.h                                  minix-comp
 ./usr/include/link.h                                    minix-comp
@@ -1899,6 +1900,7 @@
 ./usr/lib/bc/libhgfs.a                                  minix-comp      bitcode
 ./usr/lib/bc/libiberty.a                                minix-comp      bitcode,binutils
 ./usr/lib/bc/libinputdriver.a                           minix-comp      bitcode
+./usr/lib/bc/libintl.a                                  minix-comp      bitcode
 ./usr/lib/bc/libkvm.a                                   minix-comp      bitcode
 ./usr/lib/bc/libl.a                                     minix-comp      bitcode
 ./usr/lib/bc/liblua.a                                   minix-comp      bitcode
@@ -1937,6 +1939,53 @@
 ./usr/lib/bc/libvirtio.a                                minix-comp      bitcode
 ./usr/lib/bc/libvtreefs.a                               minix-comp      bitcode
 ./usr/lib/bc/libz.a                                     minix-comp      bitcode
+./usr/lib/i18n/bc                                       minix-comp      bitcode
+./usr/lib/i18n/bc/libBIG5.a                             minix-comp      bitcode
+./usr/lib/i18n/bc/libDECHanyu.a                         minix-comp      bitcode
+./usr/lib/i18n/bc/libEUC.a                              minix-comp      bitcode
+./usr/lib/i18n/bc/libEUCTW.a                            minix-comp      bitcode
+./usr/lib/i18n/bc/libGBK2K.a                            minix-comp      bitcode
+./usr/lib/i18n/bc/libHZ.a                               minix-comp      bitcode
+./usr/lib/i18n/bc/libISO2022.a                          minix-comp      bitcode
+./usr/lib/i18n/bc/libJOHAB.a                            minix-comp      bitcode
+./usr/lib/i18n/bc/libMSKanji.a                          minix-comp      bitcode
+./usr/lib/i18n/bc/libUES.a                              minix-comp      bitcode
+./usr/lib/i18n/bc/libUTF1632.a                          minix-comp      bitcode
+./usr/lib/i18n/bc/libUTF7.a                             minix-comp      bitcode
+./usr/lib/i18n/bc/libUTF8.a                             minix-comp      bitcode
+./usr/lib/i18n/bc/libVIQR.a                             minix-comp      bitcode
+./usr/lib/i18n/bc/libZW.a                               minix-comp      bitcode
+./usr/lib/i18n/bc/libiconv_none.a                       minix-comp      bitcode
+./usr/lib/i18n/bc/libiconv_std.a                        minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_646.a                       minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_none.a                      minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_parallel.a                  minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_serial.a                    minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_std.a                       minix-comp      bitcode
+./usr/lib/i18n/bc/libmapper_zone.a                      minix-comp      bitcode
+./usr/lib/i18n/libBIG5.a                                minix-comp
+./usr/lib/i18n/libDECHanyu.a                            minix-comp
+./usr/lib/i18n/libEUC.a                                 minix-comp
+./usr/lib/i18n/libEUCTW.a                               minix-comp
+./usr/lib/i18n/libGBK2K.a                               minix-comp
+./usr/lib/i18n/libHZ.a                                  minix-comp
+./usr/lib/i18n/libISO2022.a                             minix-comp
+./usr/lib/i18n/libJOHAB.a                               minix-comp
+./usr/lib/i18n/libMSKanji.a                             minix-comp
+./usr/lib/i18n/libUES.a                                 minix-comp
+./usr/lib/i18n/libUTF1632.a                             minix-comp
+./usr/lib/i18n/libUTF7.a                                minix-comp
+./usr/lib/i18n/libUTF8.a                                minix-comp
+./usr/lib/i18n/libVIQR.a                                minix-comp
+./usr/lib/i18n/libZW.a                                  minix-comp
+./usr/lib/i18n/libiconv_none.a                          minix-comp
+./usr/lib/i18n/libiconv_std.a                           minix-comp
+./usr/lib/i18n/libmapper_646.a                          minix-comp
+./usr/lib/i18n/libmapper_none.a                         minix-comp
+./usr/lib/i18n/libmapper_parallel.a                     minix-comp
+./usr/lib/i18n/libmapper_serial.a                       minix-comp
+./usr/lib/i18n/libmapper_std.a                          minix-comp
+./usr/lib/i18n/libmapper_zone.a                         minix-comp
 ./usr/lib/libarchive.a                                  minix-comp
 ./usr/lib/libarchive_pic.a                              minix-comp
 ./usr/lib/libasyn.a                                     minix-comp
@@ -1995,6 +2044,8 @@
 ./usr/lib/libgcov.a                                     minix-comp      gcc=45,!gcccmds
 ./usr/lib/libinputdriver.a                              minix-comp
 ./usr/lib/libinputdriver_pic.a                          minix-comp
+./usr/lib/libintl.a                                     minix-comp
+./usr/lib/libintl_pic.a                                 minix-comp
 ./usr/lib/libkvm.a                                      minix-comp
 ./usr/lib/libkvm_pic.a                                  minix-comp
 ./usr/lib/libl.a                                        minix-comp

@@ -1,0 +1,10 @@
+# $NetBSD: UTF.alias,v 1.5 2007/12/17 14:06:57 joerg Exp $
+
+7		utf-7
+8		utf-8 utf8
+16		utf-16 ucs-2 unicode
+16LE		utf-16le ucs-2le unicodelittle
+16BE		utf-16be ucs-2be unicodebig
+32		utf-32 ucs-4
+32LE		utf-32le ucs-4le
+32BE		utf-32be ucs-4be

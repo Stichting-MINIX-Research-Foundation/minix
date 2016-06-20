@@ -1,0 +1,33 @@
+# $NetBSD: locale.alias,v 1.12 2013/08/11 22:09:40 joerg Exp $
+
+#
+# Locale aliases
+#
+
+# Pig locale
+Pig/LC_MESSAGES			/FORCE
+
+# Linux/FreeBSD compatibility, EUC-CN == GB2312
+zh_CN.GB2312			zh_CN.eucCN
+
+# FreeBSD compatibility
+zh_HK.Big5HKSCS			zh_HK.Big5hkscs
+
+# nb(Bokmal, Norwegian) == no(Norwegian)
+no_NO.ISO8859-1			nb_NO.ISO8859-1
+no_NO.ISO8859-15		nb_NO.ISO8859-15
+no_NO.UTF-8			nb_NO.UTF-8
+
+# Serbian language uses different scripts depending on the encoding.
+sr_ME.ISO8859-2			sr_Latn_ME.ISO8859-2
+sr_RS.ISO8859-2			sr_Latn_RS.ISO8859-2
+sr_ME.ISO8859-5			sr_Cyrl_ME.ISO8859-5
+sr_RS.ISO8859-5			sr_Cyrl_RS.ISO8859-5
+sr_ME.UTF-8			sr_Cyrl_ME.UTF-8
+sr_RS.UTF-8			sr_Cyrl_RS.UTF-8
+
+# backward compatibility.
+ja_JP.ISO2022-JP		ja_JP.ISO-2022-JP
+ja_JP.ISO2022-JP2		ja_JP.ISO-2022-JP-2
+zh_HK.Big5-HKSCS		zh_HK.Big5hkscs
+zh_TW.BIG5			zh_TW.Big5

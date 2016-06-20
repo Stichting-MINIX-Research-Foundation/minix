@@ -122,6 +122,7 @@
 ./usr/man/man1/fsplit.1                                 minix-man
 ./usr/man/man1/ftp.1                                    minix-man
 ./usr/man/man1/genassym.1                               minix-man
+./usr/man/man1/gencat.1                                 minix-man
 ./usr/man/man1/getopt.1                                 minix-man
 ./usr/man/man1/getopts.1                                minix-man       obsolete
 ./usr/man/man1/gprof.1                                  minix-man       binutils
@@ -187,6 +188,7 @@
 ./usr/man/man1/loadfont.1                               minix-man
 ./usr/man/man1/loadkeys.1                               minix-man
 ./usr/man/man1/local.1                                  minix-man       obsolete
+./usr/man/man1/locale.1                                 minix-man
 ./usr/man/man1/lock.1                                   minix-man
 ./usr/man/man1/logger.1                                 minix-man
 ./usr/man/man1/login.1                                  minix-man
@@ -220,6 +222,7 @@
 ./usr/man/man1/mkdir.1                                  minix-man
 ./usr/man/man1/mkfifo.1                                 minix-man
 ./usr/man/man1/mkfs.mfs.1                               minix-man
+./usr/man/man1/mklocale.1                               minix-man
 ./usr/man/man1/mkproto.1                                minix-man
 ./usr/man/man1/mkstr.1                                  minix-man
 ./usr/man/man1/mktemp.1                                 minix-man
@@ -1112,6 +1115,8 @@
 ./usr/man/man3/bcmp.3                                   minix-man
 ./usr/man/man3/bcopy.3                                  minix-man
 ./usr/man/man3/beep.3                                   minix-man
+./usr/man/man3/bind_textdomain_codeset.3                minix-man
+./usr/man/man3/bindtextdomain.3                         minix-man
 ./usr/man/man3/bkgd.3                                   minix-man
 ./usr/man/man3/bkgdset.3                                minix-man
 ./usr/man/man3/blacklist.3                              minix-man
@@ -1351,6 +1356,8 @@
 ./usr/man/man3/dbm_open.3                               minix-man
 ./usr/man/man3/dbm_store.3                              minix-man
 ./usr/man/man3/dbopen.3                                 minix-man
+./usr/man/man3/dcgettext.3                              minix-man
+./usr/man/man3/dcngettext.3                             minix-man
 ./usr/man/man3/def_prog_mode.3                          minix-man
 ./usr/man/man3/def_shell_mode.3                         minix-man
 ./usr/man/man3/define_key.3                             minix-man
@@ -1399,6 +1406,7 @@
 ./usr/man/man3/des_string_to_key.3                      minix-man       crypto
 ./usr/man/man3/des_xcbc_encrypt.3                       minix-man       crypto
 ./usr/man/man3/devname.3                                minix-man
+./usr/man/man3/dgettext.3                               minix-man
 ./usr/man/man3/difftime.3                               minix-man
 ./usr/man/man3/directory.3                              minix-man
 ./usr/man/man3/dirfd.3                                  minix-man
@@ -1406,6 +1414,7 @@
 ./usr/man/man3/div.3                                    minix-man
 ./usr/man/man3/dn_comp.3                                minix-man
 ./usr/man/man3/dn_expand.3                              minix-man
+./usr/man/man3/dngettext.3                              minix-man
 ./usr/man/man3/doupdate.3                               minix-man
 ./usr/man/man3/dprintf.3                                minix-man
 ./usr/man/man3/drand48.3                                minix-man
@@ -1866,6 +1875,7 @@
 ./usr/man/man3/getservent.3                             minix-man
 ./usr/man/man3/getstr.3                                 minix-man
 ./usr/man/man3/getsubopt.3                              minix-man
+./usr/man/man3/gettext.3                                minix-man
 ./usr/man/man3/gettmode.3                               minix-man
 ./usr/man/man3/getttyent.3                              minix-man
 ./usr/man/man3/getttynam.3                              minix-man
@@ -2300,6 +2310,7 @@
 ./usr/man/man3/nexttoward.3                             minix-man
 ./usr/man/man3/nexttowardf.3                            minix-man
 ./usr/man/man3/nftw.3                                   minix-man
+./usr/man/man3/ngettext.3                               minix-man
 ./usr/man/man3/nice.3                                   minix-man
 ./usr/man/man3/nl.3                                     minix-man
 ./usr/man/man3/nl_langinfo.3                            minix-man
@@ -2987,6 +2998,7 @@
 ./usr/man/man3/termcap.3                                minix-man
 ./usr/man/man3/terminfo.3                               minix-man
 ./usr/man/man3/termname.3                               minix-man
+./usr/man/man3/textdomain.3                             minix-man
 ./usr/man/man3/tfind.3                                  minix-man
 ./usr/man/man3/tgamma.3                                 minix-man
 ./usr/man/man3/tgammaf.3                                minix-man

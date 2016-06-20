@@ -73,12 +73,12 @@ SUBDIR+=	../minix/lib/libmagicrt
 # below will depend on versions from DESTDIR only.
 #
 
-#SUBDIR+=	i18n_module
+SUBDIR+=	i18n_module
 
 SUBDIR+=	\
 		libbz2 \
 		libcrypt \
-		libkvm libm \
+		libintl libkvm libm \
 		libpci libprop \
 		libpuffs librmt \
 		libterminfo \

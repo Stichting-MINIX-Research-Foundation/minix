@@ -107,7 +107,7 @@ dependall-binstall: dependall-compat
 SUBDIR=	host-mkdep compat binstall \
 	.WAIT mktemp .WAIT sed .WAIT genassym
 .if ${TOOLS_BUILDRUMP} == "no"
-SUBDIR+=  \
+SUBDIR+=  gencat \
 		${LINT_BITS} \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
@@ -122,7 +122,7 @@ SUBDIR += .WAIT texinfo \
 	${DTRACE_BITS} \
 		 cksum \
 		file \
-		makefs .WAIT \
+		makefs .WAIT mkcsmapper mkesdb mklocale \
 		.WAIT \
 		.WAIT \
 		.WAIT \

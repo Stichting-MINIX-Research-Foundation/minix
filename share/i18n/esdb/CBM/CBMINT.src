@@ -1,0 +1,7 @@
+# $NetBSD: CBMINT.src,v 1.1 2011/04/27 20:05:56 mbalmer Exp $
+
+NAME		"CBMINT"
+ENCODING	"NONE"
+VARIABLE	"none"
+DEFCSID		"CBMINT"		0
+INVALID		0x3F # '?'

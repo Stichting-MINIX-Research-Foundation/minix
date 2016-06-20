@@ -1,0 +1,4 @@
+# $NetBSD: GEORGIAN.alias,v 1.2 2006/11/04 06:17:35 tnozaki Exp $
+
+PS			geo8std georgian-std geo8-gov
+ACADEMY			georgian-ilia georgian-rs geo8-bpg

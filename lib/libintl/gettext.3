@@ -1,0 +1,407 @@
+.\"	$NetBSD: gettext.3,v 1.12 2009/11/12 00:43:52 joerg Exp $
+.\"
+.\" Copyright (c) 2000 Citrus Project,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd November 10, 2004
+.Dt GETTEXT 3
+.Os
+.Sh NAME
+.Nm gettext ,
+.Nm dgettext ,
+.Nm ngettext ,
+.Nm dngettext ,
+.Nm textdomain ,
+.Nm bindtextdomain ,
+.Nm bind_textdomain_codeset ,
+.Nm dcgettext ,
+.Nm dcngettext
+.Nd message handling functions
+.Sh LIBRARY
+.Lb libintl
+.Sh SYNOPSIS
+.In libintl.h
+.Ft char *
+.Fn gettext "const char *msgid"
+.Ft char *
+.Fn dgettext "const char *domainname" "const char *msgid"
+.Ft char *
+.Fn ngettext "const char *msgid1" "const char *msgid2" "unsigned long int n"
+.Ft char *
+.Fn dngettext "const char *domainname" "const char *msgid1" "const char *msgid2" "unsigned long int n"
+.Ft char *
+.Fn textdomain "const char *domainname"
+.Ft char *
+.Fn bindtextdomain "const char *domainname" "const char *dirname"
+.Ft char *
+.Fn bind_textdomain_codeset "const char *domainname" "const char *codeset"
+.In libintl.h
+.In locale.h
+.Ft char *
+.Fn dcgettext "const char *domainname" "const char *msgid" "int category"
+.Ft char *
+.Fn dcngettext "const char *domainname" "const char *msgid1" "const char *msgid2" "unsigned long int n" "int category"
+.Sh DESCRIPTION
+The
+.Fn gettext ,
+.Fn dgettext ,
+and
+.Fn dcgettext
+functions attempt to retrieve a
+target string based on the specified
+.Fa msgid
+argument within the context of a
+specific domain and the current locale.
+The length of strings returned by
+.Fn gettext ,
+.Fn dgettext ,
+and
+.Fn dcgettext
+is undetermined until the function is
+called.
+The
+.Fa msgid
+argument is a nul-terminated string.
+.Pp
+The
+.Fn ngettext ,
+.Fn dngettext ,
+and
+.Fn dcngettext
+functions are equivalent to
+.Fn gettext ,
+.Fn dgettext ,
+and
+.Fn dcgettext ,
+respectively, except for the handling of
+plural forms.
+The
+.Fn ngettext ,
+.Fn dngettext ,
+and
+.Fn dcngettext
+functions search for the
+message string using the
+.Fa msgid1
+argument as the key, using the argument
+.Fa n
+to
+determine the plural form.
+If no message catalogs are found,
+.Fa msgid1
+is returned
+if
+.Fa n Li == 1 ,
+otherwise
+.Fa msgid2
+is returned.
+.Pp
+The
+.Dv LANGUAGE
+environment variable is examined first to determine the message
+catalogs to be used.
+The value of the
+.Dv LANGUAGE
+environment variable is a list
+of locale names separated by colon (:) character.
+If the
+.Dv LANGUAGE
+environment
+variable is defined, each locale name is tried in the specified order and if a
+message catalog containing the requested message is found, the message is
+returned.
+If the
+.Dv LANGUAGE
+environment variable is defined but failed to locate
+a message catalog, the
+.Fa msgid
+string will be returned.
+.Pp
+If the
+.Dv LANGUAGE
+environment variable is not defined,
+.Dv LC_ALL ,
+.Dv LC_xxx ,
+and
+.Dv LANG
+environment variables are examined to locate the message catalog,
+following the convention used by the
+.Xr setlocale 3
+function.
+.Pp
+The pathname used to locate the message catalog is
+.Pa dirname/locale/category/domainname.mo ,
+where dirname is the directory specified by
+.Fn bindtextdomain ,
+locale is a locale name determined by the definition of environment variables,
+.Fa category
+is
+.Dv LC_MESSAGES
+if
+.Fn gettext ,
+.Fn ngettext ,
+.Fn dgettext ,
+or
+.Fn dngettext
+is
+called, otherwise
+.Dv LC_xxx
+where the name is the same as the locale category name
+specified by the
+.Fa category
+argument of
+.Fn dcgettext
+or
+.Fn dcngettext .
+.Fa domainname
+is the name of the domain specified by
+.Fn textdomain
+or the
+.Fa domainname
+argument of
+.Fn dgettext ,
+.Fn dngettext ,
+.Fn dcgettext ,
+or
+.Fn dcngettext .
+.Pp
+For
+.Fn gettext
+and
+.Fn ngettext ,
+the domain used is set by the last valid call to
+.Fn textdomain .
+If a valid call to
+.Fn textdomain
+has not been made, the default
+domain (called messages) is used.
+.Pp
+For
+.Fn dgettext ,
+.Fn dngettext ,
+.Fn dcgettext ,
+and
+.Fn dcngettext ,
+the domain used is
+specified by the
+.Fa domainname
+argument.
+The
+.Fa domainname
+argument is equivalent in
+syntax and meaning to the
+.Fa domainname
+argument to
+.Fn textdomain ,
+except that the
+selection of the domain is valid only for the duration of the
+.Fn dgettext ,
+.Fn dngettext ,
+.Fn dcgettext ,
+or
+.Fn dcngettext
+function call.
+.Pp
+The
+.Fn dcgettext
+and
+.Fn dcngettext
+functions require additional argument
+.Fa category
+for retrieving message string for other than
+.Dv LC_MESSAGES
+category.
+Available value for the
+.Fa category
+argument are
+.Dv LC_CTYPE ,
+.Dv LC_COLLATE ,
+.Dv LC_MESSAGES ,
+.Dv LC_MONETARY ,
+.Dv LC_NUMERIC ,
+and
+.Dv LC_TIME .
+The call of
+.Fn dcgettext "domainname" "msgid" "LC_MESSAGES"
+is equivalent to
+.Fn dgettext "domainname" "msgid" .
+Note that
+.Dv LC_ALL
+must not be used.
+.Pp
+The
+.Fn textdomain
+function sets or queries the name of the current domain of the
+active
+.Dv LC_MESSAGES
+locale category.
+The
+.Fa domainname
+argument is a
+nul-terminated string that can contain only the characters allowed in legal
+filenames.
+.Pp
+The
+.Fa domainname
+argument is the unique name of a domain on the system.
+If there
+are multiple versions of the same domain on one system, namespace collisions
+can be avoided by using
+.Fn bindtextdomain .
+If
+.Fn textdomain
+is not called, a
+default domain is selected.
+The setting of domain made by the last valid call
+to
+.Fn textdomain
+remains valid across subsequent calls to
+.Xr setlocale 3 ,
+and
+.Fn gettext .
+.Pp
+The
+.Fa domainname
+argument is applied to the currently active LC_MESSAGES locale.
+.Pp
+The current setting of the domain can be queried without affecting the current
+state of the domain by calling
+.Fn textdomain
+with
+.Fa domainname
+set to the
+.Dv NULL
+pointer.
+Calling
+.Fn textdomain
+with a
+.Fa domainname
+argument of a
+.Dv NULL
+string sets
+the domain to the default domain
+.Pq messages .
+.Pp
+The
+.Fn bindtextdomain
+function binds the path predicate for a message domain
+.Fa domainname
+to the value contained in dirname.
+If
+.Fa domainname
+is a non-empty
+string and has not been bound previously,
+.Fn bindtextdomain
+binds
+.Fa domainname
+with
+.Fa dirname .
+.Pp
+If
+.Fa domainname
+is a non-empty string and has been bound previously,
+.Fn bindtextdomain
+replaces the old binding with dirname.
+The dirname argument
+can be an absolute pathname being resolved when
+.Fn gettext ,
+.Fn ngettext ,
+.Fn dgettext ,
+.Fn dngettext ,
+.Fn dcgettext ,
+or
+.Fn dcngettext
+are called.
+If
+.Fa domainname
+is a
+.Dv NULL
+pointer or an empty string,
+.Fn bindtextdomain
+returns a
+.Dv NULL
+pointer.
+If
+.Fn bindtextdomain
+is not called, implementation-defined default directory is used.
+.Pp
+The
+.Fn bind_textdomain_codeset
+function can be used to specify the output
+.Fa codeset
+for message catalogs for domain
+.Fa domainname .
+The
+.Fa codeset
+argument must
+be a valid codeset name which can be used for the
+.Xr iconv_open 3
+function.
+.Pp
+If the
+.Fa codeset
+argument is the
+.Dv NULL
+pointer,
+.Fn bind_textdomain_codeset
+returns the currently selected
+.Fa codeset
+for the domain with the name
+.Fa domainname .
+It returns a
+.Dv NULL
+pointer if no
+.Fa codeset
+has yet been selected.
+.Pp
+The
+.Fn bind_textdomain_codeset
+function can be used several times.
+If used multiple times, with the same
+.Fa domainname
+argument,
+the later call overrides the
+settings made by the earlier one.
+.Pp
+The
+.Fn bind_textdomain_codeset
+function returns a pointer to a string containing
+the name of the selected
+.Fa codeset .
+.\".Sh "RETURN VALUES"
+.\".Sh EXAMPLES
+.Sh SEE ALSO
+.Xr setlocale 3 ,
+.Xr nls 7
+.\".Sh STANDARDS
+.Sh HISTORY
+The functions are implemented by Citrus project,
+based on the documentations for GNU gettext.
+.Sh BUGS
+.\" The text was ripped off from Annex C of
+.\" .Dq LI18NUX 2000 Globalization Specification Version 1.0 .
+.\" .Pp
+.Fn bind_textdomain_codeset
+does not work at this moment
+.Pq it always fails .

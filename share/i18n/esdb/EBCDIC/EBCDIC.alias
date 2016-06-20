@@ -1,0 +1,17 @@
+# $NetBSD: EBCDIC.alias,v 1.2 2009/10/31 15:06:52 tnozaki Exp $
+
+AT-DE                           ebcdic-at-de
+AT-DE-A                         ebcdic-at-de-a
+CA-FR                           ebcdic-ca-fr
+DK-NO                           ebcdic-dk-no
+DK-NO-A                         ebcdic-dk-no-a
+ES                              ebcdic-es
+ES-A                            ebcdic-es-a
+ES-S                            ebcdic-es-s
+FI-SE                           ebcdic-fi-se
+FI-SE-A                         ebcdic-fi-se-a
+FR                              ebcdic-fr
+IT                              ebcdic-it
+PT                              ebcdic-pt
+UK                              ebcdic-uk
+US				ebcdic-us
