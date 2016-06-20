@@ -1,0 +1,79 @@
+# $NetBSD: no_NO.UTF-8.src,v 1.1 2008/05/17 04:11:30 ginsbach Exp $
+#
+# Norwegian Language Time Locale for Norway
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/timedef/no_NO.UTF-8.src,v 1.3 2007/12/30 03:08:52 ache Exp $
+#
+# Short weekday names (abday)
+#
+søn
+man
+tir
+ons
+tor
+fre
+lør
+#
+# Long weekday names (day)
+#
+søndag
+mandag
+tirsdag
+onsdag
+torsdag
+fredag
+lørdag
+#
+# Short month names (abmon)
+#
+jan
+feb
+mar
+apr
+mai
+jun
+jul
+aug
+sep
+okt
+nov
+des
+#
+# Long month names (mon)
+#
+januar
+februar
+mars
+april
+mai
+juni
+juli
+august
+september
+oktober
+november
+desember
+#
+# Ante Meridiem/Post Meridiem - %p (am_pm)
+#
+am
+pm
+#
+# Date and Time - %c (d_t_fmt)
+#
+%a %e %b %X %Y
+#
+# Date - %x (d_fmt)
+#
+%d.%m.%Y
+#
+# Time - %X (t_fmt)
+#
+%H:%M:%S
+#
+# 12-hour Clock - %r (t_ampm_fmt)
+#
+%I:%M:%S %p
+# EOF

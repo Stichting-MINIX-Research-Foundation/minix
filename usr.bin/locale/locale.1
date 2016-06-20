@@ -1,0 +1,113 @@
+.\" $NetBSD: locale.1,v 1.2 2003/07/04 07:28:14 wiz Exp $
+.\"
+.\" Copyright (c) 2003 Alexey Zelkin <phantom@FreeBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" FreeBSD: src/usr.bin/locale/locale.1,v 1.3 2003/06/26 11:01:03 phantom Exp
+.\"
+.Dd July 4, 2003
+.Dt LOCALE 1
+.Os
+.Sh NAME
+.Nm locale
+.Nd get locale-specific information
+.Sh SYNOPSIS
+.Nm
+.Op Fl a | Fl m
+.Nm
+.Op Fl ck
+.Op Ar keyword ...
+.Sh DESCRIPTION
+The
+.Nm
+utility is supposed to provide most locale specific information to
+the standard output.
+.Pp
+When
+.Nm
+is invoked without arguments it will print out a summary of the
+current locale environment depending on environment variable settings
+and internal status.
+.Pp
+When
+.Nm
+is invoked with arguments and no options specified it will print out
+.Em keyword Ns No 's
+value determined using current locale settings.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+Write names of all available locales.
+While looking for locales
+.Nm
+will respect the
+.Ev PATH_LOCALE
+environment variable, and use it instead of the system default
+locale directory.
+.It Fl c
+Write the category name for the selected keywords.
+.It Fl k
+Write the name and value of the selected keywords.
+.It Fl m
+Write names of all available charmaps.
+.El
+.Sh IMPLEMENTATION DETAILS
+Special
+.Pf ( Fx Ns -
+/
+.Nx Ns -specific )
+keyword
+.Ar list
+can be used to retrieve a human readable list of available keywords.
+.Sh DIAGNOSTICS
+.Ex -std locale
+.Sh STANDARDS
+.Nm
+conforms to
+.St -p1003.1-2001 .
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 2.0 .
+.Sh AUTHORS
+This implementation of
+.Nm
+was originally written by
+.An Alexey Zelkin
+.Aq phantom@FreeBSD.org
+for
+.Fx .
+.Sh BUGS
+Since
+.Nx
+does not support
+.Em charmap Ns No s
+in their
+.Em POSIX
+meaning
+.Nm
+emulates the
+.Fl m
+option via CODESETs listing of all available locales.

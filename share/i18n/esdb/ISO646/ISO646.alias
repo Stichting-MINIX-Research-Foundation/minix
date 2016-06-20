@@ -1,0 +1,28 @@
+# $NetBSD: ISO646.alias,v 1.2 2006/07/05 15:31:50 tnozaki Exp $
+
+BASIC:1983	iso_646.basic:1983 ref
+IRV:1983	iso-ir-2 irv
+GB		iso646-gb bs_4730 iso-ir-4
+US		iso646-us ansi_x3.4-1968 iso-ir-6 ansi_x3.4-1986 iso_646.irv:1991 ascii us-ascii us ibm367 cp367 646
+SE		iso646-se sen_850200_b iso-ir-10 fi iso646-fi se
+SE2		iso646-se2 sen_850200_c iso-ir-11 se2
+JP		iso646-jp iso-ir-14 jis_c6220-1969-ro jp
+IT		iso646-it it iso-ir-15
+PT		iso646-pt pt iso-ir-16
+ES		iso646-es es iso-ir-17
+DE		iso646-de din_66003 iso-ir-21 de
+FR1		iso646-fr1 nf_z_62-010_(1973) iso-ir-25
+CN		iso646-cn gb_1988-80 iso-ir-57 cn
+NO		iso646-no ns_4551-1 iso-ir-60 no
+NO2		iso646-no2 ns_4551-2 iso-ir-61 no2
+FR		iso646-fr nf_z_62-010 iso-ir-69 fr
+PT2		iso646-pt2 pt2 iso-ir-84
+ES2		iso646-es2 es2 iso-ir-85
+HU		iso646-hu msz_7795.3 iso-ir-86 hu
+JP-OCR-B	iso646-jp-ocr-b jis_c6229-1984-b iso-ir-92 jp-ocr-b
+CA		iso646-ca csa_z243.4-1985-1 iso-ir-121 csa7-1 ca
+CA2		iso646-ca2 csa_z243.4-1985-2 iso-ir-122 csa7-2
+YU		iso646-yu jus_i.b1.002 iso-ir-141 js yu
+CU		iso646-cu nc_nc00-10:81 cuba iso-ir-151
+DK		iso646-dk ds_2089 ds2089 dk
+KR		iso646-kr ksc5636

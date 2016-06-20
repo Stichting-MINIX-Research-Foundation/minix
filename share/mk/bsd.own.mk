@@ -22,6 +22,8 @@ BINGRP?=	operator
 MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
+LOCALEGRP?=	operator
+NLSGRP?=	operator
 
 MKKYUA?=	yes
 MKMCLINKER?=	no
@@ -51,7 +53,6 @@ MKLDAP:=	no
 MKLINT:=	no
 MKLVM:=		no
 MKMDNS:=	no
-MKNLS:=		no
 MKNPF:=		no
 MKPAM:=		no
 MKPF:=		no

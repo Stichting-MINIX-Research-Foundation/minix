@@ -1,0 +1,60 @@
+# $NetBSD: Makefile.common,v 1.1 2013/08/11 22:09:40 joerg Exp $
+
+all:		${LOCALES:S/$/.out/g}
+realall:	${LOCALES:S/$/.out/g}
+
+FILES=		${LOCALES:S/$/.out/g}
+CLEANFILES+=	${LOCALES:S/$/.out/g}
+
+.SUFFIXES: .src .out
+.src.out:
+	${_MKTARGET_CREATE}
+	${TOOL_MKLOCALE} -t ${CATEGORY} -o ${.TARGET} < ${.IMPSRC}
+
+.PATH: ${.CURDIR}/converted
+
+.for locale in ${LOCALES}
+${locale}.out: ${locale}.src
+.endfor
+
+.PHONY: update-converted
+
+update-converted:
+	@mkdir -p ${.CURDIR}/converted
+.for locale in ${LOCALES:O}
+. for charset in ${locale:C/([^\.]*)\.([^\.]*)/\2/}
+.  for locale_name in ${locale:C/([^\.]*)\.([^\.]*)/\1/}
+.   if ${locale} == "ja_JP.ct"
+	@echo Generating character set ${charset} of ${locale_name}...
+	@rm -f ${.CURDIR}/converted/${locale}.src
+	@iconv -f UTF-8 -t eucJP < ${.CURDIR}/${locale_name}.UTF-8.src \
+	| iconv -f eucJP -t ctext > ${.CURDIR}/converted/${locale}.src.tmp; \
+	sed "s,\(Character set:\) UTF-8,\1 COMPOUND_TEXT," \
+	    < ${.CURDIR}/converted/${locale}.src.tmp \
+	    > ${.CURDIR}/converted/${locale}.src; \
+	rm ${.CURDIR}/converted/${locale}.src.tmp
+.   elif !exists(${.CURDIR}/${locale}.src)
+	@echo Generating character set ${charset} of ${locale_name}...
+	@rm -f ${.CURDIR}/converted/${locale}.src
+	@set -e; cat < ${.CURDIR}/${locale_name}.UTF-8.src \
+	| (case ${charset} in ISO8859-[125]) sed 's,€,EUR,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859-9) sed 's,₺,L,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859*) sed 's,−,-,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859*) sed 's,–,-,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859-1) sed 's,’,´,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859-15) sed 's,’,'\'',g';; *) cat ;; esac) \
+	| (case ${charset} in KOI8-U|CP1251|ISO8859-5) sed 's,ʼ,'\'',g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859-2) sed 's,ț,ţ,g';; *) cat ;; esac) \
+	| (case ${charset} in ISO8859-5|KOI8-U|CP1251) sed 's,₴,грн.,g';; *) cat ;; esac) \
+	| iconv -f UTF-8 -t ${charset} \
+	    > ${.CURDIR}/converted/${locale}.src.tmp; \
+	sed "s,\(Character set:\) UTF-8,\1 ${charset}," \
+	    < ${.CURDIR}/converted/${locale}.src.tmp \
+	    > ${.CURDIR}/converted/${locale}.src; \
+	rm ${.CURDIR}/converted/${locale}.src.tmp
+.   endif
+.  endfor
+. endfor
+.endfor
+
+.include <bsd.prog.mk>

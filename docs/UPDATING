@@ -1,3 +1,14 @@
+20160702:
+	Some tools are required to generate the locale resources which are
+	embedded into libintl, which is why you need to run the following:
+
+	for t in gencat locale mkcsmapper mkesdb mklocale
+	do
+		make -C /usr/src/usr.bin/${t} all install
+	done
+
+	Then the usual "make build".
+
 20150623:
 	In order to use the new Unix98 PTYs, and to ensure that the test set
 	continues to pass, please add the following line to your /etc/fstab:

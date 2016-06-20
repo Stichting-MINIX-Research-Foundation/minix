@@ -1,0 +1,131 @@
+# $NetBSD: lt_LT.ISO8859-4.src,v 1.1 2013/08/11 22:09:41 joerg Exp $
+#
+# Locale: lt_LT
+# Character set: ISO8859-4
+#
+# Copyright 1991-2011 Unicode, Inc. All rights reserved. Distributed under the Terms of Use in
+# http://www.unicode.org/copyright.html.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of the Unicode
+# data files and any associated documentation (the "Data Files") or Unicode software and any
+# associated documentation (the "Software") to deal in the Data Files or Software without
+# restriction, including without limitation the rights to use, copy, modify, merge, publish,
+# distribute, and/or sell copies of the Data Files or Software, and to permit persons to whom
+# the Data Files or Software are furnished to do so, provided that (a) the above copyright
+# notice(s) and this permission notice appear with all copies of the Data Files or Software,
+# (b) both the above copyright notice(s) and this permission notice appear in associated
+# documentation, and (c) there is clear notice in each modified Data File or in the Software as
+# well as in the documentation associated with the Data File(s) or Software that the data or
+# software has been modified.
+# 
+# THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR
+# CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA FILES OR SOFTWARE.
+#
+# International Currency Symbol (int_curr_symbol)
+#     NOTE: Last character is always SPACE
+#
+LTL 
+#
+# Currency Symbol (currency_symbol)
+#
+Lt
+#
+# Monetary Decimal Point (mon_decimal_point)
+#
+,
+#
+# Monetary Thousands Separator (mon_thousands_sep)
+#
+ 
+#
+# Monetary Grouping Sequence (mon_grouping)
+#    A sequence of integers separated by semi-colons ';'.
+#
+3
+#
+# Positive Sign (positive_sign)
+#
+
+#
+# Negative Sign (negative_sign)
+#
+-
+#
+# International Fractional Digits (int_frac_digits)
+#
+2
+#
+# Fractional Digits (frac_digits)
+#
+2
+#
+# Currency Symbol Precedes Positive Value (p_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of Currency Symbol, Sign, and Positive Value by a Space
+# (p_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# Currency Symbol Precedes Negative Value (n_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of Currency Symbol, Sign, and Negative Value (n_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# Positive Sign Position (p_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# Negative Sign Position (n_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# International Currency Symbol Precedes Positive Value
+# (int_p_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of International Currency Symbol, Sign, and Positive Value
+# (int_p_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# International Currency Symbol Precedes Negative Value (int_n_cs_precedes)
+#    Must be either 1 or 0.
+#
+0
+#
+# Separation of International Currency Symbol, Sign, and Negative Value
+# (int_n_sep_by_space)
+#    Must be 0, 1, or 2
+#
+1
+#
+# International Positive Sign Position (int_p_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+#
+# International Negative Sign Position (int_n_sign_posn)
+#    Must be 0, 1, 2, 3, or 4
+#
+1
+# EOF
+

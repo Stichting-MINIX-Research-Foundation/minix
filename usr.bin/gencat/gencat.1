@@ -1,0 +1,233 @@
+.\" $NetBSD: gencat.1,v 1.13 2011/12/29 16:41:38 christos Exp $
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Kee Hinckley and Brian Ginsbach.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Written by Kee Hinckley <nazgul@somewhere.com>
+.\"
+.Dd December 29, 2011
+.Dt GENCAT 1
+.Os
+.Sh NAME
+.Nm gencat
+.Nd generates a Native Language Support (NLS) message catalog file
+.Sh SYNOPSIS
+.Nm
+.Ar catfile
+.Op Ar msgfile|- ...
+.Sh DESCRIPTION
+The
+.Nm
+utility generates a formatted message catalog
+.Ar catfile
+from stdin or one or more message source text files
+.Ar msgfile .
+The file
+.Ar catfile
+is created if it does not already exist.
+If
+.Ar catfile
+does exist, its messages are included in the new
+.Ar catfile .
+The new message text defined in
+.Ar msgfile
+replaces the old message text currently in
+.Ar catfile
+when the set and message numbers match.
+.Pp
+The generated message catalog contains message
+strings that will be retrieved using the
+.Xr catgets 3
+library call.
+These messages are dynamically loaded by the
+Native Language Support (NLS) library at run time.
+Error messages are grouped into sets, and a program can load a
+particular set depending on which type, or language, of messages
+is desired.
+.Ss Message Text Source File Format
+The message text source files are text files in the format described below.
+Note that the fields of a message text source line are separated by
+space or tab characters.
+.\" XXX Required by POSIX; the code must be fixed first.  Above line should be
+.\" a single space or tab character;
+.\" any other space or tab characters are considered to be part of the
+.\" field contents.
+.Bl -tag -width 3n
+.It Li $set Ar n comment
+Determines the set identifier to be used for all subsequent messages
+until the next
+.Li $set
+or end-of-file.
+The
+.Ar n
+is the set identifier which is defined as a number in the range
+.Bo 1 ,
+.Dv NL_SETMAX Bc .
+Set identifiers within a single source file need not be contiguous.
+Any string following the set identifier is treated as a comment.
+If no
+.Li $set
+directive is specified in a message text source file,
+all messages will be located in the default message set
+.Dv NL_SETD .
+.It Li $delset Ar n comment
+Removes message set
+.Ar n
+from the catalog.
+The
+.Ar n
+is a set identifier in the range
+.Bo 1 ,
+.Dv NL_SETMAX Bc .
+If a message set was created earlier in the
+current file, or in a file previously read by the
+.Nm
+command, this directive will remove it.
+Any string following the set identifier is treated as a comment.
+.It Li $ Ar comment
+A line beginning with
+.Li $
+followed by a space or tab character is treated as a comment.
+.It Ar m message-text
+A message line consists of a message identifier
+.Ar m
+in the range
+.Bo 1 ,
+.Dv NL_MSGMAX Bc
+and the
+.Ar message-text .
+The
+.Ar message-text
+is read until the end of the line or a quote character
+(if one is specified).
+The
+.Ar message-text
+is stored in the message catalog with
+the set identifier specified by the last
+.Li $set
+directive, and the message identifier
+.Ar m .
+If the
+.Ar message-text
+is empty and there is a space or tab character
+following the message identifier,
+an empty string is stored in the message catalog.
+If no
+.Ar message-text
+is provided,
+and if there is no space or tab character following the message
+identifier,
+the message with the message identifier
+.Ar m
+in the current set is removed from the catalog.
+Message identifiers need not be contiguous within a single set.
+The length of
+.Ar message-text
+must be in the range
+.Bo 0 ,
+.Dv NL_TEXTMAX Bc .
+.It Li $quote Ar c
+Sets an optional quote character to be used around the
+.Ar message-text .
+The quote character
+.Ar c
+may be any character other than white space.
+If this is specified, then messages must begin and end with the
+quote character.
+.\" XXX Remove next sentence when code is fixed for POSIX conformance.
+This is useful when messages must contain leading white space.
+.\" XXX Replacement when above is removed.
+.\" This is useful to make leading and trailing spaces or empty
+.\" messages visible.
+By default no quote character is used.
+If an empty
+.Li $quote
+directive is specified, then the current quote character is unset.
+.El
+.Pp
+Empty lines
+.\" XXX Remove next line when the code is fixed for POSIX conformance.
+and leading blanks
+in a message text source file are ignored.
+Any line beginning with any character other than those
+described above is ignored as a syntax error.
+.Pp
+Text message strings may contain any characters and
+the following special characters and escape sequences.
+.Pp
+.Bl -column -offset indent ".Sy carriage return" ".Sy Symbol" ".Sy Sequence"
+.It Sy Description Ta Sy Symbol Ta Sy Sequence
+.It newline Ta NL(LF) Ta Li \en
+.It horizontal tab Ta HT Ta Li \et
+.It vertical tab Ta VT Ta Li \ev
+.It backspace Ta BS Ta Li \eb
+.It carriage return Ta CR Ta Li \er
+.It form feed Ta FF Ta Li \ef
+.It backslash Ta \e Ta Li \e\e
+.It bit pattern Ta ddd Ta Li \eddd
+.El
+.Pp
+A bit pattern,
+.Li \eddd ,
+consists of a backslash followed by
+one, two, or three octal digits representing the value of the character.
+The current quote character, if defined, may be escaped with a backslash
+to generate the quote character.
+Any character following the backslash ('\e') other than those specified
+is ignored.
+.Pp
+A backslash at the end of the line continues the message onto the next line.
+The following two lines are an example of such a message:
+.Pp
+.Dl 1 This message continues \e
+.D1 on the next line
+.Pp
+Producing the following message:
+.Pp
+.Dl 1 This message continues on the next line
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr catclose 3 ,
+.Xr catgets 3 ,
+.Xr catopen 3 ,
+.Xr nls 7
+.\" XXX Close but not quite; add when code is fixed.
+.\".Sh STANDARDS
+.\"The
+.\".Nm
+.\"utility is compliant with the
+.\".St -p1003.1-2004
+.\"standard.
+.Sh AUTHORS
+The Native Language Support (NLS) message catalog facility was
+contributed by
+.An J.T. Conklin
+.Aq jtc@NetBSD.org .
+This page was originally written by
+.An Kee Hinckley
+.Aq nazgul@somewhere.com .

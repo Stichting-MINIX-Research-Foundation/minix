@@ -1,0 +1,6 @@
+# $NetBSD: Big5.alias,v 1.2 2007/03/05 16:58:34 tnozaki Exp $
+
+E		big5e big-5e
+ETen		big5 big5eten
+HKSCS		big5hkscs
+Plus		big5+ big-5+

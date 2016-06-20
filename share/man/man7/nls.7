@@ -1,0 +1,518 @@
+.\"     $NetBSD: nls.7,v 1.15 2009/04/09 02:51:54 joerg Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gregory McGarry.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 21, 2007
+.Dt NLS 7
+.Os
+.Sh NAME
+.Nm NLS
+.Nd Native Language Support Overview
+.Sh DESCRIPTION
+Native Language Support (NLS) provides commands for a single
+worldwide operating system base.
+An internationalized system has no built-in assumptions or dependencies
+on language-specific or cultural-specific conventions such as:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Character classifications
+.It
+Character comparison rules
+.It
+Character collation order
+.It
+Numeric and monetary formatting
+.It
+Date and time formatting
+.It
+Message-text language
+.It
+Character sets
+.El
+.Pp
+All information pertaining to cultural conventions and language is
+obtained at program run time.
+.Pp
+.Dq Internationalization
+(often abbreviated
+.Dq i18n )
+refers to the operation by which system software is developed to support
+multiple cultural-specific and language-specific conventions.
+This is a generalization process by which the system is untied from
+calling only English strings or other English-specific conventions.
+.Dq Localization
+(often abbreviated
+.Dq l10n )
+refers to the operations by which the user environment is customized to
+handle its input and output appropriate for specific language and cultural
+conventions.
+This is a specialization process, by which generic methods already
+implemented in an internationalized system are used in specific ways.
+The formal description of cultural conventions for some country, together
+with all associated translations targeted to the native language, is
+called the
+.Dq locale .
+.Pp
+.Nx
+provides extensive support to programmers and system developers to
+enable internationalized software to be developed.
+.Nx
+also supplies a large variety of locales for system localization.
+.Ss Localization of Information
+All locale information is accessible to programs at run time so that
+data is processed and displayed correctly for specific cultural
+conventions and language.
+.Pp
+A locale is divided into categories.
+A category is a group of language-specific and culture-specific conventions
+as outlined in the list above.
+ISO C specifies the following six standard categories supported by
+.Nx :
+.Pp
+.Bl -tag -compact -width LC_MONETARYXX
+.It Ev LC_COLLATE
+string-collation order information
+.It Ev LC_CTYPE
+character classification, case conversion, and other character attributes
+.It Ev LC_MESSAGES
+the format for affirmative and negative responses
+.It Ev LC_MONETARY
+rules and symbols for formatting monetary numeric information
+.It Ev LC_NUMERIC
+rules and symbols for formatting nonmonetary numeric information
+.It Ev LC_TIME
+rules and symbols for formatting time and date information
+.El
+.Pp
+Localization of the system is achieved by setting appropriate values
+in environment variables to identify which locale should be used.
+The environment variables have the same names as their respective
+locale categories.
+Additionally, the
+.Ev LANG ,
+.Ev LC_ALL ,
+and
+.Ev NLSPATH
+environment variables are used.
+The
+.Ev NLSPATH
+environment variable specifies a colon-separated list of directory names
+where the message catalog files of the NLS database are located.
+The
+.Ev LC_ALL
+and
+.Ev LANG
+environment variables also determine the current locale.
+.Pp
+The values of these environment variables contains a string format as:
+.Pp
+.Bd -literal
+	language[_territory][.codeset][@modifier]
+.Ed
+.Pp
+Valid values for the language field come from the ISO639 standard which
+defines two-character codes for many languages.
+Some common language codes are:
+.Pp
+.Bl -column "PERSIAN (farsi)" "Sy Code" "OCEANIC/INDONESIAN"
+.It Sy Language Name Ta Sy Code Ta Sy Language Family
+.It ABKHAZIAN	AB	IBERO-CAUCASIAN
+.It AFAN (OROMO)	OM	HAMITIC
+.It AFAR	AA	HAMITIC
+.It AFRIKAANS	AF	GERMANIC
+.It ALBANIAN	SQ	INDO-EUROPEAN (OTHER)
+.It AMHARIC	AM	SEMITIC
+.It ARABIC	AR	SEMITIC
+.It ARMENIAN	HY	INDO-EUROPEAN (OTHER)
+.It ASSAMESE	AS	INDIAN
+.It AYMARA	AY	AMERINDIAN
+.It AZERBAIJANI	AZ	TURKIC/ALTAIC
+.It BASHKIR	BA	TURKIC/ALTAIC
+.It BASQUE	EU	BASQUE
+.It BENGALI	BN	INDIAN
+.It BHUTANI	DZ	ASIAN
+.It BIHARI	BH	INDIAN
+.It BISLAMA     Ta BI   Ta ""
+.It BRETON	BR	CELTIC
+.It BULGARIAN	BG	SLAVIC
+.It BURMESE	MY	ASIAN
+.It BYELORUSSIAN	BE	SLAVIC
+.It CAMBODIAN	KM	ASIAN
+.It CATALAN	CA	ROMANCE
+.It CHINESE	ZH	ASIAN
+.It CORSICAN	CO	ROMANCE
+.It CROATIAN	HR	SLAVIC
+.It CZECH	CS	SLAVIC
+.It DANISH	DA	GERMANIC
+.It DUTCH	NL	GERMANIC
+.It ENGLISH	EN	GERMANIC
+.It ESPERANTO	EO	INTERNATIONAL AUX.
+.It ESTONIAN	ET	FINNO-UGRIC
+.It FAROESE	FO	GERMANIC
+.It FIJI	FJ	OCEANIC/INDONESIAN
+.It FINNISH	FI	FINNO-UGRIC
+.It FRENCH	FR	ROMANCE
+.It FRISIAN	FY	GERMANIC
+.It GALICIAN	GL	ROMANCE
+.It GEORGIAN	KA	IBERO-CAUCASIAN
+.It GERMAN	DE	GERMANIC
+.It GREEK	EL	LATIN/GREEK
+.It GREENLANDIC	KL	ESKIMO
+.It GUARANI	GN	AMERINDIAN
+.It GUJARATI	GU	INDIAN
+.It HAUSA	HA	NEGRO-AFRICAN
+.It HEBREW	HE	SEMITIC
+.It HINDI	HI	INDIAN
+.It HUNGARIAN	HU	FINNO-UGRIC
+.It ICELANDIC	IS	GERMANIC
+.It INDONESIAN	ID	OCEANIC/INDONESIAN
+.It INTERLINGUA	IA	INTERNATIONAL AUX.
+.It INTERLINGUE	IE	INTERNATIONAL AUX.
+.It INUKTITUT   Ta IU   Ta ""
+.It INUPIAK	IK	ESKIMO
+.It IRISH	GA	CELTIC
+.It ITALIAN	IT	ROMANCE
+.It JAPANESE	JA	ASIAN
+.It JAVANESE	JV	OCEANIC/INDONESIAN
+.It KANNADA	KN	DRAVIDIAN
+.It KASHMIRI	KS	INDIAN
+.It KAZAKH	KK	TURKIC/ALTAIC
+.It KINYARWANDA	RW	NEGRO-AFRICAN
+.It KIRGHIZ	KY	TURKIC/ALTAIC
+.It KURUNDI	RN	NEGRO-AFRICAN
+.It KOREAN	KO	ASIAN
+.It KURDISH	KU	IRANIAN
+.It LAOTHIAN	LO	ASIAN
+.It LATIN	LA	LATIN/GREEK
+.It LATVIAN	LV	BALTIC
+.It LINGALA	LN	NEGRO-AFRICAN
+.It LITHUANIAN	LT	BALTIC
+.It MACEDONIAN	MK	SLAVIC
+.It MALAGASY	MG	OCEANIC/INDONESIAN
+.It MALAY	MS	OCEANIC/INDONESIAN
+.It MALAYALAM	ML	DRAVIDIAN
+.It MALTESE	MT	SEMITIC
+.It MAORI	MI	OCEANIC/INDONESIAN
+.It MARATHI	MR	INDIAN
+.It MOLDAVIAN	MO	ROMANCE
+.It MONGOLIAN   Ta MN   Ta ""
+.It NAURU       Ta NA   Ta ""
+.It NEPALI	NE	INDIAN
+.It NORWEGIAN	NO	GERMANIC
+.It OCCITAN	OC	ROMANCE
+.It ORIYA	OR	INDIAN
+.It PASHTO	PS	IRANIAN
+.It PERSIAN (farsi)	FA	IRANIAN
+.It POLISH	PL	SLAVIC
+.It PORTUGUESE	PT	ROMANCE
+.It PUNJABI	PA	INDIAN
+.It QUECHUA	QU	AMERINDIAN
+.It RHAETO-ROMANCE	RM	ROMANCE
+.It ROMANIAN	RO	ROMANCE
+.It RUSSIAN	RU	SLAVIC
+.It SAMOAN	SM	OCEANIC/INDONESIAN
+.It SANGHO	SG	NEGRO-AFRICAN
+.It SANSKRIT	SA	INDIAN
+.It SCOTS GAELIC	GD	CELTIC
+.It SERBIAN	SR	SLAVIC
+.It SERBO-CROATIAN	SH	SLAVIC
+.It SESOTHO	ST	NEGRO-AFRICAN
+.It SETSWANA	TN	NEGRO-AFRICAN
+.It SHONA	SN	NEGRO-AFRICAN
+.It SINDHI	SD	INDIAN
+.It SINGHALESE	SI	INDIAN
+.It SISWATI	SS	NEGRO-AFRICAN
+.It SLOVAK	SK	SLAVIC
+.It SLOVENIAN	SL	SLAVIC
+.It SOMALI	SO	HAMITIC
+.It SPANISH	ES	ROMANCE
+.It SUNDANESE	SU	OCEANIC/INDONESIAN
+.It SWAHILI	SW	NEGRO-AFRICAN
+.It SWEDISH	SV	GERMANIC
+.It TAGALOG	TL	OCEANIC/INDONESIAN
+.It TAJIK	TG	IRANIAN
+.It TAMIL	TA	DRAVIDIAN
+.It TATAR	TT	TURKIC/ALTAIC
+.It TELUGU	TE	DRAVIDIAN
+.It THAI	TH	ASIAN
+.It TIBETAN	BO	ASIAN
+.It TIGRINYA	TI	SEMITIC
+.It TONGA	TO	OCEANIC/INDONESIAN
+.It TSONGA	TS	NEGRO-AFRICAN
+.It TURKISH	TR	TURKIC/ALTAIC
+.It TURKMEN	TK	TURKIC/ALTAIC
+.It TWI	TW	NEGRO-AFRICAN
+.It UIGUR       Ta UG   Ta ""
+.It UKRAINIAN	UK	SLAVIC
+.It URDU	UR	INDIAN
+.It UZBEK	UZ	TURKIC/ALTAIC
+.It VIETNAMESE	VI	ASIAN
+.It VOLAPUK	VO	INTERNATIONAL AUX.
+.It WELSH	CY	CELTIC
+.It WOLOF	WO	NEGRO-AFRICAN
+.It XHOSA	XH	NEGRO-AFRICAN
+.It YIDDISH	YI	GERMANIC
+.It YORUBA	YO	NEGRO-AFRICAN
+.It ZHUANG      Ta ZA   Ta ""
+.It ZULU	ZU	NEGRO-AFRICAN
+.El
+.Pp
+For example, the locale for the Danish language spoken in Denmark
+using the ISO 8859-1 character set is da_DK.ISO8859-1.
+The da stands for the Danish language and the DK stands for Denmark.
+The short form of da_DK is sufficient to indicate this locale.
+.Pp
+The environment variable settings are queried by their priority level
+in the following manner:
+.Pp
+.Bl -bullet
+.It
+If the
+.Ev LC_ALL
+environment variable is set, all six categories use the locale it
+specifies.
+.It
+If the
+.Ev LC_ALL
+environment variable is not set, each individual category uses the
+locale specified by its corresponding environment variable.
+.It
+If the
+.Ev LC_ALL
+environment variable is not set, and a value for a particular
+.Ev LC_*
+environment variable is not set, the value of the
+.Ev LANG
+environment variable specifies the default locale for all categories.
+Only the
+.Ev LANG
+environment variable should be set in /etc/profile, since it makes it
+most easy for the user to override the system default using the individual
+.Ev LC_*
+variables.
+.It
+If the
+.Ev LC_ALL
+environment variable is not set, a value for a particular
+.Ev LC_*
+environment variable is not set, and the value of the
+.Ev LANG
+environment variable is not set, the locale for that specific
+category defaults to the C locale.
+The C or POSIX locale assumes the ASCII character set and defines
+information for the six categories.
+.El
+.Ss Character Sets
+A character is any symbol used for the organization, control, or
+representation of data.
+A group of such symbols used to describe a
+particular language make up a character set.
+It is the encoding values in a character set that provide
+the interface between the system and its input and output devices.
+.Pp
+The following character sets are supported in
+.Nx :
+.Bl -tag -width ISO_8859_family
+.It ASCII
+The American Standard Code for Information Exchange (ASCII) standard
+specifies 128 Roman characters and control codes, encoded in a 7-bit
+character encoding scheme.
+.It ISO 8859 family
+Industry-standard character sets specified by the ISO/IEC 8859
+standard.
+The standard is divided into 15 numbered parts, with each
+part specifying broad script similarities.
+Examples include Western European, Central European, Arabic, Cyrillic,
+Hebrew, Greek, and Turkish.
+The character sets use an 8-bit character encoding scheme which is
+compatible with the ASCII character set.
+.It Unicode
+The Unicode character set is the full set of known abstract characters of
+all real-world scripts.  It can be used in environments where multiple
+scripts must be processed simultaneously.
+Unicode is compatible with ISO 8859-1 (Western European) and ASCII.
+Many character encoding schemes are available for Unicode, including UTF-8,
+UTF-16 and UTF-32.
+These encoding schemes are multi-byte encodings.
+The UTF-8 encoding scheme uses 8-bit, variable-width encodings which is
+compatible with ASCII.
+The UTF-16 encoding scheme uses 16-bit, variable-width encodings.
+The UTF-32 encoding scheme using 32-bit, fixed-width encodings.
+.El
+.Ss Font Sets
+A font set contains the glyphs to be displayed on the screen for a
+corresponding character in a character set.
+A display must support a suitable font to display a character set.
+If suitable fonts are available to the X server, then X clients can
+include support for different character sets.
+.Xr xterm 1
+includes support for Unicode with UTF-8 encoding.
+.Xr xfd 1
+is useful for displaying all the characters in an X font.
+.Pp
+The
+.Nx
+.Xr wscons 4
+console provides support for loading fonts using the
+.Xr wsfontload 8
+utility.
+Currently, only fonts for the ISO8859-1 family of character sets are
+supported.
+.Ss Internationalization for Programmers
+To facilitate translations of messages into various languages and to
+make the translated messages available to the program based on a
+user's locale, it is necessary to keep messages separate from the
+programs and provide them in the form of message catalogs that a
+program can access at run time.
+.Pp
+Access to locale information is provided through the
+.Xr setlocale 3
+and
+.Xr nl_langinfo 3
+interfaces.
+See their respective man pages for further information.
+.Pp
+Message source files containing application messages are created by
+the programmer and converted to message catalogs.
+These catalogs are used by the application to retrieve and display
+messages, as needed.
+.Pp
+.Nx
+supports two message catalog interfaces: the X/Open
+.Xr catgets 3
+interface and the Uniforum
+.Xr gettext 3
+interface.
+The
+.Xr catgets 3
+interface has the advantage that it belongs to a standard which is
+well supported.
+Unfortunately the interface is complicated to use and
+maintenance of the catalogs is difficult.
+The implementation also doesn't support different character sets.
+The
+.Xr gettext 3
+interface has not been standardized yet, however it is being supported
+by an increasing number of systems.
+It also provides many additional tools which make programming and
+catalog maintenance much easier.
+.Ss Support for Multi-byte Encodings
+Some character sets with multi-byte encodings may be difficult to decode,
+or may contain state (i.e., adjacent characters are dependent).
+ISO C specifies a set of functions using 'wide characters' which can handle
+multi-byte encodings properly.
+The behaviour of these functions is affected
+by the
+.Ev LC_CTYPE
+category of the current locale.
+.Pp
+A wide character is specified in ISO C
+as being a fixed number of bits wide and is stateless.
+There are two types for wide characters:
+.Em wchar_t
+and
+.Em wint_t .
+.Em wchar_t
+is a type which can contain one wide character and operates like 'char'
+type does for one character.
+.Em wint_t
+can contain one wide character or WEOF (wide EOF).
+.Pp
+There are functions that operate on
+.Em wchar_t ,
+and substitute for functions operating on 'char'.
+See
+.Xr wmemchr 3
+and
+.Xr towlower 3
+for details.
+There are some additional functions that operate on
+.Em wchar_t .
+See
+.Xr wctype 3
+and
+.Xr wctrans 3
+for details.
+.Pp
+Wide characters should be used for all I/O processing which may rely
+on locale-specific strings.
+The two primary issues requiring special use of wide characters are:
+.Bl -bullet -offset indent
+.It
+All I/O is performed using multibyte characters.
+Input data is converted into wide characters immediately after
+reading and data for output is converted from wide characters to
+multi-byte encoding immediately before writing.
+Conversion is controlled by the
+.Xr mbstowcs 3 ,
+.Xr mbsrtowcs 3 ,
+.Xr wcstombs 3 ,
+.Xr wcsrtombs 3 ,
+.Xr mblen 3 ,
+.Xr mbrlen 3 ,
+and
+.Xr  mbsinit 3 .
+.It
+Wide characters are used directly for I/O, using
+.Xr getwchar 3 ,
+.Xr fgetwc 3 ,
+.Xr getwc 3 ,
+.Xr ungetwc 3 ,
+.Xr fgetws 3 ,
+.Xr putwchar 3 ,
+.Xr fputwc 3 ,
+.Xr putwc 3 ,
+and
+.Xr fputws 3 .
+They are also used for formatted I/O functions for wide characters
+such as
+.Xr fwscanf 3 ,
+.Xr wscanf 3 ,
+.Xr swscanf 3 ,
+.Xr fwprintf 3 ,
+.Xr wprintf 3 ,
+.Xr swprintf 3 ,
+.Xr vfwprintf 3 ,
+.Xr vwprintf 3 ,
+and
+.Xr vswprintf 3 ,
+and wide character identifier of %lc, %C, %ls, %S for conventional
+formatted I/O functions.
+.El
+.Sh SEE ALSO
+.Xr gencat 1 ,
+.Xr xfd 1 ,
+.Xr xterm 1 ,
+.Xr catgets 3 ,
+.Xr gettext 3 ,
+.Xr nl_langinfo 3 ,
+.Xr setlocale 3 ,
+.Xr wsfontload 8
+.Sh BUGS
+This man page is incomplete.

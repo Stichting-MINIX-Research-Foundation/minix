@@ -1,0 +1,79 @@
+# $NetBSD: he_IL.UTF-8.src,v 1.1 2008/05/17 04:11:30 ginsbach Exp $
+#
+# Hebrew Language Time Locale for Israel
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/timedef/he_IL.UTF-8.src,v 1.3 2007/12/30 03:08:52 ache Exp $
+#
+# Short weekday names (abday)
+#
+א'
+ב'
+ג'
+ד'
+ה'
+ו'
+ש'
+#
+# Long weekday names (day)
+#
+ראשון
+שני
+שלישי
+רביעי
+חמישי
+שישי
+שבת
+#
+# Short month names (abmon)
+#
+ינו
+פבר
+מרץ
+אפר
+מאי
+יונ
+יול
+אוג
+ספט
+אוק
+נוב
+דצמ
+#
+# Long month names (mon)
+#
+ינואר
+פברואר
+מרץ
+אפריל
+מאי
+יוני
+יולי
+אוגוסט
+ספטמבר
+אוקטובר
+נובמבר
+דצמבר
+#
+# Ante Meridiem/Post Meridiem - %p (am_pm)
+#
+AM
+PM
+#
+# Date and Time - %c (d_t_fmt)
+#
+%Z %H:%M:%S %Y %b %d %a
+#
+# Date - %x (d_fmt)
+#
+%d/%m/%y
+#
+# Time - %X (t_fmt)
+#
+%H:%M:%S
+#
+# 12-hour Clock - %r (t_ampm_fmt)
+#
+%I:%M:%S %p
+# EOF

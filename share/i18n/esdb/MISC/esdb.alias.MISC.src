@@ -1,0 +1,11 @@
+# $NetBSD: esdb.alias.MISC.src,v 1.16 2007/03/13 16:34:40 tnozaki Exp $
+
+c99				C99
+ctext				CTEXT
+HZ-GB2312			HZ
+java				JAVA
+CP1361				JOHAB
+shift_jis			Shift_JIS
+sjis				Shift_JIS
+shift_jisx0213			Shift_JIS-2004
+ISO-IR-230			TDS565

@@ -1,0 +1,25 @@
+# $NetBSD: mn_MN.UTF-8.src,v 1.2 2013/06/17 11:05:42 mbalmer Exp $
+#
+# Mongolian Language Message Locale for Mongolia
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/msgdef/mn_MN.UTF-8.src,v 1.1 2006/10/02 00:36:52 ache Exp $
+#
+# Acceptable Affirmative Response Expression (yesexpr)
+#    NOTE: This must be a valid Extended Regular Expression.
+^[тТyY].*
+# Acceptable Negative Response Expression (noexpr)
+#    NOTE: This must be a valid Extended Regular Expression.
+^[үҮnN].*
+#
+# NOTE: The following were removed from the relevant standards:
+#       The Open Group Base Specifications Issue 6 (XPG6) and
+#       IEEE Std 1003.1, 2004 Edition (POSIX).
+#      The current NetBSD implementation still requires a value or blank line.
+#
+# Acceptable Affirmative Response (yesstr)
+тийм
+# Acceptable Negative  Response (nostr)
+үгүй
+# EOF

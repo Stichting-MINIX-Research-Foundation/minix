@@ -1,0 +1,4 @@
+# $NetBSD: mapper.dir.CBM.src,v 1.2 2011/04/29 09:57:49 mbalmer Exp $
+
+CBMINT/UCS		mapper_std	CBM/CBMINT%UCS.mps
+UCS/CBMINT		mapper_std	CBM/UCS%CBMINT.mps

@@ -1,0 +1,4 @@
+# $NetBSD: charset.pivot.CBM.src,v 1.2 2011/04/29 09:57:49 mbalmer Exp $
+
+CMBINT			UCS			1
+UCS			CBMINT			1
