@@ -246,6 +246,85 @@ create_protos()
 }
 
 #
+# Clone grub repository and build efi boot binary
+#
+fetch_and_build_grub()
+{
+       if [ -d ${RELEASETOOLSDIR}/grub ]
+       then
+         echo grub is already checked out
+       else
+         git clone git://git.savannah.gnu.org/grub.git ${RELEASETOOLSDIR}/grub
+         pushd ${RELEASETOOLSDIR}/grub
+         # most recent known working commit at the time of writing
+         git clone b524fa27f56381bb0efa4944e36f50265113aee5
+         ./autogen.sh
+         ./configure --with-platform=efi --target=i386
+         make clean
+         make -j ${JOBS}
+         cd grub-core
+         ../grub-mkimage -v -d . -o booti386.efi -O i386-efi -p /boot/efi normal part_msdos fat chain boot configfile multiboot minix3 gzio efi_uga
+         ls -l booti386.efi
+         popd
+       fi
+}
+
+#
+# Create grub.cfg for efi boot
+#
+create_grub_cfg()
+{
+	cat > ${EFI_DIR}/boot/efi/grub.cfg <<END_GRUBCFG
+
+insmod serial
+insmod minix3
+insmod gzio
+#insmod efi_uga
+#insmod video_fb
+insmod all_video
+
+set timeout=30
+set default=0
+
+set gfxmode=text
+
+menuentry "Minix Boot" {
+        set root=(hd0,1)
+        multiboot /boot/minix_default/kernel rootdevname=c0d0p0
+        module /boot/minix_default/mod01_ds
+        module /boot/minix_default/mod02_rs
+        module /boot/minix_default/mod03_pm
+        module /boot/minix_default/mod04_sched
+        module /boot/minix_default/mod05_vfs
+        module /boot/minix_default/mod06_memory
+        module /boot/minix_default/mod07_tty
+        module /boot/minix_default/mod08_mib
+        module /boot/minix_default/mod09_vm
+        module /boot/minix_default/mod10_pfs
+        module /boot/minix_default/mod11_mfs
+        module /boot/minix_default/mod12_init
+}
+
+menuentry "Minix Boot (serial)" {
+        set root=(hd0,1)
+        multiboot /boot/minix_default/kernel rootdevname=c0d0p0 cttyline=0 ttybaud=115200 console=tty00 consdev=com0
+        module /boot/minix_default/mod01_ds
+        module /boot/minix_default/mod02_rs
+        module /boot/minix_default/mod03_pm
+        module /boot/minix_default/mod04_sched
+        module /boot/minix_default/mod05_vfs
+        module /boot/minix_default/mod06_memory
+        module /boot/minix_default/mod07_tty
+        module /boot/minix_default/mod08_mib
+        module /boot/minix_default/mod09_vm
+        module /boot/minix_default/mod10_pfs
+        module /boot/minix_default/mod11_mfs
+        module /boot/minix_default/mod12_init
+}
+END_GRUBCFG
+}
+
+#
 # Create ramdisk image from root directory
 #
 # $1 : size of ramdisk (optional)
