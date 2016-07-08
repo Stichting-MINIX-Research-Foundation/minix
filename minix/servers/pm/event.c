@@ -310,7 +310,7 @@ do_proc_event_reply(void)
 
 /*
  * Publish a process event to interested subscribers.  The event is determined
- * from the process flags.  In addition, if the event is a process exit, also 
+ * from the process flags.  In addition, if the event is a process exit, also
  * check if it is a subscribing service that died.
  */
 void

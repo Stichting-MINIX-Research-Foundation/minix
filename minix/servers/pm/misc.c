@@ -68,7 +68,8 @@ unsigned long calls_stats[NR_PM_CALLS];
 /*===========================================================================*
  *				do_sysuname				     *
  *===========================================================================*/
-int do_sysuname()
+int
+do_sysuname(void)
 {
 /* Set or get uname strings. */
   int r;
@@ -103,7 +104,8 @@ int do_sysuname()
 /*===========================================================================*
  *				do_getsysinfo			       	     *
  *===========================================================================*/
-int do_getsysinfo()
+int
+do_getsysinfo(void)
 {
   vir_bytes src_addr, dst_addr;
   size_t len;
@@ -128,7 +130,7 @@ int do_getsysinfo()
   case SI_CALL_STATS:
   	src_addr = (vir_bytes) calls_stats;
   	len = sizeof(calls_stats);
-  	break; 
+  	break;
 #endif
   default:
   	return(EINVAL);
@@ -183,7 +185,8 @@ int do_getepinfo(void)
 /*===========================================================================*
  *				do_reboot				     *
  *===========================================================================*/
-int do_reboot()
+int
+do_reboot(void)
 {
   message m;
 
@@ -204,7 +207,7 @@ int do_reboot()
 
   /* Order matters here. When VFS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by
-   * SIGKILL. So first kill, then reboot. 
+   * SIGKILL. So first kill, then reboot.
    */
 
   check_sig(-1, SIGKILL, FALSE /* ksig*/); /* kill all users except init */
@@ -222,7 +225,8 @@ int do_reboot()
 /*===========================================================================*
  *				do_getsetpriority			     *
  *===========================================================================*/
-int do_getsetpriority()
+int
+do_getsetpriority(void)
 {
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
@@ -255,7 +259,7 @@ int do_getsetpriority()
 	/* Only root is allowed to reduce the nice level. */
 	if (rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
 		return(EACCES);
-	
+
 	/* We're SET, and it's allowed.
 	 *
 	 * The value passed in is currently between PRIO_MIN and PRIO_MAX.
@@ -305,8 +309,8 @@ int do_svrctl(void)
       size_t copy_len;
 
       /* Copy sysgetenv structure to PM. */
-      if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv, 
-              sizeof(sysgetenv)) != OK) return(EFAULT);  
+      if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv,
+              sizeof(sysgetenv)) != OK) return(EFAULT);
 
       /* Set a param override? */
       if (req == PMSETPARAM || req == OPMSETPARAM) {
@@ -318,7 +322,7 @@ int do_svrctl(void)
   	 || sysgetenv.vallen >=
   	 	 sizeof(local_param_overrides[local_params].value))
   		return EINVAL;
-  		
+
           if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
             SELF, (vir_bytes) local_param_overrides[local_params].name,
                sysgetenv.keylen)) != OK)
@@ -338,7 +342,7 @@ int do_svrctl(void)
       if (sysgetenv.keylen == 0) {	/* copy all parameters */
           val_start = monitor_params;
           val_len = sizeof(monitor_params);
-      } 
+      }
       else {				/* lookup value for key */
       	  int p;
           /* Try to get a copy of the requested key. */
@@ -367,8 +371,8 @@ int do_svrctl(void)
       	return E2BIG;
 
       /* Value found, make the actual copy (as far as possible). */
-      copy_len = MIN(val_len, sysgetenv.vallen); 
-      if ((s=sys_datacopy(SELF, (vir_bytes) val_start, 
+      copy_len = MIN(val_len, sysgetenv.vallen);
+      if ((s=sys_datacopy(SELF, (vir_bytes) val_start,
               who_e, (vir_bytes) sysgetenv.val, copy_len)) != OK)
           return(s);
 

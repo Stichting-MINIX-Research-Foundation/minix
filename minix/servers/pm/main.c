@@ -47,7 +47,8 @@ static int sef_cb_init_fresh(int type, sef_init_info_t *info);
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-int main()
+int
+main(void)
 {
 /* Main routine of the process manager. */
   unsigned int call_index;
@@ -112,7 +113,8 @@ int main()
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void
+sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -137,7 +139,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
   static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT, SIGINFO };
-  static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
+  static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE,
 				SIGBUS, SIGSEGV };
   register struct mproc *rmp;
   register char *sig_ptr;
@@ -169,10 +171,10 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
       panic("get monitor params failed: %d", s);
 
-  /* Initialize PM's process table. Request a copy of the system image table 
+  /* Initialize PM's process table. Request a copy of the system image table
    * that is defined at the kernel level to see which slots to fill in.
    */
-  if (OK != (s=sys_getimage(image))) 
+  if (OK != (s=sys_getimage(image)))
   	panic("couldn't get image table: %d", s);
   procs_in_use = 0;				/* start populating table */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
@@ -180,20 +182,20 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   		procs_in_use += 1;		/* found user process */
 
 		/* Set process details found in the image table. */
-		rmp = &mproc[ip->proc_nr];	
-  		strlcpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
-  		(void) sigemptyset(&rmp->mp_ignore);	
+		rmp = &mproc[ip->proc_nr];
+  		strlcpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN);
+  		(void) sigemptyset(&rmp->mp_ignore);
   		(void) sigemptyset(&rmp->mp_sigmask);
   		(void) sigemptyset(&rmp->mp_catch);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			/* INIT is root, we make it father of itself. This is
   			 * not really OK, INIT should have no father, i.e.
-  			 * a father with pid NO_PID. But PM currently assumes 
+  			 * a father with pid NO_PID. But PM currently assumes
   			 * that mp_parent always points to a valid slot number.
   			 */
   			rmp->mp_parent = INIT_PROC_NR;
   			rmp->mp_procgrp = rmp->mp_pid = INIT_PID;
-			rmp->mp_flags |= IN_USE; 
+			rmp->mp_flags |= IN_USE;
 
 			/* Set scheduling info */
 			rmp->mp_scheduler = KERNEL;
@@ -246,9 +248,11 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-void reply(proc_nr, result)
-int proc_nr;			/* process to reply to */
-int result;			/* result of call (usually OK or error #) */
+void
+reply(
+	int proc_nr,			/* process to reply to */
+	int result			/* result of call (usually OK or error #) */
+)
 {
 /* Send a reply to a user process.  System calls may occasionally fill in other
  * fields, this is only for the main return value and for sending the reply.
@@ -270,14 +274,16 @@ int result;			/* result of call (usually OK or error #) */
 /*===========================================================================*
  *				get_nice_value				     *
  *===========================================================================*/
-static int get_nice_value(queue)
-int queue;				/* store mem chunks here */
+static int
+get_nice_value(
+	int queue				/* store mem chunks here */
+)
 {
 /* Processes in the boot image have a priority assigned. The PM doesn't know
- * about priorities, but uses 'nice' values instead. The priority is between 
+ * about priorities, but uses 'nice' values instead. The priority is between
  * MIN_USER_Q and MAX_USER_Q. We have to scale between PRIO_MIN and PRIO_MAX.
- */ 
-  int nice_val = (queue - USER_Q) * (PRIO_MAX-PRIO_MIN+1) / 
+ */
+  int nice_val = (queue - USER_Q) * (PRIO_MAX-PRIO_MIN+1) /
       (MIN_USER_Q-MAX_USER_Q+1);
   if (nice_val > PRIO_MAX) nice_val = PRIO_MAX;	/* shouldn't happen */
   if (nice_val < PRIO_MIN) nice_val = PRIO_MIN;	/* shouldn't happen */
@@ -287,7 +293,8 @@ int queue;				/* store mem chunks here */
 /*===========================================================================*
  *				handle_vfs_reply       			     *
  *===========================================================================*/
-static void handle_vfs_reply()
+static void
+handle_vfs_reply(void)
 {
   struct mproc *rmp;
   endpoint_t proc_e;
