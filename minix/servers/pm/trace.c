@@ -1,30 +1,30 @@
-/* This file handles the process manager's part of debugging, using the 
+/* This file handles the process manager's part of debugging, using the
  * ptrace system call. Most of the commands are passed on to the system
  * task for completion.
  *
  * The debugging commands available are:
- * T_STOP	stop the process 
+ * T_STOP	stop the process
  * T_OK		enable tracing by parent for this process
- * T_GETINS	return value from instruction space 
- * T_GETDATA	return value from data space 
+ * T_GETINS	return value from instruction space
+ * T_GETDATA	return value from data space
  * T_GETUSER	return value from user process table
  * T_SETINS	set value in instruction space
  * T_SETDATA	set value in data space
- * T_SETUSER	set value in user process table 
- * T_RESUME	resume execution 
+ * T_SETUSER	set value in user process table
+ * T_RESUME	resume execution
  * T_EXIT	exit
- * T_STEP	set trace bit 
+ * T_STEP	set trace bit
  * T_SYSCALL	trace system call
  * T_ATTACH	attach to an existing process
  * T_DETACH	detach from a traced process
  * T_SETOPT	set trace options
  * T_GETRANGE	get range of values
  * T_SETRANGE	set range of values
- * 
+ *
  * The T_OK, T_ATTACH, T_EXIT, and T_SETOPT commands are handled here, and the
  * T_RESUME, T_STEP, T_SYSCALL, and T_DETACH commands are partially handled
  * here and completed by the system task. The rest are handled entirely by the
- * system task. 
+ * system task.
  */
 
 #include "pm.h"
@@ -38,7 +38,8 @@
 /*===========================================================================*
  *				do_trace  				     *
  *===========================================================================*/
-int do_trace()
+int
+do_trace(void)
 {
   register struct mproc *child;
   struct ptrace_range pr;
@@ -205,7 +206,7 @@ int do_trace()
 			FALSE /* ksig */);
 	}
 
-	/* Resume the child as if nothing ever happened. */ 
+	/* Resume the child as if nothing ever happened. */
 	child->mp_flags &= ~TRACE_STOPPED;
 	child->mp_trace_flags = 0;
 
@@ -213,7 +214,7 @@ int do_trace()
 
 	break;
 
-  case T_RESUME: 
+  case T_RESUME:
   case T_STEP:
   case T_SYSCALL:	/* resume execution */
 	if (m_in.m_lc_pm_ptrace.data < 0 || m_in.m_lc_pm_ptrace.data >= _NSIG)
@@ -251,9 +252,8 @@ int do_trace()
 /*===========================================================================*
  *				trace_stop				     *
  *===========================================================================*/
-void trace_stop(rmp, signo)
-register struct mproc *rmp;
-int signo;
+void
+trace_stop(register struct mproc *rmp, int signo)
 {
 /* A traced process got a signal so stop it. */
 
@@ -262,7 +262,7 @@ int signo;
 
   r = sys_trace(T_STOP, rmp->mp_endpoint, 0L, (long *) 0);
   if (r != OK) panic("sys_trace failed: %d", r);
- 
+
   rmp->mp_flags |= TRACE_STOPPED;
   if (wait_test(rpmp, rmp)) {
 	/* TODO: rusage support */

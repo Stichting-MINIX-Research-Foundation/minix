@@ -15,7 +15,8 @@
 /*===========================================================================*
  *				do_get					     *
  *===========================================================================*/
-int do_get()
+int
+do_get(void)
 {
 /* Handle PM_GETUID, PM_GETGID, PM_GETGROUPS, PM_GETPID, PM_GETPGRP, PM_GETSID,
  * PM_ISSETUGID.
@@ -82,7 +83,7 @@ int do_get()
 
 	default:
 		r = EINVAL;
-		break;	
+		break;
   }
   return(r);
 }
@@ -90,7 +91,8 @@ int do_get()
 /*===========================================================================*
  *				do_set					     *
  *===========================================================================*/
-int do_set()
+int
+do_set(void)
 {
 /* Handle PM_SETUID, PM_SETEUID, PM_SETGID, PM_SETGROUPS, PM_SETEGID, and
  * SETSID. These calls have in common that, if successful, they will be
@@ -173,7 +175,7 @@ int do_set()
 
 		ngroups = m_in.m_lc_pm_groups.num;
 
-		if (ngroups > NGROUPS_MAX || ngroups < 0) 
+		if (ngroups > NGROUPS_MAX || ngroups < 0)
 			return(EINVAL);
 
 		if (ngroups > 0 && m_in.m_lc_pm_groups.ptr == 0)
@@ -182,7 +184,7 @@ int do_set()
 		r = sys_datacopy(who_e, m_in.m_lc_pm_groups.ptr, SELF,
 			     (vir_bytes) rmp->mp_sgroups,
 			     ngroups * sizeof(gid_t));
-		if (r != OK) 
+		if (r != OK)
 			return(r);
 
 		for (i = 0; i < ngroups; i++) {

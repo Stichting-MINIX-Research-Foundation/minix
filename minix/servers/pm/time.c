@@ -18,7 +18,8 @@
 /*===========================================================================*
  *				do_gettime				     *
  *===========================================================================*/
-int do_gettime()
+int
+do_gettime(void)
 {
   clock_t ticks, realtime, clock;
   time_t boottime;
@@ -48,7 +49,8 @@ int do_gettime()
 /*===========================================================================*
  *				do_getres				     *
  *===========================================================================*/
-int do_getres()
+int
+do_getres(void)
 {
   switch (m_in.m_lc_pm_time.clk_id) {
 	case CLOCK_REALTIME:
@@ -65,11 +67,12 @@ int do_getres()
 /*===========================================================================*
  *				do_settime				     *
  *===========================================================================*/
-int do_settime()
+int
+do_settime(void)
 {
   int s;
 
-  if (mp->mp_effuid != SUPER_USER) { 
+  if (mp->mp_effuid != SUPER_USER) {
       return(EPERM);
   }
 
@@ -87,7 +90,8 @@ int do_settime()
 /*===========================================================================*
  *				do_time					     *
  *===========================================================================*/
-int do_time()
+int
+do_time(void)
 {
 /* Perform the time(tp) system call. */
   struct timespec tv;
@@ -102,19 +106,20 @@ int do_time()
 /*===========================================================================*
  *				do_stime				     *
  *===========================================================================*/
-int do_stime()
+int
+do_stime(void)
 {
-/* Perform the stime(tp) system call. Retrieve the system's uptime (ticks 
+/* Perform the stime(tp) system call. Retrieve the system's uptime (ticks
  * since boot) and pass the new time in seconds at system boot to the kernel.
  */
   clock_t uptime, realtime;
   time_t boottime;
   int s;
 
-  if (mp->mp_effuid != SUPER_USER) { 
+  if (mp->mp_effuid != SUPER_USER) {
       return(EPERM);
   }
-  if ( (s=getuptime(&uptime, &realtime, &boottime)) != OK) 
+  if ( (s=getuptime(&uptime, &realtime, &boottime)) != OK)
       panic("do_stime couldn't get uptime: %d", s);
   boottime = m_in.m_lc_pm_time.sec - (realtime/system_hz);
 

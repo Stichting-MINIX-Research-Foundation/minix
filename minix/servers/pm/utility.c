@@ -39,7 +39,7 @@ pid_t get_free_pid()
 
   /* Find a free pid for the child and put it in the table. */
   do {
-	t = 0;			
+	t = 0;
 	next_pid = (next_pid < NR_PIDS ? next_pid + 1 : INIT_PID + 1);
 	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
 		if (rmp->mp_pid == next_pid || rmp->mp_procgrp == next_pid) {
@@ -53,8 +53,8 @@ pid_t get_free_pid()
 /*===========================================================================*
  *				find_param				     *
  *===========================================================================*/
-char *find_param(name)
-const char *name;
+char *
+find_param(const char *name)
 {
   register const char *namep;
   register char *envp;
@@ -62,7 +62,7 @@ const char *name;
   for (envp = (char *) monitor_params; *envp != 0;) {
 	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
 		;
-	if (*namep == '\0' && *envp == '=') 
+	if (*namep == '\0' && *envp == '=')
 		return(envp + 1);
 	while (*envp++ != 0)
 		;

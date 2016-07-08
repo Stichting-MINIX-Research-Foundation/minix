@@ -367,7 +367,7 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
 
 	assert(!(rmp->mp_flags & DELAY_CALL));
   }
-  
+
   /* See if the process is still alive */
   if ((mproc[proc_nr].mp_flags & (IN_USE | EXITING)) == IN_USE)  {
       return OK; /* signal has been delivered */
@@ -380,22 +380,24 @@ int process_ksig(endpoint_t proc_nr_e, int signo)
 /*===========================================================================*
  *				sig_proc				     *
  *===========================================================================*/
-void sig_proc(rmp, signo, trace, ksig)
-register struct mproc *rmp;	/* pointer to the process to be signaled */
-int signo;			/* signal to send to process (1 to _NSIG-1) */
-int trace;			/* pass signal to tracer first? */
-int ksig;			/* non-zero means signal comes from kernel  */
+void
+sig_proc(
+	register struct mproc *rmp,	/* pointer to the process to be signaled */
+	int signo,			/* signal to send to process (1 to _NSIG-1) */
+	int trace,			/* pass signal to tracer first? */
+	int ksig			/* non-zero means signal comes from kernel  */
+)
 {
 /* Send a signal to a process.  Check to see if the signal is to be caught,
- * ignored, tranformed into a message (for system processes) or blocked.  
+ * ignored, tranformed into a message (for system processes) or blocked.
  *  - If the signal is to be transformed into a message, request the KERNEL to
- * send the target process a system notification with the pending signal as an 
- * argument. 
- *  - If the signal is to be caught, request the KERNEL to push a sigcontext 
- * structure and a sigframe structure onto the catcher's stack.  Also, KERNEL 
- * will reset the program counter and stack pointer, so that when the process 
- * next runs, it will be executing the signal handler. When the signal handler 
- * returns,  sigreturn(2) will be called.  Then KERNEL will restore the signal 
+ * send the target process a system notification with the pending signal as an
+ * argument.
+ *  - If the signal is to be caught, request the KERNEL to push a sigcontext
+ * structure and a sigframe structure onto the catcher's stack.  Also, KERNEL
+ * will reset the program counter and stack pointer, so that when the process
+ * next runs, it will be executing the signal handler. When the signal handler
+ * returns,  sigreturn(2) will be called.  Then KERNEL will restore the signal
  * context from the sigcontext structure.
  * If there is insufficient stack space, kill the process.
  */
@@ -482,7 +484,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	  sigismember(&rmp->mp_ignore, signo) ||
 	  sigismember(&rmp->mp_sigmask, signo));
 
-  if (!badignore && sigismember(&rmp->mp_ignore, signo)) { 
+  if (!badignore && sigismember(&rmp->mp_ignore, signo)) {
 	/* Signal should be ignored. */
 	return;
   }
@@ -540,9 +542,11 @@ int ksig;			/* non-zero means signal comes from kernel  */
 /*===========================================================================*
  *				sig_proc_exit				     *
  *===========================================================================*/
-static void sig_proc_exit(rmp, signo)
-struct mproc *rmp;		/* process that must exit */
-int signo;			/* signal that caused termination */
+static void
+sig_proc_exit(
+	struct mproc *rmp,		/* process that must exit */
+	int signo			/* signal that caused termination */
+)
 {
   rmp->mp_sigstatus = (char) signo;
   if (sigismember(&core_sset, signo)) {
@@ -644,8 +648,8 @@ int ksig;			/* non-zero means signal comes from kernel  */
 /*===========================================================================*
  *				check_pending				     *
  *===========================================================================*/
-void check_pending(rmp)
-register struct mproc *rmp;
+void
+check_pending(register struct mproc *rmp)
 {
   /* Check to see if any pending signals have been unblocked. Deliver as many
    * of them as we can, until we have to wait for a reply from VFS first.
@@ -680,8 +684,8 @@ register struct mproc *rmp;
 /*===========================================================================*
  *				restart_sigs				     *
  *===========================================================================*/
-void restart_sigs(rmp)
-struct mproc *rmp;
+void
+restart_sigs(struct mproc *rmp)
 {
 /* VFS has replied to a request from us; do signal-related work.
  */
@@ -712,8 +716,10 @@ struct mproc *rmp;
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-static int unpause(rmp)
-struct mproc *rmp;		/* which process */
+static int
+unpause(
+	struct mproc *rmp		/* which process */
+)
 {
 /* A signal is to be sent to a process.  If that process is hanging on a
  * system call, the system call must be terminated with EINTR.  First check if
@@ -766,9 +772,11 @@ struct mproc *rmp;		/* which process */
 /*===========================================================================*
  *				sig_send				     *
  *===========================================================================*/
-static int sig_send(rmp, signo)
-struct mproc *rmp;		/* what process to spawn a signal handler in */
-int signo;			/* signal to send to process (1 to _NSIG-1) */
+static int
+sig_send(
+	struct mproc *rmp,		/* what process to spawn a signal handler in */
+	int signo			/* signal to send to process (1 to _NSIG-1) */
+)
 {
 /* The process is supposed to catch this signal. Spawn a signal handler.
  * Return TRUE if this succeeded, FALSE otherwise.
