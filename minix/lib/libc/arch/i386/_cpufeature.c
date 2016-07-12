@@ -51,6 +51,8 @@ int _cpufeature(int cpufeature)
 	switch(cpufeature) {
 		case _CPUF_I386_PSE:
 			return edx & CPUID1_EDX_PSE;
+		case _CPUF_I386_PAE:
+			return edx & CPUID1_EDX_PAE;
 		case _CPUF_I386_PGE:
 			return edx & CPUID1_EDX_PGE;
 		case _CPUF_I386_APIC_ON_CHIP:

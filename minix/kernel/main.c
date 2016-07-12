@@ -337,6 +337,9 @@ static void announce(void)
 {
   /* Display the MINIX startup banner. */
   printf("\nMINIX %s. "
+#ifdef PAE
+"(PAE) "
+#endif
 #ifdef _VCS_REVISION
 	"(" _VCS_REVISION ")\n"
 #endif

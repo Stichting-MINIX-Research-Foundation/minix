@@ -74,6 +74,7 @@ i386/vm.h
 #define CPUID1_EDX_FPU		(1L)		/* FPU presence */
 #define CPUID1_EDX_PSE 		(1L <<  3)	/* Page Size Extension */
 #define CPUID1_EDX_SYSENTER	(1L << 11)	/* Intel SYSENTER */
+#define CPUID1_EDX_PAE 		(1L << 6)	/* Physical Address Extension */
 #define CPUID1_EDX_PGE 		(1L << 13)	/* Page Global (bit) Enable */
 #define CPUID1_EDX_APIC_ON_CHIP (1L << 9)	/* APIC is present on the chip */
 #define CPUID1_EDX_TSC		(1L << 4)	/* Timestamp counter present */

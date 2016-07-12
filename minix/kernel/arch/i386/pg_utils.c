@@ -204,9 +204,14 @@ int pg_mapkernel(void)
 void vm_enable_paging(void)
 {
         u32_t cr0, cr4;
-        int pgeok;
+        int pgeok, paeok;
 
         pgeok = _cpufeature(_CPUF_I386_PGE);
+
+#ifdef PAE
+	if(_cpufeature(_CPUF_I386_PAE) == 0)
+		panic("kernel built with PAE support, CPU seems to lack PAE support?\n");
+#endif
 
         cr0= read_cr0();
         cr4= read_cr4();
