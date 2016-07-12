@@ -43,6 +43,10 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/minix/include/arch/${MACHINE_ARCH}/include
 
 .include "system/Makefile.inc"
 
+.if ${MKPAE:Uno} != "no"
+CPPFLAGS+= -DPAE=1
+.endif
+
 .ifdef CONFIG_SMP
 SRCS+= smp.c
 .endif

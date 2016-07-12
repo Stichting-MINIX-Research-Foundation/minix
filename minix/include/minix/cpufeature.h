@@ -25,6 +25,8 @@
 #define _CPUF_I386_SYSENTER	16	/* Intel SYSENTER instrs */
 #define _CPUF_I386_SYSCALL	17	/* AMD SYSCALL instrs */
 
+#define _CPUF_I386_PAE		18	/* Page Address Extension */
+
 int _cpufeature(int featureno);
 
 #endif

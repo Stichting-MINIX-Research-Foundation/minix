@@ -11,7 +11,6 @@
 #include <sys/reboot.h>
 #include <assert.h>
 #include <signal.h>
-#include <machine/vm.h>
 
 #include <minix/u64.h>
 
