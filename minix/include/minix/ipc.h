@@ -1398,8 +1398,10 @@ _ASSERT_MSG_SIZE(mess_lsys_pci_busc_get_bar);
 
 typedef struct {
 	endpoint_t endpt;
+	vir_bytes groups;
+	int ngroups;
 
-	uint8_t padding[52];
+	uint8_t padding[44];
 } mess_lsys_pm_getepinfo;
 _ASSERT_MSG_SIZE(mess_lsys_pm_getepinfo);
 
@@ -1713,9 +1715,12 @@ _ASSERT_MSG_SIZE(mess_pm_lexec_exec_new);
 
 typedef struct {
 	uid_t uid;
+	uid_t euid;
 	gid_t gid;
+	gid_t egid;
+	int ngroups;
 
-	uint8_t padding[48];
+	uint8_t padding[36];
 } mess_pm_lsys_getepinfo;
 _ASSERT_MSG_SIZE(mess_pm_lsys_getepinfo);
 

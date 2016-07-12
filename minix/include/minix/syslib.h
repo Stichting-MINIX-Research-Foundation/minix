@@ -17,6 +17,7 @@
 /* Forward declaration */
 struct rs_pci;
 struct rusage;
+struct sockcred;
 
 #define SYSTASK SYSTEM
 
@@ -270,6 +271,8 @@ pid_t getepinfo(endpoint_t proc_ep, uid_t *uidp, gid_t *gidp);
 pid_t getnpid(endpoint_t proc_ep);
 uid_t getnuid(endpoint_t proc_ep);
 gid_t getngid(endpoint_t proc_ep);
+int getsockcred(endpoint_t proc_ep, struct sockcred * sockcred, gid_t * groups,
+	int ngroups);
 int socketpath(endpoint_t endpt, char *path, size_t size, int what, dev_t *dev,
 	ino_t *ino);
 #define SPATH_CHECK	0	/* check user permissions on socket path */

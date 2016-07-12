@@ -170,15 +170,25 @@ int do_getepinfo(void)
 {
   struct mproc *rmp;
   endpoint_t ep;
-  int slot;
+  int r, slot, ngroups;
 
   ep = m_in.m_lsys_pm_getepinfo.endpt;
   if (pm_isokendpt(ep, &slot) != OK)
 	return(ESRCH);
-
   rmp = &mproc[slot];
-  mp->mp_reply.m_pm_lsys_getepinfo.uid = rmp->mp_effuid;
-  mp->mp_reply.m_pm_lsys_getepinfo.gid = rmp->mp_effgid;
+
+  mp->mp_reply.m_pm_lsys_getepinfo.uid = rmp->mp_realuid;
+  mp->mp_reply.m_pm_lsys_getepinfo.euid = rmp->mp_effuid;
+  mp->mp_reply.m_pm_lsys_getepinfo.gid = rmp->mp_realgid;
+  mp->mp_reply.m_pm_lsys_getepinfo.egid = rmp->mp_effgid;
+  mp->mp_reply.m_pm_lsys_getepinfo.ngroups = ngroups = rmp->mp_ngroups;
+  if (ngroups > m_in.m_lsys_pm_getepinfo.ngroups)
+	ngroups = m_in.m_lsys_pm_getepinfo.ngroups;
+  if (ngroups > 0) {
+	if ((r = sys_datacopy(SELF, (vir_bytes)rmp->mp_sgroups, who_e,
+	    m_in.m_lsys_pm_getepinfo.groups, ngroups * sizeof(gid_t))) != OK)
+		return(r);
+  }
   return(rmp->mp_pid);
 }
 
