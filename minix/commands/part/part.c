@@ -1578,7 +1578,7 @@ ssize_t boot_readwrite(int rw)
 {
 	int r = 0;
 
-	if (lseek(device, offset * SECTOR_SIZE, SEEK_SET) < 0)
+	if (lseek(device, (off_t)offset * SECTOR_SIZE, SEEK_SET) < 0)
 		return -1;
 
 	switch (rw) {
