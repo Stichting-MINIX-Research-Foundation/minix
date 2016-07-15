@@ -66,8 +66,12 @@ void dangling_slink(int sub_test, char const slink_to[PATH_MAX])
 
 	/* Cleanup created files */
 	if (unlink(slink_to) == -1) e(18);
-	if (unlink("a") == -1) e(19);
-	if (unlink("c") == -1) e(20);
+	if (unlink("c") == -1) e(19);
+
+	/* Use the dangling symlink to test mknod(2) following symlinks */
+	if (mknod("a", S_IFCHR | 0777, makedev(1, 1)) != -1) e(20);
+	if (errno != EEXIST) e(21);
+	if (unlink("a") == -1) e(22);
 
 	exit(EXIT_SUCCESS);
   } else {

@@ -520,7 +520,8 @@ int do_mknod(void)
   mode_bits = job_m_in.m_lc_vfs_mknod.mode;
   dev = job_m_in.m_lc_vfs_mknod.device;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  /* If the path names a symbolic link, mknod() shall fail with EEXIST. */
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_WRITE;
 
