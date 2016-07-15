@@ -16,7 +16,6 @@ lib*.so*
 *.so.*
 *.d
 .depend
-nbsdsrc/*
 TAGS
 tags
 GPATH
@@ -25,10 +24,10 @@ GSYMS
 GTAGS
 \#*#
 CVS
+obj
 !/.gitignore
 .gitignore
 .svn
-minix-port.patch
 *.worldstone.log
 .worldstone*
 usr.bin/mdocml/man/*.7
@@ -39,5 +38,11 @@ releasetools/image
 releasetools/kernel
 releasetools/revision
 share/zoneinfo/builddir
+external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonvirtual-inheritance-no-thu
+external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonvirtual-inheritance-pure-v
+external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonvirtual-inheritance-return
+external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonvirtual-inheritance-this-a
+external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonvirtual-inheritance-vdtors
+external/bsd/llvm/dist/llvm/test/Verifier/bitcast-address-space-through-constant-inttoptr-inside-gep-i
 lib/libc/compat__*
 .gdbinit
