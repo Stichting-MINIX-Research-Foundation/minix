@@ -3424,7 +3424,7 @@
 ./usr/man/man8/pr_routes.8                              minix-man
 ./usr/man/man8/printroot.8                              minix-man
 ./usr/man/man8/pwd_mkdb.8                               minix-man
-./usr/man/man8/pwdauth.8                                minix-man
+./usr/man/man8/pwdauth.8                                minix-man	obsolete
 ./usr/man/man8/rarpd.8                                  minix-man
 ./usr/man/man8/rawspeed.8                               minix-man
 ./usr/man/man8/rdate.8                                  minix-man

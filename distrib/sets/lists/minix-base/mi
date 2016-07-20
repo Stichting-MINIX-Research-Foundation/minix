@@ -927,7 +927,7 @@
 ./usr/lib/pkgconfig/openssl.pc                          minix-base      crypto
 ./usr/lib/pkgconfig/sqlite3.pc                          minix-base
 ./usr/lib/pkgconfig/zlib.pc                             minix-base
-./usr/lib/pwdauth                                       minix-base
+./usr/lib/pwdauth                                       minix-base	obsolete
 ./usr/lib/security                                      minix-base
 ./usr/libdata                                           minix-base
 ./usr/libdata/debug                                     minix-base

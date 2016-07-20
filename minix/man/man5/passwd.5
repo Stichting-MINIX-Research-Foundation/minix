@@ -94,7 +94,7 @@ to indicate the entry
 in the shadow password file.  The password in this entry is then used for
 authentication of the user.  The shadow file can only be read by the
 privileged utility
-.BR pwdauth (8),
+.BR pwd_mkdb (8),
 so that the encrypted passwords in the shadow file are kept secret, and thus
 safe from a dictionary attack.
 .SS "Special password and group file entries"
@@ -188,7 +188,7 @@ The shadow password file.
 .BR crypt (3),
 .BR getpwent (3),
 .BR getgrent (3),
-.BR pwdauth (8).
+.BR pwd_mkdb (8).
 .SH NOTES
 The
 .B nobody
