@@ -532,7 +532,7 @@ int do_copyfd(void)
   struct vnode *vp;
   struct smap *sp;
   endpoint_t endpt;
-  int r, fd, what, slot;
+  int r, fd, what, flags, slot;
 
   /* This should be replaced with an ACL check. */
   if (!super_user) return(EPERM);
@@ -540,6 +540,9 @@ int do_copyfd(void)
   endpt = job_m_in.m_lsys_vfs_copyfd.endpt;
   fd = job_m_in.m_lsys_vfs_copyfd.fd;
   what = job_m_in.m_lsys_vfs_copyfd.what;
+
+  flags = what & COPYFD_FLAGS;
+  what &= ~COPYFD_FLAGS;
 
   if (isokendpt(endpt, &slot) != OK) return(EINVAL);
   rfp = &fproc[slot];
@@ -608,6 +611,7 @@ int do_copyfd(void)
 	}
 
 	rfp = fp;
+	flags &= ~COPYFD_CLOEXEC;
 
 	/* FALLTHROUGH */
   case COPYFD_TO:
@@ -619,6 +623,8 @@ int do_copyfd(void)
 	/* If found, fill the slot and return the slot number. */
 	if (fd < OPEN_MAX) {
 		rfp->fp_filp[fd] = rfilp;
+		if (flags & COPYFD_CLOEXEC)
+			FD_SET(fd, &rfp->fp_cloexec_set);
 		rfilp->filp_count++;
 		r = fd;
 	} else

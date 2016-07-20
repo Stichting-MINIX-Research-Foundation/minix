@@ -274,6 +274,8 @@ int copyfd(endpoint_t endpt, int fd, int what);
 #define COPYFD_FROM	0	/* copy file descriptor from remote process */
 #define COPYFD_TO	1	/* copy file descriptor to remote process */
 #define COPYFD_CLOSE	2	/* close file descriptor in remote process */
+#define COPYFD_CLOEXEC	0x8000	/* with COPYFD_TO: set close-on-exec flag */
+#define COPYFD_FLAGS	0xF000	/* flags mask */
 int closenb(int fd);
 
 /*
