@@ -134,7 +134,7 @@
 ./usr/include/i386/ibcs2_machdep.h                      minix-comp
 ./usr/include/i386/ieee.h                               minix-comp
 ./usr/include/i386/ieeefp.h                             minix-comp
-./usr/include/i386/int86.h                              minix-comp
+./usr/include/i386/int86.h                              minix-comp	obsolete
 ./usr/include/i386/int_const.h                          minix-comp
 ./usr/include/i386/int_fmtio.h                          minix-comp
 ./usr/include/i386/int_limits.h                         minix-comp

@@ -835,7 +835,6 @@ struct
 	{ "UMAP_REMOTE",	SYS_UMAP_REMOTE },
 	{ "VUMAP",		SYS_VUMAP },
 	{ "IRQCTL",		SYS_IRQCTL },
-	{ "INT86",		SYS_INT86 },
 	{ "DEVIO",		SYS_DEVIO },
 	{ "SDEVIO",		SYS_SDEVIO },
 	{ "VDEVIO",		SYS_VDEVIO },

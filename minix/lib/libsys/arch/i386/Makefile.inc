@@ -11,7 +11,6 @@ SRCS+=  \
         spin.c \
         sys_eniop.c \
         sys_in.c \
-        sys_int86.c \
         sys_out.c \
         sys_readbios.c \
         sys_sdevio.c \
