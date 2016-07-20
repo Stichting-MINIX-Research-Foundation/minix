@@ -18,7 +18,7 @@ SUBDIR=	add_route arp at backup \
 	mount mt netconf \
 	nonamed \
 	postinstall prep printroot \
-	profile progressbar pr_routes pwdauth \
+	profile progressbar pr_routes \
 	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
 	rotate service setup \
