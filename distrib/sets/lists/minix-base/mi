@@ -441,7 +441,7 @@
 ./usr/bin/pkgin_cd                                      minix-base
 ./usr/bin/pkgin_sets                                    minix-base
 ./usr/bin/playwave                                      minix-base
-./usr/bin/postinstall                                   minix-base
+./usr/bin/postinstall                                   minix-base	obsolete
 ./usr/bin/pr                                            minix-base
 ./usr/bin/pr_routes                                     minix-base
 ./usr/bin/prep                                          minix-base
