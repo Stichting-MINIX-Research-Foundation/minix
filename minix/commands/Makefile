@@ -17,7 +17,7 @@ SUBDIR=	add_route arp at backup \
 	lpd lspci mail MAKEDEV \
 	mount mt netconf \
 	nonamed \
-	postinstall prep printroot \
+	prep printroot \
 	profile progressbar pr_routes \
 	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
