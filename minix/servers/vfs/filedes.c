@@ -529,6 +529,8 @@ int do_copyfd(void)
  */
   struct fproc *rfp;
   struct filp *rfilp;
+  struct vnode *vp;
+  struct smap *sp;
   endpoint_t endpt;
   int r, fd, what, slot;
 
@@ -571,6 +573,40 @@ int do_copyfd(void)
 
   switch (what) {
   case COPYFD_FROM:
+	/*
+	 * If the caller is a socket driver (namely, UDS) and the file
+	 * descriptor being copied in is a socket for that socket driver, then
+	 * deny the call, because of at least two known issues.  Both issues
+	 * are related to UDS having an in-flight file descriptor that is the
+	 * last reference to a UDS socket:
+	 *
+	 * 1) if UDS tries to close the file descriptor, this will prompt VFS
+	 *    to close the underlying object, which is a UDS socket.  As a
+	 *    result, while UDS is blocked in the close(2), VFS will try to
+	 *    send a request to UDS to close the socket.  This results in a
+	 *    deadlock of the UDS service.
+	 *
+	 * 2) if a file descriptor for a UDS socket is sent across that same
+	 *    UDS socket, the socket will remain referenced by UDS, thus open
+	 *    in VFS, and therefore also open in UDS.  The socket and file
+	 *    descriptor will both remain in use for the rest of UDS' lifetime.
+	 *    This can easily result in denial-of-service in the UDS service.
+	 *    The same problem can be triggered using multiple sockets that
+	 *    have in-flight file descriptors referencing each other.
+	 *
+	 * A proper solution for these problems may consist of some form of
+	 * "soft reference counting" where VFS does not count UDS having a
+	 * filp open as a real reference.  That is tricky business, so for now
+	 * we prevent any such problems with the check here.
+	 */
+	if ((vp = rfilp->filp_vno) != NULL && S_ISSOCK(vp->v_mode) &&
+	    (sp = get_smap_by_dev(vp->v_sdev, NULL)) != NULL &&
+	    sp->smap_endpt == who_e) {
+		r = EDEADLK;
+
+		break;
+	}
+
 	rfp = fp;
 
 	/* FALLTHROUGH */
