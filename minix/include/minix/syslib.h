@@ -15,7 +15,6 @@
 #include <machine/mcontext.h>
 
 /* Forward declaration */
-struct reg86u;
 struct rs_pci;
 struct rusage;
 
@@ -55,7 +54,6 @@ int sys_privquery_mem(endpoint_t proc_ep, phys_bytes physstart,
 	phys_bytes physlen);
 int sys_setgrant(cp_grant_t *grants, int ngrants);
 
-int sys_int86(struct reg86u *reg86p);
 int sys_vm_setbuf(phys_bytes base, phys_bytes size, phys_bytes high);
 int sys_vm_map(endpoint_t proc_ep, int do_map, phys_bytes base,
 	phys_bytes size, phys_bytes offset);

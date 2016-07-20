@@ -224,7 +224,7 @@
 #  define SYS_VUMAP      (KERNEL_CALL + 18)	/* sys_vumap() */
 
 #  define SYS_IRQCTL     (KERNEL_CALL + 19)	/* sys_irqctl() */
-#  define SYS_INT86      (KERNEL_CALL + 20)	/* sys_int86() */
+
 #  define SYS_DEVIO      (KERNEL_CALL + 21)	/* sys_devio() */
 #  define SYS_SDEVIO     (KERNEL_CALL + 22)	/* sys_sdevio() */
 #  define SYS_VDEVIO     (KERNEL_CALL + 23)	/* sys_vdevio() */
