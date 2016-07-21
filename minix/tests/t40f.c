@@ -59,7 +59,7 @@ static void do_child(void) {
   struct timeval tv;
  
   /* Let the parent do initial read and write tests from and to the pipe. */
-  tv.tv_sec = DO_PAUSE + DO_PAUSE + DO_PAUSE + 1;
+  tv.tv_sec = DO_PAUSE + DO_PAUSE + 1;
   tv.tv_usec = 0;
   (void) select(0, NULL, NULL, NULL, &tv);
 
@@ -109,16 +109,28 @@ static void do_parent(int child) {
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv); 
   (void) gettimeofday(&end_time, NULL);     /* Record ending time */
   
-  if(retval != 0) em(3, "Should have timed out");
-  if(compute_diff(start_time, end_time, DO_PAUSE) > DO_DELTA)
-    em(4, "Time difference too large");
-  
+  if(retval != -1) em(3, "Should have failed");
+  if(errno != EINVAL) em(4, "Incorrect error thrown");
+
+  /* Do a few more tests for invalid timeout values. */
+  tv.tv_sec = 0;
+  tv.tv_usec = 1000000;
+  retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv);
+  if (retval != -1) em(0, "Should have failed");
+  if (errno != EINVAL) em(0, "Incorrect error thrown");
+
+  tv.tv_sec = 0;
+  tv.tv_usec = ~0;
+  retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv);
+  if (retval != -1) em(0, "Should have failed");
+  if (errno != EINVAL) em(0, "Incorrect error thrown");
+
   /* Let's wait for another DO_PAUSE seconds, expressed in seconds and micro
      seconds. */
   FD_ZERO(&fds_read);
   FD_SET(fd_ap[0], &fds_read);
   tv.tv_sec = DO_PAUSE - 1;
-  tv.tv_usec = (DO_PAUSE - tv.tv_sec) * 1000000L;
+  tv.tv_usec = 999999L; /* close enough */
   
   (void) gettimeofday(&start_time, NULL);   /* Record starting time */
   retval = select(fd_ap[0]+1, &fds_read, NULL, NULL, &tv); 

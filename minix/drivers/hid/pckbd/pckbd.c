@@ -44,7 +44,7 @@ static struct inputdriver pckbd_tab = {
  * The watchdog timer function, implementing all but the actual reset.
  */
 static void
-kbd_watchdog(minix_timer_t *UNUSED(tmrp))
+kbd_watchdog(int arg __unused)
 {
 	kbd_watchdog_set = 0;
 	if (!kbdout.avail)

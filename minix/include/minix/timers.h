@@ -17,50 +17,61 @@
 #include <limits.h>
 
 #include <sys/types.h>
+#include <minix/const.h>
 #include <minix/u64.h>
 #include <minix/minlib.h>
 #include <minix/endpoint.h>
 
-struct minix_timer;
-typedef void (*tmr_func_t)(struct minix_timer *tp);
-typedef union { int ta_int; long ta_long; void *ta_ptr; } ixfer_tmr_arg_t;
+typedef void (*tmr_func_t)(int arg);
 
 /* A minix_timer_t variable must be declare for each distinct timer to be used.
  * The timers watchdog function and expiration time are automatically set
- * by the library function tmrs_settimer, but its argument is not.
+ * by the library function tmrs_settimer, but its argument is not.  In general,
+ * the timer is in use when it has a callback function.
  */
 typedef struct minix_timer
 {
   struct minix_timer	*tmr_next;	/* next in a timer chain */
-  clock_t 	tmr_exp_time;	/* expiration time */
-  tmr_func_t	tmr_func;	/* function to call when expired */
-  ixfer_tmr_arg_t tmr_arg;	/* random argument */
+  clock_t 		tmr_exp_time;	/* expiration time (absolute) */
+  tmr_func_t		tmr_func;	/* function to call when expired */
+  int			tmr_arg;	/* integer argument */
 } minix_timer_t;
 
-/* Used when the timer is not active. */
-#define TMR_NEVER    ((clock_t) -1 < 0) ? ((clock_t) LONG_MAX) : ((clock_t) -1)
-#undef TMR_NEVER
-#define TMR_NEVER	((clock_t) LONG_MAX)
+/*
+ * Clock times may wrap.  Thus, we must only ever compare relative times, which
+ * means they must be no more than half the total maximum time value apart.
+ * The clock_t type is unsigned (int or long), thus we take half that.
+ */
+#define TMRDIFF_MAX		(INT_MAX)
+
+/* This value must be used only instead of a timer difference value. */
+#define TMR_NEVER		((clock_t)TMRDIFF_MAX + 1)
 
 /* These definitions can be used to set or get data from a timer variable. */
-#define tmr_arg(tp) (&(tp)->tmr_arg)
-#define tmr_exp_time(tp) (&(tp)->tmr_exp_time)
+#define tmr_exp_time(tp)	((tp)->tmr_exp_time)
+#define tmr_is_set(tp)		((tp)->tmr_func != NULL)
+/*
+ * tmr_is_first() returns TRUE iff the first given absolute time is sooner than
+ * or equal to the second given time.
+ */
+#define tmr_is_first(a,b)	((clock_t)(b) - (clock_t)(a) <= TMRDIFF_MAX)
+#define tmr_has_expired(tp,now)	tmr_is_first((tp)->tmr_exp_time, (now))
 
 /* Timers should be initialized once before they are being used. Be careful
  * not to reinitialize a timer that is in a list of timers, or the chain
  * will be broken.
  */
-#define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER, \
-	(tp)->tmr_next = NULL)
+#define tmr_inittimer(tp) (void)((tp)->tmr_func = NULL, (tp)->tmr_next = NULL)
 
 /* The following generic timer management functions are available. They
  * can be used to operate on the lists of timers. Adding a timer to a list
  * automatically takes care of removing it.
  */
-clock_t tmrs_clrtimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t *new_head);
-void tmrs_exptimers(minix_timer_t **tmrs, clock_t now, clock_t *new_head);
-clock_t tmrs_settimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t exp_time,
-	tmr_func_t watchdog, clock_t *new_head);
+int tmrs_settimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t exp_time,
+	tmr_func_t watchdog, int arg, clock_t *old_head, clock_t *new_head);
+int tmrs_clrtimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t *old_head,
+	clock_t *new_head);
+int tmrs_exptimers(minix_timer_t **tmrs, clock_t now, clock_t *new_head);
 
 #define PRINT_STATS(cum_spenttime, cum_instances) {		\
 		if(ex64hi(cum_spenttime)) { util_stacktrace(); printf(" ( ??? %lu %lu)\n",	\
@@ -110,7 +121,7 @@ clock_t tmrs_settimer(minix_timer_t **tmrs, minix_timer_t *tp, clock_t exp_time,
  */
 
 void init_timer(minix_timer_t *tp);
-void set_timer(minix_timer_t *tp, int ticks, tmr_func_t watchdog, int arg);
+void set_timer(minix_timer_t *tp, clock_t ticks, tmr_func_t watchdog, int arg);
 void cancel_timer(minix_timer_t *tp);
 void expire_timers(clock_t now);
 

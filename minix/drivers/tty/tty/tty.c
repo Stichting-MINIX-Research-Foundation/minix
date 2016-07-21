@@ -59,7 +59,7 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
-static void tty_timed_out(minix_timer_t *tp);
+static void tty_timed_out(int arg);
 static void settimer(tty_t *tty_ptr, int enable);
 static void in_transfer(tty_t *tp);
 static int tty_echo(tty_t *tp, int ch);
@@ -1573,11 +1573,11 @@ static void tty_init()
 /*===========================================================================*
  *				tty_timed_out				     *
  *===========================================================================*/
-static void tty_timed_out(minix_timer_t *tp)
+static void tty_timed_out(int arg)
 {
 /* This timer has expired. Set the events flag, to force processing. */
   tty_t *tty_ptr;
-  tty_ptr = &tty_table[tmr_arg(tp)->ta_int];
+  tty_ptr = &tty_table[arg];
   tty_ptr->tty_min = 0;			/* force read to succeed */
   tty_ptr->tty_events = 1;		
 }

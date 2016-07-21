@@ -45,7 +45,7 @@ void panic(const char *fmt, ...)
 #endif
 
   /* Abort MINIX. */
-  minix_shutdown(NULL);
+  minix_shutdown(0);
 }
 
 /*===========================================================================*

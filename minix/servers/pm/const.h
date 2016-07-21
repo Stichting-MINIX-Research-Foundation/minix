@@ -12,8 +12,7 @@
 
 #define NO_EVENTSUB	((char)-1) /* no current process event subscriber */
 
-#define MAX_CLOCK_T	((unsigned long) 1 << ((sizeof(clock_t) * 8) - 1))
-#define MAX_SECS	( (clock_t) (MAX_CLOCK_T/system_hz) )
+#define MAX_SECS	( (clock_t) (TMRDIFF_MAX/system_hz) )
 				/* max.secs for setitimer() ((2^31-1)/HZ) */
 #define NR_ITIMERS	   3	/* number of supported interval timers */
 

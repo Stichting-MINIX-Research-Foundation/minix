@@ -32,6 +32,8 @@
 #define FROM_PROC 0
 #define TO_PROC   1
 
+#define USECPERSEC 1000000	/* number of microseconds in a second */
+
 typedef fd_set *ixfer_fd_set_ptr;
 
 static struct selectentry {
@@ -71,6 +73,7 @@ static void select_return(struct selectentry *);
 static void select_restart_filps(void);
 static int tab2ops(int fd, struct selectentry *e);
 static void wipe_select(struct selectentry *s);
+void select_timeout_check(int s);
 
 static struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block,
@@ -96,12 +99,13 @@ int do_select(void)
  * timeout and wait for either the file descriptors to become ready or the
  * timer to go off. If no timeout value was provided, we wait indefinitely.
  */
-  int r, nfds, do_timeout = 0, fd, s;
+  int r, nfds, do_timeout, fd, s;
   struct filp *f;
   unsigned int type, ops;
   struct timeval timeout;
   struct selectentry *se;
   vir_bytes vtimeout;
+  clock_t ticks;
 
   nfds = job_m_in.m_lc_vfs_select.nfds;
   vtimeout = job_m_in.m_lc_vfs_select.timeout;
@@ -131,20 +135,21 @@ int do_select(void)
 
   /* Did the process set a timeout value? If so, retrieve it. */
   if (vtimeout != 0) {
-	do_timeout = 1;
 	r = sys_datacopy_wrapper(who_e, vtimeout, SELF, (vir_bytes) &timeout,
 		sizeof(timeout));
+
+	/* No nonsense in the timeval */
+	if (r == OK && (timeout.tv_sec < 0 || timeout.tv_usec < 0 ||
+	    timeout.tv_usec >= USECPERSEC))
+		r = EINVAL;
+
 	if (r != OK) {
 		se->requestor = NULL;
 		return(r);
 	}
-  }
-
-  /* No nonsense in the timeval */
-  if (do_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0)) {
-	se->requestor = NULL;
-	return(EINVAL);
-  }
+	do_timeout = 1;
+  } else
+	do_timeout = 0;
 
   /* If there is no timeout, we block forever. Otherwise, we block up to the
    * specified time interval.
@@ -282,22 +287,20 @@ int do_select(void)
   /* Convert timeval to ticks and set the timer. If it fails, undo
    * all, return error.
    */
-  if (do_timeout) {
-	int ticks;
+  if (do_timeout && se->block) {
 	/* Open Group:
 	 * "If the requested timeout interval requires a finer
 	 * granularity than the implementation supports, the
 	 * actual timeout interval shall be rounded up to the next
 	 * supported value."
 	 */
-#define USECPERSEC 1000000
-	while(timeout.tv_usec >= USECPERSEC) {
-		/* this is to avoid overflow with *system_hz below */
-		timeout.tv_usec -= USECPERSEC;
-		timeout.tv_sec++;
+	if (timeout.tv_sec >= (TMRDIFF_MAX - 1) / system_hz) {
+		ticks = TMRDIFF_MAX; /* silently truncate */
+	} else {
+		ticks = timeout.tv_sec * system_hz +
+		    (timeout.tv_usec * system_hz + USECPERSEC-1) / USECPERSEC;
 	}
-	ticks = timeout.tv_sec * system_hz +
-		(timeout.tv_usec * system_hz + USECPERSEC-1) / USECPERSEC;
+	assert(ticks != 0 && ticks <= TMRDIFF_MAX);
 	se->expiry = ticks;
 	set_timer(&se->timer, ticks, select_timeout_check, s);
   }
@@ -742,20 +745,18 @@ void select_forget(void)
 /*===========================================================================*
  *				select_timeout_check	  	     	     *
  *===========================================================================*/
-void select_timeout_check(minix_timer_t *timer)
+void select_timeout_check(int s)
 {
 /* An alarm has gone off for one of the select queries. This function MUST NOT
  * block its calling thread.
  */
-  int s;
   struct selectentry *se;
 
-  s = tmr_arg(timer)->ta_int;
   if (s < 0 || s >= MAXSELECTS) return;	/* Entry does not exist */
 
   se = &selecttab[s];
   if (se->requestor == NULL) return;
-  if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
+  if (se->expiry == 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
   if (!is_deferred(se))
 	select_return(se);

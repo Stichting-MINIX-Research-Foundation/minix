@@ -239,8 +239,8 @@ static u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
 static minix_timer_t f_tmr_timeout;		/* timer for various timeouts */
 static u32_t system_hz;		/* system clock frequency */
 static void f_expire_tmrs(clock_t stamp);
-static void stop_motor(minix_timer_t *tp);
-static void f_timeout(minix_timer_t *tp);
+static void stop_motor(int arg);
+static void f_timeout(int arg);
 
 static struct device *f_prepare(devminor_t device);
 static struct device *f_part(devminor_t minor);
@@ -784,13 +784,13 @@ static void start_motor(void)
 /*===========================================================================*
  *				stop_motor				     *
  *===========================================================================*/
-static void stop_motor(minix_timer_t *tp)
+static void stop_motor(int arg)
 {
 /* This routine is called from an alarm timer after several seconds have
  * elapsed with no floppy disk activity.  It turns the drive motor off.
  */
   int s;
-  motor_status &= ~(1 << tmr_arg(tp)->ta_int);
+  motor_status &= ~(1 << arg);
   if ((s=sys_outb(DOR, (motor_status << MOTOR_SHIFT) | ENABLE_INT)) != OK)
 	panic("Sys_outb in stop_motor() failed: %d", s);
 }
@@ -1198,7 +1198,7 @@ static int f_intr_wait(void)
 /*===========================================================================*
  *				f_timeout				     *
  *===========================================================================*/
-static void f_timeout(minix_timer_t *UNUSED(tp))
+static void f_timeout(int arg __unused)
 {
 /* This routine is called when a timer expires.  Usually to tell that a
  * motor has spun up, but also to forge an interrupt when it takes too long

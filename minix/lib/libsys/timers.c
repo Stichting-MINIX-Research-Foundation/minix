@@ -1,4 +1,5 @@
-/* Watchdog timer management. These functions in this file provide a
+/*
+ * Watchdog timer management. These functions in this file provide a
  * convenient interface to the timers library that manages a list of
  * watchdog timers. All details of scheduling an alarm at the CLOCK task
  * are hidden behind this interface.
@@ -16,71 +17,101 @@
 #include <minix/sysutil.h>
 
 static minix_timer_t *timers = NULL;
-static int expiring = 0;
+static int expiring = FALSE;
 
-/*===========================================================================*
- *                              init_timer                                   *
- *===========================================================================*/
-void init_timer(minix_timer_t *tp)
+/*
+ * Initialize the timer 'tp'.
+ */
+void
+init_timer(minix_timer_t * tp)
 {
-        tmr_inittimer(tp);
+
+	tmr_inittimer(tp);
 }
 
-/*===========================================================================*
- *                              set_timer                                    *
- *===========================================================================*/
-void set_timer(minix_timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
+/*
+ * Set the timer 'tp' to trigger 'ticks' clock ticks in the future.  When it
+ * triggers, call function 'watchdog' with argument 'arg'.  The given timer
+ * object must have been initialized with init_timer(3) already.  The given
+ * number of ticks must be between 0 and TMRDIFF_MAX inclusive.  A ticks value
+ * of zero will cause the alarm to trigger on the next clock tick.  If the
+ * timer was already set, it will be canceled first.
+ */
+void
+set_timer(minix_timer_t *tp, clock_t ticks, tmr_func_t watchdog, int arg)
 {
-        clock_t prev_time = 0, next_time;
+	clock_t prev_time, next_time;
+	int r, had_timers;
 
-        /* Set timer argument and add timer to the list. */
-        tmr_arg(tp)->ta_int = arg;
-        prev_time = tmrs_settimer(&timers, tp, getticks() + ticks, watchdog,
-            &next_time);
+	if (ticks > TMRDIFF_MAX)
+		panic("set_timer: ticks value too large: %u", (int)ticks);
 
-        /* Reschedule our synchronous alarm if necessary. */
-        if (expiring == 0 && (! prev_time || prev_time > next_time)) {
-                if (sys_setalarm(next_time, 1) != OK)
-                        panic("set_timer: couldn't set alarm");
+	/* Add the timer to the list. */
+	had_timers = tmrs_settimer(&timers, tp, getticks() + ticks, watchdog,
+	    arg, &prev_time, &next_time);
+
+	/* Reschedule our synchronous alarm if necessary. */
+	if (!expiring && (!had_timers || next_time != prev_time)) {
+		if ((r = sys_setalarm(next_time, TRUE /*abs_time*/)) != OK)
+			panic("set_timer: couldn't set alarm: %d", r);
         }
 }
 
-/*===========================================================================*
- *                              cancel_timer                                 *
- *===========================================================================*/
-void cancel_timer(minix_timer_t *tp)
+/*
+ * Cancel the timer 'tp'.  The timer object must have been initialized with
+ * init_timer(3) first.  If the timer was not set before, the call is a no-op.
+ */
+void
+cancel_timer(minix_timer_t * tp)
 {
-        clock_t next_time, prev_time;
-        prev_time = tmrs_clrtimer(&timers, tp, &next_time);
+	clock_t next_time, prev_time;
+	int r, have_timers;
 
-        /* If the earliest timer has been removed, we have to set the alarm to
-         * the next timer, or cancel the alarm altogether if the last timer
-         * has been cancelled (next_time will be 0 then).
-         */
-        if (expiring == 0 && (prev_time < next_time || ! next_time)) {
-                if (sys_setalarm(next_time, 1) != OK)
-                        panic("cancel_timer: couldn't set alarm");
+	if (!tmr_is_set(tp))
+		return;
+
+	have_timers = tmrs_clrtimer(&timers, tp, &prev_time, &next_time);
+
+	/*
+	 * If the earliest timer has been removed, we have to set the alarm to
+	 * the next timer, or cancel the alarm altogether if the last timer
+	 * has been canceled.
+	 */
+        if (!expiring) {
+		if (!have_timers)
+			r = sys_setalarm(0, FALSE /*abs_time*/);
+		else if (prev_time != next_time)
+			r = sys_setalarm(next_time, TRUE /*abs_time*/);
+		else
+			r = OK;
+
+		if (r != OK)
+                        panic("cancel_timer: couldn't set alarm: %d", r);
         }
 }
 
-/*===========================================================================*
- *                              expire_timers                                *
- *===========================================================================*/
-void expire_timers(clock_t now)
+/*
+ * Expire all timers that were set to expire before/at the given current time.
+ */
+void
+expire_timers(clock_t now)
 {
         clock_t next_time;
+	int r, have_timers;
 
-        /* Check for expired timers. Use a global variable to indicate that
-         * watchdog functions are called, so that sys_setalarm() isn't called
-         * more often than necessary when set_timer or cancel_timer are called
-         * from these watchdog functions. */
-        expiring = 1;
-        tmrs_exptimers(&timers, now, &next_time);
-        expiring = 0;
+	/*
+	 * Check for expired timers. Use a global variable to indicate that
+	 * watchdog functions are called, so that sys_setalarm() isn't called
+	 * more often than necessary when set_timer or cancel_timer are called
+	 * from these watchdog functions.
+	 */
+	expiring = TRUE;
+	have_timers = tmrs_exptimers(&timers, now, &next_time);
+	expiring = FALSE;
 
-        /* Reschedule an alarm if necessary. */
-        if (next_time > 0) {
-                if (sys_setalarm(next_time, 1) != OK)
-                        panic("expire_timers: couldn't set alarm");
-        }
+	/* Reschedule an alarm if necessary. */
+	if (have_timers) {
+		if ((r = sys_setalarm(next_time, TRUE /*abs_time*/)) != OK)
+			panic("expire_timers: couldn't set alarm: %d", r);
+	}
 }

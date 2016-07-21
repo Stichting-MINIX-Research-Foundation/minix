@@ -361,19 +361,18 @@ void prepare_shutdown(const int how)
    * argument passes the shutdown status. 
    */
   printf("MINIX will now be shut down ...\n");
-  tmr_arg(&shutdown_timer)->ta_int = how;
-  set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz, minix_shutdown);
+  set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz,
+      minix_shutdown, how);
 }
 
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-void minix_shutdown(minix_timer_t *tp)
+void minix_shutdown(int how)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX.
  */
-  int how;
 
 #ifdef CONFIG_SMP
   /* 
@@ -388,8 +387,6 @@ void minix_shutdown(minix_timer_t *tp)
 #endif
   hw_intr_disable_all();
   stop_local_timer();
-
-  how = tp ? tmr_arg(tp)->ta_int : 0;
 
   /* Show shutdown message */
   direct_cls();

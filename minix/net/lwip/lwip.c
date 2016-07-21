@@ -36,19 +36,19 @@ static void sys_init(void)
 {
 }
 
-static void arp_watchdog(__unused minix_timer_t *tp)
+static void arp_watchdog(int arg __unused)
 {
 	etharp_tmr();
 	set_timer(&arp_tmr, arp_ticks, arp_watchdog, 0);
 }
 
-static void tcp_fwatchdog(__unused minix_timer_t *tp)
+static void tcp_fwatchdog(int arg __unused)
 {
 	tcp_fasttmr();
 	set_timer(&tcp_ftmr, tcp_fticks, tcp_fwatchdog, 0);
 }
 
-static void tcp_swatchdog(__unused minix_timer_t *tp)
+static void tcp_swatchdog(int arg __unused)
 {
 	tcp_slowtmr();
 	set_timer(&tcp_ftmr, tcp_sticks, tcp_swatchdog, 0);

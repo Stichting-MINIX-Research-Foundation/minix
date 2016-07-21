@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <assert.h>
 #include "mproc.h"
 
 #define US 1000000UL	/* shortcut for microseconds per second */
@@ -24,7 +25,7 @@ static void getset_vtimer(struct mproc *mp, int nwhich, struct
 	itimerval *value, struct itimerval *ovalue);
 static void get_realtimer(struct mproc *mp, struct itimerval *value);
 static void set_realtimer(struct mproc *mp, struct itimerval *value);
-static void cause_sigalrm(minix_timer_t *tp);
+static void cause_sigalrm(int arg);
 
 /*===========================================================================*
  *				ticks_from_timeval			     *
@@ -252,7 +253,7 @@ get_realtimer(struct mproc *rmp, struct itimerval *value)
   /* First determine remaining time, in ticks, of previous alarm, if set. */
   if (rmp->mp_flags & ALARM_ON) {
 	uptime = getticks();
-  	exptime = *tmr_exp_time(&rmp->mp_timer);
+	exptime = tmr_exp_time(&rmp->mp_timer);
 
   	remaining = exptime - uptime;
 
@@ -300,6 +301,7 @@ struct mproc *rmp;		/* process that wants the alarm */
 clock_t ticks;			/* how many ticks delay before the signal */
 {
   if (ticks > 0) {
+	assert(ticks <= TMRDIFF_MAX);
   	set_timer(&rmp->mp_timer, ticks, cause_sigalrm, rmp->mp_endpoint);
 	rmp->mp_flags |=  ALARM_ON;
   } else if (rmp->mp_flags & ALARM_ON) {
@@ -311,16 +313,15 @@ clock_t ticks;			/* how many ticks delay before the signal */
 /*===========================================================================*
  *				cause_sigalrm				     *
  *===========================================================================*/
-static void cause_sigalrm(tp)
-minix_timer_t *tp;
+static void
+cause_sigalrm(int arg)
 {
   int proc_nr_n;
   register struct mproc *rmp;
 
   /* get process from timer */
-  if(pm_isokendpt(tmr_arg(tp)->ta_int, &proc_nr_n) != OK) {
-  	printf("PM: ignoring timer for invalid endpoint %d\n",
-  		tmr_arg(tp)->ta_int);
+  if(pm_isokendpt(arg, &proc_nr_n) != OK) {
+	printf("PM: ignoring timer for invalid endpoint %d\n", arg);
   	return;
   }
 
@@ -331,8 +332,7 @@ minix_timer_t *tp;
 
   /* If an interval is set, set a new timer; otherwise clear the ALARM_ON flag.
    * The set_alarm call will be calling set_timer from within this callback
-   * from the expire_timers function. This is safe, but we must not use the
-   * "tp" structure below this point anymore.
+   * from the expire_timers function. This is safe.
    */
   if (rmp->mp_interval[ITIMER_REAL] > 0)
 	set_alarm(rmp, rmp->mp_interval[ITIMER_REAL]);

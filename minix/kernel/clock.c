@@ -36,7 +36,6 @@ static void load_update(void);
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
 static minix_timer_t *clock_timers;	/* queue of CLOCK timers */
-static clock_t next_timeout;	/* monotonic time that next timer expires */
 
 /* Number of ticks to adjust realtime by. A negative value implies slowing
  * down realtime, a positive value implies speeding it up.
@@ -154,12 +153,14 @@ int timer_int_handler(void)
 	load_update();
 
 	if (cpu_is_bsp(cpuid)) {
-		/* if a timer expired, notify the clock task */
-		if ((next_timeout <= kclockinfo.uptime)) {
+		/*
+		 * If a timer expired, notify the clock task.  Keep in mind
+		 * that clock tick values may overflow, so we must only look at
+		 * relative differences, and only if there are timers at all.
+		 */
+		if (clock_timers != NULL &&
+		    tmr_has_expired(clock_timers, kclockinfo.uptime))
 			tmrs_exptimers(&clock_timers, kclockinfo.uptime, NULL);
-			next_timeout = (clock_timers == NULL) ?
-				TMR_NEVER : clock_timers->tmr_exp_time;
-		}
 
 #ifdef DEBUG_SERIAL
 		if (kinfo.do_serial_debug)
@@ -230,14 +231,14 @@ time_t get_boottime(void)
 void set_kernel_timer(
   minix_timer_t *tp,			/* pointer to timer structure */
   clock_t exp_time,			/* expiration monotonic time */
-  tmr_func_t watchdog			/* watchdog to be called */
+  tmr_func_t watchdog,			/* watchdog to be called */
+  int arg				/* argument for watchdog function */
 )
 {
 /* Insert the new timer in the active timers list. Always update the 
  * next timeout time by setting it to the front of the active list.
  */
-  tmrs_settimer(&clock_timers, tp, exp_time, watchdog, NULL);
-  next_timeout = clock_timers->tmr_exp_time;
+  (void)tmrs_settimer(&clock_timers, tp, exp_time, watchdog, arg, NULL, NULL);
 }
 
 /*===========================================================================*
@@ -251,9 +252,8 @@ void reset_kernel_timer(
  * active and expired lists. Always update the next timeout time by setting
  * it to the front of the active list.
  */
-  tmrs_clrtimer(&clock_timers, tp, NULL);
-  next_timeout = (clock_timers == NULL) ? 
-	TMR_NEVER : clock_timers->tmr_exp_time;
+  if (tmr_is_set(tp))
+	(void)tmrs_clrtimer(&clock_timers, tp, NULL, NULL);
 }
 
 /*===========================================================================*

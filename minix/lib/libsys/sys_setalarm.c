@@ -2,8 +2,11 @@
 
 /*
  * Ask the kernel to schedule a synchronous alarm for the caller, using either
- * an absolute or a relative number of clock ticks.  Optionally return the time
- * left on the previous timer (TMR_NEVER if none was set) and the current time.
+ * an absolute or a relative number of clock ticks.  The new alarm replaces any
+ * previously set alarm.  If a relative expiry time of zero is given, the
+ * current alarm is stopped.  Return OK or a negative error code.  On success,
+ * optionally return the time left on the previous timer (TMR_NEVER if none was
+ * set) and the current time.
  */
 int
 sys_setalarm2(clock_t exp_time, int abs_time, clock_t * time_left,

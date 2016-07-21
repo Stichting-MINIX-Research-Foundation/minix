@@ -371,7 +371,7 @@ static void ser_debug(const int c)
 	switch(c)
 	{
 	case 'Q':
-		minix_shutdown(NULL);
+		minix_shutdown(0);
 		NOT_REACHABLE;
 #ifdef CONFIG_SMP
 	case 'B':
