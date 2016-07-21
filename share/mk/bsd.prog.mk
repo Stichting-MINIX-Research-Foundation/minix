@@ -238,6 +238,7 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	netsock \
 	sffs \
 	sockdriver \
+	sockevent \
 	sys \
 	timers \
 	usb \

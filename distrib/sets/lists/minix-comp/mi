@@ -1239,6 +1239,7 @@
 ./usr/include/minix/sef.h                               minix-comp
 ./usr/include/minix/sffs.h                              minix-comp
 ./usr/include/minix/sockdriver.h                        minix-comp
+./usr/include/minix/sockevent.h                         minix-comp
 ./usr/include/minix/sound.h                             minix-comp
 ./usr/include/minix/spin.h                              minix-comp
 ./usr/include/minix/sys_config.h                        minix-comp
@@ -1931,6 +1932,7 @@
 ./usr/lib/bc/libsaslc.a                                 minix-comp      bitcode
 ./usr/lib/bc/libsffs.a                                  minix-comp      bitcode
 ./usr/lib/bc/libsockdriver.a                            minix-comp      bitcode
+./usr/lib/bc/libsockevent.a                             minix-comp      bitcode
 ./usr/lib/bc/libsqlite3.a                               minix-comp      bitcode
 ./usr/lib/bc/libssl.a                                   minix-comp      bitcode
 ./usr/lib/bc/libsys.a                                   minix-comp      bitcode
@@ -2092,6 +2094,8 @@
 ./usr/lib/libsffs_pic.a                                 minix-comp
 ./usr/lib/libsockdriver.a                               minix-comp
 ./usr/lib/libsockdriver_pic.a                           minix-comp
+./usr/lib/libsockevent.a                                minix-comp
+./usr/lib/libsockevent_pic.a                            minix-comp
 ./usr/lib/libsqlite3.a                                  minix-comp
 ./usr/lib/libsqlite3_pic.a                              minix-comp
 ./usr/lib/libstdc++.a                                   minix-comp      libstdcxx
