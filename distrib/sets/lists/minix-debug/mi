@@ -1046,6 +1046,7 @@
 ./usr/libdata/debug/usr/tests/minix-posix/test88.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test89.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test9.debug   minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test90.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/testvm.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/tvnd.debug    minix-debug     debug
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug     minix-debug     debug
