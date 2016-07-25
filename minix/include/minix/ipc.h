@@ -621,8 +621,9 @@ _ASSERT_MSG_SIZE(mess_lc_vfs_chown);
 
 typedef struct {
 	int fd;
+	int nblock;
 
-	uint8_t padding[52];
+	uint8_t padding[48];
 } mess_lc_vfs_close;
 _ASSERT_MSG_SIZE(mess_lc_vfs_close);
 

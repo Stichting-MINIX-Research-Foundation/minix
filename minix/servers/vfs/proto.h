@@ -89,7 +89,7 @@ void invalidate_filp(struct filp *);
 void invalidate_filp_by_endpt(endpoint_t proc_e);
 void invalidate_filp_by_char_major(devmajor_t major);
 void invalidate_filp_by_sock_drv(unsigned int num);
-void close_filp(struct filp *fp);
+int close_filp(struct filp *fp, int may_suspend);
 int do_copyfd(void);
 
 /* fscall.c */
@@ -149,7 +149,7 @@ void unmount_all(int force);
 
 /* open.c */
 int do_close(void);
-int close_fd(struct fproc *rfp, int fd_nr);
+int close_fd(struct fproc *rfp, int fd_nr, int may_suspend);
 int common_open(char path[PATH_MAX], int oflags, mode_t omode, int for_exec);
 int do_creat(void);
 int do_lseek(void);
@@ -281,7 +281,7 @@ int sdev_getsockopt(dev_t dev, int level, int name, vir_bytes addr,
 int sdev_getsockname(dev_t dev, vir_bytes addr, unsigned int *addr_len);
 int sdev_getpeername(dev_t dev, vir_bytes addr, unsigned int *addr_len);
 int sdev_shutdown(dev_t dev, int how);
-int sdev_close(dev_t dev);
+int sdev_close(dev_t dev, int may_suspend);
 int sdev_select(dev_t dev, int ops);
 void sdev_stop(struct fproc *rfp);
 void sdev_cancel(void);

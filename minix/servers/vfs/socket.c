@@ -212,7 +212,7 @@ do_socket(void)
 		return r;
 
 	if ((r = make_sock_fd(dev, flags)) < 0)
-		(void)sdev_close(dev);
+		(void)sdev_close(dev, FALSE /*may_suspend*/);
 
 	return r;
 }
@@ -250,14 +250,14 @@ do_socketpair(void)
 		return r;
 
 	if ((fd0 = make_sock_fd(dev[0], flags)) < 0) {
-		(void)sdev_close(dev[0]);
-		(void)sdev_close(dev[1]);
+		(void)sdev_close(dev[0], FALSE /*may_suspend*/);
+		(void)sdev_close(dev[1], FALSE /*may_suspend*/);
 		return fd0;
 	}
 
 	if ((fd1 = make_sock_fd(dev[1], flags)) < 0) {
-		close_fd(fp, fd0);
-		(void)sdev_close(dev[1]);
+		close_fd(fp, fd0, FALSE /*may_suspend*/);
+		(void)sdev_close(dev[1], FALSE /*may_suspend*/);
 		return fd1;
 	}
 
@@ -442,7 +442,7 @@ resume_accept(struct fproc * rfp, int status, dev_t dev, unsigned int addr_len,
 	 * handle address copy failures in the cleanest possible way.
 	 */
 	if (status != OK) {
-		(void)sdev_close(dev);
+		(void)sdev_close(dev, FALSE /*may_suspend*/);
 
 		replycode(rfp->fp_endpoint, status);
 
@@ -459,7 +459,7 @@ resume_accept(struct fproc * rfp, int status, dev_t dev, unsigned int addr_len,
 	flags &= O_CLOEXEC | O_NONBLOCK | O_NOSIGPIPE;
 
 	if ((r = make_sock_fd(dev, flags)) < 0) {
-		(void)sdev_close(dev);
+		(void)sdev_close(dev, FALSE /*may_suspend*/);
 
 		replycode(rfp->fp_endpoint, r);
 

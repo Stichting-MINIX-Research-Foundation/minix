@@ -410,12 +410,17 @@ unlock_filps(struct filp *filp1, struct filp *filp2)
 /*===========================================================================*
  *				close_filp				     *
  *===========================================================================*/
-void
-close_filp(struct filp *f)
+int
+close_filp(struct filp * f, int may_suspend)
 {
-/* Close a file. Will also unlock filp when done */
-
-  int rw;
+/* Close a file.  Will also unlock filp when done.  The 'may_suspend' flag
+ * indicates whether the current process may be suspended closing a socket.
+ * That is currently supported only when the user issued a close(2), and (only)
+ * in that case may this function return SUSPEND instead of OK.  In all other
+ * cases, this function will always return OK.  It will never return another
+ * error code, for reasons explained below.
+ */
+  int r, rw;
   dev_t dev;
   struct vnode *vp;
 
@@ -424,6 +429,8 @@ close_filp(struct filp *f)
   assert(tll_islocked(&f->filp_vno->v_lock));
 
   vp = f->filp_vno;
+
+  r = OK;
 
   if (f->filp_count - 1 == 0 && f->filp_mode != FILP_CLOSED) {
 	/* Check to see if the file is special. */
@@ -446,19 +453,34 @@ close_filp(struct filp *f)
 			(void) cdev_close(dev);	/* Ignore errors */
 		} else {
 			/*
-			 * TODO: this should be completely redone.  Sockets may
-			 * take a while to be closed (SO_LINGER etc), and thus,
-			 * we should be able to issue a suspending close to a
+			 * Sockets may take a while to be closed (SO_LINGER),
+			 * and thus, we may issue a suspending close to a
 			 * socket driver.  Getting this working for close(2) is
-			 * the easy case, but there's also eg dup2(2), which if
-			 * interrupted by a signal should fail without closing
-			 * the file descriptor.  Then there are cases where the
-			 * close should probably never block: close-on-exec,
-			 * exit, and UDS closing in-flight FDs (currently just
-			 * using close(2), but it could set the FD to non-
-			 * blocking) for instance.  There is much to do here.
+			 * the easy case, and that is all we support for now.
+			 * However, there is also eg dup2(2), which if
+			 * interrupted by a signal should technically fail
+			 * without closing the file descriptor.  Then there are
+			 * cases where the close should never block: process
+			 * exit and close-on-exec for example.  Getting all
+			 * such cases right is left to future work; currently
+			 * they all perform thread-blocking socket closes and
+			 * thus cause the socket to perform lingering in the
+			 * background if at all.
 			 */
-			(void) sdev_close(dev);	/* Ignore errors */
+			assert(!may_suspend || job_call_nr == VFS_CLOSE);
+
+			if (f->filp_flags & O_NONBLOCK)
+				may_suspend = FALSE;
+
+			r = sdev_close(dev, may_suspend);
+
+			/*
+			 * Returning a non-OK error is a bad idea, because it
+			 * will leave the application wondering whether closing
+			 * the file descriptor actually succeeded.
+			 */
+			if (r != SUSPEND)
+				r = OK;
 		}
 
 		f->filp_mode = FILP_CLOSED;
@@ -492,6 +514,8 @@ close_filp(struct filp *f)
   }
 
   mutex_unlock(&f->filp_lock);
+
+  return r;
 }
 
 /*===========================================================================*

@@ -673,9 +673,13 @@ int do_lseek(void)
  *===========================================================================*/
 int do_close(void)
 {
-/* Perform the close(fd) system call. */
-  int thefd = job_m_in.m_lc_vfs_close.fd;
-  return close_fd(fp, thefd);
+/* Perform the close(fd) or closenb(fd) system call. */
+  int fd, nblock;
+
+  fd = job_m_in.m_lc_vfs_close.fd;
+  nblock = job_m_in.m_lc_vfs_close.nblock;
+
+  return close_fd(fp, fd, !nblock /*may_suspend*/);
 }
 
 
@@ -683,13 +687,13 @@ int do_close(void)
  *				close_fd				     *
  *===========================================================================*/
 int
-close_fd(struct fproc *rfp, int fd_nr)
+close_fd(struct fproc * rfp, int fd_nr, int may_suspend)
 {
 /* Perform the close(fd) system call. */
   register struct filp *rfilp;
   register struct vnode *vp;
   struct file_lock *flp;
-  int lock_count;
+  int r, lock_count;
 
   /* First locate the vnode that belongs to the file descriptor. */
   if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) return(err_code);
@@ -701,7 +705,7 @@ close_fd(struct fproc *rfp, int fd_nr)
    */
   rfp->fp_filp[fd_nr] = NULL;
 
-  close_filp(rfilp);
+  r = close_filp(rfilp, may_suspend);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
 
@@ -719,5 +723,5 @@ close_fd(struct fproc *rfp, int fd_nr)
 		lock_revive();	/* one or more locks released */
   }
 
-  return(OK);
+  return(r);
 }

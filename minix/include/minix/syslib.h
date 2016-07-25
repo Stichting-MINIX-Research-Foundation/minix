@@ -274,6 +274,7 @@ int copyfd(endpoint_t endpt, int fd, int what);
 #define COPYFD_FROM	0	/* copy file descriptor from remote process */
 #define COPYFD_TO	1	/* copy file descriptor to remote process */
 #define COPYFD_CLOSE	2	/* close file descriptor in remote process */
+int closenb(int fd);
 
 /*
  * These are also the event numbers used in PROC_EVENT messages, but in order

@@ -15,6 +15,7 @@ SRCS+=  \
 	asynsend.c \
 	checkperms.c \
 	clock_time.c \
+	closenb.c \
 	copyfd.c \
 	cpuavg.c \
 	ds.c	\

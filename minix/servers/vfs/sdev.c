@@ -40,11 +40,6 @@
  * thread is spawned for processing successful accept replies, unless the reply
  * was received from a worker thread already (as may be the case if the accept
  * request was being canceled).
- *
- * As a current shortcoming, close requests should be long-lived (in order to
- * support SO_LINGER) but are modeled as short-lived in VFS.  This is the
- * result of implementation limitations that have to be resolved first; see the
- * comments in sdev_close() and close_filp() for more information.
  */
 
 #include "fs.h"
@@ -166,7 +161,7 @@ sdev_socket(int domain, int type, int protocol, dev_t * dev, int pair)
 		if (sock_id2 < 0) {
 			printf("VFS: %d sent bad SOCKETPAIR socket ID %d\n",
 			    sp->smap_endpt, sock_id2);
-			(void)sdev_close(dev[0]);
+			(void)sdev_close(dev[0], FALSE /*may_suspend*/);
 			return EIO;
 		}
 
@@ -606,22 +601,42 @@ sdev_shutdown(dev_t dev, int how)
  * Close the socket identified by the given socket device number.
  */
 int
-sdev_close(dev_t dev)
+sdev_close(dev_t dev, int may_suspend)
 {
+	struct smap *sp;
+	sockid_t sock_id;
+	message m;
+	int r;
 
 	/*
-	 * TODO: for now, we generate only nonblocking requests, because VFS as
-	 * a whole does not yet support blocking close operations.  See also
-	 * the comment in close_filp().  All callers of sdev_close() currently
-	 * ignore the return value, so socket drivers can already implement
-	 * support for blocking close requests if they want, although at some
-	 * later point we may have to introduce an additional SDEV_ flag to
-	 * indicate whether the close call should be interrupted (keeping the
-	 * socket open and returning EINTR, for dup2(2)) or continue in the
-	 * background (closing the socket later and returning EINPROGRESS, for
-	 * close(2)).
+	 * Originally, all close requests were blocking the calling thread, but
+	 * the new support for SO_LINGER has changed that.  In a very strictly
+	 * limited subset of cases - namely, the user process calling close(2),
+	 * we suspend the close request and handle it asynchronously.  In all
+	 * other cases, including close-on-exit, close-on-exec, and even dup2,
+	 * the close is issued as a thread-synchronous request instead.
 	 */
-	return sdev_simple(dev, SDEV_CLOSE, SDEV_NONBLOCK);
+	if (may_suspend) {
+		if ((sp = get_smap_by_dev(dev, &sock_id)) == NULL)
+			return EIO;
+
+		/* Prepare the request message. */
+		memset(&m, 0, sizeof(m));
+		m.m_type = SDEV_CLOSE;
+		m.m_vfs_lsockdriver_simple.req_id = (sockid_t)who_e;
+		m.m_vfs_lsockdriver_simple.sock_id = sock_id;
+		m.m_vfs_lsockdriver_simple.param = 0;
+
+		/* Send the request to the driver. */
+		if ((r = asynsend3(sp->smap_endpt, &m, AMF_NOREPLY)) != OK)
+			panic("VFS: asynsend in sdev_bindconn failed: %d", r);
+
+		/* Suspend the process until the reply arrives. */
+		return sdev_suspend(dev, GRANT_INVALID, GRANT_INVALID,
+		    GRANT_INVALID, -1, 0);
+	} else
+		/* Block the calling thread until the socket is closed. */
+		return sdev_simple(dev, SDEV_CLOSE, SDEV_NONBLOCK);
 }
 
 /*
@@ -774,12 +789,21 @@ sdev_finish(struct fproc * rfp, message * m_ptr)
 	case VFS_SENDTO:
 	case VFS_SENDMSG:
 	case VFS_IOCTL:
+	case VFS_CLOSE:
 		/*
 		 * These calls all use the same SDEV_REPLY reply type and only
 		 * need to reply an OK-or-error status code back to userland.
 		 */
 		if (m_ptr->m_type == SDEV_REPLY) {
 			status = m_ptr->m_lsockdriver_vfs_reply.status;
+
+			/*
+			 * For close(2) calls, the return value must indicate
+			 * that the file descriptor has been closed.
+			 */
+			if (callnr == VFS_CLOSE &&
+			    status != OK && status != EINPROGRESS)
+				status = OK;
 		} else if (m_ptr->m_type < 0) {
 			status = m_ptr->m_type;
 		} else {

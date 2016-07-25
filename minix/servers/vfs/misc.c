@@ -452,7 +452,7 @@ int do_vm_call(void)
 		}
 		case VMVFSREQ_FDCLOSE:
 		{
-			result = close_fd(fp, req_fd);
+			result = close_fd(fp, req_fd, FALSE /*may_suspend*/);
 			if(result != OK) {
 				printf("VFS: VM fd close for fd %d, %d (%d)\n",
 					req_fd, fp->fp_endpoint, result);
@@ -645,7 +645,7 @@ static void free_proc(int flags)
 
   /* Loop on file descriptors, closing any that are open. */
   for (i = 0; i < OPEN_MAX; i++) {
-	(void) close_fd(fp, i);
+	(void) close_fd(fp, i, FALSE /*may_suspend*/);
   }
 
   /* Release root and working directories. */

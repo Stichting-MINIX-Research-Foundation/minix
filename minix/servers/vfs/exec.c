@@ -391,7 +391,7 @@ pm_execfinal:
   }
 
   if(execi.vmfd >= 0 && !execi.vmfd_used) {
-  	if(OK != close_fd(vmfp, execi.vmfd)) {
+	if(OK != close_fd(vmfp, execi.vmfd, FALSE /*may_suspend*/)) {
 		printf("VFS: unexpected close fail of vm fd\n");
 	}
   }
@@ -727,7 +727,7 @@ static void clo_exec(struct fproc *rfp)
   /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
   for (i = 0; i < OPEN_MAX; i++)
 	if ( FD_ISSET(i, &rfp->fp_cloexec_set))
-		(void) close_fd(rfp, i);
+		(void) close_fd(rfp, i, FALSE /*may_suspend*/);
 }
 
 /*===========================================================================*
