@@ -3,6 +3,10 @@
  *	installboot 3.0 - Make a device bootable	Author: Kees J. Bot
  *								21 Dec 1991
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
