@@ -412,20 +412,27 @@ static int select_request_char(struct filp *f, int *ops, int block,
   /* By default, nothing to do */
   *ops = 0;
 
-  if (!block && (f->filp_select_flags & FSF_BLOCKED)) {
-	/* This filp is blocked waiting for a reply, but we don't want to
-	 * block ourselves. Unless we're awaiting the initial reply, these
-	 * operations won't be ready */
-	if (!(f->filp_select_flags & FSF_BUSY)) {
-		if ((rops & SEL_RD) && (f->filp_select_flags & FSF_RD_BLOCK))
-			rops &= ~SEL_RD;
-		if ((rops & SEL_WR) && (f->filp_select_flags & FSF_WR_BLOCK))
-			rops &= ~SEL_WR;
-		if ((rops & SEL_ERR) && (f->filp_select_flags & FSF_ERR_BLOCK))
-			rops &= ~SEL_ERR;
-		if (!(rops & (SEL_RD|SEL_WR|SEL_ERR)))
-			return(OK);
-	}
+  /*
+   * If we have previously asked the driver to notify us about certain ready
+   * operations, but it has not notified us yet, then we can safely assume that
+   * those operations are not ready right now.  Therefore, if this call is not
+   * supposed to block, we can disregard the pending operations as not ready.
+   * We must make absolutely sure that the flags are "stable" right now though:
+   * we are neither waiting to query the driver about them (FSF_UPDATE) nor
+   * querying the driver about them right now (FSF_BUSY).  This is a dangerous
+   * case of premature optimization and may be removed altogether if it proves
+   * to continue to be a source of bugs.
+   */
+  if (!block && !(f->filp_select_flags & (FSF_UPDATE | FSF_BUSY)) &&
+      (f->filp_select_flags & FSF_BLOCKED)) {
+	if ((rops & SEL_RD) && (f->filp_select_flags & FSF_RD_BLOCK))
+		rops &= ~SEL_RD;
+	if ((rops & SEL_WR) && (f->filp_select_flags & FSF_WR_BLOCK))
+		rops &= ~SEL_WR;
+	if ((rops & SEL_ERR) && (f->filp_select_flags & FSF_ERR_BLOCK))
+		rops &= ~SEL_ERR;
+	if (!(rops & (SEL_RD|SEL_WR|SEL_ERR)))
+		return(OK);
   }
 
   f->filp_select_flags |= FSF_UPDATE;
