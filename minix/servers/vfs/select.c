@@ -1113,3 +1113,54 @@ static void select_lock_filp(struct filp *f, int ops)
 
   lock_filp(f, locktype);
 }
+
+/*
+ * Dump the state of the entire select table, for debugging purposes.
+ */
+void
+select_dump(void)
+{
+	struct selectentry *se;
+	struct filp *f;
+	struct dmap *dp;
+	dev_t dev;
+	int s, fd;
+
+	for (s = 0; s < MAXSELECTS; s++) {
+		se = &selecttab[s];
+		if (se->requestor == NULL)
+			continue;
+
+		printf("select %d: endpt %d nfds %d nreadyfds %d error %d "
+		    "block %d starting %d expiry %u is_deferred %d\n",
+		    s, se->req_endpt, se->nfds, se->nreadyfds, se->error,
+		    se->block, se->starting, se->expiry, is_deferred(se));
+
+		for (fd = 0; !se->starting && fd < se->nfds; fd++) {
+			/* Save on output: do not print NULL filps at all. */
+			if ((f = se->filps[fd]) == NULL)
+				continue;
+
+			printf("- [%d] filp %p flags %x type ", fd, f,
+			    f->filp_select_flags);
+			if (is_regular_file(f))
+				printf("regular\n");
+			else if (is_pipe(f))
+				printf("pipe\n");
+			else if (is_char_device(f)) {
+				dev = cdev_map(f->filp_vno->v_sdev,
+				    se->requestor);
+				printf("char (dev <%d,%d>, dmap ",
+				    major(dev), minor(dev));
+				if (dev != NO_DEV) {
+					dp = &dmap[major(dev)];
+					printf("busy %d filp %p)\n",
+					    dp->dmap_sel_busy,
+					    dp->dmap_sel_filp);
+				} else
+					printf("unknown)\n");
+			} else
+				printf("unknown\n");
+		}
+	}
+}

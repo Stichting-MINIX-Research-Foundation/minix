@@ -862,6 +862,11 @@ int do_svrctl(void)
 				sysgetenv.val = 0;
 				sysgetenv.vallen = 0;
 				r = OK;
+			} else if (!strcmp(search_key, "print_select")) {
+				select_dump();
+				sysgetenv.val = 0;
+				sysgetenv.vallen = 0;
+				r = OK;
 			} else if (!strcmp(search_key, "active_threads")) {
 				int active = NR_WTHREADS - worker_available();
 				snprintf(small_buf, sizeof(small_buf) - 1,

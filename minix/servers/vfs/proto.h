@@ -352,6 +352,7 @@ void select_forget(void);
 void select_reply1(endpoint_t driver_e, devminor_t minor, int status);
 void select_reply2(endpoint_t driver_e, devminor_t minor, int status);
 void select_unsuspend_by_endpt(endpoint_t proc);
+void select_dump(void);
 
 /* worker.c */
 void worker_init(void);
