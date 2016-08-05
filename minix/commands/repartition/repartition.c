@@ -262,8 +262,8 @@ int main(int argc, char **argv)
 			pe->size= part_limit - pe->lowsec;
 		}
 
-		entry.base= pe->lowsec * SECTOR_SIZE;
-		entry.size= pe->size * SECTOR_SIZE;
+		entry.base= (off_t)pe->lowsec * SECTOR_SIZE;
+		entry.size= (off_t)pe->size * SECTOR_SIZE;
 		if (diocntl(makedev(hd_major, device), DSETP, &entry) < 0)
 			fatal(dev_file);
 
