@@ -944,6 +944,6 @@ rmib_process(const message * m_in, int ipc_status)
 		r = asynsend3(m_in->m_source, &m_out, AMF_NOREPLY);
 
 	if (r != OK)
-		printf("lsys:rmib: unable to send reply to %d: %d\n",
+		printf("lsys:rmib: unable to send reply to %d: %zd\n",
 		    m_in->m_source, r);
 }
