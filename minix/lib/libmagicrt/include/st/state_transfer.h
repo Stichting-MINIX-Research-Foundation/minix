@@ -40,7 +40,7 @@ typedef struct _st_init_info_t {
 typedef struct st_alloc_pages {
     int num_pages;
     void *virt_addr;
-    phys_bytes phys_addr;
+    uint32_t phys_addr;
     struct st_alloc_pages *previous;
 } st_alloc_pages;
 
