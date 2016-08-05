@@ -298,6 +298,9 @@ test_one_uid(int setnum, int sub)
 		sub89b(setnum);
 
 		return;
+
+	default:
+		abort();
 	}
 
 	if (res != 0 && (res != -1 || errno != EPERM)) e(setnum);
@@ -635,6 +638,9 @@ test_one_gid(int setnum, int sub)
 		sub89d(setnum);
 
 		return;
+
+	default:
+		abort();
 	}
 
 	if (res != 0 && (res != -1 || errno != EPERM)) e(setnum);

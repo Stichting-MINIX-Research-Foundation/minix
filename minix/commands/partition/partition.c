@@ -376,7 +376,7 @@ void distribute(void)
 				if (base > pe->lowsec) {
 					fprintf(stderr,
 	"%s: fixed partition %u is preceded by too big partitions/holes\n",
-						arg0, ((pe - table) - 1) / 2);
+				arg0, ((unsigned int)(pe - table) - 1) / 2);
 					exit(1);
 				}
 				exp= nil;	/* XXX - Extend before? */

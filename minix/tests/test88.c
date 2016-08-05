@@ -68,7 +68,7 @@ static void *bad_ptr;
  * Drop user and group privileges in the child process if requested.
  */
 static void
-spawn(struct link * link, void (* proc)(), int drop)
+spawn(struct link * link, void (* proc)(struct link *), int drop)
 {
 	struct passwd *pw;
 	struct group *gr;
@@ -1592,7 +1592,7 @@ test88c_perm1(struct link * parent)
 		 */
 		memset(val, 0, sizeof(val));
 
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 3; i++) {
 			switch (i) {
 			case 0:
 				cmd = GETALL;
@@ -1609,6 +1609,8 @@ test88c_perm1(struct link * parent)
 				ptr = &semds;
 				bit = 4;
 				break;
+			default:
+				abort();
 			}
 
 			r = semctl(id[0], 0, cmd, ptr);

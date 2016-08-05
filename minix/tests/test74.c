@@ -201,16 +201,14 @@ static void do_readlink2(void *buf, int fd, int writable)
 
 static void do_symlink1(void *buf, int fd, int writable)
 {
-	int r;
 	/* the system call just has to fail gracefully */
-	r = symlink(buf, NODENAME);
+	(void)symlink(buf, NODENAME);
 }
 
 static void do_symlink2(void *buf, int fd, int writable)
 {
-	int r;
 	/* the system call just has to fail gracefully */
-	r = symlink(NODENAME, buf);
+	(void)symlink(NODENAME, buf);
 }
 
 static void do_open(void *buf, int fd, int writable)
@@ -223,26 +221,23 @@ static void do_open(void *buf, int fd, int writable)
 
 static void do_select1(void *buf, int fd, int writable)
 {
-	int r;
 	struct timeval timeout = { 0, 200000 };	/* 0.2 sec */
 	/* the system call just has to fail gracefully */
-	r = select(1, buf, NULL, NULL, &timeout);
+	(void)select(1, buf, NULL, NULL, &timeout);
 }
 
 static void do_select2(void *buf, int fd, int writable)
 {
-	int r;
 	struct timeval timeout = { 0, 200000 };	/* 1 sec */
 	/* the system call just has to fail gracefully */
-	r = select(1, NULL, buf, NULL, &timeout);
+	(void)select(1, NULL, buf, NULL, &timeout);
 }
 
 static void do_select3(void *buf, int fd, int writable)
 {
-	int r;
 	struct timeval timeout = { 0, 200000 };	/* 1 sec */
 	/* the system call just has to fail gracefully */
-	r = select(1, NULL, NULL, buf, &timeout);
+	(void)select(1, NULL, NULL, buf, &timeout);
 }
 
 static void fillfile(int fd, int size)

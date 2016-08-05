@@ -495,7 +495,7 @@ static int buflens[] = { 0, 1, 2, 3, 4, 5, 6, 9, 10, 11, 255 };
 static void test_getnameinfo_all(void)
 {
 	int flag_NUMERICHOST, flag_NAMEREQD, flag_NUMERICSERV, flag_DGRAM;
-	int exp_results, flagcount, flags, i, j, k, l, socktypemismatch;
+	int exp_results, flagcount, flags, i, j, k, l;
 	const char *nodename, *servname;
 
 	/* set ports servent structs */
@@ -554,10 +554,6 @@ static void test_getnameinfo_all(void)
 		nodename = flag_NUMERICHOST ? ipaddrs[i].nodenum : ipaddrs[i].nodename;
 		if (buflens[k] > 0 && buflens[k] <= strlen(nodename))
 			exp_results |= (1 << EAI_OVERFLOW) | (1 << EAI_MEMORY);
-
-		socktypemismatch =
-			(flag_DGRAM && ports[j].socktype == SOCK_STREAM) ||
-			(!flag_DGRAM && ports[j].socktype == SOCK_DGRAM);
 
 		struct servent *se = flag_DGRAM ? ports[j].se_udp : ports[j].se_tcp;
 

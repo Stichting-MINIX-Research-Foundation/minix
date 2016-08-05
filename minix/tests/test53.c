@@ -166,6 +166,13 @@ static void testmul(void)
 	}
 }
 
+static void do_not_optimize_away(volatile u64_t * ptr)
+{
+
+	/* TODO: does this actually do the job? */
+	*ptr ^= 1;
+}
+
 static void testdiv0(void)
 {
 	int funcidx;
@@ -186,6 +193,8 @@ static void testdiv0(void)
 				case 4: res = i % ex64lo(j);	ERR; break;
 				default: assert(0);		ERR; break;
 			}
+
+			do_not_optimize_away((volatile u64_t *)&res);
 
 			/* if we reach this point there was no signal and an
 			 * error has been recorded

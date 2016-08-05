@@ -150,7 +150,7 @@ test87a(void)
 	pid_t pid;
 	u_quad_t q;
 	bool b, b2;
-	int i, va[2], lastva, mib[CTL_MAXNAME + 1];
+	int i, va[2], lastva = -1 /*gcc*/, mib[CTL_MAXNAME + 1];
 
 	subtest = 0;
 
@@ -1668,7 +1668,7 @@ test87c(void)
 	if (errno != EINVAL) e(0);
 
 	memcpy(&scn, &tmpscn, sizeof(scn));
-	scn.sysctl_size = SSIZE_MAX + 1;
+	scn.sysctl_size = (size_t)SSIZE_MAX + 1;
 	if (sysctl(mib, 3, NULL, NULL, &scn, sizeof(scn)) != -1) e(0);
 	if (errno != EINVAL) e(0);
 
@@ -1806,7 +1806,7 @@ test87c(void)
 	if (errno != EINVAL) e(0);
 
 	memcpy(&scn, &tmpscn, sizeof(scn));
-	scn.sysctl_size = SSIZE_MAX + 1;
+	scn.sysctl_size = (size_t)SSIZE_MAX + 1;
 	if (sysctl(mib, 3, NULL, NULL, &scn, sizeof(scn)) != -1) e(0);
 	if (errno != EINVAL) e(0);
 
@@ -2950,14 +2950,17 @@ test87f(void)
  * contents match expectations, or -1 if they do not.
  */
 static int
-test_buf(unsigned char * buf, unsigned char c, size_t size, int set)
+test_buf(char * buf, unsigned char c, size_t size, int set)
 {
+	unsigned char *ptr;
 	int step;
+
+	ptr = (unsigned char *)buf;
 
 	for (step = 1; size > 0; size--) {
 		if (set)
-			*buf++ = c;
-		else if (*buf++ != c)
+			*ptr++ = c;
+		else if (*ptr++ != c)
 			return -1;
 
 		c += step;
