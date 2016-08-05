@@ -194,12 +194,22 @@ static int mthread_increase_thread_pool(void)
   	new_tcb[i] = malloc(sizeof(mthread_tcb_t));
   	if (new_tcb[i] == NULL) {
   		mthread_debug("Can't allocate space for tcb");
+		/* Undo the allocations made so far. */
+		while (i-- > old_no_threads)
+			free(new_tcb[i]);
+		if (old_no_threads > 0) {
+			new_tcb = realloc(threads, old_no_threads *
+			    sizeof(mthread_tcb_t *));
+			if (new_tcb == NULL)
+				mthread_panic("Unable to shrink tcb array");
+		} else
+			free(new_tcb);
   		return(-1);
   	}
   	memset(new_tcb[i], '\0', sizeof(mthread_tcb_t)); /* Clear entry */
   }
 
-  /* We can breath again, let's tell the others about the good news */
+  /* We can breathe again, let's tell the others about the good news */
   threads = new_tcb; 
   no_threads = new_no_threads;
 
