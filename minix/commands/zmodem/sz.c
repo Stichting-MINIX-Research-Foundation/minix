@@ -726,7 +726,8 @@ int wctx(long flen)
 		fflush(stdout);
 		++attempts;
 	}
-		while ((firstch=(readline(Rxtimeout)) != ACK) && attempts < RETRYMAX);
+		while ((firstch = readline(Rxtimeout)) != ACK &&
+		    attempts < RETRYMAX);
 	if (attempts == RETRYMAX) {
 		zperr("No ACK on EOT");
 		return ERROR;

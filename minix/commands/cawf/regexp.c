@@ -231,8 +231,10 @@ regexp *regcomp(char *exp) {
 	regnpar = 1;
 	regcode = r->program;
 	regc(MAGIC);
-	if (reg(0, &flags) == NULL)
+	if (reg(0, &flags) == NULL) {
+		free(r);
 		return(NULL);
+	}
 
 	/* Dig out information for optimizations. */
 	r->regstart = '\0';	/* Worst-case defaults. */

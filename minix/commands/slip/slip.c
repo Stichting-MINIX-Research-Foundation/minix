@@ -278,7 +278,7 @@ static int fprintf(int fd, const char *format, ...)
     while (*fp != 0) {
 	if (*fp == '%' && memchr("sdu", fp[1], 3) != nil) {
 	    if (fp > fp0) {
-		if ((r= write(fd, fp0, (fp - fp0))) < 0) return -1;
+		if ((r= write(fd, fp0, (fp - fp0))) < 0) goto error;
 		len+= r;
 	    }
 	    fp++;
@@ -287,7 +287,7 @@ static int fprintf(int fd, const char *format, ...)
 	    if (*fp == 's') {
 		char *s= va_arg(ap, char *);
 
-		if ((r= write(fd, s, strlen(s))) < 0) return -1;
+		if ((r= write(fd, s, strlen(s))) < 0) goto error;
 		len+= r;
 	    } else {
 		int d;
@@ -308,16 +308,19 @@ static int fprintf(int fd, const char *format, ...)
 		do *--p= '0' + (u % 10); while ((u /= 10) > 0);
 
 		if (d < 0) *--p= '-';
-		if ((r= write(fd, p, (a + sizeof(a)) - p)) < 0) return -1;
+		if ((r= write(fd, p, (a + sizeof(a)) - p)) < 0) goto error;
 		len+= r;
 	    }
 	}
 	fp++;
     }
     if (fp > fp0) {
-	if ((r= write(fd, fp0, (fp - fp0))) < 0) return -1;
+	if ((r= write(fd, fp0, (fp - fp0))) < 0) goto error;
 	len+= r;
     }
     va_end(ap);
     return len;
+error:
+    va_end(ap);
+    return -1;
 }
