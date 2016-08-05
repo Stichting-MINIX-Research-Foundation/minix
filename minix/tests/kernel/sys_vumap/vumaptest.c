@@ -2,6 +2,7 @@
 #include <minix/drivers.h>
 #include <minix/ds.h>
 #include <sys/mman.h>
+#include <machine/vmparam.h>
 #include <assert.h>
 
 #include "com.h"
@@ -1075,7 +1076,7 @@ static void test_access(void)
 
 	expect(r == OK);
 	/* Same story but more possibilities. I hope I got this right. */
-	expect(pcount >= 3 || pcount <= 6);
+	expect(pcount >= 3 && pcount <= 6);
 	for (i = 0; i < 7; i++)
 		expect(is_buf_allocated(&buf[i]));
 	expect(pvecp[0].vp_addr = buf[0].phys);
