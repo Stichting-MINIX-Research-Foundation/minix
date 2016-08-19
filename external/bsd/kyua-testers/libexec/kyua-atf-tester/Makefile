@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/19 06:04:43 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2016/08/26 23:55:04 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -11,11 +11,12 @@ SRCS=		atf_main.c
 MAN=		kyua-atf-tester.1
 MAN+=		kyua-atf-interface.7
 
-PRIVATELIBDIR!=	cd ${.CURDIR}/../../lib; ${PRINTOBJDIR}
-LDADD+=		${PRIVATELIBDIR}/libatf_tester/libatf_tester.a
-DPADD+=		${PRIVATELIBDIR}/libatf_tester/libatf_tester.a
-LDADD+=		${PRIVATELIBDIR}/libtester/libtester.a
-DPADD+=		${PRIVATELIBDIR}/libtester/libtester.a
+ATFTESTER_LIBDIR!=	cd ${.CURDIR}/../../lib/libatf_tester; ${PRINTOBJDIR}
+TESTER_LIBDIR!=		cd ${.CURDIR}/../../lib/libtester; ${PRINTOBJDIR}
+LDADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
+DPADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
+LDADD+=		${TESTER_LIBDIR}/libtester.a
+DPADD+=		${TESTER_LIBDIR}/libtester.a
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libtester

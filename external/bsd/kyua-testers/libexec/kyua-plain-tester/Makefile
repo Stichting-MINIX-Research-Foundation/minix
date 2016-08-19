@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/19 06:04:43 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2016/08/26 23:55:04 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,9 @@ SRCS=		plain_main.c
 MAN=		kyua-plain-tester.1
 MAN+=		kyua-plain-interface.7
 
-PRIVATELIBDIR!=	cd ${.CURDIR}/../../lib; ${PRINTOBJDIR}
-LDADD+=		${PRIVATELIBDIR}/libtester/libtester.a
-DPADD+=		${PRIVATELIBDIR}/libtester/libtester.a
+TESTER_LIBDIR!=		cd ${.CURDIR}/../../lib/libtester; ${PRINTOBJDIR}
+LDADD+=		${TESTER_LIBDIR}/libtester.a
+DPADD+=		${TESTER_LIBDIR}/libtester.a
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libtester
