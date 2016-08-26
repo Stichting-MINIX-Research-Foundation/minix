@@ -441,7 +441,7 @@
 ./usr/bin/pkgin_cd                                      minix-base
 ./usr/bin/pkgin_sets                                    minix-base
 ./usr/bin/playwave                                      minix-base
-./usr/bin/postinstall                                   minix-base	obsolete
+./usr/bin/postinstall                                   minix-base      obsolete
 ./usr/bin/pr                                            minix-base
 ./usr/bin/pr_routes                                     minix-base
 ./usr/bin/prep                                          minix-base
@@ -927,7 +927,7 @@
 ./usr/lib/pkgconfig/openssl.pc                          minix-base      crypto
 ./usr/lib/pkgconfig/sqlite3.pc                          minix-base
 ./usr/lib/pkgconfig/zlib.pc                             minix-base
-./usr/lib/pwdauth                                       minix-base	obsolete
+./usr/lib/pwdauth                                       minix-base      obsolete
 ./usr/lib/security                                      minix-base
 ./usr/libdata                                           minix-base
 ./usr/libdata/debug                                     minix-base
@@ -935,6 +935,7 @@
 ./usr/libdata/debug/lib                                 minix-base
 ./usr/libdata/debug/libexec                             minix-base
 ./usr/libdata/debug/sbin                                minix-base
+./usr/libdata/debug/service                             minix-base
 ./usr/libdata/debug/usr                                 minix-base
 ./usr/libdata/debug/usr/bin                             minix-base
 ./usr/libdata/debug/usr/games                           minix-base
@@ -943,6 +944,10 @@
 ./usr/libdata/debug/usr/libexec                         minix-base
 ./usr/libdata/debug/usr/mdec                            minix-base
 ./usr/libdata/debug/usr/sbin                            minix-base
+./usr/libdata/debug/usr/tests/minix-posix               minix-base
+./usr/libdata/debug/usr/tests/minix-posix/blocktest     minix-base
+./usr/libdata/debug/usr/tests/minix-posix/ddekit        minix-base
+./usr/libdata/debug/usr/tests/minix-posix/rmibtest      minix-base
 ./usr/libexec                                           minix-base
 ./usr/libexec/atf-check                                 minix-base      atf
 ./usr/libexec/blacklistd-helper                         minix-base

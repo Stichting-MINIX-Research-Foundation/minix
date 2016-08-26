@@ -1,0 +1,46 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./usr/lib/libhgfs_g.a                                   minix-debug     debuglib
+./usr/lib/libm387_g.a                                   minix-debug     debuglib
+./usr/lib/libvassert_g.a                                minix-debug     debuglib
+./usr/lib/libvboxfs_g.a                                 minix-debug     debuglib
+./usr/lib/libvirtio_g.a                                 minix-debug     debuglib
+./usr/libdata/debug/service/3c90x.debug                 minix-debug     debug
+./usr/libdata/debug/service/acpi.debug                  minix-debug     debug
+./usr/libdata/debug/service/ahci.debug                  minix-debug     debug
+./usr/libdata/debug/service/amddev.debug                minix-debug     debug
+./usr/libdata/debug/service/at_wini.debug               minix-debug     debug
+./usr/libdata/debug/service/atl2.debug                  minix-debug     debug
+./usr/libdata/debug/service/dec21140A.debug             minix-debug     debug
+./usr/libdata/debug/service/dp8390.debug                minix-debug     debug
+./usr/libdata/debug/service/dpeth.debug                 minix-debug     debug
+./usr/libdata/debug/service/e1000.debug                 minix-debug     debug
+./usr/libdata/debug/service/es1370.debug                minix-debug     debug
+./usr/libdata/debug/service/es1371.debug                minix-debug     debug
+./usr/libdata/debug/service/fbd.debug                   minix-debug     debug
+./usr/libdata/debug/service/filter.debug                minix-debug     debug
+./usr/libdata/debug/service/floppy.debug                minix-debug     debug
+./usr/libdata/debug/service/fxp.debug                   minix-debug     debug
+./usr/libdata/debug/service/hgfs.debug                  minix-debug     debug
+./usr/libdata/debug/service/lance.debug                 minix-debug     debug
+./usr/libdata/debug/service/pci.debug                   minix-debug     debug
+./usr/libdata/debug/service/pckbd.debug                 minix-debug     debug
+./usr/libdata/debug/service/printer.debug               minix-debug     debug
+./usr/libdata/debug/service/rtl8139.debug               minix-debug     debug
+./usr/libdata/debug/service/rtl8169.debug               minix-debug     debug
+./usr/libdata/debug/service/sb16.debug                  minix-debug     debug
+./usr/libdata/debug/service/ti1225.debug                minix-debug     debug
+./usr/libdata/debug/service/vbfs.debug                  minix-debug     debug
+./usr/libdata/debug/service/vbox.debug                  minix-debug     debug
+./usr/libdata/debug/service/virtio_blk.debug            minix-debug     debug
+./usr/libdata/debug/service/virtio_net.debug            minix-debug     debug
+./usr/libdata/debug/usr/lib/libm387.so.0.1.debug        minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test47.debug  minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test51.debug  minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test57.debug  minix-debug     debug
+./usr/libdata/debug/usr/tests/minix-posix/test62.debug  minix-debug     debug

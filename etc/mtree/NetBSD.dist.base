@@ -134,6 +134,7 @@
 ./usr/libdata/debug/lib
 ./usr/libdata/debug/libexec
 ./usr/libdata/debug/sbin
+./usr/libdata/debug/service
 ./usr/libdata/debug/usr
 ./usr/libdata/debug/usr/bin
 ./usr/libdata/debug/usr/games
@@ -142,6 +143,11 @@
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
+./usr/libdata/debug/usr/tests
+./usr/libdata/debug/usr/tests/minix-posix
+./usr/libdata/debug/usr/tests/minix-posix/blocktest
+./usr/libdata/debug/usr/tests/minix-posix/ddekit
+./usr/libdata/debug/usr/tests/minix-posix/rmibtest
 ./usr/libexec
 ./usr/log
 ./usr/man

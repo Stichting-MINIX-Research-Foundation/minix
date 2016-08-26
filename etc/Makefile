@@ -497,7 +497,7 @@ OBSOLETE.files=		base comp etc games man misc text
 OBSOLETE.files=		minix-base minix-comp minix-games minix-kernel minix-man
 .endif # !defined(__MINIX)
 .if ${MKDEBUG} != "no"
-OBSOLETE.files+=	debug
+OBSOLETE.files+=	minix-debug
 .endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules

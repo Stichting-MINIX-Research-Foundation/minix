@@ -19,5 +19,10 @@ LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic \
 
 PKGCONFIG=	xkbui
 
+.if defined(__MINIX)
+.if ${MKDEBUGLIB:Uno} == "yes"
+CWARNFLAGS+=-Wno-format
+.endif
+.endif # defined(__MINIX)
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

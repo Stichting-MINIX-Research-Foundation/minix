@@ -52,6 +52,7 @@ CPPFLAGS.strtol.c+=	-I${NETBSDSRCDIR}/sys
 .for f in \
 	errno.o printf.o strerror.o subr_prf.o
 ${f} ${f:C/\.o/.bc/}:	${LIBSADIR}/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBSADIR}/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -82,6 +83,7 @@ CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_WIDTH_SUPPORT
 .for f in \
 	kputc.o sys_diagctl.o
 ${f} ${f:C/\.o/.bc/}:	${LIBSYSDIR}/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBSYSDIR}/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -99,6 +101,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	bswap64.o rb.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/gen/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -113,6 +116,7 @@ CPPFLAGS.rb.c+=		-D_LIBC
 .for f in \
 	sha2.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/hash/sha2/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/hash/sha2/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -130,6 +134,7 @@ CPPFLAGS.sha2.c+=	-I${NETBSDSRCDIR}/sys
 	udivmoddi4.o divsi3.o modsi3.o divmoddi4.o \
 	divmodsi4.o udivmodsi4.o #qdivrem.o lshldi3.o 
 ${f} ${f:C/\.o/.bc/}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist/lib/builtins/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -150,6 +155,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	random.o strtoul.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/stdlib/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/stdlib/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -165,6 +171,7 @@ CPPFLAGS.strtoul.c+=	-I${NETBSDSRCDIR}/sys
 .for f in \
 	strcasecmp.o strcspn.o strncasecmp.o strnlen.o strlcat.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCOMMONCDIR}/string/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -194,6 +201,7 @@ CLEANFILES+=	errlist.c
 	getprogname.o setprogname.o execle.o sleep.o time.o \
 	ctype_.o tolower_.o toupper_.o usleep.o waitpid.o sigsetops.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/gen/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -211,6 +219,7 @@ CPPFLAGS.toupper_.c+= -I${LIBCDIR}/locale
 .for f in \
 	read_tsc_64.o fslib.o itoa.o oneC_sum.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBMINIXCDIR}/gen/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -223,6 +232,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	initfini.o stack_protector.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/misc/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/misc/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -237,6 +247,7 @@ CPPFLAGS.stack_protector.c+= -Dxprintf=printf
 .for f in \
 	regcomp.o regerror.o regexec.o regfree.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/regex/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/regex/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -251,6 +262,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 	ldiv.o malloc.o setenv.o \
 	reallocarr.o _rand48.o lrand48.o srand48.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/stdlib/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/stdlib/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -273,6 +285,7 @@ SECTIONIFY.malloc.c+= -sectionify-no-override \
 .for f in \
 	strdup.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/string/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/string/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -291,6 +304,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 	stat.o stime.o svrctl.o syscall.o __sysctl.o _ucontext.o umask.o \
 	unlink.o wait4.o write.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCDIR}/sys/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBMINIXCDIR}/sys/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -303,6 +317,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	brksize.o _do_kernel_call_intr.o ipc_minix_kerninfo.o _ipc.o ucontext.o
 ${f} ${f:C/\.o/.bc/}:	${LIBMINIXCARCHDIR}/sys/${f:C/\.o/.S/}
+${f} ${f:C/\.o/.go/}:	${LIBMINIXCARCHDIR}/sys/${f:C/\.o/.S/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 
@@ -315,6 +330,7 @@ CLEANFILES+= ${f:C/\.o/.bc/}
 .for f in \
 	localtime.o
 ${f} ${f:C/\.o/.bc/}:	${LIBCDIR}/time/${f:C/\.o/.c/}
+${f} ${f:C/\.o/.go/}:	${LIBCDIR}/time/${f:C/\.o/.c/}
 OBJS+=	${f}
 CLEANFILES+= ${f}
 

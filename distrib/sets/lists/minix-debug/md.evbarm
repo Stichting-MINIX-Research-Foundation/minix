@@ -1,0 +1,25 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./usr/lib/libclkconf_g.a                                minix-debug     debuglib
+./usr/lib/libgpio_g.a                                   minix-debug     debuglib
+./usr/lib/libi2cdriver_g.a                              minix-debug     debuglib
+./usr/libdata/debug/service/bmp085.debug                minix-debug     debug
+./usr/libdata/debug/service/cat24c256.debug             minix-debug     debug
+./usr/libdata/debug/service/emmc.debug                  minix-debug     debug
+./usr/libdata/debug/service/fb.debug                    minix-debug     debug
+./usr/libdata/debug/service/gpio.debug                  minix-debug     debug
+./usr/libdata/debug/service/i2c.debug                   minix-debug     debug
+./usr/libdata/debug/service/lan8710a.debug              minix-debug     debug
+./usr/libdata/debug/service/mmc.debug                   minix-debug     debug
+./usr/libdata/debug/service/sht21.debug                 minix-debug     debug
+./usr/libdata/debug/service/tda19988.debug              minix-debug     debug
+./usr/libdata/debug/service/tps65217.debug              minix-debug     debug
+./usr/libdata/debug/service/tps65950.debug              minix-debug     debug
+./usr/libdata/debug/service/tsl2550.debug               minix-debug     debug
+./usr/libdata/debug/service/usbd.debug                  minix-debug     debug
+./usr/libdata/debug/usr/bin/eepromread.debug            minix-debug     debug

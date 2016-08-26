@@ -127,9 +127,9 @@
 ./usr/X11R7/lib/libxcb-property_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-randr_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-record_g.a			-unknown-	debuglib,xorg,compatx11file
-./usr/X11R7/lib/libxcb-render-util_g.a			-unknown-	debuglib,xorg,compatx11file
+#./usr/X11R7/lib/libxcb-render-util_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-render_g.a			-unknown-	debuglib,xorg,compatx11file
-./usr/X11R7/lib/libxcb-reply_g.a			-unknown-	debuglib,xorg,compatx11file
+#./usr/X11R7/lib/libxcb-reply_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-res_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-screensaver_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-shape_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -410,5 +410,6 @@
 ./usr/libdata/debug/usr/X11R7/bin/xwd.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xwininfo.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xwud.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/libexec/chooser.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-		debug,xorg
+#./usr/libdata/debug/usr/X11R7/libexec/chooser.debug	-unknown-	debug,xorg
+#./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-		debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/makekeys.debug        minix-debug     debug,xorg
