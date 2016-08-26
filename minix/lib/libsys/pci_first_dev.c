@@ -26,7 +26,7 @@ u16_t *didp;
 		*devindp= m.m1_i1;
 		*vidp= m.m1_i2;
 		*didp= m.m1_i3;
-#if DEBUG
+#ifdef DEBUG
 		printf("pci_first_dev: got device %d, %04x/%04x\n", 
 			*devindp, *vidp, *didp);
 #endif
@@ -35,7 +35,7 @@ u16_t *didp;
 	if (m.m_type != 0)
 		panic("pci_first_dev: got bad reply from PCI: %d", m.m_type);
 
-#if DEBUG
+#ifdef DEBUG
 	printf("pci_first_dev: got nothing\n");
 #endif
 	return 0;

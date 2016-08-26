@@ -39,7 +39,7 @@ char *pci_dev_name(u16_t vid, u16_t did)
 
 	if (m.m_type == ENOENT)
 	{
-#if DEBUG
+#ifdef DEBUG
 		printf("pci_dev_name: got no name\n");
 #endif
 		return NULL;	/* No name for this device */
@@ -51,7 +51,7 @@ char *pci_dev_name(u16_t vid, u16_t did)
 					 * terminated.
 					 */
 
-#if DEBUG
+#ifdef DEBUG
 	printf("pci_dev_name: got name %s\n", name);
 #endif
 	return name;
