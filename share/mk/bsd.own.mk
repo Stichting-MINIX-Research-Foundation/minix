@@ -24,6 +24,7 @@ INFOGRP?=	operator
 DOCGRP?=	operator
 LOCALEGRP?=	operator
 NLSGRP?=	operator
+DEBUGGRP?=	operator
 
 MKKYUA?=	yes
 MKMCLINKER?=	no
