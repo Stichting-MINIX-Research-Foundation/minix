@@ -16,7 +16,7 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--disable-werror \
 		${BRANDING}
 
-.if !defined(__MINIX)
+.if !defined(__MINIX) || ${MKUPDATE:Uno} == "yes"
 build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
 .else
 # MINIX: LSC: Make sure we trigger the fetch rule
