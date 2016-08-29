@@ -21,6 +21,12 @@ COPTS.regex.c = -Wno-stack-protector
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
+.if defined(__MINIX)
+# MINIX: make sure sources are fetched, even when tools not built earlier
+GNUHOSTDIST=	${DIST}
+.include "${.CURDIR}/../../../../../minix/Makefile.fetchgnu"
+.endif # defined(__MINIX)
+
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
@@ -30,3 +36,8 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 .PATH: ${DIST}/libiberty
 
 .include <bsd.lib.mk>
+
+.if defined(__MINIX) && ${USETOOLS} != "yes"
+# Trigger the fetch phase, even when not building tools
+${SRCS} realdepend realall realinstall: ${fetch_done}
+.endif # defined(__MINIX)
