@@ -27,6 +27,12 @@ DEFS_MK=${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
+.if defined(__MINIX)
+# MINIX: make sure sources are fetched, even when tools not built earlier
+GNUHOSTDIST=	${DIST}
+.include "${.CURDIR}/../../../../../minix/Makefile.fetchgnu"
+.endif # defined(__MINIX)
+
 SHLIB_MAJOR=	13
 SHLIB_MINOR=	0
 
@@ -105,3 +111,8 @@ pepigen.c: peXXigen.c
 pex64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/pex64/g < $> > $@
+
+.if defined(__MINIX) && ${USETOOLS} != "yes"
+# Trigger the fetch phase, even when not building tools
+${SRCS} realdepend realall realinstall: ${fetch_done}
+.endif # defined(__MINIX)
