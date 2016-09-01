@@ -27,27 +27,7 @@ MAKE_PROGRAM?=	${MAKE}
 GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 
 .if defined(__MINIX)
-# AL - MINIX /usr/src does not have the sources for the GNU utilities
-# in-tree (they are much bigger than Minix itself!) So to successfully
-# use them while cross-compiling, we have to fetch them. The success of
-# that operation is indicated by the presence of a .gitignore file in
-# the corresponding ${.CURDIR}, which also conveniently hides from git.
-.if exists(${GNUHOSTDIST:H}/fetch.sh)
-${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
-	SED=${TOOL_SED} ${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
-	@test -e ${GNUHOSTDIST}/configure
-	@echo "${MODULE:U${.CURDIR:T}:C,gcc[0-9]*,gcc,:C,gmake*,make,}-*.tar.*z*" >> $@
-	@echo ${GNUHOSTDIST:T} >> $@
-_gnu_get_src=${GNUHOSTDIST:H}/.gitignore
-.endif # exists(GNUHOSTDIST:H/fetch.sh) on MINIX
-
-# AL - Special target for MINIX, reset the source tree as pristine
-.if ${CLEANFETCHED:Uno} == "yes" && exists(${GNUHOSTDIST:H}/fetch.sh)
-cleandir: clean_gnu_src
-clean_gnu_src:
-	-rm -r -f ${GNUHOSTDIST} ${GNUHOSTDIST:H}/.gitignore
-# XXX CHECKME: could have used the content of .gitignore as well?
-.endif # CLEANFETCHED == yes
+.include "../minix/Makefile.fetchgnu"
 .endif # defined(__MINIX)
 
 FIND_ARGS+=	\! \( -type d \( \
@@ -134,7 +114,7 @@ configure_cleanup=configure_cleanup
 .endif
 
 # AL For MINIX, fetch the source if not there
-.configure_done: ${_gnu_get_src} .WAIT ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
+.configure_done: ${fetch_done} ${_GNU_CFGSRC} ${.CURDIR}/Makefile ${configure_cleanup}
 	@mkdir build 2>/dev/null || true
 	@(cd build && ${CONFIGURE_ENV} ${HOST_SH} ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
 	@echo ${BUILD_PLATFORM} > $@

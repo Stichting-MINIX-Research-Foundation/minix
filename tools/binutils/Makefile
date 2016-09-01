@@ -16,12 +16,15 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--disable-werror \
 		${BRANDING}
 
-.if !defined(__MINIX)
-build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
-.else
+.if defined(__MINIX) && ! exists(${GNUHOSTDIST}/gas/m68k-parse.c)
 # MINIX: LSC: Make sure we trigger the fetch rule
-build/gas/m68k-parse.c: ${GNUHOSTDIST:H}/.gitignore .WAIT ${GNUHOSTDIST}/gas/m68k-parse.c
-.endif # !defined(__MINIX)
+.include "${.CURDIR}/../../minix/Makefile.fetchgnu"
+
+${GNUHOSTDIST}/gas/m68k-parse.c: ${fetch_done}
+	@true
+.endif # defined(__MINIX)
+
+build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
 	@mkdir build 2>/dev/null || true
 	@mkdir build/gas 2>/dev/null || true
 	cat ${GNUHOSTDIST}/gas/m68k-parse.c > ${.TARGET}

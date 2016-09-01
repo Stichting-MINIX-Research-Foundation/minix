@@ -1,0 +1,71 @@
+#	NOT NetBSD
+#
+# Rules used to fetch a GNU package.  Expects GNUHOSTDIST to be set
+# and <bsd.own.mk> to be previously .include'd.
+#
+# New interface:
+#
+#   * When using the `cleandir' target, defining CLEANFETCHED=yes will
+#     additionally remove all the fetched files.
+#     This is particularly useful when a GNU package is updated.
+#
+# The rest should be operations hidden to the normal programmers.
+#
+# How to use: (maintainers manual)
+#
+#   * put a fetch.sh script one directory below the GNUHOSTDIST;
+#
+#   * .include "path/to/minix/Makefile.fetchgnu", after having
+#     defined GNUHOSTDIST and before any use of the variable below;
+#
+#   * insert ${fetch_done} as source before performing any operation
+#     on the files under GPL license which are usually found
+#     within NetBSD src/ tree;
+#
+#   * rinse and repeat for every target which assumes the presence of
+#    these files, and for every Makefile operating upon them.
+#
+#
+# TODO: does not handle correctly the cases where there are more than
+# one package downloaded by fetch.sh (e.g.gnu/dist with texinfo+gmake):
+# .gitignore only "protects" the first package which triggers.
+
+.if !defined(__MINIX) || !defined(GNUHOSTDIST)
+.error Bad logic in Makefiles.
+.endif
+
+.if !defined(_MINIX_FETCHGNU_MK_)
+_MINIX_FETCHGNU_MK_=1
+
+# MINIX /usr/src does not have the sources for the GNU utilities
+# in-tree, for licensing reasons. So to successfully use them while
+# cross-compiling, we have to fetch them. The success of that operation
+# is indicated by the presence of a .gitignore file in the corresponding
+# source parent directory, which also conveniently hides from git.
+.if exists(${GNUHOSTDIST:H}/fetch.sh)
+${GNUHOSTDIST:H}/.gitignore: ${GNUHOSTDIST:H}/fetch.sh
+	SED=${TOOL_SED} ${HOST_SH} ${GNUHOSTDIST:H}/fetch.sh
+	@test -e ${GNUHOSTDIST}/configure
+	@echo "${MODULE:U${.CURDIR:T}:C,gcc[0-9]*,gcc,:C,gmake*,make,}-*.tar.*z*" >> $@
+	@echo ${GNUHOSTDIST:T} >> $@
+
+# Do the fetching as an extra step, to force serialization
+.fetch_done: ${GNUHOSTDIST:H}/.gitignore
+	@touch $@
+fetch_done=.fetch_done
+
+# Special target for MINIX, reset the source tree as pristine
+# Note it does NOT remove the downloaded tarball
+.if ${CLEANFETCHED:Uno} == "yes"
+cleandir: clean_gnu_src
+clean_gnu_src:
+	-rm -r -f ${GNUHOSTDIST} ${GNUHOSTDIST:H}/.gitignore
+.endif # CLEANFETCHED == yes
+
+clean: clean.fetchgnu
+clean.fetchgnu:
+	-@rm -f .fetch_done
+
+.endif # exists(GNUHOSTDIST:H/fetch.sh) on MINIX
+
+.endif	# !defined(_MINIX_FETCHGNU_MK_)
