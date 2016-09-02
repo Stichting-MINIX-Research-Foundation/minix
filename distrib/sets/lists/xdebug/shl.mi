@@ -128,9 +128,9 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-property.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-randr.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-record.so.0.1.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libxcb-render-util.so.0.0.debug	-unknown-	xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libxcb-render-util.so.0.0.debug	-unknown-	#xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-render.so.0.1.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libxcb-reply.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+#./usr/libdata/debug/usr/X11R7/lib/libxcb-reply.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-res.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-screensaver.so.0.1.debug	-unknown-	xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-shape.so.0.1.debug	-unknown-		xorg,debug,compatx11file
@@ -147,10 +147,10 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxcb.so.2.0.debug		-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxkbui.so.2.0.debug		-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-	xorg,debug
+#./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-	xorg,debug
+#./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	obsolete	obsolete,xorg,debug,!machine=i386,!machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	obsolete	obsolete,xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/swrast_dri.so.0.debug	-unknown-	xorg,debug
+#./usr/libdata/debug/usr/X11R7/lib/modules/dri/swrast_dri.so.0.debug	-unknown-	xorg,debug
