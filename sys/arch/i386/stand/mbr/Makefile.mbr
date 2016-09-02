@@ -51,15 +51,6 @@ AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .if defined(__MINIX)
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
-
-# LSC: Still required by our old binutils
-AFLAGS.mbr.S+= -Wa,--divide
-
-BUILDSYMLINKS+= \
-	${NETBSDSRCDIR}/minix/include/arch/i386/include/stackframe.h machine/stackframe.h \
-	${NETBSDSRCDIR}/minix/include/arch/i386/include/fpu.h machine/fpu.h
-
-DPSRCS+= machine/stackframe.h  machine/fpu.h
 .endif # defined(__MINIX)
 
 ${PROG}: ${OBJS}

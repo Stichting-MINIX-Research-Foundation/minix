@@ -36,9 +36,9 @@
 
 #include <sys/featuretest.h>
 
-#if defined(__minix)
+#if defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
 #include <machine/fpu.h>
-#endif /* defined(__minix) */
+#endif /* defined(__minix) ... */
 
 typedef int sig_atomic_t;
 
@@ -108,17 +108,17 @@ struct sigcontext {
 	int	sc_err;
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
-#if defined(__minix)
+#if defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
 	union fpu_state_u sc_fpu_state;
 	int trap_style;		/* KTS_* method of entering kernel */
 	int sc_flags;			/* MF_FPU_INITIALIZED if fpu state valid */
 #define SC_MAGIC 0xc0ffee1
 	int sc_magic;
-#endif /* defined(__minix) */
+#endif /* defined(__minix) ... */
 };
 #endif /* _KERNEL */
 
-#if defined(__minix)
+#if defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
 __BEGIN_DECLS
 int sigreturn(struct sigcontext *_scp);
 __END_DECLS
