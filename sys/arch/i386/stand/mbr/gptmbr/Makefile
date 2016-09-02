@@ -4,10 +4,6 @@ PROG=		gptmbr.bin
 SRCS=		gptmbr.S
 
 AFLAGS.gptmbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-.if defined(__MINIX)
-# LSC: Still required by our old binutils
-AFLAGS.gptmbr.S+= -Wa,--divide
-.endif # defined(__MINIX)
 
 .include <../Makefile.mbr>
 
