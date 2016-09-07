@@ -22,10 +22,14 @@ d--755 0 0
 		virtio_blk ---755 0 0 virtio_blk
 		at_wini ---755 0 0 at_wini
 		pckbd ---755 0 0 pckbd
+		pci ---755 0 0 pci
+		isofs ---755 0 0 isofs
+#if RAMDISK_INC_ACPI == 1
+		acpi ---755 0 0 acpi
+#endif
 #if RAMDISK_SMALL == 1
 		ext2 ---755 0 0 ext2
 #endif
-		isofs ---755 0 0 isofs
 #endif
 #ifdef __arm__
 		mmc ---755 0 0 mmc
@@ -33,12 +37,6 @@ d--755 0 0
 		mfs ---755 0 0 mfs
 		procfs ---755 0 0 procfs
 		input ---755 0 0 input
-#ifdef __i386__
-#if RAMDISK_INC_ACPI == 1
-		acpi ---755 0 0 acpi
-#endif
-		pci ---755 0 0 pci
-#endif
 	$
 	usr d--755 0 0
 		bin d--755 0 0
