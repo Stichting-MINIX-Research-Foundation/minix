@@ -22,7 +22,8 @@ SUBDIR+=	libc
 SUBDIR+=	.WAIT
 
 .if defined(__MINIX)
-SUBDIR+=	../minix/lib/libasyn \
+SUBDIR+=	../minix/lib/libacpi \
+		../minix/lib/libasyn \
 		../minix/lib/libaudiodriver \
 		../minix/lib/libbdev \
 		../minix/lib/libblockdriver \

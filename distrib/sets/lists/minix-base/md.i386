@@ -62,6 +62,8 @@
 ./usr/lib/libm387.so.0                                  minix-base
 ./usr/lib/libm387.so.0.1                                minix-base
 ./usr/lib/libm387_pic.a                                 minix-base
+./usr/lib/libacpi.a  	                                minix-base
+./usr/lib/libacpi_pic.a                                 minix-base
 ./usr/lib/libvassert.a                                  minix-base
 ./usr/lib/libvboxfs.a                                   minix-base
 ./usr/lib/libvboxfs_pic.a                               minix-base

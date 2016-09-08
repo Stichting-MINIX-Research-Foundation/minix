@@ -8,7 +8,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/acpi.h>
 #include <minix/chardriver.h>
 #include <minix/driver.h>
-#include <minix/ds.h>
 #include <minix/param.h>
 #include <minix/rs.h>
 
@@ -94,7 +93,6 @@ static struct pcidev
 static int nr_pcidev= 0;
 
 static struct machine machine;
-static endpoint_t acpi_ep;
 
 /*===========================================================================*
  *			helper functions for I/O			     *
@@ -888,26 +886,6 @@ do_isabridge(int busind)
 			pcidev[unknown_bridge].pd_did, busind);
 	}
 	return 0;
-}
-
-/*===========================================================================*
- *				IRQ handling				     *
- *===========================================================================*/
-static int
-acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
-{
-	int err;
-	message m;
-
-	((struct acpi_get_irq_req *)&m)->hdr.request = ACPI_REQ_GET_IRQ;
-	((struct acpi_get_irq_req *)&m)->bus = bus;
-	((struct acpi_get_irq_req *)&m)->dev = dev;
-	((struct acpi_get_irq_req *)&m)->pin = pin;
-
-	if ((err = ipc_sendrec(acpi_ep, &m)) != OK)
-		panic("PCI: error %d while receiveing from ACPI\n", err);
-
-	return ((struct acpi_get_irq_resp *)&m)->irq;
 }
 
 static int
@@ -1801,30 +1779,6 @@ complete_bridges(void)
 	}
 }
 
-/*
- * tells acpi which two busses are connected by this bridge. The primary bus
- * (pbnr) must be already known to acpi and it must map dev as the connection to
- * the secondary (sbnr) bus
- */
-static void
-acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr)
-{
-	int err;
-	message m;
-
-	((struct acpi_map_bridge_req *)&m)->hdr.request = ACPI_REQ_MAP_BRIDGE;
-	((struct acpi_map_bridge_req *)&m)->primary_bus = pbnr;
-	((struct acpi_map_bridge_req *)&m)->secondary_bus = sbnr;
-	((struct acpi_map_bridge_req *)&m)->device = dev;
-
-	if ((err = ipc_sendrec(acpi_ep, &m)) != OK)
-		panic("PCI: error %d while receiveing from ACPI\n", err);
-
-	if (((struct acpi_map_bridge_resp *)&m)->err != OK)
-		printf("PCI: acpi failed to map pci (%d) to pci (%d) bridge\n",
-								pbnr, sbnr);
-}
-
 static void
 do_pcibridge(int busind)
 {
@@ -2148,7 +2102,7 @@ sef_cb_init(int type, sef_init_info_t *info)
 		return ENODEV;
 	}
 	if (machine.apic_enabled &&
-			ds_retrieve_label_endpt("acpi", &acpi_ep) != OK) {
+			acpi_init() != OK) {
 		panic("PCI: Cannot use APIC mode without ACPI!\n");
 	}
 
