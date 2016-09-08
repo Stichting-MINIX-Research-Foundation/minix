@@ -1,15 +1,15 @@
 #include <sys/types.h>
 #include <minix/ipc.h>
 
-#define ACPI_REQ_GET_IRQ	1
-#define ACPI_REQ_MAP_BRIDGE	2
+#define ACPI_REQ_GET_IRQ			1
+#define ACPI_REQ_MAP_BRIDGE			2
 
 struct acpi_request_hdr {
 	endpoint_t 	m_source; /* message header */
 	u32_t		request;
 };
 
-/* 
+/*
  * Message to request dev/pin translation to IRQ by acpi using the acpi routing
  * tables
  */
@@ -42,3 +42,7 @@ struct acpi_map_bridge_resp {
 	int		err;
 	u32_t		__padding[7];
 };
+
+int acpi_init(void);
+int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin);
+void acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr);
