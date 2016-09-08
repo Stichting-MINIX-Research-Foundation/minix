@@ -1867,6 +1867,7 @@
 ./usr/include/zlib.h                                    minix-comp
 ./usr/lib                                               minix-comp
 ./usr/lib/bc                                            minix-comp
+./usr/lib/bc/libacpi.a                                  minix-comp      bitcode
 ./usr/lib/bc/libarchive.a                               minix-comp      bitcode
 ./usr/lib/bc/libasyn.a                                  minix-comp      bitcode
 ./usr/lib/bc/libaudiodriver.a                           minix-comp      bitcode

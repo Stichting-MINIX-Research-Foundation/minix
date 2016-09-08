@@ -18,6 +18,9 @@ CWARNFLAGS.clang=-Wno-unused
 DPADD+=	${LIBCHARDRIVER}
 LDADD+=	-lchardriver
 
+DPADD+=	${LIBACPI}
+LDADD+=	-lacpi
+
 WARNS=	3
 
 .include <minix.service.mk>

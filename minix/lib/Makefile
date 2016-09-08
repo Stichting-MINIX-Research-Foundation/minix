@@ -32,6 +32,7 @@ SUBDIR+=	libnetsock
 .endif
 
 .if (${MACHINE_ARCH} == "i386")
+SUBDIR+=	libacpi
 SUBDIR+=	libhgfs
 SUBDIR+=	libvassert
 SUBDIR+=	libvboxfs
