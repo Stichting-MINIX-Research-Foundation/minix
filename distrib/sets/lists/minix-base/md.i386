@@ -55,6 +55,8 @@
 ./service/virtio_blk                                    minix-base
 ./service/virtio_net                                    minix-base
 ./service/vt6105                                        minix-base
+./usr/lib/libacpi.a                                     minix-base
+./usr/lib/libacpi_pic.a                                 minix-base
 ./usr/lib/libhgfs.a                                     minix-base
 ./usr/lib/libhgfs_pic.a                                 minix-base
 ./usr/lib/libm387.a                                     minix-base
