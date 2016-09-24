@@ -1,13 +1,13 @@
 
+#include <string.h>
+
 #include "fs.h"
 #include "file.h"
 
-int gcov_flush(cp_grant_id_t grantid, size_t size );
-
 /*===========================================================================*
- *				do_gcov_flush				*
+ *				do_gcov_flush				     *
  *===========================================================================*/
-int do_gcov_flush()
+int do_gcov_flush(void)
 {
 /* A userland tool has requested the gcov data from another
  * process (possibly vfs itself). Grant the target process
@@ -15,49 +15,56 @@ int do_gcov_flush()
  * makes the target copy its buffer to the caller (incl vfs
  * itself).
  */
-  struct fproc *rfp;
-  ssize_t size;
+  char label[LABEL_MAX];
+  vir_bytes labeladdr, buf;
+  size_t labellen, size;
+  endpoint_t endpt;
   cp_grant_id_t grantid;
-  int r, n;
-  pid_t target;
+  int r;
   message m;
-  vir_bytes buf;
 
-  size = job_m_in.m_lc_vfs_gcov.buff_sz;
-  target = job_m_in.m_lc_vfs_gcov.pid;
-  buf = job_m_in.m_lc_vfs_gcov.buff_p;
-
-  /* If the wrong process is sent to, the system hangs; so make this root-only.
+  /*
+   * Something as sensitive as system service coverage information must be
+   * call to the target service, and so it is not impossible to deadlock the
+   * system with this call.
    */
-
   if (!super_user) return(EPERM);
 
-  /* Find target gcov process. */
-  for(n = 0; n < NR_PROCS; n++) {
-	if(fproc[n].fp_endpoint != NONE && fproc[n].fp_pid == target)
-		 break;
-  }
-  if(n >= NR_PROCS) {
-	printf("VFS: gcov process %d not found\n", target);
-	return(ESRCH);
-  }
-  rfp = &fproc[n];
+  labeladdr = job_m_in.m_lc_vfs_gcov.label;
+  labellen = job_m_in.m_lc_vfs_gcov.labellen;
+  buf = job_m_in.m_lc_vfs_gcov.buf;
+  size = job_m_in.m_lc_vfs_gcov.buflen;
+
+  /* Retrieve and look up the target label. */
+  if (labellen >= sizeof(label))
+	return EINVAL;
+  if ((r = sys_datacopy_wrapper(who_e, labeladdr, SELF, (vir_bytes)label,
+    labellen)) != OK)
+	return r;
+  label[labellen - 1] = '\0';
+
+  if ((r = ds_retrieve_label_endpt(label, &endpt)) != OK)
+	return r;
+
+  /* Hack: init is the only non-system process with a valid label. */
+  if (endpt == INIT_PROC_NR)
+	return ENOENT;
 
   /* Grant target process to requestor's buffer. */
-  if ((grantid = cpf_grant_magic(rfp->fp_endpoint, who_e, buf,
-				 size, CPF_WRITE)) < 0) {
+  if ((grantid = cpf_grant_magic(endpt, who_e, buf, size, CPF_WRITE)) < 0) {
 	printf("VFS: gcov_flush: grant failed\n");
 	return(ENOMEM);
   }
 
-  if (rfp->fp_endpoint == VFS_PROC_NR) {
+  if (endpt == VFS_PROC_NR) {
 	/* Request is for VFS itself. */
-	r = gcov_flush(grantid, size);
+	r = gcov_flush(VFS_PROC_NR, grantid, size);
   } else {
 	/* Perform generic GCOV request. */
-	m.m_lc_vfs_gcov.grant = grantid;
-	m.m_lc_vfs_gcov.buff_sz = size;
-	r = _taskcall(rfp->fp_endpoint, COMMON_REQ_GCOV_DATA, &m);
+	memset(&m, 0, sizeof(m));
+	m.m_vfs_lsys_gcov.grant = grantid;
+	m.m_vfs_lsys_gcov.size = size;
+	r = _taskcall(endpt, COMMON_REQ_GCOV_DATA, &m);
   }
 
   cpf_revoke(grantid);

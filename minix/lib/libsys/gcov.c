@@ -13,25 +13,30 @@
 #include <unistd.h>
 #include <assert.h>
 #include <minix/syslib.h>
+#include <minix/sysutil.h>
 #include <minix/gcov.h>
 
-static int grant, pos;           /* data-buffer pointer from user space tool */
+static endpoint_t endpt = NONE;   /* endpoint of requesting service, or NONE */
+static cp_grant_id_t grant;    /* grant to write results into during request */
+static int pos;                  /* data-buffer pointer from user space tool */
 static int gcov_enable=0;     /* nothing will be done with gcov-data if zero */
 static int gcov_buff_sz;                        /* size of user space buffer */
 static FILE gcov_file;                      /* used as fopen() return value. */
 static int gcov_opened;
 
 /* copies <size> bytes from <ptr> to <gcov_buff> */
-static void add_buff(void *ptr, int size)
+static void add_buff(const void *ptr, int size)
 {
 	int r;
+
+	assert(endpt != NONE);
 	assert(pos <= gcov_buff_sz);
 
 	if(pos+size > gcov_buff_sz) {
 		size = pos - gcov_buff_sz;
 	}
 
-	r = sys_safecopyto(VFS_PROC_NR, grant, pos, (vir_bytes)ptr, size);
+	r = sys_safecopyto(endpt, grant, pos, (vir_bytes)ptr, size);
 
 	if(r) {
 		printf("libsys: gcov: safecopy failed (%d)\n", r);
@@ -52,7 +57,7 @@ static void add_int(int value)
  * system calls (fopen, etc)
  */
 
-FILE *_gcov_fopen(char *name, char *mode)
+FILE *_gcov_fopen(const char *name, const char *mode)
 {
 	if(!gcov_enable) return NULL;
 
@@ -75,7 +80,8 @@ size_t _gcov_fread(void *ptr, size_t itemsize, size_t nitems, FILE *stream)
         return 0;
 }
 
-size_t _gcov_fwrite(void *ptr, size_t itemsize, size_t nitems, FILE *stream)
+size_t _gcov_fwrite(const void *ptr, size_t itemsize, size_t nitems,
+	FILE *stream)
 {
 	int size = itemsize * nitems;
 
@@ -115,10 +121,11 @@ char *_gcov_getenv(const char *name)
         return NULL;
 }
 
-int gcov_flush(cp_grant_id_t grantid, int bufsize)
+int gcov_flush(endpoint_t ep, cp_grant_id_t grantid, size_t bufsize)
 {
 	/* Initialize global state. */
 	pos=0;
+	endpt = ep;
 	grant = grantid;
 	gcov_buff_sz = bufsize;
 	assert(!gcov_enable);
@@ -137,6 +144,7 @@ int gcov_flush(cp_grant_id_t grantid, int bufsize)
 	assert(!gcov_opened);
 	assert(gcov_enable);
 	gcov_enable = 0;
+	endpt = NONE;
 
 	/* Return number of bytes used in buffer. */
 	return pos;
@@ -152,10 +160,8 @@ int do_gcov_flush_impl(message *msg)
 	memset(&replymsg, 0, sizeof(replymsg));
 
 	assert(msg->m_type == COMMON_REQ_GCOV_DATA);
-	assert(msg->m_source == VFS_PROC_NR);
 
-	replymsg.m_type = gcov_flush(msg->m_lc_vfs_gcov.grant,
-		msg->m_lc_vfs_gcov.buff_sz);
+	replymsg.m_type = gcov_flush(msg->m_source, msg->m_vfs_lsys_gcov.grant,
+		msg->m_vfs_lsys_gcov.size);
 	return ipc_send(msg->m_source, &replymsg);
 }
-

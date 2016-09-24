@@ -1356,9 +1356,10 @@ static int
 vfs_gcov_flush_out(struct trace_proc * proc, const message * m_out)
 {
 
-	put_ptr(proc, "buff", m_out->m_lc_vfs_gcov.buff_p);
-	put_value(proc, "buff_sz", "%zu", m_out->m_lc_vfs_gcov.buff_sz);
-	put_value(proc, "server_pid", "%d", m_out->m_lc_vfs_gcov.pid);
+	put_buf(proc, "label", PF_STRING, m_out->m_lc_vfs_gcov.label,
+	    m_out->m_lc_vfs_gcov.labellen);
+	put_ptr(proc, "buff", m_out->m_lc_vfs_gcov.buf);
+	put_value(proc, "buff_sz", "%zu", m_out->m_lc_vfs_gcov.buflen);
 
 	return CT_DONE;
 }

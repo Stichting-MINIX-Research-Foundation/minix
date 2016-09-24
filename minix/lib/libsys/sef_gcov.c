@@ -6,6 +6,8 @@
 
 static sef_cb_gcov_t sef_cb_gcov = SEF_CB_GCOV_FLUSH_DEFAULT;
 
+int do_sef_gcov_request(message *);
+
 /*===========================================================================*
  *                            do_sef_gcov_request             		     *
  *===========================================================================*/

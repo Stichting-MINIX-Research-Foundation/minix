@@ -129,7 +129,8 @@ SRCS+=	pci_attr_r16.c \
 
 .if ${MKCOVERAGE} != "no"
 SRCS+=	gcov.c \
-	sef_gcov.c
+	sef_gcov.c \
+	llvm_gcov.c
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 

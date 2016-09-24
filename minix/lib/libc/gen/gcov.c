@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define _MINIX_SYSTEM 1
 #include <minix/gcov.h>
 
 /* wrappers for file system calls from gcc libgcov library.
@@ -9,7 +10,7 @@
    implementation for servers is used.
 */
 
-FILE *_gcov_fopen(char *name, char *mode){
+FILE *_gcov_fopen(const char *name, const char *mode){
 	return fopen(name, mode);
 }
 
@@ -19,7 +20,7 @@ size_t _gcov_fread(void *ptr, size_t itemsize, size_t nitems
         return fread(ptr, itemsize, nitems, stream);
 }
 
-size_t _gcov_fwrite(void *ptr, size_t itemsize, size_t nitems
+size_t _gcov_fwrite(const void *ptr, size_t itemsize, size_t nitems
         , FILE *stream){
 	return fwrite(ptr, itemsize, nitems, stream);
 }

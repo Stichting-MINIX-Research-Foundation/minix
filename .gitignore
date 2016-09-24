@@ -16,6 +16,8 @@ lib*.so*
 *.so.*
 *.d
 .depend
+*.gcno
+*.gcda
 TAGS
 tags
 GPATH

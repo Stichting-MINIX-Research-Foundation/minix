@@ -107,4 +107,7 @@ kernel: kernel.bcl.o
 # Disable magic and ASR passes for the kernel.
 USE_MAGIC=no
 
+# Disable coverage profiling for the kernel, at least for now.
+MKCOVERAGE=no
+
 .include <minix.service.mk>

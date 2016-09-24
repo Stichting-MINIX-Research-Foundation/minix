@@ -7,6 +7,12 @@
 AFLAGS+= -D__ASSEMBLY__
 COPTS+= -fno-builtin
 
+# For MKCOVERAGE builds, enable coverage options.
+.if ${MKCOVERAGE:Uno} == "yes"
+CPPFLAGS+= ${COVCPPFLAGS}
+LDADD+= ${COVLDADD}
+.endif # ${MKCOVERAGE:Uno} == "yes"
+
 # LSC Static linking, order matters!
 # We can't use --start-group/--end-group as they are not supported by our
 # version of clang.

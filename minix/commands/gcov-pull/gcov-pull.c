@@ -32,11 +32,11 @@ int main(int argc, char *argv[])
 {
   FILE *fd = NULL;
   int server_nr, command, size, result;
-  char buff[BUFF_SZ]; /* Buffer for all the metadata and file data sent */
+  static char buff[BUFF_SZ]; /* Buffer for all the metadata and file data */
 
-  if(argc!=2 || sscanf(argv[1], "%d", &server_nr)!=1) {
-  	fprintf(stderr, "Usage: %s <pid>\n", argv[0]);
-  	return 1;
+  if (argc != 2) {
+	fprintf(stderr, "Usage: %s <label>\n", argv[0]);
+	return 1;
   }
 
   /*
@@ -52,14 +52,14 @@ int main(int argc, char *argv[])
     the <minix/gcov.h> header file.
   */
   
-  /* visit complete buffer, so vm won't has to 
+  /* Fault in the complete buffer, so vm won't have to
      manage the pages while flushing
    */ 
-  memset(buff, 'a', sizeof(buff));
+  memset(buff, '\0', sizeof(buff));
 
   buff_p = buff;
 
-  result = gcov_flush_svr(buff_p, BUFF_SZ, server_nr);
+  result = gcov_flush_svr(argv[1], buff_p, BUFF_SZ);
 
   if(result >= BUFF_SZ) {
     fprintf(stderr, "Too much data to hold in buffer: %d\n", result);
