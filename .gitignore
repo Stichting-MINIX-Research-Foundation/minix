@@ -9,6 +9,7 @@ cscope.*
 *.rej
 *.[1-9].gz
 *.o
+*.elf
 *.[psS]o
 *.pico
 lib*.so*

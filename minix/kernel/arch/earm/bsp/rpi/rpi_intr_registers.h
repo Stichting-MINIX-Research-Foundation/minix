@@ -1,0 +1,17 @@
+#ifndef _RPI_INTR_H
+#define _RPI_INTR_H
+
+#define RPI2_INTR_BASE          0x3f00B000
+
+#define RPI2_INTR_BASIC_PENDING 0x200
+#define RPI2_INTR_PENDING1      0x204
+#define RPI2_INTR_PENDING2      0x208
+#define RPI2_INTR_FIQ_CTRL      0x20c
+#define RPI2_INTR_ENABLE1       0x210
+#define RPI2_INTR_ENABLE2       0x214
+#define RPI2_INTR_ENABLE_BASIC  0x218
+#define RPI2_INTR_DISABLE1      0x21c
+#define RPI2_INTR_DISABLE2      0x220
+#define RPI2_INTR_DISABLE_BASIC 0x224
+
+#endif /* _RPI_INTR_H */

@@ -78,6 +78,9 @@ static phys_bytes createpde(
 	phys_bytes offset;
 	int pde;
 
+	phys_bytes phys_start, phys_end;
+	get_phys_mem_map(&phys_start, &phys_end);
+
 	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
 	pde = freepdes[free_pde_idx];
 	assert(pde >= 0 && pde < 4096);
@@ -101,7 +104,7 @@ static phys_bytes createpde(
 		pdeval = pr->p_seg.p_ttbr_v[ARM_VM_PDE(linaddr)];
 	} else {
 		/* Requested address is physical. Make up the PDE entry. */
-		assert (linaddr >= PHYS_MEM_BEGIN && linaddr <= PHYS_MEM_END);
+		assert (linaddr >= phys_start && linaddr <= phys_end);
 
 		/* memory */
 		pdeval = (linaddr & ARM_VM_SECTION_MASK)

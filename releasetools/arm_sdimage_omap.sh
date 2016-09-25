@@ -19,13 +19,13 @@ then
 	. ${SETTINGS_MINIX}
 fi
 
+BSP_NAME=omap
 : ${ARCH=evbearm-el}
-: ${OBJ=../obj.${ARCH}}
 : ${TOOLCHAIN_TRIPLET=arm-elf32-minix-}
 : ${BUILDSH=build.sh}
 
 : ${SETS="minix-base minix-comp minix-games minix-man minix-tests tests"}
-: ${IMG=minix_arm_sd.img}
+: ${IMG=minix_arm_sd_omap.img}
 
 # ARM definitions:
 : ${BUILDVARS=-V MKGCCCMDS=yes -V MKLLVM=no}
@@ -144,7 +144,7 @@ ${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${WORK_DIR}/fat.img
 #
 # Download the stage 1 bootloader and u-boot
 #
-${RELEASETOOLSDIR}/fetch_u-boot.sh -o ${RELEASETOOLSDIR}/u-boot -n $U_BOOT_GIT_VERSION
+${RELEASETOOLSDIR}/checkout_repo.sh -o ${RELEASETOOLSDIR}/u-boot -b ${U_BOOT_BRANCH} -n ${U_BOOT_REVISION} ${U_BOOT_URL}
 cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${WORK_DIR}/
 cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${WORK_DIR}/
 

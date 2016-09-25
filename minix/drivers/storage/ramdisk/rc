@@ -3,7 +3,7 @@ set -e
 
 exec >/dev/log
 exec 2>/dev/log
-exec </dev/null
+exec </dev/console
 
 FSCK=/bin/fsck_mfs
 ACPI=/service/acpi
@@ -43,6 +43,12 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 		/bin/service -cr up /service/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1 2>/dev/null || :
 	fi
 	/bin/umount /proc >/dev/null
+fi
+
+# XXX: We don't have anything better to do on Raspberry Pi yet
+if [ "$(/bin/sysenv board_name)" = "RPI_2_B" ] || [ "$(/bin/sysenv board_name)" = "RPI_3_B" ]
+then
+	exec /bin/sh < /dev/console
 fi
 
 if [ X`/bin/sysenv arch` = Xearm ]
@@ -88,7 +94,7 @@ fi
 
 echo "Root device name is $rootdevname"
 
-if ! sysenv cdproberoot >/dev/null
+if (! sysenv cdproberoot) && (! sysenv bootramdisk) >/dev/null
 then
 	if [ -e $FSCK ]
 	then	$FSCK -p $rootdevname

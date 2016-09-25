@@ -2,7 +2,7 @@
 # BSP for TI hardware
 #
 
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/bsp/ti
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/bsp/${BSP_NAME}
 
 .for unpaged_obj in omap_serial.o omap_rtc.o omap_reset.o 
 BSP_OBJS_UNPAGED += ${unpaged_obj}

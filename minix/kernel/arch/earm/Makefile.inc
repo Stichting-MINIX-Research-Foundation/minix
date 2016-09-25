@@ -53,7 +53,7 @@ CPPFLAGS.subr_prf.c+= -Dputchar=kputc
 # Activate optional support, may be deactivated.
 CPPFLAGS.subr_prf.c+= -DLIBSA_PRINTF_LONGLONG_SUPPORT -DLIBSA_PRINTF_WIDTH_SUPPORT
 
-.include "bsp/ti/Makefile.inc"
+.include "bsp/${BSP_NAME}/Makefile.inc"
 
 # some object files we give a symbol prefix (or namespace) of __k_unpaged_
 # that must live in their own unique namespace.

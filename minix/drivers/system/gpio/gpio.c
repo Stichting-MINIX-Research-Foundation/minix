@@ -205,7 +205,16 @@ init_hook(void)
 		    CONTROL_CONF_PUDEN | CONTROL_CONF_MUXMODE(7)));
 		
 		add_gpio_inode("RIGHT", (32 * 1) + 17, GPIO_MODE_INPUT);
+	} else if (BOARD_IS_RPI_2_B(machine.board_id) || BOARD_IS_RPI_3_B(machine.board_id)) {
+		/* Export GPIO 26 as SLIDE_PREV */
+		add_gpio_inode("SLIDE_PREV", 26, GPIO_MODE_INPUT);
+		/* Export GPIO 21 as SLIDE_NEXT */
+		add_gpio_inode("SLIDE_NEXT", 21, GPIO_MODE_INPUT);
 
+		/* Put both of them in pull-up */
+		sys_padconf(0x94, 0x3, 2);
+		sys_padconf(0x98, 0xffffffff, (1<<26)|(1<<21));
+		sys_padconf(0x98, 0xffffffff, 0);
 	}
 }
 

@@ -33,6 +33,7 @@ struct tss_s {
 } __attribute__((packed));
 int tss_init(unsigned cpu, void * kernel_stack);
 
+void get_phys_mem_map(phys_bytes *start, phys_bytes *end);
 void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len);
 phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len);
 void vm_enable_paging(void);
