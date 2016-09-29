@@ -240,11 +240,6 @@ __RCSID("$NetBSD: traceroute.c,v 1.81 2012/08/16 00:40:28 zafer Exp $");
 #include <netipsec/ipsec.h>
 #endif
 
-#if defined(__minix)
-#include <net/gen/in.h>
-#include <net/gen/ip_io.h>
-#endif /* defined(__minix) */
-
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
@@ -499,11 +494,7 @@ main(int argc, char **argv)
 	 * running our traceroute code will forgive us.
 	 */
 #ifndef __hpux
-#if defined(__minix)
-	sndsock = prog_socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
-#else
 	sndsock = prog_socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-#endif /* defined(__minix) */
 #else
 	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW
 	    useicmp ? IPPROTO_ICMP : IPPROTO_UDP);
@@ -829,7 +820,6 @@ main(int argc, char **argv)
 	}
 #endif
 
-#if !defined(__minix)
 #ifdef SO_SNDBUF
 	if (prog_setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&packlen,
 	    sizeof(packlen)) < 0)
@@ -854,7 +844,6 @@ main(int argc, char **argv)
 		if (prog_setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE, &on,
 		    sizeof(on)) < 0)
 			err(1, "setsockopt dontroute %d", tos);
-#endif /* !defined(__minix) */
 
 	/* Get the interface address list */
 	n = ifaddrlist(&al, errbuf, sizeof errbuf);
@@ -1357,23 +1346,11 @@ again:
 		Printf("]\n");
 	}
 
-#if !defined(__minix)
 #if !defined(IP_HDRINCL) && defined(IP_TTL)
 	if (prog_setsockopt(sndsock, IPPROTO_IP, IP_TTL,
 	    (char *)&ttl, sizeof(ttl)) < 0)
 		err(1, "setsockopt ttl %d", ttl);
 #endif
-#else
-	{
-		nwio_ipopt_t ipopts; 
-		memset(&ipopts, 0, sizeof(ipopts));
-		ipopts.nwio_flags = NWIO_HDR_O_SPEC;
-		ipopts.nwio_ttl = ttl;
-		if(ioctl(sndsock, NWIOSIPOPT, &ipopts) < 0) {
-			err(1, "ttl ioctl");
-		}
-	}
-#endif /* !defined(__minix) */
 	if (dump)
 		dump_packet();
 

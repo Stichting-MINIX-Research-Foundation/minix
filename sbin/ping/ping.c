@@ -197,9 +197,7 @@ static double tsum = 0.0;			/* sum of all times */
 static double tsumsq = 0.0;
 static double maxwait = 0.0;
 
-#if !defined(__minix)
 static int bufspace = IP_MAXPACKET;
-#endif /* !defined(__minix) */
 
 static struct timespec now, clear_cache, last_tx, next_tx, first_tx;
 static struct timespec last_rx, first_rx;
@@ -261,14 +259,12 @@ main(int argc, char *argv[])
 	if ((sloop = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(EXIT_FAILURE, "Cannot create socket");
 
-#if !defined(__minix)
 	/*
 	 * sloop is never read on.  This prevents packets from
 	 * queueing in its recv buffer.
 	 */
 	if (prog_shutdown(sloop, SHUT_RD) == -1)
 		warn("Cannot shutdown for read");
-#endif /* !defined(__minix) */
 
 	if (prog_setuid(prog_getuid()) == -1)
 		err(EXIT_FAILURE, "setuid");
@@ -539,11 +535,9 @@ main(int argc, char *argv[])
 				 - optlen);
 	(void) memcpy(opack_ip + 1, optspace, optlen);
 
-#if !defined(__minix)
 	if (prog_setsockopt(s, IPPROTO_IP, IP_HDRINCL,
 	    (char *) &on, sizeof(on)) < 0)
 		err(EXIT_FAILURE, "Can't set special IP header");
-#endif /* !defined(__minix) */
 
 	opack_ip->ip_v = IPVERSION;
 	opack_ip->ip_hl = (sizeof(struct ip)+optlen) >> 2;
@@ -656,7 +650,6 @@ main(int argc, char *argv[])
 	(void)printf("PING %s (%s): %d data bytes\n", hostname,
 		     inet_ntoa(whereto.sin_addr), datalen);
 
-#if !defined(__minix)
 	/* When pinging the broadcast address, you can get a lot
 	 * of answers.  Doing something so evil is useful if you
 	 * are trying to stress the ethernet, or just want to
@@ -673,7 +666,6 @@ main(int argc, char *argv[])
 	 */
 	(void)prog_setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 			 (char*)&bufspace, sizeof(bufspace));
-#endif /* !defined(__minix) */
 
 	(void)signal(SIGINT, prefinish);
 
