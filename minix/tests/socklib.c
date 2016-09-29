@@ -1,3 +1,8 @@
+/*
+ * Socket test code library.  This file contains code that is worth sharing
+ * between TCP/IP and UDS tests, as well as code that is worth sharing between
+ * various TCP/IP tests.
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,11 +11,38 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet6/in6_var.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "common.h"
 #include "socklib.h"
+
+#define TEST_PORT_A	12345	/* this port should be free and usable */
+#define TEST_PORT_B	12346	/* this port should be free and usable */
+
+#define LOOPBACK_IFNAME		"lo0"		/* loopback interface name */
+#define LOOPBACK_IPV4		"127.0.0.1"	/* IPv4 address */
+#define LOOPBACK_IPV6_LL	"fe80::1"	/* link-local IPv6 address */
+
+/* These address should simply eat all packets. */
+#define TEST_BLACKHOLE_IPV4	"127.255.0.254"
+#define TEST_BLACKHOLE_IPV6	"::2"
+#define TEST_BLACKHOLE_IPV6_LL	"fe80::ffff"
+
+/* Addresses for multicast-related testing. */
+#define TEST_MULTICAST_IPV4	"233.252.0.1"		/* RFC 5771 Sec. 9.2 */
+#define TEST_MULTICAST_IPV6	"ff0e::db8:0:1"		/* RFC 6676 Sec. 3 */
+#define TEST_MULTICAST_IPV6_LL	"ff02::db8:0:1"
+#define TEST_MULTICAST_IPV6_BAD	"ff00::db8:0:1"
+
+#define BAD_IFINDEX	255	/* guaranteed not to belong to an interface */
 
 /* 0 = check, 1 = generate source, 2 = generate CSV */
 #define SOCKLIB_SWEEP_GENERATE 0
@@ -443,6 +475,280 @@ socklib_sweep(int domain, int type, int protocol, const enum state * states,
 
 	free(nresults);
 #endif
+}
+
+/*
+ * Test for setting and retrieving UDP/RAW multicast transmission options.
+ * This is an interface-level test only: we do not (yet) test whether the
+ * options have any effect.  The given 'type' must be SOCK_DGRAM or SOCK_RAW.
+ */
+void
+socklib_multicast_tx_options(int type)
+{
+	struct in_addr in_addr;
+	socklen_t len;
+	unsigned int ifindex;
+	uint8_t byte;
+	int fd, val;
+
+	subtest = 10;
+
+	if ((fd = socket(AF_INET, type, 0)) < 0) e(0);
+
+	/*
+	 * Initially, the multicast TTL is expected be 1, looping should be
+	 * enabled, and the multicast source address should be <any>.
+	 */
+	byte = 0;
+	len = sizeof(byte);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &byte, &len) != 0)
+		e(0);
+	if (len != sizeof(byte)) e(0);
+	if (type != SOCK_STREAM && byte != 1) e(0);
+
+	byte = 0;
+	len = sizeof(byte);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &byte, &len) != 0)
+		e(0);
+	if (len != sizeof(byte)) e(0);
+	if (byte != 1) e(0);
+
+	len = sizeof(in_addr);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &in_addr, &len) != 0)
+		e(0);
+	if (len != sizeof(in_addr)) e(0);
+	if (in_addr.s_addr != htonl(INADDR_ANY)) e(0);
+
+	/* It must not be possible to get/set IPv6 options on IPv4 sockets. */
+	val = 0;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val) /*wrong but it doesn't matter*/) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    &len) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    &len) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val, &len) != -1)
+		e(0);
+	if (errno != ENOPROTOOPT) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	if ((fd = socket(AF_INET6, type, 0)) < 0) e(0);
+
+	/*
+	 * Expect the same defaults as for IPv4.  IPV6_MULTICAST_IF uses an
+	 * interface index rather than an IP address, though.
+	 */
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (type != SOCK_STREAM && val != 1) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 1) e(0);
+
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 0) e(0);
+
+	/* It must not be possible to get/set IPv4 options on IPv6 sockets. */
+	byte = 0;
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &byte,
+	    sizeof(byte)) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &byte,
+	    sizeof(byte)) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &byte,
+	    sizeof(byte) /* wrong but it doesn't matter */) != -1) e(0);
+	if (errno != ENOPROTOOPT) e(0);
+
+	len = sizeof(byte);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &val, &len) != -1)
+		e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &val, &len) != -1)
+		e(0);
+	if (errno != ENOPROTOOPT) e(0);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &val, &len) != -1)
+		e(0);
+	if (errno != ENOPROTOOPT) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	/* Test changing options. */
+	if ((fd = socket(AF_INET, type, 0)) < 0) e(0);
+
+	byte = 129;
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &byte,
+	    sizeof(byte)) != 0) e(0);
+
+	byte = 0;
+	len = sizeof(byte);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &byte, &len) != 0)
+		e(0);
+	if (len != sizeof(byte)) e(0);
+	if (byte != 129) e(0);
+
+	byte = 0;
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &byte,
+	    sizeof(byte)) != 0)
+		e(0);
+
+	byte = 1;
+	len = sizeof(byte);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &byte, &len) != 0)
+		e(0);
+	if (len != sizeof(byte)) e(0);
+	if (byte != 0) e(0);
+
+	in_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &in_addr,
+	   sizeof(in_addr)) != 0)
+		e(0);
+
+	in_addr.s_addr = htonl(INADDR_ANY);
+	len = sizeof(in_addr);
+	if (getsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &in_addr, &len) != 0)
+		e(0);
+	if (len != sizeof(in_addr)) e(0);
+	if (in_addr.s_addr != htonl(INADDR_LOOPBACK)) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	if ((fd = socket(AF_INET6, type, 0)) < 0) e(0);
+
+	val = 137;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 137) e(0);
+
+	val = -2;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	val = 256;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 137) e(0);
+
+	val = -1; /* use default */
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 1) e(0);
+
+	val = 0;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = 1;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 0) e(0);
+
+	val = 1;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = -1;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	val = 2;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val,
+	    sizeof(val)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 1) e(0);
+
+	val = -1;
+	ifindex = if_nametoindex(LOOPBACK_IFNAME);
+
+	val = ifindex;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != ifindex) e(0);
+
+	val = BAD_IFINDEX;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != -1) e(0);
+
+	val = -1;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != -1) e(0);
+
+	val = 0;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != ifindex) e(0);
+
+	val = 0;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	val = ifindex;
+	len = sizeof(val);
+	if (getsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val, &len) != 0)
+		e(0);
+	if (len != sizeof(val)) e(0);
+	if (val != 0) e(0);
+
+	if (close(fd) != 0) e(0);
 }
 
 /*
@@ -1020,4 +1326,2275 @@ socklib_stream_recv(int (* socket_pair)(int, int, int, int *), int domain,
 							    idata, istate,
 							    rlowat, len, bits,
 							    act, break_recv);
+}
+
+/*
+ * Obtain information for a matching protocol control block, using sysctl(7).
+ * The PCB is to be obtained through the given sysctl path string, and must
+ * match the other given parameters.  Return 1 if found with 'ki' filled with
+ * the PCB information, or 0 if not.
+ */
+int
+socklib_find_pcb(const char * path, int protocol, uint16_t local_port,
+	uint16_t remote_port, struct kinfo_pcb * ki)
+{
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	struct kinfo_pcb *array;
+	size_t i, miblen, oldlen;
+	uint16_t lport, rport;
+	int mib[CTL_MAXNAME], found;
+
+	miblen = __arraycount(mib);
+	if (sysctlnametomib(path, mib, &miblen) != 0) e(0);
+	if (miblen > __arraycount(mib) - 4) e(0);
+	mib[miblen++] = 0;
+	mib[miblen++] = 0;
+	mib[miblen++] = sizeof(*array);
+	mib[miblen++] = 0;
+
+	if (sysctl(mib, miblen, NULL, &oldlen, NULL, 0) != 0) e(0);
+	if (oldlen == 0)
+		return 0;	/* should not happen due to added slop space */
+	if (oldlen % sizeof(*array)) e(0);
+
+	if ((array = (struct kinfo_pcb *)malloc(oldlen)) == NULL) e(0);
+
+	if (sysctl(mib, miblen, array, &oldlen, NULL, 0) != 0) e(0);
+	if (oldlen % sizeof(*array)) e(0);
+
+	found = -1;
+	for (i = 0; i < oldlen / sizeof(*array); i++) {
+		/* Perform some basic checks. */
+		if (array[i].ki_pcbaddr == 0) e(0);
+		if (array[i].ki_ppcbaddr == 0) e(0);
+		if (array[i].ki_family != mib[1]) e(0);
+
+		if (mib[1] == AF_INET6) {
+			memcpy(&sin6, &array[i].ki_src, sizeof(sin6));
+			if (sin6.sin6_family != AF_INET6) e(0);
+			if (sin6.sin6_len != sizeof(sin6)) e(0);
+			lport = ntohs(sin6.sin6_port);
+
+			memcpy(&sin6, &array[i].ki_dst, sizeof(sin6));
+			if (sin6.sin6_family != AF_INET6) e(0);
+			if (sin6.sin6_len != sizeof(sin6)) e(0);
+			rport = ntohs(sin6.sin6_port);
+		} else {
+			memcpy(&sin, &array[i].ki_src, sizeof(sin));
+			if (sin.sin_family != AF_INET) e(0);
+			if (sin.sin_len != sizeof(sin)) e(0);
+			lport = ntohs(sin.sin_port);
+
+			memcpy(&sin, &array[i].ki_dst, sizeof(sin));
+			if (sin.sin_family != AF_UNSPEC) {
+				if (sin.sin_family != AF_INET) e(0);
+				if (sin.sin_len != sizeof(sin)) e(0);
+				rport = ntohs(sin.sin_port);
+			} else
+				rport = 0;
+		}
+
+		/* Try to match every PCB.  We must find at most one match. */
+		if (array[i].ki_protocol == protocol && lport == local_port &&
+		    rport == remote_port) {
+			if (found != -1) e(0);
+
+			found = (int)i;
+		}
+	}
+
+	if (found >= 0)
+		memcpy(ki, &array[found], sizeof(*ki));
+
+	free(array);
+
+	return (found != -1);
+}
+
+#ifdef NO_INET6
+const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
+const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
+
+void
+inet6_getscopeid(struct sockaddr_in6 * sin6 __unused, int flags __unused)
+{
+
+	/*
+	 * Nothing.  The tests linked to socklib make heavy use of IPv6, and
+	 * are expected to fail if IPv6 support is disabled at compile time.
+	 * Therefore, what this replacement function does is not relevant.
+	 */
+}
+#endif /* NO_INET6 */
+
+#define F_ANY	0x01	/* not bound, or bound to an 'any' address */
+#define F_V4	0x02	/* address is IPv4-mapped IPv6 address */
+#define F_REM	0x04	/* address is remote (not assigned to an interface) */
+#define F_MIX	0x08	/* address has non-loopback scope */
+
+/*
+ * Test local and remote IPv6 address handling on TCP or UDP sockets.
+ */
+void
+socklib_test_addrs(int type, int protocol)
+{
+	struct sockaddr_in6 sin6, sin6_any, sin6_any_scope, sin6_lo,
+	    sin6_lo_scope, sin6_ll_all, sin6_ll_lo, sin6_ll_rem, sin6_ll_kame,
+	    sin6_ll_bad, sin6_ll_mix, sin6_rem, sin6_v4_any, sin6_v4_lo,
+	    sin6_v4_rem, rsin6;
+	const struct sockaddr_in6 *sin6p;
+	const struct {
+		const struct sockaddr_in6 *addr;
+		int res;
+		int flags;
+		const struct sockaddr_in6 *name;
+	} bind_array[] = {
+		{ NULL,			0, F_ANY,	&sin6_any },
+		{ &sin6_any,		0, F_ANY,	&sin6_any },
+		{ &sin6_any_scope,	0, F_ANY,	&sin6_any },
+		{ &sin6_lo,		0, 0,		&sin6_lo },
+		{ &sin6_lo_scope,	0, 0,		&sin6_lo },
+		{ &sin6_ll_lo,		0, 0,		&sin6_ll_lo },
+		{ &sin6_v4_lo,		0, F_V4,	&sin6_v4_lo },
+		{ &sin6_rem,		EADDRNOTAVAIL },
+		{ &sin6_ll_all,		EADDRNOTAVAIL },
+		{ &sin6_ll_rem,		EADDRNOTAVAIL },
+		{ &sin6_ll_kame,	EINVAL },
+		{ &sin6_ll_bad,		ENXIO },
+		{ &sin6_v4_any,		EADDRNOTAVAIL },
+		{ &sin6_v4_rem,		EADDRNOTAVAIL },
+		/* The following entry MUST be last. */
+		{ &sin6_ll_mix,		EADDRNOTAVAIL },
+	}, *bp;
+	const struct {
+		const struct sockaddr_in6 *addr;
+		int res;
+		int flags;
+		const struct sockaddr_in6 *name;
+	} conn_array[] = {
+		{ &sin6_any,		EHOSTUNREACH, 0 },
+		{ &sin6_any_scope,	EHOSTUNREACH, 0 },
+		{ &sin6_ll_kame,	EINVAL, 0 },
+		{ &sin6_ll_bad,		ENXIO, 0 },
+		{ &sin6_v4_any,		EHOSTUNREACH, F_V4 },
+		{ &sin6_lo,		0, 0,		&sin6_lo },
+		{ &sin6_lo_scope,	0, 0,		&sin6_lo },
+		{ &sin6_ll_all,		0, 0,		&sin6_ll_lo },
+		{ &sin6_ll_lo,		0, 0,		&sin6_ll_lo },
+		{ &sin6_v4_lo,		0, F_V4,	&sin6_v4_lo },
+		{ &sin6_rem,		0, F_REM,	&sin6_rem },
+		{ &sin6_ll_rem,		0, F_REM,	&sin6_ll_rem },
+		{ &sin6_v4_rem,		0, F_V4|F_REM,	&sin6_v4_rem },
+		/* The following entry MUST be last. */
+		{ &sin6_ll_mix,		0, F_REM|F_MIX,	&sin6_ll_mix },
+	}, *cp;
+	struct ifaddrs *ifa, *ifp, *ifp2;
+	struct in6_ifreq ifr;
+	char name[IF_NAMESIZE], buf[1];
+	socklen_t len;
+	uint32_t port;
+	unsigned int i, j, ifindex, ifindex2, have_mix, found;
+	int r, fd, fd2, fd3, val, sfl, exp, link_state;
+
+	ifindex = if_nametoindex(LOOPBACK_IFNAME);
+	if (ifindex == 0) e(0);
+
+	/* An IPv6 'any' address - ::0. */
+	memset(&sin6_any, 0, sizeof(sin6_any));
+	sin6_any.sin6_len = sizeof(sin6_any);
+	sin6_any.sin6_family = AF_INET6;
+	memcpy(&sin6_any.sin6_addr, &in6addr_any, sizeof(sin6_any.sin6_addr));
+
+	/* An IPv6 'any' address, but with a bad scope ID set. */
+	memcpy(&sin6_any_scope, &sin6_any, sizeof(sin6_any_scope));
+	sin6_any_scope.sin6_scope_id = BAD_IFINDEX;
+
+	/* An IPv6 loopback address - ::1. */
+	memcpy(&sin6_lo, &sin6_any, sizeof(sin6_lo));
+	memcpy(&sin6_lo.sin6_addr, &in6addr_loopback,
+	    sizeof(sin6_lo.sin6_addr));
+
+	/* An IPv6 loopback address, but with a bad scope ID set. */
+	memcpy(&sin6_lo_scope, &sin6_lo, sizeof(sin6_lo_scope));
+	sin6_lo_scope.sin6_scope_id = BAD_IFINDEX;
+
+	/* An IPv6 link-local address without scope - fe80::1. */
+	memcpy(&sin6_ll_all, &sin6_any, sizeof(sin6_ll_all));
+	if (inet_pton(AF_INET6, LOOPBACK_IPV6_LL, &sin6_ll_all.sin6_addr) != 1)
+		e(0);
+
+	/* An IPv6 link-local address with the loopback scope - fe80::1%lo0. */
+	memcpy(&sin6_ll_lo, &sin6_ll_all, sizeof(sin6_ll_lo));
+	sin6_ll_lo.sin6_scope_id = ifindex;
+
+	/* An unassigned IPv6 link-local address - fe80::ffff%lo0. */
+	memcpy(&sin6_ll_rem, &sin6_ll_lo, sizeof(sin6_ll_rem));
+	if (inet_pton(AF_INET6, TEST_BLACKHOLE_IPV6_LL,
+	    &sin6_ll_rem.sin6_addr) != 1) e(0);
+
+	/* A KAME-style IPv6 link-local loopback address - fe80:ifindex::1. */
+	memcpy(&sin6_ll_kame, &sin6_ll_all, sizeof(sin6_ll_kame));
+	sin6_ll_kame.sin6_addr.s6_addr[2] = ifindex >> 8;
+	sin6_ll_kame.sin6_addr.s6_addr[3] = ifindex % 0xff;
+
+	/* An IPv6 link-local address with a bad scope - fe80::1%<bad>. */
+	memcpy(&sin6_ll_bad, &sin6_ll_all, sizeof(sin6_ll_bad));
+	sin6_ll_bad.sin6_scope_id = BAD_IFINDEX;
+
+	/* A global IPv6 address not assigned to any interface - ::2. */
+	memcpy(&sin6_rem, &sin6_any, sizeof(sin6_rem));
+	if (inet_pton(AF_INET6, TEST_BLACKHOLE_IPV6,
+	    &sin6_rem.sin6_addr) != 1) e(0);
+
+	/* An IPv4-mapped IPv6 address for 'any' - ::ffff:0.0.0.0. */
+	memcpy(&sin6_v4_any, &sin6_any, sizeof(sin6_v4_any));
+	if (inet_pton(AF_INET6, "::ffff:0:0", &sin6_v4_any.sin6_addr) != 1)
+		e(0);
+
+	/* An IPv4-mapped IPv6 loopback address - ::ffff:127.0.0.1. */
+	memcpy(&sin6_v4_lo, &sin6_any, sizeof(sin6_v4_lo));
+	if (inet_pton(AF_INET6, "::ffff:"LOOPBACK_IPV4,
+	    &sin6_v4_lo.sin6_addr) != 1) e(0);
+
+	/* An unassigned IPv4-mapped IPv6 address - ::ffff:127.255.0.254. */
+	memcpy(&sin6_v4_rem, &sin6_any, sizeof(sin6_v4_rem));
+	if (inet_pton(AF_INET6, "::ffff:"TEST_BLACKHOLE_IPV4,
+	    &sin6_v4_rem.sin6_addr) != 1) e(0);
+
+	/*
+	 * An IPv6 link-local address with a scope for another interface, for
+	 * example fe80::1%em0.  Since no other interfaces may be present, we
+	 * may not be able to generate such an address.
+	 */
+	have_mix = 0;
+	for (i = 1; i < BAD_IFINDEX; i++) {
+		if (if_indextoname(i, name) == NULL) {
+			if (errno != ENXIO) e(0);
+			continue;
+		}
+
+		if (!strcmp(name, LOOPBACK_IFNAME))
+			continue;
+
+		/* Found one! */
+		memcpy(&sin6_ll_mix, &sin6_ll_all, sizeof(sin6_ll_mix));
+		sin6_ll_mix.sin6_scope_id = i;
+		have_mix = 1;
+		break;
+	}
+
+	/*
+	 * Test a whole range of combinations of local and remote addresses,
+	 * both for TCP and UDP, and for UDP both for connect+send and sendto.
+	 * Not all addresses and not all combinations are compatible, and that
+	 * is exactly what we want to test.  We first test binding to local
+	 * addresses.  Then we test connect (and for UDP, on success, send)
+	 * with remote addresses on those local addresses that could be bound
+	 * to.  Finally, for UDP sockets, we separately test sendto.
+	 */
+	for (i = 0; i < __arraycount(bind_array) - !have_mix; i++) {
+		bp = &bind_array[i];
+
+		/* Test bind(2) and getsockname(2). */
+		if (bind_array[i].addr != NULL) {
+			if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+			val = 0;
+			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &val,
+			    sizeof(val)) != 0) e(0);
+
+			r = bind(fd, (struct sockaddr *)bp->addr,
+			    sizeof(*bp->addr));
+
+			/* Did the bind(2) call produce the expected result? */
+			if (r == 0) {
+				if (bp->res != 0) e(0);
+			} else
+				if (r != -1 || bp->res != errno) e(0);
+
+			/* The rest is for successful bind(2) calls. */
+			if (r != 0) {
+				if (close(fd) != 0) e(0);
+
+				continue;
+			}
+
+			/* Get the bound address. */
+			len = sizeof(sin6);
+			if (getsockname(fd, (struct sockaddr *)&sin6,
+			    &len) != 0) e(0);
+			if (len != sizeof(sin6)) e(0);
+
+			/* A port must be set.  Clear it for the comparison. */
+			if ((sin6.sin6_port == 0) == (type != SOCK_RAW)) e(0);
+
+			sin6.sin6_port = 0;
+			if (memcmp(&sin6, bp->name, sizeof(sin6)) != 0) e(0);
+
+			if (close(fd) != 0) e(0);
+		}
+
+		/* Test connect(2), send(2), and getpeername(2). */
+		for (j = 0; j < __arraycount(conn_array) - !have_mix; j++) {
+			cp = &conn_array[j];
+
+			/*
+			 * We cannot test remote addresses without having bound
+			 * to a local address, because we may end up generating
+			 * external traffic as a result.
+			 */
+			if ((bp->flags & F_ANY) && (cp->flags & F_REM))
+				continue;
+
+			/*
+			 * Use non-blocking sockets only if connecting is going
+			 * to take a while before ultimately failing; TCP only.
+			 */
+			sfl = ((cp->flags & F_REM) && (type == SOCK_STREAM)) ?
+			    SOCK_NONBLOCK : 0;
+			if ((fd = socket(AF_INET6, type | sfl, protocol)) < 0)
+				e(0);
+
+			val = 0;
+			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &val,
+			    sizeof(val)) != 0) e(0);
+
+			if (bp->addr != NULL) {
+				if (bind(fd, (struct sockaddr *)bp->addr,
+				    sizeof(*bp->addr)) != 0) e(0);
+
+				len = sizeof(sin6);
+				if (getsockname(fd, (struct sockaddr *)&sin6,
+				    &len) != 0) e(0);
+
+				port = sin6.sin6_port;
+			} else
+				port = 0;
+
+			memcpy(&sin6, cp->addr, sizeof(sin6));
+			sin6.sin6_port = htons(TEST_PORT_A);
+
+			if ((exp = cp->res) == 0 && type == SOCK_STREAM) {
+				if (cp->flags & F_REM)
+					exp = EINPROGRESS;
+				if (cp->flags & F_MIX)
+					exp = EHOSTUNREACH;
+			}
+
+			/*
+			 * The IPv4/IPv6 mismatch check precedes most other
+			 * checks, but (currently) not the bad-scope-ID check.
+			 */
+			if (exp != ENXIO && !(bp->flags & F_ANY) &&
+			    ((bp->flags ^ cp->flags) & F_V4))
+				exp = EINVAL;
+
+			/*
+			 * Create a listening or receiving socket if we expect
+			 * the test to succeed and operate on a loopback target
+			 * so that we can test addresses on that end as well.
+			 */
+			if (exp == 0 && !(cp->flags & F_REM)) {
+				if ((fd2 = socket(AF_INET6, type,
+				    protocol)) < 0) e(0);
+
+				val = 0;
+				if (setsockopt(fd2, IPPROTO_IPV6, IPV6_V6ONLY,
+				    &val, sizeof(val)) != 0) e(0);
+
+				val = 1;
+				if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR,
+				    &val, sizeof(val)) != 0) e(0);
+
+				memcpy(&rsin6, cp->name, sizeof(rsin6));
+				rsin6.sin6_port = htons(TEST_PORT_A);
+
+				if (bind(fd2, (struct sockaddr *)&rsin6,
+				    sizeof(rsin6)) != 0) e(0);
+
+				if (type == SOCK_STREAM && listen(fd2, 1) != 0)
+					e(0);
+			} else
+				fd2 = -1;
+
+			r = connect(fd, (struct sockaddr *)&sin6,
+			    sizeof(sin6));
+
+			if (r == 0) {
+				if (exp != 0) e(0);
+			} else
+				if (r != -1 || exp != errno) e(0);
+
+			if (r != 0) {
+				if (close(fd) != 0) e(0);
+
+				continue;
+			}
+
+			/*
+			 * Connecting should always assign a local address if
+			 * no address was assigned, even if a port was assigned
+			 * already.  In the latter case, the port number must
+			 * obviously not change.  Test getsockname(2) again, if
+			 * we can.
+			 */
+			len = sizeof(sin6);
+			if (getsockname(fd, (struct sockaddr *)&sin6,
+			    &len) != 0) e(0);
+			if (len != sizeof(sin6)) e(0);
+
+			if (type != SOCK_RAW) {
+				if (sin6.sin6_port == 0) e(0);
+				if (port != 0 && port != sin6.sin6_port) e(0);
+			} else
+				if (sin6.sin6_port != 0) e(0);
+			port = sin6.sin6_port;
+
+			if (!(bp->flags & F_ANY))
+				sin6p = bp->name;
+			else if (!(cp->flags & F_REM))
+				sin6p = cp->name;
+			else
+				sin6p = NULL; /* can't test: may vary */
+
+			if (sin6p != NULL) {
+				sin6.sin6_port = 0;
+
+				if (memcmp(&sin6, sin6p, sizeof(sin6)) != 0)
+					e(0);
+			}
+
+			/*
+			 * Test getpeername(2).  It should always be the
+			 * "normalized" version of the target address.
+			 */
+			len = sizeof(sin6);
+			if (getpeername(fd, (struct sockaddr *)&sin6,
+			    &len) != 0) e(0);
+			if (len != sizeof(sin6)) e(0);
+
+			if (type != SOCK_RAW) {
+				if (sin6.sin6_port != htons(TEST_PORT_A)) e(0);
+			} else {
+				if (sin6.sin6_port != 0) e(0);
+			}
+
+			sin6.sin6_port = 0;
+			if (memcmp(&sin6, cp->name, sizeof(sin6)) != 0) e(0);
+
+			/* Test send(2) on UDP sockets. */
+			if (type != SOCK_STREAM) {
+				r = send(fd, "A", 1, 0);
+
+				/*
+				 * For remote (rejected) addresses and scope
+				 * mixing, actual send calls may fail after the
+				 * connect succeeded.
+				 */
+				if (r == -1 &&
+				    !(cp->flags & (F_REM | F_MIX))) e(0);
+				else if (r != -1 && r != 1) e(0);
+
+				if (r != 1 && fd2 != -1) {
+					if (close(fd2) != 0) e(0);
+					fd2 = -1;
+				}
+			}
+
+			if (fd2 == -1) {
+				if (close(fd) != 0) e(0);
+
+				continue;
+			}
+
+			/*
+			 * The connect or send call succeeded, so we should now
+			 * be able to check the other end.
+			 */
+			if (type == SOCK_STREAM) {
+				/* Test accept(2). */
+				len = sizeof(sin6);
+				if ((fd3 = accept(fd2,
+				    (struct sockaddr *)&sin6, &len)) < 0) e(0);
+				if (len != sizeof(sin6)) e(0);
+
+				if (close(fd2) != 0) e(0);
+
+				if (sin6.sin6_port != port) e(0);
+				sin6.sin6_port = 0;
+
+				if (memcmp(&sin6, sin6p, sizeof(sin6)) != 0)
+					e(0);
+
+				/* Test getpeername(2). */
+				if (getpeername(fd3, (struct sockaddr *)&sin6,
+				    &len) != 0) e(0);
+				if (len != sizeof(sin6)) e(0);
+
+				if (sin6.sin6_port != port) e(0);
+				sin6.sin6_port = 0;
+
+				if (memcmp(&sin6, sin6p, sizeof(sin6)) != 0)
+					e(0);
+
+				/* Test getsockname(2). */
+				if (getsockname(fd3, (struct sockaddr *)&sin6,
+				    &len) != 0) e(0);
+				if (len != sizeof(sin6)) e(0);
+
+				if (sin6.sin6_port != htons(TEST_PORT_A)) e(0);
+				sin6.sin6_port = 0;
+
+				if (memcmp(&sin6, cp->name, sizeof(sin6)) != 0)
+					e(0);
+
+				if (close(fd3) != 0) e(0);
+			} else {
+				/* Test recvfrom(2). */
+				len = sizeof(sin6);
+				if (recvfrom(fd2, buf, sizeof(buf), 0,
+				    (struct sockaddr *)&sin6, &len) != 1) e(0);
+
+				if (buf[0] != 'A') e(0);
+				if (len != sizeof(sin6)) e(0);
+
+				if (sin6.sin6_port != port) e(0);
+				sin6.sin6_port = 0;
+
+				if (memcmp(&sin6, sin6p, sizeof(sin6)) != 0)
+					e(0);
+
+				if (close(fd2) != 0) e(0);
+			}
+
+			if (close(fd) != 0) e(0);
+		}
+
+		if (type == SOCK_STREAM)
+			continue;
+
+		/* Test sendto(2). */
+		for (j = 0; j < __arraycount(conn_array) - !have_mix; j++) {
+			cp = &conn_array[j];
+
+			/*
+			 * We cannot test remote addresses without having bound
+			 * to a local address, because we may end up generating
+			 * external traffic as a result.
+			 */
+			if ((bp->flags & F_ANY) && (cp->flags & F_REM))
+				continue;
+
+			if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+			val = 0;
+			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &val,
+			    sizeof(val)) != 0) e(0);
+
+			if (bp->addr != NULL) {
+				if (bind(fd, (struct sockaddr *)bp->addr,
+				   sizeof(*bp->addr)) != 0) e(0);
+
+				len = sizeof(sin6);
+				if (getsockname(fd, (struct sockaddr *)&sin6,
+				    &len) != 0) e(0);
+
+				port = sin6.sin6_port;
+			} else
+				port = 0;
+
+			memcpy(&sin6, cp->addr, sizeof(sin6));
+			if (type != SOCK_RAW)
+				sin6.sin6_port = htons(TEST_PORT_B);
+
+			if ((exp = cp->res) == 0) {
+				if (cp->flags & (F_REM | F_MIX))
+					exp = EHOSTUNREACH;
+			}
+
+			/*
+			 * The IPv4/IPv6 mismatch check precedes most other
+			 * checks, but (currently) not the bad-scope-ID check.
+			 */
+			if (exp != ENXIO && !(bp->flags & F_ANY) &&
+			    ((bp->flags ^ cp->flags) & F_V4))
+				exp = EINVAL;
+
+			/*
+			 * If we expect the sendto(2) call to succeed and to be
+			 * able to receive the packet, create a receiving
+			 * socket to test recvfrom(2) addresses.
+			 */
+			if (exp == 0 && !(cp->flags & F_REM)) {
+				if ((fd2 = socket(AF_INET6, type,
+				    protocol)) < 0) e(0);
+
+				val = 0;
+				if (setsockopt(fd2, IPPROTO_IPV6, IPV6_V6ONLY,
+				    &val, sizeof(val)) != 0) e(0);
+
+				val = 1;
+				if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR,
+				    &val, sizeof(val)) != 0) e(0);
+
+				memcpy(&rsin6, cp->name, sizeof(rsin6));
+				if (type != SOCK_RAW)
+					rsin6.sin6_port = htons(TEST_PORT_B);
+
+				if (bind(fd2, (struct sockaddr *)&rsin6,
+				    sizeof(rsin6)) != 0) e(0);
+			} else
+				fd2 = -1;
+
+			r = sendto(fd, "B", 1, 0, (struct sockaddr *)&sin6,
+			    sizeof(sin6));
+
+			if (r != 1) {
+				if (r != -1 || exp != errno) e(0);
+
+				if (close(fd) != 0) e(0);
+
+				continue;
+			}
+
+			if (exp != 0) e(0);
+
+			/*
+			 * The sendto(2) call should assign a local port to the
+			 * socket if none was assigned before, but it must not
+			 * assign a local address.
+			 */
+			len = sizeof(sin6);
+			if (getsockname(fd, (struct sockaddr *)&sin6,
+			    &len) != 0) e(0);
+			if (len != sizeof(sin6)) e(0);
+
+			if (type != SOCK_RAW) {
+				if (sin6.sin6_port == 0) e(0);
+				if (port != 0 && port != sin6.sin6_port) e(0);
+			} else
+				if (sin6.sin6_port != 0) e(0);
+			port = sin6.sin6_port;
+
+			sin6.sin6_port = 0;
+			if (memcmp(&sin6, bp->name, sizeof(sin6)) != 0) e(0);
+
+			if (fd2 != -1) {
+				/* Test recvfrom(2) on the receiving socket. */
+				len = sizeof(sin6);
+				if (recvfrom(fd2, buf, sizeof(buf), 0,
+				    (struct sockaddr *)&sin6, &len) != 1) e(0);
+
+				if (buf[0] != 'B') e(0);
+				if (len != sizeof(sin6)) e(0);
+
+				if (sin6.sin6_port != port) e(0);
+				sin6.sin6_port = 0;
+
+				if (bp->flags & F_ANY)
+					sin6p = cp->name;
+				else
+					sin6p = bp->name;
+
+				if (memcmp(&sin6, sin6p, sizeof(sin6)) != 0)
+					e(0);
+
+				if (close(fd2) != 0) e(0);
+			}
+
+			if (close(fd) != 0) e(0);
+		}
+	}
+
+	/*
+	 * Test that scoped addresses actually work as expected.  For this we
+	 * need two interfaces with assigned link-local addresses, one of which
+	 * being the loopback interface.  Start by finding another one.
+	 */
+	if (getifaddrs(&ifa) != 0) e(0);
+
+	found = 0;
+	for (ifp = ifa; ifp != NULL; ifp = ifp->ifa_next) {
+		if (strcmp(ifp->ifa_name, LOOPBACK_IFNAME) == 0)
+			continue;
+
+		if (!(ifp->ifa_flags & IFF_UP) || ifp->ifa_addr == NULL ||
+		    ifp->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		memcpy(&sin6, ifp->ifa_addr, sizeof(sin6));
+
+		if (!IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
+			continue;
+
+		/*
+		 * Not only the interface, but also the link has to be up for
+		 * this to work.  lwIP will drop all packets, including those
+		 * sent to locally assigned addresses, if the link is down.
+		 * Of course, figuring out whether the interface link is down
+		 * is by no means convenient, especially if we want to do it
+		 * right (i.e., not rely on getifaddrs' address sorting).
+		 */
+		link_state = LINK_STATE_DOWN;
+
+		for (ifp2 = ifa; ifp2 != NULL; ifp2 = ifp2->ifa_next) {
+			if (!strcmp(ifp2->ifa_name, ifp->ifa_name) &&
+			    ifp2->ifa_addr != NULL &&
+			    ifp2->ifa_addr->sa_family == AF_LINK &&
+			    ifp2->ifa_data != NULL) {
+				memcpy(&link_state, &((struct if_data *)
+				    ifp2->ifa_data)->ifi_link_state,
+				    sizeof(link_state));
+
+				break;
+			}
+		}
+
+		if (link_state == LINK_STATE_DOWN)
+			continue;
+
+		/*
+		 * In addition, the address has to be in a state where it can
+		 * be used as source address.  In practice, that means it must
+		 * not be in ND6 duplicated or tentative state.
+		 */
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, ifp->ifa_name, sizeof(ifr.ifr_name));
+		memcpy(&ifr.ifr_addr, &sin6, sizeof(sin6));
+
+		if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) e(0);
+
+		if (ioctl(fd, SIOCGIFAFLAG_IN6, &ifr) != 0) e(0);
+
+		if (close(fd) != 0) e(0);
+
+		if (ifr.ifr_ifru.ifru_flags6 &
+		    (IN6_IFF_DUPLICATED | IN6_IFF_TENTATIVE))
+			continue;
+
+		/* Compensate for poor decisions made by the KAME project. */
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL);
+
+		if (sin6.sin6_scope_id == 0 || sin6.sin6_scope_id == ifindex)
+			e(0);
+
+		found = 1;
+
+		break;
+	}
+
+	freeifaddrs(ifa);
+
+	/*
+	 * If no second interface with a link-local address was found, we
+	 * cannot perform the rest of this subtest.
+	 */
+	if (!found)
+		return;
+
+	/*
+	 * Create one socket that binds to the link-local address of the
+	 * non-loopback interface.  The main goal of this subtest is to ensure
+	 * that traffic directed to that same link-local address but with the
+	 * loopback scope ID does not arrive on this socket.
+	 */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	if (bind(fd, (struct sockaddr *)&sin6, sizeof(sin6)) != 0) e(0);
+
+	len = sizeof(sin6);
+	if (getsockname(fd, (struct sockaddr *)&sin6, &len) != 0) e(0);
+	if (len != sizeof(sin6)) e(0);
+
+	ifindex2 = sin6.sin6_scope_id;
+
+	if (type == SOCK_STREAM) {
+		if (listen(fd, 2) != 0) e(0);
+
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		/* Connecting to the loopback-scope address should time out. */
+		signal(SIGALRM, socklib_got_signal);
+		alarm(1);
+
+		sin6.sin6_scope_id = ifindex;
+
+		if (connect(fd2, (struct sockaddr *)&sin6, sizeof(sin6)) != -1)
+			e(0);
+
+		if (errno != EINTR) e(0);
+
+		if (close(fd2) != 0) e(0);
+
+		/* Connecting to the real interface's address should work. */
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		sin6.sin6_scope_id = ifindex2;
+
+		if (connect(fd2, (struct sockaddr *)&sin6, sizeof(sin6)) != 0)
+			e(0);
+
+		if (close(fd2) != 0) e(0);
+	} else {
+		/*
+		 * First connect+send.  Sending to the loopback-scope address
+		 * should result in a rejected packet.
+		 */
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		sin6.sin6_scope_id = ifindex;
+
+		if (connect(fd2, (struct sockaddr *)&sin6, sizeof(sin6)) != 0)
+			e(0);
+
+		if (send(fd2, "C", 1, 0) != -1) e(0);
+		if (errno != EHOSTUNREACH) e(0);
+
+		if (close(fd2) != 0) e(0);
+
+		/* Sending to the real-interface address should work. */
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		sin6.sin6_scope_id = ifindex2;
+
+		if (connect(fd2, (struct sockaddr *)&sin6, sizeof(sin6)) != 0)
+			e(0);
+
+		if (send(fd2, "D", 1, 0) != 1) e(0);
+
+		if (close(fd2) != 0) e(0);
+
+		/*
+		 * Then sendto.  Sending to the loopback-scope address should
+		 * result in a rejected packet.
+		 */
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		sin6.sin6_scope_id = ifindex;
+
+		if (sendto(fd2, "E", 1, 0, (struct sockaddr *)&sin6,
+		    sizeof(sin6)) != -1) e(0);
+		if (errno != EHOSTUNREACH) e(0);
+
+		if (close(fd2) != 0) e(0);
+
+		/* Sending to the real-interface address should work. */
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		sin6.sin6_scope_id = ifindex2;
+
+		if (sendto(fd2, "F", 1, 0, (struct sockaddr *)&sin6,
+		    sizeof(sin6)) != 1) e(0);
+
+		if (close(fd2) != 0) e(0);
+
+		len = sizeof(sin6);
+		if (recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&sin6,
+		    &len) != 1) e(0);
+		if (buf[0] != 'D') e(0);
+
+		if (recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&sin6,
+		    &len) != 1) e(0);
+		if (buf[0] != 'F') e(0);
+	}
+
+	if (close(fd) != 0) e(0);
+}
+
+/*
+ * Test multicast support for the given socket type, which may be SOCK_DGRAM or
+ * SOCK_RAW.
+ */
+void
+socklib_test_multicast(int type, int protocol)
+{
+	struct sockaddr_in sinA, sinB, sin_array[3];
+	struct sockaddr_in6 sin6A, sin6B, sin6_array[3];
+	struct ip_mreq imr;
+	struct ipv6_mreq ipv6mr;
+	struct in6_pktinfo ipi6;
+	struct iovec iov;
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	socklen_t len, hdrlen;
+	unsigned int count, ifindex, ifindex2;
+	union {
+		struct cmsghdr cmsg;
+		char buf[256];
+	} control;
+	char buf[sizeof(struct ip) + 1], *buf2, name[IF_NAMESIZE];
+	uint8_t byte, ttl;
+	int i, j, r, fd, fd2, val;
+
+	/*
+	 * Start with testing join/leave mechanics, for both IPv4 and IPv6.
+	 * Note that we cannot test specifying no interface along with a
+	 * multicast address (except for scoped IPv6 addresses), because the
+	 * auto-selected interface is likely a public one, and joining the
+	 * group will thus create external traffic, which is generally
+	 * something we want to avoid in the tests.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	memset(&imr, 0, sizeof(imr));
+
+	/* Basic join-leave combo. */
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	/* Joining the same multicast group twice is an error. */
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != EEXIST) e(0);
+
+	/* If an interface address is specified, it must match an interface. */
+	imr.imr_interface.s_addr = htonl(TEST_BLACKHOLE_IPV4);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	/* The given multicast address must be an actual multicast address. */
+	imr.imr_multiaddr.s_addr = htonl(INADDR_ANY);
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	imr.imr_multiaddr.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	/* Leaving a multicast group not joined is an error. */
+	imr.imr_multiaddr.s_addr =
+	    htonl(ntohl(inet_addr(TEST_MULTICAST_IPV4)) + 1);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/*
+	 * When leaving a group, an interface address need not be specified,
+	 * even if one was specified when joining.  As mentioned, we cannot
+	 * test joining the same address on multiple interfaces, though.
+	 */
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	imr.imr_interface.s_addr = htonl(INADDR_ANY);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	/* There must be a reasonable per-socket group membership limit. */
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	for (count = 0; count < IP_MAX_MEMBERSHIPS + 1; count++) {
+		imr.imr_multiaddr.s_addr =
+		    htonl(ntohl(inet_addr(TEST_MULTICAST_IPV4)) + count);
+
+		r = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+		    sizeof(imr));
+
+		if (r != 0) {
+			if (r != -1 || errno != ENOBUFS) e(0);
+			break;
+		}
+	}
+	if (count < 8 || count > IP_MAX_MEMBERSHIPS) e(0);
+
+	/* Test leaving a group at the start of the per-socket list. */
+	imr.imr_multiaddr.s_addr =
+	    htonl(ntohl(inet_addr(TEST_MULTICAST_IPV4)) + count - 1);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/* Test leaving a group in the middle of the per-socket list. */
+	imr.imr_multiaddr.s_addr =
+	    htonl(ntohl(inet_addr(TEST_MULTICAST_IPV4)) + count / 2);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/* Test leaving a group at the end of the per-socket list. */
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	/* Still basic join/leave mechanics.. on to IPv6.. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&ipv6mr, 0, sizeof(ipv6mr));
+
+	/* Basic join-leave combo. */
+	ifindex = if_nametoindex(LOOPBACK_IFNAME);
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	/* Joining the same multicast group twice is an error. */
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EEXIST) e(0);
+
+	/* If an interface index is specified, it must be valid. */
+	ipv6mr.ipv6mr_interface = BAD_IFINDEX;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ENXIO) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ENXIO) e(0);
+
+	ipv6mr.ipv6mr_interface = 0x80000000UL | ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ENXIO) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ENXIO) e(0);
+
+	/* The given multicast address must be an actual multicast address. */
+	ipv6mr.ipv6mr_interface = ifindex;
+	memcpy(&ipv6mr.ipv6mr_multiaddr, &in6addr_any, sizeof(in6addr_any));
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	memcpy(&ipv6mr.ipv6mr_multiaddr, &in6addr_loopback,
+	    sizeof(in6addr_loopback));
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	/* Leaving a multicast group not joined is an error. */
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_multiaddr.s6_addr[15]++;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/*
+	 * When leaving a group, an interface index need not be specified,
+	 * even if one was specified when joining.  If one is specified, it
+	 * must match, though.  As mentioned, we cannot test joining the same
+	 * address on multiple interfaces, though.
+	 */
+	ipv6mr.ipv6mr_multiaddr.s6_addr[15]--;
+	ipv6mr.ipv6mr_interface = ifindex + 1; /* lazy: may or may not exist */
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ENXIO && errno != ESRCH) e(0);
+
+	ipv6mr.ipv6mr_interface = 0;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	/* For link-local addresses, an interface must always be specified. */
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = 0;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	ipv6mr.ipv6mr_interface = 0;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	/* IPv4-mapped IPv6 multicast addresses are currently not supported. */
+	val = 0;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &val, sizeof(val)) != 0)
+		e(0);
+
+	if (inet_pton(AF_INET6, "::ffff:"TEST_MULTICAST_IPV4,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	/*
+	 * There must be a reasonable per-socket group membership limit.
+	 * Apparently there is no IPv6 equivalent of IP_MAX_MEMBERSHIPS..
+	 */
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	for (count = 0; count < IP_MAX_MEMBERSHIPS + 1; count++) {
+		r = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+		    sizeof(ipv6mr));
+
+		if (r != 0) {
+			if (r != -1 || errno != ENOBUFS) e(0);
+			break;
+		}
+
+		ipv6mr.ipv6mr_multiaddr.s6_addr[15]++;
+	}
+	if (count < 8 || count > IP_MAX_MEMBERSHIPS) e(0);
+
+	/* Test leaving a group at the start of the per-socket list. */
+	ipv6mr.ipv6mr_multiaddr.s6_addr[15]--;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/* Test leaving a group in the middle of the per-socket list. */
+	ipv6mr.ipv6mr_multiaddr.s6_addr[15] -= count / 2;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	/* Test leaving a group at the end of the per-socket list. */
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != ESRCH) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * Test sending multicast packets, multicast transmission options, and
+	 * basic receipt.  Note that we cannot test IP(V6)_MULTICAST_LOOP
+	 * because no extra duplicates are generated on loopback interfaces.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	/* For UDP, get an assigned port number. */
+	memset(&sinA, 0, sizeof(sinA));
+	sinA.sin_family = AF_INET;
+
+	if (type == SOCK_DGRAM) {
+		sinA.sin_addr.s_addr = htonl(INADDR_ANY);
+
+		if (bind(fd, (struct sockaddr *)&sinA,
+		    sizeof(sinA)) != 0) e(0);
+
+		len = sizeof(sinA);
+		if (getsockname(fd, (struct sockaddr *)&sinA, &len) != 0) e(0);
+	}
+
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	/* Regular packet, default unicast TTL, sendto. */
+	sinA.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (sendto(fd2, "A", 1, 0, (struct sockaddr *)&sinA,
+	    sizeof(sinA)) != 1) e(0);
+
+	/* Multicast packet, default multicast TTL, sendto. */
+	if (setsockopt(fd2, IPPROTO_IP, IP_MULTICAST_IF, &sinA.sin_addr,
+	    sizeof(sinA.sin_addr)) != 0) e(0);
+
+	sinA.sin_addr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+
+	if (sendto(fd2, "B", 1, 0, (struct sockaddr *)&sinA,
+	    sizeof(sinA)) != 1) e(0);
+
+	/* Multicast packet, custom multicast TTL, connect+send. */
+	byte = 123;
+	if (setsockopt(fd2, IPPROTO_IP, IP_MULTICAST_TTL, &byte,
+	    sizeof(byte)) != 0) e(0);
+
+	if (connect(fd2, (struct sockaddr *)&sinA, sizeof(sinA)) != 0) e(0);
+
+	if (send(fd2, "C", 1, 0) != 1) e(0);
+
+	/* Receive and validate what we sent. */
+	len = sizeof(sinA);
+	if (getsockname(fd2, (struct sockaddr *)&sinA, &len) != 0) e(0);
+
+	len = sizeof(ttl);
+	if (getsockopt(fd2, IPPROTO_IP, IP_TTL, &ttl, &len) != 0) e(0);
+
+	val = 1;
+	if (setsockopt(fd, IPPROTO_IP, IP_RECVTTL, &val, sizeof(val)) != 0)
+		e(0);
+
+	hdrlen = (type == SOCK_RAW) ? sizeof(struct ip) : 0;
+
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = buf;
+	iov.iov_len = hdrlen + 1;
+
+	for (i = 0; i < 3; ) {
+		memset(&msg, 0, sizeof(msg));
+		msg.msg_name = &sinB;
+		msg.msg_namelen = sizeof(sinB);
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = control.buf;
+		msg.msg_controllen = sizeof(control);
+
+		r = recvmsg(fd, &msg, 0);
+		if (r < 0) e(0);
+
+		if (msg.msg_namelen != sizeof(sinB)) e(0);
+
+		/*
+		 * There is a tiny possibility that we receive other packets
+		 * on the receiving socket, as it is not bound to a particular
+		 * address, and there is currently no way to bind a socket to
+		 * a particular interface.  We therefore skip packets not from
+		 * the sending socket, conveniently testing the accuracy of the
+		 * reported source address as a side effect.
+		 */
+		if (memcmp(&sinA, &sinB, sizeof(sinA)))
+			continue;
+
+		if (r != hdrlen + 1) e(0);
+		if (buf[hdrlen] != 'A' + i) e(0);
+
+		if (msg.msg_flags & MSG_BCAST) e(0);
+
+		if ((cmsg = CMSG_FIRSTHDR(&msg)) == NULL) e(0);
+		if (cmsg->cmsg_level != IPPROTO_IP) e(0);
+		if (cmsg->cmsg_type != IP_TTL) e(0);
+		if (cmsg->cmsg_len != CMSG_LEN(sizeof(byte))) e(0);
+		memcpy(&byte, CMSG_DATA(cmsg), sizeof(byte));
+
+		switch (i) {
+		case 0:
+			if (msg.msg_flags & MSG_MCAST) e(0);
+			if (byte != ttl) e(0);
+			break;
+		case 1:
+			if (!(msg.msg_flags & MSG_MCAST)) e(0);
+			if (byte != 1) e(0);
+			break;
+		case 2:
+			if (!(msg.msg_flags & MSG_MCAST)) e(0);
+			if (byte != 123) e(0);
+			break;
+		}
+
+		i++;
+	}
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/* Still the send tests, but now IPv6.. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	/* For UDP, get an assigned port number. */
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sin6A,
+		    sizeof(sin6A)) != 0) e(0);
+
+		len = sizeof(sin6A);
+		if (getsockname(fd, (struct sockaddr *)&sin6A, &len) != 0)
+			e(0);
+	}
+
+	memcpy(&sin6B, &sin6A, sizeof(sin6B));
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	/* Regular packet, default unicast TTL, sendto. */
+	if (inet_pton(AF_INET6, LOOPBACK_IPV6_LL, &sin6A.sin6_addr) != 1) e(0);
+	sin6A.sin6_scope_id = ifindex;
+
+	if (sendto(fd2, "D", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	/* Multicast packet, default multicast TTL, sendto. */
+	val = (int)ifindex;
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &sin6A.sin6_addr) != 1) e(0);
+	sin6A.sin6_scope_id = 0;
+
+	if (sendto(fd2, "E", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	/* Multicast packet, custom multicast TTL, connect+send. */
+	val = 125;
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &val,
+	    sizeof(val)) != 0) e(0);
+
+	if (connect(fd2, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0) e(0);
+
+	if (send(fd2, "F", 1, 0) != 1) e(0);
+
+	len = sizeof(sin6A);
+	if (getsockname(fd2, (struct sockaddr *)&sin6A, &len) != 0) e(0);
+
+	/*
+	 * Repeat the last two tests, but now with a link-local multicast
+	 * address.  In particular link-local destination addresses do not need
+	 * a zone ID, and the system should be smart enough to pick the right
+	 * zone ID if an outgoing multicast interface is configured.  Zone
+	 * violations should be detected and result in errors.
+	 */
+	if (close(fd2) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	if (bind(fd2, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0) e(0);
+
+	memcpy(&sin6A, &sin6B, sizeof(sin6A));
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	/* Link-local multicast packet, sendto. */
+	val = (int)ifindex;
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &sin6A.sin6_addr) != 1) e(0);
+	sin6A.sin6_scope_id = 0;
+
+	if (sendto(fd2, "G", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	sin6A.sin6_scope_id = ifindex + 1; /* lazy: may or may not be valid */
+
+	if (sendto(fd2, "X", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != -1) e(0);
+	if (errno != ENXIO && errno != EHOSTUNREACH) e(0);
+
+	sin6A.sin6_scope_id = ifindex;
+
+	if (sendto(fd2, "H", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	/* Link-local multicast packet, connect+send. */
+	sin6A.sin6_scope_id = 0;
+
+	if (connect(fd2, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0) e(0);
+
+	if (send(fd2, "I", 1, 0) != 1) e(0);
+
+	len = sizeof(sin6A);
+	if (getsockname(fd2, (struct sockaddr *)&sin6A, &len) != 0) e(0);
+
+	/* Receive and validate what we sent. */
+	len = sizeof(val);
+	if (getsockopt(fd2, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &val,
+	    &len) != 0) e(0);
+	ttl = (uint8_t)val;
+
+	val = 1;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &val,
+	    sizeof(val)) != 0) e(0);
+
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = buf;
+	iov.iov_len = 1;
+
+	for (i = 0; i < 6; ) {
+		memset(&msg, 0, sizeof(msg));
+		msg.msg_name = &sin6B;
+		msg.msg_namelen = sizeof(sin6B);
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = control.buf;
+		msg.msg_controllen = sizeof(control);
+
+		r = recvmsg(fd, &msg, 0);
+		if (r < 0) e(0);
+
+		if (msg.msg_namelen != sizeof(sin6B)) e(0);
+
+		if (memcmp(&sin6A, &sin6B, sizeof(sin6A)))
+			continue;
+
+		if (r != 1) e(0);
+		if (buf[0] != 'D' + i) e(0);
+
+		if (msg.msg_flags & MSG_BCAST) e(0);
+
+		if ((cmsg = CMSG_FIRSTHDR(&msg)) == NULL) e(0);
+		if (cmsg->cmsg_level != IPPROTO_IPV6) e(0);
+		if (cmsg->cmsg_type != IPV6_HOPLIMIT) e(0);
+		if (cmsg->cmsg_len != CMSG_LEN(sizeof(val))) e(0);
+		memcpy(&val, CMSG_DATA(cmsg), sizeof(val));
+
+		switch (i) {
+		case 0:
+			if (msg.msg_flags & MSG_MCAST) e(0);
+			if (val != (int)ttl) e(0);
+			break;
+		case 1:
+		case 3:
+		case 4:
+		case 5:
+			if (!(msg.msg_flags & MSG_MCAST)) e(0);
+			if (val != 1) e(0);
+			break;
+		case 2:
+			if (!(msg.msg_flags & MSG_MCAST)) e(0);
+			if (val != 125) e(0);
+			break;
+		}
+
+		i++;
+	}
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * Test receiving multicast packets on a bound socket.  We have already
+	 * tested receiving packets on an unbound socket, so we need not
+	 * incorporate that into this test as well.
+	 */
+	memset(sin_array, 0, sizeof(sin_array));
+	sin_array[0].sin_family = AF_INET;
+	sin_array[0].sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	sin_array[1].sin_family = AF_INET;
+	sin_array[1].sin_addr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	sin_array[2].sin_family = AF_INET;
+	sin_array[2].sin_addr.s_addr =
+	    htonl(ntohl(sin_array[1].sin_addr.s_addr) + 1);
+
+	for (i = 0; i < __arraycount(sin_array); i++) {
+		if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+
+		if (bind(fd, (struct sockaddr *)&sin_array[i],
+		    sizeof(sin_array[i])) != 0) e(0);
+
+		imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+		memcpy(&imr.imr_multiaddr, &sin_array[1].sin_addr,
+		    sizeof(imr.imr_multiaddr));
+		if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+		    sizeof(imr)) != 0) e(0);
+
+		memcpy(&imr.imr_multiaddr, &sin_array[2].sin_addr,
+		    sizeof(imr.imr_multiaddr));
+		if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+		    sizeof(imr)) != 0) e(0);
+
+		len = sizeof(sinA);
+		if (getsockname(fd, (struct sockaddr *)&sinA, &len) != 0) e(0);
+
+		if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+		if (setsockopt(fd2, IPPROTO_IP, IP_MULTICAST_IF,
+		    &imr.imr_interface, sizeof(imr.imr_interface)) != 0) e(0);
+
+		for (j = 0; j < __arraycount(sin_array); j++) {
+			memcpy(&sinA.sin_addr, &sin_array[j].sin_addr,
+			    sizeof(sinA.sin_addr));
+
+			byte = 'A' + j;
+			if (sendto(fd2, &byte, sizeof(byte), 0,
+			    (struct sockaddr *)&sinA,
+			    sizeof(sinA)) != sizeof(byte)) e(0);
+		}
+
+		if (recv(fd, buf, sizeof(buf), 0) !=
+		    hdrlen + sizeof(byte)) e(0);
+		if (buf[hdrlen] != 'A' + i) e(0);
+
+		if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+		if (errno != EWOULDBLOCK) e(0);
+
+		if (close(fd2) != 0) e(0);
+		if (close(fd) != 0) e(0);
+	}
+
+	/* Still testing receiving on bound sockets, now IPv6.. */
+	memset(sin6_array, 0, sizeof(sin6_array));
+	sin6_array[0].sin6_family = AF_INET6;
+	memcpy(&sin6_array[0].sin6_addr, &in6addr_loopback,
+	    sizeof(sin6_array[0].sin6_addr));
+	sin6_array[1].sin6_family = AF_INET6;
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &sin6_array[1].sin6_addr) != 1) e(0);
+	sin6_array[2].sin6_family = AF_INET6;
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &sin6_array[2].sin6_addr) != 1) e(0);
+
+	/*
+	 * As with unicast addresses, binding to link-local multicast addresses
+	 * requires a proper zone ID.
+	 */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	if (bind(fd, (struct sockaddr *)&sin6_array[2],
+	    sizeof(sin6_array[2])) != -1) e(0);
+	if (errno != EADDRNOTAVAIL) e(0);
+
+	sin6_array[2].sin6_scope_id = BAD_IFINDEX;
+
+	if (bind(fd, (struct sockaddr *)&sin6_array[2],
+	    sizeof(sin6_array[2])) != -1) e(0);
+	if (errno != ENXIO) e(0);
+
+	sin6_array[2].sin6_scope_id = ifindex;
+
+	if (close(fd) != 0) e(0);
+
+	for (i = 0; i < __arraycount(sin6_array); i++) {
+		if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		if (bind(fd, (struct sockaddr *)&sin6_array[i],
+		    sizeof(sin6_array[i])) != 0) e(0);
+
+		ipv6mr.ipv6mr_interface = ifindex;
+		memcpy(&ipv6mr.ipv6mr_multiaddr, &sin6_array[1].sin6_addr,
+		    sizeof(ipv6mr.ipv6mr_multiaddr));
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+		    sizeof(ipv6mr)) != 0) e(0);
+
+		memcpy(&ipv6mr.ipv6mr_multiaddr, &sin6_array[2].sin6_addr,
+		    sizeof(ipv6mr.ipv6mr_multiaddr));
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+		    sizeof(ipv6mr)) != 0) e(0);
+
+		len = sizeof(sin6A);
+		if (getsockname(fd, (struct sockaddr *)&sin6A,
+		    &len) != 0) e(0);
+
+		if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+		val = (int)ifindex;
+		if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+		    sizeof(val)) != 0) e(0);
+
+		for (j = 0; j < __arraycount(sin6_array); j++) {
+			memcpy(&sin6A.sin6_addr, &sin6_array[j].sin6_addr,
+			    sizeof(sin6A.sin6_addr));
+
+			byte = 'A' + j;
+			if (sendto(fd2, &byte, sizeof(byte), 0,
+			    (struct sockaddr *)&sin6A,
+			    sizeof(sin6A)) != sizeof(byte)) e(0);
+		}
+
+		if (recv(fd, buf, sizeof(buf), 0) != sizeof(byte)) e(0);
+		if (buf[0] != 'A' + i) e(0);
+
+		if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+		if (errno != EWOULDBLOCK) e(0);
+
+		if (close(fd2) != 0) e(0);
+		if (close(fd) != 0) e(0);
+	}
+
+	/*
+	 * Now test *sending* on a socket bound to a multicast address.  The
+	 * multicast address must not show up as the packet's source address.
+	 * No actual multicast groups are involved here.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	if (bind(fd, (struct sockaddr *)&sin_array[1],
+	    sizeof(sin_array[1])) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	if (bind(fd2, (struct sockaddr *)&sin_array[0],
+	    sizeof(sin_array[0])) != 0) e(0);
+
+	len = sizeof(sinA);
+	if (getsockname(fd2, (struct sockaddr *)&sinA, &len) != 0) e(0);
+
+	if (sendto(fd, "D", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	len = sizeof(sinB);
+	if (recvfrom(fd2, buf, sizeof(buf), 0, (struct sockaddr *)&sinB,
+	    &len) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'D') e(0);
+
+	if (sinB.sin_addr.s_addr != htonl(INADDR_LOOPBACK)) e(0);
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/* Sending from a bound socket, IPv6 version.. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	if (bind(fd, (struct sockaddr *)&sin6_array[1],
+	    sizeof(sin6_array[1])) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	if (bind(fd2, (struct sockaddr *)&sin6_array[0],
+	    sizeof(sin6_array[0])) != 0) e(0);
+
+	len = sizeof(sin6A);
+	if (getsockname(fd2, (struct sockaddr *)&sin6A, &len) != 0) e(0);
+
+	if (sendto(fd, "E", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	len = sizeof(sin6B);
+	if (recvfrom(fd2, buf, sizeof(buf), 0, (struct sockaddr *)&sin6B,
+	    &len) != 1) e(0);
+	if (buf[0] != 'E') e(0);
+
+	if (!IN6_IS_ADDR_LOOPBACK(&sin6B.sin6_addr)) e(0);
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * A quick, partial test to see if connecting to a particular address
+	 * does not accidentally block packet receipt.  What we do not test is
+	 * whether connecting does filter traffic from other sources.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	memset(&sinA, 0, sizeof(sinA));
+	sinA.sin_family = AF_INET;
+	sinA.sin_addr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+
+	if (bind(fd, (struct sockaddr *)&sinA, sizeof(sinA)) != 0) e(0);
+
+	len = sizeof(sinA);
+	if (getsockname(fd, (struct sockaddr *)&sinA, &len) != 0) e(0);
+
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+	imr.imr_multiaddr.s_addr = sinA.sin_addr.s_addr;
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	memset(&sinB, 0, sizeof(sinB));
+	sinB.sin_family = AF_INET;
+	sinB.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (bind(fd2, (struct sockaddr *)&sinB, sizeof(sinB)) != 0) e(0);
+
+	len = sizeof(sinB);
+	if (getsockname(fd2, (struct sockaddr *)&sinB, &len) != 0) e(0);
+
+	if (connect(fd, (struct sockaddr *)&sinB, sizeof(sinB)) != 0) e(0);
+
+	/* Note that binding to a particular source address is not enough! */
+	if (setsockopt(fd2, IPPROTO_IP, IP_MULTICAST_IF, &imr.imr_interface,
+	    sizeof(imr.imr_interface)) != 0) e(0);
+
+	if (sendto(fd2, "F", 1, 0, (struct sockaddr *)&sinA,
+	    sizeof(sinA)) != 1) e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'F') e(0);
+
+	if (close(fd) != 0) e(0);
+	if (close(fd2) != 0) e(0);
+
+	/* Also try connecting with IPv6. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &sin6A.sin6_addr) != 1) e(0);
+	sin6A.sin6_scope_id = ifindex;
+
+	if (bind(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0) e(0);
+
+	len = sizeof(sin6A);
+	if (getsockname(fd, (struct sockaddr *)&sin6A, &len) != 0) e(0);
+
+	ipv6mr.ipv6mr_interface = ifindex;
+	memcpy(&ipv6mr.ipv6mr_multiaddr, &sin6A.sin6_addr,
+	    sizeof(ipv6mr.ipv6mr_multiaddr));
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6B, 0, sizeof(sin6B));
+	sin6B.sin6_family = AF_INET6;
+	memcpy(&sin6B.sin6_addr, &in6addr_loopback, sizeof(sin6B.sin6_addr));
+
+	if (bind(fd2, (struct sockaddr *)&sin6B, sizeof(sin6B)) != 0) e(0);
+
+	len = sizeof(sin6B);
+	if (getsockname(fd2, (struct sockaddr *)&sin6B, &len) != 0) e(0);
+
+	if (connect(fd, (struct sockaddr *)&sin6B, sizeof(sin6B)) != 0) e(0);
+
+	/* Unlike with IPv4, here the interface is implied by the zone. */
+	if (sendto(fd2, "G", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'G') e(0);
+
+	if (close(fd) != 0) e(0);
+	if (close(fd2) != 0) e(0);
+
+	/*
+	 * Test multiple receivers.  For UDP, we need to set the SO_REUSEADDR
+	 * option on all sockets for this to be guaranteed to work.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+	if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	memset(&sinA, 0, sizeof(sinA));
+	sinA.sin_family = AF_INET;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sinA, sizeof(sinA)) != 0)
+			e(0);
+
+		len = sizeof(sinA);
+		if (getsockname(fd, (struct sockaddr *)&sinA, &len) != 0)
+			e(0);
+
+		val = 1;
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (bind(fd2, (struct sockaddr *)&sinA, sizeof(sinA)) != 0)
+			e(0);
+	}
+
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd2, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &imr.imr_interface,
+	    sizeof(imr.imr_interface)) != 0) e(0);
+
+	sinA.sin_addr.s_addr = imr.imr_multiaddr.s_addr;
+
+	if (sendto(fd, "H", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'H') e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'H') e(0);
+
+	/*
+	 * Also test with a larger buffer, to ensure that packet duplication
+	 * actually works properly.  As of writing, we need to patch lwIP to
+	 * make this work at all.
+	 */
+	len = 8000;
+	if ((buf2 = malloc(hdrlen + len + 1)) == NULL) e(0);
+	buf2[len - 1] = 'I';
+
+	if (sendto(fd, buf2, len, 0, (struct sockaddr *)&sinA,
+	    sizeof(sinA)) != len) e(0);
+
+	buf2[hdrlen + len - 1] = '\0';
+	if (recv(fd, buf2, hdrlen + len + 1, 0) != hdrlen + len) e(0);
+	if (buf2[hdrlen + len - 1] != 'I') e(0);
+
+	buf2[hdrlen + len - 1] = '\0';
+	if (recv(fd2, buf2, hdrlen + len + 1, 0) != hdrlen + len) e(0);
+	if (buf2[hdrlen + len - 1] != 'I') e(0);
+
+	free(buf2);
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/* Multiple-receivers test, IPv6 version. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0)
+			e(0);
+
+		len = sizeof(sin6A);
+		if (getsockname(fd, (struct sockaddr *)&sin6A, &len) != 0)
+			e(0);
+
+		val = 1;
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (bind(fd2, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0)
+			e(0);
+	}
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	val = (int)ifindex;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	memcpy(&sin6A.sin6_addr, &ipv6mr.ipv6mr_multiaddr,
+	    sizeof(sin6A.sin6_addr));
+
+	if (sendto(fd, "J", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'J') e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'J') e(0);
+
+	len = 8000;
+	if ((buf2 = malloc(len + 1)) == NULL) e(0);
+	buf2[len - 1] = 'K';
+
+	if (sendto(fd, buf2, len, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != len) e(0);
+
+	buf2[len - 1] = '\0';
+	if (recv(fd, buf2, len + 1, 0) != len) e(0);
+	if (buf2[len - 1] != 'K') e(0);
+
+	buf2[len - 1] = '\0';
+	if (recv(fd2, buf2, len + 1, 0) != len) e(0);
+	if (buf2[len - 1] != 'K') e(0);
+
+	free(buf2);
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * Test proper multicast group departure.  This test relies on the fact
+	 * that actual group membership is not checked on arrival of a
+	 * multicast-destined packet, so that membership of one socket can be
+	 * tested by another socket sending packets to itself while having
+	 * joined a different group.  We test both explicit group departure
+	 * and implicit departure on close.
+	 */
+	if ((fd = socket(AF_INET, type, protocol)) < 0) e(0);
+	if ((fd2 = socket(AF_INET, type, protocol)) < 0) e(0);
+
+	memset(&sinA, 0, sizeof(sinA));
+	sinA.sin_family = AF_INET;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sinA, sizeof(sinA)) != 0)
+			e(0);
+
+		len = sizeof(sinA);
+		if (getsockname(fd, (struct sockaddr *)&sinA, &len) != 0)
+			e(0);
+
+		val = 1;
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (bind(fd2, (struct sockaddr *)&sinA, sizeof(sinA)) != 0)
+			e(0);
+	}
+
+	imr.imr_multiaddr.s_addr = inet_addr(TEST_MULTICAST_IPV4);
+	imr.imr_interface.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	imr.imr_multiaddr.s_addr = htonl(ntohl(imr.imr_multiaddr.s_addr) + 1);
+
+	if (setsockopt(fd2, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &imr.imr_interface,
+	    sizeof(imr.imr_interface)) != 0) e(0);
+
+	sinA.sin_addr.s_addr = imr.imr_multiaddr.s_addr;
+
+	if (sendto(fd, "L", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'L') e(0);
+
+	if (setsockopt(fd2, IPPROTO_IP, IP_DROP_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (sendto(fd, "M", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'L') e(0);
+
+	if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+	if (errno != EWOULDBLOCK) e(0);
+
+	if (setsockopt(fd2, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+	    sizeof(imr)) != 0) e(0);
+
+	if (sendto(fd, "N", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'N') e(0);
+
+	if (close(fd2) != 0) e(0);
+
+	if (sendto(fd, "O", 1, 0, (struct sockaddr *)&sinA, sizeof(sinA)) != 1)
+		e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != hdrlen + 1) e(0);
+	if (buf[hdrlen] != 'N') e(0);
+
+	if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+	if (errno != EWOULDBLOCK) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	/* Multicast group departure, now IPv6.. this is getting boring. */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0)
+			e(0);
+
+		len = sizeof(sin6A);
+		if (getsockname(fd, (struct sockaddr *)&sin6A, &len) != 0)
+			e(0);
+
+		val = 1;
+		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (setsockopt(fd2, SOL_SOCKET, SO_REUSEADDR, &val,
+		    sizeof(val)) != 0) e(0);
+
+		if (bind(fd2, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0)
+			e(0);
+	}
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	ipv6mr.ipv6mr_multiaddr.s6_addr[15]++;
+
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	val = (int)ifindex;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	memcpy(&sin6A.sin6_addr, &ipv6mr.ipv6mr_multiaddr,
+	    sizeof(sin6A.sin6_addr));
+
+	if (sendto(fd, "P", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'P') e(0);
+
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (sendto(fd, "Q", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'P') e(0);
+
+	if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+	if (errno != EWOULDBLOCK) e(0);
+
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if (sendto(fd, "R", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd2, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'R') e(0);
+
+	if (close(fd2) != 0) e(0);
+
+	if (sendto(fd, "S", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	if (recv(fd, buf, sizeof(buf), 0) != 1) e(0);
+	if (buf[0] != 'R') e(0);
+
+	if (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) != -1) e(0);
+	if (errno != EWOULDBLOCK) e(0);
+
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * Lastly, some IPv6-only tests.
+	 */
+	/*
+	 * Test that IPV6_PKTINFO overrides IPV6_MULTICAST_IF.  For this we
+	 * need two valid interface indices.  If we cannot find a second one,
+	 * simply test that the IPV6_PKTINFO information is used at all.
+	 */
+	for (ifindex2 = 1; ifindex2 < BAD_IFINDEX; ifindex2++) {
+		if (if_indextoname(ifindex2, name) == NULL) {
+			if (errno != ENXIO) e(0);
+			continue;
+		}
+
+		if (strcmp(name, LOOPBACK_IFNAME))
+			break;
+	}
+
+	if (ifindex2 == BAD_IFINDEX)
+		ifindex2 = 0; /* too bad; fallback mode */
+
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+
+	if (type == SOCK_DGRAM) {
+		if (bind(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != 0)
+			e(0);
+
+		len = sizeof(sin6A);
+		if (getsockname(fd, (struct sockaddr *)&sin6A, &len) != 0)
+			e(0);
+	}
+
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_LL,
+	    &ipv6mr.ipv6mr_multiaddr) != 1) e(0);
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != 0) e(0);
+
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memcpy(&sin6A.sin6_addr, &ipv6mr.ipv6mr_multiaddr,
+	    sizeof(sin6A.sin6_addr));
+
+	val = (int)ifindex2;
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	memset(&iov, 0, sizeof(iov));
+	iov.iov_base = "T";
+	iov.iov_len = 1;
+
+	memset(&ipi6, 0, sizeof(ipi6));
+	memcpy(&ipi6.ipi6_addr, &in6addr_loopback, sizeof(ipi6.ipi6_addr));
+	ipi6.ipi6_ifindex = ifindex;
+
+	control.cmsg.cmsg_len = CMSG_LEN(sizeof(ipi6));
+	control.cmsg.cmsg_level = IPPROTO_IPV6;
+	control.cmsg.cmsg_type = IPV6_PKTINFO;
+	memcpy(CMSG_DATA(&control.cmsg), &ipi6, sizeof(ipi6));
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_name = &sin6A;
+	msg.msg_namelen = sizeof(sin6A);
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = control.buf;
+	msg.msg_controllen = control.cmsg.cmsg_len;
+
+	if (sendmsg(fd2, &msg, 0) != 1) e(0);
+
+	len = sizeof(sin6B);
+	if (recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&sin6B,
+	    &len) != 1) e(0);
+	if (buf[0] != 'T') e(0);
+
+	if (len != sizeof(sin6B)) e(0);
+	if (sin6B.sin6_len != sizeof(sin6B)) e(0);
+	if (sin6B.sin6_family != AF_INET6) e(0);
+	if (memcmp(&sin6B.sin6_addr, &in6addr_loopback,
+	    sizeof(sin6B.sin6_addr)) != 0) e(0);
+
+	if (close(fd2) != 0) e(0);
+
+	/* Repeat the same test, but now with a sticky IPV6_PKTINFO setting. */
+	if ((fd2 = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&ipi6, 0, sizeof(ipi6));
+	memcpy(&ipi6.ipi6_addr, &in6addr_loopback, sizeof(ipi6.ipi6_addr));
+	ipi6.ipi6_ifindex = ifindex;
+
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_PKTINFO, &ipi6,
+	    sizeof(ipi6)) != 0) e(0);
+
+	val = (int)ifindex2;
+	if (setsockopt(fd2, IPPROTO_IPV6, IPV6_MULTICAST_IF, &val,
+	    sizeof(val)) != 0) e(0);
+
+	if (sendto(fd2, "U", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != 1) e(0);
+
+	len = sizeof(sin6B);
+	if (recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&sin6B,
+	    &len) != 1) e(0);
+	if (buf[0] != 'U') e(0);
+
+	if (len != sizeof(sin6B)) e(0);
+	if (sin6B.sin6_len != sizeof(sin6B)) e(0);
+	if (sin6B.sin6_family != AF_INET6) e(0);
+	if (memcmp(&sin6B.sin6_addr, &in6addr_loopback,
+	    sizeof(sin6B.sin6_addr)) != 0) e(0);
+
+	if (close(fd2) != 0) e(0);
+	if (close(fd) != 0) e(0);
+
+	/*
+	 * Test that invalid multicast addresses are not accepted anywhere.
+	 */
+	if ((fd = socket(AF_INET6, type, protocol)) < 0) e(0);
+
+	memset(&sin6A, 0, sizeof(sin6A));
+	sin6A.sin6_family = AF_INET6;
+	if (inet_pton(AF_INET6, TEST_MULTICAST_IPV6_BAD,
+	    &sin6A.sin6_addr) != 1) e(0);
+
+	if (bind(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	sin6A.sin6_port = htons(TEST_PORT_A);
+	if (connect(fd, (struct sockaddr *)&sin6A, sizeof(sin6A)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	if (sendto(fd, "X", 1, 0, (struct sockaddr *)&sin6A,
+	    sizeof(sin6A)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	memcpy(&ipv6mr.ipv6mr_multiaddr, &sin6A.sin6_addr,
+	    sizeof(ipv6mr.ipv6mr_multiaddr));
+	ipv6mr.ipv6mr_interface = ifindex;
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &ipv6mr,
+	    sizeof(ipv6mr)) != -1) e(0);
+	if (errno != EINVAL) e(0);
+
+	if (close(fd) != 0) e(0);
 }

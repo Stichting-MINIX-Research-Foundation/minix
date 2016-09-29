@@ -1,6 +1,28 @@
 #ifndef MINIX_TEST_SOCKLIB_H
 #define MINIX_TEST_SOCKLIB_H
 
+/* TCP/IP test values. */
+#define TEST_PORT_A	12345	/* this port should be free and usable */
+#define TEST_PORT_B	12346	/* this port should be free and usable */
+
+#define LOOPBACK_IFNAME		"lo0"		/* loopback interface name */
+#define LOOPBACK_IPV4		"127.0.0.1"	/* IPv4 address */
+#define LOOPBACK_LL_IPV6	"fe80::1"	/* link-local IPv6 address */
+
+/* These address should simply eat all packets. */
+/*
+ * IMPORTANT: the ::2 address works only if there is a route for ::/64.  This
+ * route is supposed to be added by /etc/rc.d/network, and is not present by
+ * default.  As a result, the tests will pass only when regular system/network
+ * initialization is not skipped.  We cannot add the route ourselves, since not
+ * all tests run as root.
+ */
+#define TEST_BLACKHOLE_IPV4	"127.255.0.254"
+#define TEST_BLACKHOLE_IPV6	"::2"
+#define TEST_BLACKHOLE_LL_IPV6	"fe80::ffff"
+
+#define BAD_SCOPE_ID	255	/* guaranteed not to belong to an interface */
+
 enum state {
 	S_NEW,
 	S_N_SHUT_R,
@@ -81,9 +103,14 @@ void socklib_sweep(int domain, int type, int protocol,
 	int (* proc)(int domain, int type, int protocol, enum state,
 	enum call));
 
+void socklib_multicast_tx_options(int type);
 void socklib_large_transfers(int fd[2]);
 void socklib_producer_consumer(int fd[2]);
 void socklib_stream_recv(int (* socket_pair)(int, int, int, int *), int domain,
 	int type, int (* break_recv)(int, const char *, size_t));
+int socklib_find_pcb(const char * path, int protocol, uint16_t local_port,
+	uint16_t remote_port, struct kinfo_pcb * ki);
+void socklib_test_addrs(int type, int protocol);
+void socklib_test_multicast(int type, int protocol);
 
 #endif /* !MINIX_TEST_SOCKLIB_H */
