@@ -1,0 +1,62 @@
+From 2d18d1680a4ea3a0300955675b4e11f596a85a85 Mon Sep 17 00:00:00 2001
+From: David van Moolenbroek <david@minix3.org>
+Date: Fri, 27 Jan 2017 00:10:49 +0000
+Subject: [PATCH 1/4] MINIX 3 only: mark various functions as weak
+
+This patch aims to mark the following functions as weak:
+
+- ip4_route
+- ip6_route
+- ip6_select_source_address
+
+This allows the LWIP service to override the implementation of those
+functions entirely, without requiring the definition of new prototypes
+for example.  Overriding all of these functions is essential for the
+correct operation of the LWIP service, mainly to support more advanced
+features correctly despite missing support for them in lwIP.
+
+If this patch can no longer be applied, or compilation breaks after
+applying this patch--for example, because the service can no longer
+find these functions' prototypes or the prototypes are incorrect--then
+both this patch and the LWIP service will have to be altered in order
+to achieve the same goal of overriding the above three functions.
+---
+ src/core/ipv4/ip4.c | 1 +
+ src/core/ipv6/ip6.c | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/src/core/ipv4/ip4.c b/src/core/ipv4/ip4.c
+index 2335452..d2b1751 100644
+--- a/src/core/ipv4/ip4.c
++++ b/src/core/ipv4/ip4.c
+@@ -149,6 +149,7 @@ ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
+  * @return the netif on which to send to reach dest
+  */
+ struct netif *
++__weak
+ ip4_route(const ip4_addr_t *dest)
+ {
+ #if !LWIP_SINGLE_NETIF
+diff --git a/src/core/ipv6/ip6.c b/src/core/ipv6/ip6.c
+index 39e282e..88d998b 100644
+--- a/src/core/ipv6/ip6.c
++++ b/src/core/ipv6/ip6.c
+@@ -83,6 +83,7 @@
+  * @return the netif on which to send to reach dest
+  */
+ struct netif *
++__weak
+ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
+ {
+ #if LWIP_SINGLE_NETIF
+@@ -278,6 +279,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
+  *         source address is found
+  */
+ const ip_addr_t *
++__weak
+ ip6_select_source_address(struct netif *netif, const ip6_addr_t *dest)
+ {
+   const ip_addr_t *best_addr;
+-- 
+2.5.2
+
