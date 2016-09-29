@@ -33,6 +33,7 @@ RAMDISK_DEVICES="
 STD_DEVICES="
 	${RAMDISK_DEVICES}
 	bmp085b1s77 bmp085b2s77 bmp085b3s77
+	bpf
 	eepromb1s50 eepromb1s51 eepromb1s52 eepromb1s53
 	eepromb1s54 eepromb1s55 eepromb1s56 eepromb1s57
 	eepromb2s50 eepromb2s51 eepromb2s52 eepromb2s53
@@ -128,6 +129,7 @@ Where key is one of the following:
   tty00 ... tty03         # Make serial lines
   ttyp0 ... ttyq0 ...     # Make tty, pty pairs
   audio mixer		  # Make audio devices
+  bpf                     # Make /dev/bpf
   klog                    # Make /dev/klog
   ptmx                    # Make /dev/ptmx
   random                  # Make /dev/random, /dev/urandom
@@ -214,6 +216,13 @@ do
 		major=`expr ${bus} + 52`
 
 		makedev bmp085b${bus}s77 c ${major} 0 ${uname} ${gname} 444
+		;;
+	bpf)
+		# Berkeley Packet Filter device, for the LWIP service
+		# This is a cloning device, but some programs (e.g., dhclient)
+		# assume individual devices are numbered, so also create bpf0.
+		makedev ${dev} c 7 0 ${uname} ${gname} 600
+		makedev ${dev}0 c 7 0 ${uname} ${gname} 600
 		;;
 	c[0-3]d[0-7])
 		# Whole disk devices.

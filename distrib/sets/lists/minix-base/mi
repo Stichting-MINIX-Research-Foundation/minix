@@ -194,7 +194,7 @@
 ./etc/system.conf.d/hello                               minix-base
 ./etc/system.conf.d/inet                                minix-base      obsolete
 ./etc/system.conf.d/ipc                                 minix-base
-./etc/system.conf.d/lwip                                minix-base      obsolete
+./etc/system.conf.d/lwip                                minix-base
 ./etc/system.conf.d/random                              minix-base
 ./etc/system.conf.d/uds                                 minix-base
 ./etc/system.conf.d/usb_hub                             minix-base
@@ -277,7 +277,7 @@
 ./service/is                                            minix-base
 ./service/isofs                                         minix-base
 ./service/log                                           minix-base
-./service/lwip                                          minix-base      obsolete
+./service/lwip                                          minix-base
 ./service/memory                                        minix-base
 ./service/mfs                                           minix-base
 ./service/mib                                           minix-base

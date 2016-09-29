@@ -9,6 +9,10 @@
 #include <sys/ioccom.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <minix/if.h>
+#include <minix/bpf.h>
+#include <assert.h>
 
 static void rewrite_i2c_netbsd_to_minix(minix_i2c_ioctl_exec_t *out,
     i2c_ioctl_exec_t *in);
@@ -43,6 +47,199 @@ static void rewrite_i2c_minix_to_netbsd(i2c_ioctl_exec_t *out,
   if (in->iie_buflen > 0 ) {
 	memcpy(out->iie_buf, in->iie_buf, in->iie_buflen);
   }
+}
+
+/*
+ * Convert a network interface related IOCTL with pointers to a flat format
+ * suitable for MINIX3.  Return a pointer to the new data on success, or zero
+ * (with errno set) on failure.  The original request code is given in
+ * 'request' and must be replaced by the new request code to be used.
+ */
+static vir_bytes
+ioctl_convert_if_to_minix(void * data, unsigned long * request)
+{
+	struct minix_ifmediareq *mifm;
+	struct ifmediareq *ifm;
+	struct minix_if_clonereq *mifcr;
+	struct if_clonereq *ifcr;
+
+	switch (*request) {
+	case SIOCGIFMEDIA:
+		ifm = (struct ifmediareq *)data;
+
+		mifm = (struct minix_ifmediareq *)malloc(sizeof(*mifm));
+		if (mifm != NULL) {
+			/*
+			 * The count may exceed MINIX_IF_MAXMEDIA, and should
+			 * be truncated as needed by the IF implementation.
+			 */
+			memcpy(&mifm->mifm_ifm, ifm, sizeof(*ifm));
+
+			*request = MINIX_SIOCGIFMEDIA;
+		} else
+			errno = ENOMEM;
+
+		return (vir_bytes)mifm;
+
+	case SIOCIFGCLONERS:
+		ifcr = (struct if_clonereq *)data;
+
+		mifcr = (struct minix_if_clonereq *)malloc(sizeof(*mifcr));
+		if (mifcr != NULL) {
+			/*
+			 * The count may exceed MINIX_IF_MAXCLONERS, and should
+			 * be truncated as needed by the IF implementation.
+			 */
+			memcpy(&mifcr->mifcr_ifcr, ifcr, sizeof(*ifcr));
+
+			*request = MINIX_SIOCIFGCLONERS;
+		} else
+			errno = ENOMEM;
+
+		return (vir_bytes)mifcr;
+
+	default:
+		assert(0);
+
+		errno = ENOTTY;
+		return 0;
+	}
+}
+
+/*
+ * Convert a the result of a network interface related IOCTL with pointers from
+ * the flat format used to make the call to MINIX3.  Called on success only.
+ * The given request code is that of the (NetBSD-type) original.
+ */
+static void
+ioctl_convert_if_from_minix(vir_bytes addr, void * data, unsigned long request)
+{
+	struct minix_ifmediareq *mifm;
+	struct ifmediareq *ifm;
+	struct minix_if_clonereq *mifcr;
+	struct if_clonereq *ifcr;
+	int count;
+
+	switch (request) {
+	case SIOCGIFMEDIA:
+		mifm = (struct minix_ifmediareq *)addr;
+		ifm = (struct ifmediareq *)data;
+
+		memcpy(ifm, &mifm->mifm_ifm, sizeof(*ifm));
+
+		if (ifm->ifm_ulist != NULL && ifm->ifm_count > 0)
+			memcpy(ifm->ifm_ulist, mifm->mifm_list,
+			    ifm->ifm_count * sizeof(ifm->ifm_ulist[0]));
+
+		break;
+
+	case SIOCIFGCLONERS:
+		mifcr = (struct minix_if_clonereq *)addr;
+		ifcr = (struct if_clonereq *)data;
+
+		memcpy(ifcr, &mifcr->mifcr_ifcr, sizeof(*ifcr));
+
+		count = (ifcr->ifcr_count < ifcr->ifcr_total) ?
+		    ifcr->ifcr_count : ifcr->ifcr_total;
+		if (ifcr->ifcr_buffer != NULL && count > 0)
+			memcpy(ifcr->ifcr_buffer, mifcr->mifcr_buffer,
+			    count * IFNAMSIZ);
+
+		break;
+
+	default:
+		assert(0);
+	}
+}
+
+/*
+ * Convert a BPF (Berkeley Packet Filter) related IOCTL with pointers to a flat
+ * format suitable for MINIX3.  Return a pointer to the new data on success, or
+ * zero (with errno set) on failure.  The original request code is given in
+ * 'request' and must be replaced by the new request code to be used.
+ */
+static vir_bytes
+ioctl_convert_bpf_to_minix(void * data, unsigned long * request)
+{
+	struct minix_bpf_program *mbf;
+	struct bpf_program *bf;
+	struct minix_bpf_dltlist *mbfl;
+	struct bpf_dltlist *bfl;
+
+	switch (*request) {
+	case BIOCSETF:
+		bf = (struct bpf_program *)data;
+
+		if (bf->bf_len > __arraycount(mbf->mbf_insns)) {
+			errno = EINVAL;
+			return 0;
+		}
+
+		mbf = (struct minix_bpf_program *)malloc(sizeof(*mbf));
+		if (mbf != NULL) {
+			mbf->mbf_len = bf->bf_len;
+			memcpy(mbf->mbf_insns, bf->bf_insns,
+			    bf->bf_len * sizeof(mbf->mbf_insns[0]));
+
+			*request = MINIX_BIOCSETF;
+		} else
+			errno = ENOMEM;
+
+		return (vir_bytes)mbf;
+
+	case BIOCGDLTLIST:
+		bfl = (struct bpf_dltlist *)data;
+
+		mbfl = (struct minix_bpf_dltlist *)malloc(sizeof(*mbfl));
+		if (mbfl != NULL) {
+			/*
+			 * The length may exceed MINIX_BPF_MAXDLT, and should
+			 * be truncated as needed by the BPF implementation.
+			 */
+			memcpy(&mbfl->mbfl_dltlist, bfl, sizeof(*bfl));
+
+			*request = MINIX_BIOCGDLTLIST;
+		} else
+			errno = ENOMEM;
+
+		return (vir_bytes)mbfl;
+
+	default:
+		assert(0);
+
+		errno = ENOTTY;
+		return 0;
+	}
+}
+
+/*
+ * Convert a the result of BPF (Berkeley Packet Filter) related IOCTL with
+ * pointers from the flat format used to make the call to MINIX3.  Called on
+ * success only.  The given request code is that of the (NetBSD-type) original.
+ */
+static void
+ioctl_convert_bpf_from_minix(vir_bytes addr, void * data,
+	unsigned long request)
+{
+	struct minix_bpf_dltlist *mbfl;
+	struct bpf_dltlist *bfl;
+
+	switch (request) {
+	case BIOCGDLTLIST:
+		mbfl = (struct minix_bpf_dltlist *)addr;
+		bfl = (struct bpf_dltlist *)data;
+
+		memcpy(bfl, &mbfl->mbfl_dltlist, sizeof(*bfl));
+
+		if (bfl->bfl_list != NULL && bfl->bfl_len > 0)
+			memcpy(bfl->bfl_list, mbfl->mbfl_list,
+			    bfl->bfl_len * sizeof(bfl->bfl_list[0]));
+
+		break;
+
+	default:
+		assert(0);
+	}
 }
 
 /*
@@ -110,6 +307,7 @@ ioctl_to_fcntl(int fd, unsigned long request, void * data)
 
 int     ioctl(int fd, unsigned long request, ...)
 {
+  minix_i2c_ioctl_exec_t i2c;
   int r, request_save;
   message m;
   vir_bytes addr;
@@ -124,8 +322,6 @@ int     ioctl(int fd, unsigned long request, ...)
    * To support compatibility with interfaces on other systems, certain
    * requests are re-written to flat structures (i.e. without pointers).
    */
-  minix_i2c_ioctl_exec_t i2c;
-
   request_save = request;
 
   switch (request) {
@@ -142,6 +338,19 @@ int     ioctl(int fd, unsigned long request, ...)
 		addr = (vir_bytes) &i2c;
 		request = MINIX_I2C_IOCTL_EXEC;
 		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCIFGCLONERS:
+		if ((addr = ioctl_convert_if_to_minix(data, &request)) == 0)
+			return -1;	/* errno has already been set */
+		break;
+
+	case BIOCSETF:
+	case BIOCGDLTLIST:
+		if ((addr = ioctl_convert_bpf_to_minix(data, &request)) == 0)
+			return -1;	/* errno has already been set */
+		break;
+
 	default:
 		/* Keep original as-is */
 		addr = (vir_bytes)data;
@@ -155,11 +364,30 @@ int     ioctl(int fd, unsigned long request, ...)
 
   r = _syscall(VFS_PROC_NR, VFS_IOCTL, &m);
 
-  /* Translate back to original form */
+  /*
+   * Translate back to original form.  Do this on failure as well, as
+   * temporarily allocated resources may have to be freed up again.
+   */
   switch (request_save) {
 	case I2C_IOCTL_EXEC:
 		rewrite_i2c_minix_to_netbsd(data, &i2c);
 		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCIFGCLONERS:
+		if (r == 0)
+			ioctl_convert_if_from_minix(addr, data, request_save);
+		free((void *)addr);
+		break;
+
+	case BIOCGDLTLIST:
+		if (r == 0)
+			ioctl_convert_bpf_from_minix(addr, data, request_save);
+		/* FALLTHROUGH */
+	case BIOCSETF:
+		free((void *)addr);
+		break;
+
 	default:
 		/* Nothing to do */
 		break;

@@ -130,6 +130,9 @@ do
 	;;
     6,0)	des="line printer, parallel port" dev=lp
 	;;
+    7,0)
+	des="Berkeley Packet Filter device" dev=bpf
+	;;
     9,0)
 	des="unix98 pseudoterminal master" dev=ptmx
 	;;

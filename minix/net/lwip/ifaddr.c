@@ -1,0 +1,2224 @@
+/* LWIP service - ifaddr.c - network interface address management */
+/*
+ * This module is an exception to the regular source organization of this
+ * service, in that it manages part of another module's data structures, namely
+ * ifdev.  As such, it should be seen as logically part of ifdev.  It is
+ * separated only to keep the source code more manageable.  Still, this module
+ * may use direct access only on the address-related fields of the ifdev
+ * structure, so that those one day may be move into an ifaddr-specific
+ * substructure within ifdev.
+ */
+/*
+ * We manage three types of addresses here: IPv4 addresses (ifaddr_v4),
+ * IPv6 addresses (ifaddr_v6), and link-layer a.k.a. MAC addresses (ifaddr_dl).
+ *
+ * Managing IPv4 addresses is easy.  lwIP supports only one IPv4 address per
+ * netif.  While it would be possible to construct a model where one ifdev
+ * consists of multiple netifs (with one IPv4 address each), we not support
+ * this--mostly because it is a pain to keep state synchronized between the
+ * netifs in that case.  Such support can still be added later; the IPv4 API
+ * exposed from here does support multiple IPv4 addresses already just in case,
+ * as does much of the code using the API.
+ *
+ * For IPv4 addresses we maintain only one extra piece of information here,
+ * which is whether an IPv4 address has been set at all.  This is because for
+ * our userland (DHCP clients in particular), we must allow assigning 0.0.0.0
+ * as address to an interface.  We do not use the lwIP per-netif IPv4 gateway
+ * field, nor the concept of a "default netif", in both cases because we
+ * override all (routing) decisions that would use those settings.  lwIP does
+ * not allow a broadcast address to be set, so support for broadcast addresses
+ * is botched here: we disregard custom broadcast addresses given to us, and
+ * instead expose the broadcast address that is used within lwIP.
+ *
+ * Managing IPv6 addresses is much more complicated.  First of all, even though
+ * lwIP supports stateless address autoconfiguration (SLAAC) as per RFC 4862,
+ * we disable that and instead make dhcpcd(8) responsible for all IPv6 address
+ * configuration.  dhcpcd(8) will set addresses and routes as necessary, the
+ * latter of which are used in lwIP through our routing hooks (in the route
+ * module).  This approach, which is in line with where NetBSD is headed,
+ * allows us to work around a number of lwIP limitations.  As a result we do
+ * differ in this respect from NetBSD, which may switch between kernel-only,
+ * dhcpcd-only, and hybrid autoconfiguration, mainly throught the accept_rtadv
+ * sysctl(7) node.  Writing to this node has no real effect on MINIX 3.
+ *
+ * All IPv6 addresses have a prefix length, which is almost but not quite the
+ * same as IPv4's subnet masks (see RFC 5942).  We must maintain the per-
+ * address prefix length ourselves, as lwIP supports IPv6 prefix lengths of 64
+ * bits only.  Our dhcpcd(8)-based approach allows us to work around that.
+ *
+ * All IPv6 addresses also have a state and a lifetime, both of which are
+ * managed by lwIP.  Unlike for IPv4, address-derived routes and routing socket
+ * messages are only created for addresses that are "valid", which means that
+ * they are in either PREFERRED or DEPRECATED state.  This means that we have
+ * to be aware of all address state transitions between "valid" and "not
+ * valid", some of which (namely address duplication detection and lifetime
+ * expirations) are initiated by lwIP.  As such, we need to keep shadow state
+ * for each address, and use a callback to detect whether state has changed.
+ *
+ * For understanding of this module as well as lwIP, it is important to note
+ * that "valid" is not the opposite of "invalid" in this context: "not valid"
+ * includes the address states INVALID, DUPLICATED, and TENTATIVE, while
+ * "invalid"/INVALID simply means that the address slot is free.
+ *
+ * Each IPv6 address also has associated flags.  We support an AUTOCONF flag
+ * which indicates that no subnet route should be added for the address; on
+ * MINIX 3, dhcpcd(8) is modified to pass in that flag when appropriate, thus
+ * solving a problem that NetBSD suffers from, namely that it does not know
+ * whether a userland-given route is static (implying a subnet) or auto-
+ * configured (implying no subnet, again as per RFC 5942), leading to it doing
+ * the wrong thing in dhcpcd-only autoconfiguration mode.  The TEMPORARY flag,
+ * for privacy addresses (RFC 4941) should be the same as on NetBSD; it is
+ * currently used only in source address selection (RFC 6724).  We override
+ * lwIP's IPv6 source address selection algorithm to include support for not
+ * just this flag, but also label and proper longest-common-prefix comparisons.
+ * Finally, there is an HWBASED flag to make sure that when the link-layer
+ * address is changed, the IPv6 link-local address is changed accordingly only
+ * if the previous link-local address was also autogenerated from a link-layer
+ * address and not set manually by userland.
+ *
+ * Finally, we support multiple link-layer addresses per interface, but only
+ * because NetBSD's ifconfig(8) uses an API that expects such multi-address
+ * support.  At any time, only one of the addresses is marked as "active",
+ * which means it is used as MAC address in outgoing packets.  We support only
+ * one MAC address per device driver, so the support for additional, inactive
+ * link-layer addresses is there exclusively for ifconfig(8) interoperability.
+ *
+ * All interfaces, including those that do not have MAC addresses at all (e.g.,
+ * loopback interfaces), do have one link-layer address.  This is expected in
+ * particular by getifaddrs(3), which only recognizes interfaces that have a
+ * link-layer address.
+ *
+ * Many features are still missing here, especially for IP addresses.  For
+ * example, we do not yet support destination addresses at all yet, simply
+ * because there is no interface type that uses them.  For IPv6, more work is
+ * to be done to support proper netif status transitions versus address states,
+ * fallout from address duplication, and various ND6_IFF_ flags.
+ */
+
+#include "lwip.h"
+#include "rtsock.h"
+#include "route.h"
+
+#include "lwip/etharp.h"
+
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
+
+/*
+ * Routing flags for local address and local network routing entries.  This
+ * may later have to be refined, for example in order not to set RTF_CLONING
+ * for routes on interfaces that do not have link-layer addressing.
+ *
+ * IMPORTANT: as of NetBSD 8, RTF_CLONING has been renamed to RTF_CONNECTED.
+ */
+#define IFADDR_HOST_RTFLAGS	(RTF_UP | RTF_HOST | RTF_LOCAL)
+#define IFADDR_NET_RTFLAGS	(RTF_UP | RTF_CLONING)
+
+/* Address-related sysctl(7) settings. */
+int ifaddr_auto_linklocal = 1;	/* different from NetBSD, see its usage */
+int ifaddr_accept_rtadv = 0;	/* settable but completely disregarded */
+
+/*
+ * Initialize the local address administration for an interface that is in the
+ * process of being created.
+ */
+void
+ifaddr_init(struct ifdev * ifdev)
+{
+	unsigned int i;
+
+	ifdev->ifdev_v4set = FALSE;
+
+	for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++)
+		ifdev->ifdev_v6state[i] = IP6_ADDR_INVALID;
+
+	for (i = 0; i < __arraycount(ifdev->ifdev_hwlist); i++)
+		ifdev->ifdev_hwlist[i].ifhwa_flags = 0;
+}
+
+/*
+ * Find an IPv4 address locally assigned to a interface.  The IPv4 address is
+ * given as 'addr'.  The interface is given as 'ifdev'.  On success, return OK,
+ * with the IPv4 address number stored in 'num'.  On failure, return a negative
+ * error code.
+ */
+int
+ifaddr_v4_find(struct ifdev * ifdev, const struct sockaddr_in * addr,
+	ifaddr_v4_num_t * num)
+{
+	ip_addr_t ipaddr;
+	int r;
+
+	if ((r = addr_get_inet((const struct sockaddr *)addr, sizeof(*addr),
+	    IPADDR_TYPE_V4, &ipaddr, TRUE /*kame*/, NULL /*port*/)) != OK)
+		return r;
+
+	if (!ifdev->ifdev_v4set ||
+	    !ip_addr_cmp(netif_ip_addr4(ifdev_get_netif(ifdev)), &ipaddr))
+		return EADDRNOTAVAIL;
+
+	*num = 0;
+	return OK;
+}
+
+/*
+ * Enumerate IPv4 addresses locally assigned to the given interface 'ifdev'.
+ * The caller should set 'nump' to 0 initially, and increase it by one between
+ * a successful call and the next enumeration call.  Return TRUE on success,
+ * meaning that starting from the given value of 'nump' there is at least one
+ * IPv4 address, of which the number is stored in 'nump' on return.  Return
+ * FALSE if there are no more IPv4 addresses locally assigned to the interface.
+ */
+int
+ifaddr_v4_enum(struct ifdev * ifdev, ifaddr_v4_num_t * num)
+{
+
+	/*
+	 * For now, we support only up to one IPv4 address per interface.
+	 * set if we are to return it.
+	 */
+	return (*num == 0 && ifdev->ifdev_v4set);
+}
+
+/*
+ * Obtain information about the IPv4 address 'num' assigned to the interface
+ * 'ifdev'.  On success, return OK, with the IPv4 address stored in 'addr', the
+ * network mask stored in 'mask', the broadcast stored in 'bcast', and the
+ * destination address stored in 'dest'.  Each of these pointers may be NULL.
+ * The interface may not have a broadcast and/or destination address; in that
+ * case, their corresponding structures are not filled in at all, and thus must
+ * be preinitialized by the caller to a default state.  The reason for not
+ * zeroing them is that some callers use the same buffer for both.  On failure,
+ * return a negative error code.
+ */
+int
+ifaddr_v4_get(struct ifdev * ifdev, ifaddr_v4_num_t num,
+	struct sockaddr_in * addr, struct sockaddr_in * mask,
+	struct sockaddr_in * bcast, struct sockaddr_in * dest)
+{
+	const ip_addr_t *ipaddr, *netmask;
+	struct netif *netif;
+	ip_addr_t broad;
+	socklen_t addr_len;
+
+	if (!ifaddr_v4_enum(ifdev, &num))
+		return EADDRNOTAVAIL;
+
+	netif = ifdev_get_netif(ifdev);
+
+	if (addr != NULL) {
+		addr_len = sizeof(*addr);
+
+		addr_put_inet((struct sockaddr *)addr, &addr_len,
+		    netif_ip_addr4(netif), TRUE /*kame*/, 0 /*port*/);
+	}
+
+	if (mask != NULL) {
+		addr_len = sizeof(*mask);
+
+		/*
+		 * Do not bother using addr_put_netmask() here, as we would
+		 * then first have to compute the prefix length..
+		 */
+		addr_put_inet((struct sockaddr *)mask, &addr_len,
+		    netif_ip_netmask4(netif), TRUE /*kame*/, 0 /*port*/);
+	}
+
+	if (bcast != NULL) {
+		if (netif->flags & NETIF_FLAG_BROADCAST) {
+			/* Fake a broadcast address. */
+			ipaddr = netif_ip_addr4(netif);
+			netmask = netif_ip_netmask4(netif);
+
+			ip_addr_set_ip4_u32(&broad,
+			    ip_addr_get_ip4_u32(ipaddr) |
+			    ~ip_addr_get_ip4_u32(netmask));
+
+			addr_len = sizeof(*bcast);
+
+			addr_put_inet((struct sockaddr *)bcast, &addr_len,
+			    &broad, TRUE /*kame*/, 0 /*port*/);
+		} else {
+			bcast->sin_len = 0;
+			bcast->sin_family = AF_UNSPEC;
+		}
+	}
+
+	if (dest != NULL) {
+		/* TODO: dest */
+		dest->sin_len = 0;
+		dest->sin_family = AF_UNSPEC;
+	}
+
+	return OK;
+}
+
+/*
+ * Obtain NetBSD-style state flags (IN_IFF_) for the given local IPv4 address.
+ * The given number must identify an existing address.  Return the flags.
+ */
+int
+ifaddr_v4_get_flags(struct ifdev * ifdev, ifaddr_v4_num_t num)
+{
+
+	/* IPv4 per-address flags are not supported yet. */
+	return 0;
+}
+
+/*
+ * Determine whether there should be a local subnet route for the given
+ * assigned IPv4 address, and if so, compute the subnet mask to add.  Return
+ * TRUE if a local subnet route should be added, and return the network base
+ * address in 'netbase' and the number of prefix bits in 'prefixp'.  Return
+ * FALSE if no subnet route should be added for the assigned address.
+ */
+static unsigned int
+ifaddr_v4_netroute(struct ifdev * ifdev, ifaddr_v4_num_t num,
+	ip_addr_t * netbase, unsigned int * prefixp)
+{
+	const ip_addr_t *ipaddr, *netmask;
+	unsigned int prefix;
+	uint32_t val;
+
+	/* Do not add subnet masks for loopback interfaces. */
+	if (ifdev_is_loopback(ifdev))
+		return FALSE;
+
+	assert(num == 0);
+	assert(ifdev->ifdev_v4set);
+
+	ipaddr = netif_ip_addr4(ifdev_get_netif(ifdev));
+	netmask = netif_ip_netmask4(ifdev_get_netif(ifdev));
+
+	/*
+	 * If the subnet is a /32, skip adding a local host route: not only
+	 * would it not be useful, it would fail anyway because we currently do
+	 * not support adding a host-type route and a full-width net-type route
+	 * for the same IP address.
+	 */
+	if (ip_addr_get_ip4_u32(netmask) == PP_HTONL(0xffffffffUL))
+		return FALSE;
+
+	/* Compute the network base address. */
+	ip_addr_set_ip4_u32(netbase,
+	    ip_addr_get_ip4_u32(ipaddr) & ip_addr_get_ip4_u32(netmask));
+
+	/* Find the number of prefix bits of the netmask.  TODO: improve.. */
+	val = ntohl(ip_addr_get_ip4_u32(netmask));
+
+	for (prefix = 0; prefix < IP4_BITS; prefix++)
+		if (!(val & (1 << (IP4_BITS - prefix - 1))))
+			break;
+
+	*prefixp = prefix;
+	return TRUE;
+}
+
+/*
+ * A local IPv4 address has been added to an interface.  The interface is given
+ * as 'ifdev', and the number of the just-added IPv4 address is given as 'num'.
+ * Generate a routing socket message and add local routes as appropriate.
+ */
+static void
+ifaddr_v4_added(struct ifdev * ifdev, ifaddr_v4_num_t num)
+{
+	const ip_addr_t *ipaddr;
+	ip_addr_t netbase;
+	unsigned int prefix;
+
+	assert(num == 0);
+	assert(ifdev->ifdev_v4set);
+
+	/* Report the addition of the interface address. */
+	rtsock_msg_addr_v4(ifdev, RTM_NEWADDR, num);
+
+	/*
+	 * Add the local host route.  This will always succeed: for addition,
+	 * we just checked with route_can_add(); when updating, we first remove
+	 * the exact same route.  For now, we forbid users from messing with
+	 * RTF_LOCAL routes directly, since nothing good (and a whole lot of
+	 * bad) can come out of that, so the routes will not change under us.
+	 *
+	 * Why are we not using lo0 for this route, like the BSDs do?  Because
+	 * that approach is not compatible with link-local addresses.  Instead,
+	 * we intercept outgoing traffic to the local address, and redirect it
+	 * over lo0, bypassing routing.  If we did not do this, we would never
+	 * know the originally intended zone of the outgoing packet.  As an
+	 * intended side effect, the traffic does show up on lo0 with BPF, just
+	 * like on BSDs.  Similarly, we do not need to set a gateway here.
+	 *
+	 * We currently do not use the routing tables for lookups on local
+	 * addresses - see ifaddr_v6_map() as to why.  If we ever do, that adds
+	 * another reason that the interface associated with the route must be
+	 * the interface that owns the address (and not, say, lo0).
+	 */
+	ipaddr = netif_ip_addr4(ifdev_get_netif(ifdev));
+
+	(void)route_add(ipaddr, IP4_BITS, NULL /*gateway*/, ifdev,
+	    IFADDR_HOST_RTFLAGS, NULL /*rtr*/);
+
+	/*
+	 * Add the local network route, if the rules say that we should.  Even
+	 * then, adding the route may fail for various reasons, but this route
+	 * is not essential and so we ignore failures here.
+	 */
+	if (ifaddr_v4_netroute(ifdev, num, &netbase, &prefix))
+		(void)route_add(&netbase, prefix, NULL /*gateway*/, ifdev,
+		    IFADDR_NET_RTFLAGS, NULL /*rtr*/);
+}
+
+/*
+ * A particular local IPv4 address is being deleted.  See if there is another
+ * local IPv4 address assigned to another interface that should have the same
+ * local subnet route (but didn't, as such duplicate routes can obviously not
+ * be added), and if so, readd the route for that other address.
+ */
+static void
+ifaddr_v4_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
+	unsigned int oprefix)
+{
+	struct ifdev *ifdev;
+	ip_addr_t netbase;
+	unsigned int prefix;
+
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		if (ifdev == oifdev || !ifdev->ifdev_v4set)
+			continue;
+
+		if (ifaddr_v4_netroute(ifdev, (ifaddr_v4_num_t)0, &netbase,
+		    &prefix) && prefix == oprefix &&
+		    ip_addr_cmp(&netbase, onetbase)) {
+			(void)route_add(&netbase, prefix, NULL /*gateway*/,
+			    ifdev, IFADDR_NET_RTFLAGS, NULL /*rtr*/);
+
+			return;
+		}
+	}
+}
+
+/*
+ * A local IPv4 address is about to be deleted from an interface, or the
+ * interface itself is about to be destroyed.  Generate a routing socket
+ * message about this and delete local routes as appropriate.  The interface is
+ * given as 'ifdev', and the number of the IPv4 address that is about to be
+ * deleted is given as 'num'.
+ */
+static void
+ifaddr_v4_deleted(struct ifdev * ifdev, ifaddr_v4_num_t num)
+{
+	struct route_entry *route;
+	ip_addr_t netbase;
+	unsigned int prefix;
+
+	assert(num == 0);
+	assert(ifdev->ifdev_v4set);
+
+	/* Delete the local network route, if we tried adding it at all. */
+	if (ifaddr_v4_netroute(ifdev, num, &netbase, &prefix) &&
+	    (route = route_find(&netbase, prefix,
+	    FALSE /*is_host*/)) != NULL &&
+	    route_get_flags(route) == IFADDR_NET_RTFLAGS) {
+		route_delete(route, NULL /*rtr*/);
+
+		/*
+		 * Readd the local network route for another interface, if that
+		 * interface has a local address on the very same network.
+		 */
+		ifaddr_v4_dupcheck(ifdev, &netbase, prefix);
+	}
+
+	/* Delete the local host route. */
+	if ((route = route_find(netif_ip_addr4(ifdev_get_netif(ifdev)),
+	    IP4_BITS, TRUE /*is_host*/)) != NULL)
+		route_delete(route, NULL /*rtr*/);
+
+	/* Report the deletion of the interface address. */
+	rtsock_msg_addr_v4(ifdev, RTM_DELADDR, num);
+}
+
+/*
+ * Add or update an IPv4 address on an interface.  The interface is given as
+ * 'ifdev'.  The address to add or update is pointed to by 'addr', which must
+ * always be a pointer to a valid address.  For DHCP clients it must be
+ * possible to add the 'any' address (0.0.0.0).  The network mask, broadcast
+ * address, and destination address parameters 'mask', 'bcast', and 'dest'
+ * (respectively) may be NULL pointers or pointers to AF_UNSPEC addresses, and
+ * will be disregarded if they are.  If 'mask' and/or 'bcast' are NULL when
+ * adding an address, default values will be computed for them.  The 'flags'
+ * field may contain NetBSD-style address flags (IN_IFF_).  Return OK if the
+ * address was successfully added or updated, or a negative error code if not.
+ */
+int
+ifaddr_v4_add(struct ifdev * ifdev, const struct sockaddr_in * addr,
+	const struct sockaddr_in * mask, const struct sockaddr_in * bcast,
+	const struct sockaddr_in * dest, int flags)
+{
+	ip_addr_t ipaddr, netmask, broad;
+	ip4_addr_t ip4zero;
+	struct netif *netif;
+	unsigned int dummy;
+	uint32_t val;
+	int r;
+
+	assert(addr != NULL);
+
+	if ((r = addr_get_inet((const struct sockaddr *)addr, sizeof(*addr),
+	    IPADDR_TYPE_V4, &ipaddr, TRUE /*kame*/, NULL /*port*/)) != OK)
+		return r;
+
+	/* Forbid multicast (class D) and experimental (class E) addresses. */
+	val = ntohl(ip_addr_get_ip4_u32(&ipaddr));
+
+	if (ip_addr_ismulticast(&ipaddr) || IP_EXPERIMENTAL(val))
+		return EINVAL;
+
+	if (mask != NULL && mask->sin_family != AF_UNSPEC) {
+		if ((r = addr_get_netmask((const struct sockaddr *)mask,
+		    sizeof(*mask), IPADDR_TYPE_V4, &dummy, &netmask)) != OK)
+			return r;
+	} else {
+		/*
+		 * Generate a netmask based on IP class.  Old, obsolete stuff,
+		 * but we can't have no netmask.
+		 */
+		if (IN_CLASSA(val))
+			ip_addr_set_ip4_u32(&netmask, PP_HTONL(IN_CLASSA_NET));
+		else if (IN_CLASSB(val))
+			ip_addr_set_ip4_u32(&netmask, PP_HTONL(IN_CLASSB_NET));
+		else if (IN_CLASSC(val))
+			ip_addr_set_ip4_u32(&netmask, PP_HTONL(IN_CLASSC_NET));
+		else /* should not trigger */
+			ip_addr_set_ip4_u32(&netmask, PP_HTONL(IN_CLASSD_NET));
+	}
+
+	if (bcast != NULL && bcast->sin_family != AF_UNSPEC) {
+		if ((r = addr_get_inet((const struct sockaddr *)bcast,
+		    sizeof(*bcast), IPADDR_TYPE_V4, &broad, TRUE /*kame*/,
+		    NULL /*port*/)) != OK)
+			return r;
+
+		/*
+		 * lwIP does not allow setting the broadcast address, so we
+		 * must ensure that the given address is what lwIP uses anyway.
+		 * No need to perform byte order swaps here.
+		 */
+		if (ip_addr_get_ip4_u32(&broad) !=
+		    (ip_addr_get_ip4_u32(&ipaddr) |
+		    ~ip_addr_get_ip4_u32(&netmask)))
+			return EINVAL;
+	}
+
+	/* TODO: dest (note: may be NULL) */
+
+	/*
+	 * We currently do not support any IPv4 address flags.  Even though
+	 * supporting them would make maintaining dhcpcd(8) easier, lwIP does
+	 * not offers the means to implement them properly.
+	 */
+	if (flags != 0)
+		return EINVAL;
+
+	netif = ifdev_get_netif(ifdev);
+
+	/* Should we add a new address, or update an existing one? */
+	if (!ifdev->ifdev_v4set ||
+	    !ip_addr_cmp(netif_ip_addr4(netif), &ipaddr)) {
+		/*
+		 * Add a new address.  lwIP supports only one IPv4 address per
+		 * netif.
+		 */
+		if (ifdev->ifdev_v4set)
+			return ENOBUFS; /* TODO: a better error code */
+
+		/*
+		 * It must be possible to add the address to the routing table,
+		 * so make sure that we can add such a route later on.  The
+		 * error code should be accurate for most real-world cases.
+		 */
+		if (!route_can_add(&ipaddr, IP4_BITS, TRUE /*is_host*/))
+			return EEXIST;
+
+		ip4_addr_set_zero(&ip4zero);
+
+		netif_set_addr(netif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask),
+		    &ip4zero);
+
+		ifdev->ifdev_v4set = TRUE;
+	} else {
+		/*
+		 * Update an existing address.  First report the address as
+		 * deleted.  Do not actually delete the address in netif,
+		 * because that would cause problems with its changing IP
+		 * addresses on existing sockets.
+		 */
+		ifaddr_v4_deleted(ifdev, (ifaddr_v4_num_t)0);
+
+		/* Update the one part that may have actually changed. */
+		netif_set_netmask(netif, ip_2_ip4(&netmask));
+	}
+
+	/* In both cases, we now need to report the address as added. */
+	ifaddr_v4_added(ifdev, (ifaddr_v4_num_t)0);
+
+	return OK;
+}
+
+/*
+ * Delete an IPv4 address from an interface.  The given address number 'num'
+ * must have been obtained from ifaddr_v4_find() or ifaddr_v4_enum() on the
+ * same interface just before.  This function always succeeds.
+ */
+void
+ifaddr_v4_del(struct ifdev * ifdev, ifaddr_v4_num_t num)
+{
+	ip4_addr_t ip4zero;
+
+	assert(num == 0);
+	assert(ifdev->ifdev_v4set);
+
+	/*
+	 * Report the address as deleted.  Always do this first, because the
+	 * reporting requires that the address is still there.
+	 */
+	ifaddr_v4_deleted(ifdev, num);
+
+	/* Then actually delete the address. */
+	ip4_addr_set_zero(&ip4zero);
+
+	netif_set_addr(ifdev_get_netif(ifdev), &ip4zero, &ip4zero, &ip4zero);
+
+	ifdev->ifdev_v4set = FALSE;
+}
+
+/*
+ * Announce all IPv4 addresses associated with the given interface as deleted,
+ * Used (only) right before the interface is destroyed.
+ */
+void
+ifaddr_v4_clear(struct ifdev * ifdev)
+{
+
+	if (ifdev->ifdev_v4set)
+		ifaddr_v4_deleted(ifdev, (ifaddr_v4_num_t)0);
+}
+
+/*
+ * Return the first interface device that owns the given IPv4 address, or NULL
+ * if it is not a valid local IPv4 address.
+ */
+struct ifdev *
+ifaddr_v4_map_by_addr(const ip4_addr_t * ip4addr)
+{
+	struct ifdev *ifdev;
+
+	/*
+	 * It would be nice to be able to do a route lookup on an RTF_LOCAL
+	 * entry here, but we do not do this for IPv6 either - see the comment
+	 * in ifaddr_v6_map() - and it is much less needed here, because each
+	 * interface has at most one IPv4 address.
+	 */
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		if (ifdev->ifdev_v4set &&
+		    ip4_addr_cmp(netif_ip4_addr(ifdev_get_netif(ifdev)),
+		    ip4addr))
+			return ifdev;
+	}
+
+	return NULL;
+}
+
+/*
+ * Return the first interface device for which the given IPv4 address is on a
+ * configured local subnet, or NULL if no match was found.
+ */
+static struct ifdev *
+ifaddr_v4_map_by_subnet(const ip4_addr_t * ip4addr)
+{
+	struct ifdev *ifdev;
+	struct netif *netif;
+	uint32_t addr1, addr2, mask;
+
+	addr1 = ip4_addr_get_u32(ip4addr);
+
+	/*
+	 * Here, we must never do a route lookup, because this routine is used
+	 * for SO_DONTROUTE/MSG_DONTROUTE.
+	 */
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		if (!ifdev->ifdev_v4set)
+			continue;
+
+		netif = ifdev_get_netif(ifdev);
+
+		addr2 = ip4_addr_get_u32(netif_ip4_addr(netif));
+		mask = ip4_addr_get_u32(netif_ip4_netmask(netif));
+
+		if ((addr1 & mask) == (addr2 & mask))
+			return ifdev;
+	}
+
+	return NULL;
+}
+
+/*
+ * Return TRUE if the given local IPv6 interface address is valid (= preferred
+ * or deprecated), or FALSE if it is not (= tentative or duplicated).  The
+ * address slot must be in use, that is, it must not be free (= invalid).
+ */
+static int
+ifaddr_v6_isvalid(struct ifdev * ifdev, ifaddr_v6_num_t num)
+{
+	int state;
+
+	state = ifdev->ifdev_v6state[num];
+
+	/* Note that 'valid' and 'invalid' are not each other's inverse! */
+	assert(!ip6_addr_isinvalid(state));
+
+	return ip6_addr_isvalid(state);
+}
+
+/*
+ * Find an IPv6 address assigned to the given interface that matches the given
+ * IPv6 address.  Return TRUE if a match was found, with its number stored in
+ * 'nump'.  Return FALSE if the address is not assigned to the interface.
+ */
+static int
+ifaddr_v6_match(struct ifdev * ifdev, const ip_addr_t * ipaddr,
+	ifaddr_v6_num_t * nump)
+{
+	int8_t i;
+
+	assert(IP_IS_V6(ipaddr));
+
+	i = netif_get_ip6_addr_match(ifdev_get_netif(ifdev), ip_2_ip6(ipaddr));
+	if (i < 0)
+		return FALSE;
+
+	*nump = i;
+	return TRUE;
+}
+
+/*
+ * Find an IPv6 address locally assigned to a interface.  The IPv6 address is
+ * given as 'addr6', and must use KAME-style embedding for zones.  The
+ * interface is given as 'ifdev'.  On success, return OK, with the IPv6 address
+ * number stored in 'num'.  On failure, return a negative error code.  This
+ * function also returns tentative and duplicated addresses.
+ */
+int
+ifaddr_v6_find(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
+	ifaddr_v6_num_t * nump)
+{
+	ip_addr_t ipaddr;
+	int r;
+
+	if ((r = addr_get_inet((const struct sockaddr *)addr6, sizeof(*addr6),
+	    IPADDR_TYPE_V6, &ipaddr, TRUE /*kame*/, NULL /*port*/)) != OK)
+		return r;
+
+	if (ip6_addr_has_zone(ip_2_ip6(&ipaddr)) &&
+	    ip6_addr_zone(ip_2_ip6(&ipaddr)) != ifdev_get_index(ifdev))
+		return EADDRNOTAVAIL;
+
+	if (!ifaddr_v6_match(ifdev, &ipaddr, nump))
+		return EADDRNOTAVAIL;
+
+	return OK;
+}
+
+/*
+ * Enumerate IPv6 addresses locally assigned to the given interface 'ifdev'.
+ * The caller should set 'nump' to 0 initially, and increase it by one between
+ * a successful call and the next enumeration call.  Return TRUE on success,
+ * meaning that starting from the given value of 'nump' there is at least one
+ * IPv6 address, of which the number is stored in 'nump' on return.  Return
+ * FALSE if there are no more IPv6 addresses locally assigned to the interface.
+ * This function also returns tentative and duplicated address entries.
+ */
+int
+ifaddr_v6_enum(struct ifdev * ifdev, ifaddr_v6_num_t * nump)
+{
+	ifaddr_v6_num_t num;
+
+	for (num = *nump; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+		if (!ip6_addr_isinvalid(ifdev->ifdev_v6state[num])) {
+			*nump = num;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+/*
+ * Obtain information about the IPv6 address 'num' assigned to the interface
+ * 'ifdev'.  Store the IPv6 address in 'addr6', the network mask in 'mask6',
+ * and the destination address in 'dest6'.  Each of these pointers may be NULL.
+ * The returned addresses use KAME-style embedding for zones.  This function
+ * also returns tentative and duplicated addresses.  It always succeeds.
+ */
+void
+ifaddr_v6_get(struct ifdev * ifdev, ifaddr_v6_num_t num,
+	struct sockaddr_in6 * addr6, struct sockaddr_in6 * mask6,
+	struct sockaddr_in6 * dest6)
+{
+	struct netif *netif;
+	socklen_t addr_len;
+
+	/*
+	 * Due to route message generation upon address addition and deletion,
+	 * either the ifdev_v6state or the netif state may not yet have been
+	 * updated here.
+	 */
+	assert(!ip6_addr_isinvalid(ifdev->ifdev_v6state[num]) ||
+	    !ip6_addr_isinvalid(netif_ip6_addr_state(ifdev_get_netif(ifdev),
+	    (int)num)));
+
+	netif = ifdev_get_netif(ifdev);
+
+	if (addr6 != NULL) {
+		addr_len = sizeof(*addr6);
+
+		(void)addr_put_inet((struct sockaddr *)addr6, &addr_len,
+		    netif_ip_addr6(netif, (int)num), TRUE /*kame*/,
+		    0 /*port*/);
+	}
+
+	if (mask6 != NULL) {
+		addr_len = sizeof(*mask6);
+
+		addr_put_netmask((struct sockaddr *)mask6, &addr_len,
+		    IPADDR_TYPE_V6, ifdev->ifdev_v6prefix[num]);
+	}
+
+	if (dest6 != NULL) {
+		/* TODO: dest6 */
+		dest6->sin6_len = 0;
+		dest6->sin6_family = AF_UNSPEC;
+	}
+}
+
+/*
+ * Obtain NetBSD-style state flags (IN6_IFF_) for the given local IPv6 address.
+ * The given number must identify an existing address.  Return the flags.
+ */
+int
+ifaddr_v6_get_flags(struct ifdev * ifdev, ifaddr_v6_num_t num)
+{
+	int state, flags;
+
+	state = ifdev->ifdev_v6state[num];
+
+	assert(!ip6_addr_isinvalid(state));
+
+	flags = 0;
+	if (ip6_addr_isduplicated(state))
+		flags |= IN6_IFF_DUPLICATED;
+	if (ip6_addr_istentative(state))
+		flags |= IN6_IFF_TENTATIVE;
+	if (ip6_addr_isdeprecated(state))
+		flags |= IN6_IFF_DEPRECATED;
+	if (ifdev->ifdev_v6flags[num] & IFADDR_V6F_AUTOCONF)
+		flags |= IN6_IFF_AUTOCONF;
+	if (ifdev->ifdev_v6flags[num] & IFADDR_V6F_TEMPORARY)
+		flags |= IN6_IFF_TEMPORARY;
+
+	return flags;
+}
+
+/*
+ * Obtain lifetime information about the given local IPv6 address.  The given
+ * 'lifetime' structure is filled as a result.  This function always succeeds.
+ */
+void
+ifaddr_v6_get_lifetime(struct ifdev * ifdev, ifaddr_v6_num_t num,
+	struct in6_addrlifetime * lifetime)
+{
+	struct netif *netif;
+	uint32_t valid_life, pref_life;
+	time_t now;
+
+	assert(!ip6_addr_isinvalid(ifdev->ifdev_v6state[num]));
+
+	netif = ifdev_get_netif(ifdev);
+
+	valid_life = netif_ip6_addr_valid_life(netif, (int)num);
+	pref_life = netif_ip6_addr_pref_life(netif, (int)num);
+
+	/*
+	 * Represent 'static' as 'infinite' to userland.  This applies only to
+	 * link-local addresses, which do not have lifetimes at all.
+	 */
+	if (ip6_addr_life_isstatic(valid_life)) {
+		valid_life = IP6_ADDR_LIFE_INFINITE;
+		pref_life = IP6_ADDR_LIFE_INFINITE;
+	}
+
+	now = clock_time(NULL);
+
+	/*
+	 * TODO: the _vltime and _pltime values filled in here are not correct.
+	 * They should be set to the originally assigned values rather than the
+	 * current ones.  Getting this right would mean we'd have to save the
+	 * original values.  So far it does not look like userland needs that..
+	 */
+	memset(lifetime, 0, sizeof(*lifetime));
+	lifetime->ia6t_vltime = valid_life;
+	lifetime->ia6t_pltime = pref_life;
+	if (!ip6_addr_life_isinfinite(valid_life))
+		lifetime->ia6t_expire = now + valid_life;
+	if (!ip6_addr_life_isinfinite(pref_life))
+		lifetime->ia6t_preferred = now + pref_life;
+}
+
+/*
+ * Determine whether there should be a local subnet route for the given
+ * assigned IPv6 address, and if so, compute the subnet mask to add.  Return
+ * TRUE if a local subnet route should be added, and return the network base
+ * address in 'netbase' and the number of prefix bits in 'prefixp'.  Return
+ * FALSE if no subnet route should be added for the assigned address.
+ */
+static unsigned int
+ifaddr_v6_netroute(struct ifdev * ifdev, ifaddr_v6_num_t num,
+	ip_addr_t * netbase, unsigned int * prefixp)
+{
+	const ip_addr_t *ipaddr;
+
+	ipaddr = netif_ip_addr6(ifdev_get_netif(ifdev), (int)num);
+
+	/*
+	 * A local network route should be added only if all of the following
+	 * conditions are met:
+	 *
+	 * 1) The address is not auto-configured.  Autoconfigured addresses do
+	 *    not have an implied subnet, as explained in RFC 5942.
+	 *    Consistency with respect to subnet routes is why we do not allow
+	 *    changing the AUTOCONF flag after an address has been added.
+	 * 2) The subnet assignment is not a /128 prefix.  Not only would such
+	 *    a route not be useful, adding it would fail anyway because we
+	 *    currently do not support adding a host-type route and a
+	 *    full-width net-type route for the same IP address.
+	 * 3) If the interface is a loopback device, the address is not a link-
+	 *    local address.  This appears to be what NetBSD does, but
+	 *    additional loopback-related exceptions may be needed here.
+	 */
+	if ((ifdev->ifdev_v6flags[num] & IFADDR_V6F_AUTOCONF) ||
+	    ifdev->ifdev_v6prefix[num] == IP6_BITS ||
+	    (ifdev_is_loopback(ifdev) &&
+	    ip6_addr_islinklocal(ip_2_ip6(ipaddr))))
+		return FALSE;
+
+	addr_normalize(netbase, ipaddr, ifdev->ifdev_v6prefix[num]);
+
+	*prefixp = ifdev->ifdev_v6prefix[num];
+	return TRUE;
+}
+
+/*
+ * A local IPv6 has become valid (preferred or deprecated) after previously
+ * being invalid (tentative, duplicated, or free).  Report the addition of the
+ * now-usable address, and add appropriate routes to the IPv6 routing table.
+ *
+ * This function is *not* called immediately when an address is added, but
+ * rather when the address becomes valid (meaning it is no longer tentative,
+ * and thus supposedly collision-free).  For that reason, unlike for IPv4, this
+ * function is only ever called indirectly, through the netif status callback.
+ */
+static void
+ifaddr_v6_added(struct ifdev * ifdev, ifaddr_v6_num_t num)
+{
+	const ip_addr_t *ipaddr;
+	ip_addr_t base;
+	ip6_addr_t *base6;
+	unsigned int prefix;
+
+	/* Check the netif as ifdev_v6state is not yet updated here. */
+	assert(!ip6_addr_isinvalid(netif_ip6_addr_state(ifdev_get_netif(ifdev),
+	    (int)num)));
+
+	/* Report the addition of the interface address. */
+	rtsock_msg_addr_v6(ifdev, RTM_NEWADDR, num);
+
+	/*
+	 * Add the local host route.  This will always succeed.  See the IPv4
+	 * version of this code for more information.
+	 */
+	ipaddr = netif_ip_addr6(ifdev_get_netif(ifdev), (int)num);
+
+	(void)route_add(ipaddr, IP6_BITS, NULL /*gateway*/, ifdev,
+	    IFADDR_HOST_RTFLAGS, NULL /*rtr*/);
+
+	/*
+	 * Add the local network route, if the rules say that we should.  Even
+	 * then, adding the route may fail for various reasons, but this route
+	 * is not essential and so we ignore failures here.
+	 */
+	if (ifaddr_v6_netroute(ifdev, num, &base, &prefix))
+		(void)route_add(&base, prefix, NULL /*gateway*/, ifdev,
+		    IFADDR_NET_RTFLAGS, NULL /*rtr*/);
+
+	/*
+	 * Add the node-local and link-local scope multicast routes.  These are
+	 * interface-specific rather than address-specific.  They are (re)added
+	 * for every address, and never deleted until interface destruction.
+	 */
+	ip_addr_set_zero_ip6(&base);
+	base6 = ip_2_ip6(&base);
+
+	base6->addr[0] = htonl(0xff010000UL | ifdev_get_index(ifdev));
+
+	(void)route_add(&base, 32, NULL /*gateway*/, ifdev, IFADDR_NET_RTFLAGS,
+	    NULL /*rtr*/);
+
+	base6->addr[0] = htonl(0xff020000UL | ifdev_get_index(ifdev));
+
+	(void)route_add(&base, 32, NULL /*gateway*/, ifdev, IFADDR_NET_RTFLAGS,
+	    NULL /*rtr*/);
+}
+
+/*
+ * A particular local IPv6 address is being deleted.  See if there is another
+ * local IPv6 address assigned that should have the same local subnet route
+ * (but didn't, as such duplicate routes can obviously not be added), and if
+ * so, readd the route for that other address, possibly for the same interface.
+ */
+static void
+ifaddr_v6_dupcheck(struct ifdev * oifdev, const ip_addr_t * onetbase,
+	unsigned int oprefix)
+{
+	struct ifdev *ifdev;
+	ip_addr_t netbase;
+	unsigned int prefix;
+	ifaddr_v6_num_t num;
+
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		if (ifdev == oifdev)
+			continue;
+
+		for (num = 0; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+			if (ip6_addr_isinvalid(ifdev->ifdev_v6state[num]) ||
+			    !ifaddr_v6_isvalid(ifdev, num))
+				continue;
+
+			if (!ifaddr_v6_netroute(ifdev, num, &netbase, &prefix))
+				continue;
+
+			if (prefix != oprefix ||
+			    !ip_addr_cmp(&netbase, onetbase))
+				continue;
+
+			(void)route_add(&netbase, prefix, NULL /*gateway*/,
+			    ifdev, IFADDR_NET_RTFLAGS, NULL /*rtr*/);
+
+			return;
+		}
+	}
+}
+
+/*
+ * A local IPv6 has become invalid (tentative, duplicated, or free) after
+ * previously being valid (preferred or deprecated).  Report the deletion of
+ * the previously-usable address, and remove previously added routes from the
+ * IPv6 routing table.
+ *
+ * This function is not always called for every deleted address: instead, it is
+ * called only when the address was previously valid, meaning that
+ * ifaddr_v6_added() was invoked on it before as well.  Unlike for IPv4, this
+ * function is typically called indirectly, through the netif status callback.
+ */
+static void
+ifaddr_v6_deleted(struct ifdev * ifdev, ifaddr_v6_num_t num)
+{
+	struct route_entry *route;
+	const ip_addr_t *ipaddr;
+	ip_addr_t netbase;
+	unsigned int prefix;
+
+	assert(!ip6_addr_isinvalid(ifdev->ifdev_v6state[num]));
+
+	ipaddr = netif_ip_addr6(ifdev_get_netif(ifdev), (int)num);
+
+	/* Delete the local network route, if we tried adding it at all. */
+	if (ifaddr_v6_netroute(ifdev, num, &netbase, &prefix) &&
+	    (route = route_find(&netbase, prefix,
+	    FALSE /*is_host*/)) != NULL &&
+	    route_get_flags(route) == IFADDR_NET_RTFLAGS) {
+		route_delete(route, NULL /*rtr*/);
+
+		/*
+		 * Readd the local network route for another interface, if that
+		 * interface has a local address on the very same network.
+		 * Skip scoped (e.g., link-local) addresses, for which the
+		 * routes are unique anyway.
+		 */
+		if (!ip6_addr_has_scope(ip_2_ip6(ipaddr), IP6_UNICAST))
+			ifaddr_v6_dupcheck(ifdev, &netbase, prefix);
+	}
+
+	/* Delete the local host route. */
+	if ((route = route_find(ipaddr, IP6_BITS, TRUE /*is_host*/)) != NULL)
+		route_delete(route, NULL /*rtr*/);
+
+	/* Report the deletion of the interface address. */
+	rtsock_msg_addr_v6(ifdev, RTM_DELADDR, num);
+}
+
+/*
+ * Add or update an IPv6 address on an interface.  The interface is given as
+ * 'ifdev'.  The IPv6 address to add or update is pointed to by 'addr6', which
+ * must always be a pointer to a valid address.  The network mask is given as
+ * 'mask6', but may be NULL when updating an address.  The same applies to the
+ * destination address 'dest6'.  The given IPv6 address and destination address
+ * must use KAME-style embedding for zones.  The flags field 'flags' contains
+ * a set of NetBSD-style address flags (IN6_IFF_).  The 'lifetime' parameter
+ * always points to lifetime information to be set or updated.  Return OK if
+ * the address was successfully added or updated, or a negative error code
+ * otherwise.
+ */
+int
+ifaddr_v6_add(struct ifdev * ifdev, const struct sockaddr_in6 * addr6,
+	const struct sockaddr_in6 * mask6, const struct sockaddr_in6 * dest6,
+	int flags, const struct in6_addrlifetime * lifetime)
+{
+	ip_addr_t ipaddr;
+	ip6_addr_t *ip6addr;
+	struct netif *netif;
+	unsigned int prefix;
+	ifaddr_v6_num_t num;
+	uint32_t valid_life;
+	int r, state;
+
+	netif = ifdev_get_netif(ifdev);
+
+	/*
+	 * Somewhat curiously, NetBSD ignores the zone ID for these requests,
+	 * rather than rejecting requests with a zone ID that does not match
+	 * the associated interface's.  We have no reason to be stricter, and
+	 * so we overwrite whatever zone was given..
+	 */
+	if ((r = addr_get_inet((const struct sockaddr *)addr6, sizeof(*addr6),
+	    IPADDR_TYPE_V6, &ipaddr, TRUE /*kame*/, NULL /*port*/)) != OK)
+		return r;
+
+	/*
+	 * Forbid locally-assigned multicast addresses.  Not only are those
+	 * absolutely disallowed in theory, we also assume all locally assigned
+	 * addresses are unicast in various places in practice.
+	 */
+	if (ip_addr_ismulticast(&ipaddr))
+		return EINVAL;
+
+	ip6_addr_assign_zone(ip_2_ip6(&ipaddr), IP6_UNICAST, netif);
+
+	/*
+	 * The netmask needs to be there only when adding a new address, but if
+	 * a netmask is given, it must be valid.  Note that lwIP itself
+	 * supports only /64 subnets; however, due to our custom routing hooks,
+	 * combined with giving lifetimes to all addresses (except the primary
+	 * link-local address, which is a /64), we control all routing
+	 * decisions that would otherwise be affected by that lwIP limitation.
+	 */
+	if (mask6 != NULL && mask6->sin6_family != AF_UNSPEC) {
+		if ((r = addr_get_netmask((const struct sockaddr *)mask6,
+		    sizeof(*mask6), IPADDR_TYPE_V6, &prefix,
+		    NULL /*ipaddr*/)) != OK)
+			return r;
+	} else
+		prefix = 0;
+
+	/* TODO: dest6 (note: may be NULL) */
+
+	/* TODO: support for IN6_IFF_ANYCAST and IN6_IFF_DETACHED. */
+	if (flags & ~(IN6_IFF_TENTATIVE | IN6_IFF_DEPRECATED | IN6_IFF_NODAD |
+	    IN6_IFF_AUTOCONF | IN6_IFF_TEMPORARY))
+		return EINVAL;
+
+	/* Should we add a new address, or update an existing one? */
+	ip6addr = ip_2_ip6(&ipaddr);
+
+	if (!ifaddr_v6_match(ifdev, &ipaddr, &num)) {
+		/* Add a new address. */
+		if (prefix == 0)
+			return EINVAL;
+
+		/*
+		 * It must be possible to add the address to the routing table,
+		 * so make sure that we can add such a route later on.  The
+		 * error code should be accurate for most real-world cases.
+		 */
+		if (!route_can_add(&ipaddr, IP6_BITS, TRUE /*is_host*/))
+			return EEXIST;
+
+		/*
+		 * As an exception, if the given address is a link-local
+		 * address and there is no link-local address in slot 0, use
+		 * slot 0 to store this address.  This requires a /64 prefix
+		 * length, because lwIP will use an implied /64 subnet for it.
+		 */
+		if (ip6_addr_isinvalid(ifdev->ifdev_v6state[0]) &&
+		    ip6_addr_islinklocal(ip6addr) && prefix == 64) {
+			num = (ifaddr_v6_num_t)0;
+
+			/*
+			 * Such link-local addresses are not considered to be
+			 * autoconfigured, because they always have an implied
+			 * subnet.  Therefore, clear that flag.
+			 */
+			flags &= ~IN6_IFF_AUTOCONF;
+		} else {
+			/*
+			 * Find a free slot.  We bypass netif_ip6_addr_add() as
+			 * it makes things more, rather than less, complicated
+			 * for us here.
+			 */
+			for (num = 1; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+				state = ifdev->ifdev_v6state[num];
+
+				if (ip6_addr_isinvalid(state))
+					break;
+			}
+
+			if (num == LWIP_IPV6_NUM_ADDRESSES)
+				return ENOBUFS;	/* TODO: a better error code */
+		}
+
+		assert(ip6_addr_isinvalid(netif_ip6_addr_state(netif, num)));
+
+		/*
+		 * We bypass the standard netif IPv6 address assignment
+		 * functions here, because we may want to change the state of
+		 * the address to something particular (rather than always
+		 * tentative) and set the state only when we're otherwise done.
+		 */
+		netif->ip6_addr[num] = ipaddr;
+
+		ifdev->ifdev_v6prefix[num] = prefix;
+
+		/*
+		 * New addresses are always DAD-tested for collisions first,
+		 * except on loopback interfaces, which will simply get back
+		 * its own DAD request and conclude there is a collision..
+		 */
+		if (flags & IN6_IFF_TENTATIVE)
+			state = IP6_ADDR_TENTATIVE;
+		else if (flags & IN6_IFF_DEPRECATED)
+			state = IP6_ADDR_VALID;
+		else if (ifdev_is_loopback(ifdev) || (flags & IN6_IFF_NODAD))
+			state = IP6_ADDR_PREFERRED;
+		else
+			state = IP6_ADDR_TENTATIVE;
+
+		ifdev->ifdev_v6flags[num] = 0;
+		if (flags & IN6_IFF_AUTOCONF)
+			ifdev->ifdev_v6flags[num] |= IFADDR_V6F_AUTOCONF;
+		if (flags & IN6_IFF_TEMPORARY)
+			ifdev->ifdev_v6flags[num] |= IFADDR_V6F_TEMPORARY;
+
+		/* Precompute the address scope as well. */
+		ifdev->ifdev_v6scope[num] =
+		    addrpol_get_scope(&ipaddr, TRUE /*is_src*/);
+	} else {
+		/* Update an existing address. */
+		/*
+		 * Since no fundamental aspects about the address may change
+		 * we also do not need to delete and readd the address here.
+		 */
+		if (prefix != 0 && prefix != ifdev->ifdev_v6prefix[num])
+			return EINVAL;
+
+		/* TODO: figure out exactly what userland wants here.. */
+		if (flags & IN6_IFF_TENTATIVE)
+			state = IP6_ADDR_TENTATIVE;
+		else if (flags & IN6_IFF_DEPRECATED)
+			state = IP6_ADDR_VALID;
+		else
+			state = IP6_ADDR_PREFERRED;
+
+		/*
+		 * Leave the AUTOCONF flag as is, because otherwise we might
+		 * also have to add or delete a subnet route here.
+		 */
+		if (flags & IN6_IFF_TEMPORARY)
+			ifdev->ifdev_v6flags[num] |= IFADDR_V6F_TEMPORARY;
+		else
+			ifdev->ifdev_v6flags[num] &= ~IFADDR_V6F_TEMPORARY;
+	}
+
+	/*
+	 * In our implementation, all addresses except the first link-local
+	 * address (which is always stored in slot 0) have a lifetime and are
+	 * thus not static as far as lwIP is concerned.  The result is that all
+	 * those addresses are considered to be /128 assignments, leaving the
+	 * routing decisions entirely to us, which is exactly what we want.  As
+	 * such we have to be careful not to assign a valid lifetime of 0
+	 * ("static").  For preferred lifetimes, 0 is not a special value,
+	 * though.  Either value may be 0xffffffff, which denotes "infinite".
+	 *
+	 * As for those routing decisions: we use the AUTOCONF flag as the
+	 * indication whether or not to add a subnet (= on-link prefix) route
+	 * for the address.  See also ifaddr_v6_added().
+	 */
+	if (num != 0) {
+		valid_life = lifetime->ia6t_vltime;
+		if (ip6_addr_life_isstatic(valid_life))
+			valid_life++;
+		netif_ip6_addr_set_valid_life(netif, (int)num, valid_life);
+		netif_ip6_addr_set_pref_life(netif, (int)num,
+		    lifetime->ia6t_pltime);
+	}
+
+	/*
+	 * The lifetime of address slot 0 is initialized to, and remains at all
+	 * times, zero ("static").  All other slots have an actual lifetime.
+	 */
+	assert(netif_ip6_addr_isstatic(netif, (int)num) == !num);
+
+	/*
+	 * Change the address state last, as this may immediately trigger
+	 * reports and route addition etc, although usually it will not:
+	 * addresses are typically added as tentative, and ifaddr_v6_added()
+	 * will be called only once the address is valid.
+	 */
+	netif_ip6_addr_set_state(netif, (int)num, state);
+
+	return OK;
+}
+
+/*
+ * Delete an IPv6 address from an interface.  The given address number must
+ * have been obtained through ifaddr_v6_find() or ifaddr_v6_enum().
+ * This function always succeeds.
+ */
+void
+ifaddr_v6_del(struct ifdev * ifdev, ifaddr_v6_num_t num)
+{
+
+	assert(num <= LWIP_IPV6_NUM_ADDRESSES);
+	assert(!ip6_addr_isinvalid(ifdev->ifdev_v6state[num]));
+
+	/* The state change will also trigger ifaddr_v6_deleted() if needed. */
+	netif_ip6_addr_set_state(ifdev_get_netif(ifdev), (int)num,
+	    IP6_ADDR_INVALID);
+}
+
+/*
+ * Announce all IPv6 addresses associated with the given interface as deleted.
+ * Used (only) right before the interface is destroyed.
+ */
+void
+ifaddr_v6_clear(struct ifdev * ifdev)
+{
+	ifaddr_v6_num_t num;
+
+	for (num = 0; ifaddr_v6_enum(ifdev, &num); num++) {
+		if (ifaddr_v6_isvalid(ifdev, num))
+			ifaddr_v6_deleted(ifdev, num);
+	}
+}
+
+/*
+ * Check state changes on local IPv6 addresses and update shadow state
+ * accordingly.
+ */
+void
+ifaddr_v6_check(struct ifdev * ifdev)
+{
+	struct netif *netif;
+	ifaddr_v6_num_t num;
+	int old_state, new_state, was_valid, is_valid;
+
+	netif = ifdev_get_netif(ifdev);
+
+	for (num = 0; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+		/*
+		 * Since we compile lwIP without support for stateless
+		 * autoconfiguration, there will be no cases where new
+		 * addresses appear out of nowhere.  As such, we can rely on
+		 * all necessary fields already being initialized here.
+		 */
+		old_state = ifdev->ifdev_v6state[num];
+		new_state = netif_ip6_addr_state(netif, num);
+
+		if (old_state == new_state)
+			continue;
+
+		was_valid = ip6_addr_isvalid(old_state);
+		is_valid = ip6_addr_isvalid(new_state);
+
+		if (was_valid != is_valid) {
+			if (is_valid)
+				ifaddr_v6_added(ifdev, num);
+			else
+				ifaddr_v6_deleted(ifdev, num);
+		}
+
+		ifdev->ifdev_v6state[num] = new_state;
+
+		/*
+		 * TODO: implement the requirements for dealing with duplicated
+		 * addresses, in particular the link-local address, as
+		 * specified by RFC 4862 Sec. 5.4.5.  NetBSD uses the
+		 * ND6_IFF_IFDISABLED flag for this, essentially disabling
+		 * the interface completely when that flag is set.
+		 */
+	}
+}
+
+/*
+ * A change in the interface and/or link status has resulted in both now being
+ * up.  Set the link-local address, if any, to tentative state.  Exempt
+ * loopback interfaces, which would just see their own requests as collisions.
+ *
+ * TODO: the current implementation is the absolute minimum required for
+ * dhcpcd(8) to function somewhat properly, but there is much more to be
+ * decided and done when it comes to dealing with status changes..
+ */
+void
+ifaddr_v6_set_up(struct ifdev * ifdev)
+{
+
+	if (!ifdev_is_loopback(ifdev) &&
+	    !ip6_addr_isinvalid(ifdev->ifdev_v6state[0]))
+		netif_ip6_addr_set_state(ifdev_get_netif(ifdev), 0,
+		    IP6_ADDR_TENTATIVE);
+}
+
+/*
+ * Check whether all conditions are met for (re)assigning a link-local IPv6
+ * address, and if so, do just that.
+ */
+void
+ifaddr_v6_set_linklocal(struct ifdev * ifdev)
+{
+
+	/*
+	 * A few conditions must be met for link-local address assignment.
+	 * First of all, link-local address assignment must be enabled both
+	 * globally and on the interface.  The BSDs use the global setting as
+	 * an initial value for the link-local setting, but if we do this, it
+	 * would basically be impossible to change the global setting and have
+	 * any effect.  Thus, we use the global setting as an additional
+	 * requirement, with as reasoning that people will typically disable
+	 * the global setting in order to assign no IPv6 addresses at all.
+	 */
+	if (!(ifdev_get_nd6flags(ifdev) & ND6_IFF_AUTO_LINKLOCAL) ||
+	    !ifaddr_auto_linklocal)
+		return;
+
+	/*
+	 * Second, the interface must be up.  This is an artificial requirement
+	 * that allows for the above settings to be changed at all: if we
+	 * assigned a link-local address as soon as we could (see below), this
+	 * would leave virtually no opportunity to change the settings.  Once
+	 * assigned, a link-local address is never removed automatically.
+	 */
+	if (!ifdev_is_up(ifdev))
+		return;
+
+	/*
+	 * A proper (48-bit) hardware address must be set.  Interfaces without
+	 * hardware addresses (e.g., loopback devices) do not have this kind of
+	 * auto-assignment.  It may take a while for the driver to get back to
+	 * us with its initial hardware address, so wait for at least that.
+	 * Also update the link-local address upon subsequent (user-initiated)
+	 * changes to the hardware address, as long as if the IPv6 address has
+	 * not been overridden by userland by then.
+	 */
+	if (ifdev_get_hwlen(ifdev) != ETHARP_HWADDR_LEN ||
+	    !(ifdev->ifdev_hwlist[0].ifhwa_flags & IFHWAF_VALID))
+		return;
+
+	if (!ip6_addr_isinvalid(ifdev->ifdev_v6state[0]) &&
+	    (ifdev->ifdev_v6flags[0] & IFADDR_V6F_HWBASED))
+		return;
+
+	/*
+	 * All conditions are met.  Set or replace the interface's IPv6
+	 * link-local address.  This uses the first IPv6 address slot, which
+	 * will be skipped when adding non-link-local addresses.  We first
+	 * delete the old address if any, in order to force invalidation of
+	 * bound sockets, because setting the new address does not (currently)
+	 * consider sockets.
+	 */
+	if (!ip6_addr_isinvalid(ifdev->ifdev_v6state[0]))
+		ifaddr_v6_del(ifdev, (ifaddr_v6_num_t)0);
+
+#ifdef INET6
+	ifdev->ifdev_v6flags[0] = IFADDR_V6F_HWBASED;
+	ifdev->ifdev_v6prefix[0] = 64;
+	netif_create_ip6_linklocal_address(ifdev_get_netif(ifdev),
+	    1 /*from_mac_48bit*/);
+	assert(!ip6_addr_isinvalid(ifdev->ifdev_v6state[0]));
+
+	ifdev->ifdev_v6scope[0] =
+	    addrpol_get_scope(netif_ip_addr6(ifdev_get_netif(ifdev), 0),
+	      TRUE /*is_src*/);
+#endif /* INET6 */
+}
+
+/*
+ * Return the first interface device that owns the given (non-any) IPv6
+ * address, or NULL if it is not a valid local IPv6 address.  Addresses that
+ * exist but are not usable ("usually assigned" in the RFC4862 sense) are
+ * considered not valid in this context.
+ */
+struct ifdev *
+ifaddr_v6_map_by_addr(const ip6_addr_t * ip6addr)
+{
+	struct ifdev *ifdev;
+	struct netif *netif;
+	ifaddr_v6_num_t num;
+
+	/*
+	 * It would be nice to be able to do a route lookup on an RTF_LOCAL
+	 * entry here, but this approach would currently have two problems.
+	 *
+	 * 1) link-local addresses would require a lookup with a different
+	 *    embedded zone for each possible interface, requiring a loop over
+	 *    all interfaces after all; we could do a route lookup for global
+	 *    addresses only, but then there's also the issue that..
+	 * 2) once we get the interface from the route, we still have to check
+	 *    check the state of the address, as done below, and that requires
+	 *    us to go through all the interface addresses after all; we could
+	 *    embed the local address number in the RTF_LOCAL routing entry but
+	 *    that would get rather messy API-wise.
+	 *
+	 * Still, if it turns out that this function is a bottleneck, the above
+	 * workarounds should offer a way forward for the common case.
+	 */
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		netif = ifdev_get_netif(ifdev);
+
+		for (num = 0; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+			if (ip6_addr_isinvalid(ifdev->ifdev_v6state[num]))
+				continue;
+
+			/*
+			 * An address may be used as a local address only if it
+			 * is preferred or deprecated, not if it is tentative
+			 * or duplicated.
+			 */
+			if (!ifaddr_v6_isvalid(ifdev, num))
+				continue;
+
+			/*
+			 * Ignore the zone if the given address does not have
+			 * one set.  Otherwise, the zone must match.
+			 */
+			if (ip6_addr_cmp_zoneless(netif_ip6_addr(netif, num),
+			    ip6addr) && (!ip6_addr_has_zone(ip6addr) ||
+			    ip6_addr_test_zone(ip6addr, netif)))
+				return ifdev;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Return the first interface device for which the given IPv6 address is on a
+ * configured local subnet, or NULL if no match was found.
+ */
+static struct ifdev *
+ifaddr_v6_map_by_subnet(const ip_addr_t * ipaddr)
+{
+	const ip_addr_t *addr;
+	struct ifdev *ifdev;
+	struct netif *netif;
+	ifaddr_v6_num_t num;
+	unsigned int prefix;
+
+	assert(IP_IS_V6(ipaddr));
+
+	for (ifdev = NULL; (ifdev = ifdev_enum(ifdev)) != NULL; ) {
+		netif = ifdev_get_netif(ifdev);
+
+		if (ip6_addr_has_zone(ip_2_ip6(ipaddr)) &&
+		    !ip6_addr_test_zone(ip_2_ip6(ipaddr), netif))
+			continue;
+
+		for (num = 0; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+			if (ip6_addr_isinvalid(ifdev->ifdev_v6state[num]))
+				continue;
+
+			if (!ifaddr_v6_isvalid(ifdev, num))
+				continue;
+
+			addr = netif_ip_addr6(netif, num);
+
+			/*
+			 * For addresses with no implied subnet, check against
+			 * the full address, so as to match only that address.
+			 */
+			if (ifdev->ifdev_v6flags[num] & IFADDR_V6F_AUTOCONF)
+				prefix = IP6_BITS;
+			else
+				prefix = ifdev->ifdev_v6prefix[num];
+
+			if (addr_get_common_bits(ipaddr, addr, prefix) ==
+			    prefix)
+				return ifdev;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Select an IPv6 source address for communication to the given destination
+ * address on the given interface.  Return the selected source address, or NULL
+ * if no appropriate source address could be found.  This function implements
+ * RFC 6724 Sec. 5, and is very close to a drop-in replacement for lwIP's own
+ * ip6_select_source_address() function.  We can do a slightly better job
+ * because we have more information (for Rules 6 and 7) and can offer a more
+ * complete, less lightweight implementation (for Rule 8).
+ *
+ * In summary, this is the implementation status of the rules:
+ *
+ * - Rules 1, 2, 3: fully implemented
+ * - Rules 4, 5, 5.5: not applicable
+ * - Rules 6, 7, 8: fully implemented
+ *
+ * Note that for rule 2, scope decisions are left to the addrpol module, which
+ * makes a deliberate exception from the RFC for Unique-Local Addresses.
+ *
+ * The given destination address may not be properly zoned.
+ */
+static const ip_addr_t *
+ifaddr_v6_select(struct ifdev * ifdev, const ip_addr_t * dest_addr)
+{
+	const ip_addr_t *cand_addr, *best_addr;
+	int dest_scope, cand_scope, best_scope;
+	int dest_label, cand_label, best_label = 0 /*gcc*/;
+	uint8_t cand_pref, best_pref = 0 /*gcc*/;
+	uint8_t cand_temp, best_temp = 0 /*gcc*/;
+	int cand_bits, best_bits = 0 /*gcc*/;
+	ifaddr_v6_num_t num, best_num;
+
+	assert(ifdev != NULL);
+	assert(IP_IS_V6(dest_addr));
+
+	dest_scope = addrpol_get_scope(dest_addr, FALSE /*is_src*/);
+	dest_label = -1; /* obtain only when necessary */
+
+	best_addr = NULL;
+	best_num = -1;
+
+	for (num = 0; num < LWIP_IPV6_NUM_ADDRESSES; num++) {
+		/* Consider only valid (preferred and deprecated) addresses. */
+		if (!ip6_addr_isvalid(ifdev->ifdev_v6state[num]))
+			continue;
+
+		cand_addr = netif_ip_addr6(ifdev_get_netif(ifdev), (int)num);
+
+		/* Rule 1 */
+		if (ip6_addr_cmp_zoneless(ip_2_ip6(cand_addr),
+		    ip_2_ip6(dest_addr)))
+			return cand_addr;
+
+		cand_scope = ifdev->ifdev_v6scope[num];
+		cand_pref = ip6_addr_ispreferred(ifdev->ifdev_v6state[num]);
+		cand_temp = (ifdev->ifdev_v6flags[num] & IFADDR_V6F_TEMPORARY);
+		cand_label = -1;
+		cand_bits = -1;
+
+		/*
+		 * The following monster of an if-condition relies on order of
+		 * evaluation to obtain the more expensive-to-compute values
+		 * only when strictly necessary.  We use a shortcut for Rule 6:
+		 * labels are computed based on longest matching prefix, so if
+		 * Rule 6 prefers the candidate address, Rule 8 would have
+		 * preferred the candidate address as well.  Therefore, skip
+		 * even computing labels when Rule 7 would not prefer either
+		 * address, i.e. the "temporary" state of the candidate and the
+		 * best address are equal.  For complete ties (which exist,
+		 * because Rule 8 - longest common prefix - checks up to the
+		 * subnet size), as "policy" we always pick the first address.
+		 */
+#define ADDRPOL_GET_LABEL(addr, label) \
+	(label != -1 || (label = addrpol_get_label(addr), 1))
+#define ADDR_GET_COMMON_BITS(addr1, addr2, num, bits) \
+	(bits != -1 || (bits = (int) \
+	addr_get_common_bits(addr1, addr2, ifdev->ifdev_v6prefix[num]), 1))
+
+		if (best_addr == NULL || /* no alternative yet */
+		    /* Rule 2 */
+		    (cand_scope < best_scope && cand_scope >= dest_scope) ||
+		    (cand_scope > best_scope && best_scope < dest_scope) ||
+		    (cand_scope == best_scope &&
+		    /* Rule 3 */
+		    (cand_pref > best_pref || (cand_pref == best_pref &&
+		    /* Rule 6 */
+		    ((cand_temp != best_temp && /* shortcut, part 1 */
+		    ADDRPOL_GET_LABEL(dest_addr, dest_label) &&
+		    ADDRPOL_GET_LABEL(cand_addr, cand_label) &&
+		    ADDRPOL_GET_LABEL(best_addr, best_label) &&
+		    cand_label == dest_label && best_label != dest_label) ||
+		    ((cand_temp == best_temp || /* shortcut, part 2 */
+		    ((cand_label == dest_label) ==
+		      (best_label == dest_label))) &&
+		    /* Rule 7 */
+		    (cand_temp > best_temp || (cand_temp == best_temp &&
+		    /* Rule 8 */
+		    ADDR_GET_COMMON_BITS(cand_addr, dest_addr, num,
+		      cand_bits) &&
+		    ADDR_GET_COMMON_BITS(best_addr, dest_addr, best_num,
+		      best_bits) &&
+		    cand_bits > best_bits)))))))) {
+			/* We found a new "winning" candidate. */
+			best_addr = cand_addr;
+			best_scope = cand_scope;
+			best_pref = cand_pref;
+			best_temp = cand_temp;
+			best_label = cand_label;
+			best_bits = cand_bits;
+			best_num = num;
+		}
+	}
+
+	/* Return the best candidate, if any. */
+	return best_addr;
+}
+
+/*
+ * Pick an IPv6 source address locally assigned to the given interface, for use
+ * with the given IPv6 destination address.  See ifaddr_v6_select() on why we
+ * override lwIP's version of this function.
+ *
+ * This is a full replacement of the corresponding lwIP function, which should
+ * be overridden with weak symbols, using patches against the lwIP source code.
+ * As such, the lwIP headers should already provide the correct prototype for
+ * this function.  If not, something will have changed in the lwIP
+ * implementation, and this code must be revised accordingly.
+ *
+ * Important: there are currently no tests that will detect that overriding is
+ * broken, since our test code (necessarily) uses the code path that calls
+ * ifaddr_v6_select() directly, even though there are other places in the lwIP
+ * source code that explicitly call this functions.
+ */
+const ip_addr_t *
+ip6_select_source_address(struct netif * netif, const ip6_addr_t * dest_addr)
+{
+	ip_addr_t ipaddr;
+
+	ip_addr_copy_from_ip6(ipaddr, *dest_addr);
+
+	return ifaddr_v6_select(netif_get_ifdev(netif), &ipaddr);
+}
+
+/*
+ * Find and return the interface to which the given address is assigned as a
+ * local (source) address, or NULL if the given address is not a local address
+ * for any interface.  The 'any' address as well as IPv4-mapped IPv6 addresses
+ * are not supported and will yield NULL.
+ */
+struct ifdev *
+ifaddr_map_by_addr(const ip_addr_t * ipaddr)
+{
+
+	switch (IP_GET_TYPE(ipaddr)) {
+	case IPADDR_TYPE_V4:
+		return ifaddr_v4_map_by_addr(ip_2_ip4(ipaddr));
+
+	case IPADDR_TYPE_V6:
+		if (ip6_addr_isipv4mappedipv6(ip_2_ip6(ipaddr)))
+			return NULL;
+
+		return ifaddr_v6_map_by_addr(ip_2_ip6(ipaddr));
+
+	case IPADDR_TYPE_ANY:
+		return NULL;
+
+	default:
+		panic("unknown IP address type: %u", IP_GET_TYPE(ipaddr));
+	}
+}
+
+/*
+ * Find and return an interface that has a local network configured that
+ * contains the given address, or NULL if there is no match.  If there are
+ * multiple matches, an arbitrary one is returned.  The 'any' address as well
+ * as IPv4-mapped IPv6 addresses are not supported and will yield NULL.
+ */
+struct ifdev *
+ifaddr_map_by_subnet(const ip_addr_t * ipaddr)
+{
+
+	switch (IP_GET_TYPE(ipaddr)) {
+	case IPADDR_TYPE_V4:
+		return ifaddr_v4_map_by_subnet(ip_2_ip4(ipaddr));
+
+	case IPADDR_TYPE_V6:
+		if (ip6_addr_isipv4mappedipv6(ip_2_ip6(ipaddr)))
+			return NULL;
+
+		return ifaddr_v6_map_by_subnet(ipaddr);
+
+	case IPADDR_TYPE_ANY:
+		return NULL;
+
+	default:
+		panic("unknown IP address type: %u", IP_GET_TYPE(ipaddr));
+	}
+}
+
+/*
+ * Select a local address to use as source address for the given destination
+ * address.  If 'ifdev' is not NULL, it points to the interface from which to
+ * select a source address.  If 'ifdev' is NULL, this function will attempt to
+ * select an interface as well.  On success, return the selected source
+ * address, and if 'ifdevp' is not NULL, store the selected interface in it.
+ * On failure, return NULL.
+ */
+const ip_addr_t *
+ifaddr_select(const ip_addr_t * dst_addr, struct ifdev * ifdev,
+	struct ifdev ** ifdevp)
+{
+	struct route_entry *route;
+	const ip6_addr_t *ip6addr;
+
+	/*
+	 * If no interface is provided yet, start by determining the interface.
+	 * If the destination address has a zone, this step is easy.  Otherwise
+	 * we have to do a routing query on the destination address.
+	 */
+	if (ifdev == NULL) {
+		ip6addr = ip_2_ip6(dst_addr);
+
+		if (IP_IS_V6(dst_addr) && ip6_addr_has_zone(ip6addr)) {
+			ifdev = ifdev_get_by_index(ip6_addr_zone(ip6addr));
+
+			if (ifdev == NULL)
+				return NULL;
+		} else {
+			if ((route = route_lookup(dst_addr)) == NULL)
+				return NULL;
+
+			ifdev = route_get_ifdev(route);
+		}
+	}
+
+	if (ifdevp != NULL)
+		*ifdevp = ifdev;
+
+	/*
+	 * We have found an interface.  Now select an IP address assigned to
+	 * that interface.  For IPv4, this is easy: each interface has only one
+	 * local address (if that).  For IPv6, we may have to select one of the
+	 * locally assigned addresses: global, link-local, etc.
+	 */
+	switch (IP_GET_TYPE(dst_addr)) {
+	case IPADDR_TYPE_V4:
+		/* Use the IPv4 source address if one is set at all. */
+		if (!ifdev->ifdev_v4set)
+			return FALSE;
+
+		return netif_ip_addr4(ifdev_get_netif(ifdev));
+
+	case IPADDR_TYPE_V6:
+		return ifaddr_v6_select(ifdev, dst_addr);
+
+	default:
+		panic("unknown IP address type: %u", IP_GET_TYPE(dst_addr));
+	}
+}
+
+/*
+ * Check the given IPv6 address for a zone violation against the given
+ * interface--that is, a scoped address leaving its original zone if used in
+ * the context of the interface.  Return TRUE if the address is zone-
+ * incompatible with the interface, and thus must not be used in packets sent
+ * to that interface.  Return FALSE if there is no such zone incompatibility.
+ */
+int
+ifaddr_is_zone_mismatch(const ip6_addr_t * ipaddr, struct ifdev * ifdev)
+{
+
+	/*
+	 * The IPv6 loopback address (::1) has an implicit link-local scope,
+	 * with a zone corresponding to the interface it is assigned to.  We
+	 * take a shortcut by assuming that the loopback address is assigned to
+	 * the primary loopback interface.
+	 */
+	if (ip6_addr_isloopback(ipaddr))
+		return (ifdev != ifdev_get_loopback());
+
+	/* Zoned addresses must not leave their zone. */
+	if (ip6_addr_has_zone(ipaddr))
+		return !ip6_addr_test_zone(ipaddr, ifdev_get_netif(ifdev));
+
+	return FALSE;
+}
+
+/*
+ * Find a data link (hardware) address locally assigned to a interface.  The
+ * address is given as 'addr', and the length of the memory area that contains
+ * 'addr' is given as 'addr_len'.  The interface is given as 'ifdev'.  On
+ * success, return OK, with the data link address number stored in 'num'.  For
+ * interfaces that do not support hardware addresses, if the given address
+ * provides a zero-length hardware address, always return successfully with 0
+ * stored in 'nump'.  On failure, return a negative error code.
+ */
+int
+ifaddr_dl_find(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
+	socklen_t addr_len, ifaddr_dl_num_t * nump)
+{
+	uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
+	ifaddr_dl_num_t num;
+	int r;
+
+	if ((r = addr_get_link((const struct sockaddr *)addr, addr_len,
+	    NULL /*name*/, 0 /*name_max*/, hwaddr,
+	    ifdev_get_hwlen(ifdev))) != OK)
+		return r;
+
+	/*
+	 * For interfaces without hardware addresses, after passing the above
+	 * sanity checks (which guarantee that the searched-for address is of
+	 * zero length), return the pseudo-entry zero, which yields an entry
+	 * with a zero-sized hardware address once obtained.  This is required
+	 * for at least ifconfig(8).
+	 */
+	if (ifdev->ifdev_ops->iop_set_hwaddr == NULL) {
+		*nump = 0;
+		return OK;
+	}
+
+	for (num = 0; (size_t)num < __arraycount(ifdev->ifdev_hwlist); num++) {
+		if ((ifdev->ifdev_hwlist[num].ifhwa_flags & IFHWAF_VALID) &&
+		    !memcmp(ifdev->ifdev_hwlist[num].ifhwa_addr, hwaddr,
+		    ifdev_get_hwlen(ifdev))) {
+			*nump = num;
+			return OK;
+		}
+	}
+
+	return EADDRNOTAVAIL;
+}
+
+/*
+ * Enumerate data link (hardware) addresses locally assigned to the given
+ * interface 'ifdev'.  The caller should set 'nump' to 0 initially, and
+ * increase it by one between a successful call and the next enumeration call.
+ * Return TRUE on success, meaning that starting from the given value of 'nump'
+ * there is at least one data link address, of which the number is stored in
+ * 'nump' on return.  Return FALSE if there are no more data link addresses
+ * locally assigned to the interface.
+ */
+int
+ifaddr_dl_enum(struct ifdev * ifdev, ifaddr_dl_num_t * num)
+{
+
+	/*
+	 * If hardware addresses are not supported, or if no hardware address
+	 * has been added to this interface yet (this shouldn't happen but
+	 * still), there is always one entry with a (zero-sized) address.
+	 * That is required for the IFP (name) entry as used by getifaddrs(3).
+	 */
+	if (ifdev->ifdev_ops->iop_set_hwaddr == NULL ||
+	    !(ifdev->ifdev_hwlist[0].ifhwa_flags & IFHWAF_VALID))
+		return (*num == 0);
+
+	for (; (size_t)*num < __arraycount(ifdev->ifdev_hwlist); (*num)++) {
+		if (ifdev->ifdev_hwlist[*num].ifhwa_flags & IFHWAF_VALID)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+/*
+ * Retrieve a data link (hardware) address for an interface.  For interfaces
+ * that support hardware addresses, 'num' must be a number returned by
+ * ifaddr_dl_find() or ifaddr_dl_enum().  For others, 'num' must be zero, and a
+ * pseudo-address of zero size will be returned.  The address will be stored in
+ * 'addr'.  This function always succeeds.
+ */
+void
+ifaddr_dl_get(struct ifdev * ifdev, ifaddr_dl_num_t num,
+	struct sockaddr_dlx * addr)
+{
+	const uint8_t *hwaddr;
+	size_t hwaddr_len;
+	socklen_t addr_len;
+
+	if ((hwaddr_len = ifdev_get_hwlen(ifdev)) > 0) {
+		/*
+		 * Note that if we have no hardware addresses yet (which should
+		 * not happen but still), the first entry may not be marked as
+		 * valid yet.  Ignore it, and return an all-zeroes address.
+		 */
+		hwaddr = ifdev->ifdev_hwlist[num].ifhwa_addr;
+	} else
+		hwaddr = NULL;
+
+	addr_len = sizeof(*addr);
+
+	addr_put_link((struct sockaddr *)addr, &addr_len,
+	    ifdev_get_index(ifdev), ifdev_get_iftype(ifdev),
+	    ifdev_get_name(ifdev), hwaddr, hwaddr_len);
+}
+
+/*
+ * Obtain NetBSD-style state flags (IFLR_) for the given local data link
+ * address.  The given number may be 0, in which case that slot's state may not
+ * be valid.  Otherwise, the given number must identify an existing address.
+ * Return the flags, 0 if the slot was not valid.
+ */
+int
+ifaddr_dl_get_flags(struct ifdev * ifdev, ifaddr_dl_num_t num)
+{
+	int flags;
+
+	assert(num >= 0 && (size_t)num < __arraycount(ifdev->ifdev_hwlist));
+
+	if (!(ifdev->ifdev_hwlist[num].ifhwa_flags & IFHWAF_VALID))
+		return 0;
+
+	flags = (num == 0) ? IFLR_ACTIVE : 0;
+
+	if (ifdev->ifdev_hwlist[num].ifhwa_flags & IFHWAF_FACTORY)
+		flags |= IFLR_FACTORY;
+
+	return flags;
+}
+
+/*
+ * Scan the list of hardware addresses of the given interface for a particular
+ * hardware address, as well as for an available entry.  Return the entry found
+ * or -1 if the given hardware address was not found.  Independently, return an
+ * available entry in 'availp' or -1 if no entries are available.
+ */
+static ifaddr_dl_num_t
+ifaddr_dl_scan(struct ifdev * ifdev, const uint8_t * hwaddr,
+	ifaddr_dl_num_t * availp)
+{
+	ifaddr_dl_num_t num, found, avail;
+
+	found = avail = -1;
+
+	for (num = 0; (size_t)num < __arraycount(ifdev->ifdev_hwlist); num++) {
+		if (!(ifdev->ifdev_hwlist[num].ifhwa_flags & IFHWAF_VALID)) {
+			if (avail == -1)
+				avail = num;
+		} else if (!memcmp(ifdev->ifdev_hwlist[num].ifhwa_addr, hwaddr,
+		    ifdev_get_hwlen(ifdev)))
+			found = num;
+	}
+
+	*availp = avail;
+	return found;
+}
+
+/*
+ * Set a hardware address entry in the hardware address list of the given
+ * interface.
+ */
+static void
+ifaddr_dl_set(struct ifdev * ifdev, ifaddr_dl_num_t num,
+	const uint8_t * hwaddr, int is_factory)
+{
+
+	memcpy(&ifdev->ifdev_hwlist[num].ifhwa_addr, hwaddr,
+	    ifdev_get_hwlen(ifdev));
+
+	ifdev->ifdev_hwlist[num].ifhwa_flags = IFHWAF_VALID;
+	if (is_factory)
+		ifdev->ifdev_hwlist[num].ifhwa_flags |= IFHWAF_FACTORY;
+
+	rtsock_msg_addr_dl(ifdev, RTM_NEWADDR, num);
+}
+
+/*
+ * Mark a new hardware address as active, after it has already been activated
+ * on the hardware and in local administration.  The active slot is always slot
+ * zero, so swap slots if needed.
+ */
+static void
+ifaddr_dl_activate(struct ifdev * ifdev, ifaddr_dl_num_t num)
+{
+	struct ifdev_hwaddr tmp;
+	struct netif *netif;
+	size_t sz;
+
+	assert(num != -1);
+
+	/* The given slot may be zero if this is the initial address. */
+	if (num != 0) {
+		sz = sizeof(tmp);
+		memcpy(&tmp, &ifdev->ifdev_hwlist[0], sz);
+		memcpy(&ifdev->ifdev_hwlist[0], &ifdev->ifdev_hwlist[num], sz);
+		memcpy(&ifdev->ifdev_hwlist[num], &tmp, sz);
+	}
+
+	netif = ifdev_get_netif(ifdev);
+
+	/* Tell lwIP and routing sockets. */
+	memcpy(&netif->hwaddr, &ifdev->ifdev_hwlist[0].ifhwa_addr,
+	    ifdev_get_hwlen(ifdev));
+
+	rtsock_msg_addr_dl(ifdev, RTM_CHGADDR, 0);
+
+	/* See if we can and should generate a link-local IPv6 address now. */
+	ifaddr_v6_set_linklocal(ifdev);
+}
+
+/*
+ * Add a data link (hardware) address to an interface, or if it already exists,
+ * update its associated flags (IFLR_).
+ */
+int
+ifaddr_dl_add(struct ifdev * ifdev, const struct sockaddr_dlx * addr,
+	socklen_t addr_len, int flags)
+{
+	uint8_t hwaddr[NETIF_MAX_HWADDR_LEN];
+	ifaddr_dl_num_t found, avail;
+	int r;
+
+	/*
+	 * If this interface type does not support setting hardware addresses,
+	 * refuse the call.  If the interface type supports it but the
+	 * underlying hardware does not, we cannot report failure here, though.
+	 * In that case, attempts to activate an address will fail instead.
+	 */
+	if (ifdev->ifdev_ops->iop_set_hwaddr == NULL)
+		return EINVAL;
+
+	if ((r = addr_get_link((const struct sockaddr *)addr, addr_len,
+	    NULL /*name*/, 0 /*name_max*/, hwaddr,
+	    ifdev_get_hwlen(ifdev))) != OK)
+		return r;
+
+	/*
+	 * Find the slot for the given hardware address.  Also find the slot of
+	 * the active address, and a free slot.  All of these may not exist.
+	 */
+	found = ifaddr_dl_scan(ifdev, hwaddr, &avail);
+
+	if (found == -1) {
+		if (avail == -1)
+			return ENOBUFS;	/* TODO: a better error code */
+		found = avail;
+	}
+
+	/*
+	 * If we are asked to activate this address, try that first: this may
+	 * fail if the network device does not support setting addresses, in
+	 * which case we want to fail without causing routing socket noise.
+	 */
+	if ((flags & IFLR_ACTIVE) && found != 0 &&
+	    (r = ifdev->ifdev_ops->iop_set_hwaddr(ifdev, hwaddr)) != OK)
+		return r;
+
+	/*
+	 * If this is a new address, add and announce it.  Otherwise, just
+	 * update its flags.
+	 */
+	if (found == avail) {
+		ifaddr_dl_set(ifdev, found, hwaddr,
+		    (flags & IFLR_FACTORY));
+	} else {
+		ifdev->ifdev_hwlist[found].ifhwa_flags &= ~IFLR_FACTORY;
+		if (flags & IFLR_FACTORY)
+			ifdev->ifdev_hwlist[found].ifhwa_flags |= IFLR_FACTORY;
+	}
+
+	/*
+	 * Activate the address if requested, swapping slots as needed.  It is
+	 * not possible to deactivate the active address by changing its flags.
+	 */
+	if ((flags & IFLR_ACTIVE) && found != 0)
+		ifaddr_dl_activate(ifdev, found);
+
+	return OK;
+}
+
+/*
+ * Delete a data link (hardware) address from an interface.
+ */
+int
+ifaddr_dl_del(struct ifdev * ifdev, ifaddr_dl_num_t num)
+{
+
+	if (ifdev->ifdev_ops->iop_set_hwaddr == NULL)
+		return EINVAL;
+
+	assert(num >= 0 && (size_t)num < __arraycount(ifdev->ifdev_hwlist));
+	assert(ifdev->ifdev_hwlist[num].ifhwa_flags & IFHWAF_VALID);
+
+	/* It is not possible to delete the active address. */
+	if (num == 0)
+		return EBUSY;
+
+	rtsock_msg_addr_dl(ifdev, RTM_DELADDR, num);
+
+	ifdev->ifdev_hwlist[num].ifhwa_flags = 0;
+
+	return OK;
+}
+
+/*
+ * Announce all data link (hardware) addresses associated with the given
+ * interface as deleted, including the active address.  Used (only) right
+ * before the interface is destroyed.
+ */
+void
+ifaddr_dl_clear(struct ifdev * ifdev)
+{
+	ifaddr_dl_num_t num;
+
+	/*
+	 * Do the active address last, because all announcements carry the
+	 * active address's hardware address as well.
+	 */
+	for (num = 1; ifaddr_dl_enum(ifdev, &num); num++)
+		rtsock_msg_addr_dl(ifdev, RTM_DELADDR, num);
+
+	if (ifdev->ifdev_hwlist[0].ifhwa_flags & IFHWAF_VALID)
+		rtsock_msg_addr_dl(ifdev, RTM_DELADDR, (ifaddr_dl_num_t)0);
+}
+
+/*
+ * Update the interface's active hardware address.  If the 'is_factory' flag is
+ * set, the address is the factory (driver-given) address.  This function may
+ * only be called from ifdev_update_hwaddr().
+ */
+void
+ifaddr_dl_update(struct ifdev * ifdev, const uint8_t * hwaddr, int is_factory)
+{
+	ifaddr_dl_num_t found, avail;
+
+	/*
+	 * Find the slot for the given hardware address.  Also find the slot of
+	 * the active address, and a free slot.  All of these may not exist.
+	 */
+	found = ifaddr_dl_scan(ifdev, hwaddr, &avail);
+
+	/* If the given address is already the active one, do nothing. */
+	if (found == 0) {
+		/* Factory addresses are always added first! */
+		assert(!is_factory);
+
+		return;
+	}
+
+	if (found == -1) {
+		/*
+		 * If the given address is not in the list, add it.  If the
+		 * list is full, first remove any non-active address.  The user
+		 * won't like this, but it preserves correctness without too
+		 * many complications, because this case is unlikely to happen.
+		 */
+		if (avail == -1) {
+			found = 1;
+
+			(void)ifaddr_dl_del(ifdev, found);
+		} else
+			found = avail;
+
+		ifaddr_dl_set(ifdev, found, hwaddr, is_factory);
+	}
+
+	ifaddr_dl_activate(ifdev, found);
+}
