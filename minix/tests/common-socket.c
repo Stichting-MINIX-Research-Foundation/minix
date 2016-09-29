@@ -169,10 +169,15 @@ void test_getsockname(const struct socket_test_info *info)
 {
 	int sd;
 	int rc;
+	int on;
 	struct sockaddr_storage sock_addr;
 	socklen_t sock_addr_len;
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc == -1) {
 		test_fail("bind() should have worked");
@@ -201,6 +206,7 @@ void test_bind(const struct socket_test_info *info)
 	int sd;
 	int sd2;
 	int rc;
+	int on;
 
 	debug("entering test_bind()");
 	info->callback_cleanup();
@@ -208,6 +214,10 @@ void test_bind(const struct socket_test_info *info)
 	debug("Test bind() success");
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc == -1) {
 		test_fail("bind() should have worked");
@@ -231,26 +241,23 @@ void test_bind(const struct socket_test_info *info)
 	SOCKET(sd2, info->domain, info->type, 0);
 	errno = 0;
 	rc = bind(sd2, info->serveraddr, info->serveraddrlen);
-	if (!((rc == -1) && (errno == EADDRINUSE)) &&
-		!info->bug_bind_in_use) {
+	if (!((rc == -1) && (errno == EADDRINUSE))) {
 		test_fail("bind() should have failed with EADDRINUSE");
 	}
 	CLOSE(sd2);
 	CLOSE(sd);
 	info->callback_cleanup();
 
-	if (!info->bug_bind_null) {
-		debug("Test bind() with a NULL address");
+	debug("Test bind() with a NULL address");
 
-		SOCKET(sd, info->domain, info->type, 0);
-		errno = 0;
-		rc = bind(sd, (struct sockaddr *) NULL,
-			sizeof(struct sockaddr_storage));
-		if (!((rc == -1) && (errno == EFAULT))) {
-			test_fail("bind() should have failed with EFAULT");
-		}
-		CLOSE(sd);
+	SOCKET(sd, info->domain, info->type, 0);
+	errno = 0;
+	rc = bind(sd, (struct sockaddr *) NULL,
+		sizeof(struct sockaddr_storage));
+	if (!((rc == -1) && (errno == EFAULT))) {
+		test_fail("bind() should have failed with EFAULT");
 	}
+	CLOSE(sd);
 
 	debug("leaving test_bind()");
 }
@@ -296,13 +303,11 @@ void test_shutdown(const struct socket_test_info *info)
 	/* test for each direction (read, write, read-write) */
 	for (i = 0; i < 3; i++) {
 
-		if (info->bug_shutdown_read && how[i] == SHUT_RD) continue;
-
 		debug("test shutdown() with an invalid descriptor");
 
 		errno = 0;
 		rc = shutdown(-1, how[i]);
-		if (!(rc == -1 && errno == EBADF) && !info->bug_shutdown) {
+		if (!(rc == -1 && errno == EBADF)) {
 			test_fail("shutdown(-1, how[i]) should have failed");
 		}
 
@@ -310,7 +315,7 @@ void test_shutdown(const struct socket_test_info *info)
 
 		errno = 0;
 		rc = shutdown(0, how[i]);
-		if (!(rc == -1 && errno == ENOTSOCK) && !info->bug_shutdown) {
+		if (!(rc == -1 && errno == ENOTSOCK)) {
 			test_fail("shutdown() should have failed with "
 			    "ENOTSOCK");
 		}
@@ -320,9 +325,7 @@ void test_shutdown(const struct socket_test_info *info)
 		SOCKET(sd, info->domain, info->type, 0);
 		errno = 0;
 		rc = shutdown(sd, how[i]);
-		if (rc != 0 && !(rc == -1 && errno == ENOTCONN) &&
-			!info->bug_shutdown_not_conn &&
-			!info->bug_shutdown) {
+		if (rc != 0 && !(rc == -1 && errno == ENOTCONN)) {
 			test_fail("shutdown() should have failed");
 		}
 		CLOSE(sd);
@@ -331,9 +334,7 @@ void test_shutdown(const struct socket_test_info *info)
 	SOCKET(sd, info->domain, info->type, 0);
 	errno = 0;
 	rc = shutdown(sd, -1);
-	if (!(rc == -1 && errno == EINVAL) &&
-		!info->bug_shutdown_not_conn &&
-		!info->bug_shutdown) {
+	if (!(rc == -1 && errno == EINVAL)) {
 		test_fail("shutdown(sd, -1) should have failed with EINVAL");
 	}
 	CLOSE(sd);
@@ -344,7 +345,7 @@ void test_shutdown(const struct socket_test_info *info)
 void test_close(const struct socket_test_info *info)
 {
 	int sd, sd2;
-	int rc, i;
+	int rc, i, on;
 
 	debug("entering test_close()");
 
@@ -353,6 +354,10 @@ void test_close(const struct socket_test_info *info)
 	debug("Test close() success");
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc != 0) {
 		test_fail("bind() should have worked");
@@ -373,6 +378,10 @@ void test_close(const struct socket_test_info *info)
 	debug("dup()'ing a file descriptor and closing both should work");
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc != 0) {
 		test_fail("bind() should have worked");
@@ -442,13 +451,9 @@ void test_sockopts(const struct socket_test_info *info)
 	option_len = sizeof(option_value);
 	errno = 0;
 	rc = getsockopt(sd, SOL_SOCKET, SO_SNDBUF, &option_value, &option_len);
-	if (rc != 0 && !info->bug_sockopt_sndbuf) {
-		test_fail("getsockopt() should have worked");
-	}
 
 	if (info->expected_sndbuf >= 0 &&
-		option_value != info->expected_sndbuf &&
-		!info->bug_sockopt_sndbuf) {
+		option_value != info->expected_sndbuf) {
 		test_fail("SO_SNDBUF didn't seem to work.");
 	}
 
@@ -463,13 +468,12 @@ void test_sockopts(const struct socket_test_info *info)
 	option_len = sizeof(option_value);
 	errno = 0;
 	rc = getsockopt(sd, SOL_SOCKET, SO_RCVBUF, &option_value, &option_len);
-	if (rc != 0 && !info->bug_sockopt_rcvbuf) {
+	if (rc != 0) {
 		test_fail("getsockopt() should have worked");
 	}
 
 	if (info->expected_rcvbuf >= 0 &&
-		option_value != info->expected_rcvbuf &&
-		!info->bug_sockopt_rcvbuf) {
+		option_value != info->expected_rcvbuf) {
 		test_fail("SO_RCVBUF didn't seem to work.");
 	}
 
@@ -525,7 +529,7 @@ void test_dup(const struct socket_test_info *info)
 	struct stat info2;
 	int sd, sd2;
 	int rc;
-	int i;
+	int i, on;
 
 	debug("entering test_dup()");
 
@@ -534,6 +538,10 @@ void test_dup(const struct socket_test_info *info)
 	debug("Test dup()");
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc != 0) {
 		test_fail("bind() should have worked");
@@ -611,11 +619,15 @@ void test_dup2(const struct socket_test_info *info)
 	int sd;
 	int fd;
 	int rc;
+	int on;
 
 	debug("entering test_dup2()");
 	info->callback_cleanup();
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc != 0) {
@@ -671,6 +683,7 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 	int status;
 	int rc;
 	int sd;
+	int on;
 	unsigned char buf[BUFSIZE];
 	socklen_t client_addr_size;
 	int client_sd;
@@ -686,6 +699,9 @@ static void test_xfer_server(const struct socket_test_info *info, pid_t pid)
 	memset(&client_addr, '\0', sizeof(client_addr));
 
 	SOCKET(sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	rc = bind(sd, info->serveraddr, info->serveraddrlen);
 	if (rc == -1) {
@@ -1129,7 +1145,7 @@ static void test_simple_server(const struct socket_test_info *info, int type,
 	pid_t pid)
 {
 	char buf[BUFSIZE];
-	int sd, rc, client_sd, status;
+	int sd, rc, client_sd, status, on;
 	struct sockaddr_storage addr;
 	socklen_t addr_len;
 
@@ -1139,6 +1155,9 @@ static void test_simple_server(const struct socket_test_info *info, int type,
 	if (sd == -1) {
 		test_fail("socket");
 	}
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	assert(info->clientaddrlen <= sizeof(addr));
 	memcpy(&addr, info->clientaddr, info->clientaddrlen);
@@ -1314,7 +1333,7 @@ static void test_abort_server(const struct socket_test_info *info,
 	pid_t pid, int abort_type)
 {
 	char buf[BUFSIZE];
-	int sd, rc, client_sd, status;
+	int sd, rc, client_sd, status, on;
 	struct sockaddr_storage addr;
 	socklen_t addr_len;
 
@@ -1324,6 +1343,9 @@ static void test_abort_server(const struct socket_test_info *info,
 	if (sd == -1) {
 		test_fail("socket");
 	}
+
+	on = 1;
+	(void)setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	assert(sizeof(addr) >= info->clientaddrlen);
 	memcpy(&addr, info->clientaddr, info->clientaddrlen);
@@ -1588,12 +1610,15 @@ test_nonblock(const struct socket_test_info *info)
 	socklen_t len;
 	int server_sd, client_sd;
 	struct sockaddr_storage addr;
-	int status;
+	int status, on;
 
 	debug("entering test_nonblock()");
 	memset(buf, 0, sizeof(buf));
 
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
@@ -1724,10 +1749,13 @@ test_connect_nb(const struct socket_test_info *info)
 	socklen_t len;
 	int server_sd, client_sd;
 	struct sockaddr_storage addr;
-	int status;
+	int status, on;
 
 	debug("entering test_connect_nb()");
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
@@ -1801,12 +1829,15 @@ test_intr(const struct socket_test_info *info)
 	socklen_t len;
 	int server_sd, client_sd;
 	struct sockaddr_storage addr;
-	int r, status;
+	int r, status, on;
 
 	debug("entering test_intr()");
 	memset(buf, 0, sizeof(buf));
 
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
@@ -1926,12 +1957,15 @@ test_intr(const struct socket_test_info *info)
 void
 test_connect_close(const struct socket_test_info *info)
 {
-	int server_sd, client_sd;
+	int server_sd, client_sd, sd, on;
 	struct sockaddr_storage addr;
 	socklen_t len;
 
 	debug("entering test_connect_close()");
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
@@ -1950,7 +1984,7 @@ test_connect_close(const struct socket_test_info *info)
 
 	fcntl(client_sd, F_SETFL, fcntl(client_sd, F_GETFL) | O_NONBLOCK);
 
-	if (connect(client_sd, info->clientaddr, info->clientaddrlen) != -1	||
+	if (connect(client_sd, info->clientaddr, info->clientaddrlen) != -1 ||
 		errno != EINPROGRESS)
 		test_fail("connect() should have yielded EINPROGRESS");
 
@@ -1966,10 +2000,11 @@ test_connect_close(const struct socket_test_info *info)
 
 	len = sizeof(addr);
 	errno = 0;
-	if (accept(server_sd, (struct sockaddr *) &addr, &len) != -1) {
+	if ((sd = accept(server_sd, (struct sockaddr *) &addr, &len)) != -1) {
 		if (!info->ignore_accept_delay) {
 			test_fail("accept() should have failed");
 		}
+		close(sd);
 	} else if (errno != EAGAIN) {
 		test_fail("accept() should have yielded EAGAIN");
 	}
@@ -1981,17 +2016,22 @@ test_connect_close(const struct socket_test_info *info)
 
 /*
  * Verify that closing a listening socket will cause a blocking connect to fail
- * with ECONNRESET, and that a subsequent write will yield EPIPE.
+ * with ECONNRESET, and that a subsequent write will yield EPIPE.  This test
+ * works only if the connect(2) does not succeed before accept(2) is called at
+ * all, which means it is limited to UDS with LOCAL_CONNWAIT right now.
  */
 void
 test_listen_close(const struct socket_test_info *info)
 {
 	int server_sd, client_sd;
-	int status;
+	int status, on;
 	char byte;
 
 	debug("entering test_listen_close()");
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");
@@ -2022,24 +2062,18 @@ test_listen_close(const struct socket_test_info *info)
 		test_fail("write() should have yielded ENOTCONN");
 
 	if (connect(client_sd, info->clientaddr, info->clientaddrlen) != -1) {
-		if (!info->bug_connect_after_close) {
-			test_fail("connect() should have failed");
-		}
+		test_fail("connect() should have failed");
 	} else if (errno != ECONNRESET) {
 		test_fail("connect() should have yielded ECONNRESET");
 	}
 
 	/*
 	 * The error we get on the next write() depends on whether the socket
-	 * may be reused after a failed connect: for TCP/IP, it may not, so we
-	 * get EPIPE; for UDS, it may be reused, so we get ENOTCONN.
+	 * may be reused after a failed connect.  For UDS, it may be, so we get
+	 * ENOTCONN.  Otherwise we would expect EPIPE.
 	 */
-	if (!info->bug_connect_after_close) {
-		if (write(client_sd, &byte, 1) != -1 ||
-		    (errno != EPIPE && errno != ENOTCONN))
-			test_fail("write() should have yielded "
-			    "EPIPE/ENOTCONN");
-	}
+	if (write(client_sd, &byte, 1) != -1 || errno != ENOTCONN)
+		test_fail("write() should have yielded ENOTCONN");
 
 	close(client_sd);
 
@@ -2061,11 +2095,14 @@ void
 test_listen_close_nb(const struct socket_test_info *info)
 {
 	int server_sd, client_sd;
-	int status;
+	int status, on;
 	char byte;
 
 	debug("entering test_listen_close_nb()");
 	SOCKET(server_sd, info->domain, info->type, 0);
+
+	on = 1;
+	(void)setsockopt(server_sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
 	if (bind(server_sd, info->serveraddr, info->serveraddrlen) == -1)
 		test_fail("bind() should have worked");

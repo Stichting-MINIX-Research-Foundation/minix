@@ -88,11 +88,13 @@ int main(int argc, char *argv[])
 		.types                     = &info.type,
 		.typecount                 = 1,
 
-		.bug_bind_in_use           = 1,
-		.bug_bind_null             = 1,
-		.bug_connect_after_close   = 1,
-		.bug_shutdown_not_conn     = 1,
-		.bug_shutdown_read         = 1,
+		/*
+		 * Maintainer's note: common-socket was adapted from test56 in
+		 * a time that UDS's LOCAL_CONNWAIT was the default.  Due to
+		 * this as well as inherent behavioral differences between TCP
+		 * and UDS, these exceptions basically work around the fact
+		 * that common-socket was not designed for its current task.
+		 */
 		.ignore_accept_delay       = 1,
 		.ignore_connect_unaccepted = 1,
 		.ignore_connect_delay      = 1,
@@ -130,7 +132,7 @@ int main(int argc, char *argv[])
 	test_connect_nb(&info);
 	test_intr(&info);
 	test_connect_close(&info);
-	test_listen_close(&info);
+	/* test_listen_close(&info); -- not suitable for TCP */
 	test_listen_close_nb(&info);
 
 	quit();
