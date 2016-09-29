@@ -1,0 +1,42 @@
+From 614408895d331467612a0f4ea60753b1fe5e4ce8 Mon Sep 17 00:00:00 2001
+From: David van Moolenbroek <david@minix3.org>
+Date: Thu, 2 Feb 2017 18:45:05 +0000
+Subject: [PATCH 3/4] MINIX 3 only: ignore IPv6 Router Advertisements
+
+For MINIX 3, there are two reasons why Router Advertisement messages
+should be ignored altogether, depending on the role of the system:
+
+  1) if the MINIX 3 node is acting as a router, accepting such
+     messages from other nodes would constitute an RFC violation;
+  2) if the MINIX 3 node is acting as a host, processing of the Router
+     Advertisement messages is the responsibility of userland, and
+     dhcpcd(8) in particular; letting lwIP process them would only
+     serve to fill lwIP's local (default-router and prefix) tables,
+     which may then erroneously override our subnet routing decisions.
+
+A negative side effect of this change is that in the host scenario,
+lwIP is no longer less likely to evict entries for routers from its
+neighbor cache.  This is an issue only on locally attached networks
+and should not pose many problems in practice.  The entries will also
+no longer show up as router entries in ndp(8) output.
+---
+ src/core/ipv6/icmp6.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/core/ipv6/icmp6.c b/src/core/ipv6/icmp6.c
+index 13416bd..51b6705 100644
+--- a/src/core/ipv6/icmp6.c
++++ b/src/core/ipv6/icmp6.c
+@@ -117,7 +117,9 @@ icmp6_input(struct pbuf *p, struct netif *inp)
+   switch (icmp6hdr->type) {
+   case ICMP6_TYPE_NA: /* Neighbor advertisement */
+   case ICMP6_TYPE_NS: /* Neighbor solicitation */
++#if !defined(__minix)
+   case ICMP6_TYPE_RA: /* Router advertisement */
++#endif /* !defined(__minix) */
+   case ICMP6_TYPE_RD: /* Redirect */
+   case ICMP6_TYPE_PTB: /* Packet too big */
+     nd6_input(p, inp);
+-- 
+2.5.2
+

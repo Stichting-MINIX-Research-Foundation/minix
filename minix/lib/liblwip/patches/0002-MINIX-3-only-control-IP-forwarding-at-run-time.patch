@@ -1,0 +1,101 @@
+From 7dd690e2c3f3350f5fd647ca52c3fdcc8ef17f4e Mon Sep 17 00:00:00 2001
+From: David van Moolenbroek <david@minix3.org>
+Date: Thu, 2 Feb 2017 18:21:57 +0000
+Subject: [PATCH 2/4] MINIX 3 only: control IP forwarding at run time
+
+The lwIP core supports IPv4 and IPv6 packet forwarding, but allows
+this functionality to be enabled or disabled at compile time only.
+For MINIX 3, this is not enough, as NetBSD userland (including the
+network RC script) expects to be able to control this setting at run
+time.
+
+This patch adds run-time control over IPv4 and IPv6 forwarding with
+the addition of two variables, lwip_ip4_forward and lwip_ip6_forward.
+These variables are defined in the LWIP service and declared for lwIP
+in arch/cc.h.  The variables may be changed at any time.  Any non-zero
+value indicates that packets of the corresponding IP version should be
+forwarded.
+
+In addition, change lwIP such that if IPv6 forwarding is enabled,
+meaning that the node acts as a (minimal, currently non RFC compliant)
+router, the following adjustments are made (see RFC 4861):
+
+- ICMPv6 Redirect messages are not accepted;
+- ICMPv6 Neighbor Advertisement messages carry the Router flag.
+---
+ src/core/ipv4/ip4.c |  7 +++++++
+ src/core/ipv6/ip6.c |  7 +++++++
+ src/core/ipv6/nd6.c | 14 ++++++++++++++
+ 3 files changed, 28 insertions(+)
+
+diff --git a/src/core/ipv4/ip4.c b/src/core/ipv4/ip4.c
+index d2b1751..d2fde03 100644
+--- a/src/core/ipv4/ip4.c
++++ b/src/core/ipv4/ip4.c
+@@ -272,6 +272,13 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
+ {
+   struct netif *netif;
+ 
++#if defined(__minix)
++  /* MINIX 3 only: forward packets only when enabled through configuration. */
++  if (!lwip_ip4_forward) {
++    return;
++  }
++#endif /* defined(__minix) */
++
+   PERF_START;
+   LWIP_UNUSED_ARG(inp);
+ 
+diff --git a/src/core/ipv6/ip6.c b/src/core/ipv6/ip6.c
+index 88d998b..24ecaaa 100644
+--- a/src/core/ipv6/ip6.c
++++ b/src/core/ipv6/ip6.c
+@@ -367,6 +367,13 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
+ {
+   struct netif *netif;
+ 
++#if defined(__minix)
++  /* MINIX 3 only: forward packets only when enabled through configuration. */
++  if (!lwip_ip6_forward) {
++    return;
++  }
++#endif /* defined(__minix) */
++
+   /* do not forward link-local or loopback addresses */
+   if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
+       ip6_addr_isloopback(ip6_current_dest_addr())) {
+diff --git a/src/core/ipv6/nd6.c b/src/core/ipv6/nd6.c
+index 0122d99..bd121f5 100644
+--- a/src/core/ipv6/nd6.c
++++ b/src/core/ipv6/nd6.c
+@@ -790,6 +790,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
+     struct lladdr_option *lladdr_opt;
+     ip6_addr_t destination_address, target_address;
+ 
++#if defined(__minix)
++    /* MINIX 3 only: if forwarding is enabled, do not accept redirects. */
++    if (!lwip_ip6_forward) {
++      pbuf_free(p);
++      return;
++    }
++#endif /* defined(__minix) */
++
+     /* Check that Redir header fits in packet. */
+     if (p->len < sizeof(struct redirect_header)) {
+       /* @todo debug message */
+@@ -1259,6 +1267,12 @@ nd6_send_na(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
+   na_hdr->code = 0;
+   na_hdr->chksum = 0;
+   na_hdr->flags = flags & 0xf0;
++#if defined(__minix)
++  /* MINIX 3 only: if forwarding is enabled, set the router bit. */
++  if (lwip_ip6_forward) {
++    na_hdr->flags |= ND6_FLAG_ROUTER;
++  }
++#endif /* defined(__minix) */
+   na_hdr->reserved[0] = 0;
+   na_hdr->reserved[1] = 0;
+   na_hdr->reserved[2] = 0;
+-- 
+2.5.2
+

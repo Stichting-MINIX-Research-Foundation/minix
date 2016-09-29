@@ -1,0 +1,40 @@
+From 3ec7c31a2e5fba79936ca97de3e527f851e34c6b Mon Sep 17 00:00:00 2001
+From: David van Moolenbroek <david@minix3.org>
+Date: Thu, 2 Feb 2017 18:58:11 +0000
+Subject: [PATCH 4/4] MINIX 3 only: avoid large contiguous allocations
+
+On MINIX 3, we implement our own pool-based memory management.  The
+maximum buffer size of any one of those pool elements is small: 512
+bytes, currently.  That means that any allocation for larger
+contiguous sizes will never succeed.  This patch deals with one known
+practical case where this is a problem, namely duplication of incoming
+UDP packets that should be delivered to more than one UDP PCB.  This
+case can be resolved by using our own pbuf chain allocator.
+
+The only remaining currently known case where lwIP performs large
+contiguous allocations, is in allocating the reply buffer for ICMP
+ping requests.  The result is that our implementation will never
+respond to ping requests that exceed 512 bytes, which is just fine.
+---
+ src/core/udp.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/core/udp.c b/src/core/udp.c
+index ec4b25f..f53fb66 100644
+--- a/src/core/udp.c
++++ b/src/core/udp.c
+@@ -368,7 +368,11 @@ udp_input(struct pbuf *p, struct netif *inp)
+                   pbuf_header_force(p, hdrs_len);
+                   p_header_changed = 1;
+                 }
++#if defined(__minix)
++                q = pchain_alloc(PBUF_RAW, p->tot_len);
++#else /* !defined(__minix) */
+                 q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
++#endif /* !defined(__minix) */
+                 if (q != NULL) {
+                   err_t err = pbuf_copy(q, p);
+                   if (err == ERR_OK) {
+-- 
+2.5.2
+
