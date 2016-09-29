@@ -56,9 +56,21 @@ FILES += testvm.conf
 
 # Network stack testing programs
 OBJS.test90+=	socklib.o
+OBJS.test91+=	socklib.o
+OBJS.test92+=	socklib.o
+OBJS.test93+=	socklib.o
 # Uncomment the following lines to use SOCKLIB_SWEEP_GENERATE=1/2 in socklib.c
 #.PATH: ${NETBSDSRCDIR}/minix/usr.bin/trace
 #OBJS.test90+=	error.o
+#OBJS.test91+=	error.o
+#OBJS.test92+=	error.o
+#OBJS.test93+=	error.o
+
+.if ${USE_INET6} == "no"
+# Tests 91-94 will fail without IPv6 support, but they should at least compile.
+CPPFLAGS.socklib.c += -DNO_INET6
+CPPFLAGS.test94.c += -DNO_INET6
+.endif # ${USE_INET6} == "no"
 
 # Tests to compile, For every architecture
 MINIX_TESTS= \
@@ -66,7 +78,7 @@ MINIX_TESTS= \
 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
 41 42 43 44 45 46    48 49 50    52 53 54 55 56    58 59 60 \
 61       64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 \
-81 82 83 84 85 86 87 88 89 90
+81 82 83 84 85 86 87 88 89 90 91 92 93 94
 
 FILES += t84_h_nonexec.sh
 
