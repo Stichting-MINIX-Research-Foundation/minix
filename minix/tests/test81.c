@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
 		.clientaddrsym             = (struct sockaddr *) &clientaddr,
 		.clientaddrsymlen          = sizeof(clientaddr),
 		.domain                    = PF_INET,
-		.expected_rcvbuf           = -1,
-		.expected_sndbuf           = -1,
+		.expected_rcvbuf           = 32768,
+		.expected_sndbuf           = 8192,
 		.serveraddr                = (struct sockaddr *) &serveraddr,
 		.serveraddrlen             = sizeof(serveraddr),
 		.serveraddr2               = (struct sockaddr *) &serveraddr2,
@@ -87,22 +87,6 @@ int main(int argc, char *argv[])
 		.type                      = SOCK_DGRAM,
 		.types                     = &info.type,
 		.typecount                 = 1,
-
-		.bug_bind_in_use           = 1,
-		.bug_bind_null             = 1,
-		.bug_connect_after_close   = 1,
-		.bug_shutdown              = 1, /* UDP only problem */
-		.bug_shutdown_not_conn     = 1,
-		.bug_shutdown_read         = 1,
-		.bug_sockopt_rcvbuf        = 1, /* UDP only problem */
-		.bug_sockopt_sndbuf        = 1, /* UDP only problem */
-		.ignore_accept_delay       = 1,
-		.ignore_connect_unaccepted = 1,
-		.ignore_connect_delay      = 1,
-		.ignore_select_delay       = 1,
-		.ignore_send_waiting       = 1,
-		.ignore_write_conn_reset   = 1,
-
 		.callback_check_sockaddr   = callback_check_sockaddr,
 		.callback_cleanup          = callback_cleanup,
 		.callback_xfer_prepclient  = NULL,

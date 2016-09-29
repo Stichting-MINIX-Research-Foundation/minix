@@ -75,16 +75,6 @@ struct socket_test_info {
 	const int *types;
 	size_t typecount;
 
-	int buf_accept_intr; /* accept can return success when interrupted */
-	int bug_bind_in_use; /* bind does not return EADDRINUSE */
-	int bug_bind_null; /* bind segfaults with NULL pointer */
-	int bug_connect_after_close; /* connect succeeds after server closed */
-	int bug_select_nonblock; /* select unexpected results for nb sockets */
-	int bug_shutdown; /* shutdown not supported */
-	int bug_shutdown_not_conn; /* shutdown does not return ENOTCONN */
-	int bug_shutdown_read; /* shutdown does not support SHUT_RD */
-	int bug_sockopt_rcvbuf; /* get/setsockopt does not support SO_RCVBUF */
-	int bug_sockopt_sndbuf; /* get/setsockopt does not support SO_SNDBUF */
 	int ignore_accept_delay; /* success from accept after aborted connect */
 	int ignore_connect_delay; /* nb connect not instant */
 	int ignore_connect_unaccepted; /* connect succeeds without accept */

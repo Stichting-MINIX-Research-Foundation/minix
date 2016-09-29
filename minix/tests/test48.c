@@ -165,6 +165,17 @@ static void test_getaddrinfo(
 	ai_count_stream = 0;
 	while (ai_cur)
 	{
+		/*
+		 * TODO: this test was written for IPv4.  For now, skip IPv6
+		 * results altogether.  Later, we should add additional code
+		 * for IPv6.  However, since this test now largely exercises
+		 * NetBSD code, it is not as important as it once was.
+		 */
+		if (ai_cur->ai_family == AF_INET6) {
+			ai_cur = ai_cur->ai_next;
+			continue;
+		}
+
 		/* test result fields */
 		if (ai_cur->ai_family != AF_INET) 
 			test_getaddrinfo_err_nr(2, TEST_GETADDRINFO_ERR_PARAMS,
@@ -316,8 +327,6 @@ static struct
 	{ "127.0.0.1",      0x7f000001, 1, 0, 0, 0                 },
 	{ "localhost",      0x7f000001, 0, 1, 0, 0,                },
 	{ "test48.minix3.org", 0x7f010203, 0, 1, 1, 0,             },
-	{ "",               0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
-	{ "256.256.256.256",0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
 	{ "minix3.example.com",     0x00000000, 0, 0, 1, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)}};
 
 static struct

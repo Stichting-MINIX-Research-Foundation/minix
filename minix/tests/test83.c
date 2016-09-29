@@ -38,11 +38,6 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-#include <net/gen/in.h>
-#include <net/gen/ip_io.h>
-
 #include "common.h"
 
 int max_error = 100;
@@ -124,16 +119,11 @@ static const size_t payloadsizes[] = {
 	65535 - sizeof(struct header_ip) - sizeof(struct header_udp),
 };
 
-#define ADDR_COUNT_MAX 10
-static size_t addr_count;
-static uint32_t addrsrc = 0xc0000201; /* 192.0.2.1 (TEST-NET) */
-static uint32_t addrdst = 0x7f000001; /* 127.0.0.1 (localhost) */
-static uint32_t addrs[ADDR_COUNT_MAX] = {
-	0x00000000, /* 0.0.0.0 (INADDR_NONE) */
-	0x7f000001, /* 127.0.0.1 (localhost) */
-	0xc0000201, /* 192.0.2.1 (TEST-NET) */
-	0xffffffff, /* 255.255.255.255 (broadcast) */
-	/* local addresses will be added */
+/* In its current configuration, this test uses the loopback interface only. */
+static uint32_t addrsrc = INADDR_LOOPBACK; /* 127.0.0.1 (localhost) */
+static uint32_t addrdst = INADDR_LOOPBACK; /* 127.0.0.1 (localhost) */
+static uint32_t addrs[] = {
+	INADDR_LOOPBACK, /* 127.0.0.1 (localhost) */
 };
 
 #define CLOSE(fd) do { assert(fd >= 0); if (close((fd)) != 0) efmt("close failed"); } while (0);
@@ -472,7 +462,7 @@ static pid_t server_start(int type, int port, enum server_action action) {
 		.sin_port = htons(port),
 		.sin_addr = { htonl(INADDR_ANY) },
 	};
-	int fd;
+	int fd, on;
 	pid_t pid = -1;
 
 	dbgprintf("server_start port %d\n", port);
@@ -481,6 +471,12 @@ static pid_t server_start(int type, int port, enum server_action action) {
 	fd = socket(AF_INET, type, 0);
 	if (fd < 0) {
 		efmt("cannot create socket");
+		goto cleanup;
+	}
+
+	on = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != 0) {
+		efmt("cannot set SO_REUSEADDR option on socket");
 		goto cleanup;
 	}
 
@@ -524,7 +520,13 @@ cleanup:
 }
 
 static ssize_t send_packet_raw(int fd, const void *buf, size_t size) {
-	return write(fd, buf, size);
+	struct sockaddr_in sin;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+	return sendto(fd, buf, size, 0, (struct sockaddr *)&sin, sizeof(sin));
 }
 
 enum settings_ip {
@@ -604,7 +606,7 @@ static void send_packet_ip_base(
 	struct header_ip header = {
 		.tos     = tos,
 		.id      = htons(id),
-		.fl_fo   = htons((fl << 13) | fo),
+		.fl_fo   = (fl << 13) | fo, /* no htons(), lwip swaps this */
 		.ttl     = ttl,
 		.prot    = prot,
 		.cs      = 0,
@@ -652,7 +654,7 @@ static void send_packet_ip_base(
 	if (ipsettings & si_bad_len_small) len = ihl * 4 - 1;
 	if (ipsettings & si_bad_len_big) len += 1;
 	if (ipsettings & si_bad_len_huge) len = 0xffff;
-	header.len = htons(len);
+	header.len = len; /* no htons(), lwip swaps this */
 
 	packetsize = ihl * 4 + payloadsize;
 	if (packetsize > sizeof(packet)) {
@@ -973,8 +975,8 @@ static void send_packets_ip(int fd) {
 
 	/* send packets with various addresses and corruptions */
 	params = paramsbase;
-	for (i = 0; i < addr_count; i++) {
-	for (j = 0; j < addr_count; j++) {
+	for (i = 0; i < __arraycount(addrs); i++) {
+	for (j = 0; j < __arraycount(addrs); j++) {
 		params.srcip = addrs[i];
 		params.dstip = addrs[j];
 		send_packets_ip_settings(&params);
@@ -1050,8 +1052,8 @@ static void send_packets_udp(int fd) {
 
 	/* send packets with various addresses and ports */
 	params = paramsbase;
-	for (i = 0; i < addr_count; i++) {
-	for (j = 0; j < addr_count; j++) {
+	for (i = 0; i < __arraycount(addrs); i++) {
+	for (j = 0; j < __arraycount(addrs); j++) {
 	for (k = 0; k < 5; k++) {
 		params.srcip = addrs[i];
 		params.dstip = addrs[j];
@@ -1061,7 +1063,7 @@ static void send_packets_udp(int fd) {
 	}
 	}
 	params = paramsbase;
-	for (i = 0; i < addr_count; i++) {
+	for (i = 0; i < __arraycount(addrs); i++) {
 	for (j = 0; j < 5; j++) {
 	for (k = 0; k < 5; k++) {
 		params.dstip = addrs[i];
@@ -1307,8 +1309,8 @@ static void send_packets_tcp(int fd) {
 
 	/* send packets with various addresses and ports */
 	params = paramsbase;
-	for (i = 0; i < addr_count; i++) {
-	for (j = 0; j < addr_count; j++) {
+	for (i = 0; i < __arraycount(addrs); i++) {
+	for (j = 0; j < __arraycount(addrs); j++) {
 	for (k = 0; k < 7; k++) {
 		params.srcip = addrs[i];
 		params.dstip = addrs[j];
@@ -1318,7 +1320,7 @@ static void send_packets_tcp(int fd) {
 	}
 	}
 	params = paramsbase;
-	for (i = 0; i < addr_count; i++) {
+	for (i = 0; i < __arraycount(addrs); i++) {
 	for (j = 0; j < 7; j++) {
 	for (k = 0; k < 7; k++) {
 		params.dstip = addrs[i];
@@ -1477,65 +1479,14 @@ static void recv_packets_select(int fd) {
 }
 
 static int open_raw_socket(int broadcast) {
-	int fd;
-	struct nwio_ethopt opt = { };
-	struct nwio_ethstat stat = { };
+	int fd, on;
 
-	fd = open("/dev/eth", O_RDWR);
-	if (fd < 0) efmt("cannot open /dev/eth");
+	fd = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
+	if (fd < 0) efmt("cannot create raw socket");
 
-	/* test NWIOGETHOPT */
-	if (ioctl(fd, NWIOGETHOPT, &opt) != 0) {
-		efmt("ioctl(NWIOGETHOPT) failed");
-	}
-
-	/* test NWIOGETHSTAT */
-	if (ioctl(fd, NWIOGETHSTAT, &stat) != 0) {
-		efmt("ioctl(NWIOGETHSTAT) failed");
-	}
-
-	/* test invalid NWIOSETHOPT input */
-	opt.nweo_flags = NWEO_COPY << 16;
-	if (ioctl(fd, NWIOSETHOPT, &opt) != -1 && errno != EBADMODE) {
-		efmt("ioctl(NWIOSETHOPT) should have returned EBADMODE");
-	}
-
-	opt.nweo_flags = NWEO_EN_LOC | NWEO_DI_LOC;
-	if (ioctl(fd, NWIOSETHOPT, &opt) != -1 && errno != EBADMODE) {
-		efmt("ioctl(NWIOSETHOPT) should have returned EBADMODE");
-	}
-
-	/* test NWIOSETHOPT with defaults */
-	opt.nweo_flags = 0;
-	if (ioctl(fd, NWIOSETHOPT, &opt) != 0) {
-		efmt("ioctl(NWIOSETHOPT) failed");
-	}
-
-	/* test NWIOGETHSTAT right after reconfiguring */
-	opt.nweo_flags = NWEO_EN_BROAD | NWEO_EN_MULTI | NWEO_EN_PROMISC;
-	if (ioctl(fd, NWIOSETHOPT, &opt) != 0) {
-		efmt("ioctl(NWIOSETHOPT) failed");
-	}
-
-	opt.nweo_flags = NWEO_DI_BROAD | NWEO_DI_MULTI | NWEO_DI_PROMISC;
-	if (ioctl(fd, NWIOSETHOPT, &opt) != 0) {
-		efmt("ioctl(NWIOSETHOPT) failed");
-	}
-
-	if (ioctl(fd, NWIOGETHSTAT, &stat) != 0) {
-		efmt("ioctl(NWIOGETHSTAT) failed");
-	}
-
-	/* configure /dev/eth the way we want it for the rest of the test */
-	opt.nweo_flags = NWEO_COPY | NWEO_EN_LOC | NWEO_EN_BROAD |
-		NWEO_EN_MULTI | NWEO_EN_PROMISC |
-		(broadcast ? NWEO_REMANY : NWEO_REMSPEC) |
-		NWEO_TYPESPEC | NWEO_RWDATONLY;
-	opt.nweo_type = htons(ETH_IP_PROTO);
-	memcpy(&opt.nweo_rem, &stat.nwes_addr, sizeof(opt.nweo_rem));
-	if (ioctl(fd, NWIOSETHOPT, &opt) != 0) {
-		efmt("ioctl(NWIOSETHOPT) failed");
-	}
+	on = 1;
+	if (setsockopt(fd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) != 0)
+		efmt("ioctl(IP_HDRINCL) failed");
 
 	return fd;
 }
@@ -1563,71 +1514,6 @@ static void do_packets(void) {
 	CLOSE(fd);
 }
 
-static void add_local_ip(uint32_t ip) {
-	static int first = 1;
-	int i;
-
-	for (i = 0; i < addr_count; i++) {
-		if (addrs[i] == ip) return;
-	}
-	dbgprintf("found local IP: %d.%d.%d.%d\n",
-		(uint8_t) (ip >> 24), (uint8_t) (ip >> 16),
-		(uint8_t) (ip >> 8), (uint8_t) (ip >> 0));
-	if (addr_count < ADDR_COUNT_MAX) {
-		addrs[addr_count++] = ip;
-	}
-	if (first) {
-		addrdst = ip;
-		first = 0;
-	}
-}
-
-static void get_local_ip(void) {
-	char device[16];
-	int flags;
-	int ifno;
-	nwio_ipconf_t ipconf;
-	int ip_fd;
-
-	/* inspired by ifconfig */
-	for (ifno = 0; ifno < 32; ifno++) {
-		snprintf(device, sizeof(device), "/dev/ip%d", ifno);
-		ip_fd = open(device, O_RDWR);
-		if (ip_fd < 0) {
-			if (errno != ENOENT && errno != ENXIO) {
-				efmt("cannot open %s", device);
-			}
-			continue;
-		}
-
-		flags = fcntl(ip_fd, F_GETFL);
-		if (flags == -1) {
-			efmt("cannot get flags for %s", device);
-			goto next;
-		}
-		if (fcntl(ip_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-			efmt("cannot set flags for %s", device);
-			goto next;
-		}
-
-		if (ioctl(ip_fd, NWIOGIPCONF, &ipconf) == -1) {
-			if (errno != EAGAIN) {
-				efmt("cannot get IP address for %s", device);
-			}
-			goto next;
-		}
-
-		if (fcntl(ip_fd, F_SETFL, flags) == -1) {
-			efmt("cannot restore flags for %s", device);
-		}
-
-		add_local_ip(ntohl(ipconf.nwic_ipaddr));
-
-next:
-		CLOSE(ip_fd);
-	}
-}
-
 int main(int argc, char **argv)
 {
 	int i;
@@ -1644,8 +1530,7 @@ int main(int argc, char **argv)
 	pids[5] = server_start(SOCK_DGRAM,  PORT_BASE + 1, sa_selectr);
 
 	/* send some bogus packets */
-	get_local_ip();
-	if (get_setting_use_network()) do_packets();
+	do_packets();
 
 	/* stop the servers */
 	for (i = 0; i < PORT_COUNT; i++) server_stop(pids[i]);
