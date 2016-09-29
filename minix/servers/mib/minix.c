@@ -75,6 +75,7 @@ static struct mib_node mib_minix_table[] = {
 				    "mib", "MIB service information"),
 /* 2*/	[MINIX_PROC]		= MIB_NODE(_P | _RO, mib_minix_proc_table,
 				    "proc", "Process information for ProcFS"),
+/* 3*/	/* MINIX_LWIP is mounted through RMIB and thus not present here. */
 };
 
 /*

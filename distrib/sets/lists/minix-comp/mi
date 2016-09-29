@@ -1182,6 +1182,7 @@
 ./usr/include/minix/blockdriver.h                       minix-comp
 ./usr/include/minix/blockdriver_mt.h                    minix-comp
 ./usr/include/minix/board.h                             minix-comp
+./usr/include/minix/bpf.h                               minix-comp
 ./usr/include/minix/btrace.h                            minix-comp
 ./usr/include/minix/callnr.h                            minix-comp
 ./usr/include/minix/chardriver.h                        minix-comp
@@ -1208,6 +1209,7 @@
 ./usr/include/minix/hgfs.h                              minix-comp
 ./usr/include/minix/i2c.h                               minix-comp
 ./usr/include/minix/i2cdriver.h                         minix-comp
+./usr/include/minix/if.h                                minix-comp
 ./usr/include/minix/input.h                             minix-comp
 ./usr/include/minix/inputdriver.h                       minix-comp
 ./usr/include/minix/ioctl.h                             minix-comp

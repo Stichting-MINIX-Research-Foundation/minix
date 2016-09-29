@@ -28,6 +28,7 @@
 #define MINIX_TEST	0
 #define MINIX_MIB	1
 #define MINIX_PROC	2
+#define MINIX_LWIP	3
 
 /*
  * These identifiers, under MINIX_TEST, are used by test87 to test the MIB

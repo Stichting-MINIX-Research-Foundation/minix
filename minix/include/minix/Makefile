@@ -5,14 +5,14 @@ INCSDIR= /usr/include/minix
 INCS+=	paths.h param.h
 INCS+=	acpi.h audio_fw.h bitmap.h \
 	bdev.h blockdriver.h blockdriver_mt.h \
-	board.h btrace.h \
+	board.h bpf.h btrace.h \
 	callnr.h chardriver.h clkconf.h com.h \
 	config.h const.h cpufeature.h \
 	debug.h devio.h devman.h dmap.h \
 	driver.h drivers.h drvlib.h ds.h \
 	endpoint.h fb.h fsdriver.h fslib.h gpio.h gcov.h hash.h \
-	hgfs.h i2c.h i2cdriver.h ioctl.h input.h \
-	inputdriver.h ipc.h ipc_filter.h ipcconst.h \
+	hgfs.h i2c.h i2cdriver.h if.h input.h inputdriver.h \
+	ioctl.h ipc.h ipc_filter.h ipcconst.h \
 	keymap.h log.h mmio.h mthread.h minlib.h \
 	netdriver.h optset.h padconf.h partition.h portio.h \
 	priv.h procfs.h profile.h \

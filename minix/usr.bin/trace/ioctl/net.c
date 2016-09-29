@@ -17,12 +17,115 @@
 #include <net/gen/psip_io.h>
 #include <arpa/inet.h>
 
+#include <net/route.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
+#include <net80211/ieee80211_ioctl.h>
+
 const char *
 net_ioctl_name(unsigned long req)
 {
 
 	switch (req) {
 	NAME(FIONREAD);
+	/* sys/sockio.h */
+	NAME(SIOCSHIWAT);		/* TODO: print argument */
+	NAME(SIOCGHIWAT);		/* TODO: print argument */
+	NAME(SIOCSLOWAT);		/* TODO: print argument */
+	NAME(SIOCGLOWAT);		/* TODO: print argument */
+	NAME(SIOCSPGRP);		/* TODO: print argument */
+	NAME(SIOCGPGRP);		/* TODO: print argument */
+	NAME(SIOCADDRT);		/* TODO: print argument */
+	NAME(SIOCDELRT);		/* TODO: print argument */
+	NAME(SIOCSIFADDR);		/* TODO: print argument */
+	NAME(SIOCGIFADDR);		/* TODO: print argument */
+	NAME(SIOCSIFDSTADDR);		/* TODO: print argument */
+	NAME(SIOCGIFDSTADDR);		/* TODO: print argument */
+	NAME(SIOCSIFFLAGS);		/* TODO: print argument */
+	NAME(SIOCGIFFLAGS);		/* TODO: print argument */
+	NAME(SIOCGIFBRDADDR);		/* TODO: print argument */
+	NAME(SIOCSIFBRDADDR);		/* TODO: print argument */
+	NAME(SIOCGIFCONF);		/* TODO: print argument */
+	NAME(SIOCGIFNETMASK);		/* TODO: print argument */
+	NAME(SIOCSIFNETMASK);		/* TODO: print argument */
+	NAME(SIOCGIFMETRIC);		/* TODO: print argument */
+	NAME(SIOCSIFMETRIC);		/* TODO: print argument */
+	NAME(SIOCDIFADDR);		/* TODO: print argument */
+	NAME(SIOCAIFADDR);		/* TODO: print argument */
+	NAME(SIOCGIFALIAS);		/* TODO: print argument */
+	NAME(SIOCGIFAFLAG_IN);		/* TODO: print argument */
+	NAME(SIOCALIFADDR);		/* TODO: print argument */
+	NAME(SIOCGLIFADDR);		/* TODO: print argument */
+	NAME(SIOCDLIFADDR);		/* TODO: print argument */
+	NAME(SIOCSIFADDRPREF);		/* TODO: print argument */
+	NAME(SIOCGIFADDRPREF);		/* TODO: print argument */
+	NAME(SIOCADDMULTI);		/* TODO: print argument */
+	NAME(SIOCDELMULTI);		/* TODO: print argument */
+	NAME(SIOCSIFMEDIA);		/* TODO: print argument */
+	NAME(SIOCGIFMEDIA);		/* TODO: print argument */
+	NAME(SIOCSIFGENERIC);		/* TODO: print argument */
+	NAME(SIOCGIFGENERIC);		/* TODO: print argument */
+	NAME(SIOCSIFPHYADDR);		/* TODO: print argument */
+	NAME(SIOCGIFPSRCADDR);		/* TODO: print argument */
+	NAME(SIOCGIFPDSTADDR);		/* TODO: print argument */
+	NAME(SIOCDIFPHYADDR);		/* TODO: print argument */
+	NAME(SIOCSLIFPHYADDR);		/* TODO: print argument */
+	NAME(SIOCGLIFPHYADDR);		/* TODO: print argument */
+	NAME(SIOCSIFMTU);		/* TODO: print argument */
+	NAME(SIOCGIFMTU);		/* TODO: print argument */
+	NAME(SIOCSDRVSPEC);		/* TODO: print argument */
+	NAME(SIOCGDRVSPEC);		/* TODO: print argument */
+	NAME(SIOCIFCREATE);		/* TODO: print argument */
+	NAME(SIOCIFDESTROY);		/* TODO: print argument */
+	NAME(SIOCIFGCLONERS);		/* TODO: print argument */
+	NAME(SIOCGIFDLT);		/* TODO: print argument */
+	NAME(SIOCGIFCAP);		/* TODO: print argument */
+	NAME(SIOCSIFCAP);		/* TODO: print argument */
+	NAME(SIOCSVH);			/* TODO: print argument */
+	NAME(SIOCGVH);			/* TODO: print argument */
+	NAME(SIOCINITIFADDR);		/* TODO: print argument */
+	NAME(SIOCGIFDATA);		/* TODO: print argument */
+	NAME(SIOCZIFDATA);		/* TODO: print argument */
+	NAME(SIOCGLINKSTR);		/* TODO: print argument */
+	NAME(SIOCSLINKSTR);		/* TODO: print argument */
+	NAME(SIOCGETHERCAP);		/* TODO: print argument */
+	NAME(SIOCGIFINDEX);		/* TODO: print argument */
+	NAME(SIOCSETPFSYNC);		/* TODO: print argument */
+	NAME(SIOCGETPFSYNC);		/* TODO: print argument */
+	/* netinet6/in6_var.h */
+	NAME(SIOCSIFADDR_IN6);		/* TODO: print argument */
+	NAME(SIOCGIFADDR_IN6);		/* TODO: print argument */
+	NAME(SIOCGIFDSTADDR_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFNETMASK_IN6);	/* TODO: print argument */
+	NAME(SIOCDIFADDR_IN6);		/* TODO: print argument */
+	NAME(SIOCGIFPSRCADDR_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFPDSTADDR_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFAFLAG_IN6);		/* TODO: print argument */
+	NAME(SIOCGDRLST_IN6);		/* TODO: print argument */
+	NAME(SIOCSNDFLUSH_IN6);		/* TODO: print argument */
+	NAME(SIOCGNBRINFO_IN6);		/* TODO: print argument */
+	NAME(SIOCSRTRFLUSH_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFSTAT_IN6);		/* TODO: print argument */
+	NAME(SIOCGIFSTAT_ICMP6);	/* TODO: print argument */
+	NAME(SIOCSDEFIFACE_IN6);	/* TODO: print argument */
+	NAME(SIOCGDEFIFACE_IN6);	/* TODO: print argument */
+	NAME(SIOCSIFINFO_FLAGS);	/* TODO: print argument */
+	NAME(SIOCSIFPREFIX_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFPREFIX_IN6);	/* TODO: print argument */
+	NAME(SIOCDIFPREFIX_IN6);	/* TODO: print argument */
+	NAME(SIOCAIFPREFIX_IN6);	/* TODO: print argument */
+	NAME(SIOCCIFPREFIX_IN6);	/* TODO: print argument */
+	NAME(SIOCGIFALIFETIME_IN6);	/* TODO: print argument */
+	NAME(SIOCAIFADDR_IN6);		/* TODO: print argument */
+	NAME(SIOCGIFINFO_IN6);		/* TODO: print argument */
+	NAME(SIOCSIFINFO_IN6);		/* TODO: print argument */
+	NAME(SIOCSIFPHYADDR_IN6);	/* TODO: print argument */
+	NAME(SIOCAADDRCTL_POLICY);	/* TODO: print argument */
+	NAME(SIOCDADDRCTL_POLICY);	/* TODO: print argument */
+	/* net80211/ieee80211_ioctl.h */
+	NAME(SIOCS80211NWID);		/* TODO: print argument */
+	NAME(SIOCG80211NWID);		/* TODO: print argument */
+	/* old MINIX inet ioctls */
 	NAME(NWIOSETHOPT);	/* TODO: print argument */
 	NAME(NWIOGETHOPT);	/* TODO: print argument */
 	NAME(NWIOGETHSTAT);	/* TODO: print argument */
