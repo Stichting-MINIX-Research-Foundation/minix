@@ -46,6 +46,22 @@ typedef ssize_t (*rmib_func_ptr)(struct rmib_call *, struct rmib_node *,
 	struct rmib_oldp *, struct rmib_newp *);
 
 /*
+ * Indirect node, used for sparse nodes.  Sparse nodes are node-type nodes with
+ * the CTLFLAG_SPARSE flag set.  A sparse node points not to an array of child
+ * nodes (using rnode_cptr), but to a array of {id,child pointer} elements
+ * (using rnode_icptr).  At the cost of O(n) lookups, sparse nodes save memory.
+ * Currently for presentation reasons only, indirect lists must be sorted
+ * ascending by node identifiers. They may also not have ID duplicates, may not
+ * have NULL node pointers, and may not point to nodes with zero flags fields.
+ */
+#define CTLFLAG_SPARSE	CTLFLAG_ROOT	/* overloaded NetBSD flag */
+
+struct rmib_indir {
+	unsigned int rindir_id;		/* node identifier */
+	struct rmib_node *rindir_node;	/* pointer to actual node */
+};
+
+/*
  * The central structure for remote MIB nodes.  This is essentially a somewhat
  * cut-down version of the node structure used within the MIB service.  See the
  * source code of that service for several details that apply here as well.
@@ -64,6 +80,7 @@ struct rmib_node {
 	union pxfer_rnode_ptr_u {
 		void *rpu_data;		/* struct or string data pointer */
 		struct rmib_node *rpu_cptr;	/* child node array */
+		struct rmib_indir *rpu_icptr;	/* indirect child node array */
 	} rnode_ptr_u;
 	rmib_func_ptr rnode_func;	/* handler function */
 	const char *rnode_name;		/* node name string */
@@ -75,6 +92,7 @@ struct rmib_node {
 #define rnode_clen	rnode_val_u.rvu_clen
 #define rnode_data	rnode_ptr_u.rpu_data
 #define rnode_cptr	rnode_ptr_u.rpu_cptr
+#define rnode_icptr	rnode_ptr_u.rpu_icptr
 
 /* Various macros to initialize nodes at compile time. */
 #define RMIB_NODE(f,t,n,d) {						\
@@ -82,6 +100,14 @@ struct rmib_node {
 	    CTLFLAG_PERMANENT | f,					\
 	.rnode_size = __arraycount(t),					\
 	.rnode_cptr = t,						\
+	.rnode_name = n,						\
+	.rnode_desc = d							\
+}
+#define RMIB_SNODE(f,t,n,d) {						\
+	.rnode_flags = CTLTYPE_NODE | CTLFLAG_READONLY |		\
+	    CTLFLAG_PERMANENT | CTLFLAG_SPARSE | f,			\
+	.rnode_size = 0,						\
+	.rnode_icptr = t,						\
 	.rnode_name = n,						\
 	.rnode_desc = d							\
 }

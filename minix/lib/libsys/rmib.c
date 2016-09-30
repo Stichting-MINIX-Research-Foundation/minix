@@ -5,6 +5,8 @@
  * though the copy here operates on slightly different data structures in order
  * to keep the implementation more lightweight.  For clarification on many
  * aspects of the source code here, see the source code of the MIB service.
+ * One unique feature here is support for sparse nodes, which is needed for
+ * net.inet/inet6 as those are using subtrees with protocol-based identifiers.
  *
  * There is no way for this module to get to know about MIB service deaths
  * without possibly interfering with the main code of the service this module
@@ -204,10 +206,12 @@ rmib_copyout_node(struct rmib_call * call, struct rmib_oldp * oldp,
 	memset(&scn, 0, sizeof(scn));
 
 	/*
-	 * The RMIB implementation does not overload flags, so it also need not
+	 * We use CTLFLAG_SPARSE internally only.  NetBSD uses these flags for
+	 * different purposes.  Either way, do not expose it to userland.
 	 * hide any of them from the user.
 	 */
-	scn.sysctl_flags = SYSCTL_VERSION | rnode->rnode_flags;
+	scn.sysctl_flags = SYSCTL_VERSION |
+	    (rnode->rnode_flags & ~CTLFLAG_SPARSE);
 	scn.sysctl_num = id;
 	strlcpy(scn.sysctl_name, rnode->rnode_name, sizeof(scn.sysctl_name));
 	scn.sysctl_ver = call->call_rootver;
@@ -266,7 +270,7 @@ rmib_query(struct rmib_call * call, struct rmib_node * rparent,
 {
 	struct sysctlnode scn;
 	struct rmib_node *rnode;
-	unsigned int id;
+	unsigned int i, id;
 	ssize_t r, off;
 
 	/* If the user passed in version numbers, check them. */
@@ -290,11 +294,17 @@ rmib_query(struct rmib_call * call, struct rmib_node * rparent,
 	/* Enumerate the child nodes of the given parent node. */
 	off = 0;
 
-	for (id = 0; id < rparent->rnode_size; id++) {
-		rnode = &rparent->rnode_cptr[id];
+	for (i = 0; i < rparent->rnode_size; i++) {
+		if (rparent->rnode_flags & CTLFLAG_SPARSE) {
+			id = rparent->rnode_icptr[i].rindir_id;
+			rnode = rparent->rnode_icptr[i].rindir_node;
+		} else {
+			id = i;
+			rnode = &rparent->rnode_cptr[i];
 
-		if (rnode->rnode_flags == 0)
-			continue;
+			if (rnode->rnode_flags == 0)
+				continue;
+		}
 
 		if ((r = rmib_copyout_node(call, oldp, off, id, rnode)) < 0)
 			return r;
@@ -370,6 +380,34 @@ rmib_copyout_desc(struct rmib_call * call, struct rmib_oldp * oldp,
 }
 
 /*
+ * Look up a child node given a parent node and a child node identifier.
+ * Return a pointer to the child node if found, or NULL otherwise.  The lookup
+ * procedure differs based on whether the parent node is sparse or not.
+ */
+static struct rmib_node *
+rmib_lookup(struct rmib_node * rparent, unsigned int id)
+{
+	struct rmib_node *rnode;
+	struct rmib_indir *rindir;
+	unsigned int i;
+
+	if (rparent->rnode_flags & CTLFLAG_SPARSE) {
+		rindir = rparent->rnode_icptr;
+		for (i = 0; i < rparent->rnode_size; i++, rindir++)
+			if (rindir->rindir_id == id)
+				return rindir->rindir_node;
+	} else {
+		if (id >= rparent->rnode_size)
+			return NULL;
+		rnode = &rparent->rnode_cptr[id];
+		if (rnode->rnode_flags != 0)
+			return rnode;
+	}
+
+	return NULL;
+}
+
+/*
  * Retrieve node descriptions in bulk, or retrieve a particular node's
  * description.
  */
@@ -379,7 +417,7 @@ rmib_describe(struct rmib_call * call, struct rmib_node * rparent,
 {
 	struct sysctlnode scn;
 	struct rmib_node *rnode;
-	unsigned int id;
+	unsigned int i, id;
 	ssize_t r, off;
 
 	if (newp != NULL) {
@@ -390,10 +428,7 @@ rmib_describe(struct rmib_call * call, struct rmib_node * rparent,
 			return EINVAL;
 
 		/* Locate the child node. */
-		if ((unsigned int)scn.sysctl_num >= rparent->rnode_size)
-			return ENOENT;
-		rnode = &rparent->rnode_cptr[scn.sysctl_num];
-		if (rnode->rnode_flags == 0)
+		if ((rnode = rmib_lookup(rparent, scn.sysctl_num)) == NULL)
 			return ENOENT;
 
 		/* Descriptions of private nodes are considered private too. */
@@ -419,11 +454,17 @@ rmib_describe(struct rmib_call * call, struct rmib_node * rparent,
 	/* Describe the child nodes of the given parent node. */
 	off = 0;
 
-	for (id = 0; id < rparent->rnode_size; id++) {
-		rnode = &rparent->rnode_cptr[id];
+	for (i = 0; i < rparent->rnode_size; i++) {
+		if (rparent->rnode_flags & CTLFLAG_SPARSE) {
+			id = rparent->rnode_icptr[i].rindir_id;
+			rnode = rparent->rnode_icptr[i].rindir_node;
+		} else {
+			id = i;
+			rnode = &rparent->rnode_cptr[i];
 
-		if (rnode->rnode_flags == 0)
-			continue;
+			if (rnode->rnode_flags == 0)
+				continue;
+		}
 
 		if ((r = rmib_copyout_desc(call, oldp, off, id, rnode)) < 0)
 			return r;
@@ -732,10 +773,7 @@ rmib_call(const message * m_in)
 		}
 
 		/* Locate the child node. */
-		if ((unsigned int)id >= rparent->rnode_size)
-			return ENOENT;
-		rnode = &rparent->rnode_cptr[id];
-		if (rnode->rnode_flags == 0)
+		if ((rnode = rmib_lookup(rparent, id)) == NULL)
 			return ENOENT;
 
 		/* Check if access is permitted at this level. */
@@ -790,21 +828,29 @@ rmib_call(const message * m_in)
  * assigning the proper child length value to each of them.
  */
 static void
-rmib_init(struct rmib_node * rnode)
+rmib_init(struct rmib_node * rparent)
 {
-	struct rmib_node *rchild;
-	unsigned int id;
+	struct rmib_node *rnode;
+	unsigned int i;
 
-	rchild = rnode->rnode_cptr;
+	for (i = 0; i < rparent->rnode_size; i++) {
+		if (rparent->rnode_flags & CTLFLAG_SPARSE) {
+			/* Indirect lists must be sorted ascending by ID. */
+			assert(i == 0 || rparent->rnode_icptr[i].rindir_id >
+			    rparent->rnode_icptr[i - 1].rindir_id);
 
-	for (id = 0; id < rnode->rnode_size; id++, rchild++) {
-		if (rchild->rnode_flags == 0)
-			continue;
+			rnode = rparent->rnode_icptr[i].rindir_node;
+		} else {
+			rnode = &rparent->rnode_cptr[i];
 
-		rnode->rnode_clen++;
+			if (rnode->rnode_flags == 0)
+				continue;
+		}
 
-		if (SYSCTL_TYPE(rchild->rnode_flags) == CTLTYPE_NODE)
-			rmib_init(rchild); /* recurse */
+		rparent->rnode_clen++;
+
+		if (SYSCTL_TYPE(rnode->rnode_flags) == CTLTYPE_NODE)
+			rmib_init(rnode); /* recurse */
 	}
 }
 
@@ -824,7 +870,7 @@ rmib_send_reg(int id)
 	m.m_type = MIB_REGISTER;
 	m.m_lsys_mib_register.root_id = id;
 	m.m_lsys_mib_register.flags = SYSCTL_VERSION |
-	    rnodes[id].rno_node->rnode_flags;
+	    (rnodes[id].rno_node->rnode_flags & ~CTLFLAG_SPARSE);
 	m.m_lsys_mib_register.csize = rnodes[id].rno_node->rnode_size;
 	m.m_lsys_mib_register.clen = rnodes[id].rno_node->rnode_clen;
 	m.m_lsys_mib_register.miblen = rnodes[id].rno_namelen;
