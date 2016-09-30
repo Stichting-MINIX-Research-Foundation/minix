@@ -9,11 +9,9 @@
  * There is no way for this module to get to know about MIB service deaths
  * without possibly interfering with the main code of the service this module
  * is a part of.  As a result, re-registration of mount points after a MIB
- * service restart is not automatic.  Instead, the main service code could
- * implement re-registration by first calling rmib_reset() and then making the
- * appropriate rmib_register() calls again.  TODO: it would be nicer if this
- * module implemented re-registration, but that requires saving the MIB path
- * for each of the registered subtrees.
+ * service restart is not automatic.  Instead, the main service code should
+ * provide detection of MIB service restarts, and call rmib_reregister() after
+ * such a restart in order to remount any previously mounted subtrees.
  */
 
 #include <minix/drivers.h>
@@ -50,7 +48,11 @@ struct rmib_newp {
  * The array of subtree root nodes.  Each root node's array index is the root
  * identifier used in communication with the MIB service.
  */
-static struct rmib_node *rnodes[RMIB_MAX_SUBTREES] = { NULL };
+static struct {
+	struct rmib_node *rno_node;
+	unsigned int rno_namelen;
+	int rno_name[CTL_SHORTNAME];
+} rnodes[RMIB_MAX_SUBTREES] = { { NULL, 0, { 0 } } };
 
 /*
  * Return TRUE or FALSE indicating whether the given offset is within the range
@@ -639,7 +641,7 @@ rmib_call(const message * m_in)
 	struct rmib_call call;
 	struct rmib_oldp oldp_data, *oldp;
 	struct rmib_newp newp_data, *newp;
-	unsigned int root_id, namelen;
+	unsigned int root_id, prefixlen, namelen;
 	int r, id, is_leaf, has_func, name[CTL_MAXNAME];
 
 	/*
@@ -650,9 +652,17 @@ rmib_call(const message * m_in)
 	 * request from us crosses a sysctl call request from the MIB service.
 	 */
 	root_id = m_in->m_mib_lsys_call.root_id;
-	if (root_id >= __arraycount(rnodes) || rnodes[root_id] == NULL)
+	if (root_id >= __arraycount(rnodes) ||
+	    (rnode = rnodes[root_id].rno_node) == NULL)
 		return ERESTART;
-	rnode = rnodes[root_id];
+
+	/*
+	 * Use the name of the mounted subtree as prefix to the given name, so
+	 * that call_oname will point to the complete name of the node.  This
+	 * is necessary for the few queries that make use of call_oname.
+	 */
+	prefixlen = rnodes[root_id].rno_namelen;
+	memcpy(name, rnodes[root_id].rno_name, prefixlen * sizeof(name[0]));
 
 	/*
 	 * Set up all data structures that we need to use while handling the
@@ -660,13 +670,13 @@ rmib_call(const message * m_in)
 	 */
 	/* A zero name length is valid and should always yield EISDIR. */
 	namelen = m_in->m_mib_lsys_call.name_len;
-	if (namelen > __arraycount(name))
+	if (prefixlen + namelen > __arraycount(name))
 		return EINVAL;
 
 	if (namelen > 0) {
 		r = sys_safecopyfrom(m_in->m_source,
-		    m_in->m_mib_lsys_call.name_grant, 0, (vir_bytes)name,
-		    sizeof(name[0]) * namelen);
+		    m_in->m_mib_lsys_call.name_grant, 0,
+		    (vir_bytes)&name[prefixlen], sizeof(name[0]) * namelen);
 		if (r != OK)
 			return r;
 	}
@@ -680,7 +690,8 @@ rmib_call(const message * m_in)
 	newp = (GRANT_VALID(newp_data.newp_grant)) ? &newp_data : NULL;
 
 	call.call_endpt = m_in->m_mib_lsys_call.user_endpt;
-	call.call_name = name;
+	call.call_oname = name;
+	call.call_name = &name[prefixlen];
 	call.call_namelen = namelen;
 	call.call_flags = m_in->m_mib_lsys_call.flags;
 	call.call_rootver = m_in->m_mib_lsys_call.root_ver;
@@ -798,32 +809,62 @@ rmib_init(struct rmib_node * rnode)
 }
 
 /*
+ * Request that the MIB service (re)mount the subtree identified by the given
+ * identifier.  This is a one-way request, so we never hear whether mounting
+ * succeeds.  There is not that much we can do if it fails anyway though.
+ */
+static void
+rmib_send_reg(int id)
+{
+	message m;
+	int r;
+
+	memset(&m, 0, sizeof(m));
+
+	m.m_type = MIB_REGISTER;
+	m.m_lsys_mib_register.root_id = id;
+	m.m_lsys_mib_register.flags = SYSCTL_VERSION |
+	    rnodes[id].rno_node->rnode_flags;
+	m.m_lsys_mib_register.csize = rnodes[id].rno_node->rnode_size;
+	m.m_lsys_mib_register.clen = rnodes[id].rno_node->rnode_clen;
+	m.m_lsys_mib_register.miblen = rnodes[id].rno_namelen;
+	memcpy(m.m_lsys_mib_register.mib, rnodes[id].rno_name,
+	    sizeof(rnodes[id].rno_name[0]) * rnodes[id].rno_namelen);
+
+	if ((r = asynsend3(MIB_PROC_NR, &m, AMF_NOREPLY)) != OK)
+		panic("asynsend3 call to MIB service failed: %d", r);
+}
+
+/*
  * Register a MIB subtree.  Initialize the subtree, add it to the local set,
  * and send a registration request for it to the MIB service.
  */
 int
 rmib_register(const int * name, unsigned int namelen, struct rmib_node * rnode)
 {
-	message m;
 	unsigned int id, free_id;
-	int r;
 
 	/* A few basic sanity checks. */
-	if (namelen == 0 || namelen >= CTL_SHORTNAME)
+	if (namelen == 0 || namelen >= __arraycount(rnodes[0].rno_name))
 		return EINVAL;
 	if (SYSCTL_TYPE(rnode->rnode_flags) != CTLTYPE_NODE)
 		return EINVAL;
 
 	/* Make sure this is a new subtree, and find a free slot for it. */
 	for (id = free_id = 0; id < __arraycount(rnodes); id++) {
-		if (rnodes[id] == rnode)
+		if (rnodes[id].rno_node == rnode)
 			return EEXIST;
-		else if (rnodes[id] == NULL && rnodes[free_id] != NULL)
+		else if (rnodes[id].rno_node == NULL &&
+		    rnodes[free_id].rno_node != NULL)
 			free_id = id;
 	}
 
-	if (rnodes[free_id] != NULL)
+	if (rnodes[free_id].rno_node != NULL)
 		return ENOMEM;
+
+	rnodes[free_id].rno_node = rnode;
+	rnodes[free_id].rno_namelen = namelen;
+	memcpy(rnodes[free_id].rno_name, name, sizeof(name[0]) * namelen);
 
 	/*
 	 * Initialize the entire subtree.  This will also compute rnode_clen
@@ -831,25 +872,10 @@ rmib_register(const int * name, unsigned int namelen, struct rmib_node * rnode)
 	 */
 	rmib_init(rnode);
 
-	/*
-	 * Request that the MIB service mount this subtree.  This is a one-way
-	 * request, so we never hear whether mounting succeeds.  There is not
-	 * that much we can do if it fails anyway though.
-	 */
-	memset(&m, 0, sizeof(m));
+	/* Send the registration request to the MIB service. */
+	rmib_send_reg(free_id);
 
-	m.m_type = MIB_REGISTER;
-	m.m_lsys_mib_register.root_id = free_id;
-	m.m_lsys_mib_register.flags = SYSCTL_VERSION | rnode->rnode_flags;
-	m.m_lsys_mib_register.csize = rnode->rnode_size;
-	m.m_lsys_mib_register.clen = rnode->rnode_clen;
-	m.m_lsys_mib_register.miblen = namelen;
-	memcpy(m.m_lsys_mib_register.mib, name, sizeof(name[0]) * namelen);
-
-	if ((r = asynsend3(MIB_PROC_NR, &m, AMF_NOREPLY)) == OK)
-		rnodes[free_id] = rnode;
-
-	return r;
+	return OK;
 }
 
 /*
@@ -865,13 +891,13 @@ rmib_deregister(struct rmib_node * rnode)
 	unsigned int id;
 
 	for (id = 0; id < __arraycount(rnodes); id++)
-		if (rnodes[id] == rnode)
+		if (rnodes[id].rno_node == rnode)
 			break;
 
 	if (id == __arraycount(rnodes))
 		return ENOENT;
 
-	rnodes[id] = NULL;
+	rnodes[id].rno_node = NULL;
 
 	/*
 	 * Request that the MIB service unmount the subtree.  We completely
@@ -893,9 +919,23 @@ rmib_deregister(struct rmib_node * rnode)
 }
 
 /*
- * Reset all registrations, without involving MIB communication.  This call
- * must be issued only when the caller has determined that the MIB service has
- * restarted, and is about to reregister its subtrees.
+ * Reregister all previously registered subtrees.  This routine should be
+ * called after the main program has determined that the MIB service has been
+ * restarted.
+ */
+void
+rmib_reregister(void)
+{
+	unsigned int id;
+
+	for (id = 0; id < __arraycount(rnodes); id++)
+		if (rnodes[id].rno_node != NULL)
+			rmib_send_reg(id);
+}
+
+/*
+ * Reset all registrations, without involving MIB communication.  This routine
+ * exists for testing purposes only, and may disappear in the future.
  */
 void
 rmib_reset(void)
@@ -918,9 +958,9 @@ rmib_info(const message * m_in)
 	int r;
 
 	id = m_in->m_mib_lsys_info.root_id;
-	if (id >= __arraycount(rnodes) || rnodes[id] == NULL)
+	if (id >= __arraycount(rnodes) || rnodes[id].rno_node == NULL)
 		return ENOENT;
-	rnode = rnodes[id];
+	rnode = rnodes[id].rno_node;
 
 	/* The name must fit.  If it does not, the service writer messed up. */
 	size = strlen(rnode->rnode_name) + 1;

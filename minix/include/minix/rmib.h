@@ -21,6 +21,7 @@
  */
 struct rmib_call {
 	endpoint_t call_endpt;		/* endpoint of the user process */
+	const int *call_oname;		/* original full name of the request */
 	const int *call_name;		/* remaining part of the name */
 	unsigned int call_namelen;	/* length of the remaining name part */
 	unsigned int call_flags;	/* RMIB_FLAG_ call flags */
@@ -144,6 +145,7 @@ struct rmib_node {
 /* Function prototypes. */
 int rmib_register(const int * name, unsigned int namelen, struct rmib_node *);
 int rmib_deregister(struct rmib_node *);
+void rmib_reregister(void);
 void rmib_reset(void);
 void rmib_process(const message *, int);
 
