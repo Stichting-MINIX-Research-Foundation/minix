@@ -582,7 +582,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_readfds : &se->ready_readfds;
   dst_fds = (direction == FROM_PROC) ? &se->readfds : se->vir_readfds;
   if (se->vir_readfds) {
-	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e, 
+	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e,
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
@@ -591,7 +591,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_writefds : &se->ready_writefds;
   dst_fds = (direction == FROM_PROC) ? &se->writefds : se->vir_writefds;
   if (se->vir_writefds) {
-	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e, 
+	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e,
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
@@ -600,7 +600,7 @@ static int copy_fdsets(struct selectentry *se, int nfds, int direction)
   src_fds = (direction == FROM_PROC) ? se->vir_errorfds : &se->ready_errorfds;
   dst_fds = (direction == FROM_PROC) ? &se->errorfds : se->vir_errorfds;
   if (se->vir_errorfds) {
-	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e, 
+	r = sys_datacopy_wrapper(src_e, (vir_bytes) src_fds, dst_e,
 			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
@@ -1034,9 +1034,8 @@ static void select_restart_filps(void)
 /*===========================================================================*
  *				filp_status				     *
  *===========================================================================*/
-static void filp_status(f, status)
-struct filp *f;
-int status;
+static void
+filp_status(struct filp *f, int status)
 {
 /* Tell processes that need to know about the status of this filp. This
  * function MUST NOT block its calling thread.
@@ -1065,8 +1064,8 @@ int status;
 /*===========================================================================*
  *				restart_proc				     *
  *===========================================================================*/
-static void restart_proc(se)
-struct selectentry *se;
+static void
+restart_proc(struct selectentry *se)
 {
 /* Tell process about select results (if any) unless there are still results
  * pending. This function MUST NOT block its calling thread.

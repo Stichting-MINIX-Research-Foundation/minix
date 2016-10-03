@@ -295,7 +295,7 @@ int pm_exec(vir_bytes path, size_t path_len, vir_bytes frame, size_t frame_len,
 	}
 
 	/* ld.so is linked at 0, but it can relocate itself; we
-	 * want it higher to trap NULL pointer dereferences. 
+	 * want it higher to trap NULL pointer dereferences.
 	 * Let's put it below the stack, and reserve 10MB for ld.so.
 	 */
 	execi.args.load_offset =
@@ -435,12 +435,12 @@ static int stack_prepare_elf(struct vfs_exec_info *execi, char *frame, size_t *f
 		return ENOEXEC;
 	}
 
-	/* Find first Aux vector in the stack frame. */ 
+	/* Find first Aux vector in the stack frame. */
 	vap = (vir_bytes)(psp->ps_envstr + (psp->ps_nenvstr + 1));
 	aux_vec = (AuxInfo *) (frame + (vap - *vsp));
 	aux_vec_end = aux_vec + PMEF_AUXVECTORS;
 
-	if (((char *)aux_vec < frame) || 
+	if (((char *)aux_vec < frame) ||
 		((char *)aux_vec > (frame + *frame_size))) {
 		printf("VFS: malformed stack for exec(), first AuxVector is"
 		       " not on the stack.\n");

@@ -169,7 +169,8 @@ int lock_op(int fd, int req, vir_bytes arg)
 /*===========================================================================*
  *				lock_revive				     *
  *===========================================================================*/
-void lock_revive()
+void
+lock_revive(void)
 {
 /* Go find all the processes that are waiting for any kind of lock and
  * revive them all.  The ones that are still blocked will block again when

@@ -915,8 +915,8 @@ static void service_pm(void)
 /*===========================================================================*
  *				unblock					     *
  *===========================================================================*/
-static int unblock(rfp)
-struct fproc *rfp;
+static int
+unblock(struct fproc *rfp)
 {
 /* Unblock a process that was previously blocked on a pipe or a lock.  This is
  * done by reconstructing the original request and continuing/repeating it.
