@@ -1,8 +1,8 @@
-/* System Information Service. 
+/* System Information Service.
  * This service handles the various debugging dumps, such as the process
- * table, so that these no longer directly touch kernel memory. Instead, the 
- * system task is asked to copy some table in local memory. 
- * 
+ * table, so that these no longer directly touch kernel memory. Instead, the
+ * system task is asked to copy some table in local memory.
+ *
  * Created:
  *   Apr 29, 2004	by Jorrit N. Herder
  */
@@ -30,18 +30,18 @@ static void sef_cb_signal_handler(int signo);
  *===========================================================================*/
 int main(int argc, char **argv)
 {
-/* This is the main routine of this service. The main loop consists of 
+/* This is the main routine of this service. The main loop consists of
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int result;                 
+  int result;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
   sef_local_startup();
 
-  /* Main loop - get work and do it, forever. */         
-  while (TRUE) {              
+  /* Main loop - get work and do it, forever. */
+  while (TRUE) {
       /* Wait for incoming message, sets 'callnr' and 'who'. */
       get_work();
 
@@ -73,7 +73,8 @@ int main(int argc, char **argv)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void
+sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -117,7 +118,8 @@ static void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-static void get_work()
+static void
+get_work(void)
 {
     int status = 0;
     status = sef_receive(ANY, &m_in);   /* this blocks until message arrives */
@@ -130,9 +132,11 @@ static void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-static void reply(who, result)
-int who;                           	/* destination */
-int result;                           	/* report result to replyee */
+static void
+reply(
+	int who,                           	/* destination */
+	int result                           	/* report result to replyee */
+)
 {
     int send_status;
     m_out.m_type = result;  		/* build reply message */

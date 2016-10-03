@@ -1,7 +1,7 @@
 /* This file contains procedures to dump RS data structures.
  *
  * The entry points into this file are
- *   rproc_dump:   	display RS system process table	  
+ *   rproc_dump:   	display RS system process table
  *
  * Created:
  *   Oct 03, 2005:	by Jorrit N. Herder
@@ -22,7 +22,8 @@ static char *s_flags_str(int flags, int sys_flags);
 /*===========================================================================*
  *				rproc_dmp				     *
  *===========================================================================*/
-void rproc_dmp()
+void
+rproc_dmp(void)
 {
   struct rproc *rp;
   struct rprocpub *rpub;
