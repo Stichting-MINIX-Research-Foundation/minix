@@ -147,9 +147,8 @@ static int create_pipe(int fil_des[2], int flags)
 /*===========================================================================*
  *				map_vnode				     *
  *===========================================================================*/
-int map_vnode(vp, map_to_fs_e)
-struct vnode *vp;
-endpoint_t map_to_fs_e;
+int
+map_vnode(struct vnode *vp, endpoint_t map_to_fs_e)
 {
   int r;
   struct vmnt *vmp;

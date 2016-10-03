@@ -39,10 +39,8 @@ static int check_perms(endpoint_t ep, cp_grant_id_t io_gr, size_t
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-struct vnode *advance(dirp, resolve, rfp)
-struct vnode *dirp;
-struct lookup *resolve;
-struct fproc *rfp;
+struct vnode *
+advance(struct vnode *dirp, struct lookup *resolve, struct fproc *rfp)
 {
 /* Resolve a path name starting at dirp to a vnode. */
   int r;
@@ -134,9 +132,8 @@ struct fproc *rfp;
 /*===========================================================================*
  *				eat_path				     *
  *===========================================================================*/
-struct vnode *eat_path(resolve, rfp)
-struct lookup *resolve;
-struct fproc *rfp;
+struct vnode *
+eat_path(struct lookup *resolve, struct fproc *rfp)
 {
 /* Resolve path to a vnode. advance does the actual work. */
   struct vnode *start_dir;
@@ -148,9 +145,8 @@ struct fproc *rfp;
 /*===========================================================================*
  *				last_dir				     *
  *===========================================================================*/
-struct vnode *last_dir(resolve, rfp)
-struct lookup *resolve;
-struct fproc *rfp;
+struct vnode *
+last_dir(struct lookup *resolve, struct fproc *rfp)
 {
 /* Parse a path, as far as the last directory, fetch the vnode
  * for the last directory into the vnode table, and return a pointer to the
@@ -387,11 +383,8 @@ struct fproc *rfp;
 /*===========================================================================*
  *				lookup					     *
  *===========================================================================*/
-static int lookup(start_node, resolve, result_node, rfp)
-struct vnode *start_node;
-struct lookup *resolve;
-node_details_t *result_node;
-struct fproc *rfp;
+static int
+lookup(struct vnode *start_node, struct lookup *resolve, node_details_t *result_node, struct fproc *rfp)
 {
 /* Resolve a path name relative to start_node. */
 
@@ -581,12 +574,8 @@ struct fproc *rfp;
 /*===========================================================================*
  *				lookup_init				     *
  *===========================================================================*/
-void lookup_init(resolve, path, flags, vmp, vp)
-struct lookup *resolve;
-char *path;
-int flags;
-struct vmnt **vmp;
-struct vnode **vp;
+void
+lookup_init(struct lookup *resolve, char *path, int flags, struct vmnt **vmp, struct vnode **vp)
 {
   assert(vmp != NULL);
   assert(vp != NULL);
@@ -604,10 +593,8 @@ struct vnode **vp;
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
-int get_name(dirp, entry, ename)
-struct vnode *dirp;
-struct vnode *entry;
-char ename[NAME_MAX + 1];
+int
+get_name(struct vnode *dirp, struct vnode *entry, char ename[NAME_MAX + 1])
 {
 #define DIR_ENTRIES 8
 #define DIR_ENTRY_SIZE (sizeof(struct dirent) + NAME_MAX)
@@ -660,9 +647,8 @@ char ename[NAME_MAX + 1];
 /*===========================================================================*
  *				canonical_path				     *
  *===========================================================================*/
-int canonical_path(orig_path, rfp)
-char orig_path[PATH_MAX];
-struct fproc *rfp;
+int
+canonical_path(char orig_path[PATH_MAX], struct fproc *rfp)
 {
 /* Find canonical path of a given path */
   int len = 0;
