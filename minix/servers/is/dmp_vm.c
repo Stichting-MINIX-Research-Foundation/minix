@@ -17,7 +17,7 @@ static void print_region(struct vm_region_info *vri, int *n)
   /* part of a contiguous identical run? */
   is_repeat =
 	vri &&
-  	vri_prev_set && 
+  	vri_prev_set &&
 	vri->vri_prot == vri_prev.vri_prot &&
 	vri->vri_flags == vri_prev.vri_flags &&
 	vri->vri_length == vri_prev.vri_length &&
@@ -51,7 +51,8 @@ static void print_region(struct vm_region_info *vri, int *n)
   (*n)++;
 }
 
-void vm_dmp()
+void
+vm_dmp(void)
 {
   static struct proc proc[NR_TASKS + NR_PROCS];
   static struct vm_region_info vri[LINES];
