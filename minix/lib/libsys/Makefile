@@ -21,7 +21,6 @@ SRCS+=  \
 	env_get_prm.c \
 	env_panic.c \
 	env_parse.c \
-	env_prefix.c \
 	fkey_ctl.c \
 	getepinfo.c \
 	getprocnr.c \

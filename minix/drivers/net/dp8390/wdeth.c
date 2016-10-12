@@ -7,9 +7,7 @@ Created:	March 14, 1994 by Philip Homburg
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-#include "assert.h"
+#include <assert.h>
 
 #include "local.h"
 #include "dp8390.h"
@@ -71,12 +69,12 @@ dpeth_t *dep;
 	int we_type;
 	int sendq_nr;
 
-	dep->de_address.ea_addr[0] = inb_we(dep, EPL_EA0);
-	dep->de_address.ea_addr[1] = inb_we(dep, EPL_EA1);
-	dep->de_address.ea_addr[2] = inb_we(dep, EPL_EA2);
-	dep->de_address.ea_addr[3] = inb_we(dep, EPL_EA3);
-	dep->de_address.ea_addr[4] = inb_we(dep, EPL_EA4);
-	dep->de_address.ea_addr[5] = inb_we(dep, EPL_EA5);
+	dep->de_address.na_addr[0] = inb_we(dep, EPL_EA0);
+	dep->de_address.na_addr[1] = inb_we(dep, EPL_EA1);
+	dep->de_address.na_addr[2] = inb_we(dep, EPL_EA2);
+	dep->de_address.na_addr[3] = inb_we(dep, EPL_EA3);
+	dep->de_address.na_addr[4] = inb_we(dep, EPL_EA4);
+	dep->de_address.na_addr[5] = inb_we(dep, EPL_EA5);
 
 	dep->de_dp8390_port= dep->de_base_port + EPL_DP8390;
 
@@ -182,7 +180,7 @@ dpeth_t *dep;
 			((irr & (E_IRR_IR0|E_IRR_IR1)) >> 5);
 		int_nr= we_int_table[int_indx];
 #if DEBUG
- { printf("%s: encoded irq= %d\n", dep->de_name, int_nr); }
+		printf("%s: encoded irq= %d\n", netdriver_name(), int_nr);
 #endif
 		if (dep->de_irq & DEI_DEFAULT) dep->de_irq= int_nr;
 
@@ -201,7 +199,7 @@ dpeth_t *dep;
 			((gcr & (E_790_GCR_IR1|E_790_GCR_IR0)) >> 2);
 		int_nr= we_790int_table[int_indx];
 #if DEBUG
- { printf("%s: encoded irq= %d\n", dep->de_name, int_nr); }
+		printf("%s: encoded irq= %d\n", netdriver_name(), int_nr);
 #endif
 		if (dep->de_irq & DEI_DEFAULT) dep->de_irq= int_nr;
 
@@ -215,7 +213,7 @@ dpeth_t *dep;
 	if (!debug)
 	{
 		printf("%s: WD80%d3 at %X:%d:%lX\n",
-			dep->de_name, we_type & WET_BRD_16BIT ? 1 : 0,
+			netdriver_name(), we_type & WET_BRD_16BIT ? 1 : 0,
 			dep->de_base_port, dep->de_irq, dep->de_linmem);
 	}
 	else
@@ -223,7 +221,7 @@ dpeth_t *dep;
 		printf("%s: Western Digital %s%s card %s%s at I/O "
 			"address 0x%X, memory address 0x%lX, "
 			"memory size 0x%X, irq %d\n",
-			dep->de_name,
+			netdriver_name(),
 			we_type & WET_BRD_16BIT ? "16-bit " : "", 
 			we_type & WET_ETHERNET ? "Ethernet" : 
 			we_type & WET_STARLAN ? "Starlan" : "Network",
@@ -320,7 +318,7 @@ dpeth_t *dep;
 	{
 		tlb= inb_we(dep, EPL_TLB);
 #if DEBUG
-		printf("%s: tlb= 0x%x\n", dep->de_name, tlb);
+		printf("%s: tlb= 0x%x\n", netdriver_name(), tlb);
 #endif
 		return tlb == E_TLB_EB || tlb == E_TLB_E ||
 			tlb == E_TLB_SMCE || tlb == E_TLB_SMC8216T ||

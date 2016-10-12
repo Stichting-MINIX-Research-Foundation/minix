@@ -112,7 +112,6 @@
  */
 typedef struct e1000
 {
-    char name[8];		  /**< String containing the device name. */    
     int irq;			  /**< Interrupt Request Vector. */
     int irq_hook;                 /**< Interrupt Request Vector Hook. */
     u8_t *regs;		  	  /**< Memory mapped hardware registers. */

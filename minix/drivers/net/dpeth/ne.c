@@ -14,8 +14,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (ENABLE_NE2000 == 1)
@@ -58,7 +56,7 @@ static void ne_close(dpeth_t * dep)
 */
 static void ne_init(dpeth_t * dep)
 {
-  int ix;
+  unsigned int ix;
 
   dep->de_data_port = dep->de_base_port + NE_DATA;
   if (dep->de_16bit) {
@@ -85,12 +83,12 @@ static void ne_init(dpeth_t * dep)
   ns_init(dep);			/* Initialize DP controller */
 
   printf("%s: NE%d000 (%dkB RAM) at %X:%d - ",
-         dep->de_name,
+         netdriver_name(),
          dep->de_16bit ? 2 : 1,
          dep->de_ramsize / 1024,
          dep->de_base_port, dep->de_irq);
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)
-	printf("%02X%c", dep->de_address.ea_addr[ix],
+	printf("%02X%c", dep->de_address.na_addr[ix],
 	    ix < SA_ADDR_LEN - 1 ? ':' : '\n');
 }
 
@@ -103,7 +101,7 @@ static void ne_init(dpeth_t * dep)
 */
 int ne_probe(dpeth_t * dep)
 {
-  int ix, wd, loc1, loc2;
+  unsigned int ix, wd, loc1, loc2;
   char EPROM[32];
   static const struct {
 	unsigned char offset;
@@ -176,7 +174,7 @@ int ne_probe(dpeth_t * dep)
 
   /* Setup the ethernet address. */
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1) {
-	dep->de_address.ea_addr[ix] = EPROM[ix];
+	dep->de_address.na_addr[ix] = EPROM[ix];
   }
   dep->de_16bit = wd;
   dep->de_linmem = 0;		/* Uses Programmed I/O only */

@@ -9,8 +9,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (USE_IOPL == 0)

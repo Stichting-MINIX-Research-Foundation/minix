@@ -1,8 +1,6 @@
 #ifndef LAN8710A_H_
 #define LAN8710A_H_
 
-#include <net/gen/ether.h>
-
 #define LAN8710A_DEBUG		(1)
 
 #if LAN8710A_DEBUG == 1
@@ -68,10 +66,8 @@ typedef struct lan8710a_t
 	lan8710a_desc_t  *tx_desc;
 	phys_bytes  rx_desc_phy;
 	phys_bytes  tx_desc_phy;
-	char  name[LAN8710A_NAME_LEN];
 	int  irq_rx_hook;	/* Rx interrupt Request Vector Hook. */
 	int  irq_tx_hook;	/* Tx interrupt Request Vector Hook. */
-	int  instance;
 	u8_t  *regs;
 	u32_t  phy_address;
 	u8_t  *p_rx_buf;	/* pointer to the buffer with receive frames */

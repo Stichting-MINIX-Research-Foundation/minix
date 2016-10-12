@@ -11,8 +11,6 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include <machine/pci.h>
 
 #include "assert.h"
@@ -37,7 +35,7 @@ int skip;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
-	char *dname;
+	const char *dname;
 
 	pci_init();
 
@@ -56,7 +54,7 @@ int skip;
 	if (!dname)
 		dname= "unknown device";
 	printf("%s: %s (%04X/%04X) at %s\n",
-		dep->de_name, dname, vid, did, pci_slot_name(devind));
+		netdriver_name(), dname, vid, did, pci_slot_name(devind));
         if(pci_reserve_ok(devind) != OK)
                return 0;
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
@@ -72,7 +70,7 @@ int skip;
 	if (debug)
 	{
 		printf("%s: using I/O address 0x%lx, IRQ %d\n",
-			dep->de_name, (unsigned long)bar, ilr);
+			netdriver_name(), (unsigned long)bar, ilr);
 	}
 	dep->de_initf= rtl_init;
 

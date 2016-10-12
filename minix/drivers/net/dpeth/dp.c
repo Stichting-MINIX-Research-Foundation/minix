@@ -14,8 +14,6 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 #include <minix/endpoint.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include <sys/mman.h>
 #include <assert.h>
 
@@ -41,23 +39,26 @@ static dp_conf_t dp_conf[DP_CONF_NR] = {
   {     0x000,   0,   0x00000,  },
 };
 
-static int do_init(unsigned int instance, ether_addr_t *addr);
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
 static void do_stop(void);
-static void do_mode(unsigned int mode);
+static void do_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
+	unsigned int mcast_count);
 static int do_send(struct netdriver_data *data, size_t size);
 static ssize_t do_recv(struct netdriver_data *data, size_t max);
-static void do_stat(eth_stat_t *stat);
 static void do_intr(unsigned int mask);
+static void do_tick(void);
 static void do_other(const message *m_ptr, int ipc_status);
 
 static const struct netdriver dp_table = {
+	.ndr_name	= "dpe",
 	.ndr_init	= do_init,
 	.ndr_stop	= do_stop,
-	.ndr_mode	= do_mode,
+	.ndr_set_mode	= do_set_mode,
 	.ndr_recv	= do_recv,
 	.ndr_send	= do_send,
-	.ndr_stat	= do_stat,
 	.ndr_intr	= do_intr,
+	.ndr_tick	= do_tick,
 	.ndr_other	= do_other
 };
 
@@ -101,7 +102,7 @@ static void do_dump(void)
 
   printf("\n\n");
 
-  printf("%s statistics:\t\t", dep->de_name);
+  printf("%s statistics:\t\t", netdriver_name());
 
   /* Network interface status  */
   printf("Status: 0x%04x\n\n", dep->de_flags);
@@ -111,22 +112,6 @@ static void do_dump(void)
   /* Transmitted/received bytes */
   printf("Tx bytes:%10ld\t", dep->bytes_Tx);
   printf("Rx bytes:%10ld\n", dep->bytes_Rx);
-
-  /* Transmitted/received packets */
-  printf("Tx OK:     %8ld\t", dep->de_stat.ets_packetT);
-  printf("Rx OK:     %8ld\n", dep->de_stat.ets_packetR);
-
-  /* Transmit/receive errors */
-  printf("Tx Err:    %8ld\t", dep->de_stat.ets_sendErr);
-  printf("Rx Err:    %8ld\n", dep->de_stat.ets_recvErr);
-
-  /* Transmit unnerruns/receive overrruns */
-  printf("Tx Und:    %8ld\t", dep->de_stat.ets_fifoUnder);
-  printf("Rx Ovr:    %8ld\n", dep->de_stat.ets_fifoOver);
-
-  /* Transmit collisions/receive CRC errors */
-  printf("Tx Coll:   %8ld\t", dep->de_stat.ets_collision);
-  printf("Rx CRC:    %8ld\n", dep->de_stat.ets_CRCerr);
 }
 
 /*
@@ -137,9 +122,6 @@ static void do_first_init(dpeth_t *dep, const dp_conf_t *dcp)
 {
 
   dep->de_linmem = 0xFFFF0000; /* FIXME: this overrides update_conf, why? */
-
-  /* Make sure statisics are cleared */
-  memset(&dep->de_stat, 0, sizeof(dep->de_stat));
 
   /* Device specific initialization */
   (*dep->de_initf)(dep);
@@ -168,16 +150,14 @@ static void do_first_init(dpeth_t *dep, const dp_conf_t *dcp)
 **  		Initialize hardware and data structures.
 **		Return status and ethernet address.
 */
-static int do_init(unsigned int instance, ether_addr_t *addr)
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks)
 {
   dpeth_t *dep;
   dp_conf_t *dcp;
   int confnr, fkeys, sfkeys;
 
   dep = &de_state;
-
-  strlcpy(dep->de_name, "dpeth#?", sizeof(dep->de_name));
-  dep->de_name[4] = '0' + instance;
 
   /* Pick a default configuration for this instance. */
   confnr = MIN(instance, DP_CONF_NR-1);
@@ -192,7 +172,7 @@ static int do_init(unsigned int instance, ether_addr_t *addr)
     !el2_probe(dep) &&		/* Probe for 3c503  */
     !el3_probe(dep)) {		/* Probe for 3c509  */
 	printf("%s: warning no ethernet card found at 0x%04X\n",
-	       dep->de_name, dep->de_base_port);
+	       netdriver_name(), dep->de_base_port);
 	return ENXIO;
   }
 
@@ -201,28 +181,33 @@ static int do_init(unsigned int instance, ether_addr_t *addr)
   /* Request function key for debug dumps */
   fkeys = sfkeys = 0; bit_set(sfkeys, 7);
   if (fkey_map(&fkeys, &sfkeys) != OK)
-	printf("%s: couldn't bind Shift+F7 key (%d)\n", dep->de_name, errno);
+	printf("%s: couldn't bind Shift+F7 key (%d)\n",
+	    netdriver_name(), errno);
 
-  memcpy(addr, dep->de_address.ea_addr, sizeof(*addr));
+  memcpy(addr, dep->de_address.na_addr, sizeof(*addr));
+  *caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST; /* ..is this even accurate? */
+  *ticks = sys_hz(); /* update statistics once a second */
   return OK;
 }
 
 /*
-**  Name:	de_mode
+**  Name:	de_set_mode
 **  Function:	Sets packet receipt mode.
 */
-static void do_mode(unsigned int mode)
+static void do_set_mode(unsigned int mode,
+	const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
   dpeth_t *dep;
 
   dep = &de_state;
 
   dep->de_flags &= NOT(DEF_PROMISC | DEF_MULTI | DEF_BROAD);
-  if (mode & NDEV_PROMISC)
+  if (mode & NDEV_MODE_PROMISC)
 	dep->de_flags |= DEF_PROMISC | DEF_MULTI | DEF_BROAD;
-  if (mode & NDEV_MULTI)
+  if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 	dep->de_flags |= DEF_MULTI;
-  if (mode & NDEV_BROAD)
+  if (mode & NDEV_MODE_BCAST)
 	dep->de_flags |= DEF_BROAD;
   (*dep->de_flagsf)(dep);
 }
@@ -254,16 +239,6 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
 }
 
 /*
-**  Name:	do_stat
-**  Function:	Reports device statistics.
-*/
-static void do_stat(eth_stat_t *stat)
-{
-
-  memcpy(stat, &de_state.de_stat, sizeof(*stat));
-}
-
-/*
 **  Name:	do_stop
 **  Function:	Stops network interface.
 */
@@ -290,6 +265,20 @@ static void do_intr(unsigned int __unused mask)
 	/* If device is enabled and interrupt pending */
 	(*dep->de_interruptf)(dep);
 	sys_irqenable(&dep->de_hook);
+}
+
+/*
+**  Name:	do_tick
+**  Function:	perform regular processing.
+*/
+static void do_tick(void)
+{
+	dpeth_t *dep;
+
+	dep = &de_state;
+
+	if (dep->de_getstatsf != NULL)
+		(*dep->de_getstatsf)(dep);
 }
 
 /*

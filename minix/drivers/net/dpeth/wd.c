@@ -14,8 +14,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (ENABLE_WDETH == 1)
@@ -69,14 +67,14 @@ int wdeth_probe(dpeth_t *dep)
  *===========================================================================*/
 static void we_init(dpeth_t *dep)
 {
-  int i, int_indx, int_nr;
+  unsigned int i, int_indx, int_nr;
   int tlb, rambit, revision;
   int icr, irr, hwr, b, gcr;
   int we_type;
-  int sendq_nr;
+  unsigned int sendq_nr;
 
   for (i = 0; i < 6; i += 1) {
-	dep->de_address.ea_addr[i] = inb_we(dep, EPL_EA0 + i);
+	dep->de_address.na_addr[i] = inb_we(dep, EPL_EA0 + i);
   }
 
   dep->de_dp8390_port = dep->de_base_port + EPL_DP8390;
@@ -154,7 +152,7 @@ static void we_init(dpeth_t *dep)
 	irr = inb_we(dep, EPL_IRR);
 	int_indx = (icr & E_ICR_IR2) | ((irr & (E_IRR_IR0 | E_IRR_IR1)) >> 5);
 	int_nr = we_int_table[int_indx];
-	DEBUG(printf("%s: encoded irq= %d\n", dep->de_name, int_nr));
+	DEBUG(printf("%s: encoded irq= %d\n", netdriver_name(), int_nr));
 	if (dep->de_irq & DEI_DEFAULT) dep->de_irq = int_nr;
 	outb_we(dep, EPL_IRR, irr | E_IRR_IEN);
   }
@@ -169,7 +167,7 @@ static void we_init(dpeth_t *dep)
 	int_indx = ((gcr & E_790_GCR_IR2) >> 4) |
 		((gcr & (E_790_GCR_IR1 | E_790_GCR_IR0)) >> 2);
 	int_nr = we_790int_table[int_indx];
-	DEBUG(printf("%s: encoded irq= %d\n", dep->de_name, int_nr));
+	DEBUG(printf("%s: encoded irq= %d\n", netdriver_name(), int_nr));
 	if (dep->de_irq & DEI_DEFAULT) dep->de_irq = int_nr;
 	icr = inb_we(dep, EPL_790_ICR);
 	outb_we(dep, EPL_790_ICR, icr | E_790_ICR_EIL);
@@ -195,14 +193,14 @@ static void we_init(dpeth_t *dep)
   ns_init(dep);			/* Initialize DP controller */
 
   printf("%s: WD80%d3 (%dkB RAM) at %X:%d:%lX - ",
-         dep->de_name,
+         netdriver_name(),
          we_type & WET_BRD_16BIT ? 1 : 0,
          dep->de_ramsize / 1024,
          dep->de_base_port,
          dep->de_irq,
          dep->de_linmem);
   for (i = 0; i < SA_ADDR_LEN; i += 1)
-	printf("%02X%c", dep->de_address.ea_addr[i],
+	printf("%02X%c", dep->de_address.na_addr[i],
 	       i < SA_ADDR_LEN - 1 ? ':' : '\n');
 
   return;
@@ -260,7 +258,7 @@ static int we_16bitboard(dpeth_t *dep)
  * If the 16 bit enable bit is unchangable by software we'll assume an
  * 8 bit board.
  */
-  int icr;
+  unsigned int icr;
   u8_t tlb;
 
   icr = inb_we(dep, EPL_ICR);
@@ -269,7 +267,7 @@ static int we_16bitboard(dpeth_t *dep)
   if (inb_we(dep, EPL_ICR) == icr) {
 	tlb = inb_we(dep, EPL_TLB);
 
-	DEBUG(printf("%s: tlb= 0x%x\n", dep->de_name, tlb));
+	DEBUG(printf("%s: tlb= 0x%x\n", netdriver_name(), tlb));
 
 	return tlb == E_TLB_EB || tlb == E_TLB_E ||
 		tlb == E_TLB_SMCE || tlb == E_TLB_SMC8216C;

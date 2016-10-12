@@ -10,12 +10,8 @@
 #include <assert.h>
 #include <sys/types.h>
 
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <minix/sysutil.h>
 #include <minix/virtio.h>
 
 #include <sys/queue.h>
@@ -27,7 +23,7 @@
 #if VERBOSE
 #define dput(s)		do { dprintf(s); printf("\n"); } while (0)
 #define dprintf(s) do {						\
-	printf("%s: ", name);					\
+	printf("%s: ", netdriver_name());			\
 	printf s;						\
 } while (0)
 #else
@@ -37,8 +33,6 @@
 
 static struct virtio_device *net_dev;
 
-static const char *const name = "virtio-net";
-
 enum queue {RX_Q, TX_Q, CTRL_Q};
 
 /* Number of packets to work with */
@@ -47,7 +41,7 @@ enum queue {RX_Q, TX_Q, CTRL_Q};
  */
 #define BUF_PACKETS		64
 /* Maximum size of a packet */
-#define MAX_PACK_SIZE		ETH_MAX_PACK_SIZE
+#define MAX_PACK_SIZE		NDEV_ETH_PACKET_MAX
 /* Buffer size needed for the payload of BUF_PACKETS */
 #define PACKET_BUF_SZ		(BUF_PACKETS * MAX_PACK_SIZE)
 
@@ -76,12 +70,11 @@ static STAILQ_HEAD(free_list, packet) free_list;
 static STAILQ_HEAD(recv_list, packet) recv_list;
 
 /* Various state data */
-static eth_stat_t virtio_net_stats;
 static int spurious_interrupt;
 
 /* Prototypes */
 static int virtio_net_probe(unsigned int skip);
-static void virtio_net_config(ether_addr_t *addr);
+static void virtio_net_config(netdriver_addr_t *addr);
 static int virtio_net_alloc_bufs(void);
 static void virtio_net_init_queues(void);
 
@@ -89,19 +82,19 @@ static void virtio_net_refill_rx_queue(void);
 static void virtio_net_check_queues(void);
 static void virtio_net_check_pending(void);
 
-static int virtio_net_init(unsigned int instance, ether_addr_t *addr);
+static int virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
+	uint32_t * caps, unsigned int * ticks);
 static void virtio_net_stop(void);
 static int virtio_net_send(struct netdriver_data *data, size_t len);
 static ssize_t virtio_net_recv(struct netdriver_data *data, size_t max);
-static void virtio_net_stat(eth_stat_t *stat);
 static void virtio_net_intr(unsigned int mask);
 
 static const struct netdriver virtio_net_table = {
+	.ndr_name	= "vio",
 	.ndr_init	= virtio_net_init,
 	.ndr_stop	= virtio_net_stop,
 	.ndr_recv	= virtio_net_recv,
 	.ndr_send	= virtio_net_send,
-	.ndr_stat	= virtio_net_stat,
 	.ndr_intr	= virtio_net_intr,
 };
 
@@ -119,7 +112,7 @@ virtio_net_probe(unsigned int skip)
 {
 	/* virtio-net has at least 2 queues */
 	int queues = 2;
-	net_dev= virtio_setup_device(0x00001, name, netf,
+	net_dev= virtio_setup_device(0x00001, netdriver_name(), netf,
 				     sizeof(netf) / sizeof(netf[0]),
 				     1 /* threads */, skip);
 	if (net_dev == NULL)
@@ -138,7 +131,7 @@ virtio_net_probe(unsigned int skip)
 }
 
 static void
-virtio_net_config(ether_addr_t * addr)
+virtio_net_config(netdriver_addr_t * addr)
 {
 	u32_t mac14;
 	u32_t mac56;
@@ -148,11 +141,11 @@ virtio_net_config(ether_addr_t * addr)
 		dprintf(("Mac set by host: "));
 		mac14 = virtio_sread32(net_dev, 0);
 		mac56 = virtio_sread32(net_dev, 4);
-		memcpy(&addr->ea_addr[0], &mac14, 4);
-		memcpy(&addr->ea_addr[4], &mac56, 2);
+		memcpy(&addr->na_addr[0], &mac14, 4);
+		memcpy(&addr->na_addr[4], &mac56, 2);
 
 		for (i = 0; i < 6; i++)
-			dprintf(("%02x%s", addr->ea_addr[i],
+			dprintf(("%02x%s", addr->na_addr[i],
 					 i == 5 ? "\n" : ":"));
 	} else {
 		dput(("No mac"));
@@ -247,10 +240,8 @@ virtio_net_refill_rx_queue(void)
 		in_rx++;
 	}
 
-	if (in_rx == 0 && STAILQ_EMPTY(&free_list)) {
+	if (in_rx == 0 && STAILQ_EMPTY(&free_list))
 		dput(("warning: rx queue underflow!"));
-		virtio_net_stats.ets_fifoUnder++;
-	}
 }
 
 static void
@@ -264,7 +255,6 @@ virtio_net_check_queues(void)
 		p->len = len;
 		STAILQ_INSERT_TAIL(&recv_list, p, next);
 		in_rx--;
-		virtio_net_stats.ets_packetR++;
 	}
 
 	/*
@@ -275,7 +265,6 @@ virtio_net_check_queues(void)
 		memset(p->vhdr, 0, sizeof(*p->vhdr));
 		memset(p->vdata, 0, MAX_PACK_SIZE);
 		STAILQ_INSERT_HEAD(&free_list, p, next);
-		virtio_net_stats.ets_packetT++;
 	}
 }
 
@@ -330,7 +319,8 @@ virtio_net_send(struct netdriver_data * data, size_t len)
 	STAILQ_REMOVE_HEAD(&free_list, next);
 
 	if (len > MAX_PACK_SIZE)
-		panic("%s: packet too large to send: %zu", name, len);
+		panic("%s: packet too large to send: %zu",
+		    netdriver_name(), len);
 
 	netdriver_copyin(data, 0, p->vdata, len);
 
@@ -363,18 +353,21 @@ virtio_net_recv(struct netdriver_data * data, size_t max)
 	STAILQ_REMOVE_HEAD(&recv_list, next);
 
 	/* Copy out the packet contents. */
+	if (p->len < sizeof(struct virtio_net_hdr))
+		panic("received packet does not have virtio header");
 	len = p->len - sizeof(struct virtio_net_hdr);
-	if (len > max)
-		len = max;
+	if ((size_t)len > max)
+		len = (ssize_t)max;
 
 	/*
 	 * HACK: due to lack of padding, received packets may in fact be
-	 * smaller than the minimum ethernet packet size.  Inet will accept the
-	 * packets just fine if we increase the length to its minimum.  We
-	 * already zeroed out the rest of the packet data, so this is safe.
+	 * smaller than the minimum ethernet packet size.  The TCP/IP service
+	 * will accept the packets just fine if we increase the length to its
+	 * minimum.  We already zeroed out the rest of the packet data, so this
+	 * is safe.
 	 */
-	if (len < ETH_MIN_PACK_SIZE)
-		len = ETH_MIN_PACK_SIZE;
+	if (len < NDEV_ETH_PACKET_MIN)
+		len = NDEV_ETH_PACKET_MIN;
 
 	netdriver_copyout(data, 0, p->vdata, len);
 
@@ -390,20 +383,11 @@ virtio_net_recv(struct netdriver_data * data, size_t max)
 }
 
 /*
- * Return statistics.
- */
-static void
-virtio_net_stat(eth_stat_t *stat)
-{
-
-	memcpy(stat, &virtio_net_stats, sizeof(*stat));
-}
-
-/*
  * Initialize the driver and the virtual hardware.
  */
 static int
-virtio_net_init(unsigned int instance, ether_addr_t *addr)
+virtio_net_init(unsigned int instance, netdriver_addr_t * addr,
+	uint32_t * caps, unsigned int * ticks __unused)
 {
 	int r;
 
@@ -413,7 +397,7 @@ virtio_net_init(unsigned int instance, ether_addr_t *addr)
 	virtio_net_config(addr);
 
 	if (virtio_net_alloc_bufs() != OK)
-		panic("%s: Buffer allocation failed", name);
+		panic("%s: Buffer allocation failed", netdriver_name());
 
 	virtio_net_init_queues();
 
@@ -424,7 +408,8 @@ virtio_net_init(unsigned int instance, ether_addr_t *addr)
 
 	virtio_irq_enable(net_dev);
 
-	return(OK);
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	return OK;
 }
 
 /*

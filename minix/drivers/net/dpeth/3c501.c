@@ -11,8 +11,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (ENABLE_3C501 == 1)
@@ -38,7 +36,7 @@ static void el1_getstats(dpeth_t * dep)
 */
 static void el1_reset(dpeth_t * dep)
 {
-  int ix;
+  unsigned int ix;
 
   for (ix = 0; ix < 8; ix += 1)	/* Resets the board */
 	outb_el1(dep, EL1_CSR, ECSR_RESET);
@@ -113,7 +111,7 @@ static ssize_t el1_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 	dep->de_recvq_head = rxptr->next;
 
   /* Copy buffer to user area */
-  size = MIN(rxptr->size, max);
+  size = MIN((size_t)rxptr->size, max);
 
   netdriver_copyout(data, 0, rxptr->buffer, size);
 
@@ -137,7 +135,7 @@ static int el1_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
 	if ((now - dep->de_xmit_start) > 4) {
 		/* Transmitter timed out */
 		DEBUG(printf("3c501: transmitter timed out ... \n"));
-		dep->de_stat.ets_sendErr += 1;
+		netdriver_stat_oerror(1);
 		dep->de_flags &= NOT(DEF_XMIT_BUSY);
 		/* Try sending anyway. */
 	} else
@@ -184,7 +182,7 @@ static void el1_stop(dpeth_t * dep)
 {
   int ix;
 
-  DEBUG(printf("%s: stopping Etherlink ....\n", dep->de_name));
+  DEBUG(printf("%s: stopping Etherlink ....\n", netdriver_name()));
   for (ix = 0; ix < 8; ix += 1)	/* Reset board */
 	outb_el1(dep, EL1_CSR, ECSR_RESET);
   outb_el1(dep, EL1_CSR, ECSR_SYS);
@@ -211,7 +209,7 @@ static void el1_interrupt(dpeth_t * dep)
 	DEBUG(printf("3c501: got xmit interrupt (ASR=0x%02X XSR=0x%02X)\n", csr, isr));
 		if (isr & EXSR_JAM) {
 			/* Sending, packet got a collision */
-			dep->de_stat.ets_collision += 1;
+			netdriver_stat_coll(1);
 			/* Put pointer back to beginning of packet */
 			outb_el1(dep, EL1_CSR, ECSR_RIDE | ECSR_SYS);
 			outw_el1(dep, EL1_XMITPTR, (EL1_BFRSIZ - TxBuff->size));
@@ -220,17 +218,15 @@ static void el1_interrupt(dpeth_t * dep)
 			return;
 
 		} else if ((isr & EXSR_16JAM) || !(isr & EXSR_IDLE)) {
-			dep->de_stat.ets_sendErr += 1;
-
+			netdriver_stat_oerror(1);
 		} else if (isr & EXSR_UNDER) {
-			dep->de_stat.ets_fifoUnder += 1;
+			netdriver_stat_oerror(1);
 		}
 		DEBUG(printf("3c501: got xmit interrupt (0x%02X)\n", isr));
 		el1_reset(dep);
 	} else {
 		/** if (inw_el1(dep, EL1_XMITPTR) == EL1_BFRSIZ) **/
 		/* Packet transmitted successfully */
-		dep->de_stat.ets_packetT += 1;
 		dep->bytes_Tx += (long) (TxBuff->size);
 		free_buff(dep, TxBuff);
 		dep->de_flags &= NOT(DEF_XMIT_BUSY);
@@ -245,16 +241,19 @@ static void el1_interrupt(dpeth_t * dep)
 	isr = inb_el1(dep, EL1_RECV);
 	pktsize = inw_el1(dep, EL1_RECVPTR);
 	if ((isr & ERSR_RERROR) || (isr & ERSR_STALE)) {
-	DEBUG(printf("Rx0 (ASR=0x%02X RSR=0x%02X size=%d)\n", csr, isr, pktsize));
-		dep->de_stat.ets_recvErr += 1;
+		DEBUG(printf("Rx0 (ASR=0x%02X RSR=0x%02X size=%d)\n",
+		    csr, isr, pktsize));
+		netdriver_stat_ierror(1);
 
-	} else if (pktsize < ETH_MIN_PACK_SIZE || pktsize > ETH_MAX_PACK_SIZE) {
-	DEBUG(printf("Rx1 (ASR=0x%02X RSR=0x%02X size=%d)\n", csr, isr, pktsize));
-		dep->de_stat.ets_recvErr += 1;
+	} else if (pktsize < NDEV_ETH_PACKET_MIN ||
+	    pktsize > NDEV_ETH_PACKET_MAX) {
+		DEBUG(printf("Rx1 (ASR=0x%02X RSR=0x%02X size=%d)\n",
+		    csr, isr, pktsize));
+		netdriver_stat_ierror(1);
 
 	} else if ((rxptr = alloc_buff(dep, pktsize + sizeof(buff_t))) == NULL) {
 		/* Memory not available. Drop packet */
-		dep->de_stat.ets_fifoOver += 1;
+		netdriver_stat_ierror(1);
 
 	} else if (isr & (ERSR_GOOD | ERSR_ANY)) {
 		/* Got a good packet. Read it from buffer */
@@ -263,7 +262,6 @@ static void el1_interrupt(dpeth_t * dep)
 		insb(dep->de_data_port, rxptr->buffer, pktsize);
 		rxptr->next = NULL;
 		rxptr->size = pktsize;
-		dep->de_stat.ets_packetR += 1;
 		dep->bytes_Rx += (long) pktsize;
 		/* Queue packet to receive queue */
 		if (dep->de_recvq_head == NULL)
@@ -303,7 +301,7 @@ static void el1_interrupt(dpeth_t * dep)
 */
 static void el1_init(dpeth_t * dep)
 {
-  int ix;
+  unsigned int ix;
 
   dep->de_irq &= NOT(DEI_DEFAULT);	/* Strip the default flag. */
   dep->de_offset_page = 0;
@@ -320,9 +318,9 @@ static void el1_init(dpeth_t * dep)
   el1_mode_init(dep);
 
   printf("%s: Etherlink (%s) at %X:%d - ",
-         dep->de_name, "3c501", dep->de_base_port, dep->de_irq);
+         netdriver_name(), "3c501", dep->de_base_port, dep->de_irq);
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)
-	printf("%02X%c", (dep->de_address.ea_addr[ix] = StationAddress[ix]),
+	printf("%02X%c", (dep->de_address.na_addr[ix] = StationAddress[ix]),
 	       ix < SA_ADDR_LEN - 1 ? ':' : '\n');
 
   /* Device specific functions */
@@ -341,7 +339,7 @@ static void el1_init(dpeth_t * dep)
 */
 int el1_probe(dpeth_t * dep)
 {
-  int ix;
+  unsigned int ix;
 
   for (ix = 0; ix < 8; ix += 1)	/* Reset the board */
 	outb_el1(dep, EL1_CSR, ECSR_RESET);

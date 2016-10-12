@@ -6,4 +6,6 @@ LIB=	netdriver
 
 SRCS=	netdriver.c portio.c
 
+WARNS?=	5
+
 .include <bsd.lib.mk>

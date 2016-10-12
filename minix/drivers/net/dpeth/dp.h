@@ -101,17 +101,15 @@ typedef struct dpeth {
   port_t de_base_port;
   port_t de_data_port;		/* For boards using Prog. I/O for xmit/recv */
 
-  int de_irq;
+  unsigned int de_irq;
   int de_hook;			/* interrupt hook at kernel */
-
-  char de_name[8];
 
 #define DEI_DEFAULT	0x8000
 
   phys_bytes de_linmem;		/* For boards using shared memory */
   char *de_locmem;		/* Locally mapped (virtual) address */
-  int de_ramsize;		/* Size of on board memory	 */
-  int de_offset_page;		/* Offset of shared memory page	 */
+  unsigned int de_ramsize;	/* Size of on board memory	 */
+  unsigned int de_offset_page;	/* Offset of shared memory page	 */
 
   /* Board specific functions */
   dp_eth_t de_initf;
@@ -124,12 +122,11 @@ typedef struct dpeth {
   dp_recv_t de_recvf;
   dp_send_t de_sendf;
 
-  ether_addr_t de_address;	/* Ethernet Address */
-  eth_stat_t de_stat;		/* Ethernet Statistics */
+  netdriver_addr_t de_address;	/* Ethernet Address */
   unsigned long bytes_Tx;	/* Total bytes sent/received */
   unsigned long bytes_Rx;
 
-#define	SA_ADDR_LEN	sizeof(ether_addr_t)
+#define	SA_ADDR_LEN	sizeof(netdriver_addr_t)
 
   int de_flags;			/* Send/Receive mode (Configuration) */
 
@@ -144,8 +141,8 @@ typedef struct dpeth {
   port_t de_dp8390_port;
   int de_prog_IO;
   int de_16bit;
-  int de_startpage;
-  int de_stoppage;
+  unsigned int de_startpage;
+  unsigned int de_stoppage;
 
   /* Do it yourself send queue */
   struct sendq {
@@ -153,9 +150,9 @@ typedef struct dpeth {
 	int sq_size;		/* with this size */
 	int sq_sendpage;	/* starting page of the buffer */
   } de_sendq[SENDQ_NR];
-  int de_sendq_nr;
-  int de_sendq_head;		/* Enqueue at the head */
-  int de_sendq_tail;		/* Dequeue at the tail */
+  unsigned int de_sendq_nr;
+  unsigned int de_sendq_head;		/* Enqueue at the head */
+  unsigned int de_sendq_tail;		/* Dequeue at the tail */
 
   dp_user2nicf_t de_user2nicf;
   dp_nic2userf_t de_nic2userf;

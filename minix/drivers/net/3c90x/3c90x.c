@@ -10,7 +10,6 @@
 #include "3c90x.h"
 
 #define VERBOSE		0	/* verbose debugging output */
-#define XLBC_FKEY	11	/* use Shift+Fn to dump statistics (0=off) */
 
 #if VERBOSE
 #define XLBC_DEBUG(x)	printf x
@@ -19,8 +18,6 @@
 #endif
 
 static struct {
-	char name[sizeof("3c90x#0")];	/* driver name */
-
 	int hook_id;		/* IRQ hook ID */
 	uint8_t *base;		/* base address of memory-mapped registers */
 	uint32_t size;		/* size of memory-mapped register area */
@@ -41,8 +38,6 @@ static struct {
 	size_t txb_tail;	/* index of tail TX byte in buffer */
 	size_t txb_used;	/* number of in-use TX buffer bytes */
 	unsigned int upd_head;	/* index of head RX descriptor */
-
-	eth_stat_t stat;	/* statistics */
 } state;
 
 enum xlbc_link_type {
@@ -64,24 +59,25 @@ enum xlbc_link_type {
 #define XLBC_WRITE_32(off, val)	\
 	(*(volatile uint32_t *)(state.base + (off)) = (val))
 
-static int xlbc_init(unsigned int instance, ether_addr_t *addr);
+static int xlbc_init(unsigned int, netdriver_addr_t *, uint32_t *,
+	unsigned int *);
 static void xlbc_stop(void);
-static void xlbc_mode(unsigned int mode);
-static ssize_t xlbc_recv(struct netdriver_data *data, size_t max);
-static int xlbc_send(struct netdriver_data *data, size_t size);
-static void xlbc_stat(eth_stat_t *stat);
-static void xlbc_intr(unsigned int mask);
-static void xlbc_other(const message *m_ptr, int ipc_status);
+static void xlbc_set_mode(unsigned int, const netdriver_addr_t *,
+	unsigned int);
+static ssize_t xlbc_recv(struct netdriver_data *, size_t);
+static int xlbc_send(struct netdriver_data *, size_t);
+static void xlbc_intr(unsigned int);
+static void xlbc_tick(void);
 
 static const struct netdriver xlbc_table = {
+	.ndr_name	= "xl",
 	.ndr_init	= xlbc_init,
 	.ndr_stop	= xlbc_stop,
-	.ndr_mode	= xlbc_mode,
+	.ndr_set_mode	= xlbc_set_mode,
 	.ndr_recv	= xlbc_recv,
 	.ndr_send	= xlbc_send,
-	.ndr_stat	= xlbc_stat,
 	.ndr_intr	= xlbc_intr,
-	.ndr_other	= xlbc_other,
+	.ndr_tick	= xlbc_tick
 };
 
 /*
@@ -108,7 +104,7 @@ xlbc_probe(unsigned int skip)
 
 #if VERBOSE
 	dname = pci_dev_name(vid, did);
-	XLBC_DEBUG(("%s: found %s (%04x:%04x) at %s\n", state.name,
+	XLBC_DEBUG(("%s: found %s (%04x:%04x) at %s\n", netdriver_name(),
 		dname ? dname : "<unknown>", vid, did, pci_slot_name(devind)));
 #endif
 
@@ -223,7 +219,7 @@ xlbc_read_eeprom(unsigned int word)
  * Obtain the preconfigured hardware address of the device.
  */
 static void
-xlbc_get_hwaddr(ether_addr_t * addr)
+xlbc_get_hwaddr(netdriver_addr_t * addr)
 {
 	uint16_t word[3];
 
@@ -233,34 +229,35 @@ xlbc_get_hwaddr(ether_addr_t * addr)
 	word[1] = xlbc_read_eeprom(XLBC_EEPROM_WORD_OEM_ADDR1);
 	word[2] = xlbc_read_eeprom(XLBC_EEPROM_WORD_OEM_ADDR2);
 
-	addr->ea_addr[0] = word[0] >> 8;
-	addr->ea_addr[1] = word[0] & 0xff;
-	addr->ea_addr[2] = word[1] >> 8;
-	addr->ea_addr[3] = word[1] & 0xff;
-	addr->ea_addr[4] = word[2] >> 8;
-	addr->ea_addr[5] = word[2] & 0xff;
+	addr->na_addr[0] = word[0] >> 8;
+	addr->na_addr[1] = word[0] & 0xff;
+	addr->na_addr[2] = word[1] >> 8;
+	addr->na_addr[3] = word[1] & 0xff;
+	addr->na_addr[4] = word[2] >> 8;
+	addr->na_addr[5] = word[2] & 0xff;
 
 	XLBC_DEBUG(("%s: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    state.name, addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
-	    addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]));
+	    netdriver_name(),
+	    addr->na_addr[0], addr->na_addr[1], addr->na_addr[2],
+	    addr->na_addr[3], addr->na_addr[4], addr->na_addr[5]));
 }
 
 /*
  * Configure the device to use the given hardware address.
  */
 static void
-xlbc_set_hwaddr(ether_addr_t * addr)
+xlbc_set_hwaddr(netdriver_addr_t * addr)
 {
 
 	xlbc_select_window(XLBC_STATION_WINDOW);
 
 	/* Set station address. */
 	XLBC_WRITE_16(XLBC_STATION_ADDR0_REG,
-	    addr->ea_addr[0] | (addr->ea_addr[1] << 8));
+	    addr->na_addr[0] | (addr->na_addr[1] << 8));
 	XLBC_WRITE_16(XLBC_STATION_ADDR1_REG,
-	    addr->ea_addr[2] | (addr->ea_addr[3] << 8));
+	    addr->na_addr[2] | (addr->na_addr[3] << 8));
 	XLBC_WRITE_16(XLBC_STATION_ADDR2_REG,
-	    addr->ea_addr[4] | (addr->ea_addr[5] << 8));
+	    addr->na_addr[4] | (addr->na_addr[5] << 8));
 
 	/* Set station mask. */
 	XLBC_WRITE_16(XLBC_STATION_MASK0_REG, 0);
@@ -527,7 +524,7 @@ xlbc_mii_write(uint16_t phy, uint16_t reg, uint16_t data)
 /*
  * Return a human-readable description for the given link type.
  */
-#if VERBOSE || XLBC_FKEY
+#if VERBOSE
 static const char *
 xlbc_get_link_name(enum xlbc_link_type link_type)
 {
@@ -542,7 +539,7 @@ xlbc_get_link_name(enum xlbc_link_type link_type)
 	default:			return "(unknown)";
 	}
 }
-#endif /* VERBOSE || XLBC_FKEY */
+#endif /* VERBOSE */
 
 /*
  * Determine the current link status, and return the resulting link type.
@@ -625,7 +622,7 @@ xlbc_set_duplex(enum xlbc_link_type link)
 	 * on a link change, so we're probably not doing much extra damage.
 	 * TODO: recovery for packets currently on the transmission queue.
 	 */
-	XLBC_DEBUG(("%s: %s full-duplex mode\n", state.name,
+	XLBC_DEBUG(("%s: %s full-duplex mode\n", netdriver_name(),
 	    duplex ? "setting" : "clearing"));
 
 	XLBC_WRITE_16(XLBC_MAC_CTRL_REG, word ^ XLBC_MAC_CTRL_ENA_FD);
@@ -654,7 +651,7 @@ xlbc_link_event(void)
 	link_type = xlbc_get_link_type();
 
 #if VERBOSE
-	XLBC_DEBUG(("%s: link %s\n", state.name,
+	XLBC_DEBUG(("%s: link %s\n", netdriver_name(),
 	    xlbc_get_link_name(link_type)));
 #endif
 
@@ -665,7 +662,7 @@ xlbc_link_event(void)
  * Initialize the device.
  */
 static void
-xlbc_init_hw(int devind, ether_addr_t * addr)
+xlbc_init_hw(int devind, netdriver_addr_t * addr)
 {
 	uint32_t bar;
 	uint16_t cr;
@@ -734,16 +731,12 @@ xlbc_init_hw(int devind, ether_addr_t * addr)
  * Initialize the 3c90x driver and device.
  */
 static int
-xlbc_init(unsigned int instance, ether_addr_t * addr)
+xlbc_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+	unsigned int * ticks)
 {
 	int devind;
-#if XLBC_FKEY
-	int fkeys, sfkeys;
-#endif
 
 	memset(&state, 0, sizeof(state));
-	strlcpy(state.name, "3c90x#0", sizeof(state.name));
-	state.name[sizeof(state.name) - 2] += instance;
 
 	/* Try to find a recognized device. */
 	if ((devind = xlbc_probe(instance)) < 0)
@@ -752,13 +745,8 @@ xlbc_init(unsigned int instance, ether_addr_t * addr)
 	/* Initialize the device. */
 	xlbc_init_hw(devind, addr);
 
-#if XLBC_FKEY
-	/* Register debug dump function key. */
-	fkeys = sfkeys = 0;
-	bit_set(sfkeys, XLBC_FKEY);
-	(void)fkey_map(&fkeys, &sfkeys); /* ignore failure */
-#endif
-
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	*ticks = sys_hz() / 10; /* update statistics 10x/sec */
 	return OK;
 }
 
@@ -777,16 +765,17 @@ xlbc_stop(void)
  * Set packet receipt mode.
  */
 static void
-xlbc_mode(unsigned int mode)
+xlbc_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
 
 	state.filter = XLBC_FILTER_STATION;
 
-	if (mode & NDEV_MULTI)
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		state.filter |= XLBC_FILTER_MULTI;
-	if (mode & NDEV_BROAD)
+	if (mode & NDEV_MODE_BCAST)
 		state.filter |= XLBC_FILTER_BROAD;
-	if (mode & NDEV_PROMISC)
+	if (mode & NDEV_MODE_PROMISC)
 		state.filter |= XLBC_FILTER_PROMISC;
 
 	xlbc_issue_cmd(XLBC_CMD_SET_FILTER | state.filter);
@@ -814,22 +803,16 @@ xlbc_recv(struct netdriver_data * data, size_t max)
 		return SUSPEND;
 
 	if (flags & XLBC_UP_ERROR) {
-		XLBC_DEBUG(("%s: received error\n", state.name));
+		XLBC_DEBUG(("%s: received error\n", netdriver_name()));
 
-		state.stat.ets_recvErr++;
-		if (flags & XLBC_UP_OVERRUN)
-			state.stat.ets_fifoOver++;
-		if (flags & XLBC_UP_ALIGN_ERR)
-			state.stat.ets_frameAll++;
-		if (flags & XLBC_UP_CRC_ERR)
-			state.stat.ets_CRCerr++;
+		netdriver_stat_ierror(1);
 
 		len = 0; /* immediately move on to the next descriptor */
 	} else {
 		len = flags & XLBC_UP_LEN;
 
-		XLBC_DEBUG(("%s: received packet (size %zu)\n", state.name,
-		    len));
+		XLBC_DEBUG(("%s: received packet (size %zu)\n",
+		    netdriver_name(), len));
 
 		/* The device is supposed to not give us runt frames. */
 		assert(len >= XLBC_MIN_PKT_LEN);
@@ -902,7 +885,8 @@ xlbc_send(struct netdriver_data * data, size_t size)
 	if (left < size)
 		return SUSPEND;
 
-	XLBC_DEBUG(("%s: transmitting packet (size %zu)\n", state.name, size));
+	XLBC_DEBUG(("%s: transmitting packet (size %zu)\n",
+	    netdriver_name(), size));
 
 	/* Copy in the packet. */
 	off = (state.txb_tail + used) % XLBC_TXB_SIZE;
@@ -966,7 +950,8 @@ xlbc_advance_tx(void)
 		if (!(flags & XLBC_DN_DN_COMPLETE))
 			break;
 
-		XLBC_DEBUG(("%s: packet copied to transmitter\n", state.name));
+		XLBC_DEBUG(("%s: packet copied to transmitter\n",
+		    netdriver_name()));
 
 		len = state.dpd_base[state.dpd_tail].len & ~XLBC_LEN_LAST;
 
@@ -995,25 +980,20 @@ xlbc_recover_tx(void)
 
 	while ((status = XLBC_READ_8(XLBC_TX_STATUS_REG)) &
 	    XLBC_TX_STATUS_COMPLETE) {
-		XLBC_DEBUG(("%s: transmission error (0x%04x)\n", state.name,
-		    status));
+		XLBC_DEBUG(("%s: transmission error (0x%04x)\n",
+		    netdriver_name(), status));
 
 		/* This is an internal (non-packet) error status. */
 		if (status & XLBC_TX_STATUS_OVERFLOW)
 			enable = TRUE;
 
 		if (status & XLBC_TX_STATUS_MAX_COLL) {
-			state.stat.ets_sendErr++;
-			state.stat.ets_transAb++;
+			netdriver_stat_coll(1);
 			enable = TRUE;
 		}
-		if (status & XLBC_TX_STATUS_UNDERRUN) {
-			state.stat.ets_sendErr++;
-			state.stat.ets_fifoUnder++;
-			reset = TRUE;
-		}
-		if (status & XLBC_TX_STATUS_JABBER) {
-			state.stat.ets_sendErr++;
+		if (status &
+		    (XLBC_TX_STATUS_UNDERRUN | XLBC_TX_STATUS_JABBER)) {
+			netdriver_stat_oerror(1);
 			reset = TRUE;
 		}
 
@@ -1047,7 +1027,7 @@ xlbc_recover_tx(void)
 		XLBC_WRITE_32(XLBC_DN_LIST_PTR_REG,
 		    state.dpd_phys + state.dpd_tail * sizeof(xlbc_pd_t));
 
-		XLBC_DEBUG(("%s: performed recovery\n", state.name));
+		XLBC_DEBUG(("%s: performed recovery\n", netdriver_name()));
 	} else if (enable)
 		xlbc_issue_cmd(XLBC_CMD_TX_ENABLE);
 }
@@ -1059,24 +1039,20 @@ xlbc_recover_tx(void)
 static void
 xlbc_update_stats(void)
 {
-	uint8_t upper, up_rx, up_tx;
 
 	xlbc_select_window(XLBC_STATS_WINDOW);
 
-	state.stat.ets_carrSense += XLBC_READ_8(XLBC_CARRIER_LOST_REG);
+	(void)XLBC_READ_8(XLBC_CARRIER_LOST_REG);
 	(void)XLBC_READ_8(XLBC_SQE_ERR_REG);
-	state.stat.ets_collision += XLBC_READ_8(XLBC_MULTI_COLL_REG);
-	state.stat.ets_collision += XLBC_READ_8(XLBC_SINGLE_COLL_REG);
-	state.stat.ets_OWC += XLBC_READ_8(XLBC_LATE_COLL_REG);
-	state.stat.ets_missedP += XLBC_READ_8(XLBC_RX_OVERRUNS_REG);
-	state.stat.ets_transDef += XLBC_READ_8(XLBC_FRAMES_DEFERRED_REG);
+	netdriver_stat_coll(XLBC_READ_8(XLBC_MULTI_COLL_REG));
+	netdriver_stat_coll(XLBC_READ_8(XLBC_SINGLE_COLL_REG));
+	netdriver_stat_coll(XLBC_READ_8(XLBC_LATE_COLL_REG));
+	netdriver_stat_ierror(XLBC_READ_8(XLBC_RX_OVERRUNS_REG));
+	(void)XLBC_READ_8(XLBC_FRAMES_DEFERRED_REG);
 
-	upper = XLBC_READ_8(XLBC_UPPER_FRAMES_REG);
-	up_tx = ((upper & XLBC_UPPER_TX_MASK) >> XLBC_UPPER_TX_SHIFT) << 8;
-	up_rx = ((upper & XLBC_UPPER_RX_MASK) >> XLBC_UPPER_RX_SHIFT) << 8;
-
-	state.stat.ets_packetT += XLBC_READ_8(XLBC_FRAMES_XMIT_OK_REG) + up_tx;
-	state.stat.ets_packetR += XLBC_READ_8(XLBC_FRAMES_RCVD_OK_REG) + up_rx;
+	(void)XLBC_READ_8(XLBC_UPPER_FRAMES_REG);
+	(void)XLBC_READ_8(XLBC_FRAMES_XMIT_OK_REG);
+	(void)XLBC_READ_8(XLBC_FRAMES_RCVD_OK_REG);
 
 	(void)XLBC_READ_16(XLBC_BYTES_RCVD_OK_REG);
 	(void)XLBC_READ_16(XLBC_BYTES_XMIT_OK_REG);
@@ -1084,18 +1060,6 @@ xlbc_update_stats(void)
 	xlbc_select_window(XLBC_SSD_STATS_WINDOW);
 
 	(void)XLBC_READ_8(XLBC_BAD_SSD_REG);
-}
-
-/*
- * Copy out statistics.
- */
-static void
-xlbc_stat(eth_stat_t * stat)
-{
-
-	xlbc_update_stats();
-
-	memcpy(stat, &state.stat, sizeof(*stat));
 }
 
 /*
@@ -1116,7 +1080,7 @@ xlbc_intr(unsigned int __unused mask)
 	 */
 	val = XLBC_READ_16(XLBC_STATUS_AUTO_REG);
 
-	XLBC_DEBUG(("%s: interrupt (0x%04x)\n", state.name, val));
+	XLBC_DEBUG(("%s: interrupt (0x%04x)\n", netdriver_name(), val));
 
 	if (val & XLBC_STATUS_UP_COMPLETE)
 		netdriver_recv();
@@ -1136,7 +1100,8 @@ xlbc_intr(unsigned int __unused mask)
 		 * Since this entire condition is effectively untestable, we
 		 * do not even try to be smart about it.
 		 */
-		XLBC_DEBUG(("%s: host error, performing reset\n", state.name));
+		XLBC_DEBUG(("%s: host error, performing reset\n",
+		    netdriver_name()));
 
 		xlbc_reset_tx();
 
@@ -1166,61 +1131,13 @@ xlbc_intr(unsigned int __unused mask)
 }
 
 /*
- * Dump statistics.
+ * Do regular processing.
  */
-#if XLBC_FKEY
 static void
-xlbc_dump(void)
+xlbc_tick(void)
 {
-	enum xlbc_link_type link_type;
-
-	link_type = xlbc_get_link_type();
 
 	xlbc_update_stats();
-
-	printf("\n");
-	printf("%s statistics:\n", state.name);
-
-	printf("recvErr:     %8ld\t", state.stat.ets_recvErr);
-	printf("sendErr:     %8ld\t", state.stat.ets_sendErr);
-	printf("OVW:         %8ld\n", state.stat.ets_OVW);
-
-	printf("CRCerr:      %8ld\t", state.stat.ets_CRCerr);
-	printf("frameAll:    %8ld\t", state.stat.ets_frameAll);
-	printf("missedP:     %8ld\n", state.stat.ets_missedP);
-
-	printf("packetR:     %8ld\t", state.stat.ets_packetR);
-	printf("packetT:     %8ld\t", state.stat.ets_packetT);
-	printf("transDef:    %8ld\n", state.stat.ets_transDef);
-
-	printf("collision:   %8ld\t", state.stat.ets_collision);
-	printf("transAb:     %8ld\t", state.stat.ets_transAb);
-	printf("carrSense:   %8ld\n", state.stat.ets_carrSense);
-
-	printf("fifoUnder:   %8ld\t", state.stat.ets_fifoUnder);
-	printf("fifoOver:    %8ld\t", state.stat.ets_fifoOver);
-	printf("CDheartbeat: %8ld\n", state.stat.ets_CDheartbeat);
-
-	printf("OWC:         %8ld\t", state.stat.ets_OWC);
-	printf("link:        %s\n", xlbc_get_link_name(link_type));
-}
-#endif /* XLBC_FKEY */
-
-/*
- * Process miscellaneous messages.
- */
-static void
-xlbc_other(const message * m_ptr, int ipc_status)
-{
-#if XLBC_FKEY
-	int sfkeys;
-
-	if (!is_ipc_notify(ipc_status) || m_ptr->m_source != TTY_PROC_NR)
-		return;
-
-	if (fkey_events(NULL, &sfkeys) == OK && bit_isset(sfkeys, XLBC_FKEY))
-		xlbc_dump();
-#endif /* XLBC_FKEY */
 }
 
 /*

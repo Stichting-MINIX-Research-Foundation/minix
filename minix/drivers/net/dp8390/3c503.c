@@ -14,9 +14,6 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-
 #include "local.h"
 #include "dp8390.h"
 #include "3c503.h"
@@ -48,7 +45,7 @@ dpeth_t * dep;
 
   /* Read station address from PROM */
   for (ix = EL2_EA0; ix <= EL2_EA5; ix += 1)
-	dep->de_address.ea_addr[ix] = inb_el2(dep, ix);
+	dep->de_address.na_addr[ix] = inb_el2(dep, ix);
 
   /* Map the 8390 back to lower I/O address range */
   outb_el2(dep, EL2_CNTR, cntr);
@@ -108,12 +105,12 @@ dpeth_t * dep;
 
   if (!debug) {
 	printf("%s: 3c503 at %X:%d:%lX\n",
-		dep->de_name, dep->de_base_port, dep->de_irq,
+		netdriver_name(), dep->de_base_port, dep->de_irq,
 		dep->de_linmem + dep->de_offset_page);
   } else {
 	printf("%s: 3Com Etherlink II %sat I/O address 0x%X, "
 			"memory address 0x%lX, irq %d\n",
-		dep->de_name, dep->de_16bit ? "(16-bit) " : "",
+		netdriver_name(), dep->de_16bit ? "(16-bit) " : "",
 		dep->de_base_port,
 		dep->de_linmem + dep->de_offset_page,
 		dep->de_irq);
@@ -129,7 +126,7 @@ dpeth_t * dep;
   /* Stops board by disabling interrupts. */
 
 #if DEBUG
-  printf("%s: stopping Etherlink\n", dep->de_name);
+  printf("%s: stopping Etherlink\n", netdriver_name());
 #endif
   outb_el2(dep, EL2_CFGR, ECFGR_IRQOFF);
   return;

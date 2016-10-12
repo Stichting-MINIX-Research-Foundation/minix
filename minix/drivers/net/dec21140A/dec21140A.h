@@ -18,9 +18,9 @@ Created: 09/01/2009   Nicolas Tittley (first.last @ gmail DOT com)
 #endif
 
 #define DE_NB_SEND_DESCR    32
-#define DE_SEND_BUF_SIZE    (ETH_MAX_PACK_SIZE+2)
+#define DE_SEND_BUF_SIZE    (NDEV_ETH_PACKET_MAX+2)
 #define DE_NB_RECV_DESCR    32
-#define DE_RECV_BUF_SIZE    (ETH_MAX_PACK_SIZE+2)
+#define DE_RECV_BUF_SIZE    (NDEV_ETH_PACKET_MAX+2)
 
 #define DE_MIN_BASE_ADDR    0x0400
 #define DE_SROM_EA_OFFSET   20
@@ -37,14 +37,11 @@ typedef struct de_local_descr {
 } de_loc_descr_t;
 
 typedef struct dpeth {
-  char de_name[32];              /* Name of this interface */
   port_t de_base_port;          /* Base port, for multiple card instance */
   int de_irq;                   /* IRQ line number */
   int de_hook;			/* interrupt hook at kernel */
 
   int de_type;			/* What kind of hardware */
-
-  eth_stat_t de_stat;           /* Stats */
 
   /* Space reservation. We will allocate all structures later in the code.
      here we just make sure we have the space we need at compile time */

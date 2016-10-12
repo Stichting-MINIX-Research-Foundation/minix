@@ -94,7 +94,7 @@
 #	define ATL2_ICT_DEFAULT		50000		/* 100 ms */
 
 #define ATL2_MTU_REG			0x149c	/* MTU config */
-#	define ATL2_MTU_DEFAULT		ETH_MAX_PACK_SIZE_TAGGED
+#	define ATL2_MTU_DEFAULT		NDEV_ETH_PACKET_MAX
 
 #define ATL2_CUT_THRESH_REG		0x1590	/* cut-through config */
 #	define ATL2_CUT_THRESH_DEFAULT	0x177		/* (magic) */

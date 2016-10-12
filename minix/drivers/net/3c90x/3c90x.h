@@ -21,8 +21,8 @@
 #define XLBC_TXB_SIZE			48128	/* TX buffer size in bytes */
 #define XLBC_UPD_COUNT			32	/* RX descriptor count */
 
-#define XLBC_MIN_PKT_LEN		ETH_MIN_PACK_SIZE
-#define XLBC_MAX_PKT_LEN		ETH_MAX_PACK_SIZE_TAGGED
+#define XLBC_MIN_PKT_LEN		NDEV_ETH_PACKET_MIN
+#define XLBC_MAX_PKT_LEN		NDEV_ETH_PACKET_MAX_TAGGED
 
 #define XLBC_MIN_REG_SIZE		128	/* min. register memory size */
 

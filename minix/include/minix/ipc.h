@@ -1593,6 +1593,79 @@ typedef struct {
 _ASSERT_MSG_SIZE(mess_mmap);
 
 typedef struct {
+	uint32_t id;
+
+	uint8_t padding[52];
+} mess_ndev_netdriver_init;
+_ASSERT_MSG_SIZE(mess_ndev_netdriver_init);
+
+typedef struct {
+	uint32_t id;
+	uint32_t set;
+	uint32_t mode;
+	cp_grant_id_t mcast_grant;
+	unsigned int mcast_count;
+	uint32_t caps;
+	uint32_t flags;
+	uint32_t media;
+	uint8_t hwaddr[NDEV_HWADDR_MAX];
+
+	uint8_t padding[18];
+} mess_ndev_netdriver_conf;
+_ASSERT_MSG_SIZE(mess_ndev_netdriver_conf);
+
+typedef struct {
+	uint32_t id;
+	uint32_t count;
+	cp_grant_id_t grant[NDEV_IOV_MAX];
+	uint16_t len[NDEV_IOV_MAX];
+} mess_ndev_netdriver_transfer;
+_ASSERT_MSG_SIZE(mess_ndev_netdriver_transfer);
+
+typedef struct {
+	uint32_t id;
+
+	uint8_t padding[52];
+} mess_ndev_netdriver_status_reply;
+_ASSERT_MSG_SIZE(mess_ndev_netdriver_status_reply);
+
+typedef struct {
+	uint32_t id;
+	uint32_t link;
+	uint32_t media;
+	uint32_t caps;
+	char name[NDEV_NAME_MAX];
+	uint8_t hwaddr[NDEV_HWADDR_MAX];
+	uint8_t hwaddr_len;
+	uint8_t max_send;
+	uint8_t max_recv;
+
+	uint8_t padding[15];
+} mess_netdriver_ndev_init_reply;
+_ASSERT_MSG_SIZE(mess_netdriver_ndev_init_reply);
+
+typedef struct {
+	uint32_t id;
+	int32_t result;
+
+	uint8_t padding[48];
+} mess_netdriver_ndev_reply;
+_ASSERT_MSG_SIZE(mess_netdriver_ndev_reply);
+
+typedef struct {
+	uint32_t id;
+	uint32_t link;
+	uint32_t media;
+	uint32_t oerror;
+	uint32_t coll;
+	uint32_t ierror;
+	uint32_t iqdrop;
+
+	uint8_t padding[28];
+} mess_netdriver_ndev_status;
+_ASSERT_MSG_SIZE(mess_netdriver_ndev_status);
+
+typedef struct {
 	int mode;
 
 	uint8_t padding[52];
@@ -2509,6 +2582,13 @@ typedef struct noxfer_message {
 		mess_mib_lsys_call	m_mib_lsys_call;
 		mess_mib_lsys_info	m_mib_lsys_info;
 		mess_mmap		m_mmap;
+		mess_ndev_netdriver_init m_ndev_netdriver_init;
+		mess_ndev_netdriver_conf m_ndev_netdriver_conf;
+		mess_ndev_netdriver_transfer m_ndev_netdriver_transfer;
+		mess_ndev_netdriver_status_reply m_ndev_netdriver_status_reply;
+		mess_netdriver_ndev_init_reply m_netdriver_ndev_init_reply;
+		mess_netdriver_ndev_reply m_netdriver_ndev_reply;
+		mess_netdriver_ndev_status m_netdriver_ndev_status;
 		mess_net_netdrv_dl_conf m_net_netdrv_dl_conf;
 		mess_net_netdrv_dl_getstat_s m_net_netdrv_dl_getstat_s;
 		mess_net_netdrv_dl_readv_s m_net_netdrv_dl_readv_s;

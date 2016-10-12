@@ -76,7 +76,6 @@ typedef struct fxp
 	irq_hook_t fxp_hook;
 	struct sc fxp_stat;
 	u8_t fxp_conf_bytes[CC_BYTES_NR];
-	char fxp_name[sizeof("fxp#n")];
 } fxp_t;
 
 /* fxp_type */
@@ -86,8 +85,6 @@ typedef struct fxp
 #define FT_82559	0x4
 #define FT_82801	0x8
 
-static int fxp_instance;
-
 static fxp_t *fxp_state;
 
 #define fxp_inb(port, offset)	(do_inb((port) + (offset)))
@@ -95,16 +92,20 @@ static fxp_t *fxp_state;
 #define fxp_outb(port, offset, value)	(do_outb((port) + (offset), (value)))
 #define fxp_outl(port, offset, value)	(do_outl((port) + (offset), (value)))
 
-static int fxp_init(unsigned int instance, ether_addr_t *addr);
+static int fxp_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
 static void fxp_intr(unsigned int __unused mask);
 static void fxp_stop(void);
 static int fxp_probe(fxp_t *fp, int skip);
 static void fxp_conf_hw(fxp_t *fp);
-static void fxp_init_hw(fxp_t *fp, ether_addr_t *addr);
+static void fxp_init_hw(fxp_t *fp, netdriver_addr_t *addr,
+	unsigned int instance);
 static void fxp_init_buf(fxp_t *fp);
 static void fxp_reset_hw(fxp_t *fp);
-static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr);
-static void fxp_mode(unsigned int mode);
+static void fxp_confaddr(fxp_t *fp, netdriver_addr_t *addr,
+	unsigned int instance);
+static void fxp_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
+	unsigned int mcast_count);
 static int fxp_send(struct netdriver_data *data, size_t size);
 static ssize_t fxp_recv(struct netdriver_data *data, size_t max);
 static void fxp_do_conf(fxp_t *fp);
@@ -113,11 +114,11 @@ static void fxp_cu_ptr_cmd(fxp_t *fp, int cmd, phys_bytes bus_addr, int
 static void fxp_ru_ptr_cmd(fxp_t *fp, int cmd, phys_bytes bus_addr, int
 	check_idle);
 static void fxp_restart_ru(fxp_t *fp);
-static void fxp_stat(eth_stat_t *stat);
 static void fxp_handler(fxp_t *fp);
 static void fxp_check_ints(fxp_t *fp);
-static void fxp_alarm(clock_t stamp);
+static void fxp_tick(void);
 static int fxp_link_changed(fxp_t *fp);
+static unsigned int fxp_get_link(uint32_t *media);
 static void fxp_report_link(fxp_t *fp);
 static u16_t eeprom_read(fxp_t *fp, int reg);
 static void eeprom_addrsize(fxp_t *fp);
@@ -130,14 +131,15 @@ static void tell_iommu(vir_bytes start, size_t size, int pci_bus, int
 	pci_dev, int pci_func);
 
 static const struct netdriver fxp_table = {
+	.ndr_name	= "fxp",
 	.ndr_init	= fxp_init,
 	.ndr_stop	= fxp_stop,
-	.ndr_mode	= fxp_mode,
+	.ndr_set_mode	= fxp_set_mode,
 	.ndr_recv	= fxp_recv,
 	.ndr_send	= fxp_send,
-	.ndr_stat	= fxp_stat,
+	.ndr_get_link	= fxp_get_link,
 	.ndr_intr	= fxp_intr,
-	.ndr_alarm	= fxp_alarm,
+	.ndr_tick	= fxp_tick,
 };
 
 /*===========================================================================*
@@ -187,7 +189,7 @@ static void fxp_stop(void)
 
 	/* Stop device */
 #if VERBOSE
-	printf("%s: stopping device\n", fp->fxp_name);
+	printf("%s: stopping device\n", netdriver_name());
 #endif
 
 	fxp_outl(port, CSR_PORT, CP_CMD_SOFT_RESET);
@@ -196,12 +198,11 @@ static void fxp_stop(void)
 /*===========================================================================*
  *				fxp_init				     *
  *===========================================================================*/
-static int fxp_init(unsigned int instance, ether_addr_t *addr)
+static int fxp_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks)
 {
 	fxp_t *fp;
 	int r;
-
-	fxp_instance = instance;
 
 	if (!(fxp_state = alloc_contig(sizeof(*fxp_state), 0, NULL)))
 		panic("couldn't allocate table");
@@ -210,25 +211,20 @@ static int fxp_init(unsigned int instance, ether_addr_t *addr)
 
 	memset(fp, 0, sizeof(*fp));
 
-	strlcpy(fp->fxp_name, "fxp#0", sizeof(fp->fxp_name));
-	fp->fxp_name[4] += fxp_instance;
-
 	if ((r = tsc_calibrate()) != OK)
 		panic("tsc_calibrate failed: %d", r);
 
 	/* Configure PCI device. */
-	if (!fxp_probe(fp, fxp_instance))
+	if (!fxp_probe(fp, instance))
 		return ENXIO;
 
 	fxp_conf_hw(fp);
 
-	fxp_init_hw(fp, addr);
+	fxp_init_hw(fp, addr, instance);
 	fxp_report_link(fp);
 
-	/* Set watchdog timer. */
-	if ((r = sys_setalarm(sys_hz(), 0)) != OK)
-		panic("unable to set watchdog alarm");
-
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	*ticks = sys_hz();
 	return OK;
 }
 
@@ -241,9 +237,9 @@ static int fxp_probe(fxp_t *fp, int skip)
 	u16_t vid, did, cr;
 	u32_t bar;
 	u8_t ilr, rev;
-	char *str;
+	const char *str;
 #if VERBOSE
-	char *dname;
+	const char *dname;
 #endif
 
 	pci_init();
@@ -264,7 +260,7 @@ static int fxp_probe(fxp_t *fp, int skip)
 	if (!dname)
 		dname= "unknown device";
 	printf("%s: %s (%04x/%04x) at %s\n",
-		fp->fxp_name, dname, vid, did, pci_slot_name(devind));
+		netdriver_name(), dname, vid, did, pci_slot_name(devind));
 #endif
 	pci_reserve(devind);
 
@@ -283,7 +279,7 @@ static int fxp_probe(fxp_t *fp, int skip)
 	fp->fxp_irq= ilr;
 #if VERBOSE
 	printf("%s: using I/O address 0x%lx, IRQ %d\n",
-		fp->fxp_name, (unsigned long)bar, ilr);
+		netdriver_name(), (unsigned long)bar, ilr);
 #endif
 
 	rev= pci_attr_r8(devind, PCI_REV);
@@ -338,9 +334,10 @@ static int fxp_probe(fxp_t *fp, int skip)
 
 #if VERBOSE
 	if (str)
-		printf("%s: device revision: %s\n", fp->fxp_name, str);
+		printf("%s: device revision: %s\n", netdriver_name(), str);
 	else
-		printf("%s: unknown revision: 0x%x\n", fp->fxp_name, rev);
+		printf("%s: unknown revision: 0x%x\n", netdriver_name(),
+		    rev);
 #endif
 
 	if (fp->fxp_type == FT_UNKNOWN)
@@ -445,7 +442,8 @@ static void fxp_conf_hw(fxp_t *fp)
 /*===========================================================================*
  *				fxp_init_hw				     *
  *===========================================================================*/
-static void fxp_init_hw(fxp_t *fp, ether_addr_t *addr)
+static void fxp_init_hw(fxp_t *fp, netdriver_addr_t *addr,
+	unsigned int instance)
 {
 	int r, isr;
 	port_t port;
@@ -490,7 +488,7 @@ static void fxp_init_hw(fxp_t *fp, ether_addr_t *addr)
 	fxp_ru_ptr_cmd(fp, SC_RU_START, fp->fxp_rx_busaddr,
 		TRUE /* check idle */);
 
-	fxp_confaddr(fp, addr);
+	fxp_confaddr(fp, addr, instance);
 }
 
 /*===========================================================================*
@@ -624,7 +622,8 @@ fxp_t *fp;
 /*===========================================================================*
  *				fxp_confaddr				     *
  *===========================================================================*/
-static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr)
+static void fxp_confaddr(fxp_t *fp, netdriver_addr_t *addr,
+	unsigned int instance)
 {
 	static char eakey[]= FXP_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
@@ -633,13 +632,13 @@ static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr)
 	long v;
 
 	/* User defined ethernet address? */
-	eakey[sizeof(FXP_ENVVAR)-1]= '0' + fxp_instance;
+	eakey[sizeof(FXP_ENVVAR)-1]= '0' + instance;
 
 	for (i= 0; i < 6; i++)
 	{
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
-		addr->ea_addr[i]= v;
+		addr->na_addr[i]= v;
 	}
 
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
@@ -650,8 +649,8 @@ static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr)
 		for (i= 0; i<3; i++)
 		{
 			v= eeprom_read(fp, i);
-			addr->ea_addr[i*2]= (v & 0xff);
-			addr->ea_addr[i*2+1]= ((v >> 8) & 0xff);
+			addr->na_addr[i*2]= (v & 0xff);
+			addr->na_addr[i*2+1]= ((v >> 8) & 0xff);
 		}
 	}
 
@@ -659,7 +658,7 @@ static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr)
 	tmpbufp->ias.ias_status= 0;
 	tmpbufp->ias.ias_command= CBL_C_EL | CBL_AIS;
 	tmpbufp->ias.ias_linkaddr= 0;
-	memcpy(tmpbufp->ias.ias_ethaddr, addr->ea_addr,
+	memcpy(tmpbufp->ias.ias_ethaddr, addr->na_addr,
 		sizeof(tmpbufp->ias.ias_ethaddr));
 	r= sys_umap(SELF, VM_D, (vir_bytes)&tmpbufp->ias,
 		(phys_bytes)sizeof(tmpbufp->ias), &bus_addr);
@@ -677,17 +676,19 @@ static void fxp_confaddr(fxp_t *fp, ether_addr_t *addr)
 		panic("fxp_confaddr: CU command failed");
 
 #if VERBOSE
-	printf("%s: hardware ethernet address: ", fp->fxp_name);
+	printf("%s: hardware ethernet address: ", netdriver_name());
 	for (i= 0; i<6; i++)
-		printf("%02x%s", addr->ea_addr[i], i < 5 ? ":" : "");
+		printf("%02x%s", addr->na_addr[i], i < 5 ? ":" : "");
 	printf("\n");
 #endif
 }
 
 /*===========================================================================*
- *				fxp_mode				     *
+ *				fxp_set_mode				     *
  *===========================================================================*/
-static void fxp_mode(unsigned int mode)
+static void fxp_set_mode(unsigned int mode,
+	const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
 	fxp_t *fp;
 
@@ -697,12 +698,13 @@ static void fxp_mode(unsigned int mode)
 	fp->fxp_conf_bytes[15] &= ~(CCB15_BD|CCB15_PM);
 	fp->fxp_conf_bytes[21] &= ~CCB21_MA;
 
-	if (mode & NDEV_PROMISC)
+	if (mode & NDEV_MODE_PROMISC)
 		fp->fxp_conf_bytes[15] |= CCB15_PM;
-	if (mode & NDEV_MULTI)
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		fp->fxp_conf_bytes[21] |= CCB21_MA;
 
-	if (!(mode & (NDEV_BROAD|NDEV_MULTI|NDEV_PROMISC)))
+	if (!(mode & (NDEV_MODE_BCAST | NDEV_MODE_MCAST_LIST |
+	    NDEV_MODE_MCAST_ALL | NDEV_MODE_PROMISC)))
 		fp->fxp_conf_bytes[15] |= CCB15_BD;
 
 	/* Queue request if not idle */
@@ -1034,9 +1036,9 @@ fxp_t *fp;
 }
 
 /*===========================================================================*
- *				fxp_stat				     *
+ *				fxp_update_stats			     *
  *===========================================================================*/
-static void fxp_stat(eth_stat_t *stat)
+static void fxp_update_stats(void)
 {
 	fxp_t *fp;
 	u32_t *p;
@@ -1049,41 +1051,26 @@ static void fxp_stat(eth_stat_t *stat)
 	/* The dump commmand doesn't take a pointer. Setting a pointer
 	 * doesn't hurt though.
 	 */
-	fxp_cu_ptr_cmd(fp, SC_CU_DUMP_SC, 0, FALSE /* do not check idle */);
+	fxp_cu_ptr_cmd(fp, SC_CU_DUMP_RSET_SC, 0,
+	    FALSE /* do not check idle */);
 
 	/* Wait for CU command to complete */
-	SPIN_UNTIL(*p != 0, 1000);
+	SPIN_UNTIL(*p != 0, 2500);
 
 	if (*p == 0)
 		panic("fxp_stat: CU command failed to complete");
-	if (*p != SCM_DSC)
+	if (*p != SCM_DRSC)
 		panic("fxp_stat: bad magic");
 
-	stat->ets_recvErr=
-		fp->fxp_stat.sc_rx_crc +
+	netdriver_stat_ierror(fp->fxp_stat.sc_rx_crc +
 		fp->fxp_stat.sc_rx_align +
 		fp->fxp_stat.sc_rx_resource +
 		fp->fxp_stat.sc_rx_overrun +
 		fp->fxp_stat.sc_rx_cd +
-		fp->fxp_stat.sc_rx_short;
-	stat->ets_sendErr=
-		fp->fxp_stat.sc_tx_maxcol +
-		fp->fxp_stat.sc_tx_latecol +
-		fp->fxp_stat.sc_tx_crs;
-	stat->ets_OVW= fp->fxp_stat.sc_rx_overrun;
-	stat->ets_CRCerr= fp->fxp_stat.sc_rx_crc;
-	stat->ets_frameAll= fp->fxp_stat.sc_rx_align;
-	stat->ets_missedP= fp->fxp_stat.sc_rx_resource;
-	stat->ets_packetR= fp->fxp_stat.sc_rx_good;
-	stat->ets_packetT= fp->fxp_stat.sc_tx_good;
-	stat->ets_transDef= fp->fxp_stat.sc_tx_defered;
-	stat->ets_collision= fp->fxp_stat.sc_tx_totcol;
-	stat->ets_transAb= fp->fxp_stat.sc_tx_maxcol;
-	stat->ets_carrSense= fp->fxp_stat.sc_tx_crs;
-	stat->ets_fifoUnder= fp->fxp_stat.sc_tx_underrun;
-	stat->ets_fifoOver= fp->fxp_stat.sc_rx_overrun;
-	stat->ets_CDheartbeat= 0;
-	stat->ets_OWC= fp->fxp_stat.sc_tx_latecol;
+		fp->fxp_stat.sc_rx_short);
+	netdriver_stat_coll(fp->fxp_stat.sc_tx_maxcol +
+		fp->fxp_stat.sc_tx_latecol);
+	netdriver_stat_oerror(fp->fxp_stat.sc_tx_crs);
 }
 
 /*===========================================================================*
@@ -1243,25 +1230,28 @@ static void fxp_check_ints(fxp_t *fp)
 		}
 
 	}
-	if (fp->fxp_report_link)
+	if (fp->fxp_report_link) {
+		netdriver_link();
+
 		fxp_report_link(fp);
+	}
 }
 
 /*===========================================================================*
- *				fxp_alarm				     *
+ *				fxp_tick				     *
  *===========================================================================*/
-static void fxp_alarm(clock_t __unused stamp)
+static void fxp_tick(void)
 {
 	fxp_t *fp;
 
-	sys_setalarm(sys_hz(), 0);
+	fxp_update_stats();
 
 	fp= fxp_state;
 
 	/* Check the link status. */
 	if (fxp_link_changed(fp)) {
 #if VERBOSE
-		printf("fxp_alarm: link changed\n");
+		printf("fxp_tick: link changed\n");
 #endif
 		fp->fxp_report_link= TRUE;
 		fxp_check_ints(fp);
@@ -1295,6 +1285,37 @@ static int fxp_link_changed(fxp_t *fp)
 	scr &= ~(MII_SCR_RES|MII_SCR_RES_1);
 
 	return (fp->fxp_mii_scr != scr);
+}
+
+/*===========================================================================*
+ *				fxp_get_link				     *
+ *===========================================================================*/
+static unsigned int fxp_get_link(uint32_t *media)
+{
+	fxp_t *fp;
+	u16_t mii_status, scr;
+
+	fp = fxp_state;
+
+	scr= mii_read(fp, MII_SCR);
+
+	mii_read(fp, MII_STATUS); /* The status reg is latched, read twice */
+	mii_status= mii_read(fp, MII_STATUS);
+
+	if (!(mii_status & MII_STATUS_LS))
+		return NDEV_LINK_DOWN;
+
+	if (scr & MII_SCR_100)
+		*media = IFM_ETHER | IFM_100_TX;
+	else
+		*media = IFM_ETHER | IFM_10_T;
+
+	if (scr & MII_SCR_FD)
+		*media |= IFM_FDX;
+	else
+		*media |= IFM_HDX;
+
+	return NDEV_LINK_UP;
 }
 
 /*===========================================================================*
@@ -1345,7 +1366,7 @@ static void fxp_report_link(fxp_t *fp)
 	if (!link_up)
 	{
 #if VERBOSE
-		printf("%s: link down\n", fp->fxp_name);
+		printf("%s: link down\n", netdriver_name());
 #endif
 		return;
 	}
@@ -1361,8 +1382,9 @@ static void fxp_report_link(fxp_t *fp)
 
 	if (mii_ctrl & (MII_CTRL_LB|MII_CTRL_PD|MII_CTRL_ISO))
 	{
-		printf("%s: PHY: ", fp->fxp_name);
 		f= 1;
+#if VERBOSE
+		printf("%s: PHY: ", netdriver_name());
 		if (mii_ctrl & MII_CTRL_LB)
 		{
 			printf("loopback mode");
@@ -1381,11 +1403,13 @@ static void fxp_report_link(fxp_t *fp)
 			printf("isolated");
 		}
 		printf("\n");
+#endif
 		return;
 	}
 	if (!(mii_ctrl & MII_CTRL_ANE))
 	{
-		printf("%s: manual config: ", fp->fxp_name);
+#if VERBOSE
+		printf("%s: manual config: ", netdriver_name());
 		switch(mii_ctrl & (MII_CTRL_SP_LSB|MII_CTRL_SP_MSB))
 		{
 		case MII_CTRL_SP_10:	printf("10 Mbps"); break;
@@ -1398,36 +1422,38 @@ static void fxp_report_link(fxp_t *fp)
 		else
 			printf(", half duplex");
 		printf("\n");
+#endif
 		return;
 	}
 
 #if VERBOSE
-	printf("%s: ", fp->fxp_name);
+	printf("%s: ", netdriver_name());
 	mii_print_stat_speed(mii_status, mii_extstat);
 	printf("\n");
 
 	if (!(mii_status & MII_STATUS_ANC))
-		printf("%s: auto-negotiation not complete\n", fp->fxp_name);
+		printf("%s: auto-negotiation not complete\n",
+		    netdriver_name());
 	if (mii_status & MII_STATUS_RF)
-		printf("%s: remote fault detected\n", fp->fxp_name);
+		printf("%s: remote fault detected\n", netdriver_name());
 	if (!(mii_status & MII_STATUS_ANA))
 	{
 		printf("%s: local PHY has no auto-negotiation ability\n",
-			fp->fxp_name);
+			netdriver_name());
 	}
 	if (!(mii_status & MII_STATUS_LS))
-		printf("%s: link down\n", fp->fxp_name);
+		printf("%s: link down\n", netdriver_name());
 	if (mii_status & MII_STATUS_JD)
-		printf("%s: jabber condition detected\n", fp->fxp_name);
+		printf("%s: jabber condition detected\n", netdriver_name());
 	if (!(mii_status & MII_STATUS_EC))
 	{
-		printf("%s: no extended register set\n", fp->fxp_name);
+		printf("%s: no extended register set\n", netdriver_name());
 		goto resspeed;
 	}
 	if (!(mii_status & MII_STATUS_ANC))
 		goto resspeed;
 
-	printf("%s: local cap.: ", fp->fxp_name);
+	printf("%s: local cap.: ", netdriver_name());
 	if (mii_ms_ctrl & (MII_MSC_1000T_FD | MII_MSC_1000T_HD))
 	{
 		printf("1000 Mbps: T-");
@@ -1444,15 +1470,15 @@ static void fxp_report_link(fxp_t *fp)
 	printf("\n");
 
 	if (mii_ane & MII_ANE_PDF)
-		printf("%s: parallel detection fault\n", fp->fxp_name);
+		printf("%s: parallel detection fault\n", netdriver_name());
 	if (!(mii_ane & MII_ANE_LPANA))
 	{
 		printf("%s: link-partner does not support auto-negotiation\n",
-			fp->fxp_name);
+			netdriver_name());
 		goto resspeed;
 	}
 
-	printf("%s: remote cap.: ", fp->fxp_name);
+	printf("%s: remote cap.: ", netdriver_name());
 	if (mii_ms_ctrl & (MII_MSC_1000T_FD | MII_MSC_1000T_HD))
 	if (mii_ms_status & (MII_MSS_LP1000T_FD | MII_MSS_LP1000T_HD))
 	{
@@ -1472,7 +1498,7 @@ static void fxp_report_link(fxp_t *fp)
 
 	if (fp->fxp_ms_regs)
 	{
-		printf("%s: ", fp->fxp_name);
+		printf("%s: ", netdriver_name());
 		if (mii_ms_ctrl & MII_MSC_MS_MANUAL)
 		{
 			printf("manual %s",
@@ -1502,17 +1528,17 @@ static void fxp_report_link(fxp_t *fp)
 		if (!(mii_ms_status & MII_MSS_LOCREC))
 		{
 			printf("%s: local receiver not OK\n",
-				fp->fxp_name);
+				netdriver_name());
 		}
 		if (!(mii_ms_status & MII_MSS_REMREC))
 		{
 			printf("%s: remote receiver not OK\n",
-				fp->fxp_name);
+				netdriver_name());
 		}
 	}
 	if (mii_ms_status & (MII_MSS_RES|MII_MSS_IDLE_ERR))
 	{
-		printf("%s", fp->fxp_name);
+		printf("%s", netdriver_name());
 		if (mii_ms_status & MII_MSS_RES)
 			printf(" reserved<0x%x>", mii_ms_status & MII_MSS_RES);
 		if (mii_ms_status & MII_MSS_IDLE_ERR)
@@ -1527,7 +1553,7 @@ resspeed:
 
 #if VERBOSE
 	printf("%s: link up, %d Mbps, %s duplex\n",
-		fp->fxp_name, (scr & MII_SCR_100) ? 100 : 10,
+		netdriver_name(), (scr & MII_SCR_100) ? 100 : 10,
 		(scr & MII_SCR_FD) ? "full" : "half");
 #endif
 }
@@ -1643,7 +1669,7 @@ static void eeprom_addrsize(fxp_t *fp)
 
 #if VERBOSE
 	printf("%s EEPROM address length: %d\n",
-		fp->fxp_name, fp->fxp_ee_addrlen);
+		netdriver_name(), fp->fxp_ee_addrlen);
 #endif
 }
 

@@ -31,6 +31,7 @@
  *   0x1700 - 0x17FF	PTYFS requests
  *   0x1800 - 0x18FF	Management Information Base (MIB) requests
  *   0x1900 - 0x19FF	Socket device requests and responses
+ *   0x1A00 - 0x1AFF	Network device requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -1075,6 +1076,73 @@
 #  define SDEV_OP_WR		0x02	/* selected for write operation */
 #  define SDEV_OP_ERR		0x04	/* selected for error operation */
 #  define SDEV_NOTIFY		0x08	/* notification requested */
+
+/*===========================================================================*
+ *			Messages for network devices			     *
+ *===========================================================================*/
+
+/* Base type for network device requests and responses. */
+#define NDEV_RQ_BASE		0x1A00		/* ndev -> netdriver */
+#define NDEV_RS_BASE		0x1A80		/* netdriver -> ndev */
+
+#define IS_NDEV_RQ(type)	(((type) & ~0x7f) == NDEV_RQ_BASE)
+#define IS_NDEV_RS(type)	(((type) & ~0x7f) == NDEV_RS_BASE)
+
+/*
+ * Status requests and responses travel in the opposite direction, so we group
+ * them with their sending party, so that the IS_NDEV_R[QS] macros can be used
+ * by either side to see whether the message is indeed for them.
+ */
+#define NDEV_INIT		(NDEV_RQ_BASE + 0)	/* initialize driver */
+#define NDEV_CONF		(NDEV_RQ_BASE + 1)	/* configure driver */
+#define NDEV_SEND		(NDEV_RQ_BASE + 2)	/* send a packet */
+#define NDEV_RECV		(NDEV_RQ_BASE + 3)	/* receive a packet */
+#define NDEV_IOCTL		(NDEV_RQ_BASE + 4)	/* (reserved) */
+#define NDEV_STATUS_REPLY	(NDEV_RQ_BASE + 5)	/* status reply */
+
+#define NDEV_INIT_REPLY		(NDEV_RS_BASE + 0)	/* initialize reply */
+#define NDEV_CONF_REPLY		(NDEV_RS_BASE + 1)	/* configure reply */
+#define NDEV_SEND_REPLY		(NDEV_RS_BASE + 2)	/* send reply */
+#define NDEV_RECV_REPLY		(NDEV_RS_BASE + 3)	/* receive reply */
+#define NDEV_IOCTL_REPLY	(NDEV_RS_BASE + 4)	/* (reserved) */
+#define NDEV_STATUS		(NDEV_RS_BASE + 5)	/* status report */
+
+/* Bits in the 'set' field of configuration requests. */
+#  define NDEV_SET_MODE		0x01	/* set I/O mode and multicast list */
+#  define NDEV_SET_CAPS		0x02	/* enable or disable capabilities */
+#  define NDEV_SET_FLAGS	0x04	/* set driver-specific flags */
+#  define NDEV_SET_MEDIA	0x08	/* set media type */
+#  define NDEV_SET_HWADDR	0x10	/* change the hardware address */
+
+/* Bits in the 'mode' field of configuration requests. */
+#  define NDEV_MODE_DOWN	0x00	/* transmission and receipt disabled */
+#  define NDEV_MODE_UP		0x01	/* receive unicast packets for me */
+#  define NDEV_MODE_BCAST	0x02	/* receive broadcast packets */
+#  define NDEV_MODE_MCAST_LIST	0x04	/* receive certain multicast packets */
+#  define NDEV_MODE_MCAST_ALL	0x08	/* receive all multicast packets */
+#  define NDEV_MODE_PROMISC	0x10	/* receive all packets */
+
+/* Bits in the 'caps' field of initialization and configuration requests. */
+#  define NDEV_CAP_CS_IP4_TX	0x01	/* IPv4 header checksum generation */
+#  define NDEV_CAP_CS_IP4_RX	0x02	/* IPv4 header checksum verification */
+#  define NDEV_CAP_CS_UDP_TX	0x04	/* UDP header checksum generation */
+#  define NDEV_CAP_CS_UDP_RX	0x08	/* UDP header checksum verification */
+#  define NDEV_CAP_CS_TCP_TX	0x10	/* TCP header checksum generation */
+#  define NDEV_CAP_CS_TCP_RX	0x20	/* TCP header checksum verification */
+#  define NDEV_CAP_MCAST	0x20000000	/* init only: mcast capable */
+#  define NDEV_CAP_BCAST	0x40000000	/* init only: bcast capable */
+#  define NDEV_CAP_HWADDR	0x80000000	/* init only: can set hwaddr */
+
+/* Values for the 'flags' field of configuration requests. */
+#  define NDEV_FLAG_DEBUG	0x01	/* enable driver-specific debug mode */
+#  define NDEV_FLAG_LINK0	0x02	/* enable driver-specific LINK0 flag */
+#  define NDEV_FLAG_LINK1	0x04	/* enable driver-specific LINK1 flag */
+#  define NDEV_FLAG_LINK2	0x08	/* enable driver-specific LINK2 flag */
+
+/* Values for the 'link' field of initialization and status replies. */
+#  define NDEV_LINK_UNKNOWN	0	/* link status is unknown, assume up */
+#  define NDEV_LINK_UP		1	/* link is up */
+#  define NDEV_LINK_DOWN	2	/* link is down */
 
 /*===========================================================================*
  *		Internal codes used by several services			     *

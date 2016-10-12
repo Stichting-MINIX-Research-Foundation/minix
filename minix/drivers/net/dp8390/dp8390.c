@@ -16,7 +16,6 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 
-#include <net/hton.h>
 #include <sys/mman.h>
 #include "assert.h"
 
@@ -24,7 +23,6 @@
 #include "dp8390.h"
 
 static dpeth_t de_state;
-static int de_instance;
 
 u32_t system_hz;
 
@@ -63,17 +61,19 @@ static dp_conf_t dp_conf[DP_CONF_NR]=	/* Card addresses */
  */
 #define CR_EXTRA	CR_STA
 
-static int do_init(unsigned int instance, ether_addr_t *addr);
-static void pci_conf(void);
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
+static void pci_conf(unsigned int instance);
 static int do_send(struct netdriver_data *data, size_t size);
 static ssize_t do_recv(struct netdriver_data *data, size_t max);
-static void do_mode(unsigned int mode);
-static void do_stat(eth_stat_t *stat);
+static void do_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
+	unsigned int mcast_count);
 static void do_stop(void);
-static void dp_init(dpeth_t *dep);
-static void dp_confaddr(dpeth_t *dep);
+static void dp_init(dpeth_t *dep, unsigned int instance);
+static void dp_confaddr(dpeth_t *dep, unsigned int instance);
 static void dp_reset(dpeth_t *dep);
 static void do_intr(unsigned int mask);
+static void do_tick(void);
 static void dp_getblock(dpeth_t *dep, int page, size_t offset, size_t
 	size, void *dst);
 static void dp_pio8_getblock(dpeth_t *dep, int page, size_t offset,
@@ -94,20 +94,21 @@ static void dp_pio8_nic2user_s(dpeth_t *dep, struct netdriver_data *data,
 	int nic_addr, size_t offset, size_t count);
 static void dp_pio16_nic2user_s(dpeth_t *dep, struct netdriver_data *data,
 	int nic_addr, size_t offset, size_t count);
-static void conf_hw(dpeth_t *dep);
-static void update_conf(dpeth_t *dep, dp_conf_t *dcp);
+static void conf_hw(dpeth_t *dep, unsigned int instance);
+static void update_conf(dpeth_t *dep, dp_conf_t *dcp, unsigned int instance);
 static void map_hw_buffer(dpeth_t *dep);
 static void insb(port_t port, void *buf, size_t size);
 static void insw(port_t port, void *buf, size_t size);
 
 static const struct netdriver dp_table = {
+	.ndr_name	= "dp",
 	.ndr_init	= do_init,
 	.ndr_stop	= do_stop,
-	.ndr_mode	= do_mode,
+	.ndr_set_mode	= do_set_mode,
 	.ndr_recv	= do_recv,
 	.ndr_send	= do_send,
-	.ndr_stat	= do_stat,
-	.ndr_intr	= do_intr
+	.ndr_intr	= do_intr,
+	.ndr_tick	= do_tick
 };
 
 /*===========================================================================*
@@ -125,30 +126,27 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *				do_init					     *
  *===========================================================================*/
-static int do_init(unsigned int instance, ether_addr_t *addr)
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks)
 {
 /* Initialize the dp8390 driver. */
 	dpeth_t *dep;
 
 	system_hz = sys_hz();
 
-	de_instance = instance;
-
 	dep = &de_state;
 	memset(dep, 0, sizeof(*dep));
 
-	strlcpy(dep->de_name, "dp8390#0", sizeof(dep->de_name));
-	dep->de_name[7] += de_instance;
-
-	pci_conf(); /* Configure PCI devices. */
+	pci_conf(instance); /* Configure PCI devices. */
 
 	/* This is the default, try to (re)locate the device. */
-	conf_hw(dep);
+	conf_hw(dep, instance);
 
-	dp_init(dep);
+	dp_init(dep, instance);
 
-	memcpy(addr, dep->de_address.ea_addr, sizeof(*addr));
-
+	memcpy(addr, dep->de_address.na_addr, sizeof(*addr));
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	*ticks = sys_hz(); /* update statistics once a second */
 	return OK;
 }
 
@@ -164,29 +162,7 @@ void dp8390_dump(void)
 	dep = &de_state;
 
 	printf("\n");
-	printf("dp8390 statistics of instance %d:\n", de_instance);
-
-	printf("recvErr    :%8ld\t", dep->de_stat.ets_recvErr);
-	printf("sendErr    :%8ld\t", dep->de_stat.ets_sendErr);
-	printf("OVW        :%8ld\n", dep->de_stat.ets_OVW);
-
-	printf("CRCerr     :%8ld\t", dep->de_stat.ets_CRCerr);
-	printf("frameAll   :%8ld\t", dep->de_stat.ets_frameAll);
-	printf("missedP    :%8ld\n", dep->de_stat.ets_missedP);
-
-	printf("packetR    :%8ld\t", dep->de_stat.ets_packetR);
-	printf("packetT    :%8ld\t", dep->de_stat.ets_packetT);
-	printf("transDef   :%8ld\n", dep->de_stat.ets_transDef);
-
-	printf("collision  :%8ld\t", dep->de_stat.ets_collision);
-	printf("transAb    :%8ld\t", dep->de_stat.ets_transAb);
-	printf("carrSense  :%8ld\n", dep->de_stat.ets_carrSense);
-
-	printf("fifoUnder  :%8ld\t", dep->de_stat.ets_fifoUnder);
-	printf("fifoOver   :%8ld\t", dep->de_stat.ets_fifoOver);
-	printf("CDheartbeat:%8ld\n", dep->de_stat.ets_CDheartbeat);
-
-	printf("OWC        :%8ld\t", dep->de_stat.ets_OWC);
+	printf("dp8390 statistics of %s:\n", netdriver_name());
 
 	isr= inb_reg0(dep, DP_ISR);
 	printf("dp_isr = 0x%x + 0x%x, de_flags = 0x%x\n", isr,
@@ -195,28 +171,44 @@ void dp8390_dump(void)
 #endif
 
 /*===========================================================================*
+ *				pci_env					     *
+ *===========================================================================*/
+static int pci_env(unsigned int instance)
+{
+	char envvar[16], value[EP_BUF_SIZE];
+	const char punct[] = ":,;.";
+
+	strlcpy(envvar, "DPETH0", sizeof(envvar));
+	envvar[5] += instance;
+
+	/* If no setting with this name is present, default to PCI. */
+	if (env_get_param(envvar, value, sizeof(value)) != 0)
+		return TRUE;
+
+	/* Legacy support: check for a "pci" prefix. */
+	return (strncmp(value, "pci", 3) == 0 &&
+	    strchr(punct, value[3]) != NULL);
+}
+
+/*===========================================================================*
  *				pci_conf				     *
  *===========================================================================*/
-static void pci_conf(void)
+static void pci_conf(unsigned int instance)
 {
-	char envvar[16];
 	struct dpeth *dep;
-	int i, pci_instance;
+	unsigned int i, pci_instance;
 
 	dep= &de_state;
 
-	strlcpy(envvar, "DPETH0", sizeof(envvar));
-	envvar[5] += de_instance;
-	if (!(dep->de_pci= env_prefix(envvar, "pci")))
+	if (!(dep->de_pci= pci_env(instance)))
 		return;	/* no PCI config */
 
 	/* Count the number of dp instances before this one that are configured
 	 * for PCI, so that we can skip that many when enumerating PCI devices.
 	 */
 	pci_instance= 0;
-	for (i= 0; i < de_instance; i++) {
-		envvar[5]= i;
-		if (env_prefix(envvar, "pci"))
+	for (i= 0; i < instance; i++) {
+		if (pci_env(i))
 			pci_instance++;
 	}
 
@@ -261,9 +253,11 @@ static int do_send(struct netdriver_data *data, size_t size)
 }
 
 /*===========================================================================*
- *				do_mode					     *
+ *				do_set_mode				     *
  *===========================================================================*/
-static void do_mode(unsigned int mode)
+static void do_set_mode(unsigned int mode,
+	const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
 	dpeth_t *dep;
 	int dp_rcr_reg;
@@ -273,29 +267,33 @@ static void do_mode(unsigned int mode)
 	outb_reg0(dep, DP_CR, CR_PS_P0 | CR_EXTRA);
 
 	dp_rcr_reg = 0;
-	if (mode & NDEV_PROMISC)
+	if (mode & NDEV_MODE_PROMISC)
 		dp_rcr_reg |= RCR_AB | RCR_PRO | RCR_AM;
-	if (mode & NDEV_BROAD)
+	if (mode & NDEV_MODE_BCAST)
 		dp_rcr_reg |= RCR_AB;
-	if (mode & NDEV_MULTI)
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		dp_rcr_reg |= RCR_AM;
 	outb_reg0(dep, DP_RCR, dp_rcr_reg);
 }
 
 /*===========================================================================*
- *				do_stat					     *
+ *				dp_update_stats				     *
  *===========================================================================*/
-static void do_stat(eth_stat_t *stat)
+static void dp_update_stats(dpeth_t * dep)
 {
-	dpeth_t *dep;
 
-	dep= &de_state;
+	netdriver_stat_ierror(inb_reg0(dep, DP_CNTR0));
+	netdriver_stat_ierror(inb_reg0(dep, DP_CNTR1));
+	netdriver_stat_ierror(inb_reg0(dep, DP_CNTR2));
+}
 
-	dep->de_stat.ets_CRCerr += inb_reg0(dep, DP_CNTR0);
-	dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
-	dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
+/*===========================================================================*
+ *				do_tick					     *
+ *===========================================================================*/
+static void do_tick(void)
+{
 
-	memcpy(stat, &dep->de_stat, sizeof(*stat));
+	dp_update_stats(&de_state);
 }
 
 /*===========================================================================*
@@ -314,7 +312,7 @@ static void do_stop(void)
 /*===========================================================================*
  *				dp_init					     *
  *===========================================================================*/
-static void dp_init(dpeth_t *dep)
+static void dp_init(dpeth_t *dep, unsigned int instance)
 {
 	int i, r;
 
@@ -322,13 +320,13 @@ static void dp_init(dpeth_t *dep)
 	dep->de_flags = DEF_EMPTY;
 	(*dep->de_initf)(dep);
 
-	dp_confaddr(dep);
+	dp_confaddr(dep, instance);
 
 	if (debug)
 	{
-		printf("%s: Ethernet address ", dep->de_name);
+		printf("%s: Ethernet address ", netdriver_name());
 		for (i= 0; i < 6; i++)
-			printf("%x%c", dep->de_address.ea_addr[i],
+			printf("%x%c", dep->de_address.na_addr[i],
 							i < 5 ? ':' : '\n');
 	}
 
@@ -365,12 +363,12 @@ static void dp_init(dpeth_t *dep)
 	/* Step 9: */
 	outb_reg0(dep, DP_CR, CR_PS_P1 | CR_DM_ABORT | CR_STP);
 
-	outb_reg1(dep, DP_PAR0, dep->de_address.ea_addr[0]);
-	outb_reg1(dep, DP_PAR1, dep->de_address.ea_addr[1]);
-	outb_reg1(dep, DP_PAR2, dep->de_address.ea_addr[2]);
-	outb_reg1(dep, DP_PAR3, dep->de_address.ea_addr[3]);
-	outb_reg1(dep, DP_PAR4, dep->de_address.ea_addr[4]);
-	outb_reg1(dep, DP_PAR5, dep->de_address.ea_addr[5]);
+	outb_reg1(dep, DP_PAR0, dep->de_address.na_addr[0]);
+	outb_reg1(dep, DP_PAR1, dep->de_address.na_addr[1]);
+	outb_reg1(dep, DP_PAR2, dep->de_address.na_addr[2]);
+	outb_reg1(dep, DP_PAR3, dep->de_address.na_addr[3]);
+	outb_reg1(dep, DP_PAR4, dep->de_address.na_addr[4]);
+	outb_reg1(dep, DP_PAR5, dep->de_address.na_addr[5]);
 
 	outb_reg1(dep, DP_MAR0, 0xff);
 	outb_reg1(dep, DP_MAR1, 0xff);
@@ -431,7 +429,7 @@ static void dp_init(dpeth_t *dep)
 /*===========================================================================*
  *				dp_confaddr				     *
  *===========================================================================*/
-static void dp_confaddr(dpeth_t *dep)
+static void dp_confaddr(dpeth_t *dep, unsigned int instance)
 {
 	int i;
 	char eakey[16];
@@ -440,16 +438,16 @@ static void dp_confaddr(dpeth_t *dep)
 
 	/* User defined ethernet address? */
 	strlcpy(eakey, "DPETH0_EA", sizeof(eakey));
-	eakey[5] += de_instance;
+	eakey[5] += instance;
 
 	for (i= 0; i < 6; i++)
 	{
-		v= dep->de_address.ea_addr[i];
+		v= dep->de_address.na_addr[i];
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 		{
 			break;
 		}
-		dep->de_address.ea_addr[i]= v;
+		dep->de_address.na_addr[i]= v;
 	}
 
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
@@ -510,15 +508,18 @@ static void do_intr(unsigned int __unused mask)
 			if (isr & ISR_TXE)
 			{
 #if DEBUG
- { printf("%s: got send Error\n", dep->de_name); }
+				printf("%s: got send error\n",
+				    netdriver_name());
 #endif
-				dep->de_stat.ets_sendErr++;
+				netdriver_stat_oerror(1);
 			}
 			else
 			{
 				tsr = inb_reg0(dep, DP_TSR);
 
-				if (tsr & TSR_PTX) dep->de_stat.ets_packetT++;
+				if (tsr & TSR_PTX) {
+					/* Transmission was successful. */
+				}
 #if 0	/* Reserved in later manuals, should be ignored */
 				if (!(tsr & TSR_DFR))
 				{
@@ -526,25 +527,9 @@ static void do_intr(unsigned int __unused mask)
 					 * the dp8390, this bit is set
 					 * when the packet is not deferred
 					 */
-					dep->de_stat.ets_transDef++;
 				}
 #endif
-				if (tsr & TSR_COL) dep->de_stat.ets_collision++;
-				if (tsr & TSR_ABT) dep->de_stat.ets_transAb++;
-				if (tsr & TSR_CRS) dep->de_stat.ets_carrSense++;
-				if (tsr & TSR_FU
-					&& ++dep->de_stat.ets_fifoUnder <= 10)
-				{
-					printf("%s: fifo underrun\n",
-						dep->de_name);
-				}
-				if (tsr & TSR_CDH
-					&& ++dep->de_stat.ets_CDheartbeat <= 10)
-				{
-					printf("%s: CD heart beat failure\n",
-						dep->de_name);
-				}
-				if (tsr & TSR_OWC) dep->de_stat.ets_OWC++;
+				if (tsr & TSR_COL) netdriver_stat_coll(1);
 			}
 			sendq_tail= dep->de_sendq_tail;
 
@@ -556,7 +541,7 @@ static void do_intr(unsigned int __unused mask)
 				/* Or hardware bug? */
 				printf(
 				"%s: transmit interrupt, but not sending\n",
-					dep->de_name);
+					netdriver_name());
 				continue;
 			}
 			dep->de_sendq[sendq_tail].sq_filled= 0;
@@ -578,21 +563,10 @@ static void do_intr(unsigned int __unused mask)
 		if (isr & ISR_PRX)
 			netdriver_recv();
 
-		if (isr & ISR_RXE) dep->de_stat.ets_recvErr++;
+		if (isr & ISR_RXE)
+			netdriver_stat_ierror(1);
 		if (isr & ISR_CNT)
-		{
-			dep->de_stat.ets_CRCerr += inb_reg0(dep, DP_CNTR0);
-			dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
-			dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
-		}
-		if (isr & ISR_OVW)
-		{
-			dep->de_stat.ets_OVW++;
-#if 0
-			{ printW(); printf(
-				"%s: got overwrite warning\n", dep->de_name); }
-#endif
-		}
+			dp_update_stats(dep);
 		if (isr & ISR_RDC)
 		{
 			/* Nothing to do */
@@ -606,7 +580,7 @@ static void do_intr(unsigned int __unused mask)
 			 */
 #if 0
 			 { printW(); printf(
-				"%s: NIC stopped\n", dep->de_name); }
+				"%s: NIC stopped\n", netdriver_name()); }
 #endif
 			dep->de_flags |= DEF_STOPPED;
 			netdriver_recv(); /* see if we can reset right now */
@@ -656,20 +630,21 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
 		(dep->de_getblockf)(dep, pageno, (size_t)0, sizeof(header),
 			&header);
 		(dep->de_getblockf)(dep, pageno, sizeof(header) +
-			2*sizeof(ether_addr_t), sizeof(eth_type), &eth_type);
+			2*sizeof(netdriver_addr_t), sizeof(eth_type),
+			&eth_type);
 
 		length = (header.dr_rbcl | (header.dr_rbch << 8)) -
 			sizeof(dp_rcvhdr_t);
 		next = header.dr_next;
-		if (length < ETH_MIN_PACK_SIZE || length > max)
+		if (length < NDEV_ETH_PACKET_MIN || length > max)
 		{
 			printf("%s: packet with strange length arrived: %d\n",
-				dep->de_name, (int) length);
+				netdriver_name(), (int) length);
 			next= curr;
 		}
 		else if (next < dep->de_startpage || next >= dep->de_stoppage)
 		{
-			printf("%s: strange next page\n", dep->de_name);
+			printf("%s: strange next page\n", netdriver_name());
 			next= curr;
 		}
 		else if (header.dr_status & RSR_FO)
@@ -677,8 +652,8 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
 			/* This is very serious, so we issue a warning and
 			 * reset the buffers */
 			printf("%s: fifo overrun, resetting receive buffer\n",
-				dep->de_name);
-			dep->de_stat.ets_fifoOver++;
+				netdriver_name());
+			netdriver_stat_ierror(1);
 			next = curr;
 		}
 		else if (header.dr_status & RSR_PRX)
@@ -686,7 +661,6 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
 			dp_pkt2user_s(dep, data, pageno, length);
 
 			packet_processed = TRUE;
-			dep->de_stat.ets_packetR++;
 		}
 		if (next == dep->de_startpage)
 			outb_reg0(dep, DP_BNRY, dep->de_stoppage - 1);
@@ -749,7 +723,7 @@ static void dp_pio16_getblock(dpeth_t *dep, int page, size_t offset,
 static void dp_pkt2user_s(dpeth_t *dep, struct netdriver_data *data, int page,
 	size_t length)
 {
-	int last, count;
+	unsigned int last, count;
 
 	last = page + (length - 1) / DP_PAGESIZE;
 	if (last >= dep->de_stoppage)
@@ -884,16 +858,16 @@ static void dp_pio16_nic2user_s(dpeth_t *dep, struct netdriver_data *data,
 /*===========================================================================*
  *				conf_hw					     *
  *===========================================================================*/
-static void conf_hw(dpeth_t *dep)
+static void conf_hw(dpeth_t *dep, unsigned int instance)
 {
 	int confnr;
 	dp_conf_t *dcp;
 
 	/* Pick a default configuration for this instance. */
-	confnr= MIN(de_instance, DP_CONF_NR-1);
+	confnr= MIN(instance, DP_CONF_NR-1);
 
 	dcp= &dp_conf[confnr];
-	update_conf(dep, dcp);
+	update_conf(dep, dcp, instance);
 	if (!wdeth_probe(dep) && !ne_probe(dep) && !el2_probe(dep))
 		panic("no ethernet card found at 0x%x\n", dep->de_base_port);
 
@@ -903,7 +877,7 @@ static void conf_hw(dpeth_t *dep)
 /*===========================================================================*
  *				update_conf				     *
  *===========================================================================*/
-static void update_conf(dpeth_t *dep, dp_conf_t *dcp)
+static void update_conf(dpeth_t *dep, dp_conf_t *dcp, unsigned int instance)
 {
 	long v;
 	static char dpc_fmt[] = "x:d:x:x";
@@ -916,7 +890,7 @@ static void update_conf(dpeth_t *dep, dp_conf_t *dcp)
 	}
 
 	strlcpy(eckey, "DPETH0", sizeof(eckey));
-	eckey[5] += de_instance;
+	eckey[5] += instance;
 
 	/* Get the default settings and modify them from the environment. */
 	v= dcp->dpc_port;

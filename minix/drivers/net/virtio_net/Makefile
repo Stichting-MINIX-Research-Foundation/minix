@@ -9,4 +9,6 @@ FILESDIR= /etc/system.conf.d
 DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBVIRTIO}
 LDADD+=	-lnetdriver -lsys -lvirtio
 
+WARNS?= 5
+
 .include <minix.service.mk>
