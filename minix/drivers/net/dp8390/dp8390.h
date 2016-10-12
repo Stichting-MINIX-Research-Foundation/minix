@@ -208,21 +208,20 @@ typedef struct dpeth
 	dp_initf_t de_initf; 
 	dp_stopf_t de_stopf; 
 	int de_prog_IO;
-	char de_name[sizeof("dp8390#n")];
 
 	/* The initf function fills the following fields. Only cards that do
 	 * programmed I/O fill in the de_pata_port field.
 	 * In addition, the init routine has to fill in the sendq data
 	 * structures.
 	 */
-	ether_addr_t de_address;
+	netdriver_addr_t de_address;
 	port_t de_dp8390_port;
 	port_t de_data_port;
 	int de_16bit;
-	int de_ramsize;
-	int de_offset_page;
-	int de_startpage;
-	int de_stoppage;
+	unsigned int de_ramsize;
+	unsigned int de_offset_page;
+	unsigned int de_startpage;
+	unsigned int de_stoppage;
 
 	/* PCI config */
 	char de_pci;			/* TRUE iff PCI device */
@@ -240,7 +239,6 @@ typedef struct dpeth
 
 	/* Fields for internal use by the dp8390 driver. */
 	int de_flags;
-	eth_stat_t de_stat;
 	dp_user2nicf_s_t de_user2nicf_s; 
 	dp_nic2userf_s_t de_nic2userf_s; 
 	dp_getblock_t de_getblockf; 

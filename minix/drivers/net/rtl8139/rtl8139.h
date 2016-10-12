@@ -470,8 +470,6 @@ typedef struct re
 	u32_t re_ertxth;	/* Early Tx Threshold */
 
 	int re_hook_id;			/* IRQ hook id at kernel */
-	eth_stat_t re_stat;
-	char re_name[sizeof("rtl8139#n")];
 } re_t;
 
 /*

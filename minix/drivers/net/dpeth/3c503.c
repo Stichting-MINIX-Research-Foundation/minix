@@ -11,8 +11,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (ENABLE_3C503 == 1)
@@ -26,8 +24,8 @@
 */
 static void el2_init(dpeth_t * dep)
 {
-  int ix, irq;
-  int sendq_nr;
+  unsigned int ix, irq;
+  unsigned int sendq_nr;
   int cntr;
 
   /* Map the address PROM to lower I/O address range */
@@ -36,7 +34,7 @@ static void el2_init(dpeth_t * dep)
 
   /* Read station address from PROM */
   for (ix = EL2_EA0; ix <= EL2_EA5; ix += 1)
-	dep->de_address.ea_addr[ix] = inb_el2(dep, ix);
+	dep->de_address.na_addr[ix] = inb_el2(dep, ix);
 
   /* Map the 8390 back to lower I/O address range */
   outb_el2(dep, EL2_CNTR, cntr);
@@ -92,11 +90,11 @@ static void el2_init(dpeth_t * dep)
   ns_init(dep);			/* Initialize DP controller */
 
   printf("%s: Etherlink II%s (%s) at %X:%d:%05lX - ",
-	 dep->de_name, dep->de_16bit ? "/16" : "", "3c503",
+	 netdriver_name(), dep->de_16bit ? "/16" : "", "3c503",
 	 dep->de_base_port, dep->de_irq,
          dep->de_linmem + dep->de_offset_page);
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)
-	printf("%02X%c", dep->de_address.ea_addr[ix],
+	printf("%02X%c", dep->de_address.na_addr[ix],
 	       ix < SA_ADDR_LEN - 1 ? ':' : '\n');
 }
 

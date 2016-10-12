@@ -1,18 +1,8 @@
 
-/* macros for 'flags' */
-#define ECF_PROMISC     0x01
-#define ECF_MULTI       0x02
-#define ECF_BROAD       0x04
-
 /* ====== ethernet card info. ====== */
 typedef struct ether_card
 {
-  /* ####### MINIX style ####### */
-  char port_name[sizeof("lance#n")];
-  int flags;
-  eth_stat_t eth_stat;
-
-  /* ######## device info. ####### */
+  unsigned int ec_mode;
   port_t ec_port;
   int ec_irq;
   int ec_hook;

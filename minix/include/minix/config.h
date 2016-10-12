@@ -98,4 +98,9 @@
 #define NR_PCIBUS 40
 #define NR_PCIDEV 50
 
+/* Network device driver protocol parameters. */
+#define NDEV_NAME_MAX	16	/* max network driver name length (incl nul) */
+#define NDEV_HWADDR_MAX	6	/* max network hardware address length */
+#define NDEV_IOV_MAX	8	/* max number of elements in I/O vector */
+
 #endif /* _CONFIG_H */

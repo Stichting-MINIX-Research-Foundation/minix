@@ -429,7 +429,7 @@ struct tx
 	u16_t tx_size;
 	u8_t tx_tthresh;
 	u8_t tx_ntbd;
-	u8_t tx_buf[ETH_MAX_PACK_SIZE_TAGGED];
+	u8_t tx_buf[NDEV_ETH_PACKET_MAX_TAGGED];
 };
 
 #define TXS_C		0x8000	/* Transmit DMA has completed */
@@ -506,7 +506,7 @@ struct rfd
 	u32_t rfd_reserved;
 	u16_t rfd_res;
 	u16_t rfd_size;
-	u8_t rfd_buf[ETH_MAX_PACK_SIZE_TAGGED];
+	u8_t rfd_buf[NDEV_ETH_PACKET_MAX_TAGGED];
 };
 
 #define RFDS_C		0x8000	/* Frame Reception Completed */

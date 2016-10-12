@@ -14,7 +14,6 @@
 #include "atl2.h"
 
 #define VERBOSE		0	/* Verbose debugging output */
-#define ATL2_FKEY	11	/* Use Shift+Fn to dump statistics (0=off) */
 
 #if VERBOSE
 #define ATL2_DEBUG(x) printf x
@@ -54,8 +53,6 @@ static struct {
 	int rxd_tail;		/* tail index into RxD, in elements */
 
 	int rx_avail;		/* is there a packet available for receipt? */
-
-	eth_stat_t stat;	/* statistics */
 } state;
 
 #define ATL2_READ_U8(off) (*(volatile uint8_t *)(state.base + (off)))
@@ -70,24 +67,23 @@ static struct {
 
 #define ATL2_ALIGN_32(n) (((n) + 3) & ~3)
 
-static int atl2_init(unsigned int instance, ether_addr_t *addr);
+static int atl2_init(unsigned int, netdriver_addr_t *, uint32_t *,
+	unsigned int *);
 static void atl2_stop(void);
-static void atl2_mode(unsigned int mode);
-static int atl2_send(struct netdriver_data *data, size_t size);
-static ssize_t atl2_recv(struct netdriver_data *data, size_t max);
-static void atl2_stat(eth_stat_t *stat);
+static void atl2_set_mode(unsigned int, const netdriver_addr_t *,
+	unsigned int);
+static int atl2_send(struct netdriver_data *, size_t);
+static ssize_t atl2_recv(struct netdriver_data *, size_t);
 static void atl2_intr(unsigned int mask);
-static void atl2_other(const message *m_ptr, int ipc_status);
 
 static const struct netdriver atl2_table = {
+	.ndr_name	= "lii",
 	.ndr_init	= atl2_init,
 	.ndr_stop	= atl2_stop,
-	.ndr_mode	= atl2_mode,
+	.ndr_set_mode	= atl2_set_mode,
 	.ndr_recv	= atl2_recv,
 	.ndr_send	= atl2_send,
-	.ndr_stat	= atl2_stat,
 	.ndr_intr	= atl2_intr,
-	.ndr_other	= atl2_other
 };
 
 /*
@@ -115,7 +111,8 @@ atl2_read_vpd(int index, uint32_t * res)
 	}
 
 	if (i == ATL2_VPD_NTRIES) {
-		printf("ATL2: timeout reading EEPROM register %d\n", index);
+		printf("%s: timeout reading EEPROM register %d\n",
+		    netdriver_name(), index);
 		return FALSE;
 	}
 
@@ -181,27 +178,28 @@ atl2_get_vpd_hwaddr(void)
  * use whatever the card was already set to.
  */
 static void
-atl2_get_hwaddr(ether_addr_t * addr)
+atl2_get_hwaddr(netdriver_addr_t * addr)
 {
 
 	if (!atl2_get_vpd_hwaddr()) {
-		printf("ATL2: unable to read from VPD\n");
+		printf("%s: unable to read from VPD\n", netdriver_name());
 
 		state.hwaddr[0] = ATL2_READ_U32(ATL2_HWADDR0_REG);
 		state.hwaddr[1] = ATL2_READ_U32(ATL2_HWADDR1_REG) & 0xffff;
 	}
 
-	ATL2_DEBUG(("ATL2: MAC address %04x%08x\n",
-	    state.hwaddr[1], state.hwaddr[0]));
+	ATL2_DEBUG(("%s: MAC address %04x%08x\n",
+	    netdriver_name(), state.hwaddr[1], state.hwaddr[0]));
 
-	addr->ea_addr[0] = state.hwaddr[1] >> 8;
-	addr->ea_addr[1] = state.hwaddr[1] & 0xff;
-	addr->ea_addr[2] = state.hwaddr[0] >> 24;
-	addr->ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
-	addr->ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
-	addr->ea_addr[5] = state.hwaddr[0] & 0xff;
+	addr->na_addr[0] = state.hwaddr[1] >> 8;
+	addr->na_addr[1] = state.hwaddr[1] & 0xff;
+	addr->na_addr[2] = state.hwaddr[0] >> 24;
+	addr->na_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
+	addr->na_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
+	addr->na_addr[5] = state.hwaddr[0] & 0xff;
 }
 
+#if 0 /* TODO: link status */
 /*
  * Read a MII PHY register using MDIO.
  */
@@ -231,6 +229,7 @@ atl2_read_mdio(int addr, uint16_t * res)
 	*res = (uint16_t)(rval & ATL2_MDIO_DATA_MASK);
 	return TRUE;
 }
+#endif
 
 /*
  * Allocate DMA ring buffers.
@@ -340,18 +339,19 @@ atl2_reset(void)
  * settings.
  */
 static void
-atl2_mode(unsigned int mode)
+atl2_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
 	uint32_t val;
 
 	val = ATL2_READ_U32(ATL2_MAC_REG);
 	val &= ~(ATL2_MAC_PROMISC_EN | ATL2_MAC_MCAST_EN | ATL2_MAC_BCAST_EN);
 
-	if (mode & NDEV_PROMISC)
+	if (mode & NDEV_MODE_PROMISC)
 		val |= ATL2_MAC_PROMISC_EN;
-	if (mode & NDEV_MULTI)
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		val |= ATL2_MAC_MCAST_EN;
-	if (mode & NDEV_BROAD)
+	if (mode & NDEV_MODE_BCAST)
 		val |= ATL2_MAC_BCAST_EN;
 
 	ATL2_WRITE_U32(ATL2_MAC_REG, val);
@@ -428,7 +428,7 @@ atl2_setup(void)
 	/* Did everything go alright? */
 	val = ATL2_READ_U32(ATL2_ISR_REG);
 	if (val & ATL2_ISR_PHY_LINKDOWN) {
-		printf("ATL2: initialization failed\n");
+		printf("%s: initialization failed\n", netdriver_name());
 		return FALSE;
 	}
 
@@ -442,14 +442,9 @@ atl2_setup(void)
 	/* Configure MAC. */
 	ATL2_WRITE_U32(ATL2_MAC_REG, ATL2_MAC_DEFAULT);
 
-	/*
-	 * Inet does not tell us about the multicast addresses that it is
-	 * interested in, so we have to simply accept all multicast packets.
-	 */
+	/* TODO: multicast lists. */
 	ATL2_WRITE_U32(ATL2_MHT0_REG, 0xffffffff);
 	ATL2_WRITE_U32(ATL2_MHT1_REG, 0xffffffff);
-
-	atl2_mode(NDEV_NOMODE);
 
 	/* Enable Tx/Rx. */
 	val = ATL2_READ_U32(ATL2_MAC_REG);
@@ -466,7 +461,7 @@ atl2_probe(int skip)
 {
 	uint16_t vid, did;
 #if VERBOSE
-	char *dname;
+	const char *dname;
 #endif
 	int r, devind;
 
@@ -484,7 +479,7 @@ atl2_probe(int skip)
 
 #if VERBOSE
 	dname = pci_dev_name(vid, did);
-	ATL2_DEBUG(("ATL2: found %s (%x/%x) at %s\n",
+	ATL2_DEBUG(("%s: found %s (%x/%x) at %s\n", netdriver_name(),
 	    dname ? dname : "<unknown>", vid, did, pci_slot_name(devind)));
 #endif
 
@@ -497,7 +492,7 @@ atl2_probe(int skip)
  * Initialize the device.
  */
 static void
-atl2_init_hw(int devind, ether_addr_t * addr)
+atl2_init_hw(int devind, netdriver_addr_t * addr)
 {
 	uint32_t bar;
 	int r, flag;
@@ -543,22 +538,12 @@ atl2_tx_stat(uint32_t stat)
 {
 
 	if (stat & ATL2_TXS_SUCCESS)
-		state.stat.ets_packetT++;
-	else
-		state.stat.ets_recvErr++;
+		return;
 
-	if (stat & ATL2_TXS_DEFER)
-		state.stat.ets_transDef++;
-	if (stat & (ATL2_TXS_EXCDEFER | ATL2_TXS_ABORTCOL))
-		state.stat.ets_transAb++;
-	if (stat & ATL2_TXS_SINGLECOL)
-		state.stat.ets_collision++;
-	if (stat & ATL2_TXS_MULTICOL)
-		state.stat.ets_collision++;
-	if (stat & ATL2_TXS_LATECOL)
-		state.stat.ets_OWC++;
-	if (stat & ATL2_TXS_UNDERRUN)
-		state.stat.ets_fifoUnder++;
+	if (stat & (ATL2_TXS_SINGLECOL | ATL2_TXS_MULTICOL | ATL2_TXS_LATECOL))
+		netdriver_stat_coll(1);
+	else
+		netdriver_stat_oerror(1);
 }
 
 /*
@@ -568,19 +553,8 @@ static void
 atl2_rx_stat(uint32_t stat)
 {
 
-	if (stat & ATL2_RXD_SUCCESS)
-		state.stat.ets_packetR++;
-	else
-		state.stat.ets_recvErr++;
-
-	if (stat & ATL2_RXD_CRCERR)
-		state.stat.ets_CRCerr++;
-	if (stat & ATL2_RXD_FRAG)
-		state.stat.ets_collision++;
-	if (stat & ATL2_RXD_TRUNC)
-		state.stat.ets_fifoOver++;
-	if (stat & ATL2_RXD_ALIGN)
-		state.stat.ets_frameAll++;
+	if (!(stat & ATL2_RXD_SUCCESS))
+		netdriver_stat_ierror(1);
 }
 
 /*
@@ -612,8 +586,8 @@ atl2_tx_advance(void)
 		dsize =
 		    *(volatile uint32_t *)(state.txd_base + state.txd_tail);
 		if (size != dsize)
-			printf("ATL2: TxD/TxS size mismatch (%x vs %x)\n",
-			    size, dsize);
+			printf("%s: TxD/TxS size mismatch (%x vs %x)\n",
+			    netdriver_name(), size, dsize);
 
 		/* Advance tails accordingly. */
 		size = sizeof(uint32_t) + ATL2_ALIGN_32(dsize);
@@ -625,9 +599,11 @@ atl2_tx_advance(void)
 		state.txs_num--;
 
 		if (stat & ATL2_TXS_SUCCESS)
-			ATL2_DEBUG(("ATL2: successfully sent packet\n"));
+			ATL2_DEBUG(("%s: successfully sent packet\n",
+			    netdriver_name()));
 		else
-			ATL2_DEBUG(("ATL2: failed to send packet\n"));
+			ATL2_DEBUG(("%s: failed to send packet\n",
+			    netdriver_name()));
 
 		/* Update statistics. */
 		atl2_tx_stat(stat);
@@ -657,7 +633,8 @@ atl2_rx_advance(int next)
 		state.rxd_tail = (state.rxd_tail + 1) % ATL2_RXD_COUNT;
 		update_tail = TRUE;
 
-		ATL2_DEBUG(("ATL2: successfully received packet\n"));
+		ATL2_DEBUG(("%s: successfully received packet\n",
+		    netdriver_name()));
 
 		state.rx_avail = FALSE;
 	}
@@ -685,15 +662,15 @@ atl2_rx_advance(int next)
 		size = hdr & ATL2_RXD_SIZE_MASK;
 
 		if ((hdr & ATL2_RXD_SUCCESS) &&
-		    size >= ETH_MIN_PACK_SIZE + ETH_CRC_SIZE) {
-			ATL2_DEBUG(("ATL2: packet available, size %zu\n",
-			    size));
+		    size >= NDEV_ETH_PACKET_MIN + NDEV_ETH_PACKET_CRC) {
+			ATL2_DEBUG(("%s: packet available, size %zu\n",
+			    netdriver_name(), size));
 
 			state.rx_avail = TRUE;
 			break;
 		}
 
-		ATL2_DEBUG(("ATL2: packet receipt failed\n"));
+		ATL2_DEBUG(("%s: packet receipt failed\n", netdriver_name()));
 
 		/* Advance tail. */
 		state.rxd_tail = (state.rxd_tail + 1) % ATL2_RXD_COUNT;
@@ -725,9 +702,10 @@ atl2_recv(struct netdriver_data * data, size_t max)
 	rxd = &state.rxd_base[state.rxd_tail];
 
 	size = rxd->hdr & ATL2_RXD_SIZE_MASK;
-	size -= ETH_CRC_SIZE;
+	size -= NDEV_ETH_PACKET_CRC;
 
-	ATL2_DEBUG(("ATL2: receiving packet with length %zu\n", size));
+	ATL2_DEBUG(("%s: receiving packet with length %zu\n",
+	    netdriver_name(), size));
 
 	/* Truncate large packets. */
 	if (size > max)
@@ -810,7 +788,7 @@ atl2_intr(unsigned int __unused mask)
 
 	ATL2_WRITE_U32(ATL2_ISR_REG, val | ATL2_ISR_DISABLE);
 
-	ATL2_DEBUG(("ATL2: interrupt (0x%08x)\n", val));
+	ATL2_DEBUG(("%s: interrupt (0x%08x)\n", netdriver_name(), val));
 
 	/* If an error occurred, reset the card. */
 	if (val & (ATL2_ISR_DMAR_TIMEOUT | ATL2_ISR_DMAW_TIMEOUT |
@@ -847,16 +825,7 @@ atl2_intr(unsigned int __unused mask)
 		netdriver_recv();
 }
 
-/*
- * Copy out statistics.
- */
-static void
-atl2_stat(eth_stat_t * stat)
-{
-
-	memcpy(stat, &state.stat, sizeof(*stat));
-}
-
+#if 0 /* TODO: link status (using part of this code) */
 /*
  * Dump link status.
  */
@@ -892,76 +861,16 @@ atl2_dump_link(void)
 
 	printf("%s duplex)", (val & ATL2_MII_PSSR_DUPLEX) ? "full" : "half");
 }
-
-/*
- * Dump statistics.
- */
-static void
-atl2_dump(void)
-{
-
-	printf("\n");
-	printf("Attansic L2 statistics:\n");
-
-	printf("recvErr:     %8ld\t", state.stat.ets_recvErr);
-	printf("sendErr:     %8ld\t", state.stat.ets_sendErr);
-	printf("OVW:         %8ld\n", state.stat.ets_OVW);
-
-	printf("CRCerr:      %8ld\t", state.stat.ets_CRCerr);
-	printf("frameAll:    %8ld\t", state.stat.ets_frameAll);
-	printf("missedP:     %8ld\n", state.stat.ets_missedP);
-
-	printf("packetR:     %8ld\t", state.stat.ets_packetR);
-	printf("packetT:     %8ld\t", state.stat.ets_packetT);
-	printf("transDef:    %8ld\n", state.stat.ets_transDef);
-
-	printf("collision:   %8ld\t", state.stat.ets_collision);
-	printf("transAb:     %8ld\t", state.stat.ets_transAb);
-	printf("carrSense:   %8ld\n", state.stat.ets_carrSense);
-
-	printf("fifoUnder:   %8ld\t", state.stat.ets_fifoUnder);
-	printf("fifoOver:    %8ld\t", state.stat.ets_fifoOver);
-	printf("CDheartbeat: %8ld\n", state.stat.ets_CDheartbeat);
-
-	printf("OWC:         %8ld\t", state.stat.ets_OWC);
-	printf("TxD tail:    %8d\t", state.txd_tail);
-	printf("TxD count:   %8d\n", state.txd_num);
-
-	printf("RxD tail:    %8d\t", state.rxd_tail);
-	printf("TxS tail:    %8d\t", state.txs_tail);
-	printf("TxS count:   %8d\n", state.txs_num);
-
-	atl2_dump_link();
-	printf("\n");
-}
-
-/*
- * Process miscellaneous messages.
- */
-static void
-atl2_other(const message * m_ptr, int ipc_status)
-{
-#if ATL2_FKEY
-	int sfkeys;
-
-	if (!is_ipc_notify(ipc_status) || m_ptr->m_source != TTY_PROC_NR)
-		return;
-
-	if (fkey_events(NULL, &sfkeys) == OK && bit_isset(sfkeys, ATL2_FKEY))
-		atl2_dump();
 #endif
-}
 
 /*
  * Initialize the atl2 driver.
  */
 static int
-atl2_init(unsigned int instance, ether_addr_t * addr)
+atl2_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+	unsigned int * ticks __unused)
 {
 	int devind;
-#if ATL2_FKEY
-	int r, fkeys, sfkeys;
-#endif
 
 	memset(&state, 0, sizeof(state));
 
@@ -974,15 +883,7 @@ atl2_init(unsigned int instance, ether_addr_t * addr)
 	/* Initialize the device. */
 	atl2_init_hw(devind, addr);
 
-#if ATL2_FKEY
-	/* Register debug dump function key. */
-	fkeys = sfkeys = 0;
-	bit_set(sfkeys, ATL2_FKEY);
-	if ((r = fkey_map(&fkeys, &sfkeys)) != OK)
-		printf("ATL2: warning, could not map Shift+F%u key (%d)\n",
-		    r, ATL2_FKEY);
-#endif
-
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
 	return OK;
 }
 

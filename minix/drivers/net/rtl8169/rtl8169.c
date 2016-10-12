@@ -90,17 +90,13 @@ typedef struct re {
 	int re_tx_busy;		/* how many Tx descriptors are busy? */
 
 	int re_hook_id;		/* IRQ hook id at kernel */
-	eth_stat_t re_stat;
 	phys_bytes dtcc_buf;	/* Dump Tally Counter buffer physical */
 	re_dtcc *v_dtcc_buf;	/* Dump Tally Counter buffer */
 	u32_t dtcc_counter;	/* DTCC update counter */
-	char re_name[sizeof("rtl8169#n")];
 	u32_t interrupts;
 } re_t;
 
 static re_t re_state;
-
-static int re_instance;
 
 static unsigned my_inb(u16_t port)
 {
@@ -155,37 +151,44 @@ static void my_outl(u16_t port, u32_t value)
 #define rl_outw(port, offset, value)	(my_outw((port) + (offset), (value)))
 #define rl_outl(port, offset, value)	(my_outl((port) + (offset), (value)))
 
-static int rl_init(unsigned int instance, ether_addr_t *addr);
+static int rl_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
 static int rl_probe(re_t *rep, unsigned int skip);
 static void rl_init_buf(re_t *rep);
-static void rl_init_hw(re_t *rep, ether_addr_t *addr);
+static void rl_init_hw(re_t *rep, netdriver_addr_t *addr,
+	unsigned int instance);
 static void rl_reset_hw(re_t *rep);
-static void rl_confaddr(re_t *rep, ether_addr_t *addr);
+static void rl_confaddr(re_t *rep, netdriver_addr_t *addr,
+	unsigned int instance);
+static void rl_set_hwaddr(const netdriver_addr_t *addr);
 static void rl_stop(void);
 static void rl_rec_mode(re_t *rep);
-static void rl_mode(unsigned int mode);
+static void rl_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
+	unsigned int mcast_count);
 static ssize_t rl_recv(struct netdriver_data *data, size_t max);
 static int rl_send(struct netdriver_data *data, size_t size);
+static unsigned int rl_get_link(uint32_t *media);
 static void rl_intr(unsigned int mask);
 static void rl_check_ints(re_t *rep);
 static void rl_do_reset(re_t *rep);
-static void rl_stat(eth_stat_t *stat);
 #if VERBOSE
 static void rl_report_link(re_t *rep);
 static void dump_phy(const re_t *rep);
 #endif
 static void rl_handler(re_t *rep);
-static void rl_alarm(clock_t stamp);
+static void rl_tick(void);
 
 static const struct netdriver rl_table = {
+	.ndr_name	= "re",
 	.ndr_init	= rl_init,
 	.ndr_stop	= rl_stop,
-	.ndr_mode	= rl_mode,
+	.ndr_set_mode	= rl_set_mode,
+	.ndr_set_hwaddr	= rl_set_hwaddr,
 	.ndr_recv	= rl_recv,
 	.ndr_send	= rl_send,
-	.ndr_stat	= rl_stat,
+	.ndr_get_link	= rl_get_link,
 	.ndr_intr	= rl_intr,
-	.ndr_alarm	= rl_alarm
+	.ndr_tick	= rl_tick
 };
 
 /*===========================================================================*
@@ -203,7 +206,8 @@ int main(int argc, char *argv[])
 /*===========================================================================*
  *				rl_init					     *
  *===========================================================================*/
-static int rl_init(unsigned int instance, ether_addr_t *addr)
+static int rl_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks)
 {
 /* Initialize the rtl8169 driver. */
 	re_t *rep;
@@ -211,11 +215,6 @@ static int rl_init(unsigned int instance, ether_addr_t *addr)
 	/* Initialize driver state. */
 	rep = &re_state;
 	memset(rep, 0, sizeof(*rep));
-
-	strlcpy(rep->re_name, "rtl8169#0", sizeof(rep->re_name));
-	rep->re_name[8] += re_instance;
-
-	re_instance = instance;
 
 	/* Try to find a matching device. */
 	if (!rl_probe(rep, instance))
@@ -225,11 +224,10 @@ static int rl_init(unsigned int instance, ether_addr_t *addr)
 	rl_init_buf(&re_state);
 
 	/* Initialize the device we found. */
-	rl_init_hw(rep, addr);
+	rl_init_hw(rep, addr, instance);
 
-	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(sys_hz(), 0);
-
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST | NDEV_CAP_HWADDR;
+	*ticks = sys_hz();
 	return OK;
 }
 
@@ -286,14 +284,12 @@ static int mdio_read(u16_t port, int regaddr)
 
 static void rtl8169_update_stat(re_t *rep)
 {
+	static u64_t last_miss = 0, last_coll = 0;
+	u64_t miss, coll;
 	port_t port;
 	int i;
 
 	port = rep->re_base_port;
-
-	/* Fetch Missed Packets */
-	rep->re_stat.ets_missedP += rl_inw(port, RL_MPC);
-	rl_outw(port, RL_MPC, 0x00);
 
 	/* Dump Tally Counter Command */
 	rl_outl(port, RL_DTCCR_HI, 0);		/* 64 bits */
@@ -305,11 +301,13 @@ static void rtl8169_update_stat(re_t *rep)
 	}
 
 	/* Update counters */
-	rep->re_stat.ets_frameAll = rep->v_dtcc_buf->FAE;
-	rep->re_stat.ets_transDef = rep->v_dtcc_buf->TxUndrn;
-	rep->re_stat.ets_transAb = rep->v_dtcc_buf->TxAbt;
-	rep->re_stat.ets_collision =
-		rep->v_dtcc_buf->Tx1Col + rep->v_dtcc_buf->TxMCol;
+	miss = rep->v_dtcc_buf->MissPkt;
+	netdriver_stat_ierror(miss - last_miss);
+	last_miss = miss;
+
+	coll = rep->v_dtcc_buf->Tx1Col + rep->v_dtcc_buf->TxMCol;
+	netdriver_stat_coll(coll - last_coll);
+	last_coll = coll;
 }
 
 #if 0
@@ -327,27 +325,8 @@ static void rtl8169_dump(void)
 
 	rtl8169_update_stat(rep);
 
-	printf("Realtek RTL 8169 statistics of instance %d:\n", re_instance);
+	printf("Realtek RTL 8169 driver %s:\n", netdriver_name());
 
-	printf("recvErr    :%8ld\t", rep->re_stat.ets_recvErr);
-	printf("sendErr    :%8ld\t", rep->re_stat.ets_sendErr);
-	printf("OVW        :%8ld\n", rep->re_stat.ets_OVW);
-
-	printf("CRCerr     :%8ld\t", rep->re_stat.ets_CRCerr);
-	printf("frameAll   :%8ld\t", rep->re_stat.ets_frameAll);
-	printf("missedP    :%8ld\n", rep->re_stat.ets_missedP);
-
-	printf("packetR    :%8ld\t", rep->re_stat.ets_packetR);
-	printf("packetT    :%8ld\t", rep->re_stat.ets_packetT);
-	printf("transDef   :%8ld\n", rep->re_stat.ets_transDef);
-
-	printf("collision  :%8ld\t", rep->re_stat.ets_collision);
-	printf("transAb    :%8ld\t", rep->re_stat.ets_transAb);
-	printf("carrSense  :%8ld\n", rep->re_stat.ets_carrSense);
-
-	printf("fifoUnder  :%8ld\t", rep->re_stat.ets_fifoUnder);
-	printf("fifoOver   :%8ld\t", rep->re_stat.ets_fifoOver);
-	printf("OWC        :%8ld\n", rep->re_stat.ets_OWC);
 	printf("interrupts :%8u\n", rep->interrupts);
 
 	printf("\nRealtek RTL 8169 Tally Counters:\n");
@@ -400,9 +379,11 @@ static void rtl8169_dump(void)
 #endif
 
 /*===========================================================================*
- *				rl_mode					     *
+ *				rl_set_mode				     *
  *===========================================================================*/
-static void rl_mode(unsigned int mode)
+static void rl_set_mode(unsigned int mode,
+	const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
 	re_t *rep;
 
@@ -423,7 +404,7 @@ static int rl_probe(re_t *rep, unsigned int skip)
 	u32_t bar;
 	u8_t ilr;
 #if VERBOSE
-	char *dname;
+	const char *dname;
 #endif
 
 	pci_init();
@@ -442,7 +423,7 @@ static int rl_probe(re_t *rep, unsigned int skip)
 	dname = pci_dev_name(vid, did);
 	if (!dname)
 		dname = "unknown device";
-	printf("%s: ", rep->re_name);
+	printf("%s: ", netdriver_name());
 	printf("%s (%x/%x) at %s\n", dname, vid, did, pci_slot_name(devind));
 #endif
 
@@ -457,7 +438,7 @@ static int rl_probe(re_t *rep, unsigned int skip)
 	rep->re_irq = ilr;
 #if VERBOSE
 	printf("%s: using I/O address 0x%lx, IRQ %d\n",
-		rep->re_name, (unsigned long)bar, ilr);
+		netdriver_name(), (unsigned long)bar, ilr);
 #endif
 
 	return TRUE;
@@ -479,7 +460,7 @@ static void rl_init_buf(re_t *rep)
 	tx_descsize = (N_TX_DESC * sizeof(struct re_desc));
 
 	/* Allocate receive and transmit buffers */
-	tx_bufsize = ETH_MAX_PACK_SIZE_TAGGED;
+	tx_bufsize = NDEV_ETH_PACKET_MAX_TAGGED;
 	if (tx_bufsize % 4)
 		tx_bufsize += 4-(tx_bufsize % 4);	/* Align */
 	rx_bufsize = RX_BUFSIZE;
@@ -548,7 +529,8 @@ static void rl_init_buf(re_t *rep)
 /*===========================================================================*
  *				rl_init_hw				     *
  *===========================================================================*/
-static void rl_init_hw(re_t *rep, ether_addr_t *addr)
+static void rl_init_hw(re_t *rep, netdriver_addr_t *addr,
+	unsigned int instance)
 {
 	int s;
 #if VERBOSE
@@ -571,15 +553,15 @@ static void rl_init_hw(re_t *rep, ether_addr_t *addr)
 
 #if VERBOSE
 	printf("%s: model: %s mac: 0x%08x\n",
-		rep->re_name, rep->re_model, rep->re_mac);
+		netdriver_name(), rep->re_model, rep->re_mac);
 #endif
 
-	rl_confaddr(rep, addr);
+	rl_confaddr(rep, addr, instance);
 
 #if VERBOSE
-	printf("%s: Ethernet address ", rep->re_name);
+	printf("%s: Ethernet address ", netdriver_name());
 	for (i = 0; i < 6; i++) {
-		printf("%x%c", addr->ea_addr[i],
+		printf("%x%c", addr->na_addr[i],
 			i < 5 ? ':' : '\n');
 	}
 #endif
@@ -828,47 +810,61 @@ static void rl_reset_hw(re_t *rep)
 /*===========================================================================*
  *				rl_confaddr				     *
  *===========================================================================*/
-static void rl_confaddr(re_t *rep, ether_addr_t *addr)
+static void rl_confaddr(re_t *rep, netdriver_addr_t *addr,
+	unsigned int instance)
 {
 	static char eakey[] = RL_ENVVAR "#_EA";
 	static char eafmt[] = "x:x:x:x:x:x";
 	int i;
 	port_t port;
-	u32_t w;
 	long v;
 
 	/* User defined ethernet address? */
-	eakey[sizeof(RL_ENVVAR)-1] = '0' + re_instance;
+	eakey[sizeof(RL_ENVVAR)-1] = '0' + instance;
 
 	port = rep->re_base_port;
 
 	for (i = 0; i < 6; i++) {
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
-		addr->ea_addr[i] = v;
+		addr->na_addr[i] = v;
 	}
 
 	if (i != 0 && i != 6)
 		env_panic(eakey);	/* It's all or nothing */
 
 	/* Should update ethernet address in hardware */
-	if (i == 6) {
-		port = rep->re_base_port;
-		rl_outb(port, RL_9346CR, RL_9346CR_EEM_CONFIG);
-		w = 0;
-		for (i = 0; i < 4; i++)
-			w |= (addr->ea_addr[i] << (i * 8));
-		rl_outl(port, RL_IDR, w);
-		w = 0;
-		for (i = 4; i < 6; i++)
-			w |= (addr->ea_addr[i] << ((i-4) * 8));
-		rl_outl(port, RL_IDR + 4, w);
-		rl_outb(port, RL_9346CR, RL_9346CR_EEM_NORMAL);
-	}
+	if (i == 6)
+		rl_set_hwaddr(addr);
 
 	/* Get ethernet address */
 	for (i = 0; i < 6; i++)
-		addr->ea_addr[i] = rl_inb(port, RL_IDR+i);
+		addr->na_addr[i] = rl_inb(port, RL_IDR+i);
+}
+
+/*===========================================================================*
+ *				rl_set_hwaddr				     *
+ *===========================================================================*/
+static void rl_set_hwaddr(const netdriver_addr_t *addr)
+{
+	re_t *rep;
+	port_t port;
+	u32_t w;
+	int i;
+
+	rep = &re_state;
+
+	port = rep->re_base_port;
+	rl_outb(port, RL_9346CR, RL_9346CR_EEM_CONFIG);
+	w = 0;
+	for (i = 0; i < 4; i++)
+		w |= (addr->na_addr[i] << (i * 8));
+	rl_outl(port, RL_IDR, w);
+	w = 0;
+	for (i = 4; i < 6; i++)
+		w |= (addr->na_addr[i] << ((i-4) * 8));
+	rl_outl(port, RL_IDR + 4, w);
+	rl_outb(port, RL_9346CR, RL_9346CR_EEM_NORMAL);
 }
 
 /*===========================================================================*
@@ -888,11 +884,11 @@ static void rl_rec_mode(re_t *rep)
 
 	rcr = rl_inl(port, RL_RCR);
 	rcr &= ~(RL_RCR_AB | RL_RCR_AM | RL_RCR_APM | RL_RCR_AAP);
-	if (rep->re_mode & NDEV_PROMISC)
+	if (rep->re_mode & NDEV_MODE_PROMISC)
 		rcr |= RL_RCR_AB | RL_RCR_AM | RL_RCR_AAP;
-	if (rep->re_mode & NDEV_BROAD)
+	if (rep->re_mode & NDEV_MODE_BCAST)
 		rcr |= RL_RCR_AB;
-	if (rep->re_mode & NDEV_MULTI)
+	if (rep->re_mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		rcr |= RL_RCR_AM;
 	rcr |= RL_RCR_APM;
 	rl_outl(port, RL_RCR, RL_RCR_RXFTH_UNLIM | RL_RCR_MXDMA_1024 | rcr);
@@ -928,7 +924,7 @@ static ssize_t rl_recv(struct netdriver_data *data, size_t max)
 			return SUSPEND;
 
 		if (rxstat & DESC_RX_CRC)
-			rep->re_stat.ets_CRCerr++;
+			netdriver_stat_ierror(1);
 
 		if ((rxstat & (DESC_FS | DESC_LS)) == (DESC_FS | DESC_LS))
 			break;
@@ -952,7 +948,7 @@ static ssize_t rl_recv(struct netdriver_data *data, size_t max)
 	}
 
 	totlen = rxstat & DESC_RX_LENMASK;
-	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
+	if (totlen < 8 || totlen > 2 * NDEV_ETH_PACKET_MAX) {
 		/* Someting went wrong */
 		printf("rl_recv: bad length (%u) in status 0x%08x\n",
 			totlen, rxstat);
@@ -960,13 +956,11 @@ static ssize_t rl_recv(struct netdriver_data *data, size_t max)
 	}
 
 	/* Should subtract the CRC */
-	packlen = totlen - ETH_CRC_SIZE;
+	packlen = totlen - NDEV_ETH_PACKET_CRC;
 	if (packlen > max)
 		packlen = max;
 
 	netdriver_copyout(data, 0, rep->re_rx[index].v_ret_buf, packlen);
-
-	rep->re_stat.ets_packetR++;
 
 	if (index == N_RX_DESC - 1) {
 		desc->status = DESC_EOR | DESC_OWN |
@@ -1049,10 +1043,42 @@ static void rl_check_ints(re_t *rep)
 	if (rep->re_report_link) {
 		rep->re_report_link = FALSE;
 
+		netdriver_link();
+
 #if VERBOSE
 		rl_report_link(rep);
 #endif
 	}
+}
+
+/*===========================================================================*
+ *				rl_get_link				     *
+ *===========================================================================*/
+static unsigned int rl_get_link(uint32_t *media)
+{
+	re_t *rep;
+	u8_t mii_status;
+
+	rep = &re_state;
+
+	mii_status = rl_inb(rep->re_base_port, RL_PHYSTAT);
+
+	if (!(mii_status & RL_STAT_LINK))
+		return NDEV_LINK_DOWN;
+
+	if (mii_status & RL_STAT_1000)
+		*media = IFM_ETHER | IFM_1000_T;
+	else if (mii_status & RL_STAT_100)
+		*media = IFM_ETHER | IFM_100_TX;
+	else if (mii_status & RL_STAT_10)
+		*media = IFM_ETHER | IFM_10_T;
+
+	if (mii_status & RL_STAT_FULLDUP)
+		*media |= IFM_FDX;
+	else
+		*media |= IFM_HDX;
+
+	return NDEV_LINK_UP;
 }
 
 /*===========================================================================*
@@ -1070,10 +1096,10 @@ static void rl_report_link(re_t *rep)
 
 	if (mii_status & RL_STAT_LINK) {
 		rep->re_link_up = 1;
-		printf("%s: link up at ", rep->re_name);
+		printf("%s: link up at ", netdriver_name());
 	} else {
 		rep->re_link_up = 0;
-		printf("%s: link down\n", rep->re_name);
+		printf("%s: link down\n", netdriver_name());
 		return;
 	}
 
@@ -1108,14 +1134,6 @@ static void rl_do_reset(re_t *rep)
 		rep->re_tx_busy--;
 	rep->re_tx[rep->re_tx_head].ret_busy = FALSE;
 	rep->re_send_int = TRUE;
-}
-
-/*===========================================================================*
- *				rl_stat					     *
- *===========================================================================*/
-static void rl_stat(eth_stat_t *stat)
-{
-	memcpy(stat, &re_state.re_stat, sizeof(*stat));
 }
 
 #if VERBOSE
@@ -1341,8 +1359,6 @@ static void rl_handler(re_t *rep)
 	if (isr & RL_IMR_FOVW) {
 		isr &= ~RL_IMR_FOVW;
 		/* Should do anything? */
-
-		rep->re_stat.ets_fifoOver++;
 	}
 	if (isr & RL_IMR_PUN) {
 		isr &= ~RL_IMR_PUN;
@@ -1360,7 +1376,7 @@ static void rl_handler(re_t *rep)
 
 	if (isr & (RL_ISR_RDU | RL_ISR_RER | RL_ISR_ROK)) {
 		if (isr & RL_ISR_RER)
-			rep->re_stat.ets_recvErr++;
+			netdriver_stat_ierror(1);
 		isr &= ~(RL_ISR_RDU | RL_ISR_RER | RL_ISR_ROK);
 
 		rep->re_got_int = TRUE;
@@ -1368,7 +1384,7 @@ static void rl_handler(re_t *rep)
 
 	if ((isr & (RL_ISR_TDU | RL_ISR_TER | RL_ISR_TOK)) || 1) {
 		if (isr & RL_ISR_TER)
-			rep->re_stat.ets_sendErr++;
+			netdriver_stat_oerror(1);
 		isr &= ~(RL_ISR_TDU | RL_ISR_TER | RL_ISR_TOK);
 
 		/* Transmit completed */
@@ -1397,7 +1413,6 @@ static void rl_handler(re_t *rep)
 				break;
 			}
 
-			rep->re_stat.ets_packetT++;
 			rep->re_tx[tx_tail].ret_busy = FALSE;
 			rep->re_tx_busy--;
 
@@ -1421,14 +1436,11 @@ static void rl_handler(re_t *rep)
 }
 
 /*===========================================================================*
- *				rl_alarm				     *
+ *				rl_tick					     *
  *===========================================================================*/
-static void rl_alarm(clock_t __unused stamp)
+static void rl_tick(void)
 {
 	re_t *rep;
-
-	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(sys_hz(), 0);
 
 	rep = &re_state;
 
@@ -1446,7 +1458,7 @@ static void rl_alarm(clock_t __unused stamp)
 		rep->re_tx_alive = FALSE;
 		return;
 	}
-	printf("rl_alarm: resetting instance %d\n", re_instance);
+	printf("%s: TX timeout, resetting\n", netdriver_name());
 	printf("tx_head    :%8d  busy %d\t",
 		rep->re_tx_head, rep->re_tx[rep->re_tx_head].ret_busy);
 	rep->re_need_reset = TRUE;

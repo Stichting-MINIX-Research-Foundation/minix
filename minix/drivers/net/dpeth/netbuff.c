@@ -9,8 +9,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include "dp.h"
 
 #if (HAVE_BUFFERS == 1)
@@ -90,7 +88,8 @@ void init_buff(dpeth_t *dep, buff_t **tx_buff)
 	free_buff(dep, rx + 1);
 	dep->de_recvq_tail = dep->de_recvq_head = NULL;
 	if (tx_buff != NULL) {
-		*tx_buff = alloc_buff(dep, ETH_MAX_PACK_SIZE + sizeof(buff_t));
+		*tx_buff = alloc_buff(dep,
+		    NDEV_ETH_PACKET_MAX + sizeof(buff_t));
 		(*tx_buff)->size = 0;
 	}
   }

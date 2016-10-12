@@ -11,4 +11,6 @@ LDADD+=	-lnetdriver -lsys
 
 CPPFLAGS+=	-DVERBOSE=0
 
+WARNS?= 5
+
 .include <minix.service.mk>

@@ -13,7 +13,7 @@
  *	May 31, 2005: added printf, kputc (relocated from syslib)
  *	May 31, 2005: added getuptime
  *	Mar 18, 2005: added tickdelay
- *	Oct 01, 2004: added env_parse, env_prefix, env_panic
+ *	Oct 01, 2004: added env_parse, env_panic
  *	Jul 13, 2004: added fkey_ctl
  *	Apr 28, 2004: added report, panic 
  *	Mar 31, 2004: setup like other libraries, such as syslib
@@ -36,7 +36,6 @@ extern char **env_argv;
 
 void env_setargs(int argc, char *argv[]);
 int env_get_param(const char *key, char *value, int max_size);
-int env_prefix(const char *env, const char *prefix);
 void __dead env_panic(const char *key);
 int env_parse(const char *env, const char *fmt, int field,
 	long *param, long min, long max);

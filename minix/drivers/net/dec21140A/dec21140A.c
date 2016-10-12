@@ -20,31 +20,30 @@
 static u32_t io_inl(u16_t);
 static void io_outl(u16_t, u32_t);
 
-static int do_init(unsigned int, ether_addr_t *);
+static int do_init(unsigned int, netdriver_addr_t *, uint32_t *,
+	unsigned int *);
 static void do_stop(void);
 static int do_send(struct netdriver_data *, size_t);
 static ssize_t do_recv(struct netdriver_data *, size_t);
-static void do_stat(eth_stat_t *);
 static void do_intr(unsigned int);
 
 static int de_probe(dpeth_t *, unsigned int skip);
-static void de_conf_addr(dpeth_t *, ether_addr_t *);
+static void de_conf_addr(dpeth_t *, netdriver_addr_t *);
 static void de_init_buf(dpeth_t *);
 static void de_reset(const dpeth_t *);
 static void de_hw_conf(const dpeth_t *);
 static void de_start(const dpeth_t *);
-static void de_setup_frame(const dpeth_t *, const ether_addr_t *);
+static void de_setup_frame(const dpeth_t *, const netdriver_addr_t *);
 static u16_t de_read_rom(const dpeth_t *, u8_t, u8_t);
 
 static dpeth_t de_state;
-static int de_instance;
 
 static const struct netdriver de_table = {
+	.ndr_name	= "dec",
 	.ndr_init	= do_init,
 	.ndr_stop	= do_stop,
 	.ndr_recv	= do_recv,
 	.ndr_send	= do_send,
-	.ndr_stat	= do_stat,
 	.ndr_intr	= do_intr
 };
 
@@ -57,7 +56,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-static void de_init_hw(dpeth_t *dep, ether_addr_t *addr)
+static void de_init_hw(dpeth_t *dep, netdriver_addr_t *addr)
 {
   de_reset(dep);
   de_conf_addr(dep, addr);
@@ -76,7 +75,8 @@ static void de_init_hw(dpeth_t *dep, ether_addr_t *addr)
   de_start(dep);
 }
 
-static int do_init(unsigned int instance, ether_addr_t *addr)
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks)
 {
 /* Initialize the DEC 21140A driver. */
   dpeth_t *dep;
@@ -84,22 +84,13 @@ static int do_init(unsigned int instance, ether_addr_t *addr)
   dep = &de_state;
   memset(dep, 0, sizeof(*dep));
 
-  strlcpy(dep->de_name, "dec21140A:?", sizeof(dep->de_name));
-  dep->de_name[strlen(dep->de_name)-1] = '0' + instance;
-
-  de_instance = instance;
-
   if (!de_probe(dep, instance))
     return ENXIO;
 
   de_init_hw(dep, addr);
 
+  *caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
   return OK;
-}
-
-static void do_stat(eth_stat_t *stat)
-{
-  memcpy(stat, &de_state.de_stat, sizeof(*stat));
 }
 
 static int de_probe(dpeth_t *dep, unsigned int skip)
@@ -131,14 +122,15 @@ static int de_probe(dpeth_t *dep, unsigned int skip)
     panic("de_probe: base address invalid: %d", dep->de_base_port);
 
   DEBUG(printf("%s: using I/O address 0x%lx, IRQ %d\n",
-	       dep->de_name, (unsigned long)dep->de_base_port,
+	       netdriver_name(), (unsigned long)dep->de_base_port,
 	       dep->de_irq));
 
   dep->de_type = pci_attr_r8(devind, PCI_REV);
 
   /* device validation. We support only the DEC21140A */
   if(dep->de_type != DEC_21140A){
-    printf("%s: unsupported card type %x\n", dep->de_name, dep->de_type);
+    printf("%s: unsupported card type %x\n", netdriver_name(),
+      dep->de_type);
     return FALSE;
   }
 
@@ -252,8 +244,6 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
 
   netdriver_copyout(data, 0, descr->buf1, size);
 
-  dep->de_stat.ets_packetR++;
-
   descr->descr->des[DES0]=DES0_OWN;
   dep->cur_descr[DESCR_RECV]++;
   if(dep->cur_descr[DESCR_RECV] >= DE_NB_RECV_DESCR)
@@ -264,7 +254,7 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
   return size;
 }
 
-static void de_conf_addr(dpeth_t *dep, ether_addr_t *addr)
+static void de_conf_addr(dpeth_t *dep, netdriver_addr_t *addr)
 {
   u16_t temp16;
   int i;
@@ -281,8 +271,8 @@ static void de_conf_addr(dpeth_t *dep, ether_addr_t *addr)
   /* acquire MAC addr */
   DEBUG(printf("Using MAC addr= "));
   for(i=0;i<6;i++){
-    addr->ea_addr[i] = dep->srom[i+DE_SROM_EA_OFFSET];
-    DEBUG(printf("%02X%c", addr->ea_addr[i],i!=5?'-':'\n'));
+    addr->na_addr[i] = dep->srom[i+DE_SROM_EA_OFFSET];
+    DEBUG(printf("%02X%c", addr->na_addr[i],i!=5?'-':'\n'));
   }
   DEBUG(printf("probe success\n"));
 }
@@ -436,7 +426,7 @@ static void de_start(const dpeth_t *dep)
   io_outl(CSR_ADDR(dep, CSR6), val);
 }
 
-static void de_setup_frame(const dpeth_t *dep, const ether_addr_t *addr)
+static void de_setup_frame(const dpeth_t *dep, const netdriver_addr_t *addr)
 {
   int i;
   u32_t val;
@@ -451,12 +441,12 @@ static void de_setup_frame(const dpeth_t *dep, const ether_addr_t *addr)
   dep->descr[DESCR_TRAN][0].buf1[9] = 0xFF;
   for(i=1;i<16;i++){
     memset(&(dep->descr[DESCR_TRAN][0].buf1[12*i]), 0, 12);
-    dep->descr[DESCR_TRAN][0].buf1[12*i+0] = addr->ea_addr[0];
-    dep->descr[DESCR_TRAN][0].buf1[12*i+1] = addr->ea_addr[1];
-    dep->descr[DESCR_TRAN][0].buf1[12*i+4] = addr->ea_addr[2];
-    dep->descr[DESCR_TRAN][0].buf1[12*i+5] = addr->ea_addr[3];
-    dep->descr[DESCR_TRAN][0].buf1[12*i+8] = addr->ea_addr[4];
-    dep->descr[DESCR_TRAN][0].buf1[12*i+9] = addr->ea_addr[5];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+0] = addr->na_addr[0];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+1] = addr->na_addr[1];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+4] = addr->na_addr[2];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+5] = addr->na_addr[3];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+8] = addr->na_addr[4];
+    dep->descr[DESCR_TRAN][0].buf1[12*i+9] = addr->na_addr[5];
   }
 
   dep->descr[DESCR_TRAN][0].descr->des[DES0] = DES0_OWN;
@@ -498,8 +488,6 @@ static int do_send(struct netdriver_data *data, size_t size)
     dep->cur_descr[DESCR_TRAN] = 0;
 
   io_outl(CSR_ADDR(dep, CSR1), 0xFFFFFFFF);
-
-  dep->de_stat.ets_packetT++;
 
   return OK;
 }

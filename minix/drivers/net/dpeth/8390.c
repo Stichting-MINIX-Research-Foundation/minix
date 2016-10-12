@@ -12,8 +12,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include <assert.h>
 #include "dp.h"
 
@@ -57,7 +55,8 @@ static void ns_start_xmit(const dpeth_t * dep, int size, int pageno)
 static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 {
 
-  assert(offset + size <= dep->de_ramsize);
+  assert(size >= 0);
+  assert(offset + (unsigned int)size <= dep->de_ramsize);
 
   memcpy(dst, dep->de_locmem + offset, size);
 }
@@ -179,9 +178,9 @@ static void pio_user2nic(dpeth_t *dep, int pageno, struct netdriver_data *data,
 static void ns_stats(dpeth_t * dep)
 {
 
-  dep->de_stat.ets_CRCerr += inb_reg0(dep, DP_CNTR0);
-  dep->de_stat.ets_recvErr += inb_reg0(dep, DP_CNTR1);
-  dep->de_stat.ets_fifoOver += inb_reg0(dep, DP_CNTR2);
+  netdriver_stat_ierror(inb_reg0(dep, DP_CNTR0));
+  netdriver_stat_ierror(inb_reg0(dep, DP_CNTR1));
+  netdriver_stat_ierror(inb_reg0(dep, DP_CNTR2));
 }
 
 /*
@@ -215,7 +214,7 @@ static void ns_reinit(dpeth_t * dep)
 */
 static int ns_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
 {
-  int queue;
+  unsigned int queue;
 
   queue = dep->de_sendq_head;
   if (dep->de_sendq[queue].sq_filled)
@@ -242,7 +241,7 @@ static int ns_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
 */
 static void ns_reset(dpeth_t * dep)
 {
-  int ix;
+  unsigned int ix;
 
   /* Stop chip */
   outb_reg0(dep, DP_CR, CR_STP | CR_NO_DMA);
@@ -298,21 +297,21 @@ static ssize_t ns_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 	    &header);
 #ifdef ETH_IGN_PROTO
 	(dep->de_getblockf)(dep, pageno * DP_PAGESIZE + sizeof(header) +
-	    2 * sizeof(ether_addr_t), sizeof(eth_type), &eth_type);
+	    2 * sizeof(netdriver_addr_t), sizeof(eth_type), &eth_type);
 #endif
 	length = (header.dr_rbcl | (header.dr_rbch << 8)) -
 	    sizeof(dp_rcvhdr_t);
 	next = header.dr_next;
 
-	if (length < ETH_MIN_PACK_SIZE || length > max) {
+	if (length < NDEV_ETH_PACKET_MIN || length > max) {
 		printf("%s: packet with strange length arrived: %zu\n",
-			dep->de_name, length);
-		dep->de_stat.ets_recvErr += 1;
+			netdriver_name(), length);
+		netdriver_stat_ierror(1);
 		next = curr;
 
 	} else if (next < dep->de_startpage || next >= dep->de_stoppage) {
-		printf("%s: strange next page\n", dep->de_name);
-		dep->de_stat.ets_recvErr += 1;
+		printf("%s: strange next page\n", netdriver_name());
+		netdriver_stat_ierror(1);
 		next = curr;
 #ifdef ETH_IGN_PROTO
 	} else if (eth_type == eth_ign_proto) {
@@ -321,15 +320,15 @@ static ssize_t ns_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 		if (first) {
 			first = FALSE;
 			printf("%s: dropping proto %04x packet\n",
-			    dep->de_name, ntohs(eth_ign_proto));
+			    netdriver_name(), ntohs(eth_ign_proto));
 		}
 		next = curr;
 #endif
 	} else if (header.dr_status & RSR_FO) {
 		/* This is very serious, issue a warning and reset buffers */
 		printf("%s: fifo overrun, resetting receive buffer\n",
-		    dep->de_name);
-		dep->de_stat.ets_fifoOver += 1;
+		    netdriver_name());
+		netdriver_stat_ierror(1);
 		next = curr;
 
 	} else if (header.dr_status & RSR_PRX) {
@@ -337,7 +336,6 @@ static ssize_t ns_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 		packet_processed = TRUE;
 	}
 	dep->bytes_Rx += (long) length;
-	dep->de_stat.ets_packetR += 1;
 	outb_reg0(dep, DP_BNRY,
 	    (next == dep->de_startpage ? dep->de_stoppage : next) - 1);
 	pageno = next;
@@ -353,7 +351,7 @@ static ssize_t ns_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 static void ns_interrupt(dpeth_t * dep)
 {
   int isr, tsr;
-  int queue;
+  unsigned int queue;
 
   while ((isr = inb_reg0(dep, DP_ISR)) != 0) {
 
@@ -362,22 +360,23 @@ static void ns_interrupt(dpeth_t * dep)
 
 		tsr = inb_reg0(dep, DP_TSR);
 		if (tsr & TSR_PTX) {
-			dep->de_stat.ets_packetT++;
+			/* Packet transmission was successful. */
 		}
-		if (tsr & TSR_COL) dep->de_stat.ets_collision++;
+		if (tsr & TSR_COL)
+			netdriver_stat_coll(1);
 		if (tsr & (TSR_ABT | TSR_FU)) {
-			dep->de_stat.ets_fifoUnder++;
+			netdriver_stat_oerror(1);
 		}
 		if ((isr & ISR_TXE) || (tsr & (TSR_CRS | TSR_CDH | TSR_OWC))) {
 			printf("%s: got send Error (0x%02X)\n",
-			    dep->de_name, tsr);
-			dep->de_stat.ets_sendErr++;
+			    netdriver_name(), tsr);
+			netdriver_stat_oerror(1);
 		}
 		queue = dep->de_sendq_tail;
 
 		if (!(dep->de_sendq[queue].sq_filled)) { /* Hardware bug? */
 			printf("%s: transmit interrupt, but not sending\n",
-			    dep->de_name);
+			    netdriver_name());
 			continue;
 		}
 		dep->de_sendq[queue].sq_filled = FALSE;
@@ -394,16 +393,14 @@ static void ns_interrupt(dpeth_t * dep)
 	}
 	if (isr & ISR_RXE) {
 		printf("%s: got recv Error (0x%04X)\n",
-		    dep->de_name, inb_reg0(dep, DP_RSR));
-		dep->de_stat.ets_recvErr++;
+		    netdriver_name(), inb_reg0(dep, DP_RSR));
+		netdriver_stat_ierror(1);
 	}
 	if (isr & ISR_CNT) {
-		dep->de_stat.ets_CRCerr += inb_reg0(dep, DP_CNTR0);
-		dep->de_stat.ets_recvErr += inb_reg0(dep, DP_CNTR1);
-		dep->de_stat.ets_fifoOver += inb_reg0(dep, DP_CNTR2);
+		ns_stats(dep);
 	}
 	if (isr & ISR_OVW) {
-		printf("%s: got overwrite warning\n", dep->de_name);
+		printf("%s: got overwrite warning\n", netdriver_name());
 	}
 	if (isr & ISR_RDC) {
 		/* Nothing to do */
@@ -415,7 +412,8 @@ static void ns_interrupt(dpeth_t * dep)
 		 * approach of resetting only after all pending packets had
 		 * been accepted, but it was broken and this is simpler anyway.
 		 */
-		printf("%s: network interface stopped\n", dep->de_name);
+		printf("%s: network interface stopped\n",
+		    netdriver_name());
 		ns_reset(dep);
 		break;
 	}
@@ -428,8 +426,8 @@ static void ns_interrupt(dpeth_t * dep)
 */
 void ns_init(dpeth_t * dep)
 {
-  int dp_reg;
-  int ix;
+  unsigned int dp_reg;
+  unsigned int ix;
 
   /* NS8390 initialization (as recommended in National Semiconductor specs) */
   outb_reg0(dep, DP_CR, CR_PS_P0 | CR_STP | CR_NO_DMA);	/* 0x21 */
@@ -448,7 +446,7 @@ void ns_init(dpeth_t * dep)
   /* Copies station address in page 1 registers */
   outb_reg0(dep, DP_CR, CR_PS_P1 | CR_NO_DMA);	/* Selects Page 1 */
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)	/* Initializes address */
-	outb_reg1(dep, DP_PAR0 + ix, dep->de_address.ea_addr[ix]);
+	outb_reg1(dep, DP_PAR0 + ix, dep->de_address.na_addr[ix]);
   for (ix = DP_MAR0; ix <= DP_MAR7; ix += 1)	/* Initializes address */
 	outb_reg1(dep, ix, 0xFF);
 

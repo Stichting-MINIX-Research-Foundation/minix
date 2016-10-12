@@ -7,21 +7,22 @@
 #include "lan8710a_reg.h"
 
 /* Local functions */
-static int lan8710a_init(unsigned int instance, ether_addr_t *addr);
+static int lan8710a_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
 static void lan8710a_stop(void);
 static ssize_t lan8710a_recv(struct netdriver_data *data, size_t max);
 static int lan8710a_send(struct netdriver_data *data, size_t size);
-static void lan8710a_stat(eth_stat_t *stat);
 static void lan8710a_intr(unsigned int mask);
+static void lan8710a_tick(void);
 
 static void lan8710a_enable_interrupt(int interrupt);
 static void lan8710a_map_regs(void);
 static void lan8710a_dma_config_tx(u8_t desc_idx);
 static void lan8710a_dma_reset_init(void);
-static void lan8710a_init_addr(ether_addr_t *addr);
+static void lan8710a_init_addr(netdriver_addr_t *addr, unsigned int instance);
 static void lan8710a_init_desc(void);
 static void lan8710a_init_mdio(void);
-static int lan8710a_init_hw(ether_addr_t *addr);
+static int lan8710a_init_hw(netdriver_addr_t *addr, unsigned int instance);
 static void lan8710a_reset_hw(void);
 
 static void lan8710a_phy_write(u32_t reg, u32_t value);
@@ -36,12 +37,13 @@ static void lan8710a_reg_unset(volatile u32_t *reg, u32_t value);
 static lan8710a_t lan8710a_state;
 
 static const struct netdriver lan8710a_table = {
+	.ndr_name	= "cpsw",
 	.ndr_init	= lan8710a_init,
 	.ndr_stop	= lan8710a_stop,
 	.ndr_recv	= lan8710a_recv,
 	.ndr_send	= lan8710a_send,
-	.ndr_stat	= lan8710a_stat,
-	.ndr_intr	= lan8710a_intr
+	.ndr_intr	= lan8710a_intr,
+	.ndr_tick	= lan8710a_tick
 };
 
 /*============================================================================*
@@ -65,22 +67,21 @@ main(int argc, char *argv[])
  *				lan8710a_init				      *
  *============================================================================*/
 static int
-lan8710a_init(unsigned int instance, ether_addr_t * addr)
+lan8710a_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+	unsigned int * ticks)
 {
 	/* Initialize the ethernet driver. */
 
 	/* Clear state. */
 	memset(&lan8710a_state, 0, sizeof(lan8710a_state));
 
-	strlcpy(lan8710a_state.name, "lan8710a#0", LAN8710A_NAME_LEN);
-	lan8710a_state.name[9] += instance;
-	lan8710a_state.instance = instance;
-
 	/* Initialize driver. */
 	lan8710a_map_regs();
 
-	lan8710a_init_hw(addr);
+	lan8710a_init_hw(addr, instance);
 
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	*ticks = sys_hz(); /* update statistics once a second */
 	return OK;
 }
 
@@ -158,7 +159,7 @@ lan8710a_intr(unsigned int mask)
  *				lan8710a_init_addr			      *
  *============================================================================*/
 static void
-lan8710a_init_addr(ether_addr_t * addr)
+lan8710a_init_addr(netdriver_addr_t * addr, unsigned int instance)
 {
 	static char eakey[]= LAN8710A_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
@@ -168,13 +169,13 @@ lan8710a_init_addr(ether_addr_t * addr)
 	/*
 	 * Do we have a user defined ethernet address?
 	 */
-	eakey[sizeof(LAN8710A_ENVVAR)-1] = '0' + lan8710a_state.instance;
+	eakey[sizeof(LAN8710A_ENVVAR)-1] = '0' + instance;
 
 	for (i= 0; i < 6; i++) {
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
 		else
-			addr->ea_addr[i] = v;
+			addr->na_addr[i] = v;
 	}
 	if (i == 6)
 		return;
@@ -182,12 +183,12 @@ lan8710a_init_addr(ether_addr_t * addr)
 	/*
 	 * No; get the address from the chip itself.
 	 */
-	addr->ea_addr[0] = lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF;
-	addr->ea_addr[1] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 8) & 0xFF;
-	addr->ea_addr[2] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 16) & 0xFF;
-	addr->ea_addr[3] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 24) & 0xFF;
-	addr->ea_addr[4] = lan8710a_reg_read(CTRL_MAC_ID0_LO) & 0xFF;
-	addr->ea_addr[5] = (lan8710a_reg_read(CTRL_MAC_ID0_LO) >> 8) & 0xFF;
+	addr->na_addr[0] = lan8710a_reg_read(CTRL_MAC_ID0_HI) & 0xFF;
+	addr->na_addr[1] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 8) & 0xFF;
+	addr->na_addr[2] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 16) & 0xFF;
+	addr->na_addr[3] = (lan8710a_reg_read(CTRL_MAC_ID0_HI) >> 24) & 0xFF;
+	addr->na_addr[4] = lan8710a_reg_read(CTRL_MAC_ID0_LO) & 0xFF;
+	addr->na_addr[5] = (lan8710a_reg_read(CTRL_MAC_ID0_LO) >> 8) & 0xFF;
 }
 
 /*============================================================================*
@@ -287,28 +288,44 @@ lan8710a_map_regs(void)
 }
 
 /*============================================================================*
- *				lan8710a_stat				      *
+ *				lan8710a_update_stats			      *
  *============================================================================*/
 static void
-lan8710a_stat(eth_stat_t * stat)
+lan8710a_update_stats(void)
 {
-	stat->ets_recvErr   = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR)
-				+ lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR)
-				+ lan8710a_reg_read(CPSW_STAT_RX_OVERSIZE);
-	stat->ets_sendErr   = 0;
-	stat->ets_OVW       = 0;
-	stat->ets_CRCerr    = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR);
-	stat->ets_frameAll  = lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR);
-	stat->ets_missedP   = 0;
-	stat->ets_packetR   = lan8710a_reg_read(CPSW_STAT_RX_GOOD);
-	stat->ets_packetT   = lan8710a_reg_read(CPSW_STAT_TX_GOOD);
-	stat->ets_collision = lan8710a_reg_read(CPSW_STAT_COLLISIONS);
-	stat->ets_transAb   = 0;
-	stat->ets_carrSense = lan8710a_reg_read(CPSW_STAT_CARR_SENS_ERR);
-	stat->ets_fifoUnder = lan8710a_reg_read(CPSW_STAT_TX_UNDERRUN);
-	stat->ets_fifoOver  = lan8710a_reg_read(CPSW_STAT_RX_OVERRUN);
-	stat->ets_CDheartbeat = 0;
-	stat->ets_OWC = 0;
+	uint32_t val;
+
+	/*
+	 * AM335x Technical Reference (SPRUH73J) Sec. 14.3.2.20: statistics
+	 * registers are decrement-on-write when any of the statistics port
+	 * enable bits are set.
+	 */
+	val = lan8710a_reg_read(CPSW_STAT_RX_CRC_ERR);
+	lan8710a_reg_write(CPSW_STAT_RX_CRC_ERR, val);
+	netdriver_stat_ierror(val);
+
+	val = lan8710a_reg_read(CPSW_STAT_RX_AGNCD_ERR);
+	lan8710a_reg_write(CPSW_STAT_RX_AGNCD_ERR, val);
+	netdriver_stat_ierror(val);
+
+	val = lan8710a_reg_read(CPSW_STAT_RX_OVERSIZE);
+	lan8710a_reg_write(CPSW_STAT_RX_OVERSIZE, val);
+	netdriver_stat_ierror(val);
+
+	val = lan8710a_reg_read(CPSW_STAT_COLLISIONS);
+	lan8710a_reg_write(CPSW_STAT_COLLISIONS, val);
+	netdriver_stat_coll(val);
+}
+
+/*============================================================================*
+ *				lan8710a_tick				      *
+ *============================================================================*/
+static void
+lan8710a_tick(void)
+{
+
+	/* Update statistics. */
+	lan8710a_update_stats();
 }
 
 /*============================================================================*
@@ -399,7 +416,6 @@ lan8710a_init_desc(void)
 	lan8710a_desc_t *p_rx_desc;
 	lan8710a_desc_t *p_tx_desc;
 	phys_bytes   buf_phys_addr;
-	u8_t *p_buf;
 	u8_t i;
 
 	/* Attempt to allocate. */
@@ -408,7 +424,6 @@ lan8710a_init_desc(void)
 			&buf_phys_addr)) == NULL) {
 		panic("failed to allocate RX buffers.");
 	}
-	p_buf = lan8710a_state.p_rx_buf;
 	for (i = 0; i < LAN8710A_NUM_RX_DESC; i++) {
 		p_rx_desc = &(lan8710a_state.rx_desc[i]);
 		memset(p_rx_desc, 0x0, sizeof(lan8710a_desc_t));
@@ -430,7 +445,6 @@ lan8710a_init_desc(void)
 			&buf_phys_addr)) == NULL) {
 		panic("failed to allocate TX buffers");
 	}
-	p_buf = lan8710a_state.p_tx_buf;
 	for (i = 0; i < LAN8710A_NUM_TX_DESC; i++) {
 		p_tx_desc = &(lan8710a_state.tx_desc[i]);
 		memset(p_tx_desc, 0x0, sizeof(lan8710a_desc_t));
@@ -445,7 +459,7 @@ lan8710a_init_desc(void)
  *				lan8710a_init_hw			      *
  *============================================================================*/
 static int
-lan8710a_init_hw(ether_addr_t * addr)
+lan8710a_init_hw(netdriver_addr_t * addr, unsigned int instance)
 {
 	int r, i;
 
@@ -615,7 +629,7 @@ lan8710a_init_hw(ether_addr_t * addr)
 	lan8710a_init_mdio();
 
 	/* Getting MAC Address */
-	lan8710a_init_addr(addr);
+	lan8710a_init_addr(addr, instance);
 
 	/* Initialize descriptors */
 	lan8710a_init_desc();
@@ -703,7 +717,8 @@ lan8710a_send(struct netdriver_data * data, size_t size)
 
 	/* Drop packets that exceed the size of our transmission buffer. */
 	if (size > LAN8710A_IOBUF_SIZE) {
-		printf("%s: dropping large packet (%zu)\n", e->name, size);
+		printf("%s: dropping large packet (%zu)\n",
+		    netdriver_name(), size);
 
 		return OK;
 	}

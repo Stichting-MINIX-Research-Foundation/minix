@@ -10,20 +10,21 @@ static NDR_driver g_driver;
 static int g_instance;
 
 /* driver interface */
-static int NDR_init(unsigned int instance, ether_addr_t *addr);
+static int NDR_init(unsigned int instance, netdriver_addr_t * addr,
+	uint32_t * caps, unsigned int * ticks);
 static void NDR_stop(void);
-static void NDR_mode(unsigned int mode);
+static void NDR_set_mode(unsigned int mode,
+	const netdriver_addr_t * mcast_list, unsigned int mcast_count);
 static ssize_t NDR_recv(struct netdriver_data *data, size_t max);
 static int NDR_send(struct netdriver_data *data, size_t size);
 static void NDR_intr(unsigned int mask);
-static void NDR_stat(eth_stat_t *stat);
 
 /* internal function */
 static int dev_probe(NDR_driver *pdev, int instance);
 static int dev_init_buf(NDR_driver *pdev);
-static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr);
+static int dev_init_hw(NDR_driver *pdev, netdriver_addr_t *addr);
 static int dev_reset_hw(NDR_driver *pdev);
-static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr);
+static void dev_conf_addr(NDR_driver *pdev, netdriver_addr_t *addr);
 static void dev_handler(NDR_driver *pdev);
 static void dev_check_ints(NDR_driver *pdev);
 
@@ -150,11 +151,11 @@ static void dev_set_rec_mode(u32_t *base, int mode) {
 	u32_t data, base0 = base[0];
 	data = ndr_in8(base0, REG_RCR);
 	data &= ~(CMD_RCR_UNICAST | CMD_RCR_MULTICAST | CMD_RCR_BROADCAST);
-	if (mode & NDEV_PROMISC)
+	if (mode & NDEV_MODE_PROMISC)
 		data |= CMD_RCR_UNICAST | CMD_RCR_BROADCAST | CMD_RCR_MULTICAST;
-	if (mode & NDEV_BROAD)
+	if (mode & NDEV_MODE_BCAST)
 		data |= CMD_RCR_BROADCAST;
-	if (mode & NDEV_MULTI)
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
 		data |= CMD_RCR_MULTICAST;
 	data |= CMD_RCR_UNICAST;
 	ndr_out8(base0, REG_RCR, data);
@@ -226,8 +227,7 @@ static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
  * -- Current buffer number is index
  * -- Return the length */
 static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index) {
-	int len = ((desc->status & DESC_RX_LENMASK) >> 16) - ETH_CRC_SIZE;
-	return len;
+	return ((desc->status & DESC_RX_LENMASK) >> 16) - NDEV_ETH_PACKET_CRC;
 }
 
 /* Set Rx descriptor after Rx done (### SET_RX_DESC_DONE ###)
@@ -264,13 +264,13 @@ static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index) {
 
 /* Driver interface table */
 static const struct netdriver NDR_table = {
+	.ndr_name = "vr",
 	.ndr_init = NDR_init,
 	.ndr_stop = NDR_stop,
-	.ndr_mode = NDR_mode,
+	.ndr_set_mode = NDR_set_mode,
 	.ndr_recv = NDR_recv,
 	.ndr_send = NDR_send,
 	.ndr_intr = NDR_intr,
-	.ndr_stat = NDR_stat
 };
 
 int main(int argc, char *argv[]) {
@@ -279,15 +279,15 @@ int main(int argc, char *argv[]) {
 }
 
 /* Initialize the driver */
-static int NDR_init(unsigned int instance, ether_addr_t *addr) {
+static int
+NDR_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+	unsigned int * ticks __unused)
+{
 	int i, ret = 0;
 
 	/* Intialize driver data structure */
 	memset(&g_driver, 0, sizeof(g_driver));
 	g_driver.link = LINK_UNKNOWN;
-	strcpy(g_driver.name, DRIVER_NAME);
-	strcat(g_driver.name, "#0");
-	g_driver.name[strlen(g_driver.name) - 1] += instance;
 	g_instance = instance;
 
 	/* Probe the device */
@@ -319,14 +319,12 @@ static int NDR_init(unsigned int instance, ether_addr_t *addr) {
 	/* ### RX_TX_ENABLE_DISABLE ### */
 	dev_rx_tx_control(g_driver.base, RX_TX_ENABLE);
 
-	/* Use a synchronous alarm instead of a watchdog timer */
-	sys_setalarm(sys_hz(), 0);
-
 	/* Clear send and recv flag */
 	g_driver.send_flag = FALSE;
 	g_driver.recv_flag = FALSE;
 
-	return 0;
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
+	return OK;
 
 err_init_buf:
 err_init_hw:
@@ -349,7 +347,10 @@ static void NDR_stop(void) {
 }
 
 /* Set driver mode */
-static void NDR_mode(unsigned int mode) {
+static void
+NDR_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
+{
 	g_driver.mode = mode;
 	/* Set driver receive mode */
 	/* ### SET_REC_MODE ### */
@@ -379,7 +380,7 @@ static ssize_t NDR_recv(struct netdriver_data *data, size_t max) {
 
 	/* Get data length */
 	/* ### Get , int inde, int indexxRx data length ### */
-	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
+	if (totlen < 8 || totlen > 2 * NDEV_ETH_PACKET_MAX) {
 		printf("NDR: Bad data length: %d\n", totlen);
 		panic(NULL);
 	}
@@ -390,7 +391,6 @@ static ssize_t NDR_recv(struct netdriver_data *data, size_t max) {
 
 	/* Copy data to user */
 	netdriver_copyout(data, 0, pdev->rx[index].buf + offset, packlen);
-	pdev->stat.ets_packetR++;
 
 	/* Set Rx descriptor after Rx done */
 	/* ### SET_RX_DESC_DONE ### */
@@ -458,11 +458,6 @@ static void NDR_intr(unsigned int mask) {
 	dev_check_ints(&g_driver);
 }
 
-/* Get driver status */
-static void NDR_stat(eth_stat_t *stat) {
-	memcpy(stat, &g_driver.stat, sizeof(*stat));
-}
-
 /* Match the device and get base address */
 static int dev_probe(NDR_driver *pdev, int instance) {
 	int devind, ioflag, i;
@@ -526,7 +521,7 @@ static int dev_probe(NDR_driver *pdev, int instance) {
 }
 
 /* Intialize hardware */
-static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr) {
+static int dev_init_hw(NDR_driver *pdev, netdriver_addr_t *addr) {
 	int r, ret;
 
 	/* Set the OS interrupt handler */
@@ -609,22 +604,22 @@ err_real_reset:
 }
 
 /* Configure MAC address */
-static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr) {
+static void dev_conf_addr(NDR_driver *pdev, netdriver_addr_t *addr) {
 	u8_t pa[6];
 
 	/* Get MAC address */
 	/* ### GET_MAC_ADDR ### */
 	dev_get_addr(pdev->base, pa);
-	addr->ea_addr[0] = pa[0];
-	addr->ea_addr[1] = pa[1];
-	addr->ea_addr[2] = pa[2];
-	addr->ea_addr[3] = pa[3];
-	addr->ea_addr[4] = pa[4];
-	addr->ea_addr[5] = pa[5];
+	addr->na_addr[0] = pa[0];
+	addr->na_addr[1] = pa[1];
+	addr->na_addr[2] = pa[2];
+	addr->na_addr[3] = pa[3];
+	addr->na_addr[4] = pa[4];
+	addr->na_addr[5] = pa[5];
 #ifdef MY_DEBUG
 	printf("NDR: Ethernet address is %02x:%02x:%02x:%02x:%02x:%02x\n",
-			addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
-			addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]);
+			addr->na_addr[0], addr->na_addr[1], addr->na_addr[2],
+			addr->na_addr[3], addr->na_addr[4], addr->na_addr[5]);
 #endif
 }
 
@@ -759,7 +754,6 @@ static void dev_handler(NDR_driver *pdev) {
 			else if (ret == TX_ERROR)
 				printf("NDR: Tx error now\n");
 
-			pdev->stat.ets_packetT++;
 			pdev->tx[tx_tail].busy = FALSE;
 			pdev->tx_busy_num--;
 

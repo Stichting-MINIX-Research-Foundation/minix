@@ -133,8 +133,6 @@ typedef struct NDR_driver {
 	phys_bytes tx_desc_dma;		/* Tx descriptor DMA buffer */
 
 	int hook;			/* IRQ hook id at kernel */
-	eth_stat_t stat;	/* Ethernet status */
-	char name[50];		/* Driver name */
 } NDR_driver;
 
 #endif

@@ -11,8 +11,6 @@
 
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 
 #include "dp.h"
 
@@ -37,17 +35,12 @@ static void el3_update_stats(dpeth_t * dep)
   SetWindow(WNO_Statistics);
 
   /* Reads everything, adding values to the local counters */
-  dep->de_stat.ets_sendErr += inb_el3(dep, REG_TxCarrierLost);	/* Reg. 00 */
-  dep->de_stat.ets_sendErr += inb_el3(dep, REG_TxNoCD);		/* Reg. 01 */
-  dep->de_stat.ets_collision += inb_el3(dep, REG_TxMultColl);	/* Reg. 02 */
-  dep->de_stat.ets_collision += inb_el3(dep, REG_TxSingleColl);	/* Reg. 03 */
-  dep->de_stat.ets_collision += inb_el3(dep, REG_TxLate);	/* Reg. 04 */
-  dep->de_stat.ets_recvErr += inb_el3(dep, REG_RxDiscarded);	/* Reg. 05 */
-  dep->de_stat.ets_packetT += inb_el3(dep, REG_TxFrames);	/* Reg. 06 */
-  dep->de_stat.ets_packetR += inb_el3(dep, REG_RxFrames);	/* Reg. 07 */
-  dep->de_stat.ets_transDef += inb_el3(dep, REG_TxDefer);	/* Reg. 08 */
-  dep->bytes_Rx += (unsigned) inw_el3(dep, REG_RxBytes);	/* Reg. 10 */
-  dep->bytes_Tx += (unsigned) inw_el3(dep, REG_TxBytes);	/* Reg. 12 */
+  netdriver_stat_oerror(inb_el3(dep, REG_TxCarrierLost));	/* Reg. 00 */
+  netdriver_stat_oerror(inb_el3(dep, REG_TxNoCD));		/* Reg. 01 */
+  netdriver_stat_coll(inb_el3(dep, REG_TxMultColl));		/* Reg. 02 */
+  netdriver_stat_coll(inb_el3(dep, REG_TxSingleColl));		/* Reg. 03 */
+  netdriver_stat_coll(inb_el3(dep, REG_TxLate));		/* Reg. 04 */
+  netdriver_stat_ierror(inb_el3(dep, REG_RxDiscarded));		/* Reg. 05 */
 
   /* Goes back to operating window and enables statistics */
   SetWindow(WNO_Operating);
@@ -120,7 +113,7 @@ static ssize_t el3_recv(dpeth_t *dep, struct netdriver_data *data, size_t max)
 	dep->de_recvq_head = rxptr->next;
 
   /* Copy buffer to user area and free it */
-  size = MIN(rxptr->size, max);
+  size = MIN((size_t)rxptr->size, max);
 
   netdriver_copyout(data, 0, rxptr->buffer, size);
 
@@ -151,15 +144,16 @@ static void el3_rx_complete(dpeth_t * dep)
 	switch (RxStatus) {	/* Bad packet (see error type) */
 	    case RXS_Dribble:
 	    case RXS_Oversize:
-	    case RXS_Runt:	dep->de_stat.ets_recvErr += 1;	break;
-	    case RXS_Overrun:	dep->de_stat.ets_OVW += 1;	break;
-	    case RXS_Framing:	dep->de_stat.ets_frameAll += 1;	break;
-	    case RXS_CRC:	dep->de_stat.ets_CRCerr += 1;	break;
+	    case RXS_Runt:
+	    case RXS_Overrun:
+	    case RXS_Framing:
+	    case RXS_CRC:
+		netdriver_stat_ierror(1);
 	}
 
   } else if ((rxptr = alloc_buff(dep, pktsize + sizeof(buff_t))) == NULL) {
 	/* Memory not available. Drop packet */
-	dep->de_stat.ets_fifoOver += 1;
+	netdriver_stat_ierror(1);
 
   } else {
 	/* Good packet.  Read it from FIFO */
@@ -199,8 +193,8 @@ static int el3_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
       (now - dep->de_xmit_start) > 4) {
 
 	DEBUG(printf("3c509:  Transmitter timed out. Resetting ....\n");)
-	dep->de_stat.ets_sendErr += 1;
-	/* Resets and restars the transmitter */
+	netdriver_stat_oerror(1);
+	/* Resets and restarts the transmitter */
 	outw_el3(dep, REG_CmdStatus, CMD_TxReset);
 	outw_el3(dep, REG_CmdStatus, CMD_TxEnable);
 	dep->de_flags &= NOT(DEF_XMIT_BUSY);
@@ -219,17 +213,18 @@ static int el3_send(dpeth_t *dep, struct netdriver_data *data, size_t size)
 
   dep->de_xmit_start = getticks();
   dep->de_flags |= DEF_XMIT_BUSY;
-  if (inw_el3(dep, REG_TxFree) > ETH_MAX_PACK_SIZE) {
+  if (inw_el3(dep, REG_TxFree) > NDEV_ETH_PACKET_MAX) {
 	/* Tx has enough room for a packet of maximum size */
 	dep->de_flags &= NOT(DEF_XMIT_BUSY);
   } else {
 	/* Interrupt driver when enough room is available */
-	outw_el3(dep, REG_CmdStatus, CMD_SetTxAvailable | ETH_MAX_PACK_SIZE);
+	outw_el3(dep, REG_CmdStatus, CMD_SetTxAvailable | NDEV_ETH_PACKET_MAX);
   }
 
   /* Pops Tx status stack */
   for (ix = 4; --ix && (TxStatus = inb_el3(dep, REG_TxStatus)) > 0;) {
-	if (TxStatus & 0x38) dep->de_stat.ets_sendErr += 1;
+	if (TxStatus & 0x38)
+		netdriver_stat_oerror(1);
 	if (TxStatus & 0x30)
 		outw_el3(dep, REG_CmdStatus, CMD_TxReset);
 	if (TxStatus & 0x3C)
@@ -262,7 +257,7 @@ static void el3_close(dpeth_t * dep)
 		 NOT((MediaLBeatEnable | MediaJabberEnable)));
 	/* micro_delay(5000); */
   }
-  DEBUG(printf("%s: stopping Etherlink ... \n", dep->de_name));
+  DEBUG(printf("%s: stopping Etherlink ... \n", netdriver_name()));
   /* Issues a global reset
   outw_el3(dep, REG_CmdStatus, CMD_GlobalReset); */
   sys_irqdisable(&dep->de_hook);	/* Disable interrupt */
@@ -341,8 +336,8 @@ static void el3_read_StationAddress(dpeth_t * dep)
 	/* Accesses with word No. */
 	rc = el3_read_eeprom(dep->de_id_port, ix / 2);
 	/* Swaps bytes of word */
-	dep->de_address.ea_addr[ix++] = (rc >> 8) & 0xFF;
-	dep->de_address.ea_addr[ix++] = rc & 0xFF;
+	dep->de_address.na_addr[ix++] = (rc >> 8) & 0xFF;
+	dep->de_address.na_addr[ix++] = rc & 0xFF;
   }
 }
 
@@ -387,7 +382,7 @@ static void el3_open(dpeth_t * dep)
   /* Set "my own" address */
   SetWindow(WNO_StationAddress);
   for (ix = 0; ix < 6; ix += 1)
-	outb_el3(dep, REG_SA0_1 + ix, dep->de_address.ea_addr[ix]);
+	outb_el3(dep, REG_SA0_1 + ix, dep->de_address.na_addr[ix]);
 
   /* Start Transceivers as required */
   if (dep->de_if_port == BNC_XCVR) {
@@ -445,10 +440,10 @@ static void el3_open(dpeth_t * dep)
   dep->de_interruptf = el3_interrupt;
 
   printf("%s: Etherlink III (%s) at %X:%d, %s port - ",
-         dep->de_name, "3c509", dep->de_base_port, dep->de_irq,
+         netdriver_name(), "3c509", dep->de_base_port, dep->de_irq,
          IfNamesMsg[dep->de_if_port >> 14]);
   for (ix = 0; ix < SA_ADDR_LEN; ix += 1)
-	printf("%02X%c", dep->de_address.ea_addr[ix],
+	printf("%02X%c", dep->de_address.na_addr[ix],
 	       ix < SA_ADDR_LEN - 1 ? ':' : '\n');
 }
 

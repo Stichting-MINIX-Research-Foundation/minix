@@ -14,9 +14,6 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 
-#include <net/hton.h>
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
 #include <assert.h>
 
 #include <minix/syslib.h>
@@ -26,21 +23,23 @@
 
 #include "lance.h"
 
-static int do_init(unsigned int instance, ether_addr_t *addr);
-static void ec_confaddr(ether_addr_t *addr);
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
+static void ec_confaddr(netdriver_addr_t *addr, unsigned int instance);
 static void ec_reinit(ether_card_t *ec);
 static void ec_reset(ether_card_t *ec);
 static void do_intr(unsigned int mask);
-static void do_mode(unsigned int mode);
+static void do_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
+	unsigned int mcast_count);
 static int do_send(struct netdriver_data *data, size_t size);
 static ssize_t do_recv(struct netdriver_data *data, size_t max);
-static void do_stat(eth_stat_t *stat);
 static void do_stop(void);
 static void lance_dump(void);
 static void do_other(const message *m_ptr, int ipc_status);
 static void get_addressing(int devind, ether_card_t *ec);
 static int lance_probe(ether_card_t *ec, unsigned int skip);
-static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr);
+static void lance_init_hw(ether_card_t *ec, netdriver_addr_t *addr,
+	unsigned int instance);
 
 /* Accesses Lance Control and Status Registers */
 static u8_t in_byte(port_t port);
@@ -50,7 +49,6 @@ static u16_t read_csr(port_t ioaddr, u16_t csrno);
 static void write_csr(port_t ioaddr, u16_t csrno, u16_t value);
 
 static ether_card_t ec_state;
-static int ec_instance;
 
 /* --- LANCE --- */
 /* General */
@@ -159,14 +157,14 @@ static phys_bytes tx_ring_base[TX_RING_SIZE]; /* Tx-slot physical address */
 static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
 
 static const struct netdriver lance_table = {
-   .ndr_init = do_init,
-   .ndr_stop = do_stop,
-   .ndr_mode = do_mode,
-   .ndr_recv = do_recv,
-   .ndr_send = do_send,
-   .ndr_stat = do_stat,
-   .ndr_intr = do_intr,
-   .ndr_other = do_other,
+	.ndr_name	= "le",
+	.ndr_init	= do_init,
+	.ndr_stop	= do_stop,
+	.ndr_set_mode	= do_set_mode,
+	.ndr_recv	= do_recv,
+	.ndr_send	= do_send,
+	.ndr_intr	= do_intr,
+	.ndr_other	= do_other,
 };
 
 /*===========================================================================*
@@ -194,34 +192,11 @@ static void lance_dump()
    printf("\n");
    ec = &ec_state;
 
-   printf("lance statistics of instance %d:\n", ec_instance);
-
-   printf("recvErr    :%8ld\t", ec->eth_stat.ets_recvErr);
-   printf("sendErr    :%8ld\t", ec->eth_stat.ets_sendErr);
-   printf("OVW        :%8ld\n", ec->eth_stat.ets_OVW);
-
-   printf("CRCerr     :%8ld\t", ec->eth_stat.ets_CRCerr);
-   printf("frameAll   :%8ld\t", ec->eth_stat.ets_frameAll);
-   printf("missedP    :%8ld\n", ec->eth_stat.ets_missedP);
-
-   printf("packetR    :%8ld\t", ec->eth_stat.ets_packetR);
-   printf("packetT    :%8ld\t", ec->eth_stat.ets_packetT);
-   printf("transDef   :%8ld\n", ec->eth_stat.ets_transDef);
-
-   printf("collision  :%8ld\t", ec->eth_stat.ets_collision);
-   printf("transAb    :%8ld\t", ec->eth_stat.ets_transAb);
-   printf("carrSense  :%8ld\n", ec->eth_stat.ets_carrSense);
-
-   printf("fifoUnder  :%8ld\t", ec->eth_stat.ets_fifoUnder);
-   printf("fifoOver   :%8ld\t", ec->eth_stat.ets_fifoOver);
-   printf("CDheartbeat:%8ld\n", ec->eth_stat.ets_CDheartbeat);
-
-   printf("OWC        :%8ld\t", ec->eth_stat.ets_OWC);
+   printf("lance driver %s:\n", netdriver_name());
 
    ioaddr = ec->ec_port;
    isr = read_csr(ioaddr, LANCE_CSR0);
-   printf("isr = 0x%x, flags = 0x%x\n", isr,
-             ec->flags);
+   printf("isr = 0x%x, mode = 0x%x\n", isr, ec->ec_mode);
 
    printf("irq = %d\tioadr = 0x%x\n", ec->ec_irq, ec->ec_port);
 
@@ -250,7 +225,7 @@ static void do_other(const message *m_ptr, int ipc_status)
 /*===========================================================================*
  *                              ec_confaddr                                  *
  *===========================================================================*/
-static void ec_confaddr(ether_addr_t *addr)
+static void ec_confaddr(netdriver_addr_t *addr, unsigned int instance)
 {
    int i;
    char eakey[16];
@@ -259,14 +234,14 @@ static void ec_confaddr(ether_addr_t *addr)
 
    /* User defined ethernet address? */
    strlcpy(eakey, "LANCE0_EA", sizeof(eakey));
-   eakey[5] += ec_instance;
+   eakey[5] += instance;
 
    for (i = 0; i < 6; i++)
    {
-      v= addr->ea_addr[i];
+      v= addr->na_addr[i];
       if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
          break;
-      addr->ea_addr[i]= v;
+      addr->na_addr[i]= v;
    }
 
    if (i != 0 && i != 6)
@@ -279,15 +254,16 @@ static void ec_confaddr(ether_addr_t *addr)
 /*===========================================================================*
  *		                do_init                                      *
  *===========================================================================*/
-static int do_init(unsigned int instance, ether_addr_t *addr)
+static int do_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks __unused)
 {
 /* Initialize the lance driver. */
    ether_card_t *ec;
 #if VERBOSE
-   int i, r;
+   int i;
 #endif
 #if LANCE_FKEY
-   int fkeys, sfkeys;
+   int r, fkeys, sfkeys;
 #endif
 
 #if LANCE_FKEY
@@ -297,27 +273,24 @@ static int do_init(unsigned int instance, ether_addr_t *addr)
       printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
 #endif
 
-   ec_instance = instance;
-
    /* Initialize the driver state. */
    ec= &ec_state;
    memset(ec, 0, sizeof(*ec));
-   strlcpy(ec->port_name, "lance#0", sizeof(ec->port_name));
-   ec->port_name[6] += instance;
 
    /* See if there is a matching card. */
    if (!lance_probe(ec, instance))
       return ENXIO;
 
    /* Initialize the hardware. */
-   lance_init_hw(ec, addr);
+   lance_init_hw(ec, addr, instance);
 
 #if VERBOSE
-   printf("%s: Ethernet address ", ec->port_name);
+   printf("%s: Ethernet address ", netdriver_name());
    for (i= 0; i < 6; i++)
-      printf("%x%c", addr->ea_addr[i], i < 5 ? ':' : '\n');
+      printf("%x%c", addr->na_addr[i], i < 5 ? ':' : '\n');
 #endif
 
+   *caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST;
    return OK;
 }
 
@@ -349,13 +322,14 @@ static void ec_reinit(ether_card_t *ec)
    }
 
    /* Set 'Receive Mode' */
-   if (ec->flags & ECF_PROMISC)
+   if (ec->ec_mode & NDEV_MODE_PROMISC)
    {
       write_csr(ioaddr, LANCE_CSR15, LANCE_CSR15_PROM);
    }
    else
    {
-      if (ec->flags & (ECF_BROAD | ECF_MULTI))
+      if (ec->ec_mode &
+          (NDEV_MODE_BCAST | NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
       {
          write_csr(ioaddr, LANCE_CSR15, 0x0000);
       }
@@ -373,22 +347,17 @@ static void ec_reinit(ether_card_t *ec)
 }
 
 /*===========================================================================*
- *                              do_mode                                      *
+ *                              do_set_mode                                    *
  *===========================================================================*/
-static void do_mode(unsigned int mode)
+static void do_set_mode(unsigned int mode,
+	const netdriver_addr_t *mcast_list __unused,
+	unsigned int mcast_count __unused)
 {
    ether_card_t *ec;
 
    ec = &ec_state;
 
-   ec->flags &= ~(ECF_PROMISC | ECF_MULTI | ECF_BROAD);
-
-   if (mode & NDEV_PROMISC)
-      ec->flags |= ECF_PROMISC | ECF_MULTI | ECF_BROAD;
-   if (mode & NDEV_MULTI)
-      ec->flags |= ECF_MULTI;
-   if (mode & NDEV_BROAD)
-      ec->flags |= ECF_BROAD;
+   ec->ec_mode = mode;
 
    ec_reinit(ec);
 }
@@ -436,7 +405,7 @@ static void do_intr(unsigned int __unused mask)
 #if VERBOSE
          printf("RX Missed Frame\n");
 #endif
-         ec->eth_stat.ets_recvErr++;
+         netdriver_stat_ierror(1);
       }
       if ((isr & LANCE_CSR0_BABL) || (isr & LANCE_CSR0_TINT))
       {
@@ -445,7 +414,7 @@ static void do_intr(unsigned int __unused mask)
 #if VERBOSE
             printf("TX Timeout\n");
 #endif
-            ec->eth_stat.ets_sendErr++;
+            netdriver_stat_oerror(1);
          }
          if (isr & LANCE_CSR0_TINT)
          {
@@ -459,24 +428,16 @@ static void do_intr(unsigned int __unused mask)
             if (status & 0x40000000)
             {
                status = lp->tx_ring[cur_tx_slot_nr].misc;
-               ec->eth_stat.ets_sendErr++;
-               if (status & 0x0400) /* RTRY */
-                  ec->eth_stat.ets_transAb++;
-               if (status & 0x0800) /* LCAR */
-                  ec->eth_stat.ets_carrSense++;
-               if (status & 0x1000) /* LCOL */
-                  ec->eth_stat.ets_OWC++;
+               netdriver_stat_oerror(1);
                if (status & 0x4000) /* UFLO */
                {
-                  ec->eth_stat.ets_fifoUnder++;
                   must_restart=1;
                }
             }
             else
             {
                if (status & 0x18000000)
-                  ec->eth_stat.ets_collision++;
-               ec->eth_stat.ets_packetT++;
+                  netdriver_stat_coll(1);
             }
          }
          /* transmit a packet on the next slot if it exists. */
@@ -597,20 +558,11 @@ static ssize_t do_recv(struct netdriver_data *data, size_t max)
       if (status != 0x03)
       {
          if (status & 0x01)
-            ec->eth_stat.ets_recvErr++;
-         if (status & 0x04)
-            ec->eth_stat.ets_fifoOver++;
-         if (status & 0x08)
-            ec->eth_stat.ets_CRCerr++;
-         if (status & 0x10)
-             ec->eth_stat.ets_OVW++;
-         if (status & 0x20)
-             ec->eth_stat.ets_frameAll++;
+            netdriver_stat_ierror(1);
          length = 0;
       }
       else
       {
-         ec->eth_stat.ets_packetR++;
          length = lp->rx_ring[rx_slot_nr].msg_length;
       }
 
@@ -675,15 +627,6 @@ static int do_send(struct netdriver_data *data, size_t size)
    }
 
    return OK;
-}
-
-/*===========================================================================*
- *                              do_stat                                      *
- *===========================================================================*/
-static void do_stat(eth_stat_t *stat)
-{
-
-   memcpy(stat, &ec_state.eth_stat, sizeof(*stat));
 }
 
 /*===========================================================================*
@@ -799,7 +742,7 @@ static int lance_probe(ether_card_t *ec, unsigned int skip)
 
 #if VERBOSE
    printf("%s: %s at %X:%d\n",
-          ec->port_name, chip_table[lance_version].name,
+          netdriver_name(), chip_table[lance_version].name,
           ec->ec_port, ec->ec_irq);
 #endif
 
@@ -823,7 +766,8 @@ static phys_bytes virt_to_bus(void *ptr)
 /*===========================================================================*
  *                              lance_init_hw                                *
  *===========================================================================*/
-static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr)
+static void lance_init_hw(ether_card_t *ec, netdriver_addr_t *addr,
+	unsigned int instance)
 {
    phys_bytes lance_buf_phys;
    int i, r;
@@ -859,10 +803,10 @@ static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr)
 
    /* ============= Get MAC address (cf. lance_probe1) ================ */
    for (i = 0; i < 6; ++i)
-      addr->ea_addr[i]=in_byte(ioaddr+LANCE_ETH_ADDR+i);
+      addr->na_addr[i]=in_byte(ioaddr+LANCE_ETH_ADDR+i);
 
    /* Allow the user to override the hardware address. */
-   ec_confaddr(addr);
+   ec_confaddr(addr, instance);
 
    /* ============ (re)start init_block(cf. lance_reset) =============== */
    /* Reset the LANCE */
@@ -871,7 +815,7 @@ static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr)
    /* ----- Re-initialize the LANCE ----- */
    /* Set station address */
    for (i = 0; i < 6; ++i)
-      lp->init_block.phys_addr[i] = addr->ea_addr[i];
+      lp->init_block.phys_addr[i] = addr->na_addr[i];
    /* Preset the receive ring headers */
    for (i=0; i<RX_RING_SIZE; i++)
    {
@@ -915,13 +859,14 @@ static void lance_init_hw(ether_card_t *ec, ether_addr_t *addr)
    }
 
    /* Set 'Receive Mode' */
-   if (ec->flags & ECF_PROMISC)
+   if (ec->ec_mode & NDEV_MODE_PROMISC)
    {
       write_csr(ioaddr, LANCE_CSR15, LANCE_CSR15_PROM);
    }
    else
    {
-      if (ec->flags & (ECF_BROAD | ECF_MULTI))
+      if (ec->ec_mode &
+          (NDEV_MODE_BCAST | NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
       {
          write_csr(ioaddr, LANCE_CSR15, 0x0000);
       }

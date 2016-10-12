@@ -10,14 +10,19 @@
 #include "e1000_reg.h"
 #include "e1000_pci.h"
 
-static int e1000_init(unsigned int instance, ether_addr_t *addr);
+static int e1000_init(unsigned int instance, netdriver_addr_t *addr,
+	uint32_t *caps, unsigned int *ticks);
 static void e1000_stop(void);
+static void e1000_set_mode(unsigned int, const netdriver_addr_t *,
+	unsigned int);
+static void e1000_set_hwaddr(const netdriver_addr_t *);
 static int e1000_send(struct netdriver_data *data, size_t size);
 static ssize_t e1000_recv(struct netdriver_data *data, size_t max);
-static void e1000_stat(eth_stat_t *stat);
+static unsigned int e1000_get_link(uint32_t *);
 static void e1000_intr(unsigned int mask);
+static void e1000_tick(void);
 static int e1000_probe(e1000_t *e, int skip);
-static void e1000_init_hw(e1000_t *e, ether_addr_t *addr);
+static void e1000_init_hw(e1000_t *e, netdriver_addr_t *addr);
 static uint32_t e1000_reg_read(e1000_t *e, uint32_t reg);
 static void e1000_reg_write(e1000_t *e, uint32_t reg, uint32_t value);
 static void e1000_reg_set(e1000_t *e, uint32_t reg, uint32_t value);
@@ -31,12 +36,16 @@ static int e1000_instance;
 static e1000_t e1000_state;
 
 static const struct netdriver e1000_table = {
-	.ndr_init = e1000_init,
-	.ndr_stop = e1000_stop,
-	.ndr_recv = e1000_recv,
-	.ndr_send = e1000_send,
-	.ndr_stat = e1000_stat,
-	.ndr_intr = e1000_intr,
+	.ndr_name	= "em",
+	.ndr_init	= e1000_init,
+	.ndr_stop	= e1000_stop,
+	.ndr_set_mode	= e1000_set_mode,
+	.ndr_set_hwaddr	= e1000_set_hwaddr,
+	.ndr_recv	= e1000_recv,
+	.ndr_send	= e1000_send,
+	.ndr_get_link	= e1000_get_link,
+	.ndr_intr	= e1000_intr,
+	.ndr_tick	= e1000_tick
 };
 
 /*
@@ -58,7 +67,8 @@ main(int argc, char * argv[])
  * Initialize the e1000 driver and device.
  */
 static int
-e1000_init(unsigned int instance, ether_addr_t * addr)
+e1000_init(unsigned int instance, netdriver_addr_t * addr, uint32_t * caps,
+	unsigned int * ticks)
 {
 	e1000_t *e;
 	int r;
@@ -69,8 +79,6 @@ e1000_init(unsigned int instance, ether_addr_t * addr)
 	memset(&e1000_state, 0, sizeof(e1000_state));
 
 	e = &e1000_state;
-	strlcpy(e->name, "e1000#0", sizeof(e->name));
-	e->name[6] += instance;
 
 	/* Perform calibration. */
 	if ((r = tsc_calibrate()) != OK)
@@ -83,6 +91,8 @@ e1000_init(unsigned int instance, ether_addr_t * addr)
 	/* Initialize the hardware, and return its ethernet address. */
 	e1000_init_hw(e, addr);
 
+	*caps = NDEV_CAP_MCAST | NDEV_CAP_BCAST | NDEV_CAP_HWADDR;
+	*ticks = sys_hz() / 10; /* update statistics 10x/sec */
 	return OK;
 }
 
@@ -138,9 +148,9 @@ e1000_probe(e1000_t * e, int skip)
 	u16_t vid, did, cr;
 	u32_t status;
 	u32_t base, size;
-	char *dname;
+	const char *dname;
 
-	E1000_DEBUG(3, ("%s: probe()\n", e->name));
+	E1000_DEBUG(3, ("%s: probe()\n", netdriver_name()));
 
 	/* Initialize communication to the PCI driver. */
 	pci_init();
@@ -152,7 +162,7 @@ e1000_probe(e1000_t * e, int skip)
 	/* Loop devices on the PCI bus. */
 	while (skip--) {
 		E1000_DEBUG(3, ("%s: probe() devind %d vid 0x%x did 0x%x\n",
-		    e->name, devind, vid, did));
+		    netdriver_name(), devind, vid, did));
 
 		if (!(r = pci_next_dev(&devind, &vid, &did)))
 			return FALSE;
@@ -184,7 +194,7 @@ e1000_probe(e1000_t * e, int skip)
 	if (!(dname = pci_dev_name(vid, did)))
 		dname = "Intel Pro/1000 Gigabit Ethernet Card";
 	E1000_DEBUG(1, ("%s: %s (%04x/%04x) at %s\n",
-	    e->name, dname, vid, did, pci_slot_name(devind)));
+	    netdriver_name(), dname, vid, did, pci_slot_name(devind)));
 
 	/* Reserve PCI resources found. */
 	pci_reserve(devind);
@@ -210,8 +220,9 @@ e1000_probe(e1000_t * e, int skip)
 
 	/* Output debug information. */
 	status = e1000_reg_read(e, E1000_REG_STATUS);
-	E1000_DEBUG(3, ("%s: MEM at %p, IRQ %d\n", e->name, e->regs, e->irq));
-	E1000_DEBUG(3, ("%s: link %s, %s duplex\n", e->name,
+	E1000_DEBUG(3, ("%s: MEM at %p, IRQ %d\n", netdriver_name(),
+	    e->regs, e->irq));
+	E1000_DEBUG(3, ("%s: link %s, %s duplex\n", netdriver_name(),
 	    status & 3 ? "up"   : "down", status & 1 ? "full" : "half"));
 
 	return TRUE;
@@ -235,7 +246,7 @@ e1000_reset_hw(e1000_t * e)
  * Initialize and return the card's ethernet address.
  */
 static void
-e1000_init_addr(e1000_t * e, ether_addr_t * addr)
+e1000_init_addr(e1000_t * e, netdriver_addr_t * addr)
 {
 	static char eakey[] = E1000_ENVVAR "#_EA";
 	static char eafmt[] = "x:x:x:x:x:x";
@@ -250,27 +261,25 @@ e1000_init_addr(e1000_t * e, ether_addr_t * addr)
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
 		else
-			addr->ea_addr[i] = v;
+			addr->na_addr[i] = v;
 	}
 
 	/* If that fails, read Ethernet Address from EEPROM. */
 	if (i != 6) {
 		for (i = 0; i < 3; i++) {
 			word = e->eeprom_read(e, i);
-			addr->ea_addr[i * 2]     = (word & 0x00ff);
-			addr->ea_addr[i * 2 + 1] = (word & 0xff00) >> 8;
+			addr->na_addr[i * 2]     = (word & 0x00ff);
+			addr->na_addr[i * 2 + 1] = (word & 0xff00) >> 8;
 		}
 	}
 
 	/* Set Receive Address. */
-	e1000_reg_write(e, E1000_REG_RAL, *(u32_t *)(&addr->ea_addr[0]));
-	e1000_reg_write(e, E1000_REG_RAH, *(u16_t *)(&addr->ea_addr[4]));
-	e1000_reg_set(e, E1000_REG_RAH, E1000_REG_RAH_AV);
-	e1000_reg_set(e, E1000_REG_RCTL, E1000_REG_RCTL_MPE);
+	e1000_set_hwaddr(addr);
 
-	E1000_DEBUG(3, ("%s: Ethernet Address %x:%x:%x:%x:%x:%x\n", e->name,
-	    addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
-	    addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]));
+	E1000_DEBUG(3, ("%s: Ethernet Address %x:%x:%x:%x:%x:%x\n",
+	    netdriver_name(),
+	    addr->na_addr[0], addr->na_addr[1], addr->na_addr[2],
+	    addr->na_addr[3], addr->na_addr[4], addr->na_addr[5]));
 }
 
 /*
@@ -348,7 +357,7 @@ e1000_init_buf(e1000_t * e)
  * Initialize the hardware.  Return the ethernet address.
  */
 static void
-e1000_init_hw(e1000_t * e, ether_addr_t * addr)
+e1000_init_hw(e1000_t * e, netdriver_addr_t * addr)
 {
 	int r, i;
 
@@ -397,6 +406,52 @@ e1000_init_hw(e1000_t * e, ether_addr_t * addr)
 	/* Enable interrupts. */
 	e1000_reg_set(e, E1000_REG_IMS, E1000_REG_IMS_LSC | E1000_REG_IMS_RXO |
 	    E1000_REG_IMS_RXT | E1000_REG_IMS_TXQE | E1000_REG_IMS_TXDW);
+}
+
+/*
+ * Set receive mode.
+ */
+static void
+e1000_set_mode(unsigned int mode, const netdriver_addr_t * mcast_list __unused,
+	unsigned int mcast_count __unused)
+{
+	e1000_t *e;
+	uint32_t rctl;
+
+	e = &e1000_state;
+
+	rctl = e1000_reg_read(e, E1000_REG_RCTL);
+
+	rctl &= ~(E1000_REG_RCTL_BAM | E1000_REG_RCTL_MPE |
+	    E1000_REG_RCTL_UPE);
+
+	/* TODO: support for NDEV_MODE_DOWN and multicast lists */
+	if (mode & NDEV_MODE_BCAST)
+		rctl |= E1000_REG_RCTL_BAM;
+	if (mode & (NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
+		rctl |= E1000_REG_RCTL_MPE;
+	if (mode & NDEV_MODE_PROMISC)
+		rctl |= E1000_REG_RCTL_BAM | E1000_REG_RCTL_MPE |
+		    E1000_REG_RCTL_UPE;
+
+	e1000_reg_write(e, E1000_REG_RCTL, rctl);
+}
+
+/*
+ * Set hardware address.
+ */
+static void
+e1000_set_hwaddr(const netdriver_addr_t * hwaddr)
+{
+	e1000_t *e;
+
+	e = &e1000_state;
+
+	e1000_reg_write(e, E1000_REG_RAL,
+	    *(const u32_t *)(&hwaddr->na_addr[0]));
+	e1000_reg_write(e, E1000_REG_RAH,
+	    *(const u16_t *)(&hwaddr->na_addr[4]));
+	e1000_reg_set(e, E1000_REG_RAH, E1000_REG_RAH_AV);
 }
 
 /*
@@ -463,7 +518,8 @@ e1000_recv(struct netdriver_data * data, size_t max)
 	head = e1000_reg_read(e, E1000_REG_RDH);
 	tail = e1000_reg_read(e, E1000_REG_RDT);
 
-	E1000_DEBUG(4, ("%s: head=%u, tail=%u\n", e->name, head, tail));
+	E1000_DEBUG(4, ("%s: head=%u, tail=%u\n",
+	    netdriver_name(), head, tail));
 
 	if (head == tail)
 		return SUSPEND;
@@ -506,40 +562,38 @@ e1000_recv(struct netdriver_data * data, size_t max)
 }
 
 /*
- * Return statistics.
+ * Return the link and media status.
  */
-static void
-e1000_stat(eth_stat_t * stat)
+static unsigned int
+e1000_get_link(uint32_t * media)
 {
-	e1000_t *e = &e1000_state;
+	uint32_t status, type;
 
-	E1000_DEBUG(3, ("e1000: stat()\n"));
+	status = e1000_reg_read(&e1000_state, E1000_REG_STATUS);
 
-	stat->ets_recvErr	= e1000_reg_read(e, E1000_REG_RXERRC);
-	stat->ets_sendErr	= 0;
-	stat->ets_OVW		= 0;
-	stat->ets_CRCerr	= e1000_reg_read(e, E1000_REG_CRCERRS);
-	stat->ets_frameAll	= 0;
-	stat->ets_missedP	= e1000_reg_read(e, E1000_REG_MPC);
-	stat->ets_packetR	= e1000_reg_read(e, E1000_REG_TPR);
-	stat->ets_packetT	= e1000_reg_read(e, E1000_REG_TPT);
-	stat->ets_collision	= e1000_reg_read(e, E1000_REG_COLC);
-	stat->ets_transAb	= 0;
-	stat->ets_carrSense	= 0;
-	stat->ets_fifoUnder	= 0;
-	stat->ets_fifoOver	= 0;
-	stat->ets_CDheartbeat	= 0;
-	stat->ets_OWC		= 0;
-}
+	if (!(status & E1000_REG_STATUS_LU))
+		return NDEV_LINK_DOWN;
 
-/*
- * Link status has changed.  Nothing to do for now.
- */
-static void
-e1000_link_changed(e1000_t * e)
-{
+	if (status & E1000_REG_STATUS_FD)
+		type = IFM_ETHER | IFM_FDX;
+	else
+		type = IFM_ETHER | IFM_HDX;
 
-	E1000_DEBUG(4, ("%s: link_changed()\n", e->name));
+	switch (status & E1000_REG_STATUS_SPEED) {
+	case E1000_REG_STATUS_SPEED_10:
+		type |= IFM_10_T;
+		break;
+	case E1000_REG_STATUS_SPEED_100:
+		type |= IFM_100_TX;
+		break;
+	case E1000_REG_STATUS_SPEED_1000_A:
+	case E1000_REG_STATUS_SPEED_1000_B:
+		type |= IFM_1000_T;
+		break;
+	}
+
+	*media = type;
+	return NDEV_LINK_UP;
 }
 
 /*
@@ -562,7 +616,7 @@ e1000_intr(unsigned int __unused mask)
 	/* Read the Interrupt Cause Read register. */
 	if ((cause = e1000_reg_read(e, E1000_REG_ICR)) != 0) {
 		if (cause & E1000_REG_ICR_LSC)
-			e1000_link_changed(e);
+			netdriver_link();
 
 		if (cause & (E1000_REG_ICR_RXO | E1000_REG_ICR_RXT))
 			netdriver_recv();
@@ -570,6 +624,23 @@ e1000_intr(unsigned int __unused mask)
 		if (cause & (E1000_REG_ICR_TXQE | E1000_REG_ICR_TXDW))
 			netdriver_send();
 	}
+}
+
+/*
+ * Do regular processing.
+ */
+static void
+e1000_tick(void)
+{
+	e1000_t *e;
+
+	e = &e1000_state;
+
+	/* Update statistics. */
+	netdriver_stat_ierror(e1000_reg_read(e, E1000_REG_RXERRC));
+	netdriver_stat_ierror(e1000_reg_read(e, E1000_REG_CRCERRS));
+	netdriver_stat_ierror(e1000_reg_read(e, E1000_REG_MPC));
+	netdriver_stat_coll(e1000_reg_read(e, E1000_REG_COLC));
 }
 
 /*
@@ -582,7 +653,7 @@ e1000_stop(void)
 
 	e = &e1000_state;
 
-	E1000_DEBUG(3, ("%s: stop()\n", e->name));
+	E1000_DEBUG(3, ("%s: stop()\n", netdriver_name()));
 
 	e1000_reset_hw(e);
 }
