@@ -23,6 +23,7 @@
 ./etc/system.conf.d/vbfs                                minix-base
 ./etc/system.conf.d/vbox                                minix-base
 ./etc/system.conf.d/virtio_net                          minix-base
+./etc/system.conf.d/vt6105                              minix-base
 ./service/3c90x                                         minix-base
 ./service/acpi                                          minix-base
 ./service/ahci                                          minix-base
@@ -53,6 +54,7 @@
 ./service/vbox                                          minix-base
 ./service/virtio_blk                                    minix-base
 ./service/virtio_net                                    minix-base
+./service/vt6105                                        minix-base
 ./usr/lib/libhgfs.a                                     minix-base
 ./usr/lib/libhgfs_pic.a                                 minix-base
 ./usr/lib/libm387.a                                     minix-base
