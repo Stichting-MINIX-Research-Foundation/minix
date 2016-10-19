@@ -456,7 +456,11 @@ static void vt_check_link(vt_driver *pdev) {
 }
 
 /* Stop the driver */
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 static void vt_stop(void) {
+=======
+static void vt_stop(void) {	
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 	u16_t base = g_driver.vt_base_addr;
 
 	/* Free Rx and Tx buffer*/
@@ -537,13 +541,21 @@ static ssize_t vt_recv(struct netdriver_data *data, size_t max) {
 
 		/* Other packet */
 		if (index == VT_RX_DESC_NUM - 1) {
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 			desc->status = VT_DESC_OWN |
+=======
+			desc->status = VT_DESC_OWN | 
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 						((VT_RX_BUF_SIZE << 16) & VT_DESC_RX_LENMASK);
 			index = 0;
 			desc = pdev->vt_rx_desc;
 		}
 		else {
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 			desc->status = VT_DESC_OWN |
+=======
+			desc->status = VT_DESC_OWN | 
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 						((VT_RX_BUF_SIZE << 16) & VT_DESC_RX_LENMASK);
 			index++;
 			desc++;
@@ -642,7 +654,11 @@ static void vt_intr(unsigned int mask) {
 
 /* Real handler interrupt */
 static void vt_handler(vt_driver *pdev) {
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 	u16_t base = pdev->vt_base_addr;
+=======
+	u16_t base = pdev->vt_base_addr;	
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 	int intr_status;
 	u8_t db;
 	u16_t dw;
@@ -653,7 +669,11 @@ static void vt_handler(vt_driver *pdev) {
 	/* Get interrupt status */
 	intr_status = vt_inw(base, VT_REG_ISR);
 
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 	/* Clear interrupt */
+=======
+	/* Clear interrupt */	
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 	dw = intr_status & ~(VT_INTR_PCI_ERR | VT_INTR_PORT_CHANGE);
 	vt_outw(base, VT_REG_ISR, dw);
 
@@ -663,7 +683,11 @@ static void vt_handler(vt_driver *pdev) {
 
 	/* Check interrupt status */
 	if (intr_status & VT_INTR_RX_DONE) {
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 		pdev->vt_recv_flag = TRUE;
+=======
+		pdev->vt_recv_flag = TRUE;	
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 		flag++;
 
 		if (intr_status & VT_INTR_RX_ERR) {
@@ -740,7 +764,11 @@ static void vt_handler(vt_driver *pdev) {
 			pdev->vt_stat.ets_packetT++;
 			pdev->vt_tx[tx_tail].busy = FALSE;
 			pdev->vt_tx_busy_num--;
+<<<<<<< fedd2b738632fec02d8e1e2fb8d51f2bd6e3d06d
 
+=======
+			
+>>>>>>> Add the driver for VIA Technology 6105/6106S Ethernet card
 			if (++tx_tail >= VT_TX_DESC_NUM)
 				tx_tail = 0;
 
