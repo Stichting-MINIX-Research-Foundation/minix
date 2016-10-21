@@ -1312,6 +1312,7 @@
 ./usr/include/net/if_arp.h                              minix-comp
 ./usr/include/net/if_dl.h                               minix-comp
 ./usr/include/net/if_ether.h                            minix-comp
+./usr/include/net/if_ieee1394.h                         minix-comp
 ./usr/include/net/if_media.h                            minix-comp
 ./usr/include/net/if_pflog.h                            minix-comp
 ./usr/include/net/if_types.h                            minix-comp
