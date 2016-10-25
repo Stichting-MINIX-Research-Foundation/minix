@@ -219,6 +219,7 @@ static int rs_break_off(tty_t *tp, int try);
 static int rs_close(tty_t *tp, int try);
 static void out_int(rs232_t *rs);
 static void rs232_handler(rs232_t *rs);
+static long no_rts_cts;
 
 static int my_inb(port_t port)
 {
@@ -452,6 +453,7 @@ void rs_init(tty_t *tp)
   int s, irq;
   char l[10];
 
+  env_parse("tty_rtscts", "d", 0, &no_rts_cts, 0, 1);
   /* Associate RS232 and TTY structures. */
   line = tp - &tty_table[NR_CONS];
 
