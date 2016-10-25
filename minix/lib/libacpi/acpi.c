@@ -10,26 +10,17 @@
 #include <minix/log.h>
 #include <minix/sysutil.h>
 
-#include "acpi.h"
-
 static struct log log =
 { .name = "libacpi", .log_level = LEVEL_TRACE, .log_func = default_log };
 
 static endpoint_t acpi_ep = NONE;
 
 int
-do_init()
+acpi_init(void)
 {
 	int res;
 	res = ds_retrieve_label_endpt("acpi", &acpi_ep);
-	log_info(&log, "resolved acpi to endpoint: %d\n", acpi_ep);
 	return res;
-}
-
-int
-acpi_init()
-{
-	return do_init();
 }
 
 /*===========================================================================*
@@ -41,12 +32,13 @@ acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 	int err;
 	message m;
 
-	if(acpi_ep == NONE)
-	{
-		err = do_init();
-		if (OK != err)
-		{
+	if (acpi_ep == NONE) {
+		err = acpi_init();
+		if (OK != err) {
 			panic("libacpi: ds_retrieve_label_endpt failed for 'acpi': %d", err);
+		}
+		else {
+			log_info(&log, "resolved acpi to endpoint: %d\n", acpi_ep);
 		}
 	}
 
@@ -72,11 +64,9 @@ acpi_map_bridge(unsigned int pbnr, unsigned int dev, unsigned int sbnr)
 	int err;
 	message m;
 
-	if(acpi_ep == NONE)
-	{
-		err = do_init();
-		if (OK != err)
-		{
+	if(acpi_ep == NONE) {
+		err = acpi_init();
+		if (OK != err) {
 			panic("libacpi: ds_retrieve_label_endpt failed for 'acpi': %d", err);
 		}
 	}
