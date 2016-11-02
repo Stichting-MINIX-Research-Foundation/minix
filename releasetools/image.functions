@@ -257,7 +257,7 @@ fetch_and_build_grub()
          git clone git://git.savannah.gnu.org/grub.git ${RELEASETOOLSDIR}/grub
          pushd ${RELEASETOOLSDIR}/grub
          # most recent known working commit at the time of writing
-         git clone b524fa27f56381bb0efa4944e36f50265113aee5
+         git checkout a0bf403f66dbaca4edd8e667bfc397dd91c8d71c
          ./autogen.sh
          ./configure --with-platform=efi --target=i386
          make clean

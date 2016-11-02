@@ -12,6 +12,7 @@ SUBDIR+=	lance
 SUBDIR+=	rtl8139
 SUBDIR+=	rtl8169
 SUBDIR+=	virtio_net
+SUBDIR+=	vt6105
 .endif # ${MACHINE_ARCH} == "i386"
 
 .if ${MACHINE_ARCH} == "earm"

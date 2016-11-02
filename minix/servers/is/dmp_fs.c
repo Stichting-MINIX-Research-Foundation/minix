@@ -1,8 +1,8 @@
 /* This file contains procedures to dump to FS' data structures.
  *
  * The entry points into this file are
- *   dtab_dump:   	display device <-> driver mappings	  
- *   fproc_dump:   	display FS process table	  
+ *   dtab_dump:   	display device <-> driver mappings
+ *   fproc_dump:   	display FS process table
  *
  * Created:
  *   Oct 01, 2004:	by Jorrit N. Herder
@@ -21,7 +21,8 @@ struct dmap dmap[NR_DEVICES];
 /*===========================================================================*
  *				fproc_dmp				     *
  *===========================================================================*/
-void fproc_dmp()
+void
+fproc_dmp(void)
 {
   struct fproc *fp;
   int i, j, nfds, n=0;
@@ -61,7 +62,8 @@ void fproc_dmp()
 /*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
-void dtab_dmp()
+void
+dtab_dmp(void)
 {
     int i;
 
@@ -69,7 +71,7 @@ void dtab_dmp()
         printf("Error obtaining table from VFS. Perhaps recompile IS?\n");
         return;
     }
-    
+
     printf("File System (FS) device <-> driver mappings\n");
     printf("    Label     Major Driver ept\n");
     printf("------------- ----- ----------\n");

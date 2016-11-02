@@ -289,8 +289,10 @@ int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 /*===========================================================================*
  *				read_only				     *
  *===========================================================================*/
-int read_only(vp)
-struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
+int
+read_only(
+	struct vnode *vp		/* ptr to inode whose file sys is to be cked */
+)
 {
 /* Check to see if the file system on which the inode 'ip' resides is mounted
  * read only.  If so, return EROFS, else return OK.

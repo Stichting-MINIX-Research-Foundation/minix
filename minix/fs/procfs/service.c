@@ -73,6 +73,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "rtl8169", .policy_str = "reset" },
 		{ .label = "uds", .policy_str = "reset" },
 		{ .label = "virtio_net", .policy_str = "reset" },
+		{ .label = "vt6105", .policy_str = "reset" },
 		/* power */
 		{ .label = "acpi", .policy_str = "" },
 		{ .label = "tps65217", .policy_str = "" },

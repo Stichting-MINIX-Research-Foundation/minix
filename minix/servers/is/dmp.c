@@ -1,7 +1,7 @@
-/* This file contains information dump procedures. During the initialization 
+/* This file contains information dump procedures. During the initialization
  * of the Information Service 'known' function keys are registered at the TTY
- * server in order to receive a notification if one is pressed. Here, the 
- * corresponding dump procedure is called.  
+ * server in order to receive a notification if one is pressed. Here, the
+ * corresponding dump procedure is called.
  *
  * The entry points into this file are
  *   map_unmap_fkeys:	register or unregister function key maps with TTY
@@ -42,8 +42,8 @@ struct hook_entry {
 /*===========================================================================*
  *				map_unmap_keys				     *
  *===========================================================================*/
-void map_unmap_fkeys(map)
-int map;
+void
+map_unmap_fkeys(int map)
 {
   int fkeys, sfkeys;
   int h, s;
@@ -51,7 +51,7 @@ int map;
   fkeys = sfkeys = 0;
 
   for (h = 0; h < NHOOKS; h++) {
-      if (hooks[h].key >= F1 && hooks[h].key <= F12) 
+      if (hooks[h].key >= F1 && hooks[h].key <= F12)
           bit_set(fkeys, hooks[h].key - F1 + 1);
       else if (hooks[h].key >= SF1 && hooks[h].key <= SF12)
           bit_set(sfkeys, hooks[h].key - SF1 + 1);

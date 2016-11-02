@@ -137,9 +137,11 @@ int get_fd(struct fproc *rfp, int start, mode_t bits, int *k, struct filp **fpt)
 /*===========================================================================*
  *				get_filp				     *
  *===========================================================================*/
-struct filp *get_filp(fild, locktype)
-int fild;			/* file descriptor */
-tll_access_t locktype;
+struct filp *
+get_filp(
+	int fild,			/* file descriptor */
+	tll_access_t locktype
+)
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
 
@@ -150,10 +152,12 @@ tll_access_t locktype;
 /*===========================================================================*
  *				get_filp2				     *
  *===========================================================================*/
-struct filp *get_filp2(rfp, fild, locktype)
-register struct fproc *rfp;
-int fild;			/* file descriptor */
-tll_access_t locktype;
+struct filp *
+get_filp2(
+	register struct fproc *rfp,
+	int fild,			/* file descriptor */
+	tll_access_t locktype
+)
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
   struct filp *filp;
@@ -242,9 +246,8 @@ void invalidate_filp_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				lock_filp				     *
  *===========================================================================*/
-void lock_filp(filp, locktype)
-struct filp *filp;
-tll_access_t locktype;
+void
+lock_filp(struct filp *filp, tll_access_t locktype)
 {
   struct worker_thread *org_self;
   struct vnode *vp;
@@ -287,8 +290,8 @@ tll_access_t locktype;
 /*===========================================================================*
  *				unlock_filp				     *
  *===========================================================================*/
-void unlock_filp(filp)
-struct filp *filp;
+void
+unlock_filp(struct filp *filp)
 {
   /* If this filp holds a soft lock on the vnode, we must be the owner */
   if (filp->filp_softlock != NULL)
@@ -312,9 +315,8 @@ struct filp *filp;
 /*===========================================================================*
  *				unlock_filps				     *
  *===========================================================================*/
-void unlock_filps(filp1, filp2)
-struct filp *filp1;
-struct filp *filp2;
+void
+unlock_filps(struct filp *filp1, struct filp *filp2)
 {
 /* Unlock two filps that are tied to the same vnode. As a thread can lock a
  * vnode only once, unlocking the vnode twice would result in an error. */
@@ -344,8 +346,8 @@ struct filp *filp2;
 /*===========================================================================*
  *				close_filp				     *
  *===========================================================================*/
-void close_filp(f)
-struct filp *f;
+void
+close_filp(struct filp *f)
 {
 /* Close a file. Will also unlock filp when done */
 

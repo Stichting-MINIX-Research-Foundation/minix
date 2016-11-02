@@ -57,12 +57,10 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.59 2015/09/22 16:15:08 christos Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <net/if.h>
-#if !defined(__minix)
 #include <net/if_dl.h>
 #include <net/if_ieee1394.h>
 #include <net/if_types.h>
 #include <netatalk/at.h>
-#endif /* !defined(__minix) */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -110,7 +108,6 @@ static int ip6_parsenumeric(const struct sockaddr *, const char *, char *,
 				 socklen_t, int);
 static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 #endif
-#if !defined(__minix)
 static int getnameinfo_atalk(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
 static int getnameinfo_local(const struct sockaddr *, socklen_t, char *,
@@ -119,7 +116,6 @@ static int getnameinfo_local(const struct sockaddr *, socklen_t, char *,
 static int getnameinfo_link(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
 static int hexname(const uint8_t *, size_t, char *, socklen_t);
-#endif /* !defined(__minix) */
 
 /*
  * Top-level getnameinfo() code.  Look at the address family, and pick an
@@ -133,29 +129,24 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 {
 
 	switch (sa->sa_family) {
-#if !defined(__minix)
 	case AF_APPLETALK:
 		return getnameinfo_atalk(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#endif /* !defined(__minix) */
 	case AF_INET:
 	case AF_INET6:
 		return getnameinfo_inet(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#if !defined(__minix)
 	case AF_LINK:
 		return getnameinfo_link(sa, salen, host, hostlen,
 		    serv, servlen, flags);
 	case AF_LOCAL:
 		return getnameinfo_local(sa, salen, host, hostlen,
 		    serv, servlen, flags);
-#endif /* !defined(__minix) */
 	default:
 		return EAI_FAMILY;
 	}
 }
 
-#if !defined(__minix)
 /*
  * getnameinfo_atalk():
  * Format an AppleTalk address into a printable format.
@@ -238,7 +229,6 @@ getnameinfo_local(const struct sockaddr *sa, socklen_t salen,
 
 	return 0;
 }
-#endif /* !defined(__minix) */
 
 /*
  * getnameinfo_inet():
@@ -538,7 +528,6 @@ ip6_sa2str(const struct sockaddr_in6 *sa6, char *buf, size_t bufsiz, int flags)
 #endif /* INET6 */
 
 
-#if !defined(__minix)
 /*
  * getnameinfo_link():
  * Format a link-layer address into a printable format, paying attention to
@@ -635,4 +624,3 @@ hexname(const uint8_t *cp, size_t len, char *host, socklen_t hostlen)
 	}
 	return 0;
 }
-#endif /* !defined(__minix) */

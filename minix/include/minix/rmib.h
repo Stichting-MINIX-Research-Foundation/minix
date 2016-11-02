@@ -10,6 +10,12 @@
 #include <sys/sysctl.h>
 
 /*
+ * The maximum number of I/O vector elements that can be passed to the
+ * rmib_vcopyout function.
+ */
+#define RMIB_IOV_MAX	SCPVEC_NR
+
+/*
  * This structure contains a number of less heavily used parameters for handler
  * functions, mainly to provide extensibility while limiting argument clutter.
  */
@@ -145,6 +151,8 @@ int rmib_inrange(struct rmib_oldp *, size_t);
 size_t rmib_getoldlen(struct rmib_oldp *);
 ssize_t rmib_copyout(struct rmib_oldp *, size_t, const void * __restrict,
 	size_t);
+ssize_t rmib_vcopyout(struct rmib_oldp *, size_t, const iovec_t *,
+	unsigned int);
 int rmib_copyin(struct rmib_newp * __restrict, void * __restrict, size_t);
 ssize_t rmib_readwrite(struct rmib_call *, struct rmib_node *,
 	struct rmib_oldp *, struct rmib_newp *);

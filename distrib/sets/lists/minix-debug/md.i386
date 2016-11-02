@@ -39,6 +39,7 @@
 ./usr/libdata/debug/service/vbox.debug                  minix-debug     debug
 ./usr/libdata/debug/service/virtio_blk.debug            minix-debug     debug
 ./usr/libdata/debug/service/virtio_net.debug            minix-debug     debug
+./usr/libdata/debug/service/vt6105.debug                minix-debug     debug
 ./usr/libdata/debug/usr/lib/libm387.so.0.1.debug        minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test47.debug  minix-debug     debug
 ./usr/libdata/debug/usr/tests/minix-posix/test51.debug  minix-debug     debug

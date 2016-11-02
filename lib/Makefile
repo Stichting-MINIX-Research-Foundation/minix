@@ -50,7 +50,8 @@ SUBDIR+=	../minix/lib/liblwip \
 .endif
 
 .if (${MACHINE_ARCH} == "i386")
-SUBDIR+=	../minix/lib/libhgfs \
+SUBDIR+=	../minix/lib/libacpi \
+		../minix/lib/libhgfs \
 		../minix/lib/libvassert \
 		../minix/lib/libvboxfs \
 		../minix/lib/libvirtio

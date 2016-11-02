@@ -27,32 +27,6 @@
 static const char padbuf[RT_ROUNDUP(0)] = { 0 };
 
 /*
- * Copy out a vector of data to the sysctl(2) caller.  TODO: decide what to do
- * with this.  We could implement this as a vectored-safecopy operation in
- * RMIB.  We could also copy everything into a single buffer first.  The
- * current implementation is probably the worst among the possibilities.
- */
-static ssize_t
-rmib_vcopyout(struct rmib_oldp * oldp, size_t off, const iovec_t * iov,
-	unsigned int iovcnt)
-{
-	unsigned int i;
-	ssize_t r, len;
-
-	len = 0;
-
-	for (i = 0; i < iovcnt; i++) {
-		if ((r = rmib_copyout(oldp, off + len,
-		    (const void *)iov[i].iov_addr, iov[i].iov_size)) < 0)
-			return r;
-
-		len += r;
-	}
-
-	return len;
-}
-
-/*
  * Compute the length for, and possibly copy out, an interface information or
  * interface address record with an associated set of zero or more routing
  * table addresses.  The addresses are padded as necessary.  Store the full

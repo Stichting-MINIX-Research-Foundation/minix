@@ -4,7 +4,7 @@ INCSDIR= /usr/include/net
 
 INCS=	bpf.h bpfdesc.h bpfjit.h dlt.h ethertypes.h if.h if_arp.h \
 	if_dl.h if_ether.h \
-	if_media.h \
+	if_ieee1394.h if_media.h \
 	if_pflog.h \
 	if_types.h \
 	pfil.h pfkeyv2.h pfvar.h radix.h \

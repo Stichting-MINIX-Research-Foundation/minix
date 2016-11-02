@@ -111,6 +111,60 @@ rmib_copyout(struct rmib_oldp * __restrict oldp, size_t off,
 }
 
 /*
+ * Copy out (partial) data to the user, from a vector of up to RMIB_IOV_MAX
+ * local buffers.  The copy is automatically limited to the range of data
+ * requested by the user.  Return the total requested length on success or an
+ * error code on failure.
+ */
+ssize_t
+rmib_vcopyout(struct rmib_oldp * oldp, size_t off, const iovec_t * iov,
+	unsigned int iovcnt)
+{
+	static struct vscp_vec vec[RMIB_IOV_MAX];
+	size_t size, chunk;
+	unsigned int i;
+	ssize_t r;
+
+	assert(iov != NULL);
+	assert(iovcnt <= __arraycount(vec));
+
+	/* Take a shortcut for single-vector elements, saving a kernel copy. */
+	if (iovcnt == 1)
+		return rmib_copyout(oldp, off, (const void *)iov->iov_addr,
+		    iov->iov_size);
+
+	/*
+	 * Iterate through the full vector even if we cannot copy out all of
+	 * it, because we need to compute the total length.
+	 */
+	for (size = i = 0; iovcnt > 0; iov++, iovcnt--) {
+		if (oldp != NULL && off < oldp->oldp_len) {
+			chunk = oldp->oldp_len - off;
+			if (chunk > iov->iov_size)
+				chunk = iov->iov_size;
+
+			vec[i].v_from = SELF;
+			vec[i].v_to = MIB_PROC_NR;
+			vec[i].v_gid = oldp->oldp_grant;
+			vec[i].v_offset = off;
+			vec[i].v_addr = iov->iov_addr;
+			vec[i].v_bytes = chunk;
+
+			off += chunk;
+			i++;
+		}
+
+		size += iov->iov_size;
+	}
+
+	/* Perform the copy, if there is anything to copy, that is. */
+	if (i > 0 && (r = sys_vsafecopy(vec, i)) != OK)
+		return r;
+
+	return size;
+}
+
+/*
  * Copy in data from the user.  The given length must match exactly the length
  * given by the user.  Return OK or an error code.
  */

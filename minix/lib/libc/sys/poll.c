@@ -57,6 +57,7 @@ poll(struct pollfd *p, nfds_t nfds, int timout)
 
 	highfd = -1;
 	for (i = 0; i < nfds; i++) {
+		p[i].revents = 0;
 		if (p[i].fd < 0)
 			continue;
 		if (p[i].fd >= FD_SETSIZE) {
@@ -83,7 +84,8 @@ poll(struct pollfd *p, nfds_t nfds, int timout)
 
 	rval = 0;
 	for (i = 0; i < nfds; i++) {
-		p[i].revents = 0;
+		if (p[i].fd < 0)
+			continue;
 		if (FD_ISSET(p[i].fd, &rd))
 			p[i].revents |= POLLIN|POLLRDNORM|POLLRDBAND|POLLPRI;
 		if (FD_ISSET(p[i].fd, &wr))

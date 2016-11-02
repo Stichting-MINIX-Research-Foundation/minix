@@ -338,5 +338,7 @@ cause_sigalrm(int arg)
 	set_alarm(rmp, rmp->mp_interval[ITIMER_REAL]);
   else rmp->mp_flags &= ~ALARM_ON;
 
+  mp = &mproc[0];		/* pretend the signal comes from PM */
+
   check_sig(rmp->mp_pid, SIGALRM, FALSE /* ksig */);
 }
