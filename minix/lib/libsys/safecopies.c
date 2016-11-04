@@ -44,23 +44,35 @@ static cp_grant_t *grants = NULL;
 static int ngrants = 0;
 static int freelist = -1;
 
-static void
-cpf_grow(void)
+/*
+ * Preallocate more grants that will be free for subsequent use.  If a specific
+ * number of grants is given (i.e., count > 0), the total number of grants will
+ * be increased by that amount.  If no number of grants is given (count == 0),
+ * double(ish) the size of the table.  The latter is used internally.  This
+ * function may fail, either because the maximum number of slots is reached or
+ * because no new memory can be allocated.  In that case, nothing will change;
+ * the caller must check afterward whether there are newly available grants.
+ */
+void
+cpf_prealloc(unsigned int count)
 {
-/* Grow the grants table if possible. */
 	cp_grant_t *new_grants;
 	int g, new_size;
 
-	if(!ngrants) {
+	if (!ngrants && count <= NR_STATIC_GRANTS) {
 		/* Use statically allocated grants the first time. */
 		new_size = NR_STATIC_GRANTS;
 		new_grants = static_grants;
 	}
 	else {
-		/* Double(ish) the size, up to the maximum number of slots. */
 		if (ngrants >= GRANT_MAX_IDX)
 			return;
-		new_size = (1+ngrants)*2;
+		if (count != 0) {
+			if (count > (unsigned)(GRANT_MAX_IDX - ngrants))
+				count = (unsigned)(GRANT_MAX_IDX - ngrants);
+			new_size = ngrants + (int)count;
+		} else
+			new_size = (1+ngrants)*2;
 		if (new_size >= GRANT_MAX_IDX)
 			new_size = GRANT_MAX_IDX;
 		assert(new_size > ngrants);
@@ -116,7 +128,7 @@ cpf_new_grantslot(void)
 	/* Obtain a free slot. */
 	if ((g = freelist) == -1) {
 		/* Table full - try to make the table larger. */
-		cpf_grow();
+		cpf_prealloc(0);
 		if ((g = freelist) == -1) {
 			/* ngrants hasn't increased. */
 			errno = ENOSPC;
