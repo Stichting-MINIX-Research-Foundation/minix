@@ -78,9 +78,13 @@ struct vscp_vec {
 #define GRANT_FAULTED	1	/* CPF_TRY: a soft fault occurred */
 
 /* Prototypes for functions in libsys. */
-cp_grant_id_t cpf_grant_direct(endpoint_t, vir_bytes, size_t, int);
-cp_grant_id_t cpf_grant_indirect(endpoint_t, endpoint_t, cp_grant_id_t);
-cp_grant_id_t cpf_grant_magic(endpoint_t, endpoint_t, vir_bytes, size_t, int);
+void cpf_prealloc(unsigned int count);
+cp_grant_id_t cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes,
+	int access);
+cp_grant_id_t cpf_grant_indirect(endpoint_t who_to, endpoint_t who_from,
+	cp_grant_id_t gr);
+cp_grant_id_t cpf_grant_magic(endpoint_t who_to, endpoint_t who_from,
+	vir_bytes addr, size_t bytes, int access);
 int cpf_revoke(cp_grant_id_t grant_id);
 
 /* START OF DEPRECATED API */
