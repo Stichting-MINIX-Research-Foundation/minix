@@ -933,9 +933,6 @@ static void ic_handler(ic_driver *pdev) {
 #endif
 		return;
 	}
-
-	/* Perform tasks based on the flagged condition */
-	ic_check_ints(pdev);
 }
 
 /* Check interrupt and perform */
