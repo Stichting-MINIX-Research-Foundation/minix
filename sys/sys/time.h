@@ -281,7 +281,7 @@ struct	itimerspec {
 };
 
 #define	CLOCK_REALTIME	0
-#if !defined(__minix)
+#if !defined(__minix) || defined(_KERNEL)
 #define	CLOCK_VIRTUAL	1
 #define	CLOCK_PROF	2
 #endif /* !defined(__minix) */
