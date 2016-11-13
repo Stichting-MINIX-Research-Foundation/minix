@@ -378,6 +378,15 @@ LDSTATIC=	-dynamic
 .endif
 
 .if defined(RUMPPRG)
+. if defined(__MINIX)
+PROG=			${RUMPPRG}
+PROGS=			${RUMPPRG}
+.  if defined(SRCS)
+SRCS+=			${PROG}_hostops.c
+.  else
+SRCS=			${PROG}.c ${PROG}_hostops.c
+. endif
+.else
 PROG=			${RUMPPRG}
 . ifndef CRUNCHEDPROG
 .  if (${MKRUMP} != "no")
@@ -407,6 +416,7 @@ _RUMPINSTALL.rump.${PROG}=# defined
 PROGS=			${PROG}
 CPPFLAGS+=		-DCRUNCHOPS
 . endif
+.endif
 .endif
 
 .if defined(PROG)

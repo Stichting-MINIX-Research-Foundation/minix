@@ -58,7 +58,6 @@ MKNPF:=		no
 MKPAM:=		no
 MKPF:=		no
 MKPOSTFIX:=	no
-MKRUMP:=	no
 MKSKEY:=	no
 MKYP:=		no
 MKCROSSGDB:=	no

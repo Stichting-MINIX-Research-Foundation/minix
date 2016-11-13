@@ -10,8 +10,10 @@ TESTS_SUBDIRS=	csu libc libcrypt libcurses libevent libexecinfo \
 		libm libprop  \
 		libutil
 
+.if !defined(__MINIX)
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_SUBDIRS+= librumpclient librumphijack
+.endif
 .endif
 
 .if ${MKCRYPTO} != "no"

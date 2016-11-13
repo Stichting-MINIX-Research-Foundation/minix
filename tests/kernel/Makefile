@@ -30,7 +30,7 @@ PROGS+=		h_ps_strings2
 
 LDADD.t_mqueue+= -lrt
 
-
+.if !defined(__MINIX)
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_SUBDIRS+=	tty
 
@@ -46,7 +46,6 @@ LDADD.t_rnd+=  -lrump -lpthread
 .endif
 
 
-.if !defined(__MINIX)
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
 SRCS.t_extent=		t_extent.c subr_extent.c

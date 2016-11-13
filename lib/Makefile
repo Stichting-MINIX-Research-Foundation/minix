@@ -99,7 +99,7 @@ SUBDIR+=	libc_vfp
 .endif
 .endif
 .if (${MKRUMP} != "no")
-SUBDIR+=	librumpclient
+#SUBDIR+=	librumpclient
 .endif
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey
@@ -189,8 +189,8 @@ SUBDIR+=	libexecinfo 	# depends on libelf
 SUBDIR+=	librefuse	# depends on libpuffs
 #SUBDIR+=	libisns 	# depends on libpthread
 .if (${MKRUMP} != "no")
-SUBDIR+=	librumpuser	# depends on libpthread
-SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
+#SUBDIR+=	librumpuser	# depends on libpthread
+#SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 .endif
 
 .if (${MKNPF} != "no")
@@ -255,7 +255,7 @@ SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
 #SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
 .if (${MKRUMP} != "no")
-SUBDIR+=	librump		# depends on librumpuser
+#SUBDIR+=	librump		# depends on librumpuser
 .endif
 
 .if (${MKKERBEROS} != "no")
@@ -288,9 +288,9 @@ SUBDIR+=        ../external/cddl/osnet/lib/libdtrace	# depends on libproc
 .endif
 
 .if (${MKRUMP} != "no")
-SUBDIR+=	librumpdev	# depends on librump
-SUBDIR+=	librumpnet	# depends on librump
-SUBDIR+=	librumpvfs	# depends on librump
+#SUBDIR+=	librumpdev	# depends on librump
+#SUBDIR+=	librumpnet	# depends on librump
+#SUBDIR+=	librumpvfs	# depends on librump
 .endif
 
 .if (${MKPAM} != "no")
@@ -307,7 +307,7 @@ SUBDIR+=	../external/bsd/mdocml/lib
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-SUBDIR+=	libukfs		# depends on librumpvfs, librump
+#SUBDIR+=	libukfs		# depends on librumpvfs, librump
 
 .if (${MKTPM} != "no")
 SUBDIR+=	../crypto/external/cpl/trousers/lib
@@ -316,17 +316,17 @@ SUBDIR+=	../crypto/external/cpl/trousers/lib
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+#SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
 .if (${MKTPM} != "no")
 SUBDIR+=	../crypto/external/cpl/tpm-tools/lib	# depends on trousers
 .endif
 
 .if !defined(BSD_MK_COMPAT_FILE)
-SUBDIR+=	../sys/rump/dev/lib
-SUBDIR+=	../sys/rump/fs/lib
-SUBDIR+=	../sys/rump/kern/lib
-SUBDIR+=	../sys/rump/net/lib
+#SUBDIR+=	../sys/rump/dev/lib
+#SUBDIR+=	../sys/rump/fs/lib
+#SUBDIR+=	../sys/rump/kern/lib
+#SUBDIR+=	../sys/rump/net/lib
 .endif
 .endif
 

@@ -44,7 +44,7 @@ SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
 .endif
 
 .if (${MKRUMP} != "no")
-SUBDIR+= puffs
+#SUBDIR+= puffs
 .endif
 
 .if ${TOOLCHAIN_MISSING} != "no"
