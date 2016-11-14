@@ -1,0 +1,19 @@
+The ip1000 driver is for IC Plus 1000A/Family (ST1023) Ethernet card.
+
+This driver is referred to Minix(3.4.0) vt6105 driver, 
+Linux(4.2.1) ipg driver and IP1000A LF-DS-R08 datasheet.
+
+The supported PCI number is 13F0:1023:13F0:1023.
+Maybe the Ethernet cards of other PCI numbers for IC Plus can be supported.
+
+Revision 1.0 2016/11/02
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
+Revision 1.1 2016/11/12
+Modification: Remove and rewrite Linux-derived code
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
+Something can be improved:
+1. Ethernet address can not be modified at present.
+2. Dump interfaces are not provided.
+3. The device needs serveral seconds to work normally after initialization.
