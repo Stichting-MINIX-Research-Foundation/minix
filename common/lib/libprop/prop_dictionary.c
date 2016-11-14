@@ -655,7 +655,7 @@ static void
 _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-#if defined(__minix) && defined(_REENTRANT)
+#if defined(__minix) && defined(_REENTRANT) || defined(_KERNEL)
 	prop_dictionary_t pd _PROP_ARG_UNUSED = pdi->pdi_base.pi_obj;
 #endif /* defined(__minix) && defined(_REENTRANT) */
 
