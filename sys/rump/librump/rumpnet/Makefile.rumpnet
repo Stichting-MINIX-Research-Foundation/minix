@@ -1,0 +1,45 @@
+#	$NetBSD: Makefile.rumpnet,v 1.18 2015/08/24 22:31:33 pooka Exp $
+#
+
+LIB=		rumpnet
+
+.PATH:	${RUMPTOP}/librump/rumpnet				\
+	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../net					\
+	${RUMPTOP}/../netatalk					\
+	${RUMPTOP}/../netinet					\
+	${RUMPTOP}/../netinet6					\
+	${RUMPTOP}/../compat/common
+
+SRCS=	net_stub.c netisr.c rump_net.c
+
+SRCS+=	rumpnet_if_wrappers.c
+
+SRCS+=	rumpnet_syscalls.c
+
+# sys/kern networking (sockets, mbufs, etc.)
+SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
+	uipc_socket.c uipc_socket2.c uipc_syscalls.c
+
+# sys/net
+SRCS+=	pktqueue.c
+
+# formatters
+SRCS+= at_print.c dl_print.c in_print.c in6_print.c
+
+# radix trie support
+SRCS+=	radix.c
+SRCS+=	rtbl.c
+
+# compat (nothing for now)
+SRCS+=	
+
+# bpf stubs, required for all kernels
+SRCS+=	bpf_stub.c
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+
+.include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>

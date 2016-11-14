@@ -1,0 +1,80 @@
+#	$NetBSD: Makefile.rumpvfs,v 1.47 2015/05/06 15:57:08 hannken Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.own.mk>
+
+LIB=	rumpvfs
+
+MAN=	rump_etfs.3 rumpfs.4
+
+.PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
+	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../miscfs/genfs				\
+	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
+	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
+	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/mfs			\
+	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/ufs
+
+#
+# Source modules, first the ones specifically implemented for librump.
+# 
+SRCS+=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
+
+SRCS+=	rumpvfs_if_wrappers.c
+
+SRCS+=	rumpvfs_syscalls.c
+
+# sys/kern I/O
+SRCS+=	kern_physio.c
+
+# sys/kern vfs
+SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
+	vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c vfs_mount.c	\
+	vfs_subr.c vfs_syscalls.c vfs_trans.c vfs_vnode.c vfs_vnops.c	\
+	vfs_wapbl.c vfs_xattr.c
+
+# sys/kern module support
+SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
+
+# sys/uvm
+SRCS+=	uvm_vnode.c
+
+# sys/miscfs/deadfs
+SRCS+=	dead_vfsops.c dead_vnops.c
+
+# sys/miscfs
+SRCS+=	genfs_io.c genfs_rename.c genfs_vfsops.c genfs_vnops.c spec_vnops.c
+
+# sys/kern bufq
+SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
+	bufq_readprio.c
+
+# MFS miniroot support
+SRCS+=	mfs_miniroot.c
+
+# ktrace vfs part
+.if ${RUMP_KTRACE} == "yes"
+SRCS+= kern_ktrace_vfs.c
+.endif
+
+#quota2 plists
+SRCS+= quota1_subr.c vfs_quotactl.c
+
+# dev
+# firmload is technically part of rumpdev, but it's pure vfs in nature.
+SRCS+=	firmload.c
+
+# compat syscalls
+.if !empty(RUMP_NBCOMPAT:M50)
+SRCS+=	vfs_syscalls_50.c
+SRCS+=	rumpvfs_compat50.c
+.endif
+
+SRCS+=	rumpvnode_if.c
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>

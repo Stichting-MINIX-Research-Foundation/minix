@@ -2,7 +2,7 @@
 #
 
 SUBDIR= 	include
-#SUBDIR+=	librump
+SUBDIR+=	librump
 #SUBDIR+=	dev fs kern net
 #SUBDIR+=	share
 

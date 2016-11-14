@@ -1,0 +1,128 @@
+# $NetBSD: Makefile.compiler-rt,v 1.5 2014/08/10 05:57:31 matt Exp $
+
+COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
+
+.if ${MACHINE_ARCH} == "powerpc"
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
+.else
+COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_CPU}
+COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/${MACHINE_ARCH}
+.endif
+
+.PATH: ${COMPILER_RT_CPU_DIR}
+.PATH: ${COMPILER_RT_ARCH_DIR}
+.PATH: ${COMPILER_RT_SRCDIR}/lib/builtins
+
+GENERIC_SRCS+= \
+	absvdi2.c \
+	absvsi2.c \
+	absvti2.c \
+	addvdi3.c \
+	addvsi3.c \
+	addvti3.c \
+	ashlti3.c \
+	ashrti3.c \
+	clzti2.c \
+	cmpti2.c \
+	ctzti2.c \
+	divti3.c \
+	ffsti2.c \
+	int_util.c \
+	lshrti3.c \
+	modti3.c \
+	mulodi4.c \
+	mulosi4.c \
+	muloti4.c \
+	multi3.c \
+	mulvdi3.c \
+	mulvsi3.c \
+	mulvti3.c \
+	negti2.c \
+	negvdi2.c \
+	negvsi2.c \
+	negvti2.c \
+	paritydi2.c \
+	paritysi2.c \
+	parityti2.c \
+	popcountdi2.c \
+	popcountsi2.c \
+	popcountti2.c \
+	subvdi3.c \
+	subvsi3.c \
+	subvti3.c \
+	ucmpti2.c \
+	udivmodti4.c \
+	udivti3.c \
+	umodti3.c
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	clzsi2.c \
+	ctzsi2.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	divmodsi4.c \
+	divsi3.c \
+	modsi3.c \
+	udivmodsi4.c \
+	udivsi3.c \
+	umodsi3.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	clzdi2.c \
+	ctzdi2.c \
+	ffsdi2.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	ashldi3.c \
+	ashrdi3.c \
+	lshrdi3.c
+.endif
+
+.if ${MACHINE_CPU} != "aarch64" && ${MACHINE} != "alpha"
+GENERIC_SRCS+= \
+	cmpdi2.c \
+	divdi3.c \
+	divmoddi4.c \
+	moddi3.c \
+	muldi3.c \
+	negdi2.c \
+	ucmpdi2.c \
+	udivdi3.c \
+	udivmoddi4.c \
+	umoddi3.c
+.endif
+
+.if ${MACHINE_CPU} == "arm"
+.  if !empty(MACHINE_ARCH:Mearm*)
+GENERIC_SRCS+= \
+	aeabi_idivmod.S \
+	aeabi_ldivmod.S \
+	aeabi_uidivmod.S \
+	aeabi_uldivmod.S \
+	__aeabi_idiv0.c \
+	__aeabi_ldiv0.c
+.  endif
+.endif
+
+.for src in ${GENERIC_SRCS}
+.  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
+      exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
+SRCS+=	${src:R}.S
+.  else
+SRCS+=	${src}
+COPTS.${src}+=	-Wno-missing-prototypes \
+		-Wno-old-style-definition \
+		-Wno-strict-prototypes \
+		-Wno-uninitialized
+.  endif
+.endfor
+
+CPPFLAGS.int_util.c+=	-DKERNEL_USE

@@ -1,0 +1,3 @@
+#	$NetBSD: files.cprng_fast,v 1.2 2014/08/10 16:44:35 tls Exp $
+
+file	crypto/cprng_fast/cprng_fast.c

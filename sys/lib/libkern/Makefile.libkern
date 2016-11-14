@@ -1,0 +1,113 @@
+#	$NetBSD: Makefile.libkern,v 1.38 2015/04/15 19:13:47 mrg Exp $
+
+# 
+# Variable definitions for libkern.  
+#
+# Before including this, you _must_ set
+#   KERNDIR: location of sys/lib/libkern
+#
+# You *may* set:
+#   LIBKERN_ARCH: architecture subdir to be used
+#   KERNCPPFLAGS: see Makefile.inc
+#   KERNMISCCPPFLAGS: see Makefile.inc
+#
+
+.include <bsd.own.mk>
+
+.if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
+    exists(${KERNDIR}/arch/${LIBKERN_ARCH})
+ARCHSUBDIR=     ${LIBKERN_ARCH}
+.elif defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
+    exists(${KERNDIR}/arch/${MACHINE_ARCH})
+ARCHSUBDIR=     ${MACHINE_ARCH}
+.elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \
+    exists(${KERNDIR}/arch/${MACHINE_CPU})
+ARCHSUBDIR=     ${MACHINE_CPU}
+.endif
+
+M= ${KERNDIR}/arch/${ARCHSUBDIR}
+
+CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
+
+.include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libutil/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libppath/Makefile.inc"
+
+CPPFLAGS+=	-I${KERNDIR}/../../../common/include
+
+.PATH.c: ${KERNDIR}
+.if exists ($M/Makefile.inc)
+.PATH.c: $M
+.PATH.S: $M
+.include "$M/Makefile.inc"
+.endif
+
+.if !defined(RUMPKERNEL)
+.include "${.PARSEDIR}/Makefile.compiler-rt"
+.endif
+
+# Other stuff
+SRCS+=	kern_assert.c __main.c
+SRCS+=	cpuset.c inet_addr.c intoa.c
+.if empty(SRCS:Mbyte_swap_8.*)
+SRCS+=	bswap64.c
+.endif
+SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c murmurhash.c
+SRCS+=	pmatch.c mcount.c mertwist.c crc32.c
+
+SRCS+=	ppath_kmem_alloc.c
+
+SRCS+=	strsep.c strstr.c
+SRCS+=	strlcpy.c strlcat.c
+
+SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
+SRCS+=	memmove.c
+SRCS+=	strchr.c strrchr.c
+SRCS+=	memcmp.c
+
+SRCS+=	memcpy.c
+.if empty(SRCS:Mmemset2.*)
+SRCS+=	memset.c 
+.endif
+
+SRCS+=	popcount32.c popcount64.c
+SRCS+=	strtoul.c strtoll.c strtoull.c strtoimax.c strtoumax.c
+SRCS+=	strtoi.c strtou.c
+
+SRCS+=	scanc.c skpc.c
+SRCS+=	random.c
+SRCS+=	rngtest.c
+
+SRCS+=	memchr.c
+SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c strnlen.c
+SRCS+=	strncat.c strncmp.c strncpy.c strpbrk.c strspn.c
+SRCS+=	strcasecmp.c strncasecmp.c
+
+SRCS+=	xlat_mbr_fstype.c
+
+SRCS+=	heapsort.c ptree.c rb.c
+
+# for crypto
+SRCS+=	explicit_memset.c consttime_memequal.c
+
+.PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
+SRCS+=	cdbr.c
+SRCS+=	mi_vector_hash.c
+
+#.PATH:	${NETBSDSRCDIR}/external/bsd/liblzf/dist
+#SRCS+=	lzf_c.c lzf_d.c
+
+# Files to clean up
+CLEANFILES+= lib${LIB}.o lib${LIB}.po
+
+# Remove from SRCS the .c files for any .S files added by the MD makefiles,
+# also remove from SRCS the .c files for the .c files in NO_SRCS.
+# (Unlike libc, we don't worry about lint)
+
+.for check_file in ${SRCS:M*.S} ${NO_SRCS}
+unwanted_file := ${SRCS:M${check_file:.S=.c}}
+.if "${unwanted_file}" != ""
+SRCS := ${SRCS:N${unwanted_file}}
+.endif
+.endfor

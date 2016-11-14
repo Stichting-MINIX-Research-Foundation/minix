@@ -1,0 +1,26 @@
+#	$NetBSD: Makefile.rumpdev,v 1.11 2015/08/25 00:08:56 pooka Exp $
+#
+
+LIB=	rumpdev
+
+.PATH:	${RUMPTOP}/librump/rumpdev				\
+	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../dev
+
+IOCONFDIR:=	${.PARSEDIR}
+IOCONF=		MAINBUS.ioconf
+
+SRCS=	rump_dev.c autoconf.c
+
+# sys/kern
+SRCS+=	kern_pmf.c subr_autoconf.c
+
+# sys/dev
+SRCS+=	dev_verbose.c
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+
+.include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>
