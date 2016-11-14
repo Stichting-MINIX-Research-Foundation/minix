@@ -16,11 +16,8 @@ SUBDIR+=modules
 #.endif
 .endif # !defined(__MINIX)
 
-# LSC FIXME: Remove this test as soon as we have imported RUMP
-.if !defined(__MINIX)
 .if make(includes) || make(obj) || make(cleandir)
 SUBDIR+= rump
 .endif
-.endif # !defined(__MINIX)
 
 .include <bsd.kinc.mk>

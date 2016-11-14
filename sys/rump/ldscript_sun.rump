@@ -1,0 +1,67 @@
+# $NetBSD: ldscript_sun.rump,v 1.1 2013/03/15 12:13:07 pooka Exp $
+
+$mapfile_version 2
+LOAD_SEGMENT rumpkern_linksets {
+	ASSIGN_SECTION { IS_NAME= link_set_start_rump_components };
+	ASSIGN_SECTION { IS_NAME= link_set_rump_components };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_rump_components };
+	OS_ORDER+= link_set_start_rump_components
+	    link_set_rump_components
+	    link_set_stop_rump_components;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_evcnts };
+	ASSIGN_SECTION { IS_NAME= link_set_evcnts };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_evcnts };
+	OS_ORDER+= link_set_start_evcnts
+	    link_set_evcnts
+	    link_set_stop_evcnts;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_prop_linkpools };
+	ASSIGN_SECTION { IS_NAME= link_set_prop_linkpools };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_prop_linkpools };
+	OS_ORDER+= link_set_start_prop_linkpools
+	    link_set_prop_linkpools
+	    link_set_stop_prop_linkpools;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_modules };
+	ASSIGN_SECTION { IS_NAME= link_set_modules };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_modules };
+	OS_ORDER+= link_set_start_modules
+	    link_set_modules
+	    link_set_stop_modules;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_sysctl_funcs };
+	ASSIGN_SECTION { IS_NAME= link_set_sysctl_funcs };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_sysctl_funcs };
+	OS_ORDER+= link_set_start_sysctl_funcs
+	    link_set_sysctl_funcs
+	    link_set_stop_sysctl_funcs;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_bufq_strats };
+	ASSIGN_SECTION { IS_NAME= link_set_bufq_strats };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_bufq_strats };
+	OS_ORDER+= link_set_start_bufq_strats
+	    link_set_bufq_strats
+	    link_set_stop_bufq_strats;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_domains };
+	ASSIGN_SECTION { IS_NAME= link_set_domains };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_domains };
+	OS_ORDER+= link_set_start_domains
+	    link_set_domains
+	    link_set_stop_domains;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_dkwedge_methods };
+	ASSIGN_SECTION { IS_NAME= link_set_dkwedge_methods };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_dkwedge_methods };
+	OS_ORDER+= link_set_start_dkwedge_methods
+	    link_set_dkwedge_methods
+	    link_set_stop_dkwedge_methods;
+
+	ASSIGN_SECTION { IS_NAME= link_set_start_ieee80211_funcs };
+	ASSIGN_SECTION { IS_NAME= link_set_ieee80211_funcs };
+	ASSIGN_SECTION { IS_NAME= link_set_stop_ieee80211_funcs };
+	OS_ORDER+= link_set_start_ieee80211_funcs
+	    link_set_ieee80211_funcs
+	    link_set_stop_ieee80211_funcs;
+};

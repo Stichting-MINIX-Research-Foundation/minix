@@ -1,0 +1,68 @@
+	$NetBSD: README.dirs,v 1.12 2013/01/08 13:12:26 pooka Exp $
+
+
+The following is a quick rundown of the current directory structure.
+First, components in the kernel namespace, i.e. compiled with -D_KERNEL
+
+sys/rump/librump - rump kernel base and factions
+  /rumpkern	- kernel core, e.g. syscall, interrupt and lock support
+
+  /rumpdev	- device support, e.g. autoconf subsystem
+  /rumpnet	- networking support and sockets layer
+  /rumpvfs	- file system support
+
+sys/rump/include
+  /machine - used for architectures where the rump kernel ABI is not yet the
+	     same as the kernel module ABI.  will eventually disappear
+	     completely
+  /rump    - kernel headers installed to userspace
+
+sys/rump/dev - device components, e.g. audio, raidframe, usb drivers
+
+sys/rump/fs - file system components
+  /lib/lib${fs}  - kernel file system code
+
+sys/rump/net - networking components
+  /lib/libnet	  - subroutines from sys/net, e.g. route and if_ethersubr
+  /lib/libnetinet - TCP/IP
+  /lib/libvirtif  - a virtual interface which uses host tap(4) to shovel
+		    packets.  This is used by netinet and if_ethersubr.
+  /lib/libshmif   - a virtual interface which uses a memory mapped file
+		    as an ethernet bus.  works completely unprivileged.
+  /lib/libsockin  - implements PF_INET using host kernel sockets.  This is
+		    mutually exclusive with net, netinet and virtif.
+
+
+
+The rest are out-of-kernel components (i.e. no -D_KERNEL).
+
+hypercall interface:
+src/lib/librumpuser
+  The "rumpuser" hypercall interfaces are used by a rump kernel to
+  access host resources.
+
+remote client interface:
+src/lib/librumpclient
+  The rumpclient library provides remote access to rump kernel servers.
+
+system call hijacking:
+src/lib/librumphijack
+  The rumphijack library allows intercepting system calls and redirecting
+  them to a rump kernel server instead of the host kernel.  In other
+  words, it allows existing binaries to request indicated services from
+  a rump kernel instead of from the host kernel.
+
+Users:
+src/lib
+  /libp2k  - puffs-to-vfs adaption layer, userspace namespace
+  /libukfs - user kernel file system, a library to access file system
+	     images (or devices) directly in userspace without going
+	     through a system call and puffs.  It provides a slightly
+	     higher interface than syscalls.
+
+src/usr.sbin/puffs
+  rump_$fs - userspace file system daemons using the kernel fs code
+
+src/share/examples/rump
+  Various examples detailing use of rump kernels in different scenarios.
+  These are provided source-only.

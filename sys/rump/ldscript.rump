@@ -1,0 +1,28 @@
+/*	$NetBSD: ldscript.rump,v 1.3 2014/04/23 17:05:18 pooka Exp $	*/
+
+/*
+ * From binutils 2.19 onwards (in NetBSD) binutils ld PROVIDEs
+ * __start/__stop for orphaned sections.  This means that
+ * __start_link_set_modules/__stop_link_set_modules will no
+ * longer automatically be present in shared libraries.  This
+ * ldscript forces those symbols to be present for all rump
+ * shared lib components.
+ */
+
+SECTIONS
+{
+	link_set_modules :
+	{
+		__start_link_set_modules = .;
+		*(link_set_modules);
+		__stop_link_set_modules = .;
+	}
+
+	link_set_rump_components :
+	{
+		__start_link_set_rump_components = .;
+		*(link_set_rump_components);
+		__stop_link_set_rump_components = .;
+	}
+}
+INSERT AFTER .data;

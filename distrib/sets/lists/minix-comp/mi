@@ -1518,6 +1518,19 @@
 ./usr/include/rpcsvc                                    minix-comp
 ./usr/include/rpcsvc/yp_prot.h                          minix-comp
 ./usr/include/rpcsvc/ypclnt.h                           minix-comp
+./usr/include/rump                                      minix-comp      rump
+./usr/include/rump/rump.h                               minix-comp      rump
+./usr/include/rump/rump_namei.h                         minix-comp      rump
+./usr/include/rump/rump_syscalls.h                      minix-comp      rump
+./usr/include/rump/rump_syscalls_compat.h               minix-comp      rump
+./usr/include/rump/rumpdefs.h                           minix-comp      rump
+./usr/include/rump/rumperr.h                            minix-comp      rump
+./usr/include/rump/rumperrno2host.h                     minix-comp      rump
+./usr/include/rump/rumpkern_if_pub.h                    minix-comp      rump
+./usr/include/rump/rumpnet_if_pub.h                     minix-comp      rump
+./usr/include/rump/rumpuser.h                           minix-comp      rump
+./usr/include/rump/rumpvfs_if_pub.h                     minix-comp      rump
+./usr/include/rump/rumpvnode_if.h                       minix-comp      rump
 ./usr/include/saslc.h                                   minix-comp      crypto
 ./usr/include/sched.h                                   minix-comp
 ./usr/include/search.h                                  minix-comp

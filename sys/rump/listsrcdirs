@@ -1,0 +1,138 @@
+#!/bin/sh
+#
+#	$NetBSD: listsrcdirs,v 1.34 2015/07/07 12:40:13 justin Exp $
+#
+
+#
+# This script echoes the NetBSD source directories useful for
+# rump kernels.
+# Feed the output to whichever method you use to obtain NetBSD sources, e.g.
+#
+# ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
+#
+
+# Check that the intersection between all branches is the null set
+if [ "${LISTSRCDIRS_INSANITY}" != 'y' ]; then
+	if [ ! -z "$(LISTSRCDIRS_INSANITY=y sh $0 all | sort | uniq -d)" ]; then
+		echo $0: INTERNAL ERROR
+		exit 1
+	fi
+fi
+
+# default echomode (for compat)
+em='sys posix'
+
+# everything we support
+all='sys posix usr'
+
+# mini-getopt (so that we don't have to with getopt vs. getopts
+cvsmode=false
+if [ "${1}" = "-c" ]; then
+	cvsmode=true
+	shift
+fi
+
+[ ! -z "${*}" ] && em="${*}"
+[ "$em" = all ] && em="${all}"
+for x in ${em}; do
+	for y in ${all}; do
+		[ $x = $y ] && continue 2
+	done
+	echo invalid specifier $x
+	exit 1
+done
+
+iswanted ()
+{
+
+	for x in ${em}; do
+		if [ "$x" = "$1" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+lsrc ()
+{
+
+	what=$1
+	pfx=$2
+	shift 2
+
+	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
+}
+
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 evbarm64 riscv"
+ARCHS_EXTRA="arm/arm32 Makefile"
+
+# sources necessary for building rump kernel components.  This list
+# depends on TOOLS_BUILDRUMP=yes.
+lsrc sys /			build.sh Makefile Makefile.inc
+lsrc sys /			tools common include share/mk
+lsrc sys /etc/			Makefile.params master.passwd group
+lsrc sys /lib/lib		c util
+lsrc sys /external/bsd/		flex mdocml byacc
+lsrc sys /external/cddl/	osnet
+lsrc sys /external/historical/	nawk
+lsrc sys /bin/			cat
+lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
+lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
+lsrc sys /usr.bin/		rpcgen rump_wmd
+lsrc sys /usr.bin/		genassym stat uname
+lsrc sys /usr.sbin/		mtree
+
+# sources hosted in the NetBSD tree that are required/useful
+# when targeting POSIX-y platforms
+lsrc posix /lib/lib		rump rumpdev rumpnet rumpvfs
+lsrc posix /lib/lib		rumpuser rumpclient rumphijack
+lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
+
+# assorted userspace sources, mostly for configuration & diagnostics
+# NOTE! libc++ is handled below as a special case due to the NetBSD
+# dist directory consisting ~90% (50+MB) of tests unnecessary to us
+lsrc usr /lib/			i18n_module
+lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
+lsrc usr /lib/lib		pthread rmt y z
+lsrc usr /libexec/		ld.elf_so
+lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
+lsrc usr /bin/			rm rmdir
+lsrc usr /sbin/			brconfig cgdconfig chown
+lsrc usr /sbin/			disklabel dump fdisk
+lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
+lsrc usr /sbin/			ifconfig mknod
+lsrc usr /sbin/			modstat mount
+lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
+lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
+lsrc usr /sbin/			ping ping6 raidctl reboot
+lsrc usr /sbin/			rndctl route setkey sysctl umount
+lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
+lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
+lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
+lsrc usr /external/bsd/		libelf libpcap tcpdump wpa
+lsrc usr /crypto/		Makefile.openssl
+lsrc usr /crypto/dist/		ipsec-tools
+lsrc usr /crypto/external/bsd/	openssl
+
+
+# If -c is given, use CVS syntax to exclude large subdirectories
+# of sys.  Otherwise just do it wholesale.
+if ${cvsmode}; then
+	iswanted sys && echo \!src/sys/arch src/sys
+
+	iswanted usr && \
+	    echo \!src/external/bsd/libc++/dist/libcxx/test \
+	           src/external/bsd/libc++
+
+	# pick a few useful archs, namely those mentioned in buildrump.sh
+	for arch in ${ARCHS}; do
+		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
+	done
+	for extra in ${ARCHS_EXTRA}; do
+		lsrc sys /sys/arch/ ${extra}
+	done
+else
+	lsrc sys / sys
+
+	lsrc usr /external /bsd/libc++
+fi
