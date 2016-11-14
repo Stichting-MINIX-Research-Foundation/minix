@@ -66,6 +66,7 @@
 ./usr/man/man1/comm.1                                   minix-man
 ./usr/man/man1/command.1                                minix-man       obsolete
 ./usr/man/man1/compress.1                               minix-man
+./usr/man/man1/config.1                                 minix-man
 ./usr/man/man1/continue.1                               minix-man       obsolete
 ./usr/man/man1/cp.1                                     minix-man
 ./usr/man/man1/cpio.1                                   minix-man
@@ -3268,6 +3269,8 @@
 ./usr/man/man5/blacklistd.conf.5                        minix-man
 ./usr/man/man5/boot.cfg.5                               minix-man
 ./usr/man/man5/cdb.5                                    minix-man
+./usr/man/man5/config.5                                 minix-man
+./usr/man/man5/config.samples.5                         minix-man
 ./usr/man/man5/configfile.5                             minix-man
 ./usr/man/man5/cpio.5                                   minix-man
 ./usr/man/man5/crontab.5                                minix-man
@@ -3424,7 +3427,7 @@
 ./usr/man/man8/pr_routes.8                              minix-man
 ./usr/man/man8/printroot.8                              minix-man
 ./usr/man/man8/pwd_mkdb.8                               minix-man
-./usr/man/man8/pwdauth.8                                minix-man	obsolete
+./usr/man/man8/pwdauth.8                                minix-man       obsolete
 ./usr/man/man8/rarpd.8                                  minix-man
 ./usr/man/man8/rawspeed.8                               minix-man
 ./usr/man/man8/rdate.8                                  minix-man

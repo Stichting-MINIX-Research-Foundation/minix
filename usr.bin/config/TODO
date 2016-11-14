@@ -1,0 +1,461 @@
+o Call module as module.
+
+  Until now, everything is called as attribute.  Separate module from it:
+
+	- Module is a collection of code (*.[cSo]), and provides a function.
+	  Module can depend on other modules.
+
+	- Attribute provides metadata for modules.  One module can have
+	  multiple attributes.  Attribute doesn't generate a module (*.o,
+	  *.ko).
+
+o Emit everything (ioconf.*, Makefile, ...) per-attribute.
+
+  config(9) related metadata (cfdriver, cfattach, cfdata, ...) should be
+  collected using linker.  Create ELF sections like
+  .{rodata,data}.config.{cfdriver,cfattach,cfdata}.  Provide reference
+  symbols (e.g. cfdriverinit[]) using linker script.  Sort entries by name
+  to lookup entries by binary search in kernel.
+
+o Generate modular(9) related information.  Especially module dependency.
+
+  At this moment modular(9) modules hardcode dependency in *.c using the
+  MODULE() macro:
+
+	MODULE(MODULE_CLASS_DRIVER, hdaudio, "pci");
+
+  This information already exists in config(5) definitions (files.*).
+  Extend config(5) to be able to specify module's class.
+
+  Ideally these module metadata are kept somewhere in ELF headers, so that
+  loaders (e.g. boot(8)) can easily read.  One idea is to abuse DYNAMIC
+  sections to record dependency, as shared library does.  (Feasibility
+  unknown.)
+
+o Rename "interface attribute" to "bus".
+
+  Instead of
+
+	define	audiobus {}
+	attach	audio at audiobus
+
+  Do like this
+
+	defbus	audiobus {}
+	attach	audio at audiobus
+
+  Always provide xxxbusprint() (and xxxbussubmatch if multiple children).
+  Extend struct cfiattrdata like:
+
+	struct cfiattrdata {
+		const char *ci_name;
+		cfprint_t ci_print;
+		cfsubmatch_t ci_submatch;
+		int ci_loclen;
+		const struct cflocdesc ci_locdesc[];
+	};
+
+o Simplify child configuration API
+
+  With said struct cfiattrdata extension, config_found*() can omit
+  print/submatch args.  If the found child is known (e.g., "pcibus" creating
+  "pci"):
+
+	config_found(self, "pcibus");
+
+  If finding unknown children (e.g. "pci" finding pci devices):
+
+	config_find(self, "pci", locs, aux);
+
+o Retire "attach foo at bar with foo_bar.c"
+
+  Most of these should be rewritten by defining a common interface attribute
+  "foobus", instead of writing multiple attachments.  com(4), ld(4), ehci(4)
+  are typical examples.  For ehci(4), EHCI-capable controller drivers implement
+  "ehcibus" interface, like:
+
+	defne	ehcibus {}
+	device	imxehci: ehcibus
+
+  These drivers' attach functions call config_found() to attach ehci(4) via
+  the "ehcibus" interface attribute, instead of calling ehci_init() directly.
+  Same for com(4) (com_attach_subr()) and ld(4) (ldattach()).
+
+o Sort objects in more reasonable order.
+
+  Put machdep.ko in the lowest address.  uvm.ko and kern.ko follow.
+
+  Kill alphabetical sort (${OBJS:O} in sys/conf/Makefile.inc.kern.
+
+  Use ldscript.  Do like this
+
+	.text :
+	AT (ADDR(.text) & 0x0fffffff)
+	{
+	  *(.text.machdep.locore.entry)
+	  *(.text.machdep.locore)
+	  *(.text.machdep)
+	  *(.text)
+	  *(.text.*)
+	  :
+
+  Kill linker definitions in sys/conf/Makefile.inc.kern.
+
+o Differentiate "options" and "flags"/"params".
+
+  "options" enables features by adding *.c files (via attributes).
+
+  "flags" and "params" are to change contents of *.c files.  These don't add
+  *.c files to the result kernel, or don't build attributes (modules).
+
+o Make flags/params per attributes (modules).
+
+  Basically flags and params are cpp(1) #define's generated in opt_*.h.  Make
+  them local to one attributes (modules).  Flags/params which affects files
+  across attributes (modules) are possible, but should be discouraged.
+
+o Generate things only by definitions.
+
+  In the ideal dynamically modular world, "selection" will be done not at
+  compile time but at runtime.  Users select their wanted modules, by
+  dynamically loading them.
+
+  This means that the system provides all choices; that is, build all modules
+  in the source tree.  Necessary information is defined in the "definition"
+  part.
+
+o Split cfdata.
+
+  cfdata is a set of pattern matching rules to enable devices at runtime device
+  auto-configuration.  It is pure data and can (should) be generated separately
+  from the code.
+
+o Allow easier adding and removing of options.
+
+  It should be possible to add or remove options, flags, etc.,
+  without regard to whether or not they are already defined.
+  For example, a configuration like this:
+
+	include GENERIC
+	options FOO
+	no options BAR
+
+  should work regardless of whether or not options FOO and/or
+  options BAR were defined in GENERIC.  It should not give
+  errors like "options BAR was already defined" or "options FOO
+  was not defined".
+
+o Introduce "class".
+
+  Every module should be classified as at least one class, as modular(9)
+  modules already do.  For example, file systems are marked as "vfs", network
+  protocols are "netproto".
+
+  Consider to merge "devclass" into "class".
+
+  For syntax clarity, class names could be used as a keyword to select the
+  class's instance module:
+
+	# Define net80211 module as netproto class
+	class netproto
+	define net80211: netproto
+
+	# Select net80211 to be builtin
+	netproto net80211
+
+  Accordingly device/attach selection syntax should be revisited.
+
+o Support kernel constructor/destructor (.kctors/.kdtors)
+
+  Initialization and finalization should be called via constructors and
+  destructors.  Don't hardcode those sequences as sys/kern/init_main.c:main()
+  does.
+
+  The order of .kctors/.kdtors is resolved by dependency.  The difference from
+  userland is that in kernel depended ones are located in lower addresses;
+  "machdep" module is the lowest.  Thus the lowest entry in .ctors must be
+  executed the first.
+
+  The .kctors/.kdtors entries are executed by kernel's main() function, unlike
+  userland where start code executes .ctors/.dtors before main().  The hardcoded
+  sequence of various subsystem initializations in init_main.c:main() will be
+  replaced by an array of .kctors invocations, and #ifdef's there will be gone.
+
+o Hide link-set in the final kernel.
+
+  Link-set is used to collect references (pointers) at link time.  It relys on
+  the ld(1) behavior that it automatically generates `__start_X' and `__stop_X'
+  symbols for the section `X' to reduce coding.
+
+  Don't allow kernel subsystems create random ELF sections.
+
+  Pre-define all the available link-set names and pre-generate a linker script
+  to merge them into .rodata.
+
+  (For modular(9) modules, `link_set_modules' is looked up by kernel loader.
+  Provide only it.)
+
+  Provide a way for 3rd party modules to declare extra link-set.
+
+o Shared kernel objects.
+
+  Since NetBSD has not established a clear kernel ABI, every single kernel
+  has to build all the objects by their own.  As a result, similar kernels
+  (e.g. evbarm kernels) repeatedly compile similar objects, that is waste of
+  energy & space.
+
+  Share them if possible.  For evb* ports, ideally everything except machdep.ko
+  should be shared.
+
+  While leaving optimizations as options (CPU specific optimizations, inlined
+  bus_space(9) operations, etc.) for users, the official binaries build
+  provided by TNF should be as portable as possible.
+
+o Always use explicit kernel linker script.
+
+  ld(1) has an option -T <ldscript> to use a given linker script.  If not
+  specified, a default, built-in linker script, mainly meant for userland
+  programs, is used.
+
+  Currently m68k, sh3, and vax don't have kernel linker scripts.  These work
+  because these have no constraints about page boundary; they map and access
+  kernel .text/.data in the same way.
+
+o Pass input files to ${LD} via linker script.
+
+  Instead of passing input files on command-line, output "INPUT(xxx.o)"
+  commands, and include it from generated linker scripts.
+
+o Generate `*.d' files.
+
+  Output source/object files in raw texts instead of `Makefile'.  Generate
+  `*.d' (make(1) depend) files.  make(1) knows which object files are to be
+  compiled.  With "INPUT(xxx.o)" linker scripts, either generated `Makefile'
+  or `Makefile.kern.inc' don't need to keep source/object files in variables.
+
+o Control ELF sections using linker script.
+
+  Now kernel is linked and built directly from object files (*.o).  Each port
+  has an MD linker script, which does everything needed to be done at link
+  time.  As a result, they do from MI alignment restriction (read_mostly,
+  cacheline_aligned) to load address specification for external boot loaders.
+
+  Make this into multiple stages to make linkage more structural.  Especially,
+  reserve the final link for purely MD purpose.  Note that in modular build,
+  *.ko are shared between build of kernel and modular(9) modules (*.kmod).
+
+	Monolithic build:
+		     *.o  ---> netbsd.ko	Generic MI linkage
+		netbsd.ko ---> netbsd.ro	Kernel MI linkage
+		netbsd.ro ---> netbsd		Kernel MD linkage
+
+	Modular build (kernel):
+		     *.o  --->      *.ko	Generic + Per-module MI linkage
+		     *.ko ---> netbsd.ro	Kernel MI linkage
+		netbsd.ro ---> netbsd		Kernel MD linkage
+
+	Modular build (module):
+		     *.o  --->      *.ko	Generic + Per-module MI linkage
+		     *.ko --->      *.ro	Modular MI linkage
+		     *.ro --->      *.kmod	Modular MD linkage
+
+  Genric MI linkage is for processing MI linkage that can be applied generally.
+  Data section alignment (.data.read_mostly and .data.cacheline_aligned) is
+  processed here.
+
+  Per-module MI linkage is for modules that want some ordering.  For example,
+  machdep.ko wants to put entry code at the top of .text and .data.
+
+  Kernel MI linkage is for collecting kernel global section data, that is what
+  link-set is used for now.  Once they are collected and symbols to the ranges
+  are assigned, those sections are merged into the pre-existing sections
+  (.rodata) because link-set sections in "netbsd" will never be interpreted by
+  external loaders.
+
+  Kernel MD linkage is used purely for MD purposes, that is, how kernels are
+  loaded by external loaders.  It might be possible that one kernel relocatable
+  (netbsd.ro) is linked into multiple final kernel image (netbsd) for diferent
+  load addresses.
+
+  Modular MI linkage is to prepare a module to be loadable as modular(9).  This
+  may add some extra sections and/or symbols.
+
+  Modular MD linkage is again for pure MD purposes like kernel MD linkage.
+  Adjustment and/or optimization may be done.
+
+  Kernel and modular MI linkages may change behavior depending on existence
+  of debug information.  In the future .symtab will be copied using linker
+  during this stage.
+
+o Fix db_symtab copying (COPY_SYMTAB)
+
+  o Collect all objects and create a relocatable (netbsd.ro).  At this point,
+    the number of symbols is known.
+
+  o Relink and allocate .rodata.symtab with the calculated size of .symtab.
+    Linker recalculates symbol addresses.
+
+  o Embed the .symtab into .rodata.symtab.
+
+  o Link the final netbsd ELF.
+
+  The make(1) rule (dependency graph) should be identical with/without
+  COPY_SYMTAB.  Kill .ifdef COPY_SYMTAB from $S/conf/Makefile.kern.inc.
+
+o Preprocess and generate linker scripts dynamically.
+
+  Include opt_xxx.h and replace some constant values (e.g. COHERENCY_UNIT,
+  PAGE_SIZE, KERNEL_BASE_PHYS, KERNEL_BASE_VIRT, ...) with cpp(1).
+
+  Don't unnecessarily define symbols.  Don't use sed(1).
+
+o Clean up linker scripts.
+
+  o Don't specify OUTPUT_FORMAT()/OUTPUT_ARCH()
+
+    These are basically set in compilers/linkers.  If non-default ABI is used,
+    command-line arguments should be specified.
+
+  o Remove .rel/.rela handlings.
+
+    These are set in relocatable objects, and handled by dynamic linkers.
+    Totally irrelefant for kernels.
+
+  o Clean up debug section handlings.
+
+  o Document (section boundary) symbols set in linker scripts.
+
+    There must be a reason why symbols are defined and exported.
+
+    PROVIDE() is to define internal symbols.
+
+  o Clean up load addresses.
+
+  o Program headers.
+
+  o According to matt@, .ARM.extab/.ARM.exidx sections are no longer needed.
+
+o Redesign swapnetbsd.c (root/swap device specification)
+
+  Don't build a whole kernel only to specify root/swap devices.
+
+  Make these parameter re-configurable afterwards.
+
+o Namespace.
+
+  Investigate namespace of attributes/modules/options.  Figure out the hidden
+  design about these, document it, then re-design it.
+
+  At this moment, all of them share the single "selecttab", which means their
+  namespaces are common, but they also have respective tables (attrtab,
+  opttab, etc.).
+
+  Selecting an option (addoption()), that is also a module name, works only if
+  the module doesn't depend on anything, because addoption() doesn't select
+  module and its dependencies (selectattr()).  In other words, an option is
+  only safely converted to a module (define), only if it doesn't depend on
+  anything.  (One example is DDB.)
+
+o Convert pseudo(dev) attach functions to take (void) (== kernel ctors).
+
+  The pseudo attach function was originally designed to take `int n' as
+  the number of instances of the pseudo device.  Now most of pseudo
+  devices have been converted to be `cloneable', meaning that their
+  instances are dynamically allocated at run-time, because guessing how
+  much instances are needed for users at compile time is almost impossible.
+  Restricting such a pure software resource at compile time is senseless,
+  considering that the rest of the world is dynamic.
+
+  If pseudo attach functions once become (void), config(1) no longer
+  has to generate iteration to call those functions, by making them part
+  of kernel constructors, that are a list of (void) functions.
+
+  Some pseudo devices may have dependency/ordering problems, because
+  pseudo attach functions have no choice when to be called.  This could
+  be solved by converting to kctors, where functions are called in order
+  by dependency.
+
+o Enhance ioconf behavior for pseudo-devices
+
+  See "bin/48571: config(1) ioconf is insufficient for pseudo-devices" for
+  more details.  In a nutshell, it would be "useful" for config to emit
+  the necessary stuff in the generated ioconf.[ch] to enable use of
+  config_{init,fini}_component() for attaching and detaching pseudodev's.
+
+  Currently, you need to manually construct your own data structures, and
+  manually "attach" them, one at a time.  This leads to duplication of
+  code (where multiple drivers contain the same basic logic), and doesn't
+  necessarily handle all of the "frobbing" of the kernel lists.
+
+o Don't use -Ttext ${TEXTADDR}.
+
+  Although ld(1)'s `-Ttext ${TEXTADDR}' is an easy way to specify the virtual
+  base address of .text at link time, it needs to change command-line; in
+  kernel build, Makefile needs to change to reflect kernel's configuration.
+  It is simpler to reflect kenel configuration using linker script via assym.h.
+
+o Convert ${DIAGNOSTIC} and ${DEBUG} as flags (defflag).
+
+  Probably generate opt_diagnostic.h/opt_debug.h and include them in
+  sys/param.h.
+
+o Strictly define DIAGNOSTIC.
+
+  It is possible to make DIAGNOSTIC kernel and modules binary-compatible with
+  non-DIAGNOSTIC ones.  In that case, debug type informations should match
+  theoretically (not confirmed).
+
+o Use suffix rules.
+
+  Build objects following suffix rules.  Source files are defined as relative to
+  $S (e.g. sys/kern/init_main.c) and objects are generated in the corresponding
+  subdirectories under kernel build directories (e.g.
+  .../compile/GENERIC/sys/kern/init_main.o).  Dig subdirectories from within
+  config(1).
+
+  Debugging (-g) and profiling (-pg) objects could be generated with *.go/*.po
+  suffixes as userland libraries do.  Maybe something similar for
+  DIAGNOSTIC/DEBUG.
+
+  genassym(1) definitions will be split into per-source instead of the single
+  assym.h.  Dependencies are corrected and some of misterious dependencies on
+  `Makefile' in sys/conf/Makefile.kern.inc can go away.
+
+o Define genassym(1) symbols per file.
+
+  Have each file define symbols that have to be generated by genassym(1) so
+  that more accurate dependency is reflected.
+
+  For example, if foo.S needs some symbols, it defines them in foo.assym,
+  declaring that foo.S depends on foo.assym.h, and includes foo.assym.h.
+  foo.assym.h is generated by following the suffix rule of .assym -> .assym.h.
+  When one header is updated, only related *.assym.h files are regenerated,
+  instead of rebuilding all MD/*.S files that depend on the global, single
+  assym.h.
+
+o Support library.
+
+  Provide a consistent way to build library either as .o or .a.
+
+  Build libraries in sub-make.  Don't include library makefiles.  Don't
+  pollute search path (.PATH).  libkern does too much.
+
+o Accept `.a' suffix.
+
+  Make "file" command accept `.a' suffix.  Handle it the same way as `.o'.
+
+o Clean up ${MD_OBJS} and friends in Makefile.${MACHINE}.
+
+  Don't use ${MD_OBJS}, ${MD_LIBS}, ${MD_SFILES}, and ${MD_CFILES}.
+
+  List files in config(5)'s "file".  Override build rules only when neccesary.
+
+  Rely on the fact that config(1) parses files.${MACHINE} first, outputs
+  files in the order it parses files.* (actually include depth), and
+  `Makefile.kern.inc' preserve file order to pass to ${LD}.
+
+o Clean up CTF-related rules.
+
+  Don't overwrite compile/link rules conditionally by existence of
+  ${CTFCONVERT}/${CTFMERGE}.  Give a separate suffix (*.ctfo) and define its
+  rules (.c -> .ctfo).

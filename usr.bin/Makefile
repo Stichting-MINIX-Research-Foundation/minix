@@ -7,7 +7,7 @@ SUBDIR= asa \
 	banner basename \
 	bzip2 bzip2recover cal calendar \
 	checknr chpass cksum cmp col colcrt colrm \
-	column comm csplit ctags cut \
+	column comm config csplit ctags cut \
 	deroff dirname du \
 	env expand \
 	false find finger flock fold fpr from \

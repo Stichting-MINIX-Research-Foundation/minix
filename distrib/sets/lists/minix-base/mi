@@ -284,6 +284,7 @@
 ./usr/bin/column                                        minix-base
 ./usr/bin/comm                                          minix-base
 ./usr/bin/compress                                      minix-base
+./usr/bin/config                                        minix-base
 ./usr/bin/cpio                                          minix-base
 ./usr/bin/cprofalyze                                    minix-base      obsolete
 ./usr/bin/crc                                           minix-base

@@ -1,0 +1,358 @@
+.\"	$NetBSD: config.1,v 1.19 2015/09/01 16:01:23 uebayasi Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd September 1, 2015
+.Dt CONFIG 1
+.Os
+.Sh NAME
+.Nm config
+.Nd build kernel compilation directories
+.Sh SYNOPSIS
+.Nm
+.Op Fl dMPpSv
+.Op Fl b Ar builddir
+.Op Fl D Ar var=value
+.Op Fl s Ar srcdir
+.Op Fl U Ar value
+.Op Ar config-file
+.Nm
+.Fl x
+.Op Ar kernel-file
+.Nm
+.Fl L
+.Op Fl v
+.Op Fl s Ar srcdir
+.Op Ar config-file
+.Sh DESCRIPTION
+In its first synopsis form,
+.Nm
+creates a kernel build directory from the machine description file
+.Ar config-file ,
+which describes the system to configure.
+Refer to section
+.Sx KERNEL BUILD CONFIGURATION
+for the details of that use
+of
+.Nm .
+.Pp
+In its second synopsis form,
+.Nm
+takes the binary kernel
+.Ar kernel-file
+as its single argument (aside from the mandatory
+.Fl x
+flag), then extracts the embedded configuration file (if any) and
+writes it to standard output.
+If
+.Ar kernel-file
+is not given, and the system is not running
+.Nx
+an error is printed.
+On systems running
+.Nx
+the booted kernel is looked up using the
+.Xr sysctl 3
+variable
+.Dv machdep.booted_kernel
+and if that is not found,
+.Dv _PATH_UNIX
+.Pq Pa /netbsd
+is used.
+Configuration data will be available if the given kernel was compiled
+with either
+.Va INCLUDE_CONFIG_FILE
+or
+.Va INCLUDE_JUST_CONFIG
+options.
+.Pp
+In its third synopsis form,
+.Nm
+is a tool for the kernel developer and generates a
+.Dq lint
+configuration file to be used during regression testing.
+Refer to section
+.Sx LINT CONFIGURATION
+for the details of that use of
+.Nm .
+.Pp
+.Nm
+accepts the following parameters:
+.Bl -tag -width indent
+.It Fl b Ar builddir
+Use
+.Ar builddir
+as the kernel build directory, instead of computing and creating one
+automatically.
+.It Fl d
+Issue diagnostic output for debugging problems with
+.Nm
+itself.
+More
+.Fl d
+options (currently up to 5) produce more output.
+.It Fl D Ar var=value
+Define a makeoptions variable to the given value.
+This is equivalent to appending a
+.Li makeoptions var=value
+line to the config file.
+.It Fl L
+Generate a lint configuration.
+See section
+.Sx LINT CONFIGURATION
+for details.
+.It Fl M
+Do modular build (experimental).
+Instead of linking all object files (*.o) at once, collect related object
+files into an intermediate relocatable object (*.ko), then link those *.ko
+files into the final kernel.
+This changes the order of objects in the kernel binary.
+.It Fl P
+Pack locators to save space in the resulting kernel binary.
+The amount of space saved that way is so small that this option should
+be considered historical, and of no actual use.
+.It Fl p
+Generate a build directory suited for kernel profiling.
+However, this options should be avoided in favor of the relevant options
+inside the configuration file as described in section
+.Sx KERNEL BUILD CONFIGURATION .
+.It Fl s Ar srcdir
+Point to the top of the kernel source tree.
+It must be an absolute path when
+.Nm
+is used to prepare a kernel build directory, but can be relative
+when it is used in combination with the
+.Fl L
+flag.
+.It Fl S
+Use suffix rules and build objects under subdirectories (experimental).
+.It Fl U Ar var
+Undefine the makeoption
+.Ar var .
+This is equivalent to appending the line
+.Li no makeoptions var
+to the config file.
+.It Fl v
+Increase verbosity by enabling some more warnings.
+.It Fl x
+Extract the configuration embedded in a kernel binary.
+.El
+.Ss KERNEL BUILD CONFIGURATION
+There are several different ways to run the
+.Nm
+program.
+The traditional way is to run
+.Nm
+from the
+.Pa conf
+subdirectory of the machine-specific directory of the system source
+(usually
+.Pa /sys/arch/MACHINE/conf ,
+where
+.Pa MACHINE
+is one of
+.Pa vax ,
+.Pa hp300 ,
+and so forth), and to specify as the
+.Ar config-file
+the name of a machine description file located in that directory.
+.Nm
+will by default create files in the directory
+.Pa ../compile/SYSTEMNAME ,
+where
+.Pa SYSTEMNAME
+is the last path component of
+.Ar config-file .
+.Nm
+will assume that the top-level kernel source directory is located four
+directories above the build directory.
+.Pp
+Another way is to create the build directory yourself, place the
+machine description file in the build directory with the name
+.Pa CONFIG ,
+and run
+.Nm
+from within the build directory without specifying a
+.Ar config-file .
+.Nm
+will then by default create files in the current directory.
+If you run
+.Nm
+this way, you must specify the location of the top-level kernel source
+directory using the
+.Fl s
+option or by using the
+.Dq Li source
+directive at the beginning of the machine description file.
+.Pp
+Finally, you can specify the build directory for
+.Nm
+and run it from anywhere.
+You can specify a build directory with the
+.Fl b
+option or by using the
+.Dq Li build
+directive at the beginning of the machine description file.
+You must specify the location of the top-level kernel source directory if you
+specify a build directory.
+.Pp
+If
+.Ar config-file
+is a binary kernel,
+.Nm
+will try to extract the configuration file embedded into it, which will
+be present if that kernel was built either with
+.Va INCLUDE_CONFIG_FILE
+or
+.Va INCLUDE_JUST_CONFIG
+options.
+This work mode requires you to manually specify a build directory with
+the
+.Fl b
+option, which implies the need to provide a source tree too.
+.Pp
+If the
+.Fl p
+option is supplied,
+.Pa .PROF
+is appended to the default compilation directory name, and
+.Nm
+acts as if the lines
+.Dq Li makeoptions PROF="-pg"
+and
+.Dq Li options GPROF
+appeared in the machine description file.
+This will build a system that includes profiling code; see
+.Xr kgmon 8
+and
+.Xr gprof 1 .
+The
+.Fl p
+flag is expected to be used for
+.Dq one-shot
+profiles of existing systems; for regular profiling, it is probably
+wiser to create a separate machine description file containing the
+.Li makeoptions
+line.
+.Pp
+The old undocumented
+.Fl g
+flag is no longer supported.
+Instead, use
+.Dq Li makeoptions DEBUG="-g"
+and (typically)
+.Dq Li options KGDB .
+.Pp
+The output of
+.Nm
+consists of a number of files, principally
+.Pa ioconf.c ,
+a description of I/O devices that may be attached to the system; and a
+.Pa Makefile ,
+used by
+.Xr make 1
+in building the kernel.
+.Pp
+After running
+.Nm ,
+it is wise to run
+.Dq Li make depend
+in the directory where the new makefile
+was created.
+.Nm
+prints a reminder of this when it completes.
+.Pp
+If
+.Nm
+stops due to errors, the problems reported should be corrected and
+.Nm
+should be run again.
+.Nm
+attempts to avoid changing the compilation directory
+if there are configuration errors,
+but this code is not well-tested,
+and some problems (such as running out of disk space)
+are unrecoverable.
+.Ss LINT CONFIGURATION
+A so-called
+.Dq lint
+configuration should include everything from the kernel that can
+possibly be selected.
+The rationale is to provide a way to reach all the code a user might
+select, in order to make sure all options and drivers compile without
+error for a given source tree.
+.Pp
+When used with the
+.Fl L
+flag,
+.Nm
+takes the regular configuration file
+.Ar config-file
+and prints on the standard output a configuration file that includes
+.Ar config-file ,
+selects all options and file-systems the user can possibly select,
+and defines an instance of every possible attachment as described by
+the kernel option definition files used by
+.Ar config-file .
+.Pp
+The resulting configuration file is meant as a way to select all
+possible features in order to test that each of them compiles.
+It is not meant to result in a kernel binary that can run on any
+hardware.
+.Pp
+Unlike the first synopsis form, the provided
+.Ar srcdir
+is relative to the current working directory.
+In the first synopsis form, it is relative to the build directory.
+.Sh SEE ALSO
+The SYNOPSIS portion of each device in section 4.
+.\".Rs
+.\" .%T "Building 4.4 BSD Systems with Config"
+.\" .%T "Device Support in 4.4BSD"
+.\".Re
+.Pp
+.Xr options 4 ,
+.Xr config 5 ,
+.Xr config 9
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.1 .
+It was completely revised in
+.Bx 4.4 .
+The
+.Fl x
+option appeared in
+.Nx 2.0 .
+The
+.Fl L
+option appeared in
+.Nx 5.0 .

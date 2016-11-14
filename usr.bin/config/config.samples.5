@@ -1,0 +1,252 @@
+.\" $NetBSD: config.samples.5,v 1.6 2014/03/06 15:00:21 riastradh Exp $
+.\"
+.\"  Copyright (c) 2006 The NetBSD Foundation.
+.\"  All rights reserved.
+.\"
+.\"  Redistribution and use in source and binary forms, with or without
+.\"  modification, are permitted provided that the following conditions
+.\"  are met:
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions and the following disclaimer.
+.\"  2. Redistributions in binary form must reproduce the above copyright
+.\"     notice, this list of conditions and the following disclaimer in the
+.\"     documentation and/or other materials provided with the distribution.
+.\"
+.\"  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\"  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\"  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\"  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\"  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\"  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\"  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\"  POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 4, 2006
+.Dt CONFIG.SAMPLES 5
+.Os
+.Sh NAME
+.Nm config.samples
+.Nd kernel configuration file syntax examples
+.Sh DESCRIPTION
+.Ss Devices, drivers and instances
+For a given device, at most one driver will attach.
+In order for a driver to attach, the kernel configuration file must include a
+compatible instance of the driver for the location of the device.
+The following lines from the
+.Pa GENERIC
+kernel configuration file of
+.Nx Ns / Ns i386
+are examples of instances of drivers:
+.Bd -literal
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
+
+ix0	at isa? port 0x300 irq 10	# EtherExpress/16
+.Ed
+.Pp
+The first three instances allow three different drivers to attach to all the
+matching devices found on any PCI bus.
+This is the most generic case.
+.Pp
+The next two lines allow two distinct drivers to attach to any matching device
+found on any PCI bus, but those two drivers are special because they both
+support some of the same devices.
+Each of the driver has a matching function that returns their score for the
+device that is being considered.
+.Xr autoconf 9
+decides at run-time which driver will attach.
+Of course, it is deterministic so if the user wants to change the driver that
+attaches to the device, the instance of the other driver will have to be
+removed, e.g. by commenting it out.
+.Pp
+The last line configures an instance of an ISA device.
+Unlike the PCI bus, the ISA bus cannot discover the devices that are present on
+the bus.
+The driver has to try accessing the device in order to discover it.
+That implies locators must be specified to some extent: a driver would
+usually need the base address of the device, some need the IRQ line that the
+device is configured to use, though some others would just try a set of known
+values, at the risk of badly interacting with other devices on the bus.
+.Ss Hard-wiring kernel configuration
+This technique consists in specifying exactly the location of the devices on a
+given system.
+In the general case it has very little use, because it does not change the size
+of the kernel, and it will prevent it from finding devices in case the hardware
+changes, even slightly.
+.Pp
+Let's consider the following excerpt of
+.Xr dmesg 8
+output:
+.Bd -literal
+auich0 at pci0 dev 31 function 5: i82801DB/DBM (ICH4/ICH4M) AC-97 Audio
+.Ed
+.Pp
+The
+.Xr auich 4
+driver (which controls Intel's AC-97 audio chips) attached there because of the
+following instance of
+.Pa GENERIC :
+.Bd -literal
+auich* at pci? dev ? function ?
+.Ed
+.Pp
+Hard-wiring that instance means re-writing it to the following:
+.Bd -literal
+auich0 at pci0 dev 31 function 5
+.Ed
+.Pp
+and that way,
+.Ar auich0
+will attach to that specific location, or will not attach.
+.Ss Removing options and drivers
+When two kernel configurations differ by a very small number of changes, it is
+easier to manage them by having one include the other, and add or remove the
+differences.
+Removing options and drivers is also useful in the situation of a user who
+wants to follow the development of
+.Nx :
+drivers and options get added to the configuration files found in the source
+tree, such as
+.Pa GENERIC ,
+so one can include it and remove all options and drivers that are not relevant
+to the considered system.
+Additions to
+.Pa GENERIC
+will then automatically be followed and used in case they are relevant.
+.Pp
+While negating an options (with
+.Ic no options )
+is unambiguous, it is not as clear for devices instances.
+.Pp
+The
+.Ic no Ar instance definition
+statements of
+.Xr config 1
+syntax only apply on the current state of the configuration file, not on the
+resulting kernel binary.
+.Xr autoconf 9
+has no knowledge of instance negation, thus it is currently impossible to
+express the following in a kernel configuration file:
+.Bd -ragged -offset indent
+.Do I want support for
+.Xr ath 4
+attaching at
+.Xr pci 4 ,
+but I do not want any instance of
+.Xr ath 4
+attaching at
+.Ar pci3 .
+.Dc
+.Ed
+.Pp
+For a real-world use of
+.Ic no device at Ar instance
+consider the following, taken from
+.Nx Ns / Ns i386 :
+.Bd -literal -offset indent
+include "arch/i386/conf/GENERIC"
+
+acpi0 at mainbus?
+
+com* at acpi?
+[... more instances of legacy devices attaching at acpi? ...]
+
+no device at isa0
+.Ed
+.Pp
+One could actually live without the
+.Ar isa0
+instance, as all the legacy devices are attached at
+.Ar acpi0 .
+But unfortunately, dependencies on the
+.Ar isa
+attribute are not well registered all through the source tree, so an instance
+of the
+.Xr isa 4
+driver is required to compile a kernel.
+So while:
+.Bd -literal -offset indent
+no isa*
+.Ed
+.Pp
+is what is intended, the
+.Xr isa 4
+instance itself must be kept, and that is precisely the difference made by:
+.Bd -literal -offset indent
+no device at isa0
+.Ed
+.Ss Interface attributes
+.Em Interface attributes
+are a subtlety of
+.Xr config 1
+and
+.Xr autoconf 9 ,
+which often confuses users and utilities that parse
+.Xr dmesg 8
+output to manipulate kernel configuration files.
+What they are is best shown by the following example.
+.Pp
+The
+.Xr dmesg 8
+output look like this:
+.Bd -literal -offset indent
+auvia0 at pci0 dev 17 function 5: VIA Technologies VT8235 AC'97 Audio (rev 0x50)
+audio0 at auvia0: full duplex, mmap, independent
+.Ed
+.Pp
+while the kernel configuration look like this:
+.Bd -literal
+auvia* at pci? dev ? function ?
+audio* at audiobus?
+.Ed
+.Pp
+It is not obvious from the kernel configuration file that an
+.Xr audio 4
+device can attach at an
+.Xr auvia 4
+device.
+.Ar audiobus
+is an
+.Em interface attribute ,
+exposed by
+.Ar auvia .
+.Pp
+Of course, it is possible to specify
+.Bd -literal -offset indent
+audio* at auvia?
+.Ed
+in the kernel configuration file, but then one instance per audio controller
+would be needed.
+.Em Interface attributes
+reflect the fact there is a standard way to attach a device to its parent, no
+matter what the latter is precisely.
+It also means lower maintainance of the kernel configuration files because
+drivers for audio controllers are added more easily.
+.Pp
+Most attachments are done through
+.Em interface attributes ,
+although only a few of them are specified that way in the configuration files
+found in the tree.
+Another example of such an attribute is
+.Ar ata :
+.Bd -literal -offset indent
+viaide0 at pci0 dev 17 function 1
+atabus0 at viaide0 channel 0
+
+viaide* at pci? dev ? function ?
+atabus* at ata?
+.Ed
+.\" Suggested section, maybe for later:
+.\" .Ss Using a third-party driver
+.Sh SEE ALSO
+.Xr config 1 ,
+.Xr options 4 ,
+.Xr config 5 ,
+.Xr dmesg 8
