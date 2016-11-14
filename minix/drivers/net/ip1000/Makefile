@@ -1,4 +1,4 @@
-# Makefile for the ip1000 Ethernet drivers
+# Makefile for the Ethernet drivers
 PROG=	ip1000	
 SRCS=	ip1000.c
 

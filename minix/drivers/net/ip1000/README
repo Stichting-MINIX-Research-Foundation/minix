@@ -9,6 +9,10 @@ Maybe the Ethernet cards of other PCI numbers for IC Plus can be supported.
 Revision 1.0 2016/11/02
 Authored by Jia-Ju Bai <baijiaju1990@163.com>
 
+Revision 1.1 2016/11/12
+Modification: Remove and rewrite Linux-derived code
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
 Something can be improved:
 1. Ethernet address can not be modified at present.
 2. Dump interfaces are not provided.
