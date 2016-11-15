@@ -1,0 +1,13 @@
+# Intel Graphics Media Accelerator
+
+define igmabus {}
+
+# the graphics part
+device	igmafb: wsemuldisplaydev, rasops8, rasops16, rasops32, vcons, videomode, iic, i2c_bitbang, glyphcache
+attach	igmafb at igmabus
+file	dev/pci/igma/igmafb.c		igmafb needs-flag
+
+## the audio part
+#device 	vac: audiobus, auconv, mulaw
+#attach 	vac at igmabus
+#file 	dev/pci/igma/vac.c		vac needs-flag

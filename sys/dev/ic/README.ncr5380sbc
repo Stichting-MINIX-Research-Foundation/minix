@@ -1,0 +1,186 @@
+NCR 53C80/53C400 driver
+
+BACKGROUND
+----------
+The NCR 53C80 SCSI Bus Controller (SBC) is an early single-chip solution
+which formed the basis of many early SCSI host adapters for both the
+i386 and m68k platforms. The NCR 53C400 is a slightly more advanced
+chip which retains backward compatibility with the 53C80.
+
+On the PC, the NCR 53C80 was most commonly used to implement simple, cheap
+SCSI host adapters that were bundled with tape and CD-ROM drives. Since
+these controllers were not bus-mastering (and in some cases were not even
+interrupt-driven), they (like IDE adapters) required the CPU to perform
+much of the actual processing. These days, these controllers are cheap
+and plentiful since many are not supported by Windows 95.
+
+Similarly, NetBSD, although it has had an MI 53C80 driver (used by the
+Sun3 and Mac68k ports) for some time, has not had a i386 driver.
+
+Until now, that is...
+
+OVERVIEW
+--------
+The NCR 53C80/53C400 driver (the 'nca' device) consists of two pieces:
+
+	1) Patches for the 53C80 MI driver to make it use bus_space()
+	   functions. (This requires an optional define. By default,
+	   the driver will compile in "legacy" memory-mapped mode.
+
+	2) A machine-dependent driver (nca) containing probe and
+	   attachment routines.
+
+This driver has bene tested with the following adapters:
+
+	NCS-250 (Chinon)	53C80, port-mapped, polled-mode
+				(This is used in my primary development
+				box to drive an external Zip drive.)
+	Sumo SCSI-AT		53C80, port-mapped, interrupt driven
+				(Note: This is an odd card in that its
+				own firmware seems to have trouble detecting
+				attached drives. Under NetBSD, however,
+				it operates with no problems.)
+	Trantor T-160		53C400, port-mapped, interrupt driven
+				This card was often bundled with NEC
+				CD-ROM drives. (My standalone test box
+				is using this as its primary adapter.)
+	DTC 3150V		53C400, memory-mapped, interrupt driven
+				This a simple card designed to drive
+				a CD-ROM.
+
+CONFIGURATION
+-------------
+To setup the nca driver, the configuration file must contain the following:
+
+	options	NCR5380_USE_BUS_SPACE
+
+This line is required to add bus_space() compatibility to the MI driver.
+
+Next you need to add one or more configuration lines for the nca devices:
+
+	nca0	at isa? port 0x360 irq 15
+	nca1	at isa? iomem 0xd8000 irq 5
+
+The first is for a port-mapped controller at 0x360, IRQ 15. The second line
+is for a memory-mapped controller (Trantor T128 or equivalent) at
+0xd800-0xdff, IRQ 5.
+
+You can also set up the driver in "polled" mode (i.e., no interrupts) by
+leaving off the "irq" portion of the line:
+
+	nca0	at isa? port 0x360
+	nca1	at isa? iomem 0xd8000
+
+Lastly, you need to add a scsibus attachment line for the nca device:
+
+	scsibus* at nca?
+
+The following is the probe output from my test system:
+
+	Copyright (c) 1996, 1997, 1998
+	    The NetBSD Foundation, Inc.  All rights reserved.
+	Copyright (c) 1982, 1986, 1989, 1991, 1993
+	    The Regents of the University of California.  All rights reserved.
+
+	NetBSD 1.3.2 (GENERIC) #2: Sun Oct  4 17:11:43 EDT 1998
+	    root@hefalump:/usr/src/sys/arch/i386/compile/GENERIC
+	cpu0: Intel 486DX (486-class)
+	real mem  = 7995392
+	avail mem = 5349376
+	using 123 buffers containing 503808 bytes of memory
+	mainbus0 (root)
+	isa0 at mainbus0
+	com1 at isa0 port 0x2f8-0x2ff irq 3: ns8250 or ns16450, no fifo
+	com2 at isa0 port 0x3e8-0x3ef irq 5: ns8250 or ns16450, no fifo
+	lpt0 at isa0 port 0x378-0x37b irq 7
+	nca0 at isa0 port 0x360-0x36f irq 15
+	nca0: NCR 53C400 detected
+	scsibus0 at nca0: 8 targets
+	sd0 at scsibus0 targ 0 lun 0: <HP, C2235, 0B11> SCSI2 0/direct fixed
+	sd0: 402MB, 1574 cyl, 9 head, 58 sec, 512 bytes/sect x 825012 sectors
+	cd0 at scsibus0 targ 6 lun 0: <CHINON, CD-ROM CDS-535, Q20> SCSI2 5/cdrom removable
+	nca1 at isa0 iomem 0xdb878-0xdb887 irq 5
+	nca1: NCR 53C400 detected
+	scsibus1 at nca1: 8 targets
+	sd1 at scsibus1 targ 5 lun 0: <IOMEGA, ZIP 100, J.02> SCSI2 0/direct removable
+	sd1: 96MB, 96 cyl, 64 head, 32 sec, 512 bytes/sect x 196608 sectors
+	npx0 at isa0 port 0xf0-0xff: using exception 16
+	pc0 at isa0 port 0x60-0x6f irq 1: color
+	pc0: console
+	fdc0 at isa0 port 0x3f0-0x3f7 irq 6 drq 2
+	fd0 at fdc0 drive 0: 1.44MB, 80 cyl, 2 head, 18 sec
+	biomask 8060 netmask 8460 ttymask 84e2
+	boot device: sd0
+	root on sd0a dumps on sd0b
+	root file system type: ffs
+
+In this output, nca0 is a Trantor T-160 and nca1 is a DTC 3150V. Both happen
+to be 53C400-based controllers.
+
+LIMITATIONS
+-----------
+As of this writing, the nca driver has two known limitations:
+
+1) No DMA or pseudo-DMA support
+
+This is unfortunate, but may be remedied in a later release. I would welcome
+any help by someone more familiar with DMA, particularly in relation to
+bus_space().
+
+As it is, however, performance of the nca driver is acceptable, though some
+of that may depend on one's definition of "acceptable". Remember that these
+were not high speed controller under the best conditions, so much of it is
+really the nature of the beast. It should be adequate for tapes, CD-ROMS,
+and low-usage disk devices (e.g., Zip drives). If you want to drive a CD-R
+drive, then invest in an Adaptec 154X or a PCI controller.
+
+2) No support for the SCSI port of the Pro AudioStudio 16.
+
+This is also unfortunate and may not be able to be remedied withing the
+current framework of the bus_space() functions and the nca driver.
+
+The problem is this: In most adapters, the eight 53C80 registers are mapped
+to eight sequential locations, either ports or memory addresses. On the
+PAS-16, however, the registers are mapped to two sets of ports- four
+sequential ports at the base address and four sequential ports located
+0x2000 higher. As I currently understand it, this is not supportable by
+the current bus_space() implementation nor is it possible for the driver
+to allocate a second bus_space_tag and _handle itself to accommodate the
+second set of ports. Without either, it is very difficult to imagine how
+a portable linkage to the MI driver could be made.
+
+Again, I welcome suggestions.
+
+HISTORY
+-------
+An nca driver first appeared in FreeBSD.
+
+This particular one borrows a little code from it and some from the i386
+'esp' and sun3 'si' drivers. It, like many things in the free unix world,
+was written because it solved a problem- mine! In my case, it was a need
+of a SCSI card and a lack of IRQs. The good news was that I had one
+(NCS-250); the bad news was that it was not supported under NetBSD. The
+rest is history.
+
+DISCLAIMER
+----------
+Like most things, you should take this code with a grain of salt. I have
+tried to test it sufficiently, but it is always possible that it is not
+compatible with some aspect of your system. If you end up suffering
+massive data loss and destruction, you have my sympathies, but I do not
+and will not allow myself to be held responsible.
+
+CREDITS
+-------
+My thanks to Jason Thorpe and the rest of the NetBSD team for making it
+so easy to write this driver. My thanks also to the authors of the
+FreeBSD nca driver for inspiration and 53C400 support.
+
+In the end, I hope that someone else can find this driver as useful as I
+have. If so, please drop me a line at jruschme@exit109.com and let me
+know about it.
+
+Share and enjoy
+
+John Ruschmeyer (jruschme@exit109.com)
+11 October 1998

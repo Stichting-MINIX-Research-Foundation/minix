@@ -1,0 +1,8 @@
+#	$NetBSD: files.umapfs,v 1.3 2014/10/12 03:52:30 uebayasi Exp $
+
+deffs	UMAPFS
+
+define	umapfs: vfs, layerfs
+file	miscfs/umapfs/umap_subr.c	umapfs
+file	miscfs/umapfs/umap_vfsops.c	umapfs
+file	miscfs/umapfs/umap_vnops.c	umapfs

@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.eisadevs,v 1.2 2008/10/19 22:05:22 apb Exp $
+
+.include <bsd.own.mk>
+
+eisadevs.h eisadevs_data.h: eisadevs devlist2h.awk
+	/bin/rm -f eisadevs.h eisadevs_data.h
+	${TOOL_AWK} -f devlist2h.awk eisadevs

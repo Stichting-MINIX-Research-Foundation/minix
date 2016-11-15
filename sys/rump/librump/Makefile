@@ -2,6 +2,6 @@
 #
 
 SUBDIR= 	rumpkern
-#SUBDIR+=	rumpdev rumpnet rumpvfs
+SUBDIR+=	rumpdev rumpnet rumpvfs
 
 .include <bsd.subdir.mk>

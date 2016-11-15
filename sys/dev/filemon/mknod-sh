@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Note that filemon.kmod needs the 6.x version of modload.
+
+Error() {
+	echo "ERROR: $@" >&2; exit 1
+}
+
+major=`sysctl kern.drivers | tr ',' '\012' | sed -n '/filemon/s,.*\[\([0-9][0-9]*\).*,\1,p'`
+
+[ ${major:-0} -gt 0 ] || Error filemon not loaded
+dev=/dev/filemon
+
+if [ -c $dev ]; then
+   x=`'ls' -l $dev`
+   case "$x" in
+   *" $major,"*) exit 0;;
+   esac
+   rm -f $dev
+fi
+mknod -m 666 $dev c $major 0
+

@@ -1,0 +1,197 @@
+/*	$NetBSD: igmareg.h,v 1.1 2014/01/21 14:52:07 mlelstv Exp $	*/
+
+/*
+ * Copyright (c) 2014 Michael van Elst
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef IGMAREG_H
+#define IGMAREG_H
+
+/* North display */
+
+#define CPU_VGA_CNTRL   0x41000
+#define PCH_VGA_CNTRL   0x71400
+#define   VGA_CNTRL_DISABLE     (1L << 31)
+#define   VGA_2X_MODE           (1L << 29)
+#define   VGA_PIPE_B_SELECT     (1L << 29)
+
+#define PF_WINPOS(i)    (0x68070+i*0x800)
+#define   PF_WINPOS_VAL(x,y) ((x) << 16 | (y))
+#define PF_WINSZ(i)     (0x68074+i*0x800)
+#define   PF_WINSZ_VAL(w,h)      ((w) << 16 | (h))
+#define   PF_WINSZ_GET_WIDTH(r)  (((r) >> 16) & 0x1fff)
+#define   PF_WINSZ_GET_HEIGHT(r) (((r) >>  0) & 0xfff)
+#define PF_CTRL(i)      (0x68080+i*0x800)
+#define PF_CTRL_I965    (0x61230)
+#define   PF_ENABLE            (1L << 31)
+
+#define PIPE_HTOTAL(i)   (0x60000+i*0x1000)
+#define   PIPE_HOTAL_VAL(t,a)       (((t)-1) << 16 | ((a)-1))
+#define   PIPE_HTOTAL_GET_TOTAL(r)  ((((r) >> 16) & 0x1fff)+1)
+#define   PIPE_HTOTAL_GET_ACTIVE(r) ((((r) >> 0) & 0x1fff)+1)
+#define PIPE_HBLANK(i)   (0x60004+i*0x1000)
+#define   PIPE_HBLANK_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define PIPE_HSYNC(i)    (0x60008+i*0x1000)
+#define   PIPE_HSYNC_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define PIPE_VTOTAL(i)   (0x6000c+i*0x1000)
+#define   PIPE_VTOTAL_VAL(t,a)      (((t)-1) << 16 | ((a)-1))
+#define   PIPE_VTOTAL_GET_TOTAL(r)  ((((r) >> 16) & 0xfff)+1)
+#define   PIPE_VTOTAL_GET_ACTIVE(r) ((((r) >> 0) & 0xfff)+1)
+#define PIPE_VBLANK(i)   (0x60010+i*0x1000)
+#define   PIPE_VBLANK_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define PIPE_VSYNC(i)    (0x60014+i*0x1000)
+#define   PIPE_VSYNC_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define PIPE_SRCSZ(i)    (0x6001c+i*0x1000)
+#define   PIPE_SRCSZ_VAL(w,h) (((w)-1) << 16 | ((h)-1))
+#define PIPE_VSHIFT(i)   (0x60028+i*0x1000)
+#define PIPE_DATAM1(i)   (0x60030+i*0x1000)
+#define PIPE_DATAM2(i)   (0x60034+i*0x1000)
+#define PIPE_DATAN1(i)   (0x60038+i*0x1000)
+#define PIPE_DATAN2(i)   (0x6003c+i*0x1000)
+#define PIPE_DPLINKM1(i) (0x60040+i*0x1000)
+#define PIPE_DPLINKM2(i) (0x60044+i*0x1000)
+#define PIPE_DPLINKN1(i) (0x60048+i*0x1000)
+#define PIPE_DPLINKN2(i) (0x6004c+i*0x1000)
+#define PIPE_CONF(i)     (0x70080+i*0x1000)
+#define   PIPE_CONF_ENABLE     (1L << 31)
+#define   PIPE_CONF_STATE      (1L << 30)
+#define   PIPE_CONF_GAMMA8     (0L << 24)
+#define   PIPE_CONF_GAMMA10    (1L << 24)
+#define   PIPE_CONF_GAMMA12    (2L << 24)
+#define   PIPE_CONF_PFPD       (0L << 21)
+#define   PIPE_CONF_PFID       (1L << 21)
+#define   PIPE_CONF_IFID       (3L << 21)
+#define   PIPE_CONF_IFID_DBL   (4L << 21)
+#define   PIPE_CONF_PFID_DBL   (5L << 21)
+#define   PIPE_CONF_POWERSAVE  (1L << 20)
+#define   PIPE_CONF_MSA1       (0L << 18)
+#define   PIPE_CONF_MSA2       (1L << 18)
+#define   PIPE_CONF_MSA3       (2L << 18)
+#define   PIPE_CONF_MSA4       (3L << 18)
+#define   PIPE_CONF_ROT0       (0L << 14)
+#define   PIPE_CONF_ROT90      (1L << 14)
+#define   PIPE_CONF_ROT180     (2L << 14)
+#define   PIPE_CONF_ROT270     (3L << 14)
+#define   PIPE_CONF_CE         (1L << 13)
+#define   PIPE_CONF_8BPP       (0L << 5)
+#define   PIPE_CONF_6BPP       (2L << 5)
+#define   PIPE_CONF_DITHER     (4L << 2)
+#define   PIPE_CONF_DITHERST1  (5L << 2)
+#define   PIPE_CONF_DITHERST2  (6L << 2)
+#define   PIPE_CONF_DITHERT    (7L << 2)
+#define CUR_CNTR(i)      (0x70080+i*0x1000)
+#define CUR_BASE(i)      (0x70084+i*0x1000)
+#define PRI_CTRL(i)      (0x70180+i*0x1000)
+#define   PRI_CTRL_ENABLE     (1L << 31)
+#define   PRI_CTRL_GAMMA      (1L << 30)
+#define   PRI_CTRL_IND8       (2L << 26)
+#define   PRI_CTRL_BGR565     (5L << 26)
+#define   PRI_CTRL_BGR        (6L << 26)
+#define   PRI_CTRL_RGB10      (8L << 26)
+#define   PRI_CTRL_BGR10      (10L << 26)
+#define   PRI_CTRL_RGBFP      (12L << 26)
+#define   PRI_CTRL_RGB        (14L << 26)
+#define   PRI_CTRL_PIXFMTMSK  (31L << 26)
+#define   PRI_CTRL_CSC        (1L << 24)
+#define   PRI_CTRL_ROT180     (1L << 15)
+#define   PRI_CTRL_NOTRICKLE  (1L << 14)
+#define   PRI_CTRL_TILED      (1L << 10)
+#define   PRI_CTRL_ASYNC      (1L << 9)
+#define PRI_LINOFF(i)    (0x70184+i*0x1000)
+#define PRI_STRIDE(i)    (0x70188+i*0x1000)
+#define PRI_SURF(i)      (0x7019c+i*0x1000)
+#define PRI_TILEOFF(i)   (0x701a4+i*0x1000)
+#define FDI_TX_CTL(i)    (0x60100+i*0x1000)
+
+#define FW_BLC_SELF     (0x20e0)
+#define FW_BLC_SELF_EN  (1L << 15)
+
+/* South display */
+
+#define DREF_CTL        (0xc6200)
+#define RAWCLK_FREQ     (0xc6204)
+#define DPLL_SEL        (0xc7000)
+
+#define DAC_CTL         (0xe1100)
+#define HDMI_CTL        (0xe1140)
+#define HDMI_BUF_CTL    (0xfd024)
+#define LVDS_CTL        (0xe1180)
+#define PCH_DP_CTL(i)	(0xe4100+i*0x100)
+
+#define PCH_DPLL_CTL(i)    (0xc6014+i*0x0008)
+#define PCH_DPLL_FP0(i)    (0xc6040+i*0x0008)
+#define PCH_DPLL_FP1(i)    (0xc6044+i*0x0008)
+#define TRANS_HTOTAL(i)    (0xe0000+i*0x1000)
+#define   TRANS_HOTAL_VAL(t,a) (((t)-1) << 16 | ((a)-1))
+#define TRANS_HBLANK(i)    (0xe0004+i*0x1000)
+#define   TRANS_HBLANK_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define TRANS_HSYNC(i)     (0xe0008+i*0x1000)
+#define   TRANS_HSYNC_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define TRANS_VTOTAL(i)    (0xe000c+i*0x1000)
+#define   TRANS_VTOTAL_VAL(t,a) (((t)-1) << 16 | ((a)-1))
+#define TRANS_VBLANK(i)    (0xe0010+i*0x1000)
+#define   TRANS_VBLANK_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define TRANS_VSYNC(i)     (0xe0014+i*0x1000)
+#define   TRANS_VSYNC_VAL(e,s) (((e)-1) << 16 | ((s)-1))
+#define TRANS_CONF(i)      (0xf0008+i*0x1000)
+#define FDI_RX_CTL(i)      (0xf000c+i*0x1000)
+
+#define OLD_BLC_PWM_CTL2   (0x61250)
+#define OLD_BLC_PWM_CTL    (0x61254)
+#define   BLM_PWM_ENABLE          (1L << 31)
+#define   BLM_PIPE(p)             ((p) << 29)
+#define   BLM_PHASEIN_INTST       (1L << 26)
+#define   BLM_PHASEIN_ENABLE      (1L << 25)
+#define   BLM_PHASEIN_INTEN       (1L << 24)
+#define   BLM_PHASEIN_TIME(t)     ((t) << 16)
+#define   BLM_PHASEIN_COUNT(c)    ((c) << 8)
+#define   BLM_PHASEIN_INCR(i)     ((i) << 0)
+#define CPU_BLC_PWM_CTL2   (0x48250)
+#define CPU_BLC_PWM_CTL    (0x48254)
+#define HSW_BLC_PWM_CTL    (0x48350)
+#define   BACKLIGHT_VAL(f,l,v)    ((f) << 17 | (l) << 16 | (v))
+#define   BACKLIGHT_GET_FREQ(r)   (((r) >> 17) & 0x7fff)
+#define   BACKLIGHT_GET_LEGACY(r) (((r) >> 16) & 0x1)
+#define   BACKLIGHT_GET_CYCLE(r)  (((r) >>  0) & 0xffff)
+
+#define GMBUS_NUM_PORTS    6
+#define OLD_GPIOA          (0x5010)
+#define OLD_GPIOB          (0x5014)
+#define OLD_GPIOC          (0x5018)
+#define OLD_GPIOD          (0x501c)
+#define OLD_GPIOE          (0x5020)
+#define OLD_GPIOF          (0x5024)
+#define PCH_GPIOA          (0xc5010)
+#define PCH_GPIOB          (0xc5014)
+#define PCH_GPIOC          (0xc5018)
+#define PCH_GPIOD          (0xc501c)
+#define PCH_GPIOE          (0xc5020)
+#define PCH_GPIOF          (0xc5024)
+#define   GPIO_CLOCK_DIR_MASK            (1 << 0)
+#define   GPIO_CLOCK_DIR_IN              (0 << 1)
+#define   GPIO_CLOCK_DIR_OUT             (1 << 1)
+#define   GPIO_CLOCK_VAL_MASK            (1 << 2)
+#define   GPIO_CLOCK_VAL_OUT             (1 << 3)
+#define   GPIO_CLOCK_VAL_IN              (1 << 4)
+#define   GPIO_CLOCK_PULLUP_DISABLE      (1 << 5)
+#define   GPIO_DATA_DIR_MASK             (1 << 8)  
+#define   GPIO_DATA_DIR_IN               (0 << 9)
+#define   GPIO_DATA_DIR_OUT              (1 << 9)
+#define   GPIO_DATA_VAL_MASK             (1 << 10)
+#define   GPIO_DATA_VAL_OUT              (1 << 11)
+#define   GPIO_DATA_VAL_IN               (1 << 12)
+#define   GPIO_DATA_PULLUP_DISABLE       (1 << 13)
+
+#endif

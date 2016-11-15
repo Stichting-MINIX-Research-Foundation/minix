@@ -1,0 +1,98 @@
+#	$NetBSD: files.uba,v 1.17 2008/03/11 05:34:01 matt Exp $
+#
+# Config file and device description for machine-independent
+# code for devices Digital Equipment Corp. Unibus and Q22 bus.
+# Included by ports that need it.
+device	uba { csr }: bus
+
+define	qfont
+define	ifuba
+
+file	dev/qbus/uba.c				uba
+file	dev/qbus/if_uba.c			ifuba
+
+# DZ-11 (-compatible) tty device driver.
+attach	dz at uba with dz_uba
+file	dev/qbus/dz_uba.c			dz_uba
+
+# DL-11 at UBA
+device	dl: tty
+attach	dl at uba
+file	dev/qbus/dl.c				dl needs-flag
+
+# DHU-11 at UBA
+device	dhu: tty
+attach	dhu at uba
+file	dev/qbus/dhu.c				dhu needs-flag
+
+# UDA50/whatever disk/tape MSCP controller
+device	mtc: mscp
+attach	mtc at uba
+device	uda: mscp
+attach	uda at uba
+file	dev/qbus/uda.c				uda | mtc
+
+# DELQA-PLUS Turbo mode Ethernet controller
+device	qt: ifnet, ether, arp
+attach	qt at uba
+file	dev/qbus/if_qt.c			qt
+
+# DEQNA/DELQA Ethernet controller
+device	qe: ifnet, ether, arp
+attach	qe at uba
+file	dev/qbus/if_qe.c			qe
+
+# DEUNA/DELUA Ethernet controller
+device	de: ifnet, ether, arp, ifuba
+attach	de at uba
+file	dev/qbus/if_de.c			de
+
+# Interlan NI1010 Ethernet controller
+device	il: ifnet, ether, arp, ifuba
+attach	il at uba
+file	dev/qbus/if_il.c			il
+
+# QDSS at UBA
+device	qd: qfont
+attach	qd at uba
+file	dev/qbus/qd.c				qd needs-count
+
+# Fontfile for DEC framebuffers, soon to die in favour for MI fontfiles.
+file	dev/qbus/qfont.c			qfont
+
+# RL01/02 disk controller
+device	rlc { drive=-1 }
+attach	rlc at uba
+device	rl: disk
+attach	rl at rlc
+file	dev/qbus/rl.c				rl | rlc needs-flag
+
+# DEC DMC-11/DMR-11 P2P interface
+device	dmc: ifnet, ifuba
+attach	dmc at uba
+file	dev/qbus/if_dmc.c			dmc
+
+# DEC TS11 tape formatter
+device	ts: tape
+attach	ts at uba
+file	dev/qbus/ts.c				ts needs-flag
+
+# DMF32 on UBA
+device	dmf: tty # ifnet, ifuba
+attach	dmf at uba
+file	dev/qbus/dmf.c				dmf needs-flag
+
+# DMZ32 on UBA
+device	dmz: tty
+attach	dmz at uba
+file	dev/qbus/dmz.c				dmz needs-flag
+
+# Common code for dmf/dmz
+file	dev/qbus/dmx.c				dmf | dmz
+
+# RX01/02 floppy disk controller
+device  rfc { drive=-1 }
+attach  rfc at uba
+device  rf: disk
+attach  rf at rfc
+file	dev/qbus/rf.c				rf | rfc needs-flag

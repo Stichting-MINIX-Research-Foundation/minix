@@ -1,0 +1,19 @@
+# $NetBSD: files.nand,v 1.5 2012/10/31 18:58:08 riz Exp $
+
+define	nandbus	{ }
+
+device	nand: flashbus
+attach	nand at nandbus
+file	dev/nand/nand.c		nand
+file	dev/nand/hamming.c	nand
+file	dev/nand/nand_bbt.c	nand
+file	dev/nand/nand_crc.c	nand
+file	dev/nand/nand_micron.c	nand
+file	dev/nand/nand_samsung.c	nand
+
+defpseudodev	nandemulator: nandbus
+file	dev/nand/nandemulator.c	nandemulator
+
+defflag opt_nand.h		NAND_BBT
+defflag opt_nand.h		NAND_DEBUG
+defflag opt_nand.h		NAND_VERBOSE

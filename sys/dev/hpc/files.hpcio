@@ -1,0 +1,46 @@
+#	$NetBSD: files.hpcio,v 1.6 2006/10/09 10:33:42 peter Exp $
+#	H/PC GPIO interface
+
+#  platform:
+#    iochip: sepecify GPIO chip
+#    evtype: event tyep of config_hook
+#        id: event id of config_hook
+#      port: port number on GPIO
+#    active: which value is 'ON', 0 or 1.
+# initvalue: initial value
+#		0: low
+#		1: high
+#		default: do nothing
+#     level: level sense interrupt
+#		0: low
+#		1: high
+#		default: edge
+#      edge: edge trriger interrupt
+#		1: positive edge
+#		2: negative edge
+#		other: both
+
+define hpcioif { [platform = -1], [iochip = -1], [id = -1], [port = -1], [active = 1], [level = -1], [edge = -1], [initvalue = -1], [addr=-1], [size=-1] }
+
+device hpcioman { [iochip = -1], [evtype = -1], [id = -1], [port = -1], [active = 1], [level = -1], [edge = -1], [initvalue = -1], [hold = -1], [connect = 0] }
+
+attach hpcioman at hpcioif
+file dev/hpc/hpcioman.c		hpcioman
+
+device hpcin
+attach hpcin at hpcioman
+file dev/hpc/hpcin.c		hpcin
+
+device hpcout
+attach hpcout at hpcioman
+file dev/hpc/hpcout.c		hpcout
+
+device pwctl
+attach pwctl at hpcioif
+file dev/hpc/pwctl.c		pwctl
+defflag	opt_pwctl.h	PWCTLDEBUG
+defparam opt_pwctl.h	PWCTLDEBUG_CONF
+
+device button
+attach button at hpcioif
+file dev/hpc/button.c		button

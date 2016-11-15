@@ -1,0 +1,55 @@
+#	$NetBSD: files.netinet,v 1.26 2015/02/10 19:11:52 rjs Exp $
+
+defflag opt_tcp_debug.h		TCP_DEBUG
+defparam opt_tcp_debug.h	TCP_NDEBUG
+defflag opt_inet.h		INET INET6 TCP_SIGNATURE
+				TCP_OUTPUT_COUNTERS TCP_REASS_COUNTERS IPSELSRC
+defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
+
+defflag				MROUTING
+defflag				PIM
+defflag				TCP_COMPAT_42
+
+defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
+
+defflag opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
+				UDP_CSUM_COUNTERS
+
+defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
+
+defflag opt_dccp.h		DCCP DCCP_TFRC DCCPSTATES DCCPBHASHSIZE
+				DCCP_DEBUG_ON ACKDEBUG
+
+file	netinet/igmp.c		inet
+file	netinet/in.c		inet
+file	netinet/in_offload.c	inet
+file	netinet/in_pcb.c	inet
+file	netinet/in_print.c
+file	netinet/in_proto.c	inet
+file	netinet/in_selsrc.c	inet & ipselsrc
+file	netinet/ip_flow.c	inet & gateway
+file	netinet/ip_icmp.c	inet
+file	netinet/ip_id.c		inet
+file	netinet/ip_input.c	inet
+file	netinet/ip_mroute.c	inet & mrouting
+file	netinet/ip_output.c	inet
+file	netinet/ip_reass.c	inet
+file	netinet/raw_ip.c	inet
+
+file	netinet/tcp_debug.c	(inet | inet6) & tcp_debug
+file	netinet/tcp_input.c	inet | inet6
+file	netinet/tcp_output.c	inet | inet6
+file	netinet/tcp_sack.c	inet | inet6
+file	netinet/tcp_subr.c	inet | inet6
+file	netinet/tcp_timer.c	inet | inet6
+file	netinet/tcp_usrreq.c	inet | inet6
+file	netinet/tcp_congctl.c	inet | inet6
+file	netinet/tcp_vtw.c	inet | inet6
+
+file	netinet/udp_usrreq.c	inet | inet6
+file	netinet/portalgo.c	inet | inet6
+
+file	netinet/dccp_cc_sw.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_tcplike.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_tfrc.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_usrreq.c	inet & dccp | inet6 & dccp

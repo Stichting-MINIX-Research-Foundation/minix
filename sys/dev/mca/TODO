@@ -1,0 +1,4 @@
+# $NetBSD: TODO,v 1.16 2002/03/24 18:47:54 jdolecek Exp $
+
+Projects:
+* IBM SCSI Adapter support

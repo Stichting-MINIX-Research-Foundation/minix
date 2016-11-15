@@ -1,0 +1,14 @@
+Things to do for the bktr driver, in no special order:
+
+o check for a possibility to replace remaining vtophys()
+o clean up bt8xx.h
+o does it work on alpha?
+o use NetBSD's own i2c-functions
+o look for cause of warning:
+  bktr0: ioctl: tsleep error 35 200001c
+  See mail by Stuart Sharpe <stu@drazi.demon.co.uk>
+  on Wed, 4 Oct 2000 21:50:11 +0100 (BST) on current-users,
+  Message-Id: <200010042050.e94KoEg00353@drazi.demon.co.uk>
+o split up contents of bktr directory to better places? (also fix
+  bktr2netbsd in that case)
+o replace unsigned long by u_int32_t (and similar for int/short?)

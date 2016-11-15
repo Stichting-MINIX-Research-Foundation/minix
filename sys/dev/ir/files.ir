@@ -1,0 +1,22 @@
+#	$NetBSD: files.ir,v 1.3 2007/03/06 20:34:36 drochner Exp $
+
+define	irbus { }
+
+define	irdasir
+define	irframedrv
+
+# IrDA physical frame level driver
+device	irframe: irframedrv
+attach	irframe at irbus
+file	dev/ir/irframe.c		irframe | irframedrv	needs-flag
+
+# Consumer Ir driver
+device	cir
+attach	cir at irbus
+file	dev/ir/cir.c			cir			needs-flag
+
+defpseudo irframetty: irframedrv, irdasir
+file	dev/ir/irframe_tty.c		irframetty		needs-flag
+
+file	dev/ir/ir.c			cir | irframedrv
+file	dev/ir/sir.c			irdasir

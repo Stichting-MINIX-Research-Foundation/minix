@@ -1,0 +1,10 @@
+# $NetBSD: files.apm,v 1.4 2012/09/30 21:36:20 dsl Exp $
+
+#
+# Common APM support files
+#
+defflag	opt_apm.h	APM_V10_ONLY APM_NO_V12 APMDEBUG
+			APM_POWER_PRINT
+defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
+device	apm
+file	dev/apm/apm.c		apm

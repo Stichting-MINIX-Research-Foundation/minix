@@ -1,0 +1,58 @@
+#-
+# Copyright (C) 2001-2003 by NBMK Encryption Technologies.
+# All rights reserved.
+# 
+# NBMK Encryption Technologies provides no support of any kind for
+# this software.  Questions or concerns about it may be addressed to
+# the members of the relevant open-source community at
+# <tech-crypto@netbsd.org>.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+# 
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 
+# 2. Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+
+KMOD	= nsp2000
+SRCS	= nsp.c n8_API_Initialize.c config.c n8_manage_memory.c n8_sksInit.c n8_memory.c \
+	  userPool.c QMgrInit.c contextMem.c n8_memory_bsd.c n8_semaphore_bsd.c \
+	  QMQueue.c QMUtil.c helper.c irq.c RNQueue.c \
+	  n8_util.c \
+	  n8_key_works.c n8_hash.c n8_cb_ea.c n8_precompute.c \
+	  n8_precomp_md5.c n8_pub_enums.c \
+	  n8_cryptographic.c \
+	  n8_contextM.c n8_pk_ops.c n8_cb_pk_ops.c \
+	  n8_dsa.c n8_dh.c n8_cb_dsa.c n8_cb_dh.c n8_rsa.c n8_cb_rsa.c
+KLDMOD	= t
+MKMAN	= no
+
+CPPFLAGS  += -Werror -Wall -Wmissing-prototypes -Wstrict-prototypes -Wswitch -Wshadow -Wcast-qual -Wwrite-strings -Wno-sign-compare -Wno-pointer-sign -Wno-attributes -Wextra -Wno-unused-parameter -I. -I./common -I./QMgr -I./include_private -I./include_public -I./common/api -I./common/api/commands -DKOFF -DKERNEL -DMULTIPROCESSOR -DMAX_NSP_INSTANCES=1 -DSUPPORT_CALLBACKS
+#CPPFLAGS += -DN8DEBUG
+
+.PATH: ./common ./memory ./QMgr ./common/api ./common/api/commands
+
+#modload
+#modunload
+#modstat
+KO		= ${KMOD}.ko
+
+.include <bsd.kmod.mk>

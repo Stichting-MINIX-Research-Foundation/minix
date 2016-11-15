@@ -33,12 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: pickmode.c,v 1.4 2011/04/09 20:53:39 christos Exp $"
 
 #include <sys/param.h>
 #include <dev/videomode/videomode.h>
-#if !defined(__minix)
 #include "opt_videomode.h"
-#else
-#include <lib/libkern/libkern.h>
-#include <minix/sysutil.h>
-#endif /* !defined(__minix) */
 
 #ifdef PICKMODE_DEBUG
 #define DPRINTF printf

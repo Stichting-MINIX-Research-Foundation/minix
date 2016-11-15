@@ -1,0 +1,252 @@
+#	$NetBSD: files.i2c,v 1.65 2015/05/12 20:54:08 jmcneill Exp $
+
+obsolete defflag	opt_i2cbus.h		I2C_SCAN
+define	i2cbus { }
+define	i2cexec
+
+device	iic { [addr = -1], [size = -1] }
+attach	iic at i2cbus
+file	dev/i2c/i2c.c				iic
+file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
+file	dev/i2c/i2c_subr.c			iic | i2cbus
+defparam opt_i2c.h				I2C_MAX_ADDR
+
+# Common module for bit-bang'ing an I2C bus
+define	i2c_bitbang
+file	dev/i2c/i2c_bitbang.c			i2c_bitbang
+
+# Auvitek AU8522 decoder
+define	au8522: i2cexec
+file	dev/i2c/au8522.c			au8522
+
+# LG DT3303 decoder
+define	lg3303: i2cexec, dtv_math
+file	dev/i2c/lg3303.c			lg3303
+
+# Xceive XC3028 tuner
+define	xc3028: i2cexec, firmload
+file	dev/i2c/xc3028.c			xc3028
+
+# Xceive XC5000 tuner
+define	xc5k: i2cexec, firmload
+file	dev/i2c/xc5k.c				xc5k
+
+# Generic PLL-based tuners
+define	tvpll: i2cexec
+file	dev/i2c/tvpll.c				tvpll
+file	dev/i2c/tvpll_tuners.c			tvpll
+
+# Nextwave NXT200x demodulator
+define	nxt2k: i2cexec, firmload
+file	dev/i2c/nxt2k.c				nxt2k
+
+# Microtune MT2131 silicon tuner
+define	mt2131: i2cexec
+file	dev/i2c/mt2131.c			mt2131
+
+# Conexant/Samsung CX24227/S5H1409 demodulator
+define	cx24227: i2cexec
+file	dev/i2c/cx24227.c			cx24227
+
+#
+# I2C master devices
+#
+define	motoi2c
+file	dev/i2c/motoi2c.c			motoi2c
+define	mvi2c
+file	dev/i2c/gttwsi_core.c			mvi2c
+defflag opt_gttwsi.h				GTTWSI_ALLWINNER
+
+#
+# I2C client devices
+#
+
+# M41T00 Real Time Clock
+device	m41trtc
+attach	m41trtc at iic
+file	dev/i2c/m41t00.c			m41trtc
+
+# M41ST84 Real Time Clock
+device	strtc
+attach	strtc at iic
+file	dev/i2c/m41st84.c			strtc
+defflag	opt_strtc.h				STRTC_NO_USERRAM
+						STRTC_NO_WATCHDOG
+
+# MAX6900 Real Time Clock
+device	maxrtc
+attach	maxrtc at iic
+file	dev/i2c/max6900.c			maxrtc
+
+# NXP/Philips PCF8563 Real Time Clock
+device	pcf8563rtc
+attach	pcf8563rtc at iic
+file	dev/i2c/pcf8563.c			pcf8563rtc
+
+# Philips PCF8583 Real Time Clock
+device	pcfrtc
+attach	pcfrtc at iic
+file	dev/i2c/pcf8583.c			pcfrtc
+
+# Seiko Instruments S-xx390A Real Time Clock
+device	s390rtc
+attach	s390rtc at iic
+file	dev/i2c/s390.c				s390rtc
+
+# Atmel/Microchip 24Cxx Serial EEPROM
+define	at24cxx_eeprom
+device	seeprom
+attach	seeprom at iic
+file	dev/i2c/at24cxx.c			seeprom | at24cxx_eeprom
+						    needs-flag
+
+# National Semiconductor LM75 temperature sensor
+device	lmtemp: sysmon_envsys
+attach	lmtemp at iic
+file	dev/i2c/lm75.c				lmtemp
+
+# IST-AG Humidity and Teperature sensor (P14)
+device	hythygtemp: sysmon_envsys
+attach	hythygtemp at iic
+file	dev/i2c/hytp14.c			hythygtemp
+
+# National Semiconductor LM78 temp sensor/fan controller
+attach	lm at iic with lm_iic
+file	dev/i2c/lm_i2c.c			lm_iic
+
+# National Semiconductor LM87 and clones system hardware monitor
+device	lmenv: sysmon_envsys
+attach	lmenv at iic
+file	dev/i2c/lm87.c				lmenv
+
+# Dallas DS1307 Real Time Clock
+device	dsrtc: sysmon_envsys
+attach	dsrtc at iic
+file	dev/i2c/ds1307.c			dsrtc
+
+# Xicor X1226 Real Time Clock
+device	xrtc
+attach	xrtc at iic
+file	dev/i2c/x1226.c				xrtc
+
+# Analog Devices dBCool family of thermal monitors / fan controllers
+define dbcool {}
+device dbcool: sysmon_envsys
+attach dbcool at iic
+file dev/i2c/dbcool.c			dbcool
+
+# RICOH RS5C372[AB] Real Time Clock
+device	rs5c372rtc
+attach	rs5c372rtc at iic
+file	dev/i2c/rs5c372.c		rs5c372rtc
+
+# RICOH R2025S/D Real Time Clock
+device	r2025rtc
+attach	r2025rtc at iic
+file	dev/i2c/r2025.c			r2025rtc
+
+# VESA Display Data Channel 2
+device	ddc
+define	ddc_read_edid
+attach	ddc at iic
+file	dev/i2c/ddc.c			ddc | ddc_read_edid
+
+# SGS TDA7433 audio mixer
+device	sgsmix
+attach	sgsmix at iic
+file	dev/i2c/sgsmix.c		sgsmix needs-flag
+defflag	opt_sgsmix.h	SGSMIX_DEBUG
+
+# Memory Serial Presence Detect
+attach	spdmem at iic with spdmem_iic
+file	dev/i2c/spdmem_i2c.c		spdmem_iic
+
+# Memory Temp Sensor
+device	sdtemp: sysmon_envsys
+attach	sdtemp at iic
+file	dev/i2c/sdtemp.c		sdtemp
+
+# DS1672 Real Time Clock
+device	ds1672rtc
+attach	ds1672rtc at iic
+file	dev/i2c/ds1672.c		ds1672rtc
+
+# ADM1021
+device	admtemp: sysmon_envsys
+attach	admtemp at iic
+file	dev/i2c/adm1021.c		admtemp
+
+# SMSC LPC47M192 hardware monitor
+device	smscmon: sysmon_envsys
+attach	smscmon at iic
+file	dev/i2c/smscmon.c		smscmon
+
+# G760a FAN controller
+device	g760a: sysmon_envsys
+attach	g760a at iic
+file	dev/i2c/g760a.c			g760a
+
+# IBM Hawk Integrated Systems Management Processor
+device	ibmhawk: sysmon_envsys
+attach	ibmhawk at iic
+file	dev/i2c/ibmhawk.c		ibmhawk
+
+# TI TPS65950 OMAP Power Management and System Companion Device
+device	tps65950pm: sysmon_wdog
+attach	tps65950pm at iic
+file	dev/i2c/tps65950.c		tps65950pm
+
+# TI TPS65217
+device	tps65217pmic: sysmon_envsys
+attach	tps65217pmic at iic
+file	dev/i2c/tps65217pmic.c 		tps65217pmic
+
+# Microchip MCP980x
+device	mcp980x: sysmon_envsys
+attach	mcp980x at iic
+file	dev/i2c/mcp980x.c 		mcp980x
+
+# Nuvoton W83795G/ADG Hardware Monitor
+device	w83795g: gpiobus, sysmon_envsys, sysmon_wdog
+attach	w83795g at iic
+file	dev/i2c/w83795g.c 		w83795g
+
+# Freescale MPL115A2
+device  mpl115a: sysmon_envsys
+attach  mpl115a at iic
+file    dev/i2c/mpl115a.c		mpl115a
+
+# AXP20x Power Management Unit
+device	axp20x: sysmon_envsys
+attach	axp20x at iic
+file	dev/i2c/axp20x.c			axp20x
+
+# AXP22x Power Management Unit
+device	axp22x: sysmon_envsys
+attach	axp22x at iic
+file	dev/i2c/axp22x.c			axp22x
+
+# AXP806 Power Management Unit
+device	axp806pm
+attach	axp806pm at iic
+file	dev/i2c/axp806.c			axp806pm	needs-flag
+
+# AXP809 Power Management Unit
+device	axp809pm
+attach	axp809pm at iic
+file	dev/i2c/axp809.c			axp809pm	needs-flag
+
+# AC100 integrated audio codec and RTC
+device	ac100ic
+attach	ac100ic at iic
+file	dev/i2c/ac100.c				ac100ic		needs-flag
+
+# ACT8846 Power Management Unit
+device	act8846pm
+attach	act8846pm at iic
+file	dev/i2c/act8846.c			act8846pm	needs-flag
+
+# Texas Instruments TMP451 Temperature Sensor
+device	titemp: sysmon_envsys
+attach	titemp at iic
+file	dev/i2c/titemp.c			titemp

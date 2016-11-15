@@ -1,0 +1,101 @@
+#	$NetBSD: files.discovery,v 1.22 2013/09/06 00:56:12 matt Exp $
+#
+# Config file and device description for machine-independent support for
+# the Marvell (formerly Galileo Technology) Discovery system controllers.
+#
+# Ports that include this must also supply some glue code of their own.
+# Notably:
+#	* devices here are indirectly configured by the configuration
+# 	  file since different systems will be configured somewhat
+#	  differently,
+#	* The Multi-Purpose Port (MPP) is configured differently on
+#	  different systems,
+#	* CPU attachment is handled in largely a machine-independent
+#	  fashion,
+#	* The interrupts on different systems will be handled differently.
+#
+# Systems with multiple GT controllers are not currently handled by this
+# code.
+
+defparam	opt_marvell.h	MPSC_CONSOLE
+defparam	opt_marvell.h	GT_MPSC_DEFAULT_BAUD_RATE
+defparam	opt_marvell.h	GT_MPSC_FREQUENCY GT_MPSC_CLOCK_SOURCE
+defparam	opt_marvell.h	GT_MPP_WATCHDOG
+defflag 	opt_marvell.h	GT_DEVBUS GT_ECC GT_COMM GT_WATCHDOG
+
+define	gt { [unit = -1], [offset = -1], [irq = -1] }
+device	gt: gt
+file	dev/marvell/gt.c		gt
+
+# PCI Interface
+device	gtpci: pcibus
+file	dev/marvell/gtpci.c		gtpci & (gtpci_gt|gtpci_mbus) needs-flag
+attach	gtpci at gt with gtpci_gt
+
+# PCI Express Interface
+device	mvpex: pcibus
+file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
+attach	mvpex at gt with mvpex_gt
+
+# Fast ethernet
+define	gfec { [port = -1], [irq = -1] }
+device	gfec: gfec
+attach	gfec at gt
+device	gfe: ether, ifnet, arp, mii
+attach	gfe at gfec
+file	dev/marvell/if_gfe.c		gfec | gfe
+
+# Multi-Protocol Serial controller
+device	gtmpsc: tty
+attach	gtmpsc at gt
+file	dev/marvell/gtmpsc.c		gtmpsc needs-flag
+
+define	obio { [offset = -1], [size = 0], [irq = -1] }
+device	obio: obio
+attach	obio at gt
+file	dev/marvell/obio.c		obio
+
+# Serial-ATA II Host Controller (SATAHC)
+attach	mvsata at gt with mvsata_gt
+file	dev/marvell/mvsata_mv.c		mvsata_gt | mvsata_mbus
+
+# Gigabit Ethernet Controller Interface
+define	mvgbec { [port = -1], [irq = -1] }
+device	mvgbec: mvgbec
+attach	mvgbec at gt with mvgbec_gt
+device	mvgbe: ether, ifnet, arp, mii
+attach	mvgbe at mvgbec
+file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
+
+# USB 2.0 Interface
+attach	ehci at gt with mvusb_gt
+file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
+
+# Cryptographic Engines and Security Accelerator
+device	mvcesa: opencrypto
+file	dev/marvell/mvcesa.c		mvcesa
+attach	mvcesa at gt with mvcesa_gt
+
+# Two-Wire Serial Interface
+device	gttwsi: i2cbus, mvi2c
+file	dev/marvell/gttwsi.c		gttwsi
+attach	gttwsi at gt with gttwsi_gt
+
+# UART Interface
+attach	com at gt with mvuart_gt
+file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
+
+# IDMA Controller and XOR Engine
+device	gtidmac: dmover_service
+file	dev/marvell/gtidmac.c		gtidmac
+attach	gtidmac at gt with gtidmac_gt
+
+# Secure Digital Input/Output (SDIO) Interface
+device	mvsdio: sdmmcbus
+file	dev/marvell/mvsdio.c		mvsdio
+defparam	opt_mvsdio.h		MVSDIO_CARD_DETECT
+					MVSDIO_WRITE_PROTECT
+
+# SPI Serial Peripheral Interface
+device 	mvspi: spibus
+file	dev/marvell/mvspi.c		mvspi

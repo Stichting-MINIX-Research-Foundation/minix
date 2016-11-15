@@ -1,0 +1,39 @@
+#	$NetBSD: files.ofw,v 1.13 2007/01/08 06:43:09 macallan Exp $
+#
+# First cut on Openfirmware interface
+#
+
+define	ofbus {}
+define	of_network_dev
+
+defpseudo openfirm
+file	dev/ofw/openfirmio.c		openfirm needs-flag
+
+file	dev/ofw/ofw_subr.c		ofbus | openfirm
+
+file	dev/ofw/ofw_network_subr.c	of_network_dev
+
+# Generic disk support
+device	ofdisk: disk
+attach	ofdisk at ofbus
+file	dev/ofw/ofdisk.c		ofdisk needs-flag
+
+# Generic net support
+device	ofnet: ether, ifnet, arp
+attach	ofnet at ofbus
+file	dev/ofw/ofnet.c			ofnet needs-flag
+
+# Generic console support
+device	ofcons: tty
+attach	ofcons at ofbus
+file	dev/ofw/ofcons.c		ofcons needs-flag
+
+# Generic RTC support
+device	ofrtc
+attach	ofrtc at ofbus
+file	dev/ofw/ofrtc.c			ofrtc needs-flag
+
+# Generic bus support
+device	ofbus: ofbus
+attach	ofbus at ofbus
+file	dev/ofw/ofbus.c			ofbus

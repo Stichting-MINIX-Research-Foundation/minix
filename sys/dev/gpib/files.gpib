@@ -1,0 +1,38 @@
+#	$NetBSD: files.gpib,v 1.1 2003/06/02 03:45:41 gmcgarry Exp $
+#
+# Config file and device description for machine-independent GPIB code.
+# Included by ports that need it.
+
+# GPIB layer
+device	gpib { [address = -1] }
+attach	gpib at gpibdev
+file	dev/gpib/gpib.c			gpib		needs-flag
+
+# plotter/printer
+device	ppi
+attach	ppi at gpib
+file	dev/gpib/ppi.c			ppi		needs-flag
+
+# CS80/SS80 devices
+device	cs80bus { slave = -1, punit = -1 }
+attach	cs80bus at gpib
+file	dev/gpib/cs80bus.c		cs80bus
+
+# cartridge tapes
+device	ct: tape
+attach	ct at cs80bus
+file	dev/gpib/ct.c			ct		needs-flag
+
+# 9-track tape
+device	mt: tape
+attach	mt at cs80bus
+file	dev/gpib/mt.c			mt		needs-flag
+
+# disks
+device	rd: disk
+attach	rd at cs80bus
+file	dev/gpib/rd.c			rd		needs-flag
+
+# 82169A GPIB/HIL interface
+#attach	hil at gpib with hil_gpib
+#file	dev/gpib/hil_gpib.c		hil_gpib

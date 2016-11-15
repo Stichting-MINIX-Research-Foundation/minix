@@ -1,0 +1,13 @@
+#	$NetBSD: files.netatalk,v 1.3 2014/12/08 07:18:45 uebayasi Exp $
+
+defflag opt_atalk.h			NETATALK
+
+define	netatalk
+file	netatalk/aarp.c			netatalk
+file	netatalk/at_control.c		netatalk
+file	netatalk/at_print.c
+file	netatalk/at_proto.c		netatalk
+file	netatalk/at_rmx.c		netatalkdebug
+file	netatalk/ddp_input.c		netatalk
+file	netatalk/ddp_output.c		netatalk
+file	netatalk/ddp_usrreq.c		netatalk

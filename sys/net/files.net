@@ -1,0 +1,70 @@
+#	$NetBSD: files.net,v 1.7 2015/08/31 08:02:44 ozaki-r Exp $
+
+# XXX CLEANUP
+define	net
+file	net/bpf.c			bpfilter
+file	net/bpf_filter.c		bpf_filter
+file	net/bpf_stub.c			net
+file	net/bsd-comp.c			ppp & ppp_bsdcomp
+file	net/dl_print.c
+file	net/if.c			net
+file	net/if_arcsubr.c		arcnet			needs-flag
+file	net/if_atmsubr.c		atm
+file	net/if_bridge.c			bridge			needs-flag
+file	net/bridgestp.c			bridge
+file	net/if_ecosubr.c		eco
+file	net/if_etherip.c		etherip			needs-flag
+file	net/if_ethersubr.c		ether | fddi | netatalk | token |
+					    wlan		needs-flag
+file	net/if_faith.c			faith & (inet | inet6)	needs-flag
+file	net/if_fddisubr.c		fddi			needs-flag
+file	net/if_gif.c			gif			needs-flag
+file	net/if_gre.c			gre			needs-flag
+file	net/if_hippisubr.c		hippi			needs-flag
+file	net/if_ieee1394subr.c		ieee1394
+file	net/if_llatbl.c			ether
+file	net/if_loop.c			loop
+file	net/if_media.c			net
+file	net/if_mpls.c			ifmpls			needs-flag
+file	net/if_ppp.c			ppp			needs-flag
+file	net/if_srt.c			srt
+file	net/if_stf.c			stf & inet & inet6	needs-flag
+file	net/if_sl.c			sl			needs-flag
+file	net/if_spppsubr.c		sppp
+file	net/if_strip.c			strip			needs-flag
+file	net/if_tokensubr.c		token			needs-flag
+file	net/if_tap.c			tap
+file	net/if_tun.c			tun
+file	net/if_vlan.c			vlan			needs-flag
+file	net/if_pppoe.c			pppoe			needs-flag
+file	net/pfil.c			net
+file	net/ppp-deflate.c		ppp & ppp_deflate
+file	net/ppp_tty.c			ppp
+file	net/pktqueue.c			net
+file	net/net_stats.c			net
+file	net/radix.c			net
+file	net/raw_cb.c			net
+file	net/raw_usrreq.c		net
+file	net/route.c			net
+file	net/rtbl.c			net
+file	net/rtsock.c			net
+file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
+file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression | kdtrace_hooks
+file	netinet/accf_data.c		accf_data
+file	netinet/accf_http.c		accf_http
+file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
+file	netinet/if_arp.c		arp | netatalk		needs-flag
+file	netinet/if_atm.c		atm
+file	netinet/in4_cksum.c		inet
+file	netinet/in_cksum.c		inet
+file	netinet/in_gif.c		gif & inet
+file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
+file	netinet/ip_ecn.c		ipsec | gif | stf
+file	netinet/ip_encap.c		inet | inet6
+file	netinet/ip_etherip.c		etherip & inet
+file	netinet6/ip6_etherip.c		etherip & inet6
+file	netinet6/in6_gif.c		gif & inet6
+
+include	"net/agr/files.agr"
+
+include "netisdn/files.i4b"

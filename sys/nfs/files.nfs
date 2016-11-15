@@ -1,0 +1,40 @@
+#	$NetBSD: files.nfs,v 1.14 2014/10/11 06:42:20 uebayasi Exp $
+
+deffs				NFS
+
+defflag opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
+				NFS_BOOT_GATEWAY NFS_BOOT_TCP
+				NFS_BOOT_BOOTSTATIC
+
+defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS
+				NFS_BOOT_RWSIZE
+				NFS_BOOTSTATIC_MYIP NFS_BOOTSTATIC_GWIP
+				NFS_BOOTSTATIC_MASK NFS_BOOTSTATIC_SERVADDR
+				NFS_BOOTSTATIC_SERVER
+
+defflag opt_nfs.h		NFS_V2_ONLY
+
+defflag				NFSSERVER
+
+define	nfs: vfs, net
+file	nfs/krpc_subr.c		nfs
+file	nfs/nfs_bio.c		nfs
+file	nfs/nfs_boot.c		nfs
+file	nfs/nfs_bootdhcp.c	nfs & (nfs_boot_bootp | nfs_boot_dhcp)
+file	nfs/nfs_bootparam.c	nfs & nfs_boot_bootparam
+file	nfs/nfs_bootstatic.c	nfs & nfs_boot_bootstatic
+file	nfs/nfs_clntsocket.c	nfs
+file	nfs/nfs_clntsubs.c	nfs
+file	nfs/nfs_export.c	nfsserver
+file	nfs/nfs_iod.c		nfs
+file	nfs/nfs_kq.c		nfs
+file	nfs/nfs_node.c		nfs
+file	nfs/nfs_serv.c		nfsserver
+file	nfs/nfs_socket.c	nfsserver | nfs
+file	nfs/nfs_srvcache.c	nfsserver
+file	nfs/nfs_srvsubs.c	nfsserver
+file	nfs/nfs_srvsocket.c	nfsserver
+file	nfs/nfs_subs.c		nfsserver | nfs
+file	nfs/nfs_syscalls.c	nfsserver
+file	nfs/nfs_vfsops.c	nfs
+file	nfs/nfs_vnops.c		nfs

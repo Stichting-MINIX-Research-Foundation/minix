@@ -1,0 +1,31 @@
+# 	$NetBSD: files.wsfont,v 1.21 2015/01/25 20:09:42 christos Exp $
+
+defpseudo wsfont
+
+# Note: `wsfont_glue' is only here to force the header file's name
+#	hence it must be mentioned first  (shudder...)
+file	dev/wsfont/wsfont.c	(wsfont_glue & rasops_rotation) |
+    rasterconsole | wsdisplay | wsfont		needs-flag
+
+defflag	opt_wsfont.h		FONT_BOLD8x16
+				FONT_GLASS10x19
+				FONT_GLASS10x25
+				FONT_GALLANT12x22
+				FONT_QVSS8x15
+				FONT_LUCIDA16x29
+				FONT_VT220L8x8
+				FONT_VT220L8x10
+				FONT_VT220L8x16
+				FONT_VT220ISO8x8
+				FONT_VT220ISO8x16
+				FONT_VT220KOI8x10_KOI8_R
+				FONT_VT220KOI8x10_KOI8_U
+				FONT_SONY8x16
+				FONT_SONY12x24
+				FONT_OMRON12x20
+				FONT_DEJAVU_SANS_MONO12x22
+				FONT_DROID_SANS_MONO12x22
+				FONT_DROID_SANS_MONO9x18
+				FONT_DROID_SANS_MONO19x36
+
+file	dev/wsfont/wsfontdev.c	wsfont needs-flag

@@ -1,0 +1,7 @@
+# $NetBSD: files.hdmicec,v 1.1 2015/08/01 21:19:24 jmcneill Exp $
+
+define	hdmicecbus { }
+
+device	hdmicec
+attach	hdmicec at hdmicecbus
+file	dev/hdmicec/hdmicec.c		hdmicec

@@ -1,0 +1,15 @@
+#	$NetBSD: files.i2o,v 1.10 2007/12/01 18:14:48 ad Exp $
+
+device	iop {tid = -1}
+file	dev/i2o/iop.c			iop			needs-flag
+
+attach	ld at iop with ld_iop
+file	dev/i2o/ld_iop.c		ld_iop
+
+device	iopsp: scsi
+attach	iopsp at iop
+file	dev/i2o/iopsp.c			iopsp
+
+device	dpti
+attach	dpti at iop
+file	dev/i2o/dpti.c			dpti			needs-flag

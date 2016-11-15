@@ -1,0 +1,55 @@
+# $NetBSD: files.podulebus,v 1.18 2013/07/11 13:44:51 kiyohara Exp $
+
+device	podulebus { [slot = -1] }
+define	podloader
+
+# Acorn SCSI Expansion Card (SEC)
+device	sec: scsi, wd33c93, podloader
+attach	sec at podulebus
+file	dev/podulebus/sec.c			sec
+
+# Oak SCSI
+device	oak: scsi, ncr5380sbc, podloader
+attach	oak at podulebus
+file	dev/podulebus/oak.c			oak
+
+# HCCS 8-bit SCSI
+device	hcsc: scsi, ncr5380sbc, podloader
+attach	hcsc at podulebus
+file	dev/podulebus/hcsc.c			hcsc
+
+# D.T. software IDE
+device	dtide: ata
+attach	dtide at podulebus
+file	dev/podulebus/dtide.c			dtide
+
+# HCCS IDE
+device	hcide: ata
+attach	hcide at podulebus
+file	dev/podulebus/hcide.c			hcide
+
+# Acorn Ether1
+device	ei: ether, ifnet, arp, i82586
+attach	ei at podulebus
+file	dev/podulebus/if_ei.c			ei
+
+# Acorn/Atomwide Ether3
+device	ea: ether, ifnet, arp, seeq8005
+attach	ea at podulebus
+file	dev/podulebus/if_ea.c			ea
+
+# ANT EtherB
+device	eb: ether, ifnet, arp, seeq8005
+attach	eb at podulebus
+file	dev/podulebus/if_eb.c			eb
+
+# ACE (alias MCS) Midi-Connect card
+# EXPERIMENTAL.  Probably not very useful.
+device	acemidi { }
+attach	acemidi at podulebus
+attach	com at acemidi with com_acemidi
+file	dev/podulebus/acemidi.c			acemidi
+
+# Castle SCSI16 (Qlogic FAS209) boards
+attach	esp at podulebus with esp_podule : ncr53c9x
+file	dev/podulebus/esp_podule.c		esp_podule

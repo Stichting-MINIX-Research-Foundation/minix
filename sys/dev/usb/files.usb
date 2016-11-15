@@ -1,0 +1,552 @@
+#	$NetBSD: files.usb,v 1.135 2014/10/10 17:31:12 uebayasi Exp $
+#
+# Config file and device description for machine-independent USB code.
+# Included by ports that need it.  Ports that use it must provide
+# their own "major" declarations for the appropriate devices.
+
+defflag	USBVERBOSE
+defparam opt_usb.h	USBHIST_SIZE
+defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
+
+# top level usb debug defines
+defflag	opt_usb.h	USBHIST: KERNHIST
+defflag	opt_usb.h	USB_DEBUG: USBHIST
+
+# HC controllers
+defflag	opt_usb.h	EHCI_DEBUG: USB_DEBUG
+defflag	opt_usb.h	OHCI_DEBUG: USB_DEBUG
+defflag	opt_usb.h	UHCI_DEBUG: USB_DEBUG
+defflag	opt_usb.h	DWC2_DEBUG: USB_DEBUG
+defflag	opt_usb.h	XHCI_DEBUG: USB_DEBUG
+defflag	opt_usb.h	MOTG_DEBUG: USB_DEBUG
+
+# HUB driver
+defflag opt_usb.h	UHUB_DEBUG: USB_DEBUG
+
+# Device drivers
+
+defflag opt_usb.h	ATU_DEBUG: USB_DEBUG
+defflag opt_usb.h	AUE_DEBUG: USB_DEBUG
+defflag opt_usb.h	AUVITEK_I2C_DEBUG: USB_DEBUG
+defflag opt_usb.h	AXE_DEBUG: USB_DEBUG
+defflag opt_usb.h	AXEN_DEBUG: USB_DEBUG
+defflag opt_usb.h	CUE_DEBUG: USB_DEBUG
+defflag opt_usb.h	EZLOAD_DEBUG: USB_DEBUG
+defflag opt_usb.h	KUE_DEBUG: USB_DEBUG
+defflag opt_usb.h	OTUS_DEBUG: USB_DEBUG
+defflag opt_usb.h	RUM_DEBUG: USB_DEBUG
+defflag opt_usb.h	RUN_DEBUG: USB_DEBUG
+defflag opt_usb.h	UARK_DEBUG: USB_DEBUG
+defflag opt_usb.h	UATP_DEBUG: USB_DEBUG
+defflag opt_usb.h	UAUDIO_DEBUG: USB_DEBUG
+defflag opt_usb.h	UBERRY_DEBUG: USB_DEBUG
+defflag opt_usb.h	UBSA_DEBUG: USB_DEBUG
+defflag opt_usb.h	UBT_DEBUG: USB_DEBUG
+defflag opt_usb.h	UCHCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UCYCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UDAV_DEBUG: USB_DEBUG
+defflag opt_usb.h	UDL_DEBUG: USB_DEBUG
+defflag opt_usb.h	UDSBR_DEBUG: USB_DEBUG
+defflag opt_usb.h	UFTDI_DEBUG: USB_DEBUG
+defflag opt_usb.h	UGENSA_DEBUG: USB_DEBUG
+defflag opt_usb.h	UGEN_DEBUG: USB_DEBUG
+defflag opt_usb.h	UHIDEV_DEBUG: USB_DEBUG
+defflag opt_usb.h	UHID_DEBUG: USB_DEBUG
+defflag opt_usb.h	UHMODEM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UHSO_DEBUG: USB_DEBUG
+defflag opt_usb.h	UIPAD_DEBUG: USB_DEBUG
+defflag opt_usb.h	UIPAQ_DEBUG: USB_DEBUG
+defflag opt_usb.h	UIRDA_DEBUG: USB_DEBUG
+defflag opt_usb.h	UISDATA_DEBUG: USB_DEBUG
+defflag opt_usb.h	UKBD_DEBUG: USB_DEBUG
+defflag opt_usb.h	UKYOPON_DEBUG: USB_DEBUG
+defflag opt_usb.h	ULPT_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMASS_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMCT_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMIDIQUIRK_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMIDI_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMODEM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UMS_DEBUG: USB_DEBUG
+defflag opt_usb.h	UPGT_DEBUG: USB_DEBUG
+defflag opt_usb.h	UPLCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UPL_DEBUG: USB_DEBUG
+defflag opt_usb.h	URAL_DEBUG: USB_DEBUG
+defflag opt_usb.h	URIO_DEBUG: USB_DEBUG
+defflag opt_usb.h	URL_DEBUG: USB_DEBUG
+defflag opt_usb.h	URNDIS_DEBUG: USB_DEBUG
+defflag opt_usb.h	URTWN_DEBUG: USB_DEBUG
+defflag opt_usb.h	URTW_DEBUG: USB_DEBUG
+defflag opt_usb.h	USCANNER_DEBUG: USB_DEBUG
+defflag opt_usb.h	USLSA_DEBUG: USB_DEBUG
+defflag opt_usb.h	USSCANNER_DEBUG: USB_DEBUG
+defflag opt_usb.h	USTIR_DEBUG: USB_DEBUG
+defflag opt_usb.h	UTHUM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UTOPPY_DEBUG: USB_DEBUG
+defflag opt_usb.h	UTS_DEBUG: USB_DEBUG
+defflag opt_usb.h	UVIDEO_DEBUG: USB_DEBUG
+defflag opt_usb.h	UVISOR_DEBUG: USB_DEBUG
+defflag opt_usb.h	UVSCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	UYUREX_DEBUG: USB_DEBUG
+defflag opt_usb.h	UZCOM_DEBUG: USB_DEBUG
+defflag opt_usb.h	ZYD_DEBUG: USB_DEBUG
+
+define	usbroothubif { }
+define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
+		   [vendor = -1], [product = -1], [release = -1] }
+define	usbifif { [port = -1], [configuration = -1], [interface = -1],
+		  [vendor = -1], [product = -1], [release = -1] }
+
+device	usb: usbroothubif
+attach	usb at usbus
+file	dev/usb/usb.c			usb			needs-flag
+file	dev/usb/usbdi.c			usb
+file	dev/usb/usbdi_util.c		usb
+file	dev/usb/usb_subr.c		usb
+file	dev/usb/usb_quirks.c		usb
+
+define	usb_dma: usb
+file	dev/usb/usb_mem.c		usb_dma
+
+define	usbverbose: usb
+file	dev/usb/usb_verbose.c		usbverbose
+
+# Hub driver
+device	uhub: usbdevif, usbifif
+attach	uhub at usbroothubif with uroothub
+attach	uhub at usbdevif
+file	dev/usb/uhub.c			usb
+
+# Modem and com serial port "bus"
+define	ucombus {[ portno = -1 ]}
+
+# EZ-USB firmware loader
+define	ezload
+file	dev/usb/ezload.c		ezload
+
+# Audio devices
+device	uaudio: audiobus, auconv, mulaw, aurateconv
+attach	uaudio at usbifif
+file	dev/usb/uaudio.c		uaudio
+
+# MIDI devices
+device	umidi: midibus
+attach	umidi at usbifif
+file	dev/usb/umidi.c			umidi
+file	dev/usb/umidi_quirks.c		umidi
+
+# Modem and com serial port
+device	ucom
+attach	ucom at ucombus
+file	dev/usb/ucom.c			ucom | ucombus		needs-flag
+
+
+# Generic devices
+device	ugen
+attach	ugen at usbdevif
+file	dev/usb/ugen.c			ugen			needs-flag
+
+
+# HID
+# HID "bus"
+define	uhidbus {[ reportid = -1 ]}
+
+# HID root device for multiple report IDs
+device	uhidev: hid, uhidbus
+attach	uhidev at usbifif
+file	dev/usb/uhidev.c		uhidev
+
+# Generic HID devices
+device	uhid: hid
+attach	uhid at uhidbus
+file	dev/usb/uhid.c			uhid			needs-flag
+
+# Keyboards
+defparam	UKBD_LAYOUT
+# Gdium's Fn key needs software translation
+defflag		opt_ukbd.h 	GDIUM_KEYBOARD_HACK
+device	ukbd: hid, wskbddev
+attach	ukbd at uhidbus
+file	dev/usb/ukbd.c			ukbd			needs-flag
+file	dev/usb/ukbdmap.c		ukbd | btkbd
+
+# Mice
+device	ums: hid, wsmousedev
+attach	ums at uhidbus
+file	dev/usb/ums.c			ums
+
+# USB Apple trackpad
+device	uatp: hid, wsmousedev
+attach	uatp at uhidbus
+file	dev/usb/uatp.c			uatp
+
+# Touchscreens
+device	uts: hid, wsmousedev, tpcalib
+attach	uts at uhidbus
+file	dev/usb/uts.c			uts
+
+# eGalax USB Touch Panel
+device	uep: wsmousedev, tpcalib
+attach	uep at usbdevif
+file	dev/usb/uep.c			uep			needs-flag
+
+# Cypress microcontroller based serial adapters
+device	ucycom: hid
+attach	ucycom at uhidbus
+file	dev/usb/ucycom.c		ucycom			needs-flag
+
+# Printers
+device	ulpt
+attach	ulpt at usbifif
+file	dev/usb/ulpt.c			ulpt			needs-flag
+
+
+# Mass storage
+device	umass: scsi, atapi, ata_hl
+attach	umass at usbifif
+file	dev/usb/umass.c			umass
+file	dev/usb/umass_isdata.c		umass & wd
+file	dev/usb/umass_quirks.c		umass
+file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
+
+
+# IrDA bridges
+device	uirda: irbus
+attach	uirda at usbifif
+file	dev/usb/uirda.c			uirda | stuirda
+
+# SigmaTel not quite UIRDA IrDA bridge
+device	stuirda: irbus,firmload
+attach	stuirda at usbifif
+file	dev/usb/stuirda.c		stuirda
+
+# SigmaTel IrDA bridge
+device	ustir: irbus, irdasir
+attach	ustir at usbdevif
+file	dev/usb/ustir.c			ustir
+
+# Windows Media Center IR tranceivers
+device	irmce: irbus
+attach	irmce at usbifif
+file	dev/usb/irmce.c			irmce
+
+
+# Bluetooth controllers
+device	ubt: btbus, bluetooth
+attach	ubt at usbdevif
+file	dev/usb/ubt.c			ubt
+
+# Atheros USB Bluetooth firmware load
+device	aubtfwl: firmload
+attach	aubtfwl at usbdevif
+file	dev/usb/aubtfwl.c		aubtfwl
+
+#
+# Capture devices
+#
+
+# Sony PLAYSTATION(R) Eye
+device	pseye: videobus
+attach	pseye at usbifif
+file	dev/usb/pseye.c			pseye
+
+# USB Video Class capture devices
+device	uvideo: videobus
+attach	uvideo at usbifif
+file	dev/usb/uvideo.c		uvideo
+
+# Auvitek AU0828
+device	auvitek: videobus, dtvbus, i2cbus, i2cexec, usbifif, au8522, xc5k
+attach	auvitek at usbdevif
+file	dev/usb/auvitek.c		auvitek
+file	dev/usb/auvitek_audio.c		auvitek
+file	dev/usb/auvitek_board.c		auvitek
+file	dev/usb/auvitek_dtv.c		auvitek
+file	dev/usb/auvitek_i2c.c		auvitek
+file	dev/usb/auvitek_video.c		auvitek
+
+# Empia EM28xx
+device	emdtv: dtvbus, irbus, i2cexec, lg3303, xc3028
+attach	emdtv at usbdevif
+file	dev/usb/emdtv.c			emdtv
+file	dev/usb/emdtv_board.c		emdtv
+file	dev/usb/emdtv_dtv.c		emdtv
+file	dev/usb/emdtv_i2c.c		emdtv
+file	dev/usb/emdtv_ir.c		emdtv
+
+#
+# Misc
+#
+
+# Diamond Multimedia Rio 500
+device	urio
+attach	urio at usbdevif
+file	dev/usb/urio.c			urio			needs-flag
+
+# Apple iPad
+device	uipad
+attach	uipad at usbdevif
+file	dev/usb/uipad.c				uipad
+
+# BlackBerries
+device	uberry
+attach	uberry at usbdevif
+file	dev/usb/uberry.c			uberry
+
+# Handspring Visor
+device	uvisor: ucombus
+attach	uvisor at usbdevif
+file	dev/usb/uvisor.c		uvisor
+
+# Generic Serial Adapter
+device	ugensa: ucombus
+attach	ugensa at usbdevif
+file	dev/usb/ugensa.c		ugensa
+
+# 3G Modem
+device	u3g: ucombus
+attach	u3g at usbifif
+device	u3ginit
+attach	u3ginit at usbdevif
+file	dev/usb/u3g.c			u3g | u3ginit
+
+# YAP phone firmware loader
+device	uyap: ezload
+attach	uyap at usbdevif
+file	dev/usb/uyap.c			uyap
+
+# D-Link DSB-R100 FM radio
+device	udsbr: radiodev
+attach	udsbr at usbdevif
+file	dev/usb/udsbr.c			udsbr
+
+# Silicon Labs USB radio module (FM)
+device	slurm: radiodev
+attach	slurm at usbifif
+file	dev/usb/slurm.c			slurm
+
+# TEMPerHUM HID
+device	uthum: hid, sysmon_envsys
+attach	uthum at uhidbus
+file	dev/usb/uthum.c			uthum
+
+# Ethernet adapters
+# ADMtek AN986 Pegasus
+device	aue: arp, ether, ifnet, mii, mii_phy
+attach	aue at usbdevif
+file	dev/usb/if_aue.c		aue
+
+# CDC Ethernet
+device	cdce: arp, ether, ifnet
+attach	cdce at usbifif
+file	dev/usb/if_cdce.c		cdce
+
+# CATC USB-EL1201A
+device	cue: arp, ether, ifnet
+attach	cue at usbdevif
+file	dev/usb/if_cue.c		cue
+
+# Kawasaki LSI KL5KUSB101B
+device	kue: arp, ether, ifnet
+attach	kue at usbdevif
+file	dev/usb/if_kue.c		kue
+
+# Prolific PL2302 host-host
+device	upl: ifnet
+attach	upl at usbdevif
+file	dev/usb/if_upl.c		upl
+
+# Realtek RTL8150L(M)
+device	url: arp, ether, ifnet, mii
+attach	url at usbdevif
+file	dev/usb/if_url.c		url
+
+# ASIX AX88172
+device	axe: arp, ether, ifnet, mii, mii_phy
+attach	axe at usbdevif
+file	dev/usb/if_axe.c		axe
+
+# ASIX AX88178a and AX88179
+device	axen: arp, ether, ifnet, mii
+attach	axen at usbdevif
+file	dev/usb/if_axen.c		axen
+
+# DAVICOM DM9601
+device	udav: arp, ether, ifnet, mii, mii_phy
+attach	udav at usbdevif
+file	dev/usb/if_udav.c		udav
+
+# Atheros AR9170
+device	otus: arp, ether, firmload, ifnet, wlan
+attach	otus at usbdevif
+file	dev/usb/if_otus.c		otus
+
+# Serial drivers
+# Modems
+define	umodem_common
+file	dev/usb/umodem_common.c		umodem_common
+device	umodem: ucombus, umodem_common
+attach	umodem at usbifif
+file	dev/usb/umodem.c		umodem
+
+# FTDI serial driver
+device	uftdi: ucombus
+attach	uftdi at usbdevif
+file	dev/usb/uftdi.c			uftdi
+
+# Prolific PL2303 serial driver
+device	uplcom: ucombus
+attach	uplcom at usbdevif
+file	dev/usb/uplcom.c		uplcom
+
+# MCT USB-232 serial driver
+device	umct: ucombus
+attach	umct at usbdevif
+file	dev/usb/umct.c			umct
+
+# MOSCHIP MCS7xxx serial driver
+device	moscom: ucombus
+attach	moscom at usbdevif
+file	dev/usb/moscom.c		moscom
+
+# andother driver for the same chip
+device	umcs: ucombus
+attach	umcs at usbdevif
+file	dev/usb/umcs.c			umcs
+
+# SUNTAC Slipper U VS-10U driver
+device	uvscom: ucombus
+attach	uvscom at usbdevif
+file	dev/usb/uvscom.c		uvscom
+
+# Belkin & other serial driver
+define	ubsa_common
+file	dev/usb/ubsa_common.c		ubsa_common
+device	ubsa: ucombus, ubsa_common
+attach	ubsa at usbdevif
+file	dev/usb/ubsa.c			ubsa
+
+# Huawei E220 3G/HSDPA modem (ubsa)
+device	uhmodem: ucombus, ubsa_common
+attach	uhmodem at usbifif
+file	dev/usb/uhmodem.c		uhmodem
+
+# iPAQ PDAs
+device	uipaq: ucombus
+attach	uipaq at usbdevif
+file	dev/usb/uipaq.c			uipaq
+
+# Kyocera AIR-EDGE PHONE
+device	ukyopon: ucombus, umodem_common
+attach	ukyopon at usbifif
+file	dev/usb/ukyopon.c		ukyopon
+
+# ArkMicroChips 3116 based serial (used with some Nokia USB cables too)
+device	uark: ucombus
+attach	uark at usbdevif
+file	dev/usb/uark.c		uark
+
+# Silicon Labs CP210x serial driver
+device	uslsa: ucombus
+attach	uslsa at usbifif
+file	dev/usb/uslsa.c			uslsa
+
+# WinChipHead CH341/340 serial driver
+device	uchcom: ucombus
+attach	uchcom at usbdevif
+file	dev/usb/uchcom.c		uchcom
+
+# Scanners
+# Generic scanner support
+device	uscanner
+attach	uscanner at usbdevif
+file	dev/usb/uscanner.c		uscanner		needs-flag
+
+# Avision SCSI over USB, HP5300
+device	usscanner: scsi
+attach	usscanner at usbdevif
+file	dev/usb/usscanner.c		usscanner
+
+# Atmel AT76c503 / AT76c503a / AT76c505 / AT76c505a @ USB
+device	atu: ether, ifnet, arp, wlan
+attach	atu at usbdevif
+file	dev/usb/if_atu.c		atu
+
+# Intersil PrismGT
+device	upgt: ether, ifnet, arp, wlan, firmload
+attach	upgt at usbdevif
+file	dev/usb/if_upgt.c		upgt
+
+# SMSC LAN95xx
+device	usmsc: arp, ether, ifnet, mii, mii_phy
+attach	usmsc at usbdevif
+file	dev/usb/if_smsc.c		usmsc
+
+# Ralink Technology RT2500USB
+device	ural: arp, ether, ifnet, wlan, firmload
+attach	ural at usbdevif
+file	dev/usb/if_ural.c		ural
+
+device	rum: ether, ifnet, arp, wlan, firmload
+attach	rum at usbdevif
+file	dev/usb/if_rum.c		rum
+
+# Topfield digital PVRs
+device	utoppy
+attach	utoppy at usbdevif
+file	dev/usb/utoppy.c		utoppy
+
+# Zydas ZD1211
+device	zyd: ether, ifnet, arp, wlan, firmload
+attach	zyd at usbdevif
+file	dev/usb/if_zyd.c		zyd
+
+# DisplayLink DL-1x0/DL-1x5
+device	udl: wsemuldisplaydev, rasops16, edid, firmload
+attach	udl at usbdevif
+file	dev/usb/udl.c			udl
+
+# Wireless WAN modems from Option N.V.
+device	uhso: ifnet
+attach	uhso at usbdevif
+file	dev/usb/uhso.c			uhso
+
+# Maywa-denki/Kayac YUREX
+device	uyurex: hid
+attach	uyurex at uhidbus
+file	dev/usb/uyurex.c		uyurex
+
+# Microsoft RNDIS
+device	urndis: arp, ether, ifnet
+attach	urndis at usbifif
+file	dev/usb/if_urndis.c		urndis
+
+# Realtek RTL8188CU/RTL8192CU
+device	urtwn: ether, ifnet, arp, wlan, firmload
+attach	urtwn at usbdevif
+file	dev/usb/if_urtwn.c              urtwn
+
+# Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
+device	urtw: ether, ifnet, arp, wlan
+attach	urtw at usbdevif
+file	dev/usb/if_urtw.c		urtw
+
+# Ralink Technology RT2700U/RT2800U/RT3000U
+device	run: ether, ifnet, arp, wlan, firmload
+attach	run at usbdevif
+file	dev/usb/if_run.c		run
+
+# Atheros AR9002U
+attach	athn at usbdevif with athn_usb: firmload
+file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
+
+# XXX: ljt
+# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+device	rsu: arp, ether, firmload, ifnet, wlan
+attach	rsu at usbdevif
+file	dev/usb/if_rsu.c		rsu
+
+# KingSun/DonShine IrDA adaptors
+device	udsir: irbus, irdasir
+attach	udsir at usbifif
+file	dev/usb/udsir.c			udsir

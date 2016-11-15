@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.hdaudiodevs,v 1.2 2015/05/30 14:10:01 jmcneill Exp $
+#
+# As per tron@NetBSD.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/hdaudio/hdaudiodevs".
+# 2.) Commit "src/sys/dev/hdaudio/hdaudiodevs".
+# 3.) Execute "make -f Makefile.hdaudiodevs" in "src/sys/dev/hdaudio".
+# 4.) Commit "src/sys/dev/hdaudio/hdaudiodevs.h" and "src/sys/dev/hdaudio/hdaudiodevs_data.h".
+
+.include <bsd.own.mk>
+
+hdaudiodevs.h hdaudiodevs_data.h: ${.CURDIR}/../devlist2h.awk hdaudiodevs
+	/bin/rm -f hdaudiodevs.h hdaudiodevs_data.h
+	${TOOL_AWK} -f ${.ALLSRC}

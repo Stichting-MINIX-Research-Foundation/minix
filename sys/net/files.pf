@@ -1,0 +1,22 @@
+#	$NetBSD: files.pf,v 1.6 2011/08/29 09:50:04 jmcneill Exp $
+
+defpseudo pf:		ifnet
+defpseudo pflog:	ifnet
+defpseudo pfsync:	ifnet
+
+file	dist/pf/net/if_pflog.c		pflog		needs-flag
+file	dist/pf/net/if_pfsync.c		pfsync		needs-flag
+
+file	dist/pf/net/pf.c		pf		needs-flag
+file	dist/pf/net/pf_if.c		pf
+file	dist/pf/net/pf_ioctl.c		pf
+file	dist/pf/net/pf_norm.c		pf
+file	dist/pf/net/pf_osfp.c		pf
+file	dist/pf/net/pf_ruleset.c	pf
+file	dist/pf/net/pf_table.c		pf
+
+file	dist/pf/net/if_compat.c		pf
+file	dist/pf/net/pf_mtag.c		pf
+file	dist/pf/netinet/tcp_rndiss.c	pf
+
+makeoptions	pf	CPPFLAGS+="-I$S/dist/pf"

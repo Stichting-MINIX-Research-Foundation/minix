@@ -1,0 +1,5 @@
+# $NetBSD: files.drm,v 1.9 2011/02/20 15:40:21 jmcneill Exp $
+
+device	vboxdrm: drmbase, drmpci
+attach	vboxdrm at drm
+file	dev/drm/vbox_drv.c			vboxdrm

@@ -1,0 +1,18 @@
+#	$NetBSD: files.procfs,v 1.9 2014/10/11 06:42:20 uebayasi Exp $
+
+deffs	PROCFS:	PTRACE
+
+define	procfs: vfs
+file	miscfs/procfs/procfs_cmdline.c	procfs
+file	miscfs/procfs/procfs_ctl.c	procfs
+file	miscfs/procfs/procfs_fd.c	procfs
+file	miscfs/procfs/procfs_fpregs.c	procfs
+file	miscfs/procfs/procfs_linux.c	procfs
+file	miscfs/procfs/procfs_map.c	procfs
+file	miscfs/procfs/procfs_mem.c	procfs
+file	miscfs/procfs/procfs_note.c	procfs
+file	miscfs/procfs/procfs_regs.c	procfs
+file	miscfs/procfs/procfs_status.c	procfs
+file	miscfs/procfs/procfs_subr.c	procfs
+file	miscfs/procfs/procfs_vfsops.c	procfs
+file	miscfs/procfs/procfs_vnops.c	procfs

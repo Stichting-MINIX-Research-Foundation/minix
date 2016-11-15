@@ -1,0 +1,354 @@
+$NetBSD: podules,v 1.18 2009/01/21 14:31:04 jnemeth Exp $
+
+/*
+ * Copyright (c) 1996 Mark Brinicombe
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.podules" to regenerate podules.h and podule_data.h
+ */
+
+/*
+ * List of known podule manufacturers
+ */
+
+manufacturer	ACORN		0x0000	Acorn Computers
+manufacturer	ACORNUSA	0x0001	Acorn Computers (USA)
+manufacturer	OLIVETTI	0x0002	Olivetti
+manufacturer	WATFORD		0x0003	Watford Electronics
+manufacturer	CCONCEPTS	0x0004	Computer Concepts
+manufacturer	IINTERFACES	0x0005	Intelligent Interfaces
+manufacturer	CAMAN		0x0006	Caman
+manufacturer	ARMADILLO	0x0007	Armadillo Systems
+manufacturer	SOFTOPTION	0x0008	Soft Option
+manufacturer	WILDVISION	0x0009	Wild Vision
+manufacturer	ANGLOCOMPUTERS	0x000a	Anglo Computers
+manufacturer	RESOURCE	0x000b	Resource
+/* RISC iX: #define XCB_COMPANY_ALLIEDINTERACTIVE 12 */
+manufacturer	HCCS		0x000c	HCCS
+manufacturer	MUSBURYCONSULT	0x000d	Musbury Consultants
+manufacturer	GNOME		0x000e	Gnome
+manufacturer	AANDGELEC	0x000f	A and G Electronics
+manufacturer	SPACETECH	0x0010	Spacetech
+manufacturer	ATOMWIDE	0x0011	Atomwide
+manufacturer	SYNTEC		0x0012	Syntec
+manufacturer	EMR		0x0013	ElectroMusic Research
+manufacturer	MILLIPEDE	0x0014	Millipede
+manufacturer	VIDEOELEC	0x0015	Video Electronics
+manufacturer	BRAINSOFT	0x0016	Brainsoft
+/* RISC iX: #define XCB_COMPANY_ASP 23 */
+manufacturer	ATOMWIDE2	0x0017	Atomwide
+manufacturer	LENDAC		0x0018	Lendac Data Systems
+manufacturer	CAMMICROSYS	0x0019	Cambridge Micro Systems
+/* RISC iX: #define XCB_COMPANY_JOHNBALANCECOMPUTING 26 */
+manufacturer	LINGENUITY	0x001a	Lingenuity
+manufacturer	SIPLAN		0x001b	Siplan Electronics Research
+manufacturer	SCIFRONTIERS	0x001c	Science Frontiers
+manufacturer	PINEAPPLE	0x001d	Pineapple Software
+manufacturer	TECHNOMATIC	0x001e	Technomatic
+manufacturer	IRLAM		0x001f	Irlam Instruments
+manufacturer	NEXUS		0x0020	Nexus Electronics
+manufacturer	OAK		0x0021	Oak Solutions
+manufacturer	HUGHSYMONS	0x0022	Hugh Symons
+manufacturer	BEEBUG		0x0023	BEEBUG (RISC Developments)
+manufacturer	TEKNOMUSIK	0x0024	Teknomusik
+manufacturer	REELTIME	0x0025	Reel Time
+manufacturer	PRES		0x0026	PRES
+manufacturer	DIGIHURST	0x0027	Digihurst
+manufacturer	SGBCOMPSERV	0x0028	SGB Computer Services
+manufacturer	SJ		0x0029	SJ Research
+manufacturer	PHOBOX		0x002a	Phobox Electronics
+manufacturer	MORLEY		0x002b	Morley Electronics
+manufacturer	RACINGCAR	0x002c	Raching Car Computers
+manufacturer	HCCS2		0x002d	HCCS
+manufacturer	LINDIS		0x002e	Lindis International
+manufacturer	CCC		0x002f	Computer Control Consultants
+manufacturer	UNILAB		0x0030	Unilab
+manufacturer	SEFANFROHLING	0x0031	Sefan Frohling
+manufacturer	ROMBO		0x0032	Rombo Productions
+manufacturer	3SL		0x0033	3SL
+manufacturer	DELTRONICS	0x0034	Deltronics
+/* RISC iX: #define XCB_COMPANY_PCARNOLDTECHNICALSERVICES 53 */
+manufacturer	VTI		0x0035	Vertical Twist
+manufacturer	SIMIS		0x0036	Simis
+manufacturer	DTSOFT		0x0037	D.T. Software
+manufacturer	ARMINTERFACES	0x0038	ARM Interfaces
+manufacturer	BIA		0x0039	BIA
+manufacturer	CUMANA		0x003a	Cumana
+manufacturer	IOTA		0x003b	Iota
+manufacturer	ICS		0x003c	Ian Copestake Software
+manufacturer	BAILDON		0x003d	Baildon Electronics
+manufacturer	CSD		0x003e	CSD
+manufacturer	SERIALPORT	0x003f	Serial Port
+manufacturer	CADSOFT		0x0040	CADsoft
+manufacturer	ARXE		0x0041	ARXE
+manufacturer	ALEPH1		0x0042	Aleph 1
+manufacturer	ICUBED		0x0046	I-Cubed
+manufacturer	BRINI		0x0050	Brini
+manufacturer	ANT		0x0053	ANT
+manufacturer	CASTLE		0x0055	Castle Technology
+manufacturer	ALSYSTEMS	0x005b	Alsystems
+manufacturer	SIMTEC		0x005f	Simtec Electronics
+manufacturer	YES		0x0060	Yellowstone Educational Solutions
+manufacturer	MCS		0x0063	MCS
+manufacturer	EESOX		0x0064	EESOX
+
+/*
+ * List of known podules.
+ */
+
+podule	HOSTTUBE		0x0000	Host TUBE (to BBC)
+podule	PARASITETUBE		0x0001	Parastite TUBE (to 2nd processor)
+podule	ACORN_SCSI		0x0002	Acorn SCSI interface
+podule	ETHER1			0x0003	Ether1 interface
+podule	IBMDISC			0x0004	IBM disc
+podule	ROMRAM			0x0005	ROM/RAM podule
+podule	BBCIO			0x0006	BBC I/O podule
+podule	FAXPACK			0x0007	FaxPack modem
+podule	TELETEXT		0x0008	Teletext
+podule	CDROM			0x0009	CD-ROM
+podule	IEEE488			0x000a	IEEE 488 interface
+podule	ST506			0x000b	ST506 HD interface
+podule	ESDI			0x000c	ESDI interface
+podule	SMD			0x000d	SMD interface
+podule	LASERPRINTER		0x000e	laser printer
+podule	SCANNER			0x000f	scanner
+podule	FASTRING		0x0010	Fast Ring interface
+podule	FASTRING2		0x0011	Fast Ring II interface
+podule	PROMPROGRAMMER		0x0012	PROM programmer
+podule	ACORN_MIDI		0x0013	MIDI interface
+/* RISC iX: #define XCB_PRODUCT_MONOVPU 20 */
+podule	LASERDIRECT		0x0014	LaserDirect (Canon LBP-4)
+podule	FRAMEGRABBER		0x0015	frame grabber
+podule	A448			0x0016	A448 sound sampler
+podule	VIDEODIGITISER		0x0017	video digitiser
+podule	GENLOCK			0x0018	genlock
+podule	CODECSAMPLER		0x0019	codec sampler
+podule	IMAGEANALYSER		0x001a	image analyser
+podule	ANALOGUEINPUT		0x001b	analogue input
+podule	CDSOUNDSAMPLER		0x001c	CD sound sampler
+podule	6MIPSSIGPROC		0x001d	6 MIPS signal processor
+podule	12MIPSSIGPROC		0x001e	12 MIPS signal processor
+podule	33MIPSSIGPROC		0x001f	33 MIPS signal processor
+podule	TOUCHSCREEN		0x0020	touch screen
+podule	TRANSPUTERLINK		0x0021	Transputer link
+/* RISC iX: #define XCB_PRODUCT_INTERACTIVEVIDEO 34 */
+podule	HCCS_IDESCSI		0x0022	HCCS IDE or SCSI interface
+podule	LASERSCANNER		0x0023	laser scanner
+podule	GNOME_TRANSPUTERLINK	0x0024	Transputer link
+podule	VMEBUS			0x0025	VME bus interface
+podule	TAPESTREAMER		0x0026	tape streamer
+podule	LASERTEST		0x0027	laser test
+podule	COLOURDIGITISER		0x0028	colour digitiser
+podule	WEATHERSATELLITE	0x0029	weather satellite
+podule	AUTOCUE			0x002a	autocue
+podule	PARALLELIO16BIT		0x002b	16-bit parallel I/O
+podule	12BITATOD		0x002c	12-bit ADC
+podule	SERIALPORTSRS423	0x002d	RS423 serial ports
+podule	MINI			0x002e	mini
+podule	FRAMEGRABBER2		0x002f	frame grabber II
+podule	INTERACTIVEVIDEO2	0x0030	interactive video II
+podule	WILDVISION_ATOD		0x0031	ADC
+podule	WILDVISION_DTOA		0x0032	DAC
+podule	EMR_MIDI4		0x0033	MIDI 4
+podule	FPCP			0x0034	floating-point co-processor
+podule	PRISMA3			0x0035	Prisma 3
+podule	ARVIS			0x0036	ARVIS
+podule	4BY4MIDI		0x0037	4x4 MIDI
+podule	BISERIALPARALLEL	0x0038	Bi-directional serial/parallel
+podule	CHROMA300		0x0039	Chroma 300 genlock
+/* RISC iX: #define XCB_PRODUCT_CHROMA400GENLOCK 58 */
+podule	CUMANA_SCSI2		0x003a	SCSI II interface
+podule	COLOURCONVERTER		0x003b	Colour Converter
+podule	8BITSAMPLER		0x003c	8-bit sampler
+podule	PLUTO			0x003d	Pluto interface
+podule	LOGICANALYSER		0x003e	Logic Analyser
+podule	ACORN_USERMIDI		0x003f	User Port/MIDI interface
+podule	LINGENUITY_SCSI8	0x0040	8 bit SCSI interface
+/* RISC iX: #define XCB_PRODUCT_SIPLANADCANDDAC 65 */
+podule	ARXE_SCSI		0x0041	16 bit SCSI interface
+podule	DUALUSERPORT		0x0042	dual User Port
+podule	EMR_SAMPLER8		0x0043	Sampler8
+podule	EMR_SMTP		0x0044	SMTP
+podule	EMR_MIDI2		0x0045	MIDI2
+podule	PINEAPPLE_DIGITISER	0x0046	digitiser
+podule	VIDEOFRAMECAPTURE	0x0047	video frame capture
+podule	MONOOVERLAYFRSTORE	0x0048	mono overlay frame store
+podule	MARKETBUFFER		0x0049	market buffer
+podule	PAGESTORE		0x004a	page store
+podule	TRAMMOTHERBOARD		0x004b	TRAM motherboard
+podule	TRANSPUTER		0x004c	Transputer
+podule	OPTICALSCANNER		0x004d	optical scanner
+podule	DIGITISINGTABLET	0x004e	digitising tablet
+podule	200DPISCANNER		0x004f	200-dpi scanner
+/* RISC iX: #define XCB_PRODUCT_DIGITALIO 80 */
+podule	COLOURCARD		0x0050	ColourCard
+podule	PRESENTERGENLOCK	0x0051	Presenter Genlock
+podule	HAWKV9			0x0052	Hawk v9 mark2
+podule	CROMA200		0x0053	Chroma 200 genlock
+podule	WILDVISION_SOUNDSAMPLER	0x0054	Wild Vision Sound Sampler
+/* RISC iX: #define XCB_PRODUCT_SMTPEINTERFACE 85 */
+podule	DTSOFT_IDE		0x0055	IDE interface
+podule	8BITATOD		0x0056	8-bit ADC
+podule	MFMHDCONTROLLER		0x0057	MFM hard disc controller
+/* XXX ID 0x0058 is used by Oak ClassNet (EtherO) Ethernet cards */
+podule	OAK_SCSI		0x0058	16 bit SCSI interface
+podule	QUADSERIAL		0x0059	quad serial
+podule	PALPROGRAMMER		0x005a	PAL programmer
+podule	I2CBUS			0x005b	I^2C bus
+podule	BEEBUG_SCANNER		0x005c	scanner interface
+podule	PANDORA_QUADMIDI	0x005d	quad MIDI
+podule	PRES_DISCBUFFER		0x005e	disc buffer
+podule	PRES_USERPORT		0x005f	User Port
+podule	MICROYEAI		0x0060	Micro YEAI
+podule	ETHER2			0x0061	Ether2 interface
+podule	SGB_EXPANSIONBOX	0x0062	SGB expansion box
+/* RISC iX: #define XCB_PRODUCT_SGBFASTPORT 99 */
+podule	ULTIMATE		0x0063	Ultimate micropodule carrier
+podule	NEXUS			0x0064	Nexus interface (Podule)
+podule	PHOBOX_USERANALOGUE	0x0065	User and Analogue ports
+podule	MORLEY_STATICRAM	0x0066	static RAM
+podule	MORLEY_SCSI		0x0067	SCSI interface
+podule	MORLEY_TELETEXT		0x0068	teletext interface
+podule	TECHNOMATIC_SCANNER	0x0069	scanner
+podule	BEEBUG_QUADRANT		0x006a	Quadrant
+podule	RCC_VOICEPROCESSOR	0x006b	voice processor
+podule	RCC_UHFLINK		0x006c	UHF link
+podule	MORLEY_USERANALOGUE	0x006d	User and Analogue ports
+podule	HCCS_USERANALOGUE	0x006e	User and Analogue ports
+podule	WILDVISION_CENTRONICS	0x006f	Bi-directional Centronics
+podule	HCCS_A3000SCSI		0x0070	A3000 SCSI interface
+podule	LINDIS_DIGITISER	0x0071	digitiser
+podule	CCC_PEAKPROGMETER	0x0072	peak prog. meter
+podule	LASERLIGHTCONTROL	0x0073	laser light control
+podule	HARDDISCINTERFACE	0x0074	hard disc interface
+podule	EXTRAMOUSE		0x0075	extra mouse
+podule	STEBUSINTERFACE		0x0076	STE bus interface
+podule	MORLEY_ST506		0x0077	ST506 disc interface
+podule	BRAINSOFT_MULTI1	0x0078	Multi_1
+podule	BRAINSOFT_MULTI2	0x0079	Multi_2
+podule	BRAINSOFT_24DIGITISER	0x007a	24-bit digitiser
+podule	BRAINSOFT_24GRAPHICS	0x007b	24-bit graphics
+podule	SYNTEC_SPECTRON		0x007c	Spectron
+podule	SYNTEC_QUAD16DTOA	0x007d	Quad 16-bit DAC
+podule	ROMBO_4BITDIGIISER	0x007e	4-bit digitiser
+podule	DONGLEANDKEYPAD		0x007f	dongle and keypad
+podule	3SL_SCSI		0x0080	SCSI interface
+podule	ARMADILLO_BTM1		0x0081	BTM1
+podule	ARMADILLO_DSO1		0x0082	DSO1
+podule	DELTRONICS_USER		0x0083	User Port
+podule	JPEGCOMPRESSOR		0x0084	JPEG compressor
+podule	BEEBUG_A3000SCSI	0x0085	A3000 SCSI
+podule	BEEBUG_COLOURSCAN	0x0086	colour scanner interface
+podule	EXTENSIONROM		0x0087	extension ROM
+podule	GRAPHICSENHANCER	0x0088	Graphics Enhancer
+podule	SIMIS_AFB300		0x0089	AFB300
+podule	FAXPACKSENIOR		0x008a	FaxPack Senior
+podule	FAXPACKJUNIOR		0x008b	FaxPack Junior
+podule	LINGENUITY_SCSI8SHARE	0x008c	8 bit SCSIShare interface
+podule	VTI_SCSI		0x008d	SCSI interface
+podule	ATOMWIDE_PIA		0x008e	PIA
+podule	NEXUSNS			0x008f	Nexus interface (A3020/RiscPC netslot)
+/* RISC iX: #define XCB_PRODUCT_XCB_DTSOFTWAREPCCONNECT 144 */
+podule	ATOMWIDE_SERIAL		0x0090	multiport serial interface
+podule	WATFORD_IDE		0x0091	IDE interface
+podule	ATOMWIDE_IDE		0x0092	IDE interface
+podule	ARMADILLO_RSI		0x0093	RSI
+podule	ARMADILLO_TCR		0x0094	TCR
+podule	LINGENUITY_SCSI		0x0095	16 bit SCSI interface
+podule	LINGENUITY_SCSISHARE	0x0096	16 bit SCSIShare interface
+podule	BEEBUG_IDE		0x0097	IDE interface
+podule	WATFORD_PRISMRT		0x0098	Prism RT
+podule	HCCS_VIDEODIGITISER	0x0099	video digitiser
+podule	DTSOFT_SCANPORT		0x009a	ScanPort
+podule	DTSOFT_PACCEL		0x009b	Paccel
+podule	DTSOFT_CANONION		0x009c	Canon ION interface
+podule	BIA_AUDIO		0x009d	BIA audio
+podule	IRLAM_FAXIM		0x009e	FaxIm
+podule	IRLAM_MOVINGIMAGE	0x009f	Moving Image
+podule	CUMANA_SCSI1		0x00a0	SCSI I interface
+podule	NEXUS_A3000ETHERNET	0x00a1	A3000 Ethernet
+podule	NEXUS_PCEMACCELL	0x00a2	PC Emulator accelerator
+podule	NEXUS_64CANSERIAL	0x00a3	64-channel serial
+podule	ETHER3			0x00a4	Ether3/Ether5 interface
+podule	IOTA_SCANNER		0x00a5	scanner interface
+podule	NEXUS_I860MATHACCELL	0x00a6	i860 floating-point accelerator
+podule	II_QUADSERIAL		0x00a7	quad serial port
+podule	WATFORD_SCANNERGREY	0x00a8	grey-scale scanner
+podule	WATFORD_SCANNERRGB	0x00a9	RGB scanner
+podule	WATFORD_PRISMCOLOUR	0x00aa	Prism Colour
+podule	WATFORD_USERANALOGUE	0x00ab	Analogue and User Ports
+podule	BAILDON_DISCBUFFER	0x00ac	disc buffer
+podule	BAILDON_A3000UPBUS	0x00ad	A3000 UP bus
+podule	ICS_IDE			0x00ae	IDE Interface
+podule	HCCS_BWDIGITISER	0x00af	b/w digitiser
+podule	CSD_IDE8		0x00b0	8-bit IDE interface
+podule	CSD_IDE16		0x00b1	16-bit IDE interface
+podule	SERIALPORT_IDE		0x00b2	IDE interface
+podule	SERIALPORT_4MFLOPPY	0x00b3	4 MB floppy
+podule	CADSOFT_MAESTROINTER	0x00b4	Maestro Inter
+podule	ARXE_QUADFS		0x00b5	Quad-density floppy interface
+podule	SERIALPORT_DUALSERIAL	0x00b9	Serial interface
+podule	ETHERLAN200		0x00bd	EtherLan 200-series
+podule	SCANLIGHTV256		0x00cb	ScanLight Video 256
+podule	EAGLEM2			0x00cc	Eagle M2
+podule	LARKA16			0x00ce	Lark A16
+podule	ETHERLAN100		0x00cf	EtherLan 100-series
+podule	ETHERLAN500		0x00d4	EtherLan 500-series
+podule	ETHERM			0x00d8	EtherM dual interface NIC
+podule	CUMANA_SLCD		0x00dd	CDFS & SLCD expansion card
+podule	BRINILINK		0x00df	BriniLink transputer link adapter
+podule	ETHERB			0x00e4	EtherB network slot interface
+podule	24I16			0x00e6	24i16 digitiser
+podule	PCCARD			0x00ea	PC card
+podule	ETHERLAN600		0x00ec	EtherLan 600-series
+podule	CASTLE_SCSI16SHARE	0x00f3  8 or 16 bit SCSI2Share interface
+podule	CASTLE_ETHERSCSISHARE	0x00f4  8 or 16 bit SCSI2Share interface, possibly with Ethernet
+podule	CASTLE_ETHERSCSI	0x00f5  EtherSCSI
+podule	CASTLE_SCSI16		0x00f6  8 or 16 bit SCSI2 interface
+podule	ALSYSTEMS_SCSI		0x0107	SCSI II host adapter
+podule	RAPIDE			0x0114	RapIDE32 interface
+podule	ETHERLAN100AEH		0x011c	AEH77 (EtherLan 102)
+podule	ETHERLAN200AEH		0x011d	AEH79 (EtherLan 210)
+podule	ETHERLAN600AEH		0x011e	AEH62/78/99 (EtherLan 602)
+podule	ETHERLAN500AEH		0x011f	AEH75 (EtherLan 512)
+podule	CONNECT32		0x0125	Connect32 SCSI II interface
+podule	CASTLE_SCSI32		0x012b  32 bit SCSI2 + DMA interface
+podule	ETHERLAN700AEH		0x012e	AEH98 (EtherLan 700-series)
+podule	ETHERLAN700		0x012f	EtherLan 700-series
+podule	SIMTEC_IDE8		0x0130	8 bit IDE interface
+podule	SIMTEC_IDE		0x0131	16 bit IDE interface
+podule	MIDICONNECT		0x0133	Midi-Connect
+podule	ETHERI			0x0139	EtherI interface
+podule	SIMTEC_USB		0x0145	USB interface
+podule	SIMTEC_NET100		0x0150	NET100 interface
+podule	MIDIMAX			0x0200	MIDI max
+podule	MMETHERV		0x1234	Multi-media/EtherV
+podule	ETHERN			0x5678	EtherN interface

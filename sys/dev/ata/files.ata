@@ -1,0 +1,39 @@
+#	$NetBSD: files.ata,v 1.24 2012/07/31 15:50:34 bouyer Exp $
+#
+# Config file and device description for machine-independent devices
+# which attach to ATA busses.  Included by ports that need it.  Ports
+# that use it must provide their own "major" declarations for the
+# appropriate devices.
+
+# ATA disks
+device	wd: disk
+attach	wd at ata_hl
+file	dev/ata/wd.c			wd			needs-flag
+file	dev/ata/ata_wdc.c		wd & atabus & wdc_common
+
+defflag	WD_SOFTBADSECT
+
+file	dev/ata/ata.c			(ata_hl | atapi) & atabus
+
+# ATA RAID configuration support
+defpseudodev ataraid {[vendtype = -1], [unit = -1]}
+file	dev/ata/ata_raid.c		ataraid			needs-flag
+file	dev/ata/ata_raid_subr.c		ataraid
+file	dev/ata/ata_raid_promise.c	ataraid
+file	dev/ata/ata_raid_adaptec.c	ataraid
+file	dev/ata/ata_raid_nvidia.c	ataraid
+file	dev/ata/ata_raid_via.c		ataraid
+file	dev/ata/ata_raid_jmicron.c	ataraid
+file	dev/ata/ata_raid_intel.c	ataraid
+
+attach	ld at ataraid with ld_ataraid
+file	dev/ata/ld_ataraid.c		ld_ataraid
+
+# Common SATA subroutines
+file	dev/ata/sata_subr.c		sata			needs-flag
+
+# Common SATA FIS subroutines
+file	dev/ata/satafis_subr.c		sata_fis
+
+# SATA port multiplier support
+file	dev/ata/satapmp_subr.c		sata_pmp		needs-flag

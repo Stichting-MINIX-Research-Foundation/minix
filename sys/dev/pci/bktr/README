@@ -1,0 +1,30 @@
+README FOR BT848/BT878 DRIVER
+Updated 20th March 2000
+
+  Roger Hardiman
+  roger@cs.strath.ac.uk
+  roger@freebsd.org
+  http://www.telepresence.strath.ac.uk/bt848
+  http://www.freebsd.org/~roger
+
+Introduction
+------------
+
+The BKTR driver is a driver for Bt848 and Bt878 based Video Capture
+cards and TV Tuner Cards.
+The driver was written by Amancio Hasty for FreeBSD but is now
+maintained by Roger Hardiman.
+
+The driver has been ported from FreeBSD to NetBSD, OpenBSD and BSD/OS.
+There is also a Linux version on an old version.
+
+
+Please read the README file for your specific Operating System for
+more information.
+
+Thanks
+Roger
+--
+Roger Hardiman
+
+$SourceForge: README,v 1.2 2003/03/11 23:11:16 thomasklausner Exp $

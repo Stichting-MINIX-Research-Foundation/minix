@@ -1,0 +1,6 @@
+#	$NetBSD: files.netmpls,v 1.1 2010/06/26 15:17:56 kefren Exp $
+
+defflag	opt_mpls.h	MPLS
+
+file	netmpls/mpls_proto.c	mpls
+file	netmpls/mpls_ttl.c	mpls

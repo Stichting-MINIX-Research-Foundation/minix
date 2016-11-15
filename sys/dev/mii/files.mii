@@ -1,0 +1,160 @@
+#	$NetBSD: files.mii,v 1.50 2014/11/15 19:18:18 christos Exp $
+
+defflag	opt_mii.h	MIIVERBOSE
+
+define	mii		{[phy = -1]}
+file	dev/mii/mii.c				mii
+
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c			mii_bitbang
+
+define	mii_phy
+file	dev/mii/mii_physubr.c			mii_phy
+
+file	dev/mii/mii_ethersubr.c			mii & ether
+file	dev/mii/mii_verbose.c			mii & miiverbose
+
+define	ukphy_subr
+file	dev/mii/ukphy_subr.c			ukphy_subr
+
+device	acphy: mii_phy
+attach	acphy at mii
+file	dev/mii/acphy.c				acphy
+
+device	amhphy: mii_phy
+attach	amhphy at mii
+file	dev/mii/amhphy.c			amhphy
+
+device	bmtphy: mii_phy
+attach	bmtphy at mii
+file	dev/mii/bmtphy.c			bmtphy
+
+device	brgphy: mii_phy
+attach	brgphy at mii
+file	dev/mii/brgphy.c			brgphy
+
+device	tlphy: mii_phy
+attach	tlphy at mii
+file	dev/mii/tlphy.c				tlphy
+
+device	nsphy: mii_phy
+attach	nsphy at mii
+file	dev/mii/nsphy.c				nsphy
+
+device	nsphyter: mii_phy
+attach	nsphyter at mii
+file	dev/mii/nsphyter.c			nsphyter
+
+device	gentbi: mii_phy
+attach	gentbi at mii
+file	dev/mii/gentbi.c			gentbi
+
+device	glxtphy: mii_phy
+attach	glxtphy at mii
+file	dev/mii/glxtphy.c			glxtphy
+
+device	gphyter: mii_phy
+attach	gphyter at mii
+file	dev/mii/gphyter.c			gphyter
+
+device	qsphy: mii_phy
+attach	qsphy at mii
+file	dev/mii/qsphy.c				qsphy
+
+device	inphy: mii_phy
+attach	inphy at mii
+file	dev/mii/inphy.c				inphy
+
+device	iophy: mii_phy
+attach	iophy at mii
+file	dev/mii/iophy.c				iophy
+
+device	exphy: mii_phy, ukphy_subr
+attach	exphy at mii
+file	dev/mii/exphy.c				exphy
+
+device	lxtphy: mii_phy, ukphy_subr
+attach	lxtphy at mii
+file	dev/mii/lxtphy.c			lxtphy
+
+# Old
+device	makphy: mii_phy
+attach	makphy at mii
+file	dev/mii/makphy.c			makphy
+
+# New
+device	e1000phy: mii_phy
+attach	e1000phy at mii
+file	dev/mii/e1000phy.c			e1000phy
+
+device	icsphy: mii_phy
+attach	icsphy at mii
+file	dev/mii/icsphy.c			icsphy
+
+device	igphy: mii_phy
+attach	igphy at mii
+file	dev/mii/igphy.c				igphy
+
+device	ikphy: mii_phy
+attach	ikphy at mii
+file	dev/mii/ikphy.c				ikphy
+
+device	sqphy: mii_phy
+attach	sqphy at mii
+file	dev/mii/sqphy.c				sqphy
+
+device	tqphy: mii_phy
+attach	tqphy at mii
+file	dev/mii/tqphy.c				tqphy
+
+device	dmphy: mii_phy
+attach	dmphy at mii
+file	dev/mii/dmphy.c				dmphy
+
+device	pnaphy: mii_phy
+attach	pnaphy at mii
+file	dev/mii/pnaphy.c			pnaphy
+
+device	rgephy: mii_phy
+attach	rgephy at mii
+file	dev/mii/rgephy.c			rgephy
+
+device	urlphy: mii_phy
+attach	urlphy at mii
+file	dev/mii/urlphy.c			urlphy
+
+device	ukphy: mii_phy, ukphy_subr
+attach	ukphy at mii
+file	dev/mii/ukphy.c				ukphy
+
+device	ciphy: mii_phy
+attach	ciphy at mii
+file	dev/mii/ciphy.c				ciphy
+
+device	rlphy: mii_phy
+attach	rlphy at mii
+file	dev/mii/rlphy.c				rlphy
+
+device	mvphy: mii_phy
+attach	mvphy at mii
+file	dev/mii/mvphy.c				mvphy
+
+device	atphy: mii_phy
+attach	atphy at mii
+file	dev/mii/atphy.c				atphy
+
+device	ihphy: mii_phy
+attach	ihphy at mii
+file	dev/mii/ihphy.c				ihphy
+
+device	etphy: mii_phy
+attach	etphy at mii
+file	dev/mii/etphy.c				etphy
+
+device	rdcphy: mii_phy
+attach	rdcphy at mii
+file	dev/mii/rdcphy.c			rdcphy
+
+device	micphy: mii_phy, ukphy_subr
+attach	micphy at mii
+file	dev/mii/micphy.c			micphy

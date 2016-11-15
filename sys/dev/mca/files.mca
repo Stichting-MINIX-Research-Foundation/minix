@@ -1,0 +1,69 @@
+# $NetBSD: files.mca,v 1.22 2005/12/11 12:22:18 christos Exp $
+#
+# Config.new file and device description for machine-independent MCA code.
+# Included by ports that need it.
+
+defflag	MCAVERBOSE
+
+#device	mca {[slot = -1]}
+attach	mca at mcabus
+file	dev/mca/mca.c			mca			needs-flag
+file	dev/mca/mca_subr.c		mca
+
+file	dev/mca/mcabusprint.c		mcabus
+
+# 3Com 3C529
+attach	ep at mca with ep_mca: elink
+file	dev/mca/if_ep_mca.c		ep_mca
+
+# WD/SMC 80x3x/A and clones
+attach	we at mca with we_mca
+file	dev/mca/if_we_mca.c		we_mca
+
+# Adaptec AHA-1640
+attach	aha at mca with aha_mca
+file	dev/mca/aha_mca.c		aha_mca
+
+# TROPIC based Token-Ring (IBM)
+attach	tr at mca with tr_mca
+file	dev/mca/if_tr_mca.c		tr_mca
+
+# 3Com 3C523
+device	elmc: ether, ifnet, arp, i82586
+attach	elmc at mca with elmc_mca
+file	dev/mca/if_elmc_mca.c		elmc_mca
+
+# serial port devices
+attach	com at mca with com_mca
+file	dev/mca/com_mca.c		com_mca
+
+# Allied Telesis AT1720
+# device in sys/conf/files
+attach	ate at mca with ate_mca
+file	dev/mca/if_ate_mca.c		ate_mca
+
+# ESDI controllers & disks
+device	edc {[drive = -1]}
+attach	edc at mca with edc_mca
+file	dev/mca/edc_mca.c		edc_mca
+
+device	ed: disk
+attach	ed at edc with ed_mca
+file	dev/mca/ed_mca.c		ed_mca		needs-flag
+
+# Novell NE2000, and clones
+attach	ne at mca with ne_mca
+file	dev/mca/if_ne_mca.c		ne_mca
+
+# AMD am7990 (Lance) -based boards
+attach	le at mca with le_mca: le24
+file	dev/mca/if_le_mca.c		le_mca
+
+# NCR 53C90
+attach	esp at mca with esp_mca
+file	dev/mca/esp_mca.c		esp_mca
+
+# Tiara LANCard
+device	tra:  ether, ifnet, arp, mb86950
+attach	tra at mca with tra_mca
+file	dev/mca/if_tra_mca.c		tra_mca

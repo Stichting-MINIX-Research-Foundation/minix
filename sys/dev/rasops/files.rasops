@@ -1,0 +1,22 @@
+# 	$NetBSD: files.rasops,v 1.13 2012/01/11 15:52:32 macallan Exp $
+
+# Note: `rasops_glue' is only here to force the header file's name
+#       hence it must be mentioned first  (shudder...)
+file dev/rasops/rasops.c ( (rasops_glue |
+    rasops1 | rasops2 | rasops4 | rasops8 | rasops15 | rasops16 | rasops24 |
+    rasops32 | rasops_rotation) &
+    (rasterconsole | wsdisplay)) needs-flag
+
+file dev/rasops/rasops_masks.c ((rasterconsole | wsdisplay) &
+    (rasops1 | rasops2 | rasops4))
+file dev/rasops/rasops1.c ((rasterconsole | wsdisplay) & rasops1)
+file dev/rasops/rasops2.c ((rasterconsole | wsdisplay) & rasops2)
+file dev/rasops/rasops4.c ((rasterconsole | wsdisplay) & rasops4)
+file dev/rasops/rasops8.c ((rasterconsole | wsdisplay) & rasops8)
+file dev/rasops/rasops15.c ((rasterconsole | wsdisplay) & (rasops15 | rasops16))
+file dev/rasops/rasops24.c ((rasterconsole | wsdisplay) & rasops24)
+file dev/rasops/rasops32.c ((rasterconsole | wsdisplay) & rasops32)
+
+defflag	opt_rasops.h 	RASOPS_CLIPPING RASOPS_SMALL
+defparam opt_rasops.h	RASOPS_DEFAULT_WIDTH = 80
+defparam opt_rasops.h	RASOPS_DEFAULT_HEIGHT = 25

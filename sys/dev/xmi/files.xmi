@@ -1,0 +1,13 @@
+#	$NetBSD: files.xmi,v 1.2 2008/03/11 05:34:02 matt Exp $
+#
+# Config file and device description for machine-independent
+# code for devices Digital Equipment Corp. XMI bus.
+# Included by ports that need it.
+
+device	xmi { node=-1 }: bus
+
+file	dev/xmi/xmi.c				xmi
+
+# DWMBA XMI-BI adapter
+attach	bi at xmi with bi_xmi
+file	dev/xmi/bi_xmi.c			bi_xmi

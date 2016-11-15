@@ -1,0 +1,90 @@
+
+
+/* constant dm_target structures for error, zero, linear, stripes etc. */
+struct dm_target {
+	int (*init)(struct dm_table_entry *, int argc, char **argv);
+	int (*destroy)(struct dm_table_entry *);
+	int (*strategy)(struct dm_table_entry *, struct buf *);
+	int (*upcall)(struct dm_table_entry *, struct buf *);
+
+	SLIST_ENTRY(dm_target) next;
+};
+
+
+struct dm_table_entry {
+	struct dm_dev *dm_dev;		/* backlink */
+	uint64_t start;
+	uint64_t length;
+
+	struct dm_target *target;
+	void *target_config;
+	SLIST_ENTRY(dm_table_entry) next;
+};
+SLIST(dm_table, dm_table_entry);
+
+
+struct dm_pdev {
+	struct vnode *pdev_vnode;
+	int refcnt;
+	SLIST_ENTRY(dm_pdev) next_pdev;
+};
+SLIST(dm_pdevs, pm_pdev);
+
+
+struct dm_dev {
+	char name[DM_NAME_LEN];
+	char uuid[DM_UUID_LEN];
+
+	int minor;
+	uint32_t flags;
+
+	kmutex_t dev_mtx;
+	uint32_t event_nr;
+	uint32_t ref_cnt;
+
+	struct dm_pdev pdevs;
+
+	int cur_active_table;
+	struct dm_table tables[2];
+
+	struct dm_dev_list upcalls;
+	SLIST_NEXT(dm_dev) next_upcall;
+
+	SLIST_NEXT(dm_dev) next_devlist;
+};
+SLIST(dm_dev_list, dm_dev) dm_devs;
+
+
+/* for zero,error : dm_target->target_config == NULL */
+/* for linear : */
+struct target_linear_config {
+	struct dm_pdev *pdev;
+	uint64_t offset;
+};
+
+
+/* for mirror : */
+struct target_mirror_config {
+	struct dm_pdev *orig;
+	struct dm_pdev *copies[MAX_MIRROR_COPIES];
+
+	/* copied blocks bitmaps administration etc*/
+	struct dm_pdev *log_pdev;	/* for administration */
+	uint64_t log_regionsize;	/* blocksize of mirror */
+
+	/* list of parts that still need copied etc.; run length encoded? */
+	....
+};
+
+
+/* for snapshot : */
+struct target_snapshot_config {
+	struct dm_dev *orig;
+
+	/* modified blocks bitmaps administration etc*/
+	struct dm_pdev *log_pdev;
+	uint64_t log_regionsize;
+	/* list of sector renames to the log device */
+	...
+};
+

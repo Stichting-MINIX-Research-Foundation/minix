@@ -1,0 +1,84 @@
+# $NetBSD: files.wscons,v 1.49 2014/10/17 10:09:21 uebayasi Exp $
+
+#
+# "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
+# plus deals with kernel mouse drivers.
+#
+# These files are included with strange conditions because of the hairy
+# interactions between them.  In particular, chunks of the glue,
+# keyboard, and mouse code are called directly by other chunks.  Also,
+# each hardware driver can make calls into its (child) interface driver.
+# This could all be cleaned up, but it's not clear that it's worth the
+# trouble.
+#
+
+defparam opt_wsemul.h		WSEMUL_DEFAULT
+defflag	opt_wsemul.h		WSEMUL_NO_DUMB WSEMUL_SUN WSEMUL_VT100
+defflag opt_wsdisplay_border.h	WSDISPLAY_CUSTOM_BORDER
+defparam opt_wsdisplay_border.h	WSDISPLAY_BORDER_COLOR
+defflag opt_wsmsgattrs.h	WSDISPLAY_CUSTOM_OUTPUT
+defparam opt_wsmsgattrs.h	WS_DEFAULT_COLATTR WS_DEFAULT_MONOATTR
+				WS_DEFAULT_BG WS_DEFAULT_FG
+				WS_KERNEL_COLATTR WS_KERNEL_MONOATTR
+				WS_KERNEL_BG WS_KERNEL_FG
+				WSDISPLAY_SCROLLCOMBO
+defparam opt_wsemul.h		WSEMUL_VT100_HILIT_FG WSEMUL_VT100_UNDERLINE_FG
+				WSEMUL_VT100_HILIT_BG WSEMUL_VT100_UNDERLINE_BG
+defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
+				WSDISPLAY_COMPAT_RAWKBD
+				WSDISPLAY_COMPAT_PCVT WSDISPLAY_COMPAT_SYSCONS
+				WSCONS_SUPPORT_PCVTFONTS
+				WSCONS_SUPPORT_ISO7FONTS
+				WSDISPLAY_SCROLLSUPPORT
+				WSKBD_EVENT_AUTOREPEAT
+defparam opt_wsdisplay_compat.h	WSCOMPAT_USL_SYNCTIMEOUT
+				WSDISPLAY_DEFAULTSCREENS
+defparam opt_wsdisplay_compat.h WSDISPLAY_SCROLLBACK_LINES=100
+
+# this loses, but there's no way to define attributes which have attributes
+device	wsdisplay #tty?
+attach	wsdisplay at wsemuldisplaydev with wsdisplay_emul
+attach	wsdisplay at wsdisplaydev with wsdisplay_noemul
+device	wskbd
+attach	wskbd at wskbddev
+device	wsmouse
+attach	wsmouse at wsmousedev
+
+file	dev/wscons/wsdisplay.c		wsdisplay		needs-flag
+file	dev/wscons/wsdisplay_compat_usl.c wsdisplay & wsdisplay_compat_usl
+file	dev/wscons/wsdisplay_util.c	wsdisplay
+file	dev/wscons/wsemulconf.c		wsdisplay
+file	dev/wscons/wsemul_dumb.c	wsdisplay & !wsemul_no_dumb
+file	dev/wscons/wsemul_sun.c		wsdisplay & wsemul_sun
+file	dev/wscons/wsemul_vt100.c	wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_subr.c	wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_chars.c	wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_keys.c	wsdisplay & wsemul_vt100
+file	dev/wscons/wsevent.c		wsdisplay | wskbd | wsmouse | wsmux
+file	dev/wscons/wskbd.c		wskbd			needs-flag
+file	dev/wscons/wskbdutil.c		wskbd			needs-flag
+file	dev/wscons/wsmouse.c		wsmouse			needs-flag
+
+# rcons bit-depth options
+include "dev/rcons/files.rcons"
+
+file	dev/wscons/wscons_rinit.c	wsrasteremulops
+file	dev/wscons/wscons_rops.c	wsrasteremulops
+
+defpseudo	wsmux
+file	dev/wscons/wsmux.c		wsmux			needs-flag
+
+define	tpcalib
+file	dev/wscons/tpcalib.c		tpcalib
+file	dev/wscons/mra.c		tpcalib
+defflag opt_tpcalib.h		TPCALIBDEBUG
+
+# generic virtual console support on bitmapped framebuffers
+file	dev/wscons/wsdisplay_vcons.c		vcons
+file	dev/wscons/wsdisplay_vcons_util.c	vcons
+defflag	opt_vcons.h		VCONS_DRAW_INTR VCONS_INTR_DEBUG
+
+# generic support code for caching rendered glyphs in video memory
+define	glyphcache
+file	dev/wscons/wsdisplay_glyphcache.c	glyphcache
+defflag	opt_glyphcache.h GLYPHCACHE_DEBUG

@@ -1,0 +1,30 @@
+#	$NetBSD: files.hpckbd,v 1.9 2008/06/10 12:49:16 drochner Exp $
+#	H/PC keyboard interface for wskbd
+
+device hpckbdif {}
+device hpckbd: wskbddev
+attach hpckbd at hpckbdif
+file dev/hpc/hpckbd.c			hpckbd
+
+# XXX: hpckbd.c uses the same option name, "PCKBD_LAYOUT", that
+# pckbd.c uses (see dev/pckbport/files.pckbport)
+defparam	PCKBD_LAYOUT
+
+
+device btnmgr: wskbddev
+attach btnmgr at mainbus
+file	dev/hpc/btnmgr.c		btnmgr
+defflag	opt_btnmgr.h		BTNMGRDEBUG
+defparam opt_btnmgr.h		BTNMGRDEBUG_CONF
+
+defpseudodev hpf1275a: wskbddev
+file	dev/hpc/hpf1275a_tty.c		hpf1275a
+
+
+# XXX: we use dev/pckbport/wskbdmap_mfii.c with a set of conditions
+# different from that in dev/pckbport/files.pckbport, so we also need
+# to keep the list of options that affect this file in sync
+defflag	opt_wskbdmap.h			WSKBD_USONLY
+
+file	dev/pckbport/wskbdmap_mfii.c	btnmgr | hpckbd | hpf1275a
+file	dev/hpc/pckbd_encode.c		btnmgr | hpckbd | hpf1275a

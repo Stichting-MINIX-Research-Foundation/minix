@@ -1,0 +1,102 @@
+#	$NetBSD: files.tc,v 1.33 2008/02/27 23:49:11 matt Exp $
+#
+# Config file and device description for machine-independent
+# TURBOchannel code.  Included by ports that need it.
+
+defflag	TCVERBOSE
+
+device	tc {[slot = -1], [offset = -1]}: bus
+#attach	tc at tcbus
+file	dev/tc/tc.c			tc	needs-flag
+
+# IOCTL ASIC
+device	ioasic { offset = -1 }
+attach	ioasic at tc
+file	dev/tc/ioasic_subr.c		ioasic
+
+# LANCE attachments.
+#  lance device defined in sys/conf/files
+#  le_dec_subr	attribute defined in sys/dev/dec/files.dec
+
+attach le at ioasic with le_ioasic:	le24, le_dec_subr
+file	dev/tc/if_le_ioasic.c		le_ioasic
+
+attach le at tc with le_tc:		le24, le_dec_subr
+file	dev/tc/if_le_tc.c		le_tc
+
+# baseboard audio
+device  bba: audiobus,am7930,auconv
+attach  bba at ioasic
+file    dev/tc/bba.c                    bba
+
+# DEFTA FDDI controller
+device	fta: pdq, fddi, ifnet, arp
+attach	fta at tc
+file	dev/tc/if_fta.c			fta
+
+# TCDS dual channel SCSI
+device	tcds { chip = -1 }
+attach	tcds at tc
+file	dev/tc/tcds.c			tcds
+
+# 53C[F]90 PMAZ single channel SCSI
+device	asc: ncr53c9x, scsi
+attach	asc at tc with asc_tc
+file	dev/tc/asc_tc.c			asc_tc
+attach	asc at tcds with asc_tcds
+file	dev/tc/asc_tcds.c		asc_tcds
+
+# 8530 UARTs using the MI 8530 driver
+device zsc { channel = -1 }
+attach zsc at ioasic with zsc_ioasic
+file   dev/tc/zs_ioasic.c              zsc_ioasic      needs-flag
+file   dev/ic/z8530sc.c                zsc
+
+device zstty: tty
+attach zstty at zsc
+file   dev/ic/z8530tty.c               zstty           needs-flag
+
+attach vsms at zsc with zsms
+file   dev/tc/zsms.c                   zsms
+
+attach lkkbd at zsc with zskbd
+file   dev/tc/zskbd.c                  zskbd           needs-flag
+
+# CX PMAG-B
+device cfb: wsemuldisplaydev, rasops8
+attach cfb at tc
+file   dev/tc/cfb.c                    cfb needs-flag
+
+# MX PMAG-A
+device mfb: wsemuldisplaydev, rasops8
+attach mfb at tc
+file   dev/tc/mfb.c                    mfb needs-flag
+
+# TX PMAG-J
+device tfb: wsemuldisplaydev, rasops8  
+attach tfb at tc 
+file   dev/tc/tfb.c                    tfb needs-flag
+
+# HX PMAGB-B
+device sfb: wsemuldisplaydev, rasops8
+attach sfb at tc
+file   dev/tc/sfb.c                    sfb needs-flag
+
+# STIC (stamp interface chip) for PX and PXG
+define stic
+file   dev/tc/stic.c                   stic needs-flag
+
+# PX PMAG-C
+device px: wsemuldisplaydev, stic
+attach px at tc  
+file   dev/tc/px.c                     px needs-flag  
+
+# PXG PMAG-D, PMAG-E, PMAG-F
+device pxg: wsemuldisplaydev, stic
+attach pxg at tc
+file   dev/tc/pxg.c                    pxg needs-flag
+
+# HX+ PMAGD
+device	sfbp: wsemuldisplaydev, rasops32, rasops8
+attach	sfbp at tc
+file	dev/tc/sfbplus.c		sfbp needs-flag

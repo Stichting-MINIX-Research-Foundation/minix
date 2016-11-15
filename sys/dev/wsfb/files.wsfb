@@ -1,0 +1,15 @@
+# $NetBSD: files.wsfb,v 1.9 2015/05/01 02:00:41 nat Exp $
+
+#
+# wsdisplay framebuffer drivers
+#
+
+# some generic flags that drivers may or may not honour
+defflag opt_wsfb.h WSFB_FAKE_VGA_FB	# allow mmap(0xa0000)
+defflag opt_wsfb.h WSFB_ALLOW_OTHERS	# allow to mmap() foreign ranges
+
+# a generic framebuffer console
+define genfb: rasops1, rasops2, rasops8, rasops15, rasops16, rasops24, rasops32, vcons
+device genfb: genfb, wsemuldisplaydev, drm, splash
+file	dev/wsfb/genfb.c	genfb	needs-flag
+defflag opt_genfb.h GENFB_DEBUG GENFB_SHADOWFB

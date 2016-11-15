@@ -1,0 +1,49 @@
+#	$NetBSD: files.mvme,v 1.3 2005/12/11 12:22:48 christos Exp $
+#
+# Config file and device description for drivers shared between all
+# Motorola MVME boards.
+
+# Our own common VMEbus glue
+define	mvmebus
+file	dev/mvme/mvmebus.c			mvmebus
+
+# VMEChip2 found on many MVME boards
+device	vmetwo: mvmebus, vmebus
+attach	vmetwo at mainbus
+file	dev/mvme/vme_two.c			vmetwo needs-flag
+
+# PCCChip2 found on many MVME boards
+device	pcctwo { [ ipl = -1 ] }
+attach	pcctwo at mainbus
+file	dev/mvme/pcctwo.c			pcctwo needs-flag
+
+# This is not as odd as it looks. If the user doesn't define
+# a vmetwo0 device in the config file, we still need the
+# following gloop to deal with some local interrupts.
+file	dev/mvme/vme_two_isr.c			pcctwo
+
+# MVME68K/MVME88K Clock
+attach	clock at pcctwo with clock_pcctwo
+file	dev/mvme/clock_pcctwo.c			clock_pcctwo
+
+# MVME68K/MVME88K Printer
+attach	lpt at pcctwo with lpt_pcctwo
+file	dev/mvme/lpt_mvme.c			lpt needs-flag
+file	dev/mvme/lpt_pcctwo.c			lpt_pcctwo
+
+# MVME68K/MVME88K Ethernet Interface
+attach	ie at pcctwo with ie_pcctwo
+file	dev/mvme/if_ie_mvme.c			ie_pcctwo
+
+# CD2401 Quad Serial Controller
+attach	clmpcc at pcctwo with clmpcc_pcctwo
+file	dev/mvme/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
+
+# MVME68K/MVME88K Memory Controller ASICs
+device	memc
+attach	memc at mainbus
+file	dev/mvme/memc.c				memc
+
+# MVME68K/MVME88K ncr53c710 SCSI
+attach	osiop at pcctwo with osiop_pcctwo
+file	dev/mvme/osiop_pcctwo.c			osiop_pcctwo

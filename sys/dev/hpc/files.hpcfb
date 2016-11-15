@@ -1,0 +1,16 @@
+#	$NetBSD: files.hpcfb,v 1.4 2008/02/21 19:52:00 uwe Exp $
+#	H/PC framebuffer interface for wsdisplay
+
+define	hpcfbif {}
+device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops15, rasops16
+attach	hpcfb at hpcfbif
+file	dev/hpc/hpcfb.c		hpcfb		needs-flag
+
+define	hpccmap
+file	dev/hpc/hpccmap.c	hpccmap
+
+device	bivideo: hpcfbif, hpccmap
+attach	bivideo at mainbus
+file	dev/hpc/bivideo.c	bivideo		needs-flag
+
+defflag	opt_hpcfb.h		FBDEBUG

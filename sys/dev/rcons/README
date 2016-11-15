@@ -1,0 +1,3 @@
+$NetBSD: README,v 1.1 1999/12/17 01:41:52 ad Exp $
+
+This code is depreciated. Use wscons instead.
