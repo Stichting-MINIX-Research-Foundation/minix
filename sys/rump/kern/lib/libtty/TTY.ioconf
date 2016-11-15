@@ -1,0 +1,7 @@
+#	$NetBSD: TTY.ioconf,v 1.1 2015/08/20 11:59:16 christos Exp $
+
+ioconf		tty
+
+include		"conf/files"
+
+pseudo-device   pty

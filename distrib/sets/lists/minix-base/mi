@@ -869,6 +869,18 @@
 ./usr/lib/librefuse.so                                  minix-base
 ./usr/lib/librefuse.so.2                                minix-base
 ./usr/lib/librefuse.so.2.0                              minix-base
+./usr/lib/librumpkern_crypto.so.0.0                     minix-base      rump
+./usr/lib/librumpkern_crypto.so.0                       minix-base      rump
+./usr/lib/librumpkern_crypto.so                         minix-base      rump
+./usr/lib/librumpkern_sysproxy.so.0.0                   minix-base      rump
+./usr/lib/librumpkern_sysproxy.so.0                     minix-base      rump
+./usr/lib/librumpkern_sysproxy.so                       minix-base      rump
+./usr/lib/librumpkern_tty.so.0.0                        minix-base      rump
+./usr/lib/librumpkern_tty.so.0                          minix-base      rump
+./usr/lib/librumpkern_tty.so                            minix-base      rump
+./usr/lib/librumpkern_z.so.0.0                          minix-base      rump
+./usr/lib/librumpkern_z.so.0                            minix-base      rump
+./usr/lib/librumpkern_z.so                              minix-base      rump
 ./usr/lib/libsaslc.a                                    minix-base      crypto
 ./usr/lib/libsaslc.so.0.0                               minix-base      crypto
 ./usr/lib/libsaslc.so.0                                 minix-base      crypto

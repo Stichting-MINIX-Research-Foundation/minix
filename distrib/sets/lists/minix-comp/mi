@@ -2264,6 +2264,14 @@
 ./usr/lib/librefuse.a                                   minix-comp
 ./usr/lib/librefuse_pic.a                               minix-comp
 ./usr/lib/librmt.a                                      minix-comp
+./usr/lib/librumpkern_crypto.a                          minix-comp      rump
+./usr/lib/librumpkern_crypto_pic.a                      minix-comp      rump
+./usr/lib/librumpkern_sysproxy.a                        minix-comp      rump
+./usr/lib/librumpkern_sysproxy_pic.a                    minix-comp      rump
+./usr/lib/librumpkern_tty.a                             minix-comp      rump
+./usr/lib/librumpkern_tty_pic.a                         minix-comp      rump
+./usr/lib/librumpkern_z.a                               minix-comp      rump
+./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
 ./usr/lib/libsffs.a                                     minix-comp
 ./usr/lib/libsffs_pic.a                                 minix-comp
 ./usr/lib/libsqlite3.a                                  minix-comp

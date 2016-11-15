@@ -1,0 +1,5 @@
+#	$NetBSD: files.arc4,v 1.2 2014/08/10 16:44:35 tls Exp $
+
+define	arc4
+
+file	crypto/arc4/arc4.c

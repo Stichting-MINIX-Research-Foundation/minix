@@ -1,0 +1,5 @@
+#	$NetBSD: files.cast128,v 1.1 2002/10/11 01:52:09 thorpej Exp $
+
+define	cast128
+
+file	crypto/cast128/cast128.c	cast128
