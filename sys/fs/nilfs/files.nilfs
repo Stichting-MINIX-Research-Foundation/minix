@@ -1,0 +1,11 @@
+#	$NetBSD: files.nilfs,v 1.3 2014/10/11 06:42:18 uebayasi Exp $
+
+deffs	NILFS
+
+define	nilfs: vfs
+file	fs/nilfs/nilfs_vfsops.c		nilfs
+file	fs/nilfs/nilfs_vnops.c		nilfs
+file	fs/nilfs/nilfs_subr.c		nilfs
+#file	fs/nilfs/nilfs_readwrite.c		nilfs
+#file	fs/nilfs/nilfs_allocation.c		nilfs
+

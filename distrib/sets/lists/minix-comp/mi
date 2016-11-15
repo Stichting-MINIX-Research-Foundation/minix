@@ -41,6 +41,8 @@
 ./usr/bin/strip                                         minix-comp      binutils
 ./usr/include                                           minix-comp
 ./usr/include/a.out.h                                   minix-comp
+./usr/include/adosfs                                    minix-comp      rump
+./usr/include/adosfs/adosfs.h                           minix-comp      rump
 ./usr/include/aio.h                                     minix-comp
 ./usr/include/altq                                      minix-comp
 ./usr/include/altq/if_altq.h                            minix-comp
@@ -448,13 +450,34 @@
 ./usr/include/fcntl.h                                   minix-comp
 ./usr/include/fenv.h                                    minix-comp
 ./usr/include/fetch.h                                   minix-comp
+./usr/include/filecorefs                                minix-comp      rump
+./usr/include/filecorefs/filecore_mount.h               minix-comp      rump
 ./usr/include/float.h                                   minix-comp
 ./usr/include/fmtmsg.h                                  minix-comp
 ./usr/include/fnmatch.h                                 minix-comp
 ./usr/include/form.h                                    minix-comp
 ./usr/include/fs                                        minix-comp
+./usr/include/fs/efs                                    minix-comp      rump
+./usr/include/fs/efs/efs.h                              minix-comp      rump
+./usr/include/fs/efs/efs_mount.h                        minix-comp      rump
+./usr/include/fs/efs/efs_sb.h                           minix-comp      rump
+./usr/include/fs/hfs                                    minix-comp      rump
+./usr/include/fs/hfs/hfs.h                              minix-comp      rump
+./usr/include/fs/hfs/libhfs.h                           minix-comp      rump
+./usr/include/fs/nilfs                                  minix-comp      rump
+./usr/include/fs/nilfs/nilfs_fs.h                       minix-comp      rump
+./usr/include/fs/nilfs/nilfs_mount.h                    minix-comp      rump
+./usr/include/fs/ptyfs                                  minix-comp      rump
+./usr/include/fs/ptyfs/ptyfs.h                          minix-comp      rump
 ./usr/include/fs/puffs                                  minix-comp
 ./usr/include/fs/puffs/puffs_msgif.h                    minix-comp
+./usr/include/fs/smbfs                                  minix-comp      rump
+./usr/include/fs/smbfs/smbfs.h                          minix-comp      rump
+./usr/include/fs/sysvbfs                                minix-comp      rump
+./usr/include/fs/sysvbfs/bfs.h                          minix-comp      rump
+./usr/include/fs/sysvbfs/sysvbfs_args.h                 minix-comp      rump
+./usr/include/fs/tmpfs                                  minix-comp      rump
+./usr/include/fs/tmpfs/tmpfs_args.h                     minix-comp      rump
 ./usr/include/fs/udf                                    minix-comp
 ./usr/include/fs/udf/ecma167-udf.h                      minix-comp
 ./usr/include/fs/udf/udf_mount.h                        minix-comp
@@ -1373,6 +1396,9 @@
 ./usr/include/minix/virtio.h                            minix-comp
 ./usr/include/minix/vm.h                                minix-comp
 ./usr/include/minix/vtreefs.h                           minix-comp
+./usr/include/miscfs                                    minix-comp      rump
+./usr/include/miscfs/union                              minix-comp      rump
+./usr/include/miscfs/union/union.h                      minix-comp      rump
 ./usr/include/mj.h                                      minix-comp      crypto
 ./usr/include/mntopts.h                                 minix-comp
 ./usr/include/monetary.h                                minix-comp
@@ -1547,6 +1573,10 @@
 ./usr/include/nl_types.h                                minix-comp
 ./usr/include/nlist.h                                   minix-comp
 ./usr/include/nsswitch.h                                minix-comp
+./usr/include/ntfs                                      minix-comp      rump
+./usr/include/ntfs/ntfs.h                               minix-comp      rump
+./usr/include/ntfs/ntfs_inode.h                         minix-comp      rump
+./usr/include/ntfs/ntfsmount.h                          minix-comp      rump
 ./usr/include/objc                                      minix-comp      gcc
 ./usr/include/objc/NXConstStr.h                         minix-comp      gcc
 ./usr/include/objc/Object.h                             minix-comp      gcc
@@ -2264,6 +2294,52 @@
 ./usr/lib/librefuse.a                                   minix-comp
 ./usr/lib/librefuse_pic.a                               minix-comp
 ./usr/lib/librmt.a                                      minix-comp
+./usr/lib/librumpfs_cd9660.a                            minix-comp      rump
+./usr/lib/librumpfs_cd9660_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_efs.a                               minix-comp      rump
+./usr/lib/librumpfs_efs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_ext2fs.a                            minix-comp      rump
+./usr/lib/librumpfs_ext2fs_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_fdesc.a                             minix-comp      rump
+./usr/lib/librumpfs_fdesc_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_ffs.a                               minix-comp      rump
+./usr/lib/librumpfs_ffs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_hfs.a                               minix-comp      rump
+./usr/lib/librumpfs_hfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_kernfs.a                            minix-comp      rump
+./usr/lib/librumpfs_kernfs_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_lfs.a                               minix-comp      rump
+./usr/lib/librumpfs_lfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_msdos.a                             minix-comp      rump
+./usr/lib/librumpfs_msdos_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_nfs.a                               minix-comp      rump
+./usr/lib/librumpfs_nfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_nfsserver.a                         minix-comp      rump
+./usr/lib/librumpfs_nfsserver_pic.a                     minix-comp      rump
+./usr/lib/librumpfs_nilfs.a                             minix-comp      rump
+./usr/lib/librumpfs_nilfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_ntfs.a                              minix-comp      rump
+./usr/lib/librumpfs_ntfs_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_null.a                              minix-comp      rump
+./usr/lib/librumpfs_null_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_ptyfs.a                             minix-comp      rump
+./usr/lib/librumpfs_ptyfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_smbfs.a                             minix-comp      rump
+./usr/lib/librumpfs_smbfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_syspuffs.a                          minix-comp      rump
+./usr/lib/librumpfs_syspuffs_pic.a                      minix-comp      rump
+./usr/lib/librumpfs_sysvbfs.a                           minix-comp      rump
+./usr/lib/librumpfs_sysvbfs_pic.a                       minix-comp      rump
+./usr/lib/librumpfs_tmpfs.a                             minix-comp      rump
+./usr/lib/librumpfs_tmpfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_udf.a                               minix-comp      rump
+./usr/lib/librumpfs_udf_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_umap.a                              minix-comp      rump
+./usr/lib/librumpfs_umap_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_union.a                             minix-comp      rump
+./usr/lib/librumpfs_union_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_v7fs.a                              minix-comp      rump
+./usr/lib/librumpfs_v7fs_pic.a                          minix-comp      rump
 ./usr/lib/librumpkern_crypto.a                          minix-comp      rump
 ./usr/lib/librumpkern_crypto_pic.a                      minix-comp      rump
 ./usr/lib/librumpkern_sysproxy.a                        minix-comp      rump
@@ -2272,6 +2348,12 @@
 ./usr/lib/librumpkern_tty_pic.a                         minix-comp      rump
 ./usr/lib/librumpkern_z.a                               minix-comp      rump
 ./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
+./usr/lib/librumpvfs_aio.a                              minix-comp      rump
+./usr/lib/librumpvfs_aio_pic.a                          minix-comp      rump
+./usr/lib/librumpvfs_fifofs.a                           minix-comp      rump
+./usr/lib/librumpvfs_fifofs_pic.a                       minix-comp      rump
+./usr/lib/librumpvfs_layerfs.a                          minix-comp      rump
+./usr/lib/librumpvfs_layerfs_pic.a                      minix-comp      rump
 ./usr/lib/libsffs.a                                     minix-comp
 ./usr/lib/libsffs_pic.a                                 minix-comp
 ./usr/lib/libsqlite3.a                                  minix-comp

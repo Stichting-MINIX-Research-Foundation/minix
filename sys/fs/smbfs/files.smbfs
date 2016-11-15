@@ -1,0 +1,12 @@
+#	$NetBSD: files.smbfs,v 1.3 2014/10/11 06:42:19 uebayasi Exp $
+
+deffs	SMBFS
+
+define	smbfs: vfs
+file	fs/smbfs/smbfs_io.c		smbfs
+file	fs/smbfs/smbfs_kq.c		smbfs
+file	fs/smbfs/smbfs_node.c		smbfs
+file	fs/smbfs/smbfs_smb.c		smbfs
+file	fs/smbfs/smbfs_subr.c		smbfs
+file	fs/smbfs/smbfs_vfsops.c		smbfs
+file	fs/smbfs/smbfs_vnops.c		smbfs

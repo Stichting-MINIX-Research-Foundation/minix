@@ -1,0 +1,15 @@
+- Verify that file holes work (they should, but must be checked).  Add a
+  regression test for this feature.
+
+- Fix and complete code marked with `XXX' and `TODO' tags.
+
+- Adjust code style - remove the /* ---- */ markers and use standard
+  struct vop_*_args assignment into *ap with comment like:
+        struct vop_link_v2_args /* {
+                struct vnode *a_dvp;
+                struct vnode *a_vp;
+                struct componentname *a_cnp;
+        } */ *ap = v;
+
+  jmmv: I may agree with the removal of the visual lines, but not with the
+  vop_*_args assignment.  Those are very ugly and add a lot of redundancy.

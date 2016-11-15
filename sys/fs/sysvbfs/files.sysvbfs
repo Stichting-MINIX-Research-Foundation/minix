@@ -1,0 +1,10 @@
+#	$NetBSD: files.sysvbfs,v 1.2 2014/10/11 06:42:19 uebayasi Exp $
+
+deffs	SYSVBFS
+
+define	sysvbfs: vfs
+file	fs/sysvbfs/bfs.c		sysvbfs
+file	fs/sysvbfs/bfs_sysvbfs.c	sysvbfs
+file	fs/sysvbfs/sysvbfs.c		sysvbfs
+file	fs/sysvbfs/sysvbfs_vnops.c	sysvbfs
+file	fs/sysvbfs/sysvbfs_vfsops.c	sysvbfs

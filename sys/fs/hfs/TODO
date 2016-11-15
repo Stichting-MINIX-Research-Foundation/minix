@@ -1,0 +1,53 @@
+[dillo]
+
+- add . and .. to dir listing
+- check _lookup locking (deleted PDIRUNLOCK)
+- unicode decomposition
+- make type/creator accessible
+- mount options: default uid/gid/mode
+- return correct error for device not ready (CD) (not Operation not Permitted)
+- use lookup cache
+- use pool for struct hfsnode
+- reduce use of malloc and memcpy
+- slim down libhfs
+  - replace cbargs with void *
+  - remove openvol callback
+  - remove HFS_LIBERR
+- union/nfs support
+- KNF
+- update copyright of apmlabel
+
+- scan APM when synthesizing disklabel
+
+Last revision: 2005-08-31
+
+
+There are HEAPS of limitations and deficiencies in this implementation. In fact,
+this code doesn't do a lot more than the very bare minimum needed to even be
+called an HFS+ filesystem. Some of the most notable features that need to be
+written or improved are, in approximate order of importance:
+
+- uid/gid remapping for non-superusers (possibly)
+- support for special nodes
+- MASSIVE performance and memory optimization, using lots of caching; this fs is
+  about as unoptimized as you can get
+- better error handling
+- usage of UBC and memory pools
+- handling of bad blocks
+- HFS wrapper support
+- NFS support
+- union mount support
+- check for broken functionality or security risks due to insufficient range
+  checking
+- regression tests
+- allow volume to be used as root filesystem
+- reformat the code to use 8-space tabs :-\
+
+
+This is, of course, in addition to the missing major features:
+
+- write support
+- journal support
+- fsck_hfs, newfs_hfs
+- vanilla HFS support
+- man pages and lots of other documentation
