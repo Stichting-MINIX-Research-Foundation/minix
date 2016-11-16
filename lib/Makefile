@@ -255,7 +255,7 @@ SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
 #SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
 .if (${MKRUMP} != "no")
-#SUBDIR+=	librump		# depends on librumpuser
+SUBDIR+=	librump		# depends on librumpuser
 .endif
 
 .if (${MKKERBEROS} != "no")

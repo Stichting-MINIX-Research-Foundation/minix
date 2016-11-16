@@ -2294,6 +2294,8 @@
 ./usr/lib/librefuse.a                                   minix-comp
 ./usr/lib/librefuse_pic.a                               minix-comp
 ./usr/lib/librmt.a                                      minix-comp
+./usr/lib/librump.a                                     minix-comp      rump
+./usr/lib/librump_pic.a                                 minix-comp      rump
 ./usr/lib/librumpfs_cd9660.a                            minix-comp      rump
 ./usr/lib/librumpfs_cd9660_pic.a                        minix-comp      rump
 ./usr/lib/librumpfs_efs.a                               minix-comp      rump

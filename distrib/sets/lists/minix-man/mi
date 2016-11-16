@@ -2713,6 +2713,8 @@
 ./usr/man/man3/roundl.3                                 minix-man
 ./usr/man/man3/rresvport.3                              minix-man
 ./usr/man/man3/rresvport_af.3                           minix-man
+./usr/man/man3/rump.3                                   minix-man       rump
+./usr/man/man3/rump_lwproc.3                            minix-man       rump
 ./usr/man/man3/ruserok.3                                minix-man
 ./usr/man/man3/saslc.d.3                                minix-man       crypto
 ./usr/man/man3/saslc_alloc.3                            minix-man       crypto
