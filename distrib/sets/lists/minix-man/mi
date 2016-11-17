@@ -2714,6 +2714,7 @@
 ./usr/man/man3/rresvport.3                              minix-man
 ./usr/man/man3/rresvport_af.3                           minix-man
 ./usr/man/man3/rump.3                                   minix-man       rump
+./usr/man/man3/rump_etfs.3                              minix-man       rump
 ./usr/man/man3/rump_lwproc.3                            minix-man       rump
 ./usr/man/man3/ruserok.3                                minix-man
 ./usr/man/man3/saslc.d.3                                minix-man       crypto
@@ -3261,6 +3262,7 @@
 ./usr/man/man4/mtio.4                                   minix-man
 ./usr/man/man4/ncr810.4                                 minix-man
 ./usr/man/man4/psip.4                                   minix-man
+./usr/man/man4/rumpfs.4                                 minix-man       rump
 ./usr/man/man4/tape.4                                   minix-man
 ./usr/man/man4/tty.4                                    minix-man
 ./usr/man/man4/udp.4                                    minix-man

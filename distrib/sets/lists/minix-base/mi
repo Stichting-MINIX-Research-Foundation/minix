@@ -872,6 +872,9 @@
 ./usr/lib/librump.so.0.0                                minix-base      rump
 ./usr/lib/librump.so.0                                  minix-base      rump
 ./usr/lib/librump.so                                    minix-base      rump
+./usr/lib/librumpdev.so.0.0                             minix-base      rump
+./usr/lib/librumpdev.so.0                               minix-base      rump
+./usr/lib/librumpdev.so                                 minix-base      rump
 ./usr/lib/librumpfs_cd9660.so.0.0                       minix-base      rump
 ./usr/lib/librumpfs_cd9660.so.0                         minix-base      rump
 ./usr/lib/librumpfs_cd9660.so                           minix-base      rump
@@ -953,6 +956,12 @@
 ./usr/lib/librumpkern_z.so.0.0                          minix-base      rump
 ./usr/lib/librumpkern_z.so.0                            minix-base      rump
 ./usr/lib/librumpkern_z.so                              minix-base      rump
+./usr/lib/librumpnet.so.0.0                             minix-base      rump
+./usr/lib/librumpnet.so.0                               minix-base      rump
+./usr/lib/librumpnet.so                                 minix-base      rump
+./usr/lib/librumpvfs.so.0.0                             minix-base      rump
+./usr/lib/librumpvfs.so.0                               minix-base      rump
+./usr/lib/librumpvfs.so                                 minix-base      rump
 ./usr/lib/librumpvfs_aio.so.0.0                         minix-base      rump
 ./usr/lib/librumpvfs_aio.so.0                           minix-base      rump
 ./usr/lib/librumpvfs_aio.so                             minix-base      rump

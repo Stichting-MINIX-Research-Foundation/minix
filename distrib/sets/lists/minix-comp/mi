@@ -2296,6 +2296,8 @@
 ./usr/lib/librmt.a                                      minix-comp
 ./usr/lib/librump.a                                     minix-comp      rump
 ./usr/lib/librump_pic.a                                 minix-comp      rump
+./usr/lib/librumpdev.a                                  minix-comp      rump
+./usr/lib/librumpdev_pic.a                              minix-comp      rump
 ./usr/lib/librumpfs_cd9660.a                            minix-comp      rump
 ./usr/lib/librumpfs_cd9660_pic.a                        minix-comp      rump
 ./usr/lib/librumpfs_efs.a                               minix-comp      rump
@@ -2350,12 +2352,16 @@
 ./usr/lib/librumpkern_tty_pic.a                         minix-comp      rump
 ./usr/lib/librumpkern_z.a                               minix-comp      rump
 ./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
+./usr/lib/librumpnet.a                                  minix-comp      rump
+./usr/lib/librumpnet_pic.a                              minix-comp      rump
+./usr/lib/librumpvfs.a                                  minix-comp      rump
 ./usr/lib/librumpvfs_aio.a                              minix-comp      rump
 ./usr/lib/librumpvfs_aio_pic.a                          minix-comp      rump
 ./usr/lib/librumpvfs_fifofs.a                           minix-comp      rump
 ./usr/lib/librumpvfs_fifofs_pic.a                       minix-comp      rump
 ./usr/lib/librumpvfs_layerfs.a                          minix-comp      rump
 ./usr/lib/librumpvfs_layerfs_pic.a                      minix-comp      rump
+./usr/lib/librumpvfs_pic.a                              minix-comp      rump
 ./usr/lib/libsffs.a                                     minix-comp
 ./usr/lib/libsffs_pic.a                                 minix-comp
 ./usr/lib/libsqlite3.a                                  minix-comp

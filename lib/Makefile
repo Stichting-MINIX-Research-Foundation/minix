@@ -288,9 +288,9 @@ SUBDIR+=        ../external/cddl/osnet/lib/libdtrace	# depends on libproc
 .endif
 
 .if (${MKRUMP} != "no")
-#SUBDIR+=	librumpdev	# depends on librump
-#SUBDIR+=	librumpnet	# depends on librump
-#SUBDIR+=	librumpvfs	# depends on librump
+SUBDIR+=	librumpdev	# depends on librump
+SUBDIR+=	librumpnet	# depends on librump
+SUBDIR+=	librumpvfs	# depends on librump
 .endif
 
 .if (${MKPAM} != "no")
