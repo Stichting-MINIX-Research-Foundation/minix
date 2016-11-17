@@ -959,6 +959,9 @@
 ./usr/lib/librumpnet.so.0.0                             minix-base      rump
 ./usr/lib/librumpnet.so.0                               minix-base      rump
 ./usr/lib/librumpnet.so                                 minix-base      rump
+./usr/lib/librumpuser.so.0.1                            minix-base      rump
+./usr/lib/librumpuser.so.0                              minix-base      rump
+./usr/lib/librumpuser.so                                minix-base      rump
 ./usr/lib/librumpvfs.so.0.0                             minix-base      rump
 ./usr/lib/librumpvfs.so.0                               minix-base      rump
 ./usr/lib/librumpvfs.so                                 minix-base      rump

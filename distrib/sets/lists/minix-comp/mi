@@ -1724,6 +1724,8 @@
 ./usr/include/rump/rumpkern_if_pub.h                    minix-comp      rump
 ./usr/include/rump/rumpnet_if_pub.h                     minix-comp      rump
 ./usr/include/rump/rumpuser.h                           minix-comp      rump
+./usr/include/rump/rumpuser_component.h                 minix-comp      rump
+./usr/include/rump/rumpuser_port.h                      minix-comp      rump
 ./usr/include/rump/rumpvfs_if_pub.h                     minix-comp      rump
 ./usr/include/rump/rumpvnode_if.h                       minix-comp      rump
 ./usr/include/saslc.h                                   minix-comp      crypto
@@ -2354,6 +2356,8 @@
 ./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
 ./usr/lib/librumpnet.a                                  minix-comp      rump
 ./usr/lib/librumpnet_pic.a                              minix-comp      rump
+./usr/lib/librumpuser.a                                 minix-comp      rump
+./usr/lib/librumpuser_pic.a                             minix-comp      rump
 ./usr/lib/librumpvfs.a                                  minix-comp      rump
 ./usr/lib/librumpvfs_aio.a                              minix-comp      rump
 ./usr/lib/librumpvfs_aio_pic.a                          minix-comp      rump
