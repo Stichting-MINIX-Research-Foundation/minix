@@ -1,0 +1,609 @@
+***
+*** Summary of changes between 2005-05-18 and 2005-11-01.
+***
+*** % setenv TZ UTC
+*** % cvs -d freebsdanoncvs@anoncvs.freebsd.org:/home/ncvs co src
+*** % cd src/sys/net80211/
+*** % cvs2cl --follow trunk --hide-filenames --no-indent --no-wrap \
+***      -f CHANGES -l '-d 2005-05-18<=2005-11-01'
+***
+
+2005-08-30 14:27  avatar
+
+Properly set ic_curchan before calling back to device driver to do channel
+switching(ifconfig devX channel Y).  This fix should make channel changing
+works again in monitor mode.
+
+Submitted by:	sam
+X-MFC-With:	other ic_curchan changes
+
+2005-08-13 17:50  sam
+
+revert 1.64: we cannot use the channel characteristics to decide when to
+do 11g erp sta accounting because b/g channels show up as false positives
+when operating in 11b.
+
+Noticed by:	Michal Mertl
+
+2005-08-13 17:31  sam
+
+Extend acl support to pass ioctl requests through and use this to
+add support for getting the current policy setting and collecting
+the list of mac addresses in the acl table.
+
+Submitted by:	Michal Mertl (original version)
+MFC after:	2 weeks
+
+2005-08-10 17:42  sam
+
+Don't use ic_curmode to decide when to do 11g station accounting,
+use the station channel properties.  Fixes assert failure/bogus
+operation when an ap is operating in 11a and has associated stations
+then switches to 11g.
+
+Noticed by:	Michal Mertl
+Reviewed by:	avatar
+MFC after:	2 weeks
+
+2005-08-10 16:22  sam
+
+Clarify/fix handling of the current channel:
+o add ic_curchan and use it uniformly for specifying the current
+  channel instead of overloading ic->ic_bss->ni_chan (or in some
+  drivers ic_ibss_chan)
+o add ieee80211_scanparams structure to encapsulate scanning-related
+  state captured for rx frames
+o move rx beacon+probe response frame handling into separate routines
+o change beacon+probe response handling to treat the scan table
+  more like a scan cache--look for an existing entry before adding
+  a new one; this combined with ic_curchan use corrects handling of
+  stations that were previously found at a different channel
+o move adhoc neighbor discovery by beacon+probe response frames to
+  a new ieee80211_add_neighbor routine
+
+Reviewed by:	avatar
+Tested by:	avatar, Michal Mertl
+MFC after:	2 weeks
+
+2005-08-09 10:19  rwatson
+
+Propagate rename of IFF_OACTIVE and IFF_RUNNING to IFF_DRV_OACTIVE and
+IFF_DRV_RUNNING, as well as the move from ifnet.if_flags to
+ifnet.if_drv_flags.  Device drivers are now responsible for
+synchronizing access to these flags, as they are in if_drv_flags.  This
+helps prevent races between the network stack and device driver in
+maintaining the interface flags field.
+
+Many __FreeBSD__ and __FreeBSD_version checks maintained and continued;
+some less so.
+
+Reviewed by:	pjd, bz
+MFC after:	7 days
+
+2005-08-08 18:46  sam
+
+Split crypto tx+rx key indices and add a key index -> node mapping table:
+
+Crypto changes:
+o change driver/net80211 key_alloc api to return tx+rx key indices; a
+  driver can leave the rx key index set to IEEE80211_KEYIX_NONE or set
+  it to be the same as the tx key index (the former disables use of
+  the key index in building the keyix->node mapping table and is the
+  default setup for naive drivers by null_key_alloc)
+o add cs_max_keyid to crypto state to specify the max h/w key index a
+  driver will return; this is used to allocate the key index mapping
+  table and to bounds check table loookups
+o while here introduce ieee80211_keyix (finally) for the type of a h/w
+  key index
+o change crypto notifiers for rx failures to pass the rx key index up
+  as appropriate (michael failure, replay, etc.)
+
+Node table changes:
+o optionally allocate a h/w key index to node mapping table for the
+  station table using the max key index setting supplied by drivers
+  (note the scan table does not get a map)
+o defer node table allocation to lateattach so the driver has a chance
+  to set the max key id to size the key index map
+o while here also defer the aid bitmap allocation
+o add new ieee80211_find_rxnode_withkey api to find a sta/node entry
+  on frame receive with an optional h/w key index to use in checking
+  mapping table; also updates the map if it does a hash lookup and the
+  found node has a rx key index set in the unicast key; note this work
+  is separated from the old ieee80211_find_rxnode call so drivers do
+  not need to be aware of the new mechanism
+o move some node table manipulation under the node table lock to close
+  a race on node delete
+o add ieee80211_node_delucastkey to do the dirty work of deleting
+  unicast key state for a node (deletes any key and handles key map
+  references)
+
+Ath driver:
+o nuke private sc_keyixmap mechansim in favor of net80211 support
+o update key alloc api
+
+These changes close several race conditions for the ath driver operating
+in ap mode.  Other drivers should see no change.  Station mode operation
+for ath no longer uses the key index map but performance tests show no
+noticeable change and this will be fixed when the scan table is eliminated
+with the new scanning support.
+
+Tested by:	Michal Mertl, avatar, others
+Reviewed by:	avatar, others
+MFC after:	2 weeks
+
+2005-08-08 05:49  sam
+
+use ieee80211_iterate_nodes to retrieve station data; the previous
+code walked the list w/o locking
+
+MFC after:	1 week
+
+2005-08-08 03:30  sam
+
+Cleanup beacon/listen interval handling:
+o separate configured beacon interval from listen interval; this
+  avoids potential use of one value for the other (e.g. setting
+  powersavesleep to 0 clobbers the beacon interval used in hostap
+  or ibss mode)
+o bounds check the beacon interval received in probe response and
+  beacon frames and drop frames with bogus settings; not clear
+  if we should instead clamp the value as any alteration would
+  result in mismatched sta+ap configuration and probably be more
+  confusing (don't want to log to the console but perhaps ok with
+  rate limiting)
+o while here up max beacon interval to reflect WiFi standard
+
+Noticed by:	Martin <nakal@nurfuerspam.de>
+MFC after:	1 week
+
+2005-08-06 04:57  sam
+
+fix debug msg typo
+
+MFC after:	3 days
+
+2005-08-06 04:56  sam
+
+Fix handling of frames sent prior to a station being authorized
+when operating in ap mode.  Previously we allocated a node from the
+station table, sent the frame (using the node), then released the
+reference that "held the frame in the table".  But while the frame
+was in flight the node might be reclaimed which could lead to
+problems.  The solution is to add an ieee80211_tmp_node routine
+that crafts a node that does exist in a table and so isn't ever
+reclaimed; it exists only so long as the associated frame is in flight.
+
+MFC after:	5 days
+
+2005-07-31 06:12  sam
+
+close a race between reclaiming a node when a station is inactive
+and sending the null data frame used to probe inactive stations
+
+MFC after:	5 days
+
+2005-07-27 04:41  sam
+
+when bridging internally bypass the bss node as traffic to it
+must follow the normal input path
+
+Submitted by:	Michal Mertl
+MFC after:	5 days
+
+2005-07-27 02:53  sam
+
+bandaid ni_fails handling so ap's with association failures are
+reconsidered after a bit; a proper fix involves more changes to
+the scanning infrastructure
+
+Reviewed by:	avatar, David Young
+MFC after:	5 days
+
+2005-07-23 00:16  sam
+
+the AREF flag is only meaningful in ap mode; adhoc neighbors now
+are timed out of the sta/neighbor table
+
+2005-07-22 23:25  sam
+
+o move inactivity-related debug msgs under IEEE80211_MSG_INACT
+o probe inactive neighbors in adhoc mode (they don't have an
+  association id so previously were being timed out)
+
+MFC after:	3 days
+
+2005-07-22 21:11  sam
+
+split xmit of probe request frame out into a separate routine that
+takes explicit parameters; this will be needed when scanning is
+decoupled from the state machine to do bg scanning
+
+MFC after:	3 days
+
+2005-07-22 20:48  sam
+
+split 802.11 frame xmit setup code into ieee80211_send_setup
+
+MFC after:	3 days
+
+2005-07-22 17:57  sam
+
+simplify ic_newassoc callback
+
+MFC after:	3 days
+
+2005-07-22 17:54  sam
+
+simplify ieee80211_ibss_merge api
+
+MFC after:	3 days
+
+2005-07-22 17:50  sam
+
+add stats we know we'll need soon and some spare fields for future expansion
+
+MFC after:	3 days
+
+2005-07-22 17:45  sam
+
+simplify tim callback api
+
+MFC after:	3 days
+
+2005-07-22 17:42  sam
+
+don't include 802.3 header in min frame length calculation as it may
+not be present for a frag; fixes problem with small (fragmented) frames
+being dropped
+
+Obtained from:	Atheros
+MFC after:	3 days
+
+2005-07-22 17:36  sam
+
+simplify ieee80211_node_authorize and ieee80211_node_unauthorize api's
+
+MFC after:	3 days
+
+2005-07-22 17:31  sam
+
+simplifiy ieee80211_send_nulldata api
+
+MFC after:	3 days
+
+2005-07-22 17:29  sam
+
+simplify rate set api's by removing ic parameter (implicit in node reference)
+
+MFC after:	3 days
+
+2005-07-22 17:21  sam
+
+reject association requests with a wpa/rsn ie when wpa/rsn is not
+configured on the ap; previously we either ignored the ie or (possibly)
+failed an assertion
+
+Obtained from:	Atheros
+MFC after:	3 days
+
+2005-07-22 17:16  sam
+
+missed one in last commit; add device name to discard msgs
+
+2005-07-22 17:13  sam
+
+include device name in discard msgs
+
+2005-07-22 17:12  sam
+
+add diag msgs for frames discarded because the direction field is wrong
+
+2005-07-22 17:08  sam
+
+split data frame delivery out to a new function ieee80211_deliver_data
+
+2005-07-22 17:00  sam
+
+o add IEEE80211_IOC_FRAGTHRESHOLD for getting+setting the
+  tx fragmentation threshold
+o fix bounds checking on IEEE80211_IOC_RTSTHRESHOLD
+
+MFC after:	3 days
+
+2005-07-22 16:55  sam
+
+o add IEEE80211_FRAG_DEFAULT
+o move default settings for RTS and frag thresholds to ieee80211_var.h
+
+2005-07-22 16:50  sam
+
+diff reduction against p4: define IEEE80211_FIXED_RATE_NONE and use
+it instead of -1
+
+2005-07-22 16:37  sam
+
+add flags missed in last merge
+
+2005-07-22 16:36  sam
+
+Diff reduction against p4:
+o add ic_flags_ext for eventual extention of ic_flags
+o define/reserve flag+capabilities bits for superg,
+  bg scan, and roaming support
+o refactor debug msg macros
+
+MFC after:	3 days
+
+2005-07-22 05:17  sam
+
+send a response when an auth request is denied due to an acl;
+might be better to silently ignore the frame but this way we
+give stations a chance of figuring out what's wrong
+
+2005-07-22 05:15  sam
+
+remove excess whitespace
+
+2005-07-22 04:55  sam
+
+use IF_HANDOFF when bridging frames internally so if_start gets
+called; fixes communication between associated sta's
+
+MFC after:	3 days
+
+2005-07-11 03:06  sam
+
+Handle encrypt of arbitarily fragmented mbuf chains: previously
+we bailed if we couldn't collect the 16-bytes of data required
+for an aes block cipher in 2 mbufs; now we deal with it.  While
+here make space accounting signed so a sanity check does the
+right thing for malformed mbuf chains.
+
+Approved by:	re (scottl)
+
+2005-07-11 03:00  sam
+
+nuke assert that duplicates real check
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-09 23:15  sam
+
+Change default key allocation method to do the right thing for
+legacy parts (i.e. those that have 4 global key slots).  We
+blindly assign unicast keys to key slot 0.  Devices that need
+alternate allocation logic must override this method.
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-08 22:49  sam
+
+correct check for high priority wme traffic
+
+Noticed by:	Ralf Assmann
+Reviewed by:	apatti
+Approved by:	re (scottl)
+
+2005-07-08 16:36  sam
+
+fix another instance of the MORE_DATA bit handling for frames on the
+power save queue (missed in previous commit)
+
+Submitted by:	Bruno Randolf
+Approved by:	re (scottl)
+
+2005-07-06 15:38  sam
+
+add "pureg" mode for ap operation: reject association requests from
+11b-only stations when operating in 11g
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-06 01:55  sam
+
+Fix handling of data frames queued for a station in power save mode:
+don't mark the MORE_DATA bit when taking it off the ps queue, there's
+no 802.11 header then; we must wait to do this at encap time so
+mark the mbuf instead.
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+Obtained from:	Atheros
+
+2005-07-06 01:51  sam
+
+Fix race condition in handling node reference counts for authenticating
+stations in ap mode.  Track when a node's first auth frame is
+received and use this to decide whether or not to bump the refcnt.
+This insures we only ever bump the refcnt once.
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-06 01:31  avatar
+
+Only update the scan entry state based on newly received frames.
+This fixes duplicative BSS entries(memory leaks as well) listed in
+"ifconfig dev list scan" when a station fails to associate with an AP.
+
+Reviewed by:	sam
+Approved by:	re (scottl)
+
+2005-07-05 18:05  sam
+
+remove auto-add of IEEE80211_KEY_GROUP; all the apps that need to
+set it have been fixed
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-05 17:35  sam
+
+o when setting a wpa key, hold a ref on the bss node;
+  fixes a ref cnt leak
+o make unicast key handling on delete identical to set
+o change legacy wep key api to reset the 802.11 state
+  machine for backwards compatibility
+
+Reviewed by:	avatar
+Approved by:	re (scottl)
+
+2005-07-04 01:29  sam
+
+when operating in ap mode, explicitly drop associated/authenticated
+stations when transitioning to INIT state (e.g. as a result of
+changing state at the 802.11 level)
+
+Approved by:	re (scottl)
+
+2005-06-13 21:01  sam
+
+revert 1.53; it breaks ibss merge
+
+Noticed by:	Bruno Randolf
+Approved by:	re (dwhite)
+
+2005-06-10 21:30  sam
+
+don't look at the wme ie in a beacon unless we negotiated use
+
+2005-06-10 16:49  brooks
+
+Stop embedding struct ifnet at the top of driver softcs. Instead the
+struct ifnet or the layer 2 common structure it was embedded in have
+been replaced with a struct ifnet pointer to be filled by a call to the
+new function, if_alloc(). The layer 2 common structure is also allocated
+via if_alloc() based on the interface type. It is hung off the new
+struct ifnet member, if_l2com.
+
+This change removes the size of these structures from the kernel ABI and
+will allow us to better manage them as interfaces come and go.
+
+Other changes of note:
+ - Struct arpcom is no longer referenced in normal interface code.
+   Instead the Ethernet address is accessed via the IFP2ENADDR() macro.
+   To enforce this ac_enaddr has been renamed to _ac_enaddr.
+ - The second argument to ether_ifattach is now always the mac address
+   from driver private storage rather than sometimes being ac_enaddr.
+
+Reviewed by:	sobomax, sam
+
+2005-06-10 16:14  sam
+
+validate the bssid for non-data frames too when operating in
+adhoc/ahdemo/hostap modes
+
+2005-06-10 16:11  sam
+
+o fix wpa w/ wme: don't strip the QoS header on recv as tkip requires
+  it; instead pass the space occupied by the header down into the
+  crypto modules (except in the demic case which needs it only when
+  doing int in s/w)
+o while here fix defrag to strip the header from 2nd and later frames
+o teach decap code how to handle 4-address frames
+
+2005-06-10 05:04  sam
+
+mark stations authorized during recv processing instead of doing it
+as a side effect of sending an auth success frame; sending mgmt
+frames should not have side effects
+
+2005-06-10 04:42  sam
+
+move AID implementation defines from the protocol definitions to
+where they are used
+
+2005-06-10 04:37  sam
+
+accept diassoc frame in ASSOC state
+
+2005-06-10 01:48  sam
+
+pull some debug msgs up so they're seen more often
+
+2005-06-10 01:47  sam
+
+kick the state machine when we receive failure notice from an ap (when
+operating in sta mode); this speeds up the state machine, previously
+we were acting on a timeout
+
+2005-06-10 01:43  sam
+
+discard open auth requests in adhoc mode
+
+2005-06-10 01:41  sam
+
+reject open auth requests when shared key auth is configured
+
+Obtained from:	Atheros
+
+2005-06-10 01:40  sam
+
+add ieee80211_send_error to encapsulate an idiom
+
+2005-06-10 01:38  sam
+
+o always check if ic_set_tim is !NULL before using it
+o add missing call to clear tim after flushing ps q
+
+2005-06-10 01:35  sam
+
+mark state for protection only when operating in 11g
+
+2005-06-10 01:33  sam
+
+don't reject station based on the PRIVACY bit in the capabilities;
+the 802.11 spec says not to
+
+Obtained from:	Atheros
+
+2005-06-10 01:31  sam
+
+correct checks for rate set compatibility
+
+2005-06-10 01:29  sam
+
+record tstamp from beacons received in station mode when associated;
+this is needed by drivers that want to resync their timers based on
+the tsf of the last recv'd beacon frame
+
+2005-06-09 04:05  sam
+
+o collect dtim period+count from beacons in station mode so drivers
+  can better program beacon timers
+o leave placeholder in com structure for future ap/adhoc mode tim support
+
+Reviewed by:	avatar
+
+2005-06-07 23:37  sam
+
+Change the MLME ASSOCIATE ioctl to accept either a ssid, a bssid,
+or a bssid+ssid. This is needed for later versions of wpa_supplicant
+and for forthcoming addons to wpa_supplicant.
+
+Note this is an api change and applications must be rebuilt.
+
+2005-06-07 23:31  sam
+
+Don't clock the state machine in various cases when roaming is set
+to manual; this helps keep wpa_supplicant in sync.
+
+2005-06-07 00:08  sam
+
+WPA/802.11i interoperability fixes:
+o only include capabilities word in the WPA ie when non-zero and
+  not preauth
+o always include the capabilities in the RSN ie
+
+Obtained from:	Atheros
+
+2005-06-06 04:04  sam
+
+add force flag to enmic/demic crypto api for use in xmit fragmentation
+and h/w mic verification
+
+Reviewed by:	avatar
+

@@ -1499,6 +1499,12 @@
 ./usr/include/net80211/ieee80211_crypto.h               minix-comp
 ./usr/include/net80211/ieee80211_ioctl.h                minix-comp
 ./usr/include/net80211/ieee80211_netbsd.h               minix-comp
+./usr/include/net80211/ieee80211_node.h                 minix-comp      rump
+./usr/include/net80211/ieee80211_proto.h                minix-comp      rump
+./usr/include/net80211/ieee80211_radiotap.h             minix-comp      rump
+./usr/include/net80211/ieee80211_rssadapt.h             minix-comp      rump
+./usr/include/net80211/ieee80211_sysctl.h               minix-comp      rump
+./usr/include/net80211/ieee80211_var.h                  minix-comp      rump
 ./usr/include/netatalk                                  minix-comp
 ./usr/include/netatalk/aarp.h                           minix-comp      rump
 ./usr/include/netatalk/at.h                             minix-comp
@@ -2355,7 +2361,33 @@
 ./usr/lib/librumpkern_z.a                               minix-comp      rump
 ./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
 ./usr/lib/librumpnet.a                                  minix-comp      rump
+./usr/lib/librumpnet_agr.a                              minix-comp      rump
+./usr/lib/librumpnet_agr_pic.a                          minix-comp      rump
+./usr/lib/librumpnet_bridge.a                           minix-comp      rump
+./usr/lib/librumpnet_bridge_pic.a                       minix-comp      rump
+./usr/lib/librumpnet_local.a                            minix-comp      rump
+./usr/lib/librumpnet_local_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_net.a                              minix-comp      rump
+./usr/lib/librumpnet_net80211.a                         minix-comp      rump
+./usr/lib/librumpnet_net80211_pic.a                     minix-comp      rump
+./usr/lib/librumpnet_net_pic.a                          minix-comp      rump
+./usr/lib/librumpnet_netbt.a                            minix-comp      rump
+./usr/lib/librumpnet_netbt_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_netinet.a                          minix-comp      rump
+./usr/lib/librumpnet_netinet6.a                         minix-comp      rump
+./usr/lib/librumpnet_netinet6_pic.a                     minix-comp      rump
+./usr/lib/librumpnet_netinet_pic.a                      minix-comp      rump
+./usr/lib/librumpnet_netmpls.a                          minix-comp      rump
+./usr/lib/librumpnet_netmpls_pic.a                      minix-comp      rump
+./usr/lib/librumpnet_npf.a                              minix-comp      rump
+./usr/lib/librumpnet_npf_pic.a                          minix-comp      rump
 ./usr/lib/librumpnet_pic.a                              minix-comp      rump
+./usr/lib/librumpnet_shmif.a                            minix-comp      rump
+./usr/lib/librumpnet_shmif_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_sockin.a                           minix-comp      rump
+./usr/lib/librumpnet_sockin_pic.a                       minix-comp      rump
+./usr/lib/librumpnet_tap.a                              minix-comp      rump
+./usr/lib/librumpnet_tap_pic.a                          minix-comp      rump
 ./usr/lib/librumpuser.a                                 minix-comp      rump
 ./usr/lib/librumpuser_pic.a                             minix-comp      rump
 ./usr/lib/librumpvfs.a                                  minix-comp      rump

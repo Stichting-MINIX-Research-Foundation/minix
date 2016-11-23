@@ -236,6 +236,10 @@ static void	sysctl_net_inet_carp_setup(struct sysctllog **);
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
 
+#if defined(__minix)
+void carpattach(int);
+#endif
+
 static __inline u_int16_t
 carp_cksum(struct mbuf *m, int len)
 {

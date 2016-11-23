@@ -234,6 +234,10 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
+#if defined(__minix)
+void tapattach(int);
+#endif
+
 void
 tapattach(int n)
 {

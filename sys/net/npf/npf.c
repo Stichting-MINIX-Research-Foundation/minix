@@ -88,6 +88,10 @@ const struct cdevsw npf_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
+#if defined(__minix)
+void npfattach(int nunits);
+#endif
+
 static int
 npf_init(void)
 {

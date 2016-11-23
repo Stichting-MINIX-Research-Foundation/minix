@@ -110,6 +110,10 @@ extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
 	mpls_forwarding, mpls_frame_accept, mpls_mapprec_inet, mpls_mapclass_inet6,
 	mpls_rfc4182;
 
+#if defined(__minix)
+void ifmplsattach(int);
+#endif
+
 /* ARGSUSED */
 void
 ifmplsattach(int count)

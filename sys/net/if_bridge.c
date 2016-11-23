@@ -366,6 +366,10 @@ static kmutex_t bridge_list_lock;
 static struct if_clone bridge_cloner =
     IF_CLONE_INITIALIZER("bridge", bridge_clone_create, bridge_clone_destroy);
 
+#if defined(__minix)
+void bridgeattach(int);
+#endif
+
 /*
  * bridgeattach:
  *

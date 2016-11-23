@@ -96,6 +96,10 @@ static void agr_ports_exit(struct agr_softc *);
 static struct if_clone agr_cloner =
     IF_CLONE_INITIALIZER("agr", agr_clone_create, agr_clone_destroy);
 
+#if defined(__minix)
+void agrattach(int);
+#endif
+
 /*
  * EXPORTED FUNCTIONS
  */
