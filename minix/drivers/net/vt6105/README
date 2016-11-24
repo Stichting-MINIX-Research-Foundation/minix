@@ -3,10 +3,11 @@ The vt6105 driver is for VIA Technology 6105/6106S Ethernet card.
 This driver is referred to Minix(3.4.0) rtl8169 driver,
 Linux(4.2.1) via-rhine driver and VT6105 Rhine III Specification(Rev 1.2).
 
-The supported PCI number is 1106:3106:1186:1403.
-Maybe other PCI numbers for VIA Rhine III can be supported.
-
 Revision 1.0 2016/10/18
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
+Revision 1.1 2016/11/12
+Modification: Remove and rewrite Linux-derived code
 Authored by Jia-Ju Bai <baijiaju1990@163.com>
 
 Something can be improved:
