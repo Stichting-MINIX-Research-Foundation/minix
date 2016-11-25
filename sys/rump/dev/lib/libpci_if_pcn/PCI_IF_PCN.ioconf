@@ -1,0 +1,11 @@
+#	$NetBSD: PCI_IF_PCN.ioconf,v 1.1 2014/08/13 15:01:32 pooka Exp $
+#
+
+ioconf pci_if_pcn
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+pcn*     at pci? dev ? function ?

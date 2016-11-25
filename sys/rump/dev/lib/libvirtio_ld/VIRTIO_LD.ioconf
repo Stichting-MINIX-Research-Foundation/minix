@@ -1,0 +1,12 @@
+#	$NetBSD: VIRTIO_LD.ioconf,v 1.1 2014/08/22 09:57:05 pooka Exp $
+#
+
+ioconf virtio_ld
+
+include "conf/files"
+include "dev/pci/files.pci"
+include "rump/dev/files.rump"
+
+pseudo-root virtio*
+
+ld*     at virtio?                      # Virtio disk device

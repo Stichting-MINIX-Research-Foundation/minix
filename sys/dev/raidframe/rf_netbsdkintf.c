@@ -322,6 +322,10 @@ int rf_have_enough_components(RF_ConfigSet_t *);
 struct raid_softc *rf_auto_config_set(RF_ConfigSet_t *);
 static void rf_fix_old_label_size(RF_ComponentLabel_t *, uint64_t);
 
+#if defined(__minix)
+void raidattach(int);
+#endif
+
 /*
  * Debugging, mostly.  Set to 0 to not allow autoconfig to take place.
  * Note that this is overridden by having RAID_AUTOCONFIG as an option

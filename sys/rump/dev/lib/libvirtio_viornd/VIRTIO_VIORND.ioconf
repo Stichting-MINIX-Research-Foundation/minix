@@ -1,0 +1,12 @@
+#	$NetBSD: VIRTIO_VIORND.ioconf,v 1.1 2014/11/06 00:45:58 pooka Exp $
+#
+
+ioconf virtio_viornd
+
+include "conf/files"
+include "dev/pci/files.pci"
+include "rump/dev/files.rump"
+
+pseudo-root virtio*
+
+viornd* at virtio?			# Virtio entropy device

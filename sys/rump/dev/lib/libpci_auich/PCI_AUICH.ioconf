@@ -1,0 +1,11 @@
+#	$NetBSD: PCI_AUICH.ioconf,v 1.1 2015/06/03 14:06:19 pooka Exp $
+#
+
+ioconf pci_auich
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+auich* at pci?

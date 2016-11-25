@@ -323,7 +323,7 @@ SUBDIR+=	../crypto/external/cpl/tpm-tools/lib	# depends on trousers
 .endif
 
 .if !defined(BSD_MK_COMPAT_FILE)
-#SUBDIR+=	../sys/rump/dev/lib
+SUBDIR+=	../sys/rump/dev/lib
 SUBDIR+=	../sys/rump/fs/lib
 SUBDIR+=	../sys/rump/kern/lib
 SUBDIR+=	../sys/rump/net/lib

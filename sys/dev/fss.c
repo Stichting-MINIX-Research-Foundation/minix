@@ -132,6 +132,10 @@ CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
     fss_match, fss_attach, fss_detach, NULL);
 extern struct cfdriver fss_cd;
 
+#if defined(__minix)
+void fssattach(int);
+#endif
+
 void
 fssattach(int num)
 {

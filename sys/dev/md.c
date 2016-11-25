@@ -139,6 +139,10 @@ extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
 	0, md_attach, md_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
+#if defined(__minix)
+void mdattach(int);
+#endif
+
 static kmutex_t md_device_lock;		/* Protect unit creation / deletion. */
 extern size_t md_root_size;
 

@@ -108,6 +108,10 @@ static const struct fileops drvctl_fileops = {
 static int drvctl_command(struct lwp *, struct plistref *, u_long, int);
 static int drvctl_getevent(struct lwp *, struct plistref *, u_long, int);
 
+#if defined(__minix)
+void drvctlattach(int);
+#endif
+
 void
 drvctl_init(void)
 {

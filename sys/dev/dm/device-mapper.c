@@ -111,6 +111,10 @@ CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
 
+#if defined(__minix)
+void dmattach(int);
+#endif
+
 extern struct cfdriver dm_cd;
 
 extern uint32_t dm_dev_counter;

@@ -3,7 +3,7 @@
 
 SUBDIR= 	include
 SUBDIR+=	librump
-SUBDIR+=	fs kern net
+SUBDIR+=	dev fs kern net
 #SUBDIR+=	share
 
 .include <bsd.subdir.mk>

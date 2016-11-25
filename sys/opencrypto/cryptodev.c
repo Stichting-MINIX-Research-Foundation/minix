@@ -197,6 +197,10 @@ static int	cryptodev_getstatus(struct fcrypt *, struct crypt_result *);
 extern int	ocryptof_ioctl(struct file *, u_long, void *);
 #endif
 
+#if defined(__minix)
+void cryptoattach(int);
+#endif
+
 /*
  * sysctl-able control variables for /dev/crypto now defined in crypto.c:
  * crypto_usercrypto, crypto_userasmcrypto, crypto_devallowsoft.

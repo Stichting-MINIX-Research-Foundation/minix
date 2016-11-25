@@ -1,0 +1,41 @@
+#	$NetBSD: MIIPHY.ioconf,v 1.1 2014/04/04 14:18:19 pooka Exp $
+#
+
+ioconf phy
+
+include "conf/files"
+
+pseudo-root mii*
+
+acphy*  at mii? phy ?                   # Altima AC101 and AMD Am79c874 PHYs
+amhphy* at mii? phy ?                   # AMD 79c901 Ethernet PHYs
+atphy*  at mii? phy ?                   # Attansic/Atheros PHYs
+bmtphy* at mii? phy ?                   # Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?                   # Broadcom BCM5400-family PHYs
+ciphy*  at mii? phy ?                   # Cicada CS8201 Gig-E PHYs
+dmphy*  at mii? phy ?                   # Davicom DM9101 PHYs
+etphy*  at mii? phy ?                   # Agere/LSI ET1011 TruePHY Gig-E PHYs
+exphy*  at mii? phy ?                   # 3Com internal PHYs
+gentbi* at mii? phy ?                   # Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy* at mii? phy ?                  # Level One LXT-1000 PHYs
+gphyter* at mii? phy ?                  # NS83861 Gig-E PHY
+icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS189x
+igphy*  at mii? phy ?                   # Intel IGP01E1000
+ihphy*  at mii? phy ?                   # Intel 82577 PHYs
+ikphy*  at mii? phy ?                   # Intel 82563 PHYs
+inphy*  at mii? phy ?                   # Intel 82555 PHYs
+iophy*  at mii? phy ?                   # Intel 82553 PHYs
+lxtphy* at mii? phy ?                   # Level One LXT-970 PHYs
+makphy* at mii? phy ?                   # Marvell Semiconductor 88E1000 PHYs
+nsphy*  at mii? phy ?                   # NS83840 PHYs
+nsphyter* at mii? phy ?                 # NS83843 PHYs
+pnaphy* at mii? phy ?                   # generic HomePNA PHYs
+qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
+rdcphy* at mii? phy ?                   # RDC R6040 10/100 PHY
+rgephy* at mii? phy ?                   # Realtek 8169S/8110S internal PHYs
+rlphy*  at mii? phy ?                   # Realtek 8139/8201L PHYs
+sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
+tlphy*  at mii? phy ?                   # ThunderLAN PHYs
+tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs

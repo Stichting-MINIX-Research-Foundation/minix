@@ -230,6 +230,10 @@ CFATTACH_DECL3_NEW(vnd, sizeof(struct vnd_softc),
     vnd_match, vnd_attach, vnd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 extern struct cfdriver vnd_cd;
 
+#if defined(__minix)
+void vndattach(int);
+#endif
+
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);
 

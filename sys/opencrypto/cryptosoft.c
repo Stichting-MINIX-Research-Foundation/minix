@@ -77,6 +77,10 @@ static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
 
+#if defined(__minix)
+void swcryptoattach(int);
+#endif
+
 /*
  * Apply a symmetric encryption/decryption algorithm.
  */

@@ -130,6 +130,10 @@ CFATTACH_DECL3_NEW(cgd, sizeof(struct cgd_softc),
     cgd_match, cgd_attach, cgd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 extern struct cfdriver cgd_cd;
 
+#if defined(__minix)
+void cgdattach(int);
+#endif
+
 /* DIAGNOSTIC and DEBUG definitions */
 
 #if defined(CGDDEBUG) && !defined(DEBUG)

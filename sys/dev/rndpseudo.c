@@ -151,6 +151,10 @@ static struct evcnt rndpseudo_hard = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 EVCNT_ATTACH_STATIC(rndpseudo_soft);
 EVCNT_ATTACH_STATIC(rndpseudo_hard);
 
+#if defined(__minix)
+void rndattach(int);
+#endif
+
 /*
  * Generate a 32-bit counter.
  */

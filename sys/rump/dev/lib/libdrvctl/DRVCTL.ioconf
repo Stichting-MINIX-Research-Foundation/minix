@@ -1,0 +1,8 @@
+#	$NetBSD: DRVCTL.ioconf,v 1.1 2010/12/07 21:38:07 pooka Exp $
+#
+
+ioconf drvctl
+
+include "conf/files"
+
+pseudo-device drvctl

@@ -104,6 +104,10 @@ const struct cdevsw nsmb_cdevsw = {
 
 static bool nsmb_inited = false;
 
+#if defined(__minix)
+void nsmbattach(int);
+#endif
+
 void
 nsmbattach(int num)
 {
