@@ -46,6 +46,7 @@
 ./bin/readclock                                         minix-base
 ./bin/rm                                                minix-base
 ./bin/rmdir                                             minix-base
+./bin/rump.dd                                           minix-base      rump
 ./bin/service                                           minix-base
 ./bin/setup                                             minix-base
 ./bin/sh                                                minix-base
@@ -195,6 +196,8 @@
 ./sbin/ping                                             minix-base
 ./sbin/poweroff                                         minix-base
 ./sbin/reboot                                           minix-base
+./sbin/rump.ping                                        minix-base      rump
+./sbin/rump.sysctl                                      minix-base      rump
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base
 ./service                                               minix-base
@@ -1212,6 +1215,7 @@
 ./usr/sbin/postinstall                                  minix-base
 ./usr/sbin/pwd_mkdb                                     minix-base
 ./usr/sbin/rdate                                        minix-base
+./usr/sbin/rump.traceroute                              minix-base      rump
 ./usr/sbin/syslogd                                      minix-base
 ./usr/sbin/traceroute                                   minix-base
 ./usr/sbin/unlink                                       minix-base

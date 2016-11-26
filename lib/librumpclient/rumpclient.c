@@ -73,10 +73,19 @@ __RCSID("$NetBSD: rumpclient.c,v 1.65 2015/01/17 19:34:50 justin Exp $");
 #if defined(__minix)
 #define _MTHREADIFY_PTHREADS
 #include <minix/mthread.h>
+/* XXX: This is a really, really bad idea. */
+#include <signal.h>
+#undef pthread_sigmask
+#define pthread_sigmask sigprocmask
+int __libc_thr_sigsetmask_stub(int h, const sigset_t *s, sigset_t *o);
+int __libc_thr_sigsetmask_stub(int h, const sigset_t *s, sigset_t *o)
+{
+	return sigprocmask(h, s, o);
+}
 #else
 #include <pthread.h>
-#endif
 #include <signal.h>
+#endif
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>

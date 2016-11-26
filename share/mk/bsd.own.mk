@@ -19,6 +19,7 @@ BINMODE?=	755
 NONBINMODE?=	644
 MANDIR?=	/usr/man
 BINGRP?=	operator
+RUMPBINGRP?=	operator
 MANGRP?=	operator
 INFOGRP?=	operator
 DOCGRP?=	operator
