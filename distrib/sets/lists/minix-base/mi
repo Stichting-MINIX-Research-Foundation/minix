@@ -872,6 +872,9 @@
 ./usr/lib/librump.so.0.0                                minix-base      rump
 ./usr/lib/librump.so.0                                  minix-base      rump
 ./usr/lib/librump.so                                    minix-base      rump
+./usr/lib/librumpclient.so.0.0                          minix-base      rump
+./usr/lib/librumpclient.so.0                            minix-base      rump
+./usr/lib/librumpclient.so                              minix-base      rump
 ./usr/lib/librumpdev.so.0.0                             minix-base      rump
 ./usr/lib/librumpdev.so.0                               minix-base      rump
 ./usr/lib/librumpdev.so                                 minix-base      rump

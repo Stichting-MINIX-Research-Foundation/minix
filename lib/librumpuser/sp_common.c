@@ -48,7 +48,12 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <poll.h>
+#if defined(__minix)
+#define _MTHREADIFY_PTHREADS
+#include <minix/mthread.h>
+#else
 #include <pthread.h>
+#endif
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>

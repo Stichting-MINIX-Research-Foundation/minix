@@ -99,7 +99,7 @@ SUBDIR+=	libc_vfp
 .endif
 .endif
 .if (${MKRUMP} != "no")
-#SUBDIR+=	librumpclient
+SUBDIR+=	librumpclient
 .endif
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey

@@ -1,0 +1,204 @@
+.\"     $NetBSD: rumpclient.3,v 1.3 2013/03/08 08:30:44 wiz Exp $
+.\"
+.\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd February 16, 2011
+.Dt RUMPCLIENT 3
+.Os
+.Sh NAME
+.Nm rumpclient
+.Nd rump client library
+.Sh LIBRARY
+.Lb rumpclient
+.Sh SYNOPSIS
+.In rump/rumpclient.h
+.In rump/rump_syscalls.h
+.Ft int
+.Fn rumpclient_init
+.Ft pid_t
+.Fn rumpclient_fork
+.Ft pid_t
+.Fn rumpclient_vfork
+.Ft struct rumpclient_fork *
+.Fn rumpclient_prefork
+.Ft int
+.Fn rumpclient_fork_init "struct rumpclient_fork *rfp"
+.Ft void
+.Fn rumpclient_fork_cancel "struct rumpclient_fork *rfp"
+.Ft int
+.Fn rumpclient_exec "const char *path" "char *const argv[]" "char *const envp[]"
+.Ft int
+.Fn rumpclient_daemon "int nochdir" "int noclose"
+.Ft void
+.Fn rumpclient_setconnretry "time_t retrytime"
+.Ft int
+.Fo rumpclient_syscall
+.Fa "int num" "const void *sysarg" "size_t argsize" "register_t *retval"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is the clientside implementation of the
+.Xr rump_sp 7
+facility.
+It can be used to connect to a rump kernel server and make system call
+style requests.
+.Pp
+Every connection to a rump kernel server creates a new process
+context in the rump kernel.
+By default a process is inherited from init, but through existing
+connections and the forking facility offered by
+.Nm
+it is possible to form process trees.
+.Bl -tag -width xxxx
+.It Fn rumpclient_init
+Initialize
+.Nm .
+The server address is determined from the environment variable
+.Ev RUMP_SERVER
+according to syntax described in
+.Xr rump_sp 7 .
+The new process is registered to the rump kernel with the command
+name from
+.Xr getprogname 3 .
+.It Fn rumpclient_fork
+Fork a rump client process.
+This also causes a host process fork via
+.Xr fork 2 .
+The child will have a copy of the parent's rump kernel file descriptors.
+.It Fn rumpclient_vfork
+Like above, but the host uses
+.Xr vfork 2 .
+.It Fn rumpclient_prefork
+Low-level routine which instructs the rump kernel that the current
+process is planning to fork.
+The routine returns a
+.Pf non- Dv NULL
+cookie if successful.
+.It Fn rumpclient_fork_init rfp
+Low-level routine which works like
+.Fn rumpclient_init ,
+with the exception that it uses the
+.Ar rfp
+context created by a call to
+.Fn rumpclient_prefork .
+This is typically called from the child of a
+.Xr fork 2
+call.
+.It Fn rumpclient_fork_cancel rfp
+Cancel previously initiated prefork context.
+This is useful for error handling in case a full fork could not
+be carried through.
+.It Fn rumpclient_exec path argv envp
+This call is a
+.Nm
+wrapper around
+.Xr execve 2 .
+The wrapper makes sure that the rump kernel process context stays
+the same in the newly executed program.
+This means that the rump kernel PID remains the same and the same
+rump file descriptors are available (apart from ones which
+were marked with
+.Dv FD_CLOEXEC ) .
+.Pp
+It should be noted that the newly executed program must call
+.Fn rumpclient_init
+before any other rump kernel communication can take place.
+The wrapper cannot do it because it no longer has program control.
+However, since all rump clients call the init routine,
+this should not be a problem.
+.It Fn rumpclient_daemon noclose nochdir
+This function performs the equivalent of
+.Xr daemon 3 ,
+but also ensures that the internal call to
+.Xr fork 2
+is handled properly.
+This routine is provided for convenience.
+.It Fn rumpclient_setconnretry retrytime
+Set the timeout for how long the client attempts to reconnect to
+the server in case of a broken connection.
+After the timeout expires the client will return a failure
+for that particular request.
+It is critical to note that after a restablished connection the
+rump kernel context will be that of a newly connected client.
+This means all previous kernel state such as file descriptors
+will be lost.
+It is largely up to a particular application if this has impact
+or not.
+For example, web browsers tend to recover fairly smoothly from a
+kernel server reconnect, while
+.Xr sshd 8
+gets confused if its sockets go missing.
+.Pp
+If
+.Ar retrytime
+is a positive integer, it means the number of seconds for which
+reconnection will be attempted.
+The value 0 means that reconnection will not be attempted, and all
+subsequent operations will return the errno
+.Er ENOTCONN .
+.Pp
+Additionally, the following special values are accepted:
+.Bl -tag -width xxxx
+.It Dv RUMPCLIENT_RETRYCONN_INFTIME
+Attempt reconnection indefinitely.
+.It Dv RUMPCLIENT_RETRYCONN_ONCE
+Attempt reconnect exactly once.
+What this precisely means depends on the situation: e.g. getting
+.Er EHOSTUNREACH
+immediately or the TCP connection request timeouting are considered
+to be one retry.
+.It Dv RUMPCLIENT_RETRYCONN_DIE
+In case of a broken connection is detected at runtime, call
+.Xr exit 3 .
+This is useful for example in testing.
+It ensures that clients are killed immediately when they attempt
+to communicate with a halted server.
+.El
+.It Fn rumpclient_syscall num sysarg argsize retval
+Execute an "indirect" system call.
+In the normal case system calls are executed through the interfaces in
+.In rump/rump_syscalls.h
+(for example
+.Fn rump_sys_read fd buf nbytes ) .
+This interface allows calling the server with pre-marshalled arguments.
+.El
+.Pp
+Additionally, all of the supported rump system calls are available
+through this library.
+See
+.In rump/rump_syscalls.h
+for a list.
+.Sh RETURN VALUES
+.Nm
+routines return \-1 in case of error and set errno.
+In case of success a non-negative integer is returned, where applicable.
+.Sh SEE ALSO
+.Xr rump_server 1 ,
+.Xr rump 3 ,
+.Xr rump_sp 7
+.Sh CAVEATS
+Interfaces for a cryptographically authenticated client-server
+handshake do not currently exist.
+This can be worked around with e.g. host access control and an ssh
+tunnel.

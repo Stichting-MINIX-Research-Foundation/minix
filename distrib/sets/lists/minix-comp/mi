@@ -1724,6 +1724,7 @@
 ./usr/include/rump/rump_namei.h                         minix-comp      rump
 ./usr/include/rump/rump_syscalls.h                      minix-comp      rump
 ./usr/include/rump/rump_syscalls_compat.h               minix-comp      rump
+./usr/include/rump/rumpclient.h                         minix-comp      rump
 ./usr/include/rump/rumpdefs.h                           minix-comp      rump
 ./usr/include/rump/rumperr.h                            minix-comp      rump
 ./usr/include/rump/rumperrno2host.h                     minix-comp      rump
@@ -2304,6 +2305,8 @@
 ./usr/lib/librmt.a                                      minix-comp
 ./usr/lib/librump.a                                     minix-comp      rump
 ./usr/lib/librump_pic.a                                 minix-comp      rump
+./usr/lib/librumpclient.a                               minix-comp      rump
+./usr/lib/librumpclient_pic.a                           minix-comp      rump
 ./usr/lib/librumpdev.a                                  minix-comp      rump
 ./usr/lib/librumpdev_audio.a                            minix-comp      rump
 ./usr/lib/librumpdev_audio_pic.a                        minix-comp      rump
