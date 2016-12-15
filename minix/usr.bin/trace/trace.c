@@ -8,6 +8,7 @@
 #include <err.h>
 
 /* Global variables, used only for a subset of the command line options. */
+int timestamps;		 /* 0 = none, 1 = time w/o usecs, 2 = time w/usecs */
 int allnames;		 /* FALSE = structure field names, TRUE = all names */
 unsigned int valuesonly; /* 0 = normal, 1 = no symbols, 2 = no structures */
 unsigned int verbose;	 /* 0 = essentials, 1 = elaborate, 2 = everything */
@@ -444,7 +445,7 @@ static void __dead
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-fgNsVv] [-o file] [-p pid] "
+	(void)fprintf(stderr, "usage: %s [-fgNstVv] [-o file] [-p pid] "
 	    "[command]\n", getprogname());
 
 	exit(EXIT_FAILURE);
@@ -471,11 +472,12 @@ main(int argc, char * argv[])
 	grouping = FALSE;
 	output_file = NULL;
 
+	timestamps = 0;
 	allnames = FALSE;
 	verbose = 0;
 	valuesonly = 0;
 
-	while ((c = getopt(argc, argv, "fgNsVvo:p:")) != -1) {
+	while ((c = getopt(argc, argv, "fgNstVvo:p:")) != -1) {
 		switch (c) {
 		case 'f':
 			follow_fork = TRUE;
@@ -488,6 +490,9 @@ main(int argc, char * argv[])
 			break;
 		case 's':
 			show_stack = TRUE;
+			break;
+		case 't':
+			timestamps++;
 			break;
 		case 'V':
 			valuesonly++;

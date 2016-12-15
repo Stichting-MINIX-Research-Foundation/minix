@@ -165,15 +165,18 @@ output_flush(void)
 }
 
 /*
- * Print a PID prefix for the given process, or an info prefix if no process
- * (NULL) is given.  Prefixes are only relevant when multiple processes are
- * traced.  As long as there are multiple processes, each line is prefixed with
- * the PID of the process.  As soon as the number of processes has been reduced
- * back to one, one more line is prefixed with the PID of the remaining process
- * (with a "'" instead of a "|") to help the user identify which process is
- * left.  In addition, whenever a preempted call is about to be resumed, a "*"
- * is printed instead of a space, so as to show that it is a continuation of a
- * previous line.  An example of all these cases:
+ * Print a prefix for a line of output.  Possibly print a timestamp first.
+ * Then, if applicable, print a PID prefix for the given process, or an info
+ * prefix if no process (NULL) is given.
+ *
+ * PIDs are relevant only when multiple processes are traced.  As long as there
+ * are multiple processes, each line is prefixed with the PID of the process.
+ * As soon as the number of processes has been reduced back to one, one more
+ * line is prefixed with the PID of the remaining process (with a "'" instead
+ * of a "|") to help the user identify which process remains.  In addition,
+ * whenever a preempted call is about to be resumed, a "*" is printed instead
+ * of a space, so as to show that it is a continuation of a previous line.  An
+ * example of all these cases:
  *
  *   fork() = 3
  *       3| Tracing test (pid 3)
@@ -191,10 +194,32 @@ output_flush(void)
 static void
 put_prefix(struct trace_proc * proc, int resuming)
 {
+	struct timeval tv;
+	struct tm *tm;
 	char prefix[32];
-	unsigned int count;
+	unsigned int off, count;
 
 	assert(line_off == 0);
+
+	off = 0;
+
+	if (timestamps > 0) {
+		gettimeofday(&tv, NULL);
+
+		tm = gmtime(&tv.tv_sec);
+
+		off = strftime(prefix, sizeof(prefix), "%T", tm);
+
+		if (timestamps > 1)
+			off += snprintf(&prefix[off], sizeof(prefix) - off,
+			    ".%06u", tv.tv_usec);
+
+		assert(off < sizeof(prefix) - 2);
+		prefix[off++] = ' ';
+		prefix[off] = '\0';
+
+		off = output_write(prefix);
+	}
 
 	count = proc_count();
 
@@ -212,14 +237,14 @@ put_prefix(struct trace_proc * proc, int resuming)
 			    proc->pid, (count > 1) ? '|' : '\'',
 			    resuming ? '*' : ' ');
 
-		prefix_off = line_off = output_write(prefix);
+		off += output_write(prefix);
 
 		last_pid = (proc != NULL ? proc->pid : 0);
-	} else {
+	} else
 		assert(!resuming);
 
-		prefix_off = 0;
-	}
+	prefix_off = off;
+	line_off += off;
 
 	/* Remember whether the next line should get prefixed regardless. */
 	print_pid = (count > 1 || proc == NULL);
