@@ -8,6 +8,7 @@ SUBDIR+=	dp8390
 SUBDIR+=	dpeth
 SUBDIR+=	e1000
 SUBDIR+=	fxp
+SUBDIR+=	ip1000
 SUBDIR+=	lance
 SUBDIR+=	rtl8139
 SUBDIR+=	rtl8169

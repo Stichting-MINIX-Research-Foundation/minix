@@ -4,6 +4,16 @@
 
 .if defined(__MINIX)
 SUBDIR+=	texinfo
+
+.if ${USETOOLS} != "yes"
+# MINIX: make sure sources are fetched, even when tools were not built earlier
+MODULE=		texinfo
+GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/${MODULE}
+.include "${.CURDIR}/../../minix/Makefile.fetchgnu"
+
+realall realdepend: ${GNUHOSTDIST:H}/.gitignore
+.endif # defined(__MINIX)
+
 .else
 SUBDIR+=	bc
 SUBDIR+=	c89 c99

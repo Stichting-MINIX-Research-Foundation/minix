@@ -70,6 +70,7 @@ static u16_t read_phy_reg(u32_t base, int phy_addr, int phy_reg) {
 	u32_t field[8];
 	u8_t data, polar;
 
+<<<<<<< HEAD
 	field[0] = 0xffffffff; 	fieldlen[0] = 32;
 	field[1] = 0x0001; 		fieldlen[1] = 2;
 	field[2] = 0x0002; 		fieldlen[2] = 2;
@@ -77,6 +78,15 @@ static u16_t read_phy_reg(u32_t base, int phy_addr, int phy_reg) {
 	field[4] = phy_reg;		fieldlen[4] = 5;
 	field[5] = 0x0000; 		fieldlen[5] = 2;
 	field[6] = 0x0000; 		fieldlen[6] = 16;
+=======
+	field[0] = 0xffffffff;		fieldlen[0] = 32;
+	field[1] = 0x0001;		fieldlen[1] = 2;
+	field[2] = 0x0002;		fieldlen[2] = 2;
+	field[3] = phy_addr;	fieldlen[3] = 5;
+	field[4] = phy_reg;		fieldlen[4] = 5;
+	field[5] = 0x0000;		fieldlen[5] = 2;
+	field[6] = 0x0000;		fieldlen[6] = 16;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	field[7] = 0x0000;		fieldlen[7] = 1;
 
 	polar = ic_in8(base, REG_PHY_CTRL) & 0x28;
@@ -123,6 +133,7 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 	u32_t field[8];
 	u8_t data, polar;
 
+<<<<<<< HEAD
 	field[0] = 0xffffffff; 	fieldlen[0] = 32;
 	field[1] = 0x0001; 		fieldlen[1] = 2;
 	field[2] = 0x0001; 		fieldlen[2] = 2;
@@ -130,6 +141,15 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 	field[4] = phy_reg;		fieldlen[4] = 5;
 	field[5] = 0x0002; 		fieldlen[5] = 2;
 	field[6] = val; 		fieldlen[6] = 16;
+=======
+	field[0] = 0xffffffff;		fieldlen[0] = 32;
+	field[1] = 0x0001;		fieldlen[1] = 2;
+	field[2] = 0x0001;		fieldlen[2] = 2;
+	field[3] = phy_addr;		fieldlen[3] = 5;
+	field[4] = phy_reg;		fieldlen[4] = 5;
+	field[5] = 0x0002;		fieldlen[5] = 2;
+	field[6] = val;			fieldlen[6] = 16;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	field[7] = 0x0000;		fieldlen[7] = 1;
 
 	polar = ic_in8(base, REG_PHY_CTRL) & 0x28;
@@ -146,7 +166,11 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 	for (i = 0; i < fieldlen[7]; i ++) {
 		ic_out8(base, REG_PHY_CTRL, polar);
 		micro_delay(10);
+<<<<<<< HEAD
 		field[7] |= ((ic_in8(base, REG_PHY_CTRL) & 0x02) >> 1) 
+=======
+		field[7] |= ((ic_in8(base, REG_PHY_CTRL) & 0x02) >> 1)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 						<< (fieldlen[7] - i -1);
 		ic_out8(base, REG_PHY_CTRL, (data | 0x01));
 		micro_delay(10);
@@ -178,7 +202,11 @@ static int ic_real_reset(u32_t base) {
 	micro_delay(10000);
 	if (ic_in32(base, REG_ASIC_CTRL) & AC_RESET_BUSY)
 		return -EIO;
+<<<<<<< HEAD
 	return OK;	
+=======
+	return OK;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 }
 
 /* Intialize power (### POWER_INIT_CAN_FAIL ###)
@@ -304,14 +332,22 @@ static void ic_get_addr(u32_t base, u8_t *pa) {
 	pa[5] = (u8_t)((ic_in16(base, REG_STA_ADDR2) & 0xff00) >> 8);
 }
 
+<<<<<<< HEAD
 /* Check link status (### CHECK_LINK ###) 
+=======
+/* Check link status (### CHECK_LINK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return LINK_UP or LINK_DOWN */
 static int ic_check_link(u32_t base) {
 	u8_t phy_ctrl;
 	u32_t mac_ctrl;
 	int ret;
 	char speed[20], duplex[20];
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	phy_ctrl = ic_in8(base, REG_PHY_CTRL);
 	mac_ctrl = ic_in8(base, REG_MAC_CTRL);
 	switch (phy_ctrl & PC_LINK_SPEED) {
@@ -350,7 +386,11 @@ static void ic_stop_rx_tx(u32_t base) {
 	ic_out32(base, REG_ASIC_CTRL, AC_RESET_ALL);
 }
 
+<<<<<<< HEAD
 /* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###) 
+=======
+/* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return TRUE or FALSE */
 static int ic_rx_status_ok(ic_desc *desc) {
 	if ((desc->status & RFS_NORMAL) == RFS_NORMAL)
@@ -358,7 +398,11 @@ static int ic_rx_status_ok(ic_desc *desc) {
 	return FALSE;
 }
 
+<<<<<<< HEAD
 /* Get Rx data length from descriptor (### GET_RX_LEN ###) 
+=======
+/* Get Rx data length from descriptor (### GET_RX_LEN ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * --- Return the length */
 static int ic_get_rx_len(ic_desc *desc) {
 	int totlen;
@@ -370,10 +414,17 @@ static int ic_get_rx_len(ic_desc *desc) {
 static void ic_tx_desc_start(ic_desc *desc, size_t size) {
 	desc->status = TFS_TFD_DONE;
 	desc->status |= (u64_t)(TFS_WORD_ALIGN | (TFS_FRAMEID & (g_driver.tx_head))
+<<<<<<< HEAD
 				   	| (TFS_FRAG_COUNT & (1 << 24)));
 	desc->status |= TFS_TX_DMA_INDICATE;
 	desc->frag_info |= TFI_FRAG_LEN & ((u64_t)((size >= 60 ? size : 60) &
 						   	0xffff) << 48);
+=======
+					| (TFS_FRAG_COUNT & (1 << 24)));
+	desc->status |= TFS_TX_DMA_INDICATE;
+	desc->frag_info |= TFI_FRAG_LEN & ((u64_t)((size >= 60 ? size : 60) &
+						0xffff) << 48);
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	desc->status &= (u64_t)(~(TFS_TFD_DONE));
 }
 
@@ -382,7 +433,11 @@ static void ic_wakeup_tx(u32_t base) {
 	ic_out32(base, REG_DMA_CTRL, 0x00001000);
 }
 
+<<<<<<< HEAD
 /* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###) 
+=======
+/* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return TRUE or FALSE */
 static int ic_tx_status_ok(ic_desc *desc) {
 	if (desc->status & TFS_TFD_DONE)
@@ -500,7 +555,11 @@ static int ic_probe(ic_driver *pdev, int instance) {
 	}
 	pdev->base_addr = bar;
 #endif
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	/* Get irq number */
 	irq = pci_attr_r8(devind, PCI_ILR);
 	pdev->irq = irq;
@@ -747,7 +806,11 @@ static void ic_conf_addr(ic_driver *pdev, ether_addr_t *addr) {
 }
 
 /* Stop the driver */
+<<<<<<< HEAD
 static void ic_stop(void) {	
+=======
+static void ic_stop(void) {
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	u32_t base = g_driver.base_addr;
 
 	/* Free Rx and Tx buffer*/
@@ -891,7 +954,11 @@ static void ic_intr(unsigned int mask) {
 
 /* Real handler interrupt */
 static void ic_handler(ic_driver *pdev) {
+<<<<<<< HEAD
 	u32_t base = pdev->base_addr;	
+=======
+	u32_t base = pdev->base_addr;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	u16_t intr_status;
 	int flag = 0, tx_head, tx_tail;
 	ic_desc *desc;
@@ -900,7 +967,11 @@ static void ic_handler(ic_driver *pdev) {
 	/* ### GET_INTR_STATUS ### */
 	intr_status = ic_in16(base, REG_ISR);
 
+<<<<<<< HEAD
 	/* Clear interrupt */	
+=======
+	/* Clear interrupt */
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	/* ### CLEAR_INTR ### */
 	ic_out16(base, REG_ISR, intr_status & INTR_ISR_CLEAR);
 
@@ -928,7 +999,11 @@ static void ic_handler(ic_driver *pdev) {
 	/* Check Rx request status */
 	/* ### CHECK_RX_INTR ### */
 	if (intr_status & INTR_ISR_RX_DONE) {
+<<<<<<< HEAD
 		pdev->recv_flag = TRUE;	
+=======
+		pdev->recv_flag = TRUE;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 		flag++;
 	}
 
@@ -960,7 +1035,11 @@ static void ic_handler(ic_driver *pdev) {
 			pdev->stat.ets_packetT++;
 			pdev->tx[tx_tail].busy = FALSE;
 			pdev->tx_busy_num--;
+<<<<<<< HEAD
 			
+=======
+
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 			if (++tx_tail >= TX_DESC_NUM)
 				tx_tail = 0;
 
@@ -1002,5 +1081,9 @@ static void ic_check_ints(ic_driver *pdev) {
 }
 
 static void ic_stat(eth_stat_t *stat) {
+<<<<<<< HEAD
 	memcpy(stat, &g_driver.stat, sizeof(*stat));	
+=======
+	memcpy(stat, &g_driver.stat, sizeof(*stat));
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 }

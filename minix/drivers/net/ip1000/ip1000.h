@@ -7,12 +7,15 @@
 /* Global configure */
 #define DESC_BASE64
 
+<<<<<<< HEAD
 /* Rx/Tx buffer parameter */
 #define RX_BUF_SIZE		1536
 #define TX_BUF_SIZE		1536
 #define RX_DESC_NUM		64
 #define TX_DESC_NUM		64
 
+=======
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 /* Key internal register */
 #define REG_RCR				0x88
 #define REG_ISR				0x5a
