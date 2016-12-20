@@ -66,6 +66,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "dpeth", .policy_str = "reset" },
 		{ .label = "e1000", .policy_str = "reset" },
 		{ .label = "fxp", .policy_str = "reset" },
+		{ .label = "ip1000", .policy_str = "reset" },
 		{ .label = "lance", .policy_str = "reset" },
 		{ .label = "lan8710a", .policy_str = "reset" },
 		{ .label = "orinoco", .policy_str = "reset" },

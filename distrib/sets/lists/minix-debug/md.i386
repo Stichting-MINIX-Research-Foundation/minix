@@ -27,6 +27,7 @@
 ./usr/libdata/debug/service/floppy.debug                minix-debug     debug
 ./usr/libdata/debug/service/fxp.debug                   minix-debug     debug
 ./usr/libdata/debug/service/hgfs.debug                  minix-debug     debug
+./usr/libdata/debug/service/ip1000.debug                minix-debug     debug
 ./usr/libdata/debug/service/lance.debug                 minix-debug     debug
 ./usr/libdata/debug/service/pci.debug                   minix-debug     debug
 ./usr/libdata/debug/service/pckbd.debug                 minix-debug     debug

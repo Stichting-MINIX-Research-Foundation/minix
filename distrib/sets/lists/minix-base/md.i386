@@ -15,6 +15,7 @@
 ./etc/system.conf.d/es1371                              minix-base
 ./etc/system.conf.d/e1000                               minix-base
 ./etc/system.conf.d/fxp                                 minix-base
+./etc/system.conf.d/ip1000                              minix-base
 ./etc/system.conf.d/lance                               minix-base
 ./etc/system.conf.d/printer                             minix-base
 ./etc/system.conf.d/rtl8139                             minix-base
@@ -41,6 +42,7 @@
 ./service/floppy                                        minix-base
 ./service/fxp                                           minix-base
 ./service/hgfs                                          minix-base
+./service/ip1000                                        minix-base
 ./service/lance                                         minix-base
 ./service/pci                                           minix-base
 ./service/pckbd                                         minix-base
