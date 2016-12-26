@@ -1112,6 +1112,9 @@
 ./usr/lib/libtermlib.so                                 minix-base
 ./usr/lib/libtermlib.so.0                               minix-base
 ./usr/lib/libtermlib.so.0.6                             minix-base
+./usr/lib/libukfs.so.1.0                                minix-base      rump
+./usr/lib/libukfs.so.1                                  minix-base      rump
+./usr/lib/libukfs.so                                    minix-base      rump
 ./usr/lib/libutil.so                                    minix-base
 ./usr/lib/libutil.so.7                                  minix-base
 ./usr/lib/libutil.so.7.21                               minix-base      obsolete

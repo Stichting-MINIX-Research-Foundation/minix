@@ -3070,6 +3070,7 @@
 ./usr/man/man3/tzsetwall.3                              minix-man
 ./usr/man/man3/ualarm.3                                 minix-man
 ./usr/man/man3/uid_from_user.3                          minix-man
+./usr/man/man3/ukfs.3                                   minix-man       rump
 ./usr/man/man3/ulimit.3                                 minix-man
 ./usr/man/man3/uname.3                                  minix-man
 ./usr/man/man3/unctrl.3                                 minix-man

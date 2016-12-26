@@ -307,7 +307,7 @@ SUBDIR+=	../external/bsd/mdocml/lib
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-#SUBDIR+=	libukfs		# depends on librumpvfs, librump
+SUBDIR+=	libukfs		# depends on librumpvfs, librump
 
 .if (${MKTPM} != "no")
 SUBDIR+=	../crypto/external/cpl/trousers/lib

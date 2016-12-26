@@ -1735,6 +1735,7 @@
 ./usr/include/rump/rumpuser_port.h                      minix-comp      rump
 ./usr/include/rump/rumpvfs_if_pub.h                     minix-comp      rump
 ./usr/include/rump/rumpvnode_if.h                       minix-comp      rump
+./usr/include/rump/ukfs.h                               minix-comp      rump
 ./usr/include/saslc.h                                   minix-comp      crypto
 ./usr/include/sched.h                                   minix-comp
 ./usr/include/search.h                                  minix-comp
@@ -2458,6 +2459,7 @@
 ./usr/lib/libtermlib_pic.a                              minix-comp
 ./usr/lib/libtimers.a                                   minix-comp
 ./usr/lib/libtimers_pic.a                               minix-comp
+./usr/lib/libukfs.a                                     minix-comp      rump
 ./usr/lib/libusb.a                                      minix-comp
 ./usr/lib/libusb_pic.a                                  minix-comp
 ./usr/lib/libutil.a                                     minix-comp
