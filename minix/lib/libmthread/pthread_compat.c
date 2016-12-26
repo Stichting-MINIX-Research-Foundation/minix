@@ -139,6 +139,72 @@ int pthread_rwlock_init(pthread_rwlock_t *rwlock, pthread_rwlockattr_t *UNUSED(a
 	return mthread_rwlock_init(rwlock);
 }
 
+/*===========================================================================*
+ *				pthread_spin_destroy			     *
+ *===========================================================================*/
+int pthread_spin_destroy(pthread_spinlock_t *lock)
+{
+	pthread_mutex_t *mutex = (pthread_mutex_t*)lock;
+
+	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+		mthread_mutex_init(mutex, NULL);
+	}
+
+	return mthread_mutex_destroy(mutex);
+}
+
+/*===========================================================================*
+ *				pthread_spin_init			     *
+ *===========================================================================*/
+int pthread_spin_init(pthread_spinlock_t *lock, int UNUSED(pshared))
+{
+	pthread_mutex_t *mutex = (pthread_mutex_t*)lock;
+
+	return mthread_mutex_init(mutex, NULL);
+}
+
+/*===========================================================================*
+ *				pthread_spin_lock			     *
+ *===========================================================================*/
+int pthread_spin_lock(pthread_spinlock_t *lock)
+{
+	pthread_mutex_t *mutex = (pthread_mutex_t*)lock;
+
+	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+		mthread_mutex_init(mutex, NULL);
+	}
+
+	return mthread_mutex_lock(mutex);
+}
+
+/*===========================================================================*
+ *				pthread_spin_trylock			     *
+ *===========================================================================*/
+int pthread_spin_trylock(pthread_spinlock_t *lock)
+{
+	pthread_mutex_t *mutex = (pthread_mutex_t*)lock;
+
+	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+		mthread_mutex_init(mutex, NULL);
+	}
+
+	return mthread_mutex_trylock(mutex);
+}
+
+/*===========================================================================*
+ *				pthread_spin_unlock			     *
+ *===========================================================================*/
+int pthread_spin_unlock(pthread_spinlock_t *lock)
+{
+	pthread_mutex_t *mutex = (pthread_mutex_t*)lock;
+
+	if (PTHREAD_MUTEX_INITIALIZER == *mutex) {
+		mthread_mutex_init(mutex, NULL);
+	}
+
+	return mthread_mutex_unlock(mutex);
+}
+
 #if !defined(__weak_alias)
 #error __weak_alias is required to compile the pthread compat library
 #endif
