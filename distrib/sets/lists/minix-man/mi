@@ -2368,6 +2368,7 @@
 ./usr/man/man3/orcmd_af.3                               minix-man
 ./usr/man/man3/overlay.3                                minix-man
 ./usr/man/man3/overwrite.3                              minix-man
+./usr/man/man3/p2k.3                                    minix-man
 ./usr/man/man3/p_query.3                                minix-man
 ./usr/man/man3/pair_content.3                           minix-man
 ./usr/man/man3/parsedate.3                              minix-man

@@ -859,6 +859,9 @@
 ./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
 ./usr/lib/libopcodes.so.6.0                             minix-base      binutils
 ./usr/lib/libopcodes.so.6                               minix-base      binutils
+./usr/lib/libp2k.so                                     minix-base
+./usr/lib/libp2k.so.2                                   minix-base
+./usr/lib/libp2k.so.2.0                                 minix-base
 ./usr/lib/libpci.so                                     minix-base
 ./usr/lib/libpci.so.2                                   minix-base
 ./usr/lib/libpci.so.2.0                                 minix-base      obsolete

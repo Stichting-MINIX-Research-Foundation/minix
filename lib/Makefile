@@ -316,7 +316,7 @@ SUBDIR+=	../crypto/external/cpl/trousers/lib
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-#SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
 .if (${MKTPM} != "no")
 SUBDIR+=	../crypto/external/cpl/tpm-tools/lib	# depends on trousers

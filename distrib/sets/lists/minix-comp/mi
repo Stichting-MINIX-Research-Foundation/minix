@@ -1720,6 +1720,7 @@
 ./usr/include/rpcsvc/yp_prot.h                          minix-comp
 ./usr/include/rpcsvc/ypclnt.h                           minix-comp
 ./usr/include/rump                                      minix-comp      rump
+./usr/include/rump/p2k.h                                minix-comp      rump
 ./usr/include/rump/rump.h                               minix-comp      rump
 ./usr/include/rump/rump_namei.h                         minix-comp      rump
 ./usr/include/rump/rump_syscalls.h                      minix-comp      rump
@@ -2295,6 +2296,7 @@
 ./usr/lib/libnetsock_pic.a                              minix-comp
 ./usr/lib/libobjc.a                                     minix-comp      gcc=45
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
+./usr/lib/libp2k.a                                      minix-comp      rump
 ./usr/lib/libpci.a                                      minix-comp
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp

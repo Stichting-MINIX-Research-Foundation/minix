@@ -1,0 +1,141 @@
+.\"     $NetBSD: p2k.3,v 1.10 2011/01/07 16:02:32 pooka Exp $
+.\"
+.\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 7, 2011
+.Dt P2K 3
+.Os
+.Sh NAME
+.Nm p2k
+.Nd puffs to kernel vfs translation library
+.Sh LIBRARY
+p2k Library (libp2k, \-lp2k)
+.Sh SYNOPSIS
+.In rump/p2k.h
+.Ft struct p2k_mount *
+.Fn p2k_init "uint32_t puffs_flags"
+.Ft void
+.Fn p2k_cancel "struct p2k_mount *p2m" "int error"
+.Ft int
+.Fo p2k_setup_fs
+.Fa "struct p2k_mount *p2m" "const char *vfsname" "const char *devpath"
+.Fa "const char *mountpath" "int mntflags" "void *arg" "size_t alen"
+.Fc
+.Fo p2k_setup_diskfs
+.Fa "struct p2k_mount *p2m" "const char *vfsname" "const char *devpath"
+.Fa "int partition" "const char *mountpath" "int mntflags"
+.Fa "void *arg" "size_t alen"
+.Fc
+.Ft int
+.Fn p2k_mainloop "struct p2k_mount *p2m"
+.Ft int
+.Fo p2k_run_fs
+.Fa "const char *vfsname" "const char *devpath" "const char *mountpath"
+.Fa "int mntflags" "void *arg" "size_t alen" "uint32_t puffs_flags"
+.Fc
+.Ft int
+.Fo p2k_run_diskfs
+.Fa "const char *vfsname" "const char *devpath" "int partition"
+.Fa "const char *mountpath" "int mntflags" "void *arg" "size_t alen"
+.Fa "uint32_t puffs_flags"
+.Fc
+.Sh DESCRIPTION
+The
+.Nm
+library translates the puffs protocol to the kernel
+.Xr vfs 9
+protocol and back again.
+It can therefore be used to mount and run kernel file system code as
+a userspace daemon.
+.Pp
+Calling the library interface function mounts the file system and,
+if succesful, starts handling requests.
+The parameters are handled by
+.Fn ukfs_mount
+(see
+.Xr ukfs 3 ) ,
+with the exception that
+.Fa mountpath
+and
+.Fa puffs_flags
+are handled by
+.Xr puffs 3 .
+The "run_fs" variants of the interfaces are provided as a convenience
+for the common case.
+They execute all of init, setup and mainloop in one call.
+.Sh ENVIRONMENT
+The following environment variables affect the behaviour of
+.Nm .
+They are useful mostly for debugging purposes.
+The flags are environment variables because typically the command line
+arguments to
+.Nm
+utilities are parsed using versions not aware of
+.Nm
+options; for example, the
+.Xr rump_cd9660 8
+arguments are really parsed by
+.Xr mount_cd9660 8 .
+.Bl -tag -width "XP2K_NOCACHE_PAGE" -offset 2n
+.It Dv P2K_DEBUG
+Do not detach from tty and print information about each puffs operation.
+In case the daemon receives
+.Dv SIGINFO
+(typically from ctrl-T), it dumps out the status of the mount point.
+Sending
+.Dv SIGUSR1
+causes a dump of all the vnodes (verbose).
+.It Dv P2K_NODETACH
+Do not detach from tty.
+.It Dv P2K_NOCACHE_PAGE
+Do not use the puffs page cache.
+.It Dv P2K_NOCACHE_NAME
+Do not use the puffs name cache.
+.It Dv P2K_NOCACHE
+Do not use the puffs page or name cache.
+.It Dv P2K_WIZARDUID
+If set, use the value of the variable to determine the UID of the
+caller of each operation instead of the actual caller supplied by
+.Xr puffs 3 .
+This can be used for example to simplify modifying an OS installation's
+root image as a non-root user.
+.El
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr rump 3 ,
+.Xr ukfs 3 ,
+.Xr rump_cd9660 8 ,
+.Xr rump_efs 8 ,
+.Xr rump_ext2fs 8 ,
+.Xr rump_ffs 8 ,
+.Xr rump_hfs 8 ,
+.Xr rump_lfs 8 ,
+.Xr rump_msdos 8 ,
+.Xr rump_nfs 8 ,
+.Xr rump_ntfs 8 ,
+.Xr rump_smbfs 8 ,
+.Xr rump_syspuffs 8 ,
+.Xr rump_sysvbfs 8 ,
+.Xr rump_tmpfs 8 ,
+.Xr rump_udf 8
