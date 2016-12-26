@@ -59,7 +59,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
 		mthread_mutex_init(mutex, NULL);	
 	}
 
-	return pthread_mutex_trylock(mutex);
+	return mthread_mutex_trylock(mutex);
 }
 
 /*===========================================================================*
