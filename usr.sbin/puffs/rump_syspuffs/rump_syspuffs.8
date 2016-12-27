@@ -1,0 +1,73 @@
+.\"	$NetBSD: rump_syspuffs.8,v 1.4 2012/11/14 23:11:27 njoly Exp $
+.\"
+.\" Copyright (c) 2008 Antti Kantee. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd June 9, 2009
+.Dt RUMP_SYSPUFFS 8
+.Os
+.Sh NAME
+.Nm rump_syspuffs
+.Nd mount a puffs file server with a userspace puffs loop
+.Sh SYNOPSIS
+.Cd "file-system PUFFS"
+.Cd "pseudo-device putter"
+.Pp
+.Nm
+.Ar "file_server"
+.Ar arguments
+.Sh DESCRIPTION
+The
+.Nm
+utility can be used to mount any
+.Xr puffs 3
+file server so that the requests are passed through the kernel
+puffs code in userspace as well.
+Therefore the approximate callgraph looks a little like the following,
+where k and u denote code running in the kernel space and userspace,
+respectively:
+puffs vfs (k) \(-> libpuffs (u) \(-> p2k (u) \(-> puffs vfs (u) \(->
+libpuffs (u) \(-> file server (u).
+The response path is the same, but in reverse.
+.Pp
+In its current state,
+.Nm
+is most useful as a proof of concept for file system distribution
+and for developing and debugging the kernel portion of puffs.
+.Sh EXAMPLES
+Mount a file system with sshfs:
+.Dl rump_syspuffs mount_psshfs server.address /mnt
+.Pp
+Mount an ntfs file system using ntfs-3g (from pkgsrc/filesystems/fuse-ntfs-3g),
+set the default uid to 1323:
+.Dl rump_syspuffs ntfs-3g -o uid=1323 /path/to/filesystem /mnt
+.Sh SEE ALSO
+.Xr p2k 3 ,
+.Xr puffs 3 ,
+.Xr rump 3 ,
+.Xr puffs 4
+.Sh HISTORY
+The
+.Nm
+debugging utility first appeared in
+.Nx 5.0 .

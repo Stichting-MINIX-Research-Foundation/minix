@@ -2297,6 +2297,7 @@
 ./usr/lib/libobjc.a                                     minix-comp      gcc=45
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
 ./usr/lib/libp2k.a                                      minix-comp      rump
+./usr/lib/libp2k_pic.a                                  minix-comp      rump
 ./usr/lib/libpci.a                                      minix-comp
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp
@@ -2462,6 +2463,7 @@
 ./usr/lib/libtimers.a                                   minix-comp
 ./usr/lib/libtimers_pic.a                               minix-comp
 ./usr/lib/libukfs.a                                     minix-comp      rump
+./usr/lib/libukfs_pic.a                                 minix-comp      rump
 ./usr/lib/libusb.a                                      minix-comp
 ./usr/lib/libusb_pic.a                                  minix-comp
 ./usr/lib/libutil.a                                     minix-comp

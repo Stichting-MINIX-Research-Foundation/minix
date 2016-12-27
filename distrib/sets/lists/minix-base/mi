@@ -1222,6 +1222,7 @@
 ./usr/sbin/pwd_mkdb                                     minix-base
 ./usr/sbin/rdate                                        minix-base
 ./usr/sbin/rump.traceroute                              minix-base      rump
+./usr/sbin/rump_sysvbfs                                 minix-base      rump
 ./usr/sbin/syslogd                                      minix-base
 ./usr/sbin/traceroute                                   minix-base
 ./usr/sbin/unlink                                       minix-base
