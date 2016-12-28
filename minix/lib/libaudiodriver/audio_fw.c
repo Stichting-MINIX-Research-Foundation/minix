@@ -609,6 +609,7 @@ static void handle_int_read(int sub_dev_nr)
 			sub_dev_ptr->DmaLength -= 1;
 			sub_dev_ptr->DmaReadNext = 
 				(sub_dev_ptr->DmaReadNext + 1) % sub_dev_ptr->NrOfDmaFragments;
+			sub_dev_ptr->BufLength += 1;
 			sub_dev_ptr->BufFillNext = 
 				(sub_dev_ptr->BufFillNext + 1) % sub_dev_ptr->NrOfExtraBuffers;
 		}
