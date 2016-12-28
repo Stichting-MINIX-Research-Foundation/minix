@@ -496,15 +496,18 @@ static void msg_hardware(unsigned int UNUSED(mask))
 {
 	int i;
 
-	/* loop over all sub devices */
-	for ( i = 0; i < drv.NrOfSubDevices; i++) {
-		/* if interrupt from sub device and Dma transfer 
-		   was actually busy, take care of business */
-		if( drv_int(i) && sub_dev[i].DmaBusy ) {
-			if (sub_dev[i].DmaMode == WRITE_DMA)
-				handle_int_write(i);
-			if (sub_dev[i].DmaMode == READ_DMA)
-				handle_int_read(i);
+	/* if we have an interrupt */
+	if (drv_int_sum()) {
+		/* loop over all sub devices */
+		for ( i = 0; i < drv.NrOfSubDevices; i++) {
+			/* if interrupt from sub device and Dma transfer
+			   was actually busy, take care of business */
+			if( drv_int(i) && sub_dev[i].DmaBusy ) {
+				if (sub_dev[i].DmaMode == WRITE_DMA)
+					handle_int_write(i);
+				if (sub_dev[i].DmaMode == READ_DMA)
+					handle_int_read(i);
+			}
 		}
 	}
 
