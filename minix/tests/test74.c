@@ -395,7 +395,9 @@ static void basic_regression(void)
 	 */
 
 	fd1 = open("../testsh1", O_RDONLY);
+	if (fd1 < 0) fd1 = open("../testsh1.sh", O_RDONLY);
 	fd2 = open("../testsh2", O_RDONLY);
+	if (fd2 < 0) fd2 = open("../testsh2.sh", O_RDONLY);
 	if(fd1 < 0 || fd2 < 0) { e(2); }
 
 	/* just check that we can't mmap() a file writable */
