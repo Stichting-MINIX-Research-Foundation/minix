@@ -327,6 +327,10 @@
 ./usr/man/man1/rmd160.1                                 minix-man
 ./usr/man/man1/rmdir.1                                  minix-man
 ./usr/man/man1/rsh.1                                    minix-man
+./usr/man/man1/rump.halt.1                              minix-man       rump
+./usr/man/man1/rump_allserver.1                         minix-man       rump
+./usr/man/man1/rump_server.1                            minix-man       rump
+./usr/man/man1/rump_wmd.1                               minix-man       rump
 ./usr/man/man1/rz.1                                     minix-man
 ./usr/man/man1/sdiff.1                                  minix-man
 ./usr/man/man1/sed.1                                    minix-man

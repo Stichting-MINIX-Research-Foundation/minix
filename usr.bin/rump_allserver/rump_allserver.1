@@ -1,0 +1,230 @@
+.\"	$NetBSD: rump_allserver.1,v 1.21 2014/01/16 00:32:48 pooka Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 15, 2014
+.Dt RUMP_SERVER 1
+.Os
+.Sh NAME
+.Nm rump_server ,
+.Nm rump_allserver
+.Nd rump kernel server
+.Sh SYNOPSIS
+.Nm
+.Op Fl s
+.Op Fl c Ar ncpu
+.Op Fl d Ar drivespec
+.Op Fl l Ar library
+.Op Fl m Ar module
+.Ar url
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to provide a rump kernel service.
+Clients can use the system calls provided by
+.Nm
+via
+.Ar url .
+.Pp
+The difference between
+.Nm
+and
+.Nm rump_allserver
+is that
+.Nm
+offers only a minimalistic set of features,
+while
+.Nm rump_allserver
+provides all rump kernel components which were available when the
+system was built.
+At execution time it is possible to load components from the command
+line as described in the options section.
+.Bl -tag -width indent
+.It Fl c Ar ncpu
+Configure
+.Ar ncpu
+virtual CPUs on SMP-capable archs.
+By default, the number of CPUs equals the number of CPUs on the
+host.
+.It Fl d Ar drivespec
+The argument
+.Ar drivespec
+maps a host file in the rump kernel fs namespace.
+The string
+.Ar drivespec
+must be of comma-separated
+.Dq name=value
+format and must contain the following tokens:
+.Bl -tag -width hostpath1234
+.It Ar key
+Block device path in rump kernel namespace.
+This must be specified according to the rules for a key in
+.Xr rump_etfs 3 .
+.It Ar hostpath
+Host file used for storage.
+If the file does not exist, it will be created.
+.It Ar size
+Size of the mapping.
+Similar to
+.Xr dd 1 ,
+this argument accepts a suffix as the multiplier for the number.
+The special value
+.Dq host
+indicates that the current size of
+.Ar hostpath
+will be used.
+In this case it is assumed that
+.Ar hostpath
+exists and is a regular file.
+.It OR
+.It Ar disklabel
+Use a disklabel partition identifier to specify the offset and size
+of the mapping.
+.Ar hostpath
+must contain an existing and valid disklabel within the first 64k.
+.El
+.Pp
+The following are optional:
+.Bl -tag -width hostpath1234
+.It Ar offset
+Offset of the mapping.
+The window into
+.Ar hostpath
+therefore is
+.Fa [ offset , offset+size ] .
+In case this parameter is not given, the default value 0 is used.
+.It Ar type
+The type of file that
+.Ar key
+is exposed as within the rump kernel.
+The possibilities are
+.Dq blk ,
+.Dq chr ,
+and
+.Dq reg
+for block device, character device and regular file, respectively.
+The default is a block device.
+.Pp
+Note: the contents of block devices are cached in the rump kernel's
+buffer cache.
+To avoid cache incoherency, it is advisable not to access a file
+through the host namespace while it is mapped as a block device in
+a rump kernel.
+.El
+.Pp
+In case
+.Ar hostpath
+does not exist, it will be created as a regular file with mode
+0644 (plus any restrictions placed by umask).
+In case
+.Ar hostpath
+is a regular file and is not large enough to accommodate the
+specified size, it will be extended to the specified size.
+.It Fl l Ar library
+Call
+.Fn dlopen
+on library before initializing the rump kernel.
+In case
+.Ar library
+provides a kernel module, it will appear as a builtin module in the
+rump kernel.
+Any rump kernel component present in
+.Ar library
+will also be initialized.
+.Pp
+The argument
+.Ar library
+can contain a full path or a filename, in which case the standard
+dynamic library search path will be used.
+By default, lazy resolution is used, and may result in a runtime
+error due to missing components.
+To test a configuration, run
+.Nm
+with
+.Ev LD_BIND_NOW=1
+(see examples).
+.It Fl m Ar module
+Load and link a kernel module after the rump kernel is initialized.
+For this to work, the rump kernel must include the vfs faction,
+since the module is loaded using kernel vfs code (see
+.Sx EXAMPLES ) .
+.It Fl r Ar total_ram
+Sets the limit of kernel memory allocatable by the server to
+.Ar total_ram
+as opposed to the default which allows the server to allocate as much
+memory as the host will give it.
+This parameter is especially useful for VFS servers, since by
+default the virtual file system will attempt to consume as much
+memory as it can, and accessing large files can cause an excessive
+amount of memory to be used as file system cache.
+.It Fl s
+Do not detach from the terminal.
+By default,
+.Nm
+detaches from the terminal once the service is running on
+.Ar url .
+.It Fl v
+Set bootverbose.
+.El
+.Pp
+After use,
+.Nm
+can be made to exit using
+.Xr rump.halt 1 .
+.Sh EXAMPLES
+Start a server and load the tmpfs file system module, and halt the
+server immediately afterwards:
+.Bd -literal -offset indent
+$ rump_server -lrumpvfs -m /modules/tmpfs.kmod unix://sock
+$ env RUMP_SERVER=unix://sock rump.halt
+.Ed
+.Pp
+Start a server with the one gigabyte host file
+.Pa dk.img
+mapped as the block device
+.Pa /dev/dk
+in the rump kernel.
+.Bd -literal -offset indent
+$ rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1g unix://sock
+.Ed
+.Pp
+Start a server which listens on INADDR_ANY port 3755
+.Bd -literal -offset indent
+$ rump_server tcp://0:3755/
+.Ed
+.Pp
+Test that a configuration contains all of the necessary components:
+.Bd -literal -offset indent
+$ env LD_BIND_NOW=1 rump_server -lrumpvfs -lrumpfs_ffs unix://tsock
+.Ed
+.Pp
+Start a FFS server with a 16MB kernel memory limit.
+.Bd -literal -offset indent
+$ rump_server -lrumpfs_ffs [...] -r 16m unix://ffs
+.Ed
+.Sh SEE ALSO
+.Xr rump.halt 1 ,
+.Xr dlopen 3 ,
+.Xr rump 3 ,
+.Xr rump_sp 7

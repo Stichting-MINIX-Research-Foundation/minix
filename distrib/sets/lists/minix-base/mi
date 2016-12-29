@@ -472,6 +472,10 @@
 ./usr/bin/rotate                                        minix-base
 ./usr/bin/rput                                          minix-base
 ./usr/bin/rsh                                           minix-base
+./usr/bin/rump.halt                                     minix-base      rump
+./usr/bin/rump_allserver                                minix-base      rump
+./usr/bin/rump_server                                   minix-base      rump
+./usr/bin/rump_wmd                                      minix-base      rump
 ./usr/bin/rz                                            minix-base
 ./usr/bin/screendump                                    minix-base
 ./usr/bin/sdiff                                         minix-base

@@ -1,0 +1,98 @@
+.\"	$NetBSD: rump_wmd.1,v 1.3 2014/01/28 14:02:54 pooka Exp $
+.\"
+.\" Copyright (c) 2014 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 28, 2014
+.Dt RUMP_WMD 1
+.Os
+.Sh NAME
+.Nm rump_wmd
+.Nd Resolve rump kernel component dependencies
+.Sh SYNOPSIS
+.Nm
+.Op Fl hv
+.Op Fl L Ar dir
+.Fl l Ar component
+.Sh DESCRIPTION
+The
+.Nm
+utility can be used to resolve the link dependencies of rump kernel
+components.
+This functionality is useful when desiring to run a rump kernel with
+a given set of drivers, but not being sure what the dependencies of
+those drivers are.
+The output of
+.Nm
+is accepted as command line input by
+.Xr rump_server 1 .
+.Pp
+The command line options are:
+.Bl -tag -width indent
+.It Fl h
+Print the usage.
+.It Fl L Ar dir
+By default, rump kernel components in
+.Pa /usr/lib
+are examined.
+If this option is supplied, components in
+.Ar dir
+are examined instead.
+.It Fl v
+Increase debug output from the utility.
+This option may be given multiple times.
+.El
+.Pp
+The desired components are given using
+.Fl l Ar component .
+This parameter may be specified multiple time and must be the last
+set of parameters.
+.Sh EXAMPLES
+Resolve dependencies for FFS:
+.Bd -literal -offset indent
+$ rump_wmd -lrumpfs_ffs
+DEBUG0: Searching component combinations. This may take a while ...
+DEBUG0: Found a set
+-lrumpdev -lrumpdev_disk -lrumpvfs -lrumpfs_ffs
+.Ed
+.Pp
+Resolve dependencies for NFS, use IPv6 networking and the virtif
+network interface:
+.Bd -literal -offset indent
+$ rump_wmd -lrumpfs_nfs -lrumpnet_netinet6 -lrumpnet_virtif
+DEBUG0: Searching component combinations. This may take a while ...
+DEBUG0: Found a set
+-lrumpnet -lrumpnet_net -lrumpvfs -lrumpfs_nfs -lrumpnet_netinet6 -lrumpnet_virtif
+.Ed
+.Sh SEE ALSO
+.Xr rump_server 1
+.Sh CAVEATS
+Since
+.Nm
+uses trial-and-error brute force resolution, it runs somewhat slow.
+If several seconds are spent for dependency resolution, the benefit of
+a rump kernel booting in 10ms is somewhat lost.
+Caching the output is highly recommended.
+.Sh FUN FACTS
+.Nm
+is short for "rump, where's my dependency".
