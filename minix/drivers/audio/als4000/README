@@ -1,0 +1,12 @@
+The als4000 driver is for Avance Logic ALS4000 sound card.
+
+This driver is referred to Minix(3.4.0) es1371 driver, 
+Linux(4.2.1) snd_als4000 driver and ALS4000 Media Audio Specification(Rev 1.0).
+
+Revision 1.0 2016/12/16
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
+Something can be improved: 
+1. MIDI and MPU-401 ports are not supported.
+2. Only supported 8 and 16 sample bits, and common sample rates (like 44100).
+3. Multiple music files may not be played well at the same time.
