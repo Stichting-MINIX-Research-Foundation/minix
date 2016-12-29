@@ -1,4 +1,0 @@
-
-/* pseudo-devices */
-
-/* driver structs */
