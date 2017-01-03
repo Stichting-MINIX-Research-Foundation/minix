@@ -5,8 +5,3 @@ Linux(4.2.1) snd_cmipci driver and CMI8738 Audio Specification(Rev 2.2).
 
 Revision 1.0 2016/12/16
 Authored by Jia-Ju Bai <baijiaju1990@163.com>
-
-Something can be improved: 
-1. MIDI and MPU-401 ports are not supported.
-2. Only supported 8 and 16 sample bits, and common sample rates (like 44100).
-3. Multiple music files may not be played well at the same time.

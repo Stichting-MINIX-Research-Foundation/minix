@@ -9,8 +9,8 @@
 static u8_t my_inb(u32_t port) {
 	u32_t value;
 	int r;
-#ifdef DMA_REG_MODE
-	value = *(u8_t *)(port);
+#ifdef DMA_BASE_IOMAP
+	value = *(volatile u8_t *)(port);
 #else
 	if ((r = sys_inb(port, &value)) != OK)
 		printf("SDR: sys_inb failed: %d\n", r);
@@ -22,8 +22,8 @@ static u8_t my_inb(u32_t port) {
 static u16_t my_inw(u32_t port) {
 	u32_t value;
 	int r;
-#ifdef DMA_REG_MODE
-	value = *(u16_t *)(port);
+#ifdef DMA_BASE_IOMAP
+	value = *(volatile u16_t *)(port);
 #else
 	if ((r = sys_inw(port, &value)) != OK)
 		printf("SDR: sys_inw failed: %d\n", r);
@@ -35,8 +35,8 @@ static u16_t my_inw(u32_t port) {
 static u32_t my_inl(u32_t port) {
 	u32_t value;
 	int r;
-#ifdef DMA_REG_MODE
-	value = *(u32_t *)(port);
+#ifdef DMA_BASE_IOMAP
+	value = *(volatile u32_t *)(port);
 #else
 	if ((r = sys_inl(port, &value)) != OK)
 		printf("SDR: sys_inl failed: %d\n", r);
@@ -47,8 +47,8 @@ static u32_t my_inl(u32_t port) {
 
 static void my_outb(u32_t port, u32_t value) {
 	int r;
-#ifdef DMA_REG_MODE
-	*(u8_t *)(port) = value;
+#ifdef DMA_BASE_IOMAP
+	*(volatile u8_t *)(port) = value;
 #else
 	if ((r = sys_outb(port, (u8_t)value)) != OK)
 		printf("SDR: sys_outb failed: %d\n", r);
@@ -59,8 +59,8 @@ static void my_outb(u32_t port, u32_t value) {
 
 static void my_outw(u32_t port, u32_t value) {
 	int r;
-#ifdef DMA_REG_MODE
-	*(u16_t *)(port) = value;
+#ifdef DMA_BASE_IOMAP
+	*(volatile u16_t *)(port) = value;
 #else
 	if ((r = sys_outw(port, (u16_t)value)) != OK)
 		printf("SDR: sys_outw failed: %d\n", r);
@@ -71,8 +71,8 @@ static void my_outw(u32_t port, u32_t value) {
 
 static void my_outl(u32_t port, u32_t value) {
 	int r;
-#ifdef DMA_REG_MODE
-	*(u32_t *)(port) = value;
+#ifdef DMA_BASE_IOMAP
+	*(volatile u32_t *)(port) = value;
 #else
 	if ((r = sys_outl(port, value)) != OK)
 		printf("SDR: sys_outl failed: %d\n", r);
