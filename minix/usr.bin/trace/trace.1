@@ -6,7 +6,7 @@
 .Nd print process system calls and signals
 .Sh SYNOPSIS
 .Nm
-.Op Fl fgNsVv
+.Op Fl fgNstVv
 .Op Fl o Ar file
 .Op Fl p Ar pid
 .Op Ar command
@@ -58,6 +58,14 @@ preceded by a line showing the process's current stack trace.
 For signals blocked by the target process, the stack trace may not be
 meaningful.
 Stack traces may not be supported on all platforms.
+.It Fl t
+Print timestamps.
+By default, no timestamps are printed.
+If this flag is given once, each line will be prefixed by the current time.
+If this flag is given twice, the time will also include microseconds.
+The printed timestamp corresponds to the time at which printing of the rest of
+the line was initiated, which in the case of call resumption may not be the
+same as the time that the system call was initiated.
 .It Fl V
 Print values only.
 If this flag is given once, numerical values will be printed instead of

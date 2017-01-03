@@ -96,6 +96,7 @@ unsigned int proc_count(void);
 const char *get_signal_name(int sig);
 
 /* trace.c */
+extern int timestamps;
 extern int allnames;
 extern unsigned int verbose;
 extern unsigned int valuesonly;

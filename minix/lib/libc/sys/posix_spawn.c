@@ -265,6 +265,9 @@ posix_spawn(pid_t * __restrict pid, const char * __restrict path,
 			error = errno;
 		close(pfd[0]);
 
+		if (error != 0)
+			(void)waitpid(p, NULL, 0);
+
 		if (pid != NULL)
 			*pid = p;
 		return error;
