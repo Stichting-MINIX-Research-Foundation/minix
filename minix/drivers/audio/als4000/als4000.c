@@ -1,4 +1,5 @@
 #include "als4000.h"
+#include "mixer.h"
 
 /* global value */
 DEV_STRUCT dev;
@@ -6,25 +7,6 @@ aud_sub_dev_conf_t aud_conf[3];
 sub_dev_t sub_dev[3];
 special_file_t special_file[3];
 drv_t drv;
-
-#ifdef MIXER_SB16
-#define SB16_MASTER_LEFT	0x30
-#define SB16_MASTER_RIGHT	0x31
-#define SB16_DAC_LEFT		0x32
-#define SB16_DAC_RIGHT		0x33
-#define SB16_FM_LEFT		0x34
-#define SB16_FM_RIGHT		0x35
-#define SB16_CD_LEFT		0x36
-#define SB16_CD_RIGHT		0x37
-#define SB16_LINE_LEFT		0x38
-#define SB16_LINE_RIGHT		0x39
-#define SB16_MIC_LEVEL		0x3a
-#define SB16_PC_LEVEL		0x3b
-#define SB16_TREBLE_LEFT	0x44
-#define SB16_TREBLE_RIGHT	0x45
-#define SB16_BASS_LEFT		0x46
-#define SB16_BASS_RIGHT		0x47
-#endif
 
 /* internal function */
 static int dev_probe(void);
@@ -35,43 +17,26 @@ static int set_frag_size(u32_t frag_size, int num);
 static int set_sign(u32_t val, int num);
 static int get_frag_size(u32_t *val, int *len, int num);
 static int free_buf(u32_t *val, int *len, int num);
-static void dev_set_default_volume(u32_t base);
 
 /* developer interface */
-static int dev_reset(u32_t base);
-static void dev_configure(u32_t base);
-static void dev_init_mixer(u32_t base);
-static void dev_set_sample_rate(u32_t base, u16_t sample_rate);
-static void dev_set_format(u32_t base, u32_t bits, u32_t sign, 
+static int dev_reset(u32_t *base);
+static void dev_configure(u32_t *base);
+static void dev_init_mixer(u32_t *base);
+static void dev_set_sample_rate(u32_t *base, u16_t sample_rate);
+static void dev_set_format(u32_t *base, u32_t bits, u32_t sign, 
 							u32_t stereo, u32_t sample_count);
-static void dev_start_channel(u32_t base, int sub_dev);
-static void dev_stop_channel(u32_t base, int sub_dev);
-static void dev_set_dac_dma(u32_t base, u32_t dma, u32_t len);
-static void dev_set_adc_dma(u32_t base, u32_t dma, u32_t len);
-static void dev_pause_dma(u32_t base, int sub_dev);
-static void dev_resume_dma(u32_t base, int sub_dev);
-static void dev_intr_other(u32_t base, u32_t status);
+static void dev_start_channel(u32_t *base, int sub_dev);
+static void dev_stop_channel(u32_t *base, int sub_dev);
+static void dev_set_dma(u32_t *base, u32_t dma, u32_t len, int sub_dev);
+static u32_t dev_read_dma_current(u32_t *base, int sub_dev);
+static void dev_pause_dma(u32_t *base, int sub_dev);
+static void dev_resume_dma(u32_t *base, int sub_dev);
+static void dev_intr_other(u32_t *base, u32_t status);
+static u32_t dev_read_clear_intr_status(u32_t *base);
+static void dev_intr_enable(u32_t *base, int flag);
 
-/* ======= Developer-defined function ======= */
+/* ======= Developer implemented function ======= */
 /* ====== Self-defined function ====== */
-/* Write the data to mixer register (AC97 or SB16) (### WRITE_MIXER_REG ###) */
-static void dev_mixer_write(u32_t base, u32_t reg, u32_t val) {
-	sdr_out8(base + REG_SB_BASE, REG_MIXER_ADDR, reg);
-	micro_delay(100);
-	sdr_out8(base + REG_SB_BASE, REG_MIXER_DATA, val);
-	micro_delay(100);
-}
-
-/* Read the data from mixer register (AC97 or SB16) (### READ_MIXER_REG ###) */
-static u32_t dev_mixer_read(u32_t base, u32_t reg) {
-	u32_t res;
-	sdr_out8(base + REG_SB_BASE, REG_MIXER_ADDR, reg);
-	micro_delay(100);
-	res = sdr_in8(base + REG_SB_BASE, REG_MIXER_DATA);
-	micro_delay(100);
-	return res;
-}
-
 static u32_t dev_gcr_read(u32_t base, u32_t reg) {
 	u32_t res;
 	sdr_out8(base, REG_GCR_INDEX, reg);
@@ -92,21 +57,41 @@ static void dev_command(u32_t base, u32_t cmd) {
 			return;
 		}
 	}
+	printf("SDR: Fail to execute SB command\n");
 }
 
-/* ====== Developer interface ======*/
+/* ====== Mixer handling interface ====== */
+/* Write the data to mixer register (### WRITE_MIXER_REG ###) */
+void dev_mixer_write(u32_t *base, u32_t reg, u32_t val) {
+	sdr_out8(base[0] + REG_SB_BASE, REG_MIXER_ADDR, reg);
+	micro_delay(100);
+	sdr_out8(base[0] + REG_SB_BASE, REG_MIXER_DATA, val);
+	micro_delay(100);
+}
 
+/* Read the data from mixer register (### READ_MIXER_REG ###) */
+u32_t dev_mixer_read(u32_t *base, u32_t reg) {
+	u32_t res;
+	sdr_out8(base[0] + REG_SB_BASE, REG_MIXER_ADDR, reg);
+	micro_delay(100);
+	res = sdr_in8(base[0] + REG_SB_BASE, REG_MIXER_DATA);
+	micro_delay(100);
+	return res;
+}
+
+
+/* ====== Developer interface ======*/
 /* Reset the device (### RESET_HARDWARE_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int dev_reset(u32_t base) {
-	int i;
-	sdr_out8(base, REG_SB_RESET, 1);
+static int dev_reset(u32_t *base) {
+	u32_t i, base0 = base[0];
+	sdr_out8(base0, REG_SB_RESET, 1);
 	micro_delay(10);
-	sdr_out8(base, REG_SB_RESET, 0);
+	sdr_out8(base0, REG_SB_RESET, 0);
 	micro_delay(30);
 	for (i = 0; i < 1000; i++) {
-		if (sdr_in8(base + REG_SB_BASE, REG_SB_DATA) & 0x80) {
-			if (sdr_in8(base + REG_SB_BASE, REG_SB_READ) == 0xaa)
+		if (sdr_in8(base0 + REG_SB_BASE, REG_SB_DATA) & 0x80) {
+			if (sdr_in8(base0 + REG_SB_BASE, REG_SB_READ) == 0xaa)
 				break;
 			else
 				return EIO;
@@ -116,35 +101,39 @@ static int dev_reset(u32_t base) {
 }
 
 /* Configure hardware registers (### CONF_HARDWARE ###) */
-static void dev_configure(u32_t base) {
-	u32_t data;
-	data = dev_mixer_read(base, REG_SB_CONFIG | REG_SB_CTRL);
+static void dev_configure(u32_t *base) {
+	u32_t i, data, base0 = base[0];
+	data = dev_mixer_read(base, REG_SB_CONFIG);
 	dev_mixer_write(base, REG_SB_CONFIG | REG_SB_CTRL, 
 							data | CMD_MIXER_WRITE_ENABLE);
 	dev_mixer_write(base, REG_SB_DMA_SETUP, 0x01);
 	dev_mixer_write(base, REG_SB_CONFIG | REG_SB_CTRL, 
 							(data & ~CMD_MIXER_WRITE_ENABLE));
-	data = dev_gcr_read(base, REG_DMA_EM_CTRL);
-	dev_gcr_write(base, REG_DMA_EM_CTRL, (data & ~0x07) | 0x04);
+	for (i = 0x91; i <= 0x96; i++)
+		dev_gcr_write(base0, i, 0);
+	data = dev_gcr_read(base0, REG_DMA_EM_CTRL);
+//	dev_gcr_write(base0, REG_DMA_EM_CTRL, (data & ~0x07) | 0x04);
+	dev_gcr_write(base0, REG_DMA_EM_CTRL, data);
 }
 
 /* Initialize the mixer (### INIT_MIXER ###) */
-static void dev_init_mixer(u32_t base) {
-	dev_mixer_write(base, 0, 0);
+static void dev_init_mixer(u32_t *base) {
+//	dev_mixer_write(base, 0, 0);
 }
 
 /* Set DAC and ADC sample rate (### SET_SAMPLE_RATE ###) */
-static void dev_set_sample_rate(u32_t base, u16_t sample_rate) {
-	dev_command(base, CMD_SAMPLE_RATE_OUT);
-	dev_command(base, sample_rate >> 8);
-	dev_command(base, sample_rate);
+static void dev_set_sample_rate(u32_t *base, u16_t sample_rate) {
+	u32_t base0 = base[0];
+	dev_command(base0, CMD_SAMPLE_RATE_OUT);
+	dev_command(base0, sample_rate >> 8);
+	dev_command(base0, sample_rate & 0xff);
 }
 
+static u32_t rec_format = 0;
 /* Set DAC and ADC format (### SET_FORMAT ###)*/
-static void dev_set_format(u32_t base, u32_t bits, u32_t sign,
+static void dev_set_format(u32_t *base, u32_t bits, u32_t sign,
 							u32_t stereo, u32_t sample_count) {
-	u32_t format = 0, rec_format;
-
+	u32_t format = 0, base0 = base[0];
 	if (bits == 16) {
 		format = CMD_BIT16_AI;
 		rec_format = 0;
@@ -153,16 +142,14 @@ static void dev_set_format(u32_t base, u32_t bits, u32_t sign,
 		format = CMD_BIT8_AI;
 		rec_format = CMD_REC_WIDTH8;
 	}
-	dev_command(base, format);
+	dev_command(base0, format);
 	if (sign == 0) {
 		if (stereo == 1) {
 			format = CMD_UNSIGN_STEREO;
 			rec_format |= CMD_REC_STEREO;
 		}
-		else {
+		else
 			format = CMD_UNSIGN_MONO;
-			rec_format |= CMD_REC_MONO;
-		}
 	}
 	else {
 		rec_format |= CMD_REC_SIGN;
@@ -170,154 +157,119 @@ static void dev_set_format(u32_t base, u32_t bits, u32_t sign,
 			format = CMD_SIGN_STEREO;
 			rec_format |= CMD_REC_STEREO;
 		}
-		else {
+		else
 			format = CMD_SIGN_STEREO;
-			rec_format |= CMD_REC_MONO;
-		}
 	}
-	dev_command(base, format);
-	dev_mixer_write(base, REG_SB_FIFO_CTRL | REG_SB_CTRL, rec_format);
+	dev_command(base0, format);
 	if (bits == 16)
 		sample_count >>= 1;
 	sample_count--;
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, sample_count & 0xff);
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, sample_count >> 8);
-	dev_mixer_write(base, REG_SB_FIFO_LEN_LO, sample_count & 0xff);
-	dev_mixer_write(base, REG_SB_FIFO_LEN_HI, sample_count >> 8);
+	dev_command(base0, sample_count & 0xff);
+	dev_command(base0, sample_count >> 8);
+	dev_mixer_write(base, REG_SB_FIFO_LEN_LO|REG_SB_CTRL, sample_count & 0xff);
+	dev_mixer_write(base, REG_SB_FIFO_LEN_HI|REG_SB_CTRL, sample_count >> 8);
 }
 
 /* Start the channel (### START_CHANNEL ###) */
-static void dev_start_channel(u32_t base, int sub_dev) {
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT16_DMA_ON);
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT8_DMA_ON);
+static void dev_start_channel(u32_t *base, int sub_dev) {
+	u32_t base0 = base[0];
+	dev_command(base0, CMD_SOUND_ON);
+	if (sub_dev == DAC) {
+		dev_command(base0, CMD_BIT16_DMA_ON);
+		dev_command(base0, CMD_BIT8_DMA_ON);
+	}
+	else if (sub_dev == ADC)
+		dev_mixer_write(base, REG_SB_FIFO_CTRL|REG_SB_CTRL, rec_format | 0x80);
 }
 
 /* Stop the channel (### STOP_CHANNEL ###) */
-static void dev_stop_channel(u32_t base, int sub_dev) {
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT16_DMA_OFF);
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT8_DMA_OFF);
+static void dev_stop_channel(u32_t *base, int sub_dev) {
+	u32_t base0 = base[0];
+	if (sub_dev == DAC) {
+		dev_command(base0, CMD_BIT16_DMA_OFF);
+		dev_command(base0, CMD_BIT8_DMA_OFF);
+	}	
+	else if (sub_dev == ADC)
+		dev_mixer_write(base, REG_SB_FIFO_CTRL | REG_SB_CTRL, 0x00);
 }
 
-/* Set DAC DMA address and length (### SET_DAC_DMA ###) */
-static void dev_set_dac_dma(u32_t base, u32_t dma, u32_t len) {
-	dev_gcr_write(base, REG_DAC_DMA_ADDR, dma);
-	dev_gcr_write(base, REG_DAC_DMA_LEN, (len - 1) | 0x180000);
+/* Set DMA address and length (### SET_DMA ###) */
+static void dev_set_dma(u32_t *base, u32_t dma, u32_t len, int sub_dev) {
+	u32_t base0 = base[0];
+	if (sub_dev == DAC) {
+		dev_gcr_write(base0, REG_DAC_DMA_ADDR, dma);
+		dev_gcr_write(base0, REG_DAC_DMA_LEN, (len - 1) | 0x180000);
+	}
+	else if (sub_dev == ADC) {
+		dev_gcr_write(base0, REG_ADC_DMA_ADDR, dma);
+		dev_gcr_write(base0, REG_ADC_DMA_LEN, len - 1);
+	}
 }
 
-/* Set ADC DMA address and length (### SET_ADC_DMA ###) */
-static void dev_set_adc_dma(u32_t base, u32_t dma, u32_t len) {
-	dev_gcr_write(base, REG_ADC_DMA_ADDR, dma);
-	dev_gcr_write(base, REG_ADC_DMA_LEN, len - 1);
+/* Read current address (### READ_DMA_CURRENT_ADDR ###) */
+static u32_t dev_read_dma_current(u32_t *base, int sub_dev) {
+	u32_t data, base0 = base[0];
+	if (sub_dev == DAC)
+		data = dev_gcr_read(base0, REG_DAC_CUR_ADDR);
+	else if (sub_dev == ADC)
+		data = dev_gcr_read(base0, REG_ADC_CUR_ADDR);
+	return data & 0xffff;
 }
 
-/* Pause the DMA */
-static void dev_pause_dma(u32_t base, int sub_dev) {
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT16_DMA_OFF);
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT8_DMA_OFF);
+/* Pause the DMA (### PAUSE_DMA ###) */
+static void dev_pause_dma(u32_t *base, int sub_dev) {
+	u32_t base0 = base[0];
+	if (sub_dev == DAC) {
+		dev_command(base0, CMD_BIT16_DMA_OFF);
+		dev_command(base0, CMD_BIT8_DMA_OFF);
+	}
+	else if (sub_dev == ADC)
+		dev_mixer_write(base, REG_SB_FIFO_CTRL | REG_SB_CTRL, 0x00);
 }
 
-/* Resume the DMA */
-static void dev_resume_dma(u32_t base, int sub_dev) {
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT16_DMA_ON);
-	sdr_out8(base, REG_SB_CMD + REG_SB_BASE, CMD_BIT8_DMA_ON);
+/* Resume the DMA (### RESUME_DMA ###) */
+static void dev_resume_dma(u32_t *base, int sub_dev) {
+	u32_t base0 = base[0];
+	if (sub_dev == DAC) {
+		dev_command(base0, CMD_BIT16_DMA_ON);
+		dev_command(base0, CMD_BIT8_DMA_ON);
+	}
+	else if (sub_dev == ADC)
+		dev_mixer_write(base, REG_SB_FIFO_CTRL|REG_SB_CTRL, rec_format | 0x80);
 }
 
-/* Other interrupt handle */
-static void dev_intr_other(u32_t base, u32_t status) {
-	u32_t data;
+/* Read and clear interrupt status (### READ_CLEAR_INTR_STS ###) 
+ * -- Return interrupt status */
+static u32_t dev_read_clear_intr_status(u32_t *base) {
+	u32_t data, status, base0 = base[0];
+	status = sdr_in8(base0, REG_INTR_STS);
+	sdr_out8(base0, REG_INTR_STS, status);
 	data = dev_mixer_read(base, REG_SB_IRQ_STATUS);
 	if (data & 0x02)
-		sdr_in8(base + REG_SB_BASE, 0x0f);
+		sdr_in8(base0 + REG_SB_BASE, 0x0f);
 	else if (data & 0x01)
-		sdr_in8(base + REG_SB_BASE, 0x0e);
+		sdr_in8(base0 + REG_SB_BASE, 0x0e);
 	else if (data & 0x20)
-		sdr_in8(base, 0x16);
+		sdr_in8(base0, 0x16);
+	return status;
 }
 
-#ifdef MIXER_SB16
-static int get_set_volume(u32_t base, struct volume_level *level, int flag) {
-	int max_level, shift, cmd_left, cmd_right;
-	
-	max_level = 0x1f;
-	shift = 3;
-	/* Check device */
-	switch (level->device) {
-		case Master:
-			cmd_left = SB16_MASTER_LEFT;
-			cmd_right = SB16_MASTER_RIGHT;
-			break;
-		case Dac:
-			cmd_left = SB16_DAC_LEFT;
-			cmd_right = SB16_DAC_RIGHT;
-			break;
-		case Fm:
-			cmd_left = SB16_FM_LEFT;
-			cmd_right = SB16_FM_RIGHT;
-			break;
-		case Cd:
-			cmd_left = SB16_CD_LEFT;
-			cmd_right = SB16_CD_RIGHT;
-			break;
-		case Line:
-			cmd_left = SB16_LINE_LEFT;
-			cmd_left = SB16_LINE_RIGHT;
-			break;
-		case Mic:
-			cmd_left = cmd_right = SB16_MIC_LEVEL;
-			break;
-		case Speaker:
-			cmd_left = cmd_right = SB16_PC_LEVEL;
-			shift = 6;
-			max_level = 0x03;
-			break;
-		case Treble:
-			cmd_left = SB16_TREBLE_LEFT;
-			cmd_right = SB16_TREBLE_RIGHT;
-			shift = 4;
-			max_level = 0x0f;
-			break;
-		case Bass:
-			cmd_left = SB16_BASS_LEFT;
-			cmd_right = SB16_BASS_RIGHT;
-			shift = 4;
-			max_level = 0x0f;
-			break;
-		default:
-			return EINVAL;
-	}
-	/* Set volume */
-	if (flag) {
-		if (level->right < 0)
-			level->right = 0;
-		else if (level->right > max_level)
-			level->right = max_level;
-		if (level->left < 0)
-			level->left = 0;
-		else if (level->left > max_level)
-			level->left = max_level;
-		/* ### WRITE_MIXER_REG ### */
-		dev_mixer_write(base, cmd_left, level->left << shift);
-		/* ### WRITE_MIXER_REG ### */
-		dev_mixer_write(base, cmd_right, level->right << shift);
-	}
-	/* Get volume */
-	else {
-		/* ### READ_MIXER_REG ### */
-		level->left = dev_mixer_read(base, cmd_left);
-		/* ### READ_MIXER_REG ### */
-		level->right = dev_mixer_read(base, cmd_right);
-		level->left >>= shift;
-		level->right >>= shift;
-	}
-	return OK;
+/* Enable or disable interrupt (### INTR_ENABLE_DISABLE ###) */
+static void dev_intr_enable(u32_t *base, int flag) {
+	u32_t data, base0 = base[0];
+	data = dev_gcr_read(base0, REG_INTR_CTRL);
+	if (flag == INTR_ENABLE)
+		dev_gcr_write(base0, REG_INTR_CTRL, data | CMD_INTR_ENABLE);
+	else if (flag == INTR_DISABLE)
+		dev_gcr_write(base0, REG_INTR_CTRL, data & ~CMD_INTR_ENABLE);
 }
-#endif
 
+/* ======= Common driver function ======= */
 /* Probe the device */
 static int dev_probe(void) {
-	u32_t device, size, base;
-	int devind, ioflag;
-	u16_t vid, did;
+	int devind, i, ioflag;
+	u32_t device, bar, size, base;
+	u16_t vid, did, temp;
 	u8_t *reg;
 
 	pci_init();
@@ -330,36 +282,43 @@ static int dev_probe(void) {
 	if (vid != VENDOR_ID || did != DEVICE_ID)
 		return EIO;
 	pci_reserve(devind);
-
-#ifdef DMA_REG_MODE
-	if (pci_get_bar(devind, PCI_BAR, &base, &size, &ioflag)) {
-		printf("SDR: Fail to get PCI BAR\n");
-		return EIO;
+	
+	for (i = 0; i < 6; i++)
+		dev.base[i] = 0;
+#ifdef DMA_BASE_IOMAP
+	for (i = 0; i < 6; i++) {
+		if (pci_get_bar(devind, PCI_BAR + i * 4, &base, &size, &ioflag)) {
+			/* printf("SDR: Fail to get PCI BAR %d\n", i); */
+			continue;
+		}
+		if (ioflag) {
+			/* printf("SDR: PCI BAR %d is not for memory\n", i); */
+			continue;
+		}
+		if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
+			printf("SDR: Fail to map hardware registers from PCI\n");
+			return -EIO;
+		}
+		dev.base[i] = (u32_t)reg;
 	}
-	if (ioflag) {
-		printf("SDR: PCI BAR is not for memory\n");
-		return EIO;
-	}
-	if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
-		printf("SDR: Fail to map hardware registers from PCI\n");
-		return EIO;
-	}
-	dev.base = (u32_t)reg;
 #else
-	dev.base = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
+	/* Get PCI BAR0-5 */
+	for (i = 0; i < 6; i++) 
+		dev.base[i] = pci_attr_r32(devind, PCI_BAR + i * 4) & 0xffffffe0;
 #endif
-
 	dev.name = pci_dev_name(vid, did);
 	dev.irq = pci_attr_r8(devind, PCI_ILR);
 	dev.revision = pci_attr_r8(devind, PCI_REV);
 	dev.did = did;
 	dev.vid = vid;
 	dev.devind = devind;
-	pci_attr_w16(devind, PCI_CR, 0x105);
+	temp = pci_attr_r16(devind, PCI_CR);
+	pci_attr_w16(devind, PCI_CR, temp | 0x105);
 
 #ifdef MY_DEBUG
 	printf("SDR: Hardware name is %s\n", dev.name);
-	printf("SDR: PCI base address is 0x%08x\n", dev.base);
+	for (i = 0; i < 6; i++) 
+		printf("SDR: PCI BAR%d is 0x%08x\n", i, dev.base[i]);
 	printf("SDR: IRQ number is 0x%02x\n", dev.irq);
 #endif
 	return OK;
@@ -419,44 +378,15 @@ static int free_buf(u32_t *val, int *len, int num) {
 /* Get the current sample counter */
 static int get_samples_in_buf(u32_t *result, int *len, int chan) {
 	u32_t res;
-	if (chan == DAC) {
-		/* ### READ_DAC_CURRENT_ADDR ### */
-		res = dev_gcr_read(dev.base, REG_DAC_CUR_ADDR);
-		*result = (u32_t)(sub_dev[chan].BufLength * 8192) + res;
-	}
-	else if (chan == ADC) {
-		/* ### READ_ADC_CURRENT_ADDR ### */
-		res = dev_gcr_read(dev.base, REG_ADC_CUR_ADDR);
-		*result = (u32_t)(sub_dev[chan].BufLength * 8192) + res;
-	}
+	/* READ_DMA_CURRENT_ADDR */
+	res = dev_read_dma_current(dev.base, chan);
+	*result = (u32_t)(sub_dev[chan].BufLength * 8192) + res;
 	return OK;
-}
-
-/* Set default mixer volume */
-static void dev_set_default_volume(u32_t base) {
-#ifdef MIXER_SB16
-	dev_mixer_write(dev.base, SB16_MASTER_LEFT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_MASTER_RIGHT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_DAC_LEFT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_DAC_RIGHT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_FM_LEFT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_FM_RIGHT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_CD_LEFT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_CD_RIGHT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_LINE_LEFT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_LINE_RIGHT, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_MIC_LEVEL, 0x12 << 3);
-	dev_mixer_write(dev.base, SB16_PC_LEVEL, 0x01 << 6);
-	dev_mixer_write(dev.base, SB16_TREBLE_LEFT, 0x08 << 4);
-	dev_mixer_write(dev.base, SB16_TREBLE_RIGHT, 0x08 << 4);
-	dev_mixer_write(dev.base, SB16_BASS_LEFT, 0x08 << 4);
-	dev_mixer_write(dev.base, SB16_BASS_RIGHT, 0x08 << 4);
-#endif
 }
 
 /* ======= [Audio interface] Initialize data structure ======= */
 int drv_init(void) {
-	drv.DriverName = "SDR";
+	drv.DriverName = DRIVER_NAME;
 	drv.NrOfSubDevices = 3;
 	drv.NrOfSpecialFiles = 3;
 
@@ -553,13 +483,15 @@ int drv_start(int sub_dev, int DmaMode) {
 	dev_set_sample_rate(dev.base, aud_conf[sub_dev].sample_rate);
 
 	sample_count = aud_conf[sub_dev].fragment_size;
-#ifdef DMA_FRAME_LENGTH
+#ifdef DMA_LENGTH_BY_FRAME
 	sample_count = sample_count / (aud_conf[sub_dev].nr_of_bits * (aud_conf[sub_dev].stereo + 1) / 8);
 #endif
 	/* Set DAC and ADC format */
 	/* ### SET_FORMAT ### */
 	dev_set_format(dev.base, aud_conf[sub_dev].nr_of_bits,
 			aud_conf[sub_dev].sign, aud_conf[sub_dev].stereo, sample_count); 
+
+	drv_reenable_int(sub_dev);
 
 	/* Start the channel */
 	/* ### START_CHANNEL ### */
@@ -573,9 +505,8 @@ int drv_start(int sub_dev, int DmaMode) {
 int drv_stop(int sub_dev) {
 	u32_t data;
 
-	/* ### DISABLE_INTR ### */
-	data = dev_gcr_read(dev.base, REG_INTR_CTRL);
-	dev_gcr_write(dev.base, REG_INTR_CTRL, data & (~CMD_INTR_ENA));
+	/* INTR_ENABLE_DISABLE */
+	dev_intr_enable(dev.base, INTR_DISABLE);
 
 	/* ### STOP_CHANNEL ### */
 	dev_stop_channel(dev.base, sub_dev);
@@ -586,12 +517,8 @@ int drv_stop(int sub_dev) {
 
 /* ======= [Audio interface] Enable interrupt ======= */
 int drv_reenable_int(int chan) {
-	u32_t data;
-
-	/* ### ENABLE_INTR ### */
-	data = dev_gcr_read(dev.base, REG_INTR_CTRL);
-	dev_gcr_write(dev.base, REG_INTR_CTRL, data & (~CMD_INTR_ENA));
-	dev_gcr_write(dev.base, REG_INTR_CTRL, data | CMD_INTR_ENA);
+	/* INTR_ENABLE_DISABLE */
+	dev_intr_enable(dev.base, INTR_ENABLE);
 	return OK;
 }
 
@@ -661,35 +588,29 @@ int drv_get_frag_size(u32_t *frag_size, int sub_dev) {
 
 /* ======= [Audio interface] Set DMA channel ======= */
 int drv_set_dma(u32_t dma, u32_t length, int chan) {
-#ifdef DMA_FRAME_LENGTH
+#ifdef DMA_LENGTH_BY_FRAME
 	length = length / (aud_conf[chan].nr_of_bits * (aud_conf[chan].stereo + 1) / 8);
 #endif
-	if (chan == DAC) {
-		/* ### SET_DAC_DMA ### */
-		dev_set_dac_dma(dev.base, dma, length);
-	}
-	else if (chan == ADC) {
-		/* ### SET_ADC_DMA ### */
-		dev_set_adc_dma(dev.base, dma, length);
-	}
+	/* ### SET_DMA ### */
+	dev_set_dma(dev.base, dma, length, chan);
 	return OK;
 }
 
 /* ======= [Audio interface] Get interrupt summary status ======= */
 int drv_int_sum(void) {
 	u32_t status;
-	/* ### READ_INTR_STS ### */
-	status = sdr_in8(dev.base, REG_INTR_STS);
-	/* ### CHECK_INTR_DAC ### */ /* ### CHECK_INTR_ADC ### */
+	/* ### READ_CLEAR_INTR_STS ### */
+	status = dev_read_clear_intr_status(dev.base);
+	dev.intr_status = status;
+#ifdef MY_DEBUG
+	printf("SDR: Interrupt status is 0x%08x\n", status);
+#endif
 	return (status & (INTR_STS_DAC | INTR_STS_ADC));
 }
 
 /* ======= [Audio interface] Handle interrupt status ======= */
 int drv_int(int sub_dev) {
-	u32_t status, mask;
-
-	/* ### READ_INTR_STS ### */
-	status = sdr_in8(dev.base, REG_INTR_STS);
+	u32_t mask;
 
 	/* ### CHECK_INTR_DAC ### */
 	if (sub_dev == DAC)
@@ -698,18 +619,9 @@ int drv_int(int sub_dev) {
 	else if (sub_dev == ADC)
 		mask = INTR_STS_ADC;
 	else
-		return EINVAL;
-	/* ### CLEAR_INTR_STS ### */
-	sdr_out8(dev.base, REG_INTR_STS, CMD_INTR_CLR);
+		return 0;
 
-	/* ### OTHER_INTR_HANDLE ###*/
-	dev_intr_other(dev.base, status);
-
-	drv_reenable_int(sub_dev);
-#ifdef MY_DEBUG
-	printf("SDR: Interrupt status is 0x%08x\n", status);
-#endif
-	return status & mask;
+	return dev.intr_status & mask;
 }
 
 /* ======= [Audio interface] Pause DMA ======= */
