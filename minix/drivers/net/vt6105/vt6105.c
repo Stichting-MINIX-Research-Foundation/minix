@@ -54,7 +54,11 @@ static void vt_init_rx_desc(vt_desc *desc, size_t size, phys_bytes dma) {
 /* Intialize Tx descriptor (### TX_DESC_INIT ###) */
 static void vt_init_tx_desc(vt_desc *desc, size_t size, phys_bytes dma) {
 	desc->addr = dma;
+<<<<<<< HEAD
+	desc->length = size;	
+=======
 	desc->length = size;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 }
 
 /* Real hardware reset (### RESET_HARDWARE_CAN_FAIL ###)
@@ -68,7 +72,11 @@ static int vt_real_reset(u32_t base) {
 		if (vt_in16(base, REG_CR) & CMD_RESET)
 			return -EIO;
 	}
+<<<<<<< HEAD
+	return OK;	
+=======
 	return OK;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 }
 
 /* Intialize power (### POWER_INIT_CAN_FAIL ###)
@@ -109,7 +117,11 @@ static void vt_get_addr(u32_t base, u8_t *pa) {
 		pa[i] = vt_in8(base, REG_ADDR + i);
 }
 
+<<<<<<< HEAD
+/* Check link status (### CHECK_LINK ###) 
+=======
 /* Check link status (### CHECK_LINK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return LINK_UP or LINK_DOWN */
 static int vt_check_link(u32_t base) {
 	u32_t r;
@@ -128,17 +140,29 @@ static void vt_stop_rx_tx(u32_t base) {
 	vt_out16(base, REG_CR, CMD_STOP);
 }
 
+<<<<<<< HEAD
+/* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###) 
+=======
 /* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return TRUE or FALSE */
 static int vt_rx_status_ok(vt_desc *desc) {
 	if (!(desc->status & DESC_OWN)) {
 		if ((desc->status & DESC_RX_NORMAL) == DESC_RX_NORMAL)
 			return TRUE;
+<<<<<<< HEAD
+	} 
+	return FALSE;
+}
+
+/* Get Rx data length from descriptor (### GET_RX_LEN ###) 
+=======
 	}
 	return FALSE;
 }
 
 /* Get Rx data length from descriptor (### GET_RX_LEN ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * --- Return the length */
 static int vt_get_rx_len(vt_desc *desc) {
 	int len;
@@ -160,7 +184,11 @@ static void vt_wakeup_tx(u32_t base) {
 	vt_out8(base, REG_CR, cmd);
 }
 
+<<<<<<< HEAD
+/* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###) 
+=======
 /* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###)
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
  * -- Return TRUE or FALSE */
 static int vt_tx_status_ok(vt_desc *desc) {
 	if (!(desc->status & DESC_OWN))
@@ -278,7 +306,11 @@ static int vt_probe(vt_driver *pdev, int instance) {
 	}
 	pdev->base_addr = bar;
 #endif
+<<<<<<< HEAD
+	
+=======
 
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	/* Get irq number */
 	irq = pci_attr_r8(devind, PCI_ILR);
 	pdev->irq = irq;
@@ -525,16 +557,28 @@ static void vt_conf_addr(vt_driver *pdev, ether_addr_t *addr) {
 }
 
 /* Stop the driver */
+<<<<<<< HEAD
+static void vt_stop(void) {	
+=======
 static void vt_stop(void) {
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	u32_t base = g_driver.base_addr;
 
 	/* Free Rx and Tx buffer*/
 	free_contig(g_driver.buf, g_driver.buf_size);
+<<<<<<< HEAD
 
 	/* Stop interrupt */
 	/* ### DISABLE_INTR ### */
 	vt_out16(base, REG_IMR, INTR_IMR_DISABLE);
 
+=======
+
+	/* Stop interrupt */
+	/* ### DISABLE_INTR ### */
+	vt_out16(base, REG_IMR, INTR_IMR_DISABLE);
+
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	/* Stop Rx/Tx */
 	/* ### STOP_RX_TX ### */
 	vt_stop_rx_tx(base);
@@ -669,7 +713,11 @@ static void vt_intr(unsigned int mask) {
 
 /* Real handler interrupt */
 static void vt_handler(vt_driver *pdev) {
+<<<<<<< HEAD
+	u32_t base = pdev->base_addr;	
+=======
 	u32_t base = pdev->base_addr;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	u16_t intr_status;
 	int flag = 0, tx_head, tx_tail;
 	vt_desc *desc;
@@ -678,7 +726,11 @@ static void vt_handler(vt_driver *pdev) {
 	/* ### GET_INTR_STATUS ### */
 	intr_status = vt_in16(base, REG_ISR);
 
+<<<<<<< HEAD
+	/* Clear interrupt */	
+=======
 	/* Clear interrupt */
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 	/* ### CLEAR_INTR ### */
 	vt_out16(base, REG_ISR, intr_status & INTR_ISR_CLEAR);
 
@@ -706,7 +758,11 @@ static void vt_handler(vt_driver *pdev) {
 	/* Check Rx request status */
 	/* ### CHECK_RX_INTR ### */
 	if (intr_status & INTR_ISR_RX_DONE) {
+<<<<<<< HEAD
+		pdev->recv_flag = TRUE;	
+=======
 		pdev->recv_flag = TRUE;
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 		flag++;
 	}
 
@@ -738,7 +794,11 @@ static void vt_handler(vt_driver *pdev) {
 			pdev->stat.ets_packetT++;
 			pdev->tx[tx_tail].busy = FALSE;
 			pdev->tx_busy_num--;
+<<<<<<< HEAD
+			
+=======
 
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 			if (++tx_tail >= TX_DESC_NUM)
 				tx_tail = 0;
 
@@ -780,5 +840,9 @@ static void vt_check_ints(vt_driver *pdev) {
 }
 
 static void vt_stat(eth_stat_t *stat) {
+<<<<<<< HEAD
+	memcpy(stat, &g_driver.stat, sizeof(*stat));	
+=======
 	memcpy(stat, &g_driver.stat, sizeof(*stat));
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 }

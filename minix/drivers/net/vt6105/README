@@ -1,6 +1,6 @@
 The vt6105 driver is for VIA Technology 6105/6106S Ethernet card.
 
-This driver is referred to Minix(3.4.0) rtl8169 driver,
+This driver is referred to Minix(3.4.0) rtl8169 driver, 
 Linux(4.2.1) via-rhine driver and VT6105 Rhine III Specification(Rev 1.2).
 
 Revision 1.0 2016/10/18
@@ -10,7 +10,11 @@ Revision 1.1 2016/11/12
 Modification: Remove and rewrite Linux-derived code
 Authored by Jia-Ju Bai <baijiaju1990@163.com>
 
+<<<<<<< HEAD
+Something can be improved: 
+=======
 Something can be improved:
+>>>>>>> 3f862305f83a4a0421b5952d0686bebd9aeee0bc
 1. MII, WOL functions are not adequately defined and used.
 2. Link status report does not work well.
 3. Ethernet address can not be modified at present.
