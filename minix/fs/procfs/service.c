@@ -41,6 +41,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		const char *policy_str;
 	} def_pol[] = {
 		/* audio */
+		{ .label = "cmi8738", .policy_str = "reset" },
 		{ .label = "es1370", .policy_str = "reset" },
 		{ .label = "es1371", .policy_str = "reset" },
 		{ .label = "sb16", .policy_str = "reset" },

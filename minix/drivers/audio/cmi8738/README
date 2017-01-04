@@ -1,0 +1,7 @@
+The cmi8738 driver is for C-Media 8738/8768 sound card.
+
+This driver is referred to Minix(3.4.0) es1371 driver,
+Linux(4.2.1) snd_cmipci driver and CMI8738 Audio Specification(Rev 2.2).
+
+Revision 1.0 2016/12/16
+Authored by Jia-Ju Bai <baijiaju1990@163.com>

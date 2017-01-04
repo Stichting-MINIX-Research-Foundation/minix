@@ -8,6 +8,7 @@
 ./etc/system.conf.d/3c90x                               minix-base
 ./etc/system.conf.d/amddev                              minix-base
 ./etc/system.conf.d/atl2                                minix-base
+./etc/system.conf.d/cmi8738                             minix-base
 ./etc/system.conf.d/dec21140A                           minix-base
 ./etc/system.conf.d/dp8390                              minix-base
 ./etc/system.conf.d/dpeth                               minix-base
@@ -31,6 +32,7 @@
 ./service/amddev                                        minix-base
 ./service/at_wini                                       minix-base
 ./service/atl2                                          minix-base
+./service/cmi8738                                       minix-base
 ./service/dec21140A                                     minix-base
 ./service/dp8390                                        minix-base
 ./service/dpeth                                         minix-base
