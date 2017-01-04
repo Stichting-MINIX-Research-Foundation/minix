@@ -6,6 +6,7 @@
 # mv out mi
 #
 ./etc/system.conf.d/3c90x                               minix-base
+./etc/system.conf.d/als4000                             minix-base
 ./etc/system.conf.d/amddev                              minix-base
 ./etc/system.conf.d/atl2                                minix-base
 ./etc/system.conf.d/cmi8738                             minix-base
@@ -29,6 +30,7 @@
 ./service/3c90x                                         minix-base
 ./service/acpi                                          minix-base
 ./service/ahci                                          minix-base
+./service/als4000                                       minix-base
 ./service/amddev                                        minix-base
 ./service/at_wini                                       minix-base
 ./service/atl2                                          minix-base
