@@ -1,0 +1,7 @@
+The trident driver is for Trident 4DWAVE-DX sound card.
+
+This driver is referred to Minix(3.4.0) es1371 driver,
+FreeBSD t4dwave driver and Trident 4DWAVE-DX Manual(Rev 1.1).
+
+Revision 1.0 2016/12/28
+Authored by Jia-Ju Bai <baijiaju1990@163.com>

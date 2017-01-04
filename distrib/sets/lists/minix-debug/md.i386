@@ -39,6 +39,7 @@
 ./usr/libdata/debug/service/rtl8169.debug               minix-debug     debug
 ./usr/libdata/debug/service/sb16.debug                  minix-debug     debug
 ./usr/libdata/debug/service/ti1225.debug                minix-debug     debug
+./usr/libdata/debug/service/trident.debug               minix-debug     debug
 ./usr/libdata/debug/service/vbfs.debug                  minix-debug     debug
 ./usr/libdata/debug/service/vbox.debug                  minix-debug     debug
 ./usr/libdata/debug/service/virtio_blk.debug            minix-debug     debug

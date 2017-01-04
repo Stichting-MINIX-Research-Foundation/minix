@@ -7,6 +7,7 @@ SUBDIR+=	cs4281
 SUBDIR+=	es1370
 SUBDIR+=	es1371
 SUBDIR+=	sb16
+SUBDIR+=	trident
 .endif # ${MACHINE_ARCH} == "i386"
 
 .include <bsd.subdir.mk>

@@ -47,6 +47,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "es1370", .policy_str = "reset" },
 		{ .label = "es1371", .policy_str = "reset" },
 		{ .label = "sb16", .policy_str = "reset" },
+		{ .label = "trident", .policy_str = "reset" },
 		/* bus */
 		{ .label = "i2c", .policy_str = "restart" },
 		{ .label = "pci", .policy_str = "restart" },
