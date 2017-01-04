@@ -43,6 +43,7 @@ service_get_policies(struct policies * pol, index_t slot)
 		/* audio */
 		{ .label = "als4000", .policy_str = "reset" },
 		{ .label = "cmi8738", .policy_str = "reset" },
+		{ .label = "cs4281", .policy_str = "reset" },
 		{ .label = "es1370", .policy_str = "reset" },
 		{ .label = "es1371", .policy_str = "reset" },
 		{ .label = "sb16", .policy_str = "reset" },

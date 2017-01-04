@@ -18,6 +18,7 @@
 ./usr/libdata/debug/service/at_wini.debug               minix-debug     debug
 ./usr/libdata/debug/service/atl2.debug                  minix-debug     debug
 ./usr/libdata/debug/service/cmi8738.debug               minix-debug     debug
+./usr/libdata/debug/service/cs4281.debug                minix-debug     debug
 ./usr/libdata/debug/service/dec21140A.debug             minix-debug     debug
 ./usr/libdata/debug/service/dp8390.debug                minix-debug     debug
 ./usr/libdata/debug/service/dpeth.debug                 minix-debug     debug
