@@ -5,11 +5,11 @@
 /*=========================================================================*
  *				env_prefix				   *
  *=========================================================================*/
-int env_prefix(env, prefix)
-char *env;		/* environment variable to inspect */
-char *prefix;		/* prefix to test for */
+int env_prefix(const char *env, const char *prefix)
 {
 /* An environment setting may be prefixed by a word, usually "pci".  
+ * - env: environment variable to inspect
+ * - prefix: prefix to test for
  * Return TRUE if a given prefix is used.
  */
   char value[EP_BUF_SIZE];

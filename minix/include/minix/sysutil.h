@@ -36,8 +36,8 @@ extern char **env_argv;
 
 void env_setargs(int argc, char *argv[]);
 int env_get_param(const char *key, char *value, int max_size);
-int env_prefix(char *env, char *prefix);
-void env_panic(const char *key);
+int env_prefix(const char *env, const char *prefix);
+void __dead env_panic(const char *key);
 int env_parse(const char *env, const char *fmt, int field,
 	long *param, long min, long max);
 

@@ -18,7 +18,6 @@
 #include <minix/bitmap.h>
 #include <string.h>
 #include <errno.h>
-#include <env.h>
 #include <unistd.h>
 #include <assert.h>
 #include <sys/param.h>

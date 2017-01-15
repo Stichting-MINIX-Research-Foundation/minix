@@ -19,7 +19,6 @@
 #include <minix/rs.h>
 #include <string.h>
 #include <errno.h>
-#include <env.h>
 #include <unistd.h>
 #include <assert.h>
 #include <sys/cdefs.h>

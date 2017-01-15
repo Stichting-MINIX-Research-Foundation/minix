@@ -17,7 +17,6 @@
 
 #include <string.h>
 #include <errno.h>
-#include <env.h>
 #include <assert.h>
 
 #include "glo.h"

@@ -292,7 +292,7 @@
 ./usr/include/disktab.h                                 minix-comp
 ./usr/include/dlfcn.h                                   minix-comp
 ./usr/include/elf.h                                     minix-comp
-./usr/include/env.h                                     minix-comp
+./usr/include/env.h                                     minix-comp      obsolete
 ./usr/include/err.h                                     minix-comp
 ./usr/include/errno.h                                   minix-comp
 ./usr/include/eti.h                                     minix-comp

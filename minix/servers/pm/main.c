@@ -25,7 +25,6 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <machine/archtypes.h>
-#include <env.h>
 #include <assert.h>
 #include "mproc.h"
 

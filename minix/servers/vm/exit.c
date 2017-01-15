@@ -16,7 +16,6 @@
 
 #include <errno.h>
 #include <assert.h>
-#include <env.h>
 
 #include "glo.h"
 #include "proto.h"

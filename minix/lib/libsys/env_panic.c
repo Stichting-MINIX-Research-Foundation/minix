@@ -1,6 +1,5 @@
 #include "sysutil.h"
 #include <string.h>
-#include <env.h>
 
 /*=========================================================================*
  *				env_panic				   *

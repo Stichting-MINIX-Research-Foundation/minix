@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <env.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>

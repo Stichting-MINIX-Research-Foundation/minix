@@ -23,7 +23,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <env.h>
 #include <stdio.h>
 #include <assert.h>
 
