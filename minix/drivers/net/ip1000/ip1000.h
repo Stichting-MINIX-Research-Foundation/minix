@@ -1,59 +1,46 @@
-#ifndef _ic_H
-#define _ic_H
-
-#include <minix/drivers.h>
+#ifndef _NDR_H
+#define _NDR_H
 
 /* ======= General Parameter ======= */
 /* Global configure */
-#define DESC_BASE64
 
-/* Key internal register */
-#define REG_RCR				0x88
-#define REG_ISR				0x5a
-#define REG_IMR				0x5c
-#define REG_RX_DESC_BASEL	0x1c
-#define REG_TX_DESC_BASEL	0x10
+#include <minix/drivers.h>
 
-#ifdef DESC_BASE_DMA64
-#define REG_RX_DESC_BASEU	0x20
-#define REG_TX_DESC_BASEU	0x14
-#endif
+#define DRIVER_NAME		"IP1000"
 
-/* Key internal register width */
-#define WIDTH_REG_RCR		8
-#define WIDTH_REG_ISR		16
-#define WIDTH_REG_IMR		16
+/* Rx/Tx buffer parameter */
+#define RX_BUF_SIZE		1536
+#define TX_BUF_SIZE		1536
+#define RX_BUFFER_NUM	64
+#define TX_BUFFER_NUM	64
 
-/* Interrupt statu and command */
-#define INTR_ISR_ERR			0x0002
-#define INTR_ISR_LINK_EVENT		0x0100
-#define INTR_ISR_RX_DONE		0x0400
-#define INTR_ISR_TX_DONE		0x0200
-#define INTR_ISR_CLEAR			0x0000
-#define INTR_IMR_ENABLE			0x17f6
-#define INTR_IMR_DISABLE		0x0000
-
-/* Descriptor status */
-#define DESC_STATUS_RX_RECV_ERR		0x00000000003f0000ULL
-#define DESC_STATUS_RX_RECV_CLEAR	0x0000000000000000ULL
-#define DESC_STATUS_TX_SEND_ERR		0x0000000000000000ULL
-#define DESC_STATUS_TX_SEND_CLEAR	0x0000000000000000ULL
-
-/* Rx mode */
-#define RCR_UNICAST		0x01
-#define RCR_MULTICAST	0x02
-#define RCR_BROADCAST	0x04
+/* Interrupt status */
+#define INTR_STS_LINK	0x0100
+#define INTR_STS_RX		0x0400
+#define INTR_STS_TX		0x0200
 
 /* Link status */
 #define LINK_UP			1
 #define LINK_DOWN		0
 #define LINK_UNKNOWN	-1
 
-/* Basic Rx/Tx parameters */
-#define RX_BUF_SIZE		1536
-#define TX_BUF_SIZE		1536
-#define RX_DESC_NUM		256
-#define TX_DESC_NUM		256
+/* Interrupt control */
+#define INTR_ENABLE		1
+#define INTR_DISABLE	0
+
+/* Rx status */
+#define RX_ERROR		1
+#define RX_OK			0
+#define RX_SUSPEND		-1
+
+/* Tx status */
+#define TX_ERROR		1
+#define TX_OK			0
+#define TX_SUSPEND		-1
+
+/* Rx/Tx control */
+#define RX_TX_ENABLE	1
+#define RX_TX_DISABLE	0
 
 /* ======= Self-defined Parameter ======= */
 #define RFI_FRAG_LEN		0xffff000000000000ULL
@@ -61,6 +48,7 @@
 #define RFS_FRAME_START		0x0000000020000000ULL
 #define RFS_FRAME_END		0x0000000040000000ULL
 #define RFS_RFD_DONE		0x0000000080000000ULL
+#define RFS_ERROR			0x00000000003f0000ULL
 #define RFS_NORMAL			(RFS_RFD_DONE | RFS_FRAME_START | RFS_FRAME_END)
 
 #define TFI_FRAG_LEN		0xffff000000000000ULL
@@ -71,9 +59,13 @@
 #define TFS_TFD_DONE		0x0000000080000000ULL
 
 #define REG_DMA_CTRL		0x00
+#define REG_TX_DESC_BASEL	0x10
+#define REG_TX_DESC_BASEU	0x14
 #define REG_TX_DMA_BTH		0x18
 #define REG_TX_DMA_UTH		0x19
 #define REG_TX_DMA_PERIOD	0x1a
+#define REG_RX_DESC_BASEL	0x1c
+#define REG_RX_DESC_BASEU	0x20
 #define REG_RX_DMA_BTH		0x24
 #define REG_RX_DMA_UTH		0x25
 #define REG_RX_DMA_PERIOD	0x26
@@ -82,6 +74,8 @@
 #define REG_FLOW_ON_TH		0x3e
 #define REG_EEPROM_DATA		0x48
 #define REG_EEPROM_CTRL		0x4a
+#define REG_ISR				0x5a
+#define REG_IMR				0x5c
 #define REG_MAC_CTRL		0x6c
 #define REG_PHY_SET			0x75
 #define REG_PHY_CTRL		0x76
@@ -89,6 +83,7 @@
 #define REG_STA_ADDR1		0x7a
 #define REG_STA_ADDR2		0x7c
 #define REG_MAX_FRAME		0x86
+#define REG_RCR				0x88
 
 #define AC_LED_MODE		0x00004000
 #define AC_GB_RESET		0x00010000
@@ -121,6 +116,12 @@
 #define PC_LINK_SPEED100	0x80
 #define PC_LINK_SPEED1000	0xc0
 
+#define CMD_INTR_ENABLE		0x17e6
+#define CMD_RCR_UNICAST		0x01
+#define CMD_RCR_MULTICAST	0x02
+#define CMD_RCR_BROADCAST	0x04
+#define CMD_TX_START		0x1000
+
 #define EC_READ		0x0200
 #define EC_BUSY		0x8000
 
@@ -136,22 +137,26 @@ static u16_t PhyParam[] = {
 };
 
 /* ======= Data Descriptor ======= */
-typedef struct ic_desc {
-	u64_t next;;
-	u64_t status;;
-	u64_t frag_info;;
-} ic_desc;
+typedef struct NDR_desc {
+	u64_t next;
+	u64_t status;
+	u64_t frag_info;
+} NDR_desc;
 
 /* Driver Data Structure */
-typedef struct ic_driver {
-	u32_t base_addr;		/* Base address */
-	int revision;			/* Revision ID */
-	int irq;				/* IRQ number */
+typedef struct NDR_driver {
+	char *dev_name;			/* Device name */
+	u16_t vid, did;			/* Vendor and device ID */
+	u32_t devind;			/* Device index */
+	u32_t base[6];			/* Base address */
+	char irq;				/* IRQ number */
+	char revision;			/* Revision ID */
+
 	int mode;
 	int link;				/* Whether link-up */
 	int recv_flag;			/* Receive flag */
 	int send_flag;			/* Send flag */
-	int tx_busy;
+	int tx_busy;			/* Whether Tx is busy */
 
 	/* Buffer */
 	size_t buf_size;
@@ -162,9 +167,7 @@ typedef struct ic_driver {
 	struct {
 		phys_bytes buf_dma;
 		char *buf;
-	} rx[RX_DESC_NUM];
-	ic_desc *rx_desc;			/* Rx descriptor buffer */
-	phys_bytes rx_desc_dma;		/* Rx descriptor DMA buffer */
+	} rx[RX_BUFFER_NUM];
 
 	/* Tx data */
 	int tx_head;
@@ -173,15 +176,17 @@ typedef struct ic_driver {
 		int busy;
 		phys_bytes buf_dma;
 		char *buf;
-	} tx[TX_DESC_NUM];
-	ic_desc *tx_desc;			/* Tx descriptor buffer */
+	} tx[TX_BUFFER_NUM];
+	int tx_busy_num;			/* Number of busy Tx buffer */
+
+	NDR_desc *rx_desc;			/* Rx descriptor buffer */
+	phys_bytes rx_desc_dma;		/* Rx descriptor DMA buffer */
+	NDR_desc *tx_desc;			/* Tx descriptor buffer */
 	phys_bytes tx_desc_dma;		/* Tx descriptor DMA buffer */
-	int tx_busy_num;			/* Number of busy Tx descriptors */
 
-	int hook;		/* IRQ hook id at kernel */
-	eth_stat_t stat;
-
-	char name[20];
-} ic_driver;
+	int hook;			/* IRQ hook id at kernel */
+	eth_stat_t stat;	/* Ethernet status */
+	char name[50];		/* Driver name */
+} NDR_driver;
 
 #endif

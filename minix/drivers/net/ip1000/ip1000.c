@@ -1,62 +1,70 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 #include <machine/pci.h>
+#include <sys/mman.h>
 #include "ip1000.h"
 #include "io.h"
 
 /* global value */
-static ic_driver g_driver;
+static NDR_driver g_driver;
 static int g_instance;
 
 /* driver interface */
-static int ic_init(unsigned int instance, ether_addr_t *addr);
-static void ic_stop(void);
-static void ic_mode(unsigned int mode);
-static ssize_t ic_recv(struct netdriver_data *data, size_t max);
-static int ic_send(struct netdriver_data *data, size_t size);
-static void ic_intr(unsigned int mask);
-static void ic_stat(eth_stat_t *stat);
+static int NDR_init(unsigned int instance, ether_addr_t *addr);
+static void NDR_stop(void);
+static void NDR_mode(unsigned int mode);
+static ssize_t NDR_recv(struct netdriver_data *data, size_t max);
+static int NDR_send(struct netdriver_data *data, size_t size);
+static void NDR_intr(unsigned int mask);
+static void NDR_stat(eth_stat_t *stat);
 
 /* internal function */
-static int ic_probe(ic_driver *pdev, int instance);
-static int ic_init_buf(ic_driver *pdev);
-static int ic_init_hw(ic_driver *pdev, ether_addr_t *addr);
-static int ic_reset_hw(ic_driver *pdev);
-static void ic_conf_addr(ic_driver *pdev, ether_addr_t *addr);
-static void ic_handler(ic_driver *pdev);
-static void ic_check_ints(ic_driver *pdev);
+static int dev_probe(NDR_driver *pdev, int instance);
+static int dev_init_buf(NDR_driver *pdev);
+static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr);
+static int dev_reset_hw(NDR_driver *pdev);
+static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr);
+static void dev_handler(NDR_driver *pdev);
+static void dev_check_ints(NDR_driver *pdev);
 
 /* developer interface */
-static void ic_init_rx_desc(ic_desc *desc, size_t size, phys_bytes dma);
-static void ic_init_tx_desc(ic_desc *desc, size_t size, phys_bytes dma);
-static int ic_real_reset(u32_t base);
-static int ic_init_power(u32_t base);
-static int ic_init_mii(u32_t base);
-static int ic_init_io(u32_t base);
-static void ic_start_rx_tx(u32_t base);
-static void ic_get_addr(u32_t base, u8_t *pa);
-static int ic_check_link(u32_t base);
-static void ic_stop_rx_tx(u32_t base);
-static int ic_rx_status_ok(ic_desc *desc);
-static int ic_get_rx_len(ic_desc *desc);
-static void ic_tx_desc_start(ic_desc *desc, size_t size);
-static void ic_wakeup_tx(u32_t base);
-static int ic_tx_status_ok(ic_desc *desc);
+static int dev_real_reset(u32_t *base);
+static int dev_init_io(u32_t *base);
+static int dev_init_mii(u32_t *base);
+static void dev_intr_control(u32_t *base, int flag);
+static void dev_rx_tx_control(u32_t *base, int flag);
+static void dev_get_addr(u32_t *base, u8_t *pa);
+static int dev_check_link(u32_t *base);
+static void dev_set_rec_mode(u32_t *base, int mode);
+static void dev_start_tx(u32_t *base);
+static u32_t dev_read_clear_intr_status(u32_t *base);
+static void dev_init_rx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
+static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
+static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+								phys_bytes tx_addr);
+static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index);
+static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+										size_t data_size);
+static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index);
 
-/* ======= Developer-defined function ======= */
+/* ======= Developer implemented function ======= */
 /* ====== Self-defined function ======*/
-
 static u16_t read_eeprom(u32_t base, int addr) {
-	u16_t ret, data, val;
+	u32_t ret, data, val;
 	int i;
 
 	val = EC_READ | (addr & 0xff);
-	ic_out16(base, REG_EEPROM_CTRL, val);
+	ndr_out16(base, REG_EEPROM_CTRL, val);
 	for (i = 0; i < 100; i++) {
 		micro_delay(10000);
-		data = ic_in16(base, REG_EEPROM_CTRL);
+		data = ndr_in16(base, REG_EEPROM_CTRL);
 		if (!(data & EC_BUSY)) {
-			ret = ic_in16(base, REG_EEPROM_DATA);
+			ret = ndr_in16(base, REG_EEPROM_DATA);
 			break;
 		}
 	}
@@ -73,48 +81,48 @@ static u16_t read_phy_reg(u32_t base, int phy_addr, int phy_reg) {
 	field[0] = 0xffffffff;		fieldlen[0] = 32;
 	field[1] = 0x0001;		fieldlen[1] = 2;
 	field[2] = 0x0002;		fieldlen[2] = 2;
-	field[3] = phy_addr;	fieldlen[3] = 5;
+	field[3] = phy_addr;		fieldlen[3] = 5;
 	field[4] = phy_reg;		fieldlen[4] = 5;
 	field[5] = 0x0000;		fieldlen[5] = 2;
 	field[6] = 0x0000;		fieldlen[6] = 16;
 	field[7] = 0x0000;		fieldlen[7] = 1;
 
-	polar = ic_in8(base, REG_PHY_CTRL) & 0x28;
+	polar = ndr_in8(base, REG_PHY_CTRL) & 0x28;
 	for (i = 0; i < 5; i++) {
 		for (j = 0; j < fieldlen[i]; j++) {
 			data = (field[i] >> (fieldlen[i] - j - 1)) << 1;
 			data = (0x02 & data) | (0x04 | polar);
-			ic_out8(base, REG_PHY_CTRL, data);
+			ndr_out8(base, REG_PHY_CTRL, data);
 			micro_delay(10);
-			ic_out8(base, REG_PHY_CTRL, (data | 0x01));
+			ndr_out8(base, REG_PHY_CTRL, (data | 0x01));
 			micro_delay(10);
 		}
 	}
-	ic_out8(base, REG_PHY_CTRL, (polar | 0x04));
+	ndr_out8(base, REG_PHY_CTRL, (polar | 0x04));
 	micro_delay(10);
-	ic_out8(base, REG_PHY_CTRL, (polar | 0x05));
+	ndr_out8(base, REG_PHY_CTRL, (polar | 0x05));
 	micro_delay(10);
-	ic_out8(base, REG_PHY_CTRL, polar);
+	ndr_out8(base, REG_PHY_CTRL, polar);
 	micro_delay(10);
-	data = ic_in8(base, REG_PHY_CTRL);
-	ic_out8(base, REG_PHY_CTRL, (polar | 0x01));
+	data = ndr_in8(base, REG_PHY_CTRL);
+	ndr_out8(base, REG_PHY_CTRL, (polar | 0x01));
 	micro_delay(10);
 	for (i = 0; i < fieldlen[6]; i++) {
-		ic_out8(base, REG_PHY_CTRL, polar);
+		ndr_out8(base, REG_PHY_CTRL, polar);
 		micro_delay(10);
-		data = ((ic_in8(base, REG_PHY_CTRL) & 0x02) >> 1) & 0x01;
-		ic_out8(base, REG_PHY_CTRL, (polar | 0x01));
+		data = ((ndr_in8(base, REG_PHY_CTRL) & 0x02) >> 1) & 0x01;
+		ndr_out8(base, REG_PHY_CTRL, (polar | 0x01));
 		micro_delay(10);
 		field[6] |= (data << (fieldlen[6] - i - 1));
 	}
 
 	for (i = 0; i < 3; i++) {
-		ic_out8(base, REG_PHY_CTRL, (polar | 0x04));
+		ndr_out8(base, REG_PHY_CTRL, (polar | 0x04));
 		micro_delay(10);
-		ic_out8(base, REG_PHY_CTRL, (polar | 0x05));
+		ndr_out8(base, REG_PHY_CTRL, (polar | 0x05));
 		micro_delay(10);
 	}
-	ic_out8(base, REG_PHY_CTRL, (polar | 0x04));
+	ndr_out8(base, REG_PHY_CTRL, (polar | 0x04));
 	return field[6];
 }
 
@@ -132,63 +140,46 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 	field[6] = val;			fieldlen[6] = 16;
 	field[7] = 0x0000;		fieldlen[7] = 1;
 
-	polar = ic_in8(base, REG_PHY_CTRL) & 0x28;
+	polar = ndr_in8(base, REG_PHY_CTRL) & 0x28;
 	for (i = 0; i < 7; i++) {
 		for (j = 0; j < fieldlen[i]; j++) {
 			data = (field[i] >> (field[j] - j - 1)) << 1;
 			data = (0x02 & data) | (0x04 | polar);
-			ic_out8(base, REG_PHY_CTRL, data);
+			ndr_out8(base, REG_PHY_CTRL, data);
 			micro_delay(10);
-			ic_out8(base, REG_PHY_CTRL, (data | 0x01));
+			ndr_out8(base, REG_PHY_CTRL, (data | 0x01));
 			micro_delay(10);
 		}
 	}
 	for (i = 0; i < fieldlen[7]; i ++) {
-		ic_out8(base, REG_PHY_CTRL, polar);
+		ndr_out8(base, REG_PHY_CTRL, polar);
 		micro_delay(10);
-		field[7] |= ((ic_in8(base, REG_PHY_CTRL) & 0x02) >> 1)
+		field[7] |= ((ndr_in8(base, REG_PHY_CTRL) & 0x02) >> 1)
 						<< (fieldlen[7] - i -1);
-		ic_out8(base, REG_PHY_CTRL, (data | 0x01));
+		ndr_out8(base, REG_PHY_CTRL, (data | 0x01));
 		micro_delay(10);
 	}
 }
 
 /* ====== Developer interface ======*/
-
-/* Intialize Rx descriptor (### RX_DESC_INIT ###) */
-static void ic_init_rx_desc(ic_desc *desc, size_t size, phys_bytes dma) {
-	desc->status = 0x0000000000000000ULL;
-	desc->frag_info = (u64_t)dma;
-	desc->frag_info |= ((u64_t)size << 48) & RFI_FRAG_LEN;
-}
-
-/* Intialize Tx descriptor (### TX_DESC_INIT ###) */
-static void ic_init_tx_desc(ic_desc *desc, size_t size, phys_bytes dma) {
-	desc->status = TFS_TFD_DONE;
-	desc->frag_info = (u64_t)dma;
-}
-
 /* Real hardware reset (### RESET_HARDWARE_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int ic_real_reset(u32_t base) {
-	u32_t data;
-	data = ic_in32(base, REG_ASIC_CTRL);
-	data |= AC_RESET_ALL;
-	ic_out32(base, REG_ASIC_CTRL, data);
-	micro_delay(10000);
-	if (ic_in32(base, REG_ASIC_CTRL) & AC_RESET_BUSY)
+static int dev_real_reset(u32_t *base) {
+	u32_t data, base0 = base[0];
+	data = ndr_in32(base0, REG_ASIC_CTRL);
+	ndr_out32(base0, REG_ASIC_CTRL, data | AC_RESET_ALL);
+	micro_delay(5000);
+	if (ndr_in32(base0, REG_ASIC_CTRL) & AC_RESET_BUSY)
 		return -EIO;
 	return OK;
 }
 
-/* Intialize power (### POWER_INIT_CAN_FAIL ###)
+/* Intialize other hardware I/O registers (### INIT_HARDWARE_IO_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int ic_init_power(u32_t base) {
-	u8_t physet;
-	u32_t mode0, mode1;
-
-	mode0 = read_eeprom(base, 6);
-	mode1 = ic_in16(base, REG_ASIC_CTRL);
+static int dev_init_io(u32_t *base) {
+	u32_t mac_ctrl, physet, mode0, mode1, base0 = base[0];
+	mode0 = read_eeprom(base0, 6);
+	mode1 = ndr_in16(base0, REG_ASIC_CTRL);
 	mode1 &= ~(AC_LED_MODE_B1 | AC_LED_MODE | AC_LED_SPEED);
 	if ((mode0 & 0x03) > 1)
 		mode1 |= AC_LED_MODE_B1;
@@ -196,38 +187,48 @@ static int ic_init_power(u32_t base) {
 		mode1 |= AC_LED_MODE;
 	if ((mode0 & 0x08) == 8)
 		mode1 |= AC_LED_SPEED;
-	ic_out32(base, REG_ASIC_CTRL, mode1);
-
-	physet = ic_in8(base, REG_PHY_SET);
-	physet &= ~(0x07);
-	physet |= (mode0 & 0x70) >> 4;
-	ic_out8(base, REG_PHY_SET, physet);
-
+	ndr_out32(base0, REG_ASIC_CTRL, mode1);
+	physet = ndr_in8(base0, REG_PHY_SET);
+	physet = (physet & 0xf8) | ((mode0 & 0x70) >> 4);
+	ndr_out8(base0, REG_PHY_SET, physet);
+	mac_ctrl = ndr_in32(base0, REG_MAC_CTRL);
+	mac_ctrl |= (MC_STAT_DISABLE | MC_TX_FC_ENA | MC_RX_FC_ENA);
+	ndr_out32(base0, REG_MAC_CTRL, 0);
+	ndr_out16(base0, REG_MAX_FRAME, RX_BUF_SIZE);
+	ndr_out8(base0, REG_RX_DMA_PERIOD, 0x01);
+	ndr_out8(base0, REG_RX_DMA_UTH, 0x30);
+	ndr_out8(base0, REG_RX_DMA_BTH, 0x30);
+	ndr_out8(base0, REG_TX_DMA_PERIOD, 0x26);
+	ndr_out8(base0, REG_TX_DMA_UTH, 0x04);
+	ndr_out8(base0, REG_TX_DMA_BTH, 0x30);
+	ndr_out16(base0, REG_FLOW_ON_TH, 0x0740);
+	ndr_out16(base0, REG_FLOW_OFF_TH, 0x00bf);
+	ndr_out32(base0, REG_MAC_CTRL, mac_ctrl);
 	return OK;
 }
 
 /* Intialize MII interface (### MII_INIT_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int ic_init_mii(u32_t base) {
+static int dev_init_mii(u32_t *base) {
 	int i, phyaddr;
 	u8_t revision;
 	u16_t phyctrl, cr1000, length, address, value;
 	u16_t *param;
-	u32_t status;
+	u32_t status, base0 = base[0];
 
 	for (i = 0; i < 32; i++) {
 		phyaddr = (i + 0x01) % 32;
-		status = read_phy_reg(base, phyaddr, 0x01);
+		status = read_phy_reg(base0, phyaddr, 0x01);
 		if ((status != 0xffff) && (status != 0))
 			break;
 	}
 	if (i == 32)
 		return -EIO;
 	if (phyaddr != -1) {
-		cr1000 = read_phy_reg(base, phyaddr, 0x09);
+		cr1000 = read_phy_reg(base0, phyaddr, 0x09);
 		cr1000 |= 0x0700;
-		write_phy_reg(base, phyaddr, 0x09, cr1000);
-		phyctrl = read_phy_reg(base, phyaddr, 0x00);
+		write_phy_reg(base0, phyaddr, 0x09, cr1000);
+		phyctrl = read_phy_reg(base0, phyaddr, 0x00);
 	}
 
 	param = &PhyParam[0];
@@ -240,7 +241,7 @@ static int ic_init_mii(u32_t base) {
 				address = *param;
 				value = *(param + 1);
 				param += 2;
-				write_phy_reg(base, phyaddr, address, value);
+				write_phy_reg(base0, phyaddr, address, value);
 				length -= 4;
 			}
 			break;
@@ -252,68 +253,55 @@ static int ic_init_mii(u32_t base) {
 			param++;
 		}
 	}
-
-	phyctrl |= 0x8200;
-	write_phy_reg(base, phyaddr, 0x00, phyctrl);
-
+	write_phy_reg(base0, phyaddr, 0x00, phyctrl | 0x8200);
 	return OK;
 }
 
-/* Intialize other hardware I/O registers (### INIT_HARDWARE_IO_CAN_FAIL ###)
- * -- Return OK means success, Others means failure */
-static int ic_init_io(u32_t base) {
-	u32_t mac_ctrl;
-
-	mac_ctrl = ic_in32(base, REG_MAC_CTRL);
-	mac_ctrl |= (MC_STAT_DISABLE | MC_TX_FC_ENA | MC_RX_FC_ENA);
-	ic_out32(base, REG_MAC_CTRL, 0x00000000);
-	ic_out16(base, REG_MAX_FRAME, RX_BUF_SIZE);
-	ic_out8(base, REG_RX_DMA_PERIOD, 0x01);
-	ic_out8(base, REG_RX_DMA_UTH, 0x30);
-	ic_out8(base, REG_RX_DMA_BTH, 0x30);
-	ic_out8(base, REG_TX_DMA_PERIOD, 0x26);
-	ic_out8(base, REG_TX_DMA_UTH, 0x04);
-	ic_out8(base, REG_TX_DMA_BTH, 0x30);
-	ic_out16(base, REG_FLOW_ON_TH, 0x0740);
-	ic_out16(base, REG_FLOW_OFF_TH, 0x00bf);
-	ic_out32(base, REG_MAC_CTRL, mac_ctrl);
-	return OK;
+/* Enable or disable interrupt (### INTR_ENABLE_DISABLE ###) */
+static void dev_intr_control(u32_t *base, int flag) {
+	u32_t base0 = base[0];
+	if (flag == INTR_ENABLE)
+		ndr_out16(base0, REG_IMR, CMD_INTR_ENABLE);
+	else if (flag == INTR_DISABLE)
+		ndr_out16(base0, REG_IMR, 0);
 }
 
-/* Start Rx/Tx (### START_RX_TX ###) */
-static void ic_start_rx_tx(u32_t base) {
-	u32_t mac_ctrl;
-
-	mac_ctrl = ic_in32(base, REG_MAC_CTRL);
-	mac_ctrl |= (MC_RX_ENABLE | MC_TX_ENABLE);
-	ic_out32(base, REG_MAC_CTRL, mac_ctrl);
+/* Enable or disable Rx/Tx (### RX_TX_ENABLE_DISABLE ###) */
+static void dev_rx_tx_control(u32_t *base, int flag) {
+	u32_t data, base0 = base[0];
+	data = ndr_in32(base0, REG_MAC_CTRL);
+	if (flag == RX_TX_ENABLE)
+		ndr_out32(base0, REG_MAC_CTRL, data | (MC_RX_ENABLE | MC_TX_ENABLE));
+	else if (flag == RX_TX_DISABLE) {
+		ndr_out32(base0, REG_MAC_CTRL, 0);
+		ndr_out32(base0, REG_ASIC_CTRL, AC_RESET_ALL);
+	}
 }
 
 /* Get MAC address to the array 'pa' (### GET_MAC_ADDR ###) */
-static void ic_get_addr(u32_t base, u8_t *pa) {
-	int i, sta_addr[3];
-	for (i = 0; i < 3; i++) {
-		sta_addr[i] = read_eeprom(base, 16 + i);
-		ic_out16(base, (REG_STA_ADDR0 + i * 2), sta_addr[i]);
+static void dev_get_addr(u32_t *base, u8_t *pa) {
+	u32_t i, sta_addr[3], base0 = base[0];
+	for (i = 0; i < 3; i++)	 {
+		sta_addr[i] = read_eeprom(base0, 16 + i);
+		ndr_out16(base0, (REG_STA_ADDR0 + i * 2), sta_addr[i]);
 	}
-	pa[0] = (u8_t)(ic_in16(base, REG_STA_ADDR0) & 0x00ff);
-	pa[1] = (u8_t)((ic_in16(base, REG_STA_ADDR0) & 0xff00) >> 8);
-	pa[2] = (u8_t)(ic_in16(base, REG_STA_ADDR1) & 0x00ff);
-	pa[3] = (u8_t)((ic_in16(base, REG_STA_ADDR1) & 0xff00) >> 8);
-	pa[4] = (u8_t)(ic_in16(base, REG_STA_ADDR2) & 0x00ff);
-	pa[5] = (u8_t)((ic_in16(base, REG_STA_ADDR2) & 0xff00) >> 8);
+	pa[0] = (u8_t)(ndr_in16(base0, REG_STA_ADDR0) & 0x00ff);
+	pa[1] = (u8_t)((ndr_in16(base0, REG_STA_ADDR0) & 0xff00) >> 8);
+	pa[2] = (u8_t)(ndr_in16(base0, REG_STA_ADDR1) & 0x00ff);
+	pa[3] = (u8_t)((ndr_in16(base0, REG_STA_ADDR1) & 0xff00) >> 8);
+	pa[4] = (u8_t)(ndr_in16(base0, REG_STA_ADDR2) & 0x00ff);
+	pa[5] = (u8_t)((ndr_in16(base0, REG_STA_ADDR2) & 0xff00) >> 8);
 }
 
 /* Check link status (### CHECK_LINK ###)
  * -- Return LINK_UP or LINK_DOWN */
-static int ic_check_link(u32_t base) {
-	u8_t phy_ctrl;
-	u32_t mac_ctrl;
+static int dev_check_link(u32_t *base) {
+	u32_t phy_ctrl, mac_ctrl, base0 = base[0];
 	int ret;
 	char speed[20], duplex[20];
 
-	phy_ctrl = ic_in8(base, REG_PHY_CTRL);
-	mac_ctrl = ic_in8(base, REG_MAC_CTRL);
+	phy_ctrl = ndr_in8(base0, REG_PHY_CTRL);
+	mac_ctrl = ndr_in8(base0, REG_MAC_CTRL);
 	switch (phy_ctrl & PC_LINK_SPEED) {
 		case PC_LINK_SPEED10:
 			strcpy(speed, "10Mbps");
@@ -338,105 +326,189 @@ static int ic_check_link(u32_t base) {
 	}
 	else
 		strcpy(duplex, "half");
-	ic_out32(base, REG_MAC_CTRL, mac_ctrl);
+	ndr_out32(base0, REG_MAC_CTRL, mac_ctrl);
 #ifdef MY_DEBUG
-	printf("ip1000: Link speed is %s, %s duplex\n", speed, duplex);
+	printf("NDR: Link speed is %s, %s duplex\n", speed, duplex);
 #endif
 	return ret;
 }
 
-/* Stop Rx/Tx (### STOP_RX_TX ###) */
-static void ic_stop_rx_tx(u32_t base) {
-	ic_out32(base, REG_ASIC_CTRL, AC_RESET_ALL);
+/* Set driver receive mode (### SET_REC_MODE ###) */
+static void dev_set_rec_mode(u32_t *base, int mode) {
+	u32_t data, base0 = base[0];
+	data = ndr_in8(base0, REG_RCR);
+	data &= ~(CMD_RCR_UNICAST | CMD_RCR_MULTICAST | CMD_RCR_BROADCAST);
+	if (mode & NDEV_PROMISC)
+		data |= CMD_RCR_UNICAST | CMD_RCR_MULTICAST | CMD_RCR_MULTICAST;
+	if (mode & NDEV_BROAD)
+		data |= CMD_RCR_BROADCAST;
+	if (mode & NDEV_MULTI)
+		data |= CMD_RCR_MULTICAST;
+	data |= CMD_RCR_UNICAST;
+	ndr_out8(base0, REG_RCR, data);
 }
 
-/* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###)
- * -- Return TRUE or FALSE */
-static int ic_rx_status_ok(ic_desc *desc) {
-	if ((desc->status & RFS_NORMAL) == RFS_NORMAL)
-		return TRUE;
-	return FALSE;
+/* Start Tx channel (### START_TX_CHANNEL ###) */
+static void dev_start_tx(u32_t *base) {
+	u32_t base0 = base[0];
+	ndr_out32(base0, REG_DMA_CTRL, CMD_TX_START);
 }
 
-/* Get Rx data length from descriptor (### GET_RX_LEN ###)
- * --- Return the length */
-static int ic_get_rx_len(ic_desc *desc) {
+/* Read and clear interrupt (### READ_CLEAR_INTR_STS ###) */
+static u32_t dev_read_clear_intr_status(u32_t *base) {
+	u32_t data, base0 = base[0];
+	data = ndr_in16(base0, REG_ISR);
+	ndr_out16(base0, REG_ISR, 0);
+	return data;
+}
+
+/* ---------- WITH DESCRIPTOR ---------- */
+/* Intialize Rx descriptor (### INIT_RX_DESC ###) */
+static void dev_init_rx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start) {
+	NDR_desc *desc = desc_start + index;
+	desc->status = 0;
+	desc->frag_info = (u64_t)(buf_dma);
+	desc->frag_info |= ((u64_t)buf_size << 48) & RFI_FRAG_LEN;
+	if (index == max_desc_num - 1)
+		desc->next = desc_dma_start;
+	else
+		desc->next = desc_dma_start + (index + 1) * sizeof(NDR_desc);
+}
+
+/* Intialize Tx descriptor (### INIT_TX_DESC ###) */
+static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start) {
+	NDR_desc *desc = desc_start + index;
+	desc->status = TFS_TFD_DONE;
+	desc->frag_info = (u64_t)(buf_dma);
+	if (index == max_desc_num - 1)
+		desc->next = desc_dma_start;
+	else
+		desc->next = desc_dma_start + (index + 1) * sizeof(NDR_desc);
+}
+
+/* Set Rx/Tx descriptor address into device register (### SET_DESC_REG ###) */
+static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+								phys_bytes tx_addr) {
+	u32_t base0 = base[0];
+	ndr_out32(base0, REG_RX_DESC_BASEL, rx_addr);
+	ndr_out32(base0, REG_RX_DESC_BASEU, 0);
+	ndr_out32(base0, REG_TX_DESC_BASEL, tx_addr);
+	ndr_out32(base0, REG_TX_DESC_BASEU, 0);
+}
+
+/* Check whether Rx is OK from Rx descriptor (### CHECK_RX_OK_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return RX_OK or RX_SUSPEND or RX_ERROR */
+static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
+	if (desc->status & RFS_RFD_DONE) {
+		if (desc->status & RFS_ERROR)
+			return RX_ERROR;
+		if ((desc->status & RFS_NORMAL) == RFS_NORMAL)
+			return RX_OK;
+	}
+	return RX_SUSPEND;
+}
+
+/* Get length from Rx descriptor (### GET_RX_LENGTH_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return the length */
+static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index) {
 	int totlen;
-	totlen = (u32_t)(desc->status & RFS_FRAME_LEN);
+	totlen = (int)(desc->status & RFS_FRAME_LEN);
 	return totlen;
 }
 
-/* Set Tx descriptor in send (### TX_DESC_START ###) */
-static void ic_tx_desc_start(ic_desc *desc, size_t size) {
+/* Set Rx descriptor after Rx done (### SET_RX_DESC_DONE ###)
+ * -- Current buffer number is index */
+static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+	desc->status = 0;
+}
+
+/* Set Tx descriptor to prepare transmitting (### SET_TX_DESC_PREPARE)
+ * -- Current buffer number is index */
+static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+									size_t data_size) {
 	desc->status = TFS_TFD_DONE;
-	desc->status |= (u64_t)(TFS_WORD_ALIGN | (TFS_FRAMEID & (g_driver.tx_head))
-					| (TFS_FRAG_COUNT & (1 << 24)));
-	desc->status |= TFS_TX_DMA_INDICATE;
-	desc->frag_info |= TFI_FRAG_LEN & ((u64_t)((size >= 60 ? size : 60) &
-						0xffff) << 48);
+	desc->status |= (u64_t)(TFS_WORD_ALIGN | (TFS_FRAMEID & index)
+					| (TFS_FRAG_COUNT & (1 << 24))) | TFS_TX_DMA_INDICATE;
+	desc->frag_info |= TFI_FRAG_LEN & ((u64_t)((data_size > 60 ? data_size : 60)
+							& 0xffff) << 48);
 	desc->status &= (u64_t)(~(TFS_TFD_DONE));
 }
 
-/* Wake up Tx channel (### WAKE_UP_TX ###) */
-static void ic_wakeup_tx(u32_t base) {
-	ic_out32(base, REG_DMA_CTRL, 0x00001000);
+/* Check whether Tx is OK from Tx descriptor (### CHECK_TX_OK_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return TX_OK or TX_SUSPEND or TX_ERROR */
+static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
+	if (desc->status & TFS_TFD_DONE)
+		return TX_OK;
+	return TX_SUSPEND;
 }
 
-/* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###)
- * -- Return TRUE or FALSE */
-static int ic_tx_status_ok(ic_desc *desc) {
-	if (desc->status & TFS_TFD_DONE)
-		return TRUE;
-	return FALSE;
+/* Set Tx descriptor after Tx done (### SET_TX_DESC_DONE ###)
+ * -- Current buffer number is index */
+static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+	desc->status = 0;
 }
 
 /* Driver interface table */
-static const struct netdriver ic_table = {
-	.ndr_init = ic_init,
-	.ndr_stop = ic_stop,
-	.ndr_mode = ic_mode,
-	.ndr_recv = ic_recv,
-	.ndr_send = ic_send,
-	.ndr_stat = ic_stat,
-	.ndr_intr = ic_intr,
+static const struct netdriver NDR_table = {
+	.ndr_init = NDR_init,
+	.ndr_stop = NDR_stop,
+	.ndr_mode = NDR_mode,
+	.ndr_recv = NDR_recv,
+	.ndr_send = NDR_send,
+	.ndr_intr = NDR_intr,
+	.ndr_stat = NDR_stat
 };
 
 int main(int argc, char *argv[]) {
 	env_setargs(argc, argv);
-	netdriver_task(&ic_table);
+	netdriver_task(&NDR_table);
 }
 
 /* Initialize the driver */
-static int ic_init(unsigned int instance, ether_addr_t *addr) {
-	int ret = 0;
+static int NDR_init(unsigned int instance, ether_addr_t *addr) {
+	int i, ret = 0;
 
 	/* Intialize driver data structure */
 	memset(&g_driver, 0, sizeof(g_driver));
 	g_driver.link = LINK_UNKNOWN;
-	strcpy(g_driver.name, "netdriver#0");
-	g_driver.name[10] += instance;
+	strcpy(g_driver.name, DRIVER_NAME);
+	strcat(g_driver.name, "#0");
+	g_driver.name[strlen(g_driver.name) - 1] += instance;
 	g_instance = instance;
 
 	/* Probe the device */
-	if (ic_probe(&g_driver, instance)) {
-		printf("ip1000: Device is not found\n");
+	if (dev_probe(&g_driver, instance)) {
+		printf("NDR: Device is not found\n");
 		ret = -ENODEV;
 		goto err_probe;
 	}
 
+	/* Intialize hardware */
+	if (dev_init_hw(&g_driver, addr)) {
+		printf("NDR: Fail to initialize hardware\n");
+		ret = -EIO;
+		goto err_init_hw;
+	}
+
 	/* Allocate and initialize buffer */
-	if (ic_init_buf(&g_driver)) {
-		printf("ip1000: Fail to initialize buffer\n");
+	if (dev_init_buf(&g_driver)) {
+		printf("NDR: Fail to initialize buffer\n");
 		ret = -ENODEV;
 		goto err_init_buf;
 	}
 
-	/* Intialize hardware */
-	if (ic_init_hw(&g_driver, addr)) {
-		printf("ip1000: Fail to initialize hardware\n");
-		ret = -EIO;
-		goto err_init_hw;
-	}
+	/* Enable interrupts */
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(g_driver.base, INTR_ENABLE);
+
+	/* Start Rx and Tx */
+	/* ### RX_TX_ENABLE_DISABLE ### */
+	dev_rx_tx_control(g_driver.base, RX_TX_ENABLE);
 
 	/* Use a synchronous alarm instead of a watchdog timer */
 	sys_setalarm(sys_hz(), 0);
@@ -447,18 +519,146 @@ static int ic_init(unsigned int instance, ether_addr_t *addr) {
 
 	return 0;
 
-err_init_hw:
-	free_contig(g_driver.buf, g_driver.buf_size);
 err_init_buf:
+err_init_hw:
 err_probe:
 	return ret;
 }
 
+/* Stop the driver */
+static void NDR_stop(void) {
+	/* Free Rx and Tx buffer*/
+	free_contig(g_driver.buf, g_driver.buf_size);
+
+	/* Stop interrupt */
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(g_driver.base, INTR_DISABLE);
+
+	/* Stop Rx and Tx */
+	/* ### RX_TX_ENABLE_DISABLE ### */
+	dev_rx_tx_control(g_driver.base, RX_TX_DISABLE);
+}
+
+/* Set driver mode */
+static void NDR_mode(unsigned int mode) {
+	g_driver.mode = mode;
+	/* Set driver receive mode */
+	/* ### SET_REC_MODE ### */
+	dev_set_rec_mode(g_driver.base, mode);
+}
+
+/* Receive data */
+static ssize_t NDR_recv(struct netdriver_data *data, size_t max) {
+	NDR_driver *pdev = &g_driver;
+	u32_t totlen, packlen;
+	int index, ret, offset = 0;
+	NDR_desc *desc;
+
+	index = pdev->rx_head;
+	desc = pdev->rx_desc;
+	desc += index;
+	/* Check whether Rx is OK from Rx descriptor */
+	/* ### CHECK_RX_OK_FROM_DESC ### */
+	ret = dev_rx_ok_desc(pdev->base, desc, index);
+	if (ret == RX_SUSPEND)
+		return SUSPEND;
+	else if (ret == RX_ERROR)
+		printf("NDR: Rx error now\n");
+	/* Get length from Rx descriptor */
+	/* ### GET_RX_LENGTH_FROM_DESC ### */
+	totlen = dev_rx_len_desc(pdev->base, desc, index);
+
+	/* Get data length */
+	/* ### Get , int inde, int indexxRx data length ### */
+	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
+		printf("NDR: Bad data length: %d\n", totlen);
+		panic(NULL);
+	}
+
+	packlen = totlen;
+	if (packlen > max)
+		packlen = max;
+
+	/* Copy data to user */
+	netdriver_copyout(data, 0, pdev->rx[index].buf + offset, packlen);
+	pdev->stat.ets_packetR++;
+
+	/* Set Rx descriptor after Rx done */
+	/* ### SET_RX_DESC_DONE ### */
+	dev_set_rx_desc_done(pdev->base, desc, index);
+	if (index == RX_BUFFER_NUM - 1)
+		index = 0;
+	else
+		index++;
+	pdev->rx_head = index;
+
+#ifdef MY_DEBUG
+	printf("NDR: Successfully receive a packet, length = %d\n", packlen);
+#endif
+
+	return packlen;
+}
+
+/* Transmit data */
+static int NDR_send(struct netdriver_data *data, size_t size) {
+	NDR_driver *pdev = &g_driver;
+	int tx_head, i;
+	NDR_desc *desc;
+
+	tx_head = pdev->tx_head;
+	if (pdev->tx[tx_head].busy)
+		return SUSPEND;
+
+	/* Copy data from user */
+	netdriver_copyin(data, 0, pdev->tx[tx_head].buf, size);
+
+	/* Set busy */
+	pdev->tx[tx_head].busy = TRUE;
+	pdev->tx_busy_num++;
+
+	desc = pdev->tx_desc;
+	desc += tx_head;
+	/* Set Tx descriptor to prepare transmitting */
+	/* ### SET_TX_DESC_PREPARE ### */
+	dev_set_tx_desc_prepare(pdev->base, desc, tx_head, size);
+	if (tx_head == TX_BUFFER_NUM - 1)
+		tx_head = 0;
+	else
+		tx_head++;
+	pdev->tx_head = tx_head;
+
+	/* Start Tx channel */
+	/* ### START_TX ### */
+	dev_start_tx(pdev->base);
+
+	return 0;
+}
+
+/* Handle interrupt */
+static void NDR_intr(unsigned int mask) {
+	int s;
+
+	/* Run interrupt handler at driver level */
+	dev_handler(&g_driver);
+
+	/* Reenable interrupts for this hook */
+	if ((s = sys_irqenable(&g_driver.hook)) != OK)
+		printf("NDR: Cannot enable OS interrupts: %d\n", s);
+
+	/* Perform tasks based on the flagged conditions */
+	dev_check_ints(&g_driver);
+}
+
+/* Get driver status */
+static void NDR_stat(eth_stat_t *stat) {
+	memcpy(stat, &g_driver.stat, sizeof(*stat));
+}
+
 /* Match the device and get base address */
-static int ic_probe(ic_driver *pdev, int instance) {
-	int devind, ioflag;
+static int dev_probe(NDR_driver *pdev, int instance) {
+	int devind, ioflag, i;
 	u16_t cr, vid, did;
-	u32_t bar, size;
+	u32_t bar, size, base;
 	u8_t irq, rev;
 	u8_t *reg;
 
@@ -472,183 +672,87 @@ static int ic_probe(ic_driver *pdev, int instance) {
 	}
 	pci_reserve(devind);
 
-	/* Enable bus mastering */
+	/* Enable bus mastering and I/O space */
 	cr = pci_attr_r16(devind, PCI_CR);
-	if (!(cr & PCI_CR_MAST_EN))
-		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+	pci_attr_w16(devind, PCI_CR, cr | 0x105);
 
 	/* Get base address */
-#ifdef DMA_REG_MODE
-	if (pci_get_bar(devind, PCI_BAR, &base, &size, &ioflag)) {
-		printf("ip1000: Fail to get PCI BAR\n");
-		return -EIO;
+	for (i = 0; i < 6; i++)
+		pdev->base[i] = 0;
+#ifdef DMA_BASE_IOMAP
+	for (i = 0; i < 6; i++) {
+		if (pci_get_bar(devind, PCI_BAR + i * 4, &base, &size, &ioflag)) {
+			/* printf("NDR: Fail to get PCI BAR\n"); */
+			continue;
+		}
+		if (ioflag) {
+			/* printf("NDR: PCI BAR is not for memory\n"); */
+			continue;
+		}
+		if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
+			printf("NDR: Fail to map hardware registers from PCI\n");
+			return -EIO;
+		}
+		pdev->base[i] = (u32_t)reg;
 	}
-	if (ioflag) {
-		printf("ip1000: PCI BAR is not for memory\n");
-		return -EIO;
-	}
-	if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
-		printf("ip1000: Fail to map hardware registers from PCI\n");
-		return -EIO;
-	}
-	pdev->base_addr = (u32_t)reg;
 #else
-	bar = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-	if (bar < 0x400) {
-		printf("ip1000: Base address is not properly configured\n");
-		return -EIO;
-	}
-	pdev->base_addr = bar;
+	for (i = 0; i < 6; i++)
+		pdev->base[i] = pci_attr_r32(devind, PCI_BAR + i * 4) & 0xffffffe0;
 #endif
-
-	/* Get irq number */
-	irq = pci_attr_r8(devind, PCI_ILR);
-	pdev->irq = irq;
-
-	/* Get revision ID */
-	rev = pci_attr_r8(devind, PCI_REV);
-	pdev->revision = rev;
+	pdev->dev_name = pci_dev_name(vid, did);
+	pdev->irq = pci_attr_r8(devind, PCI_ILR);
+	pdev->revision = pci_attr_r8(devind, PCI_REV);
+	pdev->did = did;
+	pdev->vid = vid;
+	pdev->devind = devind;
 
 #ifdef MY_DEBUG
-	printf("ip1000: Base address is 0x%08x\n", pdev->base_addr);
-	printf("ip1000: IRQ number is 0x%02x\n", pdev->irq);
-	printf("ip1000: Revision ID is 0x%02x\n", pdev->revision);
+	printf("NDR: Hardware name is %s\n", pdev->dev_name);
+	for (i = 0; i < 6; i++)
+		printf("NDR: PCI BAR%d is 0x%08x\n", i, pdev->base[i]);
+	printf("NDR: IRQ number is 0x%02x\n", pdev->irq);
 #endif
-
-	return 0;
-}
-
-/* Allocate and initialize buffer */
-static int ic_init_buf(ic_driver *pdev) {
-	size_t rx_desc_size, tx_desc_size, rx_buf_size, tx_buf_size, tot_buf_size;
-	ic_desc *desc;
-	phys_bytes buf_dma, next;
-	char *buf;
-	int i;
-
-	/* Build Rx and Tx descriptor buffer */
-	rx_desc_size = RX_DESC_NUM * sizeof(ic_desc);
-	tx_desc_size = TX_DESC_NUM * sizeof(ic_desc);
-
-	/* Allocate Rx and Tx buffer */
-	tx_buf_size = TX_BUF_SIZE;
-	if (tx_buf_size % 4)
-		tx_buf_size += 4 - (tx_buf_size % 4);
-	rx_buf_size = RX_BUF_SIZE;
-	tot_buf_size = rx_desc_size + tx_desc_size;
-	tot_buf_size += TX_DESC_NUM * tx_buf_size + RX_DESC_NUM * rx_buf_size;
-	if (tot_buf_size % 4096)
-		tot_buf_size += 4096 - (tot_buf_size % 4096);
-
-	if (!(buf = alloc_contig(tot_buf_size, 0, &buf_dma))) {
-		printf("ip1000: Fail to allocate memory\n");
-		return -ENOMEM;
-	}
-	pdev->buf_size = tot_buf_size;
-	pdev->buf = buf;
-
-	/* Rx descriptor */
-	pdev->rx_desc = (ic_desc *)buf;
-	pdev->rx_desc_dma = buf_dma;
-	memset(buf, 0, rx_desc_size);
-	buf += rx_desc_size;
-	buf_dma += rx_desc_size;
-
-	/* Tx descriptor */
-	pdev->tx_desc = (ic_desc *)buf;
-	pdev->tx_desc_dma = buf_dma;
-	memset(buf, 0, tx_desc_size);
-	buf += tx_desc_size;
-	buf_dma += tx_desc_size;
-
-	/* Rx buffer assignment */
-	desc = pdev->rx_desc;
-	next = pdev->rx_desc_dma;
-	for (i = 0; i < RX_DESC_NUM; i++) {
-		/* Set Rx buffer */
-		pdev->rx[i].buf_dma = buf_dma;
-		pdev->rx[i].buf = buf;
-		buf_dma += rx_buf_size;
-		buf += rx_buf_size;
-
-		/* Set Rx descriptor */
-		/* ### RX_DESC_INIT ### */
-		ic_init_rx_desc(desc, rx_buf_size, pdev->rx[i].buf_dma);
-		if (i == (RX_DESC_NUM - 1))
-			desc->next = pdev->rx_desc_dma;
-		else {
-			next += sizeof(ic_desc);
-			desc->next = next;
-			desc++;
-		}
-	}
-
-	/* Tx buffer assignment */
-	desc = pdev->tx_desc;
-	next = pdev->tx_desc_dma;
-	for (i = 0; i < TX_DESC_NUM; i++) {
-		/* Set Tx buffer */
-		pdev->tx[i].busy = 0;
-		pdev->tx[i].buf_dma = buf_dma;
-		pdev->tx[i].buf = buf;
-		buf_dma += tx_buf_size;
-		buf += tx_buf_size;
-
-		/* Set Rx descriptor */
-		/* ### TX_DESC_INIT ### */
-		ic_init_tx_desc(desc, tx_buf_size, pdev->tx[i].buf_dma);
-		if (i == (TX_DESC_NUM - 1))
-			desc->next = pdev->tx_desc_dma;
-		else {
-			next += sizeof(ic_desc);
-			desc->next = next;
-			desc++;
-		}
-	}
-	pdev->tx_busy_num = 0;
-	pdev->tx_head = 0;
-	pdev->tx_tail = 0;
-	pdev->rx_head = 0;
 
 	return 0;
 }
 
 /* Intialize hardware */
-static int ic_init_hw(ic_driver *pdev, ether_addr_t *addr) {
+static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr) {
 	int r, ret;
 
 	/* Set the OS interrupt handler */
 	pdev->hook = pdev->irq;
 	if ((r = sys_irqsetpolicy(pdev->irq, 0, &pdev->hook)) != OK) {
-		printf("ip1000: Fail to set OS IRQ policy: %d\n", r);
+		printf("NDR: Fail to set OS IRQ policy: %d\n", r);
 		ret = -EFAULT;
 		goto err_irq_policy;
 	}
 
 	/* Reset hardware */
-	if (ic_reset_hw(pdev)) {
-		printf("ip1000: Fail to reset the device\n");
+	if (dev_reset_hw(pdev)) {
+		printf("NDR: Fail to reset the device\n");
 		ret = -EIO;
 		goto err_reset_hw;
 	}
 
 	/* Enable OS IRQ */
 	if ((r = sys_irqenable(&pdev->hook)) != OK) {
-		printf("ip1000: Fail to enable OS IRQ: %d\n", r);
+		printf("NDR: Fail to enable OS IRQ: %d\n", r);
 		ret = -EFAULT;
 		goto err_irq_enable;
 	}
 
 	/* Configure MAC address */
-	ic_conf_addr(pdev, addr);
+	dev_conf_addr(pdev, addr);
 
 	/* Detect link status */
-	pdev->link = ic_check_link(pdev->base_addr);
+	/* ### CHECK_LINK ### */
+	pdev->link = dev_check_link(pdev->base);
 #ifdef MY_DEBUG
 	if (pdev->link)
-		printf("ip1000: Link up\n");
+		printf("NDR: Link up\n");
 	else
-		printf("ip1000: Link down\n");
+		printf("NDR: Link down\n");
 #endif
 
 	return 0;
@@ -660,79 +764,48 @@ err_irq_policy:
 }
 
 /* Reset hardware */
-static int ic_reset_hw(ic_driver *pdev) {
-	u32_t base = pdev->base_addr;
+static int dev_reset_hw(NDR_driver *pdev) {
 	int ret;
 
 	/* Reset the chip */
 	/* ### RESET_HARDWARE_CAN_FAIL ### */
-	if (ic_real_reset(base)) {
-		printf("ip1000: Fail to reset the hardware\n");
+	if (dev_real_reset(pdev->base)) {
+		printf("NDR: Fail to reset the hardware\n");
 		ret = -EIO;
 		goto err_real_reset;
 	}
 
-	/* Initialize power */
-	/* ### POWER_INIT_CAN_FAIL ### */
-	if (ic_init_power(base)) {
-		printf("ip1000: Fail to initialize power\n");
-		ret = -EIO;
-		goto err_init_power;
-	}
-
-	/* Initialize MII interface */
-	/* ### MII_INIT_CAN_FAIL ### */
-	if (ic_init_mii(base)) {
-		printf("ip1000: Fail to initialize MII interface\n");
-		ret = -EIO;
-		goto err_init_mii;
-	}
-
-	/* Initialize hardware I/O registers */
+	/* Initialize other hardware I/O registers */
 	/* ### SET_RX_DESC_REG ### */
-	if (ic_init_io(base)) {
-		printf("ip1000: Fail to initialize I/O registers\n");
+	if (dev_init_io(pdev->base)) {
+		printf("NDR: Fail to initialize I/O registers\n");
 		ret = -EIO;
 		goto err_init_io;
 	}
 
-	/* Set Rx/Tx descriptor into register */
-	/* ### SET_RX_DESC_REG ### */
-	ic_out32(base, REG_RX_DESC_BASEL, pdev->rx_desc_dma);
-#ifdef DESC_BASE_DMA64
-	ic_out32(base, REG_RX_DESC_BASEU, 0x00000000);
-#endif
-	/* ### SET_TX_DESC_REG ### */
-	ic_out32(base, REG_TX_DESC_BASEL, pdev->tx_desc_dma);
-#ifdef DESC_BASE_DMA64
-	ic_out32(base, REG_TX_DESC_BASEU, 0x00000000);
-#endif
-
-	/* Enable interrupts */
-	/* ### ENABLE_INTR ### */
-	ic_out16(base, REG_IMR, INTR_IMR_ENABLE);
-
-	/* Start the device, Rx and Tx */
-	/* ### START_RX_TX ### */
-	ic_start_rx_tx(base);
+	/* Initialize MII interface */
+	/* ### MII_INIT_CAN_FAIL ### */
+	if (dev_init_mii(pdev->base)) {
+		printf("NDR: Fail to initialize MII interface\n");
+		ret = -EIO;
+		goto err_init_mii;
+	}
 
 	return 0;
 
-err_init_io:
 err_init_mii:
-err_init_power:
+err_init_io:
 err_real_reset:
 	return ret;
 }
 
 /* Configure MAC address */
-static void ic_conf_addr(ic_driver *pdev, ether_addr_t *addr) {
+static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr) {
 	u8_t pa[6];
-	u32_t base = pdev->base_addr;
 
 	/* Get MAC address */
 	/* ### GET_MAC_ADDR ### */
-	ic_get_addr(base, pa);
+	dev_get_addr(pdev->base, pa);
 	addr->ea_addr[0] = pa[0];
 	addr->ea_addr[1] = pa[1];
 	addr->ea_addr[2] = pa[2];
@@ -740,201 +813,123 @@ static void ic_conf_addr(ic_driver *pdev, ether_addr_t *addr) {
 	addr->ea_addr[4] = pa[4];
 	addr->ea_addr[5] = pa[5];
 #ifdef MY_DEBUG
-	printf("ip1000: Ethernet address is %02x:%02x:%02x:%02x:%02x:%02x\n",
+	printf("NDR: Ethernet address is %02x:%02x:%02x:%02x:%02x:%02x\n",
 			addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
 			addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]);
 #endif
 }
 
-/* Stop the driver */
-static void ic_stop(void) {
-	u32_t base = g_driver.base_addr;
+/* Allocate and initialize buffer */
+static int dev_init_buf(NDR_driver *pdev) {
+	size_t rx_desc_size, tx_desc_size, rx_buf_size, tx_buf_size, tot_buf_size;
+	phys_bytes buf_dma;
+	char *buf;
+	int i;
 
-	/* Free Rx and Tx buffer*/
-	free_contig(g_driver.buf, g_driver.buf_size);
+	/* Build Rx and Tx buffer */
+	tx_buf_size = TX_BUF_SIZE;
+	if (tx_buf_size % 4)
+		tx_buf_size += 4 - (tx_buf_size % 4);
+	rx_buf_size = RX_BUF_SIZE;
+	if (rx_buf_size % 4)
+		rx_buf_size += 4 - (rx_buf_size % 4);
+	tot_buf_size = TX_BUFFER_NUM * tx_buf_size + RX_BUFFER_NUM * rx_buf_size;
+	rx_desc_size = RX_BUFFER_NUM * sizeof(NDR_desc);
+	tx_desc_size = TX_BUFFER_NUM * sizeof(NDR_desc);
+	tot_buf_size += rx_desc_size + tx_desc_size;
+	if (tot_buf_size % 4096)
+		tot_buf_size += 4096 - (tot_buf_size % 4096);
 
-	/* Stop interrupt */
-	/* ### DISABLE_INTR ### */
-	ic_out16(base, REG_IMR, INTR_IMR_DISABLE);
+	if (!(buf = alloc_contig(tot_buf_size, 0, &buf_dma))) {
+		printf("NDR: Fail to allocate memory\n");
+		return -ENOMEM;
+	}
+	pdev->buf_size = tot_buf_size;
+	pdev->buf = buf;
 
-	/* Stop Rx/Tx */
-	/* ### STOP_RX_TX ### */
-	ic_stop_rx_tx(base);
-}
+	/* Rx descriptor buffer location */
+	pdev->rx_desc = (NDR_desc *)buf;
+	pdev->rx_desc_dma = buf_dma;
+	memset(buf, 0, rx_desc_size);
+	buf += rx_desc_size;
+	buf_dma += rx_desc_size;
 
-/* Set driver mode */
-static void ic_mode(unsigned int mode) {
-	ic_driver *pdev = &g_driver;
-	u32_t base = pdev->base_addr;
-	u8_t rcr;
+	/* Tx descriptor buffer location */
+	pdev->tx_desc = (NDR_desc *)buf;
+	pdev->tx_desc_dma = buf_dma;
+	memset(buf, 0, tx_desc_size);
+	buf += tx_desc_size;
+	buf_dma += tx_desc_size;
 
-	pdev->mode = mode;
-
-	/* ### READ_RCR ### */
-	rcr = ic_in8(base, REG_RCR);
-	rcr &= ~(RCR_UNICAST | RCR_MULTICAST | RCR_BROADCAST);
-	if (pdev->mode & NDEV_PROMISC)
-		rcr |= RCR_UNICAST | RCR_MULTICAST;
-	if (pdev->mode & NDEV_BROAD)
-		rcr |= RCR_BROADCAST;
-	if (pdev->mode & NDEV_MULTI)
-		rcr |= RCR_MULTICAST;
-	rcr |= RCR_UNICAST;
-	/* ### WRITE_RCR ### */
-	ic_out8(base, REG_RCR, rcr);
-}
-
-/* Receive data */
-static ssize_t ic_recv(struct netdriver_data *data, size_t max) {
-	ic_driver *pdev = &g_driver;
-	u32_t totlen, packlen;
-	ic_desc *desc;
-	int index, i;
-
-	index = pdev->rx_head;
-	desc = pdev->rx_desc;
-	desc += index;
-
-	/* Check whether the receiving is OK */
-	/* ### CHECK_RX_STATUS_OK ### */
-	if (ic_rx_status_ok(desc) != TRUE)
-		return SUSPEND;
-
-	/* Check Rx status error */
-	/* ### CHECK_RX_STATUS_ERROR ### */
-	if (desc->status & DESC_STATUS_RX_RECV_ERR)
-		printf("ip1000: Rx error\n");
-
-	/* Get data length */
-	/* ### Get Rx data length ### */
-	totlen = ic_get_rx_len(desc);
-	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
-		printf("ip1000: Bad data length: %d\n", totlen);
-		panic(NULL);
+	/* Rx buffer assignment */
+	for (i = 0; i < RX_BUFFER_NUM; i++) {
+		/* Initialize Rx buffer */
+		pdev->rx[i].buf_dma = buf_dma;
+		pdev->rx[i].buf = buf;
+		buf_dma += rx_buf_size;
+		buf += rx_buf_size;
+		/* Set Rx descriptor */
+		/* ### INIT_RX_DESC ### */
+		dev_init_rx_desc(pdev->rx_desc, i, rx_buf_size, pdev->rx[i].buf_dma,
+							RX_BUFFER_NUM, pdev->rx_desc_dma);
 	}
 
-	packlen = totlen;
-	if (packlen > max)
-		packlen = max;
+	/* Tx buffer assignment */
+	for (i = 0; i < TX_BUFFER_NUM; i++) {
+		/* Set Tx buffer */
+		pdev->tx[i].busy = 0;
+		pdev->tx[i].buf_dma = buf_dma;
+		pdev->tx[i].buf = buf;
+		buf_dma += tx_buf_size;
+		buf += tx_buf_size;
+		/* Initialize Tx descriptor */
+		/* ### INIT_TX_DESC ### */
+		dev_init_tx_desc(pdev->tx_desc, i, tx_buf_size, pdev->tx[i].buf_dma,
+							TX_BUFFER_NUM, pdev->tx_desc_dma);
+	}
 
-	/* Copy data to user */
-	netdriver_copyout(data, 0, pdev->rx[index].buf, packlen);
-	pdev->stat.ets_packetR++;
+	/* Set Rx/Tx descriptor address into device register */
+	/* ### SET_DESC_REG ### */
+	dev_set_desc_reg(pdev->base, g_driver.rx_desc_dma,
+						g_driver.tx_desc_dma);
 
-	/* Set Rx descriptor status */
-	/* ### SET_RX_STATUS_INTR ### */
-	desc->status = DESC_STATUS_RX_RECV_CLEAR;
-	if (index == RX_DESC_NUM - 1)
-		index = 0;
-	else
-		index++;
-	pdev->rx_head = index;
-
-#ifdef MY_DEBUG
-	printf("ip1000: Successfully receive a packet, length = %d\n", packlen);
-#endif
-
-	return packlen;
-}
-
-/* Transmit data */
-static int ic_send(struct netdriver_data *data, size_t size) {
-	ic_driver *pdev = &g_driver;
-	ic_desc *desc;
-	int tx_head, i;
-	u32_t base = pdev->base_addr;
-
-	tx_head = pdev->tx_head;
-	desc = pdev->tx_desc;
-	desc += tx_head;
-
-	if (pdev->tx[tx_head].busy)
-		return SUSPEND;
-
-	/* Copy data from user */
-	netdriver_copyin(data, 0, pdev->tx[tx_head].buf, size);
-
-	/* Set busy */
-	pdev->tx[tx_head].busy = TRUE;
-	pdev->tx_busy_num++;
-
-	/* Set Tx descriptor status */
-	/* ### TX_DESC_START ### */
-	ic_tx_desc_start(desc, size);
-	if (tx_head == TX_DESC_NUM - 1)
-		tx_head = 0;
-	else
-		tx_head++;
-	pdev->tx_head = tx_head;
-
-	/* Wake up transmit channel */
-	/* ### WAKE_UP_TX ### */
-	ic_wakeup_tx(base);
+	pdev->tx_busy_num = 0;
+	pdev->tx_head = 0;
+	pdev->tx_tail = 0;
+	pdev->rx_head = 0;
 
 	return 0;
 }
 
-/* Handle Interrupt */
-static void ic_intr(unsigned int mask) {
-	int s;
-
-	/* Run interrupt handler at driver level */
-	ic_handler(&g_driver);
-
-	/* Reenable interrupts for this hook */
-	if ((s = sys_irqenable(&g_driver.hook)) != OK)
-		printf("ip1000: Cannot enable OS interrupts: %d\n", s);
-
-	/* Perform tasks based on the flagged conditions */
-	ic_check_ints(&g_driver);
-}
-
 /* Real handler interrupt */
-static void ic_handler(ic_driver *pdev) {
-	u32_t base = pdev->base_addr;
-	u16_t intr_status;
-	int flag = 0, tx_head, tx_tail;
-	ic_desc *desc;
+static void dev_handler(NDR_driver *pdev) {
+	u32_t intr_status;
+	int tx_head, tx_tail, index, flag = 0, ret;
+	NDR_desc *desc;
 
-	/* Get interrupt status */
-	/* ### GET_INTR_STATUS ### */
-	intr_status = ic_in16(base, REG_ISR);
-
-	/* Clear interrupt */
-	/* ### CLEAR_INTR ### */
-	ic_out16(base, REG_ISR, intr_status & INTR_ISR_CLEAR);
+	/* Read and clear interrupt status */
+	/* ### READ_CLEAR_INTR_STS ### */
+	intr_status = dev_read_clear_intr_status(pdev->base);
 
 	/* Enable interrupt */
-	/* ### ENABLE_INTR ### */
-	ic_out16(base, REG_IMR, INTR_IMR_ENABLE);
-
-	/* Check interrupt error */
-	/* ### CHECK_INTR_ERROR ### */
-	if (intr_status & INTR_ISR_ERR) {
-		printf("ip1000: interrupt error\n");
-		return;
-	}
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(pdev->base, INTR_ENABLE);
 
 	/* Check link status */
-	/* ### CHECK_LINK_INTR ### */
-	if (intr_status & INTR_ISR_LINK_EVENT) {
-		pdev->link = ic_check_link(base);
+	if (intr_status & INTR_STS_LINK) {
+		pdev->link = dev_check_link(pdev->base);
 #ifdef MY_DEBUG
-		printf("ip1000: Link state change\n");
+		printf("NDR: Link state change\n");
 #endif
 		flag++;
 	}
-
 	/* Check Rx request status */
-	/* ### CHECK_RX_INTR ### */
-	if (intr_status & INTR_ISR_RX_DONE) {
+	if (intr_status & INTR_STS_RX) {
 		pdev->recv_flag = TRUE;
 		flag++;
 	}
-
 	/* Check Tx request status */
-	/* ### CHECK_TX_INTR ### */
-	if (intr_status & INTR_ISR_TX_DONE) {
+	if (intr_status & INTR_STS_TX) {
 		pdev->send_flag = TRUE;
 		flag++;
 
@@ -942,51 +937,48 @@ static void ic_handler(ic_driver *pdev) {
 		tx_head = pdev->tx_head;
 		tx_tail = pdev->tx_tail;
 		while (tx_tail != tx_head) {
+			if (!pdev->tx[tx_tail].busy)
+				printf("NDR: Strange, buffer not busy?\n");
+			index = tx_tail;
 			desc = pdev->tx_desc;
 			desc += tx_tail;
-			if (!pdev->tx[tx_tail].busy)
-				printf("ip1000: Strange, buffer not busy?\n");
-
-			/* Check whether the transmiting is OK */
-			/* ### CHECK_TX_STATUS_OK ### */
-			if (ic_tx_status_ok(desc) != TRUE)
+			/* Check whether Tx is OK from Tx descriptor */
+			/* ### CHECK_TX_OK_FROM_DESC ### */
+			ret = dev_tx_ok_desc(pdev->base, desc, index);
+			if (ret == TX_SUSPEND)
 				break;
-
-			/* Check Tx status error */
-			/* ### CHECK_TX_STATUS_ERROR ### */
-			if (desc->status & DESC_STATUS_TX_SEND_ERR)
-				printf("ip1000: Tx error\n");
+			else if (ret == TX_ERROR)
+				printf("NDR: Tx error now\n");
 
 			pdev->stat.ets_packetT++;
 			pdev->tx[tx_tail].busy = FALSE;
 			pdev->tx_busy_num--;
 
-			if (++tx_tail >= TX_DESC_NUM)
+			if (++tx_tail >= TX_BUFFER_NUM)
 				tx_tail = 0;
 
 			pdev->send_flag = TRUE;
 			pdev->recv_flag = TRUE;
 
-			/* Set Tx descriptor status in interrupt */
-			/* ### SET_TX_STATUS_INTR ### */
-			desc->status = DESC_STATUS_TX_SEND_CLEAR;
-
+			/* Set Tx descriptor after Tx done */
+			/* ### SET_TX_DESC_DONE ### */
+			dev_set_tx_desc_done(pdev->base, desc, index);
 #ifdef MY_DEBUG
-			printf("ip1000: Successfully send a packet\n");
+			printf("NDR: Successfully send a packet\n");
 #endif
 		}
 		pdev->tx_tail = tx_tail;
 	}
 #ifdef MY_DEBUG
 	if (!flag) {
-		printf("ip1000: Unknown error in interrupt\n");
+		printf("NDR: Unknown error in interrupt 0x%08x\n", intr_status);
 		return;
 	}
 #endif
 }
 
 /* Check interrupt and perform */
-static void ic_check_ints(ic_driver *pdev) {
+static void dev_check_ints(NDR_driver *pdev) {
 	if (!pdev->recv_flag)
 		return;
 	pdev->recv_flag = FALSE;
@@ -999,8 +991,4 @@ static void ic_check_ints(ic_driver *pdev) {
 		pdev->send_flag = FALSE;
 		netdriver_send();
 	}
-}
-
-static void ic_stat(eth_stat_t *stat) {
-	memcpy(stat, &g_driver.stat, sizeof(*stat));
 }
