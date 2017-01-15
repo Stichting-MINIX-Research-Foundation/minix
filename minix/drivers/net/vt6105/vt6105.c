@@ -1,220 +1,323 @@
 #include <minix/drivers.h>
 #include <minix/netdriver.h>
 #include <machine/pci.h>
+#include <sys/mman.h>
 #include "vt6105.h"
 #include "io.h"
 
 /* global value */
-static vt_driver g_driver;
+static NDR_driver g_driver;
 static int g_instance;
 
 /* driver interface */
-static int vt_init(unsigned int instance, ether_addr_t *addr);
-static void vt_stop(void);
-static void vt_mode(unsigned int mode);
-static ssize_t vt_recv(struct netdriver_data *data, size_t max);
-static int vt_send(struct netdriver_data *data, size_t size);
-static void vt_intr(unsigned int mask);
-static void vt_stat(eth_stat_t *stat);
+static int NDR_init(unsigned int instance, ether_addr_t *addr);
+static void NDR_stop(void);
+static void NDR_mode(unsigned int mode);
+static ssize_t NDR_recv(struct netdriver_data *data, size_t max);
+static int NDR_send(struct netdriver_data *data, size_t size);
+static void NDR_intr(unsigned int mask);
+static void NDR_stat(eth_stat_t *stat);
 
 /* internal function */
-static int vt_probe(vt_driver *pdev, int instance);
-static int vt_init_buf(vt_driver *pdev);
-static int vt_init_hw(vt_driver *pdev, ether_addr_t *addr);
-static int vt_reset_hw(vt_driver *pdev);
-static void vt_conf_addr(vt_driver *pdev, ether_addr_t *addr);
-static void vt_handler(vt_driver *pdev);
-static void vt_check_ints(vt_driver *pdev);
+static int dev_probe(NDR_driver *pdev, int instance);
+static int dev_init_buf(NDR_driver *pdev);
+static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr);
+static int dev_reset_hw(NDR_driver *pdev);
+static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr);
+static void dev_handler(NDR_driver *pdev);
+static void dev_check_ints(NDR_driver *pdev);
 
 /* developer interface */
-static void vt_init_rx_desc(vt_desc *desc, size_t size, phys_bytes dma);
-static void vt_init_tx_desc(vt_desc *desc, size_t size, phys_bytes dma);
-static int vt_real_reset(u32_t base);
-static int vt_init_power(u32_t base);
-static int vt_init_mii(u32_t base);
-static int vt_init_io(u32_t base);
-static void vt_start_rx_tx(u32_t base);
-static void vt_get_addr(u32_t base, u8_t *pa);
-static int vt_check_link(u32_t base);
-static void vt_stop_rx_tx(u32_t base);
-static int vt_rx_status_ok(vt_desc *desc);
-static int vt_get_rx_len(vt_desc *desc);
-static void vt_tx_desc_start(vt_desc *desc, size_t size);
-static void vt_wakeup_tx(u32_t base);
-static int vt_tx_status_ok(vt_desc *desc);
+static int dev_real_reset(u32_t *base);
+static int dev_init_io(u32_t *base);
+static int dev_init_mii(u32_t *base);
+static void dev_intr_control(u32_t *base, int flag);
+static void dev_rx_tx_control(u32_t *base, int flag);
+static void dev_get_addr(u32_t *base, u8_t *pa);
+static int dev_check_link(u32_t *base);
+static void dev_set_rec_mode(u32_t *base, int mode);
+static void dev_start_tx(u32_t *base);
+static u32_t dev_read_clear_intr_status(u32_t *base);
+static void dev_init_rx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
+static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start);
+static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+								phys_bytes tx_addr);
+static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index);
+static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+										size_t data_size);
+static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index);
+static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index);
 
-/* ======= Developer-defined function ======= */
-/* Intialize Rx descriptor (### RX_DESC_INIT ###) */
-static void vt_init_rx_desc(vt_desc *desc, size_t size, phys_bytes dma) {
-	desc->status = DESC_OWN | ((size << 16) & DESC_RX_LENMASK);
-	desc->addr = dma;
-	desc->length = size;
-}
+/* ======= Developer implemented function ======= */
+/* ====== Self-defined function ======*/
 
-/* Intialize Tx descriptor (### TX_DESC_INIT ###) */
-static void vt_init_tx_desc(vt_desc *desc, size_t size, phys_bytes dma) {
-	desc->addr = dma;
-	desc->length = size;
-}
-
+/* ====== Developer interface ======*/
 /* Real hardware reset (### RESET_HARDWARE_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int vt_real_reset(u32_t base) {
-	vt_out16(base, REG_CR, CMD_RESET);
-	micro_delay(10000);
-	if (vt_in16(base, REG_CR) & CMD_RESET) {
-		vt_out8(base, REG_MCR1, 0x40);
-		micro_delay(10000);
-		if (vt_in16(base, REG_CR) & CMD_RESET)
+static int dev_real_reset(u32_t *base) {
+	u32_t base0 = base[0];
+	ndr_out16(base0, REG_CR, CMD_RESET);
+	micro_delay(5000);
+	if (ndr_in16(base0, REG_CR) & CMD_RESET) {
+		ndr_out8(base0, REG_MCR, 0x40);
+		micro_delay(5000);
+		if (ndr_in16(base0, REG_CR) & CMD_RESET)
 			return -EIO;
 	}
 	return OK;
 }
 
-/* Intialize power (### POWER_INIT_CAN_FAIL ###)
+/* Intialize other hardware I/O registers (### INIT_HARDWARE_IO_CAN_FAIL ###)
  * -- Return OK means success, Others means failure */
-static int vt_init_power(u32_t base) {
+static int dev_init_io(u32_t *base) {
+	u32_t base0 = base[0];
 	u8_t stick;
-	stick = vt_in8(base, REG_STICK);
-	vt_out8(base, REG_STICK, stick & 0xfc);
+	stick = ndr_in8(base0, REG_STICK);
+	ndr_out8(base0, REG_STICK, stick & 0xfc);
+	ndr_out16(base0, REG_BCR, 0x0006);
+	ndr_out8(base0, REG_TCR, 0x20);
+	ndr_out8(base0, REG_RCR, 0x78);
 	return OK;
 }
 
 /* Intialize MII interface (### MII_INIT_CAN_FAIL ###)
- * -- Return OK means success, Others means failure */
-static int vt_init_mii(u32_t base) {
+  -- Return OK means success, Others means failure */
+static int dev_init_mii(u32_t *base) {
+	u32_t base0 = base[0];
+	ndr_out8(base0, REG_MII_CR, 0);
+	ndr_out8(base0, REG_MII_REG, 0x01);
+	ndr_out8(base0, REG_MII_CR, 0x80);
+	micro_delay(5000);
+	if (!(ndr_in8(base0, REG_MII_REG) & 0x20)) {
+		printf("NDR: Fail to monitor linkage\n");
+		return -EIO;
+	}
+	ndr_out8(base0, REG_MII_REG, 0x41);
 	return OK;
 }
 
-/* Intialize other hardware I/O registers (### INIT_HARDWARE_IO_CAN_FAIL ###)
- * -- Return OK means success, Others means failure */
-static int vt_init_io(u32_t base) {
-	vt_out16(base, REG_BCR0, 0x0006);
-	vt_out8(base, REG_TCR, 0x20);
-	vt_out8(base, REG_RCR, 0x78);
-	return OK;
+/* Enable or disable interrupt (### INTR_ENABLE_DISABLE ###) */
+static void dev_intr_control(u32_t *base, int flag) {
+	u32_t data, base0 = base[0];
+	data = ndr_in16(base0, REG_IMR);
+	if (flag == INTR_ENABLE)
+		ndr_out16(base0, REG_IMR, data | CMD_INTR_ENABLE);
+	else if (flag == INTR_DISABLE)
+		ndr_out16(base0, REG_IMR, data & ~CMD_INTR_ENABLE);
 }
 
-/* Start Rx/Tx (### START_RX_TX ###) */
-static void vt_start_rx_tx(u32_t base) {
-	u16_t cmd = CMD_START | CMD_RX_ON | CMD_TX_ON | CMD_NO_POLL | CMD_FDUPLEX;
-	vt_out16(base, REG_CR, cmd);
-	micro_delay(1000);
+/* Enable or disable Rx/Tx (### RX_TX_ENABLE_DISABLE ###) */
+static void dev_rx_tx_control(u32_t *base, int flag) {
+	u32_t data, base0 = base[0];
+	if (flag == RX_TX_ENABLE) {
+		data = CMD_START | CMD_RX_ON | CMD_TX_ON | CMD_NO_POLL | CMD_FDUPLEX;
+		ndr_out16(base0, REG_CR, data);
+	}
+	else if (flag == RX_TX_DISABLE) {
+		ndr_out16(base0, REG_CR, CMD_STOP);
+	}
 }
 
 /* Get MAC address to the array 'pa' (### GET_MAC_ADDR ###) */
-static void vt_get_addr(u32_t base, u8_t *pa) {
-	int i;
+static void dev_get_addr(u32_t *base, u8_t *pa) {
+	u32_t i, base0 = base[0];
 	for (i = 0; i < 6; i++)
-		pa[i] = vt_in8(base, REG_ADDR + i);
+		pa[i] = ndr_in8(base0, REG_ADDR + i);
 }
 
 /* Check link status (### CHECK_LINK ###)
  * -- Return LINK_UP or LINK_DOWN */
-static int vt_check_link(u32_t base) {
-	u32_t r;
-	vt_out8(base, REG_MII_CFG, 0x01);
-	vt_out8(base, REG_MII_ADDR, 0x01);
-	vt_out8(base, REG_MII_CR, 0x40);
-	micro_delay(10000);
-	r = vt_in16(base, REG_MII_DATA);
-	if (r & 0x0004)
+static int dev_check_link(u32_t *base) {
+	u32_t data, base0 = base[0];
+	ndr_out8(base0, REG_MII_PHY, 0x01);
+	ndr_out8(base0, REG_MII_REG, 0x01);
+	ndr_out8(base0, REG_MII_CR, 0x40);
+	micro_delay(5000);
+	if (ndr_in8(base0, REG_MII_CR) & 0x40)
+		printf("NDR: Fail to get linkage\n");
+	data = ndr_in16(base0, REG_MII_DATA);
+	if (data & LINK_STATUS)
 		return LINK_UP;
 	return LINK_DOWN;
 }
 
-/* Stop Rx/Tx (### STOP_RX_TX ###) */
-static void vt_stop_rx_tx(u32_t base) {
-	vt_out16(base, REG_CR, CMD_STOP);
+/* Set driver receive mode (### SET_REC_MODE ###) */
+static void dev_set_rec_mode(u32_t *base, int mode) {
+	u32_t data, base0 = base[0];
+	data = ndr_in8(base0, REG_RCR);
+	data &= ~(CMD_RCR_UNICAST | CMD_RCR_MULTICAST | CMD_RCR_BROADCAST);
+	if (mode & NDEV_PROMISC)
+		data |= CMD_RCR_UNICAST | CMD_RCR_BROADCAST | CMD_RCR_MULTICAST;
+	if (mode & NDEV_BROAD)
+		data |= CMD_RCR_BROADCAST;
+	if (mode & NDEV_MULTI)
+		data |= CMD_RCR_MULTICAST;
+	data |= CMD_RCR_UNICAST;
+	ndr_out8(base0, REG_RCR, data);
 }
 
-/* Check whether Rx status OK (### CHECK_RX_STATUS_OK ###)
- * -- Return TRUE or FALSE */
-static int vt_rx_status_ok(vt_desc *desc) {
+/* Start Tx channel (### START_TX_CHANNEL ###) */
+static void dev_start_tx(u32_t *base) {
+	u32_t data, base0 = base[0];
+	data = ndr_in8(base0, REG_CR);
+	ndr_out8(base0, REG_CR, data | CMD_TX_DEMAND);
+}
+
+/* Read and clear interrupt (### READ_CLEAR_INTR_STS ###) */
+static u32_t dev_read_clear_intr_status(u32_t *base) {
+	u32_t data, base0 = base[0];
+	data = ndr_in16(base0, REG_ISR);
+	ndr_out16(base0, REG_ISR, data & INTR_STS_CLEAR);
+	return data;
+}
+
+/* ---------- WITH DESCRIPTOR ---------- */
+/* Intialize Rx descriptor (### INIT_RX_DESC ###) */
+static void dev_init_rx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start) {
+	NDR_desc *desc = desc_start + index;
+	desc->status = DESC_OWN | ((buf_size << 16) & DESC_RX_LENMASK);
+	desc->addr = buf_dma;
+	desc->length = buf_size;
+	if (index == max_desc_num - 1)
+		desc->next = desc_dma_start;
+	else
+		desc->next = desc_dma_start + (index + 1) * sizeof(NDR_desc);
+}
+
+/* Intialize Tx descriptor (### INIT_TX_DESC ###) */
+static void dev_init_tx_desc(NDR_desc *desc_start, int index, size_t buf_size,
+			phys_bytes buf_dma, int max_desc_num, phys_bytes desc_dma_start) {
+	NDR_desc *desc = desc_start + index;
+	desc->addr = buf_dma;
+	desc->length = buf_size;
+	if (index == max_desc_num - 1)
+		desc->next = desc_dma_start;
+	else
+		desc->next = desc_dma_start + (index + 1) * sizeof(NDR_desc);
+}
+
+/* Set Rx/Tx descriptor address into device register (### SET_DESC_REG ###) */
+static void dev_set_desc_reg(u32_t *base, phys_bytes rx_addr,
+								phys_bytes tx_addr) {
+	u32_t base0 = base[0];
+	ndr_out32(base0, REG_RX_DESC_BASE, rx_addr);
+	ndr_out32(base0, REG_TX_DESC_BASE, tx_addr);
+}
+
+/* Check whether Rx is OK from Rx descriptor (### CHECK_RX_OK_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return RX_OK or RX_SUSPEND or RX_ERROR */
+static int dev_rx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
 	if (!(desc->status & DESC_OWN)) {
+		if (desc->status & DESC_RX_ERROR)
+			return RX_ERROR;
 		if ((desc->status & DESC_RX_NORMAL) == DESC_RX_NORMAL)
-			return TRUE;
+			return RX_OK;
 	}
-	return FALSE;
+	return RX_SUSPEND;
 }
 
-/* Get Rx data length from descriptor (### GET_RX_LEN ###)
- * --- Return the length */
-static int vt_get_rx_len(vt_desc *desc) {
-	int len;
-	len = ((desc->status & DESC_RX_LENMASK) >> 16) - ETH_CRC_SIZE;
+/* Get length from Rx descriptor (### GET_RX_LENGTH_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return the length */
+static int dev_rx_len_desc(u32_t *base, NDR_desc *desc, int index) {
+	int len = ((desc->status & DESC_RX_LENMASK) >> 16) - ETH_CRC_SIZE;
 	return len;
 }
 
-/* Set Tx descriptor in send (### TX_DESC_START ###) */
-static void vt_tx_desc_start(vt_desc *desc, size_t size) {
+/* Set Rx descriptor after Rx done (### SET_RX_DESC_DONE ###)
+ * -- Current buffer number is index */
+static void dev_set_rx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+	desc->status = DESC_OWN;
+}
+
+/* Set Tx descriptor to prepare transmitting (### SET_TX_DESC_PREPARE)
+ * -- Current buffer number is index */
+static void dev_set_tx_desc_prepare(u32_t *base, NDR_desc *desc, int index,
+								size_t data_size) {
 	desc->status = DESC_OWN | DESC_FIRST | DESC_LAST;
-	desc->length = 0x00e08000 | (size > 60 ? size : 60);
+	desc->length = 0x00e08000 | (data_size > 60 ? data_size : 60);
 }
 
-/* Wake up Tx channel (### WAKE_UP_TX ###) */
-static void vt_wakeup_tx(u32_t base) {
-	u8_t cmd;
-	cmd = vt_in8(base, REG_CR);
-	cmd |= CMD_TX_DEMAND;
-	vt_out8(base, REG_CR, cmd);
+/* Check whether Tx is OK from Tx descriptor (### CHECK_TX_OK_FROM_DESC ###)
+ * -- Current buffer number is index
+ * -- Return TX_OK or TX_SUSPEND or TX_ERROR */
+static int dev_tx_ok_desc(u32_t *base, NDR_desc *desc, int index) {
+	if (!(desc->status & DESC_OWN)) {
+		if (desc->status & DESC_TX_ERROR)
+			return TX_ERROR;
+		return TX_OK;
+	}
+	return TX_SUSPEND;
 }
 
-/* Check whether Tx status OK (### CHECK_TX_STATUS_OK ###)
- * -- Return TRUE or FALSE */
-static int vt_tx_status_ok(vt_desc *desc) {
-	if (!(desc->status & DESC_OWN))
-		return TRUE;
-	return FALSE;
+/* Set Tx descriptor after Tx done (### SET_TX_DESC_DONE ###)
+ * -- Current buffer number is index */
+static void dev_set_tx_desc_done(u32_t *base, NDR_desc *desc, int index) {
+	desc->status = 0;
 }
 
 /* Driver interface table */
-static const struct netdriver vt_table = {
-	.ndr_init = vt_init,
-	.ndr_stop = vt_stop,
-	.ndr_mode = vt_mode,
-	.ndr_recv = vt_recv,
-	.ndr_send = vt_send,
-	.ndr_stat = vt_stat,
-	.ndr_intr = vt_intr,
+static const struct netdriver NDR_table = {
+	.ndr_init = NDR_init,
+	.ndr_stop = NDR_stop,
+	.ndr_mode = NDR_mode,
+	.ndr_recv = NDR_recv,
+	.ndr_send = NDR_send,
+	.ndr_intr = NDR_intr,
+	.ndr_stat = NDR_stat
 };
 
 int main(int argc, char *argv[]) {
 	env_setargs(argc, argv);
-	netdriver_task(&vt_table);
+	netdriver_task(&NDR_table);
 }
 
 /* Initialize the driver */
-static int vt_init(unsigned int instance, ether_addr_t *addr) {
-	int ret = 0;
+static int NDR_init(unsigned int instance, ether_addr_t *addr) {
+	int i, ret = 0;
 
 	/* Intialize driver data structure */
 	memset(&g_driver, 0, sizeof(g_driver));
 	g_driver.link = LINK_UNKNOWN;
-	strcpy(g_driver.name, "netdriver#0");
-	g_driver.name[10] += instance;
+	strcpy(g_driver.name, DRIVER_NAME);
+	strcat(g_driver.name, "#0");
+	g_driver.name[strlen(g_driver.name) - 1] += instance;
 	g_instance = instance;
 
 	/* Probe the device */
-	if (vt_probe(&g_driver, instance)) {
-		printf("vt6105: Device is not found\n");
+	if (dev_probe(&g_driver, instance)) {
+		printf("NDR: Device is not found\n");
 		ret = -ENODEV;
 		goto err_probe;
 	}
 
+	/* Intialize hardware */
+	if (dev_init_hw(&g_driver, addr)) {
+		printf("NDR: Fail to initialize hardware\n");
+		ret = -EIO;
+		goto err_init_hw;
+	}
+
 	/* Allocate and initialize buffer */
-	if (vt_init_buf(&g_driver)) {
-		printf("vt6105: Fail to initialize buffer\n");
+	if (dev_init_buf(&g_driver)) {
+		printf("NDR: Fail to initialize buffer\n");
 		ret = -ENODEV;
 		goto err_init_buf;
 	}
 
-	/* Intialize hardware */
-	if (vt_init_hw(&g_driver, addr)) {
-		printf("vt6105: Fail to initialize hardware\n");
-		ret = -EIO;
-		goto err_init_hw;
-	}
+	/* Enable interrupts */
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(g_driver.base, INTR_ENABLE);
+
+	/* Start Rx and Tx */
+	/* ### RX_TX_ENABLE_DISABLE ### */
+	dev_rx_tx_control(g_driver.base, RX_TX_ENABLE);
 
 	/* Use a synchronous alarm instead of a watchdog timer */
 	sys_setalarm(sys_hz(), 0);
@@ -225,18 +328,146 @@ static int vt_init(unsigned int instance, ether_addr_t *addr) {
 
 	return 0;
 
-err_init_hw:
-	free_contig(g_driver.buf, g_driver.buf_size);
 err_init_buf:
+err_init_hw:
 err_probe:
 	return ret;
 }
 
+/* Stop the driver */
+static void NDR_stop(void) {
+	/* Free Rx and Tx buffer*/
+	free_contig(g_driver.buf, g_driver.buf_size);
+
+	/* Stop interrupt */
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(g_driver.base, INTR_DISABLE);
+
+	/* Stop Rx and Tx */
+	/* ### RX_TX_ENABLE_DISABLE ### */
+	dev_rx_tx_control(g_driver.base, RX_TX_DISABLE);
+}
+
+/* Set driver mode */
+static void NDR_mode(unsigned int mode) {
+	g_driver.mode = mode;
+	/* Set driver receive mode */
+	/* ### SET_REC_MODE ### */
+	dev_set_rec_mode(g_driver.base, mode);
+}
+
+/* Receive data */
+static ssize_t NDR_recv(struct netdriver_data *data, size_t max) {
+	NDR_driver *pdev = &g_driver;
+	u32_t totlen, packlen;
+	int index, ret, offset = 0;
+	NDR_desc *desc;
+
+	index = pdev->rx_head;
+	desc = pdev->rx_desc;
+	desc += index;
+	/* Check whether Rx is OK from Rx descriptor */
+	/* ### CHECK_RX_OK_FROM_DESC ### */
+	ret = dev_rx_ok_desc(pdev->base, desc, index);
+	if (ret == RX_SUSPEND)
+		return SUSPEND;
+	else if (ret == RX_ERROR)
+		printf("NDR: Rx error now\n");
+	/* Get length from Rx descriptor */
+	/* ### GET_RX_LENGTH_FROM_DESC ### */
+	totlen = dev_rx_len_desc(pdev->base, desc, index);
+
+	/* Get data length */
+	/* ### Get , int inde, int indexxRx data length ### */
+	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
+		printf("NDR: Bad data length: %d\n", totlen);
+		panic(NULL);
+	}
+
+	packlen = totlen;
+	if (packlen > max)
+		packlen = max;
+
+	/* Copy data to user */
+	netdriver_copyout(data, 0, pdev->rx[index].buf + offset, packlen);
+	pdev->stat.ets_packetR++;
+
+	/* Set Rx descriptor after Rx done */
+	/* ### SET_RX_DESC_DONE ### */
+	dev_set_rx_desc_done(pdev->base, desc, index);
+	if (index == RX_BUFFER_NUM - 1)
+		index = 0;
+	else
+		index++;
+	pdev->rx_head = index;
+
+#ifdef MY_DEBUG
+	printf("NDR: Successfully receive a packet, length = %d\n", packlen);
+#endif
+
+	return packlen;
+}
+
+/* Transmit data */
+static int NDR_send(struct netdriver_data *data, size_t size) {
+	NDR_driver *pdev = &g_driver;
+	int tx_head, i;
+	NDR_desc *desc;
+
+	tx_head = pdev->tx_head;
+	if (pdev->tx[tx_head].busy)
+		return SUSPEND;
+
+	/* Copy data from user */
+	netdriver_copyin(data, 0, pdev->tx[tx_head].buf, size);
+
+	/* Set busy */
+	pdev->tx[tx_head].busy = TRUE;
+	pdev->tx_busy_num++;
+
+	desc = pdev->tx_desc;
+	desc += tx_head;
+	/* Set Tx descriptor to prepare transmitting */
+	/* ### SET_TX_DESC_PREPARE ### */
+	dev_set_tx_desc_prepare(pdev->base, desc, tx_head, size);
+	if (tx_head == TX_BUFFER_NUM - 1)
+		tx_head = 0;
+	else
+		tx_head++;
+	pdev->tx_head = tx_head;
+
+	/* Start Tx channel */
+	/* ### START_TX ### */
+	dev_start_tx(pdev->base);
+
+	return 0;
+}
+
+/* Handle interrupt */
+static void NDR_intr(unsigned int mask) {
+	int s;
+
+	/* Run interrupt handler at driver level */
+	dev_handler(&g_driver);
+
+	/* Reenable interrupts for this hook */
+	if ((s = sys_irqenable(&g_driver.hook)) != OK)
+		printf("NDR: Cannot enable OS interrupts: %d\n", s);
+
+	/* Perform tasks based on the flagged conditions */
+	dev_check_ints(&g_driver);
+}
+
+/* Get driver status */
+static void NDR_stat(eth_stat_t *stat) {
+	memcpy(stat, &g_driver.stat, sizeof(*stat));
+}
+
 /* Match the device and get base address */
-static int vt_probe(vt_driver *pdev, int instance) {
-	int devind, ioflag;
+static int dev_probe(NDR_driver *pdev, int instance) {
+	int devind, ioflag, i;
 	u16_t cr, vid, did;
-	u32_t bar, size;
+	u32_t bar, size, base;
 	u8_t irq, rev;
 	u8_t *reg;
 
@@ -250,183 +481,87 @@ static int vt_probe(vt_driver *pdev, int instance) {
 	}
 	pci_reserve(devind);
 
-	/* Enable bus mastering */
+	/* Enable bus mastering and I/O space */
 	cr = pci_attr_r16(devind, PCI_CR);
-	if (!(cr & PCI_CR_MAST_EN))
-		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+	pci_attr_w16(devind, PCI_CR, cr | 0x105);
 
 	/* Get base address */
-#ifdef DMA_REG_MODE
-	if (pci_get_bar(devind, PCI_BAR, &base, &size, &ioflag)) {
-		printf("vt6105: Fail to get PCI BAR\n");
-		return -EIO;
+	for (i = 0; i < 6; i++)
+		pdev->base[i] = 0;
+#ifdef DMA_BASE_IOMAP
+	for (i = 0; i < 6; i++) {
+		if (pci_get_bar(devind, PCI_BAR + i * 4, &base, &size, &ioflag)) {
+			/* printf("NDR: Fail to get PCI BAR\n"); */
+			continue;
+		}
+		if (ioflag) {
+			/* printf("NDR: PCI BAR is not for memory\n"); */
+			continue;
+		}
+		if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
+			printf("NDR: Fail to map hardware registers from PCI\n");
+			return -EIO;
+		}
+		pdev->base[i] = (u32_t)reg;
 	}
-	if (ioflag) {
-		printf("vt6105: PCI BAR is not for memory\n");
-		return -EIO;
-	}
-	if ((reg = vm_map_phys(SELF, (void *)base, size)) == MAP_FAILED) {
-		printf("vt6105: Fail to map hardware registers from PCI\n");
-		return -EIO;
-	}
-	pdev->base_addr = (u32_t)reg;
 #else
-	bar = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-	if (bar < 0x400) {
-		printf("vt6105: Base address is not properly configured\n");
-		return -EIO;
-	}
-	pdev->base_addr = bar;
+	for (i = 0; i < 6; i++)
+		pdev->base[i] = pci_attr_r32(devind, PCI_BAR + i * 4) & 0xffffffe0;
 #endif
-
-	/* Get irq number */
-	irq = pci_attr_r8(devind, PCI_ILR);
-	pdev->irq = irq;
-
-	/* Get revision ID */
-	rev = pci_attr_r8(devind, PCI_REV);
-	pdev->revision = rev;
+	pdev->dev_name = pci_dev_name(vid, did);
+	pdev->irq = pci_attr_r8(devind, PCI_ILR);
+	pdev->revision = pci_attr_r8(devind, PCI_REV);
+	pdev->did = did;
+	pdev->vid = vid;
+	pdev->devind = devind;
 
 #ifdef MY_DEBUG
-	printf("vt6105: Base address is 0x%08x\n", pdev->base_addr);
-	printf("vt6105: IRQ number is 0x%02x\n", pdev->irq);
-	printf("vt6105: Revision ID is 0x%02x\n", pdev->revision);
+	printf("NDR: Hardware name is %s\n", pdev->dev_name);
+	for (i = 0; i < 6; i++)
+		printf("NDR: PCI BAR%d is 0x%08x\n", i, pdev->base[i]);
+	printf("NDR: IRQ number is 0x%02x\n", pdev->irq);
 #endif
-
-	return 0;
-}
-
-/* Allocate and initialize buffer */
-static int vt_init_buf(vt_driver *pdev) {
-	size_t rx_desc_size, tx_desc_size, rx_buf_size, tx_buf_size, tot_buf_size;
-	vt_desc *desc;
-	phys_bytes buf_dma, next;
-	char *buf;
-	int i;
-
-	/* Build Rx and Tx descriptor buffer */
-	rx_desc_size = RX_DESC_NUM * sizeof(vt_desc);
-	tx_desc_size = TX_DESC_NUM * sizeof(vt_desc);
-
-	/* Allocate Rx and Tx buffer */
-	tx_buf_size = TX_BUF_SIZE;
-	if (tx_buf_size % 4)
-		tx_buf_size += 4 - (tx_buf_size % 4);
-	rx_buf_size = RX_BUF_SIZE;
-	tot_buf_size = rx_desc_size + tx_desc_size;
-	tot_buf_size += TX_DESC_NUM * tx_buf_size + RX_DESC_NUM * rx_buf_size;
-	if (tot_buf_size % 4096)
-		tot_buf_size += 4096 - (tot_buf_size % 4096);
-
-	if (!(buf = alloc_contig(tot_buf_size, 0, &buf_dma))) {
-		printf("vt6105: Fail to allocate memory\n");
-		return -ENOMEM;
-	}
-	pdev->buf_size = tot_buf_size;
-	pdev->buf = buf;
-
-	/* Rx descriptor */
-	pdev->rx_desc = (vt_desc *)buf;
-	pdev->rx_desc_dma = buf_dma;
-	memset(buf, 0, rx_desc_size);
-	buf += rx_desc_size;
-	buf_dma += rx_desc_size;
-
-	/* Tx descriptor */
-	pdev->tx_desc = (vt_desc *)buf;
-	pdev->tx_desc_dma = buf_dma;
-	memset(buf, 0, tx_desc_size);
-	buf += tx_desc_size;
-	buf_dma += tx_desc_size;
-
-	/* Rx buffer assignment */
-	desc = pdev->rx_desc;
-	next = pdev->rx_desc_dma;
-	for (i = 0; i < RX_DESC_NUM; i++) {
-		/* Set Rx buffer */
-		pdev->rx[i].buf_dma = buf_dma;
-		pdev->rx[i].buf = buf;
-		buf_dma += rx_buf_size;
-		buf += rx_buf_size;
-
-		/* Set Rx descriptor */
-		/* ### RX_DESC_INIT ### */
-		vt_init_rx_desc(desc, rx_buf_size, pdev->rx[i].buf_dma);
-		if (i == (RX_DESC_NUM - 1))
-			desc->next = pdev->rx_desc_dma;
-		else {
-			next += sizeof(vt_desc);
-			desc->next = next;
-			desc++;
-		}
-	}
-
-	/* Tx buffer assignment */
-	desc = pdev->tx_desc;
-	next = pdev->tx_desc_dma;
-	for (i = 0; i < TX_DESC_NUM; i++) {
-		/* Set Tx buffer */
-		pdev->tx[i].busy = 0;
-		pdev->tx[i].buf_dma = buf_dma;
-		pdev->tx[i].buf = buf;
-		buf_dma += tx_buf_size;
-		buf += tx_buf_size;
-
-		/* Set Rx descriptor */
-		/* ### TX_DESC_INIT ### */
-		vt_init_tx_desc(desc, tx_buf_size, pdev->tx[i].buf_dma);
-		if (i == (TX_DESC_NUM - 1))
-			desc->next = pdev->tx_desc_dma;
-		else {
-			next += sizeof(vt_desc);
-			desc->next = next;
-			desc++;
-		}
-	}
-	pdev->tx_busy_num = 0;
-	pdev->tx_head = 0;
-	pdev->tx_tail = 0;
-	pdev->rx_head = 0;
 
 	return 0;
 }
 
 /* Intialize hardware */
-static int vt_init_hw(vt_driver *pdev, ether_addr_t *addr) {
+static int dev_init_hw(NDR_driver *pdev, ether_addr_t *addr) {
 	int r, ret;
 
 	/* Set the OS interrupt handler */
 	pdev->hook = pdev->irq;
 	if ((r = sys_irqsetpolicy(pdev->irq, 0, &pdev->hook)) != OK) {
-		printf("vt6105: Fail to set OS IRQ policy: %d\n", r);
+		printf("NDR: Fail to set OS IRQ policy: %d\n", r);
 		ret = -EFAULT;
 		goto err_irq_policy;
 	}
 
 	/* Reset hardware */
-	if (vt_reset_hw(pdev)) {
-		printf("vt6105: Fail to reset the device\n");
+	if (dev_reset_hw(pdev)) {
+		printf("NDR: Fail to reset the device\n");
 		ret = -EIO;
 		goto err_reset_hw;
 	}
 
 	/* Enable OS IRQ */
 	if ((r = sys_irqenable(&pdev->hook)) != OK) {
-		printf("vt6105: Fail to enable OS IRQ: %d\n", r);
+		printf("NDR: Fail to enable OS IRQ: %d\n", r);
 		ret = -EFAULT;
 		goto err_irq_enable;
 	}
 
 	/* Configure MAC address */
-	vt_conf_addr(pdev, addr);
+	dev_conf_addr(pdev, addr);
 
 	/* Detect link status */
-	pdev->link = vt_check_link(pdev->base_addr);
+	/* ### CHECK_LINK ### */
+	pdev->link = dev_check_link(pdev->base);
 #ifdef MY_DEBUG
 	if (pdev->link)
-		printf("vt6105: Link up\n");
+		printf("NDR: Link up\n");
 	else
-		printf("vt6105: Link down\n");
+		printf("NDR: Link down\n");
 #endif
 
 	return 0;
@@ -438,79 +573,48 @@ err_irq_policy:
 }
 
 /* Reset hardware */
-static int vt_reset_hw(vt_driver *pdev) {
-	u32_t base = pdev->base_addr;
+static int dev_reset_hw(NDR_driver *pdev) {
 	int ret;
 
 	/* Reset the chip */
 	/* ### RESET_HARDWARE_CAN_FAIL ### */
-	if (vt_real_reset(base)) {
-		printf("vt6105: Fail to reset the hardware\n");
+	if (dev_real_reset(pdev->base)) {
+		printf("NDR: Fail to reset the hardware\n");
 		ret = -EIO;
 		goto err_real_reset;
 	}
 
-	/* Initialize power */
-	/* ### POWER_INIT_CAN_FAIL ### */
-	if (vt_init_power(base)) {
-		printf("vt6105: Fail to initialize power\n");
-		ret = -EIO;
-		goto err_init_power;
-	}
-
-	/* Initialize MII interface */
-	/* ### MII_INIT_CAN_FAIL ### */
-	if (vt_init_mii(base)) {
-		printf("vt6105: Fail to initialize MII interface\n");
-		ret = -EIO;
-		goto err_init_mii;
-	}
-
-	/* Initialize hardware I/O registers */
+	/* Initialize other hardware I/O registers */
 	/* ### SET_RX_DESC_REG ### */
-	if (vt_init_io(base)) {
-		printf("vt6105: Fail to initialize I/O registers\n");
+	if (dev_init_io(pdev->base)) {
+		printf("NDR: Fail to initialize I/O registers\n");
 		ret = -EIO;
 		goto err_init_io;
 	}
 
-	/* Set Rx/Tx descriptor into register */
-	/* ### SET_RX_DESC_REG ### */
-	vt_out32(base, REG_RX_DESC_BASEL, pdev->rx_desc_dma);
-#ifdef DESC_BASE_DMA64
-	vt_out32(base, REG_RX_DESC_BASEU, 0x00000000);
-#endif
-	/* ### SET_TX_DESC_REG ### */
-	vt_out32(base, REG_TX_DESC_BASEL, pdev->tx_desc_dma);
-#ifdef DESC_BASE_DMA64
-	vt_out32(base, REG_TX_DESC_BASEU, 0x00000000);
-#endif
-
-	/* Enable interrupts */
-	/* ### ENABLE_INTR ### */
-	vt_out16(base, REG_IMR, INTR_IMR_ENABLE);
-
-	/* Start the device, Rx and Tx */
-	/* ### START_RX_TX ### */
-	vt_start_rx_tx(base);
+	/* Initialize MII interface */
+	/* ### MII_INIT_CAN_FAIL ### */
+	if (dev_init_mii(pdev->base)) {
+		printf("NDR: Fail to initialize MII interface\n");
+		ret = -EIO;
+		goto err_init_mii;
+	}
 
 	return 0;
 
-err_init_io:
 err_init_mii:
-err_init_power:
+err_init_io:
 err_real_reset:
 	return ret;
 }
 
 /* Configure MAC address */
-static void vt_conf_addr(vt_driver *pdev, ether_addr_t *addr) {
+static void dev_conf_addr(NDR_driver *pdev, ether_addr_t *addr) {
 	u8_t pa[6];
-	u32_t base = pdev->base_addr;
 
 	/* Get MAC address */
 	/* ### GET_MAC_ADDR ### */
-	vt_get_addr(base, pa);
+	dev_get_addr(pdev->base, pa);
 	addr->ea_addr[0] = pa[0];
 	addr->ea_addr[1] = pa[1];
 	addr->ea_addr[2] = pa[2];
@@ -518,201 +622,123 @@ static void vt_conf_addr(vt_driver *pdev, ether_addr_t *addr) {
 	addr->ea_addr[4] = pa[4];
 	addr->ea_addr[5] = pa[5];
 #ifdef MY_DEBUG
-	printf("vt6105: Ethernet address is %02x:%02x:%02x:%02x:%02x:%02x\n",
+	printf("NDR: Ethernet address is %02x:%02x:%02x:%02x:%02x:%02x\n",
 			addr->ea_addr[0], addr->ea_addr[1], addr->ea_addr[2],
 			addr->ea_addr[3], addr->ea_addr[4], addr->ea_addr[5]);
 #endif
 }
 
-/* Stop the driver */
-static void vt_stop(void) {
-	u32_t base = g_driver.base_addr;
+/* Allocate and initialize buffer */
+static int dev_init_buf(NDR_driver *pdev) {
+	size_t rx_desc_size, tx_desc_size, rx_buf_size, tx_buf_size, tot_buf_size;
+	phys_bytes buf_dma;
+	char *buf;
+	int i;
 
-	/* Free Rx and Tx buffer*/
-	free_contig(g_driver.buf, g_driver.buf_size);
+	/* Build Rx and Tx buffer */
+	tx_buf_size = TX_BUF_SIZE;
+	if (tx_buf_size % 4)
+		tx_buf_size += 4 - (tx_buf_size % 4);
+	rx_buf_size = RX_BUF_SIZE;
+	if (rx_buf_size % 4)
+		rx_buf_size += 4 - (rx_buf_size % 4);
+	tot_buf_size = TX_BUFFER_NUM * tx_buf_size + RX_BUFFER_NUM * rx_buf_size;
+	rx_desc_size = RX_BUFFER_NUM * sizeof(NDR_desc);
+	tx_desc_size = TX_BUFFER_NUM * sizeof(NDR_desc);
+	tot_buf_size += rx_desc_size + tx_desc_size;
+	if (tot_buf_size % 4096)
+		tot_buf_size += 4096 - (tot_buf_size % 4096);
 
-	/* Stop interrupt */
-	/* ### DISABLE_INTR ### */
-	vt_out16(base, REG_IMR, INTR_IMR_DISABLE);
+	if (!(buf = alloc_contig(tot_buf_size, 0, &buf_dma))) {
+		printf("NDR: Fail to allocate memory\n");
+		return -ENOMEM;
+	}
+	pdev->buf_size = tot_buf_size;
+	pdev->buf = buf;
 
-	/* Stop Rx/Tx */
-	/* ### STOP_RX_TX ### */
-	vt_stop_rx_tx(base);
-}
+	/* Rx descriptor buffer location */
+	pdev->rx_desc = (NDR_desc *)buf;
+	pdev->rx_desc_dma = buf_dma;
+	memset(buf, 0, rx_desc_size);
+	buf += rx_desc_size;
+	buf_dma += rx_desc_size;
 
-/* Set driver mode */
-static void vt_mode(unsigned int mode) {
-	vt_driver *pdev = &g_driver;
-	u32_t base = pdev->base_addr;
-	u8_t rcr;
+	/* Tx descriptor buffer location */
+	pdev->tx_desc = (NDR_desc *)buf;
+	pdev->tx_desc_dma = buf_dma;
+	memset(buf, 0, tx_desc_size);
+	buf += tx_desc_size;
+	buf_dma += tx_desc_size;
 
-	pdev->mode = mode;
-
-	/* ### READ_RCR ### */
-	rcr = vt_in8(base, REG_RCR);
-	rcr &= ~(RCR_UNICAST | RCR_MULTICAST | RCR_BROADCAST);
-	if (pdev->mode & NDEV_PROMISC)
-		rcr |= RCR_UNICAST | RCR_MULTICAST;
-	if (pdev->mode & NDEV_BROAD)
-		rcr |= RCR_BROADCAST;
-	if (pdev->mode & NDEV_MULTI)
-		rcr |= RCR_MULTICAST;
-	rcr |= RCR_UNICAST;
-	/* ### WRITE_RCR ### */
-	vt_out8(base, REG_RCR, rcr);
-}
-
-/* Receive data */
-static ssize_t vt_recv(struct netdriver_data *data, size_t max) {
-	vt_driver *pdev = &g_driver;
-	u32_t totlen, packlen;
-	vt_desc *desc;
-	int index, i;
-
-	index = pdev->rx_head;
-	desc = pdev->rx_desc;
-	desc += index;
-
-	/* Check whether the receiving is OK */
-	/* ### CHECK_RX_STATUS_OK ### */
-	if (vt_rx_status_ok(desc) != TRUE)
-		return SUSPEND;
-
-	/* Check Rx status error */
-	/* ### CHECK_RX_STATUS_ERROR ### */
-	if (desc->status & DESC_STATUS_RX_RECV_ERR)
-		printf("vt6105: Rx error\n");
-
-	/* Get data length */
-	/* ### Get Rx data length ### */
-	totlen = vt_get_rx_len(desc);
-	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
-		printf("vt6105: Bad data length: %d\n", totlen);
-		panic(NULL);
+	/* Rx buffer assignment */
+	for (i = 0; i < RX_BUFFER_NUM; i++) {
+		/* Initialize Rx buffer */
+		pdev->rx[i].buf_dma = buf_dma;
+		pdev->rx[i].buf = buf;
+		buf_dma += rx_buf_size;
+		buf += rx_buf_size;
+		/* Set Rx descriptor */
+		/* ### INIT_RX_DESC ### */
+		dev_init_rx_desc(pdev->rx_desc, i, rx_buf_size, pdev->rx[i].buf_dma,
+							RX_BUFFER_NUM, pdev->rx_desc_dma);
 	}
 
-	packlen = totlen;
-	if (packlen > max)
-		packlen = max;
+	/* Tx buffer assignment */
+	for (i = 0; i < TX_BUFFER_NUM; i++) {
+		/* Set Tx buffer */
+		pdev->tx[i].busy = 0;
+		pdev->tx[i].buf_dma = buf_dma;
+		pdev->tx[i].buf = buf;
+		buf_dma += tx_buf_size;
+		buf += tx_buf_size;
+		/* Initialize Tx descriptor */
+		/* ### INIT_TX_DESC ### */
+		dev_init_tx_desc(pdev->tx_desc, i, tx_buf_size, pdev->tx[i].buf_dma,
+							TX_BUFFER_NUM, pdev->tx_desc_dma);
+	}
 
-	/* Copy data to user */
-	netdriver_copyout(data, 0, pdev->rx[index].buf, packlen);
-	pdev->stat.ets_packetR++;
+	/* Set Rx/Tx descriptor address into device register */
+	/* ### SET_DESC_REG ### */
+	dev_set_desc_reg(pdev->base, g_driver.rx_desc_dma,
+						g_driver.tx_desc_dma);
 
-	/* Set Rx descriptor status */
-	/* ### SET_RX_STATUS_INTR ### */
-	desc->status = DESC_STATUS_RX_RECV_CLEAR;
-	if (index == RX_DESC_NUM - 1)
-		index = 0;
-	else
-		index++;
-	pdev->rx_head = index;
-
-#ifdef MY_DEBUG
-	printf("vt6105: Successfully receive a packet, length = %d\n", packlen);
-#endif
-
-	return packlen;
-}
-
-/* Transmit data */
-static int vt_send(struct netdriver_data *data, size_t size) {
-	vt_driver *pdev = &g_driver;
-	vt_desc *desc;
-	int tx_head, i;
-	u32_t base = pdev->base_addr;
-
-	tx_head = pdev->tx_head;
-	desc = pdev->tx_desc;
-	desc += tx_head;
-
-	if (pdev->tx[tx_head].busy)
-		return SUSPEND;
-
-	/* Copy data from user */
-	netdriver_copyin(data, 0, pdev->tx[tx_head].buf, size);
-
-	/* Set busy */
-	pdev->tx[tx_head].busy = TRUE;
-	pdev->tx_busy_num++;
-
-	/* Set Tx descriptor status */
-	/* ### TX_DESC_START ### */
-	vt_tx_desc_start(desc, size);
-	if (tx_head == TX_DESC_NUM - 1)
-		tx_head = 0;
-	else
-		tx_head++;
-	pdev->tx_head = tx_head;
-
-	/* Wake up transmit channel */
-	/* ### WAKE_UP_TX ### */
-	vt_wakeup_tx(base);
+	pdev->tx_busy_num = 0;
+	pdev->tx_head = 0;
+	pdev->tx_tail = 0;
+	pdev->rx_head = 0;
 
 	return 0;
 }
 
-/* Handle Interrupt */
-static void vt_intr(unsigned int mask) {
-	int s;
-
-	/* Run interrupt handler at driver level */
-	vt_handler(&g_driver);
-
-	/* Reenable interrupts for this hook */
-	if ((s = sys_irqenable(&g_driver.hook)) != OK)
-		printf("vt6105: Cannot enable OS interrupts: %d\n", s);
-
-	/* Perform tasks based on the flagged conditions */
-	vt_check_ints(&g_driver);
-}
-
 /* Real handler interrupt */
-static void vt_handler(vt_driver *pdev) {
-	u32_t base = pdev->base_addr;
-	u16_t intr_status;
-	int flag = 0, tx_head, tx_tail;
-	vt_desc *desc;
+static void dev_handler(NDR_driver *pdev) {
+	u32_t intr_status;
+	int tx_head, tx_tail, index, flag = 0, ret;
+	NDR_desc *desc;
 
-	/* Get interrupt status */
-	/* ### GET_INTR_STATUS ### */
-	intr_status = vt_in16(base, REG_ISR);
-
-	/* Clear interrupt */
-	/* ### CLEAR_INTR ### */
-	vt_out16(base, REG_ISR, intr_status & INTR_ISR_CLEAR);
+	/* Read and clear interrupt status */
+	/* ### READ_CLEAR_INTR_STS ### */
+	intr_status = dev_read_clear_intr_status(pdev->base);
 
 	/* Enable interrupt */
-	/* ### ENABLE_INTR ### */
-	vt_out16(base, REG_IMR, INTR_IMR_ENABLE);
-
-	/* Check interrupt error */
-	/* ### CHECK_INTR_ERROR ### */
-	if (intr_status & INTR_ISR_ERR) {
-		printf("vt6105: interrupt error\n");
-		return;
-	}
+	/* ### INTR_ENABLE_DISABLE ### */
+	dev_intr_control(pdev->base, INTR_ENABLE);
 
 	/* Check link status */
-	/* ### CHECK_LINK_INTR ### */
-	if (intr_status & INTR_ISR_LINK_EVENT) {
-		pdev->link = vt_check_link(base);
+	if (intr_status & INTR_STS_LINK) {
+		pdev->link = dev_check_link(pdev->base);
 #ifdef MY_DEBUG
-		printf("vt6105: Link state change\n");
+		printf("NDR: Link state change\n");
 #endif
 		flag++;
 	}
-
 	/* Check Rx request status */
-	/* ### CHECK_RX_INTR ### */
-	if (intr_status & INTR_ISR_RX_DONE) {
+	if (intr_status & INTR_STS_RX) {
 		pdev->recv_flag = TRUE;
 		flag++;
 	}
-
 	/* Check Tx request status */
-	/* ### CHECK_TX_INTR ### */
-	if (intr_status & INTR_ISR_TX_DONE) {
+	if (intr_status & INTR_STS_TX) {
 		pdev->send_flag = TRUE;
 		flag++;
 
@@ -720,51 +746,48 @@ static void vt_handler(vt_driver *pdev) {
 		tx_head = pdev->tx_head;
 		tx_tail = pdev->tx_tail;
 		while (tx_tail != tx_head) {
+			if (!pdev->tx[tx_tail].busy)
+				printf("NDR: Strange, buffer not busy?\n");
+			index = tx_tail;
 			desc = pdev->tx_desc;
 			desc += tx_tail;
-			if (!pdev->tx[tx_tail].busy)
-				printf("vt6105: Strange, buffer not busy?\n");
-
-			/* Check whether the transmiting is OK */
-			/* ### CHECK_TX_STATUS_OK ### */
-			if (vt_tx_status_ok(desc) != TRUE)
+			/* Check whether Tx is OK from Tx descriptor */
+			/* ### CHECK_TX_OK_FROM_DESC ### */
+			ret = dev_tx_ok_desc(pdev->base, desc, index);
+			if (ret == TX_SUSPEND)
 				break;
-
-			/* Check Tx status error */
-			/* ### CHECK_TX_STATUS_ERROR ### */
-			if (desc->status & DESC_STATUS_TX_SEND_ERR)
-				printf("vt6105: Tx error\n");
+			else if (ret == TX_ERROR)
+				printf("NDR: Tx error now\n");
 
 			pdev->stat.ets_packetT++;
 			pdev->tx[tx_tail].busy = FALSE;
 			pdev->tx_busy_num--;
 
-			if (++tx_tail >= TX_DESC_NUM)
+			if (++tx_tail >= TX_BUFFER_NUM)
 				tx_tail = 0;
 
 			pdev->send_flag = TRUE;
 			pdev->recv_flag = TRUE;
 
-			/* Set Tx descriptor status in interrupt */
-			/* ### SET_TX_STATUS_INTR ### */
-			desc->status = DESC_STATUS_TX_SEND_CLEAR;
-
+			/* Set Tx descriptor after Tx done */
+			/* ### SET_TX_DESC_DONE ### */
+			dev_set_tx_desc_done(pdev->base, desc, index);
 #ifdef MY_DEBUG
-			printf("vt6105: Successfully send a packet\n");
+			printf("NDR: Successfully send a packet\n");
 #endif
 		}
 		pdev->tx_tail = tx_tail;
 	}
 #ifdef MY_DEBUG
 	if (!flag) {
-		printf("vt6105: Unknown error in interrupt\n");
+		printf("NDR: Unknown error in interrupt 0x%08x\n", intr_status);
 		return;
 	}
 #endif
 }
 
 /* Check interrupt and perform */
-static void vt_check_ints(vt_driver *pdev) {
+static void dev_check_ints(NDR_driver *pdev) {
 	if (!pdev->recv_flag)
 		return;
 	pdev->recv_flag = FALSE;
@@ -777,8 +800,4 @@ static void vt_check_ints(vt_driver *pdev) {
 		pdev->send_flag = FALSE;
 		netdriver_send();
 	}
-}
-
-static void vt_stat(eth_stat_t *stat) {
-	memcpy(stat, &g_driver.stat, sizeof(*stat));
 }

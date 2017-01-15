@@ -10,9 +10,11 @@ Revision 1.1 2016/11/12
 Modification: Remove and rewrite Linux-derived code
 Authored by Jia-Ju Bai <baijiaju1990@163.com>
 
+Revision 1.2 2017/1/12
+Modification: Restructure the code and correct function order in initialization
+Authored by Jia-Ju Bai <baijiaju1990@163.com>
+
 Something can be improved:
-1. MII, WOL functions are not adequately defined and used.
-2. Link status report does not work well.
-3. Ethernet address can not be modified at present.
-4. Programming PHY registers and EEPROM are not adequately used.
-5. Dump interfaces are not provided.
+1. Link status report is not detailed.
+2. Ethernet address can not be modified at present.
+3. Dump interfaces are not provided.
