@@ -68,6 +68,7 @@ int main(int argc, char **argv)
 {
 	struct rs_config config;
 	const char *label;
+	uint16_t sub_vid, sub_did;
         int id;
 
 	if(argc != 2) {
@@ -87,9 +88,25 @@ int main(int argc, char **argv)
 		printstack();
 		printf("%s %s ", KW_PCI, KW_DEVICE);
 		for(id = 0; id < config.rs_start.rss_nr_pci_id; id++) {
-			printf("%04X:%04X ",
-				config.rs_start.rss_pci_id[id].vid,
-				config.rs_start.rss_pci_id[id].did);
+			sub_vid = config.rs_start.rss_pci_id[id].sub_vid;
+			sub_did = config.rs_start.rss_pci_id[id].sub_did;
+			/*
+			 * The PCI driver interprets each of these two fields
+			 * individually, so we must print them even if just one
+			 * of them is set.  Correct matching of just one of
+			 * the fields may be hard to do from a script though,
+			 * so driver writers are advised to specify either both
+			 * or neither of these two fields.
+			 */
+			if (sub_vid != NO_SUB_VID || sub_did != NO_SUB_DID)
+				printf("%04X:%04X/%04X:%04X ",
+					config.rs_start.rss_pci_id[id].vid,
+					config.rs_start.rss_pci_id[id].did,
+					sub_vid, sub_did);
+			else
+				printf("%04X:%04X ",
+					config.rs_start.rss_pci_id[id].vid,
+					config.rs_start.rss_pci_id[id].did);
 		}
 		printf("\n");
 	}
