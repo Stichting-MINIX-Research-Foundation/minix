@@ -1,3 +1,11 @@
+20170122:
+	MINIX 3 did not import NetBSD's passwd.conf file, which makes the
+	userland fall back by default to the old, broken UNIX password hashing
+	algorithm. Among other problems, it truncates passwords to the first
+	eight characters.
+
+	Please install /etc/passwd.conf and reset your passwords with passwd.
+
 20160702:
 	Some tools are required to generate the locale resources which are
 	embedded into libintl, which is why you need to run the following:
