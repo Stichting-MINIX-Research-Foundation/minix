@@ -103,9 +103,9 @@ int do_select(void)
  * timeout and wait for either the file descriptors to become ready or the
  * timer to go off. If no timeout value was provided, we wait indefinitely.
  */
-  int r, nfds, do_timeout, fd, s;
+  int r, nfds, do_timeout, fd, type, s;
   struct filp *f;
-  unsigned int type, ops;
+  unsigned int ops;
   struct timeval timeout;
   struct selectentry *se;
   vir_bytes vtimeout;
@@ -183,16 +183,22 @@ int do_select(void)
 	if (!(ops = tab2ops(fd, se)))
 		continue; /* No operations set; nothing to do for this fd */
 
-	/* Get filp belonging to this fd */
+	/* Get filp belonging to this fd. If this fails, there are two causes:
+	 * either the given file descriptor was bad, or the associated filp is
+	 * closed (in the FILP_CLOSED sense) as a result of invalidation. Only
+	 * the former is a select error. The latter should result in operations
+	 * being returned as ready on the file descriptor, since subsequent
+	 * I/O calls are guaranteed to return I/O errors on such descriptors.
+	 */
 	f = se->filps[fd] = get_filp(fd, VNODE_READ);
-	if (f == NULL) {
-		if (err_code == EBADF)
-			r = err_code;
-		else /* File descriptor is 'ready' to return EIO */
-			r = EINTR;
+	if (f == NULL && err_code != EIO) {
+		assert(err_code == EBADF);
 
-		se->requestor = NULL;
-		return(r);
+		/* We may already have adjusted filp_selectors on previous
+		 * file pointers in the set, so do not simply return here.
+		 */
+		se->error = EBADF;
+		break;
 	}
 
 	/* Check file types. According to POSIX 2008:
@@ -208,8 +214,14 @@ int do_select(void)
 	 * device nodes. Some may not implement support for select and let
 	 * libchardriver return EBADF, which we then pass to the calling
 	 * process once we receive the reply.
+	 *
+	 * If we could not access the file pointer at all, it will have been
+	 * closed due to invalidation after a service crash. In that case, we
+	 * skip type matching and simply return pending operations as ready.
 	 */
 	se->type[fd] = -1;
+	if (f == NULL)
+		continue; /* closed, skip type matching */
 	for (type = 0; type < SEL_FDS; type++) {
 		if (fdtypes[type].type_match(f)) {
 			se->type[fd] = type;
@@ -220,9 +232,16 @@ int do_select(void)
 	}
 	unlock_filp(f);
 	if (se->type[fd] == -1) { /* Type not found */
-		se->requestor = NULL;
-		return(EBADF);
+		se->error = EBADF;
+		break;
 	}
+  }
+
+  /* If an error occurred already, undo any changes so far and return. */
+  if (se->error != OK) {
+	select_cancel_all(se);
+	se->requestor = NULL;
+	return(se->error);
   }
 
   /* Check all file descriptors in the set whether one is 'ready' now */
@@ -233,9 +252,15 @@ int do_select(void)
 
 	/* File descriptors selected for reading that are not opened for
 	 * reading should be marked as readable, as read calls would fail
-	 * immediately. The same applies to writing.
+	 * immediately. The same applies to writing. For file descriptors for
+	 * which the file pointer is already closed (f==NULL), return readable
+	 * and writable operations (if requested) and skip the rest.
 	 */
 	f = se->filps[fd];
+	if (f == NULL) {
+		ops2tab(SEL_RD | SEL_WR, fd, se);
+		continue;
+	}
 	if ((ops & SEL_RD) && !(f->filp_mode & R_BIT)) {
 		ops2tab(SEL_RD, fd, se);
 		ops &= ~SEL_RD;
@@ -251,6 +276,7 @@ int do_select(void)
 
 		wantops = (f->filp_select_ops |= ops);
 		type = se->type[fd];
+		assert(type >= 0);
 		select_lock_filp(f, wantops);
 		r = fdtypes[type].select_request(f, &wantops, se->block, fp);
 		unlock_filp(f);
@@ -861,7 +887,7 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
   struct dmap *dp;
   struct smap *sp;
   devmajor_t major;
-  int fd, s, is_driver;
+  int fd, s, is_driver, restart;
   struct selectentry *se;
   struct filp *f;
 
@@ -872,7 +898,6 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
   is_driver = (dp != NULL || sp != NULL);
 
   for (s = 0; s < MAXSELECTS; s++) {
-	int wakehim = 0;
 	se = &selecttab[s];
 	if (se->requestor == NULL) continue;
 	if (se->requestor->fp_endpoint == proc_e) {
@@ -885,6 +910,8 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
 	if (!is_driver)
 		continue;
 
+	restart = FALSE;
+
 	for (fd = 0; fd < se->nfds; fd++) {
 		if ((f = se->filps[fd]) == NULL)
 			continue;
@@ -892,24 +919,24 @@ void select_unsuspend_by_endpt(endpoint_t proc_e)
 			assert(f->filp_select_dev != NO_DEV);
 			major = major(f->filp_select_dev);
 			if (dmap_driver_match(proc_e, major)) {
+				ops2tab(SEL_RD | SEL_WR, fd, se);
 				se->filps[fd] = NULL;
-				se->error = EIO;
 				select_cancel_filp(f);
-				wakehim = 1;
+				restart = TRUE;
 			}
 		} else if (sp != NULL && is_sock_device(f)) {
 			assert(f->filp_select_dev != NO_DEV);
 			if (get_smap_by_dev(f->filp_select_dev, NULL) == sp) {
+				ops2tab(SEL_RD | SEL_WR, fd, se);
 				se->filps[fd] = NULL;
-				se->error = EIO;
 				select_cancel_filp(f);
-				wakehim = 1;
+				restart = TRUE;
 			}
 		}
 	}
 
-	if (wakehim && !is_deferred(se))
-		select_return(se);
+	if (restart)
+		restart_proc(se);
   }
 
   /* Any outstanding queries will never be answered, so forget about them. */
