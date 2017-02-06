@@ -694,6 +694,7 @@
 ./usr/lib/keymaps/dvorak.map                            minix-base
 ./usr/lib/keymaps/french.map                            minix-base
 ./usr/lib/keymaps/german.map                            minix-base
+./usr/lib/keymaps/hungarian.map                         minix-base
 ./usr/lib/keymaps/italian.map                           minix-base
 ./usr/lib/keymaps/japanese.map                          minix-base
 ./usr/lib/keymaps/latin-america.map                     minix-base
