@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.podules,v 1.2 2008/10/19 22:05:23 apb Exp $
+
+.include <bsd.own.mk>
+
+podules.h podule_data.h: podules podulelist2h.awk
+	/bin/rm -f podules.h podule_data.h
+	${TOOL_AWK} -f podulelist2h.awk podules

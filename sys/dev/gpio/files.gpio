@@ -1,0 +1,41 @@
+# $NetBSD: files.gpio,v 1.13 2015/08/20 12:09:22 uebayasi Exp $
+
+define	gpio {[offset = -1], [mask = 0], [flag = 0]}
+
+device	gpio: gpio
+attach	gpio at gpiobus
+file	dev/gpio/gpio.c				gpio	needs-flag
+
+# GPIO simulator
+defpseudodev	gpiosim: gpiobus
+file	dev/gpio/gpiosim.c			gpiosim	needs-count
+
+# I2C bus bit-banging
+device	gpioiic: i2cbus, i2c_bitbang
+attach	gpioiic at gpio
+file	dev/gpio/gpioiic.c			gpioiic
+
+# 1-Wire bus bit-banging
+device	gpioow: onewirebus, onewire_bitbang
+attach	gpioow at gpio
+file	dev/gpio/gpioow.c			gpioow
+
+# Keylock
+device	gpiolock: gpiobus
+attach	gpiolock at gpio
+file	dev/gpio/gpiolock.c			gpiolock
+
+# PWM
+device	gpiopwm: gpiobus
+attach	gpiopwm at gpio
+file	dev/gpio/gpiopwm.c			gpiopwm
+
+# RF kill
+device	gpiorfkill: gpiobus
+attach	gpiorfkill at gpio
+file	dev/gpio/gpiorfkill.c			gpiorfkill
+
+# Button
+device	gpiobutton: gpiobus, sysmon_power
+attach	gpiobutton at gpio
+file	dev/gpio/gpiobutton.c			gpiobutton

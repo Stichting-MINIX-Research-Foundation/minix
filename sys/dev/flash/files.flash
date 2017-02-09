@@ -1,0 +1,10 @@
+# $NetBSD: files.flash,v 1.2 2011/06/28 18:14:11 ahoka Exp $
+
+define	flashbus	{ [offset = 0], [size = 0], [readonly = 0] }
+
+device	flash
+attach	flash at flashbus
+file	dev/flash/flash.c		flash
+file	dev/flash/flash_io.c		flash
+
+defflag opt_flash.h			FLASH_STATIC_PARTITIONS

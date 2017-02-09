@@ -1,0 +1,45 @@
+#	$NetBSD: files.vme,v 1.10 2007/01/09 23:51:30 cube Exp $
+#
+# Config file and device description for machine-independent VME code.
+# Included by ports that need it.
+
+# keep the "3" consistent with VME_MAXCFRANGES in vmevar.h
+#  and VME_NUMCFRANGES in vme.c!
+#  (the latter will hopefully go away)
+device	vme {[addr[3] = {-1,-1,-1}], [len[3] = {-1,-1,-1}],
+	    [am[3] = {-1,-1,-1}], [irq = -1], [vect = -1]}
+
+attach	vme at vmebus
+device	vme_slv
+attach	vme_slv at vme
+file	dev/vme/vme.c		vme
+
+
+# Sun i82586 based ethernet controller
+device	ie: ifnet, ether, arp, i82586
+attach	ie at vme with ie_vme
+file	dev/vme/if_ie_vme.c	ie_vme
+
+# Xylogics 753/7053 SMD controller
+device	xdc {drive = -1}
+attach	xdc at vme
+device	xd: disk
+attach	xd at xdc
+file	dev/vme/xd.c		xd | xdc			needs-flag
+
+# Xylogics 450/451 SMD controller
+device	xyc {drive = -1}
+attach	xyc at vme
+device	xy: disk
+attach	xy at xyc
+file	dev/vme/xy.c		xy | xyc			needs-flag
+
+# Sun 5380 based SCSI controller
+device	si: scsi, ncr5380sbc
+attach	si at vme
+file	dev/vme/si.c		si
+
+# Sun "SCSI-2" SCSI controller
+device	sc: scsi, sunscpal
+attach	sc at vme with sc_vme
+file	dev/vme/sc_vme.c	sc_vme

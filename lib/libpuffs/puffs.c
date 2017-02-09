@@ -436,7 +436,12 @@ puffs_set_prepost(struct puffs_usermount *pu,
 	pu->pu_oppost = pst;
 }
 
-#if !defined(__minix)
+#if defined(__minix)
+void
+puffs_setback(struct puffs_cc *pcc, int whatback)
+{
+}
+#else
 void
 puffs_setback(struct puffs_cc *pcc, int whatback)
 {
@@ -451,7 +456,16 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 
 	preq->preq_setbacks |= whatback & PUFFS_SETBACK_MASK;
 }
+#endif /* defined(__minix) */
 
+#if defined(__minix)
+int
+puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
+{
+	errno = ENOTSUP;
+	return -1;
+}
+#else
 int
 puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 {
@@ -510,7 +524,7 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	assert(n == 4);
 	return -1;
 }
-#endif /* !defined(__minix) */
+#endif /* defined(__minix) */
 
 static void
 shutdaemon(struct puffs_usermount *pu, int error)
@@ -806,7 +820,17 @@ puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 	return 0;
 }
 
-#if !defined(__minix)
+#if defined(__minix)
+
+int
+puffs_unmountonsignal(int sig, bool sigignore)
+{
+	errno = ENOTSUP;
+	return -1;
+}
+
+#else
+
 /* no sigset_t static intializer */
 static int sigs[NSIG] = { 0, };
 static int sigcatch = 0;
@@ -829,7 +853,7 @@ puffs_unmountonsignal(int sig, bool sigignore)
 
 	return 0;
 }
-#endif /* !defined(__minix) */
+#endif /* defined(__minix) */
 
 /*
  * Actual mainloop.  This is called from a context which can block.

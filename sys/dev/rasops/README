@@ -1,0 +1,18 @@
+$NetBSD: README,v 1.6 2013/12/02 14:05:51 tsutsui Exp $
+
+This directory contains `rasops', a set of raster operations intended to
+replace the dev/rcons/raster stuff for both wscons and rcons. It yields
+significantly improved performance, supports multiple depths and color.
+
+Issues/TODO:
+
+- There is no generic `putchar' function for 2bpp
+- Color handling for 2bpp is broken
+- 64-bit types are not used on machines that are 64-bit
+- We should never be doing reads/writes of less than 32-bits
+- Flags in attribute values are hardcoded
+- Need a manpage
+- Should handle multiple fonts simulatneously
+- Generate an `empty' box character when we have no match?
+- Use 'int' in lieu of 'int32' where we can
+- Compress some cases in rasops1.c

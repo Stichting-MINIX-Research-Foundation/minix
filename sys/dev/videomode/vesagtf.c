@@ -660,7 +660,6 @@ vesagtf_mode(unsigned x, unsigned y, unsigned refresh, struct videomode *vmp)
 
 /* print_xf86_mode() - print the XFree86 modeline, given mode timings. */
 
-#if !defined(__minix)
 #ifndef _KERNEL
 void
 print_xf86_mode (struct videomode *vmp)
@@ -701,4 +700,3 @@ main (int argc, char *argv[])
     
 }
 #endif
-#endif /* !defined(__minix) */

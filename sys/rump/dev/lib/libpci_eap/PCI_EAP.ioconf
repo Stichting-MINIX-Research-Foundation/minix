@@ -1,0 +1,11 @@
+#	$NetBSD: PCI_EAP.ioconf,v 1.1 2014/11/18 08:43:03 pooka Exp $
+#
+
+ioconf pci_eap
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+eap* at pci?

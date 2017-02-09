@@ -1,0 +1,12 @@
+#	$NetBSD: files.tmpfs,v 1.6 2014/10/11 06:42:19 uebayasi Exp $
+
+deffs	TMPFS
+
+define	tmpfs: vfs
+file	fs/tmpfs/tmpfs_fifoops.c	tmpfs
+file	fs/tmpfs/tmpfs_mem.c		tmpfs
+file	fs/tmpfs/tmpfs_rename.c		tmpfs
+file	fs/tmpfs/tmpfs_specops.c	tmpfs
+file	fs/tmpfs/tmpfs_subr.c		tmpfs
+file	fs/tmpfs/tmpfs_vfsops.c		tmpfs
+file	fs/tmpfs/tmpfs_vnops.c		tmpfs

@@ -1,0 +1,46 @@
+# $NetBSD: files.ppbus,v 1.8 2008/04/29 14:07:36 cegger Exp $
+#
+# Config file and device description for machine-independent parallel port bus
+# code.
+
+defflag	opt_ppbus.h		PPBUS_VERBOSE PPBUS_DEBUG
+defflag	opt_ppbus_1284.h	DONTPROBE_1284 DEBUG_1284
+
+# Generic device attribute: parallel port
+define	parport { }
+
+# ppbus related files
+device	ppbus { }: gpiobus
+attach	ppbus at parport
+file	dev/ppbus/ppbus_conf.c	ppbus		needs-flag
+file	dev/ppbus/ppbus_base.c	ppbus
+file	dev/ppbus/ppbus_msq.c	ppbus
+file	dev/ppbus/ppbus_1284.c	ppbus
+file	dev/ppbus/ppbus_gpio.c  ppbus & gpio
+
+# lpt driver
+defflag	opt_ppbus_lpt.h		LPT_DEBUG LPT_VERBOSE
+device	lpt
+attach	lpt at ppbus with lpt_ppbus
+file	dev/ppbus/lpt.c		lpt_ppbus
+
+# XXX for now, include dev/ic/lpt.c if lpt is configured,
+# to ease transition from old lpt(4)
+defflag	USE_ALT_LPT
+file	dev/ic/lpt.c		lpt & !ppbus & !use_alt_lpt
+
+# PLIP driver
+defflag	opt_plip.h		PLIP_DEBUG
+device	plip # : arp, ether, ifnet
+attach	plip at ppbus
+file	dev/ppbus/if_plip.c	plip		needs-flag
+
+# pps interface
+device	pps
+attach	pps at ppbus
+file	dev/ppbus/pps_ppbus.c	pps
+
+# AT-compatible parallel port chipset
+defflag	opt_atppc.h		ATPPC_DEBUG ATPPC_VERBOSE
+device	atppc: parport
+file	dev/ic/atppc.c                     atppc needs-flag

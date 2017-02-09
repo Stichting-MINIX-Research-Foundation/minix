@@ -1,0 +1,119 @@
+#! /bin/sh
+#
+#	$NetBSD: bktr2netbsd,v 1.6 2008/04/30 13:10:59 martin Exp $
+#
+# Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# bktr2netbsd:  convert sourceforge bktr source directory tree into
+# netbsd bktr source tree, under sys/dev/pci/bktr
+# originally based on bind2netbsd by Bernd Ernesti
+
+if [ $# -ne 2 ]; then echo "bktr2netbsd src dest"; exit 1; fi
+
+r=$1
+d=$2/sys/dev/pci/bktr
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d=`/bin/pwd`/$d
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+echo preparing directory $d
+rm -rf $d
+mkdir -p $d
+
+### Copy the files
+echo copying $r to $d
+cd $r
+pax -rw * $d
+
+echo removing unneeded files
+
+### Remove unneeded files
+cd $d
+rm -f CHANGELOG.TXT README.* bktr_i2c.[ch]
+
+### Remove the $'s around RCS tags
+find $d -type f -print | xargs egrep -l '\$Id:' | while read f; do
+	sed -e 's/\$\(Id:\)\(.*\) \$/SourceForge:\2/' \
+	    < $f > /tmp/bktr1f$$ && mv /tmp/bktr1f$$ $f && \
+	echo quoted \$RCS tag from $f
+done
+
+### create bt8xx.h from ioctl_meteor.h and ioctl_bt848.h
+echo merging ioctl_meteor.h and ioctl_bt848.h to bt8xx.h
+echo "/* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */" > bt8xx.h
+echo "/* The copyright below only applies to the ioctl_meteor.h part of this file. */" >> bt8xx.h
+echo "" >> bt8xx.h
+echo "#ifndef _DEV_IC_BT8XX_H_" >> bt8xx.h
+echo "#define _DEV_IC_BT8XX_H_" >> bt8xx.h
+cat ioctl_meteor.h ioctl_bt848.h | grep -v _MACHINE_IOCTL_METEOR_H_ | \
+	grep -v _MACHINE_IOCTL_BT848_H >> bt8xx.h
+echo "#endif /* _DEV_IC_BT8XX_H_ */" >> bt8xx.h
+rm ioctl_meteor.h ioctl_bt848.h
+
+echo done
+
+### move bt8xx.h to correct place
+echo moving bt8xx.h to dev/ic
+mkdir -p $d/../../ic
+mv bt8xx.h $d/../../ic
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $d
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $d
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+echo Now do:
+echo cd $d/../..
+echo and import into src/sys/dev with
+echo Vendor: BKTR_SF
+echo Release: BKTR_YYYY_MM_DD
+
+echo Do not forget to tag the imported version in the sourceforge repository!
+exit 0

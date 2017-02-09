@@ -1,0 +1,116 @@
+/* $NetBSD: pl181reg.h,v 1.1 2015/01/27 16:33:26 jmcneill Exp $ */
+
+/*-
+ * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _PL181REG_H
+#define _PL181REG_H
+
+#define MMCI_POWER_REG		0x000
+#define MMCI_CLOCK_REG		0x004
+#define	MMCI_ARGUMENT_REG	0x008
+#define MMCI_COMMAND_REG	0x00c
+#define MMCI_RESP_CMD_REG	0x010
+#define MMCI_RESP0_REG		0x014
+#define MMCI_RESP1_REG		0x018
+#define MMCI_RESP2_REG		0x01c
+#define MMCI_RESP3_REG		0x020
+#define MMCI_DATA_TIMER_REG	0x024
+#define MMCI_DATA_LENGTH_REG	0x028
+#define MMCI_DATA_CTRL_REG	0x02c
+#define MMCI_DATA_CNT_REG	0x030
+#define MMCI_STATUS_REG		0x034
+#define MMCI_CLEAR_REG		0x038
+#define MMCI_MASK0_REG		0x03c
+#define MMCI_MASK1_REG		0x040
+#define MMCI_FIFO_CNT_REG	0x048
+#define MMCI_FIFO_REG		0x080
+#define MMCI_PERIPH_ID0_REG	0xfe0
+#define MMCI_PERIPH_ID1_REG	0xfe4
+#define MMCI_PERIPH_ID2_REG	0xfe8
+#define MMCI_PERIPH_ID3_REG	0xfec
+#define MMCI_PCELL_ID0_REG	0xff0
+#define MMCI_PCELL_ID1_REG	0xff4
+#define MMCI_PCELL_ID2_REG	0xff8
+#define MMCI_PCELL_ID3_REG	0xffc
+
+#define MMCI_POWER_CTRL		__BITS(1,0)
+#define MMCI_POWER_CTRL_OFF	0
+#define MMCI_POWER_CTRL_POWERUP	2
+#define MMCI_POWER_CTRL_POWERON	3
+#define MMCI_POWER_VOLTAGE	__BITS(5,2)
+#define MMCI_POWER_OD		__BIT(6)
+#define MMCI_POWER_ROD		__BIT(7)
+
+#define MMCI_CLOCK_CLKDIV	__BITS(7,0)
+#define MMCI_CLOCK_ENABLE	__BIT(8)
+#define MMCI_CLOCK_PWRSAVE	__BIT(9)
+#define MMCI_CLOCK_BYPASS	__BIT(10)
+
+#define MMCI_COMMAND_CMDINDEX	__BITS(5,0)
+#define MMCI_COMMAND_RESPONSE	__BIT(6)
+#define MMCI_COMMAND_LONGRSP	__BIT(7)
+#define MMCI_COMMAND_INTERRUPT	__BIT(8)
+#define MMCI_COMMAND_PENDING	__BIT(9)
+#define MMCI_COMMAND_ENABLE	__BIT(10)
+
+#define MMCI_RESP_CMD		__BITS(5,0)
+
+#define MMCI_DATA_LENGTH	__BITS(15,0)
+
+#define MMCI_DATA_CTRL_ENABLE		__BIT(0)
+#define MMCI_DATA_CTRL_DIRECTION	__BIT(1)
+#define MMCI_DATA_CTRL_MODE		__BIT(2)
+#define MMCI_DATA_CTRL_DMAENABLE	__BIT(3)
+#define MMCI_DATA_CTRL_BLOCKSIZE	__BITS(7,4)
+
+#define MMCI_DATA_CNT		__BITS(15,0)
+
+#define MMCI_INT_CMD_CRC_FAIL		__BIT(0)
+#define MMCI_INT_DATA_CRC_FAIL		__BIT(1)
+#define MMCI_INT_CMD_TIMEOUT		__BIT(2)
+#define MMCI_INT_DATA_TIMEOUT		__BIT(3)
+#define MMCI_INT_TX_UNDERRUN		__BIT(4)
+#define MMCI_INT_RX_OVERRUN		__BIT(5)
+#define MMCI_INT_CMD_RESP_END		__BIT(6)
+#define MMCI_INT_CMD_SENT		__BIT(7)
+#define MMCI_INT_DATA_END		__BIT(8)
+#define MMCI_INT_DATA_BLOCK_END		__BIT(10)
+#define MMCI_INT_CMD_ACTIVE		__BIT(11)
+#define MMCI_INT_TX_ACTIVE		__BIT(12)
+#define MMCI_INT_RX_ACTIVE		__BIT(13)
+#define MMCI_INT_TX_FIFO_HALF_EMPTY	__BIT(14)
+#define MMCI_INT_RX_FIFO_HALF_FULL	__BIT(15)
+#define MMCI_INT_TX_FIFO_FULL		__BIT(16)
+#define MMCI_INT_RX_FIFO_FULL		__BIT(17)
+#define MMCI_INT_TX_FIFO_EMPTY		__BIT(18)
+#define MMCI_INT_RX_FIFO_EMPTY		__BIT(19)
+#define MMCI_INT_TX_DATA_AVAIL		__BIT(20)
+#define MMCI_INT_RX_DATA_AVAIL		__BIT(21)
+
+#define MMCI_FIFO_CNT		__BITS(14,0)
+
+#endif /* !_PL181REG_H */

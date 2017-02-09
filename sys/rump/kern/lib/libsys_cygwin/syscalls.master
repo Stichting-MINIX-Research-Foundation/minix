@@ -1,0 +1,575 @@
+	$NetBSD: syscalls.master,v 1.2 2013/05/15 21:39:30 pooka Exp $
+
+;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
+
+; NetBSD system call name/number "master" file.
+; (See syscalls.conf to see what it is processed into.)
+;
+; Fields: number type [type-dependent ...]
+;	number	system call number, must be in order
+;	type	one of NODEF, UNIMPL, or NOARGS
+;
+; types:
+;	NODEF	always included
+;	UNIMPL	unimplemented, not included in system
+;	NODEF	included, but don't define the syscall number
+;	NOARGS	included, but don't define the syscall args structure
+;
+; arguments:
+;	PAD	argument not part of the C interface, used only for padding
+;
+;
+; Support just enough syscalls to make fs-utils run (plus a few other
+; low-hanging fruit)
+;
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/mount.h>
+#include <sys/sched.h>
+#include <sys/syscallargs.h>
+
+#include "rump_cygwin_syscallargs.h"
+
+%%
+
+0	NOARGS		{ int|sys||nosys(void); }
+1	UNIMPL 		exit
+2	UNIMPL 		fork
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
+5	NODEF		{ int|rump_cygwin_sys||open(const char *path, \
+			    int flags, int mode); }
+6	NOARGS	 	{ int|sys||close(int fd); }
+7	UNIMPL		wait4
+8	UNIMPL		creat
+9	NOARGS 		{ int|sys||link(const char *path, const char *link); }
+10	NOARGS 	 	{ int|sys||unlink(const char *path); }
+11	UNIMPL		execv
+12	NOARGS 	 	{ int|sys||chdir(const char *path); }
+13	NOARGS 	 	{ int|sys||fchdir(int fd); }
+14	UNIMPL		mknod
+15	NOARGS 	 	{ int|sys||chmod(const char *path, int mode); }
+16	NOARGS 	 	{ int|sys||chown(const char *path, int uid, int gid); }
+17	UNIMPL		obreak
+18	UNIMPL		getfsstat
+19	UNIMPL		lseek
+20	NOARGS 		{ pid_t|sys||getpid_with_ppid(void); } getpid
+21	UNIMPL		mount
+22	UNIMPL		unmount
+23	NOARGS		{ int|sys||setuid(int uid); }
+24	NOARGS		{ int|sys||getuid_with_euid(void); } getuid
+25	NOARGS		{ int|sys||geteuid(void); }
+26	UNIMPL 		ptrace
+27	UNIMPL		recvmsg
+28	UNIMPL		sendmsg
+29	UNIMPL		recvfrom
+30	UNIMPL		accept
+31	UNIMPL		getpeername
+32	UNIMPL		getsockname
+33	NOARGS 		{ int|sys||access(const char *path, int flags); }
+34	UNIMPL		chflags
+35	UNIMPL		fchflags
+36	NOARGS		{ void|sys||sync(void); }
+37	UNIMPL 		kill
+38	UNIMPL		stat
+39	UNIMPL		getppid
+40	UNIMPL		lstat
+41	NOARGS 		{ int|sys||dup(int fd); }
+42	NOARGS 		{ int|sys||pipe(void); }
+43	UNIMPL		getegid
+44	UNIMPL 		profil
+45	UNIMPL 		ktrace
+46	UNIMPL		sigaction
+47	NOARGS 		{ int|sys||getgid_with_egid(void); } getgid
+48	UNIMPL		sigprocmask
+49	UNIMPL		__getlogin
+50	UNIMPL		__setlogin
+51	UNIMPL		acct
+52	UNIMPL  	sigpending
+53	UNIMPL  	sigaltstack
+54	UNIMPL		ioctl
+55	UNIMPL		reboot
+56	UNIMPL		revoke
+57	NOARGS 	 	{ int|sys||symlink(const char *path, \
+			    const char *link); }
+58	NOARGS 	 	{ ssize_t|sys||readlink(const char *path, char *buf, \
+			    int count); }
+59	UNIMPL 		execve
+60	NOARGS 	 	{ mode_t|sys||umask(mode_t newmask); }
+61	NOARGS 	 	{ int|sys||chroot(const char *path); }
+62	UNIMPL		fstat43
+63	UNIMPL		getkerninfo
+64	UNIMPL		getpagesize
+65	UNIMPL		msync
+66	UNIMPL 		vfork
+67	UNIMPL		vread
+68	UNIMPL		vwrite
+69	UNIMPL 		sbrk
+70	UNIMPL 		sstk
+71	UNIMPL  	mmap
+72	UNIMPL 		ovadvise
+73	UNIMPL 		munmap
+74	UNIMPL 		mprotect
+75	UNIMPL 		madvise
+76	UNIMPL		vhangup
+77	UNIMPL		vlimit
+78	UNIMPL 		mincore
+79	NOARGS 		{ int|sys||getgroups(int gidsetsize, \
+			    int *gidset); }
+80	NOARGS 		{ int|sys||setgroups(int gidsetsize, \
+			    const int *gidset); }
+81	NOARGS 		{ int|sys||getpgrp(void); }
+82	NOARGS 		{ int|sys||setpgid(int pid, int pgid); }
+83	UNIMPL		setitimer
+84	UNIMPL		wait
+85	UNIMPL		swapon
+86	UNIMPL		getitimer
+87	UNIMPL		gethostname
+88	UNIMPL		sethostname
+89	UNIMPL		getdtablesize
+90	NOARGS 	 	{ int|sys||dup2(int from, int to); }
+91	UNIMPL		getdopt
+92	UNIMPL		fcntl
+93	UNIMPL		select
+94	UNIMPL		setdopt
+95	NOARGS		{ int|sys||fsync(int fd); }
+96	UNIMPL		setpriority
+97	UNIMPL		socket
+98	UNIMPL		connect
+99	UNIMPL		accept
+100	UNIMPL 		getpriority
+
+101	UNIMPL		send
+102	UNIMPL		recv
+
+103	UNIMPL		sigreturn
+104	UNIMPL		bind
+105	UNIMPL		setsockopt
+106	UNIMPL		listen
+107	UNIMPL		vtimes
+108	UNIMPL		sigvec
+109	UNIMPL		sigblock
+110	UNIMPL		sigsetmask
+111	UNIMPL		sigsuspend
+112	UNIMPL		sigstack
+113	UNIMPL		orecvmsg
+114	UNIMPL		osendmsg
+115	UNIMPL		vtrace
+116	UNIMPL		gettimeofday
+117	UNIMPL 		getrusage
+118	UNIMPL		getsockopt
+119	UNIMPL		resuba
+120	NOARGS 		{ ssize_t|sys||readv(int fd, \
+			    struct iovec *iovp, int iovcnt); }
+121	NOARGS 		{ ssize_t|sys||writev(int fd, \
+			    struct iovec *iovp, int iovcnt); }
+122	UNIMPL		settimeofday
+123	NOARGS 	 	{ int|sys||fchown(int fd, int uid, int gid); }
+124	NOARGS 	 	{ int|sys||fchmod(int fd, int mode); }
+125	UNIMPL		orecvfrom
+126	NOARGS 		{ int|sys||setreuid(int ruid, int euid); }
+127	NOARGS 		{ int|sys||setregid(int rgid, int egid); }
+128	NOARGS 	 	{ int|sys||rename(char *from, char *to); }
+129	UNIMPL		otruncate
+130	UNIMPL		oftruncate
+131	NOARGS 	 	{ int|sys||flock(int fd, int how); }
+132	UNIMPL 	 	mkfifo
+133	UNIMPL 	 	sendto
+134	UNIMPL	 	shutdown
+135	UNIMPL	 	socketpair
+136	NOARGS 	 	{ int|sys||mkdir(const char *path, int mode); }
+137	NOARGS 	 	{ int|sys||rmdir(const char *path); }
+138	UNIMPL		utimes
+
+139	UNIMPL		4.2 sigreturn
+140	UNIMPL		adjtime
+141	UNIMPL		ogetpeername
+142	UNIMPL		ogethostid
+143	UNIMPL		osethostid
+144	UNIMPL		ogetrlimit
+145	UNIMPL		osetrlimit
+146	UNIMPL		okillpg
+147	NOARGS 		{ int|sys||setsid(void); }
+148	UNIMPL		quotactl
+149	UNIMPL		oquota
+150	UNIMPL		ogetsockname
+
+; Syscalls 151-180 inclusive are reserved for vendor-specific
+; system calls.  (This includes various calls added for compatibity
+; with other Unix variants.)
+; Some of these calls are now supported by BSD...
+151	UNIMPL
+152	UNIMPL
+153	UNIMPL
+154	UNIMPL
+155	UNIMPL		nfssvc
+156	UNIMPL		ogetdirentries
+157	UNIMPL		statfs12
+158	UNIMPL		fstatfs12
+159	UNIMPL
+160	UNIMPL
+161	UNIMPL		getfh30
+162	UNIMPL		ogetdomainname
+163	UNIMPL		osetdomainname
+164	UNIMPL		ouname
+165	UNIMPL 		sysarch
+166	UNIMPL
+167	UNIMPL
+168	UNIMPL
+169	UNIMPL		1.0 semsys
+170	UNIMPL		1.0 msgsys
+171	UNIMPL		1.0 shmsys
+172	UNIMPL
+173	NOARGS 	 	{ ssize_t|sys||pread(int fd, char *buf, \
+			    size_t nbyte, int PAD, off_t offset); }
+174	NOARGS 	 	{ ssize_t|sys||pwrite(int fd, char *buf, \
+			    size_t nbyte, int PAD, off_t offset); }
+175	UNIMPL		ntp_gettime
+176	UNIMPL		ntp_adjtime
+177	UNIMPL
+178	UNIMPL
+179	UNIMPL
+180	UNIMPL
+
+; Syscalls 180-199 are used by/reserved for BSD
+181	NOARGS 		{ int|sys||setgid(gid_t gid); }
+182	NOARGS 		{ int|sys||setegid(gid_t egid); }
+183	NOARGS 		{ int|sys||seteuid(uid_t euid); }
+184	UNIMPL		lfs_bmapv
+185	UNIMPL		lfs_markv
+186	UNIMPL		lfs_segclean
+187	UNIMPL		lfs_segwait
+188	UNIMPL		stat12
+189	UNIMPL		fstat12
+190	UNIMPL		lstat12
+191	UNIMPL 		pathconf
+192	UNIMPL 		fpathconf
+193	UNIMPL
+194	UNIMPL 		getrlimit
+195	UNIMPL 		setrlimit
+196	UNIMPL		getdirentries
+197	UNIMPL		mmap
+198	UNIMPL		__syscall
+199	NOARGS 	 	{ long|sys||lseek(int fd, int PAD, off_t offset, \
+			    int whence); }
+200	NOARGS 	 	{ int|sys||truncate(const char *path, int PAD, \
+			    off_t length); }
+201	NOARGS 	 	{ int|sys||ftruncate(int fd, int PAD, off_t length); }
+202	UNIMPL		__sysctl
+203	UNIMPL		mlock
+204	UNIMPL		munlock
+205	UNIMPL		undelete
+206	UNIMPL		futimes
+207	NOARGS 	 	{ pid_t|sys||getpgid(pid_t pid); }
+208	UNIMPL	 	reboot
+209	NOARGS 	 	{ int|sys||poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
+;
+; Syscalls 210-219 are reserved for dynamically loaded syscalls
+;
+210	UNIMPL	 	afssys
+211	UNIMPL
+212	UNIMPL
+213	UNIMPL
+214	UNIMPL
+215	UNIMPL
+216	UNIMPL
+217	UNIMPL
+218	UNIMPL
+219	UNIMPL
+220	UNIMPL		compat_14_semctl
+221	UNIMPL		semget
+222	UNIMPL		semop
+223	UNIMPL		semconfig
+224	UNIMPL 		compat_14_msgctl
+225	UNIMPL 		msgget
+226	UNIMPL 		msgsnd
+227	UNIMPL 		msgrcv
+228	UNIMPL		shmat
+229	UNIMPL		compat_14_shmctl
+230	UNIMPL		shmdt
+231	UNIMPL		shmget
+
+232	UNIMPL		clock_gettime
+233	UNIMPL		clock_settime
+234	UNIMPL		clock_getres
+235	UNIMPL		timer_create
+236	UNIMPL		timer_delete
+237	UNIMPL		timer_settime
+238	UNIMPL		timer_gettime
+239	UNIMPL		timer_getoverrun
+;
+; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
+;
+240	UNIMPL		nanosleep
+241	UNIMPL 	 	fdatasync
+242	UNIMPL		mlockall
+243	UNIMPL		munlockall
+244	UNIMPL		__sigtimedwait
+245	UNIMPL		sigqueueinfo
+246	UNIMPL		modctl
+247	UNIMPL		_ksem_init
+248	UNIMPL		_ksem_open
+249	UNIMPL		_ksem_unlink
+250	UNIMPL		_ksem_close
+251	UNIMPL		_ksem_post
+252	UNIMPL		_ksem_wait
+253	UNIMPL		_ksem_trywait
+254	UNIMPL		_ksem_getvalue
+255	UNIMPL		_ksem_destroy
+256	UNIMPL		_ksem_timedwait
+
+257	UNIMPL		mq_open
+258	UNIMPL		mq_close
+259	UNIMPL		mq_unlink
+260	UNIMPL		mq_getattr
+261	UNIMPL		mq_setattr
+262	UNIMPL		mq_notify
+263	UNIMPL		mq_send
+264	UNIMPL		mq_receive
+265	UNIMPL		mq_timedsend
+266	UNIMPL		mq_timedreceive
+267	UNIMPL
+268	UNIMPL
+269	UNIMPL
+270	UNIMPL		__posix_rename
+271	UNIMPL		swapctl
+272	UNIMPL		getdents
+273	UNIMPL		minherit
+274	UNIMPL 	 	lchmod
+275	UNIMPL 	 	lchown
+276	UNIMPL		lutimes
+277	UNIMPL		msync
+278	UNIMPL		stat
+279	UNIMPL		fstat
+280	UNIMPL		lstat
+281	UNIMPL		sigaltstack
+282	UNIMPL		vfork
+283	UNIMPL		__posix_chown
+284	UNIMPL		__posix_fchown
+285	UNIMPL		__posix_lchown
+286	NOARGS 		{ pid_t|sys||getsid(pid_t pid); }
+
+287	UNIMPL		__clone
+288	UNIMPL		fktrace
+289	UNIMPL 		{ ssize_t|sys||preadv(int fd, \
+			    const struct iovec *iovp, int iovcnt, \
+			    int PAD, off_t offset); }
+290	UNIMPL 		{ ssize_t|sys||pwritev(int fd, \
+			    const struct iovec *iovp, int iovcnt, \
+			    int PAD, off_t offset); }
+291	UNIMPL		sigaction
+292	UNIMPL		sigpending
+293	UNIMPL		sigprocmask
+294	UNIMPL		sigsuspend
+295	UNIMPL		sigreturn
+296	NOARGS 	 	{ int|sys||__getcwd(char *bufp, size_t length); }
+297	NOARGS 	 	{ int|sys||fchroot(int fd); }
+298	UNIMPL		fhopen
+299	UNIMPL		fhstat
+300	UNIMPL		fhstatfs
+301	UNIMPL		____semctl13
+302	UNIMPL		__msgctl13
+303	UNIMPL		__shmctl13
+304	UNIMPL 	 	lchflags
+305	UNIMPL		issetugid
+306	UNIMPL		utrace
+307	UNIMPL		getcontext
+308	UNIMPL		setcontext
+309	UNIMPL		_lwp_create
+310	UNIMPL		_lwp_exit
+311	UNIMPL		_lwp_self
+312	UNIMPL		_lwp_wait
+313	UNIMPL		_lwp_suspend
+314	UNIMPL		_lwp_continue
+315	UNIMPL		_lwp_wakeup
+316	UNIMPL		_lwp_getprivate
+317	UNIMPL		_lwp_setprivate
+318	UNIMPL		_lwp_kill
+319	UNIMPL		_lwp_detach
+320	UNIMPL		_lwp_park
+321	UNIMPL		_lwp_unpark
+322	UNIMPL		_lwp_unpark_all
+323	UNIMPL		_lwp_setname
+324	UNIMPL		_lwp_getname
+325	UNIMPL		_lwp_ctl
+
+; Syscalls 326-339 reserved for LWP syscalls.
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+; SA system calls.
+330	UNIMPL		sa_register
+331	UNIMPL		sa_stacks
+332	UNIMPL		sa_enable
+333	UNIMPL		sa_setconcurrency
+334	UNIMPL		sa_yield
+335	UNIMPL		sa_preempt
+336	UNIMPL 		sys_sa_unblockyield
+;
+; Syscalls 337-339 are reserved for other scheduler activation syscalls.
+;
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
+
+340	UNIMPL		__sigaction_sigtramp
+341	UNIMPL		pmc_get_info
+342	UNIMPL		pmc_control
+343	UNIMPL		rasctl
+344	UNIMPL		kqueue
+345	UNIMPL		kevent
+
+; Scheduling system calls.
+346	UNIMPL		_sched_setparam
+347	UNIMPL		_sched_getparam
+348	UNIMPL		_sched_setaffinity
+349	UNIMPL		_sched_getaffinity
+350	UNIMPL		sched_yield
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
+
+354	UNIMPL		fsync_range
+355	UNIMPL		uuidgen
+356	UNIMPL		getvfsstat
+357	UNIMPL		statvfs1
+358	UNIMPL		fstatvfs1
+359	UNIMPL		fhstatvfs1
+360	UNIMPL		extattrctl
+361	UNIMPL		extattr_set_file
+362	UNIMPL		extattr_get_file
+363	UNIMPL		extattr_delete_file
+364	UNIMPL		extattr_set_fd
+365	UNIMPL		extattr_get_fd
+366	UNIMPL		extattr_delete_fd
+367	UNIMPL		extattr_set_link
+368	UNIMPL		extattr_get_link
+369	UNIMPL		extattr_delete_link
+370	UNIMPL		extattr_list_fd
+371	UNIMPL		extattr_list_file
+372	UNIMPL		extattr_list_link
+373	UNIMPL		pselect
+374	UNIMPL		pollts
+375	UNIMPL		setxattr
+376	UNIMPL		lsetxattr
+377	UNIMPL		fsetxattr
+378	UNIMPL		getxattr
+379	UNIMPL		lgetxattr
+380	UNIMPL		fgetxattr
+381	UNIMPL		listxattr
+382	UNIMPL		llistxattr
+383	UNIMPL		flistxattr
+384	UNIMPL		removexattr
+385	UNIMPL		lremovexattr
+386	UNIMPL		fremovexattr
+387	UNIMPL		stat30
+388	UNIMPL		fstat30
+389	UNIMPL		lstat30
+390	NODEF		{ int|rump_cygwin_sys||getdents(int fd, \
+			    char *buf, size_t nbytes); }
+391	UNIMPL		old posix_fadvise
+392	UNIMPL		fhstat
+393	UNIMPL		ntp_gettime
+394	UNIMPL		socket
+395	UNIMPL		getfh
+396	UNIMPL		fhopen
+397	UNIMPL		fhstatvfs1
+398	UNIMPL		fhstat
+
+; Asynchronous I/O system calls
+399	UNIMPL		aio_cancel
+400	UNIMPL		aio_error
+401	UNIMPL		aio_fsync
+402	UNIMPL		aio_read
+403	UNIMPL		aio_return
+404	UNIMPL		aio_suspend
+405	UNIMPL		aio_write
+406	UNIMPL		lio_listio
+
+407	UNIMPL
+408	UNIMPL
+409	UNIMPL
+
+410	UNIMPL		mount
+411	UNIMPL		mremap
+
+; Processor-sets system calls
+412	UNIMPL		pset_create
+413	UNIMPL		pset_destroy
+414	UNIMPL		pset_assign
+415	UNIMPL		_pset_bind
+416	UNIMPL		fadvise
+417	UNIMPL		select
+418	UNIMPL		gettimeofday
+419	UNIMPL		settimeofday
+420	NOARGS		{ int|compat_50_sys||utimes(char *path, \
+			    struct timeval50 *tptr); }
+421	UNIMPL		adjtime
+422	UNIMPL		lfs_segwait
+423	NOARGS		{ int|compat_50_sys||futimes(int fd, \
+			    struct timeval50 *tptr); }
+424	UNIMPL		lutimes
+425	UNIMPL		setitimer
+426	UNIMPL		getitimer
+427	UNIMPL		clock_gettime
+428	UNIMPL		clock_settime
+429	UNIMPL		clock_getres
+430	UNIMPL		nanosleep
+431	UNIMPL		__sigtimedwait
+432	UNIMPL		mq_timedsend
+433	UNIMPL		mq_timedreceive
+434	UNIMPL		_lwp_park
+435	UNIMPL		kevent
+436	UNIMPL		pselect
+437	UNIMPL		ppoll
+438	UNIMPL		aio_suspend
+439	NODEF 		{ int|rump_cygwin_sys||stat(const char *path, \
+			    struct cygwin_stat *sp); }
+440	NODEF 		{ int|rump_cygwin_sys||fstat(int fd, \
+			    struct cygwin_stat *sp); }
+441	NODEF 		{ int|rump_cygwin_sys||lstat(const char *path, \
+			    struct cygwin_stat *sp); }
+442	UNIMPL		__semctl
+443	UNIMPL		shmctl
+444	UNIMPL		msgctl
+445	UNIMPL		getrusage
+446	UNIMPL		timer_settime
+447	UNIMPL		timer_gettime
+448	UNIMPL		ntp_gettime
+449	UNIMPL		wait4
+450	NOARGS 		{ int|sys|50|mknod(const char *path, mode_t mode, \
+			    int dev); }
+451	UNIMPL		fhstat
+
+; 452 only ever appeared in 5.99.x and can be reused after netbsd-7
+452	UNIMPL		5.99 quotactl
+453	UNIMPL		pipe2
+454	UNIMPL		dup3
+455	UNIMPL		kqueue1
+456	UNIMPL		paccept
+457	UNIMPL		linkat
+458	UNIMPL		renameat
+459	UNIMPL		mkfifoat
+460	UNIMPL		mknodat
+461	UNIMPL		mkdirat
+462	UNIMPL		faccessat
+463	UNIMPL		fchmodat
+464	UNIMPL		fchownat
+465	UNIMPL		fexecve
+466	UNIMPL		fstatat
+467	UNIMPL		utimensat
+468	UNIMPL		openat
+469	UNIMPL		readlinkat
+470	UNIMPL		symlinkat
+471	UNIMPL		unlinkat
+472	UNIMPL		futimens
+473	UNIMPL		__quotactl
+474	UNIMPL		posix_spawn
+475	UNIMPL		recvmmsg
+476	UNIMPL		sendmmsg

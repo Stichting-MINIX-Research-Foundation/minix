@@ -1,0 +1,12 @@
+#	$NetBSD: PCI_IF_IWN.ioconf,v 1.1 2014/04/07 01:45:36 pooka Exp $
+#
+
+ioconf pci_if_iwn
+
+include "conf/files"
+include "dev/pci/files.pci"
+include "rump/dev/files.rump"
+
+pseudo-root pci*
+
+iwn*     at pci? dev ? function ?        # Intel PRO/Wireless

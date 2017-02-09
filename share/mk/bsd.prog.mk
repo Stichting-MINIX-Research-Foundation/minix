@@ -398,7 +398,11 @@ SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
 .  endif
 .   if (${MKRUMP} != "no")
 DPSRCS+=		${PROG}_rumpops.c ${RUMPSRCS}
+.if defined(__MINIX)
+LDADD.rump.${PROG}+=	-lrumpclient -lmthread
+.else
 LDADD.rump.${PROG}+=	-lrumpclient
+.endif
 DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
 _RUMPINSTALL.rump.${PROG}=# defined

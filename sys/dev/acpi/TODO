@@ -1,0 +1,40 @@
+Important things to make ACPI useful on more machines:
+
+* Fix problems with PCI_INTR_FIXUP.  The current code always chooses the last
+  possible interrupt, which causes problems when that interrupt is shared with
+  an ISA device.  http://mail-index.netbsd.org/tech-kern/2005/11/11/0011.html
+  has a more detailed analysis.
+
+- sekiya, 21 December 2005
+
+* The mismatch between the conventional and the ACPI device tree is the single
+  biggest architectural problem in the current stack. Various power management
+  features rely on the interaction between the firmware (ACPI) and the native
+  drivers. Examples include, but are not limited to, WoL, PCI power management,
+  and runtime power management (which involves GPEs on the ACPI side).
+
+  Devices should not attach to acpi(4), but should still use ACPI to reserve
+  PCI, ISA, and other resources. This includes also buses such as I2C where
+  resource conflicts and other bus errors are widely known to exist.
+
+  A satisfactory solution involves full or partial redesign of the x86
+  autoconfiguration process. The current ad-hoc solutions used for instance
+  in acpi_pci.c are inefficient and ugly.
+
+* Related to previous, investigate how existing systems can interact with
+  the BIOS and ACPI. For instance, at the moment of writing this, IPMI is
+  already available via ACPI. In the future this may cause possible conflicts
+  between ipmi(4) and the firmware.
+
+* Not directly related to ACPI, but implement S4 a.k.a. suspend-to-disk.
+
+* Improve IA-64 ACPI support. Even if the architecture may be rare,
+  support for Itanium is a good way to ensure that the stack remains MI.
+
+* Implement the ACPI requirements for CPU hot-plug.
+
+* Support APEI (ACPI Platform Error Interface).
+
+* Support ACPI 4.0 devices.
+
+- jruoho, 23 June 2011

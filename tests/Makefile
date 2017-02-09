@@ -12,7 +12,7 @@ TESTS_SUBDIRS=		bin dev games include kernel lib libexec
 TESTS_SUBDIRS+=		sbin sys usr.bin usr.sbin
 
 . if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
-TESTS_SUBDIRS+=		fs rump
+#TESTS_SUBDIRS+=		fs rump
 
 . if ${MKKMOD} != "no"
 TESTS_SUBDIRS+=		modules

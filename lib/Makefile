@@ -190,7 +190,7 @@ SUBDIR+=	librefuse	# depends on libpuffs
 #SUBDIR+=	libisns 	# depends on libpthread
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpuser	# depends on libpthread
-SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
+#SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 .endif
 
 .if (${MKNPF} != "no")

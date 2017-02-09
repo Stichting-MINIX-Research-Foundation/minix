@@ -61,7 +61,7 @@ struct ttysize {
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
-#if defined(__minix)
+#if !defined(_KERNEL) && defined(__minix)
 /* ioctls */
 #include <sys/ioc_net.h>	/* 'n'			*/
 #include <sys/ioc_disk.h>	/* 'd'			*/

@@ -1,0 +1,8 @@
+#	$NetBSD: files.bicons,v 1.3 2001/02/22 18:37:54 uch Exp $
+#	H/PC builtin console
+
+defpseudo	biconsdev
+
+file	dev/hpc/biconsdev.c	biconsdev	needs-count
+file	dev/hpc/bicons.c	biconsdev
+file	dev/hpc/bifont.c	biconsdev

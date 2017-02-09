@@ -1,0 +1,20 @@
+#	$NetBSD: files.ieee1394,v 1.10 2006/04/30 12:11:58 kiyohara Exp $
+
+file	dev/ieee1394/fwohci.c		fwohci
+
+device	ieee1394if {[euihi = -1], [euilo = -1]}
+attach	ieee1394if at fwbus
+file	dev/ieee1394/firewire.c		ieee1394if
+file	dev/ieee1394/fwdev.c		ieee1394if
+file	dev/ieee1394/fwmem.c		ieee1394if
+
+file	dev/ieee1394/fwdma.c		ieee1394if
+file	dev/ieee1394/fwcrom.c		ieee1394if
+
+device	fwip: arp, ieee1394, ifnet
+attach	fwip at ieee1394if
+file	dev/ieee1394/if_fwip.c		fwip
+
+device	sbp { }: scsi
+attach	sbp at ieee1394if
+file	dev/ieee1394/sbp.c		sbp

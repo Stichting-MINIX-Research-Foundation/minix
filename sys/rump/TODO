@@ -1,0 +1,19 @@
+	$NetBSD: TODO,v 1.12 2015/09/08 12:14:20 pooka Exp $
+
+* integrate build framework with config(1) to stop the need to
+  maintain a separate build infrastructure.  the remaining step
+  is to rewrite the Makefiles to use  source file lists generated
+  with config(1) (where possible)
+  + this will also benefit kernel modules
+  + the patch to config(1) exists but is not in-tree.  remaining work is
+    modifications to files.*
+* the .a semantics do not make sense for rump kernel components.
+  additionally, they cannot be loaded as modules since they are
+  ar's instead of elf objects.  make the build produce and use elf
+  objects instead of archives
+* cleanup remaining uses of __ in the kernel
+* rump_syscalls.c in librump should be compiled in the client
+  namespace, not the rump kernel namespace.  while technically trivial,
+  the build system makes this quite difficult.  one option for "cheating"
+  would be to put it into librumpuser which is always available for
+  local clients (per definition of local client).

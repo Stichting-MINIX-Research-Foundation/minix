@@ -1,0 +1,32 @@
+# $NetBSD: files.netbt,v 1.5 2010/03/26 18:15:15 pooka Exp $
+
+# Bluetooth Protocols
+
+define	bluetooth
+
+# Bluetooth HCI controller (bthub attaches here)
+define	btbus	{ }
+
+file	netbt/bt_proto.c	bluetooth
+file	netbt/bt_sysctl.c	bluetooth
+
+file	netbt/hci_event.c	bluetooth
+file	netbt/hci_ioctl.c	bluetooth
+file	netbt/hci_link.c	bluetooth
+file	netbt/hci_misc.c	bluetooth
+file	netbt/hci_socket.c	bluetooth
+file	netbt/hci_unit.c	bluetooth
+
+file	netbt/l2cap_lower.c	bluetooth
+file	netbt/l2cap_misc.c	bluetooth
+file	netbt/l2cap_signal.c	bluetooth
+file	netbt/l2cap_socket.c	bluetooth
+file	netbt/l2cap_upper.c	bluetooth
+
+file	netbt/rfcomm_dlc.c	bluetooth
+file	netbt/rfcomm_session.c	bluetooth
+file	netbt/rfcomm_socket.c	bluetooth
+file	netbt/rfcomm_upper.c	bluetooth
+
+file	netbt/sco_socket.c	bluetooth
+file	netbt/sco_upper.c	bluetooth

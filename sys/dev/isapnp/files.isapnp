@@ -1,0 +1,118 @@
+#	$NetBSD: files.isapnp,v 1.38 2005/12/11 12:22:16 christos Exp $
+#
+# Config file and device description for machine-independent ISAPnP code.
+# Included by ports that need it.
+
+# XXX: We don't use locators currenly...
+
+device	isapnp {[port = -1], [size = 0],
+	     [iomem = -1], [iosiz = 0],
+	     [irq = -1], [drq = -1]}
+attach	isapnp at isa
+file	dev/isapnp/isapnp.c			isapnp		needs-flag
+file	dev/isapnp/isapnpdebug.c		isapnp
+file	dev/isapnp/isapnpres.c			isapnp
+file	dev/isapnp/isapnpdevs.c			isapnp
+
+# 3Com 3C509B
+attach	ep at isapnp with ep_isapnp
+file	dev/isapnp/if_ep_isapnp.c		ep_isapnp
+
+# Fujitsu FMV-183/184
+attach	fmv at isapnp with fmv_isapnp
+file	dev/isapnp/if_fmv_isapnp.c		fmv_isapnp
+
+# PCnet-PnP
+attach	le at isapnp with le_isapnp: le24, isadma
+file	dev/isapnp/if_le_isapnp.c		le_isapnp
+
+# NE2000-PnP
+attach	ne at isapnp with ne_isapnp: rtl80x9
+file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
+
+# TROPIC based Token-Ring (IBM/3COM)
+attach	tr at isapnp with tr_isapnp
+file	dev/isapnp/if_tr_isapnp.c		tr_isapnp
+
+# Aironet 802.11 ISA
+attach	an at isapnp with an_isapnp
+file	dev/isapnp/if_an_isapnp.c		an_isapnp
+
+# Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
+attach	cs at isapnp with cs_isapnp
+file	dev/isapnp/if_cs_isapnp.c		cs_isapnp
+
+# serial ports/modems
+attach	com at isapnp with com_isapnp
+file	dev/isapnp/com_isapnp.c			com_isapnp
+
+# IDE disks
+attach	wdc at isapnp with wdc_isapnp
+file	dev/isapnp/wdc_isapnp.c			wdc_isapnp
+
+#
+# ISAPnP Sound hardware
+#
+
+# SoundBlaster family
+attach	sb at isapnp with sb_isapnp
+file	dev/isapnp/sb_isapnp.c			sb_isapnp
+
+# GUS Pnp (Interwave)
+device	guspnp: audiobus, isadma, interwave, mulaw
+attach	guspnp at isapnp
+file	dev/isapnp/gus_isapnp.c			guspnp		needs-flag
+
+# Yamaha OPL3-SA3 driver
+attach	ym at isapnp with ym_isapnp
+file	dev/isapnp/ym_isapnp.c			ym_isapnp
+
+# WSS compatibles
+attach	wss at isapnp with wss_isapnp
+file	dev/isapnp/wss_isapnp.c			wss_isapnp	needs-flag
+
+# ESS compatibles
+attach	ess at isapnp with ess_isapnp
+file	dev/isapnp/ess_isapnp.c			ess_isapnp
+
+# MPU401 compatibles
+attach	mpu at isapnp with mpu_isapnp
+file	dev/isapnp/mpu_isapnp.c			mpu_isapnp
+
+#
+# ISAPnP SCSI Controller
+#
+
+# Adaptec AHA-1542
+attach	aha at isapnp with aha_isapnp: isadma
+file	dev/isapnp/aha_isapnp.c			aha_isapnp
+
+# Adaptec AHA-1520B
+attach	aic at isapnp with aic_isapnp
+file	dev/isapnp/aic_isapnp.c			aic_isapnp
+
+# ISDN devices
+attach isic at isapnp with isic_isapnp
+file dev/isapnp/isic_isapnp.c			isic_isapnp
+
+defflag	opt_isicpnp.h	ISICPNP_TEL_S0_16_3_P ISICPNP_CRTX_S0_P ISICPNP_DRN_NGO
+			ISICPNP_ELSA_QS1ISA ISICPNP_ELSA_PCC16
+			ISICPNP_SEDLBAUER ISICPNP_DYNALINK
+			ISICPNP_SIEMENS_ISURF2 ISICPNP_ITKIX
+
+file dev/isapnp/isic_isapnp_tel_s0P.c		isic_isapnp
+file dev/isapnp/isic_isapnp_ctx_s0P.c		isic_isapnp
+file dev/isapnp/isic_isapnp_drn_ngo.c		isic_isapnp
+file dev/isapnp/isic_isapnp_elsa_qs1i.c		isic_isapnp
+file dev/isapnp/isic_isapnp_sws.c		isic_isapnp
+file dev/isapnp/isic_isapnp_dynalink.c		isic_isapnp
+file dev/isapnp/isic_isapnp_siemens_isurf.c	isic_isapnp
+file dev/isapnp/isic_isapnp_itkix.c		isic_isapnp
+
+# Game adapter (joystick)
+attach	joy at isapnp with joy_isapnp
+file	dev/isapnp/joy_isapnp.c		joy_isapnp
+
+# AT-style Parallel Port
+attach	atppc at isapnp with atppc_isapnp: isadma
+file	dev/isapnp/atppc_isapnp.c	atppc_isapnp

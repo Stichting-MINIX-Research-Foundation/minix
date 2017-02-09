@@ -1,0 +1,9 @@
+#	$NetBSD: files.blowfish,v 1.4 2014/01/01 15:18:57 pgoyette Exp $
+
+define	blowfish
+
+file	crypto/blowfish/bf_module.c	blowfish
+file	crypto/blowfish/bf_ecb.c	blowfish
+file	crypto/blowfish/bf_enc.c	blowfish
+file	crypto/blowfish/bf_cbc.c	blowfish
+file	crypto/blowfish/bf_skey.c	blowfish

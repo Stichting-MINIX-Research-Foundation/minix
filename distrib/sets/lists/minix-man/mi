@@ -66,6 +66,7 @@
 ./usr/man/man1/comm.1                                   minix-man
 ./usr/man/man1/command.1                                minix-man       obsolete
 ./usr/man/man1/compress.1                               minix-man
+./usr/man/man1/config.1                                 minix-man
 ./usr/man/man1/continue.1                               minix-man       obsolete
 ./usr/man/man1/cp.1                                     minix-man
 ./usr/man/man1/cpio.1                                   minix-man
@@ -326,6 +327,10 @@
 ./usr/man/man1/rmd160.1                                 minix-man
 ./usr/man/man1/rmdir.1                                  minix-man
 ./usr/man/man1/rsh.1                                    minix-man
+./usr/man/man1/rump.halt.1                              minix-man       rump
+./usr/man/man1/rump_allserver.1                         minix-man       rump
+./usr/man/man1/rump_server.1                            minix-man       rump
+./usr/man/man1/rump_wmd.1                               minix-man       rump
 ./usr/man/man1/rz.1                                     minix-man
 ./usr/man/man1/sdiff.1                                  minix-man
 ./usr/man/man1/sed.1                                    minix-man
@@ -2367,6 +2372,7 @@
 ./usr/man/man3/orcmd_af.3                               minix-man
 ./usr/man/man3/overlay.3                                minix-man
 ./usr/man/man3/overwrite.3                              minix-man
+./usr/man/man3/p2k.3                                    minix-man
 ./usr/man/man3/p_query.3                                minix-man
 ./usr/man/man3/pair_content.3                           minix-man
 ./usr/man/man3/parsedate.3                              minix-man
@@ -2712,6 +2718,10 @@
 ./usr/man/man3/roundl.3                                 minix-man
 ./usr/man/man3/rresvport.3                              minix-man
 ./usr/man/man3/rresvport_af.3                           minix-man
+./usr/man/man3/rump.3                                   minix-man       rump
+./usr/man/man3/rump_etfs.3                              minix-man       rump
+./usr/man/man3/rump_lwproc.3                            minix-man       rump
+./usr/man/man3/rumpclient.3                             minix-man       rump
 ./usr/man/man3/ruserok.3                                minix-man
 ./usr/man/man3/saslc.d.3                                minix-man       crypto
 ./usr/man/man3/saslc_alloc.3                            minix-man       crypto
@@ -3065,6 +3075,7 @@
 ./usr/man/man3/tzsetwall.3                              minix-man
 ./usr/man/man3/ualarm.3                                 minix-man
 ./usr/man/man3/uid_from_user.3                          minix-man
+./usr/man/man3/ukfs.3                                   minix-man       rump
 ./usr/man/man3/ulimit.3                                 minix-man
 ./usr/man/man3/uname.3                                  minix-man
 ./usr/man/man3/unctrl.3                                 minix-man
@@ -3258,6 +3269,7 @@
 ./usr/man/man4/mtio.4                                   minix-man
 ./usr/man/man4/ncr810.4                                 minix-man
 ./usr/man/man4/psip.4                                   minix-man
+./usr/man/man4/rumpfs.4                                 minix-man       rump
 ./usr/man/man4/tape.4                                   minix-man
 ./usr/man/man4/tty.4                                    minix-man
 ./usr/man/man4/udp.4                                    minix-man
@@ -3268,6 +3280,8 @@
 ./usr/man/man5/blacklistd.conf.5                        minix-man
 ./usr/man/man5/boot.cfg.5                               minix-man
 ./usr/man/man5/cdb.5                                    minix-man
+./usr/man/man5/config.5                                 minix-man
+./usr/man/man5/config.samples.5                         minix-man
 ./usr/man/man5/configfile.5                             minix-man
 ./usr/man/man5/cpio.5                                   minix-man
 ./usr/man/man5/crontab.5                                minix-man
@@ -3424,7 +3438,7 @@
 ./usr/man/man8/pr_routes.8                              minix-man
 ./usr/man/man8/printroot.8                              minix-man
 ./usr/man/man8/pwd_mkdb.8                               minix-man
-./usr/man/man8/pwdauth.8                                minix-man	obsolete
+./usr/man/man8/pwdauth.8                                minix-man       obsolete
 ./usr/man/man8/rarpd.8                                  minix-man
 ./usr/man/man8/rawspeed.8                               minix-man
 ./usr/man/man8/rdate.8                                  minix-man
@@ -3434,6 +3448,7 @@
 ./usr/man/man8/repartition.8                            minix-man
 ./usr/man/man8/rotate.8                                 minix-man
 ./usr/man/man8/rshd.8                                   minix-man
+./usr/man/man8/rump_sysvbfs.8                           minix-man       rump
 ./usr/man/man8/screendump.8                             minix-man
 ./usr/man/man8/serial-ip.8                              minix-man       obsolete
 ./usr/man/man8/service.8                                minix-man

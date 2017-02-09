@@ -35,19 +35,10 @@
 __KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.13 2014/11/17 00:46:04 jmcneill Exp $");
 
 #include <sys/param.h>
-#if defined(__minix)
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#ifndef aprint_debug
-#define aprint_debug if (0) printf
-#endif /* !aprint_debug */
-#else
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#endif /* !defined(__minix) */
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/ediddevs.h>
 #include <dev/videomode/edidreg.h>

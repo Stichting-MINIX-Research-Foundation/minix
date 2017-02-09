@@ -1,0 +1,34 @@
+#	$NetBSD: README,v 1.6 2014/01/18 09:51:08 apb Exp $
+
+This is the Intel ACPI Component Architecture, Intel's reference
+implementation of the core operating system ACPI support.  The
+portion in the acpica/ subdirectory is provided by the operating
+system as the glue between the OS and the ACPICA.
+
+Please, do not import an updated ACPICA snapshot from Intel unless
+you absolutely know what you're doing -- The Intel directory layout
+changes from release to release, and we must munge it (by hand) into
+something sane that we can use. The current version of munge is:
+
+	mv source/* .
+	rmdir source
+	mv components/* .
+	rmdir components
+
+Please also update ACPI_DATE in include/acapps.h.
+
+The routines that the operating system must provide are documented
+in the following document:
+
+	Intel Corp., ACPI Component Architecture Programmer Reference
+
+Copies of the document may be retrieved from:
+
+	http://www.acpica.org/download/acpica-reference.pdf
+
+Structure:
+
+sys/external/bsd/acpica/dist	The imported source
+sys/external/bsd/acpica/conf	The config glue
+sys/dev/acpi			Device drivers
+sys/dev/acpica			OS dependent functions that are required

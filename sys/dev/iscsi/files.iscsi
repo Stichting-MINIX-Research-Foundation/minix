@@ -1,0 +1,15 @@
+# $NetBSD: files.iscsi,v 1.5 2015/05/30 18:00:09 joerg Exp $
+#
+# Configuration file for iSCSI initiator
+
+defpseudodev	iscsi : scsi
+
+defparam	ISCSI_DEBUG
+
+file	dev/iscsi/base64.c		iscsi
+file	dev/iscsi/iscsi_ioctl.c		iscsi
+file	dev/iscsi/iscsi_main.c		iscsi
+file	dev/iscsi/iscsi_rcv.c		iscsi
+file	dev/iscsi/iscsi_send.c		iscsi
+file	dev/iscsi/iscsi_text.c		iscsi
+file	dev/iscsi/iscsi_utils.c		iscsi

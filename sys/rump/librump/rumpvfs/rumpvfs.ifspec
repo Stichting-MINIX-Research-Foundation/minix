@@ -1,0 +1,55 @@
+;       $NetBSD: rumpvfs.ifspec,v 1.10 2015/04/23 10:50:29 pooka Exp $
+
+NAME|vfs
+PUBHDR|include/rump/rumpvfs_if_pub.h
+PRIVHDR|librump/rumpvfs/rumpvfs_if_priv.h
+WRAPPERS|librump/rumpvfs/rumpvfs_if_wrappers.c
+
+; type          | name          | args		| attrs
+;
+
+void		|getvninfo	|struct vnode *, enum rump_vtype *,	\
+				 off_t *, dev_t *
+
+struct vfsops *	|vfslist_iterate|struct vfsops *
+struct vfsops *	|vfs_getopsbyname|const char *
+
+struct vattr *	|vattr_init	|void
+void		|vattr_settype	|struct vattr *, enum rump_vtype
+void		|vattr_setmode	|struct vattr *, mode_t
+void		|vattr_setrdev	|struct vattr *, dev_t
+void		|vattr_free	|struct vattr *
+
+void		|vp_incref	|struct vnode *
+int		|vp_getref	|struct vnode *
+void		|vp_rele	|struct vnode *
+
+void		|vp_interlock	|struct vnode *
+
+void		|freecn		|struct componentname *, int
+int		|namei		|uint32_t, uint32_t, const char *,	\
+				 struct vnode **, struct vnode **,	\
+				 struct componentname **
+struct componentname *|makecn	|u_long, u_long, const char *, size_t,	\
+				 struct kauth_cred *, struct lwp *
+
+int		|vfs_unmount	|struct mount *, int
+int		|vfs_root	|struct mount *, struct vnode **, int
+int		|vfs_statvfs	|struct mount *, struct statvfs *
+int		|vfs_sync	|struct mount *, int, struct kauth_cred *
+int		|vfs_fhtovp	|struct mount *, struct fid *, struct vnode **
+int		|vfs_vptofh	|struct vnode *, struct fid *, size_t *
+int		|vfs_extattrctl	|struct mount *, int, struct vnode *,	\
+				 int, const char *
+void		|vfs_syncwait	|struct mount *
+int		|vfs_getmp	|const char *, struct mount **
+
+void		|vfs_mount_print|const char *, int
+
+; I picked the wrong header to stop sniffin' glue
+int		|syspuffs_glueinit	|int, int *	|WEAK
+
+; Other compat glue (for sniffing purposes)
+; XXX: (lack of) types
+void		|vattr50_to_vattr|const struct vattr *, struct vattr *|COMPAT_50
+void		|vattr_to_vattr50|const struct vattr *, struct vattr *|COMPAT_50

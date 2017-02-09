@@ -11,7 +11,7 @@ SRCS+= 	accept.c access.c adjtime.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	getsockopt.c setsockopt.c gettimeofday.c geteuid.c getuid.c \
 	getvfsstat.c \
 	ioctl.c issetugid.c kill.c link.c listen.c loadname.c lseek.c \
-	minix_rs.c mkdir.c mkfifo.c mknod.c mmap.c mount.c nanosleep.c \
+	minix_mount.c minix_rs.c mkdir.c mkfifo.c mknod.c mmap.c mount.c nanosleep.c \
 	open.c pathconf.c pipe.c poll.c posix_spawn.c pread.c ptrace.c pwrite.c \
 	read.c readlink.c reboot.c recvfrom.c recvmsg.c rename.c \
 	rmdir.c select.c sem.c sendmsg.c sendto.c setgroups.c setsid.c \

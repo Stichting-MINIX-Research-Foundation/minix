@@ -1,0 +1,43 @@
+#	$NetBSD: files.ipfilter,v 1.15 2012/03/23 21:30:18 christos Exp $
+
+defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
+defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK
+defflag	opt_ipfilter.h	IPFILTER_BPF		# BPF opcodes in rules
+defflag	opt_ipfilter.h	IPFILTER_CKSUM		# check layer 4 checksums
+defflag	opt_ipfilter.h	IPFILTER_COMPILED	# support for compiled IPF rules
+defflag	opt_ipfilter.h	IPFILTER_LOOKUP		# support for ippool(8)
+defflag	opt_ipfilter.h	IPFILTER_SCAN		# scanning of packet contents
+defflag	opt_ipfilter.h	IPFILTER_SYNC		# synchronisation of state 
+defflag	opt_ipfilter.h	IPFILTER_COMPAT		# IPFilter version compat.
+
+defparam opt_ipfilter.h	IPFILTER_LOGSIZE	# size of logging buffer
+defparam opt_ipfilter.h	IPSTATE_MAX	# maximum number of references to state table entry
+defparam opt_ipfilter.h	IPSTATE_SIZE	# size of state hash table
+defparam opt_ipfilter.h	NAT_TABLE_MAX	# maximum number of NAT state entries
+defparam opt_ipfilter.h	NAT_TABLE_SZ	# size of NAT state hash table
+defparam opt_ipfilter.h	NAT_SIZE	# size of nat rules hash table
+defparam opt_ipfilter.h	RDR_SIZE	# size of rdr rules hash table
+defparam opt_ipfilter.h	HOSTMAP_SIZE	# size of hostmap hash table
+
+
+defpseudo ipfilter: ifnet, bpf_filter		# XXX not really an ifnet
+
+file	external/bsd/ipf/netinet/fil.c			ipfilter
+file	external/bsd/ipf/netinet/ip_auth.c		ipfilter
+file	external/bsd/ipf/netinet/ip_dstlist.c		ipfilter
+file	external/bsd/ipf/netinet/ip_fil_netbsd.c	ipfilter needs-flag
+file	external/bsd/ipf/netinet/ip_frag.c		ipfilter
+file	external/bsd/ipf/netinet/ip_htable.c		ipfilter
+file	external/bsd/ipf/netinet/ip_log.c		ipfilter & ipfilter_log
+file	external/bsd/ipf/netinet/ip_lookup.c		ipfilter
+file	external/bsd/ipf/netinet/ip_nat.c		ipfilter
+file	external/bsd/ipf/netinet/ip_nat6.c		ipfilter
+file	external/bsd/ipf/netinet/ip_pool.c		ipfilter
+file	external/bsd/ipf/netinet/ip_proxy.c		ipfilter
+file	external/bsd/ipf/netinet/ip_scan.c		ipfilter & ipfilter_scan
+file	external/bsd/ipf/netinet/ip_state.c		ipfilter
+file	external/bsd/ipf/netinet/ip_sync.c		ipfilter
+file	external/bsd/ipf/netinet/ip_fil_compat.c	ipfilter & ipfilter_compat
+file	external/bsd/ipf/netinet/radix_ipf.c		ipfilter
+
+makeoptions	ipfilter	CPPFLAGS+="-I$S/external/bsd/ipf"

@@ -1,0 +1,27 @@
+#	$NetBSD: files.mscp,v 1.8 2012/06/22 20:42:24 abs Exp $
+#
+# File and device description for MSCP devices.
+#
+
+define	mscp {}
+file	dev/mscp/mscp.c		mscp
+file	dev/mscp/mscp_subr.c	mscp
+
+device	mscpbus {drive = -1}
+attach	mscpbus at mscp
+
+device	ra: disk
+attach	ra at mscpbus
+
+device	racd: disk
+attach	racd at mscpbus
+
+device	rx: disk
+attach	rx at mscpbus
+
+file	dev/mscp/mscp_disk.c	ra | racd | rx needs-flag
+
+device	mt: tape
+attach	mt at mscpbus
+file	dev/mscp/mscp_tape.c	mt needs-flag
+

@@ -1,0 +1,19 @@
+#	$NetBSD: files.dmover,v 1.1 2002/08/02 00:30:40 thorpej Exp $
+
+define	dmover_service
+
+file	dev/dmover/dmover_backend.c	dmover_service
+file	dev/dmover/dmover_process.c	dmover_service
+file	dev/dmover/dmover_request.c	dmover_service
+file	dev/dmover/dmover_session.c	dmover_service
+file	dev/dmover/dmover_util.c	dmover_service
+
+# Software back-end which provides the dmover functions
+# documented in dmover(9).
+defpseudo	swdmover: dmover_service
+file		dev/dmover/swdmover.c	swdmover
+
+# Userland interface to dmover(9) through a message-passing
+# interface.
+defpseudo	dmoverio: dmover_service
+file		dev/dmover/dmover_io.c	dmoverio	needs-flag

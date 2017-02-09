@@ -1,0 +1,79 @@
+# $NetBSD: files.sun,v 1.18 2012/07/12 01:20:22 macallan Exp $
+#
+# Configuration file for devices found on Sun machines.
+#
+
+
+#
+# Sun keyboard and mouse drivers
+#
+
+define	firm_events
+file	dev/sun/event.c			firm_events needs-flag
+
+
+# upper layer of sun kbd driver
+# examples for lower and middle layers follows.  cannot move them here
+# because zs/zstty attachments are slightly different on each sun port.
+device kbd: firm_events, wskbddev
+file	dev/sun/kbd.c			kbd needs-flag
+file	dev/sun/kbd_tables.c 		kbd
+
+defflag	opt_sunkbd.h	SPARCBOOK_CMD KBD_HIJACK_VOLUME_BUTTONS
+file	dev/sun/wskbdmap_sun.c		kbd & wskbd
+
+# e.g. - lower layer: sun keyboard at zs
+#attach kbd at zs with kbd_zs
+#file	dev/sun/kbd_zs.c		kbd_zs
+
+# e.g. - lower layer: sun keyboard at a line discipline
+#attach kbd at zstty, com with kbd_tty
+#file	dev/sun/sunkbd.c		kbd_tty
+
+# e.g. - middle layer: serial attachment of sun keyboard
+#file	dev/sun/kbdsun.c		kbd_zs | kbd_tty
+
+
+# upper layer of sun ms driver
+# XXX: middle layer for sun serial mice (split out?)
+device ms: firm_events, wsmousedev
+file	dev/sun/ms.c			ms needs-flag
+
+# e.g. - lower layer: sun (mouse systems) mouse at zs
+#attach ms at zs with ms_zs
+#file	dev/sun/ms_zs.c			ms_zs
+
+# e.g. - lower layer: sun (mouse systems) mouse at a line discipline
+#attach ms at zstty, com with ms_tty
+#file	dev/sun/sunms.c			ms_tty
+
+# XXX: middle layer for sun (mouse systems) serial mice consists of
+# just one function in dev/sun/ms.c.  It probably should be split out
+# for consistency into a separate middle-layer file.
+
+
+
+#
+# Framebuffer drivers
+#
+
+# Brooktree DAC attribute
+define	bt_dac
+file	dev/sun/bt_subr.c		bt_dac
+
+# Include /dev/fb driver only if a framebuffer card is included
+# The attribute "fb" is already defined in src/sys/conf/files
+file	dev/sun/fb.c			fb needs-flag
+
+# pfour `add-on'; used by several drivers
+define	pfour
+file	dev/sun/pfour_subr.c		pfour needs-flag
+
+device bwtwo: fb, rasops1, pfour, wsemuldisplaydev, vcons
+file	dev/sun/bwtwo.c			bwtwo needs-flag
+
+device cgthree: bt_dac, fb, rasops8, wsemuldisplaydev, vcons
+file	dev/sun/cgthree.c		cgthree needs-flag
+
+device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev, vcons, glyphcache
+file	dev/sun/cgsix.c			cgsix needs-flag

@@ -1,0 +1,564 @@
+#	$NetBSD: vnode_if.src,v 1.69 2015/04/20 23:08:07 riastradh Exp $
+#
+# Copyright (c) 1992, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)vnode_if.src	8.14 (Berkeley) 8/6/95
+#
+#
+
+# 
+# Above each of the vop descriptors is a specification of the locking
+# protocol used by each vop call.  The first column is the name of
+# the variable, the remaining three columns are in, out and error
+# respectively.  The "in" column defines the lock state on input,
+# the "out" column defines the state on successful return, and the
+# "error" column defines the locking state on error exit.
+#     
+# The locking value can take the following values:
+# L: locked.
+# U: unlocked.
+# -: not applicable.  vnode does not yet (or no longer) exists.
+# =: the same on input and output, may be either L or U.
+# X: locked if not nil.
+#
+# For operations other than VOP_LOOKUP which require a component name
+# parameter, the flags required for the initial namei() call are listed.
+# Additional flags may be added to the namei() call, but these are required.
+#     
+
+#
+#% bwrite     vp      = = =
+#
+vop_bwrite {
+	IN struct vnode *vp;
+	IN struct buf *bp;
+};
+ 
+#
+#% lookup     dvp     L L L
+#% lookup     vpp     - U -
+#
+#    Note especially that *vpp may equal dvp.
+#
+#    More details:
+#     All lookups find the named node (creating the vnode if needed) and
+#          return it, referenced and unlocked, in *vpp.
+#     On failure, *vpp is NULL, and *dvp is left locked.
+#
+vop_lookup {
+	VERSION 2
+	IN struct vnode *dvp;
+	OUT WILLMAKE struct vnode **vpp;
+	IN struct componentname *cnp;
+};
+
+#
+#% create     dvp     L L L
+#% create     vpp     - U -
+#
+#! create cnp	CREATE, LOCKPARENT
+#
+vop_create {
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
+	OUT WILLMAKE struct vnode **vpp;
+	IN struct componentname *cnp;
+	IN struct vattr *vap;
+};
+
+#
+#% mknod      dvp     L L L
+#% mknod      vpp     - U -
+#
+#! mknod cnp	CREATE, LOCKPARENT
+#
+vop_mknod {
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
+	OUT WILLMAKE struct vnode **vpp;
+	IN struct componentname *cnp;
+	IN struct vattr *vap;
+};
+
+#
+#% open               vp      L L L
+#
+vop_open {
+	IN LOCKED=YES struct vnode *vp;
+	IN int mode;
+	IN kauth_cred_t cred;
+};
+
+#
+#% close      vp      L L L
+#
+vop_close {
+	IN LOCKED=YES struct vnode *vp;
+	IN int fflag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% access     vp      L L L
+#
+vop_access {
+	IN LOCKED=YES struct vnode *vp;
+	IN int mode;
+	IN kauth_cred_t cred;
+};
+
+#
+#% getattr    vp      L L L
+#
+vop_getattr {
+	IN struct vnode *vp;
+	IN struct vattr *vap;
+	IN kauth_cred_t cred;
+};
+
+#
+#% setattr    vp      L L L
+#
+vop_setattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN struct vattr *vap;
+	IN kauth_cred_t cred;
+};
+
+#
+#% read               vp      L L L
+#
+vop_read {
+	IN LOCKED=YES struct vnode *vp;
+	INOUT struct uio *uio;
+	IN int ioflag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% write      vp      L L L
+#
+vop_write {
+	IN LOCKED=YES struct vnode *vp;
+	INOUT struct uio *uio;
+	IN int ioflag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% fallocate  vp      L L L
+#
+vop_fallocate {
+	IN LOCKED=YES struct vnode *vp;
+	IN off_t pos;
+	IN off_t len;
+};
+
+#
+#% fdiscard   vp      L L L
+#
+vop_fdiscard {
+	IN LOCKED=YES struct vnode *vp;
+	IN off_t pos;
+	IN off_t len;
+};
+
+#
+#% ioctl      vp      U U U
+#
+vop_ioctl {
+	IN LOCKED=NO struct vnode *vp;
+	IN u_long command;
+	IN void *data;
+	IN int fflag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% fcntl      vp      U U U
+#
+vop_fcntl {
+	IN LOCKED=NO struct vnode *vp;
+	IN u_int command;
+	IN void *data;
+	IN int fflag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% poll     vp      U U U
+#
+vop_poll {
+	IN LOCKED=NO struct vnode *vp;
+	IN int events;
+};
+
+#
+#% kqfilter     vp      U U U
+#
+vop_kqfilter {
+	IN LOCKED=NO struct vnode *vp;
+	IN struct knote *kn;
+};
+
+#
+#% revoke     vp      U U U
+#
+vop_revoke {
+	IN LOCKED=NO struct vnode *vp;
+	IN int flags;
+};
+
+#     
+#% mmap      vp      = = =
+#
+vop_mmap {
+	IN struct vnode *vp;
+	IN vm_prot_t prot;
+	IN kauth_cred_t cred;
+};
+
+#
+#% fsync      vp      L L L
+#
+vop_fsync {
+	IN LOCKED=YES struct vnode *vp;
+	IN kauth_cred_t cred;
+	IN int flags;
+	IN off_t offlo;
+	IN off_t offhi;
+};
+
+#
+# Needs work: Is newoff right?  What's it mean?
+# XXX Locking protocol?
+#
+vop_seek {
+	IN struct vnode *vp;
+	IN off_t oldoff;
+	IN off_t newoff;
+	IN kauth_cred_t cred;
+};
+
+#
+#% remove     dvp     L U U
+#% remove     vp      L U U
+#
+#! remove cnp	DELETE, LOCKPARENT | LOCKLEAF
+#
+vop_remove {
+	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	IN LOCKED=YES WILLPUT struct vnode *vp;
+	IN struct componentname *cnp;
+};
+
+#
+#% link               dvp     L L L
+#% link               vp      U U U
+#
+#! link	 cnp	CREATE, LOCKPARENT
+#
+vop_link {
+	VERSION 2
+	IN LOCKED=YES struct vnode *dvp;
+	IN LOCKED=NO struct vnode *vp;
+	IN struct componentname *cnp;
+};
+
+#
+#% rename     fdvp    U U U
+#% rename     fvp     U U U
+#% rename     tdvp    L U U
+#% rename     tvp     X U U
+#
+#! rename fcnp	DELETE,	LOCKPARENT
+#! rename tcnp	RENAME, LOCKPARENT | LOCKLEAF | NOCACHE
+#
+vop_rename {
+	IN LOCKED=NO WILLRELE struct vnode *fdvp;
+	IN LOCKED=NO WILLRELE struct vnode *fvp;
+	IN struct componentname *fcnp;
+	IN LOCKED=YES WILLPUT struct vnode *tdvp;
+	IN WILLPUT struct vnode *tvp;
+	IN struct componentname *tcnp;
+};
+
+#
+#% mkdir      dvp     L L L
+#% mkdir      vpp     - U - 
+#
+#! mkdir cnp	CREATE, LOCKPARENT
+#
+vop_mkdir {
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
+	OUT WILLMAKE struct vnode **vpp;
+	IN struct componentname *cnp;
+	IN struct vattr *vap;
+};
+
+#
+#% rmdir      dvp     L U U
+#% rmdir      vp      L U U
+#
+#! rmdir cnp	DELETE, LOCKPARENT | LOCKLEAF
+#
+vop_rmdir {
+	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	IN LOCKED=YES WILLPUT struct vnode *vp;
+	IN struct componentname *cnp;
+};
+
+#
+#% symlink    dvp     L L L
+#% symlink    vpp     - U -
+#
+#! symlink cnp	CREATE, LOCKPARENT
+#
+vop_symlink {
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
+	OUT WILLMAKE struct vnode **vpp;
+	IN struct componentname *cnp;
+	IN struct vattr *vap;
+	IN char *target;
+};
+
+#
+#% readdir    vp      L L L   
+#
+vop_readdir {
+	IN LOCKED=YES struct vnode *vp;
+	INOUT struct uio *uio;
+	IN kauth_cred_t cred;
+	OUT int *eofflag;
+	OUT off_t **cookies;
+	IN int *ncookies;
+};
+
+#
+#% readlink   vp      L L L
+#
+vop_readlink {
+	IN LOCKED=YES struct vnode *vp;
+	INOUT struct uio *uio;
+	IN kauth_cred_t cred;
+};
+
+#
+#% abortop    dvp     = = =
+#
+#! abortop cnp	as appropriate.
+#
+vop_abortop {
+	IN struct vnode *dvp;
+	IN struct componentname *cnp;
+};
+
+#
+#% inactive   vp      L U U  
+#
+vop_inactive {
+	IN LOCKED=YES WILLUNLOCK struct vnode *vp;
+	INOUT bool *recycle;
+};
+
+#
+#% reclaim    vp      U U U
+#
+vop_reclaim {
+	IN LOCKED=NO struct vnode *vp;
+};
+
+#
+#% lock               vp      U L U
+#
+vop_lock {
+	IN LOCKED=NO struct vnode *vp;
+	IN int flags;
+};
+
+#
+#% unlock     vp      L U L
+#
+vop_unlock {
+	IN LOCKED=YES struct vnode *vp;
+};
+
+#
+#% bmap               vp      = = =
+#% bmap               vpp     - U -
+#
+vop_bmap {
+	IN struct vnode *vp;
+	IN daddr_t bn;
+	OUT struct vnode **vpp;
+	IN daddr_t *bnp;
+	OUT int *runp;
+};
+
+#
+#% strategy   vp      = = =
+#
+vop_strategy {
+	IN struct vnode *vp;
+	IN struct buf *bp;
+};
+
+#
+#% print      vp      = = =
+#
+vop_print {
+	IN struct vnode *vp;
+};
+
+#
+#% islocked   vp      = = =
+#
+vop_islocked {
+	IN struct vnode *vp;
+};
+
+#
+#% pathconf   vp      L L L
+#
+vop_pathconf {
+	IN LOCKED=YES struct vnode *vp;
+	IN int name;
+	OUT register_t *retval;
+};
+
+#
+#% advlock    vp      U U U
+#
+vop_advlock {
+	IN LOCKED=NO struct vnode *vp;
+	IN void *id;
+	IN int op;
+	IN struct flock *fl;
+	IN int flags;
+};
+
+#
+#% whiteout   dvp     L L L
+#% whiteout   cnp     - - -
+#% whiteout   flag    - - -
+#
+#! whiteout cnp	CREATE, LOCKPARENT
+# 
+vop_whiteout {
+	IN LOCKED=YES struct vnode *dvp;
+	IN struct componentname *cnp;
+	IN int flags;
+};
+
+#
+#% getpages	vp = = =
+#
+vop_getpages {
+	IN struct vnode *vp;
+	IN voff_t offset;
+	IN struct vm_page **m;
+	IN int *count;
+	IN int centeridx;
+	IN vm_prot_t access_type;
+	IN int advice;
+	IN int flags;
+};
+
+#
+#% putpages	vp = = =
+#
+vop_putpages {
+	IN struct vnode *vp;
+	IN voff_t offlo;
+	IN voff_t offhi;
+	IN int flags;
+};
+
+#
+#% closeextattr	vp L L L
+#
+vop_closeextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int commit;
+	IN kauth_cred_t cred;
+};
+
+#
+#% getextattr	vp L L L
+#
+vop_getextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	OUT size_t *size;
+	IN kauth_cred_t cred;
+};
+
+#
+#% listextattr	vp L L L
+#
+vop_listextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	INOUT struct uio *uio;
+	OUT size_t *size;
+	IN int flag;
+	IN kauth_cred_t cred;
+};
+
+#
+#% openextattr	vp L L L
+#
+vop_openextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN kauth_cred_t cred;
+};
+
+#
+#% deleteextattr vp L L L
+#
+vop_deleteextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	IN kauth_cred_t cred;
+};
+
+#
+#% setextattr	vp L L L
+#
+vop_setextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	IN kauth_cred_t cred;
+};

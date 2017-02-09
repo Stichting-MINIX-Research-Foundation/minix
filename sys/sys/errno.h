@@ -192,6 +192,7 @@
 #   define _SIGN         
 #endif
 
+#if !defined(_KERNEL)
 /* minix-specific error codes */
 #define ERESTART     (_SIGN 200 )  /* service restarted */
 #define ENOTREADY    (_SIGN 201 )  /* source or destination is not ready */
@@ -211,6 +212,8 @@
 #define EDEADEPT     (_SIGN 215 )  /* specified endpoint is not alive */
 #define EBADEPT      (_SIGN 216 )  /* specified endpoint is bad */
 #define EBADCPU      (_SIGN 217 )  /* requested CPU does not work */
+
+#endif /* !defined(_KERNEL) */
 
 #endif /* defined(__minix) */
 

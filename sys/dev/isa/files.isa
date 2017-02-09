@@ -1,0 +1,540 @@
+#	$NetBSD: files.isa,v 1.163 2013/06/10 07:14:02 kardel Exp $
+#
+# Config file and device description for machine-independent ISA code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+# ports should specify appropriate major numbers for the following
+# devices:
+#	mcd, wd, wt
+
+device	isa {[port = -1], [size = 0],
+	     [iomem = -1], [iosiz = 0],
+	     [irq = -1], [drq = -1], [drq2 = -1]}
+attach	isa at isabus
+file	dev/isa/isa.c			isa			needs-flag
+
+file	dev/isa/isabusprint.c		isabus
+
+# ISA DMA controller
+define	isadma
+file	dev/isa/isadma.c		isadma			needs-flag
+
+#
+# 8250/16[45]50-based multi-port serial boards
+#
+
+define	commulti {[slave = -1]}
+file	dev/isa/commultiprint.c		commulti
+
+# AST 4-port board
+device	ast: commulti
+attach	ast at isa
+file	dev/isa/ast.c			ast
+
+# TC-800 8-port board
+device	tcom: commulti
+attach	tcom at isa
+file	dev/isa/tcom.c			tcom
+
+# BOCA 8-port board
+device	boca: commulti
+attach	boca at isa
+file	dev/isa/boca.c			boca
+
+# Addonics FlexPort multiport serial card
+device	addcom: commulti
+attach	addcom at isa with addcom_isa
+file	dev/isa/addcom_isa.c		addcom
+
+# IBM RT PC 4-port board
+device	rtfps: commulti
+attach	rtfps at isa
+file	dev/isa/rtfps.c			rtfps
+
+# BOCA 6-port board (3x 16552)
+device	ioat: commulti
+attach	ioat at isa
+file	dev/isa/ioat66.c		ioat
+
+# MOXA 8-port board
+device	moxa: commulti
+attach	moxa at isa with moxa_isa
+file	dev/isa/moxa_isa.c		moxa
+
+#
+# Serial and parallel drivers
+#
+
+attach	com at isa with com_isa
+file	dev/isa/com_isa.c		com_isa
+
+attach	com at commulti with com_multi
+file	dev/isa/com_multi.c		com_multi
+
+# Cyclades Cyclom-8/16/32
+attach	cy at isa with cy_isa
+file	dev/isa/cy_isa.c		cy_isa
+
+# PC-style parallel ports: ISA bus attachment (XXX what chip?)
+# XXX chip driver should be defined elsewhere
+attach	lpt at isa with lpt_isa
+file	dev/isa/lpt_isa.c		lpt_isa & !ppbus
+
+# Parallel port chipset
+attach	atppc at isa with atppc_isa: isadma
+file	dev/isa/atppc_isa.c		atppc_isa
+file	dev/isa/atppc_isadma.c		atppc_isa | atppc_acpi | atppc_pnpbios | atppc_ofisa | atppc_isapnp
+
+#
+# SCSI host adapters
+#
+
+# AdvanSys 514x family
+# device declaration in sys/conf/files
+attach	adv at isa with adv_isa: isadma
+file	dev/isa/adv_isa.c               adv_isa
+
+# Adaptec AHA-154x family
+# device declaration in sys/conf/files
+attach	aha at isa with aha_isa: isadma
+file	dev/isa/aha_isa.c		aha_isa
+
+# Adaptec AIC-6[32]60 ICs
+# device declaration in sys/conf/files
+attach	aic at isa with aic_isa: isadma
+file	dev/isa/aic_isa.c		aic_isa
+
+# Qlogic ESP406/FAS408 boards
+# device declaration in sys/conf/files
+attach	esp at isa with esp_isa: isadma
+file	dev/isa/esp_isa.c		esp_isa
+
+# BusLogic BT-[45]4x ISA family
+# device declaration in sys/conf/files
+attach	bha at isa with bha_isa: isadma
+file	dev/isa/bha_isa.c		bha_isa
+
+# DPT SmartCache/SmartRAID III/IV ISA family
+# device declaration in sys/conf/files
+attach	dpt at isa with dpt_isa: isadma
+file	dev/isa/dpt_isa.c		dpt_isa
+
+# Seagate ST0[12] ICs
+device	sea: scsi, isadma
+attach	sea at isa
+file	dev/isa/seagate.c		sea
+
+# UltraStor UHA-[13]4f boards
+# device declaration in sys/conf/files
+attach	uha at isa with uha_isa: isadma
+file	dev/isa/uha_isa.c		uha_isa
+
+# Western Digital WD7000 and Future Domain TMC-7000 boards
+device	wds: scsi, isadma
+attach	wds at isa
+file	dev/isa/wds.c			wds
+
+#
+# Other ISA disk controllers
+#
+
+# Mitsumi CD-ROM controllers
+device	mcd: disk
+attach	mcd at isa
+file	dev/isa/mcd.c			mcd			needs-flag
+defflag			MCD_PROMISC		# enable "promiscuous" match
+
+attach	wdc at isa with wdc_isa
+file	dev/isa/wdc_isa.c		wdc_isa
+
+# Wangtek- and Archive-compatible tape controller boards
+device	wt: tape, isadma
+attach	wt at isa
+file	dev/isa/wt.c			wt			needs-flag
+
+#
+# GPIB controllers
+#
+
+device	cec: gpibdev
+attach	cec at isa
+file	dev/isa/cec.c			cec
+
+#
+# ISA networking drivers
+#
+
+# WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
+# MUST be first: probe is non invasive, and registers are clobbered
+# by other drivers's probe
+# device declaration in sys/conf/files
+attach	we at isa with we_isa
+file	dev/isa/if_we_isa.c		we_isa
+
+# 3Com 3C503
+device	ec: ether, ifnet, arp, dp8390nic
+attach	ec at isa
+file	dev/isa/if_ec.c			ec
+
+# 3Com 3C505
+device	eg: ether, ifnet, arp
+attach	eg at isa
+file	dev/isa/if_eg.c			eg
+
+# 3Com 3C501
+device	el: ether, ifnet, arp
+attach	el at isa
+file	dev/isa/if_el.c			el
+
+# 3Com 3C509 Ethernet controller
+# device declaration in sys/conf/files
+attach	ep at isa with ep_isa: elink
+file	dev/isa/if_ep_isa.c		ep_isa
+
+# SDL Communications N2 PCI Network Interface
+# device in sys/conf/files
+attach	ntwoc at isa with ntwoc_isa
+file	dev/isa/if_ntwoc_isa.c          ntwoc_isa
+
+
+# Allied Telesis MB86965-based boards
+# (Allied Telesis AT1700/RE2000)
+# device in sys/conf/files
+attach	ate at isa with ate_isa
+file	dev/isa/if_ate.c		ate_isa
+
+# Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
+define	cs_isa_common
+file	dev/isa/cs89x0isa.c		cs_isa_common
+attach	cs at isa with cs_isa: cs_isa_common, isadma
+file	dev/isa/if_cs_isa.c		cs_isa
+attach	tscs at isa with tscs_isa
+file	dev/isa/if_tscs_isa.c		tscs_isa
+
+# Fujitsu MB86960-based boards
+# (Fujitsu FMV-180 series)
+# device in sys/conf/files
+attach	fmv at isa with fmv_isa
+file	dev/isa/if_fmv_isa.c		fmv_isa
+
+# Intel i82595-based boards.
+# (Intel EtherExpress PRO)
+device	iy: ether, ifnet, arp
+attach	iy at isa
+file	dev/isa/if_iy.c			iy
+
+# the probe routine of this "recognizes" the iy. Probe after it.
+# NCR 5380-based boards
+attach	nca at isa with nca_isa
+file	dev/isa/nca_isa.c		nca_isa
+
+# AMD am7990 (Lance) -based boards
+# (BICC Isolan, NE2100, DEPCA)
+# device declaration in sys/conf/files
+device	nele {}
+attach	nele at isa
+attach	le at nele with le_nele: le24, isadma
+device	bicc {}
+attach	bicc at isa
+attach	le at bicc with le_bicc: le24, isadma
+file	dev/isa/if_le_isa.c		nele | bicc
+attach	depca at isa with depca_isa
+file	dev/isa/depca_isa.c		depca
+
+# DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
+attach	lc at isa with lc_isa
+file	dev/isa/if_lc_isa.c		lc_isa
+
+# Novell NE1000, NE2000, and clones
+attach	ne at isa with ne_isa: rtl80x9
+file	dev/isa/if_ne_isa.c		ne_isa
+
+# SMC91Cxx Ethernet Controllers
+attach	sm at isa with sm_isa
+file	dev/isa/if_sm_isa.c		sm_isa
+
+# 3Com 3C507
+device	ef: ether, ifnet, arp, elink, i82586
+attach	ef at isa
+file	dev/isa/if_ef.c			ef
+
+# AT&T StarLan boards
+device	ai: ether, ifnet, arp, i82586
+attach	ai at isa
+file	dev/isa/if_ai.c			ai
+
+# EtherExpress/16
+device	ix: ether, ifnet, arp, i82586
+attach	ix at isa
+file	dev/isa/if_ix.c			ix
+
+# TROPIC based Token-Ring (IBM/3COM)
+define	tr_isa
+file	dev/isa/if_tr_isa.c		tr_isa
+attach	tr at isa with tr_isa: tr_isa, elink
+file	dev/isa/if_tribm_isa.c		tr_isa
+file	dev/isa/if_trtcm_isa.c		tr_isa
+
+#
+# ISA Sound hardware
+#
+
+# MPU401 MIDI UART compatibles
+attach	mpu at isa with mpu_isa
+file	dev/isa/mpu_isa.c		mpu_isa
+
+# the SoundBlaster DSP, or close likenesses; used by other drivers
+define	sbdsp { }
+file	dev/isa/sbdsp.c			sbdsp
+
+# SoundBlaster family
+device	sb: audiobus, isadma, sbdsp, mulaw, auconv, midibus
+file	dev/isa/sb.c			sb			needs-flag
+
+attach	sb at isa with sb_isa
+file	dev/isa/sb_isa.c		sb_isa			needs-flag
+
+attach	opl at sbdsp with opl_sb
+file	dev/isa/opl_sb.c		opl_sb
+
+attach	mpu at sbdsp with mpu_sb
+file	dev/isa/mpu_sb.c		mpu_sb
+
+# ProAudio Spectrum
+device	pas: audiobus, isadma, sbdsp, mulaw, auconv
+attach	pas at isa
+file	dev/isa/pas.c			pas			needs-flag
+
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
+file	dev/isa/ad1848_isa.c		ad1848
+
+# ICS2101 mixer chip support; used by other drivers
+define	ics2101
+file	dev/isa/ics2101.c		ics2101
+
+# Microsoft Windows Sound System
+device	wss { } : audiobus, isadma, ad1848, auconv
+file	dev/isa/wss.c			wss			needs-flag
+
+attach	wss at isa with wss_isa
+file	dev/isa/wss_isa.c		wss_isa			needs-flag
+
+attach	opl at wss with opl_wss
+file	dev/isa/opl_wss.c		opl_wss
+
+# ESS Technology ES1887/ES888/ES1888
+device	ess { } : audiobus, isadma, mulaw, auconv, midibus
+file	dev/isa/ess.c			ess			needs-flag
+
+attach	ess at isa with ess_isa
+file	dev/isa/ess_isa.c		ess_isa			needs-flag
+
+attach	opl at ess with opl_ess
+file	dev/isa/opl_ess.c		opl_ess
+
+attach	joy at ess with joy_ess
+file	dev/isa/joy_ess.c		joy_ess			needs-flag
+
+# Yamaha OPL2/OPL3 FM synth
+attach	opl at isa with opl_isa
+file	dev/isa/opl_isa.c		opl_isa
+
+# Yamaha OPL3-SA3
+device	ym { }: audiobus, isadma, ad1848, auconv
+file	dev/isa/ym.c			ym
+defparam opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
+
+attach	opl at ym with opl_ym
+file	dev/isa/opl_ym.c		opl_ym
+
+attach	mpu at ym with mpu_ym
+file	dev/isa/mpu_ym.c		mpu_ym			needs-flag
+
+# Gravis UltraSound & UltraSound MAX.
+# Use the "drq2" keyword in a config file to specify an extra DMA
+# channel for full-duplex operation.
+device	gus: audiobus, isadma, ics2101, ad1848, mulaw, auconv
+attach	gus at isa
+file	dev/isa/gus.c			gus			needs-flag
+
+# Sierra's Aria chipset.
+# (e.g. Prometheus Aria 16)
+device	aria: audiobus, mulaw, auconv
+attach	aria at isa
+file	dev/isa/aria.c			aria
+
+# Creative Music System (CMS)
+device	cms: midibus
+attach	cms at isa
+file	dev/isa/cms.c			cms
+
+#
+# PlanetConnect satellite receiver driver.
+#
+device	satlink: isadma
+attach	satlink at isa
+file	dev/isa/satlink.c		satlink			needs-flag
+
+# ISA PC keyboard controller
+defflag opt_pckbc.h			PCKBCNOTEST
+attach	pckbc at isa with pckbc_isa
+file	dev/isa/pckbc_isa.c		pckbc_isa
+
+# generic ISA VGA
+attach	vga at isa with vga_isa
+file	dev/isa/vga_isa.c		vga_isa			needs-flag
+
+# generic EGA
+device	ega: wsemuldisplaydev, pcdisplayops
+attach	ega at isa
+file	dev/isa/ega.c			ega			needs-flag
+
+# IDEC Supervision/16 image capture board
+device	isv
+attach	isv at isa with isv_isa
+file	dev/isa/isv.c			isv
+
+# generic PC graphics adapter (MGA, CGA, ...)
+device	pcdisplay: wsemuldisplaydev, pcdisplayops
+attach	pcdisplay at isa
+file	dev/isa/pcdisplay.c		pcdisplay		needs-flag
+
+# Middle Digital, Inc. PC-Weasel serial console board.
+# XXX This is a little gross... this is to conditionally compile
+# support for the PC-Weasel into the `pcdisplay' driver,
+# but we can't use an `option', because options can't have
+# attributes.
+defpseudo pcweasel: sysmon_wdog
+file	dev/isa/weasel_isa.c		pcweasel		needs-flag
+
+# Sound Forte RadioLink SF16-FMR2 FM Radio Card
+device sf2r: radiodev, tea5757
+attach sf2r at isa
+file	dev/isa/sf16fmr2.c		sf2r
+
+# Aztech/PackardBell FM Radio Card
+device az: radiodev, lm700x
+attach az at isa
+file	dev/isa/aztech.c		az
+
+# AIMS Lab Radiotrack & compatible
+device	rt: radiodev, lm700x
+attach	rt at isa
+file	dev/isa/radiotrack.c		rt
+
+# AIMS Lab Radiotrack II FM Radio Card
+device	rtii: radiodev, tea5757
+attach	rtii at isa
+file	dev/isa/radiotrack2.c		rtii
+
+# PC PPI (speaker interface)
+device	pcppi {}
+attach	pcppi at isa
+file	dev/isa/pcppi.c			pcppi			needs-flag
+device	spkr
+attach	spkr at pcppi
+file	dev/isa/spkr.c			spkr			needs-flag
+attach	midi at pcppi with midi_pcppi: midisyn
+file	dev/isa/midi_pcppi.c		midi_pcppi
+
+# AT Timer (TIMER 1)
+attach	attimer at isa with attimer_isa
+file	dev/isa/attimer_isa.c		attimer_isa
+
+#
+# Environmental monitors
+#
+
+# SMSC LPC47B397 Super I/O with hardware monitor
+device	smsc: sysmon_envsys
+attach	smsc at isa with smsc
+file	dev/isa/smsc.c			smsc			needs-flag
+
+# Winbond LPC Super I/O
+device	wbsio {}
+attach	wbsio at isa
+file	dev/isa/wbsio.c			wbsio
+
+# LM78 temp/fanspeed monitor
+attach	lm at isa with lm_isa
+attach	lm at wbsio with lm_wbsio
+file	dev/isa/lm_isa_common.c		lm_isa | lm_wbsio
+file	dev/isa/lm_isa.c		lm_isa
+file	dev/isa/lm_wbsio.c		lm_wbsio
+
+# iTE Super I/O with hardware monitor
+device	itesio: sysmon_envsys, sysmon_wdog
+attach	itesio at isa with itesio
+file	dev/isa/itesio_isa.c		itesio
+
+# Fintek Super I/O with hardware monitor
+device	finsio: sysmon_envsys
+attach	finsio at isa with finsio
+file	dev/isa/finsio_isa.c 		finsio
+
+# Abit uGuru hardware monitor
+attach	ug at isa with ug_isa
+file	dev/isa/ug_isa.c		ug_isa
+
+# IBM ThinkPad Active Protection System
+device	aps: sysmon_envsys
+attach	aps at isa with aps
+file	dev/isa/aps.c 			aps
+
+# ISDN devices
+attach	isic at isa with isic_isa
+file	dev/isa/isic_isa.c		isic_isa
+#attach	daic at isa with daic_isa
+#file	dev/isa/daic_isa.c		daic_isa
+
+defflag	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
+			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1
+
+file	dev/isa/isic_isa_tel_s08.c	isic_isa
+file	dev/isa/isic_isa_tel_s016.c	isic_isa
+file	dev/isa/isic_isa_tel_s0163.c	isic_isa
+file	dev/isa/isic_isa_avm_a1.c	isic_isa
+file	dev/isa/isic_isa_usr_sti.c	isic_isa
+file	dev/isa/isic_isa_itk_ix1.c	isic_isa
+
+# Game adapter (joystick)
+attach	joy at isa with joy_isa
+file	dev/isa/joy_isa.c		joy_isa
+
+# NSC PC87366 Super IO / monitor chip
+device nsclpcsio: sysmon_envsys, gpiobus
+attach nsclpcsio at isa with nsclpcsio_isa
+file dev/isa/nsclpcsio_isa.c nsclpcsio_isa
+
+# USB Controller
+attach	slhci at isa with slhci_isa
+file	dev/isa/slhci_isa.c		slhci_isa
+
+device	tsdio {}
+attach	tsdio at isa
+file	dev/isa/tsdio.c			tsdio
+
+device	toasterlcd: hd44780, wsemuldisplaydev
+attach	toasterlcd at tsdio
+file	dev/isa/toasterlcd.c		toasterlcd
+
+device toaster
+attach toaster at tsdio
+file	dev/isa/toaster.c		toaster
+
+# Trusted Platform Module
+attach tpm at isa with tpm_isa
+file   dev/isa/tpm_isa.c		tpm_isa	needs-flag
+
+# Soekris GPIO & LEDs driver
+device	soekrisgpio: gpiobus
+attach	soekrisgpio at isa
+file	dev/isa/soekrisgpio.c		soekrisgpio
+
+#
+# ISA Plug 'n Play autoconfiguration glue.
+# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
+# ISA PnP devices often use `device' declarations listed in this file.
+#
+include	"dev/isapnp/files.isapnp"

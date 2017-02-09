@@ -1,0 +1,70 @@
+.\"	$NetBSD: mount_9p.8,v 1.4 2007/12/02 21:03:32 wiz Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 8, 2007
+.Dt MOUNT_9P 8
+.Os
+.Sh NAME
+.Nm mount_9p
+.Nd mount a file server using the 9P resource sharing protocol
+.Sh SYNOPSIS
+.Nm
+.Op Fl s
+.Op Fl o Ar mntopts
+.Op Fl p Ar port
+.Ar [user@]host[:path]
+.Ar mount_point
+.Sh DESCRIPTION
+The
+.Nm
+program is used to mount a file hierarchy served with the Plan 9
+file sharing protocol: 9P.
+After the file system is mounted, the files on the remote
+.Ar host
+will be accessed using the credentials of the user named
+.Ar user
+and whatever UID the user happens to have on the remote server.
+If
+.Ar path
+is supplied, it is used as the mount rootpath on the remote host.
+.Ar path
+must be an absolute path.
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr puffs 4 ,
+.Xr mount 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 5.0 .
+.Sh CAVEATS
+Permissions are not handled well.
+.Pp
+Authentication support is missing.
+.Pp
+Error code handling is missing.
+.Pp
+Under construction.

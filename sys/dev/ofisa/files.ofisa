@@ -1,0 +1,43 @@
+#	$NetBSD: files.ofisa,v 1.14 2005/12/11 12:22:48 christos Exp $
+
+# OFW ISA bus support
+# XXX eventually we should do something with these locators
+define	ofisa { [i = -1], [it = -1], [iv = -1], [m = -1] }
+device	ofisa: ofisa, ofbus
+attach	ofisa at ofbus
+file	dev/ofisa/ofisa.c		ofisa
+
+# attachment for MI pckbc driver
+attach	pckbc at ofisa with pckbc_ofisa
+file	dev/ofisa/pckbc_ofisa.c		pckbc_ofisa
+
+# attachment for MI com driver
+attach	com at ofisa with com_ofisa
+file	dev/ofisa/com_ofisa.c		com_ofisa
+
+# attachment for MI lpt driver
+attach	lpt at ofisa with lpt_ofisa
+file	dev/ofisa/lpt_ofisa.c		lpt_ofisa & !ppbus
+
+attach	atppc at ofisa with atppc_ofisa: isadma
+file	dev/ofisa/atppc_ofisa.c		atppc_ofisa
+
+# attachment for MI wdc driver
+attach	wdc at ofisa with wdc_ofisa
+file	dev/ofisa/wdc_ofisa.c		wdc_ofisa
+
+# attachment of ISA SoundBlaster driver
+attach	sb at ofisa with sb_ofisa
+file	dev/ofisa/sb_ofisa.c		sb_ofisa
+
+# attachment of ISA ESS Technology ES1887/ES888
+attach	ess at ofisa with ess_ofisa
+file	dev/ofisa/ess_ofisa.c		ess_ofisa
+
+# attachment of ISA CS8900 driver
+attach	cs at ofisa with cs_ofisa: of_network_dev, cs_isa_common, isadma
+file	dev/ofisa/if_cs_ofisa.c		cs_ofisa
+
+# attachment of ISA Game port driver
+attach	joy at ofisa with joy_ofisa
+file	dev/ofisa/joy_ofisa.c		joy_ofisa

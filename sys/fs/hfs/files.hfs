@@ -1,0 +1,10 @@
+#	$NetBSD: files.hfs,v 1.4 2014/10/11 06:42:18 uebayasi Exp $
+
+deffs	HFS
+
+define	hfs: vfs
+file	fs/hfs/hfs_subr.c	hfs
+file	fs/hfs/hfs_vfsops.c	hfs
+file	fs/hfs/hfs_vnops.c	hfs
+file	fs/hfs/libhfs.c		hfs
+file	fs/hfs/unicode.c	hfs

@@ -1,0 +1,6 @@
+# $NetBSD: files.camellia,v 1.1 2011/05/05 17:38:36 drochner Exp $
+
+define camellia
+
+file crypto/camellia/camellia.c		camellia
+file crypto/camellia/camellia-api.c	camellia

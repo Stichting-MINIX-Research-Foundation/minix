@@ -1,0 +1,30 @@
+#	$NetBSD: files.opencrypto,v 1.25 2011/11/19 22:51:30 tls Exp $
+#
+#
+
+# Opencrypto framework.
+# Devices that provide crypto transforms via opencrypto, or subsystems
+# that use the opencrypto framework, should list opencrypto as a dependency
+# to pull in the framework.
+
+define	opencrypto
+file	opencrypto/criov.c		opencrypto
+file	opencrypto/xform.c		opencrypto
+file	opencrypto/crypto.c		opencrypto
+
+# Pseudo-device that provides software implementations of various cryptographic
+# algorithms.
+defpseudo swcrypto: opencrypto,
+		blowfish, des, cast128, skipjack, camellia
+file	opencrypto/cryptosoft.c		swcrypto
+file	opencrypto/deflate.c		swcrypto	# wrapper around zlib
+file	opencrypto/aesxcbcmac.c		swcrypto
+file	opencrypto/gmac.c		swcrypto
+
+# Pseudo-device for userspace access to opencrypto
+# (and thus crypto hardware accelerators).
+defpseudo crypto: opencrypto
+file	opencrypto/cryptodev.c		crypto
+file	opencrypto/ocryptodev.c		crypto & compat_50
+
+defflag opt_ocf.h	CRYPTO_DEBUG CRYPTO_TIMING

@@ -317,4 +317,8 @@ int tty_try_xonxoff(struct tty *, unsigned char /*c*/);
 
 #endif /* _KERNEL */
 
+#if defined(__minix)
+extern void ptyattach(int);
+#endif
+
 #endif /* !_SYS_TTY_H_ */

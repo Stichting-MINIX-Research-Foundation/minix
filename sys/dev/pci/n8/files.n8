@@ -1,0 +1,46 @@
+#	$NetBSD: files.n8,v 1.1 2008/10/30 12:02:14 darran Exp $
+
+# NetOctave N8 crypto accelerator
+device	nsp: opencrypto
+attach	nsp at pci
+
+
+file	dev/pci/n8/nsp.c				nsp
+file	dev/pci/n8/helper.c				nsp
+file	dev/pci/n8/n8_memory_bsd.c			nsp
+file	dev/pci/n8/n8_semaphore_bsd.c			nsp
+file	dev/pci/n8/common/api/n8_API_Initialize.c	nsp
+file	dev/pci/n8/common/config.c			nsp
+file	dev/pci/n8/memory/n8_manage_memory.c		nsp
+file	dev/pci/n8/common/n8_sksInit.c			nsp
+file	dev/pci/n8/common/n8_memory.c			nsp
+file	dev/pci/n8/common/userPool.c			nsp
+file	dev/pci/n8/QMgr/QMgrInit.c			nsp
+file	dev/pci/n8/common/contextMem.c			nsp
+file	dev/pci/n8/QMgr/QMQueue.c			nsp
+file	dev/pci/n8/QMgr/QMUtil.c			nsp
+file	dev/pci/n8/common/irq.c				nsp
+file	dev/pci/n8/QMgr/RNQueue.c			nsp
+file	dev/pci/n8/common/api/n8_util.c			nsp
+file	dev/pci/n8/common/api/n8_key_works.c		nsp
+file	dev/pci/n8/common/api/n8_hash.c			nsp
+file	dev/pci/n8/common/api/commands/n8_cb_ea.c	nsp
+file	dev/pci/n8/common/api/n8_precompute.c		nsp
+file	dev/pci/n8/common/api/n8_precomp_md5.c		nsp
+file	dev/pci/n8/common/api/n8_pub_enums.c		nsp
+file	dev/pci/n8/common/api/n8_cryptographic.c	nsp
+file	dev/pci/n8/common/api/n8_contextM.c		nsp
+file	dev/pci/n8/common/api/n8_pk_ops.c		nsp
+file	dev/pci/n8/common/api/commands/n8_cb_pk_ops.c	nsp
+file	dev/pci/n8/common/api/n8_dsa.c			nsp
+file	dev/pci/n8/common/api/n8_dh.c			nsp
+file	dev/pci/n8/common/api/commands/n8_cb_dsa.c	nsp
+file	dev/pci/n8/common/api/commands/n8_cb_dh.c	nsp
+file	dev/pci/n8/common/api/n8_rsa.c			nsp
+file	dev/pci/n8/common/api/commands/n8_cb_rsa.c	nsp
+
+makeoptions	nsp	CPPFLAGS+="-I$S/dev/pci/n8 -I$S/dev/pci/n8/common -I$S/dev/pci/n8/QMgr -I$S/dev/pci/n8/include_private -I$S/dev/pci/n8/include_public -I$S/dev/pci/n8/common/api -I$S/dev/pci/n8/common/api/commands"
+makeoptions	nsp	CPPFLAGS+="-DMAX_NSP_INSTANCES=1 -DSUPPORT_CALLBACKS -DKOFF -DKERNEL"
+
+# Uncomment this line to enable detailed debugging in the driver
+#makeoptions	nsp	CPPFLAGS+="-DN8DEBUG"

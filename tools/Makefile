@@ -131,14 +131,12 @@ SUBDIR += .WAIT texinfo \
 .endif
 SUBDIR+= stat .WAIT
 
-.if defined(__MINIX)
 SUBDIR += \
 	mkfs.mfs \
 	partition \
 	toproto
-.else
+
 SUBDIR+= .WAIT config
-.endif # defined(__MINIX)
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \

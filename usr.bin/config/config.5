@@ -1,0 +1,764 @@
+.\" $NetBSD: config.5,v 1.34 2015/09/01 13:42:48 uebayasi Exp $
+.\"
+.\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
+.\"  All rights reserved.
+.\"
+.\"  Redistribution and use in source and binary forms, with or without
+.\"  modification, are permitted provided that the following conditions
+.\"  are met:
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions and the following disclaimer.
+.\"  2. Redistributions in binary form must reproduce the above copyright
+.\"     notice, this list of conditions and the following disclaimer in the
+.\"     documentation and/or other materials provided with the distribution.
+.\"
+.\"  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\"  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\"  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\"  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\"  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\"  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\"  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\"  POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 1, 2015
+.Dt CONFIG 5
+.Os
+.Sh NAME
+.Nm config
+.Nd kernel configuration file syntax
+.Sh DESCRIPTION
+The kernel configuration file specifies the way the kernel should be compiled
+by the rest of the toolchain.
+It is processed by
+.Xr config 1
+to produce a number of files that will allow the user to compile a possibly
+customised kernel.
+One compilation can issue several kernel binaries, with different root and
+dump devices configurations, or with full debugging information.
+.Pp
+This manual page is intended to serve as a complete reference of all aspects
+of the syntax used in the many files processed by
+.Xr config 1 .
+The novice user will prefer looking at the examples given in
+.Xr config.samples 5
+in order to understand better how the default configuration can be changed,
+and how all of its elements interact with each other.
+.Pp
+The kernel configuration file actually contains the description of all the
+options, drivers and source files involved in the kernel compilation, and the
+logic that binds them.
+The
+.Ic machine
+statement, usually found in the
+.Pa std.${MACHINE}
+file, hides this from the user by automatically including all the descriptive
+files spread all around the kernel source tree, the main one being
+.Pa conf/files .
+.Pp
+Thus, the kernel configuration file contains two parts:
+the description of the compilation options, and the selection of those options.
+However, it begins with a small preamble that controls a couple of options of
+.Xr config 1 ,
+and a few statements belong to any of the two sections.
+.Pp
+The user controls the options selection part, which is located in a file
+commonly referenced as the
+.Em main configuration file
+or simply the
+.Em kernel configuration file .
+The developer is responsible for describing the options in the relevant files
+from the kernel source tree.
+.Pp
+Statements are separated by new-line characters.
+However, new-line characters can appear in the middle of a given statement,
+with the value of a space character.
+.Ss OBJECTS AND NAMES
+.Xr config 1
+is a rather complicated piece of software that tries to comply with any
+configuration the user might think of.
+Quite a few different objects are manipulated through the kernel configuration
+file, therefore some definitions are needed.
+.Ss Options and attributes
+The basic objects driving the kernel compilation are
+.Em options ,
+and are called
+.Ar attributes
+in some contexts.
+An
+.Ar attribute
+usually refers to a feature a given piece of hardware might have.
+However, the scope of an attribute is rather wide and can just be a place
+holder to group some source files together.
+.Pp
+There is a special class of attribute, named
+.Em interface attribute ,
+which represents a hook that allows a device to attach to (i.e., be a child of)
+another device.
+An
+.Em interface attribute
+has a (possibly empty) list of
+.Ar locators
+to match the actual location of a device.
+For example, on a PCI bus, devices are located by a
+.Em device number
+that is fixed by the wiring of the motherboard.
+Additionally, each of those devices can appear through several interfaces named
+.Em functions .
+A single PCI device entity is a unique function number of a given device from
+the considered PCI bus.
+Therefore, the locators for a
+.Xr pci 4
+device are
+.Ar dev
+(for device), and
+.Ar function .
+.Pp
+A
+.Ar locator
+can either be a single integer value, or an array of integer values.
+It can have a default value, in which case it can be wildcarded with a
+.Dq \&?
+in the options selection section of the configuration file.
+A single
+.Ar locator
+definition can take one of the following forms:
+.Bl -enum -offset indent -compact
+.It
+.Ar locator
+.It
+.Ar locator
+=
+.Ar value
+.It
+.Ar locator Ns Oo Ar length Oc
+.It
+.Ar locator Ns Oo Ar length Oc = Brq Ar value , ...
+.El
+The variants that specify a default value can be enclosed into square brackets,
+in which case the locator will not have to be specified later in the options
+selection section of the configuration file.
+.Pp
+In the options selection section, the locators are specified when declaring an
+instance as a space-separated list of
+.Dq Ao Ar locator Ac Ao Ar value Ac
+where value can be the
+.Dq \&?
+wildcard if the locator allows it.
+.Ss Devices, instances and attachments
+The main benefit of the kernel configuration file is to allow the user to avoid
+compiling some drivers, and wire down the configuration of some others.
+We have already seen that devices attach to each other through
+.Em interface attributes ,
+but not everything can attach to anything.
+Furthermore, the user has the ability to define precise instances for the
+devices.
+An
+.Ar instance
+is simply the reality of a device when it is probed and attached by the kernel.
+.Pp
+Each driver has a name for its devices.
+It is called the base device name and is found as
+.Ar base
+in this documentation.
+An
+.Ar instance
+is the concatenation of a device name and a number.
+In the kernel configuration file, instances can sometimes be wildcarded
+(i.e., the number is replaced by a
+.Dq *
+or a
+.Dq \&? )
+in order to match all the possible instances of a device.
+.Pp
+The usual
+.Dq *
+becomes a
+.Dq \&?
+when the instance name is used as an
+.Em attachment name .
+In the options selection part of the kernel configuration files, an
+.Em attachment
+is an
+.Em interface attribute
+concatenated with a number or the wildcard
+.Dq \&? .
+.Ss Pseudo-devices
+Some components of the kernel behave like a device although they don't have
+any actual reality in the hardware.
+For example, this is the case for special network devices, such as
+.Xr tun 4
+and
+.Xr tap 4 .
+They are integrated in the kernel as pseudo-devices, and can have several
+instances and even children, just like normal devices.
+.Ss Dependencies
+The options description part of the kernel configuration file contains all the
+logic that ties the source files together, and it is done first through writing
+down dependencies between
+.Xr config 1
+objects.
+.Pp
+In this documentation, the syntax for
+.Ar dependencies
+is a comma-separated list of
+.Ar options
+and
+.Ar attributes .
+.Pp
+For example, the use of an Ethernet network card requires the source files that
+handle the specificities of that protocol.
+Therefore, all Ethernet network card drivers depend on the
+.Ar ether
+attribute.
+.Ss Conditions
+Finally, source file selection is possible through the help of
+conditionals, referred to as
+.Ar condition
+later in this documentation.
+The syntax for those conditions uses well-known operators (
+.Dq \*[Am] ,
+.Dq |
+and
+.Dq \&! )
+to combine
+.Ar options
+and
+.Ar attributes .
+.Ss CONTEXT NEUTRAL STATEMENTS
+.Bl -ohang
+.It Ic version Ar yyyymmdd
+Indicates the syntax version used by the rest of the file, or until the next
+.Ic version
+statement.
+The argument is an ISO date.
+A given
+.Xr config 1
+binary might only be compatible with a limited range of version numbers.
+.It Ic include Ar path
+Includes a file.
+The path is relative to the top of the kernel source tree, or the inner-most
+defined
+.Ic prefix .
+.It Ic cinclude Ar path
+Conditionally includes a file.
+Contrary to
+.Ic include ,
+it will not produce an error if the file does not exist.
+The argument obeys the same rules as for
+.Ic include .
+.It Ic prefix Op Ar path
+If
+.Ar path
+is given, it pushes a new prefix for
+.Ic file ,
+.Ic include
+and
+.Ic cinclude .
+.Ic prefix
+statements act like a stack, and an empty
+.Ar path
+argument has the latest prefix popped out.
+The
+.Ar path
+argument is either absolute or relative to the current defined prefix, which
+defaults to the top of the kernel source tree.
+.It Ic buildprefix Op Ar path
+If
+.Ar path
+is given, it pushes a new build prefix for
+.Ic file .
+.Ic buildprefix
+statements act like a stack, and an empty
+.Ar path
+argument has the latest prefix popped out.
+The
+.Ar path
+argument is relative to the current defined buildprefix, which
+defaults to the top of the kernel build directory.
+When prefix is either absolute or relative out of the kernel source tree (../),
+buildprefix must be defined.
+.It Ic ifdef Ar attribute
+.It Ic ifndef Ar attribute
+.It Ic elifdef Ar attribute
+.It Ic elifndef Ar attribute
+.It Ic else
+.It Ic endif
+Conditionally interprets portions of the current file.
+Those statements depend on whether or not the given
+.Ar attribute
+has been previously defined, through
+.Ic define
+or any other statement that implicitely defines attributes such as
+.Ic device .
+.El
+.Ss PREAMBLE
+In addition to
+.Ic include , cinclude ,
+and
+.Ic prefix ,
+the preamble may contain the following optional statements:
+.Bl -ohang
+.It Ic build Ar path
+Defines the build directory for the compilation of the kernel.
+It replaces the default of
+.Pa ../compile/\*[Lt]config-file\*[Gt]
+and is superseded by the
+.Fl b
+parameter of
+.Xr config 1 .
+.It Ic source Ar path
+Defines the directory in which the source of the kernel lives.
+It replaces the default of
+.Pa ../../../..
+and is superseded by the
+.Fl s
+parameter of
+.Xr config 1 .
+.El
+.Ss OPTIONS DESCRIPTION
+The user will not usually have to use descriptive statements, as they are meant
+for the developer to tie a given piece of code to the rest of the kernel.
+However, third parties may provide sources to add to the kernel compilation,
+and the logic that binds them to the
+.Nx
+kernel will have to be added to the user-edited configuration file.
+.Bl -ohang
+.It Ic devclass Ar class
+Defines a special attribute, named
+.Em device class .
+A given device cannot belong to more than one device class.
+.Xr config 1
+translates that property by the rule that a device cannot depend on more than
+one device class, and will properly fill the configuration information file it
+generates according to that value.
+.It Ic defflag Oo Ar file Oc Ar option Oo Ar option Oo Ar ... Oc Oc \
+    Op : Ar dependencies
+Defines a boolean option, that can either be selected or be un-selected by the
+user with the
+.Ic options
+statement.
+The optional
+.Ar file
+argument names a header file that will contain the C pre-processor definition
+for the option.
+If no file name is given, it will default to
+.Ar opt_\*[Lt]option\*[Gt].h .
+.Xr config 1
+will always create the header file, but if the user choose not to select the
+option, it will be empty.
+Several options can be combined in one header file, for convenience.
+The header file is created in the compilation directory, making them directly
+accessible by source files.
+.It Ic defparam Oo Ar file Oc Ar option Oo = Ar value Oc \
+    Oo := Ar lint-value Oc Oo Ar option Oo Ar ... Oc Oc Op : Ar dependencies
+Behaves like
+.Ic defflag ,
+except the defined option must have a value.
+Such options are not typed:
+they can have either a numeric or a string value.
+If a
+.Ar value
+is specified, it is treated as a default, and the option is
+always defined in the corresponding header file.
+If a
+.Ar lint-value
+is specified,
+.Xr config 1
+will use it as a value when generating a lint configuration with
+.Fl L ,
+and ignore it in all other cases.
+.It Ic deffs Ar name Op Ar name Op Ar ...
+Defines a file-system name.
+It is no more than a regular option, as defined by
+.Ic defflag ,
+but it allows the user to select the
+file-systems to be compiled in the kernel with the
+.Ic file-system
+statement instead of the
+.Ic options
+statement.
+.It Ic obsolete defflag Oo Ar file Oc Ar option Op Ar option Op Ar ...
+.It Ic obsolete defparam Oo Ar file Oc Ar option Op Ar option Op Ar ...
+Those two statements are identical and mark the listed option names as
+obsolete.
+If the user selects one of the listed options in the kernel configuration
+file,
+.Xr config 1
+will emit a warning and ignore the option.
+The optional
+.Ar file
+argument should match the original definition of the option.
+.It Ic define Ar attribute Oo Bro Ar locators Brc Oc Oo : Ar dependencies Oc
+Defines an
+.Ar attribute .
+The
+.Ar locators
+list is optional, and can be empty.
+If the pair of brackets are present, the locator list is defined and the
+declared attribute becomes an
+.Em interface attribute ,
+on which devices can attach.
+.It Ic maxpartitions Ar number
+Defines the maximum number of partitions the disklabels for the considered
+architecture can hold.
+This statement cannot be repeated and should only appear in the
+.Pa std\&.$\&{ARCH\&}
+file.
+.It Ic maxusers Ar min default max
+Indicates the range of values that will later be accepted by
+.Xr config 1
+for the
+.Ic maxusers
+statement in the options selection part of the configuration file.
+In case the user doesn't include a
+.Ic maxusers
+statement in the configuration file, the value
+.Ar default
+is used instead.
+.It Ic device Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+Declares a device of name
+.Ar base .
+The optional list of
+.Ar locators ,
+which can also be empty, indicates the device can have children attached
+directly to it.
+Internally, that means
+.Ar base
+becomes an
+.Ar interface attribute .
+For every device the user selects,
+.Xr config 1
+will add the matching
+.Fn CFDRIVER_DECL
+statement to
+.Pa ioconf.c .
+However, it is the responsibility of the developer to add the relevant
+.Fn CFATTACH_DECL
+line to the source of the device's driver.
+.It Ic attach Ar base Ic at Ar attr Oo , Ar attr Oo , Ar ... Oc Oc Oo Ic with \
+    Ar name Oc Oo : dependencies Oc
+All devices must have at least one declared attachment.
+Otherwise, they will never be found in the
+.Xr autoconf 9
+process.
+The attributes on which an instance of device
+.Ar base
+can attach must be
+.Ar interface attributes ,
+or
+.Ic root
+in case the device is at the top-level, which is usually the case of e.g.,
+.Xr mainbus 4 .
+The instances of device
+.Ar base
+will later attach to one interface attribute from the specified list.
+.Pp
+Different
+.Ic attach
+definitions must use different names using the
+.Ic with
+option.
+It is then possible to use the associated
+.Ar name
+as a conditional element in a
+.Ic file
+statement.
+.It Ic defpseudo Ar base Oo : dependencies Oc
+Declares a pseudo-device.
+Those devices don't need an attachment to be declared, they will always be
+attached if they were selected by the user.
+.It Ic defpseudodev Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+Declares a pseudo-device.
+Those devices don't need an attachment to be declared, they will always be
+attached if they were selected by the user.
+This declaration should be used if the pseudodevice uses
+.Xr autoconf 9
+functions to manage its instances or attach children.
+As for normal devices, an optional list of
+.Ar locators
+can be defined, which implies an interface attribute named
+.Ar base ,
+allowing the pseudo-device to have children.
+Interface attributes can also be defined in the
+.Ar dependencies
+list.
+.It Ic file Ar path Oo Ar condition Oc Oo Ic needs-count Oc \
+    Oo Ic needs-flag Oc Op Ic compile with Ar rule
+Adds a source file to the list of files to be compiled into the kernel, if the
+.Ar conditions
+are met.
+The
+.Ic needs-count
+option indicates that the source file requires the number of all the countable
+objects it depends on (through the
+.Ar conditions )
+to be defined.
+It is usually used for
+.Ar pseudo-devices
+whose number can be specified by the user in the
+.Ic pseudo-device
+statement.
+Countable objects are devices and pseudo-devices.
+For the former, the count is the number of declared instances.
+For the latter, it is the number specified by the user, defaulting to 1.
+The
+.Ic needs-flag
+options requires that a flag indicating the selection of an attribute to
+be created, but the precise number isn't needed.
+This is useful for source files that only partly depend on the attribute,
+and thus need to add pre-processor statements for it.
+.Pp
+.Ic needs-count
+and
+.Ic needs-flag
+both produce a header file for each of the considered attributes.
+The name of that file is
+.Pa \*[Lt]attribute\*[Gt].h .
+It contains one pre-processor definition of
+.Dv NATTRIBUTE
+set to 0 if the attribute was not selected by the user, or to the number of
+instances of the device in the
+.Ic needs-count
+case, or to 1 in all the other cases.
+.Pp
+The
+.Ar rule
+argument specifies the
+.Xr make 1
+rule that will be used to compile the source file.
+If it is not given, the default rule for the type of the file will be used.
+For a given file, there can be more than one
+.Ic file
+statement, but not from the same configuration source file, and all later
+statements can only specify a
+.Ar rule
+argument, and no
+.Ar conditions
+or flags.
+This is useful when a file needs special consideration from one particular
+architecture.
+.Pp
+The path is relative to the top of the kernel source tree, or the inner-most
+defined
+.Ic prefix .
+.It Ic object Ar path Op Ar condition
+Adds an object file to the list of objects to be linked into the kernel, if the
+.Ar conditions
+are met.
+This is most useful for third parties providing binary-only components.
+.Pp
+The path is relative to the top of the kernel source tree, or the inner-most
+defined
+.Ic prefix .
+.It Ic device-major Ar base Oo Ic char Ar number Oc Oo Ic block Ar number Oc \
+    Op Ar condition
+Associates a major device number with the device
+.Ar base .
+A device can be a character device, a block device, or both, and can have
+different numbers for each.
+The
+.Ar condition
+indicates when the relevant line should be added to
+.Pa ioconf.c ,
+and works just like the
+.Ic file
+statement.
+.El
+.Ss OPTIONS SELECTION
+.Bl -ohang
+.It Ic machine Ar machine Op Ar arch Op Ar subarch Op Ar ...
+The
+.Ic machine
+statement should appear first in the kernel configuration file, with the
+exception of context-neutral statements.
+It makes
+.Xr config 1
+include, in that order, the following files:
+.Bl -enum -offset indent -compact
+.It
+.Pa conf/files
+.It
+.Pa arch/${ARCH}/conf/files.${ARCH}
+if defined
+.It
+.Pa arch/${SUBARCH}/conf/files.${SUBARCH}
+for each defined sub-architecture
+.It
+.Pa arch/${MACHINE}/conf/files.${MACHINE}
+.El
+It also defines an attribute for the
+.Ar machine ,
+the
+.Ar arch
+and each of the
+.Ar subarch .
+.It Ic package Ar path
+Simpler version of:
+.Bd -literal -offset indent
+prefix PATH
+include FILE
+prefix
+.Ed
+.It Ic ident Ar string
+Defines the identification string of the kernel.
+This statement is optional, and the name of the main configuration file will be
+used as a default value.
+.It Ic no ident
+Deletes any pre-existing identification string of the kernel.
+.It Ic maxusers Ar number
+Despite its name, this statement does not limit the maximum number of users on
+the system.
+There is no such limit, actually.
+However, some kernel structures need to be adjusted to accommodate with more
+users, and the
+.Ic maxusers
+parameter is used for example to compute the maximum number of opened files,
+and the maximum number of processes, which itself is used to adjust a few
+other parameters.
+.It Ic options Ar name Oo = Ar value Oc Op , Ar name Oo = Ar \
+    value Oc , Ar ...
+Selects the option
+.Ar name ,
+affecting it a
+.Ar value
+if the options requires it (see the
+.Ic defflag
+and
+.Ic defparam
+statements).
+.Pp
+If the option has not been declared in the options description part of the
+kernel configuration machinery, it will be added as a pre-processor definition
+when source files are compiled.
+If the option has previously been selected, the statement produces a
+warning, and the new
+.Ic options
+statement replaces the original.
+.It Ic no options Ar name Op , Ar name Op , Ar ...
+Un-selects the option
+.Ar name .
+If option
+.Ar name
+has not previously been selected, the statement produces a warning.
+.It Ic file-system Ar name Op , Ar name Op , Ar ...
+Adds support for all the listed file-systems.
+.It Ic no file-system Ar name Op , Ar name Op , Ar ...
+Removes support for all the listed file-systems.
+.It Ic config Ar name Ic root on Ar device Oo Ic type Ar fs Oc Op Ic dumps on \
+    Ar device
+Adds
+.Ar name
+to the list of kernel binaries to compile from the configuration file, using
+the specified root and dump devices information.
+.Pp
+Any of the
+.Ar device
+and
+.Ar fs
+parameters can be wildcarded with
+.Dq \&?
+to let the kernel automatically discover those values.
+.Pp
+At least one
+.Ic config
+statement must appear in the configuration file.
+.It Ic no config Ar name
+Removes
+.Ar name
+from the list of kernel binaries to compile from the configuration file.
+.It Ar instance Ic at Ar attachment Op Ar locator specification
+Configures an instance of a device attaching at a specific location in the
+device tree.
+All parameters can be wildcarded, with a
+.Dq *
+for
+.Ar instance ,
+and a
+.Dq \&?
+for
+.Ar attachment
+and the locators.
+.It Ic no Ar instance Op Ic at Ar attachment
+Removes the previously configured instances of a device that exactly match the
+given specification.
+If two instances differ only by their locators, both are removed.
+If no
+.Ar attachment
+is specified, all matching instances are removed.
+.Pp
+If
+.Ar instance
+is a bare device name, all the previously defined instances of that device,
+regardless of the numbers or wildcard, are removed.
+.It Ic no device at Ar attachment
+Removes all previously configured instances that attach to the specified
+attachment.
+If
+.Ar attachment
+ends with a
+.Dq * ,
+all instances attaching to all the variants of
+.Ar attachment
+are removed.
+.It Ic pseudo-device Ar device Op Ar number
+Adds support for the specified pseudo-device.
+The parameter
+.Ar number
+is passed to the initialisation function of the pseudo-device, usually to
+indicate how many instances should be created.
+It defaults to 1, and some pseudo-devices ignore that parameter.
+.It Ic no pseudo-device Ar name
+Removes support for the specified pseudo-device.
+.It Ic makeoptions Ar name Ns = Ns Ar value Op , Ar name Ns += Ns Ar value \
+    Op , Ar ...
+Adds or appends to a definition in the generated
+.Pa Makefile .
+A definition cannot be overriden, it must be removed before it can be added
+again.
+Optionally, if an option
+.Pa makeoptions_\*[Lt]name\*[Gt]
+is defined with
+.Ic defparam ,
+the
+.Ar value
+is defined as an option too.
+.It Ic makeoptions Ar condition name Ns += Ns Ar value Op , Ar condition \
+    name Ns += Ns Ar value
+Appends to a definition in the generated
+.Pa Makefile .
+.It Ic no makeoptions Ar name Op , Ar name Op , Ar ...
+Removes one or more definitions from the generated
+.Pa Makefile .
+.It Ic select Ar name
+Adds the specified attribute and its dependencies.
+.It Ic no select Ar name
+Removes the specified attribute and all the attributes which depend on it.
+.El
+.Sh FILES
+The files are relative to the kernel source top directory (e.g.,
+.Pa /usr/src/sys ) .
+.Pp
+.Bl -tag -width arch/${MACHINE}/conf/std.${MACHINE}
+.It Pa arch/${MACHINE}/conf/std.${MACHINE}
+Standard configuration for the given architecture.
+This file should always be included.
+.It Pa arch/${MACHINE}/conf/GENERIC
+Standard options selection file for the given architecture.
+Users should always start changing their main kernel configuration file by
+editing a copy of this file.
+.It Pa conf/files
+Main options description file.
+.El
+.Sh EXAMPLES
+.Xr config.samples 5
+uses several examples to cover all the practical aspects of writing or
+modifying a kernel configuration file.
+.Sh SEE ALSO
+.Xr config 1 ,
+.Xr options 4 ,
+.Xr config.samples 5 ,
+.Xr config 9

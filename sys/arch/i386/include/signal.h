@@ -36,7 +36,7 @@
 
 #include <sys/featuretest.h>
 
-#if defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
+#if !defined(_KERNEL) && defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
 #include <machine/fpu.h>
 #endif /* defined(__minix) ... */
 
@@ -108,7 +108,7 @@ struct sigcontext {
 	int	sc_err;
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
-#if defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
+#if !defined(_KERNEL) && defined(__minix) && (defined(_LIBMINC) || ! defined(_STANDALONE))
 	union fpu_state_u sc_fpu_state;
 	int trap_style;		/* KTS_* method of entering kernel */
 	int sc_flags;			/* MF_FPU_INITIALIZED if fpu state valid */

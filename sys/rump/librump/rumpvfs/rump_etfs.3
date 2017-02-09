@@ -1,0 +1,213 @@
+.\"     $NetBSD: rump_etfs.3,v 1.4 2015/06/12 17:50:01 dholland Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 27, 2014
+.Dt RUMP_ETFS 3
+.Os
+.Sh NAME
+.Nm rump_etfs
+.Nd rump kernel host file system interface
+.Sh LIBRARY
+rump kernel (librump, \-lrump)
+.Sh SYNOPSIS
+.In rump/rump.h
+.Ft int
+.Fo rump_pub_etfs_register
+.Fa "const char *key" "const char *hostpath" "enum rump_etfs_type ftype"
+.Fc
+.Ft int
+.Fo rump_pub_etfs_register_withsize
+.Fa "const char *key" "const char *hostpath" "enum rump_etfs_type ftype"
+.Fa "uint64_t begin" "uint64_t size"
+.Fc
+.Ft void
+.Fn rump_boot_etfs_register "struct rump_boot_etfs *eb"
+.Ft int
+.Fn rump_pub_etfs_remove "const char *key"
+.Sh DESCRIPTION
+The rump ExtraTerrestrial File System
+.Nm ( )
+is used to provide access to the host file system namespace
+within a rump kernel.
+.Pp
+The operation is based on registered
+.Fa key
+values which each map to a
+.Fa hostpath .
+A key must be an absolute path (i.e. begin with
+.Dq / ) .
+Multiple leading slashes are collapsed to one (i.e.
+.Dq /key
+is the same as
+.Dq //key ) .
+The rest of the path, including slashes, is compared verbatim (i.e.
+.Dq /key/path
+does not match
+.Dq /key//path ) .
+.Pp
+The
+.Fa hostpath
+is interpreted in host system context for the current working directory
+and can be either absolute or relative.
+.Pp
+The
+.Fa key
+is accessible from all rump kernel clients, both local and remote.
+Note: the keys are not visible via readdir, so you will not see
+them in directory listings.
+.Pp
+The
+.Fa ftype
+parameter specifies how the etfs file will be presented and does not
+have to match the host type, although some limitations apply.
+Possible values are:
+.Bl -tag -width RUMP_ETFS_DIR_SUBDIRSXXX
+.It Dv RUMP_ETFS_REG
+regular file.
+.It Dv RUMP_ETFS_BLK
+block device.
+This is often used when mapping file system images.
+.It Dv RUMP_ETFS_CHR
+character device.
+.It Dv RUMP_ETFS_DIR
+directory.
+This option is valid only when
+.Fa hostpath
+is a directory.
+The immediate children of the host directory will be accessible
+inside a rump kernel.
+.It Dv RUMP_ETFS_DIR_SUBDIRS
+directory.
+This option is valid only when
+.Fa hostpath
+is a directory.
+This option recursively applies to all subdirectories, and allows
+a rump kernel to access an entire directory tree.
+.El
+.Pp
+The interfaces are:
+.Bl -tag -width xxxx
+.It Fn rump_pub_etfs_register "key" "hostpath" "ftype"
+Map
+.Fa key
+to a file of type
+.Fa ftype
+with the contents of
+.Fa hostpath .
+.It Fn rump_pub_etfs_register_withsize "key" "hostpath" "ftype" "begin" "size"
+Like the above, but map only
+.Fa [ begin , begin+size ]
+from
+.Fa hostpath .
+This is useful when mapping disk images where only one partition is
+relevant to the application.
+If
+.Ar size
+is given the special value
+.Dv RUMP_ETFS_SIZE_ENDOFF ,
+the underlying file is mapped from
+.Ar begin
+to the end of the file.
+.It Fn rump_boot_etfs_register "eb"
+Unlike the above interfaces,
+.Fn rump_boot_etfs_register
+can and must be called before
+.Fn rump_init .
+It causes an etfs key to be available immediately when the root file
+system is mounted as part of
+.Fn rump_init .
+The intended use is for example for firmware images to be available
+immediately when device driver autoconfiguration is run as part of
+.Fn rump_init .
+.Pp
+To use
+.Fn rump_boot_etfs_register ,
+the client fills out
+.Fa eb .
+The layout of
+.Fa eb
+is as follows:
+.Bd -literal
+struct rump_boot_etfs {
+	/* client initializes */
+	const char *eb_key;
+	const char *eb_hostpath;
+	enum rump_etfs_type eb_type;
+	uint64_t eb_begin;
+	uint64_t eb_size;
+
+	/* rump kernel initializes */
+	struct rump_boot_etfs *_eb_next;
+	int eb_status;
+};
+.Ed
+.Pp
+All of the client fields must be initialized before the call.
+See
+.Fn rump_pub_etfs_register_withsize
+for descriptions of the fields.
+After the function has been called, the client may not touch the
+structure memory or the pathname pointers.
+After
+.Fn rump_init
+returns, the client may check the status of the registration from
+.Fa eb_status
+and free the structure.
+A value of \-1 designates that the etfs registration was not
+performed, 0 designates success and a value larger than 0 designates
+an errno.
+The client must serialize calls to
+.Fn rump_boot_etfs_register .
+.It Fn rump_pub_etfs_remove "key"
+Remove etfs mapping for
+.Fa key .
+This routine may be called only if the file related to the mapping
+is not in use.
+.El
+.Sh RETURN VALUES
+.Nm
+routines return 0 on success or an errno indicating the reason for failure.
+.Sh EXAMPLES
+Map a host image file to a mountable
+.Pa /dev/harddisk
+path using window offsets from the disklabel.
+.Bd -literal -offset indent
+rump_pub_etfs_register_withsize("/dev/harddisk", "disk.img",
+    RUMP_ETFS_BLK,
+    pp->p_offset << DEV_BSHIFT, pp->p_size << DEV_BSHIFT);
+.Ed
+.Pp
+Make the host kernel module directory hierarchy available within the
+rump kernel.
+.Bd -literal -offset indent
+rump_pub_etfs_register("/stand/i386/5.99.41",
+    "/stand/i386/5.99.41", RUMP_ETFS_DIR_SUBDIRS);
+.Ed
+.Sh SEE ALSO
+.Xr rump 3
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 6.0 .

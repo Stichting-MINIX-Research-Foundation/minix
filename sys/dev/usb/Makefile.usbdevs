@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.usbdevs,v 1.7 2014/09/21 14:30:22 christos Exp $
+#
+# As per tron@NetBSD.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/usb/usbdevs".
+# 2.) Commit "src/sys/dev/usb/usbdevs".
+# 3.) Execute "make -f Makefile.usbdevs" in "src/sys/dev/usb".
+# 4.) Commit "src/sys/dev/usb/usbdevs.h" and "src/sys/dev/usb/usbdevs_data.h".
+
+.include <bsd.own.mk>
+
+usbdevs.h usbdevs_data.h: ${.CURDIR}/../devlist2h.awk usbdevs
+	/bin/rm -f usbdevs.h usbdevs_data.h
+	${TOOL_AWK} -f ${.ALLSRC}

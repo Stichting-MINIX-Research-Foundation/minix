@@ -41,6 +41,8 @@
 ./usr/bin/strip                                         minix-comp      binutils
 ./usr/include                                           minix-comp
 ./usr/include/a.out.h                                   minix-comp
+./usr/include/adosfs                                    minix-comp      rump
+./usr/include/adosfs/adosfs.h                           minix-comp      rump
 ./usr/include/aio.h                                     minix-comp
 ./usr/include/altq                                      minix-comp
 ./usr/include/altq/if_altq.h                            minix-comp
@@ -272,8 +274,74 @@
 ./usr/include/ddekit/usb.h                              minix-comp
 ./usr/include/des.h                                     minix-comp      crypto
 ./usr/include/dev                                       minix-comp
+./usr/include/dev/apm                                   minix-comp      rump
+./usr/include/dev/apm/apmbios.h                         minix-comp      rump
+./usr/include/dev/apm/apmio.h                           minix-comp      rump
+./usr/include/dev/ata                                   minix-comp      rump
+./usr/include/dev/ata/atareg.h                          minix-comp      rump
+./usr/include/dev/ata/atavar.h                          minix-comp      rump
+./usr/include/dev/ata/satareg.h                         minix-comp      rump
+./usr/include/dev/biovar.h                              minix-comp      rump
+./usr/include/dev/bluetooth                             minix-comp      rump
+./usr/include/dev/bluetooth/bcsp.h                      minix-comp      rump
+./usr/include/dev/bluetooth/btdev.h                     minix-comp      rump
+./usr/include/dev/bluetooth/bthidev.h                   minix-comp      rump
+./usr/include/dev/bluetooth/btsco.h                     minix-comp      rump
+./usr/include/dev/ccdvar.h                              minix-comp      rump
+./usr/include/dev/cgdvar.h                              minix-comp      rump
+./usr/include/dev/dec                                   minix-comp      rump
+./usr/include/dev/dec/dec_boot.h                        minix-comp      rump
+./usr/include/dev/dec/lk201.h                           minix-comp      rump
+./usr/include/dev/dm                                    minix-comp      rump
+./usr/include/dev/dm/netbsd-dm.h                        minix-comp      rump
+./usr/include/dev/dmover                                minix-comp      rump
+./usr/include/dev/dmover/dmover_io.h                    minix-comp      rump
+./usr/include/dev/dtv                                   minix-comp      rump
+./usr/include/dev/dtv/dtvio.h                           minix-comp      rump
+./usr/include/dev/dtv/dtvio_demux.h                     minix-comp      rump
+./usr/include/dev/dtv/dtvio_frontend.h                  minix-comp      rump
+./usr/include/dev/filemon                               minix-comp      rump
+./usr/include/dev/filemon/filemon.h                     minix-comp      rump
+./usr/include/dev/fssvar.h                              minix-comp      rump
+./usr/include/dev/hdaudio                               minix-comp      rump
+./usr/include/dev/hdaudio/hdaudioio.h                   minix-comp      rump
+./usr/include/dev/hdaudio/hdaudioreg.h                  minix-comp      rump
+./usr/include/dev/hdmicec                               minix-comp      rump
+./usr/include/dev/hdmicec/hdmicecio.h                   minix-comp      rump
+./usr/include/dev/hpc                                   minix-comp      rump
+./usr/include/dev/hpc/hpcfbio.h                         minix-comp      rump
 ./usr/include/dev/i2c                                   minix-comp
 ./usr/include/dev/i2c/i2c_io.h                          minix-comp
+./usr/include/dev/i2o                                   minix-comp      rump
+./usr/include/dev/i2o/i2o.h                             minix-comp      rump
+./usr/include/dev/i2o/iopio.h                           minix-comp      rump
+./usr/include/dev/ic                                    minix-comp      rump
+./usr/include/dev/ic/athioctl.h                         minix-comp      rump
+./usr/include/dev/ic/bt8xx.h                            minix-comp      rump
+./usr/include/dev/ic/hd44780var.h                       minix-comp      rump
+./usr/include/dev/ic/icp_ioctl.h                        minix-comp      rump
+./usr/include/dev/ic/icpreg.h                           minix-comp      rump
+./usr/include/dev/ic/isp_ioctl.h                        minix-comp      rump
+./usr/include/dev/ic/mlxio.h                            minix-comp      rump
+./usr/include/dev/ic/mlxreg.h                           minix-comp      rump
+./usr/include/dev/ic/rrunnerreg.h                       minix-comp      rump
+./usr/include/dev/ic/rrunnervar.h                       minix-comp      rump
+./usr/include/dev/ic/wdcreg.h                           minix-comp      rump
+./usr/include/dev/ic/wi_ieee.h                          minix-comp      rump
+./usr/include/dev/ieee1394                              minix-comp      rump
+./usr/include/dev/ir                                    minix-comp      rump
+./usr/include/dev/ir/irdaio.h                           minix-comp      rump
+./usr/include/dev/isa                                   minix-comp      rump
+./usr/include/dev/isa/isvio.h                           minix-comp      rump
+./usr/include/dev/isa/satlinkio.h                       minix-comp      rump
+./usr/include/dev/isa/spkrio.h                          minix-comp      rump
+./usr/include/dev/isa/wtreg.h                           minix-comp      rump
+./usr/include/dev/keylock.h                             minix-comp      rump
+./usr/include/dev/kttcpio.h                             minix-comp      rump
+./usr/include/dev/lockstat.h                            minix-comp      rump
+./usr/include/dev/md.h                                  minix-comp      rump
+./usr/include/dev/ofw                                   minix-comp      rump
+./usr/include/dev/ofw/openfirmio.h                      minix-comp      rump
 ./usr/include/dev/pci                                   minix-comp
 ./usr/include/dev/pci/amrio.h                           minix-comp
 ./usr/include/dev/pci/amrreg.h                          minix-comp
@@ -287,7 +355,56 @@
 ./usr/include/dev/pci/tgareg.h                          minix-comp
 ./usr/include/dev/pci/tweio.h                           minix-comp
 ./usr/include/dev/pci/twereg.h                          minix-comp
+./usr/include/dev/pckbc                                 minix-comp      rump
+./usr/include/dev/pckbc/pckbdreg.h                      minix-comp      rump
+./usr/include/dev/pcmcia                                minix-comp      rump
+./usr/include/dev/pcmcia/if_cnwioctl.h                  minix-comp      rump
+./usr/include/dev/pcmcia/if_rayreg.h                    minix-comp      rump
+./usr/include/dev/pud                                   minix-comp      rump
+./usr/include/dev/pud/pud_msgif.h                       minix-comp      rump
+./usr/include/dev/putter                                minix-comp      rump
+./usr/include/dev/putter/putter.h                       minix-comp      rump
+./usr/include/dev/raidframe                             minix-comp      rump
+./usr/include/dev/raidframe/raidframeio.h               minix-comp      rump
+./usr/include/dev/raidframe/raidframevar.h              minix-comp      rump
+./usr/include/dev/sbus                                  minix-comp      rump
+./usr/include/dev/sbus/mbppio.h                         minix-comp      rump
+./usr/include/dev/scsipi                                minix-comp      rump
+./usr/include/dev/scsipi/scsi_all.h                     minix-comp      rump
+./usr/include/dev/scsipi/scsi_disk.h                    minix-comp      rump
+./usr/include/dev/scsipi/scsi_spc.h                     minix-comp      rump
+./usr/include/dev/scsipi/scsiconf.h                     minix-comp      rump
+./usr/include/dev/scsipi/scsipi_all.h                   minix-comp      rump
+./usr/include/dev/scsipi/scsipi_cd.h                    minix-comp      rump
+./usr/include/dev/scsipi/scsipi_debug.h                 minix-comp      rump
+./usr/include/dev/scsipi/scsipiconf.h                   minix-comp      rump
+./usr/include/dev/scsipi/ses.h                          minix-comp      rump
+./usr/include/dev/sun                                   minix-comp      rump
+./usr/include/dev/sun/disklabel.h                       minix-comp      rump
+./usr/include/dev/sun/eeprom.h                          minix-comp      rump
+./usr/include/dev/sun/fbio.h                            minix-comp      rump
+./usr/include/dev/sun/idprom.h                          minix-comp      rump
+./usr/include/dev/sun/kbd_reg.h                         minix-comp      rump
+./usr/include/dev/sun/kbio.h                            minix-comp      rump
+./usr/include/dev/sun/vuid_event.h                      minix-comp      rump
+./usr/include/dev/tc                                    minix-comp      rump
+./usr/include/dev/tc/sfbreg.h                           minix-comp      rump
+./usr/include/dev/tc/sticio.h                           minix-comp      rump
+./usr/include/dev/tc/sticreg.h                          minix-comp      rump
+./usr/include/dev/usb                                   minix-comp      rump
+./usr/include/dev/usb/ukyopon.h                         minix-comp      rump
+./usr/include/dev/usb/urio.h                            minix-comp      rump
+./usr/include/dev/usb/usb.h                             minix-comp      rump
+./usr/include/dev/usb/usbhid.h                          minix-comp      rump
+./usr/include/dev/usb/utoppy.h                          minix-comp      rump
+./usr/include/dev/vme                                   minix-comp      rump
+./usr/include/dev/vme/xio.h                             minix-comp      rump
 ./usr/include/dev/vndvar.h                              minix-comp
+./usr/include/dev/wscons                                minix-comp      rump
+./usr/include/dev/wscons/wsconsio.h                     minix-comp      rump
+./usr/include/dev/wscons/wsdisplay_usl_io.h             minix-comp      rump
+./usr/include/dev/wscons/wsksymdef.h                    minix-comp      rump
+./usr/include/dev/wscons/wsksymvar.h                    minix-comp      rump
 ./usr/include/dirent.h                                  minix-comp
 ./usr/include/disktab.h                                 minix-comp
 ./usr/include/dlfcn.h                                   minix-comp
@@ -333,13 +450,34 @@
 ./usr/include/fcntl.h                                   minix-comp
 ./usr/include/fenv.h                                    minix-comp
 ./usr/include/fetch.h                                   minix-comp
+./usr/include/filecorefs                                minix-comp      rump
+./usr/include/filecorefs/filecore_mount.h               minix-comp      rump
 ./usr/include/float.h                                   minix-comp
 ./usr/include/fmtmsg.h                                  minix-comp
 ./usr/include/fnmatch.h                                 minix-comp
 ./usr/include/form.h                                    minix-comp
 ./usr/include/fs                                        minix-comp
+./usr/include/fs/efs                                    minix-comp      rump
+./usr/include/fs/efs/efs.h                              minix-comp      rump
+./usr/include/fs/efs/efs_mount.h                        minix-comp      rump
+./usr/include/fs/efs/efs_sb.h                           minix-comp      rump
+./usr/include/fs/hfs                                    minix-comp      rump
+./usr/include/fs/hfs/hfs.h                              minix-comp      rump
+./usr/include/fs/hfs/libhfs.h                           minix-comp      rump
+./usr/include/fs/nilfs                                  minix-comp      rump
+./usr/include/fs/nilfs/nilfs_fs.h                       minix-comp      rump
+./usr/include/fs/nilfs/nilfs_mount.h                    minix-comp      rump
+./usr/include/fs/ptyfs                                  minix-comp      rump
+./usr/include/fs/ptyfs/ptyfs.h                          minix-comp      rump
 ./usr/include/fs/puffs                                  minix-comp
 ./usr/include/fs/puffs/puffs_msgif.h                    minix-comp
+./usr/include/fs/smbfs                                  minix-comp      rump
+./usr/include/fs/smbfs/smbfs.h                          minix-comp      rump
+./usr/include/fs/sysvbfs                                minix-comp      rump
+./usr/include/fs/sysvbfs/bfs.h                          minix-comp      rump
+./usr/include/fs/sysvbfs/sysvbfs_args.h                 minix-comp      rump
+./usr/include/fs/tmpfs                                  minix-comp      rump
+./usr/include/fs/tmpfs/tmpfs_args.h                     minix-comp      rump
 ./usr/include/fs/udf                                    minix-comp
 ./usr/include/fs/udf/ecma167-udf.h                      minix-comp
 ./usr/include/fs/udf/udf_mount.h                        minix-comp
@@ -1258,6 +1396,9 @@
 ./usr/include/minix/virtio.h                            minix-comp
 ./usr/include/minix/vm.h                                minix-comp
 ./usr/include/minix/vtreefs.h                           minix-comp
+./usr/include/miscfs                                    minix-comp      rump
+./usr/include/miscfs/union                              minix-comp      rump
+./usr/include/miscfs/union/union.h                      minix-comp      rump
 ./usr/include/mj.h                                      minix-comp      crypto
 ./usr/include/mntopts.h                                 minix-comp
 ./usr/include/monetary.h                                minix-comp
@@ -1272,6 +1413,8 @@
 ./usr/include/msdosfs/msdosfsmount.h                    minix-comp
 ./usr/include/ndbm.h                                    minix-comp
 ./usr/include/net                                       minix-comp
+./usr/include/net/agr                                   minix-comp      rump
+./usr/include/net/agr/if_agrioctl.h                     minix-comp      rump
 ./usr/include/net/bpf.h                                 minix-comp
 ./usr/include/net/bpfdesc.h                             minix-comp
 ./usr/include/net/bpfjit.h                              minix-comp
@@ -1309,50 +1452,98 @@
 ./usr/include/net/gen/vjhc.h                            minix-comp
 ./usr/include/net/hton.h                                minix-comp
 ./usr/include/net/if.h                                  minix-comp
+./usr/include/net/if_arc.h                              minix-comp      rump
 ./usr/include/net/if_arp.h                              minix-comp
+./usr/include/net/if_atm.h                              minix-comp      rump
+./usr/include/net/if_bridgevar.h                        minix-comp      rump
 ./usr/include/net/if_dl.h                               minix-comp
 ./usr/include/net/if_ether.h                            minix-comp
+./usr/include/net/if_etherip.h                          minix-comp      rump
+./usr/include/net/if_fddi.h                             minix-comp      rump
+./usr/include/net/if_gif.h                              minix-comp      rump
+./usr/include/net/if_gre.h                              minix-comp      rump
+./usr/include/net/if_hippi.h                            minix-comp      rump
 ./usr/include/net/if_ieee1394.h                         minix-comp
+./usr/include/net/if_llc.h                              minix-comp      rump
 ./usr/include/net/if_media.h                            minix-comp
+./usr/include/net/if_mpls.h                             minix-comp      rump
 ./usr/include/net/if_pflog.h                            minix-comp
+./usr/include/net/if_ppp.h                              minix-comp      rump
+./usr/include/net/if_pppoe.h                            minix-comp      rump
+./usr/include/net/if_sppp.h                             minix-comp      rump
+./usr/include/net/if_srt.h                              minix-comp      rump
+./usr/include/net/if_stf.h                              minix-comp      rump
+./usr/include/net/if_tap.h                              minix-comp      rump
+./usr/include/net/if_token.h                            minix-comp      rump
+./usr/include/net/if_tun.h                              minix-comp      rump
 ./usr/include/net/if_types.h                            minix-comp
+./usr/include/net/if_vlanvar.h                          minix-comp      rump
+./usr/include/net/net_stats.h                           minix-comp      rump
+./usr/include/net/netisr.h                              minix-comp      rump
 ./usr/include/net/netlib.h                              minix-comp
+./usr/include/net/npf.h                                 minix-comp      rump
 ./usr/include/net/pfil.h                                minix-comp
 ./usr/include/net/pfkeyv2.h                             minix-comp
 ./usr/include/net/pfvar.h                               minix-comp
+./usr/include/net/ppp-comp.h                            minix-comp      rump
+./usr/include/net/ppp_defs.h                            minix-comp      rump
 ./usr/include/net/radix.h                               minix-comp
+./usr/include/net/raw_cb.h                              minix-comp      rump
 ./usr/include/net/route.h                               minix-comp
+./usr/include/net/slcompress.h                          minix-comp      rump
+./usr/include/net/slip.h                                minix-comp      rump
+./usr/include/net/zlib.h                                minix-comp      rump
 ./usr/include/net80211                                  minix-comp
 ./usr/include/net80211/_ieee80211.h                     minix-comp
 ./usr/include/net80211/ieee80211.h                      minix-comp
 ./usr/include/net80211/ieee80211_crypto.h               minix-comp
 ./usr/include/net80211/ieee80211_ioctl.h                minix-comp
 ./usr/include/net80211/ieee80211_netbsd.h               minix-comp
+./usr/include/net80211/ieee80211_node.h                 minix-comp      rump
+./usr/include/net80211/ieee80211_proto.h                minix-comp      rump
+./usr/include/net80211/ieee80211_radiotap.h             minix-comp      rump
+./usr/include/net80211/ieee80211_rssadapt.h             minix-comp      rump
+./usr/include/net80211/ieee80211_sysctl.h               minix-comp      rump
+./usr/include/net80211/ieee80211_var.h                  minix-comp      rump
 ./usr/include/netatalk                                  minix-comp
+./usr/include/netatalk/aarp.h                           minix-comp      rump
 ./usr/include/netatalk/at.h                             minix-comp
+./usr/include/netatalk/at_extern.h                      minix-comp      rump
+./usr/include/netatalk/at_var.h                         minix-comp      rump
+./usr/include/netatalk/ddp.h                            minix-comp      rump
 ./usr/include/netatalk/ddp_var.h                        minix-comp
+./usr/include/netatalk/phase2.h                         minix-comp      rump
 ./usr/include/netconfig.h                               minix-comp
 ./usr/include/netdb.h                                   minix-comp
 ./usr/include/netgroup.h                                minix-comp
 ./usr/include/netinet                                   minix-comp
+./usr/include/netinet/dccp.h                            minix-comp      rump
 ./usr/include/netinet/icmp6.h                           minix-comp
 ./usr/include/netinet/icmp_var.h                        minix-comp
+./usr/include/netinet/if_atm.h                          minix-comp      rump
 ./usr/include/netinet/if_ether.h                        minix-comp
 ./usr/include/netinet/if_inarp.h                        minix-comp
 ./usr/include/netinet/igmp.h                            minix-comp
 ./usr/include/netinet/igmp_var.h                        minix-comp
 ./usr/include/netinet/in.h                              minix-comp
+./usr/include/netinet/in_gif.h                          minix-comp      rump
 ./usr/include/netinet/in_pcb.h                          minix-comp
 ./usr/include/netinet/in_pcb_hdr.h                      minix-comp
+./usr/include/netinet/in_selsrc.h                       minix-comp      rump
 ./usr/include/netinet/in_systm.h                        minix-comp
 ./usr/include/netinet/in_var.h                          minix-comp
 ./usr/include/netinet/ip.h                              minix-comp
 ./usr/include/netinet/ip6.h                             minix-comp
 ./usr/include/netinet/ip_carp.h                         minix-comp
+./usr/include/netinet/ip_compat.h                       minix-comp      rump
+./usr/include/netinet/ip_ecn.h                          minix-comp      rump
+./usr/include/netinet/ip_encap.h                        minix-comp      rump
 ./usr/include/netinet/ip_icmp.h                         minix-comp
 ./usr/include/netinet/ip_mroute.h                       minix-comp
 ./usr/include/netinet/ip_var.h                          minix-comp
+./usr/include/netinet/pim.h                             minix-comp      rump
 ./usr/include/netinet/pim_var.h                         minix-comp
+./usr/include/netinet/portalgo.h                        minix-comp      rump
 ./usr/include/netinet/tcp.h                             minix-comp
 ./usr/include/netinet/tcp_debug.h                       minix-comp
 ./usr/include/netinet/tcp_fsm.h                         minix-comp
@@ -1365,11 +1556,17 @@
 ./usr/include/netinet/udp_var.h                         minix-comp
 ./usr/include/netinet6                                  minix-comp
 ./usr/include/netinet6/in6.h                            minix-comp
+./usr/include/netinet6/in6_gif.h                        minix-comp      rump
+./usr/include/netinet6/in6_ifattach.h                   minix-comp      rump
 ./usr/include/netinet6/in6_pcb.h                        minix-comp
 ./usr/include/netinet6/in6_var.h                        minix-comp
 ./usr/include/netinet6/ip6_mroute.h                     minix-comp
 ./usr/include/netinet6/ip6_var.h                        minix-comp
+./usr/include/netinet6/ip6protosw.h                     minix-comp      rump
+./usr/include/netinet6/ipsec.h                          minix-comp      rump
+./usr/include/netinet6/mld6_var.h                       minix-comp      rump
 ./usr/include/netinet6/nd6.h                            minix-comp
+./usr/include/netinet6/pim6.h                           minix-comp      rump
 ./usr/include/netinet6/pim6_var.h                       minix-comp
 ./usr/include/netinet6/raw_ip6.h                        minix-comp
 ./usr/include/netinet6/udp6.h                           minix-comp
@@ -1382,6 +1579,10 @@
 ./usr/include/nl_types.h                                minix-comp
 ./usr/include/nlist.h                                   minix-comp
 ./usr/include/nsswitch.h                                minix-comp
+./usr/include/ntfs                                      minix-comp      rump
+./usr/include/ntfs/ntfs.h                               minix-comp      rump
+./usr/include/ntfs/ntfs_inode.h                         minix-comp      rump
+./usr/include/ntfs/ntfsmount.h                          minix-comp      rump
 ./usr/include/objc                                      minix-comp      gcc
 ./usr/include/objc/NXConstStr.h                         minix-comp      gcc
 ./usr/include/objc/Object.h                             minix-comp      gcc
@@ -1518,6 +1719,24 @@
 ./usr/include/rpcsvc                                    minix-comp
 ./usr/include/rpcsvc/yp_prot.h                          minix-comp
 ./usr/include/rpcsvc/ypclnt.h                           minix-comp
+./usr/include/rump                                      minix-comp      rump
+./usr/include/rump/p2k.h                                minix-comp      rump
+./usr/include/rump/rump.h                               minix-comp      rump
+./usr/include/rump/rump_namei.h                         minix-comp      rump
+./usr/include/rump/rump_syscalls.h                      minix-comp      rump
+./usr/include/rump/rump_syscalls_compat.h               minix-comp      rump
+./usr/include/rump/rumpclient.h                         minix-comp      rump
+./usr/include/rump/rumpdefs.h                           minix-comp      rump
+./usr/include/rump/rumperr.h                            minix-comp      rump
+./usr/include/rump/rumperrno2host.h                     minix-comp      rump
+./usr/include/rump/rumpkern_if_pub.h                    minix-comp      rump
+./usr/include/rump/rumpnet_if_pub.h                     minix-comp      rump
+./usr/include/rump/rumpuser.h                           minix-comp      rump
+./usr/include/rump/rumpuser_component.h                 minix-comp      rump
+./usr/include/rump/rumpuser_port.h                      minix-comp      rump
+./usr/include/rump/rumpvfs_if_pub.h                     minix-comp      rump
+./usr/include/rump/rumpvnode_if.h                       minix-comp      rump
+./usr/include/rump/ukfs.h                               minix-comp      rump
 ./usr/include/saslc.h                                   minix-comp      crypto
 ./usr/include/sched.h                                   minix-comp
 ./usr/include/search.h                                  minix-comp
@@ -2077,6 +2296,8 @@
 ./usr/lib/libnetsock_pic.a                              minix-comp
 ./usr/lib/libobjc.a                                     minix-comp      gcc=45
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
+./usr/lib/libp2k.a                                      minix-comp      rump
+./usr/lib/libp2k_pic.a                                  minix-comp      rump
 ./usr/lib/libpci.a                                      minix-comp
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp
@@ -2086,6 +2307,144 @@
 ./usr/lib/librefuse.a                                   minix-comp
 ./usr/lib/librefuse_pic.a                               minix-comp
 ./usr/lib/librmt.a                                      minix-comp
+./usr/lib/librump.a                                     minix-comp      rump
+./usr/lib/librump_pic.a                                 minix-comp      rump
+./usr/lib/librumpclient.a                               minix-comp      rump
+./usr/lib/librumpclient_pic.a                           minix-comp      rump
+./usr/lib/librumpdev.a                                  minix-comp      rump
+./usr/lib/librumpdev_audio.a                            minix-comp      rump
+./usr/lib/librumpdev_audio_pic.a                        minix-comp      rump
+./usr/lib/librumpdev_bpf.a                              minix-comp      rump
+./usr/lib/librumpdev_bpf_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_cgd.a                              minix-comp      rump
+./usr/lib/librumpdev_cgd_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_disk.a                             minix-comp      rump
+./usr/lib/librumpdev_disk_pic.a                         minix-comp      rump
+./usr/lib/librumpdev_dm.a                               minix-comp      rump
+./usr/lib/librumpdev_dm_pic.a                           minix-comp      rump
+./usr/lib/librumpdev_drvctl.a                           minix-comp      rump
+./usr/lib/librumpdev_drvctl_pic.a                       minix-comp      rump
+./usr/lib/librumpdev_fss.a                              minix-comp      rump
+./usr/lib/librumpdev_fss_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_md.a                               minix-comp      rump
+./usr/lib/librumpdev_md_pic.a                           minix-comp      rump
+./usr/lib/librumpdev_netsmb.a                           minix-comp      rump
+./usr/lib/librumpdev_netsmb_pic.a                       minix-comp      rump
+./usr/lib/librumpdev_opencrypto.a                       minix-comp      rump
+./usr/lib/librumpdev_opencrypto_pic.a                   minix-comp      rump
+./usr/lib/librumpdev_pad.a                              minix-comp      rump
+./usr/lib/librumpdev_pad_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_pic.a                              minix-comp      rump
+./usr/lib/librumpdev_pud.a                              minix-comp      rump
+./usr/lib/librumpdev_pud_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_putter.a                           minix-comp      rump
+./usr/lib/librumpdev_putter_pic.a                       minix-comp      rump
+./usr/lib/librumpdev_raidframe.a                        minix-comp      rump
+./usr/lib/librumpdev_raidframe_pic.a                    minix-comp      rump
+./usr/lib/librumpdev_rnd.a                              minix-comp      rump
+./usr/lib/librumpdev_rnd_pic.a                          minix-comp      rump
+./usr/lib/librumpdev_sysmon.a                           minix-comp      rump
+./usr/lib/librumpdev_sysmon_pic.a                       minix-comp      rump
+./usr/lib/librumpdev_ugenhc.a                           minix-comp      rump
+./usr/lib/librumpdev_ugenhc_pic.a                       minix-comp      rump
+./usr/lib/librumpdev_ulpt.a                             minix-comp      rump
+./usr/lib/librumpdev_ulpt_pic.a                         minix-comp      rump
+./usr/lib/librumpdev_umass.a                            minix-comp      rump
+./usr/lib/librumpdev_umass_pic.a                        minix-comp      rump
+./usr/lib/librumpdev_vnd.a                              minix-comp      rump
+./usr/lib/librumpdev_vnd_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_cd9660.a                            minix-comp      rump
+./usr/lib/librumpfs_cd9660_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_efs.a                               minix-comp      rump
+./usr/lib/librumpfs_efs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_ext2fs.a                            minix-comp      rump
+./usr/lib/librumpfs_ext2fs_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_fdesc.a                             minix-comp      rump
+./usr/lib/librumpfs_fdesc_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_ffs.a                               minix-comp      rump
+./usr/lib/librumpfs_ffs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_hfs.a                               minix-comp      rump
+./usr/lib/librumpfs_hfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_kernfs.a                            minix-comp      rump
+./usr/lib/librumpfs_kernfs_pic.a                        minix-comp      rump
+./usr/lib/librumpfs_lfs.a                               minix-comp      rump
+./usr/lib/librumpfs_lfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_msdos.a                             minix-comp      rump
+./usr/lib/librumpfs_msdos_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_nfs.a                               minix-comp      rump
+./usr/lib/librumpfs_nfs_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_nfsserver.a                         minix-comp      rump
+./usr/lib/librumpfs_nfsserver_pic.a                     minix-comp      rump
+./usr/lib/librumpfs_nilfs.a                             minix-comp      rump
+./usr/lib/librumpfs_nilfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_ntfs.a                              minix-comp      rump
+./usr/lib/librumpfs_ntfs_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_null.a                              minix-comp      rump
+./usr/lib/librumpfs_null_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_ptyfs.a                             minix-comp      rump
+./usr/lib/librumpfs_ptyfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_smbfs.a                             minix-comp      rump
+./usr/lib/librumpfs_smbfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_syspuffs.a                          minix-comp      rump
+./usr/lib/librumpfs_syspuffs_pic.a                      minix-comp      rump
+./usr/lib/librumpfs_sysvbfs.a                           minix-comp      rump
+./usr/lib/librumpfs_sysvbfs_pic.a                       minix-comp      rump
+./usr/lib/librumpfs_tmpfs.a                             minix-comp      rump
+./usr/lib/librumpfs_tmpfs_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_udf.a                               minix-comp      rump
+./usr/lib/librumpfs_udf_pic.a                           minix-comp      rump
+./usr/lib/librumpfs_umap.a                              minix-comp      rump
+./usr/lib/librumpfs_umap_pic.a                          minix-comp      rump
+./usr/lib/librumpfs_union.a                             minix-comp      rump
+./usr/lib/librumpfs_union_pic.a                         minix-comp      rump
+./usr/lib/librumpfs_v7fs.a                              minix-comp      rump
+./usr/lib/librumpfs_v7fs_pic.a                          minix-comp      rump
+./usr/lib/librumpkern_crypto.a                          minix-comp      rump
+./usr/lib/librumpkern_crypto_pic.a                      minix-comp      rump
+./usr/lib/librumpkern_sysproxy.a                        minix-comp      rump
+./usr/lib/librumpkern_sysproxy_pic.a                    minix-comp      rump
+./usr/lib/librumpkern_tty.a                             minix-comp      rump
+./usr/lib/librumpkern_tty_pic.a                         minix-comp      rump
+./usr/lib/librumpkern_z.a                               minix-comp      rump
+./usr/lib/librumpkern_z_pic.a                           minix-comp      rump
+./usr/lib/librumpnet.a                                  minix-comp      rump
+./usr/lib/librumpnet_agr.a                              minix-comp      rump
+./usr/lib/librumpnet_agr_pic.a                          minix-comp      rump
+./usr/lib/librumpnet_bridge.a                           minix-comp      rump
+./usr/lib/librumpnet_bridge_pic.a                       minix-comp      rump
+./usr/lib/librumpnet_local.a                            minix-comp      rump
+./usr/lib/librumpnet_local_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_net.a                              minix-comp      rump
+./usr/lib/librumpnet_net80211.a                         minix-comp      rump
+./usr/lib/librumpnet_net80211_pic.a                     minix-comp      rump
+./usr/lib/librumpnet_net_pic.a                          minix-comp      rump
+./usr/lib/librumpnet_netbt.a                            minix-comp      rump
+./usr/lib/librumpnet_netbt_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_netinet.a                          minix-comp      rump
+./usr/lib/librumpnet_netinet6.a                         minix-comp      rump
+./usr/lib/librumpnet_netinet6_pic.a                     minix-comp      rump
+./usr/lib/librumpnet_netinet_pic.a                      minix-comp      rump
+./usr/lib/librumpnet_netmpls.a                          minix-comp      rump
+./usr/lib/librumpnet_netmpls_pic.a                      minix-comp      rump
+./usr/lib/librumpnet_npf.a                              minix-comp      rump
+./usr/lib/librumpnet_npf_pic.a                          minix-comp      rump
+./usr/lib/librumpnet_pic.a                              minix-comp      rump
+./usr/lib/librumpnet_shmif.a                            minix-comp      rump
+./usr/lib/librumpnet_shmif_pic.a                        minix-comp      rump
+./usr/lib/librumpnet_sockin.a                           minix-comp      rump
+./usr/lib/librumpnet_sockin_pic.a                       minix-comp      rump
+./usr/lib/librumpnet_tap.a                              minix-comp      rump
+./usr/lib/librumpnet_tap_pic.a                          minix-comp      rump
+./usr/lib/librumpuser.a                                 minix-comp      rump
+./usr/lib/librumpuser_pic.a                             minix-comp      rump
+./usr/lib/librumpvfs.a                                  minix-comp      rump
+./usr/lib/librumpvfs_aio.a                              minix-comp      rump
+./usr/lib/librumpvfs_aio_pic.a                          minix-comp      rump
+./usr/lib/librumpvfs_fifofs.a                           minix-comp      rump
+./usr/lib/librumpvfs_fifofs_pic.a                       minix-comp      rump
+./usr/lib/librumpvfs_layerfs.a                          minix-comp      rump
+./usr/lib/librumpvfs_layerfs_pic.a                      minix-comp      rump
+./usr/lib/librumpvfs_pic.a                              minix-comp      rump
 ./usr/lib/libsffs.a                                     minix-comp
 ./usr/lib/libsffs_pic.a                                 minix-comp
 ./usr/lib/libsqlite3.a                                  minix-comp
@@ -2103,6 +2462,8 @@
 ./usr/lib/libtermlib_pic.a                              minix-comp
 ./usr/lib/libtimers.a                                   minix-comp
 ./usr/lib/libtimers_pic.a                               minix-comp
+./usr/lib/libukfs.a                                     minix-comp      rump
+./usr/lib/libukfs_pic.a                                 minix-comp      rump
 ./usr/lib/libusb.a                                      minix-comp
 ./usr/lib/libusb_pic.a                                  minix-comp
 ./usr/lib/libutil.a                                     minix-comp

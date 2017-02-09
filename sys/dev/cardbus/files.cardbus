@@ -1,0 +1,157 @@
+#	$NetBSD: files.cardbus,v 1.38 2013/03/30 02:38:59 christos Exp $
+#
+# files.cardbus
+#
+
+device	cardslot: cbbus, pcmciabus
+attach	cardslot at pcmciaslot
+file	dev/cardbus/cardslot.c		cardslot		needs-flag
+defflag	opt_cardslot.h			CARDSLOT_DEBUG
+
+device	cardbus {[function = -1]}
+attach	cardbus at cbbus
+file	dev/cardbus/cardbus.c		cardbus			needs-flag
+file	dev/cardbus/cardbus_map.c	cardbus
+file	dev/cardbus/cardbus_exrom.c	cardbus
+file	dev/cardbus/rbus.c		cardbus
+defflag	opt_cardbus.h			CARDBUS_DEBUG
+
+
+#
+# 3Com 3C575TX and 3C575BTX
+#
+attach	ex at cardbus with ex_cardbus
+file	dev/cardbus/if_ex_cardbus.c	ex_cardbus
+
+#
+# Intel PRO/100 8255x based CardBus cards.
+#
+attach	fxp at cardbus with fxp_cardbus
+file	dev/cardbus/if_fxp_cardbus.c	fxp_cardbus
+
+#
+#
+attach	com at cardbus with com_cardbus
+file	dev/cardbus/com_cardbus.c	com_cardbus
+
+#
+# ADMtek ADM8211
+#
+attach	atw at cardbus with atw_cardbus
+file	dev/cardbus/if_atw_cardbus.c	atw_cardbus
+
+#
+# Realtek RTL8180
+#
+attach	rtw at cardbus with rtw_cardbus
+file	dev/cardbus/if_rtw_cardbus.c	rtw_cardbus
+
+#
+# Ralink RT2500/RT2600
+#
+attach	ral at cardbus with ral_cardbus
+file	dev/cardbus/if_ral_cardbus.c	ral_cardbus
+
+#
+# DECchip 21143 and clones.
+#
+attach	tlp at cardbus with tlp_cardbus
+file	dev/cardbus/if_tlp_cardbus.c	tlp_cardbus
+
+#
+# Broadcom BCM43xx wireless
+#
+attach	bwi at cardbus with bwi_cardbus
+file	dev/cardbus/if_bwi_cardbus.c	bwi_cardbus
+
+#
+# OHCI USB controller
+#
+attach	ohci at cardbus with ohci_cardbus
+file	dev/cardbus/ohci_cardbus.c	ohci_cardbus
+
+#
+# UHCI USB controller
+#
+attach	uhci at cardbus with uhci_cardbus
+file	dev/cardbus/uhci_cardbus.c	uhci_cardbus
+
+#
+# EHCI USB controller
+#
+attach	ehci at cardbus with ehci_cardbus
+file	dev/cardbus/ehci_cardbus.c	ehci_cardbus needs-flag
+
+#
+# OHCI IEEE 1394 controller
+#
+attach	fwohci at cardbus with fwohci_cardbus
+file	dev/cardbus/fwohci_cardbus.c	fwohci_cardbus
+
+#
+# Adaptec ADP-1480 SCSI controller
+#
+attach	ahc at cardbus with ahc_cardbus: ahc_seeprom, smc93cx6
+file	dev/cardbus/ahc_cardbus.c	ahc_cardbus
+defparam opt_ahc_cardbus.h		AHC_CARDBUS_DEFAULT_SCSI_ID
+
+#
+# PCI bridge
+#
+attach  ppb at cardbus with rbus_ppb
+file	dev/cardbus/rbus_ppb.c		rbus_ppb
+
+#
+# Realtek 8139
+#
+attach	rtk at cardbus with rtk_cardbus
+file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
+
+#
+# Realtek 8169
+#
+attach	re at cardbus with re_cardbus
+file	dev/cardbus/if_re_cardbus.c	re_cardbus
+
+
+#
+# Advansys SCSI controller.
+#
+attach	adv at cardbus with adv_cardbus
+file	dev/cardbus/adv_cardbus.c	adv_cardbus
+
+#
+# Atheros Wireless LAN
+#
+attach	ath at cardbus with ath_cardbus
+file	dev/cardbus/if_ath_cardbus.c	ath_cardbus
+
+#
+# Atheros AR9k Wireless LAN
+#
+attach	athn at cardbus with athn_cardbus
+file	dev/cardbus/if_athn_cardbus.c	athn_cardbus
+
+#
+# Workbit NinjaSCSI-32 controllers
+#
+attach	njs at cardbus with njs_cardbus
+file	dev/cardbus/njs_cardbus.c	njs_cardbus
+
+#
+# Workbit NinjaATA-32 controllers
+#
+attach	njata at cardbus with njata_cardbus
+file	dev/cardbus/njata_cardbus.c	njata_cardbus
+
+#
+# Silicon Image SteelVine SATA-II controllers
+#
+attach	siisata at cardbus with siisata_cardbus
+file	dev/cardbus/siisata_cardbus.c	siisata_cardbus
+
+#
+# SD Host Controller
+#
+attach	sdhc at cardbus with sdhc_cardbus
+file	dev/cardbus/sdhc_cardbus.c	sdhc_cardbus

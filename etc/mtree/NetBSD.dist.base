@@ -97,6 +97,7 @@
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
 ./usr/include/minix
+./usr/include/miscfs
 ./usr/include/msdosfs
 ./usr/include/net
 ./usr/include/net80211

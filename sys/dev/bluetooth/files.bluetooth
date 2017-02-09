@@ -1,0 +1,46 @@
+#	$NetBSD: files.bluetooth,v 1.14 2010/05/22 18:56:01 plunky Exp $
+#
+# Config file for machine independent Bluetooth devices
+
+# Bluetooth Device Hub
+device bthub { }
+attach bthub at btbus
+file dev/bluetooth/bthub.c		bthub
+
+# HID "bus"
+define bthidbus {[ reportid = -1 ]}
+
+# HID Device
+device bthidev: bluetooth, bthidbus, hid
+attach bthidev at bthub
+file dev/bluetooth/bthidev.c		bthidev
+
+# HID Keyboards
+defflag		opt_btkbd.h	BTKBD_REPEAT
+defparam	opt_btkbd.h	BTKBD_LAYOUT
+device btkbd: hid, wskbddev
+attach btkbd at bthidbus
+file dev/bluetooth/btkbd.c		btkbd
+
+# HID Mice
+device btms: hid, wsmousedev
+attach btms at bthidbus
+file dev/bluetooth/btms.c		btms
+
+# Apple MagicMouse
+device btmagic: bluetooth, hid, wsmousedev
+attach btmagic at bthub
+file dev/bluetooth/btmagic.c		btmagic
+
+# SCO Audio
+device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv
+attach btsco at bthub
+file dev/bluetooth/btsco.c		btsco
+
+# Bluetooth HCI UART (H4)
+defpseudodev btuart: btbus, bluetooth, firmload
+file dev/bluetooth/btuart.c		btuart
+
+# BlueCore Serial Protocol
+defpseudodev bcsp: btbus, bluetooth
+file dev/bluetooth/bcsp.c		bcsp

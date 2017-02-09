@@ -7,7 +7,7 @@ SUBDIR= asa \
 	banner basename \
 	bzip2 bzip2recover cal calendar \
 	checknr chpass cksum cmp col colcrt colrm \
-	column comm csplit ctags cut \
+	column comm config csplit ctags cut \
 	deroff dirname du \
 	env expand \
 	false find finger flock fold fpr from \
@@ -48,7 +48,7 @@ SUBDIR+= apropos whatis
 .endif
 
 .if (${MKRUMP} != "no")
-SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server shmif_dumpbus \
+SUBDIR+= rump_allserver rump_halt rump_server \
 	rump_wmd
 .endif
 

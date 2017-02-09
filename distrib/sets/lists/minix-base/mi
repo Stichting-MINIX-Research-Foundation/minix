@@ -46,6 +46,7 @@
 ./bin/readclock                                         minix-base
 ./bin/rm                                                minix-base
 ./bin/rmdir                                             minix-base
+./bin/rump.dd                                           minix-base      rump
 ./bin/service                                           minix-base
 ./bin/setup                                             minix-base
 ./bin/sh                                                minix-base
@@ -196,6 +197,8 @@
 ./sbin/ping                                             minix-base
 ./sbin/poweroff                                         minix-base
 ./sbin/reboot                                           minix-base
+./sbin/rump.ping                                        minix-base      rump
+./sbin/rump.sysctl                                      minix-base      rump
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base
 ./service                                               minix-base
@@ -285,6 +288,7 @@
 ./usr/bin/column                                        minix-base
 ./usr/bin/comm                                          minix-base
 ./usr/bin/compress                                      minix-base
+./usr/bin/config                                        minix-base
 ./usr/bin/cpio                                          minix-base
 ./usr/bin/cprofalyze                                    minix-base      obsolete
 ./usr/bin/crc                                           minix-base
@@ -469,6 +473,10 @@
 ./usr/bin/rotate                                        minix-base
 ./usr/bin/rput                                          minix-base
 ./usr/bin/rsh                                           minix-base
+./usr/bin/rump.halt                                     minix-base      rump
+./usr/bin/rump_allserver                                minix-base      rump
+./usr/bin/rump_server                                   minix-base      rump
+./usr/bin/rump_wmd                                      minix-base      rump
 ./usr/bin/rz                                            minix-base
 ./usr/bin/screendump                                    minix-base
 ./usr/bin/sdiff                                         minix-base
@@ -857,6 +865,9 @@
 ./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
 ./usr/lib/libopcodes.so.6.0                             minix-base      binutils
 ./usr/lib/libopcodes.so.6                               minix-base      binutils
+./usr/lib/libp2k.so                                     minix-base
+./usr/lib/libp2k.so.2                                   minix-base
+./usr/lib/libp2k.so.2.0                                 minix-base
 ./usr/lib/libpci.so                                     minix-base
 ./usr/lib/libpci.so.2                                   minix-base
 ./usr/lib/libpci.so.2.0                                 minix-base      obsolete
@@ -870,6 +881,215 @@
 ./usr/lib/librefuse.so                                  minix-base
 ./usr/lib/librefuse.so.2                                minix-base
 ./usr/lib/librefuse.so.2.0                              minix-base
+./usr/lib/librump.so.0.0                                minix-base      rump
+./usr/lib/librump.so.0                                  minix-base      rump
+./usr/lib/librump.so                                    minix-base      rump
+./usr/lib/librumpclient.so.0.0                          minix-base      rump
+./usr/lib/librumpclient.so.0                            minix-base      rump
+./usr/lib/librumpclient.so                              minix-base      rump
+./usr/lib/librumpdev.so.0.0                             minix-base      rump
+./usr/lib/librumpdev.so.0                               minix-base      rump
+./usr/lib/librumpdev.so                                 minix-base      rump
+./usr/lib/librumpdev_audio.so.0.0                       minix-base      rump
+./usr/lib/librumpdev_audio.so.0                         minix-base      rump
+./usr/lib/librumpdev_audio.so                           minix-base      rump
+./usr/lib/librumpdev_bpf.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_bpf.so.0                           minix-base      rump
+./usr/lib/librumpdev_bpf.so                             minix-base      rump
+./usr/lib/librumpdev_cgd.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_cgd.so.0                           minix-base      rump
+./usr/lib/librumpdev_cgd.so                             minix-base      rump
+./usr/lib/librumpdev_disk.so.0.0                        minix-base      rump
+./usr/lib/librumpdev_disk.so.0                          minix-base      rump
+./usr/lib/librumpdev_disk.so                            minix-base      rump
+./usr/lib/librumpdev_dm.so.0.0                          minix-base      rump
+./usr/lib/librumpdev_dm.so.0                            minix-base      rump
+./usr/lib/librumpdev_dm.so                              minix-base      rump
+./usr/lib/librumpdev_drvctl.so.0.0                      minix-base      rump
+./usr/lib/librumpdev_drvctl.so.0                        minix-base      rump
+./usr/lib/librumpdev_drvctl.so                          minix-base      rump
+./usr/lib/librumpdev_fss.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_fss.so.0                           minix-base      rump
+./usr/lib/librumpdev_fss.so                             minix-base      rump
+./usr/lib/librumpdev_md.so.0.0                          minix-base      rump
+./usr/lib/librumpdev_md.so.0                            minix-base      rump
+./usr/lib/librumpdev_md.so                              minix-base      rump
+./usr/lib/librumpdev_netsmb.so.0.0                      minix-base      rump
+./usr/lib/librumpdev_netsmb.so.0                        minix-base      rump
+./usr/lib/librumpdev_netsmb.so                          minix-base      rump
+./usr/lib/librumpdev_opencrypto.so.0.0                  minix-base      rump
+./usr/lib/librumpdev_opencrypto.so.0                    minix-base      rump
+./usr/lib/librumpdev_opencrypto.so                      minix-base      rump
+./usr/lib/librumpdev_pad.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_pad.so.0                           minix-base      rump
+./usr/lib/librumpdev_pad.so                             minix-base      rump
+./usr/lib/librumpdev_pud.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_pud.so.0                           minix-base      rump
+./usr/lib/librumpdev_pud.so                             minix-base      rump
+./usr/lib/librumpdev_putter.so.0.0                      minix-base      rump
+./usr/lib/librumpdev_putter.so.0                        minix-base      rump
+./usr/lib/librumpdev_putter.so                          minix-base      rump
+./usr/lib/librumpdev_raidframe.so.0.0                   minix-base      rump
+./usr/lib/librumpdev_raidframe.so.0                     minix-base      rump
+./usr/lib/librumpdev_raidframe.so                       minix-base      rump
+./usr/lib/librumpdev_rnd.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_rnd.so.0                           minix-base      rump
+./usr/lib/librumpdev_rnd.so                             minix-base      rump
+./usr/lib/librumpdev_sysmon.so.0.0                      minix-base      rump
+./usr/lib/librumpdev_sysmon.so.0                        minix-base      rump
+./usr/lib/librumpdev_sysmon.so                          minix-base      rump
+./usr/lib/librumpdev_ugenhc.so.0.0                      minix-base      rump
+./usr/lib/librumpdev_ugenhc.so.0                        minix-base      rump
+./usr/lib/librumpdev_ugenhc.so                          minix-base      rump
+./usr/lib/librumpdev_ulpt.so.0.0                        minix-base      rump
+./usr/lib/librumpdev_ulpt.so.0                          minix-base      rump
+./usr/lib/librumpdev_ulpt.so                            minix-base      rump
+./usr/lib/librumpdev_umass.so.0.0                       minix-base      rump
+./usr/lib/librumpdev_umass.so.0                         minix-base      rump
+./usr/lib/librumpdev_umass.so                           minix-base      rump
+./usr/lib/librumpdev_vnd.so.0.0                         minix-base      rump
+./usr/lib/librumpdev_vnd.so.0                           minix-base      rump
+./usr/lib/librumpdev_vnd.so                             minix-base      rump
+./usr/lib/librumpfs_cd9660.so.0.0                       minix-base      rump
+./usr/lib/librumpfs_cd9660.so.0                         minix-base      rump
+./usr/lib/librumpfs_cd9660.so                           minix-base      rump
+./usr/lib/librumpfs_efs.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_efs.so.0                            minix-base      rump
+./usr/lib/librumpfs_efs.so                              minix-base      rump
+./usr/lib/librumpfs_ext2fs.so.0.0                       minix-base      rump
+./usr/lib/librumpfs_ext2fs.so.0                         minix-base      rump
+./usr/lib/librumpfs_ext2fs.so                           minix-base      rump
+./usr/lib/librumpfs_fdesc.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_fdesc.so.0                          minix-base      rump
+./usr/lib/librumpfs_fdesc.so                            minix-base      rump
+./usr/lib/librumpfs_ffs.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_ffs.so.0                            minix-base      rump
+./usr/lib/librumpfs_ffs.so                              minix-base      rump
+./usr/lib/librumpfs_hfs.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_hfs.so.0                            minix-base      rump
+./usr/lib/librumpfs_hfs.so                              minix-base      rump
+./usr/lib/librumpfs_kernfs.so.0.0                       minix-base      rump
+./usr/lib/librumpfs_kernfs.so.0                         minix-base      rump
+./usr/lib/librumpfs_kernfs.so                           minix-base      rump
+./usr/lib/librumpfs_lfs.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_lfs.so.0                            minix-base      rump
+./usr/lib/librumpfs_lfs.so                              minix-base      rump
+./usr/lib/librumpfs_msdos.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_msdos.so.0                          minix-base      rump
+./usr/lib/librumpfs_msdos.so                            minix-base      rump
+./usr/lib/librumpfs_nfs.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_nfs.so.0                            minix-base      rump
+./usr/lib/librumpfs_nfs.so                              minix-base      rump
+./usr/lib/librumpfs_nfsserver.so.0.0                    minix-base      rump
+./usr/lib/librumpfs_nfsserver.so.0                      minix-base      rump
+./usr/lib/librumpfs_nfsserver.so                        minix-base      rump
+./usr/lib/librumpfs_nilfs.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_nilfs.so.0                          minix-base      rump
+./usr/lib/librumpfs_nilfs.so                            minix-base      rump
+./usr/lib/librumpfs_ntfs.so.0.0                         minix-base      rump
+./usr/lib/librumpfs_ntfs.so.0                           minix-base      rump
+./usr/lib/librumpfs_ntfs.so                             minix-base      rump
+./usr/lib/librumpfs_null.so.0.0                         minix-base      rump
+./usr/lib/librumpfs_null.so.0                           minix-base      rump
+./usr/lib/librumpfs_null.so                             minix-base      rump
+./usr/lib/librumpfs_ptyfs.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_ptyfs.so.0                          minix-base      rump
+./usr/lib/librumpfs_ptyfs.so                            minix-base      rump
+./usr/lib/librumpfs_smbfs.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_smbfs.so.0                          minix-base      rump
+./usr/lib/librumpfs_smbfs.so                            minix-base      rump
+./usr/lib/librumpfs_syspuffs.so.0.0                     minix-base      rump
+./usr/lib/librumpfs_syspuffs.so.0                       minix-base      rump
+./usr/lib/librumpfs_syspuffs.so                         minix-base      rump
+./usr/lib/librumpfs_sysvbfs.so.0.0                      minix-base      rump
+./usr/lib/librumpfs_sysvbfs.so.0                        minix-base      rump
+./usr/lib/librumpfs_sysvbfs.so                          minix-base      rump
+./usr/lib/librumpfs_tmpfs.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_tmpfs.so.0                          minix-base      rump
+./usr/lib/librumpfs_tmpfs.so                            minix-base      rump
+./usr/lib/librumpfs_udf.so.0.0                          minix-base      rump
+./usr/lib/librumpfs_udf.so.0                            minix-base      rump
+./usr/lib/librumpfs_udf.so                              minix-base      rump
+./usr/lib/librumpfs_umap.so.0.0                         minix-base      rump
+./usr/lib/librumpfs_umap.so.0                           minix-base      rump
+./usr/lib/librumpfs_umap.so                             minix-base      rump
+./usr/lib/librumpfs_union.so.0.0                        minix-base      rump
+./usr/lib/librumpfs_union.so.0                          minix-base      rump
+./usr/lib/librumpfs_union.so                            minix-base      rump
+./usr/lib/librumpfs_v7fs.so.0.0                         minix-base      rump
+./usr/lib/librumpfs_v7fs.so.0                           minix-base      rump
+./usr/lib/librumpfs_v7fs.so                             minix-base      rump
+./usr/lib/librumpkern_crypto.so.0.0                     minix-base      rump
+./usr/lib/librumpkern_crypto.so.0                       minix-base      rump
+./usr/lib/librumpkern_crypto.so                         minix-base      rump
+./usr/lib/librumpkern_sysproxy.so.0.0                   minix-base      rump
+./usr/lib/librumpkern_sysproxy.so.0                     minix-base      rump
+./usr/lib/librumpkern_sysproxy.so                       minix-base      rump
+./usr/lib/librumpkern_tty.so.0.0                        minix-base      rump
+./usr/lib/librumpkern_tty.so.0                          minix-base      rump
+./usr/lib/librumpkern_tty.so                            minix-base      rump
+./usr/lib/librumpkern_z.so.0.0                          minix-base      rump
+./usr/lib/librumpkern_z.so.0                            minix-base      rump
+./usr/lib/librumpkern_z.so                              minix-base      rump
+./usr/lib/librumpnet.so.0.0                             minix-base      rump
+./usr/lib/librumpnet.so.0                               minix-base      rump
+./usr/lib/librumpnet.so                                 minix-base      rump
+./usr/lib/librumpnet_agr.so.0.0                         minix-base      rump
+./usr/lib/librumpnet_agr.so.0                           minix-base      rump
+./usr/lib/librumpnet_agr.so                             minix-base      rump
+./usr/lib/librumpnet_bridge.so.0.0                      minix-base      rump
+./usr/lib/librumpnet_bridge.so.0                        minix-base      rump
+./usr/lib/librumpnet_bridge.so                          minix-base      rump
+./usr/lib/librumpnet_local.so.0.0                       minix-base      rump
+./usr/lib/librumpnet_local.so.0                         minix-base      rump
+./usr/lib/librumpnet_local.so                           minix-base      rump
+./usr/lib/librumpnet_net.so.0.0                         minix-base      rump
+./usr/lib/librumpnet_net.so.0                           minix-base      rump
+./usr/lib/librumpnet_net.so                             minix-base      rump
+./usr/lib/librumpnet_net80211.so.0.0                    minix-base      rump
+./usr/lib/librumpnet_net80211.so.0                      minix-base      rump
+./usr/lib/librumpnet_net80211.so                        minix-base      rump
+./usr/lib/librumpnet_netbt.so.0.0                       minix-base      rump
+./usr/lib/librumpnet_netbt.so.0                         minix-base      rump
+./usr/lib/librumpnet_netbt.so                           minix-base      rump
+./usr/lib/librumpnet_netinet.so.0.0                     minix-base      rump
+./usr/lib/librumpnet_netinet.so.0                       minix-base      rump
+./usr/lib/librumpnet_netinet.so                         minix-base      rump
+./usr/lib/librumpnet_netinet6.so.0.0                    minix-base      rump
+./usr/lib/librumpnet_netinet6.so.0                      minix-base      rump
+./usr/lib/librumpnet_netinet6.so                        minix-base      rump
+./usr/lib/librumpnet_netmpls.so.0.0                     minix-base      rump
+./usr/lib/librumpnet_netmpls.so.0                       minix-base      rump
+./usr/lib/librumpnet_netmpls.so                         minix-base      rump
+./usr/lib/librumpnet_npf.so.0.0                         minix-base      rump
+./usr/lib/librumpnet_npf.so.0                           minix-base      rump
+./usr/lib/librumpnet_npf.so                             minix-base      rump
+./usr/lib/librumpnet_shmif.so.0.0                       minix-base      rump
+./usr/lib/librumpnet_shmif.so.0                         minix-base      rump
+./usr/lib/librumpnet_shmif.so                           minix-base      rump
+./usr/lib/librumpnet_sockin.a                           minix-base      rump
+./usr/lib/librumpnet_sockin.so.0.0                      minix-base      rump
+./usr/lib/librumpnet_sockin.so.0                        minix-base      rump
+./usr/lib/librumpnet_sockin.so                          minix-base      rump
+./usr/lib/librumpnet_sockin_pic.a                       minix-base      rump
+./usr/lib/librumpnet_tap.so.0.0                         minix-base      rump
+./usr/lib/librumpnet_tap.so.0                           minix-base      rump
+./usr/lib/librumpnet_tap.so                             minix-base      rump
+./usr/lib/librumpuser.so.0.1                            minix-base      rump
+./usr/lib/librumpuser.so.0                              minix-base      rump
+./usr/lib/librumpuser.so                                minix-base      rump
+./usr/lib/librumpvfs.so.0.0                             minix-base      rump
+./usr/lib/librumpvfs.so.0                               minix-base      rump
+./usr/lib/librumpvfs.so                                 minix-base      rump
+./usr/lib/librumpvfs_aio.so.0.0                         minix-base      rump
+./usr/lib/librumpvfs_aio.so.0                           minix-base      rump
+./usr/lib/librumpvfs_aio.so                             minix-base      rump
+./usr/lib/librumpvfs_fifofs.so.0.0                      minix-base      rump
+./usr/lib/librumpvfs_fifofs.so.0                        minix-base      rump
+./usr/lib/librumpvfs_fifofs.so                          minix-base      rump
+./usr/lib/librumpvfs_layerfs.so.0.0                     minix-base      rump
+./usr/lib/librumpvfs_layerfs.so.0                       minix-base      rump
+./usr/lib/librumpvfs_layerfs.so                         minix-base      rump
 ./usr/lib/libsaslc.a                                    minix-base      crypto
 ./usr/lib/libsaslc.so.0.0                               minix-base      crypto
 ./usr/lib/libsaslc.so.0                                 minix-base      crypto
@@ -901,6 +1121,9 @@
 ./usr/lib/libtermlib.so                                 minix-base
 ./usr/lib/libtermlib.so.0                               minix-base
 ./usr/lib/libtermlib.so.0.6                             minix-base
+./usr/lib/libukfs.so.1.0                                minix-base      rump
+./usr/lib/libukfs.so.1                                  minix-base      rump
+./usr/lib/libukfs.so                                    minix-base      rump
 ./usr/lib/libutil.so                                    minix-base
 ./usr/lib/libutil.so.7                                  minix-base
 ./usr/lib/libutil.so.7.21                               minix-base      obsolete
@@ -1004,6 +1227,8 @@
 ./usr/sbin/postinstall                                  minix-base
 ./usr/sbin/pwd_mkdb                                     minix-base
 ./usr/sbin/rdate                                        minix-base
+./usr/sbin/rump.traceroute                              minix-base      rump
+./usr/sbin/rump_sysvbfs                                 minix-base      rump
 ./usr/sbin/syslogd                                      minix-base
 ./usr/sbin/traceroute                                   minix-base
 ./usr/sbin/unlink                                       minix-base

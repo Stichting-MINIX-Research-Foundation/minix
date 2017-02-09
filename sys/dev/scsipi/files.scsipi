@@ -1,0 +1,69 @@
+#	$NetBSD: files.scsipi,v 1.41 2005/12/11 12:23:50 christos Exp $
+#
+# Config file and device description for machine-independent SCSI code.
+# Included by ports that need it.  Ports that use it must provide
+# their own "major" declarations for the appropriate devices.
+
+defflag	opt_scsi.h		SCSIVERBOSE ST_ENABLE_EARLYWARN
+				SES_ENABLE_PASSTHROUGH SCSI_OLD_NOINQUIRY
+defparam opt_scsi.h		ST_MOUNT_DELAY SDRETRIES SD_IO_TIMEOUT
+
+defflag	opt_scsipi_debug.h	SCSIPI_DEBUG
+defparam opt_scsipi_debug.h	SCSIPI_DEBUG_TYPE
+				SCSIPI_DEBUG_TARGET
+				SCSIPI_DEBUG_LUN
+				SCSIPI_DEBUG_FLAGS
+
+file	dev/scsipi/scsipiconf.c		scsi_core | atapibus
+file	dev/scsipi/scsipi_base.c	scsi_core | atapibus
+file	dev/scsipi/scsipi_ioctl.c	scsi_core | atapibus
+file	dev/scsipi/scsipi_verbose.c	(scsi_core | atapibus) & scsiverbose
+file	dev/scsipi/scsi_base.c		scsi_core
+file	dev/scsipi/atapi_base.c		atapibus
+file	dev/scsipi/atapi_wdc.c		atapibus & atabus & wdc_common
+
+device	scsibus {[target = -1], [lun = -1]}: scsi_core
+attach	scsibus at scsi
+file	dev/scsipi/scsiconf.c		scsibus			needs-flag
+
+device	atapibus {[drive = -1]}
+attach	atapibus at atapi
+file	dev/scsipi/atapiconf.c          atapibus		needs-flag
+
+device	cd: disk
+attach	cd at scsibus, atapibus
+file	dev/scsipi/cd.c			cd			needs-flag
+
+device	ch
+attach	ch at scsibus
+file	dev/scsipi/ch.c			ch			needs-flag
+
+device	se: ifnet, ether, arp
+attach	se at scsibus
+file	dev/scsipi/if_se.c		se			needs-flag
+
+device	sd: disk
+attach	sd at scsibus, atapibus
+file	dev/scsipi/sd.c			sd			needs-flag
+
+device	st: tape
+attach	st at scsibus with st_scsibus
+attach	st at atapibus with st_atapibus
+file	dev/scsipi/st.c			st | st_scsibus | st_atapibus needs-flag
+file	dev/scsipi/st_scsi.c		st_scsibus
+file	dev/scsipi/st_atapi.c		st_atapibus
+
+device ses
+attach ses at scsibus
+file   dev/scsipi/ses.c			ses			needs-flag
+
+
+device	ss
+attach	ss at scsibus
+file	dev/scsipi/ss.c			ss			needs-flag
+file	dev/scsipi/ss_mustek.c		ss
+file	dev/scsipi/ss_scanjet.c		ss
+
+device	uk
+attach	uk at scsibus, atapibus
+file	dev/scsipi/uk.c			uk			needs-flag

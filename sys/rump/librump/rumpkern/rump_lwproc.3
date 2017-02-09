@@ -1,0 +1,145 @@
+.\"     $NetBSD: rump_lwproc.3,v 1.2 2015/03/23 15:42:29 pooka Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 27, 2014
+.Dt RUMP_LWPROC 3
+.Os
+.Sh NAME
+.Nm rump_lwproc
+.Nd rump kernel process/lwp management
+.Sh LIBRARY
+rump kernel (librump, \-lrump)
+.Sh SYNOPSIS
+.In rump/rump.h
+.Ft int
+.Fn rump_pub_lwproc_rfork "int flags"
+.Ft int
+.Fn rump_pub_lwproc_newlwp "pid_t pid"
+.Ft void
+.Fn rump_pub_lwproc_switch "struct lwp *l"
+.Ft void
+.Fn rump_pub_lwproc_releaselwp
+.Ft struct lwp *
+.Fn rump_pub_lwproc_curlwp
+.Sh DESCRIPTION
+In a normal operating system model a process is a resource
+container and a thread (lwp) is the execution context.
+Every lwp is associated with exactly one process, and a process is
+associated with one or more lwps.
+The current lwp (curlwp) indicates the current process and determines
+which resources, such as UID/GID, current working directory, and
+file descriptor table, are currently used.
+These basic principles apply to rump kernels as well, but since
+a rump kernel uses the host's thread and process context directly, the rules
+for how thread context is determined are different.
+.Pp
+In the rump kernel model, each host thread (implemented for example
+with pthreads or green threads) is either bound to
+a rump kernel lwp or accesses the rump kernel with an implicit thread
+context associated with pid 1.
+An implicit thread context is created every time the rump kernel
+is entered and disbanded upon exit.
+While convenient for occasional calls, creating an implicit thread
+uses a shared resource which can become highly contended in a
+multithreaded situation.
+It is therefore recommended that dedicated threads are created.
+.Pp
+The association between host threads and the rump kernel curlwp is
+left to the caller.
+It is possible to create a dedicated host thread for every
+rump kernel lwp or multiplex them on top of a single host thread.
+After rump kernel lwps have been created, switching curlwp is very cheap.
+In case multiple lwps/processes are created, it is the caller's
+responsibility to keep track of them and release them when they
+are no longer necessary.
+A rump kernel lwp will persist until it is explicitly released.
+A rump kernel process will persist until all of its lwps have been
+released, at which point the process is automatically released.
+.Bl -tag -width xxxx
+.It Fn rump_pub_lwproc_rfork
+Create a process, one lwp inside it and set curlwp to the new lwp.
+The
+.Ar flags
+parameter controls how file descriptors are inherited from the
+parent.
+By default (flags=0) file descriptors are shared.
+Other options are:
+.Bl -tag -width RUMP_RFCFDGXX
+.It Dv RUMP_RFFDG
+Copy file descriptors from parent.
+This is what
+.Xr fork 2
+does.
+.It Dv RUMP_RFCFDG
+File descriptors neither copied nor shared, i.e. new process does not
+have access to the parent's file descriptors.
+.El
+.Pp
+This routine returns 0 for success or an errno indicating the reason
+for failure.
+The new process id can be retrieved in the normal fashion by calling
+.Fn rump_sys_getpid .
+.It Fn rump_pub_lwproc_newlwp "pid"
+Create a new lwp attached to the process specified by
+.Fa pid .
+Sets curlwp to the new lwp.
+This routine returns 0 for success or an errno indicating the reason
+for failure.
+.It Fn rump_pub_lwproc_switch "l"
+Sets curlwp to
+.Fa l .
+In case the new thread is associated with a different process than the
+current one, the process context is also switched.
+The special value
+.Dv NULL
+sets curlwp to implicit context.
+Switching to an already running lwp, i.e. attempting to use the
+same curlwp in two host threads simultaneously causes a fatal error.
+.It Fn rump_pub_lwproc_releaselwp
+Release curlwp and set curlwp to implicit context.
+In case curlwp was the last thread inside the current process, the
+process container is also released.
+Calling this routine without a dedicated curlwp is a fatal error.
+.It Fn rump_pub_lwproc_curlwp
+Returns curlwp or
+.Dv NULL
+if the current context is an implicit context.
+.El
+.Sh RETURN VALUES
+.Fn rump_pub_lwproc_rfork
+and
+.Fn rump_pub_lwproc_newlwp
+return 0 on success or an errno indicating the reason for failure.
+.Fn rump_pub_lwproc_curlwp
+returns curlwp or
+.Dv NULL
+if the current context is an implicit context.
+.Sh SEE ALSO
+.Xr getpid 2 ,
+.Xr rump 3
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 6.0 .

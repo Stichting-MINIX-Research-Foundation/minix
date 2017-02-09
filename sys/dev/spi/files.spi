@@ -1,0 +1,42 @@
+#	$NetBSD: files.spi,v 1.5 2015/08/18 15:54:20 phx Exp $
+
+define	spibus { }
+
+device	spi { slave }
+attach	spi at spibus
+file	dev/spi/spi.c			spi | spibus
+
+#
+# SPI client devices
+#
+
+# Common SPI flash support
+define	spiflashbus { }
+device	spiflash: disk
+attach	spiflash at spiflashbus
+file	dev/spi/spiflash.c		spiflash | spiflashbus
+
+# STMicro M25P SPI flash
+device	m25p: spiflashbus
+attach	m25p at spi
+file	dev/spi/m25p.c			m25p
+
+# TI TMP121 digital temperature sensor
+device	tmp121temp: sysmon_envsys
+attach	tmp121temp at spi
+file	dev/spi/tmp121.c		tmp121temp
+
+# MCP48x1 DAC 
+device	mcp48x1dac
+attach	mcp48x1dac at spi
+file	dev/spi/mcp48x1.c		mcp48x1dac	
+
+# MCP23S17 16-bit GPIO
+device	mcp23s17gpio: gpiobus
+attach	mcp23s17gpio at spi
+file	dev/spi/mcp23s17.c		mcp23s17gpio
+
+# MCP3x0x ADC
+device	mcp3kadc: sysmon_envsys
+attach	mcp3kadc at spi
+file	dev/spi/mcp3k.c			mcp3kadc

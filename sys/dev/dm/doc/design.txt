@@ -1,0 +1,475 @@
+		Device-mapper to libdevmapper protocol
+		
+
+
+  1) Device mapper device in a POV of LVM it is an Logical Volume. 
+     Logical Volume is virtual block device is made from logical blocks.
+     These blocks are mapped to real device blocks with algorithm called 
+     target.
+     
+     Functions available to dm device:
+     	       create, remove, list, status of device.
+
+  2) device mapper target is function which  defines how are Logical blocks 
+     mapped to physical. There are many targets linear, stripe, mirror etc.
+
+     Functions available to dm device:
+     	       list available targets. They can be added with module in linux.     	       
+
+  3) dm table.
+     Every device-mapper device consits from one or more tables. Table specify 
+     Start, length of logical blocks and target which is used to map them to 
+     physical blocks. 
+
+     {start} {length} {target} | {device} {target parameters}
+     
+     after | are target specific parameters listed. 
+
+     Functions available to dm device:
+     	       load, unload, table_status.
+
+
+   List of available ioct calls
+   
+   DM_VERSION
+   DM_REMOVE_ALL
+   DM_LIST_DEVICES
+   DM_DEV_CREATE
+   DM_DEV_REMOVE
+   DM_DEV_RENAME
+   DM_DEV_SUSPEND
+   DM_DEV_STATUS
+   DM_DEV_WAIT
+   DM_TABLE_LOAD
+   DM_TABLE_CLEAR
+   DM_TABLE_DEPS
+   DM_TABLE_STATUS
+   DM_LIST_VERSIONS
+   DM_TARGET_MSG   
+   DM_DEV_SET_GEOMETRY    
+
+   1) DM_VERSION 
+
+      in: struct dm-ioctl
+
+      out: struct dm-ioctl
+
+      Fuction:
+	 sends libdevmapper ioctl protocol version to kernel and ask for kernel version.
+	 If major and minor numbers are good we can continue.
+
+   2) DM_REMOVE_ALL
+      
+      in: none
+
+      out: none
+
+      Function:
+	This ioctl will remove all DM devices/tables from DM driver.
+
+  3) DM_LIST_DEVICES
+     
+     in: none
+	
+     out: List of structures describing all devices created in driver.
+
+     Function: 
+       List all devices created in driver. (linux use struct dm_name_list)
+
+     Implementation:
+       Kernel driver will place list of struct dm_name_list behind 
+       struct dm_ioctl in userspace. Kernel driver will list through
+       the all devices and copyout info about them.
+
+  4) DM_DEV_CREATE
+     
+     in: struct dm-ioctl(name/uuid)
+
+     out: none
+
+     Function:
+       Create device in dm driver, with specified name/uuid(uuid is prefered). 
+       (linux use struct dm_name_list)
+       
+ 5) DM_DEV_REMOVE
+     
+    in: struct dm-ioctl(name/uuid)
+
+    out: none
+
+    Function:
+      Remove device from dm driver list, also remove device tables.
+
+ 6) DM_DEV_RENAME
+    
+    in: struct dm-ioctl(name/uuid) and string found after dm-ioctl struct in buffer
+
+    out: none
+
+    Function:
+      Rename device from name to string.
+
+    Implementation:
+       Kernel driver will find device with name from struct dm_ioctl-name/uuid.
+       Change name of selected device to string foun behind struc dm_ioctl header 
+       in userspace buffer.
+
+ 7) DM_DEV_SUSPEND
+    
+    in: dm-ioctl(name/uuid)
+
+    out: none
+
+    Function: 
+      Suspend all io's  on device, after this ioctl. Already started io's will be done.
+      Newer can't be started.
+
+ 8) DM_DEV_STATUS
+
+    in: dm-ioctl(name/uuid)
+
+    out: dm-ioctl (minor,open_count,target_count)
+
+    Function: 
+      Return status info about selected device
+
+    Implementation:
+       Kernel driver will find device with name from struct dm_ioctl-name/uuid.
+       Change values minor,open_count,target_count in dm_ioctl struct for 
+       selected device.
+
+ 9) DM_DEV_WAIT
+
+    in: dm-ioctl(name/uuid)
+
+    out: none
+
+    Function: 
+      Wait for device event to happen.
+
+ 10) DM_TABLE_LOAD
+
+     in: dm-ioctl(name/uuid),table specification
+
+     out: none
+ 
+     Function: 
+       Load table to selected device. Table is loaded to unused slot and than switched.
+       (linux use struct dm_target_spec)
+       
+     Implementation:
+       Kernel driver will find device with name from struct dm_ioctl-name/uuid.
+       Table is added to the inactive slot. Every device can have more than one 
+       table loaded. Tables are stored in SLIST. This ioctl also open physical 
+       device spedcified in table and add it to dm_device specific pdev list.
+
+ 11) DM_TABLE_CLEAR
+
+     in: dm-ioctl(name/uuid)
+
+     out: none
+
+     Function: 
+       Remove table from unused slot. 
+
+ 12) DM_TABLE_DEPS
+
+     in: dm-ioctl(name/uuid)
+
+     out: list of dependiences devices
+
+     Function: 
+       Return set of device dependiences e.g. mirror device for mirror target etc..
+
+ 13) DM_TABLE_STATUS
+
+     in: dm-ioctl(name/uuid)
+
+     out: list of used tables from selected devices (linux use struct dm_target_spec)
+
+     Function: 
+       List all tables in active slot in device with name name/uuid.       
+
+     Implementation:
+       Kernel driver will find device with name from struct dm_ioctl-name/uuid.
+       DM driver will copyout dm_target_spec structures behidn struct dm_ioctl.
+
+ 14) DM_LIST_VERSIONS	
+     
+     in: none
+
+     out: list of all targets in device-mapper driver (linux use struct dm_target_versions)
+
+     Function:
+       List all available targets to libdevmapper.
+
+     Implementation:
+       Kernel driver will copy out known target versions.
+
+ 15) DM_TARGET_MSG
+     
+     in: message to driver (linux use struct dm_target_msg)
+
+     out: none
+
+     Function:
+      Send message to kernel driver target.
+     
+
+ 16) DM_DEV_SET_GEOMETRY
+
+     Function:
+       Set geometry of device-mapper driver.
+
+
+	    	NetBSD device-mapper driver implementation
+		
+   device-mapper devices -> devs dm_dev.c
+
+   This entity is created with DM_DEV_CREATE ioctl, and stores info 
+   about every device in device mapper driver. It has two slots for 
+   active and inactive table, list of active physical devices added 
+   to this device and list of upcalled devices (for targets which use
+   more than one physical device e.g. mirror, snapshot etc..).
+
+   device-mapper physical devices -> pdevs dm_pdev.c
+
+   This structure contains opened device VNODES. Because I physical 
+   device can be found in more than one table loaded to different 
+   dm devices. When device is destroyed I decrement all reference 
+   counters for all added pdevs (I remove pdevs with ref_cnt == 0).
+
+   device-mapper tables -> table  dm_table.c, dm_ioctl.c
+   
+   Table describe how is dm device made. What blocks are mapped with 
+   what target. In our implementation every table contains pointer to
+   target specific config data. These config_data are allocated in 
+   DM_TABLE_LOAD function with target_init routine. Every table 
+   contains pointer to used target.
+
+   device-mapper targets -> target dm_target.c
+   
+   Target describes mapping of logical blocks to physical. It has 
+   function pointers to function which does init, strategy, destroy,
+   upcall functions.
+
+   P.S I want to thank reinod@ for great help and guidance :).
+   
+	
+
+		Desing of new device-mapper ioctl interface
+
+   Basic architecture of device-mapper -> libdevmapper ioctl interface is this. 
+   Libdevmapper allocate buffer with size of data_size. At the start of this buffer 
+   dm-ioctl structure is placed. any aditional information from/to kernel are placed
+   behind end (start of data part is pointed with data_start var.) of dm-ioctl struct. 
+   
+   Kernel driver then after ioctl call have to copyin data from userspace to kernel.
+   When kernel driver want to send data back to user space library it must copyout 
+   data from kernel.
+
+1) In Linux device-mapper ioctl interface implementation there are these ioctls.
+
+   DM_VERSION                 *
+   DM_REMOVE_ALL	      
+   DM_LIST_DEVICES	      *
+   DM_DEV_CREATE	      *
+   DM_DEV_REMOVE	      *
+   DM_DEV_RENAME	      *
+   DM_DEV_SUSPEND	      
+   DM_DEV_STATUS	      *
+   DM_DEV_WAIT		      
+   DM_TABLE_LOAD	      *
+   DM_TABLE_CLEAR	      *
+   DM_TABLE_DEPS	      
+   DM_TABLE_STATUS	      *
+   DM_LIST_VERSIONS	      *
+   DM_TARGET_MSG   
+   DM_DEV_SET_GEOMETRY
+
+* means implemented in current version of NetBSD device-mapper.
+
+  1a) struct dm_ioctl based ioctl calls
+        These ioctl calls communicate only with basic dm_ioctl structure. 
+	
+	  DM_VERSION
+  	  DM_DEV_STATUS
+	  DM_DEV_CREATE	  
+
+  Protocol structure:
+	  
+  struct dm_ioctl {
+	uint32_t version[3];	/* device-mapper kernel/userspace version */
+	uint32_t data_size;	/* total size of data passed in
+				 * including this struct */
+
+	uint32_t data_start;	/* offset to start of data
+				 * relative to start of this struct */
+
+	uint32_t target_count;	/* in/out */ /* This should be set when DM_TABLE_STATUS is called */
+	int32_t  open_count;	/* device open count */
+	uint32_t flags;		/* information flags  */
+        uint32_t event_nr;      /* event counters not implemented */
+	uint32_t padding;
+
+	uint64_t dev;		/* dev_t */
+
+	char name[DM_NAME_LEN];	/* device name */
+	char uuid[DM_UUID_LEN];	/* unique identifier for
+				 * the block device */
+
+        void *user_space_addr;  /*this is needed for netbsd 
+				  because they differently 
+				  implement ioctl syscall*/
+  };
+
+ As SOC task I want to replace this structure with proplib dict. Proplib dict 
+ basic structure should be:
+
+ Note: I don't need data_star, data_size and use_space_addr. They are needed 
+       for current implementation. 
+
+       <dict>
+               <key>version</key>
+               <string>...</string>
+
+               <key>target_count</key>
+	       <integer></integer>
+
+               <key>open_count</key>
+	       <integer></integer>
+
+               <key>flags</key>
+	       <integer></integer>
+
+               <key>event_nr</key>
+	       <integer></integer>
+
+	       <key>dev</key>
+	       <integer></integer>
+	       
+	       <key>name</key>
+               <string>...</string>
+
+               <key>uuid</key>
+               <string>...</string>
+
+
+	       <dict>
+	        <!-- ioctl specific data -->
+	       </dict>
+       </dict>
+
+    1b) DM_LIST_VERSIONS ioctl
+
+    This ioctl is used to get list of supported targets from kernel. Target 
+    define mapping of Logical blocks to physical blocks on real device.
+    There are linear, zero, error, mirror, snapshot, multipath etc... targets.
+
+    For every target kernel driver should copyout this structure to userspace.
+
+    Protocol structure:
+
+    struct dm_target_versions {
+        uint32_t next;
+        uint32_t version[3];
+
+        char name[0];
+    };
+
+    Because I need more than one dm_target_version I will need one major proplib 
+    dictionary to store children dictionaries with target data.
+
+    <dict>
+        <dict ID="id">
+	   <key>version</key>
+           <string>...</string>	
+
+	   <key>name</key>
+	   <string>...</string>	
+	</dict>
+    </dict>
+
+    2a) DM_LIST_DEVICES 
+    
+    This ioctl is used to list all devices defined in kernel driver. 
+
+    Protocol structure:
+    
+    struct dm_name_list {
+        uint64_t dev;
+        uint32_t next;          /* offset to the next record from                                    
+                                   the _start_ of this */
+        char name[0];
+    };
+
+    Again because I can have more than one device in kernel driver I need one parent 
+    dictionary and more children dictionaries.
+
+        <dict>
+          <dict ID="id">
+	   <key>dev</key>
+           <integer>...</integer>	
+
+	   <key>name</key>
+	   <string>...</string>	
+	  </dict>
+        </dict>
+	
+   2b) DM_DEV_RENAME 
+      This ioctl is called when libdevmapper want to rename device-mapper device.
+      Libdevmapper library appends null terminated string to dm_ioctl struct in 
+      userspace..
+      
+      <dict>
+            <key>name</key>
+      	    <string>...</string>
+      </dict>
+      
+   2c) DM_DEV_CREATE, DM_DEV_REMOVE, DM_DEV_STATUS 
+       Modify only dm_ioctl structure so I don't need to specify new structures.
+
+
+  3a) DM_TABLE_LOAD, DM_TABLE_STATUS
+      DM_TABLE_LOAD ioctl loads table to device. DM_TABLE_STATUS send info about 
+      every table for selected device to userspace. Table is different for every 
+      target basic table structure is this 
+
+      {start} {length} {target} {additional information}
+
+      e.g. 
+      0 100 zero 
+
+      0 100 linear /dev/wdba 384      
+
+      Protocol structure:
+
+      struct dm_target_spec {
+        uint64_t sector_start;
+        uint64_t length;
+        int32_t status;         /* used when reading from kernel only */
+
+        uint32_t next;
+
+        char target_type[DM_MAX_TYPE_NAME];
+        
+        /*
+         * Parameter string starts immediately after this object.
+         * Be careful to add padding after string to ensure correct
+         * alignment of subsequent dm_target_spec.
+	 */
+      };
+
+      <dict>
+	<key>sector_start</key>
+	<integer>...</integer>
+
+	<key>length</key>
+	<integer>...</integer>
+
+	<key>target_type</key>
+	<string>...</string>
+	
+	<key>aditional info</key>
+	<string>...</string>
+      </dict>

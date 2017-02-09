@@ -1,0 +1,33 @@
+#	$NetBSD: Makefile.rumpfscomp,v 1.5 2014/04/10 00:09:09 pooka Exp $
+#
+
+.include <bsd.own.mk>
+
+RUMPFSCOMP=	cd9660 efs ext2fs fdesc ffs hfs kernfs lfs msdos	\
+		nfs nilfs ntfs null ptyfs smbfs syspuffs sysvbfs	\
+		tmpfs udf umap union v7fs
+
+.if ${MKZFS} != "no"
+RUMPFSCOMP+=	zfs
+.endif
+
+RUMPFSCOMP+=	nfsserver
+
+RUMPVFSCOMP+=	fifo layer
+
+RUMPFSSYSCOMP+=	aio
+
+.for var in ${RUMPFSCOMP}
+RUMPFSLIBS+=lib${var}
+RUMPFSLDADD+=-lrumpfs_${var}
+.endfor
+
+.for var in ${RUMPVFSCOMP}
+RUMPFSLIBS+=lib${var}vfs
+RUMPFSLDADD+=-lrumpvfs_${var}fs
+.endfor
+
+.for var in ${RUMPFSSYSCOMP}
+RUMPFSLIBS+=lib${var}
+RUMPFSLDADD+=-lrumpvfs_${var}
+.endfor

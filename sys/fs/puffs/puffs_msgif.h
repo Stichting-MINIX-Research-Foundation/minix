@@ -42,9 +42,7 @@
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 
-#if !defined(__minix)
 #include <dev/putter/putter.h>
-#endif /* !defined(__minix) */
 
 #include <uvm/uvm_prot.h>
 
@@ -178,9 +176,7 @@ struct puffs_kargs {
 #define PUFFS_FHSIZE_MAX	1020	/* FHANDLE_SIZE_MAX - 4 */
 
 struct puffs_req {
-#if !defined(__minix)
 	struct putter_hdr	preq_pth;
-#endif /* ! defined(__minix) */
 
 	uint64_t		preq_id;
 	puffs_cookie_t		preq_cookie;

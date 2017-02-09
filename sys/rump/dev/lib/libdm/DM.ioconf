@@ -1,0 +1,8 @@
+#	$NetBSD: DM.ioconf,v 1.1 2015/08/20 11:51:12 christos Exp $
+#
+
+ioconf dm
+
+include "conf/files"
+
+pseudo-device	dm

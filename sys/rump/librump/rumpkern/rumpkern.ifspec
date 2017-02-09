@@ -1,0 +1,41 @@
+;	$NetBSD: rumpkern.ifspec,v 1.13 2014/04/25 13:10:42 pooka Exp $
+
+NAME|kern
+PUBHDR|include/rump/rumpkern_if_pub.h
+PRIVHDR|librump/rumpkern/rumpkern_if_priv.h
+WRAPPERS|librump/rumpkern/rumpkern_if_wrappers.c
+
+; type		| name		| args
+;
+
+int		|module_init	|const struct modinfo * const *, size_t
+int		|module_fini	|const struct modinfo *
+int		|kernelfsym_load|void *, uint64_t, char *, uint64_t
+
+struct uio *	|uio_setup	|void *, size_t, off_t, enum rump_uiorw
+size_t		|uio_getresid	|struct uio *
+off_t		|uio_getoff	|struct uio *
+size_t		|uio_free	|struct uio *
+
+struct kauth_cred*|cred_create	|uid_t, gid_t, size_t, gid_t *
+void		  |cred_put	|struct kauth_cred *
+
+; lwp and proc creation / switching interfaces
+int		|lwproc_rfork		|int
+int		|lwproc_newlwp		|pid_t
+void		|lwproc_switch		|struct lwp *
+void		|lwproc_releaselwp	|void
+struct lwp *	|lwproc_curlwp		|void
+void		|lwproc_sysent_usenative|void
+
+void		|allbetsareoff_setid	|pid_t, int
+
+; wrappers for etfs interfaces.  They are not handled by librump,
+; but having the function interfaces here makes it possible to always
+; link clients which can then get a runtime failure if components
+; handling etfs are not present.
+int		|etfs_register  |const char *, const char *, enum rump_etfs_type
+int		|etfs_register_withsize |const char *, const char *,	\
+					 enum rump_etfs_type, uint64_t,	\
+					 uint64_t
+int		|etfs_remove	|const char *

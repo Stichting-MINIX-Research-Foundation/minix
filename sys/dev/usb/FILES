@@ -1,0 +1,84 @@
+A small roadmap of the USB files:
+
+FILES			this file
+Makefile		to install .h files
+Makefile.usbdevs	to run devlist2h.awk
+TODO			just a list of things to do
+devlist2h.awk		script to generate usbdevs*.h
+ehci.c			Host controller driver for EHCI (just a stub now)
+ehcireg.h		Hardware definitions for EHCI (just a stub now)
+ehcivar.h		API for ehci.c
+ezload.c		EZ-USB firmware download subroutines
+ezload.h		API for ezload.c
+files.usb		config include file
+hid.c			subroutines to parse and access HID data
+hid.h			API for hid.c
+if_aue.c		USB Pegasus Ethernet driver
+if_auereg.h		  and definitions for it
+if_cue.c		USB CATC Ethernet driver
+if_cuereg.h		  and definitions for it
+if_kue.c		USB Kawasaki Ethernet driver
+if_kuereg.h		  and definitions for it
+if_upl.c		USB Prolific host-to-host driver
+kue_fw.h		Kawasaki Ethernet firmware
+ohci.c			Host controller driver for OHCI
+ohcireg.h		Hardware definitions for OHCI
+ohcivar.h		API for ohci.c
+uaudio.c		USB audio class driver
+uaudioreg.h		  and definitions for it
+ubt.c			USB Bluetooth driver
+ucom.c			TTY emulation for two bulk pipes
+ucomvar.h		TTY emulation interface
+uftdi.c			USB FTDI serial driver
+uftdireg.h		  and definitions for it
+ugen.c			generic driver that can handle access to any USB device
+uhci.c			Host controller driver for UHCI
+uhcireg.h		Hardware definitions for UHCI
+uhcivar.h		API for uhci.c
+uhid.c			USB generic HID driver
+uhidev.c		USB HID class driver
+uhidev.h		  and definitions for it
+uhub.c			USB hub driver
+uipaq.c			HP ipaq22xx driver
+ukbd.c			USB keyboard driver
+ukbdmap.c		wscons key mapping for ukbd
+ukbdvar.h		API for ukbd.c
+ulpt.c			USB printer class driver
+umass.c			USB mass storage wire protocol driver
+umass_isdata.c		In-System Design ATA over bulk-only driver
+umass_isdata.h		  and definitions for it
+umass_quirks.c		Table of strange umass devices
+umass_quirks.h		  and definitions for it
+umass_scsipi.c		umass command protocol driver
+umass_scsipi.h		  and definitions for it
+umassvar.h		definitions for umass.c
+umidi.c			USB MIDI driver
+umidi_quirks.c		Strange MIDI devices
+umidi_quirks.h		  and definitions for it
+umodem.c		USB modem (CDC ACM) driver
+ums.c			USB mouse driver
+urio.c			USB Diamond Rio500 driver
+urio.h			USB Diamond Rio500 defines
+usb.c			usb (bus) device driver
+usb.h			general USB defines
+usb_mem.c		memory allocation for DMAable memory
+usb_mem.h		API for usb_mem.c
+usb_quirks.c		table of non-conforming USB devices and their problems
+usb_quirks.h		API for usb_quirks.c
+usb_subr.c		various subroutines used by USB code
+usbcdc.h		USB CDC class definitions
+usbdevs			data base of known device
+usbdevs.h		generated from usbdevs
+usbdevs_data.h		generated from usbdevs
+usbdi.c			implementation of the USBDI API, which all drivers use
+usbdi.h			API for usbdi.c
+usbdi_util.c		utilities built on top of usbdi.h
+usbdi_util.h		API for usbdi_util.c
+usbdivar.h		internal defines and structures for usbdi.c
+uscanner.c		minimal USB scanner driver
+usscanner.c		driver for some SCSI-over-USB scanners
+usbhid.h		USB HID class definitions
+uts.c			USB touchscreen driver
+uvisor.c		USB Handsping Visor driver
+uyap.c			Initial firmware downloader for Y@P phones
+uyap_firmware.h		Firmware for the Y@P phone

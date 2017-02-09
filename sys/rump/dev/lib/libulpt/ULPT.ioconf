@@ -1,0 +1,11 @@
+#	$NetBSD: ULPT.ioconf,v 1.4 2010/08/30 11:52:10 pooka Exp $
+#
+
+ioconf ulpt
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root uhub*
+
+ulpt*   at uhub? port ? configuration ? interface ?

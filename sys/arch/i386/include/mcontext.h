@@ -141,9 +141,13 @@ int getmcontext(mcontext_t *mcp);
 #define MCF_MAGIC 0xc0ffee
 #define _MC_FPU_SAVED	0x001
 
-#endif /* defined(__minix) */
+#define	__UCONTEXT_SIZE	784
+
+#else
 
 #define	__UCONTEXT_SIZE	776
+
+#endif /* defined(__minix) */
 
 static __inline void *
 __lwp_getprivate_fast(void)

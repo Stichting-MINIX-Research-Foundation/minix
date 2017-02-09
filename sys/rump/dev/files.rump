@@ -1,0 +1,11 @@
+#	$NetBSD: files.rump,v 1.4 2013/09/17 00:50:19 pooka Exp $
+#
+
+device mainbus { }: pcibus
+attach mainbus at root
+
+device ugenhc: usbus, usbroothub
+attach ugenhc at mainbus
+
+device scsitest: scsi
+attach scsitest at mainbus

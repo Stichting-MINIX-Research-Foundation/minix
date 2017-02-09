@@ -1,0 +1,19 @@
+
+defpseudo agr:		ifnet, ether # XXX
+file	net/agr/if_agr.c		agr		needs-flag
+file	net/agr/if_agrsoftc.c		agr
+file	net/agr/if_agrsubr.c		agr
+file	net/agr/if_agrtimer.c		agr
+file	net/agr/if_agrmonitor.c		agr
+file	net/agr/if_agrether.c		agr & ether
+file	net/agr/if_agrether_hash.c	agr & ether
+file	net/agr/ieee8023ad_marker.c	agr & ether
+file	net/agr/ieee8023ad_lacp.c	agr & ether
+file	net/agr/ieee8023ad_lacp_select.c agr & ether
+file	net/agr/ieee8023ad_lacp_timer.c	agr & ether
+file	net/agr/ieee8023ad_lacp_sm_rx.c	agr & ether
+file	net/agr/ieee8023ad_lacp_sm_mux.c agr & ether
+file	net/agr/ieee8023ad_lacp_sm_ptx.c agr & ether
+file	net/agr/ieee8023ad_lacp_sm_tx.c	agr & ether
+file	net/agr/ieee8023ad_lacp_debug.c	agr & ether
+file	net/agr/ieee8023_tlv.c		agr & ether

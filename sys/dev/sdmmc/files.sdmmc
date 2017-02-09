@@ -1,0 +1,23 @@
+#      $NetBSD: files.sdmmc,v 1.4 2014/10/02 21:49:22 jmcneill Exp $
+#      $OpenBSD: files.sdmmc,v 1.2 2006/06/01 21:53:41 uwe Exp $
+#
+# Config file and device description for machine-independent SD/MMC code.
+# Included by ports that need it.
+
+defflag	opt_sdmmc.h			SDMMC_DEBUG SDHC_DEBUG SDMMCCISDEBUG
+defflag	opt_sdmmc.h			LD_SDMMC_DEBUG
+
+device sdmmc {}
+attach sdmmc at sdmmcbus
+file	dev/sdmmc/sdmmc.c		sdmmc
+file	dev/sdmmc/sdmmc_cis.c		sdmmc
+file	dev/sdmmc/sdmmc_io.c		sdmmc
+file	dev/sdmmc/sdmmc_mem.c		sdmmc
+
+attach ld at sdmmc with ld_sdmmc
+file	dev/sdmmc/ld_sdmmc.c		ld_sdmmc
+
+# Bluetooth SDIO cards (Type-A/B)
+device sbt: btbus, bluetooth
+attach sbt at sdmmc
+file	dev/sdmmc/sbt.c			sbt

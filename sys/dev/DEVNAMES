@@ -1,0 +1,1599 @@
+#	$NetBSD: DEVNAMES,v 1.294 2015/08/27 14:04:07 nonaka Exp $
+#
+# This file contains all used device names and defined attributes in
+# alphabetical order. New devices added to the system somewhere should first
+# be checked for uniqueness here and thereafter added to this file.
+#
+# NOTE: Before adding devices to this list, ensure the appropriate
+#       man pages exist.
+#
+a12c			alpha
+a12dc			alpha
+a2kbbc			amiga
+a2kbbc			amigappc
+a34kbbc			amiga
+a34kbbc			amigappc
+a9tmr			arm
+a9wdt			arm
+aac			MI
+abtn			macppc
+abus			vax
+ac97			MI		Attribute
+acardide		MI
+acc			vax
+acemidi			MI
+aceride			MI
+aclock			arc
+acphy			MI
+acpi			MI
+acpiacad		MI
+acpibat			MI
+acpibut			MI
+acpiec			MI
+acpilid			MI
+acpismbus		MI
+acpitz			MI
+ad			vax
+ad1848			MI		Attribute
+adb			mac68k
+adb			macppc
+adc			hpcsh
+ade			alpha
+adt7463c		MI
+adt7467c		MI
+adm1030c		MI
+adv			MI
+adw			MI
+ae			evbmips
+ae			mac68k
+aed			mac68k
+aed			macppc
+afsc			amiga
+afsc			amigappc
+aftsc			amiga
+aftsc			amigappc
+agp			MI
+agr			MI
+aha			MI
+ahb			MI
+ahc			MI
+ahc_aic77xx		MI		Attribute
+ahc_seeprom		MI		Attribute
+ahd			MI
+ahsc			amiga
+ahsc			amigappc
+ai			MI
+aibs			MI
+aic			MI
+akbd			mac68k
+akbd			macppc
+algor			arc
+alpha_pci_sgmap_pte32	alpha		Attribute
+alpha_pci_sgmap_pte64	alpha		Attribute
+alpha_sgmap		alpha		Attribute
+alpha_shared_intr	alpha		Attribute
+amdpm			MI
+amhphy			MI
+amibus_b16		amiga		Attribute
+amibus_bl		amiga		Attribute
+amibus_wb		amiga		Attribute
+amibus_ww		amiga		Attribute
+amps			acorn32
+amr			MI
+ams			mac68k
+ams			macppc
+an			MI
+ap			newsmips
+apc			sparc
+apecs			alpha
+apm			i386
+aps			MI
+arbus			evbmips
+arc			MI		Attribute
+arckbd			acorn26
+arcmsr			MI
+arcpp			acorn26
+arcvideo		acorn26
+aria			MI
+armgic			arm
+arml2cc			arm
+armperiph		arm
+arp			MI		Attribute
+artsata			MI
+asc			acorn32
+asc			alpha
+asc			arc
+asc			mac68k
+asc			mipsco
+asc			pmax
+asc			vax
+asiop			amiga		Attribute
+asiop			amigappc	Attribute
+ast			MI
+aster			amiga
+aster			amigappc
+ata			MI		Attribute
+ata_dma			MI		Attribute
+ata_hl			MI		Attribute
+ata_piobm		MI		Attribute
+ata_udma		MI		Attribute
+atabus			MI
+atapi			MI		Attribute
+atapibus		MI
+ataraid			MI
+ate			MI
+ath			MI
+atm			MI		Attribute
+atppc			MI
+attimer			MI
+atu			MI
+atw			MI
+atzsc			amiga
+atzsc			amigappc
+auacer			MI
+aubus			evbmips
+aucc			amiga
+aucc			amigappc
+auconv			MI		Attribute
+audio			MI
+audio			MI		Attribute
+audioamd		MI
+audiobell		MI		Attribute
+audiocs			MI
+aue			MI
+augpio			evbmips
+auich			MI
+auixp			MI
+aumac			evbmips
+aupci			evbmips
+aupcmcia		evbmips
+aurateconv		MI		Attribute
+aurtc			evbmips
+auspi			evbmips
+autri			MI
+auvia			MI
+auxio			sparc64
+auxiotwo		sparc
+auxreg			sparc
+avmebus			atari
+awi			MI
+axe			MI
+az			MI
+azalia			MI
+bah			MI
+bandit			macppc
+bba			MI
+bce			MI
+bcsp			MI
+be			MI
+bge			MI
+bha			MI
+bi			MI
+bicc			MI
+bios32			i386		Attribute
+bioscall		i386		Attribute
+bivideo			hpcmips
+bktr			MI
+bm			macppc
+bcmcca			arm
+bcmccb			arm
+bcmeth			arm
+bcmi2c			arm
+bcmmdio			arm
+bcmnand			arm
+bcmpax			arm
+bcmrng			arm
+bcmsw			arm
+bcmusb			arm
+bmd			x68k
+bmtphy			MI
+boca			MI
+bonito			algor
+bpp			MI
+bppcsc			amiga
+bppcsc			amigappc
+brgphy			MI
+bt3c			MI
+btbc			MI
+bt_dac			sparc		Attribute
+bt_dac			sparc64		Attribute
+bthidev			MI
+bthub			MI
+btkbd			MI
+btl			arc
+btms			MI
+btnmgr			hpcmips
+btsco			MI
+btuart			MI
+btvmei			MI
+btvmeii			MI
+button			hpcmips
+bwtwo			sparc
+bwtwo			sparc64
+bwtwo			sun2
+bwtwo			sun3
+bzivsc			amiga
+bzivsc			amigappc
+bzsc			amiga
+bzsc			amigappc
+bztzsc			amiga
+bztzsc			amigappc
+cac			MI
+cardbus			MI
+cardslot		MI
+cas			MI
+cbb			MI
+cbbus			MI		Attribute
+cbiiisc			amiga
+cbiiisc			amigappc
+cbiisc			amiga
+cbiisc			amigappc
+cbsc			amiga
+cbsc			amigappc
+cd			MI
+cd18xx			MI		Attribute
+cdce			MI
+cec			MI
+cfb			alpha
+cfb			pmax
+cgeight			sparc
+cgeight			sparc64
+cgfour			sparc
+cgfour			sparc64
+cgfour			sun3
+cgfourteen		sparc
+cgfourteen		sparc64
+cgsix			sparc
+cgsix			sparc64
+cgthree			sparc
+cgthree			sparc64
+cgtwo			sparc
+cgtwo			sparc64
+cgtwo			sun3
+ch			MI
+cia			alpha
+ciphy			MI
+cir			MI
+ciss			MI
+clcd			MI
+clcs			MI
+clct			MI
+clmpcc			MI
+clock			acorn32
+clock			amiga
+clock			amigappc
+clock			atari
+clock			cats
+clock			luna68k
+clock			mvme68k
+clock			netwinder
+clock			sparc
+clock			sparc64
+clock			sun2
+clock			sun3
+clock			x68k
+clockctl		MI
+clockport		amiga
+clockportbus		amiga
+cmdide			MI
+cmi			vax
+cmpci			MI
+cms			MI
+cnw			MI
+com			MI
+commulti		MI		Attribute
+cosc			acorn32
+cpc			MI
+cpcbus			MI		Attribute
+cpciic			MI
+cpctim			MI
+cprofb			MI
+cpsw			evbarm
+cpu			acorn26
+cpu			acorn32
+cpu			algor
+cpu			alpha
+cpu			amiga
+cpu			amigappc
+cpu			arc
+cpu			atari
+cpu			cats
+cpu			cobalt
+cpu			evbarm
+cpu			evbmips
+cpu			evbppc
+cpu			hpcarm
+cpu			hpcmips
+cpu			hpcsh
+cpu			iyonix
+cpu			macppc
+cpu			mipsco
+cpu			netwinder
+cpu			newsmips
+cpu			pmax
+cpu			prep
+cpu			sbmips
+cpu			sgimips
+cpu			shark
+cpu			sparc
+cpu			sparc64
+cpu			vax
+cpu			x68k
+cpunode			evbppc
+crime			sgimips
+crypto			MI		Attribute
+cs			MI
+cs80bus			MI
+csa			acorn32
+csc			acorn32
+ct			hp300
+ct			vax
+cue			MI
+cy			MI
+cy82c693		MI
+cypide			MI
+cz			MI
+#daic			MI
+dbcool			MI
+dbri			sparc
+dcm			hp300
+ddc			MI
+ddc_read_edid		MI		Attribute
+de			MI
+depca			MI
+dge			MI
+dh			vax
+dhu			MI
+diic			powerpc
+dio			hp300
+dl			MI
+dm			MI
+dma			MI
+dma			sun3
+dmac			newsmips
+dmac			x68k
+dmc			MI
+dmf			vax
+dmphy			MI
+dmz			vax
+dn			vax
+dp8390nic		MI		Attribute
+dpt			MI
+dpti			MI
+drbbc			amiga
+drbbc			amigappc
+drsc			amiga
+drsc			amigappc
+drsupio			amiga
+drsupio			amigappc
+dsrtc			cats
+dsrtc			evbppc
+dtide			MI
+dtimer			arm
+duart			powerpc
+dvbox			hp300
+dwlpx			alpha
+dz			MI
+e500wdog		powerpc
+ea			MI
+eap			MI
+eb			MI
+ebus			sparc
+ebus			sparc64
+ec			MI
+ec			sun2
+eca			acorn26
+eccmemctl		sparc
+eco			MI		Attribute
+ed			MI (MCA)
+ed			amiga
+ed			amigappc
+edc			MI (MCA)
+edid			MI		Attribute
+eeprom			sparc
+eeprom			sparc64
+eeprom			sun3
+ef			MI
+efa			amiga
+eg			MI
+ega			MI
+eh			acorn26
+ehci			MI
+ei			MI
+eisa			MI
+eisabus			MI		Attribute
+el			MI
+elink			MI		Attribute
+elmc			MI (MCA)
+emac			evbppc
+em4k			amiga
+empb			amiga
+empm			amiga
+empsc			amiga
+empsc			amigappc
+emuxki			MI
+en			MI
+envctrl			sparc64
+ep			MI
+epclk			evbarm
+epcom			evbarm
+epe			evbarm
+epic			MI
+epsoc			evbarm
+es			amiga
+es			amigappc
+esa			MI
+esc			acorn32		Attribute
+esh			MI
+esiop			MI
+esm			MI
+eso			MI
+esp			MI
+ess			MI
+et			MI
+et4k			atari
+ether			MI		Attribute
+event			amiga		Attribute
+event			amigappc	Attribute
+event			atari		Attribute
+event			x68k		Attribute
+ex			MI
+exphy			MI
+ezload			MI		Attribute
+fb			luna68k
+fb			news68k
+fb			newsmips
+fb			sparc		Attribute
+fb			sun2		Attribute
+fb			sun3		Attribute
+fcom			cats
+fcom			netwinder
+fd			acorn32
+fd			alpha
+fd			amiga
+fd			amigappc
+fd			arc
+fd			atari
+fd			bebox
+fd			hpcmips
+fd			i386
+fd			mac68k
+fd			news68k
+fd			newsmips
+fd			prep
+fd			sparc
+fd			sparc64
+fd			sun3
+fd			x68k
+fdc			acorn32
+fdc			alpha
+fdc			amiga
+fdc			amigappc
+fdc			arc
+fdc			atari
+fdc			bebox
+fdc			evbsh3
+fdc			hpcmips
+fdc			i386
+fdc			macppc
+fdc			mmeye
+fdc			news68k
+fdc			newsmips
+fdc			prep
+fdc			sparc
+fdc			sparc64
+fdc			sun3
+fdc			x68k
+fddi			MI		Attribute
+fea			MI
+fec			arm
+ffb			sparc64
+fhpib			hp300
+finsio			MI
+fiq			acorn26		Attribute
+flash			evbppc
+flsc			amiga
+flsc			amigappc
+fms			MI
+fmv			MI
+footbridge		cats		Attribute
+footbridge		netwinder	Attribute
+fpa			MI
+fpu			acorn26
+fpu			mac68k
+frodo			hp300
+fta			MI
+fwbus			MI		Attribute
+fwip			MI
+fwohci			MI
+fxp			MI
+g2bus			dreamcast
+g740a			MI
+gapspci			dreamcast
+gayle			amiga		Attribute
+gayle			amigappc	Attribute
+gbox			hp300
+gbus			alpha
+gcscpcib		i386
+gdrom			dreamcast
+gem			MI
+gentbi			MI
+geodeide		MI
+gfe			MI
+gic			arm
+gio			sgimips
+giobus			sgimips		Attribute
+glxtphy			MI
+gm			macppc
+gpbus			hpcmips
+gpbusif			hpcmips
+gphyter			MI
+gpib			MI
+gpio			evbppc
+gpio			MI
+gpioiic			MI
+gpioow			MI
+gpiosim			MI
+grackle			macppc
+grf			amiga
+grf			amigappc
+grf			hp300
+grf			x68k
+grfb			atari		Attribute
+grfb			x68k		Attribute
+grfbus			amiga		Attribute
+grfbus			amigappc	Attribute
+grfbus			atari
+grfbus			mac68k		Attribute
+grfbus			x68k
+grfcc			amiga
+grfcc			amigappc
+grfcc			atari
+grfcl			amiga
+grfcl			amigappc
+grfcv			amiga
+grfcv			amigappc
+grfcv3d			amiga
+grfcv3d			amigappc
+grfdev			hp300		Attribute
+grfet			amiga
+grfet			amigappc
+grfet			atari
+grfrh			amiga
+grfrh			amigappc
+grfrt			amiga
+grfrt			amigappc
+grful			amiga
+grful			amigappc
+gsfb			playstation2
+gsip			MI
+gt			cobalt
+gt			evbmips
+gt			MI
+gten			prep
+gtidmac			MI
+gtmpsc			MI
+gtpci			MI
+gttwsi			MI
+gtsc			amiga
+gtsc			amigappc
+gus			MI
+guspnp			MI
+gvpbus			amiga
+gvpbus			amigappc
+hb			news68k
+hb			newsmips
+hcide			MI
+hcsc			MI
+hd44780			MI		Attribute
+hd64461if		hpcsh
+hd64461pcmcia		hpcsh
+hd64461video		hpcsh
+hd64465if		hpcsh
+hd64465pcmcia		hpcsh
+hd64465video		hpcsh
+hd64570			MI		Attribute
+hdc			vax
+hdfd			atari
+hid			MI		Attribute
+hifn			MI
+hippi			MI		Attribute
+hme			MI
+hp			vax
+hpc			sgimips
+hpcfb			hpcarm
+hpcfb			hpcmips
+hpcfb			hpcsh
+hpcfbif			hpcarm		Attribute
+hpcfbif			hpcmips		Attribute
+hpcfbif			hpcsh		Attribute
+hpckbd			hpcarm
+hpckbd			hpcsh
+hpckbdif		hpcarm		Attribute
+hpckbdif		hpcsh		Attribute
+hpibbus			hp300
+hpibdev			hp300		Attribute
+hptide			MI
+ht			vax
+hydra			acorn32
+hyper			amiga
+hyper			amigappc
+hyper			hp300
+i2c			MI		Attribute
+i2c_eeprom		MI		Attribute
+i8042			shark		Attribute
+i82586			MI		Attribute
+iavc			MI
+ibmcd			MI
+ibus			pmax
+ibus			vax
+ichlpcib		i386
+icp			MI
+icpsp			MI
+ics2101			MI		Attribute
+icside			acorn32
+icsphy			MI
+idc			vax
+idesc			amiga
+idesc			amigappc
+ie			MI
+ie			acorn32
+ie			sun3
+ieee1394		MI
+ifpci			MI
+ifuba			MI		Attribute
+igsfb			MI
+iha			MI
+iic			acorn26
+iic			acorn32
+ik			vax
+il			MI
+imc			sgimips
+inphy			MI
+intersil7170		MI		Attribute
+interwave		MI		Attribute
+intio			hp300
+intio			next68k
+intio			x68k
+intreg			sun3
+intvid			mac68k
+ioasic			MI
+ioat			MI
+iobl			amiga
+iobus			acorn26
+ioc			acorn26
+ioeb			acorn26
+iomd			acorn32
+iomdiic			acorn32
+iomdkbc			acorn32
+iommu			sparc
+iommu			sun3
+iop			MI
+iophy			MI
+iopl			MI
+iopsp			MI
+ipaqbus			hpcarm
+ipaqlcd			hpcarm
+ipaqpcic		hpcarm
+ipmi			amd64
+ipmi			i386
+ipmi			xen
+ippp			MI
+ipw			MI
+irdasir			MI		Attribute
+irframe			MI
+irframedrv		MI		Attribute
+irif			hpcmips
+irip			MI
+isa			MI
+isabeep			alpha
+isabeep			prep
+isabr			arc
+isabus			MI		Attribute
+isabus			atari
+isadma			MI		Attribute
+isapnp			MI
+isdn			MI
+isdnbchan		MI
+isdnctl			MI
+isdntel			MI
+isdntrc			MI
+isic			MI
+isp			MI
+itesio			MI
+it8368e			hpcmips
+ite			amiga
+ite			amigappc
+ite			atari
+ite			hp300
+ite			x68k
+iteide			MI
+ivsc			amiga
+ivsc			amigappc
+iwi			MI
+iwic			MI
+iwm			mac68k
+ix			MI
+ixpclk			evbarm
+ixpide			MI
+ixpio			evbarm
+ixpsip			evbarm
+iy			MI
+j6x0lcd			hpcsh
+j6x0pwr			hpcsh
+j6x0tp			hpcsh
+j720kbd			hpcarm
+j720lcd			hpcarm
+j720pwr			hpcarm
+j720ssp			hpcarm
+j720tp			hpcarm
+jme			MI
+joy			arc
+joy			bebox
+joy			cats
+joy			i386
+joy			prep
+joy			shark
+kb			news68k
+kb			newsmips
+kbc			news68k
+kbd			amiga
+kbd			amigappc
+kbd			atari
+kbd			sparc
+kbd			sparc64
+kbd			sun2
+kbd			sun3
+kbd			x68k
+kdb			MI
+kft			alpha
+kse			MI
+kue			MI
+latches			acorn26
+lc			MI
+lca			alpha
+ld			MI
+le			MI
+le24			MI		Attribute
+le32			MI		Attribute
+le_dec_subr		MI		Attribute
+lebuffer		MI
+ledma			MI
+leo			atari
+lfmiop			MI
+lii			MI
+lkkbd			alpha
+lkkbd			vax
+lkms			vax
+lm			MI
+lm700x			MI
+lmc			MI
+lmenv			MI
+lms			bebox
+lms			i386
+lockstat		MI
+lom			sparc64
+lp			atari
+lp			vax
+lpa			vax
+lpt			MI
+lpt			amiga
+lpt			amigappc
+lpt			mvme68k
+lpt			sgimips
+lpt			sparc64
+lsi64854		MI		Attribute
+lxtphy			MI
+m25p			MI
+m38813c			hpcmips
+mace			sgimips
+macepci			sgimips
+macfb			mac68k
+machfb			sparc64
+macofcons		macppc
+macvid			mac68k
+magma			MI
+mainbus			acorn32
+mainbus			algor
+mainbus			alpha
+mainbus			amiga
+mainbus			amigappc
+mainbus			arc
+mainbus			atari
+mainbus			bebox
+mainbus			bebox		Attribute
+mainbus			cats
+mainbus			cobalt
+mainbus			evbarm
+mainbus			evbmips
+mainbus			evbppc
+mainbus			hp300
+mainbus			hpcarm
+mainbus			hpcmips
+mainbus			hpcsh
+mainbus			i386
+mainbus			i386		Attribute
+mainbus			iyonix
+mainbus			luna68k
+mainbus			mac68k
+mainbus			macppc
+mainbus			macppc		Attribute
+mainbus			mvme68k
+mainbus			netwinder
+mainbus			news68k
+mainbus			news68k
+mainbus			newsmips
+mainbus			next68k
+mainbus			ofppc
+mainbus			ofppc		Attribute
+mainbus			pmax
+mainbus			prep
+mainbus			prep		Attribute
+mainbus			sgimips
+mainbus			sh3
+mainbus			sh3		Attribute
+mainbus			shark
+mainbus			sparc
+mainbus			sparc64
+mainbus			sparc64		Attribute
+mainbus			sun2
+mainbus			sun3
+mainbus			vax
+mainbus			x68k
+makphy			MI
+maple			dreamcast
+mb86960			MI		Attribute
+mba			vax
+mbe			MI
+mbio			sun2
+mbmem			sun2
+mbpp			MI
+mc			mac68k
+mc			macppc
+mca			i386
+mcbus			alpha
+mcclock			algor
+mcclock			alpha
+mcclock			evbmips
+mcclock			evbppc
+mcclock			pmax
+mcclock			prep
+mcd			MI
+mcmem			alpha
+mcp23s17gpio		MI
+mcp3kadc		MI
+mcp48x1dac		MI
+mcpcia			alpha
+mdio			evbppc
+mec			sgimips
+mediabay		macppc
+melody			amiga
+melody			amigappc
+mem			vax
+memerr			sun3
+memreg			sparc
+mesh			macppc
+mfb			pmax
+mfc			amiga
+mfc			amigappc
+mfcp			amiga
+mfcp			amigappc
+mfcs			amiga
+mfcs			amigappc
+mfp			x68k
+mgnsc			amiga
+mgnsc			amigappc
+mha			x68k
+mhzc			MI
+midi			MI
+midibus			MI		Attribute
+midisyn			MI		Attribute
+mii			MI		Attribute
+mii_bitbang		MI		Attribute
+mii_phy			MI		Attribute
+mk48txx			MI		Attribute
+mkbd			dreamcast
+mkclock			mipsco
+mkclock			news68k
+mkclock			newsmips
+mkclock			prep
+mlcd			dreamcast
+mlhsc			amiga
+mlhsc			amigappc
+mlx			MI
+mly			MI
+mmem			dreamcast
+mms			bebox
+mms			dreamcast
+mms			i386
+motg			MI
+motoi2c			MI		Attribute
+moxa			MI
+mppb			amiga
+mppb			amigappc
+mpt			MI
+mpu			MI
+mr			MI
+ms			amiga
+ms			amigappc
+ms			news68k
+ms			newsmips
+ms			sparc
+ms			sparc64
+ms			sun2
+ms			sun3
+ms			x68k
+msc			amiga
+msc			amigappc
+mscp			MI		Attribute
+mscpbus			MI
+msk			MI
+msiiep			sparc
+msiop			mvme68k		Attribute
+mspcic			sparc
+mt			MI
+mt			hp300
+mtc			MI
+mtd			MI
+mtty			MI
+mu			vax
+mulaw			MI		Attribute
+mvgbe			MI
+mvpex			MI
+mvsata			MI
+nca			MI
+ncr5380sbc		MI		Attribute
+ncr53c9x		MI		Attribute
+ncrsc			mvme68k
+ncrscsi			atari
+ncrscsi			mac68k
+ne			MI
+necpb			arc
+nele			MI
+nell			MI
+neo			MI
+neptune			x68k
+newgpbusif		hpcmips
+nextdisplay		next68k
+nextkbd			next68k
+nfe			MI
+nfsmb			MI
+nhpib			hp300
+ni			MI
+njata			MI
+njs			MI
+np			vax
+npx			i386
+nsclpcsio		MI
+nsio			acorn26		Attribute
+nsphy			MI
+nsphyter		MI
+ntwoc			MI
+nubus			mac68k
+nvr			atari
+nvram			macppc
+oak			MI
+obio			evbmips
+obio			evbppc
+obio			iyonix
+obio			mac68k
+obio			macppc
+obio			macppc		Attribute
+obio			mipsco
+obio			prep
+obio			sparc
+obio			sun2
+obio			sun3
+obio_norm		mac68k		Attribute
+obio_scsi5380		mac68k		Attribute
+obmem			sun2
+obmem			sun3
+oboe			MI
+oclock			sparc
+oclock			sun3
+of_network_dev		MI		Attribute
+ofb			macppc
+ofbus			MI
+ofbus			MI		Attribute
+ofcons			MI
+ofdisk			MI
+ofisa			MI
+ofisa			MI		Attribute
+ofisapc			shark
+ofisascr		shark
+ofnet			MI
+ofpci			sparc64
+ofppb			sparc64
+ofrom			shark
+ofrtc			MI
+ohci			MI
+oj6sh			MI
+oldscsi			pmax		Attribute
+oldscsibus		pmax
+oosiop			MI
+openfirm		macppc
+openfirm		ofppc
+openfirm		shark
+openfirm		sparc64
+opl			MI
+opm			x68k
+opms			arc
+opms			shark
+optiide			MI
+osiop			MI
+otgsc			amiga
+otgsc			amigappc
+p5bus			amiga
+p5bus			amigappc
+p5membar		amiga
+p5membar		amigappc
+p5pb			amiga
+p5pb			amigappc
+panel			cobalt
+pad			MI
+par			amiga
+par			amigappc
+par			x68k
+parport			MI		Attribute
+pas			MI
+pbcpcibr		arc
+pc			arc
+pc			bebox
+pc			i386
+pc			shark
+pcc			mvme68k
+pccard			amiga
+pcconskbd		bebox
+pcconskbd		i386
+pcctwo			mvme68k
+pcdisplay		MI
+pcdisplayops		MI		Attribute
+pceb			alpha
+pceb			i386
+pcf8563rtc		MI
+pchb			bebox
+pchb			cobalt
+pchb			evbmips
+pchb			i386
+pchb			macppc
+pchb			prep
+pci			MI
+pcib			algor
+pcib			bebox
+pcib			cats
+pcib			cobalt
+pcib			evbmips
+pcib			i386
+pcib			netwinder
+pcib			prep
+pcibus			MI		Attribute
+pcibus			atari
+pcic			algor
+pcic			alpha
+pcic			hpcmips
+pcic			i386
+pcie			evbppc
+pciide			MI
+pcivga			arc
+pcix			evbppc
+pckbc			MI
+pckbcport		bebox		Attribute
+pckbcport		i386		Attribute
+pckbd			MI
+pckbd			hpcmips
+pckbport		MI		Attribute
+pckbport_machdep_cnattach MI		Attribute
+pcmb			i386
+pcmcia			MI
+pcmcia			arc		Attribute
+pcmciabus		MI		Attribute
+pcmciaslot		MI		Attribute
+pcmcom			MI
+pcn			MI
+pcons			sparc64
+pcppi			MI
+pcscp			MI
+pdcide			MI
+pdcsata			MI
+pdq			MI		Attribute
+pfb			bebox
+pfckbd			hpcsh
+pica			arc
+piixide			MI
+pioc			acorn32
+plip			MI
+plum			hpcmips
+plumicu			hpcmips
+plumif			hpcmips
+plumiobus		hpcmips
+plumiobusif		hpcmips
+plumisab		hpcmips
+plumpcmcia		hpcmips
+plumpower		hpcmips
+plumvideo		hpcmips
+pm			pmax
+pms			MI
+pnaphy			MI
+pnozz			sparc
+podloader		MI		Attribute
+podulebus		MI
+power			sparc
+power			sparc64
+pp			sun3
+ppb			MI
+ppbus			MI
+ppi			hp300
+pps			MI
+ps			vax
+psh3lcd			hpcsh
+psh3tp			hpcsh
+psm			sparc64
+psycho			sparc64
+ptcd			amd64
+ptcd			i386
+ptsc			acorn32
+puc			MI
+pvr			dreamcast
+pwctl			hpcmips
+pwdog			MI
+px			pmax
+pxg			MI
+qd			MI
+qe			MI
+qec			MI
+qfont			MI		Attribute
+qms			acorn32
+qn			amiga
+qn			amigappc
+qsphy			MI
+qt			MI
+qv			vax
+ra			MI
+racd			MI
+radio			MI
+radio			MI		Attribute
+rambo			mipsco
+rapide			acorn32
+rasops1			MI		Attribute
+rasops15		MI		Attribute
+rasops16		MI		Attribute
+rasops2			MI		Attribute
+rasops24		MI		Attribute
+rasops32		MI		Attribute
+rasops8			MI		Attribute
+ray			MI
+rb			vax
+rbox			hp300
+rd			hp300
+rd			vax
+re			MI
+repulse			amiga
+repulse			amigappc
+rf			MI
+rfc			MI
+rk			vax
+rl			vax
+rlc			vax
+rt			MI
+rtc			acorn26
+rtc			acorn32
+rtc			evbmips
+rtc			hp300
+rtc			evbppc
+rtc			sparc
+rtc			x68k
+rtfps			MI
+rtii			MI
+rtk			MI
+rtl80x9			MI		Attribute
+rtsx			MI
+rtwn			MI
+rum			MI
+run			MI
+rx			MI
+ry			vax
+rz			pmax
+s390rtc			MI
+sab			MI
+sableio			alpha
+sacc			hpcarm
+sacom			hpcarm
+sacpcic			hpcarm
+saip			hpcarm
+saost			hpcarm
+satalink		MI
+satlink			MI
+satmgr			sandpoint
+sb			MI
+sbc			mac68k
+sbdsp			MI		Attribute
+sbi			vax
+sbic			acorn32		Attribute
+sbic			amiga		Attribute
+sbic			amigappc	Attribute
+sbic			mvme68k		Attribute
+sbmac			sbmips
+sbobio			sbmips
+sbp			MI
+sbscd			sbmips
+sbscn			sbmips
+sbtimer			sbmips
+sbus			MI
+sbus			playstation2
+sc			MI
+sc			newsmips
+sc			vax
+schide			MI
+sci			amiga		Attribute
+sci			amigappc	Attribute
+sci			evbsh3
+scif			evbsh3
+scif			hpcsh
+scr			shark
+scsi			MI		Attribute
+scsibus			MI
+scsirom			x68k
+sd			MI
+sdhc			MI
+sdmmc			MI
+sdtemp			MI
+se			MI
+sea			MI
+sebuf			sun3
+sec			MI
+sed			hpcarm
+seeq8005		MI		Attribute
+ser			amiga
+ser			amigappc
+ser			atari
+ses			MI
+sf			MI
+sf2r			MI
+sfas			acorn32		Attribute
+sfb			alpha
+sfb			pmax
+sgec			MI		Attribute
+shb			evbsh3
+shb			hpcsh
+shb			mmeye
+shpcic			evbsh3
+shpcic			mmeye
+si			MI
+si			news68k
+si			sun3
+sii			pmax
+siisata			MI
+simide			acorn32
+sio			alpha
+sio			luna68k
+sio16			sparc
+sio16			sparc64
+siop			MI
+siop_common		MI		Attribute
+siopng			amiga		Attribute
+siotty			luna68k
+sip			MI
+siside			MI
+sk			MI
+skbd			hpcmips
+skbdif			hpcmips
+slhci			MI
+slide			MI
+sm			MI
+smap			playstation2
+smc93cx6		MI		Attribute
+smg			vax
+smsh			MI
+sn			arc
+sn			mac68k
+sn			newsmips
+sparcvme		sparc
+spc			MI
+spckbd			shark		Attribute
+spd			playstation2
+spi			MI
+spic			MI
+spif			sparc
+spif			sparc64
+spifi			newsmips
+splash			MI		Attribute
+spkr			MI
+sppp			MI		Attribute
+spx			vax
+sqphy			MI
+ss			MI
+st			MI
+ste			MI
+stge			MI
+sti			MI
+stpcide			MI
+su			MI
+supio			amiga		Attribute
+supio			amigappc	Attribute
+sv			MI
+sw			sparc
+swcrypto		MI
+sysbeep			cats
+sysbeep			i386
+sysmon			MI
+sysmon_envsys		MI		Attribute
+sysmon_wdog		MI		Attribute
+tc			MI
+tc5165buf		hpcmips
+tcasic			alpha
+tcbus			MI		Attribute
+tcds			alpha
+tcic			i386
+tcom			MI
+tctrl			sparc
+tcx			sparc
+tcx			sparc64
+tdvfb			MI
+te			vax
+tea5757			MI
+tfb			MI
+tga			MI
+ti			MI
+tiotg			arm
+tifb			arm
+timer			news68k
+timer			sparc
+timer			sparc64
+tj			vax
+tl			MI
+tlp			MI
+tlphy			MI
+tlsb			alpha
+tlsbmem			alpha
+tmp121temp		MI
+tms320av110		MI		Attribute
+tod			sun2
+token			MI		Attribute
+topcat			hp300
+tpcalib			hpcarm		Attribute
+tpcalib			hpcmips		Attribute
+tpcalib			hpcsh		Attribute
+tpcic			sparc
+tpm			MI
+tqphy			MI
+tr			MI
+tr_isa			MI		Attribute
+tra			MI
+trm			MI
+ts			MI
+tsc			alpha
+tsciic			alpha
+tscs			MI
+tsec			powerpc
+tslcd			evbarm
+tslot			sparc
+tsp			alpha
+tspld			evbarm
+tsrtc			evbarm
+tt			pmax
+ttwoga			alpha
+ttwopci			alpha
+twe			MI
+tx3912video		hpcmips
+tx39biu			hpcmips
+tx39clock		hpcmips
+tx39icu			hpcmips
+tx39io			hpcmips
+tx39ir			hpcmips
+tx39power		hpcmips
+tx39sib			hpcmips
+tx39uart		hpcmips
+txcom			hpcmips
+txcomif			hpcmips
+txcsbus			hpcmips
+txcsbusif		hpcmips
+txioman			hpcmips
+txiomanif		hpcmips
+txp			MI
+txsibif			hpcmips
+txsim			hpcmips
+tz			pmax
+uaudio			MI
+uba			MI
+ubsa			MI
+ubsec			MI
+ubt			MI
+ucb			hpcmips
+ucbif			hpcmips
+ucbio			hpcmips
+ucbioport		hpcmips
+ucbsnd			hpcmips
+ucbtp			hpcmips
+ucom			MI
+ucombus			MI		Attribute
+ucycom			MI
+uda			MI
+udav			MI
+udsbr			MI
+uep			MI
+uftdi			MI
+ug			MI
+ugen			MI
+uha			MI
+uhci			MI
+uhid			MI
+uhidbus			MI		Attribute
+uhidev			MI
+uhmodem			MI
+uhso			MI
+uhub			MI
+uipaq			MI
+uirda			MI
+uk			MI
+ukbd			MI
+ukphy			MI
+ukphy_subr		MI		Attribute
+ukyopon			MI
+ulpt			MI
+umass			MI
+umct			MI
+umidi			MI
+umodem			MI
+umodem_common		MI		Attribute
+ums			MI
+uninorth		macppc
+univ_pci		MI		Attribute
+unixbp			acorn26
+up			vax
+upc			MI
+upl			MI
+uplcom			MI
+ural			MI
+urio			MI
+url			MI
+urlphy			MI
+urndis			MI
+urtw			MI
+urtwn			MI
+usb			MI
+usbus			MI		Attribute
+uscanner		MI
+usscanner		MI
+ustir			MI
+ut			vax
+uthum			MI
+utoppy			MI
+uu			vax
+uvisor			MI
+uvscom			MI
+uyap			MI
+uyurex			MI
+va			vax
+vcons			MI		Attribute
+veriexec		MI
+vesagtf			MI		Attribute
+vga			MI
+vge			MI
+viaenv			MI
+viaide			MI
+vidc			acorn32
+vidcaudio		acorn32
+vidcvideo		acorn32
+videomode		MI		Attribute
+vme			MI
+vme			atari
+vme			sun3
+vme_slv			MI
+vmebus			MI		Attribute
+vmepcc			mvme68k
+vmetwo			mvme68k
+vp			vax
+vr			MI
+vrbcu			hpcmips
+vrcmu			hpcmips
+vrdsu			hpcmips
+vrgiu			hpcmips
+vrip			hpcmips
+vrisab			hpcmips
+vrisabif		hpcmips
+vrkiu			hpcmips
+vrpiu			hpcmips
+vrpmu			hpcmips
+vrrtc			hpcmips
+vs			vax
+vs			x68k
+vsbus			vax
+vsms			alpha
+vt			i386
+vte			MI
+vtpbc			algor
+vz			vax
+wbsio			MI
+wd			MI
+wd33c93			MI		Attribute
+wdc			MI
+wdog			evbppc
+wdog			evbsh3
+wdog			mmeye
+wds			MI
+wdsc			mvme68k
+we			MI
+wesc			amiga
+wesc			amigappc
+wi			MI
+wlan			MI		Attribute
+wm			MI
+ws			luna68k
+wsdisplay		MI
+wsdisplaydev		MI		Attribute
+wsemuldisplaydev	MI		Attribute
+wskbd			MI
+wskbddev		MI		Attribute
+wsmouse			MI
+wsmousedev		MI		Attribute
+wsrasteremulops		MI		Attribute
+wss			MI
+wstsc			amiga
+wstsc			amigappc
+wt			MI
+xafb			newsmips
+xasc			pmax
+xb			alpha
+xbd			xen
+xbox			MI
+xcfb			pmax
+xd			MI
+xd			sun3
+xdc			MI
+xdc			sun3
+xe			next68k
+xel			x68k
+xencons			xen
+xenevt			xen
+xennet			xen
+xge			MI
+xhci			MI
+xi			MI
+xmi			MI
+xsh			amiga
+xsh			amigappc
+xsii			pmax
+xvif			xen
+xy			MI
+xy			sun3
+xyc			MI
+xyc			sun3
+yds			MI
+ym			MI
+zbbus			sbmips
+zbus			amiga
+zbus			amigappc
+ze			vax
+zs			atari
+zs			sparc
+zs			sparc64
+zsc			alpha
+zsc			mac68k
+zsc			macppc
+zsc			mvme68k
+zsc			news68k
+zsc			newsmips
+zsc			next68k
+zsc			sgimips
+zsc			sun3
+zsc			x68k
+zsevent			sparc		Attribute
+zsevent			sparc64		Attribute
+zsevent			sun3		Attribute
+zssc			amiga
+zssc			amigappc
+zstty			alpha
+zstty			mac68k
+zstty			macppc
+zstty			mvme68k
+zstty			news68k
+zstty			newsmips
+zstty			next68k
+zstty			sgimips
+zstty			sparc
+zstty			sparc64
+zstty			sun2
+zstty			sun3
+zstty			x68k
+zx			MI
+zyd			MI

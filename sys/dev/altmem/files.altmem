@@ -1,0 +1,7 @@
+# $NetBSD: files.altmem,v 1.1 2009/03/12 00:15:07 jmcneill Exp $
+
+define	altmemdev { }
+
+device	altmem:	disk
+attach	altmem at altmemdev
+file	dev/altmem/altmem.c	altmem

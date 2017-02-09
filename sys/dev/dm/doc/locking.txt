@@ -1,0 +1,263 @@
+
+				Device-mapper Locking architecture
+
+Overview
+
+There are 2 users in device-mapper driver 
+      a) Users who uses disk drives 
+      b) Users who uses ioctl management interface
+
+Management is done by dm_dev_*_ioctl and dm_table_*_ioctl routines. There are 
+two major structures used in these routines/device-mapper. 
+
+Table entry:
+
+typedef struct dm_table_entry {
+        struct dm_dev *dm_dev;          /* backlink */
+        uint64_t start;
+        uint64_t length;
+
+        struct dm_target *target;      /* Link to table target. */
+        void *target_config;           /* Target specific data. */
+        SLIST_ENTRY(dm_table_entry) next;
+} dm_table_entry_t;
+
+This structure stores every target part of dm device. Every device can have
+more than one target mapping entries stored in a list. This structure describe
+mapping between logical/physical blocks in dm device. 
+
+start  length target block device offset
+0 	   102400 linear /dev/wd1a     384
+102400 204800 linear /dev/wd2a     384
+204800 409600 linear /dev/wd3a     384
+
+Every device has at least two tables ACTIVE and INACTIVE. Only ACTIVE table is 
+used during IO. Every IO operation on dm device have to walk through dm_table_entries list. 
+
+Device entry:
+
+typedef struct dm_dev {
+        char name[DM_NAME_LEN];
+        char uuid[DM_UUID_LEN];
+
+        int minor;
+        uint32_t flags; /* store communication protocol flags */
+
+        kmutex_t dev_mtx; /* mutex for generall device lock */
+        kcondvar_t dev_cv; /* cv for ioctl synchronisation */
+
+        uint32_t event_nr;
+        uint32_t ref_cnt;
+
+        uint32_t dev_type;
+
+        dm_table_head_t table_head;
+
+        struct dm_dev_head upcalls;
+
+        struct disklabel *dk_label;    /* Disklabel for this table. */
+
+        TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
+
+        TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
+} dm_dev_t;
+
+Every device created in dm device-mapper is represented with this structure. 
+All devices are stored in a list. Every ioctl routine have to work with this 
+structure.
+
+	Locking in dm driver
+	
+Locking must be done in two ways. Synchronisation between ioctl routines and 
+between IO operations and ioctl. Table entries are read during IO and during some ioctl routines. There are only few routines which manipulates table lists.
+
+Read access to table list:
+
+dmsize 
+dmstrategy
+dm_dev_status_ioctl
+dm_table_info_ioctl
+dm_table_deps_ioctl
+dm_disk_ioctl 		-> DIOCCACHESYNC ioctl 
+
+Write access to table list:
+dm_dev_remove_ioctl        -> remove device from list, this routine have to 		 
+							  remove all tables.
+dm_dev_resume_ioctl		   -> Switch tables on suspended device, switch INACTIVE 
+							  and ACTIVE tables.
+dm_table_clear_ioctl  	   -> Remove INACTIVE table from table list.
+
+
+Synchronisation between readers and writers in table list
+
+I moved everything needed for table synchronisation to struct dm_table_head.
+
+typedef struct dm_table_head {
+        /* Current active table is selected with this. */
+        int cur_active_table;
+        struct dm_table tables[2];
+
+        kmutex_t   table_mtx;
+        kcondvar_t table_cv; /*IO waiting cv */
+
+        uint32_t io_cnt;
+} dm_table_head_t;
+
+dm_table_head_t is used as entry for every dm_table synchronisation routine.
+
+Because every table user have to get list to table list head I have implemented
+these routines to manage access to table lists. 
+
+/*                                                                                                            
+ * Destroy all table data. This function can run when there are no                                            
+ * readers on table lists.                                                                                    
+ */
+int dm_table_destroy(dm_table_head_t *, uint8_t);
+
+/*                                                                                                            
+ * Return length of active table in device.                                                                   
+ */
+uint64_t dm_table_size(dm_table_head_t *);
+
+/*                                                                                                            
+ * Return current active table to caller, increment io_cnt reference counter.                                 
+ */
+struct dm_table * dm_table_get_entry(dm_table_head_t *, uint8_t);
+
+/*                                                                                                            
+ * Return > 0 if table is at least one table entry (returns number of entries)                                
+ * and return 0 if there is not. Target count returned from this function                                     
+ * doesn't need to be true when userspace user receive it (after return                                       
+ * there can be dm_dev_resume_ioctl), therfore this isonly informative.                                       
+ */
+int dm_table_get_target_count(dm_table_head_t *, uint8_t);
+
+/*                                                                                                            
+ * Decrement io reference counter and wake up all callers, with table_head cv.                                
+ */
+void dm_table_release(dm_table_head_t *, uint8_t s);
+
+/*                                                                                                            
+ * Switch table from inactive to active mode. Have to wait until io_cnt is 0.                                 
+ */
+void dm_table_switch_tables(dm_table_head_t *);
+
+/*                                                                                                            
+ * Initialize table_head structures, I'm trying to keep this structure as                                     
+ * opaque as possible.                                                                                        
+ */
+void dm_table_head_init(dm_table_head_t *);
+
+/*                                                                                                            
+ * Destroy all variables in table_head                                                                        
+ */
+void dm_table_head_destroy(dm_table_head_t *);
+
+Internal table synchronisation protocol
+
+Readers:
+dm_table_size
+dm_table_get_target_count
+dm_table_get_target_count
+
+Readers with hold reference counter:
+dm_table_get_entry
+dm_table_release
+
+Writer:
+dm_table_destroy
+dm_table_switch_tables
+
+For managing synchronisation to table lists I use these routines. Every reader 
+uses dm_table_busy routine to hold reference counter during work and dm_table_unbusy for reference counter release. Every writer have to wait while 
+is reference counter 0 and only then it can work with device. It will sleep on 
+head->table_cv while there are other readers. dm_table_get_entry is specific in that it will return table with hold reference counter. After dm_table_get_entry 
+every caller must call dm_table_release when it doesn't want to work with it. 
+
+/*                                                                                                            
+ * Function to increment table user reference counter. Return id                                              
+ * of table_id table.                                                                                         
+ * DM_TABLE_ACTIVE will return active table id.                                                               
+ * DM_TABLE_INACTIVE will return inactive table id.                                                           
+ */
+static int
+dm_table_busy(dm_table_head_t *head, uint8_t table_id)
+{
+        uint8_t id;
+
+        id = 0;
+
+        mutex_enter(&head->table_mtx);
+
+        if (table_id == DM_TABLE_ACTIVE)
+                id = head->cur_active_table;
+        else
+                id = 1 - head->cur_active_table;
+
+        head->io_cnt++;
+
+        mutex_exit(&head->table_mtx);
+        return id;
+}
+
+/*                                                                                                            
+ * Function release table lock and eventually wakeup all waiters.                                             
+ */
+static void
+dm_table_unbusy(dm_table_head_t *head)
+{
+        KASSERT(head->io_cnt != 0);
+
+        mutex_enter(&head->table_mtx);
+
+        if (--head->io_cnt == 0)
+                cv_broadcast(&head->table_cv);
+
+        mutex_exit(&head->table_mtx);
+}
+
+Device-mapper betwwen ioctl device synchronisation 
+
+
+Every ioctl user have to find dm_device with name, uuid, minor number. 
+For this dm_dev_lookup is used. This routine returns device with hold reference 
+counter. 
+
+void
+dm_dev_busy(dm_dev_t *dmv)
+{
+        mutex_enter(&dmv->dev_mtx);
+        dmv->ref_cnt++;
+        mutex_exit(&dmv->dev_mtx);
+}
+
+void
+dm_dev_unbusy(dm_dev_t *dmv)
+{
+        KASSERT(dmv->ref_cnt != 0);
+
+        mutex_enter(&dmv->dev_mtx);
+        if (--dmv->ref_cnt == 0)
+                cv_broadcast(&dmv->dev_cv);
+        mutex_exit(&dmv->dev_mtx);
+}
+
+Before returning from ioctl routine must release reference counter with 
+dm_dev_unbusy.
+
+dm_dev_remove_ioctl routine have to remove dm_dev from global device list,
+and wait until all ioctl users from dm_dev are gone. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

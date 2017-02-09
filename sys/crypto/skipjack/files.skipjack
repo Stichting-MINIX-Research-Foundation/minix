@@ -1,0 +1,5 @@
+#	$NetBSD: files.skipjack,v 1.2 2005/12/11 12:20:53 christos Exp $
+
+define	skipjack
+
+file	crypto/skipjack/skipjack.c	skipjack

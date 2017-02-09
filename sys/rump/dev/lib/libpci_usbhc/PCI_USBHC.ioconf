@@ -1,0 +1,13 @@
+#	$NetBSD: PCI_USBHC.ioconf,v 1.1 2015/05/20 12:21:38 pooka Exp $
+#
+
+ioconf pci_usbhc
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+ohci* at pci?
+uhci* at pci?
+ehci* at pci?

@@ -36,7 +36,7 @@
  *	@(#)ioctl_compat.h	8.4 (Berkeley) 1/21/94
  */
 
-#if !defined(__minix)
+#if !defined(__minix) || defined(_KERNEL)
 #ifndef _SYS_IOCTL_COMPAT_H_
 #define	_SYS_IOCTL_COMPAT_H_
 

@@ -1,0 +1,59 @@
+#	$NetBSD: files.eisa,v 1.27 2005/12/11 12:21:20 christos Exp $
+#
+# Config file and device description for machine-independent EISA code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+defflag	EISAVERBOSE
+
+device	eisa {[slot = -1]}
+attach	eisa at eisabus
+file	dev/eisa/eisa.c			eisa			needs-flag
+
+file	dev/eisa/eisabusprint.c		eisabus
+
+# Adaptec AHA-174x EISA SCSI Host Adapter family
+device	ahb: scsi
+attach	ahb at eisa
+file	dev/eisa/ahb.c			ahb
+
+# Adaptec AHA-274x and aic7770 motherboard SCSI controllers
+attach	ahc at eisa with ahc_eisa: ahc_aic77xx
+file	dev/eisa/ahc_eisa.c		ahc_eisa
+
+# BusLogic BT-7xx EISA family
+attach	bha at eisa with bha_eisa
+file	dev/eisa/bha_eisa.c		bha_eisa
+
+# DPT EATA SCSI controllers
+attach	dpt at eisa with dpt_eisa
+file	dev/eisa/dpt_eisa.c		dpt_eisa
+
+# UltraStor UHA-24f boards
+attach	uha at eisa with uha_eisa
+file	dev/eisa/uha_eisa.c		uha_eisa
+
+# 3Com 3c579 and 3c509 masquerading as EISA Ethernet Controllers
+attach	ep at eisa with ep_eisa
+file	dev/eisa/if_ep_eisa.c		ep_eisa
+
+# Compaq array controllers
+attach	cac at eisa with cac_eisa
+file	dev/eisa/cac_eisa.c		cac_eisa
+
+# DEC DE422 EISA Ethernet controller
+attach	depca at eisa with depca_eisa
+file	dev/eisa/depca_eisa.c		depca_eisa
+
+# DEC DE425 EISA Ethernet controller
+attach	tlp at eisa with tlp_eisa
+file	dev/eisa/if_tlp_eisa.c		tlp_eisa
+
+# DEC DEFEA EISA FDDI controller
+device	fea: pdq, fddi, ifnet, arp
+attach	fea at eisa
+file	dev/eisa/if_fea.c		fea
+
+# Mylex RAID controllers
+attach	mlx at eisa with mlx_eisa
+file	dev/eisa/mlx_eisa.c		mlx_eisa

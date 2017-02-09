@@ -1,0 +1,183 @@
+$NetBSD: eisadevs,v 1.29 2009/01/21 14:18:44 jnemeth Exp $
+
+/*
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.eisadevs" to regenerate eisadevs.h and eisadevs_data.h
+ */
+
+/*
+ * List of known EISA vendors, sorted by vendor code.
+ */
+
+vendor ADP		Adaptec
+vendor AMI		AMI
+vendor ATT		AT&T
+vendor BUS		BusLogic
+vendor CPQ		Compaq
+vendor DEC		Digital Equipment
+vendor DPT		Distributed Processing Technology
+vendor DTI		DeskStation Technology, Inc.
+vendor FSI		FORE Systems
+vendor HWP		Hewlett-Packard
+vendor INP		Interphase
+vendor INT		Intel
+vendor ETI		Microdyne
+vendor MDG		Madge Networks
+vendor MLX		Mylex
+vendor NEC		NEC
+vendor SMC		Standard Microsystems Corp.
+vendor TCM		3Com
+vendor USC		UltraStor
+
+/*
+ * List of known products, grouped and sorted by vendor code.
+ */
+
+/* Adaptec products */
+product ADP 0000	AHA-1740 SCSI
+product ADP 0001	AHA-1740A SCSI
+product ADP 0002	AHA-1742A SCSI
+product ADP 0400	AHA-1744 SCSI
+product ADP 7770	AIC-7770 SCSI (on motherboard)
+product ADP 7771	AHA-274x SCSI
+product ADP 7756	AHA-284x SCSI (BIOS enabled)
+product ADP 7757	AHA-284x SCSI (BIOS disabled)
+
+/* AMI products */
+product AMI 4801	Series 48 SCSI
+
+/* AT&T products */
+product ATT 2408	EATA SCSI controller
+
+/* BusLogic products */
+product BUS 4201	Bt74xB SCSI
+product BUS 4202	Bt74xC SCSI
+product BUS 6001	Bt760 Ethernet
+product BUS 6301	Bt763E Ethernet
+
+/* Compaq products */
+product	CPQ 4001	IDA array controller
+product CPQ 4002	IDA-2 array controller
+product CPQ 4010	IEAS array controller
+product CPQ 4020	SMART array controller
+product CPQ 4030	SMART-2/E array controller
+product CPQ 6101	NetFlex-2 ENET-TR
+
+/* Digital Equipment products */
+product DEC 4220	DE422 Ethernet
+product DEC 4250	DE425 Ethernet
+product DEC 3001	DEFEA FDDI Controller
+product DEC 3002	DEFEA FDDI Controller
+product DEC 3003	DEFEA FDDI Controller
+product DEC 3004	DEFEA FDDI Controller
+
+/* DPT products */
+product DPT 2402	PM2012A/9X EATA SCSI controller
+product DPT A401	PM2012B/9X EATA SCSI controller
+product DPT A402	PM2012B2/9X EATA SCSI controller
+product DPT A410	PM2x22A/9X EATA SCSI controller
+product DPT A411	Spectre EATA SCSI controller
+product DPT A412	PM2021A/9X EATA SCSI controller
+product DPT A420	PM2042 EATA SCSI controller
+product DPT A501	PM2012B1/9X EATA SCSI controller
+product DPT A502	PM2012Bx/9X EATA SCSI controller
+product DPT A701	PM2011B1/9X EATA SCSI controller
+product DPT BC01	PM3011/7X ESDI controller
+
+/* DeskStation Technology, Inc. products */
+product DTI 0000	Evolution RISC PC
+
+/* ETI products */
+product ETI 1001	NE3300 Ethernet Rev. C & D
+
+/* FORE Systems products */
+product FSI 2001	ESA-200 ATM
+product FSI 2002	ESA-200A ATM
+product FSI 2003	ESA-200E ATM
+
+/* HP products */
+product HWP 0C70	HP-IB Host Adapter
+product HWP 0C80	SCSI Host Adapter (Cirrus-II) -- 25525A
+product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 1980	ATM Adapter -- J2802A
+product HWP 2051	EISA Test Adapter Card
+product HWP C000	Series 700 EISA System Board
+product HWP C010	Series 700 EISA System Board
+product HWP C051	Series 700 EISA System Board
+product HWP C091	EISA System Board
+product HWP C0D1	EISA System Board
+product HWP C0E1	EISA System Board
+
+/* Interphase products */
+product INP 25D0	Seahawk 4811 FDDI Controller
+
+/* Intel products */
+product INT 1010	EtherExpress 32 Flash Ethernet
+
+/* Madge products */
+product MDG 0002	Smart 16/4 EISA Ringnode
+
+/* Mylex products */
+product MLX 0070	DAC960 RAID controller
+product MLX 0071	DAC960 RAID controller
+product MLX 0072	DAC960 RAID controller
+product MLX 0073	DAC960 RAID controller
+product MLX 0074	DAC960 RAID controller
+product MLX 0075	DAC960-A RAID controller
+product MLX 0076	DAC960-A RAID controller
+product MLX 0077	DAC960-A RAID controller
+
+/* NEC products */
+product NEC 8200	EATA SCSI controller
+
+/* Standard Microsystems (SMC) */
+product SMC 8010	Ethercard Elite32C Ultra
+product SMC 0110	Elite32 Ethernet
+product SMC A010	Ether 10/100 (9232DST)
+
+/* UltraStor products */
+product USC 0240	24f SCSI
+
+/* 3Com products */
+product TCM 5090	3C509-TP Ethernet
+product TCM 5091	3C509 Ethernet
+product TCM 5092	3C579-TP Ethernet
+product TCM 5093	3C579 Ethernet
+product TCM 5094	3C509 Ethernet Combo
+product TCM 5095	3C509-TP Ethernet
+product TCM 5098	3C509-TP Ethernet
+product	TCM 5920 	3C592 Etherlink III
+product	TCM 5970 	3C597 Fast Etherlink TX
+product	TCM 5971 	3C597 Fast Etherlink T4
+product	TCM 5972 	3C597 Fast Etherlink MII
+product	TCM 6790	3C679 Tokenlink III 16/4

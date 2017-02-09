@@ -1,0 +1,19 @@
+#	$NetBSD: UCOM.ioconf,v 1.5 2010/08/30 11:51:29 pooka Exp $
+#
+
+ioconf ucom
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root uhub*
+
+# I/O DATA USB-RSAQ2 serial adapter
+uplcom*	at uhub?
+ucom*	at uplcom? portno ?
+
+# USB 3G datacards
+u3g*	at uhub? port ?
+u3ginit* at uhub? port ?
+
+ucom*	at u3g?

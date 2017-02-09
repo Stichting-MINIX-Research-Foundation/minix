@@ -1,0 +1,4 @@
+#	$NetBSD: files.tprof,v 1.1 2008/01/01 21:28:37 yamt Exp $
+
+defpseudo tprof
+file	dev/tprof/tprof.c	tprof

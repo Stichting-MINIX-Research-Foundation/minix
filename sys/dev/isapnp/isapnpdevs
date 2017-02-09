@@ -1,0 +1,264 @@
+$NetBSD: isapnpdevs,v 1.68 2009/01/21 14:22:46 jnemeth Exp $
+
+/*-
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Use "make -f Makefile.isapnpdevs" to regenerate isapnpdevs.h and
+ * isapnpdevs.c
+ */
+
+/*
+ * List of known drivers
+ */
+driver	aha	Adaptec SCSI
+driver	aic	Adaptec SCSI
+driver	an	Aironet 802.11
+driver	atppc	AT Parallel Port
+driver	com	National Semiconductor Serial
+driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
+driver	ep	3Com 3CXXX Ethernet
+driver	esp	Symbios SYM53C416 SCSI
+driver	ess	ESS Audio Drive
+driver	fmv	Fujitsu FMV-18x Ethernet
+driver	joy	Generic Joystick
+driver	gus	Gravis Ultrasound
+driver	le	Lance Ethernet
+driver	mpu	MPU-401 MIDI UART
+driver	ne	NE2000 Ethernet
+driver	pcic	PCMCIA bridge
+driver	sb	Creative Soundblaster
+driver	tr	TROPIC Token-Ring
+driver	wdc	Western Digital Disk Controller
+driver	wss	Microsoft Sound System
+driver	ym	Yamaha Sound
+
+/*
+ * aha
+ */
+devlogic	aha	ADP1542		0	Adaptec AHA-1542CP
+devcompat	aha	PNP00A0		0	Adaptec AHA-1542CP
+
+/*
+ * aic
+ */
+devlogic	aic	ADP1520		0	Adaptec AHA-1520B
+devlogic	aic	ADP1502		0	Adaptec AHA-1502P
+devlogic	aic	ADP1505		0	Adaptec AVA-1505A
+devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
+
+/*
+ * an
+ */
+devlogic	an	AOL0001		0	Aironet 4500/4800
+
+/*
+ * atppc
+ */
+devlogic	atppc	PNP0400		0	Generic AT Parallel Port
+devlogic	atppc	PNP0401		0	Generic ECP Prallel Port
+
+/*
+ * com
+ */
+devlogic	com	AZT4001		0	Aztech Modem
+devlogic	com	BDP3336		0	Best Data Prods. 336F
+devlogic	com	OZO8039		0	Zoom 56k flex
+devlogic	com	BRI1400		0	Boca 33.6 PnP
+devlogic	com	BRIB400		0	Boca 56k PnP
+devlogic	com	DAV0336		0	Davicom 33.6 PnP
+devlogic	com	ROK0010		0	Rockwell ?
+devlogic	com	ROK3360		0	Rockwell 33.6k PnP
+devlogic	com	USR0004		0	USR Sportster 14.4k
+devlogic	com	USR0006		0	USR Sportster 33.6k
+devlogic	com	USR0009		0	USR Courier V.Everything
+devlogic	com	USR2070		0	USR Sportster 56k
+devlogic	com	USR3031		0	USR 56k Faxmodem
+devlogic 	com	USR3090		0	USR 56K Voice INT
+devlogic	com	USR9190		0	USR 56k Voice INT
+devlogic	com	ZTIF761		0	Zoom ComStar 33.6
+devlogic	com	CIR3000		0	Cirrus Logic V43
+devlogic	com	MOT0000		0	Motorola ModemSurfr
+devlogic	com	SMM00C1		0	Leopard 56k PnP
+devlogic	com	SUP1650		0	Supra 336i Sp Intl
+devlogic	com	SUP2480		0	SupraExpress 56i Sp V.90
+devlogic	com	SUP2720		0	DIAMOND SupraExpress 56I SP V.90
+devlogic	com	GVC0505		0	GVC 56k Faxmodem
+devlogic	com	GVC000F		0	GVC 33.6k Faxmodem
+devlogic	com	IOD0081		0	I-O DATA IFML-560
+devcompat	com	PNP0500		0	Generic 8250/16450
+devcompat	com	PNP0501		0	Generic 16550A
+
+
+/*
+ * cs
+ */
+devlogic	cs	IBM1010		0	IBM EtherJet ISA
+
+/*
+ * ep
+ */
+devlogic	ep	TCM5051		0	3Com 3c515
+devlogic	ep	TCM5090		0	3Com 3c509B
+devlogic	ep	TCM5091		0	3Com 3c509B-1
+devlogic	ep	TCM5094		0	3Com 3c509B-4
+devlogic	ep	TCM5095		0	3Com 3c509B-5
+devlogic	ep	TCM5098		0	3Com 3c509B-8
+devlogic	ep	FAR0002		0	Farallon EtherWave ISA
+devcompat	ep	PNP80F8		0	Farallon EtherWave ISA
+
+/*
+ * esp
+ */
+devlogic	esp	SLI4163		0	Symbios SYM53C416
+
+/*
+ * ess
+ */
+devlogic	ess	ESS1868		0	ESS1868
+devlogic	ess	ESS1869		0	ESS1869
+devlogic	ess	ESS1878		0	ESS1878
+devlogic	ess	ESS1879		0	ESS1879
+
+/*
+ * fmv
+ */
+devlogic	fmv	FUJ01C1		0	Fujitsu FMV-183
+devlogic	fmv	FUJ01D1		0	Fujitsu FMV-184
+
+/*
+ * joy
+ */
+devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
+devlogic	joy	AZT3001		0	Aztech GAME PORT
+devlogic	joy	AZT3004		0	Aztech AZT1020 GAME PORT
+devlogic	joy	CSC0001		0	CS4235
+devlogic	joy	CSCA801		0	Terratec EWS64XL
+devlogic	joy	CTL7001		0	Creative Awe64
+devlogic	joy	CTL7002		0	Creative Vibra16CL
+devlogic	joy	ESS0001		0	ESS1868
+devlogic	joy	ESS0005		0	ESS1878
+devlogic	joy	OPT0001		0	OPTi Audio 16
+devlogic	joy	PNPB02F		0	XXX broken GUS PnP
+devlogic	joy	ASB16FD		0	AdLib NSC 16 PNP
+devcompat	joy	PNPB02F		0	generic
+
+/*
+ * gus
+ */
+devlogic	gus	GRV0000		0	Gravis Ultrasound
+devlogic	gus	GRV0003		0	SB Compatible Audio
+devlogic	gus	GRV0004		0	MPU-401 GM Music
+devlogic	gus	GRV0011		0	ATAPI IDE CD-ROM Interface
+
+/*
+ * le
+ */
+devlogic	le	TKN0010		0	Lance Ethernet on TEKNOR board
+devlogic	le	ATK1500		0	Lance Ethernet on Allied Telesyn board
+devlogic	le	CSI2203		0	Cabletron E22xx
+devlogic	le	BUF0001		0	Melco Inc. LGY-IV
+
+/*
+ * mpu
+ */
+devlogic	mpu	AZT0002		0	Aztech AZT2320 MPU401 MIDI
+devlogic	mpu	AZT2001		0	Aztech MPU401 MIDI
+devlogic	mpu	AZT2004		0	Aztech AZT1020 MPU401 MIDI
+devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
+devcompat	mpu	PNPB006		0	MPU401 compatible MIDI UART
+
+/*
+ * ne
+ */
+devcompat	ne	PNP80D6		0	Digital DE305 ISAPnP
+devlogic	ne	@@@1980		0	OvisLink LE-8019R
+
+/*
+ * pcic
+ */
+devlogic	pcic	SCM0469		0	SCM SwapBox Plug and Play
+devcompat	pcic	PNP0E00		0	PCIC Compatible PCMCIA Bridge
+devlogic	pcic	AEI0218		0	Actiontec PnP PCMCIA Adapter
+
+/*
+ * sb
+ */
+devlogic	sb	ADS7150		0	AD1815
+devlogic	sb	ADS7180		0	AD1816
+devlogic	sb	AZT1002		0	Aztech 1002 Audio
+devlogic	sb	AZT1003		0	Aztech 1003 Audio
+devlogic	sb	AZT1008		0	Aztech 1008
+devlogic	sb	AZT1016		0	Aztech 1020
+devlogic	sb	CTL0001		0	SB
+devlogic	sb	CTL0031		0	SB AWE32
+devlogic	sb	CTL0041		0	SB16 PnP (CT4131)
+devlogic	sb	CTL0042		0	SB AWE64 Value
+devlogic	sb	CTL0043		0	SB16 PnP (CT4170)
+devlogic	sb	CTL0044		0	SB AWE64 Gold
+devlogic	sb	CTL0045		0	SB AWE64 Value
+devlogic	sb	OPT9250		0	Televideo card, Opti
+devlogic	sb	@X@0001		0	CMI8330. Audio Adapter
+devlogic	sb	@@@1001		0	Avance Logic ALS100+
+devlogic	sb	@@@2001		0	Avance Logic ALS120
+devcompat	sb	PNPB000		0	Generic SB 1.5
+devcompat	sb	PNPB001		0	Generic SB 2.0
+devcompat	sb	PNPB002		0	Generic SB Pro
+devcompat	sb	PNPB003		0	Generic SB 16
+
+/*
+ * tr
+ */
+devlogic	tr	IBM0000		0	IBM TROPIC Token-Ring
+devlogic	tr	TCM3190		0	3Com TokenLink Velocity ISA
+
+/*
+ * wdc
+ */
+devlogic	wdc	AZT0000		0	Aztech AZT2320 IDE CDROM
+devlogic	wdc	AZT0500		0	Aztech IDE CDROM
+devlogic	wdc	OPT0007		0	OPTi Audio 16 IDE controller
+devlogic	wdc	ESS0002		0	ES1868 IDE Controller
+devcompat	wdc	PNP0600		0	Western Digital Compatible Controller
+
+/*
+ * wss
+ */
+devlogic	wss	AZT0001		1	Aztech AZT2320 AUDIO
+devlogic	wss	CSC0000		0	Windows Sound System
+devlogic	wss	CSC0100		0	CS4235 CODEC
+devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
+devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
+devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB
+devlogic	wss	@@@0001		0	CMI8330/C3D Audio Adapter
+
+/*
+ * ym
+ */
+devlogic	ym	YMH0021		0	OPL3-SA2, OPL3-SA3

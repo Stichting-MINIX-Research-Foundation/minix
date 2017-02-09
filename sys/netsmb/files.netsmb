@@ -1,0 +1,16 @@
+#	$NetBSD: files.netsmb,v 1.2 2003/02/19 08:33:09 jdolecek Exp $
+
+defpseudo nsmb:		des
+
+file	netsmb/iconv.c			nsmb
+file	netsmb/smb_conn.c		nsmb
+file	netsmb/smb_crypt.c		nsmb
+file	netsmb/smb_dev.c		nsmb	needs-flag
+file	netsmb/smb_iod.c		nsmb
+file	netsmb/smb_rq.c			nsmb
+file	netsmb/smb_smb.c		nsmb
+file	netsmb/smb_subr.c		nsmb
+file	netsmb/smb_trantcp.c		nsmb
+file	netsmb/smb_usr.c		nsmb
+file	netsmb/subr_mchain.c		nsmb
+

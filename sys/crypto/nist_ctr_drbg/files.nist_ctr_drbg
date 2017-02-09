@@ -1,0 +1,3 @@
+#	$NetBSD: files.nist_ctr_drbg,v 1.1 2011/11/19 22:51:22 tls Exp $
+
+file	crypto/nist_ctr_drbg/nist_ctr_drbg.c

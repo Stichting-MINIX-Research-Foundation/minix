@@ -1,0 +1,173 @@
+/* $NetBSD: cxdtvreg.h,v 1.3 2015/07/11 10:32:46 kamil Exp $ */
+
+/*-
+ * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2008 Jonathan A. Kollasch <jakllsch@kollasch.net>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _DEV_PCI_CXDTVREG_H
+#define _DEV_PCI_CXDTVREG_H
+
+/* misc. registers */
+
+#define CXDTV_PDMA_STHRSH	0x200000
+#define CXDTV_PDMA_STRGT_ADRS	0x200004
+#define CXDTV_PDMA_SINTL_ADRS	0x200008
+#define CXDTV_PDMA_SCNTRL	0x20000c
+#define CXDTV_PDMA_DTHRSH	0x200010
+#define CXDTV_PDMA_DTRGT_ADRS	0x200014
+#define CXDTV_PDMA_DINTL_ADRS	0x200018
+#define CXDTV_PDMA_DCNTRL	0x20001c
+#define CXDTV_LD_SUBSYS_ID_CFG	0x200030
+#define CXDTV_DEV_CNTRL2	0x200034
+#define CXDTV_PCI_INT_MASK	0x200040
+#define CXDTV_PCI_INT_STAT	0x200044
+#define CXDTV_PCI_INT_MSTAT	0x200048
+#define CXDTV_PLL_B		0x35c008
+#define CXDTV_GP0_IO		0x350010 /* GPIO */
+#define CXDTV_GP1_IO		0x350014
+#define CXDTV_GP2_IO		0x350018
+#define CXDTV_GP3_IO		0x35001c
+#define CXDTV_GPIO		0x350010 /* alt. GPIO mode */
+#define CXDTV_GPOE		0x350014
+#define CXDTV_GPIO_ISM		0x350028
+#define CXDTV_TM_CNT1_LDW	0x35c034
+#define CXDTV_TM_CNT1_UDW	0x35c038
+#define CXDTV_TM_LMT1_LDW	0x35c03c
+#define CXDTV_TM_LMT1_UDW	0x35c040
+#define CXDTV_PINMUX_IO		0x35c044
+#define CXDTV_AFE_CFG_IO	0x35c04c
+#define CXDTV_SRST_IO		0x35c05c
+#define CXDTV_I2C_C_DIRECT	0x360000 /* start; 0x367fff end */
+#define CXDTV_I2C_C_DATACONTROL	0x368000
+#define CXDTV_I2C_C_DATACONTROL_SDA 1 
+#define CXDTV_I2C_C_DATACONTROL_SCL 2
+#define CXDTV_I2C_C_CTRL	0x36c004
+#define CXDTV_I2C_C_XFER_STATUS	0x36c044
+
+/* for CXDTV_PCI_INT_ registers */
+#define CXT_PI_VID_INT		__BIT(0)
+#define CXT_PI_AUD_INT		__BIT(1)
+#define CXT_PI_TS_INT		__BIT(2)
+#define CXT_PI_VIP_INT		__BIT(3)
+#define CXT_PI_HST_INT		__BIT(4)
+
+#define CXDTV_DEV_CNTRL2_RUN_RISC __BIT(5)
+
+/* PINMUX_IO */
+#define MPEG_PAR_EN		__BIT(7)
+
+/* MPEG TS registers */
+
+#define CXDTV_DMA28_PTR1	0x30009c
+#define CXDTV_DMA28_PTR2	0x3000dc
+#define CXDTV_DMA28_CNT1	0x30011c
+#define CXDTV_DMA28_CNT2	0x30015c
+#define CXDTV_TS_GP_CNT		0x33c020
+#define CXDTV_TS_GP_CNT_CNTRL	0x33c030
+#define CXDTV_TS_DMA_CNTRL	0x33c040
+#define CXDTV_TS_XFER_STATUS	0x33c044
+#define CXDTV_TS_LNGTH		0x33c048
+#define CXDTV_HW_SOP_CONTROL	0x33c04c
+#define CXDTV_TS_GEN_CONTROL	0x33c050
+#define CXDTV_TS_BD_PKT_STATUS	0x33c054
+#define CXDTV_TS_SOP_STATUS	0x33c058
+#define CXDTV_TS_FIFO_OVFL_STAT	0x33c05c
+#define CXDTV_TS_VLD_MISC	0x33c060
+#define CXDTV_TS_INT_MASK	0x200070
+#define CXDTV_TS_INT_STAT	0x200074
+#define CXDTV_TS_INT_MSTAT	0x200078
+#define CXDTV_TS_INT_SSTAT	0x20007c
+
+/* TS_DMA_CNTRL */
+#define CXDTV_TS_RISC_EN	__BIT(4)
+#define CXDTV_TS_FIFO_EN	__BIT(0)
+
+/* TS_INT_* */
+#define CXDTV_TS_RISCI2		__BIT(4)
+#define CXDTV_TS_RISCI1		__BIT(0)
+#define CXDTV_TS_RISCI		(CXDTV_TS_RISCI2|CXDTV_TS_RISCI1)
+
+/* HW_SOP_CONTROL */
+
+/* TS_GEN_CONTROL */
+#define MPEG_IN_SYNC		__BIT(0)
+#define IPB_MCLK_POL		__BIT(1)
+#define IPB_PUNC_CLK		__BIT(2)
+#define IPB_SMODE		__BIT(3)
+#define IPB_BIT_RVRS		__BIT(4)
+#define IPB_ERR_ACK		__BIT(5)
+#define IPB_SW_RST		__BIT(6)
+#define IPB_STAT_CLR		__BIT(7)
+
+/* TS_SOP_STATUS */
+#define MPG_BAD_SOP_STAT	__BITS(11,0)
+#define IPB_SOP_SYNC_CHK	__BIT(12)
+#define IPB_SOP_BYTEWIDE	__BIT(13)
+#define IPB_SOP_SEL		__BITS(15, 14)
+#define IPB_TSSOP_POL		__BIT(16)
+
+/* RISC instructions */
+#define CX_RISC_WRITECR		0xd0000000
+#define CX_RISC_WRITECM		0xc0000000
+#define CX_RISC_WRITERM		0xb0000000
+#define CX_RISC_READC		0xa0000000
+#define CX_RISC_READ		0x90000000
+#define CX_RISC_SYNC		0x80000000
+#define CX_RISC_JUMP		0x70000000
+#define CX_RISC_WRITEC		0x50000000
+#define CX_RISC_SKIP		0x20000000
+#define CX_RISC_WRITE		0x10000000
+#define CX_RISC_SOL		0x08000000
+#define CX_RISC_EOL		0x04000000
+#define CX_RISC_IRQ2		0x02000000
+#define CX_RISC_IRQ1		0x01000000
+#define CX_RISC_IMM		0x00000001
+#define CX_RISC_SRP		0x00000001
+
+#define CX_CNT_CTL_NOOP		0x0
+#define CX_CNT_CTL_INCR		0x1
+#define CX_CNT_CTL_ZERO		0x3
+#define CX_RISC_CNT_CTL		__BITS(17,16)
+#define CX_RISC_CNT_CTL_NOOP	__SHIFTIN(CX_RISC_CNT_CTL,CX_CNT_CTL_NOOP)
+#define CX_RISC_CNT_CTL_INCR	__SHIFTIN(CX_RISC_CNT_CTL,CX_CNT_CTL_INCR)
+#define CX_RISC_CNT_CTL_ZERO	__SHIFTIN(CX_RISC_CNT_CTL,CX_CNT_CTL_ZERO)
+
+/* Channel Management Data Structure */
+/* offsets */
+#define CX_CMDS_O_IRPC	0x00
+#define CX_CMDS_O_CDTB	0x04
+#define CX_CMDS_O_CDTS	0x08
+#define CX_CMDS_O_IQB	0x0c
+#define CX_CMDS_O_IQS	0x10
+
+/* bits */
+#define CX_CMDS_IQS_ISRP __BIT(31)
+
+/* PCI subsystems products */
+#define PCI_SUBSYSTEM_ATI_HDTV_WONDER 0xa101
+#define PCI_SUBSYSTEM_ATI_HDTV_WONDER_HP_Z556_MC 0xa103
+
+#endif /* !_DEV_PCI_CXDTVREG_H */

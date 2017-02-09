@@ -89,14 +89,14 @@ struct vndgeom {
  * Ioctl definitions for file (vnode) disk pseudo-device.
  */
 struct vnd_ioctl {
-#if !defined(__minix)
+#if !defined(__minix) || defined(_KERNEL)
 	char		*vnd_file;	/* pathname of file to mount */
 #else
 	int		vnd_fildes;	/* file descriptor of file to mount */
 #endif /* !defined(__minix)*/
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
-#if !defined(__minix)
+#if !defined(__minix) || defined(_KERNEL)
 	unsigned int	vnd_osize;	/* (returned) size of disk */
 #endif /* !defined(__minix)*/
 	uint64_t	vnd_size;	/* (returned) size of disk */
@@ -107,7 +107,6 @@ struct vnd_ioctl {
 #define	VNDIOF_READONLY	0x02		/* as read-only device */
 #define	VNDIOF_FORCE	0x04		/* force close */
 
-#if !defined(__minix)
 #ifdef _KERNEL
 
 struct vnode;
@@ -162,7 +161,6 @@ struct vnd_comp_header
 	u_int32_t block_size;
 	u_int32_t num_blocks;
 };
-#endif /* !defined(__minix) */
 
 /*
  * A simple structure for describing which vnd units are in use.

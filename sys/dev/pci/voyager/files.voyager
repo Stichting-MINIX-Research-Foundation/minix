@@ -1,0 +1,21 @@
+# Silicon Motion SM502 / Voyager GX
+
+define voyagerbus {}
+
+# the graphics part
+device	voyagerfb: wsemuldisplaydev, rasops8, rasops16, rasops32, vcons, videomode, iic, i2c_bitbang, glyphcache
+attach	voyagerfb at voyagerbus
+file	dev/pci/voyager/voyagerfb.c		voyagerfb needs-flag
+defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG VOYAGERFB_ANTIALIAS
+defflag	opt_voyagerfb.h	VOYAGERFB_DEPTH_32
+
+# a clock timer
+defflag opt_pwmclock.h PWMCLOCK_DEBUG
+device 	pwmclock
+attach 	pwmclock at voyagerbus
+file	dev/pci/voyager/pwmclock.c		pwmclock needs-flag
+
+# the audio part
+device 	vac: audiobus, auconv, mulaw
+attach 	vac at voyagerbus
+file 	dev/pci/voyager/vac.c			vac needs-flag

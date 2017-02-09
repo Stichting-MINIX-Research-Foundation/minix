@@ -1,0 +1,46 @@
+#	$NetBSD: files.newnfs,v 1.2 2014/10/11 06:42:18 uebayasi Exp $
+
+deffs NEW_NFSCLIENT
+defflag opt_newnfs.h			NEW_NFS_BOOT_BOOTP
+					NEW_NFSSERVER
+					NEW_NFSLOCKD
+					NEW_NFS_BOOT
+
+# XXX
+define	new_nfsclient: vfs
+file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
+file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
+file	fs/nfs/client/nfs_clkrpc.c	 new_nfsclient
+file	fs/nfs/client/nfs_clnfsiod.c	 new_nfsclient
+file	fs/nfs/client/nfs_clnode.c	 new_nfsclient
+file	fs/nfs/client/nfs_clport.c	 new_nfsclient
+file	fs/nfs/client/nfs_clrpcops.c	 new_nfsclient
+file	fs/nfs/client/nfs_clstate.c	 new_nfsclient
+file	fs/nfs/client/nfs_clsubs.c	 new_nfsclient
+file	fs/nfs/client/nfs_clvfsops.c	 new_nfsclient
+file	fs/nfs/client/nfs_clvnops.c	 new_nfsclient
+file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/nfs_commonacl.c	 new_nfsclient | new_nfsserver
+file	fs/nfs/common/nfs_commonkrpc.c	 new_nfsclient | new_nfsserver
+file	fs/nfs/common/nfs_commonport.c	 new_nfsclient | new_nfsserver
+file	fs/nfs/common/nfs_commonsubs.c	 new_nfsclient | new_nfsserver
+file	fs/nfs/common/nfs_diskless.c	 new_nfsclient & new_nfs_boot
+file	fs/nfs/common/nfs_fha.c		 new_nfsserver
+file	fs/nfs/common/nfs_lock.c	 new_nfsclient | new_nfslockd | new_nfsserver
+file	fs/nfs/common/nfs_nfssvc.c	 new_nfsclient | new_nfsserver
+file	fs/nfs/nlm/nlm_advlock.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/nlm_prot_clnt.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/nlm_prot_impl.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/nlm_prot_server.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/nlm_prot_svc.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/nlm_prot_xdr.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/nlm/sm_inter_xdr.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/server/nfs_fha_new.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdcache.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdkrpc.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdport.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdserv.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdsocket.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdstate.c	 new_nfsserver
+file	fs/nfs/server/nfs_nfsdsubs.c	 new_nfsserver

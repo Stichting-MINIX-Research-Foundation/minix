@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.mcadevs,v 1.2 2008/10/19 22:05:22 apb Exp $
+#
+# The proper procedure is
+#
+# 1.) Change "src/sys/dev/mca/mcadevs".
+# 2.) Commit "src/sys/dev/mca/mcadevs".
+# 3.) Execute "make -f Makefile.mcadevs" in "src/sys/dev/mca".
+# 4.) Commit "src/sys/dev/mca/mcadevs.h" and "src/sys/dev/mca/mcadevs_data.h".
+
+.include <bsd.own.mk>
+
+mcadevs.h mcadevs_data.h: mcadevs devlist2h.awk
+	/bin/rm -f mcadevs.h mcadevs_data.h
+	${TOOL_AWK} -f devlist2h.awk mcadevs

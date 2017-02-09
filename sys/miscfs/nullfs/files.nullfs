@@ -1,0 +1,7 @@
+#	$NetBSD: files.nullfs,v 1.5 2014/10/12 03:52:30 uebayasi Exp $
+
+deffs	NULLFS
+
+define	nullfs: vfs, layerfs
+file	miscfs/nullfs/null_vfsops.c	nullfs
+file	miscfs/nullfs/null_vnops.c	nullfs

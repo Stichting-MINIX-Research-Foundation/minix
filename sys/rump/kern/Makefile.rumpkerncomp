@@ -1,0 +1,19 @@
+#	$NetBSD: Makefile.rumpkerncomp,v 1.11 2015/01/07 22:24:03 pooka Exp $
+#
+
+.include <bsd.own.mk>
+
+RUMPKERNCOMPS=	crypto sysproxy tty z
+
+.if ${MKSLJIT} != "no"
+RUMPKERNCOMPS+=	sljit
+.endif
+
+.if ${MKZFS} != "no"
+RUMPKERNCOMPS+=    solaris
+.endif
+
+.for var in ${RUMPKERNCOMPS}
+RUMPKERNLIBS+=lib${var}
+RUMPKERNLDADD+=-lrumpkern_${var}
+.endfor

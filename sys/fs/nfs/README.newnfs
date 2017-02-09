@@ -1,0 +1,25 @@
+This is new nfs code (including nfsv4) imported from FreeBSD. It is
+not even experimental yet - you don't want to be mucking with it.
+
+The nfs code (both nfs and nfsd) that NetBSD currently uses is in
+sys/nfs.
+
+
+The following things are here:
+
+   client/	- nfs client code, from sys/fs/nfsclient in freebsd
+   server/	- nfsd server code, from sys/fs/nfsserver in freebsd
+   nlm/		- kernel-side nfs lock manager, from sys/nlm in freebsd
+   common/	- shared common code, from
+			* sys/fs/nfs in freebsd
+			* sys/nfs in freebsd
+   files.newnfs - config goo
+   nfs2netbsd.sh - script for preparing a cvs import from a freebsd tree
+
+The FreeBSD shared common code contained two (different) nfsproto.h
+and xdr_subs.h files. This is how they've been imported:
+
+   sys/fs/nfs/nfsproto.h	->	common/nfsproto.h
+   sys/fs/nfs/xdr_subs.h	->	common/xdr_subs.h
+   sys/nfs/nfsproto.h		->	common/oldnfsproto.h
+   sys/nfs/xdr_subs.h		->	common/old_xdr_subs.h

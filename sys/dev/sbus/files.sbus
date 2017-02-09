@@ -1,0 +1,162 @@
+#	$NetBSD: files.sbus,v 1.41 2015/01/04 18:18:20 macallan Exp $
+#
+# Config file and device description for machine-independent SBUS code.
+# Included by ports that need it.
+
+device	sbus { slot = -1, offset = -1 }
+#notyet:file	dev/sbus/sbus.c			sbus
+
+# Sbus expander device
+device	xbox {}
+attach	xbox at sbus
+attach	sbus at xbox with sbus_xbox
+file	dev/sbus/xbox.c			xbox
+
+# Qlogic ISP 10x0 (Sbus) family
+# device declaration in sys/conf/files
+attach isp at sbus with isp_sbus
+file	dev/sbus/isp_sbus.c		isp_sbus
+
+# Sbus NCR539x SCSI & Lance Ethernet
+device	dma {}: lsi64854
+attach	dma at sbus with dma_sbus
+device	ledma {}: lsi64854
+attach	ledma at sbus
+file	dev/sbus/dma_sbus.c		dma_sbus | ledma
+
+device	lebuffer {}
+attach	lebuffer at sbus
+file	dev/sbus/lebuffer.c		lebuffer
+
+# device definition in sys/conf/files
+attach	le at sbus with le_sbus: le24
+attach	le at lebuffer with le_lebuffer: le24
+attach	le at ledma with le_ledma: le24
+file	dev/sbus/if_le.c		le_sbus
+file	dev/sbus/if_le_lebuffer.c	le_lebuffer
+file	dev/sbus/if_le_ledma.c		le_ledma
+
+attach	esp at sbus with esp_sbus
+attach	esp at dma with esp_dma
+file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
+
+# LSI64854 based bi-directional parallel port
+device	bpp {}: lsi64854
+attach	bpp at sbus
+file	dev/sbus/bpp.c			bpp	needs-flag
+
+# Efficient Networks, Inc. ATM interface
+# device declaration in sys/conf/files
+attach	en at sbus with en_sbus
+file	dev/sbus/if_en.c		en_sbus
+
+device	qec {}
+attach	qec at sbus
+file	dev/sbus/qec.c			qec
+
+device	be: arp, ether, ifnet, mii
+attach	be at qec
+file	dev/sbus/be.c			be
+
+device	qe: arp, ether, ifnet
+attach	qe at qec
+file	dev/sbus/qe.c			qe
+
+attach	hme at sbus with hme_sbus
+file	dev/sbus/if_hme_sbus.c		hme_sbus
+
+attach	gem at sbus with gem_sbus
+file	dev/sbus/if_gem_sbus.c		gem_sbus
+
+attach	audiocs at sbus with audiocs_sbus
+file	dev/sbus/cs4231_sbus.c		audiocs_sbus
+
+#
+# Magma Serial/Parallel boards
+#
+device	magma {}
+attach	magma at sbus
+device	mtty: tty
+attach	mtty at magma
+device	mbpp
+attach	mbpp at magma
+file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
+
+# XXX this should use the cd18xx code when it (the cd18xx code) works.
+device spif {}
+attach spif at sbus
+device stty: tty
+attach stty at spif
+device sbpp
+attach sbpp at spif
+file   dev/sbus/spif.c                 spif | stty | sbpp needs-flag
+
+device siosixteen { channel = -1 }
+attach siosixteen at sbus
+device clcd: tty, cd18xx
+attach clcd at siosixteen
+file	dev/sbus/sio16.c		siosixteen | clcd needs-flag
+
+# STP4020 SBus to PCMCIA bridge (`nell' to her friends)
+device	nell: pcmciabus
+attach	nell at sbus
+file	dev/sbus/stp4020.c		nell
+
+#
+# Framebuffer devices (requires dev/sun/files.sun)
+#
+attach	bwtwo at sbus with bwtwo_sbus
+file	dev/sbus/bwtwo_sbus.c		bwtwo_sbus
+
+attach	cgsix at sbus with cgsix_sbus
+file	dev/sbus/cgsix_sbus.c		cgsix_sbus
+
+attach	cgthree at sbus with cgthree_sbus
+file	dev/sbus/cgthree_sbus.c		cgthree_sbus
+
+# framebuffer devices implemented only on SBus
+device	tcx: fb, rasops8, wsemuldisplaydev, vcons
+attach	tcx at sbus
+file	dev/sbus/tcx.c			tcx needs-flag
+
+device	zx: fb, rasops32, wsemuldisplaydev, vcons
+attach	zx at sbus
+file	dev/sbus/zx.c			zx
+
+# Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
+defflag	opt_pnozz.h	PNOZZ_DEBUG
+defflag opt_pnozz.h	PNOZZ_EMUL_CG3
+defflag opt_pnozz.h	PNOZZ_USE_LATCH
+device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons, glyphcache
+attach	pnozz at sbus
+file	dev/sbus/p9100.c		pnozz needs-flag
+
+# SUNW,DBRI audio
+defflag	opt_sbus_dbri.h	DBRI_DEBUG
+defflag	opt_sbus_dbri.h	DBRI_BIG_BUFFER DBRI_SPIN
+device	dbri { }: audiobus, auconv, mulaw
+attach	dbri at sbus
+file	dev/sbus/dbri.c			dbri
+
+# an SBus frontend for genfb
+attach genfb at sbus with genfb_sbus : fb
+file	dev/sbus/genfb_sbus.c	genfb_sbus
+
+# Fujitsu AG-10e
+defflag	opt_agten.h	AGTEN_DEBUG
+device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons, glyphcache
+attach	agten at sbus
+file	dev/sbus/agten.c		agten needs-flag
+file	dev/ic/i128.c			agten
+
+# Sun CG12 / Matrox SG3
+defflag opt_cgtwelve.h	CG12_DEBUG CG12_COLOR CG12_SHADOW
+device	cgtwelve: fb, rasops1, rasops8, wsemuldisplaydev, vcons
+attach	cgtwelve at sbus
+file	dev/sbus/cgtwelve.c		cgtwelve
+
+# SSB MGX
+defflag opt_mgx.h	MGX_DEBUG
+device	mgx: fb, rasops8, wsemuldisplaydev, vcons, glyphcache
+attach	mgx at sbus
+file	dev/sbus/mgx.c			mgx

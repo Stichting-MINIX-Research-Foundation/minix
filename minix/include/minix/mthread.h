@@ -154,6 +154,7 @@ typedef mthread_mutexattr_t pthread_mutexattr_t;
 typedef mthread_attr_t pthread_attr_t;
 typedef mthread_event_t pthread_event_t;
 typedef mthread_rwlock_t pthread_rwlock_t;
+typedef mthread_mutex_t pthread_spinlock_t; /* emulate spinlocks with mutexes */
 
 /* LSC: No equivalent, so void* for now. */
 typedef void *pthread_rwlockattr_t;
@@ -161,6 +162,8 @@ typedef void *pthread_rwlockattr_t;
 #define PTHREAD_ONCE_INIT 0
 #define PTHREAD_MUTEX_INITIALIZER ((pthread_mutex_t) -1)
 #define PTHREAD_COND_INITIALIZER ((pthread_cond_t) -1)
+#define PTHREAD_PROCESS_PRIVATE 0
+#define PTHREAD_PROCESS_SHARED 1
 
 __BEGIN_DECLS
 /* allocate.c */
@@ -221,6 +224,13 @@ int pthread_rwlock_init(pthread_rwlock_t *rwlock,
 int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
 int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+
+/* pthread_compat.c */
+int pthread_spin_destroy(pthread_spinlock_t *lock);
+int pthread_spin_init(pthread_spinlock_t *lock, int UNUSED(pshared));
+int pthread_spin_lock(pthread_spinlock_t *lock);
+int pthread_spin_trylock(pthread_spinlock_t *lock);
+int pthread_spin_unlock(pthread_spinlock_t *lock);
 
 /* schedule.c */
 int pthread_yield(void);

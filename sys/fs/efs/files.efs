@@ -1,0 +1,9 @@
+#	$NetBSD: files.efs,v 1.3 2014/10/11 06:42:18 uebayasi Exp $
+
+deffs	EFS
+
+define	efs: vfs
+file	fs/efs/efs_genfs.c		efs
+file	fs/efs/efs_subr.c		efs
+file	fs/efs/efs_vnops.c		efs
+file	fs/efs/efs_vfsops.c		efs

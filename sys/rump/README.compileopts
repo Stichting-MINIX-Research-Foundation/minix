@@ -1,0 +1,145 @@
+	$NetBSD: README.compileopts,v 1.13 2015/06/17 11:48:06 pooka Exp $
+
+This file describes compile-time options for rump kernels.  Additionally,
+NetBSD build options will have an effect.  See src/share/mk/bsd.README
+for a desciption of NetBSD build options.
+
+Note: after changing an option, do a clean build.
+
+Global options:
+
+
+    RUMP_DIAGNOSTIC
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build with -DDIAGNOSTIC.
+
+
+    RUMP_DEBUG
+
+values:	<defined> / <undefined>
+defval:	<undefined>
+effect:	Iff defined, build with -DDEBUG.
+
+
+    RUMP_LOCKDEBUG
+
+values:	<defined> / <undefined>
+defval:	<undefined>
+effect:	Iff defined, build with -DLOCKDEBUG.
+
+
+    RUMP_KTRACE
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build with -DKTRACE.
+
+
+    RUMP_LOCKS_UP
+
+values: yes|no
+defval:	no
+effect: If "yes", build rump kernel with uniprocess-optimized locking.
+	An implication of this is that RUMP_NCPU==1 is required at
+	runtime.  If "no", build with multiprocessor-capable locking.
+
+
+    RUMP_VIRTIF
+
+values:	yes|no
+defval:	yes
+effect:	Iff "yes", build the virt(4) network interface.  Turning this
+	off may be necessary on systems that lack the necessary headers,
+	e.g. musl libc based Linux.
+
+
+    RUMP_CURLWP
+
+values: hypercall/__thread/register or <undefined>
+defval: <undefined>
+effect: Control how curlwp is obtained in a rump kernel.  This is
+	a very frequently accessed thread-local variable, and optimizing
+	access has a significant performance impact.  Note that all
+	options are not available on hosts/machine architectures.
+	<undefined> - use default implementation (currently "hypercall")
+	hypercall   - use a hypercall to fetch the value
+	__thread    - use the __thread feature to fetch value via TLS
+	register    - use a dedicated register (implies -ffixed)
+
+
+    RUMP_NBCOMPAT
+
+values: comma-separated list of releases; e.g. "60,70";
+	or "all" or "default" or "none".  Currently default == all (but
+	might not be so in the future)
+defval:	all
+effect:	Builds NetBSD COMPAT_nn code for each of the elements in the list.
+	This option is useful only when building rump kernels for
+	NetBSD userspace, and an empty value may be supplied elsewhere.
+
+
+================================================================================
+
+Rumpuser options:
+
+    RUMPUSER_THREADS
+
+values: pthread/none/fiber or <undefined>
+defval: <undefined>
+effect: Define the way threading is implemented in the rumpuser hypercall
+	implmentation.
+	<undefined> - use default implementation (currently "pthread")
+	pthread     - use pthreads to implement threading
+	none        - do not support kernel threads at all
+	fiber       - user a fiber interface, cooperatively scheduled contexts
+
+
+================================================================================
+
+Per-component options:
+
+    RUMP_SYM_NORENAME
+
+values: regexp matching symbol names
+defval: <undefined>
+effect: Causes matching symbols from the component to not be renamed
+	into the rump kernel symbol namespace (rumpns_).  This option
+	can only be used in embedded environments where there is full
+	control over the platform's namespace.	Conversely, this option
+	cannot be used in kernel components which are not meant to be
+	tied to a specific platform.  Note: the value is processed by
+	make and must be appropriately escaped.  example:
+	RUMP_SYM_NORENAME=HYPERVISOR_|block$$
+	will not rename "^HYPERVISOR_" or "^block$"
+
+
+================================================================================
+
+
+The rest of the options described in this file are not intended to be
+set by users, but by the package building rump kernels.
+
+
+    RUMP_KERNEL_IS_LIBC
+
+values:	defined / not defined
+effect: Iff defined, export normal system call symbols from libc.
+	For example, without this option rump_sys_open() is exported.
+	With this option, both open() and rump_sys_open() are exported.
+	This option is meant for building systems where a rump kernel
+	is the only operating system like component.
+
+
+    RUMP_LDSCRIPT
+
+values: no/GNU/sun/ctor
+defval: GNU
+effect: Select the linker script to be used for linking rump kernel shared
+	library components.
+	no	- do not use a linker script
+	GNU	- use a linker script for GNU ld 2.18 and later
+	sun	- use a linker script for the Solaris linker
+	ctor	- do not use a linker script, make the code
+		  generate __attribute__((constructor))

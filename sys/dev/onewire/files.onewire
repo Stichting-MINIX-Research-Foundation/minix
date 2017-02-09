@@ -1,0 +1,15 @@
+# $NetBSD: files.onewire,v 1.3 2006/04/14 18:38:50 riz Exp $
+
+define	onewire {}
+
+device	onewire: onewire
+attach	onewire at onewirebus
+file	dev/onewire/onewire.c		onewire
+file	dev/onewire/onewire_subr.c	onewire
+
+file	dev/onewire/onewire_bitbang.c	onewire_bitbang
+
+# Temperature family type device
+device	owtemp: sysmon_envsys
+attach	owtemp at onewire
+file	dev/onewire/owtemp.c		owtemp
