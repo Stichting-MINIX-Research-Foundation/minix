@@ -235,7 +235,6 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 	minixfs \
 	mthread \
 	netdriver \
-	netsock \
 	sffs \
 	sockdriver \
 	sockevent \

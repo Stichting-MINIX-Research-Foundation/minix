@@ -2,11 +2,6 @@
 
 .if ${MKIMAGEONLY} == "no"
 SUBDIR+=	inet
-
-.  if ${MKLWIP} == "yes"
-SUBDIR+=	lwip
-.  endif # ${MKLWIP} == "yes"
-
 SUBDIR+=	uds
 .endif # ${MKIMAGEONLY} == "no"
 

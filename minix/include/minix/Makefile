@@ -22,7 +22,7 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	syslib.h sysutil.h timers.h type.h \
 	u64.h usb.h usb_ch9.h vbox.h \
 	vboxfs.h vboxif.h vboxtype.h vm.h \
-	vfsif.h vtreefs.h libminixfs.h netsock.h \
+	vfsif.h vtreefs.h libminixfs.h \
 	virtio.h
 
 .include <bsd.kinc.mk>

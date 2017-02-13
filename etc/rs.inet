@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Recovery script for INET/lwip. It restarts daemons dependent on it in order
+# Recovery script for INET. It restarts daemons dependent on it in order
 # to recover TCP state.
 
 kill_by_name()
@@ -64,14 +64,8 @@ kill_by_name syslogd
 
 # Wait a moment to let daemons clean themselves up
 sleep 3
-if [ X`/bin/sysenv lwip` = Xyes ]
-then
-	minix-service up /service/lwip -script /etc/rs.inet -dev /dev/ip -restarts $restarts
-	dhcpd --lwip &
-else
-	minix-service up /service/inet -script /etc/rs.inet -dev /dev/ip -restarts $restarts
-	daemonize dhcpd
-fi
+minix-service up /service/inet -script /etc/rs.inet -dev /dev/ip -restarts $restarts
+daemonize dhcpd
 daemonize nonamed -L
 daemonize syslogd
 

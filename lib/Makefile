@@ -32,6 +32,7 @@ SUBDIR+=	../minix/lib/libasyn \
 		../minix/lib/libexec \
 		../minix/lib/libfsdriver \
 		../minix/lib/libinputdriver \
+		../minix/lib/liblwip \
 		../minix/lib/libminc \
 		../minix/lib/libminixfs \
 		../minix/lib/libnetdriver \
@@ -44,11 +45,6 @@ SUBDIR+=	../minix/lib/libasyn \
 
 .if (${HAVE_LIBGCC} == "no")
 SUBDIR+=	../minix/lib/libgcc_s_empty
-.endif
-
-.if (${MKLWIP} == "yes")
-SUBDIR+=	../minix/lib/liblwip \
-		../minix/lib/libnetsock
 .endif
 
 .if (${MACHINE_ARCH} == "i386")

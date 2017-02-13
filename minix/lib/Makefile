@@ -14,6 +14,7 @@ SUBDIR+=	libdevman
 SUBDIR+=	libexec
 SUBDIR+=	libfsdriver
 SUBDIR+=	libinputdriver
+SUBDIR+=	liblwip
 SUBDIR+=	libminc
 SUBDIR+=	libminixfs
 SUBDIR+=	libnetdriver
@@ -26,11 +27,6 @@ SUBDIR+=	libvtreefs
 
 .if (${HAVE_LIBGCC} == "no")
 SUBDIR+=	libgcc_s_empty
-.endif
-
-.if (${MKLWIP} == "yes")
-SUBDIR+=	liblwip
-SUBDIR+=	libnetsock
 .endif
 
 .if (${MACHINE_ARCH} == "i386")

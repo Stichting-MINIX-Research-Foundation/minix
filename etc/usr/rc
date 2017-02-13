@@ -191,12 +191,8 @@ start)
         arg="-args \"instance=$instance$arg\""
         eval up $driver -label $label $arg -period 5HZ
     done
-    if [ X`/bin/sysenv lwip` = Xyes ]
-    then
-	up lwip -script /etc/rs.inet -dev /dev/ip
-    else
-	up inet -script /etc/rs.inet -dev /dev/ip
-    fi
+
+    up inet -script /etc/rs.inet -dev /dev/ip
 
     # pty needs to know the "tty" group ID
     up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
@@ -371,13 +367,7 @@ start)
 	    if grep -s 'psip0.*default' /etc/inet.conf >/dev/null
 	    then	ifconfig -h 10.0.0.1
 	    else
-		    if [ X`/bin/sysenv lwip` = Xyes ]
-		    then
-			dhcpd --lwip &
-			echo -n " dhcpd"
-		    else
-			daemonize dhcpd
-		    fi
+		daemonize dhcpd
 	    fi
 	    daemonize nonamed -L
 	    if [ -f "$DAEMONS" ]

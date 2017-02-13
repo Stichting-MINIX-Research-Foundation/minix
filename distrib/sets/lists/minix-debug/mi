@@ -88,7 +88,7 @@
 ./usr/lib/libnetdriver_g.a                              minix-debug     debuglib
 ./usr/lib/libnetpgp_g.a                                 minix-debug     debuglib
 ./usr/lib/libnetpgpverify_g.a                           minix-debug     debuglib
-./usr/lib/libnetsock_g.a                                minix-debug     debuglib
+./usr/lib/libnetsock_g.a                                minix-debug     debuglib,obsolete
 ./usr/lib/libobjc_g.a                                   minix-debug     gcc=5,debuglib
 ./usr/lib/libopcodes_g.a                                minix-debug     debuglib
 ./usr/lib/libpci_g.a                                    minix-debug     debuglib
@@ -186,7 +186,7 @@
 ./usr/libdata/debug/service/is.debug                    minix-debug     debug
 ./usr/libdata/debug/service/isofs.debug                 minix-debug     debug
 ./usr/libdata/debug/service/log.debug                   minix-debug     debug
-./usr/libdata/debug/service/lwip.debug                  minix-debug     debug
+./usr/libdata/debug/service/lwip.debug                  minix-debug     debug,obsolete
 ./usr/libdata/debug/service/memory.debug                minix-debug     debug
 ./usr/libdata/debug/service/mfs.debug                   minix-debug     debug
 ./usr/libdata/debug/service/mib.debug                   minix-debug     debug

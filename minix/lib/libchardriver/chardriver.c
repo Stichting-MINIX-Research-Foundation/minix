@@ -208,7 +208,7 @@ static void chardriver_reply(message *mess, int ipc_status, int r)
 		/* FIXME: we should be able to check FLAGS against
 		 * CDEV_NONBLOCK here, but in practice, several drivers do not
 		 * send a reply through this path (eg TTY) or simply do not
-		 * implement nonblocking calls properly (eg audio, LWIP).
+		 * implement nonblocking calls properly (eg audio).
 		 */
 #if 0
 		if (mess->m_vfs_lchardriver_readwrite.flags & CDEV_NONBLOCK)

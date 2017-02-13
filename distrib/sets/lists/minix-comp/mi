@@ -1221,7 +1221,7 @@
 ./usr/include/minix/mmio.h                              minix-comp
 ./usr/include/minix/mthread.h                           minix-comp
 ./usr/include/minix/netdriver.h                         minix-comp
-./usr/include/minix/netsock.h                           minix-comp
+./usr/include/minix/netsock.h                           minix-comp      obsolete
 ./usr/include/minix/optset.h                            minix-comp
 ./usr/include/minix/padconf.h                           minix-comp
 ./usr/include/minix/param.h                             minix-comp
@@ -1922,7 +1922,7 @@
 ./usr/lib/bc/libnetdriver.a                             minix-comp      bitcode
 ./usr/lib/bc/libnetpgp.a                                minix-comp      bitcode
 ./usr/lib/bc/libnetpgpverify.a                          minix-comp      bitcode
-./usr/lib/bc/libnetsock.a                               minix-comp      bitcode
+./usr/lib/bc/libnetsock.a                               minix-comp      bitcode,obsolete
 ./usr/lib/bc/libopcodes.a                               minix-comp      bitcode,binutils
 ./usr/lib/bc/libpci.a                                   minix-comp      bitcode
 ./usr/lib/bc/libprop.a                                  minix-comp      bitcode
@@ -2077,8 +2077,8 @@
 ./usr/lib/libmthread_pic.a                              minix-comp
 ./usr/lib/libnetdriver.a                                minix-comp
 ./usr/lib/libnetdriver_pic.a                            minix-comp
-./usr/lib/libnetsock.a                                  minix-comp
-./usr/lib/libnetsock_pic.a                              minix-comp
+./usr/lib/libnetsock.a                                  minix-comp      obsolete
+./usr/lib/libnetsock_pic.a                              minix-comp      obsolete
 ./usr/lib/libobjc.a                                     minix-comp      gcc=45
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
 ./usr/lib/libpci.a                                      minix-comp
