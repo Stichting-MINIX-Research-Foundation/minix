@@ -1626,7 +1626,8 @@ put_struct_sockaddr(struct trace_proc * proc, const char * name, int flags,
 				    sin6.sin6_flowinfo);
 			put_in6_addr(proc, "sin6_addr", &sin6.sin6_addr);
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-			    IN6_IS_ADDR_SITELOCAL(&sin6.sin6_addr) ||
+			    IN6_IS_ADDR_MC_NODELOCAL(&sin6.sin6_addr) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr) ||
 			    verbose > 0)
 				put_value(proc, "sin6_scope_id", "%"PRIu32,
 				    sin6.sin6_scope_id);
