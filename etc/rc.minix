@@ -1,0 +1,248 @@
+# /etc/rc.minix - MINIX system startup script
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+# The normal system boot situation is that init(8) invokes the ramdisk RC
+# script, which invokes the NetBSD rc infrastructure, which in turn calls this
+# script through /etc/rc.d/minixrc.  With a boot ramdisk (x86_ramimage), the
+# ramdisk RC is bypassed altogether, but stored as /etc/rc.ramdisk.  We then
+# have to invoke it here (for startup only!) to let it perform its tasks first.
+if sysenv bootramdisk >/dev/null
+then
+	[ "$1" = "start" ] && sh /etc/rc.ramdisk "$@"
+fi
+
+# Same settings as in the default /etc/profile. We do not source this file
+# as the system administrator may decide to change those values for his users.
+RC_TZ=/etc/rc.timezone
+
+# Are we booting from CD?
+bootcd="`/bin/sysenv bootcd`"
+
+# Set TERM to minix if not present.
+TERM="${TERM-minix}"
+
+export TERM PATH
+
+# Local variables
+ARCH="`sysenv arch`"
+
+usage()
+{
+    echo >&2 "Usage: $0 [-saf] [start|stop]"
+    exec intr sh
+}
+
+up()
+{
+    # Function to dynamically start a system service
+    opt=""
+    prefix=$(expr "$1 " : '\(-\)')
+    if [ "$prefix" = "-" ];
+    then
+         opt=$1
+         shift
+    fi
+    service=$1
+    shift
+
+    minix-service $opt up /service/$service "$@"
+}
+
+edit()
+{
+    # Function to dynamically edit system service settings
+    opt=""
+    prefix=$(expr "$1 " : '\(-\)')
+    if [ "$prefix" = "-" ];
+    then
+         opt=$1
+         shift
+    fi
+    service=$1
+    shift
+
+    # Assume binaries are always in /service or /usr/pkg/service
+    binlocation=/service/$service
+    if [ ! -x $binlocation ]
+    then	binlocation=/usr/pkg/service/$service
+    fi
+
+    # Mostly to find init...
+    if [ ! -x $binlocation ]
+    then	binlocation=/sbin/$service
+    fi
+    minix-service $opt edit $binlocation -label $service "$@"
+}
+
+set -- `sysenv bootopt` "$@"
+while getopts 'saf' opt
+do
+    case $opt in
+    s)	sflag=t ;;	# Single user
+    a)	aflag=t ;;	# Ask for /usr
+    f)	fflag=-f ;;	# Force a full file system check
+    *)	usage
+    esac
+done
+shift `expr $OPTIND - 1`
+
+case "$#:$1" in
+1:start|1:stop)
+    action=$1
+    ;;
+*)  usage
+esac
+
+case $action in
+start)
+    # If booting from CD, we want some directories to be ramdisks
+    if [ ! -z "$bootcd" ]
+    then
+	. /etc/rc.cd
+    fi
+
+    # National keyboard?
+    test -f /etc/keymap && loadkeys /etc/keymap
+
+    # options for fsck. default is -r, which prompts the user for repairs.
+    optname=fsckopts
+    fsckopts=-p
+    if sysenv $optname >/dev/null
+    then       fsckopts="`sysenv $optname`"
+    fi
+
+    if [ "`sysenv debug_fkeys`" != 0 ]
+    then
+        up -n is -period 5HZ
+    fi
+
+    # Set timezone.
+    export TZ=GMT0
+    if [ -f "$RC_TZ" ]
+    then
+         . "$RC_TZ"
+    fi
+
+    # Start real time clock driver & set system time, otherwise default date.
+    up readclock.drv
+    readclock -q || date 201301010000
+
+    # We are not shutting down.
+    if [ -f /etc/nologin ]
+    then
+        rm -f /etc/nologin
+    fi
+
+    # Use MFS binary only from kernel image?
+    if [ "`sysenv bin_img`" = 1 ]
+    then
+        bin_img="-i "
+    fi
+
+    # fsck + mount using /etc/fstab.
+    fsck -x / $fflag $fsckopts
+    mount -a
+
+    if [ -z "`sysenv bootramdisk`" ]
+    then
+	# Unmount and free now defunct ramdisk
+	umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
+	ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
+    fi
+
+    # Initialize files.
+    >/var/run/utmp				# /etc/utmp keeps track of logins
+    >/var/run/utmpx				# /etc/utmpx keeps track of logins
+
+    # Edit settings for boot system services
+    if [ "`sysenv skip_boot_config`" != 1 ]
+    then
+	edit rs
+	edit vm
+	edit pm
+	edit sched
+	edit vfs
+	edit ds
+	edit tty
+	edit memory
+	edit mib
+	edit pfs
+	edit init
+	#
+	# Keep a copy around to recover the root FS from crashes
+	#
+	rootline=`cat /etc/mtab | grep "on / "`
+	rootfs=fs_`echo "$rootline" | cut -d' ' -f1 | cut -d'/' -f3`
+	[ "$rootfs" = "fs_bootramdisk" ] && rootfs=fs_imgrd
+	roottype=`echo "$rootline" | cut -d' ' -f5`
+	minix-service -c edit /service/$roottype -label $rootfs
+    fi
+
+    if [ "$sflag" ]
+    then
+	echo "Single user. Press ^D to resume multiuser startup."
+	intr sh
+	echo
+    fi
+
+    echo "Multiuser startup in progress ..."
+
+    case "`printroot -r`":$bootcd in
+    /dev/ram:)
+	# Remove boot-only things to make space,
+	# unless booting from CD, in which case we need them.
+	rm -rf /boot
+	# put the compiler on ram
+	cp /usr/lib/em* /usr/lib/cpp* /lib
+    esac
+
+    echo -n "Starting hotplugging infrastructure... "
+    rm -f /var/run/devmand.pid
+    devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
+    echo "done."
+
+    # Things should be alright now.
+    ;;
+stop)
+    sync
+    if [ -f /var/run/devmand.pid ]
+    then
+	kill -INT `cat /var/run/devmand.pid`
+	# without this delay the following will
+	# be printed in the console
+	# RS: devman not running?
+	sleep 1
+    fi
+    #
+    # usbd needs to be stopped exactly
+    # at this stage(before stopping devman
+    # and after stopping the services
+    # stated by devmand)
+    if [ -x /usr/pkg/etc/rc.d/usbd ]
+    then
+	/usr/pkg/etc/rc.d/usbd stop
+    fi
+
+    if [ -x /service/usbd ]
+    then
+	minix-service down usbd
+    fi
+
+    # Tell RS server we're going down.
+    minix-service shutdown
+    ;;
+esac
+
+# Further initialization.
+test -f /usr/etc/rc && sh /usr/etc/rc $action
+test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
+
+# Any messages?
+if [ "$action" = start ]
+then	if [ -f /etc/issue ]
+	then	cat /etc/issue
+	fi
+fi
+
+exit 0

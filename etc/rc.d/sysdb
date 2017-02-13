@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+# $NetBSD: sysdb,v 1.24 2012/06/03 21:42:45 joerg Exp $
+#
+
+# PROVIDE: sysdb
+# REQUIRE: mountcritremote
+# BEFORE:  DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="sysdb"
+rcvar=$name
+start_cmd="sysdb_start"
+stop_cmd=":"
+extra_commands="devdb utmp services netgroup password"
+devdb_cmd="build_devdb"
+utmp_cmd="build_utmp"
+services_cmd="build_services"
+netgroup_cmd="build_netgroup"
+password_cmd="build_password"
+echo=:
+
+sysdb_start()
+{
+	echo -n "Building databases:"
+	echo=echo
+	comma=" "
+	$devdb_cmd
+	$utmp_cmd
+	$services_cmd
+	$netgroup_cmd
+	$password_cmd
+	echo "."
+}
+
+check_file()
+{
+	local src="$1"
+	local db="$2"
+
+	shift 2
+	if [ ! -e "$src" ]; then
+		return
+	fi
+	if [ \( ! -f "$db" \) -o \( "$src" -nt "$db" \) ]; then
+		$echo -n "$comma$(basename "$src")"
+		comma=", "
+		"$@"
+	fi
+}
+
+build_services()
+{
+	check_file /etc/services /var/db/services.cdb services_mkdb -q
+}
+
+build_netgroup()
+{
+	check_file /etc/netgroup /var/db/netgroup.db netgroup_mkdb
+}
+
+build_devdb()
+{
+	check_file /dev /var/run/dev.db dev_mkdb
+	check_file /dev /var/run/dev.cdb dev_mkdb
+}
+
+build_password()
+{
+	local p=/etc/master.passwd
+	check_file $p /etc/spwd.db pwd_mkdb -w $p
+}
+
+build_utmp()
+{
+	#	Re-create /var/run/utmp and /var/run/utmpx, which are
+	#	deleted by mountcritlocal but can't be recreated by it
+	#	because install and chown may not be available then
+	#	(possibly no /usr).
+	#
+	local i
+	for i in "" x; do
+		if [ ! -f /var/run/utmp$i ]; then
+			$echo -n "${comma}utmp$i"
+			comma=", "
+			install -c -m 664 -g utmp /dev/null /var/run/utmp$i
+		fi
+	done
+}
+
+load_rc_config $name
+run_rc_command "$1"

@@ -4,12 +4,12 @@
 # Missing:  ms
 
 .include <bsd.own.mk>
-#__MINIX: dict doc examples man me \
+#__MINIX: dict doc examples me \
 #         tabset tmac wscons xml
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR=	legal misc mk \
+SUBDIR=	legal man misc mk \
 	terminfo
 .if ${MKNLS} != "no"
 SUBDIR+=i18n locale nls

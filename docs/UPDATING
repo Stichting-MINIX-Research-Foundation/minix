@@ -1,3 +1,9 @@
+20170223:
+	Edit your /etc/rc.conf to set rc_configured to YES.  If you do not,
+	your system will refuse to enter multi-user mode after the next reboot.
+	You can then still make the same edit from single user mode, but that
+	is not as easy.
+
 20170222:
 	Because of naming conflicts, the MINIX 3 service(8) utility has been
 	renamed to "minix-service".  After successfully rebuilding the system

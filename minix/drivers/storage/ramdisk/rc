@@ -1,16 +1,12 @@
 #!/bin/sh
 set -e
 
-exec >/dev/log
-exec 2>/dev/log
-exec </dev/null
-
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 FSCK=/bin/fsck_mfs
 ACPI=/service/acpi
 
-if [ X`/bin/sysenv arch` = Xi386 ]
+if [ X`sysenv arch` = Xi386 ]
 then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 	then
 		minix-service -c up $ACPI
@@ -25,15 +21,15 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 
 	# Do we want to use the virtio block device?
 	# If not specified, default to yes if the device is found.
-	if /bin/sysenv virtio_blk >/dev/null
-	then	virtio_blk="`/bin/sysenv virtio_blk`"
+	if sysenv virtio_blk >/dev/null
+	then	virtio_blk="`sysenv virtio_blk`"
         elif	grep '^[^ ]* [^ ]* 1AF4:1001[^ ]* ' /proc/pci >/dev/null
 	then	echo "virtio_blk not set, defaulting to using found virtio device."
 		virtio_blk=yes
         fi
 
 	minix-service -cn up /service/floppy -dev /dev/fd0
-	if [ X`/bin/sysenv ahci` = Xyes ]
+	if [ X`sysenv ahci` = Xyes ]
 	then
 		# this is here temporarily, for testing purposes
 		minix-service -c up /service/ahci -dev /dev/c0d0 -label ahci_0 -args instance=0
@@ -44,18 +40,21 @@ then	if [ -e $ACPI -a -n "`sysenv acpi`" ]
 		minix-service -c up /service/at_wini -dev /dev/c0d0 -label at_wini_0
 		minix-service -cr up /service/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1 2>/dev/null || :
 	fi
-	/bin/umount /proc >/dev/null
+	umount /proc >/dev/null
 fi
 
-if [ X`/bin/sysenv arch` = Xearm ]
+if [ X`sysenv arch` = Xearm ]
 then	echo Starting the mmc driver
 	minix-service -c up /service/mmc -dev /dev/c0d0
 fi
 
+# Load ProcFS from the ramdisk to minimize the chance of a desync with the boot
+# image services from which it obtains data structures directly.  As we move to
+# the MIB service, this will eventually become obsolete.
 minix-service up /service/procfs || echo "WARNING: couldn't start procfs"
 
-if /bin/sysenv rootdevname >/dev/null
-then	rootdevname=/dev/`/bin/sysenv rootdevname`
+if sysenv rootdevname >/dev/null
+then	rootdevname=/dev/`sysenv rootdevname`
 else
 	if (! sysenv cdproberoot) && (! sysenv bootramdisk) >/dev/null
 	then	echo "rootdevname not set"
@@ -78,7 +77,7 @@ then
 	export rootdevname
 elif [ "$rootdevname" = "/dev/ram" ]
 then
-	ramimagename=/dev/`/bin/sysenv ramimagename`
+	ramimagename=/dev/`sysenv ramimagename`
 	echo "Loading ramdisk from $ramimagename"
 	loadramdisk "$ramimagename" || echo "WARNING: loadramdisk failed"
 fi
@@ -97,16 +96,21 @@ then
 	fi
 fi
 
-# Change root from temporary boot ramdisk to the configure
-# root device
-if ! sysenv bootramdisk >/dev/null
-then
-	/bin/mount -n $bin_img"$rootdevname" /
+# Change root from temporary boot ramdisk to the configure root device
+if ! sysenv bootramdisk >/dev/null; then
+	mount -n $bin_img"$rootdevname" /
+
+	# Reopen standard file descriptors, so that we can unmount the ramdisk.
+	# That is essentially a VFS shortcoming that should be fixed, though..
+	exec >/dev/log
+	exec 2>/dev/log
+	exec </dev/console
 fi
 
-/bin/mount -e -n -t procfs none /proc || echo "WARNING: couldn't mount procfs"
+# Mount the ProcFS instance that was loaded from the ramdisk, on the root FS.
+mount -e -n -t procfs none /proc || echo "WARNING: couldn't mount procfs"
 
-if ! sysenv bootramdisk >/dev/null
-then
-	exec /bin/sh /etc/rc `sysenv bootopts` "$@"
+# Start the NetBSD rc infrastructure
+if ! sysenv bootramdisk >/dev/null; then
+	exec sh /etc/rc "$@"
 fi

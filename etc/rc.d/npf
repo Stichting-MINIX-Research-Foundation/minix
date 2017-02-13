@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# $NetBSD: npf,v 1.3 2012/11/01 06:06:14 mrg Exp $
+#
+# Public Domain.
+#
+
+# PROVIDE: npf
+# REQUIRE: root bootconf mountcritlocal tty network
+# BEFORE: NETWORKING
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="npf"
+rcvar=$name
+
+config="/etc/npf.conf"
+
+start_cmd="npf_start"
+stop_cmd="npf_stop"
+
+reload_cmd="npf_reload"
+status_cmd="npf_status"
+extra_commands="reload status"
+
+npf_cfg_check()
+{
+	if [ ! -f ${config} ]; then
+		warn "${config} is not readable; failed."
+		exit 1	
+	fi
+}
+
+npf_start()
+{
+	echo "Enabling NPF."
+	npf_cfg_check
+	/sbin/npfctl reload
+	/sbin/npfctl start
+}
+
+npf_stop()
+{
+	echo "Disabling NPF."
+	/sbin/npfctl stop
+	/sbin/npfctl flush
+}
+
+npf_reload()
+{
+	echo "Reloading NPF ruleset."
+	npf_cfg_check
+	/sbin/npfctl reload
+}
+
+npf_status()
+{
+	:
+}
+
+load_rc_config $name
+run_rc_command "$1"

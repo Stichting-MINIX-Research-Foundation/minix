@@ -1,0 +1,17 @@
+#!/bin/sh
+# MINIX 3 bridge from NetBSD rc to MINIX rc.  Must be called as the very first
+# script at startup (hence the current 'before').  Ideally the MINIX rc would
+# be decomposed into a number of small rc scripts, though.
+
+# PROVIDE: minixrc
+# BEFORE: DISKS
+# KEYWORD: shutdown
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="minixrc"
+start_cmd="sh /etc/rc.minix start"
+stop_cmd="sh /etc/rc.minix stop"
+
+load_rc_config $name
+run_rc_command "$1"

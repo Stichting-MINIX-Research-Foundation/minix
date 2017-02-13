@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# $NetBSD: ipsec,v 1.13 2013/09/12 19:52:50 christos Exp $
+#
+
+# PROVIDE: ipsec
+# REQUIRE: root bootconf mountcritlocal tty
+# BEFORE:  DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="ipsec"
+rcvar=$name
+start_precmd="ipsec_prestart"
+start_cmd="ipsec_start"
+stop_precmd="test -f /etc/ipsec.conf"
+stop_cmd="ipsec_stop"
+reload_cmd="ipsec_reload"
+extra_commands="reload"
+
+ipsec_prestart()
+{
+	if [ ! -f /etc/ipsec.conf ]; then
+		warn "/etc/ipsec.conf not readable; ipsec start aborted."
+
+		stop_boot
+		return 1
+	fi
+	return 0
+}
+
+ipsec_getip() {
+	ifconfig $1 | while read what address rest; do
+		case "$what" in
+		inet)	echo "$address";;
+		esac
+	done
+}
+
+ipsec_load() {
+	if [ -z "$1" ]; then
+		/sbin/setkey -f /etc/ipsec.conf
+	else
+		sed -e "s/@LOCAL_ADDR@/$1/" < /etc/ipsec.conf | \
+		    /sbin/setkey -f -
+	fi
+}
+
+ipsec_configure() {
+	while true; do
+		local addr="$(ipsec_getip "$ipsec_flags")"
+		case "$addr" in
+		'')		sleep 1;;
+		"0.0.0.0")	sleep 1;;
+		*)		ipsec_load "$addr"; return;;
+		esac
+	done &
+}
+
+ipsec_start()
+{
+	echo "Installing ipsec manual keys/policies."
+	if [ -n "$ipsec_flags" ]; then
+		ipsec_configure
+	else
+		ipsec_load
+	fi
+}
+
+ipsec_stop()
+{
+	echo "Clearing ipsec manual keys/policies."
+
+	# still not 100% sure if we would like to do this.
+	# it is very questionable to do this during shutdown session, since
+	# it can hang any of remaining IPv4/v6 session.
+	#
+	/sbin/setkey -F
+	/sbin/setkey -FP
+}
+
+ipsec_reload()
+{
+	echo "Reloading ipsec manual keys/policies."
+	ipsec_stop
+	ipsec_start
+}
+
+load_rc_config $name
+run_rc_command "$1"

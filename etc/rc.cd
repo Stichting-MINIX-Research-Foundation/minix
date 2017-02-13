@@ -23,7 +23,7 @@ create_ramdisk()
 }
 
 # Create /var ramdisk
-create_ramdisk ram0 /var 256
+create_ramdisk ram0 /var 512
 create_ramdisk ram1 /tmp 128
 create_ramdisk ram2 /usr/run 64
 create_ramdisk ram3 /root 512

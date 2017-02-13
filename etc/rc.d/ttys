@@ -1,0 +1,8 @@
+#!/bin/sh
+# MINIX 3 stub.
+# There is currently nothing in the NetBSD script that we want: setting tty
+# flags is not yet a supported concept, and changing /dev/tty permissions does
+# not work from the installation CD with its read-only /dev directory.
+
+# PROVIDE: tty
+# REQUIRE: root bootconf

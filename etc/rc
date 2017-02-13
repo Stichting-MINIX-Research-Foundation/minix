@@ -1,246 +1,468 @@
-# /etc/rc - System startup script run by init before going multiuser.
+#!/bin/sh
+#
+# $NetBSD: rc,v 1.170 2014/07/29 20:39:16 apb Exp $
+#
+# rc --
+#	Run the scripts in /etc/rc.d with rcorder, and log output
+#	to /var/run/rc.log.
 
-if sysenv bootramdisk >/dev/null
-then
-	/bin/sh /etc/rc.ramdisk
-fi
+#	System startup script run by init(8) on autoboot or after single-user.
+#	Output and error are redirected to console by init, and the console
+#	is the controlling terminal.
 
-# Are we booting from CD?
-bootcd="`/bin/sysenv bootcd`"
-
-exec >/dev/log
-exec 2>/dev/log
-exec </dev/null
-
+export HOME=/
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 022
 
-# Same settings as in the default /etc/profile. We do not source this file
-# as the system administrator may decide to change those values for his users.
-RC_TZ=/etc/rc.timezone
-PATH=/usr/local/sbin:/usr/pkg/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/pkg/bin:/usr/bin:/bin
+if [ -e ./rc.subr ] ; then
+	. ./rc.subr # for testing
+else
+	. /etc/rc.subr
+fi
+. /etc/rc.conf
+_rc_conf_loaded=true
 
-# Set TERM to minix if not present.
-TERM="${TERM-minix}"
+: ${RC_LOG_FILE:="/var/run/rc.log"}
 
-export TERM PATH
+# rc.subr redefines echo and printf.  Undo that here.
+unset echo ; unalias echo
+unset printf ; unalias printf
 
-# Local variables
-ARCH="`sysenv arch`"
-
-usage()
-{
-    echo >&2 "Usage: $0 [-saf] autoboot|start|stop|down"
-    exec intr sh
-}
-
-up()
-{
-    # Function to dynamically start a system service
-    opt=""
-    prefix=$(expr "$1 " : '\(-\)')
-    if [ "$prefix" = "-" ];
-    then
-         opt=$1
-         shift
-    fi
-    service=$1
-    shift
-
-    minix-service $opt up /service/$service "$@"
-}
-
-edit()
-{
-    # Function to dynamically edit system service settings
-    opt=""
-    prefix=$(expr "$1 " : '\(-\)')
-    if [ "$prefix" = "-" ];
-    then
-         opt=$1
-         shift
-    fi
-    service=$1
-    shift
-
-    # Assume binaries are always in /service or /usr/pkg/service
-    binlocation=/service/$service
-    if [ ! -x $binlocation ]
-    then	binlocation=/usr/pkg/service/$service
-    fi
-
-    # Mostly to find init...
-    if [ ! -x $binlocation ]
-    then	binlocation=/sbin/$service
-    fi
-    minix-service $opt edit $binlocation -label $service "$@"
-}
-
-while getopts 'saf' opt
-do
-    case $opt in
-    s)	sflag=t ;;	# Single user
-    a)	aflag=t ;;	# Ask for /usr
-    f)	fflag=-f ;;	# Force a full file system check
-    *)	usage
-    esac
-done
-shift `expr $OPTIND - 1`
-
-case "$#:$1" in
-1:start|1:stop|1:down|1:autoboot)
-    action=$1
-    ;;
-*)  usage
-esac
-
-case $action in
-autoboot|start)
-    # If booting from CD, we want some directories to be ramdisks
-    if [ ! -z "$bootcd" ]
-    then
-	. /etc/rc.cd
-    fi
-
-    # National keyboard?
-    test -f /etc/keymap && loadkeys /etc/keymap
-
-    # options for fsck. default is -r, which prompts the user for repairs.
-    optname=fsckopts
-    fsckopts=-p
-    if sysenv $optname >/dev/null
-    then       fsckopts="`sysenv $optname`"
-    fi
-
-    if [ "`sysenv debug_fkeys`" != 0 ]
-    then
-        up -n is -period 5HZ
-    fi
-
-    # Set timezone.
-    export TZ=GMT0
-    if [ -f "$RC_TZ" ]
-    then
-         . "$RC_TZ"
-    fi
-
-    # Start real time clock driver & set system time, otherwise default date.
-    up readclock.drv
-    readclock -q || date 201301010000
-
-    # We are not shutting down.
-    if [ -f /etc/nologin ]
-    then
-        rm -f /etc/nologin
-    fi
-
-    # Use MFS binary only from kernel image?
-    if [ "`sysenv bin_img`" = 1 ]
-    then
-        bin_img="-i "
-    fi
-
-    # fsck + mount using /etc/fstab.
-    fsck -x / $fflag $fsckopts
-    mount -a
-
-    if [ -z "`sysenv bootramdisk`" ]
-    then
-	# Unmount and free now defunct ramdisk
-	umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
-	ramdisk 0 /dev/imgrd || echo "Failed to free boot ramdisk"
-    fi
-
-    # Initialize files.
-    >/var/run/utmp				# /etc/utmp keeps track of logins
-    >/var/run/utmpx				# /etc/utmpx keeps track of logins
-
-    # Edit settings for boot system services
-    if [ "`sysenv skip_boot_config`" != 1 ]
-    then
-	edit rs
-	edit vm
-	edit pm
-	edit sched
-	edit vfs
-	edit ds
-	edit tty
-	edit memory
-	edit mib
-	edit pfs
-	edit init
-	#
-	# Keep a copy around to recover the root FS from crashes
-	#
-	rootline=`cat /etc/mtab | grep "on / "`
-	rootfs=fs_`echo "$rootline" | cut -d' ' -f1 | cut -d'/' -f3`
-	roottype=`echo "$rootline" | cut -d' ' -f5`
-	minix-service -c edit /service/$roottype -label $rootfs
-    fi
-
-    if [ "$sflag" ]
-    then
-	echo "Single user. Press ^D to resume multiuser startup."
-	intr sh
-	echo
-    fi
-
-    echo "Multiuser startup in progress ..."
-
-    case "`printroot -r`":$bootcd in
-    /dev/ram:)
-	# Remove boot-only things to make space,
-	# unless booting from CD, in which case we need them.
-	rm -rf /boot
-	# put the compiler on ram
-	cp /usr/lib/em* /usr/lib/cpp* /lib
-    esac
-
-    echo -n "Starting hotplugging infrastructure... "
-    rm -f /var/run/devmand.pid
-    devmand -d /etc/devmand -d /usr/pkg/etc/devmand &
-    echo "done."
-
-    # Things should be alright now.
-    ;;
-down|stop)
-    sync
-    if [ -f /var/run/devmand.pid ]
-    then
-	kill -INT `cat /var/run/devmand.pid`
-	# without this delay the following will
-	# be printed in the console
-	# RS: devman not running?
-	sleep 1
-    fi
-    #
-    # usbd needs to be stopped exactly
-    # at this stage(before stopping devman
-    # and after stopping the services
-    # stated by devmand)
-    if [ -x /usr/pkg/etc/rc.d/usbd ]
-    then
-	/usr/pkg/etc/rc.d/usbd stop
-    fi
-
-    if [ -x /service/usbd ]
-    then
-	minix-service down usbd
-    fi
-
-    # Tell RS server we're going down.
-    minix-service shutdown
-    ;;
-esac
-
-# Further initialization.
-test -f /usr/etc/rc && sh /usr/etc/rc $action
-test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
-
-# Any messages?
-if [ "$action" = start -o "$action" = autoboot ]
-then	if [ -f /etc/issue ]
-	then	cat /etc/issue
-	fi
+if ! checkyesno rc_configured; then
+	echo "/etc/rc.conf is not configured.  Multiuser boot aborted."
+	exit 1
 fi
 
-exit 0
+if [ "$1" = autoboot ]; then
+	autoboot=yes
+	rc_fast=yes	# run_rc_command(): do fast booting
+fi
+
+#
+# Completely ignore INT and QUIT at the outer level.  The rc_real_work()
+# function should do something different.
+#
+trap '' INT QUIT
+
+#
+# This string will be used to mark lines of meta-data sent over the pipe
+# from the rc_real_work() function to the rc_postprocess() function.  Lines
+# not so marked are assumed to be output from rc.d scripts.
+#
+# This string is long and unique to ensure that it does not accidentally
+# appear in output from any rc.d script.  It must not contain any
+# characters that are special to glob expansion ('*', '?', '[', or ']').
+#
+rc_metadata_prefix="$0:$$:metadata:";
+
+# Child scripts may sometimes want to print directly to the original
+# stdout and stderr, bypassing the pipe to the postprocessor.  These
+# _rc_*_fd variables are private, shared with /etc/rc.subr, but not
+# intended to be used directly by child scripts.  (Child scripts
+# may use rc.subr's no_rc_postprocess function.)
+#
+_rc_original_stdout_fd=7; export _rc_original_stdout_fd
+_rc_original_stderr_fd=8; export _rc_original_stderr_fd
+eval "exec ${_rc_original_stdout_fd}>&1"
+eval "exec ${_rc_original_stderr_fd}>&2"
+
+#
+# rc_real_work
+#	Do the real work.  Output from this function will be piped into
+#	rc_postprocess(), and some of the output will be marked as
+#	metadata.
+#
+# The body of this function is defined using (...), not {...}, to force
+# it to run in a subshell.
+#
+rc_real_work()
+(
+	stty status '^T'
+
+	# print_rc_metadata() wants to be able to print to the pipe
+	# that goes to our postprocessor, even if its in a context
+	# with redirected output.
+	#
+	_rc_postprocessor_fd=9 ; export _rc_postprocessor_fd
+	_rc_pid=$$ ; export _rc_pid
+	eval "exec ${_rc_postprocessor_fd}>&1"
+
+	# Print a metadata line when we exit
+	#
+	trap 'es=$?; print_rc_metadata "exit:$es"; trap "" 0; exit $es' 0
+
+	#	Set shell to ignore SIGINT, but children will not ignore it.
+	#	Shell catches SIGQUIT and returns to single user.
+	#
+	trap : INT
+	trap '_msg="Boot interrupted at $(date)";
+	      print_rc_metadata "interrupted:${_msg}";
+	      exit 1' QUIT
+
+	print_rc_metadata "start:$(date)"
+
+	#
+	# The stop_boot() function in rc.subr may kill $RC_PID.  We want
+	# it to kill the subshell running this rc_real_work() function,
+	# rather than killing the parent shell, because we want the
+	# rc_postprocess() function to be able to log the error
+	# without being killed itself.
+	#
+	# "$$" is the pid of the top-level shell, not the pid of the
+	# subshell that's executing this function.  The command below
+	# tentatively assumes that the parent of the "/bin/sh -c ..."
+	# process will be the current subshell, and then uses "kill -0
+	# ..." to check the result.  If the "/bin/sh -c ..." process
+	# fails, or returns the pid of an ephemeral process that exits
+	# before the "kill" command, then we fall back to using "$$".
+	#
+	RC_PID=$(/bin/sh -c 'ps -p $$ -o ppid=') || RC_PID=$$
+	kill -0 $RC_PID >/dev/null 2>&1 || RC_PID=$$
+
+	#
+	# As long as process $RC_PID is still running, send a "nop"
+	# metadata message to the postprocessor every few seconds.
+	# This should help flush partial lines that may appear when
+	# rc.d scripts that are NOT marked with "KEYWORD: interactive"
+	# nevertheless attempt to print prompts and wait for input.
+	#
+	(
+	    # First detach from tty, to avoid intercepting SIGINFO.
+	    eval "exec ${_rc_original_stdout_fd}<&-"
+	    eval "exec ${_rc_original_stderr_fd}<&-"
+	    exec </dev/null >/dev/null 2>&1
+	    while kill -0 $RC_PID ; do
+		print_rc_metadata "nop"
+		sleep 3
+	    done
+	) &
+
+	#
+	# Get a list of all rc.d scripts, and use rcorder to choose
+	# what order to execute them.
+	#
+	# For testing, allow RC_FILES_OVERRIDE from the environment to
+	# override this.
+	#
+	print_rc_metadata "cmd-name:rcorder"
+	scripts=$(for rcd in ${rc_directories:-/etc/rc.d}; do
+		test -d ${rcd} && echo ${rcd}/*;
+	done)
+	files=$(rcorder -s nostart ${rc_rcorder_flags} ${scripts})
+	print_rc_metadata "cmd-status:rcorder:$?"
+
+	if [ -n "${RC_FILES_OVERRIDE}" ]; then
+		files="${RC_FILES_OVERRIDE}"
+	fi
+
+	#
+	# Run the scripts in order.
+	#
+	for _rc_elem in $files; do
+		print_rc_metadata "cmd-name:$_rc_elem"
+		run_rc_script $_rc_elem start
+		print_rc_metadata "cmd-status:$_rc_elem:$?"
+	done
+
+	print_rc_metadata "end:$(date)"
+	exit 0
+)
+
+#
+# rc_postprocess
+#	Post-process the output from the rc_real_work() function.  For
+#	each line of input, we have to decide whether to print the line
+#	to the console, print a twiddle on the console, print a line to
+#	the log, or some combination of these.
+#
+#	If rc_silent is true, then suppress most output, instead running
+#	rc_silent_cmd (typically "twiddle") for each line.
+#
+# The body of this function is defined using (...), not {...}, to force
+# it to run in a subshell.
+#
+# We have to deal with the following constraints:
+#
+#  * There may be no writable file systems early in the boot, so
+#    any use of temporary files would be problematic.
+#
+#  * Scripts run during the boot may clear /tmp and/var/run, so even
+#    if they are writable, using those directories too early may be
+#    problematic.  We assume that it's safe to write to our log file
+#    after the mountcritlocal script has run.
+#
+#  * /usr/bin/tee cannot be used because the /usr file system may not
+#    be mounted early in the boot.
+#
+#  * All calls to the rc_log_message and rc_log_flush functions must be
+#    from the same subshell, otherwise the use of a shell variable to
+#    buffer log messages will fail.
+#
+rc_postprocess()
+(
+	local line
+	local before after
+	local IFS=''
+
+	# Try quite hard to flush the log to disk when we exit.
+	trap 'es=$?; rc_log_flush FORCE; trap "" 0; exit $es' 0
+
+	yesno_to_truefalse rc_silent 2>/dev/null
+
+	while read -r line ; do
+		case "$line" in
+		"${rc_metadata_prefix}"*)
+			after="${line#*"${rc_metadata_prefix}"}"
+			rc_postprocess_metadata "${after}"
+			;;
+		*"${rc_metadata_prefix}"*)
+			# magic string is present, but not at the start of
+			# the line.  Treat it as a partial line of
+			# ordinary data, followed by a line of metadata.
+			before="${line%"${rc_metadata_prefix}"*}"
+			rc_postprocess_partial_line "${before}"
+			after="${line#*"${rc_metadata_prefix}"}"
+			rc_postprocess_metadata "${after}"
+			;;
+		*)
+			rc_postprocess_plain_line "${line}"
+			;;
+		esac
+	done
+
+	# If we get here, then the rc_real_work() function must have
+	# exited uncleanly.  A clean exit would have been accompanied by
+	# a line of metadata that would have prevented us from getting
+	# here.
+	#
+	exit 1
+)
+
+#
+# rc_postprocess_plain_line string
+#	$1 is a string representing a line of output from one of the
+#	rc.d scripts.  Append the line to the log, and also either
+#	display the line on the console, or run $rc_silent_cmd,
+#	depending on the value of $rc_silent.
+#
+rc_postprocess_plain_line()
+{
+	local line="$1"
+	rc_log_message "${line}"
+	if $rc_silent; then
+		eval "$rc_silent_cmd"
+	else
+		printf "%s\n" "${line}"
+	fi
+}
+
+#
+# rc_postprocess_partial_line string
+#	This is just like rc_postprocess_plain_line, except that
+#	a newline is not appended to the string.
+#
+rc_postprocess_partial_line()
+{
+	local line="$1"
+	rc_log_message_n "${line}"
+	if $rc_silent; then
+		eval "$rc_silent_cmd"
+	else
+		printf "%s" "${line}"
+	fi
+}
+
+#
+# rc_postprocess_metadata string
+#	$1 is a string containing metadata from the rc_real_work()
+#	function.  The rc_metadata_prefix marker should already
+#	have been removed before the string is passed to this function.
+#	Take appropriate action depending on the content of the string.
+#
+rc_postprocess_metadata()
+{
+	local metadata="$1"
+	local keyword args
+	local msg
+	local IFS=':'
+
+	# given metadata="bleep:foo bar:baz",
+	# set keyword="bleep", args="foo bar:baz",
+	# $1="foo bar", $2="baz"
+	#
+	keyword="${metadata%%:*}"
+	args="${metadata#*:}"
+	set -- $args
+
+	case "$keyword" in
+	start)
+		# Marks the start of the entire /etc/rc script.
+		# $args contains a date/time.
+		rc_log_message "[$0 starting at $args]"
+		if ! $rc_silent; then
+			# MINIX 3: the clock has not been set yet!
+			#printf "%s\n" "$args"
+			# MINIX 3: end
+		fi
+		;;
+	cmd-name)
+		# Marks the start of a child script (usually one of
+		# the /etc/rc.d/* scripts).
+		rc_log_message "[running $1]"
+		;;
+	cmd-status)
+		# Marks the end of a child script.
+		# $1 is a command name, $2 is the command's exit status.
+		# If the command failed, report it, and add it to a list.
+		if [ "$2" != 0 ]; then
+			rc_failures="${rc_failures}${rc_failures:+ }$1"
+			msg="$1 $(human_exit_code $2)"
+			rc_log_message "$msg"
+			if ! $rc_silent; then
+				printf "%s\n" "$msg"
+			fi
+		fi
+		# After the mountcritlocal script has finished, it's
+		# OK to flush the log to disk
+		case "$1" in
+		*/mountcritlocal)
+			rc_log_flush OK
+			;;
+		esac
+		;;
+	nop)
+		# Do nothing.
+		# This has the side effect of flushing partial lines,
+		# and the echo() and printf() functions in rc.subr take
+		# advantage of this.
+		;;
+	note)
+		# Unlike most metadata messages, which should be used
+		# only by /etc/rc and rc.subr, the "note" message may be
+		# used directly by /etc.rc.d/* and similar scripts.
+		# It adds a note to the log file, without displaying
+		# it to stdout.
+		rc_log_message "[NOTE: $args]"
+		;;
+	end)
+		# Marks the end of processing, after the last child script.
+		# If any child scripts (or other commands) failed, report them.
+		#
+		if [ -n "$rc_failures" ]; then
+			rc_log_message "[failures]"
+			msg="The following components reported failures:"
+			msg="${msg}${nl}$( echo "    ${rc_failures}" | fmt )"
+			msg="${msg}${nl}See ${RC_LOG_FILE} for more information."
+			rc_log_message "${msg}"
+			printf "%s\n" "${msg}"
+		fi
+		#
+		# Report the end date/time, even in silent mode
+		#
+		rc_log_message "[$0 finished at $args]"
+		printf "%s\n" "$args"
+		;;
+	exit)
+		# Marks an exit from the rc_real_work() function.
+		# This may be a normal or abnormal exit.
+		#
+		rc_log_message "[$0 exiting with status $1]"
+		exit $1
+		;;
+	interrupted)
+		# Marks an interrupt trapped by the rc_real_work() function.
+		# $args is a human-readable message.
+		rc_log_message "$args"
+		printf "%s\n" "$args"
+		;;
+	*)
+		# an unrecognised line of metadata
+		rc_log_message "[metadata:${metadata}]"
+		;;
+	esac
+}
+
+#
+# rc_log_message string [...]
+#	Write a message to the log file, or buffer it for later.
+#	This function appends a newline to the message.
+#
+rc_log_message()
+{
+	_rc_log_buffer="${_rc_log_buffer}${*}${nl}"
+	rc_log_flush
+}
+
+#
+# rc_log_message_n string [...]
+#	Just like rc_log_message, except without appending a newline.
+#
+rc_log_message_n()
+{
+	_rc_log_buffer="${_rc_log_buffer}${*}"
+	rc_log_flush
+}
+
+#
+# rc_log_flush [OK|FORCE]
+#	save outstanding messages from $_rc_log_buffer to $RC_LOG_FILE.
+#
+# The log file is expected to reside in the /var/run directory, which
+# may not be writable very early in the boot sequence, and which is
+# erased a little later in the boot sequence.  We therefore avoid
+# writing to the file until we believe it's safe to do so.  We also
+# assume that it's reasonable to always append to the file, never
+# truncating it.
+#
+# Optional argument $1 may be "OK" to report that writing to the log
+# file is expected to be safe from now on, or "FORCE" to force writing
+# to the log file even if it may be unsafe.
+#
+# Returns a non-zero status if messages could not be written to the
+# file.
+#
+rc_log_flush()
+{
+	#
+	# If $_rc_log_flush_ok is false, then it's probably too early to
+	# write to the log file, so don't do it, unless $1 is "FORCE".
+	#
+	: ${_rc_log_flush_ok=false}
+	case "$1:$_rc_log_flush_ok" in
+	OK:*)
+		_rc_log_flush_ok=true
+		;;
+	FORCE:*)
+		: OK just this once
+		;;
+	*:true)
+		: OK
+		;;
+	*)
+		# it's too early in the boot sequence, so don't flush
+		return 1
+		;;
+	esac
+
+	#
+	# Now append the buffer to the file.  The buffer should already
+	# contain a trailing newline, so don't add an extra newline.
+	#
+	if [ -n "$_rc_log_buffer" ]; then
+		if { printf "%s" "${_rc_log_buffer}" >>"${RC_LOG_FILE}" ; } \
+			2>/dev/null
+		then
+			_rc_log_buffer=""
+		else
+			return 1
+		fi
+	fi
+	return 0
+}
+
+#
+# Most of the action is in the rc_real_work() and rc_postprocess()
+# functions.
+#
+rc_real_work "$@" 2>&1 | rc_postprocess
+exit $?

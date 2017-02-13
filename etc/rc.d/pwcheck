@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $NetBSD: pwcheck,v 1.5 2004/08/13 18:08:03 mycroft Exp $
+#
+
+# PROVIDE: pwcheck
+# REQUIRE: mountcritremote syslogd
+# BEFORE:  DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="pwcheck"
+start_cmd="pwcheck_start"
+stop_cmd=":"
+
+pwcheck_start()
+{
+	#	check the password temp/lock file
+	#
+	if [ -f /etc/ptmp ]; then
+		logger -s -p auth.err \
+		    "password file may be incorrect -- /etc/ptmp exists"
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

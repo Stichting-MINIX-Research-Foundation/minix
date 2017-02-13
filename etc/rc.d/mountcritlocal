@@ -1,0 +1,5 @@
+#!/bin/sh
+# MINIX 3 stub.
+
+# PROVIDE: mountcritlocal
+# REQUIRE: fsck

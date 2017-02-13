@@ -94,12 +94,18 @@ BINOWN= root
 BINGRP= wheel
 UTMPGRP= utmp
 .if defined(__MINIX)
-BIN1+=	boot.cfg.default \
+BIN1+=	\
+	\
+	gettytab \
 	man.conf \
-	passwd.conf protocols rc rc.cd rc.subr \
-	rc.daemons.dist rs.inet rs.single \
-	services shells syslog.conf \
-	termcap utmp gettytab rc.shutdown
+	\
+	passwd.conf \
+	protocols rc rc.cd rc.subr \
+	rc.shutdown services shells \
+	syslog.conf
+# MINIX-only files:
+BIN1+=	boot.cfg.default rc.daemons.dist rc.minix \
+	rs.inet rs.single termcap utmp
 .else
 BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
@@ -476,7 +482,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/rc.capes/* ${DESTDIR}/etc/rc.capes
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/minix/drivers/usb/usbd/usbd.conf ${DESTDIR}/etc/system.conf.d/usbd
 .endif # Minix/earm specific
-.for subdir in . defaults mtree root skel
+.for subdir in . defaults mtree rc.d root skel
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${_MKMSG_INSTALL} ${DESTDIR}/usr/lib/fonts

@@ -3299,6 +3299,7 @@
 ./usr/man/man5/passwd.5                                 minix-man
 ./usr/man/man5/pkg_install.conf.5                       minix-man
 ./usr/man/man5/pkg_summary.5                            minix-man
+./usr/man/man5/rc.conf.5                                minix-man
 ./usr/man/man5/resolv.conf.5                            minix-man
 ./usr/man/man5/resolver.5                               minix-man
 ./usr/man/man5/rhosts.5                                 minix-man
@@ -3429,6 +3430,11 @@
 ./usr/man/man8/pwdauth.8                                minix-man       obsolete
 ./usr/man/man8/rarpd.8                                  minix-man
 ./usr/man/man8/rawspeed.8                               minix-man
+./usr/man/man8/rc.8                                     minix-man
+./usr/man/man8/rc.d.8                                   minix-man
+./usr/man/man8/rc.local.8                               minix-man
+./usr/man/man8/rc.shutdown.8                            minix-man
+./usr/man/man8/rc.subr.8                                minix-man
 ./usr/man/man8/rcorder.8                                minix-man
 ./usr/man/man8/rdate.8                                  minix-man
 ./usr/man/man8/readclock.8                              minix-man

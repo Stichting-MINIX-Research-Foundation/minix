@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# $NetBSD: ipfilter,v 1.18 2009/03/23 18:52:02 hannken Exp $
+#
+
+# PROVIDE: ipfilter
+# REQUIRE: root bootconf mountcritlocal tty
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="ipfilter"
+rcvar=$name
+start_precmd="ipfilter_prestart"
+start_cmd="ipfilter_start"
+stop_precmd="test -f /etc/ipf.conf -o -f /etc/ipf6.conf"
+stop_cmd="ipfilter_stop"
+reload_precmd="$stop_precmd"
+reload_cmd="ipfilter_reload"
+resync_precmd="$stop_precmd"
+resync_cmd="ipfilter_resync"
+status_precmd="$stop_precmd"
+status_cmd="ipfilter_status"
+extra_commands="reload resync status"
+
+ipfilter_prestart()
+{
+	if [ ! -f /etc/ipf.conf ] && [ ! -f /etc/ipf6.conf ]; then
+		warn "/etc/ipf*.conf not readable; ipfilter start aborted."
+
+		stop_boot
+		return 1
+	fi
+	return 0
+}
+
+ipfilter_start()
+{
+	echo "Enabling ipfilter."
+	/sbin/ipf ${rc_flags} -E
+
+		# Do the flush first; since older ipf has different semantics.
+		#
+	if [ -f /etc/ipf.conf ]; then
+		/sbin/ipf -Fa
+	fi
+	if [ -f /etc/ipf6.conf ]; then
+		/sbin/ipf -6 -Fa
+	fi
+
+		# Now load the config files
+		#
+	if [ -f /etc/ipf.conf ]; then
+		/sbin/ipf -f /etc/ipf.conf
+	fi
+	if [ -f /etc/ipf6.conf ]; then
+		/sbin/ipf -6 -f /etc/ipf6.conf
+	fi
+}
+
+ipfilter_stop()
+{
+	echo "Disabling ipfilter."
+	/sbin/ipf -D
+}
+
+ipfilter_reload()
+{
+	echo "Reloading ipfilter rules."
+
+		# Do the flush first; since older ipf has different semantics.
+		#
+	if [ -f /etc/ipf.conf ]; then
+		/sbin/ipf -I -Fa
+	fi
+	if [ -f /etc/ipf6.conf ]; then
+		/sbin/ipf -6 -I -Fa
+	fi
+
+		# Now load the config files into the Inactive set
+		#
+	if [ -f /etc/ipf.conf ] && ! /sbin/ipf -I -f /etc/ipf.conf; then
+		err 1 "reload of ipf.conf failed; not swapping to new ruleset."
+	fi
+	if [ -f /etc/ipf6.conf ] && ! /sbin/ipf -I -6 -f /etc/ipf6.conf; then
+		err 1 "reload of ipf6.conf failed; not swapping to new ruleset."
+	fi
+		
+		# Swap in the new rules
+		#
+	/sbin/ipf -s
+}
+
+ipfilter_resync()
+{
+	/sbin/ipf -y
+}
+
+ipfilter_status()
+{
+	/sbin/ipf -V
+}
+
+load_rc_config $name
+run_rc_command "$1"

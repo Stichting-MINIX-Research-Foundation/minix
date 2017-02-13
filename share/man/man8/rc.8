@@ -1,0 +1,381 @@
+.\" 	$NetBSD: rc.8,v 1.36 2010/05/14 16:19:58 jruoho Exp $
+.\"
+.\" Copyright (c) 2000-2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 14, 2010
+.Dt RC 8
+.Os
+.Sh NAME
+.Nm rc ,
+.Nm rc.local ,
+.Nm rc.shutdown ,
+.Nm rc.d/
+.Nd startup and shutdown scripts
+.Sh SYNOPSIS
+.Nm rc
+.Nm rc.local
+.Nm rc.shutdown
+.Nm rc.d/
+.Sh DESCRIPTION
+.Nm
+is the command script which controls the startup of various services,
+and is invoked by
+.Xr init 8
+as part of the process of entering the automatic reboot to multi-user startup,
+or after the single user mode shell has exited.
+If
+.Xr init 8
+is starting the automatic reboot process,
+.Nm
+is invoked with the argument of
+.Sq autoboot .
+.Pp
+.Nm rc.local
+is a command script to which local boot-time actions can be added.
+It is (nearly) the last thing invoked by
+.Nm rc
+during a normal boot.
+.Pp
+.Nm rc.shutdown
+is the command script which shuts down various services, and is invoked by
+.Xr shutdown 8
+as part of the process of shutting down the system.
+.Pp
+.Nm rc.d/
+is the directory which contains various
+.Xr sh 1
+scripts, one for each service,
+which are called by
+.Nm
+at startup,
+.Nm rc.shutdown
+at shutdown,
+and as necessary during system operation to stop, start, restart, reload,
+or otherwise control the service.
+.Ss Operation of rc
+.Bl -enum
+.It
+Source
+.Pa /etc/rc.subr
+to load various
+.Xr rc.subr 8
+shell functions to use.
+.It
+If autobooting, set
+.Sy autoboot=yes
+and enable a flag
+.Sy ( rc_fast=yes ) ,
+which prevents the
+.Nm rc.d
+scripts from performing the check for already running processes
+(thus speeding up the boot process).
+This
+.Sy rc_fast=yes
+speedup won't occur when
+.Nm
+is started up after exiting the single-user shell.
+.It
+Invoke
+.Xr rcorder 8
+to order the files in
+.Pa /etc/rc.d/
+that do not have a
+.Dq nostart
+keyword (refer to
+.Xr rcorder 8 Ns 's
+.Fl s
+flag),
+and assigns the result to a variable.
+.It
+Calls each script in turn using
+.Fn run_rc_script
+(from
+.Xr rc.subr 8 ) ,
+which sets
+.Dv $1
+to
+.Sq start ,
+and sources the script in a subshell.
+If the script has a
+.Sq .sh
+suffix then it is sourced directly into the current shell.
+.It
+The output from the above steps is sent to a post-processor.
+If
+.Sy rc_silent
+is false, then the post-processor displays the output.
+If
+.Sy rc_silent
+is true, then the post-processor invokes the command specified in
+.Va rc_silent_cmd
+once for each line, without otherwise displaying the output.
+Useful values for
+.Va rc_silent_cmd
+include
+.Dq \&:
+to display nothing at all, and
+.Dq twiddle
+to display a spinning symbol on the console.
+Regardless of the value of
+.Sy rc_silent ,
+the post-processor saves the output in
+.Pa /var/run/rc.log .
+.El
+.Ss Operation of rc.shutdown
+.Bl -enum
+.It
+Source
+.Pa /etc/rc.subr
+to load various
+.Xr rc.subr 8
+shell functions to use.
+.It
+Invoke
+.Xr rcorder 8
+to order the files in
+.Pa /etc/rc.d/
+that have a
+.Dq shutdown
+keyword (refer to
+.Xr rcorder 8 Ns 's
+.Fl k
+flag),
+reverses that order, and assigns the result to a variable.
+.It
+Calls each script in turn using
+.Fn run_rc_script
+(from
+.Xr rc.subr 8 ) ,
+which sets
+.Dv $1
+to
+.Sq stop ,
+and sources the script in a subshell.
+If the script has a
+.Sq .sh
+suffix then it is sourced directly into the current shell.
+.El
+.Ss Contents of rc.d/
+.Nm rc.d/
+is located in
+.Pa /etc/rc.d .
+The following file naming conventions are currently used in
+.Nm rc.d/ :
+.Bl -tag -width ALLUPPERCASExx -offset indent
+.It Pa ALLUPPERCASE
+Scripts that are
+.Sq placeholders
+to ensure that certain operations are performed before others.
+In order of startup, these are:
+.Bl -tag -width NETWORKINGxx
+.It Pa NETWORKING
+Ensure basic network services are running, including general
+network configuration
+.Pq Pa network
+and
+.Pa dhclient .
+.It Pa SERVERS
+Ensure basic services (such as
+.Pa NETWORKING ,
+.Pa ppp ,
+.Pa syslogd ,
+and
+.Pa kdc )
+exist for services that start early (such as
+.Pa named ) ,
+because they're required by
+.Pa DAEMON
+below.
+.It Pa DAEMON
+Before all general purpose daemons such as
+.Pa dhcpd ,
+.Pa lpd ,
+and
+.Pa ntpd .
+.It Pa LOGIN
+Before user login services
+.Pa ( inetd ,
+.Pa telnetd ,
+.Pa rshd ,
+.Pa sshd ,
+and
+.Pa xdm ) ,
+as well as before services which might run commands as users
+.Pa ( cron ,
+.Pa postfix ,
+and
+.Pa sendmail ) .
+.El
+.It Pa foo.sh
+Scripts that are to be sourced into the current shell rather than a subshell
+have a
+.Sq Pa .sh
+suffix.
+Extreme care must be taken in using this, as the startup sequence will
+terminate if the script does.
+.Pa /etc/rc.d/bootconf.sh
+uses this behaviour to allow the user to select a different
+configuration (including
+.Pa /etc/rc.conf )
+early in the boot.
+.It Pa bar
+Scripts that are sourced in a subshell.
+The boot does not stop if such a script terminates with a non-zero status,
+but a script can stop the boot if necessary by invoking the
+.Fn stop_boot
+function (from
+.Xr rc.subr 8 ) .
+.El
+.Pp
+Each script should contain
+.Xr rcorder 8
+keywords, especially an appropriate
+.Dq PROVIDE
+entry.
+.Pp
+The scripts are expected to support at least the following arguments:
+.Bl -tag -width restart -offset indent
+.It Sy start
+Start the service.
+This should check that the service is to be started as specified by
+.Xr rc.conf 5 .
+Also checks if the service is already running and refuses to start if
+it is.
+This latter check is not performed by standard
+.Nx
+scripts if the system is starting directly to multi-user mode, to
+speed up the boot process.
+.It Sy stop
+If the service is to be started as specified by
+.Xr rc.conf 5 ,
+stop the service.
+This should check that the service is running and complain if it's not.
+.It Sy restart
+Perform a
+.Sy stop
+then a
+.Sy start .
+.It Sy status
+If the script starts a process (rather than performing a one-off
+operation), show the status of the process.
+Otherwise it's not necessary to support this argument.
+Defaults to displaying the process ID of the program (if running).
+.It Sy poll
+If the script starts a process (rather than performing a one-off
+operation), wait for the command to exit.
+Otherwise it's not necessary to support this argument.
+.It Sy rcvar
+Display which
+.Xr rc.conf 5
+variables are used to control the startup of the service (if any).
+.El
+.Pp
+Other arguments (such as
+.Sq reload ,
+.Sq dumpdb ,
+etc) can be added if necessary.
+.Pp
+The argument may have one of the following prefixes to alter its operation:
+.Bl -tag -width "force" -offset indent
+.It Sy fast
+Skip the check for an existing running process.
+Sets
+.Sy rc_fast=yes .
+.It Sy force
+Skips the
+.Xr rc.conf 5
+check, ignores a failure result from any of the prerequisite checks,
+executes the command, and always returns a zero exit status.
+Sets
+.Sy rc_force=yes .
+.It Sy one
+Skips the
+.Xr rc.conf 5
+check, but performs all other prerequisite tests.
+.El
+.Pp
+In order to simplify scripts, the
+.Fn run_rc_command
+function from
+.Xr rc.subr 8
+may be used.
+.Sh FILES
+.Bl -tag -width /etc/rc.shutdown -compact
+.It Pa /etc/rc
+Startup script called by
+.Xr init 8 .
+.It Pa /etc/rc.d/
+Directory containing control scripts for each service.
+.It Pa /etc/rc.local
+Local startup script.
+.It Pa /etc/rc.shutdown
+Shutdown script called by
+.Xr shutdown 8 .
+.It Pa /etc/rc.subr
+Contains
+.Xr rc.subr 8
+functions used by various scripts.
+.It Pa /etc/rc.conf
+System startup configuration file.
+.It Pa /var/run/rc.log
+Log file created by
+.Nm .
+.El
+.Sh SEE ALSO
+.Xr rc.conf 5 ,
+.Xr init 8 ,
+.Xr rc.subr 8 ,
+.Xr rcorder 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8
+.Rs
+.%A Luke Mewburn
+.%T The Design and Implementation of the NetBSD rc.d system
+.%I USENIX Association
+.%B Proceedings of the FREENIX Track: 2001 USENIX Annual Technical Conference
+.%D June 25-30, 2001
+.%U http://www.usenix.org/publications/library/proceedings/usenix01/freenix01/full_papers/mewburn/mewburn.pdf
+.Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.0 .
+The
+.Pa /etc/rc.d
+support was implemented in
+.Nx 1.5
+by
+.An Luke Mewburn
+.Aq lukem@NetBSD.org .
+The post-processor, support for
+.Va rc_silent ,
+and saving output to a file, was implemented in
+.Nx 6.0
+by
+.An Alan Barrett .

@@ -25,13 +25,10 @@ fi
 bootcd="`/bin/sysenv bootcd`"
 
 case "$#:$1" in
-1:autoboot)
-    action=start
-    ;;
-1:start|1:stop|1:down)
+1:start|1:stop)
     action=$1
     ;;
-*)  echo >&2 "Usage: $0 autoboot|start|stop|down"
+*)  echo >&2 "Usage: $0 [start|stop]"
     exit 1
 esac
 
@@ -161,7 +158,7 @@ capemgr() {
 DAEMONS=/etc/rc.daemons
 
 case $action in
-start|autoboot)
+start)
     # Select console font.
     test -f /etc/font && loadfont /etc/font </dev/console
 
@@ -236,9 +233,7 @@ start|autoboot)
 		ln -s /tmp/log /var/log || true
 		. /etc/rc.cd
     fi
-    # syslogd has not been started yet
-    rm -f /var/run/syslogd.pid
-    daemonize syslogd -s
+
     echo .
 
     # i2c only supported on ARM at the moment
@@ -393,23 +388,6 @@ start|autoboot)
 	fi
     fi
 
-    # Now that all device files should be created, see if we need to update the
-    # device file database.  This code is butchered from NetBSD etc/rc.d/sysdb.
-    DEVDIR=/dev
-    DEVDB=/var/run/dev.cdb
-    if [ ! -f "$DEVDB" -o "$DEVDIR" -nt "$DEVDB" ]
-    then
-	dev_mkdb
-    fi
-
-    # Same for /etc/services.
-    SERVICESFILE=/etc/services
-    SERVICESDB=/var/db/services.cdb
-    if [ ! -f "$SERVICESDB" -o "$SERVICESFILE" -nt "$SERVICESDB" ]
-    then
-	services_mkdb -q
-    fi
-
     if [ "$net" ]
     then
 	# Get the nodename from the DNS and set it.
@@ -427,7 +405,7 @@ start|autoboot)
     # Run the daily cleanup on systems that are not on at night.
     test -f /usr/etc/daily && sh /usr/etc/daily boot &
 ;;
-stop|down)
+stop)
     	# Save random data, if /usr is mounted rw.
 	if grep ' \/usr .*rw.*' /etc/mtab >/dev/null
 	then
@@ -440,8 +418,10 @@ stop|down)
 	fi
 esac
 
-d=
 # Let packages run their own scripts
+# FIXME: this should be removed altogether: pkgsrc is not supposed to be used
+# this way.  Instead, the user should copy over scripts from /usr/pkg/etc/rc.d
+# to /etc/rc.d as desired, and configure them in /etc/rc.conf as appropriate.
 for d in /usr/local/etc/rc.d /usr/pkg/etc/rc.d
 do
 if [ -d "$d" -a -z "$bootcd" ]

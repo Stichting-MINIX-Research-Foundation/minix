@@ -1,0 +1,6 @@
+#!/bin/sh
+# MINIX 3 stub (for now!).
+
+# PROVIDE: network
+# REQUIRE: ipfilter ipsec mountcritlocal root tty sysctl
+# BEFORE:  NETWORKING

@@ -1,0 +1,7 @@
+#!/bin/sh
+# MINIX 3 stub.
+# Even though this script does not appear to do much, it will in some cases
+# invoke the mount command with a syntax that we do not support.
+
+# PROVIDE: mountcritremote
+# REQUIRE: NETWORKING root mountcritlocal

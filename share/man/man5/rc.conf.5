@@ -1,0 +1,1556 @@
+.\"	$NetBSD: rc.conf.5,v 1.162 2015/10/09 19:49:25 plunky Exp $
+.\"
+.\" Copyright (c) 1996 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" Copyright (c) 1997 Curt J. Sampson
+.\" Copyright (c) 1997 Michael W. Long
+.\" Copyright (c) 1998-2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This document is derived from works contributed to The NetBSD Foundation
+.\" by Luke Mewburn.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 9, 2015
+.Dt RC.CONF 5
+.Os
+.Sh NAME
+.Nm rc.conf
+.Nd system startup configuration file
+.Sh DESCRIPTION
+The
+.Nm
+file specifies which services are enabled during system startup by
+the startup scripts invoked by
+.Pa /etc/rc
+(see
+.Xr rc 8 ) ,
+and the shutdown scripts invoked by
+.Pa /etc/rc.shutdown .
+The
+.Nm
+file is a shell script that is sourced by
+.Xr rc 8 ,
+meaning that
+.Nm
+must contain valid shell commands.
+.Pp
+Listed below are the standard
+.Nm
+variables that may be set, the values to which each may be set,
+a brief description of what each variable does, and a reference to
+relevant manual pages.
+Third party packages may test for additional variables.
+.Pp
+By default,
+.Nm
+reads
+.Pa /etc/defaults/rc.conf
+(if it is readable)
+to obtain default values for various variables, and the end-user
+may override these by appending appropriate entries to the end of
+.Nm .
+.Pp
+.Xr rc.d 8
+scripts that use
+.Ic load_rc_config
+from
+.Xr rc.subr 8
+also support sourcing an optional end-user provided per-script override
+file
+.Pa /etc/rc.conf.d/ Ns Ar service ,
+(where
+.Ar service
+is the contents of the
+.Sy name
+variable in the
+.Xr rc.d 8
+script).
+This may contain variable overrides, including allowing the end-user
+to override various
+.Ic run_rc_command
+.Xr rc.d 8
+control variables, and thus changing the operation of the script
+without requiring editing of the script.
+.Ss Variable naming conventions and data types
+Most variables are one of two types: enabling variables or flags
+variables.
+Enabling variables, such as
+.Sy inetd ,
+are generally named after the program or the system they enable,
+and have boolean values (specified using
+.Sq Ic YES ,
+.Sq Ic TRUE ,
+.Sq Ic ON
+or
+.Sq Ic 1
+for true, and
+.Sq Ic NO ,
+.Sq Ic FALSE ,
+.Sq Ic OFF
+or
+.Sq Ic 0
+for false, with the values being case insensitive).
+Flags variables, such as
+.Sy inetd_flags
+have the same name with "_flags" appended, and determine what
+arguments are passed to the program if it is enabled.
+.Pp
+If a variable that
+.Xr rc 8
+expects to be set is not set, or the value is not one of the allowed
+values, a warning will be printed.
+.Ss Overall control
+.Bl -tag -width net_interfaces
+.It Sy do_rcshutdown
+Boolean value.
+If false,
+.Xr shutdown 8
+will not run
+.Pa /etc/rc.shutdown .
+.It Sy rcshutdown_rcorder_flags
+A string.
+Extra arguments to the
+.Xr rcorder 8
+run by
+.Pa /etc/rc.shutdown .
+.It Sy rcshutdown_timeout
+A number.
+If non-blank, use this as the number of seconds to run a watchdog timer for
+which will terminate
+.Pa /etc/rc.shutdown
+if the timer expires before the shutdown script completes.
+.It Sy rc_configured
+Boolean value.
+If false then the system will drop into single-user mode during boot.
+.It Sy rc_fast_and_loose
+If set to a non-empty string,
+each script in
+.Pa /etc/rc.d
+will be executed in the current shell rather than a sub shell.
+This may be faster on slow machines that have an expensive
+.Xr fork 2
+operation.
+.Bl -hang
+.It Em Note :
+Use this at your own risk!
+A rogue command or script may inadvertently prevent boot to multiuser.
+.El
+.It Sy rc_rcorder_flags
+A string.
+Extra arguments to the
+.Xr rcorder 8
+run by
+.Pa /etc/rc .
+.It Sy rc_directories
+A string.
+Space separated list of directories searched for rc scripts.
+The default is
+.Pa /etc/rc.d .
+All directories in
+.Ev rc_directories
+must be located in the root file system, otherwise they will be silently
+skipped.
+.It Sy rc_silent
+Boolean value.
+If true then the usual output is suppressed, and
+.Xr rc 8
+invokes the command specified in the
+.Va rc_silent_cmd
+variable once for each line of suppressed output.
+The default value of
+.Va rc_silent
+is set from the
+.Dv AB_SILENT
+flag in the kernel's
+.Va boothowto
+variable (see
+.Xr boot 8 ,
+.Xr reboot 2 ) .
+.It Sy rc_silent_cmd
+A command to be executed once per line of suppressed output, when
+.Va rc_silent
+is true.
+The default value of
+.Va rc_silent_cmd
+is
+.Dq twiddle ,
+which will display a spinning symbol instead of each line of output.
+Another useful value is
+.Dq \&: ,
+which will display nothing at all.
+.El
+.Ss Basic network configuration
+.Bl -tag -width net_interfaces
+.It Sy defaultroute
+A string.
+Default IPv4 network route.
+If empty or not set, then the contents of
+.Pa /etc/mygate
+(if it exists) are used.
+.It Sy defaultroute6
+A string.
+Default IPv6 network route.
+If empty or not set, then the contents of
+.Pa /etc/mygate6
+(if it exists) are used.
+.It Sy domainname
+A string.
+.Tn NIS
+(YP) domain of host.
+If empty or not set, then the contents of
+.Pa /etc/defaultdomain
+(if it exists) are used.
+.It Sy force_down_interfaces
+A space separated list of interface names.
+These interfaces will be configured down when going from multiuser to single-user
+mode or on system shutdown.
+.Pp
+This is important for some stateful interfaces, for example PPP over ISDN
+connections that cost money by connection time or PPPoE interfaces which
+have no direct means of noticing
+.Dq disconnect
+events.
+.Pp
+All active
+.Xr pppoe 4
+and
+.Xr ippp 4
+interfaces will be automatically added to this list.
+.It Sy hostname
+A string.
+Name of host.
+If empty or not set, then the contents of
+.Pa /etc/myname
+(if it exists) are used.
+.El
+.Ss Boottime file-system and swap configuration
+.Bl -tag -width net_interfaces
+.It Sy critical_filesystems_local
+A string.
+File systems mounted very early in the system boot before networking
+services are available.
+Usually
+.Pa /var
+is part of this, because it is needed by services such as
+.Xr dhclient 8
+which may be required to get the network operational.
+The default is
+.Dq "OPTIONAL:/var" ,
+where the
+.Dq "OPTIONAL:"
+prefix means that it's not an error if the file system is not
+present in
+.Xr fstab 5 .
+.It Sy critical_filesystems_remote
+A string.
+File systems such as
+.Pa /usr
+that may require network services to be available to mount,
+that must be available early in the system boot for general services to use.
+The default is
+.Dq "OPTIONAL:/usr" ,
+where the
+.Dq "OPTIONAL:"
+prefix means that it is not an error if the file system is not
+present in
+.Xr fstab 5 .
+.It Sy fsck_flags
+A string.
+A file system is checked with
+.Xr fsck 8
+during boot before mounting it.
+This option may be used to override the default command-line options
+passed to the
+.Xr fsck 8
+program.
+.Pp
+When set to
+.Fl y ,
+.Xr fsck 8
+assumes yes as the answer to all operator questions during file system checks.
+This might be important with hosts where the administrator does not have
+access to the console and an unsuccessful shutdown must not make the host
+unbootable even if the file system checks would fail in preen mode.
+.It Sy no_swap
+Boolean value.
+Should be true if you have deliberately configured your system with no swap.
+If false and no swap devices are configured, the system will warn you.
+.It Sy resize_root
+Boolean value.
+Set to true to have the system resize the root file system to fill its
+partition.
+Will only attempt to resize the root file system if it is of type ffs and does
+not have logging enabled.
+Defaults to false.
+.It Sy swapoff
+Boolean value.
+Remove block-type swap devices at shutdown time.
+Useful if swapping onto RAIDframe devices.
+.El
+.Ss Block device subsystems
+.Bl -tag -width net_interfaces
+.It Sy ccd
+Boolean value.
+Configures concatenated disk devices according to
+.Xr ccd.conf 5 .
+.It Sy cgd
+Boolean value.
+Configures cryptographic disk devices.
+Requires
+.Pa /etc/cgd/cgd.conf .
+See
+.Xr cgdconfig 8
+for additional details.
+.It Sy lvm
+Boolean value.
+Configures the logical volume manager.
+See
+.Xr lvm 8
+for additional details.
+.It Sy raidframe
+Boolean value.
+Configures
+.Xr raid 4 ,
+RAIDframe disk devices.
+See
+.Xr raidctl 8
+for additional details.
+.El
+.Ss One-time actions to perform or programs to run on boot-up
+.Bl -tag -width net_interfaces
+.It Sy accounting
+Boolean value.
+Enables process accounting with
+.Xr accton 8 .
+Requires
+.Pa /var/account/acct
+to exist.
+.It Sy clear_tmp
+Boolean value.
+Clear
+.Pa /tmp
+after reboot.
+.It Sy dmesg
+Boolean value.
+Create
+.Pa /var/run/dmesg.boot
+from the output of
+.Xr dmesg 8 .
+Passes
+.Sy dmesg_flags .
+.It Sy envsys
+Boolean value.
+Sets preferences for the environmental systems framework,
+.Xr envsys 4 .
+Requires
+.Pa /etc/envsys.conf ,
+which is described in
+.Xr envsys.conf 5 .
+.It Sy gpio
+Boolean value.
+Configure
+.Xr gpio 4
+devices.
+See
+.Xr gpio.conf 5 .
+.It Sy ldconfig
+Boolean value.
+Configures
+.Xr a.out 5
+runtime link editor directory cache.
+.It Sy mixerctl
+Boolean value.
+Read
+.Xr mixerctl.conf 5
+for how to set mixer values.
+List in
+.Sy mixerctl_mixers
+the devices whose settings are to be saved at shutdown and
+restored at start-up.
+.It Sy newsyslog
+Boolean value.
+Run
+.Nm newsyslog
+to trim log files before syslogd starts.
+Intended for laptop users.
+Passes
+.Sy newsyslog_flags .
+.It Sy per_user_tmp
+Boolean value.
+Enables a per-user
+.Pa /tmp
+directory.
+.Sy per_user_tmp_dir
+can be used to override the default location of the
+.Dq real
+temporary directories,
+.Dq Pa /private/tmp .
+See
+.Xr security 7
+for additional details.
+.It Sy quota
+Boolean value.
+Checks and enables quotas by running
+.Xr quotacheck 8
+and
+.Xr quotaon 8 .
+.It Sy random_seed
+Boolean value.
+During boot-up, runs the
+.Xr rndctl 8
+utility with the
+.Fl L
+flag to seed the random number subsystem from an entropy file.
+During shutdown, runs the
+.Xr rndctl 8
+utility with the
+.Fl S
+flag to save some random information to the entropy file.
+The entropy file name is specified by the
+.Sy random_file
+variable, and defaults to
+.Pa /var/db/entropy-file .
+The entropy file must be on a local file system that is writable early during
+boot-up (just after the file systems specified in
+.Sy critical_filesystems_local
+have been mounted), and correspondingly late during shutdown.
+.It Sy rndctl
+Boolean value.
+Runs the
+.Xr rndctl 8
+utility one or more times according to the specification in
+.Sy rndctl_flags .
+.Pp
+If
+.Sy rndctl_flags
+does not contain a semicolon
+.Pq Ql \&;
+then it is expected to contain zero or more flags,
+followed by one or more device or type names.
+The
+.Xr rndctl 8
+command will be executed once for each device or type name.
+If the specified flags do not include any of
+.Fl c , C , e ,
+or
+.Fl E ,
+then the flags
+.Fl c
+and
+.Fl e
+are added, to specify that entropy from the relevant device or type
+should be both collected and estimated.
+If the specified flags do not include either of
+.Fl d
+or
+.Fl t ,
+then the flag
+.Fl d
+is added, to specify that the non-flag arguments are device names,
+not type names.
+.Pp
+.Sy rndctl_flags
+may contain multiple semicolon-separated segments, in which each
+segment contains flags and device or type names as described above.
+This allows different flags to be associated with different
+device or type names.
+For example, given
+.Li rndctl_flags="wd0 wd1; -t tty; -c -t net" ,
+the following commands will be executed:
+.Li "rndctl -c -e -d wd0" ;
+.Li "rndctl -c -e -d wd1" ;
+.Li "rndctl -c -e -t tty" ;
+.Li "rndctl -c -t net" .
+.It Sy rtclocaltime
+Boolean value.
+Sets the real time clock to local time by adjusting the
+.Xr sysctl 7
+value of
+.Pa kern.rtc_offset .
+The offset from UTC is calculated automatically according
+to the time zone information in the file
+.Pa /etc/localtime .
+.It Sy savecore
+Boolean value.
+Runs the
+.Xr savecore 8
+utility.
+Passes
+.Sy savecore_flags .
+The directory where crash dumps are stored is specified by
+.Sy savecore_dir .
+The default setting is
+.Dq Pa /var/crash .
+.It Sy sysdb
+Boolean value.
+Builds various system databases, including
+.Pa /var/run/dev.cdb ,
+.Pa /etc/spwd.db ,
+.Pa /var/db/netgroup.db ,
+.Pa /var/db/services.cdb ,
+and entries for
+.Xr utmp 5 .
+.It Sy tpctl
+Boolean value.
+Run
+.Xr tpctl 8
+to calibrate touch panel device.
+Passes
+.Sy tpctl_flags .
+.It Sy update_motd
+Boolean value.
+Updates the
+.Nx
+version string in the
+.Pa /etc/motd
+file to reflect the version of the running kernel.
+See
+.Xr motd 5 .
+.It Sy virecover
+Boolean value.
+Send notification mail to users if any recoverable files exist in
+.Pa /var/tmp/vi.recover .
+Read
+.Xr virecover 8
+for more information.
+.It Sy wdogctl
+Boolean value.
+Configures watchdog timers.
+Passes
+.Sy wdogctl_flags .
+Refer to
+.Xr wdogctl 8
+for information on how to configure a timer.
+.El
+.Ss System security settings
+.Bl -tag -width net_interfaces
+.It Sy securelevel
+A number.
+The system securelevel is set to the specified value early
+in the boot process, before any external logins, or other programs
+that run users job, are started.
+If set to nothing, the default action is taken, as described in
+.Xr init 8
+and
+.Xr secmodel_securelevel 9 ,
+which contains definitive information about the system securelevel.
+Note that setting
+.Sy securelevel
+to 0 in
+.Nm
+will actually result in the system booting with securelevel set to 1, as
+.Xr init 8
+will raise the level when
+.Xr rc 8
+completes.
+.It Sy permit_nonalpha
+Boolean value.
+Allow passwords to include non-alpha characters, usually to allow
+NIS/YP netgroups.
+.It Sy veriexec
+Boolean value.
+Load Veriexec fingerprints during startup.
+Read
+.Xr veriexecctl 8
+for more information.
+.It Sy veriexec_strict
+A number.
+Controls the strict level of Veriexec.
+Level 0 is learning mode, used when building the signatures file.
+It will only output messages but will not enforce anything.
+Level 1 will only prevent access to files with a fingerprint
+mismatch.
+Level 2 will also deny writing to and removing of
+monitored files, as well as enforce access type (as specified in
+the signatures file).
+Level 3 will take a step further and prevent
+access to files that are not monitored.
+.It Sy veriexec_verbose
+A number.
+Controls the verbosity of Veriexec.
+Recommended operation is at level 0, verbose output (mostly used when
+building the signatures file) is at level 1.
+Level 2 is for debugging only and should not be used.
+.It Sy veriexec_flags
+A string.
+Flags to pass to the
+.Nm veriexecctl
+command.
+.El
+.Ss Networking startup
+.Bl -tag -width net_interfaces
+.It Sy altqd
+Boolean value.
+ALTQ configuration/monitoring daemon.
+Passes
+.Sy altqd_flags .
+.It Sy auto_ifconfig
+Boolean value.
+Sets the
+.Sy net_interfaces
+variable (see below) to the output of
+.Xr ifconfig 8
+with the
+.Dq Li -l
+flag and suppresses warnings about interfaces in this list that
+do not have an ifconfig file or variable.
+.It Sy dhclient
+Boolean value.
+Set true to configure some or all network interfaces using
+the ISC DHCP client.
+If you set
+.Sy dhclient
+true, then
+.Pa /var
+must be in
+.Sy critical_filesystems_local ,
+or
+.Pa /var
+must be on the root file system,
+or you must modify the
+.Sy dhclient_flags
+variable to direct the DHCP client to store the leases file
+in some other directory on the root file system.
+You must not provide ifconfig information or ifaliases
+information for any interface that is to be configured using the DHCP client.
+Interface aliases can be set up in the DHCP client configuration
+file if needed - see
+.Xr dhclient.conf 5
+for details.
+.Pp
+Passes
+.Sy dhclient_flags
+to the DHCP client.
+See
+.Xr dhclient 8
+for complete documentation.
+If you wish to configure all broadcast
+network interfaces using the DHCP client, you can leave this blank.
+To configure only specific interfaces, name the interfaces to be configured
+on the command line.
+.Pp
+If you must run the DHCP client before mounting critical file systems,
+then you should specify an alternate location for the DHCP client's lease
+file in the
+.Sy dhclient_flags
+variable - for example, "-lf /tmp/dhclient.leases".
+.It Sy dhcpcd
+Boolean value.
+Set true to configure some or all network interfaces using dhcpcd.
+If you set
+.Sy dhcpcd
+true, then
+.Pa /var
+must be in
+.Sy critical_filesystems_local ,
+or
+.Pa /var
+must be on the root file system.
+If you need to restrict dhcpcd to one or a number of interfaces,
+or need a separate configuration per interface,
+then this should be done in the configuration file - see
+.Xr dhcpcd.conf 5
+for details.
+dhcpcd presently ignores the
+.Sy wpa_supplicant
+variable in rc.conf and will start wpa_supplicant if a suitable
+wpa_supplicant.conf is found unless otherwise instructed in
+.Xr dhcpcd.conf 5 .
+.It Sy dhcpcd_flags
+Passes
+.Sy dhcpcd_flags
+to dhcpcd.
+See
+.Xr dhcpcd 8
+for complete documentation.
+.It Sy flushroutes
+Boolean value.
+Flushes the route table on networking startup.
+Useful when coming up to multiuser mode after going down to
+single-user mode.
+.It Sy ftp_proxy
+Boolean value.
+Runs
+.Xr ftp-proxy 8 ,
+the proxy daemon for the Internet File Transfer Protocol.
+.It Sy hostapd
+Boolean value.
+Runs
+.Xr hostapd 8 ,
+the authenticator for IEEE 802.11 networks.
+.It Sy ifaliases_*
+A string.
+List of
+.Sq Em "address netmask"
+pairs to configure additional network addresses for the given
+configured interface
+.Dq *
+(e.g.
+.Sy ifaliases_le0 ) .
+If
+.Em netmask
+is
+.Dq - ,
+then use the default netmask for the interface.
+.Pp
+.Sy ifaliases_*
+covers limited cases only and is considered unrecommended.
+We recommend using
+.Sy ifconfig_nnX
+variables or
+.Pa /etc/ifconfig.xxN
+files with multiple lines instead.
+.It Sy ifwatchd
+Boolean value.
+Monitor dynamic interfaces and perform actions upon address changes.
+Passes
+.Sy ifwatchd_flags .
+.It Sy ip6mode
+A string.
+An IPv6 node can be a router
+.Pq nodes that forward packet for others
+or a host
+.Pq nodes that do not forward .
+A host can be autoconfigured
+based on the information advertised by adjacent IPv6 routers.
+By setting
+.Sy ip6mode
+to
+.Dq Li router ,
+.Dq Li host ,
+or
+.Dq Li autohost ,
+you can configure your node as a router,
+a non-autoconfigured host, or an autoconfigured host.
+Invalid values will be ignored, and the node will be configured as
+a non-autoconfigured host.
+You may want to check
+.Sy rtsol
+and
+.Sy rtsold
+as well, if you set the variable to
+.Dq Li autohost .
+.It Sy ip6uniquelocal
+Boolean value.
+If
+.Sy ip6mode
+is equal to
+.Dq Li router ,
+and
+.Sy ip6uniquelocal
+is false,
+a reject route will be installed on boot to avoid misconfiguration relating
+to unique-local addresses.
+If
+.Sy ip6uniquelocal
+is true, the reject route won't be installed.
+.It Sy ipfilter
+Boolean value.
+Runs
+.Xr ipf 8
+to load in packet filter specifications from
+.Pa /etc/ipf.conf
+at network boot time, before any interfaces are configured.
+Passes
+.Sy ipfilter_flags .
+See
+.Xr ipf.conf 5 .
+.It Sy ipfs
+Boolean value.
+Runs
+.Xr ipfs 8
+to save and restore information for ipnat and ipfilter state tables.
+The information is stored in
+.Pa /var/db/ipf/ipstate.ipf
+and
+.Pa /var/db/ipf/ipnat.ipf .
+Passes
+.Sy ipfs_flags .
+.It Sy ipmon
+Boolean value.
+Runs
+.Xr ipmon 8
+to read
+.Xr ipf 8
+packet log information and log it to a file or the system log.
+Passes
+.Sy ipmon_flags .
+.It Sy ipmon_flags
+A string.
+Specifies arguments to supply to
+.Xr ipmon 8 .
+Defaults to
+.Dq Li -ns .
+A typical example would be
+.Dq Fl nD Pa /var/log/ipflog
+to have
+.Xr ipmon 8
+log directly to a file bypassing
+.Xr syslogd 8 .
+If the
+.Dq -D
+argument is used, remember to modify
+.Pa /etc/newsyslog.conf
+accordingly; for example:
+.Bd -literal
+/var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
+.Ed
+.It Sy ipnat
+Boolean value.
+Runs
+.Xr ipnat 8
+to load in the IP network address translation (NAT) rules from
+.Pa /etc/ipnat.conf
+at network boot time, before any interfaces are configured.
+See
+.Xr ipnat.conf 5 .
+.It Sy ipsec
+Boolean value.
+Runs
+.Xr setkey 8
+to load in IPsec manual keys and policies from
+.Pa /etc/ipsec.conf
+at network boot time, before any interfaces are configured.
+.It Sy net_interfaces
+A string.
+The list of network interfaces to be configured at boot time.
+For each interface "xxN", the system first looks for ifconfig
+parameters in the variable
+.Sy ifconfig_xxN ,
+and then in the file
+.Pa /etc/ifconfig.xxN .
+If
+.Sy auto_ifconfig
+is false, and neither the variable nor the file is found,
+a warning is printed.
+Information in either the variable or the file is parsed identically,
+except that, if an
+.Sy ifconfig_xxN
+variable contains a single line with embedded semicolons,
+then the value is split into multiple lines prior to further parsing,
+treating the semicolon as a line separator.
+.Pp
+One common case it to set the
+.Sy ifconfig_xxN
+variable to a set of arguments to be passed to an
+.Xr ifconfig 8
+command after the interface name.
+Refer to
+.Xr ifconfig.if 5
+for more details on
+.Pa /etc/ifconfig.xxN
+files, and note that the information there also applies to
+.Sy ifconfig_xxN
+variables (after the variables are split into lines).
+.It Sy ntpdate
+Boolean value.
+Runs
+.Xr ntpdate 8
+to set the system time from one of the hosts in
+.Sy ntpdate_hosts .
+If
+.Sy ntpdate_hosts
+is empty, it will attempt to find a list of hosts in
+.Pa /etc/ntp.conf .
+Passes
+.Sy ntpdate_flags .
+.It Sy pf
+Boolean value.
+Enable
+.Xr pf 4
+at network boot time:
+Load the initial configuration
+.Xr pf.boot.conf 5
+before the network is up.
+After the network has been configured, then load the final rule set
+.Xr pf.conf 5 .
+.It Sy pf_rules
+A string.
+The path of the
+.Xr pf.conf 5
+rule set that will be used when loading the final rule set.
+.It Sy pflogd
+Boolean value.
+Run
+.Xr pflogd 8
+for dumping packet filter logging information to a file.
+.It Sy ppp
+A boolean.
+Toggles starting
+.Xr pppd 8
+on startup.
+See
+.Sy ppp_peers
+below.
+.It Sy ppp_peers
+A string.
+If
+.Sy ppp
+is true and
+.Sy ppp_peers
+is not empty, then
+.Pa /etc/rc.d/ppp
+will check each word in
+.Sy ppp_peers
+for a corresponding ppp configuration file in
+.Pa /etc/ppp/peers
+and will call
+.Xr pppd 8
+with the
+.Dq call Sy peer
+option.
+.It Sy racoon
+Boolean value.
+Runs
+.Xr racoon 8 ,
+the IKE (ISAKMP/Oakley) key management daemon.
+.It Sy rtsol
+Boolean value.
+Run
+.Xr rtsol 8 ,
+router solicitation command for IPv6 hosts.
+On nomadic hosts like notebook computers, you may want to enable
+.Sy rtsold
+as well.
+Passes
+.Sy rtsol_flags .
+This is only for autoconfigured IPv6 hosts, so set
+.Sy ip6mode
+to
+.Dq Li autohost
+if you use it.
+.It Sy wpa_supplicant
+Boolean value.
+Run
+.Xr wpa_supplicant 8 ,
+WPA/802.11i Supplicant for wireless network devices.
+If you set
+.Sy wpa_supplicant
+true, then
+.Pa /usr
+must be in
+.Sy critical_filesystems_local ,
+or
+.Pa /usr
+must be on the root file system.
+dhcpcd ignores this variable, see the
+.Sy dhcpcd
+variable for details.
+.El
+.Ss Daemons required by other daemons
+.Bl -tag -width net_interfaces
+.It Sy inetd
+Boolean value.
+Runs the
+.Xr inetd 8
+daemon to start network server processes (as listed in
+.Pa /etc/inetd.conf )
+as necessary.
+Passes
+.Sy inetd_flags .
+The
+.Dq Li -l
+flag turns on libwrap connection logging.
+.It Sy rpcbind
+Boolean value.
+The
+.Xr rpcbind 8
+daemon is required for any
+.Xr rpc 3
+services.
+These include NFS,
+.Tn NIS ,
+.Xr rpc.bootparamd 8 ,
+.Xr rpc.rstatd 8 ,
+.Xr rpc.rusersd 8 ,
+and
+.Xr rpc.rwalld 8 .
+Passes
+.Sy rpcbind_flags .
+.El
+.Ss Commonly used daemons
+.Bl -tag -width net_interfaces
+.It Sy cron
+Boolean value.
+Run
+.Xr cron 8 .
+.It Sy ftpd
+Boolean value.
+Runs the
+.Xr ftpd 8
+daemon and passes
+.Sy ftpd_flags .
+.It Sy httpd
+Boolean value.
+Runs the
+.Xr httpd 8
+daemon and passes
+.Sy httpd_flags .
+.It Sy httpd_wwwdir
+A string.
+The
+.Xr httpd 8
+WWW root directory.
+Used only if
+.Sy httpd
+is true.
+The default setting is
+.Dq Pa /var/www .
+.It Sy httpd_wwwuser
+A string.
+If non-blank and
+.Sy httpd
+is true, run
+.Xr httpd 8
+and cause it to switch to the specified user after initialization.
+It is preferred to
+.Sy httpd_user
+because
+.Xr httpd 8
+is requiring extra privileges to start listening on default port 80.
+The default setting is
+.Dq Dv _httpd .
+.It Sy lpd
+Boolean value.
+Runs
+.Xr lpd 8
+and passes
+.Sy lpd_flags .
+The
+.Dq Li -l
+flag will turn on extra logging.
+.It Sy mdnsd
+Boolean value.
+Runs
+.Xr mdnsd 8 .
+.It Sy named
+Boolean value.
+Runs
+.Xr named 8
+and passes
+.Sy named_flags .
+.It Sy named_chrootdir
+A string.
+If non-blank and
+.Sy named
+is true, run
+.Xr named 8
+as the unprivileged user and group
+.Sq named ,
+.Xr chroot 2 Ns ed
+to
+.Sy named_chrootdir .
+.Sy named_chrootdir Ns Pa /var/run/log
+will be added to the list of log sockets that
+.Xr syslogd 8
+listens to.
+.It Sy ntpd
+Boolean value.
+Runs
+.Xr ntpd 8
+and passes
+.Sy ntpd_flags .
+.It Sy ntpd_chrootdir
+A string.
+If non-blank and
+.Sy ntpd
+is true, run
+.Xr ntpd 8
+as the unprivileged user and group
+.Sq ntpd ,
+.Xr chroot 2 Ns ed
+to
+.Sy ntpd_chrootdir .
+.Sy ntpd_chrootdir Ns Pa /var/run/log
+will be added to the list of log sockets that
+.Xr syslogd 8
+listens to.
+This option requires that the kernel has
+.Dl pseudo-device clockctl
+compiled in, and that
+.Pa /dev/clockctl
+is present.
+.It Sy postfix
+Boolean value.
+Starts
+.Xr postfix 1
+mail system.
+.It Sy sshd
+Boolean value.
+Runs
+.Xr sshd 8
+and passes
+.Sy sshd_flags .
+.It Sy syslogd
+Boolean value.
+Runs
+.Xr syslogd 8
+and passes
+.Sy syslogd_flags .
+.It Sy timed
+Boolean value.
+Runs
+.Xr timed 8
+and passes
+.Sy timed_flags .
+The
+.Dq Li -M
+option allows
+.Xr timed 8
+to be a master time source as well as a slave.
+If you are also running
+.Xr ntpd 8 ,
+only one machine running both should have the
+.Dq Li -M
+flag given to
+.Xr timed 8 .
+.El
+.Ss Routing daemons
+.Bl -tag -width net_interfaces
+.It Sy mrouted
+Boolean value.
+Runs
+.Xr mrouted 8 ,
+the DVMRP multicast routing protocol daemon.
+Passes
+.Sy mrouted_flags .
+.It Sy route6d
+Boolean value.
+Runs
+.Xr route6d 8 ,
+the RIPng routing protocol daemon for IPv6.
+Passes
+.Sy route6d_flags .
+.It Sy routed
+Boolean value.
+Runs
+.Xr routed 8 ,
+the RIP routing protocol daemon.
+Passes
+.Sy routed_flags .
+.\" This should be false
+.\" if
+.\" .Sy gated
+.\" is true.
+.It Sy rtsold
+Boolean value.
+Runs
+.Xr rtsold 8 ,
+the IPv6 router solicitation daemon.
+.Xr rtsold 8
+periodically transmits router solicitation packets
+to find IPv6 routers on the network.
+This configuration is mainly for nomadic hosts like notebook computers.
+Stationary hosts should work fine with just
+.Sy rtsol .
+Passes
+.Sy rtsold_flags .
+This is only for autoconfigured IPv6 hosts, so set
+.Sy ip6mode
+to
+.Dq Li autohost
+if you use it.
+.El
+.Ss Daemons used to boot other hosts over a network
+.Bl -tag -width net_interfaces
+.It Sy bootparamd
+Boolean value.
+Runs
+.Xr bootparamd 8 ,
+the boot parameter server, with
+.Sy bootparamd_flags
+as options.
+Used to boot
+.Nx
+and
+.Tn "SunOS 4.x"
+systems.
+.It Sy dhcpd
+Boolean value.
+Runs
+.Xr dhcpd 8 ,
+the Dynamic Host Configuration Protocol (DHCP) daemon,
+for assigning IP addresses to hosts and passing boot information.
+Passes
+.Sy dhcpd_flags .
+.It Sy dhcrelay
+Boolean value.
+Runs
+.Xr dhcrelay 8 .
+Passes
+.Sy dhcrelay_flags .
+.It Sy mopd
+Boolean value.
+Runs
+.Xr mopd 8 ,
+the
+.Tn DEC
+.Tn MOP
+protocol daemon; used for booting
+.Tn VAX
+and other
+.Tn DEC
+machines.
+Passes
+.Sy mopd_flags .
+.It Sy ndbootd
+Boolean value.
+Runs
+.Xr ndbootd 8 ,
+the Sun Network Disk (ND) Protocol server.
+Passes
+.Sy ndbootd_flags .
+.It Sy rarpd
+Boolean value.
+Runs
+.Xr rarpd 8 ,
+the reverse ARP daemon, often used to boot
+.Nx
+and Sun workstations.
+Passes
+.Sy rarpd_flags .
+.It Sy rbootd
+Boolean value.
+Runs
+.Xr rbootd 8 ,
+the
+.Tn HP
+boot protocol daemon; used for booting
+.Tn HP
+workstations.
+Passes
+.Sy rbootd_flags .
+.It Sy rtadvd
+Boolean value.
+Runs
+.Xr rtadvd 8 ,
+the IPv6 router advertisement daemon, which is used to advertise
+information about the subnet to IPv6 end hosts.
+Passes
+.Sy rtadvd_flags .
+This is only for IPv6 routers, so set
+.Sy ip6mode
+to
+.Dq Li router
+if you use it.
+.El
+.Ss X Window System daemons
+.Bl -tag -width net_interfaces
+.It Sy xdm
+Boolean value.
+Runs the
+.Xr xdm 1
+X display manager.
+These X daemons are available only with the optional X distribution of
+.Nx .
+.It Sy xfs
+Boolean value.
+Runs the
+.Xr xfs 1
+X11 font server, which supplies local X font files to X terminals.
+.El
+.Ss NIS (YP) daemons
+.Bl -tag -width net_interfaces
+.It Sy ypbind
+Boolean value.
+Runs
+.Xr ypbind 8 ,
+which lets
+.Tn NIS
+(YP) clients use information from a
+.Tn NIS
+server.
+Passes
+.Sy ypbind_flags .
+.It Sy yppasswdd
+Boolean value.
+Runs
+.Xr yppasswdd 8 ,
+which allows remote
+.Tn NIS
+users to update password on master server.
+Passes
+.Sy yppasswdd_flags .
+.It Sy ypserv
+Boolean value.
+Runs
+.Xr ypserv 8 ,
+the
+.Tn NIS
+(YP) server for distributing information from certain files in
+.Pa /etc .
+Passes
+.Sy ypserv_flags .
+The
+.Dq Li -d
+flag causes it to use DNS for lookups in
+.Pa /etc/hosts
+that fail.
+.El
+.Ss NFS daemons and parameters
+.Bl -tag -width net_interfaces
+.It Sy amd
+Boolean value.
+Runs
+.Xr amd 8 ,
+the automounter daemon, which automatically mounts NFS file systems
+whenever a file or directory within that file system is accessed.
+Passes
+.Sy amd_flags .
+.It Sy amd_dir
+A string.
+The
+.Xr amd 8
+mount directory.
+Used only if
+.Sy amd
+is true.
+.It Sy lockd
+Boolean value.
+Runs
+.Xr rpc.lockd 8
+if
+.Sy nfs_server
+and/or
+.Sy nfs_client
+are true.
+Passes
+.Sy lockd_flags .
+.It Sy mountd
+Boolean value.
+Runs
+.Xr mountd 8
+and passes
+.Sy mountd_flags .
+.It Sy nfs_client
+Boolean value.
+The number of local NFS asynchronous I/O server is now controlled via
+.Xr sysctl 8 .
+.It Sy nfs_server
+Boolean value.
+Sets up a host to be a NFS server by running
+.Xr nfsd 8
+and passing
+.Sy nfsd_flags .
+.It Sy statd
+Boolean value.
+Runs
+.Xr rpc.statd 8 ,
+a status monitoring daemon used when
+.Xr rpc.lockd 8
+is running, if
+.Sy nfs_server
+and/or
+.Sy nfs_client
+are true.
+Passes
+.Sy statd_flags .
+.El
+.Ss Bluetooth support
+.Bl -tag -width net_interfaces
+.It Sy bluetooth
+Boolean value.
+Configure Bluetooth support, comprising the following tasks:
+.Bl -dash -compact
+.It
+attach serial Bluetooth controllers as listed in the
+.Pa /etc/bluetooth/btattach.conf
+configuration file.
+.It
+enable Bluetooth controllers with useful defaults, plus
+additional options as detailed below.
+.It
+optionally, start
+.Xr bthcid 8 ,
+the Bluetooth Link Key/PIN Code manager, passing
+.Sy bthcid_flags .
+.It
+configure local Bluetooth drivers as listed in the
+.Pa /etc/bluetooth/btdevctl.conf
+configuration file.
+.It
+optionally, start
+.Xr sdpd 8 ,
+the Service Discovery server, passing
+.Sy sdpd_flags .
+.El
+.It Sy btconfig_devices
+A string.
+An optional list of Bluetooth controllers to configure.
+.It Sy btconfig_{dev}
+A string.
+Additional configuration options for specific Bluetooth controllers.
+.It Sy btconfig_args
+A string.
+Additional configuration options for Bluetooth controllers without
+specific options as above.
+.It Sy bthcid
+Boolean value.
+If set to false, disable starting the Bluetooth Link Key/PIN Code manager.
+.It Sy sdpd
+Boolean value.
+If set to false, disable starting the Bluetooth Service Discovery server.
+.El
+.Ss Other daemons
+.Bl -tag -width net_interfaces
+.It Sy identd
+Boolean value.
+Runs
+.Xr identd 8 ,
+the daemon for the user identification protocol.
+Passes
+.Sy identd_flags .
+.It Sy iscsi_target
+Boolean value.
+Runs the server for iSCSI requests,
+.Xr iscsi-target 8 .
+Passes
+.Sy iscsi_target_flags .
+.It Sy isdnd
+Boolean value.
+Runs
+.Xr isdnd 8 ,
+the isdn4bsd ISDN connection management daemon.
+Passes
+.Sy isdnd_flags .
+.It Sy isdn_autoupdown
+Boolean value.
+Set all configured ISDN interfaces to
+.Dq up .
+If
+.Sy isdn_interfaces
+is not blank, only the listed interfaces will be modified.
+Used only if
+.Sy isdnd
+is true.
+.It Sy kdc
+Boolean value.
+Runs the
+.Xr kdc 8
+Kerberos v4 and v5 server.
+This should be run on Kerberos master and slave servers.
+.It Sy rwhod
+Boolean value.
+Runs
+.Xr rwhod 8
+to support the
+.Xr rwho 1
+and
+.Xr ruptime 1
+commands.
+.El
+.Ss Hardware daemons
+.Bl -tag -width net_interfaces
+.It Sy apmd
+Boolean value.
+Runs
+.Xr apmd 8
+and passes
+.Sy apmd_flags .
+.It Sy irdaattach
+Boolean value.
+Runs
+.Xr irdaattach 8
+and passes
+.Sy irdaattach_flags .
+.It Sy moused
+Boolean value.
+Runs
+.Xr moused 8 ,
+to pass serial mouse data to the wscons mouse mux.
+Passes
+.Sy moused_flags .
+.It Sy screenblank
+Boolean value.
+Runs
+.Xr screenblank 1
+and passes
+.Sy screenblank_flags .
+.It Sy wscons
+Boolean value.
+Configures the
+.Xr wscons 4
+console driver, from the configuration file
+.Pa /etc/wscons.conf .
+.It Sy wsmoused
+Boolean value.
+Runs
+.Xr wsmoused 8 ,
+to provide copy and paste text support in wscons displays.
+Passes
+.Sy wsmoused_flags .
+.El
+.Sh FILES
+.Bl -tag -width /etc/defaults/rc.conf -compact
+.It Pa /etc/rc.conf
+The file
+.Nm
+resides in
+.Pa /etc .
+.It Pa /etc/defaults/rc.conf
+Default settings for
+.Nm ,
+sourced by
+.Nm
+before the end-user configuration section.
+.It Pa /etc/rc.conf.d/ Ns Ar foo
+.Ar foo Ns No -specific
+.Nm
+overrides.
+.El
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr rc 8 ,
+.Xr rc.d 8 ,
+.Xr rc.subr 8 ,
+.Xr rcorder 8
+.Sh HISTORY
+The
+.Nm
+file appeared in
+.Nx 1.3 .

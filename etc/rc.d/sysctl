@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# $NetBSD: sysctl,v 1.13 2004/08/13 18:08:03 mycroft Exp $
+#
+
+# PROVIDE: sysctl
+# REQUIRE: root ipfilter ipsec
+# BEFORE:  DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="sysctl"
+start_cmd="sysctl_start"
+stop_cmd=":"
+
+sysctl_start()
+{
+	if [ -r /etc/sysctl.conf ]; then
+		echo "Setting sysctl variables:"
+		sysctl -f /etc/sysctl.conf
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

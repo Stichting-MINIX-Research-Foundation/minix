@@ -1,3 +1,66 @@
 #!/bin/sh
+#
+# $NetBSD: rc.shutdown,v 1.9 2012/06/25 07:22:45 jnemeth Exp $
+#
+# rc.shutdown --
+#	Run the scripts in /etc/rc.d with reverse rcorder.
 
-sh /etc/rc stop
+#	System shutdown script run by shutdown(8) at system shutdown time.
+#	Note that halt(8) and reboot(8) do NOT invoke this script.
+
+export HOME=/
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+if ! checkyesno do_rcshutdown; then
+	echo "Skipping shutdown hooks."
+	exit 0
+fi
+
+stty status '^T'
+
+#	Set shell to ignore SIGINT, but not children;
+#	shell catches SIGQUIT and returns to single user.
+#
+trap : INT
+trap "echo 'Shutdown interrupted.'; exit 1" QUIT
+
+#	If requested, start a watchdog timer in the background which
+#	will terminate rc.shutdown if rc.shutdown doesn't complete
+#	within the specified time.
+#
+_rcshutdown_watchdog=
+if [ -n "$rcshutdown_timeout" ]; then
+	sleep $rcshutdown_timeout && (
+	    _msg="$rcshutdown_timeout second watchdog timeout expired. Shutdown terminated."
+	    logger -t rc.shutdown "$_msg"
+	    echo "$_msg"
+	    date
+	    kill -KILL $$ >/dev/null 2>&1
+	    ) &
+	_rcshutdown_watchdog=$!
+fi
+
+
+#	Determine the shutdown order of the rc.d scripts,
+#	and perform the operation
+#
+scripts=$(for rcd in ${rc_directories:-/etc/rc.d}; do
+	test -d ${rcd} && echo ${rcd}/*; done)
+files=$(rcorder -k shutdown ${rcshutdown_rcorder_flags} ${scripts})
+
+for _rc_elem in $(reverse_list $files); do
+	run_rc_script $_rc_elem stop
+done
+
+
+#	Terminate the background watchdog timer (if it is running)
+#
+if [ -n "$_rcshutdown_watchdog" ]; then
+	kill -TERM $_rcshutdown_watchdog >/dev/null 2>&1
+fi
+
+date
+exit 0
