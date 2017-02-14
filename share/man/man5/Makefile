@@ -7,7 +7,7 @@
 MAN=	\
 	\
 	\
-	\
+	hosts.5 \
 	locale.alias.5 \
 	\
 	\

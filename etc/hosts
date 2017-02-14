@@ -1,0 +1,19 @@
+#	$NetBSD: hosts,v 1.9 2013/11/24 07:20:01 dholland Exp $
+#
+# Host name database.
+#
+# This file contains addresses and aliases for local hosts whose names
+# need to be resolvable during system boot; typically this includes only
+# the address and FQDN for this machine's hostname.
+#
+# By default this file is consulted before DNS, so adding additional
+# material here that then becomes out of date can lead to confusion.
+# See nsswitch.conf(5).
+#
+::1			localhost localhost.
+127.0.0.1		localhost localhost.
+#
+# RFC 1918 specifies that these networks are "internal":
+# 10.0.0.0        -   10.255.255.255  (10/8 prefix)
+# 172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
+# 192.168.0.0     -   192.168.255.255 (192.168/16 prefix)

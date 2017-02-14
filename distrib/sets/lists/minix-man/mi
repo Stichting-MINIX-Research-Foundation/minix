@@ -3284,7 +3284,7 @@
 ./usr/man/man5/ftpusers.5                               minix-man
 ./usr/man/man5/gettytab.5                               minix-man
 ./usr/man/man5/group.5                                  minix-man
-./usr/man/man5/hosts.5                                  minix-man       obsolete
+./usr/man/man5/hosts.5                                  minix-man
 ./usr/man/man5/http_status.5                            minix-man       obsolete
 ./usr/man/man5/httpd.conf.5                             minix-man       obsolete
 ./usr/man/man5/info.5                                   minix-man

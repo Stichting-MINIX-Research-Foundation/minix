@@ -100,6 +100,7 @@
 ./etc/gettytab                                          minix-base
 ./etc/group                                             minix-base
 ./etc/hostname.file                                     minix-base
+./etc/hosts                                             minix-base
 ./etc/inet.conf                                         minix-base      obsolete
 ./etc/kyua                                              minix-tests     kyua
 ./etc/man.conf                                          minix-base
