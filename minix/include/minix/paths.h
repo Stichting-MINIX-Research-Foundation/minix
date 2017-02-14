@@ -12,8 +12,6 @@
 
 #define _PATH_DRIVERS	"/service"
 
-#define	_PATH_SERVACCES	"/etc/serv.access"
-
 #define _PATH_HOSTNAME_FILE "/etc/hostname.file"
 
 #endif /* _MINIX_PATHS_H_ */

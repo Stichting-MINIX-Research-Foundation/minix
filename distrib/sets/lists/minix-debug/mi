@@ -418,8 +418,8 @@
 ./usr/libdata/debug/usr/bin/synctree.debug              minix-debug     debug
 ./usr/libdata/debug/usr/bin/sz.debug                    minix-debug     debug
 ./usr/libdata/debug/usr/bin/tail.debug                  minix-debug     debug
-./usr/libdata/debug/usr/bin/tcpd.debug                  minix-debug     debug
-./usr/libdata/debug/usr/bin/tcpdp.debug                 minix-debug     debug
+./usr/libdata/debug/usr/bin/tcpd.debug                  minix-debug     debug,obsolete
+./usr/libdata/debug/usr/bin/tcpdp.debug                 minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/tcpstat.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/tee.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/term.debug                  minix-debug     debug

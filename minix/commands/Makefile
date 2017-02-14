@@ -23,7 +23,7 @@ SUBDIR=	arp at backup \
 	rotate setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svrctl swifi synctree sysenv \
-	tcpd tcpdp telnet \
+	telnet \
 	telnetd term termcap tget \
 	truncate umount \
 	update version vol \

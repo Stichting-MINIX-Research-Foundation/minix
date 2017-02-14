@@ -3306,7 +3306,7 @@
 ./usr/man/man5/resolv.conf.5                            minix-man       obsolete
 ./usr/man/man5/resolver.5                               minix-man       obsolete
 ./usr/man/man5/rhosts.5                                 minix-man
-./usr/man/man5/serv.access.5                            minix-man
+./usr/man/man5/serv.access.5                            minix-man       obsolete
 ./usr/man/man5/statvfs.5                                minix-man
 ./usr/man/man5/syslog.conf.5                            minix-man
 ./usr/man/man5/system.conf.5                            minix-man
@@ -3461,7 +3461,7 @@
 ./usr/man/man8/sync.8                                   minix-man
 ./usr/man/man8/sysctl.8                                 minix-man
 ./usr/man/man8/syslogd.8                                minix-man
-./usr/man/man8/tcpd.8                                   minix-man
+./usr/man/man8/tcpd.8                                   minix-man       obsolete
 ./usr/man/man8/traceroute.8                             minix-man
 ./usr/man/man8/uds.8                                    minix-man       obsolete
 ./usr/man/man8/unix.8                                   minix-man

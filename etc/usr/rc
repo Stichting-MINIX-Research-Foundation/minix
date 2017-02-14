@@ -56,7 +56,6 @@ daemonize()
     # Function to start a daemon, if it exists.
     local IFS=':'
     local name="$1"
-    test "$1" = tcpd && name="$2"
 
     for dir in $PATH
     do

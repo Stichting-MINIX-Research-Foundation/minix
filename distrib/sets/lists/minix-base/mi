@@ -526,8 +526,8 @@
 ./usr/bin/sz                                            minix-base
 ./usr/bin/tail                                          minix-base
 ./usr/bin/tar                                           minix-base
-./usr/bin/tcpd                                          minix-base
-./usr/bin/tcpdp                                         minix-base
+./usr/bin/tcpd                                          minix-base      obsolete
+./usr/bin/tcpdp                                         minix-base      obsolete
 ./usr/bin/tcpstat                                       minix-base      obsolete
 ./usr/bin/tee                                           minix-base
 ./usr/bin/term                                          minix-base
