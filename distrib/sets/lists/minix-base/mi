@@ -379,7 +379,7 @@
 ./usr/bin/ifconfig                                      minix-base      obsolete
 ./usr/bin/ifdef                                         minix-base
 ./usr/bin/in.rshd                                       minix-base      obsolete
-./usr/bin/in.telnetd                                    minix-base
+./usr/bin/in.telnetd                                    minix-base      obsolete
 ./usr/bin/indent                                        minix-base
 ./usr/bin/info                                          minix-base
 ./usr/bin/infocmp                                       minix-base
