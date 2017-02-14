@@ -18,7 +18,7 @@ SUBDIR=	arp at backup \
 	minix-service mount mt netconf \
 	nonamed \
 	prep printroot \
-	profile progressbar pr_routes \
+	profile progressbar \
 	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
 	rotate setup \

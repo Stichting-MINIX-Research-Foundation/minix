@@ -374,7 +374,7 @@
 ./usr/libdata/debug/usr/bin/pathchk.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/playwave.debug              minix-debug     debug
 ./usr/libdata/debug/usr/bin/pr.debug                    minix-debug     debug
-./usr/libdata/debug/usr/bin/pr_routes.debug             minix-debug     debug
+./usr/libdata/debug/usr/bin/pr_routes.debug             minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/prep.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/printenv.debug              minix-debug     debug
 ./usr/libdata/debug/usr/bin/printf.debug                minix-debug     debug

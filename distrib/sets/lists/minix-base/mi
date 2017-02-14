@@ -474,7 +474,7 @@
 ./usr/bin/playwave                                      minix-base
 ./usr/bin/postinstall                                   minix-base      obsolete
 ./usr/bin/pr                                            minix-base
-./usr/bin/pr_routes                                     minix-base
+./usr/bin/pr_routes                                     minix-base      obsolete
 ./usr/bin/prep                                          minix-base
 ./usr/bin/printenv                                      minix-base
 ./usr/bin/printf                                        minix-base
