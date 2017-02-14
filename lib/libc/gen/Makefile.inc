@@ -8,8 +8,7 @@
 CPPFLAGS.fslib.c+= -I${NETBSDSRCDIR}/minix/fs
 CPPFLAGS.fsversion.c+= -I${NETBSDSRCDIR}/minix/fs
 
-SRCS+= fsversion.c gcov.c itoa.c \
-	oneC_sum.c read_tsc_64.c fslib.c
+SRCS+= fsversion.c gcov.c itoa.c read_tsc_64.c fslib.c
 
 .endif # defined(__MINIX)
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen

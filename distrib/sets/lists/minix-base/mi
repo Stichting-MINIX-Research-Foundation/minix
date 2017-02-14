@@ -388,7 +388,7 @@
 ./usr/bin/install                                       minix-base
 ./usr/bin/ipcrm                                         minix-base
 ./usr/bin/ipcs                                          minix-base
-./usr/bin/irdpd                                         minix-base
+./usr/bin/irdpd                                         minix-base      obsolete
 ./usr/bin/isodir                                        minix-base
 ./usr/bin/isoinfo                                       minix-base
 ./usr/bin/isoread                                       minix-base
