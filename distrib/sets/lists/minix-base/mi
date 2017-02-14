@@ -374,7 +374,7 @@
 ./usr/bin/head                                          minix-base
 ./usr/bin/hexdump                                       minix-base
 ./usr/bin/host                                          minix-base
-./usr/bin/hostaddr                                      minix-base
+./usr/bin/hostaddr                                      minix-base      obsolete
 ./usr/bin/id                                            minix-base
 ./usr/bin/ifconfig                                      minix-base      obsolete
 ./usr/bin/ifdef                                         minix-base
