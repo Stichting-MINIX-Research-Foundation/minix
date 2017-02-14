@@ -458,7 +458,6 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 .else # LSC Minix Specific
 .for owner group mode sdir tdir files in \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ daily \
-		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ dhcptags.conf \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/usr/ ${DESTDIR}/usr/etc/ rc \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/usr/lib/ crontab \
 		${BINOWN} ${BINGRP}	${BINMODE}	${NETBSDSRCDIR}/etc/ ${DESTDIR}/etc/ system.conf \

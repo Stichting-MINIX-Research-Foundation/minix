@@ -326,7 +326,7 @@
 ./usr/bin/deroff                                        minix-base
 ./usr/bin/devmand                                       minix-base
 ./usr/bin/devsize                                       minix-base
-./usr/bin/dhcpd                                         minix-base
+./usr/bin/dhcpd                                         minix-base      obsolete
 ./usr/bin/dhrystone                                     minix-base
 ./usr/bin/diff                                          minix-base
 ./usr/bin/dirname                                       minix-base
@@ -609,7 +609,7 @@
 ./usr/bin/znew                                          minix-base
 ./usr/etc                                               minix-base
 ./usr/etc/daily                                         minix-base
-./usr/etc/dhcptags.conf                                 minix-base
+./usr/etc/dhcptags.conf                                 minix-base      obsolete
 ./usr/etc/rc                                            minix-base
 ./usr/include/c++                                       minix-base      gcc=5
 ./usr/include/c++/experimental                          minix-base      gcc=5

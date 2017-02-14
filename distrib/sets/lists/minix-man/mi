@@ -3274,7 +3274,7 @@
 ./usr/man/man5/configfile.5                             minix-man
 ./usr/man/man5/cpio.5                                   minix-man
 ./usr/man/man5/crontab.5                                minix-man
-./usr/man/man5/dhcp.conf.5                              minix-man
+./usr/man/man5/dhcp.conf.5                              minix-man       obsolete
 ./usr/man/man5/dir.5                                    minix-man       obsolete
 ./usr/man/man5/editrc.5                                 minix-man
 ./usr/man/man5/ethers.5                                 minix-man
@@ -3382,7 +3382,7 @@
 ./usr/man/man8/cron.8                                   minix-man
 ./usr/man/man8/dev_mkdb.8                               minix-man
 ./usr/man/man8/devsize.8                                minix-man
-./usr/man/man8/dhcpd.8                                  minix-man
+./usr/man/man8/dhcpd.8                                  minix-man       obsolete
 ./usr/man/man8/diskctl.8                                minix-man
 ./usr/man/man8/fbdctl.8                                 minix-man
 ./usr/man/man8/fdisk.8                                  minix-man

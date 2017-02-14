@@ -6,7 +6,7 @@ SUBDIR=	arp at backup \
 	cawf cdprobe \
 	cleantmp \
 	compress crc cron crontab \
-	DESCRIBE devmand devsize dhcpd \
+	DESCRIBE devmand devsize \
 	dhrystone \
 	eject \
 	fix format fsck.mfs \
