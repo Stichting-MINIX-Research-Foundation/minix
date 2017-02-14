@@ -323,7 +323,7 @@
 ./usr/man/man1/repeat.1                                 minix-man
 ./usr/man/man1/return.1                                 minix-man       obsolete
 ./usr/man/man1/rev.1                                    minix-man
-./usr/man/man1/rget.1                                   minix-man
+./usr/man/man1/rget.1                                   minix-man       obsolete
 ./usr/man/man1/rlogin.1                                 minix-man
 ./usr/man/man1/rm.1                                     minix-man
 ./usr/man/man1/rmd160.1                                 minix-man

@@ -19,7 +19,7 @@ SUBDIR=	at backup \
 	prep printroot \
 	profile progressbar \
 	ramdisk rawspeed readclock \
-	remsync rget rlogin \
+	remsync rlogin \
 	rotate setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svrctl swifi synctree sysenv \
