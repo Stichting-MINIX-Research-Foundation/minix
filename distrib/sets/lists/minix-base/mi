@@ -268,7 +268,7 @@
 ./usr/bin                                               minix-base
 ./usr/bin/DESCRIBE                                      minix-base
 ./usr/bin/MAKEDEV                                       minix-base
-./usr/bin/add_route                                     minix-base
+./usr/bin/add_route                                     minix-base      obsolete
 ./usr/bin/apropos                                       minix-base
 ./usr/bin/arp                                           minix-base
 ./usr/bin/asa                                           minix-base
@@ -323,7 +323,7 @@
 ./usr/bin/datasizes                                     minix-base      obsolete
 ./usr/bin/dd                                            minix-base      obsolete
 ./usr/bin/decomp16                                      minix-base      obsolete
-./usr/bin/del_route                                     minix-base
+./usr/bin/del_route                                     minix-base      obsolete
 ./usr/bin/deroff                                        minix-base
 ./usr/bin/devmand                                       minix-base
 ./usr/bin/devsize                                       minix-base

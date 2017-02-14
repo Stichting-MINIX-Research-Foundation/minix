@@ -3365,7 +3365,7 @@
 ./usr/man/man7/re_format.7                              minix-man
 ./usr/man/man8                                          minix-man
 ./usr/man/man8/MAKEDEV.8                                minix-man
-./usr/man/man8/add_route.8                              minix-man
+./usr/man/man8/add_route.8                              minix-man       obsolete
 ./usr/man/man8/adduser.8                                minix-man
 ./usr/man/man8/atnormalize.8                            minix-man
 ./usr/man/man8/autopart.8                               minix-man

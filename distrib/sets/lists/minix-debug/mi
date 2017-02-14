@@ -208,7 +208,7 @@
 ./usr/libdata/debug/service/vnd.debug                   minix-debug     debug
 ./usr/libdata/debug/usr                                 minix-debug
 ./usr/libdata/debug/usr/bin                             minix-debug
-./usr/libdata/debug/usr/bin/add_route.debug             minix-debug     debug
+./usr/libdata/debug/usr/bin/add_route.debug             minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/addr2line.debug             minix-debug     debug
 ./usr/libdata/debug/usr/bin/apropos.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/ar.debug                    minix-debug     debug
