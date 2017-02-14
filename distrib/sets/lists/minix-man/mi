@@ -324,7 +324,7 @@
 ./usr/man/man1/return.1                                 minix-man       obsolete
 ./usr/man/man1/rev.1                                    minix-man
 ./usr/man/man1/rget.1                                   minix-man       obsolete
-./usr/man/man1/rlogin.1                                 minix-man
+./usr/man/man1/rlogin.1                                 minix-man       obsolete
 ./usr/man/man1/rm.1                                     minix-man
 ./usr/man/man1/rmd160.1                                 minix-man
 ./usr/man/man1/rmdir.1                                  minix-man
@@ -3305,7 +3305,7 @@
 ./usr/man/man5/rc.conf.5                                minix-man
 ./usr/man/man5/resolv.conf.5                            minix-man       obsolete
 ./usr/man/man5/resolver.5                               minix-man       obsolete
-./usr/man/man5/rhosts.5                                 minix-man
+./usr/man/man5/rhosts.5                                 minix-man       obsolete
 ./usr/man/man5/serv.access.5                            minix-man       obsolete
 ./usr/man/man5/statvfs.5                                minix-man
 ./usr/man/man5/syslog.conf.5                            minix-man

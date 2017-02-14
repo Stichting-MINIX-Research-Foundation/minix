@@ -392,7 +392,7 @@
 ./usr/libdata/debug/usr/bin/repartition.debug           minix-debug     debug
 ./usr/libdata/debug/usr/bin/rev.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/rget.debug                  minix-debug     debug,obsolete
-./usr/libdata/debug/usr/bin/rlogin.debug                minix-debug     debug
+./usr/libdata/debug/usr/bin/rlogin.debug                minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/rsh.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/rz.debug                    minix-debug     debug
 ./usr/libdata/debug/usr/bin/screendump.debug            minix-debug     debug

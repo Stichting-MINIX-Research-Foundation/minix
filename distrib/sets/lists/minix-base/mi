@@ -493,7 +493,7 @@
 ./usr/bin/restore                                       minix-base
 ./usr/bin/rev                                           minix-base
 ./usr/bin/rget                                          minix-base      obsolete
-./usr/bin/rlogin                                        minix-base
+./usr/bin/rlogin                                        minix-base      obsolete
 ./usr/bin/rmd160                                        minix-base
 ./usr/bin/rotate                                        minix-base
 ./usr/bin/rput                                          minix-base      obsolete
