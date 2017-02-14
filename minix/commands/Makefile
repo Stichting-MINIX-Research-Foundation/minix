@@ -24,9 +24,9 @@ SUBDIR=	add_route arp at backup \
 	rotate setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svrctl swifi synctree sysenv \
-	tcpd tcpdp tcpstat telnet \
+	tcpd tcpdp telnet \
 	telnetd term termcap tget \
-	truncate udpstat umount \
+	truncate umount \
 	update version vol \
 	writeisofs fetch \
 	zmodem pkgin_cd pkgin_all pkgin_sets \

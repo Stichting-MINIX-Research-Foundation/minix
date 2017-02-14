@@ -37,8 +37,6 @@ struct export_params {
 void qp_export(struct export_params *_ex_params);
 int queryparam(int (*_qgetc) (void), void **_paddress, _mnx_size_t
 	*_psize);
-_mnx_size_t paramvalue(char **_value, void *_address, _mnx_size_t
-	_size);
 #endif /* _MINIX__QUERYPARAM_H */
 
 /* $PchId: queryparam.h,v 1.1 2005/06/28 14:31:26 philip Exp $ */

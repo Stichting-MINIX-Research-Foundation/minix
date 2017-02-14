@@ -529,7 +529,7 @@
 ./usr/bin/tar                                           minix-base
 ./usr/bin/tcpd                                          minix-base
 ./usr/bin/tcpdp                                         minix-base
-./usr/bin/tcpstat                                       minix-base
+./usr/bin/tcpstat                                       minix-base      obsolete
 ./usr/bin/tee                                           minix-base
 ./usr/bin/term                                          minix-base
 ./usr/bin/termcap                                       minix-base
@@ -550,7 +550,7 @@
 ./usr/bin/tsort                                         minix-base
 ./usr/bin/ttn                                           minix-base
 ./usr/bin/tty                                           minix-base
-./usr/bin/udpstat                                       minix-base
+./usr/bin/udpstat                                       minix-base      obsolete
 ./usr/bin/ul                                            minix-base
 ./usr/bin/uname                                         minix-base
 ./usr/bin/uncompress                                    minix-base

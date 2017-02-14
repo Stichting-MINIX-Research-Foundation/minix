@@ -420,7 +420,7 @@
 ./usr/libdata/debug/usr/bin/tail.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/tcpd.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/tcpdp.debug                 minix-debug     debug
-./usr/libdata/debug/usr/bin/tcpstat.debug               minix-debug     debug
+./usr/libdata/debug/usr/bin/tcpstat.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/tee.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/term.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/termcap.debug               minix-debug     debug
@@ -439,7 +439,7 @@
 ./usr/libdata/debug/usr/bin/tsort.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/bin/ttn.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/tty.debug                   minix-debug     debug
-./usr/libdata/debug/usr/bin/udpstat.debug               minix-debug     debug
+./usr/libdata/debug/usr/bin/udpstat.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/ul.debug                    minix-debug     debug
 ./usr/libdata/debug/usr/bin/uname.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/bin/unexpand.debug              minix-debug     debug
