@@ -153,7 +153,6 @@
 ./etc/rc.shutdown                                       minix-base
 ./etc/rc.subr                                           minix-base
 ./etc/release                                           minix-base
-./etc/resolv.conf                                       minix-base
 ./etc/rs.inet                                           minix-base      obsolete
 ./etc/rs.single                                         minix-base
 ./etc/saslc.d                                           minix-base      crypto
@@ -455,7 +454,7 @@
 ./usr/bin/nice                                          minix-base
 ./usr/bin/nl                                            minix-base
 ./usr/bin/nohup                                         minix-base
-./usr/bin/nonamed                                       minix-base
+./usr/bin/nonamed                                       minix-base      obsolete
 ./usr/bin/nroff                                         minix-base
 ./usr/bin/od                                            minix-base
 ./usr/bin/openssl                                       minix-base      crypto

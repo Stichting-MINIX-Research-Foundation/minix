@@ -362,7 +362,7 @@
 ./usr/libdata/debug/usr/bin/nl.debug                    minix-debug     debug
 ./usr/libdata/debug/usr/bin/nm.debug                    minix-debug     debug
 ./usr/libdata/debug/usr/bin/nohup.debug                 minix-debug     debug
-./usr/libdata/debug/usr/bin/nonamed.debug               minix-debug     debug
+./usr/libdata/debug/usr/bin/nonamed.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/objcopy.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/objdump.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/openssl.debug               minix-debug     debug

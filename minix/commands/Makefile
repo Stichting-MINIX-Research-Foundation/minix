@@ -16,7 +16,6 @@ SUBDIR=	arp at backup \
 	loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
 	minix-service mount mt netconf \
-	nonamed \
 	prep printroot \
 	profile progressbar \
 	ramdisk rarpd rawspeed readclock \
