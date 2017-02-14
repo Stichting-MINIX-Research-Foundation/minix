@@ -180,7 +180,7 @@
 ./usr/libdata/debug/service/ds.debug                    minix-debug     debug
 ./usr/libdata/debug/service/ext2.debug                  minix-debug     debug
 ./usr/libdata/debug/service/hello.debug                 minix-debug     debug
-./usr/libdata/debug/service/inet.debug                  minix-debug     debug
+./usr/libdata/debug/service/inet.debug                  minix-debug     debug,obsolete
 ./usr/libdata/debug/service/input.debug                 minix-debug     debug
 ./usr/libdata/debug/service/ipc.debug                   minix-debug     debug
 ./usr/libdata/debug/service/is.debug                    minix-debug     debug

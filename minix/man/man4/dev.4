@@ -179,9 +179,8 @@ The
 device sends any bytes written to it to the printer.
 .SS "TCP/IP (major 7)"
 The TCP/IP task is not a kernel task, but a server like PM and VFS.  It sits
-between VFS and the DP8390 task that manages the ethernet boards.  Together
-they implement the TCP/IP protocol.  See also
-.BR ip (4).
+between VFS and the drivers that manage the ethernet boards.  Together
+they implement the TCP/IP protocol.
 .SS "Controller 1 (major 8)"
 Like controller 0 (major 3), but managing a second controller with devices
 .BR /dev/c1* .
@@ -215,7 +214,6 @@ All MINIX 3 devices
 .BR console (4),
 .BR fd (4),
 .BR controller (4),
-.BR ip (4),
 .BR uds (4),
 .BR tty (4),
 .BR MAKEDEV (8).
@@ -223,8 +221,8 @@ All MINIX 3 devices
 There are five prominent errors that processes accessing device files may
 provoke:
 .IP "ENODEV \- No such device" 5
-There is no driver managing the device class this device belongs to.  Either
-the driver is configured out, or it is not loaded (inet).
+There is no driver managing the device class this device belongs to, typically
+because it is not loaded.
 .IP "ENXIO \- No such device or address"
 This device is not available.  Either the driver does not support it at all,
 or the hardware isn't available, i.e. accessing the second disk on a system

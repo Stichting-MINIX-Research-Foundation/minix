@@ -125,7 +125,6 @@ service_get_policies(struct policies * pol, index_t slot)
 		{ .label = "ptyfs", .policy_str = "" },
 		{ .label = "vbfs", .policy_str = "" },
 		/* net */
-		{ .label = "inet", .policy_str = "reset" },
 		{ .label = "lwip", .policy_str = "" },
 		/* servers */
 		{ .label = "devman", .policy_str = "restart" },

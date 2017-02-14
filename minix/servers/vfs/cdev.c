@@ -463,11 +463,11 @@ cdev_generic_reply(message * m_ptr)
 		    proc_e, m_ptr->m_source);
 	} else {
 		/*
-		 * Some services (e.g., inet) use the same infrastructure for
-		 * nonblocking and cancelled requests, resulting in one of
-		 * EINTR or EAGAIN when the other is really the appropriate
-		 * code.  Thus, cdev_cancel converts EAGAIN into EINTR, and we
-		 * convert EINTR into EAGAIN here.
+		 * Some services use the same infrastructure for nonblocking
+		 * and cancelled requests, resulting in one of EINTR or EAGAIN
+		 * when the other is really the appropriate code.  Thus,
+		 * cdev_cancel converts EAGAIN into EINTR, and we convert EINTR
+		 * into EAGAIN here.  TODO: this may be obsolete by now..?
 		 */
 		r = m_ptr->m_lchardriver_vfs_reply.status;
 		revive(proc_e, (r == EINTR) ? EAGAIN : r);

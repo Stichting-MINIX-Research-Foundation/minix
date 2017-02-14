@@ -3253,17 +3253,17 @@
 ./usr/man/man4/disk.4                                   minix-man
 ./usr/man/man4/dosfile.4                                minix-man
 ./usr/man/man4/esdi.4                                   minix-man
-./usr/man/man4/eth.4                                    minix-man
+./usr/man/man4/eth.4                                    minix-man       obsolete
 ./usr/man/man4/fd.4                                     minix-man
-./usr/man/man4/ip.4                                     minix-man
+./usr/man/man4/ip.4                                     minix-man       obsolete
 ./usr/man/man4/keyboard.4                               minix-man
 ./usr/man/man4/lp.4                                     minix-man
 ./usr/man/man4/mtio.4                                   minix-man
 ./usr/man/man4/ncr810.4                                 minix-man
-./usr/man/man4/psip.4                                   minix-man
+./usr/man/man4/psip.4                                   minix-man       obsolete
 ./usr/man/man4/tape.4                                   minix-man
 ./usr/man/man4/tty.4                                    minix-man
-./usr/man/man4/udp.4                                    minix-man
+./usr/man/man4/udp.4                                    minix-man       obsolete
 ./usr/man/man4/uds.4                                    minix-man       obsolete
 ./usr/man/man5                                          minix-man
 ./usr/man/man5/TZ.5                                     minix-man
@@ -3402,7 +3402,7 @@
 ./usr/man/man8/i2cscan.8                                minix-man
 ./usr/man/man8/ifconfig.8                               minix-man
 ./usr/man/man8/in.httpd.8                               minix-man       obsolete
-./usr/man/man8/inet.8                                   minix-man
+./usr/man/man8/inet.8                                   minix-man       obsolete
 ./usr/man/man8/init.8                                   minix-man
 ./usr/man/man8/installboot_nbsd.8                       minix-man
 ./usr/man/man8/intr.8                                   minix-man

@@ -15,7 +15,7 @@ INCS+=	acpi.h audio_fw.h bitmap.h \
 	inputdriver.h ipc.h ipc_filter.h ipcconst.h \
 	keymap.h log.h mmio.h mthread.h minlib.h \
 	netdriver.h optset.h padconf.h partition.h portio.h \
-	priv.h procfs.h profile.h queryparam.h \
+	priv.h procfs.h profile.h \
 	rmib.h rs.h safecopies.h sched.h sef.h sffs.h \
 	sockdriver.h sockevent.h sound.h spin.h \
 	sys_config.h sysctl.h sysinfo.h \

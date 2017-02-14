@@ -105,11 +105,7 @@ up()
 }
 
 get_eth_labels() {
-  # Filter out the non-vlan ethernet entries from inet.conf.
-  # Produce as output a list of "drivername_instancenr"-formatted labels.
-  sed 's/\008/ /g' /etc/inet.conf | \
-    sed -n 's/^ *eth[0-9][0-9]* *\([^ ][^ ]*\) *\([0-9][0-9]*\).*$/\1_\2/p' | \
-    grep -v '^vlan_'
+    # Nothing yet.
 }
 
 # Detect expansion boards on the BeagleBone and load the proper drivers.
@@ -155,8 +151,6 @@ capemgr() {
     done
 }
 
-DAEMONS=/etc/rc.daemons
-
 case $action in
 start)
     # Select console font.
@@ -192,8 +186,6 @@ start)
         eval up $driver -label $label $arg -period 5HZ
     done
 
-    up inet -script /etc/rs.inet -dev /dev/ip
-
     # pty needs to know the "tty" group ID
     up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
 
@@ -213,9 +205,6 @@ start)
     fi
 
     echo .
-
-    # Network initialization.
-    (: </dev/tcp) 2>/dev/null && net=t	# Is there a TCP/IP server?
 
     echo -n "Starting daemons:"
     daemonize update
@@ -353,37 +342,6 @@ start)
 	esac
 
 	echo .
-    fi
-
-    if [ "$net" ]
-    then
-	if [ -f /etc/rc.net ]
-	then
-	    # Let a customized TCP/IP initialization script figure it out.
-	    . /etc/rc.net
-	else
-	    # Standard network daemons.
-    	    echo -n "Starting networking:"
-	    if grep -s 'psip0.*default' /etc/inet.conf >/dev/null
-	    then	ifconfig -h 10.0.0.1
-	    else
-		daemonize dhcpd
-	    fi
-	    daemonize nonamed -L
-	    if [ -f "$DAEMONS" ]
-	    then	. "$DAEMONS"
-	    fi
-	    # The last daemon has been started, so close the list:
-	    echo .
-	fi
-    fi
-
-    if [ "$net" ]
-    then
-	# Get the nodename from the DNS and set it.
-	trap '' 2
-	intr -t 20 hostaddr -h
-	trap 2
     fi
 
     # Load the stored hostname into the sysctl database.

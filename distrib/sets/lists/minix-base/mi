@@ -100,7 +100,7 @@
 ./etc/gettytab                                          minix-base
 ./etc/group                                             minix-base
 ./etc/hostname.file                                     minix-base
-./etc/inet.conf                                         minix-base
+./etc/inet.conf                                         minix-base      obsolete
 ./etc/kyua                                              minix-tests     kyua
 ./etc/man.conf                                          minix-base
 ./etc/master.passwd                                     minix-base
@@ -148,13 +148,13 @@
 ./etc/rc.d/syslogd                                      minix-base
 ./etc/rc.d/ttys                                         minix-base
 ./etc/rc.d/wscons                                       minix-base
-./etc/rc.daemons.dist                                   minix-base
+./etc/rc.daemons.dist                                   minix-base      obsolete
 ./etc/rc.minix                                          minix-base
 ./etc/rc.shutdown                                       minix-base
 ./etc/rc.subr                                           minix-base
 ./etc/release                                           minix-base
 ./etc/resolv.conf                                       minix-base
-./etc/rs.inet                                           minix-base
+./etc/rs.inet                                           minix-base      obsolete
 ./etc/rs.single                                         minix-base
 ./etc/saslc.d                                           minix-base      crypto
 ./etc/saslc.d/postfix                                   minix-base      crypto
@@ -175,7 +175,7 @@
 ./etc/system.conf                                       minix-base
 ./etc/system.conf.d                                     minix-base
 ./etc/system.conf.d/hello                               minix-base
-./etc/system.conf.d/inet                                minix-base
+./etc/system.conf.d/inet                                minix-base      obsolete
 ./etc/system.conf.d/ipc                                 minix-base
 ./etc/system.conf.d/lwip                                minix-base      obsolete
 ./etc/system.conf.d/random                              minix-base
@@ -231,7 +231,7 @@
 ./service/ds                                            minix-base
 ./service/ext2                                          minix-base
 ./service/hello                                         minix-base
-./service/inet                                          minix-base
+./service/inet                                          minix-base      obsolete
 ./service/input                                         minix-base
 ./service/ipc                                           minix-base
 ./service/is                                            minix-base

@@ -51,7 +51,7 @@
 #define DEBUG_DUMPIPCF			0
 
 /* If defined, restrict DEBUG_DUMPIPC to particular process names */
-/* #define DEBUG_DUMPIPC_NAMES		{ "tty", "inet" } */
+/* #define DEBUG_DUMPIPC_NAMES		{ "tty", "pty" } */
 
 /* DEBUG_IPCSTATS collects information on who sends messages to whom. */
 #define DEBUG_IPCSTATS			0

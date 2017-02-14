@@ -30,7 +30,6 @@ RAMDISK_DEVICES="
 	ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03
 "
 
-#eth      => ip tcp udp
 STD_DEVICES="
 	${RAMDISK_DEVICES}
 	bmp085b1s77 bmp085b2s77 bmp085b3s77
@@ -40,7 +39,7 @@ STD_DEVICES="
 	eepromb2s54 eepromb2s55 eepromb2s56 eepromb2s57
 	eepromb3s50 eepromb3s51 eepromb3s52 eepromb3s53
 	eepromb3s54 eepromb3s55 eepromb3s56 eepromb3s57
-	eth fb0 fbd filter hello
+	fb0 fbd filter hello
 	i2c-1 i2c-2 i2c-3
 	klog ptmx random
 	sht21b1s40 sht21b2s40 sht21b3s40
@@ -128,7 +127,6 @@ Where key is one of the following:
   ttyc1 ... ttyc7         # Virtual consoles
   tty00 ... tty03         # Make serial lines
   ttyp0 ... ttyq0 ...     # Make tty, pty pairs
-  eth ip tcp udp	  # One of these makes some TCP/IP devices
   audio mixer		  # Make audio devices
   klog                    # Make /dev/klog
   ptmx                    # Make /dev/ptmx
@@ -276,20 +274,6 @@ do
 		major=`expr ${bus} '*' 8 + ${slave_low} + 17`
 
 		makedev eepromb${bus}s5${slave_low} b ${major} 0 ${uname} ${gname} ${permissions}
-		;;
-	eth|ip|tcp|udp|eth0|ip0|tcp0|udp0)
-		# TCP/IP devices.
-		makedev ipstat c 7 0 ${uname} ${gname} 666
-		makedev eth0 c 7 1 ${uname} ${gname} ${permissions}
-		makedev ip0 c 7 2 ${uname} ${gname} ${permissions}
-		makedev tcp0 c 7 3 ${uname} ${gname} 666
-		makedev udp0 c 7 4 ${uname} ${gname} 666
-
-		# Default interface
-		makedev eth c 7 1 ${uname} ${gname} ${permissions}
-		makedev ip c 7 2 ${uname} ${gname} ${permissions}
-		makedev tcp c 7 3 ${uname} ${gname} 666
-		makedev udp c 7 4 ${uname} ${gname} 666
 		;;
 	fb0)
 		# Framebuffer driver

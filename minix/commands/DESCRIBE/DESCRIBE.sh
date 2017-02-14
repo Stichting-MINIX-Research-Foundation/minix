@@ -130,35 +130,6 @@ do
 	;;
     6,0)	des="line printer, parallel port" dev=lp
 	;;
-    7,*)
-	d=`expr $minor % 8`
-	n=`expr $minor / 8`
-	case $d in
-	0)  des="IP stat" dev=ipstat
-	    ;;
-	1)  case $name in
-	    psip*)
-		des="Pseudo IP #$n" dev=psip
-		;;
-	    *)  des="raw ethernet #$n" dev=eth
-	    esac
-	    ;;
-	2)  des="raw IP #$n" dev=ip
-	    ;;
-	3)  des="TCP/IP #$n" dev=tcp
-	    ;;
-	4)  des="UDP #$n" dev=udp
-	esac
-	case $d in
-	[0123])
-	    if [ "$name" = "$dev" ]
-	    then
-		des="$des (default)"
-	    else
-		dev=$dev$n
-	    fi
-	esac
-	;;
     9,0)
 	des="unix98 pseudoterminal master" dev=ptmx
 	;;

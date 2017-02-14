@@ -1231,7 +1231,7 @@
 ./usr/include/minix/priv.h                              minix-comp
 ./usr/include/minix/procfs.h                            minix-comp
 ./usr/include/minix/profile.h                           minix-comp
-./usr/include/minix/queryparam.h                        minix-comp
+./usr/include/minix/queryparam.h                        minix-comp      obsolete
 ./usr/include/minix/rmib.h                              minix-comp
 ./usr/include/minix/rs.h                                minix-comp
 ./usr/include/minix/safecopies.h                        minix-comp

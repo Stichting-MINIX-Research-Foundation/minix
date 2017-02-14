@@ -179,23 +179,6 @@ on this.  Note also the
 boot variable, you can use it to put more characters on the screen, at
 the cost of video memory.
 .TP
-.SB ENABLE_DP8390
-Master switch to enable the network drivers.  They are required by the
-network server,
-.BR inet .
-See
-.BR boot (8)
-for information on configuring network support.
-.TP
-.SB ENABLE_WDETH
-Enable code for the WD8003 and WD8013 cards in the network driver.
-.TP
-.SB ENABLE_NE2000
-Enable code for the NE1000 and NE2000 cards.
-.TP
-.SB ENABLE_3C503
-Enable code for the 3Com Etherlink II (3C503).
-.TP
 .SB NR_PTYS
 Number of pseudo terminals supported, by default
 .BR 0 ,
@@ -238,56 +221,6 @@ Number of active file locks by
 These locks are often used by programs that update a shared file, like mail
 programs do with mail boxes.  A "no locks available" error indicates that
 this table has run out.
-.PP
-.ti 2m
-.B inet/inet_config.h
-.br
-The maximum number of TCP/IP networks is:
-.TP
-.B IP_PORT_MAX
-Sets the maximum number of networks that can be defined in
-.BR /etc/inet.conf .
-.BR 8086 ,
-.BR 286 :
-By default 2.
-.BR 386 :
-By default 4.
-.PP
-.ti 2m
-.B inet/buf.c
-.br
-The number of 512 byte buffers allocated for data within the TCP/IP server is:
-.TP
-.B BUF512_NR
-These buffers are a shared resource used by the server for any data it wants
-to play with.  For incoming data this number of buffers determines the time
-packets are kept around, with each new packet evicting an old packet.  It's
-no big deal if packets get lost before a user process reads them, packets
-get lost all the time.  The only real problem is outgoing TCP data.  The
-default setting for
-.SB BUF512_NR
-allows up to four backlogged TCP streams, i.e. when data is output faster
-then it is read.  If more buffers are needed then one of the TCP connections
-is shut down.  When this happens you will see a "not enough buffers left"
-error.  This could happen for instance if a MINIX 3 web server is assaulted by
-a browser that likes to open several connections to the server
-simultaneously.  The fix is to increase
-.SB BUF512_NR
-to allow more slow outgoing TCP streams.
-.BR 86 :
-The default of
-.B 32
-buffers can be increased up to
-.BR 64 .
-(The "TCP window size" has been limited in 16-bit mode to keep the buffer
-use by TCP down.)
-.BR 386 :
-The default of
-.B 128
-can be increased to any value you like, but
-.B 512
-seems to be more than enough.  Minix-vmd uses 512 by default, and it seems
-happy that way.
 .SH "SEE ALSO"
 .BR controller (4),
 .BR usage (8),
