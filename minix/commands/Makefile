@@ -10,7 +10,7 @@ SUBDIR=	arp at backup \
 	dhrystone \
 	eject \
 	fix format fsck.mfs \
-	gcov-pull host \
+	gcov-pull \
 	ifdef \
 	intr irdpd isoread \
 	loadkeys loadramdisk logger look lp \

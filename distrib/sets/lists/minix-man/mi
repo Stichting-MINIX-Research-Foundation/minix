@@ -139,7 +139,7 @@
 ./usr/man/man1/head.1                                   minix-man
 ./usr/man/man1/hexdump.1                                minix-man
 ./usr/man/man1/history.1                                minix-man
-./usr/man/man1/host.1                                   minix-man
+./usr/man/man1/host.1                                   minix-man       obsolete
 ./usr/man/man1/hostaddr.1                               minix-man       obsolete
 ./usr/man/man1/hostname.1                               minix-man
 ./usr/man/man1/id.1                                     minix-man
