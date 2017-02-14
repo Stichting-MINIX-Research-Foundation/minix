@@ -15,7 +15,7 @@ SRCS+=	efun.c \
 	\
 	getfsspecname.c getmntopts.c getmaxpartitions.c \
 	\
-	\
+	if_media.c \
 	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
 	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
