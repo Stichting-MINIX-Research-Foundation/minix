@@ -38,7 +38,6 @@ MKGDB:=		no
 MKGROFF:=	no
 MKHESIOD:=	no
 MKHTML:=	no
-MKINET6:=	no
 MKIPFILTER:=	no
 MKISCSI:=	no
 MKKERBEROS:=	no

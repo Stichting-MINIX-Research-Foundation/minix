@@ -52,10 +52,10 @@ SUBDIR+= mdsetimage
 .endif
 
 .if (${MKINET6} != "no")
-SUBDIR+=faithd ifmcstat ndp rip6query rtsold
+SUBDIR+=
 .endif
 .if (${USE_INET6} != "no")
-SUBDIR+=mld6query route6d rtadvd traceroute6 
+SUBDIR+=
 .endif
 
 .if !defined(__MINIX)

@@ -17,7 +17,6 @@
 # The Hesiod functions are always in libc. To choose that getpwent() and friends
 # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
 .if defined(__MINIX)
-USE_INET6=no
 MKYP=no #requires RPC
 USE_JEMALLOC=no
 USE_FORT=no
