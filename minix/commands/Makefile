@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	arp at backup \
+SUBDIR=	at backup \
 	cawf cdprobe \
 	cleantmp \
 	compress crc cron crontab \

@@ -269,7 +269,7 @@
 ./usr/bin/MAKEDEV                                       minix-base
 ./usr/bin/add_route                                     minix-base      obsolete
 ./usr/bin/apropos                                       minix-base
-./usr/bin/arp                                           minix-base
+./usr/bin/arp                                           minix-base      obsolete
 ./usr/bin/asa                                           minix-base
 ./usr/bin/at                                            minix-base
 ./usr/bin/atf-report                                    minix-base      atf
