@@ -383,7 +383,7 @@
 ./usr/libdata/debug/usr/bin/pwhash.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/ramdisk.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/ranlib.debug                minix-debug     debug
-./usr/libdata/debug/usr/bin/rarpd.debug                 minix-debug     debug
+./usr/libdata/debug/usr/bin/rarpd.debug                 minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/rawspeed.debug              minix-debug     debug
 ./usr/libdata/debug/usr/bin/readelf.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/recwave.debug               minix-debug     debug

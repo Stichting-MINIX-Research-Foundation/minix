@@ -18,7 +18,7 @@ SUBDIR=	at backup \
 	minix-service mount mt netconf \
 	prep printroot \
 	profile progressbar \
-	ramdisk rarpd rawspeed readclock \
+	ramdisk rawspeed readclock \
 	remsync rget rlogin \
 	rotate setup \
 	slip spell sprofalyze sprofdiff srccrc \

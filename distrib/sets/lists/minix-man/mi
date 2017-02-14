@@ -3277,7 +3277,7 @@
 ./usr/man/man5/dhcp.conf.5                              minix-man       obsolete
 ./usr/man/man5/dir.5                                    minix-man       obsolete
 ./usr/man/man5/editrc.5                                 minix-man
-./usr/man/man5/ethers.5                                 minix-man
+./usr/man/man5/ethers.5                                 minix-man       obsolete
 ./usr/man/man5/fstab.5                                  minix-man
 ./usr/man/man5/ftpchroot.5                              minix-man
 ./usr/man/man5/ftpd.conf.5                              minix-man
@@ -3432,7 +3432,7 @@
 ./usr/man/man8/printroot.8                              minix-man
 ./usr/man/man8/pwd_mkdb.8                               minix-man
 ./usr/man/man8/pwdauth.8                                minix-man       obsolete
-./usr/man/man8/rarpd.8                                  minix-man
+./usr/man/man8/rarpd.8                                  minix-man       obsolete
 ./usr/man/man8/rawspeed.8                               minix-man
 ./usr/man/man8/rc.8                                     minix-man
 ./usr/man/man8/rc.d.8                                   minix-man
