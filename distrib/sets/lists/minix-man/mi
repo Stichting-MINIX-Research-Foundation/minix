@@ -3400,7 +3400,7 @@
 ./usr/man/man8/halt.8                                   minix-man
 ./usr/man/man8/httpd.8                                  minix-man       obsolete
 ./usr/man/man8/i2cscan.8                                minix-man
-./usr/man/man8/ifconfig.8                               minix-man
+./usr/man/man8/ifconfig.8                               minix-man       obsolete
 ./usr/man/man8/in.httpd.8                               minix-man       obsolete
 ./usr/man/man8/inet.8                                   minix-man       obsolete
 ./usr/man/man8/init.8                                   minix-man

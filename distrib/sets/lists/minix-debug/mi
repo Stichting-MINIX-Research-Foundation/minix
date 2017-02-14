@@ -294,7 +294,7 @@
 ./usr/libdata/debug/usr/bin/host.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/hostaddr.debug              minix-debug     debug
 ./usr/libdata/debug/usr/bin/id.debug                    minix-debug     debug
-./usr/libdata/debug/usr/bin/ifconfig.debug              minix-debug     debug
+./usr/libdata/debug/usr/bin/ifconfig.debug              minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/ifdef.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/bin/in.telnetd.debug            minix-debug     debug
 ./usr/libdata/debug/usr/bin/indent.debug                minix-debug     debug

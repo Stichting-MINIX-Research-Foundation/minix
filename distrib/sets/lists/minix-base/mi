@@ -377,7 +377,7 @@
 ./usr/bin/host                                          minix-base
 ./usr/bin/hostaddr                                      minix-base
 ./usr/bin/id                                            minix-base
-./usr/bin/ifconfig                                      minix-base
+./usr/bin/ifconfig                                      minix-base      obsolete
 ./usr/bin/ifdef                                         minix-base
 ./usr/bin/in.rshd                                       minix-base      obsolete
 ./usr/bin/in.telnetd                                    minix-base
