@@ -547,7 +547,7 @@
 ./usr/bin/true                                          minix-base
 ./usr/bin/truncate                                      minix-base
 ./usr/bin/tsort                                         minix-base
-./usr/bin/ttn                                           minix-base
+./usr/bin/ttn                                           minix-base      obsolete
 ./usr/bin/tty                                           minix-base
 ./usr/bin/udpstat                                       minix-base      obsolete
 ./usr/bin/ul                                            minix-base

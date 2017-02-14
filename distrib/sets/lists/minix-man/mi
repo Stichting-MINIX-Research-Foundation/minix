@@ -365,7 +365,7 @@
 ./usr/man/man1/tail.1                                   minix-man
 ./usr/man/man1/tar.1                                    minix-man
 ./usr/man/man1/tee.1                                    minix-man
-./usr/man/man1/telnet.1                                 minix-man
+./usr/man/man1/telnet.1                                 minix-man       obsolete
 ./usr/man/man1/template.1                               minix-man       obsolete
 ./usr/man/man1/term.1                                   minix-man
 ./usr/man/man1/termcap.1                                minix-man
