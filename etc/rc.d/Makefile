@@ -34,7 +34,7 @@ CONFIGFILES=\
 		fsck ftpd \
 		\
 		\
-		ipfilter ipsec \
+		inetd ipfilter ipsec \
 		\
 		\
 		local \

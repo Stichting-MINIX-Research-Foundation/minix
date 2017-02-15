@@ -11,7 +11,7 @@ SUBDIR= arp \
 	\
 	\
 	\
-	i2cscan installboot \
+	i2cscan inetd installboot \
 	\
 	\
 	link \

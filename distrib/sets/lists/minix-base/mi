@@ -102,6 +102,7 @@
 ./etc/hostname.file                                     minix-base
 ./etc/hosts                                             minix-base
 ./etc/inet.conf                                         minix-base      obsolete
+./etc/inetd.conf                                        minix-base
 ./etc/kyua                                              minix-tests     kyua
 ./etc/man.conf                                          minix-base
 ./etc/master.passwd                                     minix-base
@@ -135,6 +136,7 @@
 ./etc/rc.d/bootconf.sh                                  minix-base
 ./etc/rc.d/fsck                                         minix-base
 ./etc/rc.d/ftpd                                         minix-base
+./etc/rc.d/inetd                                        minix-base
 ./etc/rc.d/ipfilter                                     minix-base
 ./etc/rc.d/ipsec                                        minix-base
 ./etc/rc.d/local                                        minix-base
@@ -1029,6 +1031,7 @@
 ./usr/sbin/groupinfo                                    minix-base
 ./usr/sbin/groupmod                                     minix-base
 ./usr/sbin/i2cscan                                      minix-base
+./usr/sbin/inetd                                        minix-base
 ./usr/sbin/installboot_nbsd                             minix-base
 ./usr/sbin/kernel                                       minix-base
 ./usr/sbin/link                                         minix-base

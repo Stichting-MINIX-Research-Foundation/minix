@@ -3297,6 +3297,7 @@
 ./usr/man/man5/hosts_options.5                          minix-man
 ./usr/man/man5/http_status.5                            minix-man       obsolete
 ./usr/man/man5/httpd.conf.5                             minix-man       obsolete
+./usr/man/man5/inetd.conf.5                             minix-man
 ./usr/man/man5/info.5                                   minix-man
 ./usr/man/man5/keymap.5                                 minix-man
 ./usr/man/man5/kyua-tester-list.5                       minix-man       kyua
@@ -3415,6 +3416,7 @@
 ./usr/man/man8/ifconfig.8                               minix-man
 ./usr/man/man8/in.httpd.8                               minix-man       obsolete
 ./usr/man/man8/inet.8                                   minix-man       obsolete
+./usr/man/man8/inetd.8                                  minix-man
 ./usr/man/man8/init.8                                   minix-man
 ./usr/man/man8/installboot_nbsd.8                       minix-man
 ./usr/man/man8/intr.8                                   minix-man
