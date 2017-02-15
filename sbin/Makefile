@@ -8,7 +8,7 @@
 
 SUBDIR= \
 	chown \
-	fsck init \
+	fsck ifconfig init \
 	mknod nologin \
 	ping \
 	reboot rcorder \
