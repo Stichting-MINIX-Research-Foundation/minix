@@ -427,6 +427,7 @@
 ./usr/libdata/debug/usr/bin/tcpdp.debug                 minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/tcpstat.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/usr/bin/tee.debug                   minix-debug     debug
+./usr/libdata/debug/usr/bin/telnet.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/term.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/termcap.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/texindex.debug              minix-debug     debug

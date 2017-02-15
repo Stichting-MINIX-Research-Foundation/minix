@@ -536,6 +536,7 @@
 ./usr/bin/tcpdp                                         minix-base      obsolete
 ./usr/bin/tcpstat                                       minix-base      obsolete
 ./usr/bin/tee                                           minix-base
+./usr/bin/telnet                                        minix-base
 ./usr/bin/term                                          minix-base
 ./usr/bin/termcap                                       minix-base
 ./usr/bin/texi2dvi                                      minix-base

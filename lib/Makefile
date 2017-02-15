@@ -80,7 +80,7 @@ SUBDIR+=	\
 		libintl libkvm libm \
 		libpci libprop \
 		libpuffs librmt \
-		libterminfo \
+		libtelnet libterminfo \
 		libutil libwrap libz
 
 .if !defined(BSD_MK_COMPAT_FILE)
