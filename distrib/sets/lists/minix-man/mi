@@ -3455,6 +3455,7 @@
 ./usr/man/man8/renice.8                                 minix-man
 ./usr/man/man8/repartition.8                            minix-man
 ./usr/man/man8/rotate.8                                 minix-man
+./usr/man/man8/route.8                                  minix-man
 ./usr/man/man8/rshd.8                                   minix-man
 ./usr/man/man8/screendump.8                             minix-man
 ./usr/man/man8/serial-ip.8                              minix-man       obsolete

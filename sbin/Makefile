@@ -11,7 +11,7 @@ SUBDIR= \
 	fsck ifconfig init \
 	mknod nologin \
 	ping \
-	reboot rcorder \
+	reboot rcorder route \
 	shutdown sysctl \
 
 # support for various file systems

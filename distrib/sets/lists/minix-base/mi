@@ -225,6 +225,7 @@
 ./sbin/printconfig                                      minix-base
 ./sbin/rcorder                                          minix-base
 ./sbin/reboot                                           minix-base
+./sbin/route                                            minix-base
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base
 ./service                                               minix-base

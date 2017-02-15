@@ -175,6 +175,7 @@
 ./usr/libdata/debug/sbin/printconfig.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/rcorder.debug                  minix-debug     debug
 ./usr/libdata/debug/sbin/reboot.debug                   minix-debug     debug
+./usr/libdata/debug/sbin/route.debug                    minix-debug     debug
 ./usr/libdata/debug/sbin/shutdown.debug                 minix-debug     debug
 ./usr/libdata/debug/sbin/sysctl.debug                   minix-debug     debug
 ./usr/libdata/debug/service                             minix-debug
