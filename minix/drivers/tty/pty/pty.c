@@ -82,6 +82,7 @@ typedef struct pty {
 #define TTY_CLOSED	0x04	/* tty side has closed down */
 #define PTY_CLOSED	0x08	/* pty side has closed down */
 #define PTY_UNIX98	0x10	/* pty pair is Unix98 */
+#define PTY_PKTMODE	0x20	/* pty side is in packet mode (TIOCPKT) */
 
 static pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
@@ -347,6 +348,7 @@ static int pty_master_ioctl(devminor_t minor, unsigned long request,
   uid_t uid;
   struct ptmget pm;
   size_t len;
+  int r, val;
 
   if ((tp = line2tty(minor)) == NULL)
 	return ENXIO;
@@ -386,6 +388,18 @@ static int pty_master_ioctl(devminor_t minor, unsigned long request,
 		return EINVAL;
 
 	return sys_safecopyto(endpt, grant, 0, (vir_bytes)&pm, sizeof(pm));
+
+  case TIOCPKT:
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes)&val, sizeof(val));
+	if (r != OK)
+		return r;
+
+	if (val)
+		pp->state |= PTY_PKTMODE;
+	else
+		pp->state &= ~PTY_PKTMODE;
+
+	return OK;
   }
 
   /* TODO: historically, all IOCTLs on the master are processed as if issued on
@@ -608,20 +622,36 @@ static void pty_start(pty_t *pp)
 {
 /* Transfer bytes written to the output buffer to the PTY reader. */
   int count;
+  char c;
 
   /* While there are things to do. */
   for (;;) {
-  	int s;
 	count = bufend(pp->obuf) - pp->otail;
 	if (count > pp->ocount) count = pp->ocount;
+	if (count == 0 || pp->rdleft == 0) break;
+
+	/* If there is output at all, and packet mode is enabled, then prepend
+	 * the output with a zero byte. This is absolutely minimal "support"
+	 * for the TIOCPKT receipt mode to get telnetd(8) going. Implementing
+	 * full support for all the TIOCPKT bits will require more work.
+	 */
+	if (pp->rdcum == 0 && (pp->state & PTY_PKTMODE)) {
+		c = 0;
+		if (sys_safecopyto(pp->rdcaller, pp->rdgrant, 0, (vir_bytes)&c,
+		    sizeof(c)) != OK)
+			break;
+
+		pp->rdcum++;
+		pp->rdleft--;
+	}
+
 	if (count > pp->rdleft) count = pp->rdleft;
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant, pp->rdcum,
-		(vir_bytes) pp->otail, count)) != OK) {
+	if (sys_safecopyto(pp->rdcaller, pp->rdgrant, pp->rdcum,
+	    (vir_bytes)pp->otail, count) != OK)
 		break;
- 	}
 
 	/* Bookkeeping. */
 	pp->ocount -= count;
