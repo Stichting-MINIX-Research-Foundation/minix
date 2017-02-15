@@ -172,6 +172,7 @@
 ./usr/libdata/debug/sbin/newfs_udf.debug                minix-debug     debug
 ./usr/libdata/debug/sbin/newfs_v7fs.debug               minix-debug     debug
 ./usr/libdata/debug/sbin/ping.debug                     minix-debug     debug
+./usr/libdata/debug/sbin/ping6.debug                    minix-debug     use_inet6,debug
 ./usr/libdata/debug/sbin/printconfig.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/rcorder.debug                  minix-debug     debug
 ./usr/libdata/debug/sbin/reboot.debug                   minix-debug     debug

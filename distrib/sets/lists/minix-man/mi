@@ -3438,6 +3438,7 @@
 ./usr/man/man8/part.8                                   minix-man
 ./usr/man/man8/partition.8                              minix-man
 ./usr/man/man8/ping.8                                   minix-man
+./usr/man/man8/ping6.8                                  minix-man       use_inet6
 ./usr/man/man8/postinstall.8                            minix-man
 ./usr/man/man8/poweroff.8                               minix-man
 ./usr/man/man8/pr_routes.8                              minix-man       obsolete

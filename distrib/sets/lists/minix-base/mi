@@ -221,6 +221,7 @@
 ./sbin/newfs_v7fs                                       minix-base
 ./sbin/nologin                                          minix-base
 ./sbin/ping                                             minix-base
+./sbin/ping6                                            minix-base      use_inet6
 ./sbin/poweroff                                         minix-base
 ./sbin/printconfig                                      minix-base
 ./sbin/rcorder                                          minix-base

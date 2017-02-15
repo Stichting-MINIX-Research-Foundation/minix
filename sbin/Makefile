@@ -54,11 +54,13 @@ SUBDIR+= mount_v7fs
 .if (${MKCRYPTO} != "no")
 SUBDIR+= cgdconfig
 .endif
+.endif # !defined(__MINIX)
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6
 .endif
 
+.if !defined(__MINIX)
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsictl iscsid
 .endif
