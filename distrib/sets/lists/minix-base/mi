@@ -1047,6 +1047,7 @@
 ./usr/sbin/services_mkdb                                minix-base
 ./usr/sbin/syslogd                                      minix-base
 ./usr/sbin/traceroute                                   minix-base
+./usr/sbin/traceroute6                                  minix-base      use_inet6
 ./usr/sbin/unlink                                       minix-base
 ./usr/sbin/update_asr                                   minix-base
 ./usr/sbin/user                                         minix-base
