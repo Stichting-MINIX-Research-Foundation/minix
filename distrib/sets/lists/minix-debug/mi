@@ -591,6 +591,7 @@
 ./usr/libdata/debug/usr/libexec/rshd.debug              minix-debug     debug
 ./usr/libdata/debug/usr/mdec                            minix-debug
 ./usr/libdata/debug/usr/sbin                            minix-debug
+./usr/libdata/debug/usr/sbin/arp.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/sbin/btrace.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/chroot.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug             minix-debug     debug

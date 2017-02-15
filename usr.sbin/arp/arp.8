@@ -1,0 +1,153 @@
+.\"	$NetBSD: arp.8,v 1.23 2013/07/08 04:31:12 apb Exp $
+.\"
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)arp.8	8.2 (Berkeley) 4/27/95
+.\"
+.Dd July 8, 2013
+.Dt ARP 8
+.Os
+.Sh NAME
+.Nm arp
+.Nd address resolution display and control
+.Sh SYNOPSIS
+.Nm
+.Op Fl n
+.Ar hostname
+.Nm
+.Op Fl nv
+.Fl a
+.Nm
+.Op Fl v
+.Fl d
+.Fl a
+.Nm
+.Op Fl v
+.Fl d Ar hostname
+.Op Cm proxy
+.Nm
+.Fl s Ar hostname ether_addr
+.Op Cm temp
+.Op Cm pub Op Cm proxy
+.Nm
+.Fl f Ar filename
+.Sh DESCRIPTION
+The
+.Nm
+program displays and modifies the Internet-to-Ethernet address translation
+tables used by the address resolution protocol
+.Pq Xr arp 4 .
+With no flags, the program displays the current
+.Tn ARP
+entry for
+.Ar hostname .
+The host may be specified by name or by number,
+using Internet dot notation.
+.Pp
+Available options:
+.Bl -tag -width Ds
+.It Fl a
+The program displays all of the current
+.Tn ARP
+entries.
+.It Fl d
+A super-user may delete an entry for the host called
+.Ar hostname
+with the
+.Fl d
+flag.
+If the
+.Cm proxy
+keyword is specified, only the published
+.Dq proxy only
+.Tn ARP
+entry
+for this host will be deleted.
+If used with
+.Fl a
+instead of a
+.Ar hostname ,
+it will delete all arp entries.
+.It Fl f
+Causes the file
+.Ar filename
+to be read and multiple entries to be set in the
+.Tn ARP
+tables.
+Entries in the file should be of the form
+.Pp
+.Bd -filled -offset indent -compact
+.Ar hostname ether_addr
+.Op Cm temp
+.Op Cm pub
+.Ed
+.Pp
+with argument meanings as described below.
+.It Fl n
+Show network addresses as numbers (normally
+.Nm
+attempts to display addresses symbolically).
+.It Fl s Ar hostname ether_addr
+Create an
+.Tn ARP
+entry for the host called
+.Ar hostname
+with the Ethernet address
+.Ar ether_addr .
+The Ethernet address is given as six hex bytes separated by colons.
+The entry will be permanent unless the word
+.Cm temp
+is given in the command.
+If the word
+.Cm pub
+is given, the entry will be "published"; i.e., this system will
+act as an
+.Tn ARP
+server,
+responding to requests for
+.Ar hostname
+even though the host address is not its own.
+If the word
+.Cm proxy
+is also given, the published entry will be a
+.Dq proxy only
+entry.
+.It Fl v
+Display verbose information when adding or deleting
+.Tn ARP
+entries.
+.El
+.Sh SEE ALSO
+.Xr inet 3 ,
+.Xr arp 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .

@@ -3249,6 +3249,7 @@
 ./usr/man/man3/zlib.3                                   minix-man
 ./usr/man/man4                                          minix-man
 ./usr/man/man4/aha1540.4                                minix-man
+./usr/man/man4/arp.4                                    minix-man
 ./usr/man/man4/at.4                                     minix-man
 ./usr/man/man4/atf-test-case.4                          minix-man       atf
 ./usr/man/man4/bios.4                                   minix-man
@@ -3377,6 +3378,7 @@
 ./usr/man/man8/MAKEDEV.8                                minix-man
 ./usr/man/man8/add_route.8                              minix-man       obsolete
 ./usr/man/man8/adduser.8                                minix-man
+./usr/man/man8/arp.8                                    minix-man
 ./usr/man/man8/atnormalize.8                            minix-man
 ./usr/man/man8/autopart.8                               minix-man
 ./usr/man/man8/backup.8                                 minix-man

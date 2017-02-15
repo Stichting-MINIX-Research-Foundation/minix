@@ -3,7 +3,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= \
+SUBDIR= arp \
 	\
 	chroot \
 	dev_mkdb \

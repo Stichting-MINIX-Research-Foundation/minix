@@ -1010,6 +1010,7 @@
 ./usr/preserve                                          minix-base
 ./usr/run                                               minix-base
 ./usr/sbin                                              minix-base
+./usr/sbin/arp                                          minix-base
 ./usr/sbin/audit-packages                               minix-base      crypto
 ./usr/sbin/bpm                                          minix-base      crypto
 ./usr/sbin/btrace                                       minix-base
