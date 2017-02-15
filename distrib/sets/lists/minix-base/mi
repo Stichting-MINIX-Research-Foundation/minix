@@ -454,6 +454,7 @@
 ./usr/bin/netpgp                                        minix-base      crypto
 ./usr/bin/netpgpkeys                                    minix-base      crypto
 ./usr/bin/netpgpverify                                  minix-base      crypto
+./usr/bin/netstat                                       minix-base
 ./usr/bin/newgrp                                        minix-base
 ./usr/bin/nice                                          minix-base
 ./usr/bin/nl                                            minix-base

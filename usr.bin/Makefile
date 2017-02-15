@@ -19,7 +19,7 @@ SUBDIR= asa \
 	machine make man menuc mesg \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mkstr mktemp \
 	msgc \
-	nbperf newgrp nice nl nohup \
+	nbperf netstat newgrp nice nl nohup \
 	pagesize passwd paste patch pathchk pr \
 	printenv printf pwhash \
 	renice rev rsh \

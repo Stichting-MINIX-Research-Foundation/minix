@@ -360,6 +360,7 @@
 ./usr/libdata/debug/usr/bin/netpgp.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/netpgpkeys.debug            minix-debug     debug
 ./usr/libdata/debug/usr/bin/netpgpverify.debug          minix-debug     debug
+./usr/libdata/debug/usr/bin/netstat.debug               minix-debug     debug
 ./usr/libdata/debug/usr/bin/newgrp.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/nice.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/nl.debug                    minix-debug     debug

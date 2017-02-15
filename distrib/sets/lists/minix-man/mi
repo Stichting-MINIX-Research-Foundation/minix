@@ -238,6 +238,7 @@
 ./usr/man/man1/netpgp.1                                 minix-man       crypto
 ./usr/man/man1/netpgpkeys.1                             minix-man       crypto
 ./usr/man/man1/netpgpverify.1                           minix-man       crypto
+./usr/man/man1/netstat.1                                minix-man
 ./usr/man/man1/newfs_mfs.1                              minix-man
 ./usr/man/man1/newgrp.1                                 minix-man
 ./usr/man/man1/nice.1                                   minix-man
