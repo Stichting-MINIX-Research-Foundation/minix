@@ -1000,6 +1000,7 @@
 ./usr/libexec/ld.elf_so                                 minix-base
 ./usr/libexec/makewhatis                                minix-base
 ./usr/libexec/rshd                                      minix-base
+./usr/libexec/telnetd                                   minix-base
 ./usr/libexec/virecover                                 minix-base
 ./usr/log                                               minix-base
 ./usr/log/messages                                      minix-base
