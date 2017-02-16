@@ -44,6 +44,6 @@ SUBDIR+= librtld_db
 .endif
 
 #MINIX:
-SUBDIR+= blacklist nvi
+SUBDIR+= blacklist dhcp nvi
 
 .include <bsd.subdir.mk>

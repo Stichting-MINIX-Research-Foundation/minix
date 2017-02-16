@@ -1,0 +1,200 @@
+/**
+@page tests Testing
+
+@section testsOverview Testing Overview
+
+In DHCP, a unit test exercises a particular piece of code in
+isolation. There is a separate unit test per module or API. Each unit
+test lives in a directory beneath the code it is designed to exercise.
+So, we (will eventually) have:
+
+@verbatim
+server/tests/
+client/tests/
+common/tests/
+dhcpctl/tests/
+...
+@endverbatim
+
+And so on.
+
+Ideally each function would be invoked with every possible type of input, and
+each branch of every function would be checked. In practice we try to be a bit
+more pragmatic, and target the most basic operations, as well tricky code, and
+areas we have seen bugs in the past.
+
+We are using <a href="http://code.google.com/p/kyua/wiki/ATF">ATF (Automated
+Test Framework)</a> as a framework to run our unittests.
+
+@section testsAtf ATF unit-tests
+
+ATF stands for Automated Test Framework, and is the framework used for unit
+tests in ISC DHCP and BIND9. ATF sources can be downloaded from
+http://code.google.com/p/kyua/wiki/ATF . ATF itself must be configured, compiled
+and then installed to be available during the DHCP configure procedure.  Please
+follow INSTALL file supplied with ATF sources (it's essentially the typical
+./configure && make && make install procedure).
+
+The ATF successor, called Kyua, is being developed. As of August 2012, the
+latest available release of Kyua is 0.5. It claims to offer feature parity with
+ATF. Migration to Kyua may be planned some time in the future, but DHCP uses ATF
+for now. Such an upgrade should be done in coordination with BIND. The latest
+tested version of ATF that DHCP's unittests were run against is 0.15.
+
+To build the unit-tests, use the following:
+
+@verbatim
+$ ./configure --with-atf
+$ make
+$ make check
+@endverbatim
+
+The following syntax is supported as well:
+@verbatim
+$ ./configure --with-atf=/path/to/your/atf/install
+@endverbatim
+
+but it seems to have troubles sometimes detecting ATF installation, at least
+with ATF 0.14 and Mac OS X 10.6.8.
+
+Each code directory (e.g. server/) that has unit-tests has a sub-directory
+named tests (e.g. server/tests). You can execute "make check" in that
+directory to run specific subset of tests.
+
+Unit-tests are grouped into suites, each suite being a separate
+executable. The typical way to run tests is:
+
+@verbatim
+$ atf-run | atf-report
+@endverbatim
+
+atf-run will read the Atffile in the current directory and execute all the tests
+specified in it. Using atf-run - rather than calling the test binary directly -
+has several major benefits. The main one is that atf-run is able to recover from
+test segfault and continue execution from the next case onwards. Another is that
+it is possible to specify a timeout for a test. atf-run will kill the test in
+case of any infinite loops and will continue running next tests.
+
+It is possible to run atf-run without passing its output to atf-report, but its
+output is somewhat convoluted. That is useful in some situations, e.g. when one
+wants to see test output.
+
+It is possible to run test binary directly. The only required parameter is the
+test case name. The binary will print out a warning that direct binary execution
+is not recommended as it won't be able to recover from crash.  However, such an
+approach is convenient for running the test under the debugger.
+
+@section testsAtfAdding Adding new unit-tests
+
+There are a small number of unit-tests that are not ATF based. They will be
+converted to ATF soon. Please do not use any other frameworks.
+
+Sadly, the DHCP code was not written with unit-testing in mind: often a
+non-standard approach is required for writing unit-tests. The existing code
+often has many dependencies that make testing a single piece of code awkward to
+unit test.  For example, to test hash tables, one needs to also include the
+OMAPI code. Rather than significantly refactoring the code (a huge task that
+could take months), we decided to link whatever is needed in the tests. If
+developing new test suite, it is recommended that you take a look at existing
+tests and just copy them as a starting point.
+
+
+In particular, the following
+things should be done for adding new tests:
+
+<b>1. Tests directory.</b> For each code component (server, client, common,
+etc.) there should be a tests subdirectory. If it isn't there yet, then it must
+be created. This can be done by:
+
+a). Creating the directory:
+
+@verbatim
+    $ mkdir $subdir/tests
+    $ cvs add tests
+@endverbatim
+
+b). Adding the subdirectory to the build system:
+
+    Add to $subdir/Makefile.am:
+
+@verbatim
+    SUBDIRS = tests
+@endverbatim
+
+    Add to the AC_OUTPUT macro in configure.ac:
+
+@verbatim
+    subdir/tests/Makefile
+@endverbatim
+
+c. Create a Makefile.am in the new directory, something similar to this:
+
+@verbatim
+    AM_CPPFLAGS = -I../..
+
+    check_PROGRAMS = test_foo
+
+    TESTS = test_foo
+
+    test_foo_SOURCES = test_foo.c
+    test_foo_LDADD = ../../tests/libt_api.a     # plus others...
+@endverbatim
+
+See existing Makefile.am for examples, and the Automake documentation:
+
+    http://www.gnu.org/software/automake/manual/html_node/Tests.html
+
+<b>2. Implement the test.</b> That typically means that you create a new file that will
+hold test code. It is recommended you name it (tested_feature_name)_unittest.c
+and put the file in specified tests directory.  For example tests related to
+hash tables used on the server side should be named
+server/tests/hash_unittest.c. If in doubt, it is convenient to name the test
+code after the file that holds tested code, e.g. server/mdb6.c is tested in
+server/tests/mdb6_unittest.c.
+
+The file server/tests/simple_unittest.c holds a template explaining the basic
+layout of the ATF tests.  There may be many test cases in a single *_unittest.c
+file. Make sure that you register all your test cases using ATF_TP_ADD_TC()
+macro, and try to minimize modifications to the tested code if possible. Keep in
+mind that we are using modernized \ref codingGuidelines for test
+development. You are advised to also look at atf-c-api(3) man page.
+
+To add a new test, such as when a new module is added or when you want to start
+testing existing code, you can copy the server/tests/simple_unittest.c as a new
+new file, add the new file as a target in Makefile.am, and begin adding
+tests. Reviewing that file is a good idea, even if you decide to write your test
+from scratch, as it give you quick overview of the essential capabilities of the
+ATF framework (how to write test, how to make checks, pass or fail test
+etc.). Do not forget to add your new file to git via "git add
+yourtest_unittest.c".
+
+<b>3. Extend Makefile.am</b> to build your test. In particular, add your binary
+name to ATF_TESTS. The tests directory will be built only in case where
+ATF is enabled, using --with-atf during configure phase.
+
+<b>4. Modify Atffile to include your new test</b>, if needed. Tests in the
+specified directory must be registered in Atffile. See server/tests/Atffile for
+an example. Currently every executable with name of the form *_unittest will be
+executed automatically. If you followed naming convention proposed in a previous
+step, your test will be included and will be included automatically.
+
+<b>5. Enjoy your improved confidence in the code</b>, as you can run the tests after
+any change you may want to do:
+
+@verbatim
+$ make check
+@endverbatim
+
+to run all tests for all components. See \ref atfTests section for more details
+on running tests.
+
+@section testsAtfCoding ATF Coding Guidelines
+
+As the unit-test code creates an evironment that works under a different
+regime than the production code, there are slight differences to standard
+coding guidelines. In particular:
+
+- The code is written using C99. Double slash comments are allowed.
+- Please do not use tabs. Use 4 spaces for each indent level.
+
+*/

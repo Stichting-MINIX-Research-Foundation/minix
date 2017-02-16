@@ -1,0 +1,367 @@
+.\"	$NetBSD: dhclient.8,v 1.1.1.3 2014/07/12 11:57:33 spz Exp $
+.\"
+.\"	Id: dhclient.8,v 1.4 2009/11/24 02:06:56 sar Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" Portions copyright (c) 2000 David E. O'Brien.
+.\" All rights reserved.
+.\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient.8,v 1.8.2.3 2002/04/11 10:16:45 murray Exp %
+.\"
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man8/dhclient.8,v 1.8 2002/05/21 03:46:48 horikawa Exp $
+.\" WORD: Dynamic Host Configuration Protocol (DHCP)	動的ホスト設定プロトコル
+.\" WORD: lease			リース [dhclient.8]
+.\" WORD: mobile host		移動ホスト
+.\" WORD: limited broadcast address   リミテッドブロードキャストアドレス
+.\" WORD: networking framework	ネットワーキングフレームワーク
+.\" WORD: housekeeping chores   雑事
+.TH dhclient 8
+.SH 名称
+dhclient - 動的ホスト設定プロトコルのクライアント
+.SH 書式
+.B dhclient
+[
+.B -p
+.I port
+]
+[
+.B -D
+]
+[
+.B -d
+]
+[
+.B -q
+]
+[
+.B -1
+]
+[
+.B -r
+]
+[
+.B -lf
+.B lease-file
+]
+[
+.B -pf
+.I pid-file
+]
+[
+.B -cf
+.I config-file
+]
+[
+.B -sf
+.I script-file
+]
+[
+.B -s
+server
+]
+[
+.B -g
+relay
+]
+[
+.B -n
+]
+[
+.B -nw
+]
+[
+.B -w
+]
+[
+.I if0
+[
+.I ...ifN
+]
+]
+.SH 解説
+Internet Systems Consortium の DHCP クライアントである dhclient
+は動的ホスト設定プロトコル (DHCP: Dynamic Host Configuration Protocol)
+または BOOTP プロトコルを用いて、あるいは
+これらのプロトコルが失敗した場合にはアドレスを静的に割り当てて、
+1 つ以上のネットワークインタフェースを設定する方法を提供します。
+.SH 操作
+.PP
+DHCP プロトコルでは、1 つ以上のサブネットに割り当てることのできる
+IP アドレスのリストを管理する中央サーバに、ホストがアクセスできます。
+DHCP クライアントはこのリストからアドレスを要求して、
+それをネットワーク通信の一時的な土台に用いることができます。
+また DHCP プロトコルは、デフォルトルータの場所やネームサーバの場所など、
+クライアントが接続しているネットワークに関する重要な情報を
+クライアントに詳細に知らせる機構も提供します。
+.PP
+起動時に dhclient は
+.IR dhclient.conf
+から設定指示を読み取ります。
+それから現在のシステムに組み込まれている
+すべてのネットワークインタフェースのリストを取得します。
+各インタフェースに対し dhclient は DHCP プロトコルを用いて設定を試みます。
+.PP
+システムリブートやサーバ再起動の際にリースを失わないように、
+dhclient は割り当てられたリースのリストを
+dhclient.leases(5) ファイルに保存します。
+起動時、dhclient.conf ファイルを読み取った後、
+dhclient は dhclient.leases ファイルを読み込んで、
+割り当てられたリースに関するメモリを更新します。
+.PP
+新しいリースを取得すると、dhclient.leases ファイルの末尾に付け加えられます。
+ファイルが極端に大きくなるのを防ぐために、
+dhclient は時おりコア内部のリースデータベースから
+新規に dhclient.leases ファイルを作成します。
+古い dhclient.leases ファイルは、
+dhclient が次にデータベースを作り替えるまで、
+.IR dhclient.leases~
+という名前で保存されます。
+.PP
+dhclient が最初に起動されたとき
+(一般的にはシステムブート初期過程の間) に DHCP サーバが利用できなければ、
+古いリースは残されます。
+その場合、dhclient.leases ファイルから
+まだ期限の切れていない古いリースを検査し、
+有効であると判断されれば、それらの期限が切れるか
+または DHCP サーバが利用できるようになるまで、そのリースを使います。
+.PP
+DHCP サーバが存在しないネットワークに時おりアクセスする必要が
+あるような移動ホストは、そのネットワーク上の固定アドレスのリースを
+あらかじめ読み込んでおくことができます。
+DHCP サーバへのアクセスがどれも成功しなかった場合、
+dhclient はその静的なリースが有効であるか検証し、
+有効であれば次に再起動されるまでそのリースを使います。
+.PP
+また移動ホストは、DHCP は利用できないが BOOTP なら利用できるような
+ネットワークへ移動することもあるでしょう。
+そのような場合は、古いリースを順次試すよりも、
+そのネットワークの管理者と相談して
+BOOTP データベースにエントリを作成してもらい、
+そのネットワーク上で素早くブートできるようにするとよいでしょう。
+.SH コマンドライン
+.PP
+dhclient が設定しようとするネットワークインタフェースの名前を
+コマンドラインで指定できます。
+コマンドラインでインタフェース名が指定されなければ、
+dhclient はすべてのネットワークインタフェースを識別し、
+可能なら非ブロードキャストインタフェースは除いて、
+それぞれのインタフェースを設定しようとします。
+.PP
+.B dhclient.conf(5)
+ファイル中の名前でインタフェースを指定することも可能です。
+この方法でインタフェースを指定した場合、クライアントは、
+設定ファイル中で指定したインタフェースもしくはコマンド行で
+指定したインタフェースのどちらかだけを設定するでしょう。
+.PP
+.B -D
+フラグを指定すると、
+.B dhclient
+が
+.B dhclient-script
+と組み合わせて使用するために作成したスクリプトを、
+.IR /tmp
+に保存させます。
+.PP
+DHCP クライアントが標準ポート (ポート番号 68) 以外のポートで
+待機および送信する必要がある場合には
+.B -p
+フラグが使えます。
+このフラグに続けて、dhclient が使う udp ポート番号を指定します。
+これは主としてデバッグ目的では有用です。
+クライアントが待機および送信するために使用するポートに
+デフォルトとは違うポートを指定する場合、クライアントは
+もう 1 つ別の送信先ポートも使用します。その送信先ポートは、
+指定した送信先ポートよりも大きな番号を持ったものです。
+.PP
+DHCP クライアントは、通常 IP アドレスを獲得していない間
+任意のプロトコルメッセージをリミテッドブロードキャスト
+アドレスである 255.255.255.255 へと送信します。
+デバッグ目的で、サーバがこれらのメッセージをどこか別のアドレスへ
+送信した方が便利なことがあります。
+.B -s
+フラグの後に送信先の IP アドレスもしくはドメイン名をつけて指定
+できます。
+テスト目的で、DHCP クライアントが送信する全てのパケットの
+giaddr フィールドを
+.B -g
+フラグに送信先の IP アドレスを続けた形を使用することで設定する
+ことができます。これはテスト目的の時のみ有用なものであり、
+堅実さや使いやすさを求める状況で動作することを想定しては
+いけません。
+.PP
+DHCP クライアントは、通常インタフェースを設定するまでは
+フォアグラウンドで動作し、その後バックグラウンドで動作
+するようになります。dhclient を常にフォアグラウンドの
+プロセスとして動作させるためには、
+.B -d
+フラグを指定する必要があります。これは、DHCP クライアントが
+デバッガのもとで動作している場合や、System V システムの
+inittab の外側で動作している場合には有効なものです。
+.PP
+このクライアントは、通常は起動メッセージを表示し、アドレスを
+獲得するまで標準エラー出力にプロトコルシーケンスを
+書き出します。アドレスを獲得した後は
+.B syslog (3)
+ファシリティを使用してメッセージのログを取るだけになります。
+.B -q
+フラグを使用すると、エラー以外のメッセージを標準エラー出力に
+書き出さないようになります。
+.PP
+クライアントは、DHCP プロトコルで義務づけられていないため、
+通常は現在取得しているリースを開放することはありません。
+ただ、ケーブル ISP のなかには、クライアントが
+割り当てられたIP アドレスを開放したい場合には、サーバに
+通知するように義務づけているところもあります。
+.B -r
+フラグを用いると、明示的に現在のリースを開放し、いったん
+リースを開放するとクライアントは終了します。
+.PP
+.B -1
+フラグを指定すると、
+dhclient はひとつのリースに対し 1 度だけしか取得を試みません。
+もし取得に失敗すれば dhclient は終了コード 2 で終了します。
+.PP
+DHCP クライアントは、通常は設定情報を
+.B ETCDIR/dhclient.conf
+から、リースデータベースを
+.B DBDIR/dhclient.leases
+から取得し、自分のプロセス ID を
+.B RUNDIR/dhclient.pid
+という名前のファイルに保存し、
+そしてネットワークインタフェースを
+.B CLIENTBINDIR/dhclient-script
+を使用して設定します。
+これらのファイルに別の名前を指定したり、別の場所を
+指定したりするには、それぞれ
+.B -cf,
+.B -lf,
+.B -pf
+および
+.B -sf
+フラグを、後ろにファイル名を続ける形で使用してください。
+この方法は、例えば DHCP クライアントが起動したときに
+.B DBDIR
+もしくは
+.B RUNDIR
+がまだマウントされていない場合には特に有用なものに
+なり得ます。
+.PP
+DHCP クライアントは、設定すべきネットワーク
+インタフェースを同定できない場合、通常は終了します。
+ラップトップコンピュータやホットスワップ可能な I/O バスを
+持ったコンピュータでは、ブロードキャストインタフェースが
+システム起動後に追加されることがあり得ます。
+.B -w
+フラグを用いると、そのようなインタフェースが 1 つも
+見つからないときにもクライアントが終了しないようにできます。
+後で
+.B omshell (8)
+プログラムを使用して、ネットワークインタフェースが追加されたり
+削除されたりしたことをクライアントに通知することができ、
+これによってクライアントがこのインタフェース上の
+IP アドレスを設定するよう試みることができます。
+.PP
+.B -n
+フラグを用いることで、どのインタフェースも設定しようと
+しないように DHCP クライアントを指示することができます。
+このフラグは、きっと
+.B -w
+フラグと共に使用すると有用でしょう。
+.PP
+IP アドレスを獲得するまで待つのではなく、即座にデーモンと
+なるようにクライアントを指示することもできます。
+.B -nw
+フラグを与えると可能です。
+.SH 設定
+dhclient.conf(5) ファイルの書式は別に解説されています。
+.SH OMAPI
+この DHCP クライアントは、動作中にその動作を停止させる
+ことなく自分自身を制御できるようにするための機能を提供しています。
+この機能は、リモートオブジェクト操作 API である OMAPI を
+用いて提供されています。OMAPI クライアントは、TCP/IP を
+使用してこの DHCP クライアントに接続します。そして、
+DHCP クライアントの現在の状態を検査でき、その状態を変更することが
+できます。
+.PP
+ユーザプログラムでは、基礎にある OMAPI プロトコルを直接実装する
+のではなく、dhcpctl API もしくは OMAPI そのものを使用すべきです。
+dhcpctl は、OMAPI が自動で行ってはくれない雑事のいくつかを扱う
+ラッパです。dhcpctl および OMAPI については
+\fBdhcpctl(3)\fR および \fBomapi(3)\fR に記述されています。
+クライアントを用いてやりたいことのほとんどは、特別なプログラムを
+書かなくとも \fBomshell(1)\fR コマンドを使用して直接実現できる
+ものです。
+.SH 制御オブジェクト
+制御オブジェクトを使用すると、DHCP クライアントを終了させ、
+保持しているリースをすべて開放し、クライアントが追加した
+DNS レコードをすべて消去することができるようになります。
+また、クライアントを一時停止させ、クライアントが使用している
+インタフェースの設定を除くことができるようにもなります。
+その後で、DHCP クライアントを再起動させることができ、
+インタフェースを再設定することができます。通常、ハイバネーションに
+入る前やラップトップコンピュータではスリープする前に
+DHCP クライアントを一時停止させるでしょう。
+そして、電源が戻ってきた後で DHCP クライアントを回復させる
+でしょう。こうすることで、コンピュータがハイバネーションや
+スリープ中には PC カードを停止させておき、コンピュータが
+ハイバネーションやスリープから復帰したら以前の状態に
+再度初期化することができるようになるのです。
+.PP
+制御オブジェクトには属性が 1 つあります。それは状態属性です。
+クライアントを終了させるには、クライアントの状態属性を 2 に
+設定します。クライアントは自動的に DHCPRELEASE を行うでしょう。
+クライアントを一時停止させるには、クライアントの状態属性を
+3 に設定します。クライアントを復帰させるには、クライアントの
+状態属性を 4 に設定します。
+.SH 関連ファイル
+.B CLIENTBINDIR/dhclient-script,
+.B ETCDIR/dhclient.conf, DBDIR/dhclient.leases, RUNDIR/dhclient.pid,
+.B DBDIR/dhclient.leases~
+.SH 関連項目
+dhclient.conf(5), dhclient.leases(5), dhclient-script(8)
+.SH 作者
+.B dhclient(8)
+は Ted Lemon が
+Vixie Enterprises と協力して Internet Systems Consortium のために
+書きました。
+Internet Systems Consortium についてより詳しくは、
+.B https://www.isc.org
+をご覧ください。
+Vixie Enterprises についてより詳しくは、
+.B http://www.vix.com
+をご覧ください。
+.PP
+本クライアントは、Elliot Poger が
+Stanford 大学の MosquitoNet プロジェクトに参加している間に、
+Linux での利用に際し大幅に修正、改良を行いました。
+.PP
+現在のバージョンは、Elliot による Linux での改良に負うところが大きいですが、
+Internet Systems Consortium の DHCP サーバが使うものと同じ
+ネットワーキングフレームワークを用いるように、Ted Lemon が
+大幅な再編成や部分的な書き換えを行いました。
+システム特有の設定コードの大部分はシェルスクリプトに移されたので、
+より多くのオペレーティングシステムのサポートが加えられるにつれ、
+システム特有の設定コードをそのオペレーティングシステムに
+移植したり管理したりする必要はなくなるでしょう。
+代わりに、シェルスクリプトが環境に合ったツールを呼び出して
+その目的を果たしてくれます。
+.PP

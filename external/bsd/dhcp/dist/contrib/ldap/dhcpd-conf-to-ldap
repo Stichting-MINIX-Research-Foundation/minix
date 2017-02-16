@@ -1,0 +1,760 @@
+#!/usr/bin/perl -w
+
+# Brian Masney <masneyb@gftp.org>
+# To use this script, set your base DN below. Then run 
+# ./dhcpd-conf-to-ldap.pl < /path-to-dhcpd-conf/dhcpd.conf > output-file
+# The output of this script will generate entries in LDIF format. You can use
+# the slapadd command to add these entries into your LDAP server. You will
+# definately want to double check that your LDAP entries are correct before
+# you load them into LDAP.
+
+# This script does not do much error checking. Make sure before you run this
+# that the DHCP server doesn't give any errors about your config file
+
+# FailOver notes:
+#   Failover is disabled by default, since it may need manually intervention.
+#   You can try the '--use=failover' option to see what happens :-)
+#
+#   If enabled, the failover pool references will be written to LDIF output.
+#   The failover configs itself will be added to the dhcpServer statements
+#   and not to the dhcpService object (since this script uses only one and
+#   it may be usefull to have multiple service containers in failover mode).
+#   Further, this script does not check if primary or secondary makes sense,
+#   it simply converts what it gets...
+
+use Net::Domain qw(hostname hostfqdn hostdomain);
+use Getopt::Long;
+
+my $domain = hostdomain();           # your.domain
+my $basedn = "dc=".$domain;
+   $basedn =~ s/\./,dc=/g;           # dc=your,dc=domain
+my $server = hostname();             # hostname (nodename)
+my $dhcpcn = 'DHCP Config';          # CN of DHCP config tree
+my $dhcpdn = "cn=$dhcpcn, $basedn";  # DHCP config tree DN
+my $second = '';                     # secondary server DN / hostname
+my $i_conf = '';                     # dhcp.conf file to read or stdin
+my $o_ldif = '';                     # output ldif file name or stdout
+my @use    = ();                     # extended flags (failover)
+
+sub usage($;$)
+{
+  my $rc = shift;
+  my $err= shift;
+
+  print STDERR "Error: $err\n\n" if(defined $err);
+  print STDERR <<__EOF_USAGE__;
+usage: 
+  $0 [options] < dhcpd.conf > dhcpd.ldif
+
+options:
+
+  --basedn  "dc=your,dc=domain"        ("$basedn")
+
+  --dhcpdn  "dhcp config DN"           ("$dhcpdn")
+
+  --server  "dhcp server name"         ("$server")
+
+  --second  "secondary server or DN"   ("$second")
+
+  --conf    "/path/to/dhcpd.conf"      (default is stdin)
+  --ldif    "/path/to/output.ldif"     (default is stdout)
+
+  --use     "extended features"        (see source comments)
+__EOF_USAGE__
+  exit($rc);
+}
+
+
+sub next_token
+{
+  local ($lowercase) = @_;
+  local ($token, $newline);
+
+  do 
+    {
+      if (!defined ($line) || length ($line) == 0)
+        {
+          $line = <>;
+          return undef if !defined ($line);
+          chop $line;
+          $line_number++;
+          $token_number = 0;
+        }
+
+      $line =~ s/#.*//;
+      $line =~ s/^\s+//;
+      $line =~ s/\s+$//;
+    }
+  while (length ($line) == 0);
+
+  if (($token, $newline) = $line =~ /^(.*?)\s+(.*)/)
+    {
+      if ($token =~ /^"/) {
+       #handle quoted token
+       if ($token !~ /"\s*$/)
+       {
+         ($tok, $newline)  = $newline =~ /([^"]+")(.*)/;
+         $token .= " $tok";
+        }
+      }
+      $line = $newline;
+    }
+  else
+    {
+      $token = $line;
+      $line = '';
+    }
+  $token_number++;
+
+  $token =~ y/[A-Z]/[a-z]/ if $lowercase;
+
+  return ($token);
+}
+
+
+sub remaining_line
+{
+  local ($block) = shift || 0;
+  local ($tmp, $str);
+
+  $str = "";
+  while (defined($tmp = next_token (0)))
+    {
+      $str .= ' ' if !($str eq "");
+      $str .= $tmp;
+      last if $tmp =~ /;\s*$/;
+      last if($block and $tmp =~ /\s*[}{]\s*$/);
+    }
+
+  $str =~ s/;$//;
+  return ($str);
+}
+
+
+sub
+add_dn_to_stack
+{
+  local ($dn) = @_;
+
+  $current_dn = "$dn, $current_dn";
+}
+
+
+sub
+remove_dn_from_stack
+{
+  $current_dn =~ s/^.*?,\s*//;
+}
+
+
+sub
+parse_error
+{
+  print "Parse error on line number $line_number at token number $token_number\n";
+  exit (1);
+}
+
+
+sub
+print_entry
+{
+  return if (scalar keys %curentry == 0);
+
+  if (!defined ($curentry{'type'}))
+    {
+      $hostdn = "cn=$server, $basedn";
+      print "dn: $hostdn\n";
+      print "cn: $server\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpServer\n";
+      print "dhcpServiceDN: $current_dn\n";
+      if(grep(/FaIlOvEr/i, @use))
+        {
+          foreach my $fo_peer (keys %failover)
+            {
+              next if(scalar(@{$failover{$fo_peer}}) <= 1);
+              print "dhcpStatements: failover peer $fo_peer { ",
+                    join('; ', @{$failover{$fo_peer}}), "; }\n";
+            }
+        }
+      print "\n";
+
+      print "dn: $current_dn\n";
+      print "cn: $dhcpcn\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpService\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+      print "dhcpPrimaryDN: $hostdn\n";
+      if(grep(/FaIlOvEr/i, @use) and ($second ne ''))
+        {
+          print "dhcpSecondaryDN: $second\n";
+        }
+    }
+  elsif ($curentry{'type'} eq 'subnet')
+    {
+      print "dn: $current_dn\n";
+      print "cn: " . $curentry{'ip'} . "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpSubnet\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+      
+      print "dhcpNetMask: " . $curentry{'netmask'} . "\n";
+      if (defined ($curentry{'ranges'}))
+        {
+          foreach $statement (@{$curentry{'ranges'}})
+            {
+              print "dhcpRange: $statement\n";
+            }
+        }
+    }
+  elsif ($curentry{'type'} eq 'shared-network')
+    {
+      print "dn: $current_dn\n";
+      print "cn: " . $curentry{'descr'} . "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpSharedNetwork\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+    }
+  elsif ($curentry{'type'} eq 'group')
+    {
+      print "dn: $current_dn\n";
+      print "cn: group", $curentry{'idx'}, "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpGroup\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+    }
+  elsif ($curentry{'type'} eq 'host')
+    {
+      print "dn: $current_dn\n";
+      print "cn: " . $curentry{'host'} . "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpHost\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+
+      if (defined ($curentry{'hwaddress'}))
+        {
+          $curentry{'hwaddress'} =~ y/[A-Z]/[a-z]/;
+          print "dhcpHWAddress: " . $curentry{'hwaddress'} . "\n";
+        }
+    }
+  elsif ($curentry{'type'} eq 'pool')
+    {
+      print "dn: $current_dn\n";
+      print "cn: pool", $curentry{'idx'}, "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpPool\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+
+      if (defined ($curentry{'ranges'}))
+        {
+          foreach $statement (@{$curentry{'ranges'}})
+            {
+              print "dhcpRange: $statement\n";
+            }
+        }
+    }
+  elsif ($curentry{'type'} eq 'class')
+    {
+      print "dn: $current_dn\n";
+      print "cn: " . $curentry{'class'} . "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpClass\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+    }
+  elsif ($curentry{'type'} eq 'subclass')
+    {
+      print "dn: $current_dn\n";
+      print "cn: " . $curentry{'subclass'} . "\n";
+      print "objectClass: top\n";
+      print "objectClass: dhcpSubClass\n";
+      if (defined ($curentry{'options'}))
+        {
+          print "objectClass: dhcpOptions\n";
+        }
+      print "dhcpClassData: " . $curentry{'class'} . "\n";
+    }
+
+  if (defined ($curentry{'statements'}))
+    {
+      foreach $statement (@{$curentry{'statements'}})
+        {
+          print "dhcpStatements: $statement\n";
+        }
+    }
+
+  if (defined ($curentry{'options'}))
+    {
+      foreach $statement (@{$curentry{'options'}})
+        {
+          print "dhcpOption: $statement\n";
+        }
+    }
+
+  print "\n";
+  undef (%curentry);
+}
+
+
+sub parse_netmask
+{
+  local ($netmask) = @_;
+  local ($i);
+
+  if ((($a, $b, $c, $d) = $netmask =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) != 4)
+    {
+      parse_error ();
+    }
+
+  $num = (($a & 0xff) << 24) |
+         (($b & 0xff) << 16) |
+         (($c & 0xff) << 8) |
+          ($d & 0xff);
+
+  for ($i=1; $i<=32 && $num & (1 << (32 - $i)); $i++)
+    {
+    }
+  $i--;
+
+  return ($i);
+}
+
+
+sub parse_subnet
+{
+  local ($ip, $tmp, $netmask);
+
+  print_entry () if %curentry;
+    
+  $ip = next_token (0);
+  parse_error () if !defined ($ip);
+
+  $tmp = next_token (1);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq 'netmask');
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  $netmask = parse_netmask ($tmp);
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  add_dn_to_stack ("cn=$ip");
+  $curentry{'type'} = 'subnet';
+  $curentry{'ip'} = $ip;
+  $curentry{'netmask'} = $netmask;
+  $cursubnet = $ip;
+  $curcounter{$ip} = { pool  => 0, group => 0 };
+}
+
+
+sub parse_shared_network
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $descr = next_token (0);
+  parse_error () if !defined ($descr);
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  add_dn_to_stack ("cn=$descr");
+  $curentry{'type'} = 'shared-network';
+  $curentry{'descr'} = $descr;
+}
+
+
+sub parse_host
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $host = next_token (0);
+  parse_error () if !defined ($host);
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  add_dn_to_stack ("cn=$host");
+  $curentry{'type'} = 'host';
+  $curentry{'host'} = $host;
+}
+
+
+sub parse_group
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  my $idx;
+  if(exists($curcounter{$cursubnet})) {
+    $idx = ++$curcounter{$cursubnet}->{'group'};
+  } else {
+    $idx = ++$curcounter{''}->{'group'};
+  }
+
+  add_dn_to_stack ("cn=group".$idx);
+  $curentry{'type'} = 'group';
+  $curentry{'idx'} = $idx;
+}
+
+
+sub parse_pool
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  my $idx;
+  if(exists($curcounter{$cursubnet})) {
+    $idx = ++$curcounter{$cursubnet}->{'pool'};
+  } else {
+    $idx = ++$curcounter{''}->{'pool'};
+  }
+
+  add_dn_to_stack ("cn=pool".$idx);
+  $curentry{'type'} = 'pool';
+  $curentry{'idx'} = $idx;
+}
+
+
+sub parse_class
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $class = next_token (0);
+  parse_error () if !defined ($class);
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  $class =~ s/\"//g;
+  add_dn_to_stack ("cn=$class");
+  $curentry{'type'} = 'class';
+  $curentry{'class'} = $class;
+}
+
+
+sub parse_subclass
+{
+  local ($descr, $tmp);
+
+  print_entry () if %curentry;
+
+  $class = next_token (0);
+  parse_error () if !defined ($class);
+
+  $subclass = next_token (0);
+  parse_error () if !defined ($subclass);
+
+  $tmp = next_token (0);
+  parse_error () if !defined ($tmp);
+  parse_error () if !($tmp eq '{');
+
+  add_dn_to_stack ("cn=$subclass");
+  $curentry{'type'} = 'subclass';
+  $curentry{'class'} = $class;
+  $curentry{'subclass'} = $subclass;
+}
+
+
+sub parse_hwaddress
+{
+  local ($type, $hw, $tmp);
+
+  $type = next_token (1);
+  parse_error () if !defined ($type);
+
+  $hw = next_token (1);
+  parse_error () if !defined ($hw);
+  $hw =~ s/;$//;
+
+  $curentry{'hwaddress'} = "$type $hw";
+}
+
+    
+sub parse_range
+{
+  local ($tmp, $str);
+
+  $str = remaining_line ();
+
+  if (!($str eq ''))
+    {
+      $str =~ s/;$//;
+      push (@{$curentry{'ranges'}}, $str);
+    }
+}
+
+
+sub parse_statement
+{
+  local ($token) = shift;
+  local ($str);
+
+  if ($token eq 'option')
+    {
+      $str = remaining_line ();
+      push (@{$curentry{'options'}}, $str);
+    }
+  elsif($token eq 'failover')
+    {
+      $str = remaining_line (1); # take care on block
+      if($str =~ /[{]/)
+        {
+          my ($peername, @statements);
+
+          parse_error() if($str !~ /^\s*peer\s+(.+?)\s+[{]\s*$/);
+          parse_error() if(($peername = $1) !~ /^\"?[^\"]+\"?$/);
+
+          #
+          # failover config block found:
+          # e.g. 'failover peer "some-name" {'
+          #
+          if(not grep(/FaIlOvEr/i, @use))
+            {
+              print STDERR "Warning: Failover config 'peer $peername' found!\n";
+              print STDERR "         Skipping it, since failover disabled!\n";
+              print STDERR "         You may try out --use=failover option.\n";
+            }
+
+          until($str =~ /[}]/ or $str eq "")
+            {
+                $str = remaining_line (1);
+                # collect all statements, except ending '}'
+                push(@statements, $str) if($str !~ /[}]/);
+            }
+          $failover{$peername} = [@statements];
+        }
+      else
+        {
+          #
+          # pool reference to failover config is fine
+          # e.g. 'failover peer "some-name";'
+          #
+          if(not grep(/FaIlOvEr/i, @use))
+            {
+              print STDERR "Warning: Failover reference '$str' found!\n";
+              print STDERR "         Skipping it, since failover disabled!\n";
+              print STDERR "         You may try out --use=failover option.\n";
+            }
+          else
+            {
+              push (@{$curentry{'statements'}}, $token. " " . $str);
+            }
+        }
+    }
+  elsif($token eq 'zone')
+    {
+      $str = $token;
+      while($str !~ /}$/) {
+        $str .= ' ' . next_token (0);
+      }
+      push (@{$curentry{'statements'}}, $str);
+    }
+  elsif($token =~ /^(authoritative)[;]*$/)
+    {
+      push (@{$curentry{'statements'}}, $1);
+    }
+  else
+    {
+      $str = $token . " " . remaining_line ();
+      push (@{$curentry{'statements'}}, $str);
+    }
+}
+
+
+my $ok = GetOptions(
+    'basedn=s'      => \$basedn,
+    'dhcpdn=s'      => \$dhcpdn,
+    'server=s'      => \$server,
+    'second=s'      => \$second,
+    'conf=s'        => \$i_conf,
+    'ldif=s'        => \$o_ldif,
+    'use=s'         => \@use,
+    'h|help|usage'  => sub { usage(0); },
+);
+
+unless($server =~ /^\w+/)
+  {
+    usage(1, "invalid server name '$server'");
+  }
+unless($basedn =~ /^\w+=[^,]+/)
+  {
+    usage(1, "invalid base dn '$basedn'");
+  }
+
+if($dhcpdn =~ /^cn=([^,]+)/i)
+  {
+    $dhcpcn = "$1";
+  }
+$second = '' if not defined $second;
+unless($second eq '' or $second =~ /^cn=[^,]+\s*,\s*\w+=[^,]+/i)
+  {
+    if($second =~ /^cn=[^,]+$/i)
+      {
+        # relative DN 'cn=name'
+        $second = "$second, $basedn";
+      }
+    elsif($second =~ /^\w+/)
+      {
+        # assume hostname only
+        $second = "cn=$second, $basedn";
+      }
+    else
+      {
+        usage(1, "invalid secondary '$second'")
+      }
+  }
+
+usage(1) unless($ok);
+
+if($i_conf ne "" and -f $i_conf)
+  {
+    if(not open(STDIN, '<', $i_conf))
+      {
+        print STDERR "Error: can't open conf file '$i_conf': $!\n";
+        exit(1);
+      }
+  }
+if($o_ldif ne "")
+  {
+    if(-e $o_ldif)
+      {
+        print STDERR "Error: output ldif name '$o_ldif' already exists!\n";
+        exit(1);
+      }
+    if(not open(STDOUT, '>', $o_ldif))
+      {
+        print STDERR "Error: can't open ldif file '$o_ldif': $!\n";
+        exit(1);
+      }
+  }
+
+
+print STDERR "Creating LDAP Configuration with the following options:\n";
+print STDERR "\tBase DN: $basedn\n";
+print STDERR "\tDHCP DN: $dhcpdn\n";
+print STDERR "\tServer DN: cn=$server, $basedn\n";
+print STDERR "\tSecondary DN: $second\n"
+             if(grep(/FaIlOvEr/i, @use) and $second ne '');
+print STDERR "\n";
+
+my $token;
+my $token_number = 0;
+my $line_number = 0;
+my %curentry;
+my $cursubnet = '';
+my %curcounter = ( '' => { pool => 0, group => 0 } );
+
+$current_dn = "$dhcpdn";
+$curentry{'descr'} = $dhcpcn;
+$line = '';
+%failover = ();
+
+while (($token = next_token (1)))
+  {
+    if ($token eq '}')
+      {
+        print_entry () if %curentry;
+        if($current_dn =~ /.+?,\s*${dhcpdn}$/) {
+          # don't go below dhcpdn ...
+          remove_dn_from_stack ();
+        }
+      }
+    elsif ($token eq 'subnet')
+      {
+        parse_subnet ();
+        next;
+      }
+    elsif ($token eq 'shared-network')
+      {
+        parse_shared_network ();
+        next;
+      }
+    elsif ($token eq 'class')
+      {
+        parse_class ();
+        next;
+      }
+    elsif ($token eq 'subclass')
+      {
+        parse_subclass ();
+        next;
+      }
+    elsif ($token eq 'pool')
+      {
+        parse_pool ();
+        next;
+      }
+    elsif ($token eq 'group')
+      {
+        parse_group ();
+        next;
+      }
+    elsif ($token eq 'host')
+      {
+        parse_host ();
+        next;
+      }
+    elsif ($token eq 'hardware')
+      {
+        parse_hwaddress ();
+        next;
+      }
+    elsif ($token eq 'range')
+      {
+        parse_range ();
+        next;
+      }
+    else
+      {
+        parse_statement ($token);
+        next;
+      }
+  }
+
+close(STDIN)  if($i_conf);
+close(STDOUT) if($o_ldif);
+
+print STDERR "Done.\n";
+

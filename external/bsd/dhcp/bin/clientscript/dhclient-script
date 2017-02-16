@@ -1,0 +1,282 @@
+#!/bin/sh
+#
+# $NetBSD: dhclient-script,v 1.2 2015/02/26 09:59:55 roy Exp $
+
+ENTERHOOKS=/etc/dhclient-enter-hooks
+EXITHOOKS=/etc/dhclient-exit-hooks
+RESOLV=/etc/resolv.conf
+SIGNATURE="# Created by dhclient from"
+INTSIG="$SIGNATURE $interface"
+
+echo_resolv_conf() {
+	echo "$INTSIG"
+	echo search $new_domain_name
+	for nameserver in $new_domain_name_servers; do
+		echo nameserver $nameserver
+	done
+}
+
+make_resolv_conf() {
+	if [ ! -z "$new_domain_name_servers" ]; then
+		if [ -x /sbin/resolvconf ]; then
+			echo_resolv_conf | /sbin/resolvconf -a $interface
+		else
+			if [ -f $RESOLV ]; then
+				while read line; do
+					case $line in
+					"$SIGNATURE"*)
+						;;
+					*)
+						mv $RESOLV $RESOLV.save;;
+					esac
+					break
+				done < $RESOLV
+			fi
+			echo_resolv_conf > $RESOLV
+		fi
+	fi
+}
+
+restore_resolv_conf() {
+	if [ -x /sbin/resolvconf ]; then
+		/sbin/resolvconf -d $interface
+	elif [ -f $RESOLV.save -a -f $RESOLV ]; then
+		while read line; do
+			case $line in
+			"$INTSIG"*)
+				mv $RESOLV.save $RESOLV;;
+			esac
+			break
+		done < $RESOLV
+	fi
+}
+
+# Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
+exit_with_hooks() {
+	exit_status=$1
+	if [ -f "$EXITHOOKS" ]; then
+		. "$EXITHOOKS"
+	fi
+	# probably should do something with exit status of the local script
+	exit $exit_status
+}
+
+
+add_new_routes() {
+	for router in $new_routers; do
+		route add default $router
+	done >/dev/null 2>&1
+
+	set -- $new_static_routes
+	while [ $# -gt 1 ]; do
+		route add $1 $2
+		shift; shift
+	done
+}
+
+delete_old_routes() {
+	for router in $old_routers; do
+		route delete default $router
+	done >/dev/null 2>&1
+
+	set -- $old_static_routes
+	while [ $# -gt 1 ]; do
+		route delete $1 $2
+		shift; shift
+	done
+
+	route -n flush -inet -llinfo -host
+}
+
+# Invoke the local dhcp client enter hooks, if they exist.
+if [ -f $ENTERHOOKS ]; then
+	exit_status=0
+	. $ENTERHOOKS
+	# allow the local script to abort processing of this state
+	# local script must set exit_status variable to nonzero.
+	if [ $exit_status -ne 0 ]; then
+		exit $exit_status
+	fi
+fi
+
+#if [ ! -z "$new_host_name" ]; then
+#	echo New Host Name: $new_host_name
+#fi
+#
+#if [ ! -z "$new_nis_domain" ]; then
+#	echo New NIS Domain: $new_nis_domain
+#fi
+#
+#if [ ! -z "$new_network_number" ]; then
+#	echo New Network Number: $new_network_number
+#fi
+
+if [ ! -z "$new_broadcast_address" ]; then
+#	echo New Broadcast Address: $new_broadcast_address
+	new_broadcast_arg="broadcast $new_broadcast_address"
+fi
+
+if [ ! -z "$old_broadcast_address" ]; then
+	old_broadcast_arg="broadcast $old_broadcast_address"
+fi
+
+if [ ! -z "$new_subnet_mask" ]; then
+	new_netmask_arg="netmask $new_subnet_mask"
+fi
+
+if [ ! -z "$old_subnet_mask" ]; then
+	old_netmask_arg="netmask $old_subnet_mask"
+fi
+
+if [ ! -z "$alias_subnet_mask" ]; then
+	alias_subnet_arg="netmask $alias_subnet_mask"
+fi
+
+case "$reason" in
+MEDIUM)
+	test -z "$medium" && exit_with_hooks 0
+	eval "ifconfig $interface $medium"
+	eval "ifconfig $interface inet -alias 0.0.0.0 $medium" >/dev/null 2>&1
+
+	sleep 1
+
+	exit_with_hooks 0
+	;;
+
+PREINIT)
+	if [ ! -z "$alias_ip_address" ]; then
+		ifconfig $interface inet \
+		    -alias $alias_ip_address >/dev/null 2>&1
+	fi
+
+	ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
+	    broadcast 255.255.255.255 up
+
+	exit_with_hooks 0
+	;;
+
+ARPCHECK|ARPSEND)
+	exit_with_hooks 0
+	;;
+
+BOUND|RENEW|REBIND|REBOOT)
+	if [ ! -z "$new_nis_domain" ]; then
+		if type domainname > /dev/null 2>&1; then
+			domainname $new_nis_domain
+		fi
+	fi
+
+	if type hostname > /dev/null 2>&1; then
+		if [ \( -z "$current_hostname" \) -o \
+		    \( "x$new_host_name" = "x$old_hostname" \) ]; then
+			current_hostname=`hostname`
+		fi
+		if [ \( -z "$current_hostname" \) -o \
+		    \( "x$new_host_name" != "x$old_hostname" \) ]; then
+			hostname $new_host_name
+		fi
+	fi
+    
+	if [ \( ! -z "$old_ip_address" \) -a \( ! -z "$alias_ip_address" \) -a \
+	    \( "x$alias_ip_address" != "x$old_ip_address" \) ]; then
+		ifconfig $interface inet \
+		    -alias $alias_ip_address > /dev/null 2>&1
+	fi
+
+	if [ \( ! -z "$old_ip_address" \) -a \
+	    \( "x$old_ip_address" != "x$new_ip_address" \) ]; then
+		eval "ifconfig $interface inet -alias $old_ip_address $medium"
+		delete_old_routes
+	fi
+
+	if [ \( -z "$old_ip_address" \) -o \
+	    \( "x$old_ip_address" != "x$new_ip_address" \) -o \
+	    \( "x$reason" = "xBOUND" \) -o \( "x$reason" = "xREBOOT" \) ]; then
+		eval "ifconfig $interface inet $new_ip_address \
+		    $new_netmask_arg $new_broadcast_arg $medium"
+		add_new_routes
+	fi
+
+	if [ \( ! -z "$alias_ip_address" \) -a \
+	    \( "x$new_ip_address" != "x$alias_ip_address" \) ]; then
+		ifconfig $interface inet alias $alias_ip_address \
+		    $alias_subnet_arg
+	fi
+	make_resolv_conf
+	exit_with_hooks 0
+	;;
+
+EXPIRE|FAIL|RELEASE|STOP)
+	if [ ! -z "$old_nis_domain" ]; then
+		if type domainname > /dev/null 2>&1; then
+			# delete the old nis domain name
+			domainname ""
+		fi
+	fi
+
+	if [ ! -z "$alias_ip_address" ]; then
+		ifconfig $interface inet -alias $alias_ip_address 
+	fi > /dev/null 2>&1
+
+	if [ ! -z "$old_ip_address" ]; then
+		eval "ifconfig $interface inet -alias $old_ip_address $medium"
+		delete_old_routes
+
+	fi
+
+	if [ ! -z "$alias_ip_address" ]; then
+		ifconfig $interface inet alias $alias_ip_address \
+		    $alias_subnet_arg
+	fi
+
+	restore_resolv_conf
+	exit_with_hooks 0
+	;;
+
+TIMEOUT)
+	if [ ! -z "$alias_ip_address" ]; then
+		ifconfig $interface inet -alias $alias_ip_address
+	fi > /dev/null 2>&1
+
+	if [ ! -z "$new_host_name" ]; then
+		if type hostname > /dev/null 2>&1; then
+			hostname $new_host_name
+		fi
+	fi
+
+	if [ ! -z "$new_nis_domain" ]; then
+		if type domainname > /dev/null 2>&1; then
+			domainname $new_nis_domain
+		fi
+	fi
+
+	eval "ifconfig $interface inet $new_ip_address $new_netmask_arg \
+	    $new_broadcast_arg $medium"
+	sleep 1
+
+	if [ ! -z "$new_routers" ]; then
+		set -- $new_routers
+		if ping -n -q -c 1 -w 1 $1; then
+			if [ \( ! -z "$alias_ip_address" \) -a \
+			    \( "x$new_ip_address" != "x$alias_ip_address" \) ]
+			then
+				ifconfig $interface inet alias \
+				    $alias_ip_address $alias_subnet_arg
+			fi
+
+			add_new_routes
+			make_resolv_conf
+			exit_with_hooks 0
+		fi
+	fi
+
+	eval "ifconfig $interface inet -alias $new_ip_address $medium"
+
+	delete_old_routes
+
+	exit_with_hooks 1
+	;;
+*)
+	exit_with_hooks 0
+	;;
+esac

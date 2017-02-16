@@ -1,0 +1,207 @@
+#!/bin/sh
+#
+# Id: macos,v 1.4 2011/09/20 16:59:54 sar Exp 
+#
+# automous run of this script will commit the DNS setting
+#
+
+if [ -x /usr/bin/logger ]; then
+	LOGGER="/usr/bin/logger -s -p user.notice -t dhclient"
+else
+	LOGGER=echo
+fi
+
+to_commit="yes"
+
+make_resolv_conf() {
+  to_commit="no"
+  if [ "x${new_dhcp6_name_servers}" != x ]; then
+    ( cat /dev/null > /var/run/resolv.conf.dhclient6 )
+    exit_status=$?
+    if [ $exit_status -ne 0 ]; then
+      $LOGGER "Unable to create /var/run/resolv.conf.dhclient6: Error $exit_status"
+    else
+      if [ "x${new_dhcp6_domain_search}" != x ]; then
+	( echo search ${new_dhcp6_domain_search} >> /var/run/resolv.conf.dhclient6 )
+	exit_status=$?
+      fi
+      for nameserver in ${new_dhcp6_name_servers} ; do
+	if [ $exit_status -ne 0 ]; then
+	  break
+	fi
+	# If the nameserver has a link-local address
+	# add a <zone_id> (interface name) to it.
+	case $nameserver in
+	    fe80:*) zone_id="%$interface";;
+	    FE80:*) zone_id="%$interface";;
+	   *)      zone_id="";;
+	esac
+        ( echo nameserver ${nameserver}$zone_id >> /etc/resolv.conf.dhclient6 )
+	exit_status=$?
+      done
+
+      if [ $exit_status -eq 0 ]; then
+	to_commit="force"
+	commit_resolv_conf
+      fi
+    fi
+  fi
+}
+
+# Try to commit /var/run/resolv.conf.dhclient6 contents to
+# System Configuration framework's Dynamic Store.
+# Note this will be cleared by the next location change
+# or preempted by IPv4.
+#
+# The System Configuration agent "IPMonitor" gets the DNS configuration
+# from the IPv4 or IPv6 primary service in the Dynamic Store
+# (managed by configd).
+commit_resolv_conf() {
+  if [ -f /var/run/resolv.conf.dhclient6 ]; then
+    if [ -x /usr/sbin/scutil ]; then
+      serviceID=`echo show State:/Network/Global/IPv6 | \
+          /usr/sbin/scutil | \
+          awk '/PrimaryService/ { print $3 }'`
+      echo $serviceID
+      if [ x$serviceID = x ]; then
+        $LOGGER "Can't find the primary IPv6 service"
+      else
+        tmp=`mktemp SC_dhclient6.XXXXXXXXXX`
+        echo list | /usr/sbin/scutil > /tmp/$tmp
+        grep -q State:/Network/Service/$serviceID/DNS /tmp/$tmp
+        grep_status=$?
+        if [ $grep_status -eq 0 ]; then
+          $LOGGER "DNS service already set in primary IPv6 service"
+          rm /tmp/$tmp
+        else
+          res=/var/run/resolv.conf.dhclient6
+          cp /dev/null /tmp/$tmp
+          grep -q '^nameserver' $res
+          grep_status=$?
+          if [ $grep_status -eq 0 ]; then
+            echo d.add ServerAddresses '*' \
+                 `awk 'BEGIN { n="" } \
+                       /^nameserver/ { n=n " " $2 } \
+                       END { print n}' < $res` >> /tmp/$tmp
+          fi
+          grep -q '^search' $res
+          grep_status=$?
+          if [ $grep_status -eq 0 ]; then
+            echo d.add SearchDomains '*' \
+                 `sed 's/^search//' < $res` >> /tmp/$tmp
+          fi
+          echo set State:/Network/Service/$serviceID/DNS >> /tmp/$tmp
+          echo quit >> /tmp/$tmp
+          cat /tmp/$tmp
+          /usr/sbin/scutil < /tmp/$tmp
+          rm /tmp/$tmp
+        fi
+      fi
+    else
+      $LOGGER "Can't find SystemConfiguration tools."
+    fi
+  else
+    if [ $to_commit = force ]; then
+      $LOGGER "Can't find /var/run/resolv.conf.dhclient6"
+    fi
+  fi
+  to_commit="done"
+}
+
+# Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
+exit_with_hooks() {
+  exit_status=$1
+  if [ -f /etc/dhclient-exit-hooks ]; then
+    . /etc/dhclient-exit-hooks
+  fi
+# probably should do something with exit status of the local script
+  exit $exit_status
+}
+
+# Invoke the local dhcp client enter hooks, if they exist.
+if [ -f /etc/dhclient-enter-hooks ]; then
+  exit_status=0
+  . /etc/dhclient-enter-hooks
+  # allow the local script to abort processing of this state
+  # local script must set exit_status variable to nonzero.
+  if [ $exit_status -ne 0 ]; then
+    exit $exit_status
+  fi
+fi
+
+if [ x$reason = xMEDIUM ]; then
+  eval "ifconfig $interface $medium"
+  eval "ifconfig $interface inet -alias 0.0.0.0 $medium" >/dev/null 2>&1
+  sleep 1
+  exit_with_hooks 0
+fi
+
+###
+### DHCPv6 Handlers
+###
+
+if [ x$reason = xPREINIT6 ]; then
+  # Ensure interface is up.
+  ifconfig ${interface} up
+
+  # XXX: Remove any stale addresses from aborted clients.
+
+  exit_with_hooks 0
+fi
+
+if [ x${old_ip6_prefix} != x ] || [ x${new_ip6_prefix} != x ]; then
+    echo Prefix $reason old=${old_ip6_prefix} new=${new_ip6_prefix}
+
+    exit_with_hooks 0
+fi
+
+if [ x$reason = xBOUND6 ]; then
+  if [ x${new_ip6_address} = x ] || [ x${new_ip6_prefixlen} = x ]; then
+    exit_with_hooks 2;
+  fi
+
+  ifconfig ${interface} inet6 ${new_ip6_address}/${new_ip6_prefixlen} alias
+
+  # Check for nameserver options.
+  make_resolv_conf
+
+  exit_with_hooks 0
+fi
+
+if [ x$reason = xRENEW6 ] || [ x$reason = xREBIND6 ]; then
+  # Make sure nothing has moved around on us.
+
+  # Nameservers/domains/etc.
+  if [ "x${new_dhcp6_name_servers}" != "x${old_dhcp6_name_servers}" ] ||
+     [ "x${new_dhcp6_domain_search}" != "x${old_dhcp6_domain_search}" ]; then
+    make_resolv_conf
+  fi
+
+  exit_with_hooks 0
+fi
+
+if [ x$reason = xDEPREF6 ]; then
+  if [ x${new_ip6_address} = x ]; then
+    exit_with_hooks 2;
+  fi
+
+  ifconfig ${interface} inet6 ${new_ip6_address} deprecated
+
+  exit_with_hooks 0
+fi
+
+if [ x$reason = xEXPIRE6 -o x$reason = xRELEASE6 -o x$reason = xSTOP6 ]; then
+  if [ x${old_ip6_address} = x ] || [ x${old_ip6_prefixlen} = x ]; then
+    exit_with_hooks 2;
+  fi
+
+  ifconfig ${interface} inet6 ${old_ip6_address}/${old_ip6_prefixlen} -alias
+
+  exit_with_hooks 0
+fi
+
+if [ $to_commit = yes ]; then
+  commit_resolv_conf
+fi
+
+exit_with_hooks 0

@@ -1,0 +1,627 @@
+.\"	$NetBSD: dhclient.conf.5,v 1.1.1.3 2014/07/12 11:57:33 spz Exp $
+.\"
+.\"	Id: dhclient.conf.5,v 1.4 2009/11/24 02:06:56 sar Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about Internet Systems Consortium, see
+.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
+.\"
+.\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient.conf.5,v 1.7.2.1 2002/04/11 10:16:46 murray Exp %
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhclient.conf.5,v 1.6 2002/05/03 03:23:30 horikawa Exp $
+.\" WORD: lease		リース(アドレスの貸与)[dhclient.conf.5]
+.\" WORD: lease discovery request	リース発見要求[dhclient.conf.5]
+.\" WORD: offer		(リース提供の)申し出、提供申し出[dhclient.conf.5]
+.TH dhclient.conf 5
+.SH 名称
+dhclient.conf - DHCP クライアント設定ファイル
+.SH 解説
+dhclient.conf ファイルには
+Internet Systems Consortium の DHCP クライアントである
+.IR dhclient
+の設定情報が含まれます。
+.PP
+dhclient.conf は自由形式の ASCII テキストファイルです。
+このファイルは dhclient に組み込まれた再帰下降パーザに解析されます。
+ファイルには、整形の目的でタブや改行を余分に含めることもできます。
+ファイル中のキーワードでは大文字小文字を区別しません。
+(クォート内は除いて) ファイル中のどこでもコメントを置くことができます。
+コメントは文字 # で始まり、行末で終わります。
+.PP
+dhclient.conf ファイルで、クライアントのさまざまな動作を設定できます。
+それらには、プロトコルのタイミング、サーバに対して要求する情報、
+サーバに対して必須とされる情報、
+サーバが情報を提供しなかった場合に用いるデフォルト、
+サーバから提供された情報を上書きする値、
+サーバから提供された情報に前置や後置する値などがあります。
+また、DHCP サーバを持たないネットワークで使うアドレスであっても、
+あらかじめ設定ファイルで初期化することもできます。
+.SH プロトコルのタイミング
+クライアントのタイミング動作は、ユーザが設定する必要はありません。
+ユーザがタイミング設定を行わなければ、
+サーバに無秩序に負荷を与えたりせず適時更新を行うような、
+充分に適切なタイミング動作がデフォルトで用いられます。
+.PP
+しかし、必要に応じて、
+次の文を指定して DHCP クライアントのタイミング動作を調節できます:
+.PP
+.B timeout
+.I 文
+.PP
+.B timeout
+.I time
+.B ;
+.PP
+.I timeout
+文は、クライアントがアドレスを決める試みを開始してから、
+サーバにアクセスすることが
+できないと判断するまでに経過すべき時間を決めます。
+デフォルトではこのタイムアウト値は 60 秒です。
+このタイムアウト値が過ぎた後は、
+もし静的なリースが設定ファイルに定義されているか、
+リースデータベースにまだ期限切れになっていないリースが残っていれば、
+クライアントはそれらのリースをひとつずつ検証してみて、
+いずれかが有効なようであればそのリースのアドレスを使います。
+もし静的なリースも、リースデータベース内の期限の切れていないリースで
+有効なものも存在しなければ、
+クライアントは定義された retry 間隔の後でプロトコルを再開させます。
+.PP
+.B retry
+.I 文
+.PP
+ \fBretry \fItime\fR\fB;\fR
+.PP
+.I retry
+文は、クライアントが DHCP サーバが存在しないと判断してから
+再び DHCP サーバにアクセスを試みるまでの間に、経過するべき時間を決めます。
+デフォルトでは、これは 5 分です。
+.PP
+.B select-timeout
+.I 文
+.PP
+ \fBselect-timeout \fItime\fR\fB;\fR
+.PP
+あるネットワーク上で、複数の DHCP サーバがサービスを提供することもできます
+(その方が望ましいという意見もあります)。
+その場合、最初のリース発見メッセージ (lease discovery message)
+への応答として、
+クライアントが複数のリース提供の申し出を受けることもあり得ます。
+それらのうち、ある提供が他の提供よりも好ましいかもしれません
+(例えば、クライアントが以前使用していたアドレスがある提供に含まれているが、
+他の提供には含まれないなど)。
+.PP
+.I select-timeout
+はクライアントが最初のリース発見要求
+を送信して、
+少なくとも 1 つの提供申し出を受けた場合、
+サーバからの提供申し出待ちをやめるまでの時間です。
+もし
+.I select-timeout
+が切れるまでにどこからも提供申し出を受け取れなければ、
+クライアントはそのあと最初に到着する提供申し出を受け入れます。
+.PP
+デフォルトでは、select-timeout 値は 0 秒です。
+つまりクライアントは最初に受け取る提供申し出を受け入れます。
+.PP
+.B reboot
+.I 文
+.PP
+ \fBreboot \fItime\fR\fB;\fR
+.PP
+クライアントは、再起動すると、
+最後に保持していたアドレスをまず取得し直そうとします。
+これを INIT-REBOOT (初期リブート) 状態と呼びます。
+最後に動作していたときと同じネットワークに
+クライアントがまだ接続していれば、これが最も素早い起動法となります。
+.I reboot
+文は、クライアントが最初に古いアドレスの再取得を試みてから、
+あきらめて新しいアドレスを発見しようとするまでに、
+経過すべき時間を設定します。
+デフォルトでは、reboot タイムアウト値は 10 秒です。
+.PP
+.B backoff-cutoff
+.I 文
+.PP
+ \fBbackoff-cutoff \fItime\fR\fB;\fR
+.PP
+クライアントは、指数的な一時退避 (backoff) アルゴリズムを、ある程度の
+乱数付きで使用します。これは、多くのクライアントが同時に自分を設定しよう
+としたときでも、リクエストがロックしてしまうことがないようにするためです。
+.I backoff-cutoff
+文は、一時退避に許された最大時間を決定します。デフォルト値は 2 分です。
+.PP
+.B initial-interval
+.I 文
+.PP
+ \fBinitial-interval \fItime\fR\fB;\fR
+.PP
+.I initial-interval
+文は、サーバへの最初のアクセスの試みから次の試みまでの間の時間を
+設定します。メッセージの間隔は、メッセージを 1 回送信するたびに、
+現在の間隔に 0 から 1 の間の乱数値を乗じたものの 2 倍を、現在の間隔に
+加えたものになります。
+この値が backoff-cutoff 値より大きくなると、この時間が設定されます。
+デフォルト値は 10 秒です。
+.SH リース要求とリクエスト
+DHCP プロトコルでは、クライアントからサーバに対し、特定の情報を送るよう
+要求したり、受け入れ準備のできていない他の情報は送らないように要求したり
+できます。
+また、サーバからの提供申し出にクライアントの必要とする情報が含まれない
+場合や、提供された情報が充分でない場合、クライアントが提供申し出を
+拒否することもできます。
+.PP
+DHCP サーバが DHCP クライアントに送る提供申し出に含まれるデータには、
+さまざまなものがあります。
+特に要求できるデータは \fIDHCP オプション\fR と呼ばれるものです。
+DHCP オプションは
+ \fBdhcp-options(5)\fR
+に定義されています。
+.PP
+.B request
+.I 文
+.PP
+ \fBrequest [ \fIoption\fR ] [\fB,\fI ... \fIoption\fR ]\fB;\fR
+.PP
+request 文を指定することで、クライアントは、サーバに対し、その
+クライアントに応答するならば、指定したオプションの値を送るよう
+要求するようになります。
+request 文にはオプション名だけを指定し、オプションパラメータは指定しません。
+デフォルトでは DHCP クライアントは
+subnet-mask, broadcast-address, time-offset, routers,
+domain-name, domain-name-servers, host-name
+オプションを要求します。
+.PP
+場合によっては要求リストを全く送らないことが望ましいこともあります。
+そうするためには、単純にパラメータを指定しない request 文を書いて下さい:
+.PP
+.nf
+	request;
+.fi
+.PP
+.B require
+.I 文
+.PP
+ \fBrequire [ \fIoption\fR ] [\fB,\fI ... \fIoption ]\fB;\fR
+.PP
+require 文には、ある提供申し出をクライアントが受け入れるために
+サーバが送るべきオプションを列挙します。
+列挙されたオプションすべてを含まない提供申し出は無視されます。
+.PP
+.B send
+.I 文
+.PP
+ \fBsend { [ \fIoption declaration\fR ]
+[\fB,\fI ... \fIoption declaration\fR ]\fB}\fR
+.PP
+send 文を指定することで、クライアントは、
+指定したオプションを指定した値でサーバに送信するようになります。
+ここで指定できるオプションは、
+\fBdhcp-options(5)\fR で説明されているオプション宣言すべてです。
+DHCP プロトコルで常に送られるオプションは
+ここに指定するべきではありません。但し、
+\fBrequested-lease-time\fR オプションをデフォルトのリース時間 (2 時間)
+以外の値で指定することはできます。この文を使う他の場合として明らかな
+ものは、自分と別の種類のクライアントとを区別できるような
+情報を、サーバに対し送信する場合です。
+.SH 動的 DNS
+現在、リースが獲得された際に DNS の更新を行うための、
+非常に限定的なサポートがクライアントにあります。
+これはプロトタイプ的なものであり、
+おそらくあなたが思っているようには動きません。
+もし、あなたが偶然にも自分のところの DNS サーバの管理者であるというなら、
+その場合に限っては動きます。とてもありそうにないことですが。
+.PP
+これを動作させるためには、DHCP サーバの中で
+鍵とゾーンを宣言する必要があります (詳細は \fBdhcpd.conf\fR(5) を参照)。
+また、次のようにクライアントで fqdn オプションを設定する必要があります:
+.PP
+.nf
+  send fqdn.fqdn "grosse.fugue.com.";
+  send fqdn.encoded on;
+  send fqdn.server-update off;
+.fi
+.PP
+\fIfqdn.fqdn\fR オプションは \fB必ず\fR 完全なドメイン名でなければなりません。
+更新するゾーンに対するゾーン文を \fB必ず\fR 定義しなければなりません。
+\fIfqdn.encoded\fR オプションは、使用している DHCP サーバによっては、
+\fIon\fR か \fIoff\fR に設定する必要があるかもしれません。
+.PP
+.B no-client-updates
+.I 文
+.PP
+ \fBno-client-updates [ \fIflag\fR ] \fB;\fR
+.PP
+DHCP クライアントが直接 DNS の更新を行うよりも、
+DHCP クライアントスクリプト (\fBdhclient-script(8)\fR 参照) の中で
+DNS の更新を行いたい場合
+(例えば、DHCP クライアントが直接サポートしていない
+SIG(0) 認証を使用したい場合)
+には、\fBno-client-updates\fR 文を使って、更新を行わないように
+クライアントに教えることができます。
+DHCP クライアントが更新することを望まない場合は \fIflag\fR を \fBtrue\fR にし、
+更新することを望む場合は \fIflag\fR を \fBfalse\fR にすることになります。
+デフォルトでは DHCP クライアントは DNS の更新を行います。
+.PP
+.SH オプション修飾子
+そのクライアントにとって実際には適切でない
+オプションデータを受け取ったり、必要な情報を受け取らなかったり
+する場合で、かつ、それらの情報に利用可能なデフォルトの値が
+クライアント側に存在する場合があります。
+また、利用可能ではあるがローカルの情報で補う必要のある情報を
+クライアントが受けとる場合もあります。
+こういう場合を扱うために、
+いくつかのオプション修飾子が利用できます。
+.PP
+.B default
+.I 文
+.PP
+ \fBdefault [ \fIoption declaration\fR ] \fB;\fR
+.PP
+あるオプションについて、
+サーバから提供される値をクライアントが使わなければならないが、
+もしサーバから値が提供されなければ
+何らかのデフォルト値を使う必要がある場合、
+それらの値を
+.B default
+文で定義することができます。
+.PP
+.B supersede
+.I 文
+.PP
+ \fBsupersede [ \fIoption declaration\fR ] \fB;\fR
+.PP
+あるオプションについて、
+どのような値がサーバから提供されても、
+常にローカルで設定された値を使わなければならない場合、
+それらの値を
+.B supersede
+文で定義することができます。
+.PP
+.B prepend
+.I 文
+.PP
+ \fBprepend [ \fIoption declaration\fR ] \fB;\fR
+.PP
+あるオプションの集合について、まずユーザが提供する値を使い、
+その次にサーバから提供された値があればそれを使う場合、
+それらの値を
+.B prepend
+文で定義することができます。
+.B prepend
+文は複数の値を取ることのできるオプションにのみ用いることができます。
+この制約は強制されるものではありませんが、
+これを無視した場合、どのような挙動になるかは予想できません。
+.PP
+.B append
+.I 文
+.PP
+ \fBappend [ \fIoption declaration\fR ] \fB;\fR
+.PP
+あるオプションの集合について、まずサーバから提供された値を使い、
+その次にユーザが提供する値があればそれも使う場合、
+それらの値を
+.B append
+文で定義することができます。
+.B append
+文は複数の値を取ることのできるオプションにのみ用いることができます。
+この制約は強制されるものではありませんが、
+もし違反すると予期できない結果となります。
+.SH リース宣言
+.PP
+.B lease
+.I 宣言
+.PP
+ \fBlease {\fR \fIlease-declaration\fR [ ... \fIlease-declaration ] \fB}\fR
+.PP
+ある時間 (\fBプロトコルのタイミング\fR 参照) の後、DHCP クライアントは
+サーバへのアクセスに成功しそうにないと判断する場合があります。
+その時点で、クライアントは自分が持っている、古いリースのデータベースを
+見て、時間切れになっていないリースを順に調べ、そこに挙がっている
+ルータに ping を行って、それが利用可能なリースかどうかを調べます。
+DHCP サービスや BOOTP サービスが存在しないネットワークのために、
+1 つ以上の \fI固定\fR リースをクライアント設定ファイルに定義しておいて、
+クライアントがアドレスを自動的に設定できるようにすることもできます。
+これは
+.B lease
+文で行います。
+.PP
+注意: lease 文は、DHCP サーバから受け取ったリースを記録するために、
+dhclient.leases ファイルでも使われます。
+以下に説明するリース用のシンタックスには
+dhclient.leases ファイルでのみ必要なものもあります。
+説明を完全なものにするため、そのようなシンタックスもここで記述します。
+.PP
+lease 文は、リースキーワード、左中括弧、1 つ以上のリース宣言文、
+右中括弧が続いたもので構成されます。
+リース宣言として、次のものが可能です:
+.PP
+ \fBbootp;\fR
+.PP
+.B bootp
+文は、リースが DHCP プロトコルではなく、
+BOOTP プロトコルを用いて取得されたことを示します。
+この文をクライアント設定ファイルに指定する必要は全くありません。
+クライアントはこの構文をリースデータベースファイル内で使います。
+.PP
+ \fBinterface\fR \fB"\fR\fIstring\fR\fB";\fR
+.PP
+.B interface
+リース文は、そのリースを有効とするインタフェースを示します。
+これが設定されている場合、このリースは、指定されたインタフェース
+上でのみ使用されます。
+サーバからリースを受け取ったとき、
+クライアントは常にそのリースを受け取ったインタフェース番号を記録します。
+dhclient.conf ファイルで事前にリースを定義している場合、要求されてない
+のですが、そのリースでインタフェースもあわせて指定しなければ
+なりません。
+.PP
+ \fBfixed-address\fR \fIip-address\fR\fB;\fR
+.PP
+.B fixed-address
+文は特定のリースの IP アドレスを指定する際に使います。
+これはすべての lease 文に必要です。
+IP アドレスは (12.34.56.78 のように) ドット付き 4 つ組形式で
+指定しなければなりません。
+.PP
+ \fBfilename "\fR\fIstring\fR\fB";\fR
+.PP
+.B filename
+文は使用するブートファイル名を指定します。
+これは標準的なクライアント設定スクリプトでは使われませんが、
+説明の完全を期すためにここに含めてあります。
+.PP
+ \fBserver-name "\fR\fIstring\fR\fB";\fR
+.PP
+.B server-name
+文は使用するブートサーバ名を指定します。
+これも標準的なクライアント設定スクリプトでは使われません。
+.PP
+ \fBoption\fR \fIoption-declaration\fR\fB;\fR
+.PP
+.B option
+文は、サーバから提供されるオプションの値を指定するのに使います。
+あるいは、dhclient.conf で事前定義リースが宣言されている場合には、
+その事前定義リースが使われる際にクライアント設定スクリプトで使用して
+欲しい値を指定します。
+.PP
+ \fBscript "\fIscript-name\fB";\fR
+.PP
+.B script
+文は dhcp クライアント設定スクリプトのパス名を指定するのに使います。
+このスクリプトは、アドレスを要求したり、以前に提供されたアドレスを
+試したり、
+リースを取得してからインタフェースの最終設定を行ったりする前に、
+dhcp クライアントが各インタフェースの初期設定を行うのに使います。
+リースが取得できなかった場合には、
+事前定義リースが存在する場合、それらを試すためにこのスクリプトが使われます。
+また、有効なリースがひとつも得られなかった場合でも、このスクリプトは、
+1 回は呼び出されます。
+より詳しくは、
+.B dhclient-script(8)
+を参照してください。
+.PP
+ \fBvendor option space "\fIname\fB";\fR
+.PP
+.B vendor option space
+文は、vendor-encapsulate-options オプションを受信した場合、
+復号化にどのオプション空間を使用するべきかを指定するために使用されます。
+サーバからのベンダオプションの特定のクラスを要求するために、
+\fIdhcp-vendor-identifier\fR を使用することができます。
+詳細は
+.B dhcp-options(5)
+を参照してください。
+.PP
+ \fBmedium "\fImedia setup\fB";\fR
+.PP
+.B medium
+文は、接続されているネットワークのタイプをネットワークインタフェースが
+自動的に判断できないようなシステムで使うことができます。
+文字列 media setup はシステム依存のパラメータで、
+インタフェース初期化の際に dhcp クライアント設定スクリプトに渡されます。
+Unix および Unix 風のシステムでは、
+この引数はインタフェースを設定するときに ifconfig コマンドラインに
+渡されます。
+.PP
+リースを得るためにインタフェースを設定する
+際に、dhcp クライアントがメディアタイプ (
+.B media
+文を参照) を使用する場合、dhcp クライアントは、このパラメータを
+自動的に宣言します。ネットワークインタフェースがメディアタイプの
+設定を必要とする場合は (する場合に限り)、この文を事前定義リースで
+使用しなければなりません。
+.PP
+ \fBrenew\fR \fIdate\fB;\fR
+.PP
+ \fBrebind\fR \fIdate\fB;\fR
+.PP
+ \fBexpire\fR \fIdate\fB;\fR
+.PP
+\fBrenew\fR 文は、現在使用中のリースを更新 (renew) するために、
+dhcp クライアントが使用中のリースを提供してくれたサーバへのアクセスの
+試みを開始しなければならない日時を定義します。\fBrebind\fR 文は、
+リースを更新するために、dhcp クライアントが \fIいずれかの\fR dhcp
+サーバへのアクセスの試みを開始しなければならない日時を定義します。
+\fBexpire\fR 文は、リースの更新のためにサーバにアクセスできなかった場合、
+dhcp クライアントがそのリースの使用を停止しなければならない日時を
+定義します。
+.PP
+これらの宣言は、DHCP クライアントが得たリース中では自動的に設定されます。
+事前定義リースのうち、DHCP クライアントに有効期限が過ぎたものを使用して
+欲しくないものの中では、これらの宣言を設定しておく必要があります。
+.PP
+date は以下のように指定します。
+.PP
+ \fI<weekday> <year>\fB/\fI<month>\fB/\fI<day>
+<hour>\fB:\fI<minute>\fB:\fI<second>\fR
+.PP
+weekday は、人間が見てリース期限をわかりやすくするために存在します。
+これは、0 から 6 までの数字で指定します。0 は日曜日です。year は世紀
+込みで指定します。ですから、本当に長いリースを別にすると、必ず 4 桁に
+なるはずです。month は 1 (1 月を表します) から始まる数字で指定します。
+day は同様に 1 から始まる (月における) 日として指定します。hour は、
+0 から 23 の間の数字です。minute と second はともに 0 から 59 の間の
+数字を指定します。
+.SH エイリアス宣言
+ \fBalias { \fI declarations ... \fB}\fR
+.PP
+DHCP クライアントが TCP/IP ローミング (roaming) プロトコルを実行して
+いる場合、DHCP を用いて得られるリースだけでなく、事前に定義された
+IP エイリアスも、自分が使用するインタフェースに設定する必要がある
+場合があります。Internet Systems Consortium 版 DHCP クライアントは、
+固定アドレス直接指定のローミングをサポートしていませんが、その種の実験
+ができるように、この dhcp クライアントは、
+.B alias
+宣言を使って IP エイリアスを設定する準備はできています。
+.PP
+alias 宣言は lease 宣言に似ています。但し、標準の
+クライアント設定スクリプトでは、subnet-mask オプション以外の
+オプションと、各種有効期限 (expiry times) が無視される点が異なります。
+普通の alias 宣言では、 interface 宣言、IP エイリアスのための
+固定アドレス宣言、subnet-mask オプションを含みます。alias 宣言には
+medium 文は決して含まれてはなりません。
+.SH その他の宣言
+ \fBreject \fIip-address\fB;\fR
+.PP
+.B reject
+文により、DHCP クライアントは指定したアドレスをサーバ識別子として使用する
+サーバからの提供申し出を拒否するようになります。標準に準拠しない dhcp
+サーバや設定を間違えている dhcp サーバによってクライアントが設定されない
+ようにするために、この文を使用することができます。しかしながら、これは
+最後の武器とするべきです。これに先立ち、腐った DHCP サーバを追いかけて
+それを直す方がよいです。
+.PP
+ \fBinterface "\fIname\fB" { \fIdeclarations ... \fB }
+.PP
+複数のネットワークインタフェースを持つクライアントの場合、DHCP で
+設定されるインタフェースによって異なる動作をさせる必要がある場合が
+あります。lease 宣言と alias 宣言を除くすべてのタイミングパラメータ
+と宣言を、interface 宣言で囲むことができます。その場合、囲まれた
+パラメータは指定した名前に合致するインタフェースにのみ適用されます。
+interface 宣言を持たないインタフェースは、すべての interface 宣言の
+外側で宣言されたパラメータ、もしくはデフォルトの設定が適用されます。
+.PP
+ \fBpseudo "\fIname\fR" "\fIreal-name\fB" { \fIdeclarations ... \fB }
+.PP
+状況によっては仮想インタフェースを宣言し、
+DHCP クライアントがこのインタフェースのための設定を取得するようにすると
+便利になり得ます。
+通常 DHCP クライアントがサポートしている各インタフェースは、
+そのリースを獲得し管理するために、
+DHCP クライアントの状態機械を実行しています。
+仮想インタフェースは、\fIreal-name\fR と名付けられたインタフェース上で
+稼働している、まさしくもう一つの状態機械です。
+この機能を使用する場合、
+仮想インタフェースと実際のインタフェースの両方に対して
+クライアント識別子を提供しなければなりません。
+また、使用したい IP アドレスに対する仮想インタフェース用に
+分離されたクライアントスクリプトを提供しなければなりません。
+例えば次のようになります:
+.PP
+.nf
+	interface "ep0" {
+		send dhcp-client-identifier "my-client-ep0";
+	}
+	pseudo "secondary" "ep0" {
+		send dhcp-client-identifier "my-client-ep0-secondary";
+		script "/etc/dhclient-secondary";
+	}
+.fi
+.PP
+仮想インタフェースのためのクライアントスクリプトは
+インタフェースを有効にしたり無効にしたりする設定をするべきではありません。
+特に、リースの獲得や更新の状態、そしてリースの期限切れの状態を
+取り扱うためには、そのことが必要です。
+詳細は \fBdhclient-script(8)\fR を参照して下さい。
+.PP
+ \fBmedia "\fImedia setup\fB"\fI [ \fB, "\fImedia setup\fB", \fI... ]\fB;\fR
+.PP
+.B media
+文は、IP アドレス取得中に使用が試みられる、メディア設定パラメータを 1 つ
+以上定義します。dhcp クライアントは、リスト中の各 media setup 文字列を
+順次使用し、あるインタフェースをそれで設定し、ブートを試みます。
+駄目ならば次の media setup 文字列を使用します。この文は、
+メディアタイプを検出する能力を持たないネットワークインタフェースに
+対して利用できます。サーバへのリクエストができ応答が得られるもの
+ならば、どのようなメディアタイプでもたぶん正当です (保証はしませんが)。
+.PP
+media setup はアドレス取得の初期フェーズ (DHCPDISCOVER パケットと
+DHCPOFFER パケット)でのみ使用されます。ひとたびアドレスが取得されると、
+dhcp クライアントはそのアドレスをリースデータベースに記録し、
+そのアドレスを得る際に用いたメディアタイプを記録します。クライアントが
+リースを更新しようとする際には常に、それと同じメディアタイプを使用します。
+リースを期限切れにしてはじめて、クライアントはメディアタイプを順に試す
+状態に戻ります。
+.\"X .SH SAMPLE ... man-jp 標準はなんだったっけ
+.SH 使用例
+以下の設定ファイルは、NetBSD 1.3 を実行するあるラップトップマシンで
+使用されているものです。このマシンは、IP エイリアスとして 192.5.5.213、
+インタフェース ep0 (3Com 3C589C) をひとつ持っています。このクライアント
+は、DHCP 活動がほとんどないネットワークで時間の大部分を消費することが
+わかっているので、ブート間隔はデフォルト値からいくぶん小さくして
+あります。このマシンは複数ネットワーク間でローミング (移動) します。
+
+.nf
+
+timeout 60;
+retry 60;
+reboot 10;
+select-timeout 5;
+initial-interval 2;
+reject 192.33.137.209;
+
+interface "ep0" {
+    send host-name "andare.fugue.com";
+    send dhcp-client-identifier 1:0:a0:24:ab:fb:9c;
+    send dhcp-lease-time 3600;
+    supersede domain-name "fugue.com rc.vix.com home.vix.com";
+    prepend domain-name-servers 127.0.0.1;
+    request subnet-mask, broadcast-address, time-offset, routers,
+	    domain-name, domain-name-servers, host-name;
+    require subnet-mask, domain-name-servers;
+    script "CLIENTBINDIR/dhclient-script";
+    media "media 10baseT/UTP", "media 10base2/BNC";
+}
+
+alias {
+  interface "ep0";
+  fixed-address 192.5.5.213;
+  option subnet-mask 255.255.255.255;
+}
+.fi
+これは dhclient.conf ファイルとしては非常に複雑なものです。一般に、
+皆さんが使用するものははるかに簡単なはずです。多くの場合、dhclient.conf
+ファイルとして空のファイルを生成するだけで十分なはずです。
+つまり、デフォルト値でよいのが普通です。
+.SH 関連項目
+dhcp-options(5), dhclient.leases(5), dhclient(8), RFC2132,
+RFC2131
+.SH 作者
+.B dhclient(8)
+は Vixie Labs との契約のもとで Ted Lemon が書きました。
+本プロジェクトの基金は Internet Systems Consortium が提供しました。
+Internet Systems Consortium に関する情報は、
+.B https://www.isc.org
+にあります。

@@ -1,0 +1,41 @@
+/**
+ @mainpage
+ This is an ISC DHCP Developer's Guide. This documentation is intended for
+ developers, contributors and other programmers that are interested in
+ internal operation of the code.
+
+ To download the latest version of the software, please go to the
+ http://www.isc.org/software/dhcp website.
+
+ @section toc Table Of Contents
+  - Server
+    - @subpage ipv6structures
+  - @subpage tests
+    - @subpage testsOverview
+    - @subpage testsAtf
+    - @subpage testsAtfAdding
+    - @subpage testsAtfCoding
+  - @subpage qa
+    - @subpage qaTests
+    - @subpage cppcheck
+    - @subpage doxygen
+    - @subpage valgrind
+  - @subpage debug
+
+ Pages planned to be written:
+  - @subpage archSrv
+  - @subpage archCli
+  - @subpage omapi
+    - @subpage omapiIntro
+    - @subpage omapiC
+    - @subpage dhcpctl
+  - @subpage contrib
+    - @subpage contribDir
+    - @subpage codingGuidelines
+
+ Note: some of the links below may not work if corresponding logs are not available.<br/>
+
+ Doxygen: <a href="doxygen.log">[generation log]</a> <a href="doxygen-warnings.log">[errors and warnings]</a> <br/>
+ cppcheck: <a href="cppcheck.log">[generation log]</a> <a href="cppcheck-error.log">[errors and warnings]</a> <br/>
+
+ */

@@ -1,0 +1,490 @@
+.\"	$NetBSD: dhcp-eval.5,v 1.1.1.3 2014/07/12 11:57:34 spz Exp $
+.\"
+.\"	Id: dhcp-eval.5,v 1.5 2009/11/24 02:06:56 sar Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about Internet Systems Consortium, see
+.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhcp-eval.5,v 1.2 2002/05/23 04:17:13 horikawa Exp $
+.TH dhcp-eval 5
+.SH 名称
+dhcp-eval - ISC DHCP における条件付き評価
+.SH 解説
+Internet Systems Consortium の DHCP クライアントとサーバは、どちらも
+受信するパケットに依存した条件付き動作を行う能力を持ちます。
+条件付き動作の文法をここに示します。
+.SH 参照: 条件付き動作
+条件付き動作は、if, else, elsif 文を使用して指定します。
+条件文は、通常文 (option 文) が登場可能な場所はどこにでも登場可能であり、
+またこのような文を括ることも可能です。
+サーバにおける条件文は次のようになることが多いでしょう:
+.PP
+.nf
+if option dhcp-user-class = "accounting" {
+  max-lease-time 17600;
+  option domain-name "accounting.example.org";
+  option domain-name-servers ns1.accounting.example.org, 
+			     ns2.accounting.example.org;
+} elsif option dhcp-user-class = "sales" {
+  max-lease-time 17600;
+  option domain-name "sales.example.org";
+  option domain-name-servers ns1.sales.example.org, 
+			     ns2.sales.example.org;
+} elsif option dhcp-user-class = "engineering" {
+  max-lease-time 17600;
+  option domain-name "engineering.example.org";
+  option domain-name-servers ns1.engineering.example.org, 
+			     ns2.engineering.example.org;
+} else {
+  max-lease-time 600;
+  option domain-name "misc.example.org";
+  option domain-name-servers ns1.misc.example.org, 
+			     ns2.misc.example.org;
+}
+.fi
+.PP
+クライアント側では、条件付き評価の例は次のようになるでしょう:
+.PP
+.nf
+# example.org はファイヤウォールで DNS をフィルタするので、
+# example.org ネットワークに繋がるときのみ、その DNS サーバを使用します。
+# example.org に繋がるのではない場合、自己の DNS サーバを優先使用します。
+if not option domain-name = "example.org" {
+  prepend domain-name-servers 127.0.0.1;
+}
+.fi  
+.PP
+.B if
+文と
+.B elsif
+継続文は、引数としてブール式を取ります。
+つまり、これらの文は、評価されるとブール値の結果を生成する式を取ります。
+式の評価結果が真になると、
+.B if
+文の直後のブレースで括られた文が実行され、後続する
+.B elsif
+と
+.B else
+の節はスキップされます。
+そうでない場合、評価結果が真になる elsif 節に出会うまで、後続する各
+.B elsif
+節の式がチェックされます。
+そのような節が見付かると、直後のブレース中の文が実行され、後続する
+.B elsif
+と
+.B else
+の節はスキップされます。
+すべての
+.B if
+および
+.B elsif
+の節がチェックされたもののどの式も真にならない場合で、
+.B else
+節が存在する場合、
+.B else
+の直後のブレース中の文が評価されます。
+条件においては、評価結果が空になるブール式は偽として扱われます。
+.SH ブール式
+以下は、DHCP 配布物で現在サポートされているブール式の一覧です。
+.PP
+.I data-expression-1 \fB=\fI data-expression-2\fR
+.RS 0.25i
+.PP
+\fB=\fR オペレータは、2 個のデータ式を比較し、両者が同じ場合は真を返し、
+同一でない場合は偽を返します。
+左辺もしくは右辺のいずれかが空の場合、結果は空になります。
+.RE
+.PP
+.I boolean-expression-1 \fBand\fI boolean-expression-2\fR
+.PP
+.RS 0.25i
+\fBand\fR オペレータは、左辺のブール式と右辺のブール式の両方の評価結果が
+真の場合、真と評価されます。
+そうでない場合、偽と評価されます。
+左辺もしくは右辺のいずれかが空の場合、結果は空になります。
+.RE
+.PP
+.I boolean-expression-1 \fBor\fI boolean-expression-2\fR
+.PP
+.RS 0.25i
+\fBor\fR オペレータは、左辺のブール式と右辺のブール式のいずれかの評価結果が
+真の場合、真と評価されます。
+そうでない場合、偽と評価されます。
+左辺もしくは右辺のいずれかが空の場合、結果は空になります。
+.RE
+.PP
+.B not \fIboolean-expression
+.PP
+.RS 0.25i
+\fBnot\fR オペレータは、\fIboolean-expression\fR の評価結果が偽の場合、
+真と評価されます。
+また、\fIboolean-expression\fR の評価結果が真の場合、偽と評価されます。
+\fIboolean-expression\fR の評価結果が空の場合、結果もまた空になります。
+.RE
+.PP
+.B exists \fIoption-name\fR
+.PP
+.RS 0.25i
+\fBexists\fR 式は、処理対象の入力 DCHP パケット中に、
+指定されたオプションが存在する場合、真を返します。
+.RE
+.B known
+.PP
+.RS 0.25i
+\fBknown\fR 式は、要求対応中のクライアントが既知の場合、
+すなわちホスト宣言がある場合、真を返します。
+.RE
+.B static
+.PP
+.RS 0.25i
+\fBstatic\fR 式は、要求対応中のクライアントへのリース割り当てが、
+静的アドレス割り当てによるものであった場合、真を返します。
+.RE
+.SH データ式
+前述のブール式は、データ式の評価結果に依存します。
+データ式をここに示します。
+.PP
+.B substring (\fIdata-expr\fB, \fIoffset\fB, \fIlength\fB)\fR
+.PP
+.RS 0.25i
+\fBsubstring\fR オペレータは、データ式を評価し、
+評価結果中の \fIoffset\fR バイトから開始して \fIlength\fR バイト継続する
+サブストリングを返します。
+\fIoffset\fR と \fIlength\fR は共に数値式です。
+\fIdata-expr\fR, \fIoffset\fR, \fIlength\fR のいずれかが空と評価される場合、
+結果もまた空になります。
+\fIoffset\fR が、評価されたデータの長さ以上である場合、
+長さ 0 のデータ文字列が返されます。
+\fIlength\fI が、評価されたデータの \fIoffset\fR より後の長さより大きい場合、
+評価されたデータの \fIoffset\fR から終端までの全データを含む
+データ文字列が返されます。
+.RE
+.PP
+.B suffix (\fIdata-expr\fB, \fIlength\fB)\fR
+.PP
+.RS 0.25i
+\fBsuffix\fR オペレータは、\fIdata-expr\fR を評価し、
+評価結果の最後の \fIlength\fR バイトを返します。
+\fIlength\fR は数値式です。
+\fIdata-expr\fR または \fIlength\fR の評価結果が空の場合、
+結果もまた空になります。
+\fIsuffix\fR
+(訳注: \fIlength\fR が正しいと思われます)
+の評価結果が評価されたデータの長さより大きい場合、
+評価されたデータが返されます。
+.\" horikawa@jp.FreeBSD.org 2002/04/29
+.RE
+.PP
+.B option \fIoption-name\fR
+.PP
+.RS 0.25i
+\fBoption\fR オペレータは、サーバが応答処理中のパケットの中の、
+指定したオプションの内容を返します。
+.RE
+.PP
+.B config-option \fIoption-name\fR
+.PP
+.RS 0.25i
+\fBconfig-option\fR オペレータは、指定したオプションに対し、
+DHCP クライアントまたはサーバが送出するよう設定された値を返します。
+.RE
+.PP
+.B hardware
+.PP
+.RS 0.25i
+\fBhardware\fR オペレータは、データストリングを返します。
+データストリングの最初の要素は、
+対象パケットが示すネットワークインタフェースのタイプであり、
+後続する要素は、クライアントのリンク層アドレスです。
+パケットが存在しない場合もしくは RFC2131 \fIhlen\fR フィールドが無効な場合、
+結果は空になります。
+ハードウェアタイプには、イーサネット (1)、トークンリング (6)、
+FDDI (8) が含まれます。
+ハードウェアタイプは IETF によって規定され、
+どのようにタイプの数値が定義されるかの詳細は RFC2131
+(ISC DHCP 配布物では、doc/ サブディレクトリにあります) を参照してください。
+.RE
+.PP
+.B packet (\fIoffset\fB, \fIlength\fB)\fR
+.PP
+.RS 0.25i
+\fBpacket\fR オペレータは、対象パケットの指定部分を返すか、
+対象パケットが無い文脈では空を返します。
+\fIoffset\fR と \fIlength\fR は、
+\fBsubstring\fR オペレータと同様に、パケットの内容に適用されます。
+.RE
+.PP
+.I string
+.PP
+.RS 0.25i
+クォートで括られたストリングはデータ式として指定可能であり、
+クォートの間を ASCII エンコードしたのテキストを返します。
+バックスラッシュ ('\\') 文字は C プログラムのように特別扱いされます:
+すなわち '\\t' はタブを、'\\r' は復改を、'\\n' は改行を、'\\b' はベルを
+意味します。
+8 進数値は '\\nnn' で指定可能であり、nnn は 0 以上 0377 以下の 8 進数値です。
+16 進数値は '\\xnn' で指定可能であり、nn は 0 以上 0xff 以下の 16 進数値です。
+.\" 値の範囲の誤りについては、Murray 経由でレポート済
+.\" horikawa@jp.FreeBSD.org 2002/05/01
+.RE
+.PP
+.I colon-separated hexadecimal list
+.PP
+.RS 0.25i
+コロンで区切られた 16 進数のオクテット値のリストを、
+データ式として指定可能です。
+.RE
+.PP
+.B concat (\fIdata-expr1\fB, ..., \fIdata-exprN\fB)\fR
+.RS 0.25i
+式が評価され、各評価結果がサブ式の順番に連結されます。
+サブ式のいずれかの評価結果が空になる場合、連結の結果は空になります。
+.RE
+.PP
+.B reverse (\fInumeric-expr1\fB, \fIdata-expr2\fB)\fR
+.RS 0.25i
+2 個の式が評価され、データ式の評価結果がその場で反転されます。
+反転は、数値式で指定される大きさの単位で行われます。
+例えば、数値式の評価結果が 4 の場合で、
+データ式の評価結果が 12 バイトになる場合、
+reverse 式の評価結果は、次のような 12 バイトのデータになります。
+すなわち、入力の最後の 4 バイト、真中の 4バイト、最初の 4 バイトの
+順になります。
+.RE
+.PP
+.B leased-address
+.RS 0.25i
+いかなる文脈においても、
+要求処理対象となっているクライアントに IP アドレスが割り当て済の場合、
+その IP アドレスが返されます。
+.RE
+.PP
+.B binary-to-ascii (\fInumeric-expr1\fB, \fInumeric-expr2\fB,
+.B \fIdata-expr1\fB,\fR \fIdata-expr2\fB)\fR
+.RS 0.25i
+data-expr2 の評価結果をテキストストリングに変換します。
+このテキストストリング中では、
+data-expr2 の評価結果の各要素が、1 個の数値になります。
+各数値は、それぞれ、data-expr1 の評価結果によって区切られます。
+numeric-expr1 の評価結果は、基数 (2 から 16) であり、
+この基数に数値が変換されます。
+numeric-expr2 の評価結果は、各数値のビット幅であり、
+8, 16, 32 のいずれかです。
+.PP
+最初の 3 個のタイプの式の例として、
+クライアントに割り当てられた IP アドレス用の
+PTR レコードの名前を生成するために使用可能な式を示します
+.RE
+.PP
+.nf
+        concat (binary-to-ascii (10, 8, ".",
+                                 reverse (1, leased-address)),
+                ".in-addr.arpa.");
+
+.fi
+.PP
+.B encode-int (\fInumeric-expr\fB, \fIwidth\fB)\fR
+.RS 0.25i
+数値式が評価され、指定された幅のデータストリングに
+ネットワークバイト順 (最上位バイトが最初) でエンコードされます。
+数値式の評価結果が空の値になる場合、結果もまた空です。
+.RE
+.\" この ".RE" が無いと、インデントが正しくないです
+.\" horikawa@jp.FreeBSD.org 2002/04/29
+.PP
+.B pick-first-value (\fIdata-expr1\fR [ ... \fIexpr\fRn ] \fB)\fR
+.RS 0.25i
+pick-first-value 関数は、任意個のデータ式を取り得ます。
+リストの先頭から各式が評価され、
+評価結果が空ではない式が見付かるまでこれが続きます。
+この式が返され、この式に後続する式は評価されません。
+すべての式の評価結果が空の場合、空の値が返されます。
+.RE
+.PP
+.B host-decl-name
+.RS 0.25i
+host-decl-name 関数は、現在要求処理対象となっているクライアントにマッチする、
+ホスト宣言の名前を返します。
+どのホスト宣言もマッチしない場合、結果は空になります。
+.RE
+.SH 数値式
+数値式は、評価結果が整数になる式です。
+一般に、整数の最大サイズが 32 ビット未満であると仮定すべきではありませんが、
+整数の精度が 32 ビットを越えることはあり得ます。
+.PP
+.B extract-int (\fIdata-expr\fB, \fIwidth\fB)\fR
+.PP
+.RS 0.25i
+\fBextract-int\fR オペレータは、ネットワークバイト順の整数を、
+指定したデータ式の評価結果から取り出します。
+幅は、取り出す整数のビット幅です。
+現在、サポートされている幅は 8, 16, 32 のいずれかです。
+データ式の評価結果が、指定した大きさの整数と取り出すのに
+十分なビットを提供しない場合、空の値が返されます。
+.RE
+.PP
+.B lease-time
+.PP
+.RS 0.25i
+現在のリースの期間です。
+すなわち、現在の時刻とリースの期限が切れる時刻との差です。
+.RE
+.PP
+.I number
+.PP
+.RS 0.25i
+0 から表現可能な最大サイズの範囲の任意の数値を、数値式として指定可能です。
+.RE
+.PP
+.B client-state
+.PP
+.RS 0.25i
+処理対象のクライアントの現在の状態です。
+DHCP クライアント設定ファイルにおいてのみ有用です。
+取り得る値は次の通りです:
+.TP 2
+.I \(bu
+Booting - DHCP クライアントは INIT 状態であり、
+IP アドレスをまだ持ちません。
+次に送信されるメッセージは DHCPDISCOVER であり、
+これはブロードキャストされます。
+.TP
+.I \(bu
+Reboot - DHCP クライアントは INIT-REBOOT 状態です。
+IP アドレスを持ちますがまだ使用していません。
+次に送信されるメッセージは DHCPREQUEST であり、
+これはブロードキャストされます。
+応答が何も聞こえないと、クライアントはこのアドレスにバインドし、
+BOUND 状態に遷移します。
+.TP
+.I \(bu
+Select - DHCP クライアントは SELECTING 状態です。
+少なくとも 1 個の DHCPOFFER メッセージは受信しましたが、
+他の DHCPOFFER メッセージを他のサーバから受け取るかどうか待っています。
+SELECTING 状態ではメッセージは送信されません。
+.TP
+.I \(bu
+Request - DHCP クライアントは REQUESTING 状態です。
+少なくとも 1 個の DHCPOFFER メッセージを受信し、
+そのうちのどれを要求するか選択しました。
+次に送信されるメッセージは DHCPREQUEST メッセージであり、
+これはブロードキャストされます。
+.TP
+.I \(bu
+Bound - DHCP クライアントは BOUND 状態です。
+IP アドレスを所有しています。
+この状態ではメッセージは送信されません。
+.TP
+.I \(bu
+Renew - DHCP クライアントは RENEWING 状態です。
+IP アドレスを所有しており、これを更新するためにサーバに接続を試みています。
+次に送信されるメッセージは DHCPREQUEST メッセージであり、
+これはサーバに直接ユニキャストされます。
+.TP
+.I \(bu
+Rebind - DHCP クライアントは REBINDING 状態です。
+IP アドレスを所有しており、
+これを更新するために任意のサーバに接続を試みています。
+次に送信されるメッセージは DHCPREQUEST メッセージであり、
+これはブロードキャストされます。
+.RE
+.SH 参照: ログ
+ログ文を使用して、標準ログチャネルに情報を送信可能です。
+ログ文は、省略可能な priority
+(\fBfatal\fR, \fBerror\fR, \fBinfo\fR, \fBdebug\fR のいずれか) と、
+データ式を取ります。
+.PP
+.B log (\fIpriority\fB, \fIdata-expr\fB)\fR
+.\" "\FB" は "\fB" が正しい
+.\" horikawa@jp.FreeBSD.org 2002/04/29
+.PP
+ログ文は、単一のデータ式引数のみ取ります。
+複数のデータ値を出力したい場合、
+\fBconcat\fR オペレータを使用してそれらを連結する必要があります。
+.RE
+.SH 参照: 動的な DNS 更新
+.PP
+DHCP クライアントとサーバは、
+動的にドメインネームシステムを更新する能力があります。
+設定ファイル中に、どのようにドメインネームシステムを更新して欲しいか、
+定義可能です。
+更新は RFC 2136 に従っているため、
+RFC 2136 をサポートする DNS サーバは、
+DHCP サーバからの更新を受け付け可能と思われます。
+.SH セキュリティ
+TSIG および DNSSEC はまだサポートされていません。
+DHCP サーバまたはクライアントからの更新を受け付けるように
+DNS サーバを設定する場合、権限の無い更新に対して
+DNS サーバを晒すことになるかもしれません。
+これを避けるために今すぐできる最良の方法は、
+IP アドレスベースのパケットフィルタを使用して、
+権限の無いホストからの更新要求発行を抑止することです。
+明らかに、現状ではクライアントの更新に対するセキュリティを提供する方法は
+ありません。
+このためには TSIG か DNSSEC が必要ですが、
+この DHCP 配布物にはまだ含まれていません。
+.PP
+動的 DNS (DDNS) 更新は、\fBdns-update\fR 式を使用することで実行されます。
+\fBdns-update\fR 式は、ブール式であり、4 個のパラメータを取ります。
+更新に成功すると、結果は真になります。
+失敗すると、結果は偽になります。
+4 個のパラメータは、リソースレコードタイプ (RR)、
+RR の左辺、RR の右辺、レコードに適用されるべき ttl です。
+この関数の最も簡単な使用例は、dhcpd.conf ファイルの参照節にあり、
+なにが起きるか記述されています。
+この例では、複数の式が使用されて、
+\fBdns-update\fR 用の引数が作成されています。
+.PP
+例の中では、最初の \fBdns-update\fR 式への 1 番目の引数は、
+A RR タイプに評価されるデータ式です。
+2 番目の引数は、DHCP host-name オプションと
+ローカルドメイン、この場合 "ssd.example.net"、
+を含むテキストストリングを連結することで、構築されます。
+3 番目の引数は、クライアントに割り当てられたアドレスを、
+32 ビットの数値から各バイトを "."  で区切った ASCII 文字列に変換することで、
+構築されます。
+4 番目の引数 TTL は、リースの残り時間です
+(これは本当は正しくありません。
+なぜなら DNS サーバは、要求に対していつもこの TTL 値を出力してしまうからです。
+これは、リース期限切れの数秒前であってもです)。
+.PP
+最初の \fBdns-update\fR 文が成功すると、
+引き続いて 2 番目の更新により PTR RR がインストールされます。
+PTR レコードのインストールは、A RR のインストールと同様ですが、
+レコードの左辺はリースされたアドレスを逆にして ".in-addr.arpa" と
+結合されたものです。
+右辺は、アドレスのリース提供先クライアントの、完全な形でのドメイン名です。
+.SH 関連項目
+dhcpd.conf(5), dhcpd.leases(5), dhclient.conf(5), dhcp-eval(5), dhcpd(8),
+dhclient(8), RFC2132, RFC2131
+.SH 作者
+Internet Systems Consortium DHCP Distribution
+は、Vixie Labs との契約のもとで、Ted Lemon が記述しました。
+本プロジェクトの資金は、Internet Systems Consortium が提供しました。
+Internet Systems Consortium に関する情報は、
+.B https://www.isc.org
+にあります。

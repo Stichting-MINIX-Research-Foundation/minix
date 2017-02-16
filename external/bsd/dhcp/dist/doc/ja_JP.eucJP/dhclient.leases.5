@@ -1,0 +1,64 @@
+.\"	$NetBSD: dhclient.leases.5,v 1.1.1.3 2014/07/12 11:57:33 spz Exp $
+.\"
+.\"	Id: dhclient.leases.5,v 1.4 2009/11/24 02:06:56 sar Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1997-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
+.\" by Ted Lemon in cooperation with Vixie
+.\" Enterprises.  To learn more about Internet Systems Consortium,
+.\" see ``https://www.isc.org/''.  To learn more about Vixie
+.\" Enterprises, see ``http://www.vix.com''.
+.\"
+.\"
+.\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient.leases.5,v 1.2.4.1 2002/04/11 10:16:46 murray Exp %
+.\"
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhclient.leases.5,v 1.6 2002/05/05 20:40:23 horikawa Exp $
+.TH dhclient.leases 5
+.SH 名称
+dhclient.leases - DHCP クライアントのリースデータベース
+.SH 解説
+Internet Systems Consortium の DHCP クライアントは、
+獲得したリースのうちまだ有効であるものを管理するための、
+永続的なデータベースを保持します。
+このデータベースは、自由形式の ASCII ファイルであり、
+リース 1 つにつき有効な宣言を 1 つ含みます。
+あるリースに対して複数の宣言が登場する場合、
+ファイル中の最後のものが使用されます。
+このファイルはログとして書き込まれますので、
+このような状態になることは異常ではありません。
+.PP
+リース宣言の書式は、
+.B dhclient.conf(5)
+に記述されています。
+.SH 関連ファイル
+.B DBDIR/dhclient.leases
+.SH 関連項目
+dhclient(8), dhcp-options(5), dhclient.conf(5),
+RFC2132, RFC2131
+.SH 作者
+.B dhclient(8)
+は、Vixie Labs との契約のもとで、Ted Lemon が記述しました。
+本プロジェクトの資金は、Internet Systems Consortium が提供しました。
+Internet Systems Consortium に関する情報は、
+.B https://www.isc.org
+にあります。

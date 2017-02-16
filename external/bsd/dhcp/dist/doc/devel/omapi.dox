@@ -1,0 +1,15 @@
+/**
+@page omapi OMAPI Interface
+
+@section omapiIntro Introduction
+
+ @todo: Description of OMAPI and dhcpctl
+
+@section omapiC Object Management API
+
+ @todo: Essentially omapi.3
+
+@section dhcpctl dhcpctl Reference Guide
+ @todo: Essentially dhcpctl.3
+
+*/

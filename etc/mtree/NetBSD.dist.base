@@ -178,6 +178,7 @@
 ./usr/share
 ./usr/share/atf
 ./usr/share/calendar
+./usr/share/dhcpd
 ./usr/share/doc
 ./usr/share/doc/psd
 ./usr/share/doc/reference
@@ -195,6 +196,7 @@
 ./usr/share/examples
 ./usr/share/examples/atf
 ./usr/share/examples/blacklist
+./usr/share/examples/dhcp
 ./usr/share/examples/ftpd
 ./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc

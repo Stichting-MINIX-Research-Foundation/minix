@@ -1,0 +1,102 @@
+#! /bin/sh
+#
+#	$NetBSD: dhcp2netbsd,v 1.2 2013/03/27 00:38:41 christos Exp $
+#
+# Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# dhcp2netbsd:  convert a dhcp source tree into a
+# format suitable for import.  Works on current dir.
+# You can run this only once if you want it to work.
+#
+# based on file2netbsd
+#
+PROG="$(basename "$0")"
+
+if [ -z "$1" ]
+then
+	echo "Usage: $PROG <directory>" 1>&2
+	exit 1
+fi
+FILE="$1"
+
+### Wipe out stuff we don't want
+rm -fr bind
+
+### Remove the $'s around RCS tags
+cleantags "$FILE"
+
+### Add NetBSD RCS Id
+find "$FILE" -type f -name '*.[chly]' -print | while read c; do
+	sed -e '1{/$NetBSD/!{i\
+/*	\$NetBSD\$	*/\
+
+};}' $c > /tmp/dhcp1$$
+mv /tmp/dhcp1$$ $c && echo did source mods for $c
+done
+
+find "$FILE" -type f -name '*.[cly]' -print | while read c; do
+sed -e \
+'/:\/\/www.isc.org/,/^ \*\// {
+    /^ \*\//a\
+\
+#include <sys/cdefs.h>\
+__RCSID("\$NetBSD\$");
+}' $c > /tmp/dhcp1$$
+mv /tmp/dhcp1$$ $c && echo did source mods for $c
+done
+
+ for f in dst/dst_api.c dst/dst_support.c dst/hmac_link.c dst/prandom.c \
+     omapip/inet_addr.c omapip/iscprint.c server/dhcpv6.c \
+     server/dhcpleasequery.c server/ldap.c server/mdb6.c; do
+	c=$FILE/$f
+	sed -E -e \
+'/\* TH(E|IS) SOFTWARE/,/^ \*\// {
+    /^ \*\//a\
+\
+#include <sys/cdefs.h>\
+__RCSID("\$NetBSD\$");\
+
+}' $c > /tmp/dhcp1$$
+    mv /tmp/dhcp1$$ $c && echo did source mods for $c
+done
+
+
+
+#### Add RCS tags to man pages
+find "$FILE" -type f -name '*.[0-9]' -print | while read m; do
+	sed -e '1{/$NetBSD/!i\
+.\\"	\$NetBSD\$\
+.\\"
+
+}' $m > /tmp/dhcp2$$
+mv /tmp/dhcp2$$ $m && echo did manpage mods for $m
+done
+
+echo done
+
+echo You can import now.  Use the following command:
+echo cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/dhcp/dist ISC DHCPX_Y_Z
+
+exit 0

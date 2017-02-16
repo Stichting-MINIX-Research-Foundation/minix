@@ -167,6 +167,7 @@
 ./usr/libdata/debug/sbin/blacklistctl.debug             minix-debug     debug
 ./usr/libdata/debug/sbin/blacklistd.debug               minix-debug     debug
 ./usr/libdata/debug/sbin/chown.debug                    minix-debug     debug
+./usr/libdata/debug/sbin/dhclient.debug                 minix-debug     debug
 ./usr/libdata/debug/sbin/dhcpcd.debug                   minix-debug     debug
 ./usr/libdata/debug/sbin/fsck.debug                     minix-debug     debug
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug              minix-debug     debug
@@ -619,6 +620,8 @@
 ./usr/libdata/debug/usr/sbin/chroot.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug         minix-debug     debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug             minix-debug     debug
+./usr/libdata/debug/usr/sbin/dhcpd.debug                minix-debug     debug
+./usr/libdata/debug/usr/sbin/dhcrelay.debug             minix-debug     debug
 ./usr/libdata/debug/usr/sbin/diskctl.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug     minix-debug     debug
 ./usr/libdata/debug/usr/sbin/dnssec-importkey.debug     minix-debug     debug
@@ -644,6 +647,7 @@
 ./usr/libdata/debug/usr/sbin/named-journalprint.debug   minix-debug     debug
 ./usr/libdata/debug/usr/sbin/named.debug                minix-debug     debug
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug            minix-debug     debug
+./usr/libdata/debug/usr/sbin/omshell.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/pkg_add.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/pkg_admin.debug            minix-debug     debug
 ./usr/libdata/debug/usr/sbin/pkg_create.debug           minix-debug     debug

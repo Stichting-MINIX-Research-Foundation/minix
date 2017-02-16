@@ -1,0 +1,284 @@
+.\"	$NetBSD: dhcpd.leases.5,v 1.1.1.3 2014/07/12 11:58:10 spz Exp $
+.\"
+.\"	dhcpd.leases.5
+.\"
+.\" Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" Id: dhcpd.leases.5,v 1.17 2011/09/19 00:24:50 sar Exp 
+.\"
+.TH dhcpd.leases 5
+.SH NAME
+dhcpd.leases - DHCP client lease database
+.SH DESCRIPTION
+The Internet Systems Consortium DHCP Server keeps a persistent
+database of leases that it has assigned.  This database is a free-form
+ASCII file containing a series of lease declarations.  Every time a
+lease is acquired, renewed or released, its new value is recorded at
+the end of the lease file.  So if more than one declaration appears
+for a given lease, the last one in the file is the current one.
+.PP
+When dhcpd is first installed, there is no lease database.   However,
+dhcpd requires that a lease database be present before it will start.
+To make the initial lease database, just create an empty file called
+DBDIR/dhcpd.leases.   You can do this with:
+.PP
+.nf
+	touch DBDIR/dhcpd.leases
+.fi
+.PP
+In order to prevent the lease database from growing without bound, the
+file is rewritten from time to time.   First, a temporary lease
+database is created and all known leases are dumped to it.   Then, the
+old lease database is renamed DBDIR/dhcpd.leases~.   Finally, the
+newly written lease database is moved into place.
+.SH FORMAT
+Lease descriptions are stored in a format that is parsed by the same
+recursive descent parser used to read the
+.B dhcpd.conf(5)
+and
+.B dhclient.conf(5)
+files.  Lease files can contain lease declarations, and also group and
+subgroup declarations, host declarations and failover state
+declarations.  Group, subgroup and host declarations are used to
+record objects created using the OMAPI protocol.
+.PP
+The lease file is a log-structured file - whenever a lease changes,
+the contents of that lease are written to the end of the file.   This
+means that it is entirely possible and quite reasonable for there to
+be two or more declarations of the same lease in the lease file at the
+same time.   In that case, the instance of that particular lease that
+appears last in the file is the one that is in effect.
+.PP
+Group, subgroup and host declarations in the lease file are handled in
+the same manner, except that if any of these objects are deleted, a
+\fIrubout\fR is written to the lease file.   This is just the same
+declaration, with \fB{ deleted; }\fR in the scope of the
+declaration.   When the lease file is rewritten, any such rubouts that
+can be eliminated are eliminated.   It is possible to delete a
+declaration in the \fBdhcpd.conf\fR file; in this case, the rubout
+can never be eliminated from the \fBdhcpd.leases\fR file.
+.SH THE LEASE DECLARATION
+.PP
+.B lease \fIip-address\fB { \fIstatements...\fB }
+.PP
+Each lease declaration includes the single IP address that has been
+leased to the client.   The statements within the braces define the
+duration of the lease and to whom it is assigned.
+.PP
+.nf
+.B starts \fIdate\fB;\fR
+.B ends \fIdate\fB;\fR
+.B tstp \fIdate\fB;\fR
+.B tsfp \fIdate\fB;\fR
+.B atsfp \fIdate\fB;\fR
+.B cltt \fIdate\fB;\fR
+.fi
+.PP
+The start and end time of a lease are recorded using the \fBstarts\fR
+and \fBends\fR statements.   The \fBtstp\fR statement is specified if
+the failover protocol is being used, and indicates what time the peer
+has been told the lease expires.   The \fBtsfp\fR statement is
+also specified if the failover protocol is being used, and indicates
+the lease expiry time that the peer has acknowledged.
+The \fBatsfp\fR statement is the actual time sent from the failover
+partner.
+The \fBcltt\fR statement is the client's last transaction time.
+.PP
+The \fIdate\fR is specified in two ways, depending on the configuration
+value for the \fBdb-time-format\fR parameter.  If it was set to \fIdefault\fR,
+then the \fIdate\fR fields appear as follows:
+.PP
+.I weekday year\fB/\fImonth\fB/\fIday hour\fB:\fIminute\fB:\fIsecond\fR
+.PP
+The weekday is present to make it easy for a human to tell when a
+lease expires - it's specified as a number from zero to six, with zero
+being Sunday.  The day of week is ignored on input.  The year is
+specified with the century, so it should generally be four digits
+except for really long leases.  The month is specified as a number
+starting with 1 for January.  The day of the month is likewise
+specified starting with 1.  The hour is a number between 0 and 23, the
+minute a number between 0 and 59, and the second also a number between
+0 and 59.
+.PP
+Lease times are specified in Universal Coordinated Time (UTC), not in
+the local time zone.  There is probably nowhere in the world where the
+times recorded on a lease are always the same as wall clock times.  On
+most unix machines, you can display the current time in UTC by typing
+\fBdate -u\fR.
+.PP
+If the \fBdb-time-format\fR was configured to \fIlocal\fR, then
+the \fIdate\fR fields appear as follows:
+.PP
+ \fBepoch\fR \fI<seconds-since-epoch>\fR\fB; #\fR \fI<day-name> <month-name>
+<day-number> <hours>\fR\fB:\fR\fI<minutes>\fR\fB:\fR\fI<seconds> <year>\fR
+.PP
+The \fIseconds-since-epoch\fR is as according to the system's local clock (often
+referred to as "unix time").  The \fB#\fR symbol supplies a comment that
+describes what actual time this is as according to the system's configured
+timezone, at the time the value was written.  It is provided only for human
+inspection.
+.PP
+If a lease will never expire, \fIdate\fR is \fBnever\fR instead of an
+actual date.
+.PP
+.B hardware \fIhardware-type mac-address\fB;\fR
+.PP
+The hardware statement records the MAC address of the network
+interface on which the lease will be used.   It is specified as a
+series of hexadecimal octets, separated by colons.
+.PP
+.B uid \fIclient-identifier\fB;\fR
+.PP
+The \fBuid\fR statement records the client identifier used by the
+client to acquire the lease.   Clients are not required to send client
+identifiers, and this statement only appears if the client did in fact
+send one.   Client identifiers are normally an ARP type (1 for
+ethernet) followed by the MAC address, just like in the \fBhardware\fI
+statement, but this is not required.
+.PP
+The client identifier is recorded as a colon-separated hexadecimal
+list or as a quoted string.   If it is recorded as a quoted string and
+it contains one or more non-printable characters, those characters are
+represented as octal escapes - a backslash character followed by three
+octal digits.
+.PP
+.B client-hostname "\fIhostname\fB";\fR
+.PP
+Most DHCP clients will send their hostname in the \fIhost-name\fR
+option.  If a client sends its hostname in this way, the hostname is
+recorded on the lease with a \fBclient-hostname\fR statement.   This
+is not required by the protocol, however, so many specialized DHCP
+clients do not send a host-name option.
+.PP
+.B abandoned;
+.PP
+The \fBabandoned\fR statement indicates that the DHCP server has
+abandoned the lease.   In that case, the \fBabandoned\fR statement
+will be used to indicate that the lease should not be reassigned.
+Please see the \fBdhcpd.conf(5)\fR manual page for information about
+abandoned leases.
+.PP
+.B binding state \fIstate\fB;
+.B next binding state \fIstate\fB;
+.PP
+The \fBbinding state\fR statement declares the lease's binding state.
+When the DHCP server is not configured to use the failover protocol, a
+lease's binding state will be either \fBactive\fR or \fBfree\fR.   The
+failover protocol adds some additional transitional states, as well as
+the \fBbackup\fR state, which indicates that the lease is available
+for allocation by the failover secondary.
+.PP
+The \fBnext binding state\fR statement indicates what state the lease
+will move to when the current state expires.   The time when the
+current state expires is specified in the \fIends\fR statement.
+.PP
+.B option agent.circuit-id \fIstring\fR;
+.B option agent.remote-id \fIstring\fR;
+.PP
+The \fBoption agent.circuit-id\fR and \fBoption agent.remote-id\fR
+statements are used to record the circuit ID and remote ID options
+send by the relay agent, if the relay agent uses the \fIrelay agent
+information option\fR.   This allows these options to be used
+consistently in conditional evaluations even when the client is
+contacting the server directly rather than through its relay agent.
+.PP
+.B set \fIvariable\fB = \fIvalue\fB;
+.PP
+The \fBset\fR statement sets the value of a variable on the lease.
+For general information on variables, see the \fBdhcp-eval(5)\fR
+manual page.
+.PP
+.B The \fIddns-text\fB variable
+.PP
+The \fIddns-text\fR variable is used to record the value of the
+client's TXT identification record when the interim DDNS update
+style has been used to update the DNS for a particular lease.
+.PP
+.B The \fIddns-fwd-name\fB variable
+.PP
+The \fIddns-fwd-name\fB variable records the value of the name used in
+updating the client's A record if a DDNS update has been successfully
+done by the server.   The server may also have used this name to
+update the client's PTR record.
+.PP
+.B The \fIddns-client-fqdn\fB variable
+.PP
+If the server is configured to use the interim DDNS update style, and
+is also configured to allow clients to update their own FQDNs, and the
+client did in fact update its own FQDN, then the
+\fIddns-client-fqdn\fR variable records the name that the client has
+indicated it is using.   This is the name that the server will have
+used to update the client's PTR record in this case.
+.PP
+.B The \fIddns-rev-name\fB variable
+.PP
+If the server successfully updates the client's PTR record, this
+variable will record the name that the DHCP server used for the PTR
+record.   The name to which the PTR record points will be either the
+\fIddns-fwd-name\fR or the \fIddns-client-fqdn\fR.
+.PP
+.B The \fIvendor-class-identifier\fB variable
+.PP
+The server retains the client-supplied Vendor Class Identifier option
+for informational purposes, and to render them in DHCPLEASEQUERY responses.
+.PP
+.B on \fIevents\fB { \fIstatements...\fB }
+The \fBon\fI statement records a list of statements to execute if a
+certain event occurs.   The possible events that can occur for an
+active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
+can be specified - if so, the events are separated by '|' characters.
+.PP
+.B bootp;
+.B reserved;
+These two statements are effectively flags.  If present, they indicate that
+the BOOTP and RESERVED failover flags, respectively, should be set.  BOOTP
+and RESERVED dynamic leases are treated differently than normal dynamic leases,
+as they may only be used by the client to which they are currently allocated.
+.RE
+.SH THE FAILOVER PEER STATE DECLARATION
+The state of any failover peering arrangements is also recorded in the
+lease file, using the \fBfailover peer\fR statement:
+.PP
+.nf
+.B failover peer "\fIname\fB" state {
+.B   my   state \fIstate\fB at \fIdate\fB;
+.B   peer state \fIstate\fB at \fIdate\fB;
+.B }
+.fi
+.PP
+The states of the peer named \fIname\fR is being recorded.   Both the
+state of the running server (\fBmy state\fR) and the other failover
+partner (\fIpeer state\fR) are recorded.   The following states are
+possible: \fBunknown-state\fR, \fBpartner-down\fR, \fBnormal\fR,
+\fBcommunications-interrupted\fR, \fBresolution-interrupted\fR,
+\fBpotential-conflict\fR, \fBrecover\fR, \fBrecover-done\fR,
+\fBshutdown\fR, \fBpaused\fR, and \fBstartup\fR.
+.RE
+.SH FILES
+.B DBDIR/dhcpd.leases DBDIR/dhcpd.leases~
+.SH SEE ALSO
+dhcpd(8), dhcp-options(5), dhcp-eval(5), dhcpd.conf(5), RFC2132, RFC2131.
+.SH AUTHOR
+.B dhcpd(8)
+is maintained by ISC.
+Information about Internet Systems Consortium can be found at:
+.B https://www.isc.org/

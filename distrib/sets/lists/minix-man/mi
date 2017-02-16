@@ -252,6 +252,7 @@
 ./usr/man/man1/objcopy.1                                minix-man       binutils
 ./usr/man/man1/objdump.1                                minix-man       binutils
 ./usr/man/man1/od.1                                     minix-man
+./usr/man/man1/omshell.1                                minix-man
 ./usr/man/man1/openssl.1                                minix-man       crypto
 ./usr/man/man1/openssl_CA.pl.1                          minix-man       crypto
 ./usr/man/man1/openssl_asn1parse.1                      minix-man       crypto
@@ -3284,8 +3285,14 @@
 ./usr/man/man5/configfile.5                             minix-man
 ./usr/man/man5/cpio.5                                   minix-man
 ./usr/man/man5/crontab.5                                minix-man
+./usr/man/man5/dhclient.conf.5                          minix-man
+./usr/man/man5/dhclient.leases.5                        minix-man
+./usr/man/man5/dhcp-eval.5                              minix-man
+./usr/man/man5/dhcp-options.5                           minix-man
 ./usr/man/man5/dhcp.conf.5                              minix-man       obsolete
 ./usr/man/man5/dhcpcd.conf.5                            minix-man
+./usr/man/man5/dhcpd.conf.5                             minix-man
+./usr/man/man5/dhcpd.leases.5                           minix-man
 ./usr/man/man5/dir.5                                    minix-man       obsolete
 ./usr/man/man5/editrc.5                                 minix-man
 ./usr/man/man5/ethers.5                                 minix-man       obsolete
@@ -3404,9 +3411,12 @@
 ./usr/man/man8/ddns-confgen.8                           minix-man
 ./usr/man/man8/dev_mkdb.8                               minix-man
 ./usr/man/man8/devsize.8                                minix-man
+./usr/man/man8/dhclient-script.8                        minix-man
+./usr/man/man8/dhclient.8                               minix-man
 ./usr/man/man8/dhcpcd-run-hooks.8                       minix-man
 ./usr/man/man8/dhcpcd.8                                 minix-man
-./usr/man/man8/dhcpd.8                                  minix-man       obsolete
+./usr/man/man8/dhcpd.8                                  minix-man
+./usr/man/man8/dhcrelay.8                               minix-man
 ./usr/man/man8/diskctl.8                                minix-man
 ./usr/man/man8/dnssec-dsfromkey.8                       minix-man
 ./usr/man/man8/dnssec-importkey.8                       minix-man

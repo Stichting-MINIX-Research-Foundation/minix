@@ -1,0 +1,191 @@
+LDAP Support in DHCP
+Original Author: Brian Masney <masneyb@gftp.org>
+Current Maintainer: David Cantrell <dcantrell@redhat.com>
+Last updated 07-Jul-2009
+
+This document describes setting up the DHCP server to read it's configuration
+from LDAP.  This work is based on the IETF document
+draft-ietf-dhc-ldap-schema-01.txt included in the doc directory.  For the
+latest version of this document, please see
+http://dcantrel.fedorapeople.org/dhcp/ldap-patch/
+
+First question on most people's mind is "Why do I want to store my
+configuration in LDAP?"  If you run a small DHCP server, and the configuration
+on it rarely changes, then you won't need to store your configuration in LDAP.
+But, if you have several DHCP servers, and you want an easy way to manage your
+configuration, this can be a solution.
+
+The first step will be to setup your LDAP server.  I am using OpenLDAP from
+www.openldap.org.  Building and installing OpenLDAP is beyond the scope of
+this document.  There is plenty of documentation out there about this.  Once
+you have OpenLDAP installed, you will have to edit your slapd.conf file.  I
+added the following 2 lines to my configuration file:
+
+include         /etc/ldap/schema/dhcp.schema
+index           dhcpHWAddress eq
+index           dhcpClassData eq
+
+The first line tells it to include the dhcp schema file.  You will find this
+file under the contrib directory in this distribution.  You will need to copy
+this file to where your other schema files are (maybe /etc/openldap/schema/).
+The second line sets up an index for the dhcpHWAddress parameter.  The third
+parameter is for reading subclasses from LDAP every time a DHCP request comes
+in.  Make sure you run the slapindex command and restart slapd to have these
+changes to into effect.
+
+Now that you have LDAP setup, you should be able to use gq
+(http://biot.com/gq/) to verify that the dhcp schema file is loaded into LDAP.
+Pull up gq, and click on the Schema tab.  Go under objectClasses, and you
+should see at least the following object classes listed: dhcpClass, dhcpGroup,
+dhcpHost, dhcpOptions, dhcpPool, dhcpServer, dhcpService, dhcpSharedNetwork,
+dhcpSubClass, and dhcpSubnet.  If you do not see these, you need to check over
+your LDAP configuration before you go any further.
+
+You should now be ready to build DHCP.  If you would like to enable LDAP in
+dhcpd, you will need to perform the following steps:
+
+  * Apply the patch here to the unpacked ISC dhcp source tree.
+  * Regenerate the configure script (requires GNU autoconf and automake):
+        aclocal
+        libtoolize --copy --force
+        autoconf
+        autoheader
+        automake --foreign --add-missing --copy
+  * Run ./configure with the '--with-ldap' argument to enable OpenLDAP.
+    If you want LDAP over SSL, also use the '--with-ldapcrypto' argument.
+  * Run 'make' to build ISC dhcp.
+
+Once you have DHCP installed, you will need to setup your initial plaintext
+config file. In my /etc/dhcpd.conf file, I have:
+
+ldap-server "localhost";
+ldap-port 389;
+ldap-username "cn=DHCP User, dc=ntelos, dc=net";
+ldap-password "blah";
+ldap-base-dn "dc=ntelos, dc=net";
+ldap-method dynamic;
+ldap-debug-file "/var/log/dhcp-ldap-startup.log";
+
+If SSL has been enabled at compile time, the dhcp server trys to use TLS if
+possible, but continues without TLS if not.
+
+You can modify this behaviour using following option in /etc/dhcp/dhcpd.conf:
+
+ldap-ssl <off | ldaps | start_tls | on>
+   off:       disables TLS/LDAPS.
+   ldaps:     enables LDAPS -- don't forget to set ldap-port to 636.
+   start_tls: enables TLS using START_TLS command
+   on:        enables LDAPS if ldap-port is set to 636 or TLS in 
+              other cases.
+
+See also "man 5 ldap.conf" for description the following TLS related 
+options:
+   ldap-tls-reqcert, ldap-tls-ca-file, ldap-tls-ca-dir, ldap-tls-cert
+   ldap-tls-key, ldap-tls-crlcheck, ldap-tls-ciphers, ldap-tls-randfile
+
+All of these parameters should be self explanatory except for the ldap-method.
+You can set this to static or dynamic.  If you set it to static, the
+configuration is read once on startup, and LDAP isn't used anymore.  But, if
+you set this to dynamic, the configuration is read once on startup, and the
+hosts that are stored in LDAP are looked up every time a DHCP request comes
+in.
+
+When the optional statement ldap-debug-file is specified, on startup the DHCP
+server will write out the configuration that it generated from LDAP.  If you
+are getting errors about your LDAP configuration, this is a good place to
+start looking.
+
+The next step is to set up your LDAP tree. Here is an example config that will
+give a 10.100.0.x address to machines that have a host entry in LDAP.
+Otherwise, it will give a 10.200.0.x address to them.  (NOTE: replace
+dc=ntelos, dc=net with your base dn). If you would like to convert your
+existing dhcpd.conf file to LDIF format, there is a script
+dhcpd-conf-to-ldap that will convert it for you.  Type
+dhcpd-conf-to-ldap --help to see the usage information for this script.
+
+# You must specify the server's host name in LDAP that you are going to run
+# DHCP on and point it to which config tree you want to use.  Whenever DHCP
+# first starts up, it will do a search for this entry to find out which
+# config to use
+dn: cn=brian.ntelos.net, dc=ntelos, dc=net
+objectClass: top
+objectClass: dhcpServer
+cn: brian.ntelos.net
+dhcpServiceDN: cn=DHCP Service Config, dc=ntelos, dc=net
+
+# Here is the config tree that brian.ntelos.net points to.
+dn: cn=DHCP Service Config, dc=ntelos, dc=net
+cn: DHCP Service Config
+objectClass: top
+objectClass: dhcpService
+dhcpPrimaryDN: dc=ntelos, dc=net
+dhcpStatements: ddns-update-style none
+dhcpStatements: default-lease-time 600
+dhcpStatements: max-lease-time 7200
+
+# Set up a shared network segment
+dn: cn=WV Test, cn=DHCP Service Config, dc=ntelos, dc=net
+cn: WV
+objectClass: top
+objectClass: dhcpSharedNetwork
+
+# Set up a subnet declaration with a pool statement.  Also note that we have
+# a dhcpOptions object with this entry
+dn: cn=10.100.0.0, cn=WV Test, cn=DHCP Service Config, dc=ntelos, dc=net
+cn: 10.100.0.0
+objectClass: top
+objectClass: dhcpSubnet
+objectClass: dhcpOptions
+dhcpOption: domain-name-servers 10.100.0.2
+dhcpOption: routers 10.100.0.1
+dhcpOption: subnet-mask 255.255.255.0
+dhcpOption: broadcast-address 10.100.0.255
+dhcpNetMask: 24
+
+# Set up a pool for this subnet.  Only known hosts will get these IPs
+dn: cn=Known Pool, cn=10.100.0.0, cn=WV Test, cn=DHCP Service Config, dc=ntelos, dc=net
+cn: Known Pool
+objectClass: top
+objectClass: dhcpPool
+dhcpRange: 10.100.0.3 10.100.0.254
+dhcpPermitList: deny unknown-clients
+
+# Set up another subnet declaration with a pool statement
+dn: cn=10.200.0.0, cn=WV Test, cn=DHCP Service Config, dc=ntelos, dc=net
+cn: 10.200.0.0
+objectClass: top
+objectClass: dhcpSubnet
+objectClass: dhcpOptions
+dhcpOption: domain-name-servers 10.200.0.2
+dhcpOption: routers 10.200.0.1
+dhcpOption: subnet-mask 255.255.255.0
+dhcpOption: broadcast-address 10.200.0.255
+dhcpNetMask: 24
+
+# Set up a pool for this subnet. Only unknown hosts will get these IPs
+dn: cn=Known Pool, cn=10.200.0.0, cn=WV Test, cn=DHCP Service Config, dc=ntelos, dc=net
+cn: Known Pool
+objectClass: top
+objectClass: dhcpPool
+dhcpRange: 10.200.0.3 10.200.0.254
+dhcpPermitList: deny known clients
+
+# Set aside a group for all of our known MAC addresses
+dn: cn=Customers, cn=DHCP Service Config, dc=ntelos, dc=net
+objectClass: top
+objectClass: dhcpGroup
+cn: Customers
+
+# Host entry for my laptop
+dn: cn=brianlaptop, cn=Customers, cn=DHCP Service Config, dc=ntelos, dc=net
+objectClass: top
+objectClass: dhcpHost
+cn: brianlaptop
+dhcpHWAddress: ethernet 00:00:00:00:00:00
+
+You can use the command ldapadd to load all of these entries into your LDAP
+server. After you load this, you should be able to start up DHCP. If you run
+into problems reading the configuration, try running dhcpd with the -d flag.
+If you still have problems, edit the site.conf file in the DHCP source and
+add the line: COPTS= -DDEBUG_LDAP and recompile DHCP. (make sure you run make
+clean and rerun configure before you rebuild).

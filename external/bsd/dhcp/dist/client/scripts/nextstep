@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# simplified dhclient-script for NeXTSTEP/OPENSTEP
+#
+# removed a lot of the cruft from the netbsd version since NeXTSTEP doesn't
+# support aliases and lots of things were breaking for no good reason
+#
+# 14 Sep 1997, David W. Young
+#
+if [ x$reason = xPREINIT ]; then
+  ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 up >/dev/null 2>&1
+  exit 0
+fi
+if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
+   [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
+  current_hostname=`hostname`
+  if [ x$current_hostname = x ] || \
+     [ x$current_hostname = x$old_host_name ]; then
+    if [ x$current_hostname = x ] || \
+       [ x$new_host_name != x$old_host_name ]; then
+      hostname $new_host_name
+    fi
+  fi
+    
+  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]
+   then
+    ifconfig $interface $new_ip_address netmask $new_subnet_mask \
+			>/dev/null 2>&1
+    route add $new_ip_address 127.1 0 >/dev/null 2>&1
+    for router in $new_routers ; do
+      route add default $router 1 >/dev/null 2>&1
+    done
+  fi
+  if [ x"$new_domain_name_servers" != x ]; then
+    cat /dev/null > /etc/resolv.conf.dhclient
+    if [ "x$new_domain_search" != x ]; then
+      echo search $new_domain_search >> /etc/resolv.conf.dhclient
+    elif [ "x$new_domain_name" != x ]; then
+      # Note that the DHCP 'Domain Name Option' is really just a domain
+      # name, and that this practice of using the domain name option as
+      # a search path is both nonstandard and deprecated.
+      echo search $new_domain_name >> /etc/resolv.conf.dhclient
+    fi
+    for nameserver in $new_domain_name_servers; do
+      echo nameserver $nameserver >>/etc/resolv.conf.dhclient
+    done
+
+    mv /etc/resolv.conf.dhclient /etc/resolv.conf
+  fi
+  exit 0
+fi
+if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ] || [ x$reason = xRELEASE ] \
+   || [ x$reason = xSTOP ]; then
+  if [ x$old_ip_address != x ]; then
+    route delete $old_ip_address 127.1 >/dev/null 2>&1
+    for $router in $old_routers ; do
+      route delete default $router >/dev/null 2>&1
+    done
+  fi
+  exit 0
+fi

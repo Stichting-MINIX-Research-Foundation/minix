@@ -1,0 +1,93 @@
+/**
+ @page qa Quality Assurance
+
+There is a wide scale effort in progress to improve the quality of the ISC
+DHCP implementation. The following section describes the major aspects of
+quality assurance that are being implemented. As this is a work in progress,
+expect radical changes in this area.
+
+ @section qaTests ATF Unit-tests
+
+ See @ref tests Section for details description of ATF-based unit-tests.
+
+ @section cppcheck cppcheck tool
+
+<a href="http://cppcheck.sourceforge.net/">cppcheck</a> is a static analysis tool
+for C/C++ code. Unlike C/C++ compilers and many other analysis tools it does not
+detect syntax errors in the code. Cppcheck primarily detects the types of bugs
+that the compilers normally do not detect. To generate cppcheck report, you
+must have cppcheck installed in your system. Generation is simple:
+
+@verbatim
+cd doc/
+make cppcheck
+@endverbatim
+
+The log files will be stored in doc/html/cppcheck.log and
+doc/html/cppcheck-error.log. While the former is useful for verifying that all
+sources were checked, the latter is much more useful. It contains a list of
+problems that were detected by cppcheck. The goal is to correct all problems
+and make this an empty file.
+
+In the unlikely event of cppcheck finding false positives it is possible to add
+special comments formatted to instruct cppcheck to not report what it thinks is
+an issue. make cppcheck target is configured to make cppcheck print out a
+specific issue type reported. For example to disable the following error report:
+
+@verbatim
+bind/bind-9.8.1/bin/dnssec/dnssec-keygen.c:522: check_fail: Memory leak: algname (error,memleak)
+@endverbatim
+
+the following line could be added before line 522 in dnssec-keygen.c:
+@verbatim
+// cppcheck-suppress memleak
+@endverbatim
+
+Please consult cppcheck manual for details. It is section 6.2 "Inline
+suppressions" in cppcheck 1.54 manual. Section number may change in later
+versions.
+
+ @section doxygen Doxygen checks
+
+ISC DHCP Developer's Guide (the documentation you are reading now) is
+generated with doxygen. Doxygen is an open source tool for generating
+source code documentation. It is available from
+<a href="http://www.doxygen.org">www.doxygen.org</a> website. Once Doxygen
+is installed, ISC DHCP documentation can be generated with:
+
+@verbatim
+cd doc
+make devel
+@endverbatim
+
+Note that cppcheck (see @ref cppcheck Section) reports are linked from
+Developer's Guide. It is useful to generate both.
+
+ @section systemTests System level tests
+
+ISC is developing a comprehensive set of system level tests.
+They are described by a separate document called DHCP Test Plan.
+
+ @section perfdhcp Performance tests using perfdhcp
+
+ISC is also developing a performance measurement tool, called
+perfdhcp. Its main purpose is to measure performance of DHCPv4 and
+DHCPv6 servers. It is being developed as part of the BIND10 project.
+See tests/tools/perfdhcp directory in BIND10 source code.
+
+ @section tahiTests Conformance tests using TAHI
+
+<a href="http://tahi.org">TAHI project</a> developed an extensive suite of <a
+href="http://tahi.org/logo/dhcpv6/">DHCPv6 conformance tests</a>. ISC plans to
+deploy and run them periodically in the near future.
+
+ @section valgrind Memory correctness using valgrind
+
+<a href="http://valgrind.org/">Valgrind</a> is a powerful tool for dynamic code
+analysis. It allows running existing code (often even without recompiling) in a
+special environment that tracks memory operations. In particular, it is able to
+detect: memory leaks, buffer overflows, usage of uninitialized memory, double
+frees and similar errors. We currently do not use valgrind in ISC DHCP testing,
+but there are plans for starting to use it.
+
+*/

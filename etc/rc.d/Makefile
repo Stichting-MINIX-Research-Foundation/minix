@@ -30,7 +30,7 @@ CONFIGFILES=\
 		\
 		bootconf.sh \
 		\
-		dhcpcd \
+		dhclient dhcpcd dhcpd dhcrelay \
 		fsck ftpd \
 		\
 		\

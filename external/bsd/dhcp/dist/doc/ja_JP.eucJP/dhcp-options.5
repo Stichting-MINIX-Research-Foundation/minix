@@ -1,0 +1,1583 @@
+.\"	$NetBSD: dhcp-options.5,v 1.1.1.3 2014/07/12 11:57:34 spz Exp $
+.\"
+.\"	Id: dhcp-options.5,v 1.5 2010/07/20 21:09:14 dhankins Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about Internet Systems Consortium, see
+.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
+.\"
+.\" %FreeBSD: src/contrib/isc-dhcp/common/dhcp-options.5,v 1.2.2.1 2002/04/11 10:16:46 murray Exp %
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhcp-options.5,v 1.11 2002/05/21 03:51:52 horikawa Exp $
+.\" WORD: Dynamic Host Configuration Protocol	動的ホスト構成プロトコル
+.\" WORD: Path MTU Discovery	パス MTU 探索
+.\" WORD: Router Discovery	ルータ探索
+.\" WORD: Router Solicitation   ルータ要請
+.\" WORD: Mask Discovery	マスク探索
+.\"
+.TH dhcp-options 5
+.SH 名称
+dhcp-options - 動的ホスト構成プロトコルのオプション
+.SH 解説
+動的ホスト構成プロトコル (DHCP: Dynamic Host Configuration Protocol) を
+使用することにより、クライアントは DHCP サーバから、ネットワーク設定や
+ネットワーク上で利用可能な様々なサービスについて記述している
+.B オプション
+を受け取ることができます。
+.B dhcpd(8)
+や
+.B dhclient(8)
+を設定するときに、しばしばオプションを宣言する必要があるでしょう。
+ここでは、オプションを宣言する文法、
+そして宣言可能なオプションの名前と書式を文書化しています。
+.SH リファレンス: オプション文
+.PP
+DHCP \fIoption\fR 文は、常にキーワード \fIoption\fR で開始し、
+単一のオプション名が続き、オプションデータが続きます。
+オプションの名前とデータの書式は後述します。
+すべての DHCP オプションを網羅的に指定する必要はなく、
+クライアントに必要なオプションのみを指定します。
+.PP
+オプションデータには、次のように様々な書式があります:
+.PP
+.B ip-address
+データタイプは、明示的な IP アドレス (例えば 239.254.197.10) または
+ドメイン名 (例えば haagen.isc.org) のどちらでも指定可能です。
+ドメイン名で指定する場合、
+そのドメイン名を解決すると単一の IP アドレスになるようにしてください。
+.PP
+.B int32
+データタイプは符号付き 32 ビット整数を指定します。
+.B uint32
+データタイプは符号無し 32 ビット整数を指定します。
+.B int16
+および
+.B uint16
+のデータタイプは、符号付きおよび符号無しの 16 ビット整数を指定します。
+.B int8
+および
+.B uint8
+のデータタイプは、符号付きおよび符号無しの 8 ビット整数を指定します。
+符号無し 8 ビット整数は、オクテットと呼ばれることもあります。
+.PP
+.B text
+データタイプは NVT ASCII 文字列を指定します。
+文字列はダブルクォートで括る必要があります。
+例えば root-path オプションを指定する文法は、次のようになります。
+.nf
+.sp 1
+option root-path "10.0.1.4:/var/tmp/rootfs";
+.fi
+.PP
+.B domain-name
+データタイプはドメイン名を指定します。
+文字列をダブルクォートで括っていけません。
+このデータタイプは、他の既存の DHCP オプションには使われません。
+ドメイン名は、text オプションであるかのように保持されます。
+.\" text データタイプであるかのように?
+.\" metal
+.PP
+.B flag
+データタイプはブール値を指定します。
+ブール値は true または false のいずれかです
+(もしくは、on または off の方が分かりやすければ、こちらでもかまいません)。
+.PP
+.B string
+データタイプは、ダブルクォートで括られる NVT ASCII 文字列か、
+コロン区切りの 16 進数で指定されるオクテットの連続のいずれかを指定します。
+例えば次のようになります:
+.nf
+.sp 1
+  option dhcp-client-identifier "CLIENT-FOO";
+もしくは
+  option dhcp-client-identifier 43:4c:49:45:54:2d:46:4f:4f;
+.fi
+.SH 式を用いたオプション値の設定
+.\" metal
+クライアントが送出するいくつかの値を、DHCP オプションの値を設定するのに
+使えると便利なことがあります。
+これをするには式の評価が利用できます。
+.B dhcp-eval(5)
+マニュアルページに式の書き方が述べられています。
+評価の結果をオプションに代入するには、オプションを次のように定義します:
+.nf
+.sp 1
+  \fBoption \fImy-option \fB= \fIexpression \fB;\fR
+.fi
+.PP
+例えば次のようにします:
+.nf
+.sp 1
+  option hostname = binary-to-ascii (16, 8, "-",
+                                     substring (hardware, 1, 6));
+.fi
+.SH 標準 DHCP オプション
+次に示す様々なオプションに関する記述は、
+DHCP オプションに関する最新の IETF ドラフト文書からのものです。
+名前が掲載されていないオプションは、まだ実装されていないかもしれませんが、
+設定ファイルに定義することで、そのようなオプションを使えるかもしれません。
+詳しくは、この先の「新規オプションの定義」から続く記述を参照してください。
+.PP
+ここに記述されているオプションのうちのいくつかは、DHCP サーバもしくは
+クライアントによって自動的に生成されるもので、ユーザには設定できません。
+そのようなオプションの値は、受信側の DHCP プロトコルエージェント
+(サーバもしくはクライアント) の設定ファイル中の、例えば条件式などで
+使われます。
+しかしこのオプションの値は、送信側のエージェントの設定ファイル中では
+使われることはありません。
+というのも、その値は、設定ファイルが処理された後に決定されるからです。
+以降の記述において、そのようなオプションには
+「ユーザが設定することはできません」と記されます。
+.PP
+標準オプションを示します:
+.PP
+.B option \fBall-subnets-local\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが接続されている IP ネットワークの全サブネットが
+使用する MTU が、クライアントが直接接続されているサブネットの MTU と
+同じであると、クライアントが仮定してよいかを指定します。
+値 true は、全サブネットは同一の MTU であることを意味します。
+値 false は、直接接続されているネットワークのサブネットには、より小さな MTU を
+持つものがあると、クライアントが仮定すべきであることを意味します。
+.RE
+.PP
+.B option \fBarp-cache-timeout\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、ARP キャッシュエントリのタイムアウトを秒数で指定します。
+.RE
+.PP
+.B option \fBbootfile-name\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、起動ファイルを指定するために使用します。
+クライアントによってサポートされている場合、
+これは \fBfilename\fR 宣言と同じ効果を持ちます。
+BOOTP クライアントで、このオプションをサポートしているものは少ないでしょう。
+DHCP クライアントによってはサポートするものがあり、
+実際必須としているものがあります。
+.RE
+.PP
+.B option \fBboot-size\fR \fIuint16\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアント用のデフォルトのブートイメージの長さを、
+512 オクテットブロック数で指定します。
+.RE
+.PP
+.B option \fBbroadcast-address\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントのサブネットで使用されている
+ブロードキャストアドレスを指定します。
+正当なブロードキャストアドレスの値は、STD 3 (RFC1122) の 3.2.1.3 節に
+規定されています。
+.RE
+.PP
+.B option \fBcookie-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+クッキーサーバオプションは、クライアントが利用可能な
+RFC 865 クッキーサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBdefault-ip-ttl\fR \fIuint8;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントがデータグラムを送出するときに使用すべき、
+デフォルトの生存時間 (TTL) を指定します。
+.RE
+.PP
+.B option \fBdefault-tcp-ttl\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが TCP セグメントを送出するときに使用すべき、
+デフォルトの TTL を指定します。
+最小値は 1 です。
+.RE
+.PP
+.B option \fBdhcp-client-identifier\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションを使って、ホスト宣言中で DHCP クライアント識別子を
+指定することができます。
+このクライアント識別子で照合を行うことで、
+dhcpd はそのホストのレコードを発見することができます。
+.PP
+.\" metal
+DHCP クライアントの中には、ASCII テキストによってクライアント識別子が
+設定された場合、その ASCII テキストの先頭に 0 をつけるものがあることに
+注意してください。
+その場合、
+.nf
+
+	option dhcp-client-identifier "foo";
+
+ではなく、以下のように記述する必要があるでしょう。
+
+	option dhcp-client-identifier "\\0foo";
+.fi
+.RE
+.PP
+.B option \fBdhcp-lease-time\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアント要求 (DHCPDISCOVER または DHCPREQUEST) の中で、
+クライアントが IP アドレスのリース時間を要求するために使用されます。
+またサーバ応答 (DHCPOFFER) の中で、DHCP サーバが提示したいリース時間を
+指定するのにも、このオプションは使われます。
+.PP
+本オプションは、サーバではユーザが直接設定することはできません。
+.B dhcpd.conf(5)
+の \fImax-lease-time\fR と \fidefault-lease-time\fR サーバオプションを
+参照してください。
+.RE
+.PP
+.B option \fBdhcp-max-message-size\fR \fIuint16\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントから送出された場合、サーバがクライアントに
+送出するすべての応答の最大サイズを指定します。
+サーバで設定された場合、クライアントが dhcp-max-message-size オプションを
+送信してこなかった際に、このサーバで設定された値が使用されます。
+これは、BOOTP 応答でも DHCP 応答と同様に動作します。
+.RE
+.PP
+.B option \fBdhcp-message\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、障害が起きた時に、DHCP サーバが DHCPNAK メッセージ中で
+DHCP クライアントへエラーメッセージを提供するのに使用します。
+またクライアントが、提示されたパラメータを拒否した理由を示すために、
+DHCPDECLINE メッセージ中で本オプションを使うこともあります。
+.PP
+本オプションは、ユーザが設定することはできません。
+.RE
+.PP
+.B option \fBdhcp-message-type\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントとサーバの両者から送出され、
+DHCP パケットが含んでいる DHCP メッセージのタイプを指定します。
+本オプションが取り得る値は、以下のとおりです (RFC2132 よりそのまま抜粋)。
+.PP
+.nf
+             1     DHCPDISCOVER
+             2     DHCPOFFER
+             3     DHCPREQUEST
+             4     DHCPDECLINE
+             5     DHCPACK
+             6     DHCPNAK
+             7     DHCPRELEASE
+             8     DHCPINFORM               
+.fi
+.PP
+本オプションは、ユーザが設定することはできません。
+.PP
+.RE
+.B option \fBdhcp-option-overload\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、DHCP 'sname' もしくは 'file' フィールドが、
+DHCP オプションを保持するために詰め込み過ぎになっていることを
+示すのに使われます。
+DHCP サーバは、返却されたパラメータが、オプションに通常割り当てられた
+空間を超過した場合、本オプションを挿入します。
+.PP
+本オプションが存在した場合、クライアントは、標準のオプションフィールドの
+解釈が終了した後、指定された付加フィールドの解釈を行います。
+.PP
+本オプションの正当な値は、以下の通りです:
+.PP
+.nf
+             1   'file' フィールドが、オプション保持に使用されてます
+             2   'sname' フィールドが、オプション保持に使用されてます
+             3   両方のフィールドが、オプション保持に使用されてます
+.fi
+.PP
+本オプションは、ユーザが設定することはできません。
+.PP
+.RE
+.PP
+.B option \fBdhcp-parameter-request-list\fR \fIuint16\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントから送出された場合、
+サーバに返答を希望するオプションをクライアントが指定します。
+通常 ISC DHCP クライアントでは、\fIrequest\fR 文を用いて行われます。
+本オプションがクライアントから指定されなかった場合、通常 DHCP サーバは、
+スコープ内で有効かつ応答に収まるすべてのオプションを返します。
+本オプションがサーバ上で指定された場合、サーバはその指定されたオプションを
+返します。
+これは、クライアントが要求しなかったオプションを、クライアントに
+強制するのに使用されます。
+また、通常サーバが返すオプションのセットをさらに制限する必要のある
+クライアントに対して、DHCP サーバの応答を調整するのにも使用されます。
+.RE
+.PP
+.B option \fBdhcp-rebinding-time\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントがアドレスを取得してから REBINDING 状態に
+移行するまでの時間を秒数で指定します。
+.PP
+本オプションは、ユーザが設定することはできません。
+.PP
+.RE
+.PP
+.B option \fBdhcp-renewal-time\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントがアドレスを取得してから RENEWING 状態に
+移行するまでの時間を秒数で指定します。
+.PP
+本オプションは、ユーザが設定することはできません。
+.PP
+.RE
+.PP
+.B option \fBdhcp-requested-address\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、クライアントが、DHCPDISCOVER 内で特定の IP アドレスが
+割り当てられることを要求するのに使用されます。
+.PP
+本オプションは、ユーザが設定することはできません。
+.PP
+.RE
+.PP
+.B option \fBdhcp-server-identifier\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、DHCPOFFER と DHCPREQUEST メッセージ中で使用され、
+また DHCPACK と DHCPNAK メッセージ中にも含まれることがあります。
+DHCP サーバは、クライアントが (訳注: 複数サーバからの) リースの提示を
+区別できるよう、DHCPOFFER に本オプションを含めます。
+DHCP クライアントは、DHCP サーバへユニキャストするすべての DHCP メッセージの
+宛先アドレスとして 'server identifier' フィールドの内容を使用します。
+また DHCP クライアントは、DHCPREQUEST メッセージ中に本オプションを含め、
+複数のリースの提示のどれを受け入れたかを示します。
+.PP
+本オプションの値は、サーバの IP アドレスです。
+.PP
+本オプションは、ユーザが直接設定することはできません。
+.B \fIdhcpd.conf(5)
+の \fIserver-identifier\fR サーバオプションを参照してください。
+.PP
+.RE
+.PP
+.B option \fBdomain-name\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、ドメインネームシステムを使用してホスト名を解決するときに
+クライアントが使用すべきドメイン名を指定します。
+.RE
+.PP
+.B option \fBdomain-name-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+domain-name-servers オプションは、クライアントが利用可能な
+ドメインネームシステム (STD 13, RFC 1035) のネームサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBextensions-path\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、追加オプションを含むファイルのファイル名を指定します。
+この追加オプションは、RFC2132 で規定されている DHCP オプションの書式に沿って
+解釈されます。
+.RE
+.PP
+.B option \fBfinger-server\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+Finger サーバオプションは、クライアントが利用可能な Finger のリストを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBfont-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な X Window System フォントサーバを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBhost-name\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントの名前を指定します。
+この名前は、ローカルドメイン名に修飾されていても、いなくてもかまいせん
+(ドメイン名を指定するには、domain-name オプションの使用をお勧めします)。
+文字集合の制約については RFC 1035 を参照してください。
+クライアントマシンのホスト名が設定されていない場合 (すなわち
+.B rc.conf(5)
+で空文字列に設定されている場合) のみ、
+.B dhclient-script(8)
+が本オプションを尊重します。
+.RE
+.PP
+.B option \fBieee802-3-encapsulation\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、インタフェースがイーサネットである場合に、
+クライアントがイーサネットバージョン 2 (RFC 894) と
+IEEE 802.3 (RFC 1042) のどちらのカプセル化を使用すべきかを指定します。
+値 false は、クライアントが RFC 894 のカプセル化を使用すべきであることを
+意味します。
+値 true は、クライアントが RFC 1042 のカプセル化を使用すべきであることを
+意味します。
+.RE
+.PP
+.B option \fBien116-name-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+];
+.RS 0.25i
+.PP
+ien116-name-servers オプションは、
+クライアントが利用可能な IEN 116 ネームサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBimpress-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+impress-server オプションは、
+クライアントが利用可能な Imagen Impress サーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBinterface-mtu\fR \fIuint16\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、このインタフェースに対して使用する MTU を指定します。
+MTU に対する最小の正当値は 68 です。
+.RE
+.PP
+.B option \fBip-forwarding\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが、パケットを転送するように
+自分の IP 層を設定すべきかを指定します。
+値 false は IP 転送を無効にすることを意味し、
+値 true は IP 転送を有効にすることを意味します。
+.RE
+.PP
+.B option \fBirc-server\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+IRC サーバオプションは、クライアントが利用可能な IRC のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBlog-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+log-server オプションは、クライアントが利用可能な MIT-LCS UDP ログサーバの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBlpr-servers\fR \fIip-address \fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+LPR サーバオプションは、
+クライアントが利用可能な RFC 1179 ラインプリンタサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBmask-supplier\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、ICMP を使用したサブネットマスク要求に対して、
+クライアントが応答すべきかを指定します。
+値 false は、クライアントが応答すべきでないことを意味します。
+値 true は、クライアントが応答すべきであることを意味します。
+.RE
+.PP
+.B option \fBmax-dgram-reassembly\fR \fIuint16\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが再組み立ての準備をすべき
+最大データグラムサイズを指定します。
+最小の正当値は 576 です。
+.\" The minimum value legal value is 576.
+.\" The minimum legal value is 576. かな (horikawa@jp.freebsd.org 19990404)
+.RE
+.PP
+.B option \fBmerit-dump\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントがクラッシュするときの
+クライアントのコアイメージがダンプされるファイルのパス名を指定します。
+パスの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+.RE
+.PP
+.B option \fBmobile-ip-home-agent\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能なモバイル IP ホームエージェントの
+IP アドレスのリストを指定します。
+エージェントは、優先されるものから順にリストしてください。
+ただし、通常エージェントは 1 つでしょう。
+.RE
+.PP
+.B option \fBnds-context\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+nds-context オプションは、NDS クライアントのための最初の
+NetWare ディレクトリサービスの名前を指定します。
+.RE
+.PP
+.B option \fBnds-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+nds-servers オプションは、NDS サーバの IP アドレスのリストを指定します。
+.RE
+.PP
+.B option \fBnds-tree-name\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+nds-tree-name オプションは、NDS クライアントが使用すべき NDS ツリーの
+名前を指定します。
+.RE
+.PP
+.B option \fBnetbios-dd-server\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+NetBIOS データグラム配布サーバ (NBDD) オプションは、
+RFC 1001/1002 の NBDD サーバのリストを、優先されるものから順に指定します。
+.RE
+.PP
+.B option \fBnetbios-name-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...]\fB;\fR
+.RS 0.25i
+.PP
+NetBIOS ネームサーバ (NBNS) オプションは、 RFC 1001/1002 の
+NBNS ネームサーバのリストを、優先されるものから順に指定します。
+現在では、NetBIOS ネームサービスは WINS と呼ばれることの方が多いです。
+netbios-name-servers オプションを使用して、WINS サーバを指定可能です。
+.RE
+.PP
+.B option \fBnetbios-node-type\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+NetBIOS ノードタイプオプションは、
+設定可能な NetBIOS over TCP/IP クライアントを、
+RFC 1001/1002 に記述されているように設定します。
+値は単一のオクテットとして指定され、クライアントタイプを意味します。
+.PP
+使用可能なノードタイプは次の通りです:
+.PP
+.TP 5
+.I 1
+B ノード: ブロードキャスト - WINS 無し
+.TP
+.I 2
+P ノード: ピア - WINS のみ
+.TP
+.I 4
+M ノード: ミックス - ブロードキャスト後に WINS
+.TP
+.I 8
+H ノード: ハイブリッド - WINS 後にブロードキャスト
+.RE
+.PP
+.B option \fBnetbios-scope\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+NetBIOS スコープオプションは、RFC 1001/1002 に規定されているように、
+クライアントの NetBIOS over TCP/IP スコープパラメータを指定します。
+文字集合の制約については RFC1001, RFC1002, RFC1035 を参照してください。
+.RE
+.PP
+.B option \fBnis-domain\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントの NIS (Sun Network Information Services)
+ドメインを指定します。
+ドメインの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+.RE
+.PP
+.B option \fBnis-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な NIS サーバを示す IP アドレスの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBnisplus-domain\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントの NIS+ ドメインの名前を指定します。
+ドメインの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+.RE
+.PP
+.B option \fBnisplus-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な NIS+ サーバを示す IP アドレスの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBnntp-server\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+NNTP サーバオプションは、クライアントが利用可能な NNTP のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBnon-local-source-routing\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、非ローカルな指定経路 (non-local source route) を持つ
+データグラムを転送するように、クライアントが自分の IP 層を設定すべきかを
+指定します (本項目については [4] の 3.3.5 節を参照してください)。
+値 false はそのようなデータグラムの転送を許可しないことを意味し、
+値 true は転送許可を意味します。
+.RE
+.PP
+.B option \fBntp-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な NTP (RFC 1035) サーバを示す
+IP アドレスを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBnwip-domain\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+NetWare/IP クライアントが使用すべき NetWare/IP ドメインの名前です。
+.RE
+.PP
+.B option \fBnwip-suboptions\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+NetWare/IP クライアント用のサブオプションのシーケンスです。
+詳しくは RFC2242 を参照してください。
+通常、本オプションは特定の NetWare/IP サブオプションを指定することで
+設定されます。
+さらなる情報は「NetWare/IP サブオプション」の章を参照してください。
+.RE
+.PP
+.B option \fBpath-mtu-aging-timeout\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、RFC 1191 で定義される機構で発見されたパス MTU 値の
+エージングに使用するタイムアウト (秒単位) を指定します。
+.RE
+.PP
+.B option \fBpath-mtu-plateau-table\fR \fIuint16\fR [\fB,\fR \fIuint16\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、RFC 1191 で定義されるパス MTU 探索 (Path MTU Discovery)
+実施時に使用される MTU のサイズの表を指定します。
+表の書式は、最小から順に最大までの、16 ビット符号無し整数のリストです。
+最小 MTU は 68 より小さくてはなりません。
+.RE
+.PP
+.B option \fBperform-mask-discovery\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが ICMP を使用してサブネットマスク探索を
+実施すべきかを指定します。
+値 false は、クライアントがマスク探索を実施すべきでないことを意味します。
+値 true は、クライアントがマスク探索を実施すべきであることを意味します。
+.RE
+.PP
+.nf
+.B option \fBpolicy-filter\fR \fIip-address ip-address\fR
+                  [\fB,\fR \fIip-address ip-address\fR...]\fB;\fR
+.RE
+.fi
+.RS 0.25i
+.PP
+本オプションは、非ローカルな指定経路制御に対するポリシフィルタを指定します。
+フィルタは、IP アドレスとマスクの組のリストからなり、
+到着する指定経路制御されたデータグラム用のフィルタとなる
+宛先/マスクの組を指定します。
+.PP
+次ホップアドレスがフィルタのいずれにも適合しない指定経路制御された
+データグラムは、クライアントが破棄すべきです。
+.PP
+さらなる情報は STD 3 (RFC1122) を参照してください。
+.RE
+.PP
+.B option \fBpop-server\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+POP3 サーバオプションは、クライアントが利用可能な POP3 のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBresource-location-servers\fR \fIip-address\fR
+                              [\fB, \fR\fIip-address\fR...]\fB;\fR
+.fi
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な
+RFC 887 リソースロケーションサーバのリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBroot-path\fR \fItext\fB;\fR\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントのルートディスクが含まれるパス名を指定します。
+パスの書式は、NVT ASCII 文字集合の文字からなる文字列です。
+.RE
+.PP
+.B option \fBrouter-discovery\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、RFC 1256 で定義されるルータ探索 (Router Discovery) 機構を
+使用して、ルータを要請すべきかを指定します。
+値 false は、クライアントがルータ探索を実施すべきでないことを意味します。
+値 true は、クライアントはルータ探索を実施すべきであることを意味します。
+.RE
+.PP
+.B option \fBrouter-solicitation-address\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントのルータ要請の送出先アドレスを指定します。
+.RE
+.PP
+.B option routers \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+routers オプションは、クライアントのサブネット上にあるルータの
+IP アドレスのリストを指定します。
+ルータは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option slp-directory-agent \fIboolean ip-address
+[\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、2 つの項目を指定します:
+1 つ以上のサービスロケーションプロトコルディレクトリエージェント
+(Service Location Protocol Directory Agent) の IP アドレスと、
+これらのアドレスの使用が強制的かどうかです。
+最初のブール値が true であれば、SLP エージェントは、ただ与えられた
+IP アドレスのみを使用すべきです。
+値が false であれば、SLP エージェントは、SLP エージェントの
+能動的もしくは受動的なマルチキャスト探索を追加で行っても構いません
+(詳しくは RFC2165 を参照してください)。
+.PP
+本オプションと slp-service-scope オプションにおいて、
+「SLP エージェント」とは、DHCP プロトコルを用いて設定されたマシン上で
+動作しているサービスロケーションプロトコルエージェントを指していることに
+注意してください。
+.PP
+また、いくつかの企業は SLP を NDS と呼んでいることも気を付けてください。
+もし NDS ディレクトリエージェントがあり、そのアドレスを設定する必要が
+ある場合は、 slp-directory-agent オプションが利用できるはずです。
+.RE
+.PP
+.B option slp-service-scope \fIboolean text\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+サービスロケーションプロトコルのサービススコープオプションは、
+2 つの項目を指定します:
+SLP 用のサービススコープのリストと、このリストの使用が強制的かどうかです。
+最初のブール値が true であれば、SLP エージェントは、本オプションにより
+提供されるスコープのリストのみを使用すべきです。
+そうでなければ、このオプションで提供されるリストに優先して、
+それぞれの固有的の設定を使っても構いません。
+.PP
+text 文字列は、SLP エージェントが使用すべきスコープの、コンマ区切りの
+リストとしてください。
+これは省略可能で、その場合 SLP エージェントは、自分が知っている
+すべてのディレクトリエージェントのスコープの一括リストを使います。
+.RE
+.PP
+.B option \fBsmtp-server\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+SMTP サーバオプションは、クライアントが利用可能な SMTP サーバのリストを
+指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.nf
+.B option \fBstatic-routes\fR \fIip-address ip-address\fR
+                  [\fB,\fR \fIip-address ip-address\fR...]\fB;\fR
+.fi
+.RS 0.25i
+.PP
+本オプションは、クライアントが経路キャッシュに組み込むべき
+静的経路のリストを指定します。
+同じ宛先に対して複数の経路が指定されている場合は、
+優先度が低くなる順序でリストされます。
+.PP
+経路は IP アドレスの組のリストからなります。
+最初のアドレスは宛先アドレスであり、
+2 番目のアドレスはその宛先に対するルータのアドレスです。
+.PP
+デフォルト経路 (0.0.0.0) は、静的経路に対しては不正な宛先です。
+デフォルト経路を指定するには、
+.B routers
+オプションを使用してください。
+また、本オプションは、クラスレスな IP 経路制御を意図したものでは
+ないことに注意して下さい。
+これはサブネットマスクを含んでいません。
+現在、クラスレスな IP 経路制御は、もっとも広く展開されている
+経路制御標準なので、本オプションは実質的に無意味です。
+そして、マイクロソフト DHCP クライアントをはじめとするよく知られた
+DHCP クライアントには実装されていません。
+.RE
+.PP
+.nf
+.B option \fBstreettalk-directory-assistance-server\fR \fIip-address\fR
+                                           [\fB,\fR \fIip-address\fR...]\fB;\fR
+.fi
+.RS 0.25i
+.PP
+StreetTalk Directory Assistance (STDA) サーバオプションは、
+クライアントが利用可能な STDA のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBstreettalk-server\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+StreetTalk サーバオプションは、
+クライアントが利用可能な StreetTalk のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option subnet-mask \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+サブネットマスクオプションは、RFC 950 に従って、
+クライアントのサブネットマスクを指定します。
+スコープ中のどこにもサブネットマスクオプションが指定されていない場合、
+最終手段として、dhcpd は、アドレスを割り当てようとしている
+ネットワークのサブネット宣言から、サブネットマスクを使用します。
+しかし、アドレスを割り当てようとしているネットワークのスコープ中の
+.I どのような
+サブネットマスクオプション宣言であっても、
+サブネット宣言で指定されたサブネットマスクに優先します。
+.RE
+.PP
+.B option \fBsubnet-selection\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+(要求が出されたサブネットにつながれたリレーサーバのアドレスに基づいて)
+通常選択されるであろうものではないサブネットのアドレスが必要な場合、
+クライアントが送出します。
+RFC3011 を参照してください。
+このサーバにおいて使われるオプションナンバは 118 です。
+このナンバは以前からずっと定義されていたナンバではなく、
+違う値を使用するクライアントも存在することに注意してください。
+このオプションの使用は少々実験的であると考えるべきでしょう!
+.PP
+本オプションは、サーバではユーザが設定することはできません。
+.PP
+.RE
+.PP
+.B option \fBswap-server\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントのスワップサーバの IP アドレスを指定します。
+.RE
+.PP
+.B option \fBtcp-keepalive-garbage\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、古い実装との互換性のために、ゴミのオクテットと一緒に、
+TCP キープアライブメッセージをクライアントが送るべきかを指定します。
+値 false は、ゴミのオクテットを送るべきでないことを意味します。
+値 true は、ゴミのオクテットを送るべきであることを意味します。
+.RE
+.PP
+.B option \fBtcp-keepalive-interval\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントの TCP がキープアライブ (keepalive)
+メッセージを TCP 接続上に送信する前に待つべき間隔 (秒単位) を指定します。
+時間は 32 ビット符号無し整数で指定します。
+値 0 は、アプリケーションが明示的に要求しない限り、クライアントが
+接続上にキープアライブメッセージを生成すべきでないことを意味します。
+.RE
+.PP
+.B option \fBtftp-server-name\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは TFTP サーバを指定するのに使用され、クライアントが
+サポートしている場合には \fBserver-name\fR 宣言と同じ効果を持ちます。
+BOOTP クライアントは、本オプションをサポートしないでしょう。
+DHCP クライアントによってはサポートしているものがあり、
+実際必須としているものがあります。
+.RE
+.PP
+.B option time-offset \fIint32\fR\fB;\fR
+.RS 0.25i
+.PP
+time-offset オプションは、協定世界時 (UTC) を基点として、
+クライアントのサブネットのオフセットを秒で指定します。
+.RE
+.PP
+.B option time-servers \fIip-address\fR [, \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+time-server オプションは、クライアントが利用可能な RFC 868 時刻サーバの
+リストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBtrailer-encapsulation\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、ARP プロトコル使用時に、クライアントがトレイラ使用の
+ネゴシエーション (RFC 893 [14]) をすべきかを指定します。
+値 false は、クライアントがトレイラ使用を試みるべきでないと意味します。
+値 true は、クライアントがトレイラ使用を試みるべきであると意味します。
+.RE
+.PP
+.B option \fBuap-servers\fR \fItext\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、ユーザ認証プロトコル (UAP) に包まれた認証要求を
+処理する能力のあるユーザ認証サービスをそれぞれ指している
+URL のリストを指定します。
+UAP サーバは HTTP 1.1 接続も SSLv3 接続も受け取ることができます。
+リストに含まれた URL にポート部分が含まれてない場合は、
+通常のデフォルトポートが仮定されます
+(つまり http には 80 番、https には 443 番)。
+リストに含まれた URL にパスの部分が含まれてない場合は、
+パスは /uap と仮定されます。
+2 つ以上の URL がこのリストに指定された場合、URL は空白で区切られます。
+.RE
+.PP
+.B option \fBuser-class\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、ユーザが識別情報をクライアントに指定する手段として、
+いくつかの DHCP クライアントで使われます。
+これは vendor-class-identifier オプションと同様に使われますが、
+その値は、ベンダではなく、ユーザによって指定されます。
+最近のほとんどの DHCP クライアントは、この識別子に値を指定するための
+ユーザインタフェースを備えています。
+この識別子は、通常テキスト文字列です。
+.RE
+.PP
+.B option \fBvendor-class-identifier\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+本オプションは、ベンダタイプや、可能であれば DHCP クライアントの設定を
+識別するために、いくつかの DHCP クライアントで使われます。
+この情報の内容は、ベンダ固有のバイト文字列で、標準では規定されていません。
+クライアントが送出するベンダクラス識別子を確認するには、
+以下の設定を DHCP サーバ設定ファイルに加えてください:
+.nf
+.PP
+set vendor-class option vendor-class-identifier;
+.fi
+.PP
+この設定は、DHCP サーバのリースデータベースファイル中の、
+以下のような set 文を持つ vendor-class-identifier オプションを
+送ってくるクライアントすべてのエントリに作用します。
+.nf
+.PP
+set vendor-class "SUNW.Ultra-5_10";
+.fi
+.PP
+vendor-class-identifier オプションは、通常 DHCP Server によって、
+.B vendor-encapsulated-options
+オプション中で返されるオプションを決定するのに使われます。
+さらなる情報は、dhcpd.conf マニュアルページの VENDOR ENCAPSULATED OPTIONS の
+章を参照してください。
+.RE
+.PP
+.B option \fBvendor-encapsulated-options\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+.\" metal
+\fBvendor-encapsulated-options\fR オプションは、1 つのベンダ固有値、
+もしくは 1 つまたはそれ以上のベンダ固有サブオプションを含みます。
+本オプションは、通常 DHCP サーバの設定ファイルで設定されるものでは
+ありません。
+通常は、ベンダクラスがベンダ毎に定義され、
+ベンダクラスサブオプションが定義され、そのサブオプションの値が
+定義され、DHCP サーバはそれらをもとに応答を組み上げます。
+.PP
+よく知られた DHCP クライアントベンダ (今のところ Microsoft Windows
+2000 DHCP クライアント) 向けのいくつかのデフォルトの動作では、
+このオプションは自動的に設定されますが、その他のものに関しては、
+手動で設定しなければなりません。
+詳細は \fIdhcpd.conf\fI の VENDOR ENCAPSULATED OPTIONS の章を
+参照してください。
+.RE
+.PP
+.B option \fBwww-server\fR \fIip-address\fR [\fB,\fR
+\fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+WWW サーバオプションは、クライアントが利用可能な WWW のリストを指定します。
+サーバは、優先されるものから順にリストしてください。
+.RE
+.PP
+.B option \fBx-display-manager\fR \fIip-address\fR [\fB,\fR \fIip-address\fR...
+]\fB;\fR
+.RS 0.25i
+.PP
+本オプションは、クライアントが利用可能な X Window System
+ディスプレイマネージャを実行しているシステムのリストを指定します。
+アドレスは、優先されるものから順にリストしてください。
+.RE
+.SH リレーエージェント情報オプション
+.\" metal
+IETF ドラフト draft-ietf-dhc-agent-options-11.txt には、
+DHCP リレーエージェントが DHCP パケットを DHCP サーバに転送する際、
+DHCP パケットに付加することのできる一連のカプセル化されたオプションが
+定義されています。
+サーバは、これらのオプションに基づき、アドレス割当の決定
+(や、その他の判断) を行うことができます。
+またサーバは、リレーエージェントを通して返されるどのパケットにも
+これらのオプションを入れて返します。
+これによってリレーエージェントは、配送やアカウンティングなどを
+行うために、これらのオプションに含まれる情報を利用できます。
+.PP
+現在のドラフトには 2 つのオプションが定義されています。
+DHCP サーバでこれらのオプションを参照するには、オプション空間名
+"agent" のあとにピリオドをつけ、その後にオプション名を続けてください。
+サーバでこれらのオプションの値を定義することは、
+通常あまり有効ではありませんが、許容されています。
+これらのオプションは、クライアントではサポートされていません。
+.PP
+.B option \fBagent.circuit-id\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+circuit-id サブオプションは、クライアントからサーバへの DHCP パケットを
+受け取ったサーキットを示す、エージェントローカルなサーキット識別子を
+エンコードしています。
+これは、DHCP 応答を適切なサーキットへと送り返せるよう、
+エージェントによって使われることを意図しています。
+現在、このオプションの書式の定義はベンダ依存となっており、
+多分このまま残されるでしょう。
+しかし将来この書式が標準化される可能性も、現在のドラフトには残されています。
+.RE
+.PP
+.B option \fBagent.remote-id\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+remote-id サブオプションは、サーキットの終端のリモートホストの
+情報をエンコードしています。
+これに含まれるであろう情報は、次のようなものです。
+呼出元 ID 情報、ユーザ名情報、リモート ATM アドレス、ケーブルモデム ID、
+その他の同様な情報。
+原則的には、このオプションの意味はちゃんと定義されていません。
+しかし通常、サーキットの特定のリモートエンドに対して一意であるよう
+管理上保証された、なんらかのオブジェクトと考えるべきものです。
+.RE
+.SH クライアント FQDN サブオプション
+.\" metal
+現在、インターネットドラフト draft-ietf-dhc-fqdn-option-00.txt で
+定義されているクライアント FQDN オプションは、まだ標準となってはいません。
+しかしすでに十分広く利用されており、我々もこれを実装しています。
+オプションの書式が複雑なため、ここでは、単独のオプションではなく、
+サブオプション空間に実装しています。
+一般的には、本オプションは、ユーザによって設定されるものではなく、
+自動 DNS 更新システムの一部として使われるべきものです。
+.PP
+.B option fqdn.no-client-update \fIflag\fB;
+.RS 0.25i
+.PP
+本オプションがクライアントから送出された場合、これが true であれば、
+クライアントは自分の A レコードを更新しないことを意味します。
+サーバからクライアントに送出された場合は、クライアントは
+自分の A レコードを更新する \fIべきではない\fR ことを意味します。
+.RE
+.PP
+.B option fqdn.server-update \fIflag\fB;
+.RS 0.25i
+.PP
+本オプションがクライアントからサーバに送出された場合、
+サーバにクライアントの A レコードの更新を要求しています。
+サーバから送出された場合、サーバがクライアントの A レコードを
+更新した (もしくはもうすぐ更新するところ) であることを意味します。
+.RE
+.PP
+.B option fqdn.encoded \fIflag\fB;
+.RS 0.25i
+.PP
+true であった時、オプションに含まれるドメイン名が、
+ただの ASCII テキストではなく、DNS ワイヤフォーマットで
+エンコードされていることを示してます。
+クライアントは、自分が FQDN オプションの DNS ワイヤフォーマットを
+サポートしてない場合、通常このサブオプションを false に設定します。
+サーバは常に、クライアントが設定したのと同じ値を設定して返すべきです。
+この値が設定ファイルに設定されていた時は、\fIfqdn.fqdn\fR サブオプションを
+エンコードするフォーマットを制御します。
+.RE
+.PP
+.B option fqdn.rcode1 \fIflag\fB;
+.PP
+.B option fqdn.rcode2 \fIflag\fB;
+.RS 0.25i
+.PP
+これらのオプションはそれぞれ、A レコードと PTR レコードの更新結果を示します。
+これらは、DHCP サーバから DHCP クライアントへのみ送られます。
+これらのフィールドの値は、DNS プロトコル規格により定義されています。
+.RE
+.PP
+.B option fqdn.fqdn \fItext\fB;
+.RS 0.25i
+.PP
+クライアントが使用を望むドメイン名を指定します。
+これは完全修飾されたドメイン名でも、単一のラベルでも構いません。
+もし名前に '.' 文字が含まれなければ、その名前は完全修飾されておらず、
+サーバは通常、ローカルに定義されたドメイン中のその名前を更新します。
+.RE
+.PP
+もしこれらのサブオプションを使用しようと思っているのであれば、
+クライアント FQDN オプションのドラフト (もしくは、標準になった時はその標準)
+を参照することを強く推奨します。
+この文書は、そのドラフトに比べて大雑把で不完全であり、
+クライアント FQDN オプション規格をすでに理解している人に参照されることを
+単に意図しているものです。
+.SH NetWare/IP サブオプション
+.\" metal
+RFC2242 は、Novell の NetWare/IP クライアント用のカプセル化された
+オプションの組を定義しています。
+DHCP サーバにおいてこれらのオプションを使用するには、オプション空間名
+"nwip" の後にピリオドをつけ、その後にオプション名を続けてください。
+以下のオプションが指定できます:
+.PP
+.B option \fBnwip.nsq-broadcast\fR \fIflag\fR\fB;\fR
+.RS 0.25i
+.PP
+true であった場合、クライアントは、NetWare/IP サーバの位置を
+探すのに NetWare Nearest Server Query を使うべきです。
+本サブオプションが false であった場合、もしくは指定されなかった場合の
+Novell クライアントの動作は規定されていません。
+.PP
+.RE
+.B option \fBnwip.preferred-dss\fR \fIip-address\fR [\fB,\fR \fIip-address\fR... ]\fR\fB;\fR
+.RS 0.25i
+.PP
+本サブオプションには、5 つまでの IP アドレスのリストを指定します。
+それぞれのアドレスは、NetWare ドメイン SAP/RIP サーバ (DSS) の
+IP アドレスです。
+.RE
+.PP
+.B option \fBnwip.nearest-nwip-server\fR \fI\fIip-address\fR
+                             [\fB,\fR \fIip-address\fR...]\fR\fB;\fR
+.RS 0.25i
+.PP
+本サブオプションには、5 つまでの IP アドレスのリストを指定します。
+それぞれのアドレスは、近接の NetWare IP サーバ
+(Nearest NetWare IP Server) の IP アドレスです。
+.RE
+.PP
+.B option \fBnwip.autoretries\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+起動時に、NetWare/IP クライアントが、与えられた DSS サーバと
+何回通信を試みるべきかを指定します。
+.RE
+.PP
+.B option \fBnwip.autoretry-secs\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+起動時に、NetWare/IP クライアントが、与えられた DSS サーバと
+通信を確立する時に、リトライの間何秒待つべきかを指定します。
+.RE
+.PP
+.B option \fBnwip.nwip-1-1\fR \fIuint8\fR\fB;\fR
+.RS 0.25i
+.PP
+true であった場合、NetWare/IP クライアントは NetWare/IP
+バージョン 1.1 をサポートしているべきです。
+これは、クライアントが NetWare/IP バージョン 1.1 のサーバと
+通信する時のみ必要です。
+.RE
+.PP
+.B option \fBnwip.primary-dss\fR \fIip-address\fR\fB;\fR
+.RS 0.25i
+.PP
+NetWare/IP ドメインのプライマリドメイン SAP/RIP サービスサーバ
+(DSS) の IP アドレスを指定します。
+セカンダリ DSS サーバの設定時に、NetWare/IP 管理ユーティリティは、
+この値をプライマリ DSS サーバとして使用します。
+.RE
+.SH 新規オプションの定義
+.\" metal
+Internet Systems Consortium DHCP クライアントとサーバは、
+新規オプションを定義する機構も提供しています。
+それぞれの DHCP オプションは、名前とコード、構造を持っています。
+名前は、使用者がオプションを参照するのに使用されます。
+コードは、DHCP サーバとクライアントがオプションを参照するのに
+使用する番号です。
+構造は、オプションの内容がどのようなものかを記述しています。
+.PP
+新規オプションを定義するには、他のオプションでは使われていない名前を
+選ぶ必要があります。
+例えば、"host-name" と言う名前は使用できません。
+というのも、このマニュアルページに出てきたように、
+DHCP プロトコルが既に host-name オプションを定義しているからです。
+このマニュアルページに出てきていないオプション名ならば
+使っても構いませんが、将来出てくるオプションと重ならないように、
+オプション名の最初に独自の文字列をつけることは、多分いい考えでしょう。
+例えば、公式の DHCP オプションには "local" で始まるものがないので、
+"local-host-name" と言う名前は、いくらか安心して定義できるでしょう。
+.PP
+名前を選択したら、次はコードを選ばねばなりません。
+DHCP オプションの 128 から 256 までのコードは、
+サイトローカルオプション用として予約されているので、
+この中のコードならどれでも選ぶことができます。
+実際には、プロトコルを少々あいまいに解釈しているベンダがあり、
+128 より大きい値のオプションコードを使用しています。
+この問題を本当に回避する方法はありませんが、
+実際にはそう大きな問題を引き起こすものではないでしょう。
+.PP
+オプションの構造とは、単にオプションのデータが表現されている形式です。
+現在 ISC DHCP サーバは、整数、ブール値、文字列そして IP アドレスといった、
+いくつかの単純なデータ型をサポートしており、
+また単一データ型の配列や固定順のデータ型列の配列を定義することもできます。
+.PP
+新規オプションは、以下のように宣言されます:
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.I definition
+.B ;
+.PP
+.I new-name
+と
+.I new-code
+の値は、新規オプション用にあなたが選んだものです。
+.I definition
+は、オプションの構造の定義です。
+.PP
+以下の単純なオプションの型定義がサポートされています:
+.PP
+.B ブール値
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B boolean
+.B ;
+.PP
+ブール型のオプションは、on または off (もしくは true か false) の値を
+持つフラグです。
+ブール型の使用例は、以下のようになります:
+.nf
+
+option use-zephyr code 180 = boolean;
+option use-zephyr on;
+
+.fi
+.B 整数
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.I sign
+.B integer
+.I width
+.B ;
+.PP
+\fIsign\fR トークンは、空白、\fIunsigned\fR、\fIsigned\fR のいずれかです。
+width は 8, 16, 32 のいずれかで、整数の bit 数を示します。
+例えば、以下の 2 行は、sql-connection-max オプションの定義と
+使用法を示します:
+.nf
+
+option sql-connection-max code 192 = unsigned integer 16;
+option sql-connection-max 1536;
+
+.fi
+.B IP アドレス
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B ip-address
+.B ;
+.PP
+IP アドレス型の構造を持つオプションは、ドメイン名もしくは
+ドット区切りの 4 整数で表現されます。
+以下は、IP アドレス型の使用例です:
+.nf
+
+option sql-server-address code 193 = ip-address;
+option sql-server-address sql.example.com;
+
+.fi
+.PP
+.B テキスト
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B text
+.B ;
+.PP
+テキスト型のオプションは、ASCII テキスト文字列をエンコードします。
+例えば:
+.nf
+
+option sql-default-connection-name code 194 = text;
+option sql-default-connection-name "PRODZA";
+
+.fi
+.PP
+.B データ文字列
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B string
+.B ;
+.PP
+データ文字列型のオプションは、本質的には単なるバイトの集合体です。
+テキスト型のようにクオートされたテキストで指定されるか、
+もしくはコロン区切りの 16 進数のリストで指定されます。
+この時コロンで区切られた中身は、0 から FF の間の値でなければなりません。
+例えば:
+.nf
+
+option sql-identification-token code 195 = string;
+option sql-identification-token 17:23:19:a6:42:ea:99:7c:22;
+
+.fi
+.PP
+.B カプセル化
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B encapsulate
+.I identifier
+.B ;
+.PP
+カプセル化型のオプションは、\fIidentifier\fR で指定された
+オプション空間の中身をカプセル化します。
+現在 DHCP プロトコルに存在するカプセル化オプションの例は、
+vendor-encapsulated-options オプション、netware-suboptions オプション、
+relay-agent-information オプションなどです。
+.nf
+
+option space local;
+option local.demo code 1 = text;
+option local-encapsulation code 197 = encapsulate local;
+option local.demo "demo";
+
+.fi
+.PP
+.B 配列
+.PP
+オプションは、テキスト型とデータ文字列型以外の上述のいかなるデータ型の
+配列も含むことができます。
+テキスト型とデータ文字列型は、現在配列ではサポートされていません。
+配列定義の例は以下の通りです:
+.nf
+
+option kerberos-servers code 200 = array of ip-address;
+option kerberos-servers 10.20.10.1, 10.20.11.1;
+
+.fi
+.B レコード
+.PP
+オプションは、データ型の列で構成されるデータ構造を含むこともできます。
+これはしばしばレコード型と呼ばれます。
+例えば:
+.nf
+
+option contrived-001 code 201 = { boolean, integer 32, text };
+option contrived-001 on 1772 "contrivance";
+
+.fi
+またレコードの配列のオプションを持つこともできます。
+例えば:
+.nf
+
+option new-static-routes code 201 = array of {
+	ip-address, ip-address, ip-address, integer 8 };
+option static-routes
+	10.0.0.0 255.255.255.0 net-0-rtr.example.com 1,
+	10.0.1.0 255.255.255.0 net-1-rtr.example.com 1,
+	10.2.0.0 255.255.224.0 net-2-0-rtr.example.com 3;
+
+.fi	
+.SH ベンダカプセル化オプション
+.\" metal
+DHCP プロトコルには、\fB vendor-encapsulated-options\fR オプションが
+定義されています。
+ベンダは、このオプションによって、ベンダ固有のオプションを
+標準 DHCP オプションに含めて送出することができます。
+.B vendor-encapsulated-options
+オプションの書式は、書式が規定されていない一連のバイト列、
+もしくは一連のオプション列です。
+オプション列中のそれぞれのオプションは、1 バイトのベンダ固有の
+オプションコードの後に 1 バイトのデータ長、
+そしてそのデータ長で指定された大きさのデータが続いたもので構成されます
+(データ長には、データ長自身やオプションコードは含まれません)。
+.PP
+本オプションの値は、2 つの方法のいずれかで設定されます。
+1 番目の方法は、単にデータを直接指定するものです。
+データの指定には、テキスト文字列かコロンで区切られた 16 進数値を用います。
+例えば:
+.PP
+.nf
+option vendor-encapsulated-options
+    2:4:AC:11:41:1:
+    3:12:73:75:6e:64:68:63:70:2d:73:65:72:76:65:72:31:37:2d:31:
+    4:12:2f:65:78:70:6f:72:74:2f:72:6f:6f:74:2f:69:38:36:70:63;
+.fi
+.PP
+本オプションを設定する 2 番目の方法は、DHCP サーバに
+ベンダ固有オプションバッファを作成させるというものです。
+これをするには、以下の 4 つのことをする必要があります:
+オプション空間を定義し、そのオプション空間内にオプションを定義し、
+それらへ値を割り振り、最後にそのオプション空間が
+.B vendor-encapsulated-options
+オプションの生成に使用されることを指定します。
+.PP
+ベンダオプションが格納されるオプション空間を新規に定義するには、
+\fRoption space\fP 文を使用します:
+.PP
+.B option
+.B space
+.I name
+.B ;
+.PP
+この文書にこれまで書かれているように、
+この name は、オプション定義で使用することができます。
+例えば:
+.nf
+
+option space SUNW;
+option SUNW.server-address code 2 = ip-address;
+option SUNW.server-name code 3 = text;
+option SUNW.root-path code 4 = text;
+
+.fi
+一度、オプション空間とオプションの書式を定義したら、
+それらのオプションの値を定義するスコープを設定でき、
+それらのオプションをいつ使うかを指定することができます。
+例えば、2 つの異なるクラスのクライアントを扱いたいとしましょう。
+前述の例で示したオプション空間の定義を使って、以下のように、
+クライアントから送られてきた vendor-class-identifier オプションに基づいて、
+異なるオプションの値を異なるクライアントに送出することができます。
+.PP
+.nf
+class "vendor-classes" {
+  match option vendor-class-identifier;
+}
+
+option SUNW.server-address 172.17.65.1;
+option SUNW.server-name "sundhcp-server17-1";
+
+subclass "vendor-classes" "SUNW.Ultra-5_10" {
+  vendor-option-space SUNW;
+  option SUNW.root-path "/export/root/sparc";
+}
+
+subclass "vendor-classes" "SUNW.i86pc" {
+  vendor-option-space SUNW;
+  option SUNW.root-path "/export/root/i86pc";
+}
+.fi
+.PP
+先の例で見たように、通常のスコープルールを適用することで、
+グローバルな値をグローバルスコープ中に定義でき、
+特定のクラスに固有の値だけをローカルスコープに定義できます。
+\fBvendor-option-space\fR 宣言を使うことで、
+.B vendor-encapsulated-options
+オプションを構成するのに、SUNW オプション空間内のオプションを使うよう
+DHCP サーバに指示することができます。
+.SH 関連項目
+dhclient.conf(5), dhcp-eval(5), 
+dhclient(8), RFC2132, RFC2131
+.SH 作者
+Internet Systems Consortium DHCP Distribution
+は、Vixie Labs との契約のもとで、Ted Lemon が記述しました。
+本プロジェクトの資金は、Internet Systems Consortium が提供しました。
+Internet Systems Consortium に関する情報は、
+.B https://www.isc.org
+にあります。

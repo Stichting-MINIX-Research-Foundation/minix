@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# $NetBSD: dhcpd,v 1.7 2014/07/17 07:17:03 spz Exp $
+#
+
+# PROVIDE: dhcpd
+# REQUIRE: DAEMON
+# BEFORE:  LOGIN
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="dhcpd"
+rcvar=$name
+command="/usr/sbin/${name}"
+start_precmd="dhcpd_precmd"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/${name}.conf"
+
+dhcpd_precmd()
+{
+        if [ ! -e "/var/db/${name}.leases" ]; then
+                echo "Creating /var/db/${name}.leases"
+                touch /var/db/${name}.leases
+        fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

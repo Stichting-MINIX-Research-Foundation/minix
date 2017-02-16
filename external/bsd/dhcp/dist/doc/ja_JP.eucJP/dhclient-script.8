@@ -1,0 +1,244 @@
+.\"	$NetBSD: dhclient-script.8,v 1.1.1.3 2014/07/12 11:57:33 spz Exp $
+.\"
+.\"	Id: dhclient-script.8,v 1.4 2009/11/24 02:06:56 sar Exp 
+.\"
+.\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 1996-2003 by Internet Software Consortium
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+.\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"   Internet Systems Consortium, Inc.
+.\"   950 Charter Street
+.\"   Redwood City, CA 94063
+.\"   <info@isc.org>
+.\"   https://www.isc.org/
+.\"
+.\" This software has been written for Internet Systems Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about Internet Systems Consortium, see
+.\" ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
+.\"
+.\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient-script.8,v 1.5.2.4 2002/04/11 10:16:45 murray Exp %
+.\"
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man8/dhclient-script.8,v 1.13 2002/05/08 03:27:27 horikawa Exp $
+.TH dhclient-script 8
+.SH 名称
+dhclient-script - DHCP クライアントのネットワーク設定スクリプト
+.SH 解説
+DHCP クライアントのネットワーク設定スクリプトは、
+時あるごとに \fBdhclient(8)\fR が呼び出します。
+DHCP クライアントは、本スクリプトを使用することにより、
+アドレス要求に先立つ各インタフェースの初期設定と、
+付与されたアドレスの検査と、
+リース獲得時のインタフェースの最終設定を行います。
+リースが獲得されなかった場合、
+定義済みのリースが存在するならばこれを検査するために本スクリプトは使用され、
+有効なリースが判明しなかった場合にももう 1 回このスクリプトが呼ばれます。
+.PP
+本スクリプトは、エンドユーザにカスタマイズされることを意図していません。
+ローカルなカスタマイズが必要な場合、
+これは入 (enter) と出 (exit) というフックを使用することで可能となります
+(詳細はフック参照)。
+これらのフックは、
+.B /etc/resolv.conf
+作成時に、
+クライアントのデフォルト動作をユーザがオーバライドできるようにします。
+.PP
+特定のオペレーティングシステムでは、
+クライアントの実体は動作するとしても、
+標準のスクリプトが動作しないかもしれません。
+先駆的なユーザが新規スクリプトを作成したり既存のものを修正したりする必要がある
+ことはもっともなことです。
+一般的には、それぞれのコンピュータに固有のカスタマイズは
+.B ETCDIR/dhclient.conf
+スクリプトで行うべきです。
+.B ETCDIR/dhclient.conf
+のカスタマイズ無しにできないカスタマイズや、
+入と出のフックの使用ではできないカスタマイズに気づいた場合には、
+バグレポートを送ってください。
+.SH フック
+開始時に、クライアントスクリプトはまずシェル関数を定義します。その関数は
+.B make_resolv_conf
+であり、後に
+.B /etc/resolv.conf
+ファイルを作成するために使用されます。
+デフォルト動作をオーバライドするには、
+この関数を入のフックスクリプトで再定義してください。
+.PP
+make_resolv_conf 関数の定義の後、クライアントスクリプトは
+実行可能な
+.B ETCDIR/dhclient-enter-hooks
+スクリプトの存在を検査し、
+存在する場合には Bourne シェルの '.' コマンドを使用して
+本スクリプトをインラインで起動します。
+操作で記述されているすべての環境が本スクリプトで使用可能であり、
+スクリプトの動作の変更が必要な場合には環境の修正が許されています。
+スクリプト実行中にエラーが発生した場合、
+exit_status 変数を非 0 値に設定することが可能であり、
+クライアントスクリプト終了直後に
+.B CLIENTBINDIR/dhclient-script
+はそのエラーコードで終了します。
+.PP
+すべての処理の完了後に、
+.B CLIENTBINDIR/dhclient-script
+は実行可能な
+.B ETCDIR/dhclient-exit-hooks
+スクリプトの存在を検査し、存在する場合には '.' コマンドでこれを起動します。
+dhclient-script の
+終了状態は dhclient-exit-hooks の exit_status シェル変数に渡され、
+起動された仕事にスクリプトが成功した場合には値は常に 0 になります。
+dhclient-enter-hooks の項で前述したその他の環境も引き継がれます。
+.B ETCDIR/dhclient-exit-hooks
+は exit_status に手を加えて
+dhclient-script の戻り値を変更できます。
+.SH 操作
+dhclient がクライアント設定スクリプトを起動する必要があるとき、
+様々な変数を環境に定義してから
+.B CLIENTBINDIR/dhclient-script
+を起動します。
+すべての場合において、$reason にはスクリプトが起動される理由名が設定されます。
+次の理由が現在定義されています:
+MEDIUM, PREINIT, BOUND, RENEW, REBIND, REBOOT,
+EXPIRE, FAIL, TIMEOUT。
+.PP
+.SH MEDIUM
+DHCP クライアントは、インタフェースのメディアタイプの設定を求めています。
+インタフェース名は $interface で渡され、メディアタイプは $medium で渡されます。
+.SH PREINIT
+DHCP クライアントは、
+実際のアドレスを受け取る前にパケットを送信する目的で、
+要求通りにインタフェースが設定されることを求めています。
+BSD のソケットライブラリを使用するクライアントでは、
+IP アドレス 0.0.0.0 かつブロードキャストアドレス 255.255.255.255 で、
+インタフェースを設定することを意味します。
+他のクライアントでは、
+実際に IP アドレスを与えることなく単にインタフェースを設定することで
+実現されるでしょう。
+インタフェース名は $interface で渡され、メディアタイプは $medium で渡されます。
+.PP
+IP エイリアスが dhclient.conf で宣言されている場合、
+このアドレスが $alias_ip_address で渡されます。
+本 IP アドレスへの経路とともに、
+本 IP アドレスを対象インタフェースから削除する必要があります。
+.SH BOUND
+DHCP クライアントは、新アドレスへの初期の結合を完了しました。
+新しい IP アドレスは $new_ip_address で渡され、
+インタフェース名は $interface で渡されます。
+メディアタイプは $medium で渡されます。
+サーバから獲得したオプションは、\fBdhcp-options\fR で宣言されている
+オプション名で渡されます。
+例外として、 有効なシェル変数とするために
+ダッシュ ('-') はアンダスコア('_')で置き換えられ、
+変数名は new_ で開始します。
+例えば、新しいサブネットマスクは $new_subnet_mask で渡されます。
+.PP
+アドレスを実際に設定する前に、dhclient-script は何らかの方法で
+そのアドレスに対して ARP を行い、返事を受け取った場合には非 0 の値で
+終了するべきです。この場合クライアントは DHCPDECLINE メッセージをサーバ
+に送信し、違うアドレスを取得します。
+この作業は RENEW, REBIND, REBOOT 状態でも同様に行いますが、
+必ずしも必要ではなく、実際好ましくないでしょう。
+.PP
+結合が完了すると、
+ネットワークに関する多くのパラメータを設定する必要があるでしょう。
+$new_domain_name および $new_domain_name_servers
+(これには複数のサーバを空白で区切って列挙してあるかもしれません) を使用して、
+新しい /etc/resolv.conf を作成する必要があります。
+デフォルト経路は、$new_routers を使用して設定する必要があります。
+静的経路は、$new_static_routes を使用して設定する必要があるかもしれません。
+.PP
+IP エイリアスが宣言されている場合、ここで設定する必要があります。
+エイリアスの IP アドレスは  $alias_ip_address として記述され、
+エイリアス用に設定される他の DHCP オプション (例えばサブネットマスク) は
+前述のように変数で渡されますが、
+$new_ で開始するのではなく $alias_ で開始します。
+エイリアスの IP アドレスが結合された IP アドレス ($new_ip_address) と
+同じ場合、これを使用してはならないことに注意してください。
+なぜなら、この場合には他のエイリアスのパラメータが正しくない可能性がある
+からです。
+.SH RENEW
+結合が更新されると、スクリプトは BOUND と同様に呼ばれますが、
+$new_ で開始する全変数に加えて $old で開始する別の変数の組があるという
+例外があります。
+変更された可能性がある永続的な設定は、削除する必要があります。
+例えば、結合されたアドレスに対するローカル経路が設定された場合、
+古いローカル経路を削除する必要があります。
+デフォルト経路が変更された場合、古いデフォルト経路を削除する必要があります。
+静的経路が変更された場合、古いものを削除する必要があります。
+その他については、BOUND と同様に処理可能です。
+.SH REBIND
+DHCP クライアントが、新規 DHCP サーバに再結合されました。
+これは RENEW と同様に扱えますが、IP アドレスが変わった場合には、
+ARP 表をクリアする必要があります。
+.SH REBOOT
+DHCP クライアントは、リブート後に元のアドレスを再獲得することに成功しました。
+これは BOUND と同様に処理可能です。
+.SH EXPIRE
+DHCP クライアントはリース更新と新規リース獲得に失敗し、
+リースの期限が切れました。
+対象 IP アドレスを解放する必要があり、
+RENEW および REBIND と同様に、関連するパラメータを削除する必要があります。
+.SH FAIL
+DHCP クライアントは DHCP サーバに接続できず、
+また検査した IP アドレスには有効なものはありませんでした。
+最後に検査したリースのパラメータは、設定解除する必要があります。
+これは、EXPIRE と同様に扱えます。
+.SH TIMEOUT
+DHCP クライアントはどの DHCP サーバにも接続できませんでした。
+しかしながら、古いリースが識別され、
+BOUND と同様に、この古いリースのパラメータが渡されました。
+クライアントの設定スクリプトは、このパラメータを検査し、
+これが有効であると信じる理由があるならば、値 0 で終了すべきです。
+そうでないならば、非 0 の値で終了すべきです。
+.PP
+リースを検査する通常の方法は、REBIND と同様にネットワークを設定して
+(複数のリースを検査するために呼ばれることがあるからです)、
+$routers で定義される最初のルータに ping することです。
+応答を受信した場合、
+インタフェースが現在接続されているネットワークに対して、リースが有効です。
+$new_static_routers に加えて
+$new_routers に列挙されている全ルータに ping を試すようになれば、
+完全性が増すでしょう。しかし、現在のスクリプトはそうなっていません。
+.SH 関連ファイル
+類似したオペレーティングシステムに対するスクリプトファイルは
+似ていたり全く同じかもしれませんが、一般には、
+各オペレーティングシステム用に各々のスクリプトファイルがあるべきです。
+Internet Systems Consortium の DHCP 配布に含まれるスクリプトファイルは、
+client/scripts 以下の配布ツリーにあり、
+動作対象オペレーティングシステム名になっています。
+.SH バグ
+複数インタフェースを使用する場合、
+サーバが提供する設定パラメータ同士が
+衝突しないようにする明確な方法はありません。
+例えば、
+標準の dhclient-script は /etc/resolv.conf を再度書き換えてしまいます。
+すなわち、複数のインタフェースが設定されている場合、
+あるサーバから提供される値に /etc/resolv.conf が初期化された後に、
+別のサーバから提供される値に初期化されるという動作を繰り返します。
+どちらのサーバから提供される情報も有効である場合には、
+実際上問題とはならないものの、混乱のもとになりえます。
+.SH 関連項目
+dhclient.conf(5), dhclient.leases(5), dhclient(8)
+.SH 作者
+.B dhclient-script(8)
+は Ted Lemon が
+Vixie Enterprises と協力して Internet Systems Consortium のために
+書きました。
+Internet Systems Consortium についてより詳しくは、
+.B https://www.isc.org
+をご覧ください。
+Vixie Enterprises についてより詳しくは、
+.B http://www.vix.com
+をご覧ください。

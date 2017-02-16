@@ -1,0 +1,62 @@
+In order to test the DHCPv6 server, we have a configuration file with
+known values, and some Perl scripts designed to send and receive
+DHCPv6 packets to check various code paths.
+
+It is not complete test converage by any means, but it should be
+fairly easy to add additional tests as needed.
+
+The scripts themselves are not very well written. There is a lot of
+copied code, poor error handling, and so on. These should be rewritten
+at some point.
+
+To use, the DHCPv6 server must be running in test mode to send back to
+the originating port. (The scripts can be changed to bind to the
+appropriate client port, but they don't now, and have to run as root
+to do this). In server/dhcpv6.c, look for this comment:
+
+/* For testing, we reply to the sending port, so we don't need a root */
+/* client */
+		to_addr.sin6_port = remote_port;
+/*		to_addr.sin6_port = packet->client_port;*/
+
+And change the code to use the client_port value.
+
+You will need to modify one of the test configuration files to use one 
+of the physical subnets that your machine uses, in the subnet6 
+statement.
+
+Then run the server as root, in debug mode:
+
+# touch /tmp/test.leases
+# dhcpd -6 -cf test-a.conf -lf /tmp/test.leases -d
+
+You can invoke the scripts then:
+
+$ perl 000-badmsgtype.pl
+
+The expected results vary per script, depending on the behavior that
+is being tested.
+
+
+Notes about scripts:
+
+In order to manipulate IPv6 addresses, we need the Socket6 library,
+available from CPAN:
+
+http://search.cpan.org/~umemoto/Socket6-0.19/Socket6.pm
+
+The Perl that Sun issues for Solaris 10 is compiled with the Sun
+compiler. If you have the Sun compiler, then this will work fine.
+Otherwise you may need to install Perl from source.
+
+We need to get the hardware address in order to build DUID properly.
+The IO::Interface module reports hardware address, but not on Solaris
+10 it seems. Rather than do this the "right way", we do it the "Perl
+way", and hack it. "ifconfig" does return the Ethernet address, but
+only to the root user. However, we can look for files of the name
+/etc/hostname.*, get the IP address from "ifconfig", and then check
+for those addresses in the ARP table.
+
+Client DUID is supposed to be an opaque value to the server, but we go
+ahead and make a "real" type 1 or type 3 DUID.
+

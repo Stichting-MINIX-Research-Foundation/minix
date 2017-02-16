@@ -1,0 +1,63 @@
+Introduction
+------------
+
+That is only a brief overview of tests in ISC DHCP. For more thorough
+description, see ISC DHCP Developer's Guide. You can generate it, by
+having Doxygen installed and doing:
+
+ cd doc
+ make devel
+
+and then opening doc/html/index.html
+
+Tests Overview
+--------------
+
+In DHCP, a unit test exercises a particular piece of code in 
+isolation. There is a separate unit test per module or API. Each unit
+test lives in a directory beneath the code it is designed to exercise.
+So, we (will eventually) have:
+
+    server/tests/
+    client/tests/
+    common/tests/
+    dhcpctl/tests/
+
+And so on.
+
+We are using ATF (Automated Test Framework) as a framework to run our
+unittests. See ISC DHCP Developer's Guide for much more thorough
+description of unit-test and ATF framework in general.
+
+Running Unit Tests
+------------------
+
+In order to run the unit tests for DHCP, enable ATF support during configure:
+
+$ ./configure --with-atf
+
+And then use:
+
+$ make check
+
+This will run all of the unit tests. Make sure that ATF is actually
+installed and that you have atf-run and atf-report tool in your PATH.
+
+You can run a single test by going to the appropriate test directory 
+and invoking the test directly:
+
+$ cd server/tests
+$ atf-run | atf-report
+
+There are also a number of options that you can use when running a
+test. See atf-run and atf-report documentation.
+
+Adding a New Unit Test
+----------------------
+
+See ISC DHCP Developer's Guide.
+
+Adding a New Unit Test Program
+------------------------------
+
+See ISC DHCP Developer's Guide.
