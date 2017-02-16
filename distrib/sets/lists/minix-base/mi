@@ -196,6 +196,12 @@
 ./home/bin/.exrc                                        minix-base      obsolete
 ./home/bin/.profile                                     minix-base      obsolete
 ./lib                                                   minix-base
+./libexec                                               minix-base
+./libexec/resolvconf                                    minix-base
+./libexec/resolvconf/dnsmasq                            minix-base
+./libexec/resolvconf/libc                               minix-base
+./libexec/resolvconf/named                              minix-base
+./libexec/resolvconf/unbound                            minix-base
 ./mnt                                                   minix-base
 ./proc                                                  minix-base
 ./root                                                  minix-base
@@ -228,6 +234,7 @@
 ./sbin/printconfig                                      minix-base
 ./sbin/rcorder                                          minix-base
 ./sbin/reboot                                           minix-base
+./sbin/resolvconf                                       minix-base
 ./sbin/route                                            minix-base
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base

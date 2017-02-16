@@ -14,7 +14,7 @@ MAN=	\
 	\
 	nsswitch.conf.5 \
 	rc.conf.5 \
-	\
+	resolv.conf.5 \
 	\
 	\
 	
@@ -24,7 +24,7 @@ MAN=	\
 #MLINKS+=fs.5 inode.5
 #MLINKS+=hosts.equiv.5 rhosts.5
 #MLINKS+=monthly.5 monthly.conf.5
-#MLINKS+=resolv.conf.5 resolver.5
+MLINKS+=resolv.conf.5 resolver.5
 #MLINKS+=utmp.5 wtmp.5 utmp.5 lastlog.5 passwd.5 master.passwd.5
 #MLINKS+=utmpx.5 wtmpx.5 utmpx.5 lastlogx.5
 #MLINKS+=weekly.5 weekly.conf.5
