@@ -1,0 +1,186 @@
+; Id: NEWS,v 1.1 2003/06/04 00:25:03 marka Exp 
+
+Major changes in idnkit version 1.0:
+
+* Change ACE prefix of Punycode from 'zq--' to 'xn--'. And delete
+  configure's --with-punycode-prefix option.
+
+* Add NAMEPREP version RFC3491. Other versions of NAMEPREP are
+  removed.
+
+* Enable idnconv to handle a input line as long as memory permitted
+  when encoding/decoding.
+
+* unicode-form-c and unicode-form-c/3.2.0 are not supported.
+
+* Unicode 3.0.1 and Unicode 3.1.0 are not supported.
+
+* Delete BIND8, Squid and GNU libiconv patches.
+
+Major changes in idnkit version 1.0-pr2:
+
+* The license of idnkit is changed to a less restrictive one. See
+  LICENSE.txt for the new license.
+
+* The local codeset name used in the test suite, which is hard-coded
+  in the previous version, can be specified by a separate header file.
+
+* IDN encoding and decoding now always check the validity of the
+  result by performing roundtrip conversion check.
+
+Major changes in idnkit version 1.0-pr1:
+
+* Some test cases are added to the testsuite.
+
+* The testsuite can run on OpenBSD.
+
+Major changes in idnkit version 020829:
+
+* Testsuit is added for the library behavior check.
+  Testsuit and testcases are in lib/tests.  Read INSTALL (INSTALL.ja)
+  for details.  Tests aim at api, checker, converter, delimitermap,
+  mapper, mapselecter, normalizer, res, resconf, and ucs4 at the
+  moment.
+
+* "amcacez" module is renamed to "punycode".
+
+* AMC-ACE-Z and RACE are now treated as extra ACE.
+
+* Add "--with-utf8=NAME" option to configure script.
+
+Major changes in idnkit version 020730:
+
+* Complete bidi check support for NAMEPREP draft -11.
+
+* Type definitions of action flags for conversion APIs are changed
+  from int to idn_action_t.
+
+* Add -nobidicheck option to idnconv command.
+
+Major changes in idnkit version 020711:
+
+* Default delimiters are added according to IDNA-10.
+
+* ``delimiter-map'' entry in config file is removed.
+
+* Add Unicode version 3.2 support.
+
+* Add preliminary support of NAMEPREP draft -11.
+  This version supports NAMEPREP draft -11 without bidirectional label
+  check.
+
+* Supported NAMEPREP versions are changed. 
+  idnkit supports NAMEPREP draft version -03, -10, and -11.  Others
+  are removed.
+
+* IDN encoding DUDE is removed.
+
+* New action flags are available for conversion APIs.
+  IDN_ENCODE_QUERY, IDN_DECODE_QUERY, IDN_ENCODE_STORED, and
+  IDN_DECODE_STORED are newly created according to IDNA specification.
+  See include/idn/res.h for precise description.
+
+* Action flags IDN_ENCODE_APP, IDN_DECODE_APP and IDN_NAMEPREP change
+  those behavior.
+  See include/idn/res.h for precise description.
+
+* New decode APIs are created.
+  idn_decodename2() and idn_res_decodename2() are defined to add
+  conversion process from "IDN string encoded in local encoding" to
+  UTF-8 before actual decode process of IDN.
+
+* idnconv with -reverse option treats input as IDN string(s) encoded
+  in local encoding specified by -out option.
+
+* idnconv recognizes `-A' option which is synonym for `-noasciicheck'.
+
+* (Windows) idn Wrapper can run on Windows XP.
+
+* BIND-8 patch for BIND-8.3.3 is available and other patches of BIND-8
+  are removed.
+
+Major changes in idnkit version 1.0-rc1:
+
+* NAMEPREP draft -09 is supported.
+
+* idnconv now accepts any encodings specified as argument for `-in'
+  or `-out' option.  `-out' accepts non-ACE, and `-in' accepts ACE.
+
+* In configuration file, `encoding-alias-file' entry is not supported
+  any longer.  It is simply ignored.
+
+Major changes in idnkit version 1.0-beta2:
+
+* Supported nameprep version is changed.
+  Now idnkit supports nameprep-03, nameprep-06, and nameprep-08.
+  Nameprep-05 and nameprep-07 are not supported any more.
+
+* Compatibility with mDNkit is added.
+  This feature provides applications formerly written using mDNkit
+  library with some source level compatibilities.  If you want to use
+  this feature, set `--enable-mdnkit-compat' option at execution time
+  of configure script.
+
+* Now idnkit can set up easily without configuration file.
+  As this feature is added, initialization function and some behavior
+  of top level API are changed.
+
+* BIND-8 patch supports IDN conversion in itself.
+
+* (Windows) idnkit library looks for configuration files with registry
+  information.
+
+* (Windows) idnkit library returns "CP<code page number>" as local
+  encoding name when the environment variable "IDN_LOCAL_CODESET" is
+  not set.
+
+* (Windows) libidnkit/libidnkitlite are now installed as DLL.
+
+* (Windows) idnconv can be executed as a console application.
+
+Major changes in idnkit version 1.0-beta1:
+
+* mDNkit has been renamed idnkit.
+  This means all symbols with "mdn" are renamed with "idn".  For
+  example, a function `mdn_encodename()' is now `idn_encodename()', an
+  environment variable "MDN_DISABLE" is "IDN_DISABLE", system
+  configuretion file is "idn.conf", `runmdn' command is `runidn', and
+  so forth.
+
+* Also, library name has been changed to "libidnkit(lite)".
+
+* `mdnsproxy' command has been removed.
+
+* `runidn' (formerly known as `runmdn') command is not installed by
+  default.
+  If you want to install it, set "yes" to `--enable-runidn' option
+  when you run configure script.
+
+* idnkitlite library only instalation is supported.
+  Set "yes" to `--enable-liteonly' option at execution of configure
+  script to use this feature.
+
+* BIND-9.1.3 patch has been removed.
+
+* User configuration file is supported.
+  idnkit now uses ".idnrc" in user's home directory for configuration
+  of whole scheme.  If there is no user configuration file, then it
+  tries to load the system configuration file "idn.conf".
+
+* idnkit is now able to run without configuration file.
+  If there are no configuration files (both of user's and system's),
+  it sets normal configurations (the latest nameprep scheme it
+  supports and the IDN encoding "Punycode") automatically at runtime.
+
+* Encoding alias information file is supported. (by generic libidnkit)
+  Its name is "idnalias.conf" by default and it should be located in
+  same directory where the system configuration file is.  Example
+  alias information file "idnalias.conf.sample" is installed
+  automatically.
+
+* APIs are renewed.  See manpage.
+
+* Now idnkit has full support of IDNA-07.
+
+* Internal representation of domain name is changed to UCS4 in place
+  of UTF-8.

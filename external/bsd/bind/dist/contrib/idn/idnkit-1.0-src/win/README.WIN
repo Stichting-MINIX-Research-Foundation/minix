@@ -1,0 +1,17 @@
+To build idnkit for Windows, follow the instruction below.
+
+To build Windows version, you need `iconv' library.  A LGPL
+implemenation is available from the following place.
+
+    http://www.gnu.org/software/libiconv/
+
+Follow the instructions described in README.woe32 file which can be
+found in the distribution, and you'll get a DLL vesion of `libiconv'.
+Copy the DLL (iconv.dll), the header (iconv.h) and the import library
+(iconv.lib) here.
+
+Then go to the top directory and run the following command.
+
+	nmake -f make.wnt
+
+; Id: README.WIN,v 1.1 2003/06/04 00:27:32 marka Exp 

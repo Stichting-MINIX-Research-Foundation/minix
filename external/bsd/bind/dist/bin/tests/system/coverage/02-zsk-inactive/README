@@ -1,0 +1,10 @@
+This set includes one ZSK rollover.  The first ZSK is deactivated
+prior to its replacement being activated.  Tool output should resemble:
+
+Checking KSK events for zone example.com, algorithm 7:
+OK
+
+Checking ZSK events for zone example.com, algorithm 7:
+ERROR: After 2012-05-Dec (20:39:32):
+    Inactive: example.com/005/08376 (ZSK)
+No ZSK's are active

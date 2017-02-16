@@ -1,0 +1,85 @@
+# Copyright (C) 2004, 2006-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 1999-2002  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Id: Makefile.in,v 1.52 2010/12/24 23:47:05 tbox Exp 
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+@BIND9_MAKE_INCLUDES@
+
+CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} \
+		${ISC_INCLUDES} @DST_GSSAPI_INC@
+
+CDEFINES =	@USE_GSSAPI@
+CWARNINGS =
+
+DNSLIBS =	../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+ISCLIBS =	../../../lib/isc/libisc.@A@
+
+DNSDEPLIBS =	../../../lib/dns/libdns.@A@
+ISCDEPLIBS =	../../../lib/isc/libisc.@A@
+
+DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+
+LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+
+TLIB =		../../../lib/tests/libt_api.@A@
+
+TARGETS =	dst_test@EXEEXT@ t_dst@EXEEXT@ gsstest@EXEEXT@
+
+SRCS =		dst_test.c t_dst.c gsstest.c
+
+@BIND9_MAKE_RULES@
+
+dst_test@EXEEXT@: dst_test.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+		dst_test.@O@ ${LIBS}
+
+t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+		t_dst.@O@ ${TLIB} ${LIBS}
+
+gsstest@EXEEXT@: gsstest.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+		gsstest.@O@ ${LIBS}
+
+test: t_dst@EXEEXT@ randomfile
+	../../tools/genrandom@EXEEXT@ 100 randomfile
+	-@ ./t_dst@EXEEXT@ -q 1800 -a
+
+randomfile:
+	../../tools/genrandom@EXEEXT@ 100 randomfile
+
+clean distclean::
+	rm -f ${TARGETS} randomfile
+
+distclean::
+	rm -f Kdh.+002+18602.key
+	rm -f Kdh.+002+18602.private
+	rm -f Kdh.+002+48957.key
+	rm -f Kdh.+002+48957.private
+	rm -f Ktest.+001+00002.key
+	rm -f Ktest.+001+54622.key
+	rm -f Ktest.+001+54622.private
+	rm -f Ktest.+003+23616.key
+	rm -f Ktest.+003+23616.private
+	rm -f Ktest.+003+49667.key
+	rm -f dst_2_data
+	rm -f t2_data_1
+	rm -f t2_data_2
+	rm -f t2_dsasig
+	rm -f t2_rsasig

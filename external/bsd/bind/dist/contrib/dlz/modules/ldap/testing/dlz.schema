@@ -1,0 +1,187 @@
+#
+#
+# 1.3.6.1.4.1.18420.1.1.X is reserved for attribute types declared by the DLZ project.
+# 1.3.6.1.4.1.18420.1.2.X is reserved for object classes declared by the DLZ project.
+# 1.3.6.1.4.1.18420.1.3.X is reserved for PRIVATE extensions to the DLZ attribute
+#                     types and object classes that may be needed by end users
+#                     to add security, etc.  Attributes and object classes using
+#                     this OID MUST NOT be published outside of an organization
+#                     except to offer them for consideration to become part of the
+#                     standard attributes and object classes published by the DLZ project.
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.10
+        NAME 'dlzZoneName'
+        DESC 'DNS zone name - domain name not including host name'
+        SUP name 
+        SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.20
+	NAME 'dlzHostName'
+        DESC 'Host portion of a domain name'
+	SUP name
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.30
+        NAME 'dlzData'
+        DESC 'Data for the resource record'
+        SUP name
+        SINGLE-VALUE )       
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.40
+	NAME 'dlzType'
+        DESC 'DNS record type - A, SOA, NS, MX, etc...'
+        SUP name
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.50
+	NAME 'dlzSerial'
+        DESC 'SOA record serial number'
+        EQUALITY integerMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.60
+	NAME 'dlzRefresh'
+        DESC 'SOA record refresh time in seconds'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.70
+	NAME 'dlzRetry'
+        DESC 'SOA retry time in seconds'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.80
+	NAME 'dlzExpire'
+        DESC 'SOA expire time in seconds'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.90
+	NAME 'dlzMinimum'
+        DESC 'SOA minimum time in seconds'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.100
+        NAME 'dlzAdminEmail'
+        DESC 'E-mail address of person responsible for this zone - @ should be replaced with . (period)'
+	SUP name
+        SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.18420.1.1.110
+	NAME 'dlzPrimaryNS'
+        DESC 'Primary name server for this zone - should be host name not IP address'
+	SUP name
+        SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.120
+	NAME 'dlzIPAddr'
+        DESC 'IP address - IPV4 should be in dot notation xxx.xxx.xxx.xxx IPV6 should be in colon notation xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx'
+	EQUALITY caseExactIA5Match 
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{40}
+	SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.130
+	NAME 'dlzCName'
+        DESC 'DNS cname'
+	SUP name
+        SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.140
+	NAME 'dlzPreference'
+        DESC 'DNS MX record preference.  Lower numbers have higher preference'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.150
+	NAME 'dlzTTL'
+        DESC 'DNS time to live - how long this record can be cached by caching DNS servers'
+        EQUALITY integerMatch        
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+        SINGLE-VALUE )
+        
+attributetype ( 1.3.6.1.4.1.18420.1.1.160
+	NAME 'dlzRecordID'
+	DESC 'Unique ID for each DLZ resource record'
+	SUP name
+	SINGLE-VALUE )
+
+#------------------------------------------------------------------------------
+# Object class definitions
+#------------------------------------------------------------------------------
+
+objectclass ( 1.3.6.1.4.1.18420.1.2.10
+	NAME 'dlzZone'         
+        DESC 'Zone name portion of a domain name'
+        SUP top STRUCTURAL
+	MUST ( objectclass $ dlzZoneName ) )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.20
+	NAME 'dlzHost' 
+        DESC 'Host name portion of a domain name'
+        SUP top STRUCTURAL
+	MUST ( objectclass $ dlzHostName ) )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.30
+	NAME 'dlzAbstractRecord' 
+        DESC 'Data common to all DNS record types'
+        SUP top ABSTRACT
+	MUST ( objectclass $ dlzRecordID $ dlzHostName $ dlzType $ dlzTTL ) )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.40
+	NAME 'dlzGenericRecord' 
+        DESC 'Generic DNS record - useful when a specific object class has not been defined for a DNS record'
+        SUP dlzAbstractRecord STRUCTURAL
+	MUST ( dlzData ) )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.50
+        NAME 'dlzARecord'
+        DESC 'DNS A record'
+        SUP dlzAbstractrecord STRUCTURAL
+        MUST ( dlzIPAddr ) )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.60
+        NAME 'dlzNSRecord'
+        DESC 'DNS NS record'
+        SUP dlzGenericRecord STRUCTURAL )
+
+objectclass ( 1.3.6.1.4.1.18420.1.2.70
+        NAME 'dlzMXRecord'
+        DESC 'DNS MX record'
+        SUP dlzGenericRecord STRUCTURAL
+        MUST ( dlzPreference ) )
+                
+objectclass ( 1.3.6.1.4.1.18420.1.2.80
+        NAME 'dlzSOARecord'
+        DESC 'DNS SOA record'
+        SUP dlzAbstractRecord STRUCTURAL       
+        MUST ( dlzSerial $ dlzRefresh $ dlzRetry
+               $ dlzExpire $ dlzMinimum $ dlzAdminEmail $ dlzPrimaryNS ) )
+               
+objectclass ( 1.3.6.1.4.1.18420.1.2.90
+	NAME 'dlzTextRecord' 
+        DESC 'Text data with spaces should be wrapped in double quotes'
+        SUP dlzGenericRecord STRUCTURAL )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.100
+        NAME 'dlzPTRRecord'
+        DESC 'DNS PTR record'
+        SUP dlzGenericRecord STRUCTURAL )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.110
+        NAME 'dlzCNameRecord'
+        DESC 'DNS CName record'
+        SUP dlzGenericRecord STRUCTURAL )
+        
+objectclass ( 1.3.6.1.4.1.18420.1.2.120
+        NAME 'dlzXFR'
+        DESC 'Host allowed to perform zone transfer'
+        SUP top STRUCTURAL
+        MUST ( objectclass $ dlzRecordID $ dlzIPAddr ) )

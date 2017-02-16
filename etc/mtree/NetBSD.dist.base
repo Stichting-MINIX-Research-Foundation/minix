@@ -42,6 +42,7 @@
 ./etc/fonts/conf.d
 ./etc/kyua
 ./etc/mtree
+./etc/namedb
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc
@@ -187,6 +188,9 @@
 ./usr/share/doc/reference/ref1/kyua/kyua-atf-compat
 ./usr/share/doc/reference/ref1/kyua/kyua-cli
 ./usr/share/doc/reference/ref1/kyua/kyua-testers
+./usr/share/doc/reference/ref8
+./usr/share/doc/reference/ref8/bind9
+./usr/share/doc/reference/ref8/bind9/arm
 ./usr/share/doc/usd
 ./usr/share/examples
 ./usr/share/examples/atf
@@ -693,6 +697,20 @@
 ./usr/var/db/pkg
 ./usr/var/run
 ./var
+./var/chroot
+./var/chroot/named
+./var/chroot/named/dev
+./var/chroot/named/etc
+./var/chroot/named/etc/namedb
+./var/chroot/named/etc/namedb/cache	mode=0775 uname=named gname=named
+./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/usr
+./var/chroot/named/usr/libexec
+./var/chroot/named/var
+./var/chroot/named/var/run	mode=0775 gname=named
+./var/chroot/named/var/run/lwresd	mode=0775 gname=named
+./var/chroot/named/var/run/named	mode=0775 gname=named
+./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/db
 ./var/db/obsolete
 ./var/db/xdm
@@ -701,6 +719,8 @@
 ./var/heimdal
 ./var/mail			mode=1777
 ./var/run
+./var/run/lwresd		mode=0775 gname=named
+./var/run/named			mode=0775 gname=named
 ./var/spool
 ./var/spool/ftp
 ./var/spool/ftp/bin

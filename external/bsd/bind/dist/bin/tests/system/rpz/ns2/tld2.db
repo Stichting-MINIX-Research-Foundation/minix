@@ -1,0 +1,129 @@
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id
+
+
+
+; RPZ rewrite responses from this zone
+
+$TTL	120
+@		SOA	tld2.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )
+		NS	ns
+		NS	.			; check for RT 24985
+ns		A	10.53.0.2
+
+
+txt-only	TXT	"txt-only-tld2"
+
+a12		A	12.12.12.12
+		AAAA	2001::12
+		TXT	"a12 tld2 text"
+a12-cname	CNAME	a12
+
+a0-1		A	192.168.0.1
+		AAAA	2001:2::1
+		TXT	"a0-1 tld2 text"
+a0-1-scname	CNAME	a0-1.tld2s.
+
+
+a3-1		A	192.168.3.1
+		AAAA	2001:2:3::1
+		TXT	"a3-1 tld2 text"
+
+a3-2		A	192.168.3.2
+		AAAA	2001:2:3::2
+		TXT	"a3-2 tld2 text"
+
+a3-3		A	192.168.3.3
+		AAAA	2001:2:3::3
+		TXT	"a3-3 tld2 text"
+
+a3-4		A	192.168.3.4
+		AAAA	2001:2:3::4
+		TXT	"a3-4 tld2 text"
+
+a3-5		A	192.168.3.5
+		AAAA	2001:2:3::5
+		TXT	"a3-5 tld2 text"
+
+a3-6		A	192.168.3.6
+		AAAA	2001:2:3::6
+		TXT	"a3-6 tld2 text"
+
+a3-7		A	192.168.3.7
+		AAAA	2001:2:3::7
+		TXT	"a3-7 tld2 text"
+
+a3-8		A	192.168.3.8
+		AAAA	2001:2:3::8
+		TXT	"a3-8 tld2 text"
+
+a3-9		A	192.168.3.9
+		AAAA	2001:2:3::9
+		TXT	"a3-9 tld2 text"
+
+a4-1		A	192.168.4.1
+		AAAA	2001:2:4::1
+		TXT	"a4-1 tld2 text"
+a4-1-aaaa	AAAA	2001:2:4::1
+
+a4-2		A	192.168.4.2
+		AAAA	2001:2:4::2
+		TXT	"a4-2 tld2 text"
+a4-2-cname	CNAME	a4-2
+
+a4-3		A	192.168.4.3
+		AAAA	2001:2:4::3
+		TXT	"a4-3 tld2 text"
+a4-3-cname	CNAME	a4-3
+
+a4-4		A	192.168.4.4
+		AAAA	2001:2:4::4
+		TXT	"a4-4 tld2 text"
+
+a4-5		A	192.168.4.5
+		AAAA	2001:2:4::5
+		TXT	"a4-5 tld2 text"
+a4-5-cname	CNAME	a4-5
+a4-5-cname2	CNAME	a4-5-cname
+a4-5-cname3	CNAME	a4-5-cname2
+
+a4-6		A	192.168.4.6
+		AAAA	2001:2:4::6
+		TXT	"a4-6 tld2 text"
+a4-6-cname	CNAME	a4-6
+a4-6-cname2	CNAME	a4-6-cname
+a4-6-cname3	CNAME	a4-6-cname2
+
+a5-1-2		A	192.168.5.1
+		A	192.168.5.2
+		TXT	"a5-1-2 tld2 text"
+
+a5-2		A	192.168.5.2
+		TXT	"a5-2 tld2 text"
+
+a5-3		A	192.168.5.3
+		TXT	"a5-3 tld2 text"
+
+a5-4		A	192.168.5.4
+		TXT	"a5-4 tld2 text"
+
+a6-1		A	192.168.6.1
+		TXT	"a6-1 tld2 text"
+a6-2		A	192.168.6.2
+		TXT	"a6-2 tld2 text"
+
+a7-1		A	192.168.7.1
+		TXT	"a7-1 tld2 text"

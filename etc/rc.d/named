@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# $NetBSD: named,v 1.25 2014/07/13 22:06:56 tls Exp $
+#
+
+# PROVIDE: named
+# REQUIRE: NETWORKING mountcritremote syslogd
+# BEFORE:  DAEMON
+# KEYWORD: chrootdir
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="named"
+rcvar=$name
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}/${name}.pid"
+start_precmd="named_precmd"
+extra_commands="reload"
+required_dirs="$named_chrootdir"	# if it is set, it must exist
+
+named_migrate()
+{
+	local src="$1"
+	local dst="$2$1"
+	echo "Migrating $src to $dst"
+(
+	diff=false
+	cd "$src"
+	mkdir -p "$dst"
+	for f in $(find . -type f)
+	do
+		f="${f##./}"
+		case "$f" in
+		*/*)
+			ds="$(dirname "$f")"
+			dd="$dst/$ds"
+			mkdir -p "$dd"
+			chmod "$(stat -f "%p" "$ds" |
+			    sed -e 's/.*\([0-7][0-7][0-7][0-7]\)$/\1/g')" "$dd"
+			chown "$(stat -f %u:%g "$ds")" "$dd"
+			;;
+		*)
+			;;
+		esac
+		if [ -r "$dst/$f" ]
+		then
+			if ! cmp "$f" "$dst/$f"; then
+				diff=true
+			fi
+		else
+			cp -p "$f" "$dst/$f"
+		fi
+	done
+	if $diff; then
+		echo "Cannot complete migration because files are different"
+		echo "Run 'diff -r $src $dst' resolve the differences"
+	else
+		rm -fr "$src"
+		ln -s "$dst" "$src"
+	fi
+)
+}
+
+named_precmd()
+{
+	if [ ! -e "/etc/rndc.key" ]; then
+		echo "Generating rndc.key"
+		/usr/sbin/rndc-confgen -a
+	fi
+
+	if [ -z "$named_chrootdir" ]; then
+		if [ ! -d "/etc/namedb/keys" ]; then
+			mkdir -m 775 "/etc/namedb/keys"
+			chown named:named "/etc/namedb/keys"
+		fi
+		return 0;
+	fi
+
+	# If running in a chroot cage, ensure that the appropriate files
+	# exist inside the cage, as well as helper symlinks into the cage 
+	# from outside.
+	#
+	# As this is called after the is_running and required_dir checks
+	# are made in run_rc_command(), we can safely assume ${named_chrootdir}
+	# exists and named isn't running at this point (unless forcestart
+	# is used).
+	#
+	case "$($command -v)" in
+	BIND*)	# 9 no group, named-xfer, or ndc
+		;;
+	named*)	# 4 and 8
+		rc_flags="-g named $rc_flags"
+		if [ ! -x "${named_chrootdir}/usr/libexec/named-xfer" -o \
+		    "${named_chrootdir}/usr/libexec/named-xfer" -ot \
+		    /usr/libexec/named-xfer ]; then
+			rm -f "${named_chrootdir}/usr/libexec/named-xfer"
+			cp -p /usr/libexec/named-xfer \
+			    "${named_chrootdir}/usr/libexec"
+		fi
+		ln -fs "${named_chrootdir}/var/run/ndc" /var/run/ndc
+		;;
+	esac
+
+	for i in null random urandom; do
+		if [ ! -c "${named_chrootdir}/dev/$i" ]; then
+			rm -f "${named_chrootdir}/dev/$i"
+			(cd /dev && 
+			    /bin/pax -rw -pe "$i" "${named_chrootdir}/dev")
+		fi
+	done
+
+	if [ ! -h /etc/namedb ]; then
+		named_migrate /etc/namedb ${named_chrootdir}
+	fi
+
+	for i in named.conf rndc.key; do
+		if [ \( -r "/etc/$i" \) -a \( ! -h "/etc/$i" \) -a \
+		     \( ! -r "${named_chrootdir}/etc/$i" \) ]; then
+			mv "/etc/$i" "${named_chrootdir}/etc/$i"
+			ln -s "${named_chrootdir}/etc/$i" "/etc/$i"
+		fi
+	done
+
+	if [ \( ! -r ${named_chrootdir}/etc/named.conf \) -a \
+	    \( -r ${named_chrootdir}/etc/namedb/named.conf \) ]; then
+		ln -s namedb/named.conf ${named_chrootdir}/etc
+	fi
+
+	if [ -f /etc/localtime ]; then
+		cmp -s /etc/localtime "${named_chrootdir}/etc/localtime" || \
+		    cp -p /etc/localtime "${named_chrootdir}/etc/localtime"
+	fi
+
+	local piddir="$(dirname "${pidfile}")"
+	mkdir -p "${named_chrootdir}${piddir}" "${piddir}"
+	chmod 755 "${named_chrootdir}${piddir}" "${piddir}"
+	chown named:named "${named_chrootdir}${piddir}" "${piddir}"
+	ln -fs "${named_chrootdir}${pidfile}" "${pidfile}"
+
+	#	Change run_rc_commands()'s internal copy of $named_flags
+	#
+	rc_flags="-u named -t ${named_chrootdir} $rc_flags"
+}
+
+load_rc_config $name
+run_rc_command "$1"

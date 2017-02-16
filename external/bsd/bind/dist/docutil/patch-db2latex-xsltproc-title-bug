@@ -1,0 +1,29 @@
+;; Id: patch-db2latex-xsltproc-title-bug,v 1.2 2007/01/12 22:24:20 sra Exp 
+;; 
+;; This patches around a problem that I don't completely understand,
+;; and which may in fact be an xsltproc bug rather than a db2latex
+;; bug.  Symptom is that the generated \title{} contains not only the
+;; book title but also the concatenation of all the chapter titles.
+;; This makes no sense, it doesn't happen with saxon, it doesn't
+;; happen with all versions of xsltproc, and attempts to trace this
+;; with --verbose and <xsl:message/> leave me more wondering whether
+;; it's me or xsltproc that doesn't understand the XSLT pattern
+;; matching rules.
+;; 
+;; All that said, the change below prevents the bad behavior and
+;; should be completely harmless, so it will do as a workaround.
+
+Index: xsl/book-article.mod.xsl
+--- xsl/book-article.mod.xsl.~1~	Tue May  3 21:51:18 2005
++++ xsl/book-article.mod.xsl	Sat May  7 09:00:26 2005
+@@ -87,8 +87,8 @@
+ 		<xsl:call-template name="generate.latex.book.preamble"/>
+ 		<!-- book:2: output title information     -->
+ 		<xsl:text>\title{</xsl:text>
+-			<xsl:apply-templates select="title|bookinfo/title"/>
+-			<xsl:apply-templates select="subtitle|bookinfo/subtitle"/>
++			<xsl:apply-templates select="/book/title|/book/bookinfo/title"/>
++			<xsl:apply-templates select="/book/subtitle|/book/bookinfo/subtitle"/>
+ 		<xsl:text>}&#10;</xsl:text>
+ 		<!-- book:3: output author information     -->
+ 		<xsl:text>\author{</xsl:text>

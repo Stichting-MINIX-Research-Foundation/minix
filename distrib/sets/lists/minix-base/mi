@@ -114,6 +114,13 @@
 ./etc/mtree/NetBSD.dist                                 minix-base
 ./etc/mtree/set.minix-base                              minix-base
 ./etc/mtree/special                                     minix-base
+./etc/named.conf                                        minix-base
+./etc/namedb                                            minix-base
+./etc/namedb/127                                        minix-base
+./etc/namedb/bind.keys                                  minix-base
+./etc/namedb/localhost                                  minix-base
+./etc/namedb/loopback.v6                                minix-base
+./etc/namedb/root.cache                                 minix-base
 ./etc/nsswitch.conf                                     minix-base
 ./etc/openssl                                           minix-base      crypto
 ./etc/openssl/certs                                     minix-base      crypto
@@ -145,6 +152,7 @@
 ./etc/rc.d/minixrc                                      minix-base
 ./etc/rc.d/mountcritlocal                               minix-base
 ./etc/rc.d/mountcritremote                              minix-base
+./etc/rc.d/named                                        minix-base
 ./etc/rc.d/network                                      minix-base
 ./etc/rc.d/npf                                          minix-base
 ./etc/rc.d/pwcheck                                      minix-base
@@ -297,6 +305,7 @@
 ./usr/bin/add_route                                     minix-base      obsolete
 ./usr/bin/apropos                                       minix-base
 ./usr/bin/arp                                           minix-base      obsolete
+./usr/bin/arpaname                                      minix-base
 ./usr/bin/asa                                           minix-base
 ./usr/bin/at                                            minix-base
 ./usr/bin/atf-report                                    minix-base      atf
@@ -350,12 +359,14 @@
 ./usr/bin/dd                                            minix-base      obsolete
 ./usr/bin/decomp16                                      minix-base      obsolete
 ./usr/bin/del_route                                     minix-base      obsolete
+./usr/bin/delv                                          minix-base
 ./usr/bin/deroff                                        minix-base
 ./usr/bin/devmand                                       minix-base
 ./usr/bin/devsize                                       minix-base
 ./usr/bin/dhcpd                                         minix-base      obsolete
 ./usr/bin/dhrystone                                     minix-base
 ./usr/bin/diff                                          minix-base
+./usr/bin/dig                                           minix-base
 ./usr/bin/dirname                                       minix-base
 ./usr/bin/diskctl                                       minix-base      obsolete
 ./usr/bin/dosdir                                        minix-base
@@ -400,7 +411,7 @@
 ./usr/bin/gzip                                          minix-base
 ./usr/bin/head                                          minix-base
 ./usr/bin/hexdump                                       minix-base
-./usr/bin/host                                          minix-base      obsolete
+./usr/bin/host                                          minix-base
 ./usr/bin/hostaddr                                      minix-base      obsolete
 ./usr/bin/id                                            minix-base
 ./usr/bin/ifconfig                                      minix-base      obsolete
@@ -484,6 +495,8 @@
 ./usr/bin/nohup                                         minix-base
 ./usr/bin/nonamed                                       minix-base      obsolete
 ./usr/bin/nroff                                         minix-base
+./usr/bin/nslookup                                      minix-base
+./usr/bin/nsupdate                                      minix-base
 ./usr/bin/od                                            minix-base
 ./usr/bin/openssl                                       minix-base      crypto
 ./usr/bin/page                                          minix-base
@@ -783,6 +796,9 @@
 ./usr/lib/libatf-c_pic.a                                minix-base      atf
 ./usr/lib/libbfd.so.13.0                                minix-base      binutils
 ./usr/lib/libbfd.so.13                                  minix-base      binutils
+./usr/lib/libbind9.so                                   minix-base
+./usr/lib/libbind9.so.8                                 minix-base
+./usr/lib/libbind9.so.8.2                               minix-base
 ./usr/lib/libblacklist.a                                minix-base
 ./usr/lib/libblacklist.so                               minix-base
 ./usr/lib/libblacklist.so.0                             minix-base
@@ -820,6 +836,9 @@
 ./usr/lib/libdes.so.8                                   minix-base      crypto
 ./usr/lib/libdes.so                                     minix-base      crypto
 ./usr/lib/libdes_pic.a                                  minix-base      crypto
+./usr/lib/libdns.so                                     minix-base
+./usr/lib/libdns.so.8                                   minix-base
+./usr/lib/libdns.so.8.2                                 minix-base
 ./usr/lib/libedit.so                                    minix-base
 ./usr/lib/libedit.so.3                                  minix-base
 ./usr/lib/libedit.so.3.1                                minix-base
@@ -856,6 +875,18 @@
 ./usr/lib/libintl.so                                    minix-base
 ./usr/lib/libintl.so.1                                  minix-base
 ./usr/lib/libintl.so.1.1                                minix-base
+./usr/lib/libirs.so                                     minix-base
+./usr/lib/libirs.so.8                                   minix-base
+./usr/lib/libirs.so.8.2                                 minix-base
+./usr/lib/libisc.so                                     minix-base
+./usr/lib/libisc.so.8                                   minix-base
+./usr/lib/libisc.so.8.2                                 minix-base
+./usr/lib/libisccc.so                                   minix-base
+./usr/lib/libisccc.so.8                                 minix-base
+./usr/lib/libisccc.so.8.2                               minix-base
+./usr/lib/libisccfg.so                                  minix-base
+./usr/lib/libisccfg.so.8                                minix-base
+./usr/lib/libisccfg.so.8.2                              minix-base
 ./usr/lib/libkvm.so                                     minix-base
 ./usr/lib/libkvm.so.6                                   minix-base
 ./usr/lib/libkvm.so.6.0                                 minix-base
@@ -869,6 +900,9 @@
 ./usr/lib/liblutok.so.2                                 minix-base      kyua
 ./usr/lib/liblutok.so                                   minix-base      kyua
 ./usr/lib/liblutok_pic.a                                minix-base      kyua
+./usr/lib/liblwres.so                                   minix-base
+./usr/lib/liblwres.so.8                                 minix-base
+./usr/lib/liblwres.so.8.2                               minix-base
 ./usr/lib/liblzma.so                                    minix-base
 ./usr/lib/liblzma.so.1.1                                minix-base      obsolete
 ./usr/lib/liblzma.so.1                                  minix-base      obsolete
@@ -1041,8 +1075,17 @@
 ./usr/sbin/btrace                                       minix-base
 ./usr/sbin/chown                                        minix-base
 ./usr/sbin/chroot                                       minix-base
+./usr/sbin/ddns-confgen                                 minix-base
 ./usr/sbin/dev_mkdb                                     minix-base
 ./usr/sbin/diskctl                                      minix-base
+./usr/sbin/dnssec-dsfromkey                             minix-base
+./usr/sbin/dnssec-importkey                             minix-base
+./usr/sbin/dnssec-keyfromlabel                          minix-base
+./usr/sbin/dnssec-keygen                                minix-base
+./usr/sbin/dnssec-revoke                                minix-base
+./usr/sbin/dnssec-settime                               minix-base
+./usr/sbin/dnssec-signzone                              minix-base
+./usr/sbin/dnssec-verify                                minix-base
 ./usr/sbin/download-vulnerability-list                  minix-base      crypto
 ./usr/sbin/fbdctl                                       minix-base
 ./usr/sbin/group                                        minix-base
@@ -1055,11 +1098,18 @@
 ./usr/sbin/installboot_nbsd                             minix-base
 ./usr/sbin/kernel                                       minix-base
 ./usr/sbin/link                                         minix-base
+./usr/sbin/lwresd                                       minix-base
 ./usr/sbin/makefs                                       minix-base
 ./usr/sbin/mkfs.mfsv3                                   minix-base
 ./usr/sbin/mkproto                                      minix-base
 ./usr/sbin/mtree                                        minix-base
+./usr/sbin/named-checkconf                              minix-base
+./usr/sbin/named-checkzone                              minix-base
+./usr/sbin/named-compilezone                            minix-base
+./usr/sbin/named-journalprint                           minix-base
+./usr/sbin/named                                        minix-base
 ./usr/sbin/newfs_mfs                                    minix-base
+./usr/sbin/nsec3hash                                    minix-base
 ./usr/sbin/pkg_add                                      minix-base      crypto
 ./usr/sbin/pkg_admin                                    minix-base      crypto
 ./usr/sbin/pkg_create                                   minix-base      crypto
@@ -1068,6 +1118,8 @@
 ./usr/sbin/postinstall                                  minix-base
 ./usr/sbin/pwd_mkdb                                     minix-base
 ./usr/sbin/rdate                                        minix-base
+./usr/sbin/rndc-confgen                                 minix-base
+./usr/sbin/rndc                                         minix-base
 ./usr/sbin/service                                      minix-base
 ./usr/sbin/services_mkdb                                minix-base
 ./usr/sbin/syslogd                                      minix-base
@@ -1132,6 +1184,19 @@
 ./usr/share/doc/psd/19.curses/win_st.c                  minix-base      obsolete
 ./usr/share/doc/reference/ref1/bzip2                    minix-base
 ./usr/share/doc/reference/ref1/bzip2/manual.html        minix-base
+./usr/share/doc/reference/ref8                          minix-base
+./usr/share/doc/reference/ref8/bind9                    minix-base
+./usr/share/doc/reference/ref8/bind9/arm                minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch01.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch02.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch03.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch04.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch05.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch06.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch07.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch08.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.ch09.html minix-base
+./usr/share/doc/reference/ref8/bind9/arm/Bv9ARM.html    minix-base
 ./usr/share/doc/usd                                     minix-base
 ./usr/share/doc/usd/03.shell                            minix-base      obsolete
 ./usr/share/doc/usd/03.shell/Makefile                   minix-base      obsolete
@@ -3841,6 +3906,20 @@
 ./usr/var/db/pkg                                        minix-base
 ./usr/var/run                                           minix-base
 ./var                                                   minix-base
+./var/chroot                                            minix-base
+./var/chroot/named                                      minix-base
+./var/chroot/named/dev                                  minix-base
+./var/chroot/named/etc                                  minix-base
+./var/chroot/named/etc/namedb                           minix-base
+./var/chroot/named/etc/namedb/cache                     minix-base
+./var/chroot/named/etc/namedb/keys                      minix-base
+./var/chroot/named/usr                                  minix-base
+./var/chroot/named/usr/libexec                          minix-base
+./var/chroot/named/var                                  minix-base
+./var/chroot/named/var/run                              minix-base
+./var/chroot/named/var/run/lwresd                       minix-base
+./var/chroot/named/var/run/named                        minix-base
+./var/chroot/named/var/tmp                              minix-base
 ./var/db                                                minix-base
 ./var/db/obsolete                                       minix-base
 ./var/db/obsolete/minix-base                            minix-base
@@ -3851,6 +3930,8 @@
 ./var/log                                               minix-base
 ./var/mail                                              minix-base
 ./var/run                                               minix-base
+./var/run/lwresd                                        minix-base
+./var/run/named                                         minix-base
 ./var/spool                                             minix-base
 ./var/spool/ftp                                         minix-base
 ./var/spool/ftp/bin                                     minix-base

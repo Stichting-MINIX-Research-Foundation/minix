@@ -1,0 +1,711 @@
+dnl Id: configure.in,v 1.1 2003/06/04 00:25:25 marka Exp 
+dnl Process this file with autoconf to produce a configure script.
+dnl
+dnl Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
+dnl  
+dnl By using this file, you agree to the terms and conditions set forth bellow.
+dnl 
+dnl 			LICENSE TERMS AND CONDITIONS 
+dnl 
+dnl The following License Terms and Conditions apply, unless a different
+dnl license is obtained from Japan Network Information Center ("JPNIC"),
+dnl a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+dnl Chiyoda-ku, Tokyo 101-0047, Japan.
+dnl 
+dnl 1. Use, Modification and Redistribution (including distribution of any
+dnl    modified or derived work) in source and/or binary forms is permitted
+dnl    under this License Terms and Conditions.
+dnl 
+dnl 2. Redistribution of source code must retain the copyright notices as they
+dnl    appear in each source code file, this License Terms and Conditions.
+dnl 
+dnl 3. Redistribution in binary form must reproduce the Copyright Notice,
+dnl    this License Terms and Conditions, in the documentation and/or other
+dnl    materials provided with the distribution.  For the purposes of binary
+dnl    distribution the "Copyright Notice" refers to the following language:
+dnl    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+dnl 
+dnl 4. The name of JPNIC may not be used to endorse or promote products
+dnl    derived from this Software without specific prior written approval of
+dnl    JPNIC.
+dnl 
+dnl 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+dnl    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+dnl    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+dnl    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+dnl    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+dnl    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+dnl    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+dnl    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+dnl    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+dnl    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+dnl    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+AC_INIT(include/idn/converter.h)
+
+AC_CANONICAL_HOST
+
+debug=no
+AC_ARG_ENABLE(debug,
+[  --enable-debug          enable debug codes [default=no]],
+	debug=$enableval)
+case "$debug" in
+yes)
+    CFLAGS="$CFLAGS -DDEBUG"
+    ;;
+esac
+
+mdnkit_compat=no
+COMPAT_TRUE="#"
+COMPAT_FALSE=
+AC_ARG_ENABLE(mdnkit-compat,
+[  --enable-mdnkit-compat  enable mDNkit compatibility mode [default=no]],
+	mdnkit_compat=$enableval)
+case "$mdnkit_compat" in
+yes)
+    COMPAT_TRUE=
+    COMPAT_FALSE="#"
+    AC_DEFINE(ENABLE_MDNKIT_COMPAT, 1,
+	[Define if --enable-mdnkit-compat is specified])
+    ;;
+no)
+    ;;
+*)
+    AC_MSG_ERROR([You must specify yes or no to --enable-runidn option.])
+    ;;
+esac
+AC_SUBST(COMPAT_TRUE)
+AC_SUBST(COMPAT_FALSE)
+
+extraace=no
+AC_ARG_ENABLE(extra-ace,
+[  --enable-extra-ace      enable additional ACE converters. [default=no]],
+	extraace=$enableval)
+case "$extraace" in
+no)
+    ;;
+yes)
+    AC_DEFINE(IDN_EXTRA_ACE, 1,
+	[Define if you want additional ACE converters compiled in.])
+    ;;
+*)
+    AC_MSG_ERROR([You must specify yes or no to --enable-extra-ace option.])
+    ;;
+esac
+
+UTF8_NAME=no
+AC_ARG_WITH(utf8,
+[  --with-utf8=NAME        codeset name for UTF-8 encoding [UTF-8]],
+	UTF8_NAME=$withval)
+case "$UTF8_NAME" in
+no)
+    UTF8_NAME=UTF-8
+    ;;
+yes)
+    AC_MSG_ERROR([You must specify NAME to --with-utf8 option.])
+    ;;
+*)
+    AC_DEFINE_UNQUOTED(IDN_UTF8_ENCODING_NAME, "$UTF8_NAME",
+	[Define if your iconv() does not accept "UTF-8" as the codeset name for utf-8.])
+    ;;
+esac
+AC_SUBST(UTF8_NAME)
+
+liteonly=no
+LITEONLY_TRUE="#"
+LITEONLY_FALSE=
+AC_ARG_ENABLE(liteonly,
+[  --enable-liteonly       compile and install lite library only [default=no]],
+	liteonly=$enableval)
+case "$liteonly" in
+no)
+    ;;
+yes)
+    if test "$install_runidn" = yes ; then
+	AC_MSG_ERROR([you can't set value \"yes\" to --enable-runidn and --enable-liteonly simultaneously, because runidn requires iconv support of generic libidnkit.])
+    fi
+    LITEONLY_TRUE=
+    LITEONLY_FALSE="#"
+    ;;
+*)
+    AC_MSG_ERROR([You must specify yes or no to --enable-liteonly option.])
+    ;;
+esac
+AC_SUBST(LITEONLY_TRUE)
+AC_SUBST(LITEONLY_FALSE)
+
+install_runidn=no
+RUNIDN_TRUE="#"
+RUNIDN_FALSE=
+AC_ARG_ENABLE(runidn,
+[  --enable-runidn         compile and install runidn [default=no]],
+	install_runidn=$enableval)
+case "$install_runidn" in
+no)
+    ;;
+yes)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set value \"yes\" to --enable-runidn and --enable-liteonly simultaneously, because runidn requires iconv support of generic libidnkit.])
+    fi
+    RUNIDN_TRUE=
+    RUNIDN_FALSE="#"
+    ;;
+*)
+    AC_MSG_ERROR([You must specify yes or no to --enable-runidn option.])
+    ;;
+esac
+AC_SUBST(RUNIDN_TRUE)
+AC_SUBST(RUNIDN_FALSE)
+
+ICONVINC=
+ICONVLIB=
+
+libiconv=unspec
+AC_ARG_WITH(libiconv,
+[  --with-libiconv=IPREFIX  GNU libiconv are installed in IPREFIX [PREFIX]],
+	libiconv=$withval)
+case "$libiconv" in
+unspec)
+    ;;
+no)
+    ICONVINC=
+    ICONVLIB=
+    ;;
+yes)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    if test X$prefix = XNONE ; then
+	libiconv=$ac_default_prefix
+    else
+	libiconv=$prefix
+    fi
+    ICONVINC="-I$libiconv/include"
+    ICONVLIB="-L$libiconv/lib -R$libiconv/lib -liconv"
+    ;;
+*)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    ICONVINC="-I$libiconv/include"
+    ICONVLIB="-L$libiconv/lib -R$libiconv/lib -liconv"
+    ;;
+esac
+
+iconv_include=unspec
+AC_ARG_WITH(iconv-include,
+[  --with-iconv-include=DIR  iconv include files are in DIR []],
+	iconv_include=$withval)
+case "$iconv_include" in
+unspec)
+    ;;
+no)
+    ICONVINC=
+    ;;
+yes)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    AC_MSG_WARN([You must supply DIR to --with-iconv-include option.
+  Ignored.])
+    ICONVINC=
+    ;;
+*)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    ICONVINC="-I$iconv_include"
+    ;;
+esac
+
+if test "X$ICONVINC" != X ; then
+    iconv_include="`echo X$ICONVINC | sed -e 's/^X-I//'`"
+    if test ! -f "$iconv_include/iconv.h" ; then
+	AC_MSG_ERROR([iconv.h doesn't exist in $iconv_include])
+    fi
+fi
+
+AC_SUBST(ICONVINC)
+
+iconv=unspec
+AC_ARG_WITH(iconv,
+[  --with-iconv=LIB        special library for iconv []],
+	iconv=$withval)
+case "$iconv" in
+unspec)
+    ;;
+no)
+    ICONVLIB=
+    ;;
+yes)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    AC_MSG_WARN([You must supply LIB to --with-iconv option.
+  -liconv is assumed.])
+    ICONVLIB=-liconv
+    ;;
+*)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    ICONVLIB=$iconv
+    ;;
+esac
+AC_SUBST(ICONVLIB)
+
+AC_ARG_WITH(iconv-sofile,
+[  --with-iconv-sofile=PATH  shared library file for libiconv []],
+	iconv_file=$withval, iconv_file=guess)
+ICONVSOFILE=
+case "$iconv_file" in
+no)
+    ICONVSOFILE=none
+    ;;
+yes)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    AC_MSG_ERROR([You must supply PATH to --with-iconv-sofile option.])
+    ;;
+guess)
+    if test "$liteonly" != yes ; then
+	if test "$ICONVLIB" = ""; then
+	    ICONVSOFILE=none
+	else
+	    AC_MSG_CHECKING(pathname of iconv shared library)
+	    ic_libdir=
+	    ic_libname=
+	    case "$host" in
+	    *-hpux*)
+		SO=sl
+		;;
+	    *)
+		SO=so
+		;;
+	    esac
+	    for arg in $ICONVLIB; do
+		case "$arg" in
+		-L*) ic_libdir="$ic_libdir `echo $arg | sed s/-L//`" ;;
+		-l*) ic_libname=`echo $arg | sed s/-l//` ;;
+		/*.$SO*) ICONVSOFILE=$arg ;;
+		esac
+	    done
+	    if test "$ICONVSOFILE" = ""; then
+		if test "$ic_libname" = ""; then
+		    AC_MSG_RESULT(unknown)
+		    AC_MSG_WARN([use --with-iconv-sofile for specifying iconv shared library file])
+		    ICONVSOFILE=none
+		else
+		    if test "$ic_libdir" = ""; then
+			# Standard (and semi-standard) library directories
+			ic_libdir="/lib /usr/lib /usr/local/lib"
+		    fi
+		    for dir in $ic_libdir; do
+			ICONVSOFILE=`ls -r $dir/lib$ic_libname.$SO* 2>/dev/null | head -1`
+			if test "$ICONVSOFILE" != ""; then
+			    break
+			fi
+		    done
+		    if test "$ICONVSOFILE" != ""; then
+			AC_MSG_RESULT($ICONVSOFILE)
+		    else
+			AC_MSG_RESULT(unknown)
+			AC_MSG_WARN([use --with-iconv-sofile for specifying iconv shared library file])
+			ICONVSOFILE=none
+		    fi
+		fi
+	    fi
+	fi
+    else
+	ICONVSOFILE=none
+    fi
+    ;;
+*)
+    if test "$liteonly" = yes ; then
+	AC_MSG_ERROR([you can't set iconv options at all when you set value \"yes\" to --enable-liteonly, because lite library does not have iconv support.])
+    fi
+    ICONVSOFILE=$iconv_file
+    ;;
+esac
+AC_SUBST(ICONVSOFILE)
+
+dnl Figure out preload stuff.
+PRELOAD_VAR="LD_PRELOAD"
+PRELOAD_SEP=":"
+PRELOAD_LAST=""
+case "$host" in
+*-solaris*)
+    PRELOAD_SEP=" "
+    ;;
+*-linux*)
+    PRELOAD_SEP=" "
+    ;;
+*-osf*)
+    PRELOAD_VAR="_RLD_LIST"
+    PRELOAD_LAST=":DEFAULT"
+    ;;
+*-netbsd*)
+    if test -x /usr/bin/file -a -x /usr/bin/grep ; then
+        case "`/usr/bin/file /usr/bin/grep`" in
+	*ELF*)
+	    PRELOAD_SEP=" "
+	    ;;
+	esac
+    fi
+    ;;
+esac
+
+AC_SUBST(PRELOAD_VAR)
+AC_SUBST(PRELOAD_SEP)
+AC_SUBST(PRELOAD_LAST)
+
+dnl Checks for standard tools.
+AC_PROG_CC
+AC_PROG_INSTALL
+AM_PROG_LIBTOOL
+
+AC_PATH_PROGS(PERL, perl, perl)
+
+dnl Checks for header files.
+AC_CHECK_HEADERS(unistd.h locale.h langinfo.h pwd.h)
+if test "$install_runidn" = yes ; then
+    AC_CHECK_HEADERS(dlfcn.h)
+fi
+
+saved_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $ICONVINC"
+if test "$liteonly" != yes ; then
+    AC_CHECK_HEADER(iconv.h, , [AC_MSG_ERROR([iconv.h doesn't exist])])
+fi
+CPPFLAGS=$saved_CPPFLAGS
+
+dnl Checks for data types.
+AC_TYPE_UID_T
+dnl for dnsproxy.
+AC_CHECK_TYPE(BOOL, int)
+
+dnl Checks for libraries.
+if test "$install_runidn" = yes ; then
+    AC_CHECK_LIB(socket, socket)
+    AC_CHECK_LIB(nsl, inet_addr)
+    AC_CHECK_LIB(dl, dlopen, [
+	LIBS="-ldl $LIBS"
+	LIBDL="-ldl"
+	AC_DEFINE(HAVE_LIBDL, 1, [Define if you have the dl library (-ldl).])
+	AC_SUBST(LIBDL)
+    ])
+fi
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(vsnprintf setvbuf setlocale nl_langinfo memmove bcopy setenv \
+    unsetenv)
+if test "$install_runidn" = yes ; then
+    AC_CHECK_FUNCS(gethostbyname gethostbyname2 gethostbyaddr)
+    AC_CHECK_FUNCS(gethostbyname_r gethostbyname2_r gethostbyaddr_r, find_gethost_r=yes)
+    AC_CHECK_FUNCS(getipnodebyname getipnodebyaddr freehostent)
+    AC_CHECK_FUNCS(getaddrinfo freeaddrinfo getnameinfo)
+    AC_CHECK_FUNCS(dlopen dlsym)
+fi
+
+if test "$install_runidn" = yes ; then
+dnl Checks the flavor of gethostbyaddr* functions.
+    AC_CACHE_CHECK(flavor of gethostbyaddr, ac_cv_flavor_gethostbyaddr,
+    [ac_cv_flavor_gethostbyaddr=unknown
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
+	return NULL;
+    }
+    int main() {
+	(void)gethostbyaddr(NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_gethostbyaddr=glibc2_2,,
+       ac_cv_flavor_gethostbyaddr=unknown)
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    struct hostent *gethostbyaddr(const char *addr, size_t len, int type) {
+	return NULL;
+    }
+    int main() {
+	(void)gethostbyaddr(NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_gethostbyaddr=glibc,,
+       ac_cv_flavor_gethostbyaddr=unknown)
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    struct hostent *gethostbyaddr(const char *addr, int len, int type) {
+	return NULL;
+    }
+    int main() {
+	(void)gethostbyaddr(NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_gethostbyaddr=traditional,,
+       ac_cv_flavor_gethostbyaddr=unknown)
+    if test "$ac_cv_func_gethostbyaddr" = no ; then
+	ac_cv_flavor_gethostbyaddr=none
+    fi])
+
+    case "$ac_cv_flavor_gethostbyaddr" in
+    glibc2_2)
+	ac_cv_type_ghba_addr_t='const void *'
+	ac_cv_type_ghba_addrlen_t='socklen_t'
+	;;
+    glibc)
+	ac_cv_type_ghba_addr_t='const char *'
+	ac_cv_type_ghba_addrlen_t='size_t'
+	;;
+    traditional | none)
+	ac_cv_type_ghba_addr_t='const char *'
+	ac_cv_type_ghba_addrlen_t='int'
+	;;
+    *)
+	AC_MSG_ERROR([can't build runidn, since parameter type list of gethostbyaddr() is unknown to configure.])
+	;;
+    esac
+    AC_DEFINE_UNQUOTED(GHBA_ADDR_T, $ac_cv_type_ghba_addr_t,
+	[Define as the type of the 1st argument of gethostbyaddr.])
+    AC_DEFINE_UNQUOTED(GHBA_ADDRLEN_T, $ac_cv_type_ghba_addrlen_t,
+	[Define as the type of the 2nd argument of gethostbyaddr.])
+
+dnl Checks the flavor of getnameinfo functions.
+    AC_CACHE_CHECK(flavor of getnameinfo, ac_cv_flavor_getnameinfo,
+    [ac_cv_flavor_getnameinfo=unknown
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    int getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
+                    socklen_t hostlen, char *serv, socklen_t servlen,
+                    unsigned int flags) {
+	return NULL;
+    }
+    int main() {
+	(void)getnameinfo(NULL, 0, NULL, 0, NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_getnameinfo=glibc2_2_2,,
+       ac_cv_flavor_getnameinfo=unknown)
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    int getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
+                    socklen_t hostlen, char *serv, socklen_t servlen,
+                    int flags) {
+	return NULL;
+    }
+    int main() {
+	(void)getnameinfo(NULL, 0, NULL, 0, NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_getnameinfo=rfc2553bis_03,,
+       ac_cv_flavor_getnameinfo=unknown)
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    int getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
+                    size_t hostlen, char *serv, size_t servlen, int flags) {
+	return NULL;
+    }
+    int main() {
+	(void)getnameinfo(NULL, 0, NULL, 0, NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_getnameinfo=rfc2553,,
+       ac_cv_flavor_getnameinfo=unknown)
+    AC_TRY_RUN(
+    [
+    #include <stddef.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netdb.h>
+    int getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
+                    size_t hostlen, char *serv, size_t servlen, int flags) {
+	return NULL;
+    }
+    int main() {
+	(void)getnameinfo(NULL, 0, NULL, 0, NULL, 0, 0);
+	return 0;
+    }
+    ], ac_cv_flavor_getnameinfo=rfc2133,,
+       ac_cv_flavor_getnameinfo=unknown)
+    if test "$ac_cv_func_getnameinfo" = no ; then
+	ac_cv_flavor_getnameinfo=none
+    fi])
+
+    case "$ac_cv_flavor_getnameinfo" in
+    glibc2_2_2)
+	ac_cv_type_gni_salen_t='socklen_t'
+	ac_cv_type_gni_hostlen_t='socklen_t'
+	ac_cv_type_gni_servlen_t='socklen_t'
+	ac_cv_type_gni_flags_t='unsigned int'
+	;;
+    rfc2553bis_03)
+	ac_cv_type_gni_salen_t='socklen_t'
+	ac_cv_type_gni_hostlen_t='socklen_t'
+	ac_cv_type_gni_servlen_t='socklen_t'
+	ac_cv_type_gni_flags_t='int'
+	;;
+    rfc2553)
+	ac_cv_type_gni_salen_t='socklen_t'
+	ac_cv_type_gni_hostlen_t='size_t'
+	ac_cv_type_gni_servlen_t='size_t'
+	ac_cv_type_gni_flags_t='int'
+	;;
+    rfc2133 | none)
+	ac_cv_type_gni_salen_t='size_t'
+	ac_cv_type_gni_hostlen_t='size_t'
+	ac_cv_type_gni_servlen_t='size_t'
+	ac_cv_type_gni_flags_t='int'
+	;;
+    *)
+	AC_MSG_ERROR([can't build runidn, since parameter type list of getnameinfo() is unknown to configure.])
+    esac
+    AC_DEFINE_UNQUOTED(GNI_SALEN_T, $ac_cv_type_gni_salen_t,
+	[Define as the type of the 2nd argument of getnameinfo.])
+    AC_DEFINE_UNQUOTED(GNI_HOSTLEN_T, $ac_cv_type_gni_hostlen_t,
+	[Define as the type of the 4th argument of getnameinfo.])
+    AC_DEFINE_UNQUOTED(GNI_SERVLEN_T, $ac_cv_type_gni_servlen_t,
+	[Define as the type of the 6th argument of getnameinfo.])
+    AC_DEFINE_UNQUOTED(GNI_FLAGS_T, $ac_cv_type_gni_flags_t,
+	[Define as the type of the 7th argument of getnameinfo.])
+fi
+
+dnl resume here.
+dnl Checks the flavor of gethost*_r functions.
+if test "$find_gethost_r" = yes; then
+    AC_CACHE_CHECK(flavor of gethostbyname_r, ac_cv_flavor_gethost_r,
+    [AC_TRY_RUN(
+changequote(<<, >>)dnl
+<<
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stdio.h>
+int main()
+{
+    int err = 0;
+    struct hostent hebuf, *hp;
+    char buf[10];
+    /* Try resolving a invalid name using glibc flavor. */
+    (void)gethostbyname_r("@#!", &hebuf, buf, sizeof(buf), &hp, &err);
+    if (err != 0)
+	return 0;	/* glibc flavor */
+    else
+	return 1;	/* Sun flavor */
+}
+>>,
+changequote([, ])dnl
+	ac_cv_flavor_gethost_r=glibc,
+	ac_cv_flavor_gethost_r=sun,
+	ac_cv_flavor_gethost_r=sun)])
+    if test "$ac_cv_flavor_gethost_r" = "glibc"; then
+	AC_DEFINE(GETHOST_R_GLIBC_FLAVOR, 1,
+	    [Define if the prototype of gethost*_r is glibc flavor.])
+    fi
+fi
+
+dnl Find system shared object paths.
+AC_FIND_SYSTEM_SHOBJ(libc)
+if test "$install_runidn" = yes ; then
+    AC_FIND_SYSTEM_SHOBJ(libnsl)
+fi
+
+dnl Checks for iconv library.
+if test "$liteonly" != yes ; then
+    AC_MSG_CHECKING(for iconv)
+    saved_CPPFLAGS=$CPPFLAGS
+    saved_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $ICONVINC"
+    LIBS="$LIBS $ICONVLIB"
+    AC_TRY_LINK([
+    #include <iconv.h>
+    ], [
+	iconv_t i;
+	i = iconv_open("ISO-8859-1", "UTF-8");
+    ], [iconv_try_link=yes], [iconv_try_link=no])
+    LIBS=$saved_LIBS
+    CPPFLAGS=$saved_CPPFLAGS
+    AC_MSG_RESULT($iconv_try_link)
+    if test "$iconv_try_link" = no ; then
+	AC_MSG_ERROR(iconv function not available)
+    fi
+fi
+
+dnl Check for codeset name for UTF-8.
+if test "$liteonly" != yes ; then
+    AC_MSG_CHECKING([for codeset name $UTF8_NAME])
+    saved_CPPFLAGS=$CPPFLAGS
+    saved_LIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $ICONVINC"
+    LIBS="$LIBS $ICONVLIB"
+    AC_TRY_RUN([
+    #include <stddef.h>
+    #include <stdlib.h>
+    #include <iconv.h>
+    #define UTF8_NAME "$UTF8_NAME"
+    #define ICONV_FAIL ((iconv_t)(-1))
+    /* Check if the codeset name UTF8_NAME is valid by performing iconv_open(). */
+    int main() {
+	int i;
+	/* list of codeset names likely to exist */
+	static char *codeset[] = {
+	    "ASCII", "ISO-8859-1", "ISO8859-1", "iso8859_1", "8859-1",
+	    "Shift_JIS", "SJIS", "sjis", NULL,
+	};
+
+	/* First try null conversion. */
+	if (iconv_open(UTF8_NAME, UTF8_NAME) != ICONV_FAIL) return 0;
+
+	/* Unfortunately, above check fails on certain systems, such as Solaris. */
+	for (i = 0; codeset[i] != NULL; i++) {
+	    if (iconv_open(UTF8_NAME, codeset[i]) != ICONV_FAIL) return 0;
+	}
+	return 1;
+    }
+    ], utf8_name_valid=yes, utf8_name_valid=no, utf8_name_valid=unknown)
+    LIBS=$saved_LIBS
+    CPPFLAGS=$saved_CPPFLAGS
+    AC_MSG_RESULT($utf8_name_valid)
+fi
+
+dnl Output.
+AC_CONFIG_HEADER(include/config.h)
+AC_OUTPUT(
+	Makefile
+	include/Makefile
+	include/idn/Makefile
+	include/mdn/Makefile
+	lib/Makefile
+	man/Makefile
+	tools/Makefile
+	tools/idnconv/Makefile
+	tools/runidn/Makefile
+	tools/runidn/runidn
+	map/Makefile
+	lib/tests/Makefile
+)

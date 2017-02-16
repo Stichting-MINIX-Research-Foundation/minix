@@ -1,0 +1,9 @@
+BIND 9 DLZ Perl module (bind-dlz-tools)
+
+Written by John Eaglesham <dns@8192.net>
+
+A dynamically loadable zone (DLZ) plugin embedding a Perl
+interpreter in BIND, allowing Perl scripts to be written to
+integrate with BIND and serve DNS data.
+
+More information/updates at http://bind-dlz-tools.sourceforge.net/

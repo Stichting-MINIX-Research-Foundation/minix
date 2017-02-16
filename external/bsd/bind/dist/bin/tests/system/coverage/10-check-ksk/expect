@@ -1,0 +1,6 @@
+args="-k -d 1h -m 2h"
+warn=0
+error=0
+ok=1
+retcode=0
+match=""

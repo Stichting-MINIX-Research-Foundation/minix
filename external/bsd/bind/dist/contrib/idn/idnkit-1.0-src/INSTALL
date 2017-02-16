@@ -1,0 +1,309 @@
+
+				idnkit
+		     Compilation and Installation
+	       Japan Network Information Center (JPNIC)
+
+
+This file explains how to compile and install the source package.
+These procedures take the following steps:
+
+    + Prerequisite: making iconv() available
+    + System Configuration: running `configure' script
+    + Compilation: running `make'
+    + Test: running `make test' (optional)
+    + Installation: running `make install'
+    + Site Configuration: tailoring `idn.conf'
+    + Configuration Check (optional)
+    + Clean up (optional)
+
+See also the following section if you'd like to apply patch and install
+BIND9.
+
+    + Applying patches
+
+0. Prerequisite
+
+If you want to install generic idnkit library with code conversion
+support, and also if your system's library does not have iconv()
+function, which is a general codeset conversion utility, install iconv
+as an external library.  You also need external library if the
+system's implementation cannot handle UTF-8 encoding, or it doesn't
+support some encodings which your client applications uses.
+
+You can get a free version of iconv() implementation (under LGPL
+license, aka GNU libiconv) from:
+
+	ftp://ftp.gnu.org/gnu/libiconv/
+	and mirrors of that site.
+
+But if you don't want code conversion support and you want to install
+idnkitlite library without iconv support alone, you have not install
+external library.  Instead, set `--enable-liteonly' value to "yes" at
+configure script execution.
+
+
+1. Running configure script
+
+Run `configure' script in the top directory.  This checks various
+characteristics of your system and it will create Makefiles and
+config.h appropriate for your system.
+
+	% ./configure
+
+`configure' accepts many options.  Here is a list of some important
+options.
+
+    --prefix=PREFIX
+	Specifies the prefix of install directories of idnkit.  The
+	default is /usr/local.  
+
+    --enable-runidn
+        Build `runidn' command.  The default is "no".
+
+	You cannot set this option "yes" when `--enable-liteonly' is
+	also set "yes".
+
+    --with-libiconv=LIBICONV_PREFIX
+	If you have installed GNU libiconv and would like to link it
+	to idnkit, specify this option.  The argument LIBICONV_PREFIX
+	is install prefix of GNU libiconv.  If the argument is omitted,
+	PREFIX (derived from --prefix=PREFIX option) is assumed.
+
+	--with-libiconv is shorthand option for GNU libiconv.
+
+	    --with-libiconv=/usr/local
+
+	This is equivalent to:
+
+	    --with-iconv-include='-I/usr/local/include'
+	    --with-iconv='-L/usr/local/lib -R/usr/local/lib -liconv'
+
+	If both the shorthand option (--with-libiconv) and longhand
+	options (--with-iconv-include and/or --with-iconv) are specified,
+	the longhand options have priority.
+
+	You cannot set this option when --enable-liteonly is set
+	"yes", because libidnkitlite library doesn't need iconv
+	support.
+
+    --with-iconv-include=ICONV_INCDIR
+	If the header file "iconv.h" resides in a directory where your
+	C compiler doesn't search by default, specify the directory as
+	DIR like this:
+	
+	    --with-iconv-include=/usr/local/include
+
+	You cannot set this option when `--enable-liteonly' is set
+	"yes", because libidnkitlite library doesn't need iconv
+	support.
+
+    --with-iconv=ICONV_LIB
+	If your libc doesn't contain iconv(), specify the library
+	that contains iconv().  For example, if iconv() is libiconv
+	in /usr/local/lib, you should specify:
+
+	    --with-iconv="-L/usr/local/lib -liconv"
+
+	Note that if the library is a shared one, you might also want
+	to specify -R option, like:
+
+	    --with-iconv="-L/usr/local/lib -R/usr/local/lib -liconv"
+
+	You cannot set this option when `--enable-liteonly' is set
+	"yes", because libidnkitlite library doesn't need iconv
+	support.
+
+    --with-iconv-sofile=SOFILE_PATH
+	The runidn command in this kit needs to know the pathname of
+	shared library file that contains iconv(), if iconv() is not
+	part of libc.  idnkit tries to find out the pathname from the
+	informaiton provided by `--with-iconv' option described above.
+	But when it fails, you have to specify it with this option,
+	like:
+
+	    --with-iconv-sofile=/usr/local/lib/libiconv.so.2.0
+
+	You cannot set this option when `--enable-liteonly' is set
+	"yes", because libidnkitlite library doesn't need iconv
+	support.
+
+    --with-utf8=UTF8_NAME
+	If your iconv() (precisely, iconv_open()) does not accept
+	"UTF-8" as the name of UTF-8 encoding, specify the name for
+	it.  For example if your iconv() uses "utf8" instead, you
+	should specify:
+
+	    --with-utf8=utf8
+
+
+2. Other configure options
+
+The configure script has many other options though they are not widely
+used:
+
+    --exec-prefix=EXEC_PREFIX
+	Specifies the prefix of install directories for machine-specific
+	files.  The default is PREFIX (derived from `--prefix=PREFIX'
+	and its default is /usr/local).
+
+    --bindir=BINDIR
+	Specifies the install directory for idnconv and runidn.
+	The default is EXEC_PREFIX/bin.
+
+    --libdir=LIBDIR
+	Specifies the install directory for the libraries (libidnkit
+	and libidnkitlite).  The default is EXEC_PREFIX/lib.
+
+    --includedir=INCDIR
+	Specifies the install directory for the header files of the
+	libraries.  The default is PREFIX/include.
+
+    --sysconfdir=SYSCONFDIR
+	Specifies the install directory for sample configuration files
+	of the libraries.  The default is PREFIX/etc.
+
+    --mandir=MANDIR
+	Specifies the base install directory for online manuals.
+	The default is PREFIX/man.
+
+    --datadir=DATADIR
+	Specifies the base install directory for machine independent
+	data files.  The default is PREFIX/share.  Some data files for
+	idnkit will be put under the DATADIR/idnkit directory.
+
+    --enable-debug
+	Enable debugging codes.  The fault is "no".
+
+    --enable-shared
+	Build shared library.  The fault is "yes".
+
+    --enable-static
+	Build static library.  The fault is "yes".
+
+    --enable-liteonly
+        Build the `libidnlkitite' library only.  Do not build the
+	`libidnkit' library, idnconv and runidn.  The fault is "no".
+
+	If you want to set "yes" to this option, you cannot specify it
+	together with `--enable-runidn', `--with-libiconv',
+	`--with-iconv-include', `--with-iconv' or `--with-iconv-sofile'.
+
+To see the list of available options, you should run it with --help
+option.
+
+	% ./configure --help
+
+
+3. Compiling
+
+Run `make' for compilation.
+
+	% make
+
+
+4. Test
+
+Optionally, type `make test' to compile and run test programs.
+Note that Perl 5 is required for comipilation of the test programs.
+
+	% make test
+
+The test programs assume that iconv() on the system recognizes the
+encoding name "EUC-JP" as Japanese EUC, and "SJIS" as Japanese Shift
+JIS.  If iconv() on the system doesn't support the encoding name,
+please edit `lib/tests/codeset.h' before `make test'.
+
+*Note* 
+  If you use standard iconv which is attached as default on Solaris,
+  converter's test "idn_converter_convfromucs4()" may fail.  But it's
+  not the problem because the result is derived from the difference of
+  specification of iconv.  So please ignore it if you run the test on
+  Solaris.
+
+
+5. Installation
+
+Run `make install' to install binaries and manuals.  Don't forget to
+become a super-user before the installation.
+
+	% su
+	# make install
+
+*Note*
+  If you have installed pre-release versions of idnkit (such as 1.0pr1),
+  idnkit-1.0 may not work correctly because of the old configuration
+  file 'idn.conf'.  If this is the case, you should overwrite existing
+  configuration files with the new ones by executing the following command
+  after 'make install'.
+
+	# make install-config
+
+
+6. Configuration and usage
+
+Edit the `idn.conf' configuation file if you'd like to cosutomize
+conversion/normalization rules of idnkit.  Please refer the manual
+for `idn.conf' for details.  A sample configuration (`idn.conf.sample')
+is also provided for your convenience.
+
+The sample configuration file has also been installed as `idn.conf'
+if it has not exist on your system.
+
+Also online manuals for `idnconv' and `runidn' commands are available.
+Please refer them for the usage and configuration of these commands.
+
+	% man idn.conf
+	% man idnconv
+	% man runidn
+
+
+7. Check your configuration
+
+A simple shell script `idnslookup' is available in the directory
+`tools/idnconv', with which you can make queries for internationalized
+domain names.  It may help you check your configuration.
+
+The usage of `idnslookup' is:
+
+	% tools/idnconv/idnslookup <domain-name> <dns-server>
+
+Suppose that <domain-name> is an internationalized domain name written
+in the local codeset (see ``LOCAL CODESET'' in the `idn.conf' man page
+for details), and <dns-server> is a hostname or IP address of DNS
+server.
+
+`idnslookup' inquires <idn-domain-name> from <dns-server>, using
+`idnconv' and `nslookup' commands.  If something is wrong, you will
+see an error message output by `idnconv', `nslookup' or `idnslookup'
+itself.
+
+
+8. Clean up
+
+Run `make clean' to delete files generated by `make' and `make test'
+from the idnkit source directory.  (Files installed by `make install'
+are not removed.)
+
+	% make clean
+
+Run `make distclean' instead to also delete files generated by
+`configure'.
+
+	% make distclean
+
+After `make distclean', you can run `configure' and compile idnkit for
+another system using the source directory.
+
+
+Appendix A. Applying patches
+
+This distribution also contains patches for BIND9.
+The top of these patch files describe how to apply the patch and
+(re)install.
+
+Note that on Solaris, "patch" command that comes with the system
+sometimes doesn't work correctly.  You may want to install the GNU
+version of the command (http://www.gnu.org/software/patch/) and use
+it.
+
+; Id: INSTALL,v 1.1 2003/06/04 00:24:59 marka Exp 

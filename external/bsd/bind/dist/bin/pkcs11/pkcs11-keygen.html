@@ -1,0 +1,120 @@
+<!--
+ - Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+<!-- Id -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>pkcs11-ecgen</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="man.pkcs11-ecgen"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">pkcs11-keygen</span> &#8212; generate keys on a PKCS#11 device</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">pkcs11-keygen</code>  {-a <em class="replaceable"><code>algorithm</code></em>} [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>] [<code class="option">-e</code>] [<code class="option">-i <em class="replaceable"><code>id</code></em></code>] [<code class="option">-m <em class="replaceable"><code>module</code></em></code>] [<code class="option">-P</code>] [<code class="option">-p <em class="replaceable"><code>PIN</code></em></code>] [<code class="option">-q</code>] [<code class="option">-S</code>] [<code class="option">-s <em class="replaceable"><code>slot</code></em></code>] {label}</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543410"></a><h2>DESCRIPTION</h2>
+<p>
+      <span><strong class="command">pkcs11-keygen</strong></span> causes a PKCS#11 device to generate
+      a new key pair with the given <code class="option">label</code> (which must be
+      unique) and with <code class="option">keysize</code> bits of prime.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543430"></a><h2>ARGUMENTS</h2>
+<div class="variablelist"><dl>
+<dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
+<dd><p>
+            Specify the key algorithm class: Supported classes are RSA,
+            DSA, DH, and ECC. In addition to these strings, the
+            <code class="option">algorithm</code> can be specified as a DNSSEC
+            signing algorithm that will be used with this key; for
+            example, NSEC3RSASHA1 maps to RSA, and ECDSAP256SHA256 maps
+            to ECC.  The default class is "RSA".
+          </p></dd>
+<dt><span class="term">-b <em class="replaceable"><code>keysize</code></em></span></dt>
+<dd><p>
+            Create the key pair with <code class="option">keysize</code> bits of
+            prime. For ECC keys, the only valid values are 256 and 384,
+            and the default is 256.
+          </p></dd>
+<dt><span class="term">-e</span></dt>
+<dd><p>
+            For RSA keys only, use a large exponent.
+          </p></dd>
+<dt><span class="term">-i <em class="replaceable"><code>id</code></em></span></dt>
+<dd><p>
+            Create key objects with id. The id is either
+            an unsigned short 2 byte or an unsigned long 4 byte number.
+          </p></dd>
+<dt><span class="term">-m <em class="replaceable"><code>module</code></em></span></dt>
+<dd><p>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </p></dd>
+<dt><span class="term">-P</span></dt>
+<dd><p>
+            Set the new private key to be non-sensitive and extractable.
+            The allows the private key data to be read from the PKCS#11
+            device.  The default is for private keys to be sensitive and
+            non-extractable.
+          </p></dd>
+<dt><span class="term">-p <em class="replaceable"><code>PIN</code></em></span></dt>
+<dd><p>
+            Specify the PIN for the device.  If no PIN is provided on
+            the command line, <span><strong class="command">pkcs11-ecgen</strong></span> will
+            prompt for it.
+          </p></dd>
+<dt><span class="term">-e</span></dt>
+<dd><p>
+            Quiet mode: suppress unnecessary output.
+          </p></dd>
+<dt><span class="term">-S</span></dt>
+<dd><p>
+            For Diffie-Hellman (DH) keys only, use a special prime of
+            768, 1024 or 1536 bit size and base (aka generator) 2.
+	    If not specified, bit size will default to 1024.
+          </p></dd>
+<dt><span class="term">-s <em class="replaceable"><code>slot</code></em></span></dt>
+<dd><p>
+            Open the session with the given PKCS#11 slot.  The default is
+            slot 0.
+          </p></dd>
+</dl></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543605"></a><h2>SEE ALSO</h2>
+<p>
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-rsagen</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-dsagen</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-list</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">pkcs11-destroy</span>(3)</span>,
+      <span class="citerefentry"><span class="refentrytitle">dnssec-keyfromlabel</span>(3)</span>,
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543657"></a><h2>AUTHOR</h2>
+<p><span class="corpauthor">Internet Systems Consortium</span>
+    </p>
+</div>
+</div></body>
+</html>

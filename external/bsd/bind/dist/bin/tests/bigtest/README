@@ -1,0 +1,17 @@
+Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+	bash buildzones.sh < zones	# creates setup, run, servers/* master/*
+					# named.conf
+	sudo sh setup			# configure interfaces
+	sh run				# setup
+
+	../named/named [-g] -c named.conf
+
+	sh tests.sh < zones
+
+	sudo sh teardown		# teardown interfaces
+
+The test server can controlled with
+
+	rndc -k rndc.key -s 127.127.0.0 -p 5300 

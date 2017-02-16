@@ -1,0 +1,72 @@
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id
+
+
+; RPZ rewrite responses from this zone
+
+$TTL	120
+@		SOA	tld4.  hostmaster.ns.tld4. ( 1 3600 1200 604800 60 )
+		NS	ns
+ns		A	10.53.0.4
+
+
+txt-only	TXT	"txt-only-tld4"
+
+a14		A	14.14.14.14
+		AAAA	2001::14
+		TXT	"a14 text"
+a14-cname	CNAME	a14
+
+a0-1		A	192.168.0.1
+		AAAA	2001:2::1
+		TXT	"a0-1 text"
+
+a3-1		A	192.168.3.1
+		AAAA	2001:2:3::1
+		TXT	"a3-1 text"
+
+a3-2		A	192.168.3.2
+		AAAA	2001:2:3::2
+		TXT	"a3-2 text"
+
+a4-1		A	192.168.4.1
+		AAAA	2001:2:4::1
+		TXT	"a4-1 text"
+a4-1-aaaa	AAAA	2001:2:4::1
+
+a4-2		A	192.168.4.2
+		AAAA	2001:2:4::2
+		TXT	"a4-2 text"
+a4-2-cname	CNAME	a4-2
+
+a4-3		A	192.168.4.3
+		AAAA	2001:2:4::3
+		TXT	"a4-3 text"
+a4-3-cname	CNAME	a4-3
+
+a4-4		A	192.168.4.4
+		AAAA	2001:2:4::4
+		TXT	"a4-4 text"
+
+a3-6.tld2	A	56.56.56.56
+
+a3-7.sub1.tld2	A	57.57.57.57
+
+a3-8.tld2	A	58.58.58.58
+
+a3-9.sub9.tld2	A	59.59.59.59
+
+a3-10.tld2	A	60.60.60.60

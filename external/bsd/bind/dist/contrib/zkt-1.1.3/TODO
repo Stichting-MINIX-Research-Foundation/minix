@@ -1,0 +1,32 @@
+TODO list as of zkt-1.1
+
+zkt-ls:
+ feat	option to specify the key age as remaining lifetime
+	(Option -i inverse age ?).
+
+zkt-signer:
+ bug	Distribute_Cmd wouldn't work properly on dynamic zones
+ 	(missing freeze, thaw; copy Keyfiles instead of signed zone file)
+
+ bug	Automatic KSK rollover of dynamic zones will only work if the parent
+ 	uses the standard name for the signed zonefile (zonefile.db.signed).
+
+ bug	Phase3 of manual ksk rollover do not trigger a resigning of the zone
+ 	(Key removal is not recognized by dosigning () function )
+
+ bug	There is no online checking of the key material by design.
+ 	The signer command checks the status of the key as they
+	are represented in the file system and not in the zone.
+	The dnssec maintainer is responsible for the lifeliness of the
+	data in the hosted domain.
+	In other words: It's highly recommended to use the
+	option -r when you use zkt-signer on a production zone.
+	Than the time of propagation is (more or less) equal to the timestamp
+	of the zone.db.signed file.
+
+zkt-rollover:
+ feat	New command to roll keys independent of zone signing
+	(Usefull for dynamic zones managed by BIND9.7)
+
+dki:
+ feat	Use dynamic memory for dname in dki_t

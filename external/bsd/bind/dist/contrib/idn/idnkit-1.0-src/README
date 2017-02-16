@@ -1,0 +1,159 @@
+
+				idnkit
+	     -- internationalized domain name toolkit --
+			     version 1.0
+	       Japan Network Information Center (JPNIC)
+
+
+Table of contents of this file:
+
+  1. Overview
+  2. Directory structure of this distribution
+  3. Supported systems
+  4. Contact information
+
+See the file INSTALL for compilation and installation instructions.
+See the file NEWS for a list of major changes in the current release.
+
+
+1. Overview
+
+idnkit, which was originally known as mDNkit, is a toolkit for handling
+internationalized domain names.  To handle such names, the following
+features are required:
+
+    + Encoding conversion
+	Multilingualized domain names have to be converted from
+	the encoding application uses (local encoding) to
+	the encoding used for name resolution (IDN encoding), and
+	vice versa.  Since domain names in IDN encoding just look
+	like good old ASCII domain names, the encoding is also known
+	as ASCII-compatible encoding (ACE).
+
+    + NAMEPREP
+	Name preparation of domain names before converting to
+	IDN encoding.  Basically this is a normalization process
+	of the domain names.
+
+These conversion/nameprep processes to domain names have to be
+performed before they are sent to DNS servers.  And since the
+processed domain names (in IDN encoding) consist of only legal ASCII
+characters, no changes are required to DNS servers.
+	
+idnkit provides several ways for adding these features.
+
+This kit consists of following components.
+
+    + library for handling internationalized domain names
+      (libidnkit, libidnkitlite)
+	Those libraries implement encoding conversion and nameprep.
+	They provide easy-to-use APIs for handling internationalized
+	domain name in your applications.
+
+	Both libraries provide almost the same API.  The difference
+	between them is that libidnkit internally uses iconv() function
+	to provide encoding conversion from UTF-8 to the local encoding
+	(such as iso-8859-1, usually determined by the current locale),
+	and vise versa.  The idnconv and runidn commands in this toolkit
+	use libidnkit.
+
+	libidnkitlite is lightweight version of libidnkit.  It assumes
+	local encoding is UTF-8 so that it never uses iconv().
+
+    + codeset conversion utility (idnconv)
+	This command can convert internationalized domain name written
+	in local encoding (e.g. EUC-JP) to ACE or the opposite direction.
+	It can also convert named.conf and zone master files for BIND.
+
+    + command which adds IDN feature dynamically to unix applications 
+      (runidn)
+	This command enables normal applications to handle
+	internationalized domain names by dynamically attaching special
+	library to them.  See ``2. using runidn'' below.
+
+	Note that this command is not installed unless you specify the
+	`--enable-runidn' option to `configure'.  See the file `INSTALL'
+	for more information about installation.
+
+    + patch for BIND9 that adds IDN capability
+	This patch adds IDN capability to BIND9.  It adds encoding
+	conversion and nameprep features to `dig', `host' and
+	`nslookup'.  With the patch, those commands become capable of
+	internationalized domain names.
+
+    + IDN wrapper for Windows applications
+        On windows, name resolving request is passed to WINSOCK DLL. So,
+        replacing WINSOCK DLL with multi-lingual domain name version 
+        makes legacy windows applications compatible with IDN.  This is
+	wrapper DLL for WINSOCK's name resolving functions. See
+	``3. using IDN wrapper'' below.
+
+
+2. Directory structure of this distribution
+
+Below is a directory structure of this distribution with some 
+important files and their brief description.
+
+    +README             this file
+    +README.ja          .. in Japanese
+    +INSTALL            compilation and installation instructions.
+    +INSTALL.ja         .. in Japanese
+    +DISTFILES          list of files in this distribution
+    +NEWS               what's new in this version
+    +ChangeLog          list of changes
+    +Makefile.in        toplevel makefile template
+    +configure          a `configure' script
+    +include/
+    |   +config.h.in    template header file for configuration
+    |   +idn/           header files for libidnkit and libindkitlite
+    |   +mdn/           header files for backward compatibility
+    +lib/               source for libidnkit and libidnkitlite
+    +patch/
+    |   +bind9/         BIND9 patch
+    +tools/
+    |   +idnconv/       source for idnconv command
+    |   +runidn/        source for runidn command
+    +util/              utilities
+    +wsock/             source for IDN wrapper
+
+
+3. Supported systems
+
+We've had successful builds on the following systems:
+
+    -------------------------------------------------------------------
+    OS                      iconv library      configure options
+    ===================================================================
+    FreeBSD 4.7-RELEASE     GNU libiconv       --with-libiconv
+    for Intel               1.8
+    -------------------------------------------------------------------
+    Red Hat Linux 7.3       standard library   none
+    for Intel               (glibc)
+    -------------------------------------------------------------------
+    Solaris 9               standard library   none
+    for Sparc               (libc)
+    -------------------------------------------------------------------
+
+The latest information about supported/unsupported systems will be
+found at the mdnkit FAQ page linked from:
+
+	http://www.nic.ad.jp/en/idn/
+
+
+4. Contact information
+
+Please see
+
+	http://www.nic.ad.jp/en/idn/
+
+for the latest news about this kit.
+Bug reports and comments on this kit should be sent to
+
+	mdnkit-bugs@nic.ad.jp
+and
+	idn-cmt@nic.ad.jp
+
+respectively.
+
+
+; Id: README,v 1.1 2003/06/04 00:24:58 marka Exp 

@@ -1,0 +1,54 @@
+; File written on Wed Mar  5 10:20:40 2008
+; dnssec_signzone version 9.3.4-P1
+e.example1.		300	IN SOA	mname1. . (
+					2002082210 ; serial
+					20         ; refresh (20 seconds)
+					20         ; retry (20 seconds)
+					1814400    ; expire (3 weeks)
+					3600       ; minimum (1 hour)
+					)
+			300	RRSIG	SOA 5 2 300 20010101000000 (
+					20000101000000 14043 e.example1.
+					KtYwrnKM7Tu53BNf8XuTix53r9kDdCneJ1X7
+					xklFbp4YjRKC3NhwVK9PFe0jdHOkIDMtrwxn
+					n7/Rp07xIyURqw== )
+			300	NS	ns.e.example1.
+			300	RRSIG	NS 5 2 300 20010101000000 (
+					20000101000000 14043 e.example1.
+					KBPx3XmNl4swVPdwuUEFuzZedMSfsyK2a0Fu
+					o2wBnbCuS7G7DtfW9690lP/eTyixLOIwlFLQ
+					MrjN3+XgpkdgIw== )
+			300	A	10.0.1.1
+			300	RRSIG	A 5 2 300 20010101000000 (
+					20000101000000 14043 e.example1.
+					KYlxMQUvv8DQtVgS23lNL5tFYmRppJ7vTgH3
+					btvgKbyHxW/04ewRsgCa82iu3iJipdEhKM11
+					ALkRNhqL7frnig== )
+			3600	NSEC	ns.e.example1. A NS SOA RRSIG NSEC DNSKEY
+			3600	RRSIG	NSEC 5 2 3600 20010101000000 (
+					20000101000000 14043 e.example1.
+					azSgagb7bldM06qSZg8nDZWOY2FbqeZY0/T8
+					nC+6VhCs7YTfNvXynLWmvmpqL7gVT6/O+Yi2
+					2lmdntld7GORrQ== )
+			300	DNSKEY	256 3 5 (
+					AwEAAcvAUMfH7wA0z077fJaF7RMrxAFyvo0/
+					7aAL4d2/yA5TqTaUCVnJtE+XgGO34kH9mwae
+					we+Nyv2kRWDeLl6nhGk=
+					) ; key id = 14043
+			300	RRSIG	DNSKEY 5 2 300 20010101000000 (
+					20000101000000 14043 e.example1.
+					BQFWOHopXuBNdzcopkdl1YVKGF0QvIaYpywM
+					fcpG5gi+sy9EoTofQ1UGsLOjU3nFXCvJFG4K
+					1gUhzEEti440/g== )
+ns.e.example1.		300	IN A	10.53.0.1
+			300	RRSIG	A 5 3 300 20010101000000 (
+					20000101000000 14043 e.example1.
+					cYPzsWNQ/eL4h2lihKRjKT2jhGpOqV9woGJA
+					/Jstx2iethOAvYtgY22CsAbCUr/6E4bSgBZR
+					TMoC604cNdFzIw== )
+			3600	NSEC	e.example1. A RRSIG NSEC
+			3600	RRSIG	NSEC 5 3 3600 20010101000000 (
+					20000101000000 14043 e.example1.
+					J8Md544zDLP4GjyAtkjH/rSFvpzXY/7bgJRS
+					YDoARwFQRmlrJvavXEjqElb2fTQqlNNz1cal
+					QROz/WJ3GLwOWw== )

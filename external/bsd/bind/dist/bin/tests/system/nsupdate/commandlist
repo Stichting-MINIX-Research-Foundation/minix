@@ -1,0 +1,15 @@
+server 127.0.0.1
+server 127.0.0.1 port
+update
+update delete
+update delete dummy
+update delete dummy in
+update delete dummy in a
+update delete dummy in a 127.0.0.1
+update add
+update add domain
+update add domain 0
+update add domain 0 in
+update add domain 0 in a
+update add domain 0 a
+update add domain 0 a in

@@ -1,0 +1,822 @@
+#ifndef lint
+static char *rcsid = "Id: converter.tsy,v 1.1 2003/06/04 00:26:53 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <idn/converter.h>
+#include <idn/log.h>
+
+#include "codeset.h"
+#include "testutil.h"
+
+
+#ifndef IDN_PUNYCODE_ENCODING_NAME
+#define IDN_PUNYCODE_ENCODING_NAME "Punycode"
+#endif
+
+#ifndef IDN_UTF8_ENCODING_NAME
+#define IDN_UTF8_ENCODING_NAME "UTF-8"		/* by IANA */
+#endif
+
+#ifndef EUCJP_ENCODING_NAME
+#define EUCJP_ENCODING_NAME	"eucJP"
+#endif
+
+#ifndef SJIS_ENCODING_NAME
+#define SJIS_ENCODING_NAME	"SJIS"
+#endif
+
+#define CONF_FILENAME	"testalias.conf"
+#define LINEBUF_SIZE	2001
+
+#define SIZEOFUCS4(x)	(sizeof(x) / sizeof(unsigned long))
+
+/*
+ * U+1820: mongorian letter a
+ */
+#define UCS4_INVALID_NAME_FOR_EUCJP	0x1820
+
+/*
+ * A4AC: hiragana letter GA (in EUC-JP)
+ */
+#define EUCJP_NAME	"\xa4\xac"
+#define EUCJP_NAME_SIZE	3
+
+/*
+ * U+304C: hiragana letter GA
+ */
+#define UCS4_NAME		0x304C
+
+/*
+ * Conversion result of "U+304C"
+ */
+#define PUNYCODE_NAME	"xn--v8j"
+#define PUNYCODE_NAME_SIZE	8
+
+#define BUF_SIZE	128
+
+idn_result_t
+idn_test_encode(idn_converter_t ctx, void *privdata,
+		const unsigned long *from, char *to, size_t tolen)
+{
+	idn_result_t r;
+
+	if (tolen >= EUCJP_NAME_SIZE) {
+		strcpy(to, EUCJP_NAME);
+		r = idn_success;
+	} else {
+		r = idn_buffer_overflow;
+	}
+	return (r);
+
+}
+
+idn_result_t
+idn_test_decode(idn_converter_t ctx, void *privdata,
+		const char *from, unsigned long *to, size_t tolen)
+{
+	idn_result_t r;
+
+	if (tolen >= 2) {
+		to[0] = UCS4_NAME;
+		to[1] = 0x0000;
+		r = idn_success;
+	} else {
+		r = idn_buffer_overflow;
+	}
+	return (r);
+}
+
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//	group: noinit
+//--
+//	Do nothing
+{
+	idn_result_t r;
+}
+
+//# SETUP
+//	group: generic
+//--
+//	Initialize the module.
+{
+	idn_result_t r;
+	idn_converter_t ctx = NULL;
+	const char *name;
+
+	r = idn_converter_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# SETUP
+//	group: localencoding
+//--
+//	Initialize the module and load alias file.
+{
+	idn_result_t r;
+	idn_converter_t ctx = NULL;
+	const char *name;
+
+	r = idn_converter_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_success);
+	create_conf_file(CONF_FILENAME, 0,
+			 "*.KOI8-R KOI8-R",
+			 "*.ISO_8859-1 ISO-8859-1",
+			 "*.ISO_8859-2 ISO-8859-1",
+			 "*.UTF-8 UTF-8",
+			 "ja_JP.EUC eucJP",
+			 "japanese eucJP",
+			 NULL);
+	r = idn_converter_aliasfile(CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: localencoding
+//--
+//	reset alias information.
+{
+	idn_converter_resetalias();
+}
+
+//# SETUP
+//	group: conversion
+//--
+//	Initialize the module and create contexts.
+{
+	idn_result_t r;
+	idn_converter_t punycode_ctx = NULL;
+	idn_converter_t utf8_ctx = NULL;
+#ifndef WITHOUT_ICONV
+	idn_converter_t eucjp_ctx = NULL;
+#endif
+
+	r = idn_converter_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_create(IDN_PUNYCODE_ENCODING_NAME, &punycode_ctx,
+				 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_create(IDN_UTF8_ENCODING_NAME, &utf8_ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+	ASSERT_RESULT(r, idn_success);
+#ifndef WITHOUT_ICONV
+	r = idn_converter_create(EUCJP_ENCODING_NAME, &eucjp_ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+	ASSERT_RESULT(r, idn_success);
+#endif
+}
+
+//# TEARDOWN
+//	group: conversion
+//--
+//	Destroy contexts.
+{
+	if (punycode_ctx != NULL) {
+		idn_converter_destroy(punycode_ctx);
+	}
+	if (utf8_ctx != NULL) {
+		idn_converter_destroy(utf8_ctx);
+	}
+#ifndef WITHOUT_ICONV
+	if (eucjp_ctx != NULL) {
+		idn_converter_destroy(eucjp_ctx);
+	}
+#endif
+}
+
+//# SETUP
+//	group: quiet
+//--
+//	Set log level to `fatal' to supress log messages.
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+//--
+//	Restore log level.
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: idn_converter_addalias() test - without initialization
+//	group: noinit quiet
+{
+	r = idn_converter_addalias("a", "b", 0);
+	ASSERT_RESULT(r, idn_failure);
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - without initialization
+//	group: noinit quiet
+{
+	r = idn_converter_aliasfile("a");
+	ASSERT_RESULT(r, idn_failure);
+}
+
+//# TESTCASE
+//	title: idn_converter_resetalias() - without initialization
+//	group: noinit quiet
+{
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_failure);
+}
+
+//# TESTCASE
+//	title: idn_converter_getrealname() - without initialization
+//	group: noinit quiet
+{
+	const char *name;
+
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "test");
+}
+
+//# TESTCASE
+//	title: idn_converter_create()
+//	group: generic quiet
+{
+#ifdef WITHOUT_ICONV
+	r = idn_converter_addalias("*pc", "Punycode", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("*ej", EUCJP_ENCODING_NAME, 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("*sj", SJIS_ENCODING_NAME, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_converter_create("abcsj", &ctx, 0);
+	ASSERT_RESULT(r, idn_invalid_name);
+
+	r = idn_converter_create("notresolved", &ctx, 0);
+	ASSERT_RESULT(r, idn_invalid_name);
+	r = idn_converter_create("notresolved", &ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+	ASSERT_RESULT(r, idn_invalid_name);
+#else
+	r = idn_converter_addalias("*pc", IDN_PUNYCODE_ENCODING_NAME, 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("*ej", EUCJP_ENCODING_NAME, 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("*sj", SJIS_ENCODING_NAME, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_converter_create("abcsj", &ctx, 0);
+	ASSERT_RESULT(r, idn_success);
+	idn_converter_destroy(ctx);
+
+	r = idn_converter_create("notresolved", &ctx, 0);
+	ASSERT_RESULT(r, idn_invalid_name);
+	r = idn_converter_create("notresolved", &ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+	ASSERT_RESULT(r, idn_success);
+    {
+	    unsigned long ucs4_to[BUF_SIZE];
+
+	    r = idn_converter_convtoucs4(ctx, "a", ucs4_to, BUF_SIZE);
+	    ASSERT_RESULT(r, idn_invalid_name);
+	    idn_converter_destroy(ctx);
+    }
+#endif /* WITHOUT_ICONV */
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #1
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-a");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #2
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-b", 1);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-b");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #3
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-b", 0);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-a");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #4
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-b", 1);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-b");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #5
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-b", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-c", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-d", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-e", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-f", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-g", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-h", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-i", 0);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-a");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - #6
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-b", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-c", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-d", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-e", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-f", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-g", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-h", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-i", 1);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "result-i");
+}
+
+//# TESTCASE
+//	title: idn_converter_addalias() - null character
+//	group: generic
+{
+	r = idn_converter_addalias("", "result", 0);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+	r = idn_converter_addalias("test", "", 0);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+	r = idn_converter_addalias("", "", 0);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_converter_resetalias() - no alias added
+//	group: generic
+{
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "test");
+
+}
+
+//# TESTCASE
+//	title: idn_converter_resetalias() - one alias added
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "test");
+
+}
+
+//# TESTCASE
+//	title: idn_converter_resetalias() - many aliases added
+//	group: generic
+{
+	r = idn_converter_addalias("test", "result-a", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-b", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-c", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-d", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-e", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-f", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-g", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-h", 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_addalias("test", "result-i", 1);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_resetalias();
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("test");
+	ASSERT_STRING(name, "test");
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - boundary condition
+//	group: generic quiet
+{
+	r = idn_converter_aliasfile("");
+	ASSERT_RESULT(r, idn_nofile);
+
+	r = idn_converter_aliasfile("idnalias-not-found.conf");
+	ASSERT_RESULT(r, idn_nofile);
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - long line
+//	group: generic quiet
+{
+	char line[LINEBUF_SIZE];
+	const char *entry = "aaaaaaaaaa";
+	int i;
+	int len;
+
+	len = strlen(entry);
+	for (i = 0; i < LINEBUF_SIZE - len; i += len) {
+		memcpy(line + i, entry, len);
+	}
+	*(line + (LINEBUF_SIZE / 2)) = ' ';
+	*(line + i) = '\0';
+	create_conf_file(CONF_FILENAME, 0, line, NULL);
+	r = idn_converter_aliasfile(CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - no new line at end of file
+//	group: generic quiet
+{
+	create_conf_file(CONF_FILENAME, CONF_NO_EOF_NEWLINE,
+			 "*.ISO_8859-1 ISO-8859-1",
+			 "*.ISO_8859-2 ISO-8859-1",
+			 "*.SJIS Shift_JIS",
+			 "*.Shift_JIS Shift_JIS",
+			 "ja_JP.EUC eucJP",
+			 "japanese eucJP",
+			 NULL);
+	r = idn_converter_aliasfile(CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("japanese");
+	ASSERT_STRING(name, "eucJP");
+
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - invalid entries
+//	group: generic quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "*.ISO_8859-1 ISO-8859-1",
+			 "*.ISO_8859-2 ISO-8859-1",
+			 "*.SJIS",
+			 "*.Shift_JIS",
+			 "ja_JP.EUC eucJP",
+			 "japanese eucJP",
+			 NULL);
+	r = idn_converter_aliasfile(CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_converter_aliasfile() - more then two items in one line
+//	group: generic quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "*.ISO_8859-1 ISO-8859-1",
+			 "*.ISO_8859-2 ISO-8859-1",
+			 "*.SJIS Shift_JIS ko_KR.EUC",
+			 "*.Shift_JIS Shift_JIS",
+			 "*.big5 Big5 *.big5 *.big5",
+			 "ja_JP.EUC eucJP",
+			 "japanese eucJP",
+			 NULL);
+	r = idn_converter_aliasfile(CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_getrealname("japanese");
+	ASSERT_STRING(name, "eucJP");
+}
+
+//# TESTCASE
+//	title: idn_converter_localencoding() - #1
+//	group: localencoding
+{
+	r = idn_converter_create("test.UTF-8", &ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_localencoding(ctx);
+	ASSERT_STRING(name, "UTF-8");
+	idn_converter_destroy(ctx);
+}
+
+//# TESTCASE
+//	title: idn_converter_localencoding() - #2
+//	group: localencoding
+{
+	r = idn_converter_create("test.KOI8-R", &ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+#ifdef WITHOUT_ICONV
+	ASSERT_RESULT(r, idn_invalid_name);
+#else
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_localencoding(ctx);
+	ASSERT_STRING(name, "KOI8-R");
+	idn_converter_destroy(ctx);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_localencoding() - #3
+//	group: localencoding
+{
+	r = idn_converter_create("unresolvedname", &ctx,
+				 IDN_CONVERTER_DELAYEDOPEN);
+#ifdef WITHOUT_ICONV
+	ASSERT_RESULT(r, idn_invalid_name);
+#else
+	ASSERT_RESULT(r, idn_success);
+	name = idn_converter_localencoding(ctx);
+	ASSERT_STRING(name, "unresolvedname");
+	idn_converter_destroy(ctx);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_encodingtype()
+//	group: conversion
+{
+	ASSERT_INT(idn_converter_encodingtype(punycode_ctx),
+		   IDN_ACE_STRICTCASE);
+	ASSERT_INT(idn_converter_encodingtype(utf8_ctx),
+		   IDN_NONACE);
+#ifndef WITHOUT_ICONV
+	ASSERT_INT(idn_converter_encodingtype(eucjp_ctx),
+		   IDN_NONACE);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_isasciicompatible()
+//	group: conversion
+{
+	ASSERT_INT(idn_converter_isasciicompatible(punycode_ctx), 1);
+	ASSERT_INT(idn_converter_isasciicompatible(utf8_ctx), 0);
+#ifndef WITHOUT_ICONV
+	ASSERT_INT(idn_converter_isasciicompatible(eucjp_ctx), 0);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_convfromucs4()
+//	group: conversion quiet
+{
+	unsigned long from_nullchar = 0x0000;
+	unsigned long from[2] = { UCS4_NAME, 0x0000 };
+	char to[1];
+	char to_punycode[PUNYCODE_NAME_SIZE];
+#ifndef WITHOUT_ICONV
+	char to_eucjp[EUCJP_NAME_SIZE];
+#endif
+
+	r = idn_converter_convfromucs4(punycode_ctx, &from_nullchar, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convfromucs4(punycode_ctx, &from_nullchar, to, 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+
+	r = idn_converter_convfromucs4(punycode_ctx, from, to_punycode, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convfromucs4(punycode_ctx, from, to_punycode,
+				       PUNYCODE_NAME_SIZE - 1);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+	r = idn_converter_convfromucs4(punycode_ctx, from, to_punycode,
+				       PUNYCODE_NAME_SIZE);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to_punycode, PUNYCODE_NAME);
+
+#ifndef WITHOUT_ICONV
+	r = idn_converter_convfromucs4(eucjp_ctx, &from_nullchar, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convfromucs4(eucjp_ctx, &from_nullchar, to, 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+
+	r = idn_converter_convfromucs4(eucjp_ctx, from, to_eucjp, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convfromucs4(eucjp_ctx, from, to_eucjp,
+				       EUCJP_NAME_SIZE - 1);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convfromucs4(eucjp_ctx, from, to_eucjp,
+				       EUCJP_NAME_SIZE);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to_eucjp, EUCJP_NAME);
+
+	from[0] = 0x80000000;
+	r = idn_converter_convfromucs4(eucjp_ctx, from, to_eucjp,
+				       EUCJP_NAME_SIZE);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	from[0] = UCS4_INVALID_NAME_FOR_EUCJP;
+	r = idn_converter_convfromucs4(eucjp_ctx, from, to_eucjp,
+				       EUCJP_NAME_SIZE);
+	ASSERT_RESULT(r, idn_nomapping);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_convtoucs4()
+//	group: conversion
+{
+	unsigned long to_nullchar = 0x0000;
+	unsigned long to[1];
+	unsigned long punycode_to[2];
+#ifndef WITHOUT_ICONV
+	unsigned long eucjp_to[2];
+#endif
+	unsigned long ucs4_name[2] = { UCS4_NAME, 0x0000 };
+
+	r = idn_converter_convtoucs4(punycode_ctx, "", to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convtoucs4(punycode_ctx, "", to, 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, &to_nullchar);
+
+	r = idn_converter_convtoucs4(punycode_ctx, PUNYCODE_NAME,
+				     punycode_to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convtoucs4(punycode_ctx, PUNYCODE_NAME,
+				     punycode_to, 1);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+	r = idn_converter_convtoucs4(punycode_ctx, PUNYCODE_NAME, punycode_to,
+				     2);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING_THRU(punycode_to, ucs4_name);
+
+#ifndef WITHOUT_ICONV
+	r = idn_converter_convtoucs4(eucjp_ctx, "", to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convtoucs4(eucjp_ctx, "", to, 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, &to_nullchar);
+
+	r = idn_converter_convtoucs4(eucjp_ctx, EUCJP_NAME, eucjp_to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convtoucs4(eucjp_ctx, EUCJP_NAME, eucjp_to, 1);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_converter_convtoucs4(eucjp_ctx, EUCJP_NAME, eucjp_to, 2);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, &to_nullchar);
+
+	r = idn_converter_convtoucs4(eucjp_ctx, "\xFF\xFF", eucjp_to, 2);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+#endif
+}
+
+//# TESTCASE
+//	title: idn_converter_destroy(), idn_converter_incrref()
+//	group: generic
+{
+	idn_converter_t ctx2;
+
+	r = idn_converter_create(IDN_UTF8_ENCODING_NAME, &ctx, 0);
+	ASSERT_RESULT(r, idn_success);
+	idn_converter_destroy(ctx);
+
+	r = idn_converter_create(IDN_UTF8_ENCODING_NAME, &ctx2, 0);
+	ASSERT_RESULT(r, idn_success);
+	idn_converter_incrref(ctx2);
+	ASSERT_RESULT(r, idn_success);
+	idn_converter_destroy(ctx2);
+	idn_converter_destroy(ctx2);
+}
+
+//# TESTCASE
+//	title: idn_converter_register()
+//	group: generic
+{
+	char eucjp_to[3];
+	unsigned long ucs4_to[2];
+	unsigned long ucs4_name[2] = { UCS4_NAME, 0x0000 };
+
+	r = idn_converter_register("test",
+				   NULL,
+				   NULL,
+				   idn_test_encode,
+				   idn_test_decode,
+				   NULL,
+				   IDN_ACE_STRICTCASE);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_converter_create("test", &ctx, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_converter_convfromucs4(ctx, ucs4_name, eucjp_to, sizeof(eucjp_to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(eucjp_to, EUCJP_NAME);
+
+	r = idn_converter_convtoucs4(ctx, "", ucs4_to, SIZEOFUCS4(ucs4_to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(ucs4_to, ucs4_name);
+
+	idn_converter_destroy(ctx);
+}

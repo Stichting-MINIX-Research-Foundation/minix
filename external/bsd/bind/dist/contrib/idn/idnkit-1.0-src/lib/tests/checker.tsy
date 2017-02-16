@@ -1,0 +1,610 @@
+#ifndef lint
+static char *rcsid = "Id: checker.tsy,v 1.1 2003/06/04 00:26:51 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <idn/checker.h>
+#include <idn/log.h>
+#include <idn/ucs4.h>
+#include "testutil.h"
+
+#define SIZEOFUCS4(x)	(sizeof(x) / sizeof(unsigned long))
+
+#define UCS4_NAME_STR	"U+304C"	/* hiragana letter ga */
+#define UCS4_NAME	0x304C
+
+#define BUF_SIZE	128
+#define ARRAY_SIZE	9
+
+#define CONF_FILENAME	"test.map"
+
+#define LINEBUF_SIZE	2001
+
+/*
+ * Sample strings for `from' argument of normalize(),
+ * and its expected outputs.
+ */
+const unsigned long from[4] = {
+	UCS4_NAME,
+	0x00A0, /* no-break space: prohibited character */
+	0x0221, /* unassigned character */
+	0x0000
+};
+
+
+#define FROM_UCS4NAME_OFFSET	0
+#define FROM_PROH_OFFSET	1
+#define FROM_UNAS_OFFSET	2
+
+const unsigned long from2[4] = {
+	UCS4_NAME,
+	0x0221, /* unassigned character */
+	0x00A0, /* no-break space: prohibited character */
+	0x0000
+};
+
+#define FROM2_UCS4NAME_OFFSET	0
+#define FROM2_PROH_OFFSET	2
+#define FROM2_UNAS_OFFSET	1
+
+static const unsigned long bidi_from[4] = {
+	0x05BE, /* hebrew punctuation maqaf */
+	0x0041, /* latin capital letter a */
+	0xFEFC, /* arabic ligature lam with alef final form */
+	0x0000
+};
+#define BIDIFROM_OFFSET		1
+
+idn_result_t
+test_createproc(const char *parameter, void **ctxp)
+{
+	return (idn_success);
+}
+
+void
+test_destroyproc(void *ctx)
+{
+}
+
+#define FOUNDPTR_OFFSET 2
+idn_result_t
+test_lookupproc(void *ctx, const unsigned long *ucs4,
+		const unsigned long **found)
+{
+	*found = ucs4 + FOUNDPTR_OFFSET;
+	return (idn_success);
+}
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//	group: generic
+//--
+//	Initialize the module and create context.
+{
+	idn_result_t r;
+	idn_checker_t ctx = NULL;
+	char name[BUF_SIZE];
+
+	r = idn_checker_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: generic
+//--
+//	Destroy context.
+{
+	if (ctx != NULL)
+		idn_checker_destroy(ctx);
+}
+
+//# SETUP
+//	group: lookup
+//--
+//	Initialize the module and create context.
+{
+	idn_result_t r;
+	idn_checker_t ctx = NULL;
+	char name[BUF_SIZE];
+	const unsigned long *ptr;
+
+	r = idn_checker_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: lookup
+//--
+//	Destroy context.
+{
+	if (ctx != NULL)
+		idn_checker_destroy(ctx);
+}
+
+//# SETUP
+//	group: addall
+//--
+//	Initialize the module and create context.
+{
+	idn_result_t r;
+	idn_checker_t ctx = NULL;
+	char *names[ARRAY_SIZE];
+	int i;
+	const unsigned long *ptr;
+
+	for (i = 0; i < ARRAY_SIZE; i++) {
+		names[i] = malloc(BUF_SIZE);
+		if (names[i] == NULL) {
+			ASSERT("malloc failed\n");
+		}
+	}
+
+	r = idn_checker_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: addall
+//--
+//	Destroy context and free some blocks.
+{
+	if (ctx != NULL)
+		idn_checker_destroy(ctx);
+	for (i = 0; i < ARRAY_SIZE; i++) {
+		free(names[i]);
+	}
+}
+
+//# SETUP
+//	group: quiet
+//--
+//	Set log level to `fatal' to supress log messages.
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+//--
+//	Restore log level.
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: idn_checker_add() - boundary condition
+//	group: generic quiet
+{
+	r = idn_checker_add(ctx, "");
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - builtin schemes, prohibit
+//	group: generic quiet
+{
+	sprintf(name, "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	sprintf(name, "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "nameprep-01");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - builtin schemes, unassigned
+//	group: generic quiet
+{
+	sprintf(name, "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	sprintf(name, "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "nameprep-01");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - builtin schemes, bidi
+//	group: generic quiet
+{
+	sprintf(name, "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	sprintf(name, "%s%s", IDN_CHECKER_BIDI_PREFIX, "nameprep-01");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - file - boundary condition
+//	group: generic quiet
+{
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_UNASSIGNED_PREFIX, "");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_nofile);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_PROHIBIT_PREFIX, "");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_nofile);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_BIDI_PREFIX, "");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - file - long line
+//	group: generic quiet
+{
+	char line[LINEBUF_SIZE];
+	const char *first_entry = "304C;";
+	const char *other_entry = " 304D";
+	int i;
+	int len;
+	
+	memcpy(line, first_entry, strlen(first_entry));
+	len = strlen(other_entry);
+	for (i = len; i < LINEBUF_SIZE - len; i += len) {
+		memcpy(line + i, other_entry, len);
+	}
+	*(line + i) = '\0';
+
+	create_conf_file(CONF_FILENAME, 0, line, NULL);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_UNASSIGNED_PREFIX,
+		CONF_FILENAME);
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_PROHIBIT_PREFIX,
+		CONF_FILENAME);
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - file, prohibit
+//	group: lookup
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 UCS4_NAME_STR,
+			 NULL);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_PROHIBIT_PREFIX,
+		CONF_FILENAME);
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_UCS4NAME_OFFSET);
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_UCS4NAME_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - file, unassigned
+//	group: lookup
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 UCS4_NAME_STR,
+			 NULL);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_UNASSIGNED_PREFIX,
+		CONF_FILENAME);
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_UCS4NAME_OFFSET);
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_UCS4NAME_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_add() - file, bidi
+//	group: lookup quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 UCS4_NAME_STR,
+			 NULL);
+	sprintf(name, "%sfileset:%s", IDN_CHECKER_BIDI_PREFIX,
+		CONF_FILENAME);
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_addall() - boundary condition - scheme name
+//	group: addall quiet
+{
+	sprintf(names[0], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[1], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[2], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[3], "%s%s", IDN_CHECKER_BIDI_PREFIX, "");
+	r = idn_checker_addall(ctx, (const char **)names, 4);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_checker_addall() - boundary condition - nschemes = 0
+//	group: addall quiet
+{
+	sprintf(names[0], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "nameprep-01");
+	sprintf(names[1], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "nameprep-01");
+	sprintf(names[2], "%s%s", IDN_CHECKER_BIDI_PREFIX, "");
+	sprintf(names[3], "%s%s", IDN_CHECKER_BIDI_PREFIX, "nameprep-01");
+	r = idn_checker_addall(ctx, (const char **)names, 0);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, NULL);
+}
+
+//# TESTCASE
+//	title: idn_checker_addall() - add a lot of schemes #1
+//	group: addall
+{
+	sprintf(names[0], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[1], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[2], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[3], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[4], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[5], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[6], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[7], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[8], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+
+	r = idn_checker_addall(ctx, (const char **)names, 9);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_PROH_OFFSET);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_PROH_OFFSET);
+
+	r = idn_checker_lookup(ctx, bidi_from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, bidi_from + BIDIFROM_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_addall() - add a lot of schemes #2
+//	group: addall
+{
+	sprintf(names[0], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[1], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[2], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[3], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[4], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[5], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	sprintf(names[6], "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	sprintf(names[7], "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	sprintf(names[8], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+
+	r = idn_checker_addall(ctx, (const char **)names, 9);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_UNAS_OFFSET);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_UNAS_OFFSET);
+
+	r = idn_checker_lookup(ctx, bidi_from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, bidi_from + BIDIFROM_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_addall() - add same scheme repetedly
+//	group: addall
+{
+	int i;
+
+	sprintf(names[0], "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	for (i = 1; i < ARRAY_SIZE; i++) {
+		strcpy(names[i], names[0]);
+	}
+	r = idn_checker_addall(ctx, (const char **)names, ARRAY_SIZE);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_PROH_OFFSET);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_PROH_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_lookup() - builtin schemes - RFC3491 prohibit
+//	group: lookup
+{
+	sprintf(name, "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_PROH_OFFSET);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_PROH_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_lookup() - builtin schemes - RFC3491 unassigned
+//	group: lookup
+{
+	sprintf(name, "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FROM_UNAS_OFFSET);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from2 + FROM2_UNAS_OFFSET);
+}
+
+//# TESTCASE
+//	title: idn_checker_lookup() - builtin schemes - RFC3491 bidi
+//	group: lookup
+{
+	sprintf(name, "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, bidi_from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, bidi_from + BIDIFROM_OFFSET);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, NULL);
+
+	r = idn_checker_lookup(ctx, from2, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, NULL);
+}
+
+//# TESTCASE
+//	title: idn_checker_lookup() - context without procedure
+//	group: lookup
+{
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, NULL);
+}
+
+//# TESTCASE
+//	title: idn_checker_lookup() - string in ascii
+//	group: lookup
+{
+	char *ascii_str = "test";
+	unsigned long ucs4_str[5];
+
+	r = idn_ucs4_utf8toucs4(ascii_str, ucs4_str, SIZEOFUCS4(ucs4_str));
+
+	sprintf(name, "%s%s", IDN_CHECKER_PROHIBIT_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	sprintf(name, "%s%s", IDN_CHECKER_UNASSIGNED_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	sprintf(name, "%s%s", IDN_CHECKER_BIDI_PREFIX, "RFC3491");
+	r = idn_checker_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_lookup(ctx, ucs4_str, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, NULL);
+}
+
+//# TESTCASE
+//	title: idn_checker_destroy(), idn_checker_incrref()
+//	group:
+{
+	idn_result_t r;
+	idn_checker_t ctx = NULL;
+
+	r = idn_checker_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_checker_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+	idn_checker_incrref(ctx);
+	idn_checker_destroy(ctx);
+	idn_checker_destroy(ctx);
+}
+
+//# TESTCASE
+//	title: idn_checker_register()
+//	group: generic
+{
+	const unsigned long *ptr = NULL;
+
+	r = idn_checker_register("test",
+				 test_createproc,
+				 test_destroyproc,
+				 test_lookupproc);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_add(ctx, "test");
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_checker_lookup(ctx, from, &ptr);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_PTR(ptr, from + FOUNDPTR_OFFSET);
+}

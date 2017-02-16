@@ -1,0 +1,11 @@
+use BindDB;
+INSERT INTO `records` (`id`, `zone`, `ttl`, `type`, `host`, `mx_priority`, `data`, `primary_ns`, `resp_contact`, `serial`, `refresh`, `retry`, `expire`, `minimum`) VALUES
+('', 'example.com', 86400, 'SOA', '@', NULL, NULL, 'ns1.example.com.', 'info.example.com.', 2011043001, 10800, 7200, 604800, 86400),
+('', 'example.com', 86400, 'NS', '@', NULL, 'ns1.example.com.', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('', 'example.com', 86400, 'NS', '@', NULL, 'ns2.example.com.', NULL, NULL, NULL, NULL, NULL, NULL, NULL), ('', 'example.com', 86400, 'MX', '@',
+10, 'mail.example.com.', NULL, NULL, NULL, NULL, NULL, NULL, NULL), ('', 'example.com', 86400, 'A', '@', NULL, '192.168.0.2', NULL, NULL,
+NULL, NULL, NULL, NULL, NULL), ('', 'example.com', 86400, 'CNAME', 'www', NULL, '@', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('', 'example.com', 86400, 'A', 'ns1', NULL, '192.168.0.111', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('', 'example.com', 86400, 'A', 'ns2', NULL, '192.168.0.222', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('', 'example.com', 86400, 'A', 'mail', NULL, '192.168.0.3', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('', 'example.com', 86400, 'TXT', '@', NULL, 'v=spf1 ip:192.168.0.3 ~all', NULL, NULL, NULL, NULL, NULL, NULL, NULL)

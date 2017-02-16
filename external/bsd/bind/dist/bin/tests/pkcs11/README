@@ -1,0 +1,14 @@
+"pkcs11-hmacmd5" is here to check for the presence of a known bug in
+the Thales nCipher PKCS#11 provider library.  To test for the bug, use
+pkcs11-hmacmd5 to hash a test vector from RFC 2104, and determine
+whether the resulting digest is is correct.  For instance:
+
+    echo -n "Hi There" | \
+        ./pkcs11-hmacmd5 -p <PIN> -k '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b'
+
+...must return "9294727a3638bb1c13f48ef8158bfc9d".
+
+If any other value is returned, then the provider library is buggy,
+and the compilation flag PKCS11CRYPTOWITHHMAC must *not* be defined.
+However, if the correct value is returned, then it is safe to turn
+on PKCS11CRYPTOWITHHMAC. (It is off by default.)

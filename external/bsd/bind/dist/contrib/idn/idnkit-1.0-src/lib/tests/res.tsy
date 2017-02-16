@@ -1,0 +1,1026 @@
+#ifndef lint
+static char *rcsid = "Id: res.tsy,v 1.1 2003/06/04 00:26:59 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <idn/res.h>
+#include <idn/log.h>
+
+#include "codeset.h"
+#include "setenv.h"
+
+#ifndef EUCJP_ENCODING_NAME
+#define EUCJP_ENCODING_NAME	"eucJP"
+#endif
+
+/*
+ * U+304B: hiragana letter KA
+ * U+3099: combining katakana-hiragana voiced sound mark
+ *
+ * 	map("U+304B U+3099") -> "U+304C"
+ *
+ * U+304C: hiragana letter GA
+ */
+#define UTF8_NAME		"A<U+304B><U+3099>"
+#define UTF8_REVNAME		"a<U+304C>"
+
+/*
+ * A4AC: hiragana letter GA (in EUC-JP)
+ */
+#define EUCJP_NAME	"\xa4\xac"
+#define EUCJP_REVNAME	"\xa4\xac"
+
+/*
+ * Conversion result of "U+304B U+3099 A"
+ */
+#define PUNYCODE_NAME	"xn--a-i8t"
+
+/*
+ * Conversion result of "A U+304B U+3099" (in EUC-JP).
+ */
+#define AUX_EUCJP_NAME	"xn--a-i\xa3\xb8t"
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//	group: generic-conversion
+//--
+//	Initialize the `resconf' context.
+//	Set local encoding to `UTF-8'.
+{
+	char to[256];
+	idn_result_t r;
+	idn_resconf_t ctx;
+
+	setenv("IDN_LOCAL_CODESET", "UTF-8", 1);
+	unsetenv("IDN_DISABLE");
+
+	r = idn_resconf_initialize();
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_resconf_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_resconf_setdefaults(ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: generic-conversion
+{
+	idn_resconf_destroy(ctx);
+}
+
+//# SETUP
+//	group: quiet
+//--
+//	Set log level to `fatal' to supress log messages.
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+//--
+//	Restore log level.
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: basic conversion by encodename()
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: basic conversion by decodename()
+//	group: generic-conversion
+{
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+}
+
+//# TESTCASE
+//	title: basic conversion by decodename2()
+//	group: generic-conversion
+{
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+#ifdef WITHOUT_ICONV
+	ASSERT_RESULT(r, idn_failure);
+#else
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename2() with auxencoding=NULL
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to),
+			    NULL);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+#endif
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=0
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, 0, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=0
+//	group: generic-conversion
+{
+	r = idn_res_decodename(ctx, 0, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=0
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, 0, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+#endif
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=rtcheck
+//	group: generic-conversion quiet
+{
+	r = idn_res_encodename(ctx, IDN_RTCHECK, EUCJP_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=decode-query
+//	group: generic-conversion quiet
+{
+	r = idn_res_encodename(ctx, IDN_DECODE_QUERY, EUCJP_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=decode-app
+//	group: generic-conversion quiet
+{
+	r = idn_res_encodename(ctx, IDN_DECODE_APP, EUCJP_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=decode-stored
+//	group: generic-conversion quiet
+{
+	r = idn_res_encodename(ctx, IDN_DECODE_STORED, EUCJP_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=(1<<31)
+//	group: generic-conversion quiet
+{
+	r = idn_res_encodename(ctx, 1 << 31, EUCJP_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=localmap
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, IDN_LOCALMAP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=localmap
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_LOCALMAP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=lencheck
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, IDN_LENCHECK, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=lencheck
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_LENCHECK, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=encode-query
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, IDN_ENCODE_QUERY, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=encode-query
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_ENCODE_QUERY, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=encode-app
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, IDN_ENCODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=encode-app
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_ENCODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=encode-stored
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, IDN_ENCODE_STORED, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=encode-stored
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_ENCODE_STORED, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=(1<<31)
+//	group: generic-conversion quiet
+{
+	r = idn_res_decodename(ctx, 1 << 31, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=(1<<31)
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, 1 << 31, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call encodename() with actions=localconv
+//	group: generic-conversion quiet
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_encodename(ctx, IDN_LOCALCONV, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename() with actions=localconv
+//	group: generic-conversion quiet
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename(ctx, IDN_LOCALCONV, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_action);
+#endif
+}
+
+//# TESTCASE
+//	title: call decodename2() with actions=localconv
+//	group: generic-conversion
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_LOCALCONV, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_failure);
+#endif
+}
+
+//# TESTCASE
+//	title: call enable(0) and then encodename()
+//	group: generic-conversion
+{
+	idn_res_enable(0);
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+}
+
+//# TESTCASE
+//	title: call decodename() when IDN_DISABLE is defined
+//	group: generic-conversion
+{
+	idn_res_enable(0);
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: call decodename() when IDN_DISABLE is defined
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	idn_res_enable(0);
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+#endif
+}
+
+//# TESTCASE
+//	title: call enable(0) and then encodename()
+//	group: generic-conversion
+{
+	idn_res_enable(0);
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+}
+
+//# TESTCASE
+//	title: call enable(0) and then decodename()
+//	group: generic-conversion
+{
+	idn_res_enable(0);
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: call enable(0) and then decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	idn_res_enable(0);
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+#endif
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE and call encodename()
+//	group: generic-conversion
+{
+	setenv("IDN_DISABLE", "1", 1);
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE and call decodename()
+//	group: generic-conversion
+{
+	setenv("IDN_DISABLE", "1", 1);
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE and call decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	setenv("IDN_DISABLE", "1", 1);
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+#endif
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE, and then call enable(1) and encodename()
+//	group: generic-conversion
+{
+	setenv("IDN_DISABLE", "1", 1);
+	idn_res_enable(1);
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE, and then call enable(1) and decodename()
+//	group: generic-conversion
+{
+	setenv("IDN_DISABLE", "1", 1);
+	idn_res_enable(1);
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+}
+
+//# TESTCASE
+//	title: set IDN_DISABLE, and then call enable(1) and decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	setenv("IDN_DISABLE", "1", 1);
+	idn_res_enable(1);
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+#endif
+}
+
+//# TESTCASE
+//	title: overrun test for arg `to' of encodename()
+//	group: generic-conversion
+{
+	/* Normal case */
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to,
+			   strlen(PUNYCODE_NAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to,
+			   strlen(PUNYCODE_NAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* enable(0) case */
+	idn_res_enable(0);
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to,
+			   strlen(UTF8_NAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to,
+			   strlen(UTF8_NAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* actions=0 case */
+	idn_res_enable(1);
+	r = idn_res_encodename(ctx, 0, UTF8_NAME, to, strlen(UTF8_NAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_NAME);
+
+	r = idn_res_encodename(ctx, 0, UTF8_NAME, to, strlen(UTF8_NAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
+//# TESTCASE
+//	title: overrun test for arg `to' of decodename()
+//	group: generic-conversion
+{
+	/* Normal case */
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to,
+			   strlen(UTF8_REVNAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to,
+			   strlen(UTF8_REVNAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* idn_res_enable(0) case */
+	idn_res_enable(0);
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to,
+			   strlen(PUNYCODE_NAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to,
+			   strlen(PUNYCODE_NAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* actions=0 case */
+	idn_res_enable(1);
+	r = idn_res_decodename(ctx, 0, PUNYCODE_NAME, to,
+			       strlen(PUNYCODE_NAME) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, PUNYCODE_NAME);
+
+	r = idn_res_decodename(ctx, 0, PUNYCODE_NAME, to,
+			       strlen(PUNYCODE_NAME));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
+//# TESTCASE
+//	title: overrun test for arg `to' of decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* Normal case */
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to,
+			    strlen(UTF8_REVNAME) + 1, EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, UTF8_REVNAME);
+
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to,
+			    strlen(UTF8_REVNAME), EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* idn_res_enable(0) case */
+	idn_res_enable(0);
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to,
+			    strlen(AUX_EUCJP_NAME) + 1, EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to,
+			    strlen(AUX_EUCJP_NAME), EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	/* actions=0 case */
+	idn_res_enable(1);
+	r = idn_res_decodename2(ctx, 0, AUX_EUCJP_NAME, to,
+			    strlen(AUX_EUCJP_NAME) + 1, EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, AUX_EUCJP_NAME);
+
+	r = idn_res_decodename2(ctx, 0, AUX_EUCJP_NAME, to,
+				strlen(AUX_EUCJP_NAME), EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+#endif
+}
+
+//# TESTCASE
+//	title: call encodename() with tolen=0
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, UTF8_NAME, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
+//# TESTCASE
+//	title: call decodename() with tolen=0
+//	group: generic-conversion
+{
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, PUNYCODE_NAME, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
+//# TESTCASE
+//	title: call decodename2() with tolen=0
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, AUX_EUCJP_NAME, to, 0,
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+#endif
+}
+
+//# TESTCASE
+//	title: convert an empty string using encodename()
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, "", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+}
+
+//# TESTCASE
+//	title: convert an empty string using decodename()
+//	group: generic-conversion
+{
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, "", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+}
+
+//# TESTCASE
+//	title: convert an empty string using decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, "", to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+#endif
+}
+
+//# TESTCASE
+//	title: prohcheck by encodename()
+//	group: generic-conversion
+{
+	/* U+1680: prohibited character */
+	r = idn_res_encodename(ctx, IDN_PROHCHECK, "<U+1680>", to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+}
+
+//# TESTCASE
+//	title: unascheck by encodename()
+//	group: generic-conversion
+{
+	/* U+0221: unassigned codepoint */
+	r = idn_res_encodename(ctx, IDN_UNASCHECK, "<U+0221>", to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+}
+
+//# TESTCASE
+//	title: bidicheck by encodename()
+//	group: generic-conversion
+{
+	/* U+05D0:   bidirectional property is "R" */
+	/* `a':      bidirectional property is "L" */
+	/* `0', `-': bidirectional property is "N" */
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0>", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0><U+05D0>",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0><U+05D0>-a",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0>-a-<U+05D0>",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "a-<U+05D0><U+05D0>",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0><U+05D0>-0",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "<U+05D0>-0-<U+05D0>",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_res_encodename(ctx, IDN_BIDICHECK, "0-<U+05D0><U+05D0>",
+			   to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+}
+
+//# TESTCASE
+//	title: asccheck by encodename()
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, IDN_ASCCHECK, "-name", to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_ASCCHECK, "name-", to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+
+	r = idn_res_encodename(ctx, IDN_ASCCHECK, "n ame", to, sizeof(to));
+	ASSERT_RESULT(r, idn_prohibited);
+}
+
+//# TESTCASE
+//	title: lencheck by encodename()
+//	group: generic-conversion
+{
+	r = idn_res_encodename(ctx, IDN_LENCHECK,
+			   "123456789-123456789-123456789-123456789-"
+			   "123456789-123456789-123", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_res_encodename(ctx, IDN_LENCHECK,
+			   "123456789-123456789-123456789-123456789-"
+			   "123456789-123456789-1234", to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_length);
+
+	r = idn_res_encodename(ctx, IDN_LENCHECK, "a..b", to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_length);
+}
+
+//# TESTCASE
+//	title: rtcheck non-prohchecked label by decodename()
+//	group: generic-conversion
+{
+	/* "xn--6ue" -> "U+1680" (prohibited character) */
+	r = idn_res_decodename(ctx, IDN_RTCHECK, "xn--6ue", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn--6ue");
+}
+
+//# TESTCASE
+//	title: rtcheck non-unaschecked label by decodename()
+//	group: generic-conversion
+{
+	/* "xn--6la" -> "U+0221" (unassigned codepoint) */
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_UNASCHECK,
+			   "xn--6la", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn--6la");
+}
+
+//# TESTCASE
+//	title: rtcheck non-ascchecked label by decodename()
+//	group: generic-conversion
+{
+	/* "xn----x7t" -> "- U+3042" */
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_ASCCHECK,
+			   "xn----x7t", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn----x7t");
+
+	/* "xn----w7t" -> "U+3042 -" */
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_ASCCHECK,
+			   "xn----w7t", to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn----w7t");
+}
+
+//# TESTCASE
+//	title: rtcheck non-lenchecked label by decodename()
+//	group: generic-conversion
+{
+	/* `s1' has 63 characters */
+	const char *s1 =
+	    "xn--l8jaa5522a8sj38bzugvvblo3y90fjzgvxlmxscifws3d43odzaq6aj340b";
+
+	const char *s1rev =
+	    "<U+9752><U+68EE><U+5CA9><U+624B><U+5BAE><U+57CE><U+79CB><U+7530>"
+	    "<U+5C71><U+5F62><U+798F><U+5CF6><U+6771><U+4EAC><U+795E><U+5948>"
+	    "<U+5DDD><U+3042><U+3042><U+3042>";
+
+	/* `s2' has 64 characters */
+	const char *s2 =
+	    "xn--a-w7ta6522a8sj38bzugvvblo3y90fjzgvxlmxscifws3d43odzaq6aj340b";
+
+	/* `s3' has an empty label */
+	const char *s3 = "a..b";
+
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK, s1, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s1rev);
+
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK, s2, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s2);
+
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK, s3, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s3);
+}
+
+//# TESTCASE
+//	title: rtcheck non-prohchecked label by decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* "xn--6ue" -> "U+1680" (prohibited character) */
+	r = idn_res_decodename2(ctx, IDN_RTCHECK, "xn--6ue", to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn--6ue");
+#endif
+}
+
+//# TESTCASE
+//	title: rtcheck non-unaschecked label by decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* "xn--6la" -> "U+0221" (unassigned codepoint) */
+	r = idn_res_decodename2(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_UNASCHECK,
+			    "xn--6la", to, sizeof(to), EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn--6la");
+#endif
+}
+
+//# TESTCASE
+//	title: rtcheck non-ascchecked label by decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* "xn----x7t" -> "- U+3042" */
+	r = idn_res_decodename2(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_ASCCHECK,
+			    "xn----x7t", to, sizeof(to), EUCJP_ENCODING_NAME);
+
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn----x7t");
+
+	/* "xn----w7t" -> "U+3042 -" */
+	r = idn_res_decodename2(ctx, IDN_IDNCONV | IDN_RTCHECK | IDN_ASCCHECK,
+			    "xn----w7t", to, sizeof(to), EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "xn----w7t");
+#endif
+}
+
+//# TESTCASE
+//	title: rtcheck non-lenchecked label by decodename2()
+//	group: generic-conversion
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* `s1' has 63 characters */
+	const char *s1 =
+	    "xn--l8jaa5522a8sj38bzugvvblo3y90fjzgvxlmxscifws3d43odzaq6aj340b";
+
+	const char *s1rev =
+	    "<U+9752><U+68EE><U+5CA9><U+624B><U+5BAE><U+57CE><U+79CB><U+7530>"
+	    "<U+5C71><U+5F62><U+798F><U+5CF6><U+6771><U+4EAC><U+795E><U+5948>"
+	    "<U+5DDD><U+3042><U+3042><U+3042>";
+
+	/* `s2' has 64 characters */
+	const char *s2 =
+	    "xn--a-w7ta6522a8sj38bzugvvblo3y90fjzgvxlmxscifws3d43odzaq6aj340b";
+
+	/* `s3' has an empty label */
+	const char *s3 = "a..b";
+
+	r = idn_res_decodename2(ctx, IDN_IDNCONV | IDN_RTCHECK, s1, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s1rev);
+
+	r = idn_res_decodename2(ctx, IDN_IDNCONV | IDN_RTCHECK, s2, to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s2);
+
+	r = idn_res_decodename(ctx, IDN_IDNCONV | IDN_RTCHECK, s3, to, sizeof(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, s3);
+#endif
+}
+
+//# TESTCASE
+//	title: pass broken string as `from' to encodename()
+//	group: generic-conversion quiet
+{
+	/* "\xe3\x21" is not valid UTF-8 string */
+	r = idn_res_encodename(ctx, IDN_ENCODE_APP, "\xe3\x21", to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_encoding);
+}
+
+//# TESTCASE
+//	title: pass broken string as `from' to decodename()
+//	group: generic-conversion quiet
+{
+	/* "\xe3\x21" is not valid UTF-8 string */
+	r = idn_res_decodename(ctx, IDN_DECODE_APP, "\xe3\x21", to, sizeof(to));
+	ASSERT_RESULT(r, idn_invalid_encoding);
+}
+
+//# TESTCASE
+//	title: pass broken string as `from' to decodename2()
+//	group: generic-conversion quiet
+{
+#ifdef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	/* "\xa4\x21" is not valid EUC-JP string */
+	r = idn_res_decodename2(ctx, IDN_DECODE_APP, "\xa4\x21", to, sizeof(to),
+			    EUCJP_ENCODING_NAME);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+#endif
+}
+

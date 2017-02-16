@@ -1,0 +1,10 @@
+/SOA tsig_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
+/AXFR tsig_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
+/AXFR tsig_key LSAnCU+Z/
+nil.      	300	NS	ns.nil.
+nil.		300	TXT	"initial AXFR"
+a.nil.		60	A	10.0.0.61
+/AXFR tsig_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300

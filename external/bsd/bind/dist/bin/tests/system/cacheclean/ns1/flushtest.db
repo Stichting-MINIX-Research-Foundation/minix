@@ -1,0 +1,49 @@
+; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id: flushtest.db,v 1.3 2011/08/03 23:47:48 tbox Exp 
+
+$TTL 3600
+$ORIGIN flushtest.example.
+@			IN SOA	flushtest.example. ns.flushtest.example. (
+				2011072900
+				600
+				600
+				1200
+				3600
+				)
+			NS	ns
+ns			IN	A	10.53.0.1
+
+top1			IN	TXT	"text"
+second1.top1		IN	TXT	"text"
+third1.second1.top1	IN	TXT	"text"
+third2.second1.top1	IN	TXT	"text"
+second2.top1		IN	TXT	"text"
+second3.top1		IN	TXT	"text"
+
+; top2 node is omitted for testing with an empty nonterminal
+second1.top2		IN	TXT	"text"
+second2.top2		IN	TXT	"text"
+second3.top2		IN	TXT	"text"
+
+top3			IN	TXT	"text"
+second1.top3		IN	TXT	"text"
+third1.second1.top3	IN	TXT	"text"
+third2.second1.top3	IN	TXT	"text"
+; second2.top3 is omitted for testing with an empty nontermianl
+third1.second2.top3	IN	TXT	"text"
+third2.second2.top3	IN	TXT	"text"
+second3.top3		IN	TXT	"text"
+

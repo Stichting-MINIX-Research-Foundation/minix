@@ -1,0 +1,6 @@
+args="-d 1h -m 2h"
+warn=0
+error=1
+ok=1
+retcode=1
+match="No ZSK's are active"

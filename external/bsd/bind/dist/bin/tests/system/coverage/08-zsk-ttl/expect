@@ -1,0 +1,7 @@
+args="-d 1w -m 2w"
+warn=1
+error=0
+ok=2
+retcode=0
+match="WARNING: Key .* (ZSK) is activated too soon after
+Activation should be at least 7 days after publication."

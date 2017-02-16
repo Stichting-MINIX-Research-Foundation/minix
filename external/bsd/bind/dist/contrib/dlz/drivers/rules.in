@@ -1,0 +1,50 @@
+# Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Id: rules.in,v 1.3 2010/12/18 01:56:21 each Exp 
+
+dlz_drivers.@O@: ${DLZ_DRIVER_DIR}/dlz_drivers.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_drivers.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_drivers.c
+
+sdlz_helper.@O@: ${DLZ_DRIVER_DIR}/sdlz_helper.c ${DLZ_DRIVER_DIR}/include/dlz/sdlz_helper.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/sdlz_helper.c
+
+
+dlz_bdb_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_bdb_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_bdb_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_bdb_driver.c
+
+dlz_bdbhpt_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_bdbhpt_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_bdbhpt_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_bdbhpt_driver.c
+
+dlz_filesystem_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_filesystem_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_filesystem_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_filesystem_driver.c
+
+dlz_ldap_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_ldap_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_ldap_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_ldap_driver.c
+
+dlz_mysql_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_mysql_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_mysql_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_mysql_driver.c
+
+dlz_odbc_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_odbc_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_odbc_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_odbc_driver.c
+
+dlz_postgres_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_postgres_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_postgres_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_postgres_driver.c
+
+dlz_dlopen_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_dlopen_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_dlopen_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_dlopen_driver.c
+
+dlz_stub_driver.@O@: ${DLZ_DRIVER_DIR}/dlz_stub_driver.c ${DLZ_DRIVER_DIR}/include/dlz/dlz_stub_driver.h
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -c ${DLZ_DRIVER_DIR}/dlz_stub_driver.c
+

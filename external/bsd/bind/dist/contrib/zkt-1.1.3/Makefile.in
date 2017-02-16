@@ -1,0 +1,203 @@
+#################################################################
+#
+#	@(#) Makefile for dnssec zone key tool  (c) Mar 2005 hoz
+#
+#################################################################
+
+prefix	=	@prefix@
+mandir	=	@mandir@
+
+CC	=	@CC@
+
+PROFILE =	# -pg
+OPTIM	=	# -O3 -DNDEBUG
+
+#CFLAGS	?=	@CFLAGS@ @DEFS@ -I@top_srcdir@
+CFLAGS	+=	-g @DEFS@ -I@top_srcdir@
+CFLAGS	+=	-Wall #-DDBG
+CFLAGS	+=	-Wmissing-prototypes
+CFLAGS	+=	$(PROFILE) $(OPTIM)
+LDFLAGS	+=	$(PROFILE)
+LIBS	=	@LIBS@
+
+PROJECT =	@PACKAGE_TARNAME@
+VERSION =	@PACKAGE_VERSION@
+
+HEADER	=	dki.h misc.h domaincmp.h zconf.h config_zkt.h \
+		config.h.in strlist.h zone.h zkt.h debug.h \
+		ncparse.h log.h rollover.h nscomm.h soaserial.h \
+		zfparse.h tcap.h
+SRC_ALL	=	dki.c misc.c domaincmp.c zconf.c log.c
+OBJ_ALL	=	$(SRC_ALL:.c=.o)
+
+SRC_SIG	=	zkt-signer.c zone.c ncparse.c rollover.c \
+		nscomm.c soaserial.c
+OBJ_SIG	=	$(SRC_SIG:.c=.o)
+MAN_SIG	=	zkt-signer.8
+PROG_SIG=	zkt-signer
+
+SRC_CNF	=	zkt-conf.c zfparse.c
+OBJ_CNF	=	$(SRC_CNF:.c=.o)
+MAN_CNF	=	zkt-conf.8
+PROG_CNF=	zkt-conf
+
+# shared sources
+SRC_KLS	=	strlist.c zkt.c tcap.c
+OBJ_KLS	=	$(SRC_KLS:.c=.o)
+
+SRC_KEY	=	zkt-keyman.c
+OBJ_KEY	=	$(SRC_KEY:.c=.o) $(OBJ_KLS)
+MAN_KEY	=	zkt-keyman.8
+PROG_KEY=	zkt-keyman
+
+SRC_LS	=	zkt-ls.c
+OBJ_LS	=	$(SRC_LS:.c=.o) $(OBJ_KLS)
+MAN_LS	=	zkt-ls.8
+PROG_LS=	zkt-ls
+
+SRC_SER	=	zkt-soaserial.c
+OBJ_SER	=	$(SRC_SER:.c=.o)
+#MAN_SER	=	zkt-soaserial.8
+PROG_SER=	zkt-soaserial
+
+SRC_PRG	=	$(SRC_SIG) $(SRC_CNF) $(SRC_LS) $(SRC_SER) $(SRC_KEY)
+OBJ_PRG	=	$(SRC_PRG:.c=.o)
+PROG_PRG=	$(PROG_SIG) $(PROG_CNF) $(PROG_LS) $(PROG_SER) $(PROG_KEY)
+
+MAN_ALL	=	$(MAN_SIG) $(MAN_LS) $(MAN_CNF) $(MAN_KEY)
+OTHER	=	README README.logging TODO LICENSE CHANGELOG tags Makefile.in \
+		configure distribute.sh examples
+SAVE	=	$(HEADER) $(SRC_ALL) $(SRC_SIG) $(SRC_CNF) $(SRC_KLS) \
+		$(SRC_LS) $(SRC_KEY) $(SRC_SER) $(OTHER) \
+		man configure.ac config.h.in doc
+#MNTSAVE	=	$(SAVE) configure.ac config.h.in doc 
+
+
+all:	 $(PROG_CNF) $(PROG_LS) $(PROG_SIG) $(PROG_SER) $(PROG_KEY)
+
+macos:		## for MAC OS (depreciated)
+macos:
+	$(MAKE) CFLAGS="$(CFLAGS) -D HAS_UTYPES=0" all
+
+solaris:	## for solaris (depreciated)
+solaris:
+	@$(MAKE) CFLAGS="$(CFLAGS) -D HAVE_GETOPT_LONG=0" all
+
+linux:		## for linux (default)
+linux:
+	@$(MAKE) all
+
+$(PROG_SIG):	$(OBJ_SIG) $(OBJ_ALL) Makefile
+	$(CC) $(LDFLAGS) $(OBJ_SIG) $(OBJ_ALL) -o $(PROG_SIG)
+
+$(PROG_CNF):	$(OBJ_CNF) $(OBJ_ALL) Makefile
+	$(CC) $(LDFLAGS) $(OBJ_CNF) $(OBJ_ALL) -o $(PROG_CNF)
+
+$(PROG_KEY):	$(OBJ_KEY) $(OBJ_ALL) Makefile
+	$(CC) $(LDFLAGS) $(LIBS) $(OBJ_KEY) $(OBJ_ALL) -o $(PROG_KEY)
+
+$(PROG_LS):	$(OBJ_LS) $(OBJ_ALL) Makefile
+	$(CC) $(LDFLAGS) $(LIBS) $(OBJ_LS) $(OBJ_ALL) -o $(PROG_LS)
+
+$(PROG_SER):	$(OBJ_SER) Makefile
+	$(CC) $(LDFLAGS) $(OBJ_SER) -o $(PROG_SER)
+
+install:	## install binaries in prefix/bin
+install:	$(PROG_PRG)
+		test -d $(prefix)/bin || mkdir -p $(prefix)/bin
+		cp $(PROG_PRG) $(prefix)/bin/
+
+install-man:	## install man pages in mandir
+install-man:
+	test -d $(mandir)/man8/ || mkdir -p $(mandir)/man8/
+	cp -p man/$(MAN_LS) man/$(MAN_SIG) man/$(MAN_KEY) man/$(MAN_CNF) $(mandir)/man8/
+
+
+
+tags:		## create tags file
+#tags:	$(SRC_ALL) $(SRC_PRG)
+tags:	$(SRC_ALL) $(SRC_SIG) $(SRC_CNF) $(SRC_KEY) $(SRC_LS) $(SRC_SER) $(SRC_KLS)
+	ctags $(SRC_ALL) $(SRC_SIG) $(SRC_CNF) $(SRC_KEY) $(SRC_LS) $(SRC_SER) $(SRC_KLS)
+
+clean:		## remove objectfiles and binaries
+clean:
+	-rm -f $(OBJ_PRG) $(OBJ_ALL) $(PROG_PRG)
+
+distclean:	## remove objectfiles, binaries and distribution files
+distclean:	clean
+	-rm -f Makefile config.h config.log config.status config.cache \
+	$(PROJECT)-$(VERSION).tar.gz
+
+tar:		## create tar file for distribution
+tar:	$(PROJECT)-$(VERSION).tar.gz
+
+configure:	## create configure script
+configure:	configure.ac Makefile.in
+	autoconf && autoheader
+
+man:	man/$(MAN_KEY).html man/$(MAN_KEY).pdf \
+	man/$(MAN_SIG).html man/$(MAN_SIG).pdf \
+	man/$(MAN_LS).html man/$(MAN_LS).pdf \
+	man/$(MAN_CNF).html man/$(MAN_CNF).pdf
+
+man/$(MAN_KEY).html: man/$(MAN_KEY)
+	groff -Thtml -man -mhtml man/$(MAN_KEY) > man/$(MAN_KEY).html
+man/$(MAN_KEY).pdf: man/$(MAN_KEY)
+	groff -Tps -man man/$(MAN_KEY) | ps2pdf - man/$(MAN_KEY).pdf
+man/$(MAN_LS).html: man/$(MAN_LS)
+	groff -Thtml -man -mhtml man/$(MAN_LS) > man/$(MAN_LS).html
+man/$(MAN_LS).pdf: man/$(MAN_LS)
+	groff -Tps -man man/$(MAN_LS) | ps2pdf - man/$(MAN_LS).pdf
+man/$(MAN_SIG).html: man/$(MAN_SIG)
+	groff -Thtml -man -mhtml man/$(MAN_SIG) > man/$(MAN_SIG).html
+man/$(MAN_SIG).pdf: man/$(MAN_SIG)
+	groff -Tps -man man/$(MAN_SIG) | ps2pdf - man/$(MAN_SIG).pdf
+man/$(MAN_CNF).html: man/$(MAN_CNF)
+	groff -Thtml -man -mhtml man/$(MAN_CNF) > man/$(MAN_CNF).html
+man/$(MAN_CNF).pdf: man/$(MAN_CNF)
+	groff -Tps -man man/$(MAN_CNF) | ps2pdf - man/$(MAN_CNF).pdf
+	
+# generation of tar file out of the git archive
+# (use v$(VERSION) instead of HEAD if the tar file should depend on a tagged revision)
+$(PROJECT)-$(VERSION).tar.gz:   $(SAVE)
+	@test "`git tag -l $(VERSION)`" != $(VERSION) && echo "no tag $(VERSION) found in repository" && exit 
+        git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" $(VERSION) | \
+        gzip  > $(PROJECT)-$(VERSION).tar.gz
+        # git archive --format=tar --prefix="$(PROJECT)-$(VERSION)/" HEAD | \
+        # cat > $(PROJECT)-$(VERSION).tar
+
+depend:
+	$(CC) -MM $(CFLAGS) $(SRC_PRG) $(SRC_ALL)
+
+help:
+	@grep "^.*:[ 	]*##" Makefile
+
+## all dependicies
+#:r !make depend
+#gcc -MM -g -DHAVE_CONFIG_H -I. -Wall  -Wmissing-prototypes   zkt-signer.c zone.c ncparse.c rollover.c nscomm.c soaserial.c zkt-conf.c zfparse.c zkt-ls.c zkt-soaserial.c zkt-keyman.c dki.c misc.c domaincmp.c zconf.c log.c
+zkt-signer.o: zkt-signer.c config.h config_zkt.h zconf.h debug.h misc.h \
+  ncparse.h nscomm.h zone.h dki.h log.h soaserial.h rollover.h
+zone.o: zone.c config.h config_zkt.h debug.h domaincmp.h misc.h zconf.h \
+  dki.h zone.h
+ncparse.o: ncparse.c debug.h misc.h zconf.h log.h ncparse.h
+rollover.o: rollover.c config.h config_zkt.h zconf.h debug.h misc.h \
+  zone.h dki.h log.h rollover.h
+nscomm.o: nscomm.c config.h config_zkt.h zconf.h nscomm.h zone.h dki.h \
+  log.h misc.h debug.h
+soaserial.o: soaserial.c config.h config_zkt.h zconf.h log.h debug.h \
+  soaserial.h
+zkt-conf.o: zkt-conf.c config.h config_zkt.h debug.h misc.h zconf.h \
+  zfparse.h
+zfparse.o: zfparse.c config.h config_zkt.h zconf.h log.h debug.h \
+  zfparse.h
+zkt-ls.o: zkt-ls.c config.h config_zkt.h debug.h misc.h zconf.h strlist.h \
+  dki.h tcap.h zkt.h
+zkt-soaserial.o: zkt-soaserial.c config.h config_zkt.h
+zkt-keyman.o: zkt-keyman.c config.h config_zkt.h debug.h misc.h zconf.h \
+  strlist.h dki.h zkt.h
+dki.o: dki.c config.h config_zkt.h debug.h domaincmp.h misc.h zconf.h \
+  dki.h
+misc.o: misc.c config.h config_zkt.h zconf.h log.h debug.h misc.h
+domaincmp.o: domaincmp.c domaincmp.h
+zconf.o: zconf.c config.h config_zkt.h debug.h misc.h zconf.h dki.h
+log.o: log.c config.h config_zkt.h misc.h zconf.h debug.h log.h

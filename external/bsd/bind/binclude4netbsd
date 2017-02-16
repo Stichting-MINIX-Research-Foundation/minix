@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# Use this script to update the bind include files used in the nameserver,
+# after you've imported and built the latest bind code. After you run this,
+# cvs import the resulting directory
+#
+# $ cd bind-X.Y.Z
+# $ configure
+# $ make
+# $ ./binclude4netbsd . /tmp/include
+# Fix manually the config.h file to disable things controlled by the Makefiles
+# $ cd /tmp/include
+# $ cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/bind/include -m "Include files for bind-X-Y-Z" ISC bind-X-Y-Z
+#
+
+PROG=$(basename $0)
+if [ \( -z "$1" \) -o \( -z "$2" \) ]
+then
+	echo "Usage: $PROG <bind-src> <include-dest>" 1>&2
+	exit 1
+fi
+
+BIND=$1
+INCLUDE=$2
+
+mkdir -p $INCLUDE
+cp $BIND/config.h $INCLUDE
+
+mkdir -p $INCLUDE/dns
+
+cp $BIND/lib/dns/code.h $INCLUDE/dns
+
+for i in enumclass.h enumtype.h rdatastruct.h
+do
+	cp $BIND/lib/dns/include/dns/$i $INCLUDE/dns
+done
+
+mkdir -p $INCLUDE/isc
+
+cp $BIND/lib/isc/include/isc/platform.h $INCLUDE/isc
+
+mkdir -p $INCLUDE/lwres
+
+for i in netdb.h platform.h
+do
+	cp $BIND/lib/lwres/include/lwres/$i $INCLUDE/lwres
+done
+
+cleantags $INCLUDE

@@ -1,0 +1,103 @@
+#
+#	README.logging
+#
+#	Introduction into the new logging feature 
+#	available since v0.96
+#	Per domain logging is enabled since v1.0
+#	
+
+In previous version of dnssec-signer every message was written
+to the default stdout and stderr channels, and the logging itself
+was handled by a redirection of those chanels to the logger command
+or to a file.
+
+Since v0.96, the dnssec-signer command is able to log all messages
+by itself. File and SYSLOG logging is supported.
+
+To enable the logging into a file channel, you have to specify
+the file or directory name via the commandline option -L (--logfile)
+or via the config file parameter "LogFile".
+	LogFile: ""|"<file>"|"<directory>"	(default is "")
+If a file is specified, than each run of dnssec-signer will append the
+messages to that file. If a directory is specified, than a file with a
+name of zkt-<ISOdate&timeUTC>+log" will be created on each dnssec-signer run.
+
+Since v1.0 per domain logging is possible.
+If the parameter "LogDomainDir:" is not empty, than the domain specific messages
+are written to a separate log file with a name like "zkt-<domainname>+log" in the
+directory specified by the parameter.
+If "LogDomainDir:" is set to ".", then the logfile will be created in the domain
+directory of the zone.
+
+Logging into the syslog channel could be enabled via the config file
+parameter "SyslogFacility".
+	SyslogFacility:	NONE|USER|DAEMON|LOCAL0|..|LOCAL7 (default is USER)
+
+For both channels, the log level could be set to one of six log levels:
+	LG_FATAL, LG_ERROR, LG_WARNING
+	LB_NOTICE, LG_INFO, LG_DEBUG
+
+The loglevel is settable via the config file parameter :
+	SyslogLevel: FATAL|ERROR|WARNING|NOTICE|INFO|DEBUG
+		(default is ERROR)
+and
+	LogLevel: FATAL|ERROR|WARNING|NOTICE|INFO|DEBUG
+   		(default is NOTICE)
+
+All the log parameters are settable on the commandline via the generic
+option -O "optstring" (--config-option="optstring").
+
+A verbose message output to stdout could be achieved by the commandline
+option -v (or -v -v).
+If you like to have this verbose messages also logged with a level of LG_DEBUG
+you should enable this by setting the config file option
+"VerboseLog" to a value of 1 or 2.
+
+Current logging messages:
+	LG_FATAL: Not all of the fatal errors are logged
+		(e.g.: config file or command line option fatal errors are
+		not logged)
+	LG_ERROR: All error messages will be logged
+	LG_WARNING: KSK lifetime expiration
+	LG_NOTICE:
+		Start and stop of dnssec-signer
+		Re-signing events 
+		Key rollover events
+		KSK key generation and revoking
+		Zone reload resp. freeze/thaw of dynamic zone
+	LG_INFO:
+		Messages for key generation/removal and ksk rollover
+	LG_DEBUG: all "verbose" (-v) and "very verbose" (-v -v)  messages
+
+Some recomended and useful logging settings
+
+- The default setting
+	LogFile: ""
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
+	VerboseLog: 0
+
+- Setting as in version v0.95
+	LogFile: "zkt-error.log"	# or a directory for separate logfiles
+	LogLevel: ERROR
+	SyslogFacility: NONE
+	VerboseLog: 0
+
+- Setting as in previous versions
+	LogFile: ""
+	SyslogFacility: NONE
+	VerboseLog: 0
+
+- Recommended setting for normal usage
+	LogFile: "zkt.log"	# or a directory for separate logfiles
+	LogLevel: ERROR
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
+	VerboseLog: 0
+	
+- Recommended setting for debugging
+	LogFile: "zkt.log"	# or a directory for separate logfiles
+	LogLevel: DEBUG
+	SyslogFacility: USER
+	SyslogLevel: NOTICE
+	VerboseLog: 2

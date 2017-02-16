@@ -1,0 +1,227 @@
+.TH zkt-conf 8 "February 22, 2010" "ZKT 1.0" ""
+\" turn off hyphenation
+.\"	if n .nh
+.nh
+.SH NAME
+zkt-conf \(em Secure DNS zone key config tool 
+
+.SH SYNOPSYS
+.na
+.B zkt-conf
+.RB [ \-V|\-\-view
+.IR "name" ]
+.RB [ \-w|\-\-write ]
+.B \-d|\-\-default
+.RB [ \-O|\-\-option
+.IR "optstr" ]
+.br
+.B zkt-conf
+.RB [ \-V|\-\-view
+.IR "name" ]
+.RB [ \-w|\-\-write ]
+.RB [ \-s ]
+.RB [ \-c|\-\-config
+.IR "file" ]
+.RB [ \-O|\-\-option
+.IR "optstr" ]
+.br
+.B zkt-conf
+.RB [ \-V|\-\-view
+.IR "name" ]
+.RB [ \-w|\-\-write ]
+.B  \-l|\-\-local
+.RB [ \-c|\-\-config
+.IR "file" ]
+.RB [ \-O|\-\-option
+.IR "optstr" ]
+
+.B zkt-conf
+.RB [ \-c
+.IR "file" ]
+.RB [ \-w|\-\-write ]
+.I "zonefile"
+
+.br
+.ad
+
+.SH DESCRIPTION
+The 
+.I zkt-conf
+command helps to create and show a config file for use by
+the Zone Key Tool commands, which are currently
+.I dnssec-zkt(8)
+and
+.IR zkt-signer(8) .
+.PP
+In general, the ZKT commands uses three sources for the config parameters:
+.HP 3
+a)
+The build-in default parameters
+.HP 3
+b)
+The side wide config file or the file specified with option -c
+will overload the built-in vars.
+The site wide config file is the file
+.I /var/named/dnssec.conf
+or the one set by the environment variable ZKT_CONF.
+.HP 3
+c)
+The local config file 
+.I dnssec.conf
+in the current zone directory will also overload the parameters read so far.
+.PP
+Because of this overloading feature, none of the config files has to have
+a complete parameter set.
+Typically the local config file will have only those parameters which are
+different from the global or built-in ones.
+.PP
+The default operation of
+.I zkt-conf(8)
+is to print the site wide config file (same as option
+.BR \-s ).
+Option
+.B \-d
+will print out the built-in defaults while
+.B \-l
+just print the local config parameters which are different to the global ones.
+In the last case
+.B \-a
+gives the complete
+.RB ( \-\-all )
+parameter list.
+.PP
+In all forms of the command, the parameters are changeable via option
+.B \-O
+.RB ( \-\-config-option ).
+.PP
+With option
+.B \-w
+.RB ( \-\-write )
+the parameters will be written back to the config file.
+This is useful in case of an ZKT upgrade or if one or more parameters are changed
+by option
+.BR \-O .
+.PP
+Option 
+.B \-t
+checks some of the parameter for reasonable values.
+.PP
+If the option
+.B \-t
+is given, all config parameters are checked against reasonable values.
+.PP
+Which config file is shown (or modified or checked) is determined by option 
+.B \-d
+which means the built-in defaults, option
+.B \-l
+which means the local config file or
+.B \-s
+which specifies the site wide config file.
+Option
+.B \-s
+is the default.
+
+.SH GENERAL OPTIONS
+.TP
+.BI \-V " view" ", \-\-view=" view
+Try to read the default configuration out of a file named
+.I dnssec-<view>.conf .
+Instead of specifying the \-V or \-\-view option every time,
+it is also possible to create a hard or softlink to the
+executable file to give it an additional name like 
+.I zkt-conf-<view> .
+.TP
+.BI \-c " file" ", \-\-config=" file
+Read all parameter from the specified config file.
+Otherwise the default config file is read or build in defaults
+will be used.
+.TP
+.BI \-O " optstr" ", \-\-config-option=" optstr
+Set any config file parameter via the commandline.
+Several config file options could be specified at the argument string
+but have to be delimited by semicolon (or newline).
+.TP
+.BR \-a ", " \-\-all
+In case of showing the local config file parameter
+.RI ( \-l )
+print all parameter, not just the ones different o the site wide or built-in defaults.
+
+.SH COMMAND OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Print out the online help.
+.TP
+.BR \-d ", " \-\-built-in-defaults
+List all the built-in default paremeter.
+.TP
+.BR \-s ", " \-\-sidecfg
+List all side wide config parameters (this is the default).
+.TP
+.BR \-l ", "  \-\-localconf
+List all local config parameters which are different to the site-wide config
+parameters.
+With otion
+.B \-a
+.RB ( \-\-all )
+all config parameters will be shown.
+
+
+.SH SAMPLE USAGE
+.TP 
+.fam C
+.B "zkt-conf \-d
+.fam T
+Print the built-in default config pars.
+.TP
+.fam C
+.B "zkt-conf \-d \-w
+.fam T
+Write all the built-in defaults into the site wide config file.
+.TP
+.fam C
+.B "zkt-conf \-s \-\--option "SerialFormat: unixtime; Zonedir: /var/named/zones" "\-w
+.fam T
+Change two parameters in the site wide dnssec.conf file.
+
+.SH ENVIRONMENT VARIABLES
+.TP
+ZKT_CONFFILE
+Specifies the name of the default global configuration files.
+
+.SH FILES
+.TP
+.I /var/named/dnssec.conf
+Default global configuration file.
+The name of the default global config file is settable via
+the environment variable ZKT_CONFFILE.
+.TP
+.I /var/named/dnssec-<view>.conf
+View specific global configuration file.
+.TP
+.I ./dnssec.conf
+Local configuration file (additionallx used in
+.B \-l
+mode).
+
+.SH BUGS
+.PP
+Some of the general options will not be meaningful in all of the command modes.
+.PP
+
+.SH AUTHORS
+Holger Zuleger
+
+.SH COPYRIGHT
+Copyright (c) 2010 by Holger Zuleger.
+Licensed under the BSD Licences. There is NO warranty; not even for MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+.\"--------------------------------------------------
+.SH SEE ALSO
+dnssec-keygen(8), dnssec-signzone(8), rndc(8), named.conf(5), zkt-signer(8), dnssec-zkt(8),
+.br
+RFC4641 
+"DNSSEC Operational Practices" by Miek Gieben and Olaf Kolkman,
+.br
+DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC
+.br
+(http://www.nlnetlabs.nl/dnssec_howto/)

@@ -1,0 +1,25 @@
+;-----------------------------------------------------------------
+;
+;       @(#)    sub.example.de/zone.db
+;
+;-----------------------------------------------------------------
+
+$TTL 7200
+
+@ 	IN SOA	ns1.example.de. hostmaster.example.de.  (
+				2011012503; Serial (up to 10 digits)
+				86400	; Refresh	(RIPE recommendation if NOTIFY is used)
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum
+
+
+		IN  NS		ns1.example.de.
+
+$INCLUDE dnskey.db
+
+localhost	IN  A		127.0.0.1
+
+a		IN  A		1.2.3.4
+b		IN  A		1.2.3.5
+c		IN  A		1.2.3.6

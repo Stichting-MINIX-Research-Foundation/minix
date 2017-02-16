@@ -1,0 +1,2 @@
+# this server runs named with the "-T clienttest" option omitted
+-m record,size,mctx -c named.conf -d 99 -g

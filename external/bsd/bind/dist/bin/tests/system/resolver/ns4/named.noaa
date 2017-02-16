@@ -1,0 +1,6 @@
+Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+Id: named.noaa,v 1.2 2010/09/15 12:07:56 marka Exp 
+
+Add -T noaa.

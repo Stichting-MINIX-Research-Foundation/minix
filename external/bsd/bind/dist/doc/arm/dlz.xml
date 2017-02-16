@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ - Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- Id -->
+
+<sect1 id="dlz-info">
+  <title>DLZ (Dynamically Loadable Zones)</title>
+  <para>
+    DLZ (Dynamically Loadable Zones) is an extension to BIND 9 that allows
+    zone data to be retrieved directly from an external database.  There is
+    no required format or schema.  DLZ drivers exist for several different
+    database backends including PostgreSQL, MySQL, and LDAP and can be
+    written for any other.
+  </para>
+  <para>
+    Historically, DLZ drivers had to be statically linked with the named
+    binary and were turned on via a configure option at compile time (for
+    example, <userinput>"configure --with-dlz-ldap"</userinput>).
+    Currently, the drivers provided in the BIND 9 tarball in
+    <filename>contrib/dlz/drivers</filename> are still linked this
+    way.
+  </para>
+  <para>
+    In BIND 9.8 and higher, it is possible to link some DLZ modules
+    dynamically at runtime, via the DLZ "dlopen" driver, which acts as a
+    generic wrapper around a shared object implementing the DLZ API.  The
+    "dlopen" driver is linked into named by default, so configure options
+    are no longer necessary when using these dynamically linkable drivers,
+    but are still needed for the older drivers in
+    <filename>contrib/dlz/drivers</filename>.
+  </para>
+
+  <para>
+    When the DLZ module provides data to named, it does so in text format.
+    The response is converted to DNS wire format by named.  This
+    conversion, and the lack of any internal caching, places significant
+    limits on the query performance of DLZ modules.  Consequently, DLZ is
+    not recommended for use on high-volume servers.  However, it can be
+    used in a hidden master configuration, with slaves retrieving zone
+    updates via AXFR.  (Note, however, that DLZ has no built-in support for
+    DNS notify; slaves are not automatically informed of changes to the
+    zones in the database.)
+  </para>
+
+  <sect2>
+    <title>Configuring DLZ</title>
+    <para>
+      A DLZ database is configured with a <command>dlz</command>
+      statement in <filename>named.conf</filename>:
+    </para>
+    <screen>
+    dlz example {
+        database "dlopen driver.so <option>args</option>";
+        search yes;
+    };
+    </screen>
+    <para>
+      This specifies a DLZ module to search when answering queries; the
+      module is implemented in <filename>driver.so</filename> and is
+      loaded at runtime by the dlopen DLZ driver.  Multiple
+      <command>dlz</command> statements can be specified; when
+      answering a query, all DLZ modules with <option>search</option>
+      set to <literal>yes</literal> will be queried to find out if
+      they contain an answer for the query name; the best available
+      answer will be returned to the client.
+    </para>
+    <para>
+      The <option>search</option> option in the above example can be
+      omitted, because <literal>yes</literal> is the default value.
+    </para>
+    <para>
+      If <option>search</option> is set to <literal>no</literal>, then
+      this DLZ module is <emphasis>not</emphasis> searched for the best
+      match when a query is received.  Instead, zones in this DLZ must be
+      separately specified in a zone statement.  This allows you to
+      configure a zone normally using standard zone option semantics,
+      but specify a different database back-end for storage of the
+      zone's data.  For example, to implement NXDOMAIN redirection using
+      a DLZ module for back-end storage of redirection rules:
+    </para>
+    <screen>
+    dlz other {
+        database "dlopen driver.so <option>args</option>";
+        search no;
+    };
+
+    zone "." {
+        type redirect;
+        dlz other;
+    };
+    </screen>
+  </sect2>
+  <sect2>
+    <title>Sample DLZ Driver</title>
+    <para>
+      For guidance in implementation of DLZ modules, the directory
+      <filename>contrib/dlz/example</filename> contains a basic
+      dynamically-linkable DLZ module--i.e., one which can be
+      loaded at runtime by the "dlopen" DLZ driver.
+      The example sets up a single zone, whose name is passed
+      to the module as an argument in the <command>dlz</command>
+      statement:
+    </para>
+    <screen>
+    dlz other {
+        database "dlopen driver.so example.nil";
+    };
+    </screen>
+    <para>
+      In the above example, the module is configured to create a zone
+      "example.nil", which can answer queries and AXFR requests, and
+      accept DDNS updates.  At runtime, prior to any updates, the zone
+      contains an SOA, NS, and a single A record at the apex:
+    </para>
+    <screen>
+ example.nil.  3600    IN      SOA     example.nil. hostmaster.example.nil. (
+                                               123 900 600 86400 3600
+                                       )
+ example.nil.  3600    IN      NS      example.nil.
+ example.nil.  1800    IN      A       10.53.0.1
+    </screen>
+    <para>
+      The sample driver is capable of retrieving information about the
+      querying client, and altering its response on the basis of this
+      information.  To demonstrate this feature, the example driver
+      responds to queries for "source-addr.<option>zonename</option>>/TXT"
+      with the source address of the query.  Note, however, that this
+      record will *not* be included in AXFR or ANY responses.  Normally,
+      this feature would be used to alter responses in some other fashion,
+      e.g., by providing different address records for a particular name
+      depending on the network from which the query arrived.
+    </para>
+    <para>
+      Documentation of the DLZ module API can be found in
+      <filename>contrib/dlz/example/README</filename>.  This directory also
+      contains the header file <filename>dlz_minimal.h</filename>, which
+      defines the API and should be included by any dynamically-linkable
+      DLZ module.
+    </para>
+  </sect2>
+</sect1>

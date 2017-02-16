@@ -1,0 +1,616 @@
+
+
+
+Intended Status: Informational                            O. Gudmundsson
+Network Working Group                                OGUD Consulting LLC
+Internet-Draft                                                  J. Ihren
+Expires: August 21, 2008                                             AAB
+                                                       February 18, 2008
+
+
+                Names of States in the life of a DNSKEY
+                  draft-gudmundsson-life-of-dnskey-00
+
+Status of this Memo
+
+   By submitting this Internet-Draft, each author represents that any
+   applicable patent or other IPR claims of which he or she is aware
+   have been or will be disclosed, and any of which he or she becomes
+   aware will be disclosed, in accordance with Section 6 of BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups.  Note that
+   other groups may also distribute working documents as Internet-
+   Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt.
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+   This Internet-Draft will expire on August 21, 2008.
+
+Copyright Notice
+
+   Copyright (C) The IETF Trust (2008).
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 1]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+Abstract
+
+   This document recommends a specific terminology to use when
+   expressing the state that a DNSKEY is in at particular time.  This
+   does not affect how the protocol operates in any way.
+
+
+Table of Contents
+
+   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  3
+   2.  DNSKEY timeline  . . . . . . . . . . . . . . . . . . . . . . .  4
+   3.  Life stages of a DNSKEY  . . . . . . . . . . . . . . . . . . .  5
+     3.1.  Generated  . . . . . . . . . . . . . . . . . . . . . . . .  5
+     3.2.  Published  . . . . . . . . . . . . . . . . . . . . . . . .  5
+       3.2.1.  Pre-Publication  . . . . . . . . . . . . . . . . . . .  5
+       3.2.2.  Out-Of-Band Publication  . . . . . . . . . . . . . . .  5
+     3.3.  Active . . . . . . . . . . . . . . . . . . . . . . . . . .  5
+     3.4.  Retired  . . . . . . . . . . . . . . . . . . . . . . . . .  5
+     3.5.  Removed  . . . . . . . . . . . . . . . . . . . . . . . . .  6
+       3.5.1.  Lame . . . . . . . . . . . . . . . . . . . . . . . . .  6
+       3.5.2.  Stale  . . . . . . . . . . . . . . . . . . . . . . . .  6
+     3.6.  Revoked  . . . . . . . . . . . . . . . . . . . . . . . . .  6
+   4.  Security considerations  . . . . . . . . . . . . . . . . . . .  7
+   5.  IANA considerations  . . . . . . . . . . . . . . . . . . . . .  8
+   6.  References . . . . . . . . . . . . . . . . . . . . . . . . . .  9
+     6.1.  Normative References . . . . . . . . . . . . . . . . . . .  9
+     6.2.  Informative References . . . . . . . . . . . . . . . . . .  9
+   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 10
+   Intellectual Property and Copyright Statements . . . . . . . . . . 11
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 2]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+1.  Introduction
+
+   When the editors of this document where comparing their DNSSEC key
+   management projects they discovered that they where discussing
+   roughly the same thing but using different terminology.
+
+   This document presents a unified terminology to use when describing
+   the current state of a DNSKEY.
+
+   The DNSSEC standards documents ([1], [2] and [3]) do not address the
+   required states for the key management of a DNSSEC key.  The DNSSEC
+   Operational Practices [4] document does propose that keys be
+   published before use but uses inconsistent or confusing terms.  This
+   document assumes basic understanding of DNSSEC and key management.
+
+   The terms proposed in this document attempt to avoid any confusion
+   and make the states of keys to be as clear as possible.  The terms
+   used in this document are intended as a operational supplement to the
+   terms defined in Section 2 of [1].
+
+   To large extent this discussion is motivated by Trust anchor keys but
+   the same terminology can be used for zone signing keys.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 3]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+2.  DNSKEY timeline
+
+   The model in this document is that keys progress through a state
+   machine along a one-way path, keys never move to an earlier states.
+
+
+
+   GENERATED----------> PUBLISHED ---> ACTIVE ---> RETIRED --> REMOVED
+    |                   ^       |        |            |         ^
+    |                   |       |        |            v         |
+    +--> Pre-PUBLISHED--+       +--------+---------> REVOKED ---+
+
+
+   DNSKEY time line.
+
+   There are few more states that are defined below but these apply only
+   to the publisher of TA's and the consumer of TA's.  Two of these are
+   sub-sets of the Published state, the other two are error states.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 4]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+3.  Life stages of a DNSKEY
+
+3.1.  Generated
+
+   Once a key is generated it enters state Generated and stays there
+   until the next state.  While in this state only the owner of the key
+   is aware of its existence and can prepare for its future use.
+
+3.2.  Published
+
+   Once the key is added to the DNSKEY set of a zone the key is there
+   for the world to see, or published.  The key needs to remain in this
+   state for some time to propagate to all validators that have cached
+   the prior version of the DNSKEY set.  In the case of KSK the key
+   should remain in this state for a longer time as documented in DNSSEC
+   Timers RFC [5].
+
+3.2.1.  Pre-Publication
+
+   In certain circumstances a zone owner may want to give out a new
+   Trust Anchor before exposing the actual public key.  In this case the
+   zone can publish a DS record of the key.  This allows others to
+   configure the trust anchor but will not be able to use the key until
+   the key is published in the DNSKEY RRset.
+
+3.2.2.  Out-Of-Band Publication
+
+   In certain circumstances a domain may want to give out a new Trust
+   Anchor outside DNS to give others a long lead time to configure the
+   new key as trust anchor.  The reason people may want to do this is to
+   keep the size of the DNSKEY set smaller and only add new trust anchor
+   just before the key goes into use.  One likely use for this is the
+   DNS "." root key as it does not have a parent that can publish a DS
+   record for it.  The publication mechanism does not matter it can be
+   any one of web-site, advertisement in Financial Times and other
+   international publication, e-mail to DNS related mailing lists, etc..
+
+3.3.  Active
+
+   The key is in ACTIVE state while it is actively signing data in the
+   zone it resides in.  It is one of the the keys that are signing the
+   zone or parts of the zone.
+
+3.4.  Retired
+
+   When the key is no longer used for signing the zone it enters state
+   Retired.  In this state there may still be signatures by the key in
+   cached data from the zone available at recursive servers, but the
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 5]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+   authoritative servers for the zone do no longer carry any signatures
+   generated by the key.
+
+3.5.  Removed
+
+   Once the key is removed from the DNSKEY RRset it enters the state
+   Removed.  At this point all signatures by the key that may still be
+   temporarily valid will fail to verify once the validator refreshes
+   the DNSKEY RRset in its memory.
+
+   Therefore "removal" of a key is typically not done until all the
+   cached signatures have expired.  Entering this state too early may
+   cause number of validators to end up with STALE Trust Anchors.
+
+3.5.1.  Lame
+
+   A Trust Anchor is Lame if the parent continues to publish DS pointing
+   to the key after it has been removed from the DNSKEY RRset.  A Trust
+   Anchor is arguably Lame if there are no signatures by a Retired KSK
+   in the zone.
+
+3.5.2.  Stale
+
+   A Stale Trust Anchor is an old TA that remains in a validators list
+   of active key(s) after the key has been removed from the zone's
+   DNSKEY RRset.
+
+3.6.  Revoked
+
+   There are times when a zone wants to signal that a particular key
+   should not be used at all.  The mechanism to do this is to set the
+   REVOKE bit [5].  Any key in any of the while the key is the DNSSKEY
+   set can be exited to Revoked state.  After some time in the Revoke
+   state the key will be Removed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 6]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+4.  Security considerations
+
+   TBD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 7]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+5.  IANA considerations
+
+   This document does not have any IANA actions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 8]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+6.  References
+
+6.1.  Normative References
+
+6.2.  Informative References
+
+   [1]  Arends, R., Austein, R., Larson, M., Massey, D., and S. Rose,
+        "DNS Security Introduction and Requirements", RFC 4033,
+        March 2005.
+
+   [2]  Arends, R., Austein, R., Larson, M., Massey, D., and S. Rose,
+        "Resource Records for the DNS Security Extensions", RFC 4034,
+        March 2005.
+
+   [3]  Arends, R., Austein, R., Larson, M., Massey, D., and S. Rose,
+        "Protocol Modifications for the DNS Security Extensions",
+        RFC 4035, March 2005.
+
+   [4]  Kolkman, O. and R. Gieben, "DNSSEC Operational Practices",
+        RFC 4641, September 2006.
+
+   [5]  StJohns, M., "Automated Updates of DNS Security (DNSSEC) Trust
+        Anchors", RFC 5011, September 2007.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008                [Page 9]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+Authors' Addresses
+
+   Olafur Gudmundsson
+   OGUD Consulting LLC
+   3821 Village Park Drive
+   Chevy Chase, MD  20815
+   USA
+
+   Email: ogud@ogud.com
+
+
+   Johan Ihren
+   Automatica, AB
+   Bellmansgatan 30
+   Stockholm,   SE-118 47
+   Sweden
+
+   Email: johani@automatica.se
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008               [Page 10]
+
+Internet-Draft           DNSSEC Key life stages.           February 2008
+
+
+Full Copyright Statement
+
+   Copyright (C) The IETF Trust (2008).
+
+   This document is subject to the rights, licenses and restrictions
+   contained in BCP 78, and except as set forth therein, the authors
+   retain all their rights.
+
+   This document and the information contained herein are provided on an
+   "AS IS" basis and THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS
+   OR IS SPONSORED BY (IF ANY), THE INTERNET SOCIETY, THE IETF TRUST AND
+   THE INTERNET ENGINEERING TASK FORCE DISCLAIM ALL WARRANTIES, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF
+   THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED
+   WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Intellectual Property
+
+   The IETF takes no position regarding the validity or scope of any
+   Intellectual Property Rights or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; nor does it represent that it has
+   made any independent effort to identify any such rights.  Information
+   on the procedures with respect to rights in RFC documents can be
+   found in BCP 78 and BCP 79.
+
+   Copies of IPR disclosures made to the IETF Secretariat and any
+   assurances of licenses to be made available, or the result of an
+   attempt made to obtain a general license or permission for the use of
+   such proprietary rights by implementers or users of this
+   specification can be obtained from the IETF on-line IPR repository at
+   http://www.ietf.org/ipr.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights that may cover technology that may be required to implement
+   this standard.  Please address the information to the IETF at
+   ietf-ipr@ietf.org.
+
+
+Acknowledgment
+
+   Funding for the RFC Editor function is provided by the IETF
+   Administrative Support Activity (IASA).
+
+
+
+
+
+Gudmundsson & Ihren      Expires August 21, 2008               [Page 11]
+

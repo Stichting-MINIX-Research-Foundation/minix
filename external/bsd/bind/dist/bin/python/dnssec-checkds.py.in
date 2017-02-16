@@ -1,0 +1,327 @@
+#!@PYTHON@
+############################################################################
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+############################################################################
+
+import argparse
+import pprint
+import os
+
+prog='dnssec-checkds'
+
+# These routines permit platform-independent location of BIND 9 tools
+if os.name == 'nt':
+    import win32con
+    import win32api
+
+def prefix(bindir = ''):
+    if os.name != 'nt':
+        return os.path.join('@prefix@', bindir)
+
+    bind_subkey = "Software\\ISC\\BIND"
+    hKey = None
+    keyFound = True
+    try:
+        hKey = win32api.RegOpenKeyEx(win32con.HKEY_LOCAL_MACHINE, bind_subkey)
+    except:
+        keyFound = False
+    if keyFound:
+        try:
+            (namedBase, _) = win32api.RegQueryValueEx(hKey, "InstallDir")
+        except:
+            keyFound = False
+        win32api.RegCloseKey(hKey)
+    if keyFound:
+        return os.path.join(namedBase, bindir)
+    return os.path.join(win32api.GetSystemDirectory(), bindir)
+
+def shellquote(s):
+    if os.name == 'nt':
+        return '"' + s.replace('"', '"\\"') + '"'
+    return "'" + s.replace("'", "'\\''") + "'"
+
+############################################################################
+# DSRR class:
+# Delegation Signer (DS) resource record
+############################################################################
+class DSRR:
+    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST', 4: 'SHA-384' }
+    rrname=''
+    rrclass='IN'
+    rrtype='DS'
+    keyid=None
+    keyalg=None
+    hashalg=None
+    digest=''
+    ttl=0
+
+    def __init__(self, rrtext):
+        if not rrtext:
+            return
+
+        fields = rrtext.split()
+        if len(fields) < 7:
+            return
+
+        self.rrname = fields[0].lower()
+        fields = fields[1:]
+        if fields[0].upper() in ['IN','CH','HS']:
+            self.rrclass = fields[0].upper()
+            fields = fields[1:]
+        else:
+            self.ttl = int(fields[0])
+            self.rrclass = fields[1].upper()
+            fields = fields[2:]
+
+        if fields[0].upper() != 'DS':
+            raise Exception
+
+        self.rrtype = 'DS'
+        self.keyid = int(fields[1])
+        self.keyalg = int(fields[2])
+        self.hashalg = int(fields[3])
+        self.digest = ''.join(fields[4:]).upper()
+
+    def __repr__(self):
+        return('%s %s %s %d %d %d %s' %
+                (self.rrname, self.rrclass, self.rrtype, self.keyid,
+                self.keyalg, self.hashalg, self.digest))
+
+    def __eq__(self, other):
+        return self.__repr__() == other.__repr__()
+
+############################################################################
+# DLVRR class:
+# DNSSEC Lookaside Validation (DLV) resource record
+############################################################################
+class DLVRR:
+    hashalgs = {1: 'SHA-1', 2: 'SHA-256', 3: 'GOST', 4: 'SHA-384' }
+    parent=''
+    dlvname=''
+    rrname='IN'
+    rrclass='IN'
+    rrtype='DLV'
+    keyid=None
+    keyalg=None
+    hashalg=None
+    digest=''
+    ttl=0
+
+    def __init__(self, rrtext, dlvname):
+        if not rrtext:
+            return
+
+        fields = rrtext.split()
+        if len(fields) < 7:
+            return
+
+        self.dlvname = dlvname.lower()
+        parent = fields[0].lower().strip('.').split('.')
+        parent.reverse()
+        dlv = dlvname.split('.')
+        dlv.reverse()
+        while len(dlv) != 0 and len(parent) != 0 and parent[0] == dlv[0]:
+            parent = parent[1:]
+            dlv = dlv[1:]
+        if len(dlv) != 0:
+            raise Exception
+        parent.reverse()
+        self.parent = '.'.join(parent)
+        self.rrname = self.parent + '.' + self.dlvname + '.'
+        
+        fields = fields[1:]
+        if fields[0].upper() in ['IN','CH','HS']:
+            self.rrclass = fields[0].upper()
+            fields = fields[1:]
+        else:
+            self.ttl = int(fields[0])
+            self.rrclass = fields[1].upper()
+            fields = fields[2:]
+
+        if fields[0].upper() != 'DLV':
+            raise Exception
+
+        self.rrtype = 'DLV'
+        self.keyid = int(fields[1])
+        self.keyalg = int(fields[2])
+        self.hashalg = int(fields[3])
+        self.digest = ''.join(fields[4:]).upper()
+
+    def __repr__(self):
+        return('%s %s %s %d %d %d %s' %
+                (self.rrname, self.rrclass, self.rrtype,
+                self.keyid, self.keyalg, self.hashalg, self.digest))
+
+    def __eq__(self, other):
+        return self.__repr__() == other.__repr__()
+
+############################################################################
+# checkds:
+# Fetch DS RRset for the given zone from the DNS; fetch DNSKEY
+# RRset from the masterfile if specified, or from DNS if not.
+# Generate a set of expected DS records from the DNSKEY RRset,
+# and report on congruency.
+############################################################################
+def checkds(zone, masterfile = None):
+    dslist=[]
+    fp=os.popen("%s +noall +answer -t ds -q %s" %
+                (shellquote(args.dig), shellquote(zone)))
+    for line in fp:
+        dslist.append(DSRR(line))
+    dslist = sorted(dslist, key=lambda ds: (ds.keyid, ds.keyalg, ds.hashalg))
+    fp.close()
+
+    dsklist=[]
+
+    if masterfile:
+        fp = os.popen("%s -f %s %s " %
+                      (shellquote(args.dsfromkey), shellquote(masterfile),
+                       shellquote(zone)))
+    else:
+        fp = os.popen("%s +noall +answer -t dnskey -q %s | %s -f - %s" %
+                      (shellquote(args.dig), shellquote(zone),
+                       shellquote(args.dsfromkey), shellquote(zone)))
+
+    for line in fp:
+        dsklist.append(DSRR(line))
+
+    fp.close()
+
+    if (len(dsklist) < 1):
+        print ("No DNSKEY records found in zone apex")
+        return False
+
+    found = False
+    for ds in dsklist:
+        if ds in dslist:
+            print ("DS for KSK %s/%03d/%05d (%s) found in parent" %
+                   (ds.rrname.strip('.'), ds.keyalg,
+                    ds.keyid, DSRR.hashalgs[ds.hashalg]))
+            found = True
+        else:
+            print ("DS for KSK %s/%03d/%05d (%s) missing from parent" %
+                   (ds.rrname.strip('.'), ds.keyalg,
+                    ds.keyid, DSRR.hashalgs[ds.hashalg]))
+
+    if not found:
+        print ("No DS records were found for any DNSKEY")
+
+    return found
+
+############################################################################
+# checkdlv:
+# Fetch DLV RRset for the given zone from the DNS; fetch DNSKEY
+# RRset from the masterfile if specified, or from DNS if not.
+# Generate a set of expected DLV records from the DNSKEY RRset,
+# and report on congruency.
+############################################################################
+def checkdlv(zone, lookaside, masterfile = None):
+    dlvlist=[]
+    fp=os.popen("%s +noall +answer -t dlv -q %s" %
+                (shellquote(args.dig), shellquote(zone + '.' + lookaside)))
+    for line in fp:
+        dlvlist.append(DLVRR(line, lookaside))
+    dlvlist = sorted(dlvlist,
+                     key=lambda dlv: (dlv.keyid, dlv.keyalg, dlv.hashalg))
+    fp.close()
+
+    #
+    # Fetch DNSKEY records from DNS and generate DLV records from them
+    #
+    dlvklist=[]
+    if masterfile:
+        fp = os.popen("%s -f %s -l %s %s " %
+                      (args.dsfromkey, masterfile, lookaside, zone))
+    else:
+        fp = os.popen("%s +noall +answer -t dnskey %s | %s -f - -l %s %s"
+                      % (shellquote(args.dig), shellquote(zone),
+                         shellquote(args.dsfromkey), shellquote(lookaside),
+                         shellquote(zone)))
+
+    for line in fp:
+        dlvklist.append(DLVRR(line, lookaside))
+
+    fp.close()
+
+    if (len(dlvklist) < 1):
+        print ("No DNSKEY records found in zone apex")
+        return False
+
+    found = False
+    for dlv in dlvklist:
+        if dlv in dlvlist:
+            print ("DLV for KSK %s/%03d/%05d (%s) found in %s" %
+                   (dlv.parent, dlv.keyalg, dlv.keyid,
+                    DLVRR.hashalgs[dlv.hashalg], dlv.dlvname))
+            found = True
+        else:
+            print ("DLV for KSK %s/%03d/%05d (%s) missing from %s" %
+                   (dlv.parent, dlv.keyalg, dlv.keyid, 
+                    DLVRR.hashalgs[dlv.hashalg], dlv.dlvname))
+
+    if not found:
+        print ("No DLV records were found for any DNSKEY")
+
+    return found
+
+
+############################################################################
+# parse_args:
+# Read command line arguments, set global 'args' structure
+############################################################################
+def parse_args():
+    global args
+    parser = argparse.ArgumentParser(description=prog + ': checks DS coverage')
+
+    bindir = 'bin'
+    if os.name == 'nt':
+        sbindir = 'bin'
+    else:
+        sbindir = 'sbin'
+
+    parser.add_argument('zone', type=str, help='zone to check')
+    parser.add_argument('-f', '--file', dest='masterfile', type=str,
+                        help='zone master file')
+    parser.add_argument('-l', '--lookaside', dest='lookaside', type=str,
+                        help='DLV lookaside zone')
+    parser.add_argument('-d', '--dig', dest='dig',
+                        default=os.path.join(prefix(bindir), 'dig'),
+                        type=str, help='path to \'dig\'')
+    parser.add_argument('-D', '--dsfromkey', dest='dsfromkey',
+                        default=os.path.join(prefix(sbindir),
+                                             'dnssec-dsfromkey'),
+                        type=str, help='path to \'dig\'')
+    parser.add_argument('-v', '--version', action='version', version='9.9.1')
+    args = parser.parse_args()
+
+    args.zone = args.zone.strip('.')
+    if args.lookaside:
+        lookaside = args.lookaside.strip('.')
+
+############################################################################
+# Main
+############################################################################
+def main():
+    parse_args()
+
+    if args.lookaside:
+        found = checkdlv(args.zone, args.lookaside, args.masterfile)
+    else:
+        found = checkds(args.zone, args.masterfile)
+
+    exit(0 if found else 1)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,65 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_RELEASE("Id: configure.in,v 1.1 2008/02/15 01:47:15 marka Exp ")
+AC_INIT(query-loc.c)
+
+dnl Checks for programs.
+AC_PROG_CC
+if test "$GCC" = "yes"; then
+	CFLAGS="${CFLAGS} -Wall"
+fi
+AC_PROG_INSTALL
+
+dnl Checks for libraries.
+AC_CHECK_LIB(resolv, res_query)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CONFIG_HEADER(config.h)
+AC_CHECK_HEADER(resolv.h, , AC_MSG_ERROR("No headers for name service applications"))
+AC_CHECK_HEADER(arpa/nameser.h, , AC_MSG_ERROR("No headers for name service applications"))
+AC_CHECK_HEADER(sys/time.h, , AC_MSG_ERROR("Mandatory header missing on your system"))
+AC_CHECK_HEADER(unistd.h, , AC_MSG_ERROR("Mandatory header missing on your system"))
+
+
+dnl This one is only useful for Solaris?
+AC_MSG_CHECKING(if libnsl is mandatory)
+AC_TRY_LINK([#include <sys/types.h>
+             #include <netinet/in.h>
+             #include <arpa/nameser.h>
+             #include <resolv.h>
+             union
+             {
+                HEADER hdr;	
+                u_char buf[4096]; /* With RFC 2671, otherwise 512 is enough */
+             }
+             response;
+             char *domain;
+             int requested_type;	], 
+	[res_query(domain,
+		  C_IN,		
+		  requested_type,	
+		  (u_char *) & response,	
+		  sizeof (response)) ], dnl
+	[AC_MSG_RESULT(no)], dnl
+	[AC_MSG_RESULT(yes); LIBS="${LIBS} -lnsl"]) 
+
+dnl Check for the loc_ntoa macro/function
+AC_MSG_CHECKING(loc_ntoa)
+AC_TRY_LINK([#include <resolv.h>], dnl
+	[u_char *cp; char *result; loc_ntoa(cp, result)], dnl
+	[AC_MSG_RESULT(yes); AC_DEFINE(HAVE_LOC_NTOA)], dnl
+	[AC_MSG_RESULT([no, using the alternative]); LOC_NTOA=loc_ntoa.o]) 
+AC_SUBST(LOC_NTOA)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(char)
+
+dnl Misc.
+AC_OUTPUT(Makefile)
+
+
+

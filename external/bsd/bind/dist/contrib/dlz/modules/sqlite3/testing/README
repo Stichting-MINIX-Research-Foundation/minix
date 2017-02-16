@@ -1,0 +1,10 @@
+These files were used for testing on Ubuntu Linux using SQLite3
+
+- Install SQLite3: sudo apt-get install sqlite3 libsqlite3-dev
+- Build sqlite3 DLZ module
+- Run "sqlite3 BindDB < dlz.schema" to set up database
+- Run "sqlite3 BindDB < dlz.data" to populate it
+- Run "named -gc named.conf"
+- Send test queries, e.g "dig @localhost -p 5300 example.com",
+   "dig @localhost -p 5300 axfr example.com" (AXFR should be
+   allowed from 127.0.0.1 only).

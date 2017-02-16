@@ -1,0 +1,2 @@
+# this server runs named with only one worker thread
+-m record,size,mctx -c named.conf -d 99 -g -T clienttest -n 1

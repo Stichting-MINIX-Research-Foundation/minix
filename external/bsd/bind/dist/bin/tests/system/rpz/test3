@@ -1,0 +1,47 @@
+; Copyright (C) 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+; NSDNAME tests
+
+server 10.53.0.3 5300
+
+;	3, 4, 5
+; NXDOMAIN for *.sub1.tld2 by NSDNAME
+update add  *.sub1.tld2.rpz-nsdname.bl.	300 CNAME .
+;
+;	6
+; walled garden for *.sub2.tld2
+update add  *.sub2.tld2.rpz-nsdname.bl.	300 CNAME a12-cname.tld2.
+;
+;	7, 8
+; exempt a3-2.tld2 and anything in 192.168.0.0/24
+;   also checks that IP policies are preferred over NSDNAME policies
+update add  a3-2.tld2.bl		300 CNAME a3-2.tld2.
+update add  24.0.0.168.192.rpz-ip.bl	300 CNAME 24.0.0.168.192.
+;
+;	9
+; prefer QNAME policy to NSDNAME policy
+update add  a4-1.tld2.bl.		300 A 12.12.12.12
+;	10
+; prefer policy for largest NS name
+update add  ns.sub3.tld2.rpz-nsdname.bl.	300 A	127.0.0.1
+update add  ns.subsub.sub3.tld2.rpz-nsdname.bl. 300 A	127.0.0.2
+send

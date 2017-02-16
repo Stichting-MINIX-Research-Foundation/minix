@@ -1,0 +1,67 @@
+			SQLite BIND SDB driver
+
+The SQLite BIND SDB "driver" is intended as an alternative both to the
+pgsqldb and dirdb drivers, for situations that would like the management
+simplicity and convenience of single filesystem files, with the additional
+capability of SQL databases.  It is also intended as an alternative to
+the standard dynamic DNS update capability in bind, which effectively
+requires use of DNSSEC keys for authorization and is limited to 'nsupdate'
+for updates.  An sqlite database, by contrast, uses and requires only
+normal filesystem permissions, and may be updated however a typical SQLite
+database might be updated, e.g., via a web service with an SQLite backend.
+
+This driver is not considered suitable for very high volume public
+nameserver use, while likely useful for smaller private nameserver
+applications, whether or not in a production environment.  It should
+generally be suitable wherever SQLite is preferable over larger database
+engines, and not suitable where SQLite is not preferable.
+
+Usage:
+
+o Use the named_sdb process ( put ENABLE_SDB=yes in /etc/sysconfig/named )
+
+o Edit your named.conf to contain a database zone, eg.:
+  
+zone "mydomain.net." IN {
+        type master;
+        database "sqlite /etc/named.d/mydomain.db mydomain";
+        #                ^- DB file               ^-Table
+};
+
+o Create the database zone table
+  The table must contain the columns "name", "rdtype", and "rdata", and
+  is expected to contain a properly constructed zone.  The program
+  "zone2sqlite" creates such a table.
+  
+  zone2sqlite usage:
+    
+    zone2sqlite origin zonefile dbfile dbtable
+
+    where
+	origin   : zone origin, eg "mydomain.net."
+	zonefile : master zone database file, eg. mydomain.net.zone
+	dbfile   : name of SQLite database file
+        dbtable  : name of table in database
+
+---
+# mydomain.net.zone:
+$TTL 1H
+@       SOA     localhost.      root.localhost. (       1
+                                                3H
+                                                1H
+                                                1W
+                                                1H )
+        NS      localhost.
+host1   A       192.168.2.1
+host2   A       192.168.2.2
+host3   A       192.168.2.3
+host4   A       192.168.2.4
+host5   A       192.168.2.5
+host6   A       192.168.2.6
+host7   A       192.168.2.7
+---
+
+# zone2sqlite mydomain.net. mydomain.net.zone mydomain.net.db mydomain
+
+will create/update the 'mydomain' table in database file 'mydomain.net.db'.
+

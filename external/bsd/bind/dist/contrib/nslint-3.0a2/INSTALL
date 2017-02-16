@@ -1,0 +1,42 @@
+@(#) Id: INSTALL 238 2009-03-14 05:43:37Z leres  (LBL)
+
+You will need an ANSI C compiler to build nslint. The configure
+script will abort if your compiler is not ANSI compliant. If this
+happens, use the GNU C compiler, available via anonymous ftp:
+
+	ftp://prep.ai.mit.edu/pub/gnu/gcc.tar.gz
+
+If necessary, edit the BINDEST and MANDEST paths in Makefile.in
+and run ./configure (a shell script). "configure" will determine
+your system attributes and generate an appropriate Makefile from
+Makefile.in.  Now build nslint by running "make".
+
+If everything builds ok, su and type "make install" (and optionally
+"make install-man). This will install nslint and its manual entry.
+
+If your system is not one which we have tested nslint on, you may
+have to modify the configure script and Makefile.in. Please send
+us patches for any modifications you need to make.
+
+FILES
+-----
+CHANGES		- description of differences between releases
+FILES		- list of files exported as part of the distribution
+INSTALL		- this file
+Makefile.in	- compilation rules (input to the configure script)
+README		- description of distribution
+VERSION		- version of this release
+aclocal.m4	- autoconf macros
+config.guess	- autoconf support
+config.sub	- autoconf support
+configure	- configure script (run this first)
+configure.in	- configure script source
+install-sh	- BSD style install script
+lbl/gnuc.h	- gcc macros and defines
+mkdep		- construct Makefile dependency list
+nslint.8	- manual entry
+nslint.c	- main program
+savestr.c	- strdup() replacement
+savestr.h	- savestr prototypes
+strerror.c	- missing routine
+version.h	- prototypes, defines and struct definitions

@@ -1,0 +1,7 @@
+args="-d 1h -m 2h"
+warn=1
+error=1
+ok=1
+retcode=1
+match="WARNING: Key .* (KSK) is scheduled for deletion before
+No KSK's are published"

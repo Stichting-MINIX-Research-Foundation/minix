@@ -1,0 +1,14 @@
+@(#) Id: README 237 2009-03-14 05:38:15Z leres  (LBL)
+
+NSLINT 2.0
+Lawrence Berkeley National Laboratory
+Network Research Group
+nslint@ee.lbl.gov
+ftp://ftp.ee.lbl.gov/nslint.tar.gz
+
+This directory contains source code for nslint, a lint program for dns
+files.
+
+Please send bugs and comments to nslint@ee.lbl.gov.
+
+ - Craig Leres

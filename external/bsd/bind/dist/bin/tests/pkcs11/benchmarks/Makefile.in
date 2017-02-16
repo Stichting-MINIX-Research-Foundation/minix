@@ -1,0 +1,90 @@
+# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Id
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+@BIND9_MAKE_INCLUDES@
+
+PROVIDER =	@PKCS11_PROVIDER@
+
+CINCLUDES =	${ISC_INCLUDES}
+
+CDEFINES =	-DPK11_LIB_LOCATION=\"${PROVIDER}\"
+
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+
+LIBS =		${ISCLIBS} @LIBS@
+
+SUBDIRS =
+
+TARGETS =	session@EXEEXT@ login@EXEEXT@ random@EXEEXT@ \
+		sha1@EXEEXT@ create@EXEEXT@ find@EXEEXT@ \
+		pubrsa@EXEEXT@ privrsa@EXEEXT@ genrsa@EXEEXT@ \
+		sign@EXEEXT@ verify@EXEEXT@
+
+SRCS =		session.c login.c random.c sha1.c create.c find.c \
+		pubrsa.c privrsa.c genrsa.c sign.c verify.c
+
+@BIND9_MAKE_RULES@
+
+session@EXEEXT@: @srcdir@/session.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/session.c ${LIBS}
+
+login@EXEEXT@: @srcdir@/login.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/login.c ${LIBS}
+
+random@EXEEXT@: @srcdir@/random.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/random.c ${LIBS}
+
+sha1@EXEEXT@: @srcdir@/sha1.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/sha1.c ${LIBS}
+
+create@EXEEXT@: @srcdir@/create.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/create.c ${LIBS}
+
+find@EXEEXT@: @srcdir@/find.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/find.c ${LIBS}
+
+pubrsa@EXEEXT@: @srcdir@/pubrsa.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/pubrsa.c ${LIBS}
+
+privrsa@EXEEXT@: @srcdir@/privrsa.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/privrsa.c ${LIBS}
+
+genrsa@EXEEXT@: @srcdir@/genrsa.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/genrsa.c ${LIBS}
+
+sign@EXEEXT@: @srcdir@/sign.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/sign.c ${LIBS}
+
+verify@EXEEXT@: @srcdir@/verify.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
+		-o $@ @srcdir@/verify.c ${LIBS}
+
+clean distclean::
+	rm -f ${TARGETS}

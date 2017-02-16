@@ -1,0 +1,3 @@
+# run the performace test close to real life
+
+-c named.conf -gd3

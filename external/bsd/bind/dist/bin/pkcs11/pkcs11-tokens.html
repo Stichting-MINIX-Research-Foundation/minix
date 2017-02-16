@@ -1,0 +1,59 @@
+<!--
+ - Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- Id -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>pkcs11-tokens</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="man.pkcs11-tokens"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">pkcs11-tokens</span> &#8212; list PKCS#11 available tokens</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">pkcs11-tokens</code>  [<code class="option">-m <em class="replaceable"><code>module</code></em></code>]</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543342"></a><h2>DESCRIPTION</h2>
+<p>
+      <span><strong class="command">pkcs11-tokens</strong></span>
+      lists the PKCS#11 available tokens with defaults from the slot/token
+      scan performed at application initialization.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543355"></a><h2>ARGUMENTS</h2>
+<div class="variablelist"><dl>
+<dt><span class="term">-m <em class="replaceable"><code>module</code></em></span></dt>
+<dd><p>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </p></dd>
+</dl></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543382"></a><h2>AUTHOR</h2>
+<p><span class="corpauthor">Internet Systems Consortium</span>
+    </p>
+</div>
+</div></body>
+</html>

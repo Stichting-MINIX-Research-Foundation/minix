@@ -1,0 +1,10 @@
+$ORIGIN .
+example.net		7200	IN DNSKEY 257 3 8 (
+					AwEAAQ5RiqQEKys2xlo5nK3n9tnWeGg/tHST
+					baFw6AN1QPLlaEVLNXDaYKcpefu6ewNamaIn
+					rjBrkkbqRnwKTuLCwJ9aA/hyFzocCOPh+he9
+					dEQHbRTKDdTkjD3PqkOK97a+s1grWIdkRcce
+					T3MXEsAwyjlasXPRKt/4v1sqS7592eyo6wTc
+					beaoPYo6KMQLfcA9AHso9LBaRpqv7GlSjl5I
+					V51mcU8=
+					) ; KSK; alg = RSASHA256; key id = 44671

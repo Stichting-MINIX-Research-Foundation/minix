@@ -1,0 +1,21 @@
+These unit tests for BIND 9 are based on the NetBSD Automated Test Framework 
+release 0.17.
+
+To build an external copy of ATF for use by BIND 9:
+
+  $ cd atf-src
+  $ configure --prefix=<prefix> --enable-tools --disable-shared
+  $ make
+  $ make install
+
+Subsequently, specify the ATF prefix when building BIND 9:
+
+  $ configure --with-atf=<prefix>
+
+ATF can also be built automatically during the BIND 9 build,
+by specifying --with-atf without an argument:
+
+  $ configure --with-atf
+
+This causes BIND 9 to build ATF in the atf-src directory and
+link to it directly.

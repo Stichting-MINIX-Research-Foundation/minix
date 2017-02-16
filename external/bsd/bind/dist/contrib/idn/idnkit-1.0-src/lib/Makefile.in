@@ -1,0 +1,309 @@
+# Id: Makefile.in,v 1.2 2004/07/20 07:13:39 marka Exp 
+# Copyright (c) 2000, 2002 Japan Network Information Center.
+# All rights reserved.
+#  
+# By using this file, you agree to the terms and conditions set forth bellow.
+# 
+# 			LICENSE TERMS AND CONDITIONS 
+# 
+# The following License Terms and Conditions apply, unless a different
+# license is obtained from Japan Network Information Center ("JPNIC"),
+# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+# Chiyoda-ku, Tokyo 101-0047, Japan.
+# 
+# 1. Use, Modification and Redistribution (including distribution of any
+#    modified or derived work) in source and/or binary forms is permitted
+#    under this License Terms and Conditions.
+# 
+# 2. Redistribution of source code must retain the copyright notices as they
+#    appear in each source code file, this License Terms and Conditions.
+# 
+# 3. Redistribution in binary form must reproduce the Copyright Notice,
+#    this License Terms and Conditions, in the documentation and/or other
+#    materials provided with the distribution.  For the purposes of binary
+#    distribution the "Copyright Notice" refers to the following language:
+#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+# 
+# 4. The name of JPNIC may not be used to endorse or promote products
+#    derived from this Software without specific prior written approval of
+#    JPNIC.
+# 
+# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+build = @build@
+
+LIB_CURRENT = 1
+LIB_REVISION = 2
+LIB_AGE = 0
+
+.SUFFIXES:
+.SUFFIXES: .c .lo .to
+
+top_builddir = ..
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+libdir = @libdir@
+sysconfdir = @sysconfdir@
+datadir = @datadir@
+mapdir = $(datadir)/idnkit
+utf8_name = @UTF8_NAME@
+
+SUBDIRS = tests
+
+SHELL = @SHELL@
+CC = @CC@
+RANLIB = @RANLIB@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+MKINSTALLDIRS = @top_srcdir@/mkinstalldirs
+LIBTOOL = @LIBTOOL@
+
+ICONVINC = @ICONVINC@
+ICONVLIB = @ICONVLIB@
+
+INCS = -I$(srcdir)/../include -I../include $(ICONVINC)
+DEFS = -DIDN_RESCONF_DIR="\"$(sysconfdir)\""
+
+CFLAGS = $(OPTS) $(INCS) $(DEFS) @CPPFLAGS@ @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+SRCS =  \
+	aliaslist.c \
+	api.c \
+	checker.c \
+	converter.c \
+	debug.c \
+	delimitermap.c \
+	filechecker.c \
+	filemapper.c \
+	localencoding.c \
+	log.c \
+	mapper.c \
+	mapselector.c \
+	nameprep.c \
+	nameprep_template.c \
+	nameprepdata.c \
+	normalizer.c \
+	punycode.c \
+	race.c \
+	res.c \
+	resconf.c \
+	result.c \
+	strhash.c \
+	ucs4.c \
+	ucsmap.c \
+	ucsset.c \
+	unicode.c \
+	unicode_template.c \
+	unicodedata_320.c \
+	unormalize.c \
+	util.c \
+	utf8.c \
+	version.c
+
+OBJS =  \
+	aliaslist.lo \
+	api.lo \
+	checker.lo \
+	converter.lo \
+	debug.lo \
+	delimitermap.lo \
+	filechecker.lo \
+	filemapper.lo \
+	localencoding.lo \
+	log.lo \
+	mapper.lo \
+	mapselector.lo \
+	nameprep.lo \
+	normalizer.lo \
+	punycode.lo \
+	race.lo \
+	res.lo \
+	resconf.lo \
+	result.lo \
+	strhash.lo \
+	ucs4.lo \
+	ucsmap.lo \
+	ucsset.lo \
+	unicode.lo \
+	unormalize.lo \
+	utf8.lo \
+	util.lo \
+	version.lo
+
+LIB = libidnkit
+TESTLIB = libidntest
+
+LITELIBCFLAGS = $(CFLAGS) -DWITHOUT_ICONV
+LITELIB_OBJS = \
+	apilite.lo \
+	converterlite.lo \
+	reslite.lo \
+	resconflite.lo \
+	aliaslist.lo \
+	checker.lo \
+	debug.lo \
+	delimitermap.lo \
+	filechecker.lo \
+	filemapper.lo \
+	log.lo \
+	mapper.lo \
+	mapselector.lo \
+	nameprep.lo \
+	normalizer.lo \
+	punycode.lo \
+	race.lo \
+	result.lo \
+	strhash.lo \
+	ucsmap.lo \
+	ucsset.lo \
+	unicode.lo \
+	unormalize.lo \
+	ucs4.lo \
+	utf8.lo \
+	util.lo \
+	version.lo
+
+LITELIB = libidnkitlite
+TESTLITELIB = libidntestlite
+
+SAMPLES = idn.conf.sample idnalias.conf.sample
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c $<
+
+.c.to:
+	$(CC) -o $@ -DTEST $(CFLAGS) $(LDFLAGS) -c $<
+
+all: all-localdir all-subdirs
+@LITEONLY_TRUE@all-localdir: $(LITELIB).la $(SAMPLES)
+@LITEONLY_FALSE@all-localdir: $(LIB).la $(LITELIB).la $(SAMPLES)
+
+$(LIB).la: $(OBJS)
+	$(LIBTOOL) --mode=link $(LD) $(LDFLAGS) -o $@ \
+	    -version-info $(LIB_CURRENT):$(LIB_REVISION):$(LIB_AGE) \
+	    -rpath $(libdir) $(OBJS)
+
+$(TESTLIB).la: $(OBJS)
+	$(LIBTOOL) --mode=link $(LD) $(LDFLAGS) -o $@ \
+	    -version-info $(LIB_CURRENT):$(LIB_REVISION):$(LIB_AGE) \
+	    -rpath $(libdir) $(OBJS)
+
+apilite.lo: api.c
+	$(LIBTOOL) --mode=compile $(CC) $(LITELIBCFLAGS) -o $@ \
+		-c $(srcdir)/api.c
+converterlite.lo: converter.c
+	$(LIBTOOL) --mode=compile $(CC) $(LITELIBCFLAGS) -o $@ \
+		-c $(srcdir)/converter.c
+reslite.lo: res.c
+	$(LIBTOOL) --mode=compile $(CC) $(LITELIBCFLAGS) -o $@ \
+	    -c $(srcdir)/res.c
+resconflite.lo: resconf.c
+	$(LIBTOOL) --mode=compile $(CC) $(LITELIBCFLAGS) -o $@ \
+	    -c $(srcdir)/resconf.c
+
+$(LITELIB).la: $(LITELIB_OBJS)
+	$(LIBTOOL) --mode=link $(LD) $(LDFLAGS) -o $@ \
+	    -version-info $(LIB_CURRENT):$(LIB_REVISION):$(LIB_AGE) \
+	    -rpath $(libdir) $(LITELIB_OBJS)
+
+$(TESTLITELIB).la: $(LITELIB_OBJS)
+	$(LIBTOOL) --mode=link $(LD) $(LDFLAGS) -o $@ \
+	    -version-info $(LIB_CURRENT):$(LIB_REVISION):$(LIB_AGE) \
+	    -rpath $(libdir) $(LITELIB_OBJS)
+
+idn.conf.sample: idn.conf.sample.in
+	sed -e 's%[@]mapdir[@]%$(mapdir)%' \
+	    < $(srcdir)/idn.conf.sample.in > $@
+
+idnalias.conf.sample: Makefile
+	$(SHELL) $(srcdir)/aliaslist.sh $(build) $(utf8_name) > $@
+
+install: install-localdir install-subdirs
+@LITEONLY_TRUE@install-localdir: all install-common
+@LITEONLY_FALSE@install-localdir: all install-common install-nolite 
+
+install-common:
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(LIBTOOL) $(INSTALL_DATA) $(LITELIB).la \
+	    $(DESTDIR)$(libdir)/$(LITELIB).la
+	-[ -f $(DESTDIR)$(libdir)/$(LITELIB).a ] \
+	    && $(RANLIB) $(DESTDIR)$(libdir)/$(LITELIB).a
+	$(MKINSTALLDIRS) $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) idn.conf.sample \
+	    $(DESTDIR)$(sysconfdir)/idn.conf.sample
+	$(INSTALL_DATA) idnalias.conf.sample \
+	    $(DESTDIR)$(sysconfdir)/idnalias.conf.sample
+	@if [ ! -f $(DESTDIR)$(sysconfdir)/idn.conf ]; then \
+	    echo "** installing default idn.conf"; \
+	    $(INSTALL_DATA) idn.conf.sample $(DESTDIR)$(sysconfdir)/idn.conf; \
+	fi
+	@if [ ! -f $(DESTDIR)$(sysconfdir)/idnalias.conf ]; then \
+	    echo "** installing default idnalias.conf"; \
+	    $(INSTALL_DATA) idnalias.conf.sample \
+		$(DESTDIR)$(sysconfdir)/idnalias.conf; \
+	fi
+
+install-nolite:
+	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(LIBTOOL) $(INSTALL_DATA) $(LIB).la \
+	    $(DESTDIR)$(libdir)/$(LIB).la
+	-[ -f $(DESTDIR)$(libdir)/$(LIB).a ] \
+	    && $(RANLIB) $(DESTDIR)$(libdir)/$(LIB).a
+
+install-config:
+	@if [ -f $(DESTDIR)$(sysconfdir)/idn.conf ]; then \
+	    echo "** backing up old idn.conf as idn.conf.old"; \
+	    mv -f $(DESTDIR)$(sysconfdir)/idn.conf \
+		$(DESTDIR)$(sysconfdir)/idn.conf.old; \
+	fi
+	@echo "** installing default idn.conf forcibly"
+	$(INSTALL_DATA) idn.conf.sample $(DESTDIR)$(sysconfdir)/idn.conf
+	@if [ -f $(DESTDIR)$(sysconfdir)/idnalias.conf ]; then \
+	    echo "** backing up old idnalias.conf as idnalias.conf.old"; \
+	    mv -f $(DESTDIR)$(sysconfdir)/idnalias.conf \
+		$(DESTDIR)$(sysconfdir)/idnalias.conf.old; \
+	fi
+	@echo "** installing default idnalias.conf forcibly"
+	$(INSTALL_DATA) idnalias.conf.sample \
+	    $(DESTDIR)$(sysconfdir)/idnalias.conf
+
+clean: clean-localdir clean-subdirs
+clean-localdir: force
+	rm -f *.o *.lo *.la *.a core *.core *~
+	rm -f *.to *_test.c *_test
+	rm -f idn.conf.sample idnalias.conf.sample
+	rm -fr .libs/
+
+distclean: distclean-localdir distclean-subdirs
+distclean-localdir: force clean-localdir
+	rm -f Makefile
+
+test check: test-localdir test-subdirs
+
+@LITEONLY_TRUE@test-localdir: $(TESTLITELIB).la $(SAMPLES)
+@LITEONLY_FALSE@test-localdir: $(TESTLIB).la $(TESTLITELIB).la $(SAMPLES)
+
+all-subdirs install-subdirs clean-subdirs distclean-subdirs test-subdirs:
+	@target=`echo $@ | sed 's/-subdirs$$//'`; \
+	for d in $(SUBDIRS) ; do \
+	    (cd $$d; $(MAKE) DESTDIR=$(DESTDIR) $$target); \
+	done
+
+force:

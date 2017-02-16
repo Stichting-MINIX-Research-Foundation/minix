@@ -1,0 +1,40 @@
+; Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+server 10.53.0.3 5300
+
+; Poke the radix tree a little.
+update add  128.1111.2222.3333.4444.5555.6666.7777.8888.rpz-ip.bl. 300 CNAME .
+update add  128.1111.2222.3333.4444.5555.6666.zz.rpz-ip.bl.	300 CNAME   .
+update add  128.1111.2222.3333.4444.5555.zz.8888.rpz-ip.bl.	300 CNAME   .
+update add  128.1111.2222.3333.4444.zz.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.0.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.7777.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.8777.8888.rpz-ip.bl.		300 CNAME   .
+update add  127.zz.3333.4444.0.8777.8888.rpz-ip.bl.		300 CNAME   .
+;
+;
+; regression testing for some old crashes
+update add  redirect.bl.	300 A		127.0.0.1
+update add  *.redirect.bl.	300 A		127.0.0.1
+update add  *.credirect.bl.	300 CNAME	google.com.
+;
+send

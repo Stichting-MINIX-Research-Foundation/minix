@@ -1,0 +1,101 @@
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+server 10.53.0.3 5300
+
+; QNAME tests
+
+; NXDOMAIN
+;	2, 25
+update add  a0-1.tld2.bl.	300 CNAME .
+; NODATA
+;	3
+update add  a3-1.tld2.bl.	300 CNAME *.
+; and no assert-botch
+;	4, 5
+update add  a3-2.tld2.bl.	300 DNAME example.com.
+;
+; NXDOMAIN for a4-2-cname.tld2 via its target a4-2.tld2.
+;	6 and 7
+update add  a4-2.tld2.bl	300 CNAME .
+;	8
+; NODATA for a4-3-cname.tld2 via its target a4-3.tld2.
+update add  a4-3.tld2.bl	300 CNAME *.
+;
+; replace the A for a4-1.sub1.tld2 with 12.12.12.12
+;	9
+update add  a4-1.sub1.tld2.bl.	300 A 12.12.12.12
+;
+; replace the A for *.sub2.tld2 with 12.12.12.12
+;	10
+update add  a4-1.sub2.tld2.bl.	300 A 12.12.12.12
+;
+; replace NXDOMAIN for {nxc1,nxc2}.sub1.tld2 with 12.12.12.12 using CNAMEs
+;	11
+update add nxc1.sub1.tld2.bl.	300 CNAME a12.tld2.
+;	12
+update add nxc2.sub1.tld2.bl.	300 CNAME a12-cname.tld2.
+;
+; prefer the first conflicting zone
+;	13
+update add a4-4.tld2.bl.	300 A	127.4.4.1
+update add a6-1.tld2.bl.	300 CNAME a6-1.tld2.
+update add a6-2.tld2.bl.	300 A	127.6.2.1
+update add a6-1.tld2.bl.	300 A	127.6.1.1
+update add a6-2.tld2.bl.	300 CNAME a6-2.tld2.
+send
+update add a4-4.tld2.bl-2.	300 A	127.4.4.2
+send
+
+; wildcard CNAME
+;	16
+update add  a3-6.tld2.bl.	300 CNAME *.tld4.
+;	17
+update add  *.sub1.tld2.bl.	300 CNAME *.tld4.
+; CNAME chain
+;	18
+update add  a4-5.tld2.bl.	300 A	127.0.0.16
+; stop at first hit in CNAME chain
+;	19
+update add  a4-6.tld2.bl.	300 CNAME .
+update add  a4-6-cname.tld2.bl.	300 A	127.0.0.17
+; no change instead of NXDOMAIN because +norecurse
+;	20
+update add  a5-2.tld2.bl.	300 CNAME .
+; no change instead of NODATA because +norecurse
+;	21
+update add  a5-3.tld2.bl.	300 CNAME *.
+;	22, 23
+update add  a5-4.tld2.bl.	300 DNAME example.com.
+;
+; assert in rbtdb.c
+;	24
+update	add c1.crash2.tld3.bl.	300 CNAME .
+; DO=1 without signatures, DO=0 with signatures are rewritten
+;	26 - 27
+update add  a0-1.tld2s.bl.	300 CNAME .
+;	32
+update add  a3-8.tld2.bl.	300 CNAME rpz-drop.
+;	33
+update add  a3-9.tld2.bl.	300 CNAME rpz-tcp-only.
+;	34 qname-wait-recurse yes
+update add  x.servfail.bl.	300 A	127.0.0.34
+send

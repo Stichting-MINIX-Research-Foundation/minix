@@ -1,0 +1,85 @@
+// -*- C++ -*-
+// Id: mainpage,v 1.2 2006/12/22 01:44:59 marka Exp 
+//
+// Doxygen text.  Lines beginning with two slashes are comments; lines
+// beginning with three slashes are Doxygen input.
+
+/// \mainpage
+/// \section mainpage_overview Overview
+/// \par
+///
+/// This is the beginning of an internals manual for BIND9.  It's
+/// still very rough in many places.
+///
+/// \li See the files in doc/doxygen for the source to this page and
+///     the Doxygen configuration that generates the rest of the manual.
+///
+/// \li See the tabs at the top of the screen to navigate through the
+///     generated documentation.
+///
+/// \li See <a href="http://www.doxygen.org/">the Doxygen web site</a>
+///     for more information about Doxygen, including its manual.
+///
+/// \section mainpage_knownissues Known Issues
+/// \par
+///
+/// Known issues with our current use of Doxygen:
+///
+/// \li In a major departure from previous attempts to use Doxygen
+///     with BIND9, this manual attempts to take the simplest approach
+///     to every choice Doxygen gives us.  We don't generate fancy
+///     extra Doxygen tags files from the RFC database.  We don't
+///     attempt to use Doxygen as a wrapper framework for other
+///     documentation (eg, ISC Tech Notes, the ARM, ...).  We don't
+///     try to generate the list of files to document on the fly.
+///     Instead, we attempt to use Doxygen's native facilities
+///     wherever possible, on the assumption that we'll add new
+///     features later as we need them but should start as simply as
+///     we can.
+///
+/// \li Our use of \\file is wrong in many places.  We probably should
+///     be marking header files with the names by which we include
+///     them (eg, "dns/resolver.h").  Doxygen reports filename
+///     conflicts in a few cases where it can't work out which of
+///     several files to use.
+///
+/// \li At the moment we're instructing Doxygen to document all
+///     functions, whether they have proper comment markup or not.
+///     This is a good way to see what's been marked up, but might not
+///     be the right approach in the long run.
+///
+/// \li See doc/doxygen/doxygen-input-filter.in for local abbreviations.
+///
+/// \li We're probably over-using the \\brief markup tag.
+///
+/// \li We may in fact be confusing Doxygen to the point where it's
+///     not finding markup comments that it should.  Needs
+///     investigation.
+///
+/// \li At the moment I have all the cool "dot" stuff turned off,
+///     both because it's a distraction and because it slows down
+///     doxygen runs.  Maybe after I get a faster desk machine. :)
+///
+/// \li At the moment we're producing a single "BIND9 Internals"
+///     manual.   One of our previous complications was an attempt to
+///     produce separate manuals for each library, then cross-link
+///     them.  We might still need separate library manuals, but, if
+///     so, it might be easier to have the BIND9 Internals manual be a
+///     superset of the library manuals (ie, reuse the same source to
+///     produce differently scoped manuals).   Would certainly be
+///     simpler than the cross-linking mess, but partly it's a
+///     question of how we want to present the material.
+///
+/// \li Doxygen is slanted towards C++.  It can be tuned towards plain
+///     old C, but the C++ bias still shows up in places, eg, the lack
+///     of top-level menu support for functions (in C++, the basic
+///     unit of programming is the class, which Doxygen does support
+///     directly).   This is a bit annoying, but not all that
+///     critical.
+///
+/// \li If we ever get really ambitious, we might try processing
+///     Doxygen's XML output, which is basicly a dump of what Doxygen
+///     was able to scrape from the sources.   This would be a major
+///     project, just something to think about if there's something we
+///     really don't like about the output Doxygen generates.  Punt
+///     for now.

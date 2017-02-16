@@ -1,0 +1,110 @@
+; File written on Thu May  1 12:22:01 2014
+; dnssec_signzone version 9.8.5-P1
+signed.			120	IN SOA	ns.utld. hostmaster.ns.utld. (
+					1          ; serial
+					3600       ; refresh (1 hour)
+					1200       ; retry (20 minutes)
+					604800     ; expire (1 week)
+					60         ; minimum (1 minute)
+					)
+			120	RRSIG	SOA 3 1 120 20820519033608 (
+					20140501012201 20366 signed.
+					BMC1gbQgLgNsb9G6rElwoY6Krb6lV/WFsd/j
+					LO3aVnPXgU/noM1IBjs= )
+			120	NS	ns.utld.
+			120	RRSIG	NS 3 1 120 20820519033608 (
+					20140501012201 20366 signed.
+					BF9dWcW8GHL4QMp7rbeQgfUQmwEvskiMFqgt
+					GJqepDLkV4WXtw3TRK4= )
+			120	MX	10 mx.signed.
+			120	RRSIG	MX 3 1 120 20820519033608 (
+					20140501012201 20366 signed.
+					BJ7bngL8eZ9GrjQvHj0FDOgk2M6+YoW+cIAh
+					ZjGKcK431aUFMS3YSGE= )
+			60	NSEC	a-only.signed. NS SOA MX RRSIG NSEC DNSKEY
+			60	RRSIG	NSEC 3 1 60 20820519033608 (
+					20140501012201 20366 signed.
+					BHMei3tCaM9eYTPLRn93c6qp9ADL1Hxy+HlN
+					cLTyzzC+UxjUoI9O2VI= )
+			120	DNSKEY	256 3 3 (
+					BPLuLs4Ylbx3WZ8Ebj6GF+uEfI+J+RcaI1G3
+					TW4JHqVqeBa0gkPjnCDsK9VeUx5CR8i/T18f
+					YrOSojvASvdvG+TLNN9Jx+5A7c/43WzDOe2B
+					jeAlfZSl1Bie/ccGL6W1+lVvlO0OHI54EoKs
+					KxRub2izdouH4867a8dwahBlm14oWYXjqk3+
+					/ubDCPdXdTUvvLnDd9zyDpWYBXisb/3F8R1v
+					IcqyKDfJSTQSofLK+JlD+n7cv7U7pQWQn2qA
+					t/NkGcwF8EAbiQPmcF1BY6NnEMQ5XxNayAF5
+					Eza+i/kf3hLtS12cqW8hWm7aRYZWbzC4uUZL
+					WGK0XfAK2d/vT8ZMZo1oaYEvy3xHwfsFgrFV
+					qebm2ZFEomHpQ4KOSL1UhVI8uegUgnnovHjC
+					eS4q72Fh+LZTD8C4
+					) ; key id = 20366
+			120	DNSKEY	257 3 3 (
+					BPLuLs4Ylbx3WZ8Ebj6GF+uEfI+J+RcaI1G3
+					TW4JHqVqeBa0gkPjnCDsK9VeUx5CR8i/T18f
+					YrOSojvASvdvG+TLNN9Jx+5A7c/43WzDOe2B
+					jeAlfZSl1Bie/ccGL6W1+lVvlO0OHI54EoKs
+					KxRub2izdouH4867a8dwahBlm14oWYXjqk3+
+					/ubDCPdXdTUvvLnDd9zyDpWYBXisb/3F8R1v
+					IcqyKDfJSTQSofLK+JlD+n7cv7U7pQWQn2qA
+					t/NkGcwF8EAbiQPmcF1BY6NnEMQ5XxNayAF5
+					Eza+i/kf3hLtS12cqW8hWm7aRYZWbzC4uUZL
+					WGK0XfAK2d/vT8ZMZo1oaYEvy3xHwfsFgrFV
+					qebm2ZFEomHpQ4KOSL1UhVI8uegUgnnovHjC
+					eS4q72Fh+LZTD8C4
+					) ; key id = 20367
+			120	RRSIG	DNSKEY 3 1 120 20820519033608 (
+					20140501012201 20366 signed.
+					BBhlUYWd3f00zsSl+UJTxeVZUimQP8iMjf6j
+					Q7uPoI37BUz9NbZhTCg= )
+			120	RRSIG	DNSKEY 3 1 120 20820519033608 (
+					20140501012201 20367 signed.
+					BHPcogpnebYByfzp/KT53GsIiT3yPk/4atwj
+					NNsPFmVLqb/6yjotWQ0= )
+a-only.signed.		120	IN NS	1.0.0.1.signed.
+			60	NSEC	aaaa-only.signed. NS RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 20820519033608 (
+					20140501012201 20366 signed.
+					BF1Wt+NtJ1Cuoj1H1D9BCS33ImdgkZeyEKuz
+					8FT66wAFigkXQ1zNofw= )
+aaaa-only.signed.	120	IN AAAA	2001:db8::2
+			120	RRSIG	AAAA 3 2 120 20820519033608 (
+					20140501012201 20366 signed.
+					BJFHllFzB91E/NWN1KjgmLuXQgDsGqBOuMuk
+					eNEc0RmToi3wV+TZwt0= )
+			60	NSEC	dual.signed. AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 20820519033608 (
+					20140501012201 20366 signed.
+					BGfjvmN9LAHU2r9hXKgZRwyL4mZt4N/uBR1y
+					TKOGBOyx6b0hVHmGPnw= )
+dual.signed.		120	IN A	1.0.0.3
+			120	RRSIG	A 3 2 120 20820519033608 (
+					20140501012201 20366 signed.
+					BEHMwkdjcbK++gvR/a36hSHf+uLwNUpbwKiw
+					PpmEz0be+gavwU0qSmY= )
+			120	AAAA	2001:db8::3
+			120	RRSIG	AAAA 3 2 120 20820519033608 (
+					20140501012201 20366 signed.
+					BPKR07CI/4KFd5L7aLMvQifiYDb1EbAP2BIp
+					SgErW40i5qkFz9u588s= )
+			60	NSEC	mx.signed. A AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 20820519033608 (
+					20140501012201 20366 signed.
+					BGJ0Ei6QbWJva3NwVSE/Bojcodsbu0sSVVLJ
+					QE8F5puTbx6qZ2dqrv4= )
+mx.signed.		120	IN A	1.0.0.3
+			120	RRSIG	A 3 2 120 20820519033608 (
+					20140501012201 20366 signed.
+					BOyL/Pi5Ih/Xt3b1icWIqoagM7ZKXzPKrmbQ
+					VOZIvn0nmCj/gjShka4= )
+			120	AAAA	2001:db8::3
+			120	RRSIG	AAAA 3 2 120 20820519033608 (
+					20140501012201 20366 signed.
+					BL1n80SXkdcDRaFa66xHIrMMFiYUnrM0zoGj
+					ArI7APPAxthUKN+ptAQ= )
+			60	NSEC	signed. A AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 20820519033608 (
+					20140501012201 20366 signed.
+					BG6+zIJRFY4HqyUzPLcErSJibgtxxqfuHGYP
+					kXX9V0coQ3zBC92s2jo= )

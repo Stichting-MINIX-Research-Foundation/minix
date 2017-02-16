@@ -1,0 +1,116 @@
+# Id: Makefile.in,v 1.1 2003/06/04 00:27:05 marka Exp 
+# Copyright (c) 2000, 2002 Japan Network Information Center.
+# All rights reserved.
+#  
+# By using this file, you agree to the terms and conditions set forth bellow.
+# 
+# 			LICENSE TERMS AND CONDITIONS 
+# 
+# The following License Terms and Conditions apply, unless a different
+# license is obtained from Japan Network Information Center ("JPNIC"),
+# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+# Chiyoda-ku, Tokyo 101-0047, Japan.
+# 
+# 1. Use, Modification and Redistribution (including distribution of any
+#    modified or derived work) in source and/or binary forms is permitted
+#    under this License Terms and Conditions.
+# 
+# 2. Redistribution of source code must retain the copyright notices as they
+#    appear in each source code file, this License Terms and Conditions.
+# 
+# 3. Redistribution in binary form must reproduce the Copyright Notice,
+#    this License Terms and Conditions, in the documentation and/or other
+#    materials provided with the distribution.  For the purposes of binary
+#    distribution the "Copyright Notice" refers to the following language:
+#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+# 
+# 4. The name of JPNIC may not be used to endorse or promote products
+#    derived from this Software without specific prior written approval of
+#    JPNIC.
+# 
+# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+top_builddir = ../..
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@
+man1dir = $(mandir)/man1
+
+CC = @CC@
+RANLIB = @RANLIB@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+MKINSTALLDIRS = @top_srcdir@/mkinstalldirs
+SHELL   = @SHELL@
+LIBTOOL = @LIBTOOL@
+
+ICONVINC = @ICONVINC@
+ICONVLIB = @ICONVLIB@
+IDNLIB = ../../lib/libidnkit.la
+
+INCS = -I$(srcdir) -I$(srcdir)/../../include -I../../include $(ICONVINC)
+DEFS =
+
+CFLAGS = $(INCS) $(DEFS) @CPPFLAGS@ @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+SRCS = idnconv.c util.c selectiveencode.c
+OBJS = idnconv.o util.o selectiveencode.o
+
+@LITEONLY_TRUE@all:
+@LITEONLY_FALSE@all: idnconv idnslookup idnconv.1
+
+idnconv: $(OBJS) $(IDNLIB)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		$(OBJS) $(IDNLIB) $(ICONVLIB)
+
+idnslookup: $(srcdir)/idnslookup.in
+	sed -e 's%[@]bindir[@]%$(bindir)%' $(srcdir)/idnslookup.in > idnslookup
+	chmod 0755 idnslookup
+
+@LITEONLY_TRUE@install:
+@LITEONLY_FALSE@@COMPAT_TRUE@install: all install-nolite install-compat
+@LITEONLY_FALSE@@COMPAT_FALSE@install: all install-nolite
+
+install-nolite:
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) idnconv \
+	    $(DESTDIR)$(bindir)/idnconv
+	$(MKINSTALLDIRS) $(DESTDIR)$(man1dir)
+	$(INSTALL_DATA) $(srcdir)/idnconv.1 $(DESTDIR)$(man1dir)/idnconv.1
+
+install-compat:
+	src=$(DESTDIR)$(bindir)/idnconv; \
+	dst=$(DESTDIR)$(bindir)/mdnconv; \
+	rm -f $$dst; \
+	ln $$src $$dst || cp $$src $$dst
+	src=$(DESTDIR)$(man1dir)/idnconv.1; \
+	dst=$(DESTDIR)$(man1dir)/mdnconv.1; \
+	rm -f $$dst; \
+	ln $$src $$dst || cp $$src $$dst
+
+clean:
+	rm -f *.o idnconv idnslookup *.core core *~
+	rm -fr .libs/
+
+distclean: clean
+	rm -f Makefile
+
+test check:

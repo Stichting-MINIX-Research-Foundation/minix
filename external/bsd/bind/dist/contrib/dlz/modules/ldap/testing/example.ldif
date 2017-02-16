@@ -1,0 +1,168 @@
+# server suffix - o=bind-dlz
+
+dn: o=bind-dlz
+objectclass: organization
+o: bind-dlz
+
+dn: ou=dns,o=bind-dlz
+objectclass: organizationalUnit
+ou: dns
+
+dn: dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzZone
+dlzZoneName: example.com
+
+dn: dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: @
+
+dn: dlzHostName=www,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: www
+
+dn: dlzHostName=mail,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: mail
+
+dn: dlzHostName=backup,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: backup
+
+dn: dlzHostName=ns1,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: ns1
+
+dn: dlzHostName=ns2,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: ns2
+
+dn: dlzHostName=~,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzHost
+dlzHostName: ~
+
+dn: dlzRecordID=1,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzGenericRecord
+dlzRecordID: 1
+dlzHostName: @
+dlzType: txt
+dlzData: "this is a text record"
+dlzTTL: 10
+
+dn: dlzRecordID=2,dlzHostName=www,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 2
+dlzHostName: www
+dlzType: a
+dlzIPAddr: 192.168.0.1
+dlzTTL: 10
+
+dn: dlzRecordID=3,dlzHostName=mail,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 3
+dlzHostName: mail
+dlzType: a
+dlzIPAddr: 192.168.0.2
+dlzTTL: 10
+
+dn: dlzRecordID=4,dlzHostName=backup,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 4
+dlzHostName: backup
+dlzType: a
+dlzIPAddr: 192.168.0.3
+dlzTTL: 10
+
+dn: dlzRecordID=5,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzMXRecord
+dlzRecordID: 5
+dlzHostName: @
+dlzType: mx
+dlzData: mail
+dlzPreference: 20
+dlzTTL: 10
+
+dn: dlzRecordID=6,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzMXRecord
+dlzRecordID: 6
+dlzHostName: @
+dlzType: mx
+dlzData: backup
+dlzPreference: 40
+dlzTTL: 10
+
+dn: dlzRecordID=7,dlzHostName=www,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzMXRecord
+dlzRecordID: 7
+dlzHostName: www
+dlzType: mx
+dlzData: backup
+dlzPreference: 40
+dlzTTL: 10
+
+dn: dlzRecordID=8,dlzHostName=www,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzMXRecord
+dlzRecordID: 8
+dlzHostName: www
+dlzType: mx
+dlzData: mail
+dlzPreference: 20
+dlzTTL: 10
+
+dn: dlzRecordID=9,dlzHostName=ns1,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 9
+dlzHostName: ns1
+dlzType: a
+dlzIPAddr: 192.168.0.4
+dlzTTL: 10
+
+dn: dlzRecordID=10,dlzHostName=ns2,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 10
+dlzHostName: ns2
+dlzType: a
+dlzIPAddr: 192.168.0.5
+dlzTTL: 10
+
+dn: dlzRecordID=11,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzSOARecord
+dlzRecordID: 11
+dlzHostName: @
+dlzType: soa
+dlzSerial: 2
+dlzRefresh: 2800
+dlzRetry: 7200
+dlzExpire: 604800
+dlzMinimum: 86400
+dlzAdminEmail: root.example.com.
+dlzPrimaryns: ns1.example.com.
+dlzTTL: 10
+
+dn: dlzRecordID=12,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzNSRecord
+dlzRecordID: 12
+dlzHostName: @
+dlzType: ns
+dlzData: ns1.example.com.
+dlzTTL: 10
+
+dn: dlzRecordID=13,dlzHostName=@,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzNSRecord
+dlzRecordID: 13
+dlzHostName: @
+dlzType: ns
+dlzData: ns2
+dlzTTL: 10
+
+dn: dlzRecordID=14,dlzHostName=~,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzARecord
+dlzRecordID: 14
+dlzHostName: ~
+dlzType: a
+dlzIPAddr: 192.168.0.250
+dlzTTL: 10
+
+dn: dlzRecordID=15,dlzZoneName=example.com,ou=dns,o=bind-dlz
+objectclass: dlzXFR
+dlzRecordID: 15
+dlzIPAddr: 127.0.0.1

@@ -1,0 +1,116 @@
+Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+These tests check RPZ recursion behavior (including skipping
+recursion when appropriate).
+
+The general structure of the tests is:
+
+* The resolver (ns2) with an unqualified view containing the policy
+  zones, the response-policy statement, and a root hint zone
+
+* The auth server that contains two authoritative zones, l1.l0 and
+  l2.l1.l0, both delegated to itself. l2.l1.l0 specifies a non-existent
+  zone data file and so will generate SERVFAILs for any queries to it.
+
+The l2.l1.l0 zone was chosen to generate SERVFAIL responses because RPZ
+evaluation will use that error response whenever it encounters it during
+processing, thus making it a binary indicator for whether or not
+recursion was attempted.  This also allows us to not worry about having
+to craft 'ip', 'nsdname', and 'nsip' rules that matched the queries.
+
+Each test is intended to be fed a number of queries constructed as
+qXX.l2.l1.l0, where XX is the 1-based query sequence number (e.g. the
+first query of each test is q01.l2.l1.l0).
+
+For all the tests the triggers are constructed as follows:
+client-ip - match 127.0.0.1/32
+ip - match 255.255.255.255/32 (does not matter due to SERVFAIL)
+nsdname - match ns.example.org (also does not matter)
+nsip - match 255.255.255.255/32 (also does not matter)
+qname - match qXX.l2.l1.l0, where XX is the query sequence number that
+is intended to be matched by this qname rule.
+
+Here's the detail on the test cases:
+
+Group 1 - testing skipping recursion for a single policy zone with only
+records that allow recursion to be skipped
+
+Test 1a:
+    1 policy zone containing 1 'client-ip' trigger
+    1 query, expected to skip recursion
+
+Test 1b:
+    1 policy zone containing 1 'qname' trigger (q01)
+    2 queries, q01 is expected to skip recursion, q02 is expected to
+      recurse
+
+Test 1c:
+    1 policy zone containing both a 'client-ip' and 'qname' trigger (q02)
+    1 query, expected to skip recursion
+
+Group 2 - testing skipping recursion with multiple policy zones when all
+zones have only trigger types eligible to skip recursion with
+
+Test 2a:
+    32 policy zones, each containing 1 'qname' trigger (qNN, where NN is
+       the zone's sequence 1-based sequence number formatted to 2 digits,
+       so each of the first 32 queries should match a different zone)
+    33 queries, the first 32 of which are expected to skip recursion
+       while the 33rd is expected to recurse
+
+Group 3 - Testing interaction of triggers that require recursion when in
+a single zone, both alone and with triggers that allow recursion to be
+skipped
+
+Test 3a:
+    1 policy zone containing 1 'ip' trigger
+    1 query, expected to recurse
+
+Test 3b:
+    1 policy zone containing 1 'nsdname' trigger
+    1 query, expected to recurse
+
+Test 3c:
+    1 policy zone containing 1 'nsip' trigger
+    1 query, expected to recurse
+
+Test 3d:
+    1 policy zone containing 1 'ip' trigger and 1 'qname' trigger (q02)
+    2 queries, the first should not recurse and the second should recurse
+
+Test 3e:
+    1 policy zone containing 1 'nsdname' trigger and 1 'qname' trigger
+      (q02)
+    2 queries, the first should not recurse and the second should recurse
+
+Test 3f:
+    1 policy zone containing 1 'nsip' trigger and 1 'qname' trigger (q02)
+    2 queries, the first should not recurse and the second should recurse
+
+Group 4 - contains 32 subtests designed to verify that recursion is
+skippable for only the appropriate zones based on the order specified in
+the 'response-policy' statement
+
+Tests 4aa to 4bf:
+    32 policy zones per test, one of which is configured with 1 'ip'
+       trigger and one 'qname' trigger while the others are configured
+       only with 1 'qname' trigger.  The zone with both triggers starts
+       listed first and is moved backwards by one position with each
+       test.  The 'qname' triggers in the zones are structured so that
+       the zones are tested starting with the first zone and the 'ip'
+       trigger is tested before the 'qname' trigger for that zone.
+    33 queries per test, where the number expected to skip recursion
+       matches the test sequence number: e.g. 1 skip for 4aa, 26 skips
+       for 4az, and 32 skips for 4bf
+
+Group 5 - This test verifies that the "pivot" policy zone for whether or
+not recursion can be skipped is the first listed zone with applicable
+trigger types rather than a later listed zone.
+
+Test 5a:
+    5 policy zones, the 1st, 3rd, and 5th configured with 1 'qname'
+      trigger each (q01, q04, and q06, respectively), the 2nd and 4th
+      each configured with an 'ip' and 'qname' trigger (q02 and q05,
+      respectively for the 'qname' triggers
+    6 queries, of which only q01 and q02 are expected to skip recursion

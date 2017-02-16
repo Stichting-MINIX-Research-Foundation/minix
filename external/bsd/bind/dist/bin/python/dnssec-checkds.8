@@ -1,0 +1,82 @@
+.\"	$NetBSD: dnssec-checkds.8,v 1.5 2014/12/10 04:37:52 christos Exp $
+.\"
+.\" Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" Id
+.\"
+.hy 0
+.ad l
+.\"     Title: dnssec\-checkds
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
+.\"      Date: January 01, 2013
+.\"    Manual: BIND9
+.\"    Source: BIND9
+.\"
+.TH "DNSSEC\-CHECKDS" "8" "January 01, 2013" "BIND9" "BIND9"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+dnssec\-checkds \- A DNSSEC delegation consistency checking tool.
+.SH "SYNOPSIS"
+.HP 15
+\fBdnssec\-checkds\fR [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIdig\ path\fR\fR] [\fB\-D\ \fR\fB\fIdsfromkey\ path\fR\fR] {zone}
+.HP 17
+\fBdnssec\-dsfromkey\fR [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIdig\ path\fR\fR] [\fB\-D\ \fR\fB\fIdsfromkey\ path\fR\fR] {zone}
+.SH "DESCRIPTION"
+.PP
+\fBdnssec\-checkds\fR
+verifies the correctness of Delegation Signer (DS) or DNSSEC Lookaside Validation (DLV) resource records for keys in a specified zone.
+.SH "OPTIONS"
+.PP
+\-f \fIfile\fR
+.RS 4
+If a
+\fBfile\fR
+is specified, then the zone is read from that file to find the DNSKEY records. If not, then the DNSKEY records for the zone are looked up in the DNS.
+.RE
+.PP
+\-l \fIdomain\fR
+.RS 4
+Check for a DLV record in the specified lookaside domain, instead of checking for a DS record in the zone's parent. For example, to check for DLV records for "example.com" in ISC's DLV zone, use:
+\fBdnssec\-checkds \-l dlv.isc.org example.com\fR
+.RE
+.PP
+\-d \fIdig path\fR
+.RS 4
+Specifies a path to a
+\fBdig\fR
+binary. Used for testing.
+.RE
+.PP
+\-D \fIdsfromkey path\fR
+.RS 4
+Specifies a path to a
+\fBdnssec\-dsfromkey\fR
+binary. Used for testing.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBdnssec\-dsfromkey\fR(8),
+\fBdnssec\-keygen\fR(8),
+\fBdnssec\-signzone\fR(8),
+.SH "AUTHOR"
+.PP
+Internet Systems Consortium
+.SH "COPYRIGHT"
+Copyright \(co 2012\-2014 Internet Systems Consortium, Inc. ("ISC")
+.br

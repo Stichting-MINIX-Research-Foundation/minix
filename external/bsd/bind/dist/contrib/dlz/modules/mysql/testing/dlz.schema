@@ -1,0 +1,30 @@
+CREATE DATABASE `BindDB` DEFAULT CHARACTER SET latin1;
+USE `BindDB`;
+
+CREATE TABLE IF NOT EXISTS `records` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `zone` varchar(255) NOT NULL,
+    `ttl` int(11) NOT NULL DEFAULT '86400',
+    `type` varchar(255) NOT NULL,
+    `host` varchar(255) NOT NULL DEFAULT '@',
+    `mx_priority` int(11) DEFAULT NULL,
+    `data` text,
+    `primary_ns` varchar(255) DEFAULT NULL,
+    `resp_contact` varchar(255) DEFAULT NULL,
+    `serial` bigint(20) DEFAULT NULL,
+    `refresh` int(11) DEFAULT NULL,
+    `retry` int(11) DEFAULT NULL,
+    `expire` int(11) DEFAULT NULL,
+    `minimum` int(11) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `type` (`type`),
+    KEY `host` (`host`),
+    KEY `zone` (`zone`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `xfr` (
+    `zone` varchar(255) NOT NULL,
+    `client` varchar(255) NOT NULL,
+    KEY `zone` (`zone`),
+    KEY `client` (`client`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

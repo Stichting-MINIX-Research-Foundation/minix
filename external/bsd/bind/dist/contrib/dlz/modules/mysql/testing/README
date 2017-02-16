@@ -1,0 +1,7 @@
+These files were used for testing on Ubuntu Linux using MySQL
+
+- Install MySQL: sudo apt-get install mysql-server
+- Run "mysql --user=USER --password=PASSWORD < dlz.schema" to set up database
+- Run "mysql --user=USER --password=PASSWORD < dlz.data" to populate it
+- update named.conf with correct USER and PASSWORD
+

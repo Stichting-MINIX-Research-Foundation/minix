@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Id: reconf,v 1.1 2008/02/15 01:47:15 marka Exp 
+
+autoreconf
+# We do not use automake but we need its install-sh file. We do not 
+# care about the exit code.
+automake --add-missing || true

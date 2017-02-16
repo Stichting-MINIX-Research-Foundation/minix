@@ -1,0 +1,77 @@
+;; Id: patch-db2latex-duplicate-template-bug,v 1.2 2007/01/12 22:24:20 sra Exp 
+;; 
+;; This is a patch to work around a known bug in db2latex.  Apparently
+;; xsltproc's error checking got a lot better since the authors of
+;; db2latex last tested this, so a clear language violation that
+;; xsltproc used to ignore now prevents xsltproc from working with
+;; db2latex.
+;; 
+;; On FreeBSD you can simply drop this patch into the directory
+;; /usr/ports/textproc/db2latex/files/ and the ports system should
+;; take it from there.  I've sent this patch off to the port
+;; maintainer but have not yet heard anything back.
+;; 
+;; I don't really know whther this is the "right" fix, but it seems to
+;; work, and I'm pretty sure that the code this patch deletes does not
+;; work as it stands, so at worst the result after applying this patch
+;; should be no worse than the result without this patch.
+;; 
+;; YMMV.  If this patch breaks, you get to keep both pieces.
+
+Index: xsl/qandaset.mod.xsl
+--- xsl/qandaset.mod.xsl.~1~	Sun Jan  4 08:22:27 2004
++++ xsl/qandaset.mod.xsl	Fri Apr  1 22:30:20 2005
+@@ -363,53 +363,4 @@
+ 	</doc:template>
+ 	<xsl:template match="revhistory" mode="qandatoc.mode"/>
+ 
+-<xsl:template name="question.answer.label">
+-	<!-- variable: deflabel -->
+-  <xsl:variable name="deflabel">
+-  	<!-- chck whether someone has a defaultlabel attribute -->
+-    <xsl:choose>
+-		<xsl:when test="ancestor-or-self::*[@defaultlabel]">
+-        	<xsl:value-of select="(ancestor-or-self::*[@defaultlabel])[last()]/@defaultlabel"/>
+-	      </xsl:when>
+-      <xsl:otherwise>
+-        <xsl:value-of select="latex.qanda.defaultlabel"/>
+-      </xsl:otherwise>
+-    </xsl:choose>
+-  </xsl:variable>
+-
+-  <xsl:variable name="label" select="@label"/>
+-  <xsl:choose>
+-    <xsl:when test="$deflabel = 'qanda'">
+-      <xsl:call-template name="gentext">
+-        <xsl:with-param name="key">
+-          <xsl:choose>
+-            <xsl:when test="local-name(.) = 'question'">question</xsl:when>
+-            <xsl:when test="local-name(.) = 'answer'">answer</xsl:when>
+-            <xsl:when test="local-name(.) = 'qandadiv'">qandadiv</xsl:when>
+-            <xsl:otherwise>qandaset</xsl:otherwise>
+-          </xsl:choose>
+-        </xsl:with-param>
+-      </xsl:call-template>
+-    </xsl:when>
+-    <xsl:when test="$deflabel = 'label'">
+-      <xsl:value-of select="$label"/>
+-    </xsl:when>
+-    <xsl:when test="$deflabel = 'number' and local-name(.) = 'question'">
+-      <xsl:apply-templates select="ancestor::qandaset[1]" mode="number"/>
+-      <xsl:choose>
+-        <xsl:when test="ancestor::qandadiv">
+-          <xsl:apply-templates select="ancestor::qandadiv[1]" mode="number"/>
+-          <xsl:apply-templates select="ancestor::qandaentry" mode="number"/>
+-        </xsl:when>
+-        <xsl:otherwise>
+-          <xsl:apply-templates select="ancestor::qandaentry" mode="number"/>
+-        </xsl:otherwise>
+-      </xsl:choose>
+-    </xsl:when>
+-    <xsl:otherwise>
+-      <!-- nothing -->
+-    </xsl:otherwise>
+-  </xsl:choose>
+-</xsl:template>
+-
+ </xsl:stylesheet>

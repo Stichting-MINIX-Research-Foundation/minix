@@ -1,0 +1,94 @@
+
+			BIND-9 PKCS#11 support
+
+Prerequisite
+
+The PKCS#11 support needs a PKCS#11 OpenSSL engine based on the Solaris one,
+released the 2008-12-02 for OpenSSL 0.9.8i, with back port of key by reference
+and some improvements, including user friendly PIN management. You may also
+use the original engine code.
+
+Compilation
+
+"configure --with-pkcs11 ..."
+
+PKCS#11 Libraries
+
+Tested with Solaris one with a SCA board and with openCryptoki with the
+software token. Known to work on Linux and Windows 2003 server so
+should work on most operating systems. For AEP Keyper or any device used
+only for its protected key store, please switch to the sign-only engine.
+
+OpenSSL Engines
+
+With PKCS#11 support the PKCS#11 engine is statically loaded but at its
+initialization it dynamically loads the PKCS#11 objects.
+Even the pre commands are therefore unused they are defined with:
+ SO_PATH:
+   define: PKCS11_SO_PATH
+   default: /usr/local/lib/engines/engine_pkcs11.so
+ MODULE_PATH:
+   define: PKCS11_MODULE_PATH
+   default: /usr/lib/libpkcs11.so
+Without PKCS#11 support, a specific OpenSSL engine can be still used
+by defining ENGINE_ID at compile time.
+
+PKCS#11 tools
+
+The contrib/pkcs11-keygen directory contains a set of experimental tools
+to handle keys stored in a Hardware Security Module at the benefit of BIND.
+
+The patch for OpenSSL 0.9.8i is in this directory. Read its README.pkcs11
+for the way to use it (these are the original notes so with the original
+path, etc. Define HAVE_GETPASSPHRASE if you have getpassphrase() on
+a operating system which is not Solaris.)
+
+Not all tools are supported on AEP Keyper but genkey and dnssec-keyfromlabel
+are functional.
+
+PIN management
+
+With the just fixed PKCS#11 OpenSSL engine, the PIN should be entered
+each time it is required. With the improved engine, the PIN should be
+entered the first time it is required or can be configured in the
+OpenSSL configuration file (aka. openssl.cnf) by adding in it:
+ - at the beginning:
+	openssl_conf = openssl_def
+ - at any place these sections:
+	[ openssl_def ]
+	engines = engine_section
+	[ engine_section ]
+	pkcs11 = pkcs11_section
+	[ pkcs11_section ]
+	PIN = put__your__pin__value__here
+
+Slot management
+
+The engine tries to use the first best slot but it is recommended
+to simply use the slot 0 (usual default, meta-slot on Solaris).
+
+Sign-only engine
+
+openssl.../crypto/engine/hw_pk11-kp.c and hw_pk11_pub-kp.c contain
+a stripped down version of hw_pk11.c and hw_pk11_pub.c files which
+has only the useful functions (i.e., signature with a RSA private
+key in the device protected key store and key loading).
+
+This engine should be used with a device which provides mainly
+a protected store and no acceleration. AEP Keyper is an example
+of such a device (BTW with the fully capable engine, key export
+must be enabled on this device and this configuration is not yet
+supported).
+
+Original engine
+
+If you are using the original engine and getpassphrase() is not defined, add:
+#define getpassphrase(x) getpass(x)
+in openssl.../crypto/engine/hw_pk11_pub.c
+
+Notes
+
+Some names here are registered trademarks, at least Solaris is a trademark
+of Sun Microsystems Inc...
+Include files are from RSA Labs., PKCS#11 version is 2.20 amendment 3.
+The PKCS#11 support is compatible with the forthcoming FIPS 140-2 support.

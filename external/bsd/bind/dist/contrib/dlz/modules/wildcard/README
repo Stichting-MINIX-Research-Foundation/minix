@@ -1,0 +1,31 @@
+The "wildcard" DLZ module provides a "template" zone for domains matching
+a wildcard name.  For example, the following DLZ configuration would match
+any zone name containing the string "example" and ending with .com, such
+as "thisexample.com", "exampleofthat.com", or "anexampleoftheotherthing.com".
+
+    dlz "test" {
+	database "dlopen ../dlz_wildcard_dynamic.so
+        *example*.com 10.53.* 1800
+        @      3600    SOA   {ns3.example.nil. support.example.nil. 42 14400 7200 2592000 600}
+        @      3600    NS     ns3.example.nil.
+        @      3600    NS     ns4.example.nil.
+        @      3600    NS     ns8.example.nil.
+        @      3600    MX     {5 mail.example.nil.}
+        ftp    86400   A      192.0.0.1
+        sql    86400   A      192.0.0.2
+        tmp    {}      A      192.0.0.3
+        www    86400   A      192.0.0.3
+        www    86400   AAAA   ::1
+        txt    300     TXT    {\"you requested $record$ in $zone$\"}
+        *      86400   A      192.0.0.100";
+    };
+
+For any zone name matchin the wildcard, it would return the data from
+the template.  "$zone$" is replaced with zone name: i.e., the shortest
+possible string of labels in the query name that matches the wildcard.
+"$record$" is replaced with the remainder of the query name.  In the
+example above, a query for "txt.thisexample.com/TXT" would return the
+string "you requested txt in thisexample.com".
+
+Any client whose source address matches the second wildcard ("10.53.*")
+is allowed to request a zone transfer.

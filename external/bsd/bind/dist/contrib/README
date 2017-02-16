@@ -1,0 +1,57 @@
+This directory contains contributed scripts, tools, libraries,
+and other useful additions to BIND 9. It includes:
+
+    - scripts/
+
+      Assorted useful scripts, including 'nanny' which monitors 
+      named and restarts it in the event of a crash, 'zone-edit'
+      which enables editing of a dynamic zone, and others
+
+    - queryperf/
+
+      A DNS query performance testing tool
+
+    - perftcpdns/
+
+      A performance testing tool for DNS over TCP
+
+    - dane/
+
+      mkdane.sh generates TLSA records for use with DNS-based
+      Authentication of Named Entities (DANE)
+
+    - dlz/modules
+
+      Dynamically linkable DLZ modules that can be configured into
+      named at runtime, enabling access to external data sources including
+      LDAP, MySQL, Berkeley DB, perl scripts, etc
+
+    - dlz/drivers
+
+      Old-style DLZ drivers that can be linked into named at compile
+      time.  (These are no longer actively maintained and are expected
+      to be deprecated eventually.)
+
+    - sdb/
+
+      SDB drivers: another mechanism for accessing external data
+      sources
+
+    - idn/
+
+      Contains source for 'idnkit', which provides support for
+      Internationalized Domain Name processing.
+
+    - nslint-3.0a2
+
+      A lint-like tool for checking DNS files
+
+    - query-loc-0.4.0
+
+      A tool for retrieving location information stored in the DNS
+
+    - zkt-1.1.2
+
+      DNSSEC Zone Key Tools, an alternate method for managing keys
+      and signatures
+

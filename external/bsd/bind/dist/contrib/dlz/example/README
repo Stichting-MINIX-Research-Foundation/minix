@@ -1,0 +1,222 @@
+OVERVIEW:
+
+DLZ (Dynamically Loadable Zones) is an extention to BIND 9 that
+allows zone data to be retrieved directly from an external database.
+There is no required format or schema.  DLZ drivers exist for several
+different database backends including PostgreSQL, MySQL, and LDAP and
+can be written for any other.
+
+Historically, DLZ drivers had to be statically linked with the named
+binary and were turned on via a configure option at compile time (for
+example, "configure --with-dlz-ldap").  Currently, the drivers provided
+in the BIND 9 tarball in contrib/dlz/drivers are still linked this way.
+
+However, as of BIND 9.8, it is also possible to link some DLZ modules
+dynamically at runtime, via the DLZ "dlopen" driver, which acts as a
+generic wrapper around a shared object that implements the DLZ API.  The
+"dlopen" driver is linked into named by default, so configure options are
+no longer necessary unless using older DLZ drivers.
+
+When the DLZ module provides data to named, it does so in text format.
+The response is converted to DNS wire format by named.  This conversion,
+and the lack of any internal caching, places significant limits on the
+query performance of DLZ modules.  Consequently, DLZ is not recommended
+for use on high-volume servers.  However, it can be used in a hidden
+master configuration, with slaves retrieving zone updates via AXFR.
+(Note, however, that DLZ has no built-in support for DNS notify; slaves
+are not automatically informed of changes to the zones in the database.)
+
+CONFIGURING DLZ:
+
+A DLZ database is configured with a "dlz" statement in named.conf.
+
+    dlz example {
+        database "dlopen driver.so <args>";
+        search yes;
+    };
+
+This specifies a DLZ module to search when answering queries; the module
+is implemented in "driver.so" and is loaded at runtime by the dlopen DLZ
+driver.  Multiple "dlz" statements can be specified; when answering a
+query, all DLZ modules with the "search" option set to "yes" will be
+checked for an answer, and the best available answer will be returned
+to the client.
+
+The "search" option in this example can be omitted, as "yes" is the
+default value.  If it is set to "no", then this DLZ module is *not*
+searched for best-match when a query is received.  Instead, zones in
+this DLZ must be separately specified in a zone statement.  This can
+be useful when conventional zone semantics are desired but you wish
+to use a different back-end storage mechanism than the standard zone
+database.  For example, to use a DLZ module for an NXDOMAIN redirection
+zone:
+
+    dlz other {
+        database "dlopen driver.so <args>";
+        search no;
+    };
+
+    zone "." {
+        type redirect;
+        dlz other;
+    };
+
+EXAMPLE DRIVER:
+
+This directory contains an example of an externally-lodable DLZ module,
+dlz_example.c, which demonstrates the features of the DLZ API.  It sets up
+a single zone, whose name is configured in named.conf.  The zone can answer
+queries and AXFR requests, and accept DDNS updates.
+
+By default, at runtime, the zone implemented by this driver will contain
+an SOA, NS, and a single A record at the apex.  If configured in named.conf
+to use the name "example.nil", then, the zone will look like this:
+
+ example.nil.  3600    IN      SOA     example.nil. hostmaster.example.nil. (
+                                               123 900 600 86400 3600
+                                       )
+ example.nil.  3600    IN      NS      example.nil.
+ example.nil.  1800    IN      A       10.53.0.1
+
+The driver is also capable of retrieving information about the querying
+client, and altering its response on the basis of this information.  To
+demonstrate this feature, the example driver responds to queries for
+"source-addr.<zonename>/TXT" with the source address of the query.
+Note, however, that this record will *not* be included in AXFR or ANY
+responses.  (Normally, this feature would be used to alter responses in
+some other fashion, e.g., by providing different address records for
+a particular name depending on the network from which the query arrived.)
+
+IMPLEMENTATION NOTES:
+
+The minimal set of type definitions, prototypes, and macros needed
+for implementing a DLZ driver is in ../modules/dlz_minimal.h.  Copy this
+header file into your source tree when creating an external DLZ module.
+
+The DLZ dlopen driver provides a set of callback functions:
+
+  - void log(int level, const char *fmt, ...);
+
+    Writes the specified string to the named log, at the specified
+    log level.  Uses printf() format semantics.
+
+  - isc_result_t putrr(dns_sdlzlookup_t *lookup, const char *type,
+                       dns_ttl_t ttl, const char *data);
+
+    Puts a DNS resource record into the query response, which
+    referenced by the opaque structure 'lookup' provided by named.
+
+  - isc_result_t putnamedrr(dns_sdlzallnotes_t *allnodes,
+                            const char *name, const char *type,
+                            dns_ttl_t ttl, const char *data);
+
+    Puts a DNS resource record into an AXFR response, which is
+    referenced by the opaque structure 'allnodes' provided by named.
+
+  - isc_result_t writeable_zone(dns_view_t *view, const char *zone_name);
+
+    Allows the DLZ module to inform named that a given zone can recieve
+    DDNS updates.  (Note: This is not currently supported for DLZ
+    databases that are configured as 'search no;')
+
+The external DLZ module can define the following functions (some of these
+are mandatory, others optional).
+
+  - int dlz_version(unsigned int *flags);
+
+    Required for alL external DLZ modules, to indicate the version number
+    of the DLZ dlopen driver that this module supports.  It should return
+    the value DLZ_DLOPEN_VERSION, which is defined in the file
+    contrib/dlz/modules/dlz_minimal.h and is currently 3.  'flags' is
+    updated to indicate capabilities of the module.  In particular, if
+    the module is thread-safe then it sets 'flags' to include
+    DNS_SDLZFLAG_THREADSAFE.  (Other capability flags may be added in
+    the future.)
+
+  - isc_result_t dlz_create(const char *dlzname,
+                            unsigned int argc, char *argv[],
+                            void **dbdata, ...);
+
+    Required for all external DLZ modules; this call initializes the
+    module.
+
+  - void dlz_destroy(void *dbdata);
+
+    Optional.  If supplied, this will be called when the driver is
+    unloaded.
+
+  - isc_result_t dlz_findzonedb(void *dbdata, const char *name,
+                                dns_clientinfomethods_t *methods,
+                                dns_clientinfo_t *clientinfo);
+
+    Required for all external DLZ modules.  This indicates whether
+    the DLZ module can answer for the given name.  Returns ISC_R_SUCCESS
+    if so, and ISC_R_NOTFOUND if not.  As an optimization, it can
+    also return ISC_R_NOMORE: this indicates that the DLZ module has
+    no data for the given name or for any name above it in the DNS.
+    This prevents named from searching for a zone cut.
+
+   - isc_result_t dlz_lookup(const char *zone, const char *name, void *dbdata,
+                             dns_sdlzlookup_t *lookup,
+                             dns_clientinfomethods_t *methods,
+                             dns_clientinfo_t *clientinfo);
+
+    Required for all external DLZ modules.  This carries out the database
+    lookup for a query.
+
+  - isc_result_t dlz_allowzonexfr(void *dbdata, const char *name,
+                                  const char *client);
+
+    Optional.  Supply this if you want the module to support AXFR
+    for the specified zone and client.  A return value of ISC_R_SUCCESS
+    means AXFR is allowed, any other value means it isn't.
+
+  -  isc_result_t dlz_allnodes(const char *zone, void *dbdata,
+                               dns_sdlzallnodes_t *allnodes);
+
+     Optional, but must be supplied dlz_allowzonexfr() is.  This function
+     returns all nodes in the zone in order to perform a zone transfer.
+
+  - isc_result_t dlz_newversion(const char *zone, void *dbdata,
+                                void **versionp);
+
+    Optional.  Supply this if you want the module to support DDNS
+    updates.  This function starts a transaction in the database.
+
+
+  - void dlz_closeversion(const char *zone, isc_boolean_t commit,
+                          void *dbdata, void **versionp);
+
+    Optional, but must be supplied if dlz_newversion() is.  This function
+    closes a transaction.  'commit' indicates whether to commit the changes
+    to the database, or ignore them.
+
+  - isc_result_t dlz_configure(dns_view_t *view, void *dbdata);
+
+    Optional, but must be supplied in order to support DDNS updates.
+
+  - isc_boolean_t dlz_ssumatch(const char *signer, const char *name,
+                               const char *tcpaddr, const char *type,
+                               const char *key, uint32_t keydatalen,
+                               uint8_t *keydata, void *dbdata);
+
+    Optional, but must be supplied in order to support DDNS updates.
+
+  - isc_result_t dlz_addrdataset(const char *name, const char *rdatastr,
+                                 void *dbdata, void *version);
+
+    Optional, but must be supplied in order to support DDNS updates.
+    Adds the data in 'rdatastr' to a database node.
+
+  - isc_result_t dlz_subrdataset(const char *name, const char *rdatastr,
+                                 void *dbdata, void *version);
+
+    Optional, but must be supplied in order to support DDNS updates.
+    Removes the data in 'rdatastr' from a database node.
+
+  - isc_result_t dlz_delrdataset(const char *name, const char *rdatastr,
+                                 void *dbdata, void *version);
+
+    Optional, but must be supplied in order to support DDNS updates.
+    Deletes all data matching the type specified in 'rdatastr' from
+    the database.

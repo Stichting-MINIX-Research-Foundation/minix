@@ -1,0 +1,375 @@
+.\"	$NetBSD: idnconv.1,v 1.4 2014/12/10 04:37:56 christos Exp $
+.\"
+.\" Id: idnconv.1,v 1.1 2003/06/04 00:27:10 marka Exp 
+.\"
+.\" Copyright (c) 2000,2001,2002 Japan Network Information Center.
+.\" All rights reserved.
+.\"  
+.\" By using this file, you agree to the terms and conditions set forth bellow.
+.\" 
+.\" 			LICENSE TERMS AND CONDITIONS 
+.\" 
+.\" The following License Terms and Conditions apply, unless a different
+.\" license is obtained from Japan Network Information Center ("JPNIC"),
+.\" a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+.\" Chiyoda-ku, Tokyo 101-0047, Japan.
+.\" 
+.\" 1. Use, Modification and Redistribution (including distribution of any
+.\"    modified or derived work) in source and/or binary forms is permitted
+.\"    under this License Terms and Conditions.
+.\" 
+.\" 2. Redistribution of source code must retain the copyright notices as they
+.\"    appear in each source code file, this License Terms and Conditions.
+.\" 
+.\" 3. Redistribution in binary form must reproduce the Copyright Notice,
+.\"    this License Terms and Conditions, in the documentation and/or other
+.\"    materials provided with the distribution.  For the purposes of binary
+.\"    distribution the "Copyright Notice" refers to the following language:
+.\"    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+.\" 
+.\" 4. The name of JPNIC may not be used to endorse or promote products
+.\"    derived from this Software without specific prior written approval of
+.\"    JPNIC.
+.\" 
+.\" 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+.\"    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\"    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+.\"    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+.\"    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\"    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\"    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\"    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\"    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+.\"
+.TH IDNCONV 1 "Mar 3, 2001"
+.\"
+.SH NAME
+idnconv \- codeset converter for named.conf and zone master files
+.\"
+.SH SYNOPSIS
+\fBidnconv\fP [\fIoptions..\fP] [\fIfile\fP...]
+.\"
+.SH DESCRIPTION
+\fBidnconv\fR is a codeset converter for named configuration files
+and zone master files.
+\fBidnconv\fR performs codeset conversion specified either
+by the command-line arguments or by the configuration file,
+and writes the converted text to stdout.
+.PP
+If file name is specified, \fBidnconv\fR converts the contents of
+the file.
+Otherwise, \fBidnconv\fR converts \fIstdin\fR.
+.PP
+Since \fBidnconv\fR is specifically designed for converting
+internatinalized domain names, it may not be suitable as a general
+codeset converter.
+.\"
+.SH "OPERATION MODES"
+\fBidnconv\fR has two operation modes.
+.PP
+One is a mode to convert local-encoded domain names to IDN-encoded
+one.  Usually this mode is used for preparing domain names to be
+listed in named configuration files or zone master files.
+In this mode, the following processes are performed in addition to
+the codeset (encoding) conversion.
+.RS 2
+.IP \- 2
+local mapping
+.IP \- 2
+standard domain name preperation (NAMEPREP)
+.RE
+.PP
+The other mode is a reverse conversion, from IDN-encoded domain name to
+local-encoded domain names.
+In this mode, local mapping and NAMEPREP are not performed since
+IDN-encoded names should already be normalized.
+Instead, a check is done in order to make sure the IDN-encoded domain name
+is properly NAMEPREP'ed.  If it is not, the name will be output in
+IDN encoding, not in the local encoding.
+.\"
+.SH OPTIONS
+Normally \fBidnconv\fR reads system's default configuration file
+(idn.conf) and performs conversion or name preparation according to
+the parameters specified in the file.
+You can override the setting in the configuration file by various
+command line options below.
+.TP 4
+\fB\-in\fP \fIin-code\fP, \fB\-i\fP \fIin-code\fP
+Specify the codeset name of the input text.
+Any of the following codeset names can be specified.
+.RS 4
+.IP "\(bu" 2
+Any codeset names which \fIiconv_open()\fP library function accepts
+.IP "\(bu" 2
+\f(CWPunycode\fR
+.IP "\(bu" 2
+\f(CWUTF-8\fR
+.IP "\(bu" 2
+Any alias names for the above, defined by the codeset alias file.
+.RE
+.IP "" 4
+If this option is not specified, the default codeset is determined
+from the locale in normal conversion mode.
+In reverse conversion mode, the default codeset is the IDN encoding
+specified by the configuration file (``idn-encoding'' entry).
+.TP 4
+\fB\-out\fP \fIout-code\fP, \fB\-o\fP \fIout-code\fP
+Specify the codeset name of the output text. \fIout-code\fP can be any
+codeset name that can be specified for \fB\-in\fR option.
+.IP "" 4
+If this option is not specified, the default is the IDN encoding
+specified by the configuration file (``idn-encoding'' entry) in
+normal conversion mode.
+In reverse conversion mode, the default codeset is determined from
+the locale.
+.TP 4
+\fB\-conf\fP \fIpath\fP, \fB\-c\fP \fIpath\fP
+Specify the pathname of idnkit configuration file (``idn.conf'').
+If not specified, system's default file is used, unless \-noconf
+option is specified.
+.TP 4
+\fB\-noconf\fP, \fB\-C\fP
+Specify that no configuration file is to be used.
+.TP 4
+\fB\-reverse\fP, \fB\-r\fP
+Specify reverse conversion mode.
+.br
+If this option is not specified, the normal conversion mode is used.
+.TP 4
+\fB\-nameprep\fR \fIversion\fR, \fB\-n\fR \fIversion\fR
+Specify the version of NAMEPREP.
+The following is a list of currently available versions.
+.RS 4
+.IP \f(CWRFC3491\fR 4
+Perform NAMEPREP according to the RFC3491
+``rfc-3491.txt''.
+.RE
+.TP 4
+\fB\-nonameprep\fR, \fB\-N\fR
+Specify to skip NAMEPREP process (or NAMEPREP verification process
+in the reverse conversion mode).
+This option implies -nounassigncheck and -nobidicheck.
+.TP 4
+\fB\-localmap\fR \fImap\fR
+Specify the name of local mapping rule.
+Currently, following maps are available.
+.RS 4
+.IP \f(CWRFC3491\fR 4
+Use the list of mappings specified by RFC3491.
+.IP \f(CWfilemap:\fR\fIpath\fR 4
+Use list of mappings specified by mapfile \fIpath\fR.
+See idn.conf(5) for the format of a mapfile.
+.RE
+.IP "" 4
+This option can be specified more than once.
+In that case, each mapping will be performed in the order of the
+specification.
+.TP 4
+\fB\-nounassigncheck\fR, \fB\-U\fR
+Skip unassigned codepoint check.
+.TP 4
+\fB\-nobidicheck\fR, \fB\-B\fR
+Skip bidi character check.
+.TP 4
+\fB\-nolengthcheck\fR
+Do not check label length of normal conversion result.
+This option is only meaningful in the normal conversion mode.
+.TP 4
+\fB\-noasciicheck\fR, \fB\-A\fR
+Do not check ASCII range characters.
+This option is only meaningful in the normal conversion mode.
+.TP 4
+\fB\-noroundtripcheck\fR
+Do not perform round trip check.
+This option is only meaningful in the reverse conversion mode.
+.TP 4
+\fB\-delimiter\fR \fIcodepoint\fP
+Specify the character to be mapped to domain name delimiter (period).
+This option can be specified more than once in order to specify multiple
+characters.
+.br
+This option is only meaningful in the normal conversion mode.
+.TP 4
+\fB\-whole\fP, \fB\-w\fP
+Perform local mapping, nameprep and conversion to output codeset for the entire
+input text.  If this option is not specified, only non-ASCII characters
+and their surrounding texts will be processed.
+See ``NORAML CONVERSION MECHANISM'' and ``REVERSE CONVERSION MECHANISM''
+for details.
+.TP 4
+\fB\-alias\fP \fIpath\fP, \fB\-a\fP \fIpath\fP
+Specify a codeset alias file.  It is a simple text file, where
+each line has a pair of alias name and real name separated by one
+or more white spaces like below:
+.nf
+.ft CW
+
+    \fIalias-codeset-name\fP    \fIreal-codeset-name\fP
+
+.ft R
+.fi
+Lines starting with ``#'' are treated as comments.
+.TP 4
+\fB\-flush\fP
+Force line-buffering mode.
+.TP 4
+\fB\-version\fP, \fB\-v\fP
+Print version information and quit.
+.\"
+.SH LOCAL CODESET
+idnconv guesses local codeset from locale and environment variables.
+See the ``LOCAL CODESET'' section in idn.conf(5) for more details.
+.\"
+.SH NORMAL CONVERSION MECHANISM
+\fBidnconv\fR performs conversion line by line.
+Here describes how \fBidnconv\fR does its job for each line.
+.\"
+.IP "1. read a line from input text" 4
+.IP "2. convert the line to UTF-8" 4
+\fBidnconv\fR converts the line from local encoding to UTF-8.
+.IP "3. find internationalized domain names" 4
+If the \-whole\ (or \-w) option is specified, the entire line is
+assumed as an internationalized domain name.
+Otherwise, \fBidnconv\fR recognizes any character sequences having
+the following properties in the line as internationalized domain names.
+.RS 4
+.IP "\(bu" 2
+containing at least one non-ASCII character, and
+.IP "\(bu" 2
+consisting of legal domain name characters (alphabets, digits, hypens),
+non-ASCII characters and period.
+.RE
+.IP "4. convert internationalized domain names to ACE" 4
+For each internationalized domain name found in the line,
+\fBidnconv\fR converts the name to ACE.
+The details about the conversion procedure is:
+.RS 4
+.IP "4.1. delimiter mapping" 4
+Substibute certain characters specified as domain name delimiter
+with period.
+.IP "4.2. local mapping" 4
+Perform local mapping.
+If the local mapping is specified by command line option \-localmap,
+the specified mapping rule is applied.  Otherwise, find the mapping rule
+from the configuration file which matches to the TLD of the name,
+and perform mapping according to the matched rule.
+.br
+This step is skipped if the \-nolocalmap (or \-L) option is specified.
+.IP "4.3. NAMEPREP" 4
+Perform name preparation (NAMEPREP).
+Mapping, normalization, prohibited character checking, unassigned
+codepoint checking, bidirectional character checking are done in
+that order.
+If the prohibited character check, unassigned codepoint check, or
+bidi character check fails, the normal conversion procedure aborts.
+.br
+This step is skipped if the \-nonameprep (or \-N) option is specified.
+.IP "4.4. ASCII character checking" 4
+Checks ASCII range character in the domain name.
+the normal conversion procedure aborts, if the domain name has a label
+beginning or end with hyphen (U+002D) or it contains ASCII range character
+except for alphanumeric and hyphen,
+.br
+This step is skipped if the \-noasciicheck (or \-A) option is specified.
+.IP "4.5. ACE conversion" 4
+Convert the string to ACE.
+.IP "4.6. label length checking" 4
+The normal conversion procedure aborts, if the domain name has an empty
+label or too long label (64 characters or more).
+.br
+This step is skipped if the \-nolengthcheck option is specified.
+.RE
+.IP "5. output the result" 4
+.PP
+.\"
+.SH REVERSE CONVERSION MECHANISM
+This is like the normal conversion mechanism, but they are not symmetric.
+\fBidnconv\fR does its job for each line.
+.\"
+.IP "1. read a line from input text" 4
+.IP "2. convert the line to UTF-8" 4
+\fBidnconv\fR converts the line from local encoding to UTF-8.
+.IP "3. find internationalized domain names" 4
+If the \-whole\ (or \-w) option is specified, the entire line is
+assumed as an internationalized domain name.
+Otherwise, \fBidnconv\fR decodes any valid ASCII domain names
+including ACE names in the line.
+.IP "4. convert domain names to local encoding"
+Then, \fBidnconv\fR decodes the domain names.
+The decode procedure consists of the following steps.
+.RS 4
+.IP "4.1. Delimiter mapping" 4
+Substibute certain characters specified as domain name delimiter
+with period.
+.br
+.IP "4.2. NAMEPREP" 4
+Perform name preparation (NAMEPREP) for each label in the domain name.
+Mapping, normalization, prohibited character checking, unassigned
+codepoint checking, bidirectional character checking are done in
+that order.
+If the prohibited character check, unassigned codepoint check, or
+bidi character check fails, disqualified labels are restored to
+original input strings and further conversion on those labels are
+not performed.
+.br
+This step is skipped if the \-nonameprep (or \-N) option is specified.
+.IP "4.3. ACE conversion" 4
+Convert the string from ACE to UTF-8.
+.IP "4.4. Round trip checkning" 4
+For each label, perform the normal conversion and compare it with
+the result of the step 4.2.
+This check succeeds, if they are equivalent strings.
+In case of failure, disqualified labels are restored to original
+input strings and further conversion on those labels are not
+performed.
+.br
+This step is skipped if the \-noroundtripcheck option is specified.
+.IP "4.5. local encoding conversion" 4
+Convert the result of the step 4.3. from UTF-8 to local encoding.
+If a label in the domain name contains a character which cannot be
+represented in the local encoding, the label is restored to the
+original input string.
+.RE
+.IP "5. output the result" 4
+.PP
+.\"
+.SH FILE MANAGEMENT
+Maybe the best way to manage named.conf or zone master files that contains
+internationalized domain name is to keep them in your local codeset so that
+they can be edited with your favorite editor, and generate a version in
+the IDN encoding using \fBidnconv\fP.
+.PP
+`make' is a convenient tool for this purpose.
+Suppose the local codeset version has suffix `.lc', and its ACE version
+has suffix `.ace'.  The following Makefile enables you to generate
+ACE version from local codeset version by just typing `make'.
+.RS 4
+.nf
+.ft CW
+
+\&.SUFFIXES: .lc .ace
+\&.lc.ace:
+	idnconv -in $(LOCALCODE) -out $(IDNCODE) \\
+	    $(IDNCONVOPT) $< > $@
+
+LOCALCODE = EUC-JP
+IDNCODE = Punycode
+IDNCONVOPT = 
+
+DESTFILES = db.zone1.ace db.zone2.ace
+
+all: $(DESTFILES)
+.ft
+.fi
+.RE
+.\"
+.SH SEE ALSO
+idn.conf(5),
+iconv(3)
+.\"
+.SH BUGS
+The automatic input-code selection depends on your system, and sometimes
+it cannot guess or guess wrong.  It is better to explicitly specify it
+using \-in option.

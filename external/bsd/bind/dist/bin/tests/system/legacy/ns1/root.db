@@ -1,0 +1,30 @@
+; Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+$TTL 60
+.			SOA	ns1.	marka.isc.org 1 0 0 0 0
+.			NS	ns1.
+ns1.			A	10.53.0.1
+dropedns.		NS	ns.dropedns.
+ns.dropedns.		A	10.53.0.2
+dropedns-notcp.		NS	ns.dropedns-notcp.
+ns.dropedns-notcp.	A	10.53.0.3
+plain.			NS	ns.plain.
+ns.plain.		A	10.53.0.4
+plain-notcp.		NS	ns.plain-notcp.
+ns.plain-notcp.		A	10.53.0.5
+edns512.		NS	ns.edns512.
+ns.edns512.		A	10.53.0.6
+edns512-notcp.		NS	ns.edns512-notcp.
+ns.edns512-notcp.	A	10.53.0.7

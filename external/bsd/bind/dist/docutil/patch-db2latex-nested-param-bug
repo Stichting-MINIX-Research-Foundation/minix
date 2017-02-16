@@ -1,0 +1,18 @@
+;; Id: patch-db2latex-nested-param-bug,v 1.1 2007/02/06 20:58:13 sra Exp 
+;;
+;; Latest version of xsltproc doesn't like <xsl:param><xsl:param/></xsl:param>.
+
+--- xsl/lists.mod.xsl.~1~	Sat Jan 31 06:53:50 2004
++++ xsl/lists.mod.xsl	Tue Feb  6 15:41:12 2007
+@@ -269,10 +269,8 @@
+ 		</doc:notes>
+ 	</doc:template>
+ 	<xsl:template match="varlistentry">
+-		<xsl:param name="next.is.list">
+ 			<xsl:param name="object" select="listitem/*[1]"/>
+-			<xsl:value-of select="count($object[self::itemizedlist or self::orderedlist or self::variablelist])"/>
+-		</xsl:param>
++		<xsl:param name="next.is.list" select="count($object[self::itemizedlist or self::orderedlist or self::variablelist])"/>
+ 		<xsl:variable name="id">
+ 			<xsl:call-template name="label.id"/>
+ 		</xsl:variable>

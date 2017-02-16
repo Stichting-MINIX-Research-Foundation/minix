@@ -1,0 +1,383 @@
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Sat Aug 28 01:15:12 2010 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>zkt&minus;keyman</title>
+
+</head>
+<body>
+
+<h1 align="center">zkt&minus;keyman</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSYS">SYNOPSYS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#GENERAL OPTIONS">GENERAL OPTIONS</a><br>
+<a href="#COMMAND OPTIONS">COMMAND OPTIONS</a><br>
+<a href="#SAMPLE USAGE">SAMPLE USAGE</a><br>
+<a href="#ENVIRONMENT VARIABLES">ENVIRONMENT VARIABLES</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#COPYRIGHT">COPYRIGHT</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">zkt&minus;keyman
+&mdash; A DNSSEC key management tool</p>
+
+<h2>SYNOPSYS
+<a name="SYNOPSYS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;keyman
+&minus;C</b>&lt;label&gt; [<b>&minus;V|--view</b>
+<i>view</i>] [<b>&minus;c</b> <i>file</i>]
+[<b>&minus;krpz</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;keyman &minus;&minus;create=</b>&lt;label&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;krpz</b>]
+[{<i>keyfile</i>|<i>dir</i>} <i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;keyman
+&minus;</b>{<b>P</b>|<b>A</b>|<b>D</b>|<b>R</b>}<b>&lt;keytag&gt;</b>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;keyman &minus;&minus;published=</b>&lt;keytag&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;keyman &minus;&minus;active=</b>&lt;keytag&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;keyman &minus;&minus;depreciate=</b>&lt;keytag&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>] <b><br>
+zkt&minus;keyman &minus;&minus;rename=</b>&lt;keytag&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;keyman
+&minus;&minus;destroy=</b>&lt;keytag&gt;
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;r</b>] [{<i>keyfile</i>|<i>dir</i>}
+<i>...</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt&minus;keyman
+&minus;9 | &minus;&minus;ksk-rollover <br>
+zkt&minus;keyman &minus;1 |
+&minus;&minus;ksk-roll-phase1</b> <i>do.ma.in.</i>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] <b><br>
+zkt&minus;keyman &minus;2 |
+&minus;&minus;ksk-roll-phase2</b> <i>do.ma.in.</i>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] <b><br>
+zkt&minus;keyman &minus;3 |
+&minus;&minus;ksk-roll-phase3</b> <i>do.ma.in.</i>
+[<b>&minus;V|--view</b> <i>view</i>] [<b>&minus;c</b>
+<i>file</i>] <b><br>
+zkt&minus;keyman &minus;0 | &minus;&minus;ksk-roll-stat</b>
+<i>do.ma.in.</i> [<b>&minus;V|--view</b> <i>view</i>]
+[<b>&minus;c</b> <i>file</i>]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The
+<i>zkt&minus;keyman</i> command is a wrapper around
+<i>dnssec-keygen(8)</i> to assist in dnssec zone key
+management.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The command is
+useful in dns key management. It is suitable for
+modification of key status.</p>
+
+<h2>GENERAL OPTIONS
+<a name="GENERAL OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;V</b>
+<i>view</i><b>, &minus;&minus;view=</b><i>view</i></p>
+
+<p style="margin-left:22%;">Try to read the default
+configuration out of a file named
+<i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
+&minus;V or --view option every time, it is also possible to
+create a hard or softlink to the executable file to give it
+an additional name like
+<i>zkt&minus;keyman&minus;&lt;view&gt; .</i></p>
+
+<p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
+&minus;&minus;config=</b><i>file</i></p>
+
+<p style="margin-left:22%;">Read default values from the
+specified config file. Otherwise the default config file is
+read or build in defaults will be used.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>
+<i>optstr</i><b>,
+&minus;&minus;config-option=</b><i>optstr</i></p>
+
+<p style="margin-left:22%;">Set any config file option via
+the commandline. Several config file options could be
+specified at the argument string but have to be delimited by
+semicolon (or newline).</p>
+
+<p style="margin-left:11%;"><b>&minus;d</b>,
+<b>&minus;&minus;directory</b></p>
+
+<p style="margin-left:22%;">Skip directory arguments. This
+will be useful in combination with wildcard arguments to
+prevent dnsssec-zkt to list all keys found in
+subdirectories. For example &quot;zkt&minus;keyman -d
+*&quot; will print out a list of all keys only found in the
+current directory. Maybe it is easier to use
+&quot;zkt&minus;keyman .&quot; instead (without -r set). The
+option works similar to the &minus;d option of
+<i>ls(1)</i>.</p>
+
+<p style="margin-left:11%;"><b>&minus;k</b>,
+<b>&minus;&minus;ksk</b></p>
+
+<p style="margin-left:22%;">Select key signing keys only
+(default depends on command mode).</p>
+
+<p style="margin-left:11%;"><b>&minus;z</b>,
+<b>&minus;&minus;zsk</b></p>
+
+<p style="margin-left:22%;">Select zone signing keys only
+(default depends on command mode).</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;recursive</b></p>
+
+<p style="margin-left:22%;">Recursive mode (default is
+off). <br>
+Also settable in the dnssec.conf file (Parameter:
+Recursive).</p>
+
+<p style="margin-left:11%;"><b>&minus;F</b>,
+<b>&minus;&minus;setlifetime</b></p>
+
+<p style="margin-left:22%;">Set the key lifetime of all the
+selected keys. Use option -k, -z, -l or the file and dir
+argument for key selection.</p>
+
+<h2>COMMAND OPTIONS
+<a name="COMMAND OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Print out the online help.</p>
+
+<p style="margin-left:11%;"><b>&minus;C</b> <i>zone</i><b>,
+&minus;&minus;create=</b><i>zone</i></p>
+
+<p style="margin-left:22%;">Create a new zone signing key
+for the given zone. Add option <b>&minus;k</b> to create a
+key signing key. The key algorithm and key length will be
+examined from built-in default values or from the parameter
+settings in the <i>dnssec.conf</i> file. <br>
+The keyfile will be created in the current directory if the
+<b>&minus;p</b> option is specified.</p>
+
+<p style="margin-left:11%;"><b>&minus;R</b>
+<i>keyid</i><b>, &minus;&minus;revoke=</b><i>keyid</i></p>
+
+<p style="margin-left:22%;">Revoke the key signing key with
+the given keyid. A revoked key has bit 8 in the flags field
+set (see RFC5011). The keyid is the numeric keytag with an
+optionally added zone name separated by a colon.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;rename=&quot;</b><i>keyid</i></p>
+
+<p style="margin-left:22%;">Rename the key files of the key
+with the given keyid (Look at key file names starting with
+an lower &rsquo;k&rsquo;). The keyid is the numeric keytag
+with an optionally added zone name separated by a colon.</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;destroy=</b><i>keyid</i></p>
+
+<p style="margin-left:22%;">Deletes the key with the given
+keyid. The keyid is the numeric keytag with an optionally
+added zone name separated by a colon. Beware that this
+deletes both private and public keyfiles, thus the key is
+unrecoverable lost.</p>
+
+<p style="margin-left:11%;"><b>&minus;P|A|D</b>
+<i>keyid,</i> <b>&minus;&minus;published=</b><i>keyid,</i>
+<b>&minus;&minus;active=</b><i>keyid,</i>
+<b>&minus;&minus;depreciated=</b><i>keyid</i></p>
+
+<p style="margin-left:22%;">Change the status of the given
+dnssec key to published (<b>&minus;P</b>), active
+(<b>&minus;A</b>) or depreciated (<b>&minus;D</b>). The
+<i>keyid</i> is the numeric keytag with an optionally added
+zone name separated by a colon. Setting the status to
+&quot;published&quot; or &quot;depreciate&quot; will change
+the filename of the private key file to
+&quot;.published&quot; or &quot;.depreciated&quot;
+respectivly. This prevents the usage of the key as a signing
+key by the use of <i>dnssec-signzone(8)</i>. The time of
+status change will be stored in the &rsquo;mtime&rsquo;
+field of the corresponding &quot;.key&quot; file. Key
+activation via option <b>&minus;A</b> will restore the
+original timestamp and file name (&quot;.private&quot;).</p>
+
+
+<p style="margin-left:11%;"><b>&minus;&minus;ksk-roll-phase[123]</b>
+<i>do.ma.in.</i></p>
+
+<p style="margin-left:22%;">Initiate a key signing key
+rollover of the specified domain. This feature is currently
+in experimental status and is mainly for the use in an
+hierachical environment. Use --ksk-rollover for a little
+more detailed description.</p>
+
+<h2>SAMPLE USAGE
+<a name="SAMPLE USAGE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-keyman
+&minus;C example.net &minus;k &minus;r ./zonedir</b></p>
+
+<p style="margin-left:22%;">Create a new key signing key
+for the zone &quot;example.net&quot;. Store the key in the
+same directory below &quot;zonedir&quot; where the other
+&quot;example.net&quot; keys life.</p>
+
+<p style="margin-left:11%;"><b>zkt-keyman &minus;D 123245
+&minus;r .</b></p>
+
+<p style="margin-left:22%;">Depreciate the key with tag
+&quot;12345&quot; below the current directory,</p>
+
+<p style="margin-left:11%;"><b>zkt-keyman --view intern
+&minus;C example.net</b></p>
+
+<p style="margin-left:22%;">Create a new zone key for the
+internal zone example.net.</p>
+
+<p style="margin-left:11%;"><b>zkt-keyman-intern</b></p>
+
+<p style="margin-left:22%;">Same as above. The binary file
+<i>zkt&minus;keyman</i> has another link, named
+<i>zkt-keyman-intern</i> made, and <i>zkt&minus;keyman</i>
+examines argv[0] to find a view whose zones it proceeds to
+process.</p>
+
+<h2>ENVIRONMENT VARIABLES
+<a name="ENVIRONMENT VARIABLES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">ZKT_CONFFILE</p>
+
+<p style="margin-left:22%;">Specifies the name of the
+default global configuration files.</p>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>/var/named/dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Built-in default global
+configuration file. The name of the default global config
+file is settable via the environment variable
+ZKT_CONFFILE.</p>
+
+
+<p style="margin-left:11%;"><i>/var/named/dnssec-&lt;view&gt;.conf</i></p>
+
+<p style="margin-left:22%;">View specific global
+configuration file.</p>
+
+<p style="margin-left:11%;"><i>./dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Local configuration file (only
+used in <b>&minus;C</b> mode).</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Holger
+Zuleger</p>
+
+<h2>COPYRIGHT
+<a name="COPYRIGHT"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Copyright (c)
+2005 &minus; 2008 by Holger Zuleger. Licensed under the BSD
+Licences. There is NO warranty; not even for MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">dnssec-keygen(8),
+dnssec-signzone(8), rndc(8), named.conf(5), zkt-conf(8),
+zkt-ls(8), zkt-signer(8) <br>
+RFC4641 &quot;DNSSEC Operational Practices&quot; by Miek
+Gieben and Olaf Kolkman, <br>
+DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC <br>
+ (http://www.nlnetlabs.nl/dnssec_howto/)</p>
+<hr>
+</body>
+</html>

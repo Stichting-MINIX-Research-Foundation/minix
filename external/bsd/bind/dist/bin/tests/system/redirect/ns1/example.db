@@ -1,0 +1,55 @@
+; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id: example.db,v 1.3 2011/03/01 23:48:06 tbox Exp 
+
+$TTL	3600
+@	SOA ns1 marka.isc.org. 0 0 0 0 1200
+@	NS ns1
+ns1	A	10.53.0.1
+excluded-good-a	AAAA	2001:eeee::1
+		A	1.2.3.4
+excluded-bad-a	AAAA	2001:eeee::2
+		A	10.0.0.1
+excluded-only	AAAA	2001:eeee::3
+partially-excluded-good-a	AAAA	2001:eeee::1
+		AAAA	2001::1
+		A	1.2.3.4
+partially-excluded-bad-a	AAAA	2001:eeee::2
+		AAAA	2001::2
+		A	10.0.0.1
+partially-excluded-only	AAAA	2001:eeee::3
+		AAAA	2001::3
+a-only		A	1.2.3.5
+a-and-aaaa	AAAA	2001::1
+		A	1.2.3.6
+aaaa-only	AAAA	2001::2
+a-not-mapped	A	10.0.0.2
+mx-only		MX	10 ns.example.
+cname-excluded-good-a CNAME excluded-good-a
+cname-excluded-bad-a CNAME excluded-bad-a
+cname-excluded-only CNAME excluded-only
+cname-partial-excluded-good-a CNAME partial-excluded-good-a
+cname-partial-excluded-bad-a CNAME partial-excluded-bad-a
+cname-partial-excluded-only CNAME partial-excluded-only
+cname-a-only CNAME a-only
+cname-a-and-aaaa CNAME a-and-aaaa
+cname-aaaa-only CNAME aaaa-only
+cname-a-not-mapped CNAME a-not-mapped
+cname-mx-only CNAME mx-only
+cname-non-existent CNAME non-existent
+ttl-less-than-600 500 A 5.6.7.8
+ttl-more-than-600 700 A 5.6.7.8
+ttl-less-than-minimum 1100 A 5.6.7.8
+ttl-more-than-minimum 1300 A 5.6.7.8

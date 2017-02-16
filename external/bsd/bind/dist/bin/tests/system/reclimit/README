@@ -1,0 +1,11 @@
+Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+system test for recursion limits
+
+ns1  -- root server
+ans2 -- delegate to ns1.(n+1).example.com for all n, up to
+        the value specified in ans.limit (or forever if limit is 0)
+ns3  -- resolver under test
+ans4 -- delegates every query to 16 more name servers, with "victim" address
+ans7 -- "victim" server

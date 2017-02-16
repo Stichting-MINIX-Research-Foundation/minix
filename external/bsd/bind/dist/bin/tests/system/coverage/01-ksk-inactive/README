@@ -1,0 +1,10 @@
+This set includes one KSK rollover.  The KSK is deactivated prior to
+its replacement being activated.  Tool output should resemble:
+
+Checking KSK events for zone example.com, algorithm 7:
+ERROR: After 2012-31-Jul (20:59:14):
+    Inactive: example.com/007/45435 (KSK)
+No KSK's are active
+
+Checking ZSK events for zone example.com, algorithm 7:
+OK

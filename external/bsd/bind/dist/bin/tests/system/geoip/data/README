@@ -1,0 +1,32 @@
+Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+The data data files in this directory are sample GeoIP databases,
+generated from the corresponding CSV files.  Thanks to MaxMind, Inc.
+for assistance with producing these files.
+
+Unless otherwise noted, the databases only support IPv4:
+
+GeoIP.dat: Country (IPv4)
+GeoIPv6.dat: Country (IPv6)
+GeoIPCity.dat: City (IPv4)
+GeoIPCityv6.dat: City (IPv6)
+GeoIPRegion.dat: Region
+GeoIPISP.dat: ISP
+GeoIPOrg.dat: Organization
+GeoIPDoain.dat: Domain Name
+GeoIPASNum.dat: AS Number
+GeoIPNetSpeed.dat: Net Speed
+
+GeoIP.dat can also be generated using the open source 'geoip-csv-to-dat'
+utility:
+
+$ geoip-csv-to-dat -i "BIND9 geoip test data v1" -o GeoIP.dat << EOF
+"10.53.0.1","10.53.0.1","171245569","171245569","AU","Australia"
+"10.53.0.2","10.53.0.2","171245570","171245570","US","United States"
+"10.53.0.3","10.53.0.3","171245571","171245571","GB","United Kingdom"
+"10.53.0.4","10.53.0.4","171245572","171245572","CA","Canada"
+"10.53.0.5","10.53.0.5","171245573","171245573","CL","Chile"
+"10.53.0.6","10.53.0.6","171245574","171245574","DE","Germany"
+"10.53.0.7","10.53.0.7","171245575","171245575","EH","Western Sahara"
+EOF

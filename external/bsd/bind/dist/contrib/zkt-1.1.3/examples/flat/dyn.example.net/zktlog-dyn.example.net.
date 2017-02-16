@@ -1,0 +1,161 @@
+2010-02-21 19:43:15.018: debug: 	Check RFC5011 status
+2010-02-21 19:43:15.018: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 19:43:15.018: debug: 	Check KSK status
+2010-02-21 19:43:15.018: debug: 	No active KSK found: generate new one
+2010-02-21 19:43:15.330: info: "dyn.example.net.": generated new KSK 52935
+2010-02-21 19:43:15.330: debug: 	Check ZSK status
+2010-02-21 19:43:15.330: debug: 	No active ZSK found: generate new one
+2010-02-21 19:43:15.368: info: "dyn.example.net.": generated new ZSK 30323
+2010-02-21 19:43:15.368: debug: 	Re-signing necessary: Modfied zone key set
+2010-02-21 19:43:15.368: notice: "dyn.example.net.": re-signing triggered: Modfied zone key set
+2010-02-21 19:43:15.368: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 19:43:15.368: debug: 	Signing zone "dyn.example.net."
+2010-02-21 19:43:15.368: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 19:43:15.368: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 19:43:15.368: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 19:43:15.374: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 19:43:15.374: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 19:43:15.382: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: Zone contains NSEC records.  Use -u to update to NSEC3."
+2010-02-21 19:43:15.382: error: "dyn.example.net.": signing failed!
+2010-02-21 19:43:15.382: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 19:43:15.382: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 19:43:15.382: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 19:45:36.415: debug: 	Check RFC5011 status
+2010-02-21 19:45:36.416: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 19:45:36.416: debug: 	Check KSK status
+2010-02-21 19:45:36.416: debug: 	Check ZSK status
+2010-02-21 19:45:36.416: debug: 	Re-signing not necessary!
+2010-02-21 19:45:36.416: debug: 	Check if there is a parent file to copy
+2010-02-21 19:45:41.448: debug: 	Check RFC5011 status
+2010-02-21 19:45:41.448: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 19:45:41.448: debug: 	Check KSK status
+2010-02-21 19:45:41.448: debug: 	Check ZSK status
+2010-02-21 19:45:41.448: debug: 	Re-signing necessary: Option -f
+2010-02-21 19:45:41.448: notice: "dyn.example.net.": re-signing triggered: Option -f
+2010-02-21 19:45:41.448: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 19:45:41.448: debug: 	Signing zone "dyn.example.net."
+2010-02-21 19:45:41.448: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 19:45:41.448: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 19:45:41.448: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 19:45:41.457: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 19:45:41.458: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 19:45:41.473: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: NSEC3 generation requested with NSEC only DNSKEY"
+2010-02-21 19:45:41.473: error: "dyn.example.net.": signing failed!
+2010-02-21 19:45:41.473: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 19:45:41.473: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 19:45:41.473: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 19:47:06.899: debug: 	Check RFC5011 status
+2010-02-21 19:47:06.899: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 19:47:06.899: debug: 	Check KSK status
+2010-02-21 19:47:06.899: debug: 	Check ZSK status
+2010-02-21 19:47:06.899: debug: 	Re-signing necessary: Option -f
+2010-02-21 19:47:06.899: notice: "dyn.example.net.": re-signing triggered: Option -f
+2010-02-21 19:47:06.899: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 19:47:06.900: debug: 	Signing zone "dyn.example.net."
+2010-02-21 19:47:06.900: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 19:47:06.900: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 19:47:06.900: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 19:47:06.910: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 19:47:06.910: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 19:47:06.926: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: NSEC3 iterations too big for weakest DNSKEY strength. Maximum iterations allowed 0."
+2010-02-21 19:47:06.926: error: "dyn.example.net.": signing failed!
+2010-02-21 19:47:06.926: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 19:47:06.926: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 19:47:06.926: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 19:58:40.972: debug: 	Check RFC5011 status
+2010-02-21 19:58:40.972: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 19:58:40.972: debug: 	Check KSK status
+2010-02-21 19:58:40.972: debug: 	Check ZSK status
+2010-02-21 19:58:40.973: debug: 	Re-signing necessary: Option -f
+2010-02-21 19:58:40.973: notice: "dyn.example.net.": re-signing triggered: Option -f
+2010-02-21 19:58:40.973: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 19:58:40.973: debug: 	Signing zone "dyn.example.net."
+2010-02-21 19:58:40.973: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 19:58:40.973: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 19:58:40.973: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 19:58:40.982: debug: 	Dynamic Zone signing: zone file manually edited: Use it as new input file
+2010-02-21 19:58:40.982: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 19:58:40.983: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 19:58:40.999: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: NSEC3 iterations too big for weakest DNSKEY strength. Maximum iterations allowed 0."
+2010-02-21 19:58:40.999: error: "dyn.example.net.": signing failed!
+2010-02-21 19:58:40.999: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 19:58:40.999: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 19:58:40.999: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 20:00:48.833: debug: 	Check RFC5011 status
+2010-02-21 20:00:48.833: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 20:00:48.833: debug: 	Check KSK status
+2010-02-21 20:00:48.833: debug: 	Check ZSK status
+2010-02-21 20:00:48.833: debug: 	Re-signing necessary: Option -f
+2010-02-21 20:00:48.833: notice: "dyn.example.net.": re-signing triggered: Option -f
+2010-02-21 20:00:48.833: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 20:00:48.834: debug: 	Signing zone "dyn.example.net."
+2010-02-21 20:00:48.834: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 20:00:48.834: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 20:00:48.834: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 20:00:48.844: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 20:00:48.844: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 20:00:48.878: debug: 	  Cmd dnssec-signzone return: "zone.db.dsigned"
+2010-02-21 20:00:48.878: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 20:00:48.878: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 20:00:48.878: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 20:00:48.884: debug: 	Signing completed after 0s.
+2010-02-21 20:01:11.175: debug: 	Check RFC5011 status
+2010-02-21 20:01:11.175: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 20:01:11.175: debug: 	Check KSK status
+2010-02-21 20:01:11.175: debug: 	Check ZSK status
+2010-02-21 20:01:11.176: debug: 	Re-signing necessary: Option -f
+2010-02-21 20:01:11.176: notice: "dyn.example.net.": re-signing triggered: Option -f
+2010-02-21 20:01:11.176: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-21 20:01:11.176: debug: 	Signing zone "dyn.example.net."
+2010-02-21 20:01:11.176: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-21 20:01:11.176: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-21 20:01:11.176: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-21 20:01:11.181: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-21 20:01:11.181: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-21 20:01:11.202: debug: 	  Cmd dnssec-signzone return: "zone.db.dsigned"
+2010-02-21 20:01:11.202: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-21 20:01:11.203: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-21 20:01:11.203: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-21 20:01:11.208: debug: 	Signing completed after 0s.
+2010-02-21 20:01:17.175: debug: 	Check RFC5011 status
+2010-02-21 20:01:17.175: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-21 20:01:17.175: debug: 	Check KSK status
+2010-02-21 20:01:17.175: debug: 	Check ZSK status
+2010-02-21 20:01:17.176: debug: 	Re-signing not necessary!
+2010-02-21 20:01:17.176: debug: 	Check if there is a parent file to copy
+2010-02-25 23:42:29.326: debug: 	Check RFC5011 status
+2010-02-25 23:42:29.326: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-02-25 23:42:29.326: debug: 	Check KSK status
+2010-02-25 23:42:29.326: debug: 	Check ZSK status
+2010-02-25 23:42:29.326: debug: 	Re-signing necessary: re-signing interval (2d) reached
+2010-02-25 23:42:29.326: notice: "dyn.example.net.": re-signing triggered: re-signing interval (2d) reached
+2010-02-25 23:42:29.326: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-02-25 23:42:29.327: debug: 	Signing zone "dyn.example.net."
+2010-02-25 23:42:29.327: notice: "dyn.example.net.": freeze dynamic zone
+2010-02-25 23:42:29.327: debug: 	freeze dynamic zone "dyn.example.net."
+2010-02-25 23:42:29.327: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-02-25 23:42:29.388: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-02-25 23:42:29.425: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-02-25 23:42:29.471: debug: 	  Cmd dnssec-signzone return: "zone.db.dsigned"
+2010-02-25 23:42:29.471: notice: "dyn.example.net.": thaw dynamic zone
+2010-02-25 23:42:29.471: debug: 	thaw dynamic zone "dyn.example.net."
+2010-02-25 23:42:29.471: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-02-25 23:42:29.486: debug: 	Signing completed after 0s.
+2010-03-02 10:59:46.770: debug: 	Check RFC5011 status
+2010-03-02 10:59:46.770: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-03-02 10:59:46.770: debug: 	Check KSK status
+2010-03-02 10:59:46.770: debug: 	Check ZSK status
+2010-03-02 10:59:46.770: debug: 	Re-signing necessary: re-signing interval (2d) reached
+2010-03-02 10:59:46.770: notice: "dyn.example.net.": re-signing triggered: re-signing interval (2d) reached
+2010-03-02 10:59:46.770: debug: 	Writing key file "./dyn.example.net/dnskey.db"
+2010-03-02 10:59:46.770: debug: 	Signing zone "dyn.example.net."
+2010-03-02 10:59:46.770: notice: "dyn.example.net.": freeze dynamic zone
+2010-03-02 10:59:46.770: debug: 	freeze dynamic zone "dyn.example.net."
+2010-03-02 10:59:46.770: debug: 	  Run cmd "/usr/local/sbin/rndc freeze dyn.example.net."
+2010-03-02 10:59:46.852: debug: 	Dynamic Zone signing: copy old signed zone file ./dyn.example.net/zone.db.dsigned to new input file ./dyn.example.net/zone.db
+2010-03-02 10:59:46.875: debug: 	  Run cmd "cd ./dyn.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 76931F -C -g -p -d ../keysets -o dyn.example.net. -e +518400  -N increment -f zone.db.dsigned zone.db K*.private 2>&1"
+2010-03-02 10:59:46.950: debug: 	  Cmd dnssec-signzone return: "zone.db.dsigned"
+2010-03-02 10:59:46.950: notice: "dyn.example.net.": thaw dynamic zone
+2010-03-02 10:59:46.950: debug: 	thaw dynamic zone "dyn.example.net."
+2010-03-02 10:59:46.950: debug: 	  Run cmd "/usr/local/sbin/rndc thaw dyn.example.net."
+2010-03-02 10:59:46.964: debug: 	Signing completed after 0s.

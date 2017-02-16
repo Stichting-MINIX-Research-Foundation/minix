@@ -40,7 +40,7 @@ CONFIGFILES=\
 		local \
 		\
 		mountcritlocal mountcritremote \
-		network npf \
+		named network npf \
 		\
 		pwcheck \
 		\

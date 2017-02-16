@@ -1,0 +1,304 @@
+# Id: Makefile.in,v 1.2 2004/07/20 07:13:39 marka Exp 
+# Copyright (c) 2000, 2002 Japan Network Information Center.
+# All rights reserved.
+#  
+# By using this file, you agree to the terms and conditions set forth bellow.
+# 
+# 			LICENSE TERMS AND CONDITIONS 
+# 
+# The following License Terms and Conditions apply, unless a different
+# license is obtained from Japan Network Information Center ("JPNIC"),
+# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+# Chiyoda-ku, Tokyo 101-0047, Japan.
+# 
+# 1. Use, Modification and Redistribution (including distribution of any
+#    modified or derived work) in source and/or binary forms is permitted
+#    under this License Terms and Conditions.
+# 
+# 2. Redistribution of source code must retain the copyright notices as they
+#    appear in each source code file, this License Terms and Conditions.
+# 
+# 3. Redistribution in binary form must reproduce the Copyright Notice,
+#    this License Terms and Conditions, in the documentation and/or other
+#    materials provided with the distribution.  For the purposes of binary
+#    distribution the "Copyright Notice" refers to the following language:
+#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+# 
+# 4. The name of JPNIC may not be used to endorse or promote products
+#    derived from this Software without specific prior written approval of
+#    JPNIC.
+# 
+# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+.SUFFIXES:
+.SUFFIXES: .tsy .c
+
+top_builddir = ../..
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+CC = @CC@
+SHELL = @SHELL@
+LIBTOOL = @LIBTOOL@
+
+ICONVINC = @ICONVINC@
+ICONVLIB = @ICONVLIB@
+IDNLIB = ../libidntest.la
+IDNLITELIB = ../libidntestlite.la
+
+INCS = -I. -I$(srcdir) -I$(srcdir)/../../include -I../../include $(ICONVINC)
+DEFS = 
+
+CFLAGS = $(INCS) $(DEFS) @CPPFLAGS@ @CFLAGS@
+LDFLAGS = @LDFLAGS@
+TSYFLAGS =
+
+PERL = @PERL@
+
+COMMONSRCS = testsuite.c testutil.c setenv.c
+COMMONOBJS = testsuite.lo testutil.lo setenv.lo
+BUILTSRCS = api.c api-init1.c api-init2.c api-init3.c \
+	api-init4-1.c api-init4-2.c api-init4-3.c \
+	api-init5-1.c api-init5-2.c api-init5-3.c \
+	res.c resconf.c mapselector.c checker.c converter.c mapper.c \
+	normalizer.c delimitermap.c ucs4.c nameprep.c \
+	testconfig.h
+
+TESTS = api-test \
+	api-init1-test \
+	api-init2-test \
+	api-init3-test \
+	api-init4-1-test \
+	api-init4-2-test \
+	api-init4-3-test \
+	api-init5-1-test \
+	api-init5-2-test \
+	api-init5-3-test \
+	res-test \
+	resconf-test \
+	mapselector-test \
+	converter-test \
+	checker-test \
+	mapper-test \
+	normalizer-test \
+	delimitermap-test \
+	ucs4-test \
+	nameprep-test
+
+LITETESTS = apilite-test \
+	reslite-test \
+	resconflite-test \
+	converterlite-test
+
+.tsy.c:
+	rm -f $@ $@.tmp
+	$(PERL) $(srcdir)/testygen -o $@ $(TSYFLAGS) $<
+	$(PERL) $(srcdir)/utffilter $@ > $@.tmp
+	mv -f $@.tmp $@
+
+all:
+
+install:
+
+clean:
+	rm -f *.o *.lo *.tmp core *.core *~
+	rm -f $(TESTS) $(LITETESTS) $(BUILTSRCS)
+	rm -f test.conf testalias.conf test.map
+	rm -f iconvchk
+	rm -fr .libs/
+
+distclean: clean
+	rm -f Makefile
+
+@LITEONLY_TRUE@test check: test-lite
+@LITEONLY_FALSE@test check: test-nolite
+
+test-lite: $(LITETESTS)
+	@for i in $(LITETESTS); do \
+	    echo "Run test program: $$i"; \
+	    ./$$i; \
+	    echo; \
+	done
+
+test-nolite: $(TESTS) $(LITETESTS) iconvchk
+	@./iconvchk
+	@for i in $(TESTS) $(LITETESTS); do \
+	    echo "Run test program: $$i"; \
+	    ./$$i; \
+	    echo; \
+	done
+
+api-test: api.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api.lo: api.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api.c
+
+apilite-test: apilite.lo $(IDNLITELIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		apilite.lo $(COMMONOBJS) $(IDNLITELIB)
+apilite.lo: api.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -DWITHOUT_ICONV -o $@ \
+		-c api.c
+
+api-init1-test: api-init1.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init1.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init1.lo: api-init1.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init1.c
+
+api-init2-test: api-init2.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init2.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init2.lo: api-init2.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init2.c
+
+api-init3-test: api-init3.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init3.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init3.lo: api-init3.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init3.c
+
+api-init4-1-test: api-init4-1.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init4-1.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init4-1.lo: api-init4-1.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init4-1.c
+
+api-init4-2-test: api-init4-2.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init4-2.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init4-2.lo: api-init4-2.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init4-2.c
+
+api-init4-3-test: api-init4-3.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init4-3.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init4-3.lo: api-init4-3.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init4-3.c
+
+api-init5-1-test: api-init5-1.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init5-1.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init5-1.lo: api-init5-1.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init5-1.c
+
+api-init5-2-test: api-init5-2.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init5-2.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init5-2.lo: api-init5-2.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init5-2.c
+
+api-init5-3-test: api-init5-3.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		api-init5-3.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+api-init5-3.lo: api-init5-3.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c api-init5-3.c
+
+res-test: res.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		res.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+res.lo: res.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c res.c
+
+reslite-test: reslite.lo $(IDNLITELIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		reslite.lo $(COMMONOBJS) $(IDNLITELIB)
+reslite.lo: res.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -DWITHOUT_ICONV -o $@ \
+		-c res.c
+
+resconf-test: resconf.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		resconf.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+resconf.lo: resconf.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c resconf.c
+
+resconflite-test: resconflite.lo $(IDNLITELIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		resconflite.lo $(COMMONOBJS) $(IDNLITELIB)
+resconflite.lo: resconf.c testconfig.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -DWITHOUT_ICONV -o $@ \
+		-c resconf.c
+
+mapselector-test: mapselector.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		mapselector.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+mapselector.lo: mapselector.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c mapselector.c
+
+converter-test: converter.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		converter.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+converter.lo: converter.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c converter.c
+
+converterlite-test: converterlite.lo $(IDNLITELIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		converterlite.lo $(COMMONOBJS) $(IDNLITELIB)
+converterlite.lo: converter.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -DWITHOUT_ICONV -o $@ \
+		-c converter.c
+
+checker-test: checker.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		checker.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+checker.lo: checker.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c checker.c
+
+mapper-test: mapper.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		mapper.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+mapper.lo: mapper.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c mapper.c
+
+normalizer-test: normalizer.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		normalizer.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+normalizer.lo: normalizer.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c normalizer.c
+
+delimitermap-test: delimitermap.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		delimitermap.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+delimitermap.lo: delimitermap.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c delimitermap.c
+
+ucs4-test: ucs4.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		ucs4.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+ucs4.lo: ucs4.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c ucs4.c
+
+nameprep-test: nameprep.lo $(IDNLIB) $(COMMONOBJS)
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ \
+		nameprep.lo $(COMMONOBJS) $(IDNLIB) $(ICONVLIB)
+nameprep.lo: nameprep.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c nameprep.c
+
+testsuite.lo: testsuite.c testsuite.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -o $@ -c $(srcdir)/testsuite.c
+testutil.lo: testutil.c testutil.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -o $@ -c $(srcdir)/testutil.c
+setenv.lo: setenv.c
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -o $@ -c $(srcdir)/setenv.c
+
+testconfig.h: ../../include/config.h
+	rm -f testconfig.h
+	sed -n -e '/HAVE_SETENV/p' -e '/HAVE_UNSETENV/p' \
+		../../include/config.h > testconfig.h
+
+iconvchk: iconvchk.c codeset.h
+	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -o $@ \
+		$(srcdir)/iconvchk.c $(IDNLIB) $(ICONVLIB)

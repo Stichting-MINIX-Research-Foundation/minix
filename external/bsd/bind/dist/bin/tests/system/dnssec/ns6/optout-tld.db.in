@@ -1,0 +1,26 @@
+; Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id: example.db.in,v 1.2 2010/06/03 06:29:03 marka Exp 
+$TTL 60
+optout-tld. 60 IN SOA example. . 0 0 0 0 0
+optout-tld. 60 IN NS ns6.optout-tld.
+ns6.optout-tld. 60 IN A 10.53.0.6
+a 60 PTR example.
+b 60 PTR example.
+a.b.c.d 60 NS example.
+e 60 PTR example.
+f 60 PTR example.
+g 60 PTR example.
+h 60 PTR example.

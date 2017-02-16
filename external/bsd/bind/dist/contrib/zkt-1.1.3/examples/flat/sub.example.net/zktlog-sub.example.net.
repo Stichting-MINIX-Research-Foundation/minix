@@ -1,0 +1,218 @@
+2010-10-21 14:01:35.486: debug: 	Check RFC5011 status
+2010-10-21 14:01:35.486: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:01:35.486: debug: 	Check KSK status
+2010-10-21 14:01:35.486: debug: 	Check ZSK status
+2010-10-21 14:01:35.486: debug: 	No active ZSK found: generate new one
+2010-10-21 14:01:35.495: error: sub.example.net.": can't generate new ZSK
+2010-10-21 14:01:35.495: debug: 	Re-signing necessary: Modfied zone key set
+2010-10-21 14:01:35.496: notice: "sub.example.net.": re-signing triggered: Modfied zone key set
+2010-10-21 14:01:35.496: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:01:35.496: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:01:35.496: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:01:35.496: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 9FC981 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:01:35.546: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: DNSSEC completeness test failed."
+2010-10-21 14:01:35.546: error: "sub.example.net.": signing failed!
+2010-10-21 14:02:09.146: debug: 	Check RFC5011 status
+2010-10-21 14:02:09.146: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:02:09.146: debug: 	Check KSK status
+2010-10-21 14:02:09.146: debug: 	Check ZSK status
+2010-10-21 14:02:09.146: debug: 	No active ZSK found: generate new one
+2010-10-21 14:02:09.156: error: sub.example.net.": can't generate new ZSK
+2010-10-21 14:02:09.156: debug: 	Re-signing necessary: Modified keys
+2010-10-21 14:02:09.156: notice: "sub.example.net.": re-signing triggered: Modified keys
+2010-10-21 14:02:09.156: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:02:09.157: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:02:09.157: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:02:09.157: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 BD326D -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:02:09.208: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: DNSSEC completeness test failed."
+2010-10-21 14:02:09.208: error: "sub.example.net.": signing failed!
+2010-10-21 14:05:35.988: debug: 	Check RFC5011 status
+2010-10-21 14:05:35.988: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:05:35.988: debug: 	Check KSK status
+2010-10-21 14:05:35.988: debug: 	Check ZSK status
+2010-10-21 14:05:35.988: debug: 	No active ZSK found: generate new one
+2010-10-21 14:05:36.091: info: "sub.example.net.": generated new ZSK 7987
+2010-10-21 14:05:36.091: debug: 	Re-signing necessary: Modfied zone key set
+2010-10-21 14:05:36.091: notice: "sub.example.net.": re-signing triggered: Modfied zone key set
+2010-10-21 14:05:36.091: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2010-10-21 14:05:36.091: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2010-10-21 14:05:36.091: debug: 	Signing zone "sub.example.net."
+2010-10-21 14:05:36.091: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 75DE06 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2010-10-21 14:05:36.170: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2010-10-21 14:05:36.170: debug: 	Signing completed after 0s.
+2010-10-21 14:30:43.892: debug: 	Check RFC5011 status
+2010-10-21 14:30:43.892: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2010-10-21 14:30:43.892: debug: 	Check KSK status
+2010-10-21 14:30:43.892: debug: 	Check ZSK status
+2010-10-21 14:30:43.892: debug: 	Re-signing not necessary!
+2010-10-21 14:30:43.892: debug: 	Check if there is a parent file to copy
+2014-11-14 18:04:37.686: debug: 	Check RFC5011 status
+2014-11-14 18:04:37.686: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:04:37.686: debug: 	Check KSK status
+2014-11-14 18:04:37.686: warning: "sub.example.net.": lifetime of key signing key 33176 exceeded since 4d8h26m2s
+2014-11-14 18:04:37.686: debug: 	Check ZSK status
+2014-11-14 18:04:37.686: debug: 	Lifetime(259200 +/-150 sec) of active key 7987 exceeded (980762 sec)
+2014-11-14 18:04:37.686: debug: 		->waiting for published key
+2014-11-14 18:04:37.686: notice: "sub.example.net.": lifetime of zone signing key 7987 exceeded since 1w1d8h26m2s: ZSK rollover deferred: waiting for published key
+2014-11-14 18:04:37.686: debug: 	New ZSK for publishing needed
+2014-11-14 18:04:37.721: debug: 		->creating new key 39632
+2014-11-14 18:04:37.721: info: "sub.example.net.": new zone signing key 39632 generated for publishing
+2014-11-14 18:04:37.721: debug: 	Re-signing necessary: Modified zone key set
+2014-11-14 18:04:37.721: notice: "sub.example.net.": re-signing triggered: Modified zone key set
+2014-11-14 18:04:37.721: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2014-11-14 18:04:37.721: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2014-11-14 18:04:37.721: debug: 	Signing zone "sub.example.net."
+2014-11-14 18:04:37.722: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 97195D -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2014-11-14 18:04:37.729: debug: 	  Cmd dnssec-signzone return: "dnssec-signzone: fatal: NSEC3 generation requested with NSEC-only DNSKEY"
+2014-11-14 18:04:37.729: error: "sub.example.net.": signing failed!
+2014-11-14 18:09:16.251: debug: 	Check RFC5011 status
+2014-11-14 18:09:16.251: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:09:16.251: debug: 	Check KSK status
+2014-11-14 18:09:16.251: debug: 	No active KSK found: generate new one
+2014-11-14 18:09:16.288: info: "sub.example.net.": generated new KSK 60396
+2014-11-14 18:09:16.288: debug: 	Check ZSK status
+2014-11-14 18:09:16.288: debug: 	No active ZSK found: generate new one
+2014-11-14 18:09:16.329: info: "sub.example.net.": generated new ZSK 21503
+2014-11-14 18:09:16.329: debug: 	Re-signing necessary: Modified zone key set
+2014-11-14 18:09:16.329: notice: "sub.example.net.": re-signing triggered: Modified zone key set
+2014-11-14 18:09:16.329: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2014-11-14 18:09:16.330: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2014-11-14 18:09:16.330: debug: 	Signing zone "sub.example.net."
+2014-11-14 18:09:16.330: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 B26BB7 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2014-11-14 18:09:16.427: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2014-11-14 18:09:16.427: debug: 	Signing completed after 0s.
+2014-11-14 18:11:40.699: debug: 	Check RFC5011 status
+2014-11-14 18:11:40.699: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:11:40.699: debug: 	Check KSK status
+2014-11-14 18:11:40.699: debug: 	Check ZSK status
+2014-11-14 18:11:40.699: debug: 	Re-signing necessary: Modified keys
+2014-11-14 18:11:40.699: notice: "sub.example.net.": re-signing triggered: Modified keys
+2014-11-14 18:11:40.699: debug: 	Writing key file "././sub.example.net/dnskey.db"
+2014-11-14 18:11:40.699: debug: 	Incrementing serial number in file "././sub.example.net/zone.db"
+2014-11-14 18:11:40.699: debug: 	Signing zone "sub.example.net."
+2014-11-14 18:11:40.699: debug: 	  Run cmd "cd ././sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 E8CBA9 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2014-11-14 18:11:40.876: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2014-11-14 18:11:40.876: debug: 	Signing completed after 0s.
+2014-11-14 18:11:46.599: debug: 	Check RFC5011 status
+2014-11-14 18:11:46.599: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:11:46.599: debug: 	Check KSK status
+2014-11-14 18:11:46.599: debug: 	Check ZSK status
+2014-11-14 18:11:46.599: debug: 	Re-signing not necessary!
+2014-11-14 18:11:46.599: debug: 	Check if there is a parent file to copy
+2014-11-14 18:15:54.379: debug: 	Check RFC5011 status
+2014-11-14 18:15:54.379: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:15:54.379: debug: 	Check KSK status
+2014-11-14 18:15:54.379: debug: 	Check ZSK status
+2014-11-14 18:15:54.379: debug: 	Re-signing not necessary!
+2014-11-14 18:15:54.379: debug: 	Check if there is a parent file to copy
+2014-11-14 18:31:09.365: debug: 	Check RFC5011 status
+2014-11-14 18:31:09.365: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:31:09.365: debug: 	Check KSK status
+2014-11-14 18:31:09.365: debug: 	Check ZSK status
+2014-11-14 18:31:09.365: debug: 	Re-signing not necessary!
+2014-11-14 18:31:09.365: debug: 	Check if there is a parent file to copy
+2014-11-14 18:31:27.335: debug: 	Check RFC5011 status
+2014-11-14 18:31:27.335: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:31:27.335: debug: 	Check KSK status
+2014-11-14 18:31:27.335: debug: 	Check ZSK status
+2014-11-14 18:31:27.335: debug: 	Re-signing not necessary!
+2014-11-14 18:31:27.335: debug: 	Check if there is a parent file to copy
+2014-11-14 18:38:16.355: debug: 	Check RFC5011 status
+2014-11-14 18:38:16.355: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-14 18:38:16.355: debug: 	Check KSK status
+2014-11-14 18:38:16.355: debug: 	Check ZSK status
+2014-11-14 18:38:16.355: debug: 	Re-signing not necessary!
+2014-11-14 18:38:16.356: debug: 	Check if there is a parent file to copy
+2014-11-15 18:16:50.447: debug: 	Check RFC5011 status
+2014-11-15 18:16:50.447: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-15 18:16:50.447: debug: 	Check KSK status
+2014-11-15 18:16:50.447: debug: 	Check ZSK status
+2014-11-15 18:16:50.447: debug: 	Re-signing necessary: re-signing interval (1d) reached
+2014-11-15 18:16:50.447: notice: "sub.example.net.": re-signing triggered: re-signing interval (1d) reached
+2014-11-15 18:16:50.447: debug: 	Writing key file "././sub.example.net/dnskey.db"
+2014-11-15 18:16:50.447: debug: 	Incrementing serial number in file "././sub.example.net/zone.db"
+2014-11-15 18:16:50.447: debug: 	Signing zone "sub.example.net."
+2014-11-15 18:16:50.448: debug: 	  Run cmd "cd ././sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 DC5680 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2014-11-15 18:16:50.572: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2014-11-15 18:16:50.572: debug: 	Signing completed after 0s.
+2014-11-15 18:16:54.202: debug: 	Check RFC5011 status
+2014-11-15 18:16:54.202: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-15 18:16:54.202: debug: 	Check KSK status
+2014-11-15 18:16:54.202: debug: 	Check ZSK status
+2014-11-15 18:16:54.202: debug: 	Re-signing not necessary!
+2014-11-15 18:16:54.202: debug: 	Check if there is a parent file to copy
+2014-11-15 18:17:06.918: debug: 	Check RFC5011 status
+2014-11-15 18:17:06.918: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-15 18:17:06.918: debug: 	Check KSK status
+2014-11-15 18:17:06.918: debug: 	Check ZSK status
+2014-11-15 18:17:06.918: debug: 	Re-signing not necessary!
+2014-11-15 18:17:06.918: debug: 	Check if there is a parent file to copy
+2014-11-15 18:17:17.242: debug: 	Check RFC5011 status
+2014-11-15 18:17:17.242: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-15 18:17:17.242: debug: 	Check KSK status
+2014-11-15 18:17:17.242: debug: 	Check ZSK status
+2014-11-15 18:17:17.242: debug: 	Re-signing not necessary!
+2014-11-15 18:17:17.242: debug: 	Check if there is a parent file to copy
+2014-11-17 19:12:44.029: debug: 	Check RFC5011 status
+2014-11-17 19:12:44.029: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:12:44.029: debug: 	Check KSK status
+2014-11-17 19:12:44.029: debug: 	Check ZSK status
+2014-11-17 19:12:44.029: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263008 sec)
+2014-11-17 19:12:44.029: debug: 		->waiting for published key
+2014-11-17 19:12:44.029: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h3m28s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:12:44.029: debug: 	New ZSK for publishing needed
+2014-11-17 19:12:44.110: debug: 		->creating new key 53867
+2014-11-17 19:12:44.110: info: "sub.example.net.": new zone signing key 53867 generated for publishing
+2014-11-17 19:12:44.110: debug: 	Re-signing necessary: Modified zone key set
+2014-11-17 19:12:44.110: notice: "sub.example.net.": re-signing triggered: Modified zone key set
+2014-11-17 19:12:44.110: debug: 	Writing key file "./sub.example.net/dnskey.db"
+2014-11-17 19:12:44.111: debug: 	Incrementing serial number in file "./sub.example.net/zone.db"
+2014-11-17 19:12:44.111: debug: 	Signing zone "sub.example.net."
+2014-11-17 19:12:44.111: debug: 	  Run cmd "cd ./sub.example.net; /usr/local/sbin/dnssec-signzone -n 1 -u -3 9F5882 -C -g -p -d ../keysets -o sub.example.net. -e +172800  zone.db K*.private 2>&1"
+2014-11-17 19:12:44.250: debug: 	  Cmd dnssec-signzone return: "zone.db.signed"
+2014-11-17 19:12:44.250: debug: 	Signing completed after 0s.
+2014-11-17 19:12:49.691: debug: 	Check RFC5011 status
+2014-11-17 19:12:49.691: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:12:49.691: debug: 	Check KSK status
+2014-11-17 19:12:49.691: debug: 	Check ZSK status
+2014-11-17 19:12:49.691: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263013 sec)
+2014-11-17 19:12:49.691: debug: 		->waiting for published key
+2014-11-17 19:12:49.691: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h3m33s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:12:49.692: debug: 	Re-signing not necessary!
+2014-11-17 19:12:49.692: debug: 	Check if there is a parent file to copy
+2014-11-17 19:13:02.603: debug: 	Check RFC5011 status
+2014-11-17 19:13:02.603: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:13:02.603: debug: 	Check KSK status
+2014-11-17 19:13:02.603: debug: 	Check ZSK status
+2014-11-17 19:13:02.603: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263026 sec)
+2014-11-17 19:13:02.603: debug: 		->waiting for published key
+2014-11-17 19:13:02.603: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h3m46s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:13:02.603: debug: 	Re-signing not necessary!
+2014-11-17 19:13:02.603: debug: 	Check if there is a parent file to copy
+2014-11-17 19:13:50.409: debug: 	Check RFC5011 status
+2014-11-17 19:13:50.409: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:13:50.409: debug: 	Check KSK status
+2014-11-17 19:13:50.409: debug: 	Check ZSK status
+2014-11-17 19:13:50.409: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263074 sec)
+2014-11-17 19:13:50.409: debug: 		->waiting for published key
+2014-11-17 19:13:50.409: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h4m34s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:13:50.409: debug: 	Re-signing not necessary!
+2014-11-17 19:13:50.409: debug: 	Check if there is a parent file to copy
+2014-11-17 19:13:54.302: debug: 	Check RFC5011 status
+2014-11-17 19:13:54.302: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:13:54.302: debug: 	Check KSK status
+2014-11-17 19:13:54.302: debug: 	Check ZSK status
+2014-11-17 19:13:54.302: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263078 sec)
+2014-11-17 19:13:54.302: debug: 		->waiting for published key
+2014-11-17 19:13:54.302: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h4m38s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:13:54.302: debug: 	Re-signing not necessary!
+2014-11-17 19:13:54.302: debug: 	Check if there is a parent file to copy
+2014-11-17 19:14:01.845: debug: 	Check RFC5011 status
+2014-11-17 19:14:01.846: debug: 		->not a rfc5011 zone, looking for a regular ksk rollover
+2014-11-17 19:14:01.846: debug: 	Check KSK status
+2014-11-17 19:14:01.846: debug: 	Check ZSK status
+2014-11-17 19:14:01.846: debug: 	Lifetime(259200 +/-150 sec) of active key 21503 exceeded (263085 sec)
+2014-11-17 19:14:01.846: debug: 		->waiting for published key
+2014-11-17 19:14:01.846: notice: "sub.example.net.": lifetime of zone signing key 21503 exceeded since 1h4m45s: ZSK rollover deferred: waiting for published key
+2014-11-17 19:14:01.846: debug: 	Re-signing not necessary!
+2014-11-17 19:14:01.846: debug: 	Check if there is a parent file to copy

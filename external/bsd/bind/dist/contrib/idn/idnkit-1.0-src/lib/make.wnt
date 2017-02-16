@@ -1,0 +1,279 @@
+# Id: make.wnt,v 1.1 2003/06/04 00:25:54 marka Exp 
+# Makefile for MDN library, manually configured for WIN-NT (VC5.0)
+#
+# Copyright (c) 2000,2002 Japan Network Information Center.  All rights reserved.
+#  
+# By using this file, you agree to the terms and conditions set forth bellow.
+# 
+# 			LICENSE TERMS AND CONDITIONS 
+# 
+# The following License Terms and Conditions apply, unless a different
+# license is obtained from Japan Network Information Center ("JPNIC"),
+# a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+# Chiyoda-ku, Tokyo 101-0047, Japan.
+# 
+# 1. Use, Modification and Redistribution (including distribution of any
+#    modified or derived work) in source and/or binary forms is permitted
+#    under this License Terms and Conditions.
+# 
+# 2. Redistribution of source code must retain the copyright notices as they
+#    appear in each source code file, this License Terms and Conditions.
+# 
+# 3. Redistribution in binary form must reproduce the Copyright Notice,
+#    this License Terms and Conditions, in the documentation and/or other
+#    materials provided with the distribution.  For the purposes of binary
+#    distribution the "Copyright Notice" refers to the following language:
+#    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+# 
+# 4. The name of JPNIC may not be used to endorse or promote products
+#    derived from this Software without specific prior written approval of
+#    JPNIC.
+# 
+# 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+#    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+#    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+#    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+!include <ntwin32.mak>
+
+INCDIR = ..\include
+ICONVDIR = ..\win
+LIBS = $(ICONVDIR)\iconv.lib
+LIBS_LITE = 
+SYSLIBS = $(conlibsdll)
+
+#
+# Files to build MDN library
+#
+
+HDRS_LITE = \
+	$(INCDIR)\config.h \
+	$(INCDIR)\idn\aliaslist.h \
+	$(INCDIR)\idn\api.h \
+	$(INCDIR)\idn\assert.h \
+	$(INCDIR)\idn\checker.h \
+	$(INCDIR)\idn\converter.h \
+	$(INCDIR)\idn\debug.h \
+	$(INCDIR)\idn\delimitermap.h \
+	$(INCDIR)\idn\export.h \
+	$(INCDIR)\idn\filechecker.h \
+	$(INCDIR)\idn\filemapper.h \
+	$(INCDIR)\idn\localencoding.h \
+	$(INCDIR)\idn\log.h \
+	$(INCDIR)\idn\logmacro.h \
+	$(INCDIR)\idn\mapper.h \
+	$(INCDIR)\idn\mapselector.h \
+	$(INCDIR)\idn\nameprep.h \
+	$(INCDIR)\idn\normalizer.h \
+	$(INCDIR)\idn\punycode.h \
+	$(INCDIR)\idn\race.h \
+	$(INCDIR)\idn\res.h \
+	$(INCDIR)\idn\resconf.h \
+	$(INCDIR)\idn\result.h \
+	$(INCDIR)\idn\strhash.h \
+	$(INCDIR)\idn\ucs4.h \
+	$(INCDIR)\idn\ucsmap.h \
+	$(INCDIR)\idn\ucsset.h \
+	$(INCDIR)\idn\unicode.h \
+	$(INCDIR)\idn\unormalize.h \
+	$(INCDIR)\idn\utf8.h \
+	$(INCDIR)\idn\util.h \
+	$(INCDIR)\idn\version.h
+
+HDRS =  $(ICONVDIR)\iconv.h \
+	$(HDRS_LITE)
+
+SRCS =	aliaslist.c api.c checker.c \
+	converter.c debug.c delimitermap.c \
+	filechecker.c filemapper.c \
+	localencoding.c log.c mapper.c \
+	mapselector.c nameprep.c nameprep_template.c \
+	nameprepdata.c normalizer.c punycode.c race.c \
+	res.c resconf.c result.c \
+	strhash.c ucs4.c ucsmap.c \
+	ucsset.c unicode.c unicode_template.c \
+	unicodedata_320.c unormalize.c \
+	utf8.c util.c version.c
+
+OBJS =	aliaslist.obj api.obj checker.obj \
+	converter.obj debug.obj delimitermap.obj \
+	filechecker.obj filemapper.obj \
+	localencoding.obj log.obj mapper.obj \
+	mapselector.obj nameprep.obj \
+	normalizer.obj punycode.obj race.obj \
+	res.obj resconf.obj result.obj \
+	strhash.obj ucs4.obj ucsmap.obj \
+	ucsset.obj unicode.obj \
+	unormalize.obj \
+	utf8.obj util.obj version.obj
+
+OBJS_LITE = \
+	aliaslist_l.obj api_l.obj checker_l.obj \
+	converter_l.obj debug_l.obj delimitermap_l.obj \
+	filechecker_l.obj filemapper_l.obj \
+	localencoding_l.obj log_l.obj mapper_l.obj \
+	mapselector_l.obj nameprep_l.obj \
+	normalizer_l.obj punycode_l.obj race_l.obj \
+	res_l.obj resconf_l.obj result_l.obj \
+	strhash_l.obj ucs4_l.obj ucsmap_l.obj \
+	ucsset_l.obj unicode_l.obj \
+	unormalize_l.obj \
+	utf8_l.obj util_l.obj version_l.obj
+
+
+#DBG = -DDEBUG
+
+#
+# Target to build
+#
+
+TARGETS = idnkit.dll idnkitlite.dll
+
+all: $(TARGETS)
+
+idnkit.dll: $(OBJS)
+	-del idnkit.dll
+	$(link) /out:"idnkit.dll" /implib:"idnkit.lib" $(dlllflags) $(OBJS) $(LIBS) $(SYSLIBS)
+
+idnkitlite.dll: $(OBJS_LITE)
+	-del idnkitlite.dll
+	$(link) /out:"idnkitlite.dll" /implib:"idnkitlite.lib" $(dlllflags) $(OBJS_LITE) $(LIBS_LITE) $(SYSLIBS)
+
+install:
+
+clean:
+	-del *.obj
+	-del *.lib
+	-del *.dll
+	-del *.exp
+
+#
+# Dependencies
+#
+
+EXP = -DIDN_EXPORT="extern __declspec(dllexport)"
+CCARGS = $(cflags) $(cvarsdll) -I$(INCDIR) -I$(ICONVDIR) $(EXP) $(DBG)
+CCARGS_LITE = $(cflags) $(cvarsdll) -I$(INCDIR) -DWITHOUT_ICONV $(EXP) $(DBG)
+
+aliaslist.obj: aliaslist.c  $(HDRS)
+	$(cc) $(CCARGS) /Foaliaslist.obj aliaslist.c
+api.obj: api.c  $(HDRS)
+	$(cc) $(CCARGS) /Foapi.obj api.c
+checker.obj: checker.c  $(HDRS)
+	$(cc) $(CCARGS) /Fochecker.obj checker.c
+converter.obj: converter.c  $(HDRS)
+	$(cc) $(CCARGS) /Foconverter.obj converter.c
+debug.obj: debug.c  $(HDRS)
+	$(cc) $(CCARGS) /Fodebug.obj debug.c
+delimitermap.obj: delimitermap.c  $(HDRS)
+	$(cc) $(CCARGS) /Fodelimitermap.obj delimitermap.c
+filechecker.obj: filechecker.c  $(HDRS)
+	$(cc) $(CCARGS) /Fofilechecker.obj filechecker.c
+filemapper.obj: filemapper.c  $(HDRS)
+	$(cc) $(CCARGS) /Fofilemapper.obj filemapper.c
+localencoding.obj: localencoding.c  $(HDRS)
+	$(cc) $(CCARGS) /Folocalencoding.obj localencoding.c
+log.obj: log.c  $(HDRS)
+	$(cc) $(CCARGS) /Folog.obj log.c
+mapper.obj: mapper.c  $(HDRS)
+	$(cc) $(CCARGS) /Fomapper.obj mapper.c
+mapselector.obj: mapselector.c  $(HDRS)
+	$(cc) $(CCARGS) /Fomapselector.obj mapselector.c
+nameprep.obj: nameprep.c nameprepdata.c nameprep_template.c $(HDRS)
+	$(cc) $(CCARGS) /Fonameprep.obj nameprep.c
+normalizer.obj: normalizer.c  $(HDRS)
+	$(cc) $(CCARGS) /Fonormalizer.obj normalizer.c
+punycode.obj: punycode.c  $(HDRS)
+	$(cc) $(CCARGS) /Fopunycode.obj punycode.c
+race.obj: race.c  $(HDRS)
+	$(cc) $(CCARGS) /Forace.obj race.c
+res.obj: res.c  $(HDRS)
+	$(cc) $(CCARGS) /Fores.obj res.c
+resconf.obj: resconf.c  $(HDRS)
+	$(cc) $(CCARGS) /Foresconf.obj resconf.c
+result.obj: result.c  $(HDRS)
+	$(cc) $(CCARGS) /Foresult.obj result.c
+strhash.obj: strhash.c  $(HDRS)
+	$(cc) $(CCARGS) /Fostrhash.obj strhash.c
+ucs4.obj: ucs4.c  $(HDRS)
+	$(cc) $(CCARGS) /Foucs4.obj ucs4.c
+ucsmap.obj: ucsmap.c  $(HDRS)
+	$(cc) $(CCARGS) /Foucsmap.obj ucsmap.c
+ucsset.obj: ucsset.c  $(HDRS)
+	$(cc) $(CCARGS) /Foucsset.obj ucsset.c
+unicode.obj: unicode.c unicodedata_320.c unicode_template.c $(HDRS)
+	$(cc) $(CCARGS) /Founicode.obj unicode.c
+unormalize.obj: unormalize.c  $(HDRS)
+	$(cc) $(CCARGS) /Founormalize.obj unormalize.c
+utf8.obj: utf8.c  $(HDRS)
+	$(cc) $(CCARGS) /Foutf8.obj utf8.c
+util.obj: util.c  $(HDRS)
+	$(cc) $(CCARGS) /Foutil.obj util.c
+version.obj: version.c  $(HDRS)
+	$(cc) $(CCARGS) /Foversion.obj version.c
+
+aliaslist_l.obj: aliaslist.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foaliaslist_l.obj aliaslist.c
+api_l.obj: api.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foapi_l.obj api.c
+checker_l.obj: checker.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fochecker_l.obj checker.c
+converter_l.obj: converter.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foconverter_l.obj converter.c
+debug_l.obj: debug.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fodebug_l.obj debug.c
+delimitermap_l.obj: delimitermap.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fodelimitermap_l.obj delimitermap.c
+dude_l.obj: dude.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fodude_l.obj dude.c
+filechecker_l.obj: filechecker.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fofilechecker_l.obj filechecker.c
+filemapper_l.obj: filemapper.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fofilemapper_l.obj filemapper.c
+localencoding_l.obj: localencoding.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Folocalencoding_l.obj localencoding.c
+log_l.obj: log.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Folog_l.obj log.c
+mapper_l.obj: mapper.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fomapper_l.obj mapper.c
+mapselector_l.obj: mapselector.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fomapselector_l.obj mapselector.c
+nameprep_l.obj: nameprep.c nameprepdata.c nameprep_template.c $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fonameprep_l.obj nameprep.c
+normalizer_l.obj: normalizer.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fonormalizer_l.obj normalizer.c
+punycode_l.obj: punycode.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fopunycode_l.obj punycode.c
+race_l.obj: race.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Forace_l.obj race.c
+res_l.obj: res.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fores_l.obj res.c
+resconf_l.obj: resconf.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foresconf_l.obj resconf.c
+result_l.obj: result.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foresult_l.obj result.c
+strhash_l.obj: strhash.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Fostrhash_l.obj strhash.c
+ucs4_l.obj: ucs4.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foucs4_l.obj ucs4.c
+ucsmap_l.obj: ucsmap.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foucsmap_l.obj ucsmap.c
+ucsset_l.obj: ucsset.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foucsset_l.obj ucsset.c
+unicode_l.obj: unicode.c unicodedata_320.c unicode_template.c $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Founicode_l.obj unicode.c
+unormalize_l.obj: unormalize.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Founormalize_l.obj unormalize.c
+utf8_l.obj: utf8.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foutf8_l.obj utf8.c
+util_l.obj: util.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foutil_l.obj util.c
+version_l.obj: version.c  $(HDRS_LITE)
+	$(cc) $(CCARGS_LITE) /Foversion_l.obj version.c

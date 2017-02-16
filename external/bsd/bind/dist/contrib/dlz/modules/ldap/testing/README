@@ -1,0 +1,10 @@
+These files were used for testing on Ubuntu Linux using OpenLDAP.
+
+- Move aside /etc/ldap/slapd.d
+- Move slapd.conf to /etc/ldap
+- Move dlz.schema to /etc/ldap/schema/dlz.schema
+- Run "/etc/init.d/slapd restart"
+- Run "ldapadd -x -f example.ldif -D 'cn=Manager,o=bind-dlz' -w secret"
+
+LDAP server is now loaded with example.com data from the file example.ldif
+

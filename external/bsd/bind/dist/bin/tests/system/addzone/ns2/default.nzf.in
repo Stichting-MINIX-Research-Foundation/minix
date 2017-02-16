@@ -1,0 +1,1 @@
+zone previous.example { type master; file "previous.db"; };

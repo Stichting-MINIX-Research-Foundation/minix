@@ -1,0 +1,110 @@
+<!--
+ - Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2003 Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+<!-- $Id: man.named-rrchecker.html,v 1.5 2015/09/03 07:33:34 christos Exp $ -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>named-rrchecker</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+<link rel="start" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<link rel="up" href="Bv9ARM.ch13.html" title="Manual pages">
+<link rel="prev" href="man.named-journalprint.html" title="named-journalprint">
+<link rel="next" href="man.nsupdate.html" title="nsupdate">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center"><span class="application">named-rrchecker</span></th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="man.named-journalprint.html">Prev</a> </td>
+<th width="60%" align="center">Manual pages</th>
+<td width="20%" align="right"> <a accesskey="n" href="man.nsupdate.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="refentry" lang="en">
+<a name="man.named-rrchecker"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">named-rrchecker</span> &#8212; A syntax checker for individual DNS resource records</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">named-rrchecker</code>  [<code class="option">-h</code>] [<code class="option">-o <em class="replaceable"><code>origin</code></em></code>] [<code class="option">-p</code>] [<code class="option">-u</code>] [<code class="option">-C</code>] [<code class="option">-T</code>] [<code class="option">-P</code>]</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2653335"></a><h2>DESCRIPTION</h2>
+<p><span><strong class="command">named-rrchecker</strong></span>
+     read a individual DNS resource record from standard input and checks if it
+     is syntactically correct.
+    </p>
+<p>
+      The <code class="option">-h</code> prints out the help menu.
+    </p>
+<p>
+      The <code class="option">-o <em class="replaceable"><code>origin</code></em></code>
+      option specifies a origin to be used when interpreting the record.
+    </p>
+<p>
+      The <code class="option">-p</code> prints out the resulting record in canonical
+      form.  If there is no canonical form defined then the record will be
+      printed in unknown record format.
+    </p>
+<p>
+      The <code class="option">-u</code> prints out the resulting record in unknown record
+      form.
+    </p>
+<p>
+      The <code class="option">-C</code>, <code class="option">-T</code> and <code class="option">-P</code>
+      print out the known class, standard type and private type mnemonics
+      respectively.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2653392"></a><h2>SEE ALSO</h2>
+<p>
+      <em class="citetitle">RFC 1034</em>,
+      <em class="citetitle">RFC 1035</em>,
+      <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>
+    </p>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="man.named-journalprint.html">Prev</a> </td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch13.html">Up</a></td>
+<td width="40%" align="right"> <a accesskey="n" href="man.nsupdate.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+<span class="application">named-journalprint</span> </td>
+<td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
+<td width="40%" align="right" valign="top"> <span class="application">nsupdate</span>
+</td>
+</tr>
+</table>
+</div>
+<p style="text-align: center;">BIND 9.10.2-P4</p>
+</body>
+</html>

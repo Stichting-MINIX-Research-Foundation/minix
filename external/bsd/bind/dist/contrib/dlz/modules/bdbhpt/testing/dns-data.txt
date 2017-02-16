@@ -1,0 +1,19 @@
+# Name TTL Type Data
+@ 3600 SOA ns1.%zone%. root.%zone%. 2012071700 604800 86400 2419200 10800
+@ 3600 NS ns1.%zone%.
+@ 3600 MX 5 mx1.%zone%.
+@ 3600 MX 10 mx2.%zone%.
+@ 3600 TXT This zone brought to you by %driver%!
+jabber 3600 A 127.0.0.1
+mx1 3600 A 127.0.0.2
+mx2 3600 A 127.0.0.3
+jabber 3600 A 127.0.0.4
+ns1 3600 A 127.0.0.5
+ns1 3600 AAAA ::1
+voip 3600 A 127.0.0.6
+www 3600 CNAME www1.%zone%
+www1 3600 A 127.0.0.7
+_sip._udp 3600 SRV 5 0 5060 voip.%zone%.
+_jabber._tcp 3600 SRV 5 0 5269 jabber.%zone%.
+_xmpp-client._tcp 3600 SRV 5 0 5222 jabber.%zone%.
+_xmpp-server._tcp 3600 SRV 5 0 5269 jabber.%zone%.

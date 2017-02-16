@@ -1,0 +1,312 @@
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Wed Mar 31 18:15:57 2010 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>zkt-conf</title>
+
+</head>
+<body>
+
+<h1 align="center">zkt-conf</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSYS">SYNOPSYS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#COMMAND OPTIONS">COMMAND OPTIONS</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#SAMPLE USAGE">SAMPLE USAGE</a><br>
+<a href="#ENVIRONMENT VARIABLES">ENVIRONMENT VARIABLES</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#AUTHORS">AUTHORS</a><br>
+<a href="#COPYRIGHT">COPYRIGHT</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">zkt-conf
+&mdash; Secure DNS zone key config tool</p>
+
+<h2>SYNOPSYS
+<a name="SYNOPSYS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-conf</b>
+[<b>&minus;V</b> <i>name</i>] [<b>&minus;w</b>]
+<b>&minus;d</b> [<b>&minus;O</b> <i>optstr</i>] <b><br>
+zkt-conf</b> [<b>&minus;V</b> <i>name</i>] [<b>&minus;w</b>]
+[<b>&minus;s</b>] [<b>&minus;c</b> <i>file</i>]
+[<b>&minus;O</b> <i>optstr</i>] <b><br>
+zkt-conf</b> [<b>&minus;V</b> <i>name</i>] [<b>&minus;w</b>]
+<b>&minus;l</b> [<b>&minus;a</b>] [<b>&minus;c</b>
+<i>file</i>] [<b>&minus;O</b> <i>optstr</i>]</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-conf</b>
+[<b>&minus;c</b> <i>file</i>] [<b>&minus;w</b>]
+<i>zonefile</i></p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The
+<i>zkt-conf</i> command helps to create and show a config
+file for use by the Zone Key Tool commands, which are
+currently <i>zkt-ls(8) , zkt-keyman(8) ,</i> and
+<i>zkt-signer(8)</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In general, the
+ZKT commands uses up to three consequitive sources for
+config parameter settings:</p>
+
+<p style="margin-left:22%; margin-top: 1em">a) The build-in
+default parameters</p>
+
+<p style="margin-left:22%; margin-top: 1em">b) The side
+wide config file or the file specified with option -c
+overloads the built-in vars. The file is
+<i>/var/named/dnssec.conf</i> or the one set by the
+environment variable ZKT_CONFFILE.</p>
+
+<p style="margin-left:22%; margin-top: 1em">c) The local
+config file <i>dnssec.conf</i> in the current zone directory
+also overloads the parameter read so far.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Because of the
+overload feature, none of the config files has to have a
+complete parameter set. Typically the local config file will
+have only those parameters which are different from the
+global or built-in ones.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The default
+operation of <i>zkt-conf(8)</i> is to print the site wide
+config file (same as option <b>&minus;s</b>). Option
+<b>&minus;d</b> will print out the built-in defaults while
+<b>&minus;l</b> print those local parameters which are
+different to the global ones. In the last case
+<b>&minus;a</b> gives the fully (<b>&minus;&minus;all</b>)
+parameter list.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In all forms of
+the command, the parameters are changeable via option
+<b>&minus;O</b> (<b>&minus;&minus;config-option</b>).</p>
+
+<p style="margin-left:11%; margin-top: 1em">With option
+<b>&minus;w</b> (<b>&minus;&minus;write</b>) the confg
+parameters are written back to the config file. This is
+useful in case of an ZKT upgrade or if one or more
+parameters are changed by option <b>&minus;O</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Option
+<b>&minus;t</b> checks some of the parameter for reasonable
+values.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Which config
+file is shown (or modified or checked) is determined by an
+option. <b>&minus;d</b> means the built-in defaults, option
+<b>&minus;l</b> is for the local config file and
+<b>&minus;s</b> specifies the site wide config file. Option
+<b>&minus;s</b> is the default.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In the last
+form of the command, the maximum TTL value of all the
+resource records of <i>zonefile</i> is calculated and print
+on stdout. Additional, the zonefile is checked if the key
+database (<i>dnskey.db</i>) is included in the zone file. If
+option <b>&minus;w</b> is set, than the INCLUDE directive
+will be added to the zone file if necessary, and the maximum
+ttl value is written to a local config file.</p>
+
+<h2>COMMAND OPTIONS
+<a name="COMMAND OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Print out the online help.</p>
+
+<p style="margin-left:11%;"><b>&minus;d</b>,
+<b>&minus;&minus;built-in-defaults</b></p>
+
+<p style="margin-left:22%;">List all the built-in default
+parameter.</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>,
+<b>&minus;&minus;sitecfg</b></p>
+
+<p style="margin-left:22%;">List all site wide config
+parameter (this is the default).</p>
+
+<p style="margin-left:11%;"><b>&minus;l</b>,
+<b>&minus;&minus;localcfg</b></p>
+
+<p style="margin-left:22%;">List local config parameter
+which are different to the site wide config parameter. With
+otion <b>&minus;a</b> (<b>&minus;&minus;all</b>) all config
+parameters will be shown.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;V</b>
+<i>view</i><b>, &minus;&minus;view=</b><i>view</i></p>
+
+<p style="margin-left:22%;">Try to read the default
+configuration out of a file named
+<i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
+<b>&minus;V</b> or <b>&minus;&minus;view</b> option every
+time, it is also possible to create a hard or softlink to
+the executable file and name it like
+<i>zkt-conf-&lt;view&gt; .</i></p>
+
+<p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
+&minus;&minus;config=</b><i>file</i></p>
+
+<p style="margin-left:22%;">Read all parameter from the
+specified config file. Otherwise the default config file is
+read or build in defaults will be used.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>
+<i>optstr</i><b>,
+&minus;&minus;config-option=</b><i>optstr</i></p>
+
+<p style="margin-left:22%;">Set any config file parameter
+via the commandline. Several config file options could be
+specified at the argument string but have to be delimited by
+semicolon (or newline).</p>
+
+<p style="margin-left:11%;"><b>&minus;a</b>,
+<b>&minus;&minus;all</b></p>
+
+<p style="margin-left:22%;">In case of showing the local
+config file parameter (<b>&minus;l</b>) this prints all
+parameter, not just the ones different to the site wide or
+built-in defaults.</p>
+
+<h2>SAMPLE USAGE
+<a name="SAMPLE USAGE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-conf
+&minus;d</b></p>
+
+<p style="margin-left:22%;">Print the built-in default
+config pars.</p>
+
+<p style="margin-left:11%;"><b>zkt-conf &minus;d
+&minus;w</b></p>
+
+<p style="margin-left:22%;">Write all the built-in defaults
+into the site wide config file.</p>
+
+<p style="margin-left:11%;"><b>zkt-conf &minus;s &minus;O
+&quot;SerialFormat: Incremental; Zonedir:
+/var/named/zones&quot; <br>
+&minus;w</b></p>
+
+<p style="margin-left:22%;">Change two parameters in the
+site wide <i>dnssec.conf</i> file.</p>
+
+<p style="margin-left:11%;"><b>zkt-conf &minus;w
+zone.db</b></p>
+
+<p style="margin-left:22%;">Add <b>$INCLUDE dnskey.db</b>
+to the zone file and set the maximum ttl paramter in the
+local config file to the maximum ttl fond in any RR of
+<i>zone.db</i>.</p>
+
+<h2>ENVIRONMENT VARIABLES
+<a name="ENVIRONMENT VARIABLES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">ZKT_CONFFILE</p>
+
+<p style="margin-left:22%;">Specifies the name of the
+default global configuration files.</p>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>/var/named/dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Default global configuration
+file. The name of the default global config file is settable
+via the environment variable ZKT_CONFFILE.</p>
+
+
+<p style="margin-left:11%;"><i>/var/named/dnssec-&lt;view&gt;.conf</i></p>
+
+<p style="margin-left:22%;">View specific global
+configuration file.</p>
+
+<p style="margin-left:11%;"><i>./dnssec.conf</i></p>
+
+<p style="margin-left:22%;">Local configuration file
+(additionally used in <b>&minus;l</b> mode).</p>
+
+<h2>AUTHORS
+<a name="AUTHORS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Holger
+Zuleger</p>
+
+<h2>COPYRIGHT
+<a name="COPYRIGHT"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Copyright (c)
+2005 &minus; 2010 by Holger Zuleger. Licensed under the BSD
+Licences. There is NO warranty; not even for MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">dnssec-keygen(8),
+dnssec-signzone(8), rndc(8), named.conf(5), zkt-signer(8),
+zkt-ls(8), zkt-keyman(8), <br>
+RFC4641 &quot;DNSSEC Operational Practices&quot; by Miek
+Gieben and Olaf Kolkman, <br>
+DNSSEC HOWTO Tutorial by Olaf Kolkman, RIPE NCC <br>
+ (http://www.nlnetlabs.nl/dnssec_howto/)</p>
+<hr>
+</body>
+</html>

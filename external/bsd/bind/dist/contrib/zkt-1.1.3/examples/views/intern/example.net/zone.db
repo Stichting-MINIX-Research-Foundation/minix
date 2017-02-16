@@ -1,0 +1,33 @@
+;-----------------------------------------------------------------
+;
+;       @(#)    intern/example.net/zone.db
+;
+;-----------------------------------------------------------------
+
+$TTL	7200
+
+@	IN SOA	ns1.example.net. hostmaster.example.net.  (
+				0        ; Serial	
+				43200	; Refresh
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum
+
+		IN  NS		ns1.example.net.
+		IN  NS		ns2.example.net.
+
+ns1		IN  A		192.168.1.53
+		IN  AAAA	fd12:063c:cdbb::53
+ns2		IN  A		10.1.2.3
+
+localhost	IN  A		127.0.0.1
+
+; Delegation to secure zone; The DS resource record will
+; be added by dnssec-signzone automatically if the
+; keyset-sub.example.net file is present (run dnssec-signzone
+; with option -g or use the dnssec-signer tool) ;-)
+sub		IN NS      ns1.example.net.
+
+; this file will have all the zone keys
+$INCLUDE dnskey.db
+

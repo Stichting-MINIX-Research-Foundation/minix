@@ -1,0 +1,9 @@
+Type './configure', then 'make' and (as root if necessary) 'make
+install'.
+
+It requires a recent libresolv, with loc_ntoa, but use an alternative
+which I provide, if not found.
+
+Tested on Linux (i386 and Alpha), Solaris (Sparc) and Digital Unix (Alpha).
+
+Id: INSTALL,v 1.1 2008/02/15 01:47:15 marka Exp 

@@ -1,0 +1,17 @@
+20-Nov-2007 17:12:58.092 general: critical: couldn't open pid file '/var/run/named.pid': Permission denied
+20-Nov-2007 17:12:58.092 general: critical: exiting (due to early fatal error)
+20-Nov-2007 17:20:24.941 general: critical: couldn't open pid file '/var/run/named.pid': Permission denied
+20-Nov-2007 17:20:24.941 general: critical: exiting (due to early fatal error)
+20-Nov-2007 17:28:22.686 general: critical: couldn't open pid file '/var/run/named.pid': Permission denied
+20-Nov-2007 17:28:22.686 general: critical: exiting (due to early fatal error)
+20-Nov-2007 17:40:12.389 general: error: zone 0.0.127.in-addr.arpa/IN/intern: loading from master file 127.0.0.zone failed: file not found
+20-Nov-2007 17:40:12.391 general: info: zone example.net/IN/intern: loaded serial 1195574789 (signed)
+20-Nov-2007 17:40:12.393 general: info: zone example.net/IN/extern: loaded serial 1195561217 (signed)
+20-Nov-2007 17:40:12.393 general: notice: running
+20-Nov-2007 17:40:12.393 notify: info: zone example.net/IN/intern: sending notifies (serial 1195574789)
+20-Nov-2007 17:40:12.394 notify: info: zone example.net/IN/extern: sending notifies (serial 1195561217)
+20-Nov-2007 19:07:04.016 general: info: shutting down
+20-Nov-2007 19:07:04.017 network: info: no longer listening on ::#1053
+20-Nov-2007 19:07:04.017 network: info: no longer listening on 127.0.0.1#1053
+20-Nov-2007 19:07:04.017 network: info: no longer listening on 145.253.100.51#1053
+20-Nov-2007 19:07:04.020 general: notice: exiting

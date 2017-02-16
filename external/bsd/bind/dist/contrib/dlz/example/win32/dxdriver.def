@@ -1,0 +1,20 @@
+LIBRARY dxdriver
+
+; Exported Functions
+EXPORTS
+dlz_addrdataset
+dlz_allnodes
+dlz_allowzonexfr
+dlz_closeversion
+dlz_configure
+dlz_create
+dlz_delrdataset
+dlz_destroy
+dlz_findzonedb
+dlz_lookup
+dlz_newversion
+dlz_ssumatch
+dlz_subrdataset
+dlz_version
+
+

@@ -1,0 +1,494 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|@PLATFORM@">
+      <Configuration>Debug</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|@PLATFORM@">
+      <Configuration>Release</Configuration>
+      <Platform>@PLATFORM@</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3840E563-D180-4761-AA9C-E6155F02EAFF}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libisc</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
+    <IntDir>.\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\..\..\Build\$(Configuration)\</OutDir>
+    <IntDir>.\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+@IF PKCS11
+      <PreprocessorDefinitions>BIND9;@CRYPTO@@PK11_LIB_LOCATION@WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+@ELSE PKCS11
+      <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+@END PKCS11
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>.\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>@LIBXML2_LIB@@OPENSSL_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
+      <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PreBuildEvent>
+      <Command>cd ..\..\..\win32utils
+
+if NOT Exist ..\Build mkdir ..\Build
+if NOT Exist ..\Build\Debug mkdir ..\Build\Debug
+
+echo Copying COPYRIGHT notice.
+
+copy ..\COPYRIGHT ..\Build\Debug
+
+@IF OPENSSL
+echo Copying the OpenSSL DLL and LICENSE.
+
+copy @OPENSSL_DLL@ ..\Build\Debug\
+copy @OPENSSL_PATH@\LICENSE ..\Build\Debug\OpenSSL-LICENSE
+@END OPENSSL
+
+@IF LIBXML2
+echo Copying the libxml DLL.
+
+copy @LIBXML2_DLL@ ..\Build\Debug\
+@END LIBXML2
+
+@IF GSSAPI
+echo Copying the GSSAPI and KRB5 DLLs.
+
+copy @GSSAPI_DLL@ ..\Build\Debug\
+copy @KRB5_DLL@ ..\Build\Debug\
+copy @COMERR_DLL@ ..\Build\Debug\
+copy @K5SPRT_DLL@ ..\Build\Debug\
+copy @WSHELP_DLL@ ..\Build\Debug\
+@END GSSAPI
+
+@IF GEOIP
+echo Copying the GeoIP DLL.
+
+copy @GEOIP_DLL@ ..\Build\Debug\
+@END GEOIP
+
+@IF IDNKIT
+echo Copying the IDN kit DLL.
+
+copy @IDN_DLL@ ..\Build\Debug\
+copy @ICONV_DLL@ ..\Build\Debug\
+@END IDNKIT
+
+echo Copying Visual C x86 Redistributable Installer.
+
+copy /Y @VCREDIST_PATH@	..\Build\Debug\
+
+</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
+@IF PKCS11
+      <PreprocessorDefinitions>BIND9;@CRYPTO@@PK11_LIB_LOCATION@WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+@ELSE PKCS11
+      <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+@END PKCS11
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>.\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>@LIBXML2_LIB@@OPENSSL_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
+      <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+    </Link>
+    <PreBuildEvent>
+      <Command>cd ..\..\..\win32utils
+
+if NOT Exist ..\Build mkdir ..\Build
+if NOT Exist ..\Build\Release mkdir ..\Build\Release
+
+echo Copying the ARM and the Installation Notes.
+
+copy ..\COPYRIGHT ..\Build\Release
+copy ..\README ..\Build\Release
+copy ..\HISTORY ..\Build\Release
+copy readme1st.txt ..\Build\Release
+copy index.html ..\Build\Release
+copy ..\doc\arm\*.html ..\Build\Release
+copy ..\doc\arm\Bv9ARM.pdf ..\Build\Release
+copy ..\CHANGES ..\Build\Release
+if Exist ..\CHANGES.SE copy ..\CHANGES.SE ..\Build\Release
+copy ..\FAQ ..\Build\Release
+
+echo Copying the standalone manual pages.
+
+copy ..\bin\named\named.html ..\Build\Release
+copy ..\bin\rndc\*.html ..\Build\Release
+copy ..\bin\confgen\*.html ..\Build\Release
+copy ..\bin\dig\*.html ..\Build\Release
+copy ..\bin\delv\*.html ..\Build\Release
+copy ..\bin\nsupdate\*.html ..\Build\Release
+copy ..\bin\check\*.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-keygen.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-signzone.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-dsfromkey.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-keyfromlabel.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-settime.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-revoke.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-verify.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-importkey.html ..\Build\Release
+@IF PYTHON
+copy ..\bin\python\dnssec-checkds.html ..\Build\Release
+copy ..\bin\python\dnssec-coverage.html ..\Build\Release
+@END PYTHON
+@IF PKCS11
+copy ..\bin\pkcs11\pkcs11-keygen.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-list.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-destroy.html ..\Build\Release
+copy ..\bin\pkcs11\pkcs11-tokens.html ..\Build\Release
+@END PKCS11
+copy ..\bin\tools\arpaname.html ..\Build\Release
+copy ..\bin\tools\genrandom.html ..\Build\Release
+copy ..\bin\tools\isc-hmac-fixup.html ..\Build\Release
+copy ..\bin\tools\named-journalprint.html ..\Build\Release
+copy ..\bin\tools\named-rrchecker.html ..\Build\Release
+copy ..\bin\tools\nsec3hash.html ..\Build\Release
+
+echo Copying the migration notes.
+
+copy ..\doc\misc\migration ..\Build\Release
+copy ..\doc\misc\migration-4to9 ..\Build\Release
+
+@IF OPENSSL
+echo Copying the OpenSSL DLL and LICENSE.
+
+copy @OPENSSL_DLL@ ..\Build\Release\
+copy @OPENSSL_PATH@\LICENSE ..\Build\Release\OpenSSL-LICENSE
+@END OPENSSL
+
+@IF LIBXML2
+echo Copying the libxml DLL.
+
+copy @LIBXML2_DLL@ ..\Build\Release\
+@END LIBXML2
+
+@IF GSSAPI
+echo Copying the GSSAPI and KRB5 DLLs.
+
+copy @GSSAPI_DLL@ ..\Build\Release\
+copy @KRB5_DLL@ ..\Build\Release\
+copy @COMERR_DLL@ ..\Build\Release\
+copy @K5SPRT_DLL@ ..\Build\Release\
+copy @WSHELP_DLL@ ..\Build\Release\
+@END GSSAPI
+
+@IF GEOIP
+echo Copying the GeoIP DLL.
+
+copy @GEOIP_DLL@ ..\Build\Release\
+@END GEOIP
+
+@IF IDNKIT
+echo Copying the IDN kit DLL.
+
+copy @IDN_DLL@ ..\Build\Release\
+copy @ICONV_DLL@ ..\Build\Release\
+@END IDNKIT
+
+echo Copying Visual C x86 Redistributable Installer.
+
+copy /Y @VCREDIST_PATH@ ..\Build\Release\
+
+</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="libisc.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\config.h" />
+@IF AES
+    <ClInclude Include="..\include\isc\aes.h" />
+@END AES
+    <ClInclude Include="..\include\isc\app.h" />
+    <ClInclude Include="..\include\isc\assertions.h" />
+    <ClInclude Include="..\include\isc\backtrace.h" />
+    <ClInclude Include="..\include\isc\base32.h" />
+    <ClInclude Include="..\include\isc\base64.h" />
+    <ClInclude Include="..\include\isc\bind9.h" />
+    <ClInclude Include="..\include\isc\boolean.h" />
+    <ClInclude Include="..\include\isc\buffer.h" />
+    <ClInclude Include="..\include\isc\bufferlist.h" />
+    <ClInclude Include="..\include\isc\commandline.h" />
+    <ClInclude Include="..\include\isc\counter.h" />
+    <ClInclude Include="..\include\isc\crc64.h" />
+    <ClInclude Include="..\include\isc\entropy.h" />
+    <ClInclude Include="..\include\isc\error.h" />
+    <ClInclude Include="..\include\isc\event.h" />
+    <ClInclude Include="..\include\isc\eventclass.h" />
+    <ClInclude Include="..\include\isc\file.h" />
+    <ClInclude Include="..\include\isc\formatcheck.h" />
+    <ClInclude Include="..\include\isc\fsaccess.h" />
+    <ClInclude Include="..\include\isc\hash.h" />
+    <ClInclude Include="..\include\isc\heap.h" />
+    <ClInclude Include="..\include\isc\hex.h" />
+    <ClInclude Include="..\include\isc\hmacmd5.h" />
+    <ClInclude Include="..\include\isc\hmacsha.h" />
+    <ClInclude Include="..\include\isc\httpd.h" />
+    <ClInclude Include="..\include\isc\interfaceiter.h" />
+    <ClInclude Include="..\include\isc\iterated_hash.h" />
+    <ClInclude Include="..\include\isc\json.h" />
+    <ClInclude Include="..\include\isc\lang.h" />
+    <ClInclude Include="..\include\isc\lex.h" />
+    <ClInclude Include="..\include\isc\lfsr.h" />
+    <ClInclude Include="..\include\isc\lib.h" />
+    <ClInclude Include="..\include\isc\list.h" />
+    <ClInclude Include="..\include\isc\log.h" />
+    <ClInclude Include="..\include\isc\magic.h" />
+    <ClInclude Include="..\include\isc\md5.h" />
+    <ClInclude Include="..\include\isc\mem.h" />
+    <ClInclude Include="..\include\isc\msgcat.h" />
+    <ClInclude Include="..\include\isc\msgs.h" />
+    <ClInclude Include="..\include\isc\mutexblock.h" />
+    <ClInclude Include="..\include\isc\netaddr.h" />
+    <ClInclude Include="..\include\isc\netscope.h" />
+    <ClInclude Include="..\include\isc\ondestroy.h" />
+    <ClInclude Include="..\include\isc\os.h" />
+    <ClInclude Include="..\include\isc\parseint.h" />
+    <ClInclude Include="..\include\isc\pool.h" />
+    <ClInclude Include="..\include\isc\portset.h" />
+    <ClInclude Include="..\include\isc\print.h" />
+    <ClInclude Include="..\include\isc\queue.h" />
+    <ClInclude Include="..\include\isc\quota.h" />
+    <ClInclude Include="..\include\isc\radix.h" />
+    <ClInclude Include="..\include\isc\random.h" />
+    <ClInclude Include="..\include\isc\ratelimiter.h" />
+    <ClInclude Include="..\include\isc\refcount.h" />
+    <ClInclude Include="..\include\isc\regex.h" />
+    <ClInclude Include="..\include\isc\region.h" />
+    <ClInclude Include="..\include\isc\resource.h" />
+    <ClInclude Include="..\include\isc\result.h" />
+    <ClInclude Include="..\include\isc\resultclass.h" />
+    <ClInclude Include="..\include\isc\rwlock.h" />
+    <ClInclude Include="..\include\isc\safe.h" />
+    <ClInclude Include="..\include\isc\serial.h" />
+    <ClInclude Include="..\include\isc\sha1.h" />
+    <ClInclude Include="..\include\isc\sha2.h" />
+    <ClInclude Include="..\include\isc\sockaddr.h" />
+    <ClInclude Include="..\include\isc\socket.h" />
+    <ClInclude Include="..\include\isc\stdio.h" />
+    <ClInclude Include="..\include\isc\stdlib.h" />
+    <ClInclude Include="..\include\isc\string.h" />
+    <ClInclude Include="..\include\isc\symtab.h" />
+    <ClInclude Include="..\include\isc\task.h" />
+    <ClInclude Include="..\include\isc\taskpool.h" />
+    <ClInclude Include="..\include\isc\timer.h" />
+    <ClInclude Include="..\include\isc\tm.h" />
+    <ClInclude Include="..\include\isc\types.h" />
+    <ClInclude Include="..\include\isc\util.h" />
+    <ClInclude Include="..\include\isc\version.h" />
+    <ClInclude Include="..\include\isc\xml.h" />
+@IF PKCS11
+    <ClInclude Include="..\include\pk11\constants.h" />
+    <ClInclude Include="..\include\pk11\internal.h" />
+    <ClInclude Include="..\include\pk11\pk11.h" />
+    <ClInclude Include="..\include\pk11\result.h" />
+    <ClInclude Include="..\include\pkcs11\pkcs11.h" />
+    <ClInclude Include="..\include\pkcs11\pkcs11f.h" />
+    <ClInclude Include="..\include\pkcs11\pkcs11t.h" />
+@END PKCS11
+@IF ATOMIC
+    <ClInclude Include="include\isc\atomic.h" />
+@ELSE ATOMIC
+    <ClInclude Include="..\noatomic\include\isc\atomic.h" />
+@END ATOMIC
+    <ClInclude Include="errno2result.h" />
+    <ClInclude Include="include\isc\bindevt.h" />
+    <ClInclude Include="include\isc\bind_registry.h" />
+    <ClInclude Include="include\isc\condition.h" />
+    <ClInclude Include="include\isc\dir.h" />
+    <ClInclude Include="include\isc\int.h" />
+    <ClInclude Include="include\isc\ipv6.h" />
+    <ClInclude Include="include\isc\keyboard.h" />
+    <ClInclude Include="include\isc\mutex.h" />
+    <ClInclude Include="include\isc\net.h" />
+    <ClInclude Include="include\isc\netdb.h" />
+    <ClInclude Include="include\isc\ntgroups.h" />
+    <ClInclude Include="include\isc\ntpaths.h" />
+    <ClInclude Include="include\isc\offset.h" />
+    <ClInclude Include="include\isc\once.h" />
+    <ClInclude Include="include\isc\platform.h" />
+    <ClInclude Include="include\isc\stat.h" />
+    <ClInclude Include="include\isc\stdtime.h" />
+    <ClInclude Include="include\isc\strerror.h" />
+    <ClInclude Include="include\isc\syslog.h" />
+    <ClInclude Include="include\isc\thread.h" />
+    <ClInclude Include="include\isc\time.h" />
+    <ClInclude Include="include\isc\win32os.h" />
+    <ClInclude Include="syslog.h" />
+    <ClInclude Include="unistd.h" />
+@IF PKCS11
+    <ClInclude Include="include\pkcs11\cryptoki.h" />
+@END PKCS11
+    <ClInclude Include="..\..\versions.h" />
+  </ItemGroup>
+  <ItemGroup>
+@IF AES
+    <ClCompile Include="..\aes.c" />
+@END AES
+    <ClCompile Include="..\assertions.c" />
+    <ClCompile Include="..\backtrace-emptytbl.c" />
+    <ClCompile Include="..\backtrace.c" />
+    <ClCompile Include="..\base32.c" />
+    <ClCompile Include="..\base64.c" />
+    <ClCompile Include="..\bind9.c" />
+    <ClCompile Include="..\buffer.c" />
+    <ClCompile Include="..\bufferlist.c" />
+    <ClCompile Include="..\commandline.c" />
+    <ClCompile Include="..\counter.c" />
+    <ClCompile Include="..\crc64.c" />
+    <ClCompile Include="..\error.c" />
+    <ClCompile Include="..\event.c" />
+    <ClCompile Include="..\hash.c" />
+    <ClCompile Include="..\heap.c" />
+    <ClCompile Include="..\hex.c" />
+    <ClCompile Include="..\hmacmd5.c" />
+    <ClCompile Include="..\hmacsha.c" />
+    <ClCompile Include="..\httpd.c" />
+    <ClCompile Include="..\inet_aton.c" />
+    <ClCompile Include="..\inet_ntop.c" />
+    <ClCompile Include="..\inet_pton.c" />
+    <ClCompile Include="..\iterated_hash.c" />
+    <ClCompile Include="..\lex.c" />
+    <ClCompile Include="..\lfsr.c" />
+    <ClCompile Include="..\lib.c" />
+    <ClCompile Include="..\log.c" />
+    <ClCompile Include="..\md5.c" />
+    <ClCompile Include="..\mem.c" />
+    <ClCompile Include="..\mutexblock.c" />
+    <ClCompile Include="..\netaddr.c" />
+    <ClCompile Include="..\netscope.c" />
+    <ClCompile Include="..\nls\msgcat.c" />
+    <ClCompile Include="..\ondestroy.c" />
+    <ClCompile Include="..\parseint.c" />
+    <ClCompile Include="..\pool.c" />
+    <ClCompile Include="..\portset.c" />
+    <ClCompile Include="..\quota.c" />
+    <ClCompile Include="..\radix.c" />
+    <ClCompile Include="..\random.c" />
+    <ClCompile Include="..\ratelimiter.c" />
+    <ClCompile Include="..\refcount.c" />
+    <ClCompile Include="..\regex.c" />
+    <ClCompile Include="..\region.c" />
+    <ClCompile Include="..\result.c" />
+    <ClCompile Include="..\rwlock.c" />
+    <ClCompile Include="..\safe.c" />
+    <ClCompile Include="..\serial.c" />
+    <ClCompile Include="..\sha1.c" />
+    <ClCompile Include="..\sha2.c" />
+    <ClCompile Include="..\sockaddr.c" />
+    <ClCompile Include="..\stats.c" />
+    <ClCompile Include="..\string.c" />
+    <ClCompile Include="..\symtab.c" />
+    <ClCompile Include="..\task.c" />
+    <ClCompile Include="..\taskpool.c" />
+    <ClCompile Include="..\timer.c" />
+    <ClCompile Include="..\tm.c" />
+@IF PKCS11
+    <ClCompile Include="..\pk11.c" />
+    <ClCompile Include="..\pk11_result.c" />
+@END PKCS11
+    <ClCompile Include="app.c" />
+    <ClCompile Include="condition.c" />
+    <ClCompile Include="dir.c" />
+    <ClCompile Include="DLLMain.c" />
+    <ClCompile Include="entropy.c" />
+    <ClCompile Include="errno2result.c" />
+    <ClCompile Include="file.c" />
+    <ClCompile Include="fsaccess.c" />
+    <ClCompile Include="interfaceiter.c" />
+    <ClCompile Include="ipv6.c" />
+    <ClCompile Include="keyboard.c" />
+    <ClCompile Include="net.c" />
+    <ClCompile Include="ntpaths.c" />
+    <ClCompile Include="once.c" />
+    <ClCompile Include="os.c" />
+    <ClCompile Include="resource.c" />
+    <ClCompile Include="socket.c" />
+    <ClCompile Include="stdio.c" />
+    <ClCompile Include="stdtime.c" />
+    <ClCompile Include="strerror.c" />
+    <ClCompile Include="syslog.c" />
+    <ClCompile Include="thread.c" />
+    <ClCompile Include="time.c" />
+    <ClCompile Include="version.c" />
+    <ClCompile Include="win32os.c" />
+@IF PKCS11
+    <ClCompile Include="pk11_api.c" />
+@END PKCS11
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

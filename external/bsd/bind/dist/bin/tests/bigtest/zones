@@ -1,0 +1,18 @@
+noedns-1.tld	1	ns%u.%s P . x x -T noedns
+dropedns-1.tld	1	ns%u.%s P . x x -T dropedns
+maxudp512-1.tld	1	ns%u.%s S . x x -T maxudp=512
+maxudp1460-1.tld	1	ns%u.%s S . x x -T maxudp=1460
+plain-1.tld	1	ns%u.%s S . x x
+noedns-3.tld	3	ns%u.%s	P . 2 x -T noedns 
+dropedns-3.tld	3	ns%u.%s P . 2 x -T dropedns
+maxudp512-3.tld	3	ns%u.%s S . x x -T maxudp=512
+maxudp1460-3.tld	3	ns%u.%s S . x x -T maxudp=1460
+plain-3.tld	3	ns%u.%s S . x 3
+noedns-5.tld	5	ns%u.%s	P . 3 x -T noedns
+dropedns-5.tld	5	ns%u.%s P . x x -T dropedns
+maxudp512-5.tld	5	ns%u.%s S . x x -T maxudp=512
+maxudp1460-5.tld	5	ns%u.%s S . x x -T maxudp=1460
+400ms-1.tld	5	ns%u.%s S 400/400/400/400/400 2 x
+plain-5.tld	5	ns%u.%s S . x x
+tld		12	ns%u.%s S . 5 8
+.		12	ns%u.root-servers.nil%s S . x x

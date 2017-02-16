@@ -1,0 +1,89 @@
+Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+		Source Identity Token
+
+Source Identity Token (SIT) is based in Donald Eastlake 3rd's DNS Cookies[1].
+
+The main differences are that the error code has been dropped and
+that the server cookie doesn't have a fixed length and may be
+missing.
+
+The error code has been dropped because it served no useful purpose
+for us.  If it was to be restored it should be the first element
+of the option.
+
+We extended the server cookie to transmit server time and to include
+a server generated nonce.  The purpose of these is to provide a
+short window of time (1 hour with a 5 minutes of clock skew for
+cluster time) where a previous cookie can be used for and to not
+require the server secret to be updated when it is shared by a
+cluster of servers.  In particular the time of generation needed
+to be passed between servers via the client so that old cookie can
+be rejected.
+
+The option structure is:
+
+	client cookie (64 bits)
+	server cookie (128 bits) broken up into:
+		- nonce (32 bits)
+		- time (32 bits)
+		- hash (64 bits)
+
+The initial requests just sends the client cookie.  If the response
+contains a matching client cookie the entire response is saved and
+sent on the next transaction.  A new server cookie is generated for
+every response.
+
+We are currently using EDNS Experimental code point 65001.  This is
+subject to change.
+
+We have three supported hash method.  AES, HMAC SHA 1 and HMAC SHA 256.
+A cluster of servers needs to choose one of them.
+
+AES
+	memset(input, 0, sizeof(input));
+        cp = isc_buffer_used(buf);
+        isc_buffer_putmem(buf, client->cookie, 8);
+        isc_buffer_putuint32(buf, nonce);
+        isc_buffer_putuint32(buf, when);
+        memmove(input, cp, 16);
+        isc_aes128_crypt(ns_g_server->secret, input, digest);
+        for (i = 0; i < 8; i++)
+                input[i] = digest[i] ^ digest[i + 8];
+        isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
+        switch (netaddr.family) {
+        case AF_INET:
+                memmove(input + 8, (unsigned char *)&netaddr.type.in, 4);
+                memset(input + 12, 0, 4);
+                isc_aes128_crypt(ns_g_server->secret, input, digest);
+                break;
+        case AF_INET6:
+                memmove(input + 8, (unsigned char *)&netaddr.type.in6, 16);
+                isc_aes128_crypt(ns_g_server->secret, input, digest);
+                for (i = 0; i < 8; i++)
+                        input[i + 8] = digest[i] ^ digest[i + 8];
+                isc_aes128_crypt(ns_g_server->secret, input + 8, digest);
+                break;
+        }
+        for (i = 0; i < 8; i++)
+                digest[i] ^= digest[i + 8];
+        isc_buffer_putmem(buf, digest, 8);
+
+HMAC SHA1
+
+	hash = trunc(hmacsha1(secret, client|nonce|when|address), 8);
+
+HMAC SHA256
+
+	hash = trunc(hmacsha256(secret, client|nonce|when|address), 8);
+
+[1]
+INTERNET-DRAFT                                           Donald Eastlake
+Intended Status: Proposed Standard                                Huawei
+Expires: July 21, 2014                                  January 22, 2014
+
+
+                    Domain Name System (DNS) Cookies
+                 <draft-eastlake-dnsext-cookies-04.txt>
+

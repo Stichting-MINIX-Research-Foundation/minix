@@ -1,0 +1,11 @@
+/SOA unused_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 6 300 300 604800 300
+/AXFR unused_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 6 300 300 604800 300
+/AXFR unused_key LSAnCU+Z/
+nil.      	300	NS	ns.nil.
+nil.		300	TXT	"incorrect key AXFR"
+a.nil.		60	A	10.0.0.61
+b.nil.		60	A	10.0.0.62
+/AXFR unused_key LSAnCU+Z/
+nil.      	300	SOA	ns.nil. root.nil. 6 300 300 604800 300

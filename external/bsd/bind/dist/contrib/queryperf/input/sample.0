@@ -1,0 +1,8 @@
+.\"	$NetBSD: sample.0,v 1.3 2014/12/10 04:37:56 christos Exp $
+.\"
+; This is a comment
+#server ns.sector93.ie
+#port 53
+#maxwait 5
+meow.com MX
+1.0.0.10.in-addr.arpa PTR

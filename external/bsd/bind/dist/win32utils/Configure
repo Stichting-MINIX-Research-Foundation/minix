@@ -1,0 +1,2979 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Configure
+#
+# This script builds nmake and visual studio build files
+#
+
+require 5.000;
+use strict;
+use File::Spec;
+use Cwd;
+
+# files to configure
+
+my $configfilein = "..\\config.h.win32";
+my $configfileout = ">..\\config.h";
+my $platformfile = "..\\lib\\isc\\win32\\include\\isc\\platform.h";
+
+my @filelist = ("..\\bin\\check\\win32\\checktool.dsp",
+                "..\\bin\\check\\win32\\checkconf.dsp",
+                "..\\bin\\check\\win32\\checkconf.mak",
+                "..\\bin\\check\\win32\\checkzone.dsp",
+                "..\\bin\\check\\win32\\checkzone.mak",
+                "..\\bin\\confgen\\win32\\confgentool.dsp",
+                "..\\bin\\confgen\\win32\\ddnsconfgen.dsp",
+                "..\\bin\\confgen\\win32\\ddnsconfgen.mak",
+                "..\\bin\\confgen\\win32\\rndcconfgen.dsp",
+                "..\\bin\\confgen\\win32\\rndcconfgen.mak",
+                "..\\bin\\delv\\win32\\delv.dsp",
+                "..\\bin\\delv\\win32\\delv.mak",
+                "..\\bin\\dig\\win32\\dig.dsp",
+                "..\\bin\\dig\\win32\\dig.mak",
+                "..\\bin\\dig\\win32\\dighost.dsp",
+                "..\\bin\\dig\\win32\\host.dsp",
+                "..\\bin\\dig\\win32\\host.mak",
+                "..\\bin\\dig\\win32\\nslookup.dsp",
+                "..\\bin\\dig\\win32\\nslookup.mak",
+                "..\\bin\\dnssec\\win32\\dnssectool.dsp",
+                "..\\bin\\dnssec\\win32\\dsfromkey.dsp",
+                "..\\bin\\dnssec\\win32\\dsfromkey.mak",
+                "..\\bin\\dnssec\\win32\\importkey.dsp",
+                "..\\bin\\dnssec\\win32\\importkey.mak",
+                "..\\bin\\dnssec\\win32\\keyfromlabel.dsp",
+                "..\\bin\\dnssec\\win32\\keyfromlabel.mak",
+                "..\\bin\\dnssec\\win32\\keygen.dsp",
+                "..\\bin\\dnssec\\win32\\keygen.mak",
+                "..\\bin\\dnssec\\win32\\revoke.dsp",
+                "..\\bin\\dnssec\\win32\\revoke.mak",
+                "..\\bin\\dnssec\\win32\\settime.dsp",
+                "..\\bin\\dnssec\\win32\\settime.mak",
+                "..\\bin\\dnssec\\win32\\signzone.dsp",
+                "..\\bin\\dnssec\\win32\\signzone.mak",
+                "..\\bin\\dnssec\\win32\\verify.dsp",
+                "..\\bin\\dnssec\\win32\\verify.mak",
+                "..\\bin\\named\\win32\\named.dsp",
+                "..\\bin\\named\\win32\\named.mak",
+                "..\\bin\\nsupdate\\win32\\nsupdate.dsp",
+                "..\\bin\\nsupdate\\win32\\nsupdate.mak",
+                "..\\bin\\pkcs11\\win32\\pk11destroy.dsp",
+                "..\\bin\\pkcs11\\win32\\pk11destroy.mak",
+                "..\\bin\\pkcs11\\win32\\pk11keygen.dsp",
+                "..\\bin\\pkcs11\\win32\\pk11keygen.mak",
+                "..\\bin\\pkcs11\\win32\\pk11list.dsp",
+                "..\\bin\\pkcs11\\win32\\pk11list.mak",
+                "..\\bin\\pkcs11\\win32\\pk11tokens.dsp",
+                "..\\bin\\pkcs11\\win32\\pk11tokens.mak",
+                "..\\bin\\python\\dnssec-checkds.py",
+                "..\\bin\\python\\dnssec-coverage.py",
+                "..\\bin\\rndc\\win32\\rndc.dsp",
+                "..\\bin\\rndc\\win32\\rndc.mak",
+                "..\\bin\\rndc\\win32\\rndcutil.dsp",
+                "..\\bin\\tools\\win32\\arpaname.dsp",
+                "..\\bin\\tools\\win32\\arpaname.mak",
+                "..\\bin\\tools\\win32\\genrandom.dsp",
+                "..\\bin\\tools\\win32\\genrandom.mak",
+                "..\\bin\\tools\\win32\\ischmacfixup.dsp",
+                "..\\bin\\tools\\win32\\ischmacfixup.mak",
+                "..\\bin\\tools\\win32\\journalprint.dsp",
+                "..\\bin\\tools\\win32\\journalprint.mak",
+                "..\\bin\\tools\\win32\\nsec3hash.dsp",
+                "..\\bin\\tools\\win32\\nsec3hash.mak",
+                "..\\bin\\tools\\win32\\rrchecker.dsp",
+                "..\\bin\\tools\\win32\\rrchecker.mak",
+                "..\\bin\\tests\\atomic\\win32\\t_atomic.dsp",
+                "..\\bin\\tests\\atomic\\win32\\t_atomic.mak",
+                "..\\bin\\tests\\db\\win32\\t_db.dsp",
+                "..\\bin\\tests\\db\\win32\\t_db.mak",
+                "..\\bin\\tests\\dst\\win32\\t_dst.dsp",
+                "..\\bin\\tests\\dst\\win32\\t_dst.mak",
+                "..\\bin\\tests\\master\\win32\\t_master.dsp",
+                "..\\bin\\tests\\master\\win32\\t_master.mak",
+                "..\\bin\\tests\\mem\\win32\\t_mem.dsp",
+                "..\\bin\\tests\\mem\\win32\\t_mem.mak",
+                "..\\bin\\tests\\hashes\\win32\\t_hashes.dsp",
+                "..\\bin\\tests\\hashes\\win32\\t_hashes.mak",
+                "..\\bin\\tests\\names\\win32\\t_names.dsp",
+                "..\\bin\\tests\\names\\win32\\t_names.mak",
+                "..\\bin\\tests\\rbt\\win32\\t_rbt.dsp",
+                "..\\bin\\tests\\rbt\\win32\\t_rbt.mak",
+                "..\\bin\\tests\\resolver\\win32\\t_resolver.dsp",
+                "..\\bin\\tests\\resolver\\win32\\t_resolver.mak",
+                "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.dsp",
+                "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.mak",
+                "..\\bin\\tests\\tasks\\win32\\t_tasks.dsp",
+                "..\\bin\\tests\\tasks\\win32\\t_tasks.mak",
+                "..\\bin\\tests\\timers\\win32\\t_timers.dsp",
+                "..\\bin\\tests\\timers\\win32\\t_timers.mak",
+                "..\\bin\\tests\\win32\\backtrace_test.dsp",
+                "..\\bin\\tests\\win32\\backtrace_test.mak",
+                "..\\bin\\tests\\win32\\inter_test.dsp",
+                "..\\bin\\tests\\win32\\inter_test.mak",
+                "..\\bin\\tests\\win32\\rwlock_test.dsp",
+                "..\\bin\\tests\\win32\\rwlock_test.mak",
+                "..\\bin\\tests\\win32\\shutdown_test.dsp",
+                "..\\bin\\tests\\win32\\shutdown_test.mak",
+                "..\\bin\\tests\\win32\\sock_test.dsp",
+                "..\\bin\\tests\\win32\\sock_test.mak",
+                "..\\bin\\tests\\win32\\task_test.dsp",
+                "..\\bin\\tests\\win32\\task_test.mak",
+                "..\\bin\\tests\\win32\\timer_test.dsp",
+                "..\\bin\\tests\\win32\\timer_test.mak",
+                "..\\bin\\tests\\win32\\inter_test.dsp",
+                "..\\bin\\tests\\win32\\inter_test.mak",
+                "..\\bin\\tests\\win32\\rwlock_test.dsp",
+                "..\\bin\\tests\\win32\\rwlock_test.mak",
+                "..\\bin\\tests\\win32\\shutdown_test.dsp",
+                "..\\bin\\tests\\win32\\shutdown_test.mak",
+                "..\\bin\\tests\\win32\\sock_test.dsp",
+                "..\\bin\\tests\\win32\\sock_test.mak",
+                "..\\bin\\tests\\win32\\task_test.dsp",
+                "..\\bin\\tests\\win32\\task_test.mak",
+                "..\\bin\\tests\\win32\\timer_test.dsp",
+                "..\\bin\\tests\\win32\\timer_test.mak",
+                "..\\bin\\win32\\BINDInstall\\BINDInstall.dsp",
+                "..\\bin\\win32\\BINDInstall\\BINDInstall.mak",
+                "..\\lib\\bind9\\win32\\libbind9.dsp",
+                "..\\lib\\bind9\\win32\\libbind9.mak",
+                "..\\lib\\dns\\win32\\gen.dsp",
+                "..\\lib\\dns\\win32\\gen.mak",
+                "..\\lib\\dns\\win32\\libdns.def",
+                "..\\lib\\dns\\win32\\libdns.dsp",
+                "..\\lib\\dns\\win32\\libdns.mak",
+                "..\\lib\\irs\\win32\\libirs.dsp",
+                "..\\lib\\irs\\win32\\libirs.mak",
+                "..\\lib\\isc\\win32\\libisc.def",
+                "..\\lib\\isc\\win32\\libisc.dsp",
+                "..\\lib\\isc\\win32\\libisc.mak",
+                "..\\lib\\isccc\\win32\\libisccc.dsp",
+                "..\\lib\\isccc\\win32\\libisccc.mak",
+                "..\\lib\\isccfg\\win32\\libisccfg.dsp",
+                "..\\lib\\isccfg\\win32\\libisccfg.mak",
+                "..\\lib\\lwres\\win32\\liblwres.dsp",
+                "..\\lib\\lwres\\win32\\liblwres.mak",
+                "..\\lib\\samples\\win32\\async.dsp",
+                "..\\lib\\samples\\win32\\async.mak",
+                "..\\lib\\samples\\win32\\gai.dsp",
+                "..\\lib\\samples\\win32\\gai.mak",
+                "..\\lib\\samples\\win32\\nsprobe.dsp",
+                "..\\lib\\samples\\win32\\nsprobe.mak",
+                "..\\lib\\samples\\win32\\request.dsp",
+                "..\\lib\\samples\\win32\\request.mak",
+                "..\\lib\\samples\\win32\\resolve.dsp",
+                "..\\lib\\samples\\win32\\resolve.mak",
+                "..\\lib\\samples\\win32\\update.dsp",
+                "..\\lib\\samples\\win32\\update.mak",
+                "..\\lib\\tests\\win32\\libtests.dsp",
+                "..\\lib\\tests\\win32\\libtests.mak",
+                "..\\lib\\win32\\bindevt\\bindevt.dsp",
+                "..\\lib\\win32\\bindevt\\bindevt.mak",
+                "legacy\\BINDBuild.dsw",
+                "legacy\\BuildAll.bat",
+                "legacy\\BuildPost.bat",
+                "legacy\\BuildSetup.bat");
+
+my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
+                   "..\\bin\\check\\win32\\checkconf.vcxproj.filters",
+                   "..\\bin\\check\\win32\\checktool.vcxproj",
+                   "..\\bin\\check\\win32\\checktool.vcxproj.filters",
+                   "..\\bin\\check\\win32\\checkzone.vcxproj",
+                   "..\\bin\\check\\win32\\checkzone.vcxproj.filters",
+                   "..\\bin\\confgen\\win32\\confgentool.vcxproj",
+                   "..\\bin\\confgen\\win32\\confgentool.vcxproj.filters",
+                   "..\\bin\\confgen\\win32\\ddnsconfgen.vcxproj",
+                   "..\\bin\\confgen\\win32\\ddnsconfgen.vcxproj.filters",
+                   "..\\bin\\confgen\\win32\\rndcconfgen.vcxproj",
+                   "..\\bin\\confgen\\win32\\rndcconfgen.vcxproj.filters",
+                   "..\\bin\\delv\\win32\\delv.vcxproj",
+                   "..\\bin\\delv\\win32\\delv.vcxproj.filters",
+                   "..\\bin\\dig\\win32\\dig.vcxproj",
+                   "..\\bin\\dig\\win32\\dig.vcxproj.filters",
+                   "..\\bin\\dig\\win32\\dighost.vcxproj",
+                   "..\\bin\\dig\\win32\\dighost.vcxproj.filters",
+                   "..\\bin\\dig\\win32\\host.vcxproj",
+                   "..\\bin\\dig\\win32\\host.vcxproj.filters",
+                   "..\\bin\\dig\\win32\\nslookup.vcxproj",
+                   "..\\bin\\dig\\win32\\nslookup.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\dnssectool.vcxproj",
+                   "..\\bin\\dnssec\\win32\\dnssectool.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\dsfromkey.vcxproj",
+                   "..\\bin\\dnssec\\win32\\dsfromkey.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\importkey.vcxproj",
+                   "..\\bin\\dnssec\\win32\\importkey.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\keyfromlabel.vcxproj",
+                   "..\\bin\\dnssec\\win32\\keyfromlabel.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\keygen.vcxproj",
+                   "..\\bin\\dnssec\\win32\\keygen.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\revoke.vcxproj",
+                   "..\\bin\\dnssec\\win32\\revoke.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\settime.vcxproj",
+                   "..\\bin\\dnssec\\win32\\settime.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\signzone.vcxproj",
+                   "..\\bin\\dnssec\\win32\\signzone.vcxproj.filters",
+                   "..\\bin\\dnssec\\win32\\verify.vcxproj",
+                   "..\\bin\\dnssec\\win32\\verify.vcxproj.filters",
+                   "..\\bin\\named\\win32\\named.vcxproj",
+                   "..\\bin\\named\\win32\\named.vcxproj.filters",
+                   "..\\bin\\nsupdate\\win32\\nsupdate.vcxproj",
+                   "..\\bin\\nsupdate\\win32\\nsupdate.vcxproj.filters",
+                   "..\\bin\\pkcs11\\win32\\pk11destroy.vcxproj",
+                   "..\\bin\\pkcs11\\win32\\pk11destroy.vcxproj.filters",
+                   "..\\bin\\pkcs11\\win32\\pk11keygen.vcxproj",
+                   "..\\bin\\pkcs11\\win32\\pk11keygen.vcxproj.filters",
+                   "..\\bin\\pkcs11\\win32\\pk11list.vcxproj",
+                   "..\\bin\\pkcs11\\win32\\pk11list.vcxproj.filters",
+                   "..\\bin\\pkcs11\\win32\\pk11tokens.vcxproj",
+                   "..\\bin\\pkcs11\\win32\\pk11tokens.vcxproj.filters",
+                   "..\\bin\\rndc\\win32\\rndc.vcxproj",
+                   "..\\bin\\rndc\\win32\\rndc.vcxproj.filters",
+                   "..\\bin\\rndc\\win32\\rndcutil.vcxproj",
+                   "..\\bin\\rndc\\win32\\rndcutil.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\arpaname.vcxproj",
+                   "..\\bin\\tools\\win32\\arpaname.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\genrandom.vcxproj",
+                   "..\\bin\\tools\\win32\\genrandom.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\ischmacfixup.vcxproj",
+                   "..\\bin\\tools\\win32\\ischmacfixup.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\journalprint.vcxproj",
+                   "..\\bin\\tools\\win32\\journalprint.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\nsec3hash.vcxproj",
+                   "..\\bin\\tools\\win32\\nsec3hash.vcxproj.filters",
+                   "..\\bin\\tools\\win32\\rrchecker.vcxproj",
+                   "..\\bin\\tools\\win32\\rrchecker.vcxproj.filters",
+                   "..\\bin\\tests\\atomic\\win32\\t_atomic.vcxproj",
+                   "..\\bin\\tests\\atomic\\win32\\t_atomic.vcxproj.filters",
+                   "..\\bin\\tests\\db\\win32\\t_db.vcxproj",
+                   "..\\bin\\tests\\db\\win32\\t_db.vcxproj.filters",
+                   "..\\bin\\tests\\dst\\win32\\t_dst.vcxproj",
+                   "..\\bin\\tests\\dst\\win32\\t_dst.vcxproj.filters",
+                   "..\\bin\\tests\\master\\win32\\t_master.vcxproj",
+                   "..\\bin\\tests\\master\\win32\\t_master.vcxproj.filters",
+                   "..\\bin\\tests\\mem\\win32\\t_mem.vcxproj",
+                   "..\\bin\\tests\\mem\\win32\\t_mem.vcxproj.filters",
+                   "..\\bin\\tests\\hashes\\win32\\t_hashes.vcxproj",
+                   "..\\bin\\tests\\hashes\\win32\\t_hashes.vcxproj.filters",
+                   "..\\bin\\tests\\names\\win32\\t_names.vcxproj",
+                   "..\\bin\\tests\\names\\win32\\t_names.vcxproj.filters",
+                   "..\\bin\\tests\\rbt\\win32\\t_rbt.vcxproj",
+                   "..\\bin\\tests\\rbt\\win32\\t_rbt.vcxproj.filters",
+                   "..\\bin\\tests\\resolver\\win32\\t_resolver.vcxproj",
+                   "..\\bin\\tests\\resolver\\win32\\t_resolver.vcxproj.filters",
+                   "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.vcxproj",
+                   "..\\bin\\tests\\sockaddr\\win32\\t_sockaddr.vcxproj.filters",
+                   "..\\bin\\tests\\tasks\\win32\\t_tasks.vcxproj",
+                   "..\\bin\\tests\\tasks\\win32\\t_tasks.vcxproj.filters",
+                   "..\\bin\\tests\\timers\\win32\\t_timers.vcxproj",
+                   "..\\bin\\tests\\timers\\win32\\t_timers.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\backtrace_test.vcxproj",
+                   "..\\bin\\tests\\win32\\backtrace_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\inter_test.vcxproj",
+                   "..\\bin\\tests\\win32\\inter_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\rwlock_test.vcxproj",
+                   "..\\bin\\tests\\win32\\rwlock_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\shutdown_test.vcxproj",
+                   "..\\bin\\tests\\win32\\shutdown_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\sock_test.vcxproj",
+                   "..\\bin\\tests\\win32\\sock_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\task_test.vcxproj",
+                   "..\\bin\\tests\\win32\\task_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\timer_test.vcxproj",
+                   "..\\bin\\tests\\win32\\timer_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\inter_test.vcxproj",
+                   "..\\bin\\tests\\win32\\inter_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\rwlock_test.vcxproj",
+                   "..\\bin\\tests\\win32\\rwlock_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\shutdown_test.vcxproj",
+                   "..\\bin\\tests\\win32\\shutdown_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\sock_test.vcxproj",
+                   "..\\bin\\tests\\win32\\sock_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\task_test.vcxproj",
+                   "..\\bin\\tests\\win32\\task_test.vcxproj.filters",
+                   "..\\bin\\tests\\win32\\timer_test.vcxproj",
+                   "..\\bin\\tests\\win32\\timer_test.vcxproj.filters",
+                   "..\\bin\\win32\\BINDInstall\\BINDInstall.vcxproj",
+                   "..\\bin\\win32\\BINDInstall\\BINDInstall.vcxproj.filters",
+                   "..\\lib\\bind9\\win32\\libbind9.vcxproj",
+                   "..\\lib\\bind9\\win32\\libbind9.vcxproj.filters",
+                   "..\\lib\\dns\\win32\\gen.vcxproj",
+                   "..\\lib\\dns\\win32\\gen.vcxproj.filters",
+                   "..\\lib\\dns\\win32\\libdns.vcxproj",
+                   "..\\lib\\dns\\win32\\libdns.vcxproj.filters",
+                   "..\\lib\\irs\\win32\\libirs.vcxproj",
+                   "..\\lib\\irs\\win32\\libirs.vcxproj.filters",
+                   "..\\lib\\isc\\win32\\libisc.vcxproj",
+                   "..\\lib\\isc\\win32\\libisc.vcxproj.filters",
+                   "..\\lib\\isccc\\win32\\libisccc.vcxproj",
+                   "..\\lib\\isccc\\win32\\libisccc.vcxproj.filters",
+                   "..\\lib\\isccfg\\win32\\libisccfg.vcxproj",
+                   "..\\lib\\isccfg\\win32\\libisccfg.vcxproj.filters",
+                   "..\\lib\\lwres\\win32\\liblwres.vcxproj",
+                   "..\\lib\\lwres\\win32\\liblwres.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\resolve.vcxproj",
+                   "..\\lib\\samples\\win32\\resolve.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\async.vcxproj",
+                   "..\\lib\\samples\\win32\\async.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\gai.vcxproj",
+                   "..\\lib\\samples\\win32\\gai.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\update.vcxproj",
+                   "..\\lib\\samples\\win32\\update.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\request.vcxproj",
+                   "..\\lib\\samples\\win32\\request.vcxproj.filters",
+                   "..\\lib\\samples\\win32\\nsprobe.vcxproj",
+                   "..\\lib\\samples\\win32\\nsprobe.vcxproj.filters",
+                   "..\\lib\\tests\\win32\\libtests.vcxproj",
+                   "..\\lib\\tests\\win32\\libtests.vcxproj.filters",
+                   "..\\lib\\win32\\bindevt\\bindevt.vcxproj",
+                   "..\\lib\\win32\\bindevt\\bindevt.vcxproj.filters",
+                   "bind9.sln");
+
+# for config.h
+
+my %configdefh;
+
+my @substdefh = ("AES_SIT",
+                 "ALLOW_FILTER_AAAA",
+                 "CONFIGARGS",
+                 "DNS_RDATASET_FIXED",
+                 "ENABLE_RPZ_NSDNAME",
+                 "ENABLE_RPZ_NSIP",
+                 "HAVE_EVP_SHA256",
+                 "HAVE_EVP_SHA384",
+                 "HAVE_EVP_SHA512",
+                 "HAVE_GEOIP",
+                 "HAVE_GEOIP_CITY_V6",
+                 "HAVE_GEOIP_V6",
+                 "HAVE_LIBXML2",
+                 "HAVE_OPENSSL_AES",
+                 "HAVE_OPENSSL_DSA",
+                 "HAVE_OPENSSL_ECDSA",
+                 "HAVE_OPENSSL_EVP_AES",
+                 "HAVE_OPENSSL_GOST",
+                 "HAVE_PKCS11_ECDSA",
+                 "HAVE_PKCS11_GOST",
+                 "HAVE_READLINE",
+                 "HMAC_RETURN_INT",
+                 "HMAC_SHA1_SIT",
+                 "HMAC_SHA256_SIT",
+                 "ISC_LIST_CHECKINIT",
+                 "PREFER_GOSTASN1",
+                 "TUNE_LARGE",
+                 "WITH_IDN");
+
+# for platform.h
+
+my %configdefp;
+
+my @substdefp = ("ISC_PLATFORM_HAVEATOMICSTORE",
+                 "ISC_PLATFORM_HAVECMPXCHG",
+                 "ISC_PLATFORM_HAVEXADD",
+                 "ISC_PLATFORM_HAVEXADDQ",
+                 "ISC_PLATFORM_NEEDSTRCASESTR",
+                 "ISC_PLATFORM_USEBACKTRACE",
+                 "ISC_PLATFORM_USESIT",
+                 "ISC_PLATFORM_WANTAES");
+
+# includes
+
+my %configinc;
+
+my @substinc = ("GSSAPI_INC",
+                "GEOIP_INC",
+                "IDN_INC",
+                "LIBXML2_INC",
+                "OPENSSL_INC",
+                "READLINE_INC");
+
+# libraries
+
+my %configlib;
+
+my @substlib = ("GSSAPI_LIB",
+                "GEOIP_LIB",
+                "IDN_LIB",
+                "KRB5_LIB",
+                "LIBXML2_LIB",
+                "OPENSSL_LIB",
+                "READLINE_LIB",
+                "READLINE_LIBD");
+
+# DLLs
+
+my %configdll;
+
+my @substdll = ("COMERR_DLL",
+                "GSSAPI_DLL",
+                "GEOIP_DLL",
+                "ICONV_DLL",
+                "IDN_DLL",
+                "KRB5_DLL",
+                "K5SPRT_DLL",
+                "LIBXML2_DLL",
+                "OPENSSL_DLL",
+                "WSHELP_DLL");
+
+# variables
+
+my %configvar;
+
+my @substvar = ("BUILD_MACHINE",
+                "BUILD_PLATFORM",
+                "COPTI",
+                "COPTML",
+                "COPTMLD",
+                "COPTX",
+                "COPTY",
+                "INTRINSIC",
+                "MACHINE",
+                "OPENSSL_PATH",
+                "PLATFORM",
+                "PKCS11_TOOLS",
+                "prefix",
+                "PYTHON",
+                "VCREDIST_PATH"),
+
+# defines
+
+my %configdefd;
+
+my @substdefd = ("CRYPTO",
+                 "PK11_LIB_LOCATION",
+                 "USE_GSSAPI",
+                 "USE_PKCS11",
+                 "USE_PYTHON",
+                 "USE_ISC_SPNEGO");
+
+# conditions
+
+my %configcond;
+
+my @substcond = ("AES",
+                 "ATOMIC",
+                 "GSSAPI",
+                 "GEOIP",
+                 "IDNKIT",
+                 "LIBXML2",
+                 "OPENSSL",
+                 "PKCS11",
+                 "PYTHON",
+                 "SAMPLES",
+                 "TESTS",
+                 "XTESTS");
+
+# arguments
+
+# enable-xxx/disable-xxx
+
+my @enablelist = ("developer",
+                  "fixed-rrset",
+                  "intrinsics",
+                  "isc-spnego",
+                  "native-pkcs11",
+                  "openssl-hash",
+                  "filter-aaaa",
+                  "rpz-nsdname",
+                  "rpz-nsip",
+                  "sit");
+
+# with-xxx/without-xxx
+
+my @withlist = ("aes",
+                "cross-compile",
+                "ecdsa",
+                "extra-tests",
+                "gssapi",
+                "geoip",
+                "gost",
+                "iconv",
+                "idn",
+                "openssl",
+                "libxml2",
+                "pkcs11",
+                "python",
+                "readline",
+                "samples",
+                "sit-alg",
+                "tests",
+                "tuning",
+                "vcredist");
+
+# general arguments
+
+my @optionlist = ("help", "verbose", "legacy", "win32", "x64", "clean");
+
+# usage
+
+my @usage = ("Usage: perl Configure help\n",
+             "       perl Configure options* win32|x64\n",
+             "       perl Configure clean\n");
+
+# help
+
+my @help = (
+"'Configure' configures BIND9 build files.\n\n",
+@usage,
+"\nGeneral Options and Commands:\n",
+"  verbose               (options) print messages\n",
+"  help                  (command) print this help\n",
+"  legacy                (options) process only files for legacy build\n",
+"  win32                 (command) configure for Win32 platform\n",
+"  x64                   (command) configure for x64 platform\n",
+"  clean                 (command) clean up generated files\n",
+"  <none>                (command) print a summary of the configuration\n",
+"\nOptional Features:\n",
+"  enable-intrinsics     enable instrinsic/atomic functions [default=yes]\n",
+"  enable-native-pkcs11  use native PKCS#11 for all crypto [default=no]\n",
+"  enable-openssl-hash   use OpenSSL for hash functions [default=yes]\n",
+"  enable-isc-spnego     use SPNEGO from lib/dns [default=yes]\n",
+"  enable-filter-aaaa    enable filtering of AAAA records [default=no]\n",
+"  enable-fixed-rrset    enable fixed rrset ordering [default=no]\n",
+"  enable-developer      enable developer build settings [default=no]\n",
+"  enable-rpz-nsip       enable rpz-nsip rules [default=yes]\n",
+"  enable-rpz-nsdname    enable rpz-nsdname rules [default=yes]\n",
+"  enable-sit            enable source identity token [default=yes]\n",
+"\nOptional Packages:\n",
+"  with-tests            build with test suite\n",
+"  with-extra-tests      build with extra test suite\n",
+"  with-samples          build with sample programs\n",
+"  with-openssl[=PATH]   build with OpenSSL yes|no|path\n",
+"  with-pkcs11[=PATH]    build with PKCS#11 support yes|no|provider-path\n",
+"  with-ecdsa            crypto ECDSA\n",
+"  with-gost[=ENC]       crypto GOST yes|no|raw|ans1\n",
+"  with-aes              crypto AES\n",
+"  with-sit-alg          choose the algorithm for SIT aes|sha1|sha256\n",
+"  with-gssapi[=PATH]    build with MIT KfW GSSAPI yes|no|path\n",
+"  with-libxml2[=PATH]   build with libxml2 library yes|no|path\n",
+"  with-geoip[=PATH]     build with GeoIP support yes|no|path\n",
+"  with-python[=COMMAND] specify python interpreter python|command\n",
+"  with-readline[=PATH]  build with readline library support yes|no|path\n",
+"  with-idn[=PATH]       build with IDN kit support yes|no|path\n",
+"  with-iconv[=PATH]     path of the iconv DLL [default=same than idn]\n",
+"  with-vcredist[=PATH]  visual C++ redistributable package yes|path\n",
+"  with-tuning=OPTION    tune for plaform size (large|default)\n",
+"  with-cross-compile    32 / 64 bit build / host plaforms\n");
+
+# Parse arguments
+
+my $verbose = 0;
+my $legacy_only = 0;
+my $want_help = "no";
+my $want_win32 = "no";
+my $want_x64 = "no";
+my $want_clean = "no";
+my $want_unknown = "no";
+my $unknown_value;
+my $enable_intrinsics = "yes";
+my $enable_native_pkcs11 = "no";
+my $enable_openssl_hash = "auto";
+my $enable_filter_aaaa = "no";
+my $enable_isc_spnego = "yes";
+my $enable_fixed_rrset = "no";
+my $enable_developer = "no";
+my $enable_rpz_nsip = "yes";
+my $enable_rpz_nsdname = "yes";
+my $enable_sit = "yes";
+my $use_tests = "no";
+my $use_xtests = "no";
+my $use_samples = "no";
+my $use_openssl = "auto";
+my $openssl_path = "..\\..\\";
+my $use_pkcs11 = "no";
+my $pkcs11_path = "unknown";
+my $use_ecdsa = "auto";
+my $use_gost = "auto";
+my $gost_encoding = "raw";
+my $use_aes = "auto";
+my $sit_algorithm = "aes";
+my $use_gssapi = "no";
+my $gssapi_path = "C:\\Program\ Files\\MIT\\Kerberos\\";
+my $use_geoip = "no";
+my $geoip_path = "";
+my $use_libxml2 = "auto";
+my $libxml2_path = "..\\..\\";
+my $use_python = "auto";
+my $python_command = "python";
+my $use_readline = "no";
+my $readline_path = "..\\..\\";
+my $use_idn = "no";
+my $idn_path = "..\\..\\";
+my $iconv_path = " --idn-- ";
+my $use_vcredist = "yes";
+my $vcredist_path = " --infer-- ";
+my $cross_compile = "no";
+my $tuning = "default";
+
+# no arguments -> usage
+
+if ($#ARGV < 0) {
+    foreach (@usage) {
+        print $_;
+    }
+    exit 1;
+}
+
+# parse arguments
+
+foreach (@ARGV) {
+    if (/^verbose$/i) {
+        $verbose = 1;
+    } elsif (/^help$/i) {
+        $want_help = "yes";
+    } elsif (/^disable-(.*)$/i) {
+        appargs($_);
+        myenable($1, "no");
+    } elsif (/^enable-(.*)$/i) {
+        appargs($_);
+        myenable($1, "yes");
+    } elsif (/^without-(.*)$/i) {
+        appargs($_);
+        mywith($1, "no");
+    } elsif (/^with-(.*)=(.*)$/i) {
+        appargs($_);
+        mywith($1, $2);
+    } elsif (/^with-(.*)$/i) {
+        appargs($_);
+        mywith($1, "yes");
+    } elsif (/^legacy$/i) {
+        $legacy_only = 1;
+    } elsif (/^win32$/i) {
+        $want_win32 = "yes";
+    } elsif (/^x64$/i) {
+        appargs($_);
+        $want_x64 = "yes";
+    } elsif (/^clean$/i) {
+        $want_clean = "yes";
+    } else {
+        $want_unknown = "yes";
+        $unknown_value = $_;
+    }
+}
+
+# legacy default to win32
+
+if ($legacy_only && ($want_x64 ne "yes")) {
+    $want_win32 = "yes";
+}
+
+# configure the platform
+
+if (($want_win32 eq "yes") && ($want_x64 eq "yes")) {
+    die "can't ask for both Win32 and x64 platforms\n";
+} elsif ($want_win32 eq "yes") {
+    $configvar{"PLATFORM"} = "Win32";
+    $configvar{"BUILD_PLATFORM"} = "Win32";
+    $configvar{"MACHINE"} = "/machine:X86";
+    $configvar{"BUILD_MACHINE"} = "/machine:X86";
+} elsif ($want_x64 eq "yes") {
+    $configvar{"PLATFORM"} = "x64";
+    $configvar{"BUILD_PLATFORM"} = "x64";
+    $configvar{"MACHINE"} = "/machine:X64";
+    $configvar{"BUILD_MACHINE"} = "/machine:X64";
+}
+
+# append seen args to CONFIGARGS define
+
+sub appargs {
+    my $arg = $_[0];
+    # escape backslashes, spaces and double quotes
+    $arg =~ s/([\\ "])/\\$1/g;
+    if (defined($configdefh{"CONFIGARGS"})) {
+        $configdefh{"CONFIGARGS"} .= " " . $arg;
+    } else {
+        $configdefh{"CONFIGARGS"} = $arg;
+    }
+}
+
+if (!$configdefh{"CONFIGARGS"}) {
+    # CONFIGARGS default is "default"
+    $configdefh{"CONFIGARGS"} = "\"default\"";
+} else {
+    my $val = $configdefh{"CONFIGARGS"};
+    $configdefh{"CONFIGARGS"} = "\"'$val'\"";
+}
+
+# parse enable/disable
+
+sub myenable {
+    my $key = $_[0];
+    my $val = $_[1];
+
+    if ($key =~ /^intrinsics$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_intrinsics = "no";
+        }
+    } elsif ($key =~ /^native-pkcs11$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_native_pkcs11 = "yes";
+        }
+    } elsif ($key =~ /^openssl-hash$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_openssl_hash = "yes";
+        } elsif ($val =~ /^no$/i) {
+            $enable_openssl_hash = "no";
+        }
+    } elsif ($key =~ /^isc-spnego$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_isc_spnego = "no";
+        }
+    } elsif ($key =~ /^filter-aaaa$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_filter_aaaa = "yes";
+        }
+    } elsif ($key =~ /^fixed-rrset$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_fixed_rrset = "yes";
+        }
+    } elsif ($key =~ /^developer$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_developer = "yes";
+        }
+    } elsif ($key =~ /^rpz-nsip$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_rpz_nsip = "no";
+        }
+    } elsif ($key =~ /^rpz-nsdname$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_rpz_nsdname = "no";
+        }
+    } elsif ($key =~ /^sit$/i) {
+        if ($val =~ /^no$/i) {
+            $enable_sit = "no";
+        }
+    } else {
+        $want_unknown = "yes";
+        if ($val eq "no") {
+            $unknown_value = "disable-" . $key;
+        } else {
+            $unknown_value = "enable-". $key;
+        }
+    }
+}
+
+# enable-developer expansion now
+
+if ($enable_developer eq "yes") {
+    $configdefh{"ISC_LIST_CHECKINIT"} = 1;
+    $enable_filter_aaaa = "yes";
+    # no atf on WIN32
+    $enable_fixed_rrset = "yes";
+    # TODO: dlz filesystem
+    $use_tests = "yes";
+    $use_samples = "yes";
+    $enable_sit = "yes";
+}
+
+# parse with/without
+
+sub mywith {
+    my $key = $_[0];
+    my $val = $_[1];
+
+    if ($key =~ /^tests$/i) {
+        if ($val =~ /^yes$/i) {
+            $use_tests = "yes";
+        }
+    } elsif ($key =~ /^extra-tests$/i) {
+        if ($val =~ /^yes$/i) {
+            $use_tests = "yes";
+            $use_xtests = "yes";
+        }
+    } elsif ($key =~ /^samples$/i) {
+        if ($val =~ /^yes$/i) {
+            $use_samples = "yes";
+        }
+    } elsif ($key =~ /^openssl$/i) {
+        if ($val =~ /^no$/i) {
+            $use_openssl = "no";
+        } elsif ($val !~ /^yes$/i) {
+            $use_openssl = "yes";
+            $openssl_path = $val;
+        }
+    } elsif ($key =~ /^pkcs11$/i) {
+        if ($val =~ /^yes$/i) {
+            $use_pkcs11 = "yes";
+        } elsif ($val !~ /^no$/i) {
+            $use_pkcs11= "yes";
+            $pkcs11_path = $val;
+            $pkcs11_path =~ s/\.dll$//i;
+        }
+    } elsif ($key =~ /^ecdsa$/i) {
+        if ($val =~ /^no$/i) {
+            $use_ecdsa = "no";
+        } elsif ($val =~ /^yes$/i) {
+            $use_ecdsa = "yes";
+        }
+    } elsif ($key =~ /^gost$/i) {
+        if ($val =~ /^no$/i) {
+            $use_gost = "no";
+        } elsif ($val =~ /^yes$/i) {
+            $use_gost = "yes";
+            $gost_encoding = $val;
+        }
+    } elsif ($key =~ /^aes$/i) {
+        if ($val =~ /^no$/i) {
+            $use_aes = "no";
+        } elsif ($val =~ /^yes$/i) {
+            $use_aes = "yes";
+        }
+    } elsif ($key =~ /^sit-alg$/i) {
+        $sit_algorithm = $val;
+    } elsif ($key =~ /^gssapi$/i) {
+        if ($val !~ /^no$/i) {
+            $use_gssapi = "yes";
+            if ($val !~ /^yes$/i) {
+                $gssapi_path = $val;
+            }
+        }
+    } elsif ($key =~ /^libxml2$/i) {
+        if ($val =~ /^no$/i) {
+            $use_libxml2 = "no";
+        } elsif ($val !~ /^yes$/i) {
+            $use_libxml2 = "yes";
+            $libxml2_path = $val;
+        }
+    } elsif ($key =~ /^geoip$/i) {
+        if ($val !~ /^no$/i) {
+            $use_geoip = "yes";
+            if ($val !~ /^yes$/i) {
+                $geoip_path = $val;
+            }
+        }
+    } elsif ($key =~ /^readline$/i) {
+        if ($val !~ /^no$/i) {
+            $use_readline = "yes";
+            if ($val !~ /^yes$/i) {
+                $readline_path = $val;
+            }
+        }
+    } elsif ($key =~ /^idn$/i) {
+        if ($val !~ /^no$/i) {
+            $use_idn = "yes";
+            if ($val !~ /^yes$/i) {
+                $idn_path = $val;
+            }
+        }
+    } elsif ($key =~ /^iconv$/i) {
+        if ($val =~ /^no$/i) {
+            $want_unknown = "yes";
+            $unknown_value = "without-iconv doesn't make sense)";
+        } elsif ($val !~ /^yes$/i) {
+            $iconv_path = $val;
+        }
+    } elsif ($key =~ /^python$/i) {
+        if ($val =~ /^no$/i) {
+            $use_python = "no";
+        } else {
+            $use_python = "yes";
+            if ($val !~ /^yes$/i) {
+                $python_command = $val;
+            }
+        }
+    } elsif ($key =~ /^vcredist$/i) {
+        if ($val =~ /^no$/i) {
+            $want_unknown = "yes";
+            $unknown_value = "without-vcredist (vcredist is required)";
+        } elsif ($val !~ /^yes$/i) {
+            $vcredist_path = $val;
+        }
+    } elsif ($key =~ /^cross-compile$/i) {
+        if ($val =~ /^yes$/i) {
+            $cross_compile = "yes";
+        }
+    } elsif ($key =~ /^tuning$/i) {
+        if ($val =~ /^large$/i) {
+            $tuning = "large";
+        }
+    } else {
+        $want_unknown = "yes";
+        if ($val eq "no") {
+            $unknown_value = "without-" . $key;
+        } else {
+            $unknown_value = "with-" . $key;
+        }
+    }
+}
+
+# resolve enable-openssl-hash
+if ($enable_openssl_hash eq "auto") {
+    if ($use_openssl ne "no") {
+        if ($enable_native_pkcs11 eq "yes") {
+            $enable_openssl_hash="no";
+        } else {
+            $enable_openssl_hash="yes";
+        }
+    } else {
+        $enable_openssl_hash="no";
+    }
+}
+
+if ($want_help ne "no") {
+    foreach (@help) {
+        print $_;
+    }
+    exit 1;
+}
+
+# clean up and exit if requested
+if ($want_clean eq "yes") {
+    my $file;
+    foreach $file (@filelist) {
+        unlink($file);
+    }
+
+    foreach $file (@projectlist) {
+        unlink($file);
+    }
+
+    exit 0;
+}
+
+if ($want_unknown ne "no") {
+    print STDERR "can't parse $unknown_value\n";
+    exit 1;
+}
+
+if ($verbose) {
+    if ($want_win32 eq "yes") {
+        print "configure for win32\n";
+    }
+    if ($want_x64 eq "yes") {
+        print "configure for x64\n";
+    }
+    if ($cross_compile eq "yes") {
+        print "cross compiling";
+        if ($want_x64 eq "yes") {
+            print ": build on win32 for x64 host\n";
+        } elsif ($want_win32 eq "yes") {
+            print ": build on x64 for win32 host\n";
+        } else {
+            print "\n";
+        }
+    }
+    if ($enable_intrinsics eq "yes") {
+        print "intrinsics: enabled\n";
+    } else {
+        print "intrinsics: disabled\n";
+    }
+    if ($enable_native_pkcs11 eq "yes") {
+        print "native-pkcs11: enabled\n";
+    } else {
+        print "native-pkcs11: disabled\n";
+    }
+    if ($enable_openssl_hash eq "yes") {
+        print "openssl-hash: enabled\n";
+    } else {
+        print "openssl-hash: disabled\n";
+    }
+    if ($enable_isc_spnego eq "yes") {
+        print "isc-spnego: enabled\n";
+    } else {
+        print "isc-spnego: disabled\n";
+    }
+    if ($enable_filter_aaaa eq "yes") {
+        print "filter-aaaa: enabled\n";
+    } else {
+        print "filter-aaaa: disabled\n";
+    }
+    if ($enable_fixed_rrset eq "yes") {
+        print "fixed-rrset: enabled\n";
+    } else {
+        print "fixed-rrset: disabled\n";
+    }
+    if ($enable_developer eq "yes") {
+        print "developer: enabled\n";
+    } else {
+        print "developer: disabled\n";
+    }
+    if ($enable_rpz_nsip eq "yes") {
+        print "rpz-nsip: enabled\n";
+    } else {
+        print "rpz-nsip: disabled\n";
+    }
+    if ($enable_rpz_nsdname eq "yes") {
+        print "rpz-nsdname: enabled\n";
+    } else {
+        print "rpz-nsdname: disabled\n";
+    }
+    if ($enable_sit eq "yes") {
+        print "sit: enabled\n";
+        print "sit algorithm: $sit_algorithm\n";
+    } else {
+        print "sit: disabled\n";
+    }
+    if ($use_openssl eq "no") {
+        print "openssl: disabled\n";
+    } else {
+        print "openssl-path: $openssl_path\n";
+    }
+    if ($use_tests eq "yes") {
+        print "tests: enabled\n";
+    }
+    if ($use_xtests eq "yes") {
+        print "extra tests: enabled\n";
+    }
+    if ($use_samples eq "yes") {
+        print "sample programs: enabled\n";
+    }
+    if ($use_pkcs11 eq "no") {
+        print "pkcs11: disabled\n";
+    } else {
+        print "pkcs11-provider-path: $pkcs11_path\n";
+    }
+    if ($use_ecdsa eq "no") {
+        print "ecdsa: disabled\n";
+    } else {
+        print "ecdsa: enabled\n";
+    }
+    if ($use_gost eq "no") {
+        print "gost: disabled\n";
+    } else {
+        print "gost: enabled\n";
+        print "gost private key encoding: $gost_encoding\n";
+    }
+    if ($use_aes eq "no") {
+        print "aes: disabled\n";
+    } else {
+        print "aes: enabled\n";
+    }
+    if ($use_gssapi eq "no") {
+        print "gssapi: disabled\n";
+    } else {
+        print "gssapi-path: $gssapi_path\n";
+    }
+    if ($use_libxml2 eq "no") {
+        print "libxml2: disabled\n";
+    } else {
+        print "libxml2-path: $libxml2_path\n";
+    }
+    if ($use_geoip eq "no") {
+        print "geoip: disabled\n";
+    } else {
+        print "geoip-path: $geoip_path\n";
+    }
+    if ($use_readline eq "no") {
+        print "readline: disabled\n";
+    } else {
+        print "readline-path: $readline_path\n";
+    }
+    if ($use_idn eq "no") {
+        print "idn: disabled\n";
+    } else {
+        print "idn-path: $idn_path\n";
+        if ($iconv_path ne " --idn-- ") {
+            print "iconv-path: $iconv_path\n";
+        }
+    }
+    if ($use_python eq "no") {
+        print "python: disabled\n";
+    } else {
+        print "python-command: $python_command\n";
+    }
+    print "vcredist-path: $vcredist_path\n";
+}
+
+# Check environment
+
+# infer vcredist when not given
+if ($vcredist_path eq " --infer-- ") {
+    if ($verbose) {
+        print "trying to infer vcredist path from build environment\n";
+    }
+
+    my @vcpaths = {};
+    push(@vcpaths, $ENV{"VCRedistPath"}) if ($ENV{"VCRedistPath"} ne "");
+    push(@vcpaths, File::Spec->catfile( cwd(), "..", ".." ));
+
+    if ($ENV{"FrameworkSDKDir"} ne "" && $want_win32 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"FrameworkSDKDir"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x86"));
+    } elsif ($ENV{"FrameworkSDKDir"} ne "" && $want_x64 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"FrameworkSDKDir"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x64"));
+    }
+
+    if ($ENV{"WindowsSDKDir"} ne "" && $want_win32 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"WindowsSDKDir"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x86"));
+    } elsif ($ENV{"WindowsSDKDir"} ne "" && $want_x64 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"WindowsSDKDir"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x64"));
+    }
+
+    if ($ENV{"WindowsSDKDir_old"} ne "" && $want_win32 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"WindowsSDKDir_old"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x86"));
+    } elsif ($ENV{"WindowsSDKDir_old"} ne "" && $want_x64 eq "yes") {
+        push(@vcpaths, File::Spec->catfile($ENV{"WindowsSDKDir_old"},
+                                           "BootStrapper", "Packages",
+                                           "vcredist_x64"));
+    }
+
+    if ($ENV{"VCINSTALLDIR"}) {
+        push(@vcpaths, File::Spec->catfile($ENV{"VCINSTALLDIR"},
+                                           "redist", "1033"));
+    }
+
+    my $rfile;
+    if ($want_win32 eq "yes") {
+        $rfile = "vcredist_x86.exe";
+    } else {
+        $rfile = "vcredist_x64.exe";
+    }
+
+    foreach (@vcpaths) {
+        my $vp = File::Spec->catfile($_, $rfile);
+        if (-f $vp) {
+            $vcredist_path = $vp;
+            last;
+        }
+    }
+
+    if ($vcredist_path eq " --infer-- ") {
+        die "with-vcredist is REQUIRED\n";
+    }
+
+    if ($verbose) {
+        print "found vcredist at " . $vcredist_path . "\n";
+    }
+}
+
+my $msc_ver = 0;
+
+open F, ">mscver.c" || die $!;
+print F << 'EOF';
+#include <windows.h>
+#include <stdio.h>
+
+int
+main(void)
+{
+        printf("%d\n", _MSC_VER);
+        return(0);
+}
+EOF
+close F;
+my $compret = `cl /nologo /MD mscver.c`;
+if (grep { -f and -x } ".\\mscver.exe") {
+    $msc_ver = `.\\mscver.exe`;
+} else {
+    die "can't get _MSC_VER value: $compret\n";
+}
+if ($verbose) {
+    print "_MSV_VER == $msc_ver\n";
+}
+if ($msc_ver < 1600) {
+    print STDERR "warning: old version of C++ compiler/Visual Studio\n";
+    print STDERR "only the legacy (cf legacy\\win32-build.txt) will work\n";
+}
+
+# gen single threaded for < VS 2005
+
+if ($msc_ver < 1400) {
+    $configvar{"COPTML"} = "/ML";
+    $configvar{"COPTMLD"} = "/MLD";
+}
+
+# /GX deprecated in VS 2005
+
+if ($msc_ver < 1400) {
+    $configvar{"COPTX"} = "/GX";
+} else {
+    $configvar{"COPTX"} = "/EHsc";
+}
+
+# /YX for < VS 2005
+
+if ($msc_ver < 1400) {
+    $configvar{"COPTY"} = "/YX";
+}
+
+# backtrace for >= VS 2012
+
+if ($msc_ver >= 1700) {
+    $configdefp{"ISC_PLATFORM_USEBACKTRACE"} = 1;
+}
+
+# no version of MSVS supports strcasestr() yet
+$configdefp{"ISC_PLATFORM_NEEDSTRCASESTR"} = 1;
+
+# warn when cross compiling
+
+if ($cross_compile eq "yes") {
+    if ($want_x64 eq "yes") {
+        $configvar{"BUILD_PLATFORM"} = "Win32";
+        $configvar{"BUILD_MACHINE"} = "/machine:X86";
+    }
+    if ($want_win32 eq "yes") {
+        $configvar{"BUILD_PLATFORM"} = "x64";
+        $configvar{"BUILD_MACHINE"} = "/machine:X64";
+    }
+} elsif ($want_win32 eq "yes") {
+    open F, ">cross.c" || die $!;
+    print F << 'EOF';
+#include <windows.h>
+#include <stdio.h>
+
+int
+main(void)
+{
+#ifdef _WIN64
+        fprintf(stderr, "compiling for x64 when win32 was asked?!\n");
+#endif
+        return(0);
+}
+EOF
+    close F;
+    my $compret = `cl /nologo /MD cross.c`;
+    if (grep { -f and -x } ".\\cross.exe") {
+        my $cross = `.\\cross.exe`;
+        if ($cross) {
+            print STDERR $cross;
+        }
+    } else {
+        print STDERR "can't check cross compile: $compret\n";
+    }
+} else {
+    open F, ">cross.c" || die $!;
+    print F << 'EOF';
+#include <windows.h>
+#include <stdio.h>
+
+int
+main(void)
+{
+#ifndef _WIN64
+        fprintf(stderr, "compiling in 32 bits when x64 was asked?!\n");
+#endif
+        return(0);
+}
+EOF
+    close F;
+    my $compret = `cl /nologo /MD cross.c`;
+    if (grep { -f and -x } ".\\cross.exe") {
+        my $cross = `.\\cross.exe`;
+        if ($cross) {
+            print STDERR $cross;
+        }
+    } else {
+        print STDERR "can't check cross compile: $compret\n";
+    }
+}
+
+# Process arguments
+
+# enable-intrinsics
+if ($enable_intrinsics eq "yes") {
+    $configcond{"ATOMIC"} = 1;
+    $configvar{"INTRINSIC"} = "true";
+    $configvar{"COPTI"} = "/Oi";
+    $configdefp{"ISC_PLATFORM_HAVEXADD"} = 1;
+    if ($want_x64 eq "yes") {
+        $configdefp{"ISC_PLATFORM_HAVEXADDQ"} = 1;
+    }
+    $configdefp{"ISC_PLATFORM_HAVEATOMICSTORE"} = 1;
+    $configdefp{"ISC_PLATFORM_HAVECMPXCHG"} = 1;
+} else {
+    $configvar{"INTRINSIC"} = "false";
+}
+
+# enable-native-pkcs11
+if ($enable_native_pkcs11 eq "yes") {
+    if ($use_openssl eq "auto") {
+        $use_openssl = "no";
+    }
+    if ($use_openssl ne "no") {
+        die "can't have both OpenSSL and native PKCS#11\n";
+    }
+    if ($use_pkcs11 ne "yes") {
+        if ($verbose) {
+            print "native PKCS#11 support: force with-pkcs11\n";
+        }
+        $use_pkcs11 = "yes";
+    }
+    if ($pkcs11_path eq "unknown") {
+        if ($verbose) {
+            print "native PKCS#11 support: no PKCS#11 provider defined?\n";
+        }
+    }
+    $configdefd{"CRYPTO"} = "PKCS11CRYPTO";
+    if ($use_ecdsa eq "no") {
+        if ($verbose) {
+            print "no ECDSA support in native PKCS#11\n";
+        }
+    } else {
+        if ($verbose) {
+            print "enabled ECDSA support in native PKCS#11\n";
+        }
+        $configdefh{"HAVE_PKCS11_ECDSA"} = 1;
+    }
+    if ($use_gost eq "no") {
+        if ($verbose) {
+            print "no GOST support in native PKCS#11\n";
+        }
+    } else {
+        if ($verbose) {
+            print "enabled GOST support in native PKCS#11\n";
+        }
+        $configdefh{"HAVE_PKCS11_GOST"} = 1;
+    }
+    if ($use_aes eq "no") {
+        if ($verbose) {
+            print "no AES support in native PKCS#11\n";
+        }
+    } else {
+        if ($verbose) {
+            print "enabled AES support in native PKCS#11\n";
+        }
+        $use_aes = "pkcs11";
+    }
+}
+
+# enable-filter-aaaa
+if ($enable_filter_aaaa eq "yes") {
+    $configdefh{"ALLOW_FILTER_AAAA"} = 1;
+}
+
+# enable-fixed-rrset
+if ($enable_fixed_rrset eq "yes") {
+    $configdefh{"DNS_RDATASET_FIXED"} = 1;
+}
+
+# enable-rpz-nsip
+if ($enable_rpz_nsip ne "no") {
+    $configdefh{"ENABLE_RPZ_NSIP"} = 1;
+}
+
+# enable-rpz-nsdname
+if ($enable_rpz_nsdname ne "no") {
+    $configdefh{"ENABLE_RPZ_NSDNAME"} = 1;
+}
+
+# enable-sit
+if ($enable_sit ne "no") {
+    $configdefp{"ISC_PLATFORM_USESIT"} = 1;
+}
+
+# with-tests
+if ($use_tests eq "yes") {
+    $configcond{"TESTS"} = 1;
+}
+
+# with-extra-tests
+if ($use_xtests eq "yes") {
+    $configcond{"XTESTS"} = 1;
+}
+
+# with-samples
+if ($use_samples eq "yes") {
+    $configcond{"SAMPLES"} = 1;
+}
+
+# with-openssl
+if ($use_openssl eq "no") {
+    if ($verbose) {
+        print "OpenSSL library is disabled\n";
+    }
+} elsif ($use_openssl eq "auto") {
+    if ($verbose) {
+        print "checking for an OpenSSL built directory at sibling root\n";
+    }
+    opendir DIR, $openssl_path || die "No Directory: $!\n";
+    my @dirlist = grep (/^openssl-[0-9]+\.[0-9]+\.[0-9]+[a-z]{0,1}$/i,
+                        readdir(DIR));
+    closedir(DIR);
+
+    # Make sure we have something
+    if (scalar(@dirlist) == 0) {
+        die "can't find an OpenSSL at sibling root\n";
+    }
+    # Now see if we have a directory or just a file.
+    # Make sure we are case insensitive
+    my $file;
+    foreach $file (sort {uc($b) cmp uc($a)} @dirlist) {
+        if (-f File::Spec->catfile($openssl_path,
+                                   $file,
+                                   "inc32\\openssl",
+                                   "opensslv.h")) {
+            $openssl_path = File::Spec->catdir($openssl_path, $file);
+            $use_openssl = "yes";
+            last;
+        }
+    }
+
+    # If we have one use it otherwise report the error
+    if ($use_openssl eq "auto") {
+        die "can't find an OpenSSL built directory at sibling root\n";
+    }
+}
+# falls into (so no else)
+if ($use_openssl eq "yes") {
+    $openssl_path = File::Spec->rel2abs($openssl_path);
+    if ($verbose) {
+        print "checking for OpenSSL built directory at \"$openssl_path\"\n";
+    }
+    if (!-f File::Spec->catfile($openssl_path,
+                                "inc32\\openssl",
+                                "opensslv.h")) {
+        die "can't find OpenSSL opensslv.h include\n";
+    }
+    if (!-f File::Spec->catfile($openssl_path, "out32dll", "libeay32.lib")) {
+        die "can't find OpenSSL libeay32.lib library\n";
+    }
+    if (!-f File::Spec->catfile($openssl_path, "out32dll", "libeay32.dll")) {
+        die "can't find OpenSSL libeay32.dll DLL\n";
+    }
+    my $openssl_inc = File::Spec->catdir($openssl_path, "inc32");
+    my $openssl_libdir = File::Spec->catdir($openssl_path, "out32dll");
+    my $openssl_lib = File::Spec->catfile($openssl_libdir, "libeay32.lib");
+    my $openssl_dll = File::Spec->catfile($openssl_libdir, "libeay32.dll");
+
+    $configcond{"OPENSSL"} = 1;
+    $configdefd{"CRYPTO"} = "OPENSSL";
+    $configvar{"OPENSSL_PATH"} = "$openssl_path";
+    $configinc{"OPENSSL_INC"} = "$openssl_inc";
+    $configlib{"OPENSSL_LIB"} = "$openssl_lib";
+    $configdll{"OPENSSL_DLL"} = "$openssl_dll";
+    if (-f File::Spec->catfile($openssl_inc, "openssl", "dsa.h")) {
+        $configdefh{"HAVE_OPENSSL_DSA"} = 1;
+    } elsif ($verbose) {
+        print "OpenSSL DSA support is disabled\n";
+    }
+}
+
+# check OpenSSL
+if ($use_openssl eq "yes") {
+    if ($verbose) {
+        print "checking whether linking with OpenSSL works\n";
+    }
+    my $dll = $configdll{"OPENSSL_DLL"};
+    my $ret = `copy "$dll" .`;
+    if ($? != 0) {
+        die "Can't copy OpenSSL DLL to working directory: $ret\n";
+    }
+    open F, ">testossl.c" || die $!;
+    print F << 'EOF';
+#include <openssl/err.h>
+
+int
+main(void)
+{
+        ERR_clear_error();
+        return(0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testossl.c "$library"`;
+    if (grep { -f and -x } ".\\testossl.exe") {
+        `.\\testossl.exe`;
+        if ($? != 0) {
+            die "OpenSSL test failed\n";
+        }
+    } else {
+        die "can't compile OpenSSL test: $compret\n";
+    }
+}
+
+# check OpenSSL version
+if ($use_openssl eq "yes") {
+    if ($verbose) {
+        printf "checking OpenSSL library version\n";
+    }
+    open F, ">testosslv.c" || die $!;
+    print F << 'EOF';
+#include <stdio.h>
+#include <openssl/opensslv.h>
+
+int main() {
+        if ((OPENSSL_VERSION_NUMBER >= 0x009070cfL &&
+             OPENSSL_VERSION_NUMBER < 0x00908000L) ||
+             OPENSSL_VERSION_NUMBER >= 0x0090804fL)
+                return (0);
+        printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
+               OPENSSL_VERSION_NUMBER);
+        printf("Require OPENSSL_VERSION_NUMBER 0x009070cf or greater (0.9.7l)\n"
+               "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n\n");
+        return (1);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testosslv.c "$library"`;
+    if (grep { -f and -x } ".\\testosslv.exe") {
+        `.\\testosslv.exe`;
+        if ($? != 0) {
+            die "OpenSSL version test failed\n";
+        }
+    } else {
+        die "can't compile OpenSSL version test: $compret\n";
+    }
+}
+
+# check EVP_sha256 / EVP_sha384 / EVP_sha512
+
+if ($use_openssl eq "yes") {
+    if ($verbose) {
+        printf "checking for EVP_sha256\n";
+    }
+    open F, ">testsha256.c" || die $!;
+    print F << 'EOF';
+extern void *EVP_sha256();
+
+int main() {
+        return EVP_sha256() != 0;
+}
+EOF
+    close F;
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD testsha256.c "$library"`;
+    if (grep { -f and -x } ".\\testsha256.exe") {
+        `.\\testsha256.exe`;
+        if ($? == 0) {
+            if ($verbose) {
+                print "EVP_sha256 test failed: disabling EVP_sha256\n";
+            }
+            $use_ecdsa = "no";
+            $enable_openssl_hash = "no";
+        } else {
+            $configdefh{"HAVE_EVP_SHA256"} = 1;
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile EVP_sha256 test: $compret\n";
+            print "disabling EVP_sha256\n";
+        }
+        $use_ecdsa = "no";
+        $enable_openssl_hash = "no";
+    }
+
+    if ($verbose) {
+        printf "checking for EVP_sha384\n";
+    }
+    open F, ">testsha384.c" || die $!;
+    print F << 'EOF';
+extern void *EVP_sha384();
+
+int main() {
+        return EVP_sha384() != 0;
+}
+EOF
+    close F;
+    $compret = `cl /nologo /MD testsha384.c "$library"`;
+    if (grep { -f and -x } ".\\testsha384.exe") {
+        `.\\testsha384.exe`;
+        if ($? == 0) {
+            if ($verbose) {
+                print "EVP_sha384 test failed: disabling EVP_sha384\n";
+            }
+            $use_ecdsa = "no";
+            $enable_openssl_hash = "no";
+        } else {
+            $configdefh{"HAVE_EVP_SHA384"} = 1;
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile EVP_sha384 test: $compret\n";
+            print "disabling EVP_sha384\n";
+        }
+        $use_ecdsa = "no";
+        $enable_openssl_hash = "no";
+    }
+
+    if ($verbose) {
+        printf "checking for EVP_sha512\n";
+    }
+    open F, ">testsha512.c" || die $!;
+    print F << 'EOF';
+extern void *EVP_sha512();
+
+int main() {
+        return EVP_sha512() != 0;
+}
+EOF
+    close F;
+    $compret = `cl /nologo /MD testsha512.c "$library"`;
+    if (grep { -f and -x } ".\\testsha512.exe") {
+        `.\\testsha512.exe`;
+        if ($? == 0) {
+            if ($verbose) {
+                print "EVP_sha512 test failed: disabling EVP_sha512\n";
+            }
+        } else {
+            $configdefh{"HAVE_EVP_SHA512"} = 1;
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile EVP_sha512 test: $compret\n";
+            print "disabling EVP_sha512\n";
+        }
+    }
+}
+
+# with-ecdsa
+if ($use_openssl eq "no") {
+    $use_ecdsa = "no";
+}
+if ($use_ecdsa eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL ECDSA support\n";
+    }
+    open F, ">testecdsa.c" || die $!;
+    print F << 'EOF';
+#include <openssl/ecdsa.h>
+#include <openssl/objects.h>
+
+int
+main(void)
+{
+        EC_KEY *ec256, *ec384;
+
+        ec256 = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+        ec384 = EC_KEY_new_by_curve_name(NID_secp384r1);
+        if (ec256 == NULL || ec384 == NULL)
+                return (2);
+        return (0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testecdsa.c "$library"`;
+    if (grep { -f and -x } ".\\testecdsa.exe") {
+        `.\\testecdsa.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "ECDSA test failed: disabling ECDSA\n";
+            }
+            $use_ecdsa = "no";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile ECDSA test: $compret\n";
+            print "disabling ECDSA\n";
+        }
+    $use_ecdsa = "no";
+    }
+}
+
+if ($use_ecdsa ne "no") {
+    $use_ecdsa = "yes";
+    $configdefh{"HAVE_OPENSSL_ECDSA"} = 1;
+}
+
+# with-gost
+if ($use_openssl eq "no") {
+    $use_gost = "no";
+}
+if ($use_gost eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL GOST support\n";
+    }
+    open F, ">testgost.c" || die $!;
+    print F << 'EOF';
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+
+int
+main(void)
+{
+#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
+        ENGINE *e;
+        EC_KEY *ek;
+
+        ek = NULL;
+        OPENSSL_config(NULL);
+
+        e = ENGINE_by_id("gost");
+        if (e == NULL)
+                return (1);
+        if (ENGINE_init(e) <= 0)
+                return (1);
+        return (0);
+#else
+        return (1);
+#endif
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testgost.c "$library"`;
+    if (grep { -f and -x } ".\\testgost.exe") {
+        `.\\testgost.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "GOST test failed: disabling GOST\n";
+            }
+            $use_gost = "no";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile GOST test: $compret\n";
+            print "disabling GOST\n";
+        }
+    $use_gost = "no";
+    }
+}
+
+if ($use_gost ne "no") {
+    $use_gost = "yes";
+    $configdefh{"HAVE_OPENSSL_GOST"} = 1;
+}
+
+if ($gost_encoding eq "ans1") {
+    $configdefh{"PREFER_GOSTASN1"} = 1;
+} elsif ($gost_encoding ne "raw") {
+    die "Unrecognized GOST private key encoding: $gost_encoding\n";
+}
+
+# with-aes
+if ($use_openssl eq "no") {
+    if ($use_aes ne "pkcs11") {
+        $use_aes = "no";
+    }
+}
+if ($use_aes eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL EVP AES support\n";
+    }
+    $use_aes = "evp";
+    open F, ">testevpaes.c" || die $!;
+    print F << 'EOF';
+#include <openssl/evp.h>
+
+int
+main(void)
+{
+        EVP_CIPHER *aes128, *aes192, *aes256;
+
+        aes128 = EVP_aes_128_ecb();
+        aes192 = EVP_aes_192_ecb();
+        aes256 = EVP_aes_256_ecb();
+        if (aes128 == NULL || aes192 == NULL || aes256 == NULL)
+                return (1);
+        return (0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testevpaes.c "$library"`;
+    if (grep { -f and -x } ".\\testevpaes.exe") {
+        `.\\testevpaes.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "EVP AES test failed: disabling EVP AES\n";
+            }
+            $use_aes = "auto";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile EVP AES test: $compret\n";
+            print "disabling EVP AES\n";
+        }
+        $use_aes = "auto";
+    }
+}
+
+if ($use_aes eq "auto") {
+    if ($verbose) {
+        print "checking for OpenSSL native AES support\n";
+    }
+    $use_aes = "native";
+    open F, ">testaes.c" || die $!;
+    print F << 'EOF';
+#include <openssl/aes.h>
+
+AES_KEY k;
+const unsigned char bufin[16];
+unsigned char bufout[16];
+
+int
+main(void)
+{
+        AES_encrypt(bufin, bufout, &k);
+        return (0);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testaes.c "$library"`;
+    if (grep { -f and -x } ".\\testaes.exe") {
+        `.\\testaes.exe`;
+        if ($? != 0) {
+            if ($verbose) {
+                print "native AES test failed: disabling AES\n";
+            }
+            $use_aes = "no";
+        }
+    } else {
+        if ($verbose) {
+            print "can't compile native AES test: $compret\n";
+            print "disabling AES\n";
+        }
+        $use_aes = "no";
+    }
+}
+
+if ($use_aes eq "yes") {
+    $configdefh{"HAVE_OPENSSL_EVP_AES"} = 1;
+} elsif ($use_aes eq "evp") {
+    $configdefh{"HAVE_OPENSSL_EVP_AES"} = 1;
+    $use_aes = "yes";
+} elsif ($use_aes eq "native") {
+    $configdefh{"HAVE_OPENSSL_AES"} = 1;
+    $use_aes = "yes";
+} elsif ($use_aes eq "pkcs11") {
+    $use_aes = "yes";
+}
+
+if ($use_aes eq "yes") {
+    $configdefp{"ISC_PLATFORM_WANTAES"} = 1;
+    $configcond{"AES"} = 1;
+}
+
+# with-sit-alg
+if ($enable_sit ne "no") {
+    if ($sit_algorithm eq "aes") {
+        if ($use_aes ne "yes") {
+            $sit_algorithm = "sha256";
+        } else {
+            $configdefh{"AES_SIT"} = 1;
+        }
+    }
+    if ($sit_algorithm eq "sha1") {
+        $configdefh{"HMAC_SHA1_SIT"} = 1;
+    } elsif ($sit_algorithm eq "sha256") {
+        $configdefh{"HMAC_SHA256_SIT"} = 1;
+    } elsif ($sit_algorithm ne "aes") {
+        die "Unrecognized SIT algorithm: $sit_algorithm\n";
+    }
+}
+
+# enable-openssl-hash
+if ($enable_openssl_hash eq "yes") {
+    if ($use_openssl eq "no") {
+        die "No OpenSSL for hash functions\n";
+    }
+    $configdefp{"ISC_PLATFORM_OPENSSLHASH"} = 1;
+    if ($verbose) {
+        print "checking HMAC_Init() return type\n";
+    }
+    open F, ">testhmac.c" || die $!;
+    print F << 'EOF';
+#include <openssl/hmac.h>
+
+int
+main(void)
+{
+        HMAC_CTX ctx;
+        int n = HMAC_Init(&ctx, NULL, 0, NULL);
+        n += HMAC_Update(&ctx, NULL, 0);
+        n += HMAC_Final(&ctx, NULL, NULL);
+        return(n);
+}
+EOF
+    close F;
+    my $include = $configinc{"OPENSSL_INC"};
+    my $library = $configlib{"OPENSSL_LIB"};
+    $compret = `cl /nologo /MD /I "$include" testhmac.c "$library"`;
+    if (grep { -f and -x } ".\\testhmac.exe") {
+        $configdefh{"HMAC_RETURN_INT"} = 1;
+    }
+}
+
+# with-pkcs11
+if ($use_pkcs11 ne "no") {
+    $configcond{"PKCS11"} = 1;
+    $configdefd{"USE_PKCS11"} = "USE_PKCS11";
+    $configvar{"PKCS11_TOOLS"} = "pkcs11";
+    $configdefd{"PK11_LIB_LOCATION"} = "PK11_LIB_LOCATION=\"$pkcs11_path\"";
+}
+
+# with-gssapi
+if ($use_gssapi eq "no") {
+    if ($verbose) {
+        print "gssapi library is disabled\n";
+    }
+} else {
+    $gssapi_path = File::Spec->rel2abs($gssapi_path);
+    if ($verbose) {
+        print "checking for gssapi directory at \"$gssapi_path\"\n";
+    }
+    $configcond{"GSSAPI"} = 1;
+    $configdefd{"USE_GSSAPI"} = "GSSAPI";
+    if (!-f File::Spec->catfile($gssapi_path, "include",
+                                "gssapi", "gssapi.h")) {
+        die "can't find gssapi.h include\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "include",
+                                "gssapi", "gssapi_krb5.h")) {
+        die "can't find gssapi_krb5.h include\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "include",
+                                "krb5", "krb5.h")) {
+        die "can't find krb5.h include\n";
+    }
+    $configinc{"GSSAPI_INC"} = File::Spec->catdir($gssapi_path, "include");
+    my $bits = "32";
+    my $gssapi_lib;
+    my $krb5_lib;
+    if ($want_win32 eq "yes") {
+        $bits = "32";
+        if (!-f File::Spec->catfile($gssapi_path, "lib", "i386",
+                                    "gssapi${bits}.lib")) {
+            die "can't find gssapi${bits}.lib library\n";
+        }
+        $gssapi_lib = File::Spec->catfile($gssapi_path, "lib", "i386",
+                                          "gssapi${bits}.lib");
+        if (!-f File::Spec->catfile($gssapi_path, "lib", "i386",
+                                    "krb5_${bits}.lib")) {
+            die "can't find krb5_${bits}.lib library\n";
+        }
+        $krb5_lib = File::Spec->catfile($gssapi_path, "lib", "i386",
+                                             "krb5_${bits}.lib");
+    } elsif ($want_x64 eq "yes") {
+        $bits = "64";
+        if (!-f File::Spec->catfile($gssapi_path, "lib", "amd64",
+                                    "gssapi${bits}.lib")) {
+            die "can't find gssapi${bits}.lib library\n";
+        }
+        $gssapi_lib = File::Spec->catfile($gssapi_path, "lib", "amd64",
+                                             "gssapi${bits}.lib");
+        if (!-f File::Spec->catfile($gssapi_path, "lib", "amd64",
+                                    "krb5_${bits}.lib")) {
+            die "can't find krb5_${bits}.lib library\n";
+        }
+        $krb5_lib = File::Spec->catfile($gssapi_path, "lib", "amd64",
+                                        "krb5_${bits}.lib");
+    } else {
+        die "can't happen: no choice between Win32 and x64\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "bin", "gssapi${bits}.dll")) {
+        die "can't find gssapi${bits}.dll DLL\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "bin", "krb5_${bits}.dll")) {
+        die "can't find krb5_${bits}.dll DLL\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "bin", "comerr${bits}.dll")) {
+        die "can't find comerr${bits}.dll DLL\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "bin", "k5sprt${bits}.dll")) {
+        die "can't find k5sprt${bits}.dll DLL\n";
+    }
+    if (!-f File::Spec->catfile($gssapi_path, "bin", "wshelp${bits}.dll")) {
+        die "can't find wshelp${bits}.dll DLL\n";
+    }
+    $configlib{"GSSAPI_LIB"} = "$gssapi_lib";
+    $configlib{"KRB5_LIB"} = "$krb5_lib";
+    my $gssapi_dll = File::Spec->catfile($gssapi_path, "bin",
+                                         "gssapi${bits}.dll");
+    $configdll{"GSSAPI_DLL"} = "$gssapi_dll";
+    my $krb5_dll = File::Spec->catfile($gssapi_path, "bin",
+                                         "krb5_${bits}.dll");
+    $configdll{"KRB5_DLL"} = "$krb5_dll";
+    my $comerr_dll = File::Spec->catfile($gssapi_path, "bin",
+                                         "comerr${bits}.dll");
+    $configdll{"COMERR_DLL"} = "$comerr_dll";
+    my $k5sprt_dll = File::Spec->catfile($gssapi_path, "bin",
+                                         "k5sprt${bits}.dll");
+    $configdll{"K5SPRT_DLL"} = "$k5sprt_dll";
+    my $wshelp_dll = File::Spec->catfile($gssapi_path, "bin",
+                                         "wshelp${bits}.dll");
+    $configdll{"WSHELP_DLL"} = "$wshelp_dll";
+}
+
+# enable-isc-spnego
+if ($use_gssapi ne "yes") {
+    $enable_isc_spnego = "no";
+} elsif ($enable_isc_spnego eq "yes") {
+    if ($use_gssapi eq "no") {
+        die "No GSSAPI for SPNEGO\n";
+    }
+    $configdefd{"USE_ISC_SPNEGO"} = "USE_ISC_SPNEGO";
+}
+
+# with-geoip
+if ($use_geoip eq "no") {
+    if ($verbose) {
+        print "geoip library is disabled\n";
+    }
+} else {
+    $configcond{"GEOIP"} = 1;
+    $geoip_path = File::Spec->rel2abs($geoip_path);
+    if ($verbose) {
+        print "checking for geoip directory at \"$geoip_path\"\n";
+    }
+    if (!-f File::Spec->catfile($geoip_path, "GeoIP.h")) {
+        die "can't find GeoIP.h include\n";
+    }
+    if (!-f File::Spec->catfile($geoip_path, "GeoIP.lib")) {
+        die "can't find Geoip.lib library\n";
+    }
+    if (!-f File::Spec->catfile($geoip_path, "GeoIP.dll")) {
+        die "can't find Geoip.dll DLL\n";
+    }
+    $configinc{"GEOIP_INC"} = "$geoip_path";
+    my $geoip_lib = File::Spec->catfile($geoip_path, "GeoIP.lib");
+    $configlib{"GEOIP_LIB"} = "$geoip_lib";
+    my $geoip_dll = File::Spec->catfile($geoip_path, "GeoIP.dll");
+    $configdll{"GEOIP_DLL"} = "$geoip_dll";
+
+    if ($verbose) {
+        print "checking for GeoIP support\n";
+    }
+    my $ret = `copy "$geoip_dll" .`;
+    if ($? != 0) {
+        die "Can't copy GeoIP DLL to working directory: $ret\n";
+    }
+    open F, ">testgeoip.c" || die $!;
+    print F << 'EOF';
+extern void *GeoIP_open();
+
+int main() {
+        return GeoIP_open != 0;
+}
+EOF
+    close F;
+    $compret = `cl /nologo /MD testgeoip.c "$geoip_lib"`;
+    if (grep { -f and -x } ".\\testgeoip.exe") {
+        `.\\testgeoip.exe`;
+        if ($? == 0) {
+            die "GeoIP test failed\n";
+        }
+    } else {
+        die "can't compile GeoIP test: $compret\n";
+    }
+    $configdefh{"HAVE_GEOIP"} = 1;
+
+    if ($verbose) {
+        print "checking for GeoIP Country IPv6 support\n";
+    }
+    my $geoip_inc = qq(/I "$geoip_path");
+    my $geoip_libs = qq("$geoip_lib" ws2_32.lib);
+    open F, ">testgeoip1.c" || die $!;
+    print F << 'EOF';
+#include <GeoIP.h>
+
+struct in6_addr in6;
+int flag = 1;
+
+int main() {
+        if (flag)
+                return 1;
+        return GeoIP_country_name_by_ipnum_v6(NULL, in6) != NULL;
+}
+EOF
+    close F;
+    $compret = `cl /nologo $geoip_inc /MD testgeoip1.c $geoip_libs`;
+    if (grep { -f and -x } ".\\testgeoip1.exe") {
+        `.\\testgeoip1.exe`;
+        if ($? == 0) {
+            die "GeoIP Country IPv6 test failed\n";
+        }
+    } else {
+        die "can't compile GeoIP Country IPv6 test: $compret\n";
+    }
+    $configdefh{"HAVE_GEOIP_V6"} = 1;
+
+    if ($verbose) {
+        print "checking for GeoIP City IPv6 support\n";
+    }
+    open F, ">testgeoip2.c" || die $!;
+    print F << 'EOF';
+#include <GeoIP.h>
+#include <GeoIPCity.h>
+
+struct in6_addr in6;
+int i = GEOIP_CITY_EDITION_REV0_V6;
+int flag = 1;
+
+int main() {
+        if (flag)
+                return 1;
+        return GeoIP_record_by_ipnum_v6(NULL, in6) != NULL;
+}
+EOF
+    close F;
+    $compret = `cl /nologo $geoip_inc /MD testgeoip2.c $geoip_libs`;
+    if (grep { -f and -x } ".\\testgeoip2.exe") {
+        `.\\testgeoip2.exe`;
+        if ($? == 0) {
+            die "GeoIP City IPv6 test failed\n";
+        }
+    } else {
+        die "can't compile GeoIP City IPv6 test: $compret\n";
+    }
+    $configdefh{"HAVE_GEOIP_CITY_V6"} = 1;
+}
+
+# with-readline
+if ($use_readline eq "no") {
+    if ($verbose) {
+        print "readline library is disabled\n";
+    }
+} else {
+    $readline_path = File::Spec->rel2abs($readline_path);
+    if ($verbose) {
+        print "checking for readline directory at \"$readline_path\"\n";
+    }
+    if (!-f File::Spec->catfile($readline_path, "readline", "readline.h")) {
+        die "can't find readline.h include\n";
+    }
+    if (!-f File::Spec->catfile($readline_path, "readline", "readline.lib")) {
+        die "can't find readline.lib library\n";
+    }
+    $configdefh{"HAVE_READLINE"} = 1;
+    $configinc{"READLINE_INC"} = "$readline_path";
+    my $readline_lib = File::Spec->catfile($readline_path,
+                                           "readline", "readline.lib");
+    $configlib{"READLINE_LIB"} = "$readline_lib";
+    if (-f File::Spec->catfile($readline_path, "readline", "readlineD.lib")) {
+        my $readline_libd = File::Spec->catfile($readline_path,
+                                                "readline", "readlineD.lib");
+        $configlib{"READLINE_LIBD"} = "$readline_libd";
+    } else {
+        $configlib{"READLINE_LIBD"} = "$readline_lib";
+    }
+}
+
+# with-idn (including with-iconv)
+if ($use_idn eq "no") {
+    if ($verbose) {
+        print "IDN kit is disabled\n";
+    }
+} else {
+    $idn_path = File::Spec->rel2abs($idn_path);
+    if ($verbose) {
+        print "checking for IDN kit directory at \"$idn_path\"\n";
+    }
+    if (!-f File::Spec->catfile($idn_path, "idn", "api.h")) {
+        die "can't find idn\\api.h include\n";
+    }
+    if (!-f File::Spec->catfile($idn_path, "idn", "idnkit.lib")) {
+        die "can't find idnkit.lib library\n";
+    }
+    if (!-f File::Spec->catfile($idn_path, "idn", "idnkit.dll")) {
+        die "can't find idnkit.dll DLL\n";
+    }
+    $configcond{"IDNKIT"} = 1;
+    $configdefh{"WITH_IDN"} = 1;
+    $configinc{"IDN_INC"} = "$idn_path";
+    my $idn_lib = File::Spec->catfile($idn_path, "idn", "idnkit.lib");
+    $configlib{"IDN_LIB"} = "$idn_lib";
+    my $idn_dll = File::Spec->catfile($idn_path, "idn", "idnkit.dll");
+    $configdll{"IDN_DLL"} = "$idn_dll";
+    if ($iconv_path eq " --idn-- ") {
+        my $iconv_dll = File::Spec->catfile($idn_path, "idn", "iconv.dll");
+        $configdll{"ICONV_DLL"} = "$iconv_dll";
+    } else {
+        my $iconv_dll =File::Spec->catfile($iconv_path, "iconv.dll");
+        $configdll{"ICONV_DLL"} = "$iconv_dll";
+    }
+}
+
+# with-libxml2
+if ($use_libxml2 eq "no") {
+    if ($verbose) {
+        print "libxml2 library is disabled\n";
+    }
+} elsif ($use_libxml2 eq "auto") {
+    if ($verbose) {
+        print "checking for a libxml2 built directory at sibling root\n";
+    }
+    opendir DIR, $libxml2_path || die "No Directory: $!\n";
+    my @dirlist = grep (/^libxml2-[0-9]+\.[0-9]+\.[0-9]+[a-z]*/i,
+                        readdir(DIR));
+    closedir(DIR);
+
+    # Make sure we have something
+    if (scalar(@dirlist) == 0) {
+        die "can't find a libxml2 at sibling root\n";
+    }
+    # Now see if we have a directory or just a file.
+    # Make sure we are case insensitive
+    my $file;
+    foreach $file (sort {uc($b) cmp uc($a)} @dirlist) {
+        if (-f File::Spec->catfile($libxml2_path,
+                                   $file,
+                                   "include\\libxml",
+                                   "xmlversion.h")) {
+            $libxml2_path = File::Spec->catdir($libxml2_path, $file);
+            $use_libxml2 = "yes";
+            last;
+        }
+    }
+
+    # If we have one use it otherwise report the error
+    if ($use_libxml2 eq "auto") {
+        die "can't find a libxml2 built directory at sibling root\n";
+    }
+}
+# falls into (so no else)
+if ($use_libxml2 eq "yes") {
+    $libxml2_path = File::Spec->rel2abs($libxml2_path);
+    if ($verbose) {
+        print "checking for libxml2 built directory at \"$libxml2_path\"\n";
+    }
+    if (!-f File::Spec->catfile($libxml2_path,
+                                "include\\libxml",
+                                "xmlversion.h")) {
+        die "can't find libxml2 xmlversion.h include\n";
+    }
+    if (!-f File::Spec->catfile($libxml2_path,
+                                "win32\\bin.msvc",
+                                "libxml2.lib")) {
+        die "can't find Libxml2 libxml2.lib library\n";
+    }
+    if (!-f File::Spec->catfile($libxml2_path,
+                                "win32\\bin.msvc",
+                                "libxml2.dll")) {
+        die "can't find Libxml2 DLL\n";
+    }
+    $configcond{"LIBXML2"} = 1;
+    $configdefh{"HAVE_LIBXML2"} = 1;
+    my $libxml2_inc = File::Spec->catdir($libxml2_path, "include");
+    $configinc{"LIBXML2_INC"} = "$libxml2_inc";
+    my $libxml2_libdir = File::Spec->catdir($libxml2_path, "win32\\bin.msvc");
+    my $libxml2_lib = File::Spec->catfile($libxml2_libdir, "libxml2.lib");
+    $configlib{"LIBXML2_LIB"} = "$libxml2_lib";
+    my $libxml2_dll = File::Spec->catfile($libxml2_libdir, "libxml2.dll");
+    $configdll{"LIBXML2_DLL"} = "$libxml2_dll";
+}
+
+# with-python
+if ($use_python eq "no") {
+    if ($verbose) {
+        print "python is disabled\n";
+    }
+} elsif ($use_python eq "auto") {
+    if ($verbose) {
+        print "checking for python in path\n";
+    }
+    my $pythonret = `python -c "quit()" 2>&1`;
+    if ($? != 0) {
+        die "can't launch the python interpreter: $pythonret\n";
+    }
+    $use_python = "yes";
+}
+if ($use_python ne "no") {
+    if ($verbose) {
+        my $pythonret = `"$python_command" -c "quit()" 2>&1`;
+        if ($? != 0) {
+            print STDERR
+                "can't lanch the local python interpreter: $pythonret\n";
+        }
+    }
+    $configcond{"PYTHON"} = 1;
+    $configdefd{"USE_PYTHON"} = "USE_PYTHON";
+    $configvar{"PYTHON"} = "$python_command";
+    # Only a default!
+    $configvar{"prefix"} = "C:\\Program Files\ISC BIND 9";
+}
+
+# with-vcredist
+$vcredist_path = File::Spec->rel2abs($vcredist_path);
+if (!grep { -f and -x } $vcredist_path) {
+    die "$vcredist_path is not correct\n";
+} else {
+    $configvar{"VCREDIST_PATH"} = "$vcredist_path";
+}
+
+# tuning
+if ($tuning eq "large") {
+    $configdefh{"TUNE_LARGE"} = 1;
+}
+
+# setup config.h with %configdefh
+
+sub setupconfigh {
+    my $line;
+    my @Lines;
+
+    open F, $configfilein || die $!;
+    @Lines = <F>;
+    close F;
+
+    foreach $line (@Lines) {
+        chomp $line;
+        if ($line =~ /^@([^@]+)\@$/) {
+            if (defined($configdefh{$1})) {
+                $line = "#define $1 $configdefh{$1}";
+            } else {
+                $line = "/* #undef $1 */";
+            }
+        }
+    }
+
+    open F, $configfileout || die $!;
+    if ($verbose) {
+        print "Setting up config.h\n";
+    }
+    foreach $line (@Lines) {
+        print F $line . "\n";
+    }
+    close F;
+}
+
+# setup platform.h with %configdefp
+
+sub setupplatformh {
+    my $line;
+    my @Lines;
+
+    open F, $platformfile . ".in" || die $!;
+    @Lines = <F>;
+    close F;
+
+    foreach $line (@Lines) {
+        chomp $line;
+        if ($line =~ /^@([^@]+)\@$/) {
+            if (defined($configdefp{$1})) {
+                $line = "#define $1 $configdefp{$1}";
+            } else {
+                $line = "/* #undef $1 */";
+            }
+        }
+    }
+
+    open F, ">" . $platformfile || die $!;
+    if ($verbose) {
+        print "Setting up platform.h\n";
+    }
+    foreach $line (@Lines) {
+        print F $line . "\n";
+    }
+    close F;
+}
+
+# escape spaces
+
+sub kw {
+    if ($_[0] =~ / /) {
+        return "\"$_[0]\"";
+    } else {
+        return "$_[0]";
+    }
+}
+
+# setup a file with %configcond stack and %config{var,defd,inc,lib,dll}
+
+sub setupfile {
+    my $line;
+    my @Linesin;
+    my @Linesout;
+    my $filename = $_[0];
+    my $cond;
+    my @conds;
+    my $pass = 1;
+    my @passes;
+    my $val;
+
+    open F, $filename . ".in" || die $!;
+    @Linesin = <F>;
+    close F;
+
+    foreach $line (@Linesin) {
+        chomp $line;
+        if ($line =~ /^\@IF (.*)$/) {
+            if (defined($cond)) {
+                unshift(@conds, $cond);
+                unshift(@passes, $pass);
+            }
+            $cond = $1;
+            if (defined($configcond{$cond})) {
+                # do nothing
+            } else {
+                $pass = 0;
+            }
+            next;
+        } elsif ($line =~ /^\@ELSE (.*)$/) {
+            if ($cond ne $1) {
+                die "\@ELSE $1 mismatch in $filename\n";
+            }
+            if (defined($configcond{$cond})) {
+                $pass = 0;
+            } else {
+                if (scalar(@conds) > 0) {
+                    $pass = $passes[0];
+                } else {
+                    $pass = 1;
+                }
+            }
+            next;
+        } elsif ($line =~ /^\@END (.*)$/) {
+            if ($cond ne $1) {
+                die "\@END $1 mismatch in $filename\n";
+            }
+            $cond = shift(@conds);
+            if (scalar(@passes) > 0) {
+                $pass = shift(@passes);
+            } else {
+                $pass = 1;
+            }
+            next;
+        }
+        if ($pass == 0) {
+            next;
+        }
+        while ($line =~ /@([^@ ]*)@/) {
+            if ($1 ~~ @substvar) {
+                if (defined($configvar{$1})) {
+                    $val = kw($configvar{$1});
+                    $line = "$`$val$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substdefd) {
+                if (defined($configdefd{$1})) {
+                    my $def = $configdefd{$1};
+                    my $pre = "$`";
+                    my $post = "$'";
+                    $def =~ s/([\\ "])/\\$1/g;
+                    $line = qq($pre/D "$def"$post);
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substinc) {
+                if (defined($configinc{$1})) {
+                    $line = qq($`/I "$configinc{$1}"$');
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substlib) {
+                if (defined($configlib{$1})) {
+                    $val = kw($configlib{$1});
+                    $line = "$`$val$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substdll) {
+                if (defined($configdll{$1})) {
+                    $val = kw($configdll{$1});
+                    $line = "$`$val$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } else {
+                die "unknown control $& in $filename\n";
+            }
+        }
+        push @Linesout, $line;
+    }
+
+    open F, ">" . $filename || die $!;
+    if ($verbose) {
+        print "Setting up $filename\n";
+    }
+    foreach $line (@Linesout) {
+        print F $line . "\n";
+    }
+    close F;
+}
+
+# setup a project with %configcond stack and %config{var,defd,inc,lib,dll}
+
+sub setupproject {
+    my $line;
+    my @Linesin;
+    my @Linesout;
+    my $projectname = $_[0];
+    my $cond;
+    my @conds;
+    my $pass = 1;
+    my @passes;
+    my $val;
+
+    open F, $projectname . ".in" || die $!;
+    @Linesin = <F>;
+    close F;
+
+    foreach $line (@Linesin) {
+        chomp $line;
+        if ($line =~ /^\@IF (.*)$/) {
+            if (defined($cond)) {
+                unshift(@conds, $cond);
+                unshift(@passes, $pass);
+            }
+            $cond = $1;
+            if (defined($configcond{$cond})) {
+                # do nothing
+            } else {
+                $pass = 0;
+            }
+            next;
+        } elsif ($line =~ /^\@ELSE (.*)$/) {
+            if ($cond ne $1) {
+                die "\@ELSE $1 mismatch in $projectname\n";
+            }
+            if (defined($configcond{$cond})) {
+                $pass = 0;
+            } else {
+                if (scalar(@conds) > 0) {
+                    $pass = $passes[0];
+                } else {
+                    $pass = 1;
+                }
+            }
+            next;
+        } elsif ($line =~ /^\@END (.*)$/) {
+            if ($cond ne $1) {
+                die "\@END $1 mismatch in $projectname\n";
+            }
+            $cond = shift(@conds);
+            if (scalar(@passes) > 0) {
+                $pass = shift(@passes);
+            } else {
+                $pass = 1;
+            }
+            next;
+        }
+        if ($pass == 0) {
+            next;
+        }
+        while ($line =~ /@([^@ ]*)@/) {
+            if ($1 ~~ @substvar) {
+                if (defined($configvar{$1})) {
+                    $val = kw($configvar{$1});
+                    $line = "$`$val$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substdefd) {
+                if (defined($configdefd{$1})) {
+                    $val = kw($configdefd{$1});
+                    $line = "$`$val;$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substinc) {
+                if (defined($configinc{$1})) {
+                    $val = kw($configinc{$1});
+                    $line = "$`$val;$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substlib) {
+                if (defined($configlib{$1})) {
+                    $val = kw($configlib{$1});
+                    $line = "$`$val;$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } elsif ($1 ~~ @substdll) {
+                if (defined($configdll{$1})) {
+                    $val = kw($configdll{$1});
+                    $line = "$`$val$'";
+                } else {
+                    $line = "$`$'";
+                }
+            } else {
+                die "unknown control $& in $projectname\n";
+            }
+        }
+        push @Linesout, $line;
+    }
+
+    open F, ">" . $projectname || die $!;
+    if ($verbose) {
+        print "Setting up $projectname\n";
+    }
+    foreach $line (@Linesout) {
+        print F $line . "\n";
+    }
+    close F;
+}
+
+# make versions.h
+
+sub makeversion {
+    # List of directories with version files
+
+    my @dirlist = ("isc", "dns", "isccc", "isccfg", "lwres", "bind9", "irs");
+    my %LibMacros = (
+        "bind9"   => "LIBBIND9_EXPORTS",
+        "dns"     => "LIBDNS_EXPORTS",
+        "irs"     => "LIBIRS_EXPORTS",
+        "isc"     => "LIBISC_EXPORTS",
+        "isccc"   => "LIBISCCC_EXPORTS",
+        "isccfg"  => "LIBISCCFG_EXPORTS",
+        "lwres"   => "LIBLWRES_EXPORTS");
+    my @VersionNames = ("LIBINTERFACE", "LIBREVISION", "LIBAGE");
+    my %Versions;
+    my $Version;
+    my %ApiVersions;
+    my $Mapapi;
+    my $versionfile = "versions.h";
+    my $versionpath = "..\\$versionfile";
+
+    my $data;
+    my $name;
+    my $value;
+
+    # First get the version information
+
+    open V, "..\\version" || die $!;
+    while (<V>) {
+        chomp;
+        ($data) = split(/\#/);
+        if ($data) {
+            ($name, $value) = split(/=/, $data);
+            ($name) = split(/\s+/, $name);
+            if ($name eq 'PRODUCT' || $name eq 'DESCRIPTION') {
+                ($value) =~ s/^["\s]+//;
+                ($value) =~ s/["\s]+$//;
+            } else {
+                ($value) = split(/\s+/, $value);
+            }
+            $Versions{$name} = $value;
+        }
+    }
+    close V;
+
+    # And the mapapi one
+
+    open M, "..\\lib\\dns\\mapapi" || die $!;
+    while (<M>) {
+        chomp;
+        ($data) = split(/\#/);
+        if ($data) {
+            ($name, $value) = split(/=/, $data);
+            ($name) = split(/\s+/, $name);
+            if ($name eq 'MAPAPI') {
+                ($value) =~ s/^["\s]+//;
+                ($value) =~ s/["\s]+$//;
+            } else {
+                ($value) = split(/\s+/, $value);
+            }
+            $Mapapi = $value;
+        }
+    }
+    close M;
+
+    # Now set up the output version file
+
+    my $ThisDate = scalar localtime();
+    open O, ">$versionpath" ||
+        die "Can't open output file $versionpath: $!\n";
+
+    # Standard Header
+
+    print O '/*
+ * Copyright (C) 2001  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+';
+
+    print O "/*\n";
+    print O " * $versionfile.";
+    print O "  Generated automatically by Configure.pl.\n";
+    print O " * Date generated: $ThisDate\n";
+    print O " */\n\n";
+
+    print O '
+#ifndef  VERSIONS_H
+#define VERSIONS_H 1
+
+';
+
+    $Version = "$Versions{'MAJORVER'}.$Versions{'MINORVER'}";
+    if ($Versions{'PATCHVER'} != "") {
+        $Version = "$Version.$Versions{'PATCHVER'}";
+    }
+    $Version = "$Version$Versions{'RELEASETYPE'}$Versions{'RELEASEVER'}";
+    $Version = "$Version$Versions{'EXTENSIONS'}";
+    if ($verbose) {
+        print "BIND Version: $Version\n";
+    }
+
+    print O "#define VERSION \"$Version\"\n";
+    print O "#define PRODUCT \"$Versions{'PRODUCT'}\"\n\n";
+    print O "#define DESCRIPTION \"$Versions{'DESCRIPTION'}\"\n\n";
+    print O
+        "#define MAJOR \"$Versions{'MAJORVER'}.$Versions{'MINORVER'}\"\n\n";
+    print O "#define MAPAPI \"$Mapapi\"\n\n";
+
+    my $dir;
+    my $apifile;
+    foreach $dir (@dirlist) {
+        $apifile = "..\\lib\\$dir\\api";
+        open A, $apifile || die $!;
+        while (<A>) {
+            chomp;
+            ($data) = split(/\#/);
+            if ($data) {
+                ($name, $value) = split(/=/, $data);
+                $name =~ s/\s+//;
+                $value =~ s/\s+//;
+                $ApiVersions{$name} = $value;
+            }
+        }
+        close A;
+
+        print O "\n#ifdef $LibMacros{$dir}\n";
+        foreach $name (@VersionNames) {
+            print O "#define $name\t$ApiVersions{$name}\n";
+        }
+        print O "#endif\n\n";
+    }
+
+    print O "#endif /* VERSIONS_H */\n";
+    close O;
+}
+
+# make srcid.h
+
+sub makesrcid {
+    my $data;
+    my $name;
+    my $value;
+    my $srcid = "unset";
+
+    open SOUT, ">..\\srcid.h" || die "cannot open srcid.h: $!\n";
+    if (open (SIN, "..\\srcid")) {
+      LOOP: while (<SIN>) {
+          chomp;
+          ($data) = split(/\#/);
+          if ($data) {
+              ($name, $value) = split(/=/, $data);
+              ($name) = split(/\s+/, $name);
+              ($value) = split(/\s+/, $value);
+              next LOOP if ($name != "SRCID");
+              $srcid = $value;
+          }
+        }
+        close SIN;
+    }
+
+    # Now set up the output version file
+
+    my $ThisDate = scalar localtime();
+
+    # Standard Header
+
+    print SOUT '/*
+ * Copyright (C) 2012  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+';
+
+    print SOUT "/*\n";
+    print SOUT " * srcid.h";
+    print SOUT " * Generated automatically by Configure.pl.\n";
+    print SOUT " * Date generated: $ThisDate\n";
+    print SOUT " */\n\n";
+
+    print SOUT '
+#ifndef  SRCID_H
+#define SRCID_H 1
+';
+
+    if ($verbose) {
+        print "BIND SRCID: $srcid\n";
+    }
+
+    print SOUT "#define SRCID\t\"$srcid\"\n";
+    print SOUT "#endif /* SRCID_H */\n";
+    close SOUT;
+}
+
+# Status
+
+if ($verbose) {
+    my $name;
+
+    print "Configuration Status\n";
+
+    print "\tconfig.h:\n";
+    foreach $name (@substdefh) {
+        if (defined($configdefh{$name})) {
+            print qq(\t\t$name defined to "$configdefh{$name}"\n);
+        } else {
+            printf qq(\t\t$name undefined\n);
+        }
+    }
+
+    print "\tplatform.h:\n";
+    foreach $name (@substdefp) {
+        if (defined($configdefp{$name})) {
+            print qq(\t\t$name defined to "$configdefp{$name}"\n);
+        } else {
+            printf qq(\t\t$name undefined\n);
+        }
+    }
+
+    print "\tconditions:\n";
+    foreach $name (@substcond) {
+        if (defined($configcond{$name})) {
+            print "\t\t$name is true\n";
+        } else {
+            print "\t\t$name is false\n";
+        }
+    }
+
+    print "\tsubstitutions:\n";
+    foreach $name (@substvar) {
+        if (defined($configvar{$name})) {
+            print qq(\t\t$name -> "$configvar{$name}"\n);
+        }
+    }
+
+    print "\tdefines:\n";
+    foreach $name (@substdefd) {
+        if (defined($configdefd{$name})) {
+            print qq(\t\t/D "$configdefd{$name}"\n);
+        }
+    }
+
+    print "\tincludes:\n";
+    foreach $name (@substinc) {
+        if (defined($configinc{$name})) {
+            print qq(\t\t/I "$configinc{$name}"\n);
+        }
+    }
+
+    print "\tlibraries:\n";
+    foreach $name (@substlib) {
+        if (defined($configlib{$name})) {
+            print "\t\t$configlib{$name}\n";
+        }
+    }
+
+    print "\tDLLs:\n";
+    foreach $name (@substdll) {
+        if (defined($configdll{$name})) {
+            print "\t\t$configdll{$name}\n";
+        }
+    }
+
+    print "\n";
+}
+
+# Setup
+if (($want_win32 eq "yes") || ($want_x64 eq "yes")) {
+    setupconfigh();
+
+    setupplatformh();
+
+    my $file;
+    foreach $file (@filelist) {
+        setupfile($file);
+    }
+
+    if (!$legacy_only) {
+        foreach $file (@projectlist) {
+            setupproject($file);
+        }
+    }
+
+    makeversion();
+
+    makesrcid();
+
+    print "Configured.\n";
+} else {
+    print "add win32 or x64 to commit configuration to build files\n";
+}
+
+exit 0;
+
+# Notes: Unix configure.in options
+#  --enable-developer partially supported
+#  --enable-newstats (9.9/9.9sub only)
+#  --enable-native-pkcs11 supported
+#  --enable-openssl-version-check included without a way to disable it
+#  --enable-openssl-hash supported
+#  --enable-threads included without a way to disable it
+#  --enable-backtrace backtrace included without a way to disable it
+#  --enable-symtable incompatible with DLLs (or libtool)
+#  --enable-exportlib TODO (obsolete)
+#  --enable-ipv6 included without a way to disable it
+#  --enable-atomic supported (renamed to intrinsic)
+#  --enable-spnego support (part of GSSAPI)
+#  --enable-fixed-rrset supported
+#  --disable-rpz-nsip supported
+#  --disable-rpz-nsdname supported
+#  --enable-filter-aaaa supported
+#  --enable-sit supported
+#  --enable-full-report supported by verbose
+#  --with-python supported
+#  --with-openssl supported
+#  --with-pkcs11 supported
+#  --with-ecdsa supported
+#  --with-gost supported
+#  --with-aes supported
+#  --with-sit-alg supported
+#  --with-geoip supported
+#  --with-gssapi supported with MIT (K)erberos (f)or (W)indows
+#  --with-libxml2 supported
+#  --with-libjson not supported on WIN32 (package not available on WIN32)
+#  --with-purify ? (package available on WIN32 but for free?)
+#  --with-gperftools-profiler (package not available on WIN32)
+#  --with-libtool not supported on WIN32 (never)
+#  --with-locktype not supported on WIN32 (not yet available on WIN32)
+#  --with-readline supported
+#  --with-idn support
+#  --with-[lib]iconv (part of IDN)
+#  --with-atf not supported on WIN32 (package not available on WIN32)
+#  --with-tuning supported
+#  --with-dlopen included without a way to disable it
+#  --with-dlz-* ?
+#
+# Notes: MSVC versions
+# MSVC 14.0 _MSC_VER == 1900 (VS 14 (2014))
+# MSVC 12.0 _MSC_VER == 1800 (VS 2013)
+# MSVC 11.0 _MSC_VER == 1700 (VS 2012)
+# MSVC 10.0 _MSC_VER == 1600 (VS 2010)
+# MSVC 9.0  _MSC_VER == 1500 (VS 2008)
+# MSVC 8.0  _MSC_VER == 1400 (VS 2005)
+# MSVC 7.1  _MSC_VER == 1310 (VS .NET 2003)
+# MSVC 7.0  _MSC_VER == 1300 (VS .NET (2002))
+# MSVC 6.0  _MSC_VER == 1200 (VS 6.0 (1998))
+# MSVC 5.0  _MSC_VER == 1100 (VS 97)

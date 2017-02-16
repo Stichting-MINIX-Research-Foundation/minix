@@ -1,0 +1,82 @@
+
+Id: README,v 1.1 2001/07/12 02:02:09 gson Exp 
+
+This is queryperf, a DNS server query performance testing tool.
+
+It is primarily intended for measuring the performance of
+authoritative DNS servers, but it has also been used for measuring
+caching server performance.  This document describes the use of
+queryperf for authoritative server performance testing.
+
+
+Building
+
+To build queryperf, just do
+
+  sh configure
+  make
+
+
+The test environment
+
+It is recommended that you run queryperf and the name server under
+test on separate machines, so that the CPU usage of queryperf itself
+does not slow down the name server.  The two machines should be
+connected with a fast network, preferably a dedicated 100baseT
+segment.  Testing through a router or firewall is not advisable.
+
+
+Configuring the server
+
+The name server under test should be set up as an authoritative
+server, serving one or more zones similar in size and number to
+what the server is expected to serve in production.
+
+Be sure to turn off recursion in the server's configuration 
+(in BIND 8/9, specify "recursion no;" in the options block).
+In BIND 8, you should also specify "fetch-glue no;"; otherwise
+the server may attempt to retrieve glue information from the
+Internet during the test, slowing it down by an unpredictable
+factor.
+
+
+Constructing the input file
+
+You need to construct a queryperf input file containing a large and
+realistic set of queries, on the order of ten thousand to a million.
+The input file contains one line per query, consisting of a domain 
+name and an RR type name separated by a space.  The class of the 
+query is implicitly IN.
+
+When measuring the performance serving non-terminal zones such as the
+root zone or TLDs, note that such servers spend most of their time
+providing referral responses, not authoritative answers.  Therefore, a
+realistic input file might consist mostly of queries for type A for
+names *below*, not at, the delegations present in the zone.  For
+example, when testing the performance of a server configured to be
+authoritative for the top-level domain "fi.", which contains
+delegations for domains like "helsinki.fi" and "turku.fi", the input
+file could contain lines like
+
+  www.turku.fi A
+  www.helsinki.fi A
+
+where the "www" prefix ensures that the server will respond with a
+referral.  Ideally, a realistic proportion of queries for nonexistent
+domains should be mixed in with those for existing ones, and the lines
+of the input file should be in a random order.
+
+
+Running the tests
+
+Queryperf is run specifying the input file using the "-d" option, as
+in
+
+  queryperf -d input_file -s server
+
+The output of queryperf is mostly self-explanatory.  Pay attention to
+the number of dropped packets reported - when running the test over a
+local Ethernet connection, it should be zero.  If one or more packets
+has been dropped, there may be a problem with the network connection.
+In that case, the results should be considered suspect and the test
+repeated.

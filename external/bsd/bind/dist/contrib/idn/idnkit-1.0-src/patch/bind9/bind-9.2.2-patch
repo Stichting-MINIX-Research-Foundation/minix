@@ -1,0 +1,1169 @@
+IDN patch for bind-9.2.2
+========================
+
+
+This is a patch file for ISC BIND 9.2.2 to make it work with
+internationalized domain names.  With this patch you'll get IDN-aware
+dig/host/nslookup.
+
+To apply this patch, you should go to the top directory of the BIND
+distribution (where you see `README' file), then invoke `patch'
+command like this:
+
+	% patch -p0 < this-file
+
+Then follow the instructions described in `README.idnkit' to compile
+and install.
+
+
+Index: README.idnkit
+diff -c /dev/null mdn/othersrc/bind9/README.idnkit:1.3
+*** README.idnkit	Tue Mar 11 08:55:20 2003
+--- README.idnkit	Mon Mar 10 09:47:41 2003
+***************
+*** 0 ****
+--- 1,113 ----
++ 
++ 			BIND-9 IDN patch
++ 
++ 	       Japan Network Information Center (JPNIC)
++ 
++ 
++ * What is this patch for?
++ 
++ This patch adds internationalized domain name (IDN) support to BIND-9.
++ You'll get internationalized version of dig/host/nslookup commands.
++ 
++     + internationalized dig/host/nslookup
++ 	dig/host/nslookup accepts non-ASCII domain names in the local
++ 	codeset (such as Shift JIS, Big5 or ISO8859-1) determined by
++ 	the locale information.  The domain names are normalized and
++ 	converted to the encoding on the DNS protocol, and sent to DNS
++ 	servers.  The replies are converted back to the local codeset
++ 	and displayed.
++ 
++ 
++ * Compilation & installation
++ 
++ 0. Prerequisite
++ 
++ You have to build and install idnkit before building this patched version
++ of bind-9.
++ 
++ 1. Running configure script
++ 
++ Run `configure' in the top directory.  See `README' for the
++ configuration options.
++ 
++ This patch adds the following 4 options to `configure'.  You should
++ at least specify `--with-idn' option to enable IDN support.
++ 
++     --with-idn[=IDN_PREFIX]
++ 	To enable IDN support, you have to specify `--with-idn' option.
++ 	The argument IDN_PREFIX is the install prefix of idnkit.  If
++ 	IDN_PREFIX is omitted, PREFIX (derived from `--prefix=PREFIX')
++ 	is assumed.
++ 
++     --with-libiconv[=LIBICONV_PREFIX]
++ 	Specify this option if idnkit you have installed links GNU
++ 	libiconv.  The argument LIBICONV_PREFIX is install prefix of
++ 	GNU libiconv.  If the argument is omitted, PREFIX (derived
++ 	from `--prefix=PREFIX') is assumed.
++ 
++ 	`--with-libiconv' is shorthand option for GNU libiconv.
++ 
++ 	    --with-libiconv=/usr/local
++ 
++ 	This is equivalent to:
++ 
++ 	    --with-iconv='-L/usr/local/lib -R/usr/local/lib -liconv'
++ 
++ 	`--with-libiconv' assumes that your C compiler has `-R'
++ 	option, and that the option adds the specified run-time path
++ 	to an exacutable binary.  If `-R' option of your compiler has
++ 	different meaning, or your compiler lacks the option, you
++ 	should use `--with-iconv' option instead.  Binary command
++ 	without run-time path information might be unexecutable.
++ 	In that case, you would see an error message like:
++ 
++ 	    error in loading shared libraries: libiconv.so.2: cannot
++ 	    open shared object file
++ 
++ 	If both `--with-libiconv' and `--with-iconv' options are
++ 	specified, `--with-iconv' is prior to `--with-libiconv'.
++ 
++     --with-iconv=ICONV_LIBSPEC
++ 	If your libc doens't provide iconv(), you need to specify the
++ 	library containing iconv() with this option.  `ICONV_LIBSPEC'
++ 	is the argument(s) to `cc' or `ld' to link the library, for
++ 	example, `--with-iconv="-L/usr/local/lib -liconv"'.
++ 	You don't need to specify the header file directory for "iconv.h"
++ 	to the compiler, as it isn't included directly by bind-9 with
++ 	this patch.
++ 
++     --with-idnlib=IDN_LIBSPEC
++ 	With this option, you can explicitly specify the argument(s)
++ 	to `cc' or `ld' to link the idnkit's library, `libidnkit'.  If
++ 	this option is not specified, `-L${PREFIX}/lib -lidnkit' is
++ 	assumed, where ${PREFIX} is the installation prefix specified
++ 	with `--with-idn' option above.  You may need to use this
++ 	option to specify extra argments, for example,
++ 	`--with-idnlib="-L/usr/local/lib -R/usr/local/lib -lidnkit"'.
++ 
++ Please consult `README' for other configuration options.
++ 
++ Note that if you want to specify some extra header file directories,
++ you should use the environment variable STD_CINCLUDES instead of
++ CFLAGS, as described in README.
++ 
++ 2. Compilation and installation
++ 
++ After running "configure", just do
++ 
++ 	make
++ 	make install
++ 
++ for compiling and installing.
++ 
++ 
++ * Contact information
++ 
++ Please see http//www.nic.ad.jp/en/idn/ for the latest news
++ about idnkit and this patch.
++ 
++ Bug reports and comments on this kit should be sent to
++ mdnkit-bugs@nic.ad.jp and idn-cmt@nic.ad.jp, respectively.
++ 
++ 
++ ; Id: bind-9.2.2-patch,v 1.1 2003/06/04 00:27:32 marka Exp 
+Index: config.h.in
+diff -c mdn/othersrc/bind9/config.h.in:1.1.1.6 mdn/othersrc/bind9/config.h.in:1.12
+*** config.h.in	Tue Nov 27 16:55:45 2001
+--- config.h.in	Tue Mar 19 16:45:35 2002
+***************
+*** 141,146 ****
+--- 141,149 ----
+  /* define if you have strerror in the C library. */
+  #undef HAVE_STRERROR
+  
++ /* Define if you have the setlocale function.  */
++ #undef HAVE_SETLOCALE
++ 
+  /* Define if you have the <dlfcn.h> header file.  */
+  #undef HAVE_DLFCN_H
+  
+***************
+*** 150,155 ****
+--- 153,161 ----
+  /* Define if you have the <linux/capability.h> header file.  */
+  #undef HAVE_LINUX_CAPABILITY_H
+  
++ /* Define if you have the <locale.h> header file.  */
++ #undef HAVE_LOCALE_H
++ 
+  /* Define if you have the <sys/prctl.h> header file.  */
+  #undef HAVE_SYS_PRCTL_H
+  
+***************
+*** 176,178 ****
+--- 182,188 ----
+  
+  /* Define if you have the socket library (-lsocket).  */
+  #undef HAVE_LIBSOCKET
++ 
++ /* define if idnkit support is to be included. */
++ #undef WITH_IDN
++ 
+Index: configure
+diff -c mdn/othersrc/bind9/configure:1.1.1.10 mdn/othersrc/bind9/configure:1.16
+*** configure	Wed Mar  5 17:14:55 2003
+--- configure	Thu Mar  6 20:10:05 2003
+***************
+*** 1007,1012 ****
+--- 1007,1016 ----
+      --with-gnu-ld           assume the C compiler uses GNU ld default=no
+      --with-pic              try to use only PIC/non-PIC objects default=use both
+    --with-kame=PATH	use Kame IPv6 default path /usr/local/v6
++   --with-idn=MPREFIX   enable IDN support using idnkit default PREFIX
++   --with-libiconv=IPREFIX   GNU libiconv are in IPREFIX default PREFIX
++   --with-iconv=LIBSPEC   specify iconv library default -liconv
++   --with-idnlib=ARG    specify libidnkit
+  
+  Some influential environment variables:
+    CC          C compiler command
+***************
+*** 7371,7377 ****
+  case $host in
+  *-*-irix6*)
+    # Find out which ABI we are using.
+!   echo '#line 7374 "configure"' > conftest.$ac_ext
+    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+    (eval $ac_compile) 2>&5
+    ac_status=$?
+--- 7375,7381 ----
+  case $host in
+  *-*-irix6*)
+    # Find out which ABI we are using.
+!   echo '#line 7378 "configure"' > conftest.$ac_ext
+    if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+    (eval $ac_compile) 2>&5
+    ac_status=$?
+***************
+*** 7914,7920 ****
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
+  compiler_c_o=no
+! if { (eval echo configure:7917: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+    # The compiler can only warn and ignore the option if not recognized
+    # So say no if there are warnings
+    if test -s out/conftest.err; then
+--- 7918,7924 ----
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
+  compiler_c_o=no
+! if { (eval echo configure:7921: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+    # The compiler can only warn and ignore the option if not recognized
+    # So say no if there are warnings
+    if test -s out/conftest.err; then
+***************
+*** 9599,9605 ****
+      lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+    lt_status=$lt_dlunknown
+    cat > conftest.$ac_ext <<EOF
+! #line 9602 "configure"
+  #include "confdefs.h"
+  
+  #if HAVE_DLFCN_H
+--- 9603,9609 ----
+      lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+    lt_status=$lt_dlunknown
+    cat > conftest.$ac_ext <<EOF
+! #line 9606 "configure"
+  #include "confdefs.h"
+  
+  #if HAVE_DLFCN_H
+***************
+*** 9697,9703 ****
+      lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+    lt_status=$lt_dlunknown
+    cat > conftest.$ac_ext <<EOF
+! #line 9700 "configure"
+  #include "confdefs.h"
+  
+  #if HAVE_DLFCN_H
+--- 9701,9707 ----
+      lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+    lt_status=$lt_dlunknown
+    cat > conftest.$ac_ext <<EOF
+! #line 9704 "configure"
+  #include "confdefs.h"
+  
+  #if HAVE_DLFCN_H
+***************
+*** 13265,13270 ****
+--- 13269,13580 ----
+  
+  
+  #
++ # IDN support
++ #
++ 
++ # Check whether --with-idn or --without-idn was given.
++ if test "${with_idn+set}" = set; then
++   withval="$with_idn"
++   use_idn="$withval"
++ else
++   use_idn="no"
++ fi;
++ case "$use_idn" in
++ yes)
++ 	if test X$prefix = XNONE ; then
++ 		idn_path=/usr/local
++ 	else
++ 		idn_path=$prefix
++ 	fi
++ 	;;
++ no)
++ 	;;
++ *)
++ 	idn_path="$use_idn"
++ 	;;
++ esac
++ 
++ iconvinc=
++ iconvlib=
++ 
++ # Check whether --with-libiconv or --without-libiconv was given.
++ if test "${with_libiconv+set}" = set; then
++   withval="$with_libiconv"
++   use_libiconv="$withval"
++ else
++   use_libiconv="no"
++ fi;
++ case "$use_libiconv" in
++ yes)
++ 	if test X$prefix = XNONE ; then
++ 		iconvlib="-L/usr/local/lib -R/usr/local/lib -liconv"
++ 	else
++ 		iconvlib="-L$prefix/lib -R$prefix/lib -liconv"
++ 	fi
++ 	;;
++ no)
++ 	iconvlib=
++ 	;;
++ *)
++ 	iconvlib="-L$use_libiconv/lib -R$use_libiconv/lib -liconv"
++ 	;;
++ esac
++ 
++ 
++ # Check whether --with-iconv or --without-iconv was given.
++ if test "${with_iconv+set}" = set; then
++   withval="$with_iconv"
++   iconvlib="$withval"
++ fi;
++ case "$iconvlib" in
++ no)
++ 	iconvlib=
++ 	;;
++ yes)
++ 	iconvlib=-liconv
++ 	;;
++ esac
++ 
++ 
++ # Check whether --with-idnlib or --without-idnlib was given.
++ if test "${with_idnlib+set}" = set; then
++   withval="$with_idnlib"
++   idnlib="$withval"
++ else
++   idnlib="no"
++ fi;
++ if test "$idnlib" = yes; then
++ 	{ { echo "$as_me:$LINENO: error: You must specify ARG for --with-idnlib." >&5
++ echo "$as_me: error: You must specify ARG for --with-idnlib." >&2;}
++    { (exit 1); exit 1; }; }
++ fi
++ 
++ IDNLIBS=
++ if test "$use_idn" != no; then
++ 
++ cat >>confdefs.h <<\_ACEOF
++ #define WITH_IDN 1
++ _ACEOF
++ 
++ 	STD_CINCLUDES="$STD_CINCLUDES -I$idn_path/include"
++ 	if test "$idnlib" != no; then
++ 		IDNLIBS="$idnlib $iconvlib"
++ 	else
++ 		IDNLIBS="-L$idn_path/lib -lidnkit $iconvlib"
++ 	fi
++ fi
++ 
++ 
++ 
++ for ac_header in locale.h
++ do
++ as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo "$as_me:$LINENO: checking for $ac_header" >&5
++ echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++ else
++   # Is the header compilable?
++ echo "$as_me:$LINENO: checking $ac_header usability" >&5
++ echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ $ac_includes_default
++ #include <$ac_header>
++ _ACEOF
++ rm -f conftest.$ac_objext
++ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++   (eval $ac_compile) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest.$ac_objext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_header_compiler=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_header_compiler=no
++ fi
++ rm -f conftest.$ac_objext conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++ echo "${ECHO_T}$ac_header_compiler" >&6
++ 
++ # Is the header present?
++ echo "$as_me:$LINENO: checking $ac_header presence" >&5
++ echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ #include <$ac_header>
++ _ACEOF
++ if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++   ac_status=$?
++   egrep -v '^ *\+' conftest.er1 >conftest.err
++   rm -f conftest.er1
++   cat conftest.err >&5
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } >/dev/null; then
++   if test -s conftest.err; then
++     ac_cpp_err=$ac_c_preproc_warn_flag
++   else
++     ac_cpp_err=
++   fi
++ else
++   ac_cpp_err=yes
++ fi
++ if test -z "$ac_cpp_err"; then
++   ac_header_preproc=yes
++ else
++   echo "$as_me: failed program was:" >&5
++   cat conftest.$ac_ext >&5
++   ac_header_preproc=no
++ fi
++ rm -f conftest.err conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++ echo "${ECHO_T}$ac_header_preproc" >&6
++ 
++ # So?  What about this header?
++ case $ac_header_compiler:$ac_header_preproc in
++   yes:no )
++     { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
++ echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
++   no:yes )
++     { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
++ echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: check for missing prerequisite headers?" >&5
++ echo "$as_me: WARNING: $ac_header: check for missing prerequisite headers?" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
++ esac
++ echo "$as_me:$LINENO: checking for $ac_header" >&5
++ echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   eval "$as_ac_Header=$ac_header_preproc"
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++ 
++ fi
++ if test `eval echo '${'$as_ac_Header'}'` = yes; then
++   cat >>confdefs.h <<_ACEOF
++ #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
++ _ACEOF
++ 
++ fi
++ 
++ done
++ 
++ 
++ for ac_func in setlocale
++ do
++ as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
++ echo "$as_me:$LINENO: checking for $ac_func" >&5
++ echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_var+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ /* From autoconf 2.57 */
++ /* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
++    For example, HP-UX 11i <limits.h> declares gettimeofday.  */
++ #define $ac_func innocuous_$ac_func
++ 
++ /* System header to define __stub macros and hopefully few prototypes,
++     which can conflict with char $ac_func (); below.
++     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
++     <limits.h> exists even on freestanding compilers.  */
++ 
++ #ifdef __STDC__
++ # include <limits.h>
++ #else
++ # include <assert.h>
++ #endif
++ 
++ #undef $ac_func
++ 
++ /* Override any gcc2 internal prototype to avoid an error.  */
++ #ifdef __cplusplus
++ extern "C"
++ {
++ #endif
++ /* We use char because int might match the return type of a gcc2
++    builtin and then its argument prototype would still apply.  */
++ char $ac_func ();
++ /* The GNU C library defines this for functions which it implements
++     to always fail with ENOSYS.  Some functions are actually named
++     something starting with __ and the normal name is an alias.  */
++ #if defined (__stub_$ac_func) || defined (__stub___$ac_func)
++ choke me
++ #else
++ char (*f) () = $ac_func;
++ #endif
++ #ifdef __cplusplus
++ }
++ #endif
++ 
++ #ifdef F77_DUMMY_MAIN
++ #  ifdef __cplusplus
++      extern "C"
++ #  endif
++    int F77_DUMMY_MAIN() { return 1; }
++ #endif
++ int
++ main ()
++ {
++ return f != $ac_func;
++   ;
++   return 0;
++ }
++ _ACEOF
++ rm -f conftest.$ac_objext conftest$ac_exeext
++ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++   (eval $ac_link) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest$ac_exeext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   eval "$as_ac_var=yes"
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ eval "$as_ac_var=no"
++ fi
++ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
++ if test `eval echo '${'$as_ac_var'}'` = yes; then
++   cat >>confdefs.h <<_ACEOF
++ #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
++ _ACEOF
++ 
++ fi
++ done
++ 
++ 
++ #
+  # Substitutions
+  #
+  
+***************
+*** 14061,14066 ****
+--- 14371,14377 ----
+  s,@PRINTSTYLE@,$PRINTSTYLE,;t t
+  s,@XMLDCL@,$XMLDCL,;t t
+  s,@DOCBOOK2MANSPEC@,$DOCBOOK2MANSPEC,;t t
++ s,@IDNLIBS@,$IDNLIBS,;t t
+  s,@BIND9_TOP_BUILDDIR@,$BIND9_TOP_BUILDDIR,;t t
+  s,@BIND9_ISC_BUILDINCLUDE@,$BIND9_ISC_BUILDINCLUDE,;t t
+  s,@BIND9_ISCCC_BUILDINCLUDE@,$BIND9_ISCCC_BUILDINCLUDE,;t t
+Index: configure.in
+diff -c mdn/othersrc/bind9/configure.in:1.1.1.10 mdn/othersrc/bind9/configure.in:1.16
+*** configure.in	Wed Mar  5 17:14:56 2003
+--- configure.in	Wed Mar  5 17:37:08 2003
+***************
+*** 1681,1686 ****
+--- 1681,1762 ----
+  NOM_PATH_FILE(DOCBOOK2MANSPEC, docbook2X/docbook2man-spec.pl, $sgmltrees)
+  
+  #
++ # IDN support
++ #
++ AC_ARG_WITH(idn,
++ 	[  --with-idn[=MPREFIX]   enable IDN support using idnkit [default PREFIX]],
++ 	use_idn="$withval", use_idn="no")
++ case "$use_idn" in
++ yes)
++ 	if test X$prefix = XNONE ; then
++ 		idn_path=/usr/local
++ 	else
++ 		idn_path=$prefix
++ 	fi
++ 	;;
++ no)
++ 	;;
++ *)
++ 	idn_path="$use_idn"
++ 	;;
++ esac
++ 
++ iconvinc=
++ iconvlib=
++ AC_ARG_WITH(libiconv,
++ 	[  --with-libiconv[=IPREFIX]   GNU libiconv are in IPREFIX [default PREFIX]],
++ 	use_libiconv="$withval", use_libiconv="no")
++ case "$use_libiconv" in
++ yes)
++ 	if test X$prefix = XNONE ; then
++ 		iconvlib="-L/usr/local/lib -R/usr/local/lib -liconv"
++ 	else
++ 		iconvlib="-L$prefix/lib -R$prefix/lib -liconv"
++ 	fi
++ 	;;
++ no)
++ 	iconvlib=
++ 	;;
++ *)
++ 	iconvlib="-L$use_libiconv/lib -R$use_libiconv/lib -liconv"
++ 	;;
++ esac
++ 
++ AC_ARG_WITH(iconv,
++ 	[  --with-iconv[=LIBSPEC]   specify iconv library [default -liconv]],
++ 	iconvlib="$withval")
++ case "$iconvlib" in
++ no)
++ 	iconvlib=
++ 	;;
++ yes)
++ 	iconvlib=-liconv
++ 	;;
++ esac
++ 
++ AC_ARG_WITH(idnlib,
++ 	[  --with-idnlib=ARG    specify libidnkit],
++ 	idnlib="$withval", idnlib="no")
++ if test "$idnlib" = yes; then
++ 	AC_MSG_ERROR([You must specify ARG for --with-idnlib.])
++ fi
++ 
++ IDNLIBS=
++ if test "$use_idn" != no; then
++ 	AC_DEFINE(WITH_IDN, 1, [define if idnkit support is to be included.])
++ 	STD_CINCLUDES="$STD_CINCLUDES -I$idn_path/include"
++ 	if test "$idnlib" != no; then
++ 		IDNLIBS="$idnlib $iconvlib"
++ 	else
++ 		IDNLIBS="-L$idn_path/lib -lidnkit $iconvlib"
++ 	fi
++ fi
++ AC_SUBST(IDNLIBS)
++ 
++ AC_CHECK_HEADERS(locale.h)
++ AC_CHECK_FUNCS(setlocale)
++ 
++ #
+  # Substitutions
+  #
+  AC_SUBST(BIND9_TOP_BUILDDIR)
+Index: bin/dig/Makefile.in
+diff -c mdn/othersrc/bind9/bin/dig/Makefile.in:1.1.1.6 mdn/othersrc/bind9/bin/dig/Makefile.in:1.3
+*** bin/dig/Makefile.in	Tue Nov 27 16:55:50 2001
+--- bin/dig/Makefile.in	Tue Mar 19 16:45:35 2002
+***************
+*** 36,42 ****
+  
+  DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+  
+! LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+  
+  SUBDIRS =
+  
+--- 36,42 ----
+  
+  DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+  
+! LIBS =		${DNSLIBS} ${ISCLIBS} @IDNLIBS@ @LIBS@
+  
+  SUBDIRS =
+  
+Index: bin/dig/dig.1
+diff -c mdn/othersrc/bind9/bin/dig/dig.1:1.1.1.3 mdn/othersrc/bind9/bin/dig/dig.1:1.5
+*** bin/dig/dig.1	Wed Mar  5 17:14:57 2003
+--- bin/dig/dig.1	Wed Mar  5 17:42:53 2003
+***************
+*** 349,354 ****
+--- 349,365 ----
+  \fI+noqr\fR which means that \fBdig\fR
+  will not print the initial query when it looks up the NS records for
+  isc.org.
++ .SH "IDN SUPPORT"
++ .PP
++ If \fBdig\fR has been built with IDN (internationalized
++ domain name) support, it can accept and display non-ASCII domain names.
++ \fBdig\fR appropriately converts character encoding of
++ domain name before sending a request to DNS server or displaying a
++ reply from the server.
++ If you'd like to turn off the IDN support for some reason, defines
++ the \fBIDN_DISABLE\fR environment variable.
++ The IDN support is disabled if the the variable is set when 
++ \fBdig\fR runs.
+  .SH "FILES"
+  .PP
+  \fI/etc/resolv.conf\fR
+Index: bin/dig/dig.docbook
+diff -c mdn/othersrc/bind9/bin/dig/dig.docbook:1.1.1.3 mdn/othersrc/bind9/bin/dig/dig.docbook:1.5
+*** bin/dig/dig.docbook	Wed Mar  5 17:14:57 2003
+--- bin/dig/dig.docbook	Wed Mar  5 17:42:53 2003
+***************
+*** 523,528 ****
+--- 523,543 ----
+  </refsect1>
+  
+  <refsect1>
++ <title>IDN SUPPORT</title>
++ <para>
++ If <command>dig</command> has been built with IDN (internationalized
++ domain name) support, it can accept and display non-ASCII domain names.
++ <command>dig</command> appropriately converts character encoding of
++ domain name before sending a request to DNS server or displaying a
++ reply from the server.
++ If you'd like to turn off the IDN support for some reason, defines
++ the <envar>IDN_DISABLE</envar> environment variable.
++ The IDN support is disabled if the the variable is set when 
++ <command>dig</command> runs.
++ </para>
++ </refsect1>
++ 
++ <refsect1>
+  <title>FILES</title>
+  <para>
+  <filename>/etc/resolv.conf</filename>
+Index: bin/dig/dighost.c
+diff -c mdn/othersrc/bind9/bin/dig/dighost.c:1.1.1.13 mdn/othersrc/bind9/bin/dig/dighost.c:1.33
+*** bin/dig/dighost.c	Wed Mar  5 17:14:57 2003
+--- bin/dig/dighost.c	Wed Mar  5 17:42:53 2003
+***************
+*** 32,37 ****
+--- 32,48 ----
+  #include <string.h>
+  #include <limits.h>
+  
++ #ifdef HAVE_LOCALE_H
++ #include <locale.h>
++ #endif
++ 
++ #ifdef WITH_IDN
++ #include <idn/result.h>
++ #include <idn/log.h>
++ #include <idn/resconf.h>
++ #include <idn/api.h>
++ #endif
++ 
+  #include <dns/byaddr.h>
+  #include <dns/fixedname.h>
+  #include <dns/message.h>
+***************
+*** 130,135 ****
+--- 141,158 ----
+  isc_mutex_t lookup_lock;
+  dig_lookup_t *current_lookup = NULL;
+  
++ #ifdef WITH_IDN
++ static void	      initialize_idn(void);
++ static isc_result_t   output_filter(isc_buffer_t *buffer,
++ 				    unsigned int used_org,
++ 				    isc_boolean_t absolute);
++ static idn_result_t   append_textname(char *name, const char *origin,
++ 				      size_t namesize);
++ static void	      idn_check_result(idn_result_t r, const char *msg);
++ 
++ #define MAXDLEN               256
++ #endif
++ 
+  /*
+   * Apply and clear locks at the event level in global task.
+   * Can I get rid of these using shutdown events?  XXX
+***************
+*** 648,653 ****
+--- 671,680 ----
+  		ISC_LIST_APPEND(server_list, srv, link);
+  	}
+  
++ #ifdef WITH_IDN
++ 	initialize_idn();
++ #endif
++ 
+  	if (keyfile[0] != 0)
+  		setup_file_key();
+  	else if (keysecret[0] != 0)
+***************
+*** 1168,1173 ****
+--- 1195,1208 ----
+  	isc_buffer_t b;
+  	dns_compress_t cctx;
+  	char store[MXNAME];
++ #ifdef WITH_IDN
++ 	idn_result_t mr;
++ 	char utf8_textname[MXNAME], utf8_origin[MXNAME], idn_textname[MXNAME];
++ #endif
++ 
++ #ifdef WITH_IDN
++ 	dns_name_settotextfilter(output_filter);
++ #endif
+  
+  	REQUIRE(lookup != NULL);
+  	INSIST(!free_now);
+***************
+*** 1196,1201 ****
+--- 1231,1247 ----
+  	isc_buffer_init(&lookup->onamebuf, lookup->onamespace,
+  			sizeof(lookup->onamespace));
+  
++ #ifdef WITH_IDN
++ 	/*
++ 	 * We cannot convert `textname' and `origin' separately.
++ 	 * `textname' doesn't contain TLD, but local mapping needs
++ 	 * TLD.
++ 	 */
++ 	mr = idn_encodename(IDN_LOCALCONV | IDN_DELIMMAP, lookup->textname,
++ 			    utf8_textname, sizeof(utf8_textname));
++ 	idn_check_result(mr, "convert textname to UTF-8");
++ #endif
++ 
+  	/*
+  	 * If the name has too many dots, force the origin to be NULL
+  	 * (which produces an absolute lookup).  Otherwise, take the origin
+***************
+*** 1204,1215 ****
+--- 1250,1290 ----
+  	 * is TRUE or we got a domain line in the resolv.conf file.
+  	 */
+  	/* XXX New search here? */
++ #ifdef WITH_IDN
++ 	if ((count_dots(utf8_textname) >= ndots) || !usesearch)
++ 		lookup->origin = NULL; /* Force abs lookup */
++ 	else if (lookup->origin == NULL && lookup->new_search && usesearch) {
++ 		lookup->origin = ISC_LIST_HEAD(search_list);
++ 	}
++ #else
+  	if ((count_dots(lookup->textname) >= ndots) || !usesearch)
+  		lookup->origin = NULL; /* Force abs lookup */
+  	else if (lookup->origin == NULL && lookup->new_search && usesearch) {
+  		lookup->origin = ISC_LIST_HEAD(search_list);
+  	}
++ #endif
++ 
++ #ifdef WITH_IDN
+  	if (lookup->origin != NULL) {
++ 		mr = idn_encodename(IDN_LOCALCONV | IDN_DELIMMAP,
++ 				    lookup->origin->origin, utf8_origin,
++ 				    sizeof(utf8_origin));
++ 		idn_check_result(mr, "convert origin to UTF-8");
++ 		mr = append_textname(utf8_textname, utf8_origin,
++ 				     sizeof(utf8_textname));
++ 		idn_check_result(mr, "append origin to textname");
++ 	}
++ 	mr = idn_encodename(IDN_LOCALMAP | IDN_NAMEPREP | IDN_ASCCHECK |
++ 			    IDN_IDNCONV | IDN_LENCHECK, utf8_textname,
++ 			    idn_textname, sizeof(idn_textname));
++ 	idn_check_result(mr, "convert UTF-8 textname to IDN encoding");
++ #endif
++ 
++ #ifdef WITH_IDN
++ 	if (0) {
++ #else
++ 	if (lookup->origin != NULL) {
++ #endif
+  		debug("trying origin %s", lookup->origin->origin);
+  		result = dns_message_gettempname(lookup->sendmsg,
+  						 &lookup->oname);
+***************
+*** 1254,1259 ****
+--- 1329,1343 ----
+  		if (lookup->trace && lookup->trace_root)
+  			dns_name_clone(dns_rootname, lookup->name);
+  		else {
++ #ifdef WITH_IDN
++ 			len = strlen(idn_textname);
++ 			isc_buffer_init(&b, idn_textname, len);
++ 			isc_buffer_add(&b, len);
++ 			result = dns_name_fromtext(lookup->name, &b,
++ 						   dns_rootname,
++ 						   ISC_FALSE,
++ 						   &lookup->namebuf);
++ #else
+  			len = strlen(lookup->textname);
+  			isc_buffer_init(&b, lookup->textname, len);
+  			isc_buffer_add(&b, len);
+***************
+*** 1261,1266 ****
+--- 1345,1351 ----
+  						   dns_rootname,
+  						   ISC_FALSE,
+  						   &lookup->namebuf);
++ #endif
+  		}
+  		if (result != ISC_R_SUCCESS) {
+  			dns_message_puttempname(lookup->sendmsg,
+***************
+*** 2663,2665 ****
+--- 2748,2848 ----
+  	if (mctx != NULL)
+  		isc_mem_destroy(&mctx);
+  }
++ 
++ #ifdef WITH_IDN
++ static void
++ initialize_idn(void) {
++ 	idn_result_t r;
++ 
++ #ifdef HAVE_SETLOCALE
++ 	/* Set locale */
++ 	(void)setlocale(LC_ALL, "");
++ #endif
++ 	/* Create configuration context. */
++ 	r = idn_nameinit(1);
++ 	if (r != idn_success)
++ 		fatal("idn api initialization failed: %s",
++ 		      idn_result_tostring(r));
++ 
++ 	/* Set domain name -> text post-conversion filter. */
++ 	dns_name_settotextfilter(output_filter);
++ }
++ 
++ static isc_result_t
++ output_filter(isc_buffer_t *buffer, unsigned int used_org,
++ 	      isc_boolean_t absolute)
++ {
++ 	char tmp1[MAXDLEN], tmp2[MAXDLEN];
++ 	size_t fromlen, tolen;
++ 	isc_boolean_t end_with_dot;
++ 
++ 	/*
++ 	 * Copy contents of 'buffer' to 'tmp1', supply trailing dot
++ 	 * if 'absolute' is true, and terminate with NUL.
++ 	 */
++ 	fromlen = isc_buffer_usedlength(buffer) - used_org;
++ 	if (fromlen >= MAXDLEN)
++ 		return (ISC_R_SUCCESS);
++ 	memcpy(tmp1, (char *)isc_buffer_base(buffer) + used_org, fromlen);
++ 	end_with_dot = (tmp1[fromlen - 1] == '.') ? ISC_TRUE : ISC_FALSE;
++ 	if (absolute && !end_with_dot) {
++ 		fromlen++;
++ 		if (fromlen >= MAXDLEN)
++ 			return (ISC_R_SUCCESS);
++ 		tmp1[fromlen - 1] = '.';
++ 	}
++ 	tmp1[fromlen] = '\0';
++ 
++ 	/*
++ 	 * Convert contents of 'tmp1' to local encoding.
++ 	 */
++ 	if (idn_decodename(IDN_DECODE_APP, tmp1, tmp2, MAXDLEN) != idn_success)
++ 		return (ISC_R_SUCCESS);
++ 	strcpy(tmp1, tmp2);
++ 
++ 	/*
++ 	 * Copy the converted contents in 'tmp1' back to 'buffer'.
++ 	 * If we have appended trailing dot, remove it.
++ 	 */
++ 	tolen = strlen(tmp1);
++ 	if (absolute && !end_with_dot && tmp1[tolen - 1] == '.')
++ 		tolen--;
++ 
++ 	if (isc_buffer_length(buffer) < used_org + tolen)
++ 		return (ISC_R_NOSPACE);
++ 
++ 	isc_buffer_subtract(buffer, isc_buffer_usedlength(buffer) - used_org);
++ 	memcpy(isc_buffer_used(buffer), tmp1, tolen);
++ 	isc_buffer_add(buffer, tolen);
++ 
++ 	return (ISC_R_SUCCESS);
++ }
++ 
++ static idn_result_t
++ append_textname(char *name, const char *origin, size_t namesize) {
++ 	size_t namelen = strlen(name);
++ 	size_t originlen = strlen(origin);
++ 
++ 	/* Already absolute? */
++ 	if (namelen > 0 && name[namelen - 1] == '.')
++ 		return idn_success;
++ 
++ 	/* Append dot and origin */
++ 
++ 	if (namelen + 1 + originlen >= namesize)
++ 		return idn_buffer_overflow;
++ 
++ 	name[namelen++] = '.';
++ 	(void)strcpy(name + namelen, origin);
++ 	return idn_success;
++ }
++ 
++ static void
++ idn_check_result(idn_result_t r, const char *msg) {
++ 	if (r != idn_success) {
++ 		exitcode = 1;
++ 		fatal("%s: %s", msg, idn_result_tostring(r));
++ 	}
++ }
++ 
++ #endif /* WITH_IDN */
+Index: bin/dig/host.1
+diff -c mdn/othersrc/bind9/bin/dig/host.1:1.1.1.2 mdn/othersrc/bind9/bin/dig/host.1:1.4
+*** bin/dig/host.1	Wed Mar  5 17:14:57 2003
+--- bin/dig/host.1	Wed Mar  5 17:42:53 2003
+***************
+*** 120,125 ****
+--- 120,136 ----
+  effectively wait forever for a reply. The time to wait for a response
+  will be set to the number of seconds given by the hardware's maximum
+  value for an integer quantity.
++ .SH "IDN SUPPORT"
++ .PP
++ If \fBhost\fR has been built with IDN (internationalized
++ domain name) support, it can accept and display non-ASCII domain names.
++ \fBhost\fR appropriately converts character encoding of
++ domain name before sending a request to DNS server or displaying a
++ reply from the server.
++ If you'd like to turn off the IDN support for some reason, defines
++ the \fBIDN_DISABLE\fR environment variable.
++ The IDN support is disabled if the the variable is set when
++ \fBhost\fR runs.
+  .SH "FILES"
+  .PP
+  \fI/etc/resolv.conf\fR
+Index: bin/dig/host.docbook
+diff -c mdn/othersrc/bind9/bin/dig/host.docbook:1.1.1.2 mdn/othersrc/bind9/bin/dig/host.docbook:1.4
+*** bin/dig/host.docbook	Wed Mar  5 17:14:57 2003
+--- bin/dig/host.docbook	Wed Mar  5 17:42:53 2003
+***************
+*** 181,186 ****
+--- 181,201 ----
+  </refsect1>
+  
+  <refsect1>
++ <title>IDN SUPPORT</title>
++ <para>
++ If <command>host</command> has been built with IDN (internationalized
++ domain name) support, it can accept and display non-ASCII domain names.
++ <command>host</command> appropriately converts character encoding of
++ domain name before sending a request to DNS server or displaying a
++ reply from the server.
++ If you'd like to turn off the IDN support for some reason, defines
++ the <envar>IDN_DISABLE</envar> environment variable.
++ The IDN support is disabled if the the variable is set when
++ <command>host</command> runs.
++ </para>
++ </refsect1>
++ 
++ <refsect1>
+  <title>FILES</title>
+  <para>
+  <filename>/etc/resolv.conf</filename>
+Index: lib/dns/name.c
+diff -c mdn/othersrc/bind9/lib/dns/name.c:1.1.1.11 mdn/othersrc/bind9/lib/dns/name.c:1.15
+*** lib/dns/name.c	Wed Mar  5 17:16:22 2003
+--- lib/dns/name.c	Wed Mar  5 17:49:58 2003
+***************
+*** 194,199 ****
+--- 194,206 ----
+  /* XXXDCL make const? */
+  dns_name_t *dns_wildcardname = &wild;
+  
++ #ifdef WITH_IDN
++ /*
++  * dns_name_t to text post-conversion procedure.
++  */
++ static dns_name_totextfilter_t totext_filter_proc = NULL;
++ #endif
++ 
+  static void
+  set_offsets(const dns_name_t *name, unsigned char *offsets,
+  	    dns_name_t *set_name);
+***************
+*** 1684,1689 ****
+--- 1691,1699 ----
+  	unsigned int labels;
+  	isc_boolean_t saw_root = ISC_FALSE;
+  	char num[4];
++ #ifdef WITH_IDN
++ 	unsigned int oused = target->used;
++ #endif
+  
+  	/*
+  	 * This function assumes the name is in proper uncompressed
+***************
+*** 1861,1866 ****
+--- 1871,1880 ----
+  
+  	isc_buffer_add(target, tlen - trem);
+  
++ #ifdef WITH_IDN
++ 	if (totext_filter_proc != NULL)
++ 		return ((*totext_filter_proc)(target, oused, saw_root));
++ #endif
+  	return (ISC_R_SUCCESS);
+  }
+  
+***************
+*** 3325,3327 ****
+--- 3339,3347 ----
+  	return (ISC_R_SUCCESS);
+  }
+  
++ #ifdef WITH_IDN
++ void
++ dns_name_settotextfilter(dns_name_totextfilter_t proc) {
++ 	totext_filter_proc = proc;
++ }
++ #endif
+Index: lib/dns/include/dns/name.h
+diff -c mdn/othersrc/bind9/lib/dns/include/dns/name.h:1.1.1.7 mdn/othersrc/bind9/lib/dns/include/dns/name.h:1.10
+*** lib/dns/include/dns/name.h	Wed May 22 17:15:29 2002
+--- lib/dns/include/dns/name.h	Mon May 27 12:10:15 2002
+***************
+*** 219,224 ****
+--- 219,235 ----
+   */
+  #define DNS_NAME_MAXWIRE 255
+  
++ #ifdef WITH_IDN
++ /*
++  * Text output filter procedure.
++  * 'target' is the buffer to be converted.  The region to be converted
++  * is from 'buffer'->base + 'used_org' to the end of the used region.
++  */
++ typedef isc_result_t (*dns_name_totextfilter_t)(isc_buffer_t *target,
++ 						unsigned int used_org,
++ 						isc_boolean_t absolute);
++ #endif
++ 
+  /***
+   *** Initialization
+   ***/
+***************
+*** 1244,1249 ****
+--- 1255,1268 ----
+   *	'size' > 0.
+   *
+   */
++ 
++ #ifdef WITH_IDN
++ void
++ dns_name_settotextfilter(dns_name_totextfilter_t proc);
++ /*
++  * Call 'proc' at the end of dns_name_totext.
++  */
++ #endif /* WITH_IDN */
+  
+  #define DNS_NAME_FORMATSIZE (DNS_NAME_MAXTEXT + 1)
+  /*

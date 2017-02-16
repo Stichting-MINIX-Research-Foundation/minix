@@ -1,0 +1,34 @@
+; Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id: max-ttl.db,v 1.10 2009/01/21 23:47:27 tbox Exp 
+
+$ORIGIN .
+$TTL 300	; 5 minutes
+max-ttl.nil		IN SOA	ns1.max-ttl.nil. hostmaster.max-ttl.nil. (
+				1	   ; serial
+				2000       ; refresh (2000 seconds)
+				2000       ; retry (2000 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+max-ttl.nil.		NS	ns1.max-ttl.nil.
+ns1.max-ttl.nil.	A	10.53.0.1
+max-ttl.nil.		NS	ns2.max-ttl.nil.
+ns2.max-ttl.nil.	A	10.53.0.2
+
+$ORIGIN max-ttl.nil.
+*			MX	10 mail
+a			TXT	"foo foo foo"
+			PTR	foo.net.

@@ -18,6 +18,7 @@
 ./usr/man/man1/alias.1                                  minix-man
 ./usr/man/man1/apropos.1                                minix-man
 ./usr/man/man1/ar.1                                     minix-man       binutils
+./usr/man/man1/arpaname.1                               minix-man
 ./usr/man/man1/as.1                                     minix-man       binutils
 ./usr/man/man1/asa.1                                    minix-man
 ./usr/man/man1/ash.1                                    minix-man       obsolete
@@ -78,10 +79,12 @@
 ./usr/man/man1/date.1                                   minix-man
 ./usr/man/man1/dd.1                                     minix-man
 ./usr/man/man1/decomp16.1                               minix-man       obsolete
+./usr/man/man1/delv.1                                   minix-man
 ./usr/man/man1/deroff.1                                 minix-man
 ./usr/man/man1/df.1                                     minix-man
 ./usr/man/man1/dhrystone.1                              minix-man
 ./usr/man/man1/diff.1                                   minix-man
+./usr/man/man1/dig.1                                    minix-man
 ./usr/man/man1/dirname.1                                minix-man
 ./usr/man/man1/dirs.1                                   minix-man
 ./usr/man/man1/domainname.1                             minix-man
@@ -139,7 +142,7 @@
 ./usr/man/man1/head.1                                   minix-man
 ./usr/man/man1/hexdump.1                                minix-man
 ./usr/man/man1/history.1                                minix-man
-./usr/man/man1/host.1                                   minix-man       obsolete
+./usr/man/man1/host.1                                   minix-man
 ./usr/man/man1/hostaddr.1                               minix-man       obsolete
 ./usr/man/man1/hostname.1                               minix-man
 ./usr/man/man1/id.1                                     minix-man
@@ -245,6 +248,7 @@
 ./usr/man/man1/nl.1                                     minix-man
 ./usr/man/man1/nm.1                                     minix-man       binutils
 ./usr/man/man1/nohup.1                                  minix-man
+./usr/man/man1/nsupdate.1                               minix-man
 ./usr/man/man1/objcopy.1                                minix-man       binutils
 ./usr/man/man1/objdump.1                                minix-man       binutils
 ./usr/man/man1/od.1                                     minix-man
@@ -3310,6 +3314,7 @@
 ./usr/man/man5/magic.5                                  minix-man
 ./usr/man/man5/man.conf.5                               minix-man
 ./usr/man/man5/mtree.5                                  minix-man
+./usr/man/man5/named.conf.5                             minix-man
 ./usr/man/man5/nsswitch.conf.5                          minix-man
 ./usr/man/man5/openssl.cnf.5                            minix-man       crypto
 ./usr/man/man5/passwd.5                                 minix-man
@@ -3320,6 +3325,7 @@
 ./usr/man/man5/resolvconf.conf.5                        minix-man
 ./usr/man/man5/resolver.5                               minix-man
 ./usr/man/man5/rhosts.5                                 minix-man       obsolete
+./usr/man/man5/rndc.conf.5                              minix-man
 ./usr/man/man5/serv.access.5                            minix-man       obsolete
 ./usr/man/man5/statvfs.5                                minix-man
 ./usr/man/man5/syslog.conf.5                            minix-man
@@ -3395,12 +3401,21 @@
 ./usr/man/man8/cleantmp.8                               minix-man
 ./usr/man/man8/config.8                                 minix-man
 ./usr/man/man8/cron.8                                   minix-man
+./usr/man/man8/ddns-confgen.8                           minix-man
 ./usr/man/man8/dev_mkdb.8                               minix-man
 ./usr/man/man8/devsize.8                                minix-man
 ./usr/man/man8/dhcpcd-run-hooks.8                       minix-man
 ./usr/man/man8/dhcpcd.8                                 minix-man
 ./usr/man/man8/dhcpd.8                                  minix-man       obsolete
 ./usr/man/man8/diskctl.8                                minix-man
+./usr/man/man8/dnssec-dsfromkey.8                       minix-man
+./usr/man/man8/dnssec-importkey.8                       minix-man
+./usr/man/man8/dnssec-keyfromlabel.8                    minix-man
+./usr/man/man8/dnssec-keygen.8                          minix-man
+./usr/man/man8/dnssec-revoke.8                          minix-man
+./usr/man/man8/dnssec-settime.8                         minix-man
+./usr/man/man8/dnssec-signzone.8                        minix-man
+./usr/man/man8/dnssec-verify.8                          minix-man
 ./usr/man/man8/fbdctl.8                                 minix-man
 ./usr/man/man8/fdisk.8                                  minix-man
 ./usr/man/man8/fingerd.8                                minix-man
@@ -3427,11 +3442,17 @@
 ./usr/man/man8/irdpd.8                                  minix-man       obsolete
 ./usr/man/man8/link.8                                   minix-man
 ./usr/man/man8/loadramdisk.8                            minix-man
+./usr/man/man8/lwresd.8                                 minix-man
 ./usr/man/man8/makefs.8                                 minix-man
 ./usr/man/man8/makewhatis.8                             minix-man
 ./usr/man/man8/minix-service.8                          minix-man
 ./usr/man/man8/mknod.8                                  minix-man
 ./usr/man/man8/mtree.8                                  minix-man
+./usr/man/man8/named-checkconf.8                        minix-man
+./usr/man/man8/named-checkzone.8                        minix-man
+./usr/man/man8/named-compilezone.8                      minix-man
+./usr/man/man8/named-journalprint.8                     minix-man
+./usr/man/man8/named.8                                  minix-man
 ./usr/man/man8/netconf.8                                minix-man
 ./usr/man/man8/newfs_ext2fs.8                           minix-man
 ./usr/man/man8/newfs_msdos.8                            minix-man
@@ -3440,6 +3461,8 @@
 ./usr/man/man8/newroot.8                                minix-man       obsolete
 ./usr/man/man8/nologin.8                                minix-man
 ./usr/man/man8/nonamed.8                                minix-man       obsolete
+./usr/man/man8/nsec3hash.8                              minix-man
+./usr/man/man8/nslookup.8                               minix-man
 ./usr/man/man8/ossdevlinks.8                            minix-man       obsolete
 ./usr/man/man8/part.8                                   minix-man
 ./usr/man/man8/partition.8                              minix-man
@@ -3465,6 +3488,8 @@
 ./usr/man/man8/renice.8                                 minix-man
 ./usr/man/man8/repartition.8                            minix-man
 ./usr/man/man8/resolvconf.8                             minix-man
+./usr/man/man8/rndc-confgen.8                           minix-man
+./usr/man/man8/rndc.8                                   minix-man
 ./usr/man/man8/rotate.8                                 minix-man
 ./usr/man/man8/route.8                                  minix-man
 ./usr/man/man8/rshd.8                                   minix-man

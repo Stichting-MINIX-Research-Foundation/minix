@@ -1,0 +1,418 @@
+.\"	$NetBSD: delv.1,v 1.1.1.3 2014/12/10 03:34:23 christos Exp $
+.\"
+.\" Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" Id
+.\"
+.hy 0
+.ad l
+.\"     Title: delv
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
+.\"      Date: April 23, 2014
+.\"    Manual: BIND9
+.\"    Source: BIND9
+.\"
+.TH "DELV" "1" "April 23, 2014" "BIND9" "BIND9"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+delv \- DNS lookup and validation utility
+.SH "SYNOPSIS"
+.HP 5
+\fBdelv\fR [@server] [\fB\-4\fR] [\fB\-6\fR] [\fB\-a\ \fR\fB\fIanchor\-file\fR\fR] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIlevel\fR\fR] [\fB\-i\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [name] [type] [class] [queryopt...]
+.HP 5
+\fBdelv\fR [\fB\-h\fR]
+.HP 5
+\fBdelv\fR [\fB\-v\fR]
+.HP 5
+\fBdelv\fR [queryopt...] [query...]
+.SH "DESCRIPTION"
+.PP
+\fBdelv\fR
+(Domain Entity Lookup & Validation) is a tool for sending DNS queries and validating the results, using the the same internal resolver and validator logic as
+\fBnamed\fR.
+.PP
+\fBdelv\fR
+will send to a specified name server all queries needed to fetch and validate the requested data; this includes the original requested query, subsequent queries to follow CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records to establish a chain of trust for DNSSEC validation. It does not perform iterative resolution, but simulates the behavior of a name server configured for DNSSEC validating and forwarding.
+.PP
+By default, responses are validated using built\-in DNSSEC trust anchors for the root zone (".") and for the ISC DNSSEC lookaside validation zone ("dlv.isc.org"). Records returned by
+\fBdelv\fR
+are either fully validated or were not signed. If validation fails, an explanation of the failure is included in the output; the validation process can be traced in detail. Because
+\fBdelv\fR
+does not rely on an external server to carry out validation, it can be used to check the validity of DNS responses in environments where local name servers may not be trustworthy.
+.PP
+Unless it is told to query a specific name server,
+\fBdelv\fR
+will try each of the servers listed in
+\fI/etc/resolv.conf\fR. If no usable server addresses are found,
+\fBdelv\fR
+will send queries to the localhost addresses (127.0.0.1 for IPv4, ::1 for IPv6).
+.PP
+When no command line arguments or options are given,
+\fBdelv\fR
+will perform an NS query for "." (the root zone).
+.SH "SIMPLE USAGE"
+.PP
+A typical invocation of
+\fBdelv\fR
+looks like:
+.sp
+.RS 4
+.nf
+ delv @server name type 
+.fi
+.RE
+.sp
+where:
+.PP
+\fBserver\fR
+.RS 4
+is the name or IP address of the name server to query. This can be an IPv4 address in dotted\-decimal notation or an IPv6 address in colon\-delimited notation. When the supplied
+\fIserver\fR
+argument is a hostname,
+\fBdelv\fR
+resolves that name before querying that name server (note, however, that this initial lookup is
+\fInot\fR
+validated by DNSSEC).
+.sp
+If no
+\fIserver\fR
+argument is provided,
+\fBdelv\fR
+consults
+\fI/etc/resolv.conf\fR; if an address is found there, it queries the name server at that address. If either of the
+\fB\-4\fR
+or
+\fB\-6\fR
+options are in use, then only addresses for the corresponding transport will be tried. If no usable addresses are found,
+\fBdelv\fR
+will send queries to the localhost addresses (127.0.0.1 for IPv4, ::1 for IPv6).
+.RE
+.PP
+\fBname\fR
+.RS 4
+is the domain name to be looked up.
+.RE
+.PP
+\fBtype\fR
+.RS 4
+indicates what type of query is required \(em ANY, A, MX, etc.
+\fItype\fR
+can be any valid query type. If no
+\fItype\fR
+argument is supplied,
+\fBdelv\fR
+will perform a lookup for an A record.
+.RE
+.SH "OPTIONS"
+.PP
+\-a \fIanchor\-file\fR
+.RS 4
+Specifies a file from which to read DNSSEC trust anchors. The default is
+\fI/etc/bind.keys\fR, which is included with
+BIND
+9 and contains trust anchors for the root zone (".") and for the ISC DNSSEC lookaside validation zone ("dlv.isc.org").
+.sp
+Keys that do not match the root or DLV trust\-anchor names are ignored; these key names can be overridden using the
+\fB+dlv=NAME\fR
+or
+\fB+root=NAME\fR
+options.
+.sp
+Note: When reading the trust anchor file,
+\fBdelv\fR
+treats
+\fBmanaged\-keys\fR
+statements and
+\fBtrusted\-keys\fR
+statements identically. That is, for a managed key, it is the
+\fIinitial\fR
+key that is trusted; RFC 5011 key management is not supported.
+\fBdelv\fR
+will not consult the managed\-keys database maintained by
+\fBnamed\fR. This means that if either of the keys in
+\fI/etc/bind.keys\fR
+is revoked and rolled over, it will be necessary to update
+\fI/etc/bind.keys\fR
+to use DNSSEC validation in
+\fBdelv\fR.
+.RE
+.PP
+\-b \fIaddress\fR
+.RS 4
+Sets the source IP address of the query to
+\fIaddress\fR. This must be a valid address on one of the host's network interfaces or "0.0.0.0" or "::". An optional source port may be specified by appending "#<port>"
+.RE
+.PP
+\-c \fIclass\fR
+.RS 4
+Sets the query class for the requested data. Currently, only class "IN" is supported in
+\fBdelv\fR
+and any other value is ignored.
+.RE
+.PP
+\-d \fIlevel\fR
+.RS 4
+Set the systemwide debug level to
+\fBlevel\fR. The allowed range is from 0 to 99. The default is 0 (no debugging). Debugging traces from
+\fBdelv\fR
+become more verbose as the debug level increases. See the
+\fB+mtrace\fR,
+\fB+rtrace\fR, and
+\fB+vtrace\fR
+options below for additional debugging details.
+.RE
+.PP
+\-h
+.RS 4
+Display the
+\fBdelv\fR
+help usage output and exit.
+.RE
+.PP
+\-i
+.RS 4
+Insecure mode. This disables internal DNSSEC validation. (Note, however, this does not set the CD bit on upstream queries. If the server being queried is performing DNSSEC validation, then it will not return invalid data; this can cause
+\fBdelv\fR
+to time out. When it is necessary to examine invalid data to debug a DNSSEC problem, use
+\fBdig +cd\fR.)
+.RE
+.PP
+\-m
+.RS 4
+Enables memory usage debugging.
+.RE
+.PP
+\-p \fIport#\fR
+.RS 4
+Specifies a destination port to use for queries instead of the standard DNS port number 53. This option would be used with a name server that has been configured to listen for queries on a non\-standard port number.
+.RE
+.PP
+\-q \fIname\fR
+.RS 4
+Sets the query name to
+\fIname\fR. While the query name can be specified without using the
+\fB\-q\fR, it is sometimes necessary to disambiguate names from types or classes (for example, when looking up the name "ns", which could be misinterpreted as the type NS, or "ch", which could be misinterpreted as class CH).
+.RE
+.PP
+\-t \fItype\fR
+.RS 4
+Sets the query type to
+\fItype\fR, which can be any valid query type supported in BIND 9 except for zone transfer types AXFR and IXFR. As with
+\fB\-q\fR, this is useful to distinguish query name type or class when they are ambiguous. it is sometimes necessary to disambiguate names from types.
+.sp
+The default query type is "A", unless the
+\fB\-x\fR
+option is supplied to indicate a reverse lookup, in which case it is "PTR".
+.RE
+.PP
+\-v
+.RS 4
+Print the
+\fBdelv\fR
+version and exit.
+.RE
+.PP
+\-x \fIaddr\fR
+.RS 4
+Performs a reverse lookup, mapping an addresses to a name.
+\fIaddr\fR
+is an IPv4 address in dotted\-decimal notation, or a colon\-delimited IPv6 address. When
+\fB\-x\fR
+is used, there is no need to provide the
+\fIname\fR
+or
+\fItype\fR
+arguments.
+\fBdelv\fR
+automatically performs a lookup for a name like
+11.12.13.10.in\-addr.arpa
+and sets the query type to PTR. IPv6 addresses are looked up using nibble format under the IP6.ARPA domain.
+.RE
+.PP
+\-4
+.RS 4
+Forces
+\fBdelv\fR
+to only use IPv4.
+.RE
+.PP
+\-6
+.RS 4
+Forces
+\fBdelv\fR
+to only use IPv6.
+.RE
+.SH "QUERY OPTIONS"
+.PP
+\fBdelv\fR
+provides a number of query options which affect the way results are displayed, and in some cases the way lookups are performed.
+.PP
+Each query option is identified by a keyword preceded by a plus sign (+). Some keywords set or reset an option. These may be preceded by the string
+no
+to negate the meaning of that keyword. Other keywords assign values to options like the timeout interval. They have the form
+\fB+keyword=value\fR. The query options are:
+.PP
+\fB+[no]cdflag\fR
+.RS 4
+Controls whether to set the CD (checking disabled) bit in queries sent by
+\fBdelv\fR. This may be useful when troubleshooting DNSSEC problems from behind a validating resolver. A validating resolver will block invalid responses, making it difficult to retrieve them for analysis. Setting the CD flag on queries will cause the resolver to return invalid responses, which
+\fBdelv\fR
+can then validate internally and report the errors in detail.
+.RE
+.PP
+\fB+[no]class\fR
+.RS 4
+Controls whether to display the CLASS when printing a record. The default is to display the CLASS.
+.RE
+.PP
+\fB+[no]ttl\fR
+.RS 4
+Controls whether to display the TTL when printing a record. The default is to display the TTL.
+.RE
+.PP
+\fB+[no]rtrace\fR
+.RS 4
+Toggle resolver fetch logging. This reports the name and type of each query sent by
+\fBdelv\fR
+in the process of carrying out the resolution and validation process: this includes including the original query and all subsequent queries to follow CNAMEs and to establish a chain of trust for DNSSEC validation.
+.sp
+This is equivalent to setting the debug level to 1 in the "resolver" logging category. Setting the systemwide debug level to 1 using the
+\fB\-d\fR
+option will product the same output (but will affect other logging categories as well).
+.RE
+.PP
+\fB+[no]mtrace\fR
+.RS 4
+Toggle message logging. This produces a detailed dump of the responses received by
+\fBdelv\fR
+in the process of carrying out the resolution and validation process.
+.sp
+This is equivalent to setting the debug level to 10 for the the "packets" module of the "resolver" logging category. Setting the systemwide debug level to 10 using the
+\fB\-d\fR
+option will produce the same output (but will affect other logging categories as well).
+.RE
+.PP
+\fB+[no]vtrace\fR
+.RS 4
+Toggle validation logging. This shows the internal process of the validator as it determines whether an answer is validly signed, unsigned, or invalid.
+.sp
+This is equivalent to setting the debug level to 3 for the the "validator" module of the "dnssec" logging category. Setting the systemwide debug level to 3 using the
+\fB\-d\fR
+option will produce the same output (but will affect other logging categories as well).
+.RE
+.PP
+\fB+[no]short\fR
+.RS 4
+Provide a terse answer. The default is to print the answer in a verbose form.
+.RE
+.PP
+\fB+[no]comments\fR
+.RS 4
+Toggle the display of comment lines in the output. The default is to print comments.
+.RE
+.PP
+\fB+[no]rrcomments\fR
+.RS 4
+Toggle the display of per\-record comments in the output (for example, human\-readable key information about DNSKEY records). The default is to print per\-record comments.
+.RE
+.PP
+\fB+[no]crypto\fR
+.RS 4
+Toggle the display of cryptographic fields in DNSSEC records. The contents of these field are unnecessary to debug most DNSSEC validation failures and removing them makes it easier to see the common failures. The default is to display the fields. When omitted they are replaced by the string "[omitted]" or in the DNSKEY case the key id is displayed as the replacement, e.g. "[ key id = value ]".
+.RE
+.PP
+\fB+[no]trust\fR
+.RS 4
+Controls whether to display the trust level when printing a record. The default is to display the trust level.
+.RE
+.PP
+\fB+[no]split[=W]\fR
+.RS 4
+Split long hex\- or base64\-formatted fields in resource records into chunks of
+\fIW\fR
+characters (where
+\fIW\fR
+is rounded up to the nearest multiple of 4).
+\fI+nosplit\fR
+or
+\fI+split=0\fR
+causes fields not to be split at all. The default is 56 characters, or 44 characters when multiline mode is active.
+.RE
+.PP
+\fB+[no]all\fR
+.RS 4
+Set or clear the display options
+\fB+[no]comments\fR,
+\fB+[no]rrcomments\fR, and
+\fB+[no]trust\fR
+as a group.
+.RE
+.PP
+\fB+[no]multiline\fR
+.RS 4
+Print long records (such as RRSIG, DNSKEY, and SOA records) in a verbose multi\-line format with human\-readable comments. The default is to print each record on a single line, to facilitate machine parsing of the
+\fBdelv\fR
+output.
+.RE
+.PP
+\fB+[no]dnssec\fR
+.RS 4
+Indicates whether to display RRSIG records in the
+\fBdelv\fR
+output. The default is to do so. Note that (unlike in
+\fBdig\fR) this does
+\fInot\fR
+control whether to request DNSSEC records or whether to validate them. DNSSEC records are always requested, and validation will always occur unless suppressed by the use of
+\fB\-i\fR
+or
+\fB+noroot\fR
+and
+\fB+nodlv\fR.
+.RE
+.PP
+\fB+[no]root[=ROOT]\fR
+.RS 4
+Indicates whether to perform conventional (non\-lookaside) DNSSEC validation, and if so, specifies the name of a trust anchor. The default is to validate using a trust anchor of "." (the root zone), for which there is a built\-in key. If specifying a different trust anchor, then
+\fB\-a\fR
+must be used to specify a file containing the key.
+.RE
+.PP
+\fB+[no]dlv[=DLV]\fR
+.RS 4
+Indicates whether to perform DNSSEC lookaside validation, and if so, specifies the name of the DLV trust anchor. The default is to perform lookaside validation using a trust anchor of "dlv.isc.org", for which there is a built\-in key. If specifying a different name, then
+\fB\-a\fR
+must be used to specify a file containing the DLV key.
+.RE
+.SH "FILES"
+.PP
+\fI/etc/bind.keys\fR
+.PP
+\fI/etc/resolv.conf\fR
+.SH "SEE ALSO"
+.PP
+\fBdig\fR(1),
+\fBnamed\fR(8),
+RFC4034,
+RFC4035,
+RFC4431,
+RFC5074,
+RFC5155.
+.SH "COPYRIGHT"
+Copyright \(co 2014 Internet Systems Consortium, Inc. ("ISC")
+.br

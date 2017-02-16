@@ -1,0 +1,117 @@
+; Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+;
+; Permission to use, copy, modify, and/or distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+; REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+; LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+; PERFORMANCE OF THIS SOFTWARE.
+
+; Id
+
+example.		300	IN SOA	mname1. . (
+					2012050601 ; serial
+					3600       ; refresh (1 hour)
+					600        ; retry (10 minutes)
+					604800     ; expire (1 week)
+					3600       ; minimum (1 hour)
+					)
+			300	RRSIG	SOA 5 1 300 (
+					20361231235959 20000101000000 51829 example.
+					HW8O/KHJEObWSYtQD14+3MRtD6rasy/AeIAo
+					1HmtELxeUoMvVcQzm7z1RoeV6S7+r/SrUjAz
+					PwtlE4TpyTEj9sfTr4mJhU0DwrNW6dN6qHCw
+					vB3nuURVOKzU8V26PdFcjJB+/HnJT2LyLUqr
+					KAzHwU1tAXkgx0FOwfyOs2rxooo= )
+			300	NS	ns2.example.
+			300	RRSIG	NS 5 1 300 (
+					20361231235959 20000101000000 51829 example.
+					EO8/KzfhppvhD2b0hGCdEN8/WTNexK6zkC1Z
+					oW3vu0cFVvac+wrV9Vox90lHI0jTce/R+bvT
+					T9RbpZiZcBKLVyBuHIdFPOdc3ogHMPwaPNkD
+					pvVvLfV6auHCvINiVw+jWinBpTjqoROH/yTC
+					03BQ41vewKsz3fYZ03XUr2xga5Q= )
+			3600	NSEC	a.example. NS SOA RRSIG NSEC DNSKEY
+			3600	RRSIG	NSEC 5 1 3600 (
+					20361231235959 20000101000000 51829 example.
+					FiUyrwO7MV9Lhg6yu0XN/hLZPOiDg/NqIIUc
+					HfA9Yix90Z9G/yzn8NBC92Yp5EPiI4HiE24T
+					t1p4YwHe6n/IJA4KZUIpCxEY5xhQL/mVMeuj
+					dlFA2LaiDwbOh//42zdocaeGPrcV+u6OmXoU
+					xkQIuWeJ1QCaD5FXJdN6zELZsnw= )
+			300	DNSKEY	256 3 5 (
+					BwEAAAAAAAGfDKVFak/2o446xOsi39QnfZmR
+					idaRyg3LaCxDBM6kVqCHQKI3a2lEf4FWVSbp
+					+dYjGavsqWJ/Z7poMRy9JJol2bMLhtsZhESK
+					5EYRaR/2dLw5H10SR+wb/qRVVYovWlk67sql
+					7XYc3x5cjc4XaMVziBBrQMiWqkQS2oGQLwKC
+					Lw==
+					) ; ZSK; alg = RSASHA1; key id = 51829
+			300	DNSKEY	257 3 5 (
+					AwEAAaLNbgMfH/XUwZC9DBVG4OpYVUVyCyZE
+					Bqhk3k6WziIAY+2f7MN3L9CoZR9GqfqM+/c6
+					g8gfkIaZZ2YP/YUUaN73xH/nxtHYkrP5Rqe/
+					dw7qONnsVwvf3HJ8HvURG3wjaOrPoe207+Hp
+					NTNhe/sT2usKhokSU8yKB0DKlnrKQvp9vScs
+					IB/RsIxOXWmYgOMkSXtpI3lQ07l1i2Tv6Une
+					cD9s8rukfl/gPbRBketLYACrqpb2j/1f7ciQ
+					v+rz1GnN9ma8XK1Yw8173/hrVL1S/ZqTGczw
+					deA3AVyiHThOZ15EPhSuL7jaJusHOi43Aa8Z
+					fCMCeimT73F5epktGomAxFU=
+					) ; KSK; alg = RSASHA1; key id = 5896
+			300	RRSIG	DNSKEY 5 1 300 (
+					20361231235959 20000101000000 5896 example.
+					b07impYEH+uW8iPCVE0QXqYSs6Yyu7Nb8q1f
+					rXv+NgE5wbsIvdo4PDdSfScP41WgVKdLPipH
+					gaTyk4CKAuGSvIBMzlc3yib03zdvzBDgn3Yi
+					lONpl2yH47vhvn5iXYcVV4kbuYE9+SFVoVO8
+					m6xvihm1D17m8emivnG6DuJSpJJM09v0toSd
+					3yGI3bgUtki85ehOPU0ZkvA20InVgP5kKUgw
+					/M4vP4VkcwenNO7koMZOorI02KFOH3vvZSI4
+					hzuwJVaQZ35IBBVmSSMAD+0LTBk6sMPSpcmP
+					Pff75NLhU+4+UflWie6mzWIvm3ovcG3fveq0
+					W4G3TCriTIKSjY3Jqg== )
+			300	RRSIG	DNSKEY 5 1 300 (
+					20361231235959 20000101000000 51829 example.
+					a7WU2WcHEpDfM5NBUzN7t4WXEwldn1EM/HkH
+					XEo9NnZhFV16414qbuwWMlUsc5MTii+T4OFZ
+					p2+XHj9M8glM1d98o+EDSYT7LdrrE7AqdtSO
+					gcXdeY6WRI9R5wkLP3cP6kADp5WIOcQ78IPb
+					pRJ4jhxqMPFV3cqCWH/Lp8JPghY= )
+a.example.		300	IN A	10.0.0.1
+			300	RRSIG	A 5 2 300 (
+					20361231235959 20000101000000 51829 example.
+					h4WyY0hUkZobUbt2xWC4lJLEbGvzxGczH/mN
+					WHZBpgg+1tuoTAdVbt6a2TfQcJV/iPQGAHte
+					Vu/U6tD8KzP08krlqrcefwvR5LDAQygWRdjt
+					Rx105w9F0GiL6kpDH6S9T8xCw3aF5Rl1lu/u
+					8eiUzDIMIBTijhXmM96Nde18RdA= )
+			3600	NSEC	ns2.example. A RRSIG NSEC
+			3600	RRSIG	NSEC 5 2 3600 (
+					20361231235959 20000101000000 51829 example.
+					LbzeWbk9r119I95TVCebEPfnCCk9zBRq4nAR
+					swliQVQ84bCjwVJfakvlD4mgilSPtypxpyXC
+					DQaiOQWOz9LFzro5u71VuSS5fY7U4elp/lq6
+					5BJB6o/dmk5xASAHHbOO6e5dcoQ5vRxcnJaE
+					0vE1jGppo2FiQzkVi7Zbrghoolg= )
+ns2.example.		300	IN A	10.53.0.2
+			300	RRSIG	A 5 2 300 (
+					20361231235959 20000101000000 51829 example.
+					Jfp3xzrym5GksbZ+a2rjOXzV/Ct+eX2DCo8a
+					lSbriEhuK9OR3WUnXoDqp1X/d7adNL2lI9c+
+					B3UVL+EOCyvNxt9kECcN8KgQdXKExZEQUwnN
+					UB51QESM9pW6akavhXJu98sjnhtpdTwrtKbg
+					nMJkfYe5Mw3e/8RFY+wpEq/8cHw= )
+			3600	NSEC	example. A RRSIG NSEC
+			3600	RRSIG	NSEC 5 2 3600 (
+					20361231235959 20000101000000 51829 example.
+					Wxkz4nY5rty6O90QhFZguyqbaz9njnJKUs7m
+					qYF9u7dDk8vUf3yS97fw3e0N13X5zGZa7hTr
+					+65U4NKEOqYDBbvWaXSVFxrzVfSVXqY6l4jX
+					kWjA6q4q5TTgcjOUJ0MfvcjtgxcaKUiPGmPJ
+					RWdOV7t9YMWnf7QAbPI55QN9sfY= )

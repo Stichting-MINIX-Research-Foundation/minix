@@ -1,0 +1,175 @@
+echo off
+rem
+rem Copyright (C) 2004,2005  Internet Systems Consortium, Inc. ("ISC")
+rem Copyright (C) 2001-2002  Internet Software Consortium.
+rem 
+rem Permission to use, copy, modify, and distribute this software for any
+rem purpose with or without fee is hereby granted, provided that the above
+rem copyright notice and this permission notice appear in all copies.
+rem 
+rem THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+rem REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+rem AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+rem INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+rem LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+rem OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+rem PERFORMANCE OF THIS SOFTWARE.
+
+rem BuildSetup.bat
+rem This script sets up the files necessary ready to build BIND 9.
+rem This requires perl to be installed on the system.
+
+echo Generate header files for lib/dns
+
+cd ..\..\lib\dns
+cd win32
+nmake /nologo /f gen.mak CFG="gen - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..
+gen -s . -t > include/dns/enumtype.h
+gen -s . -c > include/dns/enumclass.h
+gen -s . -i -P ./rdata/rdatastructpre.h -S ./rdata/rdatastructsuf.h > include/dns/rdatastruct.h
+gen -s . > code.h
+cd ..\..\win32utils\legacy
+
+rem Make sure that the Build directories are there.
+
+if NOT Exist ..\..\Build mkdir ..\..\Build
+if NOT Exist ..\..\Build\Release mkdir ..\..\Build\Release
+if NOT Exist ..\..\Build\Debug mkdir ..\..\Build\Debug
+
+echo Copying the ARM and the Installation Notes.
+
+copy ..\..\COPYRIGHT ..\..\Build\Release
+copy ..\..\COPYRIGHT ..\..\Build\Debug
+copy ..\..\README ..\..\Build\Release
+copy ..\..\HISTORY ..\..\Build\Release
+copy ..\readme1st.txt ..\..\Build\Release
+copy ..\index.html ..\..\Build\Release
+copy ..\..\doc\arm\*.html ..\..\Build\Release
+copy ..\..\doc\arm\Bv9ARM.pdf ..\..\Build\Release
+copy ..\..\CHANGES ..\..\Build\Release
+if Exist ..\CHANGES.SE copy ..\CHANGES.SE ..\Build\Release
+copy ..\..\FAQ ..\..\Build\Release
+
+echo Copying the standalone manual pages.
+
+copy ..\..\bin\named\named.html ..\..\Build\Release
+copy ..\..\bin\rndc\*.html ..\..\Build\Release
+copy ..\..\bin\confgen\*.html ..\..\Build\Release
+copy ..\..\bin\dig\*.html ..\..\Build\Release
+copy ..\..\bin\delv\*.html ..\..\Build\Release
+copy ..\..\bin\nsupdate\*.html ..\..\Build\Release
+copy ..\..\bin\check\*.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-keygen.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-signzone.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-dsfromkey.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-keyfromlabel.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-settime.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-revoke.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-verify.html ..\..\Build\Release
+copy ..\..\bin\dnssec\dnssec-importkey.html ..\..\Build\Release
+@IF PYTHON
+copy ..\..\bin\python\dnssec-checkds.html ..\..\Build\Release
+copy ..\..\bin\python\dnssec-coverage.html ..\..\Build\Release
+@END PYTHON
+@IF PKCS11
+copy ..\..\bin\pkcs11\pkcs11-keygen.html ..\..\Build\Release
+copy ..\..\bin\pkcs11\pkcs11-list.html ..\..\Build\Release
+copy ..\..\bin\pkcs11\pkcs11-destroy.html ..\..\Build\Release
+copy ..\..\bin\pkcs11\pkcs11-tokens.html ..\..\Build\Release
+@END PKCS11
+copy ..\..\bin\tools\arpaname.html ..\..\Build\Release
+copy ..\..\bin\tools\genrandom.html ..\..\Build\Release
+copy ..\..\bin\tools\isc-hmac-fixup.html ..\..\Build\Release
+copy ..\..\bin\tools\named-journalprint.html ..\..\Build\Release
+copy ..\..\bin\tools\named-rrchecker.html ..\..\Build\Release
+copy ..\..\bin\tools\nsec3hash.html ..\..\Build\Release
+
+echo Copying the migration notes.
+
+copy ..\..\doc\misc\migration ..\..\Build\Release
+copy ..\..\doc\misc\migration-4to9 ..\..\Build\Release
+
+@IF OPENSSL
+echo Copying the OpenSSL DLL and LICENSE.
+
+copy @OPENSSL_DLL@ ..\..\Build\Release\
+copy @OPENSSL_DLL@ ..\..\Build\Debug\
+copy @OPENSSL_PATH@\LICENSE ..\..\Build\Release\OpenSSL-LICENSE
+copy @OPENSSL_PATH@\LICENSE ..\..\Build\Debug\OpenSSL-LICENSE
+@END OPENSSL
+
+@IF LIBXML2
+echo Copying the libxml DLL.
+
+copy @LIBXML2_DLL@ ..\..\Build\Release\
+copy @LIBXML2_DLL@ ..\..\Build\Debug\
+@END LIBXML2
+
+@IF GSSAPI
+echo Copying the GSSAPI and KRB5 DLLs.
+
+copy @GSSAPI_DLL@ ..\..\Build\Release\
+copy @GSSAPI_DLL@ ..\..\Build\Debug\
+copy @KRB5_DLL@ ..\..\Build\Release\
+copy @KRB5_DLL@ ..\..\Build\Debug\
+copy @COMERR_DLL@ ..\..\Build\Release\
+copy @COMERR_DLL@ ..\..\Build\Debug\
+copy @K5SPRT_DLL@ ..\..\Build\Release\
+copy @K5SPRT_DLL@ ..\..\Build\Debug\
+copy @WSHELP_DLL@ ..\..\Build\Release\
+copy @WSHELP_DLL@ ..\..\Build\Debug\
+@END GSSAPI
+
+@IF GEOIP
+echo Copying the GeoIP DLL.
+
+copy @GEOIP_DLL@ ..\..\Build\Release\
+copy @GEOIP_DLL@ ..\..\Build\Debug\
+@END GEOIP
+
+@IF IDNKIT
+echo Copying the IDN kit DLL.
+
+copy @IDN_DLL@ ..\Build\Release\
+copy @IDN_DLL@ ..\Build\Debug\
+copy @ICONV_DLL@ ..\Build\Release\
+copy @ICONV_DLL@ ..\Build\Debug\
+@END IDNKIT
+
+echo Copying the redistributable runtime object.
+
+rem
+rem Use /Y so we always have the current version of the installer.
+rem
+
+copy /Y @VCREDIST_PATH@ ..\..\Build\Release\
+copy /Y @VCREDIST_PATH@ ..\..\Build\Debug\
+
+@IF TESTS
+cd ..\..\bin\tests\dst
+copy "Kdh.+002+18602.key.in" "Kdh.+002+18602.key"
+copy "Kdh.+002+18602.private.in" "Kdh.+002+18602.private"
+copy "Kdh.+002+48957.key.in" "Kdh.+002+48957.key"
+copy "Kdh.+002+48957.private.in" "Kdh.+002+48957.private"
+copy "Ktest.+001+00002.key.in" "Ktest.+001+00002.key"
+copy "Ktest.+001+54622.key.in" "Ktest.+001+54622.key"
+copy "Ktest.+001+54622.private.in" "Ktest.+001+54622.private"
+copy "Ktest.+003+23616.key.in" "Ktest.+003+23616.key"
+copy "Ktest.+003+23616.private.in" "Ktest.+003+23616.private"
+copy "Ktest.+003+49667.key.in" "Ktest.+003+49667.key"
+copy dst_2_data.in dst_2_data
+copy t2_data_1.in t2_data_1
+copy t2_data_2.in t2_data_2
+copy t2_dsasig.in t2_dsasig
+copy t2_rsasig.in t2_rsasig
+cd ..\..\..\win32utils\legacy
+@END TESTS
+
+echo Running Message Compiler
+
+cd ..\..\lib\win32\bindevt
+mc bindevt.mc
+cd ..\..\..\win32utils\legacy
+
+rem Done

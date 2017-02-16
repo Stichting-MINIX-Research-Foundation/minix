@@ -1,0 +1,306 @@
+<!-- Creator     : groff version 1.20.1 -->
+<!-- CreationDate: Sat Nov 27 20:13:08 2010 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>zkt-signer</title>
+
+</head>
+<body>
+
+<h1 align="center">zkt-signer</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSYS">SYNOPSYS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#SAMPLE USAGE">SAMPLE USAGE</a><br>
+<a href="#Zone setup and initial preparation">Zone setup and initial preparation</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">zkt-signer
+&mdash; Secure DNS zone signing tool</p>
+
+<h2>SYNOPSYS
+<a name="SYNOPSYS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-signer</b>
+[<b>&minus;L</b> <i>file</i>] [<b>&minus;V</b> <i>view</i>]
+[<b>&minus;c</b> <i>file</i>] [<b>&minus;O</b>
+<i>optstr</i>] [<b>&minus;fhnr</b>] [<b>&minus;v</b>
+[<b>&minus;v</b>]] <b>&minus;N</b> <i>named.conf</i>
+[<i>zone ...</i>] <b><br>
+zkt-signer</b> [<b>&minus;L</b> <i>file</i>]
+[<b>&minus;V</b> <i>view</i>] [<b>&minus;c</b> <i>file</i>]
+[<b>&minus;O</b> <i>optstr</i>] [<b>&minus;fhnr</b>]
+[<b>&minus;v</b> [<b>&minus;v</b>]] [<b>&minus;D</b>
+<i>directory</i>] [<i>zone ...</i>] <b><br>
+zkt-signer</b> [<b>&minus;L</b> <i>file</i>]
+[<b>&minus;V</b> <i>view</i>] [<b>&minus;c</b> <i>file</i>]
+[<b>&minus;O</b> <i>optstr</i>] [<b>&minus;fhnr</b>]
+[<b>&minus;v</b> [<b>&minus;v</b>]] <b>&minus;o</b>
+<i>origin</i> [<i>zonefile</i>]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The
+<i>zkt-signer</i> command is a wrapper around
+<i>dnssec-signzone(8)</i> and <i>dnssec-keygen(8)</i> to
+sign a zone and manage the necessary zone keys. It is able
+to increment the serial number before signing the zone and
+can trigger <i>named(8)</i> to reload the signed zone file.
+The command controls several secure zones and, if started in
+regular intervals via <i>cron(8)</i>, can do all that stuff
+automatically.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In the most
+useful usage scenario the command will be called with option
+<b>&minus;N</b> to read the secure zones out of the given
+<i>named.conf</i> file. If you have a configuration file
+with views, you have to use option -V viewname or --view
+viewname to specify the name of the view. Alternately you
+could link the executable file to a second name like
+<i>zkt-signer-viewname</i> and use that command to specify
+the name of the view. <br>
+All master zone statements will be scanned for filenames
+ending with &quot;.signed&quot;. These zones will be checked
+if the necessary zone- and key signing keys are existent and
+fresh enough to be used in the signing process. If one or
+more out-dated keys are found, new keying material will be
+generated via the <i>dnssec-keygen(8)</i> command and the
+old keys will be marked as depreciated. So the command do
+anything needed for a zone key rollover as defined by
+[2].</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the
+resigning interval is reached or any new key must be
+announced, the serial number of the zone will be incremented
+and the <i>dnssec-signzone(8)</i> command will be evoked to
+sign the zone. After that, if the option <b>&minus;r</b> is
+given, the <i>rndc(8)</i> command will be called to reload
+the zone on the nameserver.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In the second
+form of the command it is possible to specify a directory
+tree with the option <b>&minus;D</b> <i>dir</i>. Every
+secure zone found in a subdirectory below <i>dir</i> will be
+signed. However, it is also possible to reduce the signing
+to those zones given as arguments. <br>
+If <b>&minus;D</b> is ommitted (and neither <b>&minus;N</b>
+nor <b>&minus;o</b><i>origin</i> is specified) the default
+directory specified in the <i>dnssec.conf</i> file by the
+parameter <i>zonedir</i> will be used as top level
+directory.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>&minus;L</b>
+<i>file|dir</i><b>,
+&minus;&minus;logfile=</b><i>file|dir</i></p>
+
+<p style="margin-left:22%;">Specify the name of a log file
+or a directory where logfiles are created with a name like
+zkt-<i>YYYY-MM-DD</i>T<i>hhmmss</i>Z.log<i>.</i> If the
+argument is not an absolute path name and a zone directory
+is specified in the config file, this will be prepended to
+the given name. This option is also settable in the
+dnssec.conf file via the parameter <b>LogFile</b><i>.</i>
+<br>
+The default is no file logging, but error logging to syslog
+with facility <b>USER</b> at level <b>ERROR</b> is enabled
+by default. These parameters are settable via the config
+file parameter <b>SyslogFacility</b><i>,</i>
+<b>SyslogLevel</b><i>,</i> <b>LogFile</b> and
+<b>Loglevel</b><i>.</i> <br>
+The additional parameter <b>VerboseLog</b> specifies the
+verbosity (0|1|2) of messages that will be logged with level
+<b>DEBUG</b> to file and syslog.</p>
+
+<p style="margin-left:11%;"><b>&minus;V</b> <i>view</i><b>,
+&minus;&minus;view=</b><i>view</i></p>
+
+<p style="margin-left:22%;">Try to read the default
+configuration out of a file named
+<i>dnssec-&lt;view&gt;.conf .</i> Instead of specifying the
+&minus;V or --view option every time, it is also possible to
+create a hard- or softlink to the executable file with an
+additional name like <i>zkt-signer-&lt;view&gt; .</i></p>
+
+<p style="margin-left:11%;"><b>&minus;c</b> <i>file</i><b>,
+&minus;&minus;config=</b><i>file</i></p>
+
+<p style="margin-left:22%;">Read configuration values out
+of the specified file. Otherwise the default config file is
+read or build-in defaults will be used.</p>
+
+<p style="margin-left:11%;"><b>&minus;O</b>
+<i>optstr</i><b>,
+&minus;&minus;config-option=</b><i>optstr</i></p>
+
+<p style="margin-left:22%;">Set any config file option via
+the commandline. Several config file options can be
+specified via the argument string but have to be delimited
+by semicolon (or newline).</p>
+
+<p style="margin-left:11%;"><b>&minus;f</b>,
+<b>&minus;&minus;force</b></p>
+
+<p style="margin-left:22%;">Force a resigning of the zone,
+regardless if the resigning interval is reached or new keys
+must be announced.</p>
+
+<p style="margin-left:11%;"><b>&minus;n</b>,
+<b>&minus;&minus;noexec</b></p>
+
+<p style="margin-left:22%;">Don&rsquo;t execute the
+<i>dnssec-signzone(8)</i> command. Currently this option is
+of very limited usage.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;reload</b></p>
+
+<p style="margin-left:22%;">Reload the zone via
+<i>rndc(8)</i> after successful signing. In a production
+environment it is recommended to use this option to be sure
+that a freshly signed zone will be immediately propagated.
+However, that&rsquo;s only feasable if named runs on the
+signing machine, which is not recommended.</p>
+
+<p style="margin-left:11%;"><b>&minus;v</b>,
+<b>&minus;&minus;verbose</b></p>
+
+<p style="margin-left:22%;">Verbose mode (recommended). A
+second <b>&minus;v</b> will be a little more verbose.</p>
+
+<p style="margin-left:11%;"><b>&minus;h</b>,
+<b>&minus;&minus;help</b></p>
+
+<p style="margin-left:22%;">Print out the online help.</p>
+
+<h2>SAMPLE USAGE
+<a name="SAMPLE USAGE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>zkt-signer
+&minus;N /var/named/named.conf &minus;r &minus;v
+&minus;v</b></p>
+
+<p style="margin-left:22%;">Sign all secure zones found in
+the named.conf file and, if necessary, trigger a reload of
+the zone. Print some explanatory remarks on stdout.</p>
+
+<p style="margin-left:11%;"><b>zkt-signer &minus;D
+zonedir/example.net. &minus;f &minus;v &minus;v</b></p>
+
+<p style="margin-left:22%;">Force the signing of the zone
+found in the directory <i>zonedir/example.net .</i> Do not
+reload the zone.</p>
+
+<p style="margin-left:11%;"><b>zkt-signer &minus;D zonedir
+&minus;f &minus;v &minus;v example.net.</b></p>
+
+<p style="margin-left:22%;">Same as above.</p>
+
+<p style="margin-left:11%;"><b>zkt-signer &minus;f &minus;v
+&minus;v example.net.</b></p>
+
+<p style="margin-left:22%;">Same as above if the
+<i>dnssec.conf</i> file contains the path of the parent
+directory of the <i>example.net</i> zone.</p>
+
+<p style="margin-left:11%;"><b>zkt-signer &minus;f &minus;v
+&minus;v &minus;o example.net. zone.db</b></p>
+
+<p style="margin-left:22%;">Same as above if we are in the
+directory containing the <i>example.net</i> files.</p>
+
+<p style="margin-left:11%;"><b>zkt-signer
+&minus;&minus;config-option=&rsquo;ResignInterval 1d;
+Sigvalidity 28h; \</b></p>
+
+<p style="margin-left:22%;"><b>ZSKlifetime 2d;&rsquo;
+&minus;v &minus;v &minus;o example.net. zone.db</b> <br>
+Sign the example.net zone but override some config file
+values with parameters given on the commandline.</p>
+
+<h2>Zone setup and initial preparation
+<a name="Zone setup and initial preparation"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Create a
+separate directory for every secure zone.</p>
+
+<p style="margin-left:22%;">This is useful because there
+are many additional files needed to secure a zone. Besides
+the zone file (<i>zone.db</i>), there is a signed zone file
+(<i>zone.db.signed),</i> a minimum of four files containing
+the key material, a file called <i>dnskey.db</i> with the
+current used keys, and the <i>dsset-</i> and
+<i>keyset-</i>files created by the <i>dnssec-signzone(8)</i>
+command. So in summary there is a minimum of nine files used
+per secure zone. For every additional key there are two
+extra files and every delegated subzone creates also two or
+three files.</p>
+
+<p style="margin-left:11%;">Name the directory just like
+the zone.</p>
+
+<p style="margin-left:22%;">That&rsquo;s only needed if you
+want to use the zkt-signer command in directory mode
+(<b>&minus;D</b>). Then the name of the zone will be parsed
+out of the directory name.</p>
+
+<p style="margin-left:11%;">Change the name of the zone
+file to <i>zone.db</i></p>
+
+<p style="margin-left:22%;">Otherwise you have to set the
+name via the <i>dnssec.conf</i> parameter <i>zonefile</i>,
+or you have to use the option <b>&minus;o</b> to name the
+zone and specify the zone file as argument.</p>
+
+<p style="margin-left:11%;">Add the name of the signed
+zonefile to the <i>named.conf</i> file</p>
+
+<p style="margin-left:22%;">The filename is the name of the
+zone file with the extension <i>.signed</i>. Create an empty
+file with the name <i>zone.db</i><b>.signed</b> in the zone
+directory.</p>
+
+<p style="margin-left:11%;">Include the keyfile in the
+zone.</p>
+
+<p style="margin-left:22%;">The name of the keyfile is
+settable by the <i>dnssec.conf</i> parameter <i>keyfile
+.</i> The default is <i>dnskey.db .</i></p>
+<hr>
+</body>
+</html>

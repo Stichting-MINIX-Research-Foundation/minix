@@ -1,0 +1,56 @@
+/*
+ * Copyright (C) 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Id: named.dirconf,v 1.2 2011/03/04 14:43:57 smann Exp  */
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port 5300;
+	pid-file "named.pid";
+	listen-on port 5300 {
+		10.53.0.1;
+	};
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+};
+
+logging {
+	channel default_log {
+	  file "named_dir";
+	  print-time yes;
+	};
+	category default { default_log; default_debug; };
+	category lame-servers { null; };
+};
+
+controls {
+    inet 127.0.0.1 port 9593 allow {
+			 127.0.0.1/32; ::1/128; }
+			 keys { "rndc-key"; };
+};
+
+key "rndc-key" {
+	algorithm hmac-sha256;
+	secret "Am9vCg==";
+};
+
+zone "." {
+	type master;
+	file "root.db";
+};

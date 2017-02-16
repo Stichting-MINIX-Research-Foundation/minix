@@ -1,0 +1,6 @@
+This set includes one KSK rollover.  The KSK is deactivated prior to
+its replacement being activated; however, as we are only checking ZSK's,
+we should not detect the error.  Tool output should resemble:
+
+Checking ZSK events for zone example.com, algorithm 7:
+OK

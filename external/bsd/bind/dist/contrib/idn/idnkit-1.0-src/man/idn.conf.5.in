@@ -1,0 +1,312 @@
+.\" Id: idn.conf.5.in,v 1.1 2003/06/04 00:27:16 marka Exp "
+.\"
+.\" Copyright (c) 2000,2001 Japan Network Information Center.
+.\" All rights reserved.
+.\"  
+.\" By using this file, you agree to the terms and conditions set forth bellow.
+.\" 
+.\" 			LICENSE TERMS AND CONDITIONS 
+.\" 
+.\" The following License Terms and Conditions apply, unless a different
+.\" license is obtained from Japan Network Information Center ("JPNIC"),
+.\" a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+.\" Chiyoda-ku, Tokyo 101-0047, Japan.
+.\" 
+.\" 1. Use, Modification and Redistribution (including distribution of any
+.\"    modified or derived work) in source and/or binary forms is permitted
+.\"    under this License Terms and Conditions.
+.\" 
+.\" 2. Redistribution of source code must retain the copyright notices as they
+.\"    appear in each source code file, this License Terms and Conditions.
+.\" 
+.\" 3. Redistribution in binary form must reproduce the Copyright Notice,
+.\"    this License Terms and Conditions, in the documentation and/or other
+.\"    materials provided with the distribution.  For the purposes of binary
+.\"    distribution the "Copyright Notice" refers to the following language:
+.\"    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+.\" 
+.\" 4. The name of JPNIC may not be used to endorse or promote products
+.\"    derived from this Software without specific prior written approval of
+.\"    JPNIC.
+.\" 
+.\" 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+.\"    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\"    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+.\"    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+.\"    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\"    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\"    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\"    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\"    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+.\"
+.TH idn.conf 5 "Mar 8, 2002"
+.\"
+.SH NAME
+idn.conf, .idnrc, idnalias.conf \- configuration files for idnkit library
+.\"
+.SH SYNOPSIS
+@sysconfdir@/idn.conf
+.br
+~/.idnrc
+.br
+@sysconfdir@/idnalias.conf
+.\"
+.SH DESCRIPTION
+\fBidn.conf\fR and \fB.idnrc\fR are configuration files for idnkit
+library which is a toolkit for handling internationalized domain names.
+.PP
+idnkit library tries to load the user's configuration file ~/.idnrc
+first, and then tries the system configutation file 
+@sysconfdir@/idn.conf.
+Note that idnkit library loads either, not both.
+.PP
+To use internationalized domain names in DNS or other protocols, they
+must be converted to an appropriate format before further processing.
+In idnkit, this conversion process is comprised of the following tasks.
+.IP 1. 3
+Convert the given domain name in application's local codeset to Unicode,
+and vice versa.
+.IP 2. 3
+Map certain characters in the name to period character so that they are
+treated as the domain name
+delimiter (\fIdelimiter mapping\fR).
+.IP 3. 3
+Map certain characters in the name to other characters or chracter sequences,
+according to a mapping rule determined by its top level domain (TLD).
+.IP 4. 3
+Perform NAMEPREP, which is a starndard name preparation process for
+internationalized domain names.  This process is composed of
+the tree steps called mapping, normalization, prohibited character
+checking and bidirectional string checking.
+.IP 5. 3
+Convert the nameprepped name to IDN encoding, which is the standard encoding
+for internationalized domain names (also known as ASCII-compatible encoding,
+ACE), and vice versa.
+.PP
+The configuration file specifies the parameters for these tasks, such as:
+.RS 2
+.IP \- 2
+the encoding of internationalized domain names (IDN encoding).
+.IP \- 2
+NAMEPREP schemes.
+.RE
+.\"
+.SH SYNTAX
+The configuration file is a simple text files, and each line in the file
+(other than comment lines, which begin with ``#'', and empty lines)
+forms an entry of the following format:
+.PP
+.RS 4
+.nf
+\fIkeyword\fP\ \fIvalue..\fP
+.fi
+.RE
+\."
+.SH "IDN-ENCODING ENTRY"
+IDN encoding entry specifies the encoding name (codeset name) which
+is used as the encoding of internationalized domain names.
+.PP
+The syntax of this entry is:
+.PP
+.RS 4
+.nf
+\f(CWidn-encoding \fP\fIencoding\fP
+.fi
+.RE
+.PP
+\fIencoding\fP is the encoding name to be used, and any of the following
+names can be specified.
+.RS 2
+.IP "\(bu" 2
+``Punycode''
+.IP "\(bu" 2
+``UTF-8''
+.IP "\(bu" 2
+Codeset names which iconv_open() library function accepts.  Please
+consult iconv() documentation for the available codesets.
+.IP "\(bu" 2
+Any alias names for the above, defined by the alias file.
+(See section ``ENCODING-ALIAS-FILE'')
+.RE
+.PP
+The standard encoding was determined as Punycode.
+.\"
+.SH "NAMEPREP ENTRY"
+Nameprep entry specifies the version of NAMEPREP, which is a specification
+of ``canonicalization'' process of internationalized domain name before
+it is converted to the IDN encoding.
+.PP
+The syntax of this entry is:
+.PP
+.RS 4
+.nf
+\f(CWnameprep \fP\fIversion\fP
+.fi
+.RE
+.PP
+\fIversion\fR is the version name of NAMEPREP specification, and currently
+the following versions can be specified.
+.RS 2
+.IP "\(bu" 2
+``RFC3491''
+.br
+This version refers to RFC3491 ``rfc-3491.txt''.
+.RE
+.PP
+The NAMEPREP process consists of the following 4 subprocesses.
+.IP 1. 3
+mapping, which maps certain characters in a name to other characters,
+possibly none.
+.IP 2. 3
+normalization, which replaces character variants in a name to
+a unique one.
+.IP 3. 3
+prohibited character checking, which detects invalid characters in a name.
+.IP 4. 3
+unassigned codepoint checking, which also invalid codepoints in a name.
+.IP 5. 3
+bidirectional string checking, which detecs invalid string.
+.\"
+.SH "LOCAL-MAP ENTRY"
+This entry specifies localized mapping phase before NAMEPREP takes place.
+Different mapping rules can be specified for each TLD (top-level domain).
+For example, you can have one mapping for ``.tw'' domain, and another for
+``.jp'' domain.
+.PP
+The syntax of this entry is:
+.PP
+.RS 4
+.nf
+\f(CWlocal-map \fItld\f(CW \fIscheme\fR [\fIscheme\fR..]
+.fi
+.RE
+.PP
+\fItld\fR specifies the TLD to which the mapping rule is to be applied,
+and \fIscheme\fR specifies the mapping scheme, and currently available
+schemes are:
+.RS 2
+.TP 4
+\f(CWRFC3491\fP
+Specify mapping defined by RFC3491.
+.TP 4
+\f(CWfilemap:\fP\fIpathname\fP
+Specify mapping defined by the file \fIpathname\fP.
+See ``MAPFILE FORMAT'' for the format of this file.
+.RE
+.PP
+There are two special \fItld\fRs for specifying the mapping rule for
+local domain names (domain names without any dots in them), and the
+default mapping rule.
+If
+\fItld\fR is ``-'', it matches domain names which do not contain any
+dots.
+If \fItld\fR is ``.'', it matches any domain names which don't match
+to any other mapping rules specified by ``local-map'' entries.
+.\"
+.SH "MAPFILE FORMAT"
+A mapfile defines a set of character mapping rules.  It can define
+unconditional one-character to N-character-sequence (N can be 0, 1 or more)
+mappings.
+.PP
+A mapfile is a simple text file, and each line specifies a single mapping.
+Each line is of the form:
+.PP
+.RS 4
+.nf
+\fIsrc-codepoint\fR\f(CW; \fImapped-codepoint-seq\fR\f(CW;\fR
+.fi
+.RE
+.PP
+\fIsrc-codepoint\fR indicates source character of the mapping, and must
+be a Unicode codepoint value in hexadecimal string.
+\fImapped-codepoint-seq\fR is a sequence of characters which is the
+outcome of the mapping, and must be a (possibly empty) list of Unicode
+codepoint values in hexadecimal string, separated by spaces.
+.PP
+Lines which begin with ``#'' are treated as comments and ignored.
+.PP
+A sample mapfile is shown below.
+.PP
+.RS 4
+.nf
+.ft CW
+# map "A" to "a"
+0041; 0061;
+# map "#" to nothing
+0023; ;
+# map "@" to "at"
+0040; 0061 0074;
+.ft R
+.fi
+.RE
+.\"
+.SH "LOCAL CODESET"
+\fBidn.conf\fR or \fB~/.idnrc\fR doesn't have an entry to specify the
+local codeset, since it is determined from the application's current
+locale information.
+So each application can use different local codeset.
+.PP
+Although idnkit tries hard to find out the local codeset, sometimes it
+fails.  For example, there are applications which use non-ASCII codeset
+but work in C locale.  In this case, you can specify the application's
+local codeset by an environment variable ``\fBIDN_LOCAL_CODESET\fR''.
+Just set the codeset name (or its alias name) to the variable, and
+idnkit will use the codeset as the local one, regardless of the locale
+setting.
+.\"
+.SH "ENCODING-ALIAS-FILE"
+Encoding alias file specifies codeset name aliases.  It is located on
+@sysconfdir@/idnalias.conf and always loaded automatically as idn.conf
+and .idnrc.  The aliases in this file can be used just as the real names.
+.PP
+The alias file is a simple text file, consisting of lines of the form:
+.PP
+.RS 4
+.nf
+\fIalias-name\fP\ \fIname\fP
+.fi
+.RE
+.PP
+\fIalias-name\fR is the alias name to be defined, and \fIname\fR is
+the real name or another alias name.
+.\"
+.SH "SAMPLE CONFIGURATION"
+The following shows a sample configuration file.
+.PP
+.RS 4
+.ft CW
+.nf
+#
+# a sample configuration.
+#
+
+# Use Punycode as the IDN encoding.
+idn-encoding Punycode
+
+# Use RFC3491 as NAMEPREP.
+nameprep RFC3491
+
+# Perform Japanese-specific mapping for .jp domain.
+# assuming /usr/local/lib/idnkit/jp-map contains the mapping.
+local-map .jp filemap:/usr/local/lib/idnkit/jp-map
+.fi
+.ft R
+.RE
+.\"
+.SH FILES
+.I @sysconfdir@/idn.conf
+.br
+.I ~/.idnrc
+.br
+.I @sysconfdir@/idnalias.conf
+.br
+.I @sysconfdir@/idn.conf.sample
+\- sample configuration with comments
+.br
+.I @sysconfdir@/idnalias.conf.sample
+\- sample alias file
+.\"
+.SH "SEE ALSO"
+iconv(3)

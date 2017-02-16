@@ -1,0 +1,5 @@
+a		IN  A		1.2.3.1
+b		IN  MX		10 a
+;c		IN  A		1.2.3.2
+d		IN  A		1.2.3.3
+		IN  AAAA	2001:0db8::3

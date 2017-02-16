@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS `records` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `zone` CHAR(255) NOT NULL,
+    `ttl` INT NOT NULL DEFAULT '86400',
+    `type` CHAR(255) NOT NULL,
+    `host` CHAR(255) NOT NULL DEFAULT '@',
+    `mx_priority` INT DEFAULT NULL,
+    `data` text,
+    `primary_ns` CHAR(255) DEFAULT NULL,
+    `resp_contact` CHAR(255) DEFAULT NULL,
+    `serial` bigint DEFAULT NULL,
+    `refresh` INT DEFAULT NULL,
+    `retry` INT DEFAULT NULL,
+    `expire` INT DEFAULT NULL,
+    `minimum` INT DEFAULT NULL
+);
+
+CREATE INDEX IF NOT EXISTS record_type on records (type);
+CREATE INDEX IF NOT EXISTS record_host on records (host);
+CREATE INDEX IF NOT EXISTS record_zone on records (zone);
+
+CREATE TABLE IF NOT EXISTS `xfr` (
+    `zone` CHAR(255) NOT NULL,
+    `client` CHAR(255) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS xfr_zone on xfr (zone);
+CREATE INDEX IF NOT EXISTS xfr_client on xfr (client);

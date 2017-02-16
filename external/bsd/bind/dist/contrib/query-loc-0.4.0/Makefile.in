@@ -1,0 +1,42 @@
+# Id: Makefile.in,v 1.1 2008/02/15 01:47:15 marka Exp 
+CC=@CC@
+CFLAGS=@CFLAGS@ 
+LIBS=@LIBS@
+DESTDIR=@prefix@
+BINDIR=@prefix@/bin
+MANDIR=@prefix@/share/man/man1
+DISTRIB= README INSTALL ALGO USAGE ADDRESSES Makefile.in configure configure.in config.h.in install-sh loc.h loc.c query-loc.c loc_ntoa.c query-loc.1 reconf
+OBJS=query-loc.o loc.o @LOC_NTOA@
+VERSION=`grep VERSION loc.h | cut -d ' ' -f 3 | sed s/\"//g`
+
+all: query-loc
+
+query-loc: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LIBS)
+
+%.o: %.c loc.h
+	$(CC) $(CFLAGS) -c $<
+
+clean:
+	rm -f *.o query-loc *~ 
+
+distclean: clean
+	rm -f config.h config.cache config.log config.status Makefile
+
+dist: distrib
+
+distrib: clean
+	./reconf
+	@(echo Query-Loc is version ${VERSION}; \
+	mkdir query-loc-${VERSION}; \
+	cp $(DISTRIB) query-loc-${VERSION};\
+	tar cvf query-loc-${VERSION}.tar query-loc-${VERSION}; \
+	rm -rf query-loc-${VERSION}; \
+	gzip -v -9 -f query-loc-${VERSION}.tar);
+
+install:
+	@INSTALL@ -m 0755 query-loc $(BINDIR)
+	if [ ! -d $(MANDIR) ]; then \
+		mkdir $(MANDIR); \
+	fi
+	@INSTALL@ -m 0644 query-loc.1 $(MANDIR)

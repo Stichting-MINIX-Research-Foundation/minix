@@ -1,0 +1,1 @@
+-m record,size,mctx -c named.conf -d 99 -g -T nonearest -T clienttest

@@ -1,0 +1,30 @@
+;-----------------------------------------------------------------
+;
+;       @(#)    dyn.example.net/zone.org
+;
+;-----------------------------------------------------------------
+
+$TTL	7200
+
+@	IN SOA	ns1.example.net. hostmaster.example.net.  (
+				1       ; Serial	
+				43200	; Refresh
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum
+
+		IN  NS		ns1.example.net.
+		IN  NS		ns2.example.net.
+
+ns1		IN  A		1.0.0.5
+		IN  AAAA	2001:db8::53
+ns2		IN  A		1.2.0.6
+
+localhost	IN  A		127.0.0.1
+
+x		IN  A	1.2.3.4
+y		IN  A	1.2.3.5
+z		IN  A	1.2.3.6
+
+$INCLUDE dnskey.db
+

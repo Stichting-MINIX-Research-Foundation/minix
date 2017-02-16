@@ -1,0 +1,1026 @@
+#ifndef lint
+static char *rcsid = "Id: resconf.tsy,v 1.1 2003/06/04 00:27:00 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <idn/resconf.h>
+#include <idn/converter.h>
+#include <idn/log.h>
+
+#include "setenv.h"
+#include "testutil.h"
+
+#define CONF_FILENAME		"test.conf"
+#define MAP_FILENAME		"test.map"
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//      group: generic-init
+{
+	idn_result_t r;
+	idn_resconf_t ctx = NULL;
+
+	setenv("IDN_LOCAL_CODESET", "UTF-8", 1);
+
+	r = idn_resconf_initialize();
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_resconf_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//      group: generic-init
+{
+	if (ctx != NULL)
+		idn_resconf_destroy(ctx);
+	remove(CONF_FILENAME);
+	remove(MAP_FILENAME);
+}
+
+//# SETUP
+//	group: set-defaults
+{
+	r = idn_resconf_setdefaults(ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: set-defaults
+{
+}
+
+//# SETUP
+//	group: quiet
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//# SETUP
+//	group: delimitermap_ctx
+{
+	idn_delimitermap_t delimitermap_ctx1 = NULL;
+	idn_delimitermap_t delimitermap_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: delimitermap_ctx
+{
+	if (delimitermap_ctx1 != NULL) 
+		idn_delimitermap_destroy(delimitermap_ctx1);
+	if (delimitermap_ctx2 != NULL) 
+		idn_delimitermap_destroy(delimitermap_ctx2);
+}
+
+//# SETUP
+//	group: idnconverter_ctx
+{
+	idn_converter_t idnconverter_ctx1 = NULL;
+	idn_converter_t idnconverter_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: idnconverter_ctx
+{
+	if (idnconverter_ctx1 != NULL) 
+		idn_converter_destroy(idnconverter_ctx1);
+	if (idnconverter_ctx2 != NULL) 
+		idn_converter_destroy(idnconverter_ctx2);
+}
+
+//# SETUP
+//	group: localconverter_ctx
+{
+	idn_converter_t localconverter_ctx1 = NULL;
+	idn_converter_t localconverter_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: localconverter_ctx
+{
+	if (localconverter_ctx1 != NULL) 
+		idn_converter_destroy(localconverter_ctx1);
+	if (localconverter_ctx2 != NULL) 
+		idn_converter_destroy(localconverter_ctx2);
+}
+
+//# SETUP
+//	group: auxidnconverter_ctx
+{
+	idn_converter_t auxidnconverter_ctx1 = NULL;
+	idn_converter_t auxidnconverter_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: auxidnconverter_ctx
+{
+	if (auxidnconverter_ctx1 != NULL) 
+		idn_converter_destroy(auxidnconverter_ctx1);
+	if (auxidnconverter_ctx2 != NULL) 
+		idn_converter_destroy(auxidnconverter_ctx2);
+}
+
+//# SETUP
+//	group: mapselector_ctx
+{
+	idn_mapselector_t mapselector_ctx1 = NULL;
+	idn_mapselector_t mapselector_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: mapselector_ctx
+{
+	if (mapselector_ctx1 != NULL) 
+		idn_mapselector_destroy(mapselector_ctx1);
+	if (mapselector_ctx2 != NULL) 
+		idn_mapselector_destroy(mapselector_ctx2);
+}
+
+//# SETUP
+//	group: mapper_ctx
+{
+	idn_mapper_t mapper_ctx1 = NULL;
+	idn_mapper_t mapper_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: mapper_ctx
+{
+	if (mapper_ctx1 != NULL) 
+		idn_mapper_destroy(mapper_ctx1);
+	if (mapper_ctx2 != NULL) 
+		idn_mapper_destroy(mapper_ctx2);
+}
+
+//# SETUP
+//	group: normalizer_ctx
+{
+	idn_normalizer_t normalizer_ctx1 = NULL;
+	idn_normalizer_t normalizer_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: normalizer_ctx
+{
+	if (normalizer_ctx1 != NULL) 
+		idn_normalizer_destroy(normalizer_ctx1);
+	if (normalizer_ctx2 != NULL) 
+		idn_normalizer_destroy(normalizer_ctx2);
+}
+
+//# SETUP
+//	group: prohibitchecker_ctx
+{
+	idn_checker_t prohibitchecker_ctx1 = NULL;
+	idn_checker_t prohibitchecker_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: prohibitchecker_ctx
+{
+	if (prohibitchecker_ctx1 != NULL) 
+		idn_checker_destroy(prohibitchecker_ctx1);
+	if (prohibitchecker_ctx2 != NULL) 
+		idn_checker_destroy(prohibitchecker_ctx2);
+}
+
+//# SETUP
+//	group: unassignedchecker_ctx
+{
+	idn_checker_t unassignedchecker_ctx1 = NULL;
+	idn_checker_t unassignedchecker_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: unassignedchecker_ctx
+{
+	if (unassignedchecker_ctx1 != NULL) 
+		idn_checker_destroy(unassignedchecker_ctx1);
+	if (unassignedchecker_ctx2 != NULL) 
+		idn_checker_destroy(unassignedchecker_ctx2);
+}
+
+//# SETUP
+//	group: bidichecker_ctx
+{
+	idn_checker_t bidichecker_ctx1 = NULL;
+	idn_checker_t bidichecker_ctx2 = NULL;
+}
+
+//# TEARDOWN
+//	group: bidichecker_ctx
+{
+	if (bidichecker_ctx1 != NULL) 
+		idn_checker_destroy(bidichecker_ctx1);
+	if (bidichecker_ctx2 != NULL) 
+		idn_checker_destroy(bidichecker_ctx2);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: call create() without initialization.
+//--
+//	This must be the first test case.
+{
+	idn_result_t r;
+	idn_resconf_t ctx = NULL;
+
+	r = idn_resconf_create(&ctx);
+	ASSERT_RESULT(r, idn_failure);
+
+	if (ctx != NULL)
+		idn_resconf_destroy(ctx);
+}
+
+//# TESTCASE
+//	title: call initialize() twice.
+//
+{
+	idn_result_t r;
+
+	r = idn_resconf_initialize();
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_resconf_initialize();
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: call create()
+{
+	idn_result_t r;
+	idn_resconf_t ctx;
+
+	r = idn_resconf_initialize();
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_resconf_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+
+	if (ctx != NULL)
+		idn_resconf_destroy(ctx);
+}
+
+//# TESTCASE
+//	title: load file (idn-encoding)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "idn-encoding	Punycode",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (nameprep)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "nameprep	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (idn-encoding & nameprep)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "idn-encoding	Punycode",
+			 "nameprep	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (empty)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (local-map filemap)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	filemap:" MAP_FILENAME,
+			 NULL);
+	create_conf_file(MAP_FILENAME, 0,
+			 "2212; FF0D",
+			 NULL);
+
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (local-map nameprep)
+//	group: generic-init
+{
+	const char *idn_encoding;
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: set defaults
+//	group: generic-init set-defaults
+{
+}
+
+//# TESTCASE
+//	title: load file (no file)
+//	group: generic-init
+{
+	r = idn_resconf_loadfile(ctx, "no-such-file");
+	ASSERT_RESULT(r, idn_nofile);
+}
+
+//# TESTCASE
+//	title: load file (empty file name)
+//	group: generic-init
+{
+	r = idn_resconf_loadfile(ctx, "");
+	ASSERT_RESULT(r, idn_nofile);
+}
+
+//# TESTCASE
+//	title: load file (unknown command)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "unknown-command	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: load file (no newline at the end of file)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, CONF_NO_EOF_NEWLINE,
+			 "nameprep	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (too long line)
+//	group: generic-init quiet
+{
+	char arg[1024];
+	char *line;
+
+	/* arg = "local-map . ////..." */
+	memset(arg, '/', sizeof(arg));
+	arg[sizeof(arg) - 1] = '\0';
+	line = "local-map	.	";
+	memcpy(arg, line, strlen(line));
+
+	create_conf_file(CONF_FILENAME, 0, arg, NULL);
+
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: load file (empty file)
+//	group: generic-init
+{
+	create_conf_file(CONF_FILENAME, 0, "", NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: load file (invalid parameter for idn-encoding)
+//	group: generic-init quiet
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	create_conf_file(CONF_FILENAME, 0,
+			 "idn-encoding	invalid-encoding-name",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_name);
+#endif
+}
+
+//# TESTCASE
+//	title: load file (define idn-encoding twice)
+//	group: generic-init quiet
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	create_conf_file(CONF_FILENAME, CONF_NO_EOF_NEWLINE,
+			 "idn-encoding	Punycode", 
+			 "idn-encoding	Punycode", 
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+#endif
+}
+
+//# TESTCASE
+//	title: load file (invalid parameter for nameprep)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "nameprep	invalid-version",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: load file (define nameprep twice)
+//	group: generic-init quiet
+{
+#ifndef WITHOUT_ICONV
+	SKIP_TESTCASE;
+#else
+	create_conf_file(CONF_FILENAME, CONF_NO_EOF_NEWLINE,
+			 "nameprep	" IDN_NAMEPREP_CURRENT,
+			 "nameprep	" IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+#endif
+}
+
+//# TESTCASE
+//	title: load file (invalid parameter for local-map)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	:",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_name);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	invalid:/dev/null",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_name);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	filemap",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_nofile);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	filemap:",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_nofile);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	filemap:no-such-file",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_nofile);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map "
+			 "abcdefghijklmnopqrstuvwxyz0123"
+			 "abcdefghijklmnopqrstuvwxyz0123"
+			 "4567 "
+			 IDN_NAMEPREP_CURRENT,
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: load file (pass wrong number of parameters to idn-encoding)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "idn-encoding	",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "idn-encoding	Punycode ?",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: load file (pass wrong number of parameters to nameprep)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "nameprep	",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "nameprep	" IDN_NAMEPREP_CURRENT " ?",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: load file (pass wrong number of parameters to local-map)
+//	group: generic-init quiet
+{
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "local-map	.jp	",
+			 NULL);
+	r = idn_resconf_loadfile(ctx, CONF_FILENAME);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: getdelimitermap
+//	group: generic-init set-defaults delimitermap_ctx
+{
+	delimitermap_ctx1 = idn_resconf_getdelimitermap(ctx);
+	ASSERT_PTR_NE(delimitermap_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setdelimitermap
+//	group: generic-init set-defaults delimitermap_ctx
+{
+	r = idn_delimitermap_create(&delimitermap_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set delimitermap context. */
+	idn_resconf_setdelimitermap(ctx, delimitermap_ctx1);
+	delimitermap_ctx2 = idn_resconf_getdelimitermap(ctx);
+	ASSERT_PTR(delimitermap_ctx2, delimitermap_ctx1);
+	idn_delimitermap_destroy(delimitermap_ctx2);
+
+	/* set NULL as delimitermap context */
+	idn_resconf_setdelimitermap(ctx, NULL);
+	delimitermap_ctx2 = idn_resconf_getdelimitermap(ctx);
+	ASSERT_PTR(delimitermap_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addalldelimitermapucs
+//	group: generic-init set-defaults
+{
+	static unsigned long v[] = {0x002C, 0x3001, 0xFF0C};
+	int nv = sizeof(v) / sizeof(*v);
+
+	r = idn_resconf_addalldelimitermapucs(ctx, v, nv);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getidnconverter
+//	group: generic-init set-defaults idnconverter_ctx
+{
+	idnconverter_ctx1 = idn_resconf_getidnconverter(ctx);
+	ASSERT_PTR_NE(idnconverter_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setidnconverter
+//	group: generic-init set-defaults idnconverter_ctx
+{
+	r = idn_converter_create("Punycode", &idnconverter_ctx1, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set idnconverter context. */
+	idn_resconf_setidnconverter(ctx, idnconverter_ctx1);
+	idnconverter_ctx2 = idn_resconf_getidnconverter(ctx);
+	ASSERT_PTR(idnconverter_ctx2, idnconverter_ctx1);
+	idn_converter_destroy(idnconverter_ctx2);
+
+	/* set NULL as idnconverter context */
+	idn_resconf_setidnconverter(ctx, NULL);
+	idnconverter_ctx2 = idn_resconf_getidnconverter(ctx);
+	ASSERT_PTR(idnconverter_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: getlocalconverter
+//	group: generic-init set-defaults localconverter_ctx
+{
+	localconverter_ctx1 = idn_resconf_getlocalconverter(ctx);
+#ifdef WITHOUT_ICONV
+	ASSERT_PTR(localconverter_ctx1, NULL);
+#else
+	ASSERT_PTR_NE(localconverter_ctx1, NULL);
+#endif
+}
+
+//# TESTCASE
+//	title: setlocalconverter
+//	group: generic-init set-defaults localconverter_ctx
+{
+	r = idn_converter_create("UTF-8", &localconverter_ctx1, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set localconverter context. */
+	idn_resconf_setlocalconverter(ctx, localconverter_ctx1);
+	localconverter_ctx2 = idn_resconf_getlocalconverter(ctx);
+#ifdef WITHOUT_ICONV
+	ASSERT_PTR(localconverter_ctx2, NULL);
+#else
+	ASSERT_PTR(localconverter_ctx2, localconverter_ctx1);
+	idn_converter_destroy(localconverter_ctx2);
+#endif
+
+	/* set NULL as localconverter context */
+	idn_resconf_setlocalconverter(ctx, NULL);
+	localconverter_ctx2 = idn_resconf_getlocalconverter(ctx);
+#ifdef WITHOUT_ICONV
+	ASSERT_PTR(localconverter_ctx2, NULL);
+#else
+	ASSERT_PTR_NE(localconverter_ctx2, NULL);
+#endif
+}
+
+//# TESTCASE
+//	title: getauxidnconverter
+//	group: generic-init set-defaults auxidnconverter_ctx
+{
+	auxidnconverter_ctx1 = idn_resconf_getauxidnconverter(ctx);
+	ASSERT_PTR(auxidnconverter_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setauxidnconverter
+//	group: generic-init set-defaults auxidnconverter_ctx
+{
+	r = idn_converter_create("Punycode", &auxidnconverter_ctx1, 0);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set auxidnconverter context. */
+	idn_resconf_setauxidnconverter(ctx, auxidnconverter_ctx1);
+	auxidnconverter_ctx2 = idn_resconf_getauxidnconverter(ctx);
+	ASSERT_PTR(auxidnconverter_ctx2, auxidnconverter_ctx1);
+	idn_converter_destroy(auxidnconverter_ctx2);
+
+	/* set NULL as auxidnconverter context */
+	idn_resconf_setauxidnconverter(ctx, NULL);
+	auxidnconverter_ctx2 = idn_resconf_getauxidnconverter(ctx);
+	ASSERT_PTR(auxidnconverter_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: getlocalmapselector
+//	group: generic-init set-defaults mapselector_ctx
+{
+	mapselector_ctx1 = idn_resconf_getlocalmapselector(ctx);
+	ASSERT_PTR(mapselector_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setlocalmapselector
+//	group: generic-init set-defaults mapselector_ctx
+{
+	r = idn_mapselector_create(&mapselector_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set localmapselector context. */
+	idn_resconf_setlocalmapselector(ctx, mapselector_ctx1);
+	mapselector_ctx2 = idn_resconf_getlocalmapselector(ctx);
+	ASSERT_PTR(mapselector_ctx2, mapselector_ctx1);
+	idn_mapselector_destroy(mapselector_ctx2);
+
+	/* set NULL as localmapselector context */
+	idn_resconf_setlocalmapselector(ctx, NULL);
+	mapselector_ctx2 = idn_resconf_getlocalmapselector(ctx);
+	ASSERT_PTR(mapselector_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addalllocalmapselectornames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		"filemap:" MAP_FILENAME,
+		"filemap:" MAP_FILENAME,
+		"filemap:" MAP_FILENAME
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	create_conf_file(MAP_FILENAME, 0,
+			 "2212; FF0D",
+			 NULL);
+	r = idn_resconf_addalllocalmapselectornames(ctx, ".jp", names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getmapper
+//	group: generic-init set-defaults mapper_ctx
+{
+	mapper_ctx1 = idn_resconf_getmapper(ctx);
+	ASSERT_PTR_NE(mapper_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setmapper
+//	group: generic-init set-defaults mapper_ctx
+{
+	r = idn_mapper_create(&mapper_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set mapper context. */
+	idn_resconf_setmapper(ctx, mapper_ctx1);
+	mapper_ctx2 = idn_resconf_getmapper(ctx);
+	ASSERT_PTR(mapper_ctx2, mapper_ctx1);
+	idn_mapper_destroy(mapper_ctx2);
+
+	/* set NULL as mapper context */
+	idn_resconf_setmapper(ctx, NULL);
+	mapper_ctx2 = idn_resconf_getmapper(ctx);
+	ASSERT_PTR(mapper_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addallmappernames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	r = idn_resconf_addallmappernames(ctx, names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getnormalizer
+//	group: generic-init set-defaults normalizer_ctx
+{
+	normalizer_ctx1 = idn_resconf_getnormalizer(ctx);
+	ASSERT_PTR_NE(normalizer_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setnormalizer
+//	group: generic-init set-defaults normalizer_ctx
+{
+	r = idn_normalizer_create(&normalizer_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set normalizer context. */
+	idn_resconf_setnormalizer(ctx, normalizer_ctx1);
+	normalizer_ctx2 = idn_resconf_getnormalizer(ctx);
+	ASSERT_PTR(normalizer_ctx2, normalizer_ctx1);
+	idn_normalizer_destroy(normalizer_ctx2);
+
+	/* set NULL as normalizer context */
+	idn_resconf_setnormalizer(ctx, NULL);
+	normalizer_ctx2 = idn_resconf_getnormalizer(ctx);
+	ASSERT_PTR(normalizer_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addallnormalizernames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	r = idn_resconf_addallnormalizernames(ctx, names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getprohibitchecker
+//	group: generic-init set-defaults prohibitchecker_ctx
+{
+	prohibitchecker_ctx1 = idn_resconf_getprohibitchecker(ctx);
+	ASSERT_PTR_NE(prohibitchecker_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setprohibitchecker
+//	group: generic-init set-defaults prohibitchecker_ctx
+{
+	r = idn_checker_create(&prohibitchecker_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set checker context. */
+	idn_resconf_setprohibitchecker(ctx, prohibitchecker_ctx1);
+	prohibitchecker_ctx2 = idn_resconf_getprohibitchecker(ctx);
+	ASSERT_PTR(prohibitchecker_ctx2, prohibitchecker_ctx1);
+	idn_checker_destroy(prohibitchecker_ctx2);
+
+	/* set NULL as checker context */
+	idn_resconf_setprohibitchecker(ctx, NULL);
+	prohibitchecker_ctx2 = idn_resconf_getprohibitchecker(ctx);
+	ASSERT_PTR(prohibitchecker_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addallprohibitcheckernames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	r = idn_resconf_addallprohibitcheckernames(ctx, names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getunassignedchecker
+//	group: generic-init set-defaults unassignedchecker_ctx
+{
+	unassignedchecker_ctx1 = idn_resconf_getunassignedchecker(ctx);
+	ASSERT_PTR_NE(unassignedchecker_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setunassignedchecker
+//	group: generic-init set-defaults unassignedchecker_ctx
+{
+	r = idn_checker_create(&unassignedchecker_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set checker context. */
+	idn_resconf_setunassignedchecker(ctx, unassignedchecker_ctx1);
+	unassignedchecker_ctx2 = idn_resconf_getunassignedchecker(ctx);
+	ASSERT_PTR(unassignedchecker_ctx2, unassignedchecker_ctx1);
+	idn_checker_destroy(unassignedchecker_ctx2);
+
+	/* set NULL as checker context */
+	idn_resconf_setunassignedchecker(ctx, NULL);
+	unassignedchecker_ctx2 = idn_resconf_getunassignedchecker(ctx);
+	ASSERT_PTR(unassignedchecker_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addallunassignedcheckernames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	r = idn_resconf_addallunassignedcheckernames(ctx, names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: getbidichecker
+//	group: generic-init set-defaults bidichecker_ctx
+{
+	bidichecker_ctx1 = idn_resconf_getbidichecker(ctx);
+	ASSERT_PTR_NE(bidichecker_ctx1, NULL);
+}
+
+//# TESTCASE
+//	title: setbidichecker
+//	group: generic-init set-defaults bidichecker_ctx
+{
+	r = idn_checker_create(&bidichecker_ctx1);
+	ASSERT_RESULT(r, idn_success);
+
+	/* set checker context. */
+	idn_resconf_setbidichecker(ctx, bidichecker_ctx1);
+	bidichecker_ctx2 = idn_resconf_getbidichecker(ctx);
+	ASSERT_PTR(bidichecker_ctx2, bidichecker_ctx1);
+	idn_checker_destroy(bidichecker_ctx2);
+
+	/* set NULL as checker context */
+	idn_resconf_setbidichecker(ctx, NULL);
+	bidichecker_ctx2 = idn_resconf_getbidichecker(ctx);
+	ASSERT_PTR(bidichecker_ctx2, NULL);
+}
+
+//# TESTCASE
+//	title: addallbidicheckernames
+//	group: generic-init set-defaults
+{
+	static const char *names[] = {
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT,
+		IDN_NAMEPREP_CURRENT
+	};
+	int nnames = sizeof(names) / sizeof(*names);
+
+	r = idn_resconf_addallbidicheckernames(ctx, names, nnames);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TESTCASE
+//	title: setnameprepversion
+//	group: generic-init set-defaults
+{
+	idn_resconf_setnameprepversion(ctx, IDN_NAMEPREP_CURRENT);
+	ASSERT_RESULT(r, idn_success);
+}

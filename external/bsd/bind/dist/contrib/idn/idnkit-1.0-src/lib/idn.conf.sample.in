@@ -1,0 +1,61 @@
+# Id: idn.conf.sample.in,v 1.1 2003/06/04 00:26:45 marka Exp 
+#
+# Sample file for idnkit configuration file (idn.conf).
+#
+
+#
+# `idn-encoding' entry specifies the encoding name used as the encoding
+# of multilingualized names by resolvers and DNS servers.  Currently, the
+# following encodings are available:
+#
+#	Punycode
+#	UTF-8
+#	<codeset names your iconv_open() accepts>
+#
+# If you enabled extra ace feature, following IDN encoding can be used.
+#
+#	AMC-ACE-Z (old name of Punycode)
+#	RACE
+#
+# syntax)
+#	idn-encoding <encoding>
+#
+idn-encoding Punycode
+
+#
+# `nameprep' entry specifies the version of NAMEPREP.
+# idnkit currently supports the following version:
+#
+#	RFC3491			-- name preparation scheme described in the
+#				   RFC3491
+#
+# syntax)
+#	nameprep <nameprep version>
+#
+nameprep RFC3491
+
+#
+# `local-map' entry specifies TLD (top level domain) based local mapping
+# schemes, which is performed before NAMEPREP.  Available schemes are:
+# 
+#	<nameprep version>      -- nameprep version
+#	filemap:<pathname>      -- read mapping rules from a file
+#
+# syntax)
+#	local-map <tld> <scheme> ...
+#
+# If the TLD of the domain name matches <tld>, local mapping specified
+# by <scheme> is performed on the name.  Otherwise no mapping are
+# performed.  Multiple schemes can be specified; they are applied in
+# turn.
+#
+# There are two special <tld>s for specifying a default mapping rule
+# and a mapping rule for local names (domain names containing no
+# dots).  If <tld> is `.', its schemes are applied to domain names
+# whose TLD does not match any TLDs specified in local-map entries.
+# If <tld> is `-', its schemes are applied to domain names which
+# contain no dots.
+# 
+#local-map -	filemap:/some/where/local.map
+#local-map .	filemap:/some/where/default.map
+local-map .jp	filemap:@mapdir@/jp.map

@@ -1,0 +1,500 @@
+# Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+#
+# Shorthand.  Note quoting: DLZ_DRIVER_DIR expanded in Makefile, not here.
+#
+dlzdir='${DLZ_DRIVER_DIR}'
+
+#
+# Private autoconf macro to simplify configuring drivers:
+#
+#   DLZ_ADD_DRIVER(DEFINE, DRIVER, INCLUDES, LIBS)
+#
+# where:
+#   DEFINE is FOO (to define -DDLZ_FOO)
+#   DRIVER is dlz_foo_driver (sources without the .c)
+#   INCLUDES is any necessary include definitions
+#   LIBS is any necessary library definitions
+#
+AC_DEFUN(DLZ_ADD_DRIVER, [
+	CONTRIB_DLZ="$CONTRIB_DLZ -DDLZ_$1"
+	for i in $2
+	do
+		DLZ_DRIVER_SRCS="$DLZ_DRIVER_SRCS $dlzdir/$i.c"
+		DLZ_DRIVER_OBJS="$DLZ_DRIVER_OBJS $i.$O"
+	done
+	if test -n "$3"
+	then
+		DLZ_DRIVER_INCLUDES="$DLZ_DRIVER_INCLUDES $3"
+	fi
+	if test -n "$4"
+	then
+		DLZ_DRIVER_LIBS="$DLZ_DRIVER_LIBS $4"
+	fi
+])
+
+#
+# Check for the various DLZ drivers
+#
+
+#
+# Was --with-dlz-postgres specified?
+#
+
+AC_MSG_CHECKING(for Postgres DLZ driver)
+AC_ARG_WITH(dlz_postgres,
+[  --with-dlz-postgres[=PATH]   Build with Postgres DLZ driver [yes|no|path].
+			       (Required to use Postgres with DLZ)],
+    use_dlz_postgres="$withval", use_dlz_postgres="no")
+
+if test "$use_dlz_postgres" != "no"
+then
+	if test "$use_dlz_postgres" != "yes"
+        then
+                AC_PATH_PROGS(PG_CONFIG, pg_config, [not found], $use_dlz_postgres/bin)
+	else
+                AC_PATH_PROGS(PG_CONFIG, pg_config, [not found])
+	fi
+
+	if test "$PG_CONFIG" != "not found"
+	then
+		use_dlz_postgres=`$PG_CONFIG --includedir`
+		use_dlz_postgres_lib=`$PG_CONFIG --libdir`
+	else
+		pgprefix="$use_dlz_postgres"
+		use_dlz_postgres="$pgprefix/include"
+		use_dlz_postgres_lib="$pgprefix/lib"
+	fi
+fi
+
+if test "$use_dlz_postgres" = "yes/include"
+then
+	# User did not specify path and Postgres didn't say - guess it
+	pgdirs="/usr /usr/local /usr/local/pgsql /usr/pkg"
+	for d in $pgdirs
+	do
+		if test -f $d/include/libpq-fe.h
+		then
+			use_dlz_postgres=$d/include
+			use_dlz_postgres_lib=$d/lib
+			break
+		fi
+	done
+fi
+
+if test "$use_dlz_postgres" = "yes/include"
+then
+	# Still no joy, give up
+
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(
+[No pg_config and PostgreSQL was not found in any of $pgdirs; use --with-dlz-postgres=/path or put pg_config in your path])
+fi
+
+case "$use_dlz_postgres" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		DLZ_ADD_DRIVER(POSTGRES, dlz_postgres_driver,
+				[-I$use_dlz_postgres],
+				[-L$use_dlz_postgres_lib -lpq])
+
+		AC_MSG_RESULT(
+[using PostgreSQL from $use_dlz_postgres_lib and $use_dlz_postgres])
+		;;
+esac
+
+
+#
+# Was --with-dlz-mysql specified?
+#
+
+AC_MSG_CHECKING(for MySQL DLZ driver)
+AC_ARG_WITH(dlz_mysql,
+[  --with-dlz-mysql[=PATH]   Build with MySQL DLZ driver [yes|no|path].
+			       (Required to use MySQL with DLZ)],
+    use_dlz_mysql="$withval", use_dlz_mysql="no")
+
+mysql_include=""
+mysql_lib=""
+if test "$use_dlz_mysql" = "yes"
+then
+	# User did not specify a path - guess it
+	mysqldirs="/usr /usr/local /usr/local/mysql /usr/pkg"
+	for d in $mysqldirs
+	do
+		if test -f $d/include/mysql/mysql.h
+		then
+			use_dlz_mysql=$d
+			mysql_include=$d/include/mysql
+			if test -d $d/lib/mysql
+			then
+				mysql_lib=$d/lib/mysql
+			else
+				mysql_lib=$d/lib
+			fi
+			break
+		elif test -f $d/include/mysql.h
+		then
+			use_dlz_mysql=$d
+			mysql_include=$d/include
+			if test -d $d/lib/mysql
+			then
+				mysql_lib=$d/lib/mysql
+			else
+				mysql_lib=$d/lib
+			fi
+			break
+		fi
+	done
+elif test "$use_dlz_mysql" != "no"
+then
+	d=$use_dlz_mysql
+	if test -f $d/include/mysql/mysql.h
+	then
+		mysql_include=$d/include/mysql
+		if test -d $d/lib/mysql
+		then
+			mysql_lib=$d/lib/mysql
+		else
+			mysql_lib=$d/lib
+		fi
+	elif test -f $d/include/mysql.h
+	then
+		mysql_include=$d/include
+		if test -d $d/lib/mysql
+		then
+			mysql_lib=$d/lib/mysql
+		else
+			mysql_lib=$d/lib
+		fi
+	fi
+fi
+
+if test "$use_dlz_mysql" = "yes"
+then
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(
+[MySQL was not found in any of $mysqldirs; use --with-dlz-mysql=/path])
+fi
+
+case "$use_dlz_mysql" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		DLZ_ADD_DRIVER(MYSQL, dlz_mysql_driver,
+				[-I${mysql_include}],
+				[-L${mysql_lib} -lmysqlclient -lz -lcrypt -lm])
+
+		AC_MSG_RESULT(
+[using mysql from ${mysql_lib} and ${mysql_include}])
+		;;
+esac
+
+
+#
+# Was --with-dlz-bdb specified?
+#
+
+AC_MSG_CHECKING(for Berkeley DB DLZ driver...)
+AC_ARG_WITH(dlz_bdb,
+[  --with-dlz-bdb[=PATH]   Build with Berkeley DB DLZ driver [yes|no|path].
+			       (Required to use Berkeley DB with DLZ)],
+    use_dlz_bdb="$withval", use_dlz_bdb="no")
+
+case "$use_dlz_bdb" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		if test "$use_dlz_bdb" = "yes"
+		then
+			# User did not specify a path - guess directories
+			bdbdirs="/usr/local /usr/pkg /usr"
+		elif test -d "$use_dlz_bdb"
+		then
+			# User specified directory and it exists
+			bdbdirs="$use_dlz_bdb"
+		else
+			AC_MSG_RESULT(not found)
+			AC_MSG_ERROR([path $use_dlz_bdb does not exist])
+			bdbdirs=""
+		fi
+
+		# Use path we were given or guessed.  This is insanely
+		# complicated because we have to search for a bunch of
+		# platform-specific variations and have to check
+		# separately for include and library directories.
+
+		# Set both to yes, so we can check them later
+		dlz_bdb_inc="yes"
+		dlz_bdb_libs="yes"
+
+                AC_MSG_RESULT( )
+		for dd in $bdbdirs
+		do
+			# Skip nonexistant directories
+			if test ! -d "$dd"
+			then
+				continue
+			fi
+
+			# Check other locations for includes.
+			# Order is important (sigh).
+
+			bdb_incdirs="/db53 /db51 /db48 /db47 /db46 /db45 /db44 /db43 /db42 /db41 /db4 /db"
+			# include a blank element first
+			for d in "" $bdb_incdirs
+			do
+				if test -f "$dd/include${d}/db.h"
+				then
+					dlz_bdb_inc="-I$dd/include${d}"
+					break
+				fi
+			done
+
+			# Give up on this directory if we couldn't
+			# find the include subdir
+
+			if test "$dlz_bdb_inc" = "yes"
+			then
+				continue
+			fi
+
+			# Look for libname other than libdb.so.
+			# Order is important (sigh).
+
+			bdb_libnames="db53 db-5.3 db51 db-5.1 db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
+			for d in $bdb_libnames
+			do
+				if test "$dd" = "/usr"
+				then
+					AC_CHECK_LIB($d, db_create, dlz_bdb_libs="-l${d}")
+					if test $dlz_bdb_libs != "yes"
+					then
+						break
+					fi
+				elif test -f "$dd/lib/lib${d}.so"
+				then
+					dlz_bdb_libs="-L${dd}/lib -l${d}"
+					break
+				fi
+			done
+
+			# If we found both incdir and lib, we're done
+			if test "$dlz_bdb_libs" != "yes"
+			then
+				break
+			fi
+
+			# Otherwise, we're starting over
+
+			dlz_bdb_inc="yes"
+			dlz_bdb_libs="yes"
+		done
+		
+		# Done searching, now make sure we got everything.
+
+		if test "$dlz_bdb_inc" = "yes"
+		then
+			AC_MSG_ERROR([could not find Berkeley DB include directory])
+		fi
+
+		if test "$dlz_bdb_libs" = "yes"
+		then
+			AC_MSG_RESULT(not found)
+			AC_MSG_ERROR([could not find Berkeley DB library])
+		fi
+
+		DLZ_ADD_DRIVER(BDB, dlz_bdb_driver dlz_bdbhpt_driver,
+			       [$dlz_bdb_inc], [$dlz_bdb_libs])
+
+		AC_MSG_RESULT([using Berkeley DB: $dlz_bdb_inc $dlz_bdb_libs])
+
+		AC_CONFIG_FILES([contrib/dlz/bin/dlzbdb/Makefile])
+		;;
+esac
+
+
+#
+# Was --with-dlz-filesystem specified?
+#
+
+AC_MSG_CHECKING(for file system DLZ driver)
+AC_ARG_WITH(dlz_filesystem,
+[  --with-dlz-filesystem[=PATH]   Build with filesystem DLZ driver [yes|no].
+			       (Required to use file system driver with DLZ)],
+    use_dlz_filesystem="$withval", use_dlz_filesystem="no")
+
+case "$use_dlz_filesystem" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		DLZ_ADD_DRIVER(FILESYSTEM, dlz_filesystem_driver)
+		DLZ_SYSTEM_TEST=filesystem
+		AC_MSG_RESULT(yes)
+		;;
+esac
+
+
+#
+# Was --with-dlz-ldap specified?
+#
+
+AC_MSG_CHECKING(for LDAP DLZ driver)
+AC_ARG_WITH(dlz_ldap,
+[  --with-dlz-ldap[=PATH]   Build with LDAP DLZ driver [yes|no|path].
+			       (Required to use LDAP with DLZ)],
+    use_dlz_ldap="$withval", use_dlz_ldap="no")
+
+if test "$use_dlz_ldap" = "yes"
+then
+	# User did not specify a path - guess it
+	ldapdirs="/usr /usr/local /usr/pkg"
+	for d in $ldapdirs
+	do
+		if test -f $d/include/ldap.h
+		then
+			use_dlz_ldap=$d
+			break
+		fi
+	done
+fi
+
+if test "$use_dlz_ldap" = "yes"
+then
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(
+[LDAP headers were not found in any of $ldapdirs; use --with-dlz-ldap=/path])
+fi
+
+case "$use_dlz_ldap" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		DLZ_ADD_DRIVER(LDAP, dlz_ldap_driver,
+				[-I$use_dlz_ldap/include],
+				[-L$use_dlz_ldap/lib -lldap -llber])
+
+		AC_MSG_RESULT(
+[using LDAP from $use_dlz_ldap/lib and $use_dlz_ldap/include])
+		;;
+esac
+
+
+#
+# Was --with-dlz-odbc specified?
+#
+
+AC_MSG_CHECKING(for ODBC DLZ driver)
+AC_ARG_WITH(dlz_odbc,
+[  --with-dlz-odbc[=PATH]   Build with ODBC DLZ driver [yes|no|path].
+			       (Required to use ODBC with DLZ)],
+    use_dlz_odbc="$withval", use_dlz_odbc="no")
+
+if test "$use_dlz_odbc" = "yes"
+then
+	# User did not specify a path - guess it
+	libodbc_found=no
+	sql_h_found=no
+	AC_CHECK_HEADER(sql.h, sql_h_found=yes)
+	AC_CHECK_LIB(odbc, SQLConnect, libodbc_found=yes)
+
+	if test $libodbc_found = "yes" -o $sql_h_found = "yes"
+	then
+		use_dlz_odbc=system
+		dlz_odbc_include=""
+		dlz_odbc_libs="-lodbc"
+	else
+		odbcdirs="/usr /usr/local /usr/pkg"
+		for d in $odbcdirs
+		do
+			if test -f $d/include/sql.h -a -f $d/lib/libodbc.a
+			then
+				use_dlz_odbc=$d
+				dlz_odbc_include="-I$use_dlz_odbc/include"
+				dlz_odbc_libs="-L$use_dlz_odbc/lib -lodbc"
+				break
+			fi
+		done
+	fi
+fi
+
+case "$use_dlz_odbc" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	yes)
+		AC_MSG_RESULT(not found)
+		AC_MSG_ERROR(
+[ODBC headers were not found in any of $odbcdirs; use --with-dlz-odbc=/path])
+		;;
+	*)
+		DLZ_ADD_DRIVER(ODBC, dlz_odbc_driver,
+				[$dlz_odbc_include],
+				[$dlz_odbc_libs])
+
+		AC_MSG_RESULT([using ODBC from $use_dlz_odbc])
+		;;
+esac
+
+
+#
+# Was --with-dlz-stub specified?
+#
+
+AC_MSG_CHECKING(for stub DLZ driver)
+AC_ARG_WITH(dlz_stub,
+[  --with-dlz-stub[=PATH]   Build with stub DLZ driver [yes|no].
+			       (Required to use stub driver with DLZ)],
+    use_dlz_stub="$withval", use_dlz_stub="no")
+
+case "$use_dlz_stub" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+
+		DLZ_ADD_DRIVER(STUB, dlz_stub_driver)
+
+		AC_MSG_RESULT(yes)
+		;;
+esac
+
+# Add any additional DLZ drivers here.
+
+#
+# Finally, some generic stuff that applies to all drivers, assuming
+# we're compiling contrib DLZ drivers at all.
+#
+if test -n "$CONTRIB_DLZ"
+then
+	CONTRIB_DLZ="-DCONTRIB_DLZ $CONTRIB_DLZ"
+
+	#
+	# Where to find DLZ driver header files.
+	#
+	DLZ_DRIVER_INCLUDES="-I$dlzdir/include $DLZ_DRIVER_INCLUDES"
+
+	#
+	# Initialization and shutdown wrappers, helper functions.
+	#
+	DLZ_DRIVER_SRCS="$dlzdir/dlz_drivers.c $dlzdir/sdlz_helper.c $DLZ_DRIVER_SRCS"
+	DLZ_DRIVER_OBJS="dlz_drivers.$O sdlz_helper.$O $DLZ_DRIVER_OBJS"
+fi

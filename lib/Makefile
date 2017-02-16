@@ -279,7 +279,7 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-#SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
+SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
 
 .if ${MKDTRACE} != "no"
 SUBDIR+=        ../external/cddl/osnet/lib/libdtrace	# depends on libproc

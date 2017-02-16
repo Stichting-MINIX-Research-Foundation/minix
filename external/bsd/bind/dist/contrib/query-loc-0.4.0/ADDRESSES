@@ -1,0 +1,16 @@
+The following machines, at least today seem to have LOC
+records:
+
+147.210.73.0/24 (note the two /25 have different LOC, inherited differently)
+130.104.3.*
+Melanie.Tolna.Net
+204.92.254.*
+alink.net
+caida.org
+ckdhr.com
+distributed.net (rc5stats.distributed.net)
+nikhef.nl
+yahoo.com
+nic.af
+
+Id: ADDRESSES,v 1.1 2008/02/15 01:47:15 marka Exp 

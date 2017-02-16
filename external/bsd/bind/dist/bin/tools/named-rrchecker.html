@@ -1,0 +1,71 @@
+<!--
+ - Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- Id -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>named-rrchecker</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<a name="man.named-rrchecker"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p><span class="application">named-rrchecker</span> &#8212; A syntax checker for individual DNS resource records</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="cmdsynopsis"><p><code class="command">named-rrchecker</code>  [<code class="option">-h</code>] [<code class="option">-o <em class="replaceable"><code>origin</code></em></code>] [<code class="option">-p</code>] [<code class="option">-u</code>] [<code class="option">-C</code>] [<code class="option">-T</code>] [<code class="option">-P</code>]</p></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543380"></a><h2>DESCRIPTION</h2>
+<p><span><strong class="command">named-rrchecker</strong></span>
+     read a individual DNS resource record from standard input and checks if it
+     is syntactically correct.
+    </p>
+<p>
+      The <code class="option">-h</code> prints out the help menu.
+    </p>
+<p>
+      The <code class="option">-o <em class="replaceable"><code>origin</code></em></code>
+      option specifies a origin to be used when interpreting the record.
+    </p>
+<p>
+      The <code class="option">-p</code> prints out the resulting record in canonical
+      form.  If there is no canonical form defined then the record will be
+      printed in unknown record format.
+    </p>
+<p>
+      The <code class="option">-u</code> prints out the resulting record in unknown record
+      form.
+    </p>
+<p>
+      The <code class="option">-C</code>, <code class="option">-T</code> and <code class="option">-P</code>
+      print out the known class, standard type and private type mnemonics
+      respectively.
+    </p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id2543434"></a><h2>SEE ALSO</h2>
+<p>
+      <em class="citetitle">RFC 1034</em>,
+      <em class="citetitle">RFC 1035</em>,
+      <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>
+    </p>
+</div>
+</div></body>
+</html>

@@ -1876,6 +1876,7 @@
 ./usr/lib/bc/libaudiodriver.a                           minix-comp      bitcode
 ./usr/lib/bc/libbdev.a                                  minix-comp      bitcode
 ./usr/lib/bc/libbfd.a                                   minix-comp      bitcode,binutils
+./usr/lib/bc/libbind9.a                                 minix-comp      bitcode
 ./usr/lib/bc/libblacklist.a                             minix-comp      bitcode
 ./usr/lib/bc/libblockdriver.a                           minix-comp      bitcode
 ./usr/lib/bc/libbz2.a                                   minix-comp      bitcode
@@ -1891,6 +1892,7 @@
 ./usr/lib/bc/libddekit_usb_server.a                     minix-comp      bitcode
 ./usr/lib/bc/libdes.a                                   minix-comp      bitcode
 ./usr/lib/bc/libdevman.a                                minix-comp      bitcode
+./usr/lib/bc/libdns.a                                   minix-comp      bitcode
 ./usr/lib/bc/libedit.a                                  minix-comp      bitcode
 ./usr/lib/bc/libelf.a                                   minix-comp      bitcode
 ./usr/lib/bc/libevent.a                                 minix-comp      bitcode
@@ -1906,10 +1908,15 @@
 ./usr/lib/bc/libiberty.a                                minix-comp      bitcode,binutils
 ./usr/lib/bc/libinputdriver.a                           minix-comp      bitcode
 ./usr/lib/bc/libintl.a                                  minix-comp      bitcode
+./usr/lib/bc/libirs.a                                   minix-comp      bitcode
+./usr/lib/bc/libisc.a                                   minix-comp      bitcode
+./usr/lib/bc/libisccc.a                                 minix-comp      bitcode
+./usr/lib/bc/libisccfg.a                                minix-comp      bitcode
 ./usr/lib/bc/libkvm.a                                   minix-comp      bitcode
 ./usr/lib/bc/libl.a                                     minix-comp      bitcode
 ./usr/lib/bc/liblua.a                                   minix-comp      bitcode
 ./usr/lib/bc/liblwip.a                                  minix-comp      bitcode
+./usr/lib/bc/liblwres.a                                 minix-comp      bitcode
 ./usr/lib/bc/liblzma.a                                  minix-comp      bitcode
 ./usr/lib/bc/libm.a                                     minix-comp      bitcode
 ./usr/lib/bc/libm387.a                                  minix-comp      bitcode
@@ -2002,6 +2009,8 @@
 ./usr/lib/libaudiodriver_pic.a                          minix-comp
 ./usr/lib/libbdev.a                                     minix-comp
 ./usr/lib/libbdev_pic.a                                 minix-comp
+./usr/lib/libbind9.a                                    minix-comp
+./usr/lib/libbind9_pic.a                                minix-comp
 ./usr/lib/libblockdriver.a                              minix-comp
 ./usr/lib/libblockdriver_pic.a                          minix-comp
 ./usr/lib/libbz2.a                                      minix-comp
@@ -2026,6 +2035,8 @@
 ./usr/lib/libddekit_usb_server_pic.a                    minix-comp
 ./usr/lib/libdevman.a                                   minix-comp
 ./usr/lib/libdevman_pic.a                               minix-comp
+./usr/lib/libdns.a                                      minix-comp
+./usr/lib/libdns_pic.a                                  minix-comp
 ./usr/lib/libedit.a                                     minix-comp
 ./usr/lib/libedit_pic.a                                 minix-comp
 ./usr/lib/libelf.a                                      minix-comp
@@ -2054,6 +2065,14 @@
 ./usr/lib/libinputdriver_pic.a                          minix-comp
 ./usr/lib/libintl.a                                     minix-comp
 ./usr/lib/libintl_pic.a                                 minix-comp
+./usr/lib/libirs.a                                      minix-comp
+./usr/lib/libirs_pic.a                                  minix-comp
+./usr/lib/libisc.a                                      minix-comp
+./usr/lib/libisc_pic.a                                  minix-comp
+./usr/lib/libisccc.a                                    minix-comp
+./usr/lib/libisccc_pic.a                                minix-comp
+./usr/lib/libisccfg.a                                   minix-comp
+./usr/lib/libisccfg_pic.a                               minix-comp
 ./usr/lib/libkvm.a                                      minix-comp
 ./usr/lib/libkvm_pic.a                                  minix-comp
 ./usr/lib/libl.a                                        minix-comp
@@ -2061,6 +2080,8 @@
 ./usr/lib/liblua_pic.a                                  minix-comp
 ./usr/lib/liblwip.a                                     minix-comp
 ./usr/lib/liblwip_pic.a                                 minix-comp
+./usr/lib/liblwres.a                                    minix-comp
+./usr/lib/liblwres_pic.a                                minix-comp
 ./usr/lib/liblzma.a                                     minix-comp
 ./usr/lib/liblzma_pic.a                                 minix-comp
 ./usr/lib/libm.a                                        minix-comp

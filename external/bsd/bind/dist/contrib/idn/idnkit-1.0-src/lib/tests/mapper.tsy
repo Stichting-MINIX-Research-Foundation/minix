@@ -1,0 +1,497 @@
+#ifndef lint
+static char *rcsid = "Id: mapper.tsy,v 1.1 2003/06/04 00:26:54 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <idn/mapper.h>
+#include <idn/log.h>
+#include <idn/ucs4.h>
+#include "testutil.h"
+
+#define SIZEOFUCS4(x)	(sizeof(x) / sizeof(unsigned long))
+
+#define UCS4_NAME_STR	"U+304C"	/* hiragana letter ga */
+#define UCS4_NAME	0x304C
+
+#define BUF_SIZE	128
+#define ARRAY_SIZE	9
+#define CONF_FILENAME	"test.map"
+
+#define LINEBUF_SIZE	2001
+
+/*
+ * Sample string for `from' argument of map(),
+ * and its expected outputs.
+ */
+static const unsigned long from[] = {
+	0x0041,		/* latin capital letter a */
+	0x0042,		/* latin capital letter b */
+	UCS4_NAME,
+	0x0000
+};
+
+static const unsigned long expected_default[] = {
+	0x0061,		/* latin small letter a */
+	0x0062,		/* latin small letter b */
+	UCS4_NAME,
+	0x0000
+};
+
+idn_result_t
+test_create(const char *parameter, void **ctxp)
+{
+	return (idn_success);
+}
+
+void
+test_destroy(void *ctxp)
+{
+}
+
+idn_result_t
+test_map(void *ctx, const unsigned long *from, unsigned long *to,
+	 size_t tolen)
+{
+	if (tolen > idn_ucs4_strlen(from)) {
+		idn_ucs4_strcpy(to, from);
+	} else {
+		return (idn_buffer_overflow);
+	}
+
+	return (idn_success);
+}
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//	group: noinit
+//--
+//	Do nothing
+{
+	idn_result_t r;
+	const char *name;
+}
+
+//# SETUP
+//	group: generic
+//--
+//	Initialize the module and create context.
+{
+	idn_result_t r;
+	idn_mapper_t ctx = NULL;
+
+	r = idn_mapper_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: generic
+//--
+//	Destroy context.
+{
+	idn_mapper_destroy(ctx);
+}
+
+//# SETUP
+//	group: addall
+//--
+//	Initialize the module and create context.
+{
+	idn_result_t r;
+	idn_mapper_t ctx = NULL;
+	char *names[ARRAY_SIZE];
+	int i;
+	unsigned long to[4];
+
+	for (i = 0; i < ARRAY_SIZE; i++) {
+		names[i] = malloc(BUF_SIZE);
+		if (names[i] == NULL) {
+			ASSERT("malloc failed\n");
+		}
+	}
+
+	r = idn_mapper_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+}
+
+//# TEARDOWN
+//	group: addall
+//--
+//	Destroy context and free some blocks.
+{
+	idn_mapper_destroy(ctx);
+	for (i = 0; i < ARRAY_SIZE; i++) {
+		free(names[i]);
+	}
+}
+
+//# SETUP
+//	group: quiet
+//--
+//	Set log level to `fatal' to supress log messages.
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+//--
+//	Restore log level.
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: idn_mapper_add() - boundary condition
+//	group: generic quiet
+{
+	r = idn_mapper_add(ctx, "");
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - builtin schemes
+//	group: generic quiet
+{
+	r = idn_mapper_add(ctx, "RFC3491");
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_mapper_add(ctx, "nameprep-01");
+	ASSERT_RESULT(r, idn_invalid_name);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - boundary condition
+//	group: generic quiet
+{
+	r = idn_mapper_add(ctx, "");
+	ASSERT_RESULT(r, idn_invalid_name);
+	r = idn_mapper_add(ctx, "filemap:");
+	ASSERT_RESULT(r, idn_nofile);
+	r = idn_mapper_add(ctx, "filemap:notfound.map");
+	ASSERT_RESULT(r, idn_nofile);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[4];
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041; 0061;",
+			 "0042; 0062;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file - long line
+//	group: generic quiet
+{
+	char line[LINEBUF_SIZE];
+	char name[BUF_SIZE];
+	const char *first_entry = "0041;";
+	const char *other_entry = " 0061";
+	int i;
+	int len;
+
+	memcpy(line, first_entry, strlen(first_entry));
+	len = strlen(other_entry);	
+	for (i = len; i < LINEBUF_SIZE - len; i += len) {
+		memcpy(line + i, other_entry, len);
+	}
+	*(line + i) = '\0';
+
+	create_conf_file(CONF_FILENAME, 0, line, NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file - no new line at end of file
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[4];
+
+	create_conf_file(CONF_FILENAME, CONF_NO_EOF_NEWLINE,
+			 "0041; 0061;",
+			 "0042; 0062;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file - one item in one line #1
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[3];
+	unsigned long expected[] = {
+		0x0061,
+		UCS4_NAME,
+		0x0000
+	};
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041; 0061;",
+			 "0042;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file - one item in one line #2
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[3];
+	unsigned long expected[] = {
+		0x0061,
+		UCS4_NAME,
+		0x0000
+	};
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041; 0061;",
+			 "0042; ;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file -  more then two items in one line #1
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[4];
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041; 0061; 0062;",
+			 "0042; 0062; 0063;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file -  more then two items in one line #2
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[6];
+	unsigned long expected_to[] = {
+		0x0061,
+		0x0062,
+		0x0062,
+		0x0063,
+		UCS4_NAME,
+		0x0000
+	};
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041; 0061 0062;",
+			 "0042; 0062 0063;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_to);
+}
+
+//# TESTCASE
+//	title: idn_mapper_add() - file -  more then two items in one line #3
+//	group: generic quiet
+{
+	char name[BUF_SIZE];
+	unsigned long to[3];
+
+	create_conf_file(CONF_FILENAME, 0,
+			 "0041 0042; 0063;",
+			 NULL);
+	sprintf(name, "filemap:%s", CONF_FILENAME);
+	r = idn_mapper_add(ctx, name);
+	ASSERT_RESULT(r, idn_invalid_syntax);
+}
+
+//# TESTCASE
+//	title: idn_mapper_addall() - add all builtin schemes
+//	group: addall quiet
+{
+	strcpy(names[0], "RFC3491");
+	strcpy(names[1], "RFC3491");
+	strcpy(names[2], "RFC3491");
+	strcpy(names[3], "RFC3491");
+	strcpy(names[4], "RFC3491");
+	strcpy(names[5], "RFC3491");
+	strcpy(names[6], "RFC3491");
+	strcpy(names[7], "RFC3491");
+	strcpy(names[8], "RFC3491");
+
+	r = idn_mapper_addall(ctx, (const char **)names, 9);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_addall() - add same scheme repetedly
+//	group: addall quiet
+{
+	for (i = 0; i < ARRAY_SIZE; i++) {
+		strcpy(names[i], "RFC3491");
+	}
+	r = idn_mapper_addall(ctx, (const char **)names, 3);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_map() - builtin schemes check - RFC3491
+//	group: generic quiet
+{
+	unsigned long to[4];
+
+	r = idn_mapper_add(ctx, "RFC3491");
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, expected_default);
+}
+
+//# TESTCASE
+//	title: idn_mapper_map() - context without procedure
+//	group: generic
+{
+	unsigned long to[4];
+
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, from);
+}
+
+//# TESTCASE
+//	title: idn_mapper_destroy(), idn_mapper_incrref()
+//	group:
+{
+	idn_result_t r;
+	idn_mapper_t ctx = NULL;
+
+	r = idn_mapper_initialize();
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_create(&ctx);
+	ASSERT_RESULT(r, idn_success);
+	idn_mapper_incrref(ctx);
+	idn_mapper_destroy(ctx);
+	idn_mapper_destroy(ctx);
+}
+
+//# TESTCASE
+//	title: idn_mapper_register()
+//	group: generic quiet
+{
+	unsigned long to[10];
+
+	r = idn_mapper_register("test", test_create, test_destroy, test_map);
+	ASSERT_RESULT(r, idn_success);
+	r = idn_mapper_add(ctx, "test");
+	ASSERT_RESULT(r, idn_success);
+
+	r = idn_mapper_map(ctx, from, to, SIZEOFUCS4(to));
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, from);
+}

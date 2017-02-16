@@ -1,0 +1,9 @@
+;
+;	This is a zone which has three DNSKEY records, two (KSK +ZSK) of which
+; have existing private key files available.  The third is a KSK.
+;
+$TTL 3600
+example.com.	IN	SOA ns hostmaster 00090000 1200 3600 604800 300
+$include Kexample.com.+005+07065.key
+$include Kexample.com.+005+23362.key
+$include bogus-ksk.key

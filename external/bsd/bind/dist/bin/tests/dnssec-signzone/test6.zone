@@ -1,0 +1,11 @@
+;
+;	This is a zone which has four DNSKEY records, two (KK + ZSK) of which
+; have existing private key files available.  There are also a KSK and ZSK
+; for which there will be no signatures.
+;
+$TTL 3600
+example.com.	IN	SOA ns hostmaster 00090000 1200 3600 604800 300
+$include Kexample.com.+005+07065.key
+$include Kexample.com.+005+23362.key
+$include bogus-ksk.key
+$include bogus-zsk.key

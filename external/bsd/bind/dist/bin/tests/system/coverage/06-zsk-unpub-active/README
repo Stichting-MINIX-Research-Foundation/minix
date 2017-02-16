@@ -1,0 +1,12 @@
+This set includes one KSK rollover.  The first KSK is deleted
+and its successor published prior to the first KSK being deactivated
+and its successor activated.  Tool output should resemble:
+
+Checking KSK events for zone example.com, algorithm 7:
+OK
+
+Checking ZSK events for zone example.com, algorithm 7:
+ERROR: After 2012-05-Dec (20:44:18):
+    Delete: example.com/007/26369 (ZSK)
+    Publish: example.com/007/21029 (ZSK)
+No ZSK's are both active and published

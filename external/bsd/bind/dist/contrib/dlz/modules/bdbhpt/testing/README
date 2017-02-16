@@ -1,0 +1,11 @@
+These files were used for testing on Ubuntu Linux using BDB 5.1 and
+BerkeleyDB 0.54 for perl.
+
+- Populate the database from dns-data.txt for zone example.com:
+
+      perl bdbhpt-populate.pl \
+          --bdb=test.db --input=dns-data.txt --zones=example.com
+
+- Run "named -g -c named.conf"
+
+BDB server is now loaded with example.com data from the file test.db

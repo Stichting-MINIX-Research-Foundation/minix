@@ -1,0 +1,103 @@
+Copyright (C) 2004, 2005, 2008, 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2001, 2002  Internet Software Consortium.
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+   *LEGACY* BIND 9.10 for Win32 Source Build Instructions. 04-Feb-2014
+
+Building BIND 9.10 on Windows using legacy compilers (up to Visual
+Studio 2008) has the following prerequisites:
+
+1) Perl, 2) Visual C++ redistributable object, 3) OpenSSL, and
+optionally 4) LibXML2, 5) LibGeoIP, and 6) Readline.
+See ..\build.txt for more details on these prerequisites.
+
+If you want to build using Visual C++ 6.0, you'll need some extra
+files that are to be found in the Platform SDK (which you will need
+to install), namely:
+
+iphlpapi.h
+iptypes.h
+ipexport.h
+iphlpapi.lib
+
+You'll also need an updated Iprtrmib.h - using the VC++6.0 one will
+get you some compilation errors. You can just overwrite the old one if
+you're not using it for any purposes, and maybe keep a backup of it. 
+
+You can copy the header files under VC98\INCLUDE and the library file
+under VC98\LIB. I think you can also put them in a separate directory
+and add it to the include search list, but I don't know if that can be
+made persistent. 
+
+For building on VC++ 7.0 or more recent, no extra files are required. 
+
+The instructions assume a Visual C++ 6.0 compiler with Visual Studio
+and Visual Studio Service Pack 3 or later. It may build and work with
+earlier versions but it has not been tested. The binaries may be built
+and run on any of the following platforms: NT 4.0 Workstation (SP3 or
+later), NT 4.0 Server (SP3 or later), Windows 2000 Professional (SP1
+or later), Windows 2000 Server or any kind (SP1 or later), Windows XP,
+Windows 2003 Server, Windows Vista, Windows 2008 Server, Windows 7,
+Windows 2008 R2 Server, Windows 8, Windows 2012 Server (untested), and
+further (untested as not yet available). It will NOT build or run on
+Windows 95, Windows 98, etc., or Windows RT platforms.
+
+BUILDING BIND
+
+From the command prompt cd to the win32utils\legacy directory under
+the BIND9 root:
+
+  cd bind-9.10.0\win32utils\legacy
+
+If you wish to use nmake from VC++ 6.0 or more recent, run
+the BuildAll.bat file:
+
+  BuildAll
+
+This will do the following:
+1) Build the gen application in the lib/dns directory.
+2) Run the gen application and build the required lib/dns header
+   files.
+3) Create the Build/Release subdirectory under the root of the BIND
+   source tree which will hold the binaries being built.
+4) Build the libraries, named, application tools like dig, rndc
+   dnssec tools, installer, checkconf and checkzones programs,
+   BIND 9 Installer.
+5) Copies the release notes and the OpenSSL DLL to the BUILD/Release
+   directory.
+6) Copies the BIND 9 ARM HTML files and the application HTML files
+   to the Build\Release area.
+
+If you wish to use the Visual Studio GUI for building, you can just
+run the BuildSetup.bat file:
+
+  BuildSetup
+  
+This will create or find and copy into place several files which are
+necessary for the build to proceed.  It also locates and copies into place
+the DLLs for OpenSSL and libxml2.
+
+Use BINDBuild.dsw (also located in the win32utils\legacy directory) to
+open the workspace for all of the BIND9 libraries and applications. If
+needed Visual Studio will update the workspace (aka solution) and
+project files. Note it is known to give slightly incorrect files on VS
+2010 or more recent, for instance BINDInstall is not compiled to use
+DLLs.  Finally select "Build->Batch Build", click "Select All", then
+click "Build".
+
+After the build has completed, run the BuildPost.bat file:
+
+  BuildPost
+
+...which does post-build processing.
+
+Installation is accomplished by running the BINDInstall program. All
+DLL's are copied to the Program Files area and all applications
+(including BINDInstall which may be necessary for uninstalling BIND 9)
+to the bin directory.  If BIND 8 has previously been installed on the
+system it must be uninstalled first by running it's own BINDInstall
+program.  The BIND 9 installer does not yet do this.
+
+All bugs found, whether in the process of building the application or
+running BIND or the tools should be reported to the bind9 bugs email
+account at bind9-bugs@isc.org.

@@ -1,0 +1,208 @@
+@(#) Id: CHANGES 250 2009-10-16 23:26:47Z leres  (LBL)
+
+v3.0 Fri Oct 16 16:26:04 PDT 2009
+
+- Add IPv6 support.
+
+v2.2 Fri Mar 13 22:29:52 PDT 2009
+
+- Convert source tree to subversion
+
+v2.1 Fri Feb 15 20:45:01 PST 2008
+
+- Handle "srv" records.
+
+- Fix some ttl parsing problems.
+
+- Add "ignore" option
+
+- Hack in support for "view"
+
+- Check for duplicate "cname" records.
+
+- Upgrade to autoconf 2.61
+
+v2.0.2 Tue Mar 20 17:49:13 PST 2001
+
+- Allow missing trailing dot in certain special cases.
+
+- Include zone names when checking NS records.
+
+- Document nslint.conf network keyword.
+
+- Sort the network list so that we always pick the right network/mask
+  when the overlap.
+
+v2.0.1 Tue Dec 14 11:24:31 PST 1999
+
+- Handle $ttl.
+
+- Fix some minor portability/compiler problems for OSF 4.
+
+- Correctly detect mx records that point to themselves but not a
+  real "a" record.
+
+- Fix file descriptor leak in doconf(). Thanks to Paul McIlfatrick
+  (paul.mcilfatrick@bt.com)
+
+v2.0 Wed Dec  9 16:48:54 PST 1998
+
+- Add support for BIND 8 named.conf file.
+
+- Support protocols in addition to tcp and udp for WKS records.
+  Resulted from a bug report from Petter Reinholdtsen (pere@td.org.uit.no)
+
+- Support dotted serial numbers in SOA records. Resulted from a
+  bug report from Frank Ederveen (frank@our.domaintje.com)
+
+- Ignore unknown statements and options in named.boot and named.conf
+  (instead of issuing warnings).
+
+- Handle '#' and C style named.conf comments.
+
+- Handle optional "in" in named.conf zone statements. Reported by
+  DJ Coster (djc@discoverbrokerage.com)
+
+- Add support for include directives in named.boot and named.conf.
+
+- Redo differing ttls check and do mx records in addition to a
+  records. Change place where soa values gets zeroed so they don't
+  get clobbered when we use includes.
+
+- Allow "@" abbr. for ptr, mx, cname and ns records.
+
+- Detect cname referenced by another cname or mx record.
+
+- Handle chaos records (to some minor extent).
+
+v1.7 Tue Jul 22 14:26:21 PDT 1997
+
+- Report differing ttls in A records. Check SOA records.
+
+- Detect hosts with more than one ip address on a subnet.
+
+v1.6.1 Sat Jun  7 03:12:01 PDT 1997
+
+- Fix "unknown service" printf format.
+
+- Fix off-by-one error in the ptr parsing code. Thanks to Andreas
+  Lamprecht (andreas.lamprecht@siemens.at)
+
+- Fix broken $origin code.
+
+v1.6 Mon Apr  7 19:09:52 PDT 1997
+
+- Add support for classless delegation.
+
+- Fix some case sensitive bugs.
+
+- Report domain names outside the current zone.
+
+- Fixed off-by-one bug that broke single character hostnames.
+
+- Increase size of hash table.
+
+- Make tcp and udp service name tables dynamic.
+
+- Improved error message for garbage in /etc/services.
+
+v1.5.1 Thu Jul 18 21:44:44 PDT 1996
+
+- Use $CC when checking gcc version. Thanks to Carl Lindberg
+  (carl_lindberg@blacksmith.com)
+
+- Raise size of hash table to 65K.
+
+v1.5 Fri Jul 12 18:58:47 PDT 1996
+
+- Detect extra octets and other garbage in PTR records.
+
+- Handle multi-line WKS records.
+
+- Allow multple WKS records (since we can have udp and tcp).
+
+- Convert to autoconf.
+
+- Declare optarg, optind and opterr extern. Thanks to Howard Moftich
+  (howardm@lsil.com).
+
+- BS/DOS does not have malloc.h. Thanks to Jordan Hayes
+  (jordan@thinkbank.com).
+
+- Correctly handle named.boot comments with leading whitespace.
+
+- Handle fully specified in-addr.arpa records. Resulted from a bug
+  report from Joe Kelly (joe@gol.com).
+
+- Fix endian problems. Thanks to Carl Lindberg (carl_lindberg@blacksmith.com).
+
+- Fixed some mixed case problems.
+
+- Update man page to describe how nslint.boot works.
+
+v1.4 Sat Jun  3 23:38:14 PDT 1995
+
+- Allow TXT records to exist with no other records.
+
+- Full system prototypes.
+
+- Complain about extra arguments.
+
+- Detect MX record chains.
+
+- Handle single line SOA records correctly. Thanks to Edward J. O'Brien
+  (ejobrie@sam.wal-mart.com)
+
+v1.3 Wed Mar  8 17:27:20 PST 1995
+
+- Add "allowdupa" record type for use with nslint.boot. This allows ip
+  addresses to have multiple A records.
+
+- Fixed bug that caused dangling cname references to not be reported
+  properly. Thanks to Edward J. O'Brien (ejobrie@sam.wal-mart.com).
+
+v1.2 Thu Sep  1 15:55:38 PDT 1994
+
+- Allow hostnames with a leading numeric as per rfc1123. Thanks to Bill
+  Gianopoulos (wag@sccux1.msd.ray.com).
+
+- Remove (undocumented) -u flag and allow uppercase.
+
+- Support TXT records. Thanks to Paul Pomes (paul@uxc.cso.uiuc.edu).
+
+- Support RP records.
+
+- Ignore new bind keywords.
+
+- Fix bug where we could exit with a zero status even though errors had
+  been detected
+
+- Complain about hosts that have smtp/tcp WKS entries but no MX records.
+
+- Add -B flag to handle PTR records that point outside the domains
+  listed in named.boot.
+
+v1.1 Sun May 22 20:43:03 PDT 1994
+
+- Allow ns records with no a records (the preferred way to go).
+
+- Fix typos in the sawstr array.
+
+- Use string.h instead of strings.h and add rindex(), index() and
+  bzero() macros for SYSV compatibility. Thanks to Bill King
+  (wrk@cle.ab.com).
+
+- Handle $origin directives. Thanks to Bill Gianopoulos
+  (wag@sccux1.msd.ray.com).
+
+- Fix add_domain() to work for the root. Thanks to Bill Gianopoulos.
+
+- Handle quotes in hinfo records. Thanks to Bill Gianopoulos.
+
+- Fix endian problems in parseinaddr() and parseptr().
+
+- Check non in-addr.arpa names for cname conflicts.
+
+v1.0 Thu Apr 21 11:02:59 PDT 1994
+
+- Initial release.

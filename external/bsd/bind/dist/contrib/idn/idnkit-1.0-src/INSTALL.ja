@@ -1,0 +1,310 @@
+
+				idnkit
+		    コンパイルとインストールの方法
+       (社) 日本ネットワークインフォメーションセンター (JPNIC)
+
+
+本パッケージのコンパイルおよびインストールは、次のようなステップで行
+います。
+
+    + 前準備: iconv() が利用できるようにする
+    + システム設定: `configure' スクリプトの実行
+    + コンパイル: `make' の実行
+    + テスト: `make test' の実行 (省略可)
+    + インストール: `make install' の実行
+    + サイト毎の設定: `idn.conf' による設定
+    + 設定の確認 (省略可)
+    + 後片付け (省略可)
+
+BIND9 にパッチを当ててインストールしたい場合は、次の項も参照して下さい。
+
+    + パッチの当て方
+
+0. 前準備
+  
+もしあなたがコード変換機能をサポートした通常の idnkit ライブラリをインス
+トールするつもりであり、またあなたが使用しているシステムのライブラリに 
+iconv() がない場合、あるいはあっても UTF-8 を扱うことができない場合には
+あらかじめ iconv() をインストールしておいてください。iconv() は、例えば 
+GNU libiconv と呼ばれるフリー (LGPL) の実装が
+
+	ftp://ftp.gnu.org/gnu/libiconv/
+	またはそのミラーサイト
+
+から入手可能です。
+
+ただし、コード変換を必要とせず、lite バージョンのライブラリのみをインス
+トールするのであれば、iconv() を含むライブラリは必要ありません。その場合、
+configure スクリプトの実行時に `--enable-liteonly' オプションの値を 
+"yes" にセットしてください。
+
+
+1. configure スクリプトの実行
+
+トップディレクトリにある configure スクリプトを実行してください。
+
+	% ./configure
+
+configure スクリプトには、数多くのオプションが用意されています。そのう
+ち重要と思われるものは次の通りです。
+
+    --prefix=PREFIX
+	idnkit をインストールするディレクトリのパスを指定します。デフォ
+	ルトは /usr/local です。
+
+    --enable-runidn
+	runidn コマンドを作成して、インストールします。デフォルトは "no"
+	(作成しない) です。
+
+    --with-libiconv=LIBICONV_PREFIX
+	インストール済みの GNU libiconv を idnkit にリンクさせる場合は、
+	このオプションを指定して下さい。引数 LIBICONV_PREFIX には、GNU
+	libiconv がインストールされている位置を指定します。引数を省略
+	すると、PREFIX (PREFIX の値は --prefix=PREFIX から導出されます)
+	を指定したものと見なされます。
+
+	--with-libiconv は GNU libiconv 用の短縮形のオプションで
+
+	    --with-libiconv=/usr/local
+
+	これは次と等価になります。
+
+	    --with-iconv-include='-I/usr/local/include'
+	    --with-iconv='-L/usr/local/lib -R/usr/local/lib -liconv'
+
+	短縮形のオプション (--with-libiconv) と通常用のオプション
+	(--with-iconv-include, --with-iconv) を両方とも指定した場合は、
+	通常用のオプションほうが優先されます。
+
+	このオプションは --enable-liteonly を "yes" にした場合は指定する
+	ことはできません。これは、libidnkitlite ライブラリが iconv サポー
+	トを必要としないためです。
+
+    --with-iconv-include=ICONV_INCDIR
+	C コンパイラが通常では検索しないディレクトリに "iconv.h" が置
+	かれている場合、次のようにしてそのディレクトリを指定します。
+	
+	    --with-iconv-include=/usr/local/include
+
+	このオプションは --enable-liteonly を "yes" にした場合は指定する
+	ことはできません。これは、libidnkitlite ライブラリが iconv サポー
+	トを必要としないためです。
+
+    --with-iconv=ICONV_LIB
+	libc に iconv が入っていない場合 (上記のパッケージを入れた
+	場合など) に、iconv のライブラリを指定します。例えば
+
+		--with-iconv="-L/usr/local/lib -liconv"
+
+	のように指定します。もし iconv が共有ライブラリになっている
+	場合には、-R オプションも指定して
+
+		--with-iconv="-L/usr/local/lib -R/usr/local/lib -liconv"
+
+	とする必要があるかもしれません。
+
+	このオプションは --enable-liteonly を "yes" にした場合は指定する
+	ことはできません。これは、libidnkitlite ライブラリが iconv サポー
+	トを必要としないためです。
+
+    --with-iconv-sofile=SOFILE_PATH
+	idnkit に含まれている runidn コマンドは、iconv() が libc の一
+	部として提供されないときに、iconv() を含む共有ライブラリへのパ
+	ス名を知る必要があります。idnkit は、--with-iconv オプションの
+	記述を基にパス名を検索しますが、これに失敗したときに、以下のよ
+	うに共有ライブラリを指定することができます。
+
+		--with-iconv-sofile=/usr/local/lib/libiconv.so.2.0
+
+	このオプションは --enable-liteonly を "yes" にした場合は指定する
+	ことはできません。これは、libidnkitlite ライブラリが iconv サポー
+	トを必要としないためです。
+
+    --with-utf8=UTF8_NAME
+	iconv に utf-8 エンコーディングを指定する場合、本ライブラリは
+	デフォルトでは "UTF-8" という名前を指定します。もしあなたの
+	システムの iconv が "UTF-8" という名前を受け付けない場合には、
+	代りの名前を指定します。例えば "UTF-8" ではなく "utf8" の
+	場合には次のように指定します。
+
+		--with-utf8=utf8
+
+
+2. その他の configure のオプション
+
+それほどよく使うわけではありませんが、configure には前項のもの以外に
+も様々なオプションが用意されています。
+
+    --exec-prefix=EXEC_PREFIX
+	マシン固有のファイルをインストールするディレクトリのパスを指定
+	します。デフォルトは PREFIX (``--prefix=PREFIX'' によって指定
+	可能、PREFIX のデフォルトは /usr/local) になります。
+
+    --bindir=BINDIR
+	idnconv と runidn をインストールするディレクトリを指定します。
+	デフォルトでは EXEC_PREFIX/bin です。
+
+    --libdir=LIBDIR
+	ライブラリ (libidnkit および libidnkitlite) をインストールする
+	ディレクトリを指定します。デフォルトでは EXEC_PREFIX/lib です。
+
+    --includedir=INCDIR
+	ライブラリのヘッダファイルをインストールするディレクトリを指定
+	します。デフォルトでは PREFIX/include です。
+
+    --sysconfdir=SYSCONFDIR
+	ライブラリの設定ファイルのサンプルをインストールするディレクト
+	リを指定します。デフォルトでは PREFIX/etc です。
+
+    --mandir=MANDIR
+	オンラインマニュアルのインストールディレクトリを指定します。
+	デフォルトでは PREFIX/man です。
+
+    --datadir=DATADIR
+	異なるマシンで共有可能なファイルをインストールするディレクトリ
+	を指定します。デフォルトは PREFIX/share です。DATADIR/idnkit 
+	の下に、idnkit で使用する幾つかのデータファイルがインストール
+	されます。
+
+    --enable-debug
+	デバッグ用のコードを有効にします。デフォルトは "no" (無効) です。
+
+    --enable-shared
+	共有ライブラリを作成します。デフォルトは "yes" (作成する) です。
+
+    --enable-static
+	静的ライブラリを作成します。デフォルトは "yes" (作成する) です。
+
+    --enable-liteonly
+	libidnkitlite ライブラリのみを作成します。libidnkit ライブラリ、
+	idnconv, runidn は作成しません。デフォルトは "no" (それ以外の
+	ものも作成する) です。
+
+	このオプションの値を "yes" にする場合、 `--enable-runidn'
+	`--with-libiconv' `--with-iconv-include' `--with-iconv'
+	`--with-iconv-sofile' は同時に指定することはできません。
+
+configure には他にも多くのオプションがありますが、残りは一般的なオプショ
+ンなので説明は省きます。
+
+	% ./configure --help
+
+を実行するとオプションの一覧が表示されます。
+
+
+3. コンパイル
+
+configure を実行すると Makefile などが生成されますので、続けて makeを
+実行してコンパイルします。
+
+	% make
+
+
+4. テスト
+
+テストプログラムをコンパイルし、実行するには `make test' を実行します
+(省略しても構いません)。テストプログラムのコンパイルには、Perl 5 が必
+要です。
+
+	% make test
+
+なお、iconv() が "EUC-JP" を日本語 EUC のエンコーディング名称として認
+識し、"SJIS" を日本語シフト JIS のエンコーディング名称として認識するこ
+とを、テストプログラムでは前提としています。もし、認識しないようであれ
+ば、`make test' 実行前に `lib/tests/codeset.h' を編集して下さい。
+
+*注意*
+  Solaris において OS 標準の iconv を使用している場合、converter の
+  idn_converter_convfromucs4() のテストが失敗することがあります。これ
+  は iconv の仕様の違いによるものなので、上記環境においてインストール
+  を行っている場合は無視してください。
+
+
+5. インストール
+
+スーパユーザになってインストールします。
+
+	% su
+	# make install
+
+*注意*
+  idnkit の 1.0 以前のバージョン (1.0pr1 など) がすでにインストールさ
+  れている場合、インストールされた設定ファイル 'idn.conf' の内容が古い
+  ため、idnkit-1.0が正しく動作しません。このため、idnkit-1.0 用の設定
+  ファイルを上書きインストールする必要があります。make install 実行後、
+  以下のコマンドを実行してください。
+
+	# make install-config
+
+
+6. 設定と使用方法
+
+idnkit の正規化および変換規則をカスタマイズしするなら、設定ファイル
+`idn.conf' を編集します。この設定ファイルの詳細については idn.conf の
+オンラインマニュアルをご覧ください。また設定例が書かれたサンプルファイ
+ル (idn.conf.sample) もインストールされますのでご利用ください。
+
+システムに設定ファイルが存在しなかった場合、このサンプルの設定ファイル
+は `idn.conf' としてもインストールされます。
+
+また、idnconv、runidn といったツールのオンラインマニュアルも提供されて
+います。これらのコマンドの使い方、設定方法に関してはそちらを参照してく
+ださい。
+
+	% man idn.conf
+	% man idnconv
+	% man runidn
+
+
+7. 設定の確認
+
+`idnslookup' という簡単なシェルスクリプトが tools/idnconv ディレクトリ
+に用意されています。このスクリプトを使うと DNS サーバに対して国際化ド
+メイン名を問い合わせることができます。設定ファイルの確認に役立つかも知
+れません。
+
+`idnslookup' の使用方法は、次の通りです。
+
+	% tools/idnconv/idnslookup <domain-name> <dns-server>
+
+ここで <domain-name> はローカルコードセット (詳しくは idn.conf のマニュ
+アルの ``LOCAL CODESET'' を参照のこと) で書かれた国際化ドメイン名で、
+<dns-server> は DNS サーバのホスト名もしくは IP アドレスです。
+
+`idnslookup' は `idnconv' および `nslookup' コマンドを用いて、
+<dns-server> に対して <domain-name> を引きに行きます。設定に何か間違い
+があれば、`idnconv', `nslookup', あるいは `idnslookup' 自身によるエラー
+メッセージが出力されます。
+
+
+8. 後片付け
+
+`make' および `make test' によって生成されたファイルを idnkit のソー
+スディレクトリから削除するには、`make clean' を実行して下さい。
+(`make install' の際にインストールされたファイルは、削除されません。)
+
+	% make clean
+
+`configure' で生成されたファイルも一緒に削除するなら、代わりに `make
+distclean' を実行します。
+
+	% make distclean
+
+`make distclean' を行えば、このソースディレクトリを使って、前回とは別
+のシステム向けに `configure' および idnkit のコンパイルを行うことがで
+きるようになります。
+
+
+付録 A. パッチの当て方
+
+この配布キットには、BIND9 に対するパッチが含まれています。
+パッチの当て方は、パッチファイルの先頭に書かれていますのでそちらを参照
+してください。
+
+Solaris では、システム付属の patch コマンドが正常に動作しないことがあ
+ります。そのような場合には、GNU バージョンの patch
+(http://www.gnu.org/software/patch/) をインストールして、これを使用し
+てください。
+
+
+; Id: INSTALL.ja,v 1.1 2003/06/04 00:25:00 marka Exp 

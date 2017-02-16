@@ -1,0 +1,19 @@
+Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This is copied from ../system.
+
+This test suite uses a virtual time, gettimeofday(), select(),
+poll(), kevent() and epoll_wait() Unix system calls are redirected:
+gettimeofday() returns a date in virtual/exponentially inflated
+delay from an epoch, select(), poll(), kevent() and epoll_wait()
+timeouts are deflated down to at least 10ms.
+
+These tests depends on LD_PRELOAD being supported by the runtime
+loader.
+
+Beware BIND clock uses unsigned integer, in 22 seconds isc_time_now()
+overflows and breaks assertions. Note 22 real seconds is 136 virtual
+years...
+
+Id: README,v 1.2 2010/06/17 05:38:04 marka Exp 

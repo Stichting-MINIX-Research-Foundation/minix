@@ -1,0 +1,10 @@
+;	Be sure that the serial number below is left
+;	justified in a field of at least 10 chars!!
+;				0123456789;
+;	It's also possible to use the date form e.g. 2005040101
+@	IN SOA	ns1.example.de. hostmaster.example.de.  (
+				267       ; Serial	
+				43200	; Refresh
+				1800	; Retry
+				2W	; Expire
+				7200 )	; Minimum

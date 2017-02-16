@@ -1,0 +1,257 @@
+#ifndef lint
+static char *rcsid = "Id: ucs4.tsy,v 1.1 2003/06/04 00:27:04 marka Exp ";
+#endif
+
+/*
+ * Copyright (c) 2002 Japan Network Information Center.
+ * All rights reserved.
+ *  
+ * By using this file, you agree to the terms and conditions set forth bellow.
+ * 
+ * 			LICENSE TERMS AND CONDITIONS 
+ * 
+ * The following License Terms and Conditions apply, unless a different
+ * license is obtained from Japan Network Information Center ("JPNIC"),
+ * a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F, 2-3-4 Uchi-Kanda,
+ * Chiyoda-ku, Tokyo 101-0047, Japan.
+ * 
+ * 1. Use, Modification and Redistribution (including distribution of any
+ *    modified or derived work) in source and/or binary forms is permitted
+ *    under this License Terms and Conditions.
+ * 
+ * 2. Redistribution of source code must retain the copyright notices as they
+ *    appear in each source code file, this License Terms and Conditions.
+ * 
+ * 3. Redistribution in binary form must reproduce the Copyright Notice,
+ *    this License Terms and Conditions, in the documentation and/or other
+ *    materials provided with the distribution.  For the purposes of binary
+ *    distribution the "Copyright Notice" refers to the following language:
+ *    "Copyright (c) 2000-2002 Japan Network Information Center.  All rights reserved."
+ * 
+ * 4. The name of JPNIC may not be used to endorse or promote products
+ *    derived from this Software without specific prior written approval of
+ *    JPNIC.
+ * 
+ * 5. Disclaimer/Limitation of Liability: THIS SOFTWARE IS PROVIDED BY JPNIC
+ *    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ *    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JPNIC BE LIABLE
+ *    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ *    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ *    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ *    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <idn/ucs4.h>
+#include <idn/log.h>
+#include "testutil.h"
+
+/*
+ * Sample UTF8 and UCS4 strings.
+ */
+static const char *utf8_string =
+	"\x7f"				/* 0x0000007f */
+	"\xdf\xbf"			/* 0x000007ff */
+	"\xef\xbf\xbf"			/* 0x0000ffff */
+	"\xf7\xbf\xbf\xbf"		/* 0x001fffff */
+	"\xfb\xbf\xbf\xbf\xbf"		/* 0x03ffffff */
+	"\xfd\xbf\xbf\xbf\xbf\xbf";	/* 0x7fffffff */
+
+static const unsigned long ucs4_string[] = {
+	0x0000007f,
+	0x000007ff,
+	0x0000ffff,
+	0x001fffff,
+	0x03ffffff,
+	0x7fffffff,
+	0x00000000
+};
+
+//--------------------------------------------------------------------
+// Setups and Teardowns.
+//--------------------------------------------------------------------
+
+//# SETUP
+//      group: utf8-init
+{
+	unsigned long to[256];
+	size_t tolen = 256;
+	idn_result_t r;
+}
+
+//# SETUP
+//      group: ucs4-init
+{
+	char to[256];
+	size_t tolen = 256;
+	idn_result_t r;
+}
+
+//# SETUP
+//	group: quiet
+{
+	int saved_log_level;
+
+	saved_log_level = idn_log_getlevel();
+	idn_log_setlevel(idn_log_level_fatal);
+}
+
+//# TEARDOWN
+//	group: quiet
+{
+	idn_log_setlevel(saved_log_level);
+}
+
+//--------------------------------------------------------------------
+// Testcases.
+//--------------------------------------------------------------------
+
+//# TESTCASE
+//	title: call utf8toucs4()
+//	group: utf8-init
+{
+	r = idn_ucs4_utf8toucs4(utf8_string, to, tolen);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, ucs4_string);
+}
+
+//# TESTCASE
+//	title: call ucs4toutf8()
+//	group: ucs4-init
+{
+	r = idn_ucs4_ucs4toutf8(ucs4_string, to, tolen);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, utf8_string);
+}
+
+//# TESTCASE
+//	title: call utf8toucs4() with empty from
+//	group: utf8-init
+{
+	static unsigned long empty_ucs4_string[] = {0};
+
+	r = idn_ucs4_utf8toucs4("", to, tolen);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, empty_ucs4_string);
+}
+
+//# TESTCASE
+//	title: call ucs4toutf8() with empty from
+//	group: ucs4-init
+{
+	static unsigned long empty_ucs4_string[] = {0};
+
+	r = idn_ucs4_ucs4toutf8(empty_ucs4_string, to, tolen);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, "");
+}
+
+//# TESTCASE
+//	title: call utf8toucs4() with broken string
+//	group: utf8-init quiet
+{
+	/* "\xfe" as the 1st byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xfe\xbf\xbf\xbf\xbf\xbf\xbf", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\x7f" as the 2nd byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xdf\x7f", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\xc0" as the 2nd byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xdf\xc0", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\x7f" as the 3rd byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xef\xbf\x7f", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\xc0" as the 3rd byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xef\xbf\xc0", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\x7f" as the 4th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xf7\xbf\xbf\x7f", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\xc0" as the 4th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xf7\xbf\xbf\xc0", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\x7f" as the 5th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xfb\xbf\xbf\xbf\x7f", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\xc0" as the 5th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xfb\xbf\xbf\xbf\xc0", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\x7f" as the 6th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xfd\xbf\xbf\xbf\xbf\x7f", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* "\xc0" as the 6th byte is out of range. */
+	r = idn_ucs4_utf8toucs4("\xfd\xbf\xbf\xbf\xbf\xc0", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* `from' contains surrogate pair */
+	r = idn_ucs4_utf8toucs4("\xed\xa0\x80\xed\xbf\xbf", to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+}
+
+//# TESTCASE
+//	title: call ucs4toutf8() with broken string
+//	group: ucs4-init quiet
+{
+	static unsigned long invalid_ucs4_string0[] = {0x80000000, 0};
+	static unsigned long invalid_ucs4_string1[] = {0xd800, 0xdfff, 0};
+
+	/* 0x80000000 is out of range */
+	r = idn_ucs4_ucs4toutf8(invalid_ucs4_string0, to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+
+	/* `from' contains surrogate pair */
+	r = idn_ucs4_ucs4toutf8(invalid_ucs4_string1, to, tolen);
+	ASSERT_RESULT(r, idn_invalid_encoding);
+}
+
+//# TESTCASE
+//	title: buffer overrun test for utf8toucs4()
+//	group: utf8-init
+{
+	r = idn_ucs4_utf8toucs4(utf8_string, to,
+				idn_ucs4_strlen(ucs4_string) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_UCS4STRING(to, ucs4_string);
+
+	r = idn_ucs4_utf8toucs4(utf8_string, to,
+				idn_ucs4_strlen(ucs4_string));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_ucs4_utf8toucs4(utf8_string, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
+//# TESTCASE
+//	title: buffer overrun test for ucs4toutf8()
+//	group: ucs4-init
+{
+	r = idn_ucs4_ucs4toutf8(ucs4_string, to, strlen(utf8_string) + 1);
+	ASSERT_RESULT(r, idn_success);
+	ASSERT_STRING(to, utf8_string);
+
+	r = idn_ucs4_ucs4toutf8(ucs4_string, to, strlen(utf8_string));
+	ASSERT_RESULT(r, idn_buffer_overflow);
+
+	r = idn_ucs4_ucs4toutf8(ucs4_string, to, 0);
+	ASSERT_RESULT(r, idn_buffer_overflow);
+}
+
