@@ -57,6 +57,7 @@
 ./home
 ./lib
 ./libexec
+./libexec/dhcpcd-hooks
 ./libexec/resolvconf
 ./mnt
 ./proc

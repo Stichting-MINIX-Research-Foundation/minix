@@ -160,6 +160,7 @@
 ./usr/libdata/debug/sbin/blacklistctl.debug             minix-debug     debug
 ./usr/libdata/debug/sbin/blacklistd.debug               minix-debug     debug
 ./usr/libdata/debug/sbin/chown.debug                    minix-debug     debug
+./usr/libdata/debug/sbin/dhcpcd.debug                   minix-debug     debug
 ./usr/libdata/debug/sbin/fsck.debug                     minix-debug     debug
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/fsck_mfs.debug                 minix-debug     debug

@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 #MINIX:
-SUBDIR=	byacc \
+SUBDIR=	byacc dhcpcd \
 	fetch file flex less \
 	libarchive libevent mdocml \
 	openresolv tmux top

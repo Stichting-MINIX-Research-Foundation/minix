@@ -485,6 +485,7 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 .for subdir in . defaults mtree rc.d root skel
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/dhcpcd/sbin/dhcpcd configinstall
 	${_MKMSG_INSTALL} ${DESTDIR}/usr/lib/fonts
 	${INSTALL_DIR} ${DESTDIR}/usr/lib/fonts
 	${INSTALL_FILE} -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} ${NETBSDSRCDIR}/etc/fonts/*.fnt ${DESTDIR}/usr/lib/fonts/

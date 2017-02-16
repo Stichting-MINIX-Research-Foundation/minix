@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# PROVIDE: dhcpcd
+# REQUIRE: network mountcritlocal
+# BEFORE:  NETWORKING
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name=dhcpcd
+rcvar=$name
+command=/sbin/$name
+extra_commands="reload"
+
+load_rc_config $name
+
+# If the last argument to dhcpcd is a valid interface and the prior argument
+# is not then dhcpcd will start on one interface only and create a pidfile
+# based on the interface name. See PR bin/43490.
+if [ -n "$flags" ]; then
+	myflags=$flags
+else
+	eval myflags=\$${name}_flags
+fi
+ifname="${myflags##* }"
+myflags="${myflags%% $ifname}"
+last_flag="${myflags##* }"
+if /sbin/ifconfig "$ifname" >/dev/null 2>&1 && 
+    ! /sbin/ifconfig "$last_flag" >/dev/null 2>&1
+then
+	pidfile=/var/run/$name-"$ifname".pid
+else
+	pidfile=/var/run/$name.pid
+fi
+unset myflags ifname last_flag
+
+run_rc_command "$1"

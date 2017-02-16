@@ -1,0 +1,121 @@
+# $NetBSD: 10-wpa_supplicant,v 1.6 2014/11/07 20:51:03 roy Exp $
+
+# Start, reconfigure and stop wpa_supplicant per wireless interface.
+# This is needed because wpa_supplicant lacks hotplugging of any kind
+# and the user should not be expected to have to wire it into their system
+# if the base system doesn't do this itself.
+
+if [ -z "$wpa_supplicant_conf" ]; then
+	for x in \
+		/etc/wpa_supplicant/wpa_supplicant-"$interface".conf \
+		/etc/wpa_supplicant/wpa_supplicant.conf \
+		/etc/wpa_supplicant-"$interface".conf \
+		/etc/wpa_supplicant.conf \
+	; do
+		if [ -s "$x" ]; then
+			wpa_supplicant_conf="$x"
+			break
+		fi
+	done
+fi
+: ${wpa_supplicant_conf:=/etc/wpa_supplicant.conf}
+
+wpa_supplicant_ctrldir()
+{
+	local dir
+
+	dir=$(key_get_value "[[:space:]]*ctrl_interface=" \
+		"$wpa_supplicant_conf")
+	dir=$(trim "$dir")
+	case "$dir" in
+	DIR=*)
+		dir=${dir##DIR=}
+		dir=${dir%%[[:space:]]GROUP=*}
+		dir=$(trim "$dir")
+		;;
+	esac
+	printf %s "$dir"
+}
+
+wpa_supplicant_start()
+{
+	local dir err errn
+
+	# If the carrier is up, don't bother checking anything
+	[ "$ifcarrier" = "up" ] && return 0
+
+	# Pre flight checks
+	if [ ! -s "$wpa_supplicant_conf" ]; then
+		syslog warn \
+			"$wpa_supplicant_conf does not exist"
+		syslog warn "not interacting with wpa_supplicant(8)"
+		return 1
+	fi
+	dir=$(wpa_supplicant_ctrldir)
+	if [ -z "$dir" ]; then
+		syslog warn \
+			"ctrl_interface not defined in $wpa_supplicant_conf"
+		syslog warn "not interacting with wpa_supplicant(8)"
+		return 1
+	fi
+
+	wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1 && return 0
+	syslog info "starting wpa_supplicant"
+	driver=${wpa_supplicant_driver:+-D}$wpa_supplicant_driver
+	err=$(wpa_supplicant -B -c"$wpa_supplicant_conf" -i"$interface" \
+	    "$driver" 2>&1)
+	errn=$?
+	if [ $errn != 0 ]; then
+		syslog err "failed to start wpa_supplicant"
+		syslog err "$err"
+	fi
+	return $errn
+}
+
+wpa_supplicant_reconfigure()
+{
+	local dir err errn
+
+	dir=$(wpa_supplicant_ctrldir)
+	[ -z "$dir" ] && return 1
+	if ! wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1; then
+		wpa_supplicant_start
+		return $?
+	fi
+	syslog info "reconfiguring wpa_supplicant"
+	err=$(wpa_cli -p "$dir" -i "$interface" reconfigure 2>&1)
+	errn=$?
+	if [ $errn != 0 ]; then
+		syslog err "failed to reconfigure wpa_supplicant"
+		syslog err "$err"
+	fi
+	return $errn
+}
+
+wpa_supplicant_stop()
+{
+	local dir err errn
+
+	dir=$(wpa_supplicant_ctrldir)
+	[ -z "$dir" ] && return 1
+	wpa_cli -p "$dir" -i "$interface" status >/dev/null 2>&1 || return 0
+	syslog info "stopping wpa_supplicant"
+	err=$(wpa_cli -i"$interface" terminate 2>&1)
+	errn=$?
+	if [ $errn != 0 ]; then
+		syslog err "failed to start wpa_supplicant"
+		syslog err "$err"
+	fi
+	return $errn
+}
+
+if [ "$ifwireless" = "1" ] && \
+    type wpa_supplicant >/dev/null 2>&1 && \
+    type wpa_cli >/dev/null 2>&1
+then
+	case "$reason" in
+	PREINIT)	wpa_supplicant_start;;
+	RECONFIGURE)	wpa_supplicant_reconfigure;;
+	DEPARTED)	wpa_supplicant_stop;;
+	esac
+fi
