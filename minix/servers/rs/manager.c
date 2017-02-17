@@ -572,7 +572,7 @@ struct rproc *rp;
    */
   if(rs_verbose)
       printf("RS: forking child with srv_fork()...\n");
-  child_pid= srv_fork(rp->r_uid, 0);	/* Force group to operator for now */
+  child_pid= srv_fork(rp->r_uid, 0);	/* Force group to wheel for now */
   if(child_pid < 0) {
       printf("RS: srv_fork() failed (error %d)\n", child_pid);
       free_slot(rp);

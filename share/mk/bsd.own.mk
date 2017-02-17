@@ -18,13 +18,6 @@ NO_LIBGOMP?=	yes
 BINMODE?=	755
 NONBINMODE?=	644
 MANDIR?=	/usr/man
-BINGRP?=	operator
-MANGRP?=	operator
-INFOGRP?=	operator
-DOCGRP?=	operator
-LOCALEGRP?=	operator
-NLSGRP?=	operator
-DEBUGGRP?=	operator
 
 MKKYUA?=	yes
 MKMCLINKER?=	no

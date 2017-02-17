@@ -22,7 +22,7 @@
 #define KEY_C		(KEY_A + 2)
 
 #define ROOT_USER	"root"		/* name of root */
-#define ROOT_GROUP	"operator"	/* name of root's group */
+#define ROOT_GROUP	"wheel"		/* name of root's group */
 #define NONROOT_USER	"bin"		/* name of any unprivileged user */
 #define NONROOT_GROUP	"bin"		/* name of any unprivileged group */
 

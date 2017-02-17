@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # expected sha1sum of the FS image
-expect=55d61f457204c206628c848771a1f9d75cfa3afa
+expect=98bcafa04cb1eb75b7add6c95eb587c37f5050e0
 
 set -e
 
 # ownership matters for the proto file.
-# the run script runs us with uid 2, gid 0.
-if [ "`id -u`" != 2 -o "`id -g`" != 0 ]
+# the run script runs us with user "bin" (3), group "bin" (7).
+if [ "`id -u`" != 3 -o "`id -g`" != 7 ]
 then
-	echo "test script should be run with uid 2, gid 0."
+	echo "test script should be run with uid 3, gid 7."
 	exit 1
 fi
 
@@ -72,6 +72,8 @@ dd if=/dev/zero seek=$BLOCKS of=$fsimage count=1 bs=$BS >/dev/null 2>&1
 
 /sbin/mkfs.mfs -T 1 -b $BLOCKS -i $INODES  $fsimage $protofile >/dev/null 2>&1
 sum="`sha1 $fsimage | awk '{ print $4 }'`"
+
+rm -rf $testdir $protofile $fsimage
 
 if [ $sum != $expect ]
 then	

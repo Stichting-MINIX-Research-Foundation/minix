@@ -7,11 +7,7 @@ SUBDIR=mech
 .if ${MKSHARE} != "no"
 FILESDIR=/usr/share/examples/libsaslc
 FILESOWN=root
-.if !defined(__MINIX)
 FILESGRP=wheel
-.else
-FILESGRP=operator
-.endif # !defined(__MINIX)
 FILESMODE=444
 
 FILES= saslc.conf

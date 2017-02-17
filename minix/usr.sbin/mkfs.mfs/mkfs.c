@@ -43,9 +43,6 @@
 
 #define MAX_TOKENS          10
 #define LINE_LEN           300
-/* XXX why do we not use 0 / SU_ID ? */
-#define BIN                  2
-#define BINGRP               2
 
 /* some Minix specific types that do not conflict with Posix */
 #ifndef block_t
@@ -339,8 +336,8 @@ main(int argc, char *argv[])
 
 	/* Make simple file system of the given size, using defaults. */
 	mode = 040777;
-	usrid = BIN;
-	grpid = BINGRP;
+	usrid = 0;
+	grpid = 0;
 	simple = 1;
   }
 

@@ -1,3 +1,77 @@
+20170218:
+	Before starting a build, you will have to update your master.passwd and
+	group files in /etc.  This is needed because we have switched over from
+	the old set of MINIX users and groups to the new set of NetBSD users
+	and groups, as needed by various imported tools.  Follow these steps.
+
+	1. Make a back-up copy of your old master.passwd and group files:
+
+		# cp /etc/master.passwd /etc/master.passwd~
+		# cp /etc/group /etc/group~
+
+	2. Install /usr/src/etc/master.passwd to /etc/master.passwd, and
+	   install /usr/src/etc/group to /etc/group.  If you have NOT created
+	   any local user accounts yourself, for example because you are
+	   upgrading a fresh MINIX 3 installation right away, all you need to
+	   do is copy over those two files:
+
+		# cp /usr/src/etc/master.passwd /etc/master.passwd
+		# cp /usr/src/etc/group /etc/group
+
+	   If you DO have custom user accounts or groups, you need to merge
+	   their lines (and only those!) into the new master.passwd and group
+	   files manually.  If you are unsure whether you have such custom
+	   entries, you can use the following commands:
+
+		# cd /usr/src
+		# git show 68804c2:etc/master.passwd | diff -u - /etc/master.passwd
+		# git show 68804c2:etc/group | diff -u - /etc/group
+
+	   This should show any changes compared to the old two templates.  If
+	   you have such changes, you need to reapply them after copying over
+	   the new two templates.  The following procedure shows one approach:
+
+		# cd /usr/src
+		# cp /etc/master.passwd /tmp/my-passwd
+		# vi /tmp/my-passwd
+		<remove any lines from /tmp/my-passwd that have no password>
+		# cp /usr/src/etc/master.passwd /etc/master.passwd
+		# cat /tmp/my-passwd >> /etc/master.passwd
+		# rm /tmp/my-passwd
+
+	   ..and follow a similar procedure for /etc/group.
+
+	3. Once the new files are in place, update all derived password files:
+
+		# pwd_mkdb -p /etc/master.passwd
+
+	   If you did everything right so far, the following command:
+
+		# postinstall check uid gid
+
+	   ..should show "postinstall checks passed: uid gid" and no failures.
+
+	4. Now perform a full build as usual:
+
+		# cd /usr/src
+		# make build
+
+	   As part of the build, all /dev files will get new proper ownership.
+
+	5. There may still be files that are owned by users and groups that now
+	   have been renumbered.  It is advisable to run at least the following
+	   three commands to apply the renumbering to the most common files:
+
+		# find / -user 2 -exec chown bin \{\} \;
+		# find / -user 5 -exec chown uucp \{\} \;
+		# find / -user 9998 -exec chown games \{\} \;
+
+	   If you have installed custom programs, you may want to check whether
+	   they are not affected by the change.  This should be rare, though.
+
+	Until a subsequent reboot, various running services will show up in
+	ps(1) output and /proc as owned by "postfix".  This is no problem.
+
 20170122:
 	MINIX 3 did not import NetBSD's passwd.conf file, which makes the
 	userland fall back by default to the old, broken UNIX password hashing

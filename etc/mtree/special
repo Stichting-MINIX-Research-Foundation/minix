@@ -13,8 +13,7 @@
 #	  with diff(1)s if $check_changelist is enabled.
 #
 
-#__MINIX: gname is not wheel
-/set uname=root gname=operator
+/set uname=root gname=wheel
 
 .				type=dir  mode=0755
 
