@@ -1789,6 +1789,7 @@
 ./usr/include/sysexits.h                                minix-comp
 ./usr/include/syslog.h                                  minix-comp
 ./usr/include/tar.h                                     minix-comp
+./usr/include/tcpd.h                                    minix-comp
 ./usr/include/term.h                                    minix-comp
 ./usr/include/termcap.h                                 minix-comp
 ./usr/include/termios.h                                 minix-comp
@@ -1944,6 +1945,7 @@
 ./usr/lib/bc/libvboxfs.a                                minix-comp      bitcode
 ./usr/lib/bc/libvirtio.a                                minix-comp      bitcode
 ./usr/lib/bc/libvtreefs.a                               minix-comp      bitcode
+./usr/lib/bc/libwrap.a                                  minix-comp      bitcode
 ./usr/lib/bc/libz.a                                     minix-comp      bitcode
 ./usr/lib/i18n/bc                                       minix-comp      bitcode
 ./usr/lib/i18n/bc/libBIG5.a                             minix-comp      bitcode
@@ -2117,6 +2119,8 @@
 ./usr/lib/libutil_pic.a                                 minix-comp
 ./usr/lib/libvtreefs.a                                  minix-comp
 ./usr/lib/libvtreefs_pic.a                              minix-comp
+./usr/lib/libwrap.a                                     minix-comp
+./usr/lib/libwrap_pic.a                                 minix-comp
 ./usr/lib/libz.a                                        minix-comp
 ./usr/lib/libz_pic.a                                    minix-comp
 ./usr/libexec/cc1                                       minix-comp      gcccmds

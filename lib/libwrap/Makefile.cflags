@@ -1,0 +1,23 @@
+#	$NetBSD: Makefile.cflags,v 1.8 2005/01/10 02:58:58 lukem Exp $
+
+.include <bsd.own.mk>
+
+CPPFLAGS+=-DFACILITY=LOG_AUTHPRIV -DSEVERITY=LOG_INFO
+CPPFLAGS+=-DREAL_DAEMON_DIR=\"/usr/libexec\" -DHOSTS_ACCESS -DDAEMON_UMASK=022
+CPPFLAGS+=-DRFC931_TIMEOUT=10 -DALWAYS_HOSTNAME
+CPPFLAGS+=-DHOSTS_ALLOW=\"/etc/hosts.allow\" -DHOSTS_DENY=\"/etc/hosts.deny\"
+CPPFLAGS+=-DPROCESS_OPTIONS
+
+.if (${USE_YP} != "no")
+CPPFLAGS+=-DNETGROUP
+.endif
+
+# -DPARANOID is not used by libwrap, only by programs that use it.
+# in this case inetd does not use it (probably rightly so) and so
+# we don't want to use it in wrapper-related utilities (such as
+# tcpdmatch) that include this file.
+#CPPFLAGS+=-DPARANOID
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DINET6
+.endif

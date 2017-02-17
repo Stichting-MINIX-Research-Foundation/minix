@@ -81,7 +81,7 @@ SUBDIR+=	\
 		libpci libprop \
 		libpuffs librmt \
 		libterminfo \
-		libutil libz
+		libutil libwrap libz
 
 .if !defined(BSD_MK_COMPAT_FILE)
 #SUBDIR+=	libkern

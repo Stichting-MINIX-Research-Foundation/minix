@@ -1,0 +1,56 @@
+#! /bin/sh
+#
+#	$NetBSD: libwrap2netbsd,v 1.6 2008/05/29 14:51:25 mrg Exp $
+#
+# Copyright (c) 1996 Matthew R. Green
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+# libwrap2netbsd:  convert a libwrap tcp_wrappers source tree into a
+# netbsd libwrap source tree, ready for importing.
+
+if [ $# -ne 2 ]; then echo "libwrap2netbsd src dest"; exit 1; fi
+
+r=$1
+d=$2/libwrap
+
+
+echo preparing directory $d
+rm -rf $d
+mkdir -p $d
+
+# lame to have these files duplicated.  but, what the hell.
+echo copying tree from $r into $d
+cd $r
+src='hosts_access.c options.c shell_cmd.c rfc931.c eval.c hosts_ctl.c
+refuse.c percent_x.c clean_exit.c fix_options.c socket.c workarounds.c
+update.c misc.c diag.c'
+man='hosts_access.3 hosts_access.5 hosts_options.5'
+inc='tcpd.h mystdarg.h'
+misc='DISCLAIMER'
+pax -rvw $src $man $inc $misc $d
+
+cd $d
+
+echo done
+exit 0

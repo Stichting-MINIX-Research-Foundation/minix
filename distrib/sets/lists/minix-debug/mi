@@ -110,6 +110,7 @@
 ./usr/lib/libusb_g.a                                    minix-debug     debuglib
 ./usr/lib/libutil_g.a                                   minix-debug     debuglib
 ./usr/lib/libvtreefs_g.a                                minix-debug     debuglib
+./usr/lib/libwrap_g.a                                   minix-debug     debuglib
 ./usr/lib/libz_g.a                                      minix-debug     debuglib
 ./usr/libdata                                           minix-debug
 ./usr/libdata/debug                                     minix-debug
@@ -567,6 +568,7 @@
 ./usr/libdata/debug/usr/lib/libsys.so.0.0.debug         minix-debug     debug
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug    minix-debug     debug
 ./usr/libdata/debug/usr/lib/libutil.so.7.23.debug       minix-debug     debug
+./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug           minix-debug     debug
 ./usr/libdata/debug/usr/libexec                         minix-debug
 ./usr/libdata/debug/usr/libexec/atf-check.debug         minix-debug     debug

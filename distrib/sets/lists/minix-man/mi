@@ -1920,6 +1920,8 @@
 ./usr/man/man3/history_init.3                           minix-man
 ./usr/man/man3/hline.3                                  minix-man
 ./usr/man/man3/hostalias.3                              minix-man
+./usr/man/man3/hosts_access.3                           minix-man
+./usr/man/man3/hosts_ctl.3                              minix-man
 ./usr/man/man3/hsearch.3                                minix-man
 ./usr/man/man3/hsearch_r.3                              minix-man
 ./usr/man/man3/hstrerror.3                              minix-man
@@ -2671,6 +2673,8 @@
 ./usr/man/man3/remque.3                                 minix-man
 ./usr/man/man3/remquo.3                                 minix-man
 ./usr/man/man3/remquof.3                                minix-man
+./usr/man/man3/request_init.3                           minix-man
+./usr/man/man3/request_set.3                            minix-man
 ./usr/man/man3/res_close.3                              minix-man
 ./usr/man/man3/res_findzonecut.3                        minix-man
 ./usr/man/man3/res_getservers.3                         minix-man
@@ -3285,6 +3289,10 @@
 ./usr/man/man5/gettytab.5                               minix-man
 ./usr/man/man5/group.5                                  minix-man
 ./usr/man/man5/hosts.5                                  minix-man
+./usr/man/man5/hosts.allow.5                            minix-man
+./usr/man/man5/hosts.deny.5                             minix-man
+./usr/man/man5/hosts_access.5                           minix-man
+./usr/man/man5/hosts_options.5                          minix-man
 ./usr/man/man5/http_status.5                            minix-man       obsolete
 ./usr/man/man5/httpd.conf.5                             minix-man       obsolete
 ./usr/man/man5/info.5                                   minix-man
