@@ -24,7 +24,7 @@ int fs_mount(dev_t dev, unsigned int __unused flags,
 	root_node->fn_mode = v_pri.inode_root->i_stat.st_mode;
 	root_node->fn_size = v_pri.inode_root->i_stat.st_size;
 	root_node->fn_uid = SYS_UID; /* Always root */
-	root_node->fn_gid = SYS_GID; /* operator */
+	root_node->fn_gid = SYS_GID; /* wheel */
 	root_node->fn_dev = NO_DEV;
 
 	*res_flags = RES_NOFLAGS;

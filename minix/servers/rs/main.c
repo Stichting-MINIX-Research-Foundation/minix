@@ -442,7 +442,7 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       panic("unable to clone current RS instance: %d", s);
   }
 
-  /* Fork a new RS instance with root:operator. */
+  /* Fork a new RS instance with root:wheel. */
   pid = srv_fork(0, 0);
   if(pid < 0) {
       panic("unable to fork a new RS instance: %d", pid);

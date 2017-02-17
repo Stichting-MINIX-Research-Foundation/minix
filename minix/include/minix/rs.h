@@ -13,11 +13,13 @@ Interface to the reincarnation server
 
 #define SERVICE_LOGIN	"service"	/* passwd file entry for services */
 
-/* The following definition should be kept in sync with the actual /etc/passwd
- * value for SERVICE_LOGIN for now, and removed altogether once we are able to
- * obtain its value dynamically everywhere.
+/* The following definition should be kept in sync with the actual
+ * /etc/master.passwd value for SERVICE_LOGIN for now, and removed altogether
+ * once we are able to obtain its value dynamically everywhere.  The value has
+ * been chosen so as to avoid creating conflicts with future NetBSD additions
+ * to the password files, although one can never be sure.
  */
-#define SERVICE_UID		12		/* user ID for services */
+#define SERVICE_UID		999		/* user ID for services */
 
 /* RSS definitions. */
 #define RSS_NR_IRQ		16

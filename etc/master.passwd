@@ -1,16 +1,24 @@
-root::0:0::0:0:Big Brother:/root:/bin/sh
-daemon:*:1:1::0:0:The Deuce:/etc:/bin/sh
-bin:*:2:0::0:0:Binaries Commands and Source:/nonexistent:/bin/sh
-uucp:*:5:5::0:0:UNIX to UNIX copy:/usr/spool/uucp:/usr/bin/uucico
-news:*:6:6::0:0:Usenet news:/usr/spool/news:/bin/sh
-ftp:*:7:7::0:0:Anonymous FTP:/usr/ftp:/bin/sh
-www:*:9:9::0:0:World Wide Web:/usr/www:/bin/sh
-driver:*:10:10::0:0:Device Drivers:/:/bin/sh
-server:*:11:11::0:0:OS Servers:/:/bin/sh
-service:*:12:12::0:0:System Services:/:/bin/sh
-sshd:*:22:22::0:0:sshd:/:/bin/sh
-smtpd:*:25:25::0:0:smtpd:/:/bin/sh
-postfix:*:27:27::0:0:postfix:/usr/var/spool/postfix:/usr/bin/false
-postgres:*:30:30::0:0:postgresql:/:/usr/bin/false
-games:*:9998:13::0:0:games:/:/bin/sh
-nobody:*:9999:39::0:0:Unprivileged user:/tmp:/bin/sh
+root::0:0::0:0:Charlie &:/root:/bin/sh
+toor:*:0:0::0:0:Bourne-again Superuser:/root:/bin/sh
+daemon:*:1:1::0:0:The devil himself:/:/sbin/nologin
+operator:*:2:5::0:0:System &:/usr/guest/operator:/sbin/nologin
+bin:*:3:7::0:0:Binaries Commands and Source:/:/bin/sh
+games:*:7:13::0:0:& pseudo-user:/usr/games:/sbin/nologin
+postfix:*:12:12::0:0:& pseudo-user:/var/spool/postfix:/sbin/nologin
+named:*:14:14::0:0:& pseudo-user:/var/chroot/named:/sbin/nologin
+ntpd:*:15:15::0:0:& pseudo-user:/var/chroot/ntpd:/sbin/nologin
+sshd:*:16:16::0:0:& pseudo-user:/var/chroot/sshd:/sbin/nologin
+_pflogd:*:18:18::0:0:& pseudo-user:/var/chroot/pflogd:/sbin/nologin
+_rwhod:*:19:19::0:0:& pseudo-user:/var/rwho:/sbin/nologin
+_proxy:*:21:21::0:0:Proxy Services:/nonexistent:/sbin/nologin
+_timedc:*:22:22::0:0:& pseudo-user:/nonexistent:/sbin/nologin
+_sdpd:*:23:23::0:0:& pseudo-user:/nonexistent:/sbin/nologin
+_httpd:*:24:24::0:0:& pseudo-user:/var/www:/sbin/nologin
+_mdnsd:*:25:25::0:0:& pseudo-user:/nonexistent:/sbin/nologin
+_tests:*:26:26::0:0:& pseudo-user:/nonexistent:/sbin/nologin
+_tcpdump:*:27:27::0:0:& pseudo-user:/var/chroot/tcpdump:/sbin/nologin
+_tss:*:28:28::0:0:& pseudo-user:/var/tpm:/sbin/nologin
+_rtadvd:*:30:30::0:0:& pseudo-user:/var/chroot/rtadvd:/sbin/nologin
+uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/nonexistent:/sbin/nologin
+service:*:999:0::0:0:System Services:/:/sbin/nologin
+nobody:*:32767:39::0:0:Unprivileged user:/nonexistent:/sbin/nologin

@@ -91,7 +91,7 @@ INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 
 # -rw-r--r--
 BINOWN= root
-BINGRP= operator
+BINGRP= wheel
 UTMPGRP= utmp
 .if defined(__MINIX)
 BIN1+=	boot.cfg.default \
@@ -296,7 +296,7 @@ CONFIGSYMLINKS+=	\
 #
 install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
-	${ETC_INSTALL_FILE} -o root -g operator -m 600 \
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
 	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
@@ -304,7 +304,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	( \
 		mode=0600; \
 		for metaent in spwd.db passwd pwd.db; do \
-	    		echo "./etc/$${metaent} type=file mode=$${mode} uname=root gname=operator tags=etc_pkg"; \
+	    		echo "./etc/$${metaent} type=file mode=$${mode} uname=root gname=wheel tags=etc_pkg"; \
 			mode=0644; \
 		done; \
 	) | ${METALOG.add}
@@ -351,7 +351,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${MAKEDIRTARGET} . install-etc-files-safe
 
 install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
-# LSC Minix administrator group is operator, not wheel
 .endif # defined(__MINIX)
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 .if !defined(__MINIX)
@@ -393,7 +392,6 @@ install-etc-files-safe: .PHONY .MAKE check_DESTDIR MAKEDEV
 # TAC to the .for block above.
 .if !defined(__MINIX)
 .for owner group mode file in \
-		${BINOWN} operator	664	/etc/ttys  \
 		${BINOWN} operator	664	/etc/dumpdates  \
 		${BINOWN} operator	600	/etc/skeykeys \
 		root wheel		600	/var/at/at.deny \

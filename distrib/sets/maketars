@@ -185,7 +185,7 @@ for setname in ${lists}; do
 		    > "${SDIR}/flist.${setname}.full" \
 		    || exit 1
 		(
-			echo "/set uname=root gname=operator"
+			echo "/set uname=root gname=wheel"
 			${AWK} -f "${rundir}/join.awk" \
 				"${SDIR}/flist.${setname}.full" "${metalog}"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"

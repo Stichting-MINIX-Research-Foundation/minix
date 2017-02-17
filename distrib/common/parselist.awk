@@ -133,7 +133,7 @@ BEGIN \
 		print "install:"
 	} else if (mode == "mtree") {
 		print "/unset\tall";
-		print "/set\ttype=file uname=root gname=operator";
+		print "/set\ttype=file uname=root gname=wheel";
 		print;
 	} else if (mode == "populate") {
 		print "cd " ENVIRON["CURDIR"];

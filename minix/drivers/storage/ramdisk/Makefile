@@ -190,9 +190,9 @@ etc/master.passwd: ${NETBSDSRCDIR}/etc/master.passwd
 	${TOOL_PWD_MKDB} -V 0 -p -d . etc/master.passwd
 
 proto.dev.mtree:
-	@echo ". type=dir uname=root gname=operator mode=0755" \
+	@echo ". type=dir uname=root gname=wheel mode=0755" \
 		>${.TARGET}.tmp && \
-	echo "./dev type=dir uname=root gname=operator mode=0755" \
+	echo "./dev type=dir uname=root gname=wheel mode=0755" \
 		>>${.TARGET}.tmp && \
 	${NETBSDSRCDIR}/minix/commands/MAKEDEV/MAKEDEV.sh -m -r \
 		>> ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}

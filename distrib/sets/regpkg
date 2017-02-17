@@ -819,7 +819,7 @@ create_syspkg_tgz()
 					"${spec1}" "${metalog}"
 				${AWK} -f "${rundir}/join.awk" \
 					"${spec1}" /dev/stdin <<EOF
-./etc/mtree/set.${pkgset} type=file mode=0444 uname=root gname=operator
+./etc/mtree/set.${pkgset} type=file mode=0444 uname=root gname=wheel
 EOF
 			else
 				cat "${spec1}"

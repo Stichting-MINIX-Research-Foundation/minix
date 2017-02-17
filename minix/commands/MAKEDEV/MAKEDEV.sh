@@ -191,7 +191,7 @@ for dev in ${DEVICES}
 do
 	# Reset the defaults
 	uname=root
-	gname=operator
+	gname=wheel
 	permissions=600
 
 	case ${dev} in

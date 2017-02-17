@@ -14,12 +14,11 @@ _MAKEFILE_MKFONTSCALE_=1
 MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/mkfontscale && ${PRINTOBJDIR}
 MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
 
-#__MINIX: gname=operator instead of wheel
 afterinstall: create.fonts.dir create.fonts.scale
 .if ${MKUNPRIVED} != "no"
-	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=operator" \
+	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=wheel" \
 	    | ${METALOG.add}
-	echo ".${FILESDIR}/fonts.scale type=file mode=0444 uname=root gname=operator" \
+	echo ".${FILESDIR}/fonts.scale type=file mode=0444 uname=root gname=wheel" \
 	    | ${METALOG.add}
 .endif
 	${_MKMSG_INSTALL} ${DESTDIR}${FILESDIR}/encodings.dir
