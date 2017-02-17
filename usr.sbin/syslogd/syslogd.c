@@ -1808,26 +1808,14 @@ void
 logmsg(struct buf_msg *buffer)
 {
 	struct filed *f;
-#ifndef __minix
 	int fac, omask, prilev;
-#else /* __minix */
-	int fac, prilev;
-	sigset_t omask;
-#endif /* __minix */
 
 	DPRINTF((D_CALL|D_BUFFER), "logmsg: buffer@%p, pri 0%o/%d, flags 0x%x,"
 	    " timestamp \"%s\", from \"%s\", sd \"%s\", msg \"%s\"\n",
 	    buffer, buffer->pri, buffer->pri, buffer->flags,
 	    buffer->timestamp, buffer->recvhost, buffer->sd, buffer->msg);
 
-#ifndef __minix
 	omask = sigblock(sigmask(SIGHUP)|sigmask(SIGALRM));
-#else /* __minix */
-	sigemptyset(&omask);
-	sigaddset(&omask, SIGHUP);
-	sigaddset(&omask, SIGALRM);
-#define sigsetmask(s) (sigprocmask(SIG_SETMASK, &s, NULL))
-#endif /* __minix */
 
 	/* sanity check */
 	assert(buffer->refcount == 1);

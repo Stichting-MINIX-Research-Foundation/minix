@@ -125,11 +125,9 @@ extern int dehumanize_number(const char *str, int64_t *size);
 char *strndup(const char *str, size_t n);
 #endif /* !HAVE_STRNDUP */
 
-#if !defined(__minix)
 #ifdef LIBWRAP
 #include <tcpd.h>
 #endif
-#endif /* !defined(__minix) */
 
 #define FDMASK(fd)	(1 << (fd))
 
