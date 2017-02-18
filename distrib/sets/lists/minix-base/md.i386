@@ -14,9 +14,9 @@
 ./etc/system.conf.d/dec21140A                           minix-base
 ./etc/system.conf.d/dp8390                              minix-base
 ./etc/system.conf.d/dpeth                               minix-base
+./etc/system.conf.d/e1000                               minix-base
 ./etc/system.conf.d/es1370                              minix-base
 ./etc/system.conf.d/es1371                              minix-base
-./etc/system.conf.d/e1000                               minix-base
 ./etc/system.conf.d/fxp                                 minix-base
 ./etc/system.conf.d/ip1000                              minix-base
 ./etc/system.conf.d/lance                               minix-base
