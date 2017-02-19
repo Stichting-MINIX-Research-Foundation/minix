@@ -298,6 +298,7 @@
 ./usr/man/man1/patch.1                                  minix-man
 ./usr/man/man1/pathchk.1                                minix-man
 ./usr/man/man1/pax.1                                    minix-man
+./usr/man/man1/pcap-config.1                            minix-man
 ./usr/man/man1/ping.1                                   minix-man       obsolete
 ./usr/man/man1/pkg_add.1                                minix-man       crypto
 ./usr/man/man1/pkg_admin.1                              minix-man       crypto
@@ -2382,6 +2383,61 @@
 ./usr/man/man3/pair_content.3                           minix-man
 ./usr/man/man3/parsedate.3                              minix-man
 ./usr/man/man3/pause.3                                  minix-man
+./usr/man/man3/pcap.3                                   minix-man
+./usr/man/man3/pcap_activate.3                          minix-man
+./usr/man/man3/pcap_breakloop.3                         minix-man
+./usr/man/man3/pcap_can_set_rfmon.3                     minix-man
+./usr/man/man3/pcap_close.3                             minix-man
+./usr/man/man3/pcap_compile.3                           minix-man
+./usr/man/man3/pcap_create.3                            minix-man
+./usr/man/man3/pcap_datalink.3                          minix-man
+./usr/man/man3/pcap_datalink_name_to_val.3              minix-man
+./usr/man/man3/pcap_datalink_val_to_name.3              minix-man
+./usr/man/man3/pcap_dump.3                              minix-man
+./usr/man/man3/pcap_dump_close.3                        minix-man
+./usr/man/man3/pcap_dump_file.3                         minix-man
+./usr/man/man3/pcap_dump_flush.3                        minix-man
+./usr/man/man3/pcap_dump_ftell.3                        minix-man
+./usr/man/man3/pcap_dump_open.3                         minix-man
+./usr/man/man3/pcap_file.3                              minix-man
+./usr/man/man3/pcap_fileno.3                            minix-man
+./usr/man/man3/pcap_findalldevs.3                       minix-man
+./usr/man/man3/pcap_freecode.3                          minix-man
+./usr/man/man3/pcap_get_selectable_fd.3                 minix-man
+./usr/man/man3/pcap_get_tstamp_precision.3              minix-man
+./usr/man/man3/pcap_geterr.3                            minix-man
+./usr/man/man3/pcap_inject.3                            minix-man
+./usr/man/man3/pcap_is_swapped.3                        minix-man
+./usr/man/man3/pcap_lib_version.3                       minix-man
+./usr/man/man3/pcap_list_datalinks.3                    minix-man
+./usr/man/man3/pcap_list_tstamp_types.3                 minix-man
+./usr/man/man3/pcap_lookupdev.3                         minix-man
+./usr/man/man3/pcap_lookupnet.3                         minix-man
+./usr/man/man3/pcap_loop.3                              minix-man
+./usr/man/man3/pcap_major_version.3                     minix-man
+./usr/man/man3/pcap_next_ex.3                           minix-man
+./usr/man/man3/pcap_offline_filter.3                    minix-man
+./usr/man/man3/pcap_open_dead.3                         minix-man
+./usr/man/man3/pcap_open_live.3                         minix-man
+./usr/man/man3/pcap_open_offline.3                      minix-man
+./usr/man/man3/pcap_set_buffer_size.3                   minix-man
+./usr/man/man3/pcap_set_datalink.3                      minix-man
+./usr/man/man3/pcap_set_immediate_mode.3                minix-man
+./usr/man/man3/pcap_set_promisc.3                       minix-man
+./usr/man/man3/pcap_set_rfmon.3                         minix-man
+./usr/man/man3/pcap_set_snaplen.3                       minix-man
+./usr/man/man3/pcap_set_timeout.3                       minix-man
+./usr/man/man3/pcap_set_tstamp_precision.3              minix-man
+./usr/man/man3/pcap_set_tstamp_type.3                   minix-man
+./usr/man/man3/pcap_setdirection.3                      minix-man
+./usr/man/man3/pcap_setfilter.3                         minix-man
+./usr/man/man3/pcap_setnonblock.3                       minix-man
+./usr/man/man3/pcap_snapshot.3                          minix-man
+./usr/man/man3/pcap_stats.3                             minix-man
+./usr/man/man3/pcap_statustostr.3                       minix-man
+./usr/man/man3/pcap_strerror.3                          minix-man
+./usr/man/man3/pcap_tstamp_type_name_to_val.3           minix-man
+./usr/man/man3/pcap_tstamp_type_val_to_name.3           minix-man
 ./usr/man/man3/pci.3                                    minix-man
 ./usr/man/man3/pci_conf_print.3                         minix-man
 ./usr/man/man3/pci_devinfo.3                            minix-man
@@ -3325,6 +3381,7 @@
 ./usr/man/man5/nsswitch.conf.5                          minix-man
 ./usr/man/man5/openssl.cnf.5                            minix-man       crypto
 ./usr/man/man5/passwd.5                                 minix-man
+./usr/man/man5/pcap-savefile.5                          minix-man
 ./usr/man/man5/pkg_install.conf.5                       minix-man
 ./usr/man/man5/pkg_summary.5                            minix-man
 ./usr/man/man5/rc.conf.5                                minix-man
@@ -3388,6 +3445,9 @@
 ./usr/man/man7/mandoc_roff.7                            minix-man
 ./usr/man/man7/mandoc_tbl.7                             minix-man
 ./usr/man/man7/nls.7                                    minix-man
+./usr/man/man7/pcap-filter.7                            minix-man
+./usr/man/man7/pcap-linktype.7                          minix-man
+./usr/man/man7/pcap-tstamp.7                            minix-man
 ./usr/man/man7/pkgsrc.7                                 minix-man
 ./usr/man/man7/re_format.7                              minix-man
 ./usr/man/man8                                          minix-man

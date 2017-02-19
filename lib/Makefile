@@ -114,7 +114,7 @@ SUBDIR+=	../external/bsd/flex/lib
 #SUBDIR+=	../external/bsd/tre/lib
 SUBDIR+=	../external/bsd/elftoolchain/lib/libelf
 #SUBDIR+=	../external/bsd/liblzf/lib
-#SUBDIR+=	../external/bsd/libpcap/lib
+SUBDIR+=	../external/bsd/libpcap/lib
 
 .if ${MKSLJIT} != "no"
 SUBDIR+=	../external/bsd/sljit/lib

@@ -110,6 +110,7 @@
 ./usr/include/netmpls
 ./usr/include/netpgp
 ./usr/include/openssl
+./usr/include/pcap
 ./usr/include/ppath
 ./usr/include/prop
 ./usr/include/protocols

@@ -512,6 +512,7 @@
 ./usr/bin/paste                                         minix-base
 ./usr/bin/patch                                         minix-base
 ./usr/bin/pathchk                                       minix-base
+./usr/bin/pcap-config                                   minix-base
 ./usr/bin/ping                                          minix-base      obsolete
 ./usr/bin/pkgin_all                                     minix-base
 ./usr/bin/pkgin_cd                                      minix-base
@@ -954,6 +955,9 @@
 ./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
 ./usr/lib/libopcodes.so.6.0                             minix-base      binutils
 ./usr/lib/libopcodes.so.6                               minix-base      binutils
+./usr/lib/libpcap.so                                    minix-base
+./usr/lib/libpcap.so.5                                  minix-base
+./usr/lib/libpcap.so.5.1                                minix-base
 ./usr/lib/libpci.so                                     minix-base
 ./usr/lib/libpci.so.2                                   minix-base
 ./usr/lib/libpci.so.2.0                                 minix-base      obsolete

@@ -1480,6 +1480,12 @@
 ./usr/include/openssl/x509_vfy.h                        minix-comp      crypto
 ./usr/include/openssl/x509v3.h                          minix-comp      crypto
 ./usr/include/paths.h                                   minix-comp
+./usr/include/pcap-namedb.h                             minix-comp
+./usr/include/pcap                                      minix-comp
+./usr/include/pcap.h                                    minix-comp
+./usr/include/pcap/bpf.h                                minix-comp
+./usr/include/pcap/namedb.h                             minix-comp
+./usr/include/pcap/pcap.h                               minix-comp
 ./usr/include/pci.h                                     minix-comp
 ./usr/include/poll.h                                    minix-comp
 ./usr/include/ppath                                     minix-comp
@@ -1932,6 +1938,7 @@
 ./usr/lib/bc/libnetpgpverify.a                          minix-comp      bitcode
 ./usr/lib/bc/libnetsock.a                               minix-comp      bitcode,obsolete
 ./usr/lib/bc/libopcodes.a                               minix-comp      bitcode,binutils
+./usr/lib/bc/libpcap.a                                  minix-comp      bitcode
 ./usr/lib/bc/libpci.a                                   minix-comp      bitcode
 ./usr/lib/bc/libprop.a                                  minix-comp      bitcode
 ./usr/lib/bc/libpuffs.a                                 minix-comp      bitcode
@@ -2104,6 +2111,8 @@
 ./usr/lib/libnetsock_pic.a                              minix-comp      obsolete
 ./usr/lib/libobjc.a                                     minix-comp      gcc=45
 ./usr/lib/libobjc_pic.a                                 minix-comp      gcc=45
+./usr/lib/libpcap.a                                     minix-comp
+./usr/lib/libpcap_pic.a                                 minix-comp
 ./usr/lib/libpci.a                                      minix-comp
 ./usr/lib/libpci_pic.a                                  minix-comp
 ./usr/lib/libprop.a                                     minix-comp

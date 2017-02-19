@@ -5,7 +5,7 @@
 #MINIX:
 SUBDIR=	bind byacc dhcpcd \
 	fetch file flex less \
-	libarchive libevent mdocml \
+	libarchive libevent libpcap mdocml \
 	openresolv tmux top
 
 .if (${MKATF} != "no")

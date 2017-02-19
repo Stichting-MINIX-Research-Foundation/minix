@@ -98,6 +98,7 @@
 ./usr/lib/libnetsock_g.a                                minix-debug     debuglib,obsolete
 ./usr/lib/libobjc_g.a                                   minix-debug     gcc=5,debuglib
 ./usr/lib/libopcodes_g.a                                minix-debug     debuglib
+./usr/lib/libpcap_g.a                                   minix-debug     debuglib
 ./usr/lib/libpci_g.a                                    minix-debug     debuglib
 ./usr/lib/libprop_g.a                                   minix-debug     debuglib
 ./usr/lib/libpuffs_g.a                                  minix-debug     debuglib
@@ -583,6 +584,7 @@
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug minix-debug     debug
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug        minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug     minix-debug     debug
+./usr/libdata/debug/usr/lib/libpcap.so.5.1.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.1.debug         minix-debug     debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug        minix-debug     debug
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug       minix-debug     debug
