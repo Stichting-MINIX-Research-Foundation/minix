@@ -1119,6 +1119,7 @@
 ./usr/sbin/named-compilezone                            minix-base
 ./usr/sbin/named-journalprint                           minix-base
 ./usr/sbin/named                                        minix-base
+./usr/sbin/ndp                                          minix-base      inet6
 ./usr/sbin/newfs_mfs                                    minix-base
 ./usr/sbin/nsec3hash                                    minix-base
 ./usr/sbin/omshell                                      minix-base

@@ -52,7 +52,7 @@ SUBDIR+= mdsetimage
 .endif
 
 .if (${MKINET6} != "no")
-SUBDIR+=
+SUBDIR+= ndp
 .endif
 .if (${USE_INET6} != "no")
 SUBDIR+= traceroute6

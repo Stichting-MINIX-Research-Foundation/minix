@@ -3523,6 +3523,7 @@
 ./usr/man/man8/named-compilezone.8                      minix-man
 ./usr/man/man8/named-journalprint.8                     minix-man
 ./usr/man/man8/named.8                                  minix-man
+./usr/man/man8/ndp.8                                    minix-man       inet6
 ./usr/man/man8/netconf.8                                minix-man
 ./usr/man/man8/newfs_ext2fs.8                           minix-man
 ./usr/man/man8/newfs_msdos.8                            minix-man
