@@ -1135,6 +1135,7 @@
 ./usr/sbin/service                                      minix-base
 ./usr/sbin/services_mkdb                                minix-base
 ./usr/sbin/syslogd                                      minix-base
+./usr/sbin/tcpdump                                      minix-base
 ./usr/sbin/traceroute                                   minix-base
 ./usr/sbin/traceroute6                                  minix-base      use_inet6
 ./usr/sbin/unlink                                       minix-base
@@ -3936,6 +3937,7 @@
 ./var/chroot/named/var/run/lwresd                       minix-base
 ./var/chroot/named/var/run/named                        minix-base
 ./var/chroot/named/var/tmp                              minix-base
+./var/chroot/tcpdump                                    minix-base
 ./var/db                                                minix-base
 ./var/db/obsolete                                       minix-base
 ./var/db/obsolete/minix-base                            minix-base

@@ -1,0 +1,86 @@
+#! /bin/sh
+#
+#	$NetBSD: tcpdump2netbsd,v 1.1 2013/04/06 19:33:07 christos Exp $
+#
+# Copyright (c) 2000 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# amd2netbsd:  convert an amd source tree into a
+# netbsd amd source tree, under src/dist,
+# based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
+#
+# Rough instructions for importing new amd release:
+#
+#	$ cd /some/where/temporary
+#	$ tar xpfz /new/amd/release/tar/file
+#	$ sh /usr/src/external/bsd/tcpdump/dist/tcpdump2netbsd tcpdump-x.y.z `pwd`
+#	$ cd src/dist/am-utils
+#	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import tcpdump x.y.z" src/external/bsd/tcpdump/dist TCPDUMP tcpdump-x_y_z
+#	$ cd ../../../tcpdump-x.y.z
+#	$ run ./configure
+# copy newly generated config.h with /usr/src/external/bsd/tcpdump/include/config.h
+#	- check makefiles to see if any extra sources have been added.
+#	- update distrib/sets if necessary.
+
+if [ $# -ne 1 ]; then echo "tcpdump2netbsd src"; exit 1; fi
+
+r=$1
+
+case "$d" in
+	/*)
+		;;
+	*)
+		d=`/bin/pwd`/$d
+		;;
+esac
+
+case "$r" in
+	/*)
+		;;
+	*)
+		r=`/bin/pwd`/$r
+		;;
+esac
+
+### Remove the $'s around RCS tags
+cleantags $r
+
+### Clean up any CVS directories that might be around.
+echo "cleaning up CVS residue."
+(
+	cd $r
+	find . -type d -name "CVS" -print | xargs rm -r
+)
+echo done
+
+### Fixing file and directory permissions.
+echo "Fixing file/directory permissions."
+(
+	cd $r
+	find . -type f -print | xargs chmod u+rw,go+r
+	find . -type d -print | xargs chmod u+rwx,go+rx
+)
+echo done
+
+exit 0

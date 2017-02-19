@@ -714,6 +714,7 @@
 ./var/chroot/named/var/run/lwresd	mode=0775 gname=named
 ./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
+./var/chroot/tcpdump		mode=0755
 ./var/db
 ./var/db/obsolete
 ./var/db/xdm
