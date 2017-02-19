@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# $NetBSD: rtadvd,v 1.8 2013/07/09 09:34:58 roy Exp $
+#
+
+# PROVIDE: rtadvd
+# REQUIRE: DAEMON
+# BEFORE:  LOGIN
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name=rtadvd
+rcvar=$name
+command="/usr/sbin/$name"
+pidfile="/var/run/$name.pid"
+extra_commands=reload
+start_precmd=rtadvd_prestart
+reload_precmd=rtadvd_prereload
+
+rtadvd_prereload()
+{
+	local chdir="$(getent passwd _rtadvd | cut -d: -f6)"
+	local conf=/etc/rtadvd.conf myflags o confdir
+	
+	[ -z "$chdir" -o "$chdir" = / ] && return 0
+
+	if [ -n "$flags" ]; then
+		myflags=$flags
+	else
+		eval myflags=\$${name}_flags
+	fi
+	set -- ${myflags}
+	while getopts c:dDfM:Rs o; do
+		case "$1" in
+		-c)	conf="$OPTARG";;
+		esac
+		shift
+	done
+	confdir=$(dirname "$conf")
+	
+	echo "$name: copying $conf to $chdir$conf"
+	cp "$conf" "$chdir$conf"
+
+	# Provide a link to the chrooted dump file
+	ln -snf "$chdir/var/run/$name.dump" /var/run
+}
+
+rtadvd_prestart()
+{
+	if [ "$ip6mode" != router ]; then
+		warn \
+	"${name} cannot be used on IPv6 host, only on an IPv6 router."
+		return 1
+	fi
+
+	rtadvd_prereload
+}
+
+load_rc_config $name
+run_rc_command "$1"

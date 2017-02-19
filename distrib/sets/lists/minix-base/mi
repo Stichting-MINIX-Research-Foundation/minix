@@ -160,6 +160,7 @@
 ./etc/rc.d/npf                                          minix-base
 ./etc/rc.d/pwcheck                                      minix-base
 ./etc/rc.d/root                                         minix-base
+./etc/rc.d/rtadvd                                       minix-base
 ./etc/rc.d/sysctl                                       minix-base
 ./etc/rc.d/sysdb                                        minix-base
 ./etc/rc.d/syslogd                                      minix-base
@@ -1133,6 +1134,7 @@
 ./usr/sbin/rdate                                        minix-base
 ./usr/sbin/rndc-confgen                                 minix-base
 ./usr/sbin/rndc                                         minix-base
+./usr/sbin/rtadvd                                       minix-base      use_inet6
 ./usr/sbin/service                                      minix-base
 ./usr/sbin/services_mkdb                                minix-base
 ./usr/sbin/syslogd                                      minix-base
@@ -1258,6 +1260,8 @@
 ./usr/share/examples/openssl/CA.pl                      minix-base      crypto
 ./usr/share/examples/openssl/CA.sh                      minix-base      crypto
 ./usr/share/examples/openssl/openssl.cnf                minix-base      crypto
+./usr/share/examples/rtadvd                             minix-base
+./usr/share/examples/rtadvd/rtadvd.conf                 minix-base      use_inet6
 ./usr/share/examples/tmux                               minix-base
 ./usr/share/examples/tmux/screen-keys.conf              minix-base
 ./usr/share/i18n                                        minix-base      nls
@@ -3938,6 +3942,10 @@
 ./var/chroot/named/var/run/lwresd                       minix-base
 ./var/chroot/named/var/run/named                        minix-base
 ./var/chroot/named/var/tmp                              minix-base
+./var/chroot/rtadvd                                     minix-base
+./var/chroot/rtadvd/etc                                 minix-base
+./var/chroot/rtadvd/var                                 minix-base
+./var/chroot/rtadvd/var/run                             minix-base
 ./var/chroot/tcpdump                                    minix-base
 ./var/db                                                minix-base
 ./var/db/obsolete                                       minix-base

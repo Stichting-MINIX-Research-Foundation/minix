@@ -660,6 +660,7 @@
 ./usr/libdata/debug/usr/sbin/rdate.debug                minix-debug     debug
 ./usr/libdata/debug/usr/sbin/rndc-confgen.debug         minix-debug     debug
 ./usr/libdata/debug/usr/sbin/rndc.debug                 minix-debug     debug
+./usr/libdata/debug/usr/sbin/rtadvd.debug               minix-debug     use_inet6,debug
 ./usr/libdata/debug/usr/sbin/services_mkdb.debug        minix-debug     debug
 ./usr/libdata/debug/usr/sbin/syslogd.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/tcpdump.debug              minix-debug     debug

@@ -205,6 +205,7 @@
 ./usr/share/examples/lua
 ./usr/share/examples/lutok
 ./usr/share/examples/openssl
+./usr/share/examples/rtadvd
 ./usr/share/examples/tmux
 ./usr/share/games
 ./usr/share/games/fortune
@@ -714,6 +715,10 @@
 ./var/chroot/named/var/run/lwresd	mode=0775 gname=named
 ./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
+./var/chroot/rtadvd		type=dir  mode=0755
+./var/chroot/rtadvd/etc		type=dir  mode=0755
+./var/chroot/rtadvd/var		type=dir  mode=0755
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
 ./var/chroot/tcpdump		mode=0755
 ./var/db
 ./var/db/obsolete

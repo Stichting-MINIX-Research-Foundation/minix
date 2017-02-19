@@ -3390,6 +3390,7 @@
 ./usr/man/man5/resolver.5                               minix-man
 ./usr/man/man5/rhosts.5                                 minix-man       obsolete
 ./usr/man/man5/rndc.conf.5                              minix-man
+./usr/man/man5/rtadvd.conf.5                            minix-man       use_inet6
 ./usr/man/man5/serv.access.5                            minix-man       obsolete
 ./usr/man/man5/statvfs.5                                minix-man
 ./usr/man/man5/syslog.conf.5                            minix-man
@@ -3564,6 +3565,7 @@
 ./usr/man/man8/rotate.8                                 minix-man
 ./usr/man/man8/route.8                                  minix-man
 ./usr/man/man8/rshd.8                                   minix-man
+./usr/man/man8/rtadvd.8                                 minix-man       use_inet6
 ./usr/man/man8/screendump.8                             minix-man
 ./usr/man/man8/serial-ip.8                              minix-man       obsolete
 ./usr/man/man8/service.8                                minix-man

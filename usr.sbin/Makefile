@@ -55,7 +55,7 @@ SUBDIR+= mdsetimage
 SUBDIR+= ndp
 .endif
 .if (${USE_INET6} != "no")
-SUBDIR+= traceroute6
+SUBDIR+= rtadvd traceroute6
 .endif
 
 .if !defined(__MINIX)

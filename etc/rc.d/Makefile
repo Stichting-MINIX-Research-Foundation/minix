@@ -45,7 +45,7 @@ CONFIGFILES=\
 		pwcheck \
 		\
 		\
-		root \
+		root rtadvd \
 		\
 		\
 		sysctl sysdb syslogd \
