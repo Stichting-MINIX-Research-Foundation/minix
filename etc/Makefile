@@ -105,7 +105,7 @@ BIN1+=	\
 	syslog.conf
 # MINIX-only files:
 BIN1+=	boot.cfg.default rc.minix \
-	rs.single termcap utmp
+	rs.lwip rs.single termcap utmp
 .else
 BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
