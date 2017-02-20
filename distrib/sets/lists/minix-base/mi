@@ -196,6 +196,7 @@
 ./sbin/ping                                             minix-base
 ./sbin/poweroff                                         minix-base
 ./sbin/printconfig                                      minix-base
+./sbin/rcorder                                          minix-base
 ./sbin/reboot                                           minix-base
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base

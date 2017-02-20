@@ -3428,6 +3428,7 @@
 ./usr/man/man8/pwdauth.8                                minix-man       obsolete
 ./usr/man/man8/rarpd.8                                  minix-man
 ./usr/man/man8/rawspeed.8                               minix-man
+./usr/man/man8/rcorder.8                                minix-man
 ./usr/man/man8/rdate.8                                  minix-man
 ./usr/man/man8/readclock.8                              minix-man
 ./usr/man/man8/reboot.8                                 minix-man
