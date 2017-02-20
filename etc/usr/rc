@@ -103,8 +103,74 @@ up()
     fi
 }
 
+# Print a list of labels of detected PCI ethernet hardware devices.
+get_pci_eth_labels()
+{
+	# We need to match all PCI ethernet hardware devices against all
+	# drivers.  For performance reasons, we construct a lookup table on the
+	# fly here.  In order to do that, we need to give both a list of all
+	# available network drivers with PCI device IDs (part 1 of the code
+	# below) and a list of all actually present ethernet hardware devices
+	# (part 2) to an awk script (part 3).  The awk script can tell the
+	# difference between the list entries based on whether there is a
+	# leading space on the line.  For part 2, we grab only devices that are
+	# in PCI class 2 (network controller) subclass 0 (ethernet controller).
+
+	# Part 1: collect all network drivers with supported PCI IDs
+	(for dir in $SYSTEM_CONF_DIRS; do
+		for f in $dir/$SYSTEM_CONF_SUBDIR/*; do
+			if [ -f $f ]; then
+				printconfig $f | grep ',type net.*,pci device'
+			fi
+		done
+	done | sed 's/^service \([^,]*\),.*,pci device/ \1/g';
+	# Part 2: grab all PCI IDs of ethernet hardware devices (class 2/0)
+	cat /proc/pci | grep '^[^ ]* 2/0/' | cut -d' ' -f3) | awk '
+	# Part 3: first construct a PCI-ID-to-driver table based on the lines
+	# produced by part 1 (with leading space), which each contain one
+	# driver name followed by one or more PCI IDs; then, go through all
+	# the ethernet hardware devices found in part 2 (no leading space) and
+	# if if there is a hit in the table, print the driver label to use.
+	/^ / { for (i=2;i<=NF;i++) drivers[$(i)]=$1 }
+	/^[^ ]/ {
+		# There is a bit of a discrepancy between output formats of
+		# /proc/pci and printconfig: the former uses
+		# "vid:did:sub_vid:sub_did" whereas the latter uses
+		# "vid:did/sub_vid:sub_did".  No problem; in the common case
+		# (= no sub IDs used) we need to split the PCI ID anyway.
+		if (split($1,id,":") >= 4) {
+			# Try a full "vid:did:sub_vid:sub_did" match.
+			name=drivers[id[1]":"id[2]"/"id[3]":"id[4]]
+		}
+		# No sub IDs or no match found?  Try a "vid:did" match.
+		if (!name) name=drivers[id[1]":"id[2]]
+		# If found, print the resulting label (<name>_<instance>)
+		if (name) {
+			print name"_"(instance[name]+0)
+			instance[name]++
+		}
+	}
+	'
+}
+
+# Print a list of labels of ethernet hardware devices that have been detected
+# to be present on the system.  Each label has the format '<driver>_<instance>'
+# where <driver> is the file name of the driver (in /service) and <instance> is
+# a zero-based, per-driver instance number of the device.
 get_eth_labels() {
-    # Nothing yet.
+	# For now, do autodetection only on platforms with (x86) PCI support.
+	# For (x86) ISA drivers, a custom network setting script is required;
+	# see below.  For ARM platforms, the driver (if any) is started based
+	# on the board; there is no device autodetection.
+	if [ -f /proc/pci ]; then
+		get_pci_eth_labels
+	fi
+
+	# Add any network drivers manually configured in /usr/etc/rc.local by
+	# the netconf(8) utility.
+	if [ -n "$netdriver" ]; then
+		echo "${netdriver}_0"
+	fi
 }
 
 # Detect expansion boards on the BeagleBone and load the proper drivers.
@@ -175,7 +241,7 @@ start)
 	date >> /dev/urandom
     fi
 
-    # start network driver instances for all configured ethernet devices
+    # start network driver instances for all detected ethernet devices
     for label in $(get_eth_labels); do
         driver=$(echo $label | sed 's/\(.*\)_.*/\1/')
         instance=$(echo $label | sed 's/.*_//')
@@ -250,6 +316,9 @@ start)
 			up tps65217 -label tps65217.1.24 \
 			        -args 'bus=1 address=0x24'
 
+			# Start ethernet driver.
+			up lan8710a -label lan8710a_0 -args 'instance=0'
+
 			# check for the presence of a display
 			eepromread -f /dev/i2c-2 -n > /dev/null 2>&1
 			RESULT=$?
@@ -295,6 +364,9 @@ start)
 			# Start TDA19988 driver for reading EDID.
 			up tda19988 -label tda19988.1.3470 -args \
 				'cec_bus=1 cec_address=0x34 hdmi_bus=1 hdmi_address=0x70'
+
+			# Start ethernet driver.
+			up lan8710a -label lan8710a_0 -args 'instance=0'
 
 			# start frame buffer
 			#up fb -dev /dev/fb0 -args edid.0=tda19988.1.3470
