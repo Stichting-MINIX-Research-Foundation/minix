@@ -603,6 +603,7 @@
 ./usr/libdata/debug/usr/sbin/pkg_info.debug             minix-debug     debug
 ./usr/libdata/debug/usr/sbin/pwd_mkdb.debug             minix-debug     debug
 ./usr/libdata/debug/usr/sbin/rdate.debug                minix-debug     debug
+./usr/libdata/debug/usr/sbin/services_mkdb.debug        minix-debug     debug
 ./usr/libdata/debug/usr/sbin/syslogd.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/traceroute.debug           minix-debug     debug
 ./usr/libdata/debug/usr/sbin/unlink.debug               minix-debug     debug

@@ -24,7 +24,7 @@ SUBDIR= \
 	\
 	rdate \
 	\
-	\
+	services_mkdb \
 	\
 	syslogd \
 	traceroute \

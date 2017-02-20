@@ -402,6 +402,14 @@ start|autoboot)
 	dev_mkdb
     fi
 
+    # Same for /etc/services.
+    SERVICESFILE=/etc/services
+    SERVICESDB=/var/db/services.cdb
+    if [ ! -f "$SERVICESDB" -o "$SERVICESFILE" -nt "$SERVICESDB" ]
+    then
+	services_mkdb -q
+    fi
+
     if [ "$net" ]
     then
 	# Get the nodename from the DNS and set it.
