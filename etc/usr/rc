@@ -1,6 +1,7 @@
 # /usr/etc/rc - continued system initialization.
 
 RANDOM_FILE=/usr/adm/random.dat
+TCPISN_FILE=/usr/adm/tcpisn.dat
 LOCAL_FILE=/usr/etc/rc.local
 
 ARCH="`sysenv arch`"
@@ -253,6 +254,34 @@ start)
 
     # pty needs to know the "tty" group ID
     up pty -dev /dev/ptmx -args "gid=`stat -f '%g' /dev/ptmx`"
+
+    # Start the LWIP service.
+    up lwip -dev /dev/bpf -script /etc/rs.lwip
+
+    # Load stable seed for TCP Initial Sequence Number generation (RFC 6528).
+    # The idea here is that (especially) after a system crash, the seed stays
+    # the same, so as to make it unlikely that incoming packets for connections
+    # from before the crash are accepted on connections after the crash.
+    TCPISN_LEN=$(sysctl -n net.inet.tcp.isn_secret | awk '{print length/2}')
+    if [ ! -f $TCPISN_FILE ]; then
+	# If the /usr file system is read-only, we cannot create the file.  In
+	# that case, we draw a temporary secret from the random service.
+	if grep ' \/usr .*rw.*' /etc/mtab >/dev/null; then
+	    dd if=/dev/random of=$TCPISN_FILE bs=$TCPISN_LEN count=1 2>/dev/null
+	else
+	    TCPISN_FILE=/dev/random
+	fi
+    fi
+    sysctl -qw net.inet.tcp.isn_secret=`dd if=$TCPISN_FILE bs=$TCPISN_LEN \
+	count=1 2>/dev/null | hexdump -v -e '/1 "%02x"'` 2>/dev/null
+
+    # LWIP does not block until all network drivers have fully initialized and
+    # reported back to LWIP.  That may prevent proper configuration of the
+    # corresponding interfaces a bit later.  Sleep up to five seconds waiting
+    # for all registered network drivers to initialize and report to LWIP.
+    for i in 1 2 3 4 5; do
+	[ $(sysctl -n minix.lwip.drivers.pending) -gt 0 ] && sleep 1
+    done
 
     up uds
 

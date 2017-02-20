@@ -172,6 +172,7 @@
 ./etc/rc.subr                                           minix-base
 ./etc/release                                           minix-base
 ./etc/rs.inet                                           minix-base      obsolete
+./etc/rs.lwip                                           minix-base
 ./etc/rs.single                                         minix-base
 ./etc/saslc.d                                           minix-base      crypto
 ./etc/saslc.d/postfix                                   minix-base      crypto

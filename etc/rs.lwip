@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# Recovery script for LWIP.  Aside from restarting the LWIP service itself, the
+# script aims to restart all of networking.  This includes in particular any
+# network daemons: these daemons typically have open (listening) sockets that
+# will now have become invalid, and the daemons typically do not know how to
+# deal with that.  Unfortunately, there is no reliable way to determine the
+# list of rc scripts that concern network daemons, so for now we hardcode a
+# list of known ones here: this is the list of network-related rc.d scripts.
+# FIXME: since we are not yet done importing etc/rc.d from NetBSD, this list is
+# still incomplete and should be extended as more scripts are imported!
+RC_SCRIPTS="dhclient dhcpcd dhcpd dhcrelay ftpd inetd named network rtadvd \
+    sshd staticroute syslogd"
+
+exec < /dev/console
+exec > /dev/console
+exec 2> /dev/console
+
+export HOME=/
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+# Restart the LWIP service.
+
+# There is no need to shut down daemons before bringing back up the service.
+# Note that "minix-service restart" does not do the same as these steps, and in
+# fact breaks a proper LWIP restart.
+restarts=$(grep restarts /proc/service/$1 | cut -d: -f2)
+minix-service down "$1"
+minix-service up /service/lwip -dev /dev/bpf -script /etc/rs.lwip \
+    -restarts $(($restarts + 1))
+
+# Reload TCP ISN, or make a new one if there is none.  Do not save anything.
+TCPISN_FILE=/usr/adm/tcpisn.dat
+TCPISN_LEN=$(sysctl -n net.inet.tcp.isn_secret | awk '{print length/2}')
+if [ ! -f $TCPISN_FILE ]; then TCPISN_FILE=/dev/random; fi
+sysctl -qw net.inet.tcp.isn_secret=`dd if=$TCPISN_FILE bs=$TCPISN_LEN \
+    count=1 2>/dev/null | hexdump -v -e '/1 "%02x"'` 2>/dev/null
+
+# Let LWIP find all network drivers before performing initialization.
+sleep 1
+
+# XXX temporary block until the networking rc scripts are fully imported!
+exit 0
+
+# Restart all network daemons.
+
+# Start with dhcpcd, which may be launched directly from ifconfig.if(5) scripts
+# and therefore may not be enabled in, and thus stopped by, rc.d scripts below.
+service dhcpcd onestop >/dev/null 2>&1
+
+# Then stop and start all known network daemons using their rc.d scripts.
+regex='/('"$(echo $RC_SCRIPTS | tr ' ' '|')"')$'
+scripts=$(for rcd in ${rc_directories:-/etc/rc.d}; do
+	test -d ${rcd} && echo ${rcd}/*; done)
+files=$(rcorder ${scripts} | grep -E "$regex")
+
+for _rc_elem in $(reverse_list $files); do
+	# We have already stopped dhcpcd if it was running, so skip it here.
+	[ $_rc_elem != /etc/rc.d/dhcpcd ] && run_rc_script $_rc_elem stop
+done
+
+for _rc_elem in $files; do
+	run_rc_script $_rc_elem start
+done
