@@ -54,6 +54,33 @@ int vbox_request(struct VMMDevRequestHeader *header, phys_bytes addr,
 }
 
 /*===========================================================================*
+ *				vbox_update_time			     *
+ *===========================================================================*/
+static void vbox_update_time(void)
+{
+	/* Update the current time if it has drifted too far. */
+	struct VMMDevReqHostTime *req;
+	time_t otime, ntime;
+
+	req = (struct VMMDevReqHostTime *) vir_ptr;
+
+	if (vbox_request(&req->header, phys_ptr, VMMDEV_REQ_HOSTTIME,
+			sizeof(*req)) == VMMDEV_ERR_OK) {
+		time(&otime);				/* old time */
+
+		ntime = req->time / 1000;		/* new time */
+
+		/* Make time go forward, if the difference exceeds the drift
+		 * threshold. Never make time go backward.
+		 */
+		if ((ntime - otime) >= drift)
+			stime(&ntime);
+	}
+
+	sys_setalarm(ticks, 0);
+}
+
+/*===========================================================================*
  *				vbox_init				     *
  *===========================================================================*/
 static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
@@ -111,7 +138,11 @@ static int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
 	ticks = sys_hz() * interval;
 
-	sys_setalarm(ticks, 0);
+	/*
+	 * Do the first time update immediately.  If the time changes
+	 * significantly, there may otherwise be interference with rc scripts.
+	 */
+	vbox_update_time();
 
 	return OK;
 }
@@ -145,33 +176,6 @@ static void vbox_intr(void)
 
 	if ((r = sys_irqenable(&hook_id)) != OK)
 		panic("unable to reenable IRQ: %d", r);
-}
-
-/*===========================================================================*
- *				vbox_update_time			     *
- *===========================================================================*/
-static void vbox_update_time(void)
-{
-	/* Update the current time if it has drifted too far. */
-	struct VMMDevReqHostTime *req;
-	time_t otime, ntime;
-
-	req = (struct VMMDevReqHostTime *) vir_ptr;
-
-	if (vbox_request(&req->header, phys_ptr, VMMDEV_REQ_HOSTTIME,
-			sizeof(*req)) == VMMDEV_ERR_OK) {
-		time(&otime);				/* old time */
-
-		ntime = req->time / 1000;		/* new time */
-
-		/* Make time go forward, if the difference exceeds the drift
-		 * threshold. Never make time go backward.
-		 */
-		if ((ntime - otime) >= drift)
-			stime(&ntime);
-	}
-
-	sys_setalarm(ticks, 0);
 }
 
 /*===========================================================================*
