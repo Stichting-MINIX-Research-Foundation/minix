@@ -112,6 +112,7 @@
 ./usr/man/man1/flex.1                                   minix-man
 ./usr/man/man1/flexdoc.1                                minix-man       obsolete
 ./usr/man/man1/flock.1                                  minix-man
+./usr/man/man1/fmt.1                                    minix-man
 ./usr/man/man1/fold.1                                   minix-man
 ./usr/man/man1/for.1                                    minix-man       obsolete
 ./usr/man/man1/foreach.1                                minix-man

@@ -328,6 +328,7 @@
 ./usr/bin/flex++                                        minix-base
 ./usr/bin/flex                                          minix-base
 ./usr/bin/flock                                         minix-base
+./usr/bin/fmt                                           minix-base
 ./usr/bin/fold                                          minix-base
 ./usr/bin/format                                        minix-base
 ./usr/bin/fpr                                           minix-base

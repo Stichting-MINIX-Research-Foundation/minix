@@ -269,6 +269,7 @@
 ./usr/libdata/debug/usr/bin/finger.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/fix.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/flock.debug                 minix-debug     debug
+./usr/libdata/debug/usr/bin/fmt.debug                   minix-debug     debug
 ./usr/libdata/debug/usr/bin/fold.debug                  minix-debug     debug
 ./usr/libdata/debug/usr/bin/format.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/fpr.debug                   minix-debug     debug
