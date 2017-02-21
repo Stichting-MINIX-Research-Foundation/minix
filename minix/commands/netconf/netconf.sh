@@ -1,319 +1,363 @@
 #!/bin/sh
 #
-#	netconf 0.1 - Configure network	
+#	netconf 0.2 - Configure network
 #
 # Changes:
-#						
+#	v0.2: rewrite for NetBSD network infrastructure
+#	 - the primary choice is now for an interface, not a network card;
+#	 - manual driver configuration is now an exception;
+#	 - the menu transition system is slightly more solid;
+#	 - all non-interactive functionality has been removed.
+#
 
 # Get system config
 . /etc/rc.conf
 
 LOCALRC=/usr/etc/rc.local
-INETCONF=/etc/inet.conf
-RCNET=/etc/rc.net
-HOSTS=/etc/hosts
+IFCONF=/etc/ifconfig.
+RESOLVCONF=/etc/resolv.conf
 HOSTNAME=/etc/hostname.file
 USRKBFILE=/.usrkb
-LSPCI=/tmp/lspci.$$
-DEVICES=/tmp/devices.$$
 
-step1=""
-step2=""
-step3=""
-v=1 # verbosity
-manual_opts=0
 prefix=""
 cd="no" # running from cd?
-
-eth=""
-driver=""
-driverargs=""
-
-config=""
-manual=""
-dhcp="no"
-
-hostname=""
-hostname_prev=""
-ip=""
-ip_prev=""
-netmask=""
-netmask_prev=""
-gateway=""
-dns1=""
-dns2=""
-
-# Provide some sane defaults
-hostname_default=`uname -n`
-test -z "$hostname_default" && hostname_default="Minix"
-ip_default="10.0.0.1"
-netmask_default="255.255.255.0"
-gateway_default=""
+changed="no" # have any ifconfig.if(5) files been changed?
 
 usage()
 {
     cat >&2 <<'EOF'
 Usage:
 
-  netconf [-q] [-p <prefix>] [-e <num>] [-a]
-  netconf [-H <name> -i <ip> -n <mask> -g <gw> -d <prim dns> [-s <sec dns>]]
+  netconf [-lh] [-p <prefix>]
 
   flags:
-     -q Limit generated output
-     -p Path prefix for configuration files (e.g., during install -p mnt is used as files are mounted on /mnt).
-     -e Ethernet card
-     -a Use DHCP (-H, -i, -n, -g, -d, and -s flags are discarded)
-     -H Hostname
-     -i IP address
-     -n Netmask
-     -g Default gateway
-     -d Primary DNS
-     -s Secondary DNS
-     -h Shows this help file
-     -c Shows a list of ethernet cards supported
-
-  By default netconf starts in Interactive mode. By providing parameters on the
-  command line, some questions can be omitted.
+     -l Print a list of configurable interfaces
+     -h Print this help file
+     -p Set a path prefix for all configuration files (e.g., /mnt)
 EOF
     exit 1
 }
 
-card()
+backup_file()
 {
-	card_number=$1
-	card_name=$2
-	card_avail=0
-	shift 2
-	while [ $# -gt 0 ]
-	do 
-		cat $LSPCI | grep > /dev/null "^$1" && card_avail=1
-		shift
-	done
-	if [ $card_avail -gt 0 ]
-	then 
-		card_mark="*"
-		eth_default=$card_number
-	else
-		card_mark=" "
+	# Do not make backups if we're running from CD.
+	if [ "$cd" != "yes" -a -f "$1" ]; then
+		mv "$1" "$1~" || exit 1
+		echo
+		echo "Backed up $1 to $1~"
 	fi
-	printf "%2d. %s %s\n" "$card_number" "$card_mark" "$card_name"
 }
 
-first_pcicard=5
-
-cards()
+select_number()
 {
-    # Run lspci once to a temp file for use in 'card' function
-    lspci >$LSPCI 2>/dev/null || true
-
-    card 0 "No Ethernet card (no networking)"
-    card 1 "3Com 501 or 3Com 509 based card"
-    card 2 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
-    card 3 "NE2000, 3com 503 or WD based card (also emulated by Qemu, Bochs)"
-    card 4 "lan8710a (on BeagleBone, BeagleBone Black)"
-    n=$first_pcicard
-    for pcicard in $pci_list
-    do	var=\$pci_descr$pcicard; descr="`eval echo $var`"
-    	var=\$pci_pcilist$pcicard; pcilist="`eval echo $var`"
-    	card $n "$descr" $pcilist
-	n="`expr $n + 1`"
-    done
-
-    card $first_after_pci "Different Ethernet card (no networking)"
-
-    # Remove temporary lspci output
-    rm -f $LSPCI
+	while true; do
+		echo -n "$4 [$3] "
+		read input
+		case "$input" in
+		'')
+			return $3
+			;;
+		*[!0-9]*)
+			;;
+		*)
+			[ $input -ge $1 -a $input -le $2 ] && return $input
+			;;
+		esac
+	done
 }
 
-warn()
+interfaces()
 {
-    echo -e "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b ! $1"
-}
+	# Get a list of interfaces that are not virtual (i.e., cloners). There
+	# is always one virtual interface type ("lo", loopback).
+	cloners_regex='^('`ifconfig -C | sed 's/ /[0-9]|/g'`'[0-9])'
+	iflist=`ifconfig -l | tr ' ' '\n' | grep -vE "$cloners_regex"`
 
-config_pci_cards() {
-	rm -f $DEVICES
-
-	n=0
-
-	# Collect configs from network devices
-	for dir in $SYSTEM_CONF_DIRS
-	do	for f in $dir/$SYSTEM_CONF_SUBDIR/*
-		do	if [ -f $f ]
-			then	printconfig $f | grep 'type net.*pci device'
+	ifcount=0
+	ifunconf=0 # the first interface with no configuration file, or 0
+	if [ -z "$iflist" ]; then
+		echo "    No network hardware interfaces detected!"
+	else
+		for if in $iflist; do
+			ifcount=$(($ifcount + 1))
+			if [ -r $IFCONF$if ]; then
+				info="($1)"
+			else
+				[ $ifunconf -eq 0 ] && ifunconf=$ifcount
+				info=""
 			fi
+			printf "%2d. %-8s %s\n" $ifcount "$if" "$info"
 		done
-	done >$DEVICES
-	while read devline
-	do	pcilist="`echo $devline | sed 's/.*pci device //' | sed 's/,.*//'`"
-		descr="`echo $devline | sed 's/.*,descr //' | sed 's/,.*//'`"
-		label="`echo $devline | sed 's/.*service //' | sed 's/,.*//'`"
-		pci_list="$pci_list $n"
-		eval "pci_pcilist$n=\"$pcilist\""
-		eval "pci_descr$n=\"$descr\""
-		eval "pci_label$n=\"$label\""
-		n="`expr $n + 1`"
-	done <$DEVICES
-
-	first_after_pci=`expr $first_pcicard + $n`
-
-	rm -f $DEVICES
+	fi
 }
 
 do_step1()
 {
-    eth_default=0
-    
-    # Ask user about networking
-    echo "MINIX 3 currently supports the following Ethernet cards. PCI cards detected"
-    echo "by MINIX are marked with *. Please choose: "
-    echo ""
-    cards
-    echo ""
+	echo "
+The following network interfaces are available for configuration. These are
+interfaces corresponding to network drivers that are currently running. If no
+interface is listed for your network card here, then either MINIX 3 does not
+support your card, or, if it is not a plug-and-play device, it may require
+manual configuration first.
 
-    while [ "$step1" != ok ]; do
-      echo -n "Ethernet card? [$eth_default] "; read eth
-      test -z $eth && eth=$eth_default
+Please choose the interface you would like to configure, or another option.
+"
+	interfaces "already configured"
+	echo
+	manual_choice=$(($ifcount + 1))
+	quit_choice=$(($ifcount + 2))
+	printf "%2d. Manually configure an ethernet driver\n" $manual_choice
+	printf "%2d. Quit\n\n" $quit_choice
 
-      drv_params $eth
-      test -n "$driver" && step1="ok"
-    done
+	default_choice=$ifunconf
+	[ $default_choice -eq 0 ] && default_choice=$quit_choice
+
+	select_number 1 $quit_choice $default_choice "Interface choice?"
+	choice=$?
+
+	case $choice in
+	$manual_choice)
+		step=do_stepM
+		;;
+	$quit_choice)
+		;;
+	*)
+		ifchoice="$(echo $iflist | cut -d' ' -f$choice)"
+		step=do_step2
+	esac
 }
 
-drv_params()
+do_stepM()
 {
-	# If this is a known pci device, we only have to set
-	# the driver.
-	if [ $1 -ge $first_pcicard -a $1 -lt $first_after_pci ]
-	then	pcicard="`expr $1 - $first_pcicard`"
-    		var=\$pci_label$pcicard; driver="`eval echo $var`"
-		return
-	fi
+	# TODO: it would be nice if this list changed on a per-platform basis..
+	echo "
+MINIX 3 has drivers for a limited number of older cards that require manual
+configuration. They are shown below. Please choose one of the listed options.
 
-      # Other possibilities.
-      case "$1" in
-        0) driver=psip0;    ;;    
-	1) driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-	   test "$v" = 1 && echo ""
-           test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
+ 1. 3Com 501 or 3Com 509 based ISA card (i386)
+ 2. NE2000, 3Com 503, or WD based ISA card (i386) (emulated by Bochs, Qemu)
+
+ 3. Go back to interface selection
+ 4. Quit
+"
+
+	select_number 1 4 4 "Card choice?"
+
+	case $? in
+	1)
+		driver=dpeth
+		driverargs="#dpeth_args='DPETH0=port:irq:memory'"
+		echo "
+Note: After installing, edit $LOCALRC to the right configuration."
 		;;
-	2) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	3) driver=dp8390;   driverargs="dp8390_arg='DPETH0=300:9'";
-	   test "$v" = 1 && echo ""
-           test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
-           test "$v" = 1 && echo "You may then also have to edit /etc/system.conf ."
-           test "$v" = 1 && echo "For now, the defaults for emulation by Bochs/Qemu have been set."
+	2)
+		driver=dp8390
+		driverargs="dp8390_args='DPETH0=300:9'"
+		echo "
+Note: After installing, edit $LOCALRC to the right configuration.
+You may then also have to edit /etc/system.conf.d/dp8390 to match.
+For now, the defaults for emulation by Bochs/Qemu have been set."
 		;;
-	4) driver=lan8710a;	;;
-        $first_after_pci) driver="psip0"; ;;    
-        *) warn "choose a number"
-      esac
+	3)
+		step=do_step1
+		return
+		;;
+	4)
+		return
+		;;
+	esac
+
+	backup_file "$LOCALRC"
+	echo "# Generated by netconf(8). Edit as necessary." > $LOCALRC
+	echo "netdriver='"$driver"'" >> $LOCALRC
+	echo "$driverargs" >> $LOCALRC
+
+	# $LOCALRC typically expands to /mnt/usr/etc/rc.local, so leave room..
+	echo "
+A template to start the driver has been written to $LOCALRC . As
+noted above, you may have to edit it. Once you are done editing, reboot the
+system, after which the driver will be started. Once the driver is running,
+you can run 'netconf' to configure the corresponding network interface."
 }
 
 do_step2()
 {
-    echo ""
-    echo "Configure network using DHCP or manually?"
-    echo ""
-    echo "1. Automatically using DHCP"
-    echo "2. Manually"
-    echo ""
+	iffile="$IFCONF$ifchoice"
 
-    while [ "$step2" != ok ]
-      do
-        echo -n "Configure method? [1] "; read config
-	test -z $config && config=1
-      
-	case "$config" in
-	    1) step2="ok"; dhcp="yes" ; ;;
-            2) step2="ok"; manual="do"; ;;
-	    *) warn "choose a number"
+	echo "
+Configure interface $ifchoice using DHCP or manually?
+
+For now, the choice here is primarily about IPv4. With DHCP it is possible to
+enable IPv6 as well. Even if the local network has no IPv6 facilities, enabling
+IPv6 should do no harm. For IPv6-only mode or any other configuration that is
+not supported here, you will have to edit $iffile yourself.
+
+ 1. Automatically using DHCP (IPv4 + IPv6)
+ 2. Automatically using DHCP (IPv4 only)
+ 3. Manually (IPv4 only)"
+
+	if [ -r "$iffile" ]; then
+		echo " 4. Remove current configuration"
+		remove_choice=4
+		goback_choice=5
+		quit_choice=6
+	else
+		remove_choice=X
+		goback_choice=4
+		quit_choice=5
+	fi
+
+	echo
+	printf "%2d. Go back to interface selection\n" $goback_choice
+	printf "%2d. Quit\n\n" $quit_choice
+
+	select_number 1 $quit_choice 1 "Configuration choice?"
+
+	case $? in
+	1)
+		backup_file "$iffile"
+		echo 'up' > $iffile
+		echo '!dhcpcd -qM $int' >> $iffile
+
+		echo
+		echo "Interface $ifchoice configured for DHCP (IPv4 + IPv6)."
+		step=do_step3
+		;;
+	2)
+		backup_file "$iffile"
+		echo 'up' > $iffile
+		echo '!dhcpcd -qM -4 $int' >> $iffile
+
+		echo
+		echo "Interface $ifchoice configured for DHCP (IPv4 only)."
+		step=do_step3
+		;;
+	3)
+		# Query user for settings
+		#
+		# Some of these settings (hostname, nameservers) do not apply
+		# to just the selected interface. Still, they are what one has
+		# to specify for a complete manual configuration. In order to
+		# make manual configuration of multiple interfaces less
+		# frustrating in this regard, offer defaults that match what
+		# may just have been set already.
+
+		echo
+
+		# Hostname
+		if [ -r $HOSTNAME ]; then
+			hostname_default=$(cat $HOSTNAME)
+		else
+			hostname_default="minix"
+		fi
+		echo -n "Hostname [$hostname_default]: "
+		read hostname
+		if [ -z "$hostname" ]; then
+			hostname="$hostname_default"
+		fi
+
+		# IP address
+		ip=""
+		while [ -z "$ip" ]; do
+			echo -n "IP address []: "
+			read ip
+		done
+
+		# Netmask
+		echo -n "Netmask (optional) []: "
+		read netmask
+		[ -n "$netmask" ] && netmask=" netmask $netmask"
+
+		# Gateway (no gateway is fine for local networking)
+		echo -n "Gateway (optional) []: "
+		read gateway
+
+		# DNS Servers
+		dns1_default="$(grep '^nameserver' $RESOLVCONF 2>/dev/null | \
+		    sed '1q' | awk '{print $2}')"
+		dns2_default="$(grep '^nameserver' $RESOLVCONF 2>/dev/null | \
+		    sed '2q;d' | awk '{print $2}')"
+
+		echo -n "Primary DNS Server [$dns1_default]: "
+		read dns1
+		[ -z "$dns1" ] && dns1="$dns1_default"
+
+		if [ -n "$dns1" ]; then
+			echo -n "Secondary DNS Server (optional) [$dns2_default]: "
+			read dns2
+			[ -z "$dns2" ] && dns2="$dns2_default"
+		else
+			dns2=""
+		fi
+
+		backup_file "$HOSTNAME"
+		echo "$hostname" > $HOSTNAME
+		hostname "$hostname"
+
+		backup_file "$iffile"
+		echo 'up' > $iffile
+		echo "inet $ip$netmask" >> $iffile
+		if [ -n "$gateway" ]; then
+			echo "!route -q add default $gateway" >> $iffile
+		fi
+
+		if [ -n "$dns1" ]; then
+			backup_file "$RESOLVCONF"
+			echo "nameserver $dns1" > $RESOLVCONF
+			if [ -n "$dns2" ]; then
+				echo "nameserver $dns2" >> $RESOLVCONF
+			fi
+		fi
+
+		echo
+		echo "Interface $ifchoice configured manually."
+		step=do_step3
+		;;
+	$remove_choice)
+		backup_file "$iffile"
+		rm -f "$iffile"
+		echo
+		echo "Removed configuration for interface $ifchoice."
+		step=do_step3
+		;;
+	$goback_choice)
+		step=do_step1
+		;;
 	esac
-    done
-    
-    # Use manual parameters?
-    if [ -n "$manual" ]; then
-        # Query user for settings
-        # Hostname
-	if [ -z $hostname_prev ]; then
-	    hostname_prev=$hostname_default
-	fi
-	echo -n "Hostname [$hostname_prev]: "
-	read hostname
-	if [ ! -z $hostname ]; then
-	    hostname_prev=$hostname
-	else
-	    hostname=$hostname_prev
-	fi
-	
-        # IP address
-	if [ -z $ip_prev ]; then
-	    ip_prev=$ip_default
-	fi
-	echo -n "IP address [$ip_prev]: "
-	read ip
-	if [ ! -z $ip ]; then
-	    ip_prev=$ip
-	else
-	    ip=$ip_prev
-	fi
-	
-        # Netmask
-	if [ -z $netmask_prev ]; then
-	    netmask_prev=$netmask_default
-	fi
-	echo -n "Netmask [$netmask_prev]: "
-	read netmask
-	if [ ! -z $netmask ]; then
-	    netmask_prev=$netmask
-	else
-	    netmask=$netmask_prev
-	fi
-	
-        # Gateway (no gateway is fine for local networking)
-	echo -n "Gateway: "
-	read gateway
-	    
-        # DNS Servers
-	echo -n "Primary DNS Server [$dns1_prev]: "
-	read dns1
-	test -z "$dns1" && test -n "$dns1_prev" && dns1=$dns1_prev
-	if [ ! -z "$dns1" ]; then
-	    dns1_prev=$dns1
-	    
-	    echo -n "Secondary DNS Server [$dns2_prev]: "
-	    read dns2
-	    if [ ! -z $dns2 ]; then
-		dns2_prev=$dns2
-	    fi
-	else
-	    # If no primary DNS, then also no secondary DNS
-	    dns2=""
-	fi
-    fi
 }
 
-# Find pci cards we know about
-config_pci_cards
+do_step3()
+{
+
+	# We get here only if one of the ifconfig.if(5) files have changed.
+	changed="yes"
+
+	echo "
+Do you want to configure additional interfaces?
+
+You can also invoke the 'netconf' command as root at any later time.
+
+ 1. Go back to interface selection
+ 2. Quit
+"
+
+	# Note that "quit" is deliberately the default choice: most people will
+	# want to configure at most one interface, and keep pressing Enter in
+	# order to make it through the setup procedure as easily as possible.
+	select_number 1 2 2 "Menu choice?"
+
+	[ $? -eq 1 ] && step=do_step1
+}
 
 # Parse options
-while getopts ":qe:p:aH:i:n:g:d:s:hc" arg; do
+while getopts "p:hl" arg; do
     case "$arg" in
-	q) v=0; ;;
-	e) ethernet=$OPTARG; 
-	   test "$ethernet" -ge 0 -a "$ethernet" -le 7 2>/dev/null || usage
-	   drv_params $ethernet
-	   ;;
 	p) prefix=$OPTARG; ;;
-	a) dhcp="yes"; ;;
-	H) hostname=$OPTARG; manual_opts=`expr $manual_opts '+' 1`;;
-	i) ip=$OPTARG;       manual_opts=`expr $manual_opts '+' 1`;;
-	n) netmask=$OPTARG;  manual_opts=`expr $manual_opts '+' 1`;;
-	g) gateway=$OPTARG;  manual_opts=`expr $manual_opts '+' 1`;;
-	d) dns1=$OPTARG;     ;;
-	s) dns2=$OPTARG;     ;;
 	h) usage ;;
-	c) echo -e "The following cards are supported by Minix:\n";
-	   cards; exit 0
+	l) echo "The following network hardware interfaces are detected:"
+	   echo
+	   interfaces "configured"
+	   exit 0
 	   ;;
 	\?) echo "Unknown option -$OPTARG"; usage ;;
 	:) echo "Missing required argument for -$OPTARG"; usage ;;
@@ -321,28 +365,24 @@ while getopts ":qe:p:aH:i:n:g:d:s:hc" arg; do
     esac
 done
 
-# Verify parameter count
-if [ "$dhcp" != "yes" ] ; then
-    if [ $manual_opts -gt 0 ] ; then
-        test $manual_opts -eq 4 -a -n "$dns1" || usage
-        manual="do"
-    fi
-fi
-
 if [ -n "$prefix" ] ; then
-    LOCALRC=$prefix$LOCALRC
-    INETCONF=$prefix$INETCONF
-    RCNET=$prefix$RCNET
-    HOSTS=$prefix$HOSTS
-    HOSTNAME=$prefix$HOSTNAME
-    if [ ! -f  $INETCONF ]; then
+    if [ ! -d $prefix ]; then
     	echo -e "It seems the supplied prefix (\`$prefix') is invalid."
     	exit 1
     fi
+    LOCALRC=$prefix$LOCALRC
+    IFCONF=$prefix$IFCONF
+    RESOLVCONF=$prefix$RESOLVCONF
+    HOSTNAME=$prefix$HOSTNAME
 fi
 
 if [ `whoami` != root ] ; then
-    test "$v" = 1 && echo "Please run netconf as root."
+    echo "Please run netconf as root."
+    exit 1
+fi
+
+if ! ifconfig -l >/dev/null 2>&1; then
+    echo "Unable to obtain a list of interfaces. Is the LWIP service running?"
     exit 1
 fi
 
@@ -351,52 +391,25 @@ if [ -f "$USRKBFILE" ] ; then
     cd="yes" # We are running from CD
 fi
 
-# Do we know what ethernet card to use?
-test -z "$ethernet" && do_step1
+# The interactive program.
+step=do_step1
+while [ $step != exit ]; do
+	proc=$step
+	step=exit
+	$proc
+done
 
-# If no parameters are supplied and we're not using DHCP, query for settings
-test $manual_opts -eq 0 -a "$dhcp" = "no" && do_step2
-
-# Store settings.
-# Do not make backups if we're running from CD
-test "$cd" != "yes" && test -f $INETCONF && mv $INETCONF "$INETCONF~" && 
-                     test "$v" = 1 && echo "Backed up $INETCONF to $INETCONF~"
-test "$cd" != "yes" && test -f $LOCALRC && mv $LOCALRC "$LOCALRC~" &&
-                     test "$v" = 1 && echo "Backed up $LOCALRC to $LOCALRC~"
-
-if [ "$driver" = "psip0" ]; then
-    echo "psip0 { default; } ;" > $INETCONF
-else
-    echo "eth0 $driver 0 { default; } ;" > $INETCONF
-fi
-echo "$driverargs" > $LOCALRC
-
-if [ -n "$manual" ]
-    then
-    # Backup config file if it exists and we're not running from CD
-    test "$cd" != "yes" && test -f $RCNET && mv $RCNET "$RCNET~" && 
-                      test "$v" = 1 && echo "Backed up $RCNET to $RCNET~"
-    test "$cd" != "yes" && test -f $HOSTS && mv $HOSTS "$HOSTS~" && 
-                      test "$v" = 1 && echo "Backed up $HOSTS to $HOSTS~"
-
-    # Store manual config
-    echo "ifconfig -I /dev/ip0 -n $netmask -h $ip" > $RCNET
-    test ! -z $gateway && echo "add_route -g $gateway" >> $RCNET
-    echo "daemonize nonamed -L" >> $RCNET
-    test ! -z $dns1 && echo -e "$ip\t%nameserver\t#$hostname" > $HOSTS
-    test ! -z $dns1 && echo -e "$dns1\t%nameserver\t#DNS 1" >> $HOSTS
-    test ! -z $dns2 && echo -e "$dns2\t%nameserver\t#DNS 2" >> $HOSTS
-    echo -e "\n$ip\t$hostname" >> $HOSTS
-    echo $hostname > $HOSTNAME
-else
-    test "$cd" != "yes" && test -f "$RCNET" && mv "$RCNET" "$RCNET~" && 
-        test "$v" = 1 && echo "Moved $RCNET to $RCNET~ to use default settings"
-    test "$cd" != "yes" && test -f $HOSTS && mv $HOSTS "$HOSTS~" && 
-        test "$v" = 1 && echo "Backed up $HOSTS to $HOSTS~"
-    test -f "$HOSTS~" && grep -v "%nameserver" "$HOSTS~" > $HOSTS
+# Skip printing this last bit of information if it will not actually work.  The
+# fact that it will not work on the CD (i.e. from the setup program) at least
+# yet, is also the reason why we do not simply issue the command ourselves
+# right now.  We might reconsider this later.
+if [ "$changed" = "yes" -a -z "$prefix" ]; then
+	echo
+	echo "One or more of the interface configuration files have been changed."
+	echo "You can use the command 'service network restart' to reload them now."
 fi
 
-test "$cd" != "yes" && test "$v" = 1 && echo "
-You might have to reboot for the changes to take effect."
+# Aesthetics.
+echo
 
 exit 0

@@ -8,9 +8,9 @@ created July 2013, JPEmbedded (info@jpembedded.eu)
 --------------------------------------------------------------------------------
 *                           INSTALLATION:                                      *
 --------------------------------------------------------------------------------
-To install LAN8710A for BeagleBone under MINIX you execute 'netconf' as
-usual.  Select the LAN8710A driver from the list.  Restart the system
-and the driver should work.
+To configure LAN8710A for BeagleBone under MINIX you execute 'netconf' as
+usual.  If an interface 'cpsw0' is listed, the driver is running and you can
+configure it however you wish.
 
 --------------------------------------------------------------------------------
 *                                 TESTS:                                       *
