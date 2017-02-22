@@ -32,7 +32,7 @@ if vndconfig -l vnd0 >/dev/null 2>&1; then
     echo "ok"
     exit 0
   else
-    service down vnd0
+    minix-service down vnd0
   fi
 fi
 if vndconfig -l vnd1 >/dev/null 2>&1; then
@@ -41,7 +41,7 @@ if vndconfig -l vnd1 >/dev/null 2>&1; then
     echo "ok"
     exit 0
   else
-    service down vnd1
+    minix-service down vnd1
   fi
 fi
 

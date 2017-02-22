@@ -2,6 +2,6 @@
 
 PWD=`pwd`
 
-service up ${PWD}/grantor -config ${PWD}/system.conf -script ${PWD}/down
-service up ${PWD}/requestor -config ${PWD}/system.conf -script ${PWD}/down
+minix-service up ${PWD}/grantor -config ${PWD}/system.conf -script ${PWD}/down
+minix-service up ${PWD}/requestor -config ${PWD}/system.conf -script ${PWD}/down
 

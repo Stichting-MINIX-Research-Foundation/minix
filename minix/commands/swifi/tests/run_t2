@@ -121,9 +121,9 @@ random)
 esac
 
 # Start our own driver.
-service down $LABEL
+minix-service down $LABEL
 sleep 10	# Allow driver to die
-service up $EXE -script `pwd`/rs.restart_imm -period 3HZ
+minix-service up $EXE -script `pwd`/rs.restart_imm -period 3HZ
 
 i=0
 while [ $i -lt "$count" ]
@@ -143,4 +143,4 @@ echo "driver crashed after $fault_blocks blocks"
 echo "driver failed to connect after $connect_blocks blocks"
 
 # Restart the driver
-service refresh $LABEL
+minix-service refresh $LABEL

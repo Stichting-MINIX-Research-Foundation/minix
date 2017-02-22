@@ -30,9 +30,9 @@ Limitations
 
 The measurement resolution is configurable in the chip, but this driver just
 uses standard mode. It could probably be implemented with an ioctl() or by
-passing an argument via the service command, but it doesn't seem too useful at
-this time. See the data sheet for the trade-offs between conversion time,
-power consumption, and resolution.
+passing an argument via the minix-service command, but it doesn't seem too
+useful at this time. See the data sheet for the trade-offs between conversion
+time, power consumption, and resolution.
 
 While only the BMP085 is supported at present, the BMP085's predecessor,
 SMD500, should be easy to support in this driver with some small changes
@@ -50,8 +50,8 @@ The driver should have been started by a script in /etc/rc.capes/ If not,
 this is how you start up an instance:
 
 cd /dev && MAKEDEV bmp085b3s77
-/bin/service up /service/bmp085 -label bmp085.3.77 -dev /dev/bmp085b3s77 \
-	-args 'bus=3 address=0x77'
+/sbin/minix-service up /service/bmp085 -label bmp085.3.77 \
+	-dev /dev/bmp085b3s77 -args 'bus=3 address=0x77'
 
 Getting the sensor value:
 
@@ -59,5 +59,5 @@ cat /dev/bmp085b3s77
 
 Killing an instance:
 
-/bin/service down bmp085.3.77
+/sbin/minix-service down bmp085.3.77
 

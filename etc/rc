@@ -46,7 +46,7 @@ up()
     service=$1
     shift
 
-    service $opt up /service/$service "$@"
+    minix-service $opt up /service/$service "$@"
 }
 
 edit()
@@ -72,7 +72,7 @@ edit()
     if [ ! -x $binlocation ]
     then	binlocation=/sbin/$service
     fi
-    service $opt edit $binlocation -label $service "$@"
+    minix-service $opt edit $binlocation -label $service "$@"
 }
 
 while getopts 'saf' opt
@@ -174,7 +174,7 @@ autoboot|start)
 	rootline=`cat /etc/mtab | grep "on / "`
 	rootfs=fs_`echo "$rootline" | cut -d' ' -f1 | cut -d'/' -f3`
 	roottype=`echo "$rootline" | cut -d' ' -f5`
-	service -c edit /service/$roottype -label $rootfs
+	minix-service -c edit /service/$roottype -label $rootfs
     fi
 
     if [ "$sflag" ]
@@ -224,11 +224,11 @@ down|stop)
 
     if [ -x /service/usbd ]
     then
-	service down usbd
+	minix-service down usbd
     fi
 
     # Tell RS server we're going down.
-    service shutdown
+    minix-service shutdown
     ;;
 esac
 

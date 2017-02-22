@@ -149,7 +149,7 @@ start_service(char *dev)
 
 	snprintf(cmd, sizeof(cmd),
 	    "%s up %s/vnd -label vnd%u -args instance=%u -dev %s",
-	    _PATH_SERVICE, _PATH_DRIVERS, n, n, dev);
+	    _PATH_MINIX_SERVICE, _PATH_DRIVERS, n, n, dev);
 
 	status = system(cmd);
 
@@ -183,8 +183,8 @@ stop_service(int fd, char *dev)
 		if (verbose)
 			printf("%s: stopping driver\n", dev);
 
-		snprintf(cmd, sizeof(cmd), "%s down vnd%u", _PATH_SERVICE,
-		    vnu.vnu_unit);
+		snprintf(cmd, sizeof(cmd), "%s down vnd%u",
+		    _PATH_MINIX_SERVICE, vnu.vnu_unit);
 
 		system(cmd);
 	}

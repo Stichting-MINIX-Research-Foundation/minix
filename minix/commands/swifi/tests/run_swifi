@@ -9,7 +9,7 @@ EXE=$EXEDIR/$NAME
 
 start_driver()
 {
-	service up $EXE -label $LABEL -script /etc/rs.single -period 3HZ
+	minix-service up $EXE -label $LABEL -script /etc/rs.single -period 3HZ
 }
 
 do_one()
@@ -51,7 +51,7 @@ one_round()
 }
 
 # Start our own driver.
-service down $LABEL
+minix-service down $LABEL
 sleep 10	# Allow driver to die
 start_driver
 

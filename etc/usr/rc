@@ -97,7 +97,7 @@ up()
     for dir in $SERVICES_DIRS
     do	bin=$dir/$service
 	if [ -x $bin -a -z "$found" ]
-	then	service $opt up $bin "$@" 
+	then	minix-service $opt up $bin "$@" 
     		echo -n " $service"
 		found=yes
 	fi

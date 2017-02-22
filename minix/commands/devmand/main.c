@@ -9,11 +9,9 @@
 #include <assert.h>
 #include <signal.h>
 #include <minix/dmap.h>
+#include <minix/paths.h>
 #include "usb_driver.h"
 #include "proto.h"
-
-#define SERVICE_BINARY "/bin/service"
-
 
 #define DEVMAN_TYPE_NAME "dev_type"
 #define PATH_LEN 256
@@ -166,8 +164,8 @@ int stop_driver(struct devmand_driver_instance *inst)
 	assert(inst->label);
 
 	snprintf(cmdl, 1024, "%s down %s %d",
-	    SERVICE_BINARY, inst->label, inst->dev_id);
-	dbg("executing service: \"%s\"", cmdl);
+	    _PATH_MINIX_SERVICE, inst->label, inst->dev_id);
+	dbg("executing minix-service: \"%s\"", cmdl);
 	ret = system(cmdl);
 	if (ret != 0)
 	{
@@ -201,9 +199,9 @@ int start_driver(struct devmand_driver_instance *inst)
 	assert(inst->label);
 
 	snprintf(cmdl, 1024, "%s up %s  -major %d -devid %d -label %s",
-	    SERVICE_BINARY, inst->drv->binary, inst->major, inst->dev_id,
+	    _PATH_MINIX_SERVICE, inst->drv->binary, inst->major, inst->dev_id,
 		inst->label);
-	dbg("executing service: \"%s\"", cmdl);
+	dbg("executing minix-service: \"%s\"", cmdl);
 
 	ret = system(cmdl);
 
@@ -739,7 +737,7 @@ static void usb_intf_add_event(char *path, int dev_id)
 	drv_inst->dev_id = dev_id;
 
 
-	/* start driver (invoke service) */
+	/* start driver (invoke minix-service) */
 	start_driver(drv_inst);
 
 	/*

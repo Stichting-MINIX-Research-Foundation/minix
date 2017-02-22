@@ -4,7 +4,7 @@ driver (mmcblk.c).
 * Mini how-to
 On the BeagleBone Black, the block device files /dev/c1d* (major = 8) are free.
 The driver can use /dev/c1d0.
-# service up /service/emmc -dev /dev/c1d0
+# minix-service up /service/emmc -dev /dev/c1d0
 
 * Programmed Input/Output
 The driver does not have support for DMA.

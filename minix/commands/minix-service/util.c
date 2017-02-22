@@ -7,7 +7,7 @@ void fatal(char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "service: fatal error: ");
+	fprintf(stderr, "minix-service: fatal error: ");
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -20,7 +20,7 @@ void warning(char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "service: warning: ");
+	fprintf(stderr, "minix-service: warning: ");
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);

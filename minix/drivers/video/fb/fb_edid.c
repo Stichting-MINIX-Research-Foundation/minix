@@ -45,11 +45,11 @@ static struct log log = {
 static char edid_providers[FB_DEV_NR][RS_MAX_LABEL_LEN+1];
 
 /*
- * Populate edid_providers from command line arguments. The service command
- * should get EDID providers like this: "-args edid.0=tda19988.1.3470" where
- * 0 is the minor number of the frame buffer, tda19988 is the device driver,
- * 1 is the i2c bus and 3470 is the slave address (the TDA19988 has 2 slave
- * addresses 0x34 and 0x70).
+ * Populate edid_providers from command line arguments. The minix-service
+ * command should get EDID providers like this: "-args edid.0=tda19988.1.3470"
+ * where 0 is the minor number of the frame buffer, tda19988 is the device
+ * driver, 1 is the i2c bus and 3470 is the slave address (the TDA19988 has 2
+ * slave addresses 0x34 and 0x70).
  */
 int
 fb_edid_args_parse(void)

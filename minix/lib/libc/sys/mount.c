@@ -20,9 +20,9 @@ static char fspath[] = "/service/:/usr/pkg/service/"; /* Must include trailing '
 static int rs_down(char *label)
 {
 	char cmd[200];
-	if(strlen(_PATH_SERVICE)+strlen(label)+50 >= sizeof(cmd))
+	if(strlen(_PATH_MINIX_SERVICE)+strlen(label)+50 >= sizeof(cmd))
 		return -1;
-	sprintf(cmd, _PATH_SERVICE " down '%s'", label);
+	sprintf(cmd, _PATH_MINIX_SERVICE " down '%s'", label);
 	return system(cmd);
 }
 
@@ -125,13 +125,14 @@ int minix_mount(char *special, char *name, int mountflags, int srvflags,
 		return(-1);
 	}
 
-	if (strlen(_PATH_SERVICE) + strlen(path) + strlen(label) +
+	if (strlen(_PATH_MINIX_SERVICE) + strlen(path) + strlen(label) +
 	    strlen(args) + 50 >= sizeof(cmd)) {
 		errno = E2BIG;
 		return -1;
 	}
 
-	sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s %s %s%s'",
+	sprintf(cmd, _PATH_MINIX_SERVICE
+		" %sup %s -label '%s' -args '%s %s %s%s'",
 		reuse ? "-r ": "", path, label, special, name,
 		args[0] ? "-o " : "", args);
 

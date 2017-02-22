@@ -1,24 +1,24 @@
-.TH SERVICE 8
+.TH MINIX-SERVICE 8
 .SH NAME
-service \- Manage an operating system service.
+minix-service \- Manage an operating system service.
 .SH SYNOPSIS
 .PP
-\fBservice [-b -c -n -p -r] (up|run|edit|update)\fR \fI<binary|self>\fR
+\fBminix-service [-b -c -n -p -r] (up|run|edit|update)\fR \fI<binary|self>\fR
 [\fB-args\fR \fI<args>\fR] [\fB-dev\fR \fI<special>\fR]
 [\fB-period\fR \fI<ticks>\fR]
 [\fB-script\fR \fI<path>\fR] [\fB-label\fR \fI<name>\fR]
 [\fB-config\fR \fI<path>\fR] [\fB-state\fR \fI<state>\fR]
 [\fB-maxtime\fR \fI<time>\fR]
 .PP
-\fBservice down\fR \fI<label>\fR
+\fBminix-service down\fR \fI<label>\fR
 .PP
-\fBservice refresh\fR \fI<label>\fR
+\fBminix-service refresh\fR \fI<label>\fR
 .PP
-\fBservice restart\fR \fI<label>\fR
+\fBminix-service restart\fR \fI<label>\fR
 .PP
-\fBservice clone\fR \fI<label>\fR
+\fBminix-service clone\fR \fI<label>\fR
 .PP
-\fBservice shutdown\fR
+\fBminix-service shutdown\fR
 .br
 .de FL
 .TP
@@ -32,7 +32,7 @@ service \- Manage an operating system service.
 ..
 .SH DESCRIPTION
 .PP
-The \fBservice\fR utility instructs the reincarnation server (\fBRS\fR)
+The \fBminix-service\fR utility instructs the reincarnation server (\fBRS\fR)
 to perform an action for a given system service (an OS server
 or device driver). The action may concern an existing system service
 (SHIFT+F6 to list them all), or a new system service to be started
@@ -51,7 +51,7 @@ or device driver). The action may concern an existing system service
 .SH ACTIONS
 .PP
 .SS
-\fBservice up\fR \fI<binary>\fR
+\fBminix-service up\fR \fI<binary>\fR
 .PP
 .PP
 Starts a new system service identified by the given \fI<binary>\fR,
@@ -133,20 +133,20 @@ for the syntax to use in the system configuration file.
 The default is to use the global system configuration file \fB/etc/system.conf\fR.
 .PP
 .SS
-\fBservice run\fR \fI<binary>\fR
+\fBminix-service run\fR \fI<binary>\fR
 .PP
 .PP
 Runs a new system service identified by the given \fI<binary>\fR,
 which must be specified using an absolute path. Similar to
-\fBservice up\fR \fI<binary>\fR, but instructs \fBRS\fR not to
+\fBminix-service up\fR \fI<binary>\fR, but instructs \fBRS\fR not to
 restart the service upon termination. This action is currently a shorthand
-for \fBservice up\fR \fI<binary>\fR \fB-script\fR \fI/etc/rs.single\fR, which
-uses a recovery script that simply brings down the service upon termination.
-This action should be only used for short-lived programs that need system
-service privileges and do not require crash recovery support.
+for \fBminix-service up\fR \fI<binary>\fR \fB-script\fR \fI/etc/rs.single\fR,
+which uses a recovery script that simply brings down the service upon
+termination. This action should be only used for short-lived programs that need
+system service privileges and do not require crash recovery support.
 .PP
 .SS
-\fBservice edit\fR \fI<binary>\fR [\fB-label\fR \fI<name>\fR]
+\fBminix-service edit\fR \fI<binary>\fR [\fB-label\fR \fI<name>\fR]
 .PP
 .PP
 Edits settings of an existing system service identified by the given
@@ -158,7 +158,7 @@ associated to the service will no be updated. This
 action takes the same options supported by the \fBup\fR action.
 .PP
 .SS
-\fBservice update\fR \fI<binary|self>\fR
+\fBminix-service update\fR \fI<binary|self>\fR
 .PP
 .PP
 Live updates an existing system service with a new version identified by the
@@ -182,7 +182,7 @@ specifies the maximum amount time for the service to prepare
 for the update. The default is 0 (unlimited).
 .PP
 .SS
-\fBservice down\fR \fI<label>\fR
+\fBminix-service down\fR \fI<label>\fR
 .PP
 .PP
 Stops an existing system service identified by the given \fI<label>\fR. \fBRS\fR
@@ -190,28 +190,28 @@ will bring down the service without attempting to restart it. Critical system
 services cannot be shut down.
 .PP
 .SS
-\fBservice refresh\fR \fI<label>\fR
+\fBminix-service refresh\fR \fI<label>\fR
 .PP
 .PP
 Refreshes an existing system service identified by the given \fI<label>\fR.
 \fBRS\fR will kill the service and attempt to restart it.
 .PP
 .SS
-\fBservice restart\fR \fI<label>\fR
+\fBminix-service restart\fR \fI<label>\fR
 .PP
 .PP
 Restarts an existing terminated system service identified by the
 given \fI<label>\fR. This action can only be used from a recovery script.
 .PP
 .SS
-\fBservice clone\fR \fI<label>\fR
+\fBminix-service clone\fR \fI<label>\fR
 .PP
 .PP
 Clones an existing system service to create a replica \fBRS\fR will use
 to restart the service upon termination.
 .PP
 .SS
-\fBservice shutdown\fR
+\fBminix-service shutdown\fR
 .PP
 .PP
 Tells \fBRS\fR the system is about to shutdown and no system service should
@@ -219,15 +219,15 @@ be restarted upon termination.
 .PP
 .SH EXAMPLES
 .TP 20
-.B service up /sbin/is -period 5HZ
+.B minix-service up /sbin/is -period 5HZ
 # Start the IS server and check its status every 5 seconds.
 .br
 .TP 20
-.B service up /usr/sbin/dp8390 -args DPETH0=pci
+.B minix-service up /usr/sbin/dp8390 -args DPETH0=pci
 # Start the DP8390 ethernet driver, passing one argument.
 .br
 .TP 20
-.B service down lance
+.B minix-service down lance
 # Stop the system service with label lance.
 .br
 .SH "SEE ALSO"

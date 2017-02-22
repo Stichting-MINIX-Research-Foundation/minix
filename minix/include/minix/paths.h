@@ -1,7 +1,7 @@
 #ifndef _MINIX_PATHS_H_
 #define _MINIX_PATHS_H_
 
-#define _PATH_SERVICE	"/bin/service"
+#define _PATH_MINIX_SERVICE "/sbin/minix-service"
 #define _PATH_PROC	"/proc/"
 
 #define _PATH_SYSTEM_CONF "/etc/system.conf"

@@ -6,7 +6,7 @@
 # runs the ddekit driver on the given device with the given parameters
 run_ddekittest () {
   if [ ! -x ddekittest_driver ]; then echo "compile ddekittest first!" >&2; exit 1; fi
-  service up `pwd`/ddekittest_driver  -config system.conf \
+  minix-service up `pwd`/ddekittest_driver  -config system.conf \
 	-script /etc/rs.single -label ddekittest
 }
 
@@ -16,4 +16,4 @@ run_ddekittest () {
 #
 run_ddekittest
 sleep 10
-service down ddekittest
+minix-service down ddekittest

@@ -14,6 +14,6 @@ block_test() {
   if [ ! -b "$1" ]; then echo "$1 is not a block device" >&2; exit 1; fi
   pair=$(devtopair $1)
   if [ -z "$pair" ]; then echo "driver not found for $1" >&2; exit 1; fi
-  service up `pwd`/blocktest -args "$pair,$2" -config system.conf \
+  minix-service up `pwd`/blocktest -args "$pair,$2" -config system.conf \
     -script /etc/rs.single -label blocktest_$(stat -f '%r' $1)
 }

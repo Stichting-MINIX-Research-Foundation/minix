@@ -36,7 +36,7 @@
 ./bin/mv                                                minix-base
 ./bin/netconf                                           minix-base
 ./bin/pax                                               minix-base
-./bin/printconfig                                       minix-base
+./bin/printconfig                                       minix-base      obsolete
 ./bin/printroot                                         minix-base
 ./bin/ps                                                minix-base
 ./bin/pwd                                               minix-base
@@ -46,7 +46,7 @@
 ./bin/readclock                                         minix-base
 ./bin/rm                                                minix-base
 ./bin/rmdir                                             minix-base
-./bin/service                                           minix-base
+./bin/service                                           minix-base      obsolete
 ./bin/setup                                             minix-base
 ./bin/sh                                                minix-base
 ./bin/sleep                                             minix-base
@@ -185,6 +185,7 @@
 ./sbin/fsck_mfs                                         minix-base
 ./sbin/halt                                             minix-base
 ./sbin/init                                             minix-base
+./sbin/minix-service                                    minix-base
 ./sbin/mkfs.mfs                                         minix-base
 ./sbin/mknod                                            minix-base
 ./sbin/newfs_ext2fs                                     minix-base
@@ -194,6 +195,7 @@
 ./sbin/nologin                                          minix-base
 ./sbin/ping                                             minix-base
 ./sbin/poweroff                                         minix-base
+./sbin/printconfig                                      minix-base
 ./sbin/reboot                                           minix-base
 ./sbin/shutdown                                         minix-base
 ./sbin/sysctl                                           minix-base

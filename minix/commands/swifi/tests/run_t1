@@ -101,9 +101,9 @@ random)
 esac
 
 # Start our own driver.
-service down $LABEL
+minix-service down $LABEL
 sleep 2	# Allow driver to die
-service up $EXE -script `pwd`/rs.restart_imm -period 3HZ $DEV
+minix-service up $EXE -script `pwd`/rs.restart_imm -period 3HZ $DEV
 
 i=0
 while [ $i -lt "$count" ]
@@ -119,4 +119,4 @@ do
 done
 
 # Restart the driver
-service refresh $LABEL
+minix-service refresh $LABEL

@@ -68,14 +68,14 @@ main(int argc, char *argv[])
 
 	/* stop residual testvm service if any */
 	snprintf(cmdline, sizeof(cmdline), "%s down testvm >/dev/null 2>&1",
-		_PATH_SERVICE);
+		_PATH_MINIX_SERVICE);
 	if(system(cmdline) < 0) { e(9); exit(1); }
 
 	/* start the testvm service */
 	snprintf(cmdline, sizeof(cmdline),
 		"%s up /%s/../testvm -script /etc/rs.single "
 		"-args /%s/%s -config %s/../testvm.conf",
-			_PATH_SERVICE, cwd, cwd, pipefn, cwd);
+			_PATH_MINIX_SERVICE, cwd, cwd, pipefn, cwd);
 	if(system(cmdline) < 0) { e(10); exit(1); }
 
 	/* don't hang forever if the open or read block */

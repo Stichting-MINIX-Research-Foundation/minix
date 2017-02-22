@@ -2,4 +2,4 @@
 
 # 'Recovery' script immediately restarts.
 echo "Arguments: $@" >/dev/console
-service restart "$1"
+minix-service restart "$1"

@@ -1,5 +1,5 @@
 #!/bin/sh
 
-service down grantor
-service down requestor
+minix-service down grantor
+minix-service down requestor
 

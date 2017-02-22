@@ -25,8 +25,8 @@ SKIP="memory vm"
 STATES="vfs:2 ahci_:2 virtio_blk_:2"
 
 # If this variable is set, it is used as timeout for the live updates.  The
-# service(8) argument takes a number of click ticks, or a number of seconds
-# if the value ends with "HZ".
+# minix-service(8) argument takes a number of click ticks, or a number of
+# seconds if the value ends with "HZ".
 TIMEOUT=300HZ
 
 # Configuration ends here.
@@ -122,7 +122,7 @@ for service in $services; do
 	# Perform the live update.  The update may legitimately fail if the
 	# service is not in the right state.  TODO: report transient errors
 	# as debugging output only.
-	service -a update $binary -progname $filename -label $label \
+	minix-service -a update $binary -progname $filename -label $label \
 		-asr-count $count $state $maxtime
 	error=$?
 	if [ $error -eq 0 ]; then

@@ -93,7 +93,7 @@ prepare_service() {
 	echo $flags | grep -q 'r' || return 0
 	echo $flags | grep -q 'R' && return 0
 
-	service clone $label
+	minix-service clone $label
 	return 1
 }
 
@@ -102,7 +102,7 @@ cleanup_service() {
 
 	label=$1
 
-	service unclone $label
+	minix-service unclone $label
 }
 
 #######################################################################
@@ -120,7 +120,7 @@ pol_restart() {
 	restarts_pre=$(get_value restarts ${service})
 	endpoint_pre=$(get_value endpoint ${service})
 
-	service fi ${label}
+	minix-service fi ${label}
 	if ! wait_for_service ${service} ${restarts_pre}
 	then
 		echo not ok
@@ -154,7 +154,7 @@ pol_reset() {
 	restarts_pre=$(get_value restarts ${service})
 	endpoint_pre=$(get_value endpoint ${service})
 
-	service fi ${label}
+	minix-service fi ${label}
 	if ! wait_for_service ${service} ${restarts_pre}
 	then
 		echo not ok
@@ -187,7 +187,7 @@ lu_test_one() {
 	lu_maxtime=${lu_maxtime:-3HZ}
 	lu_state=${lu_state:-1}
 
-	service ${lu_opts} update ${prog} -label ${label} -maxtime ${lu_maxtime} -state ${lu_state}
+	minix-service ${lu_opts} update ${prog} -label ${label} -maxtime ${lu_maxtime} -state ${lu_state}
 	if [ $? -ne $result ]
 	then
 		return 1
@@ -271,18 +271,18 @@ multi_lu_test_one() {
 
 			if [ $index -eq $once_index ]
 			then
-				service ${lu_opts_once} -q update self \
+				minix-service ${lu_opts_once} -q update self \
 					-label ${label} \
 					-maxtime ${lu_maxtime_once} \
 					-state ${lu_state_once} || ret=2
 			else
-				service ${lu_opts} -q update self \
+				minix-service ${lu_opts} -q update self \
 					-label ${label} \
 					-maxtime ${lu_maxtime} \
 					-state ${lu_state} || ret=2
 			fi
 		done
-		service sysctl upd_run
+		minix-service sysctl upd_run
 		result=$?
 
 		# We may experience transient failures as a result of services

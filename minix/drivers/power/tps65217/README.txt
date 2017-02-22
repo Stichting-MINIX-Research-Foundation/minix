@@ -12,9 +12,9 @@ Testing the Code
 
 Starting up an instance:
 
-/bin/service up /usr/sbin/tps65217 -label tps65217.1.24 \
+/sbin/minix-service up /usr/sbin/tps65217 -label tps65217.1.24 \
 	-args 'bus=1 address=0x24'
 
 Killing an instance:
 
-/bin/service down tps65217.1.24
+/sbin/minix-service down tps65217.1.24

@@ -33,8 +33,8 @@ The driver should have been started by a script in /etc/rc.capes/ If not,
 this is how you start up an instance:
 
 cd /dev && MAKEDEV tsl2550b3s39
-/bin/service up /service/tsl2550 -label tsl2550.3.39 -dev /dev/tsl2550b3s39 \
-	-args 'bus=3 address=0x39'
+/sbin/minix-service up /service/tsl2550 -label tsl2550.3.39 \
+	-dev /dev/tsl2550b3s39 -args 'bus=3 address=0x39'
 
 Getting the sensor value:
 
@@ -42,5 +42,5 @@ cat /dev/tsl2550b3s39
 
 Killing an instance:
 
-/bin/service down tsl2550.3.39
+/sbin/minix-service down tsl2550.3.39
 

@@ -35,9 +35,9 @@ second will return cached temperature and humidity values.
 The measurement resolution is configurable in the chip, but this driver just
 uses the default maximum resolutions (12-bit for Humidity, 14-bit for
 temperature). It could probably be implemented with an ioctl() or by passing
-an argument via the service command, but it doesn't seem too useful at this
-time. See the data sheet for the trade-off between faster conversion time and
-lower resolution.
+an argument via the minix-service command, but it doesn't seem too useful at
+this time. See the data sheet for the trade-off between faster conversion time
+and lower resolution.
 
 In testing, the temperature sensor reported a value several degrees higher
 than an indoor thermometer placed nearby. It doesn't appear to be a bug in the
@@ -54,7 +54,7 @@ The driver should have been started by a script in /etc/rc.capes/ If not,
 this is how you start up an instance:
 
 cd /dev && MAKEDEV sht21b3s40
-/bin/service up /service/sht21 -label sht21.3.40 -dev /dev/sht21b3s40 \
+/sbin/minix-service up /service/sht21 -label sht21.3.40 -dev /dev/sht21b3s40 \
 	-args 'bus=3 address=0x40'
 
 Getting the sensor value:
@@ -63,5 +63,5 @@ cat /dev/sht21b3s40
 
 Killing an instance:
 
-/bin/service down sht21.3.40
+/sbin/minix-service down sht21.3.40
 

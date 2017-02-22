@@ -15,13 +15,13 @@ SUBDIR=	add_route arp at backup \
 	intr irdpd isoread \
 	loadkeys loadramdisk logger look lp \
 	lpd lspci mail MAKEDEV \
-	mount mt netconf \
+	minix-service mount mt netconf \
 	nonamed \
 	prep printroot \
 	profile progressbar pr_routes \
 	ramdisk rarpd rawspeed readclock \
 	remsync rget rlogin \
-	rotate service setup \
+	rotate setup \
 	slip spell sprofalyze sprofdiff srccrc \
 	svrctl swifi synctree sysenv \
 	tcpd tcpdp tcpstat telnet \

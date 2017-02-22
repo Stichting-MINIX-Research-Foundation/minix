@@ -12,7 +12,7 @@
 
 bomb() {
   echo $*
-  service down rmibtest 2>/dev/null
+  minix-service down rmibtest 2>/dev/null
   exit 1
 }
 
@@ -29,7 +29,7 @@ old_nodes=`sysctl -n minix.mib.nodes 2>/dev/null` || bomb "no MIB stats?"
 old_objects=`sysctl -n minix.mib.objects 2>/dev/null` || bomb "no MIB stats?"
 old_remotes=`sysctl -n minix.mib.remotes 2>/dev/null` || bomb "no MIB stats?"
 
-service up `pwd`/rmibtest -label rmibtest -config rmibtest.conf || \
+minix-service up `pwd`/rmibtest -label rmibtest -config rmibtest.conf || \
   bomb "unable to start test service"
 
 cd ..
@@ -55,7 +55,7 @@ sysctl -wq minix.rtest.func=7895375 || bomb "unable to set func value"
 # Test the minix.test shadowing subtree using a subset of the regular MIB test
 ./test87 19 >/dev/null || bomb "test87 reported failure"
 
-service down rmibtest
+minix-service down rmibtest
 
 sleep 1
 

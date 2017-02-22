@@ -134,7 +134,7 @@
 ./usr/libdata/debug/bin/mount.debug                     minix-debug     debug
 ./usr/libdata/debug/bin/mv.debug                        minix-debug     debug
 ./usr/libdata/debug/bin/pax.debug                       minix-debug     debug
-./usr/libdata/debug/bin/printconfig.debug               minix-debug     debug
+./usr/libdata/debug/bin/printconfig.debug               minix-debug     debug,obsolete
 ./usr/libdata/debug/bin/printroot.debug                 minix-debug     debug
 ./usr/libdata/debug/bin/ps.debug                        minix-debug     debug
 ./usr/libdata/debug/bin/pwd.debug                       minix-debug     debug
@@ -143,7 +143,7 @@
 ./usr/libdata/debug/bin/readclock.debug                 minix-debug     debug
 ./usr/libdata/debug/bin/rm.debug                        minix-debug     debug
 ./usr/libdata/debug/bin/rmdir.debug                     minix-debug     debug
-./usr/libdata/debug/bin/service.debug                   minix-debug     debug
+./usr/libdata/debug/bin/service.debug                   minix-debug     debug,obsolete
 ./usr/libdata/debug/bin/sh.debug                        minix-debug     debug
 ./usr/libdata/debug/bin/sleep.debug                     minix-debug     debug
 ./usr/libdata/debug/bin/stty.debug                      minix-debug     debug
@@ -161,12 +161,14 @@
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/fsck_mfs.debug                 minix-debug     debug
 ./usr/libdata/debug/sbin/init.debug                     minix-debug     debug
+./usr/libdata/debug/sbin/minix-service.debug            minix-debug     debug
 ./usr/libdata/debug/sbin/mknod.debug                    minix-debug     debug
 ./usr/libdata/debug/sbin/newfs_ext2fs.debug             minix-debug     debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/newfs_udf.debug                minix-debug     debug
 ./usr/libdata/debug/sbin/newfs_v7fs.debug               minix-debug     debug
 ./usr/libdata/debug/sbin/ping.debug                     minix-debug     debug
+./usr/libdata/debug/sbin/printconfig.debug              minix-debug     debug
 ./usr/libdata/debug/sbin/reboot.debug                   minix-debug     debug
 ./usr/libdata/debug/sbin/shutdown.debug                 minix-debug     debug
 ./usr/libdata/debug/sbin/sysctl.debug                   minix-debug     debug

@@ -4,17 +4,17 @@
 
 # TSL2550 Ambient Light Sensor
 test -e /dev/tsl2550b3s39 || (cd /dev && MAKEDEV tsl2550b3s39)
-/bin/service up /service/tsl2550 -dev /dev/tsl2550b3s39 \
+/sbin/minix-service up /service/tsl2550 -dev /dev/tsl2550b3s39 \
 	-label tsl2550.3.39 -args 'bus=3 address=0x39' && echo -n " tsl2550"
 
 # SHT21 Temperature and Humidity Sensor
 test -e /dev/sht21b3s40 || (cd /dev && MAKEDEV sht21b3s40)
-/bin/service up /service/sht21 -dev /dev/sht21b3s40 \
+/sbin/minix-service up /service/sht21 -dev /dev/sht21b3s40 \
 	-label sht21.3.40 -args 'bus=3 address=0x40' && echo -n " sht21"
 
 # BMP085 Temperature and Pressure Sensor
 test -e /dev/bmp085b3s77 || (cd /dev && MAKEDEV bmp085b3s77)
-/bin/service up /service/bmp085 -dev /dev/bmp085b3s77 \
+/sbin/minix-service up /service/bmp085 -dev /dev/bmp085b3s77 \
 	-label bmp085.3.77 -args 'bus=3 address=0x77' && echo -n " bmp085"
 
 daemonize tcpd http /usr/share/beaglebone/weather/weatherstation.lua

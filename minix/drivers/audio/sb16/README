@@ -11,8 +11,8 @@ Installation instructions SB16 driver Minix >= 3.0.7
 (default 7 and 220)
 - make install
 - MAKEDEV /dev/audio (if /dev/audio doesn't allready exist)
-- service up /service/sb16_dsp -dev /dev/audio
-- service up /service/sb16_mixer -dev /dev/mixer
+- minix-service up /service/sb16_dsp -dev /dev/audio
+- minix-service up /service/sb16_mixer -dev /dev/mixer
 done... (you can include the last 2 lines in /usr/etc/rc)
 
 

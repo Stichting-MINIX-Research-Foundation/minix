@@ -3,7 +3,7 @@
 make >/dev/null
 
 echo -n "Kernel test (sys_padconf): "
-service up `pwd`/padconftest -config system.conf -label padconftest -script /etc/rs.single
+minix-service up `pwd`/padconftest -config system.conf -label padconftest -script /etc/rs.single
 r=$?
 
 if [ $r -ne 0 ]; then

@@ -13,7 +13,9 @@ d--755 0 0
 		umount ---755 0 0 umount
 		grep ---755 0 0 grep
 		sh ---755 0 0 sh
-		service ---755 0 0 service
+	$
+	sbin d--755 0 0
+		minix-service ---755 0 0 minix-service
 	$
 	service d--755 0 0
 #ifdef __i386__

@@ -82,11 +82,11 @@ read_test() {
   EXP=$2
   shift 2
   $RWBLOCKS $DEV $PAT
-  service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
+  minix-service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
   fbdctl add $@ >/dev/null
   #fbdctl list
   RES="`$RWBLOCKS /dev/fbd`"
-  service down fbd
+  minix-service down fbd
   echo -n "$RES: "
   if echo "$RES" | egrep "^$EXP\$" >/dev/null 2>&1; then
     if [ "$OPT" = "-last" -a "$RES" != "$LAST" ]; then
@@ -115,11 +115,11 @@ write_test() {
   WS=$3
   shift 3
   $RWBLOCKS $DEV UUUUUUUUUUUUUUUU
-  service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
+  minix-service up /service/fbd -dev /dev/fbd -args "$PAIR" || exit 1
   fbdctl add $@ >/dev/null
   #fbdctl list
   $RWBLOCKS /dev/fbd $PAT $WS
-  service down fbd
+  minix-service down fbd
   RES="`$RWBLOCKS $DEV`"
   echo -n "$RES: "
   if echo "$RES" | egrep "^$EXP\$" >/dev/null 2>&1; then

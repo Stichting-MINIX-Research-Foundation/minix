@@ -1,3 +1,18 @@
+20170222:
+	Because of naming conflicts, the MINIX 3 service(8) utility has been
+	renamed to "minix-service".  After successfully rebuilding the system
+	*and* rebooting (no earlier!), remove the old service utility:
+
+		# rm /bin/service
+
+	Better yet, use the postinstall(8) command to remove all files marked
+	as obsolete.  It is not a bad idea to do this every now and then:
+
+		# postinstall fix obsolete
+
+	..but only ever after the reboot!  Either way, deleting the old service
+	tool will avoid conflicts with the same-named NetBSD utility later on.
+
 20170218:
 	Before starting a build, you will have to update your master.passwd and
 	group files in /etc.  This is needed because we have switched over from

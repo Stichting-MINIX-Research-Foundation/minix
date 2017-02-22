@@ -1117,8 +1117,8 @@ static const char *do_config(const char *label, char *filename, struct rs_config
 	}
 	if (cp == NULL)
 	{
-		fprintf(stderr, "service: service '%s' not found in '%s'\n",
-			label, filename);
+		fprintf(stderr, "minix-service: service '%s' not found in "
+		    "'%s'\n", label, filename);
 		exit(1);
 	}
 

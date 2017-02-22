@@ -2,6 +2,6 @@
 
 PWD=`pwd`
 
-service up ${PWD}/subs -config system.conf -script /etc/rs.single
-service up ${PWD}/dstest -config system.conf -script /etc/rs.single
-service down subs
+minix-service up ${PWD}/subs -config system.conf -script /etc/rs.single
+minix-service up ${PWD}/dstest -config system.conf -script /etc/rs.single
+minix-service down subs

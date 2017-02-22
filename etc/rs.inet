@@ -57,7 +57,7 @@ echo "Arguments: $@"
 
 restarts=$(grep restarts /proc/service/$1 |cut -d: -f2)
 restarts=$(( $restarts + 1 ))
-service down "$1"
+minix-service down "$1"
 kill_by_name dhcpd
 kill_by_name nonamed
 kill_by_name syslogd
@@ -66,10 +66,10 @@ kill_by_name syslogd
 sleep 3
 if [ X`/bin/sysenv lwip` = Xyes ]
 then
-	service up /service/lwip -script /etc/rs.inet -dev /dev/ip -restarts $restarts
+	minix-service up /service/lwip -script /etc/rs.inet -dev /dev/ip -restarts $restarts
 	dhcpd --lwip &
 else
-	service up /service/inet -script /etc/rs.inet -dev /dev/ip -restarts $restarts
+	minix-service up /service/inet -script /etc/rs.inet -dev /dev/ip -restarts $restarts
 	daemonize dhcpd
 fi
 daemonize nonamed -L

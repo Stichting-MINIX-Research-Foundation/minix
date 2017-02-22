@@ -12,9 +12,9 @@ The file
 .B /etc/system.conf
 is the global system configuration file that contains the
 configuration for all the primary system services. This is the file
-that the \fBservice\fR utility uses by default. Custom configuration
+that the \fBminix-service\fR utility uses by default. Custom configuration
 files with the same format can be specified on a per-service basis. See
-.BR service (8)
+.BR minix-service (8)
 for more details.
 
 This page is a summary of all the elements that can be found in this
@@ -23,8 +23,8 @@ configuration file.
 The syntax used is that of the common configuration file described in
 .BR configfile (5).
 .PP
-The \fBservice\fR utility scans the configuration file from beginning to end
-to gather information about a specific system service when starting or
+The \fBminix-service\fR utility scans the configuration file from beginning to
+end to gather information about a specific system service when starting or
 updating the properties of a service.
 The file contains a collection of service entries of the form:
 
@@ -47,7 +47,7 @@ be used:
 .RS
 specifies the user id or the user name to use to run the system service.
 \fISELF\fR can be used when the service has to start with the realuid of
-the user who's executing the \fBservice\fR utility.
+the user who's executing the \fBminix-service\fR utility.
 Many system services run with root privileges (uid \fB0\fR).
 The default user is service (uid \fB12\fR).
 .RE
@@ -174,7 +174,7 @@ The default is to allow no controller services.
 .PP
 .SH "SEE ALSO"
 .BR configfile (5),
-.BR service (8),
+.BR minix-service (8),
 .BR boot (8).
 .SH AUTHOR
 Cristiano Giuffrida <giuffrida@cs.vu.nl>
