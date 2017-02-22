@@ -33,6 +33,7 @@
 ./usr/lib/i18n/libmapper_serial_g.a                     minix-debug     debuglib
 ./usr/lib/i18n/libmapper_std_g.a                        minix-debug     debuglib
 ./usr/lib/i18n/libmapper_zone_g.a                       minix-debug     debuglib
+./usr/lib/libacpi_g.a                                   minix-debug     debuglib
 ./usr/lib/libarchive_g.a                                minix-debug     debuglib
 ./usr/lib/libasyn_g.a                                   minix-debug     debuglib
 ./usr/lib/libatf-c++_g.a                                minix-debug     debuglib

@@ -172,7 +172,6 @@
 ./proc                                                  minix-base
 ./root                                                  minix-base
 ./root/.cshrc                                           minix-base
-./root/.exrc                                            minix-base      obsolete
 ./root/.klogin                                          minix-base
 ./root/.login                                           minix-base
 ./root/.profile                                         minix-base
