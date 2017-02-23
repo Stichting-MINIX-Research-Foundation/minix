@@ -1,0 +1,96 @@
+.\"        $NetBSD: route.conf.5,v 1.5 2012/05/02 22:38:31 wiz Exp $
+.\"
+.\" Copyright (c) 2004 Thomas Klausner
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 1, 2012
+.Dt ROUTE.CONF 5
+.Os
+.Sh NAME
+.Nm route.conf
+.Nd static routes config file
+.Sh DESCRIPTION
+The
+.Nm
+file is read by the
+.Pa staticroute
+rc.d script during system start-up and shutdown,
+and is intended for adding and removing static routes.
+.Ss FILE FORMAT
+Lines starting with a hash
+.Pq Sq #
+are comments and ignored.
+Lines starting with a plus sign
+.Pq Sq +
+are run during start-up,
+while lines starting with a minus sign
+.Pq Sq \-
+are run during system shutdown.
+If a line starts with a
+.Sq \&! ,
+the rest of the line will get evaluated as a shell script fragment.
+All other lines are passed to
+.Xr route 8 .
+During start-up, they are passed behind a
+.Dq Ic route add \-
+command and during shutdown behind a
+.Dq Ic route delete \-
+command.
+.Sh FILES
+.Bl -tag -width XXetcXrouteXconfXX
+.It Pa /etc/route.conf
+The
+.Nm
+file resides in
+.Pa /etc .
+.It Pa /etc/rc.d/staticroute
+.Xr rc.d 8
+script that parses
+.Nm .
+.El
+.Sh EXAMPLES
+In this example, the interface for the desired routing changes is set,
+the IP address on that interface is determined, and a route is added
+during startup, or deleted during system shutdown.
+.Bd -literal -offset indent
+# Set interface and determine current IP address for added route.
+!ifname=bnx0
+!ipaddr=$(/sbin/ifconfig ${ifname} | awk '$1 == "inet" {print $2}')
+net 10.10.1 -interface ${ipaddr}
+.Ed
+.Pp
+In this example,
+IP forwarding is turned on during
+start-up, and a static route added for 192.168.2.0.
+During system shutdown, the route is removed
+and IP forwarding turned off.
+.Bd -literal -offset indent
+# Turn on/off IP forwarding.
++sysctl -w net.inet.ip.forwarding=1
+-sysctl -w net.inet.ip.forwarding=0
+net 192.168.2.0 -netmask 255.255.255.0 192.168.150.2
+.Ed
+.Sh SEE ALSO
+.Xr rc.conf 5 ,
+.Xr rc 8 ,
+.Xr route 8

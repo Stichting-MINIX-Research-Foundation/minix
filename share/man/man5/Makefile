@@ -7,14 +7,14 @@
 MAN=	\
 	\
 	\
-	hosts.5 \
+	hosts.5 ifconfig.if.5 \
 	locale.alias.5 \
 	\
 	\
 	\
 	nsswitch.conf.5 \
 	rc.conf.5 \
-	resolv.conf.5 \
+	resolv.conf.5 route.conf.5 \
 	\
 	\
 	

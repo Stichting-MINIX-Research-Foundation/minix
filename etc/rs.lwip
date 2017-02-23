@@ -42,9 +42,6 @@ sysctl -qw net.inet.tcp.isn_secret=`dd if=$TCPISN_FILE bs=$TCPISN_LEN \
 # Let LWIP find all network drivers before performing initialization.
 sleep 1
 
-# XXX temporary block until the networking rc scripts are fully imported!
-exit 0
-
 # Restart all network daemons.
 
 # Start with dhcpcd, which may be launched directly from ifconfig.if(5) scripts

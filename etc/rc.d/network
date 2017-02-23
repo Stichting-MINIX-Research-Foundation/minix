@@ -1,6 +1,546 @@
 #!/bin/sh
-# MINIX 3 stub (for now!).
+#
+# $NetBSD: network,v 1.69 2014/10/14 20:49:47 christos Exp $
+#
 
 # PROVIDE: network
 # REQUIRE: ipfilter ipsec mountcritlocal root tty sysctl
 # BEFORE:  NETWORKING
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="network"
+start_cmd="network_start"
+stop_cmd="network_stop"
+
+nl='
+' # a newline
+
+intmissing()
+{
+	local int="$1"
+	shift
+	for i; do
+		if [ "$int" = "$i" ]; then
+			return 1
+		fi
+	done
+	return 0
+}
+
+have_inet6()
+{
+	/sbin/ifconfig lo0 inet6 >/dev/null 2>&1
+}
+
+network_start()
+{
+	# set hostname, turn on network
+	#
+	echo "Starting network."
+
+	network_start_hostname
+	network_start_domainname
+	network_start_loopback
+	have_inet6 &&
+	network_start_ipv6_route
+	[ "$net_interfaces" != NO ] &&
+	network_start_interfaces
+	network_start_aliases
+	network_start_defaultroute
+	network_start_defaultroute6
+	have_inet6 &&
+	network_start_ipv6_autoconf
+	network_start_local
+}
+
+network_start_hostname()
+{
+	# If $hostname is set, use it for my Internet name,
+	# otherwise use /etc/myname
+	#
+	if [ -z "$hostname" ] && [ -f /etc/myname ]; then
+		hostname=$(cat /etc/myname)
+	fi
+	if [ -n "$hostname" ]; then
+		echo "Hostname: $hostname"
+		hostname $hostname
+	else
+		# Don't warn about it if we're going to run
+		# DHCP later, as we will probably get the
+		# hostname at that time.
+		#
+		if ! checkyesno dhclient && ! checkyesno dhcpcd && \
+			[ -z "$(hostname)" ]
+		then
+			warn "\$hostname not set."
+		fi
+	fi
+}
+
+network_start_domainname()
+{
+	# Check $domainname first, then /etc/defaultdomain,
+	# for NIS/YP domain name
+	#
+	if [ -z "$domainname" ] && [ -f /etc/defaultdomain ]; then
+		domainname=$(cat /etc/defaultdomain)
+	fi
+	if [ -n "$domainname" ]; then
+		echo "NIS domainname: $domainname"
+		domainname $domainname
+	fi
+
+	# Flush all routes just to make sure it is clean
+	if checkyesno flushroutes; then
+		/sbin/route -qn flush
+	fi
+}
+
+network_start_loopback()
+{
+	# Set the address for the first loopback interface, so that the
+	# auto-route from a newly configured interface's address to lo0
+	# works correctly.
+	#
+	# NOTE: obscure networking problems will occur if lo0 isn't configured.
+	#
+	/sbin/ifconfig lo0 inet 127.0.0.1
+
+	# According to RFC1122, 127.0.0.0/8 must not leave the node.
+	#
+	/sbin/route -q add -inet 127.0.0.0 -netmask 0xff000000 127.0.0.1 -reject
+}
+
+network_start_ipv6_route()
+{
+	# IPv6 routing setups, and host/router mode selection.
+	#
+	# We have IPv6 support in kernel.
+
+	# disallow link-local unicast dest without outgoing scope
+	# identifiers.
+	#
+	/sbin/route -q add -inet6 fe80:: -prefixlen 10 ::1 -reject
+
+	# disallow the use of the RFC3849 documentation address
+	#
+	/sbin/route -q add -inet6 2001:db8:: -prefixlen 32 ::1 -reject
+
+	# IPv6 site-local scoped address prefix (fec0::/10)
+	# has been deprecated by RFC3879.
+	#
+	if [ -n "$ip6sitelocal" ]; then
+		warn "\$ip6sitelocal is no longer valid"
+	fi
+
+	# disallow "internal" addresses to appear on the wire.
+	#
+	/sbin/route -q add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+
+	# disallow packets to malicious IPv4 compatible prefix
+	#
+	/sbin/route -q add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
+	/sbin/route -q add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
+	/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+	/sbin/route -q add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
+
+	# disallow packets to malicious 6to4 prefix
+	#
+	/sbin/route -q add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
+	/sbin/route -q add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
+	/sbin/route -q add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
+	/sbin/route -q add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
+
+	# Completely disallow packets to IPv4 compatible prefix.
+	# This may conflict with RFC1933 under following circumstances:
+	# (1) An IPv6-only KAME node tries to originate packets to IPv4
+	#     compatible destination.  The KAME node has no IPv4
+	#     compatible support.  Under RFC1933, it should transmit
+	#     native IPv6 packets toward IPv4 compatible destination,
+	#     hoping it would reach a router that forwards the packet
+	#     toward auto-tunnel interface.
+	# (2) An IPv6-only node originates a packet to IPv4 compatible
+	#     destination.  A KAME node is acting as an IPv6 router, and
+	#     asked to forward it.
+	# Due to rare use of IPv4 compatible address, and security
+	# issues with it, we disable it by default.
+	#
+	/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+
+	/sbin/sysctl -qw net.inet6.ip6.forwarding=0
+	/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=0
+
+	case $ip6mode in
+	router)
+		echo 'IPv6 mode: router'
+		/sbin/sysctl -qw net.inet6.ip6.forwarding=1
+
+		# disallow unique-local unicast forwarding without
+		# explicit configuration.
+		if ! checkyesno ip6uniquelocal; then
+			/sbin/route -q add -inet6 fc00:: -prefixlen 7 \
+			    ::1 -reject
+		fi
+		;;
+
+	autohost)
+		echo 'IPv6 mode: autoconfigured host'
+		/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=1
+		;;
+
+	host)	
+		echo 'IPv6 mode: host'
+		;;
+
+	*)	warn "invalid \$ip6mode value "\"$ip6mode\"
+		;;
+
+	esac
+}
+
+network_start_interfaces()
+{
+	# Configure all of the network interfaces listed in $net_interfaces;
+	# if $auto_ifconfig is YES, grab all interfaces from ifconfig.
+	# In the following, "xxN" stands in for interface names, like "le0".
+	#
+	# For any interfaces that has an $ifconfig_xxN variable
+	# associated, we break it into lines using ';' as a separator,
+	# then process it just like the contents of an /etc/ifconfig.xxN
+	# file.
+	#
+	# For each line from the $ifconfig_xxN variable or the
+	# /etc/ifconfig.xxN file, we ignore comments and blank lines,
+	# treat lines beginning with "!" as commands to execute, treat
+	# "dhcp" as a special case to invoke dhcpcd, and for any other
+	# line we run "ifconfig xxN", using each line of the file as the
+	# arguments for a separate "ifconfig" invocation.
+	#
+	# In order to configure an interface reasonably, you at the very least
+	# need to specify "[addr_family] [hostname]" (e.g "inet my.domain.org"),
+	# and probably a netmask (as in "netmask 0xffffffe0"). You will
+	# frequently need to specify a media type, as in "media UTP", for
+	# interface cards with multiple media connections that do not
+	# autoconfigure. See the ifconfig manual page for details.
+	#
+	# Note that /etc/ifconfig.xxN takes multiple lines.  The following
+	# configuration is possible:
+	#	inet 10.1.1.1 netmask 0xffffff00
+	#	inet 10.1.1.2 netmask 0xffffff00 alias
+	#	inet6 2001:db8::1 prefixlen 64 alias
+	#
+	# You can put shell script fragment into /etc/ifconfig.xxN by
+	# starting a line with "!".  Refer to ifconfig.if(5) for details.
+	#
+	ifaces="$(/sbin/ifconfig -l)"
+	if checkyesno auto_ifconfig; then
+		tmp="$ifaces"
+		for cloner in $(/sbin/ifconfig -C); do
+			for int in /etc/ifconfig.${cloner}[0-9]*; do
+				[ ! -f $int ] && break
+				tmp="$tmp ${int##*.}"
+			done
+		done
+	else
+		tmp="$net_interfaces"
+	fi
+	echo -n 'Configuring network interfaces:'
+	for int in $tmp; do
+		eval argslist=\$ifconfig_$int
+
+		# Skip interfaces that do not have explicit
+		# configuration information.  If auto_ifconfig is
+		# false then also warn about such interfaces.
+		#
+		if [ -z "$argslist" ] && ! [ -f /etc/ifconfig.$int ]
+		then
+			if ! checkyesno auto_ifconfig; then
+				echo
+				warn \
+		"/etc/ifconfig.$int missing and ifconfig_$int not set;"
+				warn "interface $int not configured."
+			fi
+			continue
+		fi
+
+		echo -n " $int"
+
+		# Create the interface if necessary.
+		# If the interface did not exist before,
+		# then also resync ipf(4).
+		#
+		if intmissing $int $ifaces; then
+			if /sbin/ifconfig $int create && \
+			   checkyesno ipfilter; then
+				/sbin/ipf -y >/dev/null
+			fi
+		fi
+
+		# If $ifconfig_xxN is empty, then use
+		# /etc/ifconfig.xxN, which we know exists due to
+		# an earlier test.
+		#
+		# If $ifconfig_xxN is non-empty and contains a
+		# newline, then just use it as is.  (This allows
+		# semicolons through unmolested.)
+		#
+		# If $ifconfig_xxN is non-empty and does not
+		# contain a newline, then convert all semicolons
+		# to newlines.
+		#
+		case "$argslist" in
+		'')
+			cat /etc/ifconfig.$int
+			;;
+		*"${nl}"*)
+			echo "$argslist"
+			;;
+		*)
+			(
+				set -o noglob
+				IFS=';'; set -- $argslist
+				#echo >&2 "[$#] [$1] [$2] [$3] [$4]"
+				IFS="$nl"; echo "$*"
+			)
+			;;
+		esac |
+		collapse_backslash_newline |
+		while read -r args; do
+			case "$args" in
+			''|"#"*|create)
+				;;
+			"!"*)
+				# Run arbitrary command in a subshell.
+				( eval "${args#*!}" )
+				;;
+			dhcp)
+				if ! checkyesno dhcpcd; then
+					/sbin/dhcpcd -n \
+						${dhcpcd_flags} $int
+				fi
+				;;
+			*)
+				# Pass args to ifconfig.  Note
+				# that args may contain embedded
+				# shell metacharacters, such as
+				# "ssid 'foo;*>bar'". We eval
+				# one more time so that things
+				# like ssid "Columbia University" work.
+				(
+					set -o noglob
+					eval set -- $args
+					#echo >&2 "[$#] [$1] [$2] [$3]"
+					/sbin/ifconfig $int "$@"
+				)
+				;;
+			esac
+		done
+		configured_interfaces="$configured_interfaces $int"
+	done
+	echo "."
+}
+
+network_start_aliases()
+{
+	echo -n "Adding interface aliases:"
+
+	# Check if each configured interface xxN has an $ifaliases_xxN variable
+	# associated, then configure additional IP addresses for that interface.
+	# The variable contains a list of "address netmask" pairs, with
+	# "netmask" set to "-" if the interface default netmask is to be used.
+	#
+	# Note that $ifaliases_xxN works only in certain cases and its
+	# use is not recommended.  Use /etc/ifconfig.xxN or multiple
+	# commands in $ifconfig_xxN instead.
+	#
+	for int in lo0 $configured_interfaces; do
+		eval args=\$ifaliases_$int
+		if [ -n "$args" ]; then
+			set -- $args
+			while [ $# -ge 2 ]; do
+				addr=$1 ; net=$2 ; shift 2
+				if [ "$net" = "-" ]; then
+					# for compatibility only, obsolete
+					/sbin/ifconfig $int inet alias $addr
+				else
+					/sbin/ifconfig $int inet alias $addr \
+					    netmask $net
+				fi
+				echo -n " $int:$addr"
+			done
+		fi
+	done
+
+	# /etc/ifaliases, if it exists, contains the names of additional IP
+	# addresses for each interface. It is formatted as a series of lines
+	# that contain
+	#	address interface netmask
+	#
+	# Note that /etc/ifaliases works only in certain cases and its
+	# use is not recommended.  Use /etc/ifconfig.xxN or multiple
+	# commands in $ifconfig_xxN instead.
+	#
+	if [ -f /etc/ifaliases ]; then
+		while read addr int net; do
+			if [ -z "$net" ]; then
+				# for compatibility only, obsolete
+				/sbin/ifconfig $int inet alias $addr
+			else
+				/sbin/ifconfig $int inet alias $addr netmask $net
+			fi
+		done < /etc/ifaliases
+	fi
+
+	echo "." # for "Adding interface aliases:"
+}
+
+network_start_defaultroute()
+{
+	# Check $defaultroute, then /etc/mygate, for the name or address
+	# of my IPv4 gateway host. If using a name, that name must be in
+	# /etc/hosts.
+	#
+	if [ -z "$defaultroute" ] && [ -f /etc/mygate ]; then
+		defaultroute=$(cat /etc/mygate)
+	fi
+	if [ -n "$defaultroute" ]; then
+		/sbin/route add default $defaultroute
+	fi
+}
+
+network_start_defaultroute6()
+{
+	# Check $defaultroute6, then /etc/mygate6, for the name or address
+	# of my IPv6 gateway host. If using a name, that name must be in
+	# /etc/hosts.  Note that the gateway host address must be a link-local
+	# address if it is not using an stf* interface.
+	#
+	if [ -z "$defaultroute6" ] && [ -f /etc/mygate6 ]; then
+		defaultroute6=$(cat /etc/mygate6)
+	fi
+	if [ -n "$defaultroute6" ]; then
+		if [ "$ip6mode" = "autohost" ]; then
+			echo
+			warn \
+	    "ip6mode is set to 'autohost' and a v6 default route is also set."
+		fi
+		/sbin/route add -inet6 default $defaultroute6
+	fi
+}
+
+network_start_ipv6_autoconf()
+{
+	# IPv6 interface autoconfiguration.
+
+	dadcount=$(/sbin/sysctl -n net.inet6.ip6.dad_count 2>/dev/null)
+	if [ -n "$dadcount" -a "$dadcount" != 0 ]; then
+		# wait till DAD is completed
+		echo 'Waiting for DAD to complete for' \
+		    'statically configured addresses...'
+		# Add 1 for MAX_RTR_SOLICITATION_DELAY and another
+		# to give time for the last DAD packet to respond and
+		# a few more for luck.
+		waitsecs=$((dadcount + 4))
+		/sbin/ifconfig -w $waitsecs
+	fi
+
+	# dhcpcd will ensure DAD completes before forking
+	if checkyesnox rtsol && ! checkyesno dhcpcd; then
+		if [ "$ip6mode" = "autohost" ]; then
+			echo
+			warn "rtsol has been removed, " \
+			    "please configure dhcpcd in its place."
+		fi
+	fi
+}
+
+network_start_local()
+{
+	# XXX this must die
+	if [ -s /etc/netstart.local ]; then
+		sh /etc/netstart.local start
+	fi
+}
+
+network_stop()
+{
+	echo "Stopping network."
+
+	network_stop_local
+	network_stop_aliases
+	[ "$net_interfaces" != NO ] &&
+	network_stop_interfaces
+	network_stop_route
+}
+
+network_stop_local()
+{
+	# XXX this must die
+	if [ -s /etc/netstart.local ]; then
+		sh /etc/netstart.local stop
+	fi
+}
+
+network_stop_aliases()
+{
+	echo "Deleting aliases."
+	if [ -f /etc/ifaliases ]; then
+		while read addr int net; do
+			/sbin/ifconfig $int inet delete $addr
+		done < /etc/ifaliases
+	fi
+
+	for int in $(/sbin/ifconfig -lu); do
+		eval args=\$ifaliases_$int
+		if [ -n "$args" ]; then
+			set -- $args
+			while [ $# -ge 2 ]; do
+				addr=$1 ; net=$2 ; shift 2
+				/sbin/ifconfig $int inet delete $addr
+			done
+		fi
+	done
+}
+
+network_stop_interfaces()
+{
+	# down interfaces
+	#
+	echo -n 'Downing network interfaces:'
+	if checkyesno auto_ifconfig; then
+		tmp=$(/sbin/ifconfig -l)
+	else
+		tmp="$net_interfaces"
+	fi
+	for int in $tmp; do
+		eval args=\$ifconfig_$int
+		if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
+			echo -n " $int"
+			if [ -f /var/run/dhcpcd-$int.pid ]; then
+				/sbin/dhcpcd -k $int 2> /dev/null
+			fi
+			/sbin/ifconfig $int down
+			if /sbin/ifconfig $int destroy 2>/dev/null && \
+			   checkyesno ipfilter; then
+				# resync ipf(4)
+				/sbin/ipf -y >/dev/null
+			fi
+		fi
+	done
+	echo "."
+}
+
+network_stop_route()
+{
+	# flush routes
+	#
+	/sbin/route -qn flush
+
+}
+
+load_rc_config $name
+load_rc_config_var dhclient dhclient
+load_rc_config_var dhcpcd dhcpcd
+load_rc_config_var ipfilter ipfilter
+run_rc_command "$1"

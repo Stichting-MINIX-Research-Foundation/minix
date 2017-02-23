@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# $NetBSD: staticroute,v 1.6 2012/05/02 15:57:15 gendalia Exp $
+#
+
+# PROVIDE: staticroute
+# REQUIRE: network
+# BEFORE:  NETWORKING
+
+# See the route.conf(5) manual page for details.
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="staticroute"
+start_cmd="staticroute_doit Adding add"
+stop_cmd="staticroute_doit Deleting delete"
+
+staticroute_doit() {
+	retval=0
+
+	if [ -s /etc/route.conf ]; then
+		echo "$1 static routes."
+		( while read args; do
+			[ -z "$args" ] && continue
+			case "$args" in
+			"#"*)
+				;;
+			"+"*)
+				if [ $2 = "add" ]; then
+					eval "${args#*+}" || retval=1
+				fi
+				;;
+			"-"*)
+				if [ $2 = "delete" ]; then
+					eval "${args#*-}" || retval=1
+				fi
+				;;
+			"!"*)
+				eval "${args#*!}" || retval=1
+				;;
+			*)
+				eval "route -q $2 -$args" || retval=1
+				;;
+			esac
+		done < /etc/route.conf )
+	fi
+
+	return $retval
+}
+
+load_rc_config $name
+run_rc_command "$1"

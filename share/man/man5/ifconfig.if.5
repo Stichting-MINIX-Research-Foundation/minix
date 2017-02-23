@@ -1,0 +1,149 @@
+.\"	$NetBSD: ifconfig.if.5,v 1.18 2014/12/29 14:22:25 wiz Exp $
+.\"
+.\" Copyright (c) 1996 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 18, 2014
+.Dt IFCONFIG.IF 5
+.Os
+.Sh NAME
+.Nm ifconfig.if
+.Nd interface-specific configuration files or variables
+.Sh DESCRIPTION
+The
+.Nm
+files or variables contain information regarding the configuration
+of each network interface.
+.Nm
+is processed by
+.Pa /etc/rc.d/network
+at system boot time.
+.Pp
+For each interface
+.Pq Ar nnX
+that is to be configured, there should be either an
+.Sy ifconfig_nnX
+variable in
+.Xr rc.conf 5 ,
+or an
+.Pa /etc/ifconfig.nnX
+file
+(such as the
+.Sy ifconfig_fxp0
+variable or the
+.Pa /etc/ifconfig.fxp0
+file for the
+.Sy fxp0
+interface).
+Only characters allowed in
+.Xr sh 1
+variables names should be used for
+.Ar nnX
+.Po Xr ascii 7
+uppercase and lowercase letters, digits, and underscore
+.Pc .
+.Pp
+The variable or file will get evaluated only if the interface exists on
+the system.
+Multiple lines can be placed in a variable or file, and will be
+evaluated sequentially.
+In the case of a variable, semicolons may be used instead of
+newlines, as described in
+.Xr rc.conf 5 .
+.Ao backslash Ac Ns Ao newline Ac
+sequences in files are ignored, so long logical lines may be
+made up of several shorter physical lines.
+.Pp
+Normally, a line will be evaluated as command line arguments to
+.Xr ifconfig 8 .
+.Dq Li ifconfig Ar nnX
+will be prepended on evaluation.
+Arguments with embedded shell metacharacters should be quoted in
+.Xr sh 1
+style.
+.Pp
+If the line is equal to
+.Dq dhcp ,
+.Xr dhcpcd 8
+will be started for the interface.
+However, it is instead recommended that
+.Sy dhcpcd
+is set to true in
+.Xr rc.conf 5
+and any per interface configuration or restriction is done in
+.Xr dhcpcd.conf 5 .
+.Pp
+If a line is empty, or starts with
+.Sq # ,
+the line will be ignored as comment.
+.Pp
+If a line starts with
+.Sq \&! ,
+the rest of line will get evaluated as shell script fragment.
+Shell variables declared in
+.Pa /etc/rc.d/network
+are accessible but may not be modified.
+The most useful variable is
+.Li $int ,
+as it will be bound to the interface being configured with the file.
+.Pp
+For example, the following illustrates static interface configuration:
+.Bd -literal -offset indent
+# IPv4, with an alias
+inet 10.0.1.12 netmask 255.255.255.0 media 100baseTX
+inet 10.0.1.13 netmask 255.255.255.255 alias
+# let us have IPv6 address on this interface
+inet6 2001:db8::1 prefixlen 64 alias
+# have subnet router anycast address too
+inet6 2001:db8:: prefixlen 64 alias anycast
+.Ed
+.Pp
+The following example sets a network name for a wireless interface
+(using quotes to protect special characters in the name),
+and starts
+.Xr dhcpcd 8 :
+.Bd -literal -offset indent
+ssid 'my network'
+dhcp
+.Ed
+.Pp
+The following example is for dynamically-created pseudo interfaces like
+.Xr gif 4 .
+Earlier versions of
+.Pa /etc/rc.d/network
+required an explicit
+.Sq create
+command for such interfaces,
+but creation is now handled automatically.
+.Bd -literal -offset indent
+up
+# configure IPv6 default route toward the interface
+!route add -inet6 default ::1
+!route change -inet6 default -ifp $int
+.Ed
+.Sh FILES
+.Pa /etc/rc.d/network
+.Sh SEE ALSO
+.Xr rc.conf 5 ,
+.Xr ifconfig 8

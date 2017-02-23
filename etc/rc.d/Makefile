@@ -30,7 +30,7 @@ CONFIGFILES=\
 		\
 		bootconf.sh \
 		\
-		dhclient dhcpcd dhcpd dhcrelay \
+		dhclient dhcpcd dhcpd dhcrelay downinterfaces \
 		fsck ftpd \
 		\
 		\
@@ -48,7 +48,7 @@ CONFIGFILES=\
 		root rtadvd \
 		\
 		\
-		sysctl sysdb syslogd \
+		staticroute sysctl sysdb syslogd \
 		ttys \
 		wscons \
 		
