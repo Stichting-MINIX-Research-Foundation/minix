@@ -6,7 +6,7 @@
 .if ${MKSHARE} != "no"
 # MINIX 3: XXX FIXME
 #SUBDIR=	man0 man1 man2 man3 man3lua man4 man5 man6 man7 man8 man9 man9lua
-SUBDIR=	man5 man8
+SUBDIR=	man5 man7 man8
 
 .if !defined(__MINIX) # XXX FIXME
 .if ${MKRUMP} != "no"

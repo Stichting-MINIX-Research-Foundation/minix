@@ -8,7 +8,7 @@ MAN=	\
 	\
 	\
 	\
-	\
+	locale.alias.5 \
 	\
 	\
 	\
