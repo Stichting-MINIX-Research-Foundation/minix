@@ -1,0 +1,173 @@
+.\"	$NetBSD: service.8,v 1.4 2015/04/02 18:41:22 ast Exp $
+.\"
+.\" Copyright (c) 2009 Douglas Barton
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd March 20, 2015
+.Dt SERVICE 8
+.Os
+.Sh NAME
+.Nm service
+.Nd run or list system services
+.Sh SYNOPSIS
+.Nm
+.Op Fl elv
+.Nm
+.Op Fl ev
+.Ar rc_script_name1 Op Ar rc_script_name2 Op Ar ...
+.Nm
+.Op Fl v
+.Ar rc_script_name action
+.Sh DESCRIPTION
+The
+.Nm
+command is a simple interface to the services startup system.
+.Pp
+Its purpose is to list the services or invoke actions on them
+as provided by the
+.Ev rc.d
+scripts.
+When used to invoke
+.Ev rc.d
+scripts,
+.Nm
+will set the same environment that is used at boot time.
+.Pp
+The options are as follows:
+.Bl -tag -width F1
+.It Fl e
+List services that are enabled.
+The list of scripts is compiled using
+.Xr rcorder 8
+the same way as is done in
+.Xr rc 8 ;
+each script is first checked for an
+.Qq rcvar
+assignment and if present,
+checked to see if it is enabled.
+If one or more
+.Ar rc_script_name
+are specified, only those are checked.
+The
+.Ar rc_script_name
+arguments are always specified without a path prefix.
+.It Fl l
+List all files in
+.Pa /etc/rc.d
+(the default of
+.Ev rc_directories as defined in
+.Xr rc.conf 5 ) .
+A script will be listed unless it has the
+.Qq nostart
+keyword enabled.
+.It Fl v
+Report what
+.Ev rc_directories
+are defined or in which directory the
+.Ev rc.d script
+was found when an
+.Ar action
+is invoked.
+.El
+.Sh ENVIRONMENT
+When used to invoke
+.Ev rc.d scripts, the
+.Nm
+command sets
+.Ev umask
+to
+.Fa 022 ,
+.Ev HOME
+to
+.Pa / ,
+and
+.Ev PATH
+to
+.Pa /sbin:/bin:/usr/sbin:/usr/bin
+which is how they are set in
+.Pa /etc/rc
+at boot time.
+The
+.Ar action
+is typically one of
+.Ar start ,
+.Ar restart ,
+.Ar status ,
+or any other argument supported by the
+.Fa rc_script_name .
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+These are typical usages of the
+.Nm
+command:
+.Bd -literal
+# service sshd restart
+Stopping sshd.
+Starting sshd.
+.Ed
+.Bd -literal
+$ service -v inetd status
+inetd is located in /etc/rc.d
+inetd is running as pid 1713.
+.Ed
+.Bd -literal
+$ service -ve ccd motd hostapd my_pkg
+rc_directories is /etc/rc.d /usr/pkg/etc/rc.d
+/etc/rc.d/ccd
+/usr/pkg/etc/rc.d/my_pkg
+/etc/rc.d/motd
+.Ed
+.Pp
+In the last example,
+.Xr hostapd 8
+was apparently left disabled and the additional directory
+.Pa /usr/pkg/etc/rc.d
+was configured by redefining the variable
+.Ev rc_directories
+in
+.Pa rc.conf ;
+further,
+.Sy my_pkg=yes
+must have also been set.
+.Sh SEE ALSO
+.Xr rc.conf 5 ,
+.Xr rc 8 ,
+.Xr rcorder 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An -nosplit
+Written for
+.Fx
+by
+.An Douglas Barton Aq Mt dougb@FreeBSD.org .
+.Pp
+Adapted and extended to
+.Nx
+by
+.An Adrian Steinmann Aq Mt ast@marabu.ch .

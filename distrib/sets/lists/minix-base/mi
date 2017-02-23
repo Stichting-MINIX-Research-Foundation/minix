@@ -1031,6 +1031,7 @@
 ./usr/sbin/postinstall                                  minix-base
 ./usr/sbin/pwd_mkdb                                     minix-base
 ./usr/sbin/rdate                                        minix-base
+./usr/sbin/service                                      minix-base
 ./usr/sbin/services_mkdb                                minix-base
 ./usr/sbin/syslogd                                      minix-base
 ./usr/sbin/traceroute                                   minix-base

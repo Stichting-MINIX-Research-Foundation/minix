@@ -1,0 +1,126 @@
+#!/bin/sh
+#    $NetBSD: service,v 1.7 2015/04/05 11:33:15 apb Exp $
+#    service -- run or list system services
+#
+#  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
+#  Modified for NetBSD by Adrian Steinmann in March, 2015
+#
+#  Copyright (c) 2009 Douglas Barton
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+#  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+#  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+#  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+#  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+#  SUCH DAMAGE.
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+usage ()
+{
+    local me="${0##*/}"
+    echo "usage: ${me} [-elv]"
+    echo "       ${me} [-ev] rc_script_name [rc_script_name2 [...]]"
+    echo "       ${me} [-v] rc_script_name action"
+    echo "       -e: List enabled scripts; check if given scripts are enabled"
+    echo "       -l: List all scripts in rcorder"
+    echo "       -v: Verbose (mention in which directory script is found)"
+    echo "rc_directories is currently set to ${rc_directories}"
+    exit 1
+}
+
+# list all files in rc_directories with absolute pathnames
+# written to be compatible with ls(1) from pre netbsd-7
+_rc_files()
+{
+    local _d _f
+    for _d in ${rc_directories}; do
+         if [ -d "$_d" ]; then
+             for _f in "$_d"/*; do
+                 [ -f "$_f" -a -x "$_f" ] && echo "$_f"
+             done
+         fi
+    done | xargs rcorder -s nostart ${rc_rcorder_flags} 2>/dev/null
+    return 0
+}
+
+while getopts elv o; do
+    case "$o" in
+        e) ENABLED=1 ;;
+        l) LIST=1 ;;
+        v) VERBOSE=1 ;;
+        *) usage ;;
+    esac
+done
+shift $( expr $OPTIND - 1 )
+
+[ -n "${ENABLED}" -a -n "${LIST}" ] && usage
+
+. /etc/rc.subr
+load_rc_config :
+
+if [ -n "${ENABLED}" ]; then
+    [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
+    flt=cat
+    if [ $# -gt 0 ]
+    then
+        flt=$( echo $* | sed -e 's; ;|;g' -e 's;^;egrep /(;' -e 's;$;)$;' )
+    fi
+    _rc_files | $flt | while read file
+    do
+        if grep -q ^rcvar "$file"; then
+            eval $( grep ^name= "$file" )
+            eval $( grep ^rcvar "$file" )
+            if [ -n "${rcvar}" ]; then
+                load_rc_config ${rcvar}
+                checkyesno ${rcvar} 2>/dev/null && echo ${file}
+            fi
+        fi
+    done
+    exit 0
+fi
+
+if [ -n "${LIST}" ]; then
+    [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
+    _rc_files
+    exit 0
+fi
+
+if [ $# -eq 2 ]; then
+    script=$1
+    arg=$2
+else
+    usage
+fi
+
+for dir in ${rc_directories}; do
+    if [ -x "${dir}/${script}" ]; then
+        [ -n "${VERBOSE}" ] && echo "${script} is located in ${dir}" >&2
+        # run as in /etc/rc
+        cd /
+        umask 022
+        exec env -i \
+            HOME=/ PATH=/sbin:/bin:/usr/sbin:/usr/bin \
+                "${dir}/${script}" "${arg}"
+        echo "Failed to exec ${dir}/${script} ${arg}" >&2
+        exit 255
+    fi
+done
+
+echo "${script} does not exist in ${rc_directories}" >&2
+exit 1

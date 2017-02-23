@@ -3445,7 +3445,7 @@
 ./usr/man/man8/rshd.8                                   minix-man
 ./usr/man/man8/screendump.8                             minix-man
 ./usr/man/man8/serial-ip.8                              minix-man       obsolete
-./usr/man/man8/service.8                                minix-man       obsolete
+./usr/man/man8/service.8                                minix-man
 ./usr/man/man8/services_mkdb.8                          minix-man
 ./usr/man/man8/setup.8                                  minix-man
 ./usr/man/man8/shutdown.8                               minix-man
