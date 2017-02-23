@@ -112,6 +112,7 @@
 ./etc/mtree/NetBSD.dist                                 minix-base
 ./etc/mtree/set.minix-base                              minix-base
 ./etc/mtree/special                                     minix-base
+./etc/nsswitch.conf                                     minix-base
 ./etc/openssl                                           minix-base      crypto
 ./etc/openssl/certs                                     minix-base      crypto
 ./etc/openssl/misc                                      minix-base      crypto

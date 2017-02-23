@@ -12,7 +12,7 @@ MAN=	\
 	\
 	\
 	\
-	\
+	nsswitch.conf.5 \
 	rc.conf.5 \
 	\
 	\

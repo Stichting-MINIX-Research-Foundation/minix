@@ -3298,6 +3298,7 @@
 ./usr/man/man5/magic.5                                  minix-man
 ./usr/man/man5/man.conf.5                               minix-man
 ./usr/man/man5/mtree.5                                  minix-man
+./usr/man/man5/nsswitch.conf.5                          minix-man
 ./usr/man/man5/openssl.cnf.5                            minix-man       crypto
 ./usr/man/man5/passwd.5                                 minix-man
 ./usr/man/man5/pkg_install.conf.5                       minix-man
