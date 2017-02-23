@@ -1,3 +1,21 @@
+20170303:
+	The entire network stack has been replaced.  This requires two updates.
+	First, BEFORE rebooting, either before or after rebuilding the system,
+	copy the following new configuration files from /usr/src/etc into /etc:
+
+		# cd /usr/src/etc
+		# cp hosts inetd.conf named.conf nsswitch.conf /etc
+
+	Second, AFTER rebooting, set up a new network configuration for your
+	system.  Run netconf(8) and and follow its instructions:
+
+		# netconf
+
+	If you previously configured your network statically and you forgot its
+	settings, take a look at /etc/rc.network.  That file and /etc/inet.conf
+	are no longer used now.  See the ifconfig.if(5) manual page for more
+	information about how network settings are specified going forward.
+
 20170223:
 	Edit your /etc/rc.conf to set rc_configured to YES.  If you do not,
 	your system will refuse to enter multi-user mode after the next reboot.

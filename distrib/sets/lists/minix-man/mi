@@ -3365,6 +3365,7 @@
 ./usr/man/man5/hosts_options.5                          minix-man
 ./usr/man/man5/http_status.5                            minix-man       obsolete
 ./usr/man/man5/httpd.conf.5                             minix-man       obsolete
+./usr/man/man5/ifconfig.if.5                            minix-man
 ./usr/man/man5/inetd.conf.5                             minix-man
 ./usr/man/man5/info.5                                   minix-man
 ./usr/man/man5/keymap.5                                 minix-man
@@ -3390,6 +3391,7 @@
 ./usr/man/man5/resolver.5                               minix-man
 ./usr/man/man5/rhosts.5                                 minix-man       obsolete
 ./usr/man/man5/rndc.conf.5                              minix-man
+./usr/man/man5/route.conf.5                             minix-man
 ./usr/man/man5/rtadvd.conf.5                            minix-man       use_inet6
 ./usr/man/man5/serv.access.5                            minix-man       obsolete
 ./usr/man/man5/statvfs.5                                minix-man

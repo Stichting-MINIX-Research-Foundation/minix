@@ -146,6 +146,7 @@
 ./etc/rc.d/dhcpcd                                       minix-base
 ./etc/rc.d/dhcpd                                        minix-base
 ./etc/rc.d/dhcrelay                                     minix-base
+./etc/rc.d/downinterfaces                               minix-base
 ./etc/rc.d/fsck                                         minix-base
 ./etc/rc.d/ftpd                                         minix-base
 ./etc/rc.d/inetd                                        minix-base
@@ -161,6 +162,7 @@
 ./etc/rc.d/pwcheck                                      minix-base
 ./etc/rc.d/root                                         minix-base
 ./etc/rc.d/rtadvd                                       minix-base
+./etc/rc.d/staticroute                                  minix-base
 ./etc/rc.d/sysctl                                       minix-base
 ./etc/rc.d/sysdb                                        minix-base
 ./etc/rc.d/syslogd                                      minix-base

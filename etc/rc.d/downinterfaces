@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# $NetBSD: downinterfaces,v 1.6 2009/09/05 16:26:07 apb Exp $
+#
+
+# PROVIDE: downinterfaces
+# KEYWORD: nostart shutdown
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="downinterfaces"
+start_cmd=":"
+stop_cmd="downinterfaces_stop"
+
+downinterfaces_stop()
+{
+	tmp=$(ifconfig -lu)
+	iflist=""
+	for int in $tmp; do
+		case $int in
+		pppoe*)	iflist="$iflist $int"
+			;;
+		esac
+	done
+	iflist="$iflist $force_down_interfaces"
+	if [ "$iflist" != "" ] && [ "$iflist" != " " ]
+	then
+
+		echo "Shutting down interfaces:$iflist"
+		for int in $iflist; do
+			ifconfig $int down
+		done
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"
