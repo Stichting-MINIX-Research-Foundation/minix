@@ -197,7 +197,7 @@ static void handle_memory_continue(struct vmproc *vmp, message *m,
 
 static void handle_memory_final(struct hm_state *state, int result)
 {
-	int r;
+	int r, flag;
 
 	assert(state);
 	assert(state->valid == VALID);
@@ -215,9 +215,15 @@ static void handle_memory_final(struct hm_state *state, int result)
 			assert(state->caller == VFS_PROC_NR);
 			/* If a transaction ID was set, reset it */
 			msg.m_type = TRNS_ADD_ID(msg.m_type, state->transid);
-		}
+			flag = AMF_NOREPLY;
+		} else
+			flag = 0;
 
-		if(asynsend3(state->caller, &msg, 0) != OK) {
+		/*
+		 * Use AMF_NOREPLY only if there was a transaction ID, which
+		 * signifies that VFS issued the request asynchronously.
+		 */
+		if(asynsend3(state->caller, &msg, flag) != OK) {
 			panic("handle_memory_final: asynsend3 failed");
 		}
 
