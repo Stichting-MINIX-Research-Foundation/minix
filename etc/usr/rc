@@ -417,26 +417,3 @@ stop)
 	  fi
 	fi
 esac
-
-# Let packages run their own scripts
-# FIXME: this should be removed altogether: pkgsrc is not supposed to be used
-# this way.  Instead, the user should copy over scripts from /usr/pkg/etc/rc.d
-# to /etc/rc.d as desired, and configure them in /etc/rc.conf as appropriate.
-for d in /usr/local/etc/rc.d /usr/pkg/etc/rc.d
-do
-if [ -d "$d" -a -z "$bootcd" ]
-then	( if cd $d
-	then
-		echo -n "Local packages ($action): "
-		for f in *
-		do
-			if [ -x "$f" ]
-			then	echo -n "$f "
-				sh "$f" "$action"
-			fi
-		done
-		echo " done."
-	fi
-	)
-fi
-done

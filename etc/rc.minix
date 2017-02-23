@@ -214,15 +214,6 @@ stop)
 	# RS: devman not running?
 	sleep 1
     fi
-    #
-    # usbd needs to be stopped exactly
-    # at this stage(before stopping devman
-    # and after stopping the services
-    # stated by devmand)
-    if [ -x /usr/pkg/etc/rc.d/usbd ]
-    then
-	/usr/pkg/etc/rc.d/usbd stop
-    fi
 
     if [ -x /service/usbd ]
     then
