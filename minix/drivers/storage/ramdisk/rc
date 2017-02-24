@@ -56,7 +56,7 @@ minix-service up /service/procfs || echo "WARNING: couldn't start procfs"
 if sysenv rootdevname >/dev/null
 then	rootdevname=/dev/`sysenv rootdevname`
 else
-	if (! sysenv cdproberoot) && (! sysenv bootramdisk) >/dev/null
+	if ! sysenv cdproberoot >/dev/null && ! sysenv bootramdisk >/dev/null
 	then	echo "rootdevname not set"
 		exit 1
 	fi
