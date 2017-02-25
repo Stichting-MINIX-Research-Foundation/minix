@@ -3,4 +3,4 @@
 # 'Recovery' script that doesn't. This script is to be used for drivers that
 # should not be restarted. Instead, the scripts configures the driver 'down'.
 #echo "Arguments: $@" >/dev/console
-service down "$1"
+/sbin/minix-service down "$1"
