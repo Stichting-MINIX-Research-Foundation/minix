@@ -325,8 +325,7 @@ void read_inode_iso9660(struct inode_dir_entry *i,
 	/* Initialize stat. */
 	i->i_node->i_stat.st_dev = fs_dev;
 	i->i_node->i_stat.st_blksize = v_pri.logical_block_size_l;
-	i->i_node->i_stat.st_blocks =
-	    dir_rec->data_length_l / v_pri.logical_block_size_l;
+	i->i_node->i_stat.st_blocks = dir_rec->data_length_l / 512;
 	i->i_node->i_stat.st_nlink = 1;
 }
 
