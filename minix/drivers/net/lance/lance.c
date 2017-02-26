@@ -27,7 +27,6 @@ static int do_init(unsigned int instance, netdriver_addr_t *addr,
 	uint32_t *caps, unsigned int *ticks);
 static void ec_confaddr(netdriver_addr_t *addr, unsigned int instance);
 static void ec_reinit(ether_card_t *ec);
-static void ec_reset(ether_card_t *ec);
 static void do_intr(unsigned int mask);
 static void do_set_mode(unsigned int mode, const netdriver_addr_t *mcast_list,
 	unsigned int mcast_count);
@@ -299,26 +298,24 @@ static int do_init(unsigned int instance, netdriver_addr_t *addr,
  *===========================================================================*/
 static void ec_reinit(ether_card_t *ec)
 {
+   spin_t spin;
    int i;
    unsigned short ioaddr = ec->ec_port;
 
    /* stop */
    write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STOP);
-
-   /* purge Tx-ring */
-   tx_slot_nr = cur_tx_slot_nr = 0;
-   for (i=0; i<TX_RING_SIZE; i++)
-   {
-      lp->tx_ring[i].u.base = 0;
-      isstored[i]=0;
+   /* init */
+   write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_INIT);
+   /* poll for IDON */
+   SPIN_FOR(&spin, 1000) {
+      if (read_csr(ioaddr, LANCE_CSR0) & LANCE_CSR0_IDON)
+         break;
    }
 
-   /* re-init Rx-ring */
-   rx_slot_nr = 0;
-   for (i=0; i<RX_RING_SIZE; i++)
+   /* Set 'Multicast Table' */
+   for (i=0;i<4;++i)
    {
-      lp->rx_ring[i].buf_length = -ETH_FRAME_LEN;
-      lp->rx_ring[i].u.addr[3] |= 0x80;
+      write_csr(ioaddr, LANCE_CSR8 + i, 0xffff);
    }
 
    /* Set 'Receive Mode' */
@@ -337,6 +334,23 @@ static void ec_reinit(ether_card_t *ec)
       {
          write_csr(ioaddr, LANCE_CSR15, LANCE_CSR15_DRCVBC);
       }
+   }
+
+   /* purge Tx-ring */
+   tx_slot_nr = cur_tx_slot_nr = 0;
+   for (i=0; i<TX_RING_SIZE; i++)
+   {
+      lp->tx_ring[i].u.base = 0;
+      isstored[i]=0;
+   }
+   cur_tx_slot_nr = tx_slot_nr;
+
+   /* re-init Rx-ring */
+   rx_slot_nr = 0;
+   for (i=0; i<RX_RING_SIZE; i++)
+   {
+      lp->rx_ring[i].buf_length = -ETH_FRAME_LEN;
+      lp->rx_ring[i].u.addr[3] |= 0x80;
    }
 
    /* start && enable interrupt */
@@ -482,52 +496,16 @@ static void do_intr(unsigned int __unused mask)
          printf("ETH: restarting...\n");
 #endif
 
-         ec_reset(ec);
+         ec_reinit(ec);
+
+	 /* store a buffered message on the slot if it exists */
+	 netdriver_send();
       }
    }
 
    /* reenable interrupts */
    if ((r = sys_irqenable(&ec->ec_hook)) != OK)
       panic("couldn't enable interrupt: %d", r);
-}
-
-/*===========================================================================*
- *                              ec_reset                                     *
- *===========================================================================*/
-static void ec_reset(ether_card_t *ec)
-{
-   /* Stop/start the chip, and clear all RX,TX-slots.  The spec says this type
-    * of reset should be done on MERR, UFLO, and TX BUFF errors.  For now it is
-    * called only for UFLO and TX BUFF (which causes UFLO).  MERR is not (yet?)
-    * handled.  Also note that the PCnet spec says that the LANCE chip does not
-    * require resetting Rx/Tx, but PCnet does.  We intend to support both here.
-    */
-   unsigned short ioaddr = ec->ec_port;
-   int i;
-
-   /* stop */
-   write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STOP);
-   /* start */
-   write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STRT);
-
-   /* purge Tx-ring */
-   tx_slot_nr = cur_tx_slot_nr = 0;
-   for (i=0; i<TX_RING_SIZE; i++)
-   {
-      lp->tx_ring[i].u.base = 0;
-      isstored[i]=0;
-   }
-
-   /* re-init Rx-ring */
-   rx_slot_nr = 0;
-   for (i=0; i<RX_RING_SIZE; i++)
-   {
-      lp->rx_ring[i].buf_length = -ETH_FRAME_LEN;
-      lp->rx_ring[i].u.addr[3] |= 0x80;
-   }
-
-   /* store a buffered message on the slot if it exists */
-   netdriver_send();
 }
 
 /*===========================================================================*
@@ -843,38 +821,7 @@ static void lance_init_hw(ether_card_t *ec, netdriver_addr_t *addr,
              |LANCE_CSR4_TXSTRTM|LANCE_CSR4_JABM);
 
    /* ----- start when init done. ----- */
-   /* stop */
-   write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_STOP);
-   /* init */
-   write_csr(ioaddr, LANCE_CSR0, LANCE_CSR0_INIT);
-   /* poll for IDON */
-   for (i = 10000; i > 0; --i)
-      if (read_csr(ioaddr, LANCE_CSR0) & LANCE_CSR0_IDON)
-         break;
-
-   /* Set 'Multicast Table' */
-   for (i=0;i<4;++i)
-   {
-      write_csr(ioaddr, LANCE_CSR8 + i, 0xffff);
-   }
-
-   /* Set 'Receive Mode' */
-   if (ec->ec_mode & NDEV_MODE_PROMISC)
-   {
-      write_csr(ioaddr, LANCE_CSR15, LANCE_CSR15_PROM);
-   }
-   else
-   {
-      if (ec->ec_mode &
-          (NDEV_MODE_BCAST | NDEV_MODE_MCAST_LIST | NDEV_MODE_MCAST_ALL))
-      {
-         write_csr(ioaddr, LANCE_CSR15, 0x0000);
-      }
-      else
-      {
-         write_csr(ioaddr, LANCE_CSR15, LANCE_CSR15_DRCVBC);
-      }
-   }
+   ec_reinit(ec);
 
    /* Set the interrupt handler */
    ec->ec_hook = ec->ec_irq;
