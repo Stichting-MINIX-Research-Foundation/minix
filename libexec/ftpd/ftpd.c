@@ -575,6 +575,15 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "failed to write a pid file: %m");
 
 		for (;;) {
+#ifdef __minix
+			/*
+			 * MINIX 3 does not yet support SA_NOCLDWAIT.  Cleaning
+			 * up zombies this way is not perfect, but at least it
+			 * prevents accumulation of zombies over time.
+			 */
+			while (waitpid(-1, NULL, WNOHANG) > 0)
+				;
+#endif /* __minix */
 			if (poll(fds, n, INFTIM) == -1) {
 				if (errno == EINTR)
 					continue;
@@ -708,7 +717,6 @@ main(int argc, char *argv[])
 	sa.sa_handler = toolong;
 	(void) sigaction(SIGALRM, &sa, NULL);
 	sa.sa_handler = sigurg;
-#if !defined(__minix)
 	(void) sigaction(SIGURG, &sa, NULL);
 
 	/* Try to handle urgent data inline */
@@ -723,7 +731,6 @@ main(int argc, char *argv[])
 	    sizeof(int)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 #endif
-#endif /* !defined(__minix) */
 
 #ifdef	F_SETOWN
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
@@ -2012,7 +2019,6 @@ dataconn(const char *name, off_t size, const char *fmode)
 		}
 		(void) close(pdata);
 		pdata = s;
-#if !defined(__minix)
 		switch (from.su_family) {
 		case AF_INET:
 #ifdef IP_TOS
@@ -2024,7 +2030,6 @@ dataconn(const char *name, off_t size, const char *fmode)
 			break;
 #endif
 		}
-#endif /* !defined(__minix) */
 		/* Set keepalives on the socket to detect dropped conns. */
 #ifdef SO_KEEPALIVE
 		keepalive = 1;
