@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 SUBDIR= \
-	fingerd ftpd getty \
+	fingerd ftpd getty httpd \
 	ld.elf_so \
 	rshd \
 	telnetd

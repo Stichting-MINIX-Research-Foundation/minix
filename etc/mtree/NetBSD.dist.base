@@ -735,6 +735,7 @@
 ./var/spool/ftp/bin
 ./var/spool/ftp/etc
 ./var/spool/ftp/hidden		#breaks cd image generation with non-root users: mode=0111
+./var/www
 
 # Directories with special access rights
 /set type=dir uid=0 gid=0 mode=1777

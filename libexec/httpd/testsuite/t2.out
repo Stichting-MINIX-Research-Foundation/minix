@@ -1,0 +1,9 @@
+HTTP/1.0 200 OK
+Date: Tue, 10 Jul 2001 15:45:36 GMT
+Server: bozotic HTTP server version 5.08
+Accept-Ranges: bytes
+Last-Modified: Tue, 10 Jul 2001 15:50:43 GMT
+Content-Type: text/html
+Content-Length: 55
+
+this is the bozohttpd testsuite ./data/index.html file

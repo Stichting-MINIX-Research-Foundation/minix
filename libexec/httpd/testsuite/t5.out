@@ -1,0 +1,10 @@
+HTTP/1.0 403 Forbidden
+Content-Type: text/html
+Content-Length: 336
+Server: bozohttpd/20030206
+
+<html><head><title>403 Forbidden</title></head>
+<body><h1>403 Forbidden</h1>
+/cgi-bin/..M-@M-/..M-@M-/..M-@M-/..M-@M-/..M-@M-/../winnt/system32/cmd.exe: <pre>Access to this item has been denied</pre>
+<hr><address><a href="http://what-time-is-love.eterna.com.au/">what-time-is-love.eterna.com.au</a></address>
+</body></html>

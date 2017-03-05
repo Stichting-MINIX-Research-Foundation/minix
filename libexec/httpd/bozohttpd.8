@@ -1,0 +1,683 @@
+.\"	$NetBSD: bozohttpd.8,v 1.53 2015/08/13 12:30:08 wiz Exp $
+.\"
+.\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
+.\"
+.\" Copyright (c) 1997-2015 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 1, 2015
+.Dt BOZOHTTPD 8
+.Os
+.Sh NAME
+.Nm bozohttpd
+.Nd hyper text transfer protocol version 1.1 daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl CIMPSZciptvx
+.Op Fl C Ar suffix cgihandler
+.Op Fl I Ar port
+.Op Fl L Ar prefix script
+.Op Fl M Ar suffix type encoding encoding11
+.Op Fl P Ar pidfile
+.Op Fl S Ar server_software
+.Op Fl Z Ar cert privkey
+.Op Fl c Ar cgibin
+.Op Fl i Ar address
+.Op Fl p Ar pubdir
+.Op Fl t Ar chrootdir
+.Op Fl v Ar virtualroot
+.Op Fl x Ar index
+.Ar slashdir
+.Op Ar myname
+.Sh DESCRIPTION
+The
+.Nm
+program reads a
+.Em HTTP
+request from the standard input, and sends a reply to the standard output.
+Besides ~user translation and virtual hosting support (see below), all file
+requests are from
+.Ar slashdir
+directory.
+The server uses
+.Ar myname
+as its name, which defaults to the local hostname, obtained from
+.Xr gethostname 3
+(but see the
+.Fl v
+option for virtual hosting.)
+.Nm
+writes logs to
+.Xr syslog 3
+using the ftp facility (but see the
+.Fl s
+option for testing.)
+.Nm
+is designed to be small, simple and relatively featureless,
+hopefully increasing its security.
+.Ss OPTIONS
+The following options are available:
+.Bl -tag -width xxxcgibin
+.It Fl b
+Enables daemon mode, where
+.Nm
+detaches from the current terminal, running in the background and
+servicing HTTP requests.
+.It Fl C Ar suffix cgihandler
+Adds a new CGI handler program for a particular file type.
+The
+.Ar suffix
+should be any normal file suffix, and the
+.Ar cgihandler
+should be a full path to an interpreter.
+This option is the only way to enable CGI programs that exist
+outside of the cgibin directory to be executed.
+Multiple
+.Fl C
+options may be passed.
+.It Fl c Ar cgibin
+Enables the CGI/1.1 interface.
+The
+.Ar cgibin
+directory is expected to contain the CGI programs to be used.
+.Nm
+looks for URL's in the form of
+.Em /cgi-bin/\*[Lt]scriptname\*[Gt]
+where
+.Aq scriptname
+is a valid CGI program in the
+.Ar cgibin
+directory.
+In other words, all CGI URL's must begin with
+.Em \%/cgi-bin/ .
+Note that the CGI/1.1 interface is not available with
+.Em ~user
+translation.
+.It Fl e
+Causes
+.Nm
+to not clear the environment when used with either the
+.Fl t
+or
+.Fl U
+options.
+.It Fl f
+Stops the
+.Fl b
+flag from
+.Nm
+detaching from the tty and going into the background.
+.It Fl H
+Causes directory index mode to hide files and directories
+that start with a period, except for
+.Pa .. .
+Also see
+.Fl X .
+.It Fl I Ar port
+Causes
+.Nm
+to use
+.Ar port
+instead of the default
+.Dq http
+port.
+When used with the
+.Fl b
+option, it changes the bound port.
+Otherwise it forces redirections to use this port instead of the
+value obtained via
+.Xr getsockname 2 .
+.It Fl i Ar address
+Causes
+.Ar address
+to be used as the address to bind daemon mode.
+If otherwise unspecified, the address used to bind is derived from the
+.Ar myname ,
+which defaults to the name returned by
+.Xr gethostname 3 .
+Only the last
+.Fl i
+option is used.
+This option is only valid with the
+.Fl b
+option.
+.It Fl L Ar prefix script
+Adds a new Lua script for a particular prefix.
+The
+.Ar prefix
+should be an arbitrary text, and the
+.Ar script
+should be a full path to a Lua script.
+Multiple
+.Fl L
+options may be passed.
+A separate Lua state is created for each prefix.
+The Lua script can register callbacks using the
+httpd.register_handler('<name>', function) Lua function,
+which will trigger the execution of the Lua function
+.Em function
+when a URL in the form
+.Em http://<hostname>/<prefix>/<name>
+is being accessed.
+The function is passed three tables as arguments, the server
+environment, the request headers, and the decoded query string
+plus any data that was send as application/x-www-form-urlencoded.
+.It Fl M Ar suffix type encoding encoding11
+Adds a new entry to the table that converts file suffixes to
+content type and encoding.
+This option takes four additional arguments containing
+the file prefix, its
+.Dq Content-Type ,
+.Dq Content-Encoding ,
+and
+.Dq Content-Encoding
+for HTTP/1.1 connections, respectively.
+If any of these are a single dash
+.Pq Dq - ,
+the empty string is used instead.
+Multiple
+.Fl M
+options may be passed.
+.It Fl n
+Stops
+.Nm
+from doing IP address to name resolution of hosts for setting the
+.Ev REMOTE_HOST
+variable before running a CGI program.
+This option has no effect without the
+.Fl c
+option.
+.It Fl P Ar pidfile
+Causes
+.Nm
+to create a pid file in
+.Ar pidfile
+when run in daemon mode with the
+.Fl b
+option.
+.It Fl p Ar pubdir
+Changes the default user directory for
+.Em /~user/
+translations from
+.Dq public_html
+to
+.Ar pubdir .
+.It Fl r
+Forces pages besides the
+.Dq index.html
+(see the
+.Fl X
+option) page to require that the Referrer: header be present and
+refer to this web server, otherwise a redirect to the
+.Dq index.html
+page will be returned instead.
+.It Fl S Ar server_software
+Sets the internal server version to
+.Ar server_software .
+.It Fl s
+Forces logging to be set to stderr always.
+.It Fl t Ar chrootdir
+Makes
+.Nm
+chroot to the specified directory
+before answering requests.
+Every other path should be specified relative
+to the new root, if this option is used.
+Note that the current environment
+is normally replaced with an empty environment with this option, unless the
+.Fl e
+option is also used.
+.It Fl U Ar username
+Causes
+.Nm
+to switch to the user and the groups of
+.Ar username
+after initialization.
+This option, like
+.Fl t
+above, causes
+.Nm
+to clear the environment unless the
+.Fl e
+option is given.
+.It Fl u
+Enables the transformation of Uniform Resource Locators of
+the form
+.Em /~user/
+into the directory
+.Pa ~user/public_html
+(but see the
+.Fl p
+option above).
+.It Fl V
+Sets the default virtual host directory to
+.Ar slashdir .
+If no directory exists in
+.Ar virtualroot
+for the request, then
+.Ar slashdir
+will be used.
+The default behaviour is to return 404 (Not Found.)
+.It Fl v Ar virtualroot
+Enables virtual hosting support.
+Directories in
+.Ar virtualroot
+will be searched for a matching virtual host name, when parsing
+the HTML request.
+If a matching name is found, it will be used
+as both the server's real name,
+.Op Ar myname ,
+and as the
+.Ar slashdir .
+See the
+.Sx EXAMPLES
+section for an example of using this option.
+.It Fl X
+Enables directory indexing.
+A directory index will be generated only when the default file (i.e.
+.Pa index.html
+normally) is not present.
+.It Fl x Ar index
+Changes the default file read for directories from
+.Dq index.html
+to
+.Ar index .
+.It Fl Z Ar certificate_path privatekey_path
+Sets the path to the server certificate file and the private key file
+in pem format.
+It also causes
+.Nm
+to start SSL mode.
+.El
+.Pp
+Note that in
+.Nm
+versions 20031005 and prior that supported the
+.Fl C
+and
+.Fl M
+options, they took a single space-separated argument that was parsed.
+since version 20040828, they take multiple options (2 in the case of
+.Fl C
+and 4 in the case of
+.Fl M . )
+.Ss INETD CONFIGURATION
+As
+.Nm
+uses
+.Xr inetd 8
+by default to process incoming TCP connections for HTTP requests
+(but see the
+.Fl b
+option),
+.Nm
+has little internal networking knowledge.
+(Indeed, you can run it on the command line with little change of functionality.)
+A typical
+.Xr inetd.conf 5
+entry would be:
+.Bd -literal
+http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd /var/www
+http stream tcp6 nowait:600 _httpd /usr/libexec/httpd httpd /var/www
+.Ed
+.Pp
+This would serve web pages from
+.Pa /var/www
+on both IPv4 and IPv6 ports.
+The
+.Em :600
+changes the
+requests per minute to 600, up from the
+.Xr inetd 8
+default of 40.
+.Pp
+Using the
+.Nx
+.Xr inetd 8 ,
+you can provide multiple IP-address based HTTP servers by having multiple
+listening ports with different configurations.
+.Ss NOTES
+This server supports the
+.Em HTTP/0.9 ,
+.Em HTTP/1.0 ,
+and
+.Em HTTP/1.1
+standards.
+Support for these protocols is very minimal and many optional features are
+not supported.
+.Pp
+.Nm
+can be compiled without
+CGI support (NO_CGIBIN_SUPPORT),
+user transformations (NO_USER_SUPPORT),
+directory index support (NO_DIRINDEX_SUPPORT),
+daemon mode support (NO_DAEMON_MODE),
+dynamic MIME content (NO_DYNAMIC_CONTENT),
+Lua suport (NO_LUA_SUPPORT),
+and SSL support (NO_SSL_SUPPORT)
+by defining the listed macros when building
+.Nm .
+.Ss HTTP BASIC AUTHORISATION
+.Nm
+has support for HTTP Basic Authorisation.
+If a file named
+.Pa .htpasswd
+exists in the directory of the current request,
+.Nm
+will restrict access to documents in that directory
+using the RFC 2617 HTTP
+.Dq Basic
+authentication scheme.
+.Pp
+Note:
+This does not recursively protect any sub-directories.
+.Pp
+The
+.Pa .htpasswd
+file contains lines delimited with a colon containing
+usernames and passwords hashed with
+.Xr crypt 3 ,
+for example:
+.Bd -literal
+heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1
+jeremy:A.xewbx2DpQ8I
+.Ed
+.Pp
+On
+.Nx ,
+the
+.Xr pwhash 1
+utility may be used to generate hashed passwords.
+.Pp
+While
+.Nm
+distributed with
+.Nx
+has support for HTTP Basic Authorisation enabled by default,
+in the portable distribution it is excluded.
+Compile
+.Nm
+with
+.Dq -DDO_HTPASSWD
+on the compiler command line to enable this support.
+It may require linking with the crypt library, using
+.Dq -lcrypt .
+.Ss SSL SUPPORT
+.Nm
+has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
+default.
+It requires linking with the crypto and ssl library, using
+.Dq -lcrypto -lssl .
+To disable SSL SUPPORT compile
+.Nm
+with
+.Dq -DNO_SSL_SUPPORT
+on the compiler command line.
+.Ss COMPRESSION
+.Nm
+supports a very basic form compression.
+.Nm
+will serve the requested file postpended with
+.Dq Pa .gz
+if it exists, it is readable, the client requested gzip compression, and
+the client did not make a ranged request.
+.Sh FILES
+.Nm
+looks for a couple of special files in directories that allow certain features
+to be provided on a per-directory basis.
+In addition to the
+.Pa .htpasswd
+used by HTTP basic authorisation,
+if a
+.Pa .bzdirect
+file is found (contents are irrelevant)
+.Nm
+will allow direct access even with the
+.Fl r
+option.
+If a
+.Pa .bzredirect
+symbolic link is found,
+.Nm
+will perform a smart redirect to the target of this symlink.
+The target is assumed to live on the same server.
+If a
+.Pa .bzabsredirect
+symbolic link is found,
+.Nm
+will redirect to the absolute url pointed to by this symlink.
+This is useful to redirect to different servers.
+.Sh EXAMPLES
+To configure set of virtual hosts, one would use an
+.Xr inetd.conf 5
+entry like:
+.Bd -literal
+http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
+.Ed
+.Pp
+and inside
+.Pa /var/vroot
+create a directory (or a symlink to a directory) with the same name as
+the virtual host, for each virtual host.
+Lookups for these names are done in a case-insensitive manner, and may
+include the port number part of the request, allowing for distinct
+virtual hosts on the same name.
+.Pp
+To use
+.Nm
+with PHP, one must use the
+.Fl C
+option to specify a CGI handler for a particular file type.
+Typically this will be like:
+.Bd -literal
+httpd -C .php /usr/pkg/bin/php /var/www
+.Ed
+.Sh SEE ALSO
+.Xr inetd.conf 5 ,
+.Xr inetd 8
+.Sh HISTORY
+.Nm
+was first written in perl, based on another perl http server
+called
+.Dq tinyhttpd .
+It was then rewritten from scratch in perl, and then once again in C.
+From
+.Dq bozohttpd
+version 20060517, it has been integrated into
+.Nx .
+The focus has always been simplicity and security, with minimal features
+and regular code audits.
+This manual documents
+.Nm
+version 20150501.
+.Sh AUTHORS
+.An -nosplit
+.Nm
+was written by
+.An Matthew R. Green
+.Aq Mt mrg@eterna.com.au .
+.Pp
+The large list of contributors includes:
+.Bl -dash
+.It
+.An Marc Balmer
+.Aq Mt mbalmer@NetBSD.org
+added Lua support for dynamic content creation
+.It
+.An Christoph Badura
+.Aq Mt bad@bsd.de
+provided Range: header support
+.It
+.An Sean Boudreau
+.Aq Mt seanb@NetBSD.org
+provided a security fix for virtual hosting
+.It
+.An Julian Coleman
+.Aq Mt jdc@coris.org.uk
+provided an IPv6 bugfix
+.It
+.An Chuck Cranor
+.Aq Mt chuck@research.att.com
+provided cgi-bin support fixes, and more
+.It
+.An Alistair G. Crooks
+.Aq Mt agc@NetBSD.org
+cleaned up many internal interfaces, made
+.Nm
+linkable as a library and provided the Lua binding.
+.It
+.An DEGROOTE Arnaud
+.Aq Mt degroote@NetBSD.org
+provided a fix for daemon mode
+.It
+.An Andrew Doran
+.Aq Mt ad@NetBSD.org
+provided directory indexing support
+.It
+.An Per Ekman
+.Aq Mt pek@pdc.kth.se
+provided a fix for a minor (non-security) buffer overflow condition
+.It
+.An Roland Dowdeswell
+.Aq Mt elric@NetBSD.org
+added support for serving gzipped files and better SSL handling
+.It
+.An Jun-ichiro itojun Hagino, KAME
+.Aq Mt itojun@iijlab.net
+provided initial IPv6 support
+.It
+.An Martin Husemann
+.Aq Mt martin@NetBSD.org
+provided .bzabsredirect support, and fixed various redirection issues
+.It
+.An Arto Huusko
+.Aq Mt arto.huusko@pp2.inet.fi
+provided fixes cgi-bin
+.It
+.An Roland Illig
+.Aq Mt roland.illig@gmx.de
+provided some off-by-one fixes
+.It
+.An Zak Johnson
+.Aq Mt zakj@nox.cx
+provided cgi-bin enhancements
+.It
+.An Nicolas Jombart
+.Aq Mt ecu@ipv42.net
+provided fixes for HTTP basic authorisation support
+.It
+.An Antti Kantee
+.Aq Mt pooka@NetBSD.org
+provided fixes for HTTP basic authorisation support
+.It
+.An Thomas Klausner
+.Aq Mt wiz@NetBSD.org
+provided many fixes and enhancements for the man page
+.It
+.An Mateusz Kocielski
+.Aq Mt shm@NetBSD.org
+fixed memory leaks, various issues with userdir support,
+information disclosure issues, added support for using CGI handlers
+with directory indexing and provided various other fixes.
+.It
+.An Arnaud Lacombe
+.Aq Mt alc@NetBSD.org
+provided some clean up for memory leaks
+.It
+.An Johnny Lam
+.Aq Mt jlam@NetBSD.org
+provided man page fixes
+.It
+.An Julio Merino
+.Aq Mt jmmv@NetBSD.org
+Added the
+.Fl P
+option.
+.It
+.An Luke Mewburn
+.Aq Mt lukem@NetBSD.org
+provided many various fixes, including cgi-bin fixes and enhancements,
+HTTP basic authorisation support and much code clean up
+.It
+.An Rajeev V. Pillai
+.Aq Mt rajeev_v_pillai@yahoo.com
+provided several fixes for virtual hosting
+.It
+.An Jeremy C. Reed
+.Aq Mt reed@NetBSD.org
+provided several clean up fixes, and man page updates
+.It
+.An Scott Reynolds
+.Aq Mt scottr@NetBSD.org
+provided various fixes
+.It
+.An Tyler Retzlaff
+.Aq Mt rtr@eterna.com.au
+provided SSL support, cgi-bin fixes and much other random other stuff
+.It
+.An rudolf
+.Aq Mt netbsd@eq.cz
+provided minor compile fixes and a CGI content map fix
+.It
+.An Steve Rumble
+.Aq Mt rumble@ephemeral.org
+provided the
+.Fl V
+option.
+.It
+.An Thor Lancelot Simon
+.Aq Mt tls@NetBSD.org
+enhanced cgi-bin support.
+.It
+.An Joerg Sonnenberger
+.Aq Mt joerg@NetBSD.org
+implemented If-Modified-Since support
+.It
+.An ISIHARA Takanori
+.Aq Mt ishit@oak.dti.ne.jp
+provided a man page fix
+.It
+.An Holger Weiss
+.Aq Mt holger@CIS.FU-Berlin.DE
+provided http authorisation fixes
+.It
+.Aq Mt xs@kittenz.org
+provided chroot and change-to-user support, and other various fixes
+.It
+Coyote Point provided various CGI fixes.
+.It
+.An Julio Merino
+added pidfile support and provided some man page fixes.
+.El
+.Pp
+There are probably others I have forgotten (let me know if you care)
+.Pp
+Please send all updates to
+.Nm
+to
+.Aq Mt mrg@eterna.com.au
+for inclusion in future releases.
+.Sh BUGS
+.Nm
+does not handle HTTP/1.1 chunked input from the client yet.

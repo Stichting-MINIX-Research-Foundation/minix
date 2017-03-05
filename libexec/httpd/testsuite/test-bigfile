@@ -1,0 +1,27 @@
+#! /bin/sh
+
+test="$1"	# partial4000 or partial8000
+bozohttpd="$2"
+wget="$3"
+datadir="$4"
+
+bozotestport=11111
+
+# copy beginning file
+cp ./data/bigfile.${test} ./bigfile
+
+# fire up bozohttpd
+${bozohttpd} -b -b -I ${bozotestport} -n -s -f ${datadir} &
+bozopid=$!
+
+${wget} -c http://localhost:${bozotestport}/bigfile
+
+kill -9 $bozopid
+
+if cmp ./bigfile ./data/bigfile; then
+	rm -f ./bigfile
+	exit 0
+else
+	rm -f ./bigfile
+	exit 1
+fi

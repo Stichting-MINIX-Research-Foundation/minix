@@ -1,0 +1,12 @@
+HTTP/1.1 206 Partial Content
+Date: Sun, 02 Mar 2008 08:52:03 GMT
+Server: bozohttpd/20060710
+Accept-Ranges: bytes
+Last-Modified: Sun, 02 Mar 2008 08:44:38 GMT
+Content-Type: text/plain
+Content-Range: bytes 0-31/64
+Content-Length: 32
+Connection: close
+
+123456781234567
+345678903456789

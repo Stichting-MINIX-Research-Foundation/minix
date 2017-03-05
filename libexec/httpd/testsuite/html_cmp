@@ -1,0 +1,27 @@
+#! /bin/sh
+#
+#	$eterna: html_cmp,v 1.9 2011/11/17 22:18:02 mrg Exp $
+#
+# like cmp(1) but compares to files after making their `Date: ' headers
+# the same, to allow `now' and `then' to work properly.  it also tries
+# to find servername's that might be the local host and converts those
+# as well..
+#
+# it must be called like `cmp file1 file1' *only*.  
+
+h=`hostname || uname -n`
+
+sedcmd="s/^Date: .*/Date: nowish/;
+	s/^Last-Modified: .*/Last-Modified: nowish/;
+	s/[a-zA-Z0-9-]*\.eterna\.com\.au/$h/g;
+	s/^Server: .*/^Server: bozotic HTTP server version 5.08/;
+	s/^Content-Length: .*/Content-Length: 223/;"
+
+sed -e "$sedcmd" < "$1" > "f1.tmp.$$"
+sed -e "$sedcmd" < "$2" > "f2.tmp.$$"
+
+cmp -s "f1.tmp.$$" "f2.tmp.$$"
+rv=$?
+rm -f "f1.tmp.$$" "f2.tmp.$$"
+
+exit $rv

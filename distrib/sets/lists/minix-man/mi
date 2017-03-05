@@ -3462,6 +3462,7 @@
 ./usr/man/man8/blacklistctl.8                           minix-man
 ./usr/man/man8/blacklistd.8                             minix-man
 ./usr/man/man8/boot.8                                   minix-man
+./usr/man/man8/bozohttpd.8                              minix-man
 ./usr/man/man8/btrace.8                                 minix-man
 ./usr/man/man8/cdprobe.8                                minix-man
 ./usr/man/man8/chown.8                                  minix-man
@@ -3501,7 +3502,7 @@
 ./usr/man/man8/groupinfo.8                              minix-man
 ./usr/man/man8/groupmod.8                               minix-man
 ./usr/man/man8/halt.8                                   minix-man
-./usr/man/man8/httpd.8                                  minix-man       obsolete
+./usr/man/man8/httpd.8                                  minix-man
 ./usr/man/man8/i2cscan.8                                minix-man
 ./usr/man/man8/ifconfig.8                               minix-man
 ./usr/man/man8/in.httpd.8                               minix-man       obsolete

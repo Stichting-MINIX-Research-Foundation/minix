@@ -1,0 +1,275 @@
+$eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
+
+changes in bozohttpd 20150320:
+	o  fix redirection handling
+	o  support transport stream (.ts) and video object (.vob) files
+	o  directory listings show correct file sizes for large files
+
+changes in bozohttpd 20140717:
+	o  properly handle SSL errors
+
+changes in bozohttpd 20140708:
+	o  fixes for virtual host support, from rajeev_v_pillai@yahoo.com
+	o  avoid printing double errors, from shm@netbsd.org
+	o  fix a security issue in basic HTTP authentication which would allow
+	   authentication to be bypassed, from shm@netbsd.org
+
+changes in bozohttpd 20140201:
+	o  support .svg files
+	o  fix a core dump when requests timeout
+
+changes in bozohttpd 20140102:
+	o  update a few content types
+	o  add support for directly calling lua scripts to handle
+	   processes, from mbalmer@netbsd.org
+	o  properly escape generated HTML
+	o  add authentication for redirections, from martin@netbsd.org
+	o  handle chained ssl certifications, from elric@netbsd.org
+	o  add basic support for gzipped files, from elric@netbsd.org
+	o  properly escape generated URIs
+
+changes in bozohttpd 20111118:
+	o  add -P <pidfile> option, from jmmv@netbsd.org
+	o  avoid crashes with http basic auth, from pooka@netbsd.org
+	o  add support for REDIRECT_STATUS variable, from tls@netbsd.org
+	o  support .mp4 files in the default map
+	o  directory indexes with files with : are now displayed properly, from
+	   reed@netbsd.org
+	o  allow -I option to be useful in non-inetd mode as well
+
+changes in bozohttpd 20100920:
+	o  properly fully disable multi-file mode for now
+	o  fix the -t and -U options when used without the -e option, broken since
+	   the library-ifcation
+	o  be explicit that logs go to the FTP facility in syslog
+	o  use scandir() with alphasort() for sorted directory lists, from moof
+	o  fix a serious error in vhost handling; "Host:.." would allow access to
+	   the next level directory from the virtual root directory, from seanb
+	o  fix some various non standard compile time errors, from rudolf
+	o  fix dynamic CGI content maps, from rudolf
+
+changes in bozohttpd 20100617:
+	o  fix some compile issues
+	o  fix SSL mode.  from rtr
+	o  fix some cgi-bin issues, as seen with cvsweb
+	o  disable multi-file daemon mode for now, it breaks
+	o  return 404's instead of 403's when chdir of ~user dirs fail
+	o  remove "noreturn" attribute from bozo_http_error() that was
+	   causing incorrect runtime behaviour
+
+changes in bozohttpd 20100509:
+	o  major rework and clean up of internal interfaces.  move the main
+	   program into main.c, the remaining parts are useable as library.
+	   add bindings for lua.  by Alistair G. Crooks <agc@netbsd.org>
+	o  fix http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=566325
+
+changes in bozohttpd 20090522:
+	o  avoid dying in daemon mode for some uncommon, but recoverable, errors
+	o  close leaking file descriptors for CGI and daemon mode
+	o  handle poll errors properly
+	o  don't try to handle more than one request per process yet
+	o  add subdirs for build "debug" and "small" versions
+	o  clean up a bad merge / duplicate code
+	o  make mmap() usage portable, fixes linux & ranges: support
+	o  document the -f option
+	o  daemon mode now serves 6 files per child
+
+changes in bozohttpd 20090417:
+	o  make bozohttpd internally more modular, preparing the way
+	   to handle more than one request per process
+	o  fix http-auth, set $REMOTE_USER not $REMOTEUSER.  also fix
+	   cgi-bin with cvsweb, from Holger Weiss <holger@CIS.FU-Berlin.DE>
+	o  fix an uninitialised variable use in daemon mode
+	o  fix ssl mode with newer OpenSSL
+	o  mmap large files in manageable sizes so we can serve any size file
+	o  refactor url processing to handle query strings correctly for CGI
+	   from Sergey Katsev at Coyote Point
+	o  add If-Modified-Since support, from Joerg Sonnenberger
+	   <joerg@netbsd.org>
+	o  many more manual fixes, from NetBSD
+
+changes in bozohttpd 20080303:
+	o  fix some cgi header processing, from <thelsdj@gmail.com>
+	o  add simple Range: header processing, from <bad@bsd.de>
+	o  man page fixes, from NetBSD
+	o  clean up various parts, from NetBSD
+
+changes in bozohttpd 20060710:
+	o  prefix some function names with "bozo"
+	o  align directory indexing <hr> markers
+	o  clean up some code GCC4 grumbled about
+
+changes in bozohttpd 20060517:
+	o  don't allow "/.." or "../" files
+	o  don't write ":80" into urls for the http port
+	o  fix a fd leak when fork() fails
+	o  make directory indexing mode not look so ugly
+	o  build a text version of the manual page
+	o  make "make clean" work properly
+
+changes in bozohttpd 20050410:
+	o  fix some off-by-one errors from <roland.illig@gmx.de>
+	o  properly support nph- CGI
+	o  make content maps case insensitive
+	o  fix proto header merging to include the missing comma
+	o  major source reorganisation; most features are in separate files now
+	o  new -V flag that makes unknown virtualhosts use slashdir
+	   from <rumble@ephemeral.org>
+	o  HTTP/1.x protocol headers are now properly merged for CGI
+
+changes in bozohttpd 20040808:
+	o  CGI status is now properly handled (-a flag has been removed)
+	o  CGI file upload support works
+	o  %xy translations are no longer ever applied after the first '?',
+	   ala RFC2396.  from lukem
+	o  daemon mode (-b) should no longer hang spinning forever if it
+	   sees no children.  from lukem
+	o  new .bzabsredirect file support. from <martin@netbsd.org>
+	o  return a 404 error if we see %00 or %2f (/)
+	o  don't print 2 "200" headers for CGI
+	o  support .torrent files
+
+changes in bozohttpd 20040218:
+	o  new .bzredirect file support for sane directory redirection
+	o  new -Z option that enables SSL mode, from <rtr@eterna.com.au>
+	o  the -C option has been changed to take two explicit options, rather
+	   than a single option with a space separating the suffix and the
+	   interpreter.  ``-C ".foo /path/to/bar"'' should now be written
+	   as ``-C .foo /path/to/bar''
+	o  the -M option has been changed like -C and no longer requires or
+	   supports a single argument with space-separated options
+	o  with -a, still print the 200 OK.  from <rtr@eterna.com.au>
+	o  with -r, if a .bzdirect file appears in a directory, allow direct
+	   access to this directory
+
+changes in bozohttpd 20031005:
+	o  fixes for basic authorisation.  from <ecu@ipv42.net>
+	o  always display file size in directory index mode
+	o  add .xbel, .xml & .xsl -> text/xml mappings.  from
+	   <wiz@danbala.ifoer.tuwien.ac.at>
+
+changes in bozohttpd 20030626:
+	o  fix a recent core dump when given no input
+	o  add new -r flag that ensures referrer is set to this host
+	o  fix several compile time errors with -DNO_CGIBIN_SUPPORT
+	o  fix some man page details. from lukem@wasabisystems.com
+	o  re-add a missing memset(), fixing a core dump. from lukem
+	o  support HTTP basic authorisation, disabled by default.  from lukem
+	o  print the port number in redirects and errors. from lukem
+	o  only syslog the basename of the program. from lukem
+	o  add __attribute__() format checking. from lukem
+	o  fix cgibin SCRIPT_NAME to have a leading /.  from zakj@nox.cx
+	o  simplify some code in -C to avoid a core dump.  from lukem
+	o  add a .css -> css/text entry to the content_map[].  from zakj@nox.cx
+
+changes in bozohttpd 20030409:
+	o  -d without DEBUG enabled only prints one warning and continues
+	o  one can now define the C macro SERVER_SOFTWARE when building to
+	   change the Server: header and CGI variable of the same name
+	o  add new -s flag the force logging output to stderr. from zakj@nox.cx
+	o  add new -a flag for CGI bin that stops bozohttpd from outputting
+	   any HTTP reply, the CGI program must output these.  from zakj@nox.cx
+	o  new REQUEST_URI and DATE_GMT environment variables for CGI.  from
+	   zakj@nox.cx
+	o  add a "Makefile.boot" that should work with any make program
+	o  build on linux again
+	o  fix core dumps when using -C
+
+changes in bozohttpd 20030313:
+	o  deprecate -r flag; make this the default and silently ignore -r now
+	o  add support for file extentions to call CGI programs (from lukem)
+	o  add dynamic support to add new content map entries, allowing both
+	   new file types and non /cgi-bin CGI programs to be run with the
+	   new -C "suffix cgihandler" and -M "suffix type encoding encoding11"
+	   options
+	o  in -b mode, set the http date after accept() returns, not before we
+	   call accept()
+	o  in -b mode, bind all addresses found not just the first one
+	o  unsupport old hostname API
+	o  in -b mode, set the SO_REUSEADDR socket option (lukem)
+	o  allow -x (index.html) mode to work with CGI handlers
+
+changes in bozohttpd 20021106:
+	o  add .bz2 support
+	o  properly escape <, > and & in error messages, partly from
+	   Nicolas Jombart <ecu@mariejeanne.net>
+	o  new -H flag to hide .* files in directory index mode
+	o  fix buffer reallocation when parsing a request, to avoid
+	   overflowing the buffer with carriage returns (\r)
+	o  do not decode "%XY"-style cgi-bin data beyond the "?"
+
+changes in bozohttpd 5.15 (20020913):
+	o  add .ogg support -> `application/x-ogg'
+	o  fix CGI requests with "/" in the query part
+
+changes in bozohttpd 5.14 (20020823):
+	o  allow -X mode to work for "/"
+	o  work on systems without MADV_SEQUENTIAL
+	o  make a local cut-down copy of "queue.h" (fixes linux & solaris
+	   support at the very least)
+	o  portability fixes for pre-ipv6 socket api systems (eg, solaris 7)
+	o  portability fixes for missing _PATH_DEFPATH, LOG_FTP and __progname
+	o  better documentation on virtual host support
+
+changes in bozohttpd 5.13 (20020804):
+	o  support .mp3 files (type audio/mpeg)
+	o  use stat() to find out if something is a directory, for -X mode
+
+changes in bozohttpd 5.12 (20020803):
+	o  constification
+	o  fixes & enhancements for directory index mode (-X)
+
+changes in bozohttpd 5.11 (20020730):
+	o  more man page fixes from Thomas Klausner
+	   <wiz@danbala.ifoer.tuwien.ac.at>
+	o  de-K&R C-ification
+	o  fix Date: header for daemon mode
+	o  fix core dump when asking for /cgi-bin/ when CGI isn't configured
+	o  use a valid Server: header
+
+changes in bozohttpd 5.10 (20020710):
+	- add freebsd support 
+	- fix a couple of header typos
+	- many cgi-bin fixes from lukem@netbsd.org
+	- add -T chrootdir and -U user, plus several minor other cleanups
+	with signals and return values.  from xs@kittenz.org
+	- add -e that does not clear the environment for -T/-U
+	- fix a formatting error noticed by ISIHARA Takanori <ishit@oak.dti.ne.jp>
+
+changes in bozohttpd 5.09 (20010922):
+	- add a daemon mode
+	- document how to use bozohttpd in netbsd inetd with more than 40 
+	connections per minute and also with cgibin
+	- man page fixes from wiz@netbsd.org
+
+changes in bozohttpd 5.08 (20010812):
+	- add directory index generation support (-X) from ad@netbsd.org
+	- add .pa as an alias for .pac
+	- make server software version configurable (RFC)
+
+changes in bozohttpd 5.07 (20010610):
+	- add .png support 
+	- new "-x index.html" flag to change default file
+	- new "-p public_html" flag to change default ~user directory
+	- fixes cgi-bin support and more from chuck@research.att.com
+	- add many new content-types, now support most common ones
+
+changes in bozohttpd 5.06 (20000825):
+	- add IPv6 suppor from itojun@iijlab.net
+	- man page fixes from jlam@netbsd.org
+
+changes in bozohttpd 5.05 (20000815):
+	- fix a virtual host bug, from kleink@netbsd.org
+
+changes in bozohttpd 5.04 (20000427):
+	- fix virtual host support; URI takes precedence over Host:
+
+changes in bozohttpd 5.03 (20000427):
+	- fix a bug with chdir() 
+
+changes in bozohttpd 5.02 (20000426):
+	- .pac spport from simonb
+
+changes in bozohttpd 5.01 (20000421):
+	- .swf support 
+	- virtual hosting support 

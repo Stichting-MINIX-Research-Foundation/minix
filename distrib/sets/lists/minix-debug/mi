@@ -600,12 +600,14 @@
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug           minix-debug     debug
 ./usr/libdata/debug/usr/libexec                         minix-debug
 ./usr/libdata/debug/usr/libexec/atf-check.debug         minix-debug     debug
+./usr/libdata/debug/usr/libexec/bozohttpd.debug         minix-debug     debug
 ./usr/libdata/debug/usr/libexec/cc1.debug               minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug            minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1plus.debug           minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/fingerd.debug           minix-debug     debug
 ./usr/libdata/debug/usr/libexec/ftpd.debug              minix-debug     debug
 ./usr/libdata/debug/usr/libexec/getty.debug             minix-debug     debug
+./usr/libdata/debug/usr/libexec/httpd.debug             minix-debug     debug
 ./usr/libdata/debug/usr/libexec/kyua-atf-tester.debug   minix-debug     debug
 ./usr/libdata/debug/usr/libexec/kyua-plain-tester.debug minix-debug     debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug         minix-debug     debug

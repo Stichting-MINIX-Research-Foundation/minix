@@ -1,0 +1,11 @@
+HTTP/1.1 400 Bad Request
+Content-Type: text/html
+Content-Length: 229
+Server: bozotic HTTP server version 5.08
+Allow: GET, HEAD, POST
+
+<html><head><title>400 Bad Request</title></head>
+<body><h1>400 Bad Request</h1>
+/: <pre>The request was not valid</pre>
+<hr><address><a href="http://madrugada.eterna.com.au/">madrugada.eterna.com.au</a></address>
+</body></html>

@@ -1058,9 +1058,11 @@
 ./usr/libexec                                           minix-base
 ./usr/libexec/atf-check                                 minix-base      atf
 ./usr/libexec/blacklistd-helper                         minix-base
+./usr/libexec/bozohttpd                                 minix-base
 ./usr/libexec/fingerd                                   minix-base
 ./usr/libexec/ftpd                                      minix-base
 ./usr/libexec/getty                                     minix-base
+./usr/libexec/httpd                                     minix-base
 ./usr/libexec/kyua-atf-tester                           minix-base      kyua
 ./usr/libexec/kyua-plain-tester                         minix-base      kyua
 ./usr/libexec/ld.elf_so                                 minix-base
@@ -3965,3 +3967,4 @@
 ./var/spool/ftp/etc                                     minix-base
 ./var/spool/ftp/hidden                                  minix-base
 ./var/tmp                                               minix-base
+./var/www                                               minix-base
