@@ -362,6 +362,8 @@
 ./usr/bin/gcov-pull                                     minix-base
 ./usr/bin/genassym                                      minix-base
 ./usr/bin/gencat                                        minix-base
+./usr/bin/getcap                                        minix-base
+./usr/bin/getent                                        minix-base
 ./usr/bin/getopt                                        minix-base
 ./usr/bin/grep                                          minix-base
 ./usr/bin/groups                                        minix-base

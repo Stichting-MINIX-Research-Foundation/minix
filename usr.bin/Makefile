@@ -11,7 +11,7 @@ SUBDIR= asa \
 	deroff dirname du \
 	env expand \
 	false find finger flock fold fmt fpr from \
-	fsplit ftp genassym gencat \
+	fsplit ftp genassym gencat getent \
 	getopt \
 	head hexdump id indent infocmp ipcrm ipcs join jot \
 	lam last ldd leave \

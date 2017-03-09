@@ -282,6 +282,7 @@
 ./usr/libdata/debug/usr/bin/gcov.debug                  minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcpp.debug                  minix-debug     gcc=5,gcccmds,debug
 ./usr/libdata/debug/usr/bin/gencat.debug                minix-debug     debug
+./usr/libdata/debug/usr/bin/getent.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/getopt.debug                minix-debug     debug
 ./usr/libdata/debug/usr/bin/gprof.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/bin/grep.debug                  minix-debug     debug
