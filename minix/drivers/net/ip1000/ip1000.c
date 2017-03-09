@@ -143,7 +143,7 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 	polar = ndr_in8(base, REG_PHY_CTRL) & 0x28;
 	for (i = 0; i < 7; i++) {
 		for (j = 0; j < fieldlen[i]; j++) {
-			data = (field[i] >> (field[j] - j - 1)) << 1;
+			data = (field[i] >> (field[i] - j - 1)) << 1;
 			data = (0x02 & data) | (0x04 | polar);
 			ndr_out8(base, REG_PHY_CTRL, data);
 			micro_delay(10);
@@ -156,7 +156,7 @@ static void write_phy_reg(u32_t base, int phy_addr, int phy_reg, u16_t val) {
 		micro_delay(10);
 		field[7] |= ((ndr_in8(base, REG_PHY_CTRL) & 0x02) >> 1)
 						<< (fieldlen[7] - i -1);
-		ndr_out8(base, REG_PHY_CTRL, (data | 0x01));
+		ndr_out8(base, REG_PHY_CTRL, (polar | 0x01));
 		micro_delay(10);
 	}
 }
