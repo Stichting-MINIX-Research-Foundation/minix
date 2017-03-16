@@ -31,6 +31,7 @@ void panic(const char *fmt, ...)
 	printf("kernel panic: ");
   	va_start(arg, fmt);
 	vprintf(fmt, arg);
+	va_end(arg);
 	printf("\n");
   }
 
@@ -70,7 +71,7 @@ void kputc(
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       kmess.kmess_buf[kmess.blpos] = c;
       if (kmess.km_size < sizeof(kmess.km_buf))
-          kmess.km_size += 1;		
+          kmess.km_size += 1;
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
       if(kmess.blpos == maxblpos) {
       	memmove(kmess.kmess_buf,
