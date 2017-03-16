@@ -8,7 +8,7 @@
  *	m_lsys_kern_safecopy.address	address in own address space
  *    	m_lsys_kern_safecopy.bytes	bytes to be copied
  *
- * For the vectored variant (do_vsafecopy): 
+ * For the vectored variant (do_vsafecopy):
  *      m_lsys_kern_vsafecopy.vec_addr   address of vector
  *      m_lsys_kern_vsafecopy.vec_size   number of significant elements in vector
  */
@@ -285,12 +285,8 @@ static int safecopy(
 	static struct vir_addr v_src, v_dst;
 	static vir_bytes v_offset;
 	endpoint_t new_granter, *src, *dst;
-	struct proc *granter_p;
 	int r;
 	struct cp_sfinfo sfinfo;
-#if PERF_USE_COW_SAFECOPY
-	vir_bytes size;
-#endif
 
 	if(granter == NONE || grantee == NONE) {
 		printf("safecopy: nonsense processes\n");
@@ -393,7 +389,7 @@ int do_safecopy_to(struct proc * caller, message * m_ptr)
 int do_safecopy_from(struct proc * caller, message * m_ptr)
 {
 	return safecopy(caller, m_ptr->m_lsys_kern_safecopy.from_to, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->m_lsys_kern_safecopy.gid, 
+		(cp_grant_id_t) m_ptr->m_lsys_kern_safecopy.gid,
 		m_ptr->m_lsys_kern_safecopy.bytes, m_ptr->m_lsys_kern_safecopy.offset,
 		(vir_bytes) m_ptr->m_lsys_kern_safecopy.address, CPF_READ);
 }
