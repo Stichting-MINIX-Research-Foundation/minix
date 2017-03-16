@@ -1,13 +1,13 @@
 /* This task handles the interface between the kernel and user-level servers.
- * System services can be accessed by doing a system call. System calls are 
- * transformed into request messages, which are handled by this task. By 
+ * System services can be accessed by doing a system call. System calls are
+ * transformed into request messages, which are handled by this task. By
  * convention, a sys_call() is transformed in a SYS_CALL request message that
- * is handled in a function named do_call(). 
+ * is handled in a function named do_call().
  *
  * A private call vector is used to map all system calls to the functions that
  * handle them. The actual handler functions are contained in separate files
  * to keep this file clean. The call vector is used in the system task's main
- * loop to handle all incoming requests.  
+ * loop to handle all incoming requests.
  *
  * In addition to the main sys_task() entry point, which starts the main loop,
  * there are several other minor entry points:
@@ -26,7 +26,7 @@
  * Changes:
 *    Nov 22, 2009   get_priv supports static priv ids (Cristiano Giuffrida)
  *   Aug 04, 2005   check if system call is allowed  (Jorrit N. Herder)
- *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
+ *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder)
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
@@ -44,11 +44,11 @@
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
 
-/* Declaration of the call vector that defines the mapping of system calls 
- * to handler functions. The vector is initialized in sys_init() with map(), 
- * which makes sure the system call numbers are ok. No space is allocated, 
- * because the dummy is declared extern. If an illegal call is given, the 
- * array size will be negative and this won't compile. 
+/* Declaration of the call vector that defines the mapping of system calls
+ * to handler functions. The vector is initialized in sys_init() with map(),
+ * which makes sure the system call numbers are ok. No space is allocated,
+ * because the dummy is declared extern. If an illegal call is given, the
+ * array size will be negative and this won't compile.
  */
 static int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
 
@@ -97,7 +97,7 @@ static int kernel_call_dispatch(struct proc * caller, message *msg)
 {
   int result = OK;
   int call_nr;
-  
+
 #if DEBUG_IPC_HOOK
 	hook_ipc_msgkcall(msg, caller);
 #endif
@@ -156,7 +156,7 @@ void kernel_call(message *m_user, struct proc * caller)
 	  return;
   }
 
-  
+
   /* remember who invoked the kcall so we can bill it its time */
   kbill_kcall = caller;
 
@@ -181,7 +181,7 @@ void system_init(void)
     tmr_inittimer(&(sp->s_alarm_timer));
   }
 
-  /* Initialize the call vector to a safe default handler. Some system calls 
+  /* Initialize the call vector to a safe default handler. Some system calls
    * may be disabled or nonexistant. Then explicitly map known calls to their
    * handler functions. This is done with a macro that gives a compile error
    * if an illegal call number is used. The ordering is not important here.
@@ -210,10 +210,10 @@ void system_init(void)
   map(SYS_SIGRETURN, do_sigreturn);	/* return from POSIX-style signal */
 
   /* Device I/O. */
-  map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
+  map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */
 #if defined(__i386__)
-  map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
-  map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
+  map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */
+  map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */
 #endif
 
   /* Memory management. */
@@ -242,7 +242,7 @@ void system_init(void)
 
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
-  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
+  map(SYS_GETINFO, do_getinfo); 	/* request system information */
   map(SYS_DIAGCTL, do_diagctl);		/* diagnostics-related functionality */
 
   /* Profiling. */
@@ -283,8 +283,8 @@ int get_priv(
   register struct priv *sp;                 /* privilege structure */
 
   if(priv_id == NULL_PRIV_ID) {             /* allocate slot dynamically */
-      for (sp = BEG_DYN_PRIV_ADDR; sp < END_DYN_PRIV_ADDR; ++sp) 
-          if (sp->s_proc_nr == NONE) break;	
+      for (sp = BEG_DYN_PRIV_ADDR; sp < END_DYN_PRIV_ADDR; ++sp)
+          if (sp->s_proc_nr == NONE) break;
       if (sp >= END_DYN_PRIV_ADDR) return(ENOSPC);
   }
   else {                                    /* allocate slot from id */
@@ -308,7 +308,7 @@ int get_priv(
 void set_sendto_bit(const struct proc *rp, int id)
 {
 /* Allow a process to send messages to the process(es) associated with the
- * system privilege structure with the given ID. 
+ * system privilege structure with the given ID.
  */
 
   /* Disallow the process from sending to a process privilege structure with no
@@ -365,9 +365,9 @@ void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
 int send_sig(endpoint_t ep, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
- * set the signal that is to be delivered in the pending signals map and 
+ * set the signal that is to be delivered in the pending signals map and
  * send a notification with source SYSTEM.
- */ 
+ */
   register struct proc *rp;
   struct priv *priv;
   int proc_nr;
@@ -393,14 +393,14 @@ void cause_sig(proc_nr_t proc_nr, int sig_nr)
  * Examples are:
  *  - HARDWARE wanting to cause a SIGSEGV after a CPU exception
  *  - TTY wanting to cause SIGINT upon getting a DEL
- *  - FS wanting to cause SIGPIPE for a broken pipe 
+ *  - FS wanting to cause SIGPIPE for a broken pipe
  * Signals are handled by sending a message to the signal manager assigned to
  * the process. This function handles the signals and makes sure the signal
  * manager gets them by sending a notification. The process being signaled
  * is blocked while the signal manager has not finished all signals for it.
  * Race conditions between calls to this function and the system calls that
  * process pending kernel signals cannot exist. Signal related functions are
- * only called when a user process causes a CPU exception and from the kernel 
+ * only called when a user process causes a CPU exception and from the kernel
  * process level, which runs to completion.
  */
   register struct proc *rp, *sig_mgr_rp;
@@ -560,9 +560,9 @@ void clear_endpoint(struct proc * rc)
    */
   clear_ipc(rc);
 
-  /* Likewise, if another process was sending or receive a message to or from 
+  /* Likewise, if another process was sending or receive a message to or from
    * the exiting process, it must be alerted that process no longer is alive.
-   * Check all processes. 
+   * Check all processes.
    */
   clear_ipc_refs(rc, EDEADSRCDST);
 
@@ -586,7 +586,7 @@ void clear_ipc_refs(
 
   /* Tell processes that sent asynchronous messages to 'rc' they are not
    * going to be delivered */
-  while ((src_id = has_pending_asend(rc, ANY)) != NULL_PRIV_ID) 
+  while ((src_id = has_pending_asend(rc, ANY)) != NULL_PRIV_ID)
       cancel_async(proc_addr(id_to_nr(src_id)), rc);
 
   for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
@@ -887,7 +887,6 @@ int allow_ipc_filtered_memreq(struct proc *src_rp, struct proc *dst_rp)
 
 	struct proc *vmp;
 	message m_buf;
-	int allow_src, allow_dst;
 
 	vmp = proc_addr(VM_PROC_NR);
 
