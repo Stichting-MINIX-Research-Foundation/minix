@@ -35,6 +35,7 @@ void panic(const char *fmt, ...)
   }
 
   printf("kernel on CPU %d: ", cpuid);
+  va_end(arg)
   util_stacktrace();
 
 #if 0
@@ -70,7 +71,7 @@ void kputc(
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       kmess.kmess_buf[kmess.blpos] = c;
       if (kmess.km_size < sizeof(kmess.km_buf))
-          kmess.km_size += 1;		
+          kmess.km_size += 1;
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
       if(kmess.blpos == maxblpos) {
       	memmove(kmess.kmess_buf,
