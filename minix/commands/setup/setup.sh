@@ -560,10 +560,6 @@ then	ln -sf minix_default /mnt/boot/minix_latest
 fi
 chroot /mnt update_bootcfg
 
-# Save name of CD drive
-cddrive="`mount | fgrep ' /usr ' | awk '{ print $1 }' | sed 's/p.*//'`"
-echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package
-
 bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 
 echo "Saving random data.."
@@ -576,26 +572,19 @@ echo ""
 
 /bin/netconf -p /mnt || echo FAILED TO CONFIGURE NETWORK
 
-PACKAGES_DIR="/usr/packages/$(uname -v | cut -f2 -d' ')/$(uname -p)/All"
+PACKAGES_DIR="/packages/$(uname -v | cut -f2 -d' ')/$(uname -p)/All"
 if [ -e "$PACKAGES_DIR" ]
 then
 	echo "Installing pkgin..."
-
 	sh -c "cp $PACKAGES_DIR/pkgin-* $PACKAGES_DIR/pkg_install-* $PACKAGES_DIR/libarchive-* /mnt/tmp &&
 	 chroot /mnt pkg_add /tmp/pkgin-*"
 	rm -f /mnt/tmp/*
 
-	if [ -f "$PACKAGES_DIR/pkg_summary.bz2" ]
-	then
-		echo ""
-		echo "Packages are bundled on this installation media."
-		echo "They are available under the directory $PACKAGES_DIR"
-		echo "To install them after rebooting, mount this CD, set PKG_PATH to this directory"
-		echo "and use pkg_add."
-		echo "If you mount the CD at /mnt, PKG_PATH should be:"
-		echo "/mnt$PACKAGES_DIR"
-		echo ""
-	fi
+	# Save name of CD drive
+	cddrive=$(mount | grep ' on / ' | cut -f1 -d' ')
+	echo "cddrive=$cddrive" >>/mnt/usr/etc/rc.package
+else
+	echo "Package dir not found, skipping pkgin installation..."
 fi
 
 if [ "$nohome" = 0 ]; then
