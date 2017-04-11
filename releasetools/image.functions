@@ -45,29 +45,34 @@ add_link_spec()
 # $1 : sets to extract
 build_workdir()
 {
-	# Extract sets
 	mkdir -p ${ROOT_DIR}
-	for set in $1; do
-		if [ ! -e ${SETS_DIR}/${set}.tgz ]; then
-			echo "Missing ${SETS_DIR}/${set}.tgz, aborting"
-			echo "Are the release sets tarballs created?"
-			exit 1
+
+	# Don't do anything if we don't use sets
+	if [ -n "$1" ]
+	then
+		# Extract sets
+		for set in $1; do
+			if [ ! -e ${SETS_DIR}/${set}.tgz ]; then
+				echo "Missing ${SETS_DIR}/${set}.tgz, aborting"
+				echo "Are the release sets tarballs created?"
+				exit 1
+			fi
+			echo " * Extracting $set..."
+			(cd ${ROOT_DIR}; ${CROSS_TOOLS}/nbpax -rnz -f ${SETS_DIR}/${set}.tgz .)
+		done
+
+		# add rc (if any)
+		if [ -f ${RC} ]; then
+			cp ${RC} ${ROOT_DIR}/usr/etc/rc.local
 		fi
-		echo " * Extracting $set..."
-		(cd ${ROOT_DIR}; ${CROSS_TOOLS}/nbpax -rnz -f ${SETS_DIR}/${set}.tgz .)
-	done
 
-	# add rc (if any)
-	if [ -f ${RC} ]; then
-		cp ${RC} ${ROOT_DIR}/usr/etc/rc.local
+		# Build login/password files
+		${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${ROOT_DIR} ${ROOT_DIR}/etc/master.passwd
+
+		# Build specifications files
+		cp ${ROOT_DIR}/etc/mtree/set* ${WORK_DIR}
+		${ROOT_DIR}/usr/bin/MAKEDEV -s -m all >> ${WORK_DIR}/extra.dev
 	fi
-
-	# Build login/password files
-	${CROSS_TOOLS}/nbpwd_mkdb -V 0 -p -d ${ROOT_DIR} ${ROOT_DIR}/etc/master.passwd
-
-	# Build specifications files
-	cp ${ROOT_DIR}/etc/mtree/set* ${WORK_DIR}
-	${ROOT_DIR}/usr/bin/MAKEDEV -s -m all >> ${WORK_DIR}/extra.dev
 
 	if [ ${BUNDLE_SETS} -eq 1 ]
 	then
@@ -210,7 +215,12 @@ workdir_add_kernel()
 #
 create_input_spec()
 {
-	cat ${WORK_DIR}/set* ${WORK_DIR}/extra* | ${CROSS_TOOLS}/nbmtree -N ${ROOT_DIR}/etc -C -K device > ${WORK_DIR}/input
+	if [ -n "$SETS" ]
+	then
+		cat ${WORK_DIR}/set* ${WORK_DIR}/extra* | ${CROSS_TOOLS}/nbmtree -N ${ROOT_DIR}/etc -C -K device > ${WORK_DIR}/input
+	else
+		cat ${WORK_DIR}/extra* | ${CROSS_TOOLS}/nbmtree -C > ${WORK_DIR}/input
+	fi
 
 	if [ ${ASR_HACK} -eq 1 ]
 	then
@@ -350,16 +360,26 @@ create_ramdisk_image()
 # $1 : packages to bundle
 bundle_packages()
 {
-	if [ -z "$1" ]
+	if [ -z $PACKAGE_DIR ]
 	then
+		echo " * PACKAGE_DIR not set, skipping package bundling..."
 		return
 	fi
 
-	if [ -z $PACKAGE_DIR ]
+	if [ ! -x "$(which $PKG_INFO)" ]
 	then
-		echo "Error: PACKAGE_DIR is not set while trying to bundle packages."
-		echo "Please fetch binary packages to bundle and set PACKAGE_DIR to continue."
+		echo "Error: PKG_INFO ("$(which $PKG_INFO)") not executable."
+		echo "Can't create package index without pkg_info."
+		echo "Bootstrap pkgsrc on host to get pkg_info."
 		exit 1
+	fi
+
+	# Bundle all available packages if no list was given
+	if [ -z "$1" ]
+	then
+		PACKAGES=$(for i in $(echo "$PACKAGE_DIR"/*.tgz); do basename $i | sed s/\.tgz//; done)
+	else
+		PACKAGES=$1
 	fi
 
 	DESTPACKAGES="usr/packages/$RELEASE_VERSION/$ARCH/All"
@@ -373,7 +393,7 @@ bundle_packages()
 	add_dir_spec "usr/packages/$RELEASE_VERSION/$ARCH" extra.pkgsrc
 	add_dir_spec "usr/packages/$RELEASE_VERSION/$ARCH/All" extra.pkgsrc
 	add_link_spec "packages" "usr/packages" extra.pkgsrc
-	for pkgprefix in $1
+	for pkgprefix in $PACKAGES
 	do
 		realfn=$(echo $PACKAGE_DIR/${pkgprefix}*.tgz | cut -d' ' -f1)
 		if [ -f "$realfn" ]
@@ -389,21 +409,15 @@ bundle_packages()
 		fi
 	done
 
-	if [ -x "$(which $PKG_INFO)" ]
-	then
-		# Create packages index
-		echo " * Generating package index..."
-		indexname=$indexpath/$p.$index
-		$PKG_INFO -X $RELEASEPACKAGE/*.tgz >> $RELEASEPACKAGE/$index
+	# Create packages index
+	echo " * Generating package index..."
+	indexname=$indexpath/$p.$index
+	$PKG_INFO -X $RELEASEPACKAGE/*.tgz >> $RELEASEPACKAGE/$index
 
-		# Compress index
-		echo " * Compressing index..."
-		bzip2 -f $RELEASEPACKAGE/$index
-		add_file_spec "$DESTPACKAGES/$index.bz2" extra.pkgsrc
-	else
-		echo " * Skipping package index generation."
-		echo "   PKG_INFO ("$(which $PKG_INFO)") not executable."
-	fi
+	# Compress index
+	echo " * Compressing index..."
+	bzip2 -f $RELEASEPACKAGE/$index
+	add_file_spec "$DESTPACKAGES/$index.bz2" extra.pkgsrc
 }
 
 #
