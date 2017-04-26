@@ -10,7 +10,6 @@
 #include "kernel/system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
-#include <minix/portio.h>
 
 #if USE_DEVIO
 

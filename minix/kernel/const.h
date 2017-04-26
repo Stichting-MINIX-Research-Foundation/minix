@@ -5,7 +5,6 @@
 #include <minix/config.h>
 #include <minix/bitmap.h>
 
-#include "config.h"
 #include "debug.h"
 
 /* Translate an endpoint number to a process number, return success. */

@@ -29,14 +29,11 @@
  * nonempty lists. As shown above, this is not required with pointer pointers.
  */
 
-#include <minix/com.h>
-#include <minix/ipcconst.h>
 #include <stddef.h>
 #include <signal.h>
 #include <assert.h>
 #include <string.h>
 
-#include "kernel/kernel.h"
 #include "vm.h"
 #include "clock.h"
 #include "spinlock.h"

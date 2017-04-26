@@ -32,7 +32,6 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
-#include "kernel/kernel.h"
 #include "kernel/system.h"
 #include "kernel/vm.h"
 #include "kernel/clock.h"

@@ -9,7 +9,6 @@
  */
 
 #include "kernel/system.h"
-#include "kernel/kernel.h"
 #include <minix/endpoint.h>
 
 #include "arch_proto.h"

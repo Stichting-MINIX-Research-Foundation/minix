@@ -9,9 +9,7 @@
 
 #include "kernel/system.h"
 #include "kernel/vm.h"
-#include "kernel/debug.h"
 #include <assert.h>
-#include <minix/type.h>
 
 /*===========================================================================*
  *				do_vmctl				     *

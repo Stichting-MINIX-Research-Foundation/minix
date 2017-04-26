@@ -12,7 +12,6 @@
  *   Nov 22, 2009  rewrite of privilege management (Cristiano Giuffrida)
  *   Jul 01, 2005  Created.  (Jorrit N. Herder)	
  */
-#include <minix/com.h>
 #include <minix/const.h>
 #include <minix/priv.h>
 #include "kernel/const.h"

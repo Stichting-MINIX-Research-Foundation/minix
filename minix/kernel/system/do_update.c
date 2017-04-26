@@ -8,7 +8,6 @@
  */
 
 #include "kernel/system.h"
-#include "kernel/ipc.h"
 #include <string.h>
 #include <assert.h>
 

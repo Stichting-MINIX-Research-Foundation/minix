@@ -8,10 +8,8 @@
 
 #include <minix/cpufeature.h>
 #include <sys/types.h>
-#include <machine/multiboot.h>
 #include "kernel/kernel.h"
 
-#include "archconst.h"
 #include "arch_proto.h"
 
 #include <sys/exec.h>

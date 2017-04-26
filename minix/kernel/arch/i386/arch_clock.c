@@ -1,15 +1,10 @@
 /* i386-specific clock functions. */
 
 #include <machine/ports.h>
-#include <minix/portio.h>
-
-#include "kernel/kernel.h"
 
 #include "kernel/clock.h"
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
-#include "kernel/glo.h"
-#include "kernel/profile.h"
 
 #include <sys/sched.h> /* for CP_*, CPUSTATES */
 #if CPUSTATES != MINIX_CPUSTATES

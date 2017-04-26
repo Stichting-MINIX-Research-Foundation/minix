@@ -13,7 +13,6 @@
 #include <minix/safecopies.h>
 
 #include "kernel/system.h"
-#include "kernel/kernel.h"
 
 /*===========================================================================*
  *                              do_safememset                                *

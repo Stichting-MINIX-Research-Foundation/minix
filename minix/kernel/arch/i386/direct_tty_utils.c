@@ -1,19 +1,11 @@
 
-#include "kernel/kernel.h"
 #include <minix/minlib.h>
-#include <minix/const.h>
 #include <minix/cpufeature.h>
-#include <minix/type.h>
-#include <minix/com.h>
-#include <sys/types.h>
-#include <sys/param.h>
 #include <machine/partition.h>
 #include "string.h"
-#include "arch_proto.h"
 #include "direct_utils.h"
 #include "serial.h"
 #include "glo.h"
-#include <machine/multiboot.h>
 
 /* Give non-zero values to avoid them in BSS */
 static int print_line = 1, print_col = 1;

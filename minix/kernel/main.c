@@ -8,16 +8,13 @@
  *   main:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
  */
-#include "kernel/kernel.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <minix/com.h>
 #include <minix/endpoint.h>
 #include <machine/vmparam.h>
 #include <minix/u64.h>
 #include <minix/board.h>
-#include <minix/type.h>
 #include <sys/reboot.h>
 #include "clock.h"
 #include "direct_utils.h"

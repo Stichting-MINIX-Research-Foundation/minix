@@ -4,7 +4,6 @@
 
 #include <machine/vm.h>
 
-#include <minix/type.h>
 #include <minix/syslib.h>
 #include <minix/cpufeature.h>
 #include <string.h>

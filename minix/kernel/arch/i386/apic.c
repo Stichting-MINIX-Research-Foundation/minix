@@ -1,7 +1,6 @@
 /*
  * APIC handling routines. APIC is a requirement for SMP
  */
-#include "kernel/kernel.h"
 #include <assert.h>
 
 #include <unistd.h>
@@ -9,8 +8,6 @@
 
 #include <minix/syslib.h>
 #include <machine/cmos.h>
-
-#include "arch_proto.h"
 
 #include <minix/u64.h>
 

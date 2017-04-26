@@ -12,7 +12,6 @@
 
 #include "kernel/system.h"
 #include "kernel/vm.h"
-#include <minix/type.h>
 #include <assert.h>
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)
