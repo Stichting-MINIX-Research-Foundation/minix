@@ -6,12 +6,7 @@
  *   14 Aug, 2006   Created, (Rogier Meurs)
  */
 
-#include <minix/config.h>
-
 #include "kernel/kernel.h"
-
-#include <minix/profile.h>
-#include <minix/portio.h>
 
 #if SPROFILE
 

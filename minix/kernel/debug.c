@@ -6,7 +6,6 @@
 #include "kernel/kernel.h"
 
 #include <minix/callnr.h>
-#include <minix/sysutil.h>
 #include <minix/u64.h>
 #include <limits.h>
 #include <string.h>

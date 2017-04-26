@@ -10,7 +10,6 @@
  */
 
 #include "kernel/system.h"
-#include "kernel/ipc.h"
 #include <signal.h>
 #include <string.h>
 #include <minix/endpoint.h>

@@ -9,7 +9,6 @@
 
 #include "kernel/system.h"
 #include <assert.h>
-#include <minix/type.h>
 
 #include "arch_proto.h"
 

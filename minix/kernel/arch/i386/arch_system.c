@@ -1,7 +1,5 @@
 /* system dependent functions for use inside the whole kernel. */
 
-#include "kernel/kernel.h"
-
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
@@ -17,10 +15,7 @@
 #include <minix/u64.h>
 
 #include "archconst.h"
-#include "arch_proto.h"
-#include "serial.h"
 #include "oxpcie.h"
-#include <machine/multiboot.h>
 
 #include "glo.h"
 

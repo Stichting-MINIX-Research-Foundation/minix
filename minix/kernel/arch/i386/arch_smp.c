@@ -6,17 +6,12 @@
 
 #define _SMP
 
-#include "kernel/kernel.h"
-#include "arch_proto.h"
 #include <unistd.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <machine/archtypes.h>
-#include <archconst.h>
 #include <machine/cmos.h>
 #include <machine/bios.h>
-#include <minix/portio.h>
 
 #include "kernel/spinlock.h"
 #include "kernel/smp.h"

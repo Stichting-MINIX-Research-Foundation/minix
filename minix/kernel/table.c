@@ -30,7 +30,6 @@
 #define _TABLE
 
 #include "kernel/kernel.h"
-#include <minix/com.h>
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs

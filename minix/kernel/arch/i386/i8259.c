@@ -8,7 +8,6 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 #include "hw_intr.h"
-#include <minix/portio.h>
 #include <machine/cpu.h>
 
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */

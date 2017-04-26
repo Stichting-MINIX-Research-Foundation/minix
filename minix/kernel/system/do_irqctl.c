@@ -9,7 +9,6 @@
  *    m_krn_lsys_sys_irqctl.hook_id	(returns index of irq hook assigned at kernel)
  */
 
-#include "kernel/kernel.h"
 #include "kernel/system.h"
 
 #include <minix/endpoint.h>

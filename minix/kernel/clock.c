@@ -12,7 +12,6 @@
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  */
 
-#include "kernel/kernel.h"
 #include <minix/endpoint.h>
 #include <stdlib.h>
 #include <string.h>
