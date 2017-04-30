@@ -1375,7 +1375,7 @@ sockevent_listen(sockid_t id, int backlog)
 
 		/*
 		 * For the extremely unlikely case that right after the socket
-		 * is put into listening mode, it has a connection ready tor
+		 * is put into listening mode, it has a connection ready to
 		 * accept, we retest blocked ready-to-read select queries now.
 		 */
 		sockevent_raise(sock, SEV_ACCEPT);

@@ -10,8 +10,8 @@
  * (SOCK_DGRAM) neither.  There are two types of ancillary data: in-flight file
  * descriptors and sender credentials.  In addition, for SOCK_DGRAM sockets,
  * the segment may contain the sender's socket path (if the sender's socket is
- * bound).  Each segment has has a header, containing the full segment size,
- * the size of the actual data in the segment (if any), and a flags field that
+ * bound).  Each segment has a header, containing the full segment size, the
+ * size of the actual data in the segment (if any), and a flags field that
  * states which ancillary are associated with the segment (if any).  For
  * SOCK_STREAM type sockets, new data may be merged into a previous segment,
  * but only if it has no ancillary data.  For the other two socket types, each
@@ -599,6 +599,14 @@ uds_send_data(struct udssock * uds, struct udssock * peer,
 		if ((r = getsockcred(user_endpt, &sockcred, groups,
 		    __arraycount(groups))) != OK)
 			return r;
+
+		/*
+		 * getsockcred(3) returns the total number of groups for the
+		 * process, which may exceed the size of the given array.  Our
+		 * groups array should always be large enough for all groups,
+		 * but we check to be sure anyway.
+		 */
+		assert(sockcred.sc_ngroups <= (int)__arraycount(groups));
 
 		credlen = 1 + SOCKCREDSIZE(sockcred.sc_ngroups);
 
