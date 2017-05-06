@@ -607,7 +607,6 @@
 ./usr/libdata/debug/usr/libexec/fingerd.debug           minix-debug     debug
 ./usr/libdata/debug/usr/libexec/ftpd.debug              minix-debug     debug
 ./usr/libdata/debug/usr/libexec/getty.debug             minix-debug     debug
-./usr/libdata/debug/usr/libexec/httpd.debug             minix-debug     debug
 ./usr/libdata/debug/usr/libexec/kyua-atf-tester.debug   minix-debug     debug
 ./usr/libdata/debug/usr/libexec/kyua-plain-tester.debug minix-debug     debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug         minix-debug     debug
@@ -641,7 +640,6 @@
 ./usr/libdata/debug/usr/sbin/installboot_nbsd.debug     minix-debug     debug
 ./usr/libdata/debug/usr/sbin/kernel.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/link.debug                 minix-debug     debug
-./usr/libdata/debug/usr/sbin/lwresd.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/makefs.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/mkfs.mfsv3.debug           minix-debug     debug
 ./usr/libdata/debug/usr/sbin/mkproto.debug              minix-debug     debug
