@@ -167,7 +167,7 @@ ${PROG}: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,--section-start=.text=0 -T ${LDSCRIPT} \
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,--section-start=.text=0 -T ${LDSCRIPT} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 
