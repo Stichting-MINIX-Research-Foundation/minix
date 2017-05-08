@@ -751,7 +751,7 @@
 ** without modifying the main part of the file.
 */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__minix)
 
 /* Integer types */
 #undef LUA_INTEGER
@@ -812,7 +812,7 @@
 
 #endif /* _KERNEL */
 
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || __minix */
 
 #endif
 
