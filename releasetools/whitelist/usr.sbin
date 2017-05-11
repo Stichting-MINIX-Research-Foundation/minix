@@ -1,0 +1,16 @@
+chroot
+i2cscan
+installboot
+link
+Makefile
+Makefile.inc
+mtree
+postinstall
+pwd_mkdb
+rdate
+traceroute
+unlink
+user
+vipw
+vnconfig
+zic

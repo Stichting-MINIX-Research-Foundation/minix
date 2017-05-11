@@ -1,0 +1,9 @@
+minix
+build.sh
+distrib
+docs
+etc
+Makefile
+releasetools
+.gitignore
+.gitreview
