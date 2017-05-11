@@ -204,7 +204,7 @@ int pg_mapkernel(void)
 void vm_enable_paging(void)
 {
         u32_t cr0, cr4;
-        int pgeok;
+        int pgeok, paeok;
 
         pgeok = _cpufeature(_CPUF_I386_PGE);
 
