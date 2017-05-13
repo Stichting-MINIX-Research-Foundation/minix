@@ -49,3 +49,8 @@ external/bsd/llvm/dist/clang/test/CodeGenCXX/microsoft-abi-vtables-multiple-nonv
 external/bsd/llvm/dist/llvm/test/Verifier/bitcast-address-space-through-constant-inttoptr-inside-gep-i
 lib/libc/compat__*
 .gdbinit
+minix_x86.img
+obj.i386/*
+sys/arch/*/include/fpu.h
+sys/arch/*/include/stackframe.h
+			
