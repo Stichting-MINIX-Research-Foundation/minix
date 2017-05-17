@@ -1729,8 +1729,9 @@ static int atapi_open(void)
 /* Should load and lock the device and obtain its size.  For now just set the
  * size of the device to something big.  What is really needed is a generic
  * SCSI layer that does all this stuff for ATAPI and SCSI devices (kjb). (XXX)
+ * .."something big" is now the maximum size of the largest type of DVD.
  */
-  w_wn->part[0].dv_size = (u64_t)(800L*1024) * 1024;
+  w_wn->part[0].dv_size = (u64_t)(8500L*1024) * 1024;
   return(OK);
 }
 
