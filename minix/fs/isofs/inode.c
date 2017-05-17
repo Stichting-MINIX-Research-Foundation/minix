@@ -100,11 +100,11 @@ void dup_inode(struct inode *i_node) {
 }
 
 int read_directory(struct inode *dir) {
-#define MAX_ENTRIES 4096
+#define MAX_ENTRIES 256		/* avoid using lots of stack.. */
 	/* Read all entries in a directory. */
-	size_t pos = 0, cur_entry = 0, cpt;
-	struct inode_dir_entry entries[MAX_ENTRIES];
-	int status = OK;
+	size_t pos = 0, saved_pos, cur_entry, num_entries, cpt;
+	struct inode_dir_entry entries[MAX_ENTRIES + 1];
+	int status;
 
 	if (dir->dir_contents)
 		return OK;
@@ -112,27 +112,88 @@ int read_directory(struct inode *dir) {
 	if (!S_ISDIR(dir->i_stat.st_mode))
 		return ENOTDIR;
 
-	for (cur_entry = 0; status == OK && cur_entry < MAX_ENTRIES; cur_entry++) {
-		memset(&entries[cur_entry], 0, sizeof(struct inode_dir_entry));
+	/*
+	 * We do not know how many inode entries we will find, but we want to
+	 * allocate an array of the right size for dir->dir_contents.  First
+	 * find out how many entries there are, and store up to MAX_ENTRIES of
+	 * them into a temporary array on the stack.  If there are more than
+	 * MAX_ENTRIES entries, we have to do a second pass on the part of the
+	 * directory that we did not manage to fit in the temporary array.
+	 *
+	 * The entire service needs massive structural improvement (and in
+	 * particular, no dynamic memory allocation like this), but for now
+	 * this is the simplest way to be fast for small directories while at
+	 * the same time supporting seriously large directories.
+	 */
+	cur_entry = 0;
+	num_entries = 0;
 
-		status = read_inode(&entries[cur_entry], &dir->extent, &pos);
-		if (status != OK)
-			break;
-
+	while ((status = read_inode(&entries[cur_entry], &dir->extent,
+	    &pos)) == OK) {
 		/* Dump the entry if it's not to be exported to userland. */
 		if (entries[cur_entry].i_node->skip) {
 			free_inode_dir_entry(&entries[cur_entry]);
 			continue;
 		}
+
+		if (cur_entry < MAX_ENTRIES) {
+			cur_entry++;
+
+			/*
+			 * As long as more entries fit in the temporary array,
+			 * update the saved position of the next entry.  Once
+			 * we hit the first entry that does not fit (if any),
+			 * the updating stops and we will have the correct
+			 * saved position.
+			 */
+			saved_pos = pos;
+		} else {
+			/*
+			 * No room in the temporary array.  Free the entry
+			 * again.  This is costly but only for those rare
+			 * directories that have more than MAX_ENTRIES entries.
+			 */
+			free_inode_dir_entry(&entries[cur_entry]);
+		}
+
+		num_entries++;
 	}
 
-	/* Resize dynamic array to correct size */
-	dir->dir_contents = alloc_mem(sizeof(struct inode_dir_entry) * cur_entry);
-	memcpy(dir->dir_contents, entries, sizeof(struct inode_dir_entry) * cur_entry);
-	dir->dir_size = cur_entry;
+	/*
+	 * Allocate a dynamic array of the correct size, and populate it with
+	 * all the entries in the temporary array.  For large directories, the
+	 * temporary array will have partial results, in which case we have to
+	 * do a second pass on the rest below.
+	 */
+	dir->dir_contents =
+	    alloc_mem(sizeof(struct inode_dir_entry) * num_entries);
+
+	memcpy(dir->dir_contents, entries,
+	    sizeof(struct inode_dir_entry) * cur_entry);
+
+	/*
+	 * The second pass.  This pass starts from the saved position and reads
+	 * only the entries that did not fit in the temporary array.  This time
+	 * we can read straight into the actual destination array.  We expect
+	 * to find the same entries as during the first pass.
+	 */
+	while (cur_entry < num_entries) {
+		if (read_inode(&dir->dir_contents[cur_entry], &dir->extent,
+		    &saved_pos) != OK)
+			panic("unexpected EOF or error rereading directory");
+
+		if (dir->dir_contents[cur_entry].i_node->skip) {
+			free_inode_dir_entry(&entries[cur_entry]);
+			continue;
+		}
+
+		cur_entry++;
+	}
+
+	dir->dir_size = num_entries;
 
 	/* The name pointer has to point to the new memory location. */
-	for (cpt = 0; cpt < cur_entry; cpt++) {
+	for (cpt = 0; cpt < num_entries; cpt++) {
 		if (dir->dir_contents[cpt].r_name == NULL)
 			dir->dir_contents[cpt].name =
 			    dir->dir_contents[cpt].i_name;
@@ -201,6 +262,8 @@ int read_inode(struct inode_dir_entry *dir_entry, struct dir_extent *extent,
 		    * v_pri.logical_block_size_l +
 		    *offset % v_pri.logical_block_size_l;
 	}
+
+	memset(dir_entry, 0, sizeof(*dir_entry));
 
 	i_node = inode_cache_get(ino_nr);
 	if (i_node) {

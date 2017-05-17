@@ -38,6 +38,7 @@ void parse_susp_rock_ridge_plcl(struct rrii_dir_record *dir, u32_t block) {
 	lmfs_put_block(bp);
 
 	memset(&dummy_dir_entry, 0, sizeof(struct inode_dir_entry));
+	/* XXX what if this fails? */
 	read_inode(&dummy_dir_entry, &extent, &dummy_offset);
 	free(dummy_dir_entry.r_name);
 	dir->reparented_inode = dummy_dir_entry.i_node;
