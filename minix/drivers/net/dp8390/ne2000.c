@@ -32,7 +32,6 @@ static u8_t	pat3[]= { 0x96, 0x69, 0x5A, 0xA5 };
 static int test_8(dpeth_t *dep, int pos, u8_t *pat);
 static int test_16(dpeth_t *dep, int pos, u8_t *pat);
 static void ne_stop(dpeth_t *dep);
-static void milli_delay(unsigned long millis);
 
 /*===========================================================================*
  *				ne_probe				     *
@@ -56,9 +55,9 @@ int ne_probe(dpeth_t *dep)
 	{
 		/* Reset the ethernet card */
 		byte= inb_ne(dep, NE_RESET);
-		milli_delay(2);
+		micro_delay(2000);
 		outb_ne(dep, NE_RESET, byte);
-		milli_delay(2);
+		micro_delay(2000);
 
 		/* Reset the dp8390 */
 		outb_reg0(dep, DP_CR, CR_STP | CR_DM_ABORT);
@@ -310,13 +309,8 @@ dpeth_t *dep;
 
 	/* Reset the ethernet card */
 	byte= inb_ne(dep, NE_RESET);
-	milli_delay(2);
+	micro_delay(2000);
 	outb_ne(dep, NE_RESET, byte);
-}
-
-static void milli_delay(unsigned long millis)
-{
-	tickdelay(MILLIS_TO_TICKS(millis));
 }
 
 #endif /* ENABLE_NE2000 */

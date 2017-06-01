@@ -239,7 +239,7 @@ e1000_reset_hw(e1000_t * e)
 	e1000_reg_set(e, E1000_REG_CTRL, E1000_REG_CTRL_RST);
 
 	/* Wait one microsecond. */
-	tickdelay(1);
+	micro_delay(16000);
 }
 
 /*
@@ -792,7 +792,7 @@ eeprom_ich_init(e1000_t * e)
 				ret_val = 0;
 				break;
 			}
-			tickdelay(1);
+			micro_delay(16000);
 		}
 		if (ret_val == 0) {
 			/*
@@ -834,7 +834,7 @@ eeprom_ich_cycle(e1000_t * e, u32_t timeout)
 		hsfsts.regval = E1000_READ_FLASH_REG16(e, ICH_FLASH_HSFSTS);
 		if (hsfsts.hsf_status.flcdone == 1)
 			break;
-		tickdelay(1);
+		micro_delay(16000);
 	} while (i++ < timeout);
 
 	if (hsfsts.hsf_status.flcdone == 1 && hsfsts.hsf_status.flcerr == 0)
@@ -867,7 +867,7 @@ eeprom_ich(e1000_t * e, int reg)
 	    e->flash_base_addr;
 
 	do {
-		tickdelay(1);
+		micro_delay(16000);
 
 		/* Steps */
 		ret_val = eeprom_ich_init(e);

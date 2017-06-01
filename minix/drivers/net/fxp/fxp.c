@@ -607,7 +607,7 @@ fxp_t *fp;
 
 	/* Reset device */
 	fxp_outl(port, CSR_PORT, CP_CMD_SOFT_RESET);
-	tickdelay(micros_to_ticks(CSR_PORT_RESET_DELAY));
+	micro_delay(CSR_PORT_RESET_DELAY);
 
 	/* Disable interrupts */
 	fxp_outb(port, SCB_INT_MASK, SIM_M);

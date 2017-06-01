@@ -26,7 +26,6 @@ extern u32_t system_hz;
 
 static void el2_init(dpeth_t *dep);
 static void el2_stop(dpeth_t *dep);
-static void milli_delay(unsigned long millis);
 
 /*===========================================================================*
  *				el2_init				     *
@@ -154,9 +153,9 @@ dpeth_t * dep;
 
   /* Resets board */
   outb_el2(dep, EL2_CNTR, ECNTR_RESET | thin);
-  milli_delay(1);
+  micro_delay(1000);
   outb_el2(dep, EL2_CNTR, thin);
-  milli_delay(5);
+  micro_delay(5000);
 
   /* Map the address PROM to lower I/O address range */
   outb_el2(dep, EL2_CNTR, ECNTR_SAPROM | thin);
@@ -182,11 +181,6 @@ dpeth_t * dep;
   dep->de_initf = el2_init;
   dep->de_stopf = el2_stop;
   return 1;
-}
-
-static void milli_delay(unsigned long millis)
-{
-	tickdelay(MILLIS_TO_TICKS(millis));
 }
 
 #endif /* ENABLE_3C503 */

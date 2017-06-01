@@ -655,7 +655,7 @@ lan8710a_init_hw(netdriver_addr_t * addr, unsigned int instance)
 			LAN8710A_DEBUG_PRINT(("Autonegotiation failed"));
 			break;
 		}
-		tickdelay(100);
+		micro_delay(1666666);
 	}
 
 	/* GMII RX and TX release from reset. */
