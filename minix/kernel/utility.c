@@ -36,6 +36,7 @@ void panic(const char *fmt, ...)
   }
 
   printf("kernel on CPU %d: ", cpuid);
+  va_end(arg)
   util_stacktrace();
 
 #if 0
