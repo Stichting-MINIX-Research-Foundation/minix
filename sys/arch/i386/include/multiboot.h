@@ -83,19 +83,20 @@ extern struct multiboot_header *Multiboot_Header;
 /*
  * Multiboot information structure.
  */
-#define MULTIBOOT_INFO_MAGIC		0x2BADB002
-#define MULTIBOOT_INFO_HAS_MEMORY	0x00000001
+#define MULTIBOOT_INFO_MAGIC			0x2BADB002
+#define MULTIBOOT_INFO_HAS_MEMORY		0x00000001
 #define MULTIBOOT_INFO_HAS_BOOT_DEVICE	0x00000002
-#define MULTIBOOT_INFO_HAS_CMDLINE	0x00000004
+#define MULTIBOOT_INFO_HAS_CMDLINE		0x00000004
 #define MULTIBOOT_INFO_HAS_MODS		0x00000008
 #define MULTIBOOT_INFO_HAS_AOUT_SYMS	0x00000010
-#define MULTIBOOT_INFO_HAS_ELF_SYMS	0x00000020
+#define MULTIBOOT_INFO_HAS_ELF_SYMS		0x00000020
 #define MULTIBOOT_INFO_HAS_MMAP		0x00000040
-#define MULTIBOOT_INFO_HAS_DRIVES	0x00000080
+#define MULTIBOOT_INFO_HAS_DRIVES		0x00000080
 #define MULTIBOOT_INFO_HAS_CONFIG_TABLE	0x00000100
 #define MULTIBOOT_INFO_HAS_LOADER_NAME	0x00000200
 #define MULTIBOOT_INFO_HAS_APM_TABLE	0x00000400
-#define MULTIBOOT_INFO_HAS_VBE		0x00000800
+#define MULTIBOOT_INFO_HAS_VBE			0x00000800
+#define MULTIBOOT_INFO_HAS_FRAMEBUFFER	0x00001000
 
 #if defined(__minix) && !defined(__ASSEMBLY__) && (defined(_MINIX_SYSTEM) || defined(_STANDALONE))
 
@@ -144,11 +145,40 @@ struct multiboot_info {
 	void *		unused_mi_apm_table;
 
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_VBE. */
-	void *		unused_mi_vbe_control_info;
-	void *		unused_mi_vbe_mode_info;
-	paddr_t		unused_mi_vbe_interface_seg;
-	paddr_t		unused_mi_vbe_interface_off;
-	uint32_t	unused_mi_vbe_interface_len;
+	uint32_t vbe_control_info;
+	uint32_t vbe_mode_info;
+	uint16_t vbe_mode;
+	uint16_t vbe_interface_seg;
+	uint16_t vbe_interface_off;
+	uint16_t vbe_interface_len;
+
+	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_FRAMEBUFFER. */
+	uint64_t framebuffer_addr;
+	uint32_t framebuffer_pitch;
+	uint32_t framebuffer_width;
+	uint32_t framebuffer_height;
+	uint8_t framebuffer_bpp;
+#define MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED 0
+#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB     1
+#define MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT	2
+	uint8_t framebuffer_type;
+	union
+	{
+		struct
+		{
+			uint32_t framebuffer_palette_addr;
+			uint16_t framebuffer_palette_num_colors;
+		};
+		struct
+		{
+			uint8_t framebuffer_red_field_position;
+			uint8_t framebuffer_red_mask_size;
+			uint8_t framebuffer_green_field_position;
+			uint8_t framebuffer_green_mask_size;
+			uint8_t framebuffer_blue_field_position;
+			uint8_t framebuffer_blue_mask_size;
+	    };
+	};
 };
 
 /* --------------------------------------------------------------------- */
