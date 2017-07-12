@@ -64,31 +64,7 @@ then
 	exit 1
 fi
 
-case $(uname -s) in
-Darwin)
-	MKFS_VFAT_CMD=newfs_msdos
-	MKFS_VFAT_OPTS="-h 64 -u 32 -S 512 -s ${FAT_SIZE} -o 0"
-;;
-FreeBSD)
-	MKFS_VFAT_CMD=newfs_msdos
-	MKFS_VFAT_OPTS=
-;;
-*)
-	MKFS_VFAT_CMD=mkfs.vfat
-	MKFS_VFAT_OPTS=
-;;
-esac
-
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}
-
-for needed in mcopy dd ${MKFS_VFAT_CMD} git
-do
-	if ! which $needed 2>&1 > /dev/null
-	then
-		echo "**Skipping image creation: missing tool '$needed'"
-		exit 1
-	fi
-done
 
 # we create a disk image of about 2 gig's
 # for alignment reasons, prefer sizes which are multiples of 4096 bytes
@@ -130,67 +106,9 @@ echo "Creating specification files..."
 create_input_spec
 create_protos "usr home"
 
-#
-# Create the FAT partition, which contains the bootloader files, kernel and modules
-#
-dd if=/dev/zero of=${WORK_DIR}/fat.img bs=512 count=1 seek=$(($FAT_SIZE -1)) 2>/dev/null
-
-#
-# Format the fat partition and put the bootloaders
-# uEnv and the kernel command line in the FAT partition
-#
-${MKFS_VFAT_CMD} ${MKFS_VFAT_OPTS} ${WORK_DIR}/fat.img
-
-#
 # Download the stage 1 bootloader and u-boot
 #
 ${RELEASETOOLSDIR}/fetch_u-boot.sh -o ${RELEASETOOLSDIR}/u-boot -n $U_BOOT_GIT_VERSION
-cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${WORK_DIR}/
-cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${WORK_DIR}/
-
-#
-# Create a uEnv.txt file
-# -n default to network boot
-# -p add a prefix to the network booted files (e.g. xm/"
-# -c set console e.g. tty02 or tty00
-# -v set verbosity e.g. 0 to 3
-#${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE} -n -p bb/ > ${WORK_DIR}/uEnv.txt
-${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE}  > ${WORK_DIR}/uEnv.txt
-
-echo "Copying configuration kernel and boot modules"
-mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/$MLO ::MLO
-mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/$UBOOT ::u-boot.img
-mcopy -bsp -i ${WORK_DIR}/fat.img ${WORK_DIR}/uEnv.txt ::uEnv.txt
-
-#
-# Do some last processing of the kernel and servers and then put them on the FAT
-# partition.
-#
-${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${OBJ}/kernel.bin
-mcopy -bsp -i ${WORK_DIR}/fat.img ${OBJ}/kernel.bin ::kernel.bin
-
-for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
-	servers/vfs/vfs servers/ds/ds servers/mib/mib fs/pfs/pfs fs/mfs/mfs \
-	../sbin/init/init
-do
-    fn=`basename $f`.elf
-    cp ${OBJ}/minix/${f} ${OBJ}/${fn}
-    ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
-    mcopy -bsp -i ${WORK_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
-done
-
-for f in tty/tty/tty storage/memory/memory
-do
-    fn=`basename $f`.elf
-    cp ${OBJ}/minix/drivers/${f} ${OBJ}/${fn}
-    ${CROSS_PREFIX}strip -s ${OBJ}/${fn}
-    mcopy -bsp -i ${WORK_DIR}/fat.img  ${OBJ}/${fn} ::${fn}
-done
-
-#
-# For tftp booting
-#
-cp ${WORK_DIR}/uEnv.txt ${OBJ}/
 
 # Clean image
 if [ -f ${IMG} ]	# IMG might be a block device
@@ -222,12 +140,63 @@ HOME_START=$((${USR_START} + ${_USR_SIZE}))
 echo " * HOME"
 _HOME_SIZE=$(${CROSS_TOOLS}/nbmkfs.mfs -d ${HOMESIZEARG} -I $((${HOME_START}*512)) ${IMG} ${WORK_DIR}/proto.home)
 _HOME_SIZE=$(($_HOME_SIZE / 512))
+echo " * BOOT"
+rm -rf ${ROOT_DIR}/*
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/MLO ${ROOT_DIR}/
+cp ${RELEASETOOLSDIR}/u-boot/${U_BOOT_BIN_DIR}/u-boot.img ${ROOT_DIR}/
+
+# Create a uEnv.txt file
+# -n default to network boot
+# -p add a prefix to the network booted files (e.g. xm/"
+# -c set console e.g. tty02 or tty00
+# -v set verbosity e.g. 0 to 3
+#${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE} -n -p bb/ > ${WORK_DIR}/uEnv.txt
+${RELEASETOOLSDIR}/gen_uEnv.txt.sh -c ${CONSOLE}  > ${ROOT_DIR}/uEnv.txt
+
+# Do some last processing of the kernel and servers and then put them on the FAT
+# partition.
+${CROSS_PREFIX}objcopy ${OBJ}/minix/kernel/kernel -O binary ${ROOT_DIR}/kernel.bin
+
+for f in servers/vm/vm servers/rs/rs servers/pm/pm servers/sched/sched \
+	servers/vfs/vfs servers/ds/ds servers/mib/mib fs/pfs/pfs fs/mfs/mfs \
+	../sbin/init/init drivers/tty/tty/tty drivers/storage/memory/memory
+do
+    fn=`basename $f`.elf
+    cp ${OBJ}/minix/${f} ${ROOT_DIR}/${fn}
+    ${CROSS_PREFIX}strip -s ${ROOT_DIR}/${fn}
+done
+cat >${WORK_DIR}/boot.mtree <<EOF
+. type=dir
+./MLO type=file
+./u-boot.img type=file
+./uEnv.txt type=file
+./kernel.bin type=file
+./ds.elf type=file
+./rs.elf type=file
+./pm.elf type=file
+./sched.elf type=file
+./vfs.elf type=file
+./memory.elf type=file
+./tty.elf type=file
+./mib.elf type=file
+./vm.elf type=file
+./pfs.elf type=file
+./mfs.elf type=file
+./init.elf type=file
+EOF
+
+#
+# Create the FAT partition, which contains the bootloader files, kernel and modules
+#
+${CROSS_TOOLS}/nbmakefs -t msdos -s ${FAT_SIZE}b -o F=16,c=1 \
+	-F ${WORK_DIR}/boot.mtree ${WORK_DIR}/fat.img ${ROOT_DIR}
 
 #
 # Write the partition table using the natively compiled
 # minix partition utility
 #
-${CROSS_TOOLS}/nbpartition -f -m ${IMG} ${FAT_START} "c:${FAT_SIZE}*" 81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
+${CROSS_TOOLS}/nbpartition -f -m ${IMG} ${FAT_START} \
+	"c:${FAT_SIZE}*" 81:${_ROOT_SIZE} 81:${_USR_SIZE} 81:${_HOME_SIZE}
 
 #
 # Merge the partitions into a single image.
