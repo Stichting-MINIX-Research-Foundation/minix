@@ -618,10 +618,10 @@ pci_subclass_name(pcireg_t reg)
 	}
 
 	if (subclassp) {
-		return subclassp->name;	
+		return subclassp->name;
 	} else {
 		return NULL;
-	}	
+	}
 }
 #endif /* defined(__minix) && defined(_PCI_SERVER) */
 
