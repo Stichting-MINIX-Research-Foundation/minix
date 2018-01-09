@@ -1,7 +1,6 @@
 #include "fs.h"
 #include "inode.h"
 #include "clean.h"
-#include <assert.h>
 
 /*===========================================================================*
  *				fs_sync					     *

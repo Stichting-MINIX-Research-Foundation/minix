@@ -1,6 +1,5 @@
 #include "fs.h"
 #include <string.h>
-#include <assert.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include "inode.h"
