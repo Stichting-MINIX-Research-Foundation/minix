@@ -264,7 +264,7 @@ main(int argc, char *argv[])
   /* Determine the size of the device if not specified as -b or proto. */
   maxblocks = sizeup(argv[optind]);
   if (bblocks != 0 && bblocks + fs_offset_blocks > maxblocks && !insertmode) {
-	errx(4, "Given size -b %d exeeds device capacity(%d)\n", bblocks, maxblocks);
+	errx(4, "Given size -b %d exceeds device capacity(%d)\n", bblocks, maxblocks);
   }
 
   if (argc - optind == 1 && bblocks == 0) {
