@@ -109,6 +109,34 @@ static void pagefault( struct proc *pr,
 	return;
 }
 
+static void
+data_abort(int is_nested, struct proc *pr, reg_t *saved_lr,
+		       struct ex_s *ep, u32_t dfar, u32_t dfsr)
+{
+	/* Extract fault status bit [0:3, 10] from DFSR */
+	u32_t fs = dfsr & 0x0F;
+	fs |= ((dfsr >> 6) & 0x10);
+	if (is_alignment_fault(fs)) {
+		if (is_nested) {
+			printf("KERNEL: alignment fault dfar=0x%lx\n", dfar);
+			inkernel_disaster(pr, saved_lr, ep, is_nested);
+		}
+		/* Send SIGBUS to violating process. */
+		cause_sig(proc_nr(pr), SIGBUS);
+		return;
+	} else if (is_translation_fault(fs) || is_permission_fault(fs)) {
+		/* Ask VM to handle translation and permission faults as pagefaults */
+		pagefault(pr, saved_lr, is_nested, dfar, dfsr);
+		return;
+	} else {
+		/* Die on unknown things... */
+		printf("KERNEL: unhandled data abort dfar=0x%lx dfsr=0x%lx "
+			"fs=0x%lx is_nested=%d\n", dfar, dfsr, fs, is_nested);
+		panic("unhandled data abort");
+	}
+	NOT_REACHABLE;
+}
+
 static void inkernel_disaster(struct proc *saved_proc,
 	reg_t *saved_lr, struct ex_s *ep,
 	int is_nested)
@@ -171,7 +199,7 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
   }
 
   if (vector == DATA_ABORT_VECTOR) {
-	pagefault(saved_proc, saved_lr, is_nested, read_dfar(), read_dfsr());
+	data_abort(is_nested, saved_proc, saved_lr, ep, read_dfar(), read_dfsr());
 	return;
   }
 
