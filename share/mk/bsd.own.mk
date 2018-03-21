@@ -82,6 +82,11 @@ SMP_FLAGS += -DCONFIG_MAX_CPUS=${CONFIG_MAX_CPUS}
 
 CPPFLAGS+= ${SMP_FLAGS}
 
+# Disabled unaligned accesses on ARM
+.if !empty(MACHINE_ARCH:Mearm*)
+CFLAGS+= -mno-unaligned-access
+.endif
+
 __uname_s!= uname -s
 .if ${__uname_s:Uunknown} == "Minix" 
 USETOOLS?=	never
