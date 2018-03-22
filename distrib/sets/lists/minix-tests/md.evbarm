@@ -1,0 +1,9 @@
+#
+# Sorted using sort_set.pl in releasetools.
+# to add an entry simply add it at the end of the
+# file and run
+# ../../../../releasetools/sort_set.pl < mi > out
+# mv out mi
+#
+./usr/tests/minix-posix/test_arm_segfault               minix-tests
+./usr/tests/minix-posix/test_arm_unaligned              minix-tests
