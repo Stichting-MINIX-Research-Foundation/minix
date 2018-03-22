@@ -21,24 +21,15 @@
 #define INTERRUPT_VECTOR              6
 #define FAST_INTERRUPT_VECTOR         7
 
+/* Data abort helper */
+#define is_align_fault(fault_status) \
+	((fault_status) == FAULT_ALIGN_0)
 
-/* Known fault status bits */
-#define DFSR_FS_ALIGNMENT_FAULT			0x01
-#define DFSR_FS_TRANSLATION_FAULT_PAGE		0x07
-#define DFSR_FS_TRANSLATION_FAULT_SECTION	0x05
-#define DFSR_FS_PERMISSION_FAULT_PAGE		0x0F
-#define DFSR_FS_PERMISSION_FAULT_SECTION	0x0D
+#define is_trans_fault(fault_status) \
+	(((fault_status) == FAULT_TRANS_S) || ((fault_status) == FAULT_TRANS_P))
 
-#define is_alignment_fault(fault_status) \
-	((fault_status) == DFSR_FS_ALIGNMENT_FAULT)
-
-#define is_translation_fault(fault_status) \
-	(((fault_status) == DFSR_FS_TRANSLATION_FAULT_PAGE) \
-		|| ((fault_status) == DFSR_FS_TRANSLATION_FAULT_SECTION))
-
-#define is_permission_fault(fault_status) \
-	(((fault_status) == DFSR_FS_PERMISSION_FAULT_PAGE) \
-		|| ((fault_status) == DFSR_FS_PERMISSION_FAULT_SECTION))
+#define is_perm_fault(fault_status) \
+	(((fault_status) == FAULT_PERM_S) || ((fault_status) == FAULT_PERM_P))
 
 /*
  * defines how many bytes are reserved at the top of the kernel stack for global

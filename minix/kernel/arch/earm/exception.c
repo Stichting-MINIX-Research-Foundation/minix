@@ -116,25 +116,27 @@ data_abort(int is_nested, struct proc *pr, reg_t *saved_lr,
 	/* Extract fault status bit [0:3, 10] from DFSR */
 	u32_t fs = dfsr & 0x0F;
 	fs |= ((dfsr >> 6) & 0x10);
-	if (is_alignment_fault(fs)) {
-		if (is_nested) {
-			printf("KERNEL: alignment fault dfar=0x%lx\n", dfar);
-			inkernel_disaster(pr, saved_lr, ep, is_nested);
-		}
-		/* Send SIGBUS to violating process. */
-		cause_sig(proc_nr(pr), SIGBUS);
-		return;
-	} else if (is_translation_fault(fs) || is_permission_fault(fs)) {
-		/* Ask VM to handle translation and permission faults as pagefaults */
+
+	 /* Translation and permission faults are handled as pagefaults. */
+	if (is_trans_fault(fs) || is_perm_fault(fs)) {
 		pagefault(pr, saved_lr, is_nested, dfar, dfsr);
-		return;
-	} else {
-		/* Die on unknown things... */
-		printf("KERNEL: unhandled data abort dfar=0x%lx dfsr=0x%lx "
-			"fs=0x%lx is_nested=%d\n", dfar, dfsr, fs, is_nested);
-		panic("unhandled data abort");
+	} else if (!is_nested) {
+		/* A user process caused some other kind of data abort. */
+		int signum = SIGSEGV;
+
+		if (is_align_fault(fs)) {
+			signum = SIGBUS;
+		} else {
+			printf("KERNEL: unknown data abort by proc %d sending "
+			       "SIGSEGV (dfar=0x%lx dfsr=0x%lx fs=0x%lx)\n",
+			       proc_nr(pr), dfar, dfsr, fs);
+		}
+		cause_sig(proc_nr(pr), signum);
+	} else { /* is_nested */
+		printf("KERNEL: inkernel data abort - disaster (dfar=0x%lx "
+		       "dfsr=0x%lx fs=0x%lx)\n", dfar, dfsr, fs);
+		inkernel_disaster(pr, saved_lr, ep, is_nested);
 	}
-	NOT_REACHABLE;
 }
 
 static void inkernel_disaster(struct proc *saved_proc,
