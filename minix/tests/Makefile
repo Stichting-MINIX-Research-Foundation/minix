@@ -126,6 +126,8 @@ PROGS+=		test63 mod
 OBJS.${o} += common.o
 .endfor
 
+.include "./arch/${MACHINE_ARCH}/Makefile.inc"
+
 # LSC Make sure there is not leftover after a failed testrun
 clean: .PHONY .MAKE
 	@rm -rf DIR*
