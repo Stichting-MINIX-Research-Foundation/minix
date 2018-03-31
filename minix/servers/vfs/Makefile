@@ -15,6 +15,11 @@ SRCS+=  gcov.c
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 
+.if defined(__MINIX)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -O3
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif # defined(__MINIX)
+
 CFLAGS+= -Wall -Wextra -Wno-sign-compare -Werror
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
 LDADD+=	-lsys -ltimers -lexec -lmthread

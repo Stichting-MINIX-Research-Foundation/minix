@@ -6,6 +6,12 @@ CWARNFLAGS.clang+=	-Wno-constant-logical-operand -Wno-error=unused-function
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+#LSC: -Wno-unused-but-set-variable while compiling with -DNDEBUG -O2
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -O3
+CWARNFLAGS.gcc+=	-Wno-unused-but-set-variable -Wno-maybe-uninitialized
+.endif # defined(__MINIX)
+
 USE_FORT?= yes	# network client
 
 BINDIR=/usr/sbin

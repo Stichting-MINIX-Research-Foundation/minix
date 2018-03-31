@@ -18,6 +18,14 @@ CLEANFILES+=sqlite3.pc
 
 .include <bsd.lib.mk>
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif
+.endif # defined(__MINIX)
+
 all: sqlite3.pc
 dependall: all
 

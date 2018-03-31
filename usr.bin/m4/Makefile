@@ -6,6 +6,14 @@
 # 	if you want the paste & spaste macros.
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif
+.endif # defined(__MINIX)
+
 PROG=		m4
 CPPFLAGS+=	-DEXTENDED -I${.CURDIR}/lib
 SRCS=	parser.y tokenizer.l eval.c expr.c look.c main.c misc.c gnum4.c trace.c

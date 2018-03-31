@@ -581,7 +581,10 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
  * The parent and child parameters tell who forked off whom. The file
  * system uses the same slot numbers as the kernel.  Only PM makes this call.
  */
-  struct fproc *cp, *pp;
+  struct fproc *cp;
+#if !defined(NDEBUG)
+  struct fproc *pp;
+#endif /* !defined(NDEBUG) */
   int i, parentno, childno;
   mutex_t c_fp_lock;
 
@@ -606,7 +609,9 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
 
   /* Increase the counters in the 'filp' table. */
   cp = &fproc[childno];
+#if !defined(NDEBUG)
   pp = &fproc[parentno];
+#endif /* !defined(NDEBUG) */
 
   for (i = 0; i < OPEN_MAX; i++)
 	if (cp->fp_filp[i] != NULL) cp->fp_filp[i]->filp_count++;
@@ -615,8 +620,10 @@ void pm_fork(endpoint_t pproc, endpoint_t cproc, pid_t cpid)
   cp->fp_pid = cpid;
   cp->fp_endpoint = cproc;
 
+#if !defined(NDEBUG)
   /* A forking process cannot possibly be suspended on anything. */
   assert(pp->fp_blocked_on == FP_BLOCKED_ON_NONE);
+#endif /* !defined(NDEBUG) */
 
   /* A child is not a process leader, not being revived, etc. */
   cp->fp_flags = FP_NOFLAGS;

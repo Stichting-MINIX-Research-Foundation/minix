@@ -581,7 +581,10 @@ addr_put_netmask(struct sockaddr * addr, socklen_t * addr_len, uint8_t type,
 void
 addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
 {
-	unsigned int addr_len, byte, bit;
+#if !defined(NDEBUG)
+	unsigned int addr_len;
+#endif /* !defined(NDEBUG) */
+	unsigned int byte, bit;
 	const uint8_t *srcaddr;
 	uint8_t type, *dstaddr;
 
@@ -594,7 +597,9 @@ addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
 	case IPADDR_TYPE_V4:
 		srcaddr = (const uint8_t *)&ip_2_ip4(src)->addr;
 		dstaddr = (uint8_t *)&ip_2_ip4(dst)->addr;
+#if !defined(NDEBUG)
 		addr_len = sizeof(ip_2_ip4(src)->addr);
+#endif /* !defined(NDEBUG) */
 
 		break;
 
@@ -603,7 +608,9 @@ addr_normalize(ip_addr_t * dst, const ip_addr_t * src, unsigned int prefix)
 
 		srcaddr = (const uint8_t *)&ip_2_ip6(src)->addr;
 		dstaddr = (uint8_t *)&ip_2_ip6(dst)->addr;
+#if !defined(NDEBUG)
 		addr_len = sizeof(ip_2_ip6(src)->addr);
+#endif /* !defined(NDEBUG) */
 
 		break;
 

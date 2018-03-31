@@ -6,6 +6,14 @@ USE_WIDECHAR?=yes
 
 CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif
+.endif # defined(__MINIX)
+
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 #DBG=-g
 #CPPFLAGS+=-DLOGDEBUG -DTRACE

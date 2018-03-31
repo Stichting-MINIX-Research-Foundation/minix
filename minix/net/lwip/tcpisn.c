@@ -78,7 +78,7 @@ tcpisn_secret(struct rmib_call * call __unused,
 	struct rmib_newp * newp)
 {
 	uint8_t secret[TCPISN_SECRET_HEX_LENGTH], byte, *p;
-	unsigned int i;
+	unsigned int i = 0 /*gcc*/;
 	int r;
 
 	/* First copy out the old (current) ISN secret. */

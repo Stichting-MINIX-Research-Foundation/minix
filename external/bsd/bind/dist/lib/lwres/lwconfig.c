@@ -606,15 +606,21 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 	FILE *fp = NULL;
 	char word[256];
 	lwres_result_t rval, ret;
+#if !defined(NDEBUG) && defined(__minix)
 	lwres_conf_t *confdata;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 	int stopchar;
 
 	REQUIRE(ctx != NULL);
+#if !defined(NDEBUG) && defined(__minix)
 	confdata = &ctx->confdata;
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 	REQUIRE(filename != NULL);
 	REQUIRE(strlen(filename) > 0U);
+#if !defined(NDEBUG) && defined(__minix)
 	REQUIRE(confdata != NULL);
+#endif /* !defined(NDEBUG) && defined(__minix) */
 
 	errno = 0;
 	if ((fp = fopen(filename, "r")) == NULL)

@@ -9,6 +9,14 @@ PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
 	progressbar.c ruserpass.c util.c
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized -Wno-clobbered
+.endif
+.endif # defined(__MINIX)
+
 # Uncomment the following to provide defaults for gate-ftp operation
 #
 #CPPFLAGS+=-DGATE_SERVER=\"ftp-gw.host\" # -DGATE_PORT=21

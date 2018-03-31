@@ -1694,7 +1694,7 @@ uds_recv(struct sock * sock, const struct sockdriver_data * data, size_t len,
 	struct udssock *uds = (struct udssock *)sock;
 	size_t seglen, datalen, reslen = 0 /*gcc*/, credpos = 0 /*gcc*/;
 	unsigned int segflags;
-	int r, partial, may_block;
+	int r, partial, may_block = 0 /*gcc*/;
 
 	dprintf(("UDS: recv(%d,%zu,%zu,%u,%u,0x%x)\n",
 	    uds_get_id(uds), len, (off != NULL) ? *off : 0, ctl_len,

@@ -10,6 +10,9 @@
 RUMPPRG=ifconfig
 MAN=	ifconfig.8
 
+.if defined(__MINIX)
+CWARNFLAGS.gcc+=	-Wno-unused-but-set-variable
+.endif # defined(__MINIX)
 #DBG+=-g
 SRCS= af_atalk.c af_link.c carp.c
 .if (${USE_INET6} != "no")

@@ -50,6 +50,14 @@ LDADD+=		-lnbutil
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
+	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif
+.endif # defined(__MINIX)
+
 .if ${MKCRYPTO} != "no"
 
 LDADD+=	-lssl -lcrypto

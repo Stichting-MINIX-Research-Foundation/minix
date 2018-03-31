@@ -7,6 +7,10 @@ MAN=	named.8 lwresd.8 named.conf.5
 BINDIR=	/usr/sbin
 LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
+.if defined(__MINIX)
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif # defined(__MINIX)
+
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/bin/named

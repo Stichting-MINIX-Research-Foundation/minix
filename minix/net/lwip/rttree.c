@@ -476,7 +476,7 @@ rttree_add(struct rttree * tree, struct rttree_entry * entry,
 {
 	struct rttree_node *node, *parent, *link;
 	struct rttree_entry *other_entry;
-	unsigned int bit, side, side2;
+	unsigned int bit = 0 /*gcc*/, side, side2;
 	int match;
 
 	assert(mask != NULL || prefix == tree->rtt_bits);

@@ -5,6 +5,11 @@ LIB=isc
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Os
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif # defined(__MINIX)
+
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=	${IDIST}/lib/isc

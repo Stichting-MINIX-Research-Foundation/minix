@@ -14,6 +14,10 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 
 .include <bsd.own.mk>
 
+.if defined(__MINIX)
+CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.endif # defined(__MINIX)
+
 SRCS+=		auth.c hmac_md5.c
 
 USE_INET?=	yes

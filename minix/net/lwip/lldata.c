@@ -425,9 +425,9 @@ lldata_ndp_get(lldata_ndp_num_t num, struct sockaddr_in6 * addr,
 {
 	const ip6_addr_t *ip6addr;
 	ip_addr_t ipaddr;
-	struct netif *netif;
+	struct netif *netif = NULL /*gcc*/;
 	struct ifdev *ifdev;
-	const uint8_t *lladdr;
+	const uint8_t *lladdr = NULL /*gcc*/;
 	socklen_t addr_len;
 
 	ip6addr = nd6_get_neighbor_cache_entry(num, &netif, &lladdr,
