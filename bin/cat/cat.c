@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.55 2015/07/25 16:17:01 sevan Exp $	*/
+/* $NetBSD: cat.c,v 1.57 2016/06/16 00:52:37 sevan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.55 2015/07/25 16:17:01 sevan Exp $");
+__RCSID("$NetBSD: cat.c,v 1.57 2016/06/16 00:52:37 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 			vflag = 1;
 			break;
 		default:
+		case '?':
 			(void)fprintf(stderr,
 			    "Usage: %s [-beflnstuv] [-B bsize] [-] "
 			    "[file ...]\n", getprogname());
@@ -174,18 +175,16 @@ cook_buf(FILE *fp)
 	line = gobble = 0;
 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
 		if (prev == '\n') {
-			if (ch == '\n') {
-				if (sflag) {
-					if (!gobble && nflag && !bflag)
-						(void)fprintf(stdout,
-							"%6d\t\n", ++line);
-					else if (!gobble && putchar(ch) == EOF)
-						break;
+			if (sflag) {
+				if (ch == '\n') {
+					if (gobble)
+						continue;
 					gobble = 1;
-					continue;
+				} else
+					gobble = 0;
 				}
 				if (nflag) {
-					if (!bflag) {
+					if (!bflag || ch != '\n') {
 						(void)fprintf(stdout,
 						    "%6d\t", ++line);
 						if (ferror(stdout))
@@ -197,13 +196,7 @@ cook_buf(FILE *fp)
 							break;
 					}
 				}
-			} else if (nflag) {
-				(void)fprintf(stdout, "%6d\t", ++line);
-				if (ferror(stdout))
-					break;
 			}
-		}
-		gobble = 0;
 		if (ch == '\n') {
 			if (eflag)
 				if (putchar('$') == EOF)
