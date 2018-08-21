@@ -1,0 +1,36 @@
+diff -rNU3 dist.orig/configure dist/configure
+--- dist.orig/configure	2006-04-01 08:40:00.000000000 +0200
++++ dist/configure	2018-08-21 21:28:59.000000000 +0200
+@@ -13622,7 +13622,7 @@
+ #define GLOB_INTERFACE_VERSION 1
+ #if !defined _LIBC && defined __GNU_LIBRARY__ && __GNU_LIBRARY__ > 1
+ # include <gnu-versions.h>
+-# if _GNU_GLOB_INTERFACE_VERSION == GLOB_INTERFACE_VERSION
++# if _GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION
+    gnu glob
+ # endif
+ #endif
+diff -rNU3 dist.orig/configure.in dist/configure.in
+--- dist.orig/configure.in	2018-08-21 21:29:42.000000000 +0200
++++ dist/configure.in	2018-08-21 21:29:24.000000000 +0200
+@@ -354,7 +354,7 @@
+ #define GLOB_INTERFACE_VERSION 1
+ #if !defined _LIBC && defined __GNU_LIBRARY__ && __GNU_LIBRARY__ > 1
+ # include <gnu-versions.h>
+-# if _GNU_GLOB_INTERFACE_VERSION == GLOB_INTERFACE_VERSION
++# if _GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION
+    gnu glob
+ # endif
+ #endif
+diff -rNU3 dist.orig/glob/glob.c dist/glob/glob.c
+--- dist.orig/glob/glob.c	2006-03-10 03:20:45.000000000 +0100
++++ dist/glob/glob.c	2018-08-21 21:28:17.000000000 +0200
+@@ -51,7 +51,7 @@
+ #define GLOB_INTERFACE_VERSION 1
+ #if !defined _LIBC && defined __GNU_LIBRARY__ && __GNU_LIBRARY__ > 1
+ # include <gnu-versions.h>
+-# if _GNU_GLOB_INTERFACE_VERSION == GLOB_INTERFACE_VERSION
++# if _GNU_GLOB_INTERFACE_VERSION >= GLOB_INTERFACE_VERSION
+ #  define ELIDE_CODE
+ # endif
+ #endif
