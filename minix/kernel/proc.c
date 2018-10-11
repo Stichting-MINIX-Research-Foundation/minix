@@ -1784,7 +1784,7 @@ void dequeue(struct proc *rp)
  *===========================================================================*/
 static struct proc * pick_proc(void)
 {
-/* Decide who to run now.  A new process is selected an returned.
+/* Decide who to run now.  A new process is selected and returned.
  * When a billable process is selected, record it in 'bill_ptr', so that the 
  * clock task can tell who to bill for system time.
  *
