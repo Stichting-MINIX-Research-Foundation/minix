@@ -1,0 +1,90 @@
+.\"	$NetBSD: wtf.6,v 1.19 2015/04/22 15:04:57 christos Exp $
+.\"
+.\" Public Domain
+.\"
+.Dd April 22, 2015
+.Dt WTF 6
+.Os
+.Sh NAME
+.Nm wtf
+.Nd look up terms
+.Sh SYNOPSIS
+.Nm
+.Op Fl f Ar dbfile
+.Op Fl o
+.Op Ar is
+.Ar term ...
+.Sh DESCRIPTION
+The
+.Nm
+utility looks up the meaning of one or more
+.Ar term
+operands specified on the command line.
+.Pp
+.Ar term
+will first be searched for as an acronym in the acronym databases,
+which are expected to be in the format
+.Dq acronym[tab]meaning .
+If no match has been found,
+.Nm
+will check to see if the term is known by
+.Xr whatis 1 ,
+.Xr pkg_info 1 ,
+or, when called from within a pkgsrc package directory,
+pkgsrc's internal help facility,
+.Dq make help topic=XXX .
+.Pp
+The optional
+.Ar is
+operand will be ignored, allowing the
+fairly natural
+.Dq wtf is WTF
+usage.
+.Pp
+The following option is available:
+.Bl -tag -width flag
+.It Fl f Ar dbfile
+Overrides the default list of acronym databases, bypassing the value of the
+.Ev ACRONYMDB
+variable.
+Unlike this variable the
+.Fl f
+option only accepts one file name as an argument,
+but it may be given multiple times to specify more than one file to use.
+.It Fl o
+Include acronyms that could be considered offensive to some.
+Please consult
+.Xr fortune 6
+for more information about the
+.Fl o
+flag.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width ACRONYMDB
+.It Ev ACRONYMDB
+The default list of acronym databases may be overridden by setting the
+environment variable
+.Ev ACRONYMDB
+to the name of one or more space-separated file names of
+acronym databases.
+.El
+.Sh FILES
+.Bl -tag -width /usr/share/misc/acronyms.XXXX -compact
+.It Pa /usr/share/misc/acronyms
+default acronym database.
+.It Pa /usr/share/misc/acronyms-o
+default offensive acronym database.
+.It Pa /usr/share/misc/acronyms.comp
+default computer-related acronym database.
+.El
+.Sh SEE ALSO
+.Xr make 1 ,
+.Xr pkg_info 1 ,
+.Xr whatis 1 ,
+.Xr fortune 6
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 1.5 .
+Initially it only translated acronyms;
+functionality to look up the meaning of terms in other sources was added later.
