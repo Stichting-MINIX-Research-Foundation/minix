@@ -15,7 +15,7 @@ SUBDIR=	adventure arithmetic \
 	monop morse number \
 	pig ppt primes \
 	rain random rogue snake tetris \
-	wargames
+	wargames wtf
 
 .if !defined(__MINIX)
 .if ${MKCXX} != "no"

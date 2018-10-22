@@ -37,6 +37,7 @@
 ./usr/games/tetris                                      minix-games
 ./usr/games/unstr                                       minix-games
 ./usr/games/wargames                                    minix-games
+./usr/games/wtf                                         minix-games
 ./usr/share                                             minix-games
 ./usr/share/games                                       minix-games
 ./usr/share/games/fish.instr                            minix-games

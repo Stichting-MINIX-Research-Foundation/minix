@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+#	$NetBSD: wtf,v 1.21 2015/04/21 23:56:30 christos Exp $
+#
+# Public domain
+#
+
+PROGNAME="$(basename "$0")"
+offensive=false
+
+usage() {
+	echo "usage: $PROGNAME [-o] [-f dbfile] [is] term ..."
+	exit 1
+}
+
+while getopts f:o f
+do
+	case "$f" in
+	o)	offensive=true
+		;;
+	f)
+		acronyms="$OPTARG $acronyms"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+
+shift "$(expr "$OPTIND" - 1)"
+
+if [ "$1" = "is" ]; then
+	shift
+fi
+
+if [ -z "$1" ]; then
+	usage
+fi
+
+if [ -z "$acronyms" ]; then
+	if [ -z "$ACRONYMDB" ]; then
+		for f in /usr/share/misc/acronyms*; do
+			case $f in
+			*-o)
+				if $offensive; then
+					acronyms="$acronyms $f"
+				fi
+				;;
+			*)
+				acronyms="$acronyms $f"
+				;;
+			esac
+		done
+	else
+		acronyms="$ACRONYMDB"
+	fi
+fi
+
+if [ -z "$acronyms" ]; then
+	echo "$PROGNAME: acronym database not found!" >&2
+	exit 1
+fi
+
+
+for f in $acronyms; do
+	if [ ! -f $f ]; then
+		echo "$PROGNAME: cannot open acronym database file \`$f'" >&2
+		exit 1
+	fi
+done
+
+rv=0
+for i; do
+	# Search acronym list first
+	target="$(echo "$i" | tr '[a-z]' '[A-Z]')"
+	ans="$(fgrep -h "$target" $acronyms 2>/dev/null \
+	     | sed -ne "\|^$target[[:space:]]|s|^$target[[:space:]]*||p")"
+	if [ -n "$ans" ] ; then
+		echo "$target: $ans"
+		continue
+	fi
+
+	# Try whatis(1) next
+	ans="$(whatis "$i" 2>/dev/null)"
+	if [ $? -eq 0 ]; then
+		echo "$ans" | sort -u
+		continue
+	fi
+
+	# Try pkg_info(1) next
+	ans="$(pkg_info -qc "$i" 2> /dev/null)"
+	if [ $? -eq 0 ]; then
+		echo "$i: $ans"
+		continue
+	fi
+
+	# If called from pkgsrc package directory,
+	# try querying pkgsrc's help facility next
+	if [ -f ../../mk/bsd.pkg.mk ]; then
+		ans="$(make help topic="$i")"
+		if [ "$ans" != "No help found for $i." ]; then
+			echo "$i: $ans"
+			continue
+		fi
+	fi
+
+	# Give up!
+	echo "$PROGNAME: I don't know what \`$i' means!" 1>&2
+	rv=1
+done
+exit $rv
