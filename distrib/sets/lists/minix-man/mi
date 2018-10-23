@@ -3430,6 +3430,7 @@
 ./usr/man/man6/snake.6                                  minix-man
 ./usr/man/man6/tetris.6                                 minix-man
 ./usr/man/man6/wargames.6                               minix-man
+./usr/man/man6/worms.6                                  minix-man
 ./usr/man/man6/wtf.6                                    minix-man
 ./usr/man/man7                                          minix-man
 ./usr/man/man7/ascii.7                                  minix-man
