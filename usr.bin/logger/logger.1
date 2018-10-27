@@ -1,0 +1,117 @@
+.\"	$NetBSD: logger.1,v 1.15 2012/05/13 17:08:31 njoly Exp $
+.\"
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)logger.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd April 26, 2012
+.Dt LOGGER 1
+.Os
+.Sh NAME
+.Nm logger
+.Nd make entries in the system log
+.Sh SYNOPSIS
+.Nm
+.Op Fl cins
+.Op Fl d Ar SD
+.Op Fl f Ar file
+.Op Fl m Ar msgid
+.Op Fl p Ar pri
+.Op Fl t Ar tag
+.Op Ar message ...
+.Sh DESCRIPTION
+.Nm
+provides a shell command interface to the
+.Xr syslog 3
+system log module.
+.Pp
+Options:
+.Pp
+.Bl -tag -width "messageXX"
+.It Fl c
+Log to console
+.Dv ( LOG_CONS ) .
+.It Fl d Ar sd
+Log this in the structured data (SD) field.
+.Po
+.Ar sd
+has to be passed as one argument and will require careful quoting when used from
+the shell.
+.Pc
+.It Fl f Ar file
+Log the specified file.
+.It Fl i
+Log the process id of the logger process
+with each line
+.Dv ( LOG_PID ) .
+.It Fl m Ar msgid
+The MSGID used for the message.
+.It Fl n
+Open log file immediately
+.Dv ( LOG_NDELAY ) .
+.It Fl p Ar pri
+Enter the message with the specified priority.
+The priority may be specified numerically or as a
+.Dq facility.level
+pair.
+For example,
+.Dq \-p local3.info
+logs the message(s) as
+.Ar info Ns rmational
+level in the
+.Ar local3
+facility.
+The default is
+.Dq user.notice .
+.It Fl s
+Log the message to standard error, as well as the system log
+.Dv ( LOG_PERROR ) .
+.It Fl t Ar tag
+Mark every line in the log with the specified
+.Ar tag  .
+.It Ar message
+Write the message to log; if not specified, and the
+.Fl f
+flag is not provided, standard input is logged.
+.El
+.Sh EXIT STATUS
+.Ex -std logger
+.Sh EXAMPLES
+.Bd -literal -offset indent -compact
+logger System rebooted
+
+logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
+.Ed
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr syslogd 8
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.2-92 .

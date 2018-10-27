@@ -15,7 +15,7 @@ SUBDIR= asa \
 	getopt \
 	head hexdump id indent infocmp ipcrm ipcs join jot \
 	lam last ldd leave \
-	locale lock login logname lorder m4 \
+	locale lock logger login logname lorder m4 \
 	machine make man menuc mesg \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mkstr mktemp \
 	msgc \
