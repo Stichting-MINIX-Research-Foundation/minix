@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.90 2012/01/07 18:45:13 christos Exp $ */
+/*	$NetBSD: df.c,v 1.92.8.1 2018/08/28 13:21:42 martin Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.90 2012/01/07 18:45:13 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.92.8.1 2018/08/28 13:21:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,13 +379,13 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		 */
 		(void)printf("%10s (%-12s): %7ld block size %12ld frag size\n",
 		    sfsp->f_mntonname, sfsp->f_mntfromname,
-		    sfsp->f_iosize,	/* On UFS/FFS systems this is
+		    sfsp->f_bsize,	/* On UFS/FFS systems this is
 					 * also called the "optimal
 					 * transfer block size" but it
 					 * is of course the file
 					 * system's block size too.
 					 */
-		    sfsp->f_bsize);	/* not so surprisingly the
+		    sfsp->f_frsize);	/* not so surprisingly the
 					 * "fundamental file system
 					 * block size" is the frag
 					 * size.
@@ -499,7 +499,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %8jd %8jd %3s%%",
+		(void)printf(" %8jd %8jd %4s%%",
 		    (intmax_t)used, (intmax_t)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
 		    strspct(pb, sizeof(pb), used, inodes, 0));
@@ -512,7 +512,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aGgln] [-hkm|-ihkm|-Pk] [-t type] [file | "
+	    "Usage: %s [-agln] [-Ghkm|-ihkm|-Pk] [-t type] [file | "
 	    "file_system ...]\n",
 	    getprogname());
 	exit(1);
