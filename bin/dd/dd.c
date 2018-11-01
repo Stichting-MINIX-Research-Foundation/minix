@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.50 2015/03/18 13:23:49 manu Exp $	*/
+/*	$NetBSD: dd.c,v 1.51 2016/09/05 01:00:07 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.50 2015/03/18 13:23:49 manu Exp $");
+__RCSID("$NetBSD: dd.c,v 1.51 2016/09/05 01:00:07 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,6 @@ static void dd_in(void);
 static void getfdtype(IO *);
 static void redup_clean_fd(IO *);
 static void setup(void);
-
-int main(int, char *[]);
 
 IO		in, out;		/* input/output state */
 STAT		st;			/* statistics */
