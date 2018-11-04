@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.38 2012/03/15 02:02:20 joerg Exp $ */
+/* $NetBSD: expr.y,v 1.39 2016/09/05 01:00:07 sevan Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.38 2012/03/15 02:02:20 joerg Exp $");
+__RCSID("$NetBSD: expr.y,v 1.39 2016/09/05 01:00:07 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,8 +54,6 @@ static int yylex(void);
 static int is_zero_or_null(const char *);
 static int is_integer(const char *);
 static int64_t perform_arith_op(const char *, const char *, const char *);
-
-int main(int, const char * const *);
 
 #define YYSTYPE	const char *
 
