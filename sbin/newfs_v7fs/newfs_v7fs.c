@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.c,v 1.4 2015/06/16 23:18:55 christos Exp $ */
+/*	$NetBSD: newfs_v7fs.c,v 1.5 2017/01/10 20:53:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,19 +31,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_v7fs.c,v 1.4 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: newfs_v7fs.c,v 1.5 2017/01/10 20:53:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/disklabel.h>
 
 #include <fs/v7fs/v7fs.h>
 #include "v7fs_impl.h"
