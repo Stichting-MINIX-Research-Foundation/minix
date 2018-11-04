@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.17 2013/10/19 01:09:59 christos Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.18 2016/09/05 01:09:57 sevan Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -162,7 +162,6 @@ Hash_Entry *make_fake_provision(filenode *);
 void crunch_all_files(void);
 void initialize(void);
 void generate_ordering(void);
-int main(int, char *[]);
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.40 2013/05/04 06:26:44 uebayasi Exp $ */
+/* $NetBSD: test.c,v 1.41 2016/09/05 01:00:07 sevan Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.40 2013/05/04 06:26:44 uebayasi Exp $");
+__RCSID("$NetBSD: test.c,v 1.41 2016/09/05 01:00:07 sevan Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -206,8 +206,6 @@ int testcmd(int, char **);
 int
 testcmd(int argc, char **argv)
 #else
-int main(int, char *[]);
-
 int
 main(int argc, char *argv[])
 #endif
