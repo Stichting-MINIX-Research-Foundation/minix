@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.h,v 1.2 2013/01/23 15:29:15 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.h,v 1.6 2017/02/17 09:29:35 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +38,7 @@ AOPT('C', off_t, create_size, 0, "Create file") \
 AOPT('F', uint8_t,  fat_type, 12, "FAT type (12, 16, or 32)") \
 AOPT('I', uint32_t, volume_id, 0, "Volume ID") \
 AOPT('L', char *, volume_label, -1, "Volume Label") \
-AOPT('N', bool, no_create, -2, "Don't create filesystem, print params only") \
+AOPT('N', bool, no_create, -2, "Don't create file system, print params only") \
 AOPT('O', char *, OEM_string, -1, "OEM string") \
 AOPT('S', uint16_t, bytes_per_sector, 1, "Bytes per sector") \
 AOPT('a', uint32_t, sectors_per_fat, 1, "Sectors per FAT") \
@@ -63,6 +60,8 @@ struct msdos_options {
 #define AOPT(_opt, _type, _name, _min, _desc) _type _name;
 ALLOPTS
 #undef AOPT	
+	time_t	timestamp;
+	uint32_t timestamp_set:1;
 	uint32_t volume_id_set:1;
 	uint32_t media_descriptor_set:1;
 	uint32_t hidden_sectors_set:1;

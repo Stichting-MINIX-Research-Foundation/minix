@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.20 2014/04/24 23:49:40 christos Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.23 2017/02/17 09:29:35 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" From: $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.13 2001/08/14 10:01:48 ru Exp $
 .\"
-.Dd April 24, 2014
+.Dd February 16, 2017
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Op Fl o Ar hidden
 .Op Fl r Ar reserved
 .Op Fl s Ar total
+.Op Fl T Ar timestamp
 .Op Fl u Ar track-size
 .Ar special
 .Op Ar disktype
@@ -74,9 +75,9 @@ to determine geometry, if required.
 The options are as follow:
 .Bl -tag -width indent
 .It Fl N
-Don't create a file system: just print out parameters.
+Do not create a file system: just print out parameters.
 .It Fl @ Ar offset
-Build the filesystem at the specified offset in bytes in the device or file.
+Build the file system at the specified offset in bytes in the device or file.
 A suffix s, k, m, g (lower or upper case)
 appended to the offset specifies that the
 number is in sectors, kilobytes, megabytes or gigabytes, respectively.
@@ -120,7 +121,7 @@ Sectors per cluster.
 Acceptable values are powers of 2 in the range 1 through 128.
 If the block or cluster size are not specified, the code
 uses a cluster between 512 bytes and 32K depending on
-the filesystem size.
+the file system size.
 .It Fl e Ar dirents
 Number of root directory entries (FAT12 and FAT16 only).
 .It Fl f Ar format
@@ -147,6 +148,13 @@ Number of hidden sectors.
 Number of reserved sectors.
 .It Fl s Ar total
 File system size.
+.It Fl T At timestamp
+Specify a timestamp to be used for file system creation so that
+it can be consistent for reproducible builds.
+The timestamp can be a pathname, where the timestamps are derived from
+that file, a parseable date for parsedate(3) (this option is not
+yet available in the tools build), or an integer value interpreted
+as the number of seconds from the Epoch.
 .It Fl u Ar track-size
 Number of sectors per track.
 .El
@@ -174,7 +182,7 @@ option.
 When the geometry is not available, it is assumed to be
 63 sectors, 255 heads.
 The size is then rounded to become
-a multiple of the track size and avoid complaints by some filesystem code.
+a multiple of the track size and avoid complaints by some file system code.
 .Pp
 FAT file system parameters occupy a "Boot Sector BPB (BIOS Parameter
 Block)" in the first of the "reserved" sectors which precede the actual
@@ -233,6 +241,10 @@ Exit status is 0 on success and 1 on error.
 .Xr fdisk 8 ,
 .Xr newfs 8
 .Sh HISTORY
+A
+.Nm
+utility appeared in
+.Fx 3.0 .
 The
 .Nm
 command first appeared in
