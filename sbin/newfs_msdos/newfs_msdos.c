@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.43 2015/04/23 13:27:14 abs Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,11 +33,12 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.43 2015/04/23 13:27:14 abs Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <err.h>
@@ -45,6 +46,7 @@ __RCSID("$NetBSD: newfs_msdos.c,v 1.43 2015/04/23 13:27:14 abs Exp $");
 #include <unistd.h>
 #include <paths.h>
 #include <errno.h>
+#include <util.h>
 
 #include "mkfs_msdos.h"
 
@@ -57,13 +59,38 @@ __dead static void usage(void);
 static u_int argtou(const char *, u_int, u_int, const char *);
 static off_t argtooff(const char *, const char *);
 
+static time_t
+get_tstamp(const char *b)
+{
+	struct stat st;
+	char *eb;
+	long long l;
+#ifndef HAVE_NBTOOL_CONFIG_H
+	time_t when;
+#endif
+
+	if (stat(b, &st) != -1)
+		return (time_t)st.st_mtime;
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+	errno = 0;
+	if ((when = parsedate(b, NULL, NULL)) != -1 || errno == 0)
+		return when;
+#endif
+	errno = 0;
+	l = strtoll(b, &eb, 0);
+	if (b == eb || *eb || errno)
+		errx(EXIT_FAILURE, "Can't parse timestamp `%s'", b);
+	return (time_t)l;
+}
+
 /*
  * Construct a FAT12, FAT16, or FAT32 file system.
  */
 int
 main(int argc, char *argv[])
 {
-    static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:u:";
+    static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:T:u:";
     struct msdos_options o;
     char *fname, *dtype;
     char buf[MAXPATHLEN];
@@ -141,6 +168,10 @@ main(int argc, char *argv[])
 	    break;
 	case 's':
 	    o.size = argto4(optarg, 1, "file system size");
+	    break;
+	case 'T':
+	    o.timestamp_set = 1;
+	    o.timestamp = get_tstamp(optarg);
 	    break;
 	case 'u':
 	    o.sectors_per_track = argto2(optarg, 1, "sectors/track");
