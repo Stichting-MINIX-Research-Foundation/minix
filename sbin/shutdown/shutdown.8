@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.31 2011/10/04 07:25:34 dholland Exp $
+.\"	$NetBSD: shutdown.8,v 1.33 2016/09/14 00:16:31 kre Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd October 4, 2011
+.Dd September 12, 2016
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -237,7 +237,9 @@ System shutdown commands
 The hours and minutes in the second time format may be separated by
 a colon (``:'') for backward compatibility.
 .Sh HISTORY
-The
+A
 .Nm
-command appeared in
-.Bx 4.0 .
+command was originally written by Ian Johnstone for UNSW's modified
+.At "6th Edn" ,
+modified, and then incorporated in
+.Bx 4.1 .

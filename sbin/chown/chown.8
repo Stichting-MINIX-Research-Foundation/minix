@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.7 2013/12/17 09:54:08 apb Exp $
+.\"	$NetBSD: chown.8,v 1.10 2016/09/11 01:23:26 sevan Exp $
 .\"
-.Dd October 22, 2012
+.Dd September 11, 2016
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -62,6 +62,9 @@
 .Sh DESCRIPTION
 .Nm
 sets the user ID and/or the group ID of the specified files.
+Symbolic links named by arguments are silently left unchanged unless
+.Fl h
+is used.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -82,7 +85,7 @@ option is specified, no symbolic links are followed.
 Change the user ID and/or the group ID for the file hierarchies rooted
 in the files instead of just the files themselves.
 .It Fl f
-Don't report any failure to change file owner or group, nor modify
+Do not report any failure to change file owner or group, nor modify
 the exit status to reflect such failures.
 .It Fl h
 If
@@ -135,7 +138,7 @@ The
 .Ar group
 may be either a group name or a numeric group ID.
 Since it is valid to have a user or group name that is numeric (and
-doesn't have the numeric ID that matches its name) the name lookup
+does not have the numeric ID that matches its name) the name lookup
 is always done first.
 Preceding an ID with a ``#'' character will force it to be taken
 as a number.
@@ -166,6 +169,11 @@ group names may contain the dot character.
 .Xr lchown 2 ,
 .Xr fts 3 ,
 .Xr symlink 7
+.Sh HISTORY
+A
+.Nm
+utility appeared in
+.At v1 .
 .Sh STANDARDS
 The
 .Nm
