@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.26 2011/08/29 14:49:38 joerg Exp $ */
+/* $NetBSD: rmdir.c,v 1.26.36.1 2017/08/14 23:54:30 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.26 2011/08/29 14:49:38 joerg Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.26.36.1 2017/08/14 23:54:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,10 @@ rm_path(char *path)
 		if (p[1] == 0)
 			/* Ignore trailing '/' on deleted name */
 			continue;
+
+		if (*path == 0)
+			/* At top level (root) directory */
+			break;
 
 		if (rmdir(path) < 0) {
 			warn("%s", path);
