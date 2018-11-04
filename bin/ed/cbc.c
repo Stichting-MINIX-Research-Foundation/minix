@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.23 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: cbc.c,v 1.24 2016/02/01 17:34:00 christos Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.23 2014/03/23 05:06:42 dholland Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.24 2016/02/01 17:34:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,7 +303,7 @@ expand_des_key(char *obuf /* bit pattern */, char *inbuf /* the key itself */)
 		/*
 		 * now translate it, bombing on any illegal hex digit
 		 */
-		for (i = 0; inbuf[i] && i < 16; i++)
+		for (i = 0; i < 16 && inbuf[i]; i++)
 			if ((nbuf[i] = hex_to_binary((int) inbuf[i], 16)) == -1)
 				des_error("bad hex digit in key");
 		while (i < 16)
@@ -323,7 +323,7 @@ expand_des_key(char *obuf /* bit pattern */, char *inbuf /* the key itself */)
 		/*
 		 * now translate it, bombing on any illegal binary digit
 		 */
-		for (i = 0; inbuf[i] && i < 16; i++)
+		for (i = 0; i < 16 && inbuf[i]; i++)
 			if ((nbuf[i] = hex_to_binary((int) inbuf[i], 2)) == -1)
 				des_error("bad binary digit in key");
 		while (i < 64)
