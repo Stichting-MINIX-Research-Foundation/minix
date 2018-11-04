@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.74 2014/04/02 10:55:47 wiz Exp $	*/
+/*	$NetBSD: ls.c,v 1.76 2017/02/06 21:06:04 rin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.74 2014/04/02 10:55:47 wiz Exp $");
+__RCSID("$NetBSD: ls.c,v 1.76 2017/02/06 21:06:04 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
 int f_humanize;			/* humanize the size field */
-int f_commas;           /* separate size field with comma */
+int f_commas;			/* separate size field with comma */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
@@ -631,7 +631,7 @@ display(FTSENT *p, FTSENT *list)
 		if (f_humanize) {
 			d.s_block = 4; /* min buf length for humanize_number */
 		} else {
-			(void)snprintf(buf, sizeof(buf), "%llu",
+			(void)snprintf(buf, sizeof(buf), "%lld",
 			    (long long)howmany(maxblock, blocksize));
 			d.s_block = strlen(buf);
 			if (f_commas) /* allow for commas before every third digit */
@@ -647,7 +647,7 @@ display(FTSENT *p, FTSENT *list)
 		if (f_humanize) {
 			d.s_size = 4; /* min buf length for humanize_number */
 		} else {
-			(void)snprintf(buf, sizeof(buf), "%llu",
+			(void)snprintf(buf, sizeof(buf), "%lld",
 			    (long long)maxsize);
 			d.s_size = strlen(buf);
 			if (f_commas) /* allow for commas before every third digit */
@@ -655,9 +655,9 @@ display(FTSENT *p, FTSENT *list)
 		}
 		d.s_user = maxuser;
 		if (bcfile) {
-			(void)snprintf(buf, sizeof(buf), "%u", maxmajor);
+			(void)snprintf(buf, sizeof(buf), "%d", maxmajor);
 			d.s_major = strlen(buf);
-			(void)snprintf(buf, sizeof(buf), "%u", maxminor);
+			(void)snprintf(buf, sizeof(buf), "%d", maxminor);
 			d.s_minor = strlen(buf);
 			if (d.s_major + d.s_minor + 2 > d.s_size)
 				d.s_size = d.s_major + d.s_minor + 2;
