@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.1 2014/03/09 00:15:45 agc Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.2 2016/06/14 20:47:08 agc Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -29,8 +29,6 @@
  * RSA Laboratories, CryptoBytes, Volume 3, Number 2, Autumn 1997,
  * ftp://ftp.rsasecurity.com/pub/cryptobytes/crypto3n2.pdf
  */
-
-#include <sys/cdefs.h>
 
 #include <string.h>
 
@@ -97,7 +95,7 @@ static const u_char PADDING[64] = {
 };
 
 void
-RMD160Init(RMD160_CTX *ctx)
+netpgpv_RMD160Init(NETPGPV_RMD160_CTX *ctx)
 {
 	ctx->count = 0;
 	ctx->state[0] = H0;
@@ -108,7 +106,7 @@ RMD160Init(RMD160_CTX *ctx)
 }
 
 void
-RMD160Update(RMD160_CTX *ctx, const u_char *input, uint32_t len)
+netpgpv_RMD160Update(NETPGPV_RMD160_CTX *ctx, const u_char *input, uint32_t len)
 {
 	uint32_t have, off, need;
 
@@ -120,13 +118,13 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, uint32_t len)
 	if (len >= need) {
 		if (have) {
 			memcpy(ctx->buffer + have, input, (size_t)need);
-			RMD160Transform(ctx->state, ctx->buffer);
+			netpgpv_RMD160Transform(ctx->state, ctx->buffer);
 			off = need;
 			have = 0;
 		}
 		/* now the buffer is empty */
 		while (off + 64 <= len) {
-			RMD160Transform(ctx->state, input+off);
+			netpgpv_RMD160Transform(ctx->state, input+off);
 			off += 64;
 		}
 	}
@@ -135,7 +133,7 @@ RMD160Update(RMD160_CTX *ctx, const u_char *input, uint32_t len)
 }
 
 void
-RMD160Final(u_char digest[20], RMD160_CTX *ctx)
+netpgpv_RMD160Final(u_char digest[20], NETPGPV_RMD160_CTX *ctx)
 {
 	int i;
 	u_char size[8];
@@ -150,8 +148,8 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 	padlen = (uint32_t)(64 - ((ctx->count/8) % 64));
 	if (padlen < 1 + 8)
 		padlen += 64;
-	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
-	RMD160Update(ctx, size, 8);
+	netpgpv_RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
+	netpgpv_RMD160Update(ctx, size, 8);
 
 	if (digest != NULL)
 		for (i = 0; i < 5; i++)
@@ -161,7 +159,7 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 }
 
 void
-RMD160Transform(uint32_t state[5], const u_char block[64])
+netpgpv_RMD160Transform(uint32_t state[5], const u_char block[64])
 {
 	uint32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
 
@@ -170,8 +168,13 @@ RMD160Transform(uint32_t state[5], const u_char block[64])
 #else
 	int i;
 
-	for (i = 0; i < 16; i++)
-		x[i] = le32dec(block+i*4);
+	for (i = 0; i < 16; i++) {
+		x[i] = (uint32_t)(
+		    (uint32_t)(block[i*4 + 0]) |
+		    (uint32_t)(block[i*4 + 1]) <<  8 |
+		    (uint32_t)(block[i*4 + 2]) << 16 |
+		    (uint32_t)(block[i*4 + 3]) << 24);
+	}
 #endif
 
 	a = state[0];

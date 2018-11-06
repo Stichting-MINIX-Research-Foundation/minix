@@ -33,7 +33,6 @@
 #include "sha1.h"
 #include "sha2.h"
 #include "rmd160.h"
-#include "tiger.h"
 
 #ifndef __BEGIN_DECLS
 #  if defined(__cplusplus)
@@ -50,24 +49,21 @@ __BEGIN_DECLS
 #define MD5_HASH_ALG		1
 #define SHA1_HASH_ALG		2
 #define RIPEMD_HASH_ALG		3
-#define TIGER_HASH_ALG		6	/* from rfc2440 */
 #define SHA256_HASH_ALG		8
 #define SHA384_HASH_ALG		9
 #define SHA512_HASH_ALG		10
 #define SHA224_HASH_ALG		11
-#define TIGER2_HASH_ALG		100	/* private/experimental from rfc4880 */
 
 /* structure to describe digest methods */
 typedef struct digest_t {
 	uint32_t		 alg;		/* algorithm */
 	size_t			 size;		/* size */
 	union {
-		MD5_CTX		 md5ctx;	/* MD5 */
-		SHA1_CTX	 sha1ctx;	/* SHA1 */
-		RMD160_CTX	 rmd160ctx;	/* RIPEMD */
-		SHA256_CTX	 sha256ctx;	/* SHA256 */
-		SHA512_CTX	 sha512ctx;	/* SHA512 */
-		TIGER_CTX	 tigerctx;	/* TIGER/TIGER2 */
+		NETPGPV_MD5_CTX		 md5ctx;	/* MD5 */
+		NETPGPV_SHA1_CTX	 sha1ctx;	/* SHA1 */
+		NETPGPV_RMD160_CTX	 rmd160ctx;	/* RIPEMD */
+		NETPGPV_SHA256_CTX	 sha256ctx;	/* SHA256 */
+		NETPGPV_SHA512_CTX	 sha512ctx;	/* SHA512 */
 	} u;
 	void			*prefix;	/* points to specific prefix */
 	uint32_t		 len;		/* prefix length */

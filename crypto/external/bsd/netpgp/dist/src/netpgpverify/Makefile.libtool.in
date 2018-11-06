@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.libtool.in,v 1.1 2014/03/09 00:15:45 agc Exp $
+# $NetBSD: Makefile.libtool.in,v 1.2 2017/04/17 19:50:28 agc Exp $
 
 LIB=	libnetpgpverify.a
 
@@ -8,7 +8,7 @@ OBJS+= pgpsum.o rsa.o
 
 OBJS+= bzlib.o zlib.o
 
-OBJS+= sha1.o sha2.o md5c.o rmd160.o tiger.o
+OBJS+= sha1.o sha2.o md5c.o rmd160.o
 
 PREFIX=@PREFIX@
 MANDIR=@MANDIR@

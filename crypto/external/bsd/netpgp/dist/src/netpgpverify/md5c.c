@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.1 2014/03/09 00:15:45 agc Exp $	*/
+/*	$NetBSD: md5c.c,v 1.2 2016/06/14 20:47:08 agc Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -29,7 +29,6 @@
  * documentation and/or software.
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
@@ -155,7 +154,7 @@ static const unsigned char PADDING[64] = {
  * MD5 initialization. Begins an MD5 operation, writing a new context.
  */
 void
-MD5Init(MD5_CTX *context)
+netpgpv_MD5Init(NETPGPV_MD5_CTX *context)
 {
 
 	context->count[0] = context->count[1] = 0;
@@ -173,7 +172,7 @@ MD5Init(MD5_CTX *context)
  * context.
  */
 void
-MD5Update(MD5_CTX *context,
+netpgpv_MD5Update(NETPGPV_MD5_CTX *context,
 	const unsigned char *input,	/* input block */
 	unsigned int inputLen)		/* length of input block */
 {
@@ -211,8 +210,8 @@ MD5Update(MD5_CTX *context,
  * message digest and zeroing the context.
  */
 void
-MD5Final(unsigned char digest[16],	/* message digest */
-	MD5_CTX *context)		/* context */
+netpgpv_MD5Final(unsigned char digest[16],	/* message digest */
+	NETPGPV_MD5_CTX *context)		/* context */
 {
 	unsigned char bits[8];
 	unsigned int idx, padLen;
@@ -223,10 +222,10 @@ MD5Final(unsigned char digest[16],	/* message digest */
 	/* Pad out to 56 mod 64. */
 	idx = (unsigned int)((context->count[0] >> 3) & 0x3f);
 	padLen = (idx < 56) ? (56 - idx) : (120 - idx);
-	MD5Update (context, PADDING, padLen);
+	netpgpv_MD5Update (context, PADDING, padLen);
 
 	/* Append length (before padding) */
-	MD5Update(context, bits, 8);
+	netpgpv_MD5Update(context, bits, 8);
 
 	/* Store state in digest */
 	Encode(digest, context->state, 16);

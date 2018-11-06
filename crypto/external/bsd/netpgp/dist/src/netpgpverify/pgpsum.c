@@ -41,6 +41,21 @@
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
+#undef swap16
+#undef swap32
+
+/* ignore any dash-escape at the start of a line */
+static void
+dash_escaped_update(digest_t *hash, uint8_t *in, size_t insize)
+{
+	if (insize >= 2 && memcmp(in, "- ", 2) == 0) {
+		in += 2;
+		insize -= 2;
+	}
+	digest_update(hash, in, insize);
+
+}
+
 /* add the ascii armor line endings (except for last line) */
 static size_t
 don_armor(digest_t *hash, uint8_t *in, size_t insize, int doarmor)
@@ -58,10 +73,10 @@ don_armor(digest_t *hash, uint8_t *in, size_t insize, int doarmor)
 				break;
 			}
 		}
-		digest_update(hash, from, (size_t)(newp - from));
+		dash_escaped_update(hash, from, (size_t)(newp - from));
 		digest_update(hash, dos_line_end, sizeof(dos_line_end));
 	}
-	digest_update(hash, from, insize - (size_t)(from - in));
+	dash_escaped_update(hash, from, insize - (size_t)(from - in));
 	return 1;
 }
 

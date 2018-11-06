@@ -24,7 +24,6 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/syslog.h>
 
 #ifdef _KERNEL
 # include <sys/kmem.h>

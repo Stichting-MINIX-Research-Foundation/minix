@@ -49,10 +49,11 @@ ptime(int64_t secs)
 static void
 pentry(pgpv_t *pgp, int n, const char *modifiers)
 {
+	size_t	 cc;
 	char	*s;
 
-	pgpv_get_entry(pgp, (unsigned)n, &s, modifiers);
-	printf("%s", s);
+	cc = pgpv_get_entry(pgp, (unsigned)n, &s, modifiers);
+	fwrite(s, 1, cc, stdout);
 	free(s);
 }
 
@@ -88,41 +89,46 @@ getstdin(ssize_t *cc, size_t *size)
 static int
 verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, ssize_t cc)
 {
-	pgpv_cursor_t	 cursor;
+	pgpv_cursor_t	*cursor;
 	const char	*modifiers;
 	size_t		 size;
 	size_t		 cookie;
 	char		*data;
 	int		 el;
+	int		 ok;
 
-	memset(&cursor, 0x0, sizeof(cursor));
+	cursor = pgpv_new_cursor();
+	ok = 0;
 	if (strcasecmp(cmd, "cat") == 0) {
-		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
-			if ((size = pgpv_get_verified(&cursor, cookie, &data)) > 0) {
+		if ((cookie = pgpv_verify(cursor, pgp, in, cc)) != 0) {
+			if ((size = pgpv_get_verified(cursor, cookie, &data)) > 0) {
 				write(STDOUT_FILENO, data, size);
 			}
-			return 1;
+			ok = 1;
 		}
 	} else if (strcasecmp(cmd, "dump") == 0) {
-		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
+		if ((cookie = pgpv_verify(cursor, pgp, in, cc)) != 0) {
 			size = pgpv_dump(pgp, &data);
 			write(STDOUT_FILENO, data, size);
-			return 1;
+			ok = 1;
 		}
 	} else if (strcasecmp(cmd, "verify") == 0 || strcasecmp(cmd, "trust") == 0) {
 		modifiers = (strcasecmp(cmd, "trust") == 0) ? "trust" : NULL;
-		if (pgpv_verify(&cursor, pgp, in, cc)) {
+		if (pgpv_verify(cursor, pgp, in, cc)) {
 			printf("Good signature for %s made ", inname);
-			ptime(cursor.sigtime);
-			el = pgpv_get_cursor_element(&cursor, 0);
+			ptime(pgpv_get_cursor_num(cursor, "sigtime"));
+			el = pgpv_get_cursor_element(cursor, 0);
 			pentry(pgp, el, modifiers);
-			return 1;
+			ok = 1;
+		} else {
+			fprintf(stderr, "Signature did not match contents -- %s\n",
+				pgpv_get_cursor_str(cursor, "why"));
 		}
-		fprintf(stderr, "Signature did not match contents -- %s\n", cursor.why);
 	} else {
 		fprintf(stderr, "unrecognised command \"%s\"\n", cmd);
 	}
-	return 0;
+	pgpv_cursor_close(cursor);
+	return ok;
 }
 
 int
@@ -132,13 +138,13 @@ main(int argc, char **argv)
 	const char	*cmd;
 	ssize_t		 cc;
 	size_t		 size;
-	pgpv_t		 pgp;
+	pgpv_t		*pgp;
 	char		*in;
 	int		 ssh;
 	int		 ok;
 	int		 i;
 
-	memset(&pgp, 0x0, sizeof(pgp));
+	pgp = pgpv_new();
 	keyring = NULL;
 	ssh = 0;
 	ok = 1;
@@ -163,24 +169,24 @@ main(int argc, char **argv)
 		}
 	}
 	if (ssh) {
-		if (!pgpv_read_ssh_pubkeys(&pgp, keyring, -1)) {
+		if (!pgpv_read_ssh_pubkeys(pgp, keyring, -1)) {
 			fprintf(stderr, "can't read ssh keyring\n");
 			exit(EXIT_FAILURE);
 		}
-	} else if (!pgpv_read_pubring(&pgp, keyring, -1)) {
+	} else if (!pgpv_read_pubring(pgp, keyring, -1)) {
 		fprintf(stderr, "can't read keyring\n");
 		exit(EXIT_FAILURE);
 	}
 	if (optind == argc) {
 		in = getstdin(&cc, &size);
-		ok = verify_data(&pgp, cmd, "[stdin]", in, cc);
+		ok = verify_data(pgp, cmd, "[stdin]", in, cc);
 	} else {
 		for (ok = 1, i = optind ; i < argc ; i++) {
-			if (!verify_data(&pgp, cmd, argv[i], argv[i], -1)) {
+			if (!verify_data(pgp, cmd, argv[i], argv[i], -1)) {
 				ok = 0;
 			}
 		}
 	}
-	pgpv_close(&pgp);
+	pgpv_close(pgp);
 	exit((ok) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

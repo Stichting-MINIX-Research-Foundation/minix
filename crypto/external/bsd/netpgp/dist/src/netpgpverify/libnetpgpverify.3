@@ -1,6 +1,6 @@
-.\" $NetBSD: libnetpgpverify.3,v 1.3 2015/02/05 01:26:54 agc Exp $
+.\" $NetBSD: libnetpgpverify.3,v 1.4 2017/04/17 19:50:28 agc Exp $
 .\"
-.\" Copyright (c) 2014 Alistair Crooks <agc@NetBSD.org>
+.\" Copyright (c) 2014,2015,2016 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 15, 2015
+.Dd June 26, 2016
 .Dt LIBNETPGPVERIFY 3
 .Os
 .Sh NAME
@@ -33,6 +33,14 @@
 .Lb libnetpgpverify
 .Sh SYNOPSIS
 .In netpgp/verify.h
+.Ft int
+.Fo pgpv_new
+.Fa "void"
+.Fc
+.Ft int
+.Fo pgpv_new_cursor
+.Fa "void"
+.Fc
 .Ft int
 .Fo pgpv_read_pubring
 .Fa "pgpv_t *pgp" "const void *keyring" "ssize_t size"
@@ -60,6 +68,14 @@
 .Ft size_t
 .Fo pgpv_get_entry
 .Fa "pgpv_t *pgp" "unsigned ent" "char **ret" "const char *modifiers"
+.Fc
+.Ft int64_t
+.Fo pgpv_get_cursor_num
+.Fa "pgpv_t *pgp" "const char *field"
+.Fc
+.Ft char *
+.Fo pgpv_get_cursor_str
+.Fa "pgpv_t *pgp" "const char *field"
 .Fc
 .Ft int
 .Fo pgpv_close

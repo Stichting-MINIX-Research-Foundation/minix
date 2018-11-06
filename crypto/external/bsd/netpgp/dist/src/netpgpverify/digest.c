@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <sys/syslog.h>
 
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -46,6 +45,10 @@
 
 #include "digest.h"
 
+#ifndef USE_ARG
+#define	USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
+
 static uint8_t prefix_md5[] = {
 	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
 	0xF7, 0x0D, 0x02, 0x05, 0x05, 0x00, 0x04, 0x10
@@ -59,12 +62,6 @@ static uint8_t prefix_sha1[] = {
 static uint8_t prefix_sha256[] = {
 	0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
 	0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
-};
-
-static uint64_t	prefix_tiger[] = {
-	0x0123456789ABCDEFLL,
-	0xFEDCBA9876543210LL,
-	0xF096A5B4C3B2E187LL
 };
 
 static uint8_t prefix_rmd160[] = {
@@ -96,9 +93,6 @@ digest_alg_size(unsigned alg)
 		return 32;
 	case SHA512_HASH_ALG:
 		return 64;
-	case TIGER_HASH_ALG:
-	case TIGER2_HASH_ALG:
-		return TIGER_DIGEST_LENGTH;
 	default:
 		printf("hash_any: bad algorithm\n");
 		return 0;
@@ -114,53 +108,39 @@ digest_init(digest_t *hash, const uint32_t hashalg)
 	}
 	switch(hash->alg = hashalg) {
 	case MD5_HASH_ALG:
-		MD5Init(&hash->u.md5ctx);
+		netpgpv_MD5Init(&hash->u.md5ctx);
 		hash->size = 16;
 		hash->prefix = prefix_md5;
 		hash->len = sizeof(prefix_md5);
 		hash->ctx = &hash->u.md5ctx;
 		return 1;
 	case SHA1_HASH_ALG:
-		SHA1Init(&hash->u.sha1ctx);
+		netpgpv_SHA1Init(&hash->u.sha1ctx);
 		hash->size = 20;
 		hash->prefix = prefix_sha1;
 		hash->len = sizeof(prefix_sha1);
 		hash->ctx = &hash->u.sha1ctx;
 		return 1;
 	case RIPEMD_HASH_ALG:
-		RMD160Init(&hash->u.rmd160ctx);
+		netpgpv_RMD160Init(&hash->u.rmd160ctx);
 		hash->size = 20;
 		hash->prefix = prefix_rmd160;
 		hash->len = sizeof(prefix_rmd160);
 		hash->ctx = &hash->u.rmd160ctx;
 		return 1;
 	case SHA256_HASH_ALG:
-		SHA256_Init(&hash->u.sha256ctx);
+		netpgpv_SHA256_Init(&hash->u.sha256ctx);
 		hash->size = 32;
 		hash->prefix = prefix_sha256;
 		hash->len = sizeof(prefix_sha256);
 		hash->ctx = &hash->u.sha256ctx;
 		return 1;
 	case SHA512_HASH_ALG:
-		SHA512_Init(&hash->u.sha512ctx);
+		netpgpv_SHA512_Init(&hash->u.sha512ctx);
 		hash->size = 64;
 		hash->prefix = prefix_sha512;
 		hash->len = sizeof(prefix_sha512);
 		hash->ctx = &hash->u.sha512ctx;
-		return 1;
-	case TIGER_HASH_ALG:
-		TIGER_Init(&hash->u.tigerctx);
-		hash->size = TIGER_DIGEST_LENGTH;
-		hash->prefix = prefix_tiger;
-		hash->len = sizeof(prefix_tiger);
-		hash->ctx = &hash->u.tigerctx;
-		return 1;
-	case TIGER2_HASH_ALG:
-		TIGER2_Init(&hash->u.tigerctx);
-		hash->size = TIGER_DIGEST_LENGTH;
-		hash->prefix = prefix_tiger;
-		hash->len = sizeof(prefix_tiger);
-		hash->ctx = &hash->u.tigerctx;
 		return 1;
 	default:
 		printf("hash_any: bad algorithm\n");
@@ -179,8 +159,6 @@ static rec_t	hashalgs[] = {
 	{	"ripemd",	RIPEMD_HASH_ALG	},
 	{	"sha256",	SHA256_HASH_ALG	},
 	{	"sha512",	SHA512_HASH_ALG	},
-	{	"tiger",	TIGER_HASH_ALG	},
-	{	"tiger2",	TIGER2_HASH_ALG	},
 	{	NULL,		0		}
 };
 
@@ -206,23 +184,19 @@ digest_update(digest_t *hash, const uint8_t *data, size_t length)
 	}
 	switch(hash->alg) {
 	case MD5_HASH_ALG:
-		MD5Update(hash->ctx, data, (unsigned)length);
+		netpgpv_MD5Update(hash->ctx, data, (unsigned)length);
 		return 1;
 	case SHA1_HASH_ALG:
-		SHA1Update(hash->ctx, data, (unsigned)length);
+		netpgpv_SHA1Update(hash->ctx, data, (unsigned)length);
 		return 1;
 	case RIPEMD_HASH_ALG:
-		RMD160Update(hash->ctx, data, (unsigned)length);
+		netpgpv_RMD160Update(hash->ctx, data, (unsigned)length);
 		return 1;
 	case SHA256_HASH_ALG:
-		SHA256_Update(hash->ctx, data, length);
+		netpgpv_SHA256_Update(hash->ctx, data, length);
 		return 1;
 	case SHA512_HASH_ALG:
-		SHA512_Update(hash->ctx, data, length);
-		return 1;
-	case TIGER_HASH_ALG:
-	case TIGER2_HASH_ALG:
-		TIGER_Update(hash->ctx, data, length);
+		netpgpv_SHA512_Update(hash->ctx, data, length);
 		return 1;
 	default:
 		printf("hash_any: bad algorithm\n");
@@ -238,22 +212,19 @@ digest_final(uint8_t *out, digest_t *hash)
 	}
 	switch(hash->alg) {
 	case MD5_HASH_ALG:
-		MD5Final(out, hash->ctx);
+		netpgpv_MD5Final(out, hash->ctx);
 		break;
 	case SHA1_HASH_ALG:
-		SHA1Final(out, hash->ctx);
+		netpgpv_SHA1Final(out, hash->ctx);
 		break;
 	case RIPEMD_HASH_ALG:
-		RMD160Final(out, hash->ctx);
+		netpgpv_RMD160Final(out, hash->ctx);
 		break;
 	case SHA256_HASH_ALG:
-		SHA256_Final(out, hash->ctx);
+		netpgpv_SHA256_Final(out, hash->ctx);
 		break;
 	case SHA512_HASH_ALG:
-		SHA512_Final(out, hash->ctx);
-		break;
-	case TIGER_HASH_ALG:
-		TIGER_Final(out, hash->ctx);
+		netpgpv_SHA512_Final(out, hash->ctx);
 		break;
 	default:
 		printf("hash_any: bad algorithm\n");
@@ -298,6 +269,9 @@ digest_get_prefix(unsigned hashalg, uint8_t *prefix, size_t size)
 	case SHA256_HASH_ALG:
 		memcpy(prefix, prefix_sha256, sizeof(prefix_sha256));
 		return sizeof(prefix_sha256);
+	case SHA512_HASH_ALG:
+		memcpy(prefix, prefix_sha512, sizeof(prefix_sha512));
+		return sizeof(prefix_sha512);
 	default:
 		printf("digest_get_prefix: unknown hash algorithm: %d\n", hashalg);
 		return 0;
