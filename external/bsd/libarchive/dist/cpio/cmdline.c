@@ -51,7 +51,7 @@ __FBSDID("$FreeBSD: src/usr.bin/cpio/cmdline.c,v 1.5 2008/12/06 07:30:40 kientzl
 /*
  * Short options for cpio.  Please keep this sorted.
  */
-static const char *short_options = "0AaBC:cdE:F:f:H:hI:iJjLlmnO:opR:rtuvW:yZz";
+static const char *short_options = "0AaBC:cdE:F:f:H:hI:iJjLlmnO:opR:rtuVvW:yZz";
 
 /*
  * Long options for cpio.  Please keep this sorted.
@@ -61,25 +61,34 @@ static const struct option {
 	int required;	/* 1 if this option requires an argument */
 	int equivalent;	/* Equivalent short option. */
 } cpio_longopts[] = {
+	{ "b64encode",			0, OPTION_B64ENCODE },
 	{ "create",			0, 'o' },
+	{ "dereference",		0, 'L' },
+	{ "dot",			0, 'V' },
 	{ "extract",			0, 'i' },
 	{ "file",			1, 'F' },
 	{ "format",             	1, 'H' },
+	{ "grzip",			0, OPTION_GRZIP },
 	{ "help",			0, 'h' },
 	{ "insecure",			0, OPTION_INSECURE },
 	{ "link",			0, 'l' },
 	{ "list",			0, 't' },
+	{ "lrzip",			0, OPTION_LRZIP },
+	{ "lz4",			0, OPTION_LZ4 },
 	{ "lzma",			0, OPTION_LZMA },
+	{ "lzop",			0, OPTION_LZOP },
 	{ "make-directories",		0, 'd' },
 	{ "no-preserve-owner",		0, OPTION_NO_PRESERVE_OWNER },
 	{ "null",			0, '0' },
 	{ "numeric-uid-gid",		0, 'n' },
 	{ "owner",			1, 'R' },
+	{ "passphrase",			1, OPTION_PASSPHRASE },
 	{ "pass-through",		0, 'p' },
 	{ "preserve-modification-time", 0, 'm' },
 	{ "preserve-owner",		0, OPTION_PRESERVE_OWNER },
 	{ "quiet",			0, OPTION_QUIET },
 	{ "unconditional",		0, 'u' },
+	{ "uuencode",			0, OPTION_UUENCODE },
 	{ "verbose",			0, 'v' },
 	{ "version",			0, OPTION_VERSION },
 	{ "xz",				0, 'J' },
@@ -109,7 +118,7 @@ cpio_getopt(struct cpio *cpio)
 	int opt = '?';
 	int required = 0;
 
-	cpio->optarg = NULL;
+	cpio->argument = NULL;
 
 	/* First time through, initialize everything. */
 	if (state == state_start) {
@@ -188,7 +197,7 @@ cpio_getopt(struct cpio *cpio)
 				long_prefix = "-W "; /* For clearer errors. */
 			} else {
 				state = state_next_word;
-				cpio->optarg = opt_word;
+				cpio->argument = opt_word;
 			}
 		}
 	}
@@ -202,7 +211,7 @@ cpio_getopt(struct cpio *cpio)
 		p = strchr(opt_word, '=');
 		if (p != NULL) {
 			optlength = (size_t)(p - opt_word);
-			cpio->optarg = (char *)(uintptr_t)(p + 1);
+			cpio->argument = (char *)(uintptr_t)(p + 1);
 		} else {
 			optlength = strlen(opt_word);
 		}
@@ -241,9 +250,9 @@ cpio_getopt(struct cpio *cpio)
 		/* We've found a unique match; does it need an argument? */
 		if (match->required) {
 			/* Argument required: get next word if necessary. */
-			if (cpio->optarg == NULL) {
-				cpio->optarg = *cpio->argv;
-				if (cpio->optarg == NULL) {
+			if (cpio->argument == NULL) {
+				cpio->argument = *cpio->argv;
+				if (cpio->argument == NULL) {
 					lafe_warnc(0,
 					    "Option %s%s requires an argument",
 					    long_prefix, match->name);
@@ -254,7 +263,7 @@ cpio_getopt(struct cpio *cpio)
 			}
 		} else {
 			/* Argument forbidden: fail if there is one. */
-			if (cpio->optarg != NULL) {
+			if (cpio->argument != NULL) {
 				lafe_warnc(0,
 				    "Option %s%s does not allow an argument",
 				    long_prefix, match->name);
@@ -285,6 +294,8 @@ cpio_getopt(struct cpio *cpio)
  * A period can be used instead of the colon.
  *
  * Sets uid/gid return as appropriate, -1 indicates uid/gid not specified.
+ * TODO: If the spec uses uname/gname, then return those to the caller
+ * as well.  If the spec provides uid/gid, just return names as NULL.
  *
  * Returns NULL if no error, otherwise returns error string for display.
  *
@@ -338,11 +349,12 @@ owner_parse(const char *spec, int *uid, int *gid)
 		} else {
 			char *end;
 			errno = 0;
-			*uid = strtoul(user, &end, 10);
+			*uid = (int)strtoul(user, &end, 10);
 			if (errno || *end != '\0') {
 				snprintf(errbuff, sizeof(errbuff),
 				    "Couldn't lookup user ``%s''", user);
 				errbuff[sizeof(errbuff) - 1] = '\0';
+				free(user);
 				return (errbuff);
 			}
 		}
@@ -356,7 +368,7 @@ owner_parse(const char *spec, int *uid, int *gid)
 		} else {
 			char *end;
 			errno = 0;
-			*gid = strtoul(g, &end, 10);
+			*gid = (int)strtoul(g, &end, 10);
 			if (errno || *end != '\0') {
 				snprintf(errbuff, sizeof(errbuff),
 				    "Couldn't lookup group ``%s''", g);

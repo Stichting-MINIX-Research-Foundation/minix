@@ -42,6 +42,10 @@
 #include "config.h"
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include "bsdtar_windows.h"
+#endif
+
 /* Get a real definition for __FBSDID if we can */
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
@@ -67,10 +71,10 @@
 #endif
 
 /*
- * Include "dirent.h" (or it's equivalent on several different platforms).
+ * Include "dirent.h" (or its equivalent on several different platforms).
  *
  * This is slightly modified from the GNU autoconf recipe.
- * In particular, FreeBSD includes d_namlen in it's dirent structure,
+ * In particular, FreeBSD includes d_namlen in its dirent structure,
  * so my configure script includes an explicit test for the d_namlen
  * field.
  */
@@ -123,10 +127,6 @@
 #define	__LA_DEAD	__attribute__((__noreturn__))
 #else
 #define	__LA_DEAD
-#endif
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#include "bsdtar_windows.h"
 #endif
 
 #endif /* !BSDTAR_PLATFORM_H_INCLUDED */

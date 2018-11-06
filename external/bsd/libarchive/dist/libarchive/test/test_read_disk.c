@@ -34,7 +34,7 @@ gname_cleanup(void *d)
 }
 
 static const char *
-gname_lookup(void *d, gid_t g)
+gname_lookup(void *d, int64_t g)
 {
 	int *mp = d;
 	assertEqualInt(*mp, 0x13579);
@@ -52,7 +52,7 @@ uname_cleanup(void *d)
 }
 
 static const char *
-uname_lookup(void *d, uid_t u)
+uname_lookup(void *d, int64_t u)
 {
 	int *mp = d;
 	assertEqualInt(*mp, 0x1234);
@@ -61,6 +61,7 @@ uname_lookup(void *d, uid_t u)
 	return ("NOTFOO");
 }
 
+#if !defined(__CYGWIN__) && !defined(__HAIKU__)
 /* We test GID lookup by looking up the name of group number zero and
  * checking it against the following list.  If your system uses a
  * different conventional name for group number zero, please extend
@@ -71,13 +72,16 @@ static const char *zero_groups[] = {
 	"root",   /* Linux */
 	"wheel"  /* BSD */
 };
+#endif
 
 DEFINE_TEST(test_read_disk)
 {
 	struct archive *a;
 	int gmagic = 0x13579, umagic = 0x1234;
+#if !defined(__CYGWIN__) && !defined(__HAIKU__)
 	const char *p;
 	size_t i;
+#endif
 
 	assert((a = archive_read_disk_new()) != NULL);
 
@@ -115,8 +119,6 @@ DEFINE_TEST(test_read_disk)
 		/* Some platforms don't have predictable names for
 		 * uid=0, so we skip this part of the test. */
 		skipping("standard uname/gname lookup");
-		i = 0;
-		p = zero_groups[0]; /* avoid unused warnings */
 #else
 		/* XXX Someday, we may need to generalize this the
 		 * same way we generalized the group name check below.
@@ -126,7 +128,8 @@ DEFINE_TEST(test_read_disk)
 
 		/* Get the group name for group 0 and see if it makes sense. */
 		p = archive_read_disk_gname(a, 0);
-		if (assert(p != NULL)) {
+		assert(p != NULL);
+		if (p != NULL) {
 			i = 0;
 			while (i < sizeof(zero_groups)/sizeof(zero_groups[0])) {
 				if (strcmp(zero_groups[i], p) == 0)
@@ -164,7 +167,7 @@ DEFINE_TEST(test_read_disk)
 			   &umagic, &uname_lookup, &uname_cleanup));
 
 	/* Destroy the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 	/* Verify our cleanup functions got called. */
 	assertEqualInt(gmagic, 0x2468);

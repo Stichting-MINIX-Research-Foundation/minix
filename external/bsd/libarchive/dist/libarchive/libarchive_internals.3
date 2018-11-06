@@ -22,10 +22,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/libarchive_internals.3,v 1.2 2007/12/30 04:58:22 kientzle Exp $
+.\" $FreeBSD$
 .\"
-.Dd April 16, 2007
-.Dt LIBARCHIVE 3
+.Dd January 26, 2011
+.Dt LIBARCHIVE_INTERNALS 3
 .Os
 .Sh NAME
 .Nm libarchive_internals
@@ -41,15 +41,15 @@ make it easy to add new archive and compression formats.
 Externally, libarchive exposes most operations through an
 opaque, object-style interface.
 The
-.Xr archive_entry 1
+.Xr archive_entry 3
 objects store information about a single filesystem object.
 The rest of the library provides facilities to write
-.Xr archive_entry 1
+.Xr archive_entry 3
 objects to archive files,
 read them from archive files,
 and write them to disk.
 (There are plans to add a facility to read
-.Xr archive_entry 1
+.Xr archive_entry 3
 objects from disk as well.)
 .Pp
 The read and write APIs each have four layers: a public API
@@ -347,11 +347,11 @@ Fortunately, such archives are very rare, and libarchive can read
 most ZIP archives, though it cannot always extract as much information
 as a dedicated ZIP program.
 .Sh SEE ALSO
-.Xr archive 3 ,
 .Xr archive_entry 3 ,
 .Xr archive_read 3 ,
 .Xr archive_write 3 ,
 .Xr archive_write_disk 3
+.Xr libarchive 3 ,
 .Sh HISTORY
 The
 .Nm libarchive
@@ -362,4 +362,4 @@ library first appeared in
 The
 .Nm libarchive
 library was written by
-.An Tim Kientzle Aq Mt kientzle@acm.org .
+.An Tim Kientzle Aq kientzle@acm.org .

@@ -16,13 +16,12 @@ the actual statements in the files are controlling.
   a 3-clause UC Regents copyright; please read the individual source
   files for details:
    libarchive/archive_entry.c
-   libarchive/archive_read_support_compression_compress.c
-   libarchive/archive_write_set_compression_compress.c
+   libarchive/archive_read_support_filter_compress.c
+   libarchive/archive_write_add_filter_compress.c
    libarchive/mtree.5
-   tar/matching.c
 
 * The following source files are in the public domain:
-   tar/getdate.c
+   libarchive/archive_getdate.c
 
 * The build files---including Makefiles, configure scripts,
   and auxiliary scripts used as part of the compile process---have

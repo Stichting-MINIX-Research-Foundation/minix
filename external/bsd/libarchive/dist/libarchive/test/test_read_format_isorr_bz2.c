@@ -26,7 +26,7 @@
 __FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_isorr_bz2.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 /*
-PLEASE use old cdrtools; mkisofs verion is 2.01.
+PLEASE use old cdrtools; mkisofs version is 2.01.
 This version mkisofs made wrong "SL" System Use Entry of RRIP.
 
 Execute the following command to rebuild the data for this program:
@@ -59,12 +59,12 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 	struct archive *a;
 	const void *p;
 	size_t size;
-	off_t offset;
+	int64_t offset;
 	int i;
 
 	extract_reference_file(refname);
 	assert((a = archive_read_new()) != NULL);
-	assertEqualInt(0, archive_read_support_compression_all(a));
+	assertEqualInt(0, archive_read_support_filter_all(a));
 	assertEqualInt(0, archive_read_support_format_all(a));
 	assertEqualInt(ARCHIVE_OK,
 	    archive_read_open_filename(a, refname, 10240));
@@ -73,6 +73,9 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 	 * verify that each one is what we expect. */
 	for (i = 0; i < 10; ++i) {
 		assertEqualInt(0, archive_read_next_header(a, &ae));
+		
+		assertEqualInt(archive_entry_is_encrypted(ae), 0);
+		assertEqualIntA(a, archive_read_has_encrypted_entries(a), ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED);
 
 		if (strcmp(".", archive_entry_pathname(ae)) == 0) {
 			/* '.' root directory. */
@@ -97,9 +100,9 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 			assertEqualInt(2, archive_entry_stat(ae)->st_nlink);
 			assertEqualInt(1, archive_entry_uid(ae));
 			assertEqualInt(2, archive_entry_gid(ae));
-		} else if (strcmp("hardlink", archive_entry_pathname(ae)) == 0) {
+		} else if (strcmp("file", archive_entry_pathname(ae)) == 0) {
 			/* A regular file. */
-			assertEqualString("hardlink", archive_entry_pathname(ae));
+			assertEqualString("file", archive_entry_pathname(ae));
 			assertEqualInt(AE_IFREG, archive_entry_filetype(ae));
 			assertEqualInt(12345684, archive_entry_size(ae));
 			assertEqualInt(0,
@@ -111,16 +114,16 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 			assertEqualInt(2, archive_entry_stat(ae)->st_nlink);
 			assertEqualInt(1, archive_entry_uid(ae));
 			assertEqualInt(2, archive_entry_gid(ae));
-		} else if (strcmp("file", archive_entry_pathname(ae)) == 0) {
+		} else if (strcmp("hardlink", archive_entry_pathname(ae)) == 0) {
 			/* A hardlink to the regular file. */
 			/* Note: If "hardlink" gets returned before "file",
 			 * then "hardlink" will get returned as a regular file
 			 * and "file" will get returned as the hardlink.
 			 * This test should tolerate that, since it's a
 			 * perfectly permissible thing for libarchive to do. */
-			assertEqualString("file", archive_entry_pathname(ae));
+			assertEqualString("hardlink", archive_entry_pathname(ae));
 			assertEqualInt(AE_IFREG, archive_entry_filetype(ae));
-			assertEqualString("hardlink", archive_entry_hardlink(ae));
+			assertEqualString("file", archive_entry_hardlink(ae));
 			assertEqualInt(0, archive_entry_size_is_set(ae));
 			assertEqualInt(0, archive_entry_size(ae));
 			assertEqualInt(86401, archive_entry_mtime(ae));
@@ -192,12 +195,12 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 	assertEqualInt(ARCHIVE_EOF, archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_COMPRESS);
+	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_COMPRESS);
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_ISO9660_ROCKRIDGE);
 
 	/* Close the archive. */
-	assertEqualInt(0, archive_read_close(a));
-	assertEqualInt(0, archive_read_finish(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 

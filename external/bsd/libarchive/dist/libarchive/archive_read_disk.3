@@ -22,13 +22,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: head/lib/libarchive/archive_read_disk.3 190957 2009-04-12 05:04:02Z kientzle $
+.\" $FreeBSD$
 .\"
-.Dd March 10, 2009
-.Dt archive_read_disk 3
+.Dd April 3, 2017
+.Dt ARCHIVE_READ_DISK 3
 .Os
 .Sh NAME
 .Nm archive_read_disk_new ,
+.Nm archive_read_disk_set_behavior ,
 .Nm archive_read_disk_set_symlink_logical ,
 .Nm archive_read_disk_set_symlink_physical ,
 .Nm archive_read_disk_set_symlink_hybrid ,
@@ -37,23 +38,25 @@
 .Nm archive_read_disk_uname ,
 .Nm archive_read_disk_set_uname_lookup ,
 .Nm archive_read_disk_set_gname_lookup ,
-.Nm archive_read_disk_set_standard_lookup ,
-.Nm archive_read_close ,
-.Nm archive_read_finish
+.Nm archive_read_disk_set_standard_lookup
 .Nd functions for reading objects from disk
+.Sh LIBRARY
+Streaming Archive Library (libarchive, -larchive)
 .Sh SYNOPSIS
 .In archive.h
 .Ft struct archive *
 .Fn archive_read_disk_new "void"
+.Ft int
+.Fn archive_read_disk_set_behavior "struct archive *" "int"
 .Ft int
 .Fn archive_read_disk_set_symlink_logical "struct archive *"
 .Ft int
 .Fn archive_read_disk_set_symlink_physical "struct archive *"
 .Ft int
 .Fn archive_read_disk_set_symlink_hybrid "struct archive *"
-.Ft int
+.Ft const char *
 .Fn archive_read_disk_gname "struct archive *" "gid_t"
-.Ft int
+.Ft const char *
 .Fn archive_read_disk_uname "struct archive *" "uid_t"
 .Ft int
 .Fo archive_read_disk_set_gname_lookup
@@ -78,10 +81,6 @@
 .Fa "int fd"
 .Fa "const struct stat *"
 .Fc
-.Ft int
-.Fn archive_read_close "struct archive *"
-.Ft int
-.Fn archive_read_finish "struct archive *"
 .Sh DESCRIPTION
 These functions provide an API for reading information about
 objects on disk.
@@ -93,9 +92,56 @@ objects.
 Allocates and initializes a
 .Tn struct archive
 object suitable for reading object information from disk.
-.It Fn archive_read_disk_set_symlink_logical , \
-Fn archive_read_disk_set_symlink_physical , \
-Fn archive_read_disk_set_symlink_hybrid
+.It Fn archive_read_disk_set_behavior
+Configures various behavior options when reading entries from disk.
+The flags field consists of a bitwise OR of one or more of the
+following values:
+.Bl -tag -compact -width "indent"
+.It Cm ARCHIVE_READDISK_HONOR_NODUMP
+Skip files and directories with the nodump file attribute (file flag) set.
+By default, the nodump file atrribute is ignored.
+.It Cm ARCHIVE_READDISK_MAC_COPYFILE
+Mac OS X specific. Read metadata (ACLs and extended attributes) with
+.Xr copyfile 3 .
+By default, metadata is read using
+.Xr copyfile 3 .
+.It Cm ARCHIVE_READDISK_NO_ACL
+Do not read Access Control Lists.
+By default, ACLs are read from disk.
+.It Cm ARCHIVE_READDISK_NO_FFLAGS
+Do not read file attributes (file flags).
+By default, file attributes are read from disk.
+See
+.Xr chattr 1
+.Pq Linux
+or
+.Xr chflags 1
+.Pq FreeBSD, Mac OS X
+for more information on file attributes.
+.It Cm ARCHIVE_READDISK_NO_TRAVERSE_MOUNTS
+Do not traverse mount points.
+By defaut, moint points are traversed.
+.It Cm ARCHIVE_READDISK_NO_XATTR
+Do not read extended file attributes (xattrs).
+By default, extended file attributes are read from disk.
+See
+.Xr xattr 7
+.Pq Linux ,
+.Xr xattr 2
+.Pq Mac OS X ,
+or
+.Xr getextattr 8
+.Pq FreeBSD
+for more information on extended file attributes.
+.It Cm ARCHIVE_READDISK_RESTORE_ATIME
+Restore access time of traversed files.
+By default, access time of traversed files is not restored.
+.El
+.It Xo
+.Fn archive_read_disk_set_symlink_logical ,
+.Fn archive_read_disk_set_symlink_physical ,
+.Fn archive_read_disk_set_symlink_hybrid
+.Xc
 This sets the mode used for handling symbolic links.
 The
 .Dq logical
@@ -108,12 +154,16 @@ The
 mode currently behaves identically to the
 .Dq logical
 mode.
-.It Fn archive_read_disk_gname , \
-Fn archive_read_disk_uname
+.It Xo
+.Fn archive_read_disk_gname ,
+.Fn archive_read_disk_uname
+.Xc
 Returns a user or group name given a gid or uid value.
 By default, these always return a NULL string.
-.It Fn archive_read_disk_set_gname_lookup , \
-Fn archive_read_disk_set_uname_lookup
+.It Xo
+.Fn archive_read_disk_set_gname_lookup ,
+.Fn archive_read_disk_set_uname_lookup
+.Xc
 These allow you to override the functions used for
 user and group name lookups.
 You may also provide a
@@ -127,16 +177,16 @@ object is destroyed or when new lookup functions are registered.
 This convenience function installs a standard set of user
 and group name lookup functions.
 These functions use
-.Xr getpwid 3
+.Xr getpwuid 3
 and
-.Xr getgrid 3
+.Xr getgrgid 3
 to convert ids to names, defaulting to NULL if the names cannot
 be looked up.
 These functions also implement a simple memory cache to reduce
 the number of calls to
-.Xr getpwid 3
+.Xr getpwuid 3
 and
-.Xr getgrid 3 .
+.Xr getgrgid 3 .
 .It Fn archive_read_disk_entry_from_file
 Populates a
 .Tn struct archive_entry
@@ -170,12 +220,6 @@ using the currently registered lookup functions above.
 This affects the file ownership fields and ACL values in the
 .Tn struct archive_entry
 object.
-.It Fn archive_read_close
-This currently does nothing.
-.It Fn archive_write_finish
-Invokes
-.Fn archive_write_close
-if it was not invoked manually, then releases all resources.
 .El
 More information about the
 .Va struct archive
@@ -201,13 +245,13 @@ file_to_archive(struct archive *a, const char *name)
   fd = open(name, O_RDONLY);
   if (fd < 0)
      return;
-  archive_entry_copy_sourcepath(entry, name);
+  archive_entry_copy_pathname(entry, name);
   archive_read_disk_entry_from_file(ard, entry, fd, NULL);
   archive_write_header(a, entry);
   while ((bytes_read = read(fd, buff, sizeof(buff))) > 0)
     archive_write_data(a, buff, bytes_read);
   archive_write_finish_entry(a);
-  archive_read_finish(ard);
+  archive_read_free(ard);
   archive_entry_free(entry);
 }
 .Ed
@@ -223,15 +267,6 @@ for operations that might succeed if retried,
 for unusual conditions that do not prevent further operations, and
 .Cm ARCHIVE_FATAL
 for serious errors that make remaining operations impossible.
-The
-.Xr archive_errno 3
-and
-.Xr archive_error_string 3
-functions can be used to retrieve an appropriate error code and a
-textual error message.
-(See
-.Xr archive_util 3
-for details.)
 .Pp
 .Fn archive_read_disk_new
 returns a pointer to a newly-allocated
@@ -247,9 +282,17 @@ pointers to the textual name or NULL if the lookup failed for any reason.
 The returned pointer points to internal storage that
 may be reused on the next call to either of these functions;
 callers should copy the string if they need to continue accessing it.
-.Pp
+.\"
+.Sh ERRORS
+Detailed error codes and textual descriptions are available from the
+.Fn archive_errno
+and
+.Fn archive_error_string
+functions.
+.\"
 .Sh SEE ALSO
 .Xr archive_read 3 ,
+.Xr archive_util 3 ,
 .Xr archive_write 3 ,
 .Xr archive_write_disk 3 ,
 .Xr tar 1 ,
@@ -270,14 +313,14 @@ and first appeared in
 The
 .Nm libarchive
 library was written by
-.An Tim Kientzle Aq Mt kientzle@freebsd.org .
+.An Tim Kientzle Aq kientzle@FreeBSD.org .
 .Sh BUGS
 The
 .Dq standard
 user name and group name lookup functions are not the defaults because
-.Xr getgrid 3
+.Xr getgrgid 3
 and
-.Xr getpwid 3
+.Xr getpwuid 3
 are sometimes too large for particular applications.
 The current design allows the application author to use a more
 compact implementation when appropriate.

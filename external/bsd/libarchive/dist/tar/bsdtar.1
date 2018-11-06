@@ -1,4 +1,5 @@
 .\" Copyright (c) 2003-2007 Tim Kientzle
+.\" Copyright (c) 2017 Martin Matuska
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,10 +23,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.bin/tar/bsdtar.1,v 1.46 2008/12/06 07:37:55 kientzle Exp $
+.\" $FreeBSD$
 .\"
-.Dd Oct 12, 2009
-.Dt BSDTAR 1
+.Dd February 25, 2017
+.Dt TAR 1
 .Os
 .Sh NAME
 .Nm tar
@@ -50,9 +51,9 @@
 .Sh DESCRIPTION
 .Nm
 creates and manipulates streaming archive files.
-This implementation can extract from tar, pax, cpio, zip, jar, ar,
-and ISO 9660 cdrom images and can create tar, pax, cpio, ar,
-and shar archives.
+This implementation can extract from tar, pax, cpio, zip, jar, ar, xar,
+rpm, 7-zip, and ISO 9660 cdrom images and can create tar, pax, cpio, ar, zip,
+7-zip, and shar archives.
 .Pp
 The first synopsis form shows a
 .Dq bundled
@@ -67,6 +68,8 @@ is a mode indicator from the following list:
 .Bl -tag -compact -width indent
 .It Fl c
 Create a new archive containing the specified items.
+The long option form is
+.Fl Fl create .
 .It Fl r
 Like
 .Fl c ,
@@ -75,8 +78,12 @@ Note that this only works on uncompressed archives stored in regular files.
 The
 .Fl f
 option is required.
+The long option form is
+.Fl Fl append .
 .It Fl t
 List archive contents to stdout.
+The long option form is
+.Fl Fl list .
 .It Fl u
 Like
 .Fl r ,
@@ -86,11 +93,15 @@ Note that this only works on uncompressed archives stored in regular files.
 The
 .Fl f
 option is required.
+The long form is
+.Fl Fl update .
 .It Fl x
 Extract to disk from the archive.
 If a file with the same name appears more than once in the archive,
 each copy will be extracted, with later copies overwriting (replacing)
 earlier copies.
+The long option form is
+.Fl Fl extract .
 .El
 .Pp
 In
@@ -114,7 +125,7 @@ Unless specifically stated otherwise, options are applicable in
 all operating modes.
 .Bl -tag -width indent
 .It Cm @ Ns Pa archive
-(c and r mode only)
+(c and r modes only)
 The specified archive is opened and the entries
 in it will be appended to the current archive.
 As a simple example,
@@ -127,38 +138,80 @@ In contrast,
 .Dl Nm Fl c Fl f Pa - Pa newfile Pa original.tar
 creates a new archive with only two entries.
 Similarly,
-.Dl Nm Fl czf Pa - Fl -format Cm pax Cm @ Ns Pa -
+.Dl Nm Fl czf Pa - Fl Fl format Cm pax Cm @ Ns Pa -
 reads an archive from standard input (whose format will be determined
 automatically) and converts it into a gzip-compressed
 pax-format archive on stdout.
 In this way,
 .Nm
 can be used to convert archives from one format to another.
-.It Fl b Ar blocksize
+.It Fl a , Fl Fl auto-compress
+(c mode only)
+Use the archive suffix to decide a set of the format and
+the compressions.
+As a simple example,
+.Dl Nm Fl a Fl cf Pa archive.tgz source.c source.h
+creates a new archive with restricted pax format and gzip compression,
+.Dl Nm Fl a Fl cf Pa archive.tar.bz2.uu source.c source.h
+creates a new archive with restricted pax format and bzip2 compression
+and uuencode compression,
+.Dl Nm Fl a Fl cf Pa archive.zip source.c source.h
+creates a new archive with zip format,
+.Dl Nm Fl a Fl jcf Pa archive.tgz source.c source.h
+ignores the
+.Dq -j
+option, and creates a new archive with restricted pax format
+and gzip compression,
+.Dl Nm Fl a Fl jcf Pa archive.xxx source.c source.h
+if it is unknown suffix or no suffix, creates a new archive with
+restricted pax format and bzip2 compression.
+.It Fl Fl acls
+(c, r, u, x modes only)
+Archive or extract POSIX.1e or NFSv4 ACLs. This is the reverse of
+.Fl Fl no-acls
+and the default behavior in c, r, and u modes (except on Mac OS X) or if
+.Nm
+is run in x mode as root. On Mac OS X this option translates extended ACLs
+to NFSv4 ACLs. To store extended ACLs the
+.Fl Fl mac-metadata
+option is preferred.
+.It Fl B , Fl Fl read-full-blocks
+Ignored for compatibility with other
+.Xr tar 1
+implementations.
+.It Fl b Ar blocksize , Fl Fl block-size Ar blocksize
 Specify the block size, in 512-byte records, for tape drive I/O.
 As a rule, this argument is only needed when reading from or writing
 to tape drives, and usually not even then as the default block size of
 20 records (10240 bytes) is very common.
-.It Fl C Ar directory
+.It Fl C Ar directory , Fl Fl cd Ar directory , Fl Fl directory Ar directory
 In c and r mode, this changes the directory before adding
 the following files.
 In x mode, change directories after opening the archive
 but before extracting entries from the archive.
-.It Fl -check-links
-(c and r modes only)
-Issue a warning message unless all links to each file are archived.
-.It Fl -chroot
+.It Fl Fl chroot
 (x mode only)
 .Fn chroot
 to the current directory after processing any
 .Fl C
 options and before extracting any files.
-.It Fl -exclude Ar pattern
+.It Fl Fl clear-nochange-fflags
+(x mode only)
+Before removing file system objects to replace them, clear platform-specific
+file flags that might prevent removal.
+.It Fl Fl exclude Ar pattern
 Do not process files or directories that match the
 specified pattern.
 Note that exclusions take precedence over patterns or filenames
 specified on the command line.
-.It Fl -format Ar format
+.It Fl Fl fflags
+(c, r, u, x modes only)
+Archive or extract file flags. This is the reverse of
+.Fl Fl no-fflags
+and the default behavior in c, r, and u modes or if
+.Nm
+is run in x mode as root.
+.It Fl Fl format Ar format
 (c, r, u mode only)
 Use the specified format for the created archive.
 Supported formats include
@@ -172,46 +225,88 @@ Other formats may also be supported; see
 for more information about currently-supported formats.
 In r and u modes, when extending an existing archive, the format specified
 here must be compatible with the format of the existing archive on disk.
-.It Fl f Ar file
+.It Fl f Ar file , Fl Fl file Ar file
 Read the archive from or write the archive to the specified file.
 The filename can be
 .Pa -
 for standard input or standard output.
-If not specified, the default tape device will be used.
-(On
+The default varies by system;
+on
 .Fx ,
-the default tape device is
-.Pa /dev/sa0 . )
+the default is
+.Pa /dev/sa0 ;
+on Linux, the default is
+.Pa /dev/st0 .
+.It Fl Fl gid Ar id
+Use the provided group id number.
+On extract, this overrides the group id in the archive;
+the group name in the archive will be ignored.
+On create, this overrides the group id read from disk;
+if
+.Fl Fl gname
+is not also specified, the group name will be set to
+match the group id.
+.It Fl Fl gname Ar name
+Use the provided group name.
+On extract, this overrides the group name in the archive;
+if the provided group name does not exist on the system,
+the group id
+(from the archive or from the
+.Fl Fl gid
+option)
+will be used instead.
+On create, this sets the group name that will be stored
+in the archive;
+the name will not be verified against the system group database.
 .It Fl H
-(c and r mode only)
+(c and r modes only)
 Symbolic links named on the command line will be followed; the
 target of the link will be archived, not the link itself.
 .It Fl h
-(c and r mode only)
+(c and r modes only)
 Synonym for
 .Fl L .
 .It Fl I
 Synonym for
 .Fl T .
-.It Fl -include Ar pattern
+.It Fl Fl help
+Show usage.
+.It Fl Fl hfsCompression
+(x mode only)
+Mac OS X specific (v10.6 or later). Compress extracted regular files with HFS+
+compression.
+.It Fl Fl ignore-zeros
+An alias of
+.Fl Fl options Cm read_concatenated_archives
+for compatibility with GNU tar.
+.It Fl Fl include Ar pattern
 Process only files or directories that match the specified pattern.
 Note that exclusions specified with
-.Fl -exclude
+.Fl Fl exclude
 take precedence over inclusions.
 If no inclusions are explicitly specified, all entries are processed by
 default.
 The
-.Fl -include
+.Fl Fl include
 option is especially useful when filtering archives.
 For example, the command
-.Dl Nm Fl c Fl f Pa new.tar Fl -include='*foo*' Cm @ Ns Pa old.tgz
+.Dl Nm Fl c Fl f Pa new.tar Fl Fl include='*foo*' Cm @ Ns Pa old.tgz
 creates a new archive
 .Pa new.tar
 containing only the entries from
 .Pa old.tgz
 containing the string
 .Sq foo .
-.It Fl j
+.It Fl J , Fl Fl xz
+(c mode only)
+Compress the resulting archive with
+.Xr xz 1 .
+In extract or list modes, this option is ignored.
+Note that, unlike other
+.Nm tar
+implementations, this implementation recognizes XZ compression
+automatically when reading archives.
+.It Fl j , Fl Fl bzip , Fl Fl bzip2 , Fl Fl bunzip2
 (c mode only)
 Compress the resulting archive with
 .Xr bzip2 1 .
@@ -220,69 +315,160 @@ Note that, unlike other
 .Nm tar
 implementations, this implementation recognizes bzip2 compression
 automatically when reading archives.
-.It Fl k
+.It Fl k , Fl Fl keep-old-files
 (x mode only)
 Do not overwrite existing files.
 In particular, if a file appears more than once in an archive,
 later copies will not overwrite earlier copies.
-.It Fl -keep-newer-files
+.It Fl Fl keep-newer-files
 (x mode only)
 Do not overwrite existing files that are newer than the
 versions appearing in the archive being extracted.
-.It Fl L
-(c and r mode only)
+.It Fl L , Fl Fl dereference
+(c and r modes only)
 All symbolic links will be followed.
 Normally, symbolic links are archived as such.
 With this option, the target of the link will be archived instead.
-.It Fl l
-This is a synonym for the
-.Fl -check-links
-option.
-.It Fl m
+.It Fl l , Fl Fl check-links
+(c and r modes only)
+Issue a warning message unless all links to each file are archived.
+.It Fl Fl lrzip
+(c mode only)
+Compress the resulting archive with
+.Xr lrzip 1 .
+In extract or list modes, this option is ignored.
+.It Fl Fl lz4
+(c mode only)
+Compress the archive with lz4-compatible compression before writing it.
+In input mode, this option is ignored; lz4 compression is recognized
+automatically on input.
+.It Fl Fl lzma
+(c mode only) Compress the resulting archive with the original LZMA algorithm.
+Use of this option is discouraged and new archives should be created with
+.Fl Fl xz
+instead.
+Note that, unlike other
+.Nm tar
+implementations, this implementation recognizes LZMA compression
+automatically when reading archives.
+.It Fl Fl lzop
+(c mode only)
+Compress the resulting archive with
+.Xr lzop 1 .
+In extract or list modes, this option is ignored.
+.It Fl m , Fl Fl modification-time
 (x mode only)
 Do not extract modification time.
 By default, the modification time is set to the time stored in the archive.
-.It Fl n
+.It Fl Fl mac-metadata
+(c, r, u and x mode only)
+Mac OS X specific. Archive or extract extended ACLs and extended attributes
+using
+.Xr copyfile 3
+in AppleDouble format. This is the reverse of
+.Fl Fl no-mac-metadata .
+and the default behavior in c, r, and u modes or if
+.Nm
+is run in x mode as root.
+.It Fl n , Fl Fl norecurse , Fl Fl no-recursion
 (c, r, u modes only)
 Do not recursively archive the contents of directories.
-.It Fl -newer Ar date
+.It Fl Fl newer Ar date
 (c, r, u modes only)
 Only include files and directories newer than the specified date.
 This compares ctime entries.
-.It Fl -newer-mtime Ar date
+.It Fl Fl newer-mtime Ar date
 (c, r, u modes only)
 Like
-.Fl -newer ,
+.Fl Fl newer ,
 except it compares mtime entries instead of ctime entries.
-.It Fl -newer-than Pa file
+.It Fl Fl newer-than Pa file
 (c, r, u modes only)
 Only include files and directories newer than the specified file.
 This compares ctime entries.
-.It Fl -newer-mtime-than Pa file
+.It Fl Fl newer-mtime-than Pa file
 (c, r, u modes only)
 Like
-.Fl -newer-than ,
+.Fl Fl newer-than ,
 except it compares mtime entries instead of ctime entries.
-.It Fl -nodump
+.It Fl Fl nodump
 (c and r modes only)
 Honor the nodump file flag by skipping this file.
-.It Fl -null
+.It Fl Fl nopreserveHFSCompression
+(x mode only)
+Mac OS X specific (v10.6 or later). Do not compress extracted regular files
+which were compressed with HFS+ compression before archived.
+By default, compress the regular files again with HFS+ compression.
+.It Fl Fl null
 (use with
-.Fl I ,
-.Fl T ,
+.Fl I
 or
-.Fl X )
+.Fl T )
 Filenames or patterns are separated by null characters,
 not by newlines.
 This is often used to read filenames output by the
 .Fl print0
 option to
 .Xr find 1 .
-.It Fl -numeric-owner
+.It Fl Fl no-acls
+(c, r, u, x modes only)
+Do not archive or extract POSIX.1e or NFSv4 ACLs. This is the reverse of
+.Fl Fl acls
+and the default behavior if
+.Nm
+is run as non-root in x mode (on Mac OS X as any user in c, r, u and x modes).
+.It Fl Fl no-fflags
+(c, r, u, x modes only)
+Do not archive or extract file flags. This is the reverse of
+.Fl Fl fflags
+and the default behavior if
+.Nm
+is run as non-root in x mode.
+.It Fl Fl no-mac-metadata
 (x mode only)
-Ignore symbolic user and group names when restoring archives to disk,
-only numeric uid and gid values will be obeyed.
-.It Fl O
+Mac OS X specific. Do not archive or extract ACLs and extended attributes using
+.Xr copyfile 3
+in AppleDouble format. This is the reverse of
+.Fl Fl mac-metadata .
+and the default behavior if
+.Nm
+is run as non-root in x mode.
+.It Fl n , Fl Fl norecurse , Fl Fl no-recursion
+.It Fl Fl no-same-owner
+(x mode only)
+Do not extract owner and group IDs.
+This is the reverse of
+.Fl Fl same-owner
+and the default behavior if
+.Nm
+is run as non-root.
+.It Fl Fl no-same-permissions
+(x mode only)
+Do not extract full permissions (SGID, SUID, sticky bit, ACLs,
+extended attributes or extended file flags).
+This is the reverse of
+.Fl p
+and the default behavior if
+.Nm
+is run as non-root.
+.It Fl Fl no-xattrs
+(c, r, u, x modes only)
+Do not archive or extract extended attributes. This is the reverse of
+.Fl Fl xattrs
+and the default behavior if
+.Nm
+is run as non-root in x mode.
+.It Fl Fl numeric-owner
+This is equivalent to
+.Fl Fl uname
+.Qq
+.Fl Fl gname
+.Qq .
+On extract, it causes user and group names in the archive
+to be ignored in favor of the numeric user and group ids.
+On create, it causes user and group names to not be stored
+in the archive.
+.It Fl O , Fl Fl to-stdout
 (x, t modes only)
 In extract (-x) mode, files will be written to standard out rather than
 being extracted to disk.
@@ -301,11 +487,29 @@ the archive will be discarded.
 .It Fl o
 (c, r, u mode)
 A synonym for
-.Fl -format Ar ustar
-.It Fl -one-file-system
+.Fl Fl format Ar ustar
+.It Fl Fl older Ar date
+(c, r, u modes only)
+Only include files and directories older than the specified date.
+This compares ctime entries.
+.It Fl Fl older-mtime Ar date
+(c, r, u modes only)
+Like
+.Fl Fl older ,
+except it compares mtime entries instead of ctime entries.
+.It Fl Fl older-than Pa file
+(c, r, u modes only)
+Only include files and directories older than the specified file.
+This compares ctime entries.
+.It Fl Fl older-mtime-than Pa file
+(c, r, u modes only)
+Like
+.Fl Fl older-than ,
+except it compares mtime entries instead of ctime entries.
+.It Fl Fl one-file-system
 (c, r, and u modes)
 Do not cross mount points.
-.It Fl -options Ar options
+.It Fl Fl options Ar options
 Select optional behaviors for particular modules.
 The argument is a text string containing comma-separated
 keywords and values.
@@ -344,7 +548,37 @@ or
 .Cm iso9660:!rockridge
 to disable.
 .It Cm gzip:compression-level
-A decimal integer from 0 to 9 specifying the gzip compression level.
+A decimal integer from 1 to 9 specifying the gzip compression level.
+.It Cm gzip:timestamp
+Store timestamp. This is enabled by default, use
+.Cm !timestamp
+or
+.Cm gzip:!timestamp
+to disable.
+.It Cm lrzip:compression Ns = Ns Ar type
+Use
+.Ar type
+as compression method.
+Supported values are bzip2, gzip, lzo (ultra fast),
+and zpaq (best, extremely slow).
+.It Cm lrzip:compression-level
+A decimal integer from 1 to 9 specifying the lrzip compression level.
+.It Cm lz4:compression-level
+A decimal integer from 1 to 9 specifying the lzop compression level.
+.It Cm lz4:stream-checksum
+Enable stream checksum. This is by default, use
+.Cm lz4:!stream-checksum
+to disable.
+.It Cm lz4:block-checksum
+Enable block checksum (Disabled by default).
+.It Cm lz4:block-size
+A decimal integer from 4 to 7 specifying the lz4 compression block size
+(7 is set by default).
+.It Cm lz4:block-dependence
+Use the previous block of the block being compressed for
+a compression dictionary to improve compression ratio.
+.It Cm lzop:compression-level
+A decimal integer from 1 to 9 specifying the lzop compression level.
 .It Cm xz:compression-level
 A decimal integer from 0 to 9 specifying the xz compression level.
 .It Cm mtree: Ns Ar keyword
@@ -373,10 +607,25 @@ Use
 .Ar type
 as compression method.
 Supported values are store (uncompressed) and deflate (gzip algorithm).
+.It Cm zip:encryption
+Enable encryption using traditional zip encryption.
+.It Cm zip:encryption Ns = Ns Ar type
+Use
+.Ar type
+as encryption type.
+Supported values are zipcrypt (traditional zip encryption),
+aes128 (WinZip AES-128 encryption) and aes256 (WinZip AES-256 encryption).
+.It Cm read_concatenated_archives
+Ignore zeroed blocks in the archive, which occurs when multiple tar archives
+have been concatenated together.  Without this option, only the contents of
+the first concatenated archive would be read.  This option is comparable to
+the
+.Fl i , Fl Fl ignore-zeros
+option of GNU tar.
 .El
 If a provided option is not supported by any module, that
 is a fatal error.
-.It Fl P
+.It Fl P , Fl Fl absolute-paths
 Preserve pathnames.
 By default, absolute pathnames (those that begin with a /
 character) have the leading slash removed both when creating archives
@@ -387,21 +636,33 @@ will refuse to extract archive entries whose pathnames contain
 .Pa ..
 or whose target directory would be altered by a symlink.
 This option suppresses these behaviors.
-.It Fl p
+.It Fl p , Fl Fl insecure , Fl Fl preserve-permissions
 (x mode only)
 Preserve file permissions.
-Attempt to restore the full permissions, including owner, file modes, file
-flags and ACLs, if available, for each item extracted from the archive.
-By default, newly-created files are owned by the user running
-.Nm ,
-the file mode is restored for newly-created regular files, and
-all other types of entries receive default permissions.
-If
+Attempt to restore the full permissions, including owner, file modes, ACLs,
+extended attributes and extended file flags, if available, for each item
+extracted from the archive. This is te reverse of
+.Fl Fl no-same-permissions
+and the default if
 .Nm
-is being run by root, the default is to restore the owner unless the
-.Fl o
-option is also specified.
-.It Fl q ( Fl -fast-read )
+is being run by root and can be partially overridden by also specifying
+.Fl Fl no-acls ,
+.Fl Fl no-fflags ,
+.Fl Fl no-mac-metadata
+or
+.Fl Fl no-xattrs .
+.It Fl Fl passphrase Ar passphrase
+The
+.Pa passphrase
+is used to extract or create an encrypted archive.
+Currently, zip is the only supported format that supports encryption.
+You shouldn't use this option unless you realize how insecure
+use of this option is.
+.It Fl Fl posix
+(c, r, u mode only)
+Synonym for
+.Fl Fl format Ar pax
+.It Fl q , Fl Fl fast-read
 (x and t mode only)
 Extract or list only the first archive entry that matches each pattern
 or filename operand.
@@ -415,18 +676,12 @@ This option is provided as a performance optimization.
 Extract files as sparse files.
 For every block on disk, check first if it contains only NULL bytes and seek
 over it otherwise.
-This works similiar to the conv=sparse option of dd.
-.It Fl -strip-components Ar count
-(x mode only)
-Remove the specified number of leading path elements.
-Pathnames with fewer elements will be silently skipped.
-Note that the pathname is edited after checking inclusion/exclusion patterns
-but before security checks.
+This works similar to the conv=sparse option of dd.
 .It Fl s Ar pattern
 Modify file or archive member names according to
 .Pa pattern .
 The pattern has the format
-.Ar /old/new/ Ns Op gps
+.Ar /old/new/ Ns Op ghHprRsS
 where
 .Ar old
 is a basic regular expression,
@@ -442,13 +697,36 @@ Within
 ~ is substituted with the match, \e1 to \e9 with the content of
 the corresponding captured group.
 The optional trailing g specifies that matching should continue
-after the matched part and stopped on the first unmatched pattern.
+after the matched part and stop on the first unmatched pattern.
 The optional trailing s specifies that the pattern applies to the value
 of symbolic links.
 The optional trailing p specifies that after a successful substitution
 the original path name and the new path name should be printed to
 standard error.
-.It Fl T Ar filename
+Optional trailing H, R, or S characters suppress substitutions
+for hardlink targets, regular filenames, or symlink targets,
+respectively.
+Optional trailing h, r, or s characters enable substitutions
+for hardlink targets, regular filenames, or symlink targets,
+respectively.
+The default is
+.Ar hrs
+which applies substitutions to all names.
+In particular, it is never necessary to specify h, r, or s.
+.It Fl Fl same-owner
+(x mode only)
+Extract owner and group IDs.
+This is the reverse of
+.Fl Fl no-same-owner
+and the default behavior if
+.Nm
+is run as root.
+.It Fl Fl strip-components Ar count
+Remove the specified number of leading path elements.
+Pathnames with fewer elements will be silently skipped.
+Note that the pathname is edited after checking inclusion/exclusion patterns
+but before security checks.
+.It Fl T Ar filename , Fl Fl files-from Ar filename
 In x or t mode,
 .Nm
 will read the list of names to be extracted from
@@ -462,25 +740,55 @@ The special name
 on a line by itself will cause the current directory to be changed to
 the directory specified on the following line.
 Names are terminated by newlines unless
-.Fl -null
+.Fl Fl null
 is specified.
 Note that
-.Fl -null
+.Fl Fl null
 also disables the special handling of lines containing
 .Dq -C .
-.It Fl U
+Note:  If you are generating lists of files using
+.Xr find 1 ,
+you probably want to use
+.Fl n
+as well.
+.It Fl Fl totals
+(c, r, u modes only)
+After archiving all files, print a summary to stderr.
+.It Fl U , Fl Fl unlink , Fl Fl unlink-first
 (x mode only)
 Unlink files before creating them.
-Without this option,
+This can be a minor performance optimization if most files
+already exist, but can make things slower if most files
+do not already exist.
+This flag also causes
 .Nm
-overwrites existing files, which preserves existing hardlinks.
-With this option, existing hardlinks will be broken, as will any
-symlink that would affect the location of an extracted file.
-.It Fl -use-compress-program Ar program
+to remove intervening directory symlinks instead of
+reporting an error.
+See the SECURITY section below for more details.
+.It Fl Fl uid Ar id
+Use the provided user id number and ignore the user
+name from the archive.
+On create, if
+.Fl Fl uname
+is not also specified, the user name will be set to
+match the user id.
+.It Fl Fl uname Ar name
+Use the provided user name.
+On extract, this overrides the user name in the archive;
+if the provided user name does not exist on the system,
+it will be ignored and the user id
+(from the archive or from the
+.Fl Fl uid
+option)
+will be used instead.
+On create, this sets the user name that will be stored
+in the archive;
+the name is not verified against the system user database.
+.It Fl Fl use-compress-program Ar program
 Pipe the input (in x or t mode) or the output (in c mode) through
 .Pa program
 instead of using the builtin compression support.
-.It Fl v
+.It Fl v , Fl Fl verbose
 Produce verbose output.
 In create and extract modes,
 .Nm
@@ -490,22 +798,29 @@ In list mode,
 .Nm
 will produce output similar to that of
 .Xr ls 1 .
-Additional
+An additional
 .Fl v
-options will provide additional detail.
-.It Fl -version
+option will also provide ls-like details in create and extract mode.
+.It Fl Fl version
 Print version of
 .Nm
 and
 .Nm libarchive ,
 and exit.
-.It Fl w
+.It Fl w , Fl Fl confirmation , Fl Fl interactive
 Ask for confirmation for every action.
-.It Fl X Ar filename
+.It Fl X Ar filename , Fl Fl exclude-from Ar filename
 Read a list of exclusion patterns from the specified file.
 See
-.Fl -exclude
+.Fl Fl exclude
 for more information about the handling of exclusions.
+.It Fl Fl xattrs
+(c, r, u, x modes only)
+Archive or extract extended attributes. This is the reverse of
+.Fl Fl no-xattrs
+and the default behavior in c, r, and u modes or if
+.Nm
+is run in x mode as root.
 .It Fl y
 (c mode only)
 Compress the resulting archive with
@@ -515,16 +830,7 @@ Note that, unlike other
 .Nm tar
 implementations, this implementation recognizes bzip2 compression
 automatically when reading archives.
-.It Fl z
-(c mode only)
-Compress the resulting archive with
-.Xr gzip 1 .
-In extract or list modes, this option is ignored.
-Note that, unlike other
-.Nm tar
-implementations, this implementation recognizes gzip compression
-automatically when reading archives.
-.It Fl Z
+.It Fl Z , Fl Fl compress , Fl Fl uncompress
 (c mode only)
 Compress the resulting archive with
 .Xr compress 1 .
@@ -533,38 +839,51 @@ Note that, unlike other
 .Nm tar
 implementations, this implementation recognizes compress compression
 automatically when reading archives.
+.It Fl z , Fl Fl gunzip , Fl Fl gzip
+(c mode only)
+Compress the resulting archive with
+.Xr gzip 1 .
+In extract or list modes, this option is ignored.
+Note that, unlike other
+.Nm tar
+implementations, this implementation recognizes gzip compression
+automatically when reading archives.
 .El
-.Sh EXIT STATUS
-.Ex -std
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm :
 .Bl -tag -width ".Ev BLOCKSIZE"
+.It Ev TAR_READER_OPTIONS
+The default options for format readers and compression readers.
+The
+.Fl Fl options
+option overrides this.
+.It Ev TAR_WRITER_OPTIONS
+The default options for format writers and compression writers.
+The
+.Fl Fl options
+option overrides this.
 .It Ev LANG
 The locale to use.
 See
 .Xr environ 7
 for more information.
 .It Ev TAPE
-The default tape device.
+The default device.
 The
 .Fl f
 option overrides this.
+Please see the description of the
+.Fl f
+option above for more details.
 .It Ev TZ
 The timezone to use when displaying dates.
 See
 .Xr environ 7
 for more information.
 .El
-.Sh FILES
-.Bl -tag -width ".Ev BLOCKSIZE"
-.It Pa /dev/sa0
-The default tape device, if not overridden by the
-.Ev TAPE
-environment variable or the
-.Fl f
-option.
-.El
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 The following creates a new archive
 called
@@ -620,16 +939,18 @@ An input file in
 format can be used to create an output archive with arbitrary ownership,
 permissions, or names that differ from existing data on disk:
 .Pp
-.Dl $ cat input.mtree
-.Dl #mtree
-.Dl usr/bin uid=0 gid=0 mode=0755 type=dir
-.Dl usr/bin/ls uid=0 gid=0 mode=0755 type=file content=myls
-.Dl $ tar -cvf output.tar @input.mtree
+.Bd -literal -offset indent
+$ cat input.mtree
+#mtree
+usr/bin uid=0 gid=0 mode=0755 type=dir
+usr/bin/ls uid=0 gid=0 mode=0755 type=file content=myls
+$ tar -cvf output.tar @input.mtree
+.Ed
 .Pp
 The
-.Fl -newer
+.Fl Fl newer
 and
-.Fl -newer-mtime
+.Fl Fl newer-mtime
 switches accept a variety of common date and time specifications, including
 .Dq 12 Mar 2005 7:14:29pm ,
 .Dq 2005-03-12 19:14 ,
@@ -638,7 +959,7 @@ and
 .Dq 19:14 PST May 1 .
 .Pp
 The
-.Fl -options
+.Fl Fl options
 argument can be used to control various details of archive generation
 or reading.
 For example, you can generate mtree output which only contains
@@ -646,9 +967,9 @@ For example, you can generate mtree output which only contains
 and
 .Cm uid
 keywords:
-.Dl Nm Fl cf Pa file.tar Fl -format=mtree Fl -options='!all,type,time,uid' Pa dir
+.Dl Nm Fl cf Pa file.tar Fl Fl format=mtree Fl Fl options='!all,type,time,uid' Pa dir
 or you can set the compression level used by gzip or xz compression:
-.Dl Nm Fl czf Pa file.tar Fl -options='compression-level=9' .
+.Dl Nm Fl czf Pa file.tar Fl Fl options='compression-level=9' .
 For more details, see the explanation of the
 .Fn archive_read_set_options
 and
@@ -794,6 +1115,7 @@ components, or symlinks to other directories.
 .Xr mt 1 ,
 .Xr pax 1 ,
 .Xr shar 1 ,
+.Xr xz 1 ,
 .Xr libarchive 3 ,
 .Xr libarchive-formats 5 ,
 .Xr tar 5
@@ -803,7 +1125,7 @@ in
 .St -p1003.1-96
 but was dropped from
 .St -p1003.1-2001 .
-The options used by this implementation were developed by surveying a
+The options supported by this implementation were developed by surveying a
 number of existing tar implementations as well as the old POSIX specification
 for tar and the current POSIX specification for pax.
 .Pp
@@ -829,6 +1151,9 @@ beginning with
 This is a complete re-implementation based on the
 .Xr libarchive 3
 library.
+It was first released with
+.Fx 5.4
+in May, 2005.
 .Sh BUGS
 This program follows
 .St -p1003.1-96
@@ -838,7 +1163,7 @@ option.
 Note that GNU tar prior to version 1.15 treated
 .Fl l
 as a synonym for the
-.Fl -one-file-system
+.Fl Fl one-file-system
 option.
 .Pp
 The
@@ -908,14 +1233,10 @@ option is specified.
 There needs to be better support for file selection on both create
 and extract.
 .Pp
-There is not yet any support for multi-volume archives or for archiving
-sparse files.
+There is not yet any support for multi-volume archives.
 .Pp
 Converting between dissimilar archive formats (such as tar and cpio) using the
 .Cm @ Ns Pa -
 convention can cause hard link information to be lost.
 (This is a consequence of the incompatible ways that different archive
 formats store hardlink information.)
-.Pp
-There are alternative long options for many of the short options that
-are deliberately not documented.

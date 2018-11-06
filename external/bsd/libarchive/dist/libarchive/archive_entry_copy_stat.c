@@ -30,6 +30,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry_copy_stat.c 189466 2009-03
 #include <sys/stat.h>
 #endif
 
+#include "archive.h"
 #include "archive_entry.h"
 
 void
@@ -43,6 +44,10 @@ archive_entry_copy_stat(struct archive_entry *entry, const struct stat *st)
 	archive_entry_set_atime(entry, st->st_atime, st->st_atim.tv_nsec);
 	archive_entry_set_ctime(entry, st->st_ctime, st->st_ctim.tv_nsec);
 	archive_entry_set_mtime(entry, st->st_mtime, st->st_mtim.tv_nsec);
+#elif HAVE_STRUCT_STAT_ST_MTIME_NSEC
+	archive_entry_set_atime(entry, st->st_atime, st->st_atime_nsec);
+	archive_entry_set_ctime(entry, st->st_ctime, st->st_ctime_nsec);
+	archive_entry_set_mtime(entry, st->st_mtime, st->st_mtime_nsec);
 #elif HAVE_STRUCT_STAT_ST_MTIME_N
 	archive_entry_set_atime(entry, st->st_atime, st->st_atime_n);
 	archive_entry_set_ctime(entry, st->st_ctime, st->st_ctime_n);
@@ -59,12 +64,13 @@ archive_entry_copy_stat(struct archive_entry *entry, const struct stat *st)
 	archive_entry_set_atime(entry, st->st_atime, 0);
 	archive_entry_set_ctime(entry, st->st_ctime, 0);
 	archive_entry_set_mtime(entry, st->st_mtime, 0);
-#if HAVE_STRUCT_STAT_ST_BIRTHTIME
-	archive_entry_set_birthtime(entry, st->st_birthtime, 0);
-#endif
 #endif
 #if HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC
 	archive_entry_set_birthtime(entry, st->st_birthtime, st->st_birthtimespec.tv_nsec);
+#elif HAVE_STRUCT_STAT_ST_BIRTHTIME
+	archive_entry_set_birthtime(entry, st->st_birthtime, 0);
+#else
+	archive_entry_unset_birthtime(entry);
 #endif
 	archive_entry_set_dev(entry, st->st_dev);
 	archive_entry_set_gid(entry, st->st_gid);

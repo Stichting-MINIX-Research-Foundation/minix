@@ -51,21 +51,27 @@ from_octal(const char *p, size_t l)
 	return (r);
 }
 
+#if !defined(_WIN32) || defined(__CYGWIN__)
+static int
+nlinks(const char *p)
+{
+	struct stat st;
+	assertEqualInt(0, stat(p, &st));
+	return st.st_nlink;
+}
+#endif
+
 DEFINE_TEST(test_option_c)
 {
 	FILE *filelist;
 	int r;
-	int uid = -1;
-	int dev, ino, gid;
+	int uid = 1000;
+	int dev, ino, gid = 1000;
 	time_t t, now;
 	char *p, *e;
 	size_t s;
 
 	assertUmask(0);
-
-#if !defined(_WIN32)
-	uid = getuid();
-#endif
 
 	/*
 	 * Create an assortment of files.
@@ -91,7 +97,7 @@ DEFINE_TEST(test_option_c)
 
 	/* Use the cpio program to create an archive. */
 	fclose(filelist);
-	r = systemf("%s -oc <filelist >basic.out 2>basic.err", testprog);
+	r = systemf("%s -R 1000:1000 -oc <filelist >basic.out 2>basic.err", testprog);
 	/* Verify that nothing went to stderr. */
 	assertTextFileContents("1 block\n", "basic.err");
 
@@ -176,22 +182,24 @@ DEFINE_TEST(test_option_c)
 	assertEqualInt(dev, from_octal(e + 6, 6));
 	/* Ino must be different from first entry. */
 	assert(is_octal(e + 12, 6)); /* ino */
-	assert(dev != from_octal(e + 12, 6));
+	assert(ino != from_octal(e + 12, 6));
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	/* Group members bits and others bits do not work. */
 	assertEqualMem(e + 18, "040777", 6); /* Mode */
 #else
-	/* Accept 042775 to accomodate systems where sgid bit propagates. */
+	/* Accept 042775 to accommodate systems where sgid bit propagates. */
 	if (memcmp(e + 18, "042775", 6) != 0)
 		assertEqualMem(e + 18, "040775", 6); /* Mode */
 #endif
-	assertEqualInt(from_octal(e + 24, 6), uid); /* uid */
+	assertEqualInt(uid, from_octal(e + 24, 6)); /* uid */
 	/* Gid should be same as first entry. */
 	assert(is_octal(e + 30, 6)); /* gid */
 	assertEqualInt(gid, from_octal(e + 30, 6));
-#ifndef NLINKS_INACCURATE_FOR_DIRS
-	assertEqualMem(e + 36, "000002", 6); /* Nlink */
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	assertEqualInt(nlinks("dir"), from_octal(e + 36, 6)); /* Nlink */
 #endif
+
 	t = from_octal(e + 48, 11); /* mtime */
 	assert(t <= now); /* File wasn't created in future. */
 	assert(t >= now - 2); /* File was created w/in last 2 secs. */

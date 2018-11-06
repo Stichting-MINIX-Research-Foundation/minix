@@ -113,9 +113,10 @@ DEFINE_TEST(test_stdio)
 	assertEqualInt(r, 0);
 	/* Verify xvOf.out is the file contents */
 	p = slurpfile(&s, "xvOf.out");
-	assert(s = 3);
+	assertEqualInt((int)s, 3);
 	assertEqualMem(p, "abc", 3);
 	/* TODO: Verify xvf.err */
+	free(p);
 
 	/* 'xvf -' should generate list on stderr, empty stdout. */
 	r = systemf("%s xvf - < archive >xvf-.out 2>xvf-.err", testprog);

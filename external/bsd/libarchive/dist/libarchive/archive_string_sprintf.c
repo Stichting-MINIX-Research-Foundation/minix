@@ -38,7 +38,9 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_string_sprintf.c 189435 2009-03-
  * here.  This is only used to format error messages, so doesn't
  * require any floating-point support or field-width handling.
  */
-
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
 #include <stdio.h>
 
 #include "archive_string.h"
@@ -51,7 +53,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_string_sprintf.c 189435 2009-03-
 static void
 append_uint(struct archive_string *as, uintmax_t d, unsigned base)
 {
-	static const char *digits = "0123456789abcdef";
+	static const char digits[] = "0123456789abcdef";
 	if (d >= base)
 		append_uint(as, d/base, base);
 	archive_strappend_char(as, digits[d % base]);
@@ -60,16 +62,19 @@ append_uint(struct archive_string *as, uintmax_t d, unsigned base)
 static void
 append_int(struct archive_string *as, intmax_t d, unsigned base)
 {
+	uintmax_t ud;
+
 	if (d < 0) {
 		archive_strappend_char(as, '-');
-		d = -d;
-	}
-	append_uint(as, d, base);
+		ud = (d == INTMAX_MIN) ? (uintmax_t)(INTMAX_MAX) + 1 : (uintmax_t)(-d);
+	} else
+		ud = d;
+	append_uint(as, ud, base);
 }
 
 
 void
-__archive_string_sprintf(struct archive_string *as, const char *fmt, ...)
+archive_string_sprintf(struct archive_string *as, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -83,15 +88,16 @@ __archive_string_sprintf(struct archive_string *as, const char *fmt, ...)
  * necessary.
  */
 void
-__archive_string_vsprintf(struct archive_string *as, const char *fmt,
+archive_string_vsprintf(struct archive_string *as, const char *fmt,
     va_list ap)
 {
 	char long_flag;
 	intmax_t s; /* Signed integer temp. */
 	uintmax_t u; /* Unsigned integer temp. */
 	const char *p, *p2;
+	const wchar_t *pw;
 
-	if (__archive_string_ensure(as, 64) == NULL)
+	if (archive_string_ensure(as, 64) == NULL)
 		__archive_errx(1, "Out of memory");
 
 	if (fmt == NULL) {
@@ -112,40 +118,62 @@ __archive_string_vsprintf(struct archive_string *as, const char *fmt,
 		long_flag = '\0';
 		switch(*p) {
 		case 'j':
-			long_flag = 'j';
-			p++;
-			break;
 		case 'l':
-			long_flag = 'l';
+		case 'z':
+			long_flag = *p;
 			p++;
 			break;
 		}
 
 		switch (*p) {
 		case '%':
-			__archive_strappend_char(as, '%');
+			archive_strappend_char(as, '%');
 			break;
 		case 'c':
 			s = va_arg(ap, int);
-			__archive_strappend_char(as, s);
+			archive_strappend_char(as, (char)s);
 			break;
 		case 'd':
 			switch(long_flag) {
 			case 'j': s = va_arg(ap, intmax_t); break;
 			case 'l': s = va_arg(ap, long); break;
+			case 'z': s = va_arg(ap, ssize_t); break;
 			default:  s = va_arg(ap, int); break;
 			}
 		        append_int(as, s, 10);
 			break;
 		case 's':
-			p2 = va_arg(ap, char *);
-			archive_strcat(as, p2);
+			switch(long_flag) {
+			case 'l':
+				pw = va_arg(ap, wchar_t *);
+				if (pw == NULL)
+					pw = L"(null)";
+				if (archive_string_append_from_wcs(as, pw,
+				    wcslen(pw)) != 0 && errno == ENOMEM)
+					__archive_errx(1, "Out of memory");
+				break;
+			default:
+				p2 = va_arg(ap, char *);
+				if (p2 == NULL)
+					p2 = "(null)";
+				archive_strcat(as, p2);
+				break;
+			}
+			break;
+		case 'S':
+			pw = va_arg(ap, wchar_t *);
+			if (pw == NULL)
+				pw = L"(null)";
+			if (archive_string_append_from_wcs(as, pw,
+			    wcslen(pw)) != 0 && errno == ENOMEM)
+				__archive_errx(1, "Out of memory");
 			break;
 		case 'o': case 'u': case 'x': case 'X':
 			/* Common handling for unsigned integer formats. */
 			switch(long_flag) {
 			case 'j': u = va_arg(ap, uintmax_t); break;
 			case 'l': u = va_arg(ap, unsigned long); break;
+			case 'z': u = va_arg(ap, size_t); break;
 			default:  u = va_arg(ap, unsigned int); break;
 			}
 			/* Format it in the correct base. */

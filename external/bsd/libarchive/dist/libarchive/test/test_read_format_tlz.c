@@ -42,19 +42,22 @@ DEFINE_TEST(test_read_format_tlz)
 	int r;
 
 	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_compression_all(a));
-	r = archive_read_support_compression_lzma(a);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	r = archive_read_support_filter_lzma(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("lzma reading not fully supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_open_memory(a, archive, sizeof(archive)));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_LZMA);
+	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_LZMA);
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
+	assertEqualInt(archive_entry_is_encrypted(ae), 0);
+	assertEqualIntA(a, archive_read_has_encrypted_entries(a), ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

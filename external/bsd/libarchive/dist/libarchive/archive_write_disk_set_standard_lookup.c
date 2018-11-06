@@ -58,8 +58,8 @@ struct bucket {
 
 static const size_t cache_size = 127;
 static unsigned int	hash(const char *);
-static gid_t	lookup_gid(void *, const char *uname, gid_t);
-static uid_t	lookup_uid(void *, const char *uname, uid_t);
+static int64_t	lookup_gid(void *, const char *uname, int64_t);
+static int64_t	lookup_uid(void *, const char *uname, int64_t);
 static void	cleanup(void *);
 
 /*
@@ -67,7 +67,7 @@ static void	cleanup(void *);
  * a simple cache to accelerate such lookups---into the archive_write_disk
  * object.  This is in a separate file because getpwnam()/getgrnam()
  * can pull in a LOT of library code (including NIS/LDAP functions, which
- * pull in DNS resolveers, etc).  This can easily top 500kB, which makes
+ * pull in DNS resolvers, etc).  This can easily top 500kB, which makes
  * it inappropriate for some space-constrained applications.
  *
  * Applications that are size-sensitive may want to just use the
@@ -84,17 +84,20 @@ static void	cleanup(void *);
 int
 archive_write_disk_set_standard_lookup(struct archive *a)
 {
-	struct bucket *ucache = malloc(cache_size * sizeof(struct bucket));
-	struct bucket *gcache = malloc(cache_size * sizeof(struct bucket));
-	memset(ucache, 0, cache_size * sizeof(struct bucket));
-	memset(gcache, 0, cache_size * sizeof(struct bucket));
+	struct bucket *ucache = calloc(cache_size, sizeof(struct bucket));
+	struct bucket *gcache = calloc(cache_size, sizeof(struct bucket));
+	if (ucache == NULL || gcache == NULL) {
+		free(ucache);
+		free(gcache);
+		return (ARCHIVE_FATAL);
+	}
 	archive_write_disk_set_group_lookup(a, gcache, lookup_gid, cleanup);
 	archive_write_disk_set_user_lookup(a, ucache, lookup_uid, cleanup);
 	return (ARCHIVE_OK);
 }
 
-static gid_t
-lookup_gid(void *private_data, const char *gname, gid_t gid)
+static int64_t
+lookup_gid(void *private_data, const char *gname, int64_t gid)
 {
 	int h;
 	struct bucket *b;
@@ -122,6 +125,7 @@ lookup_gid(void *private_data, const char *gname, gid_t gid)
 		char _buffer[128];
 		size_t bufsize = 128;
 		char *buffer = _buffer;
+		char *allocated = NULL;
 		struct group	grent, *result;
 		int r;
 
@@ -133,16 +137,15 @@ lookup_gid(void *private_data, const char *gname, gid_t gid)
 			if (r != ERANGE)
 				break;
 			bufsize *= 2;
-			if (buffer != _buffer)
-				free(buffer);
-			buffer = malloc(bufsize);
-			if (buffer == NULL)
+			free(allocated);
+			allocated = malloc(bufsize);
+			if (allocated == NULL)
 				break;
+			buffer = allocated;
 		}
 		if (result != NULL)
 			gid = result->gr_gid;
-		if (buffer != _buffer)
-			free(buffer);
+		free(allocated);
 	}
 #  else /* HAVE_GETGRNAM_R */
 	{
@@ -158,13 +161,13 @@ lookup_gid(void *private_data, const char *gname, gid_t gid)
 #else
 	#error No way to perform gid lookups on this platform
 #endif
-	b->id = gid;
+	b->id = (gid_t)gid;
 
 	return (gid);
 }
 
-static uid_t
-lookup_uid(void *private_data, const char *uname, uid_t uid)
+static int64_t
+lookup_uid(void *private_data, const char *uname, int64_t uid)
 {
 	int h;
 	struct bucket *b;
@@ -192,6 +195,7 @@ lookup_uid(void *private_data, const char *uname, uid_t uid)
 		char _buffer[128];
 		size_t bufsize = 128;
 		char *buffer = _buffer;
+		char *allocated = NULL;
 		struct passwd	pwent, *result;
 		int r;
 
@@ -203,16 +207,15 @@ lookup_uid(void *private_data, const char *uname, uid_t uid)
 			if (r != ERANGE)
 				break;
 			bufsize *= 2;
-			if (buffer != _buffer)
-				free(buffer);
-			buffer = malloc(bufsize);
-			if (buffer == NULL)
+			free(allocated);
+			allocated = malloc(bufsize);
+			if (allocated == NULL)
 				break;
+			buffer = allocated;
 		}
 		if (result != NULL)
 			uid = result->pw_uid;
-		if (buffer != _buffer)
-			free(buffer);
+		free(allocated);
 	}
 #  else /* HAVE_GETPWNAM_R */
 	{
@@ -228,7 +231,7 @@ lookup_uid(void *private_data, const char *uname, uid_t uid)
 #else
 	#error No way to look up uids on this platform
 #endif
-	b->id = uid;
+	b->id = (uid_t)uid;
 
 	return (uid);
 }
