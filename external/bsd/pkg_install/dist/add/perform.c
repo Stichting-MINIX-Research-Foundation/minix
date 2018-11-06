@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.4 2013/04/20 15:29:22 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.5 2017/04/20 13:18:23 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.4 2013/04/20 15:29:22 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.5 2017/04/20 13:18:23 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: perform.c,v 1.4 2013/04/20 15:29:22 wiz Exp $");
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,7 +76,6 @@ struct pkg_meta {
 	char *meta_install;
 	char *meta_deinstall;
 	char *meta_preserve;
-	char *meta_views;
 	char *meta_installed_info;
 };
 
@@ -121,7 +121,6 @@ static const struct pkg_meta_desc {
 	{ offsetof(struct pkg_meta, meta_size_pkg), SIZE_PKG_FNAME, 0, 0444 },
 	{ offsetof(struct pkg_meta, meta_size_all), SIZE_ALL_FNAME, 0, 0444 },
 	{ offsetof(struct pkg_meta, meta_preserve), PRESERVE_FNAME, 0, 0444 },
-	{ offsetof(struct pkg_meta, meta_views), VIEWS_FNAME, 0, 0444 },
 	{ offsetof(struct pkg_meta, meta_required_by), REQUIRED_BY_FNAME, 0, 0644 },
 	{ offsetof(struct pkg_meta, meta_installed_info), INSTALLED_INFO_FNAME, 0, 0644 },
 	{ 0, NULL, 0, 0 },
@@ -412,9 +411,6 @@ check_already_installed(struct pkg_task *pkg)
 		}
 		return 1;
 	}
-
-	if (Force)
-		return 1;
 
 	/* We can only arrive here for explicitly requested packages. */
 	if (!Automatic && is_automatic_installed(pkg->pkgname)) {
@@ -832,8 +828,7 @@ extract_files(struct pkg_task *pkg)
 out:
 	if (!NoRecord)
 		pkgdb_close();
-	archive_write_close(writer);
-	archive_write_finish(writer);
+	archive_write_free(writer);
 
 	return r;
 }
@@ -912,7 +907,7 @@ check_platform(struct pkg_task *pkg)
 	if (OverrideMachine != NULL)
 		effective_arch = OverrideMachine;
 	else
-		effective_arch = MACHINE_ARCH;
+		effective_arch = PKGSRC_MACHINE_ARCH;
 
 	/* If either the OS or arch are different, bomb */
 	if (strcmp(OPSYS_NAME, pkg->buildinfo[BI_OPSYS]) ||
@@ -1182,30 +1177,6 @@ check_dependencies(struct pkg_task *pkg)
 	return status;
 }
 
-/*
- * If this package uses pkg_views, register it in the default view.
- */
-static void
-pkg_register_views(struct pkg_task *pkg)
-{
-	if (Fake || NoView || pkg->meta_data.meta_views == NULL)
-		return;
-
-	if (Verbose) {
-		printf("%s/pkg_view -d %s %s%s %s%s %sadd %s\n",
-			BINDIR, pkgdb_get_dir(),
-			View ? "-w " : "", View ? View : "",
-			Viewbase ? "-W " : "", Viewbase ? Viewbase : "",
-			Verbose ? "-v " : "", pkg->pkgname);
-	}
-
-	fexec_skipempty(BINDIR "/pkg_view", "-d", pkgdb_get_dir(),
-			View ? "-w " : "", View ? View : "",
-			Viewbase ? "-W " : "", Viewbase ? Viewbase : "",
-			Verbose ? "-v " : "", "add", pkg->pkgname,
-			(void *)NULL);
-}
-
 static int
 preserve_meta_data_file(struct pkg_task *pkg, const char *name)
 {
@@ -1275,6 +1246,9 @@ static int check_input(const char *line, size_t len)
 static int
 check_signature(struct pkg_task *pkg, int invalid_sig)
 {
+#ifdef BOOTSTRAP
+	return 0;
+#else
 	char *line;
 	size_t len;
 
@@ -1311,11 +1285,15 @@ check_signature(struct pkg_task *pkg, int invalid_sig)
 	}
 	warnx("Unknown value of configuration variable VERIFIED_INSTALLATION");
 	return 1;
+#endif
 }
 
 static int
 check_vulnerable(struct pkg_task *pkg)
 {
+#ifdef BOOTSTRAP
+	return 0;
+#else
 	static struct pkg_vulnerabilities *pv;
 	int require_check;
 	char *line;
@@ -1354,11 +1332,15 @@ check_vulnerable(struct pkg_task *pkg)
 		return 1;
 	}
 	return 0;
+#endif
 }
 
 static int
 check_license(struct pkg_task *pkg)
 {
+#ifdef BOOTSTRAP
+	return 0;
+#else
 	if (LicenseCheck == 0)
 		return 0;
 
@@ -1382,6 +1364,7 @@ check_license(struct pkg_task *pkg)
 		warnx("Invalid LICENSE for package `%s'", pkg->pkgname);
 		return 1;
 	}
+#endif
 }
 
 /*
@@ -1404,8 +1387,12 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		goto clean_find_archive;
 	}
 
+#ifndef BOOTSTRAP
 	invalid_sig = pkg_verify_signature(archive_name, &pkg->archive, &pkg->entry,
 	    &pkg->pkgname);
+#else
+	invalid_sig = 0;
+#endif
 	free(archive_name);
 
 	if (pkg->archive == NULL)
@@ -1436,12 +1423,7 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (pkg->meta_data.meta_mtree != NULL)
 		warnx("mtree specification in pkg `%s' ignored", pkg->pkgname);
 
-	if (pkg->meta_data.meta_views != NULL) {
-		pkg->logdir = xstrdup(pkg->prefix);
-		pkgdb_set_dir(dirname_of(pkg->logdir), 4);
-	} else {
-		pkg->logdir = xasprintf("%s/%s", config_pkg_dbdir, pkg->pkgname);
-	}
+	pkg->logdir = xasprintf("%s/%s", config_pkg_dbdir, pkg->pkgname);
 
 	if (Destdir != NULL)
 		pkg->install_logdir = xasprintf("%s/%s", Destdir, pkg->logdir);
@@ -1542,8 +1524,6 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 	if (pkg->meta_data.meta_display != NULL)
 		fputs(pkg->meta_data.meta_display, stdout);
 
-	pkg_register_views(pkg);
-
 	status = 0;
 	goto clean_memory;
 
@@ -1559,6 +1539,7 @@ nuke_pkg:
 
 nuke_pkgdb:
 	if (!Fake) {
+		(void) remove_files(pkg->install_logdir, "+*");
 		if (recursive_remove(pkg->install_logdir, 1))
 			warn("Couldn't remove %s", pkg->install_logdir);
 		free(pkg->install_logdir_real);
@@ -1582,7 +1563,7 @@ clean_memory:
 	free_plist(&pkg->plist);
 	free_meta_data(pkg);
 	if (pkg->archive)
-		archive_read_finish(pkg->archive);
+		archive_read_free(pkg->archive);
 	free(pkg->other_version);
 	free(pkg->pkgname);
 clean_find_archive:

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.7 2010/01/30 21:33:31 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.7 2010/01/30 21:33:31 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -26,7 +26,8 @@ __RCSID("$NetBSD: main.c,v 1.1.1.7 2010/01/30 21:33:31 joerg Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EF:I:K:L:OP:S:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
+/* -U is silently ignored, it used to inhibit pkgdb changes. */
+static const char Options[] = "B:C:D:F:I:K:L:OP:S:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -47,8 +48,6 @@ char   *DefaultOwner = NULL;
 char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
 const char *CompressionType = NULL;
-int	update_pkgdb = 1;
-int	create_views = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
 Boolean File2Pkg = FALSE;
@@ -57,7 +56,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: pkg_create [-ElOUVv] [-B build-info-file] [-b build-version-file]\n"
+	    "usage: pkg_create [-lOUVv] [-B build-info-file] [-b build-version-file]\n"
             "                  [-C cpkgs] [-D displayfile] [-F compression] \n"
 	    "                  [-I realprefix] [-i iscript]\n"
             "                  [-K pkg_dbdir] [-k dscript]\n"
@@ -81,10 +80,6 @@ main(int argc, char **argv)
 			Verbose = TRUE;
 			break;
 
-		case 'E':
-			create_views = 1;
-			break;
-
 		case 'F':
 			CompressionType = optarg;
 			break;
@@ -98,7 +93,6 @@ main(int argc, char **argv)
 			break;
 
 		case 'U':
-			update_pkgdb = 0;
 			break;
 
 		case 'p':
@@ -209,7 +203,7 @@ main(int argc, char **argv)
 		return 0;
 	if (Verbose) {
 		if (PlistOnly)
-			warnx("package registration failed");
+			warnx("PLIST adjustment failed");
 		else
 			warnx("package creation failed");
 	}

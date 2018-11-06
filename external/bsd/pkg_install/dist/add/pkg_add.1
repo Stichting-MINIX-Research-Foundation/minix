@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.12 2011/02/18 22:32:28 aymeric Exp $
+.\" $NetBSD: pkg_add.1,v 1.2 2017/04/20 13:18:23 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd June 16, 2010
+.Dd December 27, 2014
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -25,14 +25,12 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl AfILnRUuVv
+.Op Fl AfInRUuVv
 .Op Fl C Ar config
 .Op Fl K Ar pkg_dbdir
 .Op Fl m Ar machine
 .Op Fl P Ar destdir
 .Op Fl p Ar prefix
-.Op Fl W Ar viewbase
-.Op Fl w Ar view
 .Ar Oo Oo Li ftp|http Oc Ns Li :// Ns Oo Ar user Oc Ns \
 Oo Li \&: Ns Ar password Oc \
 Ns Li @ Oc Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns \
@@ -142,8 +140,6 @@ Override the value of the
 .Dv PKG_DBDIR
 configuration option with the value
 .Ar pkg_dbdir .
-.It Fl L
-Don't add the package to any views after installation.
 .It Fl m
 Override the machine architecture returned by uname with
 .Ar machine .
@@ -179,14 +175,6 @@ See below for a more detailed description of the process.
 Print version number and exit.
 .It Fl v
 Turn on verbose output.
-.It Fl W Ar viewbase
-Passed down to
-.Xr pkg_view 1
-for managed views.
-.It Fl w Ar view
-Passed down to
-.Xr pkg_view 1
-for managed views.
 .El
 .Pp
 One or more
@@ -337,11 +325,6 @@ Any package dependencies are recorded in the other packages'
 .Pa +REQUIRED_BY
 file.
 .It
-If the package is a depoted package, then add it to the registered
-by calling
-.Xr pkg_view 1
-accordingly.
-.It
 Finally, if we were upgrading a package, any
 .Pa +REQUIRED_BY
 file that was moved aside before upgrading was started is now moved
@@ -386,9 +369,6 @@ are prefixed with
 See
 .Xr pkg_install.conf 5
 for options, that can also be specified using the environment.
-Packages using views are also affected by the environment variables
-documented for
-.Xr pkg_view 1 .
 .Sh EXAMPLES
 In all cases,
 .Nm

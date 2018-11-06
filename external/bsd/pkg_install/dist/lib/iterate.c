@@ -1,4 +1,4 @@
-/*	$NetBSD: iterate.c,v 1.1.1.4 2010/01/30 21:33:47 joerg Exp $	*/
+/*	$NetBSD: iterate.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.

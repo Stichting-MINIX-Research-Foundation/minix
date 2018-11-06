@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.7 2014/01/07 02:15:27 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.8 2017/04/20 13:18:23 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -29,9 +29,6 @@
 #include "config.h"
 #endif
 #include <nbcompat.h>
-#if HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -116,9 +113,6 @@ enum {
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
 #define PRESERVE_FNAME		"+PRESERVE"
-#define VIEWS_FNAME		"+VIEWS"
-#define VIEWS_FNAME_TMP		"+VIEWS.tmp"
-#define DEPOT_FNAME		"+DEPOT"
 
 /* The names of special variables */
 #define AUTOMATIC_VARNAME	"automatic"
@@ -322,6 +316,7 @@ int	has_pkgdir(const char *);
 struct archive;
 struct archive_entry;
 
+struct archive *prepare_archive(void);
 struct archive *open_archive(const char *, char **);
 struct archive *find_archive(const char *, int, char **);
 void	process_pkg_path(void);
@@ -363,7 +358,6 @@ const char   *pkgdb_get_dir(void);
  * 1 config file
  * 2 environment
  * 3 command line
- * 4 destdir/views reset
  */
 void	pkgdb_set_dir(const char *, int);
 char   *pkgdb_pkg_dir(const char *);
@@ -404,9 +398,7 @@ int easy_pkcs7_sign(const char *, size_t, char **, size_t *, const char *,
     const char *);
 #endif
 
-int inline_gpg_verify(const char *, size_t, const char *);
-int detached_gpg_verify(const char *, size_t, const char *, size_t,
-    const char *);
+int gpg_verify(const char *, size_t, const char *, const char *, size_t);
 int detached_gpg_sign(const char *, size_t, char **, size_t *, const char *,
     const char *);
 
@@ -421,7 +413,12 @@ char *xstrdup(const char *);
 void *xrealloc(void *, size_t);
 void *xcalloc(size_t, size_t);
 void *xmalloc(size_t);
-char *xasprintf(const char *, ...) __printflike(1, 2);
+#if defined(__GNUC__) && __GNUC__ >= 2
+char	*xasprintf(const char *, ...)
+			   __attribute__((__format__(__printf__, 1, 2)));
+#else
+char	*xasprintf(const char *, ...);
+#endif
 
 /* Externs */
 extern Boolean Verbose;

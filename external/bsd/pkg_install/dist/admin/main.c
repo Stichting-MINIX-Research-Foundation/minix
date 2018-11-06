@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.15 2010/04/23 20:54:07 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.15 2010/04/23 20:54:07 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -104,7 +104,6 @@ usage(void)
 	    " rebuild-tree                - rebuild +REQUIRED_BY files from forward deps\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
 	    " add pkg ...                 - add pkg files to database\n"
-	    " delete pkg ...              - delete file entries for pkg in database\n"
 	    " set variable=value pkg ...  - set installation variable for package\n"
 	    " unset variable pkg ...      - unset installation variable for package\n"
 	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
@@ -220,15 +219,6 @@ add_pkg(const char *pkgdir, void *vp)
 	return 0;
 }
 
-static void
-delete1pkg(const char *pkgdir)
-{
-	if (!pkgdb_open(ReadWrite))
-		err(EXIT_FAILURE, "cannot open pkgdb");
-	(void) pkgdb_remove_pkg(pkgdir);
-	pkgdb_close();
-}
-
 static void 
 rebuild(void)
 {
@@ -248,7 +238,7 @@ rebuild(void)
 	iterate_pkg_db(add_pkg, &count);
 
 	printf("\n");
-	printf("Stored %" PRIzu " file%s and %zu explicit director%s"
+	printf("Stored %" PRIzu " file%s and %" PRIzu " explicit director%s"
 	    " from %"PRIzu " package%s in %s.\n",
 	    count.files, count.files == 1 ? "" : "s",
 	    count.directories, count.directories == 1 ? "y" : "ies",
@@ -525,12 +515,6 @@ main(int argc, char *argv[])
 
 		for (++argv; *argv != NULL; ++argv)
 			add_pkg(*argv, &count);
-	} else if (strcasecmp(argv[0], "delete") == 0) {
-		argv++;		/* "delete" */
-		while (*argv != NULL) {
-			delete1pkg(*argv);
-			argv++;
-		}
 	} else if (strcasecmp(argv[0], "set") == 0) {
 		argv++;		/* "set" */
 		set_unset_variable(argv, FALSE);
@@ -624,8 +608,8 @@ main(int argc, char *argv[])
 			if (pkg_full_signature_check(archive_name, &pkg))
 				rc = 1;
 			free(archive_name);
-			if (!pkg)
-				archive_read_finish(pkg);
+			if (pkg != NULL)
+				archive_read_free(pkg);
 		}
 		return rc;
 	} else if (strcasecmp(argv[0], "x509-sign-package") == 0) {

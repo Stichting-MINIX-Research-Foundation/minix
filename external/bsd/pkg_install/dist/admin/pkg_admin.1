@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.12 2013/04/20 15:26:52 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.2 2017/04/20 13:18:23 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 14, 2012
+.Dd December 27, 2014
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -106,13 +106,6 @@ Be more verbose.
 .Pp
 The following commands are supported:
 .Bl -tag -width indent
-.It Cm add Ar pkg ...
-For each listed package, write the absolute pathnames of the files listed in
-its
-.Pa +CONTENTS
-file together with the package they belong to into the package database.
-This should be used only by
-.Xr pkg_view 1 .
 .It Cm audit Oo Fl es Oc Oo Fl t Ar type Oc Oo Ar pkg Oc ...
 Check the listed installed packages for vulnerabilities.
 If no package is given, check all installed packages.
@@ -187,11 +180,6 @@ otherwise it exits with error.
 Print the current value of
 .Ar variable
 as used after parsing the configuration file.
-.It Cm delete Ar pkg ...
-For each listed package, remove all file entries in the package database that
-belong to the package.
-This should be used only by
-.Xr pkg_view 1 .
 .It Cm dump
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
@@ -310,7 +298,6 @@ for options, that can also be specified using the environment.
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr pkg_view 1 ,
 .Xr pkg_install.conf 5 ,
 .Xr pkgsrc 7
 .Sh HISTORY

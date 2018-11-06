@@ -1,4 +1,4 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.5 2010/06/26 00:14:33 joerg Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.5 2010/06/26 00:14:33 joerg Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -77,6 +77,20 @@ static const char pgp_msg_end[] = "-----BEGIN PGP SIGNATURE-----\n";
 static const char pkcs7_begin[] = "-----BEGIN PKCS7-----\n";
 static const char pkcs7_end[] = "-----END PKCS7-----\n";
 
+static struct archive *
+prepare_raw_file(void)
+{
+	struct archive *a = archive_read_new();
+	if (a == NULL)
+		errx(EXIT_FAILURE, "memory allocation failed");
+
+	archive_read_support_filter_gzip(a);
+	archive_read_support_filter_bzip2(a);
+	archive_read_support_filter_xz(a);
+	archive_read_support_format_raw(a);
+	return a;
+}
+
 static void
 verify_signature_pkcs7(const char *input)
 {
@@ -110,12 +124,7 @@ verify_signature_pkcs7(const char *input)
 static void
 verify_signature(const char *input, size_t input_len)
 {
-	if (gpg_cmd == NULL && certs_pkg_vulnerabilities == NULL)
-		errx(EXIT_FAILURE,
-		    "At least GPG or CERTIFICATE_ANCHOR_PKGVULN "
-		    "must be configured");
-	if (gpg_cmd != NULL)
-		inline_gpg_verify(input, input_len, gpg_keyring_pkgvuln);
+	gpg_verify(input, input_len, gpg_keyring_pkgvuln, NULL, 0);
 	if (certs_pkg_vulnerabilities != NULL)
 		verify_signature_pkcs7(input);
 }
@@ -350,12 +359,8 @@ read_pkg_vulnerabilities_memory(void *buf, size_t len, int check_sum)
 	struct archive *a;
 	struct pkg_vulnerabilities *pv;
 
-	if ((a = archive_read_new()) == NULL)
-		errx(EXIT_FAILURE, "memory allocation failed");
-	
-	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
-	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
-	    archive_read_open_memory(a, buf, len) != ARCHIVE_OK)
+	a = prepare_raw_file();
+	if (archive_read_open_memory(a, buf, len) != ARCHIVE_OK)
 		errx(EXIT_FAILURE, "Cannot open pkg_vulnerabilies buffer: %s",
 		    archive_error_string(a));
 
@@ -381,12 +386,8 @@ read_pkg_vulnerabilities_file(const char *path, int ignore_missing, int check_su
 		err(EXIT_FAILURE, "Cannot open %s", path);
 	}
 
-	if ((a = archive_read_new()) == NULL)
-		errx(EXIT_FAILURE, "memory allocation failed");
-	
-	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
-	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
-	    archive_read_open_fd(a, fd, 65536) != ARCHIVE_OK)
+	a = prepare_raw_file();
+	if (archive_read_open_fd(a, fd, 65536) != ARCHIVE_OK)
 		errx(EXIT_FAILURE, "Cannot open ``%s'': %s", path,
 		    archive_error_string(a));
 
@@ -450,9 +451,6 @@ parse_pkg_vuln(const char *input, size_t input_len, int check_sum)
 	size_t allocated_vulns;
 	int in_pgp_msg;
 
-#if defined(__minix)
-	next = NULL; /* LSC: Fix -Os compilation: -Werror=maybe-uninitialized */
-#endif /* defined(__minix) */
 	pv = xmalloc(sizeof(*pv));
 
 	allocated_vulns = pv->entries = 0;

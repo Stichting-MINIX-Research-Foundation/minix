@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/02/02 20:47:21 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2017/04/20 13:18:47 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 PROG= pkg_add
@@ -8,6 +8,6 @@ SRCS= main.c perform.c
 
 .PATH:	${DIST}/add
 
-CPPFLAGS+=	-DMACHINE_ARCH=\"${MACHINE_ARCH}\"
+CPPFLAGS+=	-DPKGSRC_MACHINE_ARCH=\"${MACHINE_ARCH}\"
 
 .include <bsd.prog.mk>

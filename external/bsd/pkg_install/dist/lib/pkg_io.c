@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.9 2010/04/23 20:54:11 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.9 2010/04/23 20:54:11 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -46,8 +46,13 @@ __RCSID("$NetBSD: pkg_io.c,v 1.1.1.9 2010/04/23 20:54:11 joerg Exp $");
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif
-#include <fetch.h>
 #include <stdlib.h>
+
+#ifdef BOOTSTRAP
+#define IS_URL(x) 0
+#else
+#include <fetch.h>
+#endif
 
 #include "lib.h"
 
@@ -59,6 +64,7 @@ struct pkg_path {
 static char *orig_cwd, *last_toplevel;
 static TAILQ_HEAD(, pkg_path) pkg_path = TAILQ_HEAD_INITIALIZER(pkg_path);
 
+#ifndef BOOTSTRAP
 struct fetch_archive {
 	struct url *url;
 	fetchIO *fetch;
@@ -145,17 +151,31 @@ open_archive_by_url(struct url *url, char **archive_name)
 
 	*archive_name = fetchStringifyURL(url);
 
-	a = archive_read_new();
-	archive_read_support_compression_all(a);
-	archive_read_support_format_all(a);
+	a = prepare_archive();
 	if (archive_read_open(a, f, fetch_archive_open, fetch_archive_read,
 	    fetch_archive_close)) {
 		free(*archive_name);
 		*archive_name = NULL;
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 
+	return a;
+}
+#endif /* !BOOTSTRAP */
+
+struct archive *
+prepare_archive(void)
+{
+	struct archive *a = archive_read_new();
+	if (a == NULL)
+		errx(EXIT_FAILURE, "memory allocation failed");
+	archive_read_support_filter_gzip(a);
+	archive_read_support_filter_bzip2(a);
+	archive_read_support_filter_xz(a);
+	archive_read_support_format_ar(a);
+	archive_read_support_format_tar(a);
+	archive_read_set_options(a, "hdrcharset=BINARY");
 	return a;
 }
 
@@ -168,9 +188,7 @@ open_archive(const char *url, char **archive_name)
 	*archive_name = NULL;
 
 	if (!IS_URL(url)) {
-		a = archive_read_new();
-		archive_read_support_compression_all(a);
-		archive_read_support_format_all(a);
+		a = prepare_archive();
 		if (archive_read_open_filename(a, url, 1024)) {
 			archive_read_close(a);
 			return NULL;
@@ -179,6 +197,9 @@ open_archive(const char *url, char **archive_name)
 		return a;
 	}
 
+#ifdef BOOTSTRAP
+	return NULL;
+#else
 	if ((u = fetchParseURL(url)) == NULL)
 		return NULL;
 
@@ -186,8 +207,10 @@ open_archive(const char *url, char **archive_name)
 
 	fetchFreeURL(u);
 	return a;
+#endif
 }
 
+#ifndef BOOTSTRAP
 static int
 strip_suffix(char *filename)
 {
@@ -333,6 +356,7 @@ find_best_package(const char *toplevel, const char *pattern, int do_path)
 
 	return best_match;
 }
+#endif /* !BOOTSTRAP */
 
 struct archive *
 find_archive(const char *fname, int top_level, char **archive_name)
@@ -364,7 +388,7 @@ find_archive(const char *fname, int top_level, char **archive_name)
 		free(full_fname);
 		return a;
 	}
-
+#ifndef BOOTSTRAP
 	fname = last_slash + 1;
 	*last_slash = '\0';
 
@@ -379,5 +403,6 @@ find_archive(const char *fname, int top_level, char **archive_name)
 		return NULL;
 	a = open_archive_by_url(best_match, archive_name);
 	fetchFreeURL(best_match);
+#endif /* !BOOTSTRAP */
 	return a;
 }
