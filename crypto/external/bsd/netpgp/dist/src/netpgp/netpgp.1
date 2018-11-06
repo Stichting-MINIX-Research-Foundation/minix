@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.19 2014/02/17 07:23:18 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.21 2017/03/27 21:34:32 khorben Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,7 +203,7 @@ library.
 In addition to one of the preceding commands, a number of qualifiers
 or options may be given.
 .Bl -tag -width Ar
-.It Fl Fl armour , Fl armor
+.It Fl Fl armour , Fl Fl armor
 This option, however it is spelled, wraps the signature as an
 ASCII-encoded piece of text, for ease of use.
 .It Fl Fl cipher Ar ciphername
@@ -216,7 +216,7 @@ access to the cipher used.
 The default cipher algorithm is the
 .Dq CAST5
 algorithm.
-.It Fl Fl detached
+.It Fl Fl detach , Fl Fl detached
 When signing a file, place the resulting signature in a separate
 file from the one being signed.
 .It Fl Fl hash-alg Ar hash-algorithm

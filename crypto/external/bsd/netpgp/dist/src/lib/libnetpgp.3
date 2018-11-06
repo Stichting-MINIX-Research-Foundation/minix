@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.16 2014/02/17 07:23:18 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.16.18.1 2018/05/06 09:47:47 martin Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2014
+.Dd April 29, 2018
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -79,6 +79,10 @@ The following functions are for variable management:
 .Fo netpgp_incvar
 .Fa "netpgp_t *netpgp" "const char *name" "const int delta"
 .Fc
+.Ft int
+.Fo netpgp_unsetvar
+.Fa "netpgp_t *netpgp" "const char *name"
+.Fc
 .Pp
 The following function sets the home directory:
 .Ft int
@@ -92,8 +96,20 @@ The following functions are used for key management:
 .Fa "netpgp_t *netpgp" "const int printsigs"
 .Fc
 .Ft int
-.Fo netpgp_match_list_keys
-.Fa "netpgp_t *netpgp" "char *pattern"
+.Fo netpgp_list_keys_json
+.Fa "netpgp_t *netpgp" "char **json" "const int psigs"
+.Fc
+.Ft int
+.Fo netpgp_match_keys
+.Fa "netpgp_t *netpgp" "char *name" "const char *fmt" "void *vp" "const int psigs"
+.Fc
+.Ft int
+.Fo netpgp_match_keys_json
+.Fa "netpgp_t *netpgp" "char **json" "char *name" "const char *fmt" "const int psigs"
+.Fc
+.Ft int
+.Fo netpgp_match_pubkeys
+.Fa "netpgp_t *netpgp" "char *name" "void *vp"
 .Fc
 .Ft int
 .Fo netpgp_find_key
@@ -101,7 +117,7 @@ The following functions are used for key management:
 .Fc
 .Ft char *
 .Fo netpgp_get_key
-.Fa "netpgp_t *netpgp" "const char *id"
+.Fa "netpgp_t *netpgp" "const char *name" "const char *fmt"
 .Fc
 .Ft int
 .Fo netpgp_export_key
@@ -115,31 +131,39 @@ The following functions are used for key management:
 .Fo netpgp_generate_key
 .Fa "netpgp_t *netpgp" "char *userid" "int numbits"
 .Fc
+.Ft int
+.Fo netpgp_validate_sigs
+.Fa "netpgp_t *netpgp"
+.Fc
+.Ft int
+.Fo netpgp_format_json
+.Fa "void *vp" "const char *json" "const int psigs"
+.Fc
 .Pp
 The following functions are used for file management:
 .Ft int
 .Fo netpgp_encrypt_file
-.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "netpgp_t *netpgp" "const char *userid" "const char *filename" "char *out"
 .Fa "int armored"
 .Fc
 .Ft int
 .Fo netpgp_decrypt_file
-.Fa "netpgp_t *netpgp" "char *filename" "char *out" "int armored"
+.Fa "netpgp_t *netpgp" "const char *filename" "char *out" "int armored"
 .Fc
 .Ft int
 .Fo netpgp_sign_file
-.Fa "netpgp_t *netpgp" "char *userid" "char *filename" "char *out"
+.Fa "netpgp_t *netpgp" "const char *userid" "const char *filename" "char *out"
 .Fa "int armored" "int cleartext" "int detached"
 .Fc
 .Ft int
 .Fo netpgp_verify_file
-.Fa "netpgp_t *netpgp" "char *f" "int armored"
+.Fa "netpgp_t *netpgp" "const char *in" "const char *out" "int armored"
 .Fc
 .Pp
 The following functions are used for memory signing and encryption:
 .Ft int
 .Fo netpgp_encrypt_memory
-.Fa "netpgp_t *netpgp" "char *userid" "void *in" "const size_t insize"
+.Fa "netpgp_t *netpgp" "const char *userid" "void *in" "const size_t insize"
 .Fa "char *out" "size_t outsize" "int armored"
 .Fc
 .Ft int
@@ -172,12 +196,13 @@ Normal operation sees the
 .Nm
 process be initialised using the
 .Fn netpgp_init
-function, which will set up the public and private keyrings, and set the
-user identity to the
+function, which will set up the public and private keyrings, as well as set the
+user identity in the
 .Ar userid
-argument passed stored in the
+member of the
 .Dv netpgp_t
-structure, and set using the
+structure.
+These are set using the
 .Fn netpgp_setvar
 function.
 If no public key ring file is set, initial values will be taken from those
@@ -189,6 +214,13 @@ initial values will be taken from those
 in the
 .Pa .gnupg/secring.gpg
 file in the user's home directory.
+The user identity is obtained from the
+.Ev userid
+environment variable, or failing that, the value of the
+.Dq default-key
+setting from
+.Pa .gnupg/gpg.conf
+file in the user's home directory is used.
 The
 .Fn netpgp_init
 function returns 1 on success, 0 on failure.
@@ -198,13 +230,6 @@ To list all the keys in a keyring, the
 function is used.
 The signature subkey fields can also be displayed
 using this function.
-The
-.Fn netpgp_match_list_keys
-function is used to match (via regular expression)
-a subset of the keys in the keyring.
-If the expression to match is NULL,
-the search will degenerate into a
-listing of all keys in the keyring.
 .Pp
 The home directory is specified as an internal variable,
 and its existence is checked using the
@@ -223,13 +248,13 @@ Output is sent to the standard output.
 .Pp
 To import a key onto the public keyring, the
 .Fn netpgp_import_key
-is used.
+function is used.
 The name of the file containing the key to be imported is provided
 as the filename argument.
 .Pp
 To generate a key, the
 .Fn netpgp_generate_key
-is used.
+function is used.
 It takes an argument of the number of bits to use in the key.
 At the time that this manual page was created (April 2009),
 the recommendations are that the bare minimum key size
