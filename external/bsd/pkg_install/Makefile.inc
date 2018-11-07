@@ -11,7 +11,7 @@ CPPFLAGS+=-DHAVE_CONFIG_H -DNETBSD -DHAVE_SSL
 CPPFLAGS+=-DSYSCONFDIR='"/etc"'
 .else
 CPPFLAGS+=-DSYSCONFDIR='"/usr/pkg/etc"'
-CPPFLAGS+=-DDEF_LOG_DIR='"/usr/pkg/pkgdb"'
+CPPFLAGS+=-DDEF_LOG_DIR='"/usr/pkg/var/db/pkg"'
 CPPFLAGS+=-DOPSYS_NAME='"Minix"'
 .endif # !defined(__MINIX)
 
