@@ -115,9 +115,8 @@ static BIO_METHOD methods_filep = {
     NULL,
 };
 
-BIO *BIO_new_file(const char *filename, const char *mode)
+static FILE *file_fopen(const char *filename, const char *mode)
 {
-    BIO *ret;
     FILE *file = NULL;
 
 #  if defined(_WIN32) && defined(CP_UTF8)
@@ -164,10 +163,22 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 #  else
     file = fopen(filename, mode);
 #  endif
+    return (file);
+}
+
+BIO *BIO_new_file(const char *filename, const char *mode)
+{
+    BIO  *ret;
+    FILE *file = file_fopen(filename, mode);
+
     if (file == NULL) {
         SYSerr(SYS_F_FOPEN, get_last_sys_error());
         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
-        if (errno == ENOENT)
+        if (errno == ENOENT
+# ifdef ENXIO
+            || errno == ENXIO
+# endif
+            )
             BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
         else
             BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
@@ -386,7 +397,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             strlcat(p, "t", sizeof(p));
 #  endif
-        fp = fopen(ptr, p);
+        fp = file_fopen(ptr, p);
         if (fp == NULL) {
             SYSerr(SYS_F_FOPEN, get_last_sys_error());
             ERR_add_error_data(5, "fopen('", ptr, "','", p, "')");

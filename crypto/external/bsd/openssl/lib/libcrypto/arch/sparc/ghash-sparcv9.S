@@ -246,5 +246,173 @@ gcm_gmult_4bit:
 	restore
 .type	gcm_gmult_4bit,#function
 .size	gcm_gmult_4bit,(.-gcm_gmult_4bit)
-.asciz	"GHASH for SPARCv9, CRYPTOGAMS by <appro@openssl.org>"
+.globl	gcm_init_vis3
+.align	32
+gcm_init_vis3:
+	save	%sp,-112,%sp
+
+	ldx	[%i1+0],%o2
+	ldx	[%i1+8],%o1
+	mov	0xE1,%o4
+	mov	1,%o3
+	sllx	%o4,57,%o4
+	srax	%o2,63,%g1		! broadcast carry
+	addcc	%o1,%o1,%o1		! H<<=1
+	.word	0x95b2822a !addxc	%o2,%o2,%o2
+	and	%g1,%o3,%o3
+	and	%g1,%o4,%o4
+	xor	%o3,%o1,%o1
+	xor	%o4,%o2,%o2
+	stx	%o1,[%i0+8]		! save twisted H
+	stx	%o2,[%i0+0]
+
+	sethi	%hi(0xA0406080),%g5
+	sethi	%hi(0x20C0E000),%l0
+	or	%g5,%lo(0xA0406080),%g5
+	or	%l0,%lo(0x20C0E000),%l0
+	sllx	%g5,32,%g5
+	or	%l0,%g5,%g5		! (0xE0·i)&0xff=0xA040608020C0E000
+	stx	%g5,[%i0+16]
+
+	ret
+	restore
+.type	gcm_init_vis3,#function
+.size	gcm_init_vis3,.-gcm_init_vis3
+
+.globl	gcm_gmult_vis3
+.align	32
+gcm_gmult_vis3:
+	save	%sp,-112,%sp
+
+	ldx	[%i0+8],%o3		! load Xi
+	ldx	[%i0+0],%o4
+	ldx	[%i1+8],%o1	! load twisted H
+	ldx	[%i1+0],%o2
+
+	mov	0xE1,%l7
+	sllx	%l7,57,%o5		! 57 is not a typo
+	ldx	[%i1+16],%g5		! (0xE0·i)&0xff=0xA040608020C0E000
+
+	xor	%o2,%o1,%o0		! Karatsuba pre-processing
+	.word	0x83b2e2a9 !xmulx	%o3,%o1,%g1
+	xor	%o3,%o4,%g3		! Karatsuba pre-processing
+	.word	0x85b0e2a8 !xmulx	%g3,%o0,%g2
+	.word	0x97b2e2c9 !xmulxhi	%o3,%o1,%o3
+	.word	0x87b0e2c8 !xmulxhi	%g3,%o0,%g3
+	.word	0x89b322ca !xmulxhi	%o4,%o2,%g4
+	.word	0x99b322aa !xmulx	%o4,%o2,%o4
+
+	sll	%g1,3,%o7
+	srlx	%g5,%o7,%o7		! ·0xE0 [implicit &(7<<3)]
+	xor	%g1,%o7,%o7
+	sllx	%o7,57,%o7		! (%g1·0xE1)<<1<<56 [implicit &0x7f]
+
+	xor	%g1,%g2,%g2		! Karatsuba post-processing
+	xor	%o3,%g3,%g3
+	 xor	%o7,%o3,%o3		! real destination is %g2
+	xor	%g4,%g3,%g3
+	xor	%o3,%g2,%g2
+	xor	%o4,%g3,%g3
+	xor	%o4,%g2,%g2
+
+	.word	0x97b062cd !xmulxhi	%g1,%o5,%o3		! ·0xE1<<1<<56
+	 xor	%g1,%g3,%g3
+	.word	0x83b0a2ad !xmulx	%g2,%o5,%g1
+	 xor	%g2,%g4,%g4
+	.word	0x85b0a2cd !xmulxhi	%g2,%o5,%g2
+
+	xor	%o3,%g3,%g3
+	xor	%g1,%g3,%g3
+	xor	%g2,%g4,%g4
+
+	stx	%g3,[%i0+8]		! save Xi
+	stx	%g4,[%i0+0]
+
+	ret
+	restore
+.type	gcm_gmult_vis3,#function
+.size	gcm_gmult_vis3,.-gcm_gmult_vis3
+
+.globl	gcm_ghash_vis3
+.align	32
+gcm_ghash_vis3:
+	save	%sp,-112,%sp
+	nop
+	srln	%i3,0,%i3		! needed on v8+, "nop" on v9
+
+	ldx	[%i0+8],%g3		! load Xi
+	ldx	[%i0+0],%g4
+	ldx	[%i1+8],%o1	! load twisted H
+	ldx	[%i1+0],%o2
+
+	mov	0xE1,%l7
+	sllx	%l7,57,%o5		! 57 is not a typo
+	ldx	[%i1+16],%g5		! (0xE0·i)&0xff=0xA040608020C0E000
+
+	and	%i2,7,%l0
+	andn	%i2,7,%i2
+	sll	%l0,3,%l0
+	prefetch [%i2+63], 20
+	sub	%g0,%l0,%l1
+
+	xor	%o2,%o1,%o0		! Karatsuba pre-processing
+.Loop:
+	ldx	[%i2+8],%o3
+	brz,pt	%l0,1f
+	ldx	[%i2+0],%o4
+
+	ldx	[%i2+16],%g2		! align data
+	srlx	%o3,%l1,%g1
+	sllx	%o3,%l0,%o3
+	sllx	%o4,%l0,%o4
+	srlx	%g2,%l1,%g2
+	or	%g1,%o4,%o4
+	or	%g2,%o3,%o3
+1:
+	add	%i2,16,%i2
+	sub	%i3,16,%i3
+	xor	%g3,%o3,%o3
+	xor	%g4,%o4,%o4
+	prefetch [%i2+63], 20
+
+	.word	0x83b2e2a9 !xmulx	%o3,%o1,%g1
+	xor	%o3,%o4,%g3		! Karatsuba pre-processing
+	.word	0x85b0e2a8 !xmulx	%g3,%o0,%g2
+	.word	0x97b2e2c9 !xmulxhi	%o3,%o1,%o3
+	.word	0x87b0e2c8 !xmulxhi	%g3,%o0,%g3
+	.word	0x89b322ca !xmulxhi	%o4,%o2,%g4
+	.word	0x99b322aa !xmulx	%o4,%o2,%o4
+
+	sll	%g1,3,%o7
+	srlx	%g5,%o7,%o7		! ·0xE0 [implicit &(7<<3)]
+	xor	%g1,%o7,%o7
+	sllx	%o7,57,%o7		! (%g1·0xE1)<<1<<56 [implicit &0x7f]
+
+	xor	%g1,%g2,%g2		! Karatsuba post-processing
+	xor	%o3,%g3,%g3
+	 xor	%o7,%o3,%o3		! real destination is %g2
+	xor	%g4,%g3,%g3
+	xor	%o3,%g2,%g2
+	xor	%o4,%g3,%g3
+	xor	%o4,%g2,%g2
+
+	.word	0x97b062cd !xmulxhi	%g1,%o5,%o3		! ·0xE1<<1<<56
+	 xor	%g1,%g3,%g3
+	.word	0x83b0a2ad !xmulx	%g2,%o5,%g1
+	 xor	%g2,%g4,%g4
+	.word	0x85b0a2cd !xmulxhi	%g2,%o5,%g2
+
+	xor	%o3,%g3,%g3
+	xor	%g1,%g3,%g3
+	brnz,pt	%i3,.Loop
+	xor	%g2,%g4,%g4
+
+	stx	%g3,[%i0+8]		! save Xi
+	stx	%g4,[%i0+0]
+
+	ret
+	restore
+.type	gcm_ghash_vis3,#function
+.size	gcm_ghash_vis3,.-gcm_ghash_vis3
+.asciz	"GHASH for SPARCv9/VIS3, CRYPTOGAMS by <appro@openssl.org>"
 .align	4

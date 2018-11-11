@@ -340,7 +340,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         ivlen = EVP_CIPHER_iv_length(evp_cipher);
         xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
         if (ivlen > 0)
-            if (RAND_pseudo_bytes(iv, ivlen) <= 0)
+            if (RAND_bytes(iv, ivlen) <= 0)
                 goto err;
         if (EVP_CipherInit_ex(ctx, evp_cipher, NULL, NULL, NULL, 1) <= 0)
             goto err;
@@ -642,6 +642,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     } else {
 # if 0
         bio = BIO_new(BIO_s_mem());
+        if (bio == NULL)
+            goto err;
         /*
          * We need to set this so that when we have read all the data, the
          * encrypt BIO, if present, will read EOF and encode the last few
@@ -656,6 +658,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             bio = BIO_new_mem_buf(data_body->data, data_body->length);
         else {
             bio = BIO_new(BIO_s_mem());
+            if (bio == NULL)
+                goto err;
             BIO_set_mem_eof_return(bio, 0);
         }
         if (bio == NULL)
@@ -1156,7 +1160,6 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
     rsk = p7->d.signed_and_enveloped->recipientinfo;
     if (rsk == NULL)
         return NULL;
-    ri = sk_PKCS7_RECIP_INFO_value(rsk, 0);
     if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx)
         return (NULL);
     ri = sk_PKCS7_RECIP_INFO_value(rsk, idx);

@@ -173,10 +173,10 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 int SSL_SESSION_get_ex_new_index(long argl, void *argp,
                                  CRYPTO_EX_new *new_func,
                                  CRYPTO_EX_dup *dup_func,
-                                 CRYPTO_EX_free *free_func)
+                                 CRYPTO_EX_free *freefunc)
 {
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL_SESSION, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
@@ -256,8 +256,8 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->tlsext_ecpointformatlist = NULL;
     dest->tlsext_ellipticcurvelist = NULL;
 # endif
-#endif
     dest->tlsext_tick = NULL;
+#endif
 #ifndef OPENSSL_NO_SRP
     dest->srp_username = NULL;
 #endif
@@ -324,7 +324,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             goto err;
     }
 # endif
-#endif
 
     if (ticket != 0) {
         dest->tlsext_tick = BUF_memdup(src->tlsext_tick, src->tlsext_ticklen);
@@ -334,6 +333,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         dest->tlsext_tick_lifetime_hint = 0;
         dest->tlsext_ticklen = 0;
     }
+#endif
 
 #ifndef OPENSSL_NO_SRP
     if (src->srp_username) {
@@ -382,7 +382,7 @@ static int def_generate_session_id(const SSL *ssl, unsigned char *id,
 {
     unsigned int retry = 0;
     do
-        if (RAND_pseudo_bytes(id, *id_len) <= 0)
+        if (RAND_bytes(id, *id_len) <= 0)
             return 0;
     while (SSL_has_matching_session_id(ssl, id, *id_len) &&
            (++retry < MAX_SESS_ID_ATTEMPTS)) ;
@@ -443,6 +443,9 @@ int ssl_get_new_session(SSL *s, int session)
             ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         } else if (s->version == DTLS1_VERSION) {
             ss->ssl_version = DTLS1_VERSION;
+            ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
+        } else if (s->version == DTLS1_2_VERSION) {
+            ss->ssl_version = DTLS1_2_VERSION;
             ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         } else {
             SSLerr(SSL_F_SSL_GET_NEW_SESSION, SSL_R_UNSUPPORTED_SSL_VERSION);
@@ -519,38 +522,6 @@ int ssl_get_new_session(SSL *s, int session)
                 return 0;
             }
         }
-# ifndef OPENSSL_NO_EC
-        if (s->tlsext_ecpointformatlist) {
-            if (ss->tlsext_ecpointformatlist != NULL)
-                OPENSSL_free(ss->tlsext_ecpointformatlist);
-            if ((ss->tlsext_ecpointformatlist =
-                 OPENSSL_malloc(s->tlsext_ecpointformatlist_length)) ==
-                NULL) {
-                SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
-                SSL_SESSION_free(ss);
-                return 0;
-            }
-            ss->tlsext_ecpointformatlist_length =
-                s->tlsext_ecpointformatlist_length;
-            memcpy(ss->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist,
-                   s->tlsext_ecpointformatlist_length);
-        }
-        if (s->tlsext_ellipticcurvelist) {
-            if (ss->tlsext_ellipticcurvelist != NULL)
-                OPENSSL_free(ss->tlsext_ellipticcurvelist);
-            if ((ss->tlsext_ellipticcurvelist =
-                 OPENSSL_malloc(s->tlsext_ellipticcurvelist_length)) ==
-                NULL) {
-                SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
-                SSL_SESSION_free(ss);
-                return 0;
-            }
-            ss->tlsext_ellipticcurvelist_length =
-                s->tlsext_ellipticcurvelist_length;
-            memcpy(ss->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist,
-                   s->tlsext_ellipticcurvelist_length);
-        }
-# endif
 #endif
     } else {
         ss->session_id_length = 0;
@@ -602,10 +573,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
     int r;
 #endif
 
-    if (len < 0 || len > SSL_MAX_SSL_SESSION_ID_LENGTH)
-        goto err;
-
-    if (session_id + len > limit) {
+    if (limit - session_id < len) {
         fatal = 1;
         goto err;
     }
@@ -801,6 +769,15 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
          * obtain the same session from an external cache)
          */
         s = NULL;
+    } else if (s == NULL &&
+               lh_SSL_SESSION_retrieve(ctx->sessions, c) == NULL) {
+        /* s == NULL can also mean OOM error in lh_SSL_SESSION_insert ... */
+
+        /*
+         * ... so take back the extra reference and also don't add
+         * the session to the SSL_SESSION_list at this time
+         */
+        s = c;
     }
 
     /* Put at the head of the queue unless it is already in the cache */
@@ -951,6 +928,10 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
             session->krb5_client_princ_len > 0) {
             s->kssl_ctx->client_princ =
                 (char *)OPENSSL_malloc(session->krb5_client_princ_len + 1);
+            if (s->kssl_ctx->client_princ == NULL) {
+                SSLerr(SSL_F_SSL_SET_SESSION, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             memcpy(s->kssl_ctx->client_princ, session->krb5_client_princ,
                    session->krb5_client_princ_len);
             s->kssl_ctx->client_princ[session->krb5_client_princ_len] = '\0';
@@ -1155,7 +1136,7 @@ int ssl_clear_bad_session(SSL *s)
     if ((s->session != NULL) &&
         !(s->shutdown & SSL_SENT_SHUTDOWN) &&
         !(SSL_in_init(s) || SSL_in_before(s))) {
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
         return (1);
     } else
         return (0);

@@ -11,6 +11,7 @@ OPENSSL_ppc64_probe:
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
 
+
 .globl	OPENSSL_altivec_probe
 .type	OPENSSL_altivec_probe,@function
 .align	4
@@ -19,6 +20,18 @@ OPENSSL_altivec_probe:
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
+
+
+.globl	OPENSSL_crypto207_probe
+.type	OPENSSL_crypto207_probe,@function
+.align	4
+OPENSSL_crypto207_probe:
+.long	0x7C000E99
+.long	0x10000508
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
 
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,@function
@@ -53,6 +66,7 @@ OPENSSL_wipe_cpu:
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
 
+
 .globl	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,@function
 .align	4
@@ -67,6 +81,7 @@ OPENSSL_atomic_add:
 .byte	0,12,0x14,0,0,0,2,0
 .long	0
 
+
 .globl	OPENSSL_rdtsc
 .type	OPENSSL_rdtsc,@function
 .align	4
@@ -80,6 +95,7 @@ OPENSSL_rdtsc:
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
+
 
 .globl	OPENSSL_cleanse
 .type	OPENSSL_cleanse,@function
@@ -113,3 +129,4 @@ OPENSSL_cleanse:
 .long	0
 .byte	0,12,0x14,0,0,0,2,0
 .long	0
+

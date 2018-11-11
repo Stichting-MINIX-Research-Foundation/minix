@@ -270,10 +270,10 @@ int DSA_size(const DSA *r)
 }
 
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc)
 {
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)

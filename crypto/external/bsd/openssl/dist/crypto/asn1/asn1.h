@@ -207,13 +207,13 @@ typedef struct asn1_const_ctx_st {
 # define ASN1_OBJECT_FLAG_CRITICAL        0x02/* critical x509v3 object id */
 # define ASN1_OBJECT_FLAG_DYNAMIC_STRINGS 0x04/* internal use */
 # define ASN1_OBJECT_FLAG_DYNAMIC_DATA    0x08/* internal use */
-typedef struct asn1_object_st {
+struct asn1_object_st {
     const char *sn, *ln;
     int nid;
     int length;
     const unsigned char *data;  /* data remains const after init */
     int flags;                  /* Should we free this one */
-} ASN1_OBJECT;
+};
 
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
 /*
@@ -843,7 +843,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
 
-int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
+int ASN1_UTCTIME_check(const ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t);
 ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
                                int offset_day, long offset_sec);
@@ -853,13 +853,15 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 # endif
 
-int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
                                                time_t t);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
                                                time_t t, int offset_day,
                                                long offset_sec);
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
+int ASN1_TIME_diff(int *pday, int *psec,
+                   const ASN1_TIME *from, const ASN1_TIME *to);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
 ASN1_OCTET_STRING *ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *a);
@@ -904,7 +906,7 @@ int i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp,
 STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       const unsigned char **pp,
                                       long length, d2i_of_void *d2i,
-                                      void (*free_func) (OPENSSL_BLOCK),
+                                      void (*freefunc) (OPENSSL_BLOCK),
                                       int ex_tag, int ex_class);
 
 # ifndef OPENSSL_NO_BIO
@@ -1058,7 +1060,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num,
 
 STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
                                          d2i_of_void *d2i,
-                                         void (*free_func) (OPENSSL_BLOCK));
+                                         void (*freefunc) (OPENSSL_BLOCK));
 unsigned char *ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
                              unsigned char **buf, int *len);
 void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);
@@ -1363,6 +1365,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_MSTRING_NOT_UNIVERSAL                     139
 # define ASN1_R_MSTRING_WRONG_TAG                         140
 # define ASN1_R_NESTED_ASN1_STRING                        197
+# define ASN1_R_NESTED_TOO_DEEP                           219
 # define ASN1_R_NON_HEX_CHARACTERS                        141
 # define ASN1_R_NOT_ASCII_FORMAT                          190
 # define ASN1_R_NOT_ENOUGH_DATA                           142
@@ -1410,6 +1413,14 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_WRONG_PUBLIC_KEY_TYPE                     200
 # define ASN1_R_WRONG_TAG                                 168
 # define ASN1_R_WRONG_TYPE                                169
+
+#if OPENSSL_API_COMPAT >= 0x10100000L
+static inline const unsigned char *
+ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+	return ASN1_STRING_data(__UNCONST(x));
+}
+#endif
 
 #ifdef  __cplusplus
 }

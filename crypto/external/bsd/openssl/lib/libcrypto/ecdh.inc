@@ -1,4 +1,4 @@
-#	$NetBSD: ecdh.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
+#	$NetBSD: ecdh.inc,v 1.2 2016/10/14 16:09:43 spz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,7 @@
 .PATH:	${OPENSSLSRC}/crypto/ecdh
 
 
-ECDH_SRCS = ech_err.c ech_key.c ech_lib.c ech_ossl.c 
+ECDH_SRCS = ech_err.c ech_key.c ech_lib.c ech_ossl.c ech_kdf.c
 SRCS += ${ECDH_SRCS}
 
 .for cryptosrc in ${ECDH_SRCS}

@@ -211,8 +211,10 @@ int main(int argc, char *argv[])
             cache_stats = 1;
         else if (strcmp(*argv, "-ssl3") == 0)
             ssl_method = SSLv3_method();
+#ifndef OPENSSL_NO_SSL2
         else if (strcmp(*argv, "-ssl2") == 0)
             ssl_method = SSLv2_method();
+#endif
         else if (strcmp(*argv, "-CApath") == 0) {
             if (--argc < 1)
                 goto bad;

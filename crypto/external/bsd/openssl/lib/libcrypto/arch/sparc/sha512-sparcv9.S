@@ -1,3 +1,10 @@
+#include "sparc_arch.h"
+
+#ifdef __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
+
 .section	".text",#alloc,#execinstr
 
 .align	64
@@ -44,9 +51,123 @@ K512:
 	.long	0x4cc5d4be,0xcb3e42b6, 0x597f299c,0xfc657e2a
 	.long	0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817
 .size	K512,.-K512
+
+#ifdef __PIC__
+SPARC_PIC_THUNK(%g1)
+#endif
+
 .globl	sha512_block_data_order
+.align	32
 sha512_block_data_order:
-	save	%sp,-240,%sp
+	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
+	ld	[%g1+4],%g1		! OPENSSL_sparcv9cap_P[1]
+
+	andcc	%g1, CFR_SHA512, %g0
+	be	.Lsoftware
+	nop
+	ldd	[%o0 + 0x00], %f0	! load context
+	ldd	[%o0 + 0x08], %f2
+	ldd	[%o0 + 0x10], %f4
+	ldd	[%o0 + 0x18], %f6
+	ldd	[%o0 + 0x20], %f8
+	ldd	[%o0 + 0x28], %f10
+	andcc	%o1, 0x7, %g0
+	ldd	[%o0 + 0x30], %f12
+	bne,pn	%icc, .Lhwunaligned
+	 ldd	[%o0 + 0x38], %f14
+
+.Lhwaligned_loop:
+	ldd	[%o1 + 0x00], %f16
+	ldd	[%o1 + 0x08], %f18
+	ldd	[%o1 + 0x10], %f20
+	ldd	[%o1 + 0x18], %f22
+	ldd	[%o1 + 0x20], %f24
+	ldd	[%o1 + 0x28], %f26
+	ldd	[%o1 + 0x30], %f28
+	ldd	[%o1 + 0x38], %f30
+	ldd	[%o1 + 0x40], %f32
+	ldd	[%o1 + 0x48], %f34
+	ldd	[%o1 + 0x50], %f36
+	ldd	[%o1 + 0x58], %f38
+	ldd	[%o1 + 0x60], %f40
+	ldd	[%o1 + 0x68], %f42
+	ldd	[%o1 + 0x70], %f44
+	subcc	%o2, 1, %o2		! done yet?
+	ldd	[%o1 + 0x78], %f46
+	add	%o1, 0x80, %o1
+	prefetch [%o1 + 63], 20
+	prefetch [%o1 + 64+63], 20
+
+	.word	0x81b02860		! SHA512
+
+	bne,pt	SIZE_T_CC, .Lhwaligned_loop
+	nop
+
+.Lhwfinish:
+	std	%f0, [%o0 + 0x00]	! store context
+	std	%f2, [%o0 + 0x08]
+	std	%f4, [%o0 + 0x10]
+	std	%f6, [%o0 + 0x18]
+	std	%f8, [%o0 + 0x20]
+	std	%f10, [%o0 + 0x28]
+	std	%f12, [%o0 + 0x30]
+	retl
+	 std	%f14, [%o0 + 0x38]
+
+.align	16
+.Lhwunaligned:
+	.word	0x93b24300 !alignaddr	%o1,%g0,%o1
+
+	ldd	[%o1 + 0x00], %f18
+.Lhwunaligned_loop:
+	ldd	[%o1 + 0x08], %f20
+	ldd	[%o1 + 0x10], %f22
+	ldd	[%o1 + 0x18], %f24
+	ldd	[%o1 + 0x20], %f26
+	ldd	[%o1 + 0x28], %f28
+	ldd	[%o1 + 0x30], %f30
+	ldd	[%o1 + 0x38], %f32
+	ldd	[%o1 + 0x40], %f34
+	ldd	[%o1 + 0x48], %f36
+	ldd	[%o1 + 0x50], %f38
+	ldd	[%o1 + 0x58], %f40
+	ldd	[%o1 + 0x60], %f42
+	ldd	[%o1 + 0x68], %f44
+	ldd	[%o1 + 0x70], %f46
+	ldd	[%o1 + 0x78], %f48
+	subcc	%o2, 1, %o2		! done yet?
+	ldd	[%o1 + 0x80], %f50
+	add	%o1, 0x80, %o1
+	prefetch [%o1 + 63], 20
+	prefetch [%o1 + 64+63], 20
+
+	.word	0xa1b48914 !faligndata	%f18,%f20,%f16
+	.word	0xa5b50916 !faligndata	%f20,%f22,%f18
+	.word	0xa9b58918 !faligndata	%f22,%f24,%f20
+	.word	0xadb6091a !faligndata	%f24,%f26,%f22
+	.word	0xb1b6891c !faligndata	%f26,%f28,%f24
+	.word	0xb5b7091e !faligndata	%f28,%f30,%f26
+	.word	0xb9b78901 !faligndata	%f30,%f32,%f28
+	.word	0xbdb04903 !faligndata	%f32,%f34,%f30
+	.word	0x83b0c905 !faligndata	%f34,%f36,%f32
+	.word	0x87b14907 !faligndata	%f36,%f38,%f34
+	.word	0x8bb1c909 !faligndata	%f38,%f40,%f36
+	.word	0x8fb2490b !faligndata	%f40,%f42,%f38
+	.word	0x93b2c90d !faligndata	%f42,%f44,%f40
+	.word	0x97b3490f !faligndata	%f44,%f46,%f42
+	.word	0x9bb3c911 !faligndata	%f46,%f48,%f44
+	.word	0x9fb44913 !faligndata	%f48,%f50,%f46
+
+	.word	0x81b02860		! SHA512
+
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
+	.word	0xa5b4cf93 !for	%f50,%f50,%f18	! %f18=%f50
+
+	ba	.Lhwfinish
+	nop
+.align	16
+.Lsoftware:
+	save	%sp,-STACK_FRAME-128,%sp
 	and	%i1,3,%i4
 	sllx	%i2,7,%i2
 	andn	%i1,3,%i1
@@ -74,6 +195,7 @@ sha512_block_data_order:
 	ld	[%i1+16],%l4
 	ld	[%i1+20],%l5
 	ld	[%i1+24],%l6
+	cmp	%i4,0
 	ld	[%i1+28],%l7
 	sllx	%l1,%i4,%g5	! Xload(0)
 	add	%i4,32,%g3
@@ -84,7 +206,7 @@ sha512_block_data_order:
 	or	%l1,%g5,%g5
 	ld	[%i1+36],%l1
 	add	%o7,%g5,%g2
-	stx	%g5,[%sp+112]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+0]
 	srlx	%o4,14,%o7	!! 0
 	xor	%o5,%g1,%g5
 	sllx	%o4,23,%g4
@@ -133,7 +255,7 @@ sha512_block_data_order:
 	or	%l3,%g5,%g5
 	ld	[%i1+44],%l3
 	add	%g1,%g5,%g2
-	stx	%g5,[%sp+120]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+8]
 	srlx	%o3,14,%g1	!! 1
 	xor	%o4,%o5,%g5
 	sllx	%o3,23,%g4
@@ -182,7 +304,7 @@ sha512_block_data_order:
 	or	%l5,%g5,%g5
 	ld	[%i1+52],%l5
 	add	%o5,%g5,%g2
-	stx	%g5,[%sp+128]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+16]
 	srlx	%o2,14,%o5	!! 2
 	xor	%o3,%o4,%g5
 	sllx	%o2,23,%g4
@@ -231,7 +353,7 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 	ld	[%i1+60],%l7
 	add	%o4,%g5,%g2
-	stx	%g5,[%sp+136]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+24]
 	srlx	%o1,14,%o4	!! 3
 	xor	%o2,%o3,%g5
 	sllx	%o1,23,%g4
@@ -280,7 +402,7 @@ sha512_block_data_order:
 	or	%l1,%g5,%g5
 	ld	[%i1+68],%l1
 	add	%o3,%g5,%g2
-	stx	%g5,[%sp+144]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+32]
 	srlx	%o0,14,%o3	!! 4
 	xor	%o1,%o2,%g5
 	sllx	%o0,23,%g4
@@ -329,7 +451,7 @@ sha512_block_data_order:
 	or	%l3,%g5,%g5
 	ld	[%i1+76],%l3
 	add	%o2,%g5,%g2
-	stx	%g5,[%sp+152]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+40]
 	srlx	%o7,14,%o2	!! 5
 	xor	%o0,%o1,%g5
 	sllx	%o7,23,%g4
@@ -378,7 +500,7 @@ sha512_block_data_order:
 	or	%l5,%g5,%g5
 	ld	[%i1+84],%l5
 	add	%o1,%g5,%g2
-	stx	%g5,[%sp+160]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+48]
 	srlx	%g1,14,%o1	!! 6
 	xor	%o7,%o0,%g5
 	sllx	%g1,23,%g4
@@ -427,7 +549,7 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 	ld	[%i1+92],%l7
 	add	%o0,%g5,%g2
-	stx	%g5,[%sp+168]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+56]
 	srlx	%o5,14,%o0	!! 7
 	xor	%g1,%o7,%g5
 	sllx	%o5,23,%g4
@@ -476,7 +598,7 @@ sha512_block_data_order:
 	or	%l1,%g5,%g5
 	ld	[%i1+100],%l1
 	add	%o7,%g5,%g2
-	stx	%g5,[%sp+176]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+64]
 	srlx	%o4,14,%o7	!! 8
 	xor	%o5,%g1,%g5
 	sllx	%o4,23,%g4
@@ -525,7 +647,7 @@ sha512_block_data_order:
 	or	%l3,%g5,%g5
 	ld	[%i1+108],%l3
 	add	%g1,%g5,%g2
-	stx	%g5,[%sp+184]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+72]
 	srlx	%o3,14,%g1	!! 9
 	xor	%o4,%o5,%g5
 	sllx	%o3,23,%g4
@@ -574,7 +696,7 @@ sha512_block_data_order:
 	or	%l5,%g5,%g5
 	ld	[%i1+116],%l5
 	add	%o5,%g5,%g2
-	stx	%g5,[%sp+192]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+80]
 	srlx	%o2,14,%o5	!! 10
 	xor	%o3,%o4,%g5
 	sllx	%o2,23,%g4
@@ -623,7 +745,7 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 	ld	[%i1+124],%l7
 	add	%o4,%g5,%g2
-	stx	%g5,[%sp+200]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+88]
 	srlx	%o1,14,%o4	!! 11
 	xor	%o2,%o3,%g5
 	sllx	%o1,23,%g4
@@ -672,8 +794,8 @@ sha512_block_data_order:
 	or	%l1,%g5,%g5
 	
 	add	%o3,%g5,%g2
-	stx	%g5,[%sp+208]
-	brnz,a	%i4,.+8
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+96]
+	bnz,a,pn	%icc,.+8
 	ld	[%i1+128],%l0
 	srlx	%o0,14,%o3	!! 12
 	xor	%o1,%o2,%g5
@@ -723,7 +845,7 @@ sha512_block_data_order:
 	or	%l3,%g5,%g5
 	
 	add	%o2,%g5,%g2
-	stx	%g5,[%sp+216]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+104]
 	srlx	%o7,14,%o2	!! 13
 	xor	%o0,%o1,%g5
 	sllx	%o7,23,%g4
@@ -772,7 +894,7 @@ sha512_block_data_order:
 	or	%l5,%g5,%g5
 	
 	add	%o1,%g5,%g2
-	stx	%g5,[%sp+224]
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+112]
 	srlx	%g1,14,%o1	!! 14
 	xor	%o7,%o0,%g5
 	sllx	%g1,23,%g4
@@ -812,22 +934,22 @@ sha512_block_data_order:
 
 	add	%g2,%o5,%o5
 	add	%g2,%o1,%o1
-	ld	[%sp+120],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l2
 	sllx	%l7,%i4,%g5	! Xload(15)
 	add	%i4,32,%g3
-	ld	[%sp+124],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+12],%l3
 	sllx	%l6,%g3,%g4
-	ld	[%sp+184],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+72],%l4
 	srlx	%l0,%i5,%l7
 	or	%g4,%g5,%g5
-	ld	[%sp+188],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+76],%l5
 	or	%l7,%g5,%g5
-	ld	[%sp+224],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+112],%l6
 	add	%o0,%g5,%g2
-	stx	%g5,[%sp+232]
-	ld	[%sp+228],%l7
-	ld	[%sp+112],%l0
-	ld	[%sp+116],%l1
+	stx	%g5,[%sp+STACK_BIAS+STACK_FRAME+120]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+116],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+0],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l1
 	srlx	%o5,14,%o0	!! 15
 	xor	%g1,%o7,%g5
 	sllx	%o5,23,%g4
@@ -872,9 +994,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+128],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+16],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+132],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+20],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -886,9 +1008,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+232],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+120],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+236],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+124],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -897,18 +1019,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[16+14])
-	ld	[%sp+192],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+80],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+196],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+84],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+120],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[16+9]
-	ld	[%sp+124],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+12],%l1
 	add	%g5,%g2,%g2		! +=X[16]
-	stx	%g2,[%sp+112]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+0]
 	add	%o7,%g2,%g2
 	srlx	%o4,14,%o7	!! 16
 	xor	%o5,%g1,%g5
@@ -953,9 +1075,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+136],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+24],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+140],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+28],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -967,9 +1089,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+112],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+0],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+116],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -978,18 +1100,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[17+14])
-	ld	[%sp+200],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+88],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+204],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+92],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+128],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+16],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[17+9]
-	ld	[%sp+132],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+20],%l1
 	add	%g5,%g2,%g2		! +=X[17]
-	stx	%g2,[%sp+120]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+8]
 	add	%g1,%g2,%g2
 	srlx	%o3,14,%g1	!! 17
 	xor	%o4,%o5,%g5
@@ -1034,9 +1156,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+144],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+32],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+148],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+36],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1048,9 +1170,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+120],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+124],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+12],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1059,18 +1181,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[18+14])
-	ld	[%sp+208],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+96],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+212],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+100],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+136],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+24],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[18+9]
-	ld	[%sp+140],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+28],%l1
 	add	%g5,%g2,%g2		! +=X[18]
-	stx	%g2,[%sp+128]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+16]
 	add	%o5,%g2,%g2
 	srlx	%o2,14,%o5	!! 18
 	xor	%o3,%o4,%g5
@@ -1115,9 +1237,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+152],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+40],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+156],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+44],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1129,9 +1251,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+128],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+16],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+132],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+20],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1140,18 +1262,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[19+14])
-	ld	[%sp+216],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+104],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+220],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+108],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+144],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+32],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[19+9]
-	ld	[%sp+148],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+36],%l1
 	add	%g5,%g2,%g2		! +=X[19]
-	stx	%g2,[%sp+136]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+24]
 	add	%o4,%g2,%g2
 	srlx	%o1,14,%o4	!! 19
 	xor	%o2,%o3,%g5
@@ -1196,9 +1318,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+160],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+48],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+164],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+52],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1210,9 +1332,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+136],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+24],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+140],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+28],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1221,18 +1343,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[20+14])
-	ld	[%sp+224],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+112],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+228],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+116],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+152],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+40],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[20+9]
-	ld	[%sp+156],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+44],%l1
 	add	%g5,%g2,%g2		! +=X[20]
-	stx	%g2,[%sp+144]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+32]
 	add	%o3,%g2,%g2
 	srlx	%o0,14,%o3	!! 20
 	xor	%o1,%o2,%g5
@@ -1277,9 +1399,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+168],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+56],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+172],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+60],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1291,9 +1413,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+144],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+32],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+148],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+36],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1302,18 +1424,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[21+14])
-	ld	[%sp+232],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+120],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+236],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+124],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+160],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+48],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[21+9]
-	ld	[%sp+164],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+52],%l1
 	add	%g5,%g2,%g2		! +=X[21]
-	stx	%g2,[%sp+152]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+40]
 	add	%o2,%g2,%g2
 	srlx	%o7,14,%o2	!! 21
 	xor	%o0,%o1,%g5
@@ -1358,9 +1480,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+176],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+64],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+180],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+68],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1372,9 +1494,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+152],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+40],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+156],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+44],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1383,18 +1505,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[22+14])
-	ld	[%sp+112],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+0],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+116],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+168],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+56],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[22+9]
-	ld	[%sp+172],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+60],%l1
 	add	%g5,%g2,%g2		! +=X[22]
-	stx	%g2,[%sp+160]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+48]
 	add	%o1,%g2,%g2
 	srlx	%g1,14,%o1	!! 22
 	xor	%o7,%o0,%g5
@@ -1439,9 +1561,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+184],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+72],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+188],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+76],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1453,9 +1575,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+160],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+48],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+164],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+52],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1464,18 +1586,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[23+14])
-	ld	[%sp+120],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+124],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+12],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+176],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+64],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[23+9]
-	ld	[%sp+180],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+68],%l1
 	add	%g5,%g2,%g2		! +=X[23]
-	stx	%g2,[%sp+168]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+56]
 	add	%o0,%g2,%g2
 	srlx	%o5,14,%o0	!! 23
 	xor	%g1,%o7,%g5
@@ -1520,9 +1642,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+192],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+80],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+196],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+84],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1534,9 +1656,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+168],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+56],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+172],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+60],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1545,18 +1667,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[24+14])
-	ld	[%sp+128],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+16],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+132],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+20],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+184],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+72],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[24+9]
-	ld	[%sp+188],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+76],%l1
 	add	%g5,%g2,%g2		! +=X[24]
-	stx	%g2,[%sp+176]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+64]
 	add	%o7,%g2,%g2
 	srlx	%o4,14,%o7	!! 24
 	xor	%o5,%g1,%g5
@@ -1601,9 +1723,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+200],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+88],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+204],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+92],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1615,9 +1737,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+176],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+64],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+180],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+68],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1626,18 +1748,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[25+14])
-	ld	[%sp+136],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+24],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+140],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+28],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+192],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+80],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[25+9]
-	ld	[%sp+196],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+84],%l1
 	add	%g5,%g2,%g2		! +=X[25]
-	stx	%g2,[%sp+184]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+72]
 	add	%g1,%g2,%g2
 	srlx	%o3,14,%g1	!! 25
 	xor	%o4,%o5,%g5
@@ -1682,9 +1804,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+208],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+96],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+212],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+100],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1696,9 +1818,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+184],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+72],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+188],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+76],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1707,18 +1829,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[26+14])
-	ld	[%sp+144],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+32],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+148],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+36],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+200],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+88],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[26+9]
-	ld	[%sp+204],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+92],%l1
 	add	%g5,%g2,%g2		! +=X[26]
-	stx	%g2,[%sp+192]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+80]
 	add	%o5,%g2,%g2
 	srlx	%o2,14,%o5	!! 26
 	xor	%o3,%o4,%g5
@@ -1763,9 +1885,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+216],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+104],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+220],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+108],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1777,9 +1899,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+192],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+80],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+196],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+84],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1788,18 +1910,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[27+14])
-	ld	[%sp+152],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+40],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+156],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+44],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+208],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+96],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[27+9]
-	ld	[%sp+212],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+100],%l1
 	add	%g5,%g2,%g2		! +=X[27]
-	stx	%g2,[%sp+200]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+88]
 	add	%o4,%g2,%g2
 	srlx	%o1,14,%o4	!! 27
 	xor	%o2,%o3,%g5
@@ -1844,9 +1966,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+224],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+112],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+228],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+116],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1858,9 +1980,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+200],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+88],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+204],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+92],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1869,18 +1991,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[28+14])
-	ld	[%sp+160],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+48],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+164],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+52],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+216],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+104],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[28+9]
-	ld	[%sp+220],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+108],%l1
 	add	%g5,%g2,%g2		! +=X[28]
-	stx	%g2,[%sp+208]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+96]
 	add	%o3,%g2,%g2
 	srlx	%o0,14,%o3	!! 28
 	xor	%o1,%o2,%g5
@@ -1925,9 +2047,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+232],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+120],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+236],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+124],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -1939,9 +2061,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+208],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+96],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+212],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+100],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -1950,18 +2072,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[29+14])
-	ld	[%sp+168],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+56],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+172],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+60],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+224],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+112],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[29+9]
-	ld	[%sp+228],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+116],%l1
 	add	%g5,%g2,%g2		! +=X[29]
-	stx	%g2,[%sp+216]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+104]
 	add	%o2,%g2,%g2
 	srlx	%o7,14,%o2	!! 29
 	xor	%o0,%o1,%g5
@@ -2006,9 +2128,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+112],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+0],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+116],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -2020,9 +2142,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+216],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+104],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+220],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+108],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -2031,18 +2153,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[30+14])
-	ld	[%sp+176],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+64],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+180],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+68],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+232],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+120],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[30+9]
-	ld	[%sp+236],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+124],%l1
 	add	%g5,%g2,%g2		! +=X[30]
-	stx	%g2,[%sp+224]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+112]
 	add	%o1,%g2,%g2
 	srlx	%g1,14,%o1	!! 30
 	xor	%o7,%o0,%g5
@@ -2087,9 +2209,9 @@ sha512_block_data_order:
 	or	%l3,%g3,%g3
 
 	srlx	%g3,7,%g2
-	ld	[%sp+120],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l2
 	sllx	%g3,56,%g4
-	ld	[%sp+124],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+12],%l3
 	srlx	%g3,1,%g3
 	xor	%g4,%g2,%g2
 	sllx	%g4,7,%g4
@@ -2101,9 +2223,9 @@ sha512_block_data_order:
 	or	%l7,%g5,%g5
 
 	srlx	%g5,6,%g4
-	ld	[%sp+224],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+112],%l6
 	sllx	%g5,3,%g3
-	ld	[%sp+228],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+116],%l7
 	srlx	%g5,19,%g5
 	xor	%g3,%g4,%g4
 	sllx	%g3,42,%g3
@@ -2112,18 +2234,18 @@ sha512_block_data_order:
 	xor	%g3,%g4,%g4
 	sllx	%l4,32,%g3
 	xor	%g5,%g4,%g4	! sigma1(X[31+14])
-	ld	[%sp+184],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+72],%l4
 	or	%l5,%g3,%g3
-	ld	[%sp+188],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+76],%l5
 
 	sllx	%l0,32,%g5
 	add	%g4,%g2,%g2
-	ld	[%sp+112],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+0],%l0
 	or	%l1,%g5,%g5
 	add	%g3,%g2,%g2		! +=X[31+9]
-	ld	[%sp+116],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l1
 	add	%g5,%g2,%g2		! +=X[31]
-	stx	%g2,[%sp+232]
+	stx	%g2,[%sp+STACK_BIAS+STACK_FRAME+120]
 	add	%o0,%g2,%g2
 	srlx	%o5,14,%o0	!! 31
 	xor	%g1,%o7,%g5
@@ -2222,7 +2344,7 @@ sha512_block_data_order:
 	stx	%o7,[%i0+56]
 	add	%i1,128,%i1		! advance inp
 	cmp	%i1,%i2
-	bne	%icc,.Lloop
+	bne	SIZE_T_CC,.Lloop
 	sub	%i3,512,%i3	! rewind Ktbl
 
 	ret

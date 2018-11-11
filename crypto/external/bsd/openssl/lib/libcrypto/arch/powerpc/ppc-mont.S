@@ -8,7 +8,7 @@ bn_mul_mont_int:
 	cmpwi	8,4
 	mr	9,3
 	li	3,0
-	bclr	12,0
+	bltlr
 	cmpwi	8,32
 	bgelr	
 	slwi	8,8,2
@@ -80,7 +80,7 @@ bn_mul_mont_int:
 
 	addi	21,21,4
 	addi	22,22,4
-	bdnz+	.L1st
+	bc	16,0,.L1st
 
 	addc	25,29,26
 	addze	26,30
@@ -142,7 +142,7 @@ bn_mul_mont_int:
 	addze	28,28
 	stw	27,0(22)
 	addi	22,22,4
-	bdnz+	.Linner
+	bc	16,0,.Linner
 
 	lwz	12,4(22)
 	addc	25,29,26
@@ -165,7 +165,7 @@ bn_mul_mont_int:
 	slwi	12,8,2
 	.long	0x7c146040
 	addi	20,20,4
-	ble-	.Louter
+	ble	.Louter
 
 	addi	8,8,2
 	subfc	21,21,21
@@ -178,7 +178,7 @@ bn_mul_mont_int:
 	subfe	10,11,12
 	stwx	10,9,21
 	addi	21,21,4
-	bdnz+	.Lsub
+	bc	16,0,.Lsub
 
 	li	21,0
 	mtctr	8
@@ -193,7 +193,7 @@ bn_mul_mont_int:
 	stwx	12,9,21
 	stwx	21,22,21
 	addi	21,21,4
-	bdnz+	.Lcopy
+	bc	16,0,.Lcopy
 
 	lwz	12,0(1)
 	li	3,1
@@ -214,6 +214,7 @@ bn_mul_mont_int:
 .long	0
 .byte	0,12,4,0,0x80,12,6,0
 .long	0
+
 
 .byte	77,111,110,116,103,111,109,101,114,121,32,77,117,108,116,105,112,108,105,99,97,116,105,111,110,32,102,111,114,32,80,80,67,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	2

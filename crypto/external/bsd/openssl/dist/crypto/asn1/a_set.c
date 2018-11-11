@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1_mac.h>
 
@@ -98,10 +99,14 @@ int i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp,
 
     if (a == NULL)
         return (0);
-    for (i = sk_OPENSSL_BLOCK_num(a) - 1; i >= 0; i--)
+    for (i = sk_OPENSSL_BLOCK_num(a) - 1; i >= 0; i--) {
+        int tmplen = i2d(sk_OPENSSL_BLOCK_value(a, i), NULL);
+        if (tmplen > INT_MAX - ret)
+            return -1;
         ret += i2d(sk_OPENSSL_BLOCK_value(a, i), NULL);
+    }
     r = ASN1_object_size(1, ret, ex_tag);
-    if (pp == NULL)
+    if (pp == NULL || r == -1)
         return (r);
 
     p = *pp;
@@ -164,7 +169,7 @@ int i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp,
 STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       const unsigned char **pp,
                                       long length, d2i_of_void *d2i,
-                                      void (*free_func) (OPENSSL_BLOCK),
+                                      void (*freefunc) (OPENSSL_BLOCK),
                                       int ex_tag, int ex_class)
 {
     ASN1_const_CTX c;
@@ -227,8 +232,8 @@ STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
     return (ret);
  err:
     if ((ret != NULL) && ((a == NULL) || (*a != ret))) {
-        if (free_func != NULL)
-            sk_OPENSSL_BLOCK_pop_free(ret, free_func);
+        if (freefunc != NULL)
+            sk_OPENSSL_BLOCK_pop_free(ret, freefunc);
         else
             sk_OPENSSL_BLOCK_free(ret);
     }

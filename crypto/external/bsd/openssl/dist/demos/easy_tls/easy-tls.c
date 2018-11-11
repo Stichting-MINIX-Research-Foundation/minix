@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-file-style: "bsd" -*- */
+/* */
 /*-
  * easy-tls.c -- generic TLS proxy.
  * Id: easy-tls.c,v 1.4 2002/03/05 09:07:16 bodo Exp 
@@ -322,6 +322,7 @@ static void tls_errprintf(int flush, void *apparg, const char *fmt, ...)
         va_start(args, fmt);
         n = (sizeof errbuf) - errbuf_i;
         r = vsnprintf(errbuf + errbuf_i, n, fmt, args);
+        va_end(args);
         if (r >= n)
             r = n - 1;
         if (r >= 0) {

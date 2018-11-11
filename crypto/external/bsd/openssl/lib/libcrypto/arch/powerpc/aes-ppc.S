@@ -607,8 +607,7 @@ AES_encrypt:
 	stwu	1,-128(1)
 	mflr	0
 
-	stw	2,48(1)
-	stw	13,52(1)
+	stw	4,52(1)
 	stw	14,56(1)
 	stw	15,60(1)
 	stw	16,64(1)
@@ -629,9 +628,9 @@ AES_encrypt:
 	stw	31,124(1)
 	stw	0,132(1)
 
-	andi.	0,3,3
-	andi.	13,4,3
-	or.	0,0,13
+	andi.	12,3,3
+	andi.	0,4,3
+	or.	12,12,0
 	bne	.Lenc_unaligned
 
 .Lenc_unaligned_ok:
@@ -641,6 +640,7 @@ AES_encrypt:
 	lwz	11,12(3)
 	bl	.LAES_Te
 	bl	.Lppc_AES_encrypt_compact
+	lwz	4,52(1)
 	stw	8,0(4)
 	stw	9,4(4)
 	stw	10,8(4)
@@ -648,11 +648,11 @@ AES_encrypt:
 	b	.Lenc_done
 
 .Lenc_unaligned:
-	subfic	0,3,4096
-	subfic	13,4,4096
-	andi.	0,0,4096-16
+	subfic	12,3,4096
+	subfic	0,4,4096
+	andi.	12,12,4096-16
 	beq	.Lenc_xpage
-	andi.	13,13,4096-16
+	andi.	0,0,4096-16
 	bne	.Lenc_unaligned_ok
 
 .Lenc_xpage:
@@ -687,6 +687,7 @@ AES_encrypt:
 
 	bl	.LAES_Te
 	bl	.Lppc_AES_encrypt_compact
+	lwz	4,52(1)
 
 	extrwi	16,8,8,0
 	extrwi	17,8,8,8
@@ -719,8 +720,6 @@ AES_encrypt:
 
 .Lenc_done:
 	lwz	0,132(1)
-	lwz	2,48(1)
-	lwz	13,52(1)
 	lwz	14,56(1)
 	lwz	15,60(1)
 	lwz	16,64(1)
@@ -750,16 +749,16 @@ AES_encrypt:
 .Lppc_AES_encrypt:
 	lwz	16,240(5)
 	addi	6,3,3
-	lwz	0,0(5)
+	lwz	12,0(5)
 	addi	7,3,2
-	lwz	13,4(5)
-	addi	12,3,1
+	lwz	0,4(5)
+	addi	4,3,1
 	lwz	14,8(5)
 	addi	16,16,-1
 	lwz	15,12(5)
 	addi	5,5,16
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	mtctr	16
@@ -769,9 +768,9 @@ AES_encrypt:
 	rlwinm	17,9,11,21,28
 	rlwinm	18,10,11,21,28
 	rlwinm	19,11,11,21,28
-	lwz	0,0(5)
+	lwz	12,0(5)
 	rlwinm	20,9,19,21,28
-	lwz	13,4(5)
+	lwz	0,4(5)
 	rlwinm	21,10,19,21,28
 	lwz	14,8(5)
 	rlwinm	22,11,19,21,28
@@ -794,37 +793,37 @@ AES_encrypt:
 	lwzx	23,6,23
 	rlwinm	31,10,3,21,28
 	lwzx	24,7,24
-	xor	0,0,16
+	xor	12,12,16
 	lwzx	25,7,25
-	xor	13,13,17
+	xor	0,0,17
 	lwzx	26,7,26
 	xor	14,14,18
 	lwzx	27,7,27
 	xor	15,15,19
-	lwzx	28,12,28
-	xor	0,0,20
-	lwzx	29,12,29
-	xor	13,13,21
-	lwzx	30,12,30
+	lwzx	28,4,28
+	xor	12,12,20
+	lwzx	29,4,29
+	xor	0,0,21
+	lwzx	30,4,30
 	xor	14,14,22
-	lwzx	31,12,31
+	lwzx	31,4,31
 	xor	15,15,23
-	xor	0,0,24
-	xor	13,13,25
+	xor	12,12,24
+	xor	0,0,25
 	xor	14,14,26
 	xor	15,15,27
-	xor	8,0,28
-	xor	9,13,29
+	xor	8,12,28
+	xor	9,0,29
 	xor	10,14,30
 	xor	11,15,31
 	addi	5,5,16
-	bdnz+	.Lenc_loop
+	bc	16,0,.Lenc_loop
 
 	addi	7,3,2048
 	nop	
-	lwz	0,0(5)
+	lwz	12,0(5)
 	rlwinm	16,8,8,24,31
-	lwz	13,4(5)
+	lwz	0,4(5)
 	rlwinm	17,9,8,24,31
 	lwz	14,8(5)
 	rlwinm	18,10,8,24,31
@@ -882,8 +881,8 @@ AES_encrypt:
 	or	9,9,29
 	or	10,10,30
 	or	11,11,31
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	blr	
@@ -894,20 +893,20 @@ AES_encrypt:
 .Lppc_AES_encrypt_compact:
 	lwz	16,240(5)
 	addi	6,3,2048
-	lwz	0,0(5)
+	lwz	12,0(5)
 	lis	7,0x8080
-	lwz	13,4(5)
-	lis	12,0x1b1b
+	lwz	0,4(5)
+	lis	4,0x1b1b
 	lwz	14,8(5)
 	ori	7,7,0x8080
 	lwz	15,12(5)
-	ori	12,12,0x1b1b
+	ori	4,4,0x1b1b
 	addi	5,5,16
 	mtctr	16
 .align	4
 .Lenc_compact_loop:
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	rlwinm	16,8,8,24,31
 	xor	10,10,14
 	rlwinm	17,9,8,24,31
@@ -954,9 +953,9 @@ AES_encrypt:
 	rlwimi	9,25,8,16,23
 	rlwimi	10,26,8,16,23
 	rlwimi	11,27,8,16,23
-	lwz	0,0(5)
+	lwz	12,0(5)
 	or	8,8,28
-	lwz	13,4(5)
+	lwz	0,4(5)
 	or	9,9,29
 	lwz	14,8(5)
 	or	10,10,30
@@ -986,10 +985,10 @@ AES_encrypt:
 	add	25,25,25
 	add	26,26,26
 	add	27,27,27
-	and	16,16,12
-	and	17,17,12
-	and	18,18,12
-	and	19,19,12
+	and	16,16,4
+	and	17,17,4
+	and	18,18,4
+	and	19,19,4
 	xor	16,16,24
 	xor	17,17,25
 	rotlwi	28,8,16
@@ -1027,13 +1026,14 @@ AES_encrypt:
 	b	.Lenc_compact_loop
 .align	4
 .Lenc_compact_done:
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
+
 
 .globl	AES_decrypt
 .type	AES_decrypt,@function
@@ -1042,8 +1042,7 @@ AES_decrypt:
 	stwu	1,-128(1)
 	mflr	0
 
-	stw	2,48(1)
-	stw	13,52(1)
+	stw	4,52(1)
 	stw	14,56(1)
 	stw	15,60(1)
 	stw	16,64(1)
@@ -1064,9 +1063,9 @@ AES_decrypt:
 	stw	31,124(1)
 	stw	0,132(1)
 
-	andi.	0,3,3
-	andi.	13,4,3
-	or.	0,0,13
+	andi.	12,3,3
+	andi.	0,4,3
+	or.	12,12,0
 	bne	.Ldec_unaligned
 
 .Ldec_unaligned_ok:
@@ -1076,6 +1075,7 @@ AES_decrypt:
 	lwz	11,12(3)
 	bl	.LAES_Td
 	bl	.Lppc_AES_decrypt_compact
+	lwz	4,52(1)
 	stw	8,0(4)
 	stw	9,4(4)
 	stw	10,8(4)
@@ -1083,11 +1083,11 @@ AES_decrypt:
 	b	.Ldec_done
 
 .Ldec_unaligned:
-	subfic	0,3,4096
-	subfic	13,4,4096
-	andi.	0,0,4096-16
+	subfic	12,3,4096
+	subfic	0,4,4096
+	andi.	12,12,4096-16
 	beq	.Ldec_xpage
-	andi.	13,13,4096-16
+	andi.	0,0,4096-16
 	bne	.Ldec_unaligned_ok
 
 .Ldec_xpage:
@@ -1122,6 +1122,7 @@ AES_decrypt:
 
 	bl	.LAES_Td
 	bl	.Lppc_AES_decrypt_compact
+	lwz	4,52(1)
 
 	extrwi	16,8,8,0
 	extrwi	17,8,8,8
@@ -1154,8 +1155,6 @@ AES_decrypt:
 
 .Ldec_done:
 	lwz	0,132(1)
-	lwz	2,48(1)
-	lwz	13,52(1)
 	lwz	14,56(1)
 	lwz	15,60(1)
 	lwz	16,64(1)
@@ -1185,16 +1184,16 @@ AES_decrypt:
 .Lppc_AES_decrypt:
 	lwz	16,240(5)
 	addi	6,3,3
-	lwz	0,0(5)
+	lwz	12,0(5)
 	addi	7,3,2
-	lwz	13,4(5)
-	addi	12,3,1
+	lwz	0,4(5)
+	addi	4,3,1
 	lwz	14,8(5)
 	addi	16,16,-1
 	lwz	15,12(5)
 	addi	5,5,16
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	mtctr	16
@@ -1204,9 +1203,9 @@ AES_decrypt:
 	rlwinm	17,9,11,21,28
 	rlwinm	18,10,11,21,28
 	rlwinm	19,11,11,21,28
-	lwz	0,0(5)
+	lwz	12,0(5)
 	rlwinm	20,11,19,21,28
-	lwz	13,4(5)
+	lwz	0,4(5)
 	rlwinm	21,8,19,21,28
 	lwz	14,8(5)
 	rlwinm	22,9,19,21,28
@@ -1229,37 +1228,37 @@ AES_decrypt:
 	lwzx	23,6,23
 	rlwinm	31,8,3,21,28
 	lwzx	24,7,24
-	xor	0,0,16
+	xor	12,12,16
 	lwzx	25,7,25
-	xor	13,13,17
+	xor	0,0,17
 	lwzx	26,7,26
 	xor	14,14,18
 	lwzx	27,7,27
 	xor	15,15,19
-	lwzx	28,12,28
-	xor	0,0,20
-	lwzx	29,12,29
-	xor	13,13,21
-	lwzx	30,12,30
+	lwzx	28,4,28
+	xor	12,12,20
+	lwzx	29,4,29
+	xor	0,0,21
+	lwzx	30,4,30
 	xor	14,14,22
-	lwzx	31,12,31
+	lwzx	31,4,31
 	xor	15,15,23
-	xor	0,0,24
-	xor	13,13,25
+	xor	12,12,24
+	xor	0,0,25
 	xor	14,14,26
 	xor	15,15,27
-	xor	8,0,28
-	xor	9,13,29
+	xor	8,12,28
+	xor	9,0,29
 	xor	10,14,30
 	xor	11,15,31
 	addi	5,5,16
-	bdnz+	.Ldec_loop
+	bc	16,0,.Ldec_loop
 
 	addi	7,3,2048
 	nop	
-	lwz	0,0(5)
+	lwz	12,0(5)
 	rlwinm	16,8,8,24,31
-	lwz	13,4(5)
+	lwz	0,4(5)
 	rlwinm	17,9,8,24,31
 	lwz	14,8(5)
 	rlwinm	18,10,8,24,31
@@ -1317,8 +1316,8 @@ AES_decrypt:
 	or	9,9,29
 	or	10,10,30
 	or	11,11,31
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	blr	
@@ -1329,20 +1328,20 @@ AES_decrypt:
 .Lppc_AES_decrypt_compact:
 	lwz	16,240(5)
 	addi	6,3,2048
-	lwz	0,0(5)
+	lwz	12,0(5)
 	lis	7,0x8080
-	lwz	13,4(5)
-	lis	12,0x1b1b
+	lwz	0,4(5)
+	lis	4,0x1b1b
 	lwz	14,8(5)
 	ori	7,7,0x8080
 	lwz	15,12(5)
-	ori	12,12,0x1b1b
+	ori	4,4,0x1b1b
 	addi	5,5,16
 	mtctr	16
 .align	4
 .Ldec_compact_loop:
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	rlwinm	16,8,8,24,31
 	xor	10,10,14
 	rlwinm	17,9,8,24,31
@@ -1389,9 +1388,9 @@ AES_decrypt:
 	rlwimi	9,25,8,16,23
 	rlwimi	10,26,8,16,23
 	rlwimi	11,27,8,16,23
-	lwz	0,0(5)
+	lwz	12,0(5)
 	or	8,8,28
-	lwz	13,4(5)
+	lwz	0,4(5)
 	or	9,9,29
 	lwz	14,8(5)
 	or	10,10,30
@@ -1420,10 +1419,10 @@ AES_decrypt:
 	add	25,25,25
 	add	26,26,26
 	add	27,27,27
-	and	16,16,12
-	and	17,17,12
-	and	18,18,12
-	and	19,19,12
+	and	16,16,4
+	and	17,17,4
+	and	18,18,4
+	and	19,19,4
 	xor	16,16,24
 	xor	17,17,25
 	xor	18,18,26
@@ -1449,10 +1448,10 @@ AES_decrypt:
 	add	29,29,29
 	add	30,30,30
 	add	31,31,31
-	and	20,20,12
-	and	21,21,12
-	and	22,22,12
-	and	23,23,12
+	and	20,20,4
+	and	21,21,4
+	and	22,22,4
+	and	23,23,4
 	xor	20,20,28
 	xor	21,21,29
 	xor	22,22,30
@@ -1478,10 +1477,10 @@ AES_decrypt:
 	add	29,29,29
 	add	30,30,30
 	add	31,31,31
-	and	24,24,12
-	and	25,25,12
-	and	26,26,12
-	and	27,27,12
+	and	24,24,4
+	and	25,25,4
+	and	26,26,4
+	and	27,27,4
 	xor	24,24,28
 	xor	25,25,29
 	xor	26,26,30
@@ -1547,13 +1546,14 @@ AES_decrypt:
 	b	.Ldec_compact_loop
 .align	4
 .Ldec_compact_done:
-	xor	8,8,0
-	xor	9,9,13
+	xor	8,8,12
+	xor	9,9,0
 	xor	10,10,14
 	xor	11,11,15
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
+
 
 .byte	65,69,83,32,102,111,114,32,80,80,67,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	2

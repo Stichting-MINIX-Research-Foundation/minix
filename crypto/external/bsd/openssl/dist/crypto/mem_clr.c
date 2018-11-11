@@ -1,4 +1,4 @@
-/* crypto/mem_clr.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/mem_clr.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2002.
@@ -61,18 +61,16 @@
 #include <openssl/crypto.h>
 #include <inttypes.h>
 
-unsigned char cleanse_ctr = 0;
+/*
+ * Pointer to memset is volatile so that compiler must de-reference
+ * the pointer and can't assume that it points to any function in
+ * particular (such as memset, which it then might further "optimize")
+ */
+typedef void *(*memset_t)(void *,int,size_t);
+
+static volatile memset_t memset_func = memset;
 
 void OPENSSL_cleanse(void *ptr, size_t len)
 {
-    unsigned char *p = ptr;
-    size_t loop = len, ctr = cleanse_ctr;
-    while (loop--) {
-        *(p++) = (unsigned char)ctr;
-        ctr += (17 + (unsigned char)((intptr_t)p & 0xF));
-    }
-    p = memchr(ptr, (unsigned char)ctr, len);
-    if (p)
-        ctr += (63 + (size_t)p);
-    cleanse_ctr = (unsigned char)ctr;
+    memset_func(ptr, 0, len);
 }

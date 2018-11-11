@@ -1,4 +1,4 @@
-/* crypto/store/str_lib.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/store/str_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -188,10 +188,10 @@ int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f) (void))
 }
 
 int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc)
 {
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_STORE, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int STORE_set_ex_data(STORE *r, int idx, void *arg)

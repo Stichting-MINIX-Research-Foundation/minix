@@ -50,7 +50,7 @@ sha1_block_data_order:
 	srwi.	6,6,6
 	beq	.Lcross_page
 	.long	0x7c053040
-	ble-	.Laligned
+	ble	.Laligned
 	mtctr	6
 	subfc	5,6,5
 	bl	.Lsha1_block_private
@@ -78,7 +78,7 @@ sha1_block_data_order:
 	bl	.Lsha1_block_private
 	lwz	4,88(1)
 	addic.	5,5,-1
-	bne-	.Lunaligned
+	bne	.Lunaligned
 
 .Ldone:
 	lwz	0,164(1)
@@ -328,244 +328,244 @@ sha1_block_data_order:
 	lis	0,0x6ed9
 	ori	0,0,0xeba1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	21,21,23
 	add	10,10,20
-	xor	15,12,7
+	xor	15,15,7
 	xor	21,21,29
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	21,21,18
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	21,21,18
+	add	10,10,9
 	rotlwi	21,21,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	22,22,24
 	add	9,9,21
-	xor	15,11,12
+	xor	15,15,12
 	xor	22,22,30
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	22,22,19
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	22,22,19
+	add	9,9,8
 	rotlwi	22,22,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	23,23,25
 	add	8,8,22
-	xor	15,10,11
+	xor	15,15,11
 	xor	23,23,31
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	23,23,20
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	23,23,20
+	add	8,8,7
 	rotlwi	23,23,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	24,24,26
 	add	7,7,23
-	xor	15,9,10
+	xor	15,15,10
 	xor	24,24,16
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	24,24,21
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	24,24,21
+	add	7,7,12
 	rotlwi	24,24,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	25,25,27
 	add	12,12,24
-	xor	15,8,9
+	xor	15,15,9
 	xor	25,25,17
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	25,25,22
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	25,25,22
+	add	12,12,11
 	rotlwi	25,25,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	26,26,28
 	add	11,11,25
-	xor	15,7,8
+	xor	15,15,8
 	xor	26,26,18
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	26,26,23
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	26,26,23
+	add	11,11,10
 	rotlwi	26,26,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	27,27,29
 	add	10,10,26
-	xor	15,12,7
+	xor	15,15,7
 	xor	27,27,19
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	27,27,24
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	27,27,24
+	add	10,10,9
 	rotlwi	27,27,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	28,28,30
 	add	9,9,27
-	xor	15,11,12
+	xor	15,15,12
 	xor	28,28,20
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	28,28,25
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	28,28,25
+	add	9,9,8
 	rotlwi	28,28,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	29,29,31
 	add	8,8,28
-	xor	15,10,11
+	xor	15,15,11
 	xor	29,29,21
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	29,29,26
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	29,29,26
+	add	8,8,7
 	rotlwi	29,29,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	30,30,16
 	add	7,7,29
-	xor	15,9,10
+	xor	15,15,10
 	xor	30,30,22
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	30,30,27
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	30,30,27
+	add	7,7,12
 	rotlwi	30,30,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	31,31,17
 	add	12,12,30
-	xor	15,8,9
+	xor	15,15,9
 	xor	31,31,23
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	31,31,28
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	31,31,28
+	add	12,12,11
 	rotlwi	31,31,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	16,16,18
 	add	11,11,31
-	xor	15,7,8
+	xor	15,15,8
 	xor	16,16,24
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	16,16,29
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	16,16,29
+	add	11,11,10
 	rotlwi	16,16,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	17,17,19
 	add	10,10,16
-	xor	15,12,7
+	xor	15,15,7
 	xor	17,17,25
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	17,17,30
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	17,17,30
+	add	10,10,9
 	rotlwi	17,17,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	18,18,20
 	add	9,9,17
-	xor	15,11,12
+	xor	15,15,12
 	xor	18,18,26
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	18,18,31
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	18,18,31
+	add	9,9,8
 	rotlwi	18,18,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	19,19,21
 	add	8,8,18
-	xor	15,10,11
+	xor	15,15,11
 	xor	19,19,27
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	19,19,16
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	19,19,16
+	add	8,8,7
 	rotlwi	19,19,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	20,20,22
 	add	7,7,19
-	xor	15,9,10
+	xor	15,15,10
 	xor	20,20,28
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	20,20,17
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	20,20,17
+	add	7,7,12
 	rotlwi	20,20,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	21,21,23
 	add	12,12,20
-	xor	15,8,9
+	xor	15,15,9
 	xor	21,21,29
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	21,21,18
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	21,21,18
+	add	12,12,11
 	rotlwi	21,21,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	22,22,24
 	add	11,11,21
-	xor	15,7,8
+	xor	15,15,8
 	xor	22,22,30
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	22,22,19
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	22,22,19
+	add	11,11,10
 	rotlwi	22,22,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	23,23,25
 	add	10,10,22
-	xor	15,12,7
+	xor	15,15,7
 	xor	23,23,31
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	23,23,20
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	23,23,20
+	add	10,10,9
 	rotlwi	23,23,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	24,24,26
 	add	9,9,23
-	xor	15,11,12
+	xor	15,15,12
 	xor	24,24,16
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	24,24,21
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	24,24,21
+	add	9,9,8
 	rotlwi	24,24,1
 	lis	0,0x8f1b
 	ori	0,0,0xbcdc
@@ -852,245 +852,245 @@ sha1_block_data_order:
 	lis	0,0xca62
 	ori	0,0,0xc1d6
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	29,29,31
 	add	12,12,28
-	xor	15,8,9
+	xor	15,15,9
 	xor	29,29,21
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	29,29,26
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	29,29,26
+	add	12,12,11
 	rotlwi	29,29,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	30,30,16
 	add	11,11,29
-	xor	15,7,8
+	xor	15,15,8
 	xor	30,30,22
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	30,30,27
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	30,30,27
+	add	11,11,10
 	rotlwi	30,30,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	31,31,17
 	add	10,10,30
-	xor	15,12,7
+	xor	15,15,7
 	xor	31,31,23
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	31,31,28
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	31,31,28
+	add	10,10,9
 	rotlwi	31,31,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	16,16,18
 	add	9,9,31
-	xor	15,11,12
+	xor	15,15,12
 	xor	16,16,24
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	16,16,29
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	16,16,29
+	add	9,9,8
 	rotlwi	16,16,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	17,17,19
 	add	8,8,16
-	xor	15,10,11
+	xor	15,15,11
 	xor	17,17,25
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	17,17,30
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	17,17,30
+	add	8,8,7
 	rotlwi	17,17,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	18,18,20
 	add	7,7,17
-	xor	15,9,10
+	xor	15,15,10
 	xor	18,18,26
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	18,18,31
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	18,18,31
+	add	7,7,12
 	rotlwi	18,18,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	19,19,21
 	add	12,12,18
-	xor	15,8,9
+	xor	15,15,9
 	xor	19,19,27
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	19,19,16
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	19,19,16
+	add	12,12,11
 	rotlwi	19,19,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	20,20,22
 	add	11,11,19
-	xor	15,7,8
+	xor	15,15,8
 	xor	20,20,28
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	20,20,17
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	20,20,17
+	add	11,11,10
 	rotlwi	20,20,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	21,21,23
 	add	10,10,20
-	xor	15,12,7
+	xor	15,15,7
 	xor	21,21,29
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	21,21,18
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	21,21,18
+	add	10,10,9
 	rotlwi	21,21,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	22,22,24
 	add	9,9,21
-	xor	15,11,12
+	xor	15,15,12
 	xor	22,22,30
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	22,22,19
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	22,22,19
+	add	9,9,8
 	rotlwi	22,22,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	23,23,25
 	add	8,8,22
-	xor	15,10,11
+	xor	15,15,11
 	xor	23,23,31
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	23,23,20
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	23,23,20
+	add	8,8,7
 	rotlwi	23,23,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	24,24,26
 	add	7,7,23
-	xor	15,9,10
+	xor	15,15,10
 	xor	24,24,16
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	24,24,21
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	24,24,21
+	add	7,7,12
 	rotlwi	24,24,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	25,25,27
 	add	12,12,24
-	xor	15,8,9
+	xor	15,15,9
 	xor	25,25,17
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	25,25,22
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	25,25,22
+	add	12,12,11
 	rotlwi	25,25,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	xor	26,26,28
 	add	11,11,25
-	xor	15,7,8
+	xor	15,15,8
 	xor	26,26,18
-	add	11,11,10
-	rotlwi	7,7,30
-	xor	15,15,9
-	xor	26,26,23
 	add	11,11,15
+	rotlwi	7,7,30
+	xor	26,26,23
+	add	11,11,10
 	rotlwi	26,26,1
 	add	10,0,9
+	xor	15,12,8
 	rotlwi	9,11,5
 	xor	27,27,29
 	add	10,10,26
-	xor	15,12,7
+	xor	15,15,7
 	xor	27,27,19
-	add	10,10,9
-	rotlwi	12,12,30
-	xor	15,15,8
-	xor	27,27,24
 	add	10,10,15
+	rotlwi	12,12,30
+	xor	27,27,24
+	add	10,10,9
 	rotlwi	27,27,1
 	add	9,0,8
+	xor	15,11,7
 	rotlwi	8,10,5
 	xor	28,28,30
 	add	9,9,27
-	xor	15,11,12
+	xor	15,15,12
 	xor	28,28,20
-	add	9,9,8
-	rotlwi	11,11,30
-	xor	15,15,7
-	xor	28,28,25
 	add	9,9,15
+	rotlwi	11,11,30
+	xor	28,28,25
+	add	9,9,8
 	rotlwi	28,28,1
 	add	8,0,7
+	xor	15,10,12
 	rotlwi	7,9,5
 	xor	29,29,31
 	add	8,8,28
-	xor	15,10,11
+	xor	15,15,11
 	xor	29,29,21
-	add	8,8,7
-	rotlwi	10,10,30
-	xor	15,15,12
-	xor	29,29,26
 	add	8,8,15
+	rotlwi	10,10,30
+	xor	29,29,26
+	add	8,8,7
 	rotlwi	29,29,1
 	add	7,0,12
+	xor	15,9,11
 	rotlwi	12,8,5
 	xor	30,30,16
 	add	7,7,29
-	xor	15,9,10
+	xor	15,15,10
 	xor	30,30,22
-	add	7,7,12
-	rotlwi	9,9,30
-	xor	15,15,11
-	xor	30,30,27
 	add	7,7,15
+	rotlwi	9,9,30
+	xor	30,30,27
+	add	7,7,12
 	rotlwi	30,30,1
 	add	12,0,11
+	xor	15,8,10
 	rotlwi	11,7,5
 	xor	31,31,17
 	add	12,12,30
-	xor	15,8,9
+	xor	15,15,9
 	xor	31,31,23
-	add	12,12,11
-	rotlwi	8,8,30
-	xor	15,15,10
-	xor	31,31,28
 	add	12,12,15
+	rotlwi	8,8,30
+	xor	31,31,28
+	add	12,12,11
 	rotlwi	31,31,1
 	add	11,0,10
+	xor	15,7,9
 	rotlwi	10,12,5
 	lwz	16,0(3)
 	add	11,11,31
-	xor	15,7,8
+	xor	15,15,8
 	lwz	17,4(3)
-	add	11,11,10
+	add	11,11,15
 	rotlwi	7,7,30
 	lwz	18,8(3)
-	xor	15,15,9
 	lwz	19,12(3)
-	add	11,11,15
+	add	11,11,10
 	lwz	20,16(3)
 	add	16,16,11
 	add	17,17,12
@@ -1108,9 +1108,10 @@ sha1_block_data_order:
 	stw	20,16(3)
 	mr	11,20
 	addi	4,4,64
-	bdnz+	.Lsha1_block_private
+	bc	16,0,.Lsha1_block_private
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
+
 .byte	83,72,65,49,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,80,80,67,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,102,121,46,99,104,97,108,109,101,114,115,46,115,101,62,0
 .align	2

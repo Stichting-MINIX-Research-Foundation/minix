@@ -154,7 +154,7 @@ struct st_CRYPTO_EX_DATA_IMPL {
     /* Get a new method index within a class */
     int (*cb_get_new_index) (int class_index, long argl, void *argp,
                              CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                             CRYPTO_EX_free *free_func);
+                             CRYPTO_EX_free *freefunc);
     /* Initialise a new CRYPTO_EX_DATA of a given class */
     int (*cb_new_ex_data) (int class_index, void *obj, CRYPTO_EX_DATA *ad);
     /* Duplicate a CRYPTO_EX_DATA of a given class onto a copy */
@@ -178,7 +178,7 @@ static int int_new_class(void);
 static void int_cleanup(void);
 static int int_get_new_index(int class_index, long argl, void *argp,
                              CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                             CRYPTO_EX_free *free_func);
+                             CRYPTO_EX_free *freefunc);
 static int int_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                            CRYPTO_EX_DATA *from);
@@ -347,7 +347,7 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
  */
 static int def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
                          CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                         CRYPTO_EX_free *free_func)
+                         CRYPTO_EX_free *freefunc)
 {
     int toret = -1;
     CRYPTO_EX_DATA_FUNCS *a =
@@ -360,7 +360,7 @@ static int def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
     a->argp = argp;
     a->new_func = new_func;
     a->dup_func = dup_func;
-    a->free_func = free_func;
+    a->freefunc = freefunc;
     CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
     while (sk_CRYPTO_EX_DATA_FUNCS_num(item->meth) <= item->meth_num) {
         if (!sk_CRYPTO_EX_DATA_FUNCS_push(item->meth, NULL)) {
@@ -399,12 +399,12 @@ static void int_cleanup(void)
 
 static int int_get_new_index(int class_index, long argl, void *argp,
                              CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                             CRYPTO_EX_free *free_func)
+                             CRYPTO_EX_free *freefunc)
 {
     EX_CLASS_ITEM *item = def_get_class(class_index);
     if (!item)
         return -1;
-    return def_add_index(item, argl, argp, new_func, dup_func, free_func);
+    return def_add_index(item, argl, argp, new_func, dup_func, freefunc);
 }
 
 /*
@@ -520,9 +520,9 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
         return;
     }
     for (i = 0; i < mx; i++) {
-        if (storage[i] && storage[i]->free_func) {
+        if (storage[i] && storage[i]->freefunc) {
             ptr = CRYPTO_get_ex_data(ad, i);
-            storage[i]->free_func(obj, ptr, ad, i,
+            storage[i]->freefunc(obj, ptr, ad, i,
                                   storage[i]->argl, storage[i]->argp);
         }
     }
@@ -563,14 +563,14 @@ void CRYPTO_cleanup_all_ex_data(void)
 /* Inside an existing class, get/register a new index. */
 int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func)
+                            CRYPTO_EX_free *freefunc)
 {
     int ret = -1;
 
     IMPL_CHECK
         ret = EX_IMPL(get_new_index) (class_index,
                                       argl, argp, new_func, dup_func,
-                                      free_func);
+                                      freefunc);
     return ret;
 }
 

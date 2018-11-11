@@ -56,7 +56,7 @@
 # achieves respectful 432MBps on 2.8GHz processor now. For reference.
 # If executed on Xeon, current RC4_CHAR code-path is 2.7x faster than
 # RC4_INT code-path. While if executed on Opteron, it's only 25%
-# slower than the RC4_INT one [meaning that if CPU µ-arch detection
+# slower than the RC4_INT one [meaning that if CPU Âµ-arch detection
 # is not implemented, then this final RC4_CHAR code-path should be
 # preferred, as it provides better *all-round* performance].
 
@@ -158,7 +158,7 @@ $code.=<<___;
 	mov	-4($dat),$YY#b
 	cmpl	\$-1,256($dat)
 	je	.LRC4_CHAR
-	mov	OPENSSL_ia32cap_P(%rip),%r8
+	mov	OPENSSL_ia32cap_P(%rip),%r8d
 	xor	$TX[1],$TX[1]
 	inc	$XX[0]#b
 	sub	$XX[0],$TX[1]
@@ -166,7 +166,7 @@ $code.=<<___;
 	movl	($dat,$XX[0],4),$TX[0]#d
 	test	\$-16,$len
 	jz	.Lloop1
-	bt	\$30,(%r8)	# Intel CPU?
+	bt	\$30,%r8d	# Intel CPU?
 	jc	.Lintel
 	and	\$7,$TX[1]
 	lea	1($XX[0]),$XX[1]
@@ -443,8 +443,8 @@ private_RC4_set_key:
 	xor	%r10,%r10
 	xor	%r11,%r11
 
-	mov	OPENSSL_ia32cap_P(%rip),$idx
-	bt	\$20,($idx)	# RC4_CHAR?
+	mov	OPENSSL_ia32cap_P(%rip),$idx#d
+	bt	\$20,$idx#d	# RC4_CHAR?
 	jc	.Lc1stloop
 	jmp	.Lw1stloop
 

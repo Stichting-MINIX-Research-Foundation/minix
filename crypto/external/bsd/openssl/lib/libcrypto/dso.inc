@@ -1,4 +1,4 @@
-#	$NetBSD: dso.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
+#	$NetBSD: dso.inc,v 1.2 2016/10/14 16:09:43 spz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 DSO_SRCS = dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c dso_null.c \
-	dso_openssl.c dso_win32.c dso_vms.c
+	dso_openssl.c dso_win32.c dso_vms.c dso_beos.c
 SRCS += ${DSO_SRCS}
 
 .for cryptosrc in ${DSO_SRCS}

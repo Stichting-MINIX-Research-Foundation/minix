@@ -1,4 +1,4 @@
-/* crypto/store/store.h -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/store/store.h */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -124,7 +124,7 @@ int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f) (void));
 # define STORE_get_app_data(s)           STORE_get_ex_data(s,0)
 int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                            CRYPTO_EX_dup *dup_func,
-                           CRYPTO_EX_free *free_func);
+                           CRYPTO_EX_free *freefunc);
 int STORE_set_ex_data(STORE *r, int idx, void *arg);
 void *STORE_get_ex_data(STORE *r, int idx);
 

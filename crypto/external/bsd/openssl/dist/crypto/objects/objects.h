@@ -993,7 +993,7 @@ typedef struct obj_name_st {
 int OBJ_NAME_init(void);
 int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
                        int (*cmp_func) (const char *, const char *),
-                       void (*free_func) (const char *, int, const char *));
+                       void (*freefunc) (const char *, int, const char *));
 const char *OBJ_NAME_get(const char *name, int type);
 int OBJ_NAME_add(const char *name, int type, const char *data);
 int OBJ_NAME_remove(const char *name, int type);
