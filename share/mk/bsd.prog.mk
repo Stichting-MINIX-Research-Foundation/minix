@@ -115,9 +115,6 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	compat \
 	crypt \
 	crypto \
-	crypto_idea \
-	crypto_mdc2 \
-	crypto_rc5 \
 	curses \
 	dbm \
 	des \
