@@ -833,8 +833,10 @@
 ./usr/lib/libcrypt.so.1.0                               minix-base
 ./usr/lib/libcrypto.a                                   minix-base      crypto
 ./usr/lib/libcrypto.so.8.1                              minix-base      crypto,obsolete
-./usr/lib/libcrypto.so.8.4                              minix-base      crypto
-./usr/lib/libcrypto.so.8                                minix-base      crypto
+./usr/lib/libcrypto.so.8.4                              minix-base      crypto,obsolete
+./usr/lib/libcrypto.so.8                                minix-base      crypto,obsolete
+./usr/lib/libcrypto.so.12.0                             minix-base      crypto
+./usr/lib/libcrypto.so.12                               minix-base      crypto
 ./usr/lib/libcrypto.so                                  minix-base      crypto
 ./usr/lib/libcrypto_pic.a                               minix-base      crypto
 ./usr/lib/libcurses.so                                  minix-base
@@ -842,8 +844,10 @@
 ./usr/lib/libcurses.so.7.0                              minix-base
 ./usr/lib/libdes.a                                      minix-base      crypto
 ./usr/lib/libdes.so.8.1                                 minix-base      crypto,obsolete
-./usr/lib/libdes.so.8.2                                 minix-base      crypto
-./usr/lib/libdes.so.8                                   minix-base      crypto
+./usr/lib/libdes.so.8.2                                 minix-base      crypto,obsolete
+./usr/lib/libdes.so.8                                   minix-base      crypto,obsolete
+./usr/lib/libdes.so.12.0                                minix-base      crypto
+./usr/lib/libdes.so.12                                  minix-base      crypto
 ./usr/lib/libdes.so                                     minix-base      crypto
 ./usr/lib/libdes_pic.a                                  minix-base      crypto
 ./usr/lib/libdns.so                                     minix-base
@@ -986,8 +990,10 @@
 ./usr/lib/libsqlite3.so.1.2                             minix-base
 ./usr/lib/libssl.a                                      minix-base      crypto
 ./usr/lib/libssl.so.10.1                                minix-base      crypto,obsolete
-./usr/lib/libssl.so.10.5                                minix-base      crypto
-./usr/lib/libssl.so.10                                  minix-base      crypto
+./usr/lib/libssl.so.10.5                                minix-base      crypto,obsolete
+./usr/lib/libssl.so.10                                  minix-base      crypto,obsolete
+./usr/lib/libssl.so.12.0                                minix-base      crypto
+./usr/lib/libssl.so.12                                  minix-base      crypto
 ./usr/lib/libssl.so                                     minix-base      crypto
 ./usr/lib/libssl_pic.a                                  minix-base      crypto
 ./usr/lib/libstdc++.so.6.1                              minix-base      libstdcxx,obsolete
