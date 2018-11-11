@@ -3151,8 +3151,8 @@
 ./usr/lib/libcrypto_mdc2.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2_p.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_p.a				comp-c-proflib		compatfile,crypto,profile
-./usr/lib/libcrypto_rc5.a			comp-c-lib		compatfile,crypto_rc5
-./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		compatfile,crypto_rc5,profile
+./usr/lib/libcrypto_rc5.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_rc5_p.a			comp-obsolete		obsolete
 ./usr/lib/libctf.a				comp-c-lib		compatfile,dtrace
 ./usr/lib/libctf_p.a				comp-c-proflib		compatfile,dtrace,profile
 ./usr/lib/libcurses.a				comp-c-lib		compatfile
@@ -3614,7 +3614,7 @@
 ./usr/libdata/lint/llib-lcrypto.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lcrypto_idea.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_mdc2.ln		comp-obsolete		obsolete
-./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
+./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lctf.ln			comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
