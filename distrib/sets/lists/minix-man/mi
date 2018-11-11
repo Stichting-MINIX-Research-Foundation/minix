@@ -256,8 +256,10 @@
 ./usr/man/man1/openssl.1                                minix-man       crypto
 ./usr/man/man1/openssl_CA.pl.1                          minix-man       crypto
 ./usr/man/man1/openssl_asn1parse.1                      minix-man       crypto
+./usr/man/man1/openssl_c_rehash.1                       minix-man       crypto
 ./usr/man/man1/openssl_ca.1                             minix-man       crypto
 ./usr/man/man1/openssl_ciphers.1                        minix-man       crypto
+./usr/man/man1/openssl_cms.1                            minix-man       crypto
 ./usr/man/man1/openssl_crl.1                            minix-man       crypto
 ./usr/man/man1/openssl_crl2pkcs7.1                      minix-man       crypto
 ./usr/man/man1/openssl_dgst.1                           minix-man       crypto
@@ -269,6 +271,7 @@
 ./usr/man/man1/openssl_enc.1                            minix-man       crypto
 ./usr/man/man1/openssl_errstr.1                         minix-man       crypto
 ./usr/man/man1/openssl_gendsa.1                         minix-man       crypto
+./usr/man/man1/openssl_genpkey.1                        minix-man       crypto
 ./usr/man/man1/openssl_genrsa.1                         minix-man       crypto
 ./usr/man/man1/openssl_nseq.1                           minix-man       crypto
 ./usr/man/man1/openssl_ocsp.1                           minix-man       crypto
@@ -276,6 +279,9 @@
 ./usr/man/man1/openssl_pkcs12.1                         minix-man       crypto
 ./usr/man/man1/openssl_pkcs7.1                          minix-man       crypto
 ./usr/man/man1/openssl_pkcs8.1                          minix-man       crypto
+./usr/man/man1/openssl_pkey.1                           minix-man       crypto
+./usr/man/man1/openssl_pkeyparam.1                      minix-man       crypto
+./usr/man/man1/openssl_pkeyutl.1                        minix-man       crypto
 ./usr/man/man1/openssl_rand.1                           minix-man       crypto
 ./usr/man/man1/openssl_req.1                            minix-man       crypto
 ./usr/man/man1/openssl_rsa.1                            minix-man       crypto
@@ -287,6 +293,8 @@
 ./usr/man/man1/openssl_smime.1                          minix-man       crypto
 ./usr/man/man1/openssl_speed.1                          minix-man       crypto
 ./usr/man/man1/openssl_spkac.1                          minix-man       crypto
+./usr/man/man1/openssl_ts.1                             minix-man       crypto
+./usr/man/man1/openssl_tsget.1                          minix-man       crypto
 ./usr/man/man1/openssl_verify.1                         minix-man       crypto
 ./usr/man/man1/openssl_version.1                        minix-man       crypto
 ./usr/man/man1/openssl_x509.1                           minix-man       crypto
@@ -559,6 +567,7 @@
 ./usr/man/man3/BIO_f_ssl.3                              minix-man       crypto
 ./usr/man/man3/BIO_find_type.3                          minix-man       crypto
 ./usr/man/man3/BIO_new.3                                minix-man       crypto
+./usr/man/man3/BIO_new_CMS.3                            minix-man       crypto
 ./usr/man/man3/BIO_push.3                               minix-man       crypto
 ./usr/man/man3/BIO_read.3                               minix-man       crypto
 ./usr/man/man3/BIO_s_accept.3                           minix-man       crypto
@@ -589,6 +598,22 @@
 ./usr/man/man3/BN_set_bit.3                             minix-man       crypto
 ./usr/man/man3/BN_swap.3                                minix-man       crypto
 ./usr/man/man3/BN_zero.3                                minix-man       crypto
+./usr/man/man3/CMS_add0_cert.3                          minix-man       crypto
+./usr/man/man3/CMS_add1_recipient_cert.3                minix-man       crypto
+./usr/man/man3/CMS_add1_signer.3                        minix-man       crypto
+./usr/man/man3/CMS_compress.3                           minix-man       crypto
+./usr/man/man3/CMS_decrypt.3                            minix-man       crypto
+./usr/man/man3/CMS_encrypt.3                            minix-man       crypto
+./usr/man/man3/CMS_final.3                              minix-man       crypto
+./usr/man/man3/CMS_get0_RecipientInfos.3                minix-man       crypto
+./usr/man/man3/CMS_get0_SignerInfos.3                   minix-man       crypto
+./usr/man/man3/CMS_get0_type.3                          minix-man       crypto
+./usr/man/man3/CMS_get1_ReceiptRequest.3                minix-man       crypto
+./usr/man/man3/CMS_sign.3                               minix-man       crypto
+./usr/man/man3/CMS_sign_receipt.3                       minix-man       crypto
+./usr/man/man3/CMS_uncompress.3                         minix-man       crypto
+./usr/man/man3/CMS_verify.3                             minix-man       crypto
+./usr/man/man3/CMS_verify_receipt.3                     minix-man       crypto
 ./usr/man/man3/CONF_modules_free.3                      minix-man       crypto
 ./usr/man/man3/CONF_modules_load_file.3                 minix-man       crypto
 ./usr/man/man3/CRYPTO_set_ex_data.3                     minix-man       crypto
@@ -620,10 +645,24 @@
 ./usr/man/man3/ERR_set_mark.3                           minix-man       crypto
 ./usr/man/man3/EVP_BytesToKey.3                         minix-man       crypto
 ./usr/man/man3/EVP_DigestInit.3                         minix-man       crypto
+./usr/man/man3/EVP_DigestSignInit.3                     minix-man       crypto
+./usr/man/man3/EVP_DigestVerifyInit.3                   minix-man       crypto
+./usr/man/man3/EVP_EncodeInit.3                         minix-man       crypto
 ./usr/man/man3/EVP_EncryptInit.3                        minix-man       crypto
 ./usr/man/man3/EVP_OpenInit.3                           minix-man       crypto
+./usr/man/man3/EVP_PKEY_CTX_ctrl.3                      minix-man       crypto
+./usr/man/man3/EVP_PKEY_CTX_new.3                       minix-man       crypto
+./usr/man/man3/EVP_PKEY_cmp.3                           minix-man       crypto
+./usr/man/man3/EVP_PKEY_decrypt.3                       minix-man       crypto
+./usr/man/man3/EVP_PKEY_derive.3                        minix-man       crypto
+./usr/man/man3/EVP_PKEY_encrypt.3                       minix-man       crypto
+./usr/man/man3/EVP_PKEY_get_default_digest.3            minix-man       crypto
+./usr/man/man3/EVP_PKEY_keygen.3                        minix-man       crypto
 ./usr/man/man3/EVP_PKEY_new.3                           minix-man       crypto
+./usr/man/man3/EVP_PKEY_print_private.3                 minix-man       crypto
 ./usr/man/man3/EVP_PKEY_set1_RSA.3                      minix-man       crypto
+./usr/man/man3/EVP_PKEY_sign.3                          minix-man       crypto
+./usr/man/man3/EVP_PKEY_verify.3                        minix-man       crypto
 ./usr/man/man3/EVP_PKEY_verify_recover.3                minix-man       crypto
 ./usr/man/man3/EVP_SealInit.3                           minix-man       crypto
 ./usr/man/man3/EVP_SignInit.3                           minix-man       crypto
@@ -655,11 +694,14 @@
 ./usr/man/man3/OPENSSL_ia32cap.3                        minix-man       crypto
 ./usr/man/man3/OPENSSL_load_builtin_modules.3           minix-man       crypto
 ./usr/man/man3/OpenSSL_add_all_algorithms.3             minix-man       crypto
+./usr/man/man3/PEM_write_bio_CMS_stream.3               minix-man       crypto
+./usr/man/man3/PEM_write_bio_PKCS7_stream.3             minix-man       crypto
 ./usr/man/man3/PKCS12_create.3                          minix-man       crypto
 ./usr/man/man3/PKCS12_parse.3                           minix-man       crypto
 ./usr/man/man3/PKCS7_decrypt.3                          minix-man       crypto
 ./usr/man/man3/PKCS7_encrypt.3                          minix-man       crypto
 ./usr/man/man3/PKCS7_sign.3                             minix-man       crypto
+./usr/man/man3/PKCS7_sign_add_signer.3                  minix-man       crypto
 ./usr/man/man3/PKCS7_verify.3                           minix-man       crypto
 ./usr/man/man3/RAND_add.3                               minix-man       crypto
 ./usr/man/man3/RAND_bytes.3                             minix-man       crypto
@@ -727,7 +769,9 @@
 ./usr/man/man3/SHA512_Init.3                            minix-man
 ./usr/man/man3/SHA512_Transform.3                       minix-man
 ./usr/man/man3/SHA512_Update.3                          minix-man
+./usr/man/man3/SMIME_read_CMS.3                         minix-man       crypto
 ./usr/man/man3/SMIME_read_PKCS7.3                       minix-man       crypto
+./usr/man/man3/SMIME_write_CMS.3                        minix-man       crypto
 ./usr/man/man3/SMIME_write_PKCS7.3                      minix-man       crypto
 ./usr/man/man3/SSL_CIPHER_get_name.3                    minix-man       crypto
 ./usr/man/man3/SSL_COMP_add_compression_method.3        minix-man       crypto
@@ -756,16 +800,20 @@
 ./usr/man/man3/SSL_CTX_set_mode.3                       minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_msg_callback.3               minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_options.3                    minix-man       crypto
+./usr/man/man3/SSL_CTX_set_psk_client_callback.3        minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_quiet_shutdown.3             minix-man       crypto
+./usr/man/man3/SSL_CTX_set_read_ahead.3                 minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_session_cache_mode.3         minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_session_id_context.3         minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_ssl_version.3                minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_timeout.3                    minix-man       crypto
+./usr/man/man3/SSL_CTX_set_tlsext_status_cb.3           minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3       minix-man
 ./usr/man/man3/SSL_CTX_set_tmp_dh_callback.3            minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_tmp_rsa_callback.3           minix-man       crypto
 ./usr/man/man3/SSL_CTX_set_verify.3                     minix-man       crypto
 ./usr/man/man3/SSL_CTX_use_certificate.3                minix-man       crypto
+./usr/man/man3/SSL_CTX_use_psk_identity_hint.3          minix-man       crypto
 ./usr/man/man3/SSL_SESSION_free.3                       minix-man       crypto
 ./usr/man/man3/SSL_SESSION_get_ex_new_index.3           minix-man       crypto
 ./usr/man/man3/SSL_SESSION_get_time.3                   minix-man       crypto
@@ -786,6 +834,7 @@
 ./usr/man/man3/SSL_get_fd.3                             minix-man       crypto
 ./usr/man/man3/SSL_get_peer_cert_chain.3                minix-man       crypto
 ./usr/man/man3/SSL_get_peer_certificate.3               minix-man       crypto
+./usr/man/man3/SSL_get_psk_identity.3                   minix-man       crypto
 ./usr/man/man3/SSL_get_rbio.3                           minix-man       crypto
 ./usr/man/man3/SSL_get_session.3                        minix-man       crypto
 ./usr/man/man3/SSL_get_verify_result.3                  minix-man       crypto
@@ -1339,8 +1388,10 @@
 ./usr/man/man3/curses_underscore.3                      minix-man
 ./usr/man/man3/curses_window.3                          minix-man
 ./usr/man/man3/d2i_ASN1_OBJECT.3                        minix-man       crypto
+./usr/man/man3/d2i_CMS_ContentInfo.3                    minix-man       crypto
 ./usr/man/man3/d2i_DHparams.3                           minix-man       crypto
 ./usr/man/man3/d2i_DSAPublicKey.3                       minix-man       crypto
+./usr/man/man3/d2i_ECPrivateKey.3                       minix-man       crypto
 ./usr/man/man3/d2i_PKCS8PrivateKey.3                    minix-man       crypto
 ./usr/man/man3/d2i_RSAPublicKey.3                       minix-man       crypto
 ./usr/man/man3/d2i_SSL_SESSION.3                        minix-man       crypto
@@ -1937,6 +1988,8 @@
 ./usr/man/man3/humanize_number.3                        minix-man
 ./usr/man/man3/hypot.3                                  minix-man
 ./usr/man/man3/hypotf.3                                 minix-man
+./usr/man/man3/i2d_CMS_bio_stream.3                     minix-man       crypto
+./usr/man/man3/i2d_PKCS7_bio_stream.3                   minix-man       crypto
 ./usr/man/man3/iconv.3                                  minix-man
 ./usr/man/man3/iconv_close.3                            minix-man
 ./usr/man/man3/iconv_open.3                             minix-man
