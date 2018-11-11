@@ -3,6 +3,7 @@
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=		libcrypto
+
 .if !defined(__MINIX)
 TESTS_SUBDIRS+=		opencrypto
 .endif # !defined(__MINIX)
