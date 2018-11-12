@@ -1090,7 +1090,7 @@
 ./usr/sbin                                              minix-base
 ./usr/sbin/arp                                          minix-base
 ./usr/sbin/audit-packages                               minix-base      crypto
-./usr/sbin/bpm                                          minix-base      crypto
+./usr/sbin/bpm                                          minix-base      obsolete
 ./usr/sbin/btrace                                       minix-base
 ./usr/sbin/chown                                        minix-base
 ./usr/sbin/chroot                                       minix-base

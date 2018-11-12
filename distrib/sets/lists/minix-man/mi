@@ -34,7 +34,7 @@
 ./usr/man/man1/basename.1                               minix-man
 ./usr/man/man1/bdes.1                                   minix-man       crypto
 ./usr/man/man1/bg.1                                     minix-man
-./usr/man/man1/bpm.1                                    minix-man       crypto
+./usr/man/man1/bpm.1                                    minix-man       obsolete
 ./usr/man/man1/break.1                                  minix-man       obsolete
 ./usr/man/man1/bsdtar.1                                 minix-man
 ./usr/man/man1/bsfilt.1                                 minix-man
@@ -857,7 +857,7 @@
 ./usr/man/man3/archive_entry_acl_next.3                 minix-man
 ./usr/man/man3/archive_entry_acl_next_w.3               minix-man
 ./usr/man/man3/archive_entry_acl_reset.3                minix-man
-./usr/man/man3/archive_entry_acl_text_w.3               minix-man
+./usr/man/man3/archive_entry_acl_text_w.3               minix-man       obsolete
 ./usr/man/man3/archive_entry_acl_to_text.3              minix-man
 ./usr/man/man3/archive_entry_acl_to_text_w.3            minix-man
 ./usr/man/man3/archive_entry_acl_types.3                minix-man
@@ -984,14 +984,14 @@
 ./usr/man/man3/archive_read_close.3                     minix-man
 ./usr/man/man3/archive_read_data.3                      minix-man
 ./usr/man/man3/archive_read_data_block.3                minix-man
-./usr/man/man3/archive_read_data_into_buffer.3          minix-man
+./usr/man/man3/archive_read_data_into_buffer.3          minix-man       obsolete
 ./usr/man/man3/archive_read_data_into_fd.3              minix-man
 ./usr/man/man3/archive_read_data_skip.3                 minix-man
 ./usr/man/man3/archive_read_disk.3                      minix-man
 ./usr/man/man3/archive_read_disk_entry_from_file.3      minix-man
 ./usr/man/man3/archive_read_disk_gname.3                minix-man
 ./usr/man/man3/archive_read_disk_new.3                  minix-man
-./usr/man/man3/archive_read_disk_set_entry_from_file.3  minix-man
+./usr/man/man3/archive_read_disk_set_entry_from_file.3  minix-man       obsolete
 ./usr/man/man3/archive_read_disk_set_gname_lookup.3     minix-man
 ./usr/man/man3/archive_read_disk_set_standard_lookup.3  minix-man
 ./usr/man/man3/archive_read_disk_set_symlink_hybrid.3   minix-man
@@ -1009,31 +1009,31 @@
 ./usr/man/man3/archive_read_header.3                    minix-man
 ./usr/man/man3/archive_read_header2.3                   minix-man
 ./usr/man/man3/archive_read_new.3                       minix-man
-./usr/man/man3/archive_read_next_header.3               minix-man
-./usr/man/man3/archive_read_next_header2.3              minix-man
+./usr/man/man3/archive_read_next_header.3               minix-man       obsolete
+./usr/man/man3/archive_read_next_header2.3              minix-man       obsolete
 ./usr/man/man3/archive_read_open.3                      minix-man
 ./usr/man/man3/archive_read_open2.3                     minix-man
 ./usr/man/man3/archive_read_open_FILE.3                 minix-man
 ./usr/man/man3/archive_read_open_fd.3                   minix-man
-./usr/man/man3/archive_read_open_file.3                 minix-man
+./usr/man/man3/archive_read_open_file.3                 minix-man       obsolete
 ./usr/man/man3/archive_read_open_filename.3             minix-man
 ./usr/man/man3/archive_read_open_memory.3               minix-man
 ./usr/man/man3/archive_read_set_filter_option.3         minix-man
-./usr/man/man3/archive_read_set_filter_options.3        minix-man
+./usr/man/man3/archive_read_set_filter_options.3        minix-man       obsolete
 ./usr/man/man3/archive_read_set_format_option.3         minix-man
-./usr/man/man3/archive_read_set_format_options.3        minix-man
+./usr/man/man3/archive_read_set_format_options.3        minix-man       obsolete
 ./usr/man/man3/archive_read_set_option.3                minix-man
 ./usr/man/man3/archive_read_set_options.3               minix-man
 ./usr/man/man3/archive_read_set_passphrase_callback.3   minix-man
-./usr/man/man3/archive_read_support_compression_all.3   minix-man
-./usr/man/man3/archive_read_support_compression_bzip2.3 minix-man
-./usr/man/man3/archive_read_support_compression_compress.3 minix-man
-./usr/man/man3/archive_read_support_compression_gzip.3  minix-man
-./usr/man/man3/archive_read_support_compression_lzma.3  minix-man
-./usr/man/man3/archive_read_support_compression_none.3  minix-man
-./usr/man/man3/archive_read_support_compression_program.3 minix-man
-./usr/man/man3/archive_read_support_compression_program_signature.3 minix-man
-./usr/man/man3/archive_read_support_compression_xz.3    minix-man
+./usr/man/man3/archive_read_support_compression_all.3   minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_bzip2.3 minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_compress.3 minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_gzip.3  minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_lzma.3  minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_none.3  minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_program.3 minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_program_signature.3 minix-man       obsolete
+./usr/man/man3/archive_read_support_compression_xz.3    minix-man       obsolete
 ./usr/man/man3/archive_read_support_filter_all.3        minix-man
 ./usr/man/man3/archive_read_support_filter_bzip2.3      minix-man
 ./usr/man/man3/archive_read_support_filter_compress.3   minix-man
@@ -1104,16 +1104,16 @@
 ./usr/man/man3/archive_write_open_fd.3                  minix-man
 ./usr/man/man3/archive_write_open_filename.3            minix-man
 ./usr/man/man3/archive_write_open_memory.3              minix-man
-./usr/man/man3/archive_write_options.3                  minix-man
+./usr/man/man3/archive_write_options.3                  minix-man       obsolete
 ./usr/man/man3/archive_write_set_bytes_in_last_block.3  minix-man
 ./usr/man/man3/archive_write_set_bytes_per_block.3      minix-man
-./usr/man/man3/archive_write_set_callbacks.3            minix-man
-./usr/man/man3/archive_write_set_compression_bzip2.3    minix-man
-./usr/man/man3/archive_write_set_compression_compress.3 minix-man
-./usr/man/man3/archive_write_set_compression_gzip.3     minix-man
-./usr/man/man3/archive_write_set_compression_none.3     minix-man
-./usr/man/man3/archive_write_set_compression_program.3  minix-man
-./usr/man/man3/archive_write_set_compressor_options.3   minix-man
+./usr/man/man3/archive_write_set_callbacks.3            minix-man       obsolete
+./usr/man/man3/archive_write_set_compression_bzip2.3    minix-man       obsolete
+./usr/man/man3/archive_write_set_compression_compress.3 minix-man       obsolete
+./usr/man/man3/archive_write_set_compression_gzip.3     minix-man       obsolete
+./usr/man/man3/archive_write_set_compression_none.3     minix-man       obsolete
+./usr/man/man3/archive_write_set_compression_program.3  minix-man       obsolete
+./usr/man/man3/archive_write_set_compressor_options.3   minix-man       obsolete
 ./usr/man/man3/archive_write_set_filter_option.3
 ./usr/man/man3/archive_write_set_format_7zip.3
 ./usr/man/man3/archive_write_set_format_ar.3
@@ -1134,7 +1134,7 @@
 ./usr/man/man3/archive_write_set_format_pax_restricted.3 minix-man
 ./usr/man/man3/archive_write_set_format_raw.3           minix-man
 ./usr/man/man3/archive_write_set_format_shar.3          minix-man
-./usr/man/man3/archive_write_set_format_shar_binary.3   minix-man
+./usr/man/man3/archive_write_set_format_shar_binary.3   minix-man       obsolete
 ./usr/man/man3/archive_write_set_format_shar_dump.3     minix-man
 ./usr/man/man3/archive_write_set_format_ustar.3         minix-man
 ./usr/man/man3/archive_write_set_format_v7tar.3         minix-man
