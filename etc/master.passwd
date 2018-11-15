@@ -2,7 +2,7 @@ root::0:0::0:0:Charlie &:/root:/bin/sh
 toor:*:0:0::0:0:Bourne-again Superuser:/root:/bin/sh
 daemon:*:1:1::0:0:The devil himself:/:/sbin/nologin
 operator:*:2:5::0:0:System &:/usr/guest/operator:/sbin/nologin
-bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
+bin:*:3:7::0:0:Binaries Commands and Source:/:/bin/sh
 games:*:7:13::0:0:& pseudo-user:/usr/games:/sbin/nologin
 postfix:*:12:12::0:0:& pseudo-user:/var/spool/postfix:/sbin/nologin
 named:*:14:14::0:0:& pseudo-user:/var/chroot/named:/sbin/nologin
