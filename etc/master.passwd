@@ -2,7 +2,7 @@ root::0:0::0:0:Charlie &:/root:/bin/sh
 toor:*:0:0::0:0:Bourne-again Superuser:/root:/bin/sh
 daemon:*:1:1::0:0:The devil himself:/:/sbin/nologin
 operator:*:2:5::0:0:System &:/usr/guest/operator:/sbin/nologin
-bin:*:3:7::0:0:Binaries Commands and Source:/:/bin/sh
+bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
 games:*:7:13::0:0:& pseudo-user:/usr/games:/sbin/nologin
 postfix:*:12:12::0:0:& pseudo-user:/var/spool/postfix:/sbin/nologin
 named:*:14:14::0:0:& pseudo-user:/var/chroot/named:/sbin/nologin
@@ -19,6 +19,8 @@ _tests:*:26:26::0:0:& pseudo-user:/nonexistent:/sbin/nologin
 _tcpdump:*:27:27::0:0:& pseudo-user:/var/chroot/tcpdump:/sbin/nologin
 _tss:*:28:28::0:0:& pseudo-user:/var/tpm:/sbin/nologin
 _rtadvd:*:30:30::0:0:& pseudo-user:/var/chroot/rtadvd:/sbin/nologin
+_unbound:*:32:32::0:0:& pseudo-user:/var/chroot/unbound:/sbin/nologin
+_nsd:*:33:33::0:0:& pseudo-user:/var/chroot/nsd:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/nonexistent:/sbin/nologin
 service:*:999:0::0:0:System Services:/:/sbin/nologin
 nobody:*:32767:39::0:0:Unprivileged user:/nonexistent:/sbin/nologin
