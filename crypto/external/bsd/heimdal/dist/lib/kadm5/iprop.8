@@ -1,4 +1,4 @@
-.\"	$NetBSD: iprop.8,v 1.4 2014/04/24 13:45:34 pettai Exp $
+.\"	$NetBSD: iprop.8,v 1.5 2017/01/28 21:31:49 christos Exp $
 .\"
 .\" Id
 .\"
@@ -40,7 +40,7 @@
 .Nm iprop ,
 .Nm ipropd-master ,
 .Nm ipropd-slave
-.Nd propagate changes to a Heimdal Kerberos master KDC to slave KDCs
+.Nd propagate transactions from a Heimdal Kerberos master KDC to slave KDCs
 .Sh SYNOPSIS
 .Nm ipropd-master
 .Oo Fl c Ar string \*(Ba Xo
@@ -112,12 +112,17 @@ which sends the whole database to the slaves regularly,
 .Nm
 normally sends only the changes as they happen on the master.
 The master keeps track of all the changes by assigning a version
-number to every change to the database.
+number to every transaction to the database.
 The slaves know which was the latest version they saw, and in this
 way it can be determined if they are in sync or not.
-A log of all the changes is kept on the master.
+A log of all the transactions is kept on the master.
 When a slave is at an older version than the oldest one in the log,
 the whole database has to be sent.
+.Pp
+The log of transactions is also used to implement a two-phase commit
+(with roll-forward for recovery) method of updating the HDB.
+Transactions are first recorded in the log, then in the HDB, then
+the log is updated to mark the transaction as committed.
 .Pp
 The changes are propagated over a secure channel (on port 2121 by
 default).
@@ -177,6 +182,11 @@ like 5 min, 300 s, or simply a number of seconds.
 .Pa slaves ,
 .Pa slave-stats
 in the database directory.
+.Pa ipropd-master.pid ,
+.Pa ipropd-slave.pid
+in the database directory, or in the directory named by the
+.Ev HEIM_PIDFILE_DIR
+environment variable.
 .Sh SEE ALSO
 .Xr krb5.conf 5 ,
 .Xr hprop 8 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc_locl.h,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $	*/
+/*	$NetBSD: kdc_locl.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -45,7 +45,52 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+typedef struct kdc_request_desc *kdc_request_t;
+
 #include <kdc-private.h>
+
+#define FAST_EXPIRATION_TIME (3 * 60)
+
+struct kdc_request_desc {
+    krb5_context context;
+    krb5_kdc_configuration *config;
+
+    /* */
+
+    krb5_data request;
+    KDC_REQ req;
+    METHOD_DATA *padata;
+
+    /* out */
+
+    METHOD_DATA outpadata;
+    
+    KDC_REP rep;
+    EncTicketPart et;
+    EncKDCRepPart ek;
+
+    /* PA methods can affect both the reply key and the session key (pkinit) */
+    krb5_enctype sessionetype;
+    krb5_keyblock reply_key;
+    krb5_keyblock session_key;
+
+    const char *e_text;
+
+    /* state */
+    krb5_principal client_princ;
+    char *client_name;
+    hdb_entry_ex *client;
+    HDB *clientdb;
+
+    krb5_principal server_princ;
+    char *server_name;
+    hdb_entry_ex *server;
+
+    krb5_crypto armor_crypto;
+
+    KDCFastState fast;
+};
+
 
 extern sig_atomic_t exit_flag;
 extern size_t max_request_udp;
@@ -56,12 +101,11 @@ extern krb5_addresses explicit_addresses;
 
 extern int enable_http;
 
-#ifdef SUPPORT_DETACH
-
-#define DETACH_IS_DEFAULT FALSE
-
 extern int detach_from_console;
-#endif
+extern int daemon_child;
+extern int do_bonjour;
+
+extern int testing_flag;
 
 extern const struct units _kdc_digestunits[];
 
@@ -74,10 +118,10 @@ extern char *runas_string;
 extern char *chroot_string;
 
 void
-loop(krb5_context context, krb5_kdc_configuration *config);
+start_kdc(krb5_context context, krb5_kdc_configuration *config, const char *argv0);
 
 krb5_kdc_configuration *
-configure(krb5_context context, int argc, char **argv);
+configure(krb5_context context, int argc, char **argv, int *optidx);
 
 #ifdef __APPLE__
 void bonjour_announce(krb5_context, krb5_kdc_configuration *);

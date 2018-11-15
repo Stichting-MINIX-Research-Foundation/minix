@@ -1,4 +1,4 @@
-/*	$NetBSD: ent_setup.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: ent_setup.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: ent_setup.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 #define set_value(X, V) do { if((X) == NULL) (X) = malloc(sizeof(*(X))); *(X) = V; } while(0)
 #define set_null(X)     do { if((X) != NULL) free((X)); (X) = NULL; } while (0)
@@ -53,6 +53,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     /* DUP_SKEY */
     flags->invalid =	       !!(attr & KRB5_KDB_DISALLOW_ALL_TIX);
     flags->require_preauth =   !!(attr & KRB5_KDB_REQUIRES_PRE_AUTH);
+    flags->require_pwchange =  !!(attr & KRB5_KDB_REQUIRES_PWCHANGE);
     /* HW_AUTH */
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);
@@ -180,8 +181,14 @@ _kadm5_setup_entry(kadm5_server_context *context,
 	}
     }
     if(mask & KADM5_KVNO
-       && princ_mask & KADM5_KVNO)
-	ent->entry.kvno = princ->kvno;
+       && (princ_mask & KADM5_KVNO)) {
+	krb5_error_code ret;
+
+	ret = hdb_change_kvno(context->context, princ->kvno, &ent->entry);
+	if (ret && ret != HDB_ERR_KVNO_NOT_FOUND)
+	    return ret;
+	ent->entry.kvno = princ->kvno; /* force it */
+    }
     if(mask & KADM5_MAX_RLIFE) {
 	if(princ_mask & KADM5_MAX_RLIFE) {
 	  if(princ->max_renewable_life)

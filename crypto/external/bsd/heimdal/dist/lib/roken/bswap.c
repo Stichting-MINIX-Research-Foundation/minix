@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: bswap.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Kungliga Tekniska Högskolan
@@ -35,6 +35,23 @@
 
 #include <config.h>
 #include <krb5/roken.h>
+
+#ifndef HAVE_BSWAP64
+
+ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL
+bswap64 (uint64_t val)
+{
+    return
+        (val & 0xffULL) << 56 |
+	(val & 0xff00ULL) << 40 |
+	(val & 0xff0000ULL) << 24 |
+	(val & 0xff000000ULL) << 8 |
+	(val & 0xff00000000ULL) >> 8 |
+	(val & 0xff0000000000ULL) >> 24 |
+	(val & 0xff000000000000ULL) >> 40 |
+	(val & 0xff00000000000000ULL) >> 56 ;
+}
+#endif
 
 #ifndef HAVE_BSWAP32
 

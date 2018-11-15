@@ -1,4 +1,4 @@
-/*	$NetBSD: sha.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
+/*	$NetBSD: sha.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
@@ -66,9 +66,9 @@ struct sha {
 
 typedef struct sha SHA_CTX;
 
-void SHA1_Init (struct sha *m);
-void SHA1_Update (struct sha *m, const void *v, size_t len);
-void SHA1_Final (void *res, struct sha *m);
+int SHA1_Init (struct sha *m);
+int SHA1_Update (struct sha *m, const void *v, size_t len);
+int SHA1_Final (void *res, struct sha *m);
 
 /*
  * SHA-2 256
@@ -84,9 +84,9 @@ struct hc_sha256state {
 
 typedef struct hc_sha256state SHA256_CTX;
 
-void SHA256_Init (SHA256_CTX *);
-void SHA256_Update (SHA256_CTX *, const void *, size_t);
-void SHA256_Final (void *, SHA256_CTX *);
+int SHA256_Init (SHA256_CTX *);
+int SHA256_Update (SHA256_CTX *, const void *, size_t);
+int SHA256_Final (void *, SHA256_CTX *);
 
 /*
  * SHA-2 512
@@ -102,16 +102,16 @@ struct hc_sha512state {
 
 typedef struct hc_sha512state SHA512_CTX;
 
-void SHA512_Init (SHA512_CTX *);
-void SHA512_Update (SHA512_CTX *, const void *, size_t);
-void SHA512_Final (void *, SHA512_CTX *);
+int SHA512_Init (SHA512_CTX *);
+int SHA512_Update (SHA512_CTX *, const void *, size_t);
+int SHA512_Final (void *, SHA512_CTX *);
 
 #define SHA384_DIGEST_LENGTH 48
 
 typedef struct hc_sha512state SHA384_CTX;
 
-void SHA384_Init (SHA384_CTX *);
-void SHA384_Update (SHA384_CTX *, const void *, size_t);
-void SHA384_Final (void *, SHA384_CTX *);
+int SHA384_Init (SHA384_CTX *);
+int SHA384_Update (SHA384_CTX *, const void *, size_t);
+int SHA384_Final (void *, SHA384_CTX *);
 
 #endif /* HEIM_SHA_H */

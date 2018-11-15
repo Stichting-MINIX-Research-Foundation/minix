@@ -112,7 +112,12 @@ index 94
 error_code INVALID_HASH_ALG, "Invalid OTP digest algorithm"
 error_code INVALID_ITERATION_COUNT, "Invalid OTP iteration count"
 
-# 97-127 are reserved
+# 97-99 are reserved
+
+index 100
+error_code NO_ACCEPTABLE_KDF, "No acceptable KDF offered"
+
+# 101-127 are reserved
 
 index 128
 prefix

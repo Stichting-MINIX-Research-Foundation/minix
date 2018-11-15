@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: config.c,v 1.2.4.1 2017/09/11 04:58:44 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -46,10 +46,8 @@ char *door_path = NULL;
 
 static char *max_request_str;	/* `max_request' as a string */
 
-#ifdef SUPPORT_DETACH
 int detach_from_console = -1;
-#define DETACH_IS_DEFAULT FALSE
-#endif
+int daemon_child = -1;
 
 static const char *system_cache_name = NULL;
 static const char *system_keytab = NULL;
@@ -88,22 +86,17 @@ static struct getargs args[] = {
     },
     {
 	"launchd",	0,	arg_flag, &launchd_flag,
-	"when in use by launchd"
+	"when in use by launchd", NULL
     },
-#ifdef SUPPORT_DETACH
-#if DETACH_IS_DEFAULT
-    {
-	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console"
-    },
-#else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
-	"detach from console"
+	"detach from console", NULL
     },
-#endif
-#endif
-    {	"help",		'h',	arg_flag,   &help_flag },
+    {
+        "daemon-child",       0 ,      arg_integer, &daemon_child,
+        "private argument, do not use", NULL
+    },
+    {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {
 	"system-principal",	'k',	arg_string,	&system_principal,
 	"system principal name",	"principal"
@@ -118,11 +111,11 @@ static struct getargs args[] = {
     },
     {
 	"name-constraints",	'n', arg_negative_flag, &name_constraints,
-	"disable credentials cache name constraints"
+	"disable credentials cache name constraints", NULL
     },
     {
 	"disallow-getting-krbtgt", 0, arg_flag, &disallow_getting_krbtgt,
-	"disable fetching krbtgt from the cache"
+	"disable fetching krbtgt from the cache", NULL
     },
     {
 	"renewable-life",	'r', arg_string, &renew_life,
@@ -150,7 +143,7 @@ static struct getargs args[] = {
 	"user",		'u',	arg_string,	&system_user,
 	"system cache owner",	"user"
     },
-    {	"version",	'v',	arg_flag,   &version_flag }
+    {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);
@@ -166,28 +159,33 @@ static int parse_owners(kcm_ccache ccache)
 {
     uid_t uid = 0;
     gid_t gid = 0;
-    struct passwd *pw;
     struct group *gr;
     int uid_p = 0;
     int gid_p = 0;
+    struct passwd pw, *pwd = NULL;
+    char pwbuf[2048];
 
     if (system_user != NULL) {
 	if (isdigit((unsigned char)system_user[0])) {
-	    pw = getpwuid(atoi(system_user));
+	    if (rk_getpwuid_r(atoi(system_user), &pw, pwbuf, sizeof(pwbuf),
+		&pwd) != 0)
+		    pwd = NULL;
 	} else {
-	    pw = getpwnam(system_user);
+	    if (rk_getpwnam_r(system_user, &pw, pwbuf, sizeof(pwbuf),
+		&pwd) != 0)
+		    pwd = NULL;
 	}
-	if (pw == NULL) {
+	if (pwd == NULL) {
 	    return errno;
 	}
 
-	system_user = strdup(pw->pw_name);
+	system_user = strdup(pwd->pw_name);
 	if (system_user == NULL) {
 	    return ENOMEM;
 	}
 
-	uid = pw->pw_uid; uid_p = 1;
-	gid = pw->pw_gid; gid_p = 1;
+	uid = pwd->pw_uid; uid_p = 1;
+	gid = pwd->pw_gid; gid_p = 1;
     }
 
     if (system_group != NULL) {
@@ -279,7 +277,7 @@ ccache_init_system(void)
 	renew_life = kcm_system_config_get_string("renew_life");
 
     if (renew_life == NULL)
-	renew_life = "1 month";
+	renew_life = "6 months";
 
     if (renew_life != NULL) {
 	ccache->renew_life = parse_time(renew_life, "s");
@@ -330,13 +328,13 @@ void
 kcm_configure(int argc, char **argv)
 {
     krb5_error_code ret;
-    int optind = 0;
+    int optidx = 0;
     const char *p;
 
-    while(getarg(args, num_args, argc, argv, &optind))
-	warnx("error at argument `%s'", argv[optind]);
+    while (getarg(args, num_args, argc, argv, &optidx))
+	warnx("error at argument `%s'", argv[optidx]);
 
-    if(help_flag)
+    if (help_flag)
 	usage (0);
 
     if (version_flag) {
@@ -344,8 +342,8 @@ kcm_configure(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 0)
 	usage(1);
@@ -389,13 +387,11 @@ kcm_configure(int argc, char **argv)
 	    krb5_err(kcm_context, 1, ret, "initializing system ccache");
     }
 
-#ifdef SUPPORT_DETACH
     if(detach_from_console == -1)
 	detach_from_console = krb5_config_get_bool_default(kcm_context, NULL,
-							   DETACH_IS_DEFAULT,
+							   FALSE,
 							   "kcm",
 							   "detach", NULL);
-#endif
     kcm_openlog();
     if(max_request == 0)
 	max_request = 64 * 1024;

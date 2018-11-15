@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -35,19 +35,11 @@
 
 #include "kcm_locl.h"
 
-__RCSID("NetBSD");
-
-sig_atomic_t exit_flag = 0;
+__RCSID("$NetBSD: main.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
 
 krb5_context kcm_context = NULL;
 
 const char *service_name = "org.h5l.kcm";
-
-static RETSIGTYPE
-sigterm(int sig)
-{
-    exit_flag = 1;
-}
 
 static RETSIGTYPE
 sigusr1(int sig)
@@ -80,13 +72,9 @@ main(int argc, char **argv)
 	struct sigaction sa;
 
 	sa.sa_flags = 0;
-	sa.sa_handler = sigterm;
+	sa.sa_handler = sigusr1;
 	sigemptyset(&sa.sa_mask);
 
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);
-
-	sa.sa_handler = sigusr1;
 	sigaction(SIGUSR1, &sa, NULL);
 
 	sa.sa_handler = sigusr2;
@@ -96,17 +84,13 @@ main(int argc, char **argv)
 	sigaction(SIGPIPE, &sa, NULL);
     }
 #else
-    signal(SIGINT, sigterm);
-    signal(SIGTERM, sigterm);
     signal(SIGUSR1, sigusr1);
     signal(SIGUSR2, sigusr2);
     signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
-#endif
-    pidfile(NULL);
+    if (detach_from_console && !launchd_flag && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
+    rk_pidfile(NULL);
 
     if (launchd_flag) {
 	heim_sipc mach;
@@ -115,6 +99,8 @@ main(int argc, char **argv)
 	heim_sipc un;
 	heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
     }
+
+    roken_detach_finish(NULL, daemon_child);
 
     heim_ipc_main();
 

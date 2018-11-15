@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -70,7 +70,7 @@ OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_accept_sec_context
 (OM_uint32 * minor_status,
  gss_ctx_id_t * context_handle,
- const gss_cred_id_t acceptor_cred_handle,
+ gss_const_cred_id_t acceptor_cred_handle,
  const gss_buffer_t input_token_buffer,
  const gss_channel_bindings_t input_chan_bindings,
  gss_name_t * src_name,

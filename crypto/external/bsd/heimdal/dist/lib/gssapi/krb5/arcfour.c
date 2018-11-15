@@ -1,4 +1,4 @@
-/*	$NetBSD: arcfour.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: arcfour.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -71,7 +71,7 @@
 
 static krb5_error_code
 arcfour_mic_key(krb5_context context, krb5_keyblock *key,
-		void *cksum_data, size_t cksum_size,
+		const void *cksum_data, size_t cksum_size,
 		void *key6_data, size_t key6_size)
 {
     krb5_error_code ret;
@@ -88,7 +88,7 @@ arcfour_mic_key(krb5_context context, krb5_keyblock *key,
     cksum_k5.checksum.data = k5_data;
     cksum_k5.checksum.length = sizeof(k5_data);
 
-    if (key->keytype == ENCTYPE_ARCFOUR_HMAC_MD5_56) {
+    if (key->keytype == KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56) {
 	char L40[14] = "fortybits";
 
 	memcpy(L40 + 10, T, sizeof(T));
@@ -102,7 +102,7 @@ arcfour_mic_key(krb5_context context, krb5_keyblock *key,
     if (ret)
 	return ret;
 
-    key5.keytype = ENCTYPE_ARCFOUR_HMAC_MD5;
+    key5.keytype = KRB5_ENCTYPE_ARCFOUR_HMAC_MD5;
     key5.keyvalue = cksum_k5.checksum;
 
     cksum_k6.checksum.data = key6_data;
@@ -114,30 +114,73 @@ arcfour_mic_key(krb5_context context, krb5_keyblock *key,
 
 
 static krb5_error_code
-arcfour_mic_cksum(krb5_context context,
-		  krb5_keyblock *key, unsigned usage,
-		  u_char *sgn_cksum, size_t sgn_cksum_sz,
-		  const u_char *v1, size_t l1,
-		  const void *v2, size_t l2,
-		  const void *v3, size_t l3)
+arcfour_mic_cksum_iov(krb5_context context,
+		      krb5_keyblock *key, unsigned usage,
+		      u_char *sgn_cksum, size_t sgn_cksum_sz,
+		      const u_char *v1, size_t l1,
+		      const void *v2, size_t l2,
+		      const gss_iov_buffer_desc *iov,
+		      int iov_count,
+		      const gss_iov_buffer_desc *padding)
 {
     Checksum CKSUM;
     u_char *ptr;
     size_t len;
+    size_t ofs = 0;
+    int i;
     krb5_crypto crypto;
     krb5_error_code ret;
 
     assert(sgn_cksum_sz == 8);
 
-    len = l1 + l2 + l3;
+    len = l1 + l2;
+
+    for (i=0; i < iov_count; i++) {
+	switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	case GSS_IOV_BUFFER_TYPE_DATA:
+	case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+	    break;
+	default:
+	    continue;
+	}
+
+	len += iov[i].buffer.length;
+    }
+
+    if (padding) {
+	len += padding->buffer.length;
+    }
 
     ptr = malloc(len);
     if (ptr == NULL)
 	return ENOMEM;
 
-    memcpy(ptr, v1, l1);
-    memcpy(ptr + l1, v2, l2);
-    memcpy(ptr + l1 + l2, v3, l3);
+    memcpy(ptr + ofs, v1, l1);
+    ofs += l1;
+    memcpy(ptr + ofs, v2, l2);
+    ofs += l2;
+
+    for (i=0; i < iov_count; i++) {
+	switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	case GSS_IOV_BUFFER_TYPE_DATA:
+	case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+	    break;
+	default:
+	    continue;
+	}
+
+	memcpy(ptr + ofs,
+	       iov[i].buffer.value,
+	       iov[i].buffer.length);
+	ofs += iov[i].buffer.length;
+    }
+
+    if (padding) {
+	memcpy(ptr + ofs,
+	       padding->buffer.value,
+	       padding->buffer.length);
+	ofs += padding->buffer.length;
+    }
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret) {
@@ -151,6 +194,7 @@ arcfour_mic_cksum(krb5_context context,
 			       0,
 			       ptr, len,
 			       &CKSUM);
+    memset(ptr, 0, len);
     free(ptr);
     if (ret == 0) {
 	memcpy(sgn_cksum, CKSUM.checksum.data, sgn_cksum_sz);
@@ -159,6 +203,26 @@ arcfour_mic_cksum(krb5_context context,
     krb5_crypto_destroy(context, crypto);
 
     return ret;
+}
+
+static krb5_error_code
+arcfour_mic_cksum(krb5_context context,
+		  krb5_keyblock *key, unsigned usage,
+		  u_char *sgn_cksum, size_t sgn_cksum_sz,
+		  const u_char *v1, size_t l1,
+		  const void *v2, size_t l2,
+		  const void *v3, size_t l3)
+{
+    gss_iov_buffer_desc iov;
+
+    iov.type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+    iov.buffer.value = rk_UNCONST(v3);
+    iov.buffer.length = l3;
+
+    return arcfour_mic_cksum_iov(context, key, usage,
+				 sgn_cksum, sgn_cksum_sz,
+				 v1, l1, v2, l2,
+				 &iov, 1, NULL);
 }
 
 
@@ -760,5 +824,565 @@ _gssapi_wrap_size_arcfour(OM_uint32 *minor_status,
 
     krb5_crypto_destroy(context, crypto);
 
+    return GSS_S_COMPLETE;
+}
+
+OM_uint32
+_gssapi_wrap_iov_length_arcfour(OM_uint32 *minor_status,
+				gsskrb5_ctx ctx,
+				krb5_context context,
+				int conf_req_flag,
+				gss_qop_t qop_req,
+				int *conf_state,
+				gss_iov_buffer_desc *iov,
+				int iov_count)
+{
+    OM_uint32 major_status;
+    size_t data_len = 0;
+    int i;
+    gss_iov_buffer_desc *header = NULL;
+    gss_iov_buffer_desc *padding = NULL;
+    gss_iov_buffer_desc *trailer = NULL;
+
+    *minor_status = 0;
+
+    for (i = 0; i < iov_count; i++) {
+	switch(GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	case GSS_IOV_BUFFER_TYPE_EMPTY:
+	    break;
+	case GSS_IOV_BUFFER_TYPE_DATA:
+	    data_len += iov[i].buffer.length;
+	    break;
+	case GSS_IOV_BUFFER_TYPE_HEADER:
+	    if (header != NULL) {
+		*minor_status = EINVAL;
+		return GSS_S_FAILURE;
+	    }
+	    header = &iov[i];
+	    break;
+	case GSS_IOV_BUFFER_TYPE_TRAILER:
+	    if (trailer != NULL) {
+		*minor_status = EINVAL;
+		return GSS_S_FAILURE;
+	    }
+	    trailer = &iov[i];
+	    break;
+	case GSS_IOV_BUFFER_TYPE_PADDING:
+	    if (padding != NULL) {
+		*minor_status = EINVAL;
+		return GSS_S_FAILURE;
+	    }
+	    padding = &iov[i];
+	    break;
+	case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+	    break;
+	default:
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
+    }
+
+    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    if (major_status != GSS_S_COMPLETE) {
+	    return major_status;
+    }
+
+    if (IS_DCE_STYLE(ctx)) {
+	size_t len = GSS_ARCFOUR_WRAP_TOKEN_SIZE;
+	size_t total_len;
+	_gssapi_encap_length(len, &len, &total_len, GSS_KRB5_MECHANISM);
+	header->buffer.length = total_len;
+    } else {
+	size_t len;
+	size_t total_len;
+	if (padding) {
+	    data_len += 1; /* padding */
+	}
+	len = data_len + GSS_ARCFOUR_WRAP_TOKEN_SIZE;
+	_gssapi_encap_length(len, &len, &total_len, GSS_KRB5_MECHANISM);
+	header->buffer.length = total_len - data_len;
+    }
+
+    if (trailer) {
+	trailer->buffer.length = 0;
+    }
+
+    if (padding) {
+	padding->buffer.length = 1;
+    }
+
+    return GSS_S_COMPLETE;
+}
+
+OM_uint32
+_gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
+			 gsskrb5_ctx ctx,
+			 krb5_context context,
+			 int conf_req_flag,
+			 int *conf_state,
+			 gss_iov_buffer_desc *iov,
+			 int iov_count,
+			 krb5_keyblock *key)
+{
+    OM_uint32 major_status, junk;
+    gss_iov_buffer_desc *header, *padding, *trailer;
+    krb5_error_code kret;
+    int32_t seq_number;
+    u_char Klocaldata[16], k6_data[16], *p, *p0;
+    size_t make_len = 0;
+    size_t header_len = 0;
+    size_t data_len = 0;
+    krb5_keyblock Klocal;
+    int i;
+
+    header = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_HEADER);
+    padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
+    trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
+
+    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    if (major_status != GSS_S_COMPLETE) {
+	return major_status;
+    }
+
+    for (i = 0; i < iov_count; i++) {
+	switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	case GSS_IOV_BUFFER_TYPE_DATA:
+	    break;
+	default:
+	    continue;
+	}
+
+	data_len += iov[i].buffer.length;
+    }
+
+    if (padding) {
+	data_len += 1;
+    }
+
+    if (IS_DCE_STYLE(ctx)) {
+	size_t unwrapped_len;
+	unwrapped_len = GSS_ARCFOUR_WRAP_TOKEN_SIZE;
+	_gssapi_encap_length(unwrapped_len,
+			     &make_len,
+			     &header_len,
+			     GSS_KRB5_MECHANISM);
+    } else {
+	size_t unwrapped_len;
+	unwrapped_len = GSS_ARCFOUR_WRAP_TOKEN_SIZE + data_len;
+	_gssapi_encap_length(unwrapped_len,
+			     &make_len,
+			     &header_len,
+			     GSS_KRB5_MECHANISM);
+	header_len -= data_len;
+    }
+
+    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+	major_status = _gk_allocate_buffer(minor_status, header,
+					   header_len);
+	if (major_status != GSS_S_COMPLETE)
+	    goto failure;
+    } else if (header->buffer.length < header_len) {
+	*minor_status = KRB5_BAD_MSIZE;
+	major_status = GSS_S_FAILURE;
+	goto failure;
+    } else {
+	header->buffer.length = header_len;
+    }
+
+    if (padding) {
+	if (GSS_IOV_BUFFER_FLAGS(padding->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+	    major_status = _gk_allocate_buffer(minor_status, padding, 1);
+	    if (major_status != GSS_S_COMPLETE)
+		goto failure;
+	} else if (padding->buffer.length < 1) {
+	    *minor_status = KRB5_BAD_MSIZE;
+	    major_status = GSS_S_FAILURE;
+	    goto failure;
+	} else {
+	    padding->buffer.length = 1;
+	}
+	memset(padding->buffer.value, 1, 1);
+    }
+
+    if (trailer) {
+	trailer->buffer.length = 0;
+	trailer->buffer.value = NULL;
+    }
+
+    p0 = _gssapi_make_mech_header(header->buffer.value,
+				  make_len,
+				  GSS_KRB5_MECHANISM);
+    p = p0;
+
+    *p++ = 0x02; /* TOK_ID */
+    *p++ = 0x01;
+    *p++ = 0x11; /* SGN_ALG */
+    *p++ = 0x00;
+    if (conf_req_flag) {
+	*p++ = 0x10; /* SEAL_ALG */
+	*p++ = 0x00;
+    } else {
+	*p++ = 0xff; /* SEAL_ALG */
+	*p++ = 0xff;
+    }
+    *p++ = 0xff; /* Filler */
+    *p++ = 0xff;
+
+    p = NULL;
+
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    krb5_auth_con_getlocalseqnumber(context,
+				    ctx->auth_context,
+				    &seq_number);
+    _gsskrb5_encode_be_om_uint32(seq_number, p0 + 8);
+
+    krb5_auth_con_setlocalseqnumber(context,
+				    ctx->auth_context,
+				    ++seq_number);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+
+    memset(p0 + 8 + 4,
+           (ctx->more_flags & LOCAL) ? 0 : 0xff,
+           4);
+
+    krb5_generate_random_block(p0 + 24, 8); /* fill in Confounder */
+
+    /* Sign Data */
+    kret = arcfour_mic_cksum_iov(context,
+				 key, KRB5_KU_USAGE_SEAL,
+				 p0 + 16, 8, /* SGN_CKSUM */
+				 p0, 8, /* TOK_ID, SGN_ALG, SEAL_ALG, Filler */
+				 p0 + 24, 8, /* Confounder */
+				 iov, iov_count, /* Data + SignOnly */
+				 padding); /* padding */
+    if (kret) {
+	*minor_status = kret;
+	major_status = GSS_S_FAILURE;
+	goto failure;
+    }
+
+    Klocal.keytype = key->keytype;
+    Klocal.keyvalue.data = Klocaldata;
+    Klocal.keyvalue.length = sizeof(Klocaldata);
+
+    for (i = 0; i < 16; i++) {
+	Klocaldata[i] = ((u_char *)key->keyvalue.data)[i] ^ 0xF0;
+    }
+    kret = arcfour_mic_key(context, &Klocal,
+			   p0 + 8, 4, /* SND_SEQ */
+			   k6_data, sizeof(k6_data));
+    memset(Klocaldata, 0, sizeof(Klocaldata));
+    if (kret) {
+	*minor_status = kret;
+	major_status = GSS_S_FAILURE;
+	goto failure;
+    }
+
+    if (conf_req_flag) {
+	EVP_CIPHER_CTX rc4_key;
+
+	EVP_CIPHER_CTX_init(&rc4_key);
+	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+
+	/* Confounder */
+	EVP_Cipher(&rc4_key, p0 + 24, p0 + 24, 8);
+
+	/* Seal Data */
+	for (i=0; i < iov_count; i++) {
+	    switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	    case GSS_IOV_BUFFER_TYPE_DATA:
+		break;
+	    default:
+		continue;
+	    }
+
+	    EVP_Cipher(&rc4_key, iov[i].buffer.value,
+		       iov[i].buffer.value, iov[i].buffer.length);
+	}
+
+	/* Padding */
+	if (padding) {
+	    EVP_Cipher(&rc4_key, padding->buffer.value,
+		       padding->buffer.value, padding->buffer.length);
+	}
+
+	EVP_CIPHER_CTX_cleanup(&rc4_key);
+    }
+    memset(k6_data, 0, sizeof(k6_data));
+
+    kret = arcfour_mic_key(context, key,
+			   p0 + 16, 8, /* SGN_CKSUM */
+			   k6_data, sizeof(k6_data));
+    if (kret) {
+	*minor_status = kret;
+	major_status = GSS_S_FAILURE;
+        return major_status;
+    }
+
+    {
+	EVP_CIPHER_CTX rc4_key;
+
+	EVP_CIPHER_CTX_init(&rc4_key);
+	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(&rc4_key, p0 + 8, p0 + 8, 8); /* SND_SEQ */
+	EVP_CIPHER_CTX_cleanup(&rc4_key);
+
+	memset(k6_data, 0, sizeof(k6_data));
+    }
+
+    if (conf_state)
+	*conf_state = conf_req_flag;
+
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
+
+failure:
+
+    gss_release_iov_buffer(&junk, iov, iov_count);
+
+    return major_status;
+}
+
+OM_uint32
+_gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
+			   gsskrb5_ctx ctx,
+			   krb5_context context,
+			   int *pconf_state,
+			   gss_qop_t *pqop_state,
+			   gss_iov_buffer_desc *iov,
+			   int iov_count,
+			   krb5_keyblock *key)
+{
+    OM_uint32 major_status;
+    gss_iov_buffer_desc *header, *padding, *trailer;
+    krb5_keyblock Klocal;
+    uint8_t Klocaldata[16];
+    uint8_t k6_data[16], snd_seq[8], Confounder[8];
+    uint8_t cksum_data[8];
+    uint8_t *_p = NULL;
+    const uint8_t *p, *p0;
+    size_t verify_len = 0;
+    uint32_t seq_number;
+    size_t hlen = 0;
+    int conf_state;
+    int cmp;
+    size_t i;
+    krb5_error_code kret;
+    OM_uint32 ret;
+
+    if (pconf_state != NULL) {
+	*pconf_state = 0;
+    }
+    if (pqop_state != NULL) {
+	*pqop_state = 0;
+    }
+
+    header = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_HEADER);
+    padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
+    trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
+
+    /* Check if the packet is correct */
+    major_status = _gk_verify_buffers(minor_status,
+				  ctx,
+				  header,
+				  padding,
+				  trailer);
+    if (major_status != GSS_S_COMPLETE) {
+	return major_status;
+    }
+
+    if (padding != NULL && padding->buffer.length != 1) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+    }
+
+    if (IS_DCE_STYLE(context)) {
+	verify_len = GSS_ARCFOUR_WRAP_TOKEN_SIZE +
+		     GSS_ARCFOUR_WRAP_TOKEN_DCE_DER_HEADER_SIZE;
+	if (header->buffer.length > verify_len) {
+	    return GSS_S_BAD_MECH;
+	}
+    } else {
+	verify_len = header->buffer.length;
+    }
+    _p = header->buffer.value;
+
+    ret = _gssapi_verify_mech_header(&_p,
+				     verify_len,
+				     GSS_KRB5_MECHANISM);
+    if (ret) {
+	return ret;
+    }
+    p0 = _p;
+
+    /* length of mech header */
+    hlen = (p0 - (uint8_t *)header->buffer.value);
+    hlen += GSS_ARCFOUR_WRAP_TOKEN_SIZE;
+
+    if (hlen > header->buffer.length) {
+	return GSS_S_BAD_MECH;
+    }
+
+    p = p0;
+
+    if (memcmp(p, "\x02\x01", 2) != 0)
+	return GSS_S_BAD_SIG;
+    p += 2;
+    if (memcmp(p, "\x11\x00", 2) != 0) /* SGN_ALG = HMAC MD5 ARCFOUR */
+	return GSS_S_BAD_SIG;
+    p += 2;
+
+    if (memcmp (p, "\x10\x00", 2) == 0)
+	conf_state = 1;
+    else if (memcmp (p, "\xff\xff", 2) == 0)
+	conf_state = 0;
+    else
+	return GSS_S_BAD_SIG;
+
+    p += 2;
+    if (memcmp (p, "\xff\xff", 2) != 0)
+	return GSS_S_BAD_MIC;
+    p = NULL;
+
+    kret = arcfour_mic_key(context,
+			   key,
+			   p0 + 16, /* SGN_CKSUM */
+			   8,       /* SGN_CKSUM_LEN */
+			   k6_data,
+			   sizeof(k6_data));
+    if (kret) {
+	*minor_status = kret;
+	return GSS_S_FAILURE;
+    }
+
+    {
+	EVP_CIPHER_CTX rc4_key;
+
+	EVP_CIPHER_CTX_init(&rc4_key);
+	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(&rc4_key, snd_seq, p0 + 8, 8); /* SND_SEQ */
+	EVP_CIPHER_CTX_cleanup(&rc4_key);
+
+	memset(k6_data, 0, sizeof(k6_data));
+    }
+
+    _gsskrb5_decode_be_om_uint32(snd_seq, &seq_number);
+
+    if (ctx->more_flags & LOCAL) {
+	cmp = memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4);
+    } else {
+	cmp = memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4);
+    }
+    if (cmp != 0) {
+	*minor_status = 0;
+	return GSS_S_BAD_MIC;
+    }
+
+    if (ctx->more_flags & LOCAL) {
+	cmp = memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4);
+    } else {
+	cmp = memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4);
+    }
+    if (cmp != 0) {
+	*minor_status = 0;
+	return GSS_S_BAD_MIC;
+    }
+
+    /* keyblock */
+    Klocal.keytype = key->keytype;
+    Klocal.keyvalue.data = Klocaldata;
+    Klocal.keyvalue.length = sizeof(Klocaldata);
+
+    for (i = 0; i < 16; i++) {
+	Klocaldata[i] = ((u_char *)key->keyvalue.data)[i] ^ 0xF0;
+    }
+
+    kret = arcfour_mic_key(context,
+			   &Klocal,
+			   snd_seq,
+			   4,
+			   k6_data, sizeof(k6_data));
+    memset(Klocaldata, 0, sizeof(Klocaldata));
+    if (kret) {
+	*minor_status = kret;
+	return GSS_S_FAILURE;
+    }
+
+    if (conf_state == 1) {
+	EVP_CIPHER_CTX rc4_key;
+
+	EVP_CIPHER_CTX_init(&rc4_key);
+	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+
+	/* Confounder */
+	EVP_Cipher(&rc4_key, Confounder, p0 + 24, 8);
+
+	/* Data */
+	for (i = 0; i < iov_count; i++) {
+	    switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	    case GSS_IOV_BUFFER_TYPE_DATA:
+		break;
+	    default:
+		continue;
+	    }
+
+	    EVP_Cipher(&rc4_key, iov[i].buffer.value,
+		       iov[i].buffer.value, iov[i].buffer.length);
+	}
+
+	/* Padding */
+	if (padding) {
+	    EVP_Cipher(&rc4_key, padding->buffer.value,
+		       padding->buffer.value, padding->buffer.length);
+	}
+
+	EVP_CIPHER_CTX_cleanup(&rc4_key);
+    } else {
+	/* Confounder */
+	memcpy(Confounder, p0 + 24, 8);
+    }
+    memset(k6_data, 0, sizeof(k6_data));
+
+    /* Prepare the buffer for signing */
+    kret = arcfour_mic_cksum_iov(context,
+				 key, KRB5_KU_USAGE_SEAL,
+				 cksum_data, sizeof(cksum_data),
+				 p0, 8,
+				 Confounder, sizeof(Confounder),
+				 iov, iov_count,
+				 padding);
+    if (kret) {
+	*minor_status = kret;
+	return GSS_S_FAILURE;
+    }
+
+    cmp = memcmp(cksum_data, p0 + 16, 8); /* SGN_CKSUM */
+    if (cmp != 0) {
+	*minor_status = 0;
+	return GSS_S_BAD_MIC;
+    }
+
+    if (padding) {
+	size_t plen;
+
+	ret = _gssapi_verify_pad(&padding->buffer, 1, &plen);
+	if (ret) {
+	    *minor_status = 0;
+	    return ret;
+	}
+    }
+
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    ret = _gssapi_msg_order_check(ctx->order, seq_number);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    if (ret != 0) {
+	return ret;
+    }
+
+    if (pconf_state) {
+	*pconf_state = conf_state;
+    }
+
+    *minor_status = 0;
     return GSS_S_COMPLETE;
 }

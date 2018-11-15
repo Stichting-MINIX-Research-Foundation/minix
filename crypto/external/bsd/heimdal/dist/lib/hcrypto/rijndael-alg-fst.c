@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*	NetBSD: rijndael-alg-fst.c,v 1.5 2001/11/13 01:40:10 lukem Exp	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.10 2003/07/15 10:47:16 itojun Exp $	*/
@@ -30,10 +30,9 @@
 
 /* "NetBSD: rijndael-alg-fst.c,v 1.5 2001/11/13 01:40:10 lukem Exp" */
 
-#include "config.h"
+#include <config.h>
+#include <krb5/roken.h>
 
-
-#include <stdlib.h>
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif

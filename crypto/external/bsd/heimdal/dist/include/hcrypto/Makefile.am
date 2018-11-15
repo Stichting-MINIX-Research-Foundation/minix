@@ -25,6 +25,7 @@ CLEANFILES =		\
 	rc4.h		\
 	rsa.h		\
 	sha.h		\
-	ui.h
+	ui.h		\
+	undef.h
 
 EXTRA_DIST = NTMakefile

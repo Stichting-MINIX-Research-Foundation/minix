@@ -67,7 +67,7 @@ oid	base	GSS_SPNEGO_MECHANISM			1.3.6.1.5.5.2
 
 # /* From Luke Howard */
 
-oid	base	GSS_C_PEER_HAS_UPDATED_SPNEGO		1.3.6.1.4.1.9513.19.5
+oid	base	GSS_C_PEER_HAS_UPDATED_SPNEGO		1.3.6.1.4.1.5322.19.5
 
 #/*
 # * OID mappings with name and short description and and slightly longer description

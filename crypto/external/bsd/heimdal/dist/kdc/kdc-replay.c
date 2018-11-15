@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-replay.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: kdc-replay.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -39,11 +39,11 @@ static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
-    { "version",   0,	arg_flag, &version_flag },
-    { "help",     'h',	arg_flag, &help_flag }
+    { "version",   0,	arg_flag, &version_flag, NULL, NULL },
+    { "help",     'h',	arg_flag, &help_flag,    NULL, NULL }
 };
 
-const static int num_args = sizeof(args) / sizeof(args[0]);
+static const int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
 usage(int ret)

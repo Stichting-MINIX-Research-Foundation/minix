@@ -38,6 +38,9 @@ srcdir="@srcdir@"
 objdir="@objdir@"
 EGREP="@EGREP@"
 
+default_db_type=@default_db_type@
+db_type=${1:-${default_db_type}}
+
 # If there is no useful db support compile in, disable test
 ./have-db || exit 77
 
@@ -46,7 +49,7 @@ R=EXAMPLE.ORG
 kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
 iproplog="${TESTS_ENVIRONMENT} ../../lib/kadm5/iprop-log"
 
-KRB5_CONFIG="${objdir}/krb5.conf"
+KRB5_CONFIG="${objdir}/krb5.conf-${db_type}"
 export KRB5_CONFIG
 
 rm -f current-db*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sample_passwd_check.c,v 1.1.1.2 2011/04/14 14:09:17 elric Exp $	*/
+/*	$NetBSD: sample_passwd_check.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan

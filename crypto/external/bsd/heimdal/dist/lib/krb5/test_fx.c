@@ -1,4 +1,4 @@
-/*	$NetBSD: test_fx.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: test_fx.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -84,7 +84,30 @@ struct {
 	"\x88\xbd\xb2\xa9\xf\x3e\x52\x5a\xb0\x5f\x68\xc5\x43\x9a\x4d\x5e"
 	"\x9c\x2b\xfd\x2b\x02\x24\xde\x39\xb5\x82\xf4\xbb\x05\xfe\x2\x2e",
 	32
-    }
+    },
+    {
+	"key1", "a", ETYPE_ARCFOUR_HMAC_MD5,
+	"key2", "b", ETYPE_ARCFOUR_HMAC_MD5,
+	ETYPE_ARCFOUR_HMAC_MD5,
+        "\x24\xd7\xf6\xb6\xba\xe4\xe5\xc0\x0d\x20\x82\xc5\xeb\xab\x36\x72",
+	16
+    },
+    /* We don't yet have a PRF for 1DES in Heimdal */
+    {
+	"key1", "a", ETYPE_DES_CBC_CRC,
+	"key2", "b", ETYPE_DES_CBC_CRC,
+	ETYPE_DES_CBC_CRC,
+        "\x43\xba\xe3\x73\x8c\x94\x67\xe6",
+	8
+    },
+    {
+	"key1", "a", ETYPE_DES3_CBC_SHA1,
+	"key2", "b", ETYPE_DES3_CBC_SHA1,
+	ETYPE_DES3_CBC_SHA1,
+        "\xe5\x8f\x9e\xb6\x43\x86\x2c\x13\xad\x38\xe5\x29\x31\x34\x62\xa7"
+        "\xf7\x3e\x62\x83\x4f\xe5\x4a\x01",
+	24
+    },
 };
 
 
@@ -97,6 +120,11 @@ test_cf2(krb5_context context)
     krb5_keyblock k1, k2, k3;
     krb5_crypto c1, c2;
     unsigned int i;
+    unsigned int errors = 0;
+
+    ret = krb5_allow_weak_crypto(context, 1);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_allow_weak_crypto");
 
     for (i = 0; i < sizeof(cf2)/sizeof(cf2[0]); i++) {
 	pw.data = cf2[i].p1;
@@ -142,14 +170,26 @@ test_cf2(krb5_context context)
 	p2.length = strlen(cf2[i].pepper2);
 
 	ret = krb5_crypto_fx_cf2(context, c1, c2, &p1, &p2, cf2[i].e3, &k3);
-	if (ret)
+        if (ret == KRB5_PROG_ETYPE_NOSUPP) {
+            krb5_warn(context, ret, "KRB-FX-CF2 not supported for enctype %d",
+                      cf2[i].e1);
+            continue;
+        } else if (ret) {
 	    krb5_err(context, 1, ret, "krb5_crypto_fx_cf2");
+        }
 
-	if (k3.keytype != cf2[i].e3)
-	    krb5_errx(context, 1, "length not right");
+	if (k3.keytype != cf2[i].e3) {
+            errors++;
+	    krb5_warnx(context, "length not right for enctype %d", cf2[i].e3);
+            continue;
+        }
 	if (k3.keyvalue.length != cf2[i].len ||
-	    memcmp(k3.keyvalue.data, cf2[i].key, cf2[i].len) != 0)
-	    krb5_errx(context, 1, "key not same");
+	    memcmp(k3.keyvalue.data, cf2[i].key, cf2[i].len) != 0) {
+            errors++;
+	    krb5_warnx(context, "key not same for enctypes %d %d %d",
+                       cf2[i].e1, cf2[i].e2, cf2[i].e3);
+            continue;
+        }
 
 	krb5_crypto_destroy(context, c1);
 	krb5_crypto_destroy(context, c2);
@@ -158,6 +198,9 @@ test_cf2(krb5_context context)
 	krb5_free_keyblock_contents(context, &k2);
 	krb5_free_keyblock_contents(context, &k3);
     }
+
+    if (errors)
+        krb5_errx(context, 1, "%u KRB-FX-CF2 vectors failed", errors);
 }
 
 static int version_flag = 0;

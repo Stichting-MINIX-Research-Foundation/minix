@@ -1,0 +1,153 @@
+#!/bin/sh
+#
+# Copyright (c) 2007 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden). 
+# All rights reserved. 
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions 
+# are met: 
+#
+# 1. Redistributions of source code must retain the above copyright 
+#    notice, this list of conditions and the following disclaimer. 
+#
+# 2. Redistributions in binary form must reproduce the above copyright 
+#    notice, this list of conditions and the following disclaimer in the 
+#    documentation and/or other materials provided with the distribution. 
+#
+# 3. Neither the name of the Institute nor the names of its contributors 
+#    may be used to endorse or promote products derived from this software 
+#    without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE. 
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="."
+
+. ${env_setup}
+
+srcdir="${top_srcdir}/tests/kdc"
+test_alname="${test_alname} --simple"
+
+rm -f localname
+
+check_localname() {
+    stderr=
+    if test "$2" -ne 0; then
+	stderr="2>/dev/null"
+    fi
+    eval ${test_alname} "'$1'" > localname $stderr
+    status=$?
+    if test $status -ne "$2"; then
+	echo "Unexpected exit code from test_alname $1: $status"
+	exit 1
+    fi
+    if test $status -ne 0; then
+	return 0
+    fi
+    read lname < localname
+    if test "X$lname" != "X$3"; then
+	echo "Unexpected mapping of $1: $lname"
+	exit 1
+    fi
+    return 0
+}
+
+R=TEST.H5L.SE
+R2=TEST2.H5L.SE
+R3=TEST3.H5L.SE
+R4=TEST4.H5L.SE
+
+KRB5_CONFIG="${objdir}/krb5-authz.conf"
+export KRB5_CONFIG
+
+echo "Checking 1-component principal names in default realms"
+check_localname mapped1@${R} 0 foo || exit 1
+check_localname mapped2@${R} 0 bar || exit 1
+check_localname mapped1@${R2} 0 m1 || exit 1
+check_localname mapped2@${R2} 0 m2 || exit 1
+check_localname mapped1@${R3} 0 mapped1 || exit 1
+check_localname mapped2@${R3} 0 mapped2 || exit 1
+check_localname notmapped1@${R} 0 notmapped1 || exit 1
+check_localname notmapped1@${R2} 0 notmapped1 || exit 1
+check_localname notmapped1@${R3} 0 notmapped1 || exit 1
+
+echo "Checking 1-component principal names in non-default realm"
+check_localname mapped1@${R4} 1 || exit 1
+check_localname notmapped1@${R4} 1 || exit 1
+
+echo "Checking 2-component principal names"
+check_localname foo/mapped1@${R} 0 foo || exit 1
+check_localname foo/mapped2@${R} 0 bar || exit 1
+check_localname bar/mapped1@${R2} 0 foobar || exit 1
+check_localname bar/mapped2@${R2} 0 foobaz || exit 1
+check_localname foo/mapped1@${R3} 1 || exit 1
+check_localname bar/mapped1@${R3} 1 || exit 1
+check_localname foo/notmapped1@${R} 1 || exit 1
+check_localname bar/notmapped1@${R2} 1 || exit 1
+
+echo "Checking 2-component principal names in non-default realm"
+check_localname foo/mapped1@${R4} 1 || exit 1
+check_localname bar/mapped1@${R4} 1 || exit 1
+check_localname foo/notmapped1@${R4} 1 || exit 1
+check_localname bar/notmapped1@${R4} 1 || exit 1
+
+echo "Checking for overflow"
+test_alname="${test_alname} --simple --lname-size=1"
+check_localname mapped1@${R} 3 || exit 1
+check_localname mapped2@${R} 3 || exit 1
+check_localname mapped1@${R2} 3 || exit 1
+check_localname mapped2@${R2} 3 || exit 1
+check_localname mapped1@${R3} 3 || exit 1
+check_localname mapped2@${R3} 3 || exit 1
+
+echo "Checking krb5_kuserok()"
+${test_kuserok} random-princ@RANDOM-REALM foo > /dev/null || exit 1
+${test_kuserok} mapped1@${R} foo > /dev/null || exit 1
+${test_kuserok} mapped1@${R2} m1 > /dev/null || exit 1
+${test_kuserok} notmapped1@${R3} notmapped1 > /dev/null || exit 1
+${test_kuserok} this-better-not-exist@NOR-THIS foo > /dev/null && exit 1
+
+# If the user running this test has a ~/.k5login or .k5logind, test
+# based on their content
+if test -n "${HOME}" -a -n "${USER:-${LOGNAME}}" -a -s "${HOME}/.k5login"; then
+    echo "Checking ~/.k5login"
+    while read princ; do
+	${test_kuserok} "${princ}" "${USER:-${LOGNAME}}" > /dev/null || exit 1
+    done < "${HOME}/.k5login" || exit 1
+fi
+if test -n "${HOME}" -a -n "${USER:-${LOGNAME}}" -a -d "${HOME}/.k5login.d"; then
+    echo "Checking ~/.k5login.d"
+    ls -f "${HOME}/.k5login.d" | egrep -v '^(\.|\.\.|#.*|.*~|\.*.sw.)$' | while read f; do
+	f="${HOME}/.k5login.d/$f"
+	test -d "${f}" && continue
+	while read princ; do
+	    ${test_kuserok} "${princ}" "${USER:-${LOGNAME}}" > /dev/null || exit 1
+	done < "${f}" || exit 1
+    done || exit 1
+fi
+
+KRB5_CONFIG="${objdir}/krb5-authz2.conf"
+export KRB5_CONFIG
+
+echo "Checking krb5_kuserok() (with authoritative k5login files)"
+${test_kuserok} random-princ@RANDOM-REALM foo > /dev/null || exit 1
+${test_kuserok} mapped1@${R} foo > /dev/null && exit 1
+${test_kuserok} mapped1@${R2} m1 > /dev/null || exit 1
+${test_kuserok} notmapped1@${R3} notmapped1 > /dev/null || exit 1
+${test_kuserok} this-better-not-exist@NOR-THIS foo > /dev/null && exit 1
+
+rm -f messages.log
+
+exit 0

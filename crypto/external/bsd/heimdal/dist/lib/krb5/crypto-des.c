@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: crypto-des.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ krb5_DES_random_to_key(krb5_context context,
     memcpy(k, data, key->keyvalue.length);
     DES_set_odd_parity(k);
     if(DES_is_weak_key(k))
-	_krb5_xor(k, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+	_krb5_xor8(*k, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 }
 
 static struct _krb5_key_type keytype_des_old = {
@@ -290,6 +290,7 @@ DES_PCBC_encrypt_key_ivec(krb5_context context,
 struct _krb5_encryption_type _krb5_enctype_des_cbc_crc = {
     ETYPE_DES_CBC_CRC,
     "des-cbc-crc",
+    NULL,
     8,
     8,
     8,
@@ -305,6 +306,7 @@ struct _krb5_encryption_type _krb5_enctype_des_cbc_crc = {
 struct _krb5_encryption_type _krb5_enctype_des_cbc_md4 = {
     ETYPE_DES_CBC_MD4,
     "des-cbc-md4",
+    NULL,
     8,
     8,
     8,
@@ -320,6 +322,7 @@ struct _krb5_encryption_type _krb5_enctype_des_cbc_md4 = {
 struct _krb5_encryption_type _krb5_enctype_des_cbc_md5 = {
     ETYPE_DES_CBC_MD5,
     "des-cbc-md5",
+    NULL,
     8,
     8,
     8,
@@ -335,6 +338,7 @@ struct _krb5_encryption_type _krb5_enctype_des_cbc_md5 = {
 struct _krb5_encryption_type _krb5_enctype_des_cbc_none = {
     ETYPE_DES_CBC_NONE,
     "des-cbc-none",
+    NULL,
     8,
     8,
     0,
@@ -350,6 +354,7 @@ struct _krb5_encryption_type _krb5_enctype_des_cbc_none = {
 struct _krb5_encryption_type _krb5_enctype_des_cfb64_none = {
     ETYPE_DES_CFB64_NONE,
     "des-cfb64-none",
+    NULL,
     1,
     1,
     0,
@@ -365,6 +370,7 @@ struct _krb5_encryption_type _krb5_enctype_des_cfb64_none = {
 struct _krb5_encryption_type _krb5_enctype_des_pcbc_none = {
     ETYPE_DES_PCBC_NONE,
     "des-pcbc-none",
+    NULL,
     8,
     8,
     0,

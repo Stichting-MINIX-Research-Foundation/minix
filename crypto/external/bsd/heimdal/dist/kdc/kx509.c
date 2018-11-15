@@ -1,4 +1,4 @@
-/*	$NetBSD: kx509.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: kx509.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -145,21 +145,53 @@ build_certificate(krb5_context context,
 		  krb5_principal principal,
 		  krb5_data *certificate)
 {
+    char *name = NULL;
+    const char *kx509_ca;
     hx509_ca_tbs tbs = NULL;
     hx509_env env = NULL;
     hx509_cert cert = NULL;
     hx509_cert signer = NULL;
+    krb5_boolean def_bool;
     int ret;
 
-    if (krb5_principal_get_comp_string(context, principal, 1) != NULL) {
-	kdc_log(context, config, 0, "Principal is not a user");
-	return EINVAL;
-    }
-
-    ret = hx509_env_add(context->hx509ctx, &env, "principal-name",
-			krb5_principal_get_comp_string(context, principal, 0));
+    ret = krb5_unparse_name_flags(context, principal,
+				  KRB5_PRINCIPAL_UNPARSE_NO_REALM,
+				  &name);
     if (ret)
 	goto out;
+
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name-without-realm",
+			name);
+    krb5_xfree(name);
+    name = NULL;
+    if (ret)
+	goto out;
+
+    /*
+     * Include the realm in the principal-name env var; the template
+     * might not use $principal-name-realm after all.
+     */
+    ret = krb5_unparse_name(context, principal, &name);
+    if (ret)
+	goto out;
+
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name",
+			name);
+    if (ret)
+	goto out;
+
+    ret = hx509_env_add(context->hx509ctx, &env, "principal-name-realm",
+			krb5_principal_get_realm(context, principal));
+    if (ret)
+	goto out;
+
+    /* Pick an issuer based on the crealm if we can */
+    kx509_ca = krb5_config_get_string(context, NULL, "kdc",
+                                      krb5_principal_get_realm(context,
+                                                               principal),
+                                      "kx509_ca", NULL);
+    if (kx509_ca == NULL)
+        kx509_ca = config->kx509_ca;
 
     {
 	hx509_certs certs;
@@ -245,6 +277,19 @@ build_certificate(krb5_context context,
 	    goto out;
     }
 
+    def_bool = krb5_config_get_bool_default(context, NULL, TRUE, "kdc",
+                                            "kx509_include_pkinit_san",
+                                            NULL);
+    if (krb5_config_get_bool_default(context, NULL, def_bool, "kdc",
+                                     krb5_principal_get_realm(context,
+                                                              principal),
+                                     "kx509_include_pkinit_san",
+                                     NULL)) {
+        ret = hx509_ca_tbs_add_san_pkinit(context->hx509ctx, tbs, name);
+        if (ret)
+            goto out;
+    }
+
     hx509_ca_tbs_set_notAfter(context->hx509ctx, tbs, endtime);
 
     hx509_ca_tbs_subject_expand(context->hx509ctx, tbs, env);
@@ -262,8 +307,13 @@ build_certificate(krb5_context context,
     if (ret)
 	goto out;
 
+    /* cleanup on success */
+    krb5_xfree(name);
+
     return 0;
 out:
+    if (name)
+	krb5_xfree(name);
     if (env)
 	hx509_env_free(&env);
     if (tbs)
@@ -271,6 +321,53 @@ out:
     if (signer)
 	hx509_cert_free(signer);
     krb5_set_error_message(context, ret, "cert creation failed");
+    return ret;
+}
+
+krb5_error_code
+kdc_kx509_verify_service_principal(krb5_context context,
+				   const char *cname,
+				   krb5_principal sprincipal)
+{
+    krb5_error_code ret, aret;
+    krb5_boolean bret;
+    krb5_principal principal = NULL;
+    char *expected = NULL;
+    char localhost[MAXHOSTNAMELEN];
+
+    ret = gethostname(localhost, sizeof(localhost) - 1);
+    if (ret != 0) {
+	ret = errno;
+	krb5_set_error_message(context, ret,
+			       N_("Failed to get local hostname", ""));
+	return ret;
+    }
+    localhost[sizeof(localhost) - 1] = '\0';
+
+    ret = krb5_make_principal(context, &principal, "", "kca_service",
+			      localhost, NULL);
+    if (ret)
+	goto out;
+
+    bret = krb5_principal_compare_any_realm(context, sprincipal, principal);
+    if (bret == TRUE)
+	goto out;	/* found a match */
+
+    ret = KRB5KDC_ERR_SERVER_NOMATCH;
+
+    aret = krb5_unparse_name(context, sprincipal, &expected);
+    if (aret)
+	goto out;
+
+    krb5_set_error_message(context, ret,
+			   "User %s used wrong Kx509 service "
+			   "principal, expected: %s",
+			   cname, expected);
+
+  out:
+    krb5_xfree(expected);
+    krb5_free_principal(context, principal);
+
     return ret;
 }
 
@@ -294,6 +391,7 @@ _kdc_do_kx509(krb5_context context,
     Kx509Response rep;
     size_t size;
     krb5_keyblock *key = NULL;
+    krb5_boolean def_bool;
 
     krb5_data_zero(reply);
     memset(&rep, 0, sizeof(rep));
@@ -306,7 +404,7 @@ _kdc_do_kx509(krb5_context context,
 
     kdc_log(context, config, 0, "Kx509 request from %s", from);
 
-    ret = krb5_kt_resolve(context, "HDB:", &id);
+    ret = krb5_kt_resolve(context, "HDBGET:", &id);
     if (ret) {
 	kdc_log(context, config, 0, "Can't open database for digest");
 	goto out;
@@ -326,48 +424,29 @@ _kdc_do_kx509(krb5_context context,
     if (ret)
 	goto out;
 
+    def_bool = krb5_config_get_bool_default(context, NULL, TRUE, "kdc",
+                                            "require_initial_kca_tickets",
+                                            NULL);
+    if (!ticket->ticket.flags.initial &&
+        krb5_config_get_bool_default(context, NULL, def_bool, "kdc",
+                                      krb5_principal_get_realm(context,
+                                                               cprincipal),
+                                      "require_initial_kca_tickets", NULL)) {
+        ret = KRB5KDC_ERR_POLICY;
+        goto out;
+    }
+
     ret = krb5_unparse_name(context, cprincipal, &cname);
     if (ret)
 	goto out;
 
-    /* verify server principal */
-
-    ret = krb5_sname_to_principal(context, NULL, "kca_service",
-				  KRB5_NT_UNKNOWN, &sprincipal);
+    ret = krb5_ticket_get_server(context, ticket, &sprincipal);
     if (ret)
 	goto out;
 
-    {
-	krb5_principal principal = NULL;
-
-	ret = krb5_ticket_get_server(context, ticket, &principal);
-	if (ret)
-	    goto out;
-
-	ret = krb5_principal_compare(context, sprincipal, principal);
-	krb5_free_principal(context, principal);
-	if (ret != TRUE) {
-	    char *expected, *used;
-
-	    ret = krb5_unparse_name(context, sprincipal, &expected);
-	    if (ret)
-		goto out;
-	    ret = krb5_unparse_name(context, principal, &used);
-	    if (ret) {
-		krb5_xfree(expected);
-		goto out;
-	    }
-
-	    ret = KRB5KDC_ERR_SERVER_NOMATCH;
-	    krb5_set_error_message(context, ret,
-				   "User %s used wrong Kx509 service "
-				   "principal, expected: %s, used %s",
-				   cname, expected, used);
-	    krb5_xfree(expected);
-	    krb5_xfree(used);
-	    goto out;
-	}
-    }
+    ret = kdc_kx509_verify_service_principal(context, cname, sprincipal);
+    if (ret)
+	goto out;
 
     ret = krb5_auth_con_getkey(context, ac, &key);
     if (ret == 0 && key == NULL)
@@ -383,15 +462,15 @@ _kdc_do_kx509(krb5_context context,
 
     /* Verify that the key is encoded RSA key */
     {
-	RSAPublicKey key;
-	size_t size;
+	RSAPublicKey rsapkey;
+	size_t rsapkeysize;
 
 	ret = decode_RSAPublicKey(req->pk_key.data, req->pk_key.length,
-				  &key, &size);
+				  &rsapkey, &rsapkeysize);
 	if (ret)
 	    goto out;
-	free_RSAPublicKey(&key);
-	if (size != req->pk_key.length) {
+	free_RSAPublicKey(&rsapkey);
+	if (rsapkeysize != req->pk_key.length) {
 	    ret = ASN1_EXTRA_DATA;
 	    goto out;
 	}

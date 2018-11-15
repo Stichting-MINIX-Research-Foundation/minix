@@ -1,4 +1,4 @@
-/*	$NetBSD: copy_cred_cache.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: copy_cred_cache.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 #include <config.h>
 #include <krb5/parse_units.h>
 #include <krb5/parse_time.h>
-#include "kcc-commands.h"
+#include "heimtools-commands.h"
 
 static int32_t
 bitswap32(int32_t b)
@@ -94,72 +94,73 @@ copy_cred_cache(struct copy_cred_cache_options *opt, int argc, char **argv)
     memset(&ctx, 0, sizeof(ctx));
 
     if (opt->service_string) {
-	ret = krb5_parse_name(kcc_context, opt->service_string, &ctx.mcreds.server);
+	ret = krb5_parse_name(heimtools_context, opt->service_string, &ctx.mcreds.server);
 	if (ret)
-	    krb5_err(kcc_context, 1, ret, "%s", opt->service_string);
+	    krb5_err(heimtools_context, 1, ret, "%s", opt->service_string);
     }
     if (opt->enctype_string) {
 	krb5_enctype enctype;
-	ret = krb5_string_to_enctype(kcc_context, opt->enctype_string, &enctype);
+	ret = krb5_string_to_enctype(heimtools_context, opt->enctype_string, &enctype);
 	if (ret)
-	    krb5_err(kcc_context, 1, ret, "%s", opt->enctype_string);
+	    krb5_err(heimtools_context, 1, ret, "%s", opt->enctype_string);
 	ctx.whichfields |= KRB5_TC_MATCH_KEYTYPE;
 	ctx.mcreds.session.keytype = enctype;
     }
     if (opt->flags_string) {
-	parse_ticket_flags(kcc_context, opt->flags_string, &ctx.mcreds.flags);
+	parse_ticket_flags(heimtools_context, opt->flags_string, &ctx.mcreds.flags);
 	ctx.whichfields |= KRB5_TC_MATCH_FLAGS;
     }
     if (opt->valid_for_string) {
 	time_t t = parse_time(opt->valid_for_string, "s");
 	if(t < 0)
 	    errx(1, "unknown time \"%s\"", opt->valid_for_string);
-	ctx.mcreds.times.endtime = time(NULL) + t;
+	krb5_timeofday(heimtools_context, &ctx.mcreds.times.endtime);
+	ctx.mcreds.times.endtime += t;
 	ctx.whichfields |= KRB5_TC_MATCH_TIMES;
     }
     if (opt->fcache_version_integer)
-	krb5_set_fcache_version(kcc_context, opt->fcache_version_integer);
+	krb5_set_fcache_version(heimtools_context, opt->fcache_version_integer);
 
     if (argc == 1) {
-	from_name = krb5_cc_default_name(kcc_context);
+	from_name = krb5_cc_default_name(heimtools_context);
 	to_name = argv[0];
     } else {
 	from_name = argv[0];
 	to_name = argv[1];
     }
 
-    ret = krb5_cc_resolve(kcc_context, from_name, &from_ccache);
+    ret = krb5_cc_resolve(heimtools_context, from_name, &from_ccache);
     if (ret)
-	krb5_err(kcc_context, 1, ret, "%s", from_name);
+	krb5_err(heimtools_context, 1, ret, "%s", from_name);
 
     if (opt->krbtgt_only_flag) {
 	krb5_principal client;
-	ret = krb5_cc_get_principal(kcc_context, from_ccache, &client);
+	ret = krb5_cc_get_principal(heimtools_context, from_ccache, &client);
 	if (ret)
-	    krb5_err(kcc_context, 1, ret, "getting default principal");
-	ret = krb5_make_principal(kcc_context, &ctx.mcreds.server,
-				  krb5_principal_get_realm(kcc_context, client),
+	    krb5_err(heimtools_context, 1, ret, "getting default principal");
+	ret = krb5_make_principal(heimtools_context, &ctx.mcreds.server,
+				  krb5_principal_get_realm(heimtools_context, client),
 				  KRB5_TGS_NAME,
-				  krb5_principal_get_realm(kcc_context, client),
+				  krb5_principal_get_realm(heimtools_context, client),
 				  NULL);
 	if (ret)
-	    krb5_err(kcc_context, 1, ret, "constructing krbtgt principal");
-	krb5_free_principal(kcc_context, client);
+	    krb5_err(heimtools_context, 1, ret, "constructing krbtgt principal");
+	krb5_free_principal(heimtools_context, client);
     }
-    ret = krb5_cc_resolve(kcc_context, to_name, &to_ccache);
+    ret = krb5_cc_resolve(heimtools_context, to_name, &to_ccache);
     if (ret)
-	krb5_err(kcc_context, 1, ret, "%s", to_name);
+	krb5_err(heimtools_context, 1, ret, "%s", to_name);
 
-    ret = krb5_cc_copy_match_f(kcc_context, from_ccache, to_ccache,
+    ret = krb5_cc_copy_match_f(heimtools_context, from_ccache, to_ccache,
 			       matchfunc, &ctx, &matched);
     if (ret)
-	krb5_err(kcc_context, 1, ret, "copying cred cache");
+	krb5_err(heimtools_context, 1, ret, "copying cred cache");
 
-    krb5_cc_close(kcc_context, from_ccache);
+    krb5_cc_close(heimtools_context, from_ccache);
     if(matched == 0)
-	krb5_cc_destroy(kcc_context, to_ccache);
+	krb5_cc_destroy(heimtools_context, to_ccache);
     else
-	krb5_cc_close(kcc_context, to_ccache);
+	krb5_cc_close(heimtools_context, to_ccache);
 
     return matched == 0;
 }

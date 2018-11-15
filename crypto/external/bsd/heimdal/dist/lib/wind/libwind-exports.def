@@ -11,6 +11,7 @@ EXPORTS
 	wind_utf8ucs2_length
 	wind_ucs2utf8_length
 	wind_ucs2read
+        wind_ucs2write
 
         initialize_wind_error_table_r   ;!
 

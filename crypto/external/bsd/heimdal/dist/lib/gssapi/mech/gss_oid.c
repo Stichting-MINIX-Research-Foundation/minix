@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_oid.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_oid.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /* Generated file */
 #include "mech_locl.h"
@@ -106,10 +106,10 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_name_oid_desc = { 6, rk_UNCONST
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_description_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x66") };
 
 /* GSS_C_CRED_PASSWORD - 1.2.752.43.13.200 */
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_password_oid_desc = { 7, "\x2a\x85\x70\x2b\x0d\x81\x48" };
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_password_oid_desc = { 7, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x81\x48") };
 
 /* GSS_C_CRED_CERTIFICATE - 1.2.752.43.13.201 */
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_certificate_oid_desc = { 7, "\x2a\x85\x70\x2b\x0d\x81\x49" };
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_cred_certificate_oid_desc = { 7, rk_UNCONST("\x2a\x85\x70\x2b\x0d\x81\x49") };
 
 /* GSS_SASL_DIGEST_MD5_MECHANISM - 1.2.752.43.14.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_sasl_digest_md5_mechanism_oid_desc = { 6, rk_UNCONST("\x2a\x85\x70\x2b\x0e\x01") };
@@ -141,8 +141,8 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_ntlm_mechanism_oid_desc = { 10, rk_UNCONS
 /* GSS_SPNEGO_MECHANISM - 1.3.6.1.5.5.2 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_spnego_mechanism_oid_desc = { 6, rk_UNCONST("\x2b\x06\x01\x05\x05\x02") };
 
-/* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.9513.19.5 */
-gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9, rk_UNCONST("\x2b\x06\x01\x04\x01\xca\x29\x13\x05") };
+/* GSS_C_PEER_HAS_UPDATED_SPNEGO - 1.3.6.1.4.1.5322.19.5 */
+gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_peer_has_updated_spnego_oid_desc = { 9, rk_UNCONST("\x2b\x06\x01\x04\x01\xa9\x4a\x13\x05") };
 
 /* GSS_C_MA_MECH_CONCRETE - 1.3.6.1.5.5.13.1 */
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_mech_concrete_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x01") };
@@ -226,43 +226,43 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_compress_oid_desc = { 7, rk_UNCONST(
 gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_ma_ctx_trans_oid_desc = { 7, rk_UNCONST("\x2b\x06\x01\x05\x05\x0d\x1b") };
 
 struct _gss_oid_name_table _gss_ont_ma[] = {
-  { GSS_C_MA_COMPRESS, "GSS_C_MA_COMPRESS", "compress", "" },
+  { GSS_C_MA_AUTH_INIT, "GSS_C_MA_AUTH_INIT", "auth-init-princ", "" },
+  { GSS_C_MA_AUTH_INIT_ANON, "GSS_C_MA_AUTH_INIT_ANON", "auth-init-princ-anon", "" },
+  { GSS_C_MA_AUTH_INIT_INIT, "GSS_C_MA_AUTH_INIT_INIT", "auth-init-princ-initial", "" },
+  { GSS_C_MA_AUTH_TARG, "GSS_C_MA_AUTH_TARG", "auth-targ-princ", "" },
+  { GSS_C_MA_AUTH_TARG_ANON, "GSS_C_MA_AUTH_TARG_ANON", "auth-targ-princ-anon", "" },
   { GSS_C_MA_AUTH_TARG_INIT, "GSS_C_MA_AUTH_TARG_INIT", "auth-targ-princ-initial", "" },
   { GSS_C_MA_CBINDINGS, "GSS_C_MA_CBINDINGS", "channel-bindings", "" },
-  { GSS_C_MA_WRAP, "GSS_C_MA_WRAP", "wrap", "" },
-  { GSS_C_MA_ITOK_FRAMED, "GSS_C_MA_ITOK_FRAMED", "initial-is-framed", "" },
-  { GSS_C_MA_MECH_NEGO, "GSS_C_MA_MECH_NEGO", "mech-negotiation-mech", "" },
-  { GSS_C_MA_MECH_COMPOSITE, "GSS_C_MA_MECH_COMPOSITE", "composite-mech", "" },
-  { GSS_C_MA_REPLAY_DET, "GSS_C_MA_REPLAY_DET", "replay-detection", "" },
-  { GSS_C_MA_AUTH_INIT_ANON, "GSS_C_MA_AUTH_INIT_ANON", "auth-init-princ-anon", "" },
-  { GSS_C_MA_PROT_READY, "GSS_C_MA_PROT_READY", "prot-ready", "" },
-  { GSS_C_MA_AUTH_INIT, "GSS_C_MA_AUTH_INIT", "auth-init-princ", "" },
-  { GSS_C_MA_PFS, "GSS_C_MA_PFS", "pfs", "" },
+  { GSS_C_MA_COMPRESS, "GSS_C_MA_COMPRESS", "compress", "" },
   { GSS_C_MA_CONF_PROT, "GSS_C_MA_CONF_PROT", "conf-prot", "" },
-  { GSS_C_MA_MECH_PSEUDO, "GSS_C_MA_MECH_PSEUDO", "pseudo-mech", "" },
-  { GSS_C_MA_AUTH_TARG, "GSS_C_MA_AUTH_TARG", "auth-targ-princ", "" },
-  { GSS_C_MA_MECH_NAME, "GSS_C_MA_MECH_NAME", "GSS mech name", "The name of the GSS-API mechanism" },
-  { GSS_C_MA_NOT_MECH, "GSS_C_MA_NOT_MECH", "not-mech", "" },
-  { GSS_C_MA_MIC, "GSS_C_MA_MIC", "mic", "" },
-  { GSS_C_MA_DEPRECATED, "GSS_C_MA_DEPRECATED", "mech-deprecated", "" },
-  { GSS_C_MA_MECH_GLUE, "GSS_C_MA_MECH_GLUE", "mech-glue", "" },
-  { GSS_C_MA_DELEG_CRED, "GSS_C_MA_DELEG_CRED", "deleg-cred", "" },
-  { GSS_C_MA_NOT_DFLT_MECH, "GSS_C_MA_NOT_DFLT_MECH", "mech-not-default", "" },
-  { GSS_C_MA_AUTH_TARG_ANON, "GSS_C_MA_AUTH_TARG_ANON", "auth-targ-princ-anon", "" },
-  { GSS_C_MA_INTEG_PROT, "GSS_C_MA_INTEG_PROT", "integ-prot", "" },
   { GSS_C_MA_CTX_TRANS, "GSS_C_MA_CTX_TRANS", "context-transfer", "" },
-  { GSS_C_MA_MECH_DESCRIPTION, "GSS_C_MA_MECH_DESCRIPTION", "Mech description", "The long description of the mechanism" },
-  { GSS_C_MA_OOS_DET, "GSS_C_MA_OOS_DET", "oos-detection", "" },
-  { GSS_C_MA_AUTH_INIT_INIT, "GSS_C_MA_AUTH_INIT_INIT", "auth-init-princ-initial", "" },
+  { GSS_C_MA_DELEG_CRED, "GSS_C_MA_DELEG_CRED", "deleg-cred", "" },
+  { GSS_C_MA_DEPRECATED, "GSS_C_MA_DEPRECATED", "mech-deprecated", "" },
+  { GSS_C_MA_INTEG_PROT, "GSS_C_MA_INTEG_PROT", "integ-prot", "" },
+  { GSS_C_MA_ITOK_FRAMED, "GSS_C_MA_ITOK_FRAMED", "initial-is-framed", "" },
+  { GSS_C_MA_MECH_COMPOSITE, "GSS_C_MA_MECH_COMPOSITE", "composite-mech", "" },
   { GSS_C_MA_MECH_CONCRETE, "GSS_C_MA_MECH_CONCRETE", "concrete-mech", "Indicates that a mech is neither a pseudo-mechanism nor a composite mechanism" },
+  { GSS_C_MA_MECH_DESCRIPTION, "GSS_C_MA_MECH_DESCRIPTION", "Mech description", "The long description of the mechanism" },
+  { GSS_C_MA_MECH_GLUE, "GSS_C_MA_MECH_GLUE", "mech-glue", "" },
+  { GSS_C_MA_MECH_NAME, "GSS_C_MA_MECH_NAME", "GSS mech name", "The name of the GSS-API mechanism" },
+  { GSS_C_MA_MECH_NEGO, "GSS_C_MA_MECH_NEGO", "mech-negotiation-mech", "" },
+  { GSS_C_MA_MECH_PSEUDO, "GSS_C_MA_MECH_PSEUDO", "pseudo-mech", "" },
+  { GSS_C_MA_MIC, "GSS_C_MA_MIC", "mic", "" },
+  { GSS_C_MA_NOT_DFLT_MECH, "GSS_C_MA_NOT_DFLT_MECH", "mech-not-default", "" },
+  { GSS_C_MA_NOT_MECH, "GSS_C_MA_NOT_MECH", "not-mech", "" },
+  { GSS_C_MA_OOS_DET, "GSS_C_MA_OOS_DET", "oos-detection", "" },
+  { GSS_C_MA_PFS, "GSS_C_MA_PFS", "pfs", "" },
+  { GSS_C_MA_PROT_READY, "GSS_C_MA_PROT_READY", "prot-ready", "" },
+  { GSS_C_MA_REPLAY_DET, "GSS_C_MA_REPLAY_DET", "replay-detection", "" },
   { GSS_C_MA_SASL_MECH_NAME, "GSS_C_MA_SASL_MECH_NAME", "SASL mechanism name", "The name of the SASL mechanism" },
-  { NULL }
+  { GSS_C_MA_WRAP, "GSS_C_MA_WRAP", "wrap", "" },
+  { NULL, NULL, NULL, NULL }
 };
 
 struct _gss_oid_name_table _gss_ont_mech[] = {
   { GSS_KRB5_MECHANISM, "GSS_KRB5_MECHANISM", "Kerberos 5", "Heimdal Kerberos 5 mechanism" },
-  { GSS_SPNEGO_MECHANISM, "GSS_SPNEGO_MECHANISM", "SPNEGO", "Heimdal SPNEGO mechanism" },
   { GSS_NTLM_MECHANISM, "GSS_NTLM_MECHANISM", "NTLM", "Heimdal NTLM mechanism" },
-  { NULL }
+  { GSS_SPNEGO_MECHANISM, "GSS_SPNEGO_MECHANISM", "SPNEGO", "Heimdal SPNEGO mechanism" },
+  { NULL, NULL, NULL, NULL }
 };
 

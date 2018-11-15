@@ -1,4 +1,4 @@
-/*	$NetBSD: keyset.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: keyset.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -108,6 +108,8 @@ _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
  * @param lock a lock that unlocks the certificates store, use NULL to
  * select no password/certifictes/prompt lock (see @ref page_lock).
  * @param certs return pointer, free with hx509_certs_free().
+ *
+ * @return Returns an hx509 error code.
  *
  * @ingroup hx509_keyset
  */
@@ -320,8 +322,8 @@ hx509_certs_end_seq(hx509_context context,
 }
 
 /**
- * Iterate over all certificates in a keystore and call an function
- * for each fo them.
+ * Iterate over all certificates in a keystore and call a function
+ * for each of them.
  *
  * @param context a hx509 context.
  * @param certs certificate store to iterate over.
@@ -368,21 +370,6 @@ hx509_certs_iter_f(hx509_context context,
     return ret;
 }
 
-/**
- * Iterate over all certificates in a keystore and call an function
- * for each fo them.
- *
- * @param context a hx509 context.
- * @param certs certificate store to iterate over.
- * @param func function to call for each certificate. The function
- * should return non-zero to abort the iteration, that value is passed
- * back to the caller of hx509_certs_iter().
- *
- * @return Returns an hx509 error code.
- *
- * @ingroup hx509_keyset
- */
-
 #ifdef __BLOCKS__
 
 static int
@@ -393,8 +380,8 @@ certs_iter(hx509_context context, void *ctx, hx509_cert cert)
 }
 
 /**
- * Iterate over all certificates in a keystore and call an block
- * for each fo them.
+ * Iterate over all certificates in a keystore and call a block
+ * for each of them.
  *
  * @param context a hx509 context.
  * @param certs certificate store to iterate over.
@@ -754,11 +741,12 @@ _hx509_pi_printf(int (*func)(void *, const char *), void *ctx,
 {
     va_list ap;
     char *str;
+    int ret;
 
     va_start(ap, fmt);
-    vasprintf(&str, fmt, ap);
+    ret = vasprintf(&str, fmt, ap);
     va_end(ap);
-    if (str == NULL)
+    if (ret == -1 || str == NULL)
 	return;
     (*func)(ctx, str);
     free(str);

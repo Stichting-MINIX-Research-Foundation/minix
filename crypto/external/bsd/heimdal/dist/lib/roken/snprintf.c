@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -117,6 +117,10 @@ typedef long long longest;
 #else
 typedef unsigned long u_longest;
 typedef long longest;
+#endif
+
+#ifndef HAVE_UINTPTR_T
+typedef u_longest uintptr_t;
 #endif
 
 
@@ -274,7 +278,7 @@ append_string (struct snprintf_state *state,
 	len += pad(state, width, ' ');
 
     if (prec != -1) {
-	while (*arg && prec--) {
+	while (prec-- && *arg) {
 	    (*state->append_char) (state, *arg++);
 	    ++len;
 	}
@@ -500,7 +504,7 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 		break;
 	    }
 	    case 'p' : {
-		u_longest arg = (u_longest)va_arg(ap, void*);
+		uintptr_t arg = (uintptr_t)va_arg(ap, void*);
 
 		len += append_number (state, arg, 0x10, "0123456789ABCDEF",
 				      width, prec, flags, 0);

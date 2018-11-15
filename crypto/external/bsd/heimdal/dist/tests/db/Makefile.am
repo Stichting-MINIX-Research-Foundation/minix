@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_DATA = krb5.conf krb5.conf-sqlite
+noinst_DATA = krb5.conf krb5.conf-sqlite krb5.conf-db3 krb5.conf-db1 krb5.conf-lmdb
 
 noinst_SCRIPTS = have-db
 
@@ -13,6 +13,8 @@ TESTS = $(check_SCRIPTS)
 do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/db,g' \
+	-e 's,[@]default_db_type[@],$(db_type),g' \
+	-e 's,[@]db_type_preference[@],$(db_type_preference),g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
 loaddump-db: loaddump-db.in Makefile
@@ -48,6 +50,18 @@ krb5.conf-sqlite: krb5.conf.in Makefile
 	$(do_subst) -e 's,[@]type[@],sqlite:,g' < $(srcdir)/krb5.conf.in > krb5.conf-sqlite.tmp
 	mv krb5.conf-sqlite.tmp krb5.conf-sqlite
 
+krb5.conf-db3: krb5.conf.in Makefile
+	$(do_subst) -e 's,[@]type[@],db3:,g' < $(srcdir)/krb5.conf.in > krb5.conf-db3.tmp
+	mv krb5.conf-db3.tmp krb5.conf-db3
+
+krb5.conf-db1: krb5.conf.in Makefile
+	$(do_subst) -e 's,[@]type[@],db1:,g' < $(srcdir)/krb5.conf.in > krb5.conf-db1.tmp
+	mv krb5.conf-db1.tmp krb5.conf-db1
+
+krb5.conf-lmdb: krb5.conf.in Makefile
+	$(do_subst) -e 's,[@]type[@],lmdb:,g' < $(srcdir)/krb5.conf.in > krb5.conf-lmdb.tmp
+	mv krb5.conf-lmdb.tmp krb5.conf-lmdb
+
 krb5-mit.conf: krb5-mit.conf.in Makefile
 	$(do_subst) < $(srcdir)/krb5-mit.conf.in > krb5-mit.conf.tmp
 	mv krb5-mit.conf.tmp krb5-mit.conf
@@ -64,6 +78,9 @@ CLEANFILES= \
 	mkey.file* \
 	krb5.conf krb5.conf.tmp \
 	krb5.conf-sqlite krb5.conf-sqlite.tmp \
+	krb5.conf-db3 krb5.conf-db3.tmp \
+	krb5.conf-db1 krb5.conf-db1.tmp \
+	krb5.conf-lmdb krb5.conf-lmdb.tmp \
 	krb5-mit.conf krb5-mit.conf.tmp \
 	tempfile \
 	log.current-db* \

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_delete_sec_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_delete_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -35,7 +35,7 @@ gss_delete_sec_context(OM_uint32 *minor_status,
     gss_ctx_id_t *context_handle,
     gss_buffer_t output_token)
 {
-	OM_uint32 major_status;
+	OM_uint32 major_status = GSS_S_COMPLETE;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 
 	if (output_token)
@@ -55,5 +55,5 @@ gss_delete_sec_context(OM_uint32 *minor_status,
 		*context_handle = GSS_C_NO_CONTEXT;
 	}
 
-	return (GSS_S_COMPLETE);
+	return (major_status);
 }

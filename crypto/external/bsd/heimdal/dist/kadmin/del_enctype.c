@@ -1,4 +1,4 @@
-/*	$NetBSD: del_enctype.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: del_enctype.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2006 Kungliga Tekniska Högskolan
@@ -51,6 +51,7 @@ del_enctype(void *opt, int argc, char **argv)
     krb5_key_data *new_key_data;
     int n_etypes;
     krb5_enctype *etypes;
+    krb5_key_data *key;
 
     memset (&princ, 0, sizeof(princ));
     princ_name = argv[0];
@@ -83,6 +84,11 @@ del_enctype(void *opt, int argc, char **argv)
 	goto out2;
     }
 
+    if (kadm5_all_keys_are_bogus(princ.n_key_data, princ.key_data)) {
+	krb5_warnx(context, "user lacks get-keys privilege");
+	goto out;
+    }
+
     new_key_data   = malloc(princ.n_key_data * sizeof(*new_key_data));
     if (new_key_data == NULL && princ.n_key_data != 0) {
 	krb5_warnx (context, "out of memory");
@@ -90,14 +96,15 @@ del_enctype(void *opt, int argc, char **argv)
     }
 
     for (i = 0, j = 0; i < princ.n_key_data; ++i) {
-	krb5_key_data *key = &princ.key_data[i];
 	int docopy = 1;
+	key = &princ.key_data[i];
 
-	for (k = 0; k < n_etypes; ++k)
+	for (k = 0; k < n_etypes; ++k) {
 	    if (etypes[k] == key->key_data_type[0]) {
 		docopy = 0;
 		break;
 	    }
+	}
 	if (docopy) {
 	    new_key_data[j++] = *key;
 	} else {
@@ -108,6 +115,10 @@ del_enctype(void *opt, int argc, char **argv)
     }
 
     free (princ.key_data);
+    if (j == 0) {
+	free(new_key_data);
+	new_key_data = NULL;
+    }
     princ.n_key_data = j;
     princ.key_data   = new_key_data;
 

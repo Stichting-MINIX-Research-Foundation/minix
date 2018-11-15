@@ -1,4 +1,4 @@
-/*	$NetBSD: windc.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: windc.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -35,40 +35,41 @@
 
 #include "kdc_locl.h"
 
-static krb5plugin_windc_ftable *windcft;
-static void *windcctx;
+static int have_plugin = 0;
 
 /*
  * Pick the first WINDC module that we find.
  */
 
+static krb5_error_code KRB5_LIB_CALL
+load(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    have_plugin = 1;
+    return KRB5_PLUGIN_NO_HANDLE;
+}
+
 krb5_error_code
 krb5_kdc_windc_init(krb5_context context)
 {
-    struct krb5_plugin *list = NULL, *e;
-    krb5_error_code ret;
-
-    ret = _krb5_plugin_find(context, PLUGIN_TYPE_DATA, "windc", &list);
-    if(ret != 0 || list == NULL)
-	return 0;
-
-    for (e = list; e != NULL; e = _krb5_plugin_get_next(e)) {
-
-	windcft = _krb5_plugin_get_symbol(e);
-	if (windcft->minor_version < KRB5_WINDC_PLUGIN_MINOR)
-	    continue;
-
-	(*windcft->init)(context, &windcctx);
-	break;
-    }
-    _krb5_plugin_free(list);
-    if (e == NULL) {
-	krb5_set_error_message(context, ENOENT, "Did not find any WINDC plugin");
-	windcft = NULL;
-	return ENOENT;
-    }
-
+    (void)_krb5_plugin_run_f(context, "krb5", "windc",
+			     KRB5_WINDC_PLUGIN_MINOR, 0, NULL, load);
     return 0;
+}
+
+struct generate_uc {
+    hdb_entry_ex *client;
+    krb5_pac *pac;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    struct generate_uc *uc = (struct generate_uc *)userctx;    
+
+    if (ft->pac_generate == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->pac_generate((void *)plug, context, uc->client, uc->pac);
 }
 
 
@@ -77,10 +78,46 @@ _kdc_pac_generate(krb5_context context,
 		  hdb_entry_ex *client,
 		  krb5_pac *pac)
 {
-    *pac = NULL;
-    if (windcft == NULL)
+    struct generate_uc uc;
+
+    if (!have_plugin)
 	return 0;
-    return (windcft->pac_generate)(windcctx, context, client, pac);
+
+    uc.client = client;
+    uc.pac = pac;
+
+    (void)_krb5_plugin_run_f(context, "krb5", "windc",
+			     KRB5_WINDC_PLUGIN_MINOR, 0, &uc, generate);
+    return 0;
+}
+
+struct verify_uc {
+    krb5_principal client_principal;
+    krb5_principal delegated_proxy_principal;
+    hdb_entry_ex *client;
+    hdb_entry_ex *server;
+    hdb_entry_ex *krbtgt;
+    krb5_pac *pac;
+    int *verified;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    struct verify_uc *uc = (struct verify_uc *)userctx;    
+    krb5_error_code ret;
+
+    if (ft->pac_verify == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    ret = ft->pac_verify((void *)plug, context,
+			 uc->client_principal,
+			 uc->delegated_proxy_principal,
+			 uc->client, uc->server, uc->krbtgt, uc->pac);
+    if (ret == 0)
+	(*uc->verified) = 1;
+
+    return 0;
 }
 
 krb5_error_code
@@ -93,19 +130,48 @@ _kdc_pac_verify(krb5_context context,
 		krb5_pac *pac,
 		int *verified)
 {
-    krb5_error_code ret;
+    struct verify_uc uc;
 
-    if (windcft == NULL)
+    if (!have_plugin)
 	return 0;
 
-    ret = windcft->pac_verify(windcctx, context,
-			      client_principal,
-			      delegated_proxy_principal,
-			      client, server, krbtgt, pac);
-    if (ret == 0)
-	*verified = 1;
-    return ret;
+    uc.client_principal = client_principal;
+    uc.delegated_proxy_principal = delegated_proxy_principal;
+    uc.client = client;
+    uc.server = server;
+    uc.krbtgt = krbtgt;
+    uc.pac = pac;
+    uc.verified = verified;
+
+    (void)_krb5_plugin_run_f(context, "krb5", "windc",
+			     KRB5_WINDC_PLUGIN_MINOR, 0, &uc, verify);
+    return 0;
 }
+
+struct check_uc {
+    krb5_kdc_configuration *config;
+    hdb_entry_ex *client_ex;
+    const char *client_name;
+    hdb_entry_ex *server_ex;
+    const char *server_name;
+    KDC_REQ *req;
+    METHOD_DATA *method_data;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+check(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    struct check_uc *uc = (struct check_uc *)userctx;    
+
+    if (ft->client_access == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->client_access((void *)plug, context, uc->config, 
+			     uc->client_ex, uc->client_name, 
+			     uc->server_ex, uc->server_name, 
+			     uc->req, uc->method_data);
+}
+
 
 krb5_error_code
 _kdc_check_access(krb5_context context,
@@ -113,17 +179,28 @@ _kdc_check_access(krb5_context context,
 		  hdb_entry_ex *client_ex, const char *client_name,
 		  hdb_entry_ex *server_ex, const char *server_name,
 		  KDC_REQ *req,
-		  krb5_data *e_data)
+		  METHOD_DATA *method_data)
 {
-    if (windcft == NULL)
-	    return kdc_check_flags(context, config,
-				   client_ex, client_name,
-				   server_ex, server_name,
-				   req->msg_type == krb_as_req);
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+    struct check_uc uc;
 
-    return (windcft->client_access)(windcctx,
-				    context, config,
-				    client_ex, client_name,
-				    server_ex, server_name,
-				    req, e_data);
+    if (have_plugin) {
+        uc.config = config;
+        uc.client_ex = client_ex;
+        uc.client_name = client_name;
+        uc.server_ex = server_ex;
+        uc.server_name = server_name;
+        uc.req = req;
+        uc.method_data = method_data;
+
+        ret = _krb5_plugin_run_f(context, "krb5", "windc",
+                                 KRB5_WINDC_PLUGIN_MINOR, 0, &uc, check);
+    }
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	return kdc_check_flags(context, config,
+			       client_ex, client_name,
+			       server_ex, server_name,
+			       req->msg_type == krb_as_req);
+    return ret;
 }

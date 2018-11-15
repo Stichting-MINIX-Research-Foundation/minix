@@ -1,4 +1,4 @@
-/*	$NetBSD: rctest.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rctest.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -34,9 +34,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <string.h>
+#include <krb5/roken.h>
 #include <rc4.h>
 
 static unsigned char plain1[8] =

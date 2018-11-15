@@ -1,4 +1,4 @@
-.\"	$NetBSD: kgetcred.1,v 1.3 2014/04/24 13:45:34 pettai Exp $
+.\"	$NetBSD: kgetcred.1,v 1.4 2017/01/28 21:31:45 christos Exp $
 .\"
 .\" Copyright (c) 1999, 2001 - 2002 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Fl canonicalize
+.Op Fl Fl canonical
 .Oo Fl c cache \*(Ba Xo
 .Fl Fl cache= Ns Ar cache
 .Xc
@@ -50,30 +51,123 @@
 .Fl Fl enctype= Ns Ar enctype
 .Xc
 .Oc
+.Op Fl Fl debug
+.Oo Fl H \*(Ba Xo
+.Fl Fl hostbased
+.Xc
+.Oc
+.Op Fl Fl name-type= Ns Ar name-type
 .Op Fl Fl no-transit-check
+.Op Fl Fl no-store
+.Op Fl Fl cached-only
 .Op Fl Fl version
 .Op Fl Fl help
+.Ar principal
+.Nm
+.Op options
+.Fl Fl hostbased
+.Ar principal
+.Nm
+.Op options
+.Fl Fl hostbased
 .Ar service
+.Ar hostname
+.Ar [extra-components]
 .Sh DESCRIPTION
 .Nm
-obtains a ticket for a service.
+obtains a ticket for the given service principal.
 Usually tickets for services are obtained automatically when needed
 but sometimes for some odd reason you want to obtain a particular
 ticket or of a special type.
 .Pp
+If
+.Fl Fl hostbased
+is given then the given service principal name will be canonicalized
+(see below).
+.Pp
+The third form constructs a host-based principal from the given service
+name and hostname.  The service name "host" is used if the given
+.Ar service
+name in the third usage is the empty string.
+.Pp
+For host-based names, the local host's hostname is used if the given
+.Ar hostname
+is the empty string or if the
+.Ar principal
+has a single component.
+.Pp
+Any additional components will be included, even for host-based service
+principal names, but there are no defaults nor local canonicalization
+rules for additional components.
+.Pp
+Local name canonicalization rules are applied unless the
+.Fl Fl canonical
+option is given.  Currently local name canonicalization rules are
+supported only for host-based principal names' hostname component.
+.Pp
+The principal's realm name may be canonicalized by following Kerberos
+referrals from the client principal's home realm if the
+.Fl Fl canonicalize
+option is given or if the local name canonicalization rules are
+configured to use referrals.
+.Pp
 Supported options:
 .Bl -tag -width Ds
 .It Fl Fl canonicalize
-requests that the KDC canonicalize the principal.
+requests that the KDC canonicalize the principal.  Currently this only
+canonicalizes the realm by chasing referrals from the user's start
+realm, but in the future this may also enable the KDC to canonicalize
+the complete principal name.
+.It Fl Fl canonical
+turns off local canonicalization of the principal name.
+.It Fl Fl name-type= Ns Ar name-type
+the name-type to use when parsing the principal name.
+.It Fl Fl hostbased
+is short for
+.Fl Fl name-type=srv_hst .
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
 the credential cache to use.
+.It Fl Fl delegation-credential-cache= Ns Ar cache
+the credential cache to use for delegation.
 .It Fl e Ar enctype , Fl Fl enctype= Ns Ar enctype
 encryption type to use.
 .It Fl Fl no-transit-check
 requests that the KDC doesn't do transit checking.
+.It Fl Fl no-store
+do not store tickets in the ccache.
+.It Fl Fl cached-only
+do not talk the TGS, search only the ccache.
+.It Fl Fl forwardable
+.It Fl Fl debug
+enables debug output to stderr.
 .It Fl Fl version
 .It Fl Fl help
 .El
+.Pp
+If the
+.Fl Fl canonical
+option is used, then no further canonicalization should be done locally
+by the client (for example, DNS), but if
+.Fl Fl canonicalize
+is used, then the client will ask that the KDC canonicalize the name.
+.Pp
+If the
+.Fl Fl canonicalize
+option is used with
+.Fl Fl hostbased
+a host-based name-type, and
+.Fl Fl canonical
+is not used, then the hostname will be canonicalized according to the
+name canonicalization rules in
+.Va krb5.conf .
+.Pp
+GSS-API initiator applications with host-based services will get the
+same behavior as using the
+.Fl Fl canonicalize
+.Fl Fl hostbased
+options here.
 .Sh SEE ALSO
 .Xr kinit 1 ,
-.Xr klist 1
+.Xr klist 1 ,
+.Xr krb5.conf 5 ,
+.Xr krb5_openlog 3

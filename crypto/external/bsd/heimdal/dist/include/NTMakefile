@@ -61,6 +61,7 @@ while(<>) {
     if ("$(KRB5)") { print "#define KRB5 1\n"; }
     if ("$(KRB4)") { print "#define KRB4 1\n"; }
     if ("$(WEAK_CRYPTO)") { print "#define HEIM_WEAK_CRYPTO 1\n"; }
+    if ("$(HCRYPTO_FALLBACK)") { print "#define HCRYPTO_FALLBACK 1\n"; } else { print "#define HCRYPTO_FALLBACK 0\n"; }
     if ("$(PKINIT)") { print "#define PKINIT 1\n"; }
     if ("$(NO_AFS)") { print "#define NO_AFS 1\n"; }
     if ("$(OPENLDAP)") { print "#define OPENLDAP 1\n"; }
@@ -75,6 +76,7 @@ while(<>) {
     if ("$(ENV_HACK)") { print "#define ENV_HACK 1\n"; }
     if ("$(HAVE_KCM)") { print "#define HAVE_KCM 1\n"; }
     if ("$(HAVE_SCC)") { print "#define HAVE_SCC 1\n"; }
+    if ("$(HAVE_STDINT_H)") { print "#define HAVE_STDINT_H 1\n"; }
     if ("$(DIR_hdbdir)") { print "#define HDB_DB_DIR \"".'$(DIR_hdbdir)'."\"\n"; }
     if ("$(HAVE_MSLSA_CACHE)") { print "#define HAVE_MSLSA_CACHE 1\n"; }
     if ("$(NO_LOCALNAME)") { print "#define NO_LOCALNAME 1\n"; }
@@ -84,14 +86,14 @@ while(<>) {
     if ("$(VER_PRERELEASE)") { print "#define VER_PRERELEASE 1\n"; }
     if ("$(VER_PRIVATE)") { print "#define VER_PRIVATE \"$(VER_PRIVATE)\"\n"; }
     if ("$(VER_SPECIAL)") { print "#define VER_SPECIAL \"$(VER_SPECIAL)\"\n"; }
-    if ("$(BUILD)" =~ "dbg") { print "#define VER_DEBUG 1\n"; }
+    if ("$(BUILD)" eq "dbg") { print "#define VER_DEBUG 1\n"; }
     print "#define HOST \"$(COMPUTERNAME)\"\n";
 
   } else {
 
     s/\@PACKAGE\@/$(VER_PACKAGE)/;
     s/\@PACKAGE_NAME\@/$(VER_PACKAGE_NAME)/;
-    s/\@PACKAGE_BUGREPORT\@/$(VER_PACKAGE_BUGREPORT:@=\@)/;
+    s{\@PACKAGE_BUGREPORT\@}{$(VER_PACKAGE_BUGREPORT:@=\@)};
     s/\@PACKAGE_VERSION\@/$(VER_PACKAGE_VERSION)/;
     s/\@PACKAGE_COPYRIGHT\@/$(VER_PACKAGE_COPYRIGHT)/;
     s/\@PACKAGE_COMPANY\@/$(VER_PACKAGE_COMPANY)/;

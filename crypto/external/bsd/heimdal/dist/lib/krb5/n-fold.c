@@ -1,4 +1,4 @@
-/*	$NetBSD: n-fold.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: n-fold.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -34,68 +34,79 @@
 
 #include "krb5_locl.h"
 
-static krb5_error_code
-rr13(unsigned char *buf, size_t len)
+static void
+rr13(uint8_t *dst1, uint8_t *dst2, uint8_t *src, size_t len)
 {
-    unsigned char *tmp;
     int bytes = (len + 7) / 8;
     int i;
-    if(len == 0)
-	return 0;
-    {
-	const int bits = 13 % len;
-	const int lbit = len % 8;
+    const int bits = 13 % len;
 
-	tmp = malloc(bytes);
-	if (tmp == NULL)
-	    return ENOMEM;
-	memcpy(tmp, buf, bytes);
-	if(lbit) {
-	    /* pad final byte with inital bits */
-	    tmp[bytes - 1] &= 0xff << (8 - lbit);
-	    for(i = lbit; i < 8; i += len)
-		tmp[bytes - 1] |= buf[0] >> i;
-	}
-	for(i = 0; i < bytes; i++) {
-	    int bb;
-	    int b1, s1, b2, s2;
-	    /* calculate first bit position of this byte */
-	    bb = 8 * i - bits;
-	    while(bb < 0)
-		bb += len;
-	    /* byte offset and shift count */
-	    b1 = bb / 8;
-	    s1 = bb % 8;
+    for (i = 0; i < bytes; i++) {
+	int bb;
+	int b1, s1, b2, s2;
+	/* calculate first bit position of this byte */
+	bb = 8 * i - bits;
+	while(bb < 0)
+	    bb += len;
+	/* byte offset and shift count */
+	b1 = bb / 8;
+	s1 = bb % 8;
 
-	    if(bb + 8 > bytes * 8)
-		/* watch for wraparound */
-		s2 = (len + 8 - s1) % 8;
-	    else
-		s2 = 8 - s1;
-	    b2 = (b1 + 1) % bytes;
-	    buf[i] = (tmp[b1] << s1) | (tmp[b2] >> s2);
-	}
-	free(tmp);
+	if (bb + 8 > bytes * 8)
+	    /* watch for wraparound */
+	    s2 = (len + 8 - s1) % 8;
+	else
+	    s2 = 8 - s1;
+	b2 = (b1 + 1) % bytes;
+	dst1[i] = (src[b1] << s1) | (src[b2] >> s2);
+	dst2[i] = dst1[i];
     }
-    return 0;
+
+    return;
 }
 
-/* Add `b' to `a', both being one's complement numbers. */
+/*
+ * Add `b' to `a', both being one's complement numbers.
+ * This function assumes that inputs *a, *b are aligned
+ * to 4 bytes.
+ */
 static void
-add1(unsigned char *a, unsigned char *b, size_t len)
+add1(uint8_t *a, uint8_t *b, size_t len)
 {
     int i;
     int carry = 0;
-    for(i = len - 1; i >= 0; i--){
-	int x = a[i] + b[i] + carry;
+    uint32_t x;
+    uint32_t left, right;
+
+    for (i = len - 1; (i+1) % 4; i--) {
+	x = a[i] + b[i] + carry;
 	carry = x > 0xff;
 	a[i] = x & 0xff;
     }
-    for(i = len - 1; carry && i >= 0; i--){
-	int x = a[i] + carry;
+
+    for (i = len / 4 - 1; i >= 0; i--) {
+	left = ntohl(((uint32_t *)a)[i]);
+	right = ntohl(((uint32_t *)b)[i]);
+	x = left + right + carry;
+	carry = x < left || x < right;
+	((uint32_t *)a)[i]  = x;
+    }
+
+    for (i = len - 1; (i+1) % 4; i--) {
+	x = a[i] + carry;
 	carry = x > 0xff;
 	a[i] = x & 0xff;
     }
+
+    for (i = len / 4 - 1; carry && i >= 0; i--) {
+        left = ((uint32_t *)a)[i];
+        x = left + carry;
+        carry = x < left;
+        ((uint32_t *)a)[i] = x;
+    }
+
+    for (i = len / 4 - 1; i >=0; i--)
+        ((uint32_t *)a)[i] = htonl(((uint32_t *)a)[i]);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -103,25 +114,25 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 {
     /* if len < size we need at most N * len bytes, ie < 2 * size;
        if len > size we need at most 2 * len */
-    krb5_error_code ret = 0;
     size_t maxlen = 2 * max(size, len);
     size_t l = 0;
-    unsigned char *tmp = malloc(maxlen);
-    unsigned char *buf = malloc(len);
+    uint8_t *tmp;
+    uint8_t *tmpbuf;
+    uint8_t *buf1;
+    uint8_t *buf2;
 
-    if (tmp == NULL || buf == NULL) {
-        ret = ENOMEM;
-	goto out;
-    }
+    tmp = malloc(maxlen + 2 * len);
+    if (tmp == NULL)
+        return ENOMEM;
 
-    memcpy(buf, str, len);
+    buf1 = tmp + maxlen;
+    buf2 = tmp + maxlen + len;
+
     memset(key, 0, size);
+    memcpy(buf1, str, len);
+    memcpy(tmp, buf1, len);
     do {
-	memcpy(tmp + l, buf, len);
 	l += len;
-	ret = rr13(buf, len * 8);
-	if (ret)
-	    goto out;
 	while(l >= size) {
 	    add1(key, tmp, size);
 	    l -= size;
@@ -129,15 +140,13 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 		break;
 	    memmove(tmp, tmp + size, l);
 	}
+	rr13(tmp + l, buf2, buf1, len * 8);
+	tmpbuf = buf1;
+	buf1 = buf2;
+	buf2 = tmpbuf;
     } while(l != 0);
-out:
-    if (buf) {
-        memset(buf, 0, len);
-	free(buf);
-    }
-    if (tmp) {
-        memset(tmp, 0, maxlen);
-	free(tmp);
-    }
-    return ret;
+
+    memset(tmp, 0, maxlen + 2 * len);
+    free(tmp);
+    return 0;
 }

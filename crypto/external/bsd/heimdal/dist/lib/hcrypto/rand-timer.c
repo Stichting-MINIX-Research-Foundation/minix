@@ -1,4 +1,4 @@
-/*	$NetBSD: rand-timer.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: rand-timer.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1999, 2007 Kungliga Tekniska Högskolan
@@ -34,12 +34,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <rand.h>
-
 #include <krb5/roken.h>
+
+#include <rand.h>
 
 #include "randi.h"
 
@@ -188,6 +185,16 @@ timer_status(void)
 #endif
 }
 
+#if defined(__GNUC__) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+const RAND_METHOD hc_rand_timer_method = {
+    .seed = timer_seed,
+    .bytes = timer_bytes,
+    .cleanup = timer_cleanup,
+    .add = timer_add,
+    .pseudorand = timer_pseudorand,
+    .status = timer_status
+};
+#else
 const RAND_METHOD hc_rand_timer_method = {
     timer_seed,
     timer_bytes,
@@ -196,6 +203,7 @@ const RAND_METHOD hc_rand_timer_method = {
     timer_pseudorand,
     timer_status
 };
+#endif
 
 const RAND_METHOD *
 RAND_timer_method(void)

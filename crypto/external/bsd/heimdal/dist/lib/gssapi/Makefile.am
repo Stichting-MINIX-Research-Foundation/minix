@@ -12,9 +12,7 @@ AM_CPPFLAGS += \
 	-I$(srcdir)/ntlm \
 	-I$(srcdir)/krb5 \
 	-I$(srcdir)/spnego \
-	$(INCLUDE_libintl) \
-	$(INCLUDE_hcrypto) \
-	$(INCLUDE_krb4)
+	$(INCLUDE_libintl)
 
 lib_LTLIBRARIES = libgssapi.la
 
@@ -46,7 +44,7 @@ krb5src = \
 	krb5/external.c \
 	krb5/get_mic.c \
 	krb5/gsskrb5_locl.h \
-	krb5/gsskrb5-private.h \
+	$(srcdir)/krb5/gsskrb5-private.h \
 	krb5/import_name.c \
 	krb5/import_sec_context.c \
 	krb5/indicate_mechs.c \
@@ -165,7 +163,7 @@ spnegosrc = \
 	spnego/external.c \
 	spnego/init_sec_context.c \
 	spnego/spnego_locl.h \
-	spnego/spnego-private.h
+	$(srcdir)/spnego/spnego-private.h
 
 ntlmsrc = \
 	ntlm/accept_sec_context.c \
@@ -184,7 +182,6 @@ ntlmsrc = \
 	ntlm/export_sec_context.c \
 	ntlm/external.c \
 	ntlm/ntlm.h \
-	ntlm/ntlm-private.h \
 	ntlm/import_name.c \
 	ntlm/import_sec_context.c \
 	ntlm/indicate_mechs.c \
@@ -200,7 +197,7 @@ ntlmsrc = \
 	ntlm/release_name.c \
 	ntlm/kdc.c
 
-$(srcdir)/ntlm/ntlm-private.h:
+$(srcdir)/ntlm/ntlm-private.h: $(ntlmsrc)
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p ntlm/ntlm-private.h $(ntlmsrc) || rm -f ntlm/ntlm-private.h
 
 dist_libgssapi_la_SOURCES  = \
@@ -235,9 +232,9 @@ man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5
 include_HEADERS = gssapi.h
 noinst_HEADERS = \
 	gssapi_mech.h \
-	ntlm/ntlm-private.h \
-	spnego/spnego-private.h \
-	krb5/gsskrb5-private.h
+	$(srcdir)/ntlm/ntlm-private.h \
+	$(srcdir)/spnego/spnego-private.h \
+	$(srcdir)/krb5/gsskrb5-private.h
 
 nobase_include_HEADERS = \
 	gssapi/gssapi.h \
@@ -274,10 +271,13 @@ $(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
 
 BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
 
+$(libgssapi_la_OBJECTS): gkrb5_err.h
+gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
+
 CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.h gkrb5_err.c \
-	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.c \
-	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.c \
+	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \
+	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.[cx] \
 	gss-commands.h gss-commands.c
 
 $(spnego_files) spnego_asn1.hx spnego_asn1-priv.hx: spnego_asn1_files
@@ -304,11 +304,13 @@ test_cfx_SOURCES = krb5/test_cfx.c
 check_PROGRAMS = test_acquire_cred $(TESTS)
 
 bin_PROGRAMS = gsstool
-noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm
+noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm test_add_store_cred
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
 test_ntlm_SOURCES = test_ntlm.c test_common.c test_common.h
 test_acquire_cred_SOURCES = test_acquire_cred.c test_common.c test_common.h
+
+test_add_store_cred_SOURCES = test_add_store_cred.c
 
 test_ntlm_LDADD = \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
@@ -339,6 +341,13 @@ EXTRA_DIST = \
 	libgssapi-version.rc \
 	libgssapi-exports.def \
 	$(man_MANS) \
+	gen-oid.pl \
+	gssapi/gssapi_netlogon.h \
+	krb5/test_acquire_cred.c \
+	krb5/test_cred.c \
+	krb5/test_kcred.c \
+	krb5/test_oid.c \
+	oid.txt \
 	krb5/gkrb5_err.et \
 	mech/gssapi.asn1 \
 	spnego/spnego.asn1 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: context_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: context_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,64 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: context_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+
+static kadm5_ret_t
+kadm5_s_lock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
+
+    if (context->keep_open) {
+	/*
+	 * We open/close around every operation, but we retain the DB
+	 * open if the DB was locked with a prior call to kadm5_lock(),
+	 * so if it's open here that must be because the DB is locked.
+	 */
+	heim_assert(context->db->lock_count > 0,
+		    "Internal error in tracking HDB locks");
+	return KADM5_ALREADY_LOCKED;
+    }
+
+    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+    if (ret)
+	return ret;
+
+    ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
+    if (ret) {
+        (void) context->db->hdb_close(context->context, context->db);
+	return ret;
+    }
+
+    /*
+     * Attempt to recover the log.  This will generally fail on slaves,
+     * and we can't tell if we're on a slave here.
+     *
+     * Perhaps we could set a flag in the kadm5_server_context to
+     * indicate whether a read has been done without recovering the log,
+     * in which case we could fail any subsequent writes.
+     */
+    if (kadm5_log_init(context) == 0)
+        (void) kadm5_log_end(context);
+
+    context->keep_open = 1;
+    return 0;
+}
+
+static kadm5_ret_t
+kadm5_s_unlock(void *server_handle)
+{
+    kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret;
+
+    if (!context->keep_open)
+	return KADM5_NOT_LOCKED;
+
+    context->keep_open = 0;
+    ret = context->db->hdb_unlock(context->context, context->db);
+    (void) context->db->hdb_close(context->context, context->db);
+    return ret;
+}
 
 static void
 set_funcs(kadm5_server_context *c)
@@ -53,6 +110,9 @@ set_funcs(kadm5_server_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
+    SET(c, setkey_principal_3);
 }
 
 #ifndef NO_UNIX_SOCKETS
@@ -83,6 +143,7 @@ find_db_spec(kadm5_server_context *ctx)
     krb5_context context = ctx->context;
     struct hdb_dbinfo *info, *d;
     krb5_error_code ret;
+    int aret;
 
     if (ctx->config.realm) {
 	/* fetch the databases */
@@ -99,20 +160,32 @@ find_db_spec(kadm5_server_context *ctx)
 		continue;
 
 	    p = hdb_dbinfo_get_dbname(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.dbname = strdup(p);
+                if (ctx->config.dbname == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_acl_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.acl_file = strdup(p);
+                if (ctx->config.acl_file == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_mkey_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->config.stash_file = strdup(p);
+                if (ctx->config.stash_file == NULL)
+                    return ENOMEM;
+            }
 
 	    p = hdb_dbinfo_get_log_file(context, d);
-	    if (p)
+	    if (p) {
 		ctx->log_context.log_file = strdup(p);
+                if (ctx->log_context.log_file == NULL)
+                    return ENOMEM;
+            }
 	    break;
 	}
 	hdb_free_dbinfo(context, &info);
@@ -120,14 +193,29 @@ find_db_spec(kadm5_server_context *ctx)
 
     /* If any of the values was unset, pick up the default value */
 
-    if (ctx->config.dbname == NULL)
+    if (ctx->config.dbname == NULL) {
 	ctx->config.dbname = strdup(hdb_default_db(context));
-    if (ctx->config.acl_file == NULL)
-	asprintf(&ctx->config.acl_file, "%s/kadmind.acl", hdb_db_dir(context));
-    if (ctx->config.stash_file == NULL)
-	asprintf(&ctx->config.stash_file, "%s/m-key", hdb_db_dir(context));
-    if (ctx->log_context.log_file == NULL)
-	asprintf(&ctx->log_context.log_file, "%s/log", hdb_db_dir(context));
+        if (ctx->config.dbname == NULL)
+            return ENOMEM;
+    }
+    if (ctx->config.acl_file == NULL) {
+	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
+    if (ctx->config.stash_file == NULL) {
+	aret = asprintf(&ctx->config.stash_file, "%s/m-key",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
+    if (ctx->log_context.log_file == NULL) {
+	aret = asprintf(&ctx->log_context.log_file, "%s/log",
+			hdb_db_dir(context));
+	if (aret == -1)
+	    return ENOMEM;
+    }
 
 #ifndef NO_UNIX_SOCKETS
     set_socket_name(context, &ctx->log_context.socket_name);
@@ -143,24 +231,42 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
 		      kadm5_config_params *params,
 		      krb5_context context)
 {
-    *ctx = malloc(sizeof(**ctx));
-    if(*ctx == NULL)
+    kadm5_ret_t ret = 0;
+
+    *ctx = calloc(1, sizeof(**ctx));
+    if (*ctx == NULL)
 	return ENOMEM;
-    memset(*ctx, 0, sizeof(**ctx));
+    (*ctx)->log_context.socket_fd = rk_INVALID_SOCKET;
+
     set_funcs(*ctx);
     (*ctx)->context = context;
     krb5_add_et_list (context, initialize_kadm5_error_table_r);
+
 #define is_set(M) (params && params->mask & KADM5_CONFIG_ ## M)
-    if(is_set(REALM))
+    if (is_set(REALM)) {
 	(*ctx)->config.realm = strdup(params->realm);
-    else
-	krb5_get_default_realm(context, &(*ctx)->config.realm);
-    if(is_set(DBNAME))
+        if ((*ctx)->config.realm == NULL)
+            return ENOMEM;
+    } else {
+	ret = krb5_get_default_realm(context, &(*ctx)->config.realm);
+        if (ret)
+            return ret;
+    }
+    if (is_set(DBNAME)) {
 	(*ctx)->config.dbname = strdup(params->dbname);
-    if(is_set(ACL_FILE))
+        if ((*ctx)->config.dbname == NULL)
+            return ENOMEM;
+    }
+    if (is_set(ACL_FILE)) {
 	(*ctx)->config.acl_file = strdup(params->acl_file);
-    if(is_set(STASH_FILE))
+        if ((*ctx)->config.acl_file == NULL)
+            return ENOMEM;
+    }
+    if (is_set(STASH_FILE)) {
 	(*ctx)->config.stash_file = strdup(params->stash_file);
+        if ((*ctx)->config.stash_file == NULL)
+            return ENOMEM;
+    }
 
     find_db_spec(*ctx);
 

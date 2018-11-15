@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_verify_mic.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_verify_mic.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -32,7 +32,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_verify_mic(OM_uint32 *minor_status,
-    const gss_ctx_id_t context_handle,
+    gss_const_ctx_id_t context_handle,
     const gss_buffer_t message_buffer,
     const gss_buffer_t token_buffer,
     gss_qop_t *qop_state)

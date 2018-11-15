@@ -1,7 +1,7 @@
-/*	$NetBSD: test_cipher.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: test_cipher.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,20 +34,20 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED_CRYPTO
 
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <krb5/getarg.h>
-#include <krb5/roken.h>
 
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
+#if defined(_WIN32)
+#include <evp-w32.h>
+#endif
+#include <evp-pkcs11.h>
+#include <evp-openssl.h>
 #include <krb5/hex.h>
 #include <err.h>
 
@@ -70,7 +70,8 @@ struct tests aes_tests[] = {
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
       16,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\xdc\x95\xc0\x78\xa2\x40\x89\x89\xad\x48\xa2\x14\x92\x84\x20\x87"
+      "\xdc\x95\xc0\x78\xa2\x40\x89\x89\xad\x48\xa2\x14\x92\x84\x20\x87",
+      NULL
     }
 };
 
@@ -81,9 +82,24 @@ struct tests aes_cfb_tests[] = {
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
       16,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\x66\xe9\x4b\xd4\xef\x8a\x2c\x3b\x88\x4c\xfa\x59\xca\x34\x2b\x2e"
+      "\x66\x16\xf9\x2e\x42\xa8\xf1\x1a\x91\x16\x68\x57\x8e\xc3\xaa\x0f",
+      NULL
     }
 };
+
+
+struct tests rc2_tests[] = {
+    { "rc2",
+      "\x88\xbc\xa9\x0e\x90\x87\x5a\x7f\x0f\x79\xc3\x84\x62\x7b\xaf\xb2",
+      16,
+      "\x00\x00\x00\x00\x00\x00\x00\x00",
+      8,
+      "\x00\x00\x00\x00\x00\x00\x00\x00",
+      "\x22\x69\x55\x2a\xb0\xf8\x5c\xa6",
+      NULL
+    }
+};
+
 
 struct tests rc2_40_tests[] = {
     { "rc2-40",
@@ -92,7 +108,8 @@ struct tests rc2_40_tests[] = {
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
       16,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\xc0\xb8\xff\xa5\xd6\xeb\xc9\x62\xcc\x52\x5f\xfe\x9a\x3c\x97\xe6"
+      "\xc0\xb8\xff\xa5\xd6\xeb\xc9\x62\xcc\x52\x5f\xfe\x9a\x3c\x97\xe6",
+      NULL
     }
 };
 
@@ -105,7 +122,8 @@ struct tests des_ede3_tests[] = {
       "\xbf\x9a\x12\xb7\x26\x69\xfd\x05",
       16,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\x55\x95\x97\x76\xa9\x6c\x66\x40\x64\xc7\xf4\x1c\x21\xb7\x14\x1b"
+      "\x55\x95\x97\x76\xa9\x6c\x66\x40\x64\xc7\xf4\x1c\x21\xb7\x14\x1b",
+      NULL
     }
 };
 
@@ -225,7 +243,8 @@ struct tests rc4_tests[] = {
 	"\x89\x21\xc2\xf5\xa4\x63\x93\x8c"
 	"\xe0\x98\x22\x65\xee\xf7\x01\x79"
 	"\xbc\x55\x3f\x33\x9e\xb1\xa4\xc1"
-	"\xaf\x5f\x6a\x54\x7f"
+	"\xaf\x5f\x6a\x54\x7f",
+	NULL
     }
 };
 
@@ -261,7 +280,7 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
     d = emalloc(t->datasize);
 
     if (!EVP_Cipher(&ectx, d, t->indata, t->datasize))
-	return 1;
+	errx(1, "%s: %d EVP_Cipher encrypt failed", t->name, i);
 
     if (memcmp(d, t->outdata, t->datasize) != 0) {
 	char *s, *s2;
@@ -271,7 +290,7 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
     }
 
     if (!EVP_Cipher(&dctx, d, d, t->datasize))
-	return 1;
+	errx(1, "%s: %d EVP_Cipher decrypt failed", t->name, i);
 
     if (memcmp(d, t->indata, t->datasize) != 0) {
 	char *s;
@@ -335,7 +354,8 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_aes_128_cfb8(), &aes_cfb_tests[i]);
-
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_hcrypto_rc2_cbc(), &rc2_tests[i]);
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
@@ -350,10 +370,8 @@ main(int argc, char **argv)
 #ifdef __APPLE__
     for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_256_cbc(), &aes_tests[i]);
-#if 0
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_128_cfb8(), &aes_cfb_tests[i]);
-#endif
     for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
@@ -363,7 +381,55 @@ main(int argc, char **argv)
 			   &camellia128_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_rc4(), &rc4_tests[i]);
-#endif
+#endif /* __APPLE__ */
+
+    /* Windows CNG (if available) */
+#ifdef WIN32
+    for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_aes_256_cbc(), &aes_tests[i]);
+    for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_aes_128_cfb8(), &aes_cfb_tests[i]);
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc2_cbc(), &rc2_tests[i]);
+    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc2_40_cbc(), &rc2_40_tests[i]);
+    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_des_ede3_cbc(), &des_ede3_tests[i]);
+    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
+	ret += test_cipher(i, EVP_w32crypto_rc4(), &rc4_tests[i]);
+#endif /* WIN32 */
+
+    /* PKCS#11 */
+#if __sun || defined(PKCS11_MODULE_PATH)
+    for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_aes_256_cbc(), &aes_tests[i]);
+    for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_aes_128_cfb8(), &aes_cfb_tests[i]);
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_rc2_cbc(), &rc2_tests[i]);
+    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_rc2_40_cbc(), &rc2_40_tests[i]);
+    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_des_ede3_cbc(), &des_ede3_tests[i]);
+    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
+	ret += test_cipher(i, EVP_pkcs11_rc4(), &rc4_tests[i]);
+#endif /* PKCS11_MODULE_PATH */
+
+    /* OpenSSL */
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+    for (i = 0; i < sizeof(aes_tests)/sizeof(aes_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_aes_256_cbc(), &aes_tests[i]);
+    for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_aes_128_cfb8(), &aes_cfb_tests[i]);
+    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_rc2_cbc(), &rc2_tests[i]);
+    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_rc2_40_cbc(), &rc2_40_tests[i]);
+    for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_des_ede3_cbc(), &des_ede3_tests[i]);
+    for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
+	ret += test_cipher(i, EVP_ossl_rc4(), &rc4_tests[i]);
+#endif /* PKCS11_MODULE_PATH */
 
     return ret;
 }

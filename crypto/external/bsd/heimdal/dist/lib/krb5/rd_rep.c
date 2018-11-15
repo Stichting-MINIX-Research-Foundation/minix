@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_rep.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: rd_rep.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -47,6 +47,7 @@ krb5_rd_rep(krb5_context context,
     krb5_data data;
     krb5_crypto crypto;
 
+    *repl = NULL;
     krb5_data_zero (&data);
 
     ret = decode_AP_REP(inbuf->data, inbuf->length, &ap_rep, &len);
@@ -66,35 +67,32 @@ krb5_rd_rep(krb5_context context,
     ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
     if (ret)
 	goto out;
-    ret = krb5_decrypt_EncryptedData (context,
-				      crypto,
-				      KRB5_KU_AP_REQ_ENC_PART,
-				      &ap_rep.enc_part,
-				      &data);
+    ret = krb5_decrypt_EncryptedData(context,
+				     crypto,
+				     KRB5_KU_AP_REQ_ENC_PART,
+				     &ap_rep.enc_part,
+				     &data);
     krb5_crypto_destroy(context, crypto);
     if (ret)
 	goto out;
 
     *repl = malloc(sizeof(**repl));
     if (*repl == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
     ret = decode_EncAPRepPart(data.data, data.length, *repl, &len);
     if (ret) {
 	krb5_set_error_message(context, ret, N_("Failed to decode EncAPRepPart", ""));
-	return ret;
+        goto out;
     }
 
     if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_TIME) {
 	if ((*repl)->ctime != auth_context->authenticator->ctime ||
 	    (*repl)->cusec != auth_context->authenticator->cusec)
 	{
-	    krb5_free_ap_rep_enc_part(context, *repl);
-	    *repl = NULL;
 	    ret = KRB5KRB_AP_ERR_MUT_FAIL;
-	    krb5_clear_error_message (context);
+	    krb5_clear_error_message(context);
 	    goto out;
 	}
     }
@@ -105,8 +103,12 @@ krb5_rd_rep(krb5_context context,
 	krb5_auth_con_setremotesubkey(context, auth_context, (*repl)->subkey);
 
  out:
-    krb5_data_free (&data);
-    free_AP_REP (&ap_rep);
+    if (ret) {
+        krb5_free_ap_rep_enc_part(context, *repl);
+        *repl = NULL;
+    }
+    krb5_data_free(&data);
+    free_AP_REP(&ap_rep);
     return ret;
 }
 

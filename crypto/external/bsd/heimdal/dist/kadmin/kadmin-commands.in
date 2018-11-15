@@ -76,6 +76,12 @@ command = {
 		type = "flag"
 		help = "decrypt keys"
 	}
+	option = {
+		long = "format"
+		short = "f"
+		type = "string"
+		help = "dump format, mit or heimdal (default: heimdal)"
+	}
 	argument = "[dump-file]"
 	min_args = "0"
 	max_args = "1"
@@ -175,9 +181,29 @@ command = {
 		help = "password expiration time"
 	}
 	option = {
+		long = "hist-kvno-diff-clnt"
+		type = "integer"
+		argument = "kvno diff"
+		help = "historic keys allowed for client"
+		default = "-1"
+	}
+	option = {
+		long = "hist-kvno-diff-svc"
+		type = "integer"
+		argument = "kvno diff"
+		help = "historic keys allowed for service"
+		default = "-1"
+	}
+	option = {
 		long = "use-defaults"
 		type = "flag"
 		help = "use default values"
+	}
+	option = {
+		long = "policy"
+		type = "string"
+		argument = "policy"
+		help = "policy name"
 	}
 	argument = "principal..."
 	min_args = "1"
@@ -209,6 +235,11 @@ command = {
 		long = "key"
 		type = "string"
 		help = "DES key in hex"
+	}
+	option = {
+		long = "keepold"
+		type = "flag"
+		help = "keep old keys/password"
 	}
 	argument = "principal..."
 	min_args = "1"
@@ -248,6 +279,12 @@ command = {
 		short = "k"
 		type = "string"
 		help = "keytab to use"
+	}
+	option = {
+		long = "random-key"
+		short = "r"
+		type = "flag"
+		help = "set random key"
 	}
 	argument = "principal..."
 	min_args = "1"
@@ -353,6 +390,26 @@ command = {
 		argument = "subject dn"
 		help = "aliases"
 	}
+	option = {
+		long = "policy"
+		type = "string"
+		argument = "policy"
+		help = "policy name"
+	}
+	option = {
+		long = "hist-kvno-diff-clnt"
+		type = "integer"
+		argument = "kvno diff"
+		help = "historic keys allowed for client"
+		default = "-1"
+	}
+	option = {
+		long = "hist-kvno-diff-svc"
+		type = "integer"
+		argument = "kvno diff"
+		help = "historic keys allowed for service"
+		default = "-1"
+	}
 	argument = "principal"
 	min_args = "1"
 	max_args = "1"
@@ -413,6 +470,22 @@ command = {
 	min_args = "0"
 	max_args = "1"
 	help = "Check the realm (if not given, the default realm) for configuration errors."
+}
+command = {
+	name = "lock"
+	function = "lock"
+	argument = ""
+	min_args = "0"
+	max_args = "0"
+	help = "Lock the database for writing (use with care)."
+}
+command = {
+	name = "unlock"
+	function = "unlock"
+	argument = ""
+	min_args = "0"
+	max_args = "0"
+	help = "Unlock the database."
 }
 command = {
 	name = "help"

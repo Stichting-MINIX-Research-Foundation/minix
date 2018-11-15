@@ -1,0 +1,54 @@
+#
+# This file tells appveyor.com how to build Heimdal on Windows.
+# Appveyor is a continuous integration (CI) service for github and other
+# users, and is free for public repositories.
+#
+
+install:
+  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
+
+build_script:
+  - set PSDKDir=C:\Program Files\Microsoft SDKs\Windows\v7.1
+  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.Cmd" %1 %2 /xp
+  - set WIXDIR="c:\Program Files (x86)\Windows Installer XML v3.5"
+  # We're not doing any codesigning in the Appveyor build yet.
+  - SET CODESIGN_PKT=0000000000000000
+  - set PATH=%PATH%;C:\Python26;C:\Perl64\bin;C:\tools\cygwin\bin;C:\Program Files (x86)\HTML Help Workshop
+  - set PATH=%PATH%;C:/msys64/usr/bin
+  - set PATH=%PATH%;C:\program files (x86)\windows installer xml v3.5\bin;C:\cygwin\bin
+  - set dbg__type=Debug
+  - title Heimdal Build %CPU% %dbg__type%
+  - echo PATH=%PATH%
+  # Newer texinfo has no .exe's, so we have to invoke it as
+  # "perl ...\makeinfo ...".  See doc/NTMakefile.
+  - nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1
+  - 7z a heimdal-out.zip C:\projects\heimdal\out\
+
+test_script:
+  # Packages are not validated in the Appveyor build, FYI.
+  - nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1 test
+
+artifacts:
+  - path: heimdal-out.zip
+    name: heimdal-out
+
+on_failure:
+  - appveyor PushArtifact heimdal-out.zip
+
+# To get RDP access to an appveyor worker for debugging a build, just
+# uncomment these next two lines and the last two lines too.
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+# Uncomment this to allow the RDP session to continue after the build
+# finishes.
+#
+# There's a delete-me file on the desktop that one should delete when
+# one is done with the worker.  RDP sessions are capped at 60 minutes as
+# of this writing.
+#
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+

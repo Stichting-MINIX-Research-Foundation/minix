@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_acquire_cred_with_password.c,v 1.1.1.1 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_acquire_cred_with_password.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2011, PADL Software Pty Ltd.
@@ -36,7 +36,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred_with_password(OM_uint32 *minor_status,
-			       const gss_name_t desired_name,
+			       gss_const_name_t desired_name,
 			       const gss_buffer_t password,
 			       OM_uint32 time_req,
 			       const gss_OID_set desired_mechs,
@@ -95,7 +95,8 @@ gss_acquire_cred_with_password(OM_uint32 *minor_status,
 
 	if (!HEIM_SLIST_FIRST(&new_cred->gc_mc)) {
 	    free(new_cred);
-	    *minor_status = 0;
+            if (desired_mechs->count > 1)
+                *minor_status = 0;
 	    return GSS_S_NO_CRED;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: keytab.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
     }
     db = name;
     mkey = strstr(name, ":mkey=");
-    if(mkey == NULL || mkey[5] == '\0') {
+    if(mkey == NULL || mkey[6] == '\0') {
 	if(*name == '\0')
 	    d->dbname = NULL;
 	else {
@@ -89,7 +89,7 @@ hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
 	memmove(d->dbname, db, mkey - db);
 	d->dbname[mkey - db] = '\0';
 
-	d->mkey = strdup(mkey + 5);
+	d->mkey = strdup(mkey + 6);
 	if(d->mkey == NULL) {
 	    free(d->dbname);
 	    free(d);
@@ -422,5 +422,23 @@ krb5_kt_ops hdb_kt_ops = {
     hdb_next_entry,
     hdb_end_seq_get,
     NULL,		/* add */
-    NULL		/* remove */
+    NULL,		/* remove */
+    NULL,
+    0
+};
+
+krb5_kt_ops hdb_get_kt_ops = {
+    "HDBGET",
+    hdb_resolve,
+    hdb_get_name,
+    hdb_close,
+    NULL,
+    hdb_get_entry,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    0
 };

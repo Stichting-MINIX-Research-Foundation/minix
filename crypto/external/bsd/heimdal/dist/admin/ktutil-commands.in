@@ -206,7 +206,7 @@ command = {
 		short = "V"
 		type = "integer"
 		help = "key version to remove"
-		argument = "enctype"
+		argument = "kvno"
 		default = "0"
 	}
 	option = {

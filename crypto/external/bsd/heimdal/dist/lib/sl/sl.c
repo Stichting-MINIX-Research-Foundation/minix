@@ -1,4 +1,4 @@
-/*	$NetBSD: sl.c,v 1.1.1.2 2014/04/24 12:45:53 pettai Exp $	*/
+/*	$NetBSD: sl.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
@@ -55,8 +55,11 @@ mandoc_template(SL_cmd *cmds,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(getprogname(), '/');
-    if(p) p++; else p = getprogname();
+#ifdef HAVE_GETPROGNAME
+    p = getprogname();
+#else
+    p = "unknown-application";
+#endif
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);
@@ -329,7 +332,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     if (argc >= 1) {
 	ret = sl_command(cmds, argc, argv);
 	if(ret == -1) {
-	    printf ("Unrecognized command: %s\n", argv[0]);
+	    sl_did_you_mean(cmds, argv[0]);
 	    ret = 0;
 	}
     }
@@ -394,4 +397,103 @@ sl_slc_help (SL_cmd *cmds, int argc, char **argv)
 	    }
 	}
     }
+}
+
+/* OptimalStringAlignmentDistance */
+
+static int
+osad(const char *s1, const char *s2)
+{
+    size_t l1 = strlen(s1), l2 = strlen(s2), i, j;
+    int *row0, *row1, *row2, *tmp, cost;
+
+    row0 = calloc(sizeof(int), l2 + 1);
+    row1 = calloc(sizeof(int), l2 + 1);
+    row2 = calloc(sizeof(int), l2 + 1);
+
+    for (j = 0; j < l2 + 1; j++)
+        row1[j] = j;
+
+    for (i = 0; i < l1; i++) {
+
+        row2[0] = i + 1;
+
+        for (j = 0; j < l2; j++) {
+
+	    row2[j + 1] = row1[j] + (s1[i] != s2[j]); /* substitute */
+	    
+	    if (row2[j + 1] > row1[j + 1] + 1) /* delete */
+		row2[j + 1] = row1[j + 1] + 1;
+	    if (row2[j + 1] > row2[j] + 1) /* insert */
+		row2[j + 1] = row2[j] + 1;
+	    if (j > 0 && i > 0 && s1[i - 1] != s2[j - 1] && s1[i - 1] == s2[j] && s1[i] == s2[j - 1] && row2[j + 1] < row0[j - 1]) /* transposition */
+	        row2[j + 1] = row0[j - 1] + 1;
+	}
+
+	tmp = row0;
+	row0 = row1;
+	row1 = row2;
+	row2 = tmp;
+    }
+
+    cost = row1[l2];
+
+    free(row0);
+    free(row1);
+    free(row2);
+
+    return cost;
+}
+
+/**
+ * Will propose a list of command that are almost matching the command
+ * used, if there is no matching, will ask the user to use "help".
+ *
+ * @param cmds command array to use for matching
+ * @param match the command that didn't exists
+ */
+
+void
+sl_did_you_mean(SL_cmd *cmds, const char *match)
+{
+    int *metrics, best_match = INT_MAX;
+    SL_cmd *c;
+    size_t n;
+
+    for (n = 0, c = cmds; c->name; c++, n++)
+        ;
+    metrics = calloc(n, sizeof(metrics[0]));
+    if (metrics == NULL)
+        return;
+
+    for (n = 0; cmds[n].name; n++) {
+        metrics[n] = osad(match, cmds[n].name);
+	if (metrics[n] < best_match)
+	    best_match = metrics[n];
+    }
+    if (best_match == INT_MAX) {
+        free(metrics);
+        fprintf(stderr, "What kind of command is %s", match);
+        return;
+    }
+
+    /* if match distance is low, propose that for the user */
+    if (best_match < 7) {
+
+	fprintf(stderr, "error: %s is not a known command, did you mean ?\n", match);
+	for (n = 0; cmds[n].name; n++) {
+	    if (metrics[n] == best_match) {
+		fprintf(stderr, "\t%s\n", cmds[n].name);
+	    }
+	}
+	fprintf(stderr, "\n");
+
+    } else {
+
+	fprintf(stderr, "error: %s is not a command, use \"help\" for more list of commands.\n", match);
+    }
+
+    free(metrics);
+
+    return;
 }

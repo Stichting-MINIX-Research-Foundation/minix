@@ -1,4 +1,4 @@
-/*	$NetBSD: cloexec.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: cloexec.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -66,3 +66,12 @@ rk_cloexec_dir(DIR * d)
     rk_cloexec(dirfd(d));
 #endif
 }
+
+void ROKEN_LIB_FUNCTION
+rk_cloexec_socket(rk_socket_t s)
+{
+#ifndef _WIN32
+    rk_cloexec((int)s);
+#endif
+}
+

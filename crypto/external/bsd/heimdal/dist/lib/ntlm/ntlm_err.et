@@ -14,11 +14,47 @@ error_code RAND,		"Random generator failed"
 error_code AUTH,		"NTLM authentication failed"
 error_code TIME_SKEW,		"Client time skewed to server"
 error_code OEM,			"Client set OEM string"
-error_code MISSING_NAME_SEPARATOR, "missing @ or \ in name"
+error_code MISSING_NAME_SEPARATOR, "missing @ or \\\\ in name"
 error_code MISSING_BUFFER, 	"missing expected buffer"
 error_code INVALID_APOP, 	"Invalid APOP response"
 error_code INVALID_CRAM_MD5, 	"Invalid CRAM-MD5 response"
 error_code INVALID_DIGEST_MD5, 	"Invalid DIGEST-MD5 response"
 error_code INVALID_DIGEST_MD5_RSPAUTH, 	"Invalid DIGEST-MD5 rspauth"
+error_code INVALID_CHANNEL_BINDINGS, "Invalid channel bindings"
+error_code INVALID_MIC, 	"Invalid MIC"
+error_code INVALID_SESSIONKEY, 	"Invalid session key"
+
+
+#
+# NTLM/GSS error codes
+#
+index 64
+error_code NOT_CONFIGURED,		"NTLM not configured"
+
+error_code INVALID_CHALLANGE,		"Invalid client challenge"
+error_code INVALID_LMv1_RESPONSE,	"Invalid client LMv1 response"
+error_code INVALID_NT_RESPONSE,		"Invalid client NT response"
+error_code INVALID_LMv2_RESPONSE,	"Invalid client LMv2 response"
+error_code INVALID_NTv1_RESPONSE,	"Invalid client NTv1 response"
+error_code INVALID_NTv2_RESPONSE,	"Invalid client NTv2 response"
+error_code INVALID_NTv1_ANSWER,		"Invalid client NTv1 answer"
+error_code INVALID_NTv2_ANSWER,		"Invalid client NTv2 answer"
+error_code INVALID_SESSION_KEY,		"Invalid session key"
+
+error_code INVALID_NO_GUEST,		"Invalid guest login request"
+
+error_code NO_NETR_CONFIGURED,		"No NETR configured"
+
+
+#
+# Scram errors
+#
+prefix HSCRAM_ERR
+index 128
+
+error_code INVALID_MESSAGE,		"Invalid SCRAM message"
+error_code INVALID_PROOF,		"Invalid SCRAM proof"
+error_code INVALID_ROLE,		"Invalid SCRAM role"
+
 
 end

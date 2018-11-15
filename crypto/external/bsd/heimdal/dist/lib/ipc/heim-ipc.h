@@ -1,4 +1,4 @@
-/*	$NetBSD: heim-ipc.h,v 1.1.1.1 2011/04/13 18:15:28 elric Exp $	*/
+/*	$NetBSD: heim-ipc.h,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -41,7 +41,7 @@ typedef struct heim_ipc *heim_ipc;
 typedef struct heim_sipc *heim_sipc;
 typedef struct heim_icred *heim_icred;
 typedef struct heim_isemaphore *heim_isemaphore;
-typedef struct heim_octet_string heim_idata;
+typedef struct heim_base_data heim_idata;
 typedef struct heim_sipc_call *heim_sipc_call;
 
 /* common */

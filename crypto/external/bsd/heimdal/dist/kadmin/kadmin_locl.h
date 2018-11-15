@@ -1,4 +1,4 @@
-/*	$NetBSD: kadmin_locl.h,v 1.1.1.2 2011/04/14 14:08:10 elric Exp $	*/
+/*	$NetBSD: kadmin_locl.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -111,6 +111,9 @@ int  str2attributes(const char *, krb5_flags *);
 int  parse_attributes (const char *, krb5_flags *, int *, int);
 int  edit_attributes (const char *, krb5_flags *, int *, int);
 
+int  parse_policy (const char *, char **, int *, int);
+int  edit_policy (const char *, char **, int *, int);
+
 void time_t2str(time_t, char *, size_t, int);
 int  str2time_t (const char *, time_t *);
 int  parse_timet (const char *, krb5_timestamp *, int *, int);
@@ -126,7 +129,7 @@ int edit_entry(kadm5_principal_ent_t, int *, kadm5_principal_ent_t, int);
 void set_defaults(kadm5_principal_ent_t, int *, kadm5_principal_ent_t, int);
 int set_entry(krb5_context, kadm5_principal_ent_t, int *,
 	      const char *, const char *, const char *,
-	      const char *, const char *);
+	      const char *, const char *, const char *);
 int
 foreach_principal(const char *, int (*)(krb5_principal, void*),
 		  const char *, void *);

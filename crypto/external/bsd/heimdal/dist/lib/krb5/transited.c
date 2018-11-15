@@ -1,4 +1,4 @@
-/*	$NetBSD: transited.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: transited.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -400,6 +400,208 @@ krb5_domain_x500_encode(char **realms, unsigned int num_realms,
     return 0;
 }
 
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_free_capath(krb5_context context, char **capath)
+{
+    char **s;
+
+    for (s = capath; s && *s; ++s)
+        free(*s);
+    free(capath);
+}
+
+struct hier_iter {
+    const char *local_realm;
+    const char *server_realm;
+    const char *lr;     /* Pointer into tail of local realm */
+    const char *sr;     /* Pointer into tail of server realm */
+    size_t llen;        /* Length of local_realm */
+    size_t slen;        /* Length of server_realm */
+    size_t len;         /* Length of common suffix */
+    size_t num;         /* Path element count */
+};
+
+/*
+ * Step up from local_realm to common suffix, or else down to server_realm.
+ */
+static const char *
+hier_next(struct hier_iter *state)
+{
+    const char *lr = state->lr;
+    const char *sr = state->sr;
+    const char *lsuffix = state->local_realm + state->llen - state->len;
+    const char *server_realm = state->server_realm;
+
+    if (lr != NULL) {
+        while (lr < lsuffix)
+            if (*lr++ == '.')
+                return state->lr = lr;
+        state->lr = NULL;
+    }
+    if (sr != NULL) {
+        while (--sr >= server_realm)
+            if (sr == server_realm || sr[-1] == '.')
+                return state->sr = sr;
+        state->sr = NULL;
+    }
+    return NULL;
+}
+
+static void
+hier_init(struct hier_iter *state, const char *local_realm, const char *server_realm)
+{
+    size_t llen;
+    size_t slen;
+    size_t len = 0;
+    const char *lr;
+    const char *sr;
+
+    state->local_realm = local_realm;
+    state->server_realm = server_realm;
+    state->llen = llen = strlen(local_realm);
+    state->slen = slen = strlen(server_realm);
+    state->len = 0;
+    state->num = 0;
+
+    if (slen == 0 || llen == 0)
+        return;
+
+    /* Find first difference from the back */
+    for (lr = local_realm + llen, sr = server_realm + slen;
+         lr != local_realm && sr != server_realm;
+         --lr, --sr) {
+        if (lr[-1] != sr[-1])
+            break;
+        if (lr[-1] == '.')
+            len = llen - (lr - local_realm);
+    }
+
+    /* Nothing in common? */
+    if (*lr == '\0')
+        return;
+
+    /* Everything in common? */
+    if (llen == slen && lr == local_realm)
+        return;
+
+    /* Is one realm is a suffix of the other? */
+    if ((llen < slen && lr == local_realm && sr[-1] == '.') ||
+        (llen > slen && sr == server_realm && lr[-1] == '.'))
+        len = llen - (lr - local_realm);
+
+    state->len = len;
+    /* `lr` starts at local realm and walks up the tree to common suffix */
+    state->lr = local_realm;
+    /* `sr` starts at common suffix in server realm and walks down the tree */
+    state->sr = server_realm + slen - len;
+
+    /* Count elements and reset */
+    while (hier_next(state) != NULL)
+        ++state->num;
+    state->lr = local_realm;
+    state->sr = server_realm + slen - len;
+}
+
+/*
+ * Find a referral path from client_realm to server_realm via local_realm.
+ * Either via [capaths] or hierarchicaly.
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_find_capath(krb5_context context,
+                  const char *client_realm,
+                  const char *local_realm,
+                  const char *server_realm,
+                  krb5_boolean use_hierarchical,
+                  char ***rpath,
+                  size_t *npath)
+{
+    char **confpath;
+    char **capath;
+    struct hier_iter hier_state;
+    char **rp;
+    const char *r;
+
+    *rpath = NULL;
+    *npath = 0;
+
+    confpath = krb5_config_get_strings(context, NULL, "capaths",
+                                       client_realm, server_realm, NULL);
+    if (confpath == NULL)
+        confpath = krb5_config_get_strings(context, NULL, "capaths",
+                                           local_realm, server_realm, NULL);
+    /*
+     * With a [capaths] setting from the client to the server we look for our
+     * own realm in the list.  If our own realm is not present, we return the
+     * full list.  Otherwise, we return our realm's successors, or possibly
+     * NULL.  Ignoring a [capaths] settings risks loops plus would violate
+     * explicit policy and the principle of least surpise.
+     */
+    if (confpath != NULL) {
+        char **start = confpath;
+        size_t i;
+        size_t n;
+
+	for (rp = start; *rp; rp++)
+            if (strcmp(*rp, local_realm) == 0)
+                start = rp+1;
+        n = rp - start;
+
+        if (n == 0) {
+            krb5_config_free_strings(confpath);
+            return 0;
+        }
+
+        capath = calloc(n + 1, sizeof(*capath));
+        if (capath == NULL) {
+            krb5_config_free_strings(confpath);
+            return krb5_enomem(context);
+        }
+
+	for (i = 0, rp = start; *rp; rp++) {
+            if ((capath[i++] = strdup(*rp)) == NULL) {
+                _krb5_free_capath(context, capath);
+                krb5_config_free_strings(confpath);
+                return krb5_enomem(context);
+            }
+        }
+        krb5_config_free_strings(confpath);
+        capath[i] = NULL;
+        *rpath = capath;
+        *npath = n;
+        return 0;
+    }
+
+    /* The use_hierarchical flag makes hierarchical path lookup unconditional */
+    if (! use_hierarchical &&
+        ! krb5_config_get_bool_default(context, NULL, TRUE, "libdefaults",
+                                       "allow_hierarchical_capaths", NULL))
+        return 0;
+
+    /*
+     * When validating transit paths, local_realm == client_realm.  Otherwise,
+     * with hierarchical referrals, they may differ, and we may be building a
+     * path forward from our own realm!
+     */
+    hier_init(&hier_state, local_realm, server_realm);
+    if (hier_state.num == 0)
+        return 0;
+
+    rp = capath = calloc(hier_state.num + 1, sizeof(*capath));
+    if (capath == NULL)
+        return krb5_enomem(context);
+    while ((r = hier_next(&hier_state)) != NULL) {
+        if ((*rp++ = strdup(r)) == NULL) {
+            _krb5_free_capath(context, capath);
+            return krb5_enomem(context);
+        }
+    }
+
+    *rp = NULL;
+    *rpath = capath;
+    *npath = hier_state.num;
+    return 0;
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_check_transited(krb5_context context,
 		     krb5_const_realm client_realm,
@@ -408,35 +610,36 @@ krb5_check_transited(krb5_context context,
 		     unsigned int num_realms,
 		     int *bad_realm)
 {
-    char **tr_realms;
-    char **p;
-    size_t i;
+    krb5_error_code ret = 0;
+    char **capath = NULL;
+    size_t num_capath = 0;
+    size_t i = 0;
+    size_t j = 0;
 
-    if(num_realms == 0)
-	return 0;
+    /* In transit checks hierarchical capaths are optional */
+    ret = _krb5_find_capath(context, client_realm, client_realm, server_realm,
+                            FALSE, &capath, &num_capath);
+    if (ret)
+        return ret;
 
-    tr_realms = krb5_config_get_strings(context, NULL,
-					"capaths",
-					client_realm,
-					server_realm,
-					NULL);
-    for(i = 0; i < num_realms; i++) {
-	for(p = tr_realms; p && *p; p++) {
-	    if(strcmp(*p, realms[i]) == 0)
+    for (i = 0; i < num_realms; i++) {
+	for (j = 0; j < num_capath; ++j) {
+	    if (strcmp(realms[i], capath[j]) == 0)
 		break;
 	}
-	if(p == NULL || *p == NULL) {
-	    krb5_config_free_strings(tr_realms);
+	if (j == num_capath) {
+            _krb5_free_capath(context, capath);
 	    krb5_set_error_message (context, KRB5KRB_AP_ERR_ILL_CR_TKT,
 				    N_("no transit allowed "
-				       "through realm %s", ""),
-				    realms[i]);
-	    if(bad_realm)
+				       "through realm %s from %s to %s", ""),
+				       realms[i], client_realm, server_realm);
+	    if (bad_realm)
 		*bad_realm = i;
 	    return KRB5KRB_AP_ERR_ILL_CR_TKT;
 	}
     }
-    krb5_config_free_strings(tr_realms);
+
+    _krb5_free_capath(context, capath);
     return 0;
 }
 
@@ -489,4 +692,3 @@ main(int argc, char **argv)
     return 0;
 }
 #endif
-

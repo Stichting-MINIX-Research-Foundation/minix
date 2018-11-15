@@ -1,4 +1,4 @@
-/*	$NetBSD: combining.c,v 1.1.1.1 2011/04/13 18:15:45 elric Exp $	*/
+/*	$NetBSD: combining.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -51,7 +51,7 @@ translation_cmp(const void *key, const void *data)
 int
 _wind_combining_class(uint32_t code_point)
 {
-    struct translation ts = {code_point};
+    struct translation ts = {code_point, 0};
     void *s = bsearch(&ts, _wind_combining_table, _wind_combining_table_size,
 		      sizeof(_wind_combining_table[0]),
 		      translation_cmp);

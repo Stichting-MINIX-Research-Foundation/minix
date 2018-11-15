@@ -1,4 +1,4 @@
-/*	$NetBSD: roken_gethostby.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: roken_gethostby.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
@@ -79,7 +79,8 @@ setup_int(const char *proxy_host, short proxy_port,
 	if(make_address(dns_host, &dns_addr.sin_addr) != 0)
 	    return -1;
 	dns_addr.sin_port = htons(dns_port);
-	asprintf(&dns_req, "%s", dns_path);
+	if (asprintf(&dns_req, "%s", dns_path) < 0)
+	    return -1;
     }
     dns_addr.sin_family = AF_INET;
     return 0;

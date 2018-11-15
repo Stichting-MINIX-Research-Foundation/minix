@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 
-require 'getopts.pl';
+use Getopt::Std;
 
 my $debug = 0;
 
-Getopts('dc:p:o:') || die "foo";
+getopts('dc:p:o:') || die "foo";
 
 if ($opt_d) {
     $debug = 1;
@@ -145,12 +145,15 @@ sub parse_if
     if (m/^\s*$/) {
 	print "end $_\n" if ($debug);
 	return 1;
+    } elsif (m/^\(([^&]+)\&\&(.*)\)\s*\|\|\s*\(([^&]+)\&\&(.*)\)$/) {
+	print "($1 and $2) or ($3 and $4)\n" if ($debug);
+	return ((parse_if($1) and parse_if($2)) or (parse_if($3) and parse_if($4)));
     } elsif (m/^([^&]+)\&\&(.*)$/) {
 	print "$1 and $2\n" if ($debug);
 	return parse_if($1) and parse_if($2);
     } elsif (m/^([^\|]+)\|\|(.*)$/) {
 	print "$1 or $2\n" if ($debug);
-	return parse_if($1) or parse_if($2);
+	return (parse_if($1) or parse_if($2));
     } elsif (m/^\s*(\!)?\s*defined\((\w+)\)/) {
 	($neg, $var) = ($1, $2);
 	print "def: ${neg}-defined(${var})\n" if ($debug);

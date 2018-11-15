@@ -61,7 +61,6 @@ kdestroy2="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache2 ${afs_no_unlog}"
 uu_server="${TESTS_ENVIRONMENT} ../../appl/test/uu_server"
 uu_client="${TESTS_ENVIRONMENT} ../../appl/test/uu_client"
 
-
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
@@ -86,15 +85,9 @@ ${kadmin} check ${R} || exit 1
 
 echo foo > ${objdir}/foopassword
 
-echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    exit 1
-fi
+echo Starting kdc ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill -9 ${kdcpid} ${uuspid}; echo signal killing kdc; exit 1;" EXIT
 

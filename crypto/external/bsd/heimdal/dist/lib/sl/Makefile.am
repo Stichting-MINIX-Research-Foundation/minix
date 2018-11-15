@@ -3,7 +3,7 @@
 include $(top_srcdir)/Makefile.am.common
 
 if do_roken_rename
-ES = strtok_r.c snprintf.c strdup.c strupr.c getprogname.c
+ES = strtok_r.c snprintf.c strdup.c strupr.c
 endif
 
 AM_CPPFLAGS += $(ROKEN_RENAME)
@@ -29,7 +29,7 @@ libexec_heimdal_PROGRAMS = slc
 
 slc_SOURCES = slc-gram.y slc-lex.l slc.h
 
-CLEANFILES = snprintf.c strtok_r.c strdup.c strupr.c getprogname.c slc-lex.c
+CLEANFILES = snprintf.c strtok_r.c strdup.c strupr.c slc-lex.c
 
 LDADD =	libsl.la $(LIB_roken)
 
@@ -43,8 +43,6 @@ strdup.c:
 	$(LN_S) $(srcdir)/../roken/strdup.c .
 strupr.c:
 	$(LN_S) $(srcdir)/../roken/strupr.c .
-getprogname.c:
-	$(LN_S) $(srcdir)/../roken/getprogname.c .
 
 slc-lex.c: slc-gram.h
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_alname.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_alname.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -36,13 +36,33 @@
 #include <krb5/getarg.h>
 #include <err.h>
 
+char localname[1024];
+static size_t lname_size = sizeof (localname);
+static int lname_size_arg = 0;
+static int simple_flag = 0;
+static int verbose_flag = 0;
+static int version_flag = 0;
+static int help_flag	= 0;
+
+static struct getargs args[] = {
+    {"lname-size",	0,	arg_integer,	&lname_size_arg,
+     "set localname size (0 means use default, must be 0..1023)", "integer" },
+    {"simple",	0,	arg_flag,	&simple_flag, /* Used for scripting */
+     "map the given principal and print the resulting localname", NULL },
+    {"verbose",	0,	arg_flag,	&verbose_flag,
+     "print the actual principal name as well as the localname", NULL },
+    {"version",	0,	arg_flag,	&version_flag,
+     "print version", NULL },
+    {"help",	0,	arg_flag,	&help_flag,
+     NULL, NULL }
+};
+
 static void
 test_alname(krb5_context context, krb5_const_realm realm,
 	    const char *user, const char *inst,
 	    const char *localuser, int ok)
 {
     krb5_principal p;
-    char localname[1024];
     krb5_error_code ret;
     char *princ;
 
@@ -54,14 +74,16 @@ test_alname(krb5_context context, krb5_const_realm realm,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_unparse_name");
 
-    ret = krb5_aname_to_localname(context, p, sizeof(localname), localname);
+    ret = krb5_aname_to_localname(context, p, lname_size, localname);
     krb5_free_principal(context, p);
-    free(princ);
     if (ret) {
-	if (!ok)
+	if (!ok) {
+	    free(princ);
 	    return;
+	}
 	krb5_err(context, 1, ret, "krb5_aname_to_localname: %s -> %s",
 		 princ, localuser);
+	free(princ);
     }
 
     if (strcmp(localname, localuser) != 0) {
@@ -75,16 +97,6 @@ test_alname(krb5_context context, krb5_const_realm realm,
     }
 
 }
-
-static int version_flag = 0;
-static int help_flag	= 0;
-
-static struct getargs args[] = {
-    {"version",	0,	arg_flag,	&version_flag,
-     "print version", NULL },
-    {"help",	0,	arg_flag,	&help_flag,
-     NULL, NULL }
-};
 
 static void
 usage (int ret)
@@ -121,14 +133,67 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (argc != 1)
-	errx(1, "first argument should be a local user that in root .k5login");
-
-    user = argv[0];
-
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    if (simple_flag) {
+	krb5_principal princ;
+	char *unparsed;
+	int status = 0;
+
+	/* Map then print the result and exit */
+	if (argc != 1)
+	    errx(1, "One argument is required and it must be a principal name");
+
+	ret = krb5_parse_name(context, argv[0], &princ);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_build_principal");
+
+	ret = krb5_unparse_name(context, princ, &unparsed);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_unparse_name");
+
+	if (lname_size_arg > 0 && lname_size_arg < 1024)
+	    lname_size = lname_size_arg;
+	else if (lname_size_arg != 0)
+	    errx(1, "local name size must be between 0 and 1023 (inclusive)");
+
+	ret = krb5_aname_to_localname(context, princ, lname_size, localname);
+	if (ret == KRB5_NO_LOCALNAME) {
+	    if (verbose_flag)
+		fprintf(stderr, "No mapping obtained for %s\n", unparsed);
+	    exit(1);
+	}
+	switch (ret) {
+	case KRB5_PLUGIN_NO_HANDLE:
+	    fprintf(stderr, "Error: KRB5_PLUGIN_NO_HANDLE leaked!\n");
+	    status = 2;
+	    break;
+	case KRB5_CONFIG_NOTENUFSPACE:
+	    fprintf(stderr, "Error: lname-size (%lu) too small\n",
+		    (long unsigned)lname_size);
+	    status = 3;
+	    break;
+	case 0:
+	    if (verbose_flag)
+		printf("%s ", unparsed);
+	    printf("%s\n", localname);
+	    break;
+	default:
+	    krb5_err(context, 4, ret, "krb5_aname_to_localname");
+	    break;
+	}
+	free(unparsed);
+	krb5_free_principal(context, princ);
+	krb5_free_context(context);
+	exit(status);
+    }
+
+    if (argc != 1)
+	errx(1, "first argument should be a local user that is in root .k5login");
+
+    user = argv[0];
 
     ret = krb5_get_default_realm(context, &realm);
     if (ret)

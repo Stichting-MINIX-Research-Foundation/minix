@@ -39,6 +39,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\concat.obj		\
 	$(OBJ)\cloexec.obj		\
 	$(OBJ)\ct.obj			\
+	$(OBJ)\detach.obj		\
 	$(OBJ)\dirent.obj		\
 	$(OBJ)\dlfcn_w32.obj		\
 	$(OBJ)\dumpdata.obj		\
@@ -69,6 +70,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\issuid.obj		\
 	$(OBJ)\localtime_r.obj		\
 	$(OBJ)\lstat.obj		\
+	$(OBJ)\memset_s.obj 		\
+	$(OBJ)\mkdir.obj                \
 	$(OBJ)\mini_inetd.obj		\
 	$(OBJ)\mkstemp.obj		\
 	$(OBJ)\net_read.obj		\
@@ -94,11 +97,14 @@ libroken_la_OBJS =			\
 	$(OBJ)\strerror_r.obj		\
 	$(OBJ)\strlcat.obj		\
 	$(OBJ)\strlcpy.obj		\
+	$(OBJ)\strndup.obj		\
 	$(OBJ)\strpool.obj		\
 	$(OBJ)\strptime.obj		\
 	$(OBJ)\strsep.obj		\
 	$(OBJ)\strsep_copy.obj		\
 	$(OBJ)\strtok_r.obj		\
+	$(OBJ)\strtoll.obj		\
+	$(OBJ)\strtoull.obj		\
 	$(OBJ)\syslogc.obj		\
 	$(OBJ)\timegm.obj		\
 	$(OBJ)\timeval.obj		\
@@ -113,6 +119,8 @@ libroken_la_OBJS =			\
 	$(OBJ)\warn.obj			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
+        $(OBJ)\win32_alloc.obj          \
+	$(OBJ)\writev.obj               \
 	$(OBJ)\xfree.obj
 
 !if $(NMAKE_WINVER) < 0x0600
@@ -160,6 +168,9 @@ INCFILES = 			\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
+!ifndef HAVE_STDINT_H
+	$(INCDIR)\stdint.h	\
+!endif
 	$(INCDIR)\xdbm.h
 
 clean::
@@ -179,6 +190,7 @@ TEST_PROGS =			    \
 	$(OBJ)\getaddrinfo-test.exe \
 	$(OBJ)\getifaddrs-test.exe  \
 	$(OBJ)\hex-test.exe	    \
+	$(OBJ)\test-detach.exe	    \
 	$(OBJ)\test-readenv.exe	    \
 	$(OBJ)\parse_bytes-test.exe \
 	$(OBJ)\parse_reply-test.exe \
@@ -230,7 +242,7 @@ $(OBJ)\snprintf-test.exe: $(OBJ)\snprintf-test.obj $(OBJ)\libtest.lib $(LIBROKEN
 $(OBJ)\resolve-test.exe: $(OBJ)\resolve-test.obj $(LIBROKEN)
 	$(EXECONLINK) DnsAPI.lib
 
-$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj
+$(OBJ)\base64-test.exe: $(OBJ)\base64-test.obj $(OBJ)\base64.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\getaddrinfo-test.exe: $(OBJ)\getaddrinfo-test.obj $(LIBROKEN)
@@ -240,6 +252,9 @@ $(OBJ)\hex-test.exe: $(OBJ)\hex-test.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\parse_bytes-test.exe: $(OBJ)\parse_bytes-test.obj $(LIBROKEN)
+	$(EXECONLINK)
+
+$(OBJ)\test-detach.exe: $(OBJ)\test-detach.obj $(OBJ)\detach.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\dirent-test.exe: $(OBJ)\dirent-test.obj $(LIBROKEN)
@@ -255,19 +270,19 @@ test-binaries: $(TEST_PROGS) $(TMP_PROGS)
 
 test-run:
 	cd $(OBJ)
-	test-mini_inetd.exe
-	dirent-test.exe
-	base64-test.exe
-	getaddrinfo-test.exe
-	getifaddrs-test.exe
-	hex-test.exe
-	test-readenv.exe
-	parse_bytes-test.exe
+	-test-mini_inetd.exe
+	-dirent-test.exe
+	-base64-test.exe
+	-getaddrinfo-test.exe
+	-getifaddrs-test.exe
+	-hex-test.exe
+	-test-readenv.exe
+	-parse_bytes-test.exe
 # Need to rewrite this test:
-#	parse_reply-test.exe
-	parse_time-test.exe
-	snprintf-test.exe
-	strpftime-test.exe
+#	-parse_reply-test.exe
+	-parse_time-test.exe
+	-snprintf-test.exe
+	-strpftime-test.exe
 	cd $(SRCDIR)
 
 test:: test-binaries test-run

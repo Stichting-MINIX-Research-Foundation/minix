@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: init.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -39,11 +39,14 @@
 #include "kadmin-commands.h"
 #include <kadm5/private.h>
 
+#define CRE_DUP_OK	1
+
 static kadm5_ret_t
 create_random_entry(krb5_principal princ,
 		    unsigned max_life,
 		    unsigned max_rlife,
-		    uint32_t attributes)
+		    uint32_t attributes,
+		    unsigned flags)
 {
     kadm5_principal_ent_rec ent;
     kadm5_ret_t ret;
@@ -80,6 +83,8 @@ create_random_entry(krb5_principal princ,
     /* Create the entry with a random password */
     ret = kadm5_create_principal(kadm_handle, &ent, mask, password);
     if(ret) {
+	if (ret == KADM5_DUP && (flags & CRE_DUP_OK))
+	    goto out;
 	krb5_warn(context, ret, "create_random_entry(%s): randkey failed",
 		  name);
 	goto out;
@@ -154,6 +159,10 @@ init(struct init_options *opt, int argc, char **argv)
 	krb5_warn(context, ret, "hdb_open");
 	return 0;
     }
+    ret = kadm5_log_reinit(kadm_handle, 0);
+    if (ret)
+        krb5_err(context, 1, ret, "Failed iprop log initialization");
+    kadm5_log_end(kadm_handle);
     db->hdb_close(context, db);
     for(i = 0; i < argc; i++){
 	krb5_principal princ;
@@ -179,7 +188,7 @@ init(struct init_options *opt, int argc, char **argv)
 	if(ret)
 	    return 0;
 
-	create_random_entry(princ, max_life, max_rlife, 0);
+	create_random_entry(princ, max_life, max_rlife, 0, 0);
 	krb5_free_principal(context, princ);
 
 	if (opt->bare_flag)
@@ -200,13 +209,14 @@ init(struct init_options *opt, int argc, char **argv)
 			    KRB5_KDB_DISALLOW_POSTDATED|
 			    KRB5_KDB_DISALLOW_RENEWABLE|
 			    KRB5_KDB_DISALLOW_PROXIABLE|
-			    KRB5_KDB_REQUIRES_PRE_AUTH);
+			    KRB5_KDB_REQUIRES_PRE_AUTH,
+			    0);
 	krb5_free_principal(context, princ);
 
 	/* Create `kadmin/admin' */
 	krb5_make_principal(context, &princ, realm,
 			    "kadmin", "admin", NULL);
-	create_random_entry(princ, 60*60, 60*60, KRB5_KDB_REQUIRES_PRE_AUTH);
+	create_random_entry(princ, 60*60, 60*60, KRB5_KDB_REQUIRES_PRE_AUTH, 0);
 	krb5_free_principal(context, princ);
 
 	/* Create `changepw/kerberos' (for v4 compat) */
@@ -214,7 +224,7 @@ init(struct init_options *opt, int argc, char **argv)
 			    "changepw", "kerberos", NULL);
 	create_random_entry(princ, 60*60, 60*60,
 			    KRB5_KDB_DISALLOW_TGT_BASED|
-			    KRB5_KDB_PWCHANGE_SERVICE);
+			    KRB5_KDB_PWCHANGE_SERVICE, 0);
 
 	krb5_free_principal(context, princ);
 
@@ -223,16 +233,25 @@ init(struct init_options *opt, int argc, char **argv)
 			    "kadmin", "hprop", NULL);
 	create_random_entry(princ, 60*60, 60*60,
 			    KRB5_KDB_REQUIRES_PRE_AUTH|
-			    KRB5_KDB_DISALLOW_TGT_BASED);
+			    KRB5_KDB_DISALLOW_TGT_BASED, 0);
 	krb5_free_principal(context, princ);
 
 	/* Create `WELLKNOWN/ANONYMOUS' for anonymous as-req */
 	krb5_make_principal(context, &princ, realm,
 			    KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, NULL);
 	create_random_entry(princ, 60*60, 60*60,
-			    KRB5_KDB_REQUIRES_PRE_AUTH);
+			    KRB5_KDB_REQUIRES_PRE_AUTH, 0);
 	krb5_free_principal(context, princ);
 
+
+	/* Create `WELLKNONW/org.h5l.fast-cookie@WELLKNOWN:ORG.H5L' for FAST cookie */
+	krb5_make_principal(context, &princ, KRB5_WELLKNOWN_ORG_H5L_REALM,
+			    KRB5_WELLKNOWN_NAME, "org.h5l.fast-cookie", NULL);
+	create_random_entry(princ, 60*60, 60*60,
+			    KRB5_KDB_REQUIRES_PRE_AUTH|
+			    KRB5_KDB_DISALLOW_TGT_BASED|
+			    KRB5_KDB_DISALLOW_ALL_TIX, CRE_DUP_OK);
+	krb5_free_principal(context, princ);
 
 	/* Create `default' */
 	{

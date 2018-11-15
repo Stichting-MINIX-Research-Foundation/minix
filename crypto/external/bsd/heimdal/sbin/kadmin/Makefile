@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
+# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:53 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -43,6 +43,11 @@ LDADD+=	-lkadm5srv -lhdb -lkadm5clnt -lsl
 LDADD+= -lutil -ledit -lterminfo
 DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKADM5CLNT} ${LIBSL}
 DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
+
+kadmin.8: kadmin.1
+	@${TOOL_SED} -e 's/KADMIN 1/KADMIN 8/' < ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=kadmin.8
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

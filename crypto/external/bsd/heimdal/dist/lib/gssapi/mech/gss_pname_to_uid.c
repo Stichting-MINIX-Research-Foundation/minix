@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_pname_to_uid.c,v 1.1.1.1 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_pname_to_uid.c,v 1.2.4.1 2017/09/11 04:58:44 snj Exp $	*/
 
 /*
  * Copyright (c) 2011, PADL Software Pty Ltd.
@@ -35,21 +35,21 @@
 #include "mech_locl.h"
 
 static OM_uint32
-mech_pname_to_uid(OM_uint32 *minor_status,
-                  struct _gss_mechanism_name *mn,
-                  uid_t *uidp)
+mech_localname(OM_uint32 *minor_status,
+               struct _gss_mechanism_name *mn,
+               gss_buffer_t localname)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
 
     *minor_status = 0;
 
-    if (mn->gmn_mech->gm_pname_to_uid == NULL)
+    if (mn->gmn_mech->gm_localname == NULL)
         return GSS_S_UNAVAILABLE;
 
-    major_status = mn->gmn_mech->gm_pname_to_uid(minor_status,
-                                                 mn->gmn_name,
-                                                 mn->gmn_mech_oid,
-                                                 uidp);
+    major_status = mn->gmn_mech->gm_localname(minor_status,
+                                              mn->gmn_name,
+                                              mn->gmn_mech_oid,
+                                              localname);
     if (GSS_ERROR(major_status))
         _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
 
@@ -57,86 +57,55 @@ mech_pname_to_uid(OM_uint32 *minor_status,
 }
 
 static OM_uint32
-attr_pname_to_uid(OM_uint32 *minor_status,
-                  struct _gss_mechanism_name *mn,
-                  uid_t *uidp)
+attr_localname(OM_uint32 *minor_status,
+               struct _gss_mechanism_name *mn,
+               gss_buffer_t localname)
 {
-#ifdef NO_LOCALNAME
-    return GSS_S_UNAVAILABLE;
-#else
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     OM_uint32 tmpMinor;
+    gss_buffer_desc value = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc display_value = GSS_C_EMPTY_BUFFER;
+    int authenticated = 0, complete = 0;
     int more = -1;
 
     *minor_status = 0;
 
+    localname->length = 0;
+    localname->value = NULL;
+
     if (mn->gmn_mech->gm_get_name_attribute == NULL)
         return GSS_S_UNAVAILABLE;
 
-    while (more != 0) {
-        gss_buffer_desc value;
-        gss_buffer_desc display_value;
-        int authenticated = 0, complete = 0;
-#ifdef POSIX_GETPWNAM_R
-        char pwbuf[2048];
-        struct passwd pw, *pwd;
-#else
-        struct passwd *pwd;
-#endif
-        char *localname;
-
-        major_status = mn->gmn_mech->gm_get_name_attribute(minor_status,
-                                                           mn->gmn_name,
-                                                           GSS_C_ATTR_LOCAL_LOGIN_USER,
-                                                           &authenticated,
-                                                           &complete,
-                                                           &value,
-                                                           &display_value,
-                                                           &more);
-        if (GSS_ERROR(major_status)) {
-            _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
-            break;
-        }
-
-        localname = malloc(value.length + 1);
-        if (localname == NULL) {
-            major_status = GSS_S_FAILURE;
-            *minor_status = ENOMEM;
-            break;
-        }
-
-        memcpy(localname, value.value, value.length);
-        localname[value.length] = '\0';
-
-#ifdef POSIX_GETPWNAM_R
-        if (getpwnam_r(localname, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0)
-            pwd = NULL;
-#else
-        pwd = getpwnam(localname);
-#endif
-
-        free(localname);
-        gss_release_buffer(&tmpMinor, &value);
-        gss_release_buffer(&tmpMinor, &display_value);
-
-        if (pwd != NULL) {
-            *uidp = pwd->pw_uid;
-            major_status = GSS_S_COMPLETE;
-            *minor_status = 0;
-            break;
-        } else
-            major_status = GSS_S_UNAVAILABLE;
+    major_status = mn->gmn_mech->gm_get_name_attribute(minor_status,
+                                                       mn->gmn_name,
+                                                       GSS_C_ATTR_LOCAL_LOGIN_USER,
+                                                       &authenticated,
+                                                       &complete,
+                                                       &value,
+                                                       &display_value,
+                                                       &more);
+    if (GSS_ERROR(major_status)) {
+        _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
+        return major_status;
     }
 
+    if (authenticated) {
+        *localname = value;
+    } else {
+        major_status = GSS_S_UNAVAILABLE;
+        gss_release_buffer(&tmpMinor, &value);
+    }
+
+    gss_release_buffer(&tmpMinor, &display_value);
+
     return major_status;
-#endif /* NO_LOCALNAME */
 }
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
-gss_pname_to_uid(OM_uint32 *minor_status,
-                 const gss_name_t pname,
-                 const gss_OID mech_type,
-                 uid_t *uidp)
+gss_localname(OM_uint32 *minor_status,
+              gss_const_name_t pname,
+              const gss_OID mech_type,
+              gss_buffer_t localname)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) pname;
@@ -149,14 +118,14 @@ gss_pname_to_uid(OM_uint32 *minor_status,
         if (GSS_ERROR(major_status))
             return major_status;
 
-        major_status = mech_pname_to_uid(minor_status, mn, uidp);
+        major_status = mech_localname(minor_status, mn, localname);
         if (major_status != GSS_S_COMPLETE)
-            major_status = attr_pname_to_uid(minor_status, mn, uidp);
+            major_status = attr_localname(minor_status, mn, localname);
     } else {
         HEIM_SLIST_FOREACH(mn, &name->gn_mn, gmn_link) {
-            major_status = mech_pname_to_uid(minor_status, mn, uidp);
+            major_status = mech_localname(minor_status, mn, localname);
             if (major_status != GSS_S_COMPLETE)
-                major_status = attr_pname_to_uid(minor_status, mn, uidp);
+                major_status = attr_localname(minor_status, mn, localname);
             if (major_status != GSS_S_UNAVAILABLE)
                 break;
         }
@@ -166,4 +135,53 @@ gss_pname_to_uid(OM_uint32 *minor_status,
         _gss_mg_error(mn->gmn_mech, major_status, *minor_status);
 
     return major_status;
+}
+
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_pname_to_uid(OM_uint32 *minor_status,
+                 gss_const_name_t pname,
+                 const gss_OID mech_type,
+                 uid_t *uidp)
+{
+#ifdef NO_LOCALNAME
+    return GSS_S_UNAVAILABLE;
+#else
+    OM_uint32 major, tmpMinor;
+    gss_buffer_desc localname = GSS_C_EMPTY_BUFFER;
+    char *szLocalname;
+    char pwbuf[2048];
+    struct passwd pw, *pwd;
+
+    major = gss_localname(minor_status, pname, mech_type, &localname);
+    if (GSS_ERROR(major))
+        return major;
+
+    szLocalname = malloc(localname.length + 1);
+    if (szLocalname == NULL) {
+        gss_release_buffer(&tmpMinor, &localname);
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
+    }
+
+    memcpy(szLocalname, localname.value, localname.length);
+    szLocalname[localname.length] = '\0';
+
+    if (rk_getpwnam_r(szLocalname, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0)
+        pwd = NULL;
+
+    gss_release_buffer(&tmpMinor, &localname);
+    free(szLocalname);
+
+    *minor_status = 0;
+
+    if (pwd != NULL) {
+        *uidp = pwd->pw_uid;
+        major = GSS_S_COMPLETE;
+    } else {
+        major = GSS_S_UNAVAILABLE;
+    }
+
+    return major;
+#endif
 }

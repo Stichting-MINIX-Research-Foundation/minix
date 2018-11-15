@@ -1,4 +1,4 @@
-/*	$NetBSD: test_commonauth.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: test_commonauth.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -39,13 +39,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <krb5/roken.h>
+#include <err.h>
 #include "heim-auth.h"
 
 static int
 test_sasl_digest_md5(void)
 {
     heim_digest_t ctx;
-    const char *user;
+    const char *user, *challenge, *resp;
     char *r;
 
     if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_AUTO)) == NULL)
@@ -53,16 +54,26 @@ test_sasl_digest_md5(void)
 
     if (heim_digest_parse_challenge(ctx, "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8"))
 	abort();
+
+    /* check that server detects changing QOP */
+    if (!heim_digest_parse_response(ctx, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth-int"))
+	errx(1, "don't detect changing qop");
+    
+    /* should pass */
     if (heim_digest_parse_response(ctx, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth"))
 	abort();
-
+    
     if ((user = heim_digest_get_key(ctx, "username")) == NULL)
 	abort();
     if (strcmp(user, "chris") != 0)
 	abort();
 
-    heim_digest_set_key(ctx, "password", "secret");
+    /*
+     * check password
+     */
 
+    heim_digest_set_key(ctx, "password", "secret");
+    
     if (heim_digest_verify(ctx, &r))
 	abort();
 
@@ -71,16 +82,133 @@ test_sasl_digest_md5(void)
 
     free(r);
 
+    /*
+     * Also check userhash
+     */
+
+    r = heim_digest_userhash("chris", "elwood.innosoft.com", "secret");
+    if (strcmp(r, "eb5a750053e4d2c34aa84bbc9b0b6ee7") != 0)
+	abort();
+
+    heim_digest_set_key(ctx, "userhash", r);
+    free(r);
+    
+    if (heim_digest_verify(ctx, &r))
+	abort();
+
+    if (strcmp(r, "rspauth=ea40f60335c427b5527b84dbabcdfffd") != 0)
+	abort();
+
+    free(r);
+
+    /* check that it failes */
+
+    heim_digest_set_key(ctx, "username", "notright");
+    heim_digest_set_key(ctx, "password", "secret");
+    
+    if (heim_digest_verify(ctx, &r) == 0)
+	abort();
+
+    if ((user = heim_digest_get_key(ctx, "username")) == NULL)
+	abort();
+    if (strcmp(user, "notright") != 0)
+	abort();
+
+
+    /* Done */
+
+    heim_digest_release(ctx);
+    
+    
+    /*
+     * Check heim_digest_generate_challenge()
+     */
+    
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_RFC2831)) == NULL)
+	abort();
+    
+    heim_digest_set_key(ctx, "serverRealm", "elwood.innosoft.com");
+    heim_digest_set_key(ctx, "serverNonce", "OA6MG9tEQGm2hh");
+    heim_digest_set_key(ctx, "serverQOP", "auth,auth-int");
+    
+    challenge = heim_digest_generate_challenge(ctx);
+    if (challenge == NULL)
+	abort();
+    
+    if (heim_digest_parse_challenge(ctx, challenge))
+	abort();
+
+    /* check that server detects changing QOP */
+    if (!heim_digest_parse_response(ctx, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth-conf"))
+	abort();
+    
+    if (heim_digest_parse_response(ctx, "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth"))
+	abort();
+    
+    heim_digest_set_key(ctx, "password", "secret");
+    
+    if (heim_digest_verify(ctx, &r))
+	abort();
+    
+    if (strcmp(r, "rspauth=ea40f60335c427b5527b84dbabcdfffd") != 0)
+	abort();
+    
+    free(r);
+
     heim_digest_release(ctx);
 
+    /*
+     * Validate heim_digest_service_response()
+     */
+    
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_RFC2831)) == NULL)
+	abort();
+    
+    heim_digest_set_key(ctx, "clientNonce", "OA6MHXh6VqTrRk");
+    heim_digest_set_key(ctx, "clientQOP", "auth");
+    heim_digest_set_key(ctx, "clientNC", "00000001");
+    heim_digest_set_key(ctx, "serverNonce", "OA6MG9tEQGm2hh");
+    heim_digest_set_key(ctx, "clientURI", "imap/elwood.innosoft.com");
+    heim_digest_set_key(ctx, "serverRealm", "elwood.innosoft.com");
+    heim_digest_set_key(ctx, "serverNonce", "OA6MG9tEQGm2hh");
+    heim_digest_set_key(ctx, "H(A1)", "a2549853149b0536f01f0b850c643c57");
+    
+    resp = heim_digest_server_response(ctx);
+
+    if (resp == NULL || strcmp(resp, "rspauth=ea40f60335c427b5527b84dbabcdfffd") != 0)
+	abort();
+
+    heim_digest_release(ctx);
+
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_RFC2831)) == NULL)
+	abort();
+    
+    heim_digest_set_key(ctx, "clientNonce", "OA6MHXh6VqTrRk");
+    heim_digest_set_key(ctx, "clientQOP", "auth");
+    heim_digest_set_key(ctx, "clientNC", "00000001");
+    heim_digest_set_key(ctx, "serverNonce", "OA6MG9tEQGm2hh");
+    heim_digest_set_key(ctx, "clientURI", "imap/elwood.innosoft.com");
+    heim_digest_set_key(ctx, "serverRealm", "elwood.innosoft.com");
+    heim_digest_set_key(ctx, "serverNonce", "OA6MG9tEQGm2hh");
+    heim_digest_set_key(ctx, "password", "secret");
+    heim_digest_set_key(ctx, "username", "chris");
+
+    resp = heim_digest_server_response(ctx);
+    
+    if (resp == NULL || strcmp(resp, "rspauth=ea40f60335c427b5527b84dbabcdfffd") != 0)
+	abort();
+    
+    heim_digest_release(ctx);
+    
     return 0;
 }
 
 static int
 test_http_digest_md5(void)
 {
-    heim_digest_t ctx;
-    const char *user;
+    heim_digest_t ctx, ctx2;
+    const char *user, *chal, *resp;
+    char *serverresp, *serverresp2;
 
     if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_AUTO)) == NULL)
 	abort();
@@ -97,19 +225,104 @@ test_http_digest_md5(void)
 				   "response=\"1949323746fe6a43ef61f9606e7febea\","
 				   "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""))
 	abort();
-
+    
     if ((user = heim_digest_get_key(ctx, "username")) == NULL)
 	abort();
     if (strcmp(user, "Mufasa") != 0)
 	abort();
 
-    heim_digest_set_key(ctx, "password", "CircleOfLife");
+    if ((user = heim_digest_get_key(ctx, "clientUsername")) == NULL)
+	abort();
+    if (strcmp(user, "Mufasa") != 0)
+	abort();
 
+    heim_digest_set_key(ctx, "password", "CircleOfLife");
+    
     if (heim_digest_verify(ctx, NULL))
+	abort();
+
+    /* Verify failure */
+
+    heim_digest_set_key(ctx, "username", "Oskar");
+    
+    if (heim_digest_verify(ctx, NULL) == 0)
+	abort();
+
+    heim_digest_release(ctx);
+    
+    /*
+     * Check myself
+     */
+
+    /* server */
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_RFC2831)) == NULL)
+	abort();
+    
+    heim_digest_set_key(ctx, "serverRealm", "myrealmhahaha");
+    heim_digest_set_key(ctx, "serverQOP", "auth,auth-int");
+    
+    chal = heim_digest_generate_challenge(ctx);
+    if (chal == NULL)
+	abort();
+    
+    /* client */
+    if ((ctx2 = heim_digest_create(1, HEIM_DIGEST_TYPE_RFC2831)) == NULL)
+	abort();
+    
+    if (heim_digest_parse_challenge(ctx2, chal))
+	abort();
+    
+    heim_digest_set_key(ctx2, "username", "lha");
+    heim_digest_set_key(ctx2, "password", "passw0rd");
+    heim_digest_set_key(ctx2, "uri", "/uri");
+    
+    resp = heim_digest_create_response(ctx2, &serverresp);
+    if (resp == NULL)
+	abort();
+    
+    /* server */
+    if (heim_digest_parse_response(ctx, resp))
+	abort();
+    
+    heim_digest_set_key(ctx,  "password", "passw0rd");
+    heim_digest_verify(ctx, &serverresp2);
+
+    
+    /* client */
+    if (strcmp(serverresp, serverresp2) != 0)
+	abort();
+    
+    heim_digest_release(ctx);
+    heim_digest_release(ctx2);
+    
+    /*
+     * check prefix
+     */
+    
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_AUTO)) == NULL)
+	abort();
+    
+    if (heim_digest_parse_challenge(ctx, "Digest realm=\"testrealm@host.com\","
+				    "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\","
+				    "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""))
 	abort();
 
     heim_digest_release(ctx);
 
+    /*
+     * check prefix
+     */
+    
+    if ((ctx = heim_digest_create(1, HEIM_DIGEST_TYPE_AUTO)) == NULL)
+	abort();
+    
+    if (heim_digest_parse_challenge(ctx, "Digest  realm=\"testrealm@host.com\","
+				    "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\","
+				    "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""))
+	abort();
+    
+    heim_digest_release(ctx);
+    
     return 0;
 }
 
@@ -160,7 +373,6 @@ test_cram_md5(void)
 	abort();
 
     heim_cram_md5_export(secret, &state);
-
     /* here you can store the memcpy-ed version of state somewhere else */
 
     ctx = heim_cram_md5_import(&state, sizeof(state));
@@ -184,7 +396,6 @@ test_apop(void)
     const char *secret = "tanstaaf";
     const char *resp = "c4c9334bac560ecc979e58001b3e22fb";
     char *t;
-
 
     t = heim_apop_create(chal, secret);
     if (t == NULL)
@@ -211,8 +422,6 @@ main(int argc, char **argv)
     ret |= test_http_digest_md5();
     ret |= test_cram_md5();
     ret |= test_apop();
-
-    system("bash");
 
     return ret;
 }

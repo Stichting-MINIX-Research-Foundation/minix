@@ -1,11 +1,11 @@
-/*	$NetBSD: gen_template.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gen_template.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
- * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
+ * Portions Copyright (c) 2009 - 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,11 +54,13 @@ integer_symbol(const char *basename, const Type *t)
 	return "int"; /* XXX enum foo */
     else if (t->range == NULL)
 	return "heim_integer";
-    else if (t->range->min == INT_MIN && t->range->max == INT_MAX)
+    else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+	return "int64_t";
+    else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+	return "uint64_t";
+    else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
 	return "int";
-    else if (t->range->min == 0 && t->range->max == UINT_MAX)
-	return "unsigned";
-    else if (t->range->min == 0 && t->range->max == INT_MAX)
+    else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
 	return "unsigned";
     else {
 	abort();
@@ -116,6 +118,12 @@ ia5string_symbol(const char *basename, const Type *t)
 }
 
 static const char *
+teletexstring_symbol(const char *basename, const Type *t)
+{
+    return "heim_teletex_string";
+}
+
+static const char *
 visiblestring_symbol(const char *basename, const Type *t)
 {
     return "heim_visible_string";
@@ -166,6 +174,7 @@ struct {
     { TGeneralString, generalstring_symbol, 0 },
     { TGeneralizedTime, time_symbol, 0 },
     { TIA5String, ia5string_symbol, 0 },
+    { TTeletexString, generalstring_symbol, 0 },
     { TInteger, integer_symbol, 0 },
     { TOID, oid_symbol, 0 },
     { TOctetString, octetstring_symbol, 0 },
@@ -177,6 +186,7 @@ struct {
     { TType, ttype_symbol, 1 },
     { TUTCTime, time_symbol, 0 },
     { TUniversalString, universalstring_symbol, 0 },
+    { TTeletexString, teletexstring_symbol, 0 },
     { TVisibleString,  visiblestring_symbol, 0 },
     { TUTF8String, utf8string_symbol, 0 },
     { TChoice, sequence_symbol, 1 },
@@ -223,12 +233,12 @@ symbol_name(const char *basename, const Type *t)
 
 
 static char *
-partial_offset(const char *basetype, const char *name, int need_offset)
+partial_offset(const char *basetype, const char *name, int need_offset, int isstruct)
 {
     char *str;
     if (name == NULL || need_offset == 0)
 	return strdup("0");
-    if (asprintf(&str, "offsetof(struct %s, %s)", basetype, name) < 0 || str == NULL)
+    if (asprintf(&str, "offsetof(%s%s, %s)", isstruct ? "struct " : "", basetype, name) < 0 || str == NULL)
 	errx(1, "malloc");
     return str;
 }
@@ -252,13 +262,13 @@ struct tlist {
 
 ASN1_TAILQ_HEAD(tlisthead, tlist);
 
-static void tlist_header(struct tlist *, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
+static void tlist_header(struct tlist *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static struct template *
-    add_line(struct templatehead *, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
+    add_line(struct templatehead *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static int tlist_cmp(const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
-    __attribute__((__format__(__printf__, 4, 5)));
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
 static struct tlisthead tlistmaster = ASN1_TAILQ_HEAD_INITIALIZER(tlistmaster);
@@ -308,7 +318,7 @@ tlist_print(struct tlist *tl)
     unsigned int i = 1;
     FILE *f = get_code_file();
 
-    fprintf(f, "static const struct asn1_template asn1_%s[] = {\n", tl->name);
+    fprintf(f, "const struct asn1_template asn1_%s[] = {\n", tl->name);
     fprintf(f, "/* 0 */ %s,\n", tl->header);
     ASN1_TAILQ_FOREACH(q, &tl->template, members) {
 	int last = (ASN1_TAILQ_LAST(&tl->template, templatehead) == q);
@@ -333,6 +343,10 @@ tlist_cmp_name(const char *tname, const char *qname)
 {
     struct tlist *tl = tlist_find_by_name(tname);
     struct tlist *ql = tlist_find_by_name(qname);
+    if (tl == NULL)
+	return 1;
+    if (ql == NULL)
+	return -1;
     return tlist_cmp(tl, ql);
 }
 
@@ -433,7 +447,7 @@ use_extern(const Symbol *s)
 }
 
 static int
-is_struct(Type *t, int isstruct)
+is_struct(const Type *t, int isstruct)
 {
     size_t i;
 
@@ -465,24 +479,28 @@ compact_tag(const Type *t)
 }
 
 static void
-template_members(struct templatehead *temp, const char *basetype, const char *name, const Type *t, int optional, int isstruct, int need_offset)
+template_members(struct templatehead *temp, const char *basetype, const char *name, const Type *t, int optional, int implicit, int isstruct, int need_offset)
 {
     char *poffset = NULL;
 
     if (optional && t->type != TTag && t->type != TType)
 	errx(1, "%s...%s is optional and not a (TTag or TType)", basetype, name);
 
-    poffset = partial_offset(basetype, name, need_offset);
+    poffset = partial_offset(basetype, name, need_offset, isstruct);
 
     switch (t->type) {
     case TType:
 	if (use_extern(t->symbol)) {
-	    add_line(temp, "{ A1_OP_TYPE_EXTERN %s, %s, &asn1_extern_%s}",
+	    add_line(temp, "{ A1_OP_TYPE_EXTERN %s%s, %s, &asn1_extern_%s}",
 		     optional ? "|A1_FLAG_OPTIONAL" : "",
+		     implicit ? "|A1_FLAG_IMPLICIT" : "",
 		     poffset, t->symbol->gen_name);
 	} else {
 	    add_line_pointer(temp, t->symbol->gen_name, poffset,
-			     "A1_OP_TYPE %s", optional ? "|A1_FLAG_OPTIONAL" : "");
+			     "A1_OP_TYPE %s%s",
+			     optional ? "|A1_FLAG_OPTIONAL" : "",
+			     implicit ? "|A1_FLAG_IMPLICIT" : "");
+
 	}
 	break;
     case TInteger: {
@@ -492,15 +510,17 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    itype = "IMEMBER";
 	else if (t->range == NULL)
 	    itype = "HEIM_INTEGER";
-	else if (t->range->min == INT_MIN && t->range->max == INT_MAX)
+	else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX)
+	    itype = "INTEGER64";
+	else if (t->range->min >= 0 && t->range->max > UINT_MAX)
+	    itype = "UNSIGNED64";
+	else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX)
 	    itype = "INTEGER";
-	else if (t->range->min == 0 && t->range->max == UINT_MAX)
-	    itype = "UNSIGNED";
-	else if (t->range->min == 0 && t->range->max == INT_MAX)
+	else if (t->range->min >= 0 && t->range->max <= UINT_MAX)
 	    itype = "UNSIGNED";
 	else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
 
 	add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, NULL }", itype, poffset);
 	break;
@@ -547,19 +567,22 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     case TNull:
 	break;
     case TBitString: {
-	struct templatehead template = ASN1_TAILQ_HEAD_INITIALIZER(template);
+	struct templatehead template;
 	struct template *q;
 	Member *m;
 	size_t count = 0, i;
 	char *bname = NULL;
 	FILE *f = get_code_file();
+	static unsigned long bmember_counter = 0;
+
+	ASN1_TAILQ_INIT(&template);
 
 	if (ASN1_TAILQ_EMPTY(t->members)) {
 	    add_line(temp, "{ A1_PARSE_T(A1T_HEIM_BIT_STRING), %s, NULL }", poffset);
 	    break;
 	}
 
-	if (asprintf(&bname, "bmember_%s_%p", name ? name : "", t) < 0 || bname == NULL)
+	if (asprintf(&bname, "bmember_%s_%lu", name ? name : "", bmember_counter++) < 0 || bname == NULL)
 	    errx(1, "malloc");
 	output_name(bname);
 
@@ -591,6 +614,8 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
     case TSequence: {
 	Member *m;
 
+	fprintf(get_code_file(), "/* tsequence: members isstruct: %d */\n", isstruct);
+
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
 
@@ -605,7 +630,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    if (newbasename == NULL)
 		errx(1, "malloc");
 
-	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, isstruct, 1);
+	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, 0, isstruct, 1);
 
 	    free(newbasename);
 	}
@@ -616,13 +641,47 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	char *tname = NULL, *elname = NULL;
 	const char *sename, *dupname;
 	int subtype_is_struct = is_struct(t->subtype, isstruct);
+	static unsigned long tag_counter = 0;
+	int tagimplicit = (t->tag.tagenv == TE_IMPLICIT);
+	struct type *subtype;
+
+	fprintf(get_code_file(), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
+
+	if (tagimplicit) {
+
+	    struct type *type = t->subtype;
+	    int have_tag = 0;
+
+	    while (!have_tag) {
+		if (type->type == TTag) {
+		    fprintf(get_code_file(), "/* template_members: imp skip tag */\n");
+		    type = type->subtype;
+		    have_tag = 1;
+		} else if(type->type == TType && type->symbol && type->symbol->type) {
+		    /* XXX really, we should stop here and find a
+		     * pointer to where this is encoded instead of
+		     * generated an new structure and hope that the
+		     * optimizer catch it later.
+		     */
+		    subtype_is_struct = is_struct(type, isstruct);
+		    fprintf(get_code_file(), "/* template_members: imp skip type %s isstruct: %d */\n",
+			    type->symbol->name, subtype_is_struct);
+		    type = type->symbol->type;
+		} else {
+		    have_tag = 1;
+		}
+	    }
+	    subtype = type;
+	} else {
+	    subtype = t->subtype;
+	}
 
 	if (subtype_is_struct)
 	    sename = basetype;
 	else
-	    sename = symbol_name(basetype, t->subtype);
+	    sename = symbol_name(basetype, subtype);
 
-	if (asprintf(&tname, "tag_%s_%p", name ? name : "", t) < 0 || tname == NULL)
+	if (asprintf(&tname, "tag_%s_%lu", name ? name : "", tag_counter++) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	output_name(tname);
 
@@ -630,14 +689,15 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, name,
-			       t->subtype, 0, subtype_is_struct, 0);
+			       subtype, 0, subtype_is_struct, 0);
 
 	add_line_pointer(temp, dupname, poffset,
-			 "A1_TAG_T(%s,%s,%s)%s",
+			 "A1_TAG_T(%s,%s,%s)%s%s",
 			 classname(t->tag.tagclass),
-			 is_primitive_type(t->subtype->type)  ? "PRIM" : "CONS",
+			 is_primitive_type(subtype->type)  ? "PRIM" : "CONS",
 			 valuename(t->tag.tagclass, t->tag.tagvalue),
-			 optional ? "|A1_FLAG_OPTIONAL" : "");
+			 optional ? "|A1_FLAG_OPTIONAL" : "",
+			 tagimplicit ? "|A1_FLAG_IMPLICIT" : "");
 
 	free(tname);
 	free(elname);
@@ -649,6 +709,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	const char *type = NULL, *tname, *dupname;
 	char *sename = NULL, *elname = NULL;
 	int subtype_is_struct = is_struct(t->subtype, 0);
+	static unsigned long seof_counter = 0;
 
 	if (name && subtype_is_struct) {
 	    tname = "seofTstruct";
@@ -672,7 +733,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	else if (t->type == TSequenceOf) type = "A1_OP_SEQOF";
 	else abort();
 
-	if (asprintf(&elname, "%s_%s_%p", basetype, tname, t) < 0 || elname == NULL)
+	if (asprintf(&elname, "%s_%s_%lu", basetype, tname, seof_counter++) < 0 || elname == NULL)
 	    errx(1, "malloc");
 
 	generate_template_type(elname, &dupname, NULL, sename, NULL, t->subtype,
@@ -683,7 +744,7 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	break;
     }
     case TChoice: {
-	struct templatehead template = ASN1_TAILQ_HEAD_INITIALIZER(template);
+	struct templatehead template;
 	struct template *q;
 	size_t count = 0, i;
 	char *tname = NULL;
@@ -691,9 +752,12 @@ template_members(struct templatehead *temp, const char *basetype, const char *na
 	Member *m;
 	int ellipsis = 0;
 	char *e;
+	static unsigned long choice_counter = 0;
 
-	if (asprintf(&tname, "asn1_choice_%s_%s%x",
-		     basetype, name ? name : "", (unsigned int)(uintptr_t)t) < 0 || tname == NULL)
+	ASN1_TAILQ_INIT(&template);
+
+	if (asprintf(&tname, "asn1_choice_%s_%s%lu",
+		     basetype, name ? name : "", choice_counter++) < 0 || tname == NULL)
 	    errx(1, "malloc");
 
 	ASN1_TAILQ_FOREACH(m, t->members, members) {
@@ -805,12 +869,20 @@ generate_template_type(const char *varname,
 		       int optional, int isstruct, int need_offset)
 {
     struct tlist *tl;
-    const char *dup;
+    const char *d;
+    char *szt = NULL;
     int have_ellipsis = 0;
+    int implicit = 0;
+    int n;
 
     tl = tlist_new(varname);
 
-    template_members(&tl->template, basetype, name, type, optional, isstruct, need_offset);
+    if (type->type == TTag)
+	implicit = (type->tag.tagenv == TE_IMPLICIT);
+
+    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n", tl->name);
+
+    template_members(&tl->template, basetype, name, type, optional, implicit, isstruct, need_offset);
 
     /* if its a sequence or set type, check if there is a ellipsis */
     if (type->type == TSequence || type->type == TSet) {
@@ -821,19 +893,34 @@ generate_template_type(const char *varname,
 	}
     }
 
+    if (isstruct)
+	if (name)
+	    n = asprintf(&szt, "struct %s_%s", basetype, name);
+	else
+	    n = asprintf(&szt, "struct %s", basetype);
+    else
+	n = asprintf(&szt, "%s", basetype);
+    if (n < 0 || szt == NULL)
+	errx(1, "malloc");
+
     if (ASN1_TAILQ_EMPTY(&tl->template) && compact_tag(type)->type != TNull)
 	errx(1, "Tag %s...%s with no content ?", basetype, name ? name : "");
 
-    tlist_header(tl, "{ 0%s%s, sizeof(%s%s), ((void *)%lu) }",
-		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
-		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "",
-		 isstruct ? "struct " : "", basetype, tlist_count(tl));
+    fprintf(get_code_file(), "/* generate_template_type: %s */\n", tl->name);
 
-    dup = tlist_find_dup(tl);
-    if (dup) {
-	if (strcmp(dup, tl->name) == 0)
-	    errx(1, "found dup of ourself");
-	*dupname = dup;
+    tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)%lu) }",
+		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
+		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "", szt, tlist_count(tl));
+
+    free(szt);
+
+    d = tlist_find_dup(tl);
+    if (d) {
+#if 0
+	if (strcmp(d, tl->name) == 0)
+	    errx(1, "found dup of ourself: %s", d);
+#endif
+	*dupname = d;
     } else {
 	*dupname = tl->name;
 	tlist_print(tl);
@@ -873,11 +960,12 @@ generate_template(const Symbol *s)
 	    "int\n"
 	    "encode_%s(unsigned char *p, size_t len, const %s *data, size_t *size)\n"
 	    "{\n"
-	    "    return _asn1_encode(asn1_%s, p, len, data, size);\n"
+	    "    return _asn1_encode%s(asn1_%s, p, len, data, size);\n"
 	    "}\n"
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
+	    fuzzer_string,
 	    dupname);
 
     fprintf(f,
@@ -885,11 +973,12 @@ generate_template(const Symbol *s)
 	    "size_t\n"
 	    "length_%s(const %s *data)\n"
 	    "{\n"
-	    "    return _asn1_length(asn1_%s, data);\n"
+	    "    return _asn1_length%s(asn1_%s, data);\n"
 	    "}\n"
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
+	    fuzzer_string,
 	    dupname);
 
 
@@ -898,7 +987,7 @@ generate_template(const Symbol *s)
 	    "void\n"
 	    "free_%s(%s *data)\n"
 	    "{\n"
-	    "    _asn1_free(asn1_%s, data);\n"
+	    "    _asn1_free_top(asn1_%s, data);\n"
 	    "}\n"
 	    "\n",
 	    s->gen_name,

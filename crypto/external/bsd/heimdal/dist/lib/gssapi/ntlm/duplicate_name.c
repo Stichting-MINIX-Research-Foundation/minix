@@ -1,4 +1,4 @@
-/*	$NetBSD: duplicate_name.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: duplicate_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_duplicate_name (
             OM_uint32 * minor_status,
-            const gss_name_t src_name,
+            gss_const_name_t src_name,
             gss_name_t * dest_name
            )
 {

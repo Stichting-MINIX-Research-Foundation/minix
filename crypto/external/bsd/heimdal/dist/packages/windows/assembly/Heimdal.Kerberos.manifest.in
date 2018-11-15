@@ -8,8 +8,12 @@
   <file name="com_err.dll" hashalg="SHA1" />
   <file name="heimntlm.dll" hashalg="SHA1" />
   <file name="gssapi.dll" hashalg="SHA1" />
+  <file name="libhdb.dll" hashalg="SHA1" />
+  <file name="libkadm5srv.dll" hashalg="SHA1" />
   <file name="heimdal.pdb" hashalg="SHA1" />
   <file name="com_err.pdb" hashalg="SHA1" />
   <file name="heimntlm.pdb" hashalg="SHA1" />
   <file name="gssapi.pdb" hashalg="SHA1" />
+  <file name="libhdb.pdb" hashalg="SHA1" />
+  <file name="libkadm5srv.pdb" hashalg="SHA1" />
 </assembly>

@@ -1,12 +1,6 @@
 EXPORTS
-#ifdef KRB4
-	krb524_convert_creds_kdc
-	krb524_convert_creds_kdc_ccache
-        krb5_425_conv_principal
-        krb5_425_conv_principal_ext
-        krb5_425_conv_principal_ext2
-        krb5_524_conv_principal
-#endif
+        krb524_convert_creds_kdc
+        krb524_convert_creds_kdc_ccache
 	krb5_abort
 	krb5_abortx
 	krb5_acl_match_file
@@ -356,6 +350,7 @@ EXPORTS
 	krb5_get_init_creds_opt_set_address_list
 	krb5_get_init_creds_opt_set_addressless
 	krb5_get_init_creds_opt_set_anonymous
+	krb5_get_init_creds_opt_set_change_password_prompt
 	krb5_get_init_creds_opt_set_canonicalize
 	krb5_get_init_creds_opt_set_default_flags
 	krb5_get_init_creds_opt_set_etype_list
@@ -395,6 +390,7 @@ EXPORTS
 	krb5_init_ets
 	krb5_initlog
 	krb5_is_config_principal
+	krb5_is_enctype_weak
 	krb5_is_thread_safe
 #ifdef HAVE_KCM
 	krb5_kcm_call
@@ -445,6 +441,7 @@ EXPORTS
 	krb5_make_principal
 	krb5_max_sockaddr_size
 	krb5_mk_error
+	krb5_mk_error_ext
 	krb5_mk_priv
 	krb5_mk_rep
 	krb5_mk_req
@@ -456,7 +453,7 @@ EXPORTS
 	krb5_net_write_block
 	krb5_ntlm_alloc
 	krb5_ntlm_free
-	krb5_ntlm_init_get_challange
+	krb5_ntlm_init_get_challenge
 	krb5_ntlm_init_get_flags
 	krb5_ntlm_init_get_opaque
 	krb5_ntlm_init_get_targetinfo
@@ -502,6 +499,7 @@ EXPORTS
 	krb5_principal_get_type
 	krb5_principal_is_krbtgt
 	krb5_principal_match
+	krb5_principal_set_comp_string
 	krb5_principal_set_realm
 	krb5_principal_set_type
 	krb5_print_address
@@ -555,6 +553,7 @@ EXPORTS
 	krb5_ret_data
 	krb5_ret_int16
 	krb5_ret_int32
+	krb5_ret_int64
 	krb5_ret_int8
 	krb5_ret_keyblock
 	krb5_ret_principal
@@ -564,6 +563,7 @@ EXPORTS
 	krb5_ret_times
 	krb5_ret_uint16
 	krb5_ret_uint32
+	krb5_ret_uint64
 	krb5_ret_uint8
 	krb5_salttype_to_string
 	krb5_sendauth
@@ -578,6 +578,7 @@ EXPORTS
 	krb5_sendto_kdc
 	krb5_sendto_kdc_flags
 	krb5_set_config_files
+	krb5_set_debug_dest
 	krb5_set_default_in_tkt_etypes
 	krb5_set_default_realm
 	krb5_set_dns_canonicalize_hostname
@@ -608,6 +609,8 @@ EXPORTS
 	krb5_storage_from_fd
 	krb5_storage_from_mem
 	krb5_storage_from_readonly_mem
+	krb5_storage_from_socket
+	krb5_storage_fsync
 	krb5_storage_get_byteorder
 	krb5_storage_get_eof_code
 	krb5_storage_is_flags
@@ -628,6 +631,7 @@ EXPORTS
 	krb5_store_data
 	krb5_store_int16
 	krb5_store_int32
+	krb5_store_int64
 	krb5_store_int8
 	krb5_store_keyblock
 	krb5_store_principal
@@ -637,6 +641,7 @@ EXPORTS
 	krb5_store_times
 	krb5_store_uint16
 	krb5_store_uint32
+	krb5_store_uint64
 	krb5_store_uint8
 	krb5_string_to_deltat
 	krb5_string_to_enctype
@@ -742,36 +747,21 @@ EXPORTS
 	_krb5_get_krbtgt
 	_krb5_build_authenticator
 
-#ifdef KRB4
-        ; V4 compat glue
-	_krb5_krb_tf_setup
-	_krb5_krb_dest_tkt
-	_krb5_krb_life_to_time
-	_krb5_krb_decomp_ticket
-	_krb5_krb_create_ticket
-	_krb5_krb_create_ciph
-	_krb5_krb_create_auth_reply
-	_krb5_krb_rd_req
-	_krb5_krb_free_auth_data
-	_krb5_krb_time_to_life
-	_krb5_krb_cr_err_reply
-#endif
-
 	; Shared with libkdc
-	_krb5_AES_string_to_default_iterator
+	_krb5_AES_SHA1_string_to_default_iterator
+	_krb5_AES_SHA2_string_to_default_iterator
 	_krb5_dh_group_ok
 	_krb5_get_host_realm_int
 	_krb5_get_int
+        _krb5_get_int64
 	_krb5_pac_sign
 	_krb5_parse_moduli
 	_krb5_pk_kdf
 	_krb5_pk_load_id
 	_krb5_pk_mk_ContentInfo
 	_krb5_pk_octetstring2key
-	_krb5_plugin_find
-	_krb5_plugin_free
-	_krb5_plugin_get_next
-	_krb5_plugin_get_symbol
+	_krb5_plugin_run_f
+	_krb5_enctype_requires_random_salt
 	_krb5_principal2principalname
 	_krb5_principalname2krb5_principal
 	_krb5_put_int
@@ -782,7 +772,33 @@ EXPORTS
 	krb5_get_init_creds_opt_set_pkinit_user_certs
 	krb5_pk_enterprise_cert
 
+	krb5_auth_con_getsendsubkey
+	krb5_init_creds_free
+	krb5_init_creds_get
+	krb5_init_creds_get_creds
+	krb5_init_creds_get_error
+	krb5_init_creds_init
+	krb5_init_creds_set_fast_ccache
+	krb5_init_creds_set_keytab
+	krb5_init_creds_set_password
+	krb5_init_creds_set_service
+	krb5_init_creds_store
+	krb5_process_last_request
+
 	; testing
 ;!	_krb5_aes_cts_encrypt
 	_krb5_n_fold
 	_krb5_expand_default_cc_name
+
+	; FAST
+	_krb5_fast_cf2
+	_krb5_fast_armor_key
+
+	; Recent additions
+	krb5_cc_type_dcc;
+	krb5_dcc_ops;
+	_krb5_plugin_find;
+	_krb5_plugin_free;
+	_krb5_expand_path_tokensv;
+        _krb5_find_capath;
+        _krb5_free_capath;

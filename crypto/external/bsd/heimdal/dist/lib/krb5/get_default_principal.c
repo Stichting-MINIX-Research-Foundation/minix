@@ -1,4 +1,4 @@
-/*	$NetBSD: get_default_principal.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: get_default_principal.c,v 1.2.4.1 2017/09/11 04:58:44 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -58,7 +58,7 @@ get_env_user(void)
  * avoid recursive calls.
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local (krb5_context context,
 				   krb5_principal *princ)
 {
@@ -78,9 +78,11 @@ _krb5_get_default_principal_local (krb5_context context,
 	else
 	    ret = krb5_make_principal(context, princ, NULL, "root", NULL);
     } else {
-	struct passwd *pw = getpwuid(uid);
-	if(pw != NULL)
-	    user = pw->pw_name;
+	struct passwd pw, *pwd = NULL;
+	char pwbuf[2048];
+
+	if (rk_getpwuid_r(uid, &pw, pwbuf, sizeof(pwbuf), &pwd) == 0)
+	    user = pwd->pw_name;
 	else {
 	    user = get_env_user();
 	    if(user == NULL)
@@ -102,7 +104,7 @@ _krb5_get_default_principal_local (krb5_context context,
 #define SECURITY_WIN32
 #include <security.h>
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local(krb5_context context,
 				  krb5_principal *princ)
 {

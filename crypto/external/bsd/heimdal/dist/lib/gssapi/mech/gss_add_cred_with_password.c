@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_add_cred_with_password.c,v 1.1.1.1 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_add_cred_with_password.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -32,8 +32,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_add_cred_with_password(OM_uint32 *minor_status,
-    const gss_cred_id_t input_cred_handle,
-    const gss_name_t desired_name,
+    gss_const_cred_id_t input_cred_handle,
+    gss_const_name_t desired_name,
     const gss_OID desired_mech,
     const gss_buffer_t password,
     gss_cred_usage_t cred_usage,

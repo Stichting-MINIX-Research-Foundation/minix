@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -179,9 +179,9 @@ spnego_reply_internal(OM_uint32 *minor_status,
 static OM_uint32
 spnego_initial
            (OM_uint32 * minor_status,
-	    gss_cred_id_t cred,
+	    gss_const_cred_id_t cred,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,
@@ -376,9 +376,9 @@ spnego_initial
 static OM_uint32
 spnego_reply
            (OM_uint32 * minor_status,
-	    const gss_cred_id_t cred,
+	    gss_const_cred_id_t cred,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,
@@ -616,9 +616,9 @@ spnego_reply
 OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_init_sec_context
            (OM_uint32 * minor_status,
-            const gss_cred_id_t initiator_cred_handle,
+            gss_const_cred_id_t initiator_cred_handle,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,

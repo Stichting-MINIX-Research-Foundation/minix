@@ -1,4 +1,4 @@
-/*	$NetBSD: mod.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: mod.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -43,7 +43,7 @@ add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
 
     tl = ecalloc(1, sizeof(*tl));
     tl->tl_data_next = NULL;
-    tl->tl_data_type = KRB5_TL_EXTENSION;
+    tl->tl_data_type = type;
     tl->tl_data_length = data->length;
     tl->tl_data_contents = data->data;
 
@@ -187,6 +187,37 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
+static void
+add_kvno_diff(krb5_context contextp, kadm5_principal_ent_rec *princ,
+	      int is_svc_diff, krb5_kvno kvno_diff)
+{
+    krb5_error_code ret;
+    HDB_extension ext;
+    krb5_data buf;
+    size_t size = 0;
+
+    if (kvno_diff < 0)
+	return;
+    if (kvno_diff > 2048)
+	kvno_diff = 2048;
+
+    if (is_svc_diff) {
+	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
+	ext.data.u.hist_kvno_diff_svc = (unsigned int)kvno_diff;
+    } else {
+	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
+	ext.data.u.hist_kvno_diff_clnt = (unsigned int)kvno_diff;
+    }
+    ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
+		       &ext, &size, ret);
+    if (ret)
+	abort();
+    if (buf.length != size)
+	abort();
+
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
+}
+
 static int
 do_mod_entry(krb5_principal principal, void *data)
 {
@@ -209,16 +240,20 @@ do_mod_entry(krb5_principal principal, void *data)
        e->expiration_time_string ||
        e->pw_expiration_time_string ||
        e->attributes_string ||
+       e->policy_string ||
        e->kvno_integer != -1 ||
        e->constrained_delegation_strings.num_strings ||
        e->alias_strings.num_strings ||
-       e->pkinit_acl_strings.num_strings) {
+       e->pkinit_acl_strings.num_strings ||
+       e->hist_kvno_diff_clnt_integer != -1 ||
+       e->hist_kvno_diff_svc_integer != -1) {
 	ret = set_entry(context, &princ, &mask,
 			e->max_ticket_life_string,
 			e->max_renewable_life_string,
 			e->expiration_time_string,
 			e->pw_expiration_time_string,
-			e->attributes_string);
+			e->attributes_string,
+			e->policy_string);
 	if(e->kvno_integer != -1) {
 	    princ.kvno = e->kvno_integer;
 	    mask |= KADM5_KVNO;
@@ -236,7 +271,14 @@ do_mod_entry(krb5_principal principal, void *data)
 	    add_pkinit_acl(context, &princ, &e->pkinit_acl_strings);
 	    mask |= KADM5_TL_DATA;
 	}
-
+	if (e->hist_kvno_diff_clnt_integer != -1) {
+	    add_kvno_diff(context, &princ, 0, e->hist_kvno_diff_clnt_integer);
+	    mask |= KADM5_TL_DATA;
+	}
+	if (e->hist_kvno_diff_svc_integer != -1) {
+	    add_kvno_diff(context, &princ, 1, e->hist_kvno_diff_svc_integer);
+	    mask |= KADM5_TL_DATA;
+	}
     } else
 	ret = edit_entry(&princ, &mask, NULL, 0);
     if(ret == 0) {

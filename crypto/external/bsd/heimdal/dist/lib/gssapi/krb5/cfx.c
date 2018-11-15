@@ -1,4 +1,4 @@
-/*	$NetBSD: cfx.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: cfx.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, PADL Software Pty Ltd.
@@ -393,7 +393,6 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 	if (IS_DCE_STYLE(ctx))
 	    rrc -= ec;
 	gsshsize += gsstsize;
-	gsstsize = 0;
     } else if (GSS_IOV_BUFFER_FLAGS(trailer->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	major_status = _gk_allocate_buffer(minor_status, trailer, gsstsize);
 	if (major_status)
@@ -685,6 +684,7 @@ unrotate_iov(OM_uint32 *minor_status, size_t rrc, gss_iov_buffer_desc *iov, int 
 	    if (iov[i].buffer.length <= skip) {
 		skip -= iov[i].buffer.length;
 	    } else {
+                /* copy back to original buffer */
 		memcpy(((uint8_t *)iov[i].buffer.value) + skip, q, iov[i].buffer.length - skip);
 		q += iov[i].buffer.length - skip;
 		skip = 0;
@@ -699,13 +699,14 @@ unrotate_iov(OM_uint32 *minor_status, size_t rrc, gss_iov_buffer_desc *iov, int 
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_PADDING ||
 	    GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_TRAILER)
 	{
-	    memcpy(q, iov[i].buffer.value, min(iov[i].buffer.length, skip));
+	    memcpy(iov[i].buffer.value, q, min(iov[i].buffer.length, skip));
 	    if (iov[i].buffer.length > skip)
 		break;
 	    skip -= iov[i].buffer.length;
 	    q += iov[i].buffer.length;
 	}
     }
+    free(p);
     return GSS_S_COMPLETE;
 }
 
@@ -932,7 +933,6 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 	    }
 
 	    gsshsize += gsstsize;
-	    gsstsize = 0;
 	} else if (trailer->buffer.length != gsstsize) {
 	    major_status = GSS_S_DEFECTIVE_TOKEN;
 	    goto failure;

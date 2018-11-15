@@ -1,0 +1,247 @@
+.\"	$NetBSD: krb5-plugin.7,v 1.2 2017/01/28 21:31:49 christos Exp $
+.\"
+.\" Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" Id
+.\"
+.Dd December  21, 2011
+.Dt KRB5-PLUGIN 7
+.Os HEIMDAL
+.Sh NAME
+.Nm krb5-plugin
+.Nd plugin interface for Heimdal
+.Sh SYNOPSIS
+.In krb5.h
+.In krb5/an2ln_plugin.h
+.In krb5/ccache_plugin.h
+.In krb5/db_plugin.h
+.In krb5/kuserok_plugin.h
+.In krb5/locate_plugin.h
+.In krb5/send_to_kdc_plugin.h
+.Sh DESCRIPTION
+Heimdal has a plugin interface.  Plugins may be statically linked into
+Heimdal and registered via the
+.Xr krb5_plugin_register 3
+function, or they may be dynamically loaded from shared objects present
+in the Heimdal plugins directories.
+.Pp
+Plugins consist of a C struct whose struct name is given in the
+associated header file, such as, for example,
+.Va krb5plugin_kuserok_ftable
+and a pointer to which is either registered via
+.Xr krb5_plugin_register 3
+or found in a shared object via a symbol lookup for the symbol name
+defined in the associated header file (e.g., "kuserok" for the
+plugin for
+.Xr krb5_kuserok 3
+).
+.Pp
+The plugin structs for all plugin types always begin with the same three
+common fields:
+.Bl -enum -compact
+.It
+.Va minor_version
+, an int.  Plugin minor versions are defined in each plugin type's
+associated header file.
+.It
+.Va init
+, a pointer to a function with two arguments, a krb5_context and a
+void **, returning a krb5_error_code.  This function will be called to
+initialize a plugin-specific context in the form of a void * that will
+be output through the init function's second argument.
+.It
+.Va fini
+, a pointer to a function of one argument, a void *, consisting of the
+plugin's context to be destroyed, and returning void.
+.El
+.Pp
+Each plugin type must add zero or more fields to this struct following
+the above three.  Plugins are typically invoked in no particular order
+until one succeeds or fails, or all return a special return value such
+as KRB5_PLUGIN_NO_HANDLE to indicate that the plugin was not applicable.
+Most plugin types obtain deterministic plugin behavior in spite of the
+non-deterministic invocation order by, for example, invoking all plugins
+for each "rule" and passing the rule to each plugin with the expectation
+that just one plugin will match any given rule.
+.Pp
+There is a database plugin system intended for many of the uses of
+databases in Heimdal.  The plugin is expected to call
+.Xr heim_db_register 3
+from its
+.Va init
+entry point to register a DB type.  The DB plugin's
+.Va fini
+function must do nothing, and the plugin must not provide any other
+entry points.
+.Pp
+The krb5_kuserok plugin adds a single field to its struct: a pointer to
+a function that implements kuserok functionality with the following
+form:
+.Bd -literal -offset indent
+static krb5_error_code
+kuserok(void *plug_ctx, krb5_context context, const char *rule,
+        unsigned int flags, const char *k5login_dir,
+        const char *luser, krb5_const_principal principal,
+        krb5_boolean *result)
+.Ed
+.Pp
+The
+.Va luser
+,
+.Va principal
+and
+.Va result
+arguments are self-explanatory (see
+.Xr krb5_kuserok 3
+).  The
+.Va plug_ctx
+argument is the context output by the plugin's init function.  The
+.Va rule
+argument is a kuserok rule from the krb5.conf file; each plugin is invoked once
+for each rule until all plugins fail or one succeeds.  The
+.Va k5login_dir
+argument provides an alternative k5login file location, if not NULL.
+The
+.Va flags
+argument indicates whether the plugin may call
+.Xr krb5_aname_to_localname 3
+(KUSEROK_ANAME_TO_LNAME_OK), and whether k5login databases are expected to be
+authoritative (KUSEROK_K5LOGIN_IS_AUTHORITATIVE).
+.Pp
+The plugin for
+.Xr krb5_aname_to_localname 3
+is named "an2ln" and has a single extra field for the plugin struct:
+.Bd -literal -offset indent
+typedef krb5_error_code (*set_result_f)(void *, const char *);
+
+static krb5_error_code
+an2ln(void *plug_ctx, krb5_context context, const char *rule,
+      krb5_const_principal aname, set_result_f set_res_f, void *set_res_ctx)
+.Ed
+.Pp
+The arguments for the
+.Va an2ln
+plugin are similar to those of the kuserok plugin, but the result, being
+a string, is set by calling the
+.Va set_res_f
+function argument with the
+.Va set_res_ctx
+and result string as arguments.  The
+.Va set_res_f
+function will make a copy of the string.
+.Sh FILES
+.Bl -tag -compact
+.It Pa libdir/plugin/krb5/*
+Shared objects containing plugins for Heimdal.
+.El
+.Sh EXAMPLES
+.Pp
+An example an2ln plugin that maps principals to a constant "nouser"
+follows:
+.Pp
+.Bd -literal -offset indent
+#include <krb5/an2ln_plugin.h>
+
+static krb5_error_code
+nouser_plug_init(krb5_context context, void **ctx)
+{
+    *ctx = NULL;
+    return 0;
+}
+
+static void nouser_plug_fini(void *ctx) { }
+
+static krb5_error_code
+nouser_plug_an2ln(void *plug_ctx, krb5_context context,
+                  const char *rule,
+                  krb5_const_principal aname,
+                  set_result_f set_res_f, void *set_res_ctx)
+{   
+    krb5_error_code ret;
+
+    if (strcmp(rule, "NOUSER") != 0)
+	return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = set_res_f(set_res_ctx, "nouser");
+
+    return ret;
+}
+
+krb5plugin_an2ln_ftable an2ln = {
+    KRB5_PLUGIN_AN2LN_VERSION_0,
+    nouser_plug_init,
+    nouser_plug_fini,
+    nouser_plug_an2ln,
+};
+.Ed
+.Pp
+An example kuserok plugin that rejects all requests follows.  (Note that
+there exists a built-in plugin with this functionality; see
+.Xr krb5_kuserok 3
+).
+.Pp
+.Bd -literal -offset indent
+#include <krb5/kuserok_plugin.h>
+
+static krb5_error_code
+reject_plug_init(krb5_context context, void **ctx)
+{
+    *ctx = NULL;
+    return 0;
+}
+
+static void reject_plug_fini(void *ctx) { }
+
+static krb5_error_code
+reject_plug_kuserok(void *plug_ctx, krb5_context context, const char *rule,
+                    unsigned int flags, const char *k5login_dir,
+                    const char *luser, krb5_const_principal principal,
+                    krb5_boolean *result)
+{
+    if (strcmp(rule, "REJECT") != 0)
+        return KRB5_PLUGIN_NO_HANDLE;
+
+    *result = FALSE;
+    return 0;
+}
+
+krb5plugin_kuserok_ftable kuserok = {
+    KRB5_PLUGIN_KUSEROK_VERSION_0,
+    reject_plug_init,
+    reject_plug_fini,
+    reject_plug_kuserok,
+};
+.Ed
+.Sh SEE ALSO
+.Xr krb5_plugin_register 3
+.Xr krb5_kuserok 3
+.Xr krb5_aname_to_localname 3

@@ -6,17 +6,21 @@ dnl - own-built libhcrypto
 
 m4_define([test_headers], [
 		#undef KRB5 /* makes md4.h et al unhappy */
-		#ifdef HAVE_OPENSSL
+		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		#ifdef HAVE_SYS_TYPES_H
 		#include <sys/types.h>
 		#endif
 		#include <openssl/evp.h>
+		#include <openssl/bn.h>
 		#include <openssl/md4.h>
 		#include <openssl/md5.h>
 		#include <openssl/sha.h>
 		#include <openssl/des.h>
 		#include <openssl/rc4.h>
 		#include <openssl/aes.h>
+		#include <openssl/rsa.h>
+		#include <openssl/dsa.h>
+		#include <openssl/dh.h>
 		#include <openssl/ec.h>
 		#include <openssl/engine.h>
 		#include <openssl/ui.h>
@@ -50,7 +54,7 @@ m4_define([test_body], [
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));
 		UI_UTIL_read_pw_string(0,0,0,0);
 		RAND_status();
-		#ifdef HAVE_OPENSSL
+		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		EC_KEY_new();
 		#endif
 
@@ -59,119 +63,102 @@ m4_define([test_body], [
 		DES_cbc_encrypt(0, 0, 0, schedule, 0, 0);
 		RC4(0, 0, 0, 0);])
 
-
 AC_DEFUN([KRB_CRYPTO],[
-crypto_lib=unknown
+AC_ARG_WITH([hcrypto-default-backend],
+            AS_HELP_STRING([--with-hcrypto-default-backend=cc|pkcs11_hcrypto|ossl|w32crypto|hcrypto],
+                           [specify the default hcrypto backend]),
+            [
+            CFLAGS="${CFLAGS} -DHCRYPTO_DEF_PROVIDER=${withval}"
+            case "$withval" in
+            cc) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [cc], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            pkcs11_hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [pkcs11_hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            ossl) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [ossl], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            w32crypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [w32crypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
+            *) echo "Invalid hcrypto provider name ($withval)"; exit 5;;
+            esac
+            ],
+            [])
+AC_ARG_WITH([hcrypto-fallback],
+            AS_HELP_STRING([--without-hcrypto-fallback],
+                           [disable fallback on hcrypto for unavailable algorithms]),
+            [AC_DEFINE([HCRYPTO_FALLBACK],0,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])],
+            [AC_DEFINE([HCRYPTO_FALLBACK],1,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])])
 AC_WITH_ALL([openssl])
-
-DIR_hcrypto=
 
 AC_MSG_CHECKING([for crypto library])
 
 openssl=no
 
-if test "$crypto_lib" = "unknown" -a "$with_krb4" != "no"; then
-	save_CPPFLAGS="$CPPFLAGS"
-	save_LIBS="$LIBS"
-
-	cdirs= clibs=
-	for i in $LIB_krb4; do
-		case "$i" in
-		-L*) cdirs="$cdirs $i";;
-		-l*) clibs="$clibs $i";;
-		esac
-	done
-
-	ires=
-	for i in $INCLUDE_krb4; do
-		CFLAGS="-DHAVE_OPENSSL $i $save_CFLAGS"
-		for j in $cdirs; do
-			for k in $clibs; do
-				LIBS="$j $k $save_LIBS"
-				AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],
-						[test_body])],
-					[openssl=yes ires="$i" lres="$j $k"; break 3])
-			done
-		done
-		CFLAGS="$i $save_CFLAGS"
-		for j in $cdirs; do
-			for k in $clibs; do
-				LIBS="$j $k $save_LIBS"
-				AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],[test_body])],
-					[openssl=no ires="$i" lres="$j $k"; break 3])
-			done
-		done
-	done
-		
-	CFLAGS="$save_CFLAGS"
-	LIBS="$save_LIBS"
-	if test "$ires" -a "$lres"; then
-		INCLUDE_hcrypto="$ires"
-		LIB_hcrypto="$lres"
-		crypto_lib=krb4
-		AC_MSG_RESULT([same as krb4])
-		LIB_hcrypto_a='$(LIB_hcrypto)'
-		LIB_hcrypto_so='$(LIB_hcrypto)'
-		LIB_hcrypto_appl='$(LIB_hcrypto)'
-	fi
+if test "$with_openssl" = "yes"; then
+        with_openssl=/usr
 fi
-
-if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
-	save_CFLAGS="$CFLAGS"
-	save_LIBS="$LIBS"
-	INCLUDE_hcrypto=
-	LIB_hcrypto=
+if test "$with_openssl" != "no"; then
+        saved_CFLAGS="${CFLAGS}"
+        saved_LDFLAGS="${LDFLAGS}"
+	INCLUDE_openssl_crypto=
+	LIB_openssl_crypto=
 	if test "$with_openssl_include" != ""; then
-		INCLUDE_hcrypto="-I${with_openssl_include}"
+		INCLUDE_openssl_crypto="-I${with_openssl_include}"
+        else
+                INCLUDE_openssl_crypto="-I${with_openssl}/include"
 	fi
 	if test "$with_openssl_lib" != ""; then
-		LIB_hcrypto="-L${with_openssl_lib}"
+		LIB_openssl_crypto="-L${with_openssl_lib}"
+        elif test "${with_openssl}" != "/usr" -a -d "${with_openssl}/lib"; then
+                LIB_openssl_crypto="-L${with_openssl}/lib"
 	fi
-	CFLAGS="-DHAVE_OPENSSL ${INCLUDE_hcrypto} ${CFLAGS}"
-	saved_LIB_hcrypto="$LIB_hcrypto"
-	for lres in "" "-ldl" "-lnsl -lsocket" "-lnsl -lsocket -ldl"; do
-		LIB_hcrypto="${saved_LIB_hcrypto} -lcrypto $lres"
-		LIB_hcrypto_a="$LIB_hcrypto"
-		LIB_hcrypto_so="$LIB_hcrypto"
-		LIB_hcrypto_appl="$LIB_hcrypto"
-		LIBS="${LIBS} ${LIB_hcrypto}"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([test_headers],[test_body])], [
-			crypto_lib=libcrypto openssl=yes
-			AC_MSG_RESULT([libcrypto])
-		])
-		if test "$crypto_lib" = libcrypto ; then
-			break;
-		fi
-	done
-	CFLAGS="$save_CFLAGS"
-	LIBS="$save_LIBS"
+	CFLAGS="-DHAVE_HCRYPTO_W_OPENSSL ${INCLUDE_openssl_crypto} ${CFLAGS}"
+        LDFLAGS="${LIB_openssl_crypto} ${LDFLAGS}"
+        AC_CHECK_LIB([crypto], [OPENSSL_init],
+                     [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto"; openssl=yes], [openssl=no], [])
+        # These cases are just for static linking on older OSes,
+        # presumably.
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl"; openssl=yes], [openssl=no], [-ldl])
+        fi
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl -lnsl"; openssl=yes], [openssl=no], [-ldl -lnsl])
+        fi
+        if test "$openssl" = "no"; then
+                AC_CHECK_LIB([crypto], [OPENSSL_init],
+                             [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto -ldl -lnsl -lsocket"; openssl=yes], [openssl=no], [-ldl -lnsl -lsocket])
+        fi
+        if test "$openssl" = "no"; then
+                INCLUDE_openssl_crypto=
+                LIB_openssl_crypto=
+        fi
+        CFLAGS="${saved_CFLAGS}"
+        LDFLAGS="${saved_LDFLAGS}"
 fi
 
-if test "$crypto_lib" = "unknown"; then
+LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
+LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
+LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'
+LIB_hcrypto_appl="-lhcrypto"
 
-  DIR_hcrypto='hcrypto'
-  LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
-  LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
-  LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'
-  LIB_hcrypto_appl="-lhcrypto"
+AC_MSG_RESULT([included libhcrypto])
 
-  AC_MSG_RESULT([included libhcrypto])
+AC_ARG_WITH(pkcs11-module,
+                       AS_HELP_STRING([--with-pkcs11-module=path],
+                                      [use PKCS11 module in path]),
+                       [pkcs11_module="$withval"],
+                       [])
 
-fi
-
-if test "$with_krb4" != no -a "$crypto_lib" != krb4; then
-	AC_MSG_ERROR([the crypto library used by krb4 lacks features
-required by Kerberos 5; to continue, you need to install a newer 
-Kerberos 4 or configure --without-krb4])
+if test "$pkcs11_module" != ""; then
+  AC_DEFINE_UNQUOTED(PKCS11_MODULE_PATH, "$pkcs11_module", [path to PKCS11 module])
+  openssl=no
 fi
 
 if test "$openssl" = "yes"; then
-  AC_DEFINE([HAVE_OPENSSL], 1, [define to use openssl's libcrypto])
+  AC_DEFINE([HAVE_HCRYPTO_W_OPENSSL], 1, [define to use openssl's libcrypto as the default backend for libhcrypto])
 fi
-AM_CONDITIONAL(HAVE_OPENSSL, test "$openssl" = yes)dnl
+AM_CONDITIONAL(HAVE_HCRYPTO_W_OPENSSL, test "$openssl" = yes)dnl
 
-AC_SUBST(DIR_hcrypto)
-AC_SUBST(INCLUDE_hcrypto)
+AC_SUBST(INCLUDE_openssl_crypto)
+AC_SUBST(LIB_openssl_crypto)
 AC_SUBST(LIB_hcrypto)
 AC_SUBST(LIB_hcrypto_a)
 AC_SUBST(LIB_hcrypto_so)

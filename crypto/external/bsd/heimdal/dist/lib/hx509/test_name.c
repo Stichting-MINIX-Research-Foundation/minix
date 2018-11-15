@@ -1,4 +1,4 @@
-/*	$NetBSD: test_name.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: test_name.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -321,14 +321,14 @@ test_compare(hx509_context context)
 
     /* check transative properties of name compare function */
 
-    ret = hx509_cert_init_data(context, certdata1, sizeof(certdata1) - 1, &c1);
-    if (ret) return 1;
+    c1 = hx509_cert_init_data(context, certdata1, sizeof(certdata1) - 1, NULL);
+    if (c1 == NULL) return 1;
 
-    ret = hx509_cert_init_data(context, certdata2, sizeof(certdata2) - 1, &c2);
-    if (ret) return 1;
-
-    ret = hx509_cert_init_data(context, certdata3, sizeof(certdata3) - 1, &c3);
-    if (ret) return 1;
+    c2 = hx509_cert_init_data(context, certdata2, sizeof(certdata2) - 1, NULL);
+    if (c2 == NULL) return 1;
+    
+    c3 = hx509_cert_init_data(context, certdata3, sizeof(certdata3) - 1, NULL);
+    if (c3 == NULL) return 1;
 
     ret = compare_subject(c1, c1, &l0);
     if (ret) return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.h,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $	*/
+/*	$NetBSD: headers.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -49,6 +49,9 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -107,6 +110,8 @@
 #endif
 #include <krb5/kdc.h>
 #include <windc_plugin.h>
+
+#include <krb5/heimbase.h>
 
 #undef ALLOC
 #define ALLOC(X) ((X) = calloc(1, sizeof(*(X))))

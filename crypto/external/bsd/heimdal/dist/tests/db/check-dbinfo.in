@@ -37,7 +37,10 @@
 srcdir="@srcdir@"
 objdir="@objdir@"
 
-KRB5_CONFIG="${objdir}/krb5.conf"
+default_db_type=@default_db_type@
+db_type=${1:-${default_db_type}}
+
+KRB5_CONFIG="${objdir}/krb5.conf-${db_type}"
 export KRB5_CONFIG
 
 ../../lib/hdb/test_dbinfo > dbinfo.out || exit 1

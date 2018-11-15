@@ -1,4 +1,4 @@
-/*	$NetBSD: kdestroy.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: kdestroy.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000, 2003 Kungliga Tekniska Högskolan

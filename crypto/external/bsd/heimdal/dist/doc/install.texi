@@ -1,5 +1,5 @@
 @node Building and Installing, Setting up a realm, What is Kerberos?, Top
-@c $NetBSD: install.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c $NetBSD: install.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 @comment  node-name,  next,  previous,  up
 @chapter Building and Installing
 

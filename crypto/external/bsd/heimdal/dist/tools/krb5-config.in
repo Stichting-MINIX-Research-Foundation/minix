@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2000 - 2008 Kungliga Tekniska Högskolan
+# Copyright (c) 2000 - 2008 Kungliga Tekniska HÃ¶gskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
 # All rights reserved. 
 #
@@ -32,12 +32,19 @@
 # SUCH DAMAGE. 
 #
 
+do_all=no
 do_libs=no
+do_lib_deps=no
 do_cflags=no
 do_usage=no
 print_prefix=no
 print_exec_prefix=no
-library=krb5
+library=
+lib_krb5=no
+lib_gssapi=no
+lib_kadm_client=no
+lib_kadm_server=no
+lib_kafs=no
 
 if test $# -eq 0; then
   do_usage=yes
@@ -49,6 +56,13 @@ for i in $*; do
   --help)
     do_usage=yes
     usage_exit=0
+    ;;
+  --all)
+    do_all=yes
+    ;;
+  --vendor)
+    echo "Heimdal"
+    exit 0;
     ;;
   --version)
     echo "@PACKAGE@ @VERSION@"
@@ -69,23 +83,31 @@ for i in $*; do
   --libs)
     do_libs=yes
     ;;
+  --deps)
+    do_lib_deps=yes
+    ;;
   --cflags)
     do_cflags=yes
     ;;
   krb5)
     library=krb5
+    lib_krb5=yes
     ;;
   gssapi)
     library=gssapi
+    lib_gssapi=yes
     ;;
   kadm-client)
     library=kadm-client
+    lib_kadm_client=yes
     ;;
   kadm-server)
     library=kadm-server
+    lib_kadm_server=yes
     ;;
   kafs)
     library=kafs
+    lib_kafs=yes
     ;;
   *)
     echo "unknown option: $i"
@@ -96,9 +118,26 @@ done
 
 if test "$do_usage" = "yes"; then
     echo "usage: $0 [options] [libraries]"
-    echo "options: [--prefix[=dir]] [--exec-prefix[=dir]] [--libs] [--cflags]"
-    echo "libraries: krb5 gssapi kadm-client kadm-server kafs"
+    echo "options:   [--help]         show this message"
+    echo "           [--all]          display version, vendor, etc."
+    echo "           [--version]      display version information"
+    echo "           [--prefix]       display the prefix of Kerberos"
+    echo "           [--exec-prefix]  display the exec_prefix of Kerberos"
+    echo "           [--cflags]       display the CFLAGS required"
+    echo "           [--libs]         display the libraries required to link"
+    echo "           [--deps]         display the dependent libs required"
+    echo "                            for static linking"
+    echo
+    echo "libraries: krb5             Kerberos 5 applications"
+    echo "           gssapi           GSSAPI applications"
+    echo "           kadm-client      libkadm5 client"
+    echo "           kadm-server      libkadm5 server"
+    echo "           kafs             kafs"
     exit $usage_exit
+fi
+
+if test X"$library" = X; then
+    lib_krb5=yes
 fi
 
 if test "$prefix" = ""; then
@@ -111,38 +150,107 @@ fi
 libdir=@libdir@
 includedir=@includedir@
 
+if test "$do_all" = "yes"; then
+    echo "Version:     @PACKAGE@ @VERSION@"
+    echo "Vendor:      Heimdal"
+    echo "Prefix:      $prefix"
+    echo "Exec_prefix: $exec_prefix"
+    exit 0
+fi
+
 if test "$print_prefix" = "yes"; then
     echo $prefix
+    exit 0
 fi
 
 if test "$print_exec_prefix" = "yes"; then
     echo $exec_prefix
+    exit 0
 fi
 
+# The following rpath_flag setting code is distilled from MIT Kerberos'
+# src/config/shlib.conf.  Some of this seems ancient and likely to be
+# wrong in some cases, but right for all the cases we probably care
+# about.  Also, this will very likely be wrong depending on how the
+# caller will be doing link-edits (with what compiler-driver or
+# link-editor)!  There's no fixing this.
+#
+# In principle this doesn't belong here: application should instead use
+# krb5-config --libdir to get the directory to use for the rpath, then
+# workout the rpath flags on their own.  Of course, there's no --libdir
+# option...  And MIT's krb5-config does include rpath flags.
+#
+# Compatibility with MIT is the winning consideration for now.
+case "@CANONICAL_HOST@" in
+alpha*-dec-osf*)
+  rpath_flag='-Wl,-rpath -Wl,';;
+*-*-hpux*)
+  rpath_flag='-Wl,+b,';;
+*-*-irix* | mips-*-netbsd*)
+  rpath_flag='-Wl,-rpath -Wl,';;
+*-*-netbsd* | *-*-openbsd* | *-*-solaris*)
+  rpath_flag='-R';;
+*-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-freebsd*)
+  rpath_flag='-Wl,--enable-new-dtags -Wl,-rpath -Wl,';;
+*-*-aix*)
+  rpath_flag='-Wl,-blibpath:';;
+*)
+rpath_flag=;;
+esac
+
 if test "$do_libs" = "yes"; then
-    lib_flags="-L${libdir}"
-    case $library in
-    gssapi)
-	lib_flags="$lib_flags -lgssapi -lheimntlm"
-	;;
-    kadm-client)
+    deplibs=""
+    if test "$lib_gssapi" = yes; then
+	lib_flags="$lib_flags -lgssapi"
+	deplibs="$deplibs -lheimntlm"
+	if test X"$do_lib_deps" = Xyes; then
+	    lib_krb5=yes
+	fi
+    fi
+    if test "$lib_kadm_client" = yes; then
 	lib_flags="$lib_flags -lkadm5clnt"
-	;;
-    kadm-server)
-	lib_flags="$lib_flags -lkadm5srv @LIB_dbopen@"
-	;;
-    kafs)
+	if test X"$do_lib_deps" = Xyes; then
+	    lib_krb5=yes
+	fi
+    fi
+    if test "$lib_kadm_server" = yes; then
+	lib_flags="$lib_flags -lkadm5srv"
+	deplibs="$deplibs @LIB_dbopen@"
+	if test X"$do_lib_deps" = Xyes; then
+	    lib_krb5=yes
+	fi
+    fi
+    if test "$lib_kafs" = yes; then
 	lib_flags="$lib_flags -lkafs"
-	;;
-    esac
-    lib_flags="$lib_flags -lkrb5 @LIB_pkinit@ -lcom_err"
-    lib_flags="$lib_flags @LIB_hcrypto_appl@ -lasn1 -lwind -lheimbase -lroken"
-    lib_flags="$lib_flags @LIB_crypt@ @PTHREAD_LIBADD@ @LIB_dlopen@"
-    lib_flags="$lib_flags @LIB_door_create@ @LIBS@"
-    echo $lib_flags
+	if test X"$do_lib_deps" = Xyes; then
+	    lib_krb5=yes
+	fi
+    fi
+    if test "$lib_krb5" = yes; then
+	lib_flags="$lib_flags -lkrb5"
+    fi
+    deplibs="$deplibs @LIB_pkinit@ -lcom_err"
+    deplibs="$deplibs @LIB_hcrypto_appl@ -lasn1 -lwind -lheimbase -lroken"
+    deplibs="$deplibs @LIB_crypt@ @PTHREAD_LIBADD@ @LIB_dlopen@"
+    deplibs="$deplibs @LIB_door_create@ @LIBS@"
+    if test X"$do_lib_deps" = X"yes"; then
+	lib_flags="$lib_flags $deplibs"
+    fi
+    if test X"$libdir" != X/usr/lib; then
+	lib_flags="-L${libdir} $lib_flags"
+	if test X"$rpath_flag" != X; then
+	    lib_flags="${rpath_flag}${libdir} $lib_flags"
+	fi
+    fi
+
+    echo ${lib_flags}
 fi
 if test "$do_cflags" = "yes"; then
-    echo "-I${includedir} @INCLUDE_hcrypto@"
+    cflags=""
+    if test X"${includedir}" != X/usr/include; then
+	cflags="-I${includedir} $cflags"
+    fi
+    echo $cflags
 fi
 
 exit 0

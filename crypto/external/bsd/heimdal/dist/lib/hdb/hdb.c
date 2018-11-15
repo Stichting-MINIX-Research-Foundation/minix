@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: hdb.c,v 1.4 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -66,47 +66,97 @@
 const int hdb_interface_version = HDB_INTERFACE_VERSION;
 
 static struct hdb_method methods[] = {
-#if HAVE_DB1 || HAVE_DB3
-    { HDB_INTERFACE_VERSION, "db:",	hdb_db_create},
+    /* "db:" should be db3 if we have db3, or db1 if we have db1 */
+#if HAVE_DB3
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db3_create},
+#elif HAVE_DB1
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db:",	hdb_db1_create},
 #endif
 #if HAVE_DB1
-    { HDB_INTERFACE_VERSION, "mit-db:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db1:",	hdb_db1_create},
+#endif
+#if HAVE_DB3
+    { HDB_INTERFACE_VERSION, NULL, NULL, "db3:",	hdb_db3_create},
+#endif
+#if HAVE_DB1
+    { HDB_INTERFACE_VERSION, NULL, NULL, "mit-db:",	hdb_mitdb_create},
+#endif
+#if HAVE_LMDB
+    { HDB_INTERFACE_VERSION, NULL, NULL, "mdb:",	hdb_mdb_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "lmdb:",	hdb_mdb_create},
 #endif
 #if HAVE_NDBM
-    { HDB_INTERFACE_VERSION, "ndbm:",	hdb_ndbm_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ndbm:",	hdb_ndbm_create},
 #endif
-    { HDB_INTERFACE_VERSION, "keytab:",	hdb_keytab_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "keytab:",	hdb_keytab_create},
 #if defined(OPENLDAP) && !defined(OPENLDAP_MODULE)
-    { HDB_INTERFACE_VERSION, "ldap:",	hdb_ldap_create},
-    { HDB_INTERFACE_VERSION, "ldapi:",	hdb_ldapi_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	hdb_ldap_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	hdb_ldapi_create},
+#elif defined(OPENLDAP)
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldap:",	NULL},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "ldapi:",	NULL},
 #endif
 #ifdef HAVE_SQLITE3
-    { HDB_INTERFACE_VERSION, "sqlite:", hdb_sqlite_create},
+    { HDB_INTERFACE_VERSION, NULL, NULL, "sqlite:", hdb_sqlite_create},
 #endif
-    {0, NULL,	NULL}
+    { 0, NULL, NULL, NULL, NULL}
 };
 
-#if HAVE_DB1 || HAVE_DB3
-static struct hdb_method dbmetod =
-    { HDB_INTERFACE_VERSION, "", hdb_db_create };
+/*
+ * It'd be nice if we could try opening an HDB with each supported
+ * backend until one works or all fail.  It may not be possible for all
+ * flavors, but where it's possible we should.
+ */
+#if defined(HAVE_LMDB)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_mdb_create };
+#elif defined(HAVE_DB3)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db3_create };
+#elif defined(HAVE_DB1)
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_db1_create };
 #elif defined(HAVE_NDBM)
-static struct hdb_method dbmetod =
-    { HDB_INTERFACE_VERSION, "", hdb_ndbm_create };
+static struct hdb_method default_dbmethod =
+    { HDB_INTERFACE_VERSION, NULL, NULL, "", hdb_ndbm_create };
 #endif
 
+const Keys *
+hdb_kvno2keys(krb5_context context,
+	      const hdb_entry *e,
+	      krb5_kvno kvno)
+{
+    HDB_Ext_KeySet *hist_keys;
+    HDB_extension *extp;
+    size_t i;
+
+    if (kvno == 0)
+	return &e->keys;
+
+    extp = hdb_find_extension(e, choice_HDB_extension_data_hist_keys);
+    if (extp == NULL)
+	return 0;
+
+    hist_keys = &extp->data.u.hist_keys;
+    for (i = 0; i < hist_keys->len; i++) {
+	if (hist_keys->val[i].kvno == kvno)
+	    return &hist_keys->val[i].keys;
+    }
+
+    return NULL;
+}
 
 krb5_error_code
 hdb_next_enctype2key(krb5_context context,
 		     const hdb_entry *e,
+		     const Keys *keyset,
 		     krb5_enctype enctype,
 		     Key **key)
 {
+    const Keys *keys = keyset ? keyset : &e->keys;
     Key *k;
 
-    for (k = *key ? (*key) + 1 : e->keys.val;
-	 k < e->keys.val + e->keys.len;
-	 k++)
-    {
+    for (k = *key ? (*key) + 1 : keys->val; k < keys->val + keys->len; k++) {
 	if(k->key.keytype == enctype){
 	    *key = k;
 	    return 0;
@@ -121,11 +171,12 @@ hdb_next_enctype2key(krb5_context context,
 krb5_error_code
 hdb_enctype2key(krb5_context context,
 		hdb_entry *e,
+		const Keys *keyset,
 		krb5_enctype enctype,
 		Key **key)
 {
     *key = NULL;
-    return hdb_next_enctype2key(context, e, enctype, key);
+    return hdb_next_enctype2key(context, e, keyset, enctype, key);
 }
 
 void
@@ -170,13 +221,14 @@ hdb_unlock(int fd)
 void
 hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
 {
+    Key *k;
     size_t i;
 
     if (ent->free_entry)
 	(*ent->free_entry)(context, ent);
 
-    for(i = 0; i < ent->entry.keys.len; ++i) {
-	Key *k = &ent->entry.keys.val[i];
+    for(i = 0; i < ent->entry.keys.len; i++) {
+	k = &ent->entry.keys.val[i];
 
 	memset (k->key.keyvalue.data, 0, k->key.keyvalue.length);
     }
@@ -267,100 +319,6 @@ hdb_init_db(krb5_context context, HDB *db)
     return ret2;
 }
 
-#ifdef HAVE_DLOPEN
-
- /*
- * Load a dynamic backend from /usr/heimdal/lib/hdb_NAME.so,
- * looking for the hdb_NAME_create symbol.
- */
-
-static const struct hdb_method *
-find_dynamic_method (krb5_context context,
-		     const char *filename,
-		     const char **rest)
-{
-    static struct hdb_method method;
-    struct hdb_so_method *mso;
-    char *prefix, *path, *symbol;
-    const char *p;
-    void *dl;
-    size_t len;
-
-    p = strchr(filename, ':');
-
-    /* if no prefix, don't know what module to load, just ignore it */
-    if (p == NULL)
-	return NULL;
-
-    len = p - filename;
-    *rest = filename + len + 1;
-
-    prefix = malloc(len + 1);
-    if (prefix == NULL)
-	krb5_errx(context, 1, "out of memory");
-    strlcpy(prefix, filename, len + 1);
-
-    if (asprintf(&path, LIBDIR "/hdb_%s.so", prefix) == -1)
-	krb5_errx(context, 1, "out of memory");
-
-#ifndef RTLD_NOW
-#define RTLD_NOW 0
-#endif
-#ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
-#endif
-
-    dl = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-    if (dl == NULL) {
-	krb5_warnx(context, "error trying to load dynamic module %s: %s\n",
-		   path, dlerror());
-	free(prefix);
-	free(path);
-	return NULL;
-    }
-
-    if (asprintf(&symbol, "hdb_%s_interface", prefix) == -1)
-	krb5_errx(context, 1, "out of memory");
-
-    mso = (struct hdb_so_method *) dlsym(dl, symbol);
-    if (mso == NULL) {
-	krb5_warnx(context, "error finding symbol %s in %s: %s\n",
-		   symbol, path, dlerror());
-	dlclose(dl);
-	free(symbol);
-	free(prefix);
-	free(path);
-	return NULL;
-    }
-    free(path);
-    free(symbol);
-
-    if (mso->version != HDB_INTERFACE_VERSION) {
-	krb5_warnx(context,
-		   "error wrong version in shared module %s "
-		   "version: %d should have been %d\n",
-		   prefix, mso->version, HDB_INTERFACE_VERSION);
-	dlclose(dl);
-	free(prefix);
-	return NULL;
-    }
-
-    if (mso->create == NULL) {
-	krb5_errx(context, 1,
-		  "no entry point function in shared mod %s ",
-		   prefix);
-	dlclose(dl);
-	free(prefix);
-	return NULL;
-    }
-
-    method.create = mso->create;
-    method.prefix = prefix;
-
-    return &method;
-}
-#endif /* HAVE_DLOPEN */
-
 /*
  * find the relevant method for `filename', returning a pointer to the
  * rest in `rest'.
@@ -378,17 +336,60 @@ find_method (const char *filename, const char **rest)
 	    return h;
 	}
     }
-#if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_NDBM)
-    if (strncmp(filename, "/", 1) == 0
-	|| strncmp(filename, "./", 2) == 0
-	|| strncmp(filename, "../", 3) == 0)
+#if defined(HAVE_DB1) || defined(HAVE_DB3) || defined(HAVE_LMDB) || defined(HAVE_NDBM)
+    if (strncmp(filename, "/", sizeof("/") - 1) == 0
+	|| strncmp(filename, "./", sizeof("./") - 1) == 0
+	|| strncmp(filename, "../", sizeof("../") - 1) == 0
+#ifdef WIN32
+        || strncmp(filename, "\\\\", sizeof("\\\\") - 1)
+        || (isalpha(filename[0]) && filename[1] == ':')
+#endif
+        )
     {
 	*rest = filename;
-	return &dbmetod;
+	return &default_dbmethod;
     }
 #endif
 
     return NULL;
+}
+
+struct cb_s {
+    const char *residual;
+    const char *filename;
+    const struct hdb_method *h;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    const struct hdb_method *h = (const struct hdb_method *)plug;
+    struct cb_s *cb_ctx = (struct cb_s *)userctx;
+
+    if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
+	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix) + 1;
+	cb_ctx->h = h;
+	return 0;
+    }
+   return KRB5_PLUGIN_NO_HANDLE;
+}
+
+static char *
+make_sym(const char *prefix)
+{
+    char *s, *sym;
+
+    errno = 0;
+    if (prefix == NULL || prefix[0] == '\0')
+        return NULL;
+    if ((s = strdup(prefix)) == NULL)
+        return NULL;
+    if (strchr(s, ':') != NULL)
+        *strchr(s, ':') = '\0';
+    if (asprintf(&sym, "hdb_%s_interface", s) == -1)
+        sym = NULL;
+    free(s);
+    return sym;
 }
 
 krb5_error_code
@@ -407,12 +408,35 @@ hdb_list_builtin(krb5_context context, char **list)
     len += 1;
     buf = malloc(len);
     if (buf == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     buf[0] = '\0';
 
     for (h = methods; h->prefix != NULL; ++h) {
+        if (h->create == NULL) {
+            struct cb_s cb_ctx;
+            char *f;
+            char *sym;
+
+            /* Try loading the plugin */
+            if (asprintf(&f, "%sfoo", h->prefix) == -1)
+                f = NULL;
+            if ((sym = make_sym(h->prefix)) == NULL) {
+                free(buf);
+                free(f);
+                return krb5_enomem(context);
+            }
+            cb_ctx.filename = f;
+            cb_ctx.residual = NULL;
+            cb_ctx.h = NULL;
+            (void)_krb5_plugin_run_f(context, "krb5", sym,
+                                     HDB_INTERFACE_VERSION, 0, &cb_ctx,
+                                     callback);
+            free(f);
+            free(sym);
+            if (cb_ctx.h == NULL || cb_ctx.h->create == NULL)
+                continue;
+        }
 	if (h != methods)
 	    strlcat(buf, ", ", len);
 	strlcat(buf, h->prefix, len);
@@ -453,39 +477,25 @@ _hdb_keytab2hdb_entry(krb5_context context,
 krb5_error_code
 hdb_create(krb5_context context, HDB **db, const char *filename)
 {
-    const struct hdb_method *h;
-    const char *residual;
-    krb5_error_code ret;
-    struct krb5_plugin *list = NULL, *e;
+    struct cb_s cb_ctx;
 
-    if(filename == NULL)
+    if (filename == NULL)
 	filename = HDB_DEFAULT_DB;
-    krb5_add_et_list(context, initialize_hdb_error_table_r);
-    h = find_method (filename, &residual);
+    cb_ctx.h = find_method (filename, &cb_ctx.residual);
+    cb_ctx.filename = filename;
 
-    if (h == NULL) {
-	    ret = _krb5_plugin_find(context, PLUGIN_TYPE_DATA, "hdb", &list);
-	    if(ret == 0 && list != NULL) {
-		    for (e = list; e != NULL; e = _krb5_plugin_get_next(e)) {
-			    h = _krb5_plugin_get_symbol(e);
-			    if (strncmp (filename, h->prefix, strlen(h->prefix)) == 0
-				&& h->interface_version == HDB_INTERFACE_VERSION) {
-				    residual = filename + strlen(h->prefix);
-				    break;
-			    }
-		    }
-		    if (e == NULL) {
-			    h = NULL;
-			    _krb5_plugin_free(list);
-		    }
-	    }
+    if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
+        char *sym;
+
+        if ((sym = make_sym(filename)) == NULL)
+            return krb5_enomem(context);
+
+        (void)_krb5_plugin_run_f(context, "krb5", sym, HDB_INTERFACE_VERSION,
+                                 0, &cb_ctx, callback);
+
+        free(sym);
     }
-
-#ifdef HAVE_DLOPEN
-    if (h == NULL)
-	h = find_dynamic_method (context, filename, &residual);
-#endif
-    if (h == NULL)
-	krb5_errx(context, 1, "No database support for %s", filename);
-    return (*h->create)(context, db, residual);
+    if (cb_ctx.h == NULL)
+	krb5_errx(context, 1, "No database support for %s", cb_ctx.filename);
+    return (*cb_ctx.h->create)(context, db, cb_ctx.residual);
 }

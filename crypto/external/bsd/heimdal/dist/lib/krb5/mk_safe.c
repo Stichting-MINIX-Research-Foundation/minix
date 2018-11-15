@@ -1,4 +1,4 @@
-/*	$NetBSD: mk_safe.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: mk_safe.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan

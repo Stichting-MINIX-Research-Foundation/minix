@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: kdc.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -253,7 +253,7 @@ kdc_type2(OM_uint32 *minor_status,
     struct ntlmkrb5 *c = ctx;
     krb5_error_code ret;
     struct ntlm_type2 type2;
-    krb5_data challange;
+    krb5_data challenge;
     struct ntlm_buf data;
     krb5_data ti;
 
@@ -295,18 +295,18 @@ kdc_type2(OM_uint32 *minor_status,
     }
     *ret_flags = type2.flags;
 
-    ret = krb5_ntlm_init_get_challange(c->context, c->ntlm, &challange);
+    ret = krb5_ntlm_init_get_challenge(c->context, c->ntlm, &challenge);
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
     }
 
-    if (challange.length != sizeof(type2.challenge)) {
+    if (challenge.length != sizeof(type2.challenge)) {
 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
-    memcpy(type2.challenge, challange.data, sizeof(type2.challenge));
-    krb5_data_free(&challange);
+    memcpy(type2.challenge, challenge.data, sizeof(type2.challenge));
+    krb5_data_free(&challenge);
 
     ret = krb5_ntlm_init_get_targetname(c->context, c->ntlm,
 					&type2.targetname);

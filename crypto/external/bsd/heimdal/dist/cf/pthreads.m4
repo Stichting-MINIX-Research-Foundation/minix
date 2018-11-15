@@ -12,12 +12,12 @@ case "$host" in
 *-*-solaris2*)
 	native_pthread_support=yes
 	if test "$GCC" = yes; then
-		PTHREAD_CFLAGS=-pthreads
-		PTHREAD_LIBADD=-pthreads
+		PTHREAD_CFLAGS="-D_REENTRANT -D_TS_ERRNO"
+		PTHREAD_LIBADD=-lpthread
 	else
-		PTHREAD_CFLAGS=-mt
+		PTHREAD_CFLAGS="-mt -D_REENTRANT -D_TS_ERRNO"
 		PTHREAD_LDADD=-mt
-		PTHREAD_LIBADD=-mt
+		PTHREAD_LIBADD="-mt -lpthread"
 	fi
 	;;
 *-*-netbsd[[12]]*)
@@ -30,7 +30,9 @@ case "$host" in
 	dnl heim_threads.h knows this
 	PTHREAD_LIBADD="-lpthread"
 	;;
-*-*-freebsd[[56789]]*)
+*-*-freebsd[[1234]])
+    ;;
+*-*-freebsd*)
 	native_pthread_support=yes
 	PTHREAD_LIBADD="-pthread"
 	;;
@@ -38,6 +40,11 @@ case "$host" in
 	native_pthread_support=yes
 	PTHREAD_CFLAGS=-pthread
 	PTHREAD_LIBADD=-pthread
+	;;
+*-*-gnu*)
+	native_pthread_support=yes
+	PTHREADS_CFLAGS=-pthread
+	PTHREAD_LIBADD="-pthread -lpthread"
 	;;
 *-*-linux* | *-*-linux-gnu)
 	case `uname -r` in
@@ -56,6 +63,17 @@ case "$host" in
 *-*-aix*)
 	dnl AIX is disabled since we don't handle the utmp/utmpx
         dnl problems that aix causes when compiling with pthread support
+        dnl (2016-11-14, we longer use utmp).  Original logic was:
+        dnl     if test "$GCC" = yes; then
+        dnl             native_pthread_support=yes
+        dnl             PTHREADS_LIBS="-pthread"
+        dnl     elif expr "$CC" : ".*_r" > /dev/null ; then
+        dnl             native_pthread_support=yes
+        dnl             PTHREADS_CFLAGS=""
+        dnl             PTHREADS_LIBS=""
+        dnl     else
+        dnl             native_pthread_support=no
+        dnl     fi
 	native_pthread_support=no
 	;;
 mips-sgi-irix6.[[5-9]])  # maybe works for earlier versions too
@@ -84,6 +102,12 @@ else
   PTHREAD_CFLAGS=""
   PTHREAD_LIBADD=""
 fi
+
+AM_CONDITIONAL(ENABLE_PTHREAD_SUPPORT, test "$enable_pthread_support" != no)
+
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LDADD="$LDADD $PTHREAD_LDADD"
+LIBADD="$LIBADD $PTHREAD_LIBADD"
 
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LDADD)

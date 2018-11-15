@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -123,17 +123,12 @@ krb5_initlog(krb5_context context,
 	     krb5_log_facility **fac)
 {
     krb5_log_facility *f = calloc(1, sizeof(*f));
-    if(f == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (f == NULL)
+	return krb5_enomem(context);
     f->program = strdup(program);
     if(f->program == NULL){
 	free(f);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *fac = f;
     return 0;
@@ -149,11 +144,8 @@ krb5_addlog_func(krb5_context context,
 		 void *data)
 {
     struct facility *fp = log_realloc(fac);
-    if(fp == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (fp == NULL)
+	return krb5_enomem(context);
     fp->min = min;
     fp->max = max;
     fp->log_func = log_func;
@@ -192,11 +184,8 @@ open_syslog(krb5_context context,
     struct _heimdal_syslog_data *sd = malloc(sizeof(*sd));
     int i;
 
-    if(sd == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (sd == NULL)
+	return krb5_enomem(context);
     i = find_value(sev, syslogvals);
     if(i == -1)
 	i = LOG_ERR;
@@ -215,6 +204,7 @@ struct file_data{
     const char *mode;
     FILE *fd;
     int keep_open;
+    int freefilename;
 };
 
 static void KRB5_CALLCONV
@@ -249,23 +239,27 @@ close_file(void *data)
     struct file_data *f = data;
     if(f->keep_open && f->filename)
 	fclose(f->fd);
+    if (f->filename && f->freefilename)
+	free((char *)f->filename);
     free(data);
 }
 
 static krb5_error_code
 open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
-	  const char *filename, const char *mode, FILE *f, int keep_open)
+	  const char *filename, const char *mode, FILE *f, int keep_open,
+	  int freefilename)
 {
     struct file_data *fd = malloc(sizeof(*fd));
-    if(fd == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+    if (fd == NULL) {
+	if (freefilename && filename)
+	    free((char *)filename);
+	return krb5_enomem(context);
     }
     fd->filename = filename;
     fd->mode = mode;
     fd->fd = f;
     fd->keep_open = keep_open;
+    fd->freefilename = freefilename;
 
     return krb5_addlog_func(context, fac, min, max, log_file, close_file, fd);
 }
@@ -279,10 +273,13 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
     int min = 0, max = -1, n;
     char c;
     const char *p = orig;
+#ifdef _WIN32
+    const char *q;
+#endif
 
     n = sscanf(p, "%d%c%d/", &min, &c, &max);
     if(n == 2){
-	if(c == '/') {
+	if(ISPATHSEP(c)) {
 	    if(min < 0){
 		max = -min;
 		min = 0;
@@ -292,6 +289,12 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	}
     }
     if(n){
+#ifdef _WIN32
+	q = strrchr(p, '\\');
+	if (q != NULL)
+	    p = q;
+	else
+#endif
 	p = strchr(p, '/');
 	if(p == NULL) {
 	    krb5_set_error_message(context, HEIM_ERR_LOG_PARSE,
@@ -301,26 +304,23 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	p++;
     }
     if(strcmp(p, "STDERR") == 0){
-	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1);
+	ret = open_file(context, f, min, max, NULL, NULL, stderr, 1, 0);
     }else if(strcmp(p, "CONSOLE") == 0){
-	ret = open_file(context, f, min, max, "/dev/console", "w", NULL, 0);
+	ret = open_file(context, f, min, max, "/dev/console", "w", NULL, 0, 0);
     }else if(strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')){
 	char *fn;
 	FILE *file = NULL;
 	int keep_open = 0;
 	fn = strdup(p + 5);
-	if(fn == NULL) {
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (fn == NULL)
+	    return krb5_enomem(context);
 	if(p[4] == '='){
 	    int i = open(fn, O_WRONLY | O_CREAT |
 			 O_TRUNC | O_APPEND, 0666);
 	    if(i < 0) {
 		ret = errno;
 		krb5_set_error_message(context, ret,
-				       N_("open(%s) logile: %s", ""), fn,
+				       N_("open(%s) logfile: %s", ""), fn,
 				       strerror(ret));
 		free(fn);
 		return ret;
@@ -338,9 +338,9 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	    }
 	    keep_open = 1;
 	}
-	ret = open_file(context, f, min, max, fn, "a", file, keep_open);
+	ret = open_file(context, f, min, max, fn, "a", file, keep_open, 1);
     }else if(strncmp(p, "DEVICE", 6) == 0 && (p[6] == ':' || p[6] == '=')){
-	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0);
+	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0, 1);
     }else if(strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')){
 	char severity[128] = "";
 	char facility[128] = "";
@@ -413,7 +413,7 @@ krb5_vlog_msg(krb5_context context,
 	      int level,
 	      const char *fmt,
 	      va_list ap)
-     __attribute__((format (printf, 5, 0)))
+     __attribute__ ((__format__ (__printf__, 5, 0)))
 {
 
     char *msg = NULL;
@@ -451,7 +451,7 @@ krb5_vlog(krb5_context context,
 	  int level,
 	  const char *fmt,
 	  va_list ap)
-     __attribute__((format (printf, 4, 0)))
+     __attribute__ ((__format__ (__printf__, 4, 0)))
 {
     return krb5_vlog_msg(context, fac, NULL, level, fmt, ap);
 }
@@ -463,7 +463,7 @@ krb5_log_msg(krb5_context context,
 	     char **reply,
 	     const char *fmt,
 	     ...)
-     __attribute__((format (printf, 5, 6)))
+     __attribute__ ((__format__ (__printf__, 5, 6)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -481,7 +481,7 @@ krb5_log(krb5_context context,
 	 int level,
 	 const char *fmt,
 	 ...)
-     __attribute__((format (printf, 4, 5)))
+     __attribute__ ((__format__ (__printf__, 4, 5)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -497,7 +497,7 @@ _krb5_debug(krb5_context context,
 	    int level,
 	    const char *fmt,
 	    ...)
-    __attribute__((format (printf, 3, 4)))
+    __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
 
@@ -509,10 +509,28 @@ _krb5_debug(krb5_context context,
     va_end(ap);
 }
 
-krb5_boolean KRB5_LIB_FUNCTION
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {
     if (context == NULL || context->debug_dest == NULL)
 	return 0 ;
     return 1;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_debug_dest(krb5_context context, const char *program,
+                    const char *log_spec)
+{
+    krb5_error_code ret;
+
+    if (context->debug_dest == NULL) {
+        ret = krb5_initlog(context, program, &context->debug_dest);
+        if (ret)
+            return ret;
+    }
+
+    ret = krb5_addlog_dest(context, context->debug_dest, log_spec);
+    if (ret)
+        return ret;
+    return 0;
 }

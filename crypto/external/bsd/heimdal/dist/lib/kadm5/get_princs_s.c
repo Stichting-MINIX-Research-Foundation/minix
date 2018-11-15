@@ -1,4 +1,4 @@
-/*	$NetBSD: get_princs_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: get_princs_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: get_princs_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 struct foreach_data {
     const char *exp;
@@ -87,29 +87,41 @@ kadm5_s_get_principals(void *server_handle,
     struct foreach_data d;
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret) {
-	krb5_warn(context->context, ret, "opening database");
-	return ret;
+
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+	if (ret) {
+	    krb5_warn(context->context, ret, "opening database");
+	    return ret;
+	}
     }
     d.exp = expression;
     {
 	krb5_realm r;
+	int aret;
+
 	krb5_get_default_realm(context->context, &r);
-	asprintf(&d.exp2, "%s@%s", expression, r);
+	aret = asprintf(&d.exp2, "%s@%s", expression, r);
 	free(r);
+	if (aret == -1 || d.exp2 == NULL) {
+	    ret = ENOMEM;
+            goto out;
+	}
     }
     d.princs = NULL;
     d.count = 0;
     ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
-    context->db->hdb_close(context->context, context->db);
-    if(ret == 0)
+
+    if (ret == 0)
 	ret = add_princ(&d, NULL);
-    if(ret == 0){
+    if (ret == 0){
 	*princs = d.princs;
 	*count = d.count - 1;
-    }else
+    } else
 	kadm5_free_name_list(context, d.princs, &d.count);
     free(d.exp2);
+ out:
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

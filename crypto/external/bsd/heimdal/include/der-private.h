@@ -5,6 +5,20 @@
 #include <stdarg.h>
 
 int
+_asn1_bmember_isset_bit (
+	const void */*data*/,
+	unsigned int /*bit*/,
+	size_t /*size*/);
+
+void
+_asn1_bmember_put_bit (
+	unsigned char */*p*/,
+	const void */*data*/,
+	unsigned int /*bit*/,
+	size_t /*size*/,
+	unsigned int */*bitset*/);
+
+int
 _asn1_copy (
 	const struct asn1_template */*t*/,
 	const void */*from*/,
@@ -42,8 +56,21 @@ _asn1_encode (
 	const void */*data*/,
 	size_t */*size*/);
 
+int
+_asn1_encode_fuzzer (
+	const struct asn1_template */*t*/,
+	unsigned char */*p*/,
+	size_t /*len*/,
+	const void */*data*/,
+	size_t */*size*/);
+
 void
 _asn1_free (
+	const struct asn1_template */*t*/,
+	void */*data*/);
+
+void
+_asn1_free_top (
 	const struct asn1_template */*t*/,
 	void */*data*/);
 
@@ -51,6 +78,14 @@ size_t
 _asn1_length (
 	const struct asn1_template */*t*/,
 	const void */*data*/);
+
+size_t
+_asn1_length_fuzzer (
+	const struct asn1_template */*t*/,
+	const void */*data*/);
+
+size_t
+_asn1_sizeofType (const struct asn1_template */*t*/);
 
 struct tm *
 _der_gmtime (
@@ -71,7 +106,13 @@ size_t
 _heim_len_int (int /*val*/);
 
 size_t
+_heim_len_int64 (int64_t /*val*/);
+
+size_t
 _heim_len_unsigned (unsigned /*val*/);
+
+size_t
+_heim_len_unsigned64 (uint64_t /*val*/);
 
 int
 _heim_time2generalizedtime (

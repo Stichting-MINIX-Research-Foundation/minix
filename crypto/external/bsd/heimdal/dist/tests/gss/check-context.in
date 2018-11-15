@@ -34,8 +34,11 @@
 # Id
 #
 
+env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
+
+. ${env_setup}
 
 # If there is no useful db support compile in, disable test
 ../db/have-db || exit 77
@@ -50,6 +53,7 @@ nokeytab="FILE:no-such-keytab"
 cache="FILE:krb5ccfile"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
+klist="${TESTS_ENVIRONMENT} ../../kuser/heimtools klist -c $cache"
 klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
 kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
 kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
@@ -81,8 +85,6 @@ ${kadmin} \
 # add both lucid and lucid.test.h5l.se to simulate aliases
 ${kadmin} add -p p1 --use-defaults host/lucid.test.h5l.se@${R} || exit 1
 ${kadmin} ext -k ${keytab} host/lucid.test.h5l.se@${R} || exit 1
-${kadmin} add -p p1 --use-defaults host/lucid@${R} || exit 1
-${kadmin} ext -k ${keytab} host/lucid@${R} || exit 1
 
 ${kadmin} add -p p1 --use-defaults host/ok-delegate.test.h5l.se@${R} || exit 1
 ${kadmin} mod --attributes=+ok-as-delegate host/ok-delegate.test.h5l.se@${R} || exit 1
@@ -112,18 +114,30 @@ ${kadmin} check ${R} || exit 1
 echo u1 > ${objdir}/foopassword
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    exit 1
-fi
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 testfailed="echo test failed; cat messages.log; exit 1"
+
+echo "Test gss_acquire_cred_with_password" ; > messages.log
+${context} --client-name=user1@${R} --client-password=u1 --mech-type=krb5 \
+        host@lucid.test.h5l.se || { eval "$testfailed"; }
+# These must fail (because wrong password)
+${context} --client-name=user1@${R} --client-password=u2 --mech-type=krb5 \
+        host@lucid.test.h5l.se && { eval "$testfailed"; }
+${context} --client-name=user1@${R} --client-password=u2 --mech-type='' \
+        --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${context} --client-name=user1@${R} --client-password=u2 --mech-type=krb5 \
+        --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${context} --client-name=user1@${R} --client-password=u2 --mech-type=all \
+        --mech-types=krb5 host@lucid.test.h5l.se && { eval "$testfailed"; }
+${context} --client-name=user1@${R} --client-password=u2 \
+        --mech-type=krb5,ntlm --mech-types=krb5 host@lucid.test.h5l.se \
+        && { eval "$testfailed"; }
+# gss_acquire_cred_with_password() must not have side-effects
+${klist} && { eval "$testfailed"; }
 
 echo "Getting client initial tickets" ; > messages.log
 ${kinit} --password-file=${objdir}/foopassword --forwardable user1@${R} || \
@@ -152,12 +166,21 @@ echo "======test naming combinations"
 echo "plain"  ; > messages.log
 ${context} --name-type=hostbased-service host@lucid.test.h5l.se || \
 	{ eval "$testfailed"; }
+echo "plain w/ short-form hostname"  ; > messages.log
+${context} --name-type=hostbased-service host@lucid || \
+	{ eval "$testfailed"; }
 echo "plain (krb5)" ; > messages.log
 ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se@${R} || \
 	{ eval "$testfailed"; }
 echo "plain (krb5 realmless)" ; > messages.log
 ${context} --name-type=krb5-principal-name host/lucid.test.h5l.se || \
 	{ eval "$testfailed"; }
+echo "plain (krb5 realmless short-form)" ; > messages.log
+${context} --name-type=krb5-principal-name host/lucid 2>/dev/null || \
+	{ eval "$testfailed"; }
+echo "creating short-form princ"
+${kadmin} add -p p1 --use-defaults host/lucid@${R} || exit 1
+${kadmin} ext -k ${keytab} host/lucid@${R} || exit 1
 echo "dns canon on (long name) OFF, need dns_wrapper" ; > messages.log
 #${context} --dns-canon host@lucid.test.h5l.se || \
 #	{ eval "$testfailed"; }

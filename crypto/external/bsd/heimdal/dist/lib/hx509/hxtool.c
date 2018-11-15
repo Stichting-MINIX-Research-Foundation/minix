@@ -1,7 +1,7 @@
-/*	$NetBSD: hxtool.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: hxtool.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
- * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
+ * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -374,9 +374,9 @@ cms_create_sd(struct cms_create_sd_options *opt, int argc, char **argv)
     infile = argv[0];
 
     if (argc < 2) {
-	asprintf(&outfile, "%s.%s", infile,
-		 opt->pem_flag ? "pem" : "cms-signeddata");
-	if (outfile == NULL)
+	ret = asprintf(&outfile, "%s.%s", infile,
+		       opt->pem_flag ? "pem" : "cms-signeddata");
+	if (ret == -1 || outfile == NULL)
 	    errx(1, "out of memory");
     } else
 	outfile = argv[1];
@@ -1137,6 +1137,45 @@ ocsp_print(struct ocsp_print_options *opt, int argc, char **argv)
     return 0;
 }
 
+int
+revoke_print(struct revoke_print_options *opt, int argc, char **argv)
+{
+    hx509_revoke_ctx revoke_ctx;
+    int ret;
+
+    ret = hx509_revoke_init(context, &revoke_ctx);
+    if (ret)
+	errx(1, "hx509_revoke_init: %d", ret);
+
+    while(argc--) {
+	char *s = *argv++;
+
+	if (strncmp(s, "crl:", 4) == 0) {
+	    s += 4;
+
+	    ret = hx509_revoke_add_crl(context, revoke_ctx, s);
+	    if (ret)
+		errx(1, "hx509_revoke_add_crl: %s: %d", s, ret);
+
+	} else if (strncmp(s, "ocsp:", 4) == 0) {
+	    s += 5;
+
+	    ret = hx509_revoke_add_ocsp(context, revoke_ctx, s);
+	    if (ret)
+		errx(1, "hx509_revoke_add_ocsp: %s: %d", s, ret);
+
+	} else {
+	    errx(1, "unknown option to verify: `%s'\n", s);
+	}
+    }
+
+    ret = hx509_revoke_print(context, revoke_ctx, stdout);
+    if (ret)
+	warnx("hx509_revoke_print: %d", ret);
+
+    return ret;
+}
+
 /*
  *
  */
@@ -1396,7 +1435,7 @@ info(void *opt, int argc, char **argv)
 	if (m != NULL)
 	    printf("dh: %s\n", m->name);
     }
-#ifdef HAVE_OPENSSL
+#ifdef HAVE_HCRYPTO_W_OPENSSL
     {
 	printf("ecdsa: ECDSA_METHOD-not-export\n");
     }
@@ -1694,12 +1733,13 @@ eval_types(hx509_context contextp,
 	}
     }
 
-    if (opt->pk_init_principal_string) {
+    for (i = 0; i < opt->pk_init_principal_strings.num_strings; i++) {
+	const char *pk_init_princ = opt->pk_init_principal_strings.strings[i];
+
 	if (!ctopt.pkinit)
 	    errx(1, "pk-init principal given but no pk-init oid");
 
-	ret = hx509_ca_tbs_add_san_pkinit(contextp, tbs,
-					  opt->pk_init_principal_string);
+	ret = hx509_ca_tbs_add_san_pkinit(contextp, tbs, pk_init_princ);
 	if (ret)
 	    hx509_err(contextp, 1, ret, "hx509_ca_tbs_add_san_pkinit");
     }
@@ -1889,6 +1929,17 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
     ret = hx509_ca_tbs_init(context, &tbs);
     if (ret)
 	hx509_err(context, 1, ret, "hx509_ca_tbs_init");
+
+    if (opt->signature_algorithm_string) {
+	const AlgorithmIdentifier *sigalg;
+	if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha1") == 0)
+	    sigalg = hx509_signature_rsa_with_sha1();
+	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha256") == 0)
+	    sigalg = hx509_signature_rsa_with_sha256();
+	else
+	    errx(1, "unsupported sigature algorithm");
+	hx509_ca_tbs_set_signature_algorithm(context, tbs, sigalg);
+    }
 
     if (opt->template_certificate_string) {
 	hx509_cert template;

@@ -1,4 +1,4 @@
-/*	$NetBSD: display_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: display_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_display_name
            (OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             gss_buffer_t output_name_buffer,
             gss_OID * output_name_type
            )

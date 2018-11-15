@@ -24,7 +24,7 @@ typedef ssize_t krb5_ssize_t;
 
 #ifndef HEIMDAL_DEPRECATED
 #if __has_extension(deprecated) || KRB5TYPES_REQUIRE_GNUC(3,1,0)
-#define HEIMDAL_DEPRECATED __attribute__((deprecated))
+#define HEIMDAL_DEPRECATED __attribute__ ((__deprecated__))
 #elif defined(_MSC_VER) && (_MSC_VER>1200) 
 #define HEIMDAL_DEPRECATED __declspec(deprecated)
 #else
@@ -34,7 +34,7 @@ typedef ssize_t krb5_ssize_t;
 
 #ifndef HEIMDAL_PRINTF_ATTRIBUTE
 #if __has_extension(format) || KRB5TYPES_REQUIRE_GNUC(3,1,0)
-#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__((format x))
+#define HEIMDAL_PRINTF_ATTRIBUTE(x) __attribute__ ((__format__ x))
 #else
 #define HEIMDAL_PRINTF_ATTRIBUTE(x)
 #endif
@@ -42,7 +42,7 @@ typedef ssize_t krb5_ssize_t;
 
 #ifndef HEIMDAL_NORETURN_ATTRIBUTE
 #if __has_extension(noreturn) || KRB5TYPES_REQUIRE_GNUC(3,1,0)
-#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__((noreturn))
+#define HEIMDAL_NORETURN_ATTRIBUTE __attribute__ ((__noreturn__))
 #else
 #define HEIMDAL_NORETURN_ATTRIBUTE
 #endif
@@ -50,9 +50,15 @@ typedef ssize_t krb5_ssize_t;
 
 #ifndef HEIMDAL_UNUSED_ATTRIBUTE
 #if __has_extension(unused) || KRB5TYPES_REQUIRE_GNUC(3,1,0)
-#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__((unused))
+#define HEIMDAL_UNUSED_ATTRIBUTE __attribute__ ((__unused__))
 #else
 #define HEIMDAL_UNUSED_ATTRIBUTE
+#endif
+#endif
+
+#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+#if __has_extension(__warn_unused_result__) || KRB5TYPES_REQUIRE_GNUC(3,3,0)
+#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__ ((__warn_unused_result__))
 #endif
 #endif
 

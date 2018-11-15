@@ -1,4 +1,4 @@
-/*	$NetBSD: recvauth.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: recvauth.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -45,6 +45,24 @@ match_exact(const void *data, const char *appl_version)
     return strcmp(data, appl_version) == 0;
 }
 
+/**
+ * Perform the server side of the sendauth protocol.
+ *
+ * @param context       Kerberos 5 context.
+ * @param auth_context  authentication context of the peer.
+ * @param p_fd          socket associated to the connection.
+ * @param appl_version  server-specific string.
+ * @param server        server principal.
+ * @param flags         if KRB5_RECVAUTH_IGNORE_VERSION is set, skip the sendauth version
+ *                      part of the protocol.
+ * @param keytab        server keytab.
+ * @param ticket        on success, set to the authenticated client credentials.
+ *                      Must be deallocated with krb5_free_ticket(). If not
+ *                      interested, pass a NULL value.
+ *
+ * @return 0 to indicate success. Otherwise a Kerberos error code is
+ *         returned, see krb5_get_error_message().
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_recvauth(krb5_context context,
 	      krb5_auth_context *auth_context,
@@ -61,6 +79,11 @@ krb5_recvauth(krb5_context context,
 				       keytab, ticket);
 }
 
+/**
+ * Perform the server side of the sendauth protocol like krb5_recvauth(), but support
+ * a user-specified callback, \a match_appl_version, to perform the match of the application
+ * version \a match_data.
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_recvauth_match_version(krb5_context context,
 			    krb5_auth_context *auth_context,
@@ -99,10 +122,13 @@ krb5_recvauth_match_version(krb5_context context,
     if (ret)
 	return ret;
 
+    /*
+     * Expect SENDAUTH protocol version.
+     */
     if(!(flags & KRB5_RECVAUTH_IGNORE_VERSION)) {
 	n = krb5_net_read (context, p_fd, &len, 4);
 	if (n < 0) {
-	    ret = errno;
+	    ret = errno ? errno : EINVAL;
 	    krb5_set_error_message(context, ret, "read: %s", strerror(ret));
 	    return ret;
 	}
@@ -122,9 +148,12 @@ krb5_recvauth_match_version(krb5_context context,
 	}
     }
 
+    /*
+     * Expect application protocol version.
+     */
     n = krb5_net_read (context, p_fd, &len, 4);
     if (n < 0) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "read: %s", strerror(ret));
 	return ret;
     }
@@ -137,29 +166,38 @@ krb5_recvauth_match_version(krb5_context context,
     if (her_appl_version == NULL) {
 	repl = 2;
 	krb5_net_write (context, p_fd, &repl, 1);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     if (krb5_net_read (context, p_fd, her_appl_version, len) != len
 	|| !(*match_appl_version)(match_data, her_appl_version)) {
 	repl = 2;
 	krb5_net_write (context, p_fd, &repl, 1);
 	krb5_set_error_message(context, KRB5_SENDAUTH_BADAPPLVERS,
-			       N_("wrong sendauth version (%s)", ""),
+			       N_("wrong sendauth application version (%s)", ""),
 			       her_appl_version);
 	free (her_appl_version);
 	return KRB5_SENDAUTH_BADAPPLVERS;
     }
     free (her_appl_version);
 
+    /*
+     * Send OK.
+     */
     repl = 0;
     if (krb5_net_write (context, p_fd, &repl, 1) != 1) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
 	return ret;
     }
 
+    /*
+     * Until here, the fields in the message were in cleartext and unauthenticated.
+     * From now on, Kerberos kicks in.
+     */
+
+    /*
+     * Expect AP_REQ.
+     */
     krb5_data_zero (&data);
     ret = krb5_read_message (context, p_fd, &data);
     if (ret)
@@ -193,15 +231,21 @@ krb5_recvauth_match_version(krb5_context context,
 	return ret;
     }
 
+    /*
+     * Send OK.
+     */
     len = 0;
     if (krb5_net_write (context, p_fd, &len, 4) != 4) {
-	ret = errno;
+	ret = errno ? errno : EINVAL;
 	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
 	krb5_free_ticket(context, *ticket);
 	*ticket = NULL;
 	return ret;
     }
 
+    /*
+     * If client requires mutual authentication, send AP_REP.
+     */
     if (ap_options & AP_OPTS_MUTUAL_REQUIRED) {
 	ret = krb5_mk_rep (context, *auth_context, &data);
 	if (ret) {

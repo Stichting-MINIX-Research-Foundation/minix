@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_export_name.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_export_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -30,9 +30,23 @@
 
 #include "mech_locl.h"
 
+/**
+ * Convert a GGS-API name from internal form to contiguous string.
+ *
+ * @sa gss_import_name(), @ref internalVSmechname.
+ *
+ * @param minor_status   minor status code
+ * @param input_name     input name in internal name form
+ * @param exported_name  output name in contiguos string form
+ *
+ * @returns a gss_error code, see gss_display_status() about printing
+ *        the error code.
+ *
+ * @ingroup gssapi
+ */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name(OM_uint32 *minor_status,
-    const gss_name_t input_name,
+    gss_const_name_t input_name,
     gss_buffer_t exported_name)
 {
 	struct _gss_name *name = (struct _gss_name *) input_name;

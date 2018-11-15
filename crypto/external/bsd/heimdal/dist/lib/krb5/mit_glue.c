@@ -1,4 +1,4 @@
-/*	$NetBSD: mit_glue.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: mit_glue.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -98,7 +98,7 @@ krb5_c_get_checksum(krb5_context context, const krb5_checksum *cksum,
     if (data) {
 	*data = malloc(sizeof(**data));
 	if (*data == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 
 	ret = der_copy_octet_string(&cksum->checksum, *data);
 	if (ret) {
@@ -169,7 +169,7 @@ krb5_copy_checksum (krb5_context context,
 {
     *new = malloc(sizeof(**new));
     if (*new == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     return copy_Checksum(old, *new);
 }
 
@@ -380,7 +380,8 @@ krb5_c_prf(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_random_make_octets(krb5_context context, krb5_data * data)
 {
-    return krb5_generate_random_keyblock(context, data->length, data->data);
+    krb5_generate_random_block(data->data, data->length);
+    return 0;
 }
 
 /**

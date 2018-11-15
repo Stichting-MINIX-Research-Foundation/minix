@@ -1,4 +1,4 @@
-/*	$NetBSD: kafs_locl.h,v 1.1.1.2 2011/04/14 14:09:18 elric Exp $	*/
+/*	$NetBSD: kafs_locl.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
@@ -101,7 +101,9 @@
 #include <krb5/krb5-v4compat.h>
 typedef struct credentials CREDENTIALS;
 #endif /* KRB5 */
+#ifndef NO_AFS
 #include <krb5/kafs.h>
+#endif
 
 #include <krb5/resolve.h>
 
@@ -151,6 +153,9 @@ _kafs_v4_to_kt(CREDENTIALS *, uid_t, struct kafs_token *);
 
 void
 _kafs_fixup_viceid(struct ClearToken *, uid_t);
+
+int
+_kafs_derive_des_key(krb5_enctype, void *, size_t, char[8]);
 
 #ifdef _AIX
 int aix_pioctl(char*, int, struct ViceIoctl*, int);

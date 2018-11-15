@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: kafs
+Description: Libraries for application that uses kafs.
+Version: @VERSION@
+Requires.private: heimdal-krb5
+Libs: -lkafs

@@ -33,10 +33,12 @@
 /* Id */
 
 command = {
+	name = "mechanisms"
 	name = "supported-mechanisms"
 	help = "Print the supported mechanisms"
 }
 command = {
+	name = "attributes"
 	name = "attrs-for-mech"
 	help = "Print the attributes for mechs"
 	option = {

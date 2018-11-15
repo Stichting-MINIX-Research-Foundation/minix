@@ -1,4 +1,4 @@
-/*	$NetBSD: store_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: store_cred.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -48,8 +48,11 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
     krb5_context context;
     krb5_error_code ret;
     gsskrb5_cred cred;
-    krb5_ccache id;
-    int destroy = 0;
+    krb5_ccache id = NULL;
+    krb5_ccache def_ccache = NULL;
+    const char *def_type = NULL;
+    time_t exp_current;
+    time_t exp_new;
 
     *minor_status = 0;
 
@@ -58,7 +61,8 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0)
+    if (desired_mech != GSS_C_NO_OID &&
+        gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0)
 	return GSS_S_BAD_MECH;
 
     cred = (gsskrb5_cred)input_cred_handle;
@@ -71,48 +75,87 @@ _gsskrb5_store_cred(OM_uint32         *minor_status,
     if (cred->usage != cred_usage && cred->usage != GSS_C_BOTH) {
 	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return(GSS_S_FAILURE);
+	return GSS_S_FAILURE;
+    }
+
+    ret = krb5_cc_get_lifetime(context, cred->ccache, &exp_new);
+    if (ret) {
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	*minor_status = ret;
+	return GSS_S_NO_CRED;
     }
 
     if (cred->principal == NULL) {
 	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	*minor_status = GSS_KRB5_S_KG_TGT_MISSING;
-	return(GSS_S_FAILURE);
+	return GSS_S_FAILURE;
     }
 
-    /* write out cred to credential cache */
+    ret = krb5_cc_default(context, &def_ccache);
+    if (ret == 0) {
+        def_type = krb5_cc_get_type(context, def_ccache);
+        krb5_cc_close(context, def_ccache);
+    }
+    def_ccache = NULL;
 
+    /* write out cred to credential cache */
     ret = krb5_cc_cache_match(context, cred->principal, &id);
     if (ret) {
-	ret = krb5_cc_new_unique(context, NULL, NULL, &id);
-	if (ret) {
-	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-	    *minor_status = ret;
-	    return(GSS_S_FAILURE);
-	}
-	destroy = 1;
+        if (default_cred) {
+            ret = krb5_cc_default(context, &id);
+            if (ret) {
+                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+                *minor_status = ret;
+                return GSS_S_FAILURE;
+            }
+        } else {
+            if (def_type == NULL ||
+                !krb5_cc_support_switch(context, def_type)) {
+                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+                *minor_status = 0;      /* XXX */
+                return GSS_S_NO_CRED;   /* XXX */
+            }
+            ret = krb5_cc_new_unique(context, def_type, NULL, &id);
+            if (ret) {
+                HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+                *minor_status = ret;
+                return GSS_S_FAILURE;
+            }
+            overwrite_cred = 1;
+        }
+    }
+
+    if (!overwrite_cred) {
+        /* If current creds are expired or near it, overwrite */
+        ret = krb5_cc_get_lifetime(context, id, &exp_current);
+        if (ret != 0 || exp_new > exp_current)
+            overwrite_cred = 1;
+    }
+
+    if (!overwrite_cred) {
+        /* Nothing to do */
+        krb5_cc_close(context, id);
+        HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+        *minor_status = 0;
+        return GSS_S_DUPLICATE_ELEMENT;
     }
 
     ret = krb5_cc_initialize(context, id, cred->principal);
     if (ret == 0)
 	ret = krb5_cc_copy_match_f(context, cred->ccache, id, NULL, NULL, NULL);
     if (ret) {
-	if (destroy)
-	    krb5_cc_destroy(context, id);
-	else
-	    krb5_cc_close(context, id);
+        krb5_cc_close(context, id);
 	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	*minor_status = ret;
 	return(GSS_S_FAILURE);
     }
 
-    if (default_cred)
+    if (default_cred && def_type != NULL &&
+        krb5_cc_support_switch(context, def_type))
 	krb5_cc_switch(context, id);
 
     krb5_cc_close(context, id);
-
     HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-
     *minor_status = 0;
     return GSS_S_COMPLETE;
 }

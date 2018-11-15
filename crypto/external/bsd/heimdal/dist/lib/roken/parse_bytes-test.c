@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_bytes-test.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: parse_bytes-test.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -65,7 +65,6 @@ main(int argc, char **argv)
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
 	char buf[256];
 	int val = parse_bytes (tests[i].str, tests[i].def_unit);
-	int len;
 
 	if (val != tests[i].val) {
 	    printf ("parse_bytes (%s, %s) = %d != %d\n",
@@ -75,7 +74,7 @@ main(int argc, char **argv)
 	    ++ret;
 	}
 	if (tests[i].canonicalp) {
-	    len = unparse_bytes (tests[i].val, buf, sizeof(buf));
+	    (void) unparse_bytes (tests[i].val, buf, sizeof(buf));
 	    if (strcmp (tests[i].str, buf) != 0) {
 		printf ("unparse_bytes (%d) = \"%s\" != \"%s\"\n",
 			tests[i].val, buf, tests[i].str);

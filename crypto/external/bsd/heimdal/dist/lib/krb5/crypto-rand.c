@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-rand.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-rand.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -35,6 +35,9 @@
 
 #include "krb5_locl.h"
 
+#undef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+
 #define ENTROPY_NEEDED 128
 
 static HEIMDAL_MUTEX crypto_mutex = HEIMDAL_MUTEX_INITIALIZER;
@@ -42,6 +45,7 @@ static HEIMDAL_MUTEX crypto_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static int
 seed_something(void)
 {
+#ifndef NO_RANDFILE
     char buf[1024], seedfile[256];
 
     /* If there is a seed file, load it. But such a file cannot be trusted,
@@ -60,52 +64,91 @@ seed_something(void)
 	    seedfile[0] = '\0';
     } else
 	seedfile[0] = '\0';
+#endif
 
     /* Calling RAND_status() will try to use /dev/urandom if it exists so
        we do not have to deal with it. */
     if (RAND_status() != 1) {
-#ifndef _WIN32
-	krb5_context context;
-	const char *p;
-
-	/* Try using egd */
-	if (!krb5_init_context(&context)) {
-	    p = krb5_config_get_string(context, NULL, "libdefaults",
-				       "egd_socket", NULL);
-	    if (p != NULL)
-		RAND_egd_bytes(p, ENTROPY_NEEDED);
-	    krb5_free_context(context);
-	}
-#else
 	/* TODO: Once a Windows CryptoAPI RAND method is defined, we
 	   can use that and failover to another method. */
-#endif
     }
 
     if (RAND_status() == 1)	{
+#ifndef NO_RANDFILE
 	/* Update the seed file */
 	if (seedfile[0])
 	    RAND_write_file(seedfile);
+#endif
 
 	return 0;
     } else
 	return -1;
 }
 
-KRB5_LIB_FUNCTION void KRB5_LIB_CALL
-krb5_generate_random_block(void *buf, size_t len)
+/**
+ * Fill buffer buf with len bytes of PRNG randomness that is ok to use
+ * for key generation, padding and public diclosing the randomness w/o
+ * disclosing the randomness source.
+ *
+ * This function can fail, and callers must check the return value.
+ *
+ * @param buf a buffer to fill with randomness
+ * @param len length of memory that buf points to.
+ *
+ * @return return 0 on success or HEIM_ERR_RANDOM_OFFLINE if the
+ * funcation failed to initialize the randomness source.
+ *
+ * @ingroup krb5_crypto
+ */
+
+HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_generate_random(void *buf, size_t len)
 {
     static int rng_initialized = 0;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&crypto_mutex);
     if (!rng_initialized) {
-	if (seed_something())
-	    krb5_abortx(NULL, "Fatal: could not seed the "
-			"random number generator");
-
+	if (seed_something()) {
+            HEIMDAL_MUTEX_unlock(&crypto_mutex);
+	    return HEIM_ERR_RANDOM_OFFLINE;
+        }
 	rng_initialized = 1;
     }
-    HEIMDAL_MUTEX_unlock(&crypto_mutex);
     if (RAND_bytes(buf, len) <= 0)
+	ret = HEIM_ERR_RANDOM_OFFLINE;
+    else
+	ret = 0;
+    HEIMDAL_MUTEX_unlock(&crypto_mutex);
+
+    return ret;
+}
+
+/**
+ * Fill buffer buf with len bytes of PRNG randomness that is ok to use
+ * for key generation, padding and public diclosing the randomness w/o
+ * disclosing the randomness source.
+ *
+ * This function can NOT fail, instead it will abort() and program will crash.
+ *
+ * If this function is called after a successful krb5_init_context(),
+ * the chance of it failing is low due to that krb5_init_context()
+ * pulls out some random, and quite commonly the randomness sources
+ * will not fail once it have started to produce good output,
+ * /dev/urandom behavies that way.
+ *
+ * @param buf a buffer to fill with randomness
+ * @param len length of memory that buf points to.
+ *
+ * @ingroup krb5_crypto
+ */
+
+
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+krb5_generate_random_block(void *buf, size_t len)
+{
+    int ret = krb5_generate_random(buf, len);
+    if (ret)
 	krb5_abortx(NULL, "Failed to generate random block");
 }

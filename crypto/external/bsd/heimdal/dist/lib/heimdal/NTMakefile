@@ -54,6 +54,11 @@ DLLSDKDEPS= \
 	dnsapi.lib      \
         shlwapi.lib
 
+dlllflags=$(dlllflags) /DELAYLOAD:bcrypt.dll
+DLLSDKDEPS=$(DLLSDKDEPS)\
+	bcrypt.lib	\
+	delayimp.lib 
+
 DEF=$(OBJ)\heimdal.def
 
 RES=$(OBJ)\heimdal-version.res
@@ -88,6 +93,3 @@ $(LIBHEIMDAL): $(LIBASN1) $(LIBWIND) $(LIBHCRYPTO) $(LIBHX509) $(LIBKRB5) $(LIBH
 !endif
 
 all:: $(LIBHEIMDAL)
-
-clean::
-	-$(RM) $(LIBHEIMDAL)

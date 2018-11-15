@@ -1,4 +1,4 @@
-/*	$NetBSD: n-fold-test.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: n-fold-test.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
@@ -89,7 +89,7 @@ static struct testcase {
       0x08, 0xa5, 0x08, 0x41, 0x22, 0x9a, 0xd7, 0x98, 0xfa, 0xb9, 0x54,
       0x0c, 0x1b}
     },
-    {NULL, 0}
+    {NULL, 0, {0}}
 };
 
 int

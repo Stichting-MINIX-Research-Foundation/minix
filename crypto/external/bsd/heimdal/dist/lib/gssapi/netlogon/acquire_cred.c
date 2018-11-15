@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: acquire_cred.c,v 1.3 2017/01/30 20:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 
 OM_uint32
 _netlogon_acquire_cred(OM_uint32 * min_stat,
-                       const gss_name_t desired_name,
+                       gss_const_name_t desired_name,
                        OM_uint32 time_req,
                        const gss_OID_set desired_mechs,
                        gss_cred_usage_t cred_usage,
@@ -84,7 +84,7 @@ _netlogon_acquire_cred(OM_uint32 * min_stat,
 
 OM_uint32
 _netlogon_acquire_cred_ex(gss_status_id_t status,
-                          const gss_name_t desired_name,
+                          gss_const_name_t desired_name,
                           OM_uint32 flags,
                           OM_uint32 time_req,
                           gss_cred_usage_t cred_usage,

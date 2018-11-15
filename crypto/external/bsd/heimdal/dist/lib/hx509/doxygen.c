@@ -1,4 +1,4 @@
-/*	$NetBSD: doxygen.c,v 1.1.1.1 2011/04/13 18:15:10 elric Exp $	*/
+/*	$NetBSD: doxygen.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -84,4 +84,4 @@
  * See the @ref page_ca for description and examples. */
 /** @defgroup hx509_peer hx509 certificate selecting functions */
 /** @defgroup hx509_print hx509 printing functions */
-/** @defgroup hx509_env hx509 enviroment functions */
+/** @defgroup hx509_env hx509 environment functions */

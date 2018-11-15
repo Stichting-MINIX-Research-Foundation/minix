@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.3 2017/01/30 20:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@ OM_uint32
 _netlogon_accept_sec_context
 (OM_uint32 * minor_status,
  gss_ctx_id_t * context_handle,
- const gss_cred_id_t acceptor_cred_handle,
+ gss_const_cred_id_t acceptor_cred_handle,
  const gss_buffer_t input_token_buffer,
  const gss_channel_bindings_t input_chan_bindings,
  gss_name_t * src_name,

@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: external.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -204,67 +204,131 @@ static gss_mo_desc krb5_mo[] = {
     },
     {
 	GSS_C_MA_MECH_CONCRETE,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_ITOK_FRAMED,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_INIT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_TARG,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_INIT_ANON,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_DELEG_CRED,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_INTEG_PROT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CONF_PROT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_MIC,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_WRAP,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_PROT_READY,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_REPLAY_DET,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_OOS_DET,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CBINDINGS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_PFS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CTX_TRANS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     }
 };
 
@@ -326,7 +390,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     NULL,
     krb5_mo,
     sizeof(krb5_mo) / sizeof(krb5_mo[0]),
-    _gsskrb5_pname_to_uid,
+    _gsskrb5_localname,
     _gsskrb5_authorize_localname,
     NULL,
     NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cc.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: test_cc.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
@@ -59,7 +59,7 @@ test_default_name(krb5_context context)
     p1 = estrdup(p);
 
     ret = krb5_cc_set_default_name(context, NULL);
-    if (p == NULL)
+    if (ret)
 	krb5_errx (context, 1, "krb5_cc_set_default_name failed");
 
     p = krb5_cc_default_name(context);
@@ -71,7 +71,7 @@ test_default_name(krb5_context context)
 	krb5_errx (context, 1, "krb5_cc_default_name no longer same");
 
     ret = krb5_cc_set_default_name(context, test_cc_name);
-    if (p == NULL)
+    if (ret)
 	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
 
     p = krb5_cc_default_name(context);
@@ -295,31 +295,31 @@ struct {
 } cc_names[] = {
     { "foo", 0, "foo" },
     { "foo%}", 0, "foo%}" },
-    { "%{uid}", 0 },
+    { "%{uid}", 0, NULL },
     { "foo%{null}", 0, "foo" },
     { "foo%{null}bar", 0, "foobar" },
-    { "%{", 1 },
-    { "%{foo %{", 1 },
-    { "%{{", 1 },
-    { "%{{}", 1 },
-    { "%{nulll}", 1 },
-    { "%{does not exist}", 1 },
-    { "%{}", 1 },
+    { "%{", 1, NULL },
+    { "%{foo %{", 1, NULL },
+    { "%{{", 1, NULL },
+    { "%{{}", 1, NULL },
+    { "%{nulll}", 1, NULL },
+    { "%{does not exist}", 1, NULL },
+    { "%{}", 1, NULL },
 #ifdef KRB5_USE_PATH_TOKENS
-    { "%{APPDATA}", 0 },
-    { "%{COMMON_APPDATA}", 0},
-    { "%{LOCAL_APPDATA}", 0},
-    { "%{SYSTEM}", 0},
-    { "%{WINDOWS}", 0},
-    { "%{TEMP}", 0},
-    { "%{USERID}", 0},
-    { "%{uid}", 0},
-    { "%{USERCONFIG}", 0},
-    { "%{COMMONCONFIG}", 0},
-    { "%{LIBDIR}", 0},
-    { "%{BINDIR}", 0},
-    { "%{LIBEXEC}", 0},
-    { "%{SBINDIR}", 0},
+    { "%{APPDATA}", 0, NULL },
+    { "%{COMMON_APPDATA}", 0, NULL},
+    { "%{LOCAL_APPDATA}", 0, NULL},
+    { "%{SYSTEM}", 0, NULL},
+    { "%{WINDOWS}", 0, NULL},
+    { "%{TEMP}", 0, NULL},
+    { "%{USERID}", 0, NULL},
+    { "%{uid}", 0, NULL},
+    { "%{USERCONFIG}", 0, NULL},
+    { "%{COMMONCONFIG}", 0, NULL},
+    { "%{LIBDIR}", 0, NULL},
+    { "%{BINDIR}", 0, NULL},
+    { "%{LIBEXEC}", 0, NULL},
+    { "%{SBINDIR}", 0, NULL},
 #endif
 };
 
@@ -551,14 +551,15 @@ test_prefix_ops(krb5_context context, const char *name, const krb5_cc_ops *ops)
 }
 
 static void
-test_cc_config(krb5_context context)
+test_cc_config(krb5_context context, const char *cc_type,
+	       const char *cc_name, size_t count)
 {
     krb5_error_code ret;
     krb5_principal p;
     krb5_ccache id;
     unsigned int i;
 
-    ret = krb5_cc_new_unique(context, "MEMORY", "bar", &id);
+    ret = krb5_cc_new_unique(context, cc_type, cc_name, &id);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
@@ -570,7 +571,7 @@ test_cc_config(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_initialize");
 
-    for (i = 0; i < 1000; i++) {
+    for (i = 0; i < count; i++) {
 	krb5_data data, data2;
 	const char *name = "foo";
 	krb5_principal p1 = NULL;
@@ -581,6 +582,10 @@ test_cc_config(krb5_context context)
 	data.data = rk_UNCONST(name);
 	data.length = strlen(name);
 
+	/*
+	 * Because of how krb5_cc_set_config() this will also test
+	 * krb5_cc_remove_cred().
+	 */
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", &data);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_set_config: add");
@@ -588,7 +593,15 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_get_config: first");
+
+	if (data.length != data2.length ||
+	    memcmp(data.data, data2.data, data.length) != 0)
+	    krb5_errx(context, 1, "krb5_cc_get_config: did not fetch what was set");
+
 	krb5_data_free(&data2);
+
+	data.data = rk_UNCONST("bar");
+	data.length = strlen("bar");
 
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", &data);
 	if (ret)
@@ -597,6 +610,11 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret)
 	    krb5_errx(context, 1, "krb5_cc_get_config: second");
+
+	if (data.length != data2.length ||
+	    memcmp(data.data, data2.data, data.length) != 0)
+	    krb5_errx(context, 1, "krb5_cc_get_config: replace failed");
+
 	krb5_data_free(&data2);
 
 	ret = krb5_cc_set_config(context, id, p1, "FriendlyName", NULL);
@@ -606,6 +624,9 @@ test_cc_config(krb5_context context)
 	ret = krb5_cc_get_config(context, id, p1, "FriendlyName", &data2);
 	if (ret == 0)
 	    krb5_errx(context, 1, "krb5_cc_get_config: non-existant");
+
+	if (data2.length)
+	    krb5_errx(context, 1, "krb5_cc_get_config: delete failed");
     }
 
     krb5_cc_destroy(context, id);
@@ -671,6 +692,7 @@ main(int argc, char **argv)
     test_init_vs_destroy(context, krb5_cc_type_api);
 #endif
     test_init_vs_destroy(context, krb5_cc_type_scc);
+    test_init_vs_destroy(context, krb5_cc_type_dcc);
     test_mcc_default();
     test_def_cc_name(context);
 
@@ -696,6 +718,10 @@ main(int argc, char **argv)
     test_cache_iter(context, krb5_cc_type_api, 0);
     test_cache_iter(context, krb5_cc_type_scc, 0);
     test_cache_iter(context, krb5_cc_type_scc, 1);
+#if 0
+    test_cache_iter(context, krb5_cc_type_dcc, 0);
+    test_cache_iter(context, krb5_cc_type_dcc, 1);
+#endif
 
     test_copy(context, krb5_cc_type_file, krb5_cc_type_file);
     test_copy(context, krb5_cc_type_memory, krb5_cc_type_memory);
@@ -705,6 +731,11 @@ main(int argc, char **argv)
     test_copy(context, krb5_cc_type_file, krb5_cc_type_scc);
     test_copy(context, krb5_cc_type_scc, krb5_cc_type_memory);
     test_copy(context, krb5_cc_type_memory, krb5_cc_type_scc);
+#if 0
+    test_copy(context, krb5_cc_type_dcc, krb5_cc_type_memory);
+    test_copy(context, krb5_cc_type_dcc, krb5_cc_type_file);
+    test_copy(context, krb5_cc_type_dcc, krb5_cc_type_scc);
+#endif
 
     test_move(context, krb5_cc_type_file);
     test_move(context, krb5_cc_type_memory);
@@ -712,6 +743,9 @@ main(int argc, char **argv)
     test_move(context, krb5_cc_type_kcm);
 #endif
     test_move(context, krb5_cc_type_scc);
+#if 0
+    test_move(context, krb5_cc_type_dcc);
+#endif
 
     test_prefix_ops(context, "FILE:/tmp/foo", &krb5_fcc_ops);
     test_prefix_ops(context, "FILE", &krb5_fcc_ops);
@@ -722,11 +756,16 @@ main(int argc, char **argv)
     test_prefix_ops(context, "SCC:", &krb5_scc_ops);
     test_prefix_ops(context, "SCC:foo", &krb5_scc_ops);
 #endif
+#if 0
+    test_prefix_ops(context, "DIR:", &krb5_dcc_ops);
+    test_prefix_ops(context, "DIR:tkt1", &krb5_dcc_ops);
+#endif
 
     krb5_cc_destroy(context, id1);
     krb5_cc_destroy(context, id2);
 
-    test_cc_config(context);
+    test_cc_config(context, "MEMORY", "bar", 1000);  /* 1000 because fast */
+    test_cc_config(context, "FILE", "/tmp/foocc", 30); /* 30 because slower */
 
     krb5_free_context(context);
 

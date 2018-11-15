@@ -1,4 +1,4 @@
-/*	$NetBSD: dsa.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: dsa.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,12 +34,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <dsa.h>
-
 #include <krb5/roken.h>
+
+#include <dsa.h>
 
 /*
  *
@@ -91,7 +88,16 @@ DSA_up_ref(DSA *dsa)
  */
 
 static const DSA_METHOD dsa_null_method = {
-    "hcrypto null DSA"
+    "hcrypto null DSA",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    0,
+    NULL
 };
 
 const DSA_METHOD *

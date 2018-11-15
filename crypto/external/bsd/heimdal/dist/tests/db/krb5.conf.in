@@ -12,17 +12,21 @@
 			realm = LABEL.TEST.H5L.SE
 			dbname = @type@@objdir@/label-db
 			mkey_file = @objdir@/mkey.file
+                        log_file = @objdir@/current.log
 		}
 		label2 = {
 			dbname = @type@@objdir@/lable2-db
 			realm = LABEL2.TEST.H5L.SE
 			mkey_file = @objdir@/mkey2.file
+                        log_file = @objdir@/current.log
 		}
 		dbname = @type@@objdir@/current-db
 		realm = EXAMPLE.ORG
 		mkey_file = @objdir@/mkey.file
-		log_file = @objdir@/log.current-db.log
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	default = 0-/FILE:@objdir@/messages.log

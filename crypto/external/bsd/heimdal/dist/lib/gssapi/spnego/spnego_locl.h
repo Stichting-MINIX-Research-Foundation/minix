@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_locl.h,v 1.1.1.3 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: spnego_locl.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.

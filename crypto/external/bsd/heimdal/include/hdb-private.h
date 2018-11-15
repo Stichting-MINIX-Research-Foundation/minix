@@ -15,7 +15,7 @@ _hdb_fetch_kvno (
 
 hdb_master_key
 _hdb_find_master_key (
-	uint32_t */*mkvno*/,
+	unsigned int */*mkvno*/,
 	hdb_master_key /*mkey*/);
 
 krb5_error_code
@@ -23,6 +23,19 @@ _hdb_keytab2hdb_entry (
 	krb5_context /*context*/,
 	const krb5_keytab_entry */*ktentry*/,
 	hdb_entry_ex */*entry*/);
+
+krb5_error_code
+_hdb_mdb_value2entry (
+	krb5_context /*context*/,
+	krb5_data */*data*/,
+	krb5_kvno /*target_kvno*/,
+	hdb_entry */*entry*/);
+
+int
+_hdb_mit_dump2mitdb_entry (
+	krb5_context /*context*/,
+	char */*line*/,
+	krb5_storage */*sp*/);
 
 int
 _hdb_mkey_decrypt (
@@ -49,7 +62,14 @@ krb5_error_code
 _hdb_remove (
 	krb5_context /*context*/,
 	HDB */*db*/,
+	unsigned /*flags*/,
 	krb5_const_principal /*principal*/);
+
+krb5_error_code
+_hdb_set_master_key_usage (
+	krb5_context /*context*/,
+	HDB */*db*/,
+	unsigned int /*key_usage*/);
 
 krb5_error_code
 _hdb_store (

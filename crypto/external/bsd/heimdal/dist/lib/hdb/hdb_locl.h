@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb_locl.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
+/*	$NetBSD: hdb_locl.h,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
@@ -39,6 +39,9 @@
 #define __HDB_LOCL_H__
 
 #include <config.h>
+
+#include <assert.h>
+#include <krb5/heimbase.h>
 
 #include <stdio.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab_any.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keytab_any.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Kungliga Tekniska Högskolan
@@ -65,15 +65,14 @@ any_resolve(krb5_context context, const char *name, krb5_keytab id)
     while (strsep_copy(&name, ",", buf, sizeof(buf)) != -1) {
 	a = calloc(1, sizeof(*a));
 	if (a == NULL) {
-	    ret = ENOMEM;
+	    ret = krb5_enomem(context);
 	    goto fail;
 	}
 	if (a0 == NULL) {
 	    a0 = a;
 	    a->name = strdup(buf);
 	    if (a->name == NULL) {
-		ret = ENOMEM;
-		krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+		ret = krb5_enomem(context);
 		goto fail;
 	    }
 	} else
@@ -133,10 +132,8 @@ any_start_seq_get(krb5_context context,
     krb5_error_code ret;
 
     c->data = malloc (sizeof(struct any_cursor_extra_data));
-    if(c->data == NULL){
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if(c->data == NULL)
+	return krb5_enomem(context);
     ed = (struct any_cursor_extra_data *)c->data;
     for (ed->a = a; ed->a != NULL; ed->a = ed->a->next) {
 	ret = krb5_kt_start_seq_get(context, ed->a->kt, &ed->cursor);
@@ -259,5 +256,7 @@ const krb5_kt_ops krb5_any_ops = {
     any_next_entry,
     any_end_seq_get,
     any_add_entry,
-    any_remove_entry
+    any_remove_entry,
+    NULL,
+    0
 };

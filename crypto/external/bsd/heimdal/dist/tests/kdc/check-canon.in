@@ -1,0 +1,210 @@
+#!/bin/sh
+#
+# Copyright (c) 2011, Secure Endpoints Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+# OF THE POSSIBILITY OF SUCH DAMAGE.
+
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+# If there is no useful db support compile in, disable test
+# (krb5_kt_get_entry() is tested in another test)
+${have_db} || exit 77
+
+R1=TEST.H5L.SE
+R2=TEST2.H5L.SE
+R3=TEST3.H5L.SE
+
+port=@port@
+
+kadmin="${kadmin} -l -r ${R1}"
+kdc="${kdc} --addresses=localhost -P $port"
+
+cache="FILE:${objdir}/cache.krb5"
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist="${klist} -c $cache"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+KRB5_CONFIG="${objdir}/krb5-canon.conf"
+export KRB5_CONFIG
+
+testfailed="echo test failed; ${klist}; exit 1"
+
+rm -f ${keytabfile}
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+
+> messages.log
+
+echo "Creating database"
+initflags="init --realm-max-ticket-life=1day --realm-max-renewable-life=1month"
+
+${kadmin} ${initflags} ${R1} || exit 1
+${kadmin} ${initflags} ${R2} || exit 1
+${kadmin} ${initflags} ${R3} || exit 1
+
+${kadmin} add -p foo --use-defaults foo@${R1} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R1}@${R2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R2}@${R1} || exit 1
+${kadmin} add -p cross3 --use-defaults krbtgt/${R3}@${R1} || exit 1
+${kadmin} add -p cross4 --use-defaults krbtgt/${R1}@${R3} || exit 1
+${kadmin} add -p cross5 --use-defaults krbtgt/${R3}@${R2} || exit 1
+${kadmin} add -p cross6 --use-defaults krbtgt/${R2}@${R3} || exit 1
+
+${kadmin} add -p foo --use-defaults host/t1@${R1} || exit 1
+${kadmin} add -p foo --use-defaults host/t2@${R2} || exit 1
+${kadmin} add -p foo --use-defaults host/t3@${R3} || exit 1
+${kadmin} add -p foo --use-defaults host/t11.test1.h5l.se@${R1} || exit 1
+${kadmin} add -p foo --use-defaults host/t12.test1.h5l.se@${R2} || exit 1
+${kadmin} add -p foo --use-defaults host/t22.test2.h5l.se@${R2} || exit 1
+${kadmin} add -p foo --use-defaults host/t23.test2.h5l.se@${R3} || exit 1
+${kadmin} add -p foo --use-defaults host/t33.test3.h5l.se@${R3} || exit 1
+
+
+echo "Doing database check"
+${kadmin} check ${R1} || exit 1
+${kadmin} check ${R2} || exit 1
+${kadmin} check ${R3} || exit 1
+
+echo foo > ${objdir}/foopassword
+
+echo "Starting kdc" ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
+
+trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+
+ec=0
+
+echo "Getting client initial tickets";
+${kinit} --password-file=${objdir}/foopassword foo@${R1} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "get service tickets (success)"
+for host in t1 t2 t3 t11 t12 t22 t33 ; do
+    echo "    $host"
+    ${kgetcred} --name-type=SRV_HST host $host || { ec=1 ; eval "${testfailed}"; }
+done
+echo "get service tickets (failure)"
+for host in t23 ; do
+    echo "    $host"
+    ${kgetcred} --name-type=SRV_HST host $host 2>/dev/null && { ec=1 ; eval "${testfailed}"; }
+done
+
+echo "check result"
+${klist} | grep 'host/t1@$' > /dev/null ||
+    { ec=1 ; echo "t1 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t1@${R1}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t1 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t2@$' > /dev/null ||
+    { ec=1 ; echo "t2 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t2@${R2}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t2 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t3@$' > /dev/null ||
+    { ec=1 ; echo "t3 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t3@${R3}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t3 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t11@$' > /dev/null ||
+    { ec=1 ; echo "t11 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t11.test1.h5l.se@${R1}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t11 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t12@$' > /dev/null ||
+    { ec=1 ; echo "t12 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t12.test1.h5l.se@${R2}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t12 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t22@$' > /dev/null ||
+    { ec=1 ; echo "t22 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t22.test2.h5l.se@${R2}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t22 entry not present";  eval "${testfailed}"; }
+${klist} | grep 'host/t33@$' > /dev/null ||
+    { ec=1 ; echo "t33 referral entry not present";  eval "${testfailed}"; }
+${klist} | grep "host/t33.test3.h5l.se@${R3}" > /dev/null ||
+    { ec=1 ; echo "canonicalized t33 entry not present";  eval "${testfailed}"; }
+
+
+${kdestroy}
+
+if false; then
+
+    # This may not be portable.  It'd be nice to be able to set more of the
+    # resolver configuration via the environment!
+    LOCALDOMAIN=test1.h5l.se
+    export LOCALDOMAIN
+    KRB5_CONFIG="${objdir}/krb5-canon2.conf"
+    export KRB5_CONFIG
+    
+    echo "Getting client initial tickets (round 2)";
+    ${kinit} --password-file=${objdir}/foopassword foo@${R1} || \
+    	{ ec=1 ; eval "${testfailed}"; }
+    
+    echo "get service tickets (success)"
+    for host in t1 t2 t3 t11 ; do
+        echo "    $host"
+        ${kgetcred} --name-type=SRV_HST host $host || { ec=1 ; eval "${testfailed}"; }
+    done
+    echo "get service tickets (failure)"
+    for host in t12 t22 t23 t33 ; do
+        echo "    $host"
+        ${kgetcred} --name-type=SRV_HST host $host 2> /dev/null &&
+            { ec=1 ; eval "${testfailed}"; }
+    done
+    
+    echo "check result"
+    ${klist} | grep 'host/t1@$' > /dev/null ||
+        { ec=1 ; echo "t1 referral entry not present";  eval "${testfailed}"; }
+    ${klist} | grep "host/t1@${R1}" > /dev/null ||
+        { ec=1 ; echo "canonicalized t1 entry not present";  eval "${testfailed}"; }
+    ${klist} | grep 'host/t2@$' > /dev/null ||
+        { ec=1 ; echo "t2 referral entry not present";  eval "${testfailed}"; }
+    ${klist} | grep "host/t2@${R2}" > /dev/null ||
+        { ec=1 ; echo "canonicalized t2 entry not present";  eval "${testfailed}"; }
+    ${klist} | grep 'host/t3@$' > /dev/null ||
+        { ec=1 ; echo "t3 referral entry not present";  eval "${testfailed}"; }
+    ${klist} | grep "host/t3@${R3}" > /dev/null ||
+        { ec=1 ; echo "canonicalized t3 entry not present";  eval "${testfailed}"; }
+    ${klist} | grep 'host/t11@$' > /dev/null ||
+        { ec=1 ; echo "t11 referral entry not present";  eval "${testfailed}"; }
+    ${klist} | grep "host/t11.test1.h5l.se@${R1}" > /dev/null ||
+        { ec=1 ; echo "canonicalized t11 entry not present";  eval "${testfailed}"; }
+    
+    
+    ${kdestroy}
+fi
+
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+
+trap "" EXIT
+
+exit $ec

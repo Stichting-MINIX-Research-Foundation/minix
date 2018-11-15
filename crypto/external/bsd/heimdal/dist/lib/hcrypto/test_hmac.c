@@ -1,4 +1,4 @@
-/*	$NetBSD: test_hmac.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: test_hmac.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,16 +34,10 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 
 #include <hmac.h>
 #include <evp.h>
-#include <krb5/roken.h>
 
 int
 main(int argc, char **argv)

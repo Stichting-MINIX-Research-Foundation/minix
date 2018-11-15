@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_dir.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: ks_dir.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -213,7 +213,10 @@ static struct hx509_keyset_ops keyset_dir = {
     NULL,
     dir_iter_start,
     dir_iter,
-    dir_iter_end
+    dir_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
 
 void

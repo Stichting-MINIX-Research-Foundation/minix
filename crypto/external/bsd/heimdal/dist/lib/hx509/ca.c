@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
+/*	$NetBSD: ca.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2010 Kungliga Tekniska Högskolan
@@ -63,7 +63,7 @@ struct hx509_ca_tbs {
     CRLDistributionPoints crldp;
     heim_bit_string subjectUniqueID;
     heim_bit_string issuerUniqueID;
-
+    AlgorithmIdentifier *sigalg;
 };
 
 /**
@@ -111,6 +111,10 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
     der_free_bit_string(&(*tbs)->subjectUniqueID);
     der_free_bit_string(&(*tbs)->issuerUniqueID);
     hx509_name_free(&(*tbs)->subject);
+    if ((*tbs)->sigalg) {
+	free_AlgorithmIdentifier((*tbs)->sigalg);
+	free((*tbs)->sigalg);
+    }
 
     memset(*tbs, 0, sizeof(**tbs));
     free(*tbs);
@@ -890,7 +894,7 @@ hx509_ca_tbs_set_unique(hx509_context context,
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param env enviroment variable to expand variables in the subject
+ * @param env environment variable to expand variables in the subject
  * name, see hx509_env_init().
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -904,6 +908,39 @@ hx509_ca_tbs_subject_expand(hx509_context context,
 			    hx509_env env)
 {
     return hx509_name_expand(context, tbs->subject, env);
+}
+
+/**
+ * Set signature algorithm on the to be signed certificate
+ *
+ * @param context A hx509 context.
+ * @param tbs object to be signed.
+ * @param sigalg signature algorithm to use
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_ca
+ */
+
+int
+hx509_ca_tbs_set_signature_algorithm(hx509_context context,
+				     hx509_ca_tbs tbs,
+				     const AlgorithmIdentifier *sigalg)
+{
+    int ret;
+
+    tbs->sigalg = calloc(1, sizeof(*tbs->sigalg));
+    if (tbs->sigalg == NULL) {
+	hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
+	return ENOMEM;
+    }
+    ret = copy_AlgorithmIdentifier(sigalg, tbs->sigalg);
+    if (ret) {
+	free(tbs->sigalg);
+	tbs->sigalg = NULL;
+	return ret;
+    }
+    return 0;
 }
 
 /*
@@ -967,8 +1004,8 @@ build_proxy_prefix(hx509_context context, const Name *issuer, Name *subject)
     }
 
     t = time(NULL);
-    asprintf(&tstr, "ts-%lu", (unsigned long)t);
-    if (tstr == NULL) {
+    ret = asprintf(&tstr, "ts-%lu", (unsigned long)t);
+    if (ret == -1 || tstr == NULL) {
 	hx509_set_error_string(context, 0, ENOMEM,
 			       "Failed to copy subject name");
 	return ENOMEM;
@@ -989,6 +1026,7 @@ ca_sign(hx509_context context,
 	const Name *issuername,
 	hx509_cert *certificate)
 {
+    heim_error_t error = NULL;
     heim_octet_string data;
     Certificate c;
     TBSCertificate *tbsc;
@@ -999,7 +1037,9 @@ ca_sign(hx509_context context,
     time_t notAfter;
     unsigned key_usage;
 
-    sigalg = _hx509_crypto_default_sig_alg;
+    sigalg = tbs->sigalg;
+    if (sigalg == NULL)
+	sigalg = _hx509_crypto_default_sig_alg;
 
     memset(&c, 0, sizeof(c));
 
@@ -1088,6 +1128,12 @@ ca_sign(hx509_context context,
 	    goto out;
 	}
     } else {
+	/*
+	 * If no explicit serial number is specified, 20 random bytes should be
+	 * sufficiently collision resistant.  Since the serial number must be a
+	 * positive integer, ensure minimal ASN.1 DER form by forcing the high
+	 * bit off and the next bit on (thus avoiding an all zero first octet).
+	 */
 	tbsc->serialNumber.length = 20;
 	tbsc->serialNumber.data = malloc(tbsc->serialNumber.length);
 	if (tbsc->serialNumber.data == NULL){
@@ -1095,9 +1141,9 @@ ca_sign(hx509_context context,
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	/* XXX diffrent */
 	RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
 	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
+	((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
     }
     /* signature            AlgorithmIdentifier, */
     ret = copy_AlgorithmIdentifier(sigalg, &tbsc->signature);
@@ -1410,9 +1456,12 @@ ca_sign(hx509_context context,
     if (ret)
 	goto out;
 
-    ret = hx509_cert_init(context, &c, certificate);
-    if (ret)
+    *certificate = hx509_cert_init(context, &c, &error);
+    if (*certificate == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	goto out;
+    }
 
     free_Certificate(&c);
 

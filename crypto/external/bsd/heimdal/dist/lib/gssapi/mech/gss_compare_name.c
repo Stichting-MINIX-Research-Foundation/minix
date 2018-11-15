@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_compare_name.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_compare_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -32,8 +32,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_compare_name(OM_uint32 *minor_status,
-    const gss_name_t name1_arg,
-    const gss_name_t name2_arg,
+    gss_const_name_t name1_arg,
+    gss_const_name_t name2_arg,
     int *name_equal)
 {
 	struct _gss_name *name1 = (struct _gss_name *) name1_arg;
@@ -49,7 +49,7 @@ gss_compare_name(OM_uint32 *minor_status,
 		if (!gss_oid_equal(&name1->gn_type, &name2->gn_type)) {
 			*name_equal = 0;
 		} else if (name1->gn_value.length != name2->gn_value.length ||
-		    memcmp(name1->gn_value.value, name1->gn_value.value,
+		    memcmp(name1->gn_value.value, name2->gn_value.value,
 			name1->gn_value.length)) {
 			*name_equal = 0;
 		}

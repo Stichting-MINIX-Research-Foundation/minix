@@ -29,12 +29,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-!if exist(thirdparty/NTMakefile)
+!if exist("thirdparty\NTMakefile")
 thirdparty=thirdparty
 !endif
 
-SUBDIRS = include lib\roken base lib kuser kdc admin kadmin kpasswd appl doc \
+!ifdef APPVEYOR
+SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl doc \
+	tools tests packages etc
+!else
+SUBDIRS = include lib kuser kdc admin kadmin kpasswd appl doc \
 	tools tests packages etc $(thirdparty) packages\windows\installer
+!endif
 
 !include windows/NTMakefile.w32
 

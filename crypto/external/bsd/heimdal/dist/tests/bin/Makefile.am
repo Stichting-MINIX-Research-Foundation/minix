@@ -2,6 +2,14 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_SCRIPTS = setup-env
 
+noinst_PROGRAMS = intr
+
+intr_SOURCES = intr.c
+
+CHECK_LOCAL = no-check-local
+
+intr_LDADD = $(LIB_roken)
+
 do_subst = \
 	top_srcdir="$$(cd ${top_srcdir} && pwd)" ; \
 	top_builddir="$$(cd ${top_builddir} && pwd)" ; \

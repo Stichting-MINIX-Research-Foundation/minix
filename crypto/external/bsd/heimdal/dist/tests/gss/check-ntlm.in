@@ -34,8 +34,11 @@
 # Id
 #
 
+env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
+
+. ${env_setup}
 
 # If there is no useful db support compile in, disable test
 ../db/have-db || exit 77
@@ -103,14 +106,8 @@ echo u1 > ${objdir}/foopassword
 echo ds > ${objdir}/barpassword
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    exit 1
-fi
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 

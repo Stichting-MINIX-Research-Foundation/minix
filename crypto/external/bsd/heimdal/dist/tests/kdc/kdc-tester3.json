@@ -1,0 +1,23 @@
+[
+	{
+	"op" : "kinit",
+	"client" : "host/datan.test.h5l.se@TEST.H5L.SE",
+	"keytab" : "FILE:server.keytab",
+	"ccache" : "MEMORY:fast-cc"
+	},
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"keytab" : "FILE:server.keytab",
+		"fast-armor-cc" : "MEMORY:fast-cc"
+		}
+	},
+	{
+	"op" : "kdestroy",
+	"ccache" : "MEMORY:fast-cc"
+	}
+]
+

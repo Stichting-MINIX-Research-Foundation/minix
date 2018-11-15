@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 #include "krb5_locl.h"
 
 static struct _krb5_key_type keytype_arcfour = {
-    ENCTYPE_ARCFOUR_HMAC_MD5,
+    KRB5_ENCTYPE_ARCFOUR_HMAC_MD5,
     "arcfour",
     128,
     16,
@@ -77,10 +77,8 @@ _krb5_HMAC_MD5_checksum(krb5_context context,
     krb5_error_code ret;
 
     m = EVP_MD_CTX_create();
-    if (m == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (m == NULL)
+	return krb5_enomem(context);
     ksign_c.checksum.length = sizeof(ksign_c_data);
     ksign_c.checksum.data   = ksign_c_data;
     ret = _krb5_internal_hmac(context, c, signature, sizeof(signature),
@@ -149,7 +147,7 @@ ARCFOUR_subencrypt(krb5_context context,
     k1_c.checksum.length = sizeof(k1_c_data);
     k1_c.checksum.data   = k1_c_data;
 
-    ret = _krb5_internal_hmac(NULL, c, t, sizeof(t), 0, key, &k1_c);
+    ret = _krb5_internal_hmac(context, c, t, sizeof(t), 0, key, &k1_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -164,7 +162,7 @@ ARCFOUR_subencrypt(krb5_context context,
     cksum.checksum.length = 16;
     cksum.checksum.data   = data;
 
-    ret = _krb5_internal_hmac(NULL, c, cdata + 16, len - 16, 0, &ke, &cksum);
+    ret = _krb5_internal_hmac(context, c, cdata + 16, len - 16, 0, &ke, &cksum);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -174,7 +172,7 @@ ARCFOUR_subencrypt(krb5_context context,
     k3_c.checksum.length = sizeof(k3_c_data);
     k3_c.checksum.data   = k3_c_data;
 
-    ret = _krb5_internal_hmac(NULL, c, data, 16, 0, &ke, &k3_c);
+    ret = _krb5_internal_hmac(context, c, data, 16, 0, &ke, &k3_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -217,7 +215,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     k1_c.checksum.length = sizeof(k1_c_data);
     k1_c.checksum.data   = k1_c_data;
 
-    ret = _krb5_internal_hmac(NULL, c, t, sizeof(t), 0, key, &k1_c);
+    ret = _krb5_internal_hmac(context, c, t, sizeof(t), 0, key, &k1_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -232,7 +230,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     k3_c.checksum.length = sizeof(k3_c_data);
     k3_c.checksum.data   = k3_c_data;
 
-    ret = _krb5_internal_hmac(NULL, c, cdata, 16, 0, &ke, &k3_c);
+    ret = _krb5_internal_hmac(context, c, cdata, 16, 0, &ke, &k3_c);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -247,7 +245,7 @@ ARCFOUR_subdecrypt(krb5_context context,
     cksum.checksum.length = 16;
     cksum.checksum.data   = cksum_data;
 
-    ret = _krb5_internal_hmac(NULL, c, cdata + 16, len - 16, 0, &ke, &cksum);
+    ret = _krb5_internal_hmac(context, c, cdata + 16, len - 16, 0, &ke, &cksum);
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
@@ -269,7 +267,7 @@ ARCFOUR_subdecrypt(krb5_context context,
  * draft-brezak-win2k-krb-rc4-hmac-04.txt
  */
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_usage2arcfour(krb5_context context, unsigned *usage)
 {
     switch (*usage) {
@@ -311,17 +309,42 @@ ARCFOUR_encrypt(krb5_context context,
 	return ARCFOUR_subdecrypt (context, key, data, len, keyusage, ivec);
 }
 
+static krb5_error_code
+ARCFOUR_prf(krb5_context context,
+	    krb5_crypto crypto,
+	    const krb5_data *in,
+	    krb5_data *out)
+{
+    struct _krb5_checksum_type *c = _krb5_find_checksum(CKSUMTYPE_SHA1);
+    krb5_error_code ret;
+    Checksum res;
+
+    ret = krb5_data_alloc(out, c->checksumsize);
+    if (ret)
+	return ret;
+
+    res.checksum.data = out->data;
+    res.checksum.length = out->length;
+
+    ret = _krb5_internal_hmac(context, c, in->data, in->length, 0, &crypto->key, &res);
+    if (ret)
+	krb5_data_free(out);
+    return 0;
+}
+
+
 struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5 = {
     ETYPE_ARCFOUR_HMAC_MD5,
     "arcfour-hmac-md5",
+    "rc4-hmac",
     1,
     1,
     8,
     &keytype_arcfour,
     &_krb5_checksum_hmac_md5,
     &_krb5_checksum_hmac_md5,
-    F_SPECIAL,
+    F_SPECIAL | F_WEAK,
     ARCFOUR_encrypt,
     0,
-    NULL
+    ARCFOUR_prf
 };

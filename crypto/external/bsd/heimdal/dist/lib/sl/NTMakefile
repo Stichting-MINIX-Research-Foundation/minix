@@ -68,7 +68,7 @@ test-binaries: $(OBJ)\test_sl.exe
 
 test-run:
 	cd $(OBJ)
-	test_sl.exe
+	-test_sl.exe
 	cd $(SRC)\$(RELDIR)
 
 test:: test-binaries test-run

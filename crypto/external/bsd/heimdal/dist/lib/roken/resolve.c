@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.4 2014/04/24 14:49:43 pettai Exp $	*/
+/*	$NetBSD: resolve.c,v 1.5 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
@@ -661,40 +661,59 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 
     headp = &r->head;
 
-    for(ss = srvs; ss < srvs + num_srv; ) {
-	int sum, rnd, count;
+    for (ss = srvs; ss < srvs + num_srv; ) {
+	int sum, zeros, rnd, count; /* zeros -> weight scaling */
 	struct rk_resource_record **ee, **tt;
-	/* find the last record with the same priority and count the
-           sum of all weights */
-	for(sum = 0, tt = ss; tt < srvs + num_srv; tt++) {
+
+	/*
+	 * find the last record with the same priority and count the sum of all
+	 * weights
+	 */
+	for (sum = 0, zeros = 0, tt = ss; tt < srvs + num_srv; tt++) {
 	    assert(*tt != NULL);
 	    if((*tt)->u.srv->priority != (*ss)->u.srv->priority)
 		break;
 	    sum += (*tt)->u.srv->weight;
+	    if ((*tt)->u.srv->weight == 0)
+		zeros++;
 	}
+	/* make sure scale (`zeros') is > 0 then scale out */
+	sum += zeros ? 1 : zeros++;
+	sum *= zeros;
 	ee = tt;
-	/* ss is now the first record of this priority and ee is the
-           first of the next */
-	while(ss < ee) {
-	    rnd = rk_random() % (sum + 1);
-	    for(count = 0, tt = ss; ; tt++) {
-		if(*tt == NULL)
-		    continue;
-		count += (*tt)->u.srv->weight;
-		if(count >= rnd)
+
+	/*
+	 * ss is now the first record of this priority and ee is the first of
+	 * the next or the first past the end of srvs
+	 */
+	while (ss < ee) {
+	    rnd = rk_random() % sum + 1;
+	    for (count = 0, tt = ss; tt < ee; tt++) {
+		if (*tt == NULL)
+		    continue;   /* this one's already been picked */
+		if ((*tt)->u.srv->weight == 0)
+		    count++;
+		else
+		    count += (*tt)->u.srv->weight * zeros;
+		if (count >= rnd)
 		    break;
 	    }
-
 	    assert(tt < ee);
 
-	    /* insert the selected record at the tail (of the head) of
-               the list */
+	    /* push the selected record */
 	    (*tt)->next = *headp;
 	    *headp = *tt;
 	    headp = &(*tt)->next;
-	    sum -= (*tt)->u.srv->weight;
+	    /*
+	     * reduce the sum so the next iteration is sure to reach the random
+	     * total after examining all the remaining records.
+	     */
+	    if ((*tt)->u.srv->weight == 0)
+		sum--;
+	    else
+		sum -= (*tt)->u.srv->weight * zeros;
 	    *tt = NULL;
-	    while(ss < ee && *ss == NULL)
+	    while (ss < ee && *ss == NULL)
 		ss++;
 	}
     }

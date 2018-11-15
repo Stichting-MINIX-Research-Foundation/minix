@@ -135,14 +135,14 @@ test-binaries: $(TEST_BINARIES)
 
 test-run:
 	cd $(OBJ)
-	test-bidi.exe
-	test-map.exe
-	test-rw.exe
-	test-normalize.exe $(SRCDIR)\NormalizationTest.txt
-	test-prohibited.exe
-	test-punycode.exe
-	test-ldap.exe
-	test-utf8.exe
+	-test-bidi.exe
+	-test-map.exe
+	-test-rw.exe
+	-test-normalize.exe $(SRCDIR)\NormalizationTest.txt
+	-test-prohibited.exe
+	-test-punycode.exe
+	-test-ldap.exe
+	-test-utf8.exe
 	cd $(SRCDIR)
 
 all:: $(INCFILES) $(LIBWIND)

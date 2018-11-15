@@ -1,4 +1,4 @@
-/*	$NetBSD: export_sec_context.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: export_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2003 Kungliga Tekniska Högskolan
@@ -36,9 +36,9 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV
-_gsskrb5_export_sec_context (
-    OM_uint32 * minor_status,
-    gss_ctx_id_t * context_handle,
+_gsskrb5_export_sec_context(
+    OM_uint32 *minor_status,
+    gss_ctx_id_t *context_handle,
     gss_buffer_t interprocess_token
     )
 {
@@ -206,7 +206,11 @@ _gsskrb5_export_sec_context (
 	*minor_status = kret;
 	goto failure;
     }
-    kret = krb5_store_int32 (sp, ctx->lifetime);
+    /*
+     * XXX We should put a 64-bit int here, but we don't have a
+     * krb5_store_int64() yet.
+     */
+    kret = krb5_store_int32 (sp, ctx->endtime);
     if (kret) {
 	*minor_status = kret;
 	goto failure;

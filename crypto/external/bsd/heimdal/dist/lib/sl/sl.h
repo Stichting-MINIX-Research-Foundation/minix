@@ -1,4 +1,4 @@
-/*	$NetBSD: sl.h,v 1.1.1.3 2014/04/24 12:45:53 pettai Exp $	*/
+/*	$NetBSD: sl.h,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
@@ -63,6 +63,8 @@ int sl_make_argv(char*, int*, char***);
 void sl_apropos (SL_cmd *cmd, const char *topic);
 SL_cmd *sl_match (SL_cmd *cmds, char *cmd, int exactp);
 void sl_slc_help (SL_cmd *cmds, int argc, char **argv);
+void sl_did_you_mean(SL_cmd *cmds, const char *match);
+
 
 #ifdef __cplusplus
 }

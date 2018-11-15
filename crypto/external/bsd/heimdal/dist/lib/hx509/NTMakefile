@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009-2016, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 # 
 
 RELDIR=lib\hx509
-intcflags=-I$(SRCDIR)\ref -I$(OBJ)
+intcflags=-I$(OBJ)
 localcflags=-DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
@@ -47,6 +47,7 @@ libhx509_la_OBJS =			\
 	$(OBJ)\cms.obj			\
 	$(OBJ)\collector.obj		\
 	$(OBJ)\crypto.obj		\
+	$(OBJ)\crypto-ec.obj		\
 	$(OBJ)\error.obj		\
 	$(OBJ)\env.obj			\
 	$(OBJ)\file.obj			\
@@ -81,6 +82,7 @@ dist_libhx509_la_SOURCES =	\
 	$(SRCDIR)\cms.c		\
 	$(SRCDIR)\collector.c	\
 	$(SRCDIR)\crypto.c	\
+	$(SRCDIR)\crypto-ec.c	\
 	$(SRCDIR)\doxygen.c	\
 	$(SRCDIR)\error.c	\
 	$(SRCDIR)\env.c		\
@@ -162,7 +164,7 @@ $(OBJ)\hxtool-commands.c $(OBJ)\hxtool-commands.h: hxtool-commands.in $(SLC)
 	cd $(SRCDIR)
 
 $(BINDIR)\hxtool.exe: $(OBJ)\tool\hxtool.obj $(OBJ)\tool\hxtool-commands.obj $(LIBHEIMDAL) $(OBJ)\hxtool-version.res
-	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR)
+	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR) $(LIB_openssl_crypto)
 	$(EXEPREP)
 
 $(OBJ)\hx509-protos.h:

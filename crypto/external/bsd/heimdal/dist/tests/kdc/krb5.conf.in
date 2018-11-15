@@ -2,6 +2,9 @@
 	default_realm = TEST.H5L.SE TEST2.H5L.SE
 	no-addresses = TRUE
 	allow_weak_crypto = @WEAK@
+	dns_lookup_kdc = no
+	dns_lookup_realm = no
+
 
 [appdefaults]
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt
@@ -28,21 +31,51 @@
 	TEST4.H5L.SE = {
 		kdc = localhost:@port@
 	}
+	SOME-REALM5.FR = {
+		kdc = localhost:@port@
+	}
+	SOME-REALM6.US = {
+		kdc = localhost:@port@
+	}
+	SOME-REALM7.UK = {
+		kdc = localhost:@port@
+	}
 	TEST-HTTP.H5L.SE = {
 		kdc = http/localhost:@port@
+	}
+	H1.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H3.H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	H4.H2.TEST.H5L.SE = {
+		kdc = localhost:@port@
 	}
 
 [domain_realm]
 	.test.h5l.se = TEST.H5L.SE
 	.sub.test.h5l.se = SUB.TEST.H5L.SE
+	.h1.test.h5l.se = H1.TEST.H5L.SE
+	.h2.test.h5l.se = H2.TEST.H5L.SE
+	.h3.h2.test.h5l.se = H3.H2.TEST.H5L.SE
+	.h4.h2.test.h5l.se = H4.H2.TEST.H5L.SE
 	.example.com = TEST2.H5L.SE
 	localhost = TEST.H5L.SE
+	.localdomain = TEST.H5L.SE
+	localdomain = TEST.H5L.SE
+	.localdomain6 = TEST.H5L.SE
+	localdomain6 = TEST.H5L.SE
 	
 
 [kdc]
 	enable-digest = true
 	allow-anonymous = true
 	digests_allowed = chap-md5,digest-md5,ntlm-v1,ntlm-v1-session,ntlm-v2,ms-chap-v2
+        strict-nametypes = true
 
 	enable-http = true
 
@@ -56,15 +89,22 @@
 
 	database = {
 		label = { 
-			dbname = @objdir@/current-db@kdc@
+			dbname = @db_type@:@objdir@/current-db@kdc@
 			realm = TEST.H5L.SE
 			mkey_file = @objdir@/mkey.file
 			acl_file = @srcdir@/heimdal.acl
 			log_file = @objdir@/current@kdc@.log
 		}
 		label2 = { 
-			dbname = @objdir@/current-db@kdc@
+			dbname = @db_type@:@objdir@/current-db@kdc@
 			realm = TEST2.H5L.SE
+			mkey_file = @objdir@/mkey.file
+			acl_file = @srcdir@/heimdal.acl
+			log_file = @objdir@/current@kdc@.log
+		}
+		label3 = { 
+			dbname = sqlite:@objdir@/current-db@kdc@.sqlite3
+			realm = SOME-REALM5.FR
 			mkey_file = @objdir@/mkey.file
 			acl_file = @srcdir@/heimdal.acl
 			log_file = @objdir@/current@kdc@.log
@@ -74,20 +114,47 @@
 	signal_socket = @objdir@/signal
 	iprop-stats = @objdir@/iprop-stats
 	iprop-acl = @srcdir@/iprop-acl
+        log-max-size = 40000
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
+	krb5 = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log
+
+# If you are doing preformance measurements on OSX you want to change
+# the kdc LOG line from = to - below to keep the FILE open and avoid
+# open/write/close which is blocking (rdar:// ) on OSX.
+#	kdc = 0-/FILE=@objdir@/messages.log
 
 [kadmin]
 	save-password = true
+	default_key_rules = {
+		*/des3-only@* = des3-cbc-sha1:pw-salt
+		*/aes-only@* = aes256-cts-hmac-sha1-96:pw-salt
+	}
 	@dk@
 
 [capaths]
 	TEST.H5L.SE = {
+		TEST2.H5L.SE = .
+		SOME-REALM5.FR = 1
 		TEST3.H5L.SE = TEST2.H5L.SE
-	}
-	TEST.H5L.SE = {
 		TEST4.H5L.SE = TEST2.H5L.SE
 		TEST4.H5L.SE = TEST3.H5L.SE
+		SOME-REALM6.US = SOME-REALM5.FR
+		SOME-REALM7.UK = SOME-REALM6.US
+		SOME-REALM7.UK = SOME-REALM5.FR
 	}
+        H4.H2.TEST.H5L.SE = {
+                H1.TEST.H5L.SE = H3.H2.TEST.H5L.SE
+                H1.TEST.H5L.SE = H2.TEST.H5L.SE
+                H1.TEST.H5L.SE = TEST.H5L.SE
+
+                TEST.H5L.SE = H3.H2.TEST.H5L.SE
+                TEST.H5L.SE = H2.TEST.H5L.SE
+
+                H2.TEST.H5L.SE = H3.H2.TEST.H5L.SE
+        }

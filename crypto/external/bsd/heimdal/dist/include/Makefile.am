@@ -13,7 +13,7 @@ nodist_include_HEADERS = krb5-types.h
 
 noinst_HEADERS = heim_threads.h crypto-headers.h
 
-EXTRA_DIST = NTMakefile krb5-types.cross
+EXTRA_DIST = NTMakefile krb5-types.cross config.h.w32
 
 if !CROSS_COMPILE
 
@@ -28,18 +28,20 @@ krb5-types.h: krb5-types.cross
 endif
 
 CLEANFILES =			\
-	asn1.h			\
+	an2ln_plugin.h		\
 	asn1-common.h		\
 	asn1-template.h		\
+	asn1.h			\
 	asn1_err.h		\
 	base64.h		\
+	ccache_plugin.h		\
 	cms_asn1.h 		\
-	crmf_asn1.h		\
 	com_err.h		\
 	com_right.h		\
-	ccache_plugin.h		\
-	der-protos.h 		\
+	crmf_asn1.h		\
+	db_plugin.h		\
 	der-private.h 		\
+	der-protos.h 		\
 	der.h			\
 	digest_asn1.h 		\
 	editline.h		\
@@ -47,6 +49,8 @@ CLEANFILES =			\
 	getarg.h		\
 	glob.h			\
 	gssapi.h		\
+	gssapi_mech.h		\
+	hdb-private.h		\
 	hdb-protos.h		\
 	hdb.h			\
 	hdb_asn1.h		\
@@ -58,11 +62,14 @@ CLEANFILES =			\
 	heimntlm-protos.h	\
 	heimntlm.h		\
 	hex.h			\
+	hx509-private.h		\
 	hx509-protos.h		\
 	hx509.h			\
 	hx509_err.h		\
 	k524_err.h		\
 	kafs.h			\
+	kcm-protos.h		\
+	kdc-private.h		\
 	kdc-protos.h		\
 	kdc.h			\
 	krb5-private.h		\
@@ -76,6 +83,7 @@ CLEANFILES =			\
 	kx509_asn1.h		\
 	kx509_err.h		\
 	locate_plugin.h		\
+	login-protos.h		\
 	ntlm_err.h		\
 	ocsp_asn1.h		\
 	otp.h			\
@@ -94,6 +102,8 @@ CLEANFILES =			\
 	rtbl.h			\
 	send_to_kdc_plugin.h	\
 	sl.h			\
+	sqlite3.h		\
+	sqlite3ext.h		\
 	test-mem.h		\
 	vers.h			\
 	vis.h			\

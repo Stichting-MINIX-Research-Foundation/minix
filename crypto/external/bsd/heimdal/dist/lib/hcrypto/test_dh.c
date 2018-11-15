@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dh.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: test_dh.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
 * Copyright (c) 2007, Novell, Inc.
@@ -40,11 +40,9 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <ctype.h>
-
 #include <krb5/roken.h>
+
+#include <ctype.h>
 #include <krb5/getarg.h>
 
 #include <dh.h>

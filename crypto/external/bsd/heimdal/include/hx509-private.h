@@ -30,7 +30,7 @@ void
 _hx509_abort (
 	const char */*fmt*/,
 	...)
-     __attribute__ ((noreturn, format (printf, 1, 2)));
+     __attribute__ ((__noreturn__, __format__ (__printf__, 1, 2)));
 
 int
 _hx509_calculate_path (
@@ -193,6 +193,9 @@ _hx509_find_extension_subject_key_id (
 	const Certificate */*issuer*/,
 	SubjectKeyIdentifier */*si*/);
 
+const struct signature_alg *
+_hx509_find_sig_alg (const heim_oid */*oid*/);
+
 int
 _hx509_generate_private_key (
 	hx509_context /*context*/,
@@ -333,6 +336,9 @@ _hx509_pi_printf (
 	const char */*fmt*/,
 	...);
 
+void
+_hx509_private_eckey_free (void */*eckey*/);
+
 int
 _hx509_private_key_export (
 	hx509_context /*context*/,
@@ -440,10 +446,16 @@ _hx509_set_cert_attribute (
 	const heim_octet_string */*attr*/);
 
 int
-_hx509_signature_best_before (
+_hx509_set_digest_alg (
+	DigestAlgorithmIdentifier */*id*/,
+	const heim_oid */*oid*/,
+	const void */*param*/,
+	size_t /*length*/);
+
+int
+_hx509_signature_is_weak (
 	hx509_context /*context*/,
-	const AlgorithmIdentifier */*alg*/,
-	time_t /*t*/);
+	const AlgorithmIdentifier */*alg*/);
 
 void
 _hx509_unmap_file_os (heim_octet_string */*os*/);

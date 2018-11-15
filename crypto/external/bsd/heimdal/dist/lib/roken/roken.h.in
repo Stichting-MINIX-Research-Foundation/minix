@@ -3,22 +3,22 @@
  * Copyright (c) 1995-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,6 +32,12 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_WIN32) && _MSC_VER >= 1400
+/* _CRT_RAND_S must be defined before including stdlib.h */
+# define _CRT_RAND_S
+# define HAVE_WIN32_RAND_S 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -39,6 +45,7 @@
 #include <stdint.h>
 #endif
 #include <string.h>
+#include <limits.h>
 #include <signal.h>
 
 #ifndef ROKEN_LIB_FUNCTION
@@ -65,10 +72,8 @@
 #include <ws2tcpip.h>
 
 /*
- * error codes for inet_ntop/inet_pton 
+ * error codes for inet_ntop/inet_pton
  */
-#define EAFNOSUPPORT WSAEAFNOSUPPORT
-
 typedef SOCKET rk_socket_t;
 
 #define rk_closesocket(x) closesocket(x)
@@ -78,23 +83,6 @@ typedef SOCKET rk_socket_t;
 #define rk_SOCK_ERRNO WSAGetLastError()
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_SOCK_IOCTL(SOCKET s, long cmd, int * argp);
-
-/* Microsoft VC 2010 POSIX definitions */
-#ifndef ENOTSOCK
-#define ENOTSOCK		128
-#endif
-#ifndef ENOTSUP
-#define ENOTSUP                 129
-#endif
-#ifndef EOVERFLOW
-#define EOVERFLOW               132
-#endif
-#ifndef ETIMEDOUT
-#define ETIMEDOUT               138
-#endif
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK             140
-#endif
 
 #define rk_SOCK_INIT() rk_WSAStartup()
 #define rk_SOCK_EXIT() rk_WSACleanup()
@@ -116,13 +104,17 @@ typedef int rk_socket_t;
 #define rk_SOCK_INIT() 0
 #define rk_SOCK_EXIT() do { } while(0)
 
-#endif
+#endif  /* WinSock */
 
 #ifndef IN_LOOPBACKNET
 #define IN_LOOPBACKNET 127
 #endif
 
 #ifdef _MSC_VER
+#ifndef HAVE_STDINT_H
+#include <intsafe.h>
+#endif
+
 /* Declarations for Microsoft Visual C runtime on Windows */
 
 #include<process.h>
@@ -195,6 +187,9 @@ struct sockaddr_dl;
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
 #endif
 #ifdef HAVE_SYS_BITYPES_H
 #include <sys/bitypes.h>
@@ -272,6 +267,10 @@ struct sockaddr_dl;
 
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
+
+#ifdef HAVE_DIRECT_H
+#include <direct.h>
 #endif
 
 #ifdef BACKSLASH_PATH_DELIM
@@ -367,6 +366,49 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
  S_ISBLK(m)
 */
 
+/* The following symbolic constants are provided for rk_mkdir mode */
+
+#define S_IRWXU 00700 /* user (file owner) has read, write and execute permission */
+#define S_IRUSR 00400 /* user has read permission */
+#define S_IWUSR 00200 /* user has write permission */
+#define S_IXUSR 00100 /* user has execute permission */
+#define S_IRWXG 00070 /* group has read, write and execute permission */
+#define S_IRGRP 00040 /* group has read permission */
+#define S_IWGRP 00020 /* group has write permission */
+#define S_IXGRP 00010 /* group has execute permission */
+#define S_IRWXO 00007 /* others have read, write and execute permission */
+#define S_IROTH 00004 /* others have read permission */
+#define S_IWOTH 00002 /* others have write permission */
+#define S_IXOTH 00001 /* others have execute permission */
+
+#if !defined(ROKEN_NO_DEFINE_ALLOCATORS)
+/* Ensure that a common memory allocator is used by all */
+#define calloc  rk_calloc
+#define free    rk_free
+#define malloc  rk_malloc
+#define realloc rk_realloc
+#define strdup  rk_strdup
+#define wcsdup  rk_wcsdup
+#endif
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_calloc(size_t, size_t);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+rk_free(void *);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_malloc(size_t);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_realloc(void *, size_t);
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_strdup(const char *);
+
+ROKEN_LIB_FUNCTION unsigned short * ROKEN_LIB_CALL
+rk_wcsdup(const unsigned short *);
+
 #endif  /* _MSC_VER */
 
 #ifdef HAVE_WINSOCK
@@ -429,16 +471,16 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL endusershell(void);
 #endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
      rk_snprintf (char *, size_t, const char *, ...)
-     __attribute__ ((format (printf, 3, 4)));
+     __attribute__ ((__format__ (__printf__, 3, 4)));
 #endif
 
 #if !defined(HAVE_VSNPRINTF) || defined(NEED_VSNPRINTF_PROTO)
 #ifndef HAVE_VSNPRINTF
 #define vsnprintf rk_vsnprintf
 #endif
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
      rk_vsnprintf (char *, size_t, const char *, va_list)
-     __attribute__((format (printf, 3, 0)));
+     __attribute__ ((__format__ (__printf__, 3, 0)));
 #endif
 
 #if !defined(HAVE_ASPRINTF) || defined(NEED_ASPRINTF_PROTO)
@@ -447,7 +489,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 #endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
      rk_asprintf (char **, const char *, ...)
-     __attribute__ ((format (printf, 2, 3)));
+     __attribute__ ((__format__ (__printf__, 2, 3)));
 #endif
 
 #if !defined(HAVE_VASPRINTF) || defined(NEED_VASPRINTF_PROTO)
@@ -456,7 +498,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 #endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     rk_vasprintf (char **, const char *, va_list)
-     __attribute__((format (printf, 2, 0)));
+     __attribute__ ((__format__ (__printf__, 2, 0)));
 #endif
 
 #if !defined(HAVE_ASNPRINTF) || defined(NEED_ASNPRINTF_PROTO)
@@ -465,7 +507,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 #endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     rk_asnprintf (char **, size_t, const char *, ...)
-     __attribute__ ((format (printf, 3, 4)));
+     __attribute__ ((__format__ (__printf__, 3, 4)));
 #endif
 
 #if !defined(HAVE_VASNPRINTF) || defined(NEED_VASNPRINTF_PROTO)
@@ -474,7 +516,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 #endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     vasnprintf (char **, size_t, const char *, va_list)
-     __attribute__((format (printf, 3, 0)));
+     __attribute__ ((__format__ (__printf__, 3, 0)));
 #endif
 
 #ifndef HAVE_STRDUP
@@ -601,6 +643,20 @@ ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwnam (const char *);
 ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwuid (uid_t);
 #endif
 
+#ifdef POSIX_GETPWNAM_R
+#define rk_getpwnam_r(_n, _pw, _b, _sz, _pwd) getpwnam_r(_n, _pw, _b, _sz, _pwd)
+#else
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
+#endif
+
+#ifdef POSIX_GETPWUID_R
+#define rk_getpwuid_r(_u, _pw, _b, _sz, _pwd) getpwuid_r(_u, _pw, _b, _sz, _pwd)
+#else
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
+#endif
+
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL get_default_username (void);
 
 #ifndef HAVE_SETEUID
@@ -648,6 +704,13 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #define rk_rename(__rk_rn_from,__rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
 #endif
 
+#ifdef MKDIR_DOES_NOT_HAVE_MODE
+#define mkdir rk_mkdir
+#else
+#define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)
+#endif
+
+
 #if !defined(HAVE_DAEMON) || defined(NEED_DAEMON_PROTO)
 #ifndef HAVE_DAEMON
 #define daemon rk_daemon
@@ -677,7 +740,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL innetgr(const char*, const char*,
 
 #ifndef HAVE_IRUSEROK
 #define iruserok rk_iruserok
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL iruserok(unsigned, int, 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL iruserok(unsigned, int,
     const char *, const char *);
 #endif
 
@@ -700,13 +763,15 @@ ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 readv(int, const struct iovec *, int);
 #endif
 
-#ifndef HAVE_PIDFILE
 #ifdef NO_PIDFILES
-#define pidfile(x) ((void) 0)
+#define rk_pidfile(x) ((void) 0)
 #else
-#define pidfile rk_pidfile
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL pidfile (const char*);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rk_pidfile (const char*);
 #endif
+
+#ifndef HAVE_BSWAP64
+#define bswap64 rk_bswap64
+ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL bswap64(uint64_t);
 #endif
 
 #ifndef HAVE_BSWAP32
@@ -759,6 +824,9 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_vconcat (char *, size_t, va_list);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
     roken_vmconcat (char **, size_t, va_list);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL roken_detach_prep(int, char **, char *);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL roken_detach_finish(const char *, int);
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
     net_write (rk_socket_t, const void *, size_t);
@@ -923,6 +991,9 @@ gai_strerror(int);
 ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 sleep(unsigned int seconds);
 
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+usleep(unsigned int useconds);
+
 #endif
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
@@ -932,7 +1003,7 @@ getnameinfo_verified(const struct sockaddr *, socklen_t,
 		     int);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
+roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
@@ -979,7 +1050,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_gethostby_setup(const char*, const char*);
 ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyname(const char*);
-ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL 
+ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyaddr(const void*, size_t, int);
 
 #ifdef GETSERVBYNAME_PROTO_COMPATIBLE
@@ -1024,6 +1095,22 @@ mini_inetd (int, rk_socket_t *);
 #define localtime_r rk_localtime_r
 ROKEN_LIB_FUNCTION struct tm * ROKEN_LIB_CALL
 localtime_r(const time_t *, struct tm *);
+#endif
+
+#if !defined(HAVE_STRTOLL) || defined(NEED_STRTOLL_PROTO)
+#ifndef HAVE_STRTOLL
+#define strtoll rk_strtoll
+#endif
+ROKEN_LIB_FUNCTION long long ROKEN_LIB_CALL
+strtoll(const char * nptr, char ** endptr, int base);
+#endif
+
+#if !defined(HAVE_STRTOULL) || defined(NEED_STRTOULL_PROTO)
+#ifndef HAVE_STRTOULL
+#define strtoull rk_strtoull
+#endif
+ROKEN_LIB_FUNCTION unsigned long long ROKEN_LIB_CALL
+strtoull(const char * nptr, char ** endptr, int base);
 #endif
 
 #if !defined(HAVE_STRSVIS) || defined(NEED_STRSVIS_PROTO)
@@ -1108,12 +1195,23 @@ void
 rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 
+#ifndef HAVE_MEMSET_S
+#define memset_s rk_memset_s
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL memset_s(void *s, size_t smax,
+					int c, size_t n);
+#endif
+
 #if defined(HAVE_ARC4RANDOM)
-#define rk_random() arc4random()
+# define rk_random() arc4random()
 #elif defined(HAVE_RANDOM)
-#define rk_random() random()
+# define rk_random() random()
 #else
-#define rk_random() rand()
+# ifdef HAVE_WIN32_RAND_S
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+rk_random(void);
+# else
+#  define rk_random() rand()
+# endif
 #endif
 
 #ifndef HAVE_TDELETE
@@ -1134,6 +1232,33 @@ rk_qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
 int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #endif
+
+/* Microsoft VC 2010 POSIX definitions */
+#ifndef EAFNOSUPPORT
+#define EAFNOSUPPORT            102
+#endif
+#ifndef EINPROGRESS
+#define EINPROGRESS             112
+#endif
+#ifndef ELOOP
+#define ELOOP			114
+#endif
+#ifndef ENOTSOCK
+#define ENOTSOCK		128
+#endif
+#ifndef ENOTSUP
+#define ENOTSUP                 129
+#endif
+#ifndef EOVERFLOW
+#define EOVERFLOW               132
+#endif
+#ifndef ETIMEDOUT
+#define ETIMEDOUT               138
+#endif
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK             140
+#endif
+
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>

@@ -57,9 +57,14 @@ hx509_TEXINFOS = \
 
 {}.tin{$(OBJ)}.texi:
 	$(SED) -e "s,[@]dbdir[@],x,g"	\
+	-e "s,[@]dbtype[@],sqlite,g" < $** > $@ \
 	-e "s,[@]PACKAGE_VERSION[@],$(VER_PACKAGE_VERSION),g" < $** > $@
 
 MAKEINFOFLAGS = --css-include=$(SRCDIR)/heimdal.css
+
+!ifdef APPVEYOR
+MAKEINFO = $(PERL) C:\msys64\usr\bin\makeinfo
+!endif
 
 ######################################################################
 # Build heimdal.chm

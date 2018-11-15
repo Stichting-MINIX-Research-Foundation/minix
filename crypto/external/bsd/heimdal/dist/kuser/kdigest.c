@@ -1,4 +1,4 @@
-/*	$NetBSD: kdigest.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: kdigest.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -460,9 +460,9 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
      *
      */
 
-    ret = krb5_ntlm_init_get_challange(context, ntlm, &challenge);
+    ret = krb5_ntlm_init_get_challenge(context, ntlm, &challenge);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_get_challange");
+	krb5_err(context, 1, ret, "krb5_ntlm_init_get_challenge");
 
     if (challenge.length != sizeof(type2.challenge))
 	krb5_errx(context, 1, "ntlm challenge have wrong length");
@@ -487,7 +487,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
      *
      */
 
-    base64_encode(data.data, data.length, &s);
+    rk_base64_encode(data.data, data.length, &s);
     free(data.data);
     printf("type2=%s\n", s);
     free(s);
@@ -500,7 +500,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_ntlm_init_get_opaque");
 
-    base64_encode(opaque.data, opaque.length, &s);
+    rk_base64_encode(opaque.data, opaque.length, &s);
     krb5_data_free(&opaque);
     printf("opaque=%s\n", s);
     free(s);

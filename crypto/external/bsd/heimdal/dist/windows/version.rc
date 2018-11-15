@@ -123,7 +123,9 @@ values as a substitute */
 	       VALUE "ProductVersion", RC_FILE_PRODUCT_VER_0409
 	       VALUE "CompanyName", RC_FILE_COMPANY_0409
 	       VALUE "LegalCopyright", RC_FILE_COPYRIGHT_0409
-
+#ifdef RC_FILE_TRADEMARK_0409
+	       VALUE "LegalTrademark", RC_FILE_TRADEMARK_0409
+#endif
 #ifdef RC_FILE_COMMENT_0409
 	       VALUE "Comments", RC_FILE_COMMENT_0409
 #endif

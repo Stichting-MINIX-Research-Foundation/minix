@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1_glue.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: asn1_glue.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -55,9 +55,9 @@ _krb5_principalname2krb5_principal (krb5_context context,
     krb5_error_code ret;
     krb5_principal p;
 
-    p = malloc(sizeof(*p));
+    p = calloc(1, sizeof(*p));
     if (p == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     ret = copy_PrincipalName(&from, &p->name);
     if (ret) {
 	free(p);
@@ -67,7 +67,7 @@ _krb5_principalname2krb5_principal (krb5_context context,
     if (p->realm == NULL) {
 	free_PrincipalName(&p->name);
         free(p);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     *principal = p;
     return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_cred.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: rd_cred.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -98,7 +98,7 @@ krb5_rd_cred(krb5_context context,
 	goto out;
     }
 
-    if (cred.enc_part.etype == ETYPE_NULL) {
+    if (cred.enc_part.etype == (krb5_enctype)ETYPE_NULL) {
 	/* DK: MIT GSS-API Compatibility */
 	enc_krb_cred_part_data.length = cred.enc_part.cipher.length;
 	enc_krb_cred_part_data.data   = cred.enc_part.cipher.data;
@@ -224,7 +224,7 @@ krb5_rd_cred(krb5_context context,
 
 	if (enc_krb_cred_part.timestamp == NULL ||
 	    enc_krb_cred_part.usec      == NULL ||
-	    abs(*enc_krb_cred_part.timestamp - sec)
+	    labs(*enc_krb_cred_part.timestamp - sec)
 	    > context->max_skew) {
 	    krb5_clear_error_message (context);
 	    ret = KRB5KRB_AP_ERR_SKEW;
@@ -251,9 +251,7 @@ krb5_rd_cred(krb5_context context,
 			sizeof(**ret_creds));
 
     if (*ret_creds == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -263,9 +261,7 @@ krb5_rd_cred(krb5_context context,
 
 	creds = calloc(1, sizeof(*creds));
 	if(creds == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 

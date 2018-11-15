@@ -1,5 +1,5 @@
 /***********************************************************************
- * Copyright (c) 2009, Secure Endpoints Inc.
+ * Copyright (c) 2009-2016, Secure Endpoints Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -132,9 +132,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `arc4random' function. */
 /* #undef HAVE_ARC4RANDOM */
-
-/* Define to 1 if you have the <arpa/ftp.h> header file. */
-/* #undef HAVE_ARPA_FTP_H  */
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 /* #undef HAVE_ARPA_INET_H  */
@@ -302,6 +299,10 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `dlopen' function. */
 /* MSVC doesn't provide a <dlfcn.h>, but we implement it in lib/roken. */
 #define HAVE_DLOPEN 1
+
+/* Define to 1 if you have the `dladdr' function. */
+/* MSVC doesn't provide a <dlfcn.h>, but we implement it in lib/roken. */
+#define HAVE_DLADDR 1
 
 /* Define to 1 if you have the `dn_expand' function. */
 /* #undef HAVE_DN_EXPAND */
@@ -648,8 +649,8 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `openpty' function. */
 /* #define HAVE_OPENPTY 1 */
 
-/* define to use openssl's libcrypto */
-/* #undef HAVE_OPENSSL */
+/* define to 1 to use openssl's libcrypto as a (default) backend for libhcrypto */
+/* #undef HAVE_HCRYPTO_W_OPENSSL */
 
 /* Define to enable basic OSF C2 support. */
 /* #undef HAVE_OSFC2 */
@@ -917,30 +918,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if struct tm has field tm_zone. */
 /* #undef HAVE_STRUCT_TM_TM_ZONE */
 
-/* Define if struct utmpx has field ut_exit. */
-/* #undef HAVE_STRUCT_UTMPX_UT_EXIT */
-
-/* Define if struct utmpx has field ut_syslen. */
-/* #undef HAVE_STRUCT_UTMPX_UT_SYSLEN */
-
-/* Define if struct utmp has field ut_addr. */
-/* #define HAVE_STRUCT_UTMP_UT_ADDR 1 */
-
-/* Define if struct utmp has field ut_host. */
-/* #define HAVE_STRUCT_UTMP_UT_HOST 1 */
-
-/* Define if struct utmp has field ut_id. */
-/* #define HAVE_STRUCT_UTMP_UT_ID 1 */
-
-/* Define if struct utmp has field ut_pid. */
-/* #define HAVE_STRUCT_UTMP_UT_PID 1 */
-
-/* Define if struct utmp has field ut_type. */
-/* #define HAVE_STRUCT_UTMP_UT_TYPE 1 */
-
-/* Define if struct utmp has field ut_user. */
-/* #define HAVE_STRUCT_UTMP_UT_USER 1 */
-
 /* define if struct winsize is declared in sys/termios.h */
 /* #define HAVE_STRUCT_WINSIZE 1 */
 
@@ -1162,12 +1139,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <util.h> header file. */
 /* #undef HAVE_UTIL_H */
 
-/* Define to 1 if you have the <utmpx.h> header file. */
-/* #define HAVE_UTMPX_H 1 */
-
-/* Define to 1 if you have the <utmp.h> header file. */
-/* #define HAVE_UTMP_H 1 */
-
 /* Define to 1 if the system has the type `u_int16_t'. */
 /* #define HAVE_U_INT16_T 1 */
 
@@ -1236,15 +1207,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* define if struct winsize has ws_ypixel */
 /* #define HAVE_WS_YPIXEL 1 */
 
-/* Define to 1 if you have the `XauFileName' function. */
-/* #undef HAVE_XAUFILENAME */
-
-/* Define to 1 if you have the `XauReadAuth' function. */
-/* #undef HAVE_XAUREADAUTH */
-
-/* Define to 1 if you have the `XauWriteAuth' function. */
-/* #undef HAVE_XAUWRITEAUTH */
-
 /* Define to 1 if you have the `yp_get_default_domain' function. */
 /* #undef HAVE_YP_GET_DEFAULT_DOMAIN */
 
@@ -1262,9 +1224,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the `__progname' variable. */
 /* #define HAVE___PROGNAME 1 */
-
-/* Define if you have the hesiod package. */
-/* #undef HESIOD */
 
 /* Define if you are running IRIX 4. */
 /* #undef IRIX4 */
@@ -1358,9 +1317,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you don't want to use mmap. */
 #define NO_MMAP 1
-
-/* Define if EGD rand method is not defined */
-#define NO_RAND_EGD_METHOD 1
 
 /* Define if the Unix rand method is not defined */
 #define NO_RAND_UNIX_METHOD 1

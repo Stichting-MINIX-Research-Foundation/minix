@@ -1,4 +1,4 @@
-/*	$NetBSD: iprop.h,v 1.1.1.2 2011/04/14 14:09:16 elric Exp $	*/
+/*	$NetBSD: iprop.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Kungliga Tekniska Högskolan
@@ -63,10 +63,20 @@ enum iprop_cmd { I_HAVE = 1,
 		 ONE_PRINC = 4,
 		 NOW_YOU_HAVE = 5,
 		 ARE_YOU_THERE = 6,
-		 I_AM_HERE = 7
+		 I_AM_HERE = 7,
+		 YOU_HAVE_LAST_VERSION = 8
 };
 
 extern sig_atomic_t exit_flag;
 void setup_signal(void);
+
+enum ipropd_exit_code {
+    IPROPD_DONE = 0,
+    IPROPD_RESTART = 1,
+    IPROPD_RESTART_SLOW = 2,
+    IPROPD_FATAL = 3,
+};
+
+int restarter(krb5_context, size_t *);
 
 #endif /* __IPROP_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: plugin.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: plugin.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -63,67 +63,6 @@ struct plugin {
 
 static HEIMDAL_MUTEX plugin_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static struct plugin *registered = NULL;
-static int plugins_needs_scan = 1;
-
-static const char *sysplugin_dirs[] =  {
-    LIBDIR "/plugin/krb5",
-#ifdef __APPLE__
-    "/System/Library/KerberosPlugins/KerberosFrameworkPlugins",
-#endif
-    NULL
-};
-
-/*
- *
- */
-
-void *
-_krb5_plugin_get_symbol(struct krb5_plugin *p)
-{
-    return p->symbol;
-}
-
-struct krb5_plugin *
-_krb5_plugin_get_next(struct krb5_plugin *p)
-{
-    return p->next;
-}
-
-/*
- *
- */
-
-#ifdef HAVE_DLOPEN
-
-static krb5_error_code
-loadlib(krb5_context context, char *path)
-{
-    struct plugin *e;
-
-    e = calloc(1, sizeof(*e));
-    if (e == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	free(path);
-	return ENOMEM;
-    }
-
-#ifndef RTLD_LAZY
-#define RTLD_LAZY 0
-#endif
-#ifndef RTLD_LOCAL
-#define RTLD_LOCAL 0
-#endif
-    e->type = DSO;
-    /* ignore error from dlopen, and just keep it as negative cache entry */
-    e->u.dso.dsohandle = dlopen(path, RTLD_LOCAL|RTLD_LAZY);
-    e->u.dso.path = path;
-
-    e->next = registered;
-    registered = e;
-
-    return 0;
-}
-#endif /* HAVE_DLOPEN */
 
 /**
  * Register a plugin symbol name of specific type.
@@ -181,128 +120,6 @@ krb5_plugin_register(krb5_context context,
     return 0;
 }
 
-static int
-is_valid_plugin_filename(const char * n)
-{
-    if (n[0] == '.' && (n[1] == '\0' || (n[1] == '.' && n[2] == '\0')))
-        return 0;
-
-#ifdef _WIN32
-    /* On Windows, we only attempt to load .dll files as plug-ins. */
-    {
-        const char * ext;
-
-        ext = strrchr(n, '.');
-        if (ext == NULL)
-            return 0;
-
-        return !stricmp(ext, ".dll");
-    }
-#else
-    return 1;
-#endif
-}
-
-static void
-trim_trailing_slash(char * path)
-{
-    size_t l;
-
-    l = strlen(path);
-    while (l > 0 && (path[l - 1] == '/'
-#ifdef BACKSLASH_PATH_DELIM
-                     || path[l - 1] == '\\'
-#endif
-               )) {
-        path[--l] = '\0';
-    }
-}
-
-static krb5_error_code
-load_plugins(krb5_context context)
-{
-    struct plugin *e;
-    krb5_error_code ret;
-    char **dirs = NULL, **di;
-    struct dirent *entry;
-    char *path;
-    DIR *d = NULL;
-
-    if (!plugins_needs_scan)
-	return 0;
-    plugins_needs_scan = 0;
-
-#ifdef HAVE_DLOPEN
-
-    dirs = krb5_config_get_strings(context, NULL, "libdefaults",
-				   "plugin_dir", NULL);
-    if (dirs == NULL)
-	dirs = rk_UNCONST(sysplugin_dirs);
-
-    for (di = dirs; *di != NULL; di++) {
-        char * dir = *di;
-
-#ifdef KRB5_USE_PATH_TOKENS
-        if (_krb5_expand_path_tokens(context, *di, &dir))
-            goto next_dir;
-#endif
-
-        trim_trailing_slash(dir);
-
-        d = opendir(dir);
-
-	if (d == NULL)
-	    goto next_dir;
-
-	rk_cloexec_dir(d);
-
-	while ((entry = readdir(d)) != NULL) {
-	    char *n = entry->d_name;
-
-	    /* skip . and .. */
-            if (!is_valid_plugin_filename(n))
-		continue;
-
-	    path = NULL;
-	    ret = 0;
-#ifdef __APPLE__
-	    { /* support loading bundles on MacOS */
-		size_t len = strlen(n);
-		if (len > 7 && strcmp(&n[len - 7],  ".bundle") == 0)
-		    ret = asprintf(&path, "%s/%s/Contents/MacOS/%.*s", dir, n, (int)(len - 7), n);
-	    }
-#endif
-	    if (ret < 0 || path == NULL)
-		ret = asprintf(&path, "%s/%s", dir, n);
-
-	    if (ret < 0 || path == NULL) {
-		ret = ENOMEM;
-		krb5_set_error_message(context, ret, "malloc: out of memory");
-		return ret;
-	    }
-
-	    /* check if already tried */
-	    for (e = registered; e != NULL; e = e->next)
-		if (e->type == DSO && strcmp(e->u.dso.path, path) == 0)
-		    break;
-	    if (e) {
-		free(path);
-	    } else {
-		loadlib(context, path); /* store or frees path */
-	    }
-	}
-	closedir(d);
-
-    next_dir:
-        if (dir != *di)
-            free(dir);
-    }
-    if (dirs != rk_UNCONST(sysplugin_dirs))
-	krb5_config_free_strings(dirs);
-#endif /* HAVE_DLOPEN */
-    return 0;
-}
-
 static krb5_error_code
 add_symbol(krb5_context context, struct krb5_plugin **list, void *symbol)
 {
@@ -319,7 +136,7 @@ add_symbol(krb5_context context, struct krb5_plugin **list, void *symbol)
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_plugin_find(krb5_context context,
 		  enum krb5_plugin_type type,
 		  const char *name,
@@ -331,8 +148,6 @@ _krb5_plugin_find(krb5_context context,
     *list = NULL;
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
-
-    load_plugins(context);
 
     for (ret = 0, e = registered; e != NULL; e = e->next) {
 	switch(e->type) {
@@ -368,7 +183,7 @@ _krb5_plugin_find(krb5_context context,
     return 0;
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_plugin_free(struct krb5_plugin *list)
 {
     struct krb5_plugin *next;
@@ -406,8 +221,57 @@ plug_dealloc(void *ptr)
 	dlclose(p->dsohandle);
 }
 
+static char *
+resolve_origin(const char *di)
+{
+#ifdef HAVE_DLADDR
+    Dl_info dl_info;
+    const char *dname;
+    char *path, *p;
+#endif
 
-void
+    if (strncmp(di, "$ORIGIN/", sizeof("$ORIGIN/") - 1) &&
+        strcmp(di, "$ORIGIN"))
+        return strdup(di);
+
+#ifndef HAVE_DLADDR
+    return strdup(LIBDIR "/plugin/krb5");
+#else /* !HAVE_DLADDR */
+    di += sizeof("$ORIGIN") - 1;
+
+    if (dladdr(_krb5_load_plugins, &dl_info) == 0)
+        return strdup(LIBDIR "/plugin/krb5");
+
+    dname = dl_info.dli_fname;
+#ifdef _WIN32
+    p = strrchr(dname, '\\');
+    if (p == NULL)
+#endif
+	p = strrchr(dname, '/');
+    if (p) {
+        if (asprintf(&path, "%.*s%s", (int) (p - dname), dname, di) == -1)
+            return NULL;
+    } else {
+        if (asprintf(&path, "%s%s", dname, di) == -1)
+            return NULL;
+    }
+
+    return path;
+#endif /* !HAVE_DLADDR */
+}
+
+
+/**
+ * Load plugins (new system) for the given module @name (typically
+ * "krb5") from the given directory @paths.
+ *
+ * Inputs:
+ *
+ * @context A krb5_context
+ * @name    Name of plugin module (typically "krb5")
+ * @paths   Array of directory paths where to look
+ */
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 {
 #ifdef HAVE_DLOPEN
@@ -416,7 +280,16 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
     struct dirent *entry;
     krb5_error_code ret;
     const char **di;
+    char *dirname = NULL;
     DIR *d;
+#ifdef _WIN32
+    const char * plugin_prefix;
+    size_t plugin_prefix_len;
+
+    if (asprintf(&plugin_prefix, "plugin_%s_", name) == -1)
+	return;
+    plugin_prefix_len = (plugin_prefix ? strlen(plugin_prefix) : 0);
+#endif
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 
@@ -436,12 +309,16 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 	    heim_release(s);
 	    return;
 	}
-	heim_dict_add_value(modules, s, module);
+	heim_dict_set_value(modules, s, module);
     }
     heim_release(s);
 
     for (di = paths; *di != NULL; di++) {
-	d = opendir(*di);
+        free(dirname);
+        dirname = resolve_origin(*di);
+        if (dirname == NULL)
+            continue;
+	d = opendir(dirname);
 	if (d == NULL)
 	    continue;
 	rk_cloexec_dir(d);
@@ -457,15 +334,35 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		continue;
 
 	    ret = 0;
+#ifdef _WIN32
+	    /*
+	     * On Windows, plugins must be loaded from the same directory as
+	     * heimdal.dll (typically the assembly directory) and must have
+	     * the name form "plugin_<module>_<name>.dll".
+	     */
+	    {
+		char *ext;
+
+		if (strnicmp(n, plugin_prefix, plugin_prefix_len))
+		    continue;
+		ext = strrchr(n, '.');
+		if (ext == NULL || stricmp(ext, ".dll"))
+		     continue;
+
+		ret = asprintf(&path, "%s\\%s", dirname, n);
+		if (ret < 0 || path == NULL)
+		    continue;
+	    }
+#endif
 #ifdef __APPLE__
 	    { /* support loading bundles on MacOS */
 		size_t len = strlen(n);
 		if (len > 7 && strcmp(&n[len - 7],  ".bundle") == 0)
-		    ret = asprintf(&path, "%s/%s/Contents/MacOS/%.*s", *di, n, (int)(len - 7), n);
+		    ret = asprintf(&path, "%s/%s/Contents/MacOS/%.*s", dirname, n, (int)(len - 7), n);
 	    }
 #endif
 	    if (ret < 0 || path == NULL)
-		ret = asprintf(&path, "%s/%s", *di, n);
+		ret = asprintf(&path, "%s/%s", dirname, n);
 
 	    if (ret < 0 || path == NULL)
 		continue;
@@ -483,24 +380,32 @@ _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
 		if (p)
 		    p->dsohandle = dlopen(path, RTLD_LOCAL|RTLD_LAZY);
 
-		if (p->dsohandle) {
+		if (p && p->dsohandle) {
 		    p->path = heim_retain(spath);
 		    p->names = heim_dict_create(11);
-		    heim_dict_add_value(module, spath, p);
+		    heim_dict_set_value(module, spath, p);
 		}
 	    }
+            heim_release(p);
 	    heim_release(spath);
-	    heim_release(p);
 	    free(path);
 	}
 	closedir(d);
     }
-    heim_release(module);
+    free(dirname);
     HEIMDAL_MUTEX_unlock(&plugin_mutex);
+    heim_release(module);
+#ifdef _WIN32
+    if (plugin_prefix)
+	free(plugin_prefix);
+#endif
 #endif /* HAVE_DLOPEN */
 }
 
-void
+/**
+ * Unload plugins (new system)
+ */
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_unload_plugins(krb5_context context, const char *name)
 {
     HEIMDAL_MUTEX_lock(&plugin_mutex);
@@ -539,14 +444,15 @@ struct iter_ctx {
     heim_string_t n;
     const char *name;
     int min_version;
+    int flags;
     heim_array_t result;
-    krb5_error_code (*func)(krb5_context, const void *, void *, void *);
+    krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *);
     void *userctx;
     krb5_error_code ret;
 };
 
 static void
-search_modules(void *ctx, heim_object_t key, heim_object_t value)
+search_modules(heim_object_t key, heim_object_t value, void *ctx)
 {
     struct iter_ctx *s = ctx;
     struct plugin2 *p = value;
@@ -567,19 +473,18 @@ search_modules(void *ctx, heim_object_t key, heim_object_t value)
 	    if (ret)
 		cpm = pl->dataptr = NULL;
 	}
-	heim_dict_add_value(p->names, s->n, pl);
+	heim_dict_set_value(p->names, s->n, pl);
     } else {
 	cpm = pl->dataptr;
     }
 
     if (cpm && cpm->version >= s->min_version)
 	heim_array_append_value(s->result, pl);
-
     heim_release(pl);
 }
 
 static void
-eval_results(heim_object_t value, void *ctx)
+eval_results(heim_object_t value, void *ctx, int *stop)
 {
     struct plug *pl = value;
     struct iter_ctx *s = ctx;
@@ -588,50 +493,116 @@ eval_results(heim_object_t value, void *ctx)
 	return;
 
     s->ret = s->func(s->context, pl->dataptr, pl->ctx, s->userctx);
+    if (s->ret != KRB5_PLUGIN_NO_HANDLE
+        && !(s->flags & KRB5_PLUGIN_INVOKE_ALL))
+        *stop = 1;
 }
 
-krb5_error_code
+/**
+ * Run plugins for the given @module (e.g., "krb5") and @name (e.g.,
+ * "kuserok").  Specifically, the @func is invoked once per-plugin with
+ * four arguments: the @context, the plugin symbol value (a pointer to a
+ * struct whose first three fields are the same as struct common_plugin_method),
+ * a context value produced by the plugin's init method, and @userctx.
+ *
+ * @func should unpack arguments for a plugin function and invoke it
+ * with arguments taken from @userctx.  @func should save plugin
+ * outputs, if any, in @userctx.
+ *
+ * All loaded and registered plugins are invoked via @func until @func
+ * returns something other than KRB5_PLUGIN_NO_HANDLE.  Plugins that
+ * have nothing to do for the given arguments should return
+ * KRB5_PLUGIN_NO_HANDLE.
+ *
+ * Inputs:
+ *
+ * @context     A krb5_context
+ * @module      Name of module (typically "krb5")
+ * @name        Name of pluggable interface (e.g., "kuserok")
+ * @min_version Lowest acceptable plugin minor version number
+ * @flags       Flags (none defined at this time)
+ * @userctx     Callback data for the callback function @func
+ * @func        A callback function, invoked once per-plugin
+ *
+ * Outputs: None, other than the return value and such outputs as are
+ *          gathered by @func.
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_plugin_run_f(krb5_context context,
 		   const char *module,
 		   const char *name,
 		   int min_version,
 		   int flags,
 		   void *userctx,
-		   krb5_error_code (*func)(krb5_context, const void *, void *, void *))
+		   krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *))
 {
     heim_string_t m = heim_string_create(module);
     heim_dict_t dict;
+    void *plug_ctx;
+    struct common_plugin_method *cpm;
     struct iter_ctx s;
+    struct krb5_plugin *registered_plugins = NULL;
+    struct krb5_plugin *p;
+
+    /* Get registered plugins */
+    (void) _krb5_plugin_find(context, SYMBOL, name, &registered_plugins);
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
-
-    dict = heim_dict_copy_value(modules, m);
-    heim_release(m);
-    if (dict == NULL) {
-	HEIMDAL_MUTEX_unlock(&plugin_mutex);
-	return KRB5_PLUGIN_NO_HANDLE;
-    }
 
     s.context = context;
     s.name = name;
     s.n = heim_string_create(name);
+    s.flags = flags;
     s.min_version = min_version;
     s.result = heim_array_create();
     s.func = func;
     s.userctx = userctx;
-
-    heim_dict_iterate_f(dict, search_modules, &s);
-
-    heim_release(dict);
-
-    HEIMDAL_MUTEX_unlock(&plugin_mutex);
-
     s.ret = KRB5_PLUGIN_NO_HANDLE;
 
-    heim_array_iterate_f(s.result, eval_results, &s);
+    /* Get loaded plugins */
+    dict = heim_dict_copy_value(modules, m);
+    heim_release(m);
+
+    /* Add loaded plugins to s.result array */
+    if (dict)
+	heim_dict_iterate_f(dict, &s, search_modules);
+
+    /* We don't need to hold plugin_mutex during plugin invocation */
+    HEIMDAL_MUTEX_unlock(&plugin_mutex);
+
+    /* Invoke registered plugins (old system) */
+    for (p = registered_plugins; p; p = p->next) {
+	/*
+	 * XXX This is the wrong way to handle registered plugins, as we
+	 * call init/fini on each invocation!  We do this because we
+	 * have nowhere in the struct plugin registered list to store
+	 * the context allocated by the plugin's init function.  (But at
+	 * least we do call init/fini!)
+	 *
+	 * What we should do is adapt the old plugin system to the new
+	 * one and change how we register plugins so that we use the new
+	 * struct plug to keep track of their context structures, that
+	 * way we can init once, invoke many times, then fini.
+	 */
+	cpm = (struct common_plugin_method *)p->symbol;
+	s.ret = cpm->init(context, &plug_ctx);
+	if (s.ret)
+	    continue;
+	s.ret = s.func(s.context, p->symbol, plug_ctx, s.userctx);
+	cpm->fini(plug_ctx);
+	if (s.ret != KRB5_PLUGIN_NO_HANDLE &&
+            !(flags & KRB5_PLUGIN_INVOKE_ALL))
+	    break;
+    }
+    _krb5_plugin_free(registered_plugins);
+
+    /* Invoke loaded plugins (new system) */
+    if (s.ret == KRB5_PLUGIN_NO_HANDLE)
+	heim_array_iterate_f(s.result, &s, eval_results);
 
     heim_release(s.result);
     heim_release(s.n);
+    heim_release(dict);
 
     return s.ret;
 }

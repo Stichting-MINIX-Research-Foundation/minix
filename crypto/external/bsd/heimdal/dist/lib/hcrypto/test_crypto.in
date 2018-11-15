@@ -92,7 +92,7 @@ done
 
 #
 # Last time we run is w/o HOME and RANDFILE to make sure we can do
-# RAND_file_name() when the enviroment is lacking those.
+# RAND_file_name() when the environment is lacking those.
 #
 
 if [ -r /dev/random -o -r /dev/urandom -o -r /dev/srandom -o -r /dev/arandom ] ; then

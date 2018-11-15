@@ -35,8 +35,11 @@
 #
 
 srcdir="@srcdir@"
+env_setup="@env_setup@"
 objdir="@objdir@"
 port="@port@"
+
+. ${env_setup}
 
 # Disable test if: no data, no java, or socket wrapper
 ../db/have-db || exit 77
@@ -44,9 +47,15 @@ sh ${srcdir}/have-java.sh || exit 77
 [ X"$SOCKET_WRAPPER_DIR" != X ] && exit 77
 
 R=TEST.H5L.SE
+server=host/localhost
+keytabfile="${objdir}/server.keytab"
+keytab="FILE:${keytabfile}"
+cache="FILE:${objdir}/cache.krb5"
 
+kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
 kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
 kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=127.0.0.1 -P $port"
+gssclient="${TESTS_ENVIRONMENT} ../../appl/test/gssapi_client"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -60,7 +69,13 @@ echo "Compile"
 javac -d "${objdir}" "${srcdir}/KerberosInit.java" || \
     { echo "Failed to compile java program: $?" ; exit 77; }
 
+echo "Compile"
+javac -d "${objdir}" "${srcdir}/../../appl/test/jgssapi_server.java" || \
+    { echo "Failed to compile java program: $?" ; exit 77; }
+
 > messages.log
+
+echo foo > ${objdir}/foopassword
 
 echo Creating database
 ${kadmin} \
@@ -71,30 +86,61 @@ ${kadmin} \
 
 ${kadmin} add -p foo --use-defaults lha@${R} || exit 1
 ${kadmin} modify --attributes=+requires-pre-auth lha@${R} || exit 1
+${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
+${kadmin} ext -k ${keytab} ${server}@${R} || exit 1
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    exit 1
-fi
-
-trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 echo "Run init"
 java \
-  -Dsun.security.krb5.debug=true \
-  -Djava.security.krb5.conf="${objdir}"/krb5.conf \
-  -Djava.security.auth.login.config="${srcdir}/jaas.conf" \
-  KerberosInit > output.tmp 2>&1 || { cat output.tmp ; exit 1; }
+    -Dsun.security.krb5.debug=true \
+    -Djava.security.krb5.conf="${objdir}"/krb5.conf \
+    -Djava.security.auth.login.config="${srcdir}/jaas.conf" \
+    KerberosInit > output.tmp 2>&1 || { cat output.tmp ; exit 1; }
+
+
+# Disabled because of:
+#
+# http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7077646
+# http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7077640
+#
+
+if false ; then
+
+    echo "start server"
+    java \
+        -Dsun.security.krb5.debug=true \
+        -Djava.security.krb5.conf="${objdir}"/krb5.conf \
+        -Djavax.security.auth.useSubjectCredsOnly=false \
+        -Djava.security.auth.login.config="${srcdir}/jaas.conf" \
+        jgssapi_server > output.tmp 2>&1 &
+    javapid=$!
+    sleep 5
+    
+    trap "kill -9 ${kdcpid} ${javapid}; echo signal killing kdc java; exit 1;" EXIT
+    
+    echo "Getting client initial tickets"; > messages.log
+    ${kinit} --password-file=${objdir}/foopassword lha@$R || \
+    	{ echo "kinit failed" ; exit 1; }
+    
+    env KRB5CCNAME=${cache} \
+        ${gssclient} --port=4717 --service=host localhost || exit 1
+    
+    sleep 5
+    
+    kill ${javapid}
+    
+    grep 'Exception in thread' output.tmp && exit 1
+fi
 
 echo "Done"
 
-echo "killing kdc (${kdcpid})"
-kill $kdcpid || exit 1
+echo "killing kdc (${kdcpid} ${javapid})"
+kill $kdcpid $javapid || exit 1
 
 trap "" EXIT
 

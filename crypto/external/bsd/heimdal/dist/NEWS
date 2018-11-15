@@ -1,3 +1,134 @@
+Release Notes - Heimdal - Version Heimdal 7.1
+
+ Security
+
+ - kx509 realm-chopping security bug
+ - non-authorization of alias additions/removals in kadmind
+   (CVE-2016-2400)
+
+ Feature
+
+ - iprop has been revamped to fix a number of race conditions that could
+   lead to inconsistent replication
+ - Hierarchical capath support
+ - AES Encryption with HMAC-SHA2 for Kerberos 5
+   draft-ietf-kitten-aes-cts-hmac-sha2-11
+ - hcrypto is now thread safe on all platforms
+ - libhcrypto has new backends: CNG (Windows), PKCS#11 (mainly for
+   Solaris), and OpenSSL.  OpenSSL is now a first-class libhcrypto backend.
+   OpenSSL 1.0.x and 1.1 are both supported. AES-NI used when supported by
+   backend
+ - HDB now supports LMDB
+ - Thread support on Windows
+ - RFC 6113  Generalized Framework for Kerberos Pre-Authentication (FAST)
+ - New GSS APIs:
+   . gss_localname
+ - Allow setting what encryption types a principal should have with
+   [kadmin] default_key_rules, see krb5.conf manpage for more info
+ - Unify libhcrypto with LTC (libtomcrypto)
+ - asn1_compile 64-bit INTEGER functionality
+ - HDB key history support including --keepold kadmin password option
+ - Improved cross-realm key rollover safety
+ - New krb5_kuserok() and krb5_aname_to_localname() plug-in interfaces
+ - Improved MIT compatibility
+   . kadm5 API
+   . Migration from MIT KDB via "mitdb" HDB backend
+   . Capable of writing the HDB in MIT dump format
+ - Improved Active Directory interoperability
+   . Enctype selection issues for PAC and other authz-data signatures
+   . Cross realm key rollover (kvno 0)
+ - New [kdc] enctype negotiation configuration:
+   . tgt-use-strongest-session-key
+   . svc-use-strongest-session-key
+   . preauth-use-strongest-session-key
+   . use-strongest-server-key
+ - The KDC process now uses a multi-process model improving
+   resiliency and performance
+ - Allow batch-mode kinit with password file
+ - SIGINFO support added to kinit cmd
+ - New kx509 configuration options:
+   . kx509_ca
+   . kca_service
+   . kx509_include_pkinit_san
+   . kx509_template
+ - Improved Heimdal library/plugin version safety
+ - Name canonicalization
+   . DNS resolver searchlist
+   . Improved referral support
+   . Support host:port host-based services
+ - Pluggable libheimbase interface for DBs
+ - Improve IPv6 Support
+ - LDAP
+   . Bind DN and password
+   . Start TLS
+ - klist --json
+ - DIR credential cache type
+ - Updated upstream SQLite and libedit
+ - Removed legacy applications: ftp, kx, login, popper, push, rcp, rsh,
+   telnet, xnlock
+ - Completely remove RAND_egd support
+ - Moved kadmin and ktutil to /usr/bin
+ - Stricter fcache checks (see fcache_strict_checking krb5.conf setting)
+    . use O_NOFOLLOW
+    . don't follow symlinks
+    . require cache files to be owned by the user
+    . require sensible permissions (not group/other readable)
+ - Implemented gss_store_cred()
+ - Many more
+
+ Bug fixes
+ - iprop has been revamped to fix a number of race conditions that could
+   lead to data loss
+ - Include non-loopback addresses assigned to loopback interfaces
+   when requesting tickets with addresses
+ - KDC 1DES session key selection (for AFS rxkad-k5 compatibility)
+ - Keytab file descriptor and lock leak
+ - Credential cache corruption bugs
+   (NOTE: The FILE ccache is still not entirely safe due to the
+   fundamentally unsafe design of POSIX file locking)
+ - gss_pseudo_random() interop bug
+ - Plugins are now preferentially loaded from the run-time install tree
+ - Reauthentication after password change in init_creds_password
+ - Memory leak in the client kadmin library
+ - TGS client requests renewable/forwardable/proxiable when possible
+ - Locking issues in DB1 and DB3 HDB backends
+ - Master HDB can remain locked while waiting for network I/O
+ - Renewal/refresh logic when kinit is provided with a command
+ - KDC handling of enterprise principals
+ - Use correct bit for anon-pkinit
+ - Many more
+
+ Acknowledgements
+
+ This release of Heimdal includes contributions from:
+
+    Abhinav Upadhyay        Heath Kehoe             Nico Williams
+    Andreas Schneider       Henry Jacques           Patrik Lundin
+    Andrew Bartlett         Howard Chu              Philip Boulain
+    Andrew Tridgell         Igor Sobrado            Ragnar Sundblad
+    Antoine Jacoutot        Ingo Schwarze           Remi Ferrand
+    Arran Cudbard-Bell      Jakub Čajka             Rod Widdowson
+    Arvid Requate           James Le Cuirot         Rok Papež
+    Asanka Herath           James Lee               Roland C. Dowdeswell
+    Ben Kaduk               Jeffrey Altman          Ross L Richardson
+    Benjamin Kaduk          Jeffrey Clark           Russ Allbery
+    Bernard Spil            Jeffrey Hutzelman       Samuel Cabrero
+    Brian May               Jelmer Vernooij         Samuel Thibault
+    Chas Williams           Ken Dreyer              Santosh Kumar Pradhan
+    Chaskiel Grundman       Kiran S J               Sean Davis
+    Dana Koch               Kumar Thangavelu        Sergio Gelato
+    Daniel Schepler         Landon Fuller           Simon Wilkinson
+    David Mulder            Linus Nordberg          Stef Walter
+    Douglas Bagnall         Love Hörnquist Åstrand  Stefan Metzmacher
+    Ed Maste                Luke Howard             Steffen Jaeckel
+    Eray Aslan              Magnus Ahltorp          Timothy Pearson
+    Florian Best            Marc Balmer             Tollef Fog Heen
+    Fredrik Pettai          Marcin Cieślak          Tony Acero
+    Greg Hudson             Marco Molteni           Uri Simchoni
+    Gustavo Zacarias        Matthieu Hautreux       Viktor Dukhovni
+    Günther Deschner        Michael Meffie          Volker Lendecke
+    Harald Barth            Moritz Lenz
+
 Release Notes - Heimdal - Version Heimdal 1.5.3
 
  Bug fixes
@@ -102,7 +233,7 @@ Release Notes - Heimdal - Version Heimdal 1.3
 
  - Support for settin friendly name on credential caches
  - Move to using doxygen to generate documentation.
- - Sprinkling __attribute__((depricated)) for old function to be removed
+ - Sprinkling __attribute__((__deprecated__)) for old function to be removed
  - Support to export LAST-REQUST information in AS-REQ
  - Support for client deferrals in in AS-REQ
  - Add seek support for krb5_storage.

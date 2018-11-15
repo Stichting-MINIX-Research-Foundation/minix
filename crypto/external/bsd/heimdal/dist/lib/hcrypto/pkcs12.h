@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs12.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
+/*	$NetBSD: pkcs12.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan

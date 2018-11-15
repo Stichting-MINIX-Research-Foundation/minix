@@ -1,4 +1,4 @@
-/*	$NetBSD: authorize_localname.c,v 1.1.1.1 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: authorize_localname.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2011, PADL Software Pty Ltd.
@@ -36,7 +36,7 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_authorize_localname(OM_uint32 *minor_status,
-                             const gss_name_t input_name,
+                             gss_const_name_t input_name,
                              gss_const_buffer_t user_name,
                              gss_const_OID user_name_type)
 {

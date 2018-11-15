@@ -42,6 +42,18 @@ command = {
 		argument = "file"
 	}
 	option = {
+		long = "no-lock"
+		short = "n"
+		type = "flag"
+		help = "don't lock iprop log"
+	}
+	option = {
+		long = "reverse"
+		short = "R"
+		type = "flag"
+		help = "dump the log in reverse order"
+	}
+	option = {
 		long = "realm"
 		short = "r"
 		type = "string"
@@ -49,7 +61,7 @@ command = {
 	}
 	function = "iprop_dump"
 	help = "Prints the iprop transaction log in text."
-	max_args = "0"
+	max_args = "1"
 }
 command = {
 	name = "truncate"
@@ -66,9 +78,30 @@ command = {
 		type = "string"
 		help = "realm"
 	}
+	option = {
+		long = "keep-entries"
+		short = "K"
+		type = "integer"
+		help = "number of entries to keep"
+                default = "-1"
+	}
+	option = {
+		long = "max-bytes"
+		short = "B"
+		type = "integer"
+		help = "keep entries that fit in the given number of bytes"
+                default = "-1"
+	}
+        option = {
+                long = "reset"
+                short = "R"
+                type = "flag"
+                help = "reset the log to version 1; forces full propagation"
+                default = "0";
+        }
 	function = "iprop_truncate"
-	help = "Truncate the log, preserve the version number."
-	max_args = "0"
+	help = "Truncate the log, preserve the version number.  Keeps 100 entries by default."
+	max_args = "1"
 }
 command = {
 	name = "replay"
@@ -101,10 +134,34 @@ command = {
 	}
 	function = "iprop_replay"
 	help = "Replay the log on the database."
-	max_args = "0"
+	max_args = "1"
 }
 command = {
 	name = "last-version"
+	option = {
+		long = "config-file"
+		short = "c"
+		type = "string"
+		help = "configuration file"
+		argument = "file"
+	}
+	option = {
+		long = "no-lock"
+		short = "n"
+		type = "flag"
+		help = "don't lock iprop log"
+	}
+	option = {
+		long = "realm"
+		short = "r"
+		type = "string"
+		help = "realm"
+	}
+	function = "last_version"
+	help = "Print the last version of the log-file."
+}
+command = {
+	name = "signal"
 	option = {
 		long = "config-file"
 		short = "c"
@@ -118,7 +175,7 @@ command = {
 		type = "string"
 		help = "realm"
 	}
-	function = "last_version"
+	function = "signal_master"
 	help = "Print the last version of the log-file."
 	max_args = "0"
 }

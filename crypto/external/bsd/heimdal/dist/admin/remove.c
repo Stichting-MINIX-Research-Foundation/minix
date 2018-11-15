@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
+/*	$NetBSD: remove.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: remove.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
 
 int
 kt_remove(struct remove_options *opt, int argc, char **argv)

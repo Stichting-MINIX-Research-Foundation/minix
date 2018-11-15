@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5_auth_context.3,v 1.1.1.2 2011/04/14 14:09:22 elric Exp $
+.\"	$NetBSD: krb5_auth_context.3,v 1.2 2017/01/28 21:31:49 christos Exp $
 .\"
 .\" Copyright (c) 2001 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -226,7 +226,7 @@ will force
 and
 .Fn krb5_fwd_tgt_creds
 to create unencrypted )
-.Dv ENCTYPE_NULL )
+.Dv KRB5_ENCTYPE_NULL )
 credentials.
 This is for use with old MIT server and JAVA based servers as
 they can't handle encrypted

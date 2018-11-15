@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cfx.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: test_cfx.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	errx(1, "krb5_context_init: %d", ret);
 
     ret = krb5_generate_random_keyblock(context,
-					ENCTYPE_AES256_CTS_HMAC_SHA1_96,
+					KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
 					&keyblock);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");

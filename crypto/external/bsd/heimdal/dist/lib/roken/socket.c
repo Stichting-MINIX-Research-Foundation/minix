@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
@@ -258,6 +258,28 @@ socket_set_tos (rk_socket_t sock, int tos)
 {
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
     setsockopt (sock, IPPROTO_IP, IP_TOS, (void *) &tos, sizeof(int));
+#endif
+}
+
+/*
+ * Set the non-blocking-ness of the socket.
+ */
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+socket_set_nonblocking(rk_socket_t sock, int nonblock)
+{
+#if defined(O_NONBLOCK)
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags == -1)
+	return;
+    if (nonblock)
+	flags |= O_NONBLOCK;
+    else
+	flags &= ~O_NONBLOCK;
+    fcntl(sock, F_SETFL, flags);
+#elif defined(FIOBIO)
+    int flags = !!nonblock;
+    return ioctl(sock, FIOBIO, &flags);
 #endif
 }
 

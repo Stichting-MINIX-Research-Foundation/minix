@@ -306,7 +306,7 @@
 	
 2005-08-25  Love Hörnquist Åstrand  <lha@it.su.se>
 
-	* strpool.c (rk_strpoolprintf): remove debug printf, plug memory
+	* strpool.c (rk_strpoolprintf): remove debug __printf__, plug memory
 	leak
 	
 2005-08-23  Love Hörnquist Åstrand  <lha@it.su.se>

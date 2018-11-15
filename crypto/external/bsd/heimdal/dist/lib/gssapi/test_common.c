@@ -1,4 +1,4 @@
-/*	$NetBSD: test_common.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: test_common.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 char *
 gssapi_err(OM_uint32 maj_stat, OM_uint32 min_stat, gss_OID mech)
 {
-	OM_uint32 disp_min_stat, disp_maj_stat;
+	OM_uint32 disp_min_stat;
 	gss_buffer_desc maj_error_message;
 	gss_buffer_desc min_error_message;
 	OM_uint32 msg_ctx = 0;
@@ -52,12 +52,10 @@ gssapi_err(OM_uint32 maj_stat, OM_uint32 min_stat, gss_OID mech)
 	min_error_message.length = 0;
 	min_error_message.value = NULL;
 
-	disp_maj_stat = gss_display_status(&disp_min_stat, maj_stat,
-					   GSS_C_GSS_CODE,
-					   mech, &msg_ctx, &maj_error_message);
-	disp_maj_stat = gss_display_status(&disp_min_stat, min_stat,
-					   GSS_C_MECH_CODE,
-					   mech, &msg_ctx, &min_error_message);
+	(void) gss_display_status(&disp_min_stat, maj_stat, GSS_C_GSS_CODE,
+				  mech, &msg_ctx, &maj_error_message);
+	(void) gss_display_status(&disp_min_stat, min_stat, GSS_C_MECH_CODE,
+				  mech, &msg_ctx, &min_error_message);
 	if (asprintf(&ret, "gss-code: %lu %.*s -- mech-code: %lu %.*s",
 		     (unsigned long)maj_stat,
 		     (int)maj_error_message.length,

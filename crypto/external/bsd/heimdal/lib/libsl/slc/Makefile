@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/04/15 21:02:47 elric Exp $
+# $NetBSD: Makefile,v 1.4 2017/01/30 02:38:50 jakllsch Exp $
 
 NOMAN=		# defined
 
@@ -37,11 +37,12 @@ print_version.h: make-print-version
 beforedepend:
 	[ -h krb5 ] || ln -sf . krb5
 	ln -sf ${HEIMBASE}/include/roken.h
+	ln -sf ${HEIMBASE}/include/krb5-types.h
 	ln -sf ${HEIMBASE}/dist/lib/roken/roken-common.h
 	ln -sf ${HEIMBASE}/dist/lib/roken/getarg.h
 
-CLEANFILES+=	krb5 roken.h roken-common.h getarg.h	\
-		print_version.h make-print-version	\
+CLEANFILES+=	krb5 roken.h krb5-types.h roken-common.h	\
+		getarg.h print_version.h make-print-version	\
 		make-print-version.lo
 
 # HOSTPROG will be set already if this is a src/tools build.

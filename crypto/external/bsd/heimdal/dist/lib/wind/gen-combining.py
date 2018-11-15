@@ -73,8 +73,8 @@ extern const size_t _wind_combining_table_size;
 
 combining_c.file.write(
 '''
-#include <stdlib.h>
 #include "combining_table.h"
+#include <stdlib.h>
 
 const struct translation _wind_combining_table[] = {
 ''')

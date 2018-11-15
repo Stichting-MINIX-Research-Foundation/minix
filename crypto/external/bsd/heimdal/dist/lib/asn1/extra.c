@@ -1,4 +1,4 @@
-/*	$NetBSD: extra.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: extra.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2005 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include "der_locl.h"
 #include <krb5/heim_asn1.h>
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: extra.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 int
 encode_heim_any(unsigned char *p, size_t len,

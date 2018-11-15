@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*	NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp	*/
 

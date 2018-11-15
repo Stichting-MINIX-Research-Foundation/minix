@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_mo.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_mo.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -205,6 +205,7 @@ make_sasl_name(OM_uint32 *minor, const gss_OID mech, char sasl_name[16])
     EVP_DigestUpdate(ctx, hdr, 2);
     EVP_DigestUpdate(ctx, mech->elements, mech->length);
     EVP_DigestFinal_ex(ctx, hash, NULL);
+    EVP_MD_CTX_destroy(ctx);
 
     memcpy(p, "GS2-", 4);
     p += 4;

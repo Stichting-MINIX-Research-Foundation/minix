@@ -553,6 +553,7 @@ all-tools:: $(BINDIR)\gsstool.exe
 
 $(BINDIR)\gsstool.exe: $(OBJ)\gsstool.obj $(OBJ)\gss-commands.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBSL) $(LIBVERS)
 	$(EXECONLINK)
+	$(EXEPREP)
 
 $(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
 	cd $(OBJ)
@@ -630,10 +631,10 @@ test-binaries: $(LIBGSSAPI) $(TEST_BINARIES)
 
 run-test:
 	cd $(OBJ)
-	test_oid
-	test_names
-	test_cfx
-	test_kcred
+	-test_oid
+	-test_names
+	-test_cfx
+	-test_kcred
 	cd $(SRCDIR)
 
 test:: test-binaries run-test

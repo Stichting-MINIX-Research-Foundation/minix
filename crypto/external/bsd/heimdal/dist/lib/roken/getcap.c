@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: getcap.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*	NetBSD: getcap.c,v 1.29 1999/03/29 09:27:29 abs Exp	*/
 
@@ -54,9 +54,6 @@
 #include <unistd.h>
 
 #define	BFRAG		1024
-#if 0
-#define	BSIZE		1024
-#endif
 #define	ESC		('[' & 037)	/* ASCII ESC */
 #define	MAX_RECURSION	32		/* maximum getent recursion */
 #define	SFRAG		100		/* cgetstr mallocs in SFRAG chunks */
@@ -68,15 +65,6 @@
 static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
-
-#if 0 /*
-       * Don't use db support unless it's build into libc but we don't
-       * check for that now, so just disable the code.
-       */
-#if defined(HAVE_DBOPEN) && defined(HAVE_DB_H)
-#define USE_DB
-#endif
-#endif
 
 #ifdef USE_DB
 static int	cdbget (DB *, char **, const char *);
@@ -90,10 +78,6 @@ ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL cgetcap(char *buf, const char *cap, int
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetent(char **buf, char **db_array, const char *name);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetmatch(const char *buf, const char *name);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetclose(void);
-#if 0
-int cgetfirst(char **buf, char **db_array);
-int cgetnext(char **bp, char **db_array);
-#endif
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetstr(char *buf, const char *cap, char **str);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetustr(char *buf, const char *cap, char **str);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetnum(char *buf, const char *cap, long *num);
@@ -252,12 +236,12 @@ getent(char **cap, size_t *len, char **db_array, int fd,
      * Check if we have a top record from cgetset().
      */
     if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-	size_t len = topreclen + BFRAG;
-	if ((record = malloc (len)) == NULL) {
+	size_t tmplen = topreclen + BFRAG;
+	if ((record = malloc (tmplen)) == NULL) {
 	    errno = ENOMEM;
 	    return (-2);
 	}
-	(void)strlcpy(record, toprec, len);
+	(void)strlcpy(record, toprec, tmplen);
 	db_p = db_array;
 	rp = record + topreclen + 1;
 	r_end = rp + BFRAG;
@@ -298,6 +282,7 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 		!= NULL) {
 		free(record);
 		retval = cdbget(capdbp, &record, name);
+                /* record is no longer for us to free here */
 		if (retval < 0) {
 		    /* no record available */
 		    (void)capdbp->close(capdbp);
@@ -418,17 +403,20 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 				 */
 		    if (rp >= r_end) {
 			u_int pos;
+                        char *tmp;
 			size_t newsize;
 
 			pos = rp - record;
 			newsize = r_end - record + BFRAG;
-			record = realloc(record, newsize);
-			if (record == NULL) {
+			tmp = realloc(record, newsize);
+			if (tmp == NULL) {
 			    errno = ENOMEM;
 			    if (myfd)
 				(void)close(fd);
+                            free(record);
 			    return (-2);
 			}
+                        record = tmp;
 			r_end = record + newsize;
 			rp = record + pos;
 		    }
@@ -466,8 +454,10 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	    break;
     }
 
-    if (!foundit)
+    if (!foundit) {
+        free(record);
 	return (-1);
+    }
 
     /*
      * Got the capability record, but now we have to expand all tc=name
@@ -559,19 +549,22 @@ getent(char **cap, size_t *len, char **db_array, int fd,
 	    if (diff >= r_end - rp) {
 		u_int pos, tcpos, tcposend;
 		size_t newsize;
+                char *tmp;
 
 		pos = rp - record;
 		newsize = r_end - record + diff + BFRAG;
 		tcpos = tcstart - record;
 		tcposend = tcend - record;
-		record = realloc(record, newsize);
-		if (record == NULL) {
+		tmp = realloc(record, newsize);
+		if (tmp == NULL) {
 		    errno = ENOMEM;
 		    if (myfd)
 			(void)close(fd);
 		    free(icap);
+                    free(record);
 		    return (-2);
 		}
+                record = tmp;
 		r_end = record + newsize;
 		rp = record + pos;
 		tcstart = record + tcpos;
@@ -602,12 +595,15 @@ getent(char **cap, size_t *len, char **db_array, int fd,
     if (myfd)
 	(void)close(fd);
     *len = rp - record - 1;	/* don't count NUL */
-    if (r_end > rp)
-	if ((record =
-	     realloc(record, (size_t)(rp - record))) == NULL) {
+    if (r_end > rp) {
+        char *tmp = realloc(record, (size_t)(rp - record));
+	if (tmp == NULL) {
 	    errno = ENOMEM;
+            free(record);
 	    return (-2);
 	}
+        record = tmp;
+    }
 
     *cap = record;
     if (tc_not_resolved)
@@ -689,15 +685,6 @@ cgetmatch(const char *buf, const char *name)
     }
 }
 
-#if 0
-int
-cgetfirst(char **buf, char **db_array)
-{
-    (void)cgetclose();
-    return (cgetnext(buf, db_array));
-}
-#endif
-
 static FILE *pfp;
 static int slash;
 static char **dbp;
@@ -714,131 +701,6 @@ cgetclose(void)
     slash = 0;
     return(0);
 }
-
-#if 0
-/*
- * Cgetnext() gets either the first or next entry in the logical database
- * specified by db_array.  It returns 0 upon completion of the database, 1
- * upon returning an entry with more remaining, and -1 if an error occurs.
- */
-int
-cgetnext(char **bp, char **db_array)
-{
-    size_t len;
-    int status, done;
-    char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
-    size_t dummy;
-
-    if (dbp == NULL)
-	dbp = db_array;
-
-    if (pfp == NULL && (pfp = fopen(*dbp, "r")) == NULL) {
-	(void)cgetclose();
-	return (-1);
-    }
-    for(;;) {
-	if (toprec && !gottoprec) {
-	    gottoprec = 1;
-	    line = toprec;
-	} else {
-	    line = fgetln(pfp, &len);
-	    if (line == NULL && pfp) {
-		if (ferror(pfp)) {
-		    (void)cgetclose();
-		    return (-1);
-		} else {
-		    (void)fclose(pfp);
-		    pfp = NULL;
-		    if (*++dbp == NULL) {
-			(void)cgetclose();
-			return (0);
-		    } else if ((pfp =
-				fopen(*dbp, "r")) == NULL) {
-			(void)cgetclose();
-			return (-1);
-		    } else
-			continue;
-		}
-	    } else
-		line[len - 1] = '\0';
-	    if (len == 1) {
-		slash = 0;
-		continue;
-	    }
-	    if (isspace((unsigned char)*line) ||
-		*line == ':' || *line == '#' || slash) {
-		if (line[len - 2] == '\\')
-		    slash = 1;
-		else
-		    slash = 0;
-		continue;
-	    }
-	    if (line[len - 2] == '\\')
-		slash = 1;
-	    else
-		slash = 0;
-	}
-
-
-	/*
-	 * Line points to a name line.
-	 */
-	done = 0;
-	np = nbuf;
-	for (;;) {
-	    for (cp = line; *cp != '\0'; cp++) {
-		if (*cp == ':') {
-		    *np++ = ':';
-		    done = 1;
-		    break;
-		}
-		if (*cp == '\\')
-		    break;
-		*np++ = *cp;
-	    }
-	    if (done) {
-		*np = '\0';
-		break;
-	    } else { /* name field extends beyond the line */
-		line = fgetln(pfp, &len);
-		if (line == NULL && pfp) {
-		    if (ferror(pfp)) {
-			(void)cgetclose();
-			return (-1);
-		    }
-		    (void)fclose(pfp);
-		    pfp = NULL;
-		    *np = '\0';
-		    break;
-		} else
-		    line[len - 1] = '\0';
-	    }
-	}
-	rp = buf;
-	for(cp = nbuf; *cp != '\0'; cp++)
-	    if (*cp == '|' || *cp == ':')
-		break;
-	    else
-		*rp++ = *cp;
-
-	*rp = '\0';
-	/*
-	 * XXX
-	 * Last argument of getent here should be nbuf if we want true
-	 * sequential access in the case of duplicates.
-	 * With NULL, getent will return the first entry found
-	 * rather than the duplicate entry record.  This is a
-	 * matter of semantics that should be resolved.
-	 */
-	status = getent(bp, &dummy, db_array, -1, buf, 0, NULL);
-	if (status == -2 || status == -3)
-	    (void)cgetclose();
-
-	return (status + 1);
-    }
-    /* NOTREACHED */
-}
-#endif
 
 /*
  * Cgetstr retrieves the value of the string capability cap from the
@@ -1038,9 +900,14 @@ cgetustr(char *buf, const char *cap, char **str)
     /*
      * Give back any extra memory and return value and success.
      */
-    if (m_room != 0)
-	if ((mem = realloc(mem, (size_t)(mp - mem))) == NULL)
+    if (m_room != 0) {
+        char *tmp = realloc(mem, (size_t)(mp - mem));
+	if (tmp == NULL) {
+            free(mem);
 	    return (-2);
+        }
+        mem = tmp;
+    }
     *str = mem;
     return (len);
 }

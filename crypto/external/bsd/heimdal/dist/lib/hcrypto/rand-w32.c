@@ -1,4 +1,4 @@
-/*	$NetBSD: rand-w32.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: rand-w32.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -38,23 +38,21 @@
 
 #include <wincrypt.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <rand.h>
 #include <heim_threads.h>
 
 #include "randi.h"
 
-volatile static HCRYPTPROV g_cryptprovider = 0;
+volatile static HCRYPTPROV g_cryptprovider = NULL;
 
 static HCRYPTPROV
 _hc_CryptProvider(void)
 {
     BOOL rv;
-    HCRYPTPROV cryptprovider = 0;
+    HCRYPTPROV cryptprovider = NULL;
 
-    if (g_cryptprovider != 0)
-	return g_cryptprovider;
+    if (g_cryptprovider != NULL)
+	goto out;
 
     rv = CryptAcquireContext(&cryptprovider, NULL,
 			      MS_ENHANCED_PROV, PROV_RSA_FULL,
@@ -84,15 +82,15 @@ _hc_CryptProvider(void)
                                  CRYPT_VERIFYCONTEXT);
     }
 
-    if (rv &&
+    if (rv == 0 &&
         InterlockedCompareExchangePointer((PVOID *) &g_cryptprovider,
-					  (PVOID) cryptprovider, 0) != 0) {
+					  (PVOID) cryptprovider, NULL) != 0) {
 
         CryptReleaseContext(cryptprovider, 0);
-        cryptprovider = g_cryptprovider;
     }
 
-    return cryptprovider;
+out:
+    return g_cryptprovider;
 }
 
 /*

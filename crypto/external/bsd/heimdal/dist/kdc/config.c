@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: config.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -54,8 +54,24 @@ static char *max_request_str;	/* `max_request' as a string */
 static int disable_des = -1;
 
 static int builtin_hdb_flag;
+int testing_flag;
 static int help_flag;
 static int version_flag;
+
+/* Should we enable the HTTP hack? */
+int enable_http = -1;
+
+/* Log over requests to the KDC */
+const char *request_log;
+
+/* A string describing on what ports to listen */
+const char *port_str;
+
+krb5_addresses explicit_addresses;
+
+size_t max_request_udp;
+size_t max_request_tcp;
+
 
 static struct getarg_strings addresses_str;	/* addresses to listen on */
 
@@ -81,18 +97,19 @@ static struct getargs args[] = {
     {	"ports",	'P', 	arg_string, rk_UNCONST(&port_str),
 	"ports to listen to", "portspec"
     },
-#ifdef SUPPORT_DETACH
-#if DETACH_IS_DEFAULT
-    {
-	"detach",       'D',      arg_negative_flag, &detach_from_console,
-	"don't detach from console", NULL
-    },
-#else
     {
 	"detach",       0 ,      arg_flag, &detach_from_console,
 	"detach from console", NULL
     },
-#endif
+    {
+        "daemon-child",       0 ,      arg_flag, &daemon_child,
+        "private argument, do not use", NULL
+    },
+#ifdef __APPLE__
+    {
+        "bonjour",       0 ,      arg_flag, &do_bonjour,
+        "private argument, do not use", NULL
+    },
 #endif
     {	"addresses",	0,	arg_strings, &addresses_str,
 	"addresses to listen on", "list of addresses" },
@@ -106,6 +123,7 @@ static struct getargs args[] = {
     {   "chroot",	0,	arg_string, &chroot_string,
 	"chroot directory to run in", NULL
     },
+    {	"testing",	0,	arg_flag,   &testing_flag, NULL, NULL },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
@@ -136,17 +154,19 @@ add_one_address (krb5_context context, const char *str, int first)
 }
 
 krb5_kdc_configuration *
-configure(krb5_context context, int argc, char **argv)
+configure(krb5_context context, int argc, char **argv, int *optidx)
 {
     krb5_kdc_configuration *config;
     krb5_error_code ret;
-    int optidx = 0;
+    
     const char *p;
 
-    while(getarg(args, num_args, argc, argv, &optidx))
-	warnx("error at argument `%s'", argv[optidx]);
+    *optidx = 0;
 
-    if(help_flag)
+    while (getarg(args, num_args, argc, argv, optidx))
+	warnx("error at argument `%s'", argv[*optidx]);
+
+    if (help_flag)
 	usage (0);
 
     if (version_flag) {
@@ -164,18 +184,22 @@ configure(krb5_context context, int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optidx;
-    argv += optidx;
+    if(detach_from_console == -1)
+	detach_from_console = krb5_config_get_bool_default(context, NULL,
+							   FALSE,
+							   "kdc",
+							   "detach", NULL);
 
-    if (argc != 0)
-	usage(1);
+    if (detach_from_console && daemon_child == -1)
+        roken_detach_prep(argc, argv, "--daemon-child");
 
     {
 	char **files;
+	int aret;
 
 	if (config_file == NULL) {
-	    asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	    if (config_file == NULL)
+	    aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+	    if (aret == -1 || config_file == NULL)
 		errx(1, "out of memory");
 	}
 
@@ -254,14 +278,6 @@ configure(krb5_context context, int argc, char **argv)
 			       "enforce-transited-policy", NULL))
 	krb5_errx(context, 1, "enforce-transited-policy deprecated, "
 		  "use [kdc]transited-policy instead");
-
-#ifdef SUPPORT_DETACH
-    if(detach_from_console == -1)
-	detach_from_console = krb5_config_get_bool_default(context, NULL,
-							   DETACH_IS_DEFAULT,
-							   "kdc",
-							   "detach", NULL);
-#endif /* SUPPORT_DETACH */
 
     if(max_request_tcp == 0)
 	max_request_tcp = 64 * 1024;

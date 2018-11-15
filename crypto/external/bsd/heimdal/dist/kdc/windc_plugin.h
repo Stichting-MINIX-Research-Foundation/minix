@@ -1,4 +1,4 @@
-/*	$NetBSD: windc_plugin.h,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: windc_plugin.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -70,9 +70,9 @@ typedef krb5_error_code
 (*krb5plugin_windc_client_access)(
 	void *, krb5_context,
 	krb5_kdc_configuration *config,
-	hdb_entry_ex *, const char *,
-	hdb_entry_ex *, const char *,
-	KDC_REQ *, krb5_data *);
+	hdb_entry_ex *, const char *, 
+	hdb_entry_ex *, const char *, 
+	KDC_REQ *, METHOD_DATA *);
 
 
 #define KRB5_WINDC_PLUGIN_MINOR			6

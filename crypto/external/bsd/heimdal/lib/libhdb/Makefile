@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2017/01/28 21:31:52 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -21,19 +21,22 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		heimbase	${HEIMBASE}/lib/libheimbase
 
 HEIMSRCS= hdb_err.et hdb.asn1
+ASN1_OPTS.hdb.asn1+= --one-code-file --sequence=HDB-Ext-KeySet --sequence=Keys
 
 SRCS=			\
 	common.c	\
 	db.c		\
 	db3.c		\
+	dbinfo.c	\
 	ext.c		\
-	hdb-ldap.c	\
-	hdb.c		\
 	hdb-keytab.c	\
+	hdb-ldap.c	\
 	hdb-mitdb.c	\
+	hdb-sqlite.c	\
+	hdb.c		\
+	hdb_err.c	\
 	keys.c		\
 	keytab.c	\
-	dbinfo.c	\
 	mkey.c		\
 	ndbm.c		\
 	print.c

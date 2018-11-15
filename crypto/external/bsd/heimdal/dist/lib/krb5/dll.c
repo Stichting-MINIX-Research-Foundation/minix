@@ -1,4 +1,4 @@
-/*	$NetBSD: dll.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: dll.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
@@ -33,12 +33,29 @@
 
 #include<windows.h>
 
+extern void heim_w32_service_thread_detach(void *);
+
 HINSTANCE _krb5_hInstance = NULL;
+
+#if NTDDI_VERSION >= NTDDI_VISTA
+extern BOOL WINAPI
+_hc_w32crypto_DllMain(HINSTANCE hinstDLL,
+		      DWORD fdwReason,
+		      LPVOID lpvReserved);
+#endif
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 		    DWORD fdwReason,
 		    LPVOID lpvReserved)
 {
+#if NTDDI_VERSION >= NTDDI_VISTA
+    BOOL ret;
+
+    ret = _hc_w32crypto_DllMain(hinstDLL, fdwReason, lpvReserved);
+    if (!ret)
+	return ret;
+#endif
+
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 
@@ -52,6 +69,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 	return FALSE;
 
     case DLL_THREAD_DETACH:
+        heim_w32_service_thread_detach(NULL);
 	return FALSE;
     }
 

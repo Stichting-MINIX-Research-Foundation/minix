@@ -1,18 +1,38 @@
 @c Id
-@c $NetBSD: migration.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
+@c $NetBSD: migration.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 
 @node Migration, Acknowledgments, Programming with Kerberos, Top
 @chapter Migration
 
 @section Migration from MIT Kerberos to Heimdal
 
-hpropd can read MIT Kerberos dump, the format is the same as used in
-mit-kerberos 1.0b7, and to dump that format use the following command:
-@samp{kdb5_util dump -b7}.
+hpropd can read MIT Kerberos dump in "kdb5_util load_dump version 5" or
+version 6 format.  Simply run:
+@samp{kdb5_util dump}.
 
 To load the MIT Kerberos dump file, use the following command:
 
 @samp{/usr/heimdal/libexec/hprop --database=dump-file --master-key=/var/db/krb5kdc/mit_stash --source=mit-dump --decrypt --stdout | /usr/heimdal/libexec/hpropd --stdin}
+
+kadmin can dump in MIT Kerberos format.  Simply run:
+@samp{kadmin -l dump -f MIT}.
+
+The Heimdal KDC and kadmind, as well as kadmin -l and the libkadm5srv
+library can read and write MIT KDBs, and can read MIT stash files.  To
+build with KDB support requires having a standalone libdb from MIT
+Kerberos and associated headers, then you can configure Heildal as
+follows:
+
+@samp{./configure ... CPPFLAGS=-I/path-to-mit-db-headers LDFLAGS="-L/path-to-mit-db-object -Wl,-rpath -Wl,/path-to-mit-db-object" LDLIBS=-ldb}
+
+At this time support for MIT Kerberos KDB dump/load format and direct
+KDB access does not include support for PKINIT, or K/M key history,
+constrained delegation, and other advanced features.
+
+Heimdal supports using multiple HDBs at once, with all write going to
+just one HDB.  This allows for entries to be moved to a native HDB from
+an MIT KDB over time as those entries are changed.  Or you can use hprop
+and hpropd.
 
 @section General issues
 

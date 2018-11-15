@@ -58,9 +58,15 @@ EXPORTS
 	asn1_oid_id_ecPublicKey	DATA
 	asn1_oid_id_ec_group_secp160r1	DATA
 	asn1_oid_id_ec_group_secp160r2	DATA
+	asn1_oid_id_ec_group_secp224r1	DATA
 	asn1_oid_id_ec_group_secp256r1	DATA
+	asn1_oid_id_ec_group_secp384r1	DATA
+	asn1_oid_id_ec_group_secp521r1	DATA
 	asn1_oid_id_ecdsa_with_SHA1	DATA
+	asn1_oid_id_ecdsa_with_SHA224   DATA
 	asn1_oid_id_ecdsa_with_SHA256	DATA
+	asn1_oid_id_ecdsa_with_SHA384   DATA
+	asn1_oid_id_ecdsa_with_SHA512   DATA
 	asn1_oid_id_heim_rsa_pkcs1_x509	DATA
 	asn1_oid_id_ms_cert_enroll_domaincontroller	DATA
 	asn1_oid_id_ms_client_authentication	DATA
@@ -299,6 +305,8 @@ EXPORTS
 	copy_IssuerAndSerialNumber
 	copy_KDCDHKeyInfo
 	copy_KDCDHKeyInfo_Win2k
+	copy_KDCFastCookie
+	copy_KDCFastState
 	copy_KDCOptions
 	copy_KDC_REP
 	copy_KDC_REQ
@@ -346,8 +354,6 @@ EXPORTS
 	copy_OriginatorInfo
 	copy_OtherName
 	copy_PADATA_TYPE
-	copy_PA_ClientCanonicalized
-	copy_PA_ClientCanonicalizedNames
 	copy_PA_DATA
 	copy_PA_ENC_SAM_RESPONSE_ENC
 	copy_PA_ENC_TS_ENC
@@ -551,6 +557,8 @@ EXPORTS
 	decode_IssuerAndSerialNumber
 	decode_KDCDHKeyInfo
 	decode_KDCDHKeyInfo_Win2k
+	decode_KDCFastCookie
+	decode_KDCFastState
 	decode_KDCOptions
 	decode_KDC_REP
 	decode_KDC_REQ
@@ -598,8 +606,6 @@ EXPORTS
 	decode_OriginatorInfo
 	decode_OtherName
 	decode_PADATA_TYPE
-	decode_PA_ClientCanonicalized
-	decode_PA_ClientCanonicalizedNames
 	decode_PA_DATA
 	decode_PA_ENC_SAM_RESPONSE_ENC
 	decode_PA_ENC_TS_ENC
@@ -699,11 +705,13 @@ EXPORTS
 	der_copy_heim_integer
 	der_copy_ia5_string
 	der_copy_integer
+	der_copy_integer64
 	der_copy_octet_string
 	der_copy_oid
 	der_copy_printable_string
 	der_copy_universal_string
 	der_copy_unsigned
+	der_copy_unsigned64
 	der_copy_utctime
 	der_copy_utf8string
 	der_copy_visible_string
@@ -714,11 +722,13 @@ EXPORTS
 	der_free_heim_integer
 	der_free_ia5_string
 	der_free_integer
+	der_free_integer64
 	der_free_octet_string
 	der_free_oid
 	der_free_printable_string
 	der_free_universal_string
 	der_free_unsigned
+	der_free_unsigned64
 	der_free_utctime
 	der_free_utf8string
 	der_free_visible_string
@@ -732,6 +742,7 @@ EXPORTS
 	der_get_heim_integer
 	der_get_ia5_string
 	der_get_integer
+	der_get_integer64
 	der_get_length
 	der_get_octet_string
 	der_get_octet_string_ber
@@ -744,6 +755,7 @@ EXPORTS
 	der_get_type_num
 	der_get_universal_string
 	der_get_unsigned
+	der_get_unsigned64
 	der_get_utctime
 	der_get_utf8string
 	der_get_visible_string
@@ -763,6 +775,7 @@ EXPORTS
 	der_length_heim_integer
 	der_length_ia5_string
 	der_length_integer
+	der_length_integer64
 	der_length_len
 	der_length_octet_string
 	der_length_oid
@@ -770,6 +783,7 @@ EXPORTS
 	der_length_tag
 	der_length_universal_string
 	der_length_unsigned
+	der_length_unsigned64
 	der_length_utctime
 	der_length_utf8string
 	der_length_visible_string
@@ -789,6 +803,7 @@ EXPORTS
 	der_put_heim_integer
 	der_put_ia5_string
 	der_put_integer
+	der_put_integer64
 	der_put_length
 	der_put_length_and_tag
 	der_put_octet_string
@@ -797,6 +812,7 @@ EXPORTS
 	der_put_tag
 	der_put_universal_string
 	der_put_unsigned
+	der_put_unsigned64
 	der_put_utctime
 	der_put_utf8string
 	der_put_visible_string
@@ -911,6 +927,8 @@ EXPORTS
 	encode_IssuerAndSerialNumber
 	encode_KDCDHKeyInfo
 	encode_KDCDHKeyInfo_Win2k
+	encode_KDCFastCookie
+	encode_KDCFastState
 	encode_KDCOptions
 	encode_KDC_REP
 	encode_KDC_REQ
@@ -958,8 +976,6 @@ EXPORTS
 	encode_OriginatorInfo
 	encode_OtherName
 	encode_PADATA_TYPE
-	encode_PA_ClientCanonicalized
-	encode_PA_ClientCanonicalizedNames
 	encode_PA_DATA
 	encode_PA_ENC_SAM_RESPONSE_ENC
 	encode_PA_ENC_TS_ENC
@@ -1163,6 +1179,8 @@ EXPORTS
 	free_IssuerAndSerialNumber
 	free_KDCDHKeyInfo
 	free_KDCDHKeyInfo_Win2k
+	free_KDCFastCookie
+	free_KDCFastState
 	free_KDCOptions
 	free_KDC_REP
 	free_KDC_REQ
@@ -1210,8 +1228,6 @@ EXPORTS
 	free_OriginatorInfo
 	free_OtherName
 	free_PADATA_TYPE
-	free_PA_ClientCanonicalized
-	free_PA_ClientCanonicalizedNames
 	free_PA_DATA
 	free_PA_ENC_SAM_RESPONSE_ENC
 	free_PA_ENC_TS_ENC
@@ -1426,6 +1442,8 @@ EXPORTS
 	length_IssuerAndSerialNumber
 	length_KDCDHKeyInfo
 	length_KDCDHKeyInfo_Win2k
+	length_KDCFastCookie
+	length_KDCFastState
 	length_KDCOptions
 	length_KDC_REP
 	length_KDC_REQ
@@ -1473,8 +1491,6 @@ EXPORTS
 	length_OriginatorInfo
 	length_OtherName
 	length_PADATA_TYPE
-	length_PA_ClientCanonicalized
-	length_PA_ClientCanonicalizedNames
 	length_PA_DATA
 	length_PA_ENC_SAM_RESPONSE_ENC
 	length_PA_ENC_TS_ENC

@@ -1,0 +1,12 @@
+[
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"keytab" : "FILE:server.keytab"
+		}
+	}
+]
+

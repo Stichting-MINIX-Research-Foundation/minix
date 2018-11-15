@@ -88,9 +88,21 @@ id-ecMQV OBJECT IDENTIFIER ::= {
        iso(1) identified-organization(3) certicom(132) schemes(1)
        ecmqv(13) }
 
+id-ecdsa-with-SHA512 OBJECT IDENTIFIER ::= {
+     iso(1) member-body(2) us(840) ansi-X9-62(10045) signatures(4)
+     ecdsa-with-SHA2(3) 4 }
+
+id-ecdsa-with-SHA384 OBJECT IDENTIFIER ::= {
+     iso(1) member-body(2) us(840) ansi-X9-62(10045) signatures(4)
+     ecdsa-with-SHA2(3) 3 }
+
 id-ecdsa-with-SHA256 OBJECT IDENTIFIER ::= {
      iso(1) member-body(2) us(840) ansi-X9-62(10045) signatures(4)
      ecdsa-with-SHA2(3) 2 }
+
+id-ecdsa-with-SHA224 OBJECT IDENTIFIER ::= {
+     iso(1) member-body(2) us(840) ansi-X9-62(10045) signatures(4)
+     ecdsa-with-SHA2(3) 1 }
 
 id-ecdsa-with-SHA1 OBJECT IDENTIFIER ::= {
      iso(1) member-body(2) us(840) ansi-X9-62(10045) signatures(4) 1 }
@@ -106,6 +118,15 @@ id-ec-group-secp160r1 OBJECT IDENTIFIER ::= {
 
 id-ec-group-secp160r2 OBJECT IDENTIFIER ::= {
        iso(1) identified-organization(3) certicom(132) 0 30 }
+
+id-ec-group-secp224r1 OBJECT IDENTIFIER ::= {
+       iso(1) identified-organization(3) certicom(132) 0 33 }
+
+id-ec-group-secp384r1 OBJECT IDENTIFIER ::= {
+       iso(1) identified-organization(3) certicom(132) 0 34 }
+
+id-ec-group-secp521r1 OBJECT IDENTIFIER ::= {
+       iso(1) identified-organization(3) certicom(132) 0 35 }
 
 -- DSA
 
@@ -128,6 +149,8 @@ id-at-stateOrProvinceName	OBJECT IDENTIFIER ::= { id-x520-at 8 }
 id-at-streetAddress		OBJECT IDENTIFIER ::= { id-x520-at 9 }
 id-at-organizationName		OBJECT IDENTIFIER ::= { id-x520-at 10 }
 id-at-organizationalUnitName	OBJECT IDENTIFIER ::= { id-x520-at 11 }
+id-at-title			OBJECT IDENTIFIER ::= { id-x520-at 12 }
+id-at-description		OBJECT IDENTIFIER ::= { id-x520-at 13 }
 id-at-name			OBJECT IDENTIFIER ::= { id-x520-at 41 }
 id-at-givenName			OBJECT IDENTIFIER ::= { id-x520-at 42 }
 id-at-initials			OBJECT IDENTIFIER ::= { id-x520-at 43 }

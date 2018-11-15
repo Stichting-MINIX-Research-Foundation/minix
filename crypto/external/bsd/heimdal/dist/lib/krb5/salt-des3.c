@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-des3.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: salt-des3.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -52,10 +52,8 @@ DES3_string_to_key(krb5_context context,
 
     len = password.length + salt.saltvalue.length;
     str = malloc(len);
-    if(len != 0 && str == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && str == NULL)
+	return krb5_enomem(context);
     memcpy(str, password.data, password.length);
     memcpy(str + password.length, salt.saltvalue.data, salt.saltvalue.length);
     {
@@ -75,7 +73,7 @@ DES3_string_to_key(krb5_context context,
 	    memcpy(keys + i, tmp + i * 8, sizeof(keys[i]));
 	    DES_set_odd_parity(keys + i);
 	    if(DES_is_weak_key(keys + i))
-		_krb5_xor(keys + i, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+		_krb5_xor8(*(keys + i), (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 	    DES_set_key_unchecked(keys + i, &s[i]);
 	}
 	memset(&ivec, 0, sizeof(ivec));
@@ -88,7 +86,7 @@ DES3_string_to_key(krb5_context context,
 	    memcpy(keys + i, tmp + i * 8, sizeof(keys[i]));
 	    DES_set_odd_parity(keys + i);
 	    if(DES_is_weak_key(keys + i))
-		_krb5_xor(keys + i, (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+		_krb5_xor8(*(keys + i), (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 	}
 	memset(tmp, 0, sizeof(tmp));
     }
@@ -114,10 +112,8 @@ DES3_string_to_key_derived(krb5_context context,
     char *s;
 
     s = malloc(len);
-    if(len != 0 && s == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && s == NULL)
+	return krb5_enomem(context);
     memcpy(s, password.data, password.length);
     memcpy(s + password.length, salt.saltvalue.data, salt.saltvalue.length);
     ret = krb5_string_to_key_derived(context,
@@ -138,7 +134,7 @@ struct salt_type _krb5_des3_salt[] = {
 	"pw-salt",
 	DES3_string_to_key
     },
-    { 0 }
+    { 0, NULL, NULL }
 };
 #endif
 
@@ -148,5 +144,5 @@ struct salt_type _krb5_des3_salt_derived[] = {
 	"pw-salt",
 	DES3_string_to_key_derived
     },
-    { 0 }
+    { 0, NULL, NULL }
 };

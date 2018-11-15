@@ -147,5 +147,6 @@ clean::
 	-$(RM) $(SDKINCDIR)\krb5\*.*
 	-$(RM) $(SDKINCDIR)\heimdal\*.*
 	-$(RM) $(SDKINCDIR)\kadm5\*.*
+	-$(RM) $(SDKINCDIR)\gssapi\*.*
 	-$(RM) $(SDKLIBDIR)\*.*
 	-$(RM) $(SDKREDISTDIR)\*.*

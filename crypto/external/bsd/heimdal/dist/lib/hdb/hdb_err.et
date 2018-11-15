@@ -26,5 +26,8 @@ error_code NO_MKEY,		"No correct master key"
 error_code MANDATORY_OPTION,	"Entry contains unknown mandatory extension"
 error_code NO_WRITE_SUPPORT,	"HDB backend doesn't contain write support"
 error_code NOT_FOUND_HERE,	"The secret for this entry is not replicated to this database"
+error_code MISUSE,		"Incorrect use of the API"
+error_code KVNO_NOT_FOUND,	"Entry key version number not found"
+error_code WRONG_REALM,		"The principal exists in another realm."
 
 end

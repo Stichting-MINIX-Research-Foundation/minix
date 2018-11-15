@@ -1144,7 +1144,7 @@ msgstr ""
 
 #: lib/krb5/log.c:311
 #, c-format
-msgid "open(%s) logile: %s"
+msgid "open(%s) logfile: %s"
 msgstr ""
 
 #: lib/krb5/log.c:322
@@ -1705,7 +1705,7 @@ msgstr ""
 #: lib/krb5/transited.c:457
 #: lib/krb5/transited.c:490
 #, c-format
-msgid "no transit allowed through realm %s"
+msgid "no transit allowed through realm %s from %s to %s"
 msgstr ""
 
 #: lib/krb5/v4_glue.c:153

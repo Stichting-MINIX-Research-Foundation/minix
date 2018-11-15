@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: heimdal2netbsd,v 1.6 2014/04/22 14:07:31 pettai Exp $
+#	$NetBSD: heimdal2netbsd,v 1.8 2017/01/28 21:31:43 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@
 #	$ export SRCDIR=/usr/src
 #	$ export HEIMDAL_SRCDIR=src/crypto/external/bsd/heimdal
 #	$ cd /some/where/temporary
-#	$ git clone git@github.com:heimdal/heimdal.git
+#	$ git clone git://github.com/heimdal/heimdal.git
 #	$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal `pwd`
 #	$ cd $HEIMDAL_SRCDIR/dist
 #       $ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL head-20110317
@@ -184,15 +184,15 @@ find $d -type f -print | xargs egrep -l '\$NetBSD:' | while read f; do
 	echo froze NetBSD RCSID for $f
 done
 
+### Remove the $'s around RCS tags
+cleantags $d
+
 # Convert unexpanded RCSID's to the NetBSD way.
-find $d -type f -print | xargs egrep -l 'RCSID\("\$Id\$"\)' | while read f; do
-	sed -e 's/RCSID("\$\Id\$")/__RCSID("\$NetBSD\$")/' \
+find $d -type f -print | xargs egrep -l 'RCSID\("Id"\)' | while read f; do
+	sed -e 's/RCSID("Id")/__RCSID("\$NetBSD\$")/' \
 	    < $f > /tmp/heimdal1f$$ && mv /tmp/heimdal1f$$ $f && \
 	echo converted RCSID to NetBSD for $f
 done
-
-### Remove the $'s around RCS tags
-cleantags $d
 
 ### Add our NetBSD RCS Id
 find $d -type f -name '*.[chly]' -print | while read c; do

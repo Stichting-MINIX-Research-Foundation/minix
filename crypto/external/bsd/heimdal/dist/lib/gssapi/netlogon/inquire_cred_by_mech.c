@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_cred_by_mech.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: inquire_cred_by_mech.c,v 1.3 2017/01/30 20:27:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 
 OM_uint32 _netlogon_inquire_cred_by_mech (
             OM_uint32 * minor_status,
-            const gss_cred_id_t cred_handle,
+            gss_const_cred_id_t cred_handle,
             const gss_OID mech_type,
             gss_name_t * name,
             OM_uint32 * initiator_lifetime,
@@ -52,7 +52,7 @@ OM_uint32 _netlogon_inquire_cred_by_mech (
 
     if (name != NULL) {
         ret = _netlogon_duplicate_name(minor_status,
-                                       (const gss_name_t)cred->Name, name);
+                                       (gss_const_name_t)cred->Name, name);
         if (GSS_ERROR(ret))
             return ret;
     }

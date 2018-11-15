@@ -1,4 +1,4 @@
-/*	$NetBSD: free.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: free.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: free.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 void
 kadm5_free_key_data(void *server_handle,
@@ -62,12 +62,13 @@ kadm5_free_principal_ent(void *server_handle,
 			 kadm5_principal_ent_t princ)
 {
     kadm5_server_context *context = server_handle;
-    if(princ->principal)
+
+    if (princ->principal)
 	krb5_free_principal(context->context, princ->principal);
-    if(princ->mod_name)
+    if (princ->mod_name)
 	krb5_free_principal(context->context, princ->mod_name);
     kadm5_free_key_data(server_handle, &princ->n_key_data, princ->key_data);
-    while(princ->n_tl_data && princ->tl_data) {
+    while (princ->n_tl_data && princ->tl_data) {
 	krb5_tl_data *tp;
 	tp = princ->tl_data;
 	princ->tl_data = tp->tl_data_next;
@@ -76,8 +77,8 @@ kadm5_free_principal_ent(void *server_handle,
 	free(tp->tl_data_contents);
 	free(tp);
     }
-    if (princ->key_data != NULL)
-	free (princ->key_data);
+    free(princ->key_data);
+    free(princ->policy);
 }
 
 void

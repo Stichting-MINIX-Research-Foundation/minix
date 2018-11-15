@@ -1,4 +1,4 @@
-/*	$NetBSD: aeap.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: aeap.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2008  Kungliga Tekniska Högskolan
@@ -46,17 +46,43 @@ _gk_wrap_iov(OM_uint32 * minor_status,
 	     gss_iov_buffer_desc *iov,
 	     int iov_count)
 {
-  const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
-  krb5_context context;
+    const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+    krb5_context context;
+    OM_uint32 ret;
+    krb5_keyblock *key;
+    krb5_keytype keytype;
 
-  GSSAPI_KRB5_INIT (&context);
+    GSSAPI_KRB5_INIT (&context);
 
-  if (ctx->more_flags & IS_CFX)
-      return _gssapi_wrap_cfx_iov(minor_status, ctx, context,
-				  conf_req_flag, conf_state,
-				  iov, iov_count);
+    if (ctx->more_flags & IS_CFX)
+        return _gssapi_wrap_cfx_iov(minor_status, ctx, context,
+				    conf_req_flag, conf_state,
+				    iov, iov_count);
 
-    return GSS_S_FAILURE;
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    ret = _gsskrb5i_get_token_key(ctx, context, &key);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    if (ret) {
+	*minor_status = ret;
+	return GSS_S_FAILURE;
+    }
+    krb5_enctype_to_keytype(context, key->keytype, &keytype);
+
+    switch (keytype) {
+    case KEYTYPE_ARCFOUR:
+    case KEYTYPE_ARCFOUR_56:
+	ret = _gssapi_wrap_iov_arcfour(minor_status, ctx, context,
+				       conf_req_flag, conf_state,
+				       iov, iov_count, key);
+	break;
+
+    default:
+	ret = GSS_S_FAILURE;
+	break;
+    }
+
+    krb5_free_keyblock(context, key);
+    return ret;
 }
 
 OM_uint32 GSSAPI_CALLCONV
@@ -69,6 +95,9 @@ _gk_unwrap_iov(OM_uint32 *minor_status,
 {
     const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
     krb5_context context;
+    OM_uint32 ret;
+    krb5_keytype keytype;
+    krb5_keyblock *key;
 
     GSSAPI_KRB5_INIT (&context);
 
@@ -76,7 +105,30 @@ _gk_unwrap_iov(OM_uint32 *minor_status,
 	return _gssapi_unwrap_cfx_iov(minor_status, ctx, context,
 				      conf_state, qop_state, iov, iov_count);
 
-    return GSS_S_FAILURE;
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    ret = _gsskrb5i_get_token_key(ctx, context, &key);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    if (ret) {
+	*minor_status = ret;
+	return GSS_S_FAILURE;
+    }
+    krb5_enctype_to_keytype(context, key->keytype, &keytype);
+
+    switch (keytype) {
+    case KEYTYPE_ARCFOUR:
+    case KEYTYPE_ARCFOUR_56:
+	ret = _gssapi_unwrap_iov_arcfour(minor_status, ctx, context,
+					 conf_state, qop_state,
+					 iov, iov_count, key);
+	break;
+
+    default:
+	ret = GSS_S_FAILURE;
+	break;
+    }
+
+    krb5_free_keyblock(context, key);
+    return ret;
 }
 
 OM_uint32 GSSAPI_CALLCONV
@@ -90,6 +142,9 @@ _gk_wrap_iov_length(OM_uint32 * minor_status,
 {
     const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
     krb5_context context;
+    OM_uint32 ret;
+    krb5_keytype keytype;
+    krb5_keyblock *key;
 
     GSSAPI_KRB5_INIT (&context);
 
@@ -98,5 +153,28 @@ _gk_wrap_iov_length(OM_uint32 * minor_status,
 					   conf_req_flag, qop_req, conf_state,
 					   iov, iov_count);
 
-    return GSS_S_FAILURE;
+    HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+    ret = _gsskrb5i_get_token_key(ctx, context, &key);
+    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+    if (ret) {
+	*minor_status = ret;
+	return GSS_S_FAILURE;
+    }
+    krb5_enctype_to_keytype(context, key->keytype, &keytype);
+
+    switch (keytype) {
+    case KEYTYPE_ARCFOUR:
+    case KEYTYPE_ARCFOUR_56:
+	ret = _gssapi_wrap_iov_length_arcfour(minor_status, ctx, context,
+					      conf_req_flag, qop_req, conf_state,
+					      iov, iov_count);
+	break;
+
+    default:
+	ret = GSS_S_FAILURE;
+	break;
+    }
+
+    krb5_free_keyblock(context, key);
+    return ret;
 }

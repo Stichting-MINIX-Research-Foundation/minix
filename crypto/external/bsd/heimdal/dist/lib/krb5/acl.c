@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: acl.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2002, 2004 Kungliga Tekniska Högskolan
@@ -83,10 +83,8 @@ acl_parse_format(krb5_context context,
     for(p = format; *p != '\0'; p++) {
 	tmp = malloc(sizeof(*tmp));
 	if(tmp == NULL) {
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
 	    acl_free_list(acl, 0);
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	if(*p == 's') {
 	    tmp->type = acl_string;

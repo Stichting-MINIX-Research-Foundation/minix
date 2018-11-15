@@ -1,4 +1,4 @@
-/*	$NetBSD: destroy_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: destroy_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: destroy_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 /*
  * dealloc a `kadm5_config_params'
@@ -57,8 +57,9 @@ destroy_config (kadm5_config_params *c)
 static void
 destroy_kadm5_log_context (kadm5_log_context *c)
 {
-    free (c->log_file);
-    rk_closesocket (c->socket_fd);
+    free(c->log_file);
+    if (c->socket_fd != rk_INVALID_SOCKET)
+        rk_closesocket(c->socket_fd);
 #ifdef NO_UNIX_SOCKETS
     if (c->socket_info) {
 	freeaddrinfo(c->socket_info);
@@ -74,16 +75,18 @@ destroy_kadm5_log_context (kadm5_log_context *c)
 kadm5_ret_t
 kadm5_s_destroy(void *server_handle)
 {
-    kadm5_ret_t ret;
+    kadm5_ret_t ret = 0;
     kadm5_server_context *context = server_handle;
     krb5_context kcontext = context->context;
 
-    ret = context->db->hdb_destroy(kcontext, context->db);
-    destroy_kadm5_log_context (&context->log_context);
-    destroy_config (&context->config);
-    krb5_free_principal (kcontext, context->caller);
-    if(context->my_context)
+    if (context->db != NULL)
+        ret = context->db->hdb_destroy(kcontext, context->db);
+    destroy_kadm5_log_context(&context->log_context);
+    destroy_config(&context->config);
+    krb5_free_principal(kcontext, context->caller);
+    if (context->my_context)
 	krb5_free_context(kcontext);
-    free (context);
+    free(context);
+
     return ret;
 }

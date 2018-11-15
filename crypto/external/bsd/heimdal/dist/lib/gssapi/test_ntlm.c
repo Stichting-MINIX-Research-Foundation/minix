@@ -1,4 +1,4 @@
-/*	$NetBSD: test_ntlm.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: test_ntlm.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -133,7 +133,7 @@ test_libntlm_v1(int flags)
 	free(key.data);
     }
 
-    ret = heim_ntlm_encode_type3(&type3, &data);
+    ret = heim_ntlm_encode_type3(&type3, &data, NULL);
     if (ret)
 	errx(1, "heim_ntlm_encode_type3");
 
@@ -262,7 +262,7 @@ test_libntlm_v2(int flags)
 	}
     }
 
-    ret = heim_ntlm_encode_type3(&type3, &data);
+    ret = heim_ntlm_encode_type3(&type3, &data, NULL);
     if (ret)
 	errx(1, "heim_ntlm_encode_type3");
 
@@ -311,11 +311,11 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int ret = 0, optind = 0;
+    int ret = 0, optidx = 0;
 
     setprogname(argv[0]);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
@@ -326,8 +326,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     ret += test_libntlm_v1(0);
     ret += test_libntlm_v1(NTLM_NEG_KEYEX);
@@ -335,5 +335,5 @@ main(int argc, char **argv)
     ret += test_libntlm_v2(0);
     ret += test_libntlm_v2(NTLM_NEG_KEYEX);
 
-    return 0;
+    return ret;
 }

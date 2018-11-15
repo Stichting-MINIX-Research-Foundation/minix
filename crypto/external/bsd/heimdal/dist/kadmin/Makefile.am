@@ -2,13 +2,13 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) $(INCLUDE_hcrypto) -I$(srcdir)/../lib/krb5 -I$(top_builddir)/include/gssapi
+AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) -I$(srcdir)/../lib/krb5 -I$(top_builddir)/include/gssapi
 
-sbin_PROGRAMS = kadmin
+bin_PROGRAMS = kadmin
 
 libexec_PROGRAMS = kadmind
 
-man_MANS = kadmin.8 kadmind.8
+man_MANS = kadmin.1 kadmind.8
 
 noinst_PROGRAMS = add_random_users
 
@@ -65,7 +65,7 @@ LDADD_common = \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 kadmind_LDADD = $(top_builddir)/lib/kadm5/libkadm5srv.la \
 	../lib/gssapi/libgssapi.la \
