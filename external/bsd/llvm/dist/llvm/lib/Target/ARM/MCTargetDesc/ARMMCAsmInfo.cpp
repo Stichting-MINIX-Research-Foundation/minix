@@ -59,6 +59,7 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo(StringRef TT) {
 
   // Exceptions handling
   switch (TheTriple.getOS()) {
+  case Triple::Minix:
   case Triple::NetBSD:
     ExceptionsType = ExceptionHandling::DwarfCFI;
     break;

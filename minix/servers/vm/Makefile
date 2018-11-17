@@ -8,10 +8,6 @@ SRCS=	main.c alloc.c utility.c exit.c fork.c break.c \
 	mem_anon.c mem_directphys.c mem_anon_contig.c mem_shared.c	\
 	mem_cache.c cache.c vfs.c mem_file.c fdref.c acl.c
 
-.if ${MACHINE_ARCH} == "earm"
-LDFLAGS+= -T ${.CURDIR}/arch/${MACHINE_ARCH}/vm.lds
-.endif
-
 .if ${MKPAE:Uno} != "no"
 CPPFLAGS+= -DPAE=1
 .endif

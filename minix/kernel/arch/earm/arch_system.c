@@ -11,6 +11,7 @@
 #include <machine/vm.h>
 #include <machine/signal.h>
 #include <arm/armreg.h>
+#include <arm/vfpreg.h>
 
 #include <minix/u64.h>
 
@@ -26,16 +27,36 @@
 
 void * k_stacks;
 
-
+#define VFP_COPROC 10
+#define VFP_COPROC2 11
 void fpu_init(void)
 {
+	const char *model = NULL;
+	uint32_t cpu_media_and_vfp_features[2];
+
+	const uint32_t cpacr_vfp = CPACR_CPn(VFP_COPROC);
+	const uint32_t cpacr_vfp2 = CPACR_CPn(VFP_COPROC2);
+
+	/*
+	 * We first need to enable access to the coprocessors.
+	 */
+	uint32_t cpacr = armreg_cpacr_read();
+	cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
+	cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
+	armreg_cpacr_write(cpacr);
+
+	isb();
+
+	/* Enable vfp/neon unit */
+	armreg_fpexc_write(VFP_FPEXC_EN);
 }
 
 void save_local_fpu(struct proc *pr, int retain)
 {
 }
 
-void save_fpu(struct proc *pr)
+void
+save_fpu(struct proc *pr)
 {
 }
 

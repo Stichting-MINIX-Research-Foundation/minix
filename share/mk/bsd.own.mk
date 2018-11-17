@@ -120,6 +120,11 @@ USETOOLS?=	never
 # LSC FIXME: RELEASEMACHINEDIR is set to evbarm, instead of evbearm-el
 .if !empty(MACHINE:Mevbarm*)
 RELEASEMACHINEDIR:= evbearm-el
+# LSC: Clang uses floating point instruction to vectorize some operation, even
+#      at -O0, make sure it uses soft-float as the minix uKernel doesn't yet
+#      save / restore the hardware fpu context on ARM.
+CFLAGS+= -mno-implicit-float -fno-vectorize
+MKSOFTFLOAT=yes
 .endif
 
 .if ${HAVE_GCC:Dyes} == "yes" || \

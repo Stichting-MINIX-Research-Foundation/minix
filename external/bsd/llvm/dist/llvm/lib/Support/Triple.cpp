@@ -1074,6 +1074,8 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
   // supported by LLVM.
   // FIXME: Should warn once that we're falling back.
   switch (getOS()) {
+  case llvm::Triple::Minix:
+      return "cortex-a8";
   case llvm::Triple::NetBSD:
     switch (getEnvironment()) {
     case llvm::Triple::GNUEABIHF:
