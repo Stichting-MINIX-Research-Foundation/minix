@@ -121,6 +121,6 @@ void		 grep_close(file_t *f);
 
 /* binary.c */
 int		 bin_file(FILE * f);
-int		 gzbin_file(gzFile * f);
+int		 gzbin_file(gzFile f);
 int		 mmbin_file(mmf_t *f);
 

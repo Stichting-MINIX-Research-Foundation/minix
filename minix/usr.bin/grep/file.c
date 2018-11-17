@@ -53,12 +53,12 @@ struct file {
 	int	 noseek;
 	FILE	*f;
 	mmf_t	*mmf;
-	gzFile	*gzf;
+	gzFile	gzf;
 };
 
 #ifndef NOZ
 static char *
-gzfgetln(gzFile *f, size_t *len)
+gzfgetln(gzFile f, size_t *len)
 {
 	size_t		n;
 	int		c;
