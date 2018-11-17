@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2010/11/05 09:09:01 he Exp $
+# $NetBSD: Makefile.inc,v 1.5 2017/04/21 12:43:22 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,8 @@ CPPFLAGS+=	-DBINDIR='"${BINDIR}"'
 DPADD+=	${LIBINSTALL}/libinstall.a
 LDADD+=	-L${LIBINSTALL} -linstall -ltermcap
 
-DPADD+=		${LIBFETCH} ${LIBSSL} ${LIBCRYPTO}
-LDADD+=		-lfetch -lssl -lcrypto
+DPADD+=		${LIBNETPGPVERIFY} ${LIBFETCH} ${LIBSSL} ${LIBCRYPTO}
+LDADD+=		-lnetpgpverify -lfetch -lssl -lcrypto
 
 DPADD+=		${LIBARCHIVE}
 LDADD+=		-larchive
@@ -21,5 +21,10 @@ LDADD+=		-larchive
 DPADD+=		${LIBZ} ${LIBBZ2}
 LDADD+=		-lz -lbz2
 
+.if !defined(__MINIX)
+DPADD+=		${LIBLZMA} ${LIBPTHREAD}
+LDADD+=		-llzma -lpthread
+.else
 DPADD+=		${LIBLZMA}
 LDADD+=		-llzma
+.endif # !defined(__MINIX)

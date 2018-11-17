@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.2 2015/10/10 10:08:12 mbalmer Exp $
+.\" $NetBSD: pkg_create.1,v 1.3 2017/04/20 13:18:23 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd October 10, 2015
+.Dd December 27, 2014
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -32,70 +32,28 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl ElOUVv
-.Bk -words
+.Op Fl lOVv
 .Op Fl B Ar build-info-file
-.Ek
-.Bk -words
 .Op Fl b Ar build-version-file
-.Ek
-.Bk -words
 .Op Fl C Ar cpkgs
-.Ek
-.Bk -words
 .Op Fl D Ar displayfile
-.Ek
-.Bk -words
 .Op Fl F Ar compression
-.Ek
-.Bk -words
 .Op Fl g Ar group
-.Ek
-.Bk -words
 .Op Fl I Ar realprefix
-.Ek
-.Bk -words
 .Op Fl i Ar iscript
-.Ek
-.Bk -words
 .Op Fl K Ar pkg_dbdir
-.Ek
-.Bk -words
 .Op Fl k Ar dscript
-.Ek
-.Bk -words
 .Op Fl n Ar preserve-file
-.Ek
-.Bk -words
 .Op Fl P Ar dpkgs
-.Ek
-.Bk -words
-.Op Fl T Ar buildpkgs
-.Ek
-.Bk -words
 .Op Fl p Ar prefix
-.Ek
-.Bk -words
 .Op Fl S Ar size-all-file
-.Ek
-.Bk -words
 .Op Fl s Ar size-pkg-file
-.Ek
-.Bk -words
+.Op Fl T Ar buildpkgs
 .Op Fl t Ar template
-.Ek
-.Bk -words
 .Op Fl u Ar owner
-.Ek
-.Bk -words
 .Fl c Ar comment
-.Ek
-.Bk -words
 .Fl d Ar description
-.Ek
-.Bk -words
 .Fl f Ar packlist
-.Ek
 .Ar pkg-name
 .Sh DESCRIPTION
 The
@@ -158,8 +116,6 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
-.It Fl E
-Add an empty views file to the package.
 .It Fl F Ar compression
 Use
 .Ar compression
@@ -287,8 +243,6 @@ Be sure to leave some number of
 characters for
 .Xr mktemp 3
 to fill in with a unique ID.
-.It Fl U
-Do not update the package file database with any file information.
 .It Fl u Ar owner
 Make
 .Ar owner
@@ -494,12 +448,11 @@ command first appeared in
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It Jordan Hubbard
-did most of the work.
+most of the work
 .It John Kohl
 refined it for
-.Nx .
+.Nx
 .It Hubert Feyrer
-added
 .Nx
 wildcard dependency processing, pkgdb, pkg size recording etc.
 .El

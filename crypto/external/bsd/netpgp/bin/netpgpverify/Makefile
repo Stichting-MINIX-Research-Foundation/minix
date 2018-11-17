@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/12/05 04:42:36 agc Exp $
+#	$NetBSD: Makefile,v 1.15 2017/04/17 19:50:27 agc Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -9,7 +9,7 @@ SRCS+= pgpsum.c rsa.c
 
 SRCS+= bzlib.c zlib.c
 
-SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
+SRCS+= md5c.c rmd160.c sha1.c sha2.c
 
 CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 COPTS.libverify.c+= -Wno-format-nonliteral
@@ -36,3 +36,5 @@ t tst: ${PROG}
 	./${PROG} -S ${EXTDIST}/src/netpgpverify/sshtest-20140202.pub ${EXTDIST}/src/netpgpverify/data.sig
 	@echo "expected failure, to check bad signatures fail to verify"
 	-sed -e 's|A|B|' ${EXTDIST}/src/netpgpverify/data.gpg | ./${PROG} -S ${EXTDIST}/src/netpgpverify/sshtest-20140202.pub 
+	@echo "testing signatures with no version"
+	./${PROG} -k ${EXTDIST}/src/netpgpverify/pubring.gpg ${EXTDIST}/src/netpgpverify/noversion.asc

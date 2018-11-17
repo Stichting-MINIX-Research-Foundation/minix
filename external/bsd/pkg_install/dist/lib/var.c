@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.2 2013/05/16 19:19:44 martin Exp $	*/
+/*	$NetBSD: var.c,v 1.3 2017/04/20 13:18:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: var.c,v 1.2 2013/05/16 19:19:44 martin Exp $");
+__RCSID("$NetBSD: var.c,v 1.3 2017/04/20 13:18:23 joerg Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -60,7 +60,7 @@ static const char *var_cmp(const char *, size_t, const char *, size_t);
 static void var_print(FILE *, const char *, const char *);
 
 /*
- * Copy the specified varibales from the file fname to stdout.
+ * Copy the specified variables from the file fname to stdout.
  */
 int
 var_copy_list(const char *buf, const char **variables)
@@ -74,8 +74,8 @@ var_copy_list(const char *buf, const char **variables)
 			next = eol + 1;
 			len = eol - buf;
 		} else {
-			next = eol;
 			len = strlen(buf);
+			next = buf + len;
 		}
 
 		for (i=0; variables[i]; i++) {

@@ -41,7 +41,7 @@ DEFINE_TEST(test_option_u)
 	assertMakeFile("f", 0644, "a");
 
 	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
+	r = systemf("echo f| %s -pd copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -49,6 +49,7 @@ DEFINE_TEST(test_option_u)
 	p = slurpfile(&s, "copy/f");
 	assertEqualInt(s, 1);
 	assertEqualMem(p, "a", 1);
+	free(p);
 
 	/* Recreate the file with a single "b" */
 	assertMakeFile("f", 0644, "b");
@@ -60,7 +61,7 @@ DEFINE_TEST(test_option_u)
 	assertEqualInt(0, utime("f", &times));
 
 	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
+	r = systemf("echo f| %s -pd copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -68,9 +69,10 @@ DEFINE_TEST(test_option_u)
 	p = slurpfile(&s, "copy/f");
 	assertEqualInt(s, 1);
 	assertEqualMem(p, "a", 1);
+	free(p);
 
 	/* Copy the file to the "copy" dir with -u (force) */
-	r = systemf("echo f | %s -pud copy >copy.out 2>copy.err",
+	r = systemf("echo f| %s -pud copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -78,4 +80,5 @@ DEFINE_TEST(test_option_u)
 	p = slurpfile(&s, "copy/f");
 	assertEqualInt(s, 1);
 	assertEqualMem(p, "b", 1);
+	free(p);
 }

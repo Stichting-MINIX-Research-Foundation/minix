@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2003-2007 Tim Kientzle
+ * Copyright (c) 2016 Martin Matuska
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +40,9 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry.c 201096 2009-12-28 02:41:
 #include <sys/sysmacros.h>
 #define HAVE_MAJOR
 #endif
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
@@ -68,12 +72,11 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry.c 201096 2009-12-28 02:41:
 #endif
 
 #include "archive.h"
+#include "archive_acl_private.h"
 #include "archive_entry.h"
+#include "archive_entry_locale.h"
 #include "archive_private.h"
 #include "archive_entry_private.h"
-
-#undef max
-#define	max(a, b)	((a)>(b)?(a):(b))
 
 #if !defined(HAVE_MAJOR) && !defined(major)
 /* Replacement for major/minor/makedev. */
@@ -98,39 +101,26 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry.c 201096 2009-12-28 02:41:
 #define ae_makedev(maj, min) makedev((maj), (min))
 #endif
 
-static void	aes_clean(struct aes *);
-static void	aes_copy(struct aes *dest, struct aes *src);
-static const char *	aes_get_mbs(struct aes *);
-static const wchar_t *	aes_get_wcs(struct aes *);
-static int	aes_set_mbs(struct aes *, const char *mbs);
-static int	aes_copy_mbs(struct aes *, const char *mbs);
-/* static void	aes_set_wcs(struct aes *, const wchar_t *wcs); */
-static int	aes_copy_wcs(struct aes *, const wchar_t *wcs);
-static int	aes_copy_wcs_len(struct aes *, const wchar_t *wcs, size_t);
+/*
+ * This adjustment is needed to support the following idiom for adding
+ * 1000ns to the stored time:
+ * archive_entry_set_atime(archive_entry_atime(),
+ *                         archive_entry_atime_nsec() + 1000)
+ * The additional if() here compensates for ambiguity in the C standard,
+ * which permits two possible interpretations of a % b when a is negative.
+ */
+#define FIX_NS(t,ns) \
+	do {	\
+		t += ns / 1000000000; \
+		ns %= 1000000000; \
+		if (ns < 0) { --t; ns += 1000000000; } \
+	} while (0)
 
 static char *	 ae_fflagstostr(unsigned long bitset, unsigned long bitclear);
 static const wchar_t	*ae_wcstofflags(const wchar_t *stringp,
 		    unsigned long *setp, unsigned long *clrp);
 static const char	*ae_strtofflags(const char *stringp,
 		    unsigned long *setp, unsigned long *clrp);
-static void	append_entry_w(wchar_t **wp, const wchar_t *prefix, int tag,
-		    const wchar_t *wname, int perm, int id);
-static void	append_id_w(wchar_t **wp, int id);
-
-static int	acl_special(struct archive_entry *entry,
-		    int type, int permset, int tag);
-static struct ae_acl *acl_new_entry(struct archive_entry *entry,
-		    int type, int permset, int tag, int id);
-static int	isint_w(const wchar_t *start, const wchar_t *end, int *result);
-static int	ismode_w(const wchar_t *start, const wchar_t *end, int *result);
-static void	next_field_w(const wchar_t **wp, const wchar_t **start,
-		    const wchar_t **end, wchar_t *sep);
-static int	prefix_w(const wchar_t *start, const wchar_t *end,
-		    const wchar_t *test);
-static void
-archive_entry_acl_add_entry_w_len(struct archive_entry *entry, int type,
-		    int permset, int tag, int id, const wchar_t *name, size_t);
-
 
 #ifndef HAVE_WCSCPY
 static wchar_t * wcscpy(wchar_t *s1, const wchar_t *s2)
@@ -154,214 +144,6 @@ static size_t wcslen(const wchar_t *s)
 /* Good enough for simple equality testing, but not for sorting. */
 #define wmemcmp(a,b,i)  memcmp((a), (b), (i) * sizeof(wchar_t))
 #endif
-#ifndef HAVE_WMEMCPY
-#define wmemcpy(a,b,i)  (wchar_t *)memcpy((a), (b), (i) * sizeof(wchar_t))
-#endif
-
-static void
-aes_clean(struct aes *aes)
-{
-	if (aes->aes_wcs) {
-		free((wchar_t *)(uintptr_t)aes->aes_wcs);
-		aes->aes_wcs = NULL;
-	}
-	archive_string_free(&(aes->aes_mbs));
-	archive_string_free(&(aes->aes_utf8));
-	aes->aes_set = 0;
-}
-
-static void
-aes_copy(struct aes *dest, struct aes *src)
-{
-	wchar_t *wp;
-
-	dest->aes_set = src->aes_set;
-	archive_string_copy(&(dest->aes_mbs), &(src->aes_mbs));
-	archive_string_copy(&(dest->aes_utf8), &(src->aes_utf8));
-
-	if (src->aes_wcs != NULL) {
-		wp = (wchar_t *)malloc((wcslen(src->aes_wcs) + 1)
-		    * sizeof(wchar_t));
-		if (wp == NULL)
-			__archive_errx(1, "No memory for aes_copy()");
-		wcscpy(wp, src->aes_wcs);
-		dest->aes_wcs = wp;
-	}
-}
-
-static const char *
-aes_get_utf8(struct aes *aes)
-{
-	if (aes->aes_set & AES_SET_UTF8)
-		return (aes->aes_utf8.s);
-	if ((aes->aes_set & AES_SET_WCS)
-	    && archive_strappend_w_utf8(&(aes->aes_utf8), aes->aes_wcs) != NULL) {
-		aes->aes_set |= AES_SET_UTF8;
-		return (aes->aes_utf8.s);
-	}
-	return (NULL);
-}
-
-static const char *
-aes_get_mbs(struct aes *aes)
-{
-	/* If we already have an MBS form, return that immediately. */
-	if (aes->aes_set & AES_SET_MBS)
-		return (aes->aes_mbs.s);
-	/* If there's a WCS form, try converting with the native locale. */
-	if ((aes->aes_set & AES_SET_WCS)
-	    && archive_strappend_w_mbs(&(aes->aes_mbs), aes->aes_wcs) != NULL) {
-		aes->aes_set |= AES_SET_MBS;
-		return (aes->aes_mbs.s);
-	}
-	/* We'll use UTF-8 for MBS if all else fails. */
-	return (aes_get_utf8(aes));
-}
-
-static const wchar_t *
-aes_get_wcs(struct aes *aes)
-{
-	wchar_t *w;
-	size_t r;
-
-	/* Return WCS form if we already have it. */
-	if (aes->aes_set & AES_SET_WCS)
-		return (aes->aes_wcs);
-
-	if (aes->aes_set & AES_SET_MBS) {
-		/* Try converting MBS to WCS using native locale. */
-		/*
-		 * No single byte will be more than one wide character,
-		 * so this length estimate will always be big enough.
-		 */
-		size_t wcs_length = aes->aes_mbs.length;
-
-		w = (wchar_t *)malloc((wcs_length + 1) * sizeof(wchar_t));
-		if (w == NULL)
-			__archive_errx(1, "No memory for aes_get_wcs()");
-		r = mbstowcs(w, aes->aes_mbs.s, wcs_length);
-		if (r != (size_t)-1 && r != 0) {
-			w[r] = 0;
-			aes->aes_set |= AES_SET_WCS;
-			return (aes->aes_wcs = w);
-		}
-		free(w);
-	}
-
-	if (aes->aes_set & AES_SET_UTF8) {
-		/* Try converting UTF8 to WCS. */
-		aes->aes_wcs = __archive_string_utf8_w(&(aes->aes_utf8));
-		if (aes->aes_wcs != NULL)
-			aes->aes_set |= AES_SET_WCS;
-		return (aes->aes_wcs);
-	}
-	return (NULL);
-}
-
-static int
-aes_set_mbs(struct aes *aes, const char *mbs)
-{
-	return (aes_copy_mbs(aes, mbs));
-}
-
-static int
-aes_copy_mbs(struct aes *aes, const char *mbs)
-{
-	if (mbs == NULL) {
-		aes->aes_set = 0;
-		return (0);
-	}
-	aes->aes_set = AES_SET_MBS; /* Only MBS form is set now. */
-	archive_strcpy(&(aes->aes_mbs), mbs);
-	archive_string_empty(&(aes->aes_utf8));
-	if (aes->aes_wcs) {
-		free((wchar_t *)(uintptr_t)aes->aes_wcs);
-		aes->aes_wcs = NULL;
-	}
-	return (0);
-}
-
-/*
- * The 'update' form tries to proactively update all forms of
- * this string (WCS and MBS) and returns an error if any of
- * them fail.  This is used by the 'pax' handler, for instance,
- * to detect and report character-conversion failures early while
- * still allowing clients to get potentially useful values from
- * the more tolerant lazy conversions.  (get_mbs and get_wcs will
- * strive to give the user something useful, so you can get hopefully
- * usable values even if some of the character conversions are failing.)
- */
-static int
-aes_update_utf8(struct aes *aes, const char *utf8)
-{
-	if (utf8 == NULL) {
-		aes->aes_set = 0;
-		return (1); /* Succeeded in clearing everything. */
-	}
-
-	/* Save the UTF8 string. */
-	archive_strcpy(&(aes->aes_utf8), utf8);
-
-	/* Empty the mbs and wcs strings. */
-	archive_string_empty(&(aes->aes_mbs));
-	if (aes->aes_wcs) {
-		free((wchar_t *)(uintptr_t)aes->aes_wcs);
-		aes->aes_wcs = NULL;
-	}
-
-	aes->aes_set = AES_SET_UTF8;	/* Only UTF8 is set now. */
-
-	/* TODO: We should just do a direct UTF-8 to MBS conversion
-	 * here.  That would be faster, use less space, and give the
-	 * same information.  (If a UTF-8 to MBS conversion succeeds,
-	 * then UTF-8->WCS and Unicode->MBS conversions will both
-	 * succeed.) */
-
-	/* Try converting UTF8 to WCS, return false on failure. */
-	aes->aes_wcs = __archive_string_utf8_w(&(aes->aes_utf8));
-	if (aes->aes_wcs == NULL)
-		return (0);
-	aes->aes_set = AES_SET_UTF8 | AES_SET_WCS; /* Both UTF8 and WCS set. */
-
-	/* Try converting WCS to MBS, return false on failure. */
-	if (archive_strappend_w_mbs(&(aes->aes_mbs), aes->aes_wcs) == NULL)
-		return (0);
-	aes->aes_set = AES_SET_UTF8 | AES_SET_WCS | AES_SET_MBS;
-
-	/* All conversions succeeded. */
-	return (1);
-}
-
-static int
-aes_copy_wcs(struct aes *aes, const wchar_t *wcs)
-{
-	return aes_copy_wcs_len(aes, wcs, wcs == NULL ? 0 : wcslen(wcs));
-}
-
-static int
-aes_copy_wcs_len(struct aes *aes, const wchar_t *wcs, size_t len)
-{
-	wchar_t *w;
-
-	if (wcs == NULL) {
-		aes->aes_set = 0;
-		return (0);
-	}
-	aes->aes_set = AES_SET_WCS; /* Only WCS form set. */
-	archive_string_empty(&(aes->aes_mbs));
-	archive_string_empty(&(aes->aes_utf8));
-	if (aes->aes_wcs) {
-		free((wchar_t *)(uintptr_t)aes->aes_wcs);
-		aes->aes_wcs = NULL;
-	}
-	w = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
-	if (w == NULL)
-		__archive_errx(1, "No memory for aes_copy_wcs()");
-	wmemcpy(w, wcs, len);
-	w[len] = L'\0';
-	aes->aes_wcs = w;
-	return (0);
-}
 
 /****************************************************************************
  *
@@ -374,15 +156,17 @@ archive_entry_clear(struct archive_entry *entry)
 {
 	if (entry == NULL)
 		return (NULL);
-	aes_clean(&entry->ae_fflags_text);
-	aes_clean(&entry->ae_gname);
-	aes_clean(&entry->ae_hardlink);
-	aes_clean(&entry->ae_pathname);
-	aes_clean(&entry->ae_sourcepath);
-	aes_clean(&entry->ae_symlink);
-	aes_clean(&entry->ae_uname);
-	archive_entry_acl_clear(entry);
+	archive_mstring_clean(&entry->ae_fflags_text);
+	archive_mstring_clean(&entry->ae_gname);
+	archive_mstring_clean(&entry->ae_hardlink);
+	archive_mstring_clean(&entry->ae_pathname);
+	archive_mstring_clean(&entry->ae_sourcepath);
+	archive_mstring_clean(&entry->ae_symlink);
+	archive_mstring_clean(&entry->ae_uname);
+	archive_entry_copy_mac_metadata(entry, NULL, 0);
+	archive_acl_clear(&entry->acl);
 	archive_entry_xattr_clear(entry);
+	archive_entry_sparse_clear(entry);
 	free(entry->stat);
 	memset(entry, 0, sizeof(*entry));
 	return entry;
@@ -392,36 +176,41 @@ struct archive_entry *
 archive_entry_clone(struct archive_entry *entry)
 {
 	struct archive_entry *entry2;
-	struct ae_acl *ap, *ap2;
 	struct ae_xattr *xp;
+	struct ae_sparse *sp;
+	size_t s;
+	const void *p;
 
 	/* Allocate new structure and copy over all of the fields. */
-	entry2 = (struct archive_entry *)malloc(sizeof(*entry2));
+	/* TODO: Should we copy the archive over?  Or require a new archive
+	 * as an argument? */
+	entry2 = archive_entry_new2(entry->archive);
 	if (entry2 == NULL)
 		return (NULL);
-	memset(entry2, 0, sizeof(*entry2));
 	entry2->ae_stat = entry->ae_stat;
 	entry2->ae_fflags_set = entry->ae_fflags_set;
 	entry2->ae_fflags_clear = entry->ae_fflags_clear;
 
-	aes_copy(&entry2->ae_fflags_text, &entry->ae_fflags_text);
-	aes_copy(&entry2->ae_gname, &entry->ae_gname);
-	aes_copy(&entry2->ae_hardlink, &entry->ae_hardlink);
-	aes_copy(&entry2->ae_pathname, &entry->ae_pathname);
-	aes_copy(&entry2->ae_sourcepath, &entry->ae_sourcepath);
-	aes_copy(&entry2->ae_symlink, &entry->ae_symlink);
+	/* TODO: XXX If clone can have a different archive, what do we do here if
+	 * character sets are different? XXX */
+	archive_mstring_copy(&entry2->ae_fflags_text, &entry->ae_fflags_text);
+	archive_mstring_copy(&entry2->ae_gname, &entry->ae_gname);
+	archive_mstring_copy(&entry2->ae_hardlink, &entry->ae_hardlink);
+	archive_mstring_copy(&entry2->ae_pathname, &entry->ae_pathname);
+	archive_mstring_copy(&entry2->ae_sourcepath, &entry->ae_sourcepath);
+	archive_mstring_copy(&entry2->ae_symlink, &entry->ae_symlink);
 	entry2->ae_set = entry->ae_set;
-	aes_copy(&entry2->ae_uname, &entry->ae_uname);
+	archive_mstring_copy(&entry2->ae_uname, &entry->ae_uname);
 
+	/* Copy encryption status */
+	entry2->encryption = entry->encryption;
+	
 	/* Copy ACL data over. */
-	ap = entry->acl_head;
-	while (ap != NULL) {
-		ap2 = acl_new_entry(entry2,
-		    ap->type, ap->permset, ap->tag, ap->id);
-		if (ap2 != NULL)
-			aes_copy(&ap2->name, &ap->name);
-		ap = ap->next;
-	}
+	archive_acl_copy(&entry2->acl, &entry->acl);
+
+	/* Copy Mac OS metadata. */
+	p = archive_entry_mac_metadata(entry, &s);
+	archive_entry_copy_mac_metadata(entry2, p, s);
 
 	/* Copy xattr data over. */
 	xp = entry->xattr_head;
@@ -429,6 +218,14 @@ archive_entry_clone(struct archive_entry *entry)
 		archive_entry_xattr_add_entry(entry2,
 		    xp->name, xp->value, xp->size);
 		xp = xp->next;
+	}
+
+	/* Copy sparse data over. */
+	sp = entry->sparse_head;
+	while (sp != NULL) {
+		archive_entry_sparse_add_entry(entry2,
+		    sp->offset, sp->length);
+		sp = sp->next;
 	}
 
 	return (entry2);
@@ -444,12 +241,18 @@ archive_entry_free(struct archive_entry *entry)
 struct archive_entry *
 archive_entry_new(void)
 {
+	return archive_entry_new2(NULL);
+}
+
+struct archive_entry *
+archive_entry_new2(struct archive *a)
+{
 	struct archive_entry *entry;
 
-	entry = (struct archive_entry *)malloc(sizeof(*entry));
+	entry = (struct archive_entry *)calloc(1, sizeof(*entry));
 	if (entry == NULL)
 		return (NULL);
-	memset(entry, 0, sizeof(*entry));
+	entry->archive = a;
 	return (entry);
 }
 
@@ -521,6 +324,12 @@ archive_entry_dev(struct archive_entry *entry)
 		return (entry->ae_stat.aest_dev);
 }
 
+int
+archive_entry_dev_is_set(struct archive_entry *entry)
+{
+	return (entry->ae_set & AE_SET_DEV);
+}
+
 dev_t
 archive_entry_devmajor(struct archive_entry *entry)
 {
@@ -542,7 +351,7 @@ archive_entry_devminor(struct archive_entry *entry)
 mode_t
 archive_entry_filetype(struct archive_entry *entry)
 {
-	return (AE_IFMT & entry->ae_stat.aest_mode);
+	return (AE_IFMT & entry->acl.mode);
 }
 
 void
@@ -568,9 +377,12 @@ archive_entry_fflags_text(struct archive_entry *entry)
 	const char *f;
 	char *p;
 
-	f = aes_get_mbs(&entry->ae_fflags_text);
-	if (f != NULL)
-		return (f);
+	if (archive_mstring_get_mbs(entry->archive,
+	    &entry->ae_fflags_text, &f) == 0) {
+		if (f != NULL)
+			return (f);
+	} else if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
 
 	if (entry->ae_fflags_set == 0  &&  entry->ae_fflags_clear == 0)
 		return (NULL);
@@ -579,13 +391,17 @@ archive_entry_fflags_text(struct archive_entry *entry)
 	if (p == NULL)
 		return (NULL);
 
-	aes_copy_mbs(&entry->ae_fflags_text, p);
+	archive_mstring_copy_mbs(&entry->ae_fflags_text, p);
 	free(p);
-	f = aes_get_mbs(&entry->ae_fflags_text);
-	return (f);
+	if (archive_mstring_get_mbs(entry->archive,
+	    &entry->ae_fflags_text, &f) == 0)
+		return (f);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
 }
 
-gid_t
+la_int64_t
 archive_entry_gid(struct archive_entry *entry)
 {
 	return (entry->ae_stat.aest_gid);
@@ -594,38 +410,111 @@ archive_entry_gid(struct archive_entry *entry)
 const char *
 archive_entry_gname(struct archive_entry *entry)
 {
-	return (aes_get_mbs(&entry->ae_gname));
+	const char *p;
+	if (archive_mstring_get_mbs(entry->archive, &entry->ae_gname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
 }
+
+const char *
+archive_entry_gname_utf8(struct archive_entry *entry)
+{
+	const char *p;
+	if (archive_mstring_get_utf8(entry->archive, &entry->ae_gname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
 
 const wchar_t *
 archive_entry_gname_w(struct archive_entry *entry)
 {
-	return (aes_get_wcs(&entry->ae_gname));
+	const wchar_t *p;
+	if (archive_mstring_get_wcs(entry->archive, &entry->ae_gname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+int
+_archive_entry_gname_l(struct archive_entry *entry,
+    const char **p, size_t *len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_get_mbs_l(&entry->ae_gname, p, len, sc));
 }
 
 const char *
 archive_entry_hardlink(struct archive_entry *entry)
 {
-	if (entry->ae_set & AE_SET_HARDLINK)
-		return (aes_get_mbs(&entry->ae_hardlink));
+	const char *p;
+	if ((entry->ae_set & AE_SET_HARDLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_mbs(
+	    entry->archive, &entry->ae_hardlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+const char *
+archive_entry_hardlink_utf8(struct archive_entry *entry)
+{
+	const char *p;
+	if ((entry->ae_set & AE_SET_HARDLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_utf8(
+	    entry->archive, &entry->ae_hardlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
 archive_entry_hardlink_w(struct archive_entry *entry)
 {
-	if (entry->ae_set & AE_SET_HARDLINK)
-		return (aes_get_wcs(&entry->ae_hardlink));
+	const wchar_t *p;
+	if ((entry->ae_set & AE_SET_HARDLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_wcs(
+	    entry->archive, &entry->ae_hardlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
 	return (NULL);
 }
 
-ino_t
+int
+_archive_entry_hardlink_l(struct archive_entry *entry,
+    const char **p, size_t *len, struct archive_string_conv *sc)
+{
+	if ((entry->ae_set & AE_SET_HARDLINK) == 0) {
+		*p = NULL;
+		*len = 0;
+		return (0);
+	}
+	return (archive_mstring_get_mbs_l(&entry->ae_hardlink, p, len, sc));
+}
+
+la_int64_t
 archive_entry_ino(struct archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ino);
 }
 
-int64_t
+int
+archive_entry_ino_is_set(struct archive_entry *entry)
+{
+	return (entry->ae_set & AE_SET_INO);
+}
+
+la_int64_t
 archive_entry_ino64(struct archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ino);
@@ -634,7 +523,7 @@ archive_entry_ino64(struct archive_entry *entry)
 mode_t
 archive_entry_mode(struct archive_entry *entry)
 {
-	return (entry->ae_stat.aest_mode);
+	return (entry->acl.mode);
 }
 
 time_t
@@ -664,13 +553,50 @@ archive_entry_nlink(struct archive_entry *entry)
 const char *
 archive_entry_pathname(struct archive_entry *entry)
 {
-	return (aes_get_mbs(&entry->ae_pathname));
+	const char *p;
+	if (archive_mstring_get_mbs(
+	    entry->archive, &entry->ae_pathname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+const char *
+archive_entry_pathname_utf8(struct archive_entry *entry)
+{
+	const char *p;
+	if (archive_mstring_get_utf8(
+	    entry->archive, &entry->ae_pathname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
 }
 
 const wchar_t *
 archive_entry_pathname_w(struct archive_entry *entry)
 {
-	return (aes_get_wcs(&entry->ae_pathname));
+	const wchar_t *p;
+	if (archive_mstring_get_wcs(
+	    entry->archive, &entry->ae_pathname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+int
+_archive_entry_pathname_l(struct archive_entry *entry,
+    const char **p, size_t *len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_get_mbs_l(&entry->ae_pathname, p, len, sc));
+}
+
+mode_t
+archive_entry_perm(struct archive_entry *entry)
+{
+	return (~AE_IFMT & entry->acl.mode);
 }
 
 dev_t
@@ -701,7 +627,7 @@ archive_entry_rdevminor(struct archive_entry *entry)
 		return minor(entry->ae_stat.aest_rdev);
 }
 
-int64_t
+la_int64_t
 archive_entry_size(struct archive_entry *entry)
 {
 	return (entry->ae_stat.aest_size);
@@ -716,26 +642,80 @@ archive_entry_size_is_set(struct archive_entry *entry)
 const char *
 archive_entry_sourcepath(struct archive_entry *entry)
 {
-	return (aes_get_mbs(&entry->ae_sourcepath));
+	const char *p;
+	if (archive_mstring_get_mbs(
+	    entry->archive, &entry->ae_sourcepath, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+const wchar_t *
+archive_entry_sourcepath_w(struct archive_entry *entry)
+{
+	const wchar_t *p;
+	if (archive_mstring_get_wcs(
+	    entry->archive, &entry->ae_sourcepath, &p) == 0)
+		return (p);
+	return (NULL);
 }
 
 const char *
 archive_entry_symlink(struct archive_entry *entry)
 {
-	if (entry->ae_set & AE_SET_SYMLINK)
-		return (aes_get_mbs(&entry->ae_symlink));
+	const char *p;
+	if ((entry->ae_set & AE_SET_SYMLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_mbs(
+	    entry->archive, &entry->ae_symlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+const char *
+archive_entry_symlink_utf8(struct archive_entry *entry)
+{
+	const char *p;
+	if ((entry->ae_set & AE_SET_SYMLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_utf8(
+	    entry->archive, &entry->ae_symlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
 archive_entry_symlink_w(struct archive_entry *entry)
 {
-	if (entry->ae_set & AE_SET_SYMLINK)
-		return (aes_get_wcs(&entry->ae_symlink));
+	const wchar_t *p;
+	if ((entry->ae_set & AE_SET_SYMLINK) == 0)
+		return (NULL);
+	if (archive_mstring_get_wcs(
+	    entry->archive, &entry->ae_symlink, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
 	return (NULL);
 }
 
-uid_t
+int
+_archive_entry_symlink_l(struct archive_entry *entry,
+    const char **p, size_t *len, struct archive_string_conv *sc)
+{
+	if ((entry->ae_set & AE_SET_SYMLINK) == 0) {
+		*p = NULL;
+		*len = 0;
+		return (0);
+	}
+	return (archive_mstring_get_mbs_l( &entry->ae_symlink, p, len, sc));
+}
+
+la_int64_t
 archive_entry_uid(struct archive_entry *entry)
 {
 	return (entry->ae_stat.aest_uid);
@@ -744,13 +724,59 @@ archive_entry_uid(struct archive_entry *entry)
 const char *
 archive_entry_uname(struct archive_entry *entry)
 {
-	return (aes_get_mbs(&entry->ae_uname));
+	const char *p;
+	if (archive_mstring_get_mbs(entry->archive, &entry->ae_uname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+const char *
+archive_entry_uname_utf8(struct archive_entry *entry)
+{
+	const char *p;
+	if (archive_mstring_get_utf8(entry->archive, &entry->ae_uname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
 }
 
 const wchar_t *
 archive_entry_uname_w(struct archive_entry *entry)
 {
-	return (aes_get_wcs(&entry->ae_uname));
+	const wchar_t *p;
+	if (archive_mstring_get_wcs(entry->archive, &entry->ae_uname, &p) == 0)
+		return (p);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (NULL);
+}
+
+int
+_archive_entry_uname_l(struct archive_entry *entry,
+    const char **p, size_t *len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_get_mbs_l(&entry->ae_uname, p, len, sc));
+}
+
+int
+archive_entry_is_data_encrypted(struct archive_entry *entry)
+{
+	return ((entry->encryption & AE_ENCRYPTION_DATA) == AE_ENCRYPTION_DATA);
+}
+
+int
+archive_entry_is_metadata_encrypted(struct archive_entry *entry)
+{
+	return ((entry->encryption & AE_ENCRYPTION_METADATA) == AE_ENCRYPTION_METADATA);
+}
+
+int
+archive_entry_is_encrypted(struct archive_entry *entry)
+{
+	return (entry->encryption & (AE_ENCRYPTION_DATA|AE_ENCRYPTION_METADATA));
 }
 
 /*
@@ -761,15 +787,15 @@ void
 archive_entry_set_filetype(struct archive_entry *entry, unsigned int type)
 {
 	entry->stat_valid = 0;
-	entry->ae_stat.aest_mode &= ~AE_IFMT;
-	entry->ae_stat.aest_mode |= AE_IFMT & type;
+	entry->acl.mode &= ~AE_IFMT;
+	entry->acl.mode |= AE_IFMT & type;
 }
 
 void
 archive_entry_set_fflags(struct archive_entry *entry,
     unsigned long set, unsigned long clear)
 {
-	aes_clean(&entry->ae_fflags_text);
+	archive_mstring_clean(&entry->ae_fflags_text);
 	entry->ae_fflags_set = set;
 	entry->ae_fflags_clear = clear;
 }
@@ -778,7 +804,7 @@ const char *
 archive_entry_copy_fflags_text(struct archive_entry *entry,
     const char *flags)
 {
-	aes_copy_mbs(&entry->ae_fflags_text, flags);
+	archive_mstring_copy_mbs(&entry->ae_fflags_text, flags);
 	return (ae_strtofflags(flags,
 		    &entry->ae_fflags_set, &entry->ae_fflags_clear));
 }
@@ -787,13 +813,13 @@ const wchar_t *
 archive_entry_copy_fflags_text_w(struct archive_entry *entry,
     const wchar_t *flags)
 {
-	aes_copy_wcs(&entry->ae_fflags_text, flags);
+	archive_mstring_copy_wcs(&entry->ae_fflags_text, flags);
 	return (ae_wcstofflags(flags,
 		    &entry->ae_fflags_set, &entry->ae_fflags_clear));
 }
 
 void
-archive_entry_set_gid(struct archive_entry *entry, gid_t g)
+archive_entry_set_gid(struct archive_entry *entry, la_int64_t g)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_gid = g;
@@ -802,45 +828,75 @@ archive_entry_set_gid(struct archive_entry *entry, gid_t g)
 void
 archive_entry_set_gname(struct archive_entry *entry, const char *name)
 {
-	aes_set_mbs(&entry->ae_gname, name);
+	archive_mstring_copy_mbs(&entry->ae_gname, name);
+}
+
+void
+archive_entry_set_gname_utf8(struct archive_entry *entry, const char *name)
+{
+	archive_mstring_copy_utf8(&entry->ae_gname, name);
 }
 
 void
 archive_entry_copy_gname(struct archive_entry *entry, const char *name)
 {
-	aes_copy_mbs(&entry->ae_gname, name);
+	archive_mstring_copy_mbs(&entry->ae_gname, name);
 }
 
 void
 archive_entry_copy_gname_w(struct archive_entry *entry, const wchar_t *name)
 {
-	aes_copy_wcs(&entry->ae_gname, name);
+	archive_mstring_copy_wcs(&entry->ae_gname, name);
 }
 
 int
 archive_entry_update_gname_utf8(struct archive_entry *entry, const char *name)
 {
-	return (aes_update_utf8(&entry->ae_gname, name));
+	if (archive_mstring_update_utf8(entry->archive,
+	    &entry->ae_gname, name) == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+int
+_archive_entry_copy_gname_l(struct archive_entry *entry,
+    const char *name, size_t len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_copy_mbs_len_l(&entry->ae_gname, name, len, sc));
 }
 
 void
-archive_entry_set_ino(struct archive_entry *entry, unsigned long ino)
+archive_entry_set_ino(struct archive_entry *entry, la_int64_t ino)
 {
 	entry->stat_valid = 0;
+	entry->ae_set |= AE_SET_INO;
 	entry->ae_stat.aest_ino = ino;
 }
 
 void
-archive_entry_set_ino64(struct archive_entry *entry, int64_t ino)
+archive_entry_set_ino64(struct archive_entry *entry, la_int64_t ino)
 {
 	entry->stat_valid = 0;
+	entry->ae_set |= AE_SET_INO;
 	entry->ae_stat.aest_ino = ino;
 }
 
 void
 archive_entry_set_hardlink(struct archive_entry *entry, const char *target)
 {
-	aes_set_mbs(&entry->ae_hardlink, target);
+	archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+	if (target != NULL)
+		entry->ae_set |= AE_SET_HARDLINK;
+	else
+		entry->ae_set &= ~AE_SET_HARDLINK;
+}
+
+void
+archive_entry_set_hardlink_utf8(struct archive_entry *entry, const char *target)
+{
+	archive_mstring_copy_utf8(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -850,7 +906,7 @@ archive_entry_set_hardlink(struct archive_entry *entry, const char *target)
 void
 archive_entry_copy_hardlink(struct archive_entry *entry, const char *target)
 {
-	aes_copy_mbs(&entry->ae_hardlink, target);
+	archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -860,7 +916,7 @@ archive_entry_copy_hardlink(struct archive_entry *entry, const char *target)
 void
 archive_entry_copy_hardlink_w(struct archive_entry *entry, const wchar_t *target)
 {
-	aes_copy_wcs(&entry->ae_hardlink, target);
+	archive_mstring_copy_wcs(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -874,12 +930,33 @@ archive_entry_update_hardlink_utf8(struct archive_entry *entry, const char *targ
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
 		entry->ae_set &= ~AE_SET_HARDLINK;
-	return (aes_update_utf8(&entry->ae_hardlink, target));
+	if (archive_mstring_update_utf8(entry->archive,
+	    &entry->ae_hardlink, target) == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+int
+_archive_entry_copy_hardlink_l(struct archive_entry *entry,
+    const char *target, size_t len, struct archive_string_conv *sc)
+{
+	int r;
+
+	r = archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
+	    target, len, sc);
+	if (target != NULL && r == 0)
+		entry->ae_set |= AE_SET_HARDLINK;
+	else
+		entry->ae_set &= ~AE_SET_HARDLINK;
+	return (r);
 }
 
 void
 archive_entry_set_atime(struct archive_entry *entry, time_t t, long ns)
 {
+	FIX_NS(t, ns);
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_ATIME;
 	entry->ae_stat.aest_atime = t;
@@ -894,11 +971,12 @@ archive_entry_unset_atime(struct archive_entry *entry)
 }
 
 void
-archive_entry_set_birthtime(struct archive_entry *entry, time_t m, long ns)
+archive_entry_set_birthtime(struct archive_entry *entry, time_t t, long ns)
 {
+	FIX_NS(t, ns);
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_BIRTHTIME;
-	entry->ae_stat.aest_birthtime = m;
+	entry->ae_stat.aest_birthtime = t;
 	entry->ae_stat.aest_birthtime_nsec = ns;
 }
 
@@ -912,6 +990,7 @@ archive_entry_unset_birthtime(struct archive_entry *entry)
 void
 archive_entry_set_ctime(struct archive_entry *entry, time_t t, long ns)
 {
+	FIX_NS(t, ns);
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_CTIME;
 	entry->ae_stat.aest_ctime = t;
@@ -929,6 +1008,7 @@ void
 archive_entry_set_dev(struct archive_entry *entry, dev_t d)
 {
 	entry->stat_valid = 0;
+	entry->ae_set |= AE_SET_DEV;
 	entry->ae_stat.aest_dev_is_broken_down = 0;
 	entry->ae_stat.aest_dev = d;
 }
@@ -937,6 +1017,7 @@ void
 archive_entry_set_devmajor(struct archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
+	entry->ae_set |= AE_SET_DEV;
 	entry->ae_stat.aest_dev_is_broken_down = 1;
 	entry->ae_stat.aest_devmajor = m;
 }
@@ -945,6 +1026,7 @@ void
 archive_entry_set_devminor(struct archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
+	entry->ae_set |= AE_SET_DEV;
 	entry->ae_stat.aest_dev_is_broken_down = 1;
 	entry->ae_stat.aest_devminor = m;
 }
@@ -954,9 +1036,18 @@ void
 archive_entry_set_link(struct archive_entry *entry, const char *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		aes_set_mbs(&entry->ae_symlink, target);
+		archive_mstring_copy_mbs(&entry->ae_symlink, target);
 	else
-		aes_set_mbs(&entry->ae_hardlink, target);
+		archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+}
+
+void
+archive_entry_set_link_utf8(struct archive_entry *entry, const char *target)
+{
+	if (entry->ae_set & AE_SET_SYMLINK)
+		archive_mstring_copy_utf8(&entry->ae_symlink, target);
+	else
+		archive_mstring_copy_utf8(&entry->ae_hardlink, target);
 }
 
 /* Set symlink if symlink is already set, else set hardlink. */
@@ -964,9 +1055,9 @@ void
 archive_entry_copy_link(struct archive_entry *entry, const char *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		aes_copy_mbs(&entry->ae_symlink, target);
+		archive_mstring_copy_mbs(&entry->ae_symlink, target);
 	else
-		aes_copy_mbs(&entry->ae_hardlink, target);
+		archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 }
 
 /* Set symlink if symlink is already set, else set hardlink. */
@@ -974,33 +1065,57 @@ void
 archive_entry_copy_link_w(struct archive_entry *entry, const wchar_t *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		aes_copy_wcs(&entry->ae_symlink, target);
+		archive_mstring_copy_wcs(&entry->ae_symlink, target);
 	else
-		aes_copy_wcs(&entry->ae_hardlink, target);
+		archive_mstring_copy_wcs(&entry->ae_hardlink, target);
 }
 
 int
 archive_entry_update_link_utf8(struct archive_entry *entry, const char *target)
 {
+	int r;
 	if (entry->ae_set & AE_SET_SYMLINK)
-		return (aes_update_utf8(&entry->ae_symlink, target));
+		r = archive_mstring_update_utf8(entry->archive,
+		    &entry->ae_symlink, target);
 	else
-		return (aes_update_utf8(&entry->ae_hardlink, target));
+		r = archive_mstring_update_utf8(entry->archive,
+		    &entry->ae_hardlink, target);
+	if (r == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+int
+_archive_entry_copy_link_l(struct archive_entry *entry,
+    const char *target, size_t len, struct archive_string_conv *sc)
+{
+	int r;
+
+	if (entry->ae_set & AE_SET_SYMLINK)
+		r = archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
+		    target, len, sc);
+	else
+		r = archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
+		    target, len, sc);
+	return (r);
 }
 
 void
 archive_entry_set_mode(struct archive_entry *entry, mode_t m)
 {
 	entry->stat_valid = 0;
-	entry->ae_stat.aest_mode = m;
+	entry->acl.mode = m;
 }
 
 void
-archive_entry_set_mtime(struct archive_entry *entry, time_t m, long ns)
+archive_entry_set_mtime(struct archive_entry *entry, time_t t, long ns)
 {
+	FIX_NS(t, ns);
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_MTIME;
-	entry->ae_stat.aest_mtime = m;
+	entry->ae_stat.aest_mtime = t;
 	entry->ae_stat.aest_mtime_nsec = ns;
 }
 
@@ -1021,33 +1136,52 @@ archive_entry_set_nlink(struct archive_entry *entry, unsigned int nlink)
 void
 archive_entry_set_pathname(struct archive_entry *entry, const char *name)
 {
-	aes_set_mbs(&entry->ae_pathname, name);
+	archive_mstring_copy_mbs(&entry->ae_pathname, name);
+}
+
+void
+archive_entry_set_pathname_utf8(struct archive_entry *entry, const char *name)
+{
+	archive_mstring_copy_utf8(&entry->ae_pathname, name);
 }
 
 void
 archive_entry_copy_pathname(struct archive_entry *entry, const char *name)
 {
-	aes_copy_mbs(&entry->ae_pathname, name);
+	archive_mstring_copy_mbs(&entry->ae_pathname, name);
 }
 
 void
 archive_entry_copy_pathname_w(struct archive_entry *entry, const wchar_t *name)
 {
-	aes_copy_wcs(&entry->ae_pathname, name);
+	archive_mstring_copy_wcs(&entry->ae_pathname, name);
 }
 
 int
 archive_entry_update_pathname_utf8(struct archive_entry *entry, const char *name)
 {
-	return (aes_update_utf8(&entry->ae_pathname, name));
+	if (archive_mstring_update_utf8(entry->archive,
+	    &entry->ae_pathname, name) == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+int
+_archive_entry_copy_pathname_l(struct archive_entry *entry,
+    const char *name, size_t len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_copy_mbs_len_l(&entry->ae_pathname,
+	    name, len, sc));
 }
 
 void
 archive_entry_set_perm(struct archive_entry *entry, mode_t p)
 {
 	entry->stat_valid = 0;
-	entry->ae_stat.aest_mode &= AE_IFMT;
-	entry->ae_stat.aest_mode |= ~AE_IFMT & p;
+	entry->acl.mode &= AE_IFMT;
+	entry->acl.mode |= ~AE_IFMT & p;
 }
 
 void
@@ -1075,7 +1209,7 @@ archive_entry_set_rdevminor(struct archive_entry *entry, dev_t m)
 }
 
 void
-archive_entry_set_size(struct archive_entry *entry, int64_t s)
+archive_entry_set_size(struct archive_entry *entry, la_int64_t s)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_size = s;
@@ -1092,13 +1226,29 @@ archive_entry_unset_size(struct archive_entry *entry)
 void
 archive_entry_copy_sourcepath(struct archive_entry *entry, const char *path)
 {
-	aes_set_mbs(&entry->ae_sourcepath, path);
+	archive_mstring_copy_mbs(&entry->ae_sourcepath, path);
+}
+
+void
+archive_entry_copy_sourcepath_w(struct archive_entry *entry, const wchar_t *path)
+{
+	archive_mstring_copy_wcs(&entry->ae_sourcepath, path);
 }
 
 void
 archive_entry_set_symlink(struct archive_entry *entry, const char *linkname)
 {
-	aes_set_mbs(&entry->ae_symlink, linkname);
+	archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
+	if (linkname != NULL)
+		entry->ae_set |= AE_SET_SYMLINK;
+	else
+		entry->ae_set &= ~AE_SET_SYMLINK;
+}
+
+void
+archive_entry_set_symlink_utf8(struct archive_entry *entry, const char *linkname)
+{
+	archive_mstring_copy_utf8(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1108,7 +1258,7 @@ archive_entry_set_symlink(struct archive_entry *entry, const char *linkname)
 void
 archive_entry_copy_symlink(struct archive_entry *entry, const char *linkname)
 {
-	aes_copy_mbs(&entry->ae_symlink, linkname);
+	archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1118,7 +1268,7 @@ archive_entry_copy_symlink(struct archive_entry *entry, const char *linkname)
 void
 archive_entry_copy_symlink_w(struct archive_entry *entry, const wchar_t *linkname)
 {
-	aes_copy_wcs(&entry->ae_symlink, linkname);
+	archive_mstring_copy_wcs(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1132,11 +1282,31 @@ archive_entry_update_symlink_utf8(struct archive_entry *entry, const char *linkn
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
 		entry->ae_set &= ~AE_SET_SYMLINK;
-	return (aes_update_utf8(&entry->ae_symlink, linkname));
+	if (archive_mstring_update_utf8(entry->archive,
+	    &entry->ae_symlink, linkname) == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+int
+_archive_entry_copy_symlink_l(struct archive_entry *entry,
+    const char *linkname, size_t len, struct archive_string_conv *sc)
+{
+	int r;
+
+	r = archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
+	    linkname, len, sc);
+	if (linkname != NULL && r == 0)
+		entry->ae_set |= AE_SET_SYMLINK;
+	else
+		entry->ae_set &= ~AE_SET_SYMLINK;
+	return (r);
 }
 
 void
-archive_entry_set_uid(struct archive_entry *entry, uid_t u)
+archive_entry_set_uid(struct archive_entry *entry, la_int64_t u)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_uid = u;
@@ -1145,25 +1315,88 @@ archive_entry_set_uid(struct archive_entry *entry, uid_t u)
 void
 archive_entry_set_uname(struct archive_entry *entry, const char *name)
 {
-	aes_set_mbs(&entry->ae_uname, name);
+	archive_mstring_copy_mbs(&entry->ae_uname, name);
+}
+
+void
+archive_entry_set_uname_utf8(struct archive_entry *entry, const char *name)
+{
+	archive_mstring_copy_utf8(&entry->ae_uname, name);
 }
 
 void
 archive_entry_copy_uname(struct archive_entry *entry, const char *name)
 {
-	aes_copy_mbs(&entry->ae_uname, name);
+	archive_mstring_copy_mbs(&entry->ae_uname, name);
 }
 
 void
 archive_entry_copy_uname_w(struct archive_entry *entry, const wchar_t *name)
 {
-	aes_copy_wcs(&entry->ae_uname, name);
+	archive_mstring_copy_wcs(&entry->ae_uname, name);
 }
 
 int
 archive_entry_update_uname_utf8(struct archive_entry *entry, const char *name)
 {
-	return (aes_update_utf8(&entry->ae_uname, name));
+	if (archive_mstring_update_utf8(entry->archive,
+	    &entry->ae_uname, name) == 0)
+		return (1);
+	if (errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (0);
+}
+
+void
+archive_entry_set_is_data_encrypted(struct archive_entry *entry, char is_encrypted)
+{
+	if (is_encrypted) {
+		entry->encryption |= AE_ENCRYPTION_DATA;
+	} else {
+		entry->encryption &= ~AE_ENCRYPTION_DATA;
+	}
+}
+
+void
+archive_entry_set_is_metadata_encrypted(struct archive_entry *entry, char is_encrypted)
+{
+	if (is_encrypted) {
+		entry->encryption |= AE_ENCRYPTION_METADATA;
+	} else {
+		entry->encryption &= ~AE_ENCRYPTION_METADATA;
+	}
+}
+
+int
+_archive_entry_copy_uname_l(struct archive_entry *entry,
+    const char *name, size_t len, struct archive_string_conv *sc)
+{
+	return (archive_mstring_copy_mbs_len_l(&entry->ae_uname,
+	    name, len, sc));
+}
+
+const void *
+archive_entry_mac_metadata(struct archive_entry *entry, size_t *s)
+{
+  *s = entry->mac_metadata_size;
+  return entry->mac_metadata;
+}
+
+void
+archive_entry_copy_mac_metadata(struct archive_entry *entry,
+    const void *p, size_t s)
+{
+  free(entry->mac_metadata);
+  if (p == NULL || s == 0) {
+    entry->mac_metadata = NULL;
+    entry->mac_metadata_size = 0;
+  } else {
+    entry->mac_metadata_size = s;
+    entry->mac_metadata = malloc(s);
+    if (entry->mac_metadata == NULL)
+      abort();
+    memcpy(entry->mac_metadata, p, s);
+  }
 }
 
 /*
@@ -1175,148 +1408,46 @@ archive_entry_update_uname_utf8(struct archive_entry *entry, const char *name)
  * uninitiated.
  */
 
+struct archive_acl *
+archive_entry_acl(struct archive_entry *entry)
+{
+	return &entry->acl;
+}
+
 void
 archive_entry_acl_clear(struct archive_entry *entry)
 {
-	struct ae_acl	*ap;
-
-	while (entry->acl_head != NULL) {
-		ap = entry->acl_head->next;
-		aes_clean(&entry->acl_head->name);
-		free(entry->acl_head);
-		entry->acl_head = ap;
-	}
-	if (entry->acl_text_w != NULL) {
-		free(entry->acl_text_w);
-		entry->acl_text_w = NULL;
-	}
-	entry->acl_p = NULL;
-	entry->acl_state = 0; /* Not counting. */
+	archive_acl_clear(&entry->acl);
 }
 
 /*
  * Add a single ACL entry to the internal list of ACL data.
  */
-void
+int
 archive_entry_acl_add_entry(struct archive_entry *entry,
     int type, int permset, int tag, int id, const char *name)
 {
-	struct ae_acl *ap;
-
-	if (acl_special(entry, type, permset, tag) == 0)
-		return;
-	ap = acl_new_entry(entry, type, permset, tag, id);
-	if (ap == NULL) {
-		/* XXX Error XXX */
-		return;
-	}
-	if (name != NULL  &&  *name != '\0')
-		aes_copy_mbs(&ap->name, name);
-	else
-		aes_clean(&ap->name);
+	return archive_acl_add_entry(&entry->acl, type, permset, tag, id, name);
 }
 
 /*
  * As above, but with a wide-character name.
  */
-void
+int
 archive_entry_acl_add_entry_w(struct archive_entry *entry,
     int type, int permset, int tag, int id, const wchar_t *name)
 {
-	archive_entry_acl_add_entry_w_len(entry, type, permset, tag, id, name, wcslen(name));
-}
-
-static void
-archive_entry_acl_add_entry_w_len(struct archive_entry *entry,
-    int type, int permset, int tag, int id, const wchar_t *name, size_t len)
-{
-	struct ae_acl *ap;
-
-	if (acl_special(entry, type, permset, tag) == 0)
-		return;
-	ap = acl_new_entry(entry, type, permset, tag, id);
-	if (ap == NULL) {
-		/* XXX Error XXX */
-		return;
-	}
-	if (name != NULL  &&  *name != L'\0' && len > 0)
-		aes_copy_wcs_len(&ap->name, name, len);
-	else
-		aes_clean(&ap->name);
+	return archive_acl_add_entry_w_len(&entry->acl,
+	    type, permset, tag, id, name, wcslen(name));
 }
 
 /*
- * If this ACL entry is part of the standard POSIX permissions set,
- * store the permissions in the stat structure and return zero.
+ * Return a bitmask of ACL types in an archive entry ACL list
  */
-static int
-acl_special(struct archive_entry *entry, int type, int permset, int tag)
+int
+archive_entry_acl_types(struct archive_entry *entry)
 {
-	if (type == ARCHIVE_ENTRY_ACL_TYPE_ACCESS) {
-		switch (tag) {
-		case ARCHIVE_ENTRY_ACL_USER_OBJ:
-			entry->ae_stat.aest_mode &= ~0700;
-			entry->ae_stat.aest_mode |= (permset & 7) << 6;
-			return (0);
-		case ARCHIVE_ENTRY_ACL_GROUP_OBJ:
-			entry->ae_stat.aest_mode &= ~0070;
-			entry->ae_stat.aest_mode |= (permset & 7) << 3;
-			return (0);
-		case ARCHIVE_ENTRY_ACL_OTHER:
-			entry->ae_stat.aest_mode &= ~0007;
-			entry->ae_stat.aest_mode |= permset & 7;
-			return (0);
-		}
-	}
-	return (1);
-}
-
-/*
- * Allocate and populate a new ACL entry with everything but the
- * name.
- */
-static struct ae_acl *
-acl_new_entry(struct archive_entry *entry,
-    int type, int permset, int tag, int id)
-{
-	struct ae_acl *ap, *aq;
-
-	if (type != ARCHIVE_ENTRY_ACL_TYPE_ACCESS &&
-	    type != ARCHIVE_ENTRY_ACL_TYPE_DEFAULT)
-		return (NULL);
-	if (entry->acl_text_w != NULL) {
-		free(entry->acl_text_w);
-		entry->acl_text_w = NULL;
-	}
-
-	/* XXX TODO: More sanity-checks on the arguments XXX */
-
-	/* If there's a matching entry already in the list, overwrite it. */
-	ap = entry->acl_head;
-	aq = NULL;
-	while (ap != NULL) {
-		if (ap->type == type && ap->tag == tag && ap->id == id) {
-			ap->permset = permset;
-			return (ap);
-		}
-		aq = ap;
-		ap = ap->next;
-	}
-
-	/* Add a new entry to the end of the list. */
-	ap = (struct ae_acl *)malloc(sizeof(*ap));
-	if (ap == NULL)
-		return (NULL);
-	memset(ap, 0, sizeof(*ap));
-	if (aq == NULL)
-		entry->acl_head = ap;
-	else
-		aq->next = ap;
-	ap->type = type;
-	ap->tag = tag;
-	ap->id = id;
-	ap->permset = permset;
-	return (ap);
+	return (archive_acl_types(&entry->acl));
 }
 
 /*
@@ -1325,20 +1456,7 @@ acl_new_entry(struct archive_entry *entry,
 int
 archive_entry_acl_count(struct archive_entry *entry, int want_type)
 {
-	int count;
-	struct ae_acl *ap;
-
-	count = 0;
-	ap = entry->acl_head;
-	while (ap != NULL) {
-		if ((ap->type & want_type) != 0)
-			count++;
-		ap = ap->next;
-	}
-
-	if (count > 0 && ((want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0))
-		count += 3;
-	return (count);
+	return archive_acl_count(&entry->acl, want_type);
 }
 
 /*
@@ -1349,506 +1467,142 @@ archive_entry_acl_count(struct archive_entry *entry, int want_type)
 int
 archive_entry_acl_reset(struct archive_entry *entry, int want_type)
 {
-	int count, cutoff;
-
-	count = archive_entry_acl_count(entry, want_type);
-
-	/*
-	 * If the only entries are the three standard ones,
-	 * then don't return any ACL data.  (In this case,
-	 * client can just use chmod(2) to set permissions.)
-	 */
-	if ((want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0)
-		cutoff = 3;
-	else
-		cutoff = 0;
-
-	if (count > cutoff)
-		entry->acl_state = ARCHIVE_ENTRY_ACL_USER_OBJ;
-	else
-		entry->acl_state = 0;
-	entry->acl_p = entry->acl_head;
-	return (count);
+	return archive_acl_reset(&entry->acl, want_type);
 }
 
 /*
  * Return the next ACL entry in the list.  Fake entries for the
  * standard permissions and include them in the returned list.
  */
-
 int
 archive_entry_acl_next(struct archive_entry *entry, int want_type, int *type,
     int *permset, int *tag, int *id, const char **name)
 {
-	*name = NULL;
-	*id = -1;
-
-	/*
-	 * The acl_state is either zero (no entries available), -1
-	 * (reading from list), or an entry type (retrieve that type
-	 * from ae_stat.aest_mode).
-	 */
-	if (entry->acl_state == 0)
-		return (ARCHIVE_WARN);
-
-	/* The first three access entries are special. */
-	if ((want_type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0) {
-		switch (entry->acl_state) {
-		case ARCHIVE_ENTRY_ACL_USER_OBJ:
-			*permset = (entry->ae_stat.aest_mode >> 6) & 7;
-			*type = ARCHIVE_ENTRY_ACL_TYPE_ACCESS;
-			*tag = ARCHIVE_ENTRY_ACL_USER_OBJ;
-			entry->acl_state = ARCHIVE_ENTRY_ACL_GROUP_OBJ;
-			return (ARCHIVE_OK);
-		case ARCHIVE_ENTRY_ACL_GROUP_OBJ:
-			*permset = (entry->ae_stat.aest_mode >> 3) & 7;
-			*type = ARCHIVE_ENTRY_ACL_TYPE_ACCESS;
-			*tag = ARCHIVE_ENTRY_ACL_GROUP_OBJ;
-			entry->acl_state = ARCHIVE_ENTRY_ACL_OTHER;
-			return (ARCHIVE_OK);
-		case ARCHIVE_ENTRY_ACL_OTHER:
-			*permset = entry->ae_stat.aest_mode & 7;
-			*type = ARCHIVE_ENTRY_ACL_TYPE_ACCESS;
-			*tag = ARCHIVE_ENTRY_ACL_OTHER;
-			entry->acl_state = -1;
-			entry->acl_p = entry->acl_head;
-			return (ARCHIVE_OK);
-		default:
-			break;
-		}
-	}
-
-	while (entry->acl_p != NULL && (entry->acl_p->type & want_type) == 0)
-		entry->acl_p = entry->acl_p->next;
-	if (entry->acl_p == NULL) {
-		entry->acl_state = 0;
-		*type = 0;
-		*permset = 0;
-		*tag = 0;
-		*id = -1;
-		*name = NULL;
-		return (ARCHIVE_EOF); /* End of ACL entries. */
-	}
-	*type = entry->acl_p->type;
-	*permset = entry->acl_p->permset;
-	*tag = entry->acl_p->tag;
-	*id = entry->acl_p->id;
-	*name = aes_get_mbs(&entry->acl_p->name);
-	entry->acl_p = entry->acl_p->next;
-	return (ARCHIVE_OK);
+	int r;
+	r = archive_acl_next(entry->archive, &entry->acl, want_type, type,
+		permset, tag, id, name);
+	if (r == ARCHIVE_FATAL && errno == ENOMEM)
+		__archive_errx(1, "No memory");
+	return (r);
 }
 
 /*
- * Generate a text version of the ACL.  The flags parameter controls
+ * Generate a text version of the ACL. The flags parameter controls
  * the style of the generated ACL.
  */
+wchar_t *
+archive_entry_acl_to_text_w(struct archive_entry *entry, ssize_t *len,
+    int flags)
+{
+	return (archive_acl_to_text_w(&entry->acl, len, flags,
+	    entry->archive));
+}
+
+char *
+archive_entry_acl_to_text(struct archive_entry *entry, ssize_t *len,
+    int flags)
+{
+	return (archive_acl_to_text_l(&entry->acl, len, flags, NULL));
+}
+
+char *
+_archive_entry_acl_to_text_l(struct archive_entry *entry, ssize_t *len,
+   int flags, struct archive_string_conv *sc)
+{
+	return (archive_acl_to_text_l(&entry->acl, len, flags, sc));
+}
+
+/*
+ * ACL text parser.
+ */
+int
+archive_entry_acl_from_text_w(struct archive_entry *entry,
+    const wchar_t *wtext, int type)
+{
+	return (archive_acl_from_text_w(&entry->acl, wtext, type));
+}
+
+int
+archive_entry_acl_from_text(struct archive_entry *entry,
+    const char *text, int type)
+{
+	return (archive_acl_from_text_l(&entry->acl, text, type, NULL));
+}
+
+int
+_archive_entry_acl_from_text_l(struct archive_entry *entry, const char *text,
+    int type, struct archive_string_conv *sc)
+{
+	return (archive_acl_from_text_l(&entry->acl, text, type, sc));
+}
+
+/* Deprecated */
+static int
+archive_entry_acl_text_compat(int *flags)
+{
+	if ((*flags & ARCHIVE_ENTRY_ACL_TYPE_POSIX1E) == 0)
+		return (1);
+
+	/* ABI compat with old ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID */
+	if ((*flags & OLD_ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID) != 0)
+		*flags |= ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID;
+
+	/* ABI compat with old ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT */
+	if ((*flags & OLD_ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT) != 0)
+		*flags |=  ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT;
+
+	*flags |= ARCHIVE_ENTRY_ACL_STYLE_SEPARATOR_COMMA;
+
+	return (0);
+}
+
+/* Deprecated */
 const wchar_t *
 archive_entry_acl_text_w(struct archive_entry *entry, int flags)
 {
-	int count;
-	size_t length;
-	const wchar_t *wname;
-	const wchar_t *prefix;
-	wchar_t separator;
-	struct ae_acl *ap;
-	int id;
-	wchar_t *wp;
-
-	if (entry->acl_text_w != NULL) {
-		free (entry->acl_text_w);
-		entry->acl_text_w = NULL;
+	if (entry->acl.acl_text_w != NULL) {
+		free(entry->acl.acl_text_w);
+		entry->acl.acl_text_w = NULL;
 	}
-
-	separator = L',';
-	count = 0;
-	length = 0;
-	ap = entry->acl_head;
-	while (ap != NULL) {
-		if ((ap->type & flags) != 0) {
-			count++;
-			if ((flags & ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT) &&
-			    (ap->type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT))
-				length += 8; /* "default:" */
-			length += 5; /* tag name */
-			length += 1; /* colon */
-			wname = aes_get_wcs(&ap->name);
-			if (wname != NULL)
-				length += wcslen(wname);
-			else
-				length += sizeof(uid_t) * 3 + 1;
-			length ++; /* colon */
-			length += 3; /* rwx */
-			length += 1; /* colon */
-			length += max(sizeof(uid_t), sizeof(gid_t)) * 3 + 1;
-			length ++; /* newline */
-		}
-		ap = ap->next;
-	}
-
-	if (count > 0 && ((flags & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0)) {
-		length += 10; /* "user::rwx\n" */
-		length += 11; /* "group::rwx\n" */
-		length += 11; /* "other::rwx\n" */
-	}
-
-	if (count == 0)
-		return (NULL);
-
-	/* Now, allocate the string and actually populate it. */
-	wp = entry->acl_text_w = (wchar_t *)malloc(length * sizeof(wchar_t));
-	if (wp == NULL)
-		__archive_errx(1, "No memory to generate the text version of the ACL");
-	count = 0;
-	if ((flags & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0) {
-		append_entry_w(&wp, NULL, ARCHIVE_ENTRY_ACL_USER_OBJ, NULL,
-		    entry->ae_stat.aest_mode & 0700, -1);
-		*wp++ = ',';
-		append_entry_w(&wp, NULL, ARCHIVE_ENTRY_ACL_GROUP_OBJ, NULL,
-		    entry->ae_stat.aest_mode & 0070, -1);
-		*wp++ = ',';
-		append_entry_w(&wp, NULL, ARCHIVE_ENTRY_ACL_OTHER, NULL,
-		    entry->ae_stat.aest_mode & 0007, -1);
-		count += 3;
-
-		ap = entry->acl_head;
-		while (ap != NULL) {
-			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0) {
-				wname = aes_get_wcs(&ap->name);
-				*wp++ = separator;
-				if (flags & ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID)
-					id = ap->id;
-				else
-					id = -1;
-				append_entry_w(&wp, NULL, ap->tag, wname,
-				    ap->permset, id);
-				count++;
-			}
-			ap = ap->next;
-		}
-	}
-
-
-	if ((flags & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) != 0) {
-		if (flags & ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT)
-			prefix = L"default:";
-		else
-			prefix = NULL;
-		ap = entry->acl_head;
-		count = 0;
-		while (ap != NULL) {
-			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) != 0) {
-				wname = aes_get_wcs(&ap->name);
-				if (count > 0)
-					*wp++ = separator;
-				if (flags & ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID)
-					id = ap->id;
-				else
-					id = -1;
-				append_entry_w(&wp, prefix, ap->tag,
-				    wname, ap->permset, id);
-				count ++;
-			}
-			ap = ap->next;
-		}
-	}
-
-	return (entry->acl_text_w);
+	if (archive_entry_acl_text_compat(&flags) == 0)
+		entry->acl.acl_text_w = archive_acl_to_text_w(&entry->acl,
+		    NULL, flags, entry->archive);
+	return (entry->acl.acl_text_w);
 }
 
-static void
-append_id_w(wchar_t **wp, int id)
+/* Deprecated */
+const char *
+archive_entry_acl_text(struct archive_entry *entry, int flags)
 {
-	if (id < 0)
-		id = 0;
-	if (id > 9)
-		append_id_w(wp, id / 10);
-	*(*wp)++ = L"0123456789"[id % 10];
+	if (entry->acl.acl_text != NULL) {
+		free(entry->acl.acl_text);
+		entry->acl.acl_text = NULL;
+	}
+	if (archive_entry_acl_text_compat(&flags) == 0)
+		entry->acl.acl_text = archive_acl_to_text_l(&entry->acl, NULL,
+		    flags, NULL);
+
+	return (entry->acl.acl_text);
 }
 
-static void
-append_entry_w(wchar_t **wp, const wchar_t *prefix, int tag,
-    const wchar_t *wname, int perm, int id)
-{
-	if (prefix != NULL) {
-		wcscpy(*wp, prefix);
-		*wp += wcslen(*wp);
-	}
-	switch (tag) {
-	case ARCHIVE_ENTRY_ACL_USER_OBJ:
-		wname = NULL;
-		id = -1;
-		/* FALLTHROUGH */
-	case ARCHIVE_ENTRY_ACL_USER:
-		wcscpy(*wp, L"user");
-		break;
-	case ARCHIVE_ENTRY_ACL_GROUP_OBJ:
-		wname = NULL;
-		id = -1;
-		/* FALLTHROUGH */
-	case ARCHIVE_ENTRY_ACL_GROUP:
-		wcscpy(*wp, L"group");
-		break;
-	case ARCHIVE_ENTRY_ACL_MASK:
-		wcscpy(*wp, L"mask");
-		wname = NULL;
-		id = -1;
-		break;
-	case ARCHIVE_ENTRY_ACL_OTHER:
-		wcscpy(*wp, L"other");
-		wname = NULL;
-		id = -1;
-		break;
-	}
-	*wp += wcslen(*wp);
-	*(*wp)++ = L':';
-	if (wname != NULL) {
-		wcscpy(*wp, wname);
-		*wp += wcslen(*wp);
-	} else if (tag == ARCHIVE_ENTRY_ACL_USER
-	    || tag == ARCHIVE_ENTRY_ACL_GROUP) {
-		append_id_w(wp, id);
-		id = -1;
-	}
-	*(*wp)++ = L':';
-	*(*wp)++ = (perm & 0444) ? L'r' : L'-';
-	*(*wp)++ = (perm & 0222) ? L'w' : L'-';
-	*(*wp)++ = (perm & 0111) ? L'x' : L'-';
-	if (id != -1) {
-		*(*wp)++ = L':';
-		append_id_w(wp, id);
-	}
-	**wp = L'\0';
-}
-
-/*
- * Parse a textual ACL.  This automatically recognizes and supports
- * extensions described above.  The 'type' argument is used to
- * indicate the type that should be used for any entries not
- * explicitly marked as "default:".
- */
+/* Deprecated */
 int
-__archive_entry_acl_parse_w(struct archive_entry *entry,
-    const wchar_t *text, int default_type)
+_archive_entry_acl_text_l(struct archive_entry *entry, int flags,
+    const char **acl_text, size_t *len, struct archive_string_conv *sc)
 {
-	struct {
-		const wchar_t *start;
-		const wchar_t *end;
-	} field[4], name;
+	if (entry->acl.acl_text != NULL) {
+		free(entry->acl.acl_text);
+		entry->acl.acl_text = NULL;
+        }
 
-	int fields, n;
-	int type, tag, permset, id;
-	wchar_t sep;
+	if (archive_entry_acl_text_compat(&flags) == 0)
+		entry->acl.acl_text = archive_acl_to_text_l(&entry->acl,
+		    (ssize_t *)len, flags, sc);
 
-	while (text != NULL  &&  *text != L'\0') {
-		/*
-		 * Parse the fields out of the next entry,
-		 * advance 'text' to start of next entry.
-		 */
-		fields = 0;
-		do {
-			const wchar_t *start, *end;
-			next_field_w(&text, &start, &end, &sep);
-			if (fields < 4) {
-				field[fields].start = start;
-				field[fields].end = end;
-			}
-			++fields;
-		} while (sep == L':');
+	*acl_text = entry->acl.acl_text;
 
-		/* Set remaining fields to blank. */
-		for (n = fields; n < 4; ++n)
-			field[n].start = field[n].end = NULL;
-
-		/* Check for a numeric ID in field 1 or 3. */
-		id = -1;
-		isint_w(field[1].start, field[1].end, &id);
-		/* Field 3 is optional. */
-		if (id == -1 && fields > 3)
-			isint_w(field[3].start, field[3].end, &id);
-
-		/*
-		 * Solaris extension:  "defaultuser::rwx" is the
-		 * default ACL corresponding to "user::rwx", etc.
-		 */
-		if (field[0].end - field[0].start > 7
-		    && wmemcmp(field[0].start, L"default", 7) == 0) {
-			type = ARCHIVE_ENTRY_ACL_TYPE_DEFAULT;
-			field[0].start += 7;
-		} else
-			type = default_type;
-
-		name.start = name.end = NULL;
-		if (prefix_w(field[0].start, field[0].end, L"user")) {
-			if (!ismode_w(field[2].start, field[2].end, &permset))
-				return (ARCHIVE_WARN);
-			if (id != -1 || field[1].start < field[1].end) {
-				tag = ARCHIVE_ENTRY_ACL_USER;
-				name = field[1];
-			} else
-				tag = ARCHIVE_ENTRY_ACL_USER_OBJ;
-		} else if (prefix_w(field[0].start, field[0].end, L"group")) {
-			if (!ismode_w(field[2].start, field[2].end, &permset))
-				return (ARCHIVE_WARN);
-			if (id != -1 || field[1].start < field[1].end) {
-				tag = ARCHIVE_ENTRY_ACL_GROUP;
-				name = field[1];
-			} else
-				tag = ARCHIVE_ENTRY_ACL_GROUP_OBJ;
-		} else if (prefix_w(field[0].start, field[0].end, L"other")) {
-			if (fields == 2
-			    && field[1].start < field[1].end
-			    && ismode_w(field[1].start, field[1].end, &permset)) {
-				/* This is Solaris-style "other:rwx" */
-			} else if (fields == 3
-			    && field[1].start == field[1].end
-			    && field[2].start < field[2].end
-			    && ismode_w(field[2].start, field[2].end, &permset)) {
-				/* This is FreeBSD-style "other::rwx" */
-			} else
-				return (ARCHIVE_WARN);
-			tag = ARCHIVE_ENTRY_ACL_OTHER;
-		} else if (prefix_w(field[0].start, field[0].end, L"mask")) {
-			if (fields == 2
-			    && field[1].start < field[1].end
-			    && ismode_w(field[1].start, field[1].end, &permset)) {
-				/* This is Solaris-style "mask:rwx" */
-			} else if (fields == 3
-			    && field[1].start == field[1].end
-			    && field[2].start < field[2].end
-			    && ismode_w(field[2].start, field[2].end, &permset)) {
-				/* This is FreeBSD-style "mask::rwx" */
-			} else
-				return (ARCHIVE_WARN);
-			tag = ARCHIVE_ENTRY_ACL_MASK;
-		} else
-			return (ARCHIVE_WARN);
-
-		/* Add entry to the internal list. */
-		archive_entry_acl_add_entry_w_len(entry, type, permset,
-		    tag, id, name.start, name.end - name.start);
-	}
-	return (ARCHIVE_OK);
+	return (0);
 }
-
-/*
- * Parse a string to a positive decimal integer.  Returns true if
- * the string is non-empty and consists only of decimal digits,
- * false otherwise.
- */
-static int
-isint_w(const wchar_t *start, const wchar_t *end, int *result)
-{
-	int n = 0;
-	if (start >= end)
-		return (0);
-	while (start < end) {
-		if (*start < '0' || *start > '9')
-			return (0);
-		if (n > (INT_MAX / 10))
-			n = INT_MAX;
-		else {
-			n *= 10;
-			n += *start - '0';
-		}
-		start++;
-	}
-	*result = n;
-	return (1);
-}
-
-/*
- * Parse a string as a mode field.  Returns true if
- * the string is non-empty and consists only of mode characters,
- * false otherwise.
- */
-static int
-ismode_w(const wchar_t *start, const wchar_t *end, int *permset)
-{
-	const wchar_t *p;
-
-	if (start >= end)
-		return (0);
-	p = start;
-	*permset = 0;
-	while (p < end) {
-		switch (*p++) {
-		case 'r': case 'R':
-			*permset |= ARCHIVE_ENTRY_ACL_READ;
-			break;
-		case 'w': case 'W':
-			*permset |= ARCHIVE_ENTRY_ACL_WRITE;
-			break;
-		case 'x': case 'X':
-			*permset |= ARCHIVE_ENTRY_ACL_EXECUTE;
-			break;
-		case '-':
-			break;
-		default:
-			return (0);
-		}
-	}
-	return (1);
-}
-
-/*
- * Match "[:whitespace:]*(.*)[:whitespace:]*[:,\n]".  *wp is updated
- * to point to just after the separator.  *start points to the first
- * character of the matched text and *end just after the last
- * character of the matched identifier.  In particular *end - *start
- * is the length of the field body, not including leading or trailing
- * whitespace.
- */
-static void
-next_field_w(const wchar_t **wp, const wchar_t **start,
-    const wchar_t **end, wchar_t *sep)
-{
-	/* Skip leading whitespace to find start of field. */
-	while (**wp == L' ' || **wp == L'\t' || **wp == L'\n') {
-		(*wp)++;
-	}
-	*start = *wp;
-
-	/* Scan for the separator. */
-	while (**wp != L'\0' && **wp != L',' && **wp != L':' &&
-	    **wp != L'\n') {
-		(*wp)++;
-	}
-	*sep = **wp;
-
-	/* Trim trailing whitespace to locate end of field. */
-	*end = *wp - 1;
-	while (**end == L' ' || **end == L'\t' || **end == L'\n') {
-		(*end)--;
-	}
-	(*end)++;
-
-	/* Adjust scanner location. */
-	if (**wp != L'\0')
-		(*wp)++;
-}
-
-/*
- * Return true if the characters [start...end) are a prefix of 'test'.
- * This makes it easy to handle the obvious abbreviations: 'u' for 'user', etc.
- */
-static int
-prefix_w(const wchar_t *start, const wchar_t *end, const wchar_t *test)
-{
-	if (start == end)
-		return (0);
-
-	if (*start++ != *test++)
-		return (0);
-
-	while (start < end  &&  *start++ == *test++)
-		;
-
-	if (start < end)
-		return (0);
-
-	return (1);
-}
-
 
 /*
  * Following code is modified from UC Berkeley sources, and
@@ -1884,7 +1638,7 @@ prefix_w(const wchar_t *start, const wchar_t *end, const wchar_t *test)
  * SUCH DAMAGE.
  */
 
-static struct flag {
+static const struct flag {
 	const char	*name;
 	const wchar_t	*wname;
 	unsigned long	 set;
@@ -1895,7 +1649,10 @@ static struct flag {
 	{ "nosappnd",	L"nosappnd",		SF_APPEND,	0 },
 	{ "nosappend",	L"nosappend",		SF_APPEND,	0 },
 #endif
-#ifdef  EXT2_APPEND_FL				/* 'a' */
+#if defined(FS_APPEND_FL)			/* 'a' */
+	{ "nosappnd",	L"nosappnd",		FS_APPEND_FL,	0 },
+	{ "nosappend",	L"nosappend",		FS_APPEND_FL,	0 },
+#elif defined(EXT2_APPEND_FL)			/* 'a' */
 	{ "nosappnd",	L"nosappnd",		EXT2_APPEND_FL,	0 },
 	{ "nosappend",	L"nosappend",		EXT2_APPEND_FL,	0 },
 #endif
@@ -1908,7 +1665,11 @@ static struct flag {
 	{ "noschange",	L"noschange",		SF_IMMUTABLE,	0 },
 	{ "nosimmutable",	L"nosimmutable",	SF_IMMUTABLE,	0 },
 #endif
-#ifdef EXT2_IMMUTABLE_FL			/* 'i' */
+#if defined(FS_IMMUTABLE_FL)			/* 'i' */
+	{ "noschg",	L"noschg",		FS_IMMUTABLE_FL,	0 },
+	{ "noschange",	L"noschange",		FS_IMMUTABLE_FL,	0 },
+	{ "nosimmutable",	L"nosimmutable",	FS_IMMUTABLE_FL,	0 },
+#elif defined(EXT2_IMMUTABLE_FL)		/* 'i' */
 	{ "noschg",	L"noschg",		EXT2_IMMUTABLE_FL,	0 },
 	{ "noschange",	L"noschange",		EXT2_IMMUTABLE_FL,	0 },
 	{ "nosimmutable",	L"nosimmutable",	EXT2_IMMUTABLE_FL,	0 },
@@ -1932,7 +1693,9 @@ static struct flag {
 #ifdef UF_NODUMP
 	{ "nodump",	L"nodump",		0,		UF_NODUMP},
 #endif
-#ifdef EXT2_NODUMP_FL				/* 'd' */
+#if defined(FS_NODUMP_FL)	/* 'd' */
+	{ "nodump",	L"nodump",		0,		FS_NODUMP_FL},
+#elif defined(EXT2_NODUMP_FL) 	/* 'd' */
 	{ "nodump",	L"nodump",		0,		EXT2_NODUMP_FL},
 #endif
 #ifdef UF_OPAQUE
@@ -1942,65 +1705,130 @@ static struct flag {
 	{ "nouunlnk",	L"nouunlnk",		UF_NOUNLINK,	0 },
 	{ "nouunlink",	L"nouunlink",		UF_NOUNLINK,	0 },
 #endif
-#ifdef EXT2_UNRM_FL
+#ifdef UF_COMPRESSED
+	{ "nocompressed",L"nocompressed",	UF_COMPRESSED,	0 },
+#endif
+#ifdef UF_HIDDEN
+	{ "nohidden",	L"nohidden",		UF_HIDDEN,	0 },
+#endif
+#if defined(FS_UNRM_FL)
+        { "nouunlink",	L"nouunlink",		FS_UNRM_FL,	0},
+#elif defined(EXT2_UNRM_FL)
         { "nouunlink",	L"nouunlink",		EXT2_UNRM_FL,	0},
 #endif
 
-#ifdef EXT2_BTREE_FL
+#if defined(FS_BTREE_FL)
+        { "nobtree",	L"nobtree",       	FS_BTREE_FL,	0 },
+#elif defined(EXT2_BTREE_FL)
         { "nobtree",	L"nobtree",       	EXT2_BTREE_FL,	0 },
 #endif
 
-#ifdef EXT2_ECOMPR_FL
+#if defined(FS_ECOMPR_FL)
+        { "nocomperr",	L"nocomperr",       	FS_ECOMPR_FL,	0 },
+#elif defined(EXT2_ECOMPR_FL)
         { "nocomperr",	L"nocomperr",       	EXT2_ECOMPR_FL,	0 },
 #endif
 
-#ifdef EXT2_COMPR_FL				/* 'c' */
+#if defined(FS_COMPR_FL)			/* 'c' */
+        { "nocompress",	L"nocompress",       	FS_COMPR_FL,	0 },
+#elif defined(EXT2_COMPR_FL)			/* 'c' */
         { "nocompress",	L"nocompress",       	EXT2_COMPR_FL,	0 },
 #endif
 
-#ifdef EXT2_NOATIME_FL				/* 'A' */
+#if defined(FS_NOATIME_FL)			/* 'A' */
+        { "noatime",	L"noatime",		0,		FS_NOATIME_FL},
+#elif defined(EXT2_NOATIME_FL)			/* 'A' */
         { "noatime",	L"noatime",		0,		EXT2_NOATIME_FL},
 #endif
 
-#ifdef EXT2_DIRTY_FL
+#if defined(FS_DIRTY_FL)
+        { "nocompdirty",L"nocompdirty",		FS_DIRTY_FL,		0},
+#elif defined(EXT2_DIRTY_FL)
         { "nocompdirty",L"nocompdirty",		EXT2_DIRTY_FL,		0},
 #endif
 
-#ifdef EXT2_COMPRBLK_FL
-#ifdef EXT2_NOCOMPR_FL
+#if defined(FS_COMPRBLK_FL)
+#if defined(FS_NOCOMPR_FL)
+        { "nocomprblk",	L"nocomprblk",		FS_COMPRBLK_FL, FS_NOCOMPR_FL},
+#else
+        { "nocomprblk",	L"nocomprblk",		FS_COMPRBLK_FL,	0},
+#endif
+#elif defined(EXT2_COMPRBLK_FL)
+#if defined(EXT2_NOCOMPR_FL)
         { "nocomprblk",	L"nocomprblk",		EXT2_COMPRBLK_FL, EXT2_NOCOMPR_FL},
 #else
         { "nocomprblk",	L"nocomprblk",		EXT2_COMPRBLK_FL,	0},
 #endif
 #endif
-#ifdef EXT2_DIRSYNC_FL
+#if defined(FS_DIRSYNC_FL)
+        { "nodirsync",	L"nodirsync",		FS_DIRSYNC_FL,	0},
+#elif defined(EXT2_DIRSYNC_FL)
         { "nodirsync",	L"nodirsync",		EXT2_DIRSYNC_FL,	0},
 #endif
-#ifdef EXT2_INDEX_FL
+#if defined(FS_INDEX_FL)
+        { "nohashidx",	L"nohashidx",		FS_INDEX_FL,		0},
+#elif defined(EXT2_INDEX_FL)
         { "nohashidx",	L"nohashidx",		EXT2_INDEX_FL,		0},
 #endif
-#ifdef EXT2_IMAGIC_FL
+#if defined(FS_IMAGIC_FL)
+        { "noimagic",	L"noimagic",		FS_IMAGIC_FL,		0},
+#elif defined(EXT2_IMAGIC_FL)
         { "noimagic",	L"noimagic",		EXT2_IMAGIC_FL,		0},
 #endif
-#ifdef EXT3_JOURNAL_DATA_FL
+#if defined(FS_JOURNAL_DATA_FL)
+        { "nojournal",	L"nojournal",		FS_JOURNAL_DATA_FL,	0},
+#elif defined(EXT3_JOURNAL_DATA_FL)
         { "nojournal",	L"nojournal",		EXT3_JOURNAL_DATA_FL,	0},
 #endif
-#ifdef EXT2_SECRM_FL
+#if defined(FS_SECRM_FL)
+        { "nosecuredeletion",L"nosecuredeletion",FS_SECRM_FL,		0},
+#elif defined(EXT2_SECRM_FL)
         { "nosecuredeletion",L"nosecuredeletion",EXT2_SECRM_FL,		0},
 #endif
-#ifdef EXT2_SYNC_FL
+#if defined(FS_SYNC_FL)
+        { "nosync",	L"nosync",		FS_SYNC_FL,		0},
+#elif defined(EXT2_SYNC_FL)
         { "nosync",	L"nosync",		EXT2_SYNC_FL,		0},
 #endif
-#ifdef EXT2_NOTAIL_FL
+#if defined(FS_NOTAIL_FL)
+        { "notail",	L"notail",		0,		FS_NOTAIL_FL},
+#elif defined(EXT2_NOTAIL_FL)
         { "notail",	L"notail",		0,		EXT2_NOTAIL_FL},
 #endif
-#ifdef EXT2_TOPDIR_FL
+#if defined(FS_TOPDIR_FL)
+        { "notopdir",	L"notopdir",		FS_TOPDIR_FL,		0},
+#elif defined(EXT2_TOPDIR_FL)
         { "notopdir",	L"notopdir",		EXT2_TOPDIR_FL,		0},
 #endif
-#ifdef EXT2_RESERVED_FL
+#ifdef FS_ENCRYPT_FL
+        { "noencrypt",	L"noencrypt",		FS_ENCRYPT_FL,	0},
+#endif
+#ifdef FS_HUGE_FILE_FL
+        { "nohugefile",	L"nohugefile",		FS_HUGE_FILE_FL,	0},
+#endif
+#ifdef FS_EXTENT_FL
+        { "noextent",	L"noextent",		FS_EXTENT_FL,	0},
+#endif
+#ifdef FS_EA_INODE_FL
+        { "noeainode",	L"noeainode",		FS_EA_INODE_FL,	0},
+#endif
+#ifdef FS_EOFBLOCKS_FL
+        { "noeofblocks",L"noeofblocks",		FS_EOFBLOCKS_FL,	0},
+#endif
+#ifdef FS_NOCOW_FL
+        { "nocow",	L"nocow",		FS_NOCOW_FL,	0},
+#endif
+#ifdef FS_INLINE_DATA_FL
+        { "noinlinedata",L"noinlinedata",	FS_INLINE_DATA_FL,	0},
+#endif
+#ifdef FS_PROJINHERIT_FL
+        { "noprojinherit",L"noprojinherit",	FS_PROJINHERIT_FL,	0},
+#endif
+#if defined(FS_RESERVED_FL)
+        { "noreserved",	L"noreserved",		FS_RESERVED_FL,	0},
+#elif defined(EXT2_RESERVED_FL)
         { "noreserved",	L"noreserved",		EXT2_RESERVED_FL,	0},
 #endif
-
 	{ NULL,		NULL,			0,		0 }
 };
 
@@ -2015,7 +1843,7 @@ ae_fflagstostr(unsigned long bitset, unsigned long bitclear)
 	char *string, *dp;
 	const char *sp;
 	unsigned long bits;
-	struct flag *flag;
+	const struct flag *flag;
 	size_t	length;
 
 	bits = bitset | bitclear;
@@ -2067,7 +1895,7 @@ static const char *
 ae_strtofflags(const char *s, unsigned long *setp, unsigned long *clrp)
 {
 	const char *start, *end;
-	struct flag *flag;
+	const struct flag *flag;
 	unsigned long set, clear;
 	const char *failed;
 
@@ -2078,19 +1906,23 @@ ae_strtofflags(const char *s, unsigned long *setp, unsigned long *clrp)
 	while (*start == '\t'  ||  *start == ' '  ||  *start == ',')
 		start++;
 	while (*start != '\0') {
+		size_t length;
 		/* Locate end of token. */
 		end = start;
 		while (*end != '\0'  &&  *end != '\t'  &&
 		    *end != ' '  &&  *end != ',')
 			end++;
+		length = end - start;
 		for (flag = flags; flag->name != NULL; flag++) {
-			if (memcmp(start, flag->name, end - start) == 0) {
+			size_t flag_length = strlen(flag->name);
+			if (length == flag_length
+			    && memcmp(start, flag->name, length) == 0) {
 				/* Matched "noXXXX", so reverse the sense. */
 				clear |= flag->set;
 				set |= flag->clear;
 				break;
-			} else if (memcmp(start, flag->name + 2, end - start)
-			    == 0) {
+			} else if (length == flag_length - 2
+			    && memcmp(start, flag->name + 2, length) == 0) {
 				/* Matched "XXXX", so don't reverse. */
 				set |= flag->set;
 				clear |= flag->clear;
@@ -2131,7 +1963,7 @@ static const wchar_t *
 ae_wcstofflags(const wchar_t *s, unsigned long *setp, unsigned long *clrp)
 {
 	const wchar_t *start, *end;
-	struct flag *flag;
+	const struct flag *flag;
 	unsigned long set, clear;
 	const wchar_t *failed;
 
@@ -2142,19 +1974,23 @@ ae_wcstofflags(const wchar_t *s, unsigned long *setp, unsigned long *clrp)
 	while (*start == L'\t'  ||  *start == L' '  ||  *start == L',')
 		start++;
 	while (*start != L'\0') {
+		size_t length;
 		/* Locate end of token. */
 		end = start;
 		while (*end != L'\0'  &&  *end != L'\t'  &&
 		    *end != L' '  &&  *end != L',')
 			end++;
+		length = end - start;
 		for (flag = flags; flag->wname != NULL; flag++) {
-			if (wmemcmp(start, flag->wname, end - start) == 0) {
+			size_t flag_length = wcslen(flag->wname);
+			if (length == flag_length
+			    && wmemcmp(start, flag->wname, length) == 0) {
 				/* Matched "noXXXX", so reverse the sense. */
 				clear |= flag->set;
 				set |= flag->clear;
 				break;
-			} else if (wmemcmp(start, flag->wname + 2, end - start)
-			    == 0) {
+			} else if (length == flag_length - 2
+			    && wmemcmp(start, flag->wname + 2, length) == 0) {
 				/* Matched "XXXX", so don't reverse. */
 				set |= flag->set;
 				clear |= flag->clear;

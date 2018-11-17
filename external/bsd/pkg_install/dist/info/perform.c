@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#if HAVE_SYS_QUEUE_H
-#include <sys/queue.h>
-#endif
-#if HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -73,6 +67,12 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $");
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#if HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 
 #ifndef BOOTSTRAP
 #include <archive.h>
@@ -81,22 +81,13 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $");
 #if HAVE_ERR_H
 #include <err.h>
 #endif
-#if HAVE_ERRNO_H
-#include <errno.h>
-#endif
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-#if HAVE_DIRENT_H
-#include <dirent.h>
-#endif
-#if HAVE_CTYPE_H
 #include <ctype.h>
-#endif
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stddef.h>
+#include <signal.h>
 
 #define	LOAD_CONTENTS		(1 << 0)
 #define	LOAD_COMMENT		(1 << 1)
@@ -110,9 +101,8 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $");
 #define	LOAD_SIZE_PKG		(1 << 9)
 #define	LOAD_SIZE_ALL		(1 << 10)
 #define	LOAD_PRESERVE		(1 << 11)
-#define	LOAD_VIEWS		(1 << 12)
-#define	LOAD_REQUIRED_BY	(1 << 13)
-#define	LOAD_INSTALLED_INFO	(1 << 14)
+#define	LOAD_REQUIRED_BY	(1 << 12)
+#define	LOAD_INSTALLED_INFO	(1 << 13)
 
 static const struct pkg_meta_desc {
 	size_t entry_offset;
@@ -144,8 +134,6 @@ static const struct pkg_meta_desc {
 	    LOAD_SIZE_ALL, 0 },
 	{ offsetof(struct pkg_meta, meta_preserve), PRESERVE_FNAME,
 	    LOAD_PRESERVE, 0 },
-	{ offsetof(struct pkg_meta, meta_views), VIEWS_FNAME,
-	    LOAD_VIEWS, 0 },
 	{ offsetof(struct pkg_meta, meta_required_by), REQUIRED_BY_FNAME,
 	    LOAD_REQUIRED_BY, 0 },
 	{ offsetof(struct pkg_meta, meta_installed_info), INSTALLED_INFO_FNAME,
@@ -361,7 +349,7 @@ pkg_do(const char *pkg)
 		free(pkgname);
 
 		meta = read_meta_data_from_archive(archive, entry);
-		archive_read_finish(archive);
+		archive_read_free(archive);
 		if (!IS_URL(pkg))
 			binpkgfile = pkg;
 #endif

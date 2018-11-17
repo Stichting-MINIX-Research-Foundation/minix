@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.8 2010/04/23 20:54:08 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.2 2017/04/20 13:18:23 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd January 20, 2010
+.Dd December 27, 2014
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -221,12 +221,6 @@ script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
 .Aq Ar pkg-name
-.Ar VIEW-DEINSTALL
-.Ed
-before removing the package from a view, and as:
-.Bd -filled -offset indent -compact
-.Cm deinstall
-.Aq Ar pkg-name
 .Ar DEINSTALL
 .Ed
 before deleting all files and as:
@@ -237,8 +231,7 @@ before deleting all files and as:
 .Ed
 after deleting them.
 Passing the keywords
-.Ar VIEW-DEINSTALL ,
-.Ar DEINSTALL ,
+.Ar DEINSTALL
 and
 .Ar POST-DEINSTALL
 lets you potentially write only one program/script that handles all

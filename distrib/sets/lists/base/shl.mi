@@ -170,8 +170,10 @@
 ./usr/lib/libamu.so.5				base-amd-shlib		compatfile
 ./usr/lib/libamu.so.5.0				base-amd-shlib		compatfile
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
-./usr/lib/libarchive.so.3			base-sys-shlib		compatfile
-./usr/lib/libarchive.so.3.1			base-sys-shlib		compatfile
+./usr/lib/libarchive.so.3			base-sys-shlib		compatfile,obsolete
+./usr/lib/libarchive.so.3.1			base-sys-shlib		compatfile,obsolete
+./usr/lib/libarchive.so.4			base-sys-shlib		compatfile
+./usr/lib/libarchive.so.4.0			base-sys-shlib		compatfile
 ./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc
 ./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc
@@ -393,8 +395,10 @@
 ./usr/lib/libnetpgp.so.3			base-crypto-shlib	compatfile,crypto
 ./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	compatfile,crypto
 ./usr/lib/libnetpgpverify.so			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgpverify.so.4			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgpverify.so.4.0		base-crypto-shlib	compatfile,crypto
+./usr/lib/libnetpgpverify.so.4			base-crypto-shlib	compatfile,crypto,obsolete
+./usr/lib/libnetpgpverify.so.4.0		base-crypto-shlib	compatfile,crypto,obsolete
+./usr/lib/libnetpgpverify.so.5			base-crypto-shlib	compatfile,crypto
+./usr/lib/libnetpgpverify.so.5.0		base-crypto-shlib	compatfile,crypto
 ./usr/lib/libnpf.so				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0.0				base-npf-shlib		npf,compatfile

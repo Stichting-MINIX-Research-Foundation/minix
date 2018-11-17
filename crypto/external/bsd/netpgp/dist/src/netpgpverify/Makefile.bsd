@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bsd,v 1.4 2015/02/05 01:26:54 agc Exp $
+# $NetBSD: Makefile.bsd,v 1.7 2017/04/17 19:50:28 agc Exp $
 
 PROG=netpgpverify
 
@@ -8,7 +8,7 @@ SRCS+= pgpsum.c rsa.c
 
 SRCS+= bzlib.c zlib.c
 
-SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
+SRCS+= md5c.c rmd160.c sha1.c sha2.c
 
 CPPFLAGS+=-I.
 
@@ -43,3 +43,9 @@ tst:
 	rm -f 1keytest.gpg
 	@echo "testing signing with a subkey"
 	./chk.sh -k joyent-pubring.gpg digest-20121220.tgz
+	@echo "testing signatures with version"
+	./${PROG} -k pubring.gpg version.asc
+	@echo "testing signatures with no version"
+	./${PROG} -k pubring.gpg noversion.asc
+	@echo "testing dash-escaped text"
+	./${PROG} -k pubring.gpg dash-escaped-text.asc

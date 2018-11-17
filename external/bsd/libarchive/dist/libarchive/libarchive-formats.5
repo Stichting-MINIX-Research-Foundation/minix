@@ -22,10 +22,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: head/lib/libarchive/libarchive-formats.5 201077 2009-12-28 01:50:23Z kientzle $
+.\" $FreeBSD$
 .\"
-.Dd December 27, 2009
-.Dt libarchive-formats 5
+.Dd December 27, 2016
+.Dt LIBARCHIVE-FORMATS 5
 .Os
 .Sh NAME
 .Nm libarchive-formats
@@ -51,11 +51,11 @@ functions to enable all supported formats.
 The
 .Xr libarchive 3
 library can read most tar archives.
-However, it only writes POSIX-standard
+It can write POSIX-standard
 .Dq ustar
 and
 .Dq pax interchange
-formats.
+formats as well as v7 tar format and a subset of the legacy GNU tar format.
 .Pp
 All tar formats store each entry in one or more 512-byte records.
 The first record is used for file metadata, including filename,
@@ -65,18 +65,22 @@ Later variants have extended this by either appropriating undefined
 areas of the header record, extending the header to multiple records,
 or by storing special entries that modify the interpretation of
 subsequent entries.
-.Pp
 .Bl -tag -width indent
 .It Cm gnutar
 The
 .Xr libarchive 3
-library can read GNU-format tar archives.
+library can read most GNU-format tar archives.
 It currently supports the most popular GNU extensions, including
 modern long filename and linkname support, as well as atime and ctime data.
 The libarchive library does not support multi-volume
 archives, nor the old GNU long filename format.
 It can read GNU sparse file entries, including the new POSIX-based
-formats, but cannot write GNU sparse file entries.
+formats.
+.Pp
+The
+.Xr libarchive 3
+library can write GNU tar format, including long filename
+and linkname support, as well as atime and ctime data.
 .It Cm pax
 The
 .Xr libarchive 3
@@ -98,6 +102,14 @@ archiver and a few LIBARCHIVE keys.
 The libarchive library can read most of the SCHILY keys
 and most of the GNU keys introduced by GNU tar.
 It silently ignores any keywords that it does not understand.
+.Pp
+The pax interchange format converts filenames to Unicode
+and stores them using the UTF-8 encoding.
+Prior to libarchive 3.0, libarchive erroneously assumed
+that the system wide-character routines natively supported
+Unicode.
+This caused it to mis-handle non-ASCII filenames on systems
+that did not satisfy this assumption.
 .It Cm restricted pax
 The libarchive library can also write pax archives in which it
 attempts to suppress the extended attributes entry whenever
@@ -135,6 +147,32 @@ security information cannot be stored.
 Archive entries are limited to 8 gigabytes in size.
 .El
 Note that the pax interchange format has none of these restrictions.
+The ustar format is old and widely supported.
+It is recommended when compatibility is the primary concern.
+.It Cm v7
+The libarchive library can read and write the legacy v7 tar format.
+This format has the following limitations:
+.Bl -bullet -compact
+.It
+Only regular files, directories, and symbolic links can be archived.
+Block and character device nodes, FIFOs, and sockets cannot be archived.
+.It
+Path names in the archive are limited to 100 bytes.
+.It
+Symbolic links and hard links are stored in the archive with
+the name of the referenced file.
+This name is limited to 100 bytes.
+.It
+User and group information are stored as numeric IDs; there
+is no provision for storing user or group names.
+.It
+Extended attributes, file flags, and other extended
+security information cannot be stored.
+.It
+Archive entries are limited to 8 gigabytes in size.
+.El
+Generally, users should prefer the ustar format for portability
+as the v7 tar format is both less useful and less portable.
 .El
 .Pp
 The libarchive library also reads a variety of commonly-used extensions to
@@ -153,8 +191,6 @@ and device numbers.
 .It Solaris extensions
 Libarchive recognizes ACL and extended attribute records written
 by Solaris tar.
-Currently, libarchive only has support for old-style ACLs; the
-newer NFSv4 ACLs are recognized but discarded.
 .El
 .Pp
 The first tar program appeared in Seventh Edition Unix in 1979.
@@ -196,7 +232,7 @@ This format stores the header contents as octal values in ASCII.
 It is standard, portable, and immune from byte-order confusion.
 File sizes and mtime are limited to 33 bits (8GB file size),
 other fields are limited to 18 bits.
-.It Cm SVR4
+.It Cm SVR4/newc
 The libarchive library can read both CRC and non-CRC variants of
 this format.
 The SVR4 format uses eight-digit hexadecimal values for
@@ -268,19 +304,68 @@ If both extensions are present, the Joliet extensions will be
 used and the Rockridge extensions will be ignored.
 In particular, this can create problems with hardlinks and symlinks,
 which are supported by Rockridge but not by Joliet.
+.Pp
+Libarchive reads ISO9660 images using a streaming strategy.
+This allows it to read compressed images directly
+(decompressing on the fly) and allows it to read images
+directly from network sockets, pipes, and other non-seekable
+data sources.
+This strategy works well for optimized ISO9660 images created
+by many popular programs.
+Such programs collect all directory information at the beginning
+of the ISO9660 image so it can be read from a physical disk
+with a minimum of seeking.
+However, not all ISO9660 images can be read in this fashion.
+.Pp
+Libarchive can also write ISO9660 images.
+Such images are fully optimized with the directory information
+preceding all file data.
+This is done by storing all file data to a temporary file
+while collecting directory information in memory.
+When the image is finished, libarchive writes out the
+directory structure followed by the file data.
+The location used for the temporary file can be changed
+by the usual environment variables.
 .Ss Zip format
 Libarchive can read and write zip format archives that have
 uncompressed entries and entries compressed with the
 .Dq deflate
 algorithm.
-Older zip compression algorithms are not supported.
-It can extract jar archives, archives that use Zip64 extensions and many
+Other zip compression algorithms are not supported.
+It can extract jar archives, archives that use Zip64 extensions and
 self-extracting zip archives.
-Libarchive reads Zip archives as they are being streamed,
-which allows it to read archives of arbitrary size.
-It currently does not use the central directory; this
-limits libarchive's ability to support some self-extracting
-archives and ones that have been modified in certain ways.
+Libarchive can use either of two different strategies for
+reading Zip archives:
+a streaming strategy which is fast and can handle extremely
+large archives, and a seeking strategy which can correctly
+process self-extracting Zip archives and archives with
+deleted members or other in-place modifications.
+.Pp
+The streaming reader processes Zip archives as they are read.
+It can read archives of arbitrary size from tape or
+network sockets, and can decode Zip archives that have
+been separately compressed or encoded.
+However, self-extracting Zip archives and archives with
+certain types of modifications cannot be correctly
+handled.
+Such archives require that the reader first process the
+Central Directory, which is ordinarily located
+at the end of a Zip archive and is thus inaccessible
+to the streaming reader.
+If the program using libarchive has enabled seek support, then
+libarchive will use this to processes the central directory first.
+.Pp
+In particular, the seeking reader must be used to
+correctly handle self-extracting archives.
+Such archives consist of a program followed by a regular
+Zip archive.
+The streaming reader cannot parse the initial program
+portion, but the seeking reader starts by reading the
+Central Directory from the end of the archive.
+Similarly, Zip archives that have been modified in-place
+can have deleted entries or other garbage data that
+can only be accurately detected by first reading the
+Central Directory.
 .Ss Archive (library) file format
 The Unix archive format (commonly created by the
 .Xr ar 1
@@ -300,8 +385,10 @@ area adjacent to the entry.
 Libarchive can read both extensions,
 including archives that may include both types of long filenames.
 Programs using libarchive can write GNU/SVR4 format
-if they provide a filename table to be written into
-the archive before any of the entries.
+if they provide an entry called
+.Pa //
+containing a filename table to be written into the archive
+before any of the entries.
 Any entries whose names are not in the filename table
 will be written using BSD-style long filenames.
 This can cause problems for programs such as
@@ -315,7 +402,7 @@ of a file hierarchy in which each line specifies the name of a file and
 provides specific metadata about that file.
 Libarchive can read all of the keywords supported by both
 the NetBSD and FreeBSD versions of
-.Xr mtree 1 ,
+.Xr mtree 8 ,
 although many of the keywords cannot currently be stored in an
 .Tn archive_entry
 object.
@@ -342,6 +429,29 @@ using libarchive.
 If it cannot locate and open the file on disk, libarchive
 will return an error for any attempt to read the entry
 body.
+.Ss 7-Zip
+Libarchive can read and write 7-Zip format archives.
+TODO: Need more information
+.Ss CAB
+Libarchive can read Microsoft Cabinet (
+.Dq CAB )
+format archives.
+TODO: Need more information.
+.Ss LHA
+TODO: Information about libarchive's LHA support
+.Ss RAR
+Libarchive has limited support for reading RAR format archives.
+Currently, libarchive can read RARv3 format archives
+which have been either created uncompressed, or compressed using
+any of the compression methods supported by the RARv3 format.
+Libarchive can also read self-extracting RAR archives.
+.Ss Warc
+Libarchive can read and write
+.Dq web archives .
+TODO: Need more information
+.Ss XAR
+Libarchive can read and write the XAR format used by many Apple tools.
+TODO: Need more information
 .Sh SEE ALSO
 .Xr ar 1 ,
 .Xr cpio 1 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.2 2015/04/28 09:48:30 prlw1 Exp $
+.\" $NetBSD: pkg_info.1,v 1.3 2017/04/20 13:18:23 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd December 14, 2012
+.Dd January 11, 2015
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -226,7 +226,7 @@ The filename is resolved to a package name using the package database.
 The filename must be absolute, as in the output of
 .Dl pkg_info -aF .
 For example,
-.Dl pkg_info -eF /path/to/file
+.Dl pkg_info -Fe /path/to/file
 can be used to display the package the given file belongs to, and
 .Dl pkg_info -LF /path/to/file
 can be used to display all files belonging to the package the given

@@ -46,7 +46,7 @@ test_compat_gtar_1(void)
 	int r;
 
 	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_compression_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
 	extract_reference_file(name);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 10240));
@@ -54,7 +54,7 @@ test_compat_gtar_1(void)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_finish(a);
+		archive_read_free(a);
 		return;
 	}
 	assertEqualString(
@@ -73,7 +73,7 @@ test_compat_gtar_1(void)
 	/* Read second entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_finish(a);
+		archive_read_free(a);
 		return;
 	}
 	assertEqualString(
@@ -99,21 +99,57 @@ test_compat_gtar_1(void)
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 
 	/* Verify that the format detection worked. */
-	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_NONE);
+	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_GNUTAR);
 
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-#if ARCHIVE_VERSION_NUMBER < 2000000
-	archive_read_finish(a);
-#else
-	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
-#endif
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+/*
+ * test_compat_gtar_2.tar exercises reading of UID = 2097152 as base256
+ * and GID = 2097152 as octal without null terminator.
+ */
+static void
+test_compat_gtar_2(void)
+{
+	char name[] = "test_compat_gtar_2.tar";
+	struct archive_entry *ae;
+	struct archive *a;
+	int r;
+
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	extract_reference_file(name);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 10240));
+
+	/* Read first entry. */
+	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
+	if (r != ARCHIVE_OK) {
+		archive_read_free(a);
+		return;
+	}
+
+	/* Check UID and GID */
+	assertEqualInt(2097152, archive_entry_uid(ae));
+	assertEqualInt(2097152, archive_entry_gid(ae));
+
+	/* Verify the end-of-archive. */
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+
+	/* Verify that the format detection worked. */
+	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_GNUTAR);
+
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
 
 DEFINE_TEST(test_compat_gtar)
 {
 	test_compat_gtar_1();
+	test_compat_gtar_2();
 }
 
 

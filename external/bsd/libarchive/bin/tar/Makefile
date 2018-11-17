@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.4 2011/09/09 12:43:14 christos Exp $
+# $NetBSD: Makefile,v 1.5 2017/04/20 13:11:04 joerg Exp $
 
 PROG=	tar
-SRCS=	bsdtar.c cmdline.c getdate.c read.c subst.c tree.c util.c write.c
+SRCS=	bsdtar.c cmdline.c creation_set.c read.c subst.c util.c write.c
 
 .include <bsd.init.mk>
 

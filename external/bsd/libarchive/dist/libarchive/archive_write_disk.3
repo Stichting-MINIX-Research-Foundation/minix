@@ -22,10 +22,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/archive_write_disk.3,v 1.4 2008/09/04 05:22:00 kientzle Exp $
+.\" $FreeBSD$
 .\"
-.Dd August 5, 2008
-.Dt archive_write_disk 3
+.Dd April 3, 2017
+.Dt ARCHIVE_WRITE_DISK 3
 .Os
 .Sh NAME
 .Nm archive_write_disk_new ,
@@ -33,13 +33,10 @@
 .Nm archive_write_disk_set_skip_file ,
 .Nm archive_write_disk_set_group_lookup ,
 .Nm archive_write_disk_set_standard_lookup ,
-.Nm archive_write_disk_set_user_lookup ,
-.Nm archive_write_header ,
-.Nm archive_write_data ,
-.Nm archive_write_finish_entry ,
-.Nm archive_write_close ,
-.Nm archive_write_finish
+.Nm archive_write_disk_set_user_lookup
 .Nd functions for creating objects on disk
+.Sh LIBRARY
+Streaming Archive Library (libarchive, -larchive)
 .Sh SYNOPSIS
 .In archive.h
 .Ft struct archive *
@@ -64,16 +61,6 @@
 .Fa "uid_t (*)(void *, const char *uname, uid_t uid)"
 .Fa "void (*cleanup)(void *)"
 .Fc
-.Ft int
-.Fn archive_write_header "struct archive *" "struct archive_entry *"
-.Ft ssize_t
-.Fn archive_write_data "struct archive *" "const void *" "size_t"
-.Ft int
-.Fn archive_write_finish_entry "struct archive *"
-.Ft int
-.Fn archive_write_close "struct archive *"
-.Ft int
-.Fn archive_write_finish "struct archive *"
 .Sh DESCRIPTION
 These functions provide a complete API for creating objects on
 disk from
@@ -109,6 +96,33 @@ performance optimization in practice.
 The options field consists of a bitwise OR of one or more of the
 following values:
 .Bl -tag -compact -width "indent"
+.It Cm ARCHIVE_EXTRACT_ACL
+Attempt to restore Access Control Lists.
+By default, extended ACLs are ignored.
+.It Cm ARCHIVE_EXTRACT_CLEAR_NOCHANGE_FFLAGS
+Before removing a file system object prior to replacing it, clear
+platform-specific file flags which might prevent its removal.
+.It Cm ARCHIVE_EXTRACT_FFLAGS
+Attempt to restore file attributes (file flags).
+By default, file attributes are ignored.
+See
+.Xr chattr 1
+.Pq Linux
+or
+.Xr chflags 1
+.Pq FreeBSD, Mac OS X
+for more information on file attributes.
+.It Cm ARCHIVE_EXTRACT_MAC_METADATA
+Mac OS X specific. Restore metadata using
+.Xr copyfile 3 .
+By default,
+.Xr copyfile 3
+metadata is ignored.
+.It Cm ARCHIVE_EXTRACT_NO_OVERWRITE
+Existing files on disk will not be overwritten.
+By default, existing regular files are truncated and overwritten;
+existing directories will have their permissions updated;
+other pre-existing objects are unlinked and recreated from scratch.
 .It Cm ARCHIVE_EXTRACT_OWNER
 The user and group IDs should be set on the restored file.
 By default, the user and group IDs are not restored.
@@ -124,43 +138,9 @@ is not specified, then SUID and SGID bits will only be restored
 if the default user and group IDs of newly-created objects on disk
 happen to match those specified in the archive entry.
 By default, only basic permissions are restored, and umask is obeyed.
-.It Cm ARCHIVE_EXTRACT_TIME
-The timestamps (mtime, ctime, and atime) should be restored.
-By default, they are ignored.
-Note that restoring of atime is not currently supported.
-.It Cm ARCHIVE_EXTRACT_NO_OVERWRITE
-Existing files on disk will not be overwritten.
-By default, existing regular files are truncated and overwritten;
-existing directories will have their permissions updated;
-other pre-existing objects are unlinked and recreated from scratch.
-.It Cm ARCHIVE_EXTRACT_UNLINK
-Existing files on disk will be unlinked before any attempt to
-create them.
-In some cases, this can prove to be a significant performance improvement.
-By default, existing files are truncated and rewritten, but
-the file is not recreated.
-In particular, the default behavior does not break existing hard links.
-.It Cm ARCHIVE_EXTRACT_ACL
-Attempt to restore ACLs.
-By default, extended ACLs are ignored.
-.It Cm ARCHIVE_EXTRACT_FFLAGS
-Attempt to restore extended file flags.
-By default, file flags are ignored.
-.It Cm ARCHIVE_EXTRACT_XATTR
-Attempt to restore POSIX.1e extended attributes.
-By default, they are ignored.
-.It Cm ARCHIVE_EXTRACT_SECURE_SYMLINKS
-Refuse to extract any object whose final location would be altered
-by a symlink on disk.
-This is intended to help guard against a variety of mischief
-caused by archives that (deliberately or otherwise) extract
-files outside of the current directory.
-The default is not to perform this check.
-If
-.Cm ARCHIVE_EXTRACT_UNLINK
-is specified together with this option, the library will
-remove any intermediate symlinks it finds and return an
-error only if such symlink could not be removed.
+.It Cm ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS
+Refuse to extract an absolute path.
+The default is to not refuse such paths.
 .It Cm ARCHIVE_EXTRACT_SECURE_NODOTDOT
 Refuse to extract a path that contains a
 .Pa ..
@@ -169,13 +149,50 @@ The default is to not refuse such paths.
 Note that paths ending in
 .Pa ..
 always cause an error, regardless of this flag.
+.It Cm ARCHIVE_EXTRACT_SECURE_SYMLINKS
+Refuse to extract any object whose final location would be altered
+by a symlink on disk.
+This is intended to help guard against a variety of mischief
+caused by archives that (deliberately or otherwise) extract
+files outside of the current directory.
+The default is not to perform this check.
+If
 .It Cm ARCHIVE_EXTRACT_SPARSE
 Scan data for blocks of NUL bytes and try to recreate them with holes.
 This results in sparse files, independent of whether the archive format
 supports or uses them.
+.Cm ARCHIVE_EXTRACT_UNLINK
+is specified together with this option, the library will
+remove any intermediate symlinks it finds and return an
+error only if such symlink could not be removed.
+.It Cm ARCHIVE_EXTRACT_TIME
+The timestamps (mtime, ctime, and atime) should be restored.
+By default, they are ignored.
+Note that restoring of atime is not currently supported.
+.It Cm ARCHIVE_EXTRACT_UNLINK
+Existing files on disk will be unlinked before any attempt to
+create them.
+In some cases, this can prove to be a significant performance improvement.
+By default, existing files are truncated and rewritten, but
+the file is not recreated.
+In particular, the default behavior does not break existing hard links.
+.It Cm ARCHIVE_EXTRACT_XATTR
+Attempt to restore extended file attributes.
+By default, they are ignored.
+See
+.Xr xattr 7
+.Pq Linux ,
+.Xr xattr 2
+.Pq Mac OS X ,
+or
+.Xr getextattr 8
+.Pq FreeBSD
+for more information on extended file attributes.
 .El
-.It Fn archive_write_disk_set_group_lookup , \
-Fn archive_write_disk_set_user_lookup
+.It Xo
+.Fn archive_write_disk_set_group_lookup ,
+.Fn archive_write_disk_set_user_lookup
+.Xc
 The
 .Tn struct archive_entry
 objects contain both names and ids that can be used to identify users
@@ -207,40 +224,6 @@ the number of calls to
 .Xr getpwnam 3
 and
 .Xr getgrnam 3 .
-.It Fn archive_write_header
-Build and write a header using the data in the provided
-.Tn struct archive_entry
-structure.
-See
-.Xr archive_entry 3
-for information on creating and populating
-.Tn struct archive_entry
-objects.
-.It Fn archive_write_data
-Write data corresponding to the header just written.
-Returns number of bytes written or -1 on error.
-.It Fn archive_write_finish_entry
-Close out the entry just written.
-Ordinarily, clients never need to call this, as it
-is called automatically by
-.Fn archive_write_next_header
-and
-.Fn archive_write_close
-as needed.
-.It Fn archive_write_close
-Set any attributes that could not be set during the initial restore.
-For example, directory timestamps are not restored initially because
-restoring a subsequent file would alter that timestamp.
-Similarly, non-writable directories are initially created with
-write permissions (so that their contents can be restored).
-The
-.Nm
-library maintains a list of all such deferred attributes and
-sets them when this function is invoked.
-.It Fn archive_write_finish
-Invokes
-.Fn archive_write_close
-if it was not invoked manually, then releases all resources.
 .El
 More information about the
 .Va struct archive
@@ -261,12 +244,6 @@ for operations that might succeed if retried,
 for unusual conditions that do not prevent further operations, and
 .Cm ARCHIVE_FATAL
 for serious errors that make remaining operations impossible.
-The
-.Fn archive_errno
-and
-.Fn archive_error_string
-functions can be used to retrieve an appropriate error code and a
-textual error message.
 .Pp
 .Fn archive_write_disk_new
 returns a pointer to a newly-allocated
@@ -274,12 +251,18 @@ returns a pointer to a newly-allocated
 object.
 .Pp
 .Fn archive_write_data
-returns a count of the number of bytes actually written.
-On error, -1 is returned and the
+returns a count of the number of bytes actually written,
+or
+.Li -1
+on error.
+.\"
+.Sh ERRORS
+Detailed error codes and textual descriptions are available from the
 .Fn archive_errno
 and
 .Fn archive_error_string
-functions will return appropriate values.
+functions.
+.\"
 .Sh SEE ALSO
 .Xr archive_read 3 ,
 .Xr archive_write 3 ,
@@ -301,7 +284,7 @@ and first appeared in
 The
 .Nm libarchive
 library was written by
-.An Tim Kientzle Aq Mt kientzle@acm.org .
+.An Tim Kientzle Aq kientzle@acm.org .
 .Sh BUGS
 Directories are actually extracted in two distinct phases.
 Directories are created during
@@ -337,7 +320,7 @@ In particular, the directory
 .Pa aa
 is created as well as the final object
 .Pa bb .
-In theory, this can be exploited to create an entire directory heirarchy
+In theory, this can be exploited to create an entire directory hierarchy
 with a single request.
 Of course, this does not work if the
 .Cm ARCHIVE_EXTRACT_NODOTDOT
@@ -369,5 +352,5 @@ compact implementation when appropriate.
 .Pp
 There should be a corresponding
 .Nm archive_read_disk
-interface that walks a directory heirarchy and returns archive
+interface that walks a directory hierarchy and returns archive
 entry objects.

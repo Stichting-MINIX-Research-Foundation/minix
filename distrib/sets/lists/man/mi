@@ -5988,7 +5988,7 @@
 ./usr/share/man/man1/bdes.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/bg.1			man-util-man		.man
 ./usr/share/man/man1/biff.1			man-mail-man		.man
-./usr/share/man/man1/bpm.1			man-pkgutil-man		crypto,.man
+./usr/share/man/man1/bpm.1			man-obsolete		.man,obsolete
 ./usr/share/man/man1/bthset.1			man-util-man		.man
 ./usr/share/man/man1/btkey.1			man-util-man		.man
 ./usr/share/man/man1/btpin.1			man-util-man		.man

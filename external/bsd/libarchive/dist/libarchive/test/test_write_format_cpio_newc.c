@@ -30,7 +30,7 @@ static int
 is_hex(const char *p, size_t l)
 {
 	while (l > 0) {
-		if (*p >= 0 && *p <= '9') {
+		if (*p >= '0' && *p <= '9') {
 			/* Ascii digit */
 		} else if (*p >= 'a' && *p <= 'f') {
 			/* lowercase letter a-f */
@@ -61,7 +61,7 @@ DEFINE_TEST(test_write_format_cpio_newc)
 	/* Create a new archive in memory. */
 	assert((a = archive_write_new()) != NULL);
 	assertEqualIntA(a, 0, archive_write_set_format_cpio_newc(a));
-	assertEqualIntA(a, 0, archive_write_set_compression_none(a));
+	assertEqualIntA(a, 0, archive_write_add_filter_none(a));
 	assertEqualIntA(a, 0, archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
@@ -111,12 +111,7 @@ DEFINE_TEST(test_write_format_cpio_newc)
 	assertEqualIntA(a, 0, archive_write_header(a, entry));
 	archive_entry_free(entry);
 
-
-#if ARCHIVE_VERSION_NUMBER < 2000000
-	archive_write_finish(a);
-#else
-	assert(0 == archive_write_finish(a));
-#endif
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/*
 	 * Verify the archive format.

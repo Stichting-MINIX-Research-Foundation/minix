@@ -1,4 +1,4 @@
-/*	$NetBSD: gpgsig.c,v 1.1.1.2 2009/08/06 16:55:27 joerg Exp $	*/
+/*	$NetBSD: gpgsig.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: gpgsig.c,v 1.1.1.2 2009/08/06 16:55:27 joerg Exp $");
+__RCSID("$NetBSD: gpgsig.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -50,106 +50,48 @@ __RCSID("$NetBSD: gpgsig.c,v 1.1.1.2 2009/08/06 16:55:27 joerg Exp $");
 #include <stdlib.h>
 #endif
 
+#include <netpgp/verify.h>
+
 #include "lib.h"
 
-static void
-verify_signature(const char *input, size_t input_len, const char *keyring,
-    const char *detached_signature)
-{
-	const char *argv[8], **argvp;
-	pid_t child;
-	int fd[2], status;
-
-	if (pipe(fd) == -1)
-		err(EXIT_FAILURE, "cannot create input pipes");
-
-	child = vfork();
-	if (child == -1)
-		err(EXIT_FAILURE, "cannot fork GPG process");
-	if (child == 0) {
-		close(fd[1]);
-		close(STDIN_FILENO);
-		if (dup2(fd[0], STDIN_FILENO) == -1) {
-			static const char err_msg[] =
-			    "cannot redirect stdin of GPG process\n";
-			write(STDERR_FILENO, err_msg, sizeof(err_msg) - 1);
-			_exit(255);
-		}
-		close(fd[0]);
-		argvp = argv;
-		*argvp++ = gpg_cmd;
-		*argvp++ = "--verify";
-		if (keyring != NULL) {
-			*argvp++ = "--no-default-keyring";
-			*argvp++ = "--keyring";
-			*argvp++ = keyring;
-		}
-
-		if (detached_signature != NULL)
-			*argvp++ = detached_signature;
-		*argvp++ = "-";
-
-		*argvp = NULL;
-
-		execvp(gpg_cmd, __UNCONST(argv));
-		_exit(255);
-	}
-	close(fd[0]);
-	if (write(fd[1], input, input_len) != (ssize_t)input_len)
-		errx(EXIT_FAILURE, "Short read from GPG");
-	close(fd[1]);
-	waitpid(child, &status, 0);
-	if (status)
-		errx(EXIT_FAILURE, "GPG could not verify the signature");
-}
-
 int
-inline_gpg_verify(const char *content, size_t len, const char *keyring)
+gpg_verify(const char *content, size_t len, const char *keyring,
+    const char *sig, size_t sig_len)
 {
-	verify_signature(content, len, keyring, NULL);
+	pgpv_t *pgp;
+	pgpv_cursor_t *cursor;
+	static const char hdr1[] = "-----BEGIN PGP SIGNED MESSAGE-----\n";
+	static const char hdr2[] = "Hash: SHA512\n\n";
+	ssize_t buflen;
+	char *allocated_buf;
+	const char *buf;
 
-	return 0;
-}
-
-int
-detached_gpg_verify(const char *content, size_t len,
-    const char *signature, size_t signature_len, const char *keyring)
-{
-	int fd;
-	const char *tmpdir;
-	char *tempsig;
-	ssize_t ret;
-
-	if (gpg_cmd == NULL) {
-		warnx("GPG variable not set, failing signature check");
-		return -1;
+	/*
+	 * If there is a detached signature we need to construct a format that
+	 * netpgp can parse, otherwise use as-is.
+	 */
+	if (sig_len) {
+		buf = allocated_buf = xasprintf("%s%s%s%s", hdr1, hdr2, content, sig);
+		buflen = strlen(buf);
+	} else {
+		buf = content;
+		allocated_buf = NULL;
+		buflen = len;
 	}
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
-		tmpdir = "/tmp";
-	tempsig = xasprintf("%s/pkg_install.XXXXXX", tmpdir);
+	pgp = pgpv_new();
+	cursor = pgpv_new_cursor();
 
-	fd = mkstemp(tempsig);
-	if (fd == -1) {
-		warnx("Creating temporary file for GPG signature failed");
-		return -1;
-	}
+	if (!pgpv_read_pubring(pgp, keyring, -1))
+		err(EXIT_FAILURE, "cannot read keyring");
 
-	while (signature_len) {
-		ret = write(fd, signature, signature_len);
-		if (ret == -1)
-			err(EXIT_FAILURE, "Write to GPG failed");
-		if (ret == 0)
-			errx(EXIT_FAILURE, "Short write to GPG");
-		signature_len -= ret;
-		signature += ret;
-	}
+	if (!pgpv_verify(cursor, pgp, buf, buflen))
+		errx(EXIT_FAILURE, "unable to verify signature: %s",
+		    pgpv_get_cursor_str(cursor, "why"));
 
-	verify_signature(content, len, keyring, tempsig);
+	pgpv_close(pgp);
 
-	unlink(tempsig);
-	close(fd);
-	free(tempsig);
+	free(allocated_buf);
 
 	return 0;
 }

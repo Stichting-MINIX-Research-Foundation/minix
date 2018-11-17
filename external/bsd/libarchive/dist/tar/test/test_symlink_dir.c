@@ -31,42 +31,33 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/test/test_symlink_dir.c,v 1.1 2008/09/14 02:
  * way of a dir extraction.
  */
 
-static int
-mkfile(const char *name, int mode, const char *contents, size_t size)
-{
-	FILE *f = fopen(name, "wb");
-	size_t written;
-
-	(void)mode; /* UNUSED */
-	if (f == NULL)
-		return (-1);
-	written = fwrite(contents, 1, size, f);
-	fclose(f);
-	if (size != written)
-		return (-1);
-	return (0);
-}
-
 DEFINE_TEST(test_symlink_dir)
 {
 	assertUmask(0);
 
 	assertMakeDir("source", 0755);
-	assertEqualInt(0, mkfile("source/file", 0755, "a", 1));
-	assertEqualInt(0, mkfile("source/file2", 0755, "ab", 2));
+	assertMakeFile("source/file", 0755, "a");
+	assertMakeFile("source/file2", 0755, "ab");
 	assertMakeDir("source/dir", 0755);
 	assertMakeDir("source/dir/d", 0755);
-	assertEqualInt(0, mkfile("source/dir/f", 0755, "abc", 3));
+	assertMakeFile("source/dir/f", 0755, "abc");
 	assertMakeDir("source/dir2", 0755);
 	assertMakeDir("source/dir2/d2", 0755);
-	assertEqualInt(0, mkfile("source/dir2/f2", 0755, "abcd", 4));
+	assertMakeFile("source/dir2/f2", 0755, "abcd");
 	assertMakeDir("source/dir3", 0755);
 	assertMakeDir("source/dir3/d3", 0755);
-	assertEqualInt(0, mkfile("source/dir3/f3", 0755, "abcde", 5));
+	assertMakeFile("source/dir3/f3", 0755, "abcde");
+	assertMakeDir("source/dir4", 0755);
+	assertMakeFile("source/dir4/file3", 0755, "abcdef");
+	assertMakeHardlink("source/dir4/file4", "source/dir4/file3");
 
 	assertEqualInt(0,
 	    systemf("%s -cf test.tar -C source dir dir2 dir3 file file2",
 		testprog));
+
+	/* Second archive with hardlinks */
+	assertEqualInt(0,
+	    systemf("%s -cf test2.tar -C source dir4", testprog));
 
 	/*
 	 * Extract with -x and without -P.
@@ -79,14 +70,14 @@ DEFINE_TEST(test_symlink_dir)
 		/* "dir2" is a symlink to a non-existing "real_dir2" */
 		assertMakeSymlink("dest1/dir2", "real_dir2");
 	} else {
-		skipping("some symlink checks");
+		skipping("Symlinks are not supported on this platform");
 	}
 	/* "dir3" is a symlink to an existing "non_dir3" */
-	assertEqualInt(0, mkfile("dest1/non_dir3", 0755, "abcdef", 6));
+	assertMakeFile("dest1/non_dir3", 0755, "abcdef");
 	if (canSymlink())
 		assertMakeSymlink("dest1/dir3", "non_dir3");
 	/* "file" is a symlink to existing "real_file" */
-	assertEqualInt(0, mkfile("dest1/real_file", 0755, "abcdefg", 7));
+	assertMakeFile("dest1/real_file", 0755, "abcdefg");
 	if (canSymlink()) {
 		assertMakeSymlink("dest1/file", "real_file");
 		/* "file2" is a symlink to non-existing "real_file2" */
@@ -122,11 +113,11 @@ DEFINE_TEST(test_symlink_dir)
 	if (canSymlink())
 		assertMakeSymlink("dest2/dir2", "real_dir2");
 	/* "dir3" is a symlink to an existing "non_dir3" */
-	assertEqualInt(0, mkfile("dest2/non_dir3", 0755, "abcdefgh", 8));
+	assertMakeFile("dest2/non_dir3", 0755, "abcdefgh");
 	if (canSymlink())
 		assertMakeSymlink("dest2/dir3", "non_dir3");
 	/* "file" is a symlink to existing "real_file" */
-	assertEqualInt(0, mkfile("dest2/real_file", 0755, "abcdefghi", 9));
+	assertMakeFile("dest2/real_file", 0755, "abcdefghi");
 	if (canSymlink())
 		assertMakeSymlink("dest2/file", "real_file");
 	/* "file2" is a symlink to non-existing "real_file2" */
@@ -134,9 +125,15 @@ DEFINE_TEST(test_symlink_dir)
 		assertMakeSymlink("dest2/file2", "real_file2");
 	assertEqualInt(0, systemf("%s -xPf test.tar -C dest2", testprog));
 
-	/* dest2/dir symlink should be followed */
+	/* "dir4" is a symlink to existing "real_dir" */
+	if (canSymlink())
+		assertMakeSymlink("dest2/dir4", "real_dir");
+	assertEqualInt(0, systemf("%s -xPf test2.tar -C dest2", testprog));
+
+	/* dest2/dir and dest2/dir4 symlinks should be followed */
 	if (canSymlink()) {
 		assertIsSymlink("dest2/dir", "real_dir");
+		assertIsSymlink("dest2/dir4", "real_dir");
 		assertIsDir("dest2/real_dir", -1);
 	}
 
@@ -157,4 +154,7 @@ DEFINE_TEST(test_symlink_dir)
 	/* dest2/file2 symlink should be removed */
 	failure("Symlink to non-existing file should be removed");
 	assertIsReg("dest2/file2", -1);
+
+	/* dest2/dir4/file3 and dest2/dir4/file4 should be hard links */
+	assertIsHardlink("dest2/dir4/file3", "dest2/dir4/file4");
 }

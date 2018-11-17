@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.h,v 1.1 2014/03/09 00:15:45 agc Exp $	*/
+/*	$NetBSD: rmd160.h,v 1.2 2016/06/14 20:47:08 agc Exp $	*/
 /*	$KAME: rmd160.h,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 /*
@@ -27,7 +27,6 @@
 #ifndef  _RMD160_H
 #define  _RMD160_H
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <inttypes.h>
@@ -35,23 +34,33 @@
 #define RMD160_DIGEST_LENGTH		20
 #define RMD160_DIGEST_STRING_LENGTH	41
 
+#ifndef __BEGIN_DECLS
+#  if defined(__cplusplus)
+#  define __BEGIN_DECLS           extern "C" {
+#  define __END_DECLS             }
+#  else
+#  define __BEGIN_DECLS
+#  define __END_DECLS
+#  endif
+#endif
+
 /* RMD160 context. */
 typedef struct RMD160Context {
 	uint32_t state[5];	/* state */
 	uint64_t count;		/* number of bits, modulo 2^64 */
 	u_char buffer[64];	/* input buffer */
-} RMD160_CTX;
+} NETPGPV_RMD160_CTX;
 
 __BEGIN_DECLS
-void	 RMD160Init(RMD160_CTX *);
-void	 RMD160Transform(uint32_t [5], const u_char [64]);
-void	 RMD160Update(RMD160_CTX *, const u_char *, uint32_t);
-void	 RMD160Final(u_char [RMD160_DIGEST_LENGTH], RMD160_CTX *);
+void	 netpgpv_RMD160Init(NETPGPV_RMD160_CTX *);
+void	 netpgpv_RMD160Transform(uint32_t [5], const u_char [64]);
+void	 netpgpv_RMD160Update(NETPGPV_RMD160_CTX *, const u_char *, uint32_t);
+void	 netpgpv_RMD160Final(u_char [RMD160_DIGEST_LENGTH], NETPGPV_RMD160_CTX *);
 #ifndef _KERNEL
-char	*RMD160End(RMD160_CTX *, char *);
-char	*RMD160FileChunk(const char *, char *, off_t, off_t);
-char	*RMD160File(const char *, char *);
-char	*RMD160Data(const u_char *, size_t, char *);
+char	*netpgpv_RMD160End(NETPGPV_RMD160_CTX *, char *);
+char	*netpgpv_RMD160FileChunk(const char *, char *, off_t, off_t);
+char	*netpgpv_RMD160File(const char *, char *);
+char	*netpgpv_RMD160Data(const u_char *, size_t, char *);
 #endif /* _KERNEL */
 __END_DECLS
 

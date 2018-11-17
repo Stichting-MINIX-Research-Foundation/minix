@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.23 2017/04/20 13:11:35 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.23 2017/04/20 13:11:35 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -131,7 +131,6 @@ errorx(const char *fmt, ...)
 	exit(1);
 }
 
-#if 0
 /* non-fatal error message + errno */
 __printflike(1, 2) static void
 warning(const char *fmt, ...)
@@ -147,7 +146,7 @@ warning(const char *fmt, ...)
 	va_end(ap);
 	fprintf(stderr, ": %s\n", strerror(errno));
 }
-#endif
+
 /* non-fatal error message, no errno */
 __printflike(1, 2) static void
 warningx(const char *fmt, ...)
@@ -437,7 +436,7 @@ handle_existing_file(char **path)
 			(void)unlink(*path);
 			return 1;
 		case 'N':
-			n_opt = 1;			
+			n_opt = 1;
 			/* FALL THROUGH */
 		case 'n':
 			return -1;
@@ -487,6 +486,92 @@ check_binary(const unsigned char *buf, size_t len)
 }
 
 /*
+ * Extract to a file descriptor
+ */
+static int
+extract2fd(struct archive *a, char *pathname, int fd)
+{
+	int cr, text, warn;
+	ssize_t len;
+	unsigned char *p, *q, *end;
+
+	text = a_opt;
+	warn = 0;
+	cr = 0;
+
+	/* loop over file contents and write to fd */
+	for (int n = 0; ; n++) {
+		if (fd != STDOUT_FILENO)
+			if (tty && (n % 4) == 0)
+				info(" %c\b\b", spinner[(n / 4) % sizeof spinner]);
+
+		len = archive_read_data(a, buffer, sizeof buffer);
+
+		if (len < 0)
+			ac(len);
+
+		/* left over CR from previous buffer */
+		if (a_opt && cr) {
+			if (len == 0 || buffer[0] != '\n')
+				if (write(fd, "\r", 1) != 1)
+					error("write('%s')", pathname);
+			cr = 0;
+		}
+
+		/* EOF */
+		if (len == 0)
+			break;
+		end = buffer + len;
+
+		/*
+		 * Detect whether this is a text file.  The correct way to
+		 * do this is to check the least significant bit of the
+		 * "internal file attributes" field of the corresponding
+		 * file header in the central directory, but libarchive
+		 * does not provide access to this field, so we have to
+		 * guess by looking for non-ASCII characters in the
+		 * buffer.  Hopefully we won't guess wrong.  If we do
+		 * guess wrong, we print a warning message later.
+		 */
+		if (a_opt && n == 0) {
+			if (check_binary(buffer, len))
+				text = 0;
+		}
+
+		/* simple case */
+		if (!a_opt || !text) {
+			if (write(fd, buffer, len) != len)
+				error("write('%s')", pathname);
+			continue;
+		}
+
+		/* hard case: convert \r\n to \n (sigh...) */
+		for (p = buffer; p < end; p = q + 1) {
+			for (q = p; q < end; q++) {
+				if (!warn && BYTE_IS_BINARY(*q)) {
+					warningx("%s may be corrupted due"
+					    " to weak text file detection"
+					    " heuristic", pathname);
+					warn = 1;
+				}
+				if (q[0] != '\r')
+					continue;
+				if (&q[1] == end) {
+					cr = 1;
+					break;
+				}
+				if (q[1] == '\n')
+					break;
+			}
+			if (write(fd, p, q - p) != q - p)
+				error("write('%s')", pathname);
+		}
+	}
+
+	return text;
+}
+
+/*
  * Extract a regular file.
  */
 static void
@@ -496,9 +581,8 @@ extract_file(struct archive *a, struct archive_entry *e, char **path)
 	time_t mtime;
 	struct stat sb;
 	struct timeval tv[2];
-	int cr, fd, text, warn, check;
-	ssize_t len;
-	unsigned char *p, *q, *end;
+	int fd, check, text;
+	const char *linkname;
 
 	mode = archive_entry_mode(e) & 0777;
 	if (mode == 0)
@@ -531,80 +615,40 @@ recheck:
 			return;
 	}
 
+	tv[0].tv_sec = now;
+	tv[0].tv_usec = 0;
+	tv[1].tv_sec = mtime;
+	tv[1].tv_usec = 0;
+
+	/* process symlinks */
+	linkname = archive_entry_symlink(e);
+	if (linkname != NULL) {
+		if (symlink(linkname, *path) == -1)
+			error("symlink('%s', '%s')", linkname, *path);
+		info(" extracting: %s -> %s\n", *path, linkname);
+		if (lchmod(*path, mode) == -1)
+			warning("Cannot set mode for '%s'", *path);
+		if (lutimes(*path, tv) == -1)
+			warning("utimes('%s')", *path);
+		return;
+	}
+
+	/* process hardlinks */
+	linkname = archive_entry_hardlink(e);
+	if (linkname != NULL) {
+		if (link(linkname, *path) == -1)
+			error("link('%s', '%s')", linkname, *path);
+		info(" extracting: %s link to %s\n", *path, linkname);
+		return;
+	}
+
 	if ((fd = open(*path, O_RDWR|O_CREAT|O_TRUNC, mode)) < 0)
 		error("open('%s')", *path);
 
-	/* loop over file contents and write to disk */
 	info(" extracting: %s", *path);
-	text = a_opt;
-	warn = 0;
-	cr = 0;
-	for (int n = 0; ; n++) {
-		if (tty && (n % 4) == 0)
-			info(" %c\b\b", spinner[(n / 4) % sizeof spinner]);
 
-		len = archive_read_data(a, buffer, sizeof buffer);
+	text = extract2fd(a, *path, fd);
 
-		if (len < 0)
-			ac(len);
-
-		/* left over CR from previous buffer */
-		if (a_opt && cr) {
-			if (len == 0 || buffer[0] != '\n')
-				if (write(fd, "\r", 1) != 1)
-					error("write('%s')", *path);
-			cr = 0;
-		}
-
-		/* EOF */
-		if (len == 0)
-			break;
-		end = buffer + len;
-
-		/*
-		 * Detect whether this is a text file.  The correct way to
-		 * do this is to check the least significant bit of the
-		 * "internal file attributes" field of the corresponding
-		 * file header in the central directory, but libarchive
-		 * does not read the central directory, so we have to
-		 * guess by looking for non-ASCII characters in the
-		 * buffer.  Hopefully we won't guess wrong.  If we do
-		 * guess wrong, we print a warning message later.
-		 */
-		if (a_opt && n == 0) {
-			if (check_binary(buffer, len))
-				text = 0;
-		}
-
-		/* simple case */
-		if (!a_opt || !text) {
-			if (write(fd, buffer, len) != len)
-				error("write('%s')", *path);
-			continue;
-		}
-
-		/* hard case: convert \r\n to \n (sigh...) */
-		for (p = buffer; p < end; p = q + 1) {
-			for (q = p; q < end; q++) {
-				if (!warn && BYTE_IS_BINARY(*q)) {
-					warningx("%s may be corrupted due"
-					    " to weak text file detection"
-					    " heuristic", *path);
-					warn = 1;
-				}
-				if (q[0] != '\r')
-					continue;
-				if (&q[1] == end) {
-					cr = 1;
-					break;
-				}
-				if (q[1] == '\n')
-					break;
-			}
-			if (write(fd, p, q - p) != q - p)
-				error("write('%s')", *path);
-		}
-	}
 	if (tty)
 		info("  \b\b");
 	if (text)
@@ -612,10 +656,6 @@ recheck:
 	info("\n");
 
 	/* set access and modification time */
-	tv[0].tv_sec = now;
-	tv[0].tv_usec = 0;
-	tv[1].tv_sec = mtime;
-	tv[1].tv_usec = 0;
 	if (futimes(fd, tv) != 0)
 		error("utimes('%s')", *path);
 	if (close(fd) != 0)
@@ -658,7 +698,7 @@ extract(struct archive *a, struct archive_entry *e)
 	}
 
 	/* I don't think this can happen in a zipfile.. */
-	if (!S_ISDIR(filetype) && !S_ISREG(filetype)) {
+	if (!S_ISDIR(filetype) && !S_ISREG(filetype) && !S_ISLNK(filetype)) {
 		warningx("skipping non-regular entry '%s'", pathname);
 		ac(archive_read_data_skip(a));
 		free(pathname);
@@ -706,15 +746,12 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 {
 	char *pathname;
 	mode_t filetype;
-	int cr, text, warn;
-	ssize_t len;
-	unsigned char *p, *q, *end;
 
 	pathname = pathdup(archive_entry_pathname(e));
 	filetype = archive_entry_filetype(e);
 
 	/* I don't think this can happen in a zipfile.. */
-	if (!S_ISDIR(filetype) && !S_ISREG(filetype)) {
+	if (!S_ISDIR(filetype) && !S_ISREG(filetype) && !S_ISLNK(filetype)) {
 		warningx("skipping non-regular entry '%s'", pathname);
 		ac(archive_read_data_skip(a));
 		free(pathname);
@@ -738,77 +775,7 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 	if (c_opt)
 		info("x %s\n", pathname);
 
-	text = a_opt;
-	warn = 0;
-	cr = 0;
-	for (int n = 0; ; n++) {
-		len = archive_read_data(a, buffer, sizeof buffer);
-
-		if (len < 0)
-			ac(len);
-
-		/* left over CR from previous buffer */
-		if (a_opt && cr) {
-			if (len == 0 || buffer[0] != '\n') {
-				if (fwrite("\r", 1, 1, stderr) != 1)
-					error("write('%s')", pathname);
-			}
-			cr = 0;
-		}
-
-		/* EOF */
-		if (len == 0)
-			break;
-		end = buffer + len;
-
-		/*
-		 * Detect whether this is a text file.  The correct way to
-		 * do this is to check the least significant bit of the
-		 * "internal file attributes" field of the corresponding
-		 * file header in the central directory, but libarchive
-		 * does not read the central directory, so we have to
-		 * guess by looking for non-ASCII characters in the
-		 * buffer.  Hopefully we won't guess wrong.  If we do
-		 * guess wrong, we print a warning message later.
-		 */
-		if (a_opt && n == 0) {
-			for (p = buffer; p < end; ++p) {
-				if (!isascii((unsigned char)*p)) {
-					text = 0;
-					break;
-				}
-			}
-		}
-
-		/* simple case */
-		if (!a_opt || !text) {
-			if (fwrite(buffer, 1, len, stdout) != (size_t)len)
-				error("write('%s')", pathname);
-			continue;
-		}
-
-		/* hard case: convert \r\n to \n (sigh...) */
-		for (p = buffer; p < end; p = q + 1) {
-			for (q = p; q < end; q++) {
-				if (!warn && !isascii(*q)) {
-					warningx("%s may be corrupted due"
-					    " to weak text file detection"
-					    " heuristic", pathname);
-					warn = 1;
-				}
-				if (q[0] != '\r')
-					continue;
-				if (&q[1] == end) {
-					cr = 1;
-					break;
-				}
-				if (q[1] == '\n')
-					break;
-			}
-			if (fwrite(p, 1, q - p, stdout) != (size_t)(q - p))
-				error("write('%s')", pathname);
-		}
-	}
+	(void)extract2fd(a, pathname, STDOUT_FILENO);
 
 	free(pathname);
 }
@@ -874,7 +841,6 @@ test(struct archive *a, struct archive_entry *e)
 	return error_count;
 }
 
-
 /*
  * Main loop: open the zipfile, iterate over its contents and decide what
  * to do with each entry.
@@ -884,15 +850,14 @@ unzip(const char *fn)
 {
 	struct archive *a;
 	struct archive_entry *e;
-	int fd, ret;
+	int ret;
 	uintmax_t total_size, file_count, error_count;
 
-	if ((fd = open(fn, O_RDONLY)) < 0)
-		error("%s", fn);
+	if ((a = archive_read_new()) == NULL)
+		error("archive_read_new failed");
 
-	a = archive_read_new();
 	ac(archive_read_support_format_zip(a));
-	ac(archive_read_open_fd(a, fd, 8192));
+	ac(archive_read_open_filename(a, fn, 8192));
 
 	if (!q_opt && !p_opt)
 	    printf("Archive:  %s\n", fn);
@@ -937,11 +902,7 @@ unzip(const char *fn)
 		    file_count != 1 ? "s" : "");
 	}
 
-	ac(archive_read_close(a));
-	(void)archive_read_finish(a);
-
-	if (close(fd) != 0)
-		error("%s", fn);
+	ac(archive_read_free(a));
 
 	if (t_opt) {
 		if (error_count > 0) {
@@ -1056,6 +1017,9 @@ main(int argc, char *argv[])
 	if (argc <= nopts)
 		usage();
 	zipfile = argv[nopts++];
+
+	if (strcmp(zipfile, "-") == 0)
+		zipfile = NULL; /* STDIN */
 
 	while (nopts < argc && *argv[nopts] != '-')
 		add_pattern(&include, argv[nopts++]);

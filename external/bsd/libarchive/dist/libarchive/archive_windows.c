@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009 Michihiro NAKAJIMA
+ * Copyright (c) 2009-2011 Michihiro NAKAJIMA
  * Copyright (c) 2003-2007 Kees Zeelenberg
  * All rights reserved.
  *
@@ -48,7 +48,7 @@
 
 #include "archive_platform.h"
 #include "archive_private.h"
-#include "archive_hash.h"
+#include "archive_entry.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stddef.h>
@@ -56,24 +56,25 @@
 #include <sys/utime.h>
 #endif
 #include <sys/stat.h>
+#include <locale.h>
 #include <process.h>
 #include <stdlib.h>
 #include <wchar.h>
 #include <windows.h>
+#include <share.h>
 
 #define EPOC_TIME ARCHIVE_LITERAL_ULL(116444736000000000)
 
-#if defined(_MSC_VER) && _MSC_VER < 1300
-/* VS 6 does not provide SetFilePointerEx, so define it here.  */
-static BOOL SetFilePointerEx(HANDLE hFile,
-                             LARGE_INTEGER liDistanceToMove,
-                             PLARGE_INTEGER lpNewFilePointer,
-                             DWORD dwMoveMethod)
+#if defined(__LA_LSEEK_NEEDED)
+static BOOL SetFilePointerEx_perso(HANDLE hFile,
+				   LARGE_INTEGER liDistanceToMove,
+				   PLARGE_INTEGER lpNewFilePointer,
+				   DWORD dwMoveMethod)
 {
 	LARGE_INTEGER li;
 	li.QuadPart = liDistanceToMove.QuadPart;
 	li.LowPart = SetFilePointer(
-	    hFile, li.LowPart, &li.HighPart, dwMoveMethod);
+		hFile, li.LowPart, &li.HighPart, dwMoveMethod);
 	if(lpNewFilePointer) {
 		lpNewFilePointer->QuadPart = li.QuadPart;
 	}
@@ -99,9 +100,6 @@ struct ustat {
 	dev_t		st_rdev;
 };
 
-/* Local replacement for undocumented Windows CRT function. */
-static void la_dosmaperr(unsigned long e);
-
 /* Transform 64-bits ino into 32-bits by hashing.
  * You do not forget that really unique number size is 64-bits.
  */
@@ -112,7 +110,7 @@ getino(struct ustat *ub)
 	ULARGE_INTEGER ino64;
 	ino64.QuadPart = ub->st_ino;
 	/* I don't know this hashing is correct way */
-	return (ino64.LowPart ^ (ino64.LowPart >> INOSIZE));
+	return ((ino_t)(ino64.LowPart ^ (ino64.LowPart >> INOSIZE)));
 }
 
 /*
@@ -121,52 +119,63 @@ getino(struct ustat *ub)
  * characters.
  * see also http://msdn.microsoft.com/en-us/library/aa365247.aspx
  */
-static wchar_t *
-permissive_name(const char *name)
+wchar_t *
+__la_win_permissive_name(const char *name)
+{
+	wchar_t *wn;
+	wchar_t *ws;
+	size_t ll;
+
+	ll = strlen(name);
+	wn = malloc((ll + 1) * sizeof(wchar_t));
+	if (wn == NULL)
+		return (NULL);
+	ll = mbstowcs(wn, name, ll);
+	if (ll == (size_t)-1) {
+		free(wn);
+		return (NULL);
+	}
+	wn[ll] = L'\0';
+	ws = __la_win_permissive_name_w(wn);
+	free(wn);
+	return (ws);
+}
+
+wchar_t *
+__la_win_permissive_name_w(const wchar_t *wname)
 {
 	wchar_t *wn, *wnp;
 	wchar_t *ws, *wsp;
 	DWORD l, len, slen;
 	int unc;
 
-	len = (DWORD)strlen(name);
-	wn = malloc((len + 1) * sizeof(wchar_t));
-	if (wn == NULL)
+	/* Get a full-pathname. */
+	l = GetFullPathNameW(wname, 0, NULL, NULL);
+	if (l == 0)
 		return (NULL);
-	l = MultiByteToWideChar(CP_ACP, 0, name, (int)len, wn, (int)len);
-	if (l == 0) {
-		free(wn);
-		return (NULL);
-	}
-	wn[l] = L'\0';
-
-	/* Get a full path names */
-	l = GetFullPathNameW(wn, 0, NULL, NULL);
-	if (l == 0) {
-		free(wn);
-		return (NULL);
-	}
+	/* NOTE: GetFullPathNameW has a bug that if the length of the file
+	 * name is just 1 then it returns incomplete buffer size. Thus, we
+	 * have to add three to the size to allocate a sufficient buffer
+	 * size for the full-pathname of the file name. */
+	l += 3;
 	wnp = malloc(l * sizeof(wchar_t));
-	if (wnp == NULL) {
-		free(wn);
+	if (wnp == NULL)
 		return (NULL);
-	}
-	len = GetFullPathNameW(wn, l, wnp, NULL);
-	free(wn);
+	len = GetFullPathNameW(wname, l, wnp, NULL);
 	wn = wnp;
 
 	if (wnp[0] == L'\\' && wnp[1] == L'\\' &&
 	    wnp[2] == L'?' && wnp[3] == L'\\')
-		/* We have already permissive names. */
+		/* We have already a permissive name. */
 		return (wn);
 
 	if (wnp[0] == L'\\' && wnp[1] == L'\\' &&
 		wnp[2] == L'.' && wnp[3] == L'\\') {
-		/* Device names */
+		/* This is a device name */
 		if (((wnp[4] >= L'a' && wnp[4] <= L'z') ||
 		     (wnp[4] >= L'A' && wnp[4] <= L'Z')) &&
 		    wnp[5] == L':' && wnp[6] == L'\\')
-			wnp[2] = L'?';/* Not device names. */
+			wnp[2] = L'?';/* Not device name. */
 		return (wn);
 	}
 
@@ -214,6 +223,10 @@ permissive_name(const char *name)
 	return (ws);
 }
 
+/*
+ * Create a file handle.
+ * This can exceed MAX_PATH limitation.
+ */
 static HANDLE
 la_CreateFile(const char *path, DWORD dwDesiredAccess, DWORD dwShareMode,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -229,7 +242,7 @@ la_CreateFile(const char *path, DWORD dwDesiredAccess, DWORD dwShareMode,
 		return (handle);
 	if (GetLastError() != ERROR_PATH_NOT_FOUND)
 		return (handle);
-	wpath = permissive_name(path);
+	wpath = __la_win_permissive_name(path);
 	if (wpath == NULL)
 		return (handle);
 	handle = CreateFileW(wpath, dwDesiredAccess, dwShareMode,
@@ -239,299 +252,7 @@ la_CreateFile(const char *path, DWORD dwDesiredAccess, DWORD dwShareMode,
 	return (handle);
 }
 
-static void *
-la_GetFunctionKernel32(const char *name)
-{
-	static HINSTANCE lib;
-	static int set;
-	if (!set) {
-		set = 1;
-		lib = LoadLibrary("kernel32.dll");
-	}
-	if (lib == NULL) {
-		fprintf(stderr, "Can't load kernel32.dll?!\n");
-		exit(1);
-	}
-	return (void *)GetProcAddress(lib, name);
-}
-
-static int
-la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
-{
-	static BOOLEAN (WINAPI *f)(LPWSTR, LPWSTR, LPSECURITY_ATTRIBUTES);
-	static int set;
-	if (!set) {
-		set = 1;
-		f = la_GetFunctionKernel32("CreateHardLinkW");
-	}
-	return f == NULL ? 0 : (*f)(linkname, target, NULL);
-}
-
-
-/* Make a link to src called dst.  */
-static int
-__link(const char *src, const char *dst)
-{
-	wchar_t *wsrc, *wdst;
-	int res, retval;
-	DWORD attr;
-
-	if (src == NULL || dst == NULL) {
-		set_errno (EINVAL);
-		return -1;
-	}
-
-	wsrc = permissive_name(src);
-	wdst = permissive_name(dst);
-	if (wsrc == NULL || wdst == NULL) {
-		free(wsrc);
-		free(wdst);
-		set_errno (EINVAL);
-		return -1;
-	}
-
-	if ((attr = GetFileAttributesW(wsrc)) != (DWORD)-1) {
-		res = la_CreateHardLinkW(wdst, wsrc);
-	} else {
-		/* wsrc does not exist; try src prepend it with the dirname of wdst */
-		wchar_t *wnewsrc, *slash;
-		int i, n, slen, wlen;
-
-		if (strlen(src) >= 3 && isalpha((unsigned char)src[0]) &&
-		    src[1] == ':' && src[2] == '\\') {
-			/* Original src name is already full-path */
-			retval = -1;
-			goto exit;
-		}
-		if (src[0] == '\\') {
-			/* Original src name is almost full-path
-			 * (maybe src name is without drive) */
-			retval = -1;
-			goto exit;
-		}
-
-		wnewsrc = malloc ((wcslen(wsrc) + wcslen(wdst) + 1) * sizeof(wchar_t));
-		if (wnewsrc == NULL) {
-			errno = ENOMEM;
-			retval = -1;
-			goto exit;
-		}
-		/* Copying a dirname of wdst */
-		wcscpy(wnewsrc, wdst);
-		slash = wcsrchr(wnewsrc, L'\\');
-		if (slash != NULL)
-			*++slash = L'\0';
-		else
-			wcscat(wnewsrc, L"\\");
-		/* Converting multi-byte src to wide-char src */
-		wlen = (int)wcslen(wsrc);
-		slen = (int)strlen(src);
-		n = MultiByteToWideChar(CP_ACP, 0, src, slen, wsrc, wlen);
-		if (n == 0) {
-			free (wnewsrc);
-			retval = -1;
-			goto exit;
-		}
-		for (i = 0; i < n; i++)
-			if (wsrc[i] == L'/')
-				wsrc[i] = L'\\';
-		wcsncat(wnewsrc, wsrc, n);
-		/* Check again */
-		attr = GetFileAttributesW(wnewsrc);
-		if (attr == (DWORD)-1 || (attr & FILE_ATTRIBUTE_DIRECTORY) != 0) {
-			if (attr == (DWORD)-1)
-				la_dosmaperr(GetLastError());
-			else
-				errno = EPERM;
-			free (wnewsrc);
-			retval = -1;
-			goto exit;
-		}
-		res = la_CreateHardLinkW(wdst, wnewsrc);
-		free (wnewsrc);
-	}
-	if (res == 0) {
-		la_dosmaperr(GetLastError());
-		retval = -1;
-	} else
-		retval = 0;
-exit:
-	free(wsrc);
-	free(wdst);
-	return (retval);
-}
-
-/* Make a hard link to src called dst.  */
-int
-__la_link(const char *src, const char *dst)
-{
-	return __link(src, dst);
-}
-
-int
-__la_ftruncate(int fd, off_t length)
-{
-	LARGE_INTEGER distance;
-	HANDLE handle;
-
-	if (fd < 0) {
-		errno = EBADF;
-		return (-1);
-	}
-	handle = (HANDLE)_get_osfhandle(fd);
-	if (GetFileType(handle) != FILE_TYPE_DISK) {
-		errno = EBADF;
-		return (-1);
-	}
-	distance.QuadPart = length;
-	if (!SetFilePointerEx(handle, distance, NULL, FILE_BEGIN)) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	if (!SetEndOfFile(handle)) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	return (0);
-}
-
-#define WINTIME(sec, usec)	((Int32x32To64(sec, 10000000) + EPOC_TIME) + (usec * 10))
-static int
-__hutimes(HANDLE handle, const struct __timeval *times)
-{
-	ULARGE_INTEGER wintm;
-	FILETIME fatime, fmtime;
-
-	wintm.QuadPart = WINTIME(times[0].tv_sec, times[0].tv_usec);
-	fatime.dwLowDateTime = wintm.LowPart;
-	fatime.dwHighDateTime = wintm.HighPart;
-	wintm.QuadPart = WINTIME(times[1].tv_sec, times[1].tv_usec);
-	fmtime.dwLowDateTime = wintm.LowPart;
-	fmtime.dwHighDateTime = wintm.HighPart;
-	if (SetFileTime(handle, NULL, &fatime, &fmtime) == 0) {
-		errno = EINVAL;
-		return (-1);
-	}
-	return (0);
-}
-
-int
-__la_futimes(int fd, const struct __timeval *times)
-{
-
-	return (__hutimes((HANDLE)_get_osfhandle(fd), times));
-}
-
-int
-__la_utimes(const char *name, const struct __timeval *times)
-{
-	int ret;
-	HANDLE handle;
-
-	handle = la_CreateFile(name, GENERIC_READ | GENERIC_WRITE,
-	    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-	    FILE_FLAG_BACKUP_SEMANTICS, NULL);
-	if (handle == INVALID_HANDLE_VALUE) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	ret = __hutimes(handle, times);
-	CloseHandle(handle);
-	return (ret);
-}
-
-int
-__la_chdir(const char *path)
-{
-	wchar_t *ws;
-	int r;
-
-	r = SetCurrentDirectoryA(path);
-	if (r == 0) {
-		if (GetLastError() != ERROR_FILE_NOT_FOUND) {
-			la_dosmaperr(GetLastError());
-			return (-1);
-		}
-	} else
-		return (0);
-	ws = permissive_name(path);
-	if (ws == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
-	r = SetCurrentDirectoryW(ws);
-	free(ws);
-	if (r == 0) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	return (0);
-}
-
-int
-__la_chmod(const char *path, mode_t mode)
-{
-	wchar_t *ws;
-	DWORD attr;
-	BOOL r;
-
-	ws = NULL;
-	attr = GetFileAttributesA(path);
-	if (attr == (DWORD)-1) {
-		if (GetLastError() != ERROR_FILE_NOT_FOUND) {
-			la_dosmaperr(GetLastError());
-			return (-1);
-		}
-		ws = permissive_name(path);
-		if (ws == NULL) {
-			errno = EINVAL;
-			return (-1);
-		}
-		attr = GetFileAttributesW(ws);
-		if (attr == (DWORD)-1) {
-			free(ws);
-			la_dosmaperr(GetLastError());
-			return (-1);
-		}
-	}
-	if (mode & _S_IWRITE)
-		attr &= ~FILE_ATTRIBUTE_READONLY;
-	else
-		attr |= FILE_ATTRIBUTE_READONLY;
-	if (ws == NULL)
-		r = SetFileAttributesA(path, attr);
-	else {
-		r = SetFileAttributesW(ws, attr);
-		free(ws);
-	}
-	if (r == 0) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	return (0);
-}
-
-/*
- * This fcntl is limited implemention.
- */
-int
-__la_fcntl(int fd, int cmd, int val)
-{
-	HANDLE handle;
-
-	handle = (HANDLE)_get_osfhandle(fd);
-	if (GetFileType(handle) == FILE_TYPE_PIPE) {
-		if (cmd == F_SETFL && val == 0) {
-			DWORD mode = PIPE_WAIT;
-			if (SetNamedPipeHandleState(
-			    handle, &mode, NULL, NULL) != 0)
-				return (0);
-		}
-	}
-	errno = EINVAL;
-	return (-1);
-}
-
+#if defined(__LA_LSEEK_NEEDED)
 __int64
 __la_lseek(int fd, __int64 offset, int whence)
 {
@@ -549,7 +270,7 @@ __la_lseek(int fd, __int64 offset, int whence)
 		return (-1);
 	}
 	distance.QuadPart = offset;
-	if (!SetFilePointerEx(handle, distance, &newpointer, whence)) {
+	if (!SetFilePointerEx_perso(handle, distance, &newpointer, whence)) {
 		DWORD lasterr;
 
 		lasterr = GetLastError();
@@ -563,52 +284,9 @@ __la_lseek(int fd, __int64 offset, int whence)
 	}
 	return (newpointer.QuadPart);
 }
+#endif
 
-int
-__la_mkdir(const char *path, mode_t mode)
-{
-	wchar_t *ws;
-	int r;
-
-	(void)mode;/* UNUSED */
-	r = CreateDirectoryA(path, NULL);
-	if (r == 0) {
-		DWORD lasterr = GetLastError();
-		if (lasterr != ERROR_FILENAME_EXCED_RANGE &&
-			lasterr != ERROR_PATH_NOT_FOUND) {
-			la_dosmaperr(GetLastError());
-			return (-1);
-		}
-	} else
-		return (0);
-	ws = permissive_name(path);
-	if (ws == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
-	r = CreateDirectoryW(ws, NULL);
-	free(ws);
-	if (r == 0) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	return (0);
-}
-
-/* Windows' mbstowcs is differrent error handling from other unix mbstowcs.
- * That one is using MultiByteToWideChar function with MB_PRECOMPOSED and
- * MB_ERR_INVALID_CHARS flags.
- * This implements for only to pass libarchive_test.
- */
-size_t
-__la_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t nwchars)
-{
-
-	return (MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
-	    mbstr, (int)strlen(mbstr), wcstr,
-	    (int)nwchars));
-}
-
+/* This can exceed MAX_PATH limitation. */
 int
 __la_open(const char *path, int flags, ...)
 {
@@ -623,12 +301,12 @@ __la_open(const char *path, int flags, ...)
 	ws = NULL;
 	if ((flags & ~O_BINARY) == O_RDONLY) {
 		/*
-		 * When we open a directory, _open function returns 
+		 * When we open a directory, _open function returns
 		 * "Permission denied" error.
 		 */
 		attr = GetFileAttributesA(path);
 		if (attr == (DWORD)-1 && GetLastError() == ERROR_PATH_NOT_FOUND) {
-			ws = permissive_name(path);
+			ws = __la_win_permissive_name(path);
 			if (ws == NULL) {
 				errno = EINVAL;
 				return (-1);
@@ -673,7 +351,7 @@ __la_open(const char *path, int flags, ...)
 		r = _open(path, flags, pmode);
 #endif
 		if (r < 0 && errno == EACCES && (flags & O_CREAT) != 0) {
-			/* simular other POSIX system action to pass a test */
+			/* Simulate other POSIX system action to pass our test suite. */
 			attr = GetFileAttributesA(path);
 			if (attr == (DWORD)-1)
 				la_dosmaperr(GetLastError());
@@ -685,7 +363,7 @@ __la_open(const char *path, int flags, ...)
 		}
 		if (r >= 0 || errno != ENOENT)
 			return (r);
-		ws = permissive_name(path);
+		ws = __la_win_permissive_name(path);
 		if (ws == NULL) {
 			errno = EINVAL;
 			return (-1);
@@ -693,7 +371,7 @@ __la_open(const char *path, int flags, ...)
 	}
 	r = _wopen(ws, flags, pmode);
 	if (r < 0 && errno == EACCES && (flags & O_CREAT) != 0) {
-		/* simular other POSIX system action to pass a test */
+		/* Simulate other POSIX system action to pass our test suite. */
 		attr = GetFileAttributesW(ws);
 		if (attr == (DWORD)-1)
 			la_dosmaperr(GetLastError());
@@ -721,23 +399,11 @@ __la_read(int fd, void *buf, size_t nbytes)
 		errno = EBADF;
 		return (-1);
 	}
+	/* Do not pass 0 to third parameter of ReadFile(), read bytes.
+	 * This will not return to application side. */
+	if (nbytes == 0)
+		return (0);
 	handle = (HANDLE)_get_osfhandle(fd);
-	if (GetFileType(handle) == FILE_TYPE_PIPE) {
-		DWORD sta;
-		if (GetNamedPipeHandleState(
-		    handle, &sta, NULL, NULL, NULL, NULL, 0) != 0 &&
-		    (sta & PIPE_NOWAIT) == 0) {
-			DWORD avail = -1;
-			int cnt = 3;
-
-			while (PeekNamedPipe(
-			    handle, NULL, 0, NULL, &avail, NULL) != 0 &&
-			    avail == 0 && --cnt)
-				Sleep(100);
-			if (avail == 0)
-				return (0);
-		}
-	}
 	r = ReadFile(handle, buf, (uint32_t)nbytes,
 	    &bytes_read, NULL);
 	if (r == 0) {
@@ -757,29 +423,9 @@ __la_read(int fd, void *buf, size_t nbytes)
 	return ((ssize_t)bytes_read);
 }
 
-/* Remove directory */
-int
-__la_rmdir(const char *path)
-{
-	wchar_t *ws;
-	int r;
-
-	r = _rmdir(path);
-	if (r >= 0 || errno != ENOENT)
-		return (r);
-	ws = permissive_name(path);
-	if (ws == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
-	r = _wrmdir(ws);
-	free(ws);
-	return (r);
-}
-
 /* Convert Windows FILETIME to UTC */
 __inline static void
-fileTimeToUTC(const FILETIME *filetime, time_t *time, long *ns)
+fileTimeToUTC(const FILETIME *filetime, time_t *t, long *ns)
 {
 	ULARGE_INTEGER utc;
 
@@ -787,18 +433,18 @@ fileTimeToUTC(const FILETIME *filetime, time_t *time, long *ns)
 	utc.LowPart  = filetime->dwLowDateTime;
 	if (utc.QuadPart >= EPOC_TIME) {
 		utc.QuadPart -= EPOC_TIME;
-		*time = (time_t)(utc.QuadPart / 10000000);	/* milli seconds base */
+		*t = (time_t)(utc.QuadPart / 10000000);	/* milli seconds base */
 		*ns = (long)(utc.QuadPart % 10000000) * 100;/* nano seconds base */
 	} else {
-		*time = 0;
+		*t = 0;
 		*ns = 0;
 	}
 }
 
 /* Stat by handle
- * Windows' stat() does not accept path which is added "\\?\" especially "?"
+ * Windows' stat() does not accept the path added "\\?\" especially "?"
  * character.
- * It means we cannot access a long name path(which is longer than MAX_PATH).
+ * It means we cannot access the long name path longer than MAX_PATH.
  * So I've implemented simular Windows' stat() to access the long name path.
  * And I've added some feature.
  * 1. set st_ino by nFileIndexHigh and nFileIndexLow of
@@ -813,7 +459,7 @@ __hstat(HANDLE handle, struct ustat *st)
 	ULARGE_INTEGER ino64;
 	DWORD ftype;
 	mode_t mode;
-	time_t time;
+	time_t t;
 	long ns;
 
 	switch (ftype = GetFileType(handle)) {
@@ -869,17 +515,17 @@ __hstat(HANDLE handle, struct ustat *st)
 	else
 		mode |= S_IFREG;
 	st->st_mode = mode;
-	
-	fileTimeToUTC(&info.ftLastAccessTime, &time, &ns);
-	st->st_atime = time; 
+
+	fileTimeToUTC(&info.ftLastAccessTime, &t, &ns);
+	st->st_atime = t;
 	st->st_atime_nsec = ns;
-	fileTimeToUTC(&info.ftLastWriteTime, &time, &ns);
-	st->st_mtime = time;
+	fileTimeToUTC(&info.ftLastWriteTime, &t, &ns);
+	st->st_mtime = t;
 	st->st_mtime_nsec = ns;
-	fileTimeToUTC(&info.ftCreationTime, &time, &ns);
-	st->st_ctime = time;
+	fileTimeToUTC(&info.ftCreationTime, &t, &ns);
+	st->st_ctime = t;
 	st->st_ctime_nsec = ns;
-	st->st_size = 
+	st->st_size =
 	    ((int64_t)(info.nFileSizeHigh) * ((int64_t)MAXDWORD + 1))
 		+ (int64_t)(info.nFileSizeLow);
 #ifdef SIMULATE_WIN_STAT
@@ -887,7 +533,7 @@ __hstat(HANDLE handle, struct ustat *st)
 	st->st_nlink = 1;
 	st->st_dev = 0;
 #else
-	/* Getting FileIndex as i-node. We have to remove a sequence which
+	/* Getting FileIndex as i-node. We should remove a sequence which
 	 * is high-16-bits of nFileIndexHigh. */
 	ino64.HighPart = info.nFileIndexHigh & 0x0000FFFFUL;
 	ino64.LowPart  = info.nFileIndexLow;
@@ -913,12 +559,17 @@ copy_stat(struct stat *st, struct ustat *us)
 	st->st_ino = getino(us);
 	st->st_mode = us->st_mode;
 	st->st_nlink = us->st_nlink;
-	st->st_size = us->st_size;
+	st->st_size = (off_t)us->st_size;
 	st->st_uid = us->st_uid;
 	st->st_dev = us->st_dev;
 	st->st_rdev = us->st_rdev;
 }
 
+/*
+ * TODO: Remove a use of __la_fstat and __la_stat.
+ * We should use GetFileInformationByHandle in place
+ * where We still use the *stat functions.
+ */
 int
 __la_fstat(int fd, struct stat *st)
 {
@@ -940,6 +591,7 @@ __la_fstat(int fd, struct stat *st)
 	return (ret);
 }
 
+/* This can exceed MAX_PATH limitation. */
 int
 __la_stat(const char *path, struct stat *st)
 {
@@ -947,8 +599,8 @@ __la_stat(const char *path, struct stat *st)
 	struct ustat u;
 	int ret;
 
-	handle = la_CreateFile(path, 0, 0, NULL, OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_READONLY,
+	handle = la_CreateFile(path, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
 		NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		la_dosmaperr(GetLastError());
@@ -977,57 +629,26 @@ __la_stat(const char *path, struct stat *st)
 	return (ret);
 }
 
-int
-__la_unlink(const char *path)
-{
-	wchar_t *ws;
-	int r;
-
-	r = _unlink(path);
-	if (r >= 0 || errno != ENOENT)
-		return (r);
-	ws = permissive_name(path);
-	if (ws == NULL) {
-		errno = EINVAL;
-		return (-1);
-	}
-	r = _wunlink(ws);
-	free(ws);
-	return (r);
-}
-
 /*
- * This waitpid is limited implemention.
+ * This waitpid is limited implementation.
  */
 pid_t
-__la_waitpid(pid_t wpid, int *status, int option)
+__la_waitpid(HANDLE child, int *status, int option)
 {
-	HANDLE child;
-	DWORD cs, ret;
+	DWORD cs;
 
 	(void)option;/* UNUSED */
-	child = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, wpid);
-	if (child == NULL) {
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	ret = WaitForSingleObject(child, INFINITE);
-	if (ret == WAIT_FAILED) {
-		CloseHandle(child);
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	if (GetExitCodeProcess(child, &cs) == 0) {
-		CloseHandle(child);
-		la_dosmaperr(GetLastError());
-		return (-1);
-	}
-	if (cs == STILL_ACTIVE)
-		*status = 0x100;
-	else
-		*status = (int)(cs & 0xff);
-	CloseHandle(child);
-	return (wpid);
+	do {
+		if (GetExitCodeProcess(child, &cs) == 0) {
+			CloseHandle(child);
+			la_dosmaperr(GetLastError());
+			*status = 0;
+			return (-1);
+		}
+	} while (cs == STILL_ACTIVE);
+
+	*status = (int)(cs & 0xff);
+	return (0);
 }
 
 ssize_t
@@ -1056,6 +677,113 @@ __la_write(int fd, const void *buf, size_t nbytes)
 	}
 	return (bytes_written);
 }
+
+/*
+ * Replace the Windows path separator '\' with '/'.
+ */
+static int
+replace_pathseparator(struct archive_wstring *ws, const wchar_t *wp)
+{
+	wchar_t *w;
+	size_t path_length;
+
+	if (wp == NULL)
+		return(0);
+	if (wcschr(wp, L'\\') == NULL)
+		return(0);
+	path_length = wcslen(wp);
+	if (archive_wstring_ensure(ws, path_length) == NULL)
+		return(-1);
+	archive_wstrncpy(ws, wp, path_length);
+	for (w = ws->s; *w; w++) {
+		if (*w == L'\\')
+			*w = L'/';
+	}
+	return(1);
+}
+
+static int
+fix_pathseparator(struct archive_entry *entry)
+{
+	struct archive_wstring ws;
+	const wchar_t *wp;
+	int ret = ARCHIVE_OK;
+
+	archive_string_init(&ws);
+	wp = archive_entry_pathname_w(entry);
+	switch (replace_pathseparator(&ws, wp)) {
+	case 0: /* Not replaced. */
+		break;
+	case 1: /* Replaced. */
+		archive_entry_copy_pathname_w(entry, ws.s);
+		break;
+	default:
+		ret = ARCHIVE_FAILED;
+	}
+	wp = archive_entry_hardlink_w(entry);
+	switch (replace_pathseparator(&ws, wp)) {
+	case 0: /* Not replaced. */
+		break;
+	case 1: /* Replaced. */
+		archive_entry_copy_hardlink_w(entry, ws.s);
+		break;
+	default:
+		ret = ARCHIVE_FAILED;
+	}
+	wp = archive_entry_symlink_w(entry);
+	switch (replace_pathseparator(&ws, wp)) {
+	case 0: /* Not replaced. */
+		break;
+	case 1: /* Replaced. */
+		archive_entry_copy_symlink_w(entry, ws.s);
+		break;
+	default:
+		ret = ARCHIVE_FAILED;
+	}
+	archive_wstring_free(&ws);
+	return(ret);
+}
+
+struct archive_entry *
+__la_win_entry_in_posix_pathseparator(struct archive_entry *entry)
+{
+	struct archive_entry *entry_main;
+	const wchar_t *wp;
+	int has_backslash = 0;
+	int ret;
+
+	wp = archive_entry_pathname_w(entry);
+	if (wp != NULL && wcschr(wp, L'\\') != NULL)
+		has_backslash = 1;
+	if (!has_backslash) {
+		wp = archive_entry_hardlink_w(entry);
+		if (wp != NULL && wcschr(wp, L'\\') != NULL)
+			has_backslash = 1;
+	}
+	if (!has_backslash) {
+		wp = archive_entry_symlink_w(entry);
+		if (wp != NULL && wcschr(wp, L'\\') != NULL)
+			has_backslash = 1;
+	}
+	/*
+	 * If there is no backslash chars, return the original.
+	 */
+	if (!has_backslash)
+		return (entry);
+
+	/* Copy entry so we can modify it as needed. */
+	entry_main = archive_entry_clone(entry);
+	if (entry_main == NULL)
+		return (NULL);
+	/* Replace the Windows path-separator '\' with '/'. */
+	ret = fix_pathseparator(entry_main);
+	if (ret < ARCHIVE_WARN) {
+		archive_entry_free(entry_main);
+		return (NULL);
+	}
+	return (entry_main);
+}
+
 
 /*
  * The following function was modified from PostgreSQL sources and is
@@ -1152,8 +880,8 @@ static const struct {
 	{	ERROR_NOT_ENOUGH_QUOTA, ENOMEM	}
 };
 
-static void
-la_dosmaperr(unsigned long e)
+void
+__la_dosmaperr(unsigned long e)
 {
 	int			i;
 
@@ -1163,7 +891,7 @@ la_dosmaperr(unsigned long e)
 		return;
 	}
 
-	for (i = 0; i < sizeof(doserrors); i++)
+	for (i = 0; i < (int)(sizeof(doserrors)/sizeof(doserrors[0])); i++)
 	{
 		if (doserrors[i].winerr == e)
 		{
@@ -1176,61 +904,5 @@ la_dosmaperr(unsigned long e)
 	errno = EINVAL;
 	return;
 }
-
-#if defined(ARCHIVE_HASH_MD5_WIN)    ||\
-    defined(ARCHIVE_HASH_SHA1_WIN)   || defined(ARCHIVE_HASH_SHA256_WIN) ||\
-    defined(ARCHIVE_HASH_SHA384_WIN) || defined(ARCHIVE_HASH_SHA512_WIN)
-/*
- * Message digest functions.
- */
-void
-__la_hash_Init(Digest_CTX *ctx, ALG_ID algId)
-{
-
-	ctx->valid = 0;
-	if (!CryptAcquireContext(&ctx->cryptProv, NULL, NULL,
-	    PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-		if (GetLastError() != (DWORD)NTE_BAD_KEYSET)
-			return;
-		if (!CryptAcquireContext(&ctx->cryptProv, NULL, NULL,
-		    PROV_RSA_FULL, CRYPT_NEWKEYSET))
-			return;
-	}
-
-	if (!CryptCreateHash(ctx->cryptProv, algId, 0, 0, &ctx->hash)) {
-		CryptReleaseContext(ctx->cryptProv, 0);
-		return;
-	}
-
-	ctx->valid = 1;
-}
-
-void
-__la_hash_Update(Digest_CTX *ctx, const unsigned char *buf, size_t len)
-{
-
-	if (!ctx->valid)
-	return;
-
-	CryptHashData(ctx->hash,
-		      (unsigned char *)(uintptr_t)buf,
-		      (DWORD)len, 0);
-}
-
-void
-__la_hash_Final(unsigned char *buf, size_t bufsize, Digest_CTX *ctx)
-{
-	DWORD siglen = bufsize;
-
-	if (!ctx->valid)
-		return;
-
-	CryptGetHashParam(ctx->hash, HP_HASHVAL, buf, &siglen, 0);
-	CryptDestroyHash(ctx->hash);
-	CryptReleaseContext(ctx->cryptProv, 0);
-	ctx->valid = 0;
-}
-
-#endif /* defined(ARCHIVE_HASH_*_WIN) */
 
 #endif /* _WIN32 && !__CYGWIN__ */

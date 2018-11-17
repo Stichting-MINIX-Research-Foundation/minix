@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.2 2010/02/20 02:55:53 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.3 2017/04/20 13:11:04 joerg Exp $
 #
 # Extract the new tarball and rename the libarchive-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -16,7 +16,9 @@ rm -rf tmp
 
 cd dist
 
-rm -rf build contrib doc examples
-rm INSTALL Makefile.am Makefile.in aclocal.m4 config.h.in
-rm configure configure.ac CMakeLists.txt */CMakeLists.txt */config_freebsd.h
+rm -rf build contrib doc examples test_utils autom4te.cache
+rm -f INSTALL Makefile.am Makefile.in aclocal.m4 config.h.in
+rm -f configure configure.ac CMakeLists.txt */CMakeLists.txt */*/CMakeLists.txt
+rm -f */config_freebsd.h  CTestConfig.cmake .gitattributes .gitignore
+rm -f .travis.yml */*/.cvsignore
 

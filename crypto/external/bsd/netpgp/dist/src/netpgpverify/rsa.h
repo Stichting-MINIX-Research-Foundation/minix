@@ -40,8 +40,8 @@
 __BEGIN_DECLS
 
 typedef struct rsa_pubkey_t {
-	BIGNUM		*n;	/* RSA public modulus n */
-	BIGNUM		*e;	/* RSA public encryption exponent e */
+	PGPV_BIGNUM		*n;	/* RSA public modulus n */
+	PGPV_BIGNUM		*e;	/* RSA public encryption exponent e */
 } rsa_pubkey_t;
 
 typedef struct mpi_rsa_t {
@@ -49,44 +49,44 @@ typedef struct mpi_rsa_t {
 	long		 f2;	/* openssl version */
 	const void	*f3;	/* openssl method */
 	void		*f4;	/* openssl engine */
-	BIGNUM		*n;
-	BIGNUM		*e;
-	BIGNUM		*d;
-	BIGNUM		*p;
-	BIGNUM		*q;
-	BIGNUM		*dmp1;
-	BIGNUM		*dmq1;
-	BIGNUM		*iqmp;
+	PGPV_BIGNUM		*n;
+	PGPV_BIGNUM		*e;
+	PGPV_BIGNUM		*d;
+	PGPV_BIGNUM		*p;
+	PGPV_BIGNUM		*q;
+	PGPV_BIGNUM		*dmp1;
+	PGPV_BIGNUM		*dmq1;
+	PGPV_BIGNUM		*iqmp;
 } mpi_rsa_t;
 
 #define RSA	mpi_rsa_t
 
 typedef struct dsa_pubkey_t {
-	BIGNUM		*p;	/* DSA public modulus n */
-	BIGNUM		*q;	/* DSA public encryption exponent e */
-	BIGNUM		*g;
-	BIGNUM		*y;
+	PGPV_BIGNUM		*p;	/* DSA public modulus n */
+	PGPV_BIGNUM		*q;	/* DSA public encryption exponent e */
+	PGPV_BIGNUM		*g;
+	PGPV_BIGNUM		*y;
 } dsa_pubkey_t;
 
 typedef struct mpi_dsa_t {
-	BIGNUM		*p;
-	BIGNUM		*q;
-	BIGNUM		*g;
-	BIGNUM		*y;
-	BIGNUM		*x;
-	BIGNUM		*pub_key;
-	BIGNUM		*priv_key;
+	PGPV_BIGNUM		*p;
+	PGPV_BIGNUM		*q;
+	PGPV_BIGNUM		*g;
+	PGPV_BIGNUM		*y;
+	PGPV_BIGNUM		*x;
+	PGPV_BIGNUM		*pub_key;
+	PGPV_BIGNUM		*priv_key;
 } mpi_dsa_t;
 
 #define DSA	mpi_dsa_t
 
 typedef struct rsasig_t {
-	BIGNUM		*sig;			/* mpi which is actual signature */
+	PGPV_BIGNUM		*sig;			/* mpi which is actual signature */
 } rsasig_t;
 
 typedef struct dsasig_t {
-	BIGNUM		*r;			/* mpi which is actual signature */
-	BIGNUM		*s;			/* mpi which is actual signature */
+	PGPV_BIGNUM		*r;			/* mpi which is actual signature */
+	PGPV_BIGNUM		*s;			/* mpi which is actual signature */
 } dsasig_t;
 
 #define DSA_SIG		dsasig_t

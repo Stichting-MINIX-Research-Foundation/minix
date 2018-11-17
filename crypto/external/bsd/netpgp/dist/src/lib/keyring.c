@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.50 2011/06/25 00:37:44 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.55 2017/03/27 21:19:12 khorben Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -214,7 +214,7 @@ pgp_get_writable_seckey(pgp_key_t *data)
 
 /* utility function to zero out memory */
 void
-pgp_forget(void *vp, unsigned size)
+pgp_forget(void *vp, size_t size)
 {
 	(void) memset(vp, 0x0, size);
 }
@@ -226,7 +226,7 @@ typedef struct {
 	pgp_seckey_t		*seckey;
 } decrypt_t;
 
-static pgp_cb_ret_t 
+static pgp_cb_ret_t
 decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
 	const pgp_contents_t	*content = &pkt->u;
@@ -244,9 +244,11 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 		break;
 
 	case PGP_GET_PASSPHRASE:
-		(void) pgp_getpassphrase(decrypt->passfp, pass, sizeof(pass));
+		if (pgp_getpassphrase(decrypt->passfp, pass, sizeof(pass)) == 0) {
+			pass[0] = '\0';
+		}
 		*content->skey_passphrase.passphrase = netpgp_strdup(pass);
-		pgp_forget(pass, (unsigned)sizeof(pass));
+		pgp_forget(pass, sizeof(pass));
 		return PGP_KEEP_MEMORY;
 
 	case PGP_PARSER_ERRCODE:
@@ -292,6 +294,20 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 	return PGP_RELEASE_MEMORY;
 }
 
+static pgp_cb_ret_t
+decrypt_cb_empty(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
+{
+	const pgp_contents_t	*content = &pkt->u;
+
+	switch (pkt->tag) {
+	case PGP_GET_PASSPHRASE:
+		*content->skey_passphrase.passphrase = netpgp_strdup("");
+		return PGP_KEEP_MEMORY;
+	default:
+		return decrypt_cb(pkt, cbinfo);
+	}
+}
+
 /**
 \ingroup Core_Keys
 \brief Decrypts secret key from given keydata with given passphrase
@@ -300,14 +316,24 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 \return secret key
 */
 pgp_seckey_t *
-pgp_decrypt_seckey(const pgp_key_t *key, void *passfp)
+pgp_decrypt_seckey(const pgp_key_t *key, FILE *passfp)
 {
 	pgp_stream_t	*stream;
 	const int	 printerrors = 1;
 	decrypt_t	 decrypt;
 
+	/* XXX first try with an empty passphrase */
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
+	stream = pgp_new(sizeof(*stream));
+	pgp_keydata_reader_set(stream, key);
+	pgp_set_callback(stream, decrypt_cb_empty, &decrypt);
+	stream->readinfo.accumulate = 1;
+	pgp_parse(stream, !printerrors);
+	if (decrypt.seckey != NULL) {
+		return decrypt.seckey;
+	}
+	/* ask for a passphrase */
 	decrypt.passfp = passfp;
 	stream = pgp_new(sizeof(*stream));
 	pgp_keydata_reader_set(stream, key);
@@ -993,9 +1019,12 @@ pgp_keyring_list(pgp_io_t *io, const pgp_keyring_t *keyring, const int psigs)
 {
 	pgp_key_t		*key;
 	unsigned		 n;
+	unsigned		 keyc = (keyring != NULL) ? keyring->keyc : 0;
 
-	(void) fprintf(io->res, "%u key%s\n", keyring->keyc,
-		(keyring->keyc == 1) ? "" : "s");
+	(void) fprintf(io->res, "%u key%s\n", keyc, (keyc == 1) ? "" : "s");
+	if (keyring == NULL) {
+		return 1;
+	}
 	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (pgp_is_key_secret(key)) {
 			pgp_print_keydata(io, keyring, key, "sec",

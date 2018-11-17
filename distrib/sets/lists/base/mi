@@ -1572,7 +1572,7 @@
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
-./usr/sbin/bpm					base-pkgutil-bin	crypto
+./usr/sbin/bpm					base-obsolete		obsolete
 ./usr/sbin/btattach				base-sysutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
 ./usr/sbin/btcontrol				base-obsolete		obsolete
