@@ -1,5 +1,3 @@
-/*	$NetBSD: zfstream.h,v 1.1.1.1 2006/01/14 20:10:54 christos Exp $	*/
-
 /*
  * A C++ I/O streams interface to the zlib gz* functions
  *

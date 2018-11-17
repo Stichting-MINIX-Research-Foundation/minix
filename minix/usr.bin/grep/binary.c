@@ -62,7 +62,7 @@ bin_file(FILE *f)
 
 #ifndef NOZ
 int
-gzbin_file(gzFile *f)
+gzbin_file(gzFile f)
 {
 	char		buf[BUFSIZ];
 	int		m;

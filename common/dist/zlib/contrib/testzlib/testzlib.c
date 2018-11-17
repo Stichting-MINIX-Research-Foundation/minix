@@ -1,5 +1,3 @@
-/*	$NetBSD: testzlib.c,v 1.1.1.1 2006/01/14 20:11:02 christos Exp $	*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -105,12 +103,12 @@ DWORD GetMsecSincePerfCounter(LARGE_INTEGER beginTime64,BOOL fComputeTimeQueryPe
         MyDoMinus64(&ticks,endTime64,beginTime64);
         QueryPerformanceFrequency(&ticksPerSecond);
 
-    
+
         {
             ticksShifted = Int64ShrlMod32(*(DWORDLONG*)&ticks,dwLog);
             tickSecShifted = Int64ShrlMod32(*(DWORDLONG*)&ticksPerSecond,dwLog);
-        
-        } 
+
+        }
 
         dwRet = (DWORD)((((DWORD)ticksShifted)*1000)/(DWORD)(tickSecShifted));
         dwRet *=1;
@@ -118,10 +116,10 @@ DWORD GetMsecSincePerfCounter(LARGE_INTEGER beginTime64,BOOL fComputeTimeQueryPe
     return dwRet;
 }
 
-int ReadFileMemory(const char* filename,long* plFileSize,void** pFilePtr)
+int ReadFileMemory(const char* filename,long* plFileSize,unsigned char** pFilePtr)
 {
     FILE* stream;
-    void* ptr;
+    unsigned char* ptr;
     int retVal=1;
     stream=fopen(filename, "rb");
     if (stream==NULL)

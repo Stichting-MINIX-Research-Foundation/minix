@@ -1,9 +1,7 @@
-/*	$NetBSD: gzappend.c,v 1.1.1.1 2006/01/14 20:11:08 christos Exp $	*/
-
 /* gzappend -- command to append to a gzip file
 
-  Copyright (C) 2003 Mark Adler, all rights reserved
-  version 1.1, 4 Nov 2003
+  Copyright (C) 2003, 2012 Mark Adler, all rights reserved
+  version 1.2, 11 Oct 2012
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the author be held liable for any damages
@@ -41,6 +39,8 @@
  *                      - Keep gzip file clean on appended file read errors
  *                      - Use in-place rotate instead of auxiliary buffer
  *                        (Why you ask?  Because it was fun to write!)
+ * 1.2  11 Oct 2012     - Fix for proper z_const usage
+ *                      - Check for input buffer malloc failure
  */
 
 /*
@@ -172,7 +172,7 @@ typedef struct {
     int size;                   /* 1 << size is bytes in buf */
     unsigned left;              /* bytes available at next */
     unsigned char *buf;         /* buffer */
-    unsigned char *next;        /* next byte in buffer */
+    z_const unsigned char *next;    /* next byte in buffer */
     char *name;                 /* file name for error messages */
 } file;
 
@@ -401,14 +401,14 @@ local void gztack(char *name, int gd, z_stream *strm, int last)
     }
 
     /* allocate buffers */
-    in = fd == -1 ? NULL : malloc(CHUNK);
+    in = malloc(CHUNK);
     out = malloc(CHUNK);
-    if (out == NULL) bye("out of memory", "");
+    if (in == NULL || out == NULL) bye("out of memory", "");
 
     /* compress input file and append to gzip file */
     do {
         /* get more input */
-        len = fd == -1 ? 0 : read(fd, in, CHUNK);
+        len = read(fd, in, CHUNK);
         if (len == -1) {
             fprintf(stderr,
                     "gzappend warning: error reading %s, skipping rest ...\n",
@@ -455,7 +455,7 @@ local void gztack(char *name, int gd, z_stream *strm, int last)
 
     /* clean up and return */
     free(out);
-    if (in != NULL) free(in);
+    free(in);
     if (fd > 0) close(fd);
 }
 
@@ -469,11 +469,13 @@ int main(int argc, char **argv)
     z_stream strm;
 
     /* ignore command name */
-    argv++;
+    argc--; argv++;
 
     /* provide usage if no arguments */
     if (*argv == NULL) {
-        printf("gzappend 1.1 (4 Nov 2003) Copyright (C) 2003 Mark Adler\n");
+        printf(
+            "gzappend 1.2 (11 Oct 2012) Copyright (C) 2003, 2012 Mark Adler\n"
+               );
         printf(
             "usage: gzappend [-level] file.gz [ addthis [ andthis ... ]]\n");
         return 0;

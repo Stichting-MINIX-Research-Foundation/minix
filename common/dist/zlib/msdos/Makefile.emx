@@ -11,7 +11,7 @@ CC=gcc
 
 #CFLAGS=-MMD -O
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
-#CFLAGS=-MMD -g -DDEBUG
+#CFLAGS=-MMD -g -DZLIB_DEBUG
 CFLAGS=-MMD -O3 $(BUTT) -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
              -Wstrict-prototypes -Wmissing-prototypes
 
@@ -33,8 +33,8 @@ AR=ar rcs
 prefix=/usr/local
 exec_prefix = $(prefix)
 
-OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
-       zutil.o inflate.o infback.o inftrees.o inffast.o
+OBJS = adler32.o compress.o crc32.o gzclose.o gzlib.o gzread.o gzwrite.o \
+       uncompr.o deflate.o trees.o zutil.o inflate.o infback.o inftrees.o inffast.o
 
 TEST_OBJS = example.o minigzip.o
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: untgz.c,v 1.1.1.1 2006/01/14 20:11:02 christos Exp $	*/
-
 /*
  * untgz.c -- Display contents and extract files from a gzip'd TAR file
  *

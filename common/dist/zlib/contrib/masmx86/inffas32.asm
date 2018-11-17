@@ -16,7 +16,7 @@
 ; * enabled.  I will attempt to merge the MMX code into this version.  Newer
 ; * versions of this and inffast.S can be found at
 ; * http://www.eetbeetee.com/zlib/ and http://www.charm.net/~christop/zlib/
-; * 
+; *
 ; * 2005 : modification by Gilles Vollant
 ; */
 ; For Visual C++ 4.x and higher and ML 6.x and higher
@@ -33,7 +33,7 @@
 
 
 ; zlib122sup is 0 fort zlib 1.2.2.1 and lower
-; zlib122sup is 8 fort zlib 1.2.2.2 and more (with addition of dmax and head 
+; zlib122sup is 8 fort zlib 1.2.2.2 and more (with addition of dmax and head
 ;        in inflate_state in inflate.h)
 zlib1222sup      equ    8
 
@@ -73,11 +73,6 @@ inflate_fast_use_mmx:
 
 
 _TEXT			segment
-PUBLIC _inflate_fast
-
-ALIGN 4
-_inflate_fast:
-	jmp inflate_fast_entry
 
 
 
@@ -163,7 +158,8 @@ distbits_state	 equ	(76+4+zlib1222sup)	;/* state->distbits */
 ;SECTION .text
 
 ALIGN 4
-inflate_fast_entry:
+_inflate_fast proc near
+.FPO (16, 4, 0, 0, 1, 0)
 	push  edi
 	push  esi
 	push  ebp
@@ -644,9 +640,9 @@ L_init_mmx:
 	movd mm0,ebp
 	mov  ebp,ebx
 ; 896 "inffast.S"
-	movd mm4,[esp+0]
+	movd mm4,dword ptr [esp+0]
 	movq mm3,mm4
-	movd mm5,[esp+4]
+	movd mm5,dword ptr [esp+4]
 	movq mm2,mm5
 	pxor mm1,mm1
 	mov  ebx, [esp+8]
@@ -660,7 +656,7 @@ L_do_loop_mmx:
 	ja  L_get_length_code_mmx
 
 	movd mm6,ebp
-	movd mm7,[esi]
+	movd mm7,dword ptr [esi]
 	add  esi,4
 	psllq mm7,mm6
 	add  ebp,32
@@ -717,7 +713,7 @@ L_decode_distance_mmx:
 	ja L_get_dist_code_mmx
 
 	movd mm6,ebp
-	movd mm7,[esi]
+	movd mm7,dword ptr [esi]
 	add  esi,4
 	psllq mm7,mm6
 	add  ebp,32
@@ -1078,6 +1074,7 @@ L_done:
 	pop  esi
 	pop  edi
 	ret
+_inflate_fast endp
 
 _TEXT	ends
 end

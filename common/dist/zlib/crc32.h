@@ -1,10 +1,8 @@
-/*	$NetBSD: crc32.h,v 1.1.1.1 2006/01/14 20:10:27 christos Exp $	*/
-
 /* crc32.h -- tables for rapid CRC calculation
  * Generated automatically by crc32.c
  */
 
-local const unsigned long FAR crc_table[TBLS][256] =
+local const z_crc_t FAR crc_table[TBLS][256] =
 {
   {
     0x00000000UL, 0x77073096UL, 0xee0e612cUL, 0x990951baUL, 0x076dc419UL,

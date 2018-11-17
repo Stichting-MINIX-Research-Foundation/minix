@@ -1,5 +1,3 @@
-/*	$NetBSD: mztools.h,v 1.1.1.1 2006/01/14 20:10:58 christos Exp $	*/
-
 /*
   Additional tools for Minizip
   Code: Xavier Roche '2004
@@ -19,15 +17,21 @@ extern "C" {
 
 #include "unzip.h"
 
-/* Repair a ZIP file (missing central directory) 
+/* Repair a ZIP file (missing central directory)
    file: file to recover
    fileOut: output file after recovery
    fileOutTmp: temporary file name used for recovery
 */
-extern int ZEXPORT unzRepair(const char* file, 
-                             const char* fileOut, 
-                             const char* fileOutTmp, 
+extern int ZEXPORT unzRepair(const char* file,
+                             const char* fileOut,
+                             const char* fileOutTmp,
                              uLong* nRecovered,
                              uLong* bytesRecovered);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

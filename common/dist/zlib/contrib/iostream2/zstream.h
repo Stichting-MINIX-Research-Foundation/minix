@@ -1,5 +1,3 @@
-/*	$NetBSD: zstream.h,v 1.1.1.1 2006/01/14 20:10:54 christos Exp $	*/
-
 /*
  *
  * Copyright (c) 1997
@@ -23,7 +21,7 @@
 
 /*
  * zstream.h - C++ interface to the 'zlib' general purpose compression library
- * Id: zstream.h 1.1 1997-06-25 12:00:56+02 tyge Exp tyge 
+ * $Id: zstream.h,v 1.1.1.2 2017/01/10 00:25:30 christos Exp $
  */
 
 #include <strstream.h>

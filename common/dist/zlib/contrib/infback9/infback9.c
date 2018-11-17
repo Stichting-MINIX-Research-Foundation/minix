@@ -1,7 +1,5 @@
-/*	$NetBSD: infback9.c,v 1.1.1.1 2006/01/14 20:10:50 christos Exp $	*/
-
 /* infback9.c -- inflate deflate64 data using a call-back interface
- * Copyright (C) 1995-2003 Mark Adler
+ * Copyright (C) 1995-2008 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -224,14 +222,13 @@ out_func out;
 void FAR *out_desc;
 {
     struct inflate_state FAR *state;
-    unsigned char FAR *next;    /* next input */
+    z_const unsigned char FAR *next;    /* next input */
     unsigned char FAR *put;     /* next output */
     unsigned have;              /* available input */
     unsigned long left;         /* available output */
     inflate_mode mode;          /* current inflate mode */
     int lastblock;              /* true if processing last block */
     int wrap;                   /* true if the window has wrapped */
-    unsigned long write;        /* window write index */
     unsigned char FAR *window;  /* allocated sliding window, if needed */
     unsigned long hold;         /* bit buffer */
     unsigned bits;              /* bits in bit buffer */
@@ -244,7 +241,7 @@ void FAR *out_desc;
     code const FAR *distcode;   /* starting table for distance codes */
     unsigned lenbits;           /* index bits for lencode */
     unsigned distbits;          /* index bits for distcode */
-    code this;                  /* current decoding table entry */
+    code here;                  /* current decoding table entry */
     code last;                  /* parent table entry */
     unsigned len;               /* length to copy for repeats, bits to drop */
     int ret;                    /* return code */
@@ -261,7 +258,6 @@ void FAR *out_desc;
     strm->msg = Z_NULL;
     mode = TYPE;
     lastblock = 0;
-    write = 0;
     wrap = 0;
     window = state->window;
     next = strm->next_in;
@@ -386,19 +382,19 @@ void FAR *out_desc;
             state->have = 0;
             while (state->have < state->nlen + state->ndist) {
                 for (;;) {
-                    this = lencode[BITS(lenbits)];
-                    if ((unsigned)(this.bits) <= bits) break;
+                    here = lencode[BITS(lenbits)];
+                    if ((unsigned)(here.bits) <= bits) break;
                     PULLBYTE();
                 }
-                if (this.val < 16) {
-                    NEEDBITS(this.bits);
-                    DROPBITS(this.bits);
-                    state->lens[state->have++] = this.val;
+                if (here.val < 16) {
+                    NEEDBITS(here.bits);
+                    DROPBITS(here.bits);
+                    state->lens[state->have++] = here.val;
                 }
                 else {
-                    if (this.val == 16) {
-                        NEEDBITS(this.bits + 2);
-                        DROPBITS(this.bits);
+                    if (here.val == 16) {
+                        NEEDBITS(here.bits + 2);
+                        DROPBITS(here.bits);
                         if (state->have == 0) {
                             strm->msg = (char *)"invalid bit length repeat";
                             mode = BAD;
@@ -408,16 +404,16 @@ void FAR *out_desc;
                         copy = 3 + BITS(2);
                         DROPBITS(2);
                     }
-                    else if (this.val == 17) {
-                        NEEDBITS(this.bits + 3);
-                        DROPBITS(this.bits);
+                    else if (here.val == 17) {
+                        NEEDBITS(here.bits + 3);
+                        DROPBITS(here.bits);
                         len = 0;
                         copy = 3 + BITS(3);
                         DROPBITS(3);
                     }
                     else {
-                        NEEDBITS(this.bits + 7);
-                        DROPBITS(this.bits);
+                        NEEDBITS(here.bits + 7);
+                        DROPBITS(here.bits);
                         len = 0;
                         copy = 11 + BITS(7);
                         DROPBITS(7);
@@ -435,7 +431,16 @@ void FAR *out_desc;
             /* handle error breaks in while */
             if (mode == BAD) break;
 
-            /* build code tables */
+            /* check for end-of-block code (better have one) */
+            if (state->lens[256] == 0) {
+                strm->msg = (char *)"invalid code -- missing end-of-block";
+                mode = BAD;
+                break;
+            }
+
+            /* build code tables -- note: do not change the lenbits or distbits
+               values here (9 and 6) without reading the comments in inftree9.h
+               concerning the ENOUGH constants, which depend on those values */
             state->next = state->codes;
             lencode = (code const FAR *)(state->next);
             lenbits = 9;
@@ -462,28 +467,28 @@ void FAR *out_desc;
         case LEN:
             /* get a literal, length, or end-of-block code */
             for (;;) {
-                this = lencode[BITS(lenbits)];
-                if ((unsigned)(this.bits) <= bits) break;
+                here = lencode[BITS(lenbits)];
+                if ((unsigned)(here.bits) <= bits) break;
                 PULLBYTE();
             }
-            if (this.op && (this.op & 0xf0) == 0) {
-                last = this;
+            if (here.op && (here.op & 0xf0) == 0) {
+                last = here;
                 for (;;) {
-                    this = lencode[last.val +
+                    here = lencode[last.val +
                             (BITS(last.bits + last.op) >> last.bits)];
-                    if ((unsigned)(last.bits + this.bits) <= bits) break;
+                    if ((unsigned)(last.bits + here.bits) <= bits) break;
                     PULLBYTE();
                 }
                 DROPBITS(last.bits);
             }
-            DROPBITS(this.bits);
-            length = (unsigned)this.val;
+            DROPBITS(here.bits);
+            length = (unsigned)here.val;
 
             /* process literal */
-            if (this.op == 0) {
-                Tracevv((stderr, this.val >= 0x20 && this.val < 0x7f ?
+            if (here.op == 0) {
+                Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
                         "inflate:         literal '%c'\n" :
-                        "inflate:         literal 0x%02x\n", this.val));
+                        "inflate:         literal 0x%02x\n", here.val));
                 ROOM();
                 *put++ = (unsigned char)(length);
                 left--;
@@ -492,21 +497,21 @@ void FAR *out_desc;
             }
 
             /* process end of block */
-            if (this.op & 32) {
+            if (here.op & 32) {
                 Tracevv((stderr, "inflate:         end of block\n"));
                 mode = TYPE;
                 break;
             }
 
             /* invalid code */
-            if (this.op & 64) {
+            if (here.op & 64) {
                 strm->msg = (char *)"invalid literal/length code";
                 mode = BAD;
                 break;
             }
 
             /* length code -- get extra bits, if any */
-            extra = (unsigned)(this.op) & 31;
+            extra = (unsigned)(here.op) & 31;
             if (extra != 0) {
                 NEEDBITS(extra);
                 length += BITS(extra);
@@ -516,30 +521,30 @@ void FAR *out_desc;
 
             /* get distance code */
             for (;;) {
-                this = distcode[BITS(distbits)];
-                if ((unsigned)(this.bits) <= bits) break;
+                here = distcode[BITS(distbits)];
+                if ((unsigned)(here.bits) <= bits) break;
                 PULLBYTE();
             }
-            if ((this.op & 0xf0) == 0) {
-                last = this;
+            if ((here.op & 0xf0) == 0) {
+                last = here;
                 for (;;) {
-                    this = distcode[last.val +
+                    here = distcode[last.val +
                             (BITS(last.bits + last.op) >> last.bits)];
-                    if ((unsigned)(last.bits + this.bits) <= bits) break;
+                    if ((unsigned)(last.bits + here.bits) <= bits) break;
                     PULLBYTE();
                 }
                 DROPBITS(last.bits);
             }
-            DROPBITS(this.bits);
-            if (this.op & 64) {
+            DROPBITS(here.bits);
+            if (here.op & 64) {
                 strm->msg = (char *)"invalid distance code";
                 mode = BAD;
                 break;
             }
-            offset = (unsigned)this.val;
+            offset = (unsigned)here.val;
 
             /* get distance extra bits, if any */
-            extra = (unsigned)(this.op) & 15;
+            extra = (unsigned)(here.op) & 15;
             if (extra != 0) {
                 NEEDBITS(extra);
                 offset += BITS(extra);
