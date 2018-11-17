@@ -1,8 +1,6 @@
-/*	$NetBSD: puff.h,v 1.1.1.1 2006/01/14 20:11:02 christos Exp $	*/
-
 /* puff.h
-  Copyright (C) 2002, 2003 Mark Adler, all rights reserved
-  version 1.7, 3 Mar 2002
+  Copyright (C) 2002-2013 Mark Adler, all rights reserved
+  version 2.3, 21 Jan 2013
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the author be held liable for any damages
@@ -27,7 +25,11 @@
 /*
  * See puff.c for purpose and usage.
  */
+#ifndef NIL
+#  define NIL ((unsigned char *)0)      /* for no output option */
+#endif
+
 int puff(unsigned char *dest,           /* pointer to destination pointer */
          unsigned long *destlen,        /* amount of output space */
-         unsigned char *source,         /* pointer to source data pointer */
+         const unsigned char *source,   /* pointer to source data pointer */
          unsigned long *sourcelen);     /* amount of input available */

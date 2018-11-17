@@ -1,5 +1,3 @@
-/*	$NetBSD: inflate9.h,v 1.1.1.1 2006/01/14 20:10:51 christos Exp $	*/
-
 /* inflate9.h -- internal inflate state definition
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

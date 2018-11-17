@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2014/01/30 06:49:16 wiz Exp $
+#	$NetBSD: Makefile,v 1.23 2017/01/10 01:28:03 christos Exp $
 
 WARNS=	3
 
@@ -12,8 +12,9 @@ ZLIBDIR=${NETBSDSRCDIR}/common/dist/zlib
 .PATH: ${ZLIBDIR}
 LIB=		z
 
-SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infback.c inffast.c \
-	inflate.c inftrees.c trees.c uncompr.c zutil.c 
+SRCS=	adler32.c compress.c crc32.c deflate.c infback.c inffast.c \
+	inflate.c inftrees.c trees.c uncompr.c zutil.c gzwrite.c \
+	gzlib.c gzread.c gzclose.c
 MAN=	zlib.3
 
 CPPFLAGS+=	-I${ZLIBDIR}
@@ -35,5 +36,5 @@ test: minigzip
 
 # Note: CFLAGS ommitted by intention!
 # This is to verify that zlib.h works standalone.
-minigzip: minigzip.c libz.a
-	${CC} -o minigzip ${.CURDIR}/minigzip.c libz.a
+minigzip: ${ZLIBDIR}/test/minigzip.c libz.a
+	${CC} -o minigzip ${ZLIBDIR}/test/minigzip.c libz.a

@@ -6,7 +6,7 @@
 --  Open source license information is in the zlib.ads file.  --
 ----------------------------------------------------------------
 
---  Id: zlib-streams.ads,v 1.12 2004/05/31 10:53:40 vagul Exp 
+--  $Id: zlib-streams.ads,v 1.1.1.2 2017/01/10 00:25:30 christos Exp $
 
 package ZLib.Streams is
 
@@ -31,7 +31,7 @@ package ZLib.Streams is
       Mode   : in     Flush_Mode := Sync_Flush);
    --  Flush the written data to the back stream,
    --  all data placed to the compressor is flushing to the Back stream.
-   --  Should not be used untill necessary, becouse it is decreasing
+   --  Should not be used until necessary, because it is decreasing
    --  compression.
 
    function Read_Total_In (Stream : in Stream_Type) return Count;
@@ -97,13 +97,13 @@ private
       Rest_Last  : Stream_Element_Offset;
       --  Buffer for Read operation.
       --  We need to have this buffer in the record
-      --  becouse not all read data from back stream
+      --  because not all read data from back stream
       --  could be processed during the read operation.
 
       Buffer_Size : Stream_Element_Offset;
       --  Buffer size for write operation.
       --  We do not need to have this buffer
-      --  in the record becouse all data could be
+      --  in the record because all data could be
       --  processed in the write operation.
 
       Back       : Stream_Access;
