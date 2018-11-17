@@ -69,12 +69,12 @@
 
 STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
                                          d2i_of_void *d2i,
-                                         void (*free_func) (OPENSSL_BLOCK))
+                                         void (*freefunc) (OPENSSL_BLOCK))
 {
     STACK_OF(OPENSSL_BLOCK) *sk;
     const unsigned char *pbuf;
     pbuf = buf;
-    if (!(sk = d2i_ASN1_SET(NULL, &pbuf, len, d2i, free_func,
+    if (!(sk = d2i_ASN1_SET(NULL, &pbuf, len, d2i, freefunc,
                             V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL)))
         ASN1err(ASN1_F_ASN1_SEQ_UNPACK, ASN1_R_DECODE_ERROR);
     return sk;

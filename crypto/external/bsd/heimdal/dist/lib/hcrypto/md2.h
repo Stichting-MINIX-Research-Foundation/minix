@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
+/*	$NetBSD: md2.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -58,8 +58,8 @@ struct md2 {
 
 typedef struct md2 MD2_CTX;
 
-void MD2_Init (struct md2 *m);
-void MD2_Update (struct md2 *m, const void *p, size_t len);
-void MD2_Final (void *res, struct md2 *m);
+int MD2_Init (struct md2 *m);
+int MD2_Update (struct md2 *m, const void *p, size_t len);
+int MD2_Final (void *res, struct md2 *m);
 
 #endif /* HEIM_MD2_H */

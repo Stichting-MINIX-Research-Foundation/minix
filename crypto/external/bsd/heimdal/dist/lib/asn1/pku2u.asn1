@@ -1,0 +1,32 @@
+-- Id
+
+PKU2U DEFINITIONS ::= BEGIN
+
+IMPORTS heim_any_set FROM heim
+	Checksum FROM krb5
+	GeneralName FROM rfc2459
+	;
+
+GSS_KRB5_FINISHED ::= SEQUENCE {
+	gss-mic [1] Checksum,
+	...
+}
+
+InitiatorName ::= CHOICE {
+	sanIndex INTEGER (-2147483648..2147483647),
+	nameNotInCert [0] GeneralName,
+	...
+}
+
+TargetName ::= CHOICE {
+	exportedTargName OCTET STRING,
+	generalName [0] GeneralName,
+	...
+}
+
+InitiatorNameAssertion ::= SEQUENCE {
+	initiatorName [0] InitiatorName OPTIONAL,
+	targetName [1] TargetName OPTIONAL
+}
+
+END

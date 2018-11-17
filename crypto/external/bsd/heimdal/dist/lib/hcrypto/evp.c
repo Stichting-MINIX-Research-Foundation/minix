@@ -1,7 +1,7 @@
-/*	$NetBSD: evp.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: evp.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -36,25 +36,34 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED
 #define HC_DEPRECATED_CRYPTO
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>
 #include <evp-hcrypto.h>
 #include <evp-cc.h>
+#if defined(_WIN32)
+#include <evp-w32.h>
+#endif
+#include <evp-pkcs11.h>
+#include <evp-openssl.h>
 
 #include <krb5/krb5-types.h>
-#include <krb5/roken.h>
 
 #ifndef HCRYPTO_DEF_PROVIDER
-#define HCRYPTO_DEF_PROVIDER hcrypto
+# ifdef __APPLE__
+#  define HCRYPTO_DEF_PROVIDER cc
+# elif __sun
+#  define HCRYPTO_DEF_PROVIDER pkcs11_hcrypto
+# elif HAVE_HCRYPTO_W_OPENSSL
+#  define HCRYPTO_DEF_PROVIDER ossl
+# else
+#  define HCRYPTO_DEF_PROVIDER hcrypto
+# endif
 #endif
 
 #define HC_CONCAT4(x,y,z,aa)	x ## y ## z ## aa
@@ -177,10 +186,13 @@ EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
-    if (ctx->md && ctx->md->cleanup)
-	(ctx->md->cleanup)(ctx);
-    else if (ctx->md)
+    if (ctx->md && ctx->md->cleanup) {
+	int ret = (ctx->md->cleanup)(ctx->ptr);
+	if (!ret)
+	    return ret;
+    } else if (ctx->md) {
 	memset(ctx->ptr, 0, ctx->md->ctx_size);
+    }
     ctx->md = NULL;
     ctx->engine = NULL;
     free(ctx->ptr);
@@ -255,13 +267,16 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 	EVP_MD_CTX_cleanup(ctx);
 	ctx->md = md;
 	ctx->engine = engine;
+        if (md == NULL)
+            return 0;
 
 	ctx->ptr = calloc(1, md->ctx_size);
 	if (ctx->ptr == NULL)
 	    return 0;
     }
-    (ctx->md->init)(ctx->ptr);
-    return 1;
+    if (ctx->md == 0)
+        return 0;
+    return (ctx->md->init)(ctx->ptr);
 }
 
 /**
@@ -584,10 +599,14 @@ EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *c)
 int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 {
-    if (c->cipher && c->cipher->cleanup)
-	c->cipher->cleanup(c);
+    if (c->cipher && c->cipher->cleanup) {
+	int ret = c->cipher->cleanup(c);
+	if (!ret)
+	    return ret;
+    }
     if (c->cipher_data) {
-	memset(c->cipher_data, 0, c->cipher->ctx_size);
+        if (c->cipher)
+            memset(c->cipher_data, 0, c->cipher->ctx_size);
 	free(c->cipher_data);
 	c->cipher_data = NULL;
     }
@@ -789,6 +808,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 	/* assume block size is a multiple of 2 */
 	ctx->block_mask = EVP_CIPHER_block_size(c) - 1;
 
+        if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) &&
+            !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
+            return 0;
+
     } else if (ctx->cipher == NULL) {
 	/* reuse of cipher, but not any cipher ever set! */
 	return 0;
@@ -816,7 +839,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
     }
 
     if (key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT))
-	ctx->cipher->init(ctx, key, iv, encp);
+	return ctx->cipher->init(ctx, key, iv, encp);
 
     return 1;
 }
@@ -1118,7 +1141,7 @@ EVP_des_cbc(void)
 }
 
 /**
- * The tripple DES cipher type
+ * The triple DES cipher type
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

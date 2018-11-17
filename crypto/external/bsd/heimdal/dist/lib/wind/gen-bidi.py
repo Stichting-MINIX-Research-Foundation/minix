@@ -70,8 +70,8 @@ extern const size_t _wind_l_table_size;
 
 bidi_c.file.write(
 '''
-#include <stdlib.h>
 #include "bidi_table.h"
+#include <stdlib.h>
 
 ''')
 

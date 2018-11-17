@@ -213,7 +213,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa);
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc);
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
@@ -287,6 +287,7 @@ void ERR_load_DSA_strings(void);
 # define DSA_F_DO_DSA_PRINT                               104
 # define DSA_F_DSAPARAMS_PRINT                            100
 # define DSA_F_DSAPARAMS_PRINT_FP                         101
+# define DSA_F_DSA_BUILTIN_PARAMGEN2                      126
 # define DSA_F_DSA_DO_SIGN                                112
 # define DSA_F_DSA_DO_VERIFY                              113
 # define DSA_F_DSA_GENERATE_KEY                           124
@@ -316,12 +317,97 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE                100
 # define DSA_R_DECODE_ERROR                               104
 # define DSA_R_INVALID_DIGEST_TYPE                        106
+# define DSA_R_INVALID_PARAMETERS                         112
 # define DSA_R_MISSING_PARAMETERS                         101
 # define DSA_R_MODULUS_TOO_LARGE                          103
 # define DSA_R_NEED_NEW_SETUP_VALUES                      110
 # define DSA_R_NON_FIPS_DSA_METHOD                        111
 # define DSA_R_NO_PARAMETERS_SET                          107
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
+# define DSA_R_Q_NOT_PRIME                                113
+
+#if OPENSSL_API_COMPAT >= 0x10100000L
+static inline void
+DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **r, const BIGNUM **s)
+{
+	if (r)
+		*r = sig->r;
+	if (s)
+		*s = sig->s;
+}
+
+static inline int
+DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	if (r) {
+		BN_free(r);
+		sig->r = r;
+	}
+	if (s) {
+		BN_free(s);
+		sig->s = s;
+	}
+	return 1;
+}
+
+static inline void DSA_get0_pqg(const DSA *d, const BIGNUM **p,
+    const BIGNUM **q, const BIGNUM **g)
+{   
+	if (p)
+		*p = d->p;
+	if (q)
+		*q = d->q;
+	if (g)
+		*g = d->g;
+}   
+
+
+static inline int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{           
+	if (p) { 
+		BN_free(d->p);
+		d->p = p;
+	}
+	if (q) {
+		BN_free(d->q);
+		d->q = q;
+	}
+	if (g) {
+		BN_free(d->g);
+		d->g = g;
+	}
+	return 1;
+}
+
+static inline void DSA_get0_key(const DSA *d, const BIGNUM **pub_key,
+     const BIGNUM **priv_key)
+{
+	if (pub_key)
+	    *pub_key = d->pub_key;
+	if (priv_key)  
+	    *priv_key = d->priv_key;
+}
+
+static inline int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+	if (pub_key) {
+		BN_free(d->pub_key);
+		d->pub_key = pub_key;
+	}
+	if (priv_key) {
+		BN_free(d->priv_key);
+		d->priv_key = priv_key;
+	}   
+
+	return 1;
+}
+
+static inline int DSA_bits(const DSA *d)
+{
+	return BN_num_bits(d->p);
+}
+#endif
+
 
 #ifdef  __cplusplus
 }

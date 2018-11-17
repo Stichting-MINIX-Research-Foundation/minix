@@ -1,4 +1,4 @@
-/*	$NetBSD: otptest.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: otptest.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -109,7 +109,7 @@ test (void)
     {"sha", "OTP's are good", "correct", 0, "d51f3e99bf8e6f0b", "RUST WELT KICK FELL TAIL FRAU"},
     {"sha", "OTP's are good", "correct", 1, "82aeb52d943774e4", "FLIT DOSE ALSO MEW DRUM DEFY"},
     {"sha", "OTP's are good", "correct", 99, "4f296a74fe1567ec", "AURA ALOE HURL WING BERG WAIT"},
-    {NULL}
+    {NULL, NULL, NULL, 0, NULL, NULL}
   };
 
   struct test *t;

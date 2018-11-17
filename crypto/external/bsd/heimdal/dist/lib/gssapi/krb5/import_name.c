@@ -1,4 +1,4 @@
-/*	$NetBSD: import_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: import_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -85,26 +85,21 @@ import_krb5_name (OM_uint32 *minor_status,
 
 OM_uint32
 _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
-		    int use_dns, krb5_const_principal sourcename, gss_name_t targetname,
-		    krb5_principal *out)
+		    gss_const_name_t targetname, krb5_principal *out)
 {
-    krb5_principal p = (krb5_principal)targetname;
+    krb5_const_principal p = (krb5_const_principal)targetname;
     krb5_error_code ret;
     char *hostname = NULL, *service;
+    int type;
+    const char *comp;
 
     *minor_status = 0;
 
     /* If its not a hostname */
-    if (krb5_principal_get_type(context, p) != MAGIC_HOSTBASED_NAME_TYPE) {
-	ret = krb5_copy_principal(context, p, out);
-    } else if (!use_dns) {
-	ret = krb5_copy_principal(context, p, out);
-	if (ret)
-	    goto out;
-	krb5_principal_set_type(context, *out, KRB5_NT_SRV_HST);
-	if (sourcename)
-	    ret = krb5_principal_set_realm(context, *out, sourcename->realm);
-    } else {
+    type = krb5_principal_get_type(context, p);
+    comp = krb5_principal_get_comp_string(context, p, 0);
+    if (type == KRB5_NT_SRV_HST || type == KRB5_NT_SRV_HST_NEEDS_CANON ||
+	(type == KRB5_NT_UNKNOWN && comp != NULL && strcmp(comp, "host") == 0)) {
 	if (p->name.name_string.len == 0)
 	    return GSS_S_BAD_NAME;
 	else if (p->name.name_string.len > 1)
@@ -117,9 +112,10 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
 				      service,
 				      KRB5_NT_SRV_HST,
 				      out);
+    } else {
+	ret = krb5_copy_principal(context, p, out);
     }
 
- out:
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -130,10 +126,10 @@ _gsskrb5_canon_name(OM_uint32 *minor_status, krb5_context context,
 
 
 static OM_uint32
-import_hostbased_name (OM_uint32 *minor_status,
-		       krb5_context context,
-		       const gss_buffer_t input_name_buffer,
-		       gss_name_t *output_name)
+import_hostbased_name(OM_uint32 *minor_status,
+		      krb5_context context,
+		      const gss_buffer_t input_name_buffer,
+		      gss_name_t *output_name)
 {
     krb5_principal princ = NULL;
     krb5_error_code kerr;
@@ -155,7 +151,7 @@ import_hostbased_name (OM_uint32 *minor_status,
 	host = p + 1;
     }
 
-    kerr = krb5_make_principal(context, &princ, NULL, tmp, host, NULL);
+    kerr = krb5_make_principal(context, &princ, "", tmp, host, NULL);
     free (tmp);
     *minor_status = kerr;
     if (kerr == KRB5_PARSE_ILLCHAR || kerr == KRB5_PARSE_MALFORMED)
@@ -163,7 +159,7 @@ import_hostbased_name (OM_uint32 *minor_status,
     else if (kerr)
 	return GSS_S_FAILURE;
 
-    krb5_principal_set_type(context, princ, MAGIC_HOSTBASED_NAME_TYPE);
+    krb5_principal_set_type(context, princ, KRB5_NT_SRV_HST);
     *output_name = (gss_name_t)princ;
 
     return 0;

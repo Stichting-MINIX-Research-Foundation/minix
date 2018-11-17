@@ -1,4 +1,4 @@
-/*	$NetBSD: test_crypto_wrapping.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_crypto_wrapping.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -133,7 +133,9 @@ main(int argc, char **argv)
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_ARCFOUR_HMAC_MD5,
 	ETYPE_AES128_CTS_HMAC_SHA1_96,
-	ETYPE_AES256_CTS_HMAC_SHA1_96
+	ETYPE_AES256_CTS_HMAC_SHA1_96,
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192
     };
 
     setprogname(argv[0]);

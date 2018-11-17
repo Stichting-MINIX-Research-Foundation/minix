@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: base64.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
@@ -54,7 +54,7 @@ pos(char c)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-base64_encode(const void *data, int size, char **str)
+rk_base64_encode(const void *data, int size, char **str)
 {
     char *s, *p;
     int i;
@@ -123,7 +123,7 @@ token_decode(const char *token)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-base64_decode(const char *str, void *data)
+rk_base64_decode(const char *str, void *data)
 {
     const char *p;
     unsigned char *q;

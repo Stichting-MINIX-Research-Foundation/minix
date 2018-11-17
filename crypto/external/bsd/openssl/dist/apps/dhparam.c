@@ -159,9 +159,8 @@ int MAIN(int argc, char **argv)
     int informat, outformat, check = 0, noout = 0, C = 0, ret = 1;
     char *infile, *outfile, *prog;
     char *inrand = NULL;
-# ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
-# endif
+    ENGINE *e = NULL;
     int num = 0, g = 0;
 
     apps_startup();
@@ -270,9 +269,7 @@ int MAIN(int argc, char **argv)
 
     ERR_load_crypto_strings();
 
-# ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
-# endif
+    e = setup_engine(bio_err, engine, 0);
 
     if (g && !num)
         num = DEFBITS;
@@ -489,9 +486,12 @@ int MAIN(int argc, char **argv)
     if (!noout) {
         if (outformat == FORMAT_ASN1)
             i = i2d_DHparams_bio(out, dh);
-        else if (outformat == FORMAT_PEM)
-            i = PEM_write_bio_DHparams(out, dh);
-        else {
+        else if (outformat == FORMAT_PEM) {
+            if (dh->q)
+                i = PEM_write_bio_DHxparams(out, dh);
+            else
+                i = PEM_write_bio_DHparams(out, dh);
+        } else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
             goto end;
         }
@@ -509,6 +509,7 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dh != NULL)
         DH_free(dh);
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

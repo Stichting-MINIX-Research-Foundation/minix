@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des-common.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crypto-des-common.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -41,10 +41,9 @@
  * A = A xor B. A & B are 8 bytes.
  */
 
-void
-_krb5_xor (DES_cblock *key, const unsigned char *b)
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_xor8(unsigned char *a, const unsigned char *b)
 {
-    unsigned char *a = (unsigned char*)key;
     a[0] ^= b[0];
     a[1] ^= b[1];
     a[2] ^= b[2];
@@ -56,7 +55,7 @@ _krb5_xor (DES_cblock *key, const unsigned char *b)
 }
 
 #if defined(DES3_OLD_ENCTYPE) || defined(HEIM_WEAK_CRYPTO)
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_checksum(krb5_context context,
 		   const EVP_MD *evp_md,
 		   struct _krb5_key_data *key,
@@ -72,10 +71,8 @@ _krb5_des_checksum(krb5_context context,
     krb5_generate_random_block(p, 8);
 
     m = EVP_MD_CTX_create();
-    if (m == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (m == NULL)
+	return krb5_enomem(context);
 
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, p, 8);
@@ -89,7 +86,7 @@ _krb5_des_checksum(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_verify(krb5_context context,
 		 const EVP_MD *evp_md,
 		 struct _krb5_key_data *key,
@@ -105,10 +102,8 @@ _krb5_des_verify(krb5_context context,
     krb5_error_code ret = 0;
 
     m = EVP_MD_CTX_create();
-    if (m == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (m == NULL)
+	return krb5_enomem(context);
 
     memset(&ivec, 0, sizeof(ivec));
     EVP_CipherInit_ex(&ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);

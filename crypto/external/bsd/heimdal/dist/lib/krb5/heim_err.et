@@ -20,6 +20,7 @@ error_code SERVICE_NOMATCH,	"Unacceptable service used"
 error_code NOT_SEEKABLE,	"File descriptor not seekable"
 error_code TOO_BIG,		"Offset too large"
 error_code BAD_HDBENT_ENCODING,	"Invalid HDB entry encoding"
+error_code RANDOM_OFFLINE,	"No random source available"
 
 index 64
 prefix HEIM_PKINIT
@@ -44,4 +45,9 @@ error_code NONAME,		"nodename nor servname provided, or not known"
 error_code SERVICE,		"servname not supported for ai_socktype"
 error_code SOCKTYPE,		"ai_socktype not supported"
 error_code SYSTEM,		"system error returned in errno"
+
+index 192
+prefix HEIM_NET
+error_code CONN_REFUSED,	"connection refused"
+
 end

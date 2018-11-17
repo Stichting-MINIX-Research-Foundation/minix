@@ -1,4 +1,4 @@
-/*	$NetBSD: ccache_plugin.h,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: ccache_plugin.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2010, Secure Endpoints Inc.

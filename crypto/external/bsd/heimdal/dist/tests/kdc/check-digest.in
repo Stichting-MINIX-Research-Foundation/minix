@@ -93,15 +93,10 @@ ${kadmin} check ${R} || exit 1
 
 echo $password > ${objdir}/foopassword
 
-echo "Starting kdc"
-env ${HEIM_MALLOC_DEBUG} ${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    exit 1
-fi
+echo "Starting kdc" ; > messages.log
+env ${HEIM_MALLOC_DEBUG} ${kdc} --detach --testing ||
+    { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXIT
 

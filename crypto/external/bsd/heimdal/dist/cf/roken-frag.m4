@@ -17,7 +17,7 @@ AC_REQUIRE([AC_PROG_CC])
 AC_REQUIRE([AC_PROG_AWK])
 AC_REQUIRE([AC_OBJEXT])
 AC_REQUIRE([AC_EXEEXT])
-AC_REQUIRE([AC_PROG_LIBTOOL])
+AC_REQUIRE([LT_INIT])
 
 AC_REQUIRE([AC_MIPS_ABI])
 
@@ -28,7 +28,10 @@ dnl C characteristics
 AC_REQUIRE([AC_C___ATTRIBUTE__])
 AC_REQUIRE([AC_C_INLINE])
 AC_REQUIRE([AC_C_CONST])
-rk_WFLAGS(-Wall -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs)
+rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow)
+
+dnl -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wstrict-prototypes
+dnl -Wcast-qual -Wswitch -Wformat=2 -Wwrite-strings
 
 AC_REQUIRE([rk_DB])
 
@@ -68,7 +71,9 @@ AC_CHECK_HEADERS([\
 	search.h				\
 	shadow.h				\
 	stdint.h				\
+	sys/auxv.h				\
 	sys/bswap.h				\
+	sys/errno.h				\
 	sys/ioctl.h				\
 	sys/mman.h				\
 	sys/param.h				\
@@ -180,6 +185,7 @@ AC_CHECK_FUNCS([				\
 	asprintf				\
 	atexit					\
 	cgetent					\
+	getauxval				\
 	getconfattr				\
 	getprogname				\
 	getrlimit				\
@@ -266,6 +272,14 @@ AC_FIND_FUNC_NO_LIBS(bswap32,,
 #include <sys/bswap.h>
 #endif],0)
 
+AC_FIND_FUNC_NO_LIBS(bswap64,,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_BSWAP_H
+#include <sys/bswap.h>
+#endif],0)
+
 AC_FIND_FUNC_NO_LIBS(pidfile,util,
 [#ifdef HAVE_UTIL_H
 #include <util.h>
@@ -303,14 +317,12 @@ AC_FIND_IF_NOT_BROKEN(gai_strerror,,
 #include <ws2tcpip.h>
 #endif],[0])
 
-dnl Darwin is weird, and in some senses not unix, launchd doesn't want
-dnl servers to use daemon(), so its deprecated.
+AC_CHECK_LIB(util, emalloc)
+
 case "$host_os" in
 	darwin*)
 		;;
 	*)
-		AC_DEFINE([SUPPORT_DETACH], 1,
-		    [Define if os support want to detach is daemonens.])
 		AC_BROKEN([daemon]) ;;
 esac
 
@@ -347,6 +359,7 @@ AC_BROKEN([					\
 	localtime_r				\
 	lstat					\
 	memmove					\
+	memset_s				\
 	mkstemp					\
 	putenv					\
 	rcmd					\
@@ -370,6 +383,8 @@ AC_BROKEN([					\
 	strsep					\
 	strsep_copy				\
 	strtok_r				\
+	strtoll					\
+	strtoull				\
 	strupr					\
 	swab					\
 	tsearch					\
@@ -390,6 +405,14 @@ AM_CONDITIONAL(have_fnmatch_h,
 
 AC_FOREACH([rk_func], [strndup strsep strtok_r],
 	[AC_NEED_PROTO([#include <string.h>], rk_func)])
+
+AC_CHECK_FUNC([strtoll],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOLL, 1,
+        [Define if you have the function strtoll.])])
+
+AC_CHECK_FUNC([strtoull],
+    [AC_DEFINE_UNQUOTED(HAVE_STRTOULL, 1,
+        [Define if you have the function strtoull.])])
 
 AC_FOREACH([rk_func], [strsvis strsvisx strunvis strvis strvisx svis unvis vis],
 [AC_NEED_PROTO([#ifdef HAVE_VIS_H

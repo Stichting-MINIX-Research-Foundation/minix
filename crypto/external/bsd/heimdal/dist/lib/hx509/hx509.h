@@ -1,4 +1,4 @@
-/*	$NetBSD: hx509.h,v 1.1.1.2 2011/04/14 14:08:56 elric Exp $	*/
+/*	$NetBSD: hx509.h,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -41,6 +41,7 @@
 #include <krb5/rfc2459_asn1.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <krb5/heimbase.h>
 
 typedef struct hx509_cert_attribute_data *hx509_cert_attribute;
 typedef struct hx509_cert_data *hx509_cert;

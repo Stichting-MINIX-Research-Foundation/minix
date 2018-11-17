@@ -1,4 +1,4 @@
-/*	$NetBSD: kadm_conn.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: kadm_conn.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
@@ -37,6 +37,8 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+
+extern int daemon_child;
 
 struct kadm_port {
     char *port;
@@ -191,7 +193,8 @@ wait_for_connection(krb5_context contextp,
 
     pgrp = getpid();
 
-    if(setpgid(0, pgrp) < 0)
+    /* systemd may cause setpgid to fail with EPERM */
+    if(setpgid(0, pgrp) < 0 && errno != EPERM)
 	err(1, "setpgid");
 
     signal(SIGTERM, terminate);
@@ -263,6 +266,7 @@ start_server(krb5_context contextp, const char *port_str)
 	if(tmp == NULL) {
 	    krb5_warnx(contextp, "failed to reallocate %lu bytes",
 		       (unsigned long)(num_socks + i) * sizeof(*socks));
+            freeaddrinfo(ai);
 	    continue;
 	}
 	socks = tmp;
@@ -293,5 +297,8 @@ start_server(krb5_context contextp, const char *port_str)
     if(num_socks == 0)
 	krb5_errx(contextp, 1, "no sockets to listen to - exiting");
 
+    roken_detach_finish(NULL, daemon_child);
+
     wait_for_connection(contextp, socks, num_socks);
+    free(socks);
 }

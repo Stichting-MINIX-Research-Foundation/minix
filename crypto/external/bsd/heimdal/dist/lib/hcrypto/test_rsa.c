@@ -1,4 +1,4 @@
-/*	$NetBSD: test_rsa.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: test_rsa.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -34,9 +34,6 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-
 #include <krb5/roken.h>
 #include <krb5/getarg.h>
 
@@ -151,7 +148,7 @@ cb_func(int a, int b, BN_GENCB *c)
 }
 
 static RSA *
-read_key(ENGINE *engine, const char *rsa_key)
+read_key(ENGINE *engine, const char *keyfile)
 {
     unsigned char buf[1024 * 4];
     const unsigned char *p;
@@ -159,22 +156,22 @@ read_key(ENGINE *engine, const char *rsa_key)
     RSA *rsa;
     FILE *f;
 
-    f = fopen(rsa_key, "rb");
+    f = fopen(keyfile, "rb");
     if (f == NULL)
-	err(1, "could not open file %s", rsa_key);
+	err(1, "could not open file %s", keyfile);
     rk_cloexec_file(f);
 
     size = fread(buf, 1, sizeof(buf), f);
     fclose(f);
     if (size == 0)
-	err(1, "failed to read file %s", rsa_key);
+	err(1, "failed to read file %s", keyfile);
     if (size == sizeof(buf))
-	err(1, "key too long in file %s!", rsa_key);
+	err(1, "key too long in file %s!", keyfile);
 
     p = buf;
     rsa = d2i_RSAPrivateKey(NULL, &p, size);
     if (rsa == NULL)
-	err(1, "failed to parse key in file %s", rsa_key);
+	err(1, "failed to parse key in file %s", keyfile);
 
     RSA_set_method(rsa, ENGINE_get_RSA(engine));
 

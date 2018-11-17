@@ -2,10 +2,6 @@ HEIMDAL_KRB5_2.0 {
 	global:
 		krb524_convert_creds_kdc;
 		krb524_convert_creds_kdc_ccache;
-		krb5_425_conv_principal;
-		krb5_425_conv_principal_ext2;
-		krb5_425_conv_principal_ext;
-		krb5_524_conv_principal;
 		krb5_abort;
 		krb5_abortx;
 		krb5_acl_match_file;
@@ -42,6 +38,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_auth_con_getrcache;
 		krb5_auth_con_getremoteseqnumber;
 		krb5_auth_con_getremotesubkey;
+		krb5_auth_con_getsendsubkey;
 		krb5_auth_con_init;
 		krb5_auth_con_removeflags;
 		krb5_auth_con_setaddrs;
@@ -349,6 +346,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_get_init_creds_opt_set_address_list;
 		krb5_get_init_creds_opt_set_addressless;
 		krb5_get_init_creds_opt_set_anonymous;
+		krb5_get_init_creds_opt_set_change_password_prompt;
 		krb5_get_init_creds_opt_set_canonicalize;
 		krb5_get_init_creds_opt_set_default_flags;
 		krb5_get_init_creds_opt_set_etype_list;
@@ -387,6 +385,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_ets;
 		krb5_initlog;
 		krb5_is_config_principal;
+		krb5_is_enctype_weak;
 		krb5_is_thread_safe;
 		krb5_kcm_call;
 		krb5_kcm_storage_request;
@@ -435,6 +434,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_make_principal;
 		krb5_max_sockaddr_size;
 		krb5_mk_error;
+		krb5_mk_error_ext;
 		krb5_mk_priv;
 		krb5_mk_rep;
 		krb5_mk_req;
@@ -446,7 +446,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_net_write_block;
 		krb5_ntlm_alloc;
 		krb5_ntlm_free;
-		krb5_ntlm_init_get_challange;
+		krb5_ntlm_init_get_challenge;
 		krb5_ntlm_init_get_flags;
 		krb5_ntlm_init_get_opaque;
 		krb5_ntlm_init_get_targetinfo;
@@ -491,6 +491,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_principal_get_realm;
 		krb5_principal_get_type;
 		krb5_principal_match;
+		krb5_principal_set_comp_string;
 		krb5_principal_set_realm;
 		krb5_principal_set_type;
 		krb5_principal_is_krbtgt;
@@ -545,6 +546,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_ret_data;
 		krb5_ret_int16;
 		krb5_ret_int32;
+		krb5_ret_int64;
 		krb5_ret_int8;
 		krb5_ret_keyblock;
 		krb5_ret_principal;
@@ -554,6 +556,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_ret_times;
 		krb5_ret_uint16;
 		krb5_ret_uint32;
+		krb5_ret_uint64;
 		krb5_ret_uint8;
 		krb5_salttype_to_string;
 		krb5_sendauth;
@@ -568,6 +571,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_sendto_kdc;
 		krb5_sendto_kdc_flags;
 		krb5_set_config_files;
+		krb5_set_debug_dest;
 		krb5_set_default_in_tkt_etypes;
 		krb5_set_default_realm;
 		krb5_set_dns_canonicalize_hostname;
@@ -598,6 +602,8 @@ HEIMDAL_KRB5_2.0 {
 		krb5_storage_from_fd;
 		krb5_storage_from_mem;
 		krb5_storage_from_readonly_mem;
+		krb5_storage_from_socket;
+		krb5_storage_fsync;
 		krb5_storage_get_byteorder;
 		krb5_storage_get_eof_code;
 		krb5_storage_is_flags;
@@ -618,6 +624,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_store_data;
 		krb5_store_int16;
 		krb5_store_int32;
+		krb5_store_int64;
 		krb5_store_int8;
 		krb5_store_keyblock;
 		krb5_store_principal;
@@ -627,6 +634,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_store_times;
 		krb5_store_uint16;
 		krb5_store_uint32;
+		krb5_store_uint64;
 		krb5_store_uint8;
 		krb5_string_to_deltat;
 		krb5_string_to_enctype;
@@ -702,6 +710,7 @@ HEIMDAL_KRB5_2.0 {
 		initialize_k524_error_table;
 
 		# variables
+		krb5_dcc_ops;
 		krb5_mcc_ops;
 		krb5_acc_ops;
 		krb5_fcc_ops;
@@ -716,10 +725,15 @@ HEIMDAL_KRB5_2.0 {
 		krb5_config_file;
 		krb5_defkeyname;
 		krb5_cc_type_api;
+		krb5_cc_type_dcc;
 		krb5_cc_type_file;
 		krb5_cc_type_memory;
 		krb5_cc_type_kcm;
 		krb5_cc_type_scc;
+
+		# shared with HDB
+		_krb5_plugin_run_f;
+		_krb5_enctype_requires_random_salt;
 
 		# Shared with GSSAPI krb5
 		_krb5_crc_init_table;		
@@ -727,25 +741,13 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_get_krbtgt;
 		_krb5_build_authenticator;
 
-		# V4 compat glue
-		_krb5_krb_tf_setup;
-		_krb5_krb_dest_tkt;
-		_krb5_krb_life_to_time;
-		_krb5_krb_decomp_ticket;
-		_krb5_krb_decomp_ticket;
-		_krb5_krb_create_ticket;
-		_krb5_krb_create_ciph;
-		_krb5_krb_create_auth_reply;
-		_krb5_krb_rd_req;
-		_krb5_krb_free_auth_data;
-		_krb5_krb_time_to_life;
-		_krb5_krb_cr_err_reply;
-
 		# Shared with libkdc
-		_krb5_AES_string_to_default_iterator;
+		_krb5_AES_SHA1_string_to_default_iterator;
+		_krb5_AES_SHA2_string_to_default_iterator;
 		_krb5_dh_group_ok;
 		_krb5_get_host_realm_int;
 		_krb5_get_int;
+		_krb5_get_int64;
 		_krb5_pac_sign;
 		_krb5_parse_moduli;
 		_krb5_pk_kdf;
@@ -754,8 +756,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_pk_octetstring2key;
 		_krb5_plugin_find;
 		_krb5_plugin_free;
-		_krb5_plugin_get_next;
-		_krb5_plugin_get_symbol;
+		_krb5_plugin_run_f;
 		_krb5_principal2principalname;
 		_krb5_principalname2krb5_principal;
 		_krb5_put_int;
@@ -773,11 +774,32 @@ HEIMDAL_KRB5_2.0 {
 		# kinit helper
 		krb5_get_init_creds_opt_set_pkinit_user_certs;
 		krb5_pk_enterprise_cert;
+		krb5_process_last_request;
+		krb5_init_creds_init;
+		krb5_init_creds_set_service;
+		krb5_init_creds_set_fast_ccache;
+		krb5_init_creds_set_keytab;
+		krb5_init_creds_get;
+		krb5_init_creds_get_creds;
+		krb5_init_creds_get_error;
+		krb5_init_creds_set_password;
+		krb5_init_creds_store;
+		krb5_init_creds_free;
 
 		# testing
 		_krb5_aes_cts_encrypt;
 		_krb5_n_fold;
 		_krb5_expand_default_cc_name;
+		_krb5_expand_path_tokensv;
+		
+		# FAST
+		_krb5_fast_cf2;
+		_krb5_fast_armor_key;
+
+                # TGS
+                _krb5_find_capath;
+                _krb5_free_capath;
+
 	local:
 		*;
 };

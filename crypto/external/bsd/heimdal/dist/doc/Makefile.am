@@ -24,6 +24,11 @@ hdb.dxy: hdb.din Makefile
 	chmod +x hdb.dxy.tmp
 	mv hdb.dxy.tmp hdb.dxy
 
+base.dxy: base.din Makefile
+	$(dxy_subst) < $(srcdir)/base.din > base.dxy.tmp
+	chmod +x base.dxy.tmp
+	mv base.dxy.tmp base.dxy
+
 hx509.dxy: hx509.din Makefile
 	$(dxy_subst) < $(srcdir)/hx509.din > hx509.dxy.tmp
 	chmod +x hx509.dxy.tmp
@@ -50,6 +55,7 @@ wind.dxy: wind.din Makefile
 	mv wind.dxy.tmp wind.dxy
 
 texi_subst = sed -e 's,[@]dbdir[@],$(localstatedir),g' \
+	-e 's,[@]dbtype[@],$(db_type),g' \
 	-e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g'
 
 vars.texi: vars.tin Makefile
@@ -57,16 +63,23 @@ vars.texi: vars.tin Makefile
 	chmod +x vars.texi.tmp
 	mv vars.texi.tmp vars.texi
 
-PROJECTS = hcrypto hdb hx509 gssapi krb5 ntlm wind 
+PROJECTS = base hdb hx509 gssapi krb5 ntlm wind 
 
-doxyout doxygen: hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
+PROJECTS += hcrypto
+
+doxyout doxygen: base.dxy hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
 	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
 	rm -rf $(srcdir)/doxyout ; \
 	mkdir $(srcdir)/doxyout ; \
 	for a in $(PROJECTS) ; do \
 		echo $$a ; \
 		doxygen $$a.dxy; \
-		(cd $(srcdir)/doxyout && find $$a/man -type f > $$a/manpages ) ; \
+		(cd $(srcdir)/doxyout && \
+		    find $$a/man -name '_*' -type f -print | \
+			perl -lne unlink && \
+		    find $$a/html -name 'dir_*.html' -type f -print | \
+			perl -lne unlink && \
+		 find $$a/man -type f > $$a/manpages ) ; \
 	done
 
 install-data-hook: install-doxygen-manpage
@@ -123,6 +136,7 @@ EXTRA_DIST = \
 	hcrypto.din \
 	header.html \
 	heimdal.css \
+	base.din \
 	hx509.din \
 	krb5.din \
 	ntlm.din \
@@ -131,10 +145,14 @@ EXTRA_DIST = \
 	layman.asc \
 	doxytmpl.dxy \
 	wind.din \
+	base.hhp \
+	heimdal.hhp \
+	hx509.hhp \
 	vars.tin
 
 CLEANFILES = \
 	hcrypto.dxy* \
+	base.dxy* \
 	hx509.dxy* \
 	hdb.dxy* \
 	gssapi.dxy* \

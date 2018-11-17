@@ -1,4 +1,4 @@
-/*	$NetBSD: kverify.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: kverify.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005, 2007 Kungliga Tekniska Högskolan
@@ -39,8 +39,8 @@ static int help_flag = 0;
 static int version_flag = 0;
 
 static struct getargs args[] = {
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag,    NULL, NULL }
 };
 
 static void

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.7 2012/09/05 19:31:04 christos Exp $
+# $NetBSD: Makefile.rules.inc,v 1.8 2017/01/28 21:31:43 christos Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -72,7 +72,7 @@ NORMALIZE_SRC=-e "s@${NETBSDSRCDIR}@/usr/src@g"
 
 .for x2c in ${ASN1_FILES.${src}}
 ${x2c:.x=.c}: ${x2c}
-	@${TOOL_SED} ${NORMALIZE_SRC} < ${x2c} > ${x2c}.r
+	@${TOOL_SED} ${NORMALIZE_SRC} < ${.ALLSRC} > ${x2c}.r
 	@cmp -s ${x2c}.r ${x2c:.x=.c} 2> /dev/null || cp ${x2c}.r ${x2c:.x=.c}
 	@rm -f ${x2c}.r
 .endfor

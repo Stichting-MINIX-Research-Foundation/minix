@@ -46,13 +46,32 @@ testfailed="echo test failed; cat messages.log; exit 1"
 ${have_db} || exit 77
 
 R=TEST.H5L.SE
+RH=TEST-HTTP.H5L.SE
 R2=TEST2.H5L.SE
-R3=TEST-HTTP.H5L.SE
+R3=TEST3.H5L.SE
+R4=TEST4.H5L.SE
+R5=SOME-REALM5.FR
+R6=SOME-REALM6.US
+R7=SOME-REALM7.UK
+
+H1=H1.$R
+H2=H2.$R
+H3=H3.$H2
+H4=H4.$H2
+
+r=`echo "$R" | tr '[A-Z]' '[a-z]'`
+h1=`echo "${H1}" | tr '[A-Z]' '[a-z]'`
+h2=`echo "${H2}" | tr '[A-Z]' '[a-z]'`
+h3=`echo "${H3}" | tr '[A-Z]' '[a-z]'`
+h4=`echo "${H4}" | tr '[A-Z]' '[a-z]'`
 
 port=@port@
+pwport=@pwport@
 
 kadmin="${kadmin} -l -r $R"
+kadmin5="${kadmin} -l -r $R5"
 kdc="${kdc} --addresses=localhost -P $port"
+kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 
 server=host/datan.test.h5l.se
 server2=host/computer.example.com
@@ -77,6 +96,7 @@ kgetcred="${kgetcred} -c $cache"
 kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 kimpersonate="${kimpersonate} -k ${keytab} --ccache=${ocache}"
+test_set_kvno0="${test_set_kvno0} -c $cache"
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -104,17 +124,91 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R3} || exit 1
 
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R4} || exit 1
+
+${kadmin5} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R5} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R6} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R7} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H1} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H2} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H3} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${H4} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${RH} || exit 1
+
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 
 ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${r}@${R} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R2} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R4} || exit 1
+${kadmin5} add -p foo --use-defaults foo@${R5} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H1} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h1}@${H1} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H2} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h2}@${H2} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H3} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h3}@${H3} || exit 1
+${kadmin} add -p foo --use-defaults foo@${H4} || exit 1
+${kadmin} add -p foo --use-defaults foo/host.${h4}@${H4} || exit 1
 ${kadmin} add -p bar --use-defaults bar@${R} || exit 1
 ${kadmin} add -p foo --use-defaults remove@${R} || exit 1
-${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
+${kadmin} add -p nop --use-defaults ${server}@${R} || exit 1
+${kadmin} cpw -p bla --keepold ${server}@${R} || exit 1
+${kadmin} cpw -p kaka --keepold ${server}@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults ${server}-des3@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults kt-des3@${R} || exit 1
+${kadmin} add -p kaka --use-defaults foo/des3-only@${R} || exit 1
+${kadmin} add -p kaka --use-defaults bar/des3-only@${R} || exit 1
+${kadmin} add -p kaka --use-defaults foo/aes-only@${R} || exit 1
 ${kadmin} add -p foo --use-defaults ${ps} || exit 1
 ${kadmin} modify --attributes=+trusted-for-delegation ${ps} || exit 1
 ${kadmin} modify --constrained-delegation=${server} ${ps} || exit 1
@@ -137,10 +231,46 @@ ${kadmin} modify --alias=${alias2}@${R} ${alias1}@${R}
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R2}@${R} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${R2} || exit 1
 
+${kadmin} add -p cross1 --use-defaults krbtgt/${R3}@${R2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R2}@${R3} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R4}@${R2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R2}@${R4} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R4}@${R3} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R3}@${R4} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R5}@${R} || exit 1
+${kadmin5} add -p cross2 --use-defaults krbtgt/${R}@${R5} || exit 1
+
+${kadmin5} add -p cross1 --use-defaults krbtgt/${R6}@${R5} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R5}@${R6} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${R7}@${R6} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R7} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H1}@${R} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${H1} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H2}@${R} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${H2} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H3}@${H2} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${H2}@${H3} || exit 1
+
+${kadmin} add -p cross1 --use-defaults krbtgt/${H3}@${H4} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${H4}@${H3} || exit 1
+
 ${kadmin} add -p foo --use-defaults pw-expire@${R} || exit 1
 ${kadmin} modify --pw-expiration-time=+1day  pw-expire@${R} || exit 1
 
-${kadmin} add -p foo --use-defaults foo@${R3} || exit 1
+${kadmin} add -p foo --use-defaults pw-expired@${R} || exit 1
+${kadmin} modify --pw-expiration-time=2012-06-12  pw-expired@${R} || exit 1
+
+${kadmin} add -p foo --use-defaults account-expired@${R} || exit 1
+${kadmin} modify --expiration-time=2012-06-12  account-expired@${R} || exit 1
+
+${kadmin} add -p foo --use-defaults foo@${RH} || exit 1
 
 echo "Check parser"
 ${kadmin} add -p foo --use-defaults -- -p || exit 1
@@ -149,14 +279,28 @@ ${kadmin} delete -- -p || exit 1
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 ${kadmin} check ${R2} || exit 1
+${kadmin} check ${R3} || exit 1
+${kadmin} check ${R4} || exit 1
+${kadmin5} check ${R5} || exit 1
+${kadmin} check ${R6} || exit 1
+${kadmin} check ${R7} || exit 1
+${kadmin} check ${H1} || exit 1
+${kadmin} check ${H2} || exit 1
+${kadmin} check ${H3} || exit 1
+${kadmin} check ${H4} || exit 1
 
 echo "Extracting enctypes"
 ${ktutil} -k ${keytab} list > tempfile || exit 1
 ${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
+    ${EGREP} -v "$server" |                 # we did cpw for this one
     awk '$1 !~ /1/  { exit 1 }' || exit 1
+${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
+    ${EGREP} "$server" | head -1 |
+    awk '$1 !~ /3/  { exit 1 }' || exit 1
+
 
 ${kadmin} get foo@${R} > tempfile || exit 1
-enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://'`
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g'`
 
 enctype_sans_aes=`echo $enctypes | sed 's/aes[^ ]*//g'`
 enctype_sans_des3=`echo $enctypes | sed 's/des3-cbc-sha1//g'`
@@ -167,26 +311,52 @@ for a in ${enctype_sans_des3} ; do
    ${ktutil} -k ${keytab} remove -p kt-des3@${R} -e $a
 done
 
-echo foo > ${objdir}/foopassword
-
-echo Starting kdc
-env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
+echo "checking globbing keys rules"
+${kadmin} get foo/des3-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
+if [ X"$enctypes" != Xdes3-cbc-sha1 ] ; then
+    echo "des3 only is not only des3: $enctypes"
     exit 1
 fi
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+${kadmin} get foo/aes-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
+if [ X"$enctypes" != Xaes256-cts-hmac-sha1-96 ] ; then
+    echo "aes only is not only aes: $enctypes"
+    exit 1
+fi
+
+
+echo foo > ${objdir}/foopassword
+echo notfoo > ${objdir}/notfoopassword
+
+echo Starting kdc ; > messages.log
+env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
+${kdc} --detach --testing ||
+    { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
+
+echo Starting kpasswdd; > messages.log
+env ${HEIM_MALLOC_DEBUG} ${kpasswdd} --detach ||
+    { echo "kpasswdd failed to start"; exit 1; }
+kpasswddpid=`getpid kpasswdd`
+
+
+trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1;" EXIT
 
 ec=0
 
+echo "Getting client initial tickets with wrong password"; > messages.log
+${kinit} --password-file=${objdir}/notfoopassword \
+        foo@${R} 2>kinit-log.tmp && \
+	{ ec=1 ; eval "${testfailed}"; }
+grep 'Password incorrect' kinit-log.tmp > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting client initial tickets"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
+echo "Doing krbtgt key rollover"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R}@${R} || exit 1
 echo "Getting tickets"; > messages.log
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "Listing tickets"; > messages.log
@@ -196,8 +366,72 @@ ${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 ${kdestroy}
 
 echo "Getting client initial tickets (http transport)"; > messages.log
-${kinit} --password-file=${objdir}/foopassword foo@${R3} || \
+${kinit} --password-file=${objdir}/foopassword foo@${RH} || \
 	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing capaths logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with capaths for $R -> $R2"
+${kgetcred} foo@${R2} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R3"
+${kgetcred} foo@${R3} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R4"
+${kgetcred} foo@${R4} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R5"
+${kgetcred} foo@${R5} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R6"
+${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R7"
+${kgetcred} foo@${R7} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing capaths logic (reverse order)"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with capaths for $R -> $R4"
+${kgetcred} foo@${R4} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R3"
+${kgetcred} foo@${R3} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R2"
+${kgetcred} foo@${R2} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R7"
+${kgetcred} foo@${R7} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R6"
+${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with capaths for $R -> $R5"
+${kgetcred} foo@${R5} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing hierarchical referral logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@${H3} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H1"
+${kgetcred} --hostbased --canonicalize foo host.${h1} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $R"
+${kgetcred} --hostbased --canonicalize foo host.${r} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H2"
+${kgetcred} --hostbased --canonicalize foo host.${h2} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Testing multi-hop [capaths] referral logic"
+${kinit} --password-file=${objdir}/foopassword \
+    -e ${aesenctype} -e ${aesenctype} \
+    foo@${H4} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting x-realm tickets with [capaths] referrals for $H4 -> $H1"
+${kgetcred} --hostbased --canonicalize foo/host.${h1}@${H4} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Testing forwardable/renewable flag copying in TGS-REQ"
@@ -248,6 +482,60 @@ for a in $enctypes; do
 		{ ec=1 ; eval "${testfailed}"; }
 	${kdestroy} --credential=${server2}@${R2}
 done
+${kdestroy}
+
+echo "Trying x-realm TGT with kvno 0 case";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Trying x-realm TGT with kvno 0 case with key rollover";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+echo "Rolling over cross realm keys"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kadmin} cpw -r --keepold krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kadmin} cpw -r --keepold krbtgt/${R}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+echo "Start tracing kdc, then hit return"
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Trying x-realm TGT with no kvno case";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} -n || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} -n || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Trying x-realm TGT with no kvno case with key rollover";
+${kinit} --password-file=${objdir}/foopassword foo@$R ||
+	{ ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} -n || { ec=1 ; eval "${testfailed}"; }
+echo "Getting cross realm tickets"; > messages.log
+${kgetcred} krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+echo "Rolling over cross realm keys"; > messages.log
+${kadmin} cpw -r --keepold krbtgt/${R}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kadmin} cpw -r --keepold krbtgt/${R2}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kadmin} cpw -r --keepold krbtgt/${R}@${R2} || { ec=1 ; eval "${testfailed}"; }
+${test_set_kvno0} -n || { ec=1 ; eval "${testfailed}"; }
+echo "Getting service ticket"; > messages.log
+echo "Start tracing kdc, then hit return"
+${kgetcred} ${server2}@${R2} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "try all permutations"; > messages.log
@@ -539,7 +827,7 @@ echo "testing removal of keytab"
 ${ktutil} -k ${keytab} destroy || { ec=1 ; eval "${testfailed}"; }
 test -f ${keytabfile} && { ec=1 ; eval "${testfailed}"; }
 
-echo "Getting client pw expire"; > messages.log
+echo "Checking client pw expire"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword \
         pw-expire@${R} 2>kinit-log.tmp|| \
 	{ ec=1 ; eval "${testfailed}"; }
@@ -552,8 +840,30 @@ ${EGREP} "^e type: 6" kinit-log.tmp > /dev/null  || \
 echo "   test_gic passes"
 ${kdestroy}
 
-echo "killing kdc (${kdcpid})"
+echo "Checking password expiration" ; > messages.log
+
+kinitpty=${objdir}/foopassword.rkpty
+cat > ${kinitpty} <<EOF
+expect Password
+password foo\n
+expect Password has expired
+expect New password
+password Foobar11\n
+expect password
+password Foobar11\n
+expect Success: Password changed
+EOF
+
+echo "Checking client pw expire"; > messages.log
+${rkpty} ${kinitpty} ${kinit} pw-expired@${R}|| \
+	{ ec=1 ; eval "${testfailed}"; }
+
+${kdestroy}
+
+
+echo "killing kdc (${kdcpid}) kpasswdd (${kpasswddpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
+sh ${leaks_kill} kpasswdd $kpasswddpid || exit 1
 
 trap "" EXIT
 

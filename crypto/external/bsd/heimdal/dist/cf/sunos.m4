@@ -8,7 +8,12 @@ case "$host" in
 *-*-solaris2.7)
 	sunos=57
 	;;
-*-*-solaris2.[[89]] | *-*-solaris2.1[[0-9]])
+*-*-solaris2.1[[1-9]])
+	AC_DEFINE([__EXTENSIONS__], [1],
+		  [Enable general extensions on Solaris.])
+	sunos=511
+	;;
+*-*-solaris2.[[89]] | *-*-solaris2.10)
 	sunos=58
 	;;
 *-*-solaris2*)

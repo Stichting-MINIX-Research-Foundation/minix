@@ -1,0 +1,277 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+  <?if $(var.Platform)=x64 ?>
+
+  <?define Win64=yes ?>
+
+  <?define ToolsBinDir=dirBin64 ?>
+  <?define GuidKinit=BAA5BD92-163E-4AA5-8C99-EA2100F3D9DE ?>
+  <?define GuidKdestroy=289C2C0D-F41D-4E46-9819-6B9B63F83418 ?>
+  <?define GuidKtutil=28B09087-4731-41F4-B734-C71E84EC31FC ?>
+  <?define GuidKdigest=D13DA4C0-B1BB-4C02-8ED2-5DFC7D16B19D ?>
+  <?define GuidKpasswd=20A984EC-5BCB-4B93-A3A9-7AACBDC625E9 ?>
+  <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
+  <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
+  <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
+  <?define GuidHeimtools=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
+
+  <?define GuidPackage={49114B84-F013-4473-B8FA-E77FAE565C4E} ?>
+  <?define GuidKerberos={0ECC969D-76EB-474F-9CC5-91AD22944520} ?>
+
+  <?else?>
+
+  <?define Win64=no ?>
+
+  <?define ToolsBinDir=dirBin32 ?>
+  <?define GuidKinit=038F19D7-F7C9-4B6A-8359-321CD1FAD347 ?>
+  <?define GuidKdestroy=07D96FBC-2251-4EBC-AA68-12C6C52F44E6 ?>
+  <?define GuidKtutil=CE082458-E2C5-4744-A423-88C23AD3C81C ?>
+  <?define GuidKdigest=3FFBFAB0-FB37-411C-AF4E-53BCC468D7D1 ?>
+  <?define GuidKpasswd=B66C04B5-EE1D-48C3-A25B-4DCAAA8F459B ?>
+  <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
+  <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
+  <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
+  <?define GuidHeimtools=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+
+  <?define GuidPackage={AF31DA8A-4D8C-4248-B685-3D60FE8CA3AE} ?>
+  <?define GuidKerberos={FC7C866C-4E6A-4C48-A7E2-151C7C86E375} ?>
+  <?endif?>
+
+  <Module Id="Heimdal" Language="0" Version="$(var.Version)">
+
+    <Package Id="$(var.GuidPackage)"
+	     InstallerVersion="200"
+	     Languages="1033" Manufacturer="Heimdal"
+	     SummaryCodepage="1252" AdminImage="no"
+	     Platform="$(var.Platform)" />
+
+    <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
+
+      <?ifdef Target32 ?>
+      <Directory Id='ProgramFilesFolder'>
+	<Directory Id='INSTALLDIR32' Name='Heimdal'>
+	  <Directory Id='dirBin32' Name='bin'>
+	  </Directory>
+	</Directory>
+      </Directory>
+      <?endif?>
+
+      <?ifdef Target64?>
+      <Directory Id='ProgramFiles64Folder'>
+	<Directory Id='INSTALLDIR64' Name='Heimdal'>
+	  <Directory Id='dirBin64' Name='bin'>
+	  </Directory>
+	</Directory>
+      </Directory>
+      <?endif?>
+
+    </Directory>
+
+    <?ifdef Target32?>
+    <DirectoryRef Id='dirBin32' DiskId='1'>
+      <Component Id='comp.SearchPath.32'
+		 Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='no'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	  <RegistryValue Name='InstallPath' Type='string'
+			 Value='[dirBin32]' KeyPath='yes' />
+	</RegistryKey>
+	<Environment Id='env.Path.32' Name='PATH' Action='set' Part='last'
+		     Separator=';' Value='[dirBin32]' System='yes' />
+      </Component>
+
+    </DirectoryRef>
+    <?endif?>
+
+    <?ifdef Target64?>
+    <DirectoryRef Id='dirBin64' DiskId='1'>
+      <Component Id='comp.SearchPath.64'
+		 Guid='2F189729-2253-47A1-AA68-06FE3A9697A7' Win64='yes'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	  <RegistryValue Name='InstallPath' Type='string'
+			 Value='[dirBin64]' KeyPath='yes' />
+	</RegistryKey>
+	<Environment Id='env.Path' Name='PATH' Action='set' Part='last'
+		     Separator=';' Value='[dirBin64]' System='yes' />
+      </Component>
+
+    </DirectoryRef>
+    <?endif?>
+
+    <DirectoryRef Id='$(var.ToolsBinDir)' FileSource='$(var.BinDir)'>
+
+      <Component Id='comp.kinit'
+		 Guid='$(var.GuidKinit)'
+		 Win64='$(var.Win64)'>
+	<File Name='kinit.exe' KeyPath='yes' />
+	<File Name='kinit.pdb' />
+      </Component>
+
+      <Component Id='comp.ktutil'
+		 Guid='$(var.GuidKtutil)'
+		 Win64='$(var.Win64)'>
+	<File Name='ktutil.exe' KeyPath='yes' />
+	<File Name='ktutil.pdb' />
+      </Component>
+
+      <Component Id='comp.kdestroy'
+		 Guid='$(var.GuidKdestroy)'
+		 Win64='$(var.Win64)'>
+	<File Name='kdestroy.exe' KeyPath='yes' />
+	<File Name='kdestroy.pdb' />
+      </Component>
+
+      <Component Id='comp.kdigest'
+		 Guid='$(var.GuidKdigest)'
+		 Win64='$(var.Win64)'>
+	<File Name='kdigest.exe' KeyPath='yes' />
+	<File Name='kdigest.pdb' />
+      </Component>
+
+      <Component Id='comp.kpasswd'
+		 Guid='$(var.GuidKpasswd)'
+		 Win64='$(var.Win64)'>
+	<File Name='kpasswd.exe' KeyPath='yes' />
+	<File Name='kpasswd.pdb' />
+      </Component>
+
+      <Component Id='comp.kvno'
+		 Guid='$(var.GuidKvno)'
+		 Win64='$(var.Win64)'>
+	<File Name='kvno.exe' KeyPath='yes' />
+	<File Name='kvno.pdb' />
+      </Component>
+
+      <Component Id='comp.kcpytkt'
+		 Guid='$(var.GuidKcpytkt)'
+		 Win64='$(var.Win64)'>
+	<File Name='kcpytkt.exe' KeyPath='yes' />
+	<File Name='kcpytkt.pdb' />
+      </Component>
+
+      <Component Id='comp.kdeltkt'
+		 Guid='$(var.GuidKdeltkt)'
+		 Win64='$(var.Win64)'>
+	<File Name='kdeltkt.exe' KeyPath='yes' />
+	<File Name='kdeltkt.pdb' />
+      </Component>
+
+      <Component Id='comp.heimtools'
+		 Guid='$(var.GuidHeimtools)'
+		 Win64='$(var.Win64)'>
+	<File Name='heimtools.exe' KeyPath='yes'>
+	  <CopyFile Id='klist.exe' DestinationName='klist.exe' DestinationProperty='$(var.ToolsBinDir)' />
+	  <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' DestinationProperty='$(var.ToolsBinDir)' />
+	</File>
+	<File Name='heimtools.pdb'>
+	  <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
+	  <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
+	</File>
+      </Component>
+
+      <Component Id='comp.Heimdal.chm'
+		 Guid='785F6668-EBDB-4F18-8BEF-F72ECECB43D6'>
+	<File Source='$(var.DocDir)\heimdal.chm' />
+      </Component>
+
+      <Component Id='comp.HX509.chm'
+		 Guid='CBB379D6-629D-4EB9-AC0D-0167651F14EF'>
+	<File Source='$(var.DocDir)\hx509.chm' />
+      </Component>
+
+    </DirectoryRef>
+
+    <DirectoryRef Id='TARGETDIR'>
+      <Directory Id='CommonAppDataFolder' Name='ProgramData'>
+	<Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
+
+	  <Component Id='comp.krb5.conf'
+		     Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66'
+		     Permanent='yes' NeverOverwrite='yes'>
+	    <File Name='krb5.conf' KeyPath='yes' Id='krb5_conf' />
+	    <Environment Id='KRB5_CONFIG_by_krb5.conf' Name='KRB5_CONFIG' Action='set' System='yes' Value='[#krb5_conf]' />
+	    <!-- Backwards compatibility -->
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
+	      <RegistryValue Name='config' Type='string' Value='[#krb5_conf]' />
+	    </RegistryKey>
+	    <Condition>Not LEGACYKRB5INI And Not LEGACYKRB5CONF And Not LEGACYKRB5REG32 And Not LEGACYKRB5REG64</Condition>
+	  </Component>
+
+	  <Component Id='comp.krb5.ini.move'
+		     Guid='316CB754-4332-4C02-95C1-4AC82590712D'>
+	    <CopyFile Id='copy_krb5.ini' Delete='yes'
+		      DestinationDirectory='dirCommonKerberos'
+		      DestinationName='krb5.conf' DestinationShortName='krb5.cnf'
+		      SourceProperty='LEGACYKRB5INI' />
+	    <Environment Id='KRB5_CONFIG_by_legacy_krb5.ini' Name='KRB5_CONFIG'
+			 Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
+	    <RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	      <RegistryValue Name='LegacyKrb5IniLocation' Type='string'
+			     Value='[LEGACYKRB5INI]' KeyPath='yes' />
+	    </RegistryKey>
+	    <!-- Backwards compatibility -->
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
+	      <RegistryValue Name='config' Type='string'
+			     Value='[dirCommonKerberos]krb5.conf' />
+	    </RegistryKey>
+	    <Condition>LEGACYKRB5INI</Condition>
+	  </Component>
+
+	  <Component Id='comp.krb5.conf.move'
+		     Guid='ADCE6801-0FD3-46E7-955A-FC9214CFE0AB'>
+	    <CopyFile Id='copy_krb5.conf' Delete='yes'
+		      DestinationDirectory='dirCommonKerberos'
+		      DestinationName='krb5.conf' DestinationShortName='krb5.cnf'
+		      SourceProperty='LEGACYKRB5CONF' />
+	    <Environment Id='KRB5_CONFIG_by_legacy_krb5.conf' Name='KRB5_CONFIG'
+			 Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
+	    <RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	      <RegistryValue Name='LegacyKrb5ConfLocation' Type='string'
+			     Value='[LEGACYKRB5CONF]' KeyPath='yes' />
+	    </RegistryKey>
+	    <!-- Backwards compatibility -->
+	    <RegistryKey Root='HKLM' Key='Software\MIT\Kerberos'>
+	      <RegistryValue Name='config' Type='string'
+			     Value='[dirCommonKerberos]krb5.conf' />
+	    </RegistryKey>
+	    <Condition>LEGACYKRB5CONF</Condition>
+	  </Component>
+
+	</Directory>
+      </Directory>
+      <Directory Id='WindowsFolder'>
+      </Directory>
+    </DirectoryRef>
+
+    <!-- Search for existing configuration files -->
+
+    <Property Id='LEGACYKRB5INI' >
+      <DirectorySearch Id='dirSearchKrb5Ini' Depth='1' Path='[WindowsFolder]'>
+	<FileSearch Name='krb5.ini' />
+      </DirectorySearch>
+    </Property>
+
+    <Property Id='LEGACYKRB5CONF' >
+      <DirectorySearch Id='dirSearchKrb5Conf' Depth='1' Path='[WindowsFolder]'>
+	<FileSearch Name='krb5.conf' />
+      </DirectorySearch>
+    </Property>
+
+    <Property Id='LEGACYKRB5REG32'>
+      <RegistrySearch Id='regSearchKrb5ConfUser' Key='Software\MIT\Kerberos' Name='config'
+		      Root='HKLM' Type='file' Win64='no'>
+	<FileSearch Name='krb5.ini' />
+      </RegistrySearch>
+    </Property>
+
+    <?if $(var.Platform)=x64 ?>
+    <Property Id='LEGACYKRB5REG64'>
+      <RegistrySearch Id='regSearchKrb5ConfMach' Key='Software\MIT\Kerberos' Name='config'
+		      Root='HKLM' Type='file' Win64='yes'>
+	<FileSearch Name='krb5.ini' />
+      </RegistrySearch>
+    </Property>
+    <?endif?>
+
+  </Module>
+</Wix>

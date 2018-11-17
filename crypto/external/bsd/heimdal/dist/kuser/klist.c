@@ -1,4 +1,4 @@
-/*	$NetBSD: klist.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: klist.c,v 1.4 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan
@@ -36,9 +36,8 @@
  */
 
 #include "kuser_locl.h"
-#include <krb5/rtbl.h>
 #include <krb5/parse_units.h>
-#include "kcc-commands.h"
+#include "heimtools-commands.h"
 
 static char*
 printable_time_internal(time_t t, int x)
@@ -132,12 +131,17 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 }
 
 static void
-print_cred_verbose(krb5_context context, krb5_creds *cred)
+print_cred_verbose(krb5_context context, krb5_creds *cred, int do_json)
 {
     size_t j;
     char *str;
     krb5_error_code ret;
     krb5_timestamp sec;
+
+    if (do_json) { /* XXX support more json formating later */
+	printf("{ \"verbose-supported\" : false }");
+	return;
+    }
 
     krb5_timeofday (context, &sec);
 
@@ -152,8 +156,8 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 	exit(1);
     printf(N_("Client: %s\n", ""), str);
     free (str);
-
-    {
+    
+    if (!krb5_is_config_principal(context, cred->client)) {
 	Ticket t;
 	size_t len;
 	char *s;
@@ -222,7 +226,7 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 }
 
 /*
- * Print all tickets in `ccache' on stdout, verbosily iff do_verbose.
+ * Print all tickets in `ccache' on stdout, verbosely if do_verbose.
  */
 
 static void
@@ -231,10 +235,11 @@ print_tickets (krb5_context context,
 	       krb5_principal principal,
 	       int do_verbose,
 	       int do_flags,
-	       int do_hidden)
+	       int do_hidden,
+	       int do_json)
 {
+    char *str, *name, *fullname;
     krb5_error_code ret;
-    char *str, *name;
     krb5_cc_cursor cursor;
     krb5_creds creds;
     krb5_deltat sec;
@@ -245,48 +250,52 @@ print_tickets (krb5_context context,
     if (ret)
 	krb5_err (context, 1, ret, "krb5_unparse_name");
 
-    printf ("%17s: %s:%s\n",
-	    N_("Credentials cache", ""),
-	    krb5_cc_get_type(context, ccache),
-	    krb5_cc_get_name(context, ccache));
-    printf ("%17s: %s\n", N_("Principal", ""), str);
+    ret = krb5_cc_get_full_name(context, ccache, &fullname);
+    if (ret)
+	krb5_err (context, 1, ret, "krb5_cc_get_full_name");
 
-    ret = krb5_cc_get_friendly_name(context, ccache, &name);
-    if (ret == 0) {
-	if (strcmp(name, str) != 0)
-	    printf ("%17s: %s\n", N_("Friendly name", ""), name);
-	free(name);
-    }
-    free (str);
-
-    if(do_verbose) {
-	printf ("%17s: %d\n", N_("Cache version", ""),
-		krb5_cc_get_version(context, ccache));
-    } else {
-        krb5_cc_set_flags(context, ccache, KRB5_TC_NOTICKET);
-    }
-
-    ret = krb5_cc_get_kdc_offset(context, ccache, &sec);
-
-    if (ret == 0 && do_verbose && sec != 0) {
-	char buf[BUFSIZ];
-	int val;
-	int sig;
-
-	val = sec;
-	sig = 1;
-	if (val < 0) {
-	    sig = -1;
-	    val = -val;
+    if (!do_json) {
+	printf ("%17s: %s\n", N_("Credentials cache", ""), fullname);
+	printf ("%17s: %s\n", N_("Principal", ""), str);
+	
+	ret = krb5_cc_get_friendly_name(context, ccache, &name);
+	if (ret == 0) {
+	    if (strcmp(name, str) != 0)
+		printf ("%17s: %s\n", N_("Friendly name", ""), name);
+	    free(name);
 	}
+	
+	if(do_verbose) {
+	    printf ("%17s: %d\n", N_("Cache version", ""),
+		    krb5_cc_get_version(context, ccache));
+	} else {
+	    krb5_cc_set_flags(context, ccache, KRB5_TC_NOTICKET);
+	}
+	
+	ret = krb5_cc_get_kdc_offset(context, ccache, &sec);
+	
+	if (ret == 0 && do_verbose && sec != 0) {
+	    char buf[BUFSIZ];
+	    int val;
+	    int sig;
+	    
+	    val = (int)sec;
+	    sig = 1;
+	    if (val < 0) {
+		sig = -1;
+		val = -val;
+	    }
+	    
+	    unparse_time (val, buf, sizeof(buf));
 
-	unparse_time (val, buf, sizeof(buf));
-
-	printf ("%17s: %s%s\n", N_("KDC time offset", ""),
-		sig == -1 ? "-" : "", buf);
+	    printf ("%17s: %s%s\n", N_("KDC time offset", ""),
+		    sig == -1 ? "-" : "", buf);
+	}
+	printf("\n");
+    } else {
+	printf ("{ \"cache\" : \"%s\", \"principal\" : \"%s\", ", fullname, str);
     }
-
-    printf("\n");
+    free(str);
 
     ret = krb5_cc_start_seq_get (context, ccache, &cursor);
     if (ret)
@@ -300,7 +309,13 @@ print_tickets (krb5_context context,
 	    rtbl_add_column(ct, COL_FLAGS, 0);
 	rtbl_add_column(ct, COL_PRINCIPAL, 0);
 	rtbl_set_separator(ct, "  ");
+	if (do_json) {
+	    rtbl_set_flags(ct, RTBL_JSON);
+	    printf("\"tickets\" : ");
+	}
     }
+    if (do_verbose && do_json)
+	printf("\"tickets\" : [");
     while ((ret = krb5_cc_next_cred (context,
 				     ccache,
 				     &cursor,
@@ -308,7 +323,7 @@ print_tickets (krb5_context context,
 	if (!do_hidden && krb5_is_config_principal(context, creds.server)) {
 	    ;
 	}else if(do_verbose){
-	    print_cred_verbose(context, &creds);
+	    print_cred_verbose(context, &creds, do_json);
 	}else{
 	    print_cred(context, &creds, ct, do_flags);
 	}
@@ -323,6 +338,11 @@ print_tickets (krb5_context context,
 	rtbl_format(ct, stdout);
 	rtbl_destroy(ct);
     }
+    if (do_json) {
+	if (do_verbose)
+	    printf("]");
+	printf("}");
+    }
 }
 
 /*
@@ -331,43 +351,21 @@ print_tickets (krb5_context context,
  */
 
 static int
-check_for_tgt (krb5_context context,
-	       krb5_ccache ccache,
-	       krb5_principal principal,
-	       time_t *expiration)
+check_expiration(krb5_context context,
+		 krb5_ccache ccache,
+		 time_t *expiration)
 {
     krb5_error_code ret;
-    krb5_creds pattern;
-    krb5_creds creds;
-    krb5_const_realm client_realm;
-    int expired;
+    time_t t;
 
-    krb5_cc_clear_mcred(&pattern);
-
-    client_realm = krb5_principal_get_realm(context, principal);
-
-    ret = krb5_make_principal (context, &pattern.server,
-			       client_realm, KRB5_TGS_NAME, client_realm, NULL);
-    if (ret)
-	krb5_err (context, 1, ret, "krb5_make_principal");
-    pattern.client = principal;
-
-    ret = krb5_cc_retrieve_cred (context, ccache, 0, &pattern, &creds);
-    krb5_free_principal (context, pattern.server);
-    if (ret) {
-	if (ret == KRB5_CC_END)
-	    return 1;
-	krb5_err (context, 1, ret, "krb5_cc_retrieve_cred");
-    }
-
-    expired = time(NULL) > creds.times.endtime;
+    ret = krb5_cc_get_lifetime(context, ccache, &t);
+    if (ret || t == 0)
+	return 1;
 
     if (expiration)
-	*expiration = creds.times.endtime;
+	*expiration = time(NULL) + t;
 
-    krb5_free_cred_contents (context, &creds);
-
-    return expired;
+    return 0;
 }
 
 /*
@@ -450,7 +448,8 @@ display_tokens(int do_verbose)
 static int
 display_v5_ccache (krb5_context context, krb5_ccache ccache,
 		   int do_test, int do_verbose,
-		   int do_flags, int do_hidden)
+		   int do_flags, int do_hidden,
+		   int do_json)
 {
     krb5_error_code ret;
     krb5_principal principal;
@@ -459,6 +458,10 @@ display_v5_ccache (krb5_context context, krb5_ccache ccache,
 
     ret = krb5_cc_get_principal (context, ccache, &principal);
     if (ret) {
+	if (do_json) {
+	    printf("{}");
+	    return 0;
+	}
 	if(ret == ENOENT) {
 	    if (!do_test)
 		krb5_warnx(context, N_("No ticket file: %s", ""),
@@ -468,10 +471,10 @@ display_v5_ccache (krb5_context context, krb5_ccache ccache,
 	    krb5_err (context, 1, ret, "krb5_cc_get_principal");
     }
     if (do_test)
-	exit_status = check_for_tgt (context, ccache, principal, NULL);
+	exit_status = check_expiration(context, ccache, NULL);
     else
 	print_tickets (context, ccache, principal, do_verbose,
-		       do_flags, do_hidden);
+		       do_flags, do_hidden, do_json);
 
     ret = krb5_cc_close (context, ccache);
     if (ret)
@@ -487,9 +490,9 @@ display_v5_ccache (krb5_context context, krb5_ccache ccache,
  */
 
 static int
-list_caches(krb5_context context)
+list_caches(krb5_context context, struct klist_options *opt)
 {
-    krb5_cc_cache_cursor cursor;
+    krb5_cccol_cursor cursor;
     const char *cdef_name;
     char *def_name;
     krb5_error_code ret;
@@ -501,51 +504,55 @@ list_caches(krb5_context context)
 	krb5_errx(context, 1, "krb5_cc_default_name");
     def_name = strdup(cdef_name);
 
-    ret = krb5_cc_cache_get_first (context, NULL, &cursor);
-    if (ret == KRB5_CC_NOSUPP)
+    ret = krb5_cccol_cursor_new(context, &cursor);
+    if (ret == KRB5_CC_NOSUPP) {
+        free(def_name);
 	return 0;
+    }
     else if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_cache_get_first");
 
     ct = rtbl_create();
+    rtbl_add_column(ct, COL_DEFCACHE, 0);
     rtbl_add_column(ct, COL_NAME, 0);
     rtbl_add_column(ct, COL_CACHENAME, 0);
     rtbl_add_column(ct, COL_EXPIRES, 0);
     rtbl_add_column(ct, COL_DEFCACHE, 0);
     rtbl_set_prefix(ct, "   ");
-    rtbl_set_column_prefix(ct, COL_NAME, "");
+    rtbl_set_column_prefix(ct, COL_DEFCACHE, "");
+    rtbl_set_column_prefix(ct, COL_NAME, " ");
+    if (opt->json_flag)
+	rtbl_set_flags(ct, RTBL_JSON);
 
-    while (krb5_cc_cache_next (context, cursor, &id) == 0) {
-	krb5_principal principal = NULL;
+    while (krb5_cccol_cursor_next(context, cursor, &id) == 0) {
 	int expired = 0;
 	char *name;
 	time_t t;
 
-	ret = krb5_cc_get_principal(context, id, &principal);
-	if (ret)
-	    continue;
-
-	expired = check_for_tgt (context, id, principal, &t);
+	expired = check_expiration(context, id, &t);
 
 	ret = krb5_cc_get_friendly_name(context, id, &name);
 	if (ret == 0) {
 	    const char *str;
 	    char *fname;
+
 	    rtbl_add_column_entry(ct, COL_NAME, name);
-	    rtbl_add_column_entry(ct, COL_CACHENAME,
-				  krb5_cc_get_name(context, id));
+	    free(name);
+
 	    if (expired)
 		str = N_(">>> Expired <<<", "");
 	    else
 		str = printable_time(t);
 	    rtbl_add_column_entry(ct, COL_EXPIRES, str);
-	    free(name);
 
 	    ret = krb5_cc_get_full_name(context, id, &fname);
 	    if (ret)
 		krb5_err (context, 1, ret, "krb5_cc_get_full_name");
 
-	    if (strcmp(fname, def_name) == 0)
+	    rtbl_add_column_entry(ct, COL_CACHENAME, fname);
+	    if (opt->json_flag)
+		;
+	    else if (strcmp(fname, def_name) == 0)
 		rtbl_add_column_entry(ct, COL_DEFCACHE, "*");
 	    else
 		rtbl_add_column_entry(ct, COL_DEFCACHE, "");
@@ -553,15 +560,16 @@ list_caches(krb5_context context)
 	    krb5_xfree(fname);
 	}
 	krb5_cc_close(context, id);
-
-	krb5_free_principal(context, principal);
     }
 
-    krb5_cc_cache_end_seq_get(context, cursor);
+    krb5_cccol_cursor_free(context, &cursor);
 
     free(def_name);
     rtbl_format(ct, stdout);
     rtbl_destroy(ct);
+
+    if (opt->json_flag)
+	printf("\n");
 
     return 0;
 }
@@ -584,8 +592,13 @@ klist(struct klist_options *opt, int argc, char **argv)
 	opt->test_flag ||
 	opt->s_flag;
 
+    if(opt->version_flag) {
+	print_version(NULL);
+	exit(0);
+    }
+
     if (opt->list_all_flag) {
-	exit_status = list_caches(kcc_context);
+	exit_status = list_caches(heimtools_context, opt);
 	return exit_status;
     }
 
@@ -594,33 +607,42 @@ klist(struct klist_options *opt, int argc, char **argv)
 
 	if (opt->all_content_flag) {
 	    krb5_cc_cache_cursor cursor;
+	    int first = 1;
 
-	    ret = krb5_cc_cache_get_first(kcc_context, NULL, &cursor);
+	    ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
 	    if (ret)
-		krb5_err(kcc_context, 1, ret, "krb5_cc_cache_get_first");
+		krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
 
+	    if (opt->json_flag)
+		printf("[");
+	    while (krb5_cc_cache_next(heimtools_context, cursor, &id) == 0) {
+		if (opt->json_flag && !first)
+		    printf(",");
 
-	    while (krb5_cc_cache_next(kcc_context, cursor, &id) == 0) {
-		exit_status |= display_v5_ccache(kcc_context, id, do_test,
+		exit_status |= display_v5_ccache(heimtools_context, id, do_test,
 						 do_verbose, opt->flags_flag,
-						 opt->hidden_flag);
-		printf("\n\n");
-	    }
-	    krb5_cc_cache_end_seq_get(kcc_context, cursor);
+						 opt->hidden_flag, opt->json_flag);
+		if (!opt->json_flag)
+		    printf("\n\n");
 
+		first = 0;
+	    }
+	    krb5_cc_cache_end_seq_get(heimtools_context, cursor);
+	    if (opt->json_flag)
+		printf("]");
 	} else {
 	    if(opt->cache_string) {
-		ret = krb5_cc_resolve(kcc_context, opt->cache_string, &id);
+		ret = krb5_cc_resolve(heimtools_context, opt->cache_string, &id);
 		if (ret)
-		    krb5_err(kcc_context, 1, ret, "%s", opt->cache_string);
+		    krb5_err(heimtools_context, 1, ret, "%s", opt->cache_string);
 	    } else {
-		ret = krb5_cc_default(kcc_context, &id);
+		ret = krb5_cc_default(heimtools_context, &id);
 		if (ret)
-		    krb5_err(kcc_context, 1, ret, "krb5_cc_resolve");
+		    krb5_err(heimtools_context, 1, ret, "krb5_cc_resolve");
 	    }
-	    exit_status = display_v5_ccache(kcc_context, id, do_test,
+	    exit_status = display_v5_ccache(heimtools_context, id, do_test,
 					    do_verbose, opt->flags_flag,
-					    opt->hidden_flag);
+					    opt->hidden_flag, opt->json_flag);
 	}
     }
 

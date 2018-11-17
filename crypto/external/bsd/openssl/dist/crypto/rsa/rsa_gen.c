@@ -69,6 +69,8 @@
 #include <openssl/rsa.h>
 #ifdef OPENSSL_FIPS
 # include <openssl/fips.h>
+extern int FIPS_rsa_x931_generate_key_ex(RSA *rsa, int bits, BIGNUM *e,
+                                         BN_GENCB *cb);
 #endif
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
@@ -94,7 +96,7 @@ int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
         return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
 #ifdef OPENSSL_FIPS
     if (FIPS_mode())
-        return FIPS_rsa_generate_key_ex(rsa, bits, e_value, cb);
+        return FIPS_rsa_x931_generate_key_ex(rsa, bits, e_value, cb);
 #endif
     return rsa_builtin_keygen(rsa, bits, e_value, cb);
 }
@@ -140,9 +142,13 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
     if (!rsa->iqmp && ((rsa->iqmp = BN_new()) == NULL))
         goto err;
 
-    BN_copy(rsa->e, e_value);
+    if (BN_copy(rsa->e, e_value) == NULL)
+        goto err;
 
     /* generate p and q */
+    BN_set_flags(rsa->p, BN_FLG_CONSTTIME);
+    BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
+    BN_set_flags(r2, BN_FLG_CONSTTIME);
     for (;;) {
         if (!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
             goto err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpw.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: cpw.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -37,6 +37,7 @@
 #include "kadmin-commands.h"
 
 struct cpw_entry_data {
+    int keepold;
     int random_key;
     int random_password;
     char *password;
@@ -44,14 +45,15 @@ struct cpw_entry_data {
 };
 
 static int
-set_random_key (krb5_principal principal)
+set_random_key (krb5_principal principal, int keepold)
 {
     krb5_error_code ret;
     int i;
     krb5_keyblock *keys;
     int num_keys;
 
-    ret = kadm5_randkey_principal(kadm_handle, principal, &keys, &num_keys);
+    ret = kadm5_randkey_principal_3(kadm_handle, principal, keepold, 0, NULL,
+				    &keys, &num_keys);
     if(ret)
 	return ret;
     for(i = 0; i < num_keys; i++)
@@ -61,13 +63,13 @@ set_random_key (krb5_principal principal)
 }
 
 static int
-set_random_password (krb5_principal principal)
+set_random_password (krb5_principal principal, int keepold)
 {
     krb5_error_code ret;
     char pw[128];
 
     random_password (pw, sizeof(pw));
-    ret = kadm5_chpass_principal(kadm_handle, principal, pw);
+    ret = kadm5_chpass_principal_3(kadm_handle, principal, keepold, 0, NULL, pw);
     if (ret == 0) {
 	char *princ_name;
 
@@ -81,18 +83,23 @@ set_random_password (krb5_principal principal)
 }
 
 static int
-set_password (krb5_principal principal, char *password)
+set_password (krb5_principal principal, char *password, int keepold)
 {
     krb5_error_code ret = 0;
     char pwbuf[128];
+    int aret;
 
     if(password == NULL) {
 	char *princ_name;
 	char *prompt;
 
-	krb5_unparse_name(context, principal, &princ_name);
-	asprintf(&prompt, "%s's Password: ", princ_name);
+	ret = krb5_unparse_name(context, principal, &princ_name);
+	if (ret)
+	    return ret;
+	aret = asprintf(&prompt, "%s's Password: ", princ_name);
 	free (princ_name);
+	if (aret == -1)
+	    return ENOMEM;
 	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt, 1);
 	free (prompt);
 	if(ret){
@@ -101,18 +108,19 @@ set_password (krb5_principal principal, char *password)
 	password = pwbuf;
     }
     if(ret == 0)
-	ret = kadm5_chpass_principal(kadm_handle, principal, password);
+	ret = kadm5_chpass_principal_3(kadm_handle, principal, keepold, 0, NULL,
+				       password);
     memset(pwbuf, 0, sizeof(pwbuf));
     return ret;
 }
 
 static int
-set_key_data (krb5_principal principal, krb5_key_data *key_data)
+set_key_data (krb5_principal principal, krb5_key_data *key_data, int keepold)
 {
     krb5_error_code ret;
 
-    ret = kadm5_chpass_principal_with_key (kadm_handle, principal,
-					   3, key_data);
+    ret = kadm5_chpass_principal_with_key_3(kadm_handle, principal, keepold,
+					    3, key_data);
     return ret;
 }
 
@@ -122,13 +130,13 @@ do_cpw_entry(krb5_principal principal, void *data)
     struct cpw_entry_data *e = data;
 
     if (e->random_key)
-	return set_random_key (principal);
+	return set_random_key (principal, e->keepold);
     else if (e->random_password)
-	return set_random_password (principal);
+	return set_random_password (principal, e->keepold);
     else if (e->key_data)
-	return set_key_data (principal, e->key_data);
+	return set_key_data (principal, e->key_data, e->keepold);
     else
-	return set_password (principal, e->password);
+	return set_password (principal, e->password, e->keepold);
 }
 
 int
@@ -140,6 +148,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
     int num;
     krb5_key_data key_data[3];
 
+    data.keepold = opt->keepold_flag;
     data.random_key = opt->random_key_flag;
     data.random_password = opt->random_password_flag;
     data.password = opt->password_string;

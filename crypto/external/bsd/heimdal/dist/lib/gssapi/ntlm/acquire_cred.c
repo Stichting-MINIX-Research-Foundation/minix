@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: acquire_cred.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -35,18 +35,18 @@
 
 #include "ntlm.h"
 
-OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
-           (OM_uint32 * min_stat,
-            const gss_name_t desired_name,
-            OM_uint32 time_req,
-            const gss_OID_set desired_mechs,
-            gss_cred_usage_t cred_usage,
-            gss_cred_id_t * output_cred_handle,
-            gss_OID_set * actual_mechs,
-            OM_uint32 * time_rec
-           )
+OM_uint32 GSSAPI_CALLCONV
+_gss_ntlm_acquire_cred(OM_uint32            *min_stat,
+                       gss_const_name_t     desired_name,
+                       OM_uint32            time_req,
+                       const gss_OID_set    desired_mechs,
+                       gss_cred_usage_t     cred_usage,
+                       gss_cred_id_t        *output_cred_handle,
+                       gss_OID_set          *actual_mechs,
+                       OM_uint32            *time_rec)
 {
     ntlm_name name = (ntlm_name) desired_name;
+    const char *domain = NULL;
     OM_uint32 maj_stat;
     ntlm_ctx ctx;
 
@@ -57,17 +57,14 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
     if (time_rec)
 	*time_rec = GSS_C_INDEFINITE;
 
-    if (desired_name == NULL)
-	return GSS_S_NO_CRED;
-
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_ACCEPT) {
 
 	maj_stat = _gss_ntlm_allocate_ctx(min_stat, &ctx);
 	if (maj_stat != GSS_S_COMPLETE)
 	    return maj_stat;
 
-	maj_stat = (*ctx->server->nsi_probe)(min_stat, ctx->ictx,
-					     name->domain);
+        domain = name != NULL ? name->domain : NULL;
+	maj_stat = (*ctx->server->nsi_probe)(min_stat, ctx->ictx, domain);
 	{
 	    gss_ctx_id_t context = (gss_ctx_id_t)ctx;
 	    OM_uint32 junk;
@@ -81,7 +78,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_ntlm_acquire_cred
 
 	*min_stat = _gss_ntlm_get_user_cred(name, &cred);
 	if (*min_stat)
-	    return GSS_S_FAILURE;
+	    return GSS_S_NO_CRED;
 	cred->usage = cred_usage;
 
 	*output_cred_handle = (gss_cred_id_t)cred;

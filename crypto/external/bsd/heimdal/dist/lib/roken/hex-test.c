@@ -1,4 +1,4 @@
-/*	$NetBSD: hex-test.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: hex-test.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001, 2005 Kungliga Tekniska Högskolan
@@ -57,7 +57,7 @@ main(int argc, char **argv)
 	{ "abcdef", 6, "616263646566" },
 	{ "abcdefg", 7, "61626364656667" },
 	{ "=", 1, "3D" },
-	{ NULL }
+	{ NULL, 0, NULL }
     };
     for(t = tests; t->data; t++) {
 	char *str;

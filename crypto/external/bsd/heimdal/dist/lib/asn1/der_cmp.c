@@ -1,4 +1,4 @@
-/*	$NetBSD: der_cmp.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: der_cmp.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@ int
 der_heim_oid_cmp(const heim_oid *p, const heim_oid *q)
 {
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     return memcmp(p->components,
 		  q->components,
 		  p->length * sizeof(*p->components));
@@ -50,7 +50,7 @@ der_heim_octet_string_cmp(const heim_octet_string *p,
 			  const heim_octet_string *q)
 {
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     return memcmp(p->data, q->data, p->length);
 }
 
@@ -72,12 +72,13 @@ int
 der_heim_bit_string_cmp(const heim_bit_string *p,
 			const heim_bit_string *q)
 {
-    int i, r1, r2;
+    int r1, r2;
+    size_t i;
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     i = memcmp(p->data, q->data, p->length / 8);
     if (i)
-	return i;
+	return (int)i;
     if ((p->length % 8) == 0)
 	return 0;
     i = (p->length / 8);
@@ -96,7 +97,7 @@ der_heim_integer_cmp(const heim_integer *p,
     if (p->negative != q->negative)
 	return q->negative - p->negative;
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     return memcmp(p->data, q->data, p->length);
 }
 
@@ -104,7 +105,7 @@ int
 der_heim_bmp_string_cmp(const heim_bmp_string *p, const heim_bmp_string *q)
 {
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     return memcmp(p->data, q->data, q->length * sizeof(q->data[0]));
 }
 
@@ -113,6 +114,6 @@ der_heim_universal_string_cmp(const heim_universal_string *p,
 			      const heim_universal_string *q)
 {
     if (p->length != q->length)
-	return p->length - q->length;
+	return (int)(p->length - q->length);
     return memcmp(p->data, q->data, q->length * sizeof(q->data[0]));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: get_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -33,9 +33,11 @@
  * SUCH DAMAGE.
  */
 
+#include <krb5_locl.h>
 #include "kadm5_locl.h"
+#include <assert.h>
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: get_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 static kadm5_ret_t
 add_tl_data(kadm5_principal_ent_t ent, int16_t type,
@@ -63,8 +65,56 @@ add_tl_data(kadm5_principal_ent_t ent, int16_t type,
     return 0;
 }
 
-KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
-_krb5_put_int(void *buffer, unsigned long value, size_t size); /* XXX */
+static
+krb5_error_code
+copy_keyset_to_kadm5(kadm5_server_context *context, krb5_kvno kvno,
+		     size_t n_keys, Key *keys, krb5_salt *salt,
+		     kadm5_principal_ent_t out)
+{
+    size_t i;
+    Key *key;
+    krb5_key_data *kd;
+    krb5_data *sp;
+    krb5_error_code ret = 0;
+
+    for (i = 0; i < n_keys; i++) {
+	key = &keys[i];
+	kd = &out->key_data[out->n_key_data];
+	kd->key_data_ver = 2;
+	kd->key_data_kvno = kvno;
+	kd->key_data_type[0] = key->key.keytype;
+	if(key->salt)
+	    kd->key_data_type[1] = key->salt->type;
+	else
+	    kd->key_data_type[1] = KRB5_PADATA_PW_SALT;
+	/* setup key */
+	kd->key_data_length[0] = key->key.keyvalue.length;
+	kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
+	if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
+	    ret = ENOMEM;
+	    break;
+	}
+	memcpy(kd->key_data_contents[0], key->key.keyvalue.data,
+	       kd->key_data_length[0]);
+	/* setup salt */
+	if(key->salt)
+	    sp = &key->salt->salt;
+	else
+	    sp = &salt->saltvalue;
+	kd->key_data_length[1] = sp->length;
+	kd->key_data_contents[1] = malloc(kd->key_data_length[1]);
+	if(kd->key_data_length[1] != 0
+	   && kd->key_data_contents[1] == NULL) {
+	    memset(kd->key_data_contents[0], 0, kd->key_data_length[0]);
+	    ret = ENOMEM;
+	    break;
+	}
+	memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
+	out->n_key_data++;
+    }
+
+    return ret;
+}
 
 kadm5_ret_t
 kadm5_s_get_principal(void *server_handle,
@@ -75,18 +125,41 @@ kadm5_s_get_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
     hdb_entry_ex ent;
+    int hdb_is_rw = 1;
 
     memset(&ent, 0, sizeof(ent));
-    ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
-    if(ret)
-	return ret;
+    memset(out, 0, sizeof(*out));
+
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+        if (ret == EPERM || ret == EACCES) {
+            ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+            hdb_is_rw = 0;
+        }
+	if (ret)
+	    return ret;
+    }
+
+    /*
+     * Attempt to recover the log.  This will generally fail on slaves,
+     * and we can't tell if we're on a slave here.
+     *
+     * Perhaps we could set a flag in the kadm5_server_context to
+     * indicate whether a read has been done without recovering the log,
+     * in which case we could fail any subsequent writes.
+     */
+    if (hdb_is_rw && kadm5_log_init_nb(context) == 0)
+        (void) kadm5_log_end(context);
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
-				      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    context->db->hdb_close(context->context, context->db);
+				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
+				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
     if(ret)
 	return _kadm5_error_code(ret);
 
-    memset(out, 0, sizeof(*out));
     if(mask & KADM5_PRINCIPAL)
 	ret  = krb5_copy_principal(context->context, ent.entry.principal,
 				   &out->principal);
@@ -106,6 +179,7 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.entry.flags.proxiable ? 0 : KRB5_KDB_DISALLOW_PROXIABLE;
 	out->attributes |= ent.entry.flags.invalid ? KRB5_KDB_DISALLOW_ALL_TIX : 0;
 	out->attributes |= ent.entry.flags.require_preauth ? KRB5_KDB_REQUIRES_PRE_AUTH : 0;
+	out->attributes |= ent.entry.flags.require_pwchange ? KRB5_KDB_REQUIRES_PWCHANGE : 0;
 	out->attributes |= ent.entry.flags.server ? 0 : KRB5_KDB_DISALLOW_SVR;
 	out->attributes |= ent.entry.flags.change_pw ? KRB5_KDB_PWCHANGE_SERVICE : 0;
 	out->attributes |= ent.entry.flags.ok_as_delegate ? KRB5_KDB_OK_AS_DELEGATE : 0;
@@ -162,8 +236,21 @@ kadm5_s_get_principal(void *server_handle,
     if(mask & KADM5_FAIL_AUTH_COUNT)
 	;
 #endif
-    if(mask & KADM5_POLICY)
-	out->policy = NULL;
+    if(mask & KADM5_POLICY) {
+	HDB_extension *ext;
+
+	ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_policy);
+	if (ext == NULL) {
+	    out->policy = strdup("default");
+	    /* It's OK if we retun NULL instead of "default" */
+	} else {
+	    out->policy = strdup(ext->data.u.policy);
+	    if (out->policy == NULL) {
+		ret = ENOMEM;
+		goto out;
+	    }
+	}
+    }
     if(mask & KADM5_MAX_RLIFE) {
 	if(ent.entry.max_renew)
 	    out->max_renewable_life = *ent.entry.max_renew;
@@ -172,57 +259,45 @@ kadm5_s_get_principal(void *server_handle,
     }
     if(mask & KADM5_KEY_DATA){
 	size_t i;
-	Key *key;
-	krb5_key_data *kd;
+	size_t n_keys = ent.entry.keys.len;
 	krb5_salt salt;
-	krb5_data *sp;
+	HDB_extension *ext;
+	HDB_Ext_KeySet *hist_keys = NULL;
+
+	/* Don't return stale keys to kadm5 clients */
+	ret = hdb_prune_keys(context->context, &ent.entry);
+	if (ret)
+	    goto out;
+	ext = hdb_find_extension(&ent.entry, choice_HDB_extension_data_hist_keys);
+	if (ext != NULL)
+	    hist_keys = &ext->data.u.hist_keys;
+
 	krb5_get_pw_salt(context->context, ent.entry.principal, &salt);
-	out->key_data = malloc(ent.entry.keys.len * sizeof(*out->key_data));
-	if (out->key_data == NULL && ent.entry.keys.len != 0) {
+	for (i = 0; hist_keys != NULL && i < hist_keys->len; i++)
+	    n_keys += hist_keys->val[i].keys.len;
+	out->key_data = malloc(n_keys * sizeof(*out->key_data));
+	if (out->key_data == NULL && n_keys != 0) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	for(i = 0; i < ent.entry.keys.len; i++){
-	    key = &ent.entry.keys.val[i];
-	    kd = &out->key_data[i];
-	    kd->key_data_ver = 2;
-	    kd->key_data_kvno = ent.entry.kvno;
-	    kd->key_data_type[0] = key->key.keytype;
-	    if(key->salt)
-		kd->key_data_type[1] = key->salt->type;
-	    else
-		kd->key_data_type[1] = KRB5_PADATA_PW_SALT;
-	    /* setup key */
-	    kd->key_data_length[0] = key->key.keyvalue.length;
-	    kd->key_data_contents[0] = malloc(kd->key_data_length[0]);
-	    if(kd->key_data_contents[0] == NULL && kd->key_data_length[0] != 0){
-		ret = ENOMEM;
-		break;
-	    }
-	    memcpy(kd->key_data_contents[0], key->key.keyvalue.data,
-		   kd->key_data_length[0]);
-	    /* setup salt */
-	    if(key->salt)
-		sp = &key->salt->salt;
-	    else
-		sp = &salt.saltvalue;
-	    kd->key_data_length[1] = sp->length;
-	    kd->key_data_contents[1] = malloc(kd->key_data_length[1]);
-	    if(kd->key_data_length[1] != 0
-	       && kd->key_data_contents[1] == NULL) {
-		memset(kd->key_data_contents[0], 0, kd->key_data_length[0]);
-		ret = ENOMEM;
-		break;
-	    }
-	    memcpy(kd->key_data_contents[1], sp->data, kd->key_data_length[1]);
-	    out->n_key_data = i + 1;
+	out->n_key_data = 0;
+	ret = copy_keyset_to_kadm5(context, ent.entry.kvno, ent.entry.keys.len,
+				   ent.entry.keys.val, &salt, out);
+	if (ret)
+	    goto out;
+	for (i = 0; hist_keys != NULL && i < hist_keys->len; i++) {
+	    ret = copy_keyset_to_kadm5(context, hist_keys->val[i].kvno,
+				       hist_keys->val[i].keys.len,
+				       hist_keys->val[i].keys.val,
+				       &salt, out);
+	    if (ret)
+		goto out;
 	}
 	krb5_free_salt(context->context, salt);
+	assert( out->n_key_data == n_keys );
     }
-    if(ret){
-	kadm5_free_principal_ent(context, out);
+    if (ret)
 	goto out;
-    }
     if(mask & KADM5_TL_DATA) {
 	time_t last_pw_expire;
 	const HDB_Ext_PKINIT_acl *acl;
@@ -234,15 +309,13 @@ kadm5_s_get_principal(void *server_handle,
 	    _krb5_put_int(buf, last_pw_expire, sizeof(buf));
 	    ret = add_tl_data(out, KRB5_TL_LAST_PWD_CHANGE, buf, sizeof(buf));
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
 	/*
 	 * If the client was allowed to get key data, let it have the
 	 * password too.
 	 */
-	if(mask & KADM5_KEY_DATA) {
+	if (mask & KADM5_KEY_DATA) {
 	    heim_utf8_string pw;
 
 	    ret = hdb_entry_get_password(context->context,
@@ -261,24 +334,18 @@ kadm5_s_get_principal(void *server_handle,
 
 	    ASN1_MALLOC_ENCODE(HDB_Ext_PKINIT_acl, buf.data, buf.length,
 				acl, &len, ret);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	    if (len != buf.length)
 		krb5_abortx(context->context,
 			    "internal ASN.1 encoder error");
 	    ret = add_tl_data(out, KRB5_TL_PKINIT_ACL, buf.data, buf.length);
 	    free(buf.data);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
 
 	ret = hdb_entry_get_aliases(&ent.entry, &aliases);
 	if (ret == 0 && aliases) {
@@ -287,27 +354,23 @@ kadm5_s_get_principal(void *server_handle,
 
 	    ASN1_MALLOC_ENCODE(HDB_Ext_Aliases, buf.data, buf.length,
 			       aliases, &len, ret);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	    if (len != buf.length)
 		krb5_abortx(context->context,
 			    "internal ASN.1 encoder error");
 	    ret = add_tl_data(out, KRB5_TL_ALIASES, buf.data, buf.length);
 	    free(buf.data);
-	    if (ret) {
-		kadm5_free_principal_ent(context, out);
+	    if (ret)
 		goto out;
-	    }
 	}
-	if(ret){
-	    kadm5_free_principal_ent(context, out);
+	if (ret)
 	    goto out;
-	}
-
     }
-out:
+
+ out:
+    if (ret)
+        kadm5_free_principal_ent(context, out);
     hdb_free_entry(context->context, &ent);
 
     return _kadm5_error_code(ret);

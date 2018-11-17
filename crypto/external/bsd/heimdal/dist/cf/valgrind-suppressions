@@ -1,4 +1,3 @@
-# Id
 {
    linux db init brokenness
    Memcheck:Param
@@ -81,4 +80,89 @@
    obj:/lib/ld-2.5.so
    obj:/lib/ld-2.5.so
    obj:/lib/ld-2.5.so
+}
+{
+   glibc sed leak 1
+   Memcheck:Leak
+   fun:calloc
+   obj:/bin/sed
+   obj:/bin/sed
+   obj:/bin/sed
+   obj:/bin/sed
+   obj:/bin/sed
+   fun:(below main)
+}
+{
+   Heimdal one-time init leak 1
+   Memcheck:Leak
+   ...
+   fun:heim_base_once_f
+   ...
+}
+{
+   Heimdal one-time init leak 2
+   Memcheck:Leak
+   fun:pthread_once
+   ...
+}
+{
+   Heimdal one-time init leak 3
+   Memcheck:Leak
+   fun:calloc
+   fun:_heim_alloc_object
+   fun:heim_dict_create
+   fun:_krb5_load_plugins
+   fun:init_context_once
+   fun:once_callback_caller
+   fun:pthread_once
+   fun:heim_base_once_f
+   fun:krb5_init_context
+   fun:main
+}
+{
+   Heimdal one-time init leak 4
+   Memcheck:Leak
+   fun:calloc
+   fun:heim_dict_create
+   fun:_krb5_load_plugins
+   fun:init_context_once
+   fun:once_callback_caller
+   fun:pthread_once
+   fun:heim_base_once_f
+   fun:krb5_init_context
+   fun:main
+}
+{
+   Heimdal ipropd-master leak 1
+   Memcheck:Leak
+   ...
+   fun:krb5_kt_resolve
+   fun:main
+   obj:*ipropd-master
+}
+{
+   Heimdal ipropd-master leak 2
+   Memcheck:Leak
+   ...
+   fun:kadm5_init_with_skey_ctx
+   fun:main
+   obj:*ipropd-master
+}
+{
+   Heimdal ipropd-slave leak 1
+   Memcheck:Leak
+   ...
+   fun:krb5_auth_con_init
+   ...
+   fun:krb5_sendauth
+   fun:main
+   obj:*ipropd-slave
+}
+{
+   Heimdal ipropd-slave leak 2
+   Memcheck:Leak
+   ...
+   fun:kadm5_init_with_password_ctx
+   fun:main
+   obj:*ipropd-slave
 }

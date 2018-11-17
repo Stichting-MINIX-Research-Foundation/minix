@@ -1,4 +1,4 @@
-/*	$NetBSD: get_for_creds.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: get_for_creds.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -51,8 +51,7 @@ add_addrs(krb5_context context,
 
     tmp = realloc(addr->val, (addr->len + n) * sizeof(*addr->val));
     if (tmp == NULL && (addr->len + n) != 0) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto fail;
     }
     addr->val = tmp;
@@ -268,8 +267,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
     cred.msg_type = krb_cred;
     ALLOC_SEQ(&cred.tickets, 1);
     if (cred.tickets.val == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out2;
     }
     ret = decode_Ticket(out_creds->ticket.data,
@@ -281,8 +279,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
     memset (&enc_krb_cred_part, 0, sizeof(enc_krb_cred_part));
     ALLOC_SEQ(&enc_krb_cred_part.ticket_info, 1);
     if (enc_krb_cred_part.ticket_info.val == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out4;
     }
 
@@ -294,15 +291,13 @@ krb5_get_forwarded_creds (krb5_context	    context,
 
 	ALLOC(enc_krb_cred_part.timestamp, 1);
 	if (enc_krb_cred_part.timestamp == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out4;
 	}
 	*enc_krb_cred_part.timestamp = sec;
 	ALLOC(enc_krb_cred_part.usec, 1);
 	if (enc_krb_cred_part.usec == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out4;
 	}
 	*enc_krb_cred_part.usec      = usec;
@@ -345,9 +340,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	} else {
 	    ALLOC(enc_krb_cred_part.r_address, 1);
 	    if (enc_krb_cred_part.r_address == NULL) {
-		ret = ENOMEM;
-		krb5_set_error_message(context, ret,
-				       N_("malloc: out of memory", ""));
+		ret = krb5_enomem(context);
 		goto out4;
 	    }
 
@@ -409,7 +402,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
      */
 
     if (auth_context->flags & KRB5_AUTH_CONTEXT_CLEAR_FORWARDED_CRED) {
-	cred.enc_part.etype = ENCTYPE_NULL;
+	cred.enc_part.etype = KRB5_ENCTYPE_NULL;
 	cred.enc_part.kvno = NULL;
 	cred.enc_part.cipher.data = buf;
 	cred.enc_part.cipher.length = buf_size;

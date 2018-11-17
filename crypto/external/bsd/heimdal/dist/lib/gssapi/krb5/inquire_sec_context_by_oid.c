@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -151,7 +151,6 @@ static OM_uint32 inquire_sec_context_get_subkey
     }
 
     ret = krb5_store_keyblock(sp, *key);
-    krb5_free_keyblock (context, key);
     if (ret)
 	goto out;
 
@@ -171,6 +170,7 @@ static OM_uint32 inquire_sec_context_get_subkey
     }
 
 out:
+    krb5_free_keyblock(context, key);
     krb5_data_free(&data);
     if (sp)
 	krb5_storage_free(sp);
@@ -335,7 +335,8 @@ export_lucid_sec_context_v1(OM_uint32 *minor_status,
     if (ret) goto out;
     ret = krb5_store_int32(sp, (context_handle->more_flags & LOCAL) ? 1 : 0);
     if (ret) goto out;
-    ret = krb5_store_int32(sp, context_handle->lifetime);
+    /* XXX need krb5_store_int64() */
+    ret = krb5_store_int32(sp, context_handle->endtime);
     if (ret) goto out;
     krb5_auth_con_getlocalseqnumber (context,
 				     context_handle->auth_context,
@@ -531,7 +532,7 @@ out:
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
            (OM_uint32 *minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_OID desired_object,
             gss_buffer_set_t *data_set)
 {

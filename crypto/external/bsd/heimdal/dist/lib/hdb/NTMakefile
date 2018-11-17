@@ -37,7 +37,7 @@ gen_files_hdb = $(OBJ)\asn1_hdb_asn1.x
 
 $(gen_files_hdb) $(OBJ)\hdb_asn1.hx $(OBJ)\hdb_asn1-priv.hx: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --sequence=HDB-Ext-Keyset --sequence=Keys --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
+	$(BINDIR)\asn1_compile.exe --sequence=HDB-Ext-KeySet --sequence=Keys --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
 
 $(gen_files_hdb:.x=.c): $$(@R).x
@@ -73,6 +73,7 @@ dist_libhdb_la_SOURCES =			\
 	hdb-sqlite.c				\
 	hdb-keytab.c				\
 	hdb-mitdb.c				\
+	hdb-mdb.c				\
 	hdb_locl.h				\
 	keys.c					\
 	keytab.c				\
@@ -127,9 +128,9 @@ RES=$(OBJ)\libhdb-version.res
 
 $(LIBHDB): $(BINDIR)\libhdb.dll
 
-$(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBHEIMDAL) $(LIBSQLITE) $(LIBCOMERR) $(LIBROKEN) $(RES)
+$(BINDIR)\libhdb.dll: $(libhdb_OBJs) $(ldap_lib) $(LIBHEIMBASE) $(LIBHEIMDAL) $(LIBSQLITE) $(LIBCOMERR) $(LIBROKEN) $(RES)
 	$(DLLGUILINK) -def:libhdb-exports.def -implib:$(LIBHDB)
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 clean::
 	-$(RM) $(BINDIR)\libhdb.*
@@ -149,7 +150,7 @@ clean::
 
 test:: test-binaries test-run
 
-test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe
+test-binaries: $(OBJ)\test_dbinfo.exe $(OBJ)\test_hdbkeys.exe $(OBJ)\test_hdbplugin.exe
 
 $(OBJ)\test_dbinfo.exe: $(OBJ)\test_dbinfo.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
@@ -159,9 +160,15 @@ $(OBJ)\test_hdbkeys.exe: $(OBJ)\test_hdbkeys.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBRO
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
+$(OBJ)\test_hdbplugin.exe: $(OBJ)\test_hdbplugin.obj $(LIBHDB) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
+	$(EXECONLINK)
+	$(EXEPREP_NODIST)
+
 test-run:
 	cd $(OBJ)
-	test_dbinfo.exe
+	-test_dbinfo.exe
+	-test_hdbkeys.exe
+	-test_hdbplugin.exe
 	cd $(SRCDIR)
 
 !ifdef OPENLDAP_INC

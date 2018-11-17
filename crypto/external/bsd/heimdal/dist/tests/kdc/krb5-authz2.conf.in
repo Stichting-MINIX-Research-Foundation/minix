@@ -1,0 +1,27 @@
+[libdefaults]
+	default_realm = TEST.H5L.SE TEST2.H5L.SE TEST3.H5L.SE
+	no-addresses = TRUE
+	k5login_authoritative = TRUE
+	k5login_directory = @srcdir@/k5login
+	kuserok = SYSTEM-K5LOGIN
+	kuserok = SIMPLE
+
+[appdefaults]
+
+[realms]
+	TEST.H5L.SE = {
+	    auth_to_local_names = {
+		foo/mapped1 = foo
+		foo/mapped2 = bar
+		mapped1 = foo
+		mapped2 = bar
+	    }
+	    auth_to_local = DB:@srcdir@/an2ln-db.txt DEFAULT
+	}
+
+[hdb]
+	db-dir = @objdir@
+
+[logging]
+	default = 0-/FILE:@objdir@/messages.log
+

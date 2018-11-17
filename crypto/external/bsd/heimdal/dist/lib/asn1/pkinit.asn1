@@ -17,6 +17,8 @@ id-pkrkeydata  OBJECT IDENTIFIER  ::= { id-pkinit 3 }
 id-pkekuoid    OBJECT IDENTIFIER  ::= { id-pkinit 4 }
 id-pkkdcekuoid OBJECT IDENTIFIER  ::= { id-pkinit 5 }
 
+id-apple-system-id OBJECT IDENTIFIER ::= { 1 2 840 113635 100 4 4 }
+
 id-pkinit-kdf OBJECT IDENTIFIER           ::= { id-pkinit 6 }
 id-pkinit-kdf-ah-sha1 OBJECT IDENTIFIER   ::= { id-pkinit-kdf 1 }
 id-pkinit-kdf-ah-sha256 OBJECT IDENTIFIER ::= { id-pkinit-kdf 2 }

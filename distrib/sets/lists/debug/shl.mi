@@ -73,7 +73,7 @@
 ./usr/libdata/debug/usr/lib/libcrypto.so.8.4.debug		comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug		comp-crypto-debug	debug,compatfile,crypto,crypto_rc5
+./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdes.so.8.2.debug			comp-crypto-debug	debug,compatfile,crypto

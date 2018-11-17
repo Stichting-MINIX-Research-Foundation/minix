@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc.h,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: kdc.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
@@ -59,6 +59,8 @@ typedef struct krb5_kdc_configuration {
     struct HDB **db;
     int num_db;
 
+    int num_kdc_processes;
+
     krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
 
     krb5_boolean tgt_use_strongest_session_key;
@@ -69,6 +71,7 @@ typedef struct krb5_kdc_configuration {
     krb5_boolean check_ticket_addresses;
     krb5_boolean allow_null_ticket_addresses;
     krb5_boolean allow_anonymous;
+    krb5_boolean strict_nametypes;
     enum krb5_kdc_trpolicy trpolicy;
 
     krb5_boolean enable_pkinit;

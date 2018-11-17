@@ -1,4 +1,4 @@
-/*	$NetBSD: kstash.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: kstash.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -66,8 +66,9 @@ int num_args = sizeof(args) / sizeof(args[0]);
 int
 main(int argc, char **argv)
 {
-    char buf[1024];
+    char buf[1024+1];
     krb5_error_code ret;
+    int aret;
 
     krb5_enctype enctype;
 
@@ -86,8 +87,11 @@ main(int argc, char **argv)
 	krb5_errx(context, 1, "random-key and master-key-fd "
 		  "is mutual exclusive");
 
-    if (keyfile == NULL)
-	asprintf(&keyfile, "%s/m-key", hdb_db_dir(context));
+    if (keyfile == NULL) {
+	aret = asprintf(&keyfile, "%s/m-key", hdb_db_dir(context));
+	if (aret == -1)
+	    krb5_errx(context, 1, "out of memory");
+    }
 
     ret = krb5_string_to_enctype(context, enctype_str, &enctype);
     if(ret)
@@ -115,7 +119,7 @@ main(int argc, char **argv)
 	} else {
 	    if(master_key_fd != -1) {
 		ssize_t n;
-		n = read(master_key_fd, buf, sizeof(buf));
+		n = read(master_key_fd, buf, sizeof(buf)-1);
 		if(n <= 0)
 		    krb5_err(context, 1, errno, "failed to read passphrase");
 		buf[n] = '\0';
@@ -134,9 +138,20 @@ main(int argc, char **argv)
     }
 
     {
-	char *new, *old;
-	asprintf(&old, "%s.old", keyfile);
-	asprintf(&new, "%s.new", keyfile);
+	char *new = NULL, *old = NULL;
+
+	aret = asprintf(&old, "%s.old", keyfile);
+	if (aret == -1) {
+	    old = NULL;
+	    ret = ENOMEM;
+	    goto out;
+	}
+	aret = asprintf(&new, "%s.new", keyfile);
+	if (aret == -1) {
+	    new = NULL;
+	    ret = ENOMEM;
+	    goto out;
+	}
 	if(unlink(new) < 0 && errno != ENOENT) {
 	    ret = errno;
 	    goto out;

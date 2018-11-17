@@ -1,4 +1,4 @@
-#	$NetBSD: idea.inc,v 1.3 2012/07/12 18:44:49 christos Exp $
+#	$NetBSD: idea.inc,v 1.4 2017/05/21 14:24:05 riastradh Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,8 +9,6 @@
 
 
 IDEA_SRCS = i_cfb64.c i_ofb64.c i_ecb.c
-# IDEA is a patented algorithm; abort().
-# see ../libcrypto_idea
 SRCS+=${IDEA_SRCS} i_cbc.c i_skey.c
 
 .for cryptosrc in ${IDEA_SRCS}

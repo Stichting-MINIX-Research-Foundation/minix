@@ -4,4 +4,5 @@
 @c
 
 @set dbdir @dbdir@
+@set dbtype @dbtype@
 @set PACKAGE_VERSION @PACKAGE_VERSION@

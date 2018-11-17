@@ -41,7 +41,7 @@ RELDIR=packages\windows\assembly
 # ..to derive the public key token.
 #
 !ifndef CODESIGN_PKT
-!  error CODESIGN_PKT should be set to the public key token for codesigning certificate
+!  error CODESIGN_PKT should be set to the public key token for codesigning certificate.  (See Windows\README).
 !endif
 
 prep:: mk-asm-dirs
@@ -49,7 +49,7 @@ prep:: mk-asm-dirs
 # ----------------------------------------------------------------------
 # Heimdal.Kerberos Assembly
 
-ASMKRBDIR=$(ASMDIR)\Heimdal.Kerberos
+ASMKRBDIR=$(ASMDIR)\$(ASMKRBNAME)
 ASMKRBVER=$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(VER_PRODUCT_AUX).$(VER_PRODUCT_PATCH)
 ASMKRBVER_OLD_BEGIN=$(VER_OLD_BEGIN_MAJOR).$(VER_OLD_BEGIN_MINOR).$(VER_OLD_BEGIN_AUX).$(VER_OLD_BEGIN_PATCH)
 ASMKRBVER_OLD_END=$(VER_OLD_END_MAJOR).$(VER_OLD_END_MINOR).$(VER_OLD_END_AUX).$(VER_OLD_END_PATCH)
@@ -60,16 +60,31 @@ ASMKRBBINS=\
 	$(ASMKRBDIR)\com_err.dll	\
 	$(ASMKRBDIR)\heimntlm.dll	\
 	$(ASMKRBDIR)\gssapi.dll		\
+	$(ASMKRBDIR)\libhdb.dll		\
+	$(ASMKRBDIR)\libkadm5srv.dll	\
 	$(ASMKRBDIR)\heimdal.pdb	\
 	$(ASMKRBDIR)\com_err.pdb	\
 	$(ASMKRBDIR)\heimntlm.pdb	\
-	$(ASMKRBDIR)\gssapi.pdb
+	$(ASMKRBDIR)\gssapi.pdb		\
+	$(ASMKRBDIR)\libhdb.pdb		\
+	$(ASMKRBDIR)\libkadm5srv.pdb
+
+!if ("$(CPU)" == "i386")
+ARCH=32
+!elseif ("$(CPU)" == "x86")
+ARCH=32
+!else
+ARCH=64
+!endif
 
 $(ASMKRBDIR)\$(ASMKRBMAN).nohash: Heimdal.Kerberos.manifest.in
 	$(SED)  -e "s,[@]name[@],$(ASMKRBNAME),g" \
+		-e "s,[@]krbname[@],$(ASMKRBNAME),g" \
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]version[@],$(ASMKRBVER),g" \
-		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
+		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" \
+		-e "s,[@]arch[@],$(ARCH),g" \
+		< $** > $@
 
 $(ASMKRBDIR)\$(ASMKRBMAN) $(ASMKRBDIR)\$(ASMKRBMAN).cdf: \
 		$(ASMKRBDIR)\$(ASMKRBMAN).nohash $(ASMKRBBINS)
@@ -81,8 +96,7 @@ $(ASMKRBDIR)\$(ASMKRBNAME).cat: $(ASMKRBDIR)\$(ASMKRBMAN).cdf
 	cd $(ASMKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
-#	$(RM) $(ASMKRBMAN).cdf
-#	$(RM) $(ASMKRBMAN).nohash
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 asm-krb: \
@@ -96,8 +110,13 @@ all:: asm-krb
 clean::
 	-$(RM) $(ASMKRBDIR)\*.*
 
+!ifdef APPVEYOR
+test::
+	true
+!else
 test::
 	$(MT) -manifest $(ASMKRBDIR)\$(ASMKRBMAN) -validate_manifest
+!endif
 
 {$(BINDIR)}.dll{$(ASMKRBDIR)}.dll:
 	$(CP) $< $@
@@ -120,13 +139,18 @@ $(APPMANIFEST): Heimdal.Application.manifest.in
 		-e "s,[@]cpu[@],$(MCPU),g" \
 		-e "s,[@]pkt[@],$(CODESIGN_PKT),g" < $** > $@
 
+!ifdef APPVEYOR
+test::
+	true
+!else
 test::
 	$(MT) -manifest $(APPMANIFEST) -validate_manifest
+!endif
 
 # ----------------------------------------------------------------------
 # Publisher configuration files
 
-POLKRB=policy.$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).Heimdal.Kerberos
+POLKRB=policy.$(VER_PRODUCT_MAJOR).$(VER_PRODUCT_MINOR).$(ASMKRBNAME)
 POLKRBDIR=$(ASMDIR)\$(POLKRB)
 POLKRBFILE=$(POLKRBDIR)\$(ASMKRBVER).pol
 POLKRBCAT=$(POLKRBDIR)\$(ASMKRBVER).cat
@@ -147,6 +171,7 @@ $(POLKRBCAT): $(POLKRBFILE).cdf
 	cd $(POLKRBDIR)
 	$(MAKECAT) $**
 	$(_CODESIGN)
+	$(_CODESIGN_SHA256)
 	cd $(SRCDIR)
 
 all:: $(POLKRBFILE) $(POLKRBCAT)

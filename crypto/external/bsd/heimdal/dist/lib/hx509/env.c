@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.1.1.1 2011/04/13 18:15:10 elric Exp $	*/
+/*	$NetBSD: env.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2008 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "hx_locl.h"
 
 /**
- * @page page_env Hx509 enviroment functions
+ * @page page_env Hx509 environment functions
  *
  * See the library functions here: @ref hx509_env
  */
@@ -45,7 +45,7 @@
  * Add a new key/value pair to the hx509_env.
  *
  * @param context A hx509 context.
- * @param env enviroment to add the enviroment variable too.
+ * @param env environment to add the environment variable too.
  * @param key key to add
  * @param value value to add
  *
@@ -96,7 +96,7 @@ hx509_env_add(hx509_context context, hx509_env *env,
  * Add a new key/binding pair to the hx509_env.
  *
  * @param context A hx509 context.
- * @param env enviroment to add the enviroment variable too.
+ * @param env environment to add the environment variable too.
  * @param key key to add
  * @param list binding list to add
  *
@@ -143,7 +143,7 @@ hx509_env_add_binding(hx509_context context, hx509_env *env,
  * Search the hx509_env for a length based key.
  *
  * @param context A hx509 context.
- * @param env enviroment to add the enviroment variable too.
+ * @param env environment to add the environment variable too.
  * @param key key to search for.
  * @param len length of key.
  *
@@ -169,7 +169,7 @@ hx509_env_lfind(hx509_context context, hx509_env env,
  * Search the hx509_env for a key.
  *
  * @param context A hx509 context.
- * @param env enviroment to add the enviroment variable too.
+ * @param env environment to add the environment variable too.
  * @param key key to search for.
  *
  * @return the value if the key is found, NULL otherwise.
@@ -192,7 +192,7 @@ hx509_env_find(hx509_context context, hx509_env env, const char *key)
  * Search the hx509_env for a binding.
  *
  * @param context A hx509 context.
- * @param env enviroment to add the enviroment variable too.
+ * @param env environment to add the environment variable too.
  * @param key key to search for.
  *
  * @return the binding if the key is found, NULL if not found.
@@ -231,9 +231,9 @@ env_free(hx509_env b)
 }
 
 /**
- * Free an hx509_env enviroment context.
+ * Free an hx509_env environment context.
  *
- * @param env the enviroment to free.
+ * @param env the environment to free.
  *
  * @ingroup hx509_env
  */

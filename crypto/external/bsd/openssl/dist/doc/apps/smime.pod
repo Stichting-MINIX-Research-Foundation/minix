@@ -53,6 +53,9 @@ The meaning of the other options varies according to the operation type.
 encrypt mail for the given recipient certificates. Input file is the message
 to be encrypted. The output file is the encrypted mail in MIME format.
 
+Note that no revocation check is done for the recipient cert, so if that
+key has been compromised, others may be able to decrypt the text.
+
 =item B<-decrypt>
 
 decrypt mail using the supplied certificate and private key. Expects an
@@ -442,6 +445,6 @@ structures may cause parsing errors.
 The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0
 
-The -no_alt_chains options was first added to OpenSSL 1.0.1n and 1.0.2b.
+The -no_alt_chains options was first added to OpenSSL 1.0.2b.
 
 =cut

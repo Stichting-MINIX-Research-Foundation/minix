@@ -14,7 +14,7 @@ catinstall="${INSTALL_CATPAGES-yes}"
 
 for f in "$@"; do
         echo $f
-	base=`echo "$f" | sed 's/\.[^.]*$//'`
+	base=`echo "$f" | sed 's~\.[^.]*$~~; s~.*/~~'`
 	section=`echo "$f" | sed 's/^[^.]*\.//'`
 	mandir="$manbase/man$section"
 	catdir="$manbase/cat$section"

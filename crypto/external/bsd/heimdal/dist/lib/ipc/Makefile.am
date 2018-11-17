@@ -33,9 +33,10 @@ ts_LDADD = libheim-ipcs.la $(LIB_roken)
 ts_http_LDADD = $(ts_LDADD)
 tc_LDADD = libheim-ipcc.la $(LIB_roken)
 
-if have_gcd
 
 EXTRA_DIST = heim_ipc.defs heim_ipc_async.defs heim_ipc_reply.defs
+
+if have_gcd
 
 heim_ipc.h heim_ipcUser.c heim_ipcServer.c heim_ipcServer.h: heim_ipc.defs
 	mig -header heim_ipc.h -user heim_ipcUser.c -sheader heim_ipcServer.h -server heim_ipcServer.c -I$(srcdir) $(srcdir)/heim_ipc.defs

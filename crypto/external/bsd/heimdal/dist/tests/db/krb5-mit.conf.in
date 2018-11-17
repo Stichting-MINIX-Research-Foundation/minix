@@ -7,8 +7,12 @@
 			realm = EXAMPLE.ORG
 			dbname = mit-db:@srcdir@/mit-db
 			mkey_file = @srcdir@/mit-db-master-stash
+                        log_file = @objdir@/current.log
 		}
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	default = 0-/FILE:@objdir@/messages.log

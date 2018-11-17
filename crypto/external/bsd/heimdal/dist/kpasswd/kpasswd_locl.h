@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswd_locl.h,v 1.1.1.2 2011/04/14 14:08:18 elric Exp $	*/
+/*	$NetBSD: kpasswd_locl.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -41,6 +41,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <krb5/roken.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,7 +100,6 @@
 #include <libutil.h>
 #endif
 #include <err.h>
-#include <krb5/roken.h>
 #include <krb5/getarg.h>
 #include <krb5/krb5.h>
 #include "crypto-headers.h" /* for des_read_pw_string */

@@ -2,16 +2,26 @@ EXPORTS
 ;!	kadm5_ad_init_with_password
 ;!	kadm5_ad_init_with_password_ctx
 	kadm5_add_passwd_quality_verifier
+	kadm5_all_keys_are_bogus
 	kadm5_check_password_quality
 	kadm5_chpass_principal
+	kadm5_chpass_principal_3
 	kadm5_chpass_principal_with_key
+	kadm5_chpass_principal_with_key_3
+        kadm5_create_policy
 	kadm5_create_principal
+	kadm5_create_principal_3
+        kadm5_decrypt_key
+        kadm5_delete_policy
 	kadm5_delete_principal
 	kadm5_destroy
 	kadm5_flush
 	kadm5_free_key_data
 	kadm5_free_name_list
+        kadm5_free_policy_ent
 	kadm5_free_principal_ent
+        kadm5_get_policies
+        kadm5_get_policy
 	kadm5_get_principal
 	kadm5_get_principals
 	kadm5_get_privs
@@ -21,18 +31,26 @@ EXPORTS
 	kadm5_init_with_password_ctx
 	kadm5_init_with_skey
 	kadm5_init_with_skey_ctx
+        kadm5_lock
+        kadm5_modify_policy
 	kadm5_modify_principal
 	kadm5_randkey_principal
+	kadm5_randkey_principal_3
 	kadm5_rename_principal
 	kadm5_ret_key_data
 	kadm5_ret_principal_ent
 	kadm5_ret_principal_ent_mask
 	kadm5_ret_tl_data
+        kadm5_setkey_principal
+        kadm5_setkey_principal_3
 	kadm5_setup_passwd_quality_check
+	kadm5_some_keys_are_bogus
 	kadm5_store_key_data
 	kadm5_store_principal_ent
 	kadm5_store_principal_ent_mask
+        kadm5_store_principal_ent_nokeys
 	kadm5_store_tl_data
+        kadm5_unlock
 	kadm5_s_init_with_password_ctx
 	kadm5_s_init_with_password
 	kadm5_s_init_with_skey_ctx
@@ -41,6 +59,7 @@ EXPORTS
 	kadm5_s_init_with_creds
 	kadm5_s_chpass_principal_cond
 	kadm5_log_set_version
+	kadm5_log_signal_master
 ;!	kadm5_log_signal_socket
 	kadm5_log_signal_socket_info    ;!
 	kadm5_log_previous
@@ -48,10 +67,14 @@ EXPORTS
 	kadm5_log_foreach
 	kadm5_log_get_version_fd
 	kadm5_log_get_version
+	kadm5_log_recover
 	kadm5_log_replay
 	kadm5_log_end
 	kadm5_log_reinit
 	kadm5_log_init
+	kadm5_log_init_nb
+	kadm5_log_init_nolock
+	kadm5_log_init_sharedlock
 	kadm5_log_nop
 	kadm5_log_truncate
 	kadm5_log_modify

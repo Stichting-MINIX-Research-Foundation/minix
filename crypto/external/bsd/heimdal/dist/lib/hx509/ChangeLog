@@ -2430,7 +2430,7 @@
 	* ks_p11.c: Implement rsa_private_decrypt and add stubs for public
 	ditto.
 
-	* ks_p11.c: Less printf, less memory leaks.
+	* ks_p11.c: Less __printf__, less memory leaks.
 
 	* ks_p11.c: Implement signing using pkcs11.
 	

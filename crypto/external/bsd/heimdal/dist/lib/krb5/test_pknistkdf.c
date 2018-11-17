@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pknistkdf.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: test_pknistkdf.c,v 1.4 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -246,6 +246,14 @@ test_dh2key(krb5_context context, int i, struct testcase *c)
     ret = krb5_parse_name(context, c->server, &server);
     if (ret)
 	krb5_err(context, 1, ret, "parse_name: %s", c->server);
+    /*
+     * Making krb5_build_principal*() set a reasonable default principal
+     * name type broke the test vectors here.  Rather than regenerate
+     * the vectors, and to prove that this was the issue, we coerce the
+     * name types back to their original.
+     */
+    krb5_principal_set_type(context, client, KRB5_NT_PRINCIPAL);
+    krb5_principal_set_type(context, server, KRB5_NT_PRINCIPAL);
 
     if (verbose_flag) {
 	char *str;

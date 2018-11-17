@@ -1,4 +1,4 @@
-/*	$NetBSD: test_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: test_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -44,6 +44,7 @@
 
 static char *type_string;
 static char *mech_string;
+static char *mechs_string;
 static char *ret_mech_string;
 static char *client_name;
 static char *client_password;
@@ -52,6 +53,7 @@ static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
 static int wrapunwrap_flag = 0;
 static int iov_flag = 0;
+static int aead_flag = 0;
 static int getverifymic_flag = 0;
 static int deleg_flag = 0;
 static int policy_deleg_flag = 0;
@@ -92,17 +94,49 @@ init_o2n(void)
 static gss_OID
 string_to_oid(const char *name)
 {
-    int i;
+    size_t i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (strcasecmp(name, o2n[i].name) == 0)
 	    return o2n[i].oid;
     errx(1, "name '%s' not unknown", name);
 }
 
+static void
+string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
+               gss_OID_desc *oidarray, size_t oidarray_len,
+               char *names)
+{
+    char *name;
+    char *s;
+
+    if (names[0] == '\0') {
+        *oidsetp = GSS_C_NO_OID_SET;
+        return;
+    }
+
+    oidset->elements = &oidarray[0];
+    if (strcasecmp(names, "all") == 0) {
+        if (sizeof(o2n)/sizeof(o2n[0]) > oidarray_len)
+            errx(1, "internal error: oidarray must be enlarged");
+        for (oidset->count = 0; oidset->count < oidarray_len; oidset->count++)
+            oidset->elements[oidset->count] = *o2n[oidset->count].oid;
+    } else {
+        for (oidset->count = 0, name = strtok_r(names, ", ", &s);
+             name != NULL;
+             oidset->count++, name = strtok_r(NULL, ", ", &s)) {
+            if (oidset->count >= oidarray_len)
+                errx(1, "too many mech names given");
+            oidset->elements[oidset->count] = *string_to_oid(name);
+        }
+        oidset->count = oidset->count;
+    }
+    *oidsetp = oidset;
+}
+
 static const char *
 oid_to_string(const gss_OID oid)
 {
-    int i;
+    size_t i;
     for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
 	if (gss_oid_equal(oid, o2n[i].oid))
 	    return o2n[i].name;
@@ -413,8 +447,63 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     if (conf_state2 != conf_state)
 	errx(1, "conf state wrong for iov: %x", flags);
 
+    gss_release_iov_buffer(&min_stat, iov, iov_len);
 
     free(token.data);
+}
+
+static void
+wrapunwrap_aead(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
+{
+    gss_buffer_desc token, assoc, message = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc output;
+    OM_uint32 min_stat, maj_stat;
+    gss_qop_t qop_state;
+    int conf_state, conf_state2;
+    char assoc_data[9] = "ABCheader";
+    char token_data[16] = "0123456789abcdef";
+
+    if (flags & USE_SIGN_ONLY) {
+	assoc.value = assoc_data;
+	assoc.length = 9;
+    } else {
+	assoc.value = NULL;
+	assoc.length = 0;
+    }
+
+    token.value = token_data;
+    token.length = 16;
+
+    maj_stat = gss_wrap_aead(&min_stat, cctx, dce_style_flag || flags & USE_CONF,
+			     GSS_C_QOP_DEFAULT, &assoc, &token,
+			     &conf_state, &message);
+    if (maj_stat != GSS_S_COMPLETE)
+	errx(1, "gss_wrap_aead failed");
+
+    if ((flags & (USE_SIGN_ONLY|FORCE_IOV)) == 0) {
+	maj_stat = gss_unwrap(&min_stat, sctx, &message,
+			      &output, &conf_state2, &qop_state);
+
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_unwrap from gss_wrap_aead failed: %s",
+		 gssapi_err(maj_stat, min_stat, mechoid));
+    } else {
+	maj_stat = gss_unwrap_aead(&min_stat, sctx, &message, &assoc,
+				   &output, &conf_state2, &qop_state);
+	if (maj_stat != GSS_S_COMPLETE)
+	    errx(1, "gss_unwrap_aead failed: %x %s", flags,
+		 gssapi_err(maj_stat, min_stat, mechoid));
+    }
+
+    if (output.length != token.length)
+	errx(1, "plaintext length wrong for aead");
+    else if (memcmp(output.value, token.value, token.length) != 0)
+	errx(1, "plaintext wrong for aead");
+    if (conf_state2 != conf_state)
+	errx(1, "conf state wrong for aead: %x", flags);
+
+    gss_release_buffer(&min_stat, &message);
+    gss_release_buffer(&min_stat, &output);
 }
 
 static void
@@ -463,7 +552,8 @@ empty_release(void)
 
 static struct getargs args[] = {
     {"name-type",0,	arg_string, &type_string,  "type of name", NULL },
-    {"mech-type",0,	arg_string, &mech_string,  "type of mech", NULL },
+    {"mech-type",0,	arg_string, &mech_string,  "mech type (name)", NULL },
+    {"mech-types",0,	arg_string, &mechs_string, "mech types (names)", NULL },
     {"ret-mech-type",0,	arg_string, &ret_mech_string,
      "type of return mech", NULL },
     {"dns-canonicalize",0,arg_negative_flag, &dns_canon_flag,
@@ -475,6 +565,7 @@ static struct getargs args[] = {
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
     {"iov", 0, 		arg_flag,	&iov_flag, "wrap/unwrap iov", NULL },
+    {"aead", 0, 	arg_flag,	&aead_flag, "wrap/unwrap aead", NULL },
     {"getverifymic",0,	arg_flag,	&getverifymic_flag,
      "get and verify mic", NULL },
     {"delegate",0,	arg_flag,	&deleg_flag, "delegate credential", NULL },
@@ -503,7 +594,7 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     OM_uint32 min_stat, maj_stat;
     gss_ctx_id_t cctx, sctx;
     void *ctx;
@@ -511,6 +602,9 @@ main(int argc, char **argv)
     gss_cred_id_t client_cred = GSS_C_NO_CREDENTIAL, deleg_cred = GSS_C_NO_CREDENTIAL;
     gss_name_t cname = GSS_C_NO_NAME;
     gss_buffer_desc credential_data = GSS_C_EMPTY_BUFFER;
+    gss_OID_desc oids[4];
+    gss_OID_set_desc mechoid_descs;
+    gss_OID_set mechoids = GSS_C_NO_OID_SET;
 
     setprogname(argv[0]);
 
@@ -521,7 +615,7 @@ main(int argc, char **argv)
 
     cctx = sctx = GSS_C_NO_CONTEXT;
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
@@ -532,8 +626,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 1)
 	usage(1);
@@ -548,12 +642,43 @@ main(int argc, char **argv)
     else if (strcmp(type_string, "krb5-principal-name") == 0)
 	nameoid = GSS_KRB5_NT_PRINCIPAL_NAME;
     else
-	errx(1, "%s not suppported", type_string);
+	errx(1, "%s not supported", type_string);
 
     if (mech_string == NULL)
 	mechoid = GSS_KRB5_MECHANISM;
     else
 	mechoid = string_to_oid(mech_string);
+
+    if (mechs_string == NULL) {
+        /*
+         * We ought to be able to use the OID set of the one mechanism
+         * OID given.  But there's some breakage that conspires to make
+         * that fail though it should succeed:
+         *
+         *  - the NTLM gss_acquire_cred() refuses to work with
+         *    desired_name == GSS_C_NO_NAME
+         *  - gss_acquire_cred() with desired_mechs == GSS_C_NO_OID_SET
+         *    does work here because we happen to have Kerberos
+         *    credentials in check-ntlm, and the subsequent
+         *    gss_init_sec_context() call finds no cred element for NTLM
+         *    but plows on anyways, surprisingly enough, and then the
+         *    NTLM gss_init_sec_context() just works.
+         *
+         * In summary, there's some breakage in gss_init_sec_context()
+         * and some breakage in NTLM that conspires against us here.
+         *
+         * We work around this in check-ntlm and check-spnego by adding
+         * --client-name=user1@${R} to the invocations of this test
+         * program that require it.
+         */
+        oids[0] = *mechoid;
+        mechoid_descs.elements = &oids[0];
+        mechoid_descs.count = 1;
+        mechoids = &mechoid_descs;
+    } else {
+        string_to_oids(&mechoids, &mechoid_descs,
+                       oids, sizeof(oids)/sizeof(oids[0]), mechs_string);
+    }
 
     if (gsskrb5_acceptor_identity) {
 	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
@@ -584,19 +709,24 @@ main(int argc, char **argv)
 						  cname,
 						  &credential_data,
 						  GSS_C_INDEFINITE,
-						  GSS_C_NO_OID_SET,
+						  mechoids,
 						  GSS_C_INITIATE,
 						  &client_cred,
 						  NULL,
 						  NULL);
-	if (GSS_ERROR(maj_stat))
+	if (GSS_ERROR(maj_stat)) {
+            if (mechoids != GSS_C_NO_OID_SET && mechoids->count == 1)
+                mechoid = &mechoids->elements[0];
+            else
+                mechoid = GSS_C_NO_OID;
 	    errx(1, "gss_acquire_cred_with_password: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+		 gssapi_err(maj_stat, min_stat, mechoid));
+        }
     } else {
 	maj_stat = gss_acquire_cred(&min_stat,
 				    cname,
 				    GSS_C_INDEFINITE,
-				    GSS_C_NO_OID_SET,
+				    mechoids,
 				    GSS_C_INITIATE,
 				    &client_cred,
 				    NULL,
@@ -646,7 +776,7 @@ main(int argc, char **argv)
 
     /* XXX should be actual_mech */
     if (gss_oid_equal(mechoid, GSS_KRB5_MECHANISM)) {
-	time_t time;
+	time_t sc_time;
 	gss_buffer_desc authz_data;
 	gss_buffer_desc in, out1, out2;
 	krb5_keyblock *keyblock, *keyblock2;
@@ -687,15 +817,15 @@ main(int argc, char **argv)
 
  	maj_stat = gsskrb5_extract_authtime_from_sec_context(&min_stat,
 							     sctx,
-							     &time);
+							     &sc_time);
 	if (maj_stat != GSS_S_COMPLETE)
 	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: %s",
 		     gssapi_err(maj_stat, min_stat, actual_mech));
 
-	if (time > now)
+	if (sc_time > now)
 	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: "
 		 "time authtime is before now: %ld %ld",
-		 (long)time, (long)now);
+		 (long)sc_time, (long)now);
 
  	maj_stat = gsskrb5_extract_service_keyblock(&min_stat,
 						    sctx,
@@ -882,6 +1012,29 @@ main(int argc, char **argv)
 	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
     }
 
+    if (aead_flag) {
+	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
+	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+    }
+
     if (getverifymic_flag) {
 	getverifymic(cctx, sctx, actual_mech);
 	getverifymic(cctx, sctx, actual_mech);
@@ -907,6 +1060,13 @@ main(int argc, char **argv)
 
 	gss_release_cred(&min_stat, &cred2);
 
+#if 0
+        /*
+         * XXX We can't do this.  Delegated credentials only work with
+         * the actual_mech.  We could gss_store_cred the delegated
+         * credentials *then* gss_add/acquire_cred() with SPNEGO, then
+         * we could try loop() with those credentials.
+         */
 	/* try again using SPNEGO */
 	if (verbose_flag)
 	    printf("checking spnego on delegated cred\n");
@@ -917,6 +1077,7 @@ main(int argc, char **argv)
 	gss_delete_sec_context(&min_stat, &sctx, NULL);
 
 	gss_release_cred(&min_stat, &cred2);
+#endif
 
 	/* check export/import */
 	if (ei_flag) {
@@ -945,6 +1106,8 @@ main(int argc, char **argv)
 	    gss_delete_sec_context(&min_stat, &cctx, NULL);
 	    gss_delete_sec_context(&min_stat, &sctx, NULL);
 
+#if 0
+            /* XXX See above */
 	    /* try again using SPNEGO */
 	    if (verbose_flag)
 		printf("checking SPNEGO on export/imported cred\n");
@@ -955,6 +1118,7 @@ main(int argc, char **argv)
 
 	    gss_delete_sec_context(&min_stat, &cctx, NULL);
 	    gss_delete_sec_context(&min_stat, &sctx, NULL);
+#endif
 
 	    gss_release_cred(&min_stat, &cred2);
 

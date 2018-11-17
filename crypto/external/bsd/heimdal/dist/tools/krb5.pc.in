@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+vendor=Heimdal
+
+Name: krb5
+Description: Heimdal implementation of the kerberos network authentication.
+Version: @VERSION@
+Requires: heimdal-krb5

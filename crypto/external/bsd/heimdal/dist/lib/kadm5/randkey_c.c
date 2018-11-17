@@ -1,4 +1,4 @@
-/*	$NetBSD: randkey_c.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: randkey_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,19 +35,23 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: randkey_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 kadm5_ret_t
 kadm5_c_randkey_principal(void *server_handle,
 			  krb5_principal princ,
+			  krb5_boolean keepold,
+			  int n_ks_tuple,
+			  krb5_key_salt_tuple *ks_tuple,
 			  krb5_keyblock **new_keys,
 			  int *n_keys)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
     krb5_storage *sp;
-    unsigned char buf[1024];
+    unsigned char buf[1536];
     int32_t tmp;
+    size_t i;
     krb5_data reply;
 
     ret = _kadm5_connect(server_handle);
@@ -59,8 +63,41 @@ kadm5_c_randkey_principal(void *server_handle,
 	krb5_clear_error_message(context->context);
 	return ENOMEM;
     }
-    krb5_store_int32(sp, kadm_randkey);
-    krb5_store_principal(sp, princ);
+
+    /*
+     * NOTE WELL: This message is extensible.  It currently consists of:
+     *
+     *  - opcode (kadm_randkey)
+     *  - principal name (princ)
+     *
+     * followed by optional items, each of which must be present if
+     * there are any items following them that are also present:
+     *
+     *  - keepold boolean (whether to delete old kvnos)
+     *  - number of key/salt type tuples
+     *  - array of {enctype, salttype}
+     *
+     * Eventually we may add:
+     *
+     *  - opaque string2key parameters (salt, rounds, ...)
+     */
+    ret = krb5_store_int32(sp, kadm_randkey);
+    if (ret == 0)
+        ret = krb5_store_principal(sp, princ);
+
+    if (ret == 0 && (keepold == TRUE || n_ks_tuple > 0))
+	ret = krb5_store_uint32(sp, keepold);
+    if (ret == 0 && n_ks_tuple > 0)
+	ret = krb5_store_uint32(sp, n_ks_tuple);
+    for (i = 0; ret == 0 && i < n_ks_tuple; i++) {
+	ret = krb5_store_int32(sp, ks_tuple[i].ks_enctype);
+        if (ret == 0)
+            krb5_store_int32(sp, ks_tuple[i].ks_salttype);
+    }
+    if (ret)
+        return ret;
+    /* Future extensions go here */
+
     ret = _kadm5_client_send(context, sp);
     krb5_storage_free(sp);
     if (ret)
@@ -75,22 +112,35 @@ kadm5_c_randkey_principal(void *server_handle,
 	return ENOMEM;
     }
     krb5_clear_error_message(context->context);
-    krb5_ret_int32(sp, &tmp);
-    ret = tmp;
-    if(ret == 0){
+    ret = krb5_ret_int32(sp, &tmp);
+    if (ret == 0)
+        ret = tmp;
+    if (ret == 0){
 	krb5_keyblock *k;
-	int i;
 
-	krb5_ret_int32(sp, &tmp);
-	k = malloc(tmp * sizeof(*k));
+	ret = krb5_ret_int32(sp, &tmp);
+        if (ret)
+            goto out;
+	if (tmp < 0) {
+	    ret = EOVERFLOW;
+	    goto out;
+	}
+	k = calloc(tmp, sizeof(*k));
 	if (k == NULL) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	for(i = 0; i < tmp; i++)
-	    krb5_ret_keyblock(sp, &k[i]);
-	*n_keys = tmp;
-	*new_keys = k;
+	for(i = 0; ret == 0 && i < tmp; i++)
+	    ret = krb5_ret_keyblock(sp, &k[i]);
+	if (ret == 0 && n_keys && new_keys) {
+	    *n_keys = tmp;
+	    *new_keys = k;
+	} else {
+            krb5_free_keyblock_contents(context->context, &k[i]);
+            for (; i > 0; i--)
+                krb5_free_keyblock_contents(context->context, &k[i - 1]);
+            free(k);
+        }
     }
 out:
     krb5_storage_free(sp);

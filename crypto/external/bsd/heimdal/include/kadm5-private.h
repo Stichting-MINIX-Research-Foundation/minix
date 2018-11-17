@@ -52,11 +52,10 @@ kadm5_ret_t
 _kadm5_error_code (kadm5_ret_t /*code*/);
 
 int
-_kadm5_exists_keys (
+_kadm5_exists_keys_hist (
 	Key */*keys1*/,
 	int /*len1*/,
-	Key */*keys2*/,
-	int /*len2*/);
+	HDB_Ext_KeySet */*hist_keys*/);
 
 void
 _kadm5_free_keys (
@@ -94,6 +93,8 @@ kadm5_ret_t
 _kadm5_set_keys (
 	kadm5_server_context */*context*/,
 	hdb_entry */*ent*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	const char */*password*/);
 
 kadm5_ret_t
@@ -114,6 +115,8 @@ kadm5_ret_t
 _kadm5_set_keys_randomly (
 	kadm5_server_context */*context*/,
 	hdb_entry */*ent*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	krb5_keyblock **/*new_keys*/,
 	int */*n_keys*/);
 
@@ -147,12 +150,16 @@ kadm5_ret_t
 kadm5_c_chpass_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	int /*keepold*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	const char */*password*/);
 
 kadm5_ret_t
 kadm5_c_chpass_principal_with_key (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	int /*keepold*/,
 	int /*n_key_data*/,
 	krb5_key_data */*key_data*/);
 
@@ -161,6 +168,8 @@ kadm5_c_create_principal (
 	void */*server_handle*/,
 	kadm5_principal_ent_t /*princ*/,
 	uint32_t /*mask*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	const char */*password*/);
 
 kadm5_ret_t
@@ -266,6 +275,9 @@ kadm5_ret_t
 kadm5_c_randkey_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	krb5_boolean /*keepold*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	krb5_keyblock **/*new_keys*/,
 	int */*n_keys*/);
 
@@ -278,7 +290,7 @@ kadm5_c_rename_principal (
 kadm5_ret_t
 kadm5_log_create (
 	kadm5_server_context */*context*/,
-	hdb_entry */*ent*/);
+	hdb_entry */*entry*/);
 
 kadm5_ret_t
 kadm5_log_delete (
@@ -286,56 +298,83 @@ kadm5_log_delete (
 	krb5_principal /*princ*/);
 
 kadm5_ret_t
-kadm5_log_end (kadm5_server_context */*context*/);
+kadm5_log_end (kadm5_server_context */*server_context*/);
 
 kadm5_ret_t
 kadm5_log_foreach (
 	kadm5_server_context */*context*/,
-	void (*/*func*/)(kadm5_server_context *server_context, uint32_t ver, time_t timestamp, enum kadm_ops op, uint32_t len, krb5_storage *, void *),
+	enum kadm_iter_opts /*iter_opts*/,
+	off_t */*off_lastp*/,
+	kadm5_ret_t (*/*func*/)(kadm5_server_context *server_context, uint32_t ver, time_t timestamp, enum kadm_ops op, uint32_t len, krb5_storage *sp, void *ctx),
 	void */*ctx*/);
 
 kadm5_ret_t
 kadm5_log_get_version (
-	kadm5_server_context */*context*/,
+	kadm5_server_context */*server_context*/,
 	uint32_t */*ver*/);
 
 kadm5_ret_t
 kadm5_log_get_version_fd (
+	kadm5_server_context */*server_context*/,
 	int /*fd*/,
-	uint32_t */*ver*/);
+	int /*which*/,
+	uint32_t */*ver*/,
+	uint32_t */*tstamp*/);
 
 krb5_storage *
-kadm5_log_goto_end (int /*fd*/);
+kadm5_log_goto_end (
+	kadm5_server_context */*server_context*/,
+	int /*fd*/);
 
 kadm5_ret_t
-kadm5_log_init (kadm5_server_context */*context*/);
+kadm5_log_init (kadm5_server_context */*server_context*/);
+
+kadm5_ret_t
+kadm5_log_init_nb (kadm5_server_context */*server_context*/);
+
+kadm5_ret_t
+kadm5_log_init_nolock (kadm5_server_context */*server_context*/);
+
+kadm5_ret_t
+kadm5_log_init_sharedlock (
+	kadm5_server_context */*server_context*/,
+	int /*lock_flags*/);
 
 kadm5_ret_t
 kadm5_log_modify (
 	kadm5_server_context */*context*/,
-	hdb_entry */*ent*/,
+	hdb_entry */*entry*/,
 	uint32_t /*mask*/);
 
 kadm5_ret_t
-kadm5_log_nop (kadm5_server_context */*context*/);
+kadm5_log_nop (
+	kadm5_server_context */*context*/,
+	enum kadm_nop_type /*nop_type*/);
 
 kadm5_ret_t
 kadm5_log_previous (
 	krb5_context /*context*/,
 	krb5_storage */*sp*/,
-	uint32_t */*ver*/,
-	time_t */*timestamp*/,
-	enum kadm_ops */*op*/,
-	uint32_t */*len*/);
+	uint32_t */*verp*/,
+	time_t */*tstampp*/,
+	enum kadm_ops */*opp*/,
+	uint32_t */*lenp*/);
 
 kadm5_ret_t
-kadm5_log_reinit (kadm5_server_context */*context*/);
+kadm5_log_recover (
+	kadm5_server_context */*context*/,
+	enum kadm_recover_mode /*mode*/);
+
+kadm5_ret_t
+kadm5_log_reinit (
+	kadm5_server_context */*server_context*/,
+	uint32_t /*vno*/);
 
 kadm5_ret_t
 kadm5_log_rename (
 	kadm5_server_context */*context*/,
 	krb5_principal /*source*/,
-	hdb_entry */*ent*/);
+	hdb_entry */*entry*/);
 
 kadm5_ret_t
 kadm5_log_replay (
@@ -350,6 +389,9 @@ kadm5_log_set_version (
 	kadm5_server_context */*context*/,
 	uint32_t /*vno*/);
 
+void
+kadm5_log_signal_master (kadm5_server_context */*context*/);
+
 const char *
 kadm5_log_signal_socket (krb5_context /*context*/);
 
@@ -360,24 +402,32 @@ kadm5_log_signal_socket_info (
 	struct addrinfo **/*ret_addrs*/);
 
 kadm5_ret_t
-kadm5_log_truncate (kadm5_server_context */*server_context*/);
+kadm5_log_truncate (
+	kadm5_server_context */*context*/,
+	size_t /*keep*/,
+	size_t /*maxbytes*/);
 
 kadm5_ret_t
 kadm5_s_chpass_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	int /*keepold*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	const char */*password*/);
 
 kadm5_ret_t
 kadm5_s_chpass_principal_cond (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	int /*keepold*/,
 	const char */*password*/);
 
 kadm5_ret_t
 kadm5_s_chpass_principal_with_key (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	int /*keepold*/,
 	int /*n_key_data*/,
 	krb5_key_data */*key_data*/);
 
@@ -386,6 +436,8 @@ kadm5_s_create_principal (
 	void */*server_handle*/,
 	kadm5_principal_ent_t /*princ*/,
 	uint32_t /*mask*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	const char */*password*/);
 
 kadm5_ret_t
@@ -497,6 +549,9 @@ kadm5_ret_t
 kadm5_s_randkey_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
+	krb5_boolean /*keepold*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
 	krb5_keyblock **/*new_keys*/,
 	int */*n_keys*/);
 
@@ -505,5 +560,15 @@ kadm5_s_rename_principal (
 	void */*server_handle*/,
 	krb5_principal /*source*/,
 	krb5_principal /*target*/);
+
+kadm5_ret_t
+kadm5_s_setkey_principal_3 (
+	void */*server_handle*/,
+	krb5_principal /*princ*/,
+	krb5_boolean /*keepold*/,
+	int /*n_ks_tuple*/,
+	krb5_key_salt_tuple */*ks_tuple*/,
+	krb5_keyblock */*keyblocks*/,
+	int /*n_keys*/);
 
 #endif /* __kadm5_private_h__ */

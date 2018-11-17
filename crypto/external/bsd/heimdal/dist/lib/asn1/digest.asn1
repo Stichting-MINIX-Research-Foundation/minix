@@ -24,7 +24,7 @@ DigestInit ::= SEQUENCE {
 }
 
 DigestInitReply ::= SEQUENCE {
-    nonce		UTF8String,	-- service nonce/challange
+    nonce		UTF8String,	-- service nonce/challenge
     opaque		UTF8String,	-- server state
     identifier		[0] UTF8String OPTIONAL
 }
@@ -78,7 +78,7 @@ NTLMInitReply ::= SEQUENCE {
     flags		[0] INTEGER (0..4294967295),
     opaque		[1] OCTET STRING,
     targetname		[2] UTF8String,
-    challange		[3] OCTET STRING,
+    challenge		[3] OCTET STRING,
     targetinfo		[4] OCTET STRING OPTIONAL
 }
 

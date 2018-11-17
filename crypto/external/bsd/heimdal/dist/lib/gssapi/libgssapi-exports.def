@@ -65,6 +65,7 @@ EXPORTS
 	gss_krb5_get_tkt_flags
 	gss_krb5_import_cred
 	gss_krb5_set_allowable_enctypes
+	gss_localname
 	gss_mg_collect_error
         gss_mo_get
         gss_mo_set
@@ -93,11 +94,13 @@ EXPORTS
 	gss_test_oid_set_member
 	gss_unseal
 	gss_unwrap
+	gss_unwrap_aead
 	gss_unwrap_iov
 	gss_userok
 	gss_verify
 	gss_verify_mic
 	gss_wrap
+	gss_wrap_aead
 	gss_wrap_iov
 	gss_wrap_iov_length
 	gss_wrap_size_limit

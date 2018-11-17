@@ -1,4 +1,4 @@
-/*	$NetBSD: expand_path.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: expand_path.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 
 /***********************************************************************
@@ -34,6 +34,8 @@
 
 #include "krb5_locl.h"
 
+#include <stdarg.h>
+
 typedef int PTYPE;
 
 #ifdef _WIN32
@@ -51,7 +53,7 @@ typedef int PTYPE;
  * temporary directory until the user profile is loaded.  In addition,
  * the returned path may or may not exist.
  */
-static int
+static krb5_error_code
 _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     TCHAR tpath[MAX_PATH];
@@ -72,11 +74,8 @@ _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char
 
     *ret = strdup(tpath);
 
-    if (*ret == NULL) {
-	if (context)
-	    krb5_set_error_message(context, ENOMEM, "strdup - Out of memory");
-	return ENOMEM;
-    }
+    if (*ret == NULL)
+	return krb5_enomem(context);
 
     return 0;
 }
@@ -91,7 +90,7 @@ extern HINSTANCE _krb5_hInstance;
  * "bin" directory is considered to be the directory in which the
  * krb5.dll is located.
  */
-static int
+static krb5_error_code
 _expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     TCHAR path[MAX_PATH];
@@ -121,7 +120,7 @@ _expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **r
 
     *ret = strdup(path);
     if (*ret == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     return 0;
 }
@@ -141,7 +140,7 @@ _expand_bin_dir(krb5_context context, PTYPE param, const char *postfix, char **r
  *    SecurityIdentification level the call will fail.
  *
  */
-static int
+static krb5_error_code
 _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     int rv = EINVAL;
@@ -239,7 +238,7 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **re
  * Expand a folder identified by a CSIDL
  */
 
-static int
+static krb5_error_code
 _expand_csidl(krb5_context context, PTYPE folder, const char *postfix, char **ret)
 {
     TCHAR path[MAX_PATH];
@@ -257,54 +256,49 @@ _expand_csidl(krb5_context context, PTYPE folder, const char *postfix, char **re
 	path[len - 1] = '\0';
 
     if (postfix &&
-	strlcat(path, postfix, sizeof(path)/sizeof(path[0])) >= sizeof(path)/sizeof(path[0])) {
-	return ENOMEM;
-    }
+	strlcat(path, postfix, sizeof(path)/sizeof(path[0])) >= sizeof(path)/sizeof(path[0]))
+	return krb5_enomem(context);
 
     *ret = strdup(path);
-    if (*ret == NULL) {
-	if (context)
-	    krb5_set_error_message(context, ENOMEM, "Out of memory");
-	return ENOMEM;
-    }
+    if (*ret == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
 #else
 
-static int
+static krb5_error_code
 _expand_path(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     *ret = strdup(postfix);
-    if (*ret == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc - out of memory");
-	return ENOMEM;
-    }
+    if (*ret == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
-static int
+static krb5_error_code
 _expand_temp_folder(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     const char *p = NULL;
 
-    if (issuid())
+    if (!issuid())
 	p = getenv("TEMP");
+
     if (p)
 	*ret = strdup(p);
     else
 	*ret = strdup("/tmp");
     if (*ret == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     return 0;
 }
 
-static int
+static krb5_error_code
 _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **str)
 {
     int ret = asprintf(str, "%ld", (unsigned long)getuid());
     if (ret < 0 || *str == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -312,25 +306,35 @@ _expand_userid(krb5_context context, PTYPE param, const char *postfix, char **st
 #endif /* _WIN32 */
 
 /**
+ * Expand an extra token
+ */
+
+static krb5_error_code
+_expand_extra_token(krb5_context context, const char *value, char **ret)
+{
+    *ret = strdup(value);
+    if (*ret == NULL)
+	return krb5_enomem(context);
+    return 0;
+}
+
+/**
  * Expand a %{null} token
  *
  * The expansion of a %{null} token is always the empty string.
  */
 
-static int
+static krb5_error_code
 _expand_null(krb5_context context, PTYPE param, const char *postfix, char **ret)
 {
     *ret = strdup("");
-    if (*ret == NULL) {
-	if (context)
-	    krb5_set_error_message(context, ENOMEM, "Out of memory");
-	return ENOMEM;
-    }
+    if (*ret == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
 
-static const struct token {
+static const struct {
     const char * tok;
     int ftype;
 #define FTYPE_CSIDL 0
@@ -372,13 +376,15 @@ static const struct token {
     {"null", SPECIAL(_expand_null)}
 };
 
-static int
+static krb5_error_code
 _expand_token(krb5_context context,
 	      const char *token,
 	      const char *token_end,
+	      char **extra_tokens,
 	      char **ret)
 {
     size_t i;
+    char **p;
 
     *ret = NULL;
 
@@ -387,6 +393,11 @@ _expand_token(krb5_context context,
 	if (context)
 	    krb5_set_error_message(context, EINVAL,"Invalid token.");
 	return EINVAL;
+    }
+
+    for (p = extra_tokens; p && p[0]; p += 2) {
+	if (strncmp(token+2, p[0], (token_end - token) - 2) == 0)
+	    return _expand_extra_token(context, p[1], ret);
     }
 
     for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++) {
@@ -400,14 +411,65 @@ _expand_token(krb5_context context,
     return EINVAL;
 }
 
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokens(krb5_context context,
 			 const char *path_in,
+			 int filepath,
 			 char **ppath_out)
 {
+    return _krb5_expand_path_tokensv(context, path_in, filepath, ppath_out, NULL);
+}
+
+static void
+free_extra_tokens(char **extra_tokens)
+{
+    char **p;
+
+    for (p = extra_tokens; p && *p; p++)
+	free(*p);
+    free(extra_tokens);
+}
+
+/**
+ * Internal function to expand tokens in paths.
+ *
+ * Inputs:
+ *
+ * @context   A krb5_context
+ * @path_in   The path to expand tokens from
+ * @ppath_out The expanded path
+ * @...       Variable number of pairs of strings, the first of each
+ *            being a token (e.g., "luser") and the second a string to
+ *            replace it with.  The list is terminated by a NULL.
+ * 
+ * Outputs:
+ *
+ * @ppath_out Path with expanded tokens (caller must free() this)
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_expand_path_tokensv(krb5_context context,
+			  const char *path_in,
+			  int filepath,
+			  char **ppath_out, ...)
+{
     char *tok_begin, *tok_end, *append;
+    char **extra_tokens = NULL;
     const char *path_left;
+    size_t nargs = 0;
     size_t len = 0;
+    va_list ap;
 
     if (path_in == NULL || *path_in == '\0') {
         *ppath_out = strdup("");
@@ -415,6 +477,45 @@ _krb5_expand_path_tokens(krb5_context context,
     }
 
     *ppath_out = NULL;
+
+    va_start(ap, ppath_out);
+    while (va_arg(ap, const char *)) {
+	nargs++;
+        va_arg(ap, const char *);
+    }
+    va_end(ap);
+    nargs *= 2;
+
+    /* Get extra tokens */
+    if (nargs) {
+	size_t i;
+
+	extra_tokens = calloc(nargs + 1, sizeof (*extra_tokens));
+	if (extra_tokens == NULL)
+	    return krb5_enomem(context);
+	va_start(ap, ppath_out);
+	for (i = 0; i < nargs; i++) {
+	    const char *s = va_arg(ap, const char *); /* token key */
+	    if (s == NULL)
+		break;
+	    extra_tokens[i] = strdup(s);
+	    if (extra_tokens[i++] == NULL) {
+		va_end(ap);
+		free_extra_tokens(extra_tokens);
+		return krb5_enomem(context);
+	    }
+	    s = va_arg(ap, const char *); /* token value */
+	    if (s == NULL)
+		s = "";
+	    extra_tokens[i] = strdup(s);
+	    if (extra_tokens[i] == NULL) {
+		va_end(ap);
+		free_extra_tokens(extra_tokens);
+		return krb5_enomem(context);
+	    }
+	}
+	va_end(ap);
+    }
 
     for (path_left = path_in; path_left && *path_left; ) {
 
@@ -433,6 +534,7 @@ _krb5_expand_path_tokens(krb5_context context,
 
 	    tok_end = strchr(tok_begin, '}');
 	    if (tok_end == NULL) {
+		free_extra_tokens(extra_tokens);
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
@@ -441,7 +543,9 @@ _krb5_expand_path_tokens(krb5_context context,
 		return EINVAL;
 	    }
 
-	    if (_expand_token(context, tok_begin, tok_end, &append)) {
+	    if (_expand_token(context, tok_begin, tok_end, extra_tokens,
+			      &append)) {
+		free_extra_tokens(extra_tokens);
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
@@ -458,12 +562,11 @@ _krb5_expand_path_tokens(krb5_context context,
 
 	if (append == NULL) {
 
+	    free_extra_tokens(extra_tokens);
 	    if (*ppath_out)
 		free(*ppath_out);
 	    *ppath_out = NULL;
-	    if (context)
-		krb5_set_error_message(context, ENOMEM, "malloc - out of memory");
-	    return ENOMEM;
+	    return krb5_enomem(context);
 
 	}
 
@@ -472,13 +575,12 @@ _krb5_expand_path_tokens(krb5_context context,
 	    char * new_str = realloc(*ppath_out, len + append_len + 1);
 
 	    if (new_str == NULL) {
+		free_extra_tokens(extra_tokens);
 		free(append);
 		if (*ppath_out)
 		    free(*ppath_out);
 		*ppath_out = NULL;
-		if (context)
-		    krb5_set_error_message(context, ENOMEM, "malloc - out of memory");
-		return ENOMEM;
+		return krb5_enomem(context);
 	    }
 
 	    *ppath_out = new_str;
@@ -490,13 +592,15 @@ _krb5_expand_path_tokens(krb5_context context,
 
 #ifdef _WIN32
     /* Also deal with slashes */
-    if (*ppath_out) {
+    if (filepath && *ppath_out) {
 	char * c;
+
 	for (c = *ppath_out; *c; c++)
 	    if (*c == '/')
 		*c = '\\';
     }
 #endif
 
+    free_extra_tokens(extra_tokens);
     return 0;
 }

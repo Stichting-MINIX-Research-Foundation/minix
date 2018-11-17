@@ -1,7 +1,7 @@
-/*	$NetBSD: ec.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: ec.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 2009 Kungliga Tekniska Högskolan
+ * Copyright (c) 2009-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -36,6 +36,10 @@
 #ifndef HEIM_EC_H
 #define HEIM_EC_H 1
 
+#define EC_KEY hc_EC_KEY
+#define EC_GROUP hc_EC_GROUP
+#define EC_GROUP_ID hc_EC_GROUP_ID
+#define EC_GROUP_ID_s hc_EC_GROUP_ID_s
 #define EC_GROUP_get_degree hc_EC_GROUP_get_degree
 #define EC_KEY_get0_group hc_EC_KEY_get0_group
 #define EC_GROUP_get_order hc_EC_GROUP_get_order

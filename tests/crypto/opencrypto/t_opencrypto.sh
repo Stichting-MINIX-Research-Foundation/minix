@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.5 2015/03/16 16:42:27 prlw1 Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.7 2017/04/17 03:59:37 knakahara Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,7 +80,11 @@ arc4_body() {
 }
 
 arc4_cleanup() {
-	common_cleanup
+	# No cleanup required since test is skipped.  Trying to run rump.halt
+	# at this point fails, causing the ATF environment to erroneously
+	# report a failed test!
+	#
+	# common_cleanup
 }
 
 atf_test_case camellia cleanup
@@ -106,6 +110,19 @@ cbcdes_body() {
 }
 
 cbcdes_cleanup() {
+	common_cleanup
+}
+
+atf_test_case cbc3des cleanup
+cbc3des_head() {
+	common_head "Test 3DES_CBC crypto"
+}
+
+cbc3des_body() {
+	common_body h_cbc3des
+}
+
+cbc3des_cleanup() {
 	common_cleanup
 }
 
@@ -171,6 +188,19 @@ aesctr2_body() {
 }
 
 aesctr2_cleanup() {
+	common_cleanup
+}
+
+atf_test_case aescbc cleanup
+aescbc_head() {
+	common_head "Test AES_CBC crypto"
+}
+
+aescbc_body() {
+	common_body h_aescbc
+}
+
+aescbc_cleanup() {
 	common_cleanup
 }
 
@@ -258,11 +288,13 @@ atf_init_test_cases() {
 	atf_add_test_case arc4
 	atf_add_test_case camellia
 	atf_add_test_case cbcdes
+	atf_add_test_case cbc3des
 	atf_add_test_case comp
 	atf_add_test_case comp_deflate
 	atf_add_test_case comp_zlib_rnd
 	atf_add_test_case aesctr1
 	atf_add_test_case aesctr2
+	atf_add_test_case aescbc
 	atf_add_test_case gcm
 	atf_add_test_case md5
 	atf_add_test_case md5_hmac

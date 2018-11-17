@@ -75,7 +75,7 @@ test-binaries: $(OBJ)\test_ntlm.exe
 
 test-run:
 	cd $(OBJ)
-	test_ntlm.exe
+	-test_ntlm.exe
 	cd $(SRCDIR)
 
 $(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(LIBHEIMNTLM) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)

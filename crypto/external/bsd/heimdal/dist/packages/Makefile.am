@@ -4,4 +4,4 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS=  mac
 
-EXTRA_DIST = windows
+EXTRA_DIST = windows NTMakefile

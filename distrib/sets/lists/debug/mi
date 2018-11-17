@@ -44,7 +44,7 @@
 ./usr/lib/libcrypto_g.a				comp-c-debuglib		debuglib,crypto,compatfile
 ./usr/lib/libcrypto_idea_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libcrypto_mdc2_g.a			comp-obsolete		obsolete,compatfile
-./usr/lib/libcrypto_rc5_g.a			comp-c-debuglib		debuglib,crypto_rc5,compatfile
+./usr/lib/libcrypto_rc5_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libctf_g.a				comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/libcurses_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libdes_g.a				comp-c-debuglib		debuglib,crypto,compatfile
@@ -1547,7 +1547,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,crypto_rc5,crypto,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile

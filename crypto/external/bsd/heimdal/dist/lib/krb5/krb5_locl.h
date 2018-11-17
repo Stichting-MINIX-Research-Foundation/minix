@@ -1,7 +1,7 @@
-/*	$NetBSD: krb5_locl.h,v 1.1.1.3 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: krb5_locl.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -41,13 +41,9 @@
 #define __KRB5_LOCL_H__
 
 #include <config.h>
+#include <krb5/roken.h>
 
-#include <errno.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #ifdef HAVE_POLL_H
 #include <sys/poll.h>
@@ -61,12 +57,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>
@@ -78,44 +68,11 @@
 #include <pwd.h>
 #endif
 
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #ifdef _AIX
-struct ether_addr;
 struct mbuf;
-struct sockaddr_dl;
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-#include <arpa/nameser.h>
-#endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
 #endif
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
@@ -150,17 +107,24 @@ struct sockaddr_dl;
 #include <door.h>
 #endif
 
-#include <krb5/roken.h>
 #include <krb5/parse_time.h>
 #include <krb5/base64.h>
 
 #include <krb5/wind.h>
 
+/*
+ * We use OpenSSL for EC, but to do this we need to disable cross-references
+ * between OpenSSL and hcrypto bn.h and such.  Source files that use OpenSSL EC
+ * must define HEIM_NO_CRYPTO_HDRS before including this file.
+ */
 #define HC_DEPRECATED_CRYPTO
+#ifndef HEIM_NO_CRYPTO_HDRS
 #include "crypto-headers.h"
+#endif
 
 
 #include <krb5/krb5_asn1.h>
+#include <krb5/pkinit_asn1.h>
 
 struct send_to_kdc;
 
@@ -256,6 +220,7 @@ typedef uint32_t krb5_enctype_set;
 
 typedef struct krb5_context_data {
     krb5_enctype *etypes;
+    krb5_enctype *cfg_etypes;
     krb5_enctype *etypes_des;/* deprecated */
     krb5_enctype *as_etypes;
     krb5_enctype *tgs_etypes;
@@ -263,6 +228,7 @@ typedef struct krb5_context_data {
     char **default_realms;
     time_t max_skew;
     time_t kdc_timeout;
+    time_t host_timeout;
     unsigned max_retries;
     int32_t kdc_sec_offset;
     int32_t kdc_usec_offset;
@@ -293,24 +259,31 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     int default_cc_name_set;
-    void *mutex;			/* protects error_string/error_buf */
+    HEIMDAL_MUTEX mutex;		/* protects error_string */
     int large_msg_size;
+    int max_msg_size;
+    int tgs_negative_timeout;		/* timeout for TGS negative cache */
     int flags;
 #define KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME	1
 #define KRB5_CTX_F_CHECK_PAC			2
 #define KRB5_CTX_F_HOMEDIR_ACCESS		4
 #define KRB5_CTX_F_SOCKETS_INITIALIZED          8
 #define KRB5_CTX_F_RD_REQ_IGNORE		16
+#define KRB5_CTX_F_FCACHE_STRICT_CHECKING	32
     struct send_to_kdc *send_to_kdc;
 #ifdef PKINIT
     hx509_context hx509ctx;
 #endif
+    unsigned int num_kdc_requests;
+    krb5_name_canon_rule name_canon_rules;
 } krb5_context_data;
 
 #ifndef KRB5_USE_PATH_TOKENS
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"
+#define KRB5_DEFAULT_CCNAME_DIR "DIR:/tmp/krb5cc_%{uid}_dir/"
 #else
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:%{TEMP}/krb5cc_%{uid}"
+#define KRB5_DEFAULT_CCNAME_DIR "DIR:%{TEMP}/krb5cc_%{uid}_dir/"
 #endif
 #define KRB5_DEFAULT_CCNAME_API "API:"
 #define KRB5_DEFAULT_CCNAME_KCM_KCM "KCM:%{uid}"
@@ -342,6 +315,22 @@ typedef struct krb5_context_data {
 #define KRB5_FORWARDABLE_DEFAULT TRUE
 #endif
 
+#ifndef KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME
+#define KRB5_CONFIGURATION_CHANGE_NOTIFY_NAME "org.h5l.Kerberos.configuration-changed"
+#endif
+
+#ifndef KRB5_FALLBACK_DEFAULT
+#define KRB5_FALLBACK_DEFAULT TRUE
+#endif
+
+#ifndef KRB5_TKT_LIFETIME_DEFAULT
+# define KRB5_TKT_LIFETIME_DEFAULT        15778800  /* seconds */
+#endif
+
+#ifndef KRB5_TKT_RENEW_LIFETIME_DEFAULT
+# define KRB5_TKT_RENEW_LIFETIME_DEFAULT  15778800  /* seconds */
+#endif
+
 #ifdef PKINIT
 
 struct krb5_pk_identity {
@@ -360,6 +349,34 @@ enum krb5_pk_type {
     PKINIT_27 = 2
 };
 
+enum keyex_enum { USE_RSA, USE_DH, USE_ECDH };
+
+struct krb5_pk_init_ctx_data {
+    struct krb5_pk_identity *id;
+    enum keyex_enum keyex;
+    union {
+	DH *dh;
+        void *eckey;
+    } u;
+    krb5_data *clientDHNonce;
+    struct krb5_dh_moduli **m;
+    hx509_peer_info peer;
+    enum krb5_pk_type type;
+    unsigned int require_binding:1;
+    unsigned int require_eku:1;
+    unsigned int require_krbtgt_otherName:1;
+    unsigned int require_hostname_match:1;
+    unsigned int trustedCertifiers:1;
+    unsigned int anonymous:1;
+};
+
 #endif /* PKINIT */
+
+#define ISTILDE(x) (x == '~')
+#ifdef _WIN32
+# define ISPATHSEP(x) (x == '/' || x =='\\')
+#else
+# define ISPATHSEP(x) (x == '/')
+#endif
 
 #endif /* __KRB5_LOCL_H__ */

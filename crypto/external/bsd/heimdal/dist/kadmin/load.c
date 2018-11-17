@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: load.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -364,7 +364,7 @@ parse_extensions(char *str, HDB_extensions **e)
 static int
 doit(const char *filename, int mergep)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     FILE *f;
     char s[8192]; /* XXX should fix this properly */
     char *p;
@@ -379,10 +379,22 @@ doit(const char *filename, int mergep)
 	krb5_warn(context, errno, "fopen(%s)", filename);
 	return 1;
     }
-    ret = kadm5_log_truncate (kadm_handle);
+    /*
+     * We don't have a version number in the dump, so we don't know which iprop
+     * log entries to keep, if any.  We throw the log away.
+     *
+     * We could merge the ipropd-master/slave dump/load here as an option, in
+     * which case we would first load the dump.
+     *
+     * If we're merging, first recover unconfirmed records in the existing log.
+     */
+    if (mergep)
+        ret = kadm5_log_init(kadm_handle);
+    if (ret == 0)
+        ret = kadm5_log_reinit(kadm_handle, 0);
     if (ret) {
 	fclose (f);
-	krb5_warn(context, ret, "kadm5_log_truncate");
+	krb5_warn(context, ret, "kadm5_log_reinit");
 	return 1;
     }
 
@@ -537,6 +549,7 @@ doit(const char *filename, int mergep)
 	    break;
 	}
     }
+    (void) kadm5_log_end(kadm_handle);
     db->hdb_close(context, db);
     fclose(f);
     return ret != 0;

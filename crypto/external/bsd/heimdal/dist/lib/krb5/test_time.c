@@ -1,4 +1,4 @@
-/*	$NetBSD: test_time.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: test_time.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -56,11 +56,11 @@ check_set_time(krb5_context context)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_us_timeofday");
 
-    diff2 = abs(sec - tv.tv_sec);
+    diff2 = labs(sec - tv.tv_sec);
 
     if (diff2 < 9 || diff > 11)
-	krb5_errx(context, 1, "set time error: diff: %d",
-		  abs(sec - tv.tv_sec));
+	krb5_errx(context, 1, "set time error: diff: %ld",
+		  labs(sec - tv.tv_sec));
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tommath_class.h,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: tommath_class.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 #if !(defined(LTM1) && defined(LTM2) && defined(LTM3))
 #if defined(LTM2)
@@ -44,6 +44,7 @@
 #define BN_MP_EXPTMOD_C
 #define BN_MP_EXPTMOD_FAST_C
 #define BN_MP_EXTEUCLID_C
+#define BN_MP_FIND_PRIME_C
 #define BN_MP_FREAD_C
 #define BN_MP_FWRITE_C
 #define BN_MP_GCD_C
@@ -57,6 +58,7 @@
 #define BN_MP_INIT_SIZE_C
 #define BN_MP_INVMOD_C
 #define BN_MP_INVMOD_SLOW_C
+#define BN_MP_ISPRIME_C
 #define BN_MP_IS_SQUARE_C
 #define BN_MP_JACOBI_C
 #define BN_MP_KARATSUBA_MUL_C

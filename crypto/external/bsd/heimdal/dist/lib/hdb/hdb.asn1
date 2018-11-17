@@ -46,8 +46,10 @@ HDBFlags ::= BIT STRING {
 	trusted-for-delegation(14),	-- Trusted to print forwardabled tickets
 	allow-kerberos4(15),		-- Allow Kerberos 4 requests
 	allow-digest(16),		-- Allow digest requests
-	locked-out(17)			-- Account is locked out,
+	locked-out(17),			-- Account is locked out,
 					-- authentication will be denied
+	require-pwchange(18),		-- require a passwd change
+	do-not-store(31)		-- Not to be modified and stored in HDB
 }
 
 GENERATION ::= SEQUENCE {
@@ -87,6 +89,17 @@ HDB-Ext-Aliases ::= SEQUENCE {
 	aliases[1]		SEQUENCE OF Principal -- all names, inc primary
 }
 
+Keys ::= SEQUENCE OF Key
+
+hdb_keyset ::= SEQUENCE {
+	kvno[0]		INTEGER (0..4294967295),
+	keys[1]		Keys,
+	set-time[2]	KerberosTime OPTIONAL,	-- time this keyset was created/set
+	...
+}
+
+HDB-Ext-KeySet ::= SEQUENCE OF hdb_keyset
+
 
 HDB-extension ::= SEQUENCE {
         mandatory[0]    BOOLEAN,        -- kdc MUST understand this extension,
@@ -102,6 +115,11 @@ HDB-extension ::= SEQUENCE {
 		aliases[6]			HDB-Ext-Aliases,
 		last-pw-change[7]		KerberosTime,
 	        pkinit-cert[8]  		HDB-Ext-PKINIT-cert,
+	        hist-keys[9]			HDB-Ext-KeySet,
+		hist-kvno-diff-clnt[10]		INTEGER (0..4294967295),
+		hist-kvno-diff-svc[11]		INTEGER (0..4294967295),
+	        policy[12]			UTF8String,
+		principal-id[13]		INTEGER(-9223372036854775808..9223372036854775807),
 		...
 	},
 	...
@@ -109,16 +127,11 @@ HDB-extension ::= SEQUENCE {
 
 HDB-extensions ::= SEQUENCE OF HDB-extension
 
-hdb_keyset ::= SEQUENCE {
-	kvno[1]		INTEGER (0..4294967295),
-	keys[0]		SEQUENCE OF Key
-}
-
 hdb_entry ::= SEQUENCE {
 	principal[0]	Principal  OPTIONAL, -- this is optional only 
 					     -- for compatibility with libkrb5
 	kvno[1]		INTEGER (0..4294967295),
-	keys[2]		SEQUENCE OF Key,
+	keys[2]		Keys,
 	created-by[3]	Event,
 	modified-by[4]	Event OPTIONAL,
 	valid-start[5]	KerberosTime OPTIONAL,

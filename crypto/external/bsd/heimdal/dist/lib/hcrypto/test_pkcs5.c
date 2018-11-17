@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pkcs5.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_pkcs5.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,12 +34,7 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 #include <err.h>
 
 #include <evp.h>
@@ -114,24 +109,24 @@ test_pkcs5_pbe2(const struct tests *t)
     unsigned char key[32];
     int ret, error = 0;
 
-    ret = PKCS5_PBKDF2_HMAC_SHA1(t->password, strlen(t->password),
-				 t->salt, strlen(t->salt),
-				 t->iterations,
-				 16, key);
+    ret = PKCS5_PBKDF2_HMAC(t->password, strlen(t->password),
+			    t->salt, strlen(t->salt),
+			    t->iterations, EVP_sha1(),
+			    16, key);
     if (ret != 1)
-	errx(1, "PKCS5_PBKDF2_HMAC_SHA1: %d", ret);
+	errx(1, "PKCS5_PBKDF2_HMAC: %d", ret);
 
     if (memcmp(t->pbkdf2_128, key, 16) != 0) {
 	printf("incorrect 128 key\n");
 	error++;
     }
 
-    ret = PKCS5_PBKDF2_HMAC_SHA1(t->password, strlen(t->password),
-				 t->salt, strlen(t->salt),
-				 t->iterations,
-				 32, key);
+    ret = PKCS5_PBKDF2_HMAC(t->password, strlen(t->password),
+			    t->salt, strlen(t->salt),
+			    t->iterations, EVP_sha1(),
+			    32, key);
     if (ret != 1)
-	errx(1, "PKCS5_PBKDF2_HMAC_SHA1: %d", ret);
+	errx(1, "PKCS5_PBKDF2_HMAC: %d", ret);
 
     if (memcmp(t->pbkdf2_256, key, 32) != 0) {
 	printf("incorrect 256 key\n");

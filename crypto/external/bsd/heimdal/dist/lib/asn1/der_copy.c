@@ -1,4 +1,4 @@
-/*	$NetBSD: der_copy.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: der_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: der_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 int
 der_copy_general_string (const heim_general_string *from,
@@ -57,7 +57,21 @@ der_copy_integer (const int *from, int *to)
 }
 
 int
+der_copy_integer64 (const int64_t *from, int64_t *to)
+{
+    *to = *from;
+    return 0;
+}
+
+int
 der_copy_unsigned (const unsigned *from, unsigned *to)
+{
+    *to = *from;
+    return 0;
+}
+
+int
+der_copy_unsigned64 (const uint64_t *from, uint64_t *to)
 {
     *to = *from;
     return 0;

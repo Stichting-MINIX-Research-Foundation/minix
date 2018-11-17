@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: check.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@ get_check_entry(const char *name, kadm5_principal_ent_rec *ent)
     }
 
     memset(ent, 0, sizeof(*ent));
-    ret = kadm5_get_principal(kadm_handle, principal, ent, 0);
+    ret = kadm5_get_principal(kadm_handle, principal, ent, KADM5_ATTRIBUTES);
     krb5_free_principal(context, principal);
     if(ret)
 	return 1;
@@ -185,6 +185,35 @@ check(void *opt, int argc, char **argv)
     free(p);
 
     kadm5_free_principal_ent(kadm_handle, &ent);
+
+    /*
+     * Check default@REALM
+     *
+     * Check that disallow-all-tix is set on the default principal
+     * (or that the entry doesn't exists)
+     */
+
+    if (asprintf(&p, "default@%s", realm) == -1) {
+	krb5_warn(context, errno, "asprintf");
+	goto fail;
+    }
+
+    ret = get_check_entry(p, &ent);
+    if (ret == 0) {
+	if ((ent.attributes & KRB5_KDB_DISALLOW_ALL_TIX) == 0) {
+	    printf("default template entry is not disabled\n");
+	    ret = EINVAL;
+	}
+	kadm5_free_principal_ent(kadm_handle, &ent);
+
+    } else {
+	ret = 0;
+    }
+
+    free(p);
+
+    if (ret)
+	goto fail;
 
     /*
      * Check for duplicate afs keys

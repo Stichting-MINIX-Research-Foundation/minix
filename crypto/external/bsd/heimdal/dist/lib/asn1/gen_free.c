@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_free.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gen_free.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: gen_free.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static void
 free_primitive (const char *typename, const char *name)

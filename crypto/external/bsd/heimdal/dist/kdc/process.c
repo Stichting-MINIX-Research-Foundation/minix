@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: process.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -59,19 +59,25 @@ kdc_as_req(krb5_context context,
 	   int datagram_reply,
 	   int *claim)
 {
+    struct kdc_request_desc r;
     krb5_error_code ret;
-    KDC_REQ req;
     size_t len;
 
-    ret = decode_AS_REQ(req_buffer->data, req_buffer->length, &req, &len);
+    memset(&r, 0, sizeof(r));
+
+    ret = decode_AS_REQ(req_buffer->data, req_buffer->length, &r.req, &len);
     if (ret)
 	return ret;
 
+    r.context = context;
+    r.config = config;
+    r.request.data = req_buffer->data;
+    r.request.length = req_buffer->length;
+
     *claim = 1;
 
-    ret = _kdc_as_rep(context, config, &req, req_buffer,
-		      reply, from, addr, datagram_reply);
-    free_AS_REQ(&req);
+    ret = _kdc_as_rep(&r, reply, from, addr, datagram_reply);
+    free_AS_REQ(&r.req);
     return ret;
 }
 
@@ -195,6 +201,7 @@ krb5_kdc_process_request(krb5_context context,
     unsigned int i;
     krb5_data req_buffer;
     int claim = 0;
+    heim_auto_release_t pool = heim_auto_release_create();
 
     req_buffer.data = buf;
     req_buffer.length = len;
@@ -206,9 +213,13 @@ krb5_kdc_process_request(krb5_context context,
 	if (claim) {
 	    if (services[i].flags & KS_NO_LENGTH)
 		*prependlength = 0;
+
+	    heim_release(pool);
 	    return ret;
 	}
     }
+
+    heim_release(pool);
 
     return -1;
 }

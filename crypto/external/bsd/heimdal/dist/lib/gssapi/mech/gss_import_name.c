@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_import_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_import_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -151,7 +151,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 }
 
 /**
- * Import a name internal or mechanism name
+ * Convert a GGS-API name from contiguous string to internal form.
  *
  * Type of name and their format:
  * - GSS_C_NO_OID
@@ -161,12 +161,12 @@ _gss_import_export_name(OM_uint32 *minor_status,
  * - GSS_C_NT_ANONYMOUS
  * - GSS_KRB5_NT_PRINCIPAL_NAME
  *
- * For more information about @ref internalVSmechname.
+ * @sa gss_export_name(), @ref internalVSmechname.
  *
- * @param minor_status minor status code
- * @param input_name_buffer import name buffer
- * @param input_name_type type of the import name buffer
- * @param output_name the resulting type, release with
+ * @param minor_status       minor status code
+ * @param input_name_buffer  import name buffer
+ * @param input_name_type    type of the import name buffer
+ * @param output_name        the resulting type, release with
  *        gss_release_name(), independent of input_name
  *
  * @returns a gss_error code, see gss_display_status() about printing

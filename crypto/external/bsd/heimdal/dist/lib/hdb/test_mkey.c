@@ -1,4 +1,4 @@
-/*	$NetBSD: test_mkey.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: test_mkey.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 
 #include "hdb_locl.h"
@@ -10,9 +10,9 @@ static int help_flag;
 static int version_flag;
 
 struct getargs args[] = {
-    { "mkey-file",	0,      arg_string, &mkey_file },
-    { "help",		'h',	arg_flag,   &help_flag },
-    { "version",	0,	arg_flag,   &version_flag }
+    { "mkey-file",	0,      arg_string, &mkey_file,    NULL, NULL },
+    { "help",		'h',	arg_flag,   &help_flag,    NULL, NULL },
+    { "version",	0,	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

@@ -23,6 +23,9 @@
 		mkey_file = @objdir@/mkey.file
 	}
 
+[hdb]
+        db-dir = @objdir@
+
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log
 	default = 0-/FILE:@objdir@/messages.log

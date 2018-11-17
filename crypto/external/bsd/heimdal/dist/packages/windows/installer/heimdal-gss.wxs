@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+  <?if $(var.Platform)=x64 ?>
+
+  <?define Win64=yes ?>
+
+  <?define ToolsBinDir=dirBin64 ?>
+  <?define GuidGssDll=9368D1E7-D4CB-4BDC-A2A6-AB1C992151AD ?>
+
+  <?define GuidPackage={A19EA263-680D-4626-AF54-5A05ACCC027C} ?>
+
+  <?else?>
+
+  <?define Win64=no ?>
+
+  <?define ToolsBinDir=dirBin32 ?>
+  <?define GuidGssDll=5F38982B-A325-4A7B-A2FC-EA40314F4D00 ?>
+
+  <?define GuidPackage={F0525351-C791-4890-98BE-14B38D3E6B72} ?>
+  <?endif?>
+
+  <Module Id="Heimdal.GSS" Language="0" Version="$(var.Version)">
+
+    <Package Id="$(var.GuidPackage)"
+	     InstallerVersion="200"
+	     Languages="1033" Manufacturer="Heimdal"
+	     SummaryCodepage="1252" AdminImage="no"
+	     Platform="$(var.Platform)" />
+
+    <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
+
+      <?ifdef Target32 ?>
+      <Directory Id='ProgramFilesFolder'>
+	<Directory Id='INSTALLDIR32' Name='Heimdal'>
+	  <Directory Id='dirBin32' Name='bin'>
+	  </Directory>
+	</Directory>
+      </Directory>
+      <?endif?>
+
+      <?ifdef Target64?>
+      <Directory Id='ProgramFiles64Folder'>
+	<Directory Id='INSTALLDIR64' Name='Heimdal'>
+	  <Directory Id='dirBin64' Name='bin'>
+	  </Directory>
+	</Directory>
+      </Directory>
+      <?endif?>
+
+    </Directory>
+
+    <?ifdef Target32?>
+    <DirectoryRef Id='dirBin32' DiskId='1'>
+      <Component Id='comp.SearchPath.32'
+		 Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='no'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	  <RegistryValue Name='InstallPath' Type='string'
+			 Value='[dirBin32]' KeyPath='yes' />
+	</RegistryKey>
+	<Environment Id='env.Path.32' Name='PATH' Action='set' Part='last'
+		     Separator=';' Value='[dirBin32]' System='yes' />
+      </Component>
+
+    </DirectoryRef>
+    <?endif?>
+
+    <?ifdef Target64?>
+    <DirectoryRef Id='dirBin64' DiskId='1'>
+      <Component Id='comp.SearchPath.64'
+		 Guid='2F189729-2253-47A1-AA68-06FE3A9697A7' Win64='yes'>
+	<RegistryKey Root='HKLM' Key='Software\Heimdal\CurrentVersion'>
+	  <RegistryValue Name='InstallPath' Type='string'
+			 Value='[dirBin64]' KeyPath='yes' />
+	</RegistryKey>
+	<Environment Id='env.Path' Name='PATH' Action='set' Part='last'
+		     Separator=';' Value='[dirBin64]' System='yes' />
+      </Component>
+
+    </DirectoryRef>
+    <?endif?>
+
+    <DirectoryRef Id='$(var.ToolsBinDir)' FileSource='$(var.BinDir)\$(var.AsmKrbName)'>
+
+      <Component Id='comp.gssdll'
+		 Guid='$(var.GuidGssDll)'
+		 Win64='$(var.Win64)'>
+	<File Name='gssapi.dll' KeyPath='yes' />
+	<File Name='gssapi.pdb' />
+      </Component>
+
+    </DirectoryRef>
+  </Module>
+</Wix>

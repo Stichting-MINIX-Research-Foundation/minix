@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2017/01/29 19:23:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -34,10 +34,8 @@
  */
 
 #include "gen_locl.h"
-#include <krb5/getarg.h>
+#include "getarg.h"
 #include "lex.h"
-
-__RCSID("NetBSD");
 
 extern FILE *yyin;
 
@@ -64,24 +62,31 @@ seq_type(const char *p)
     return 0;
 }
 
+const char *fuzzer_string = "";
+int fuzzer_flag;
 int support_ber;
 int template_flag;
 int rfc1510_bitstring;
 int one_code_file;
 char *option_file;
+int parse_units_flag = 1;
+char *type_file_string = "krb5-types.h";
 int version_flag;
 int help_flag;
 struct getargs args[] = {
-    { "template", 0, arg_flag, &template_flag },
-    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring },
-    { "decode-dce-ber", 0, arg_flag, &support_ber },
-    { "support-ber", 0, arg_flag, &support_ber },
-    { "preserve-binary", 0, arg_strings, &preserve },
-    { "sequence", 0, arg_strings, &seq },
-    { "one-code-file", 0, arg_flag, &one_code_file },
-    { "option-file", 0, arg_string, &option_file },
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "fuzzer", 0, arg_flag, &fuzzer_flag, NULL, NULL },
+    { "template", 0, arg_flag, &template_flag, NULL, NULL },
+    { "encode-rfc1510-bit-string", 0, arg_flag, &rfc1510_bitstring, NULL, NULL },
+    { "decode-dce-ber", 0, arg_flag, &support_ber, NULL, NULL },
+    { "support-ber", 0, arg_flag, &support_ber, NULL, NULL },
+    { "preserve-binary", 0, arg_strings, &preserve, NULL, NULL },
+    { "sequence", 0, arg_strings, &seq, NULL, NULL },
+    { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
+    { "option-file", 0, arg_string, &option_file, NULL, NULL },
+    { "parse-units", 0, arg_negative_flag, &parse_units_flag, NULL, NULL },
+    { "type-file", 0, arg_string, &type_file_string, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -102,7 +107,7 @@ main(int argc, char **argv)
     const char *name = NULL;
     int optidx = 0;
     char **arg = NULL;
-    size_t len = 0, i;
+    int len = 0, i;
 
     setprogname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optidx))
@@ -180,6 +185,16 @@ main(int argc, char **argv)
 	    fprintf(stderr, "extra args");
 	    exit(1);
 	}
+    }
+
+    if (fuzzer_flag) {
+	if (!template_flag) {
+	    printf("can't do fuzzer w/o --template");
+	    exit(1);
+	}
+#ifdef ASN1_FUZZER
+	fuzzer_string = "_fuzzer";
+#endif
     }
 
 

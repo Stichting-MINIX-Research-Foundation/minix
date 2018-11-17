@@ -1,4 +1,4 @@
-/*	$NetBSD: digest-service.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: digest-service.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -46,6 +46,8 @@
 typedef struct pk_client_params pk_client_params;
 struct DigestREQ;
 struct Kx509Request;
+typedef struct kdc_request_desc *kdc_request_t;
+
 #include <kdc-private.h>
 
 krb5_kdc_configuration *config;
@@ -118,7 +120,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	if (ret)
 	    goto failed;
 
-	ret = hdb_enctype2key(context, &user->entry,
+	ret = hdb_enctype2key(context, &user->entry, NULL,
 			      ETYPE_ARCFOUR_HMAC_MD5, &key);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "NTLM missing arcfour key");

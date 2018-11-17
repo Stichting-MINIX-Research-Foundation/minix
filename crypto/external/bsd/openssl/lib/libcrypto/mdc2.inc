@@ -1,4 +1,4 @@
-#	$NetBSD: mdc2.inc,v 1.3 2012/07/12 18:44:49 christos Exp $
+#	$NetBSD: mdc2.inc,v 1.4 2017/05/21 14:24:05 riastradh Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,8 +9,6 @@
 
 
 MDC2_SRCS = mdc2_one.c
-# MDC2 is a patented algorithm; abort().
-# see ../libcrypto_mdc2
 SRCS+=	${MDC2_SRCS} mdc2dgst.c
 
 .for cryptosrc in ${MDC2_SRCS}

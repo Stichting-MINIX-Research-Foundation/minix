@@ -82,23 +82,69 @@ ${kadmin} -l add -p foo --use-defaults bar@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults baz@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults bez@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults fez@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults hasalias@${R} || exit 1
 ${kadmin} -l add -p foo --use-defaults pkinit@${R} || exit 1
 ${kadmin} -l modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" pkinit@${R} || exit 1
 
 echo foo > ${objdir}/foopassword
 
-echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    kill -9 ${kadmpid}
-    exit 1
-fi
+echo Starting kdc ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill -9 ${kdcpid} ${kadmpid}" EXIT
+
+#----------------------------------
+echo "kinit (no admin); test mod --alias authorization"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} hasalias@${R} || exit 1
+
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+# Check that one non-permitted alias -> failure
+env KRB5CCNAME=${cache} \
+${kadmin} -p hasalias@${R} modify --alias=goodalias1@${R} --alias=badalias@${R} hasalias@${R} &&
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+wait $kadmpid || { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+# Check that all permitted aliases -> success
+env KRB5CCNAME=${cache} \
+${kadmin} -p hasalias@${R} modify --alias=goodalias1@${R} --alias=goodalias2@${R} hasalias@${R} ||
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+wait $kadmpid || { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+# Check that we can drop aliases
+env KRB5CCNAME=${cache} \
+${kadmin} -p hasalias@${R} modify --alias=goodalias3@${R} hasalias@${R} ||
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+wait $kadmpid || { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+${kadmin} -l get hasalias@${R} | grep Aliases: > kadmin.tmp
+read junk aliases < kadmin.tmp
+rm kadmin.tmp
+[ "$aliases" != "goodalias3@${R}" ] && { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+env KRB5CCNAME=${cache} \
+${kadmin} -p hasalias@${R} modify --alias=goodalias1@${R} --alias=goodalias2@${R} --alias=goodalias3@${R} hasalias@${R} ||
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+wait $kadmpid || { echo "kadmind failed $?"; cat messages.log ; exit 1; }
+${kadmin} -l get hasalias@${R} | grep Aliases: > kadmin.tmp
+read junk aliases < kadmin.tmp
+rm kadmin.tmp
+[ "$aliases" != "goodalias1@${R} goodalias2@${R} goodalias3@${R}" ] && { echo "FOO failed $?"; cat messages.log ; exit 1; }
 
 #----------------------------------
 ${kadmind} -d &

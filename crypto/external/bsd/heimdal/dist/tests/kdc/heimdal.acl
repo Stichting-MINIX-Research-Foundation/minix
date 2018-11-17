@@ -3,3 +3,7 @@ bar@TEST.H5L.SE all
 baz@TEST.H5L.SE get,add *
 bez@TEST.H5L.SE get,add *@TEST.H5L.SE
 fez@TEST.H5L.SE get,add
+hasalias@TEST.H5L.SE get,mod hasalias@TEST.H5L.SE
+hasalias@TEST.H5L.SE get,add goodalias1@TEST.H5L.SE
+hasalias@TEST.H5L.SE get,add goodalias2@TEST.H5L.SE
+hasalias@TEST.H5L.SE get,add goodalias3@TEST.H5L.SE

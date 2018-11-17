@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009-2016, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -67,11 +67,6 @@ $(LIBEXECDIR)\hprop.exe: $(OBJ)\hprop.obj $(OBJ)\mit_dump.obj $(BIN_LIBS) $(OBJ)
 	$(EXECONLINK)
 	$(EXEPREP)
 
-!ifdef KRB4
-$(LIBEXECDIR)\hprop.exe: $(OBJ)\v4_dump.obj
-!endif
-
-
 $(LIBEXECDIR)\hpropd.exe: $(OBJ)\hpropd.obj $(BIN_LIBS) $(OBJ)\hpropd-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
@@ -91,7 +86,7 @@ $(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
 $(LIBEXECDIR)\kdc.exe: \
 		$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj \
 		$(OBJ)\main.obj $(OBJ)\kdc-version.res \
-		$(LIBKDC) $(BIN_LIBS)
+		$(LIBKDC) $(BIN_LIBS) $(LIB_openssl_crypto)
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -99,32 +94,30 @@ LIBKDC_OBJS=\
 	$(OBJ)\default_config.obj	\
 	$(OBJ)\set_dbinfo.obj 	\
 	$(OBJ)\digest.obj	\
+	$(OBJ)\fast.obj	\
 	$(OBJ)\kerberos5.obj	\
 	$(OBJ)\krb5tgs.obj	\
 	$(OBJ)\pkinit.obj	\
+	$(OBJ)\pkinit-ec.obj	\
 	$(OBJ)\log.obj		\
 	$(OBJ)\misc.obj		\
 	$(OBJ)\kx509.obj	\
 	$(OBJ)\process.obj	\
 	$(OBJ)\windc.obj
 
-!ifdef KRB4
-LIBKDC_OBJS=$(LIBKDC_OBJS) \
-	$(OBJ)\524.obj		\
-	$(OBJ)\kerberos4.obj
-!endif
-
 LIBKDC_LIBS=\
-	$(LIBHDB)	\
-	$(LIBHEIMDAL)	\
-	$(LIBHEIMNTLM)	\
+	$(LIBHDB)		\
+	$(LIBHEIMBASE)		\
+	$(LIBHEIMDAL)		\
+	$(LIBHEIMNTLM)		\
+	$(LIB_openssl_crypto)	\
 	$(LIBROKEN)
 
 LIBKDCRES=$(OBJ)\libkdc-version.res
 
 $(LIBEXECDIR)\libkdc.dll: $(LIBKDC_OBJS) $(LIBKDC_LIBS) $(LIBKDCRES)
 	$(DLLGUILINK) -implib:$(LIBKDC) -def:libkdc-exports.def
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 $(LIBKDC): $(LIBEXECDIR)\libkdc.dll
 
@@ -135,22 +128,18 @@ libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	set_dbinfo.c	 	\
 	digest.c		\
+	fast.c		\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\
 	pkinit.c		\
+	pkinit-ec.c		\
 	log.c			\
 	misc.c			\
 	kx509.c			\
 	process.c		\
 	windc.c			\
 	rx.h
-
-!ifdef KRB4
-libkdc_la_SOURCES=$(libkdc_la_SOURCES) \
-	524.c			\
-	kerberos4.c
-!endif
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)
 	$(PERL) ..\cf\make-proto.pl -q -P remove -o $@ $(libkdc_la_SOURCES) \

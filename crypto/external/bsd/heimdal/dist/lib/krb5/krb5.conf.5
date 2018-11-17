@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5.conf.5,v 1.4 2014/04/24 13:45:34 pettai Exp $
+.\"	$NetBSD: krb5.conf.5,v 1.6 2017/01/28 21:31:49 christos Exp $
 .\"
 .\" Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -146,7 +146,7 @@ Default realm to use, this is also known as your
 The default is the result of
 .Fn krb5_get_host_realm "local hostname" .
 .It Li allow_weak_crypto = Va boolean
-is weaks crypto algorithms allowed to be used, among others, DES is
+are weak crypto algorithms allowed to be used, among others, DES is
 considered weak.
 .It Li clockskew = Va time
 Maximum time differential (in seconds) allowed when comparing
@@ -154,11 +154,6 @@ times.
 Default is 300 seconds (five minutes).
 .It Li kdc_timeout = Va time
 Maximum time to wait for a reply from the kdc, default is 3 seconds.
-.It Li v4_name_convert
-.It Li v4_instance_resolve
-These are described in the
-.Xr krb5_425_conv_principal  3
-manual page.
 .It Li capath = {
 .Bl -tag -width "xxx" -offset indent
 .It Va destination-realm Li = Va next-hop-realm
@@ -175,9 +170,9 @@ the default credentials cache name.
 If you want to change the type only use
 .Li default_cc_type .
 The string can contain variables that are expanded on runtime.
-Only support variable now is
+The Only supported variable currently is
 .Li %{uid}
-that expands to the current user id.
+which expands to the current user id.
 .It Li default_etypes = Va etypes ...
 A list of default encryption types to use. (Default: all enctypes if
 allow_weak_crypto = TRUE, else all enctypes except single DES enctypes.)
@@ -244,24 +239,172 @@ Scan all network interfaces for addresses, as opposed to simply using
 the address associated with the system's host name.
 .It Li fcache_version = Va int
 Use file credential cache format version specified.
-.It Li krb4_get_tickets = Va boolean
-Also get Kerberos 4 tickets in
-.Nm kinit ,
-.Nm login ,
-and other programs.
-This option is also valid in the [realms] section.
 .It Li fcc-mit-ticketflags = Va boolean
 Use MIT compatible format for file credential cache.
 It's the field ticketflags that is stored in reverse bit order for
 older than Heimdal 0.7.
 Setting this flag to
 .Dv TRUE
-make it store the MIT way, this is default for Heimdal 0.7.
+makes it store the MIT way, this is default for Heimdal 0.7.
 .It Li check-rd-req-server
-If set to "ignore", the framework will ignore any the server input to
-.Xr krb5_rd_req 3,
+If set to "ignore", the framework will ignore any of the server input to
+.Xr krb5_rd_req 3 ,
 this is very useful when the GSS-API server input the
 wrong server name into the gss_accept_sec_context call.
+.It Li k5login_directory = Va directory
+Alternative location for user .k5login files. This option is provided
+for compatibility with MIT krb5 configuration files.
+.It Li k5login_authoritative = Va boolean
+If true then if a principal is not found in k5login files then
+.Xr krb5_userok 3
+will not fallback on principal to username mapping. This option is
+provided for compatibility with MIT krb5 configuration files.
+.It Li kuserok = Va rule ...
+Specifies
+.Xr krb5_userok 3
+behavior.  If multiple values are given, then
+.Xr krb5_userok 3
+will evaluate them in order until one succeeds or all fail.  Rules are
+implemented by plugins, with three built-in plugins
+described below. Default: USER-K5LOGIN SIMPLE DENY.
+.It Li kuserok = Va DENY
+If set and evaluated then
+.Xr krb5_userok 3
+will deny access to the given username no matter what the principal name
+might be.
+.It Li kuserok = Va SIMPLE
+If set and evaluated then
+.Xr krb5_userok 3
+will use principal to username mapping (see auth_to_local below).  If
+the principal maps to the requested username then access is allowed.
+.It Li kuserok = Va SYSTEM-K5LOGIN[:directory]
+If set and evaluated then
+.Xr krb5_userok 3
+will use k5login files named after the
+.Va luser
+argument to
+.Xr krb5_userok 3
+in the given directory or in
+.Pa /etc/k5login.d/ .
+K5login files are text files, with each line containing just a principal
+name; principals apearing in a user's k5login file are permitted access
+to the user's account. Note: this rule performs no ownership nor
+permissions checks on k5login files; proper ownership and
+permissions/ACLs are expected due to the k5login location being a
+system location.
+.It Li kuserok = Va USER-K5LOGIN
+If set and evaluated then
+.Xr krb5_userok 3
+will use
+.Pa ~luser/.k5login
+and
+.Pa ~luser/.k5login.d/* .
+User k5login files and directories must be owned by the user and must
+not have world nor group write permissions.
+.It Li aname2lname-text-db = Va filename
+The named file must be a sorted (in increasing order) text file where
+every line consists of an unparsed principal name optionally followed by
+whitespace and a username.  The aname2lname function will do a binary
+search on this file, if configured, looking for lines that match the
+given principal name, and if found the given username will be used, or,
+if the username is missing, an error will be returned.  If the file
+doesn't exist, or if no matching line is found then other plugins will
+be allowed to run.
+.It Li fcache_strict_checking
+strict checking in FILE credential caches that owner, no symlink and
+permissions is correct.
+.It Li name_canon_rules = Va rules
+One or more service principal name canonicalization rules.  Each rule
+consists of one or more tokens separated by colon (':').  Currently
+these rules are used only for hostname canonicalization (usually when
+getting a service ticket, from a ccache or a TGS, but also when
+acquiring GSS initiator credentials from a keytab).  These rules can be
+used to implement DNS resolver-like search lists without having to use
+DNS.
+.Pp
+NOTE: Name canonicalization rules are an experimental feature.
+.Pp
+The first token is a rule type, one of:
+.Va as-is,
+.Va qualify, or
+.Va nss.
+.Pp
+Any remaining tokens must be options tokens:
+.Va use_fast
+(use FAST to protect TGS exchanges; currently not supported),
+.Va use_dnssec
+(use DNSSEC to protect hostname lookups; currently not supported),
+.Va ccache_only
+,
+.Va use_referrals,
+.Va no_referrals,
+.Va lookup_realm,
+.Va mindots=N,
+.Va maxdots=N,
+.Va order=N,
+domain=
+.Va domain,
+realm=
+.Va realm,
+match_domain=
+.Va domain,
+and match_realm=
+.Va realm.
+.Pp
+When trying to obtain a service ticket for a host-based service
+principal name, name canonicalization rules are applied to that name in
+the order given, one by one, until one succeds (a service ticket is
+obtained), or all fail.  Similarly when acquiring GSS initiator
+credentials from a keytab, and when comparing a non-canonical GSS name
+to a canonical one.
+.Pp
+For each rule the system checks that the hostname has at least
+.Va mindots
+periods (if given) in it, at most
+.Va maxdots
+periods (if given), that the hostname ends in the given
+.Va match_domain
+(if given),
+and that the realm of the principal matches the
+.Va match_realm
+(if given).
+.Pp
+.Va As-is
+rules leave the hostname unmodified but may set a realm.
+.Va Qualify
+rules qualify the hostname with the given
+.Va domain
+and also may set the realm.
+The
+.Va nss
+rule uses the system resolver to lookup the host's canonical name and is
+usually not secure.  Note that using the
+.Va nss
+rule type implies having to have principal aliases in the HDB (though
+not necessarily in keytabs).
+.Pp
+The empty realm denotes "ask the client's realm's TGS".  The empty realm
+may be set as well as matched.
+.Pp
+The order in which rules are applied is as follows: first all the rules
+with explicit
+.Va order
+then all other rules in the order in which they appear.  If any two
+rules have the same explicit
+.Va order ,
+their order of appearance in krb5.conf breaks the tie.  Explicitly
+specifying order can be useful where tools read and write the
+configuration file without preserving parameter order.
+.Pp
+Malformed rules are ignored.
+.It Li allow_hierarchical_capaths = Va boolean
+When validating cross-realm transit paths, absent any explicit capath from the
+client realm to the server realm, allow a hierarchical transit path via the
+common ancestor domain of the two realms.
+Defaults to true.
+Note, absent an explicit setting, hierarchical capaths are always used by
+the KDC when generating a referral to a destination with which is no direct
+trust.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
@@ -321,17 +464,65 @@ to the database are performed.
 Points to the server where all the password changes are performed.
 If there is no such entry, the kpasswd port on the admin_server host
 will be tried.
-.It Li krb524_server = Va host[:port]
-Points to the server that does 524 conversions.
-If it is not mentioned, the krb524 port on the kdcs will be tried.
-.It Li v4_instance_convert
-.It Li v4_name_convert
-.It Li default_domain
-See
-.Xr krb5_425_conv_principal 3 .
 .It Li tgs_require_subkey
 a boolan variable that defaults to false.
 Old DCE secd (pre 1.1) might need this to be true.
+.It Li auth_to_local_names = {
+.Bl -tag -width "xxx" -offset indent
+.It Va principal_name = Va username
+The given
+.Va principal_name
+will be mapped to the given
+.Va username
+if the
+.Va REALM
+is a default realm.
+.El
+.It Li }
+.It Li auth_to_local = HEIMDAL_DEFAULT
+Use the Heimdal default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DEFAULT
+Use the MIT default principal to username mapping.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db.txt
+Use a binary search of the given DB.  The DB must be a flat-text
+file sortedf in the "C" locale, with each record being a line
+(separated by either LF or CRLF) consisting of a principal name
+followed by whitespace followed by a username.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = DB:/path/to/db
+Use the given DB, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = RULE:...
+Use the given rule, if there's a plugin for it.
+Applies to principals from the
+.Va REALM
+if and only if
+.Va REALM
+is a default realm.
+.It Li auth_to_local = NONE
+No additional principal to username mapping is done. Note that
+.Va auth_to_local_names
+and any preceding
+.Va auth_to_local
+rules have precedence.
 .El
 .It Li }
 .El
@@ -370,8 +561,10 @@ manual page for a list of defined destinations.
 .Bl -tag -width "xxx" -offset indent
 .It Li database Li = {
 .Bl -tag -width "xxx" -offset indent
-.It Li dbname Li = Va DATABASENAME
-Use this database for this realm.
+.It Li dbname Li = Va [DATBASETYPE:]DATABASENAME
+Use this database for this realm.  The
+.Va DATABASETYPE
+should be one of 'lmdb', 'db3', 'db1', 'db', 'sqlite', or 'ldap'.
 See the info documetation how to configure different database backends.
 .It Li realm Li = Va REALM
 Specifies the realm that will be stored in this database.
@@ -390,30 +583,37 @@ Use this file for the ACL list of this database.
 Use this file as the log of changes performed to the database.
 This file is used by
 .Nm ipropd-master
-for propagating changes to slaves.
+for propagating changes to slaves.  It is also used by
+.Nm kadmind
+and
+.Nm kadmin
+(when used with the
+.Li -l
+option), and by all applications using
+.Nm libkadm5
+with the local backend, for two-phase commit functionality.  Slaves also
+use this.  Setting this to
+.Nm /dev/null
+disables two-phase commit and incremental propagation.  Use
+.Nm iprop-log
+to show the contents of this log file.
+.It Li log-max-size = Pa number
+When the log reaches this size (in bytes), the log will be truncated,
+saving some entries, and keeping the latest version number so as to not
+disrupt incremental propagation.  If set to a negative value then
+automatic log truncation will be disabled.  Defaults to 52428800 (50MB).
 .El
 .It Li }
 .It Li max-request = Va SIZE
 Maximum size of a kdc request.
 .It Li require-preauth = Va BOOL
 If set pre-authentication is required.
-Since krb4 requests are not pre-authenticated they will be rejected.
 .It Li ports = Va "list of ports"
 List of ports the kdc should listen to.
 .It Li addresses = Va "list of interfaces"
 List of addresses the kdc should bind to.
-.It Li enable-kerberos4 = Va BOOL
-Turn on Kerberos 4 support.
-.It Li v4-realm = Va REALM
-To what realm v4 requests should be mapped.
-.It Li enable-524 = Va BOOL
-Should the Kerberos 524 converting facility be turned on.
-Default is the same as
-.Va enable-kerberos4 .
 .It Li enable-http = Va BOOL
 Should the kdc answer kdc-requests over http.
-.It Li enable-kaserver = Va BOOL
-If this kdc should emulate the AFS kaserver.
 .It Li tgt-use-strongest-session-key = Va BOOL
 If this is TRUE then the KDC will prefer the strongest key from the
 client's AS-REQ or TGS-REQ enctype list for the ticket session key that
@@ -451,14 +651,6 @@ The time before expiration that the user should be warned that her
 password is about to expire.
 .It Li logging = Va Logging
 What type of logging the kdc should use, see also [logging]/kdc.
-.It Li use_2b = {
-.Bl -tag -width "xxx" -offset indent
-.It Va principal Li = Va BOOL
-boolean value if the 524 daemon should return AFS 2b tokens for
-.Fa principal .
-.It ...
-.El
-.It Li }
 .It Li hdb-ldap-structural-object Va structural object
 If the LDAP backend is used for storing principals, this is the
 structural object that will be used when creating and when reading
@@ -472,11 +664,44 @@ Should the kdc answer digest requests. The default is FALSE.
 .It Li digests_allowed = Va list of digests
 Specifies the digests the kdc will reply to. The default is
 .Li ntlm-v2 .
+.It Li kx509_ca = Va file
+Specifies the PEM credentials for the kx509 certification authority.
+.It Li require_initial_kca_tickets = Va boolean
+Specified whether to require that tickets for the
+.Li kca_service
+service principal be INITIAL.
+This may be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_include_pkinit_san = Va boolean
+If true then the kx509 client principal's name and realm will be
+included in an
+.Li id-pkinit-san
+certificate extension.
+This can be set on a per-realm basis as well as globally.
+Defaults to true for the global setting.
+.It Li kx509_template = Va file
+Specifies the PEM file with a template for the certificates to be
+issued.
+The following variables can be interpolated in the subject name using
+${variable} syntax:
+.Bl -tag -width "xxx" -offset indent
+.It principal-name
+The full name of the kx509 client principal.
+.It principal-name-without-realm
+The full name of the kx509 client principal, excluding the realm name.
+.It principal-name-realm
+The name of the client principal's realm.
 .El
+.El
+The 
+.Li kx509 ,
+.Li kx509_template ,
+.Li kx509_include_pkinit_san ,
+and
+.Li require_initial_kca_tickets
+parameters may be set on a per-realm basis as well.
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
-.It Li require-preauth = Va BOOL
-If pre-authentication is required to talk to the kadmin server.
 .It Li password_lifetime = Va time
 If a principal already have its password set for expiration, this is
 the time it will be valid for after a change.
@@ -498,17 +723,27 @@ Additional special values of keytypes are:
 .It Li v5
 The Kerberos 5 salt
 .Va pw-salt
-.It Li v4
-The Kerberos 4 salt
-.Va des:pw-salt:
 .El
+.It Li default_key_rules = Va {
+.Bl -tag -width "xxx" -offset indent
+.It Va globing-rule Li = Va keytypes...
+a globbing rule to matching a principal, and when true, use the
+keytypes as specified the same format as [kadmin]default_keys .
+.El
+.It Li }
+.It Li prune-key-history = Va BOOL
+When adding keys to the key history, drop keys that are too old to match
+unexpired tickets (based on the principal's maximum ticket lifetime).
+If the KDC keystore is later compromised traffic protected with the
+discarded older keys may remain protected.  This also keeps the HDB
+records for principals with key history from growing without bound.
+The default (backwards compatible) value is "false".
 .It Li use_v4_salt = Va BOOL
 When true, this is the same as
 .Pp
 .Va default_keys = Va des3:pw-salt Va v4
 .Pp
 and is only left for backwards compatibility.
-.El
 .It Li [password_quality]
 Check the Password quality assurance in the info documentation for
 more information.
@@ -524,6 +759,7 @@ List of policy names to apply to the password. Builtin policies are
 among other minimum-length, character-class, external-check.
 .El
 .El
+.El
 .Sh ENVIRONMENT
 .Ev KRB5_CONFIG
 points to the configuration file to read.
@@ -536,24 +772,26 @@ configuration file for Kerberos 5.
 .Bd -literal -offset indent
 [libdefaults]
 	default_realm = FOO.SE
+	name_canon_rules = as-is:realm=FOO.SE
+	name_canon_rules = qualify:domain=foo.se:realm=FOO.SE
+	name_canon_rules = qualify:domain=bar.se:realm=FOO.SE
+	name_canon_rules = nss
 [domain_realm]
 	.foo.se = FOO.SE
 	.bar.se = FOO.SE
 [realms]
 	FOO.SE = {
 		kdc = kerberos.foo.se
-		v4_name_convert = {
-			rcmd = host
-		}
-		v4_instance_convert = {
-			xyz = xyz.bar.se
-		}
 		default_domain = foo.se
 	}
 [logging]
 	kdc = FILE:/var/heimdal/kdc.log
 	kdc = SYSLOG:INFO
 	default = SYSLOG:INFO:USER
+[kadmin]
+	default_key_rules = {
+		*/ppp@* = arcfour-hmac-md5:pw-salt
+	}
 .Ed
 .Sh DIAGNOSTICS
 Since
@@ -571,7 +809,6 @@ are actually used and thus cannot warn about unknown or misspelled
 ones.
 .Sh SEE ALSO
 .Xr kinit 1 ,
-.Xr krb5_425_conv_principal 3 ,
 .Xr krb5_openlog 3 ,
 .Xr strftime 3 ,
 .Xr verify_krb5_conf 8

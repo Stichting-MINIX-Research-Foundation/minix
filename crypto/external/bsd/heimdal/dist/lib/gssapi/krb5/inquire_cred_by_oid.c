@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_cred_by_oid.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: inquire_cred_by_oid.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -36,7 +36,7 @@
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred_by_oid
 	   (OM_uint32 * minor_status,
-	    const gss_cred_id_t cred_handle,
+	    gss_const_cred_id_t cred_handle,
 	    const gss_OID desired_object,
 	    gss_buffer_set_t *data_set)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2014/04/24 13:45:33 pettai Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -142,6 +142,61 @@ edit_attributes (const char *prompt, krb5_flags *attr, int *mask, int bit)
 	if (resp[0] == '\0')
 	    break;
 	if (parse_attributes (resp, attr, mask, bit) == 0)
+	    break;
+    }
+    return 0;
+}
+
+/*
+ * try to parse the string `resp' into policy in `attr', also
+ * setting the `bit' in `mask' if attributes are given and valid.
+ */
+
+#define VALID_POLICY_NAME_CHARS \
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
+
+int
+parse_policy (const char *resp, char **policy, int *mask, int bit)
+{
+    if (strspn(resp, VALID_POLICY_NAME_CHARS) == strlen(resp) &&
+	*resp != '\0') {
+	
+	*policy = strdup(resp);
+	if (*policy == NULL) {
+	    fprintf (stderr, "Out of memory");
+	    return -1;
+	}
+	if (mask)
+	    *mask |= bit;
+	return 0;
+    } else if(*resp == '?') {
+	print_flags_table (kdb_attrs, stderr);
+    } else {
+	fprintf (stderr, "Unable to parse \"%s\"\n", resp);
+    }
+    return -1;
+}
+
+/*
+ * allow the user to edit the attributes in `attr', prompting with `prompt'
+ */
+
+int
+edit_policy (const char *prompt, char **policy, int *mask, int bit)
+{
+    char buf[1024], resp[1024];
+
+    if (mask && (*mask & bit))
+	return 0;
+
+    buf[0] = '\0';
+    strlcpy(buf, "default", sizeof (buf));
+    for (;;) {
+	if(get_response("Policy", buf, resp, sizeof(resp)) != 0)
+	    return 1;
+	if (resp[0] == '\0')
+	    break;
+	if (parse_policy (resp, policy, mask, bit) == 0)
 	    break;
     }
     return 0;
@@ -393,6 +448,14 @@ set_defaults(kadm5_principal_ent_t ent, int *mask,
 	&& (default_mask & KADM5_ATTRIBUTES)
 	&& !(*mask & KADM5_ATTRIBUTES))
 	ent->attributes = default_ent->attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
+
+    if (default_ent
+	&& (default_mask & KADM5_POLICY)
+	&& !(*mask & KADM5_POLICY)) {
+	ent->policy = strdup(default_ent->policy);
+	if (ent->policy == NULL)
+	    abort();
+    }
 }
 
 int
@@ -422,6 +485,10 @@ edit_entry(kadm5_principal_ent_t ent, int *mask,
 			KADM5_ATTRIBUTES) != 0)
 	return 1;
 
+    if(edit_policy ("Policy", &ent->policy, mask,
+			KADM5_POLICY) != 0)
+	return 1;
+
     return 0;
 }
 
@@ -439,7 +506,8 @@ set_entry(krb5_context contextp,
 	  const char *max_renewable_life,
 	  const char *expiration,
 	  const char *pw_expiration,
-	  const char *attributes)
+	  const char *attributes,
+	  const char *policy)
 {
     if (max_ticket_life != NULL) {
 	if (parse_deltat (max_ticket_life, &ent->max_life,
@@ -473,6 +541,13 @@ set_entry(krb5_context contextp,
     if (attributes != NULL) {
 	if (parse_attributes (attributes, &ent->attributes,
 			      mask, KADM5_ATTRIBUTES)) {
+	    krb5_warnx (contextp, "unable to parse `%s'", attributes);
+	    return 1;
+	}
+    }
+    if (policy != NULL) {
+	if (parse_policy (policy, &ent->policy,
+			      mask, KADM5_POLICY)) {
 	    krb5_warnx (contextp, "unable to parse `%s'", attributes);
 	    return 1;
 	}

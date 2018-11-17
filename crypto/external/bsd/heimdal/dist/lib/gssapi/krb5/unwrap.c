@@ -1,4 +1,4 @@
-/*	$NetBSD: unwrap.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: unwrap.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -384,7 +384,7 @@ unwrap_des3
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_buffer_t input_message_buffer,
             gss_buffer_t output_message_buffer,
             int * conf_state,
@@ -394,7 +394,6 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
   krb5_keyblock *key;
   krb5_context context;
   OM_uint32 ret;
-  krb5_keytype keytype;
   gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
 
   output_message_buffer->value = NULL;
@@ -416,12 +415,13 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
       *minor_status = ret;
       return GSS_S_FAILURE;
   }
-  krb5_enctype_to_keytype (context, key->keytype, &keytype);
 
   *minor_status = 0;
 
-  switch (keytype) {
-  case KEYTYPE_DES :
+  switch (key->keytype) {
+  case KRB5_ENCTYPE_DES_CBC_CRC :
+  case KRB5_ENCTYPE_DES_CBC_MD4 :
+  case KRB5_ENCTYPE_DES_CBC_MD5 :
 #ifdef HEIM_WEAK_CRYPTO
       ret = unwrap_des (minor_status, ctx,
 			input_message_buffer, output_message_buffer,
@@ -430,13 +430,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
       ret = GSS_S_FAILURE;
 #endif
       break;
-  case KEYTYPE_DES3 :
+  case KRB5_ENCTYPE_DES3_CBC_MD5 :
+  case KRB5_ENCTYPE_DES3_CBC_SHA1 :
       ret = unwrap_des3 (minor_status, ctx, context,
 			 input_message_buffer, output_message_buffer,
 			 conf_state, qop_state, key);
       break;
-  case KEYTYPE_ARCFOUR:
-  case KEYTYPE_ARCFOUR_56:
+  case KRB5_ENCTYPE_ARCFOUR_HMAC_MD5:
+  case KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56:
       ret = _gssapi_unwrap_arcfour (minor_status, ctx, context,
 				    input_message_buffer, output_message_buffer,
 				    conf_state, qop_state, key);

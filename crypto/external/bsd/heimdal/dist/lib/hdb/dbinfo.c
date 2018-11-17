@@ -1,4 +1,4 @@
-/*	$NetBSD: dbinfo.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: dbinfo.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -110,11 +110,9 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 				      NULL);
     if (db_binding) {
 
-	ret = get_dbinfo(context, db_binding, "default", &di);
-	if (ret == 0 && di) {
-	    databases = di;
-	    dt = &di->next;
-	}
+	ret = get_dbinfo(context, db_binding, "default", &databases);
+	if (ret == 0 && databases != NULL)
+	    dt = &databases->next;
 
 	for ( ; db_binding != NULL; db_binding = db_binding->next) {
 
@@ -131,36 +129,41 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 
 	    if (dt)
 		*dt = di;
-	    else
+	    else {
+                hdb_free_dbinfo(context, &databases);
 		databases = di;
+            }
 	    dt = &di->next;
 
 	}
     }
 
-    if(databases == NULL) {
+    if (databases == NULL) {
 	/* if there are none specified, create one and use defaults */
-	di = calloc(1, sizeof(*di));
-	databases = di;
-	di->label = strdup("default");
+	databases = calloc(1, sizeof(*databases));
+	databases->label = strdup("default");
     }
 
-    for(di = databases; di; di = di->next) {
-	if(di->dbname == NULL) {
+    for (di = databases; di; di = di->next) {
+	if (di->dbname == NULL) {
 	    di->dbname = strdup(default_dbname);
 	    if (di->mkey_file == NULL)
 		di->mkey_file = strdup(default_mkey);
 	}
-	if(di->mkey_file == NULL) {
+	if (di->mkey_file == NULL) {
 	    p = strrchr(di->dbname, '.');
 	    if(p == NULL || strchr(p, '/') != NULL)
 		/* final pathname component does not contain a . */
-		asprintf(&di->mkey_file, "%s.mkey", di->dbname);
+		ret = asprintf(&di->mkey_file, "%s.mkey", di->dbname);
 	    else
 		/* the filename is something.else, replace .else with
                    .mkey */
-		asprintf(&di->mkey_file, "%.*s.mkey",
-			 (int)(p - di->dbname), di->dbname);
+		ret = asprintf(&di->mkey_file, "%.*s.mkey",
+			       (int)(p - di->dbname), di->dbname);
+	    if (ret == -1) {
+                hdb_free_dbinfo(context, &databases);
+		return ENOMEM;
+            }
 	}
 	if(di->acl_file == NULL)
 	    di->acl_file = strdup(default_acl);
@@ -250,6 +253,12 @@ hdb_free_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
 const char *
 hdb_db_dir(krb5_context context)
 {
+    const char *p;
+
+    p = krb5_config_get_string(context, NULL, "hdb", "db-dir", NULL);
+    if (p)
+	return p;
+
     return HDB_DB_DIR;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: error.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2001 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ com_right_r(struct et_list *list, long code, char *str, size_t len)
 	    const char *msg = p->table->msgs[code - p->table->base];
 #ifdef LIBINTL
 	    char domain[12 + 20];
-	    snprintf(domain, sizeof(domain), "heim_com_err%d", p->table->base);
+	    snprintf(domain, sizeof(domain), "heim_com_err%ld", p->table->base);
 #endif
 	    strlcpy(str, dgettext(domain, msg), len);
 	    return str;

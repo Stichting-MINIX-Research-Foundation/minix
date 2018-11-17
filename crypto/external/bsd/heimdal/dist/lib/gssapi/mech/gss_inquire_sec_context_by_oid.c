@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_inquire_sec_context_by_oid.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_inquire_sec_context_by_oid.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -36,7 +36,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_sec_context_by_oid (OM_uint32 *minor_status,
-	                        const gss_ctx_id_t context_handle,
+	                        gss_const_ctx_id_t context_handle,
 	                        const gss_OID desired_object,
 	                        gss_buffer_set_t *data_set)
 {

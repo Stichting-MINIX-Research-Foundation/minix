@@ -1,0 +1,183 @@
+#!/bin/sh
+#
+# Copyright (c) 2006 - 2011 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden). 
+# All rights reserved. 
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions 
+# are met: 
+#
+# 1. Redistributions of source code must retain the above copyright 
+#    notice, this list of conditions and the following disclaimer. 
+#
+# 2. Redistributions in binary form must reproduce the above copyright 
+#    notice, this list of conditions and the following disclaimer in the 
+#    documentation and/or other materials provided with the distribution. 
+#
+# 3. Neither the name of the Institute nor the names of its contributors 
+#    may be used to endorse or promote products derived from this software 
+#    without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE. 
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+KRB5_CONFIG="${1-${objdir}/krb5.conf}"
+export KRB5_CONFIG
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+# If there is no useful db support compile in, disable test
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+
+port=@port@
+
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+
+server=host/datan.test.h5l.se
+cache="FILE:${objdir}/cache.krb5"
+acache="FILE:${objdir}/acache.krb5"
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+akinit="${kinit} -c $acache ${afs_no_afslog}"
+klist="${klist} -c $cache"
+aklist="${klist} -c $acache"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+rm -f ${keytabfile}
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+
+> messages.log
+
+echo Creating database
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R} || exit 1
+
+${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+${kadmin} add -p foo --use-defaults ${server}@${R} || exit 1
+
+echo "Doing database check"
+${kadmin} check ${R} || exit 1
+
+echo foo > ${objdir}/foopassword
+echo bar > ${objdir}/barpassword
+
+echo Starting kdc ; > messages.log
+env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
+
+trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXIT
+
+ec=0
+
+#
+# Check armor ticket
+#
+
+echo "Getting client initial tickets"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "Checking for FAST avail"
+${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+echo "Getting tickets"; > messages.log
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+echo "Listing tickets"; > messages.log
+${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Acquire host ticket to be used as an ARMOR ticket"; > messages.log
+${akinit} --password-file=${objdir}/foopassword ${server}@${R} >/dev/null|| { exit 1; }
+echo "Checking for FAST avail (in the FAST armor cache)"; > messages.log
+${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+#
+# Client tests
+#
+
+echo "Getting client initial tickets with FAST armor ticket"; > messages.log
+${kinit} --fast-armor-cache=${acache} \
+   --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Getting client initial tickets with FAST armor ticket [failure]"; > messages.log
+${kinit} --fast-armor-cache=${acache} \
+   --password-file=${objdir}/barpassword foo@$R 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "Checking for FAST avail (in the FAST acquired cache)"; > messages.log
+${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+echo "Getting service ticket"
+${kgetcred} ${server}@${R} || { exit 1; }
+${kdestroy}
+
+#
+# Use MIT client tools
+#
+
+mit=/usr/local/mitkerberos/bin
+
+if [ -f ${mit}/kinit ] ; then
+   echo "Running MIT FAST tests"
+
+    kinitpty=${objdir}/foopassword.rkpty
+cat > ${kinitpty} <<EOF
+expect Password
+password foo\n
+EOF
+
+   echo "Acquire host ticket"; > messages.log
+   ${rkpty} ${kinitpty} ${mit}/kinit -c ${acache} ${server}@${R} >/dev/null|| { exit 1; }
+   (${aklist} | grep ${server} > /dev/null ) || { exit 1; }
+
+   echo "Checking for FAST avail"; > messages.log
+   ${aklist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+   echo "Using plain to get a initial ticket"; > messages.log
+   ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} foo@${R} >/dev/null|| { exit 1; }
+   (${klist} | grep foo > /dev/null ) || { exit 1; }
+
+   echo "Using FAST to get a initial ticket"; > messages.log
+   ${rkpty} ${kinitpty} ${mit}/kinit -c ${cache} -T ${acache} foo@${R} >/dev/null || { exit 1; }
+   (${klist} | grep foo > /dev/null ) || { exit 1; }
+
+   echo "Checking for FAST avail"; > messages.log
+   ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
+
+   echo "Getting service ticket"; > messages.log
+   ${mit}/kvno -c ${cache} ${server}@${R} || { exit 1; }
+
+fi
+
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+
+trap "" EXIT
+
+exit $ec

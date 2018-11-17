@@ -8,7 +8,7 @@ id "Id"
 error_table hx
 prefix HX509
 
-# path validateion and construction related errors
+# path validation and construction related errors
 error_code BAD_TIMEFORMAT,	"ASN.1 failed call to system time library"
 error_code EXTENSION_NOT_FOUND,	"Extension not found"
 error_code NO_PATH,		"Certification path not found"
@@ -21,9 +21,9 @@ error_code CERT_USED_AFTER_TIME, "Certificate used after it became invalid"
 error_code PRIVATE_KEY_MISSING,	"Private key required for the operation is missing"
 error_code ALG_NOT_SUPP, 	"Algorithm not supported"
 error_code ISSUER_NOT_FOUND, 	"Issuer couldn't be found"
-error_code VERIFY_CONSTRAINTS,	"Error verifing constraints"
+error_code VERIFY_CONSTRAINTS,	"Error verifying constraints"
 error_code RANGE,		"Number too large"
-error_code NAME_CONSTRAINT_ERROR, "Error while verifing name constraints"
+error_code NAME_CONSTRAINT_ERROR, "Error while verifying name constraints"
 error_code PATH_TOO_LONG, "Path is too long, failed to find valid anchor"
 error_code KU_CERT_MISSING, "Required keyusage for this certificate is missing"
 error_code CERT_NOT_FOUND, "Certificate not found"
@@ -32,10 +32,10 @@ error_code PARENT_IS_CA, "Parent certificate is a CA"
 error_code EXTRA_DATA_AFTER_STRUCTURE, "Extra data was found after the structure"
 error_code PROXY_CERT_INVALID, "Proxy certificate is invalid"
 error_code PROXY_CERT_NAME_WRONG, "Proxy certificate name is wrong"
-error_code NAME_MALFORMED, "Name is malformated"
-error_code CERTIFICATE_MALFORMED, "Certificate is malformated"
+error_code NAME_MALFORMED, "Name is malformed"
+error_code CERTIFICATE_MALFORMED, "Certificate is malformed"
 error_code CERTIFICATE_MISSING_EKU, "Certificate is missing a required EKU"
-error_code PROXY_CERTIFICATE_NOT_CANONICALIZED, "Proxy certificate not canonicalize" 
+error_code PROXY_CERTIFICATE_NOT_CANONICALIZED, "Proxy certificate not canonicalized"
 
 # cms related errors
 index 32
@@ -58,9 +58,9 @@ error_code SIGNATURE_MISSING, "Signature missing for data"
 error_code BAD_SIGNATURE, "Signature is not valid"
 error_code SIG_NO_CONF, "Sigature doesn't provide confidentiality"
 error_code SIG_INVALID_FORMAT, "Invalid format on signature"
-error_code OID_MISMATCH, "Mismatch bewteen oids"
+error_code OID_MISMATCH, "Mismatch between oids"
 error_code NO_PROMPTER, "No prompter function defined"
-error_code SIGNATURE_WITHOUT_SIGNER, "Signature require signer, but non available"
+error_code SIGNATURE_WITHOUT_SIGNER, "Signature requires signer, but none available"
 error_code RSA_PUBLIC_ENCRYPT, "RSA public encyption failed"
 error_code RSA_PRIVATE_ENCRYPT, "RSA private encyption failed"
 error_code RSA_PUBLIC_DECRYPT, "RSA public decryption failed"
@@ -99,5 +99,11 @@ error_code TOKEN_CONFUSED,  "Token or slot failed in inconsistent way"
 error_code OPEN_SESSION,  "Failed to open session to slot"
 error_code LOGIN,  "Failed to login to slot"
 error_code LOAD,  "Failed to load PKCS module"
+
+# pkinit related errors
+error_code PIN_INCORRECT, "Incorrect User PIN"
+error_code PIN_LOCKED, "User PIN locked"
+error_code PIN_NOT_INITIALIZED, "User PIN not initialized"
+error_code PIN_EXPIRED, "User PIN expired"
 
 end

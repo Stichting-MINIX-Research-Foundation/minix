@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: crc.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@ static u_long table[256];
 
 #define CRC_GEN 0xEDB88320L
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_crc_init_table(void)
 {
     static int flag = 0;
@@ -62,7 +62,7 @@ _krb5_crc_init_table(void)
     flag = 1;
 }
 
-uint32_t
+KRB5_LIB_FUNCTION uint32_t KRB5_LIB_CALL
 _krb5_crc_update (const char *p, size_t len, uint32_t res)
 {
     while (len--)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/03/22 20:29:04 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2016/10/14 16:09:43 spz Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -30,6 +30,7 @@ CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses
 
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
+CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 
@@ -118,3 +119,5 @@ PKGCONFIG=libcrypto
 .include "${.CURDIR}/../../pkgconfig.mk"
 
 .include <bsd.lib.mk>
+# RC5 warning
+LDFLAGS+=-Wl,--no-fatal-warnings

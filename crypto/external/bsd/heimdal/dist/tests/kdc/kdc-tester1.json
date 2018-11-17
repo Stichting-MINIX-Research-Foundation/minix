@@ -1,0 +1,31 @@
+[
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kinit",
+		"client" : "foo@TEST.H5L.SE",
+		"password" : "foo"
+		}
+	},
+	{
+	"op" : "kinit",
+	"client" : "foo@TEST.H5L.SE",
+	"password" : "foo",
+	"ccache" : "MEMORY:cache"
+	},
+	{
+	"op" : "repeat",
+	"num" : 333,
+	"value" : {
+		"op" : "kgetcred",
+		"server" : "host/datan.test.h5l.se@TEST.H5L.SE",
+		"ccache" : "MEMORY:cache"
+		}
+	},
+	{
+	"op" : "kdestroy",
+	"ccache" : "MEMORY:cache"
+	}
+]
+

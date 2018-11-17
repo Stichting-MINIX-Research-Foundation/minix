@@ -1305,7 +1305,7 @@
 ./usr/tests/crypto/libcrypto/h_randtest		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/h_rc2test		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/h_rc4test		tests-crypto-tests	compattestfile,atf,crypto
-./usr/tests/crypto/libcrypto/h_rc5test		tests-crypto-tests	compattestfile,atf,crypto,crypto_rc5
+./usr/tests/crypto/libcrypto/h_rc5test		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/h_ripemdtest	tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	compattestfile,atf,crypto

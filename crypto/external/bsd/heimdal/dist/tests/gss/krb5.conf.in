@@ -6,6 +6,8 @@
 	default_keytab_name = @objdir@/server.keytab
 	dns_canonicalize_hostname = false
 	dns_lookup_realm = false
+	name_canon_rules = as-is:realm=TEST.H5L.SE
+	name_canon_rules = qualify:domain=test.h5l.se
 
 [realms]
 	TEST.H5L.SE = {
@@ -23,7 +25,11 @@
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE
 		mkey_file = @objdir@/mkey.file
+                log_file = @objdir@/current.log
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log

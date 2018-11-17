@@ -210,7 +210,6 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	compatmodules		${MKCOMPATMODULES} != no
 #	compattests		${MKCOMPATTESTS} != no
 #	crypto			${MKCRYPTO} != no
-#	crypto_rc5		${MKCRYPTO_RC5} != no
 #	cvs			${MKCVS} != no
 #	debug			${MKDEBUG} != no
 #	debuglib		${MKDEBUGLIB} != no

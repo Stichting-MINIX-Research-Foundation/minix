@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_glue.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gen_glue.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2003 - 2005 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: gen_glue.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static void
 generate_2int (const Type *t, const char *gen_name)
@@ -149,7 +149,8 @@ generate_glue (const Type *t, const char *gen_name)
 	if (!ASN1_TAILQ_EMPTY(t->members)) {
 	    generate_2int (t, gen_name);
 	    generate_int2 (t, gen_name);
-	    generate_units (t, gen_name);
+	    if (parse_units_flag)
+		generate_units (t, gen_name);
 	}
 	break;
     default :

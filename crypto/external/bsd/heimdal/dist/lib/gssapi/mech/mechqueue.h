@@ -1,4 +1,4 @@
-/*	$NetBSD: mechqueue.h,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: mechqueue.h,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*	NetBSD: queue.h,v 1.39 2004/04/18 14:25:34 lukem Exp	*/
 

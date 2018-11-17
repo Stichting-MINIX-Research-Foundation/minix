@@ -121,6 +121,9 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Setup algorithm identifier for cipher */
     encalg = X509_ALGOR_new();
+    if (encalg == NULL) {
+        goto merr;
+    }
     EVP_CIPHER_CTX_init(&ctx);
 
     if (EVP_EncryptInit_ex(&ctx, kekciph, NULL, NULL, NULL) <= 0) {
@@ -131,7 +134,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     ivlen = EVP_CIPHER_CTX_iv_length(&ctx);
 
     if (ivlen > 0) {
-        if (RAND_pseudo_bytes(iv, ivlen) <= 0)
+        if (RAND_bytes(iv, ivlen) <= 0)
             goto err;
         if (EVP_EncryptInit_ex(&ctx, NULL, NULL, NULL, iv) <= 0) {
             CMSerr(CMS_F_CMS_ADD0_RECIPIENT_PASSWORD, ERR_R_EVP_LIB);
@@ -298,7 +301,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         memcpy(out + 4, in, inlen);
         /* Add random padding to end */
         if (olen > inlen + 4
-            && RAND_pseudo_bytes(out + 4 + inlen, olen - 4 - inlen) < 0)
+            && RAND_bytes(out + 4 + inlen, olen - 4 - inlen) <= 0)
             return 0;
         /* Encrypt twice */
         EVP_EncryptUpdate(ctx, out, &dummy, out, olen);

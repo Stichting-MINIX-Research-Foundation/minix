@@ -37,7 +37,7 @@ intcflags=-I$(OBJ)
 
 BINPROGRAMS=\
 	$(BINDIR)\kinit.exe	\
-	$(BINDIR)\kcc.exe	\
+	$(BINDIR)\heimtools.exe	\
 	$(BINDIR)\kdestroy.exe	\
 	$(BINDIR)\kgetcred.exe	\
 	$(BINDIR)\kvno.exe	\
@@ -57,6 +57,9 @@ NOINSTPROGRAMS=\
 BINLIBS=\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
+!if !defined(NO_AFS)
+        $(LIBKAFS)      \
+!endif
 	$(LIBROKEN)	\
 	$(LIBVERS)
 
@@ -70,18 +73,18 @@ $(BINDIR)\kinit.exe: $(OBJ)\kinit.obj $(BINLIBS) $(OBJ)\kinit-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
-KCC_OBJS =				\
-	$(OBJ)\kcc-commands.obj		\
-	$(OBJ)\kcc.obj			\
+HEIMTOOLS_OBJS =				\
+	$(OBJ)\heimtools-commands.obj		\
+	$(OBJ)\heimtools.obj			\
 	$(OBJ)\kswitch.obj		\
 	$(OBJ)\klist.obj		\
 	$(OBJ)\copy_cred_cache.obj
 
-KCCLIBS=\
+HEIMTOOLSLIBS=\
 	$(BINLIBS)	\
 	$(LIBSL)
 
-$(BINDIR)\kcc.exe: $(KCC_OBJS) $(KCCLIBS) $(OBJ)\kcc-version.res
+$(BINDIR)\heimtools.exe: $(HEIMTOOLS_OBJS) $(HEIMTOOLSLIBS) $(OBJ)\heimtools-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
 
@@ -109,10 +112,10 @@ $(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
 	$(BINDIR)\slc.exe kdigest-commands.in
 	cd $(SRCDIR)
 
-$(OBJ)\kcc-commands.c $(OBJ)\kcc-commands.h: kcc-commands.in
+$(OBJ)\heimtools-commands.c $(OBJ)\heimtools-commands.h: heimtools-commands.in
 	cd $(OBJ)
-	$(CP) $(SRCDIR)\kcc-commands.in $(OBJ)
-	$(BINDIR)\slc.exe kcc-commands.in
+	$(CP) $(SRCDIR)\heimtools-commands.in $(OBJ)
+	$(BINDIR)\slc.exe heimtools-commands.in
 	cd $(SRCDIR)
 
 $(LIBEXECDIR)\kimpersonate.exe: $(OBJ)\kimpersonate.obj $(BINLIBS) $(OBJ)\kimpersonate-version.res

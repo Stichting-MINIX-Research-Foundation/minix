@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_error.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: bn_error.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_ERROR_C
@@ -19,7 +19,7 @@
 
 static const struct {
      int code;
-     char *msg;
+     const char *msg;
 } msgs[] = {
      { MP_OKAY, "Successful" },
      { MP_MEM,  "Out of heap" },
@@ -27,7 +27,7 @@ static const struct {
 };
 
 /* return a char * string for a given code */
-char *mp_error_to_string(int code)
+const char *mp_error_to_string(int code)
 {
    int x;
 

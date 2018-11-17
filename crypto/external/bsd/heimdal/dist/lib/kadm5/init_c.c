@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: init_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -45,12 +45,25 @@
 #include <netdb.h>
 #endif
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: init_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+
+static kadm5_ret_t
+kadm5_c_lock(void *server_handle)
+{
+    return ENOTSUP;
+}
+
+static kadm5_ret_t
+kadm5_c_unlock(void *server_handle)
+{
+    return ENOTSUP;
+}
 
 static void
 set_funcs(kadm5_client_context *c)
 {
 #define SET(C, F) (C)->funcs.F = kadm5 ## _c_ ## F
+#define SETNOTIMP(C, F) (C)->funcs.F = 0
     SET(c, chpass_principal);
     SET(c, chpass_principal_with_key);
     SET(c, create_principal);
@@ -63,6 +76,9 @@ set_funcs(kadm5_client_context *c)
     SET(c, modify_principal);
     SET(c, randkey_principal);
     SET(c, rename_principal);
+    SET(c, lock);
+    SET(c, unlock);
+    SETNOTIMP(c, setkey_principal_3);
 }
 
 kadm5_ret_t
@@ -467,11 +483,12 @@ kadm_connect(kadm5_client_context *ctx)
     }
 
     if (ctx->realm)
-	asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE, ctx->realm);
+	error = asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE,
+			 ctx->realm);
     else
-	asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
+	error = asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
 
-    if (service_name == NULL) {
+    if (error == -1 || service_name == NULL) {
 	freeaddrinfo (ai);
 	rk_closesocket(s);
 	krb5_clear_error_message(context);
@@ -573,16 +590,18 @@ kadm5_c_init_with_context(krb5_context context,
     krb5_ccache cc;
 
     ret = _kadm5_c_init_context(&ctx, realm_params, context);
-    if(ret)
+    if (ret)
 	return ret;
 
-    if(password != NULL && *password != '\0') {
+    if (password != NULL && *password != '\0') {
 	ret = _kadm5_c_get_cred_cache(context,
 				      client_name,
 				      service_name,
 				      password, prompter, keytab, ccache, &cc);
-	if(ret)
-	    return ret; /* XXX */
+	if (ret) {
+            kadm5_c_destroy(ctx);
+	    return ret;
+        }
 	ccache = cc;
     }
 

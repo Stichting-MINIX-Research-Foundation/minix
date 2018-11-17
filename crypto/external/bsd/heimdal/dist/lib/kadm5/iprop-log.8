@@ -1,4 +1,4 @@
-.\"	$NetBSD: iprop-log.8,v 1.5 2014/04/24 13:45:34 pettai Exp $
+.\"	$NetBSD: iprop-log.8,v 1.6 2017/01/28 21:31:49 christos Exp $
 .\"
 .\" Id
 .\"
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm iprop-log
-.Nd maintain the iprop log file
+.Nd examine and maintain the iprop log file
 .Sh SYNOPSIS
 .Nm
 .Op Fl Fl version
@@ -56,7 +56,20 @@
 .Fl Fl realm= Ns Ar string
 .Xc
 .Oc
+.Oo Fl K Ar integer \*(Ba Xo
+.Fl Fl keep-entries= Ns Ar integer
+.Xc
+.Oc
+.Oo Fl B Ar integer \*(Ba Xo
+.Fl Fl max-bytes= Ns Ar integer
+.Xc
+.Oc
+.Oo Fl R \*(Ba Xo
+.Fl Fl reset
+.Xc
+.Oc
 .Op Fl h | Fl Fl help
+.Op Ar log-file
 .Pp
 .Nm iprop-log dump
 .Oo Fl c Ar file \*(Ba Xo
@@ -67,7 +80,16 @@
 .Fl Fl realm= Ns Ar string
 .Xc
 .Oc
+.Oo Fl n \*(Ba Xo
+.Fl Fl no-lock
+.Xc
+.Oc
+.Oo Fl R \*(Ba Xo
+.Fl Fl reverse
+.Xc
+.Oc
 .Op Fl h | Fl Fl help
+.Op Ar log-file
 .Pp
 .Nm iprop-log replay
 .Op Fl Fl start-version= Ns Ar version-number
@@ -81,6 +103,35 @@
 .Xc
 .Oc
 .Op Fl h | Fl Fl help
+.Op Ar log-file
+.Pp
+.Nm iprop-log last-version
+.Oo Fl c Ar file \*(Ba Xo
+.Fl Fl config-file= Ns Ar file
+.Xc
+.Oc
+.Oo Fl r Ar string \*(Ba Xo
+.Fl Fl realm= Ns Ar string
+.Xc
+.Oc
+.Oo Fl n \*(Ba Xo
+.Fl Fl no-lock
+.Xc
+.Oc
+.Op Fl h | Fl Fl help
+.Op Ar log-files
+.Pp
+.Nm iprop-log signal
+.Oo Fl c Ar file \*(Ba Xo
+.Fl Fl config-file= Ns Ar file
+.Xc
+.Oc
+.Oo Fl r Ar string \*(Ba Xo
+.Fl Fl realm= Ns Ar string
+.Xc
+.Oc
+.Op Fl h | Fl Fl help
+.Pp
 .Sh DESCRIPTION
 Supported options:
 .Bl -tag -width Ds
@@ -96,11 +147,42 @@ command can be one of the following:
 configuration file
 .It Fl r Ar string , Fl Fl realm= Ns Ar string
 realm
+.It Xo
+.Fl K Ar integer ,
+.Fl Fl keep-entries= Ns Ar integer
+.Xc
+.It Xo
+.Fl B Ar integer ,
+.Fl Fl max-bytes= Ns Ar integer
+.Xc
+.It Xo
+.Fl R ,
+.Fl Fl reset
+.Xc
 .El
 .Pp
-Truncates the log. Sets the new logs version number for the to the
-last entry of the old log.  If the log is truncted by emptying the
-file, the log will start over at the first version (0).
+If
+.Fl Fl reset
+is given, then the given, configured, or default log file will be
+truncated and will start at version 1.  This forces full propagations to
+all slave KDCs.
+.Pp
+Otherwise the log will be truncated but some entries will be preserved,
+as specified by the
+.Fl Fl keep-entries
+and/or
+.Fl Fl max-bytes
+options.  The largest number of
+.Fl Fl keep-entries
+entries that are available and fit in the given
+.Fl Fl max-bytes
+option will be used.  The
+.Fl Fl keep-entries option defaults to 100, and the
+.Fl Fl max-bytes
+option defaults to the
+.Ar log-max-size
+parameter in the configuration.
+.Pp
 .It dump
 .Bl -tag -width Ds
 .It Fl c Ar file , Fl Fl config-file= Ns Ar file
@@ -110,9 +192,23 @@ configuration file
 .Fl Fl realm= Ns Ar string
 .Xc
 realm
+.It Xo
+.Fl n Ar string ,
+.Fl Fl no-lock
+.Xc
+.It Xo
+.Fl R Ar string ,
+.Fl Fl reverse
+.Xc
 .El
 .Pp
-Print out all entries in the log to standard output.
+Print out all entries in the given, configured, or default log file to
+standard output.  If the
+.Fl n
+option is used then don't lock the iprop log file.  If the
+.Fl R
+option is used, then print the entries in reverse order
+(this can be useful when the log is very large).
 .It replay
 .Bl -tag -width Ds
 .It Fl Fl start-version= Ns Ar version-number
@@ -127,9 +223,24 @@ configuration file
 realm
 .El
 .Pp
-Replay the changes from specified entries (or all if none is
-specified) in the transaction log to the database.
+Replay the changes from specified entries (or all if none is specified)
+in the given, configured, or default transaction log file to the
+database.
 .It last-version
+.Bl -tag -width Ds
+.It Fl c Ar file , Fl Fl config-file= Ns Ar file
+configuration file
+.It Fl r Ar string , Fl Fl realm= Ns Ar string
+realm
+.It Xo
+.Fl n Ar string ,
+.Fl Fl no-lock
+.Xc
+.El
+.Pp
+prints the version of the last record in each of the given log files, or
+the configured, or the default log file if none is given.
+.It signal
 .Bl -tag -width Ds
 .It Fl c Ar file , Fl Fl config-file= Ns Ar file
 configuration file
@@ -137,7 +248,9 @@ configuration file
 realm
 .El
 .Pp
-prints the version of the last log entry.
+Signals the ipropd-master daemon to send updates to slaves.  Normally
+kadmin does this every time it writes to the database, so this should
+rarely be needed.
 .El
 .Sh SEE ALSO
 .Xr iprop 8

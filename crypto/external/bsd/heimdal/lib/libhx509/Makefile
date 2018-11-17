@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/07/31 09:58:19 plunky Exp $
+# $NetBSD: Makefile,v 1.5 2017/01/28 21:31:52 christos Exp $
 
 NOLINT=		# defined
 
@@ -31,6 +31,7 @@ SRCS=				\
 	cms.c			\
 	collector.c		\
 	crypto.c		\
+	crypto-ec.c		\
 	doxygen.c		\
 	env.c			\
 	error.c			\

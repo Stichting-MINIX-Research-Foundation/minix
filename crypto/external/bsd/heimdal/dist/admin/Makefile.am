@@ -2,11 +2,11 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_readline) $(INCLUDE_hcrypto)
+AM_CPPFLAGS += $(INCLUDE_readline)
 
-man_MANS = ktutil.8
+man_MANS = ktutil.1
 
-sbin_PROGRAMS = ktutil
+bin_PROGRAMS = ktutil
 
 dist_ktutil_SOURCES =				\
 	add.c					\

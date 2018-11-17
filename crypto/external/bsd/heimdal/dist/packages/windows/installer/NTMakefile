@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2010, Secure Endpoints Inc.
+# Copyright (c) 2010-2013, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 
 RELDIR=packages\windows\installer
 
-!include ../../../windows/NTMakefile.w32
+!include ..\..\..\windows/NTMakefile.w32
 
 !ifdef BUILD_INSTALLERS
 
@@ -54,55 +54,98 @@ DEBUGOPT=-$(BUILD)
 ######################################################################
 # Heimdal Merge Modules
 
+!if exist(..\..\..\thirdparty\installer\heimdal-assemblies.wxs)
+ASM_WXS=..\..\..\thirdparty\installer\heimdal-assemblies.wxs
+!else
+ASM_WXS=heimdal-assemblies.wxs
+!endif
+
 ASSEMBLYMODULE=$(INSTDIR)\Heimdal.msm
 
 $(ASSEMBLYMODULE): $(OBJ)\heimdal-assemblies.wixobj
 	$(LIGHT) -out $@ $**
 
-$(OBJ)\heimdal-assemblies.wixobj: heimdal-assemblies.wxs
+$(OBJ)\heimdal-assemblies.wixobj: $(ASM_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
+		-dAsmKrbName=$(ASMKRBNAME)		\
 		-dPlatform=$(PLATFORM)
 
 $(SDKREDISTDIR)\Heimdal.msm: $(ASSEMBLYMODULE)
 	$(CP) $** $@
+
+!if exist(..\..\..\thirdparty\installer\heimdal-policy.wxs)
+POLICY_WXS=..\..\..\thirdparty\installer\heimdal-policy.wxs
+!else
+POLICY_WXS=heimdal-policy.wxs
+!endif
 
 POLICYMODULE=$(INSTDIR)\Heimdal.Policy.msm
 
 $(POLICYMODULE): $(OBJ)\heimdal-policy.wixobj
 	$(LIGHT) -out $@ $**
 
-$(OBJ)\heimdal-policy.wixobj: heimdal-policy.wxs
+$(OBJ)\heimdal-policy.wixobj: $(POLICY_WXS)
 	$(CANDLE) -arch $(PLATFORM) -o $@ $**	\
 		-dVersion=$(VERSION)		\
 		-dBinDir=$(BINDIR)		\
+		-dAsmKrbName=$(ASMKRBNAME)		\
 		-dPlatform=$(PLATFORM)		\
 		-dPolPrefix=$(POLPREFIX)
 
-$(SDKREDISTDIR)\Heimdal.Policy.msm: $(POLICYMODULE)
+COMMANDMODULE=$(INSTDIR)\Heimdal.Command.msm
+
+$(COMMANDMODULE): $(OBJ)\heimdal-command.wixobj
+	$(LIGHT) -out $@ $**
+
+# OBJECT COMPILED BELOW
+
+$(SDKREDISTDIR)\Heimdal.Command.msm: $(COMMANDMODULE)
 	$(CP) $** $@
+
+GSSMODULE=$(INSTDIR)\Heimdal.GSS.msm
+
+$(GSSMODULE): $(OBJ)\heimdal-gss.wixobj
+	$(LIGHT) -out $@ $**
+
+# OBJECT COMPILED BELOW
 
 all:: $(ASSEMBLYMODULE) $(SDKREDISTDIR)\Heimdal.msm
 
-all:: $(POLICYMODULE) $(SDKREDISTDIR)\Heimdal.Policy.msm
+all:: $(POLICYMODULE)
+
+all:: $(COMMANDMODULE) $(SDKREDISTDIR)\Heimdal.Command.msm
+
+all:: $(GSSMODULE)
 
 clean::
 	-$(RM) $(ASSEMBLYMODULE)
 	-$(RM) $(POLICYMODULE)
-	-$(RM) $(SDKREDISTDIR)\Heimdal.msm
-	-$(RM) $(SDKREDISTDIR)\Heimdal.Policy.msm
+	-$(RM) $(COMMANDMODULE)
+	-$(RM) $(GSSMODULE)
+	-$(RM) $(SDKREDISTDIR)\*.*
 
 ######################################################################
 # Runtime modules
 
-!if [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==15
+!if [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==16
+VCVER=VC100
+!elseif [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==15
 VCVER=VC90
 !elseif [ $(PERL) $(SRC)\cf\w32-detect-vc-version.pl $(CC) ]==14
 VCVER=VC80
 !else
 !  error Cant determine Visual C compiler version
 !endif
+
+$(SDKREDISTDIR)\heimdal-version.mak:
+   @echo HEIMDAL_VCVER=$(VCVER)  > $@
+!if "$(BUILD)"!="rel"
+   @echo HEIMDAL_CRT_DEBUG=yes   >> $@
+!endif
+
+all:: $(SDKREDISTDIR)\heimdal-version.mak
 
 !if "$(BUILD)"=="rel"
 CRTNAME=CRT
@@ -120,10 +163,13 @@ MMDIR=$(SystemDrive)\Program Files (x86)\Common Files\Merge Modules
 !if exist("$(MMDIR)")
 
 RUNTIMEMODULE32="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86.msm"
+!if "$(VCVER)"=="VC100"
+RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x64.msm"
+!else
 RUNTIMEMODULE64="$(MMDIR)\Microsoft_$(VCVER)_$(CRTNAME)_x86_x64.msm"
+!endif
 
 !else
-
 RUNTIMEMODULE32="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x86_msm.msm"
 RUNTIMEMODULE64="$(MSSDK)\Redist\VC\microsoft.vcxx.crt.x64_msm.msm"
 
@@ -139,7 +185,8 @@ CANDLEOPTS=	\
 	-dDocDir=$(DOCDIR)			\
 	-dSrcDir=$(SRC)				\
 	-dPlatform=$(PLATFORM)			\
-	-dPolPrefix=$(POLPREFIX)		\
+	-dAsmKrbName=$(ASMKRBNAME)		\
+	-dPolPrefix=$(POLPREFIX)
 
 !if "$(CPU)"=="AMD64"
 
@@ -149,19 +196,25 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget64	\
 	-dInstDir32=$(INSTDIR32)	\
 	-dInstDir64=$(INSTDIR)			\
 	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
-	-dRuntimeModule64=$(RUNTIMEMODULE64)	\
+	-dRuntimeModule64=$(RUNTIMEMODULE64)
 
 !ifdef MULTIPLATFORM_INSTALLER
-CANDLEOPTS=$(CANDLEOPTS) -dTarget32
+CANDLEOPTS_MULTI= -dTarget32
 TYPEOPT=-full
+
+INSTDEPS= \
+	$(INSTDIR32)\Heimdal.msm \
+	$(INSTDIR32)\Heimdal.GSS.msm	\
+	$(INSTDIR32)\Heimdal.Policy.msm	\
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !else
 !  message Excluding 32-bit components from installer
 TYPEOPT=
+
+INSTDEPS= \
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !endif
 
-INSTDEPS=$(INSTDIR32)\Heimdal.msm \
-	$(INSTDIR32)\Heimdal.Policy.msm	\
-	$(ASSEMBLYMODULE) $(POLICYMODULE)
 
 !else
 
@@ -169,15 +222,8 @@ CANDLEOPTS=$(CANDLEOPTS) -dTarget32		\
 	-dInstDir32=$(INSTDIR)			\
 	-dRuntimeModule32=$(RUNTIMEMODULE32)	\
 
-!endif
-
-!if exist($(SRC)\thirdparty)
-THIRDPARTYOBJS=$(INSTDIR)\apicache.wixobj $(INSTDIR)\lsacache.wixobj
-THIRDPARTYOPTS=-dApiCache=1 -dLsaCache=1
-
-!if "$(CPU)"=="AMD64"
-THIRDPARTYOBJS=$(THIRDPARTYOBJS) $(INSTDIR32)\apicache.wixobj $(INSTDIR32)\lsacache.wixobj
-!endif
+INSTDEPS= \
+	$(ASSEMBLYMODULE) $(GSSMODULE) $(POLICYMODULE)
 !endif
 
 !if exist($(SRC)\thirdparty\MKShim)
@@ -201,6 +247,26 @@ $(INSTALLER): $(WIXOBJ) $(THIRDPARTYOBJS) $(INSTDEPS) lang\en-us.wxl
 
 $(WIXOBJ): heimdal-installer.wxs
 	$(CANDLE) -arch $(PLATFORM) -o $@ heimdal-installer.wxs \
+		$(CANDLEOPTS) $(CANDLEOPTS_MULTI) $(THIRDPARTYOPTS)
+
+!if exist(thirdparty\installer\heimdal-command.wxs)
+CMD_WXS=thirdparty\installer\heimdal-command.wxs
+!else
+CMD_WXS=heimdal-command.wxs
+!endif
+
+$(OBJ)\heimdal-command.wixobj: $(CMD_WXS)
+	$(CANDLE) -arch $(PLATFORM) -o $@ $(CMD_WXS) \
+		$(CANDLEOPTS) $(THIRDPARTYOPTS)
+
+!if exist(thirdparty\installer\heimdal-gss.wxs)
+GSS_WXS=thirdparty\installer\heimdal-gss.wxs
+!else
+GSS_WXS=heimdal-gss.wxs
+!endif
+
+$(OBJ)\heimdal-gss.wixobj: $(GSS_WXS)
+	$(CANDLE) -arch $(PLATFORM) -o $@ $(GSS_WXS) \
 		$(CANDLEOPTS) $(THIRDPARTYOPTS)
 
 all:: $(INSTALLER)

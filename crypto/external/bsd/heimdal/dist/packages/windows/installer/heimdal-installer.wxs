@@ -15,7 +15,8 @@
   <?define GuidKvno=2B932C2B-9167-4051-BDF7-A104E9983CE6 ?>
   <?define GuidKcpytkt=17734691-7CB3-4E9A-AADC-6D4205795F43 ?>
   <?define GuidKdeltkt=3E853905-8CDA-4E14-8EBA-C0C4EEDB811A ?>
-  <?define GuidKcc=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
+  <?define GuidHeimtools=F411A9F1-A186-40CB-B55B-CADBE0166268 ?>
+  <?define GuidKadmin=E628E9AA-43AB-47EE-8A01-815C027555F2 ?>
 
   <?define ConfigDir=INSTALLDIR64 ?>
 
@@ -33,7 +34,8 @@
   <?define GuidKvno=4C6015BE-1347-4D12-8841-FF90E0B9D6A8 ?>
   <?define GuidKcpytkt=CBCDFC80-601B-4F26-A020-7D1278735B95 ?>
   <?define GuidKdeltkt=6450EE72-E472-4709-B457-B579BFB2472B ?>
-  <?define GuidKcc=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+  <?define GuidHeimtools=11800964-4A5F-466E-B2FE-DD2EFC54DDB9 ?>
+  <?define GuidKadmin=B31F9FFC-D588-4A3E-9AEA-C9E9137B08F0 ?>
 
   <?define ConfigDir=INSTALLDIR32 ?>
 
@@ -47,7 +49,11 @@
     <Package Id='*' Description='!(loc.Description)'
       Manufacturer='!(loc.Manufacturer)'
       InstallerVersion='300' Languages='!(loc.LanguageCode)'
-      Compressed='yes' SummaryCodepage='1252' />
+      Compressed='yes' SummaryCodepage='1252'
+      Platform='$(var.Platform)'
+      InstallScope='perMachine'
+      InstallPrivileges='elevated'
+      Keywords='Heimdal,Kerberos,GSS' />
 
     <Directory Id='TARGETDIR' Name='SourceDir' DiskId='1'>
 
@@ -55,10 +61,6 @@
       <Directory Id='ProgramFilesFolder'>
         <Directory Id='INSTALLDIR32' Name='Heimdal'>
           <Directory Id='dirBin32' Name='bin'>
-            <Directory Id='dirPlugin32' Name='plugin'>
-              <Directory Id='PLUGINDIR32' Name='krb5'>
-              </Directory>
-            </Directory>
           </Directory>
         </Directory>
       </Directory>
@@ -68,10 +70,6 @@
       <Directory Id='ProgramFiles64Folder'>
         <Directory Id='INSTALLDIR64' Name='Heimdal'>
           <Directory Id='dirBin64' Name='bin'>
-            <Directory Id='dirPlugin64' Name='plugin'>
-              <Directory Id='PLUGINDIR64' Name='krb5'>
-              </Directory>
-            </Directory>
           </Directory>
         </Directory>
       </Directory>
@@ -83,8 +81,8 @@
     <DirectoryRef Id='dirBin32' DiskId='1'>
       <Component Id='comp.SearchPath.32' Feature='feature.Main'
                  Guid='BA6C1A53-E479-4E87-9B61-7BA793DBAE56' Win64='no'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal\CurrentVersion'>
+	<RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+		     Key='Software\Heimdal\CurrentVersion'>
           <RegistryValue Name='InstallPath' Type='string'
                          Value='[dirBin32]' KeyPath='yes' />
         </RegistryKey>
@@ -94,6 +92,9 @@
 
       <Merge Id='Heimdal.Assemblies.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.msm' />
+
+      <Merge Id='Heimdal.GSS.32' Language='0'
+	     SourceFile='$(var.InstDir32)\Heimdal.GSS.msm' />
 
       <Merge Id='Heimdal.Policy.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.Policy.msm' />
@@ -108,8 +109,8 @@
     <DirectoryRef Id='dirBin64' DiskId='1'>
       <Component Id='comp.SearchPath.64' Feature='feature.Main'
                  Guid='2F189729-2253-47A1-AA68-06FE3A9697A7' Win64='yes'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal\CurrentVersion'>
+	<RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+		     Key='Software\Heimdal\CurrentVersion'>
           <RegistryValue Name='InstallPath' Type='string'
                          Value='[dirBin64]' KeyPath='yes' />
         </RegistryKey>
@@ -119,6 +120,9 @@
 
       <Merge Id='Heimdal.Assemblies.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.msm' />
+
+      <Merge Id='Heimdal.GSS.64' Language='0'
+	     SourceFile='$(var.InstDir64)\Heimdal.GSS.msm' />
 
       <Merge Id='Heimdal.Policy.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.Policy.msm' />
@@ -187,17 +191,24 @@
         <File Name='kdeltkt.pdb' />
       </Component>
 
-      <Component Id='comp.kcc'
-                 Guid='$(var.GuidKcc)'
+      <Component Id='comp.heimtools'
+                 Guid='$(var.GuidHeimtools)'
                  Win64='$(var.Win64)'>
-        <File Name='kcc.exe' KeyPath='yes'>
+        <File Name='heimtools.exe' KeyPath='yes'>
           <CopyFile Id='klist.exe' DestinationName='klist.exe' DestinationProperty='$(var.ToolsBinDir)' />
           <CopyFile Id='kswitch.exe' DestinationName='kswitch.exe' DestinationProperty='$(var.ToolsBinDir)' />
         </File>
-        <File Name='kcc.pdb'>
+        <File Name='heimtools.pdb'>
           <CopyFile Id='klist.pdb' DestinationName='klist.pdb' />
           <CopyFile Id='kswitch.pdb' DestinationName='kswitch.pdb' />
         </File>
+      </Component>
+
+      <Component Id='comp.kadmin'
+		 Guid='$(var.GuidKadmin)'
+		 Win64='$(var.Win64)'>
+	<File Name='kadmin.exe' KeyPath='yes' />
+	<File Name='kadmin.pdb' />
       </Component>
 
       <Component Id='comp.Heimdal.chm'
@@ -212,35 +223,9 @@
 
     </DirectoryRef>
 
-    <?ifdef Target32?>
-    <DirectoryRef Id='PLUGINDIR32'>
-      <Component Id='comp.Plugin.Reg.32' Feature='feature.Main'
-                 Guid='4BC44234-70A4-4CC1-A5AF-4CA76E9F9487' Win64='no'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal'>
-          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-                         Value='"[PLUGINDIR32]"' KeyPath='yes' />
-        </RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
-    <?ifdef Target64?>
-    <DirectoryRef Id='PLUGINDIR64'>
-      <Component Id='comp.Plugin.Reg.64' Feature='feature.Main'
-                 Guid='5A99A52E-A4CD-40F8-AFFD-AD61939FC547' Win64='yes'>
-        <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                     Key='Software\Heimdal'>
-          <RegistryValue Name='plugin_dir' Type='multiString' Action='append'
-                         Value='"[PLUGINDIR64]"' KeyPath='yes' />
-        </RegistryKey>
-      </Component>
-    </DirectoryRef>
-    <?endif?>
-
     <DirectoryRef Id='TARGETDIR'>
       <Directory Id='CommonAppDataFolder' Name='ProgramData'>
-        <Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
+	<Directory Id='dirCommonKerberos' Name='Kerberos' FileSource='$(var.SrcDir)'>
 
           <Component Id='comp.krb5.conf'
                      Guid='ED28951F-7B17-4DF5-91D7-4DC11C810E66'
@@ -248,8 +233,8 @@
             <File Name='krb5.conf' KeyPath='yes' Id='krb5_conf' />
             <Environment Id='KRB5_CONFIG_by_krb5.conf' Name='KRB5_CONFIG' Action='set' System='yes' Value='[#krb5_conf]' />
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+			 Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string' Value='[#krb_conf]' />
             </RegistryKey>
             <Condition>Not LEGACYKRB5INI And Not LEGACYKRB5CONF And Not LEGACYKRB5REG32 And Not LEGACYKRB5REG64</Condition>
@@ -263,14 +248,14 @@
                       SourceProperty='LEGACYKRB5INI' />
             <Environment Id='KRB5_CONFIG_by_legacy_krb5.ini' Name='KRB5_CONFIG'
                          Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\Heimdal\CurrentVersion'>
+	    <RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+			 Key='Software\Heimdal\CurrentVersion'>
               <RegistryValue Name='LegacyKrb5IniLocation' Type='string'
                              Value='[LEGACYKRB5INI]' KeyPath='yes' />
             </RegistryKey>
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+			 Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string'
                              Value='[dirCommonKerberos]krb5.conf' />
             </RegistryKey>
@@ -285,14 +270,14 @@
                       SourceProperty='LEGACYKRB5CONF' />
             <Environment Id='KRB5_CONFIG_by_legacy_krb5.conf' Name='KRB5_CONFIG'
                          Action='set' System='yes' Value='[dirCommonKerberos]krb5.conf' />
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\Heimdal\CurrentVersion'>
-              <RegistryValue Name='LegacyKrb5ConfLocation' Type='string'
+	    <RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+			 Key='Software\Heimdal\CurrentVersion'>
+	    <RegistryValue Name='LegacyKrb5ConfLocation' Type='string'
                              Value='[LEGACYKRB5CONF]' KeyPath='yes' />
             </RegistryKey>
             <!-- Backwards compatibility -->
-            <RegistryKey Action='createAndRemoveOnUninstall' Root='HKLM'
-                         Key='Software\MIT\Kerberos'>
+	    <RegistryKey ForceDeleteOnUninstall='yes' Root='HKLM'
+			 Key='Software\MIT\Kerberos'>
               <RegistryValue Name='config' Type='string'
                              Value='[dirCommonKerberos]krb5.conf' />
             </RegistryKey>
@@ -370,23 +355,8 @@
       <ComponentRef Id='comp.krb5.ini.move' />
       <ComponentRef Id='comp.ktutil' />
       <ComponentRef Id='comp.kvno' />
-      <ComponentRef Id='comp.kcc' />
-
-      <?ifdef LsaCache ?>
-      <?ifdef Target64?>
-      <ComponentGroupRef Id='comps.LSACache.64' />
-      <?else?>
-      <ComponentGroupRef Id='comps.LSACache.32' />
-      <?endif?>
-      <?endif?>
-
-      <?ifdef ApiCache ?>
-      <?ifdef Target64?>
-      <ComponentGroupRef Id='comps.APICache.64' />
-      <?else?>
-      <ComponentGroupRef Id='comps.APICache.32' />
-      <?endif?>
-      <?endif?>
+      <ComponentRef Id='comp.heimtools' />
+      <ComponentRef Id='comp.kadmin' />
 
       <?ifdef MKShim ?>
       <?ifdef Target64?>
@@ -398,10 +368,12 @@
 
       <?ifdef Target64?>
       <MergeRef Id='Heimdal.Assemblies.64' />
+      <MergeRef Id='Heimdal.GSS.64' />
       <MergeRef Id='Heimdal.Policy.64' />
       <MergeRef Id='Runtime.64' />
       <?else?>
       <MergeRef Id='Heimdal.Assemblies.32' />
+      <MergeRef Id='Heimdal.GSS.32' />
       <MergeRef Id='Heimdal.Policy.32' />
       <MergeRef Id='Runtime.32' />
       <?endif?>
@@ -415,16 +387,11 @@
                Title='!(loc.Fea32BitTitle)'
                Description='!(loc.Fea32BitDesc)'
                Level='1' TypicalDefault='install' InstallDefault='local'>
-        <?ifdef LsaCache ?>
-        <ComponentGroupRef Id='comps.LSACache.32' />
-        <?endif?>
-        <?ifdef ApiCache ?>
-        <ComponentGroupRef Id='comps.APICache.32' />
-        <?endif?>
         <?ifdef MKShim ?>
         <ComponentGroupRef Id='comp.Heimdal.MKShim.32' />
         <?endif?>
         <MergeRef Id='Heimdal.Assemblies.32' />
+	<MergeRef Id='Heimdal.GSS.32' />
         <MergeRef Id='Heimdal.Policy.32' />
         <MergeRef Id='Runtime.32' />
       </Feature>
@@ -443,9 +410,10 @@
 
     <!-- Other properties -->
 
-    <Property Id='ALLUSERS' Value='1' Secure='yes' />
-
     <UIRef Id='WixUI_FeatureTree' />
+
+    <WixVariable Id="WixUIBannerBmp" Value="images\Heimdal_banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="images\Heimdal_dialog.bmp" />
 
   </Product>
 </Wix>

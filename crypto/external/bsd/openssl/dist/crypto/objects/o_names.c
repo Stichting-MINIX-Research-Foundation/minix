@@ -31,7 +31,7 @@ static int names_type_num = OBJ_NAME_TYPE_NUM;
 typedef struct name_funcs_st {
     unsigned long (*hash_func) (const char *name);
     int (*cmp_func) (const char *a, const char *b);
-    void (*free_func) (const char *, int, const char *);
+    void (*freefunc) (const char *, int, const char *);
 } NAME_FUNCS;
 
 DECLARE_STACK_OF(NAME_FUNCS)
@@ -65,7 +65,7 @@ int OBJ_NAME_init(void)
 
 int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
                        int (*cmp_func) (const char *, const char *),
-                       void (*free_func) (const char *, int, const char *))
+                       void (*freefunc) (const char *, int, const char *))
 {
     int ret;
     int i;
@@ -92,7 +92,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         }
         name_funcs->hash_func = (unsigned long (*)(const char *))lh_strhash;
         name_funcs->cmp_func = OPENSSL_strcmp;
-        name_funcs->free_func = 0; /* NULL is often declared to * ((void
+        name_funcs->freefunc = 0; /* NULL is often declared to * ((void
                                     * *)0), which according * to Compaq C is
                                     * not really * compatible with a function
                                     * * pointer.  -- Richard Levitte */
@@ -105,8 +105,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         name_funcs->hash_func = hash_func;
     if (cmp_func != NULL)
         name_funcs->cmp_func = cmp_func;
-    if (free_func != NULL)
-        name_funcs->free_func = free_func;
+    if (freefunc != NULL)
+        name_funcs->freefunc = freefunc;
     return (ret);
 }
 
@@ -191,7 +191,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     onp = (OBJ_NAME *)OPENSSL_malloc(sizeof(OBJ_NAME));
     if (onp == NULL) {
         /* ERROR */
-        return (0);
+        return 0;
     }
 
     onp->name = name;
@@ -209,17 +209,18 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
              * get three arguments... -- Richard Levitte
              */
             sk_NAME_FUNCS_value(name_funcs_stack,
-                                ret->type)->free_func(ret->name, ret->type,
+                                ret->type)->freefunc(ret->name, ret->type,
                                                       ret->data);
         }
         OPENSSL_free(ret);
     } else {
         if (lh_OBJ_NAME_error(names_lh)) {
             /* ERROR */
-            return (0);
+            OPENSSL_free(onp);
+            return 0;
         }
     }
-    return (1);
+    return 1;
 }
 
 int OBJ_NAME_remove(const char *name, int type)
@@ -242,7 +243,7 @@ int OBJ_NAME_remove(const char *name, int type)
              * get three arguments... -- Richard Levitte
              */
             sk_NAME_FUNCS_value(name_funcs_stack,
-                                ret->type)->free_func(ret->name, ret->type,
+                                ret->type)->freefunc(ret->name, ret->type,
                                                       ret->data);
         }
         OPENSSL_free(ret);

@@ -82,6 +82,14 @@ static void *default_malloc_ex(size_t num, const char *file, int line)
 static void *(*malloc_ex_func) (size_t, const char *file, int line)
     = default_malloc_ex;
 
+#ifdef OPENSSL_SYS_VMS
+# if __INITIAL_POINTER_SIZE == 64
+#  define realloc _realloc64
+# elif __INITIAL_POINTER_SIZE == 32
+#  define realloc _realloc32
+# endif
+#endif
+
 static void *(*realloc_func) (void *, size_t) = realloc;
 static void *default_realloc_ex(void *str, size_t num,
                                 const char *file, int line)
@@ -92,7 +100,11 @@ static void *default_realloc_ex(void *str, size_t num,
 static void *(*realloc_ex_func) (void *, size_t, const char *file, int line)
     = default_realloc_ex;
 
-static void (*free_func) (void *) = free;
+#ifdef OPENSSL_SYS_VMS
+   static void (*freefunc) (__void_ptr64) = free;
+#else
+   static void (*freefunc) (void *) = free;
+#endif
 
 static void *(*malloc_locked_func) (size_t) = malloc;
 static void *default_malloc_locked_ex(size_t num, const char *file, int line)
@@ -103,7 +115,11 @@ static void *default_malloc_locked_ex(size_t num, const char *file, int line)
 static void *(*malloc_locked_ex_func) (size_t, const char *file, int line)
     = default_malloc_locked_ex;
 
-static void (*free_locked_func) (void *) = free;
+#ifdef OPENSSL_SYS_VMS
+   static void (*free_locked_func) (__void_ptr64) = free;
+#else
+   static void (*free_locked_func) (void *) = free;
+#endif
 
 /* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
@@ -144,7 +160,7 @@ int CRYPTO_set_mem_functions(void *(*m) (size_t), void *(*r) (void *, size_t),
     malloc_ex_func = default_malloc_ex;
     realloc_func = r;
     realloc_ex_func = default_realloc_ex;
-    free_func = f;
+    freefunc = f;
     malloc_locked_func = m;
     malloc_locked_ex_func = default_malloc_locked_ex;
     free_locked_func = f;
@@ -163,7 +179,7 @@ int CRYPTO_set_mem_ex_functions(void *(*m) (size_t, const char *, int),
     malloc_ex_func = m;
     realloc_func = 0;
     realloc_ex_func = r;
-    free_func = f;
+    freefunc = f;
     malloc_locked_func = 0;
     malloc_locked_ex_func = m;
     free_locked_func = f;
@@ -191,7 +207,7 @@ int CRYPTO_set_locked_mem_ex_functions(void *(*m) (size_t, const char *, int),
         return 0;
     malloc_locked_func = 0;
     malloc_locked_ex_func = m;
-    free_func = f;
+    freefunc = f;
     return 1;
 }
 
@@ -222,7 +238,7 @@ void CRYPTO_get_mem_functions(void *(**m) (size_t),
     if (r != NULL)
         *r = (realloc_ex_func == default_realloc_ex) ? realloc_func : 0;
     if (f != NULL)
-        *f = free_func;
+        *f = freefunc;
 }
 
 void CRYPTO_get_mem_ex_functions(void *(**m) (size_t, const char *, int),
@@ -234,7 +250,7 @@ void CRYPTO_get_mem_ex_functions(void *(**m) (size_t, const char *, int),
     if (r != NULL)
         *r = (realloc_ex_func != default_realloc_ex) ? realloc_ex_func : 0;
     if (f != NULL)
-        *f = free_func;
+        *f = freefunc;
 }
 
 void CRYPTO_get_locked_mem_functions(void *(**m) (size_t),
@@ -298,18 +314,6 @@ void *CRYPTO_malloc_locked(int num, const char *file, int line)
     if (malloc_debug_func != NULL)
         malloc_debug_func(ret, num, file, line, 1);
 
-#ifndef OPENSSL_CPUID_OBJ
-    /*
-     * Create a dependency on the value of 'cleanse_ctr' so our memory
-     * sanitisation function can't be optimised out. NB: We only do this for
-     * >2Kb so the overhead doesn't bother us.
-     */
-    if (ret && (num > 2048)) {
-        extern unsigned char cleanse_ctr;
-        ((unsigned char *)ret)[0] = cleanse_ctr;
-    }
-#endif
-
     return ret;
 }
 
@@ -345,18 +349,6 @@ void *CRYPTO_malloc(int num, const char *file, int line)
 #endif
     if (malloc_debug_func != NULL)
         malloc_debug_func(ret, num, file, line, 1);
-
-#ifndef OPENSSL_CPUID_OBJ
-    /*
-     * Create a dependency on the value of 'cleanse_ctr' so our memory
-     * sanitisation function can't be optimised out. NB: We only do this for
-     * >2Kb so the overhead doesn't bother us.
-     */
-    if (ret && (num > 2048)) {
-        extern unsigned char cleanse_ctr;
-        ((unsigned char *)ret)[0] = cleanse_ctr;
-    }
-#endif
 
     return ret;
 }
@@ -419,7 +411,7 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
     if (ret) {
         memcpy(ret, str, old_len);
         OPENSSL_cleanse(str, old_len);
-        free_func(str);
+        freefunc(str);
     }
 #ifdef LEVITTE_DEBUG_MEM
     fprintf(stderr,
@@ -439,7 +431,7 @@ void CRYPTO_free(void *str)
 #ifdef LEVITTE_DEBUG_MEM
     fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
 #endif
-    free_func(str);
+    freefunc(str);
     if (free_debug_func != NULL)
         free_debug_func(NULL, 1);
 }

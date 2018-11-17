@@ -63,6 +63,8 @@ EXPORTS
 	PA-ServerReferralData,
 	PA-SvrReferralData,
 	PADATA-TYPE,
+	PA-FX-FAST-REQUEST,
+	PA-FX-FAST-REPLY,
 	Principal,
 	PrincipalName,
 	Principals,
@@ -72,7 +74,19 @@ EXPORTS
 	Ticket,
 	TicketFlags,
 	TransitedEncoding,
-	TypedData
+	TypedData,
+	KrbFastResponse,
+	KrbFastFinished,
+	KrbFastReq,
+	KrbFastArmor,
+	KDCFastState,
+	KDCFastCookie,
+	KDC-PROXY-MESSAGE,
+	KERB-TIMES,
+	KERB-CRED,
+	KERB-TGS-REQ-IN,
+	KERB-TGS-REQ-OUT,
+	KERB-ARMOR-SERVICE-REPLY
 	;
 
 NAME-TYPE ::= INTEGER {
@@ -86,10 +100,15 @@ NAME-TYPE ::= INTEGER {
 	KRB5_NT_SMTP_NAME(7),	-- Name in form of SMTP email name
 	KRB5_NT_ENTERPRISE_PRINCIPAL(10), -- Windows 2000 UPN
 	KRB5_NT_WELLKNOWN(11),	-- Wellknown
+	KRB5_NT_SRV_HST_DOMAIN(12), -- Domain based service with host name as instance (RFC5179)
 	KRB5_NT_ENT_PRINCIPAL_AND_ID(-130), -- Windows 2000 UPN and SID
 	KRB5_NT_MS_PRINCIPAL(-128), -- NT 4 style name
 	KRB5_NT_MS_PRINCIPAL_AND_ID(-129), -- NT style name and SID
-	KRB5_NT_NTLM(-1200) -- NTLM name, realm is domain
+	KRB5_NT_NTLM(-1200), -- NTLM name, realm is domain
+	KRB5_NT_X509_GENERAL_NAME(-1201), -- x509 general name (base64 encoded)
+	KRB5_NT_GSS_HOSTBASED_SERVICE(-1202), -- not used; remove
+	KRB5_NT_CACHE_UUID(-1203), -- name is actually a uuid pointing to ccache, use client name in cache
+	KRB5_NT_SRV_HST_NEEDS_CANON (-195894762) -- Internal: indicates that name canonicalization is needed
 }
 
 -- message types
@@ -142,6 +161,7 @@ PADATA-TYPE ::= INTEGER {
 	KRB5-PADATA-SAM-CHALLENGE2(30),		-- (kenh@pobox.com)
 	KRB5-PADATA-SAM-RESPONSE2(31),		-- (kenh@pobox.com)
 	KRB5-PA-EXTRA-TGT(41),			-- Reserved extra TGT
+	KRB5-PADATA-FX-FAST-ARMOR(71),		-- fast armor
 	KRB5-PADATA-TD-KRB-PRINCIPAL(102),	-- PrincipalName
 	KRB5-PADATA-PK-TD-TRUSTED-CERTIFIERS(104), -- PKINIT
 	KRB5-PADATA-PK-TD-CERTIFICATE-INDEX(105), -- PKINIT
@@ -157,7 +177,6 @@ PADATA-TYPE ::= INTEGER {
 						-- tell KDC that is supports
 						-- the asCheckSum in the
 						--  PK-AS-REP
-	KRB5-PADATA-CLIENT-CANONICALIZED(133),	-- referals
 	KRB5-PADATA-FX-COOKIE(133),		-- krb-wg-preauth-framework
 	KRB5-PADATA-AUTHENTICATION-SET(134),	-- krb-wg-preauth-framework
 	KRB5-PADATA-AUTH-SET-SELECTED(135),	-- krb-wg-preauth-framework
@@ -214,6 +233,8 @@ CKSUMTYPE ::= INTEGER {
 	CKSUMTYPE_SHA1(14),
 	CKSUMTYPE_HMAC_SHA1_96_AES_128(15),
 	CKSUMTYPE_HMAC_SHA1_96_AES_256(16),
+	CKSUMTYPE_HMAC_SHA256_128_AES128(19),
+	CKSUMTYPE_HMAC_SHA384_192_AES256(20),
 	CKSUMTYPE_GSSAPI(0x8003),
 	CKSUMTYPE_HMAC_MD5(-138),	-- unofficial microsoft number
 	CKSUMTYPE_HMAC_MD5_ENC(-1138)	-- even more unofficial
@@ -233,6 +254,8 @@ ENCTYPE ::= INTEGER {
 	KRB5_ENCTYPE_DES3_CBC_SHA1(16),	-- with key derivation
 	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96(17),
 	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96(18),
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128(19),
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192(20),
 	KRB5_ENCTYPE_ARCFOUR_HMAC_MD5(23),
 	KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56(24),
 	KRB5_ENCTYPE_ENCTYPE_PK_CROSS(48),
@@ -319,8 +342,8 @@ TicketFlags ::= BIT STRING {
 	hw-authent(11),
 	transited-policy-checked(12),
 	ok-as-delegate(13),
-	anonymous(14),
-	enc-pa-rep(15)
+	enc-pa-rep(15),
+	anonymous(16)
 }
 
 KDCOptions ::= BIT STRING {
@@ -332,9 +355,9 @@ KDCOptions ::= BIT STRING {
 	allow-postdate(5),
 	postdated(6),
 	renewable(8),
-	request-anonymous(14),
+	constrained-delegation(14), -- ms extension (aka cname-in-addl-tkt)
 	canonicalize(15),
-	constrained-delegation(16), -- ms extension
+	request-anonymous(16),
 	disable-transited-check(26),
 	renewable-ok(27),
 	enc-tkt-in-skey(28),
@@ -361,7 +384,7 @@ LastReq ::= SEQUENCE OF SEQUENCE {
 
 EncryptedData ::= SEQUENCE {
 	etype[0] 		ENCTYPE, -- EncryptionType
-	kvno[1]			krb5uint32 OPTIONAL,
+	kvno[1]			krb5int32 OPTIONAL,
 	cipher[2]		OCTET STRING -- ciphertext
 }
 
@@ -732,16 +755,6 @@ KRB5SignedPath ::= SEQUENCE {
 	method_data[3]  METHOD-DATA OPTIONAL
 }
 
-PA-ClientCanonicalizedNames ::= SEQUENCE{
-	requested-name	[0] PrincipalName,
-	mapped-name	[1] PrincipalName
-}
-
-PA-ClientCanonicalized ::= SEQUENCE {
-	names		[0] PA-ClientCanonicalizedNames,
-	canon-checksum	[1] Checksum
-}
-
 AD-LoginAlias ::= SEQUENCE { -- ad-type number TBD --
 	login-alias	[0] PrincipalName,
 	checksum	[1] Checksum
@@ -766,12 +779,12 @@ PA-ServerReferralData ::= SEQUENCE {
 FastOptions ::= BIT STRING {
 	    reserved(0),
 	    hide-client-names(1),
-	    kdc-follow--referrals(16)
+	    kdc-follow-referrals(16)
 }
 
 KrbFastReq ::= SEQUENCE {
 	fast-options [0] FastOptions,
-	padata       [1] SEQUENCE OF PA-DATA,
+	padata       [1] METHOD-DATA,
 	req-body     [2] KDC-REQ-BODY,
 	...
 }
@@ -798,15 +811,15 @@ KrbFastFinished ::= SEQUENCE {
 	usec        [1] krb5int32,
 	crealm      [2] Realm,
 	cname       [3] PrincipalName,
-	checksum    [4] Checksum,
-	ticket-checksum [5] Checksum,
+	ticket-checksum [4] Checksum,
 	...
 }
 
 KrbFastResponse ::= SEQUENCE {
-	padata      [0] SEQUENCE OF PA-DATA,
-	rep-key     [1] EncryptionKey OPTIONAL,
-	finished    [2] KrbFastFinished OPTIONAL,
+	padata      	[0] METHOD-DATA,
+        strengthen-key	[1] EncryptionKey OPTIONAL,
+	finished	[2] KrbFastFinished OPTIONAL,
+        nonce		[3] krb5uint32,
 	...
 }
 
@@ -819,6 +832,89 @@ PA-FX-FAST-REPLY ::= CHOICE {
 	armored-data [0] KrbFastArmoredRep,
 	...
 }
+
+KDCFastFlags ::= BIT STRING {
+	use_reply_key(0),
+	reply_key_used(1),
+	reply_key_replaced(2),
+	kdc_verfied(3)
+}
+
+-- KDCFastState is stored in FX_COOKIE
+KDCFastState ::= SEQUENCE {
+	flags [0] KDCFastFlags,
+	expiration [1] GeneralizedTime,
+	fast-state [2] METHOD-DATA,
+	expected-pa-types [3] SEQUENCE OF PADATA-TYPE OPTIONAL
+}
+
+KDCFastCookie ::= SEQUENCE {
+	version [0] UTF8String,
+	cookie [1] EncryptedData
+}
+
+KDC-PROXY-MESSAGE ::= SEQUENCE {
+	kerb-message	[0] OCTET STRING,
+	target-domain	[1] Realm OPTIONAL,
+	dclocator-hint	[2] INTEGER OPTIONAL
+}
+
+-- these messages are used in the GSSCred communication and is not part of Kerberos propper
+
+KERB-TIMES ::= SEQUENCE {
+	authtime	[0] KerberosTime,
+	starttime	[1] KerberosTime,
+	endtime		[2] KerberosTime,
+	renew_till	[3] KerberosTime
+}
+
+KERB-CRED ::= SEQUENCE {
+	client		[0] Principal,
+	server		[1] Principal,
+	keyblock	[2] EncryptionKey,
+	times		[3] KERB-TIMES,
+	ticket		[4] OCTET STRING,
+	authdata	[5] OCTET STRING,
+	addresses	[6] HostAddresses,
+	flags		[7] TicketFlags
+}
+
+KERB-TGS-REQ-IN ::= SEQUENCE {
+	cache		[0] OCTET STRING SIZE (16),
+	addrs		[1] HostAddresses,
+	flags		[2] krb5uint32,
+	imp		[3] Principal OPTIONAL,
+	ticket		[4] OCTET STRING OPTIONAL,
+	in_cred		[5] KERB-CRED,
+	krbtgt		[6] KERB-CRED,
+	padata		[7] METHOD-DATA
+}
+
+KERB-TGS-REQ-OUT ::= SEQUENCE {
+	subkey		[0] EncryptionKey OPTIONAL,
+	t		[1] TGS-REQ
+}
+
+
+
+KERB-TGS-REP-IN ::= SEQUENCE {
+	cache		[0] OCTET STRING SIZE (16),
+	subkey		[1] EncryptionKey OPTIONAL,
+	in_cred		[2] KERB-CRED,
+	t		[3] TGS-REP
+}
+
+KERB-TGS-REP-OUT ::= SEQUENCE {
+	cache		[0] OCTET STRING SIZE (16),
+	cred		[1] KERB-CRED,
+	subkey		[2] EncryptionKey
+}
+
+KERB-ARMOR-SERVICE-REPLY ::= SEQUENCE {
+	armor		[0] KrbFastArmor,
+	armor-key	[1] EncryptionKey
+}
+
 
 END
 

@@ -13,6 +13,7 @@
 	}
 
 [kdc]
+        strict-nametypes = true
 	enable-pkinit = true
 	pkinit_identity = FILE:@objdir@/kdc.crt,@srcdir@/../../lib/hx509/data/key2.der
 	pkinit_anchors = FILE:@objdir@/ca.crt
@@ -22,7 +23,11 @@
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE
 		mkey_file = @objdir@/mkey.file
+                log_file = @objdir@/log.current-db.log
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log

@@ -1,4 +1,4 @@
-/*	$NetBSD: collector.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
+/*	$NetBSD: collector.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan

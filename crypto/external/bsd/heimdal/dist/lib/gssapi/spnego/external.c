@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: external.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -68,11 +68,19 @@ static gss_mo_desc spnego_mo[] = {
     },
     {
 	GSS_C_MA_MECH_NEGO,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_MECH_PSEUDO,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     }
 };
 
@@ -130,6 +138,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     NULL,
     spnego_mo,
     sizeof(spnego_mo) / sizeof(spnego_mo[0]),
+    NULL,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,

@@ -7,7 +7,7 @@ rm -rf db schema
 mkdir db
 
 # kill of old slapd if running
-sh ${srcdir}/slapd-stop > /dev/null
+sh "${srcdir}/slapd-stop" > /dev/null
 
 SCHEMA_NEEDED="hdb core nis cosine inetorgperson openldap samba"
 
@@ -31,9 +31,18 @@ done
 
 touch modules.conf || exit 1
 
-slapadd -d 0 -f ${srcdir}/slapd.conf < ${srcdir}/init.ldif || exit 0
+if ! slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif"; then
+    echo "moduleload back_bdb.la"   >> modules.conf
+    if ! slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif"; then
+        echo "modulepath /usr/lib/ldap"  > modules.conf
+        echo "moduleload back_bdb.la"   >> modules.conf
+        slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif" || exit 1
+    fi
+fi
+
+cp "`which slapd`" . || true # fails if running
 
 echo "starting slapd"
-slapd -d0 -f ${srcdir}/slapd.conf -h ldapi://.%2Fldap-socket &
+./slapd -d0 -f "${srcdir}/slapd.conf" -h ldapi://.%2Fldap-socket &
 
 sleep 4

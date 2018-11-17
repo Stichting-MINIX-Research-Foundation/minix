@@ -1,4 +1,4 @@
-/*	$NetBSD: test-normalize.c,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $	*/
+/*	$NetBSD: test-normalize.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
 static size_t
 parse_vector(char *buf, uint32_t *v)
 {
-    char *last;
+    char *last = NULL;
     unsigned ret = 0;
     const char *n;
     unsigned u;

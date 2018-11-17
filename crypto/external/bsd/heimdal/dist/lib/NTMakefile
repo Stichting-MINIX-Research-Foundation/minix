@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009,2011, Secure Endpoints Inc.
+# Copyright (c) 2009-2016, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,29 @@
 # 
 
 
-!ifdef KRB4
-dir_45 = 45
-!endif
 !ifdef OTP
 dir_otp = otp
 !endif
 !ifdef DCE
 dir_dce = kdfs
 !endif
-!ifndef HAVE_OPENSSL
-dir_hcrypto = hcrypto
+
+# Third party plugins must be added to the assembly
+# Permit third party assembly scripts
+
+!if exist(..\thirdparty\plugin\NTMakefile)
+plugin=..\thirdparty\plugin
 !endif
 
-SUBDIRS = vers com_err sl wind asn1 sqlite \
-	$(dir_hcrypto) hx509 krb5 heimdal ntlm kafs gssapi hdb \
-	kadm5 $(dir_45) $(dir_otp) $(dir_dce) ..\packages\windows\assembly
+!if exist(..\thirdparty\assembly\NTMakefile)
+assembly=..\thirdparty\assembly
+!else
+assembly=..\packages\windows\assembly
+!endif
+
+SUBDIRS = roken base vers com_err sl wind asn1 sqlite \
+	hcrypto hx509 krb5 heimdal ntlm kafs gssapi hdb \
+	kadm5 $(dir_otp) $(dir_dce) $(plugin) $(assembly)
 
 !include ../windows/NTMakefile.w32
 

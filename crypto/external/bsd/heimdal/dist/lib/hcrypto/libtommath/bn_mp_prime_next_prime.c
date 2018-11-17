@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_prime_next_prime.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: bn_mp_prime_next_prime.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_PRIME_NEXT_PRIME_C
@@ -144,7 +144,7 @@ int mp_prime_next_prime(mp_int *a, int t, int bbs_style)
       }
 
       /* is this prime? */
-      for (x = 0; x < t && x < PRIME_SIZE; x++) {
+      for (x = 0; x < t; x++) {
           mp_set(&b, ltm_prime_tab[x]);
           if ((err = mp_prime_miller_rabin(a, &b, &res)) != MP_OKAY) {
              goto LBL_ERR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: default_keys.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: default_keys.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include <err.h>
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: default_keys.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 static void
 print_keys(krb5_context context, Key *keys, size_t nkeys)
@@ -87,7 +87,8 @@ parse_file(krb5_context context, krb5_principal principal, int no_salt)
     size_t nkeys;
     Key *keys;
 
-    ret = hdb_generate_key_set(context, principal, &keys, &nkeys, no_salt);
+    ret = hdb_generate_key_set(context, principal, NULL, 0, &keys, &nkeys,
+			       no_salt);
     if (ret)
 	krb5_err(context, 1, ret, "hdb_generate_key_set");
 

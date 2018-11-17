@@ -2,12 +2,17 @@
 	allow_weak_crypto = TRUE
 
 [kdc]
+        strict-nametypes = true
 	database = {
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE
 		mkey_file = @objdir@/mkey.file
 		acl_file = @srcdir@/heimdal.acl
+                log_file = @objdir@/log.current-db.log
 	}
+
+[hdb]
+	db-dir = @objdir@
 
 
 [kadmin]

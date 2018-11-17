@@ -1,4 +1,4 @@
-/*	$NetBSD: init_s.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: init_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -34,8 +34,7 @@
  */
 
 #include "kadm5_locl.h"
-
-__RCSID("NetBSD");
+#include <fcntl.h>
 
 
 static kadm5_ret_t
@@ -49,12 +48,26 @@ kadm5_s_init_with_context(krb5_context context,
 {
     kadm5_ret_t ret;
     kadm5_server_context *ctx;
+    char *dbname;
+    char *stash_file;
+
+    *server_handle = NULL;
     ret = _kadm5_s_init_context(&ctx, realm_params, context);
-    if(ret)
+    if (ret)
 	return ret;
 
-    assert(ctx->config.dbname != NULL);
-    assert(ctx->config.stash_file != NULL);
+    if (realm_params->mask & KADM5_CONFIG_DBNAME)
+	dbname = realm_params->dbname;
+    else
+	dbname = ctx->config.dbname;
+
+    if (realm_params->mask & KADM5_CONFIG_STASH_FILE)
+	stash_file = realm_params->stash_file;
+    else
+	stash_file = ctx->config.stash_file;
+
+    assert(dbname != NULL);
+    assert(stash_file != NULL);
     assert(ctx->config.acl_file != NULL);
     assert(ctx->log_context.log_file != NULL);
 #ifndef NO_UNIX_SOCKETS
@@ -63,33 +76,35 @@ kadm5_s_init_with_context(krb5_context context,
     assert(ctx->log_context.socket_info != NULL);
 #endif
 
-    ret = hdb_create(ctx->context, &ctx->db, ctx->config.dbname);
-    if(ret)
+    ret = hdb_create(ctx->context, &ctx->db, dbname);
+    if (ret == 0)
+        ret = hdb_set_master_keyfile(ctx->context,
+                                     ctx->db, stash_file);
+    if (ret) {
+        kadm5_s_destroy(ctx);
 	return ret;
-    ret = hdb_set_master_keyfile (ctx->context,
-				  ctx->db, ctx->config.stash_file);
-    if(ret)
-	return ret;
+    }
 
-    ctx->log_context.log_fd   = -1;
+    ctx->log_context.log_fd = -1;
 
 #ifndef NO_UNIX_SOCKETS
-    ctx->log_context.socket_fd = socket (AF_UNIX, SOCK_DGRAM, 0);
+    ctx->log_context.socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 #else
-    ctx->log_context.socket_fd = socket (ctx->log_context.socket_info->ai_family,
-					 ctx->log_context.socket_info->ai_socktype,
-					 ctx->log_context.socket_info->ai_protocol);
+    ctx->log_context.socket_fd = socket(ctx->log_context.socket_info->ai_family,
+					ctx->log_context.socket_info->ai_socktype,
+					ctx->log_context.socket_info->ai_protocol);
 #endif
 
+    if (ctx->log_context.socket_fd != rk_INVALID_SOCKET)
+        socket_set_nonblocking(ctx->log_context.socket_fd, 1);
+
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
-    if(ret)
-	return ret;
-
-    ret = _kadm5_acl_init(ctx);
-    if(ret)
-	return ret;
-
-    *server_handle = ctx;
+    if (ret == 0)
+        ret = _kadm5_acl_init(ctx);
+    if (ret)
+        kadm5_s_destroy(ctx);
+    else
+        *server_handle = ctx;
     return 0;
 }
 

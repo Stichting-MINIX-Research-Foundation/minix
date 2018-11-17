@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.2 2014/05/12 15:34:23 christos Exp $	*/
+/*	$NetBSD: rpc.c,v 1.3 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -1099,7 +1099,7 @@ handle_mit(krb5_context contextp, void *buf, size_t len, krb5_socket_t sock)
 
     dcontext = contextp;
 
-    sp = krb5_storage_from_fd(sock);
+    sp = krb5_storage_from_socket(sock);
     INSIST(sp != NULL);
 
     process_stream(contextp, buf, len, sp);

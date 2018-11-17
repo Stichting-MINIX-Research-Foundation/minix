@@ -1,4 +1,4 @@
-/*	$NetBSD: camellia.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: camellia.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -33,18 +33,15 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
+#include <krb5/roken.h>
 
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif
 
-#include <string.h>
-
 #include "camellia-ntt.h"
 #include "camellia.h"
-
-#include <krb5/roken.h>
 
 int
 CAMELLIA_set_key(const unsigned char *userkey,

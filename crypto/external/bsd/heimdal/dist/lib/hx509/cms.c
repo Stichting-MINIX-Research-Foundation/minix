@@ -1,4 +1,4 @@
-/*	$NetBSD: cms.c,v 1.1.1.2 2014/04/24 12:45:41 pettai Exp $	*/
+/*	$NetBSD: cms.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
@@ -211,7 +211,7 @@ unparse_CMSIdentifier(hx509_context context,
 		      CMSIdentifier *id,
 		      char **str)
 {
-    int ret;
+    int ret = -1;
 
     *str = NULL;
     switch (id->element) {
@@ -229,8 +229,8 @@ unparse_CMSIdentifier(hx509_context context,
 	    free(name);
 	    return ret;
 	}
-	asprintf(str, "certificate issued by %s with serial number %s",
-		 name, serial);
+	ret = asprintf(str, "certificate issued by %s with serial number %s",
+		       name, serial);
 	free(name);
 	free(serial);
 	break;
@@ -244,15 +244,19 @@ unparse_CMSIdentifier(hx509_context context,
 	if (len < 0)
 	    return ENOMEM;
 
-	asprintf(str, "certificate with id %s", keyid);
+	ret = asprintf(str, "certificate with id %s", keyid);
 	free(keyid);
 	break;
     }
     default:
-	asprintf(str, "certificate have unknown CMSidentifier type");
+	ret = asprintf(str, "certificate have unknown CMSidentifier type");
 	break;
     }
-    if (*str == NULL)
+    /*
+     * In the following if, we check ret and *str which should be returned/set
+     * by asprintf(3) in every branch of the switch statement.
+     */
+    if (ret == -1 || *str == NULL)
 	return ENOMEM;
     return 0;
 }
@@ -341,6 +345,8 @@ find_CMSIdentifier(hx509_context context,
  * @param time_now set the current time, if zero the library uses now as the date.
  * @param contentType output type oid, should be freed with der_free_oid().
  * @param content the data, free with der_free_octet_string().
+ *
+ * @return an hx509 error code.
  *
  * @ingroup hx509_cms
  */
@@ -546,6 +552,8 @@ out:
  * @param content the output of the function,
  * free with der_free_octet_string().
  *
+ * @return an hx509 error code.
+ *
  * @ingroup hx509_cms
  */
 
@@ -728,14 +736,18 @@ any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 	return 0;
 
     for (i = 0; i < sd->certificates->len; i++) {
+	heim_error_t error;
 	hx509_cert c;
 
-	ret = hx509_cert_init_data(context,
-				   sd->certificates->val[i].data,
-				   sd->certificates->val[i].length,
-				   &c);
-	if (ret)
+	c = hx509_cert_init_data(context,
+				 sd->certificates->val[i].data,
+				 sd->certificates->val[i].length,
+				 &error);
+	if (c == NULL) {
+	    ret = heim_error_get_code(error);
+	    heim_release(error);
 	    return ret;
+	}
 	ret = hx509_certs_add(context, certs, c);
 	hx509_cert_free(c);
 	if (ret)
@@ -773,6 +785,8 @@ find_attribute(const CMSAttributes *attr, const heim_oid *oid)
  * der_free_octet_string().
  * @param signer_certs list of the cerficates used to sign this
  * request, free with hx509_certs_free().
+ *
+ * @return an hx509 error code.
  *
  * @ingroup hx509_cms
  */
@@ -857,7 +871,7 @@ hx509_cms_verify_signed(hx509_context context,
     }
 
     for (found_valid_sig = 0, i = 0; i < sd.signerInfos.len; i++) {
-	heim_octet_string signed_data;
+	heim_octet_string signed_data = { 0, 0 };
 	const heim_oid *match_oid;
 	heim_oid decode_oid;
 
@@ -1018,8 +1032,10 @@ hx509_cms_verify_signed(hx509_context context,
 				       "Failed to verify signature in "
 				       "CMS SignedData");
 	}
-        if (signer_info->signedAttrs)
-	    free(signed_data.data);
+        if (signed_data.data != NULL && content->data != signed_data.data) {
+            free(signed_data.data);
+            signed_data.data = NULL;
+        }
 	if (ret)
 	    goto next_sigature;
 
@@ -1138,6 +1154,8 @@ add_one_attribute(Attribute **attr,
  * trust anchors.
  * @param signed_data the output of the function, free with
  * der_free_octet_string().
+ *
+ * @return Returns an hx509 error code.
  *
  * @ingroup hx509_cms
  */

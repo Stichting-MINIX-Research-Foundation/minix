@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: compile_et.c,v 1.4 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
@@ -59,7 +59,8 @@ char name[128];
 char Basename[128];
 
 #ifdef YYDEBUG
-extern int yydebug = 1;
+extern int yydebug;
+int yydebug = 1;
 #endif
 
 char *filename;
@@ -189,8 +190,8 @@ generate(void)
 int version_flag;
 int help_flag;
 struct getargs args[] = {
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

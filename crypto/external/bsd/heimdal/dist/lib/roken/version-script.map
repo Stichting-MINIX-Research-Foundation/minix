@@ -2,8 +2,6 @@ HEIMDAL_ROKEN_1.0 {
 	global:
 		arg_printusage;
 		arg_printusage_i18n;
-		base64_decode;
-		base64_encode;
 		cgetcap;
 		cgetclose;
 		cgetmatch;
@@ -36,13 +34,17 @@ HEIMDAL_ROKEN_1.0 {
 		print_units_table;
 		rk_asnprintf;
 		rk_asprintf;
+		rk_base64_decode;
+		rk_base64_encode;
 		rk_bswap16;
 		rk_bswap32;
+		rk_bswap64;
 		rk_cgetent;
 		rk_cgetstr;
 		rk_cloexec;
 		rk_cloexec_file;
                 rk_cloexec_dir;
+                rk_cloexec_socket;
 		rk_closefrom;
 		rk_copyhostent;
 		rk_dns_free_data;
@@ -79,6 +81,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_inet_ntop;
 		rk_inet_pton;
 		rk_localtime_r;
+		rk_memset_s;
+		rk_mkdir;
 		rk_mkstemp;
 		rk_pid_file_delete;
 		rk_pid_file_write;
@@ -105,6 +109,7 @@ HEIMDAL_ROKEN_1.0 {
 		rk_socket_set_any;
 		rk_socket_set_debug;
 		rk_socket_set_ipv6only;
+		rk_socket_set_nonblocking;
 		rk_socket_set_port;
 		rk_socket_set_portrange;
 		rk_socket_set_reuseaddr;
@@ -123,17 +128,14 @@ HEIMDAL_ROKEN_1.0 {
 		rk_strptime;
 		rk_strsep_copy;
 		rk_strsvis;
-		rk_strsvis;
 		rk_strsvisx;
-		rk_strunvis;
+		rk_strtoll;
+		rk_strtoull;
 		rk_strunvis;
 		rk_strunvisx;
 		rk_strupr;
 		rk_strvis;
-		rk_strvis;
 		rk_strvisx;
-		rk_strvisx;
-		rk_svis;
 		rk_svis;
 		rk_timegm;
 		rk_timevaladd;
@@ -148,7 +150,6 @@ HEIMDAL_ROKEN_1.0 {
 		rk_vasnprintf;
 		rk_vasprintf;
 		rk_vis;
-		rk_vis;
 		rk_vsnprintf;
 		rk_vstrcollect;
 		rk_wait_for_process;
@@ -156,6 +157,8 @@ HEIMDAL_ROKEN_1.0 {
 		rk_warnerr;
 		rk_xfree;
 		roken_concat;
+		roken_detach_prep;
+		roken_detach_finish;
 		roken_getaddrinfo_hostspec2;
 		roken_getaddrinfo_hostspec;
 		roken_gethostby_setup;

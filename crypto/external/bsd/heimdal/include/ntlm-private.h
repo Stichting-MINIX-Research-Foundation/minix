@@ -11,7 +11,7 @@ OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_accept_sec_context (
 	OM_uint32 * /*minor_status*/,
 	gss_ctx_id_t * /*context_handle*/,
-	const gss_cred_id_t /*acceptor_cred_handle*/,
+	gss_const_cred_id_t /*acceptor_cred_handle*/,
 	const gss_buffer_t /*input_token_buffer*/,
 	const gss_channel_bindings_t /*input_chan_bindings*/,
 	gss_name_t * /*src_name*/,
@@ -23,20 +23,20 @@ _gss_ntlm_accept_sec_context (
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_acquire_cred (
-	OM_uint32 * /*min_stat*/,
-	const gss_name_t /*desired_name*/,
+	OM_uint32 */*min_stat*/,
+	gss_const_name_t /*desired_name*/,
 	OM_uint32 /*time_req*/,
 	const gss_OID_set /*desired_mechs*/,
 	gss_cred_usage_t /*cred_usage*/,
-	gss_cred_id_t * /*output_cred_handle*/,
-	gss_OID_set * /*actual_mechs*/,
-	OM_uint32 * time_rec );
+	gss_cred_id_t */*output_cred_handle*/,
+	gss_OID_set */*actual_mechs*/,
+	OM_uint32 */*time_rec*/);
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_add_cred (
 	 OM_uint32 */*minor_status*/,
-	const gss_cred_id_t /*input_cred_handle*/,
-	const gss_name_t /*desired_name*/,
+	gss_const_cred_id_t /*input_cred_handle*/,
+	gss_const_name_t /*desired_name*/,
 	const gss_OID /*desired_mech*/,
 	gss_cred_usage_t /*cred_usage*/,
 	OM_uint32 /*initiator_time_req*/,
@@ -54,21 +54,21 @@ _gss_ntlm_allocate_ctx (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_canonicalize_name (
 	 OM_uint32 * /*minor_status*/,
-	const gss_name_t /*input_name*/,
+	gss_const_name_t /*input_name*/,
 	const gss_OID /*mech_type*/,
 	gss_name_t * output_name );
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_compare_name (
 	OM_uint32 * /*minor_status*/,
-	const gss_name_t /*name1*/,
-	const gss_name_t /*name2*/,
+	gss_const_name_t /*name1*/,
+	gss_const_name_t /*name2*/,
 	int * name_equal );
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_context_time (
 	OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	OM_uint32 * time_rec );
 
 OM_uint32 GSSAPI_CALLCONV
@@ -85,7 +85,7 @@ _gss_ntlm_destroy_cred (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_display_name (
 	OM_uint32 * /*minor_status*/,
-	const gss_name_t /*input_name*/,
+	gss_const_name_t /*input_name*/,
 	gss_buffer_t /*output_name_buffer*/,
 	gss_OID * output_name_type );
 
@@ -101,13 +101,13 @@ _gss_ntlm_display_status (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_duplicate_name (
 	 OM_uint32 * /*minor_status*/,
-	const gss_name_t /*src_name*/,
+	gss_const_name_t /*src_name*/,
 	gss_name_t * dest_name );
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_export_name (
 	OM_uint32 * /*minor_status*/,
-	const gss_name_t /*input_name*/,
+	gss_const_name_t /*input_name*/,
 	gss_buffer_t exported_name );
 
 OM_uint32 GSSAPI_CALLCONV
@@ -119,7 +119,7 @@ _gss_ntlm_export_sec_context (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_get_mic (
 	OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	gss_qop_t /*qop_req*/,
 	const gss_buffer_t /*message_buffer*/,
 	gss_buffer_t message_token );
@@ -150,9 +150,9 @@ _gss_ntlm_indicate_mechs (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_init_sec_context (
 	OM_uint32 * /*minor_status*/,
-	const gss_cred_id_t /*initiator_cred_handle*/,
+	gss_const_cred_id_t /*initiator_cred_handle*/,
 	gss_ctx_id_t * /*context_handle*/,
-	const gss_name_t /*target_name*/,
+	gss_const_name_t /*target_name*/,
 	const gss_OID /*mech_type*/,
 	OM_uint32 /*req_flags*/,
 	OM_uint32 /*time_req*/,
@@ -166,7 +166,7 @@ _gss_ntlm_init_sec_context (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_context (
 	 OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	gss_name_t * /*src_name*/,
 	gss_name_t * /*targ_name*/,
 	OM_uint32 * /*lifetime_rec*/,
@@ -178,7 +178,7 @@ _gss_ntlm_inquire_context (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_cred (
 	OM_uint32 * /*minor_status*/,
-	const gss_cred_id_t /*cred_handle*/,
+	gss_const_cred_id_t /*cred_handle*/,
 	gss_name_t * /*name*/,
 	OM_uint32 * /*lifetime*/,
 	gss_cred_usage_t * /*cred_usage*/,
@@ -187,7 +187,7 @@ _gss_ntlm_inquire_cred (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_cred_by_mech (
 	 OM_uint32 * /*minor_status*/,
-	const gss_cred_id_t /*cred_handle*/,
+	gss_const_cred_id_t /*cred_handle*/,
 	const gss_OID /*mech_type*/,
 	gss_name_t * /*name*/,
 	OM_uint32 * /*initiator_lifetime*/,
@@ -197,7 +197,7 @@ _gss_ntlm_inquire_cred_by_mech (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_mechs_for_name (
 	 OM_uint32 * /*minor_status*/,
-	const gss_name_t /*input_name*/,
+	gss_const_name_t /*input_name*/,
 	gss_OID_set * mech_types );
 
 OM_uint32 GSSAPI_CALLCONV
@@ -209,7 +209,7 @@ _gss_ntlm_inquire_names_for_mech (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_sec_context_by_oid (
 	OM_uint32 */*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	const gss_OID /*desired_object*/,
 	gss_buffer_set_t */*data_set*/);
 
@@ -222,7 +222,7 @@ _gss_ntlm_iter_creds_f (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_process_context_token (
 	 OM_uint32 */*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	const gss_buffer_t token_buffer );
 
 OM_uint32 GSSAPI_CALLCONV
@@ -246,7 +246,7 @@ _gss_ntlm_set_key (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_unwrap (
 	OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	const gss_buffer_t /*input_message_buffer*/,
 	gss_buffer_t /*output_message_buffer*/,
 	int * /*conf_state*/,
@@ -255,7 +255,7 @@ _gss_ntlm_unwrap (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_verify_mic (
 	OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	const gss_buffer_t /*message_buffer*/,
 	const gss_buffer_t /*token_buffer*/,
 	gss_qop_t * qop_state );
@@ -263,7 +263,7 @@ _gss_ntlm_verify_mic (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_wrap (
 	OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	int /*conf_req_flag*/,
 	gss_qop_t /*qop_req*/,
 	const gss_buffer_t /*input_message_buffer*/,
@@ -273,7 +273,7 @@ _gss_ntlm_wrap (
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_wrap_size_limit (
 	 OM_uint32 * /*minor_status*/,
-	const gss_ctx_id_t /*context_handle*/,
+	gss_const_ctx_id_t /*context_handle*/,
 	int /*conf_req_flag*/,
 	gss_qop_t /*qop_req*/,
 	OM_uint32 /*req_output_size*/,

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_err.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
+/*	$NetBSD: com_err.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -57,11 +57,11 @@ init_error_table (const char**, long, int);
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 com_err_va (const char *, long, const char *, va_list)
-    __attribute__((format(printf, 3, 0)));
+    __attribute__ ((__format__ (__printf__, 3, 0)));
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 com_err (const char *, long, const char *, ...)
-    __attribute__((format(printf, 3, 4)));
+    __attribute__ ((__format__ (__printf__, 3, 4)));
 
 KRB5_LIB_FUNCTION errf KRB5_LIB_CALL
 set_com_err_hook (errf);

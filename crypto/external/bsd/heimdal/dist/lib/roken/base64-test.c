@@ -1,4 +1,4 @@
-/*	$NetBSD: base64-test.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: base64-test.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
@@ -55,12 +55,12 @@ main(int argc, char **argv)
 	{ "4444", 4, "NDQ0NA==" },
 	{ "55555", 5, "NTU1NTU=" },
 	{ "abc:def", 7, "YWJjOmRlZg==" },
-	{ NULL }
+	{ NULL, 0, NULL }
     };
     for(t = tests; t->data; t++) {
 	char *str;
 	int len;
-	len = base64_encode(t->data, t->len, &str);
+	len = rk_base64_encode(t->data, t->len, &str);
 	if(strcmp(str, t->result) != 0) {
 	    fprintf(stderr, "failed test %d: %s != %s\n", numtest,
 		    str, t->result);
@@ -68,7 +68,7 @@ main(int argc, char **argv)
 	}
 	free(str);
 	str = strdup(t->result);
-	len = base64_decode(t->result, str);
+	len = rk_base64_decode(t->result, str);
 	if(len != t->len) {
 	    fprintf(stderr, "failed test %d: len %lu != %lu\n", numtest,
 		    (unsigned long)len, (unsigned long)t->len);
@@ -83,12 +83,12 @@ main(int argc, char **argv)
 
     {
 	char str[32];
-	if(base64_decode("M=M=", str) != -1) {
+	if(rk_base64_decode("M=M=", str) != -1) {
 	    fprintf(stderr, "failed test %d: successful decode of `M=M='\n",
 		    numtest++);
 	    numerr++;
 	}
-	if(base64_decode("MQ===", str) != -1) {
+	if(rk_base64_decode("MQ===", str) != -1) {
 	    fprintf(stderr, "failed test %d: successful decode of `MQ==='\n",
 		    numtest++);
 	    numerr++;

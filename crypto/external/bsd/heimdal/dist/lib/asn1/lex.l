@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.1.1.3 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: lex.l,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 %{
 /*
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -257,7 +258,7 @@ WITH			{ return kw_WITH; }
 			}
 
 -?0x[0-9A-Fa-f]+|-?[0-9]+ { char *e, *y = yytext;
-			  yylval.constant = strtol((const char *)yytext,
+			  yylval.constant = strtoll((const char *)yytext,
 						   &e, 0);
 			  if(e == y)
 			    lex_error_message("malformed constant (%s)", yytext);

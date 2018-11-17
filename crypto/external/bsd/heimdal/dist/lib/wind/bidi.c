@@ -1,4 +1,4 @@
-/*	$NetBSD: bidi.c,v 1.1.1.1 2011/04/13 18:15:45 elric Exp $	*/
+/*	$NetBSD: bidi.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@ range_entry_cmp(const void *a, const void *b)
 static int
 is_ral(uint32_t cp)
 {
-    struct range_entry ee = {cp};
+    struct range_entry ee = {cp, 0};
     void *s = bsearch(&ee, _wind_ral_table, _wind_ral_table_size,
 		      sizeof(_wind_ral_table[0]),
 		      range_entry_cmp);
@@ -63,7 +63,7 @@ is_ral(uint32_t cp)
 static int
 is_l(uint32_t cp)
 {
-    struct range_entry ee = {cp};
+    struct range_entry ee = {cp, 0};
     void *s = bsearch(&ee, _wind_l_table, _wind_l_table_size,
 		      sizeof(_wind_l_table[0]),
 		      range_entry_cmp);

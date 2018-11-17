@@ -113,6 +113,11 @@ attributetype ( 1.3.6.1.4.1.5322.10.1.12
 	EQUALITY octetStringMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.40{128} )
 
+attributetype ( 1.3.6.1.4.1.5322.10.1.13
+	NAME 'krb5ExtendedAttributes'
+	DESC 'Encoded ASN1 HDB Extension Attributes as an octet string'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.5 )
+
 # Object class definitions
 
 objectclass ( 1.3.6.1.4.1.5322.10.2.1
@@ -129,7 +134,7 @@ objectclass ( 1.3.6.1.4.1.5322.10.2.2
 	MUST ( krb5KeyVersionNumber )
 	MAY ( krb5ValidStart $ krb5ValidEnd $ krb5PasswordEnd $
               krb5MaxLife $ krb5MaxRenew $ krb5KDCFlags $
-              krb5EncryptionType $ krb5Key ) )
+              krb5EncryptionType $ krb5Key $ krb5ExtendedAttributes ) )
 
 objectclass ( 1.3.6.1.4.1.5322.10.2.3
 	NAME 'krb5Realm'

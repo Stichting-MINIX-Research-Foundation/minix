@@ -107,7 +107,7 @@ command = {
 	option = {
 		long = "embedded-certs"
 		type = "-flag"
-		help = "dont embedded certficiates"
+		help = "don't embed certificates"
 	}
 	option = {
 		long = "embed-leaf-only"
@@ -409,6 +409,17 @@ command = {
 	help = "Print the OCSP responses"
 }
 command = {
+	name = "revoke-print"
+	option = {
+		long = "verbose"
+		type = "flag"
+		help = "verbose"
+	}
+	min_args="1"
+	argument="ocsp/crl files"
+	help = "Print the OCSP/CRL files"
+}
+command = {
 	name = "request-create"
 	option = {
 		long = "subject"
@@ -624,6 +635,11 @@ command = {
 		help = "Lifetime of certificate"
 	}
 	option = {
+		long = "signature-algorithm"
+		type = "string"
+		help = "Signature algorithm to use"
+	}
+	option = {
 		long = "serial-number"
 		type = "string"
 		help = "serial-number of certificate"
@@ -646,7 +662,7 @@ command = {
 	}
 	option = {
 		long = "pk-init-principal"
-		type = "string"
+		type = "strings"
 		help = "PK-INIT principal (for SAN)"
 	}
 	option = {

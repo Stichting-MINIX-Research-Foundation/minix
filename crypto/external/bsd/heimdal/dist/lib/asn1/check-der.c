@@ -1,4 +1,4 @@
-/*	$NetBSD: check-der.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: check-der.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2007 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
 
 #include "check-common.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: check-der.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static int
 cmp_integer (void *a, void *b)
@@ -60,16 +60,16 @@ static int
 test_integer (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x7f"},
-	{NULL, 2, "\x00\x80"},
-	{NULL, 2, "\x01\x00"},
-	{NULL, 1, "\x80"},
-	{NULL, 2, "\xff\x7f"},
-	{NULL, 1, "\xff"},
-	{NULL, 2, "\xff\x01"},
-	{NULL, 2, "\x00\xff"},
-	{NULL, 4, "\x7f\xff\xff\xff"}
+	{NULL, 1, "\x00", 		NULL },
+	{NULL, 1, "\x7f", 		NULL },
+	{NULL, 2, "\x00\x80", 		NULL },
+	{NULL, 2, "\x01\x00", 		NULL },
+	{NULL, 1, "\x80", 		NULL },
+	{NULL, 2, "\xff\x7f", 		NULL },
+	{NULL, 1, "\xff", 		NULL },
+	{NULL, 2, "\xff\x01", 		NULL },
+	{NULL, 2, "\x00\xff", 		NULL },
+	{NULL, 4, "\x7f\xff\xff\xff", 	NULL }
     };
 
     int values[] = {0, 127, 128, 256, -128, -129, -1, -255, 255,
@@ -186,14 +186,14 @@ static int
 test_unsigned (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x7f"},
-	{NULL, 2, "\x00\x80"},
-	{NULL, 2, "\x01\x00"},
-	{NULL, 2, "\x02\x00"},
-	{NULL, 3, "\x00\x80\x00"},
-	{NULL, 5, "\x00\x80\x00\x00\x00"},
-	{NULL, 4, "\x7f\xff\xff\xff"}
+	{NULL, 1, "\x00", 			NULL },
+	{NULL, 1, "\x7f", 			NULL },
+	{NULL, 2, "\x00\x80", 			NULL },
+	{NULL, 2, "\x01\x00", 			NULL },
+	{NULL, 2, "\x02\x00", 			NULL },
+	{NULL, 3, "\x00\x80\x00", 		NULL },
+	{NULL, 5, "\x00\x80\x00\x00\x00",	NULL },
+	{NULL, 4, "\x7f\xff\xff\xff", 		NULL }
     };
 
     unsigned int values[] = {0, 127, 128, 256, 512, 32768,
@@ -224,13 +224,7 @@ test_unsigned (void)
 static int
 cmp_octet_string (void *a, void *b)
 {
-    heim_octet_string *oa = (heim_octet_string *)a;
-    heim_octet_string *ob = (heim_octet_string *)b;
-
-    if (oa->length != ob->length)
-	return ob->length - oa->length;
-
-    return (memcmp (oa->data, ob->data, oa->length));
+    return der_heim_octet_string_cmp(a, b);
 }
 
 static int
@@ -239,7 +233,7 @@ test_octet_string (void)
     heim_octet_string s1 = {8, "\x01\x23\x45\x67\x89\xab\xcd\xef"};
 
     struct test_case tests[] = {
-	{NULL, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef"}
+	{NULL, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef", NULL }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -280,8 +274,8 @@ test_bmp_string (void)
     heim_bmp_string s2 = { 2, bmp_d2 };
 
     struct test_case tests[] = {
-	{NULL, 2, "\x00\x20"},
-	{NULL, 4, "\x00\x20\x00\x20"}
+	{NULL, 2, "\x00\x20", 		NULL },
+	{NULL, 4, "\x00\x20\x00\x20", 	NULL }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -328,8 +322,8 @@ test_universal_string (void)
     heim_universal_string s2 = { 2, universal_d2 };
 
     struct test_case tests[] = {
-	{NULL, 4, "\x00\x00\x00\x20"},
-	{NULL, 8, "\x00\x00\x00\x20\x00\x00\x00\x20"}
+	{NULL, 4, "\x00\x00\x00\x20", 			NULL },
+	{NULL, 8, "\x00\x00\x00\x20\x00\x00\x00\x20", 	NULL }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
@@ -372,7 +366,7 @@ test_general_string (void)
     char *s1 = "Test User 1";
 
     struct test_case tests[] = {
-	{NULL, 11, "\x54\x65\x73\x74\x20\x55\x73\x65\x72\x20\x31"}
+	{NULL, 11, "\x54\x65\x73\x74\x20\x55\x73\x65\x72\x20\x31", NULL }
     };
     int ret, ntests = sizeof(tests) / sizeof(*tests);
 
@@ -399,15 +393,15 @@ cmp_generalized_time (void *a, void *b)
     time_t *ta = (time_t *)a;
     time_t *tb = (time_t *)b;
 
-    return *tb - *ta;
+    return (int)(*tb - *ta);
 }
 
 static int
 test_generalized_time (void)
 {
     struct test_case tests[] = {
-	{NULL, 15, "19700101000000Z"},
-	{NULL, 15, "19851106210627Z"}
+	{NULL, 15, "19700101000000Z", 		NULL },
+	{NULL, 15, "19851106210627Z", 		NULL }
     };
     time_t values[] = {0, 500159187};
     int i, ret;
@@ -448,10 +442,10 @@ static int
 test_oid (void)
 {
     struct test_case tests[] = {
-	{NULL, 2, "\x29\x01"},
-	{NULL, 1, "\x29"},
-	{NULL, 2, "\xff\x01"},
-	{NULL, 1, "\xff"}
+	{NULL, 2, "\x29\x01", 		NULL },
+	{NULL, 1, "\x29", 		NULL },
+	{NULL, 2, "\xff\x01", 		NULL },
+	{NULL, 1, "\xff", 		NULL }
     };
     heim_oid values[] = {
 	{ 3, oid_comp1 },
@@ -492,7 +486,7 @@ static int
 test_bit_string (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\x00"}
+	{NULL, 1, "\x00", 		NULL }
     };
     heim_bit_string values[] = {
 	{ 0, "" }
@@ -530,13 +524,13 @@ static int
 test_heim_integer (void)
 {
     struct test_case tests[] = {
-	{NULL, 2, "\xfe\x01"},
-	{NULL, 2, "\xef\x01"},
-	{NULL, 3, "\xff\x00\xff"},
-	{NULL, 3, "\xff\x01\x00"},
-	{NULL, 1, "\x00"},
-	{NULL, 1, "\x01"},
-	{NULL, 2, "\x00\x80"}
+	{NULL, 2, "\xfe\x01", 		NULL },
+	{NULL, 2, "\xef\x01", 		NULL },
+	{NULL, 3, "\xff\x00\xff", 	NULL },
+	{NULL, 3, "\xff\x01\x00", 	NULL },
+	{NULL, 1, "\x00", 		NULL },
+	{NULL, 1, "\x01", 		NULL },
+	{NULL, 2, "\x00\x80", 		NULL }
     };
 
     heim_integer values[] = {
@@ -594,8 +588,8 @@ static int
 test_boolean (void)
 {
     struct test_case tests[] = {
-	{NULL, 1, "\xff"},
-	{NULL, 1, "\x00"}
+	{NULL, 1, "\xff", 		NULL },
+	{NULL, 1, "\x00", 		NULL }
     };
 
     int values[] = { 1, 0 };
@@ -1077,6 +1071,104 @@ corner_tag(void)
     return 0;
 }
 
+struct randomcheck {
+    asn1_type_decode decoder;
+    asn1_type_release release;
+    size_t typesize;
+    size_t inputsize;
+} randomcheck[] = {
+#define el(name, type, maxlen) {			\
+	(asn1_type_decode)der_get_##name,		\
+	(asn1_type_release)der_free_##name,		\
+	sizeof(type), 					\
+	maxlen						\
+    }
+    el(integer, int, 6),
+    el(heim_integer, heim_integer, 12),
+    el(integer, int, 6),
+    el(unsigned, unsigned, 6),
+    el(general_string, heim_general_string, 12),
+    el(octet_string, heim_octet_string, 12),
+    { (asn1_type_decode)der_get_octet_string_ber,
+      (asn1_type_release)der_free_octet_string,
+      sizeof(heim_octet_string), 20 },
+    el(generalized_time, time_t, 20),
+    el(utctime, time_t, 20),
+    el(bit_string, heim_bit_string, 10),
+    el(oid, heim_oid, 10),
+    { NULL, NULL, 0, 0 }
+#undef el
+};
+
+static void
+asn1rand(uint8_t *randbytes, size_t len)
+{
+    while (len) {
+	*randbytes++ = rk_random();
+	len--;
+    }
+}
+
+static int
+check_random(void)
+{
+    struct randomcheck *r = randomcheck;
+    uint8_t *input;
+    void *type;
+    size_t size, insize;
+    int ret;
+
+    while (r->decoder) {
+	type = emalloc(r->typesize);
+	memset(type, 0, r->typesize);
+
+	input = emalloc(r->inputsize);
+
+	/* try all zero first */
+	memset(input, 0, r->inputsize);
+
+	ret = r->decoder(input, r->inputsize, type, &size);
+	if (ret)
+	    r->release(type);
+	
+	/* try all one first */
+	memset(input, 0xff, r->inputsize);
+	ret = r->decoder(input, r->inputsize, type, &size);
+	if (ret)
+	    r->release(type);
+
+	/* try 0x41 too */
+	memset(input, 0x41, r->inputsize);
+	ret = r->decoder(input, r->inputsize, type, &size);
+	if (ret)
+	    r->release(type);
+
+	/* random */
+	asn1rand(input, r->inputsize);
+	ret = r->decoder(input, r->inputsize, type, &size);
+	if (ret)
+	    r->release(type);
+
+	/* let make buffer smaller */
+	insize = r->inputsize;
+	do {
+	    insize--;
+	    asn1rand(input, insize);
+
+	    ret = r->decoder(input, insize, type, &size);
+	    if (ret == 0)
+		r->release(type);
+	} while(insize > 0);
+
+	free(type);
+
+	r++;
+    }
+    return 0;
+}
+
+
+
 int
 main(int argc, char **argv)
 {
@@ -1112,6 +1204,7 @@ main(int argc, char **argv)
     ret += test_misc_cmp();
     ret += corner_generalized_time();
     ret += corner_tag();
+    ret += check_random();
 
     return ret;
 }

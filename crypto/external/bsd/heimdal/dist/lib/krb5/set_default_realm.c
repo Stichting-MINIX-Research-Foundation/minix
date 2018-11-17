@@ -1,4 +1,4 @@
-/*	$NetBSD: set_default_realm.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: set_default_realm.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -45,17 +45,12 @@ string_to_list (krb5_context context, const char *s, krb5_realm **list)
 {
 
     *list = malloc (2 * sizeof(**list));
-    if (*list == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*list == NULL)
+	return krb5_enomem(context);
     (*list)[0] = strdup (s);
     if ((*list)[0] == NULL) {
 	free (*list);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     (*list)[1] = NULL;
     return 0;

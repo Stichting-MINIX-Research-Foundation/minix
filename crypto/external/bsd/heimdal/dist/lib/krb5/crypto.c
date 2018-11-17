@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: crypto.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -149,10 +149,8 @@ _key_schedule(krb5_context context,
     if (key->schedule != NULL)
 	return 0;
     ALLOC(key->schedule, 1);
-    if(key->schedule == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (key->schedule == NULL)
+	return krb5_enomem(context);
     ret = krb5_data_alloc(key->schedule, kt->schedule_size);
     if(ret) {
 	free(key->schedule);
@@ -181,7 +179,7 @@ SHA1_checksum(krb5_context context,
 }
 
 /* HMAC according to RFC2104 */
-krb5_error_code
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_internal_hmac(krb5_context context,
 		    struct _krb5_checksum_type *cm,
 		    const void *data,
@@ -302,7 +300,7 @@ struct _krb5_checksum_type _krb5_checksum_sha1 = {
     NULL
 };
 
-struct _krb5_checksum_type *
+KRB5_LIB_FUNCTION struct _krb5_checksum_type * KRB5_LIB_CALL
 _krb5_find_checksum(krb5_cksumtype type)
 {
     int i;
@@ -327,10 +325,8 @@ get_checksum_key(krb5_context context,
 	size_t i;
 
 	*key = _new_derived_key(crypto, 0xff/* KRB5_KU_RFC1510_VARIANT */);
-	if(*key == NULL) {
-	    krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	    return ENOMEM;
-	}
+	if (*key == NULL)
+	    return krb5_enomem(context);
 	ret = krb5_copy_keyblock(context, crypto->key.key, &(*key)->key);
 	if(ret)
 	    return ret;
@@ -642,7 +638,7 @@ krb5_checksum_disable(krb5_context context,
  *                                                          *
  ************************************************************/
 
-struct _krb5_encryption_type *
+KRB5_LIB_FUNCTION struct _krb5_encryption_type * KRB5_LIB_CALL
 _krb5_find_enctype(krb5_enctype type)
 {
     int i;
@@ -668,10 +664,8 @@ krb5_enctype_to_string(krb5_context context,
 	return KRB5_PROG_ETYPE_NOSUPP;
     }
     *string = strdup(e->name);
-    if(*string == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*string == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -681,11 +675,17 @@ krb5_string_to_enctype(krb5_context context,
 		       krb5_enctype *etype)
 {
     int i;
-    for(i = 0; i < _krb5_num_etypes; i++)
+    for(i = 0; i < _krb5_num_etypes; i++) {
 	if(strcasecmp(_krb5_etypes[i]->name, string) == 0){
 	    *etype = _krb5_etypes[i]->type;
 	    return 0;
 	}
+	if(_krb5_etypes[i]->alias != NULL &&
+	   strcasecmp(_krb5_etypes[i]->alias, string) == 0){
+	    *etype = _krb5_etypes[i]->type;
+	    return 0;
+	}
+    }
     krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
 			    N_("encryption type %s not supported", ""),
 			    string);
@@ -792,19 +792,11 @@ krb5_cksumtype_valid(krb5_context context,
     return 0;
 }
 
-
 static krb5_boolean
 derived_crypto(krb5_context context,
 	       krb5_crypto crypto)
 {
     return (crypto->et->flags & F_DERIVED) != 0;
-}
-
-static krb5_boolean
-special_crypto(krb5_context context,
-	       krb5_crypto crypto)
-{
-    return (crypto->et->flags & F_SPECIAL) != 0;
 }
 
 #define CHECKSUMSIZE(C) ((C)->checksumsize)
@@ -832,10 +824,8 @@ encrypt_internal_derived(krb5_context context,
     block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
     total_sz = block_sz + checksum_sz;
     p = calloc(1, total_sz);
-    if(p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     q = p;
     krb5_generate_random_block(q, et->confoundersize); /* XXX */
@@ -876,6 +866,85 @@ encrypt_internal_derived(krb5_context context,
     return ret;
 }
 
+static krb5_error_code
+encrypt_internal_enc_then_cksum(krb5_context context,
+				krb5_crypto crypto,
+				unsigned usage,
+				const void *data,
+				size_t len,
+				krb5_data *result,
+				void *ivec)
+{
+    size_t sz, block_sz, checksum_sz, total_sz;
+    Checksum cksum;
+    unsigned char *p, *q, *ivc = NULL;
+    krb5_error_code ret;
+    struct _krb5_key_data *dkey;
+    const struct _krb5_encryption_type *et = crypto->et;
+
+    checksum_sz = CHECKSUMSIZE(et->keyed_checksum);
+
+    sz = et->confoundersize + len;
+    block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
+    total_sz = block_sz + checksum_sz;
+    p = calloc(1, total_sz);
+    if (p == NULL)
+	return krb5_enomem(context);
+
+    q = p;
+    krb5_generate_random_block(q, et->confoundersize); /* XXX */
+    q += et->confoundersize;
+    memcpy(q, data, len);
+
+    ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+    if(ret)
+	goto fail;
+    ret = _key_schedule(context, dkey);
+    if(ret)
+	goto fail;
+
+    /* XXX EVP style update API would avoid needing to allocate here */
+    ivc = malloc(et->blocksize + block_sz);
+    if (ivc == NULL) {
+	ret = krb5_enomem(context);
+	goto fail;
+    }
+    if (ivec)
+	memcpy(ivc, ivec, et->blocksize);
+    else
+	memset(ivc, 0, et->blocksize);
+
+    ret = (*et->encrypt)(context, dkey, p, block_sz, 1, usage, ivec);
+    if (ret)
+	goto fail;
+    memcpy(&ivc[et->blocksize], p, block_sz);
+
+    ret = create_checksum(context,
+			  et->keyed_checksum,
+			  crypto,
+			  INTEGRITY_USAGE(usage),
+			  ivc,
+			  et->blocksize + block_sz,
+			  &cksum);
+    if(ret == 0 && cksum.checksum.length != checksum_sz) {
+	free_Checksum (&cksum);
+	krb5_clear_error_message (context);
+	ret = KRB5_CRYPTO_INTERNAL;
+    }
+    if(ret)
+	goto fail;
+    memcpy(p + block_sz, cksum.checksum.data, cksum.checksum.length);
+    free_Checksum (&cksum);
+    result->data = p;
+    result->length = total_sz;
+    free(ivc);
+    return 0;
+ fail:
+    memset_s(p, total_sz, 0, total_sz);
+    free(p);
+    free(ivc);
+    return ret;
+}
 
 static krb5_error_code
 encrypt_internal(krb5_context context,
@@ -896,10 +965,8 @@ encrypt_internal(krb5_context context,
     sz = et->confoundersize + checksum_sz + len;
     block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
     p = calloc(1, block_sz);
-    if(p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
 
     q = p;
     krb5_generate_random_block(q, et->confoundersize); /* XXX */
@@ -958,10 +1025,8 @@ encrypt_internal_special(krb5_context context,
     krb5_error_code ret;
 
     tmp = malloc (sz);
-    if (tmp == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (tmp == NULL)
+	return krb5_enomem(context);
     p = tmp;
     memset (p, 0, cksum_sz);
     p += cksum_sz;
@@ -1010,10 +1075,8 @@ decrypt_internal_derived(krb5_context context,
     }
 
     p = malloc(len);
-    if(len != 0 && p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     len -= checksum_sz;
@@ -1053,8 +1116,91 @@ decrypt_internal_derived(krb5_context context,
     result->data = realloc(p, l);
     if(result->data == NULL && l != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
+    }
+    result->length = l;
+    return 0;
+}
+
+static krb5_error_code
+decrypt_internal_enc_then_cksum(krb5_context context,
+				krb5_crypto crypto,
+				unsigned usage,
+				void *data,
+				size_t len,
+				krb5_data *result,
+				void *ivec)
+{
+    size_t checksum_sz;
+    Checksum cksum;
+    unsigned char *p;
+    krb5_error_code ret;
+    struct _krb5_key_data *dkey;
+    struct _krb5_encryption_type *et = crypto->et;
+    unsigned long l;
+
+    checksum_sz = CHECKSUMSIZE(et->keyed_checksum);
+    if (len < checksum_sz + et->confoundersize) {
+	krb5_set_error_message(context, KRB5_BAD_MSIZE,
+			       N_("Encrypted data shorter then "
+				  "checksum + confunder", ""));
+	return KRB5_BAD_MSIZE;
+    }
+
+    if (((len - checksum_sz) % et->padsize) != 0) {
+	krb5_clear_error_message(context);
+	return KRB5_BAD_MSIZE;
+    }
+
+    len -= checksum_sz;
+
+    p = malloc(et->blocksize + len);
+    if (p == NULL)
+	return krb5_enomem(context);
+
+    if (ivec)
+	memcpy(p, ivec, et->blocksize);
+    else
+	memset(p, 0, et->blocksize);
+    memcpy(&p[et->blocksize], data, len);
+
+    cksum.checksum.data   = (unsigned char *)data + len;
+    cksum.checksum.length = checksum_sz;
+    cksum.cksumtype       = CHECKSUMTYPE(et->keyed_checksum);
+
+    ret = verify_checksum(context,
+			  crypto,
+			  INTEGRITY_USAGE(usage),
+			  p,
+			  et->blocksize + len,
+			  &cksum);
+    if(ret) {
+	free(p);
+	return ret;
+    }
+
+    ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+    if(ret) {
+	free(p);
+	return ret;
+    }
+    ret = _key_schedule(context, dkey);
+    if(ret) {
+	free(p);
+	return ret;
+    }
+    ret = (*et->encrypt)(context, dkey, &p[et->blocksize], len, 0, usage, ivec);
+    if (ret) {
+	free(p);
+	return ret;
+    }
+
+    l = len - et->confoundersize;
+    memmove(p, p + et->blocksize + et->confoundersize, l);
+    result->data = realloc(p, l);
+    if(result->data == NULL && l != 0) {
+	free(p);
+	return krb5_enomem(context);
     }
     result->length = l;
     return 0;
@@ -1087,10 +1233,8 @@ decrypt_internal(krb5_context context,
     }
 
     p = malloc(len);
-    if(len != 0 && p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len != 0 && p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     ret = _key_schedule(context, &crypto->key);
@@ -1121,8 +1265,7 @@ decrypt_internal(krb5_context context,
     result->data = realloc(p, l);
     if(result->data == NULL && l != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     result->length = l;
     return 0;
@@ -1155,10 +1298,8 @@ decrypt_internal_special(krb5_context context,
     }
 
     p = malloc (len);
-    if (p == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (p == NULL)
+	return krb5_enomem(context);
     memcpy(p, data, len);
 
     ret = (*et->encrypt)(context, &crypto->key, p, len, FALSE, usage, ivec);
@@ -1171,21 +1312,168 @@ decrypt_internal_special(krb5_context context,
     result->data = realloc(p, sz);
     if(result->data == NULL && sz != 0) {
 	free(p);
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     result->length = sz;
     return 0;
 }
 
 static krb5_crypto_iov *
-find_iv(krb5_crypto_iov *data, size_t num_data, unsigned type)
+iov_find(krb5_crypto_iov *data, size_t num_data, unsigned type)
 {
     size_t i;
     for (i = 0; i < num_data; i++)
 	if (data[i].flags == type)
 	    return &data[i];
     return NULL;
+}
+
+static size_t
+iov_enc_data_len(krb5_crypto_iov *data, int num_data)
+{
+    size_t i, len;
+
+    for (len = 0, i = 0; i < num_data; i++) {
+	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
+	    continue;
+	len += data[i].data.length;
+    }
+
+    return len;
+}
+
+static size_t
+iov_sign_data_len(krb5_crypto_iov *data, int num_data)
+{
+    size_t i, len;
+
+    for (len = 0, i = 0; i < num_data; i++) {
+	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
+	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
+	    continue;
+	len += data[i].data.length;
+    }
+
+    return len;
+}
+
+static krb5_error_code
+iov_coalesce(krb5_context context,
+	     krb5_data *prefix,
+	     krb5_crypto_iov *data,
+	     int num_data,
+	     krb5_boolean inc_sign_data,
+	     krb5_data *out)
+{
+    unsigned char *p, *q;
+    krb5_crypto_iov *hiv, *piv;
+    size_t len;
+    unsigned int i;
+
+    hiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
+
+    piv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_PADDING);
+
+    len = 0;
+    if (prefix)
+	len += prefix->length;
+    len += hiv->data.length;
+    if (inc_sign_data)
+	len += iov_sign_data_len(data, num_data);
+    else
+	len += iov_enc_data_len(data, num_data);
+    if (piv)
+	len += piv->data.length;
+
+    p = q = malloc(len);
+    if (p == NULL)
+	return krb5_enomem(context);
+
+    if (prefix) {
+	memcpy(q, prefix->data, prefix->length);
+	q += prefix->length;
+    }
+    memcpy(q, hiv->data.data, hiv->data.length);
+    q += hiv->data.length;
+    for (i = 0; i < num_data; i++) {
+	if (data[i].flags == KRB5_CRYPTO_TYPE_DATA ||
+	    (inc_sign_data && data[i].flags == KRB5_CRYPTO_TYPE_SIGN_ONLY)) {
+	    memcpy(q, data[i].data.data, data[i].data.length);
+	    q += data[i].data.length;
+	}
+    }
+    if (piv)
+	memset(q, 0, piv->data.length);
+
+    out->length = len;
+    out->data = p;
+
+    return 0;
+}
+
+static krb5_error_code
+iov_uncoalesce(krb5_context context,
+	       krb5_data *enc_data,
+	       krb5_crypto_iov *data,
+	       int num_data)
+{
+    unsigned char *q = enc_data->data;
+    krb5_crypto_iov *hiv, *piv;
+    unsigned int i;
+
+    hiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
+
+    piv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_PADDING);
+
+    memcpy(hiv->data.data, q, hiv->data.length);
+    q += hiv->data.length;
+
+    for (i = 0; i < num_data; i++) {
+	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
+	    continue;
+	memcpy(data[i].data.data, q, data[i].data.length);
+	q += data[i].data.length;
+    }
+    if (piv)
+	memcpy(piv->data.data, q, piv->data.length);
+
+    return 0;
+}
+
+static krb5_error_code
+iov_pad_validate(const struct _krb5_encryption_type *et,
+		 krb5_crypto_iov *data,
+		 int num_data,
+		 krb5_crypto_iov **ppiv)
+{
+    krb5_crypto_iov *piv;
+    size_t sz, headersz, block_sz, pad_sz, len;
+
+    len = iov_enc_data_len(data, num_data);
+
+    headersz = et->confoundersize;
+
+    sz = headersz + len;
+    block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
+
+    pad_sz = block_sz - sz;
+
+    piv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_PADDING);
+    /* its ok to have no TYPE_PADDING if there is no padding */
+    if (piv == NULL && pad_sz != 0)
+	return KRB5_BAD_MSIZE;
+    if (piv) {
+	if (piv->data.length < pad_sz)
+	    return KRB5_BAD_MSIZE;
+	piv->data.length = pad_sz;
+	if (pad_sz)
+	    memset(piv->data.data, pad_sz, pad_sz);
+	else
+	    piv = NULL;
+    }
+
+    *ppiv = piv;
+    return 0;
 }
 
 /**
@@ -1220,11 +1508,9 @@ krb5_encrypt_iov_ivec(krb5_context context,
 		      int num_data,
 		      void *ivec)
 {
-    size_t headersz, trailersz, len;
-    int i;
-    size_t sz, block_sz, pad_sz;
+    size_t headersz, trailersz;
     Checksum cksum;
-    unsigned char *p, *q;
+    krb5_data enc_data, sign_data;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
     const struct _krb5_encryption_type *et = crypto->et;
@@ -1240,147 +1526,126 @@ krb5_encrypt_iov_ivec(krb5_context context,
 	return KRB5_CRYPTO_INTERNAL;
     }
 
+    krb5_data_zero(&enc_data);
+    krb5_data_zero(&sign_data);
+
     headersz = et->confoundersize;
     trailersz = CHECKSUMSIZE(et->keyed_checksum);
 
-    for (len = 0, i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	len += data[i].data.length;
-    }
-
-    sz = headersz + len;
-    block_sz = (sz + et->padsize - 1) &~ (et->padsize - 1); /* pad */
-
-    pad_sz = block_sz - sz;
-
     /* header */
-
-    hiv = find_iv(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
+    hiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
     if (hiv == NULL || hiv->data.length != headersz)
 	return KRB5_BAD_MSIZE;
-
     krb5_generate_random_block(hiv->data.data, hiv->data.length);
 
     /* padding */
-    piv = find_iv(data, num_data, KRB5_CRYPTO_TYPE_PADDING);
-    /* its ok to have no TYPE_PADDING if there is no padding */
-    if (piv == NULL && pad_sz != 0)
-	return KRB5_BAD_MSIZE;
-    if (piv) {
-	if (piv->data.length < pad_sz)
-	    return KRB5_BAD_MSIZE;
-	piv->data.length = pad_sz;
-	if (pad_sz)
-	    memset(piv->data.data, pad_sz, pad_sz);
-	else
-	    piv = NULL;
-    }
+    ret = iov_pad_validate(et, data, num_data, &piv);
+    if(ret)
+	goto cleanup;
 
     /* trailer */
-    tiv = find_iv(data, num_data, KRB5_CRYPTO_TYPE_TRAILER);
-    if (tiv == NULL || tiv->data.length != trailersz)
-	return KRB5_BAD_MSIZE;
-
-    /*
-     * XXX replace with EVP_Sign? at least make create_checksum an iov
-     * function.
-     * XXX CTS EVP is broken, can't handle multi buffers :(
-     */
-
-    len = block_sz;
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	len += data[i].data.length;
+    tiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_TRAILER);
+    if (tiv == NULL || tiv->data.length != trailersz) {
+	ret = KRB5_BAD_MSIZE;
+	goto cleanup;
     }
 
-    p = q = malloc(len);
+    if (et->flags & F_ENC_THEN_CKSUM) {
+	unsigned char old_ivec[EVP_MAX_IV_LENGTH];
+	krb5_data ivec_data;
 
-    memcpy(q, hiv->data.data, hiv->data.length);
-    q += hiv->data.length;
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
+	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	if(ret)
+	    goto cleanup;
+
+	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+	if(ret)
+	    goto cleanup;
+
+	ret = _key_schedule(context, dkey);
+	if(ret)
+	    goto cleanup;
+
+	heim_assert(et->blocksize <= sizeof(old_ivec),
+		    "blocksize too big for ivec buffer");
+
+	if (ivec)
+	    memcpy(old_ivec, ivec, et->blocksize);
+	else
+	    memset(old_ivec, 0, et->blocksize);
+
+	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+			     1, usage, ivec);
+	if(ret)
+	    goto cleanup;
+
+	ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	if(ret)
+	    goto cleanup;
+
+	ivec_data.length = et->blocksize;
+	ivec_data.data = old_ivec;
+
+	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
+	if(ret)
+	    goto cleanup;
+    } else {
+	ret = iov_coalesce(context, NULL, data, num_data, TRUE, &sign_data);
+	if(ret)
+	    goto cleanup;
     }
-    if (piv)
-	memset(q, 0, piv->data.length);
 
     ret = create_checksum(context,
 			  et->keyed_checksum,
 			  crypto,
 			  INTEGRITY_USAGE(usage),
-			  p,
-			  len,
+			  sign_data.data,
+			  sign_data.length,
 			  &cksum);
-    free(p);
     if(ret == 0 && cksum.checksum.length != trailersz) {
 	free_Checksum (&cksum);
 	krb5_clear_error_message (context);
 	ret = KRB5_CRYPTO_INTERNAL;
     }
     if(ret)
-	return ret;
+	goto cleanup;
 
     /* save cksum at end */
     memcpy(tiv->data.data, cksum.checksum.data, cksum.checksum.length);
     free_Checksum (&cksum);
 
-    /* XXX replace with EVP_Cipher */
-    p = q = malloc(block_sz);
-    if(p == NULL)
-	return ENOMEM;
+    if (!(et->flags & F_ENC_THEN_CKSUM)) {
+	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	if(ret)
+	    goto cleanup;
 
-    memcpy(q, hiv->data.data, hiv->data.length);
-    q += hiv->data.length;
+	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+	if(ret)
+	    goto cleanup;
 
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
-    }
-    if (piv)
-	memset(q, 0, piv->data.length);
+	ret = _key_schedule(context, dkey);
+	if(ret)
+	    goto cleanup;
 
+	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+			     1, usage, ivec);
+	if(ret)
+	    goto cleanup;
 
-    ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
-    if(ret) {
-	free(p);
-	return ret;
-    }
-    ret = _key_schedule(context, dkey);
-    if(ret) {
-	free(p);
-	return ret;
+	ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	if(ret)
+	    goto cleanup;
     }
 
-    ret = (*et->encrypt)(context, dkey, p, block_sz, 1, usage, ivec);
-    if (ret) {
-	free(p);
-	return ret;
+cleanup:
+    if (enc_data.data) {
+	memset_s(enc_data.data, enc_data.length, 0, enc_data.length);
+	krb5_data_free(&enc_data);
     }
-
-    /* now copy data back to buffers */
-    q = p;
-
-    memcpy(hiv->data.data, q, hiv->data.length);
-    q += hiv->data.length;
-
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	memcpy(data[i].data.data, q, data[i].data.length);
-	q += data[i].data.length;
+    if (sign_data.data) {
+	memset_s(sign_data.data, sign_data.length, 0, sign_data.length);
+	krb5_data_free(&sign_data);
     }
-    if (piv)
-	memcpy(piv->data.data, q, pad_sz);
-
-    free(p);
-
     return ret;
 }
 
@@ -1413,10 +1678,8 @@ krb5_decrypt_iov_ivec(krb5_context context,
 		      unsigned int num_data,
 		      void *ivec)
 {
-    unsigned int i;
-    size_t headersz, trailersz, len;
     Checksum cksum;
-    unsigned char *p, *q;
+    krb5_data enc_data, sign_data;
     krb5_error_code ret;
     struct _krb5_key_data *dkey;
     struct _krb5_encryption_type *et = crypto->et;
@@ -1427,97 +1690,63 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	return KRB5_CRYPTO_INTERNAL;
     }
 
-    headersz = et->confoundersize;
-
-    hiv = find_iv(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
-    if (hiv == NULL || hiv->data.length != headersz)
+    /* header */
+    hiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_HEADER);
+    if (hiv == NULL || hiv->data.length != et->confoundersize)
 	return KRB5_BAD_MSIZE;
 
     /* trailer */
-    trailersz = CHECKSUMSIZE(et->keyed_checksum);
-
-    tiv = find_iv(data, num_data, KRB5_CRYPTO_TYPE_TRAILER);
-    if (tiv->data.length != trailersz)
+    tiv = iov_find(data, num_data, KRB5_CRYPTO_TYPE_TRAILER);
+    if (tiv->data.length != CHECKSUMSIZE(et->keyed_checksum))
 	return KRB5_BAD_MSIZE;
 
-    /* Find length of data we will decrypt */
-
-    len = headersz;
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	len += data[i].data.length;
-    }
-
-    if ((len % et->padsize) != 0) {
+    /* padding */
+    if ((iov_enc_data_len(data, num_data) % et->padsize) != 0) {
 	krb5_clear_error_message(context);
 	return KRB5_BAD_MSIZE;
     }
 
-    /* XXX replace with EVP_Cipher */
+    krb5_data_zero(&enc_data);
+    krb5_data_zero(&sign_data);
 
-    p = q = malloc(len);
-    if (p == NULL)
-	return ENOMEM;
+    if (!(et->flags & F_ENC_THEN_CKSUM)) {
+	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	if(ret)
+	    goto cleanup;
 
-    memcpy(q, hiv->data.data, hiv->data.length);
-    q += hiv->data.length;
+	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+	if(ret)
+	    goto cleanup;
 
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
-    }
+	ret = _key_schedule(context, dkey);
+	if(ret)
+	    goto cleanup;
 
-    ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
-    if(ret) {
-	free(p);
-	return ret;
-    }
-    ret = _key_schedule(context, dkey);
-    if(ret) {
-	free(p);
-	return ret;
-    }
+	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+			     0, usage, ivec);
+	if(ret)
+	    goto cleanup;
 
-    ret = (*et->encrypt)(context, dkey, p, len, 0, usage, ivec);
-    if (ret) {
-	free(p);
-	return ret;
-    }
+	ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	if(ret)
+	    goto cleanup;
 
-    /* copy data back to buffers */
-    memcpy(hiv->data.data, p, hiv->data.length);
-    q = p + hiv->data.length;
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA)
-	    continue;
-	memcpy(data[i].data.data, q, data[i].data.length);
-	q += data[i].data.length;
-    }
+	ret = iov_coalesce(context, NULL, data, num_data, TRUE, &sign_data);
+	if(ret)
+	    goto cleanup;
+    } else {
+	krb5_data ivec_data;
+	static unsigned char zero_ivec[EVP_MAX_IV_LENGTH];
 
-    free(p);
+	heim_assert(et->blocksize <= sizeof(zero_ivec),
+		    "blocksize too big for ivec buffer");
 
-    /* check signature */
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	len += data[i].data.length;
-    }
+	ivec_data.length = et->blocksize;
+	ivec_data.data = ivec ? ivec : zero_ivec;
 
-    p = q = malloc(len);
-    if (p == NULL)
-	return ENOMEM;
-
-    memcpy(q, hiv->data.data, hiv->data.length);
-    q += hiv->data.length;
-    for (i = 0; i < num_data; i++) {
-	if (data[i].flags != KRB5_CRYPTO_TYPE_DATA &&
-	    data[i].flags != KRB5_CRYPTO_TYPE_SIGN_ONLY)
-	    continue;
-	memcpy(q, data[i].data.data, data[i].data.length);
-	q += data[i].data.length;
+	ret = iov_coalesce(context, &ivec_data, data, num_data, TRUE, &sign_data);
+	if(ret)
+	    goto cleanup;
     }
 
     cksum.checksum.data   = tiv->data.data;
@@ -1527,10 +1756,44 @@ krb5_decrypt_iov_ivec(krb5_context context,
     ret = verify_checksum(context,
 			  crypto,
 			  INTEGRITY_USAGE(usage),
-			  p,
-			  len,
+			  sign_data.data,
+			  sign_data.length,
 			  &cksum);
-    free(p);
+    if(ret)
+	goto cleanup;
+
+    if (et->flags & F_ENC_THEN_CKSUM) {
+	ret = iov_coalesce(context, NULL, data, num_data, FALSE, &enc_data);
+	if(ret)
+	    goto cleanup;
+
+	ret = _get_derived_key(context, crypto, ENCRYPTION_USAGE(usage), &dkey);
+	if(ret)
+	    goto cleanup;
+
+	ret = _key_schedule(context, dkey);
+	if(ret)
+	    goto cleanup;
+
+	ret = (*et->encrypt)(context, dkey, enc_data.data, enc_data.length,
+			     0, usage, ivec);
+	if(ret)
+	    goto cleanup;
+
+	ret = iov_uncoalesce(context, &enc_data, data, num_data);
+	if(ret)
+	    goto cleanup;
+    }
+
+cleanup:
+    if (enc_data.data) {
+	memset_s(enc_data.data, enc_data.length, 0, enc_data.length);
+	krb5_data_free(&enc_data);
+    }
+    if (sign_data.data) {
+	memset_s(sign_data.data, sign_data.length, 0, sign_data.length);
+	krb5_data_free(&sign_data);
+    }
     return ret;
 }
 
@@ -1568,7 +1831,7 @@ krb5_create_checksum_iov(krb5_context context,
 	return KRB5_CRYPTO_INTERNAL;
     }
 
-    civ = find_iv(data, num_data, KRB5_CRYPTO_TYPE_CHECKSUM);
+    civ = iov_find(data, num_data, KRB5_CRYPTO_TYPE_CHECKSUM);
     if (civ == NULL)
 	return KRB5_BAD_MSIZE;
 
@@ -1647,7 +1910,7 @@ krb5_verify_checksum_iov(krb5_context context,
 	return KRB5_CRYPTO_INTERNAL;
     }
 
-    civ = find_iv(data, num_data, KRB5_CRYPTO_TYPE_CHECKSUM);
+    civ = iov_find(data, num_data, KRB5_CRYPTO_TYPE_CHECKSUM);
     if (civ == NULL)
 	return KRB5_BAD_MSIZE;
 
@@ -1756,14 +2019,27 @@ krb5_encrypt_ivec(krb5_context context,
 		  krb5_data *result,
 		  void *ivec)
 {
-    if(derived_crypto(context, crypto))
-	return encrypt_internal_derived(context, crypto, usage,
+    krb5_error_code ret;
+
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_RFC3961_ENC:
+	ret = encrypt_internal_derived(context, crypto, usage,
+				       data, len, result, ivec);
+	break;
+    case F_SPECIAL:
+	ret = encrypt_internal_special (context, crypto, usage,
 					data, len, result, ivec);
-    else if (special_crypto(context, crypto))
-	return encrypt_internal_special (context, crypto, usage,
-					 data, len, result, ivec);
-    else
-	return encrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    case F_ENC_THEN_CKSUM:
+	ret = encrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
+	break;
+    default:
+	ret = encrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    }
+
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -1804,14 +2080,27 @@ krb5_decrypt_ivec(krb5_context context,
 		  krb5_data *result,
 		  void *ivec)
 {
-    if(derived_crypto(context, crypto))
-	return decrypt_internal_derived(context, crypto, usage,
-					data, len, result, ivec);
-    else if (special_crypto (context, crypto))
-	return decrypt_internal_special(context, crypto, usage,
-					data, len, result, ivec);
-    else
-	return decrypt_internal(context, crypto, data, len, result, ivec);
+    krb5_error_code ret;
+
+    switch (crypto->et->flags & F_CRYPTO_MASK) {
+    case F_RFC3961_ENC:
+	ret = decrypt_internal_derived(context, crypto, usage,
+				data, len, result, ivec);
+	break;
+    case F_SPECIAL:
+	ret = decrypt_internal_special(context, crypto, usage,
+				       data, len, result, ivec);
+	break;
+    case F_ENC_THEN_CKSUM:
+	ret = decrypt_internal_enc_then_cksum(context, crypto, usage,
+					      data, len, result, ivec);
+	break;
+    default:
+	ret = decrypt_internal(context, crypto, data, len, result, ivec);
+	break;
+    }
+
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -1841,32 +2130,29 @@ krb5_decrypt_EncryptedData(krb5_context context,
  *                                                          *
  ************************************************************/
 
-krb5_error_code
-_krb5_derive_key(krb5_context context,
-		 struct _krb5_encryption_type *et,
-		 struct _krb5_key_data *key,
-		 const void *constant,
-		 size_t len)
+static krb5_error_code
+derive_key_rfc3961(krb5_context context,
+		   struct _krb5_encryption_type *et,
+		   struct _krb5_key_data *key,
+		   const void *constant,
+		   size_t len)
 {
+
     unsigned char *k = NULL;
     unsigned int nblocks = 0, i;
     krb5_error_code ret = 0;
     struct _krb5_key_type *kt = et->keytype;
 
-    ret = _key_schedule(context, key);
-    if(ret)
-	return ret;
     if(et->blocksize * 8 < kt->bits || len != et->blocksize) {
 	nblocks = (kt->bits + et->blocksize * 8 - 1) / (et->blocksize * 8);
 	k = malloc(nblocks * et->blocksize);
 	if(k == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	ret = _krb5_n_fold(constant, len, k, et->blocksize);
 	if (ret) {
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    krb5_enomem(context);
 	    goto out;
 	}
 
@@ -1884,8 +2170,7 @@ _krb5_derive_key(krb5_context context,
 	size_t res_len = (kt->bits + 7) / 8;
 
 	if(len != 0 && c == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	memcpy(c, constant, len);
@@ -1893,43 +2178,113 @@ _krb5_derive_key(krb5_context context,
 	k = malloc(res_len);
 	if(res_len != 0 && k == NULL) {
 	    free(c);
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	ret = _krb5_n_fold(c, len, k, res_len);
 	free(c);
 	if (ret) {
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	    krb5_enomem(context);
 	    goto out;
 	}
     }
 
-    /* XXX keytype dependent post-processing */
-    switch(kt->type) {
-    case ETYPE_OLD_DES3_CBC_SHA1:
+    if (kt->type == KRB5_ENCTYPE_OLD_DES3_CBC_SHA1)
 	_krb5_DES3_random_to_key(context, key->key, k, nblocks * et->blocksize);
-	break;
-    case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
-    case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+    else
 	memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);
+
+ out:
+    if (k) {
+	memset_s(k, nblocks * et->blocksize, 0, nblocks * et->blocksize);
+	free(k);
+    }
+    return ret;
+}
+
+static krb5_error_code
+derive_key_sp800_hmac(krb5_context context,
+		      struct _krb5_encryption_type *et,
+		      struct _krb5_key_data *key,
+		      const void *constant,
+		      size_t len)
+{
+    krb5_error_code ret;
+    struct _krb5_key_type *kt = et->keytype;
+    krb5_data label;
+    const EVP_MD *md = NULL;
+    const unsigned char *c = constant;
+    size_t key_len;
+    krb5_data K1;
+
+    ret = _krb5_aes_sha2_md_for_enctype(context, kt->type, &md);
+    if (ret)
+	return ret;
+
+    /*
+     * PRF usage: not handled here (output cannot be longer)
+     * Integrity usage: truncated hash (half length)
+     * Encryption usage: base key length
+     */
+    if (len == 5 && (c[4] == 0x99 || c[4] == 0x55))
+	key_len = EVP_MD_size(md) / 2;
+    else
+	key_len = kt->size;
+
+    ret = krb5_data_alloc(&K1, key_len);
+    if (ret)
+	return ret;
+
+    label.data = (void *)constant;
+    label.length = len;
+
+    ret = _krb5_SP800_108_HMAC_KDF(context, &key->key->keyvalue,
+				   &label, NULL, md, &K1);
+    if (ret == 0) {
+	if (key->key->keyvalue.length > key_len)
+	    key->key->keyvalue.length = key_len;
+	memcpy(key->key->keyvalue.data, K1.data, key_len);
+    }
+
+    memset_s(K1.data, K1.length, 0, K1.length);
+    krb5_data_free(&K1);
+
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_derive_key(krb5_context context,
+		 struct _krb5_encryption_type *et,
+		 struct _krb5_key_data *key,
+		 const void *constant,
+		 size_t len)
+{
+    krb5_error_code ret;
+
+    ret = _key_schedule(context, key);
+    if(ret)
+	return ret;
+
+    switch (et->flags & F_KDF_MASK) {
+    case F_RFC3961_KDF:
+	ret = derive_key_rfc3961(context, et, key, constant, len);
+	break;
+    case F_SP800_108_HMAC_KDF:
+	ret = derive_key_sp800_hmac(context, et, key, constant, len);
 	break;
     default:
 	ret = KRB5_CRYPTO_INTERNAL;
 	krb5_set_error_message(context, ret,
 			       N_("derive_key() called with unknown keytype (%u)", ""),
-			       kt->type);
+			       et->keytype->type);
 	break;
     }
- out:
+
     if (key->schedule) {
 	free_key_schedule(context, key, et);
 	key->schedule = NULL;
     }
-    if (k) {
-	memset(k, 0, nblocks * et->blocksize);
-	free(k);
-    }
+
     return ret;
 }
 
@@ -1988,21 +2343,19 @@ _get_derived_key(krb5_context context,
     struct _krb5_key_data *d;
     unsigned char constant[5];
 
+    *key = NULL;
     for(i = 0; i < crypto->num_key_usage; i++)
 	if(crypto->key_usage[i].usage == usage) {
 	    *key = &crypto->key_usage[i].key;
 	    return 0;
 	}
     d = _new_derived_key(crypto, usage);
-    if(d == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
-    krb5_copy_keyblock(context, crypto->key.key, &d->key);
-    _krb5_put_int(constant, usage, 5);
-    _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));
+    if (d == NULL)
+	return krb5_enomem(context);
     *key = d;
-    return 0;
+    krb5_copy_keyblock(context, crypto->key.key, &d->key);
+    _krb5_put_int(constant, usage, sizeof(constant));
+    return _krb5_derive_key(context, crypto->et, d, constant, sizeof(constant));
 }
 
 /**
@@ -2031,11 +2384,9 @@ krb5_crypto_init(krb5_context context,
 {
     krb5_error_code ret;
     ALLOC(*crypto, 1);
-    if(*crypto == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
-    if(etype == ETYPE_NULL)
+    if (*crypto == NULL)
+	return krb5_enomem(context);
+    if(etype == (krb5_enctype)ETYPE_NULL)
 	etype = key->keytype;
     (*crypto)->et = _krb5_find_enctype(etype);
     if((*crypto)->et == NULL || ((*crypto)->et->flags & F_DISABLED)) {
@@ -2073,7 +2424,7 @@ free_key_schedule(krb5_context context,
     krb5_free_data(context, key->schedule);
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_free_key_data(krb5_context context, struct _krb5_key_data *key,
 	      struct _krb5_encryption_type *et)
 {
@@ -2280,6 +2631,47 @@ krb5_allow_weak_crypto(krb5_context context,
 		_krb5_etypes[i]->flags |= F_DISABLED;
 	}
     return 0;
+}
+
+/**
+ * Returns is the encryption is strong or weak
+ *
+ * @param context Kerberos 5 context
+ * @param enctype encryption type to probe
+ *
+ * @return Returns true if encryption type is weak or is not supported.
+ *
+ * @ingroup krb5_crypto
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_is_enctype_weak(krb5_context context, krb5_enctype enctype)
+{
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
+    if(et == NULL || (et->flags & F_WEAK))
+	return TRUE;
+    return FALSE;
+}
+
+/**
+ * Returns whether the encryption type should use randomly generated salts
+ *
+ * @param context Kerberos 5 context
+ * @param enctype encryption type to probe
+ *
+ * @return Returns true if generated salts should have random component
+ *
+ * @ingroup krb5_crypto
+ */
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+_krb5_enctype_requires_random_salt(krb5_context context,
+				   krb5_enctype enctype)
+{
+    struct _krb5_encryption_type *et;
+
+    et = _krb5_find_enctype (enctype);
+
+    return et && (et->flags & F_SP800_108_HMAC_KDF);
 }
 
 static size_t
@@ -2554,13 +2946,11 @@ krb5_crypto_fx_cf2(krb5_context context,
     krb5_data_zero(&os1);
     krb5_data_zero(&os2);
 
-    ret = krb5_enctype_keysize(context, enctype, &keysize);
+    ret = krb5_enctype_keybits(context, enctype, &keysize);
     if (ret)
 	return ret;
+    keysize = (keysize + 7) / 8;
 
-    ret = krb5_data_alloc(&res->keyvalue, keysize);
-    if (ret)
-	goto out;
     ret = krb5_crypto_prfplus(context, crypto1, pepper1, keysize, &os1);
     if (ret)
 	goto out;
@@ -2570,13 +2960,12 @@ krb5_crypto_fx_cf2(krb5_context context,
 
     res->keytype = enctype;
     {
-	unsigned char *p1 = os1.data, *p2 = os2.data, *p3 = res->keyvalue.data;
+	unsigned char *p1 = os1.data, *p2 = os2.data;
 	for (i = 0; i < keysize; i++)
-	    p3[i] = p1[i] ^ p2[i];
+	    p1[i] ^= p2[i];
     }
+    ret = krb5_random_to_key(context, enctype, os1.data, keysize, res);
  out:
-    if (ret)
-	krb5_data_free(&res->keyvalue);
     krb5_data_free(&os1);
     krb5_data_free(&os2);
 
@@ -2617,10 +3006,8 @@ krb5_keytype_to_enctypes (krb5_context context,
     }
 
     ret = malloc(n * sizeof(*ret));
-    if (ret == NULL && n != 0) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (ret == NULL && n != 0)
+	return krb5_enomem(context);
     n = 0;
     for (i = _krb5_num_etypes - 1; i >= 0; --i) {
 	if (_krb5_etypes[i]->keytype->type == keytype

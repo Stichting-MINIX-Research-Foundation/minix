@@ -1,4 +1,4 @@
-/* crypto/ui/ui_openssl.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/ui/ui_openssl.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) and others for the
  * OpenSSL project 2001.
@@ -203,7 +203,7 @@
 # elif !defined(OPENSSL_SYS_VMS) \
 	&& !defined(OPENSSL_SYS_MSDOS) \
 	&& !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) \
-	&& !defined(MAC_OS_GUSI_SOURCE) \
+	&& !defined(MAC_OS_GUSI_SOURCE)	\
 	&& !defined(OPENSSL_SYS_VXWORKS) \
 	&& !defined(OPENSSL_SYS_NETWARE)
 #  define TERMIOS
@@ -435,7 +435,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 # else
     p = fgets(result, maxsize, tty_in);
 # endif
-    if (!p)
+    if (p == NULL)
         goto error;
     if (feof(tty_in))
         goto error;
@@ -504,18 +504,31 @@ static int open_console(UI *ui)
             is_a_tty = 0;
         else
 # endif
+# ifdef ENODEV
+            /*
+             * MacOS X returns ENODEV (Operation not supported by device),
+             * which seems appropriate.
+             */
+        if (errno == ENODEV)
+            is_a_tty = 0;
+        else
+# endif
             return 0;
     }
 #endif
 #ifdef OPENSSL_SYS_VMS
     status = sys$assign(&terminal, &channel, 0, 0);
+
+    /* if there isn't a TT device, something is very wrong */
     if (status != SS$_NORMAL)
         return 0;
-    status =
-        sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12, 0, 0,
-                 0, 0);
+
+    status = sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12,
+                      0, 0, 0, 0);
+
+    /* If IO$_SENSEMODE doesn't work, this is not a terminal device */
     if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+        is_a_tty = 0;
 #endif
     return 1;
 }
@@ -532,14 +545,15 @@ static int noecho_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] | TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] | TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+            return 0;
+    }
 #endif
     return 1;
 }
@@ -556,14 +570,15 @@ static int echo_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+            return 0;
+    }
 #endif
     return 1;
 }
@@ -576,6 +591,8 @@ static int close_console(UI *ui)
         fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
+    if (status != SS$_NORMAL)
+        return 0;
 #endif
     CRYPTO_w_unlock(CRYPTO_LOCK_UI);
 

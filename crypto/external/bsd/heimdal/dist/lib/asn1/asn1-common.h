@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1-common.h,v 1.1.1.3 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: asn1-common.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /* Id */
 
@@ -9,21 +9,26 @@
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
+#ifndef __HEIM_BASE_DATA__
+#define __HEIM_BASE_DATA__ 1
+struct heim_base_data {
+	size_t length;
+	void *data;
+};
+#endif
+
 typedef struct heim_integer {
     size_t length;
     void *data;
     int negative;
 } heim_integer;
 
-typedef struct heim_octet_string {
-    size_t length;
-    void *data;
-} heim_octet_string;
+typedef struct heim_base_data heim_octet_string;
 
 typedef char *heim_general_string;
 typedef char *heim_utf8_string;
-typedef struct heim_octet_string heim_printable_string;
-typedef struct heim_octet_string heim_ia5_string;
+typedef struct heim_base_data heim_printable_string;
+typedef struct heim_base_data heim_ia5_string;
 
 typedef struct heim_bmp_string {
     size_t length;
@@ -47,8 +52,8 @@ typedef struct heim_bit_string {
     void *data;
 } heim_bit_string;
 
-typedef struct heim_octet_string heim_any;
-typedef struct heim_octet_string heim_any_set;
+typedef struct heim_base_data heim_any;
+typedef struct heim_base_data heim_any_set;
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
   do {                                                         \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rename_s.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: rename_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003, 2005 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: rename_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 kadm5_ret_t
 kadm5_s_rename_principal(void *server_handle,
@@ -48,20 +48,26 @@ kadm5_s_rename_principal(void *server_handle,
     krb5_principal oldname;
 
     memset(&ent, 0, sizeof(ent));
-    if(krb5_principal_compare(context->context, source, target))
+    if (krb5_principal_compare(context->context, source, target))
 	return KADM5_DUP; /* XXX is this right? */
-    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+	if(ret)
+	    return ret;
+    }
+
+    ret = kadm5_log_init(context);
+    if (ret)
+        goto out;
+
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      source, HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
-    if(ret){
-	context->db->hdb_close(context->context, context->db);
-	goto out;
-    }
-    ret = _kadm5_set_modifier(context, &ent.entry);
-    if(ret)
+    if (ret)
 	goto out2;
+    oldname = ent.entry.principal;
+    ret = _kadm5_set_modifier(context, &ent.entry);
+    if (ret)
+	goto out3;
     {
 	/* fix salt */
 	size_t i;
@@ -75,39 +81,41 @@ kadm5_s_rename_principal(void *server_handle,
 	    if(ent.entry.keys.val[i].salt == NULL){
 		ent.entry.keys.val[i].salt =
 		    malloc(sizeof(*ent.entry.keys.val[i].salt));
-		if(ent.entry.keys.val[i].salt == NULL)
-		    return ENOMEM;
-		ret = copy_Salt(&salt, ent.entry.keys.val[i].salt);
-		if(ret)
+		if (ent.entry.keys.val[i].salt == NULL)
+		    ret = ENOMEM;
+                else
+                    ret = copy_Salt(&salt, ent.entry.keys.val[i].salt);
+		if (ret)
 		    break;
 	    }
 	}
 	krb5_free_salt(context->context, salt2);
     }
-    if(ret)
-	goto out2;
-    oldname = ent.entry.principal;
+    if (ret)
+	goto out3;
+
+    /* Borrow target */
     ent.entry.principal = target;
-
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
-    if (ret) {
-	ent.entry.principal = oldname;
-	goto out2;
-    }
+    if (ret)
+	goto out3;
 
-    kadm5_log_rename (context, source, &ent.entry);
+    /* This logs the change for iprop and writes to the HDB */
+    ret = kadm5_log_rename(context, source, &ent.entry);
 
-    ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    if(ret){
-	ent.entry.principal = oldname;
-	goto out2;
-    }
-    ret = context->db->hdb_remove(context->context, context->db, oldname);
-    ent.entry.principal = oldname;
-out2:
-    context->db->hdb_close(context->context, context->db);
+ out3:
+    ent.entry.principal = oldname; /* Unborrow target */
     hdb_free_entry(context->context, &ent);
-out:
+
+ out2:
+    (void) kadm5_log_end(context);
+ out:
+    if (!context->keep_open) {
+        kadm5_ret_t ret2;
+        ret2 = context->db->hdb_close(context->context, context->db);
+        if (ret == 0 && ret2 != 0)
+            ret = ret2;
+    }
     return _kadm5_error_code(ret);
 }
 

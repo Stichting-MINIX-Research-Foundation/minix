@@ -176,23 +176,23 @@ err:\
                 M_ASN1_D2I_get_imp(b,func, type);\
                 }
 
-# define M_ASN1_D2I_get_set(r,func,free_func) \
-                M_ASN1_D2I_get_imp_set(r,func,free_func, \
+# define M_ASN1_D2I_get_set(r,func,freefunc) \
+                M_ASN1_D2I_get_imp_set(r,func,freefunc, \
                         V_ASN1_SET,V_ASN1_UNIVERSAL);
 
-# define M_ASN1_D2I_get_set_type(type,r,func,free_func) \
-                M_ASN1_D2I_get_imp_set_type(type,r,func,free_func, \
+# define M_ASN1_D2I_get_set_type(type,r,func,freefunc) \
+                M_ASN1_D2I_get_imp_set_type(type,r,func,freefunc, \
                         V_ASN1_SET,V_ASN1_UNIVERSAL);
 
-# define M_ASN1_D2I_get_set_opt(r,func,free_func) \
+# define M_ASN1_D2I_get_set_opt(r,func,freefunc) \
         if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
                 V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
-                { M_ASN1_D2I_get_set(r,func,free_func); }
+                { M_ASN1_D2I_get_set(r,func,freefunc); }
 
-# define M_ASN1_D2I_get_set_opt_type(type,r,func,free_func) \
+# define M_ASN1_D2I_get_set_opt_type(type,r,func,freefunc) \
         if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
                 V_ASN1_CONSTRUCTED|V_ASN1_SET)))\
-                { M_ASN1_D2I_get_set_type(type,r,func,free_func); }
+                { M_ASN1_D2I_get_set_type(type,r,func,freefunc); }
 
 # define M_ASN1_I2D_len_SET_opt(a,f) \
         if ((a != NULL) && (sk_num(a) != 0)) \
@@ -210,61 +210,61 @@ err:\
         if ((a != NULL) && (sk_##type##_num(a) != 0)) \
                 M_ASN1_I2D_put_SEQUENCE_type(type,a,f);
 
-# define M_ASN1_D2I_get_IMP_set_opt(b,func,free_func,tag) \
+# define M_ASN1_D2I_get_IMP_set_opt(b,func,freefunc,tag) \
         if ((c.slen != 0) && \
                 (M_ASN1_next == \
                 (V_ASN1_CONTEXT_SPECIFIC|V_ASN1_CONSTRUCTED|(tag))))\
                 { \
-                M_ASN1_D2I_get_imp_set(b,func,free_func,\
+                M_ASN1_D2I_get_imp_set(b,func,freefunc,\
                         tag,V_ASN1_CONTEXT_SPECIFIC); \
                 }
 
-# define M_ASN1_D2I_get_IMP_set_opt_type(type,b,func,free_func,tag) \
+# define M_ASN1_D2I_get_IMP_set_opt_type(type,b,func,freefunc,tag) \
         if ((c.slen != 0) && \
                 (M_ASN1_next == \
                 (V_ASN1_CONTEXT_SPECIFIC|V_ASN1_CONSTRUCTED|(tag))))\
                 { \
-                M_ASN1_D2I_get_imp_set_type(type,b,func,free_func,\
+                M_ASN1_D2I_get_imp_set_type(type,b,func,freefunc,\
                         tag,V_ASN1_CONTEXT_SPECIFIC); \
                 }
 
-# define M_ASN1_D2I_get_seq(r,func,free_func) \
-                M_ASN1_D2I_get_imp_set(r,func,free_func,\
+# define M_ASN1_D2I_get_seq(r,func,freefunc) \
+                M_ASN1_D2I_get_imp_set(r,func,freefunc,\
                         V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
 
-# define M_ASN1_D2I_get_seq_type(type,r,func,free_func) \
-                M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,\
+# define M_ASN1_D2I_get_seq_type(type,r,func,freefunc) \
+                M_ASN1_D2I_get_imp_set_type(type,r,func,freefunc,\
                                             V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL)
 
-# define M_ASN1_D2I_get_seq_opt(r,func,free_func) \
+# define M_ASN1_D2I_get_seq_opt(r,func,freefunc) \
         if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
                 V_ASN1_CONSTRUCTED|V_ASN1_SEQUENCE)))\
-                { M_ASN1_D2I_get_seq(r,func,free_func); }
+                { M_ASN1_D2I_get_seq(r,func,freefunc); }
 
-# define M_ASN1_D2I_get_seq_opt_type(type,r,func,free_func) \
+# define M_ASN1_D2I_get_seq_opt_type(type,r,func,freefunc) \
         if ((c.slen != 0) && (M_ASN1_next == (V_ASN1_UNIVERSAL| \
                 V_ASN1_CONSTRUCTED|V_ASN1_SEQUENCE)))\
-                { M_ASN1_D2I_get_seq_type(type,r,func,free_func); }
+                { M_ASN1_D2I_get_seq_type(type,r,func,freefunc); }
 
-# define M_ASN1_D2I_get_IMP_set(r,func,free_func,x) \
-                M_ASN1_D2I_get_imp_set(r,func,free_func,\
+# define M_ASN1_D2I_get_IMP_set(r,func,freefunc,x) \
+                M_ASN1_D2I_get_imp_set(r,func,freefunc,\
                         x,V_ASN1_CONTEXT_SPECIFIC);
 
-# define M_ASN1_D2I_get_IMP_set_type(type,r,func,free_func,x) \
-                M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,\
+# define M_ASN1_D2I_get_IMP_set_type(type,r,func,freefunc,x) \
+                M_ASN1_D2I_get_imp_set_type(type,r,func,freefunc,\
                         x,V_ASN1_CONTEXT_SPECIFIC);
 
-# define M_ASN1_D2I_get_imp_set(r,func,free_func,a,b) \
+# define M_ASN1_D2I_get_imp_set(r,func,freefunc,a,b) \
         c.q=c.p; \
         if (d2i_ASN1_SET(&(r),&c.p,c.slen,(char *(*)())func,\
-                (void (*)())free_func,a,b) == NULL) \
+                (void (*)())freefunc,a,b) == NULL) \
                 { c.line=__LINE__; goto err; } \
         c.slen-=(c.p-c.q);
 
-# define M_ASN1_D2I_get_imp_set_type(type,r,func,free_func,a,b) \
+# define M_ASN1_D2I_get_imp_set_type(type,r,func,freefunc,a,b) \
         c.q=c.p; \
         if (d2i_ASN1_SET_OF_##type(&(r),&c.p,c.slen,func,\
-                                   free_func,a,b) == NULL) \
+                                   freefunc,a,b) == NULL) \
                 { c.line=__LINE__; goto err; } \
         c.slen-=(c.p-c.q);
 
@@ -299,7 +299,7 @@ err:\
                 c.slen-=(c.p-c.q); \
                 }
 
-# define M_ASN1_D2I_get_EXP_set_opt(r,func,free_func,tag,b) \
+# define M_ASN1_D2I_get_EXP_set_opt(r,func,freefunc,tag,b) \
         if ((c.slen != 0) && (M_ASN1_next == \
                 (V_ASN1_CONSTRUCTED|V_ASN1_CONTEXT_SPECIFIC|tag))) \
                 { \
@@ -314,7 +314,7 @@ err:\
                 if (Tinf == (V_ASN1_CONSTRUCTED+1)) \
                                         Tlen = c.slen - (c.p - c.q) - 2; \
                 if (d2i_ASN1_SET(&(r),&c.p,Tlen,(char *(*)())func, \
-                        (void (*)())free_func, \
+                        (void (*)())freefunc, \
                         b,V_ASN1_UNIVERSAL) == NULL) \
                         { c.line=__LINE__; goto err; } \
                 if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
@@ -326,7 +326,7 @@ err:\
                 c.slen-=(c.p-c.q); \
                 }
 
-# define M_ASN1_D2I_get_EXP_set_opt_type(type,r,func,free_func,tag,b) \
+# define M_ASN1_D2I_get_EXP_set_opt_type(type,r,func,freefunc,tag,b) \
         if ((c.slen != 0) && (M_ASN1_next == \
                 (V_ASN1_CONSTRUCTED|V_ASN1_CONTEXT_SPECIFIC|tag))) \
                 { \
@@ -341,7 +341,7 @@ err:\
                 if (Tinf == (V_ASN1_CONSTRUCTED+1)) \
                                         Tlen = c.slen - (c.p - c.q) - 2; \
                 if (d2i_ASN1_SET_OF_##type(&(r),&c.p,Tlen,func, \
-                        free_func,b,V_ASN1_UNIVERSAL) == NULL) \
+                        freefunc,b,V_ASN1_UNIVERSAL) == NULL) \
                         { c.line=__LINE__; goto err; } \
                 if (Tinf == (V_ASN1_CONSTRUCTED+1)) { \
                         Tlen = c.slen - (c.p - c.q); \

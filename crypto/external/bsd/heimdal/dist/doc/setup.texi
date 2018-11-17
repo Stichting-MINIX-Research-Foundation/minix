@@ -1,5 +1,5 @@
 @c Id
-@c $NetBSD: setup.texi,v 1.1.1.3 2014/04/24 12:45:27 pettai Exp $
+@c $NetBSD: setup.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 
 @node Setting up a realm, Applications, Building and Installing, Top
 
@@ -109,7 +109,7 @@ SRV-record for your realm, or your Kerberos server has DNS CNAME
 
 @cindex KRB5_CONFIG
 If you want to use a different configuration file then the default you
-can point a file with the enviroment variable @samp{KRB5_CONFIG}.
+can point a file with the environment variable @samp{KRB5_CONFIG}.
 
 @example
 env KRB5_CONFIG=$HOME/etc/krb5.conf kinit user@@REALM
@@ -124,7 +124,29 @@ Make sure the directory has restrictive permissions.
 
 @example
 # mkdir /var/heimdal
+# chmod og-rwx /var/heimdal
 @end example
+
+Heimdal supports various database backends: lmdb (LMDB), db3 (Berkeley
+DB 3.x, 4.x, or 5.x), db1 (Berkeley DB 2.x), sqlite (SQLite3), and ldap
+(LDAP).  The default is @value{dbtype}, and is selected at build time
+from one of lmdb, db3, or db1.
+
+These defaults can be overriden in the 'database' key in the @samp{kdc}
+section of the configuration.
+
+@example
+[kdc]
+        database = @{
+                dbname = lmdb:/path/to/db-file
+                realm = REALM
+                acl_file = /path/to/kadmind.acl
+                mkey_file = /path/to/mkey
+                log_file = /path/to/iprop-log-file
+        @}
+@end example
+
+To use LDAP, see @xref{Using LDAP to store the database}.
 
 The keys of all the principals are stored in the database.  If you
 choose to, these can be encrypted with a master key.  You do not have to
@@ -597,6 +619,18 @@ slave#  /usr/heimdal/libexec/ipropd-slave master &
 To manage the iprop log file you should use the @command{iprop-log}
 command. With it you can dump, truncate and replay the logfile.
 
+@subsection Status of iprop master and slave
+
+Both the master and slave provides status of the world as they see it.
+
+The master write outs the current status of the slaves, last seen and
+their version number in @file{/var/heimdal/slaves-stats}.
+
+The slave write out the current status in @file{/var/heimdal/ipropd-slave-status}.
+
+These locations can be changed with command line options, and in the
+case of @command{ipropd_master}, the configuration file.
+
 @node Encryption types and salting, Credential cache server - KCM, Incremental propagation, Setting up a realm
 @section Encryption types and salting
 @cindex Salting
@@ -1042,7 +1076,8 @@ Its also possible to configure the ldap backend as a shared module,
 see option --hdb-openldap-module to configure.
 
 @item
-Configure OpenLDAP with @kbd{--enable-local} to enable the local transport.
+Optionally configure OpenLDAP with @kbd{--enable-local} to enable the
+local transport.
 
 @item
 Add the hdb schema to the LDAP server, it's included in the source-tree
@@ -1053,8 +1088,8 @@ include /usr/local/etc/openldap/schema/hdb.schema
 @end example
 
 @item
-Configure the LDAP server ACLs to accept writes from clients over the
-local transport. For example:
+Configure the LDAP server ACLs to accept writes from clients. For
+example:
 
 @example
 access to *
@@ -1074,10 +1109,15 @@ krb5Principal aux object with krb5PrincipalName set so that the
 Another option is to create an admins group and add the dn to that
 group.
 
-Since Heimdal talks to the LDAP server over a UNIX domain socket, and
-uses external sasl authentication, it's not possible to require
-security layer quality (ssf in cyrus-sasl lingo). So that requirement
-has to be turned off in OpenLDAP @command{slapd} configuration file
+If a non-local LDAP connection is used, the authz-regexp is not
+needed as Heimdal will bind to LDAP over the network using
+provided credentials.
+
+Since Heimdal talks to the LDAP server over a UNIX domain socket when
+configured for ldapi:///, and uses external sasl authentication, it's
+not possible to require security layer quality (ssf in cyrus-sasl lingo).
+So that requirement has to be turned off in OpenLDAP @command{slapd}
+configuration file
 @file{slapd.conf}.
 
 @example
@@ -1105,9 +1145,14 @@ enter the path to the kadmin acl file:
 
 @example
 [kdc]
+	# Optional configuration
+	hdb-ldap-structural-object = inetOrgPerson
+	hdb-ldap-url = ldapi:/// (default), ldap://hostname or ldaps://hostname
+	hdb-ldap-secret-file = /path/to/file/containing/ldap/credentials
+	hdb-ldap-start-tls = false
+
         database = @{
                 dbname = ldap:ou=KerberosPrincipals,dc=example,dc=com
-                hdb-ldap-structural-object = inetOrgPerson
                 acl_file = /path/to/kadmind.acl
                 mkey_file = /path/to/mkey
         @}
@@ -1118,7 +1163,18 @@ directory to have the raw keys inside it.  The
 hdb-ldap-structural-object is not necessary if you do not need Samba
 comatibility.
 
+If connecting to a server over a non-local transport, the @samp{hdb-ldap-url}
+and @samp{hdb-ldap-secret-file} options must be provided. The
+@samp{hdb-ldap-secret-file} must contain the bind credentials:
 
+@example
+[kdc]
+	hdb-ldap-bind-dn = uid=heimdal,dc=services,dc=example,dc=com
+	hdb-ldap-bind-password = secretBindPassword
+@end example
+
+The @samp{hdb-ldap-secret-file} and should be protected with appropriate
+file permissions
 
 @item
 Once you have built Heimdal and started the LDAP server, run kadmin
@@ -1249,8 +1305,8 @@ certificates to get the initial ticket (usually the krbtgt
 ticket-granting ticket).
 
 To use PK-INIT you must first have a PKI. If you don't have one, it is
-time to create it. You should first read the whole chapter of the
-document to see the requirements imposed on the CA software.
+time to create it. You should first read the whole current chapter of
+the document to see the requirements imposed on the CA software.
 
 A mapping between the PKI certificate and what principals that
 certificate is allowed to use must exist. There are several ways to do
@@ -1260,20 +1316,23 @@ the mapping in the principals entry in the kerberos database.
 
 @section Certificates
 
-This section documents the requirements on the KDC and client
-certificates and the format used in the id-pkinit-san OtherName
-extention.
+This and following subsection documents the requirements on the KDC
+and client certificates and the format used in the id-pkinit-san
+OtherName extension.
+
+On how to create certificates, you should read @ref{Use OpenSSL to
+create certificates}.
 
 @subsection KDC certificate
 
-The certificate for the KDC has serveral requirements.
+The certificate for the KDC has several requirements.
 
 First, the certificate should have an Extended Key Usage (EKU)
 id-pkkdcekuoid (1.3.6.1.5.2.3.5) set. Second, there must be a
 subjectAltName otherName using OID id-pkinit-san (1.3.6.1.5.2.2) in
 the type field and a DER encoded KRB5PrincipalName that matches the
 name of the TGS of the target realm.  Also, if the certificate has a
-nameConstraints extention with a Generalname with dNSName or iPAdress,
+nameConstraints extension with a Generalname with dNSName or iPAdress,
 it must match the hostname or adress of the KDC.
 
 The client is not required by the standard to check the server
@@ -1292,7 +1351,7 @@ secret.
 @subsection Client certificate
 
 The client certificate may need to have a EKU id-pkekuoid
-(1.3.6.1.5.2.3.4) set depending on the certifiate on the KDC.
+(1.3.6.1.5.2.3.4) set depending on the configuration on the KDC.
 
 It possible to store the principal (if allowed by the KDC) in the
 certificate and thus delegate responsibility to do the mapping between
@@ -1307,7 +1366,7 @@ This behavior is controlled by KDC configuration option:
 
 @subsubsection Using KRB5PrincipalName in id-pkinit-san
 
-The OtherName extention in the GeneralName is used to do the mapping
+The OtherName extension in the GeneralName is used to do the mapping
 between certificate and principal.  For the KDC certificate, this
 stores the krbtgt principal name for that KDC.  For the client
 certificate, this stores the principal for which that certificate is
@@ -1435,8 +1494,6 @@ Credentials cache: API:4
 Mar 26 23:40:10  Mar 27 09:40:10  krbtgt/EXAMPLE.ORG@@EXAMPLE.ORG
 @end example
 
-TODO: Write about the KDC.
-
 @section Configure the client
 
 @example
@@ -1455,6 +1512,45 @@ TODO: Write about the KDC.
 
 @section Configure the KDC
 
+Configuration options for the KDC.
+
+@table @asis
+@item enable-pkinit = bool
+
+Enable PKINIT for this KDC.
+
+@item pkinit_identity = string
+
+Identity that the KDC will use when talking to clients. Mandatory.
+
+@item pkinit_anchors = string
+
+Trust anchors that the KDC will use when evaluating the trust of the
+client certificate. Mandatory.
+
+@item pkinit_pool = strings ...
+
+Extra certificate the KDC will use when building trust chains if it
+can't find enough certificates in the request from the client.
+
+@item pkinit_allow_proxy_certificate = bool
+
+Allow clients to use proxy certificates. The root certificate
+of the client's End Entity certificate is used for authorisation.
+
+@item pkinit_win2k_require_binding = bool
+
+Require windows clients up be upgrade to not allow cut and paste
+attack on encrypted data, applies to Windows XP and windows 2000
+servers.
+
+@item pkinit_principal_in_certificate = bool
+
+Enable the KDC to use id-pkinit-san to determine to determine the
+mapping between a certificate and principal.
+
+@end table
+
 @example
 [kdc]
 	enable-pkinit = yes
@@ -1469,7 +1565,7 @@ TODO: Write about the KDC.
 
 @subsection Using pki-mapping file
 
-Note that the file name is space sensitive.
+Note that the file contents are space sensitive.
 
 @example
 # cat /var/heimdal/pki-mapping
@@ -1479,6 +1575,13 @@ lha@@EXAMPLE.ORG:CN=Love,UID=lha
 @end example
 
 @subsection Using the Kerberos database
+
+You can also store the subject of the certificate in the principal
+entry in the kerberos database.
+
+@example
+kadmin modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" user@@REALM
+@end example
 
 @section Use hxtool to create certificates
 
@@ -1548,6 +1651,7 @@ hxtool validate FILE:user.pem
 @end example
 
 @section Use OpenSSL to create certificates
+@anchor{Use OpenSSL to create certificates}
 
 This section tries to give the CA owners hints how to create
 certificates using OpenSSL (or CA software based on OpenSSL).

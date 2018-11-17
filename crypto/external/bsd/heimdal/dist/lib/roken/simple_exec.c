@@ -1,4 +1,4 @@
-/*	$NetBSD: simple_exec.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: simple_exec.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2001, 2004 Kungliga Tekniska Högskolan
@@ -146,17 +146,31 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	   const char *file, ...)
 {
-    int in_fd[2], out_fd[2], err_fd[2];
+    int in_fd[2] = {-1, -1};
+    int out_fd[2] = {-1, -1};
+    int err_fd[2] = {-1, -1};
     pid_t pid;
     va_list ap;
     char **argv;
+    int ret = 0;
 
     if(stdin_fd != NULL)
-	pipe(in_fd);
-    if(stdout_fd != NULL)
-	pipe(out_fd);
-    if(stderr_fd != NULL)
-	pipe(err_fd);
+	ret = pipe(in_fd);
+    if(ret != -1 && stdout_fd != NULL)
+	ret = pipe(out_fd);
+    if(ret != -1 && stderr_fd != NULL)
+	ret = pipe(err_fd);
+
+    if (ret == -1) {
+	close(in_fd[0]);
+	close(in_fd[1]);
+	close(out_fd[0]);
+	close(out_fd[1]);
+	close(err_fd[0]);
+	close(err_fd[1]);
+	return SE_E_UNSPECIFIED;
+    }
+
     pid = fork();
     switch(pid) {
     case 0:

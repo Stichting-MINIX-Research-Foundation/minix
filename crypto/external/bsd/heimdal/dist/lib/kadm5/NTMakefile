@@ -86,6 +86,7 @@ dist_libkadm5srv_la_SOURCES =	\
 	rename_s.c		\
 	server_glue.c		\
 	set_keys.c		\
+	setkey3_s.c		\
 	set_modifier.c		\
 	kadm5-pwcheck.h		\
 	admin.h
@@ -137,6 +138,7 @@ LIBKADM5SRV_OBJS=		    \
 	$(OBJ)\rename_s.obj	    \
 	$(OBJ)\server_glue.obj	    \
 	$(OBJ)\set_keys.obj	    \
+	$(OBJ)\setkey3_s.obj	    \
 	$(OBJ)\set_modifier.obj	    \
 	$(OBJ)\kadm5_err.obj
 
@@ -216,9 +218,9 @@ LIBKADM5SRVRES=$(OBJ)\libkadm5srv-version.res
 
 $(LIBKADM5SRV): $(BINDIR)\libkadm5srv.dll
 
-$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBSQLITE) $(LIBKADM5SRVRES)
+$(BINDIR)\libkadm5srv.dll: $(LIBKADM5SRV_OBJS) $(LIBHEIMDAL) $(LIBROKEN) $(LIBHDB) $(LIBCOMERR) $(LIBSQLITE) $(LIBKADM5SRVRES) $(LIBHEIMBASE)
 	$(DLLGUILINK) -implib:$(LIBKADM5SRV) -def:libkadm5srv-exports.def
-	$(DLLPREP)
+	$(DLLPREP_NODIST)
 
 all:: $(INCFILES) $(LIBKADM5SRV) $(LIBKADM5CLNT)
 
@@ -257,6 +259,10 @@ EXPORTS
 	$(DLLPREP_NODIST)
 
 test-run:
+	cd $(OBJ)
+	-default_keys.exe
+	-test_pw_quality.exe
+	cd $(SRCDIR)
 
 {$(OBJ)}.h{$(KADM5INCDIR)}.h:
 	$(CP) $< $@

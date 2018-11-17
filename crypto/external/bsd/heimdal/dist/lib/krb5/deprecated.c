@@ -1,4 +1,4 @@
-/*	$NetBSD: deprecated.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: deprecated.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2009 Kungliga Tekniska Högskolan
@@ -40,6 +40,7 @@
 
 #include "krb5_locl.h"
 
+
 #undef __attribute__
 #define __attribute__(x)
 
@@ -79,16 +80,14 @@ krb5_keytype_to_enctypes_default (krb5_context context,
     unsigned int i, n;
     krb5_enctype *ret;
 
-    if (keytype != KEYTYPE_DES || context->etypes_des == NULL)
+    if (keytype != (krb5_keytype)KEYTYPE_DES || context->etypes_des == NULL)
 	return krb5_keytype_to_enctypes (context, keytype, len, val);
 
     for (n = 0; context->etypes_des[n]; ++n)
 	;
     ret = malloc (n * sizeof(*ret));
-    if (ret == NULL && n != 0) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (ret == NULL && n != 0)
+	return krb5_enomem(context);
     for (i = 0; i < n; ++i)
 	ret[i] = context->etypes_des[i];
     *len = n;
@@ -101,13 +100,13 @@ static struct {
     const char *name;
     krb5_keytype type;
 } keys[] = {
-    { "null", ENCTYPE_NULL },
-    { "des", ETYPE_DES_CBC_CRC },
-    { "des3", ETYPE_OLD_DES3_CBC_SHA1 },
-    { "aes-128", ETYPE_AES128_CTS_HMAC_SHA1_96 },
-    { "aes-256", ETYPE_AES256_CTS_HMAC_SHA1_96 },
-    { "arcfour", ETYPE_ARCFOUR_HMAC_MD5 },
-    { "arcfour-56", ETYPE_ARCFOUR_HMAC_MD5_56 }
+    { "null", KRB5_ENCTYPE_NULL },
+    { "des", KRB5_ENCTYPE_DES_CBC_CRC },
+    { "des3", KRB5_ENCTYPE_OLD_DES3_CBC_SHA1 },
+    { "aes-128", KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96 },
+    { "aes-256", KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96 },
+    { "arcfour", KRB5_ENCTYPE_ARCFOUR_HMAC_MD5 },
+    { "arcfour-56", KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56 }
 };
 
 static int num_keys = sizeof(keys) / sizeof(keys[0]);
@@ -141,11 +140,8 @@ krb5_keytype_to_string(krb5_context context,
 	return KRB5_PROG_KEYTYPE_NOSUPP;
     }
     *string = strdup(name);
-    if(*string == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*string == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -202,10 +198,8 @@ krb5_password_key_proc (krb5_context context,
     char buf[BUFSIZ];
 
     *key = malloc (sizeof (**key));
-    if (*key == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (*key == NULL)
+	return krb5_enomem(context);
     if (password == NULL) {
 	if(UI_UTIL_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
 	    free (*key);
@@ -478,7 +472,7 @@ krb5_free_error_string(krb5_context context, char *str)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_error_string(krb5_context context, const char *fmt, ...)
-    __attribute__((format (printf, 2, 3)))
+    __attribute__ ((__format__ (__printf__, 2, 3)))
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     va_list ap;
@@ -496,7 +490,8 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
  * Deprecated: use krb5_vset_error_message()
  *
  * @param context Kerberos context
- * @param msg error message to free
+ * @param fmt error message to free
+ * @param args variable argument list vector
  *
  * @return Return an error code or 0.
  *
@@ -505,7 +500,7 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vset_error_string(krb5_context context, const char *fmt, va_list args)
-    __attribute__ ((format (printf, 2, 0)))
+    __attribute__ ((__format__ (__printf__, 2, 0)))
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_vset_error_message(context, 0, fmt, args);
@@ -611,6 +606,135 @@ krb5_auth_getremoteseqnumber(krb5_context context,
 {
   *seqnumber = auth_context->remote_seqnumber;
   return 0;
+}
+
+/**
+ * Return the error message in context. On error or no error string,
+ * the function returns NULL.
+ *
+ * @param context Kerberos 5 context
+ *
+ * @return an error string, needs to be freed with
+ * krb5_free_error_message(). The functions return NULL on error.
+ *
+ * @ingroup krb5_error
+ */
+
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+krb5_get_error_string(krb5_context context)
+    KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
+{
+    char *ret = NULL;
+
+    HEIMDAL_MUTEX_lock(&context->mutex);
+    if (context->error_string)
+	ret = strdup(context->error_string);
+    HEIMDAL_MUTEX_unlock(&context->mutex);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_have_error_string(krb5_context context)
+    KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
+{
+    char *str;
+    HEIMDAL_MUTEX_lock(&context->mutex);
+    str = context->error_string;
+    HEIMDAL_MUTEX_unlock(&context->mutex);
+    return str != NULL;
+}
+
+struct send_to_kdc {
+    krb5_send_to_kdc_func func;
+    void *data;
+};
+
+/*
+ * Send the data `send' to one host from `handle` and get back the reply
+ * in `receive'.
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto (krb5_context context,
+	     const krb5_data *send_data,
+	     krb5_krbhst_handle handle,
+	     krb5_data *receive)
+{
+    krb5_error_code ret;
+    krb5_sendto_ctx ctx;
+
+    ret = krb5_sendto_ctx_alloc(context, &ctx);
+    if (ret)
+	return ret;
+    _krb5_sendto_ctx_set_krb5hst(context, ctx, handle);
+
+    ret = krb5_sendto_context(context, ctx, send_data, (char *)_krb5_krbhst_get_realm(handle), receive);
+    krb5_sendto_ctx_free(context, ctx);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto_kdc(krb5_context context,
+		const krb5_data *send_data,
+		const krb5_realm *realm,
+		krb5_data *receive)
+{
+    return krb5_sendto_kdc_flags(context, send_data, realm, receive, 0);
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_sendto_kdc_flags(krb5_context context,
+		      const krb5_data *send_data,
+		      const krb5_realm *realm,
+		      krb5_data *receive,
+		      int flags)
+{
+    krb5_error_code ret;
+    krb5_sendto_ctx ctx;
+
+    ret = krb5_sendto_ctx_alloc(context, &ctx);
+    if (ret)
+	return ret;
+    krb5_sendto_ctx_add_flags(ctx, flags);
+    krb5_sendto_ctx_set_func(ctx, _krb5_kdc_retry, NULL);
+
+    ret = krb5_sendto_context(context, ctx, send_data, *realm, receive);
+    krb5_sendto_ctx_free(context, ctx);
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_send_to_kdc_func(krb5_context context,
+			  krb5_send_to_kdc_func func,
+			  void *data)
+{
+    free(context->send_to_kdc);
+    if (func == NULL) {
+	context->send_to_kdc = NULL;
+	return 0;
+    }
+
+    context->send_to_kdc = malloc(sizeof(*context->send_to_kdc));
+    if (context->send_to_kdc == NULL) {
+	krb5_set_error_message(context, ENOMEM,
+			       N_("malloc: out of memory", ""));
+	return ENOMEM;
+    }
+
+    context->send_to_kdc->func = func;
+    context->send_to_kdc->data = data;
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_copy_send_to_kdc_func(krb5_context context, krb5_context to)
+{
+    if (context->send_to_kdc)
+	return krb5_set_send_to_kdc_func(to,
+					 context->send_to_kdc->func,
+					 context->send_to_kdc->data);
+    else
+	return krb5_set_send_to_kdc_func(to, NULL, NULL);
 }
 
 #endif /* HEIMDAL_SMALLER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_time-test.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: parse_time-test.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -51,7 +51,8 @@ static struct testcase {
     { 8, 60,		"1 minute" },
     { 6, 3600,	 	"1 hour" },
     { 15, 3601,	 	"1 hour 1 second" },
-    { 16, 3602,	 	"1 hour 2 seconds" }
+    { 16, 3602,	 	"1 hour 2 seconds" },
+    { 9, 300,	 	"5 minutes" },
 };
 
 int

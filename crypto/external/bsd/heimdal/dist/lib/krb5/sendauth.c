@@ -1,4 +1,4 @@
-/*	$NetBSD: sendauth.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: sendauth.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -62,6 +62,29 @@
  * }
  */
 
+/**
+ * Perform the client side of the sendauth protocol.
+ *
+ * @param context        Kerberos 5 context.
+ * @param auth_context   Authentication context of the peer.
+ * @param p_fd           Socket associated to the connection.
+ * @param appl_version   Server-specific string.
+ * @param client         Client principal. If NULL, use the credentials in \a ccache.
+ * @param server         Server principal.
+ * @param ap_req_options Options for the AP_REQ message. See the AP_OPTS_* defines in krb5.h.
+ * @param in_data        FIXME
+ * @param in_creds       FIXME
+ * @param ccache         Credentials cache. If NULL, use the default credentials cache.
+ * @param ret_error      If not NULL, will be set to the error reported by server, if any.
+ *                       Must be deallocated with krb5_free_error_contents().
+ * @param rep_result     If not NULL, will be set to the EncApRepPart of the AP_REP message.
+ *                       Must be deallocated with krb5_free_ap_rep_enc_part().
+ * @param out_creds      FIXME If not NULL, will be set to FIXME. Must be deallocated with
+ *                       krb5_free_creds().
+ *
+ * @return 0 to indicate success. Otherwise a Kerberos error code is
+ *         returned, see krb5_get_error_message().
+ */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendauth(krb5_context context,
 	      krb5_auth_context *auth_context,

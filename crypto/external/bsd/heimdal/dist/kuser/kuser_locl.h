@@ -1,4 +1,4 @@
-/*	$NetBSD: kuser_locl.h,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
+/*	$NetBSD: kuser_locl.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -105,6 +105,6 @@
 #define textdomain(package)
 #endif
 
-extern krb5_context kcc_context;
+extern krb5_context heimtools_context;
 
 #endif /* __KUSER_LOCL_H__ */

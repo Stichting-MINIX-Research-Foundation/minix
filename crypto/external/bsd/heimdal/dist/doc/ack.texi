@@ -1,7 +1,5 @@
-@c Id
-@c $NetBSD: ack.texi,v 1.1.1.3 2014/04/24 12:45:26 pettai Exp $
-
 @node  Acknowledgments, Copyrights and Licenses, Migration, Top
+@c $NetBSD: ack.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 @comment  node-name,  next,  previous,  up
 @appendix Acknowledgments
 
@@ -78,6 +76,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Johan Gadsjö
 @item Johan Ihrén
 @item John Center
+@item Julian Ospald
 @item Jun-ichiro itojun Hagino
 @item KAMADA Ken'ichi
 @item Kamen Mazdrashki
@@ -115,6 +114,7 @@ Bugfixes, documentation, encouragement, and code has been contributed by:
 @item Simon Wilkinson
 @item Stefan Metzmacher
 @item Ted Percival
+@item Timothy Pearson
 @item Tom Payerle
 @item Victor Guerra
 @item Zeqing Xia

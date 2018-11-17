@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd_dlg.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: passwd_dlg.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
@@ -39,9 +39,9 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #ifdef WIN32	/* Visual C++ 4.0 (Windows95/NT) */
-#include <Windows.h>
 #include "passwd_dlg.h"
 #include "Resource.h"
 #define passwdBufSZ 64

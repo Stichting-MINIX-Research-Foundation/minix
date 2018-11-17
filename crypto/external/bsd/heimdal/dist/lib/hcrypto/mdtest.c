@@ -1,7 +1,7 @@
-/*	$NetBSD: mdtest.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: mdtest.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -34,14 +34,10 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED_CRYPTO
 
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#include <string.h>
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif
@@ -142,7 +138,7 @@ struct test md2_tests[] = {
      "\xda\x33\xde\xf2\xa4\x2d\xf1\x39\x75\x35\x28\x46\xc3\x03\x38\xcd" },
     {"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
      "\xd5\x97\x6f\x79\xd8\x3d\x3a\x0d\xc9\x80\x6c\x3c\x66\xf3\xef\xd8" },
-    {NULL }
+    {NULL, { 0 } }
 };
 
 struct test md4_tests[] = {
@@ -186,7 +182,7 @@ struct test sha1_tests[] = {
       {0x34, 0xaa, 0x97, 0x3c, 0xd4, 0xc4, 0xda, 0xa4,
        0xf6, 0x1e, 0xeb, 0x2b, 0xdb, 0xad, 0x27, 0x31,
        0x65, 0x34, 0x01, 0x6f}},
-    { NULL }
+    { NULL, { 0 } }
 };
 
 struct test sha256_tests[] = {
@@ -205,7 +201,7 @@ struct test sha256_tests[] = {
        0x81,0xa1,0xc7,0xe2, 0x84,0xd7,0x3e,0x67,
        0xf1,0x80,0x9a,0x48, 0xa4,0x97,0x20,0x0e,
        0x04,0x6d,0x39,0xcc, 0xc7,0x11,0x2c,0xd0 }},
-    { NULL }
+    { NULL, { 0 } }
 };
 
 struct test sha384_tests[] = {
@@ -231,7 +227,7 @@ struct test sha384_tests[] = {
 	0x79,0x72,0xce,0xc5,0x70,0x4c,0x2a,0x5b,
 	0x07,0xb8,0xb3,0xdc,0x38,0xec,0xc4,0xeb,
 	0xae,0x97,0xdd,0xd8,0x7f,0x3d,0x89,0x85}},
-    {NULL}
+    {NULL, { 0 }}
 };
 
 struct test sha512_tests[] = {
@@ -263,7 +259,7 @@ struct test sha512_tests[] = {
 	0x4c,0xb0,0x43,0x2c,0xe5,0x77,0xc3,0x1b,
 	0xeb,0x00,0x9c,0x5c,0x2c,0x49,0xaa,0x2e,
 	0x4e,0xad,0xb2,0x17,0xad,0x8c,0xc0,0x9b }},
-    { NULL }
+    { NULL, { 0 } }
 };
 
 static int
@@ -280,6 +276,10 @@ hash_test (struct hash_foo *hash, struct test *tests)
 	char buf[1000];
 
 	ectx = EVP_MD_CTX_create();
+        if (hash->evp() == NULL) {
+            printf("unavailable\n");
+            continue;
+        }
 	EVP_DigestInit_ex(ectx, hash->evp(), NULL);
 
 	(*hash->init)(ctx);

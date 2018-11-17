@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_fast_s_mp_mul_digs.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: bn_fast_s_mp_mul_digs.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_FAST_S_MP_MUL_DIGS_C

@@ -1,7 +1,7 @@
-/*	$NetBSD: sleep.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: sleep.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /***********************************************************************
- * Copyright (c) 2009, Secure Endpoints Inc.
+ * Copyright (c) 2009, 2014, Secure Endpoints Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,16 @@
 ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 sleep(unsigned int seconds)
 {
-    SleepEx(1000 * (DWORD) seconds, FALSE);
+    if (SleepEx(1000 * (DWORD) seconds, FALSE) != 0)
+	return -1;
+    return 0;
+}
+
+/* We can only sleep in millisecond increments */
+ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
+usleep(unsigned int useconds)
+{
+    if (SleepEx((DWORD)(useconds / 1000), FALSE) != 0)
+	return -1;
     return 0;
 }

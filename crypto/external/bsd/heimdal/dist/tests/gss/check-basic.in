@@ -34,8 +34,11 @@
 # Id
 #
 
+env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
+
+. ${env_setup}
 
 # If there is no useful db support compile in, disable test
 ../db/have-db || exit 77
@@ -51,14 +54,12 @@ cache="FILE:krb5ccfile"
 cache2="FILE:krb5ccfile2"
 nocache="FILE:no-such-cache"
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
-kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache ${afs_no_unlog}"
-klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
-kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
 
 acquire_cred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_acquire_cred"
 test_kcred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_kcred"
+test_add_store_cred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_add_store_cred"
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -93,26 +94,29 @@ echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 
 echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${srcdir}/../kdc/wait-kdc.sh
-if [ "$?" != 0 ] ; then
-    kill ${kdcpid}
-    exit 1
-fi
+${kdc} --testing --detach || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 exitcode=0
 
 echo "initial ticket"
-${kinit} --password-file=${objdir}/foopassword user@${R} || exitcode=1
+${kinit} -c ${cache} --password-file=${objdir}/foopassword user@${R} || exitcode=1
+
+echo "copy ccache with gss_store_cred"
+${test_add_store_cred} ${cache} ${cache2} || exit 1
+${klist} -c ${cache2} || exit 1
 
 echo "keytab"
 ${acquire_cred} \
     --acquire-type=accept \
     --acquire-name=host@host.test.h5l.se || exit 1
+
+echo "keytab w/ short-form name and name canon rules"
+${acquire_cred} \
+    --acquire-type=accept \
+    --acquire-name=host@host || exit 1
 
 echo "keytab w/o name"
 ${acquire_cred} \
@@ -183,7 +187,7 @@ KRB5_KTNAME=${nokeytab}
 echo "kcred"
 ${test_kcred} || exit 1
 
-${kdestroy}
+${kdestroy} -c ${cache}
 
 KRB5_KTNAME="${keytab}"
 

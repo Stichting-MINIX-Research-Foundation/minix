@@ -1,4 +1,4 @@
-/*	$NetBSD: check-common.h,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: check-common.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
@@ -35,9 +35,26 @@
  * SUCH DAMAGE.
  */
 
+#define IF_OPT_COMPARE(ac,bc,e) \
+	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ac)->e)
+#define COMPARE_OPT_STRING(ac,bc,e) \
+	do { if (strcmp(*(ac)->e, *(bc)->e) != 0) return 1; } while(0)
+#define COMPARE_OPT_OCTET_STRING(ac,bc,e) \
+	do { if ((ac)->e->length != (bc)->e->length || memcmp((ac)->e->data, (bc)->e->data, (ac)->e->length) != 0) return 1; } while(0)
+#define COMPARE_STRING(ac,bc,e) \
+	do { if (strcmp((ac)->e, (bc)->e) != 0) return 1; } while(0)
+#define COMPARE_INTEGER(ac,bc,e) \
+	do { if ((ac)->e != (bc)->e) return 1; } while(0)
+#define COMPARE_OPT_INTEGER(ac,bc,e) \
+	do { if (*(ac)->e != *(bc)->e) return 1; } while(0)
+#define COMPARE_MEM(ac,bc,e,len) \
+	do { if (memcmp((ac)->e, (bc)->e,len) != 0) return 1; } while(0)
+#define COMPARE_OCTET_STRING(ac,bc,e) \
+	do { if ((ac)->e.length != (bc)->e.length || memcmp((ac)->e.data, (bc)->e.data, (ac)->e.length) != 0) return 1; } while(0)
+
 struct test_case {
     void *val;
-    int byte_len;
+    ssize_t byte_len;
     const char *bytes;
     char *name;
 };

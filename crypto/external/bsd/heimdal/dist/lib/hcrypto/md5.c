@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: md5.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
+#include <krb5/roken.h>
 
 #include "hash.h"
 #include "md5.h"
@@ -44,7 +45,7 @@
 #define D m->counter[3]
 #define X data
 
-void
+int
 MD5_Init (struct md5 *m)
 {
   m->sz[0] = 0;
@@ -53,6 +54,7 @@ MD5_Init (struct md5 *m)
   C = 0x98badcfe;
   B = 0xefcdab89;
   A = 0x67452301;
+  return 1;
 }
 
 #define F(x,y,z) CRAYFIX((x & y) | (~x & z))
@@ -196,7 +198,7 @@ struct x32{
   unsigned int b:32;
 };
 
-void
+int
 MD5_Update (struct md5 *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
@@ -216,22 +218,23 @@ MD5_Update (struct md5 *m, const void *v, size_t len)
     if(offset == 64){
 #if defined(WORDS_BIGENDIAN)
       int i;
-      uint32_t current[16];
+      uint32_t swapped[16];
       struct x32 *us = (struct x32*)m->save;
       for(i = 0; i < 8; i++){
-	current[2*i+0] = swap_uint32_t(us[i].a);
-	current[2*i+1] = swap_uint32_t(us[i].b);
+	swapped[2*i+0] = swap_uint32_t(us[i].a);
+	swapped[2*i+1] = swap_uint32_t(us[i].b);
       }
-      calc(m, current);
+      calc(m, swapped);
 #else
       calc(m, (uint32_t*)m->save);
 #endif
       offset = 0;
     }
   }
+  return 1;
 }
 
-void
+int
 MD5_Final (void *res, struct md5 *m)
 {
   unsigned char zeros[72];
@@ -269,4 +272,5 @@ MD5_Final (void *res, struct md5 *m)
       r[i] = swap_uint32_t (m->counter[i]);
   }
 #endif
+    return 1;
 }

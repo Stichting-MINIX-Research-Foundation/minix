@@ -1,4 +1,4 @@
-/*	$NetBSD: camellia-ntt.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: camellia-ntt.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /* camellia.c ver 1.2.0
  *
@@ -32,15 +32,11 @@
  *  http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
  */
 
-#include "config.h"
-
-#include <string.h>
-#include <stdlib.h>
+#include <config.h>
+#include <krb5/roken.h>
 
 #include <krb5/krb5-types.h>
 #include "camellia-ntt.h"
-
-#include <krb5/roken.h>
 
 /* key constants */
 

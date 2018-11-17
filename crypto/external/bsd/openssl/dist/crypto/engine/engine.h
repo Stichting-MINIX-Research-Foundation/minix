@@ -413,7 +413,6 @@ void ENGINE_load_gost(void);
 #  endif
 # endif
 void ENGINE_load_cryptodev(void);
-void ENGINE_load_rsax(void);
 void ENGINE_load_rdrand(void);
 void ENGINE_load_builtin_engines(void);
 
@@ -579,7 +578,7 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* These functions allow control over any per-structure ENGINE data. */
 int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                             CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func);
+                            CRYPTO_EX_free *freefunc);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 

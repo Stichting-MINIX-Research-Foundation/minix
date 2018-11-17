@@ -25,7 +25,7 @@
 ./usr/lib/libcompat_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libcrypt_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libcrypto_pic.a			comp-c-piclib		compatfile,picinstall,crypto
-./usr/lib/libcrypto_rc5_pic.a			comp-c-piclib		compatfile,picinstall,crypto,crypto_rc5
+./usr/lib/libcrypto_rc5_pic.a			comp-obsolete		obsolete
 ./usr/lib/libctf_pic.a				comp-c-piclib		compatfile,picinstall,dtrace
 ./usr/lib/libcurses_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libdes_pic.a				comp-c-piclib		compatfile,picinstall,crypto

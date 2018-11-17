@@ -1,14 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2011/07/05 10:03:10 spz Exp $
+# $NetBSD: Makefile,v 1.4 2017/05/21 14:20:45 riastradh Exp $
 
 HELPER_NAME=	rc5test
 HELPER_DIR=	rc5
 
 .include <bsd.init.mk>
 
-.if ${MKCRYPTO_RC5} != "no"
-LDADD= -lcrypto_rc5 -lcrypto
-.else
-CPPFLAGS+= -DOPENSSL_NO_RC5
-.endif
-
+LDADD= -lcrypto
 LDADD+=		-Wl,--no-fatal-warnings

@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: creds.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -64,6 +64,9 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
     type = krb5_cc_get_type(context, handle->ccache);
     if (strcmp(type, "MEMORY") == 0) {
 	krb5_creds *creds;
+	krb5_data config_start_realm;
+	char *start_realm;
+
 	ret = krb5_store_uint32(sp, 0);
 	if (ret) {
 	    krb5_storage_free(sp);
@@ -71,9 +74,25 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
 	    return GSS_S_FAILURE;
 	}
 
-	ret = _krb5_get_krbtgt(context, handle->ccache,
-			       handle->principal->realm,
-			       &creds);
+	ret = krb5_cc_get_config(context, handle->ccache, NULL, "start_realm",
+				 &config_start_realm);
+	if (ret == 0) {
+	    start_realm = strndup(config_start_realm.data,
+				  config_start_realm.length);
+	    krb5_data_free(&config_start_realm);
+	} else {
+	    start_realm = strdup(krb5_principal_get_realm(context,
+							  handle->principal));
+	}
+	if (start_realm == NULL) {
+	    *minor_status = krb5_enomem(context);
+	    krb5_storage_free(sp);
+	    return GSS_S_FAILURE;
+	}
+
+	ret = _krb5_get_krbtgt(context, handle->ccache, start_realm, &creds);
+	free(start_realm);
+	start_realm = NULL;
 	if (ret) {
 	    krb5_storage_free(sp);
 	    *minor_status = ret;
@@ -212,6 +231,10 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
 
 	ret = krb5_cc_store_cred(context, id, &creds);
 	krb5_free_cred_contents(context, &creds);
+	if (ret) {
+	    *minor_status = ret;
+	    return GSS_S_FAILURE;
+	}
 
 	flags |= GSS_CF_DESTROY_CRED_ON_RELEASE;
 

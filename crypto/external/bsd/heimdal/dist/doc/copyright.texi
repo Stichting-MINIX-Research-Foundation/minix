@@ -1,5 +1,5 @@
 
-@c $NetBSD: copyright.texi,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $
+@c $NetBSD: copyright.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 @macro copynext{} 
 @vskip 20pt plus 1fil
 @end macro
@@ -218,6 +218,9 @@ SUCH DAMAGE.
 @verbatim
 
 Copyright (c) 2003-2011, PADL Software Pty Ltd.
+Copyright (c) 2004, Andrew Bartlett.
+Copyright (c) 2003 - 2008, Kungliga Tekniska Högskolan
+Copyright (c) 2015, Timothy Pearson.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -444,7 +447,7 @@ Windows support
 
 @verbatim
 
-Copyright (c) 2009, Secure Endpoints Inc.
+Copyright (c) 2009-2015, Secure Endpoints Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -10,7 +10,9 @@ TESTS = check-ldap
 
 port = 49188
 
-do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
+do_subst = sed \
+	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
+	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/ldap,g' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 

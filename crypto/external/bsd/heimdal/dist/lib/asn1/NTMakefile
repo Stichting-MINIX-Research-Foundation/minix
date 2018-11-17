@@ -31,7 +31,7 @@
 
 RELDIR=lib\asn1
 
-intcflags=-I$(SRCDIR) -I$(OBJ)
+intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME
 
 !include ../../windows/NTMakefile.w32
 
@@ -318,11 +318,11 @@ test-binaries: $(TEST_BINARIES)
 
 test-run:
 	cd $(OBJ)
-	check-der.exe
-	check-gen.exe
-	check-timegm.exe
-	check-ber.exe
-	check-template.exe
+	-check-der.exe
+	-check-gen.exe
+	-check-timegm.exe
+	-check-ber.exe
+	-check-template.exe
 	cd $(SRC)
 
 test:: test-binaries test-run

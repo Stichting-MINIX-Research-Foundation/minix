@@ -1,4 +1,4 @@
-/*	$NetBSD: test_soft_pkcs11.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: test_soft_pkcs11.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "hx_locl.h"
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 #include <err.h>
 
 static CK_FUNCTION_LIST_PTR func;

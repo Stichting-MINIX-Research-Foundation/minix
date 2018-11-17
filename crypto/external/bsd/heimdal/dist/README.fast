@@ -1,0 +1,17 @@
+
+-- in order of preference
+
+- client: support KRB5_PADATA_ENCRYPTED_CHALLENGE in lib/krb5/init_creds_pw.c
+- client: don't support ENC-TS in FAST
+
+- client: plugin support for fast plugins
+
+- kdc: plugin support for fast plugins
+	partly done with "struct kdc_patypes"
+
+- kcm: support FAST armor ticket
+-- using PK-INIT anonymous
+-- using host key
+
+- client: tgs-req fast support
+- kdc: tgs-req fast support

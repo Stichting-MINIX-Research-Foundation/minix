@@ -1,7 +1,7 @@
-/*	$NetBSD: aes-test.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: aes-test.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
- * Copyright (c) 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,10 +37,6 @@
 #include <err.h>
 #include <assert.h>
 
-#ifdef HAVE_OPENSSL
-#include <openssl/evp.h>
-#endif
-
 static int verbose = 0;
 
 static void
@@ -63,6 +59,29 @@ struct {
     char *pbkdf2;
     char *key;
 } keys[] = {
+    {
+	"password",
+	"\x10\xDF\x9D\xD7\x83\xE5\xBC\x8A\xCE\xA1\x73\x0E\x74\x35\x5F\x61"
+	"ATHENA.MIT.EDUraeburn",
+	37,
+	32768,
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	16,
+	NULL,
+	"\x08\x9B\xCA\x48\xB1\x05\xEA\x6E\xA7\x7C\xA5\xD2\xF3\x9D\xC5\xE7"
+    },
+    {
+	"password",
+	"\x10\xDF\x9D\xD7\x83\xE5\xBC\x8A\xCE\xA1\x73\x0E\x74\x35\x5F\x61"
+	"ATHENA.MIT.EDUraeburn",
+	37,
+	32768,
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
+	32,
+	NULL,
+	"\x45\xBD\x80\x6D\xBF\x6A\x83\x3A\x9C\xFF\xC1\xC9\x45\x89\xA2\x22"
+	"\x36\x7A\x79\xBC\x21\xC4\x13\x71\x89\x06\xE9\xF5\x78\xA7\x84\x67"
+    },
     {
 	"password", "ATHENA.MIT.EDUraeburn", -1,
 	1,
@@ -162,7 +181,6 @@ struct {
 	"\x1a\x8b\x4d\x28\x26\x01\xdb\x3b\x36\xbe\x92\x46\x91\x5e\xc8\x2a",
 	"\xd7\x8c\x5c\x9c\xb8\x72\xa8\xc9\xda\xd4\x69\x7f\x0b\xb5\xb2\xd2"
 	"\x14\x96\xc8\x2b\xeb\x2c\xae\xda\x21\x12\xfc\xee\xa0\x57\x40\x1b"
-
     },
     {
 	"\xf0\x9d\x84\x9e" /* g-clef */, "EXAMPLE.COMpianist", -1,
@@ -227,14 +245,15 @@ string_to_key_test(krb5_context context)
 	    if (keys[i].keylen > sizeof(keyout))
 		abort();
 
-	    PKCS5_PBKDF2_HMAC_SHA1(password.data, password.length,
-				   salt.saltvalue.data, salt.saltvalue.length,
-				   keys[i].iterations,
-				   keys[i].keylen, keyout);
+	    PKCS5_PBKDF2_HMAC(password.data, password.length,
+			      salt.saltvalue.data, salt.saltvalue.length,
+			      keys[i].iterations, EVP_sha1(),
+			      keys[i].keylen, keyout);
 
 	    if (memcmp(keyout, keys[i].pbkdf2, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: pbkdf2", i);
 		val = 1;
+		hex_dump_data(keyout, keys[i].keylen);
 		continue;
 	    }
 
@@ -271,6 +290,8 @@ string_to_key_test(krb5_context context)
 	    if (memcmp(key.keyvalue.data, keys[i].key, keys[i].keylen) != 0) {
 		krb5_warnx(context, "%d: key wrong", i);
 		val = 1;
+		hex_dump_data(key.keyvalue.data, key.keyvalue.length);
+		hex_dump_data(keys[i].key, keys[i].keylen);
 		continue;
 	    }
 
@@ -480,9 +501,10 @@ static int
 krb_checksum_iov(krb5_context context,
 		 krb5_crypto crypto,
 		 unsigned usage,
-		 krb5_data *plain)
+		 krb5_data *plain,
+		 krb5_data *verify)
 {
-    krb5_crypto_iov iov[4];
+    krb5_crypto_iov iov[3];
     int ret;
     char *p;
     size_t len;
@@ -491,8 +513,12 @@ krb_checksum_iov(krb5_context context,
     len = plain->length;
 
     iov[0].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
-    krb5_crypto_length(context, crypto, iov[0].flags, &iov[0].data.length);
-    iov[0].data.data = emalloc(iov[0].data.length);
+    if (verify) {
+	iov[0].data = *verify;
+    } else {
+	krb5_crypto_length(context, crypto, iov[0].flags, &iov[0].data.length);
+	iov[0].data.data = emalloc(iov[0].data.length);
+    }
 
     iov[1].flags = KRB5_CRYPTO_TYPE_DATA;
     iov[1].data.length = len;
@@ -502,16 +528,19 @@ krb_checksum_iov(krb5_context context,
     krb5_crypto_length(context, crypto, iov[0].flags, &iov[2].data.length);
     iov[2].data.data = malloc(iov[2].data.length);
 
-    ret = krb5_create_checksum_iov(context, crypto, usage,
-				   iov, sizeof(iov)/sizeof(iov[0]), NULL);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_create_checksum_iov failed");
+    if (verify == NULL) {
+	ret = krb5_create_checksum_iov(context, crypto, usage,
+				       iov, sizeof(iov)/sizeof(iov[0]), NULL);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_create_checksum_iov failed");
+    }
 
     ret = krb5_verify_checksum_iov(context, crypto, usage, iov, sizeof(iov)/sizeof(iov[0]), NULL);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_verify_checksum_iov");
 
-    free(iov[0].data.data);
+    if (verify == NULL)
+	free(iov[0].data.data);
     free(iov[2].data.data);
 
     return 0;
@@ -561,7 +590,6 @@ krb_enc_mit(krb5_context context,
     return 0;
 }
 
-
 struct {
     krb5_enctype enctype;
     unsigned usage;
@@ -571,6 +599,8 @@ struct {
     void* edata;
     size_t plen;
     void *pdata;
+    size_t clen; /* checksum length */
+    void *cdata; /* checksum data */
 } krbencs[] =  {
     {
 	ETYPE_AES256_CTS_HMAC_SHA1_96,
@@ -583,10 +613,132 @@ struct {
 	"\xa9\xec\x1c\x5c\x21\xfb\x6e\xef\x1a\x7a\xc8\xc1\xcc\x5a\x95\x24"
 	"\x6f\x9f\xf4\xd5\xbe\x5d\x59\x97\x44\xd8\x47\xcd",
 	16,
-	"\x54\x68\x69\x73\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x2e\x0a"
+	"\x54\x68\x69\x73\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x2e\x0a",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	2,
+	16,
+	"\x37\x05\xD9\x60\x80\xC1\x77\x28\xA0\xE8\x00\xEA\xB6\xE0\xD2\x3C",
+	32,
+	"\xEF\x85\xFB\x89\x0B\xB8\x47\x2F\x4D\xAB\x20\x39\x4D\xCA\x78\x1D"
+	"\xAD\x87\x7E\xDA\x39\xD5\x0C\x87\x0C\x0D\x5A\x0A\x8E\x48\xC7\x18",
+	0,
+	"",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	2,
+	16,
+	"\x37\x05\xD9\x60\x80\xC1\x77\x28\xA0\xE8\x00\xEA\xB6\xE0\xD2\x3C",
+	38,
+	"\x84\xD7\xF3\x07\x54\xED\x98\x7B\xAB\x0B\xF3\x50\x6B\xEB\x09\xCF"
+	"\xB5\x54\x02\xCE\xF7\xE6\x87\x7C\xE9\x9E\x24\x7E\x52\xD1\x6E\xD4"
+	"\x42\x1D\xFD\xF8\x97\x6C",
+	6,
+	"\x00\x01\x02\x03\x04\x05",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	2,
+	16,
+	"\x37\x05\xD9\x60\x80\xC1\x77\x28\xA0\xE8\x00\xEA\xB6\xE0\xD2\x3C",
+	48,
+	"\x35\x17\xD6\x40\xF5\x0D\xDC\x8A\xD3\x62\x87\x22\xB3\x56\x9D\x2A"
+	"\xE0\x74\x93\xFA\x82\x63\x25\x40\x80\xEA\x65\xC1\x00\x8E\x8F\xC2"
+	"\x95\xFB\x48\x52\xE7\xD8\x3E\x1E\x7C\x48\xC3\x7E\xEB\xE6\xB0\xD3",
+	16,
+	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+	2,
+	16,
+	"\x37\x05\xD9\x60\x80\xC1\x77\x28\xA0\xE8\x00\xEA\xB6\xE0\xD2\x3C",
+	53,
+	"\x72\x0F\x73\xB1\x8D\x98\x59\xCD\x6C\xCB\x43\x46\x11\x5C\xD3\x36"
+	"\xC7\x0F\x58\xED\xC0\xC4\x43\x7C\x55\x73\x54\x4C\x31\xC8\x13\xBC"
+	"\xE1\xE6\xD0\x72\xC1\x86\xB3\x9A\x41\x3C\x2F\x92\xCA\x9B\x83\x34"
+	"\xA2\x87\xFF\xCB\xFC",
+	21,
+	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+	"\x10\x11\x12\x13\x14",
+	16,
+	"\xD7\x83\x67\x18\x66\x43\xD6\x7B\x41\x1C\xBA\x91\x39\xFC\x1D\xEE"
+    },
+    {
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
+	2,
+	32,
+	"\x6D\x40\x4D\x37\xFA\xF7\x9F\x9D\xF0\xD3\x35\x68\xD3\x20\x66\x98"
+	"\x00\xEB\x48\x36\x47\x2E\xA8\xA0\x26\xD1\x6B\x71\x82\x46\x0C\x52",
+	40,
+	"\x41\xF5\x3F\xA5\xBF\xE7\x02\x6D\x91\xFA\xF9\xBE\x95\x91\x95\xA0"
+	"\x58\x70\x72\x73\xA9\x6A\x40\xF0\xA0\x19\x60\x62\x1A\xC6\x12\x74"
+	"\x8B\x9B\xBF\xBE\x7E\xB4\xCE\x3C",
+	0,
+	"",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
+	2,
+	32,
+	"\x6D\x40\x4D\x37\xFA\xF7\x9F\x9D\xF0\xD3\x35\x68\xD3\x20\x66\x98"
+	"\x00\xEB\x48\x36\x47\x2E\xA8\xA0\x26\xD1\x6B\x71\x82\x46\x0C\x52",
+	46,
+	"\x4E\xD7\xB3\x7C\x2B\xCA\xC8\xF7\x4F\x23\xC1\xCF\x07\xE6\x2B\xC7"
+	"\xB7\x5F\xB3\xF6\x37\xB9\xF5\x59\xC7\xF6\x64\xF6\x9E\xAB\x7B\x60"
+	"\x92\x23\x75\x26\xEA\x0D\x1F\x61\xCB\x20\xD6\x9D\x10\xF2",
+	6,
+	"\x00\x01\x02\x03\x04\x05",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
+	2,
+	32,
+	"\x6D\x40\x4D\x37\xFA\xF7\x9F\x9D\xF0\xD3\x35\x68\xD3\x20\x66\x98"
+	"\x00\xEB\x48\x36\x47\x2E\xA8\xA0\x26\xD1\x6B\x71\x82\x46\x0C\x52",
+	56,
+	"\xBC\x47\xFF\xEC\x79\x98\xEB\x91\xE8\x11\x5C\xF8\xD1\x9D\xAC\x4B"
+	"\xBB\xE2\xE1\x63\xE8\x7D\xD3\x7F\x49\xBE\xCA\x92\x02\x77\x64\xF6"
+	"\x8C\xF5\x1F\x14\xD7\x98\xC2\x27\x3F\x35\xDF\x57\x4D\x1F\x93\x2E"
+	"\x40\xC4\xFF\x25\x5B\x36\xA2\x66",
+	16,
+	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F",
+	0,
+	NULL
+    },
+    {
+	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
+	2,
+	32,
+	"\x6D\x40\x4D\x37\xFA\xF7\x9F\x9D\xF0\xD3\x35\x68\xD3\x20\x66\x98"
+	"\x00\xEB\x48\x36\x47\x2E\xA8\xA0\x26\xD1\x6B\x71\x82\x46\x0C\x52",
+	61,
+	"\x40\x01\x3E\x2D\xF5\x8E\x87\x51\x95\x7D\x28\x78\xBC\xD2\xD6\xFE"
+	"\x10\x1C\xCF\xD5\x56\xCB\x1E\xAE\x79\xDB\x3C\x3E\xE8\x64\x29\xF2"
+	"\xB2\xA6\x02\xAC\x86\xFE\xF6\xEC\xB6\x47\xD6\x29\x5F\xAE\x07\x7A"
+	"\x1F\xEB\x51\x75\x08\xD2\xC1\x6B\x41\x92\xE0\x1F\x62",
+	21,
+	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+	"\x10\x11\x12\x13\x14",
+	24,
+	"\x45\xEE\x79\x15\x67\xEE\xFC\xA3\x7F\x4A\xC1\xE0\x22\x2D\xE8\x0D"
+	"\x43\xC3\xBF\xA0\x66\x99\x67\x2A"
     }
 };
-
 
 static int
 krb_enc_test(krb5_context context)
@@ -624,9 +776,21 @@ krb_enc_test(krb5_context context)
 	if (ret)
 	    errx(1, "krb_enc_iov2 failed with %d for test %d", ret, i);
 
-	ret = krb_checksum_iov(context, crypto, krbencs[i].usage, &plain);
+	ret = krb_checksum_iov(context, crypto, krbencs[i].usage, &plain, NULL);
 	if (ret)
 	    errx(1, "krb_checksum_iov failed with %d for test %d", ret, i);
+
+	if (krbencs[i].cdata) {
+	    krb5_data checksum;
+
+	    checksum.length = krbencs[i].clen;
+	    checksum.data = krbencs[i].cdata;
+
+	    ret = krb_checksum_iov(context, crypto, krbencs[i].usage,
+				   &plain, &checksum);
+	    if (ret)
+		errx(1, "krb_checksum_iov(2) failed with %d for test %d", ret, i);
+	}
 
 	krb5_crypto_destroy(context, crypto);
 
@@ -640,9 +804,8 @@ krb_enc_test(krb5_context context)
 }
 
 static int
-iov_test(krb5_context context)
+iov_test(krb5_context context, krb5_enctype enctype)
 {
-    krb5_enctype enctype = ENCTYPE_AES256_CTS_HMAC_SHA1_96;
     krb5_error_code ret;
     krb5_crypto crypto;
     krb5_keyblock key;
@@ -859,6 +1022,9 @@ main(int argc, char **argv)
     krb5_context context;
     int val = 0;
 
+    if (argc > 1 && strcmp(argv[1], "-v") == 0)
+        verbose = 1;
+
     ret = krb5_init_context (&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
@@ -867,7 +1033,9 @@ main(int argc, char **argv)
 
     val |= krb_enc_test(context);
     val |= random_to_key(context);
-    val |= iov_test(context);
+    val |= iov_test(context, KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96);
+    val |= iov_test(context, KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128);
+    val |= iov_test(context, KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192);
 
     if (verbose && val == 0)
 	printf("all ok\n");

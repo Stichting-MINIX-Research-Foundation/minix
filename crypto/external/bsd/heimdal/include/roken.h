@@ -9,22 +9,22 @@
  * Copyright (c) 1995-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,11 +38,13 @@
  * SUCH DAMAGE.
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
 #include <signal.h>
 
 
@@ -70,6 +72,7 @@ typedef int rk_socket_t;
 #include <sys/param.h>
 #include <inttypes.h>
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -95,6 +98,7 @@ typedef int rk_socket_t;
 
 
 
+
 #include <krb5/roken-common.h>
 
 ROKEN_CPP_START
@@ -115,12 +119,12 @@ ROKEN_CPP_START
 #define asnprintf rk_asnprintf
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     rk_asnprintf (char **, size_t, const char *, ...)
-     __attribute__ ((format (printf, 3, 4)));
+     __attribute__ ((__format__ (__printf__, 3, 4)));
 
 #define vasnprintf rk_vasnprintf
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
     vasnprintf (char **, size_t, const char *, va_list)
-     __attribute__((format (printf, 3, 0)));
+     __attribute__ ((__format__ (__printf__, 3, 0)));
 
 
 
@@ -154,6 +158,9 @@ ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL strupr(char *);
 ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwnam (const char *);
 ROKEN_LIB_FUNCTION struct passwd * ROKEN_LIB_CALL k_getpwuid (uid_t);
 
+#define rk_getpwnam_r(_n, _pw, _b, _sz, _pwd) getpwnam_r(_n, _pw, _b, _sz, _pwd)
+#define rk_getpwuid_r(_u, _pw, _b, _sz, _pwd) getpwuid_r(_u, _pw, _b, _sz, _pwd)
+
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL get_default_username (void);
 
 
@@ -166,6 +173,9 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkstemp(char *);
 
 #define rk_rename(__rk_rn_from,__rk_rn_to) rename(__rk_rn_from,__rk_rn_to)
 
+#define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)
+
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL daemon(int, int);
 
 
@@ -174,6 +184,8 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL daemon(int, int);
 
 
 
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rk_pidfile (const char*);
 
 
 
@@ -192,6 +204,9 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_vconcat (char *, size_t, va_list);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
     roken_vmconcat (char **, size_t, va_list);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL roken_detach_prep(int, char **, char *);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL roken_detach_finish(const char *, int);
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
     net_write (rk_socket_t, const void *, size_t);
@@ -239,7 +254,7 @@ getnameinfo_verified(const struct sockaddr *, socklen_t,
 		     int);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
+roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
@@ -263,7 +278,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_gethostby_setup(const char*, const char*);
 ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyname(const char*);
-ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL 
+ROKEN_LIB_FUNCTION struct hostent* ROKEN_LIB_CALL
 roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_getservbyname(x,y) getservbyname(x,y)
@@ -293,12 +308,17 @@ mini_inetd (int, rk_socket_t *);
 
 
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#define rk_random() 0
-#else
-#define rk_random() arc4random()
-#endif
 
+
+#define memset_s rk_memset_s
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL memset_s(void *s, size_t smax,
+					int c, size_t n);
+
+# define rk_random() arc4random()
+
+
+
+/* Microsoft VC 2010 POSIX definitions */
 
 
 

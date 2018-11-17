@@ -1,4 +1,4 @@
-/*	$NetBSD: process_context_token.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: process_context_token.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
 	OM_uint32          *minor_status,
-	const gss_ctx_id_t context_handle,
+	gss_const_ctx_id_t context_handle,
 	const gss_buffer_t token_buffer
     )
 {

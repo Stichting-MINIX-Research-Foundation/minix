@@ -1,4 +1,4 @@
-/*	$NetBSD: dsa.h,v 1.1.1.2 2011/04/14 14:08:31 elric Exp $	*/
+/*	$NetBSD: dsa.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -43,6 +43,8 @@
 #include <hcrypto/bn.h>
 
 /* symbol renaming */
+#define DSA hc_DSA
+#define DSA_METHOD hc_DSA_METHOD
 #define DSA_null_method hc_DSA_null_method
 #define DSA_new hc_DSA_new
 #define DSA_free hc_DSA_free

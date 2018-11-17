@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_acquire_cred_ext.c,v 1.1.1.1 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_acquire_cred_ext.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -102,13 +102,22 @@ _gss_acquire_mech_cred(OM_uint32 *minor_status,
 	mc= NULL;
     }
 
-    *output_cred_handle = mc;
+    if (major_status != GSS_S_COMPLETE)
+        free(mc);
+    else
+        *output_cred_handle = mc;
     return major_status;
 }
 
+/**
+ * This function is not a public interface and is deprecated anyways, do
+ * not use.  Use gss_acquire_cred_with_password() instead for now.
+ *
+ * @deprecated
+ */
 OM_uint32
 _gss_acquire_cred_ext(OM_uint32 *minor_status,
-    const gss_name_t desired_name,
+    gss_const_name_t desired_name,
     gss_const_OID credential_type,
     const void *credential_data,
     OM_uint32 time_req,
@@ -154,7 +163,6 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
     for (i = 0; i < mechs->count; i++) {
 	struct _gss_mechanism_name *mn = NULL;
 	struct _gss_mechanism_cred *mc = NULL;
-	gss_name_t desired_mech_name = GSS_C_NO_NAME;
 
 	m = __gss_get_mechanism(&mechs->elements[i]);
 	if (!m)
@@ -165,16 +173,17 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
 					&mechs->elements[i], &mn);
 	    if (major_status != GSS_S_COMPLETE)
 		continue;
-
-	    desired_mech_name = mn->gmn_name;
 	}
 
 	major_status = _gss_acquire_mech_cred(minor_status, m, mn,
 					      credential_type, credential_data,
 					      time_req, desired_mech, cred_usage,
 					      &mc);
-	if (GSS_ERROR(major_status))
+	if (GSS_ERROR(major_status)) {
+            if (mechs->count == 1)
+                _gss_mg_error(m, major_status, *minor_status);
 	    continue;
+        }
 
 	HEIM_SLIST_INSERT_HEAD(&cred->gc_mc, mc, gmc_link);
     }
@@ -185,7 +194,8 @@ _gss_acquire_cred_ext(OM_uint32 *minor_status,
      */
     if (!HEIM_SLIST_FIRST(&cred->gc_mc)) {
 	free(cred);
-	*minor_status = 0;
+        if (mechs->count > 1)
+            *minor_status = 0;
 	return GSS_S_NO_CRED;
     }
 

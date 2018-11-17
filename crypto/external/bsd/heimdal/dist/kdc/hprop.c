@@ -1,4 +1,4 @@
-/*	$NetBSD: hprop.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: hprop.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -163,7 +163,7 @@ get_creds(krb5_context context, krb5_ccache *cache)
     krb5_preauthtype preauth = KRB5_PADATA_ENC_TIMESTAMP;
     krb5_creds creds;
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret) krb5_err(context, 1, ret, "krb5_kt_register");
 
     ret = krb5_kt_resolve(context, ktname, &keytab);
@@ -343,7 +343,6 @@ propagate_database (krb5_context context, int type,
 	if(ret) {
 	    failed++;
 	    krb5_warn(context, ret, "krb5_sendauth (%s)", host);
-	    close(fd);
 	    goto next_host;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstool.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gsstool.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -74,7 +74,7 @@ usage (int ret)
 #define COL_SASL	"SASL"
 
 int
-supported_mechanisms(void *argptr, int argc, char **argv)
+mechanisms(void *argptr, int argc, char **argv)
 {
     OM_uint32 maj_stat, min_stat;
     gss_OID_set mechs;
@@ -186,7 +186,7 @@ print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 
 
 int
-attrs_for_mech(struct attrs_for_mech_options *opt, int argc, char **argv)
+attributes(struct attributes_options *opt, int argc, char **argv)
 {
     gss_OID_set mech_attr = NULL, known_mech_attrs = NULL;
     gss_OID mech = GSS_C_NO_OID;
@@ -231,9 +231,10 @@ help(void *opt, int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int optidx = 0;
+    int exit_status = 0, ret, optidx = 0;
 
     setprogname(argv[0]);
+
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
@@ -248,10 +249,18 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (argc == 0) {
-	help(NULL, argc, argv);
-	return 1;
+    if (argc != 0) {
+	ret = sl_command(commands, argc, argv);
+	if(ret == -1)
+	    sl_did_you_mean(commands, argv[0]);
+	else if (ret == -2)
+	    ret = 0;
+	if(ret != 0)
+	    exit_status = 1;
+    } else {
+	sl_slc_help(commands, argc, argv);
+	exit_status = 1;
     }
 
-    return sl_command (commands, argc, argv);
+    return exit_status;
 }

@@ -1,0 +1,149 @@
+#!/bin/bash
+#
+# Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+KRB5_CONFIG="${objdir}/krb5-kinit.conf"
+export KRB5_CONFIG
+KRB5CCNAME="${objdir}/foocc"
+export KRB5CCNAME
+
+testfailed="echo test failed; exit 1"
+
+# If there is no useful db support compile in, disable test
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+
+port=@port@
+pwport=@pwport@
+
+kinit="${kinit} --password-file=${objdir}/foopassword ${afs_no_afslog} -c ${objdir}/foocc"
+klist="${klist} -c ${objdir}/foocc"
+kgetcred="${kgetcred} -c ${objdir}/foocc"
+kdestroy="${kdestroy} ${afs_no_unlog}"
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+
+
+cache="FILE:${objdir}/cache.krb5"
+keytabfile=${objdir}/server.keytab
+keytab="FILE:${keytabfile}"
+
+> messages.log
+
+num_concurrent=50
+num_princs=20
+torture_time=200
+cred_life=$((torture_time / 10))
+cred_renew_life=$((torture_time / 2))
+out=${objdir}/out-kinit-torture-kgetcred
+kinit_out=${objdir}/out-kinit-torture-kinit
+
+parent_shell_proc=$$
+
+if (($# == 0)); then
+
+    echo "This is a MANUAL test."
+
+    rm -f ${keytabfile}
+    rm -f current-db*
+    rm -f out-*
+    rm -f mkey.file*
+
+    cp "${objdir}/krb5.conf" "${objdir}/krb5-kinit.conf"
+
+    echo "Creating database"
+    ${kadmin} \
+	init \
+	--realm-max-ticket-life=1day \
+	--realm-max-renewable-life=1month \
+	${R} || exit 1
+
+    echo "Adding foo"
+    ${kadmin} add -p foo --use-defaults foo@${R} || exit 1
+
+    echo "Creating torture principals"
+    for i in $(seq 0 $((num_princs - 1)) ); do
+	${kadmin} add -r --use-defaults svc${i}@${R} || exit 1
+    done
+
+    echo "Doing database check"
+    ${kadmin} check ${R} || exit 1
+
+    echo foo > ${objdir}/foopassword
+
+    echo Starting kdc ; > messages.log
+    ${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+    kdcpid=`getpid kdc`
+
+    trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+
+    ec=0
+else
+    echo "begin torture (output in $out)"
+    secs=$(date +%s)
+    cat /dev/null > "$out"
+    while (($(date +%s) < (secs + torture_time) )); do
+	echo .
+	for i in $(seq 0 1000); do
+	    printf '%d\n' $((i % num_princs))
+	done | xargs -P $num_concurrent -I '{}' ${kgetcred} "svc{}@${R}"
+	${klist} -v || exit 1
+	if ! kill -0 $parent_shell_proc; then
+	    printf 'Parent shell script exited; exiting'
+	    exit 1
+	    grep 'Matching credential .* not found' messages.log > /dev/null &&
+		echo "THAT DID NOT WORK RIGHT"
+	fi
+	sleep 5
+    done
+    ${klist} -v
+    exit 0
+fi
+
+echo "checking that we have tickets"
+${kinit} -l $cred_life -r $cred_renew_life foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist} -v || { ec=1 ; eval "${testfailed}"; }
+echo "torturing"
+${kinit} -l $cred_life -r $cred_renew_life foo@${R} "$0" torture-me || { ec=1 ; eval "${testfailed}"; }
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+
+trap "" EXIT
+
+exit $ec

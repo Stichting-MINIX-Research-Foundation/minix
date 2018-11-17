@@ -1,9 +1,11 @@
-/*	$NetBSD: locate_plugin.h,v 1.1.1.2 2011/04/14 14:09:24 elric Exp $	*/
+/*	$NetBSD: locate_plugin.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
+ *
+ * Portions Copyright (c) 2010 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,6 +41,10 @@
 #define HEIMDAL_KRB5_LOCATE_PLUGIN_H 1
 
 #define KRB5_PLUGIN_LOCATE "service_locator"
+#define KRB5_PLUGIN_LOCATE_VERSION 1
+#define KRB5_PLUGIN_LOCATE_VERSION_0 0
+#define KRB5_PLUGIN_LOCATE_VERSION_1 1
+#define KRB5_PLUGIN_LOCATE_VERSION_2 2
 
 enum locate_service_type {
     locate_service_kdc = 1,
@@ -49,7 +55,15 @@ enum locate_service_type {
 };
 
 typedef krb5_error_code
-(*krb5plugin_service_locate_lookup) (void *, enum locate_service_type,
+(*krb5plugin_service_locate_lookup) (void *, unsigned long, enum locate_service_type,
+				     const char *, int, int,
+				     int (*)(void *,int,struct sockaddr *),
+				     void *);
+
+#define KRB5_PLF_ALLOW_HOMEDIR	    1
+
+typedef krb5_error_code
+(*krb5plugin_service_locate_lookup_old) (void *, enum locate_service_type,
 				     const char *, int, int,
 				     int (*)(void *,int,struct sockaddr *),
 				     void *);
@@ -59,7 +73,8 @@ typedef struct krb5plugin_service_locate_ftable {
     int			minor_version;
     krb5_error_code	(*init)(krb5_context, void **);
     void		(*fini)(void *);
-    krb5plugin_service_locate_lookup lookup;
+    krb5plugin_service_locate_lookup_old old_lookup;
+    krb5plugin_service_locate_lookup lookup; /* version 2 */
 } krb5plugin_service_locate_ftable;
 
 #endif /* HEIMDAL_KRB5_LOCATE_PLUGIN_H */

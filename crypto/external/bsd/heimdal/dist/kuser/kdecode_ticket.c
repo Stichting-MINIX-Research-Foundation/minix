@@ -1,4 +1,4 @@
-/*	$NetBSD: kdecode_ticket.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kdecode_ticket.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -81,8 +81,8 @@ print_and_decode_tkt (krb5_context context,
 struct getargs args[] = {
     { "enctype",	'e', arg_string, &etype_str,
       "encryption type to use", "enctype"},
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
 static void

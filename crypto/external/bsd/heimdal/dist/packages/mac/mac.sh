@@ -24,8 +24,12 @@ env \
   CFLAGS="-arch i386 -arch x86_64" \
   LDFLAGS="-arch i386 -arch x86_64" \
   ${config} --disable-dependency-tracking > log || exit 1
+
 echo "Build"
+env \
+  CODE_SIGN_IDENTITY="Developer ID Application:" \
 make all > /dev/null || exit 1
+
 echo "Run regression suite"
 make check > /dev/null || exit 1
 echo "Install"

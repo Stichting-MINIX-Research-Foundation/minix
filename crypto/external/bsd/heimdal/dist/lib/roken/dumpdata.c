@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpdata.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: dumpdata.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -83,14 +83,16 @@ rk_undumpdata(const char *filename, void **buf, size_t *size)
     sret = net_read(fd, *buf, *size);
     if (sret < 0)
 	ret = errno;
-    else if (sret != (ssize_t)*size) {
+    else if (sret != (ssize_t)*size)
 	ret = EINVAL;
-	free(*buf);
-	*buf = NULL;
-    } else
+    else
 	ret = 0;
 
- out:
+  out:
+    if (ret) {
+	free(*buf);
+	*buf = NULL;
+    }
     close(fd);
     return ret;
 }

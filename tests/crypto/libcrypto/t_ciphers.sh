@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.4 2012/07/14 16:04:06 spz Exp $
+# $NetBSD: t_ciphers.sh,v 1.5 2017/05/21 14:20:45 riastradh Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -103,9 +103,6 @@ rc5_head()
 }
 rc5_body()
 {
-	[ -x "$(atf_get_srcdir)/h_rc5test" ] \
-	    || atf_skip "RC5 support not available; system built" \
-	                "with MKCRYPTO_RC5=no"
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_rc5test"
 }
 

@@ -1,11 +1,98 @@
+#include "sparc_arch.h"
+
+#ifdef __arch64__
 .register	%g2,#scratch
 .register	%g3,#scratch
+#endif
+
 .section	".text",#alloc,#execinstr
+
+#ifdef __PIC__
+SPARC_PIC_THUNK(%g1)
+#endif
 
 .align	32
 .globl	sha1_block_data_order
 sha1_block_data_order:
-	save	%sp,-192,%sp
+	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
+	ld	[%g1+4],%g1		! OPENSSL_sparcv9cap_P[1]
+
+	andcc	%g1, CFR_SHA1, %g0
+	be	.Lsoftware
+	nop
+
+	ld	[%o0 + 0x00], %f0	! load context
+	ld	[%o0 + 0x04], %f1
+	ld	[%o0 + 0x08], %f2
+	andcc	%o1, 0x7, %g0
+	ld	[%o0 + 0x0c], %f3
+	bne,pn	%icc, .Lhwunaligned
+	 ld	[%o0 + 0x10], %f4
+
+.Lhw_loop:
+	ldd	[%o1 + 0x00], %f8
+	ldd	[%o1 + 0x08], %f10
+	ldd	[%o1 + 0x10], %f12
+	ldd	[%o1 + 0x18], %f14
+	ldd	[%o1 + 0x20], %f16
+	ldd	[%o1 + 0x28], %f18
+	ldd	[%o1 + 0x30], %f20
+	subcc	%o2, 1, %o2		! done yet? 
+	ldd	[%o1 + 0x38], %f22
+	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
+
+	.word	0x81b02820		! SHA1
+
+	bne,pt	SIZE_T_CC, .Lhw_loop
+	nop
+
+.Lhwfinish:
+	st	%f0, [%o0 + 0x00]	! store context
+	st	%f1, [%o0 + 0x04]
+	st	%f2, [%o0 + 0x08]
+	st	%f3, [%o0 + 0x0c]
+	retl
+	st	%f4, [%o0 + 0x10]
+
+.align	8
+.Lhwunaligned:
+	.word	0x93b24300 !alignaddr	%o1,%g0,%o1
+
+	ldd	[%o1 + 0x00], %f10
+.Lhwunaligned_loop:
+	ldd	[%o1 + 0x08], %f12
+	ldd	[%o1 + 0x10], %f14
+	ldd	[%o1 + 0x18], %f16
+	ldd	[%o1 + 0x20], %f18
+	ldd	[%o1 + 0x28], %f20
+	ldd	[%o1 + 0x30], %f22
+	ldd	[%o1 + 0x38], %f24
+	subcc	%o2, 1, %o2		! done yet?
+	ldd	[%o1 + 0x40], %f26
+	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
+
+	.word	0x91b2890c !faligndata	%f10,%f12,%f8
+	.word	0x95b3090e !faligndata	%f12,%f14,%f10
+	.word	0x99b38910 !faligndata	%f14,%f16,%f12
+	.word	0x9db40912 !faligndata	%f16,%f18,%f14
+	.word	0xa1b48914 !faligndata	%f18,%f20,%f16
+	.word	0xa5b50916 !faligndata	%f20,%f22,%f18
+	.word	0xa9b58918 !faligndata	%f22,%f24,%f20
+	.word	0xadb6091a !faligndata	%f24,%f26,%f22
+
+	.word	0x81b02820		! SHA1
+
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
+	.word	0x95b68f9a !for	%f26,%f26,%f10	! %f10=%f26
+
+	ba	.Lhwfinish
+	nop
+
+.align	16
+.Lsoftware:
+	save	%sp,-STACK_FRAME,%sp
 	sllx	%i2,6,%i2
 	add	%i1,%i2,%i2
 
@@ -1501,7 +1588,7 @@ sha1_block_data_order:
 	add	%l4,%o4,%l4
 	st	%l4,[%i0+16]
 
-	bne	%xcc,.Lloop
+	bne	SIZE_T_CC,.Lloop
 	andn	%i1,7,%i3
 
 	ret

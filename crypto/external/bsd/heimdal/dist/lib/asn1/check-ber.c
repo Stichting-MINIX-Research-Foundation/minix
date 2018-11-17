@@ -1,4 +1,4 @@
-/*	$NetBSD: check-ber.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: check-ber.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include <krb5/cms_asn1.h>
 
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: check-ber.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static const unsigned char *contentdata = (unsigned char *)
     "\x30\x80\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x07\x02\xa0\x80\x30"

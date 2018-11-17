@@ -1,4 +1,4 @@
-/*	$NetBSD: rc2.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: rc2.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -34,11 +34,9 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #include "rc2.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 /*
  * Implemented from Peter Gutmann's "Specification for Ron Rivests Cipher No.2"

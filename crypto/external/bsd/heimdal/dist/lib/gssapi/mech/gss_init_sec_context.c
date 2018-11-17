@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_init_sec_context.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_init_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -31,7 +31,7 @@
 #include "mech_locl.h"
 
 static gss_cred_id_t
-_gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
+_gss_mech_cred_find(gss_const_cred_id_t cred_handle, gss_OID mech_type)
 {
 	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
 	struct _gss_mechanism_cred *mc;
@@ -109,9 +109,9 @@ _gss_mech_cred_find(gss_cred_id_t cred_handle, gss_OID mech_type)
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_init_sec_context(OM_uint32 * minor_status,
-    const gss_cred_id_t initiator_cred_handle,
+    gss_const_cred_id_t initiator_cred_handle,
     gss_ctx_id_t * context_handle,
-    const gss_name_t target_name,
+    gss_const_name_t target_name,
     const gss_OID input_mech_type,
     OM_uint32 req_flags,
     OM_uint32 time_req,
@@ -127,7 +127,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	struct _gss_name *name = (struct _gss_name *) target_name;
 	struct _gss_mechanism_name *mn;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
-	gss_cred_id_t cred_handle;
+	gss_const_cred_id_t cred_handle;
 	int allocated_ctx;
 	gss_OID mech_type = input_mech_type;
 
@@ -174,7 +174,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
 	if (major_status != GSS_S_COMPLETE) {
 		if (allocated_ctx)
-			free(ctx);
+                    free(ctx);
 		return major_status;
 	}
 
@@ -185,6 +185,13 @@ gss_init_sec_context(OM_uint32 * minor_status,
 		cred_handle = initiator_cred_handle;
 	else
 		cred_handle = _gss_mech_cred_find(initiator_cred_handle, mech_type);
+
+        if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
+            cred_handle == NULL) {
+            if (allocated_ctx)
+                free(ctx);
+            return GSS_S_NO_CRED;
+        }
 
 	major_status = m->gm_init_sec_context(minor_status,
 	    cred_handle,

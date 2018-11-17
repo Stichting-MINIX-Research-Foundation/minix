@@ -1,7 +1,7 @@
-/*	$NetBSD: rsa.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
+/*	$NetBSD: rsa.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -68,6 +68,9 @@
 #define i2d_RSAPrivateKey hc_i2d_RSAPrivateKey
 #define i2d_RSAPublicKey hc_i2d_RSAPublicKey
 #define d2i_RSAPublicKey hc_d2i_RSAPublicKey
+
+#define RSA hc_RSA
+#define RSA_METHOD hc_RSA_METHOD
 
 /*
  *

@@ -78,6 +78,8 @@ static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
                   const ASN1_ITEM *it);
 static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                   int utype, char *free_cont, const ASN1_ITEM *it);
+static int bn_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                    int indent, const ASN1_PCTX *pctx);
 
 static ASN1_PRIMITIVE_FUNCS bignum_pf = {
     NULL, 0,
@@ -85,7 +87,8 @@ static ASN1_PRIMITIVE_FUNCS bignum_pf = {
     bn_free,
     0,
     bn_c2i,
-    bn_i2c
+    bn_i2c,
+    bn_print
 };
 
 ASN1_ITEM_start(BIGNUM)
@@ -141,12 +144,23 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                   int utype, char *free_cont, const ASN1_ITEM *it)
 {
     BIGNUM *bn;
-    if (!*pval)
-        bn_new(pval, it);
+
+    if (*pval == NULL && !bn_new(pval, it))
+        return 0;
     bn = (BIGNUM *)*pval;
     if (!BN_bin2bn(cont, len, bn)) {
         bn_free(pval, it);
         return 0;
     }
+    return 1;
+}
+
+static int bn_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                    int indent, const ASN1_PCTX *pctx)
+{
+    if (!BN_print(out, *(BIGNUM **)pval))
+        return 0;
+    if (BIO_puts(out, "\n") <= 0)
+        return 0;
     return 1;
 }

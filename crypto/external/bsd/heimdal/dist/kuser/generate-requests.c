@@ -1,4 +1,4 @@
-/*	$NetBSD: generate-requests.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: generate-requests.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
@@ -94,14 +94,15 @@ generate_requests (const char *filename, unsigned nreq)
 	    krb5_free_cred_contents (context, &cred);
 	krb5_free_principal(context, client);
     }
+    free(words);
 }
 
 static int version_flag	= 0;
 static int help_flag	= 0;
 
 static struct getargs args[] = {
-    { "version", 	0,   arg_flag, &version_flag },
-    { "help",		0,   arg_flag, &help_flag }
+    { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
+    { "help",		0,   arg_flag, &help_flag,    NULL, NULL }
 };
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: der_format.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: der_format.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "der_locl.h"
 #include <krb5/hex.h>
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: der_format.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 int
 der_parse_hex_heim_integer (const char *p, heim_integer *data)
@@ -165,7 +165,7 @@ der_parse_heim_oid (const char *str, const char *sep, heim_oid *data)
 	    free(s);
 	    return EINVAL;
 	}
-	data->components[data->length++] = l;
+	data->components[data->length++] = (unsigned int)l;
     }
     free(s);
     return 0;

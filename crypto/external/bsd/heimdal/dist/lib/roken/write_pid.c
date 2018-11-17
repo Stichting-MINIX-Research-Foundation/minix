@@ -1,4 +1,4 @@
-/*	$NetBSD: write_pid.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: write_pid.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
@@ -37,56 +37,84 @@
 
 #include <krb5/roken.h>
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
-pid_file_write (const char *progname)
+pid_file_write(const char *progname)
 {
+    const char *pidfile_dir = NULL;
     char *ret = NULL;
     FILE *fp;
 
-    if (asprintf (&ret, "%s%s.pid", _PATH_VARRUN, progname) < 0 || ret == NULL)
+    /*
+     * Maybe we could have a version of this function (and pidfile())
+     * where we get a directory from the caller.  That would allow us to
+     * have command-line options for the daemons for this.
+     *
+     * For now we use an environment variable.
+     */
+    if (!issuid())
+        pidfile_dir = getenv("HEIM_PIDFILE_DIR");
+    if (pidfile_dir == NULL)
+        pidfile_dir = _PATH_VARRUN;
+
+    if (asprintf(&ret, "%s%s.pid", pidfile_dir, progname) < 0 || ret == NULL)
 	return NULL;
-    fp = fopen (ret, "w");
+    fp = fopen(ret, "w");
     if (fp == NULL) {
-	free (ret);
+	free(ret);
 	return NULL;
     }
-    fprintf (fp, "%u", (unsigned)getpid());
-    fclose (fp);
+    fprintf(fp, "%lu\n", (unsigned long)getpid());
+    fclose(fp);
     return ret;
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-pid_file_delete (char **filename)
+pid_file_delete(char **filename)
 {
     if (*filename != NULL) {
-	unlink (*filename);
-	free (*filename);
+	unlink(*filename);
+	free(*filename);
 	*filename = NULL;
     }
 }
 
-#ifndef HAVE_PIDFILE
 static char *pidfile_path;
+static pid_t pidfile_pid;
 
 static void
 pidfile_cleanup(void)
 {
-    if(pidfile_path != NULL)
+    if (pidfile_path != NULL && pidfile_pid == getpid())
 	pid_file_delete(&pidfile_path);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-pidfile(const char *basename)
+rk_pidfile(const char *bname)
 {
-    if(pidfile_path != NULL)
+    /*
+     * If the OS has a pidfile(), call that, but still call
+     * pid_file_write().  Even if both want to write the same file,
+     * writing it twice will still work.
+     */
+#ifdef HAVE_PIDFILE
+    pidfile(bname);
+#endif
+
+    if (pidfile_path != NULL)
 	return;
-    if(basename == NULL)
-	basename = getprogname();
-    pidfile_path = pid_file_write(basename);
+    if (bname == NULL)
+	bname = getprogname();
+    pidfile_path = pid_file_write(bname);
+    pidfile_pid = getpid();
 #if defined(HAVE_ATEXIT)
-    atexit(pidfile_cleanup);
+    if (pidfile_path != NULL)
+        atexit(pidfile_cleanup);
 #elif defined(HAVE_ON_EXIT)
-    on_exit(pidfile_cleanup);
+    if (pidfile_path != NULL)
+        on_exit(pidfile_cleanup);
 #endif
 }
-#endif

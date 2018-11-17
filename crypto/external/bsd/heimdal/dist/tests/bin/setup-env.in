@@ -1,5 +1,8 @@
 #!/bin/sh
 
+HEIM_PIDFILE_DIR="${objdir}/"
+export HEIM_PIDFILE_DIR
+
 unset KRB5_CONFIG
 unset KRB5CCNAME
 
@@ -19,30 +22,42 @@ ipropd_slave="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/ipropd-slave"
 kadmin="${TESTS_ENVIRONMENT} ${top_builddir}/kadmin/kadmin"
 kadmind="${TESTS_ENVIRONMENT} ${top_builddir}/kadmin/kadmind"
 kdc="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/kdc"
+kdc_tester="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/kdc-tester"
 kdestroy="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kdestroy"
 kdigest="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kdigest"
 kgetcred="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kgetcred"
 kimpersonate="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kimpersonate"
 kinit="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kinit"
-klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc klist"
+klist="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools klist"
 kpasswd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswd"
 kpasswdd="${TESTS_ENVIRONMENT} ${top_builddir}/kpasswd/kpasswdd"
-kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/kcc kswitch"
+kswitch="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools kswitch"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
 
 # regression test tools
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"
+test_canon="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_canon"
 test_gic="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_gic"
 test_renew="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_renew"
 test_ntlm="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/test_ntlm"
 test_context="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/test_context"
 rkpty="${TESTS_ENVIRONMENT} ${top_builddir}/lib/roken/rkpty"
+test_set_kvno0="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_set_kvno0"
+test_alname="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_alname"
+test_kuserok="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_kuserok"
 
 # misc apps
 have_db="${top_builddir}/tests/db/have-db"
 leaks_kill="${top_srcdir}/tests/kdc/leaks-kill.sh"
 wait_kdc="${top_srcdir}/tests/kdc/wait-kdc.sh"
+getpid () {
+    if [ -f "$HEIM_PIDFILE_DIR/lt-${1}.pid" ]; then
+        cat "$HEIM_PIDFILE_DIR/lt-${1}.pid"
+    else
+        cat "$HEIM_PIDFILE_DIR/${1}.pid"
+    fi
+}
 
 if [ ! "${NO_AFS}" ] ; then
     afs_no_unlog="--no-unlog"

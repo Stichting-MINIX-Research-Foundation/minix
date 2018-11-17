@@ -1,6 +1,6 @@
 dnl Id
 dnl
-dnl rk_TEST_PACKAGE(package,headers,libraries,extra libs,
+dnl rk_TEST_PACKAGE(package,program,libraries,extra libs,
 dnl			default locations, conditional, config-program, headers)
 
 AC_DEFUN([rk_TEST_PACKAGE],[

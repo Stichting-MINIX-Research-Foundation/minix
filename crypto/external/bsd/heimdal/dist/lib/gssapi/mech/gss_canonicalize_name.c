@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_canonicalize_name.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gss_canonicalize_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -56,7 +56,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_canonicalize_name(OM_uint32 *minor_status,
-    const gss_name_t input_name,
+    gss_const_name_t input_name,
     const gss_OID mech_type,
     gss_name_t *output_name)
 {

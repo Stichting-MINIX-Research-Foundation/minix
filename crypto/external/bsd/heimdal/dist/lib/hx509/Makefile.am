@@ -1,5 +1,7 @@
 include $(top_srcdir)/Makefile.am.common
 
+AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
+
 lib_LTLIBRARIES = libhx509.la
 libhx509_la_LDFLAGS = -version-info 5:0:0
 
@@ -58,12 +60,11 @@ dist_libhx509_la_SOURCES = \
 	cms.c \
 	collector.c \
 	crypto.c \
+	crypto-ec.c \
 	doxygen.c \
 	error.c \
 	env.c \
 	file.c \
-	hx509-private.h \
-	hx509-protos.h \
 	hx509.h \
 	hx_locl.h \
 	sel.c \
@@ -94,8 +95,10 @@ libhx509_la_DEPENDENCIES = version-script.map
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
+	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIBADD_roken) \
 	$(LIB_dlopen)
 
@@ -108,14 +111,15 @@ libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 $(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
-libhx509_la_CPPFLAGS = -I$(srcdir)/ref $(INCLUDE_hcrypto)
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
 
 $(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
 $(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
 $(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
 
-dist_include_HEADERS = hx509.h hx509-protos.h
+dist_include_HEADERS = hx509.h $(srcdir)/hx509-protos.h
+
+noinst_HEADERS = $(srcdir)/hx509-private.h
 
 nodist_include_HEADERS = hx509_err.h
 nodist_include_HEADERS += ocsp_asn1.h
@@ -128,34 +132,40 @@ priv_headers += crmf_asn1-priv.h
 
 
 ocsp_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/ocsp.asn1 $(srcdir)/ocsp.opt
-	$(ASN1_COMPILE) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
 
 pkcs10_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/pkcs10.asn1 $(srcdir)/pkcs10.opt
-	$(ASN1_COMPILE) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
 
 crmf_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/crmf.asn1
-	$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
+	$(heim_verbose)$(ASN1_COMPILE) $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
-$(libhx509_la_OBJECTS): $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h $(srcdir)/hx_locl.h
+ALL_OBJECTS  = $(libhx509_la_OBJECTS)
+ALL_OBJECTS += $(hxtool_OBJECTS)
+
+HX509_PROTOS = $(srcdir)/hx509-protos.h $(srcdir)/hx509-private.h
+
+$(ALL_OBJECTS): $(HX509_PROTOS)
+
+$(libhx509_la_OBJECTS): $(srcdir)/hx_locl.h
 $(libhx509_la_OBJECTS): ocsp_asn1.h pkcs10_asn1.h
 
-$(srcdir)/hx509-protos.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
+$(srcdir)/hx509-protos.h: $(dist_libhx509_la_SOURCES)
+	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
 
-$(srcdir)/hx509-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
+$(srcdir)/hx509-private.h: $(dist_libhx509_la_SOURCES)
+	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
 
 bin_PROGRAMS = hxtool
 
 hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
-	$(SLC) $(srcdir)/hxtool-commands.in
+	$(heim_verbose)$(SLC) $(srcdir)/hxtool-commands.in
 
 dist_hxtool_SOURCES = hxtool.c
 nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
 
-$(hxtool_OBJECTS): hxtool-commands.h
+$(hxtool_OBJECTS): hxtool-commands.h hx509_err.h
 
-hxtool_CPPFLAGS = $(INCLUDE_hcrypto)
 hxtool_LDADD = \
 	libhx509.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
@@ -165,11 +175,11 @@ hxtool_LDADD = \
 
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(gen_files_ocsp) ocsp_asn1_files ocsp_asn1{,-priv}.h* \
-	ocsp_asn1-template.[ch]* \
+	ocsp_asn1-template.[chx]* \
 	$(gen_files_pkcs10) pkcs10_asn1_files pkcs10_asn1{,-priv}.h* \
-	pkcs10_asn1-template.[ch]* \
+	pkcs10_asn1-template.[chx]* \
 	$(gen_files_crmf) crmf_asn1_files crmf_asn1{,-priv}.h* \
-	crmf_asn1-template.[ch]* \
+	crmf_asn1-template.[chx]* \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
 	request.out \
@@ -198,11 +208,10 @@ check_PROGRAMS = $(PROGRAM_TESTS) test_soft_pkcs11
 
 LDADD = libhx509.la
 
-test_soft_pkcs11_LDADD = libhx509.la
-test_soft_pkcs11_CPPFLAGS = -I$(srcdir)/ref
+test_soft_pkcs11_LDADD = libhx509.la $(top_builddir)/lib/asn1/libasn1.la
 
-test_name_CPPFLAGS = $(INCLUDE_hcrypto)
-test_name_LDADD = libhx509.la $(LIB_roken)
+test_name_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
+test_expr_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
 
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 
@@ -226,78 +235,78 @@ SCRIPT_TESTS = 			\
 	test_windows		\
 	test_query
 
-do_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
+do_subst = $(heim_verbose)sed -e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/lib/hx509,g' \
 	-e 's,[@]egrep[@],$(EGREP),g'
 
 test_ca: test_ca.in Makefile
 	$(do_subst) < $(srcdir)/test_ca.in > test_ca.tmp
-	chmod +x test_ca.tmp
+	$(heim_verbose)chmod +x test_ca.tmp
 	mv test_ca.tmp test_ca
 
 test_cert: test_cert.in Makefile
 	$(do_subst) < $(srcdir)/test_cert.in > test_cert.tmp
-	chmod +x test_cert.tmp
+	$(heim_verbose)chmod +x test_cert.tmp
 	mv test_cert.tmp test_cert
 
 test_chain: test_chain.in Makefile
 	$(do_subst) < $(srcdir)/test_chain.in > test_chain.tmp
-	chmod +x test_chain.tmp
+	$(heim_verbose)chmod +x test_chain.tmp
 	mv test_chain.tmp test_chain
 
 test_cms: test_cms.in Makefile
 	$(do_subst) < $(srcdir)/test_cms.in > test_cms.tmp
-	chmod +x test_cms.tmp
+	$(heim_verbose)chmod +x test_cms.tmp
 	mv test_cms.tmp test_cms
 
 test_crypto: test_crypto.in Makefile
 	$(do_subst) < $(srcdir)/test_crypto.in > test_crypto.tmp
-	chmod +x test_crypto.tmp
+	$(heim_verbose)chmod +x test_crypto.tmp
 	mv test_crypto.tmp test_crypto
 
 test_nist: test_nist.in Makefile
 	$(do_subst) < $(srcdir)/test_nist.in > test_nist.tmp
-	chmod +x test_nist.tmp
+	$(heim_verbose)chmod +x test_nist.tmp
 	mv test_nist.tmp test_nist
 
 test_nist2: test_nist2.in Makefile
 	$(do_subst) < $(srcdir)/test_nist2.in > test_nist2.tmp
-	chmod +x test_nist2.tmp
+	$(heim_verbose)chmod +x test_nist2.tmp
 	mv test_nist2.tmp test_nist2
 
 test_pkcs11: test_pkcs11.in Makefile
 	$(do_subst) < $(srcdir)/test_pkcs11.in > test_pkcs11.tmp
-	chmod +x test_pkcs11.tmp
+	$(heim_verbose)chmod +x test_pkcs11.tmp
 	mv test_pkcs11.tmp test_pkcs11
 
 test_java_pkcs11: test_java_pkcs11.in Makefile
 	$(do_subst) < $(srcdir)/test_java_pkcs11.in > test_java_pkcs11.tmp
-	chmod +x test_java_pkcs11.tmp
+	$(heim_verbose)chmod +x test_java_pkcs11.tmp
 	mv test_java_pkcs11.tmp test_java_pkcs11
 
 test_nist_cert: test_nist_cert.in Makefile
 	$(do_subst) < $(srcdir)/test_nist_cert.in > test_nist_cert.tmp
-	chmod +x test_nist_cert.tmp
+	$(heim_verbose)chmod +x test_nist_cert.tmp
 	mv test_nist_cert.tmp test_nist_cert
 
 test_nist_pkcs12: test_nist_pkcs12.in Makefile
 	$(do_subst) < $(srcdir)/test_nist_pkcs12.in > test_nist_pkcs12.tmp
-	chmod +x test_nist_pkcs12.tmp
+	$(heim_verbose)chmod +x test_nist_pkcs12.tmp
 	mv test_nist_pkcs12.tmp test_nist_pkcs12
 
 test_req: test_req.in Makefile
 	$(do_subst) < $(srcdir)/test_req.in > test_req.tmp
-	chmod +x test_req.tmp
+	$(heim_verbose)chmod +x test_req.tmp
 	mv test_req.tmp test_req
 
 test_windows: test_windows.in Makefile
 	$(do_subst) < $(srcdir)/test_windows.in > test_windows.tmp
-	chmod +x test_windows.tmp
+	$(heim_verbose)chmod +x test_windows.tmp
 	mv test_windows.tmp test_windows
 
 test_query: test_query.in Makefile
 	$(do_subst) < $(srcdir)/test_query.in > test_query.tmp
-	chmod +x test_query.tmp
+	$(heim_verbose)chmod +x test_query.tmp
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \
@@ -338,16 +347,22 @@ EXTRA_DIST = \
 	tst-crypto-select5 \
 	tst-crypto-select6 \
 	tst-crypto-select7 \
+	data/PKITS_data.zip \
+	data/eccurve.pem \
+	data/https.crt \
+	data/https.key \
+	data/mkcert.sh \
+	data/nist-result2 \
 	data/n0ll.pem \
-	data/secp160r1TestCA.cert.pem \
-	data/secp160r1TestCA.key.pem \
-	data/secp160r1TestCA.pem \
-	data/secp160r2TestClient.cert.pem \
-	data/secp160r2TestClient.key.pem \
-	data/secp160r2TestClient.pem \
-	data/secp160r2TestServer.cert.pem \
-	data/secp160r2TestServer.key.pem \
-	data/secp160r2TestServer.pem \
+	data/secp256r1TestCA.cert.pem \
+	data/secp256r1TestCA.key.pem \
+	data/secp256r1TestCA.pem \
+	data/secp256r2TestClient.cert.pem \
+	data/secp256r2TestClient.key.pem \
+	data/secp256r2TestClient.pem \
+	data/secp256r2TestServer.cert.pem \
+	data/secp256r2TestServer.key.pem \
+	data/secp256r2TestServer.pem \
 	data/bleichenbacher-bad.pem \
 	data/bleichenbacher-good.pem \
 	data/bleichenbacher-sf-pad-correct.pem \

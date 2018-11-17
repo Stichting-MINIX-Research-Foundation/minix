@@ -143,6 +143,7 @@ RSA *RSA_new_method(ENGINE *engine)
         RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    memset(ret,0,sizeof(RSA));
 
     ret->meth = RSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
@@ -275,10 +276,10 @@ int RSA_up_ref(RSA *r)
 }
 
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc)
 {
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RSA, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int RSA_set_ex_data(RSA *r, int idx, void *arg)

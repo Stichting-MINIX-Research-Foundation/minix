@@ -1,4 +1,4 @@
-/*	$NetBSD: windc.c,v 1.1.1.2 2014/04/24 12:45:57 pettai Exp $	*/
+/*	$NetBSD: windc.c,v 1.2 2017/01/28 21:31:51 christos Exp $	*/
 
 #include <krb5/krb5.h>
 #include <krb5/hdb.h>
@@ -71,7 +71,7 @@ client_access(void *ctx,
 	      hdb_entry_ex *client, const char *client_name,
 	      hdb_entry_ex *server, const char *server_name,
 	      KDC_REQ *req,
-	      krb5_data *e_data)
+	      METHOD_DATA *data)
 {
     krb5_warnx(context, "client_access");
     return 0;

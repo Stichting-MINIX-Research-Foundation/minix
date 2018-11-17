@@ -1,4 +1,4 @@
-/*	$NetBSD: randi.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
+/*	$NetBSD: randi.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -42,7 +42,6 @@
 
 extern const RAND_METHOD hc_rand_fortuna_method;
 extern const RAND_METHOD hc_rand_unix_method;
-extern const RAND_METHOD hc_rand_egd_method;
 extern const RAND_METHOD hc_rand_timer_method;
 extern const RAND_METHOD hc_rand_w32crypto_method;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: symbol.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -80,7 +80,7 @@ addsym(char *name)
     key.name = name;
     s = (Symbol *) hashtabsearch(htab, (void *) &key);
     if (s == NULL) {
-	s = (Symbol *) emalloc(sizeof(*s));
+	s = (Symbol *) ecalloc(1, sizeof(*s));
 	s->name = name;
 	s->gen_name = estrdup(name);
 	output_name(s->gen_name);

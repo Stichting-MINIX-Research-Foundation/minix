@@ -45,7 +45,7 @@ ${have_db} || exit 77
 R=TEST.H5L.SE
 R2=SUB.TEST.H5L.SE
 
-service=ldap/host.sub.test.h5l.se
+service=ldap/host.sub.test.h5l.se:389
 
 port=@port@
 
@@ -58,7 +58,6 @@ kinit="${kinit} -c $cache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
-
 
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
@@ -100,15 +99,9 @@ ${kadmin} check ${R2} || exit 1
 
 echo foo > ${objdir}/foopassword
 
-echo Starting kdc
-${kdc} &
-kdcpid=$!
-
-sh ${wait_kdc}
-if [ "$?" != 0 ] ; then
-    kill -9 ${kdcpid}
-    exit 1
-fi
+echo Starting kdc ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+kdcpid=`getpid kdc`
 
 trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 

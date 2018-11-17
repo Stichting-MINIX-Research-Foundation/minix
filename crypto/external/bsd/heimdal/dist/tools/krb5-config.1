@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5-config.1,v 1.1.1.2 2014/04/24 12:45:57 pettai Exp $
+.\"	$NetBSD: krb5-config.1,v 1.2 2017/01/28 21:31:51 christos Exp $
 .\"
 .\" Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -62,7 +62,9 @@ Print the exec-prefix if no
 is specified, otherwise set exec-prefix to
 .Ar dir .
 .It Fl Fl libs
-Output the set of libraries that should be linked against.
+Output the set of libraries that should be linked against.  This also
+includes rpath flags with the expectation that the C compiler is used
+for final link-edits.
 .It Fl Fl cflags
 Output the set of flags to give to the C compiler when using the
 Heimdal libraries.

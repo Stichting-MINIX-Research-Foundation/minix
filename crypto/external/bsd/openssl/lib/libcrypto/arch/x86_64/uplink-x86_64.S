@@ -5,19 +5,19 @@
 .type	_lazy1,@function
 .align	16
 _lazy1:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$1,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*8(%rax)
 _lazy1_end:
@@ -25,19 +25,19 @@ _lazy1_end:
 .type	_lazy2,@function
 .align	16
 _lazy2:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$2,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*16(%rax)
 _lazy2_end:
@@ -45,19 +45,19 @@ _lazy2_end:
 .type	_lazy3,@function
 .align	16
 _lazy3:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$3,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*24(%rax)
 _lazy3_end:
@@ -65,19 +65,19 @@ _lazy3_end:
 .type	_lazy4,@function
 .align	16
 _lazy4:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$4,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*32(%rax)
 _lazy4_end:
@@ -85,19 +85,19 @@ _lazy4_end:
 .type	_lazy5,@function
 .align	16
 _lazy5:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$5,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*40(%rax)
 _lazy5_end:
@@ -105,19 +105,19 @@ _lazy5_end:
 .type	_lazy6,@function
 .align	16
 _lazy6:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$6,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*48(%rax)
 _lazy6_end:
@@ -125,19 +125,19 @@ _lazy6_end:
 .type	_lazy7,@function
 .align	16
 _lazy7:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$7,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*56(%rax)
 _lazy7_end:
@@ -145,19 +145,19 @@ _lazy7_end:
 .type	_lazy8,@function
 .align	16
 _lazy8:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$8,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*64(%rax)
 _lazy8_end:
@@ -165,19 +165,19 @@ _lazy8_end:
 .type	_lazy9,@function
 .align	16
 _lazy9:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$9,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*72(%rax)
 _lazy9_end:
@@ -185,19 +185,19 @@ _lazy9_end:
 .type	_lazy10,@function
 .align	16
 _lazy10:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$10,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*80(%rax)
 _lazy10_end:
@@ -205,19 +205,19 @@ _lazy10_end:
 .type	_lazy11,@function
 .align	16
 _lazy11:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$11,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*88(%rax)
 _lazy11_end:
@@ -225,19 +225,19 @@ _lazy11_end:
 .type	_lazy12,@function
 .align	16
 _lazy12:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$12,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*96(%rax)
 _lazy12_end:
@@ -245,19 +245,19 @@ _lazy12_end:
 .type	_lazy13,@function
 .align	16
 _lazy13:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$13,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*104(%rax)
 _lazy13_end:
@@ -265,19 +265,19 @@ _lazy13_end:
 .type	_lazy14,@function
 .align	16
 _lazy14:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$14,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*112(%rax)
 _lazy14_end:
@@ -285,19 +285,19 @@ _lazy14_end:
 .type	_lazy15,@function
 .align	16
 _lazy15:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$15,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*120(%rax)
 _lazy15_end:
@@ -305,19 +305,19 @@ _lazy15_end:
 .type	_lazy16,@function
 .align	16
 _lazy16:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$16,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*128(%rax)
 _lazy16_end:
@@ -325,19 +325,19 @@ _lazy16_end:
 .type	_lazy17,@function
 .align	16
 _lazy17:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$17,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*136(%rax)
 _lazy17_end:
@@ -345,19 +345,19 @@ _lazy17_end:
 .type	_lazy18,@function
 .align	16
 _lazy18:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$18,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*144(%rax)
 _lazy18_end:
@@ -365,19 +365,19 @@ _lazy18_end:
 .type	_lazy19,@function
 .align	16
 _lazy19:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$19,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*152(%rax)
 _lazy19_end:
@@ -385,19 +385,19 @@ _lazy19_end:
 .type	_lazy20,@function
 .align	16
 _lazy20:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$20,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*160(%rax)
 _lazy20_end:
@@ -405,19 +405,19 @@ _lazy20_end:
 .type	_lazy21,@function
 .align	16
 _lazy21:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$21,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*168(%rax)
 _lazy21_end:
@@ -425,19 +425,19 @@ _lazy21_end:
 .type	_lazy22,@function
 .align	16
 _lazy22:
-.byte	0x48,0x83,0xEC,0x28	
+.byte	0x48,0x83,0xEC,0x28
 	movq	%rcx,48(%rsp)
 	movq	%rdx,56(%rsp)
 	movq	%r8,64(%rsp)
 	movq	%r9,72(%rsp)
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rcx
+	leaq	OPENSSL_UplinkTable(%rip),%rcx
 	movq	$22,%rdx
 	call	OPENSSL_Uplink
 	movq	48(%rsp),%rcx
 	movq	56(%rsp),%rdx
 	movq	64(%rsp),%r8
 	movq	72(%rsp),%r9
-	leaq	OPENSSL_UplinkTable@GOTPCREL(%rip),%rax
+	leaq	OPENSSL_UplinkTable(%rip),%rax
 	addq	$40,%rsp
 	jmp	*176(%rax)
 _lazy22_end:

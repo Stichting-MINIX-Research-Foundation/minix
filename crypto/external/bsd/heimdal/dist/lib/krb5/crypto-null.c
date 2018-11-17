@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-null.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: crypto-null.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -40,11 +40,14 @@
 #endif
 
 static struct _krb5_key_type keytype_null = {
-    ENCTYPE_NULL,
+    KRB5_ENCTYPE_NULL,
     "null",
     0,
     0,
     0,
+    NULL,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL
@@ -86,6 +89,7 @@ NULL_encrypt(krb5_context context,
 struct _krb5_encryption_type _krb5_enctype_null = {
     ETYPE_NULL,
     "null",
+    NULL,
     1,
     1,
     0,

@@ -1,5 +1,5 @@
 \input texinfo @c -*- texinfo -*-
-@c $NetBSD: hx509.texi,v 1.1.1.3 2014/04/24 12:45:26 pettai Exp $
+@c $NetBSD: hx509.texi,v 1.2 2017/01/28 21:31:44 christos Exp $
 @c %**start of header
 @c Id
 @setfilename hx509.info

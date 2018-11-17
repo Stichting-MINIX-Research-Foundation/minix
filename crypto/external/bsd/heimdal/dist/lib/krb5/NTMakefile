@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009 - 2016, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -51,11 +51,13 @@ libkrb5_OBJS =			\
 	$(OBJ)\config_reg.obj		    \
 	$(OBJ)\constants.obj		    \
 	$(OBJ)\context.obj		    \
+        $(OBJ)\convert_creds.obj            \
 	$(OBJ)\copy_host_realm.obj	    \
 	$(OBJ)\crc.obj			    \
 	$(OBJ)\creds.obj		    \
 	$(OBJ)\crypto.obj		    \
-	$(OBJ)\crypto-aes.obj		    \
+	$(OBJ)\crypto-aes-sha1.obj	    \
+	$(OBJ)\crypto-aes-sha2.obj	    \
 	$(OBJ)\crypto-algs.obj		    \
 	$(OBJ)\crypto-arcfour.obj	    \
 	$(OBJ)\crypto-des-common.obj	    \
@@ -66,13 +68,17 @@ libkrb5_OBJS =			\
 	$(OBJ)\crypto-pk.obj		    \
 	$(OBJ)\crypto-rand.obj		    \
 	$(OBJ)\data.obj			    \
+	$(OBJ)\dcache.obj                   \
+	$(OBJ)\db_plugin.obj		    \
 	$(OBJ)\deprecated.obj		    \
 	$(OBJ)\digest.obj		    \
 	$(OBJ)\dll.obj			    \
 	$(OBJ)\eai_to_heim_errno.obj	    \
+        $(OBJ)\enomem.obj                   \
 	$(OBJ)\error_string.obj		    \
 	$(OBJ)\expand_hostname.obj	    \
 	$(OBJ)\expand_path.obj	    	    \
+	$(OBJ)\fast.obj			    \
 	$(OBJ)\fcache.obj		    \
 	$(OBJ)\free.obj			    \
 	$(OBJ)\free_host_realm.obj	    \
@@ -112,7 +118,10 @@ libkrb5_OBJS =			\
 	$(OBJ)\n-fold.obj		    \
 	$(OBJ)\pac.obj			    \
 	$(OBJ)\padata.obj		    \
+	$(OBJ)\pcache.obj		    \
 	$(OBJ)\pkinit.obj		    \
+	$(OBJ)\pkinit-ec.obj		    \
+	$(OBJ)\plugin.obj                   \
 	$(OBJ)\principal.obj		    \
 	$(OBJ)\prog_setup.obj		    \
 	$(OBJ)\prompter_posix.obj	    \
@@ -125,7 +134,8 @@ libkrb5_OBJS =			\
 	$(OBJ)\read_message.obj		    \
 	$(OBJ)\recvauth.obj		    \
 	$(OBJ)\replay.obj		    \
-	$(OBJ)\salt-aes.obj		    \
+	$(OBJ)\salt-aes-sha1.obj	    \
+	$(OBJ)\salt-aes-sha2.obj	    \
 	$(OBJ)\salt-arcfour.obj		    \
 	$(OBJ)\salt-des.obj		    \
 	$(OBJ)\salt-des3.obj		    \
@@ -135,13 +145,13 @@ libkrb5_OBJS =			\
 	$(OBJ)\sendauth.obj		    \
 	$(OBJ)\set_default_realm.obj	    \
 	$(OBJ)\sock_principal.obj	    \
+	$(OBJ)\sp800-108-kdf.obj	    \
 	$(OBJ)\store.obj		    \
 	$(OBJ)\store-int.obj		    \
 	$(OBJ)\store_emem.obj		    \
 	$(OBJ)\store_fd.obj		    \
 	$(OBJ)\store_mem.obj		    \
-	$(OBJ)\pcache.obj		    \
-	$(OBJ)\plugin.obj		    \
+	$(OBJ)\store_sock.obj		    \
 	$(OBJ)\ticket.obj		    \
 	$(OBJ)\time.obj			    \
 	$(OBJ)\transited.obj		    \
@@ -199,7 +209,8 @@ dist_libkrb5_la_SOURCES =			\
 	creds.c					\
 	crypto.c				\
 	crypto.h				\
-	crypto-aes.c				\
+	crypto-aes-sha1.c			\
+	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
 	crypto-des.c				\
@@ -208,14 +219,18 @@ dist_libkrb5_la_SOURCES =			\
 	crypto-evp.c				\
 	crypto-pk.c				\
 	crypto-rand.c				\
+	db_plugin.c                             \
 	doxygen.c				\
 	data.c					\
+	dcache.c                                \
 	deprecated.c				\
 	digest.c				\
 	eai_to_heim_errno.c			\
+        enomem.c                                \
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\
+	fast.c					\
 	fcache.c				\
 	free.c					\
 	free_host_realm.c			\
@@ -259,6 +274,8 @@ dist_libkrb5_la_SOURCES =			\
 	pac.c					\
 	padata.c				\
 	pkinit.c				\
+	pkinit-ec.c				\
+	plugin.c                                \
 	principal.c				\
 	prog_setup.c				\
 	prompter_posix.c			\
@@ -272,7 +289,8 @@ dist_libkrb5_la_SOURCES =			\
 	recvauth.c				\
 	replay.c				\
 	salt.c					\
-	salt-aes.c				\
+	salt-aes-sha1.c				\
+	salt-aes-sha2.c				\
 	salt-arcfour.c				\
 	salt-des.c				\
 	salt-des3.c				\
@@ -281,12 +299,14 @@ dist_libkrb5_la_SOURCES =			\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
+	sp800-108-kdf.c				\
 	store.c					\
 	store-int.c				\
 	store-int.h				\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	store_sock.c				\
 	pcache.c				\
 	plugin.c				\
 	ticket.c				\
@@ -327,8 +347,13 @@ $(OBJ)\k524_err.c $(OBJ)\k524_err.h: k524_err.et
 #----------------------------------------------------------------------
 # libkrb5
 
-$(LIBKRB5): $(libkrb5_OBJS) $(libkrb5_gen_OBJS)
-	$(LIBCON)
+$(LIBKRB5): $(libkrb5_OBJS)  $(libkrb5_gen_OBJS)
+	$(LIBCON_C) -OUT:$@ $(LIBHEIMBASE) $(LIB_openssl_crypto) @<<
+$(libkrb5_OBJS: =
+)
+$(libkrb5_gen_OBJS: =
+)
+<<
 
 all:: $(LIBKRB5)
 
@@ -349,7 +374,8 @@ clean::
 librfc3961_OBJS=\
 	$(OBJ)\crc.obj			\
 	$(OBJ)\crypto.obj		\
-	$(OBJ)\crypto-aes.obj		\
+	$(OBJ)\crypto-aes-sha1.obj	\
+	$(OBJ)\crypto-aes-sha2.obj	\
 	$(OBJ)\crypto-algs.obj		\
 	$(OBJ)\crypto-arcfour.obj	\
 	$(OBJ)\crypto-des.obj		\
@@ -365,10 +391,12 @@ librfc3961_OBJS=\
 	$(OBJ)\keyblock.obj		\
 	$(OBJ)\n-fold.obj		\
 	$(OBJ)\salt.obj			\
-	$(OBJ)\salt-aes.obj		\
+	$(OBJ)\salt-aes-sha1.obj	\
+	$(OBJ)\salt-aes-sha2.obj	\
 	$(OBJ)\salt-arcfour.obj		\
 	$(OBJ)\salt-des.obj		\
 	$(OBJ)\salt-des3.obj		\
+	$(OBJ)\sp800-108-kdf.obj	\
 	$(OBJ)\store-int.obj		\
 	$(OBJ)\warn.obj
 
@@ -409,6 +437,7 @@ test_binaries =				\
 	$(OBJ)\krbhst-test.exe		\
 	$(OBJ)\n-fold-test.exe		\
 	$(OBJ)\parse-name-test.exe	\
+	$(OBJ)\pseudo-random-test.exe	\
 	$(OBJ)\store-test.exe		\
 	$(OBJ)\string-to-key-test.exe	\
 	$(OBJ)\test_acl.exe		\
@@ -431,11 +460,10 @@ test_binaries =				\
 	$(OBJ)\test_prf.exe		\
 	$(OBJ)\test_princ.exe		\
 	$(OBJ)\test_renew.exe		\
-	$(OBJ)\test_rfc3961.exe		\
 	$(OBJ)\test_store.exe		\
 	$(OBJ)\test_time.exe		\
 
-test-binaries: $(test_binaries)
+test-binaries: $(test_binaries) $(OBJ)\test_rfc3961.exe
 
 test-files: $(OBJ)\test_config_strings.out
 
@@ -444,35 +472,46 @@ $(OBJ)\test_config_strings.out: test_config_strings.cfg
 
 test-run:
 	cd $(OBJ)
-	aes-test.exe
-	derived-key-test.exe
-	n-fold-test.exe
-	parse-name-test.exe
-	store-test.exe
-	string-to-key-test.exe
-	test_acl.exe
-	test_addr.exe
-	test_cc.exe
-	test_config.exe
-	test_prf.exe
-	test_store.exe
-	test_crypto.exe
-	test_crypto_wrapping.exe
-	test_keytab.exe
-	test_mem.exe
-	test_pac.exe
-	test_plugin.exe
-	test_princ.exe
-	test_pkinit_dh2key.exe
-	test_pknistkdf.exe
-	test_time.exe
+	-aes-test.exe
+	-derived-key-test.exe
+	-krbhst-test.exe
+	-n-fold-test.exe
+	-parse-name-test.exe
+	-pseudo-random-test.exe
+	-store-test.exe
+	-string-to-key-test.exe
+	-test_acl.exe
+	-test_addr.exe
+# Skip alname due to lack of .k5login and "root"
+#	-test_alname.exe
+	-test_cc.exe
+	-test_config.exe
+	-test_crypto.exe
+	-test_crypto_wrapping.exe
+# Skip forward due to need for existing hostname
+#	-test_forward.exe
+	-test_get_addrs.exe
+	-test_hostname.exe
+	-test_keytab.exe
+# Skip kuserok requires principal and localname
+#	-test_kuserok.exe
+	-test_mem.exe
+	-test_pac.exe
+	-test_pkinit_dh2key.exe
+	-test_pknistkdf.exe
+	-test_plugin.exe
+	-test_prf.exe
+	-test_renew.exe
+	-test_rfc3961.exe
+	-test_store.exe
+	-test_time.exe
 	cd $(SRCDIR)
 
-$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN)
+$(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBCOMERR) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

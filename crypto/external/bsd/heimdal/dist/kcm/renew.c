@@ -1,4 +1,4 @@
-/*	$NetBSD: renew.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: renew.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: renew.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
 
 krb5_error_code
 kcm_ccache_refresh(krb5_context context,
@@ -46,6 +46,7 @@ kcm_ccache_refresh(krb5_context context,
     krb5_kdc_flags flags;
     krb5_const_realm realm;
     krb5_ccache_data ccdata;
+    const char *estr;
 
     memset(&in, 0, sizeof(in));
 
@@ -68,8 +69,10 @@ kcm_ccache_refresh(krb5_context context,
     if (ccache->server != NULL) {
 	ret = krb5_copy_principal(context, ccache->server, &in.server);
 	if (ret) {
+	    estr = krb5_get_error_message(context, ret);
 	    kcm_log(0, "Failed to copy service principal: %s",
-		    krb5_get_err_text(context, ret));
+		    estr);
+	    krb5_free_error_message(context, estr);
 	    goto out;
 	}
     } else {
@@ -77,8 +80,10 @@ kcm_ccache_refresh(krb5_context context,
 	ret = krb5_make_principal(context, &in.server, realm,
 				  KRB5_TGS_NAME, realm, NULL);
 	if (ret) {
+	    estr = krb5_get_error_message(context, ret);
 	    kcm_log(0, "Failed to make TGS principal for realm %s: %s",
-		    realm, krb5_get_err_text(context, ret));
+		    realm, estr);
+	    krb5_free_error_message(context, estr);
 	    goto out;
 	}
     }
@@ -100,8 +105,10 @@ kcm_ccache_refresh(krb5_context context,
 			    &in,
 			    &out);
     if (ret) {
+	estr = krb5_get_error_message(context, ret);
 	kcm_log(0, "Failed to renew credentials for cache %s: %s",
-		ccache->name, krb5_get_err_text(context, ret));
+		ccache->name, estr);
+	krb5_free_error_message(context, estr);
 	goto out;
     }
 
@@ -110,8 +117,10 @@ kcm_ccache_refresh(krb5_context context,
 
     ret = kcm_ccache_store_cred_internal(context, ccache, out, 0, credp);
     if (ret) {
+	estr = krb5_get_error_message(context, ret);
 	kcm_log(0, "Failed to store credentials for cache %s: %s",
-		ccache->name, krb5_get_err_text(context, ret));
+		ccache->name, estr);
+	krb5_free_error_message(context, estr);
 	krb5_free_creds(context, out);
 	goto out;
     }

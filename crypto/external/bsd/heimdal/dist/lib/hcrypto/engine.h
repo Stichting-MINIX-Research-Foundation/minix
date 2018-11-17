@@ -1,7 +1,7 @@
-/*	$NetBSD: engine.h,v 1.1.1.2 2011/04/14 14:08:31 elric Exp $	*/
+/*	$NetBSD: engine.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
- * Copyright (c) 2006 Kungliga Tekniska Högskolan
+ * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -63,6 +63,8 @@
 #define ENGINE_get_default_RSA hc_ENGINE_get_default_RSA
 #define ENGINE_set_default_DH hc_ENGINE_set_default_DH
 #define ENGINE_set_default_RSA hc_ENGINE_set_default_RSA
+
+#define ENGINE hc_ENGINE
 
 /*
  *

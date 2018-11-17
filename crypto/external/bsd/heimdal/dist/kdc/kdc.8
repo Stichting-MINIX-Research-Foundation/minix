@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdc.8,v 1.4 2014/04/24 13:45:34 pettai Exp $
+.\"	$NetBSD: kdc.8,v 1.5 2017/01/28 21:31:44 christos Exp $
 .\"
 .\" Copyright (c) 2003 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -49,9 +49,6 @@
 .Op Fl p | Fl Fl no-require-preauth
 .Op Fl Fl max-request= Ns Ar size
 .Op Fl H | Fl Fl enable-http
-.Op Fl Fl no-524
-.Op Fl Fl kerberos4
-.Op Fl Fl kerberos4-cross-realm
 .Oo Fl r Ar string \*(Ba Xo
 .Fl Fl v4-realm= Ns Ar string
 .Xc
@@ -95,14 +92,6 @@ Gives an upper limit on the size of the requests that the kdc is
 willing to handle.
 .It Fl H , Fl Fl enable-http
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
-.It Fl Fl no-524
-don't respond to 524 requests
-.It Fl Fl kerberos4
-respond to Kerberos 4 requests
-.It Fl Fl kerberos4-cross-realm
-respond to Kerberos 4 requests from foreign realms.
-This is a known security hole and should not be enabled unless you
-understand the consequences and are willing to live with them.
 .It Fl r Ar string , Fl Fl v4-realm= Ns Ar string
 What realm this server should act as when dealing with version 4
 requests.
@@ -126,7 +115,7 @@ option might be used.
 .It Fl Fl detach
 detach from pty and run as a daemon.
 .It Fl Fl disable-des
-disable add des encryption types, makes the kdc not use them.
+disable all des encryption types, makes the kdc not use them.
 .El
 .Pp
 All activities are logged to one or more destinations, see

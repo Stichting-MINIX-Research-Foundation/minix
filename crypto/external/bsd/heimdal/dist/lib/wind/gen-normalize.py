@@ -97,8 +97,8 @@ extern const unsigned short _wind_canon_next_table[];
 
 normalize_c.file.write(
 '''
-#include <stdlib.h>
 #include "normalize_table.h"
+#include <stdlib.h>
 
 const struct translation _wind_normalize_table[] = {
 ''')

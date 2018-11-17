@@ -1,4 +1,4 @@
-/*	$NetBSD: kcm.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: kcm.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -555,9 +555,7 @@ kcm_get_first (krb5_context context,
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	return ret;
     }
 
@@ -579,9 +577,7 @@ kcm_get_first (krb5_context context,
 	if (ptr == NULL) {
 	    free(c->uuids);
 	    free(c);
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("malloc: out of memory", ""));
-	    return ENOMEM;
+	    return krb5_enomem(context);
 	}
 	c->uuids = ptr;
 
@@ -790,9 +786,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret,
-			       N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -821,9 +815,7 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
 	ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
 	if (ptr == NULL) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret,
-				   N_("malloc: out of memory", ""));
+	    ret = krb5_enomem(context);
 	    goto out;
 	}
 	c->uuids = ptr;
@@ -965,6 +957,7 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
     krb5_storage *request, *response;
     krb5_data response_data;
     char *name;
+    int aret;
 
     *str = NULL;
 
@@ -983,9 +976,9 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
     if (ret)
 	return ret;
 
-    asprintf(str, "%s:%s", ops->prefix, name);
+    aret = asprintf(str, "%s:%s", ops->prefix, name);
     free(name);
-    if (str == NULL)
+    if (aret == -1 || str == NULL)
 	return ENOMEM;
 
     return 0;
