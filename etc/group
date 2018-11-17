@@ -3,7 +3,7 @@ daemon:*:1:daemon
 kmem:*:2:root
 sys:*:3:root
 tty:*:4:root
-operator:*:0:root
+operator:*:5:root
 mail:*:6:
 bin:*:7:
 wsrc:*:9:
@@ -27,6 +27,8 @@ _tss:*:28:
 _gpio:*:29:
 _rtadvd:*:30:
 guest:*:31:root
+_unbound:*:32:
+_nsd:*:33:
 nobody:*:39:
 utmp:*:45:
 authpf:*:72:

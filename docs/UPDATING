@@ -1,3 +1,8 @@
+20181115:
+	The "operator" group resumes the ID 5 instead 0 which was a workaround
+	added with the change here on 20170218. This was a change to ease the
+	migration from "operator" to "wheel" as the root group.
+
 20170303:
 	The entire network stack has been replaced.  This requires two updates.
 	First, BEFORE rebooting, either before or after rebuilding the system,
