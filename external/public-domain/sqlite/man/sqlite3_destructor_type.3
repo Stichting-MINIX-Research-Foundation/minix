@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DESTRUCTOR_TYPE 3
+.Os
+.Sh NAME
+.Nm sqlite3_destructor_type ,
+.Nm SQLITE_STATIC ,
+.Nm SQLITE_TRANSIENT
+.Nd Constants Defining Special Destructor Behavior
+.Sh SYNOPSIS
+.Vt typedef void (*sqlite3_destructor_type)(void*);
+.Fd #define SQLITE_STATIC
+.Fd #define SQLITE_TRANSIENT
+.Sh DESCRIPTION
+These are special values for the destructor that is passed in as the
+final argument to routines like sqlite3_result_blob().
+If the destructor argument is SQLITE_STATIC, it means that the content
+pointer is constant and will never change.
+It does not need to be destroyed.
+The SQLITE_TRANSIENT value means that the content will likely change
+in the near future and that SQLite should make its own private copy
+of the content before returning.
+.Pp
+The typedef is necessary to work around problems in certain C++ compilers.
+.Sh SEE ALSO
+.Xr sqlite3_result_blob 3

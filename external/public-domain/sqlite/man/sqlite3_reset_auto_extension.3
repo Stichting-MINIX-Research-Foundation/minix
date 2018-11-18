@@ -1,0 +1,16 @@
+.Dd March 11, 2017
+.Dt SQLITE3_RESET_AUTO_EXTENSION 3
+.Os
+.Sh NAME
+.Nm sqlite3_reset_auto_extension
+.Nd Reset Automatic Extension Loading
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_reset_auto_extension
+.Fa "void"
+.Fc
+.Sh DESCRIPTION
+This interface disables all automatic extensions previously registered
+using sqlite3_auto_extension().
+.Sh SEE ALSO
+.Xr sqlite3_auto_extension 3

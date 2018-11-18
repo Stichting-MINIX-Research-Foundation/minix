@@ -1,0 +1,20 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_MUTEX 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_mutex
+.Nd Retrieve the mutex for a database connection
+.Sh SYNOPSIS
+.Ft sqlite3_mutex *
+.Fo sqlite3_db_mutex
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+This interface returns a pointer the sqlite3_mutex object
+that serializes access to the database connection
+given in the argument when the threading mode is Serialized.
+If the threading mode is Single-thread or Multi-thread
+then this routine returns a NULL pointer.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_mutex 3

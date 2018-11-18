@@ -1,0 +1,45 @@
+.Dd March 11, 2017
+.Dt SQLITE_STMTSTATUS_FULLSCAN_STEP 3
+.Os
+.Sh NAME
+.Nm SQLITE_STMTSTATUS_FULLSCAN_STEP ,
+.Nm SQLITE_STMTSTATUS_SORT ,
+.Nm SQLITE_STMTSTATUS_AUTOINDEX ,
+.Nm SQLITE_STMTSTATUS_VM_STEP
+.Nd Status Parameters for prepared statements
+.Sh SYNOPSIS
+.Fd #define SQLITE_STMTSTATUS_FULLSCAN_STEP
+.Fd #define SQLITE_STMTSTATUS_SORT
+.Fd #define SQLITE_STMTSTATUS_AUTOINDEX
+.Fd #define SQLITE_STMTSTATUS_VM_STEP
+.Sh DESCRIPTION
+These preprocessor macros define integer codes that name counter values
+associated with the sqlite3_stmt_status() interface.
+The meanings of the various counters are as follows: 
+.Bl -tag -width Ds
+.It SQLITE_STMTSTATUS_FULLSCAN_STEP
+This is the number of times that SQLite has stepped forward in a table
+as part of a full table scan.
+Large numbers for this counter may indicate opportunities for performance
+improvement through careful use of indices.
+.It SQLITE_STMTSTATUS_SORT
+This is the number of sort operations that have occurred.
+A non-zero value in this counter may indicate an opportunity to improvement
+performance through careful use of indices.
+.It SQLITE_STMTSTATUS_AUTOINDEX
+This is the number of rows inserted into transient indices that were
+created automatically in order to help joins run faster.
+A non-zero value in this counter may indicate an opportunity to improvement
+performance by adding permanent indices that do not need to be reinitialized
+each time the statement is run.
+.It SQLITE_STMTSTATUS_VM_STEP
+This is the number of virtual machine operations executed by the prepared
+statement if that number is less than or equal to 2147483647.
+The number of virtual machine operations can be used as a proxy for
+the total work done by the prepared statement.
+If the number of virtual machine operations exceeds 2147483647 then
+the value returned by this statement status code is undefined.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stmt_status 3

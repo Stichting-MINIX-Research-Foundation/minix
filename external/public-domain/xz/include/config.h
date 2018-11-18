@@ -46,10 +46,8 @@
 /* Define to 1 if sha256 integrity check is enabled. */
 #define HAVE_CHECK_SHA256 1
 
-#if !defined(__minix)
 /* Define to 1 if you have the `clock_gettime' function. */
 #define HAVE_CLOCK_GETTIME 1
-#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <CommonCrypto/CommonDigest.h> header file. */
 /* #undef HAVE_COMMONCRYPTO_COMMONDIGEST_H */
@@ -58,11 +56,9 @@
    */
 /* #undef HAVE_DCGETTEXT */
 
-#if !defined(__minix)
 /* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
    you don't. */
 #define HAVE_DECL_CLOCK_MONOTONIC 1
-#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the declaration of `program_invocation_name', and
    to 0 if you don't. */
@@ -146,15 +142,14 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 /* #undef HAVE_GETTEXT */
 
-#if !defined(__minix)
 /* Define if you have the iconv() function and it works. */
 #define HAVE_ICONV 1
 
 /* Define to 1 if you have the <immintrin.h> header file. */
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(__lint__) && \
+	!defined(__PCC__)
 #define HAVE_IMMINTRIN_H 1
 #endif
-#endif /* !defined(__minix) */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -192,13 +187,13 @@
 /* Define to 1 if you have the `pipe2' function. */
 #define HAVE_PIPE2 1
 
-#if !defined(__minix)
 /* Define to 1 if you have the `posix_fadvise' function. */
-#define HAVE_POSIX_FADVISE 1
+/* #define HAVE_POSIX_FADVISE 1 */
+#undef HAVE_POSIX_FADVISE
 
 /* Define to 1 if you have the `pthread_condattr_setclock' function. */
-#define HAVE_PTHREAD_CONDATTR_SETCLOCK 1
-#endif /* !defined(__minix) */
+/* #define HAVE_PTHREAD_CONDATTR_SETCLOCK 1 */
+#undef HAVE_PTHREADS_CONDATTR_SETCLOCK
 
 /* Have PTHREAD_PRIO_INHERIT. */
 /* #undef HAVE_PTHREAD_PRIO_INHERIT */
@@ -294,18 +289,15 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
 
-#if !defined(__minix)
 /* Define to 1 if _mm_movemask_epi8 is available. */
 #define HAVE__MM_MOVEMASK_EPI8 1
-#endif /* !defined(__minix) */
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
-#if !defined(__minix)
 /* Define to 1 when using POSIX threads (pthreads). */
-#define MYTHREAD_POSIX 1
-#endif /* !defined(__minix) */
+/* #define MYTHREAD_POSIX 1 */
+#undef MYTHREAD_POSIX
 
 /* Define to 1 when using Windows Vista compatible threads. This uses features
    that are not available on Windows XP. */
@@ -425,7 +417,7 @@
 /* Version number of package */
 #define VERSION "5.2.1"
 
-#if !defined(__NetBSD__) && !defined(__minix)
+#ifndef __NetBSD__
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
@@ -455,9 +447,9 @@
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 
-#if !defined(__minix)
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
+#define _MINIX 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
    this defined. */
@@ -465,11 +457,7 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
-#else
-#define _MINIX 1
-#define _POSIX_1_SOURCE 2
-#define _POSIX_SOURCE 1
-#endif /* !defined(__minix) */
+
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */

@@ -1,0 +1,33 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DATA_COUNT 3
+.Os
+.Sh NAME
+.Nm sqlite3_data_count
+.Nd Number of columns in a result set
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_data_count
+.Fa "sqlite3_stmt *pStmt"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_data_count(P) interface returns the number of columns in
+the current row of the result set of prepared statement
+P.
+If prepared statement P does not have results ready to return (via
+calls to the  sqlite3_column_*() of interfaces)
+then sqlite3_data_count(P) returns 0.
+The sqlite3_data_count(P) routine also returns 0 if P is a NULL pointer.
+The sqlite3_data_count(P) routine returns 0 if the previous call to
+sqlite3_step(P) returned SQLITE_DONE.
+The sqlite3_data_count(P) will return non-zero if previous call to
+sqlite3_step(P) returned SQLITE_ROW, except in
+the case of the PRAGMA incremental_vacuum
+where it always returns zero since each step of that multi-step pragma
+returns 0 columns of data.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_column_count 3 ,
+.Xr sqlite3_column_blob 3 ,
+.Xr sqlite3_step 3 ,
+.Xr SQLITE_OK 3

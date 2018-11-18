@@ -1,0 +1,39 @@
+.Dd March 11, 2017
+.Dt SQLITE_INTEGER 3
+.Os
+.Sh NAME
+.Nm SQLITE_INTEGER ,
+.Nm SQLITE_FLOAT ,
+.Nm SQLITE_BLOB ,
+.Nm SQLITE_NULL ,
+.Nm SQLITE_TEXT ,
+.Nm SQLITE3_TEXT
+.Nd Fundamental Datatypes
+.Sh SYNOPSIS
+.Fd #define SQLITE_INTEGER
+.Fd #define SQLITE_FLOAT
+.Fd #define SQLITE_BLOB
+.Fd #define SQLITE_NULL
+.Fd #define SQLITE_TEXT
+.Fd #define SQLITE3_TEXT
+.Sh DESCRIPTION
+Every value in SQLite has one of five fundamental datatypes: 
+.Bl -bullet
+.It
+64-bit signed integer 
+.It
+64-bit IEEE floating point number 
+.It
+string 
+.It
+BLOB 
+.It
+NULL 
+.El
+.Pp
+These constants are codes for each of those types.
+.Pp
+Note that the SQLITE_TEXT constant was also used in SQLite version
+2 for a completely different meaning.
+Software that links against both SQLite version 2 and SQLite version
+3 should use SQLITE3_TEXT, not SQLITE_TEXT.

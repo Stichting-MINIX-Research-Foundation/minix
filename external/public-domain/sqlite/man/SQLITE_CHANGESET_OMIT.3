@@ -1,0 +1,39 @@
+.Dd March 11, 2017
+.Dt SQLITE_CHANGESET_OMIT 3
+.Os
+.Sh NAME
+.Nm SQLITE_CHANGESET_OMIT ,
+.Nm SQLITE_CHANGESET_REPLACE ,
+.Nm SQLITE_CHANGESET_ABORT
+.Nd Constants Returned By The Conflict Handler
+.Sh SYNOPSIS
+.Fd #define SQLITE_CHANGESET_OMIT
+.Fd #define SQLITE_CHANGESET_REPLACE
+.Fd #define SQLITE_CHANGESET_ABORT
+.Sh DESCRIPTION
+A conflict handler callback must return one of the following three
+values.
+.Bl -tag -width Ds
+.It SQLITE_CHANGESET_OMITIf a conflict handler returns this value no special
+action is taken.
+The change that caused the conflict is not applied.
+The session module continues to the next change in the changeset.
+.It SQLITE_CHANGESET_REPLACEThis value may only be returned if the second
+argument to the conflict handler was SQLITE_CHANGESET_DATA or SQLITE_CHANGESET_CONFLICT.
+If this is not the case, any changes applied so far are rolled back
+and the call to sqlite3changeset_apply() returns SQLITE_MISUSE.
+.Pp
+If CHANGESET_REPLACE is returned by an SQLITE_CHANGESET_DATA conflict
+handler, then the conflicting row is either updated or deleted, depending
+on the type of change.
+.Pp
+If CHANGESET_REPLACE is returned by an SQLITE_CHANGESET_CONFLICT conflict
+handler, then the conflicting row is removed from the database and
+a second attempt to apply the change is made.
+If this second attempt fails, the original row is restored to the database
+before continuing.
+.It SQLITE_CHANGESET_ABORTIf this value is returned, any changes applied
+so far are rolled back and the call to sqlite3changeset_apply() returns
+SQLITE_ABORT.
+.El
+.Pp

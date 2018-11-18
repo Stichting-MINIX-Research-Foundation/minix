@@ -1,0 +1,49 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SQL 3
+.Os
+.Sh NAME
+.Nm sqlite3_sql ,
+.Nm sqlite3_expanded_sql
+.Nd Retrieving Statement SQL
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_sql
+.Fa "sqlite3_stmt *pStmt"
+.Fc
+.Ft char *
+.Fo sqlite3_expanded_sql
+.Fa "sqlite3_stmt *pStmt"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_sql(P) interface returns a pointer to a copy of the UTF-8
+SQL text used to create prepared statement P if P
+was created by either sqlite3_prepare_v2() or sqlite3_prepare16_v2().
+The sqlite3_expanded_sql(P) interface returns a pointer to a UTF-8
+string containing the SQL text of prepared statement P with bound parameters
+expanded.
+.Pp
+For example, if a prepared statement is created using the SQL text
+"SELECT $abc,:xyz" and if parameter $abc is bound to integer 2345 and
+parameter :xyz is unbound, then sqlite3_sql() will return the original
+string, "SELECT $abc,:xyz" but sqlite3_expanded_sql() will return "SELECT
+2345,NULL".
+.Pp
+The sqlite3_expanded_sql() interface returns NULL if insufficient memory
+is available to hold the result, or if the result would exceed the
+the maximum string length determined by the SQLITE_LIMIT_LENGTH.
+.Pp
+The SQLITE_TRACE_SIZE_LIMIT compile-time option
+limits the size of bound parameter expansions.
+The SQLITE_OMIT_TRACE compile-time option causes sqlite3_expanded_sql()
+to always return NULL.
+.Pp
+The string returned by sqlite3_sql(P) is managed by SQLite and is automatically
+freed when the prepared statement is finalized.
+The string returned by sqlite3_expanded_sql(P), on the other hand,
+is obtained from sqlite3_malloc() and must be free
+by the application by passing it to sqlite3_free().
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr SQLITE_LIMIT_LENGTH 3

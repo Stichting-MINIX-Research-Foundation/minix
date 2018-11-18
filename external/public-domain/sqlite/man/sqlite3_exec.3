@@ -1,0 +1,87 @@
+.Dd March 11, 2017
+.Dt SQLITE3_EXEC 3
+.Os
+.Sh NAME
+.Nm sqlite3_exec
+.Nd One-Step Query Execution Interface
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_exec
+.Fa "sqlite3*"
+.Fa "const char *sql"
+.Fa "int (*callback)(void*,int,char**,char**)"
+.Fa "void *"
+.Fa "char **errmsg                              "
+.Fc
+.Sh DESCRIPTION
+The sqlite3_exec() interface is a convenience wrapper around sqlite3_prepare_v2(),
+sqlite3_step(), and sqlite3_finalize(),
+that allows an application to run multiple statements of SQL without
+having to use a lot of C code.
+.Pp
+The sqlite3_exec() interface runs zero or more UTF-8 encoded, semicolon-separate
+SQL statements passed into its 2nd argument, in the context of the
+database connection passed in as its 1st argument.
+If the callback function of the 3rd argument to sqlite3_exec() is not
+NULL, then it is invoked for each result row coming out of the evaluated
+SQL statements.
+The 4th argument to sqlite3_exec() is relayed through to the 1st argument
+of each callback invocation.
+If the callback pointer to sqlite3_exec() is NULL, then no callback
+is ever invoked and result rows are ignored.
+.Pp
+If an error occurs while evaluating the SQL statements passed into
+sqlite3_exec(), then execution of the current statement stops and subsequent
+statements are skipped.
+If the 5th parameter to sqlite3_exec() is not NULL then any error message
+is written into memory obtained from sqlite3_malloc()
+and passed back through the 5th parameter.
+To avoid memory leaks, the application should invoke sqlite3_free()
+on error message strings returned through the 5th parameter of sqlite3_exec()
+after the error message string is no longer needed.
+If the 5th parameter to sqlite3_exec() is not NULL and no errors occur,
+then sqlite3_exec() sets the pointer in its 5th parameter to NULL before
+returning.
+.Pp
+If an sqlite3_exec() callback returns non-zero, the sqlite3_exec()
+routine returns SQLITE_ABORT without invoking the callback again and
+without running any subsequent SQL statements.
+.Pp
+The 2nd argument to the sqlite3_exec() callback function is the number
+of columns in the result.
+The 3rd argument to the sqlite3_exec() callback is an array of pointers
+to strings obtained as if from sqlite3_column_text(),
+one for each column.
+If an element of a result row is NULL then the corresponding string
+pointer for the sqlite3_exec() callback is a NULL pointer.
+The 4th argument to the sqlite3_exec() callback is an array of pointers
+to strings where each entry represents the name of corresponding result
+column as obtained from sqlite3_column_name().
+.Pp
+If the 2nd parameter to sqlite3_exec() is a NULL pointer, a pointer
+to an empty string, or a pointer that contains only whitespace and/or
+SQL comments, then no SQL statements are evaluated and the database
+is not changed.
+.Pp
+Restrictions: 
+.Bl -bullet
+.It
+The application must ensure that the 1st parameter to sqlite3_exec()
+is a valid and open database connection.
+.It
+The application must not close the database connection
+specified by the 1st parameter to sqlite3_exec() while sqlite3_exec()
+is running.
+.It
+The application must not modify the SQL statement text passed into
+the 2nd parameter of sqlite3_exec() while sqlite3_exec() is running.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_column_name 3 ,
+.Xr sqlite3_column_blob 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_step 3

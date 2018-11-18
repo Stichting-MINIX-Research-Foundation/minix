@@ -1,0 +1,24 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VTAB_CURSOR 3
+.Os
+.Sh NAME
+.Nm sqlite3_vtab_cursor
+.Nd Virtual Table Cursor Object
+.Sh SYNOPSIS
+.Vt struct sqlite3_vtab_cursor ;
+.Sh DESCRIPTION
+Every virtual table module implementation uses
+a subclass of the following structure to describe cursors that point
+into the virtual table and are used to loop through the
+virtual table.
+Cursors are created using the  xOpen method of the module and
+are destroyed by the  xClose method.
+Cursors are used by the xFilter, xNext, xEof, xColumn,
+and xRowid methods of the module.
+Each module implementation will define the content of a cursor structure
+to suit its own needs.
+.Pp
+This superclass exists in order to define fields of the cursor that
+are common to all implementations.
+.Sh SEE ALSO
+.Xr sqlite3_module 3

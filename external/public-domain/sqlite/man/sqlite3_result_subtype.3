@@ -1,0 +1,23 @@
+.Dd March 11, 2017
+.Dt SQLITE3_RESULT_SUBTYPE 3
+.Os
+.Sh NAME
+.Nm sqlite3_result_subtype
+.Nd Setting The Subtype Of An SQL Function
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_result_subtype
+.Fa "sqlite3_context*"
+.Fa "unsigned int"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_result_subtype(C,T) function causes the subtype of the
+result from the application-defined SQL function
+with sqlite3_context C to be the value T.
+Only the lower 8 bits of the subtype T are preserved in current versions
+of SQLite; higher order bits are discarded.
+The number of subtype bytes preserved by SQLite might increase in future
+releases of SQLite.
+.Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_context 3

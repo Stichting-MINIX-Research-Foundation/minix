@@ -1,0 +1,20 @@
+.Dd March 11, 2017
+.Dt SQLITE3_PCACHE_PAGE 3
+.Os
+.Sh NAME
+.Nm sqlite3_pcache_page ,
+.Nm sqlite3_pcache_page
+.Nd Custom Page Cache Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_pcache_page sqlite3_pcache_page;
+.Vt struct sqlite3_pcache_page ;
+.Sh DESCRIPTION
+The sqlite3_pcache_page object represents a single page in the page
+cache.
+The page cache will allocate instances of this object.
+Various methods of the page cache use pointers to instances of this
+object as parameters or as their return value.
+.Pp
+See sqlite3_pcache_methods2 for additional information.
+.Sh SEE ALSO
+.Xr sqlite3_pcache_methods2 3

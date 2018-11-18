@@ -1,0 +1,30 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SNAPSHOT_CMP 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot_cmp
+.Nd Compare the ages of two snapshot handles.
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_snapshot_cmp
+.Fa "sqlite3_snapshot *p1"
+.Fa "sqlite3_snapshot *p2 "
+.Fc
+.Sh DESCRIPTION
+The sqlite3_snapshot_cmp(P1, P2) interface is used to compare the ages
+of two valid snapshot handles.
+.Pp
+If the two snapshot handles are not associated with the same database
+file, the result of the comparison is undefined.
+.Pp
+Additionally, the result of the comparison is only valid if both of
+the snapshot handles were obtained by calling sqlite3_snapshot_get()
+since the last time the wal file was deleted.
+The wal file is deleted when the database is changed back to rollback
+mode or when the number of database clients drops to zero.
+If either snapshot handle was obtained before the wal file was last
+deleted, the value returned by this function is undefined.
+.Pp
+Otherwise, this API returns a negative value if P1 refers to an older
+snapshot than P2, zero if the two handles refer to the same database
+snapshot, and a positive value if P1 is a newer snapshot than P2.

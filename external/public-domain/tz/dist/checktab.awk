@@ -1,6 +1,6 @@
 # Check tz tables for consistency.
 
-# Contributed by Paul Eggert.
+# Contributed by Paul Eggert.  This file is in the public domain.
 
 BEGIN {
 	FS = "\t"
@@ -38,7 +38,7 @@ BEGIN {
 		}
 		cc0 = cc
 		if (name2cc[name]) {
-			printf "%s:%d: '%s' and '%s' have the sname name\n", \
+			printf "%s:%d: '%s' and '%s' have the same name\n", \
 				iso_table, iso_NR, name2cc[name], cc \
 				>>"/dev/stderr"
 			status = 1
@@ -112,6 +112,7 @@ BEGIN {
 	    printf "%s:%d: missing comment for %s\n", \
 	      zone_table, tz2NR[tz], comments_needed[tz] \
 	      >>"/dev/stderr"
+	    tz2comments[tz] = 1
 	    status = 1
 	  }
 	}
@@ -125,6 +126,7 @@ $1 ~ /^#/ { next }
 	if ($1 == "Zone") {
 		tz = $2
 		ruleUsed[$4] = 1
+		if ($5 ~ /%/) rulePercentUsed[$4] = 1
 	} else if ($1 == "Link" && zone_table == "zone.tab") {
 		# Ignore Link commands if source and destination basenames
 		# are identical, e.g. Europe/Istanbul versus Asia/Istanbul.
@@ -135,8 +137,10 @@ $1 ~ /^#/ { next }
 		if (src != dst) tz = $3
 	} else if ($1 == "Rule") {
 		ruleDefined[$2] = 1
+		if ($10 != "-") ruleLetters[$2] = 1
 	} else {
 		ruleUsed[$2] = 1
+		if ($3 ~ /%/) rulePercentUsed[$2] = 1
 	}
 	if (tz && tz ~ /\//) {
 		if (!tztab[tz]) {
@@ -152,6 +156,12 @@ END {
 	for (tz in ruleDefined) {
 		if (!ruleUsed[tz]) {
 			printf "%s: Rule never used\n", tz
+			status = 1
+		}
+	}
+	for (tz in ruleLetters) {
+		if (!rulePercentUsed[tz]) {
+			printf "%s: Rule contains letters never used\n", tz
 			status = 1
 		}
 	}

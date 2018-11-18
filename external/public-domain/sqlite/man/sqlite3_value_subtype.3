@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VALUE_SUBTYPE 3
+.Os
+.Sh NAME
+.Nm sqlite3_value_subtype
+.Nd Finding The Subtype Of SQL Values
+.Sh SYNOPSIS
+.Ft unsigned int 
+.Fo sqlite3_value_subtype
+.Fa "sqlite3_value*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_value_subtype(V) function returns the subtype for an application-defined SQL function
+argument V.
+The subtype information can be used to pass a limited amount of context
+from one SQL function to another.
+Use the sqlite3_result_subtype() routine to
+set the subtype for the return value of an SQL function.
+.Pp
+SQLite makes no use of subtype itself.
+It merely passes the subtype from the result of one application-defined SQL function
+into the input of another.
+.Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_result_subtype 3

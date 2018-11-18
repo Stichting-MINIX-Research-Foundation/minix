@@ -1,0 +1,131 @@
+.Dd March 11, 2017
+.Dt SQLITE3_PREPARE 3
+.Os
+.Sh NAME
+.Nm sqlite3_prepare ,
+.Nm sqlite3_prepare_v2 ,
+.Nm sqlite3_prepare16 ,
+.Nm sqlite3_prepare16_v2
+.Nd Compiling An SQL Statement
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_prepare
+.Fa "sqlite3 *db"
+.Fa "const char *zSql"
+.Fa "int nByte"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const char **pzTail     "
+.Fc
+.Ft int 
+.Fo sqlite3_prepare_v2
+.Fa "sqlite3 *db"
+.Fa "const char *zSql"
+.Fa "int nByte"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const char **pzTail     "
+.Fc
+.Ft int 
+.Fo sqlite3_prepare16
+.Fa "sqlite3 *db"
+.Fa "const void *zSql"
+.Fa "int nByte"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const void **pzTail     "
+.Fc
+.Ft int 
+.Fo sqlite3_prepare16_v2
+.Fa "sqlite3 *db"
+.Fa "const void *zSql"
+.Fa "int nByte"
+.Fa "sqlite3_stmt **ppStmt"
+.Fa "const void **pzTail     "
+.Fc
+.Sh DESCRIPTION
+To execute an SQL query, it must first be compiled into a byte-code
+program using one of these routines.
+.Pp
+The first argument, "db", is a database connection
+obtained from a prior successful call to sqlite3_open(),
+sqlite3_open_v2() or sqlite3_open16().
+The database connection must not have been closed.
+.Pp
+The second argument, "zSql", is the statement to be compiled, encoded
+as either UTF-8 or UTF-16.
+The sqlite3_prepare() and sqlite3_prepare_v2() interfaces use UTF-8,
+and sqlite3_prepare16() and sqlite3_prepare16_v2() use UTF-16.
+.Pp
+If the nByte argument is negative, then zSql is read up to the first
+zero terminator.
+If nByte is positive, then it is the number of bytes read from zSql.
+If nByte is zero, then no prepared statement is generated.
+If the caller knows that the supplied string is nul-terminated, then
+there is a small performance advantage to passing an nByte parameter
+that is the number of bytes in the input string <i>including</i> the
+nul-terminator.
+.Pp
+If pzTail is not NULL then *pzTail is made to point to the first byte
+past the end of the first SQL statement in zSql.
+These routines only compile the first statement in zSql, so *pzTail
+is left pointing to what remains uncompiled.
+.Pp
+*ppStmt is left pointing to a compiled prepared statement
+that can be executed using sqlite3_step().
+If there is an error, *ppStmt is set to NULL.
+If the input text contains no SQL (if the input is an empty string
+or a comment) then *ppStmt is set to NULL.
+The calling procedure is responsible for deleting the compiled SQL
+statement using sqlite3_finalize() after it has finished
+with it.
+ppStmt may not be NULL.
+.Pp
+On success, the sqlite3_prepare() family of routines return SQLITE_OK;
+otherwise an error code is returned.
+.Pp
+The sqlite3_prepare_v2() and sqlite3_prepare16_v2() interfaces are
+recommended for all new programs.
+The two older interfaces are retained for backwards compatibility,
+but their use is discouraged.
+In the "v2" interfaces, the prepared statement that is returned (the
+sqlite3_stmt object) contains a copy of the original SQL
+text.
+This causes the sqlite3_step() interface to behave differently
+in three ways: 
+.Bl -enum
+.It
+If the database schema changes, instead of returning SQLITE_SCHEMA
+as it always used to do, sqlite3_step() will automatically
+recompile the SQL statement and try to run it again.
+As many as SQLITE_MAX_SCHEMA_RETRY retries will
+occur before sqlite3_step() gives up and returns an error.
+.It
+When an error occurs, sqlite3_step() will return one
+of the detailed error codes or extended error codes.
+The legacy behavior was that sqlite3_step() would only
+return a generic SQLITE_ERROR result code and the application
+would have to make a second call to sqlite3_reset()
+in order to find the underlying cause of the problem.
+With the "v2" prepare interfaces, the underlying reason for the error
+is returned immediately.
+.It
+If the specific value bound to  host parameter in the
+WHERE clause might influence the choice of query plan for a statement,
+then the statement will be automatically recompiled, as if there had
+been a schema change, on the first  sqlite3_step() call
+following any change to the  bindings of that parameter.
+The specific value of WHERE-clause parameter might influence
+the choice of query plan if the parameter is the left-hand side of
+a LIKE or GLOB operator or if the parameter is compared to
+an indexed column and the SQLITE_ENABLE_STAT3 compile-time
+option is enabled.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_open 3 ,
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr SQLITE_OK 3

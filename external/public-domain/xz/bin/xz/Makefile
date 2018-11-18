@@ -19,8 +19,8 @@ CPPFLAGS+=	-DENABLE_NLS -DLOCALEDIR=\"/usr/share/locale\"
 DPADD+=	${LIBLZMA} ${LIBINTL}
 LDADD+=	-llzma -lintl
 .else
-DPADD+=	${LIBLZMA}
-LDADD+=	-llzma
+DPADD+= 	${LIBLZMA}
+LDADD+= 	-llzma
 .endif # !defined(__MINIX)
 
 LINKS+=	${BINDIR}/xz ${BINDIR}/lzcat

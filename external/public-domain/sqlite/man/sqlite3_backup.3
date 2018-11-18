@@ -1,0 +1,16 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BACKUP 3
+.Os
+.Sh NAME
+.Nm sqlite3_backup
+.Nd Online Backup Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_backup sqlite3_backup;
+.Sh DESCRIPTION
+The sqlite3_backup object records state information about an ongoing
+online backup operation.
+The sqlite3_backup object is created by a call to sqlite3_backup_init()
+and is destroyed by a call to sqlite3_backup_finish().
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_backup_init 3

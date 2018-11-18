@@ -1,0 +1,65 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SOFT_HEAP_LIMIT64 3
+.Os
+.Sh NAME
+.Nm sqlite3_soft_heap_limit64
+.Nd Impose A Limit On Heap Size
+.Sh SYNOPSIS
+.Ft sqlite3_int64 
+.Fo sqlite3_soft_heap_limit64
+.Fa "sqlite3_int64 N"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_soft_heap_limit64() interface sets and/or queries the soft
+limit on the amount of heap memory that may be allocated by SQLite.
+SQLite strives to keep heap memory utilization below the soft heap
+limit by reducing the number of pages held in the page cache as heap
+memory usages approaches the limit.
+The soft heap limit is "soft" because even though SQLite strives to
+stay below the limit, it will exceed the limit rather than generate
+an SQLITE_NOMEM error.
+In other words, the soft heap limit is advisory only.
+.Pp
+The return value from sqlite3_soft_heap_limit64() is the size of the
+soft heap limit prior to the call, or negative in the case of an error.
+If the argument N is negative then no change is made to the soft heap
+limit.
+Hence, the current size of the soft heap limit can be determined by
+invoking sqlite3_soft_heap_limit64() with a negative argument.
+.Pp
+If the argument N is zero then the soft heap limit is disabled.
+.Pp
+The soft heap limit is not enforced in the current implementation if
+one or more of following conditions are true: 
+.Bl -bullet
+.It
+The soft heap limit is set to zero.
+.It
+Memory accounting is disabled using a combination of the sqlite3_config(SQLITE_CONFIG_MEMSTATUS,...)
+start-time option and the SQLITE_DEFAULT_MEMSTATUS
+compile-time option.
+.It
+An alternative page cache implementation is specified using sqlite3_config(SQLITE_CONFIG_PCACHE2,...).
+.It
+The page cache allocates from its own memory pool supplied by sqlite3_config(SQLITE_CONFIG_PAGECACHE,...)
+rather than from the heap.
+.El
+.Pp
+Beginning with SQLite version 3.7.3 (dateof:3.7.3),
+the soft heap limit is enforced regardless of whether or not the SQLITE_ENABLE_MEMORY_MANAGEMENT
+compile-time option is invoked.
+With SQLITE_ENABLE_MEMORY_MANAGEMENT,
+the soft heap limit is enforced on every memory allocation.
+Without SQLITE_ENABLE_MEMORY_MANAGEMENT,
+the soft heap limit is only enforced when memory is allocated by the
+page cache.
+Testing suggests that because the page cache is the predominate memory
+user in SQLite, most applications will achieve adequate soft heap limit
+enforcement without the use of SQLITE_ENABLE_MEMORY_MANAGEMENT.
+.Pp
+The circumstances under which SQLite will enforce the soft heap limit
+may changes in future releases of SQLite.
+.Sh SEE ALSO
+.Xr sqlite3_config 3 ,
+.Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
+.Xr SQLITE_OK 3

@@ -1,0 +1,65 @@
+.Dd March 11, 2017
+.Dt SQLITE_TRACE_STMT 3
+.Os
+.Sh NAME
+.Nm SQLITE_TRACE_STMT ,
+.Nm SQLITE_TRACE_PROFILE ,
+.Nm SQLITE_TRACE_ROW ,
+.Nm SQLITE_TRACE_CLOSE
+.Nd SQL Trace Event Codes
+.Sh SYNOPSIS
+.Fd #define SQLITE_TRACE_STMT
+.Fd #define SQLITE_TRACE_PROFILE
+.Fd #define SQLITE_TRACE_ROW
+.Fd #define SQLITE_TRACE_CLOSE
+.Sh DESCRIPTION
+These constants identify classes of events that can be monitored using
+the sqlite3_trace_v2() tracing logic.
+The third argument to sqlite3_trace_v2() is an OR-ed
+combination of one or more of the following constants.
+The first argument to the trace callback is one of the following constants.
+.Pp
+New tracing constants may be added in future releases.
+.Pp
+A trace callback has four arguments: xCallback(T,C,P,X).
+The T argument is one of the integer type codes above.
+The C argument is a copy of the context pointer passed in as the fourth
+argument to sqlite3_trace_v2().
+The P and X arguments are pointers whose meanings depend on T.
+.Bl -tag -width Ds
+.It SQLITE_TRACE_STMT
+An SQLITE_TRACE_STMT callback is invoked when a prepared statement
+first begins running and possibly at other times during the execution
+of the prepared statement, such as at the start of each trigger subprogram.
+The P argument is a pointer to the prepared statement.
+The X argument is a pointer to a string which is the unexpanded SQL
+text of the prepared statement or an SQL comment that indicates the
+invocation of a trigger.
+The callback can compute the same text that would have been returned
+by the legacy sqlite3_trace() interface by using the
+X argument when X begins with "--" and invoking sqlite3_expanded_sql(P)
+otherwise.
+.It SQLITE_TRACE_PROFILE
+An SQLITE_TRACE_PROFILE callback provides approximately the same information
+as is provided by the sqlite3_profile() callback.
+The P argument is a pointer to the prepared statement
+and the X argument points to a 64-bit integer which is the estimated
+of the number of nanosecond that the prepared statement took to run.
+The SQLITE_TRACE_PROFILE callback is invoked when the statement finishes.
+.It SQLITE_TRACE_ROW
+An SQLITE_TRACE_ROW callback is invoked whenever a prepared statement
+generates a single row of result.
+The P argument is a pointer to the prepared statement
+and the X argument is unused.
+.It SQLITE_TRACE_CLOSE
+An SQLITE_TRACE_CLOSE callback is invoked when a database connection
+closes.
+The P argument is a pointer to the database connection
+object and the X argument is unused.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_trace 3 ,
+.Xr sqlite3_trace_v2 3

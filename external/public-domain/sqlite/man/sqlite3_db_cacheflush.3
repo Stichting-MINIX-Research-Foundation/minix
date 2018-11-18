@@ -1,0 +1,46 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_CACHEFLUSH 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_cacheflush
+.Nd Flush caches to disk mid-transaction
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_db_cacheflush
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+If a write-transaction is open on database connection
+D when the sqlite3_db_cacheflush(D) interface
+invoked, any dirty pages in the pager-cache that are not currently
+in use are written out to disk.
+A dirty page may be in use if a database cursor created by an active
+SQL statement is reading from it, or if it is page 1 of a database
+file (page 1 is always "in use").
+The sqlite3_db_cacheflush(D) interface flushes
+caches for all schemas - "main", "temp", and any attached databases.
+.Pp
+If this function needs to obtain extra database locks before dirty
+pages can be flushed to disk, it does so.
+If those locks cannot be obtained immediately and there is a busy-handler
+callback configured, it is invoked in the usual manner.
+If the required lock still cannot be obtained, then the database is
+skipped and an attempt made to flush any dirty pages belonging to the
+next (if any) database.
+If any databases are skipped because locks cannot be obtained, but
+no other error occurs, this function returns SQLITE_BUSY.
+.Pp
+If any other error occurs while flushing dirty pages to disk (for example
+an IO error or out-of-memory condition), then processing is abandoned
+and an SQLite error code is returned to the caller immediately.
+.Pp
+Otherwise, if no error occurs, sqlite3_db_cacheflush()
+returns SQLITE_OK.
+.Pp
+This function does not set the database handle error code or message
+returned by the sqlite3_errcode() and sqlite3_errmsg()
+functions.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_db_cacheflush 3 ,
+.Xr sqlite3_errcode 3

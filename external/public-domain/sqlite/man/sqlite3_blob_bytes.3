@@ -1,0 +1,26 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BLOB_BYTES 3
+.Os
+.Sh NAME
+.Nm sqlite3_blob_bytes
+.Nd Return The Size Of An Open BLOB
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_blob_bytes
+.Fa "sqlite3_blob *"
+.Fc
+.Sh DESCRIPTION
+Returns the size in bytes of the BLOB accessible via the successfully
+opened BLOB handle in its only argument.
+The incremental blob I/O routines can only read or overwriting existing
+blob content; they cannot change the size of a blob.
+.Pp
+This routine only works on a BLOB handle which has been
+created by a prior successful call to sqlite3_blob_open()
+and which has not been closed by sqlite3_blob_close().
+Passing any other pointer in to this routine results in undefined and
+probably undesirable behavior.
+.Sh SEE ALSO
+.Xr sqlite3_blob 3 ,
+.Xr sqlite3_blob_close 3 ,
+.Xr sqlite3_blob_open 3

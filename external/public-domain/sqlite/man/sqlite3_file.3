@@ -1,0 +1,21 @@
+.Dd March 11, 2017
+.Dt SQLITE3_FILE 3
+.Os
+.Sh NAME
+.Nm sqlite3_file ,
+.Nm sqlite3_file
+.Nd OS Interface Open File Handle
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_file sqlite3_file;
+.Vt struct sqlite3_file ;
+.Sh DESCRIPTION
+An sqlite3_file object represents an open file in the  OS interface layer.
+Individual OS interface implementations will want to subclass this
+object by appending additional fields for their own use.
+The pMethods entry is a pointer to an sqlite3_io_methods
+object that defines methods for performing I/O operations on the open
+file.
+.Sh SEE ALSO
+.Xr sqlite3_file 3 ,
+.Xr sqlite3_io_methods 3 ,
+.Xr sqlite3_vfs 3

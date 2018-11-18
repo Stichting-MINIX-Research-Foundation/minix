@@ -1,0 +1,34 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BLOB_CLOSE 3
+.Os
+.Sh NAME
+.Nm sqlite3_blob_close
+.Nd Close A BLOB Handle
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_blob_close
+.Fa "sqlite3_blob *"
+.Fc
+.Sh DESCRIPTION
+This function closes an open BLOB handle.
+The BLOB handle is closed unconditionally.
+Even if this routine returns an error code, the handle is still closed.
+.Pp
+If the blob handle being closed was opened for read-write access, and
+if the database is in auto-commit mode and there are no other open
+read-write blob handles or active write statements, the current transaction
+is committed.
+If an error occurs while committing the transaction, an error code
+is returned and the transaction rolled back.
+.Pp
+Calling this function with an argument that is not a NULL pointer or
+an open blob handle results in undefined behaviour.
+Calling this routine with a null pointer (such as would be returned
+by a failed call to sqlite3_blob_open()) is a harmless
+no-op.
+Otherwise, if this function is passed a valid open blob handle, the
+values returned by the sqlite3_errcode() and sqlite3_errmsg() functions
+are set before returning.
+.Sh SEE ALSO
+.Xr sqlite3_blob 3 ,
+.Xr sqlite3_blob_open 3

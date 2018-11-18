@@ -1,53 +1,239 @@
-# $NetBSD: tzdata2netbsd,v 1.7 2015/08/11 18:10:13 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.11.6.1 2018/03/24 18:03:21 snj Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
 # 0. Be in an up-to-date checkout of src/external/public-domain/tz
 #    from NetBSD-current.
-# 1. Edit OLDVER and NEWVER below.
+# 1. Make sure that you have Paul Eggert's 4K RSA public key in your
+#    keyring (62AA7E34, eggert@cs.ucla.edu)  It is not required that it be trusted.
 # 2. Run this script.  You will be prompted for confirmation before
-#    anything major (such as a cvs operation).
+#    anything major (such as a cvs operation).  The tz versions can be
+#    specified as args (new version first, and the previous second) if
+#    needed to override the calculated values
 # 3. If something fails, abort the script and fix it.
 # 4. Re-run this script until you are happy.  It's designed to
 #    be re-run over and over, and later runs will try not to
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2015e
-NEWVER=2015f
+VERS_PATTERN='2[0-9][0-9][0-9][a-z]'
+# This needs to be updated twice every millennium to allow for the
+# new millenium's years.
+# First in the late xx90's sometime, allow the new one by changing the leading
+# digit from a specific value to the class containing the current and
+# following values (eg: in 2098 or so, change '2' to be '[23]').
+# Tnen in the following early xx00's sometime, delete the class, and insert
+# leave only the current value as valid (eg: in 3001 or 3002,
+# change '[23]' to be just '3'
+# Doing it this way helps guard against invalid specifications.
+# We could automate this, but it is (IMO) not worth the cost, to avoid a
+# twice a millenium edit requirement.
+# A more significant (and harder) change will be needed in the late 9990's
+# If this script lasts until then, send me a postcard, I'll be waiting for it!
+# Things get easier again after that until the late 99990's (etc.)
 
-# Uppercase variants of OLDVER and NEWVER
-OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
-NEWVER_UC="$( echo "${NEWVER}" | tr '[a-z]' '[A-Z]' )"
+# Note the pattern is used on both the old and new version specifiers,
+# so it must be able to cope with the shift from one form (eg 2999g)
+# to the new one (eg: 3000a) without failing (or the code that uses it
+# below needs to be updated).
 
-# Tags for use with version control systems
-CVSOLDTAG="TZDATA${OLDVER_UC}"
-CVSNEWTAG="TZDATA${NEWVER_UC}"
-CVSBRANCHTAG="TZDATA"
-GITHUBTAG="${NEWVER}"
+# Also note that the option of having a second alpha (1997aa or something)
+# to handle years with much activity is handled below, the pattern does not
+# need to match those.
+# If that convention changes (as of date of writing, it has never been
+# exercised) then code changes below will be required.
 
-# URLs for fetching distribution files, etc.
-DISTURL="ftp://ftp.iana.org/tz/releases/tzdata${NEWVER}.tar.gz"
-SIGURL="${DISTURL}.asc"
-NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
+DIST_HOST=ftp.iana.org
+DIST_PATH=tz
+DIST_FILES=releases
 
-# Directories
-REPODIR="src/external/public-domain/tz/dist" # relative to the NetBSD CVS repo
-TZDISTDIR="$(pwd)/dist" # should be .../external/public-domain/tz/dist
-WORKDIR="$(pwd)/update-work/${NEWVER}"
-EXTRACTDIR="${WORKDIR}/extract"
+EDITOR=${EDITOR:-vi}
+WORK_PFX=$(pwd)/update-work || fail "Cannot obtain PWD"
+UPDATE_FROM=${WORK_PFX}/updating.from.version
 
-# Files in the work directory
-DISTFILE="${WORKDIR}/${DISTURL##*/}"
-SIGFILE="${DISTFILE}.sig"
-PGPVERIFYLOG="${WORKDIR}/pgpverify.log"
-NEWSFILE="${WORKDIR}/NEWS"
-NEWSTRIMFILE="${WORKDIR}/NEWS.trimmed"
-IMPORTMSGFILE="${WORKDIR}/import.msg"
-IMPORTDONEFILE="${WORKDIR}/import.done"
-MERGSMSGFILE="${WORKDIR}/merge.msg"
-MERGEDONEFILE="${WORKDIR}/merge.done"
-COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
+usage()
+{
+	printf >&2 '%s\n'						\
+		"Usage: $0 [new-version-id [old-version-id]]"		\
+		"     where a version-id is of the form YYYYx (eg: 2018c)" \
+		"     or '' for new-version-id (to specify only the old)"
+	exit 2
+}
+
+fail()
+{
+	local IFS=' '
+
+	printf >&2 '%s\n'	"Error detected:" "   $*" "Aborting."
+	exit 1
+}
+
+valid_vers()
+{
+	case "$2" in
+	${VERS_PATTERN} | ${VERS_PATTERN}[a-z] )
+		;;
+	*)	printf >&2 '%s: %s\n' \
+		    "Bad form for $1 version specifier '$2'" \
+		    "should (usually) be 'YYYYx'"
+		return 1
+		;;
+	esac
+	return 0
+}
+
+get_curvers()
+{
+	local LF=''
+	local LIST=iana-listing
+	local SED_SCRIPT='
+		/tzdata-latest.*-> /{
+			s/^.*-> //
+			s/\..*$//
+			s;^releases/tzdata;;p
+			q
+		}
+		d'
+
+	test -d "${WORK_PFX}" &&
+		test -s "${WORK_PFX}/${LIST}" &&
+		test "${WORK_PFX}/${LIST}" -nt dist/CVS &&
+		LF=$(find "${WORK_PFX}" -name "${LIST}" -mtime -1 -print) &&
+		test -n "${LF}" &&
+		NEWVER=$(sed -n < "${LF}" "${SED_SCRIPT}") &&
+		valid_vers new "${NEWVER}"				||
+
+	ftp >/dev/null 2>&1 -ia "${DIST_HOST}" <<- EOF &&
+					dir ${DIST_PATH} ${WORK_PFX}/${LIST}
+					quit
+					EOF
+		test -s "${WORK_PFX}/${LIST}" &&
+		NEWVER=$(sed -n < "${WORK_PFX}/${LIST}" "${SED_SCRIPT}") &&
+		valid_vers new "${NEWVER}"				||
+
+	{
+		rm -f "${WORK_PFX}/${LIST}"
+		fail "Cannot fetch current tzdata version from ${DIST_HOST}"
+	}
+
+	printf '%s\n' "Updating from ${OLDVER} to ${NEWVER}"
+}
+
+argparse()
+{
+	local OVF
+
+	if OVF=$(find "${WORK_PFX}" -name "${UPDATE_FROM##*/}" -mtime +2 -print)
+	then
+		# delete anything old
+		test -n "${OVF}" && rm -f "${OVF}"
+	fi
+
+	case "$#" in
+	0|1)
+		# once we have obtained OLDVER once, never guess it again.
+		test -f "${UPDATE_FROM}" && OLDVER=$(cat "${UPDATE_FROM}") ||
+
+		OLDVER=$(cat dist/version) || {
+			printf >&2 '%s\n'  \
+			    "Cannot determine current installed version"  \
+			    "Specify it on the command line."  \
+			    ""
+			usage
+		}
+
+		valid_vers old "${OLDVER}" ||
+			fail "Calculated bad OLDVER, give as 2nd arg"
+		;;
+
+	2)	valid_vers old "$2" && OLDVER="$2" || usage
+		;;
+
+	*)	usage
+		;;
+	esac
+
+	case "$#:$1" in
+	0: | 1: | 2: )
+		;;
+	1:?*|2:?*)	
+		valid_vers new "$1" && NEWVER="$1" || usage
+		;;
+	*)	usage
+		;;
+	esac
+
+	test -z "${NEWVER}" && get_curvers
+
+	test "${NEWVER}" = "${OLDVER}" && {
+		printf '%s\n' \
+		     "New and old versions both ${NEWVER}: nothing to do"
+		exit 0
+
+	}
+
+	printf '%s\n' "${OLDVER}" > "${UPDATE_FROM}" ||
+	    fail "Unable to preserve old version ${OLDVER} in ${UPDATE_FROM}"
+
+	test "${#NEWVER}" -gt "${#OLDVER}" ||
+		test "${NEWVER}" '>' "${OLDVER}" ||
+		{
+			local reply
+
+			printf '%s\n' \
+			    "Update would revert ${OLDVER} to ${NEWVER}"
+			read -p "Is reversion intended? " reply
+			case "${reply}" in
+			[Yy]*)	;;
+			*)	printf '%s\n' OK. Aborted.
+				rm -f "${UPDATE_FROM}"
+				exit 1
+				;;
+			esac
+		}
+
+	return 0
+}
+
+setup_versions()
+{
+	# Uppercase variants of OLDVER and NEWVER
+	OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
+	NEWVER_UC="$( echo "${NEWVER}" | tr '[a-z]' '[A-Z]' )"
+
+	# Tags for use with version control systems
+	CVSOLDTAG="TZDATA${OLDVER_UC}"
+	CVSNEWTAG="TZDATA${NEWVER_UC}"
+	CVSBRANCHTAG="TZDATA"
+	GITHUBTAG="${NEWVER}"
+
+	# URLs for fetching distribution files, etc.
+	DISTURL="ftp://${DIST_HOST}/${DIST_PATH}/${DIST_FILES}"
+	DISTURL="${DISTURL}/tzdata${NEWVER}.tar.gz"
+	SIGURL="${DISTURL}.asc"
+	NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
+
+	# Directories
+	REPODIR="src/external/public-domain/tz/dist"
+				# relative to the NetBSD CVS repo
+	TZDISTDIR="$(pwd)/dist" # should be .../external/public-domain/tz/dist
+	WORKDIR="${WORK_PFX}/${NEWVER}"
+	EXTRACTDIR="${WORKDIR}/extract"
+
+	# Files in the work directory
+	DISTFILE="${WORKDIR}/${DISTURL##*/}"
+	SIGFILE="${DISTFILE}.asc"
+	PGPVERIFYLOG="${WORKDIR}/pgpverify.log"
+	NEWSFILE="${WORKDIR}/NEWS"
+	NEWSTRIMFILE="${WORKDIR}/NEWS.trimmed"
+	IMPORTMSGFILE="${WORKDIR}/import.msg"
+	IMPORTDONEFILE="${WORKDIR}/import.done"
+	MERGSMSGFILE="${WORKDIR}/merge.msg"
+	MERGEDONEFILE="${WORKDIR}/merge.done"
+	COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
+
+	printf '%s\n' "${CVSOLDTAG}"  > "${WORK_PFX}/updating_from"
+}
 
 DOIT()
 {
@@ -62,6 +248,9 @@ DOIT()
 	[nN]*)	really_do_it=false ;;
 	[qQ]*)
 		echo "Aborting"
+		return 1
+		;;
+	*)	echo "Huh?"
 		return 1
 		;;
 	esac
@@ -83,7 +272,7 @@ DOIT()
 #    eval "\$command $quotedlist \$filename"
 #
 shell_quote()
-{(
+(
 	local result=''
 	local arg qarg
 	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
@@ -100,7 +289,7 @@ shell_quote()
 			# beginning and end of the result and as part of
 			# '\'''\'' sequences that result from multiple
 			# adjacent quotes in he input.
-			qarg="$(printf "%s\n" "$arg" | \
+			qarg="$(printf '%s\n' "$arg" | \
 			    ${SED:-sed} -e "s/'/'\\\\''/g" \
 				-e "1s/^/'/" -e "\$s/\$/'/" \
 				-e "1s/^''//" -e "\$s/''\$//" \
@@ -116,8 +305,43 @@ shell_quote()
 		esac
 		result="${result}${result:+ }${qarg}"
 	done
-	printf "%s\n" "$result"
-)}
+	printf '%s\n' "$result"
+)
+
+validate_pwd()
+{
+	local P="$(pwd)" || return 1
+
+	test -d "${P}" &&
+	    test -d "${P}/CVS" &&
+	    test -d "${P}/dist" &&
+	    test -f "${P}/dist/zone.tab" &&
+	    test -f "${P}/tzdata2netbsd" || {
+		printf >&2 '%s\n' "Please change to the correct directory"
+		return 1
+	}
+	
+	test -f "${P}/CVS/Tag" && {
+
+		# Here (for local use only) if needed for private branch work
+		# insert tests for the value of $(cat "${P}/CVS/Tag") and
+		# allow your private branch tag to pass. Eg:
+
+		#	case "$(cat "${P}/CVS/Tag")" in
+		#	my-branch-name)	return 0;;
+		#	esac
+
+		# Do not commit a version of this script modified that way,
+		# (not even on the private branch) - keep it as a local
+		# modified file.  (This script will not commit it.)
+
+		printf >&2 '%s\n' \
+		    "This script should be run in a checkout of HEAD only"
+		return 1
+	}
+
+	return 0
+}
 
 findcvsroot()
 {
@@ -128,16 +352,23 @@ findcvsroot()
 	return 1
 }
 
+mkworkpfx()
+{
+	mkdir -p "${WORK_PFX}" || fail "Unable to make missing ${WORK_PFX}"
+}
 mkworkdir()
 {
-	mkdir -p "${WORKDIR}"
+	mkdir -p "${WORKDIR}" || fail "Unable to make missing ${WORKDIR}"
 }
 
 fetch()
 {
-	[ -f "${DISTFILE}" ] || ftp -o "${DISTFILE}" "${DISTURL}"
-	[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}"
-	[ -f "${NEWSFILE}" ] || ftp -o "${NEWSFILE}" "${NEWSURL}"
+	[ -f "${DISTFILE}" ] || ftp -o "${DISTFILE}" "${DISTURL}" ||
+		fail "fetch of ${DISTFILE} failed"
+	[ -f "${SIGFILE}" ] || ftp -o "${SIGFILE}" "${SIGURL}" ||
+		fail "fetch of ${SIGFILE} failed"
+	[ -f "${NEWSFILE}" ] || ftp -o "${NEWSFILE}" "${NEWSURL}" ||
+		fail "fetch of ${NEWSFILE} failed"
 }
 
 checksig()
@@ -149,14 +380,13 @@ checksig()
 	# The output should contain lines that match all the following regexps
 	#
 	while read line; do
-		if ! grep -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
+		if ! grep -E -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
 			echo >&2 "Failed to verify signature: ${line}"
 			return 1
 		fi
 	done <<'EOF'
-gpg: Signature made .* using RSA key ID 62AA7E34
+gpg: Signature made .* using RSA key ID (62AA7E34|44AD418C)
 gpg: Good signature from "Paul Eggert <eggert@cs.ucla.edu>"
-Primary key fingerprint: 7E37 92A9 D8AC F7D6 33BC  1588 ED97 E90E 62AA 7E34
 gpg exit status 0
 EOF
 }
@@ -185,11 +415,18 @@ trimnews()
 		BEGIN {inrange = 0}
 		/^Release [0-9]+[a-z]+ - .*/ {
 			# "Release <version> - <date>"
-			inrange = ($2 > oldver && $2 <= newver)
+			# Note: must handle transition from 2018z to 2018aa
+			# Assumptions: OLDVER and NEWVER have been sanitized,
+			# and format of NEWS file does not alter (and
+			# contains valid data)
+			inrange = ((length($2) > length(oldver) || \
+					$2 > oldver) && \
+				(length($2) < newver || $2 <= newver))
 		}
 		// { if (inrange) print; }
-		' \
+	    ' \
 		<"${NEWSFILE}" >"${NEWSTRIMFILE}"
+	echo "tzdata-${NEWVER}" > ${TZDISTDIR}/TZDATA_VERSION
 }
 
 # Create IMPORTMSGFILE from NEWSTRIMFILE, by ignoring some sections,
@@ -252,7 +489,7 @@ EOF
 			havesentence = (havesentence || (t ~ "\\.$"));
 		}
 		/./ { blankline = 0; }
-		' \
+	    ' \
 		<"${NEWSTRIMFILE}"
 	} >"${IMPORTMSGFILE}"
 }
@@ -266,7 +503,7 @@ editimportmsg()
 	fi
 	# Pass both IMPORTMSGFILE and NEWSFILE to the editor, so that the
 	# user can easily consult NEWSFILE while editing IMPORTMSGFILE.
-	vi "${IMPORTMSGFILE}" "${NEWSFILE}"
+	${EDITOR} "${IMPORTMSGFILE}" "${NEWSFILE}"
 }
 
 cvsimport()
@@ -345,18 +582,26 @@ extra()
 {
 	cat <<EOF
 Also do the following:
- * Edit src/doc/3RDPARTY
- * Edit src/doc/CHANGES
- * Edit src/distrib/sets/base/mi if the set of installed files has changed.
+ * Edit and commit  src/doc/3RDPARTY
+ * Edit and commit  src/doc/CHANGES
+ * Edit and commit  src/distrib/sets/lists/base/mi
+ *      if the set of installed files altered.
  * Submit pullup requests for all active release branches.
- * rm -rf ${WORKDIR}
+ * rm -rf ${WORK_PFX}  (optional)
+ * Verify that
+  ${UPDATE_FROM}
+ * no longer exists.
 EOF
 }
 
 main()
 {
 	set -e
+	validate_pwd
 	findcvsroot
+	mkworkpfx
+	argparse "$@"
+	setup_versions
 	mkworkdir
 	fetch
 	checksig
@@ -369,6 +614,7 @@ main()
 	cvsmerge
 	resolveconflicts
 	cvscommitmerge
+	rm -f "${UPDATE_FROM}"
 	extra
 }
 

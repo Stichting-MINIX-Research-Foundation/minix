@@ -1,0 +1,19 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_FK_CONFLICTS 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_fk_conflicts
+.Nd Determine The Number Of Foreign Key Constraint Violations
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_fk_conflicts
+.Fa "sqlite3_changeset_iter *pIter"
+.Fa "int *pnOut                      "
+.Fc
+.Sh DESCRIPTION
+This function may only be called with an iterator passed to an SQLITE_CHANGESET_FOREIGN_KEY
+conflict handler callback.
+In this case it sets the output variable to the total number of known
+foreign key violations in the destination database and returns SQLITE_OK.
+.Pp
+In all other cases this function returns SQLITE_MISUSE.

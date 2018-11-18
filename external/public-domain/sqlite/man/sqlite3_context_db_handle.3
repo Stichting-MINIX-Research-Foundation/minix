@@ -1,0 +1,19 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CONTEXT_DB_HANDLE 3
+.Os
+.Sh NAME
+.Nm sqlite3_context_db_handle
+.Nd Database Connection For Functions
+.Sh SYNOPSIS
+.Ft sqlite3 *
+.Fo sqlite3_context_db_handle
+.Fa "sqlite3_context*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_context_db_handle() interface returns a copy of the pointer
+to the database connection (the 1st parameter) of
+the sqlite3_create_function() and sqlite3_create_function16()
+routines that originally registered the application defined function.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_create_function 3

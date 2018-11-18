@@ -1,0 +1,148 @@
+.Dd March 11, 2017
+.Dt SQLITE3_MPRINTF 3
+.Os
+.Sh NAME
+.Nm sqlite3_mprintf ,
+.Nm sqlite3_vmprintf ,
+.Nm sqlite3_snprintf ,
+.Nm sqlite3_vsnprintf
+.Nd Formatted String Printing Functions
+.Sh SYNOPSIS
+.Ft char *
+.Fo sqlite3_mprintf
+.Fa "const char*"
+.Fa "..."
+.Fc
+.Ft char *
+.Fo sqlite3_vmprintf
+.Fa "const char*"
+.Fa "va_list"
+.Fc
+.Ft char *
+.Fo sqlite3_snprintf
+.Fa "int"
+.Fa "char*"
+.Fa "const char*"
+.Fa "..."
+.Fc
+.Ft char *
+.Fo sqlite3_vsnprintf
+.Fa "int"
+.Fa "char*"
+.Fa "const char*"
+.Fa "va_list"
+.Fc
+.Sh DESCRIPTION
+These routines are work-alikes of the "printf()" family of functions
+from the standard C library.
+These routines understand most of the common K&R formatting options,
+plus some additional non-standard formats, detailed below.
+Note that some of the more obscure formatting options from recent C-library
+standards are omitted from this implementation.
+.Pp
+The sqlite3_mprintf() and sqlite3_vmprintf() routines write their results
+into memory obtained from sqlite3_malloc().
+The strings returned by these two routines should be released by sqlite3_free().
+Both routines return a NULL pointer if sqlite3_malloc()
+is unable to allocate enough memory to hold the resulting string.
+.Pp
+The sqlite3_snprintf() routine is similar to "snprintf()" from the
+standard C library.
+The result is written into the buffer supplied as the second parameter
+whose size is given by the first parameter.
+Note that the order of the first two parameters is reversed from snprintf().
+This is an historical accident that cannot be fixed without breaking
+backwards compatibility.
+Note also that sqlite3_snprintf() returns a pointer to its buffer instead
+of the number of characters actually written into the buffer.
+We admit that the number of characters written would be a more useful
+return value but we cannot change the implementation of sqlite3_snprintf()
+now without breaking compatibility.
+.Pp
+As long as the buffer size is greater than zero, sqlite3_snprintf()
+guarantees that the buffer is always zero-terminated.
+The first parameter "n" is the total size of the buffer, including
+space for the zero terminator.
+So the longest string that can be completely written will be n-1 characters.
+.Pp
+The sqlite3_vsnprintf() routine is a varargs version of sqlite3_snprintf().
+.Pp
+These routines all implement some additional formatting options that
+are useful for constructing SQL statements.
+All of the usual printf() formatting options apply.
+In addition, there is are "%q", "%Q", "%w" and "%z" options.
+.Pp
+The %q option works like %s in that it substitutes a nul-terminated
+string from the argument list.
+But %q also doubles every '\'' character.
+%q is designed for use inside a string literal.
+By doubling each '\'' character it escapes that character and allows
+it to be inserted into the string.
+.Pp
+For example, assume the string variable zText contains text as follows:
+.Bd -ragged
+.Bd -literal
+char *zText = "It's a happy day!"; 
+.Ed
+.Pp
+.Ed
+.Pp
+One can use this text in an SQL statement as follows: 
+.Bd -ragged
+.Bd -literal
+char *zSQL = sqlite3_mprintf("INSERT INTO table VALUES('%q')", zText);
+sqlite3_exec(db, zSQL, 0, 0, 0); sqlite3_free(zSQL); 
+.Ed
+.Pp
+.Ed
+.Pp
+Because the %q format string is used, the '\'' character in zText is
+escaped and the SQL generated is as follows: 
+.Bd -ragged
+.Bd -literal
+INSERT INTO table1 VALUES('It''s a happy day!') 
+.Ed
+.Pp
+.Ed
+.Pp
+This is correct.
+Had we used %s instead of %q, the generated SQL would have looked like
+this: 
+.Bd -ragged
+.Bd -literal
+INSERT INTO table1 VALUES('It's a happy day!'); 
+.Ed
+.Pp
+.Ed
+.Pp
+This second example is an SQL syntax error.
+As a general rule you should always use %q instead of %s when inserting
+text into a string literal.
+.Pp
+The %Q option works like %q except it also adds single quotes around
+the outside of the total string.
+Additionally, if the parameter in the argument list is a NULL pointer,
+%Q substitutes the text "NULL" (without single quotes).
+So, for example, one could say: 
+.Bd -ragged
+.Bd -literal
+char *zSQL = sqlite3_mprintf("INSERT INTO table VALUES(%Q)", zText);
+sqlite3_exec(db, zSQL, 0, 0, 0); sqlite3_free(zSQL); 
+.Ed
+.Pp
+.Ed
+.Pp
+The code above will render a correct SQL statement in the zSQL variable
+even if the zText variable is a NULL pointer.
+.Pp
+The "%w" formatting option is like "%q" except that it expects to be
+contained within double-quotes instead of single quotes, and it escapes
+the double-quote character instead of the single-quote character.
+The "%w" formatting option is intended for safely inserting table and
+column names into a constructed SQL statement.
+.Pp
+The "%z" formatting option works like "%s" but with the addition that
+after the string has been read and copied into the result, sqlite3_free()
+is called on the input string.
+.Sh SEE ALSO
+.Xr sqlite3_malloc 3

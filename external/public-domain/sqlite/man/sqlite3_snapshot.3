@@ -1,0 +1,35 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SNAPSHOT 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot
+.Nd Database Snapshot
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_snapshot { unsigned char hidden[48]; } sqlite3_snapshot;
+.Sh DESCRIPTION
+An instance of the snapshot object records the state of a WAL mode
+database for some specific point in history.
+.Pp
+In WAL mode, multiple database connections
+that are open on the same database file can each be reading a different
+historical version of the database file.
+When a database connection begins a read transaction,
+that connection sees an unchanging copy of the database as it existed
+for the point in time when the transaction first started.
+Subsequent changes to the database from other connections are not seen
+by the reader until a new read transaction is started.
+.Pp
+The sqlite3_snapshot object records state information about an historical
+version of the database file so that it is possible to later open a
+new read transaction that sees that historical version of the database
+rather than the most recent version.
+.Pp
+The constructor for this object is sqlite3_snapshot_get().
+The sqlite3_snapshot_open() method causes a
+fresh read transaction to refer to an historical snapshot (if possible).
+The destructor for sqlite3_snapshot objects is sqlite3_snapshot_free().
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_snapshot_free 3 ,
+.Xr sqlite3_snapshot_get 3 ,
+.Xr sqlite3_snapshot_open 3

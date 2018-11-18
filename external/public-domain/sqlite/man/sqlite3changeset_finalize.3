@@ -1,0 +1,39 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_FINALIZE 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_finalize
+.Nd Finalize A Changeset Iterator
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_finalize
+.Fa "sqlite3_changeset_iter *pIter"
+.Fc
+.Sh DESCRIPTION
+This function is used to finalize an iterator allocated with sqlite3changeset_start().
+.Pp
+This function should only be called on iterators created using the
+sqlite3changeset_start() function.
+If an application calls this function with an iterator passed to a
+conflict-handler by sqlite3changeset_apply(),
+SQLITE_MISUSE is immediately returned and the call has
+no effect.
+.Pp
+If an error was encountered within a call to an sqlite3changeset_xxx()
+function (for example an SQLITE_CORRUPT in sqlite3changeset_next()
+or an SQLITE_NOMEM in sqlite3changeset_new())
+then an error code corresponding to that error is returned by this
+function.
+Otherwise, SQLITE_OK is returned.
+This is to allow the following pattern (pseudo-code): 
+.Pp
+sqlite3changeset_start(); while( SQLITE_ROW==sqlite3changeset_next()
+){ // Do something with change.
+} rc = sqlite3changeset_finalize(); if( rc!=SQLITE_OK ){ // An error
+has occurred }
+.Sh SEE ALSO
+.Xr sqlite3changeset_apply 3 ,
+.Xr sqlite3changeset_new 3 ,
+.Xr sqlite3changeset_next 3 ,
+.Xr sqlite3changeset_start 3 ,
+.Xr SQLITE_OK 3

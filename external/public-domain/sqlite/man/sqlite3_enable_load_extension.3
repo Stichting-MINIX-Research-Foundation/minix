@@ -1,0 +1,39 @@
+.Dd March 11, 2017
+.Dt SQLITE3_ENABLE_LOAD_EXTENSION 3
+.Os
+.Sh NAME
+.Nm sqlite3_enable_load_extension
+.Nd Enable Or Disable Extension Loading
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_enable_load_extension
+.Fa "sqlite3 *db"
+.Fa "int onoff"
+.Fc
+.Sh DESCRIPTION
+So as not to open security holes in older applications that are unprepared
+to deal with extension loading, and as a means of
+disabling extension loading while evaluating user-entered
+SQL, the following API is provided to turn the sqlite3_load_extension()
+mechanism on and off.
+.Pp
+Extension loading is off by default.
+Call the sqlite3_enable_load_extension() routine with onoff==1 to turn
+extension loading on and call it with onoff==0 to turn it back off
+again.
+.Pp
+This interface enables or disables both the C-API sqlite3_load_extension()
+and the SQL function load_extension().
+Use sqlite3_db_config(db,SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION,..)
+to enable or disable only the C-API.
+.Pp
+\fBSecurity warning:\fP It is recommended that extension loading be disabled
+using the SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION
+method rather than this interface, so the load_extension()
+SQL function remains disabled.
+This will prevent SQL injections from giving attackers access to extension
+loading capabilities.
+.Sh SEE ALSO
+.Xr sqlite3_db_config 3 ,
+.Xr sqlite3_load_extension 3 ,
+.Xr SQLITE_DBCONFIG_MAINDBNAME 3

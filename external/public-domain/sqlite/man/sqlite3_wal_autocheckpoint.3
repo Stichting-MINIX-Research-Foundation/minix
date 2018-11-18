@@ -1,0 +1,40 @@
+.Dd March 11, 2017
+.Dt SQLITE3_WAL_AUTOCHECKPOINT 3
+.Os
+.Sh NAME
+.Nm sqlite3_wal_autocheckpoint
+.Nd Configure an auto-checkpoint
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_wal_autocheckpoint
+.Fa "sqlite3 *db"
+.Fa "int N"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_wal_autocheckpoint(D,N)
+is a wrapper around sqlite3_wal_hook() that causes
+any database on database connection D to automatically
+checkpoint after committing a transaction if there are N
+or more frames in the write-ahead log file.
+Passing zero or a negative value as the nFrame parameter disables automatic
+checkpoints entirely.
+.Pp
+The callback registered by this function replaces any existing callback
+registered using sqlite3_wal_hook().
+Likewise, registering a callback using sqlite3_wal_hook()
+disables the automatic checkpoint mechanism configured by this function.
+.Pp
+The wal_autocheckpoint pragma can be used
+to invoke this interface from SQL.
+.Pp
+Checkpoints initiated by this mechanism are PASSIVE.
+.Pp
+Every new database connection defaults to having
+the auto-checkpoint enabled with a threshold of 1000 or SQLITE_DEFAULT_WAL_AUTOCHECKPOINT
+pages.
+The use of this interface is only necessary if the default setting
+is found to be suboptimal for a particular application.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_wal_checkpoint_v2 3 ,
+.Xr sqlite3_wal_hook 3

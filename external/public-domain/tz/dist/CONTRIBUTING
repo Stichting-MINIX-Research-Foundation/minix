@@ -5,23 +5,33 @@ change timekeeping rules erratically and sometimes with little
 warning, the data entries do not cover all of civil time before
 1970, and undoubtedly errors remain in the code and data.  Feel
 free to fill gaps or fix mistakes, and please email improvements
-to tz@iana.org for use in the future.
+to tz@iana.org for use in the future.  In your email, please give
+reliable sources that reviewers can check.
+
+-----
+
+Developers can contribute technical changes to the source code and
+data as follows.
 
 To email small changes, please run a POSIX shell command like
 'diff -u old/europe new/europe >myfix.patch', and attach
 myfix.patch to the email.
 
-For more-elaborate changes, please read the Theory file and browse
-the mailing list archives <http://mm.icann.org/pipermail/tz/> for
-examples of patches that tend to work well.  Ideally, additions to
-data should contain commentary citing reliable sources as
-justification.
+For more-elaborate or possibly-controversial changes,
+such as renaming, adding or removing zones, please read
+<https://www.iana.org/time-zones/repository/theory.html> or the file
+theory.html.  It is also good to browse the mailing list archives
+<https://mm.icann.org/pipermail/tz/> for examples of patches that tend
+to work well.  Additions to data should contain commentary citing
+reliable sources as justification.  Citations should use https: URLs
+if available.
 
 Please submit changes against either the latest release in
-<ftp://ftp.iana.org/tz/> or the master branch of the experimental
-Git repository.  If you use Git the following workflow may be helpful:
+<https://www.iana.org/time-zones> or the master branch of the development
+repository.  The latter is preferred.  If you use Git the following
+workflow may be helpful:
 
-  * Copy the experimental repository.
+  * Copy the development repository.
 
       git clone https://github.com/eggert/tz.git
       cd tz
@@ -35,6 +45,12 @@ Git repository.  If you use Git the following workflow may be helpful:
     branch name for each change set.
 
       git checkout -b mybranch
+
+  * Sleuth by using 'git blame'.  For example, when fixing data for
+    Africa/Sao_Tome, if the command 'git blame africa' outputs a line
+    '2951fa3b (Paul Eggert 2018-01-08 09:03:13 -0800 1068) Zone
+    Africa/Sao_Tome 0:26:56 - LMT 1884', commit 2951fa3b should
+    provide some justification for the 'Zone Africa/Sao_Tome' line.
 
   * Edit source files.  Include commentary that justifies the
     changes by citing reliable sources.
@@ -61,9 +77,16 @@ Git repository.  If you use Git the following workflow may be helpful:
 
       git send-email master
 
+    For an archived example of such an email, see
+    <https://mm.icann.org/pipermail/tz/2018-February/026122.html>.
+
   * Start anew by getting current with the master branch again
     (the second step above).
 
 Please do not create issues or pull requests on GitHub, as the
 proper procedure for proposing and distributing patches is via
 email as illustrated above.
+
+-----
+
+This file is in the public domain.

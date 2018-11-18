@@ -1,0 +1,93 @@
+.Dd March 11, 2017
+.Dt SQLITE3_MUTEX_METHODS 3
+.Os
+.Sh NAME
+.Nm sqlite3_mutex_methods ,
+.Nm sqlite3_mutex_methods
+.Nd Mutex Methods Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_mutex_methods sqlite3_mutex_methods;
+.Vt struct sqlite3_mutex_methods ;
+.Sh DESCRIPTION
+An instance of this structure defines the low-level routines used to
+allocate and use mutexes.
+.Pp
+Usually, the default mutex implementations provided by SQLite are sufficient,
+however the application has the option of substituting a custom implementation
+for specialized deployments or systems for which SQLite does not provide
+a suitable implementation.
+In this case, the application creates and populates an instance of
+this structure to pass to sqlite3_config() along with the SQLITE_CONFIG_MUTEX
+option.
+Additionally, an instance of this structure can be used as an output
+variable when querying the system for the current mutex implementation,
+using the SQLITE_CONFIG_GETMUTEX option.
+.Pp
+The xMutexInit method defined by this structure is invoked as part
+of system initialization by the sqlite3_initialize() function.
+The xMutexInit routine is called by SQLite exactly once for each effective
+call to sqlite3_initialize().
+.Pp
+The xMutexEnd method defined by this structure is invoked as part of
+system shutdown by the sqlite3_shutdown() function.
+The implementation of this method is expected to release all outstanding
+resources obtained by the mutex methods implementation, especially
+those obtained by the xMutexInit method.
+The xMutexEnd() interface is invoked exactly once for each call to
+sqlite3_shutdown().
+.Pp
+The remaining seven methods defined by this structure (xMutexAlloc,
+xMutexFree, xMutexEnter, xMutexTry, xMutexLeave, xMutexHeld and xMutexNotheld)
+implement the following interfaces (respectively): 
+.Bl -bullet
+.It
+sqlite3_mutex_alloc() 
+.It
+sqlite3_mutex_free() 
+.It
+sqlite3_mutex_enter() 
+.It
+sqlite3_mutex_try() 
+.It
+sqlite3_mutex_leave() 
+.It
+sqlite3_mutex_held() 
+.It
+sqlite3_mutex_notheld() 
+.El
+.Pp
+The only difference is that the public sqlite3_XXX functions enumerated
+above silently ignore any invocations that pass a NULL pointer instead
+of a valid mutex handle.
+The implementations of the methods defined by this structure are not
+required to handle this case, the results of passing a NULL pointer
+instead of a valid mutex handle are undefined (i.e.
+it is acceptable to provide an implementation that segfaults if it
+is passed a NULL pointer).
+.Pp
+The xMutexInit() method must be threadsafe.
+It must be harmless to invoke xMutexInit() multiple times within the
+same process and without intervening calls to xMutexEnd().
+Second and subsequent calls to xMutexInit() must be no-ops.
+.Pp
+xMutexInit() must not use SQLite memory allocation (sqlite3_malloc()
+and its associates).
+Similarly, xMutexAlloc() must not use SQLite memory allocation for
+a static mutex.
+However xMutexAlloc() may use SQLite memory allocation for a fast or
+recursive mutex.
+.Pp
+SQLite will invoke the xMutexEnd() method when sqlite3_shutdown()
+is called, but only if the prior call to xMutexInit returned SQLITE_OK.
+If xMutexInit fails in any way, it is expected to clean up after itself
+prior to returning.
+.Sh SEE ALSO
+.Xr sqlite3_initialize 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_mutex_alloc 3 ,
+.Xr sqlite3_mutex_held 3 ,
+.Xr sqlite3_mutex_alloc 3 ,
+.Xr sqlite3_mutex_held 3 ,
+.Xr sqlite3_mutex_alloc 3 ,
+.Xr sqlite3_initialize 3 ,
+.Xr SQLITE_CONFIG_SINGLETHREAD 3

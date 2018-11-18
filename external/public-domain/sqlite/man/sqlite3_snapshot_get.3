@@ -1,0 +1,62 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SNAPSHOT_GET 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot_get
+.Nd Record A Database Snapshot
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_snapshot_get
+.Fa "sqlite3 *db"
+.Fa "const char *zSchema"
+.Fa "sqlite3_snapshot **ppSnapshot "
+.Fc
+.Sh DESCRIPTION
+The sqlite3_snapshot_get(D,S,P) interface
+attempts to make a new sqlite3_snapshot object that
+records the current state of schema S in database connection D.
+On success, the sqlite3_snapshot_get(D,S,P)
+interface writes a pointer to the newly created sqlite3_snapshot
+object into *P and returns SQLITE_OK.
+If there is not already a read-transaction open on schema S when this
+function is called, one is opened automatically.
+.Pp
+The following must be true for this function to succeed.
+If any of the following statements are false when sqlite3_snapshot_get()
+is called, SQLITE_ERROR is returned.
+The final value of *P is undefined in this case.
+.Bl -bullet
+.It
+The database handle must be in autocommit mode.
+.It
+Schema S of database connection D must be a WAL mode
+database.
+.It
+There must not be a write transaction open on schema S of database
+connection D.
+.It
+One or more transactions must have been written to the current wal
+file since it was created on disk (by any connection).
+This means that a snapshot cannot be taken on a wal mode database with
+no wal file immediately after it is first opened.
+At least one transaction must be written to it first.
+.El
+.Pp
+This function may also return SQLITE_NOMEM.
+If it is called with the database handle in autocommit mode but fails
+for some other reason, whether or not a read transaction is opened
+on schema S is undefined.
+.Pp
+The sqlite3_snapshot object returned from a successful
+call to sqlite3_snapshot_get() must be freed
+using sqlite3_snapshot_free() to avoid a memory
+leak.
+.Pp
+The sqlite3_snapshot_get() interface is only
+available when the SQLITE_ENABLE_SNAPSHOT compile-time option is used.
+.Sh SEE ALSO
+.Xr sqlite3_get_autocommit 3 ,
+.Xr sqlite3 3 ,
+.Xr sqlite3_snapshot 3 ,
+.Xr sqlite3_snapshot_free 3 ,
+.Xr sqlite3_snapshot_get 3

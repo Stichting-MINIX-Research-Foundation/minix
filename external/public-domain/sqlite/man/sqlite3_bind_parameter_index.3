@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BIND_PARAMETER_INDEX 3
+.Os
+.Sh NAME
+.Nm sqlite3_bind_parameter_index
+.Nd Index Of A Parameter With A Given Name
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_bind_parameter_index
+.Fa "sqlite3_stmt*"
+.Fa "const char *zName"
+.Fc
+.Sh DESCRIPTION
+Return the index of an SQL parameter given its name.
+The index value returned is suitable for use as the second parameter
+to sqlite3_bind().
+A zero is returned if no matching parameter is found.
+The parameter name must be given in UTF-8 even if the original statement
+was prepared from UTF-16 text using sqlite3_prepare16_v2().
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_bind_parameter_count 3 ,
+.Xr sqlite3_bind_parameter_name 3 ,
+.Xr sqlite3_prepare 3

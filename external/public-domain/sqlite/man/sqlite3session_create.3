@@ -1,0 +1,47 @@
+.Dd March 11, 2017
+.Dt SQLITE3SESSION_CREATE 3
+.Os
+.Sh NAME
+.Nm sqlite3session_create
+.Nd Create A New Session Object
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3session_create
+.Fa "sqlite3 *db"
+.Fa "const char *zDb"
+.Fa "sqlite3_session **ppSession     "
+.Fc
+.Sh DESCRIPTION
+Create a new session object attached to database handle db.
+If successful, a pointer to the new object is written to *ppSession
+and SQLITE_OK is returned.
+If an error occurs, *ppSession is set to NULL and an SQLite error code
+(e.g.
+SQLITE_NOMEM) is returned.
+.Pp
+It is possible to create multiple session objects attached to a single
+database handle.
+.Pp
+Session objects created using this function should be deleted using
+the sqlite3session_delete() function before
+the database handle that they are attached to is itself closed.
+If the database handle is closed before the session object is deleted,
+then the results of calling any session module function, including
+sqlite3session_delete() on the session object
+are undefined.
+.Pp
+Because the session module uses the sqlite3_preupdate_hook()
+API, it is not possible for an application to register a pre-update
+hook on a database handle that has one or more session objects attached.
+Nor is it possible to create a session object attached to a database
+handle for which a pre-update hook is already defined.
+The results of attempting either of these things are undefined.
+.Pp
+The session object will be used to create changesets for tables in
+database zDb, where zDb is either "main", or "temp", or the name of
+an attached database.
+It is not an error if database zDb is not attached to the database
+when the session object is created.
+.Sh SEE ALSO
+.Xr sqlite3_preupdate_hook 3 ,
+.Xr sqlite3session_delete 3

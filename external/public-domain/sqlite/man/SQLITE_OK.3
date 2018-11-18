@@ -1,0 +1,76 @@
+.Dd March 11, 2017
+.Dt SQLITE_OK 3
+.Os
+.Sh NAME
+.Nm SQLITE_OK ,
+.Nm SQLITE_ERROR ,
+.Nm SQLITE_INTERNAL ,
+.Nm SQLITE_PERM ,
+.Nm SQLITE_ABORT ,
+.Nm SQLITE_BUSY ,
+.Nm SQLITE_LOCKED ,
+.Nm SQLITE_NOMEM ,
+.Nm SQLITE_READONLY ,
+.Nm SQLITE_INTERRUPT ,
+.Nm SQLITE_IOERR ,
+.Nm SQLITE_CORRUPT ,
+.Nm SQLITE_NOTFOUND ,
+.Nm SQLITE_FULL ,
+.Nm SQLITE_CANTOPEN ,
+.Nm SQLITE_PROTOCOL ,
+.Nm SQLITE_EMPTY ,
+.Nm SQLITE_SCHEMA ,
+.Nm SQLITE_TOOBIG ,
+.Nm SQLITE_CONSTRAINT ,
+.Nm SQLITE_MISMATCH ,
+.Nm SQLITE_MISUSE ,
+.Nm SQLITE_NOLFS ,
+.Nm SQLITE_AUTH ,
+.Nm SQLITE_FORMAT ,
+.Nm SQLITE_RANGE ,
+.Nm SQLITE_NOTADB ,
+.Nm SQLITE_NOTICE ,
+.Nm SQLITE_WARNING ,
+.Nm SQLITE_ROW ,
+.Nm SQLITE_DONE
+.Nd Result Codes
+.Sh SYNOPSIS
+.Fd #define SQLITE_OK
+.Fd #define SQLITE_ERROR
+.Fd #define SQLITE_INTERNAL
+.Fd #define SQLITE_PERM
+.Fd #define SQLITE_ABORT
+.Fd #define SQLITE_BUSY
+.Fd #define SQLITE_LOCKED
+.Fd #define SQLITE_NOMEM
+.Fd #define SQLITE_READONLY
+.Fd #define SQLITE_INTERRUPT
+.Fd #define SQLITE_IOERR
+.Fd #define SQLITE_CORRUPT
+.Fd #define SQLITE_NOTFOUND
+.Fd #define SQLITE_FULL
+.Fd #define SQLITE_CANTOPEN
+.Fd #define SQLITE_PROTOCOL
+.Fd #define SQLITE_EMPTY
+.Fd #define SQLITE_SCHEMA
+.Fd #define SQLITE_TOOBIG
+.Fd #define SQLITE_CONSTRAINT
+.Fd #define SQLITE_MISMATCH
+.Fd #define SQLITE_MISUSE
+.Fd #define SQLITE_NOLFS
+.Fd #define SQLITE_AUTH
+.Fd #define SQLITE_FORMAT
+.Fd #define SQLITE_RANGE
+.Fd #define SQLITE_NOTADB
+.Fd #define SQLITE_NOTICE
+.Fd #define SQLITE_WARNING
+.Fd #define SQLITE_ROW
+.Fd #define SQLITE_DONE
+.Sh DESCRIPTION
+Many SQLite functions return an integer result code from the set shown
+here in order to indicate success or failure.
+.Pp
+New error codes may be added in future versions of SQLite.
+.Pp
+.Sh SEE ALSO
+.Xr SQLITE_IOERR_READ 3

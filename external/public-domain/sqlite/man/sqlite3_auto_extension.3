@@ -1,0 +1,52 @@
+.Dd March 11, 2017
+.Dt SQLITE3_AUTO_EXTENSION 3
+.Os
+.Sh NAME
+.Nm sqlite3_auto_extension
+.Nd Automatically Load Statically Linked Extensions
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_auto_extension
+.Fa "void(*xEntryPoint)(void)"
+.Fc
+.Sh DESCRIPTION
+This interface causes the xEntryPoint() function to be invoked for
+each new database connection that is created.
+The idea here is that xEntryPoint() is the entry point for a statically
+linked SQLite extension that is to be automatically
+loaded into all new database connections.
+.Pp
+Even though the function prototype shows that xEntryPoint() takes no
+arguments and returns void, SQLite invokes xEntryPoint() with three
+arguments and expects an integer result as if the signature of the
+entry point where as follows: 
+.Bd -ragged
+.Bd -literal
+   int xEntryPoint(      sqlite3 *db,      const char **pzErrMsg,  
+const struct sqlite3_api_routines *pThunk    ); 
+.Ed
+.Pp
+.Ed
+.Pp
+If the xEntryPoint routine encounters an error, it should make *pzErrMsg
+point to an appropriate error message (obtained from sqlite3_mprintf())
+and return an appropriate error code.
+SQLite ensures that *pzErrMsg is NULL before calling the xEntryPoint().
+SQLite will invoke sqlite3_free() on *pzErrMsg after
+xEntryPoint() returns.
+If any xEntryPoint() returns an error, the sqlite3_open(),
+sqlite3_open16(), or sqlite3_open_v2()
+call that provoked the xEntryPoint() will fail.
+.Pp
+Calling sqlite3_auto_extension(X) with an entry point X that is already
+on the list of automatic extensions is a harmless no-op.
+No entry point will be called more than once for each database connection
+that is opened.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_cancel_auto_extension 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_mprintf 3 ,
+.Xr sqlite3_open 3 ,
+.Xr sqlite3_reset_auto_extension 3

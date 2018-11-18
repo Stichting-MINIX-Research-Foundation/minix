@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SYSTEM_ERRNO 3
+.Os
+.Sh NAME
+.Nm sqlite3_system_errno
+.Nd Low-level system error code
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_system_errno
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+Attempt to return the underlying operating system error code or error
+number that caused the most recent I/O error or failure to open a file.
+The return value is OS-dependent.
+For example, on unix systems, after sqlite3_open_v2()
+returns SQLITE_CANTOPEN, this interface could be called
+to get back the underlying "errno" that caused the problem, such as
+ENOSPC, EAUTH, EISDIR, and so forth.
+.Sh SEE ALSO
+.Xr sqlite3_open 3 ,
+.Xr SQLITE_OK 3

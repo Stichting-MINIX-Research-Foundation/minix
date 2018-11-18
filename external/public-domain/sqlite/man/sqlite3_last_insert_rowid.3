@@ -1,0 +1,59 @@
+.Dd March 11, 2017
+.Dt SQLITE3_LAST_INSERT_ROWID 3
+.Os
+.Sh NAME
+.Nm sqlite3_last_insert_rowid
+.Nd Last Insert Rowid
+.Sh SYNOPSIS
+.Ft sqlite3_int64 
+.Fo sqlite3_last_insert_rowid
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+Each entry in most SQLite tables (except for WITHOUT ROWID
+tables) has a unique 64-bit signed integer key called the  "rowid".
+The rowid is always available as an undeclared column named ROWID,
+OID, or _ROWID_ as long as those names are not also used by explicitly
+declared columns.
+If the table has a column of type INTEGER PRIMARY KEY
+then that column is another alias for the rowid.
+.Pp
+The sqlite3_last_insert_rowid(D) interface returns the rowid of
+the most recent successful INSERT into a rowid table or virtual table
+on database connection D.
+Inserts into WITHOUT ROWID tables are not recorded.
+If no successful INSERTs into rowid tables have ever occurred
+on the database connection D, then sqlite3_last_insert_rowid(D) returns
+zero.
+.Pp
+If an INSERT occurs within a trigger or within a virtual table
+method, then this routine will return the rowid of the inserted
+row as long as the trigger or virtual table method is running.
+But once the trigger or virtual table method ends, the value returned
+by this routine reverts to what it was before the trigger or virtual
+table method began.
+.Pp
+An INSERT that fails due to a constraint violation is not a successful
+INSERT and does not change the value returned by this routine.
+Thus INSERT OR FAIL, INSERT OR IGNORE, INSERT OR ROLLBACK, and INSERT
+OR ABORT make no changes to the return value of this routine when their
+insertion fails.
+When INSERT OR REPLACE encounters a constraint violation, it does not
+fail.
+The INSERT continues to completion after deleting rows that caused
+the constraint problem so INSERT OR REPLACE will always change the
+return value of this interface.
+.Pp
+For the purposes of this routine, an INSERT is considered to
+be successful even if it is subsequently rolled back.
+.Pp
+This function is accessible to SQL statements via the last_insert_rowid() SQL function.
+.Pp
+If a separate thread performs a new INSERT on the same database
+connection while the sqlite3_last_insert_rowid()
+function is running and thus changes the last insert rowid, then
+the value returned by sqlite3_last_insert_rowid()
+is unpredictable and might not equal either the old or the new last
+insert rowid.
+.Sh SEE ALSO
+.Xr sqlite3_last_insert_rowid 3

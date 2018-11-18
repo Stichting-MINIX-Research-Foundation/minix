@@ -1,0 +1,46 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SNAPSHOT_OPEN 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot_open
+.Nd Start a read transaction on an historical snapshot
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_snapshot_open
+.Fa "sqlite3 *db"
+.Fa "const char *zSchema"
+.Fa "sqlite3_snapshot *pSnapshot "
+.Fc
+.Sh DESCRIPTION
+The sqlite3_snapshot_open(D,S,P) interface
+starts a read transaction for schema S of database connection
+D such that the read transaction refers to historical snapshot
+P, rather than the most recent change to the database.
+The sqlite3_snapshot_open() interface returns
+SQLITE_OK on success or an appropriate error code if it fails.
+.Pp
+In order to succeed, a call to sqlite3_snapshot_open(D,S,P)
+must be the first operation following the BEGIN that takes the
+schema S out of autocommit mode.
+In other words, schema S must not currently be in a transaction for
+sqlite3_snapshot_open(D,S,P) to work, but
+the database connection D must be out of autocommit mode.
+A snapshot will fail to open if it has been overwritten by
+a checkpoint.
+A call to sqlite3_snapshot_open(D,S,P)
+will fail if the database connection D does not know that the database
+file for schema S is in WAL mode.
+A database connection might not know that the database file is in WAL mode
+if there has been no prior I/O on that database connection, or if the
+database entered WAL mode after the most recent I/O on the
+database connection.
+(Hint: Run "PRAGMA application_id" against a newly
+opened database connection in order to make it ready to use snapshots.)
+.Pp
+The sqlite3_snapshot_open() interface is only
+available when the SQLITE_ENABLE_SNAPSHOT compile-time option is used.
+.Sh SEE ALSO
+.Xr sqlite3_get_autocommit 3 ,
+.Xr sqlite3 3 ,
+.Xr sqlite3_snapshot 3 ,
+.Xr sqlite3_snapshot_open 3

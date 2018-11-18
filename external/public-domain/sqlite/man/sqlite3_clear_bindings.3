@@ -1,0 +1,19 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CLEAR_BINDINGS 3
+.Os
+.Sh NAME
+.Nm sqlite3_clear_bindings
+.Nd Reset All Bindings On A Prepared Statement
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_clear_bindings
+.Fa "sqlite3_stmt*"
+.Fc
+.Sh DESCRIPTION
+Contrary to the intuition of many, sqlite3_reset() does
+not reset the  bindings on a prepared statement.
+Use this routine to reset all host parameters to NULL.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_reset 3

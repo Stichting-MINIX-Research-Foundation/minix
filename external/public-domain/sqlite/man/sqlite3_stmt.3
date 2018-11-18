@@ -1,0 +1,39 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STMT 3
+.Os
+.Sh NAME
+.Nm sqlite3_stmt
+.Nd Prepared Statement Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_stmt sqlite3_stmt;
+.Sh DESCRIPTION
+An instance of this object represents a single SQL statement that has
+been compiled into binary form and is ready to be evaluated.
+.Pp
+Think of each SQL statement as a separate computer program.
+The original SQL text is source code.
+A prepared statement object is the compiled object code.
+All SQL must be converted into a prepared statement before it can be
+run.
+.Pp
+The life-cycle of a prepared statement object usually goes like this:
+.Bl -enum
+.It
+Create the prepared statement object using sqlite3_prepare_v2().
+.It
+Bind values to parameters using the sqlite3_bind_*() interfaces.
+.It
+Run the SQL by calling sqlite3_step() one or more times.
+.It
+Reset the prepared statement using sqlite3_reset() then
+go back to step 2.
+Do this zero or more times.
+.It
+Destroy the object using sqlite3_finalize().
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_step 3

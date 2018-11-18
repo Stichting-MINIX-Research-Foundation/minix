@@ -1,0 +1,24 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STRLIKE 3
+.Os
+.Sh NAME
+.Nm sqlite3_strlike
+.Nd String LIKE Matching
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_strlike
+.Fa "const char *zGlob"
+.Fa "const char *zStr"
+.Fa "unsigned int cEsc"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_strlike(P,X,E) function matches Unicode
+characters, though only ASCII characters are case folded.
+.Pp
+Note that this routine returns zero on a match and non-zero if the
+strings do not match, the same as sqlite3_stricmp()
+and sqlite3_strnicmp().
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_strglob 3 ,
+.Xr sqlite3_stricmp 3

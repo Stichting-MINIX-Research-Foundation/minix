@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE_CHECKPOINT_PASSIVE 3
+.Os
+.Sh NAME
+.Nm SQLITE_CHECKPOINT_PASSIVE ,
+.Nm SQLITE_CHECKPOINT_FULL ,
+.Nm SQLITE_CHECKPOINT_RESTART ,
+.Nm SQLITE_CHECKPOINT_TRUNCATE
+.Nd Checkpoint Mode Values
+.Sh SYNOPSIS
+.Fd #define SQLITE_CHECKPOINT_PASSIVE
+.Fd #define SQLITE_CHECKPOINT_FULL
+.Fd #define SQLITE_CHECKPOINT_RESTART
+.Fd #define SQLITE_CHECKPOINT_TRUNCATE
+.Sh DESCRIPTION
+These constants define all valid values for the "checkpoint mode" passed
+as the third parameter to the sqlite3_wal_checkpoint_v2()
+interface.
+See the sqlite3_wal_checkpoint_v2() documentation
+for details on the meaning of each of these checkpoint modes.
+.Sh SEE ALSO
+.Xr sqlite3_wal_checkpoint_v2 3

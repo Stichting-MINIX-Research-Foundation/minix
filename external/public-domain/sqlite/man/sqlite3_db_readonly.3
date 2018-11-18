@@ -1,0 +1,16 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_READONLY 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_readonly
+.Nd Determine if a database is read-only
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_db_readonly
+.Fa "sqlite3 *db"
+.Fa "const char *zDbName"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_db_readonly(D,N) interface returns 1 if the database N
+of connection D is read-only, 0 if it is read/write, or -1 if N is
+not the name of a database on connection D.

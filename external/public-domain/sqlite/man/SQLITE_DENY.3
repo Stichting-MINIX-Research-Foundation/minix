@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE_DENY 3
+.Os
+.Sh NAME
+.Nm SQLITE_DENY ,
+.Nm SQLITE_IGNORE
+.Nd Authorizer Return Codes
+.Sh SYNOPSIS
+.Fd #define SQLITE_DENY
+.Fd #define SQLITE_IGNORE
+.Sh DESCRIPTION
+The  authorizer callback function must
+return either SQLITE_OK or one of these two constants in order
+to signal SQLite whether or not the action is permitted.
+See the  authorizer documentation for additional
+information.
+.Pp
+Note that SQLITE_IGNORE is also used as a conflict resolution mode
+returned from the sqlite3_vtab_on_conflict()
+interface.
+.Sh SEE ALSO
+.Xr SQLITE_ROLLBACK 3 ,
+.Xr sqlite3_set_authorizer 3 ,
+.Xr sqlite3_vtab_on_conflict 3 ,
+.Xr SQLITE_OK 3

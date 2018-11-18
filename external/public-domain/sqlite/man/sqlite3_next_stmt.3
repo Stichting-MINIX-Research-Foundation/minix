@@ -1,0 +1,27 @@
+.Dd March 11, 2017
+.Dt SQLITE3_NEXT_STMT 3
+.Os
+.Sh NAME
+.Nm sqlite3_next_stmt
+.Nd Find the next prepared statement
+.Sh SYNOPSIS
+.Ft sqlite3_stmt *
+.Fo sqlite3_next_stmt
+.Fa "sqlite3 *pDb"
+.Fa "sqlite3_stmt *pStmt"
+.Fc
+.Sh DESCRIPTION
+This interface returns a pointer to the next prepared statement
+after pStmt associated with the database connection
+pDb.
+If pStmt is NULL then this interface returns a pointer to the first
+prepared statement associated with the database connection pDb.
+If no prepared statement satisfies the conditions of this routine,
+it returns NULL.
+.Pp
+The database connection pointer D in a call to sqlite3_next_stmt(D,S)
+must refer to an open database connection and in particular must not
+be a NULL pointer.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3

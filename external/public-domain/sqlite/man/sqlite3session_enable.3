@@ -1,0 +1,30 @@
+.Dd March 11, 2017
+.Dt SQLITE3SESSION_ENABLE 3
+.Os
+.Sh NAME
+.Nm sqlite3session_enable
+.Nd Enable Or Disable A Session Object
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3session_enable
+.Fa "sqlite3_session *pSession"
+.Fa "int bEnable"
+.Fc
+.Sh DESCRIPTION
+Enable or disable the recording of changes by a session object.
+When enabled, a session object records changes made to the database.
+When disabled - it does not.
+A newly created session object is enabled.
+Refer to the documentation for sqlite3session_changeset()
+for further details regarding how enabling and disabling a session
+object affects the eventual changesets.
+.Pp
+Passing zero to this function disables the session.
+Passing a value greater than zero enables it.
+Passing a value less than zero is a no-op, and may be used to query
+the current state of the session.
+.Pp
+The return value indicates the final state of the session object: 0
+if the session is disabled, or 1 if it is enabled.
+.Sh SEE ALSO
+.Xr sqlite3session_changeset 3

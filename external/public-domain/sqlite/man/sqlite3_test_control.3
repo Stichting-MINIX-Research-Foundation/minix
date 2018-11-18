@@ -1,0 +1,28 @@
+.Dd March 11, 2017
+.Dt SQLITE3_TEST_CONTROL 3
+.Os
+.Sh NAME
+.Nm sqlite3_test_control
+.Nd Testing Interface
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_test_control
+.Fa "int op"
+.Fa "..."
+.Fc
+.Sh DESCRIPTION
+The sqlite3_test_control() interface is used to read out internal state
+of SQLite and to inject faults into SQLite for testing purposes.
+The first parameter is an operation code that determines the number,
+meaning, and operation of all subsequent parameters.
+.Pp
+This interface is not for use by applications.
+It exists solely for verifying the correct operation of the SQLite
+library.
+Depending on how the SQLite library is compiled, this interface might
+not exist.
+.Pp
+The details of the operation codes, their meanings, the parameters
+they take, and what they do are all subject to change without notice.
+Unlike most of the SQLite API, this function is not guaranteed to operate
+consistently from one release to the next.

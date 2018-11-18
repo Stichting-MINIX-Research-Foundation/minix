@@ -1,0 +1,129 @@
+.Dd $Mdocdate: March 30 2016 $
+.Dt SQLITE2MDOC 1
+.Os
+.Sh NAME
+.Nm sqlite2mdoc
+.Nd extract C reference manpages from SQLite header file
+.Sh SYNOPSIS
+.Nm sqlite2mdoc
+.Op Fl nv
+.Op Fl p Ar prefix
+.Sh DESCRIPTION
+The
+.Nm
+utility extracts C interface descriptions from a header file composed
+using the SQLite documentation syntax (see
+.Sx SYNTAX ) .
+It then emits the corresponding set of
+.Xr mdoc 7
+manpages, one per interface description.
+By default, 
+.Nm
+reads from standard input and outputs files into the current directory.
+Its arguments are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Don't create files in
+.Ar prefix :
+just dump everything to stdout.
+.It Fl v
+Show all missing references.
+.It Fl p Ar prefix
+Output into
+.Ar prefix ,
+which must already exist.
+.El
+.Pp
+This tool was designed for SQLite's header file
+.Pa sqlite.h ,
+although it will work for any document following the
+.Sx SYNTAX .
+Historically, all of the SQLite C reference documentation (called the
+.Dq C-language Interface Specification )
+was only available in HTML.
+.Sh SYNTAX
+The syntax for the interface descriptions is as follows:
+.Bd -literal
+/*
+** CAPI3REF: A Brief Description Here
+** KEYWORDS: {multiword keyword} single_keyword
+**
+** This is a longer description following the blank line.
+** You can refer to [other descriptions] by enclosing references to
+** keywords (or declaration names) in brackets.
+** If the brackets have [some_keyword | a bar] within them, the
+** second part is shown while the first is used as a reference.
+** Each reference will be collected and its corresponding manpage,
+** if found, will be listed in SEE ALSO.
+**
+** You can embed <b>HTML</b>, but you must limit this to lists
+** (ordered, unordered, description).
+**
+** See also: [another_keyword], although since we're the only
+** reference, none of these will be found.
+** Anything not in [function() | quotes] will be discarded.
+**
+** Now we end the comment.  Anything after this, until the next
+** blank line, is taken as declarations.
+*/
+int function_name(char *anarg, char *another);
+#define A_DEFINITION "text"
+struct a_struct {
+	struct embedded_struct {
+		int foo;
+		int bar;
+	};
+};
+typedef void (*fptr)(const char *a, const char *b);
+.Ed
+.Pp
+It's important that the opening and closing comment parts are flush left
+and not followed by spaces.
+Paragraph breaks (empty comment lines) should also not have any spaces.
+.Pp
+There are many SQLite-specific bits that are purposely not documented so
+that people don't use them.
+.\" .Sh CONTEXT
+.\" For section 9 functions only.
+.\" .Sh IMPLEMENTATION NOTES
+.\" Not used in OpenBSD.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, and 9 function return values only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7, and 8 only.
+.\" .Sh FILES
+.Sh EXIT STATUS
+.Ex -std
+.\" For sections 1, 6, and 8 only.
+.\" .Sh EXAMPLES
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, 4, and 9 errno settings only.
+.Sh SEE ALSO
+.Xr mdoc 7 ,
+.Lk https://www.sqlite.org/capi3ref.html "C-language Interface Specification for SQLite"
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+.Nm
+was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.Sh CAVEATS
+There are some missing bits:
+.Bl -bullet
+.It
+HTML tables are not parsed.
+.It
+HTML anchors are not parsed.
+.It
+Obviously-broken HTML (e.g., unmatched </dt>) isn't worked around.
+.It
+Structure definitions are discarded except for the structure name.
+.It
+Comments in definitions will cause extra white-space.
+.El
+.Sh BUGS
+Absolutely.
+.\" .Sh SECURITY CONSIDERATIONS
+.\" Not used in OpenBSD.

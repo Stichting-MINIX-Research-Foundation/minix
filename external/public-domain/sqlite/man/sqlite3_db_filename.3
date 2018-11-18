@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_FILENAME 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_filename
+.Nd Return The Filename For A Database Connection
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_db_filename
+.Fa "sqlite3 *db"
+.Fa "const char *zDbName"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_db_filename(D,N) interface returns a pointer to a filename
+associated with database N of connection D.
+The main database file has the name "main".
+If there is no attached database N on the database connection D, or
+if database N is a temporary or in-memory database, then a NULL pointer
+is returned.
+.Pp
+The filename returned by this function is the output of the xFullPathname
+method of the VFS.
+In other words, the filename will be an absolute pathname, even if
+the filename used to open the database originally was a URI or relative
+pathname.

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/04 03:38:06 matt Exp $
+# $NetBSD: Makefile,v 1.2 2016/01/28 19:40:29 christos Exp $
 
 PROG=	lzmainfo
 BINDIR=	/usr/bin
@@ -18,8 +18,8 @@ CPPFLAGS+=	-DPACKAGE=\"xz\"
 .if !defined(__MINIX)
 CPPFLAGS+=	-DENABLE_NLS -DLOCALEDIR=\"/usr/share/locale\"
 
-DPADD+=	${LIBLZMA} ${LIBINTL}
-LDADD+=	-llzma -lintl
+DPADD+=	${LIBLZMA} ${LIBINTL} ${LIBPTHREAD}
+LDADD+=	-llzma -lintl -lpthread
 .else
 DPADD+= ${LIBLZMA}
 LDADD+= -llzma

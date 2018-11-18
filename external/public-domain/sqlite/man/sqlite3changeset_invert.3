@@ -1,0 +1,45 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_INVERT 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_invert
+.Nd Invert A Changeset
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_invert
+.Fa "int nIn"
+.Fa "const void *pIn"
+.Fa "int *pnOut"
+.Fa "void **ppOut        "
+.Fc
+.Sh DESCRIPTION
+This function is used to "invert" a changeset object.
+Applying an inverted changeset to a database reverses the effects of
+applying the uninverted changeset.
+Specifically: 
+.Bl -bullet
+.It
+Each DELETE change is changed to an INSERT, and 
+.It
+Each INSERT change is changed to a DELETE, and 
+.It
+For each UPDATE change, the old.* and new.* values are exchanged.
+.El
+.Pp
+This function does not change the order in which changes appear within
+the changeset.
+It merely reverses the sense of each individual change.
+.Pp
+If successful, a pointer to a buffer containing the inverted changeset
+is stored in *ppOut, the size of the same buffer is stored in *pnOut,
+and SQLITE_OK is returned.
+If an error occurs, both *pnOut and *ppOut are zeroed and an SQLite
+error code returned.
+.Pp
+It is the responsibility of the caller to eventually call sqlite3_free()
+on the *ppOut pointer to free the buffer allocation following a successful
+call to this function.
+.Pp
+WARNING/TODO: This function currently assumes that the input is a valid
+changeset.
+If it is not, the results are undefined.

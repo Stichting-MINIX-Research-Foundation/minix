@@ -1,0 +1,38 @@
+.Dd March 11, 2017
+.Dt SQLITE_SYNC_NORMAL 3
+.Os
+.Sh NAME
+.Nm SQLITE_SYNC_NORMAL ,
+.Nm SQLITE_SYNC_FULL ,
+.Nm SQLITE_SYNC_DATAONLY
+.Nd Synchronization Type Flags
+.Sh SYNOPSIS
+.Fd #define SQLITE_SYNC_NORMAL
+.Fd #define SQLITE_SYNC_FULL
+.Fd #define SQLITE_SYNC_DATAONLY
+.Sh DESCRIPTION
+When SQLite invokes the xSync() method of an sqlite3_io_methods
+object it uses a combination of these integer values as the second
+argument.
+.Pp
+When the SQLITE_SYNC_DATAONLY flag is used, it means that the sync
+operation only needs to flush data to mass storage.
+Inode information need not be flushed.
+If the lower four bits of the flag equal SQLITE_SYNC_NORMAL, that means
+to use normal fsync() semantics.
+If the lower four bits equal SQLITE_SYNC_FULL, that means to use Mac
+OS X style fullsync instead of fsync().
+.Pp
+Do not confuse the SQLITE_SYNC_NORMAL and SQLITE_SYNC_FULL flags with
+the PRAGMA synchronous=NORMAL and PRAGMA synchronous=FULL
+settings.
+The synchronous pragma determines when calls to the
+xSync VFS method occur and applies uniformly across all platforms.
+The SQLITE_SYNC_NORMAL and SQLITE_SYNC_FULL flags determine how energetic
+or rigorous or forceful the sync operations are and only make a difference
+on Mac OSX for the default SQLite code.
+(Third-party VFS implementations might also make the distinction between
+SQLITE_SYNC_NORMAL and SQLITE_SYNC_FULL, but among the operating systems
+natively supported by SQLite, only Mac OSX cares about the difference.)
+.Sh SEE ALSO
+.Xr sqlite3_io_methods 3

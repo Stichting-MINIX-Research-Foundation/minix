@@ -1,0 +1,133 @@
+.Dd March 11, 2017
+.Dt SQLITE3_IO_METHODS 3
+.Os
+.Sh NAME
+.Nm sqlite3_io_methods ,
+.Nm sqlite3_io_methods
+.Nd OS Interface File Virtual Methods Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_io_methods sqlite3_io_methods;
+.Vt struct sqlite3_io_methods ;
+.Sh DESCRIPTION
+Every file opened by the sqlite3_vfs.xOpen method
+populates an sqlite3_file object (or, more commonly, a
+subclass of the sqlite3_file object) with a pointer to
+an instance of this object.
+This object defines the methods used to perform various operations
+against the open file represented by the sqlite3_file object.
+.Pp
+If the sqlite3_vfs.xOpen method sets the sqlite3_file.pMethods
+element to a non-NULL pointer, then the sqlite3_io_methods.xClose method
+may be invoked even if the sqlite3_vfs.xOpen reported
+that it failed.
+The only way to prevent a call to xClose following a failed sqlite3_vfs.xOpen
+is for the sqlite3_vfs.xOpen to set the sqlite3_file.pMethods
+element to NULL.
+.Pp
+The flags argument to xSync may be one of SQLITE_SYNC_NORMAL
+or SQLITE_SYNC_FULL.
+The first choice is the normal fsync().
+The second choice is a Mac OS X style fullsync.
+The SQLITE_SYNC_DATAONLY flag may be ORed in to
+indicate that only the data of the file and not its inode needs to
+be synced.
+.Pp
+The integer values to xLock() and xUnlock() are one of 
+.Bl -bullet
+.It
+SQLITE_LOCK_NONE, 
+.It
+SQLITE_LOCK_SHARED, 
+.It
+SQLITE_LOCK_RESERVED, 
+.It
+SQLITE_LOCK_PENDING, or 
+.It
+SQLITE_LOCK_EXCLUSIVE.
+.El
+.Pp
+xLock() increases the lock.
+xUnlock() decreases the lock.
+The xCheckReservedLock() method checks whether any database connection,
+either in this process or in some other process, is holding a RESERVED,
+PENDING, or EXCLUSIVE lock on the file.
+It returns true if such a lock exists and false otherwise.
+.Pp
+The xFileControl() method is a generic interface that allows custom
+VFS implementations to directly control an open file using the sqlite3_file_control()
+interface.
+The second "op" argument is an integer opcode.
+The third argument is a generic pointer intended to point to a structure
+that may contain arguments or space in which to write return values.
+Potential uses for xFileControl() might be functions to enable blocking
+locks with timeouts, to change the locking strategy (for example to
+use dot-file locks), to inquire about the status of a lock, or to break
+stale locks.
+The SQLite core reserves all opcodes less than 100 for its own use.
+A  list of opcodes less than 100 is available.
+Applications that define a custom xFileControl method should use opcodes
+greater than 100 to avoid conflicts.
+VFS implementations should return SQLITE_NOTFOUND for
+file control opcodes that they do not recognize.
+.Pp
+The xSectorSize() method returns the sector size of the device that
+underlies the file.
+The sector size is the minimum write that can be performed without
+disturbing other bytes in the file.
+The xDeviceCharacteristics() method returns a bit vector describing
+behaviors of the underlying device: 
+.Bl -bullet
+.It
+SQLITE_IOCAP_ATOMIC 
+.It
+SQLITE_IOCAP_ATOMIC512 
+.It
+SQLITE_IOCAP_ATOMIC1K 
+.It
+SQLITE_IOCAP_ATOMIC2K 
+.It
+SQLITE_IOCAP_ATOMIC4K 
+.It
+SQLITE_IOCAP_ATOMIC8K 
+.It
+SQLITE_IOCAP_ATOMIC16K 
+.It
+SQLITE_IOCAP_ATOMIC32K 
+.It
+SQLITE_IOCAP_ATOMIC64K 
+.It
+SQLITE_IOCAP_SAFE_APPEND 
+.It
+SQLITE_IOCAP_SEQUENTIAL 
+.It
+SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN
+.It
+SQLITE_IOCAP_POWERSAFE_OVERWRITE 
+.It
+SQLITE_IOCAP_IMMUTABLE 
+.El
+.Pp
+The SQLITE_IOCAP_ATOMIC property means that all writes of any size
+are atomic.
+The SQLITE_IOCAP_ATOMICnnn values mean that writes of blocks that are
+nnn bytes in size and are aligned to an address which is an integer
+multiple of nnn are atomic.
+The SQLITE_IOCAP_SAFE_APPEND value means that when data is appended
+to a file, the data is appended first then the size of the file is
+extended, never the other way around.
+The SQLITE_IOCAP_SEQUENTIAL property means that information is written
+to disk in the same order as calls to xWrite().
+.Pp
+If xRead() returns SQLITE_IOERR_SHORT_READ it must also fill in the
+unread portions of the buffer with zeros.
+A VFS that fails to zero-fill short reads might seem to work.
+However, failure to zero-fill short reads will eventually lead to database
+corruption.
+.Sh SEE ALSO
+.Xr SQLITE_FCNTL_LOCKSTATE 3 ,
+.Xr sqlite3_file 3 ,
+.Xr sqlite3_file_control 3 ,
+.Xr SQLITE_IOCAP_ATOMIC 3 ,
+.Xr SQLITE_LOCK_NONE 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_SYNC_NORMAL 3

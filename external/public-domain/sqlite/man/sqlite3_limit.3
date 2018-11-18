@@ -1,0 +1,53 @@
+.Dd March 11, 2017
+.Dt SQLITE3_LIMIT 3
+.Os
+.Sh NAME
+.Nm sqlite3_limit
+.Nd Run-time Limits
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_limit
+.Fa "sqlite3*"
+.Fa "int id"
+.Fa "int newVal"
+.Fc
+.Sh DESCRIPTION
+This interface allows the size of various constructs to be limited
+on a connection by connection basis.
+The first parameter is the database connection whose
+limit is to be set or queried.
+The second parameter is one of the limit categories
+that define a class of constructs to be size limited.
+The third parameter is the new limit for that construct.
+.Pp
+If the new limit is a negative number, the limit is unchanged.
+For each limit category SQLITE_LIMIT_<i>NAME</i> there is a  hard upper bound
+set at compile-time by a C preprocessor macro called  SQLITE_MAX_<i>NAME</i>.
+(The "_LIMIT_" in the name is changed to "_MAX_".)    Attempts to increase
+a limit above its hard upper bound are silently truncated to the hard
+upper bound.
+.Pp
+Regardless of whether or not the limit was changed, the sqlite3_limit()
+interface returns the prior value of the limit.
+Hence, to find the current value of a limit without changing it, simply
+invoke this interface with the third parameter set to -1.
+.Pp
+Run-time limits are intended for use in applications that manage both
+their own internal database and also databases that are controlled
+by untrusted external sources.
+An example application might be a web browser that has its own databases
+for storing history and separate databases controlled by JavaScript
+applications downloaded off the Internet.
+The internal databases can be given the large, default limits.
+Databases managed by external sources can be given much smaller limits
+designed to prevent a denial of service attack.
+Developers might also want to use the sqlite3_set_authorizer()
+interface to further control untrusted SQL.
+The size of the database created by an untrusted script can be contained
+using the max_page_count PRAGMA.
+.Pp
+New run-time limit categories may be added in future releases.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_limit 3 ,
+.Xr sqlite3_set_authorizer 3

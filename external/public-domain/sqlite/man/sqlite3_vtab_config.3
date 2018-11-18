@@ -1,0 +1,27 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VTAB_CONFIG 3
+.Os
+.Sh NAME
+.Nm sqlite3_vtab_config
+.Nd Virtual Table Interface Configuration
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_vtab_config
+.Fa "sqlite3*"
+.Fa "int op"
+.Fa "..."
+.Fc
+.Sh DESCRIPTION
+This function may be called by either the xConnect or xCreate
+method of a virtual table implementation to configure
+various facets of the virtual table interface.
+.Pp
+If this interface is invoked outside the context of an xConnect or
+xCreate virtual table method then the behavior is undefined.
+.Pp
+At present, there is only one option that may be configured using this
+function.
+(See SQLITE_VTAB_CONSTRAINT_SUPPORT.)
+Further options may be added in the future.
+.Sh SEE ALSO
+.Xr SQLITE_VTAB_CONSTRAINT_SUPPORT 3

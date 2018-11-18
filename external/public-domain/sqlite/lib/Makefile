@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/03/07 18:37:48 christos Exp $
+# $NetBSD: Makefile,v 1.8 2016/10/04 14:25:02 christos Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -16,15 +16,18 @@ FILESDIR_sqlite3.pc=	/usr/lib/pkgconfig
 
 CLEANFILES+=sqlite3.pc
 
-.include <bsd.lib.mk>
+.include <bsd.own.mk>
 
-.if defined(__MINIX)
-.if !empty(DBG:M-Og) || !empty(CFLAGS:M-Og) || \
-	!empty(DBG:M-g) || !empty(CFLAGS:M-g)
-#LSC: -Wno-maybe-uninitialized while compiling with -DNDEBUG -Og
-CWARNFLAGS.gcc+=	-Wno-maybe-uninitialized
+.if ${MACHINE_CPU} == "m68k"
+CWARNFLAGS+=	-Wa,--warn
 .endif
-.endif # defined(__MINIX)
+
+.if ${MACHINE_ARCH} == "powerpc64"
+# call to `' lacks nop, can't restore toc; recompile with -fPIC
+COPTS.sqlite3.c += -O0
+.endif
+
+.include <bsd.lib.mk>
 
 all: sqlite3.pc
 dependall: all
