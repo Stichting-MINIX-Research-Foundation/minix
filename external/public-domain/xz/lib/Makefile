@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.5 2015/04/17 20:12:45 christos Exp $
+# $NetBSD: Makefile,v 1.8 2017/01/19 11:10:38 maya Exp $
+
+.include <bsd.init.mk>
 
 LIB=		lzma
 USE_SHLIBDIR=	yes
 NOLINT=		yes
 
-.include <bsd.init.mk>
 
 .PATH:	${XZSRCDIR}/src/liblzma/api ${XZSRCDIR}/src/liblzma/api/lzma
 INCS+=	base.h bcj.h block.h check.h container.h delta.h \
@@ -34,17 +35,17 @@ SRCS+=	check.c crc32_table.c crc64_table.c
 SRCS+=	crc32_fast.c crc64_fast.c
 
 #__MINIX: No pthreads:
-#         hardware_cputhreads.c outqueue.c stream_encoder_mt.c
+#	hardware_cputhreads.c stream_encoder_mt.c
 .PATH:	${XZSRCDIR}/src/liblzma/common
 SRCS+=	common.c block_util.c easy_preset.c filter_common.c \
-	hardware_physmem.c index.c \
+	hardware_physmem.c hardware_cputhreads.c index.c \
 	stream_flags_common.c vli_size.c \
 	alone_encoder.c block_buffer_encoder.c block_encoder.c \
 	block_header_encoder.c easy_buffer_encoder.c easy_encoder.c \
 	easy_encoder_memusage.c filter_buffer_encoder.c \
 	filter_encoder.c filter_flags_encoder.c index_encoder.c \
 	stream_buffer_encoder.c stream_encoder.c \
-	stream_flags_encoder.c vli_encoder.c \
+	stream_flags_encoder.c vli_encoder.c outqueue.c \
 	alone_decoder.c auto_decoder.c block_buffer_decoder.c \
 	block_decoder.c block_header_decoder.c easy_decoder_memusage.c \
 	filter_buffer_decoder.c filter_decoder.c filter_flags_decoder.c \
@@ -85,11 +86,14 @@ liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 	    > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
+.if ${MACHINE_ARCH} == "i386"
+COPTS += ${${ACTIVE_CC} == "gcc":? -Wno-error=psabi :}
+.endif
+
 CLEANFILES+=	liblzma.pc
 
 .if !defined(__MINIX)
-LDADD+=	-lpthread
-DPADD+=	${LIBPTHREAD}
+LIBDPLIBS+=	pthread ${NETBSDSRCDIR}/lib/libpthread
 .endif # defined(__MINIX)
 
 .include <bsd.lib.mk>
