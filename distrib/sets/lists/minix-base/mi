@@ -983,7 +983,8 @@
 ./usr/lib/libsqlite3.so                                 minix-base
 ./usr/lib/libsqlite3.so.1                               minix-base
 ./usr/lib/libsqlite3.so.1.1                             minix-base      obsolete
-./usr/lib/libsqlite3.so.1.2                             minix-base
+./usr/lib/libsqlite3.so.1.2                             minix-base      obsolete
+./usr/lib/libsqlite3.so.1.3                             minix-base
 ./usr/lib/libssl.a                                      minix-base      crypto
 ./usr/lib/libssl.so.10.1                                minix-base      crypto,obsolete
 ./usr/lib/libssl.so.10.5                                minix-base      crypto
@@ -3418,6 +3419,7 @@
 ./usr/share/zoneinfo/America/Eirunepe                   minix-base
 ./usr/share/zoneinfo/America/El_Salvador                minix-base
 ./usr/share/zoneinfo/America/Ensenada                   minix-base
+./usr/share/zoneinfo/America/Fort_Nelson                minix-base
 ./usr/share/zoneinfo/America/Fort_Wayne                 minix-base
 ./usr/share/zoneinfo/America/Fortaleza                  minix-base
 ./usr/share/zoneinfo/America/Glace_Bay                  minix-base
@@ -3494,6 +3496,7 @@
 ./usr/share/zoneinfo/America/Porto_Acre                 minix-base
 ./usr/share/zoneinfo/America/Porto_Velho                minix-base
 ./usr/share/zoneinfo/America/Puerto_Rico                minix-base
+./usr/share/zoneinfo/America/Punta_Arenas               minix-base
 ./usr/share/zoneinfo/America/Rainy_River                minix-base
 ./usr/share/zoneinfo/America/Rankin_Inlet               minix-base
 ./usr/share/zoneinfo/America/Recife                     minix-base
@@ -3552,10 +3555,12 @@
 ./usr/share/zoneinfo/Asia/Aqtobe                        minix-base
 ./usr/share/zoneinfo/Asia/Ashgabat                      minix-base
 ./usr/share/zoneinfo/Asia/Ashkhabad                     minix-base
+./usr/share/zoneinfo/Asia/Atyrau                        minix-base
 ./usr/share/zoneinfo/Asia/Baghdad                       minix-base
 ./usr/share/zoneinfo/Asia/Bahrain                       minix-base
 ./usr/share/zoneinfo/Asia/Baku                          minix-base
 ./usr/share/zoneinfo/Asia/Bangkok                       minix-base
+./usr/share/zoneinfo/Asia/Barnaul                       minix-base
 ./usr/share/zoneinfo/Asia/Beirut                        minix-base
 ./usr/share/zoneinfo/Asia/Bishkek                       minix-base
 ./usr/share/zoneinfo/Asia/Brunei                        minix-base
@@ -3571,6 +3576,7 @@
 ./usr/share/zoneinfo/Asia/Dili                          minix-base
 ./usr/share/zoneinfo/Asia/Dubai                         minix-base
 ./usr/share/zoneinfo/Asia/Dushanbe                      minix-base
+./usr/share/zoneinfo/Asia/Famagusta                     minix-base
 ./usr/share/zoneinfo/Asia/Gaza                          minix-base
 ./usr/share/zoneinfo/Asia/Harbin                        minix-base
 ./usr/share/zoneinfo/Asia/Hebron                        minix-base
@@ -3630,6 +3636,7 @@
 ./usr/share/zoneinfo/Asia/Thimbu                        minix-base
 ./usr/share/zoneinfo/Asia/Thimphu                       minix-base
 ./usr/share/zoneinfo/Asia/Tokyo                         minix-base
+./usr/share/zoneinfo/Asia/Tomsk                         minix-base
 ./usr/share/zoneinfo/Asia/Ujung_Pandang                 minix-base
 ./usr/share/zoneinfo/Asia/Ulaanbaatar                   minix-base
 ./usr/share/zoneinfo/Asia/Ulan_Bator                    minix-base
@@ -3638,6 +3645,7 @@
 ./usr/share/zoneinfo/Asia/Vientiane                     minix-base
 ./usr/share/zoneinfo/Asia/Vladivostok                   minix-base
 ./usr/share/zoneinfo/Asia/Yakutsk                       minix-base
+./usr/share/zoneinfo/Asia/Yangon                        minix-base
 ./usr/share/zoneinfo/Asia/Yekaterinburg                 minix-base
 ./usr/share/zoneinfo/Asia/Yerevan                       minix-base
 ./usr/share/zoneinfo/Atlantic                           minix-base
@@ -3687,7 +3695,7 @@
 ./usr/share/zoneinfo/Canada                             minix-base
 ./usr/share/zoneinfo/Canada/Atlantic                    minix-base
 ./usr/share/zoneinfo/Canada/Central                     minix-base
-./usr/share/zoneinfo/Canada/East-Saskatchewan           minix-base
+./usr/share/zoneinfo/Canada/East-Saskatchewan           minix-base      obsolete
 ./usr/share/zoneinfo/Canada/Eastern                     minix-base
 ./usr/share/zoneinfo/Canada/Mountain                    minix-base
 ./usr/share/zoneinfo/Canada/Newfoundland                minix-base
@@ -3742,6 +3750,7 @@
 ./usr/share/zoneinfo/Europe                             minix-base
 ./usr/share/zoneinfo/Europe/Amsterdam                   minix-base
 ./usr/share/zoneinfo/Europe/Andorra                     minix-base
+./usr/share/zoneinfo/Europe/Astrakhan                   minix-base
 ./usr/share/zoneinfo/Europe/Athens                      minix-base
 ./usr/share/zoneinfo/Europe/Belfast                     minix-base
 ./usr/share/zoneinfo/Europe/Belgrade                    minix-base
@@ -3762,6 +3771,7 @@
 ./usr/share/zoneinfo/Europe/Jersey                      minix-base
 ./usr/share/zoneinfo/Europe/Kaliningrad                 minix-base
 ./usr/share/zoneinfo/Europe/Kiev                        minix-base
+./usr/share/zoneinfo/Europe/Kirov                       minix-base
 ./usr/share/zoneinfo/Europe/Lisbon                      minix-base
 ./usr/share/zoneinfo/Europe/Ljubljana                   minix-base
 ./usr/share/zoneinfo/Europe/London                      minix-base
@@ -3782,6 +3792,7 @@
 ./usr/share/zoneinfo/Europe/Samara                      minix-base
 ./usr/share/zoneinfo/Europe/San_Marino                  minix-base
 ./usr/share/zoneinfo/Europe/Sarajevo                    minix-base
+./usr/share/zoneinfo/Europe/Saratov                     minix-base
 ./usr/share/zoneinfo/Europe/Simferopol                  minix-base
 ./usr/share/zoneinfo/Europe/Skopje                      minix-base
 ./usr/share/zoneinfo/Europe/Sofia                       minix-base
@@ -3789,6 +3800,7 @@
 ./usr/share/zoneinfo/Europe/Tallinn                     minix-base
 ./usr/share/zoneinfo/Europe/Tirane                      minix-base
 ./usr/share/zoneinfo/Europe/Tiraspol                    minix-base
+./usr/share/zoneinfo/Europe/Ulyanovsk                   minix-base
 ./usr/share/zoneinfo/Europe/Uzhgorod                    minix-base
 ./usr/share/zoneinfo/Europe/Vaduz                       minix-base
 ./usr/share/zoneinfo/Europe/Vatican                     minix-base
@@ -3893,6 +3905,7 @@
 ./usr/share/zoneinfo/ROC                                minix-base
 ./usr/share/zoneinfo/ROK                                minix-base
 ./usr/share/zoneinfo/Singapore                          minix-base
+./usr/share/zoneinfo/TZDATA_VERSION                     minix-base
 ./usr/share/zoneinfo/Turkey                             minix-base
 ./usr/share/zoneinfo/UCT                                minix-base
 ./usr/share/zoneinfo/US                                 minix-base
