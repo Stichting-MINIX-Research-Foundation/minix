@@ -1,0 +1,36 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STMT_STATUS 3
+.Os
+.Sh NAME
+.Nm sqlite3_stmt_status
+.Nd Prepared Statement Status
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_stmt_status
+.Fa "sqlite3_stmt*"
+.Fa "int op"
+.Fa "int resetFlg"
+.Fc
+.Sh DESCRIPTION
+Each prepared statement maintains various SQLITE_STMTSTATUS counters
+that measure the number of times it has performed specific operations.
+These counters can be used to monitor the performance characteristics
+of the prepared statements.
+For example, if the number of table steps greatly exceeds the number
+of table searches or result rows, that would tend to indicate that
+the prepared statement is using a full table scan rather than an index.
+.Pp
+This interface is used to retrieve and reset counter values from a
+prepared statement.
+The first argument is the prepared statement object to be interrogated.
+The second argument is an integer code for a specific SQLITE_STMTSTATUS counter
+to be interrogated.
+The current value of the requested counter is returned.
+If the resetFlg is true, then the counter is reset to zero after this
+interface call returns.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_db_status 3 ,
+.Xr sqlite3_status 3 ,
+.Xr SQLITE_STMTSTATUS_FULLSCAN_STEP 3

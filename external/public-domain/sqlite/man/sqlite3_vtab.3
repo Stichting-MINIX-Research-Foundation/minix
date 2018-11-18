@@ -1,0 +1,29 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VTAB 3
+.Os
+.Sh NAME
+.Nm sqlite3_vtab
+.Nd Virtual Table Instance Object
+.Sh SYNOPSIS
+.Vt struct sqlite3_vtab ;
+.Sh DESCRIPTION
+Every virtual table module implementation uses
+a subclass of this object to describe a particular instance of the
+virtual table.
+Each subclass will be tailored to the specific needs of the module
+implementation.
+The purpose of this superclass is to define certain fields that are
+common to all module implementations.
+.Pp
+Virtual tables methods can set an error message by assigning a string
+obtained from sqlite3_mprintf() to zErrMsg.
+The method should take care that any prior string is freed by a call
+to sqlite3_free() prior to assigning a new string to
+zErrMsg.
+After the error message is delivered up to the client application,
+the string will be automatically freed by sqlite3_free() and the zErrMsg
+field will be zeroed.
+.Sh SEE ALSO
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_mprintf 3 ,
+.Xr sqlite3_module 3

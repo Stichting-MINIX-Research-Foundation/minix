@@ -1,0 +1,49 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_OP 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_op
+.Nd Obtain The Current Operation From A Changeset Iterator
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_op
+.Fa "sqlite3_changeset_iter *pIter"
+.Fa "const char **pzTab"
+.Fa "int *pnCol"
+.Fa "int *pOp"
+.Fa "int *pbIndirect                 "
+.Fc
+.Sh DESCRIPTION
+The pIter argument passed to this function may either be an iterator
+passed to a conflict-handler by sqlite3changeset_apply(),
+or an iterator created by sqlite3changeset_start().
+In the latter case, the most recent call to sqlite3changeset_next()
+must have returned SQLITE_ROW.
+If this is not the case, this function returns SQLITE_MISUSE.
+.Pp
+If argument pzTab is not NULL, then *pzTab is set to point to a nul-terminated
+utf-8 encoded string containing the name of the table affected by the
+current change.
+The buffer remains valid until either sqlite3changeset_next() is called
+on the iterator or until the conflict-handler function returns.
+If pnCol is not NULL, then *pnCol is set to the number of columns in
+the table affected by the change.
+If pbIncorrect is not NULL, then *pbIndirect is set to true (1) if
+the change is an indirect change, or false (0) otherwise.
+See the documentation for sqlite3session_indirect()
+for a description of direct and indirect changes.
+Finally, if pOp is not NULL, then *pOp is set to one of SQLITE_INSERT,
+SQLITE_DELETE or SQLITE_UPDATE, depending
+on the type of change that the iterator currently points to.
+.Pp
+If no error occurs, SQLITE_OK is returned.
+If an error does occur, an SQLite error code is returned.
+The values of the output variables may not be trusted in this case.
+.Sh SEE ALSO
+.Xr sqlite3changeset_apply 3 ,
+.Xr sqlite3changeset_next 3 ,
+.Xr sqlite3changeset_start 3 ,
+.Xr sqlite3session_indirect 3 ,
+.Xr SQLITE_CREATE_INDEX 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_CREATE_INDEX 3

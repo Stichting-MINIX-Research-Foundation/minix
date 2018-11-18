@@ -1,0 +1,21 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STRGLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3_strglob
+.Nd String Globbing
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_strglob
+.Fa "const char *zGlob"
+.Fa "const char *zStr"
+.Fc
+.Sh DESCRIPTION
+Note that this routine returns zero on a match and non-zero if the
+strings do not match, the same as sqlite3_stricmp()
+and sqlite3_strnicmp().
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stricmp 3 ,
+.Xr sqlite3_strlike 3 ,
+.Xr sqlite3_stricmp 3

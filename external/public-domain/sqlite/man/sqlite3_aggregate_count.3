@@ -1,0 +1,46 @@
+.Dd March 11, 2017
+.Dt SQLITE3_AGGREGATE_COUNT 3
+.Os
+.Sh NAME
+.Nm sqlite3_aggregate_count ,
+.Nm sqlite3_expired ,
+.Nm sqlite3_transfer_bindings ,
+.Nm sqlite3_global_recover ,
+.Nm sqlite3_thread_cleanup ,
+.Nm sqlite3_memory_alarm
+.Nd Deprecated Functions
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_aggregate_count
+.Fa "sqlite3_context*"
+.Fc
+.Ft int 
+.Fo sqlite3_expired
+.Fa "sqlite3_stmt*"
+.Fc
+.Ft int 
+.Fo sqlite3_transfer_bindings
+.Fa "sqlite3_stmt*"
+.Fa "sqlite3_stmt*"
+.Fc
+.Ft int 
+.Fo sqlite3_global_recover
+.Fa "void"
+.Fc
+.Ft void 
+.Fo sqlite3_thread_cleanup
+.Fa "void"
+.Fc
+.Ft int 
+.Fo sqlite3_memory_alarm
+.Fa "void(*)(void*,sqlite3_int64,int)"
+.Fa "void*"
+.Fa "sqlite3_int64"
+.Fc
+.Sh DESCRIPTION
+These functions are deprecated.
+In order to maintain backwards compatibility with older code, these
+functions continue to be supported.
+However, new applications should avoid the use of these functions.
+To encourage programmers to avoid these functions, we will not explain
+what they do.

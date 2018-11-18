@@ -1,0 +1,23 @@
+.Dd March 11, 2017
+.Dt SQLITE3_MODULE 3
+.Os
+.Sh NAME
+.Nm sqlite3_module
+.Nd Virtual Table Object
+.Sh SYNOPSIS
+.Vt struct sqlite3_module ;
+.Sh DESCRIPTION
+This structure, sometimes called a "virtual table module", defines
+the implementation of a virtual tables.
+This structure consists mostly of methods for the module.
+.Pp
+A virtual table module is created by filling in a persistent instance
+of this structure and passing a pointer to that instance to sqlite3_create_module()
+or sqlite3_create_module_v2().
+The registration remains valid until it is replaced by a different
+module or until the database connection closes.
+The content of this structure must not change while it is registered
+with any database connection.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_create_module 3

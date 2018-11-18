@@ -1,0 +1,19 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SOFT_HEAP_LIMIT 3
+.Os
+.Sh NAME
+.Nm sqlite3_soft_heap_limit
+.Nd Deprecated Soft Heap Limit Interface
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_soft_heap_limit
+.Fa "int N"
+.Fc
+.Sh DESCRIPTION
+This is a deprecated version of the sqlite3_soft_heap_limit64()
+interface.
+This routine is provided for historical compatibility only.
+All new applications should use the sqlite3_soft_heap_limit64()
+interface rather than this one.
+.Sh SEE ALSO
+.Xr sqlite3_soft_heap_limit64 3

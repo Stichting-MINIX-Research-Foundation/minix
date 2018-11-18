@@ -1,0 +1,30 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VALUE_DUP 3
+.Os
+.Sh NAME
+.Nm sqlite3_value_dup ,
+.Nm sqlite3_value_free
+.Nd Copy And Free SQL Values
+.Sh SYNOPSIS
+.Ft sqlite3_value *
+.Fo sqlite3_value_dup
+.Fa "const sqlite3_value*"
+.Fc
+.Ft void 
+.Fo sqlite3_value_free
+.Fa "sqlite3_value*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_value_dup(V) interface makes a copy of the sqlite3_value
+object D and returns a pointer to that copy.
+The sqlite3_value returned is a protected sqlite3_value
+object even if the input is not.
+The sqlite3_value_dup(V) interface returns NULL if V is NULL or if
+a memory allocation fails.
+.Pp
+The sqlite3_value_free(V) interface frees an sqlite3_value
+object previously obtained from sqlite3_value_dup().
+If V is a NULL pointer then sqlite3_value_free(V) is a harmless no-op.
+.Sh SEE ALSO
+.Xr sqlite3_value 3 ,
+.Xr sqlite3_value_dup 3

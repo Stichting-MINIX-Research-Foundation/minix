@@ -1,0 +1,20 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_RELEASE_MEMORY 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_release_memory
+.Nd Free Memory Used By A Database Connection
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_db_release_memory
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_db_release_memory(D) interface attempts to free as much
+heap memory as possible from database connection D.
+Unlike the sqlite3_release_memory() interface,
+this interface is in effect even when the SQLITE_ENABLE_MEMORY_MANAGEMENT
+compile-time option is omitted.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_release_memory 3

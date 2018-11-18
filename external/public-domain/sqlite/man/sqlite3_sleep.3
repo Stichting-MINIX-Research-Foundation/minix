@@ -1,0 +1,27 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SLEEP 3
+.Os
+.Sh NAME
+.Nm sqlite3_sleep
+.Nd Suspend Execution For A Short Time
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_sleep
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_sleep() function causes the current thread to suspend execution
+for at least a number of milliseconds specified in its parameter.
+.Pp
+If the operating system does not support sleep requests with millisecond
+time resolution, then the time will be rounded up to the nearest second.
+The number of milliseconds of sleep actually requested from the operating
+system is returned.
+.Pp
+SQLite implements this interface by calling the xSleep() method of
+the default sqlite3_vfs object.
+If the xSleep() method of the default VFS is not implemented correctly,
+or not implemented at all, then the behavior of sqlite3_sleep() may
+deviate from the description in the previous paragraphs.
+.Sh SEE ALSO
+.Xr sqlite3_vfs 3

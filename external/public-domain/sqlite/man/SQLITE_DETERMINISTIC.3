@@ -1,0 +1,15 @@
+.Dd March 11, 2017
+.Dt SQLITE_DETERMINISTIC 3
+.Os
+.Sh NAME
+.Nm SQLITE_DETERMINISTIC
+.Nd Function Flags
+.Sh SYNOPSIS
+.Fd #define SQLITE_DETERMINISTIC
+.Sh DESCRIPTION
+These constants may be ORed together with the  preferred text encoding
+as the fourth argument to sqlite3_create_function(),
+sqlite3_create_function16(), or sqlite3_create_function_v2().
+.Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
+.Xr SQLITE_UTF8 3

@@ -1,0 +1,73 @@
+.Dd March 11, 2017
+.Dt SQLITE3SESSION_DIFF 3
+.Os
+.Sh NAME
+.Nm sqlite3session_diff
+.Nd Load The Difference Between Tables Into A Session 
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3session_diff
+.Fa "sqlite3_session *pSession"
+.Fa "const char *zFromDb"
+.Fa "const char *zTbl"
+.Fa "char **pzErrMsg "
+.Fc
+.Sh DESCRIPTION
+If it is not already attached to the session object passed as the first
+argument, this function attaches table zTbl in the same manner as the
+sqlite3session_attach() function.
+If zTbl does not exist, or if it does not have a primary key, this
+function is a no-op (but does not return an error).
+.Pp
+Argument zFromDb must be the name of a database ("main", "temp" etc.)
+attached to the same database handle as the session object that contains
+a table compatible with the table attached to the session by this function.
+A table is considered compatible if it: 
+.Bl -bullet
+.It
+Has the same name, 
+.It
+Has the same set of columns declared in the same order, and 
+.It
+Has the same PRIMARY KEY definition.
+.El
+.Pp
+If the tables are not compatible, SQLITE_SCHEMA is returned.
+If the tables are compatible but do not have any PRIMARY KEY columns,
+it is not an error but no changes are added to the session object.
+As with other session APIs, tables without PRIMARY KEYs are simply
+ignored.
+.Pp
+This function adds a set of changes to the session object that could
+be used to update the table in database zFrom (call this the "from-table")
+so that its content is the same as the table attached to the session
+object (call this the "to-table").
+Specifically: 
+.Bl -bullet
+.It
+For each row (primary key) that exists in the to-table but not in the
+from-table, an INSERT record is added to the session object.
+.It
+For each row (primary key) that exists in the to-table but not in the
+from-table, a DELETE record is added to the session object.
+.It
+For each row (primary key) that exists in both tables, but features
+different non-PK values in each, an UPDATE record is added to the session.
+.El
+.Pp
+To clarify, if this function is called and then a changeset constructed
+using sqlite3session_changeset(), then after
+applying that changeset to database zFrom the contents of the two compatible
+tables would be identical.
+.Pp
+It an error if database zFrom does not exist or does not contain the
+required compatible table.
+.Pp
+If the operation successful, SQLITE_OK is returned.
+Otherwise, an SQLite error code.
+In this case, if argument pzErrMsg is not NULL, *pzErrMsg may be set
+to point to a buffer containing an English language error message.
+It is the responsibility of the caller to free this buffer using sqlite3_free().
+.Sh SEE ALSO
+.Xr sqlite3session_attach 3 ,
+.Xr sqlite3session_changeset 3

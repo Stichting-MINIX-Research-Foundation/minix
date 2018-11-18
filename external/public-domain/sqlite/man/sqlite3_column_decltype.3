@@ -1,0 +1,47 @@
+.Dd March 11, 2017
+.Dt SQLITE3_COLUMN_DECLTYPE 3
+.Os
+.Sh NAME
+.Nm sqlite3_column_decltype ,
+.Nm sqlite3_column_decltype16
+.Nd Declared Datatype Of A Query Result
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_column_decltype
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const void *
+.Fo sqlite3_column_decltype16
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+The first parameter is a prepared statement.
+If this statement is a SELECT statement and the Nth column of
+the returned result set of that SELECT is a table column (not
+an expression or subquery) then the declared type of the table column
+is returned.
+If the Nth column of the result set is an expression or subquery, then
+a NULL pointer is returned.
+The returned string is always UTF-8 encoded.
+.Pp
+For example, given the database schema: 
+.Pp
+CREATE TABLE t1(c1 VARIANT); 
+.Pp
+and the following statement to be compiled: 
+.Pp
+SELECT c1 + 1, c1 FROM t1; 
+.Pp
+this routine would return the string "VARIANT" for the second result
+column (i==1), and a NULL pointer for the first result column (i==0).
+.Pp
+SQLite uses dynamic run-time typing.
+So just because a column is declared to contain a particular type does
+not mean that the data stored in that column is of the declared type.
+SQLite is strongly typed, but the typing is dynamic not static.
+Type is associated with individual values, not with the containers
+used to hold those values.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3

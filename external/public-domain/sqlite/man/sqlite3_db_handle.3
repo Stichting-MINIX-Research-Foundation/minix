@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_HANDLE 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_handle
+.Nd Find The Database Handle Of A Prepared Statement
+.Sh SYNOPSIS
+.Ft sqlite3 *
+.Fo sqlite3_db_handle
+.Fa "sqlite3_stmt*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_db_handle interface returns the database connection
+handle to which a prepared statement belongs.
+The database connection returned by sqlite3_db_handle
+is the same database connection that was the first
+argument to the sqlite3_prepare_v2() call (or its
+variants) that was used to create the statement in the first place.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_prepare 3

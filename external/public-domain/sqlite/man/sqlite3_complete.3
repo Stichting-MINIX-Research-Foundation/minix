@@ -1,0 +1,51 @@
+.Dd March 11, 2017
+.Dt SQLITE3_COMPLETE 3
+.Os
+.Sh NAME
+.Nm sqlite3_complete ,
+.Nm sqlite3_complete16
+.Nd Determine If An SQL Statement Is Complete
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_complete
+.Fa "const char *sql"
+.Fc
+.Ft int 
+.Fo sqlite3_complete16
+.Fa "const void *sql"
+.Fc
+.Sh DESCRIPTION
+These routines are useful during command-line input to determine if
+the currently entered text seems to form a complete SQL statement or
+if additional input is needed before sending the text into SQLite for
+parsing.
+These routines return 1 if the input string appears to be a complete
+SQL statement.
+A statement is judged to be complete if it ends with a semicolon token
+and is not a prefix of a well-formed CREATE TRIGGER statement.
+Semicolons that are embedded within string literals or quoted identifier
+names or comments are not independent tokens (they are part of the
+token in which they are embedded) and thus do not count as a statement
+terminator.
+Whitespace and comments that follow the final semicolon are ignored.
+.Pp
+These routines return 0 if the statement is incomplete.
+If a memory allocation fails, then SQLITE_NOMEM is returned.
+.Pp
+These routines do not parse the SQL statements thus will not detect
+syntactically incorrect SQL.
+.Pp
+If SQLite has not been initialized using sqlite3_initialize()
+prior to invoking sqlite3_complete16() then sqlite3_initialize() is
+invoked automatically by sqlite3_complete16().
+If that initialization fails, then the return value from sqlite3_complete16()
+will be non-zero regardless of whether or not the input SQL is complete.
+.Pp
+The input to sqlite3_complete() must be a zero-terminated
+UTF-8 string.
+.Pp
+The input to sqlite3_complete16() must be a zero-terminated
+UTF-16 string in native byte order.
+.Sh SEE ALSO
+.Xr sqlite3_complete 3 ,
+.Xr sqlite3_initialize 3

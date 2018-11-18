@@ -1,0 +1,78 @@
+.Dd March 11, 2017
+.Dt SQLITE3_GET_AUXDATA 3
+.Os
+.Sh NAME
+.Nm sqlite3_get_auxdata ,
+.Nm sqlite3_set_auxdata
+.Nd Function Auxiliary Data
+.Sh SYNOPSIS
+.Ft void *
+.Fo sqlite3_get_auxdata
+.Fa "sqlite3_context*"
+.Fa "int N"
+.Fc
+.Ft void 
+.Fo sqlite3_set_auxdata
+.Fa "sqlite3_context*"
+.Fa "int N"
+.Fa "void*"
+.Fa "void (*)(void*)"
+.Fc
+.Sh DESCRIPTION
+These functions may be used by (non-aggregate) SQL functions to associate
+metadata with argument values.
+If the same value is passed to multiple invocations of the same SQL
+function during query execution, under some circumstances the associated
+metadata may be preserved.
+An example of where this might be useful is in a regular-expression
+matching function.
+The compiled version of the regular expression can be stored as metadata
+associated with the pattern string.
+Then as long as the pattern string remains the same, the compiled regular
+expression can be reused on multiple invocations of the same function.
+.Pp
+The sqlite3_get_auxdata() interface returns a pointer to the metadata
+associated by the sqlite3_set_auxdata() function with the Nth argument
+value to the application-defined function.
+If there is no metadata associated with the function argument, this
+sqlite3_get_auxdata() interface returns a NULL pointer.
+.Pp
+The sqlite3_set_auxdata(C,N,P,X) interface saves P as metadata for
+the N-th argument of the application-defined function.
+Subsequent calls to sqlite3_get_auxdata(C,N) return P from the most
+recent sqlite3_set_auxdata(C,N,P,X) call if the metadata is still valid
+or NULL if the metadata has been discarded.
+After each call to sqlite3_set_auxdata(C,N,P,X) where X is not NULL,
+SQLite will invoke the destructor function X with parameter P exactly
+once, when the metadata is discarded.
+SQLite is free to discard the metadata at any time, including: 
+.Bl -bullet
+.It
+when the corresponding function parameter changes  , or 
+.It
+when sqlite3_reset() or sqlite3_finalize()
+is called for the SQL statement  , or 
+.It
+when sqlite3_set_auxdata() is invoked again on the same parameter 
+, or 
+.It
+during the original sqlite3_set_auxdata() call when a memory allocation
+error occurs.
+.El
+.Pp
+Note the last bullet in particular.
+The destructor X in sqlite3_set_auxdata(C,N,P,X) might be called immediately,
+before the sqlite3_set_auxdata() interface even returns.
+Hence sqlite3_set_auxdata() should be called near the end of the function
+implementation and the function implementation should not make any
+use of P after sqlite3_set_auxdata() has been called.
+.Pp
+In practice, metadata is preserved between function calls for function
+parameters that are compile-time constants, including literal values
+and parameters and expressions composed from the same.
+.Pp
+These routines must be called from the same thread in which the SQL
+function is running.
+.Sh SEE ALSO
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_reset 3

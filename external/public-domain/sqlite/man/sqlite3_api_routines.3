@@ -1,0 +1,13 @@
+.Dd March 11, 2017
+.Dt SQLITE3_API_ROUTINES 3
+.Os
+.Sh NAME
+.Nm sqlite3_api_routines
+.Nd Loadable Extension Thunk
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_api_routines sqlite3_api_routines;
+.Sh DESCRIPTION
+A pointer to the opaque sqlite3_api_routines structure is passed as
+the third parameter to entry points of loadable extensions.
+This structure must be typedefed in order to work around compiler warnings
+on some platforms.

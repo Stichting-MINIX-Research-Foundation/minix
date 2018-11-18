@@ -1,0 +1,123 @@
+.Dd March 11, 2017
+.Dt SQLITE_DBSTATUS_LOOKASIDE_USED 3
+.Os
+.Sh NAME
+.Nm SQLITE_DBSTATUS_LOOKASIDE_USED ,
+.Nm SQLITE_DBSTATUS_CACHE_USED ,
+.Nm SQLITE_DBSTATUS_SCHEMA_USED ,
+.Nm SQLITE_DBSTATUS_STMT_USED ,
+.Nm SQLITE_DBSTATUS_LOOKASIDE_HIT ,
+.Nm SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE ,
+.Nm SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL ,
+.Nm SQLITE_DBSTATUS_CACHE_HIT ,
+.Nm SQLITE_DBSTATUS_CACHE_MISS ,
+.Nm SQLITE_DBSTATUS_CACHE_WRITE ,
+.Nm SQLITE_DBSTATUS_DEFERRED_FKS ,
+.Nm SQLITE_DBSTATUS_CACHE_USED_SHARED ,
+.Nm SQLITE_DBSTATUS_MAX
+.Nd Status Parameters for database connections
+.Sh SYNOPSIS
+.Fd #define SQLITE_DBSTATUS_LOOKASIDE_USED
+.Fd #define SQLITE_DBSTATUS_CACHE_USED
+.Fd #define SQLITE_DBSTATUS_SCHEMA_USED
+.Fd #define SQLITE_DBSTATUS_STMT_USED
+.Fd #define SQLITE_DBSTATUS_LOOKASIDE_HIT
+.Fd #define SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE
+.Fd #define SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL
+.Fd #define SQLITE_DBSTATUS_CACHE_HIT
+.Fd #define SQLITE_DBSTATUS_CACHE_MISS
+.Fd #define SQLITE_DBSTATUS_CACHE_WRITE
+.Fd #define SQLITE_DBSTATUS_DEFERRED_FKS
+.Fd #define SQLITE_DBSTATUS_CACHE_USED_SHARED
+.Fd #define SQLITE_DBSTATUS_MAX
+.Sh DESCRIPTION
+These constants are the available integer "verbs" that can be passed
+as the second argument to the sqlite3_db_status()
+interface.
+.Pp
+New verbs may be added in future releases of SQLite.
+Existing verbs might be discontinued.
+Applications should check the return code from sqlite3_db_status()
+to make sure that the call worked.
+The sqlite3_db_status() interface will return a
+non-zero error code if a discontinued or unsupported verb is invoked.
+.Bl -tag -width Ds
+.It SQLITE_DBSTATUS_LOOKASIDE_USED
+This parameter returns the number of lookaside memory slots currently
+checked out.
+.It SQLITE_DBSTATUS_LOOKASIDE_HIT
+This parameter returns the number malloc attempts that were satisfied
+using lookaside memory.
+Only the high-water value is meaningful; the current value is always
+zero.
+.It SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE
+This parameter returns the number malloc attempts that might have been
+satisfied using lookaside memory but failed due to the amount of memory
+requested being larger than the lookaside slot size.
+Only the high-water value is meaningful; the current value is always
+zero.
+.It SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL
+This parameter returns the number malloc attempts that might have been
+satisfied using lookaside memory but failed due to all lookaside memory
+already being in use.
+Only the high-water value is meaningful; the current value is always
+zero.
+.It SQLITE_DBSTATUS_CACHE_USED
+This parameter returns the approximate number of bytes of heap memory
+used by all pager caches associated with the database connection.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED is always
+0.
+.It SQLITE_DBSTATUS_CACHE_USED_SHARED
+This parameter is similar to DBSTATUS_CACHE_USED, except that if a
+pager cache is shared between two or more connections the bytes of
+heap memory used by that pager cache is divided evenly between the
+attached connections.
+In other words, if none of the pager caches associated with the database
+connection are shared, this request returns the same value as DBSTATUS_CACHE_USED.
+Or, if one or more or the pager caches are shared, the value returned
+by this call will be smaller than that returned by DBSTATUS_CACHE_USED.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED_SHARED
+is always 0.
+.It SQLITE_DBSTATUS_SCHEMA_USED
+This parameter returns the approximate number of bytes of heap memory
+used to store the schema for all databases associated with the connection
+- main, temp, and any ATTACH-ed databases.
+The full amount of memory used by the schemas is reported, even if
+the schema memory is shared with other database connections due to
+shared cache mode being enabled.
+The highwater mark associated with SQLITE_DBSTATUS_SCHEMA_USED is always
+0.
+.It SQLITE_DBSTATUS_STMT_USED
+This parameter returns the approximate number of bytes of heap and
+lookaside memory used by all prepared statements associated with the
+database connection.
+The highwater mark associated with SQLITE_DBSTATUS_STMT_USED is always
+0.
+.It SQLITE_DBSTATUS_CACHE_HIT
+This parameter returns the number of pager cache hits that have occurred.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_HIT is always
+0.
+.It SQLITE_DBSTATUS_CACHE_MISS
+This parameter returns the number of pager cache misses that have occurred.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_MISS is always
+0.
+.It SQLITE_DBSTATUS_CACHE_WRITE
+This parameter returns the number of dirty cache entries that have
+been written to disk.
+Specifically, the number of pages written to the wal file in wal mode
+databases, or the number of pages written to the database file in rollback
+mode databases.
+Any pages written as part of transaction rollback or database recovery
+operations are not included.
+If an IO or other error occurs while writing a page to disk, the effect
+on subsequent SQLITE_DBSTATUS_CACHE_WRITE requests is undefined.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_WRITE is always
+0.
+.It SQLITE_DBSTATUS_DEFERRED_FKS
+This parameter returns zero for the current value if and only if all
+foreign key constraints (deferred or immediate) have been resolved.
+The highwater mark is always 0.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_db_status 3

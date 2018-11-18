@@ -1,0 +1,37 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_PK 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_pk
+.Nd Obtain The Primary Key Definition Of A Table
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_pk
+.Fa "sqlite3_changeset_iter *pIter"
+.Fa "unsigned char **pabPK"
+.Fa "int *pnCol                      "
+.Fc
+.Sh DESCRIPTION
+For each modified table, a changeset includes the following: 
+.Bl -bullet
+.It
+The number of columns in the table, and 
+.It
+Which of those columns make up the tables PRIMARY KEY.
+.El
+.Pp
+This function is used to find which columns comprise the PRIMARY KEY
+of the table modified by the change that iterator pIter currently points
+to.
+If successful, *pabPK is set to point to an array of nCol entries,
+where nCol is the number of columns in the table.
+Elements of *pabPK are set to 0x01 if the corresponding column is part
+of the tables primary key, or 0x00 if it is not.
+.Pp
+If argument pnCol is not NULL, then *pnCol is set to the number of
+columns in the table.
+.Pp
+If this function is called when the iterator does not point to a valid
+entry, SQLITE_MISUSE is returned and the output variables zeroed.
+Otherwise, SQLITE_OK is returned and the output variables populated
+as described above.

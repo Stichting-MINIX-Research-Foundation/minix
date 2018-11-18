@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE_LOCK_NONE 3
+.Os
+.Sh NAME
+.Nm SQLITE_LOCK_NONE ,
+.Nm SQLITE_LOCK_SHARED ,
+.Nm SQLITE_LOCK_RESERVED ,
+.Nm SQLITE_LOCK_PENDING ,
+.Nm SQLITE_LOCK_EXCLUSIVE
+.Nd File Locking Levels
+.Sh SYNOPSIS
+.Fd #define SQLITE_LOCK_NONE
+.Fd #define SQLITE_LOCK_SHARED
+.Fd #define SQLITE_LOCK_RESERVED
+.Fd #define SQLITE_LOCK_PENDING
+.Fd #define SQLITE_LOCK_EXCLUSIVE
+.Sh DESCRIPTION
+SQLite uses one of these integer values as the second argument to calls
+it makes to the xLock() and xUnlock() methods of an sqlite3_io_methods
+object.
+.Sh SEE ALSO
+.Xr sqlite3_io_methods 3

@@ -1,0 +1,50 @@
+.Dd March 11, 2017
+.Dt SQLITE3_PROGRESS_HANDLER 3
+.Os
+.Sh NAME
+.Nm sqlite3_progress_handler
+.Nd Query Progress Callbacks
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_progress_handler
+.Fa "sqlite3*"
+.Fa "int"
+.Fa "int(*)(void*)"
+.Fa "void*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_progress_handler(D,N,X,P) interface causes the callback
+function X to be invoked periodically during long running calls to
+sqlite3_exec(), sqlite3_step() and sqlite3_get_table()
+for database connection D.
+An example use for this interface is to keep a GUI updated during a
+large query.
+.Pp
+The parameter P is passed through as the only parameter to the callback
+function X.
+The parameter N is the approximate number of virtual machine instructions
+that are evaluated between successive invocations of the callback X.
+If N is less than one then the progress handler is disabled.
+.Pp
+Only a single progress handler may be defined at one time per database connection;
+setting a new progress handler cancels the old one.
+Setting parameter X to NULL disables the progress handler.
+The progress handler is also disabled by setting N to a value less
+than 1.
+.Pp
+If the progress callback returns non-zero, the operation is interrupted.
+This feature can be used to implement a "Cancel" button on a GUI progress
+dialog box.
+.Pp
+The progress handler callback must not do anything that will modify
+the database connection that invoked the progress handler.
+Note that sqlite3_prepare_v2() and sqlite3_step()
+both modify their database connections for the meaning of "modify"
+in this paragraph.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_exec 3 ,
+.Xr sqlite3_get_table 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_step 3

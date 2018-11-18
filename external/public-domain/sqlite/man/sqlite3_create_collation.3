@@ -1,0 +1,128 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CREATE_COLLATION 3
+.Os
+.Sh NAME
+.Nm sqlite3_create_collation ,
+.Nm sqlite3_create_collation_v2 ,
+.Nm sqlite3_create_collation16
+.Nd Define New Collating Sequences
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_create_collation
+.Fa "sqlite3*"
+.Fa "const char *zName"
+.Fa "int eTextRep"
+.Fa "void *pArg"
+.Fa "int(*xCompare)(void*,int,const void*,int,const void*) "
+.Fc
+.Ft int 
+.Fo sqlite3_create_collation_v2
+.Fa "sqlite3*"
+.Fa "const char *zName"
+.Fa "int eTextRep"
+.Fa "void *pArg"
+.Fa "int(*xCompare)(void*,int,const void*,int,const void*)"
+.Fa "void(*xDestroy)(void*) "
+.Fc
+.Ft int 
+.Fo sqlite3_create_collation16
+.Fa "sqlite3*"
+.Fa "const void *zName"
+.Fa "int eTextRep"
+.Fa "void *pArg"
+.Fa "int(*xCompare)(void*,int,const void*,int,const void*) "
+.Fc
+.Sh DESCRIPTION
+These functions add, remove, or modify a collation associated
+with the database connection specified as the first
+argument.
+.Pp
+The name of the collation is a UTF-8 string for sqlite3_create_collation()
+and sqlite3_create_collation_v2() and a UTF-16 string in native byte
+order for sqlite3_create_collation16().
+Collation names that compare equal according to sqlite3_strnicmp()
+are considered to be the same name.
+.Pp
+The third argument (eTextRep) must be one of the constants: 
+.Bl -bullet
+.It
+SQLITE_UTF8, 
+.It
+SQLITE_UTF16LE, 
+.It
+SQLITE_UTF16BE, 
+.It
+SQLITE_UTF16, or 
+.It
+SQLITE_UTF16_ALIGNED.
+.El
+.Pp
+The eTextRep argument determines the encoding of strings passed to
+the collating function callback, xCallback.
+The SQLITE_UTF16 and SQLITE_UTF16_ALIGNED
+values for eTextRep force strings to be UTF16 with native byte order.
+The SQLITE_UTF16_ALIGNED value for eTextRep forces
+strings to begin on an even byte address.
+.Pp
+The fourth argument, pArg, is an application data pointer that is passed
+through as the first argument to the collating function callback.
+.Pp
+The fifth argument, xCallback, is a pointer to the collating function.
+Multiple collating functions can be registered using the same name
+but with different eTextRep parameters and SQLite will use whichever
+function requires the least amount of data transformation.
+If the xCallback argument is NULL then the collating function is deleted.
+When all collating functions having the same name are deleted, that
+collation is no longer usable.
+.Pp
+The collating function callback is invoked with a copy of the pArg
+application data pointer and with two strings in the encoding specified
+by the eTextRep argument.
+The collating function must return an integer that is negative, zero,
+or positive if the first string is less than, equal to, or greater
+than the second, respectively.
+A collating function must always return the same answer given the same
+inputs.
+If two or more collating functions are registered to the same collation
+name (using different eTextRep values) then all must give an equivalent
+answer when invoked with equivalent strings.
+The collating function must obey the following properties for all strings
+A, B, and C: 
+.Bl -enum
+.It
+If A==B then B==A.
+.It
+If A==B and B==C then A==C.
+.It
+If A<B THEN B>A.
+.It
+If A<B and B<C then A<C.
+.El
+.Pp
+If a collating function fails any of the above constraints and that
+collating function is  registered and used, then the behavior of SQLite
+is undefined.
+.Pp
+The sqlite3_create_collation_v2() works like sqlite3_create_collation()
+with the addition that the xDestroy callback is invoked on pArg when
+the collating function is deleted.
+Collating functions are deleted when they are overridden by later calls
+to the collation creation functions or when the database connection
+is closed using sqlite3_close().
+.Pp
+The xDestroy callback is <u>not</u> called if the sqlite3_create_collation_v2()
+function fails.
+Applications that invoke sqlite3_create_collation_v2() with a non-NULL
+xDestroy argument should check the return code and dispose of the application
+data pointer themselves rather than expecting SQLite to deal with it
+for them.
+This is different from every other SQLite interface.
+The inconsistency is unfortunate but cannot be changed without breaking
+backwards compatibility.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_close 3 ,
+.Xr sqlite3_collation_needed 3 ,
+.Xr sqlite3_stricmp 3 ,
+.Xr SQLITE_UTF8 3

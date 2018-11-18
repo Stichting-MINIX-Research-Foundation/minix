@@ -1,0 +1,46 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_OLD 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_old
+.Nd Obtain old.* Values From A Changeset Iterator
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_old
+.Fa "sqlite3_changeset_iter *pIter"
+.Fa "int iVal"
+.Fa "sqlite3_value **ppValue         "
+.Fc
+.Sh DESCRIPTION
+The pIter argument passed to this function may either be an iterator
+passed to a conflict-handler by sqlite3changeset_apply(),
+or an iterator created by sqlite3changeset_start().
+In the latter case, the most recent call to sqlite3changeset_next()
+must have returned SQLITE_ROW.
+Furthermore, it may only be called if the type of change that the iterator
+currently points to is either SQLITE_DELETE or SQLITE_UPDATE.
+Otherwise, this function returns SQLITE_MISUSE and sets
+*ppValue to NULL.
+.Pp
+Argument iVal must be greater than or equal to 0, and less than the
+number of columns in the table affected by the current change.
+Otherwise, SQLITE_RANGE is returned and *ppValue is set
+to NULL.
+.Pp
+If successful, this function sets *ppValue to point to a protected
+sqlite3_value object containing the iVal'th value from the vector of
+original row values stored as part of the UPDATE or DELETE change and
+returns SQLITE_OK.
+The name of the function comes from the fact that this is similar to
+the "old.*" columns available to update or delete triggers.
+.Pp
+If some other error occurs (e.g.
+an OOM condition), an SQLite error code is returned and *ppValue is
+set to NULL.
+.Sh SEE ALSO
+.Xr sqlite3changeset_apply 3 ,
+.Xr sqlite3changeset_next 3 ,
+.Xr sqlite3changeset_start 3 ,
+.Xr SQLITE_CREATE_INDEX 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_CREATE_INDEX 3

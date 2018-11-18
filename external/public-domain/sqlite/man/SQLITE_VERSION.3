@@ -1,0 +1,36 @@
+.Dd March 11, 2017
+.Dt SQLITE_VERSION 3
+.Os
+.Sh NAME
+.Nm SQLITE_VERSION ,
+.Nm SQLITE_VERSION_NUMBER ,
+.Nm SQLITE_SOURCE_ID
+.Nd Compile-Time Library Version Numbers
+.Sh SYNOPSIS
+.Fd #define SQLITE_VERSION
+.Fd #define SQLITE_VERSION_NUMBER
+.Fd #define SQLITE_SOURCE_ID
+.Sh DESCRIPTION
+The SQLITE_VERSION C preprocessor macro in the sqlite3.h
+header evaluates to a string literal that is the SQLite version in
+the format "X.Y.Z" where X is the major version number (always 3 for
+SQLite3) and Y is the minor version number and Z is the release number.
+The SQLITE_VERSION_NUMBER C preprocessor macro
+resolves to an integer with the value (X*1000000 + Y*1000 + Z) where
+X, Y, and Z are the same numbers used in SQLITE_VERSION.
+The SQLITE_VERSION_NUMBER for any given release of SQLite will also
+be larger than the release from which it is derived.
+Either Y will be held constant and Z will be incremented or else Y
+will be incremented and Z will be reset to zero.
+.Pp
+Since version 3.6.18 (dateof:3.6.18), SQLite
+source code has been stored in the <a href="http://www.fossil-scm.org/">Fossil
+configuration management system</a>.
+The SQLITE_SOURCE_ID macro evaluates to a string which identifies a
+particular check-in of SQLite within its configuration management system.
+The SQLITE_SOURCE_ID string contains the date and time of the check-in
+(UTC) and an SHA1 hash of the entire source tree.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_version 3 ,
+.Xr SQLITE_VERSION 3

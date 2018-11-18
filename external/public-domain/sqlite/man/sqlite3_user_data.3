@@ -1,0 +1,21 @@
+.Dd March 11, 2017
+.Dt SQLITE3_USER_DATA 3
+.Os
+.Sh NAME
+.Nm sqlite3_user_data
+.Nd User Data For Functions
+.Sh SYNOPSIS
+.Ft void *
+.Fo sqlite3_user_data
+.Fa "sqlite3_context*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_user_data() interface returns a copy of the pointer that
+was the pUserData parameter (the 5th parameter) of the sqlite3_create_function()
+and sqlite3_create_function16() routines
+that originally registered the application defined function.
+.Pp
+This routine must be called from the same thread in which the application-defined
+function is running.
+.Sh SEE ALSO
+.Xr sqlite3_create_function 3

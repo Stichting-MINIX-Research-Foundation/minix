@@ -1,0 +1,36 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGEGROUP_OUTPUT 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_output
+.Nd Obtain A Composite Changeset From A Changegroup
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changegroup_output
+.Fa "sqlite3_changegroup*"
+.Fa "int *pnData"
+.Fa "void **ppData                   "
+.Fc
+.Sh DESCRIPTION
+Obtain a buffer containing a changeset (or patchset) representing the
+current contents of the changegroup.
+If the inputs to the changegroup were themselves changesets, the output
+is a changeset.
+Or, if the inputs were patchsets, the output is also a patchset.
+.Pp
+As with the output of the sqlite3session_changeset() and sqlite3session_patchset()
+functions, all changes related to a single table are grouped together
+in the output of this function.
+Tables appear in the same order as for the very first changeset added
+to the changegroup.
+If the second or subsequent changesets added to the changegroup contain
+changes for tables that do not appear in the first changeset, they
+are appended onto the end of the output changeset, again in the order
+in which they are first encountered.
+.Pp
+If an error occurs, an SQLite error code is returned and the output
+variables (*pnData) and (*ppData) are set to 0.
+Otherwise, SQLITE_OK is returned and the output variables are set to
+the size of and a pointer to the output buffer, respectively.
+In this case it is the responsibility of the caller to eventually free
+the buffer using a call to sqlite3_free().

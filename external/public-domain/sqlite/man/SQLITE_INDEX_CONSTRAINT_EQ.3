@@ -1,0 +1,31 @@
+.Dd March 11, 2017
+.Dt SQLITE_INDEX_CONSTRAINT_EQ 3
+.Os
+.Sh NAME
+.Nm SQLITE_INDEX_CONSTRAINT_EQ ,
+.Nm SQLITE_INDEX_CONSTRAINT_GT ,
+.Nm SQLITE_INDEX_CONSTRAINT_LE ,
+.Nm SQLITE_INDEX_CONSTRAINT_LT ,
+.Nm SQLITE_INDEX_CONSTRAINT_GE ,
+.Nm SQLITE_INDEX_CONSTRAINT_MATCH ,
+.Nm SQLITE_INDEX_CONSTRAINT_LIKE ,
+.Nm SQLITE_INDEX_CONSTRAINT_GLOB ,
+.Nm SQLITE_INDEX_CONSTRAINT_REGEXP
+.Nd Virtual Table Constraint Operator Codes
+.Sh SYNOPSIS
+.Fd #define SQLITE_INDEX_CONSTRAINT_EQ
+.Fd #define SQLITE_INDEX_CONSTRAINT_GT
+.Fd #define SQLITE_INDEX_CONSTRAINT_LE
+.Fd #define SQLITE_INDEX_CONSTRAINT_LT
+.Fd #define SQLITE_INDEX_CONSTRAINT_GE
+.Fd #define SQLITE_INDEX_CONSTRAINT_MATCH
+.Fd #define SQLITE_INDEX_CONSTRAINT_LIKE
+.Fd #define SQLITE_INDEX_CONSTRAINT_GLOB
+.Fd #define SQLITE_INDEX_CONSTRAINT_REGEXP
+.Sh DESCRIPTION
+These macros defined the allowed values for the sqlite3_index_info.aConstraint[].op
+field.
+Each value represents an operator that is part of a constraint term
+in the wHERE clause of a query that uses a virtual table.
+.Sh SEE ALSO
+.Xr sqlite3_index_info 3

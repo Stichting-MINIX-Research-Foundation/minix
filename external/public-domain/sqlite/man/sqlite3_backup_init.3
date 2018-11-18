@@ -1,0 +1,235 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BACKUP_INIT 3
+.Os
+.Sh NAME
+.Nm sqlite3_backup_init ,
+.Nm sqlite3_backup_step ,
+.Nm sqlite3_backup_finish ,
+.Nm sqlite3_backup_remaining ,
+.Nm sqlite3_backup_pagecount
+.Nd Online Backup API.
+.Sh SYNOPSIS
+.Ft sqlite3_backup *
+.Fo sqlite3_backup_init
+.Fa "sqlite3 *pDest"
+.Fa "const char *zDestName"
+.Fa "sqlite3 *pSource"
+.Fa "const char *zSourceName                "
+.Fc
+.Ft int 
+.Fo sqlite3_backup_step
+.Fa "sqlite3_backup *p"
+.Fa "int nPage"
+.Fc
+.Ft int 
+.Fo sqlite3_backup_finish
+.Fa "sqlite3_backup *p"
+.Fc
+.Ft int 
+.Fo sqlite3_backup_remaining
+.Fa "sqlite3_backup *p"
+.Fc
+.Ft int 
+.Fo sqlite3_backup_pagecount
+.Fa "sqlite3_backup *p"
+.Fc
+.Sh DESCRIPTION
+The backup API copies the content of one database into another.
+It is useful either for creating backups of databases or for copying
+in-memory databases to or from persistent files.
+.Pp
+SQLite holds a write transaction open on the destination database file
+for the duration of the backup operation.
+The source database is read-locked only while it is being read; it
+is not locked continuously for the entire backup operation.
+Thus, the backup may be performed on a live source database without
+preventing other database connections from reading or writing to the
+source database while the backup is underway.
+.Pp
+To perform a backup operation: 
+.Bl -enum
+.It
+\fBsqlite3_backup_init()\fP is called once to initialize the backup, 
+.It
+\fBsqlite3_backup_step()\fP is called one or more times to transfer the data
+between the two databases, and finally 
+.It
+\fBsqlite3_backup_finish()\fP is called to release all resources associated
+with the backup operation.
+.El
+.Pp
+There should be exactly one call to sqlite3_backup_finish() for each
+successful call to sqlite3_backup_init().
+.Pp
+\fBsqlite3_backup_init()\fP 
+.Pp
+The D and N arguments to sqlite3_backup_init(D,N,S,M) are the database connection
+associated with the destination database and the database name, respectively.
+The database name is "main" for the main database, "temp" for the temporary
+database, or the name specified after the AS keyword in an ATTACH
+statement for an attached database.
+The S and M arguments passed to sqlite3_backup_init(D,N,S,M) identify
+the database connection and database name of the
+source database, respectively.
+The source and destination database connections
+(parameters S and D) must be different or else sqlite3_backup_init(D,N,S,M)
+will fail with an error.
+.Pp
+A call to sqlite3_backup_init() will fail, returning NULL, if there
+is already a read or read-write transaction open on the destination
+database.
+.Pp
+If an error occurs within sqlite3_backup_init(D,N,S,M), then NULL is
+returned and an error code and error message are stored in the destination
+database connection D.
+The error code and message for the failed call to sqlite3_backup_init()
+can be retrieved using the sqlite3_errcode(), sqlite3_errmsg(),
+and/or sqlite3_errmsg16() functions.
+A successful call to sqlite3_backup_init() returns a pointer to an
+sqlite3_backup object.
+The sqlite3_backup object may be used with the sqlite3_backup_step()
+and sqlite3_backup_finish() functions to perform the specified backup
+operation.
+.Pp
+\fBsqlite3_backup_step()\fP 
+.Pp
+Function sqlite3_backup_step(B,N) will copy up to N pages between the
+source and destination databases specified by sqlite3_backup
+object B.
+If N is negative, all remaining source pages are copied.
+If sqlite3_backup_step(B,N) successfully copies N pages and there are
+still more pages to be copied, then the function returns SQLITE_OK.
+If sqlite3_backup_step(B,N) successfully finishes copying all pages
+from source to destination, then it returns SQLITE_DONE.
+If an error occurs while running sqlite3_backup_step(B,N), then an
+error code is returned.
+As well as SQLITE_OK and SQLITE_DONE, a call to
+sqlite3_backup_step() may return SQLITE_READONLY, SQLITE_NOMEM,
+SQLITE_BUSY, SQLITE_LOCKED, or an  SQLITE_IOERR_XXX
+extended error code.
+.Pp
+The sqlite3_backup_step() might return SQLITE_READONLY
+if 
+.Bl -enum
+.It
+the destination database was opened read-only, or 
+.It
+the destination database is using write-ahead-log journaling and the
+destination and source page sizes differ, or 
+.It
+the destination database is an in-memory database and the destination
+and source page sizes differ.
+.El
+.Pp
+If sqlite3_backup_step() cannot obtain a required file-system lock,
+then the  busy-handler function is invoked (if
+one is specified).
+If the busy-handler returns non-zero before the lock is available,
+then SQLITE_BUSY is returned to the caller.
+In this case the call to sqlite3_backup_step() can be retried later.
+If the source database connection is being used
+to write to the source database when sqlite3_backup_step() is called,
+then SQLITE_LOCKED is returned immediately.
+Again, in this case the call to sqlite3_backup_step() can be retried
+later on.
+If  SQLITE_IOERR_XXX, SQLITE_NOMEM, or
+SQLITE_READONLY is returned, then there is no point
+in retrying the call to sqlite3_backup_step().
+These errors are considered fatal.
+The application must accept that the backup operation has failed and
+pass the backup operation handle to the sqlite3_backup_finish() to
+release associated resources.
+.Pp
+The first call to sqlite3_backup_step() obtains an exclusive lock on
+the destination file.
+The exclusive lock is not released until either sqlite3_backup_finish()
+is called or the backup operation is complete and sqlite3_backup_step()
+returns SQLITE_DONE.
+Every call to sqlite3_backup_step() obtains a shared lock
+on the source database that lasts for the duration of the sqlite3_backup_step()
+call.
+Because the source database is not locked between calls to sqlite3_backup_step(),
+the source database may be modified mid-way through the backup process.
+If the source database is modified by an external process or via a
+database connection other than the one being used by the backup operation,
+then the backup will be automatically restarted by the next call to
+sqlite3_backup_step().
+If the source database is modified by the using the same database connection
+as is used by the backup operation, then the backup database is automatically
+updated at the same time.
+.Pp
+\fBsqlite3_backup_finish()\fP 
+.Pp
+When sqlite3_backup_step() has returned SQLITE_DONE, or
+when the application wishes to abandon the backup operation, the application
+should destroy the sqlite3_backup by passing it to sqlite3_backup_finish().
+The sqlite3_backup_finish() interfaces releases all resources associated
+with the sqlite3_backup object.
+If sqlite3_backup_step() has not yet returned SQLITE_DONE,
+then any active write-transaction on the destination database is rolled
+back.
+The sqlite3_backup object is invalid and may not be used
+following a call to sqlite3_backup_finish().
+.Pp
+The value returned by sqlite3_backup_finish is SQLITE_OK if
+no sqlite3_backup_step() errors occurred, regardless or whether or
+not sqlite3_backup_step() completed.
+If an out-of-memory condition or IO error occurred during any prior
+sqlite3_backup_step() call on the same sqlite3_backup
+object, then sqlite3_backup_finish() returns the corresponding error code.
+.Pp
+A return of SQLITE_BUSY or SQLITE_LOCKED from
+sqlite3_backup_step() is not a permanent error and does not affect
+the return value of sqlite3_backup_finish().
+.Pp
+\fBsqlite3_backup_remaining() and sqlite3_backup_pagecount()\fP 
+.Pp
+The sqlite3_backup_remaining() routine returns the number of pages
+still to be backed up at the conclusion of the most recent sqlite3_backup_step().
+The sqlite3_backup_pagecount() routine returns the total number of
+pages in the source database at the conclusion of the most recent sqlite3_backup_step().
+The values returned by these functions are only updated by sqlite3_backup_step().
+If the source database is modified in a way that changes the size of
+the source database or the number of pages remaining, those changes
+are not reflected in the output of sqlite3_backup_pagecount() and sqlite3_backup_remaining()
+until after the next sqlite3_backup_step().
+.Pp
+\fBConcurrent Usage of Database Handles\fP 
+.Pp
+The source database connection may be used by the
+application for other purposes while a backup operation is underway
+or being initialized.
+If SQLite is compiled and configured to support threadsafe database
+connections, then the source database connection may be used concurrently
+from within other threads.
+.Pp
+However, the application must guarantee that the destination database connection
+is not passed to any other API (by any thread) after sqlite3_backup_init()
+is called and before the corresponding call to sqlite3_backup_finish().
+SQLite does not currently check to see if the application incorrectly
+accesses the destination database connection and
+so no error code is reported, but the operations may malfunction nevertheless.
+Use of the destination database connection while a backup is in progress
+might also also cause a mutex deadlock.
+.Pp
+If running in shared cache mode, the application must
+guarantee that the shared cache used by the destination database is
+not accessed while the backup is running.
+In practice this means that the application must guarantee that the
+disk file being backed up to is not accessed by any connection within
+the process, not just the specific connection that was passed to sqlite3_backup_init().
+.Pp
+The sqlite3_backup object itself is partially threadsafe.
+Multiple threads may safely make multiple concurrent calls to sqlite3_backup_step().
+However, the sqlite3_backup_remaining() and sqlite3_backup_pagecount()
+APIs are not strictly speaking threadsafe.
+If they are invoked at the same time as another thread is invoking
+sqlite3_backup_step() it is possible that they return invalid values.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_backup 3 ,
+.Xr sqlite3_busy_handler 3 ,
+.Xr sqlite3_errcode 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_IOERR_READ 3 ,
+.Xr SQLITE_OK 3

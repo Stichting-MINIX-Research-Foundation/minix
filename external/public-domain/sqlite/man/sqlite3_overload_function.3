@@ -1,0 +1,29 @@
+.Dd March 11, 2017
+.Dt SQLITE3_OVERLOAD_FUNCTION 3
+.Os
+.Sh NAME
+.Nm sqlite3_overload_function
+.Nd Overload A Function For A Virtual Table
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_overload_function
+.Fa "sqlite3*"
+.Fa "const char *zFuncName"
+.Fa "int nArg"
+.Fc
+.Sh DESCRIPTION
+Virtual tables can provide alternative implementations of functions
+using the xFindFunction method of the virtual table module.
+But global versions of those functions must exist in order to be overloaded.
+.Pp
+This API makes sure a global version of a function with a particular
+name and number of parameters exists.
+If no such function exists before this API is called, a new function
+is created.
+The implementation of the new function always causes an exception to
+be thrown.
+So the new function is not good for anything by itself.
+Its only purpose is to be a placeholder function that can be overloaded
+by a virtual table.
+.Sh SEE ALSO
+.Xr sqlite3_module 3

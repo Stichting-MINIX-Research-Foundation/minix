@@ -1,0 +1,62 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CHANGES 3
+.Os
+.Sh NAME
+.Nm sqlite3_changes
+.Nd Count The Number Of Rows Modified
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_changes
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+This function returns the number of rows modified, inserted or deleted
+by the most recently completed INSERT, UPDATE or DELETE statement on
+the database connection specified by the only parameter.
+Executing any other type of SQL statement does not modify the value
+returned by this function.
+.Pp
+Only changes made directly by the INSERT, UPDATE or DELETE statement
+are considered - auxiliary changes caused by  triggers, foreign key actions
+or REPLACE constraint resolution are not counted.
+.Pp
+Changes to a view that are intercepted by  INSTEAD OF triggers
+are not counted.
+The value returned by sqlite3_changes() immediately after an INSERT,
+UPDATE or DELETE statement run on a view is always zero.
+Only changes made to real tables are counted.
+.Pp
+Things are more complicated if the sqlite3_changes() function is executed
+while a trigger program is running.
+This may happen if the program uses the changes() SQL function,
+or if some other callback function invokes sqlite3_changes() directly.
+Essentially: 
+.Bl -bullet
+.It
+Before entering a trigger program the value returned by sqlite3_changes()
+function is saved.
+After the trigger program has finished, the original value is restored.
+.It
+Within a trigger program each INSERT, UPDATE and DELETE statement sets
+the value returned by sqlite3_changes() upon completion as normal.
+Of course, this value will not include any changes performed by sub-triggers,
+as the sqlite3_changes() value will be saved and restored after each
+sub-trigger has run.
+.El
+.Pp
+This means that if the changes() SQL function (or similar) is used
+by the first INSERT, UPDATE or DELETE statement within a trigger, it
+returns the value as set when the calling statement began executing.
+If it is used by the second or subsequent such statement within a trigger
+program, the value returned reflects the number of rows modified by
+the previous INSERT, UPDATE or DELETE statement within the same trigger.
+.Pp
+See also the sqlite3_total_changes() interface,
+the count_changes pragma, and the changes() SQL function.
+.Pp
+If a separate thread makes changes on the same database connection
+while sqlite3_changes() is running then the value
+returned is unpredictable and not meaningful.
+.Sh SEE ALSO
+.Xr sqlite3_changes 3 ,
+.Xr sqlite3_total_changes 3

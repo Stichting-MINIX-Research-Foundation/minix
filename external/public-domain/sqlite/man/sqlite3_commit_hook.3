@@ -1,0 +1,70 @@
+.Dd March 11, 2017
+.Dt SQLITE3_COMMIT_HOOK 3
+.Os
+.Sh NAME
+.Nm sqlite3_commit_hook ,
+.Nm sqlite3_rollback_hook
+.Nd Commit And Rollback Notification Callbacks
+.Sh SYNOPSIS
+.Ft void *
+.Fo sqlite3_commit_hook
+.Fa "sqlite3*"
+.Fa "int(*)(void*)"
+.Fa "void*"
+.Fc
+.Ft void *
+.Fo sqlite3_rollback_hook
+.Fa "sqlite3*"
+.Fa "void(*)(void *)"
+.Fa "void*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_commit_hook() interface registers a callback function to
+be invoked whenever a transaction is  committed.
+Any callback set by a previous call to sqlite3_commit_hook() for the
+same database connection is overridden.
+The sqlite3_rollback_hook() interface registers a callback function
+to be invoked whenever a transaction is  rolled back.
+Any callback set by a previous call to sqlite3_rollback_hook() for
+the same database connection is overridden.
+The pArg argument is passed through to the callback.
+If the callback on a commit hook function returns non-zero, then the
+commit is converted into a rollback.
+.Pp
+The sqlite3_commit_hook(D,C,P) and sqlite3_rollback_hook(D,C,P) functions
+return the P argument from the previous call of the same function on
+the same database connection D, or NULL for the
+first call for each function on D.
+.Pp
+The commit and rollback hook callbacks are not reentrant.
+The callback implementation must not do anything that will modify the
+database connection that invoked the callback.
+Any actions to modify the database connection must be deferred until
+after the completion of the sqlite3_step() call that
+triggered the commit or rollback hook in the first place.
+Note that running any other SQL statements, including SELECT statements,
+or merely calling sqlite3_prepare_v2() and sqlite3_step()
+will modify the database connections for the meaning of "modify" in
+this paragraph.
+.Pp
+Registering a NULL function disables the callback.
+.Pp
+When the commit hook callback routine returns zero, the COMMIT
+operation is allowed to continue normally.
+If the commit hook returns non-zero, then the COMMIT is converted
+into a ROLLBACK.
+The rollback hook is invoked on a rollback that results from a commit
+hook returning non-zero, just as it would be with any other rollback.
+.Pp
+For the purposes of this API, a transaction is said to have been rolled
+back if an explicit "ROLLBACK" statement is executed, or an error or
+constraint causes an implicit rollback to occur.
+The rollback callback is not invoked if a transaction is automatically
+rolled back because the database connection is closed.
+.Pp
+See also the sqlite3_update_hook() interface.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_update_hook 3

@@ -1,0 +1,123 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VALUE_BLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3_value_blob ,
+.Nm sqlite3_value_bytes ,
+.Nm sqlite3_value_bytes16 ,
+.Nm sqlite3_value_double ,
+.Nm sqlite3_value_int ,
+.Nm sqlite3_value_int64 ,
+.Nm sqlite3_value_text ,
+.Nm sqlite3_value_text16 ,
+.Nm sqlite3_value_text16le ,
+.Nm sqlite3_value_text16be ,
+.Nm sqlite3_value_type ,
+.Nm sqlite3_value_numeric_type
+.Nd Obtaining SQL Values
+.Sh SYNOPSIS
+.Ft const void *
+.Fo sqlite3_value_blob
+.Fa "sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_value_bytes
+.Fa "sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_value_bytes16
+.Fa "sqlite3_value*"
+.Fc
+.Ft double 
+.Fo sqlite3_value_double
+.Fa "sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_value_int
+.Fa "sqlite3_value*"
+.Fc
+.Ft sqlite3_int64 
+.Fo sqlite3_value_int64
+.Fa "sqlite3_value*"
+.Fc
+.Ft const unsigned char *
+.Fo sqlite3_value_text
+.Fa "sqlite3_value*"
+.Fc
+.Ft const void *
+.Fo sqlite3_value_text16
+.Fa "sqlite3_value*"
+.Fc
+.Ft const void *
+.Fo sqlite3_value_text16le
+.Fa "sqlite3_value*"
+.Fc
+.Ft const void *
+.Fo sqlite3_value_text16be
+.Fa "sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_value_type
+.Fa "sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_value_numeric_type
+.Fa "sqlite3_value*"
+.Fc
+.Sh DESCRIPTION
+The C-language implementation of SQL functions and aggregates uses
+this set of interface routines to access the parameter values on the
+function or aggregate.
+.Pp
+The xFunc (for scalar functions) or xStep (for aggregates) parameters
+to sqlite3_create_function() and sqlite3_create_function16()
+define callbacks that implement the SQL functions and aggregates.
+The 3rd parameter to these callbacks is an array of pointers to protected sqlite3_value
+objects.
+There is one sqlite3_value object for each parameter to
+the SQL function.
+These routines are used to extract values from the sqlite3_value
+objects.
+.Pp
+These routines work only with protected sqlite3_value
+objects.
+Any attempt to use these routines on an unprotected sqlite3_value
+object results in undefined behavior.
+.Pp
+These routines work just like the corresponding column access functions
+except that these routines take a single protected sqlite3_value
+object pointer instead of a sqlite3_stmt* pointer and
+an integer column number.
+.Pp
+The sqlite3_value_text16() interface extracts a UTF-16 string in the
+native byte-order of the host machine.
+The sqlite3_value_text16be() and sqlite3_value_text16le() interfaces
+extract UTF-16 strings as big-endian and little-endian respectively.
+.Pp
+The sqlite3_value_numeric_type() interface attempts to apply numeric
+affinity to the value.
+This means that an attempt is made to convert the value to an integer
+or floating point.
+If such a conversion is possible without loss of information (in other
+words, if the value is a string that looks like a number) then the
+conversion is performed.
+Otherwise no conversion occurs.
+The  datatype after conversion is returned.
+.Pp
+Please pay particular attention to the fact that the pointer returned
+from sqlite3_value_blob(), sqlite3_value_text(),
+or sqlite3_value_text16() can be invalidated
+by a subsequent call to sqlite3_value_bytes(),
+sqlite3_value_bytes16(), sqlite3_value_text(),
+or sqlite3_value_text16().
+.Pp
+These routines must be called from the same thread as the SQL function
+that supplied the sqlite3_value* parameters.
+.Sh SEE ALSO
+.Xr sqlite3_column_blob 3 ,
+.Xr sqlite3_value 3 ,
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_value 3 ,
+.Xr sqlite3_value_blob 3 ,
+.Xr SQLITE_INTEGER 3 ,
+.Xr sqlite3_value 3

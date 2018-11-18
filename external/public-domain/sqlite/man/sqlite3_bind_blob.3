@@ -1,0 +1,224 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BIND_BLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3_bind_blob ,
+.Nm sqlite3_bind_blob64 ,
+.Nm sqlite3_bind_double ,
+.Nm sqlite3_bind_int ,
+.Nm sqlite3_bind_int64 ,
+.Nm sqlite3_bind_null ,
+.Nm sqlite3_bind_text ,
+.Nm sqlite3_bind_text16 ,
+.Nm sqlite3_bind_text64 ,
+.Nm sqlite3_bind_value ,
+.Nm sqlite3_bind_zeroblob ,
+.Nm sqlite3_bind_zeroblob64
+.Nd Binding Values To Prepared Statements
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_bind_blob
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const void*"
+.Fa "int n"
+.Fa "void(*)(void*)"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_blob64
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const void*"
+.Fa "sqlite3_uint64"
+.Fa "void(*)(void*)"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_double
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "double"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_int
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "int"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_int64
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "sqlite3_int64"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_null
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_text
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const char*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_text16
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const void*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_text64
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const char*"
+.Fa "sqlite3_uint64"
+.Fa "void(*)(void*)"
+.Fa "unsigned char encoding"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_value
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "const sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_zeroblob
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "int n"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_zeroblob64
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "sqlite3_uint64"
+.Fc
+.Sh DESCRIPTION
+In the SQL statement text input to sqlite3_prepare_v2()
+and its variants, literals may be replaced by a parameter
+that matches one of following templates: 
+.Bl -bullet
+.It
+? 
+.It
+?NNN 
+.It
+:VVV 
+.It
+@VVV 
+.It
+$VVV 
+.El
+.Pp
+In the templates above, NNN represents an integer literal, and VVV
+represents an alphanumeric identifier.
+The values of these parameters (also called "host parameter names"
+or "SQL parameters") can be set using the sqlite3_bind_*() routines
+defined here.
+.Pp
+The first argument to the sqlite3_bind_*() routines is always a pointer
+to the sqlite3_stmt object returned from sqlite3_prepare_v2()
+or its variants.
+.Pp
+The second argument is the index of the SQL parameter to be set.
+The leftmost SQL parameter has an index of 1.
+When the same named SQL parameter is used more than once, second and
+subsequent occurrences have the same index as the first occurrence.
+The index for named parameters can be looked up using the sqlite3_bind_parameter_index()
+API if desired.
+The index for "?NNN" parameters is the value of NNN.
+The NNN value must be between 1 and the sqlite3_limit()
+parameter SQLITE_LIMIT_VARIABLE_NUMBER
+(default value: 999).
+.Pp
+The third argument is the value to bind to the parameter.
+If the third parameter to sqlite3_bind_text() or sqlite3_bind_text16()
+or sqlite3_bind_blob() is a NULL pointer then the fourth parameter
+is ignored and the end result is the same as sqlite3_bind_null().
+.Pp
+In those routines that have a fourth argument, its value is the number
+of bytes in the parameter.
+To be clear: the value is the number of <u>bytes</u> in the value,
+not the number of characters.
+If the fourth parameter to sqlite3_bind_text() or sqlite3_bind_text16()
+is negative, then the length of the string is the number of bytes up
+to the first zero terminator.
+If the fourth parameter to sqlite3_bind_blob() is negative, then the
+behavior is undefined.
+If a non-negative fourth parameter is provided to sqlite3_bind_text()
+or sqlite3_bind_text16() or sqlite3_bind_text64() then that parameter
+must be the byte offset where the NUL terminator would occur assuming
+the string were NUL terminated.
+If any NUL characters occur at byte offsets less than the value of
+the fourth parameter then the resulting string value will contain embedded
+NULs.
+The result of expressions involving strings with embedded NULs is undefined.
+.Pp
+The fifth argument to the BLOB and string binding interfaces is a destructor
+used to dispose of the BLOB or string after SQLite has finished with
+it.
+The destructor is called to dispose of the BLOB or string even if the
+call to bind API fails.
+If the fifth argument is the special value SQLITE_STATIC,
+then SQLite assumes that the information is in static, unmanaged space
+and does not need to be freed.
+If the fifth argument has the value SQLITE_TRANSIENT,
+then SQLite makes its own private copy of the data immediately, before
+the sqlite3_bind_*() routine returns.
+.Pp
+The sixth argument to sqlite3_bind_text64() must be one of SQLITE_UTF8,
+SQLITE_UTF16, SQLITE_UTF16BE, or SQLITE_UTF16LE
+to specify the encoding of the text in the third parameter.
+If the sixth argument to sqlite3_bind_text64() is not one of the allowed
+values shown above, or if the text encoding is different from the encoding
+specified by the sixth parameter, then the behavior is undefined.
+.Pp
+The sqlite3_bind_zeroblob() routine binds a BLOB of length N that is
+filled with zeroes.
+A zeroblob uses a fixed amount of memory (just an integer to hold its
+size) while it is being processed.
+Zeroblobs are intended to serve as placeholders for BLOBs whose content
+is later written using  incremental BLOB I/O routines.
+A negative value for the zeroblob results in a zero-length BLOB.
+.Pp
+If any of the sqlite3_bind_*() routines are called with a NULL pointer
+for the prepared statement or with a prepared statement
+for which sqlite3_step() has been called more recently
+than sqlite3_reset(), then the call will return SQLITE_MISUSE.
+If any sqlite3_bind_() routine is passed a prepared statement
+that has been finalized, the result is undefined and probably harmful.
+.Pp
+Bindings are not cleared by the sqlite3_reset() routine.
+Unbound parameters are interpreted as NULL.
+.Pp
+The sqlite3_bind_* routines return SQLITE_OK on success or
+an error code if anything goes wrong.
+SQLITE_TOOBIG might be returned if the size of a string
+or BLOB exceeds limits imposed by sqlite3_limit(SQLITE_LIMIT_LENGTH)
+or SQLITE_MAX_LENGTH.
+SQLITE_RANGE is returned if the parameter index is out
+of range.
+SQLITE_NOMEM is returned if malloc() fails.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_bind_parameter_count 3 ,
+.Xr sqlite3_bind_parameter_index 3 ,
+.Xr sqlite3_bind_parameter_name 3 ,
+.Xr sqlite3_blob_open 3 ,
+.Xr sqlite3_limit 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_reset 3 ,
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr SQLITE_LIMIT_LENGTH 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr sqlite3_destructor_type 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr sqlite3_destructor_type 3 ,
+.Xr SQLITE_UTF8 3

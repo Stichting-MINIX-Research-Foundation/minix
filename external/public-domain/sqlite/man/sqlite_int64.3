@@ -1,0 +1,36 @@
+.Dd March 11, 2017
+.Dt SQLITE_INT64 3
+.Os
+.Sh NAME
+.Nm sqlite_int64 ,
+.Nm sqlite_uint64 ,
+.Nm sqlite_uint64 ,
+.Nm sqlite_int64 ,
+.Nm sqlite_uint64 ,
+.Nm sqlite_int64 ,
+.Nm sqlite_uint64 ,
+.Nm sqlite3_int64 ,
+.Nm sqlite3_uint64
+.Nd 64-Bit Integer Types
+.Sh SYNOPSIS
+.Vt typedef SQLITE_INT64_TYPE sqlite_int64;
+.Vt typedef SQLITE_UINT64_TYPE sqlite_uint64;
+.Vt typedef unsigned SQLITE_INT64_TYPE sqlite_uint64;
+.Vt typedef __int64 sqlite_int64;
+.Vt typedef unsigned __int64 sqlite_uint64;
+.Vt typedef long long int sqlite_int64;
+.Vt typedef unsigned long long int sqlite_uint64;
+.Vt typedef sqlite_int64 sqlite3_int64;
+.Vt typedef sqlite_uint64 sqlite3_uint64;
+.Sh DESCRIPTION
+Because there is no cross-platform way to specify 64-bit integer types
+SQLite includes typedefs for 64-bit signed and unsigned integers.
+.Pp
+The sqlite3_int64 and sqlite3_uint64 are the preferred type definitions.
+The sqlite_int64 and sqlite_uint64 types are supported for backwards
+compatibility only.
+.Pp
+The sqlite3_int64 and sqlite_int64 types can store integer values between
+-9223372036854775808 and +9223372036854775807 inclusive.
+The sqlite3_uint64 and sqlite_uint64 types can store integer values
+between 0 and +18446744073709551615 inclusive.

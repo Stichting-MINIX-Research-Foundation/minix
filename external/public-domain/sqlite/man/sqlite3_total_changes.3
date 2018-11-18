@@ -1,0 +1,34 @@
+.Dd March 11, 2017
+.Dt SQLITE3_TOTAL_CHANGES 3
+.Os
+.Sh NAME
+.Nm sqlite3_total_changes
+.Nd Total Number Of Rows Modified
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_total_changes
+.Fa "sqlite3*"
+.Fc
+.Sh DESCRIPTION
+This function returns the total number of rows inserted, modified or
+deleted by all INSERT, UPDATE or DELETE statements
+completed since the database connection was opened, including those
+executed as part of trigger programs.
+Executing any other type of SQL statement does not affect the value
+returned by sqlite3_total_changes().
+.Pp
+Changes made as part of foreign key actions are
+included in the count, but those made as part of REPLACE constraint
+resolution are not.
+Changes to a view that are intercepted by INSTEAD OF triggers are not
+counted.
+.Pp
+See also the sqlite3_changes() interface, the count_changes pragma,
+and the total_changes() SQL function.
+.Pp
+If a separate thread makes changes on the same database connection
+while sqlite3_total_changes() is running then
+the value returned is unpredictable and not meaningful.
+.Sh SEE ALSO
+.Xr sqlite3_changes 3 ,
+.Xr sqlite3_total_changes 3

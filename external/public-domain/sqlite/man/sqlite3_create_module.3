@@ -1,0 +1,50 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CREATE_MODULE 3
+.Os
+.Sh NAME
+.Nm sqlite3_create_module ,
+.Nm sqlite3_create_module_v2
+.Nd Register A Virtual Table Implementation
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_create_module
+.Fa "sqlite3 *db"
+.Fa "const char *zName"
+.Fa "const sqlite3_module *p"
+.Fa "void *pClientData          "
+.Fc
+.Ft int 
+.Fo sqlite3_create_module_v2
+.Fa "sqlite3 *db"
+.Fa "const char *zName"
+.Fa "const sqlite3_module *p"
+.Fa "void *pClientData"
+.Fa "void(*xDestroy)(void*)     "
+.Fc
+.Sh DESCRIPTION
+These routines are used to register a new virtual table module
+name.
+Module names must be registered before creating a new virtual table
+using the module and before using a preexisting virtual table
+for the module.
+.Pp
+The module name is registered on the database connection
+specified by the first parameter.
+The name of the module is given by the second parameter.
+The third parameter is a pointer to the implementation of the virtual table module.
+The fourth parameter is an arbitrary client data pointer that is passed
+through into the xCreate and xConnect methods of the
+virtual table module when a new virtual table is be being created or
+reinitialized.
+.Pp
+The sqlite3_create_module_v2() interface has a fifth parameter which
+is a pointer to a destructor for the pClientData.
+SQLite will invoke the destructor function (if it is not NULL) when
+SQLite no longer needs the pClientData pointer.
+The destructor will also be invoked if the call to sqlite3_create_module_v2()
+fails.
+The sqlite3_create_module() interface is equivalent to sqlite3_create_module_v2()
+with a NULL destructor.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_module 3

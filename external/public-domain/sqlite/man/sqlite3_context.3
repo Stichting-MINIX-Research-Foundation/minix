@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3_CONTEXT 3
+.Os
+.Sh NAME
+.Nm sqlite3_context
+.Nd SQL Function Context Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_context sqlite3_context;
+.Sh DESCRIPTION
+The context in which an SQL function executes is stored in an sqlite3_context
+object.
+A pointer to an sqlite3_context object is always first parameter to
+application-defined SQL functions.
+The application-defined SQL function implementation will pass this
+pointer through into calls to  sqlite3_result(), sqlite3_aggregate_context(),
+sqlite3_user_data(), sqlite3_context_db_handle(),
+sqlite3_get_auxdata(), and/or sqlite3_set_auxdata().
+.Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_aggregate_context 3 ,
+.Xr sqlite3_context_db_handle 3 ,
+.Xr sqlite3_get_auxdata 3 ,
+.Xr sqlite3_result_blob 3 ,
+.Xr sqlite3_get_auxdata 3 ,
+.Xr sqlite3_user_data 3

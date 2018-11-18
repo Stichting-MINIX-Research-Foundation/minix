@@ -1,0 +1,37 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BIND_PARAMETER_NAME 3
+.Os
+.Sh NAME
+.Nm sqlite3_bind_parameter_name
+.Nd Name Of A Host Parameter
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_bind_parameter_name
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_bind_parameter_name(P,N) interface returns the name of
+the N-th SQL parameter in the prepared statement
+P.
+SQL parameters of the form "?NNN" or ":AAA" or "@AAA" or "$AAA" have
+a name which is the string "?NNN" or ":AAA" or "@AAA" or "$AAA" respectively.
+In other words, the initial ":" or "$" or "@" or "?" is included as
+part of the name.
+Parameters of the form "?" without a following integer have no name
+and are referred to as "nameless" or "anonymous parameters".
+.Pp
+The first host parameter has an index of 1, not 0.
+.Pp
+If the value N is out of range or if the N-th parameter is nameless,
+then NULL is returned.
+The returned string is always in UTF-8 encoding even if the named parameter
+was originally specified as UTF-16 in sqlite3_prepare16()
+or sqlite3_prepare16_v2().
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_bind_parameter_count 3 ,
+.Xr sqlite3_bind_parameter_index 3 ,
+.Xr sqlite3_prepare 3

@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE3 3
+.Os
+.Sh NAME
+.Nm sqlite3
+.Nd Database Connection Handle
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3 sqlite3;
+.Sh DESCRIPTION
+Each open SQLite database is represented by a pointer to an instance
+of the opaque structure named "sqlite3".
+It is useful to think of an sqlite3 pointer as an object.
+The sqlite3_open(), sqlite3_open16(),
+and sqlite3_open_v2() interfaces are its constructors,
+and sqlite3_close() and sqlite3_close_v2()
+are its destructors.
+There are many other interfaces (such as sqlite3_prepare_v2(),
+sqlite3_create_function(), and sqlite3_busy_timeout()
+to name but three) that are methods on an sqlite3 object.
+.Sh SEE ALSO
+.Xr sqlite3_busy_timeout 3 ,
+.Xr sqlite3_close 3 ,
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_open 3 ,
+.Xr sqlite3_prepare 3

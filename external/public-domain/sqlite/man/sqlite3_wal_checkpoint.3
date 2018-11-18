@@ -1,0 +1,30 @@
+.Dd March 11, 2017
+.Dt SQLITE3_WAL_CHECKPOINT 3
+.Os
+.Sh NAME
+.Nm sqlite3_wal_checkpoint
+.Nd Checkpoint a database
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_wal_checkpoint
+.Fa "sqlite3 *db"
+.Fa "const char *zDb"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_wal_checkpoint(D,X) is equivalent to sqlite3_wal_checkpoint_v2(D,X,SQLITE_CHECKPOINT_PASSIVE,0,0).
+.Pp
+In brief, sqlite3_wal_checkpoint(D,X) causes the content in the write-ahead log
+for database X on database connection D to be transferred
+into the database file and for the write-ahead log to be reset.
+See the checkpointing documentation for addition information.
+.Pp
+This interface used to be the only way to cause a checkpoint to occur.
+But then the newer and more powerful sqlite3_wal_checkpoint_v2()
+interface was added.
+This interface is retained for backwards compatibility and as a convenience
+for applications that need to manually start a callback but which do
+not need the full power (and corresponding complication) of sqlite3_wal_checkpoint_v2().
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_wal_checkpoint_v2 3 ,
+.Xr SQLITE_CHECKPOINT_PASSIVE 3

@@ -1,0 +1,94 @@
+.Dd March 11, 2017
+.Dt SQLITE_CREATE_INDEX 3
+.Os
+.Sh NAME
+.Nm SQLITE_CREATE_INDEX ,
+.Nm SQLITE_CREATE_TABLE ,
+.Nm SQLITE_CREATE_TEMP_INDEX ,
+.Nm SQLITE_CREATE_TEMP_TABLE ,
+.Nm SQLITE_CREATE_TEMP_TRIGGER ,
+.Nm SQLITE_CREATE_TEMP_VIEW ,
+.Nm SQLITE_CREATE_TRIGGER ,
+.Nm SQLITE_CREATE_VIEW ,
+.Nm SQLITE_DELETE ,
+.Nm SQLITE_DROP_INDEX ,
+.Nm SQLITE_DROP_TABLE ,
+.Nm SQLITE_DROP_TEMP_INDEX ,
+.Nm SQLITE_DROP_TEMP_TABLE ,
+.Nm SQLITE_DROP_TEMP_TRIGGER ,
+.Nm SQLITE_DROP_TEMP_VIEW ,
+.Nm SQLITE_DROP_TRIGGER ,
+.Nm SQLITE_DROP_VIEW ,
+.Nm SQLITE_INSERT ,
+.Nm SQLITE_PRAGMA ,
+.Nm SQLITE_READ ,
+.Nm SQLITE_SELECT ,
+.Nm SQLITE_TRANSACTION ,
+.Nm SQLITE_UPDATE ,
+.Nm SQLITE_ATTACH ,
+.Nm SQLITE_DETACH ,
+.Nm SQLITE_ALTER_TABLE ,
+.Nm SQLITE_REINDEX ,
+.Nm SQLITE_ANALYZE ,
+.Nm SQLITE_CREATE_VTABLE ,
+.Nm SQLITE_DROP_VTABLE ,
+.Nm SQLITE_FUNCTION ,
+.Nm SQLITE_SAVEPOINT ,
+.Nm SQLITE_COPY ,
+.Nm SQLITE_RECURSIVE
+.Nd Authorizer Action Codes
+.Sh SYNOPSIS
+.Fd #define SQLITE_CREATE_INDEX
+.Fd #define SQLITE_CREATE_TABLE
+.Fd #define SQLITE_CREATE_TEMP_INDEX
+.Fd #define SQLITE_CREATE_TEMP_TABLE
+.Fd #define SQLITE_CREATE_TEMP_TRIGGER
+.Fd #define SQLITE_CREATE_TEMP_VIEW
+.Fd #define SQLITE_CREATE_TRIGGER
+.Fd #define SQLITE_CREATE_VIEW
+.Fd #define SQLITE_DELETE
+.Fd #define SQLITE_DROP_INDEX
+.Fd #define SQLITE_DROP_TABLE
+.Fd #define SQLITE_DROP_TEMP_INDEX
+.Fd #define SQLITE_DROP_TEMP_TABLE
+.Fd #define SQLITE_DROP_TEMP_TRIGGER
+.Fd #define SQLITE_DROP_TEMP_VIEW
+.Fd #define SQLITE_DROP_TRIGGER
+.Fd #define SQLITE_DROP_VIEW
+.Fd #define SQLITE_INSERT
+.Fd #define SQLITE_PRAGMA
+.Fd #define SQLITE_READ
+.Fd #define SQLITE_SELECT
+.Fd #define SQLITE_TRANSACTION
+.Fd #define SQLITE_UPDATE
+.Fd #define SQLITE_ATTACH
+.Fd #define SQLITE_DETACH
+.Fd #define SQLITE_ALTER_TABLE
+.Fd #define SQLITE_REINDEX
+.Fd #define SQLITE_ANALYZE
+.Fd #define SQLITE_CREATE_VTABLE
+.Fd #define SQLITE_DROP_VTABLE
+.Fd #define SQLITE_FUNCTION
+.Fd #define SQLITE_SAVEPOINT
+.Fd #define SQLITE_COPY
+.Fd #define SQLITE_RECURSIVE
+.Sh DESCRIPTION
+The sqlite3_set_authorizer() interface registers
+a callback function that is invoked to authorize certain SQL statement
+actions.
+The second parameter to the callback is an integer code that specifies
+what action is being authorized.
+These are the integer action codes that the authorizer callback may
+be passed.
+.Pp
+These action code values signify what kind of operation is to be authorized.
+The 3rd and 4th parameters to the authorization callback function will
+be parameters or NULL depending on which of these codes is used as
+the second parameter.
+The 5th parameter to the authorizer callback is the name of the database
+("main", "temp", etc.) if applicable.
+The 6th parameter to the authorizer callback is the name of the inner-most
+trigger or view that is responsible for the access attempt or NULL
+if this access attempt is directly from top-level SQL code.
+.Sh SEE ALSO
+.Xr sqlite3_set_authorizer 3

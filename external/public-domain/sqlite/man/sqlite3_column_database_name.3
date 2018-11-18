@@ -1,0 +1,89 @@
+.Dd March 11, 2017
+.Dt SQLITE3_COLUMN_DATABASE_NAME 3
+.Os
+.Sh NAME
+.Nm sqlite3_column_database_name ,
+.Nm sqlite3_column_database_name16 ,
+.Nm sqlite3_column_table_name ,
+.Nm sqlite3_column_table_name16 ,
+.Nm sqlite3_column_origin_name ,
+.Nm sqlite3_column_origin_name16
+.Nd Source Of Data In A Query Result
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_column_database_name
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const void *
+.Fo sqlite3_column_database_name16
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const char *
+.Fo sqlite3_column_table_name
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const void *
+.Fo sqlite3_column_table_name16
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const char *
+.Fo sqlite3_column_origin_name
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Ft const void *
+.Fo sqlite3_column_origin_name16
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+These routines provide a means to determine the database, table, and
+table column that is the origin of a particular result column in SELECT
+statement.
+The name of the database or table or column can be returned as either
+a UTF-8 or UTF-16 string.
+The _database_ routines return the database name, the _table_ routines
+return the table name, and the origin_ routines return the column name.
+The returned string is valid until the prepared statement
+is destroyed using sqlite3_finalize() or until the
+statement is automatically reprepared by the first call to sqlite3_step()
+for a particular run or until the same information is requested again
+in a different encoding.
+.Pp
+The names returned are the original un-aliased names of the database,
+table, and column.
+.Pp
+The first argument to these interfaces is a prepared statement.
+These functions return information about the Nth result column returned
+by the statement, where N is the second function argument.
+The left-most column is column 0 for these routines.
+.Pp
+If the Nth column returned by the statement is an expression or subquery
+and is not a column value, then all of these functions return NULL.
+These routine might also return NULL if a memory allocation error occurs.
+Otherwise, they return the name of the attached database, table, or
+column that query result column was extracted from.
+.Pp
+As with all other SQLite APIs, those whose names end with "16" return
+UTF-16 encoded strings and the other functions return UTF-8.
+.Pp
+These APIs are only available if the library was compiled with the
+SQLITE_ENABLE_COLUMN_METADATA C-preprocessor
+symbol.
+.Pp
+If two or more threads call one or more of these routines against the
+same prepared statement and column at the same time then the results
+are undefined.
+.Pp
+If two or more threads call one or more  column metadata interfaces
+for the same prepared statement and result column
+at the same time then the results are undefined.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_column_database_name 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_step 3

@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE3SESSION_DELETE 3
+.Os
+.Sh NAME
+.Nm sqlite3session_delete
+.Nd Delete A Session Object
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3session_delete
+.Fa "sqlite3_session *pSession"
+.Fc
+.Sh DESCRIPTION
+Delete a session object previously allocated using sqlite3session_create().
+Once a session object has been deleted, the results of attempting to
+use pSession with any other session module function are undefined.
+.Pp
+Session objects must be deleted before the database handle to which
+they are attached is closed.
+Refer to the documentation for sqlite3session_create()
+for details.
+.Sh SEE ALSO
+.Xr sqlite3session_create 3

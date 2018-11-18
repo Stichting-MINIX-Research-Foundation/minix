@@ -1,0 +1,257 @@
+.Dd March 11, 2017
+.Dt SQLITE3_RESULT_BLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3_result_blob ,
+.Nm sqlite3_result_blob64 ,
+.Nm sqlite3_result_double ,
+.Nm sqlite3_result_error ,
+.Nm sqlite3_result_error16 ,
+.Nm sqlite3_result_error_toobig ,
+.Nm sqlite3_result_error_nomem ,
+.Nm sqlite3_result_error_code ,
+.Nm sqlite3_result_int ,
+.Nm sqlite3_result_int64 ,
+.Nm sqlite3_result_null ,
+.Nm sqlite3_result_text ,
+.Nm sqlite3_result_text64 ,
+.Nm sqlite3_result_text16 ,
+.Nm sqlite3_result_text16le ,
+.Nm sqlite3_result_text16be ,
+.Nm sqlite3_result_value ,
+.Nm sqlite3_result_zeroblob ,
+.Nm sqlite3_result_zeroblob64
+.Nd Setting The Result Of An SQL Function
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_result_blob
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_blob64
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "sqlite3_uint64"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_double
+.Fa "sqlite3_context*"
+.Fa "double"
+.Fc
+.Ft void 
+.Fo sqlite3_result_error
+.Fa "sqlite3_context*"
+.Fa "const char*"
+.Fa "int"
+.Fc
+.Ft void 
+.Fo sqlite3_result_error16
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "int"
+.Fc
+.Ft void 
+.Fo sqlite3_result_error_toobig
+.Fa "sqlite3_context*"
+.Fc
+.Ft void 
+.Fo sqlite3_result_error_nomem
+.Fa "sqlite3_context*"
+.Fc
+.Ft void 
+.Fo sqlite3_result_error_code
+.Fa "sqlite3_context*"
+.Fa "int"
+.Fc
+.Ft void 
+.Fo sqlite3_result_int
+.Fa "sqlite3_context*"
+.Fa "int"
+.Fc
+.Ft void 
+.Fo sqlite3_result_int64
+.Fa "sqlite3_context*"
+.Fa "sqlite3_int64"
+.Fc
+.Ft void 
+.Fo sqlite3_result_null
+.Fa "sqlite3_context*"
+.Fc
+.Ft void 
+.Fo sqlite3_result_text
+.Fa "sqlite3_context*"
+.Fa "const char*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_text64
+.Fa "sqlite3_context*"
+.Fa "const char*"
+.Fa "sqlite3_uint64"
+.Fa "void(*)(void*)"
+.Fa "unsigned char encoding"
+.Fc
+.Ft void 
+.Fo sqlite3_result_text16
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_text16le
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_text16be
+.Fa "sqlite3_context*"
+.Fa "const void*"
+.Fa "int"
+.Fa "void(*)(void*)"
+.Fc
+.Ft void 
+.Fo sqlite3_result_value
+.Fa "sqlite3_context*"
+.Fa "sqlite3_value*"
+.Fc
+.Ft void 
+.Fo sqlite3_result_zeroblob
+.Fa "sqlite3_context*"
+.Fa "int n"
+.Fc
+.Ft int 
+.Fo sqlite3_result_zeroblob64
+.Fa "sqlite3_context*"
+.Fa "sqlite3_uint64 n"
+.Fc
+.Sh DESCRIPTION
+These routines are used by the xFunc or xFinal callbacks that implement
+SQL functions and aggregates.
+See sqlite3_create_function() and sqlite3_create_function16()
+for additional information.
+.Pp
+These functions work very much like the parameter binding
+family of functions used to bind values to host parameters in prepared
+statements.
+Refer to the SQL parameter documentation for additional
+information.
+.Pp
+The sqlite3_result_blob() interface sets the result from an application-defined
+function to be the BLOB whose content is pointed to by the second parameter
+and which is N bytes long where N is the third parameter.
+.Pp
+The sqlite3_result_zeroblob(C,N) and sqlite3_result_zeroblob64(C,N)
+interfaces set the result of the application-defined function to be
+a BLOB containing all zero bytes and N bytes in size.
+.Pp
+The sqlite3_result_double() interface sets the result from an application-defined
+function to be a floating point value specified by its 2nd argument.
+.Pp
+The sqlite3_result_error() and sqlite3_result_error16() functions cause
+the implemented SQL function to throw an exception.
+SQLite uses the string pointed to by the 2nd parameter of sqlite3_result_error()
+or sqlite3_result_error16() as the text of an error message.
+SQLite interprets the error message string from sqlite3_result_error()
+as UTF-8.
+SQLite interprets the string from sqlite3_result_error16() as UTF-16
+in native byte order.
+If the third parameter to sqlite3_result_error() or sqlite3_result_error16()
+is negative then SQLite takes as the error message all text up through
+the first zero character.
+If the third parameter to sqlite3_result_error() or sqlite3_result_error16()
+is non-negative then SQLite takes that many bytes (not characters)
+from the 2nd parameter as the error message.
+The sqlite3_result_error() and sqlite3_result_error16() routines make
+a private copy of the error message text before they return.
+Hence, the calling function can deallocate or modify the text after
+they return without harm.
+The sqlite3_result_error_code() function changes the error code returned
+by SQLite as a result of an error in a function.
+By default, the error code is SQLITE_ERROR.
+A subsequent call to sqlite3_result_error() or sqlite3_result_error16()
+resets the error code to SQLITE_ERROR.
+.Pp
+The sqlite3_result_error_toobig() interface causes SQLite to throw
+an error indicating that a string or BLOB is too long to represent.
+.Pp
+The sqlite3_result_error_nomem() interface causes SQLite to throw an
+error indicating that a memory allocation failed.
+.Pp
+The sqlite3_result_int() interface sets the return value of the application-defined
+function to be the 32-bit signed integer value given in the 2nd argument.
+The sqlite3_result_int64() interface sets the return value of the application-defined
+function to be the 64-bit signed integer value given in the 2nd argument.
+.Pp
+The sqlite3_result_null() interface sets the return value of the application-defined
+function to be NULL.
+.Pp
+The sqlite3_result_text(), sqlite3_result_text16(), sqlite3_result_text16le(),
+and sqlite3_result_text16be() interfaces set the return value of the
+application-defined function to be a text string which is represented
+as UTF-8, UTF-16 native byte order, UTF-16 little endian, or UTF-16
+big endian, respectively.
+The sqlite3_result_text64() interface sets the return value of an application-defined
+function to be a text string in an encoding specified by the fifth
+(and last) parameter, which must be one of SQLITE_UTF8,
+SQLITE_UTF16, SQLITE_UTF16BE, or SQLITE_UTF16LE.
+SQLite takes the text result from the application from the 2nd parameter
+of the sqlite3_result_text* interfaces.
+If the 3rd parameter to the sqlite3_result_text* interfaces is negative,
+then SQLite takes result text from the 2nd parameter through the first
+zero character.
+If the 3rd parameter to the sqlite3_result_text* interfaces is non-negative,
+then as many bytes (not characters) of the text pointed to by the 2nd
+parameter are taken as the application-defined function result.
+If the 3rd parameter is non-negative, then it must be the byte offset
+into the string where the NUL terminator would appear if the string
+where NUL terminated.
+If any NUL characters occur in the string at a byte offset that is
+less than the value of the 3rd parameter, then the resulting string
+will contain embedded NULs and the result of expressions operating
+on strings with embedded NULs is undefined.
+If the 4th parameter to the sqlite3_result_text* interfaces or sqlite3_result_blob
+is a non-NULL pointer, then SQLite calls that function as the destructor
+on the text or BLOB result when it has finished using that result.
+If the 4th parameter to the sqlite3_result_text* interfaces or to sqlite3_result_blob
+is the special constant SQLITE_STATIC, then SQLite assumes that the
+text or BLOB result is in constant space and does not copy the content
+of the parameter nor call a destructor on the content when it has finished
+using that result.
+If the 4th parameter to the sqlite3_result_text* interfaces or sqlite3_result_blob
+is the special constant SQLITE_TRANSIENT then SQLite makes a copy of
+the result into space obtained from from sqlite3_malloc()
+before it returns.
+.Pp
+The sqlite3_result_value() interface sets the result of the application-defined
+function to be a copy of the unprotected sqlite3_value
+object specified by the 2nd parameter.
+The sqlite3_result_value() interface makes a copy of the sqlite3_value
+so that the sqlite3_value specified in the parameter may
+change or be deallocated after sqlite3_result_value() returns without
+harm.
+A protected sqlite3_value object may always
+be used where an unprotected sqlite3_value
+object is required, so either kind of sqlite3_value object
+can be used with this interface.
+.Pp
+If these routines are called from within the different thread than
+the one containing the application-defined function that received the
+sqlite3_context pointer, the results are undefined.
+.Sh SEE ALSO
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_value 3 ,
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_context 3 ,
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_malloc 3 ,
+.Xr sqlite3_value 3 ,
+.Xr SQLITE_UTF8 3 ,
+.Xr sqlite3_value 3

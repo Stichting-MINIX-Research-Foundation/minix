@@ -1,0 +1,29 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STMT_BUSY 3
+.Os
+.Sh NAME
+.Nm sqlite3_stmt_busy
+.Nd Determine If A Prepared Statement Has Been Reset
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_stmt_busy
+.Fa "sqlite3_stmt*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_stmt_busy(S) interface returns true (non-zero) if the prepared statement
+S has been stepped at least once using sqlite3_step(S)
+but has neither run to completion (returned SQLITE_DONE
+from sqlite3_step(S)) nor been reset using sqlite3_reset(S).
+The sqlite3_stmt_busy(S) interface returns false if S is a NULL pointer.
+If S is not a NULL pointer and is not a pointer to a valid prepared statement
+object, then the behavior is undefined and probably undesirable.
+.Pp
+This interface can be used in combination sqlite3_next_stmt()
+to locate all prepared statements associated with a database connection
+that are in need of being reset.
+This can be used, for example, in diagnostic routines to search for
+prepared statements that are holding a transaction open.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_next_stmt 3 ,
+.Xr SQLITE_OK 3

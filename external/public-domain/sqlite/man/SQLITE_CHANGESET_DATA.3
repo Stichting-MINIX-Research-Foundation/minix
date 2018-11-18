@@ -1,0 +1,59 @@
+.Dd March 11, 2017
+.Dt SQLITE_CHANGESET_DATA 3
+.Os
+.Sh NAME
+.Nm SQLITE_CHANGESET_DATA ,
+.Nm SQLITE_CHANGESET_NOTFOUND ,
+.Nm SQLITE_CHANGESET_CONFLICT ,
+.Nm SQLITE_CHANGESET_CONSTRAINT ,
+.Nm SQLITE_CHANGESET_FOREIGN_KEY
+.Nd Constants Passed To The Conflict Handler
+.Sh SYNOPSIS
+.Fd #define SQLITE_CHANGESET_DATA
+.Fd #define SQLITE_CHANGESET_NOTFOUND
+.Fd #define SQLITE_CHANGESET_CONFLICT
+.Fd #define SQLITE_CHANGESET_CONSTRAINT
+.Fd #define SQLITE_CHANGESET_FOREIGN_KEY
+.Sh DESCRIPTION
+Values that may be passed as the second argument to a conflict-handler.
+.Bl -tag -width Ds
+.It SQLITE_CHANGESET_DATAThe conflict handler is invoked with CHANGESET_DATA
+as the second argument when processing a DELETE or UPDATE change if
+a row with the required PRIMARY KEY fields is present in the database,
+but one or more other (non primary-key) fields modified by the update
+do not contain the expected "before" values.
+.Pp
+The conflicting row, in this case, is the database row with the matching
+primary key.
+.It SQLITE_CHANGESET_NOTFOUNDThe conflict handler is invoked with CHANGESET_NOTFOUND
+as the second argument when processing a DELETE or UPDATE change if
+a row with the required PRIMARY KEY fields is not present in the database.
+.Pp
+There is no conflicting row in this case.
+The results of invoking the sqlite3changeset_conflict() API are undefined.
+.It SQLITE_CHANGESET_CONFLICTCHANGESET_CONFLICT is passed as the second
+argument to the conflict handler while processing an INSERT change
+if the operation would result in duplicate primary key values.
+.Pp
+The conflicting row in this case is the database row with the matching
+primary key.
+.It SQLITE_CHANGESET_FOREIGN_KEYIf foreign key handling is enabled, and
+applying a changeset leaves the database in a state containing foreign
+key violations, the conflict handler is invoked with CHANGESET_FOREIGN_KEY
+as the second argument exactly once before the changeset is committed.
+If the conflict handler returns CHANGESET_OMIT, the changes, including
+those that caused the foreign key constraint violation, are committed.
+Or, if it returns CHANGESET_ABORT, the changeset is rolled back.
+.Pp
+No current or conflicting row information is provided.
+The only function it is possible to call on the supplied sqlite3_changeset_iter
+handle is sqlite3changeset_fk_conflicts().
+.It SQLITE_CHANGESET_CONSTRAINTIf any other constraint violation occurs
+while applying a change (i.e.
+a UNIQUE, CHECK or NOT NULL constraint), the conflict handler is invoked
+with CHANGESET_CONSTRAINT as the second argument.
+.Pp
+There is no conflicting row in this case.
+The results of invoking the sqlite3changeset_conflict() API are undefined.
+.El
+.Pp

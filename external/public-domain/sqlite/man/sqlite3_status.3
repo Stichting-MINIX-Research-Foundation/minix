@@ -1,0 +1,50 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STATUS 3
+.Os
+.Sh NAME
+.Nm sqlite3_status ,
+.Nm sqlite3_status64
+.Nd SQLite Runtime Status
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_status
+.Fa "int op"
+.Fa "int *pCurrent"
+.Fa "int *pHighwater"
+.Fa "int resetFlag"
+.Fc
+.Ft int 
+.Fo sqlite3_status64
+.Fa "int op"
+.Fa "sqlite3_int64 *pCurrent"
+.Fa "sqlite3_int64 *pHighwater"
+.Fa "int resetFlag "
+.Fc
+.Sh DESCRIPTION
+These interfaces are used to retrieve runtime status information about
+the performance of SQLite, and optionally to reset various highwater
+marks.
+The first argument is an integer code for the specific parameter to
+measure.
+Recognized integer codes are of the form  SQLITE_STATUS_....
+The current value of the parameter is returned into *pCurrent.
+The highest recorded value is returned in *pHighwater.
+If the resetFlag is true, then the highest record value is reset after
+*pHighwater is written.
+Some parameters do not record the highest value.
+For those parameters nothing is written into *pHighwater and the resetFlag
+is ignored.
+Other parameters record only the highwater mark and not the current
+value.
+For these latter parameters nothing is written into *pCurrent.
+.Pp
+The sqlite3_status() and sqlite3_status64() routines return SQLITE_OK
+on success and a non-zero error code on failure.
+.Pp
+If either the current value or the highwater mark is too large to be
+represented by a 32-bit integer, then the values returned by sqlite3_status()
+are undefined.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_db_status 3 ,
+.Xr SQLITE_STATUS_MEMORY_USED 3

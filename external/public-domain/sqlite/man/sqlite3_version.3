@@ -1,0 +1,56 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VERSION 3
+.Os
+.Sh NAME
+.Nm sqlite3_version ,
+.Nm sqlite3_libversion ,
+.Nm sqlite3_sourceid ,
+.Nm sqlite3_libversion_number
+.Nd Run-Time Library Version Numbers
+.Sh SYNOPSIS
+.Vt const char sqlite3_version[];
+.Ft const char *
+.Fo sqlite3_libversion
+.Fa "void"
+.Fc
+.Ft const char *
+.Fo sqlite3_sourceid
+.Fa "void"
+.Fc
+.Ft int 
+.Fo sqlite3_libversion_number
+.Fa "void"
+.Fc
+.Sh DESCRIPTION
+These interfaces provide the same information as the SQLITE_VERSION,
+SQLITE_VERSION_NUMBER, and SQLITE_SOURCE_ID
+C preprocessor macros but are associated with the library instead of
+the header file.
+Cautious programmers might include assert() statements in their application
+to verify that values returned by these interfaces match the macros
+in the header, and thus ensure that the application is compiled with
+matching library and header files.
+.Bd -ragged
+.Bd -literal
+assert( sqlite3_libversion_number()==SQLITE_VERSION_NUMBER ); assert(
+strcmp(sqlite3_sourceid(),SQLITE_SOURCE_ID)==0 ); assert( strcmp(sqlite3_libversion(),SQLITE_VERSION)==0
+); 
+.Ed
+.Pp
+.Ed
+.Pp
+The sqlite3_version[] string constant contains the text of SQLITE_VERSION
+macro.
+The sqlite3_libversion() function returns a pointer to the to the sqlite3_version[]
+string constant.
+The sqlite3_libversion() function is provided for use in DLLs since
+DLL users usually do not have direct access to string constants within
+the DLL.
+The sqlite3_libversion_number() function returns an integer equal to
+SQLITE_VERSION_NUMBER.
+The sqlite3_sourceid() function returns a pointer to a string constant
+whose value is the same as the SQLITE_SOURCE_ID C preprocessor
+macro.
+.Pp
+.Sh SEE ALSO
+.Xr SQLITE_VERSION 3

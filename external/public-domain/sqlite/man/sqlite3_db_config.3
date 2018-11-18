@@ -1,0 +1,31 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_CONFIG 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_config
+.Nd Configure database connections
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_db_config
+.Fa "sqlite3*"
+.Fa "int op"
+.Fa "..."
+.Fc
+.Sh DESCRIPTION
+The sqlite3_db_config() interface is used to make configuration changes
+to a database connection.
+The interface is similar to sqlite3_config() except
+that the changes apply to a single database connection
+(specified in the first argument).
+.Pp
+The second argument to sqlite3_db_config(D,V,...)  is the  configuration verb
+- an integer code that indicates what aspect of the database connection
+is being configured.
+Subsequent arguments vary depending on the configuration verb.
+.Pp
+Calls to sqlite3_db_config() return SQLITE_OK if and only if the call
+is considered successful.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_config 3 ,
+.Xr SQLITE_DBCONFIG_MAINDBNAME 3

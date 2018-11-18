@@ -1,0 +1,18 @@
+.Dd March 11, 2017
+.Dt SQLITE3_PCACHE 3
+.Os
+.Sh NAME
+.Nm sqlite3_pcache
+.Nd Custom Page Cache Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_pcache sqlite3_pcache;
+.Sh DESCRIPTION
+The sqlite3_pcache type is opaque.
+It is implemented by the pluggable module.
+The SQLite core has no knowledge of its size or internal structure
+and never deals with the sqlite3_pcache object except by holding and
+passing pointers to the object.
+.Pp
+See sqlite3_pcache_methods2 for additional information.
+.Sh SEE ALSO
+.Xr sqlite3_pcache_methods2 3

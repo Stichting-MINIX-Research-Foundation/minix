@@ -1,0 +1,60 @@
+.Dd March 11, 2017
+.Dt SQLITE_IOCAP_ATOMIC 3
+.Os
+.Sh NAME
+.Nm SQLITE_IOCAP_ATOMIC ,
+.Nm SQLITE_IOCAP_ATOMIC512 ,
+.Nm SQLITE_IOCAP_ATOMIC1K ,
+.Nm SQLITE_IOCAP_ATOMIC2K ,
+.Nm SQLITE_IOCAP_ATOMIC4K ,
+.Nm SQLITE_IOCAP_ATOMIC8K ,
+.Nm SQLITE_IOCAP_ATOMIC16K ,
+.Nm SQLITE_IOCAP_ATOMIC32K ,
+.Nm SQLITE_IOCAP_ATOMIC64K ,
+.Nm SQLITE_IOCAP_SAFE_APPEND ,
+.Nm SQLITE_IOCAP_SEQUENTIAL ,
+.Nm SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN ,
+.Nm SQLITE_IOCAP_POWERSAFE_OVERWRITE ,
+.Nm SQLITE_IOCAP_IMMUTABLE
+.Nd Device Characteristics
+.Sh SYNOPSIS
+.Fd #define SQLITE_IOCAP_ATOMIC
+.Fd #define SQLITE_IOCAP_ATOMIC512
+.Fd #define SQLITE_IOCAP_ATOMIC1K
+.Fd #define SQLITE_IOCAP_ATOMIC2K
+.Fd #define SQLITE_IOCAP_ATOMIC4K
+.Fd #define SQLITE_IOCAP_ATOMIC8K
+.Fd #define SQLITE_IOCAP_ATOMIC16K
+.Fd #define SQLITE_IOCAP_ATOMIC32K
+.Fd #define SQLITE_IOCAP_ATOMIC64K
+.Fd #define SQLITE_IOCAP_SAFE_APPEND
+.Fd #define SQLITE_IOCAP_SEQUENTIAL
+.Fd #define SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN
+.Fd #define SQLITE_IOCAP_POWERSAFE_OVERWRITE
+.Fd #define SQLITE_IOCAP_IMMUTABLE
+.Sh DESCRIPTION
+The xDeviceCharacteristics method of the sqlite3_io_methods
+object returns an integer which is a vector of these bit values expressing
+I/O characteristics of the mass storage device that holds the file
+that the sqlite3_io_methods refers to.
+.Pp
+The SQLITE_IOCAP_ATOMIC property means that all writes of any size
+are atomic.
+The SQLITE_IOCAP_ATOMICnnn values mean that writes of blocks that are
+nnn bytes in size and are aligned to an address which is an integer
+multiple of nnn are atomic.
+The SQLITE_IOCAP_SAFE_APPEND value means that when data is appended
+to a file, the data is appended first then the size of the file is
+extended, never the other way around.
+The SQLITE_IOCAP_SEQUENTIAL property means that information is written
+to disk in the same order as calls to xWrite().
+The SQLITE_IOCAP_POWERSAFE_OVERWRITE property means that after reboot
+following a crash or power loss, the only bytes in a file that were
+written at the application level might have changed and that adjacent
+bytes, even bytes within the same sector are guaranteed to be unchanged.
+The SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN flag indicates that a file cannot
+be deleted when open.
+The SQLITE_IOCAP_IMMUTABLE flag indicates that the file is on read-only
+media and cannot be changed even by processes with elevated privileges.
+.Sh SEE ALSO
+.Xr sqlite3_io_methods 3

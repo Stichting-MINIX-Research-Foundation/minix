@@ -1,0 +1,45 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGEGROUP_NEW 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_new
+.Nd Create A New Changegroup Object
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changegroup_new
+.Fa "sqlite3_changegroup **pp"
+.Fc
+.Sh DESCRIPTION
+An sqlite3_changegroup object is used to combine two or more changesets
+(or patchsets) into a single changeset (or patchset).
+A single changegroup object may combine changesets or patchsets, but
+not both.
+The output is always in the same format as the input.
+.Pp
+If successful, this function returns SQLITE_OK and populates (*pp)
+with a pointer to a new sqlite3_changegroup object before returning.
+The caller should eventually free the returned object using a call
+to sqlite3changegroup_delete().
+If an error occurs, an SQLite error code (i.e.
+SQLITE_NOMEM) is returned and *pp is set to NULL.
+.Pp
+The usual usage pattern for an sqlite3_changegroup object is as follows:
+.Bl -bullet
+.It
+It is created using a call to sqlite3changegroup_new().
+.It
+Zero or more changesets (or patchsets) are added to the object by calling
+sqlite3changegroup_add().
+.It
+The result of combining all input changesets together is obtained by
+the application via a call to sqlite3changegroup_output().
+.It
+The object is deleted using a call to sqlite3changegroup_delete().
+.El
+.Pp
+Any number of calls to add() and output() may be made between the calls
+to new() and delete(), and in any order.
+.Pp
+As well as the regular sqlite3changegroup_add() and sqlite3changegroup_output()
+functions, also available are the streaming versions sqlite3changegroup_add_strm()
+and sqlite3changegroup_output_strm().

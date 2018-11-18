@@ -1,0 +1,22 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SNAPSHOT_FREE 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot_free
+.Nd Destroy a snapshot
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_snapshot_free
+.Fa "sqlite3_snapshot*"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_snapshot_free(P) interface destroys
+sqlite3_snapshot P.
+The application must eventually free every sqlite3_snapshot
+object using this routine to avoid a memory leak.
+.Pp
+The sqlite3_snapshot_free() interface is only
+available when the SQLITE_ENABLE_SNAPSHOT compile-time option is used.
+.Sh SEE ALSO
+.Xr sqlite3_snapshot 3 ,
+.Xr sqlite3_snapshot_free 3

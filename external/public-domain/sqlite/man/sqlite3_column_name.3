@@ -1,0 +1,47 @@
+.Dd March 11, 2017
+.Dt SQLITE3_COLUMN_NAME 3
+.Os
+.Sh NAME
+.Nm sqlite3_column_name ,
+.Nm sqlite3_column_name16
+.Nd Column Names In A Result Set
+.Sh SYNOPSIS
+.Ft const char *
+.Fo sqlite3_column_name
+.Fa "sqlite3_stmt*"
+.Fa "int N"
+.Fc
+.Ft const void *
+.Fo sqlite3_column_name16
+.Fa "sqlite3_stmt*"
+.Fa "int N"
+.Fc
+.Sh DESCRIPTION
+These routines return the name assigned to a particular column in the
+result set of a SELECT statement.
+The sqlite3_column_name() interface returns a pointer to a zero-terminated
+UTF-8 string and sqlite3_column_name16() returns a pointer to a zero-terminated
+UTF-16 string.
+The first parameter is the prepared statement that
+implements the SELECT statement.
+The second parameter is the column number.
+The leftmost column is number 0.
+.Pp
+The returned string pointer is valid until either the prepared statement
+is destroyed by sqlite3_finalize() or until the statement
+is automatically reprepared by the first call to sqlite3_step()
+for a particular run or until the next call to sqlite3_column_name()
+or sqlite3_column_name16() on the same column.
+.Pp
+If sqlite3_malloc() fails during the processing of either routine (for
+example during a conversion from UTF-8 to UTF-16) then a NULL pointer
+is returned.
+.Pp
+The name of a result column is the value of the "AS" clause for that
+column, if there is an AS clause.
+If there is no AS clause then the name of the column is unspecified
+and may change from one release of SQLite to the next.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_finalize 3 ,
+.Xr sqlite3_step 3

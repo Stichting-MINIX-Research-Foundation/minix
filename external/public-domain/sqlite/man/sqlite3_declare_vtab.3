@@ -1,0 +1,18 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DECLARE_VTAB 3
+.Os
+.Sh NAME
+.Nm sqlite3_declare_vtab
+.Nd Declare The Schema Of A Virtual Table
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_declare_vtab
+.Fa "sqlite3*"
+.Fa "const char *zSQL"
+.Fc
+.Sh DESCRIPTION
+The xCreate and xConnect methods of a virtual table module
+call this interface to declare the format (the names and datatypes
+of the columns) of the virtual tables they implement.
+.Sh SEE ALSO
+.Xr sqlite3_module 3

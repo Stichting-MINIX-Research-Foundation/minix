@@ -1,0 +1,15 @@
+.Dd March 11, 2017
+.Dt SQLITE_SHM_NLOCK 3
+.Os
+.Sh NAME
+.Nm SQLITE_SHM_NLOCK
+.Nd Maximum xShmLock index
+.Sh SYNOPSIS
+.Fd #define SQLITE_SHM_NLOCK
+.Sh DESCRIPTION
+The xShmLock method on sqlite3_io_methods may use
+values between 0 and this upper bound as its "offset" argument.
+The SQLite core will never attempt to acquire or release a lock outside
+of this range
+.Sh SEE ALSO
+.Xr sqlite3_io_methods 3

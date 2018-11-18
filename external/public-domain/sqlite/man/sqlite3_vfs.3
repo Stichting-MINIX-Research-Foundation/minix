@@ -1,0 +1,195 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VFS 3
+.Os
+.Sh NAME
+.Nm sqlite3_vfs ,
+.Nm sqlite3_syscall_ptr ,
+.Nm sqlite3_vfs
+.Nd OS Interface Object
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_vfs sqlite3_vfs;
+.Vt typedef void (*sqlite3_syscall_ptr)(void);
+.Vt struct sqlite3_vfs ;
+.Sh DESCRIPTION
+An instance of the sqlite3_vfs object defines the interface between
+the SQLite core and the underlying operating system.
+The "vfs" in the name of the object stands for "virtual file system".
+See the  VFS documentation for further information.
+.Pp
+The value of the iVersion field is initially 1 but may be larger in
+future versions of SQLite.
+Additional fields may be appended to this object when the iVersion
+value is increased.
+Note that the structure of the sqlite3_vfs object changes in the transaction
+between SQLite version 3.5.9 and 3.6.0 and yet the iVersion field was
+not modified.
+.Pp
+The szOsFile field is the size of the subclassed sqlite3_file
+structure used by this VFS.
+mxPathname is the maximum length of a pathname in this VFS.
+.Pp
+Registered sqlite3_vfs objects are kept on a linked list formed by
+the pNext pointer.
+The sqlite3_vfs_register() and sqlite3_vfs_unregister()
+interfaces manage this list in a thread-safe way.
+The sqlite3_vfs_find() interface searches the list.
+Neither the application code nor the VFS implementation should use
+the pNext pointer.
+.Pp
+The pNext field is the only field in the sqlite3_vfs structure that
+SQLite will ever modify.
+SQLite will only access or modify this field while holding a particular
+static mutex.
+The application should never modify anything within the sqlite3_vfs
+object once the object has been registered.
+.Pp
+The zName field holds the name of the VFS module.
+The name must be unique across all VFS modules.
+.Pp
+SQLite guarantees that the zFilename parameter to xOpen is either a
+NULL pointer or string obtained from xFullPathname() with an optional
+suffix added.
+If a suffix is added to the zFilename parameter, it will consist of
+a single "-" character followed by no more than 11 alphanumeric and/or
+"-" characters.
+SQLite further guarantees that the string will be valid and unchanged
+until xClose() is called.
+Because of the previous sentence, the sqlite3_file can
+safely store a pointer to the filename if it needs to remember the
+filename for some reason.
+If the zFilename parameter to xOpen is a NULL pointer then xOpen must
+invent its own temporary name for the file.
+Whenever the xFilename parameter is NULL it will also be the case that
+the flags parameter will include SQLITE_OPEN_DELETEONCLOSE.
+.Pp
+The flags argument to xOpen() includes all bits set in the flags argument
+to sqlite3_open_v2().
+Or if sqlite3_open() or sqlite3_open16()
+is used, then flags includes at least SQLITE_OPEN_READWRITE
+| SQLITE_OPEN_CREATE.
+If xOpen() opens a file read-only then it sets *pOutFlags to include
+SQLITE_OPEN_READONLY.
+Other bits in *pOutFlags may be set.
+.Pp
+SQLite will also add one of the following flags to the xOpen() call,
+depending on the object being opened: 
+.Bl -bullet
+.It
+SQLITE_OPEN_MAIN_DB 
+.It
+SQLITE_OPEN_MAIN_JOURNAL 
+.It
+SQLITE_OPEN_TEMP_DB 
+.It
+SQLITE_OPEN_TEMP_JOURNAL 
+.It
+SQLITE_OPEN_TRANSIENT_DB 
+.It
+SQLITE_OPEN_SUBJOURNAL 
+.It
+SQLITE_OPEN_MASTER_JOURNAL 
+.It
+SQLITE_OPEN_WAL 
+.El
+.Pp
+The file I/O implementation can use the object type flags to change
+the way it deals with files.
+For example, an application that does not care about crash recovery
+or rollback might make the open of a journal file a no-op.
+Writes to this journal would also be no-ops, and any attempt to read
+the journal would return SQLITE_IOERR.
+Or the implementation might recognize that a database file will be
+doing page-aligned sector reads and writes in a random order and set
+up its I/O subsystem accordingly.
+.Pp
+SQLite might also add one of the following flags to the xOpen method:
+.Bl -bullet
+.It
+SQLITE_OPEN_DELETEONCLOSE 
+.It
+SQLITE_OPEN_EXCLUSIVE 
+.El
+.Pp
+The SQLITE_OPEN_DELETEONCLOSE flag means the
+file should be deleted when it is closed.
+The SQLITE_OPEN_DELETEONCLOSE will be set
+for TEMP databases and their journals, transient databases, and subjournals.
+.Pp
+The SQLITE_OPEN_EXCLUSIVE flag is always used
+in conjunction with the SQLITE_OPEN_CREATE flag,
+which are both directly analogous to the O_EXCL and O_CREAT flags of
+the POSIX open() API.
+The SQLITE_OPEN_EXCLUSIVE flag, when paired with the SQLITE_OPEN_CREATE,
+is used to indicate that file should always be created, and that it
+is an error if it already exists.
+It is <i>not</i> used to indicate the file should be opened for exclusive
+access.
+.Pp
+At least szOsFile bytes of memory are allocated by SQLite to hold the
+sqlite3_file structure passed as the third argument to
+xOpen.
+The xOpen method does not have to allocate the structure; it should
+just fill it in.
+Note that the xOpen method must set the sqlite3_file.pMethods to either
+a valid sqlite3_io_methods object or to NULL.
+xOpen must do this even if the open fails.
+SQLite expects that the sqlite3_file.pMethods element will be valid
+after xOpen returns regardless of the success or failure of the xOpen
+call.
+.Pp
+The flags argument to xAccess() may be SQLITE_ACCESS_EXISTS
+to test for the existence of a file, or SQLITE_ACCESS_READWRITE
+to test whether a file is readable and writable, or SQLITE_ACCESS_READ
+to test whether a file is at least readable.
+The file can be a directory.
+.Pp
+SQLite will always allocate at least mxPathname+1 bytes for the output
+buffer xFullPathname.
+The exact size of the output buffer is also passed as a parameter to
+both  methods.
+If the output buffer is not large enough, SQLITE_CANTOPEN
+should be returned.
+Since this is handled as a fatal error by SQLite, vfs implementations
+should endeavor to prevent this by setting mxPathname to a sufficiently
+large value.
+.Pp
+The xRandomness(), xSleep(), xCurrentTime(), and xCurrentTimeInt64()
+interfaces are not strictly a part of the filesystem, but they are
+included in the VFS structure for completeness.
+The xRandomness() function attempts to return nBytes bytes of good-quality
+randomness into zOut.
+The return value is the actual number of bytes of randomness obtained.
+The xSleep() method causes the calling thread to sleep for at least
+the number of microseconds given.
+The xCurrentTime() method returns a Julian Day Number for the current
+date and time as a floating point value.
+The xCurrentTimeInt64() method returns, as an integer, the Julian Day
+Number multiplied by 86400000 (the number of milliseconds in a 24-hour
+day).
+SQLite will use the xCurrentTimeInt64() method to get the current date
+and time if that method is available (if iVersion is 2 or greater and
+the function pointer is not NULL) and will fall back to xCurrentTime()
+if xCurrentTimeInt64() is unavailable.
+.Pp
+The xSetSystemCall(), xGetSystemCall(), and xNestSystemCall() interfaces
+are not used by the SQLite core.
+These optional interfaces are provided by some VFSes to facilitate
+testing of the VFS code.
+By overriding system calls with functions under its control, a test
+program can simulate faults and error conditions that would otherwise
+be difficult or impossible to induce.
+The set of system calls that can be overridden varies from one VFS
+to another, and from one version of the same VFS to the next.
+Applications that use these interfaces must be prepared for any or
+all of these interfaces to be NULL or for their behavior to change
+from one release to the next.
+Applications must not attempt to access any of these methods if the
+iVersion of the VFS is less than 3.
+.Sh SEE ALSO
+.Xr sqlite3_file 3 ,
+.Xr sqlite3_io_methods 3 ,
+.Xr sqlite3_open 3 ,
+.Xr sqlite3_vfs_find 3 ,
+.Xr SQLITE_ACCESS_EXISTS 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_OPEN_READONLY 3

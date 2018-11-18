@@ -1,0 +1,57 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_START 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_start
+.Nd Create An Iterator To Traverse A Changeset 
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_start
+.Fa "sqlite3_changeset_iter **pp"
+.Fa "int nChangeset"
+.Fa "void *pChangeset                "
+.Fc
+.Sh DESCRIPTION
+Create an iterator used to iterate through the contents of a changeset.
+If successful, *pp is set to point to the iterator handle and SQLITE_OK
+is returned.
+Otherwise, if an error occurs, *pp is set to zero and an SQLite error
+code is returned.
+.Pp
+The following functions can be used to advance and query a changeset
+iterator created by this function: 
+.Bl -bullet
+.It
+sqlite3changeset_next() 
+.It
+sqlite3changeset_op() 
+.It
+sqlite3changeset_new() 
+.It
+sqlite3changeset_old() 
+.El
+.Pp
+It is the responsibility of the caller to eventually destroy the iterator
+by passing it to sqlite3changeset_finalize().
+The buffer containing the changeset (pChangeset) must remain valid
+until after the iterator is destroyed.
+.Pp
+Assuming the changeset blob was created by one of the sqlite3session_changeset(),
+sqlite3changeset_concat() or sqlite3changeset_invert()
+functions, all changes within the changeset that apply to a single
+table are grouped together.
+This means that when an application iterates through a changeset using
+an iterator created by this function, all changes that relate to a
+single table are visited consecutively.
+There is no chance that the iterator will visit a change the applies
+to table X, then one for table Y, and then later on visit another change
+for table X.
+.Sh SEE ALSO
+.Xr sqlite3changeset_concat 3 ,
+.Xr sqlite3changeset_finalize 3 ,
+.Xr sqlite3changeset_invert 3 ,
+.Xr sqlite3changeset_new 3 ,
+.Xr sqlite3changeset_next 3 ,
+.Xr sqlite3changeset_old 3 ,
+.Xr sqlite3changeset_op 3 ,
+.Xr sqlite3session_changeset 3

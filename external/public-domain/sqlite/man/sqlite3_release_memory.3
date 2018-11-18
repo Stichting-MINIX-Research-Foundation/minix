@@ -1,0 +1,24 @@
+.Dd March 11, 2017
+.Dt SQLITE3_RELEASE_MEMORY 3
+.Os
+.Sh NAME
+.Nm sqlite3_release_memory
+.Nd Attempt To Free Heap Memory
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_release_memory
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_release_memory() interface attempts to free N bytes of
+heap memory by deallocating non-essential memory allocations held by
+the database library.
+Memory used to cache database pages to improve performance is an example
+of non-essential memory.
+sqlite3_release_memory() returns the number of bytes actually freed,
+which might be more or less than the amount requested.
+The sqlite3_release_memory() routine is a no-op returning zero if SQLite
+is not compiled with SQLITE_ENABLE_MEMORY_MANAGEMENT.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3_db_release_memory 3

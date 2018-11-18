@@ -1,0 +1,45 @@
+.Dd March 11, 2017
+.Dt SQLITE3SESSION_ATTACH 3
+.Os
+.Sh NAME
+.Nm sqlite3session_attach
+.Nd Attach A Table To A Session Object
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3session_attach
+.Fa "sqlite3_session *pSession"
+.Fa "const char *zTab                "
+.Fc
+.Sh DESCRIPTION
+If argument zTab is not NULL, then it is the name of a table to attach
+to the session object passed as the first argument.
+All subsequent changes made to the table while the session object is
+enabled will be recorded.
+See documentation for sqlite3session_changeset()
+for further details.
+.Pp
+Or, if argument zTab is NULL, then changes are recorded for all tables
+in the database.
+If additional tables are added to the database (by executing "CREATE
+TABLE" statements) after this call is made, changes for the new tables
+are also recorded.
+.Pp
+Changes can only be recorded for tables that have a PRIMARY KEY explicitly
+defined as part of their CREATE TABLE statement.
+It does not matter if the PRIMARY KEY is an "INTEGER PRIMARY KEY" (rowid
+alias) or not.
+The PRIMARY KEY may consist of a single column, or may be a composite
+key.
+.Pp
+It is not an error if the named table does not exist in the database.
+Nor is it an error if the named table does not have a PRIMARY KEY.
+However, no changes will be recorded in either of these scenarios.
+.Pp
+Changes are not recorded for individual rows that have NULL values
+stored in one or more of their PRIMARY KEY columns.
+.Pp
+SQLITE_OK is returned if the call completes without error.
+Or, if an error occurs, an SQLite error code (e.g.
+SQLITE_NOMEM) is returned.
+.Sh SEE ALSO
+.Xr sqlite3session_changeset 3

@@ -1,0 +1,19 @@
+.Dd March 11, 2017
+.Dt SQLITE3_STMT_SCANSTATUS_RESET 3
+.Os
+.Sh NAME
+.Nm sqlite3_stmt_scanstatus_reset
+.Nd Zero Scan-Status Counters
+.Sh SYNOPSIS
+.Ft void 
+.Fo sqlite3_stmt_scanstatus_reset
+.Fa "sqlite3_stmt*"
+.Fc
+.Sh DESCRIPTION
+Zero all sqlite3_stmt_scanstatus() related
+event counters.
+.Pp
+This API is only available if the library is built with pre-processor
+symbol SQLITE_ENABLE_STMT_SCANSTATUS defined.
+.Sh SEE ALSO
+.Xr sqlite3_stmt_scanstatus 3

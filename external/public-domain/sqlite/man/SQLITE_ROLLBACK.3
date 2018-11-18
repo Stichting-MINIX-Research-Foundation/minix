@@ -1,0 +1,25 @@
+.Dd March 11, 2017
+.Dt SQLITE_ROLLBACK 3
+.Os
+.Sh NAME
+.Nm SQLITE_ROLLBACK ,
+.Nm SQLITE_FAIL ,
+.Nm SQLITE_REPLACE
+.Nd Conflict resolution modes
+.Sh SYNOPSIS
+.Fd #define SQLITE_ROLLBACK
+.Fd #define SQLITE_FAIL
+.Fd #define SQLITE_REPLACE
+.Sh DESCRIPTION
+These constants are returned by sqlite3_vtab_on_conflict()
+to inform a virtual table implementation what the ON CONFLICT
+mode is for the SQL statement being evaluated.
+.Pp
+Note that the SQLITE_IGNORE constant is also used as a
+potential return value from the sqlite3_set_authorizer()
+callback and that SQLITE_ABORT is also a result code.
+.Sh SEE ALSO
+.Xr sqlite3_set_authorizer 3 ,
+.Xr sqlite3_vtab_on_conflict 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_DENY 3

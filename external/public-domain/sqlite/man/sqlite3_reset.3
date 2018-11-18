@@ -1,0 +1,38 @@
+.Dd March 11, 2017
+.Dt SQLITE3_RESET 3
+.Os
+.Sh NAME
+.Nm sqlite3_reset
+.Nd Reset A Prepared Statement Object
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_reset
+.Fa "sqlite3_stmt *pStmt"
+.Fc
+.Sh DESCRIPTION
+The sqlite3_reset() function is called to reset a prepared statement
+object back to its initial state, ready to be re-executed.
+Any SQL statement variables that had values bound to them using the
+ sqlite3_bind_*() API retain their values.
+Use sqlite3_clear_bindings() to reset the bindings.
+.Pp
+The sqlite3_reset(S) interface resets the prepared statement
+S back to the beginning of its program.
+.Pp
+If the most recent call to sqlite3_step(S) for the prepared statement
+S returned SQLITE_ROW or SQLITE_DONE, or if sqlite3_step(S)
+has never before been called on S, then sqlite3_reset(S)
+returns SQLITE_OK.
+.Pp
+If the most recent call to sqlite3_step(S) for the prepared statement
+S indicated an error, then sqlite3_reset(S) returns
+an appropriate error code.
+.Pp
+The sqlite3_reset(S) interface does not change the
+values of any bindings on the prepared statement
+S.
+.Sh SEE ALSO
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_clear_bindings 3 ,
+.Xr SQLITE_OK 3

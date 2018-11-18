@@ -1,0 +1,37 @@
+.Dd March 11, 2017
+.Dt SQLITE3_DB_STATUS 3
+.Os
+.Sh NAME
+.Nm sqlite3_db_status
+.Nd Database Connection Status
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_db_status
+.Fa "sqlite3*"
+.Fa "int op"
+.Fa "int *pCur"
+.Fa "int *pHiwtr"
+.Fa "int resetFlg"
+.Fc
+.Sh DESCRIPTION
+This interface is used to retrieve runtime status information about
+a single database connection.
+The first argument is the database connection object to be interrogated.
+The second argument is an integer constant, taken from the set of SQLITE_DBSTATUS options,
+that determines the parameter to interrogate.
+The set of SQLITE_DBSTATUS options is likely
+to grow in future releases of SQLite.
+.Pp
+The current value of the requested parameter is written into *pCur
+and the highest instantaneous value is written into *pHiwtr.
+If the resetFlg is true, then the highest instantaneous value is reset
+back down to the current value.
+.Pp
+The sqlite3_db_status() routine returns SQLITE_OK on success and a
+non-zero error code on failure.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_status 3 ,
+.Xr sqlite3_stmt_status 3 ,
+.Xr SQLITE_DBSTATUS_LOOKASIDE_USED 3

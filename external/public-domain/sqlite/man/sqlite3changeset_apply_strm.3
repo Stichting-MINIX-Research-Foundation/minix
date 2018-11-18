@@ -1,0 +1,163 @@
+.Dd March 11, 2017
+.Dt SQLITE3CHANGESET_APPLY_STRM 3
+.Os
+.Sh NAME
+.Nm sqlite3changeset_apply_strm ,
+.Nm sqlite3changeset_concat_strm ,
+.Nm sqlite3changeset_invert_strm ,
+.Nm sqlite3changeset_start_strm ,
+.Nm sqlite3session_changeset_strm ,
+.Nm sqlite3session_patchset_strm ,
+.Nm sqlite3changegroup_add_strm ,
+.Nm sqlite3changegroup_output_strm
+.Nd Streaming Versions of API functions.
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3changeset_apply_strm
+.Fa "sqlite3 *db"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn"
+.Fa "int(*xFilter)( void *pCtx,                   const char *zTab              )"
+.Fa "int(*xConflict)( void *pCtx,                   int eConflict,                sqlite3_changeset_iter *p     )"
+.Fa "void *pCtx                      "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_concat_strm
+.Fa "int (*xInputA)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pInA"
+.Fa "int (*xInputB)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pInB"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_invert_strm
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_start_strm
+.Fa "sqlite3_changeset_iter **pp"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn "
+.Fc
+.Ft int 
+.Fo sqlite3session_changeset_strm
+.Fa "sqlite3_session *pSession"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
+.Ft int 
+.Fo sqlite3session_patchset_strm
+.Fa "sqlite3_session *pSession"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
+.Ft int 
+.Fo sqlite3changegroup_add_strm
+.Fa "sqlite3_changegroup*"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn "
+.Fc
+.Ft int 
+.Fo sqlite3changegroup_output_strm
+.Fa "sqlite3_changegroup*"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
+.Sh DESCRIPTION
+The six streaming API xxx_strm() functions serve similar purposes to
+the corresponding non-streaming API functions: 
+.Pp
+<table border=1 style="margin-left:8ex;margin-right:8ex"> <tr><th>Streaming
+function<th>Non-streaming equivalent</th> <tr><td>sqlite3changeset_apply_str<td>sqlite3changeset_apply
+<tr><td>sqlite3changeset_concat_str<td>sqlite3changeset_concat
+<tr><td>sqlite3changeset_invert_str<td>sqlite3changeset_invert
+<tr><td>sqlite3changeset_start_str<td>sqlite3changeset_start
+<tr><td>sqlite3session_changeset_str<td>sqlite3session_changeset
+<tr><td>sqlite3session_patchset_str<td>sqlite3session_patchset
+</table> 
+.Pp
+Non-streaming functions that accept changesets (or patchsets) as input
+require that the entire changeset be stored in a single buffer in memory.
+Similarly, those that return a changeset or patchset do so by returning
+a pointer to a single large buffer allocated using sqlite3_malloc().
+Normally this is convenient.
+However, if an application running in a low-memory environment is required
+to handle very large changesets, the large contiguous memory allocations
+required can become onerous.
+.Pp
+In order to avoid this problem, instead of a single large buffer, input
+is passed to a streaming API functions by way of a callback function
+that the sessions module invokes to incrementally request input data
+as it is required.
+In all cases, a pair of API function parameters such as 
+.Bd -literal
+      int nChangeset,       void *pChangeset, 
+.Ed
+.Pp
+Is replaced by: 
+.Bd -literal
+      int (*xInput)(void *pIn, void *pData, int *pnData),       void
+*pIn, 
+.Ed
+.Pp
+Each time the xInput callback is invoked by the sessions module, the
+first argument passed is a copy of the supplied pIn context pointer.
+The second argument, pData, points to a buffer (*pnData) bytes in size.
+Assuming no error occurs the xInput method should copy up to (*pnData)
+bytes of data into the buffer and set (*pnData) to the actual number
+of bytes copied before returning SQLITE_OK.
+If the input is completely exhausted, (*pnData) should be set to zero
+to indicate this.
+Or, if an error occurs, an SQLite error code should be returned.
+In all cases, if an xInput callback returns an error, all processing
+is abandoned and the streaming API function returns a copy of the error
+code to the caller.
+.Pp
+In the case of sqlite3changeset_start_strm(), the xInput callback may
+be invoked by the sessions module at any point during the lifetime
+of the iterator.
+If such an xInput callback returns an error, the iterator enters an
+error state, whereby all subsequent calls to iterator functions immediately
+fail with the same error code as returned by xInput.
+.Pp
+Similarly, streaming API functions that return changesets (or patchsets)
+return them in chunks by way of a callback function instead of via
+a pointer to a single large buffer.
+In this case, a pair of parameters such as: 
+.Bd -literal
+      int *pnChangeset,       void **ppChangeset, 
+.Ed
+.Pp
+Is replaced by: 
+.Bd -literal
+      int (*xOutput)(void *pOut, const void *pData, int nData),   
+void *pOut 
+.Ed
+.Pp
+The xOutput callback is invoked zero or more times to return data to
+the application.
+The first parameter passed to each call is a copy of the pOut pointer
+supplied by the application.
+The second parameter, pData, points to a buffer nData bytes in size
+containing the chunk of output data being returned.
+If the xOutput callback successfully processes the supplied data, it
+should return SQLITE_OK to indicate success.
+Otherwise, it should return some other SQLite error code.
+In this case processing is immediately abandoned and the streaming
+API function returns a copy of the xOutput error code to the application.
+.Pp
+The sessions module never invokes an xOutput callback with the third
+parameter set to a value less than or equal to zero.
+Other than this, no guarantees are made as to the size of the chunks
+of data returned.
+.Sh SEE ALSO
+.Xr sqlite3changeset_apply 3 ,
+.Xr sqlite3changeset_concat 3 ,
+.Xr sqlite3changeset_invert 3 ,
+.Xr sqlite3changeset_start 3 ,
+.Xr sqlite3session_changeset 3 ,
+.Xr sqlite3session_patchset 3

@@ -1,0 +1,50 @@
+.Dd March 11, 2017
+.Dt SQLITE3_ENABLE_SHARED_CACHE 3
+.Os
+.Sh NAME
+.Nm sqlite3_enable_shared_cache
+.Nd Enable Or Disable Shared Pager Cache
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_enable_shared_cache
+.Fa "int"
+.Fc
+.Sh DESCRIPTION
+This routine enables or disables the sharing of the database cache
+and schema data structures between  connections to the
+same database.
+Sharing is enabled if the argument is true and disabled if the argument
+is false.
+.Pp
+Cache sharing is enabled and disabled for an entire process.
+This is a change as of SQLite version 3.5.0 (dateof:3.5.0).
+In prior versions of SQLite, sharing was enabled or disabled for each
+thread separately.
+.Pp
+The cache sharing mode set by this interface effects all subsequent
+calls to sqlite3_open(), sqlite3_open_v2(),
+and sqlite3_open16().
+Existing database connections continue use the sharing mode that was
+in effect at the time they were opened.
+.Pp
+This routine returns SQLITE_OK if shared cache was enabled
+or disabled successfully.
+An error code is returned otherwise.
+.Pp
+Shared cache is disabled by default.
+But this might change in future releases of SQLite.
+Applications that care about shared cache setting should set it explicitly.
+.Pp
+Note: This method is disabled on MacOS X 10.7 and iOS version 5.0 and
+will always return SQLITE_MISUSE.
+On those systems, shared cache mode should be enabled per-database
+connection via sqlite3_open_v2() with SQLITE_OPEN_SHAREDCACHE.
+.Pp
+This interface is threadsafe on processors where writing a 32-bit integer
+is atomic.
+.Pp
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_open 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_OPEN_READONLY 3

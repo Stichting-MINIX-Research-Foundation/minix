@@ -1,0 +1,23 @@
+.Dd March 11, 2017
+.Dt SQLITE3_BLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3_blob
+.Nd A Handle To An Open BLOB
+.Sh SYNOPSIS
+.Vt typedef struct sqlite3_blob sqlite3_blob;
+.Sh DESCRIPTION
+An instance of this object represents an open BLOB on which  incremental BLOB I/O
+can be performed.
+Objects of this type are created by sqlite3_blob_open()
+and destroyed by sqlite3_blob_close().
+The sqlite3_blob_read() and sqlite3_blob_write()
+interfaces can be used to read or write small subsections of the BLOB.
+The sqlite3_blob_bytes() interface returns the
+size of the BLOB in bytes.
+.Sh SEE ALSO
+.Xr sqlite3_blob_bytes 3 ,
+.Xr sqlite3_blob_close 3 ,
+.Xr sqlite3_blob_open 3 ,
+.Xr sqlite3_blob_read 3 ,
+.Xr sqlite3_blob_write 3

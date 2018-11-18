@@ -1,0 +1,38 @@
+.Dd March 11, 2017
+.Dt SQLITE_SHM_UNLOCK 3
+.Os
+.Sh NAME
+.Nm SQLITE_SHM_UNLOCK ,
+.Nm SQLITE_SHM_LOCK ,
+.Nm SQLITE_SHM_SHARED ,
+.Nm SQLITE_SHM_EXCLUSIVE
+.Nd Flags for the xShmLock VFS method
+.Sh SYNOPSIS
+.Fd #define SQLITE_SHM_UNLOCK
+.Fd #define SQLITE_SHM_LOCK
+.Fd #define SQLITE_SHM_SHARED
+.Fd #define SQLITE_SHM_EXCLUSIVE
+.Sh DESCRIPTION
+These integer constants define the various locking operations allowed
+by the xShmLock method of sqlite3_io_methods.
+The following are the only legal combinations of flags to the xShmLock
+method: 
+.Bl -bullet
+.It
+SQLITE_SHM_LOCK | SQLITE_SHM_SHARED 
+.It
+SQLITE_SHM_LOCK | SQLITE_SHM_EXCLUSIVE 
+.It
+SQLITE_SHM_UNLOCK | SQLITE_SHM_SHARED 
+.It
+SQLITE_SHM_UNLOCK | SQLITE_SHM_EXCLUSIVE 
+.El
+.Pp
+When unlocking, the same SHARED or EXCLUSIVE flag must be supplied
+as was given on the corresponding lock.
+.Pp
+The xShmLock method can transition between unlocked and SHARED or between
+unlocked and EXCLUSIVE.
+It cannot transition between SHARED and EXCLUSIVE.
+.Sh SEE ALSO
+.Xr sqlite3_io_methods 3

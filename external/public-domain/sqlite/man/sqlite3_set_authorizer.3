@@ -1,0 +1,106 @@
+.Dd March 11, 2017
+.Dt SQLITE3_SET_AUTHORIZER 3
+.Os
+.Sh NAME
+.Nm sqlite3_set_authorizer
+.Nd Compile-Time Authorization Callbacks
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_set_authorizer
+.Fa "sqlite3*"
+.Fa "int (*xAuth)(void*,int,const char*,const char*,const char*,const char*)"
+.Fa "void *pUserData "
+.Fc
+.Sh DESCRIPTION
+This routine registers an authorizer callback with a particular database connection,
+supplied in the first argument.
+The authorizer callback is invoked as SQL statements are being compiled
+by sqlite3_prepare() or its variants sqlite3_prepare_v2(),
+sqlite3_prepare16() and sqlite3_prepare16_v2().
+At various points during the compilation process, as logic is being
+created to perform various actions, the authorizer callback is invoked
+to see if those actions are allowed.
+The authorizer callback should return SQLITE_OK to allow the
+action, SQLITE_IGNORE to disallow the specific action
+but allow the SQL statement to continue to be compiled, or SQLITE_DENY
+to cause the entire SQL statement to be rejected with an error.
+If the authorizer callback returns any value other than SQLITE_IGNORE,
+SQLITE_OK, or SQLITE_DENY then the sqlite3_prepare_v2()
+or equivalent call that triggered the authorizer will fail with an
+error message.
+.Pp
+When the callback returns SQLITE_OK, that means the operation
+requested is ok.
+When the callback returns SQLITE_DENY, the sqlite3_prepare_v2()
+or equivalent call that triggered the authorizer will fail with an
+error message explaining that access is denied.
+.Pp
+The first parameter to the authorizer callback is a copy of the third
+parameter to the sqlite3_set_authorizer() interface.
+The second parameter to the callback is an integer  action code
+that specifies the particular action to be authorized.
+The third through sixth parameters to the callback are zero-terminated
+strings that contain additional details about the action to be authorized.
+.Pp
+If the action code is SQLITE_READ and the callback returns
+SQLITE_IGNORE then the prepared statement
+statement is constructed to substitute a NULL value in place of the
+table column that would have been read if SQLITE_OK had been
+returned.
+The SQLITE_IGNORE return can be used to deny an untrusted
+user access to individual columns of a table.
+If the action code is SQLITE_DELETE and the callback returns
+SQLITE_IGNORE then the DELETE operation proceeds
+but the truncate optimization is disabled and
+all rows are deleted individually.
+.Pp
+An authorizer is used when  preparing SQL statements from
+an untrusted source, to ensure that the SQL statements do not try to
+access data they are not allowed to see, or that they do not try to
+execute malicious statements that damage the database.
+For example, an application may allow a user to enter arbitrary SQL
+queries for evaluation by a database.
+But the application does not want the user to be able to make arbitrary
+changes to the database.
+An authorizer could then be put in place while the user-entered SQL
+is being  prepared that disallows everything except SELECT
+statements.
+.Pp
+Applications that need to process SQL from untrusted sources might
+also consider lowering resource limits using sqlite3_limit()
+and limiting database size using the max_page_count PRAGMA
+in addition to using an authorizer.
+.Pp
+Only a single authorizer can be in place on a database connection at
+a time.
+Each call to sqlite3_set_authorizer overrides the previous call.
+Disable the authorizer by installing a NULL callback.
+The authorizer is disabled by default.
+.Pp
+The authorizer callback must not do anything that will modify the database
+connection that invoked the authorizer callback.
+Note that sqlite3_prepare_v2() and sqlite3_step()
+both modify their database connections for the meaning of "modify"
+in this paragraph.
+.Pp
+When sqlite3_prepare_v2() is used to prepare a
+statement, the statement might be re-prepared during sqlite3_step()
+due to a schema change.
+Hence, the application should ensure that the correct authorizer callback
+remains in place during the sqlite3_step().
+.Pp
+Note that the authorizer callback is invoked only during sqlite3_prepare()
+or its variants.
+Authorization is not performed during statement evaluation in sqlite3_step(),
+unless as stated in the previous paragraph, sqlite3_step() invokes
+sqlite3_prepare_v2() to reprepare a statement after a schema change.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_stmt 3 ,
+.Xr sqlite3_limit 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_step 3 ,
+.Xr SQLITE_CREATE_INDEX 3 ,
+.Xr SQLITE_DENY 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_CREATE_INDEX 3

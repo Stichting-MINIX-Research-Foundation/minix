@@ -1,0 +1,24 @@
+.Dd March 11, 2017
+.Dt SQLITE3_VTAB_ON_CONFLICT 3
+.Os
+.Sh NAME
+.Nm sqlite3_vtab_on_conflict
+.Nd Determine The Virtual Table Conflict Policy
+.Sh SYNOPSIS
+.Ft int 
+.Fo sqlite3_vtab_on_conflict
+.Fa "sqlite3 *"
+.Fc
+.Sh DESCRIPTION
+This function may only be called from within a call to the xUpdate
+method of a virtual table implementation for an INSERT
+or UPDATE operation.
+The value returned is one of SQLITE_ROLLBACK, SQLITE_IGNORE,
+SQLITE_FAIL, SQLITE_ABORT, or SQLITE_REPLACE,
+according to the ON CONFLICT mode of the SQL statement that
+triggered the call to the xUpdate method of the virtual table.
+.Sh SEE ALSO
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_ROLLBACK 3 ,
+.Xr SQLITE_DENY 3 ,
+.Xr SQLITE_ROLLBACK 3
