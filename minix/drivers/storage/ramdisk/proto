@@ -6,15 +6,15 @@ d--755 0 0
 		cdprobe ---755 0 0 cdprobe
 #endif
 		sysenv ---755 0 0 sysenv
-#if RAMDISK_SMALL == 1
-		fsck_mfs ---755 0 0 fsck_mfs
-#endif
 		mount ---755 0 0 mount
 		umount ---755 0 0 umount
 		grep ---755 0 0 grep
 		sh ---755 0 0 sh
 	$
 	sbin d--755 0 0
+#if RAMDISK_SMALL == 1
+		fsck_mfs ---755 0 0 fsck_mfs
+#endif
 		minix-service ---755 0 0 minix-service
 	$
 	service d--755 0 0

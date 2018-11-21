@@ -3,7 +3,7 @@ set -e
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-FSCK=/bin/fsck_mfs
+FSCK=/sbin/fsck_mfs
 ACPI=/service/acpi
 
 if [ X`sysenv arch` = Xi386 ]
