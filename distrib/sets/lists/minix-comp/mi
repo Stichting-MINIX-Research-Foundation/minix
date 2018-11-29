@@ -1738,7 +1738,7 @@
 ./usr/include/sys/socket.h                              minix-comp
 ./usr/include/sys/socketvar.h                           minix-comp
 ./usr/include/sys/sockio.h                              minix-comp
-./usr/include/sys/soundcard.h                           minix-comp
+./usr/include/sys/soundcard.h                           minix-comp      obsolete
 ./usr/include/sys/spawn.h                               minix-comp
 ./usr/include/sys/specificdata.h                        minix-comp
 ./usr/include/sys/stat.h                                minix-comp

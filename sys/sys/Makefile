@@ -62,7 +62,9 @@ INCSYMLINKS=\
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h
 
+.if !defined(__MINIX)
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
+.endif
 
 namei: namei.src gennameih.awk
 	${TOOL_AWK} -f gennameih.awk < namei.src
