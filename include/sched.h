@@ -55,9 +55,11 @@ int	sched_yield(void);
 int	__libc_thr_yield(void);
 __END_DECLS
 
+#ifndef __minix
 #ifndef __LIBPTHREAD_SOURCE__
 #define sched_yield		__libc_thr_yield
 #endif /* __LIBPTHREAD_SOURCE__ */
+#endif /* __minix */
 
 #if defined(_NETBSD_SOURCE)
 
