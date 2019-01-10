@@ -506,7 +506,7 @@ initdefaults()
 	# XXX Except that doesn't work on Solaris. Or many Linuces.
 	#
 	unset PWD
-	TOP=$(/bin/pwd -P 2>/dev/null || /bin/pwd 2>/dev/null)
+	TOP=$(/usr/bin/env pwd -P 2>/dev/null || /usr/bin/env pwd 2>/dev/null)
 
 	# The user can set HOST_SH in the environment, or we try to
 	# guess an appropriate value.  Then we set several other
