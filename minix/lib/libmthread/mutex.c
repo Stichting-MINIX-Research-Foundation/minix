@@ -87,7 +87,7 @@ mthread_mutex_t *mutex;
  *===========================================================================*/
 int mthread_mutex_init(mutex, mattr)
 mthread_mutex_t *mutex;	/* Mutex that is to be initialized */
-mthread_mutexattr_t *mattr;	/* Mutex attribute */
+const mthread_mutexattr_t *mattr;	/* Mutex attribute */
 {
 /* Initialize the mutex to a known state. Attributes are not supported */
 

@@ -20,7 +20,7 @@
 /*===========================================================================*
  *				pthread_mutex_init			     *
  *===========================================================================*/
-int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mattr)
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mattr)
 {
 	return mthread_mutex_init(mutex, mattr);
 }
@@ -77,7 +77,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
 /*===========================================================================*
  *				pthread_cond_init			     *
  *===========================================================================*/
-int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *cattr)
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cattr)
 {
 	return mthread_cond_init(cond, cattr);
 }
@@ -134,7 +134,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 /*===========================================================================*
  *				pthread_rwlock_init			     *
  *===========================================================================*/
-int pthread_rwlock_init(pthread_rwlock_t *rwlock, pthread_rwlockattr_t *UNUSED(attr))
+int pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *UNUSED(attr))
 {
 	return mthread_rwlock_init(rwlock);
 }
