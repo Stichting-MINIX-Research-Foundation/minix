@@ -14,7 +14,7 @@
 #include "proto.h"
 
 static int mthread_increase_thread_pool(void);
-static void mthread_thread_init(mthread_thread_t thread, mthread_attr_t
+static void mthread_thread_init(mthread_thread_t thread, const mthread_attr_t
 	*tattr, void *(*proc)(void *), void *arg);
 
 static void mthread_thread_stop(mthread_thread_t thread);
@@ -46,7 +46,7 @@ mthread_thread_t r;
  *===========================================================================*/
 int mthread_create(threadid, tattr, proc, arg)
 mthread_thread_t *threadid;
-mthread_attr_t *tattr;
+const mthread_attr_t *tattr;
 void *(*proc)(void *);
 void *arg;
 {
@@ -350,7 +350,7 @@ mthread_thread_t mthread_self(void)
  *===========================================================================*/
 static void mthread_thread_init(thread, tattr, proc, arg)
 mthread_thread_t thread;
-mthread_attr_t *tattr;
+const mthread_attr_t *tattr;
 void *(*proc)(void *);
 void *arg;
 {

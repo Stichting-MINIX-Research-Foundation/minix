@@ -117,7 +117,7 @@ mthread_cond_t *cond;
  *===========================================================================*/
 int mthread_cond_init(cond, cattr)
 mthread_cond_t *cond;
-mthread_condattr_t *cattr;
+const mthread_condattr_t *cattr;
 {
 /* Initialize condition variable to a known state. cattr is ignored */
   struct __mthread_cond *c;
