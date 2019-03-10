@@ -151,35 +151,10 @@ static struct gate_table_s gate_table_exceptions[] = {
 	{ NULL, 0, 0}
 };
 
-int tss_init(unsigned cpu, void * kernel_stack)
+void setup_sysenter_syscall(void)
 {
-	struct tss_s * t = &tss[cpu];
-	int index = TSS_INDEX(cpu);
-	struct segdesc_s *tssgdt;
-
-	tssgdt = &gdt[index];
-  
-	init_param_dataseg(tssgdt, (phys_bytes) t,
-			sizeof(struct tss_s), INTR_PRIVILEGE);
-	tssgdt->access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
-
-	/* Build TSS. */
-	memset(t, 0, sizeof(*t));
-	t->ds = t->es = t->fs = t->gs = t->ss0 = KERN_DS_SELECTOR;
-	t->cs = KERN_CS_SELECTOR;
-	t->iobase = sizeof(struct tss_s);	/* empty i/o permissions map */
-
-	/* 
-	 * make space for process pointer and cpu id and point to the first
-	 * usable word
-	 */
-	k_percpu_stacks[cpu] = t->sp0 = ((unsigned) kernel_stack) - X86_STACK_TOP_RESERVED;
-	/* 
-	 * set the cpu id at the top of the stack so we know on which cpu is
-	 * this stack in use when we trap to kernel
-	 */
-	*((reg_t *)(t->sp0 + 1 * sizeof(reg_t))) = cpu;
-
+	const int cpu = cpuid;
+	struct tss_s const *const t = &tss[cpu];
 	/* Set up Intel SYSENTER support if available. */
 	if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {
 	  ia32_msr_write(INTEL_MSR_SYSENTER_CS, 0, KERN_CS_SELECTOR);
@@ -211,7 +186,36 @@ int tss_init(unsigned cpu, void * kernel_stack)
 		set_star_cpu(7);
 		assert(CONFIG_MAX_CPUS <= 8);
   	}
+}
 
+int tss_init(unsigned cpu, void * kernel_stack)
+{
+	struct tss_s * t = &tss[cpu];
+	int index = TSS_INDEX(cpu);
+	struct segdesc_s *tssgdt;
+
+	tssgdt = &gdt[index];
+  
+	init_param_dataseg(tssgdt, (phys_bytes) t,
+			sizeof(struct tss_s), INTR_PRIVILEGE);
+	tssgdt->access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
+
+	/* Build TSS. */
+	memset(t, 0, sizeof(*t));
+	t->ds = t->es = t->fs = t->gs = t->ss0 = KERN_DS_SELECTOR;
+	t->cs = KERN_CS_SELECTOR;
+	t->iobase = sizeof(struct tss_s);	/* empty i/o permissions map */
+
+	/* 
+	 * make space for process pointer and cpu id and point to the first
+	 * usable word
+	 */
+	k_percpu_stacks[cpu] = t->sp0 = ((unsigned) kernel_stack) - X86_STACK_TOP_RESERVED;
+	/* 
+	 * set the cpu id at the top of the stack so we know on which cpu is
+	 * this stack in use when we trap to kernel
+	 */
+	*((reg_t *)(t->sp0 + 1 * sizeof(reg_t))) = cpu;
 	return SEG_SELECTOR(index);
 }
 

@@ -249,6 +249,11 @@ reg_t read_ebp(void);
  */
 int tss_init(unsigned cpu, void * kernel_stack);
 
+/*
+ * Set up MSRs for sysenter or syscall for the current cpu.
+ * Assumes that tss_init has been called before for that cpu ! */
+void setup_sysenter_syscall(void);
+
 void int_gate_idt(unsigned vec_nr, vir_bytes offset, unsigned dpl_type);
 
 void __copy_msg_from_user_end(void);

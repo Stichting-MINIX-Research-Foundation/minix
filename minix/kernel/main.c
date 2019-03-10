@@ -42,6 +42,7 @@ void bsp_finish_booting(void)
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
 
+  setup_sysenter_syscall();
   cpu_identify();
 
   vm_running = 0;
