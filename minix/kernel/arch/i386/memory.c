@@ -164,8 +164,16 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
 	assert(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE));
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
-	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_VMINHIBIT));
-	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_VMINHIBIT));
+	if(srcproc&&RTS_ISSET(srcproc, RTS_VMINHIBIT)) {
+		/* If the src is marked with an unstable memory space, then
+		 * suspend as if a page fault occured. */
+		return EFAULT_SRC;
+	}
+	if(dstproc&&RTS_ISSET(dstproc, RTS_VMINHIBIT)) {
+		/* If the dst is marked with an unstable memory space, then
+		 * suspend as if a page fault occured. */
+		return EFAULT_DST;
+	}
 
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;

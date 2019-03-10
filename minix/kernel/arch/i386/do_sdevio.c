@@ -13,6 +13,7 @@
 #include "kernel/system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
+#include "kernel/vm.h"
 
 #include "arch_proto.h"
 
@@ -67,12 +68,13 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   /* Check for 'safe' variants. */
   if((m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
-     if((r=verify_grant(proc_nr_e, caller->p_endpoint,
+     if((r=verify_grant(caller,proc_nr_e, caller->p_endpoint,
 		m_ptr->m_lsys_krn_sys_sdevio.vec_addr, count,
 		req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
 		m_ptr->m_lsys_krn_sys_sdevio.offset, &newoffset, &newep,
 		NULL)) != OK) {
 	if(r == ENOTREADY) return r;
+	if(r == VMSUSPEND) return r;
 	printf("do_sdevio: verify_grant failed\n");
 	return EPERM;
     }
