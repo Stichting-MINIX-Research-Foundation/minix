@@ -11,6 +11,7 @@
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
+#include <limits.h>
 #include <minix/bitmap.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -34,7 +35,6 @@
 
 #include <errno.h>
 #include <lib.h>
-#include <limits.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdlib.h>
