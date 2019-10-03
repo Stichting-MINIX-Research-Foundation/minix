@@ -621,7 +621,7 @@ get_name(struct vnode *dirp, struct vnode *entry, char ename[NAME_MAX + 1])
 		cur = (struct dirent *) (buf + consumed);
 		name_len = cur->d_reclen - offsetof(struct dirent, d_name) - 1;
 
-		if(cur->d_name + name_len+1 > &buf[sizeof(buf)])
+		if(name_len < 0 || cur->d_name + name_len+1 > &buf[sizeof(buf)])
 			return(EINVAL);	/* Rubbish in dir entry */
 		if (entry->v_inode_nr == cur->d_fileno) {
 			/* found the entry we were looking for */
