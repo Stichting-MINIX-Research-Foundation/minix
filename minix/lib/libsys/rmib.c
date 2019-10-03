@@ -711,7 +711,9 @@ rmib_call(const message * m_in)
 	 */
 	/* A zero name length is valid and should always yield EISDIR. */
 	namelen = m_in->m_mib_lsys_call.name_len;
-	if (prefixlen + namelen > __arraycount(name))
+	if (namelen > __arraycount(name) || 
+	    prefixlen > __arraycount(name) || 
+	    prefixlen + namelen > __arraycount(name))
 		return EINVAL;
 
 	if (namelen > 0) {
