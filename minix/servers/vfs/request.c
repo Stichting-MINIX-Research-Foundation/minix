@@ -187,6 +187,7 @@ int req_create(
 	panic("req_create: cpf_grant_direct failed");
 
   /* Fill in request message */
+  memset(&m, 0, sizeof(m));
   m.m_type = REQ_CREATE;
   m.m_vfs_fs_create.inode = inode_nr;
   m.m_vfs_fs_create.mode = omode;
