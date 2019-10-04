@@ -141,11 +141,11 @@ static int ds_retrieve_raw(const char *ds_name, char *vaddr, size_t *length,
 	m.m_ds_req.val_len = *length;
 	m.m_ds_req.flags = flags;
 	r = do_invoke_ds(&m, DS_RETRIEVE, ds_name);
+	cpf_revoke(gid);
 	if (m.m_ds_reply.val_len > *length) {
 		return EINVAL;
 	}
 	*length = m.m_ds_reply.val_len;
-	cpf_revoke(gid);
 
 	return r;
 }
