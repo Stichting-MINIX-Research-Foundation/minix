@@ -417,7 +417,7 @@ hub_task(void * UNUSED(arg))
 	HUB_DEBUG_MSG("bHubContrCurrent    %4X", d->bHubContrCurrent);
 
 	/* Check for sane number of ports... */
-	if (d->bNbrPorts > USB_HUB_PORT_LIMIT) {
+	if (d->bNbrPorts >= USB_HUB_PORT_LIMIT) {
 		HUB_MSG("Too many hub ports declared: %d", d->bNbrPorts);
 		goto HUB_ERROR;
 	}
