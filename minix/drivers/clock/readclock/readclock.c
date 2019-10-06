@@ -7,6 +7,7 @@
 #include <time.h>
 #include <errno.h>
 #include <lib.h>
+#include <string.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/callnr.h>
@@ -70,6 +71,7 @@ main(int argc, char **argv)
 		switch (m.m_type) {
 		case RTCDEV_GET_TIME:
 			/* Any user can read the time */
+			memset(&t, 0x00, sizeof(t));
 			reply_status = rtc.get_time(&t, m.m_lc_readclock_rtcdev.flags);
 			if (reply_status != OK) {
 				break;
