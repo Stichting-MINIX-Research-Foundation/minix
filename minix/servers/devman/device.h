@@ -218,6 +218,109 @@ static void do_reply(message *msg, int res)
 }
 
 /*===========================================================================*
+ *           devman_string_terminated                                        *
+ *===========================================================================*/
+int devman_is_string(char *begin, char *end) {
+	while(begin < end) {
+		if (*begin == '\0') 
+			return 1;
+		begin++;
+	}
+	return 0;
+}
+
+/*===========================================================================*
+ *           devman_validate_device_info                                     *
+ *===========================================================================*/
+int 
+devman_validate_device_info(struct devman_device_info *devinf, size_t len) {
+	char * buffer = (char *) (devinf);
+	char * end = buffer + len;
+	struct devman_device_info_entry *entries;
+	int i;
+	
+	/* make sure caller gave us enough data so it can hold sizeof(*devinf) */
+	if (len < sizeof(struct devman_device_info)) {
+		return EINVAL;
+	}
+	
+	/* make sure name offset isn't bogus */
+	if (devinf->name_offset > len) {
+		return EINVAL;
+	}
+	
+	/* make sure the name is 0-terminated */
+	if (!(devman_is_string(buffer + devinf->name_offset, end))) {
+		return EINVAL;
+	}
+
+	/* make sure string is reasonably sized. */
+	if (strlen(buffer + devinf->name_offset) > NAME_MAX) {
+		return EINVAL;
+	}
+
+	/* no negative counts */
+	if (devinf->count < 0) {
+		return EINVAL;
+	}
+
+	/* make sure count isn't bogus: integer wrap check */
+	if (devinf->count > INT_MAX / sizeof(struct devman_device_info_entry)) {
+		return EINVAL;
+	}
+	
+	/* make sure count isn't bogus: addition overflow check */
+	if ((devinf->count * sizeof(struct devman_device_info_entry)) + 
+		sizeof(struct devman_device_info_entry) < 
+		sizeof(struct devman_device_info_entry)) {
+		return EINVAL; 
+	}
+	
+	/* make sure count isn't bogus */
+	if ((devinf->count * sizeof(struct devman_device_info_entry)) + 
+		sizeof(struct devman_device_info_entry) > len) {
+		return EINVAL;
+	}
+	
+	entries = (struct devman_device_info_entry *) 
+		(buffer + sizeof(struct devman_device_info));
+	
+	for (i = 0; i < devinf->count; i++) {
+		
+		/* other types aren't implemented. can't validate what isn't there */
+		if (entries[i].type != DEVMAN_DEVINFO_STATIC) 
+			continue;
+		
+		/* make sure name offset isn't bogus */
+		if (entries[i].name_offset > len) {
+			return EINVAL;
+		}
+		
+		/* make sure data offset isn't bogus */
+		if (entries[i].data_offset > len) {
+			return EINVAL;
+		}
+		
+		/* make sure name is 0-terminated */
+		if (!(devman_is_string(buffer + entries[i].name_offset, end))) {
+			return EINVAL;
+		}
+		
+		/* make sure string is reasonably sized. */
+		if (strlen(buffer + entries[i].name_offset) > NAME_MAX) {
+			return EINVAL;
+		}
+		
+		/* make sure data is 0-terminated */
+		if (!(devman_is_string(buffer + entries[i].data_offset, end))) {
+			return EINVAL;
+		}
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
  *           do_add_device                                                   *
  *===========================================================================*/
 int do_add_device(message *msg)
@@ -245,7 +348,16 @@ int do_add_device(message *msg)
 		do_reply(msg, res);
 		return 0;
 	}
-
+	
+	res = devman_validate_device_info(devinf, msg->DEVMAN_GRANT_SIZE);
+	
+	if (res != OK) {
+		res = EINVAL;
+		free(devinf);
+		do_reply(msg, res);
+		return 0;
+	}
+	
 	if ((parent = _find_dev(&root_dev, devinf->parent_dev_id))
 		 == NULL) {
 		res = ENODEV;
