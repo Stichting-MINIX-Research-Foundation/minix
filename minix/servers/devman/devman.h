@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <lib.h>
+#include <limits.h>
 #include <minix/timers.h>
 
 #include <minix/callnr.h>
