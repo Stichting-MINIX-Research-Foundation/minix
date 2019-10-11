@@ -43,6 +43,11 @@ int copy_path(char *dest, size_t size)
   if (len > M_PATH_STRING_MAX)
 	return fetch_name(name, len, dest);
 
+  if (len == 0) {
+  	err_code = EINVAL;
+	return(EGENERIC);
+  }	
+	
   /* Just copy the path from the message */
   strncpy(dest, job_m_in.m_lc_vfs_path.buf, len);
 
