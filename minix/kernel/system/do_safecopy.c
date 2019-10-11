@@ -412,6 +412,9 @@ int do_vsafecopy(struct proc * caller, message * m_ptr)
 
 	/* No. of vector elements. */
 	els = m_ptr->m_lsys_kern_vsafecopy.vec_size;
+	if (els < 0 || els > SCPVEC_NR) {
+		return EINVAL;
+	}
 	bytes = els * sizeof(struct vscp_vec);
 
 	/* Obtain vector of copies. */

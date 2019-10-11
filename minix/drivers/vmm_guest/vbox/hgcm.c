@@ -575,7 +575,7 @@ static int do_call(message *m_ptr, int ipc_status, int *code)
 	hgcm_conn[conn].req[req].grant = m_ptr->VBOX_GRANT;
 	hgcm_conn[conn].req[req].count = count;
 
-	if (count > 0) {
+	if (count > 0 && count <= MAX_PARAMS) {
 		if ((r = sys_safecopyfrom(m_ptr->m_source, m_ptr->VBOX_GRANT,
 				0, (vir_bytes) hgcm_conn[conn].req[req].param,
 				count * sizeof(vbox_param_t))) != OK)

@@ -187,6 +187,7 @@ int req_create(
 	panic("req_create: cpf_grant_direct failed");
 
   /* Fill in request message */
+  memset(&m, 0, sizeof(m));
   m.m_type = REQ_CREATE;
   m.m_vfs_fs_create.inode = inode_nr;
   m.m_vfs_fs_create.mode = omode;
@@ -238,6 +239,7 @@ int req_statvfs(endpoint_t fs_e, struct statvfs *buf)
   cp_grant_id_t grant_id;
   message m;
 
+  memset(buf, 0x00, sizeof(struct statvfs));
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, sizeof(struct statvfs),
 			CPF_WRITE);
   if(grant_id == GRANT_INVALID)
@@ -1200,6 +1202,7 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
   assert(actimespec != NULL);
   assert(modtimespec != NULL);
 
+  memset(&m, 0, sizeof(m));
   /* Fill in request message */
   m.m_type = REQ_UTIME;
   m.m_vfs_fs_utime.inode = inode_nr;
