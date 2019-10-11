@@ -239,6 +239,7 @@ int req_statvfs(endpoint_t fs_e, struct statvfs *buf)
   cp_grant_id_t grant_id;
   message m;
 
+  memset(buf, 0x00, sizeof(struct statvfs));
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, sizeof(struct statvfs),
 			CPF_WRITE);
   if(grant_id == GRANT_INVALID)
