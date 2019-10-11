@@ -1202,6 +1202,7 @@ int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
   assert(actimespec != NULL);
   assert(modtimespec != NULL);
 
+  memset(&m, 0, sizeof(m));
   /* Fill in request message */
   m.m_type = REQ_UTIME;
   m.m_vfs_fs_utime.inode = inode_nr;
