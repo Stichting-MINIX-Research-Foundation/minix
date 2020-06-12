@@ -1,35 +1,42 @@
 #include <lib.h>
 /* Integer to ASCII for signed decimal integers. */
 
-static int next;
-static char qbuf[8];
+static char	qbuf[12];
 
 char *itoa(int n);
 
 char *itoa(int n)
 {
-  register int r, k;
-  int flag = 0;
+	register int	r;
+	register int	k;
+	int				flag = 0;
+	long long		nb = n;
+	int				next = 0;
 
-  next = 0;
-  if (n < 0) {
-	qbuf[next++] = '-';
-	n = -n;
-  }
-  if (n == 0) {
-	qbuf[next++] = '0';
-  } else {
-	k = 10000;
-	while (k > 0) {
-		r = n / k;
-		if (flag || r > 0) {
-			qbuf[next++] = '0' + r;
-			flag = 1;
-		}
-		n -= r * k;
-		k = k / 10;
+	if (nb < 0)
+	{
+		qbuf[next++] = '-';
+		nb = -nb;
 	}
-  }
-  qbuf[next] = 0;
-  return(qbuf);
+	if (nb == 0)
+	{
+		qbuf[next++] = '0';
+	}
+	else
+	{
+		k = 1000000000;
+		while (k > 0)
+		{
+			r = nb / k;
+			if (flag || r > 0)
+			{
+				qbuf[next++] = '0' + r;
+				flag = 1;
+			}
+			nb -= r * k;
+			k = k / 10;
+		}
+	}
+	qbuf[next] = 0;
+	return(qbuf);
 }
