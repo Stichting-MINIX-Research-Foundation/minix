@@ -157,7 +157,7 @@ void hook_ipc_clear(struct proc *proc);
 
 /* system/do_safecopy.c */
 struct cp_sfinfo; /* external callers may only provide NULL */
-int verify_grant(endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
+int verify_grant(struct proc*,endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes, int,
 	vir_bytes, vir_bytes *, endpoint_t *, struct cp_sfinfo *);
 
 /* system/do_diagctl.c */

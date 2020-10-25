@@ -39,6 +39,7 @@ struct cp_sfinfo {		/* information for handling soft faults */
  *				verify_grant				     *
  *===========================================================================*/
 int verify_grant(
+  struct proc *caller,		/* The caller */
   endpoint_t granter,		/* copyee */
   endpoint_t grantee,		/* copyer */
   cp_grant_id_t grant,		/* grant id */
@@ -118,12 +119,25 @@ int verify_grant(
 		 * has (presumably) set an invalid grant table entry by
 		 * returning EPERM, just like with an invalid grant id.
 		 */
-		if(data_copy(granter, priv(granter_proc)->s_grant_table +
-			sizeof(g) * grant_idx,
-			KERNEL, (vir_bytes) &g, sizeof(g)) != OK) {
-			printf(
-			"verify_grant: grant verify: data_copy failed\n");
-			return EPERM;
+		const vir_bytes entry_addr = priv(granter_proc)->s_grant_table+sizeof(g)*grant_idx;
+		const int copy_res =data_copy_vmcheck(caller,granter,entry_addr,
+			KERNEL, (vir_bytes) &g, sizeof(g));
+		if(copy_res!=OK) {
+                       /* The copy failed, it may be because we had a page
+                        * fault from the source. In this case, the caller has
+                        * been suspended already, but we need to propagate the
+                        * VMSUSPEND to the upper level (until kernel_call_finish
+                        * to make it happen. */
+                       if(copy_res==VMSUSPEND) {
+                               /* Propagate the VMSUSPEND. */
+                               return VMSUSPEND;
+                       } else {
+                               /* The reason is not a pagefault in the source
+                                * , in this case report the error. */
+                               panic(
+                               "verify_grant: grant verify: data_copy failed\n");
+                               return EPERM;
+                       }
 		}
 
 		/* Check validity: flags and sequence number. */
@@ -302,9 +316,10 @@ static int safecopy(
 	}
 
 	/* Verify permission exists. */
-	if((r=verify_grant(granter, grantee, grantid, bytes, access,
+	if((r=verify_grant(caller,granter, grantee, grantid, bytes, access,
 	    g_offset, &v_offset, &new_granter, &sfinfo)) != OK) {
 		if(r == ENOTREADY) return r;
+		if(r == VMSUSPEND) return r;
 			printf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);

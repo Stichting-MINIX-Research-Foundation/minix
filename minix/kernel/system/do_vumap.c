@@ -77,7 +77,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
 	size -= offset;
 
 	if (source != SELF) {
-		r = verify_grant(source, endpt, vvec[i].vv_grant, size, access,
+		r = verify_grant(caller,source, endpt, vvec[i].vv_grant, size, access,
 			offset, &vir_addr, &granter, NULL);
 		if (r != OK)
 			return r;

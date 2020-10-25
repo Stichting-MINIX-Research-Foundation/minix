@@ -5,6 +5,8 @@
 #include <machine/interrupt.h>
 #include <machine/multiboot.h>
 
+typedef uint32_t bitchunk_t;
+
 /* Process table and system property related types. */ 
 typedef int proc_nr_t;			/* process table entry number */
 typedef short sys_id_t;			/* system process index */

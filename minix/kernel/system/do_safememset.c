@@ -13,6 +13,7 @@
 #include <minix/safecopies.h>
 
 #include "kernel/system.h"
+#include "kernel/vm.h"
 
 /*===========================================================================*
  *                              do_safememset                                *
@@ -45,9 +46,9 @@ int do_safememset(struct proc *caller, message *m_ptr) {
 	}
 
 	/* Verify permission exists, memset always requires CPF_WRITE */
-	r = verify_grant(dst_endpt, caller_endpt, grantid, len, CPF_WRITE,
+	r = verify_grant(caller,dst_endpt, caller_endpt, grantid, len, CPF_WRITE,
 			 g_offset, &v_offset, &new_granter, NULL);
-
+	if(r==VMSUSPEND) return r;
 	if (r != OK) {
 		printf("safememset: grant %d verify failed %d", grantid, r);
 		return r;
