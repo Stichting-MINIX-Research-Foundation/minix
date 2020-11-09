@@ -101,7 +101,7 @@ public:
 
   ~ValueMap() {}
 
-  bool hasMD() const { return MDMap; }
+  bool hasMD() const { return static_cast<bool>(MDMap); }
   MDMapT &MD() {
     if (!MDMap)
       MDMap.reset(new MDMapT);
