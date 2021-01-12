@@ -41,5 +41,9 @@
 ## Managing User 
 
 ```
-
+    # group add Users
+    
+    # user add -M -g Users username
+    
+    # passwd username
 ```
