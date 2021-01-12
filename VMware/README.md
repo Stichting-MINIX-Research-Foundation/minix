@@ -54,4 +54,4 @@ Replace abcd with vmware version : wget https://github.com/mkubecek/vmware-host-
 
 ##
 
-License Key : YF390-0HF8P-M81RQ-2DXQE-M2UT6 
+License Key : <!-- YF390-0HF8P-M81RQ-2DXQE-M2UT6 -->
