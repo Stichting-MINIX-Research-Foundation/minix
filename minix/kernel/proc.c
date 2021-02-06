@@ -506,7 +506,7 @@ static int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
   {
 	if (call_nr != RECEIVE)
 	{
-#if 0
+#if DEBUG_ENABLE_IPC_WARNINGS
 		printf("sys_call: %s by %d with bad endpoint %d\n", 
 			callname,
 			proc_nr(caller_ptr), src_dst_e);
@@ -519,7 +519,7 @@ static int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
   {
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
-#if 0
+#if DEBUG_ENABLE_IPC_WARNINGS
 		printf("sys_call: %s by %d with bad endpoint %d\n", 
 			callname,
 			proc_nr(caller_ptr), src_dst_e);
@@ -576,10 +576,8 @@ static int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 		break;				/* done, or SEND failed */
 	/* fall through for SENDREC */
   case RECEIVE:			
-	if (call_nr == RECEIVE) {
-		caller_ptr->p_misc_flags &= ~MF_REPLY_PEND;
-		IPC_STATUS_CLEAR(caller_ptr);  /* clear IPC status code */
-	}
+	caller_ptr->p_misc_flags &= ~MF_REPLY_PEND;
+	IPC_STATUS_CLEAR(caller_ptr);  /* clear IPC status code */
 	result = mini_receive(caller_ptr, src_dst_e, m_ptr, 0);
 	break;
   case NOTIFY:
