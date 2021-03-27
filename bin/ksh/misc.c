@@ -31,9 +31,7 @@ static const unsigned char *cclass ARGS((const unsigned char *p, int sub));
  * Fast character classes
  */
 void
-setctypes(s, t)
-	register const char *s;
-	register int t;
+setctypes(register const char *s, register int t)
 {
 	register int i;
 
@@ -47,7 +45,7 @@ setctypes(s, t)
 }
 
 void
-initctypes()
+initctypes(void)
 {
 	register int c;
 
@@ -68,9 +66,7 @@ initctypes()
 /* convert unsigned long to base N string */
 
 char *
-ulton(n, base)
-	register unsigned long n;
-	int base;
+ulton(register unsigned long n, int base)
 {
 	register char *p;
 	static char buf [20];
@@ -85,9 +81,7 @@ ulton(n, base)
 }
 
 char *
-str_save(s, ap)
-	register const char *s;
-	Area *ap;
+str_save(register const char *s, Area *ap)
 {
 	size_t len;
 	char *p;
@@ -105,10 +99,7 @@ str_save(s, ap)
  * (unless n < 0).
  */
 char *
-str_nsave(s, n, ap)
-	register const char *s;
-	int n;
-	Area *ap;
+str_nsave(register const char *s, int n, Area *ap)
 {
 	char *ns;
 
@@ -121,10 +112,7 @@ str_nsave(s, n, ap)
 
 /* called from expand.h:XcheckN() to grow buffer */
 char *
-Xcheck_grow_(xsp, xp, more)
-	XString *xsp;
-	char *xp;
-	int more;
+Xcheck_grow_(XString *xsp, char *xp, int more)
 {
 	char *old_beg = xsp->beg;
 
@@ -197,8 +185,7 @@ const struct option goptions[] = {
  * translate -o option into F* constant (also used for test -o option)
  */
 int
-option(n)
-	const char *n;
+option(const char *n)
 {
 	int i;
 
@@ -222,11 +209,7 @@ static void printoptions ARGS((int verbose));
 
 /* format a single select menu item */
 static char *
-options_fmt_entry(arg, i, buf, buflen)
-	void *arg;
-	int i;
-	char *buf;
-	int buflen;
+options_fmt_entry(void *arg, int i, char *buf, int buflen)
 {
 	struct options_info *oi = (struct options_info *) arg;
 
@@ -237,8 +220,7 @@ options_fmt_entry(arg, i, buf, buflen)
 }
 
 static void
-printoptions(verbose)
-	int verbose;
+printoptions(int verbose)
 {
 	int i;
 
@@ -270,7 +252,7 @@ printoptions(verbose)
 }
 
 char *
-getoptions()
+getoptions(void)
 {
 	size_t i;
 	char m[(int) FNFLAGS + 1];
@@ -283,12 +265,14 @@ getoptions()
 	return str_save(m, ATEMP);
 }
 
-/* change a Flag(*) value; takes care of special actions */
+/* change a Flag(*) value; takes care of special actions
+ *
+ * f - flag to change
+ * what - what is changing the flag (command line vs set)
+ *
+ */
 void
-change_flag(f, what, newval)
-	enum sh_flag f;	/* flag to change */
-	int what;	/* what is changing the flag (command line vs set) */
-	int newval;
+change_flag(enum sh_flag f, int what, int newval)
 {
 	int oldval;
 
@@ -346,12 +330,11 @@ change_flag(f, what, newval)
 
 /* parse command line & set command arguments.  returns the index of
  * non-option arguments, -1 if there is an error.
+ *
+ * what - OF_CMDLINE or OF_SET
  */
 int
-parse_args(argv, what, setargsp)
-	char **argv;
-	int	what;		/* OF_CMDLINE or OF_SET */
-	int	*setargsp;
+parse_args(char **argv, int what, int *setargsp)
 {
 	static char cmd_opts[NELEM(goptions) + 3]; /* o:\0 */
 	static char set_opts[NELEM(goptions) + 5]; /* Ao;s\0 */
@@ -488,9 +471,7 @@ parse_args(argv, what, setargsp)
 
 /* parse a decimal number: returns 0 if string isn't a number, 1 otherwise */
 int
-getn(as, ai)
-	const char *as;
-	int *ai;
+getn(const char *as, int *ai)
 {
 	char *p;
 	long n;
@@ -506,9 +487,7 @@ getn(as, ai)
 
 /* getn() that prints error */
 int
-bi_getn(as, ai)
-	const char *as;
-	int *ai;
+bi_getn(const char *as, int *ai)
 {
 	int rv = getn(as, ai);
 
@@ -528,9 +507,7 @@ bi_getn(as, ai)
  */
 
 int
-gmatch(s, p, isfile)
-	const char *s, *p;
-	int isfile;
+gmatch(const char *s, const char *p, int isfile)
 {
 	const char *se, *pe;
 
@@ -571,8 +548,7 @@ gmatch(s, p, isfile)
 - return ?
 */
 int
-has_globbing(xp, xpe)
-	const char *xp, *xpe;
+has_globbing(const char *xp, const char *xpe)
 {
 	const unsigned char *p = (const unsigned char *) xp;
 	const unsigned char *pe = (const unsigned char *) xpe;
@@ -626,10 +602,9 @@ has_globbing(xp, xpe)
 
 /* Function must return either 0 or 1 (assumed by code for 0x80|'!') */
 static int
-do_gmatch(s, se, p, pe, isfile)
-	const unsigned char *s, *p;
-	const unsigned char *se, *pe;
-	int isfile;
+do_gmatch(const unsigned char *s, const unsigned char *se,
+		  const unsigned char *p, const unsigned char *pe,
+		  int isfile)
 {
 	register int sc, pc;
 	const unsigned char *prest, *psub, *pnext;
@@ -761,9 +736,7 @@ do_gmatch(s, se, p, pe, isfile)
 }
 
 static const unsigned char *
-cclass(p, sub)
-	const unsigned char *p;
-	register int sub;
+cclass(const unsigned char *p, register int sub)
 {
 	register int c, d, not, found = 0;
 	const unsigned char *orig_p = p;
@@ -808,10 +781,7 @@ cclass(p, sub)
 
 /* Look for next ) or | (if match_sep) in *(foo|bar) pattern */
 const unsigned char *
-pat_scan(p, pe, match_sep)
-	const unsigned char *p;
-	const unsigned char *pe;
-	int match_sep;
+pat_scan(const unsigned char *p, const unsigned char *pe, int match_sep)
 {
 	int nest = 0;
 
@@ -835,11 +805,13 @@ pat_scan(p, pe, match_sep)
  */
 static void qsort1 ARGS((void **base, void **lim, int (*f)(void *, void *)));
 
+/*
+ * base - base address
+ * n - elements
+ * f - compare function
+ */
 void
-qsortp(base, n, f)
-	void **base;				/* base address */
-	size_t n;				/* elements */
-	int (*f) ARGS((void *, void *));	/* compare function */
+qsortp(void **base, size_t n, int (*f)(void*, void*))
 {
 	qsort1(base, base + n, f);
 }
@@ -852,9 +824,7 @@ qsortp(base, n, f)
 }
 
 static void
-qsort1(base, lim, f)
-	void **base, **lim;
-	int (*f) ARGS((void *, void *));
+qsort1(void **base, void **lim, int (*f)(void *, void *))
 {
 	register void **i, **j;
 	register void **lptr, **hptr;
@@ -923,17 +893,14 @@ qsort1(base, lim, f)
 }
 
 int
-xstrcmp(p1, p2)
-	void *p1, *p2;
+xstrcmp(void *p1, void *p2)
 {
 	return (strcmp((char *)p1, (char *)p2));
 }
 
 /* Initialize a Getopt structure */
 void
-ksh_getopt_reset(go, flags)
-	Getopt *go;
-	int flags;
+ksh_getopt_reset(Getopt *go, int flags)
 {
 	go->optind = 1;
 	go->optarg = (char *) 0;
@@ -969,10 +936,7 @@ ksh_getopt_reset(go, flags)
  *	  in go->info.
  */
 int
-ksh_getopt(argv, go, options)
-	char **argv;
-	Getopt *go;
-	const char *options;
+ksh_getopt(char **argv, Getopt *go, const char *options)
 {
 	char c;
 	char *o;
@@ -1072,8 +1036,7 @@ ksh_getopt(argv, go, options)
  * No trailing newline is printed.
  */
 void
-print_value_quoted(s)
-	const char *s;
+print_value_quoted(const char *s)
 {
 	const char *p;
 	int inquote = 0;
@@ -1106,13 +1069,8 @@ print_value_quoted(s)
  * element
  */
 void
-print_columns(shf, n, func, arg, max_width, prefcol)
-	struct shf *shf;
-	int n;
-	char *(*func) ARGS((void *, int, char *, int));
-	void *arg;
-	int max_width;
-	int prefcol;
+print_columns(struct shf *shf, int n, char *(*func)(void *, int, char *, int),
+			  void *arg, int max_width, int prefcol)
 {
 	char *str = (char *) alloc(max_width + 1, ATEMP);
 	int i;
@@ -1158,9 +1116,7 @@ print_columns(shf, n, func, arg, max_width, prefcol)
 
 /* Strip any nul bytes from buf - returns new length (nbytes - # of nuls) */
 int
-strip_nuls(buf, nbytes)
-	char *buf;
-	int nbytes;
+strip_nuls(char *buf, int nbytes)
 {
 	char *dst;
 
@@ -1191,10 +1147,7 @@ strip_nuls(buf, nbytes)
  * Returns dst.
  */
 char *
-str_zcpy(dst, src, dsize)
-	char *dst;
-	const char *src;
-	int dsize;
+str_zcpy(char *dst, const char *src, int dsize)
 {
 	if (dsize > 0) {
 		int len = strlen(src);
@@ -1211,10 +1164,7 @@ str_zcpy(dst, src, dsize)
  * and restarts read.
  */
 int
-blocking_read(fd, buf, nbytes)
-	int fd;
-	char *buf;
-	int nbytes;
+blocking_read(int fd, char *buf, int nbytes)
 {
 	int ret;
 	int tried_reset = 0;
@@ -1243,8 +1193,7 @@ blocking_read(fd, buf, nbytes)
  * 1 if it was.
  */
 int
-reset_nonblock(fd)
-	int fd;
+reset_nonblock(int fd)
 {
 	int flags;
 	int blocking_flags;
@@ -1300,9 +1249,7 @@ reset_nonblock(fd)
 
 /* Like getcwd(), except bsize is ignored if buf is 0 (MAXPATHLEN is used) */
 char *
-ksh_get_wd(buf, bsize)
-	char *buf;
-	int bsize;
+ksh_get_wd(char *buf, int bsize)
 {
 #ifdef HAVE_GETCWD
 	char *b;
@@ -1362,3 +1309,4 @@ ksh_get_wd(buf, bsize)
 	return b;
 #endif /* HAVE_GETCWD */
 }
+

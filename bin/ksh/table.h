@@ -179,3 +179,4 @@ EXTERN char *tmpdir;		/* TMPDIR value */
 EXTERN const char *prompt;
 EXTERN int cur_prompt;		/* PS1 or PS2 */
 EXTERN int current_lineno;	/* LINENO value */
+

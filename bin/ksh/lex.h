@@ -131,3 +131,4 @@ EXTERN	char  **histlist;	/* saved commands */
 EXTERN	char  **histptr;	/* last history item */
 EXTERN	int	histsize;	/* history size */
 #endif /* HISTORY */
+

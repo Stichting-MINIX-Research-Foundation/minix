@@ -50,3 +50,4 @@ typedef int WAIT_T;
 #else /* !HAVE_WAITPID && HAVE_WAIT3 */
 # define ksh_waitpid(p, s, o)	waitpid((p), (s), (o))
 #endif /* !HAVE_WAITPID && HAVE_WAIT3 */
+

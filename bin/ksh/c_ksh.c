@@ -18,8 +18,7 @@ __RCSID("$NetBSD: c_ksh.c,v 1.18 2011/10/16 17:12:11 joerg Exp $");
 #endif /* __CYGWIN__ */
 
 int
-c_cd(wp)
-	char	**wp;
+c_cd(char **wp)
 {
 	int optc;
 	int physical = Flag(FPHYSICAL);
@@ -186,8 +185,7 @@ c_cd(wp)
 }
 
 int
-c_pwd(wp)
-	char	**wp;
+c_pwd(char **wp)
 {
 	int optc;
 	int physical = Flag(FPHYSICAL);
@@ -233,8 +231,7 @@ c_pwd(wp)
 }
 
 int
-c_print(wp)
-	char **wp;
+c_print(char **wp)
 {
 #define PO_NL		BIT(0)	/* print newline */
 #define PO_EXPAND	BIT(1)	/* expand backslash sequences */
@@ -457,8 +454,7 @@ c_print(wp)
 }
 
 int
-c_whence(wp)
-	char **wp;
+c_whence(char **wp)
 {
 	struct tbl *tp;
 	char *id;
@@ -580,8 +576,7 @@ c_whence(wp)
 
 /* Deal with command -vV - command -p dealt with in comexec() */
 int
-c_command(wp)
-	char **wp;
+c_command(char **wp)
 {
 	/* Let c_whence do the work.  Note that c_command() must be
 	 * a distinct function from c_whence() (tested in comexec()).
@@ -591,8 +586,7 @@ c_command(wp)
 
 /* typeset, export, and readonly */
 int
-c_typeset(wp)
-	char **wp;
+c_typeset(char **wp)
 {
 	struct block *l = e->loc;
 	struct tbl *vp, **p;
@@ -888,8 +882,7 @@ c_typeset(wp)
 }
 	
 int
-c_alias(wp)
-	char **wp;
+c_alias(char **wp)
 {
 	struct table *t = &aliases;
 	int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0;
@@ -1025,8 +1018,7 @@ c_alias(wp)
 }
 
 int
-c_unalias(wp)
-	char **wp;
+c_unalias(char **wp)
 {
 	register struct table *t = &aliases;
 	register struct tbl *ap;
@@ -1079,8 +1071,7 @@ c_unalias(wp)
 
 #ifdef KSH
 int
-c_let(wp)
-	char **wp;
+c_let(char **wp)
 {
 	int rv = 1;
 	long val;
@@ -1099,8 +1090,7 @@ c_let(wp)
 #endif /* KSH */
 
 int
-c_jobs(wp)
-	char **wp;
+c_jobs(char **wp)
 {
 	int optc;
 	int flag = 0;
@@ -1138,8 +1128,7 @@ c_jobs(wp)
 
 #ifdef JOBS
 int
-c_fgbg(wp)
-	char **wp;
+c_fgbg(char **wp)
 {
 	int bg = strcmp(*wp, "bg") == 0;
 	int UNINITIALIZED(rv);
@@ -1171,11 +1160,7 @@ static char *kill_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
 /* format a single kill item */
 static char *
-kill_fmt_entry(arg, i, buf, buflen)
-	void *arg;
-	int i;
-	char *buf;
-	int buflen;
+kill_fmt_entry(void *arg, int i, char *buf, int buflen)
 {
 	struct kill_info *ki = (struct kill_info *) arg;
 
@@ -1195,8 +1180,7 @@ kill_fmt_entry(arg, i, buf, buflen)
 
 
 int
-c_kill(wp)
-	char **wp;
+c_kill(char **wp)
 {
 	Trap *t = (Trap *) 0;
 	char *p;
@@ -1307,8 +1291,7 @@ c_kill(wp)
 }
 
 void
-getopts_reset(val)
-	int val;
+getopts_reset(int val)
 {
 	if (val >= 1) {
 		ksh_getopt_reset(&user_opt,
@@ -1318,8 +1301,7 @@ getopts_reset(val)
 }
 
 int
-c_getopts(wp)
-	char **wp;
+c_getopts(char **wp)
 {
 	int	argc;
 	const char *options;
@@ -1418,8 +1400,7 @@ c_getopts(wp)
 
 #ifdef EMACS
 int
-c_bind(wp)
-	char **wp;
+c_bind(char **wp)
 {
 	int rv = 0, macro = 0, list = 0;
 	register char *cp;
@@ -1488,3 +1469,4 @@ const struct builtin kshbuiltins [] = {
 #endif
 	{NULL, NULL}
 };
+

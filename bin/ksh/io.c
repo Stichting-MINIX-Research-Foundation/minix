@@ -23,13 +23,7 @@ static int initio_done;
 
 /* A shell error occurred (eg, syntax error, etc.) */
 void
-#ifdef HAVE_PROTOTYPES
 errorf(const char *fmt, ...)
-#else
-errorf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -48,14 +42,7 @@ errorf(fmt, va_alist)
 
 /* like errorf(), but no unwind is done */
 void
-#ifdef HAVE_PROTOTYPES
 warningf(int fileline, const char *fmt, ...)
-#else
-warningf(fileline, fmt, va_alist)
-	int fileline;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -71,13 +58,7 @@ warningf(fileline, fmt, va_alist)
  * (also unwinds environments for special builtins).
  */
 void
-#ifdef HAVE_PROTOTYPES
 bi_errorf(const char *fmt, ...)
-#else
-bi_errorf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -108,14 +89,7 @@ bi_errorf(fmt, va_alist)
 
 /* Called when something that shouldn't happen does */
 void
-#ifdef HAVE_PROTOTYPES
 internal_errorf(int jump, const char *fmt, ...)
-#else
-internal_errorf(jump, fmt, va_alist)
-	int jump;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -132,8 +106,7 @@ internal_errorf(jump, fmt, va_alist)
 
 /* used by error reporting functions to print "ksh: .kshrc[25]: " */
 void
-error_prefix(fileline)
-	int fileline;
+error_prefix(int fileline)
 {
 	/* Avoid foo: foo[2]: ... */
 	if (!fileline || !source || !source->file
@@ -148,13 +121,7 @@ error_prefix(fileline)
 
 /* printf to shl_out (stderr) with flush */
 void
-#ifdef HAVE_PROTOTYPES
 shellf(const char *fmt, ...)
-#else
-shellf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -168,13 +135,7 @@ shellf(fmt, va_alist)
 
 /* printf to shl_stdout (stdout) */
 void
-#ifdef HAVE_PROTOTYPES
 shprintf(const char *fmt, ...)
-#else
-shprintf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -189,7 +150,7 @@ shprintf(fmt, va_alist)
 static struct shf *kshdebug_shf;
 
 void
-kshdebug_init_()
+kshdebug_init_(void)
 {
 	if (kshdebug_shf)
 		shf_close(kshdebug_shf);
@@ -204,13 +165,7 @@ kshdebug_init_()
 
 /* print to debugging log */
 void
-# ifdef HAVE_PROTOTYPES
 kshdebug_printf_(const char *fmt, ...)
-# else
-kshdebug_printf_(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-# endif
 {
 	va_list va;
 
@@ -224,10 +179,7 @@ kshdebug_printf_(fmt, va_alist)
 }
 
 void
-kshdebug_dump_(str, mem, nbytes)
-	const char *str;
-	const void *mem;
-	int nbytes;
+kshdebug_dump_(const char *str, const void *mem, int nbytes)
 {
 	int i, j;
 	int nprow = 16;
@@ -250,8 +202,7 @@ kshdebug_dump_(str, mem, nbytes)
 
 /* test if we can seek backwards fd (returns 0 or SHF_UNBUF) */
 int
-can_seek(fd)
-	int fd;
+can_seek(int fd)
 {
 	struct stat statb;
 
@@ -262,7 +213,7 @@ can_seek(fd)
 struct shf	shf_iob[3];
 
 void
-initio()
+initio(void)
 {
 	shf_fdopen(1, SHF_WR, shl_stdout);	/* force buffer allocation */
 	shf_fdopen(2, SHF_WR, shl_out);
@@ -273,10 +224,7 @@ initio()
 
 /* A dup2() with error checking */
 int
-ksh_dup2(ofd, nfd, errok)
-	int ofd;
-	int nfd;
-	int errok;
+ksh_dup2(int ofd, int nfd, int errok)
 {
 	int ret = dup2(ofd, nfd);
 
@@ -297,9 +245,7 @@ ksh_dup2(ofd, nfd, errok)
  * set close-on-exec flag.
  */
 int
-savefd(fd, noclose)
-	int fd;
-	int noclose;
+savefd(int fd, int noclose)
 {
 	int nfd;
 
@@ -320,8 +266,7 @@ savefd(fd, noclose)
 }
 
 void
-restfd(fd, ofd)
-	int fd, ofd;
+restfd(int fd, int ofd)
 {
 	if (fd == 2)
 		shf_flush(&shf_iob[fd]);
@@ -334,8 +279,7 @@ restfd(fd, ofd)
 }
 
 void
-openpipe(pv)
-	register int *pv;
+openpipe(register int *pv)
 {
 	if (pipe(pv) < 0)
 		errorf("can't create pipe - try again");
@@ -344,8 +288,7 @@ openpipe(pv)
 }
 
 void
-closepipe(pv)
-	register int *pv;
+closepipe(register int *pv)
 {
 	close(pv[0]);
 	close(pv[1]);
@@ -355,10 +298,7 @@ closepipe(pv)
  * a string (the X in 2>&X, read -uX, print -uX) into a file descriptor.
  */
 int
-check_fd(name, mode, emsgp)
-	char *name;
-	int mode;
-	const char **emsgp;
+check_fd(char *name, int mode, const char **emsgp)
 {
 	int fd, fl;
 
@@ -413,7 +353,7 @@ check_fd(name, mode, emsgp)
 #ifdef KSH
 /* Called once from main */
 void
-coproc_init()
+coproc_init(void)
 {
 	coproc.read = coproc.readw = coproc.write = -1;
 	coproc.njobs = 0;
@@ -422,8 +362,7 @@ coproc_init()
 
 /* Called by c_read() when eof is read - close fd if it is the co-process fd */
 void
-coproc_read_close(fd)
-	int fd;
+coproc_read_close(int fd)
 {
 	if (coproc.read >= 0 && fd == coproc.read) {
 		coproc_readw_close(fd);
@@ -436,8 +375,7 @@ coproc_read_close(fd)
  * read pipe, so reads will actually terminate.
  */
 void
-coproc_readw_close(fd)
-	int fd;
+coproc_readw_close(int fd)
 {
 	if (coproc.readw >= 0 && coproc.read >= 0 && fd == coproc.read) {
 		close(coproc.readw);
@@ -449,8 +387,7 @@ coproc_readw_close(fd)
  * when co-process input is dup'd
  */
 void
-coproc_write_close(fd)
-	int fd;
+coproc_write_close(int fd)
 {
 	if (coproc.write >= 0 && fd == coproc.write) {
 		close(coproc.write);
@@ -462,9 +399,7 @@ coproc_write_close(fd)
  * (Used by check_fd() and by c_read/c_print to deal with -p option).
  */
 int
-coproc_getfd(mode, emsgp)
-	int mode;
-	const char **emsgp;
+coproc_getfd(int mode, const char **emsgp)
 {
 	int fd = (mode & R_OK) ? coproc.read : coproc.write;
 
@@ -479,8 +414,7 @@ coproc_getfd(mode, emsgp)
  * Should be called with SIGCHLD blocked.
  */
 void
-coproc_cleanup(reuse)
-	int reuse;
+coproc_cleanup(int reuse)
 {
 	/* This to allow co-processes to share output pipe */
 	if (!reuse || coproc.readw < 0 || coproc.read < 0) {
@@ -506,10 +440,7 @@ coproc_cleanup(reuse)
  */
 
 struct temp *
-maketemp(ap, type, tlist)
-	Area *ap;
-	Temp_type type;
-	struct temp **tlist;
+maketemp(Area *ap, Temp_type type, struct temp **tlist)
 {
 #ifndef __NetBSD__
 	static unsigned int inc;
@@ -566,3 +497,4 @@ maketemp(ap, type, tlist)
 
 	return tp;
 }
+

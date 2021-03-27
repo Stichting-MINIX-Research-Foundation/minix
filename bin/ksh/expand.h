@@ -107,3 +107,4 @@ typedef struct XPtrV {
 					 sizeofN(void*, XPsize(x)), ATEMP)
 
 #define	XPfree(x)	afree((void*) (x).beg, ATEMP)
+

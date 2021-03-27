@@ -454,11 +454,7 @@ main(int argc, char *argv[])
 }
 
 int
-include(name, argc, argv, intr_ok)
-	const char *name;
-	int argc;
-	char **argv;
-	int intr_ok;
+include(const char *name, int argc, char **argv, int intr_ok)
 {
 	register Source *volatile s = NULL;
 	struct shf *shf;
@@ -526,8 +522,7 @@ include(name, argc, argv, intr_ok)
 }
 
 int
-command(comm)
-	const char *comm;
+command(const char *comm)
 {
 	register Source *s;
 	int r;
@@ -541,11 +536,10 @@ command(comm)
 
 /*
  * run the commands from the input source, returning status.
+ * s - input source
  */
 int
-shell(s, toplevel)
-	Source *volatile s;		/* input source */
-	int volatile toplevel;
+shell(Source *volatile s, int volatile toplevel)
 {
 	struct op *t;
 	volatile int wastty = s->flags & SF_TTY;
@@ -654,8 +648,7 @@ shell(s, toplevel)
 
 /* return to closest error handler or shell(), exit if none found */
 void
-unwind(i)
-	int i;
+unwind(int i)
 {
 	/* ordering for EXIT vs ERR is a bit odd (this is what at&t ksh does) */
 	if (i == LEXIT || (Flag(FERREXIT) && (i == LERROR || i == LINTR)
@@ -689,8 +682,7 @@ unwind(i)
 }
 
 void
-newenv(type)
-	int type;
+newenv(int type)
 {
 	register struct env *ep;
 
@@ -706,7 +698,7 @@ newenv(type)
 }
 
 void
-quitenv()
+quitenv(void)
 {
 	register struct env *ep = e;
 	register int fd;
@@ -758,7 +750,7 @@ quitenv()
 
 /* Called after a fork to cleanup stuff left over from parents environment */
 void
-cleanup_parents_env()
+cleanup_parents_env(void)
 {
 	struct env *ep;
 	int fd;
@@ -783,7 +775,7 @@ cleanup_parents_env()
 
 /* Called just before an execve cleanup stuff temporary files */
 void
-cleanup_proc_env()
+cleanup_proc_env(void)
 {
 	struct env *ep;
 
@@ -793,7 +785,7 @@ cleanup_proc_env()
 
 /* remove temp files and free ATEMP Area */
 static void
-reclaim()
+reclaim(void)
 {
 	remove_temps(e->temps);
 	e->temps = NULL;
@@ -801,8 +793,7 @@ reclaim()
 }
 
 static void
-remove_temps(tp)
-	struct temp *tp;
+remove_temps(struct temp *tp)
 {
 #ifdef OS2
 	static struct temp *delayed_remove;
@@ -847,8 +838,7 @@ remove_temps(tp)
 
 /* Returns true if name refers to a restricted shell */
 static int
-is_restricted(name)
-	char *name;
+is_restricted(char *name)
 {
 	char *p;
 
@@ -859,11 +849,10 @@ is_restricted(name)
 }
 
 void
-aerror(ap, msg)
-	Area *ap;
-	const char *msg;
+aerror(Area *ap, const char *msg)
 {
 	internal_errorf(1, "alloc: %s", msg);
 	errorf("%s", null); /* this is never executed - keeps gcc quiet */
 	/*NOTREACHED*/
 }
+

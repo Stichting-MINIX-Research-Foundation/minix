@@ -209,9 +209,7 @@ error must know what to implement with
 
  
 int
-sigaction(sig, act, oact)
-  int sig;
-  struct sigaction *act, *oact;
+sigaction(int sig, struct sigaction *act, struct sigaction *oact)
 {
   handler_t oldh;
 
@@ -261,9 +259,7 @@ sigaction(sig, act, oact)
 
 
 int
-sigaddset(mask, sig)
-  sigset_t *mask;
-  int sig;
+sigaddset(sigset_t *mask, int sig)
 {
   *mask |= sigmask(sig);
   return 0;
@@ -272,9 +268,7 @@ sigaddset(mask, sig)
 
 #ifndef IS_KSH
 int
-sigdelset(mask, sig)
-  sigset_t *mask;
-  int sig;
+sigdelset(sigset_t *mask, int sig)
 {
   *mask &= ~(sigmask(sig));
   return 0;
@@ -283,8 +277,7 @@ sigdelset(mask, sig)
 
 
 int
-sigemptyset(mask)
-  sigset_t *mask;
+sigemptyset(sigset_t *mask)
 {
   *mask = 0;
   return 0;
@@ -293,8 +286,7 @@ sigemptyset(mask)
 
 #ifndef IS_KSH
 int
-sigfillset(mask)
-  sigset_t *mask;
+sigfillset(sigset_t *mask)
 {
   *mask = ~0;
   return 0;
@@ -304,9 +296,7 @@ sigfillset(mask)
 
 #ifndef IS_KSH
 int
-sigismember(mask, sig)
-  sigset_t *mask;
-  int sig;
+sigismember(sigset_t *mask, int sig)
 {
   return ((*mask) & sigmask(sig));
 }
@@ -315,8 +305,7 @@ sigismember(mask, sig)
 
 #ifndef IS_KSH
 int
-sigpending(set)
-  sigset_t *set;
+sigpending(sigset_t *set)
 {
   return 0;				/* faking it! */
 }
@@ -324,9 +313,7 @@ sigpending(set)
 
 
 int
-sigprocmask(how, set, oset)
-  int how;
-  sigset_t *set, *oset;
+sigprocmask(int how, sigset_t *set, sigset_t *oset)
 {
 #ifdef USE_SIGSET
   register int i;
@@ -390,8 +377,7 @@ sigprocmask(how, set, oset)
 
 
 int
-sigsuspend(mask)
-  sigset_t *mask;
+sigsuspend(sigset_t *mask)
 {
 #ifdef USE_SIGMASK
   sigpause(*mask);
@@ -447,9 +433,8 @@ sigsuspend(mask)
  */
 
 #ifndef IS_KSH
-handler_t Signal(sig, handler)
-  int sig;
-  handler_t handler;
+handler_t
+Signal(int sig, handler_t handler)
 {
   struct sigaction act, oact;
 
@@ -468,9 +453,8 @@ handler_t Signal(sig, handler)
  * ensure we avoid signal mayhem
  */
 
-handler_t signal(sig, handler)
-  int sig;
-  handler_t handler;
+handler_t
+signal(int sig, handler_t handler)
 {
   return (Signal(sig, handler));
 }
@@ -484,3 +468,4 @@ handler_t signal(sig, handler)
  * comment-column:40
  * End:
  */
+

@@ -18,3 +18,4 @@ extern clock_t	ksh_times ARGS((struct tms *));
 extern clock_t	times ARGS((struct tms *));
 #endif /* HAVE_TIMES */
 #endif /* KSH_TIMES_H */
+

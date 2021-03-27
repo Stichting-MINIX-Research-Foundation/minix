@@ -106,8 +106,7 @@ static int	ptest_eval ARGS((Test_env *, Test_op, const char *,
 static void	ptest_error ARGS((Test_env *, int, const char *));
 
 int
-c_test(wp)
-	char **wp;
+c_test(char **wp)
 {
 	int argc;
 	int res;
@@ -191,10 +190,7 @@ c_test(wp)
  */
 
 Test_op
-test_isop(te, meta, s)
-	Test_env *te;
-	Test_meta meta;
-	const char *s;
+test_isop(Test_env *te, Test_meta meta, const char *s)
 {
 	char sc1;
 	const struct t_op *otab;
@@ -214,12 +210,7 @@ test_isop(te, meta, s)
 }
 
 int
-test_eval(te, op, opnd1, opnd2, do_eval)
-	Test_env *te;
-	Test_op op;
-	const char *opnd1;
-	const char *opnd2;
-	int do_eval;
+test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2, int do_eval)
 {
 	int res;
 	int not;
@@ -424,9 +415,7 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 
 /* Nasty kludge to handle Korn's bizarre /dev/fd hack */
 static int
-test_stat(pathx, statb)
-	const char *pathx;
-	struct stat *statb;
+test_stat(const char *pathx, struct stat *statb)
 {
 #if !defined(HAVE_DEV_FD)
 	int fd;
@@ -442,9 +431,7 @@ test_stat(pathx, statb)
  * non-directories when running as root.
  */
 static int
-test_eaccess(pathx, mode)
-	const char *pathx;
-	int mode;
+test_eaccess(const char *pathx, int mode)
 {
 	int res;
 
@@ -485,8 +472,7 @@ test_eaccess(pathx, mode)
 }
 
 int
-test_parse(te)
-	Test_env *te;
+test_parse(Test_env *te)
 {
 	int res;
 
@@ -499,9 +485,7 @@ test_parse(te)
 }
 
 static int
-test_oexpr(te, do_eval)
-	Test_env *te;
-	int do_eval;
+test_oexpr(Test_env *te, int do_eval)
 {
 	int res;
 
@@ -514,9 +498,7 @@ test_oexpr(te, do_eval)
 }
 
 static int
-test_aexpr(te, do_eval)
-	Test_env *te;
-	int do_eval;
+test_aexpr(Test_env *te, int do_eval)
 {
 	int res;
 
@@ -529,9 +511,7 @@ test_aexpr(te, do_eval)
 }
 
 static int
-test_nexpr(te, do_eval)
-	Test_env *te;
-	int do_eval;
+test_nexpr(Test_env *te, int do_eval)
 {
 	if (!(te->flags & TEF_ERROR) && (*te->isa)(te, TM_NOT))
 		return !test_nexpr(te, do_eval);
@@ -539,9 +519,7 @@ test_nexpr(te, do_eval)
 }
 
 static int
-test_primary(te, do_eval)
-	Test_env *te;
-	int do_eval;
+test_primary(Test_env *te, int do_eval)
 {
 	const char *opnd1, *opnd2;
 	int res;
@@ -600,9 +578,7 @@ test_primary(te, do_eval)
  * TM_UNOP and TM_BINOP, the returned value is a Test_op).
  */
 static int
-ptest_isa(te, meta)
-	Test_env *te;
-	Test_meta meta;
+ptest_isa(Test_env *te, Test_meta meta)
 {
 	/* Order important - indexed by Test_meta values */
 	static const char *const tokens[] = {
@@ -628,10 +604,7 @@ ptest_isa(te, meta)
 }
 
 static const char *
-ptest_getopnd(te, op, do_eval)
-	Test_env *te;
-	Test_op op;
-	int do_eval;
+ptest_getopnd(Test_env *te, Test_op op, int do_eval)
 {
 	if (te->pos.wp >= te->wp_end)
 		return op == TO_FILTT ? "1" : (const char *) 0;
@@ -639,21 +612,13 @@ ptest_getopnd(te, op, do_eval)
 }
 
 static int
-ptest_eval(te, op, opnd1, opnd2, do_eval)
-	Test_env *te;
-	Test_op op;
-	const char *opnd1;
-	const char *opnd2;
-	int do_eval;
+ptest_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2, int do_eval)
 {
 	return test_eval(te, op, opnd1, opnd2, do_eval);
 }
 
 static void
-ptest_error(te, offset, msg)
-	Test_env *te;
-	int offset;
-	const char *msg;
+ptest_error(Test_env *te, int offset, const char *msg)
 {
 	const char *op = te->pos.wp + offset >= te->wp_end ?
 				(const char *) 0 : te->pos.wp[offset];
@@ -664,3 +629,4 @@ ptest_error(te, offset, msg)
 	else
 		bi_errorf("%s", msg);
 }
+
