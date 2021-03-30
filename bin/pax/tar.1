@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.35 2015/04/11 16:22:07 wiz Exp $
+.\" $NetBSD: tar.1,v 1.39 2019/03/19 10:14:46 wiz Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd April 11, 2015
+.Dd March 19, 2019
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -107,10 +107,10 @@ then the archive will be processed using
 .It Fl h , Fl Fl dereference
 Follow symbolic links as if they were normal files
 or directories.
-.It Fl J, Fl Fl xz
+.It Fl J , Fl Fl xz
 Compress/decompress archive using
 .Xr xz 1 .
-.It Fl j, Fl Fl bzip2, Fl Fl bunzip2
+.It Fl j , Fl Fl bzip2 , Fl Fl bunzip2
 Use
 .Xr bzip2 1
 for compression of the archive.
@@ -170,14 +170,15 @@ As in
 .Cm old
 is a basic regular expression and
 .Cm new
-can contain an ampersand (\*[Am]), \en (where n is a digit) back-references,
+can contain an ampersand (&), \en (where n is a digit) back-references,
 or subexpression matching.
 The
 .Cm old
 string may also contain
 .Aq Dv newline
 characters.
-Any non-null character can be used as a delimiter (/ is shown here).
+Any non-null character except a backslash (\\) can be used as a delimiter
+(/ is shown here).
 Multiple
 .Fl s
 expressions can be specified.
@@ -196,7 +197,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl \*[Lt]original pathname\*[Gt] \*[Gt]\*[Gt] \*[Lt]new pathname\*[Gt]
+.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 The substitutions are applied by default to the destination hard and symbolic
@@ -297,6 +298,19 @@ can be processed.
 Cause files of type directory being copied or archived, or archive members of
 type directory being extracted, to match only the directory file or archive
 member and not the file hierarchy rooted at the directory.
+.It Fl Fl timestamp Ar timestamp
+Store all modification times in the archive with the
+.Ar timestamp
+given instead of the actual modification time of the individual archive member
+so that repeatable builds are possible.
+The
+.Ar timestamp
+can be a
+.Pa pathname ,
+where the timestamps are derived from that file, a parseable date for
+.Xr parsedate 3
+(this option is not yet available in the tools build), or an integer value
+interpreted as the number of seconds from the Epoch.
 .El
 .Pp
 The options

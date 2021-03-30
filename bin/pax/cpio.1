@@ -1,4 +1,4 @@
-.\" $NetBSD: cpio.1,v 1.14 2015/12/19 18:48:33 wiz Exp $
+.\" $NetBSD: cpio.1,v 1.15 2017/07/03 21:33:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -39,8 +39,8 @@
 .Op Fl F Ar archive
 .Op Fl H Ar format
 .Op Fl O Ar archive
-.Ar "\*[Lt] name-list"
-.Op Ar "\*[Gt] archive"
+.Ar "< name-list"
+.Op Ar "> archive"
 .Nm cpio
 .Fl i
 .Op Fl 6BbcdfmrSstuvZz
@@ -50,12 +50,12 @@
 .Op Fl H Ar format
 .Op Fl I Ar archive
 .Op Ar "pattern ..."
-.Op Ar "\*[Lt] archive"
+.Op Ar "< archive"
 .Nm cpio
 .Fl p
 .Op Fl adLlmuv
 .Ar destination-directory
-.Ar "\*[Lt] name-list"
+.Ar "< name-list"
 .Sh DESCRIPTION
 The
 .Nm

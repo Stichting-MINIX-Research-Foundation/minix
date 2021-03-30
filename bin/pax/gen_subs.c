@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.36 2012/08/09 08:09:21 christos Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.37 2018/11/30 00:53:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.36 2012/08/09 08:09:21 christos Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.37 2018/11/30 00:53:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,12 +306,10 @@ u32_asc(uintmax_t val, char *str, int len, int base)
 
 /*
  * asc_umax()
- *	convert hex/octal character string into a uintmax. We do
- *	not have to to check for overflow! (the headers in all supported
- *	formats are not large enough to create an overflow).
+ *	convert hex/octal/base-256 value into a uintmax.
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	uintmax_t value
+ *	uintmax_t value; UINTMAX_MAX for overflow/negative
  */
 
 uintmax_t
@@ -321,6 +319,30 @@ asc_umax(char *str, int len, int base)
 	uintmax_t tval = 0;
 
 	stop = str + len;
+
+	/*
+	 * if the highest bit of first byte is set, it's base-256 encoded
+	 * (base-256 is basically (n-1)-bit big endian signed
+	 */
+	if (str < stop && (*str & 0x80)) {
+		/*
+		 * uintmax_t can't be negative, so fail on negative numbers
+		 */
+		if (*str & 0x40)
+			return UINTMAX_MAX;
+
+		tval = *str++ & 0x3f;
+		while (str < stop) {
+			/*
+			 * check for overflow
+			 */
+			if (tval > (UINTMAX_MAX/256))
+				return UINTMAX_MAX;
+			tval = (tval << 8) | ((*str++) & 0xFF);
+		}
+
+		return tval;
+	}
 
 	/*
 	 * skip over leading blanks and zeros

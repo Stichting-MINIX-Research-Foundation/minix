@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.59 2012/08/09 08:09:21 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.60 2020/04/03 16:13:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -204,9 +204,8 @@ void options(int, char **);
 OPLIST * opt_next(void);
 int bad_opt(void);
 int mkpath(char *);
-char *chdname;
 #if !HAVE_NBTOOL_CONFIG_H
-int do_chroot;
+extern int do_chroot;
 #endif
 
 /*
