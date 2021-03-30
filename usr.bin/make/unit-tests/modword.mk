@@ -1,28 +1,30 @@
-# $Id: modword.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $NetBSD: modword.mk,v 1.6 2021/03/14 16:00:07 rillig Exp $
 #
 # Test behaviour of new :[] modifier
+# TODO: When was this modifier new?
 
 all: mod-squarebrackets mod-S-W mod-C-W mod-tW-tw
 
-LIST= one two three
-LIST+= four five six
-LONGLIST= 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+LIST=		one two three
+LIST+=		four five six
+LONGLIST=	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
 
-EMPTY= # the space should be ignored
-ESCAPEDSPACE=\ # escaped space before the '#'
-REALLYSPACE:=${EMPTY:C/^/ /W}
-HASH= \#
-AT= @
-STAR= *
-ZERO= 0
-ONE= 1
-MINUSONE= -1
+EMPTY=		# the space should be ignored
+ESCAPEDSPACE=	\ # escaped space before the '#'
+REALLYSPACE:=	${EMPTY:C/^/ /W}
+HASH=		\#
+AT=		@
+STAR=		*
+ZERO=		0
+ONE=		1
+MINUSONE=	-1
 
 mod-squarebrackets: mod-squarebrackets-0-star-at \
 	mod-squarebrackets-hash \
 	mod-squarebrackets-n \
 	mod-squarebrackets-start-end \
-	mod-squarebrackets-nested
+	mod-squarebrackets-nested \
+	mod-squarebrackets-space
 
 mod-squarebrackets-0-star-at:
 	@echo 'LIST:[]="${LIST:[]}" is an error'
@@ -92,10 +94,12 @@ mod-squarebrackets-n:
 	@echo 'LIST:[*]:C/ /,/:[2]="${LIST:[*]:C/ /,/:[2]}"'
 	@echo 'LIST:[*]:C/ /,/:[*]:[2]="${LIST:[*]:C/ /,/:[*]:[2]}"'
 	@echo 'LIST:[*]:C/ /,/:[@]:[2]="${LIST:[*]:C/ /,/:[@]:[2]}"'
+	@echo 'LONGLIST:[012..0x12]="${LONGLIST:[012..0x12]}"'
 
 mod-squarebrackets-start-end:
 	@echo 'LIST:[1.]="${LIST:[1.]}" is an error'
 	@echo 'LIST:[1..]="${LIST:[1..]}" is an error'
+	@echo 'LIST:[1.. ]="${LIST:[1.. ]}" is an error'
 	@echo 'LIST:[1..1]="${LIST:[1..1]}"'
 	@echo 'LIST:[1..1.]="${LIST:[1..1.]}" is an error'
 	@echo 'LIST:[1..2]="${LIST:[1..2]}"'
@@ -123,6 +127,12 @@ mod-squarebrackets-nested:
 	@echo 'LIST:[$${LONGLIST:[21]:S/2//}]="${LIST:[${LONGLIST:[21]:S/2//}]}"'
 	@echo 'LIST:[$${LIST:[#]}]="${LIST:[${LIST:[#]}]}"'
 	@echo 'LIST:[$${LIST:[$${HASH}]}]="${LIST:[${LIST:[${HASH}]}]}"'
+
+mod-squarebrackets-space:
+	# As of 2020-11-01, it is possible to have spaces before the numbers
+	# but not after them.  This is an unintended side-effect of using
+	# strtol for parsing the numbers.
+	@echo 'LIST:[  -1..   +3]="${LIST:[  -1..   +3]}"'
 
 mod-C-W:
 	@echo 'LIST:C/ /,/="${LIST:C/ /,/}"'

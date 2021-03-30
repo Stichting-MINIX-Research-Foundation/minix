@@ -1,0 +1,61 @@
+Global:SPECIALS = \: : \\ * \*
+CondParser_Eval: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
+Var_Parse: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}} (eval-defined)
+Applying ${SPECIALS:M...} to "\: : \\ * \*" (eval-defined, none, regular)
+Var_Parse: ${:U}\: (eval-defined)
+Applying ${:U} to "" (eval-defined, none, undefined)
+Result of ${:U} is "" (eval-defined, none, defined)
+Pattern[SPECIALS] for [\: : \\ * \*] is [\:]
+ModifyWords: split "\: : \\ * \*" into 5 words
+VarMatch [\:] [\:]
+VarMatch [:] [\:]
+VarMatch [\\] [\:]
+VarMatch [*] [\:]
+VarMatch [\*] [\:]
+Result of ${SPECIALS:M${:U}\:} is ":" (eval-defined, none, regular)
+Var_Parse: ${SPECIALS:M\:${:U}} (eval-defined)
+Applying ${SPECIALS:M...} to "\: : \\ * \*" (eval-defined, none, regular)
+Var_Parse: ${:U} (eval-defined)
+Applying ${:U} to "" (eval-defined, none, undefined)
+Result of ${:U} is "" (eval-defined, none, defined)
+Pattern[SPECIALS] for [\: : \\ * \*] is [:]
+ModifyWords: split "\: : \\ * \*" into 5 words
+VarMatch [\:] [:]
+VarMatch [:] [:]
+VarMatch [\\] [:]
+VarMatch [*] [:]
+VarMatch [\*] [:]
+Result of ${SPECIALS:M\:${:U}} is ":" (eval-defined, none, regular)
+lhs = ":", rhs = ":", op = !=
+Global:VALUES = : :: :\:
+CondParser_Eval: ${VALUES:M\:${:U\:}} != ${VALUES:M${:U\:}\:}
+Var_Parse: ${VALUES:M\:${:U\:}} != ${VALUES:M${:U\:}\:} (eval-defined)
+Applying ${VALUES:M...} to ": :: :\:" (eval-defined, none, regular)
+Var_Parse: ${:U:} (eval-defined)
+Applying ${:U} to "" (eval-defined, none, undefined)
+Result of ${:U} is "" (eval-defined, none, defined)
+Pattern[VALUES] for [: :: :\:] is [:]
+ModifyWords: split ": :: :\:" into 3 words
+VarMatch [:] [:]
+VarMatch [::] [:]
+VarMatch [:\:] [:]
+Result of ${VALUES:M\:${:U\:}} is ":" (eval-defined, none, regular)
+Var_Parse: ${VALUES:M${:U\:}\:} (eval-defined)
+Applying ${VALUES:M...} to ": :: :\:" (eval-defined, none, regular)
+Var_Parse: ${:U\:}\: (eval-defined)
+Applying ${:U...} to "" (eval-defined, none, undefined)
+Result of ${:U\:} is ":" (eval-defined, none, defined)
+Pattern[VALUES] for [: :: :\:] is [:\:]
+ModifyWords: split ": :: :\:" into 3 words
+VarMatch [:] [:\:]
+VarMatch [::] [:\:]
+VarMatch [:\:] [:\:]
+Result of ${VALUES:M${:U\:}\:} is "::" (eval-defined, none, regular)
+lhs = ":", rhs = "::", op = !=
+make: "varmod-match-escape.mk" line 42: warning: XXX: Oops
+Global:.MAKEFLAGS =  -r -k -d cv -d
+Global:.MAKEFLAGS =  -r -k -d cv -d 0
+make: "varmod-match-escape.mk" line 67: Dollar followed by nothing
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
