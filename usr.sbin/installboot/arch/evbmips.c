@@ -1,11 +1,11 @@
-/*	$NetBSD: sun68k.c,v 1.22 2019/05/07 04:35:31 thorpej Exp $ */
+/*	$NetBSD: evbmips.c,v 1.1 2020/06/21 17:17:02 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,59 +35,85 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.22 2019/05/07 04:35:31 thorpej Exp $");
-#endif	/* !__lint */
+__RCSID("$NetBSD: evbmips.c,v 1.1 2020/06/21 17:17:02 thorpej Exp $");
+#endif  /* !__lint */
 
-#include <sys/param.h>
-
-#include <assert.h>
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
 
 #include "installboot.h"
+#include "evboards.h"
 
-static int sun68k_clearboot(ib_params *);
-static int sun68k_setboot(ib_params *);
+static int	evbmips_setboot(ib_params *);
+static int	evbmips_clearboot(ib_params *);
+static int	evbmips_editboot(ib_params *);
+static void	evbmips_usage(ib_params *);
 
-struct ib_mach ib_mach_sun2 = {
-	.name		=	"sun2",
-	.setboot	=	sun68k_setboot,
-	.clearboot	=	sun68k_clearboot,
-	.editboot	=	no_editboot,
-	.valid_flags	=	IB_STAGE2START,
-};
-
-struct ib_mach ib_mach_sun3 = {
-	.name		=	"sun3",
-	.setboot	=	sun68k_setboot,
-	.clearboot	=	sun68k_clearboot,
-	.editboot	=	no_editboot,
-	.valid_flags	=	IB_STAGE2START,
-};
-
-static struct bbinfo_params bbparams = {
-	SUN68K_BBINFO_MAGIC,
-	SUN68K_BOOT_BLOCK_OFFSET,
-	SUN68K_BOOT_BLOCK_BLOCKSIZE,
-	SUN68K_BOOT_BLOCK_MAX_SIZE,
-	0,
-	BBINFO_BIG_ENDIAN,
+struct ib_mach ib_mach_evbmips = {
+	.name		=	"evbmips",
+	.setboot	=	evbmips_setboot,
+	.clearboot	=	evbmips_clearboot,
+	.editboot	=	evbmips_editboot,
+	.usage		=	evbmips_usage,
+	.valid_flags	=	IB_BOARD | IB_DTB | IB_MEDIA,
+	.mach_flags	=	MF_UBOOT,
 };
 
 static int
-sun68k_clearboot(ib_params *params)
+evbmips_setboot(ib_params *params)
 {
+	evb_board board;
+	int rv = 0;
 
-	assert(params != NULL);
+	if (!evb_db_load(params)) {
+		warnx("Unable to load board db.");
+		return 0;
+	}
 
-	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
+	board = evb_db_get_board(params);
+	if (board == NULL)
+		goto out;
+
+	rv = evb_uboot_setboot(params, board);
+
+ out:
+	if (params->mach_data) {
+		prop_object_release(params->mach_data);
+		params->mach_data = NULL;
+	}
+	return rv;
 }
 
 static int
-sun68k_setboot(ib_params *params)
+evbmips_clearboot(ib_params *params)
 {
 
-	assert(params != NULL);
+	return no_clearboot(params);
+}
 
-	return (shared_bbinfo_setboot(params, &bbparams, NULL));
+static int
+evbmips_editboot(ib_params *params)
+{
+
+	return no_editboot(params);
+}
+
+static void
+evbmips_usage(ib_params *params)
+{
+
+	if (!evb_db_load(params)) {
+		warnx("Unable to load board db.");
+		return;
+	}
+
+	fprintf(stderr, "Known boards (for -o board=...) are:\n");
+	evb_db_list_boards(params, stderr);
+
+	if (params->mach_data) {
+		prop_object_release(params->mach_data);
+		params->mach_data = NULL;
+	}
 }

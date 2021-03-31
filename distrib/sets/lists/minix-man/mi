@@ -3514,7 +3514,7 @@
 ./usr/man/man8/inet.8                                   minix-man       obsolete
 ./usr/man/man8/inetd.8                                  minix-man
 ./usr/man/man8/init.8                                   minix-man
-./usr/man/man8/installboot_nbsd.8                       minix-man
+./usr/man/man8/installboot.8                            minix-man
 ./usr/man/man8/intr.8                                   minix-man
 ./usr/man/man8/irdpd.8                                  minix-man       obsolete
 ./usr/man/man8/link.8                                   minix-man

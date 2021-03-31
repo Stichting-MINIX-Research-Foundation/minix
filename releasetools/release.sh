@@ -336,7 +336,7 @@ isosects=`expr $isosects + $isopad`
 	dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
 mv m $IMG
 # Make CD partition table
-installboot_nbsd -m $IMG /usr/mdec/mbr
+installboot -m $IMG /usr/mdec/mbr
 # Make sure there is no hole..! Otherwise the ISO format is
 # unreadable.
 partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS

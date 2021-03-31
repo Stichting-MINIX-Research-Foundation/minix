@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.39 2014/02/24 07:23:44 skrll Exp $	*/
+/*	$NetBSD: machines.c,v 1.43 2020/06/21 17:17:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -35,60 +35,40 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.39 2014/02/24 07:23:44 skrll Exp $");
+__RCSID("$NetBSD: machines.c,v 1.43 2020/06/21 17:17:02 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
 #include "installboot.h"
 
-/*
- * Define these here so they end up as zero-filled bss if installboot
- * isn't built with all the architectures defined.
- * A lot simpler that conditionally including the definitions themselves.
- */
-struct ib_mach
-    ib_mach_alpha,
-    ib_mach_amd64,
-    ib_mach_amiga,
-    ib_mach_emips,
-    ib_mach_ews4800mips,
-    ib_mach_hp300,
-    ib_mach_hppa,
-    ib_mach_i386,
-    ib_mach_landisk,
-    ib_mach_macppc,
-    ib_mach_news68k,
-    ib_mach_newsmips,
-    ib_mach_next68k,
-    ib_mach_pmax,
-    ib_mach_sparc,
-    ib_mach_sparc64,
-    ib_mach_sun2,
-    ib_mach_sun3,
-    ib_mach_vax,
-    ib_mach_x68k;
-
 struct ib_mach * const machines[] = {
-    &ib_mach_alpha,
+#ifdef	SINGLE_ARCH
+    &SINGLE_ARCH,
+#else
+//__MINIX
+//    &ib_mach_alpha,
     &ib_mach_amd64,
-    &ib_mach_amiga,
-    &ib_mach_emips,
-    &ib_mach_ews4800mips,
-    &ib_mach_hp300,
-    &ib_mach_hppa,
+//    &ib_mach_amiga,
+//    &ib_mach_emips,
+//    &ib_mach_evbarm,
+//    &ib_mach_evbmips,
+//    &ib_mach_ews4800mips,
+//    &ib_mach_hp300,
+//    &ib_mach_hppa,
     &ib_mach_i386,
-    &ib_mach_landisk,
-    &ib_mach_macppc,
-    &ib_mach_news68k,
-    &ib_mach_newsmips,
-    &ib_mach_next68k,
-    &ib_mach_pmax,
-    &ib_mach_sparc,
-    &ib_mach_sparc64,
-    &ib_mach_sun2,
-    &ib_mach_sun3,
-    &ib_mach_vax,
-    &ib_mach_x68k,
+//    &ib_mach_landisk,
+//    &ib_mach_macppc,
+//    &ib_mach_news68k,
+//    &ib_mach_newsmips,
+//    &ib_mach_next68k,
+//    &ib_mach_pmax,
+//    &ib_mach_sparc,
+//    &ib_mach_sparc64,
+//    &ib_mach_sun2,
+//    &ib_mach_sun3,
+//    &ib_mach_vax,
+//    &ib_mach_x68k,
+#endif
     NULL
 };
 

@@ -35,6 +35,6 @@ then
 fi
 
 echo "Installing bootxx_minixfs3 into $disk."
-installboot_nbsd "$disk" "$MDEC/bootxx_minixfs3"
+installboot "$disk" "$MDEC/bootxx_minixfs3"
 
 sync
