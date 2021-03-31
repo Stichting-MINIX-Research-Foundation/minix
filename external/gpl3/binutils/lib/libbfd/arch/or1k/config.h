@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 /* config.h.  Generated from config.in by configure.  */
-/* config.in.  Generated from configure.in by autoheader.  */
+/* config.in.  Generated from configure.ac by autoheader.  */
 
 /* Check that config.h is #included before system headers
     (this works only for glibc, but that should be enough).  */
@@ -21,6 +21,10 @@
 
 /* Define to 1 if you have the <alloca.h> header file. */
 /* #undef HAVE_ALLOCA_H */
+
+/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
+   don't. */
+#define HAVE_DECL_ASPRINTF 1
 
 /* Define to 1 if you have the declaration of `basename', and to 0 if you
    don't. */
@@ -69,9 +73,17 @@
    */
 #define HAVE_DECL_STPCPY 1
 
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRNLEN 1
+
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
 #define HAVE_DECL_STRSTR 1
+
+/* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
+   don't. */
+#define HAVE_DECL_VASPRINTF 1
 
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
@@ -116,6 +128,9 @@
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
+
+/* Define to 1 if you have the `getrlimit' function. */
+#define HAVE_GETRLIMIT 1
 
 /* Define to 1 if you have the `getuid' function. */
 #define HAVE_GETUID 1
@@ -239,6 +254,9 @@
 /* Define to 1 if you have the <sys/procfs.h> header file. */
 /* #undef HAVE_SYS_PROCFS_H */
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#define HAVE_SYS_RESOURCE_H 1
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
@@ -254,14 +272,17 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the <wchar.h> header file. */
+#define HAVE_WCHAR_H 1
+
+/* Define to 1 if you have the <wctype.h> header file. */
+#define HAVE_WCTYPE_H 1
+
 /* Define if <sys/procfs.h> has win32_pstatus_t. */
 /* #undef HAVE_WIN32_PSTATUS_T */
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
-
-/* Define to 1 if you have the <zlib.h> header file. */
-#define HAVE_ZLIB_H 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -274,19 +295,19 @@
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME ""
+#define PACKAGE_NAME "bfd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING ""
+#define PACKAGE_STRING "bfd 2.26.1"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME ""
+#define PACKAGE_TARNAME "bfd"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION ""
+#define PACKAGE_VERSION "2.26.1"
 
 /* The size of `char', as computed by sizeof. */
 /* #undef SIZEOF_CHAR */
@@ -359,7 +380,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.23.2"
+#define VERSION "2.26.1"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

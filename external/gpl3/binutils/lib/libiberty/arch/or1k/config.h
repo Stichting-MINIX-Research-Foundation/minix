@@ -84,6 +84,22 @@
    don't. */
 #define HAVE_DECL_SNPRINTF 1
 
+/* Define to 1 if you have the declaration of `strtol', and to 0 if you don't.
+   */
+#define HAVE_DECL_STRTOL 1
+
+/* Define to 1 if you have the declaration of `strtoll', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOLL 1
+
+/* Define to 1 if you have the declaration of `strtoul', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOUL 1
+
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOULL 1
+
 /* Define to 1 if you have the declaration of `strverscmp', and to 0 if you
    don't. */
 #define HAVE_DECL_STRVERSCMP 0
@@ -140,6 +156,9 @@
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
+
+/* Define if you have the `long long' type. */
+#define HAVE_LONG_LONG 1
 
 /* Define to 1 if you have the <machine/hal_sysinfo.h> header file. */
 /* #undef HAVE_MACHINE_HAL_SYSINFO_H */
@@ -267,6 +286,9 @@
 /* Define to 1 if you have the `strndup' function. */
 #define HAVE_STRNDUP 1
 
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
+
 /* Define to 1 if you have the `strrchr' function. */
 #define HAVE_STRRCHR 1
 
@@ -282,8 +304,14 @@
 /* Define to 1 if you have the `strtol' function. */
 #define HAVE_STRTOL 1
 
+/* Define to 1 if you have the `strtoll' function. */
+#define HAVE_STRTOLL 1
+
 /* Define to 1 if you have the `strtoul' function. */
 #define HAVE_STRTOUL 1
+
+/* Define to 1 if you have the `strtoull' function. */
+#define HAVE_STRTOULL 1
 
 /* Define to 1 if you have the `strverscmp' function. */
 /* #undef HAVE_STRVERSCMP */
@@ -441,6 +469,15 @@
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
+/* The size of `long', as computed by sizeof. */
+#define SIZEOF_LONG 4
+
+/* The size of `long long', as computed by sizeof. */
+#define SIZEOF_LONG_LONG 8
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 4
+
 /* Define if you know the direction of stack growth for your system; otherwise
    it will be automatically deduced at run-time. STACK_DIRECTION > 0 => grows
    toward higher addresses STACK_DIRECTION < 0 => grows toward lower addresses
@@ -455,6 +492,28 @@
 
 /* Define to an unsigned 64-bit type available in the compiler. */
 #define UNSIGNED_64BIT_TYPE uint64_t
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# define _ALL_SOURCE 1
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -473,6 +532,16 @@
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
+
+/* Define to 1 if on MINIX. */
+/* #undef _MINIX */
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+/* #undef _POSIX_1_SOURCE */
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+/* #undef _POSIX_SOURCE */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

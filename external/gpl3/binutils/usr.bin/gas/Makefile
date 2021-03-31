@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2013/10/02 14:35:33 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2016/01/26 19:37:47 christos Exp $
 
-.include <bsd.own.mk>
-
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
+CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
+CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
+CPPFLAGS+=	-I${DIST}
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
@@ -19,10 +19,6 @@ COPTS.dwarf2dbg.c = -Wno-stack-protector
 COPTS.symbols.c = -Wno-stack-protector
 COPTS.stabs.c = -Wno-stack-protector
 COPTS.macro.c = -Wno-stack-protector
-
-CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
-CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
-CPPFLAGS+=	-I${DIST}
 
 PROGDPLIBS+=	opcodes	${TOP}/${BFDSUBDIR}/libopcodes
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd

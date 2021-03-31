@@ -804,8 +804,8 @@
 ./usr/lib/libatf-c.so.0                                 minix-base      atf
 ./usr/lib/libatf-c.so                                   minix-base      atf
 ./usr/lib/libatf-c_pic.a                                minix-base      atf
-./usr/lib/libbfd.so.13.0                                minix-base      binutils
-./usr/lib/libbfd.so.13                                  minix-base      binutils
+./usr/lib/libbfd.so.17.0                                minix-base      binutils
+./usr/lib/libbfd.so.17                                  minix-base      binutils
 ./usr/lib/libbind9.so                                   minix-base
 ./usr/lib/libbind9.so.8                                 minix-base
 ./usr/lib/libbind9.so.8.2                               minix-base
@@ -882,6 +882,8 @@
 ./usr/lib/libgcc_s.so                                   minix-base
 ./usr/lib/libgcc_s.so.1                                 minix-base
 ./usr/lib/libgcc_s.so.1.0                               minix-base
+./usr/lib/libgnuctf.so.0                                minix-base      binutils
+./usr/lib/libgnuctf.so.0.0                              minix-base      binutils
 ./usr/lib/libintl.so                                    minix-base
 ./usr/lib/libintl.so.1                                  minix-base
 ./usr/lib/libintl.so.1.1                                minix-base
@@ -957,8 +959,8 @@
 ./usr/lib/libobjc.so.4                                  minix-base      gcc=5
 ./usr/lib/libobjc.so                                    minix-base      gcc
 ./usr/lib/libobjc_pic.a                                 minix-base      gcc=5
-./usr/lib/libopcodes.so.6.0                             minix-base      binutils
-./usr/lib/libopcodes.so.6                               minix-base      binutils
+./usr/lib/libopcodes.so.10.0                            minix-base      binutils
+./usr/lib/libopcodes.so.10                              minix-base      binutils
 ./usr/lib/libpcap.so                                    minix-base
 ./usr/lib/libpcap.so.5                                  minix-base
 ./usr/lib/libpcap.so.5.1                                minix-base
@@ -1058,6 +1060,7 @@
 ./usr/libdata/debug/usr/tests/minix-posix/blocktest     minix-base
 ./usr/libdata/debug/usr/tests/minix-posix/ddekit        minix-base
 ./usr/libdata/debug/usr/tests/minix-posix/rmibtest      minix-base
+./usr/libdata/ldscripts                                 minix-base      binutils
 ./usr/libexec                                           minix-base
 ./usr/libexec/atf-check                                 minix-base      atf
 ./usr/libexec/blacklistd-helper                         minix-base

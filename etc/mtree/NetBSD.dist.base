@@ -153,6 +153,7 @@
 ./usr/libdata/debug/usr/tests/minix-posix/blocktest
 ./usr/libdata/debug/usr/tests/minix-posix/ddekit
 ./usr/libdata/debug/usr/tests/minix-posix/rmibtest
+./usr/libdata/ldscripts
 ./usr/libexec
 ./usr/log
 ./usr/man
