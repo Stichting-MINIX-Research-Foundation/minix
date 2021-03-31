@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.50 2013/08/05 14:41:57 reinoud Exp $	*/
+/*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.50 2013/08/05 14:41:57 reinoud Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -87,8 +87,10 @@ static fstype_t fstypes[] = {
 
 u_int		debug;
 struct timespec	start_time;
+struct stat stampst;
 
 static	fstype_t *get_fstype(const char *);
+static int get_tstamp(const char *, struct stat *);
 static	void	usage(fstype_t *, fsinfo_t *) __dead;
 
 int
@@ -116,13 +118,18 @@ main(int argc, char *argv[])
 		fstype->prepare_options(&fsoptions);
 
 	specfile = NULL;
-	if (gettimeofday(&start, NULL) == -1)
-		err(1, "Unable to get system time");
-
+#ifdef CLOCK_REALTIME
+	ch = clock_gettime(CLOCK_REALTIME, &start_time);
+#else
+	ch = gettimeofday(&start, NULL);
 	start_time.tv_sec = start.tv_sec;
 	start_time.tv_nsec = start.tv_usec * 1000;
+#endif
+	if (ch == -1)
+		err(1, "Unable to get system time");
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:rs:S:t:xZ")) != -1) {
+
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:O:o:rs:S:t:T:xZ")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -238,6 +245,12 @@ main(int argc, char *argv[])
 			if ((fstype = get_fstype(optarg)) == NULL)
 				errx(1, "Unknown fs type `%s'.", optarg);
 			fstype->prepare_options(&fsoptions);
+			break;
+
+		case 'T':
+			if (get_tstamp(optarg, &stampst) == -1)
+				errx(1, "Cannot get timestamp from `%s'",
+				    optarg);
 			break;
 
 		case 'x':
@@ -409,6 +422,36 @@ copy_opts(const option_t *o)
 	return memcpy(ecalloc(i, sizeof(*o)), o, i * sizeof(*o));
 }
 
+static int
+get_tstamp(const char *b, struct stat *st)
+{
+	time_t when;
+	char *eb;
+	long long l;
+
+	if (stat(b, st) != -1)
+		return 0;
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+	errno = 0;
+	if ((when = parsedate(b, NULL, NULL)) == -1 && errno != 0)
+#endif
+	{
+		errno = 0;
+		l = strtoll(b, &eb, 0);
+		if (b == eb || *eb || errno)
+			return -1;
+		when = (time_t)l;
+	}
+
+	st->st_ino = 1;
+#if HAVE_STRUCT_STAT_BIRTHTIME 
+	st->st_birthtime =
+#endif
+	st->st_mtime = st->st_ctime = st->st_atime = when;
+	return 0;
+}
+
 static void
 usage(fstype_t *fstype, fsinfo_t *fsoptions)
 {
@@ -419,7 +462,8 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 "Usage: %s [-rxZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-N userdb-dir] [-O offset] [-o fs-options] [-S sector-size]\n"
-"\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
+"\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"
+" image-file directory [extra-directory ...]\n",
 	    prog);
 
 	if (fstype) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.22 2015/03/29 05:52:59 agc Exp $	*/
+/*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.22 2015/03/29 05:52:59 agc Exp $");
+__RCSID("$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -78,17 +78,17 @@ bread(struct vnode *vp, daddr_t blkno, int size, int u2 __unused,
 		    (long long)(*bpp)->b_blkno, (long long) offset,
 		    (*bpp)->b_bcount);
 	if (lseek((*bpp)->b_fs->fd, offset, SEEK_SET) == -1)
-		err(1, "%s: lseek %lld (%lld)", __func__,
+		err(EXIT_FAILURE, "%s: lseek %lld (%lld)", __func__,
 		    (long long)(*bpp)->b_blkno, (long long)offset);
-	rv = read((*bpp)->b_fs->fd, (*bpp)->b_data, (*bpp)->b_bcount);
+	rv = read((*bpp)->b_fs->fd, (*bpp)->b_data, (size_t)(*bpp)->b_bcount);
 	if (debug & DEBUG_BUF_BREAD)
 		printf("bread: read %ld (%lld) returned %zd\n",
 		    (*bpp)->b_bcount, (long long)offset, rv);
 	if (rv == -1)				/* read error */
-		err(1, "%s: read %ld (%lld) returned %zd", __func__,
+		err(EXIT_FAILURE, "%s: read %ld (%lld) returned %zd", __func__,
 		    (*bpp)->b_bcount, (long long)offset, rv);
 	else if (rv != (*bpp)->b_bcount)	/* short read */
-		err(1, "%s: read %ld (%lld) returned %zd", __func__,
+		errx(EXIT_FAILURE, "%s: read %ld (%lld) returned %zd", __func__,
 		    (*bpp)->b_bcount, (long long)offset, rv);
 	else
 		return (0);
@@ -129,14 +129,14 @@ bwrite(struct buf *bp)
 {
 	off_t	offset;
 	ssize_t	rv;
-	int	bytes;
+	size_t	bytes;
 	fsinfo_t *fs = bp->b_fs;
 
 	assert (bp != NULL);
 	offset = bp->b_blkno * fs->sectorsize + fs->offset;
-	bytes  = bp->b_bcount;
+	bytes  = (size_t)bp->b_bcount;
 	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: blkno %lld offset %lld bcount %d\n",
+		printf("bwrite: blkno %lld offset %lld bcount %zu\n",
 		    (long long)bp->b_blkno, (long long) offset, bytes);
 	if (lseek(bp->b_fs->fd, offset, SEEK_SET) == -1)
 		return (errno);
@@ -145,7 +145,7 @@ bwrite(struct buf *bp)
 		printf("bwrite: write %ld (offset %lld) returned %lld\n",
 		    bp->b_bcount, (long long)offset, (long long)rv);
 	brelse(bp, 0);
-	if (rv == bytes)
+	if (rv == (ssize_t)bytes)
 		return (0);
 	else if (rv == -1)		/* write error */
 		return (errno);
@@ -210,8 +210,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int u1 __unused,
 	}
 	bp->b_bcount = size;
 	if (bp->b_data == NULL || bp->b_bcount > bp->b_bufsize) {
-		n = erealloc(bp->b_data, size);
-		memset(n, 0, size);
+		n = erealloc(bp->b_data, (size_t)size);
+		memset(n, 0, (size_t)size);
 		bp->b_data = n;
 		bp->b_bufsize = size;
 	}

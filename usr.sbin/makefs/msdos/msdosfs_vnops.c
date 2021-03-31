@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.16 2015/03/29 05:52:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -98,12 +98,20 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
+	struct timespec at;
+	struct timespec mt;
+
+	if (stampst.st_ino) 
+	    st = &stampst;
+
 #ifndef HAVE_NBTOOL_CONFIG_H
-	struct timespec at = st->st_atimespec;
-	struct timespec mt = st->st_mtimespec;
+	at = st->st_atimespec;
+	mt = st->st_mtimespec;
 #else
-	struct timespec at = { st->st_atime, 0 };
-	struct timespec mt = { st->st_mtime, 0 };
+	at.tv_sec = st->st_atime;
+	at.tv_nsec = 0;
+	mt.tv_sec = st->st_mtime;
+	mt.tv_nsec = 0;
 #endif
 	unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
 	unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
@@ -154,12 +162,12 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 		break;
 	case 2:
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	case 3:
 		olddos = 0;
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	}
 
@@ -243,7 +251,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 					chksum = winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum);
+							    chksum,
+							    pmp->pm_flags & MSDOSFSMNT_UTF8);
 					continue;
 				}
 
@@ -431,31 +440,29 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		return 0;
 
 	/* Don't bother to try to write files larger than the fs limit */
-	if (st->st_size > MSDOSFS_FILESIZE_MAX) {
-		errno = EFBIG;
-		return -1;
-	}
+	if (st->st_size > MSDOSFS_FILESIZE_MAX)
+		return EFBIG;
 
 	nsize = st->st_size;
 	DPRINTF(("%s(nsize=%zu, osize=%zu)\n", __func__, nsize, osize));
 	if (nsize > osize) {
-		if ((error = deextend(dep, nsize, NULL)) != 0) {
-			errno = error;
-			return -1;
-		}
-		if ((error = msdosfs_updatede(dep)) != 0) {
-			errno = error;
-			return -1;
-		}
+		if ((error = deextend(dep, nsize, NULL)) != 0)
+			return error;
+		if ((error = msdosfs_updatede(dep)) != 0)
+			return error;
 	}
 
-	if ((fd = open(path, O_RDONLY)) == -1)
-		err(1, "open %s", path);
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		error = errno;
+		DPRINTF((1, "open %s: %s", path, strerror(error)));
+		return error;
+	}
 
 	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
 	    == MAP_FAILED) {
-		DPRINTF(("%s: mmap %s %s", __func__, node->name,
-		    strerror(errno)));
+		error = errno;
+		DPRINTF(("%s: mmap %s: %s", __func__, node->name,
+		    strerror(error)));
 		close(fd);
 		goto out;
 	}
@@ -469,6 +476,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		cn = dep->de_StartCluster;
 		if (cn == MSDOSFSROOT) {
 			DPRINTF(("%s: bad lbn %lu", __func__, cn));
+			error = EINVAL;
 			goto out;
 		}
 		bn = cntobn(pmp, cn);

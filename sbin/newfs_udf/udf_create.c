@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $ */
+/* $NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: udf_create.c,v 1.25 2015/06/16 23:18:55 christos Exp $");
 #   define DEBUG
 #  endif
 #endif
+
+struct udf_create_context context;
+struct udf_disclayout     layout;
 
 /*
  * NOTE that there is some overlap between this code and the udf kernel fs.
@@ -339,7 +342,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	if (format_flags & FORMAT_META) {
 		/* note: all in backing partition space */
 		layout.meta_file   = pos++;
-		layout.meta_bitmap = pos++;;
+		layout.meta_bitmap = pos++;
 		layout.meta_mirror = layout.part_size_lba-1;
 		layout.meta_alignment  = MAX(blockingnr, sparable_blockingnr);
 		layout.meta_blockingnr = MAX(layout.meta_alignment, 32);
@@ -1720,10 +1723,10 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 	struct extfile_entry   *efe;
 	struct extattrhdr_desc *extattrhdr;
 	struct impl_extattr_entry *implext;
-	uint32_t impl_attr_loc, appl_attr_loc, l_ea, a_l, exthdr_len;
-	uint32_t *l_eap, l_ad;
+	uint32_t impl_attr_loc, appl_attr_loc, l_ea, l_ad, a_l;
 	uint16_t *spos;
 	uint8_t *bpos, *data;
+	void *l_eap;
 
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
 		fe    = &dscr->fe;
@@ -1741,27 +1744,22 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 
 	/* should have a header! */
 	extattrhdr = (struct extattrhdr_desc *) data;
-	l_ea = udf_rw32(*l_eap);
+	memcpy(&l_ea, l_eap, sizeof(l_ea));
+	l_ea = udf_rw32(l_ea);
 	if (l_ea == 0) {
-#if !defined(NDEBUG) && defined(__minix)
+		uint32_t exthdr_len;
 		assert(l_ad == 0);
-#else
-		if (l_ad != 0) {
-		    printf("%s:%d: l_ad != 0\n", __func__, __LINE__);
-		    abort();
-		}
-#endif /* !defined(NDEBUG) && defined(__minix) */
 		/* create empty extended attribute header */
-		exthdr_len = sizeof(struct extattrhdr_desc);
+		l_ea = sizeof(struct extattrhdr_desc);
+		exthdr_len = udf_rw32(l_ea);
 
 		udf_inittag(&extattrhdr->tag, TAGID_EXTATTR_HDR, /* loc */ 0);
-		extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
-		extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
+		extattrhdr->impl_attr_loc = exthdr_len;
+		extattrhdr->appl_attr_loc = exthdr_len;
 		extattrhdr->tag.desc_crc_len = udf_rw16(8);
 
 		/* record extended attribute header length */
-		l_ea = exthdr_len;
-		*l_eap = udf_rw32(l_ea);
+		memcpy(l_eap, &exthdr_len, sizeof(exthdr_len));
 	}
 
 	/* extract locations */
@@ -1794,7 +1792,7 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 	assert(appl_attr_loc == l_ea);
 
 	/* append the attribute at the end of the current space */
-	bpos = data + udf_rw32(*l_eap);
+	bpos = data + l_ea;
 	a_l  = udf_rw32(extattr->a_l);
 
 	/* update impl. attribute locations */
@@ -1809,7 +1807,8 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 	/* copy and advance */
 	memcpy(bpos, extattr, a_l);
 	l_ea += a_l;
-	*l_eap = udf_rw32(l_ea);
+	l_ea = udf_rw32(l_ea);
+	memcpy(l_eap, &l_ea, sizeof(l_ea));
 
 	/* do the `dance` again backwards */
 	if (context.dscrver != 2) {
@@ -2164,10 +2163,6 @@ udf_create_new_rootdir(union dscrptr **dscr)
 	struct long_ad root_icb;
 	int filetype, error;
 
-#if defined(__minix)
-	/* LSC: -Werror=maybe-uninitialized when compiling with -O3 */
-	fe = NULL;
-#endif /*defined(__minix) */
 	memset(&root_icb, 0, sizeof(root_icb));
 	root_icb.len          = udf_rw32(context.sector_size);
 	root_icb.loc.lb_num   = udf_rw32(layout.rootdir);

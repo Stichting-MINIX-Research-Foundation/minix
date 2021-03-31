@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.51 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.59 2020/04/23 21:47:07 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,12 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.51 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.59 2020/04/23 21:47:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -73,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.51 2015/03/28 19:24:05 maxv Exp
 #include <fs/msdosfs/fat.h>
 
 struct pool msdosfs_denode_pool;
-
-extern int prtactive;
 
 struct fh_key {
 	struct msdosfsmount *fhk_mount;
@@ -128,6 +125,7 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_alloc = msdosfs_gop_alloc,
 	.gop_write = genfs_gop_write,
 	.gop_markupdate = msdosfs_gop_markupdate,
+	.gop_putrange = genfs_gop_putrange,
 };
 
 MALLOC_DECLARE(M_MSDOSFSFAT);
@@ -427,7 +425,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 		} else {
 			ubc_zerorange(&DETOV(dep)->v_uobj, length,
 				      pmp->pm_bpcluster - boff,
-				      UBC_UNMAP_FLAG(DETOV(dep)));
+				      UBC_VNODE_FLAGS(DETOV(dep)));
 		}
 	}
 
@@ -525,7 +523,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	ubc_zerorange(&DETOV(dep)->v_uobj, (off_t)osize,
 	    (size_t)(round_page(dep->de_FileSize) - osize),
-	    UBC_UNMAP_FLAG(DETOV(dep)));
+	    UBC_VNODE_FLAGS(DETOV(dep)));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }
@@ -533,25 +531,19 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 int
 msdosfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 
-	fstrans_start(mp, FSTRANS_LAZY);
+	VOP_UNLOCK(vp);
+
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("msdosfs_reclaim(): pushing active", vp);
-	/*
-	 * Remove the denode from the vnode cache.
-	 */
-	vcache_remove(vp->v_mount, &dep->de_key, sizeof(dep->de_key));
 	/*
 	 * Purge old data structures associated with the denode.
 	 */
@@ -570,19 +562,17 @@ msdosfs_reclaim(void *v)
 	vp->v_data = NULL;
 	mutex_exit(vp->v_interlock);
 	pool_put(&msdosfs_denode_pool, dep);
-	fstrans_done(mp);
 	return (0);
 }
 
 int
 msdosfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
 
@@ -590,7 +580,6 @@ msdosfs_inactive(void *v)
 	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
 
-	fstrans_start(mp, FSTRANS_LAZY);
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
@@ -622,12 +611,11 @@ out:
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n",
-		vp->v_usecount, dep->de_Name[0]);
+	printf("msdosfs_inactive(): usecount %d, de_Name[0] %x\n",
+		vrefcnt(vp), dep->de_Name[0]);
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
-	VOP_UNLOCK(vp);
-	fstrans_done(mp);
+
 	return (error);
 }
 

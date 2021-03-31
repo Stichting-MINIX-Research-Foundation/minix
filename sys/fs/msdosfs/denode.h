@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.24 2014/07/08 09:21:52 hannken Exp $	*/
+/*	$NetBSD: denode.h,v 1.25 2017/01/14 17:17:53 maya Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -212,7 +212,8 @@ struct denode {
 #define DE_INTERNALIZE32(dep, dp)			\
 	 ((dep)->de_StartCluster |= getushort((dp)->deHighClust) << 16)
 #define DE_INTERNALIZE(dep, dp)				\
-	(memcpy((dep)->de_Name, (dp)->deName, 11),	\
+	(memcpy((dep)->de_Name, (dp)->deName, 8),	\
+	 memcpy((dep)->de_Name+8, (dp)->deExtension, 3),\
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
 	 (dep)->de_CHun = (dp)->deCHundredth,		\
 	 (dep)->de_CTime = getushort((dp)->deCTime),	\
@@ -229,7 +230,8 @@ struct denode {
 #define DE_EXTERNALIZE16(dp, dep)			\
 	 putushort((dp)->deHighClust, 0)
 #define DE_EXTERNALIZE(dp, dep)				\
-	(memcpy((dp)->deName, (dep)->de_Name, 11),	\
+	(memcpy((dp)->deName, (dep)->de_Name, 8),	\
+	 memcpy((dp)->deExtension, (dep)->de_Name+8, 3),\
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
 	 (dp)->deCHundredth = (dep)->de_CHun,		\
 	 putushort((dp)->deCTime, (dep)->de_CTime),	\

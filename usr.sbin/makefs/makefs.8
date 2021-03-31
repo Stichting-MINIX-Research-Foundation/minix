@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.53 2013/08/06 20:16:54 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.66 2020/11/15 00:18:48 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2013
+.Dd November 14, 2020
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -54,6 +54,7 @@
 .Op Fl o Ar fs-options
 .Op Fl S Ar sector-size
 .Op Fl s Ar image-size
+.Op Fl T Ar timestamp
 .Op Fl t Ar fs-type
 .Ar image-file
 .Ar directory
@@ -178,7 +179,7 @@ and
 .Xr getgrnam 3
 (and related) library calls.
 .It Fl O Ar offset
-Instead of creating the filesystem at the beginning of the file, start
+Instead of creating the file system at the beginning of the file, start
 at offset.
 Valid only for
 .Sy ffs
@@ -199,24 +200,58 @@ Defaults to 512.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
+This is equivalent of setting both the minimum
+.Fl ( M )
+and the maximum
+.Fl ( m )
+sizes to
+.Ar image-size .
+For
+.Sy ffs
+and
+.Sy msdos
+the
+.Ar offset
+is not included on that size.
+.It Fl T Ar timestamp
+Specify a timestamp to be set for all file system files and directories
+created so that repeatable builds are possible.
+The
+.Ar timestamp
+can be a
+.Pa pathname ,
+where the timestamps are derived from that file, a parseable date
+for
+.Xr parsedate 3
+(this option is not yet available in the tools build), or an integer
+value interpreted as the number of seconds from the Epoch.
+Note that timestamps specified in an
+.Xr mtree 5
+spec file, override the default timestamp.
+When this option is enabled, file systems that regularly use
+.Xr localtime 3
+to convert times to the native format (such as udf and cd9660), use
+.Xr gmtime 3
+instead with the specified timestamps so that they are immune to
+timezone changes and get consistent timestamps.
 .It Fl t Ar fs-type
 Create an
 .Ar fs-type
 file system image.
 The following file system types are supported:
 .Bl -tag -width cd9660 -offset indent
-.It Sy ffs
-BSD fast file system (default).
 .It Sy cd9660
 ISO 9660 file system.
 .It Sy chfs
 Chip flash file system.
+.It Sy ffs
+BSD fast file system (default).
 .It Sy msdos
 FAT12, FAT16, or FAT32 file system.
-.It Sy v7fs
-7th Edition(V7) file system.
 .It Sy udf
 ISO/Ecma UDF file system.
+.It Sy v7fs
+7th Edition(V7) file system.
 .El
 .It Fl x
 Exclude file system nodes not explicitly listed in the specfile.
@@ -228,7 +263,7 @@ This is useful for virtual machine images.
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.
 Two or more numbers may be separated by an
-.Dq x
+.Sq x
 to indicate a product.
 Each number may have one of the following optional suffixes:
 .Bl -tag -width 3n -offset indent -compact
@@ -264,10 +299,14 @@ Expected number of files per directory.
 Block size.
 .It Sy density
 Bytes per inode.
+.It Sy extent
+Maximum extent size.
 .It Sy fsize
 Fragment size.
 .It Sy label
 Label name of the image.
+.It Sy maxbpcg
+Maximum total number of blocks in a cylinder group.
 .It Sy maxbpg
 Maximum blocks per file in a cylinder group.
 .It Sy minfree
@@ -277,10 +316,6 @@ Optimization preference; one of
 .Ql space
 or
 .Ql time .
-.It Sy extent
-Maximum extent size.
-.It Sy maxbpcg
-Maximum total number of blocks in a cylinder group.
 .It Sy version
 UFS version.
 1 for FFS (default), 2 for UFS2.
@@ -304,7 +339,7 @@ the spec.
 .\" Unknown
 .It Sy allow-max-name
 Allow 37 instead of 33 characters for filenames by omitting the
-version id.
+version ID.
 .It Sy allow-multidot
 Allow multiple dots in a filename.
 .It Sy applicationid
@@ -315,9 +350,6 @@ Use the
 extension to encode
 .Tn RISC OS
 metadata.
-.It Sy chrp-boot
-Write an MBR partition table to the image to allow older CHRP hardware to
-boot.
 .It Sy boot-load-segment
 Set load segment for the boot image.
 .It Sy bootimage
@@ -326,11 +358,15 @@ Filename of a boot image in the format
 where
 .Dq sysid
 is one of
+.Ql efi ,
 .Ql i386 ,
 .Ql mac68k ,
 .Ql macppc ,
 or
 .Ql powerpc .
+.It Sy chrp-boot
+Write an MBR partition table to the image to allow older CHRP hardware to
+boot.
 .It Sy generic-bootimage
 Load a generic boot image into the first 32K of the cd9660 image.
 .It Sy hard-disk-boot
@@ -350,6 +386,8 @@ ElTorito image.
 Do not pad the image (apparently Linux needs the padding).
 .\" .It Sy omit-trailing-period
 .\" Unknown
+.It Sy platformid
+Set platform ID of section header entry of the boot image.
 .It Sy preparer
 Preparer ID of the image.
 .It Sy publisher
@@ -377,9 +415,63 @@ Type of the media.
 NOR: 0 or NAND: 1.
 .El
 .Ss msdos-specific options
-See
+.Sy msdos
+images have MS-DOS-specific optional parameters that may be
+provided.
+The arguments consist of a keyword, an equal sign
+.Pq Ql = ,
+and a value.
+The following keywords are supported (see
 .Xr newfs_msdos 8
-for fs specific options.
+for more details):
+.Pp
+.Bl -tag -width omit-trailing-period -offset indent -compact
+.It Cm backup_sector
+Location of the backup boot sector.
+.It Cm block_size
+Block size.
+.It Cm bootstrap
+Bootstrap file.
+.It Cm bytes_per_sector
+Bytes per sector.
+.It Cm create_size
+Create file size.
+.It Cm directory_entries
+Directory entries.
+.It Cm drive_heads
+Drive heads.
+.It Cm fat_type
+FAT type (12, 16, or 32).
+.It Cm floppy
+Preset drive parameters for standard format floppy disks
+(160, 180, 320, 360, 640, 720, 1200, 1232, 1440, or 2880).
+.It Cm hidden_sectors
+Hidden sectors.
+.It Cm info_sector
+Location of the info sector.
+.It Cm media_descriptor
+Media descriptor.
+.It Cm num_FAT
+Number of FATs.
+.It Cm OEM_string
+OEM string.
+.It Cm offset
+Offset in device.
+.It Cm reserved_sectors
+Reserved sectors.
+.It Cm sectors_per_cluster
+Sectors per cluster.
+.It Cm sectors_per_fat
+Sectors per FAT.
+.It Cm sectors_per_track
+Sectors per track.
+.It Cm size
+File System size.
+.It Cm volume_id
+Volume ID.
+.It Cm volume_label
+Volume Label.
+.El
 .Ss V7FS-specific options
 The following keywords are supported:
 .Pp
@@ -398,7 +490,7 @@ Each of the options consists of a keyword, an equal sign
 and a value.
 The following keywords are supported:
 .Pp
-.Bl -tag -width optimization -compact
+.Bl -tag -width optimization -offset indent -compact
 .It Sy disctype
 This can have the following values:
 .Bl -tag -width cdromXdvdromXbdromXXX -compact
@@ -453,8 +545,8 @@ utility appeared in
 .An UCHIYAMA Yasushi
 (v7fs support),
 .An Tamas Toth
-(chfs support).
+(chfs support),
 .An Christos Zoulas
-(msdos support).
+(msdos support),
 .An Reinoud Zandijk
 (udf support).

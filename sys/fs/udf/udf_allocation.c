@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.41 2020/04/23 21:47:08 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.41 2020/04/23 21:47:08 ad Exp $");
 #endif /* not lint */
 
 
@@ -1001,7 +1001,7 @@ udf_bitmap_check_trunc_free(struct udf_bitmap *bitmap, uint32_t to_trunc)
 		bitval = (1 << bit);
 		if (!(*bpos & bitval))
 			seq_free = 0;
-		offset++; to_trunc--;
+		to_trunc--;
 		bit++;
 		if (bit == 8) {
 			bpos++;
@@ -1540,8 +1540,7 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	*sizepos = udf_rw32(*sizepos) - to_trunc;
 
 	/* realloc bitmap for better memory usage */
-	new_sbd = realloc(sbd, inf_len, M_UDFVOLD,
-		M_CANFAIL | M_WAITOK);
+	new_sbd = realloc(sbd, inf_len, M_UDFVOLD, M_WAITOK);
 	if (new_sbd) {
 		/* update pointers */
 		ump->metadata_unalloc_dscr = new_sbd;
@@ -2679,7 +2678,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 #if 0
 			/* zero append space in buffer */
 			ubc_zerorange(&vp->v_uobj, old_size,
-			    new_size - old_size, UBC_UNMAP_FLAG(vp));
+			    new_size - old_size, UBC_VNODE_FLAGS(vp));
 #endif
 	
 			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
@@ -2785,7 +2784,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 		/* TODO zero appened space in buffer! */
 		/* using ubc_zerorange(&vp->v_uobj, old_size, */
-		/*    new_size - old_size, UBC_UNMAP_FLAG(vp)); ? */
+		/*    new_size - old_size, UBC_VNODE_FLAGS(vp)); ? */
 	}
 	memset(&s_ad, 0, sizeof(struct long_ad));
 
@@ -2956,7 +2955,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 
 		/* TODO zero appened space in buffer! */
 		/* using ubc_zerorange(&vp->v_uobj, old_size, */
-		/*    old_size - new_size, UBC_UNMAP_FLAG(vp)); ? */
+		/*    old_size - new_size, UBC_VNODE_FLAGS(vp)); ? */
 
 		/* set new size for uvm */
 		uvm_vnp_setsize(vp, new_size);

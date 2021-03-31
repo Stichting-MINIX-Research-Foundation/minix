@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.34 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $");
 
 #include <sys/param.h>
 
@@ -161,6 +161,10 @@ msdosfs_lookup(void *v)
 		return *vpp == NULLVP ? ENOENT: 0;
 	}
 
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE)
+		return ENOLCK;
+
 	/*
 	 * If they are going after the . or .. entry in the root directory,
 	 * they won't find it.  DOS filesystems don't have them in the root
@@ -187,12 +191,12 @@ msdosfs_lookup(void *v)
 		break;
 	case 2:
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	case 3:
 		olddos = 0;
 		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
-		    cnp->cn_namelen) + 1;
+		    cnp->cn_namelen, pmp->pm_flags & MSDOSFSMNT_UTF8) + 1;
 		break;
 	}
 	if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
@@ -282,7 +286,8 @@ msdosfs_lookup(void *v)
 					chksum = winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
-							    chksum);
+							    chksum,
+							    pmp->pm_flags & MSDOSFSMNT_UTF8);
 					continue;
 				}
 
@@ -652,7 +657,8 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 				fndoffset -= sizeof(struct direntry);
 			}
 			if (!unix2winfn(un, unlen, (struct winentry *)ndep,
-						wcnt, chksum))
+					wcnt, chksum,
+					ddep->de_pmp->pm_flags & MSDOSFSMNT_UTF8))
 				break;
 		}
 	}
