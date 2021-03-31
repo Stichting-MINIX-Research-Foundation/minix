@@ -196,7 +196,7 @@ int handle_args(int argc, char *argv[])
 }
 
 
-int start()
+int start(void)
 {
  /* This is the "starter process" for statistical profiling.
   *
@@ -262,7 +262,7 @@ int start()
 }
 
 
-int stop()
+int stop(void)
 {
   /* This is the "stopper" process for statistical profiling.
    *
@@ -296,7 +296,7 @@ int stop()
 }
 
 
-int alloc_mem()
+int alloc_mem(void)
 {
   if ((mem_ptr = malloc(mem_size)) == 0) {
 	fprintf(stderr, "Unable to allocate memory.\n");
@@ -308,7 +308,7 @@ int alloc_mem()
 }
 
 
-int init_outfile()
+int init_outfile(void)
 {
   if ((outfile_fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY)) <= 0) {
 	fprintf(stderr, "Unable to create outfile %s.\n", outfile);

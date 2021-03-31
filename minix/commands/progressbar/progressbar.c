@@ -44,9 +44,7 @@ prettyprogress(long b, long maxb, time_t starttime)
   return;
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	long i = 0, count = 0;
 	int l;

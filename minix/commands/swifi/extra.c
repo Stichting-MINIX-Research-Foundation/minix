@@ -137,10 +137,7 @@ void text_write_ub(void *addr, unsigned char value)
 	}
 }
 
-void load_nlist(exe_name, btextp, etextp)
-char *exe_name;
-unsigned long *btextp;
-unsigned long *etextp;
+void load_nlist(char *exe_name, unsigned long *btextp, unsigned long *etextp)
 {
 	int i;
 	unsigned long btext, etext;

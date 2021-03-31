@@ -22,9 +22,7 @@ void usage(void);
 static char device[PATH_MAX], mount_point[PATH_MAX], type[MNTNAMELEN],
 		flags[MNTFLAGLEN];
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int found;
   int umount_flags = 0UL;
@@ -62,8 +60,7 @@ char *argv[];
   return(0);
 }
 
-int find_mtab_entry(name)
-char *name;
+int find_mtab_entry(char *name)
 {
 /* Find a matching mtab entry for 'name' which may be a special or a path,
  * and generate a new mtab file without this entry on the fly. Do not write
@@ -97,7 +94,7 @@ char *name;
   return found;
 }
 
-void usage()
+void usage(void)
 {
   std_err("Usage: umount [-e] name\n");
   exit(1);

@@ -6,7 +6,7 @@
 
 int main(void);
 
-int main()
+int main(void)
 {
   /* Release all (?) open file descriptors. */
   close(0);
