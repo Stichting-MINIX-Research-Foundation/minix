@@ -500,7 +500,7 @@ void Proc8(Array1Dim Array1Par, Array2Dim Array2Par,
 }
 
 
-Enumeration Func1(CapitalLetter CharPar1, CapitalLetter CharPar2)
+Enumeration Func1(int CharPar1, int CharPar2)
 {
   REG CapitalLetter CharLoc1;
   REG CapitalLetter CharLoc2;

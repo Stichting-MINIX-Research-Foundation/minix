@@ -718,7 +718,7 @@ void fill_date(DIRECTORY *entry)
   entry->d_time = (hour << 11) | (minutes << 5) | seconds;
 }
 
-char *make_name(register DIRECTORY *dir_ptr, short dir_fl)
+char *make_name(register DIRECTORY *dir_ptr, int dir_fl)
 {
   static char name_buf[14];
   register char *ptr = name_buf;
