@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.6 2013/09/29 14:20:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2016/01/26 19:37:48 christos Exp $
 
+.include "${.PARSEDIR}/../Makefile.inc"
 BINDIR?=	/usr/sbin
 WARNS?=		1
 

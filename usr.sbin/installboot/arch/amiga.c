@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.9 2015/06/05 05:02:48 mlelstv Exp $	*/
+/*	$NetBSD: amiga.c,v 1.10 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.9 2015/06/05 05:02:48 mlelstv Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.10 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -64,9 +64,13 @@ u_int32_t chksum(u_int32_t *, int);
 
 static int amiga_setboot(ib_params *);
 
-struct ib_mach ib_mach_amiga =
-	{ "amiga", amiga_setboot, no_clearboot, no_editboot,
-		IB_STAGE1START | IB_STAGE2START | IB_COMMAND };
+struct ib_mach ib_mach_amiga = {
+	.name		=	"amiga",
+	.setboot	=	amiga_setboot,
+	.clearboot	=	no_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_STAGE1START | IB_STAGE2START | IB_COMMAND,
+};
 
 static int
 amiga_setboot(ib_params *params)

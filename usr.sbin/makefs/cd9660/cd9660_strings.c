@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_strings.c,v 1.5 2011/03/23 13:11:51 christos Exp $	*/
+/*	$NetBSD: cd9660_strings.c,v 1.6 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -46,14 +46,14 @@
 #include "cd9660.h"
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_strings.c,v 1.5 2011/03/23 13:11:51 christos Exp $");
+__RCSID("$NetBSD: cd9660_strings.c,v 1.6 2015/12/24 15:52:37 christos Exp $");
 #endif  /* !__lint */
 
 
 void
-cd9660_uppercase_characters(char *str, int len)
+cd9660_uppercase_characters(char *str, size_t len)
 {
-	int p;
+	size_t p;
 
 	for (p = 0; p < len; p++) {
 		if (islower((unsigned char)str[p]) )

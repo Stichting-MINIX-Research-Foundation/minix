@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.27 2015/10/06 08:57:34 hannken Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.28 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.27 2015/10/06 08:57:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.28 2016/05/24 09:55:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1005,6 +1005,16 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 
 /* --------------------------------------------------------------------- */
 
+static void
+udf_sync_caches_rmw(struct udf_strat_args *args)
+{
+	struct udf_mount *ump = args->ump;
+
+	udf_mmc_synchronise_caches(ump);
+}
+
+/* --------------------------------------------------------------------- */
+
 static void 
 udf_shedule_read_callback(struct buf *buf)
 {
@@ -1495,6 +1505,7 @@ struct udf_strategy udf_strat_rmw =
 	udf_read_nodedscr_rmw,
 	udf_write_nodedscr_rmw,
 	udf_queuebuf_rmw,
+	udf_sync_caches_rmw,
 	udf_discstrat_init_rmw,
 	udf_discstrat_finish_rmw
 };

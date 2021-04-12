@@ -2956,6 +2956,11 @@
 ./usr/share/i18n/iconv				base-sysutil-share
 ./usr/share/i18n/iconv/iconv.dir		base-sysutil-share	nls
 ./usr/share/info				base-texinfo-share
+./usr/share/installboot				base-sysutil-share
+./usr/share/installboot/evbarm			base-sysutil-share
+./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
+./usr/share/installboot/evbmips			base-sysutil-share
+./usr/share/installboot/evbmips/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share

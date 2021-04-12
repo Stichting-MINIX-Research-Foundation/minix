@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.19 2013/07/07 19:49:44 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.21 2020/01/17 20:08:08 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -40,7 +40,8 @@ int udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		  int *first_tracknr, int *last_tracknr);
 int udf_search_writing_tracks(struct udf_mount *ump);
 int udf_setup_writeparams(struct udf_mount *ump);
-int udf_synchronise_caches(struct udf_mount *ump);
+void udf_mmc_synchronise_caches(struct udf_mount *ump);
+void udf_synchronise_caches(struct udf_mount *ump);
 
 /* tags operations */
 int udf_fidsize(struct fileid_desc *fid);
@@ -131,7 +132,7 @@ uint64_t udf_advance_uniqueid(struct udf_mount *ump);
 void udf_lock_node(struct udf_node *udf_node, int flag, char const *fname, const int lineno);
 void udf_unlock_node(struct udf_node *udf_node, int flag);
 
-int udf_get_node(struct udf_mount *ump, struct long_ad *icbloc, struct udf_node **noderes);
+int udf_get_node(struct udf_mount *ump, struct long_ad *icbloc, struct udf_node **noderes, int);
 int udf_writeout_node(struct udf_node *udf_node, int waitfor);
 int udf_dispose_node(struct udf_node *node);
 

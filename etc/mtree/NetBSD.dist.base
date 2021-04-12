@@ -153,6 +153,7 @@
 ./usr/libdata/debug/usr/tests/minix-posix/blocktest
 ./usr/libdata/debug/usr/tests/minix-posix/ddekit
 ./usr/libdata/debug/usr/tests/minix-posix/rmibtest
+./usr/libdata/ldscripts
 ./usr/libexec
 ./usr/log
 ./usr/man
@@ -249,6 +250,9 @@
 ./usr/share/i18n/esdb/UTF
 ./usr/share/i18n/iconv
 ./usr/share/info
+./usr/share/installboot
+./usr/share/installboot/evbarm
+./usr/share/installboot/evbmips
 ./usr/share/keymaps
 ./usr/share/kyua-atf-compat
 ./usr/share/kyua-cli

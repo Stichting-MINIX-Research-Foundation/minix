@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.63 2013/07/29 17:46:36 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -913,7 +913,7 @@ set_chflags(char *fnm, u_int32_t flags)
  *	actual storage is quite small (the files are sparse). The problem is
  *	the holes read as all zeros so are probably stored on the archive that
  *	way (there is no way to determine if the file block is really a hole,
- *	we only know that a file block of all zero's can be a hole).
+ *	we only know that a file block of all zeros can be a hole).
  *	At this writing, no major archive format knows how to archive files
  *	with holes. However, on extraction (or during copy, -rw) we have to
  *	deal with these files. Without detecting the holes, the files can
@@ -986,7 +986,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		if (*isempt) {
 			/*
 			 * have not written to this block yet, so we keep
-			 * looking for zero's
+			 * looking for zeros
 			 */
 			pt = st;
 			end = st + wcnt;

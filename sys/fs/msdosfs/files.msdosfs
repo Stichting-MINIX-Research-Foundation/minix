@@ -1,4 +1,4 @@
-#	$NetBSD: files.msdosfs,v 1.2 2014/10/11 06:42:18 uebayasi Exp $
+#	$NetBSD: files.msdosfs,v 1.3 2016/02/06 10:40:58 mlelstv Exp $
 
 deffs	MSDOSFS
 
@@ -9,3 +9,4 @@ file	fs/msdosfs/msdosfs_fat.c		msdosfs
 file	fs/msdosfs/msdosfs_lookup.c		msdosfs
 file	fs/msdosfs/msdosfs_vfsops.c		msdosfs
 file	fs/msdosfs/msdosfs_vnops.c		msdosfs
+file	fs/msdosfs/msdosfs_unicode.c		msdosfs

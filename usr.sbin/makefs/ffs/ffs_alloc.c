@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.28 2015/03/29 05:52:59 agc Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.28 2015/03/29 05:52:59 agc Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.29 2016/06/24 19:24:11 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
 	
 	*bnp = 0;
 	if (size > fs->fs_bsize || ffs_fragoff(fs, size) != 0) {
-		errx(1, "ffs_alloc: bad size: bsize %d size %d",
+		errx(EXIT_FAILURE, "%s: bad size: bsize %d size %d", __func__,
 		    fs->fs_bsize, size);
 	}
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
@@ -441,8 +441,8 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 
 	if (size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
 	    ffs_fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
-		errx(1, "blkfree: bad size: bno %lld bsize %d size %ld",
-		    (long long)bno, fs->fs_bsize, size);
+		errx(EXIT_FAILURE, "%s: bad size: bno %lld bsize %d "
+		    "size %ld", __func__, (long long)bno, fs->fs_bsize, size);
 	}
 	cg = dtog(fs, bno);
 	if (bno >= fs->fs_size) {
@@ -465,8 +465,8 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	if (size == fs->fs_bsize) {
 		fragno = ffs_fragstoblks(fs, cgbno);
 		if (!ffs_isfreeblock(fs, cg_blksfree(cgp, needswap), fragno)) {
-			errx(1, "blkfree: freeing free block %lld",
-			    (long long)bno);
+			errx(EXIT_FAILURE, "%s: freeing free block %lld",
+			    __func__, (long long)bno);
 		}
 		ffs_setblock(fs, cg_blksfree(cgp, needswap), fragno);
 		ffs_clusteracct(fs, cgp, fragno, 1);
@@ -486,7 +486,8 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		frags = ffs_numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(cg_blksfree(cgp, needswap), cgbno + i)) {
-				errx(1, "blkfree: freeing free frag: block %lld",
+				errx(EXIT_FAILURE, "%s: freeing free frag: "
+				    "block %lld", __func__,
 				    (long long)(cgbno + i));
 			}
 			setbit(cg_blksfree(cgp, needswap), cgbno + i);
@@ -566,11 +567,10 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			(const u_char *)fragtbl[fs->fs_frag],
 			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
-			errx(1,
-    "ffs_alloccg: map corrupted: start %d len %d offset %d %ld",
-				ostart, olen,
-				ufs_rw32(cgp->cg_freeoff, needswap),
-				(long)cg_blksfree(cgp, needswap) - (long)cgp);
+			errx(EXIT_FAILURE, "%s: map corrupted: start %d "
+			    "len %d offset %d %ld", __func__, ostart, olen,
+			    ufs_rw32(cgp->cg_freeoff, needswap),
+			    (long)cg_blksfree(cgp, needswap) - (long)cgp);
 			/* NOTREACHED */
 		}
 	}
@@ -592,6 +592,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			subfield <<= 1;
 		}
 	}
-	errx(1, "ffs_alloccg: block not in map: bno %lld", (long long)bno);
+	errx(EXIT_FAILURE, "%s: block not in map: bno %lld", __func__,
+	    (long long)bno);
 	return (-1);
 }

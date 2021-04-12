@@ -1,0 +1,56 @@
+ParseReadLine (21): 'UT_VAR=		<${REF}>'
+Global:UT_VAR = <${REF}>
+ParseReadLine (28): '.export UT_VAR'
+Global:.MAKE.EXPORTED = UT_VAR
+ParseReadLine (32): ': ${UT_VAR:N*}'
+Var_Parse: ${UT_VAR:N*} (eval-defined)
+Var_Parse: ${REF}> (eval-defined)
+Applying ${UT_VAR:N...} to "<>" (eval-defined, VFL_EXPORTED|VFL_REEXPORT, regular)
+Pattern[UT_VAR] for [<>] is [*]
+ModifyWords: split "<>" into 1 words
+Result of ${UT_VAR:N*} is "" (eval-defined, VFL_EXPORTED|VFL_REEXPORT, regular)
+ParseDoDependency(: )
+CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
+Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
+Applying ${:!...} to "" (eval-defined, none, undefined)
+Modifier part: "echo "$UT_VAR""
+Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
+Applying ${.MAKE.EXPORTED:O} to "UT_VAR" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, none, regular)
+Applying ${.MAKE.EXPORTED:u} to "UT_VAR" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, none, regular)
+Var_Parse: ${UT_VAR} (eval)
+Var_Parse: ${REF}> (eval)
+Result of ${:!echo "\$UT_VAR"!} is "<>" (eval-defined, none, defined)
+lhs = "<>", rhs = "<>", op = !=
+ParseReadLine (49): ': ${UT_VAR:N*}'
+Var_Parse: ${UT_VAR:N*} (eval-defined)
+Var_Parse: ${REF}> (eval-defined)
+Applying ${UT_VAR:N...} to "<>" (eval-defined, VFL_EXPORTED|VFL_REEXPORT, regular)
+Pattern[UT_VAR] for [<>] is [*]
+ModifyWords: split "<>" into 1 words
+Result of ${UT_VAR:N*} is "" (eval-defined, VFL_EXPORTED|VFL_REEXPORT, regular)
+ParseDoDependency(: )
+ParseReadLine (53): 'REF=		defined'
+Global:REF = defined
+CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<defined>"
+Var_Parse: ${:!echo "\$UT_VAR"!} != "<defined>" (eval-defined)
+Applying ${:!...} to "" (eval-defined, none, undefined)
+Modifier part: "echo "$UT_VAR""
+Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
+Applying ${.MAKE.EXPORTED:O} to "UT_VAR" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:O} is "UT_VAR" (eval, none, regular)
+Applying ${.MAKE.EXPORTED:u} to "UT_VAR" (eval, none, regular)
+Result of ${.MAKE.EXPORTED:u} is "UT_VAR" (eval, none, regular)
+Var_Parse: ${UT_VAR} (eval)
+Var_Parse: ${REF}> (eval)
+Result of ${:!echo "\$UT_VAR"!} is "<defined>" (eval-defined, none, defined)
+lhs = "<defined>", rhs = "<defined>", op = !=
+ParseReadLine (61): 'all:'
+ParseDoDependency(all:)
+Global:.ALLTARGETS =  all
+ParseReadLine (62): '.MAKEFLAGS: -d0'
+ParseDoDependency(.MAKEFLAGS: -d0)
+Global:.MAKEFLAGS =  -r -k -d cpv -d
+Global:.MAKEFLAGS =  -r -k -d cpv -d 0
+exit status 0

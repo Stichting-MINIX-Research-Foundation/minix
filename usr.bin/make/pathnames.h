@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.17 2009/04/11 09:41:18 apb Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.18 2020/11/29 09:27:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,15 +39,15 @@
 #include <paths.h>
 #endif
 
-#define	_PATH_OBJDIR		"obj"
-#define	_PATH_OBJDIRPREFIX	"/usr/obj"
+#define _PATH_OBJDIR		"obj"
+#define _PATH_OBJDIRPREFIX	"/usr/obj"
 #ifndef _PATH_DEFSHELLDIR
-#define	_PATH_DEFSHELLDIR	"/bin"
+#define _PATH_DEFSHELLDIR	"/bin"
 #endif
-#define	_PATH_DEFSYSMK		"sys.mk"
+#define _PATH_DEFSYSMK		"sys.mk"
 #ifndef _PATH_DEFSYSPATH
-#define	_PATH_DEFSYSPATH	"/usr/share/mk"
+#define _PATH_DEFSYSPATH	"/usr/share/mk"
 #endif
 #ifndef _PATH_TMP
-#define	_PATH_TMP		"/tmp/"		/* with trailing slash */
+#define _PATH_TMP		"/tmp/"		/* with trailing slash */
 #endif

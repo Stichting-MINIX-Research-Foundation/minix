@@ -1,23 +1,36 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.8 2006/08/26 22:17:48 christos Exp $
+#	$NetBSD: buildmake.sh.in,v 1.16 2020/07/26 09:17:24 rillig Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
 
-: ${HOST_CC="@CC@"}
-: ${HOST_CFLAGS="@CPPFLAGS@ @CFLAGS@"}
-: ${HOST_LDFLAGS="@LDFLAGS@ @LIBS@"}
-: ${runcmd=""}
+: ${NETBSDSRCDIR:=@srcdir@/../..}
+MKSRCDIR=${NETBSDSRCDIR}/usr.bin/make
+
+_CC="@CC@"
+
+_CFLAGS="@CPPFLAGS@"
+_CFLAGS="${_CFLAGS} -D_PATH_DEFSYSPATH=\"${NETBSDSRCDIR}/share/mk\""
+_CFLAGS="${_CFLAGS} @DEFS@"
+_CFLAGS="${_CFLAGS} @CFLAGS@"
+
+_LDFLAGS="@LDFLAGS@ @LIBS@"
 
 docmd () {
-	echo "$1"
-	$1 || exit 1
+	case "${MAKEVERBOSE:-2}" in
+	0)
+		;;
+	1)
+		echo "    $1 ${2##*/}" ;;
+	*)
+		echo "$3" ;;
+	esac
+	$3 || exit 1
 }
 
-MKSRCDIR=@srcdir@/../../usr.bin/make
-
-for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c; do
-	docmd "${HOST_CC} ${HOST_CFLAGS} @DEFS@ -c $f"
+for f in $MKSRCDIR/*.c; do
+	docmd "compile " "$f" "${_CC} ${_CFLAGS} -c $f"
 done
 
-docmd "${HOST_CC} ${HOST_CFLAGS} -o ${_TOOL_PREFIX:-nb}make *.o ${HOST_LDFLAGS}"
+docmd "   link " "${_TOOL_PREFIX:-nb}make" \
+	"${_CC} -o ${_TOOL_PREFIX:-nb}make *.o ${_LDFLAGS}"

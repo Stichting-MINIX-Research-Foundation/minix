@@ -1,0 +1,507 @@
+<!-- $NetBSD: boards.plist,v 1.9 2020/06/21 19:39:11 thorpej Exp $ -->
+<!--
+  Copyright (c) 2019 The NetBSD Foundation, Inc.
+  All rights reserved.
+ 
+  This code is derived from software contributed to The NetBSD Foundation
+  by Jason R. Thorpe.
+ 
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+ 
+  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+-->
+<plist>
+<dict>
+	<!--
+	  -- altera boards
+	  -->
+	<key>terasic,de0-atlas</key>
+	<dict>
+		<key>description</key>
+		<string>Terasic DE-0(Atlas)</string>
+		<key>u-boot-pkg</key>
+		<string>de0-nanosoc</string>
+	</dict>
+
+	<!--
+	  -- amlogic boards
+	  -->
+	<key>hardkernel,odroid-c2</key>
+	<dict>
+		<key>description</key>
+		<string>Hardkernel ODROID-C2</string>
+		<key>u-boot-pkg</key>
+		<string>odroid-c2</string>
+	</dict>
+	<key>libretech,cc</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board AML-S905X-CC</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-cc</string>
+	</dict>
+
+	<!--
+	  -- exynos boards
+	  -->
+	<key>hardkernel,odroid-xu3</key>
+	<dict>
+		<key>description</key>
+		<string>Hardkernel Odroid XU3</string>
+		<key>u-boot-pkg</key>
+		<string>odroid-xu3</string>
+	</dict>
+
+	<!--
+	  -- rockchip boards
+	  -->
+	<key>pine64,rock64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Rock64</string>
+		<key>u-boot-pkg</key>
+		<string>rock64</string>
+	</dict>
+	<key>pine64,rockpro64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 RockPro64</string>
+		<key>u-boot-pkg</key>
+		<string>rockpro64</string>
+	</dict>
+	<key>pine64,pinebook-pro</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Pinebook Pro</string>
+		<key>u-boot-pkg</key>
+		<string>pinebook-pro</string>
+	</dict>
+	<key>asus,rk3288-tinker</key>
+	<dict>
+		<key>description</key>
+		<string>Rockchip RK3288 Asus Tinker Board</string>
+		<key>u-boot-pkg</key>
+		<string>tinker</string>
+	</dict>
+
+	<!--
+	 -- mediatek boards
+	 -->
+	<key>bananapi,bpi-r2</key>
+	<dict>
+		<key>description</key>
+		<string>Bananapi BPI-R2</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-r2</string>
+	</dict>
+
+	<!--
+	  -- nvidia boards
+	  -->
+	<key>nvidia,jetson-tk1</key>
+	<dict>
+		<key>description</key>
+		<string>NVIDIA Tegra124 Jetson TK1</string>
+		<key>u-boot-pkg</key>
+		<string>jetson-tk1</string>
+	</dict>
+	<key>nvidia,p2371-2180</key>
+	<dict>
+		<key>description</key>
+		<string>NVIDIA Jetson TX1 Developer Kit</string>
+		<key>u-boot-pkg</key>
+		<string>jetson-tx1</string>
+	</dict>
+	<key>nvidia,p2771-0000</key>
+	<dict>
+		<key>description</key>
+		<string>NVIDIA Jetson TX2 Developer Kit</string>
+		<key>u-boot-pkg</key>
+		<string>jetson-tx2</string>
+	</dict>
+	<key>nvidia,p3450-0000</key>
+	<dict>
+		<key>description</key>
+		<string>NVIDIA Jetson Nano Developer Kit</string>
+		<key>u-boot-pkg</key>
+		<string>jetson-nano</string>
+	</dict>
+
+	<!--
+	  -- omap boards
+	  -->
+	<key>ti,omap3-beagle</key>
+	<dict>
+		<key>description</key>
+		<string>TI OMAP3 BeagleBoard</string>
+		<key>u-boot-pkg</key>
+		<string>beagleboard</string>
+	</dict>
+	<key>ti,am335x-bone</key>
+	<dict>
+		<key>description</key>
+		<string>TI AM335x BeagleBone</string>
+		<key>u-boot-pkg</key>
+		<string>beaglebonewhite</string>
+	</dict>
+	<key>ti,am335x-bone-black</key>
+	<dict>
+		<key>description</key>
+		<string>TI AM335x BeagleBone Black</string>
+		<key>u-boot-pkg</key>
+		<string>beagleboneblack</string>
+	</dict>
+	<key>ti,omap4-panda</key>
+	<dict>
+		<key>description</key>
+		<string>TI OMAP4 PandaBoard</string>
+		<key>u-boot-pkg</key>
+		<string>pandaboard</string>
+	</dict>
+	<key>ti,omap4-panda-es</key>
+	<dict>
+		<key>description</key>
+		<string>TI OMAP4 PandaBoard-ES</string>
+		<key>u-boot-pkg</key>
+		<string>pandaboard</string>
+	</dict>
+
+	<!--
+	  -- sunxi boards
+	  -->
+	<!-- Banana Pi-branded board "compatible" strings are a mess.
+	     We will just keep them all together here.  -->
+	<key>lamobo,lamobo-r1</key>
+	<dict>
+		<key>description</key>
+		<string>Lamobo R1</string>
+		<key>u-boot-pkg</key>
+		<string>lamobo-r1</string>
+	</dict>
+	<key>lemaker,bananapi</key>
+	<dict>
+		<key>description</key>
+		<string>LeMaker Banana Pi</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi</string>
+	</dict>
+	<key>lemaker,bananapro</key>
+	<dict>
+		<key>description</key>
+		<string>LeMaker Banana Pro</string>
+		<key>u-boot-pkg</key>
+		<string>bananapro</string>
+	</dict>
+	<key>sinovoip,bpi-m2-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Banana Pi BPI-M2 Zero</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-m2-zero</string>
+	</dict>
+	<key>sinovoip,bpi-m3</key>
+	<dict>
+		<key>description</key>
+		<string>Banana Pi BPI-M3</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-m3</string>
+	</dict>
+	<key>sinovoip,bpi-p2-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Banana Pi BPI-P2 Zero</string>
+		<key>u-boot-pkg</key>
+		<string>bananapi-p2-zero</string>
+	</dict>
+
+	<key>cubietech,cubieboard2</key>
+	<dict>
+		<key>description</key>
+		<string>Cubietech Cubieboard2</string>
+		<key>u-boot-pkg</key>
+		<string>cubieboard2</string>
+	</dict>
+	<key>cubietech,a80-cubieboard4</key>
+	<dict>
+		<key>description</key>
+		<string>Cubietech Cubieboard4</string>
+		<key>u-boot-pkg</key>
+		<string>cubieboard4</string>
+	</dict>
+	<key>cubietech,cubietruck</key>
+	<dict>
+		<key>description</key>
+		<string>Cubietech Cubietruck</string>
+		<key>u-boot-pkg</key>
+		<string>cubietruck</string>
+	</dict>
+	<key>cubietech,cubietruck-plus</key>
+	<dict>
+		<key>description</key>
+		<string>Cubietech Cubietruck Plus</string>
+		<key>u-boot-pkg</key>
+		<string>cubietruck-plus</string>
+	</dict>
+
+	<key>friendlyarm,nanopi-m1</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyArm NanoPi M1</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-m1</string>
+	</dict>
+	<key>friendlyarm,nanopi-neo</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi NEO</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-neo</string>
+	</dict>
+	<key>friendlyarm,nanopi-neo-plus2</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi NEO Plus2</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-neo-plus2</string>
+	</dict>
+	<key>friendlyarm,nanopi-neo2</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi NEO 2</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-neo2</string>
+	</dict>
+	<key>friendlyarm,nanopi-r1</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi R1</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-r1</string>
+	</dict>
+
+	<key>libretech,all-h3-cc-h2-plus</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H2+</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h2-plus</string>
+	</dict>
+	<key>libretech,all-h3-cc-h3</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H3</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h3</string>
+	</dict>
+	<key>libretech,all-h3-cc-h5</key>
+	<dict>
+		<key>description</key>
+		<string>Libre Computer Board ALL-H3-CC H5</string>
+		<key>u-boot-pkg</key>
+		<string>libretech-all-h3-cc-h5</string>
+	</dict>
+
+	<key>merrii,a31-hummingbird</key>
+	<dict>
+		<key>description</key>
+		<string>Merrii A31 Hummingbird</string>
+		<key>u-boot-pkg</key>
+		<string>hummingbird-a31</string>
+	</dict>
+
+	<key>nextthing,chip</key>
+	<dict>
+		<key>description</key>
+		<string>NextThing C.H.I.P.</string>
+		<key>u-boot-pkg</key>
+		<string>chip</string>
+	</dict>
+	<key>nextthing,pocketchip</key>
+	<dict>
+		<key>description</key>
+		<string>NextThing PocketC.H.I.P.</string>
+		<key>u-boot-pkg</key>
+		<string>pocketchip</string>
+	</dict>
+	<key>nextthing,chip-pro</key>
+	<dict>
+		<key>description</key>
+		<string>NextThing C.H.I.P. Pro</string>
+		<key>u-boot-pkg</key>
+		<string>chip-pro</string>
+	</dict>
+
+	<key>olimex,a10-olinuxino-lime</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A10-OLinuXino-LIME</string>
+		<key>u-boot-pkg</key>
+		<string>a10-olinuxino-lime</string>
+	</dict>
+	<key>olimex,a20-olinuxino-lime2</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-LIME2</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-lime2</string>
+	</dict>
+	<key>olimex,a20-olinuxino-lime2-emmc</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-LIME2-eMMC</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-lime2-emmc</string>
+	</dict>
+	<key>olimex,a20-olinuxino-micro</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-MICRO</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-micro-emmc</string>
+	</dict>
+	<key>olimex,a20-olinuxino-micro-emmc</key>
+	<dict>
+		<key>description</key>
+		<string>Olimex A20-OLinuXino-MICRO-eMMC</string>
+		<key>u-boot-pkg</key>
+		<string>a20-olinuxino-micro-emmc</string>
+	</dict>
+
+	<key>pine64,pine64-plus</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64+</string>
+		<key>u-boot-pkg</key>
+		<string>pine64-plus</string>
+	</dict>
+	<key>pine64,pine64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64</string>
+		<key>u-boot-pkg</key>
+		<string>pine64</string>
+	</dict>
+	<key>pine64,pinebook</key>
+	<dict>
+		<key>description</key>
+		<string>Pinebook</string>
+		<key>u-boot-pkg</key>
+		<string>pinebook</string>
+	</dict>
+	<key>pine64,sopine-baseboard</key>
+	<dict>
+		<key>description</key>
+		<string>SoPine with baseboard</string>
+		<key>u-boot-pkg</key>
+		<string>sopine-baseboard</string>
+	</dict>
+	<key>pine64,pine64-lts</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 LTS</string>
+		<!-- Same u-boot as sopine-baseboard. -->
+		<key>u-boot-pkg</key>
+		<string>sopine-baseboard</string>
+	</dict>
+	<key>pine64,pine-h64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine H64</string>
+		<key>u-boot-pkg</key>
+		<string>pine-h64</string>
+	</dict>
+
+	<key>terasic,de0-atlas</key>
+	<dict>
+		<key>description</key>
+		<string>Terasic DE-0(Atlas)</string>
+		<key>u-boot-pkg</key>
+		<string>de0-nanosoc</string>
+	</dict>
+
+	<key>xunlong,orangepi-2</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi 2</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-2</string>
+	</dict>
+	<key>xunlong,orangepi-one</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi One</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-one</string>
+	</dict>
+	<key>xunlong,orangepi-lite</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite</string>
+	</dict>
+	<key>xunlong,orangepi-lite2</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite2</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite2</string>
+	</dict>
+	<key>xunlong,orangepi-plus2e</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Plus 2E</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-plus2e</string>
+	</dict>
+	<key>xunlong,orangepi-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Zero</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-zero</string>
+	</dict>
+	<key>xunlong,orangepi-zero-plus</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Zero Plus</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-zero-plus</string>
+	</dict>
+
+	<!--
+	  -- xilinx boards
+	  -->
+	<key>digilent,zynq-zybo</key>
+	<dict>
+		<key>description</key>
+		<string>Digilent Zybo board</string>
+		<key>u-boot-pkg</key>
+		<string>zynq-zybo</string>
+	</dict>
+	<key>digilent,zynq-zybo-z7</key>
+	<dict>
+		<key>description</key>
+		<string>Digilent Zybo Z7 board</string>
+		<key>u-boot-pkg</key>
+		<string>zynq-zybo-z7</string>
+	</dict>
+</dict>
+</plist>

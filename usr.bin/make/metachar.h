@@ -1,6 +1,6 @@
-/*	$NetBSD: metachar.h,v 1.4 2015/06/21 20:26:02 christos Exp $	*/
+/*	$NetBSD: metachar.h,v 1.15 2021/01/19 20:51:46 rillig Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -28,34 +28,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _METACHAR_H
-#define _METACHAR_H
+#ifndef MAKE_METACHAR_H
+#define MAKE_METACHAR_H
 
-#include <ctype.h>
+#include "make.h"
 
 extern unsigned char _metachar[];
 
-#define ismeta(c)	_metachar[(c) & 0x7f]
+#define is_shell_metachar(c)	(_metachar[(c) & 0x7f] != 0)
 
-static inline int
-hasmeta(const char *cmd)
+MAKE_INLINE Boolean
+needshell(const char *cmd)
 {
-	while (!ismeta(*cmd))
+	while (!is_shell_metachar(*cmd) && *cmd != ':' && *cmd != '=')
 		cmd++;
-
 	return *cmd != '\0';
 }
 
-static inline int
-needshell(const char *cmd, int white)
-{
-	while (!ismeta(*cmd) && *cmd != ':' && *cmd != '=') {
-		if (white && isspace((unsigned char)*cmd))
-			break;
-		cmd++;
-	}
-
-	return *cmd != '\0';
-}
-
-#endif /* _METACHAR_H */
+#endif /* MAKE_METACHAR_H */

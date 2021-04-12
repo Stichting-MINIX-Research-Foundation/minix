@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k.c,v 1.4 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: x68k.c,v 1.5 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: x68k.c,v 1.4 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: x68k.c,v 1.5 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -59,9 +59,13 @@ static int x68k_clearheader(ib_params *, struct bbinfo_params *, uint8_t *);
 static int x68k_clearboot(ib_params *);
 static int x68k_setboot(ib_params *);
 
-struct ib_mach ib_mach_x68k =
-	{ "x68k", x68k_setboot, x68k_clearboot, no_editboot,
-		IB_STAGE1START | IB_STAGE2START };
+struct ib_mach ib_mach_x68k = {
+	.name		=	"x68k",
+	.setboot	=	x68k_setboot,
+	.clearboot	=	x68k_clearboot,
+	.editboot	=	no_editboot,
+	.valid_flags	=	IB_STAGE1START | IB_STAGE2START,
+};
 
 static struct bbinfo_params bbparams = {
 	X68K_BBINFO_MAGIC,

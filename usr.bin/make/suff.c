@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.73 2014/09/07 20:55:34 joerg Exp $	*/
+/*	$NetBSD: suff.c,v 1.348 2021/03/15 12:15:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,2593 +68,2111 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.73 2014/09/07 20:55:34 joerg Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
-#else
-__RCSID("$NetBSD: suff.c,v 1.73 2014/09/07 20:55:34 joerg Exp $");
-#endif
-#endif /* not lint */
-#endif
-
-/*-
- * suff.c --
- *	Functions to maintain suffix lists and find implicit dependents
- *	using suffix transformation rules
+/*
+ * Maintain suffix lists and find implicit dependents using suffix
+ * transformation rules such as ".c.o".
  *
  * Interface:
- *	Suff_Init 	    	Initialize all things to do with suffixes.
+ *	Suff_Init	Initialize the module.
  *
- *	Suff_End 	    	Cleanup the module
+ *	Suff_End	Clean up the module.
  *
- *	Suff_DoPaths	    	This function is used to make life easier
- *	    	  	    	when searching for a file according to its
- *	    	  	    	suffix. It takes the global search path,
- *	    	  	    	as defined using the .PATH: target, and appends
- *	    	  	    	its directories to the path of each of the
- *	    	  	    	defined suffixes, as specified using
- *	    	  	    	.PATH<suffix>: targets. In addition, all
- *	    	  	    	directories given for suffixes labeled as
- *	    	  	    	include files or libraries, using the .INCLUDES
- *	    	  	    	or .LIBS targets, are played with using
- *	    	  	    	Dir_MakeFlags to create the .INCLUDES and
- *	    	  	    	.LIBS global variables.
+ *	Suff_DoPaths	Extend the search path of each suffix to include the
+ *			default search path.
  *
- *	Suff_ClearSuffixes  	Clear out all the suffixes and defined
- *	    	  	    	transformations.
+ *	Suff_ClearSuffixes
+ *			Clear out all the suffixes and transformations.
  *
- *	Suff_IsTransform    	Return TRUE if the passed string is the lhs
- *	    	  	    	of a transformation rule.
+ *	Suff_IsTransform
+ *			See if the passed string is a transformation rule.
  *
- *	Suff_AddSuffix	    	Add the passed string as another known suffix.
+ *	Suff_AddSuffix	Add the passed string as another known suffix.
  *
- *	Suff_GetPath	    	Return the search path for the given suffix.
+ *	Suff_GetPath	Return the search path for the given suffix.
  *
- *	Suff_AddInclude	    	Mark the given suffix as denoting an include
- *	    	  	    	file.
+ *	Suff_AddInclude
+ *			Mark the given suffix as denoting an include file.
  *
- *	Suff_AddLib	    	Mark the given suffix as denoting a library.
+ *	Suff_AddLib	Mark the given suffix as denoting a library.
  *
- *	Suff_AddTransform   	Add another transformation to the suffix
- *	    	  	    	graph. Returns  GNode suitable for framing, I
- *	    	  	    	mean, tacking commands, attributes, etc. on.
+ *	Suff_AddTransform
+ *			Add another transformation to the suffix graph.
  *
- *	Suff_SetNull	    	Define the suffix to consider the suffix of
- *	    	  	    	any file that doesn't have a known one.
+ *	Suff_SetNull	Define the suffix to consider the suffix of
+ *			any file that doesn't have a known one.
  *
- *	Suff_FindDeps	    	Find implicit sources for and the location of
- *	    	  	    	a target based on its suffix. Returns the
- *	    	  	    	bottom-most node added to the graph or NULL
- *	    	  	    	if the target had no implicit sources.
+ *	Suff_FindDeps	Find implicit sources for and the location of
+ *			a target based on its suffix. Returns the
+ *			bottom-most node added to the graph or NULL
+ *			if the target had no implicit sources.
  *
- *	Suff_FindPath	    	Return the appropriate path to search in
- *				order to find the node.
+ *	Suff_FindPath	Return the appropriate path to search in order to
+ *			find the node.
  */
 
-#include    	  <stdio.h>
-#include	  "make.h"
-#include	  "hash.h"
-#include	  "dir.h"
+#include "make.h"
+#include "dir.h"
 
-static Lst       sufflist;	/* Lst of suffixes */
+/*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
+MAKE_RCSID("$NetBSD: suff.c,v 1.348 2021/03/15 12:15:03 rillig Exp $");
+
+typedef List SuffixList;
+typedef ListNode SuffixListNode;
+
+typedef List CandidateList;
+typedef ListNode CandidateListNode;
+
+/* The defined suffixes, such as '.c', '.o', '.l'. */
+static SuffixList sufflist = LST_INIT;
 #ifdef CLEANUP
-static Lst	 suffClean;	/* Lst of suffixes to be cleaned */
+/* The suffixes to be cleaned up at the end. */
+static SuffixList suffClean = LST_INIT;
 #endif
-static Lst	 srclist;	/* Lst of sources */
-static Lst       transforms;	/* Lst of transformation rules */
-
-static int        sNum = 0;	/* Counter for assigning suffix numbers */
 
 /*
- * Structure describing an individual suffix.
+ * The transformation rules, such as '.c.o' to transform '.c' into '.o',
+ * or simply '.c' to transform 'file.c' into 'file'.
  */
-typedef struct _Suff {
-    char         *name;	    	/* The suffix itself */
-    int		 nameLen;	/* Length of the suffix */
-    short	 flags;      	/* Type of suffix */
-#define SUFF_INCLUDE	  0x01	    /* One which is #include'd */
-#define SUFF_LIBRARY	  0x02	    /* One which contains a library */
-#define SUFF_NULL 	  0x04	    /* The empty suffix */
-    Lst    	 searchPath;	/* The path along which files of this suffix
-				 * may be found */
-    int          sNum;	      	/* The suffix number */
-    int		 refCount;	/* Reference count of list membership */
-    Lst          parents;	/* Suffixes we have a transformation to */
-    Lst          children;	/* Suffixes we have a transformation from */
-    Lst		 ref;		/* List of lists this suffix is referenced */
-} Suff;
+static GNodeList transforms = LST_INIT;
 
 /*
- * for SuffSuffIsSuffix
+ * Counter for assigning suffix numbers.
+ * TODO: What are these suffix numbers used for?
  */
-typedef struct {
-    char	*ename;		/* The end of the name */
-    int		 len;		/* Length of the name */
-} SuffixCmpData;
+static int sNum = 0;
+
+typedef enum SuffixFlags {
+	SUFF_NONE	= 0,
+
+	/*
+	 * This suffix marks include files.  Their search path ends up in the
+	 * undocumented special variable '.INCLUDES'.
+	 */
+	SUFF_INCLUDE	= 1 << 0,
+
+	/*
+	 * This suffix marks library files.  Their search path ends up in the
+	 * undocumented special variable '.LIBS'.
+	 */
+	SUFF_LIBRARY	= 1 << 1,
+
+	/*
+	 * The empty suffix.
+	 *
+	 * XXX: What is the difference between the empty suffix and the null
+	 * suffix?
+	 *
+	 * XXX: Why is SUFF_NULL needed at all? Wouldn't nameLen == 0 mean
+	 * the same?
+	 */
+	SUFF_NULL	= 1 << 2
+
+} SuffixFlags;
+
+ENUM_FLAGS_RTTI_3(SuffixFlags,
+    SUFF_INCLUDE, SUFF_LIBRARY, SUFF_NULL);
+
+typedef List SuffixListList;
 
 /*
- * Structure used in the search for implied sources.
+ * A suffix such as ".c" or ".o" that is used in suffix transformation rules
+ * such as ".c.o:".
  */
-typedef struct _Src {
-    char            *file;	/* The file to look for */
-    char    	    *pref;  	/* Prefix from which file was formed */
-    Suff            *suff;	/* The suffix on the file */
-    struct _Src     *parent;	/* The Src for which this is a source */
-    GNode           *node;	/* The node describing the file */
-    int	    	    children;	/* Count of existing children (so we don't free
-				 * this thing too early or never nuke it) */
+typedef struct Suffix {
+	/* The suffix itself, such as ".c" */
+	char *name;
+	/* Length of the name, to avoid strlen calls */
+	size_t nameLen;
+	/* Type of suffix */
+	SuffixFlags flags;
+	/* The path along which files of this suffix may be found */
+	SearchPath *searchPath;
+	/* The suffix number; TODO: document the purpose of this number */
+	int sNum;
+	/* Reference count of list membership and several other places */
+	int refCount;
+	/* Suffixes we have a transformation to */
+	SuffixList parents;
+	/* Suffixes we have a transformation from */
+	SuffixList children;
+
+	/* Lists in which this suffix is referenced.
+	 *
+	 * XXX: These lists are used nowhere, they are just appended to, for
+	 * no apparent reason.  They do have the side effect of increasing
+	 * refCount though. */
+	SuffixListList ref;
+} Suffix;
+
+/*
+ * A candidate when searching for implied sources.
+ *
+ * For example, when "src.o" is to be made, a typical candidate is "src.c"
+ * via the transformation rule ".c.o".  If that doesn't exist, maybe there is
+ * another transformation rule ".pas.c" that would make "src.pas" an indirect
+ * candidate as well.  The first such chain that leads to an existing file or
+ * node is finally chosen to be made.
+ */
+typedef struct Candidate {
+	/* The file or node to look for. */
+	char *file;
+	/* The prefix from which file was formed.
+	 * Its memory is shared among all candidates. */
+	char *prefix;
+	/* The suffix on the file. */
+	Suffix *suff;
+
+	/* The candidate that can be made from this,
+	 * or NULL for the top-level candidate. */
+	struct Candidate *parent;
+	/* The node describing the file. */
+	GNode *node;
+
+	/* Count of existing children, only used for memory management, so we
+	 * don't free this candidate too early or too late. */
+	int numChildren;
 #ifdef DEBUG_SRC
-    Lst		    cp;		/* Debug; children list */
+	CandidateList childrenList;
 #endif
-} Src;
+} Candidate;
+
+typedef struct CandidateSearcher {
+
+	CandidateList list;
+
+	/*
+	 * TODO: Add HashSet for seen entries, to avoid endless loops such as
+	 * in suff-transform-endless.mk.
+	 */
+
+} CandidateSearcher;
+
+
+/* TODO: Document the difference between nullSuff and emptySuff. */
+/* The NULL suffix for this run */
+static Suffix *nullSuff;
+/* The empty suffix required for POSIX single-suffix transformation rules */
+static Suffix *emptySuff;
+
+
+static Suffix *
+Suffix_Ref(Suffix *suff)
+{
+	suff->refCount++;
+	return suff;
+}
+
+/* Change the value of a Suffix variable, adjusting the reference counts. */
+static void
+Suffix_Reassign(Suffix **var, Suffix *suff)
+{
+	if (*var != NULL)
+		(*var)->refCount--;
+	*var = suff;
+	suff->refCount++;
+}
+
+/* Set a Suffix variable to NULL, adjusting the reference count. */
+static void
+Suffix_Unassign(Suffix **var)
+{
+	if (*var != NULL)
+		(*var)->refCount--;
+	*var = NULL;
+}
 
 /*
- * A structure for passing more than one argument to the Lst-library-invoked
- * function...
- */
-typedef struct {
-    Lst            l;
-    Src            *s;
-} LstSrc;
-
-typedef struct {
-    GNode	  **gn;
-    Suff	   *s;
-    Boolean	    r;
-} GNodeSuff;
-
-static Suff 	    *suffNull;	/* The NULL suffix for this run */
-static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
-				 * single-suffix transformation rules */
-
-
-static const char *SuffStrIsPrefix(const char *, const char *);
-static char *SuffSuffIsSuffix(const Suff *, const SuffixCmpData *);
-static int SuffSuffIsSuffixP(const void *, const void *);
-static int SuffSuffHasNameP(const void *, const void *);
-static int SuffSuffIsPrefix(const void *, const void *);
-static int SuffGNHasNameP(const void *, const void *);
-static void SuffUnRef(void *, void *);
-static void SuffFree(void *);
-static void SuffInsert(Lst, Suff *);
-static void SuffRemove(Lst, Suff *);
-static Boolean SuffParseTransform(char *, Suff **, Suff **);
-static int SuffRebuildGraph(void *, void *);
-static int SuffScanTargets(void *, void *);
-static int SuffAddSrc(void *, void *);
-static int SuffRemoveSrc(Lst);
-static void SuffAddLevel(Lst, Src *);
-static Src *SuffFindThem(Lst, Lst);
-static Src *SuffFindCmds(Src *, Lst);
-static void SuffExpandChildren(LstNode, GNode *);
-static void SuffExpandWildcards(LstNode, GNode *);
-static Boolean SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
-static void SuffFindDeps(GNode *, Lst);
-static void SuffFindArchiveDeps(GNode *, Lst);
-static void SuffFindNormalDeps(GNode *, Lst);
-static int SuffPrintName(void *, void *);
-static int SuffPrintSuff(void *, void *);
-static int SuffPrintTrans(void *, void *);
-
-	/*************** Lst Predicates ****************/
-/*-
- *-----------------------------------------------------------------------
- * SuffStrIsPrefix  --
- *	See if pref is a prefix of str.
- *
- * Input:
- *	pref		possible prefix
- *	str		string to check
- *
- * Results:
- *	NULL if it ain't, pointer to character in str after prefix if so
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
+ * See if pref is a prefix of str.
+ * Return NULL if it ain't, pointer to character in str after prefix if so.
  */
 static const char *
-SuffStrIsPrefix(const char *pref, const char *str)
+StrTrimPrefix(const char *pref, const char *str)
 {
-    while (*str && *pref == *str) {
-	pref++;
-	str++;
-    }
+	while (*str != '\0' && *pref == *str) {
+		pref++;
+		str++;
+	}
 
-    return (*pref ? NULL : str);
+	return *pref != '\0' ? NULL : str;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffSuffIsSuffix  --
- *	See if suff is a suffix of str. sd->ename should point to THE END
- *	of the string to check. (THE END == the null byte)
- *
- * Input:
- *	s		possible suffix
- *	sd		string to examine
- *
- * Results:
- *	NULL if it ain't, pointer to character in str before suffix if
- *	it is.
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
+/*
+ * See if suff is a suffix of str, and if so, return the pointer to the suffix
+ * in str, which at the same time marks the end of the prefix.
  */
-static char *
-SuffSuffIsSuffix(const Suff *s, const SuffixCmpData *sd)
+static const char *
+StrTrimSuffix(const char *str, size_t strLen, const char *suff, size_t suffLen)
 {
-    char  *p1;	    	/* Pointer into suffix name */
-    char  *p2;	    	/* Pointer into string being examined */
+	const char *suffInStr;
+	size_t i;
 
-    if (sd->len < s->nameLen)
-	return NULL;		/* this string is shorter than the suffix */
+	if (strLen < suffLen)
+		return NULL;
 
-    p1 = s->name + s->nameLen;
-    p2 = sd->ename;
+	suffInStr = str + strLen - suffLen;
+	for (i = 0; i < suffLen; i++)
+		if (suff[i] != suffInStr[i])
+			return NULL;
 
-    while (p1 >= s->name && *p1 == *p2) {
-	p1--;
-	p2--;
-    }
-
-    return (p1 == s->name - 1 ? p2 : NULL);
+	return suffInStr;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffSuffIsSuffixP --
- *	Predicate form of SuffSuffIsSuffix. Passed as the callback function
- *	to Lst_Find.
- *
- * Results:
- *	0 if the suffix is the one desired, non-zero if not.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
+/*
+ * See if suff is a suffix of name, and if so, return the end of the prefix
+ * in name.
  */
-static int
-SuffSuffIsSuffixP(const void *s, const void *sd)
+static const char *
+Suffix_TrimSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
-    return(!SuffSuffIsSuffix(s, sd));
+	return StrTrimSuffix(nameEnd - nameLen, nameLen,
+	    suff->name, suff->nameLen);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffSuffHasNameP --
- *	Callback procedure for finding a suffix based on its name. Used by
- *	Suff_GetPath.
- *
- * Input:
- *	s		Suffix to check
- *	sd		Desired name
- *
- * Results:
- *	0 if the suffix is of the given name. non-zero otherwise.
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static int
-SuffSuffHasNameP(const void *s, const void *sname)
+static Boolean
+Suffix_IsSuffix(const Suffix *suff, size_t nameLen, const char *nameEnd)
 {
-    return (strcmp(sname, ((const Suff *)s)->name));
+	return Suffix_TrimSuffix(suff, nameLen, nameEnd) != NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffSuffIsPrefix  --
- *	See if the suffix described by s is a prefix of the string. Care
- *	must be taken when using this to search for transformations and
- *	what-not, since there could well be two suffixes, one of which
- *	is a prefix of the other...
- *
- * Input:
- *	s		suffix to compare
- *	str		string to examine
- *
- * Results:
- *	0 if s is a prefix of str. non-zero otherwise
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static int
-SuffSuffIsPrefix(const void *s, const void *str)
+static Suffix *
+FindSuffixByNameLen(const char *name, size_t nameLen)
 {
-    return SuffStrIsPrefix(((const Suff *)s)->name, str) == NULL;
+	SuffixListNode *ln;
+
+	for (ln = sufflist.first; ln != NULL; ln = ln->next) {
+		Suffix *suff = ln->datum;
+		if (suff->nameLen == nameLen &&
+		    memcmp(suff->name, name, nameLen) == 0)
+			return suff;
+	}
+	return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffGNHasNameP  --
- *	See if the graph node has the desired name
- *
- * Input:
- *	gn		current node we're looking at
- *	name		name we're looking for
- *
- * Results:
- *	0 if it does. non-zero if it doesn't
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static int
-SuffGNHasNameP(const void *gn, const void *name)
+static Suffix *
+FindSuffixByName(const char *name)
 {
-    return (strcmp(name, ((const GNode *)gn)->name));
+	return FindSuffixByNameLen(name, strlen(name));
 }
 
- 	    /*********** Maintenance Functions ************/
+static GNode *
+FindTransformByName(const char *name)
+{
+	GNodeListNode *ln;
+
+	for (ln = transforms.first; ln != NULL; ln = ln->next) {
+		GNode *gn = ln->datum;
+		if (strcmp(gn->name, name) == 0)
+			return gn;
+	}
+	return NULL;
+}
 
 static void
-SuffUnRef(void *lp, void *sp)
+SuffixList_Unref(SuffixList *list, Suffix *suff)
 {
-    Lst l = (Lst) lp;
-
-    LstNode ln = Lst_Member(l, sp);
-    if (ln != NULL) {
-	Lst_Remove(l, ln);
-	((Suff *)sp)->refCount--;
-    }
+	SuffixListNode *ln = Lst_FindDatum(list, suff);
+	if (ln != NULL) {
+		Lst_Remove(list, ln);
+		suff->refCount--;
+	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffFree  --
- *	Free up all memory associated with the given suffix structure.
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	the suffix entry is detroyed
- *-----------------------------------------------------------------------
- */
+/* Free up all memory associated with the given suffix structure. */
 static void
-SuffFree(void *sp)
+Suffix_Free(Suffix *suff)
 {
-    Suff           *s = (Suff *)sp;
 
-    if (s == suffNull)
-	suffNull = NULL;
+	if (suff == nullSuff)
+		nullSuff = NULL;
 
-    if (s == emptySuff)
-	emptySuff = NULL;
+	if (suff == emptySuff)
+		emptySuff = NULL;
 
-#ifdef notdef
-    /* We don't delete suffixes in order, so we cannot use this */
-    if (s->refCount)
-	Punt("Internal error deleting suffix `%s' with refcount = %d", s->name,
-	    s->refCount);
+#if 0
+	/* We don't delete suffixes in order, so we cannot use this */
+	if (suff->refCount != 0)
+		Punt("Internal error deleting suffix `%s' with refcount = %d",
+		    suff->name, suff->refCount);
 #endif
 
-    Lst_Destroy(s->ref, NULL);
-    Lst_Destroy(s->children, NULL);
-    Lst_Destroy(s->parents, NULL);
-    Lst_Destroy(s->searchPath, Dir_Destroy);
+	Lst_Done(&suff->ref);
+	Lst_Done(&suff->children);
+	Lst_Done(&suff->parents);
+	SearchPath_Free(suff->searchPath);
 
-    free(s->name);
-    free(s);
+	free(suff->name);
+	free(suff);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffRemove  --
- *	Remove the suffix into the list
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The reference count for the suffix is decremented and the
- *	suffix is possibly freed
- *-----------------------------------------------------------------------
+static void
+SuffFree(void *p)
+{
+	Suffix_Free(p);
+}
+
+/* Remove the suffix from the list, and free if it is otherwise unused. */
+static void
+SuffixList_Remove(SuffixList *list, Suffix *suff)
+{
+	SuffixList_Unref(list, suff);
+	if (suff->refCount == 0) {
+		/* XXX: can lead to suff->refCount == -1 */
+		SuffixList_Unref(&sufflist, suff);
+		DEBUG1(SUFF, "Removing suffix \"%s\"\n", suff->name);
+		SuffFree(suff);
+	}
+}
+
+/*
+ * Insert the suffix into the list, keeping the list ordered by suffix
+ * number.
  */
 static void
-SuffRemove(Lst l, Suff *s)
+SuffixList_Insert(SuffixList *list, Suffix *suff)
 {
-    SuffUnRef(l, s);
-    if (s->refCount == 0) {
-	SuffUnRef(sufflist, s);
-	SuffFree(s);
-    }
+	SuffixListNode *ln;
+	Suffix *listSuff = NULL;
+
+	for (ln = list->first; ln != NULL; ln = ln->next) {
+		listSuff = ln->datum;
+		if (listSuff->sNum >= suff->sNum)
+			break;
+	}
+
+	if (ln == NULL) {
+		DEBUG2(SUFF, "inserting \"%s\" (%d) at end of list\n",
+		    suff->name, suff->sNum);
+		Lst_Append(list, Suffix_Ref(suff));
+		Lst_Append(&suff->ref, list);
+	} else if (listSuff->sNum != suff->sNum) {
+		DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
+		    suff->name, suff->sNum, listSuff->name, listSuff->sNum);
+		Lst_InsertBefore(list, ln, Suffix_Ref(suff));
+		Lst_Append(&suff->ref, list);
+	} else {
+		DEBUG2(SUFF, "\"%s\" (%d) is already there\n",
+		    suff->name, suff->sNum);
+	}
 }
-
-/*-
- *-----------------------------------------------------------------------
- * SuffInsert  --
- *	Insert the suffix into the list keeping the list ordered by suffix
- *	numbers.
- *
- * Input:
- *	l		the list where in s should be inserted
- *	s		the suffix to insert
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The reference count of the suffix is incremented
- *-----------------------------------------------------------------------
- */
+
 static void
-SuffInsert(Lst l, Suff *s)
+Relate(Suffix *srcSuff, Suffix *targSuff)
 {
-    LstNode 	  ln;		/* current element in l we're examining */
-    Suff          *s2 = NULL;	/* the suffix descriptor in this element */
-
-    if (Lst_Open(l) == FAILURE) {
-	return;
-    }
-    while ((ln = Lst_Next(l)) != NULL) {
-	s2 = (Suff *)Lst_Datum(ln);
-	if (s2->sNum >= s->sNum) {
-	    break;
-	}
-    }
-
-    Lst_Close(l);
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "inserting %s(%d)...", s->name, s->sNum);
-    }
-    if (ln == NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "at end of list\n");
-	}
-	(void)Lst_AtEnd(l, s);
-	s->refCount++;
-	(void)Lst_AtEnd(s->ref, l);
-    } else if (s2->sNum != s->sNum) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "before %s(%d)\n", s2->name, s2->sNum);
-	}
-	(void)Lst_InsertBefore(l, ln, s);
-	s->refCount++;
-	(void)Lst_AtEnd(s->ref, l);
-    } else if (DEBUG(SUFF)) {
-	fprintf(debug_file, "already there\n");
-    }
+	SuffixList_Insert(&targSuff->children, srcSuff);
+	SuffixList_Insert(&srcSuff->parents, targSuff);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_ClearSuffixes --
- *	This is gross. Nuke the list of suffixes but keep all transformation
- *	rules around. The transformation graph is destroyed in this process,
- *	but we leave the list of rules so when a new graph is formed the rules
- *	will remain.
- *	This function is called from the parse module when a
- *	.SUFFIXES:\n line is encountered.
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	the sufflist and its graph nodes are destroyed
- *-----------------------------------------------------------------------
+static Suffix *
+Suffix_New(const char *name)
+{
+	Suffix *suff = bmake_malloc(sizeof *suff);
+
+	suff->name = bmake_strdup(name);
+	suff->nameLen = strlen(suff->name);
+	suff->searchPath = SearchPath_New();
+	Lst_Init(&suff->children);
+	Lst_Init(&suff->parents);
+	Lst_Init(&suff->ref);
+	suff->sNum = sNum++;
+	suff->flags = SUFF_NONE;
+	suff->refCount = 1; /* XXX: why 1? It's not assigned anywhere yet. */
+
+	return suff;
+}
+
+/*
+ * Nuke the list of suffixes but keep all transformation rules around. The
+ * transformation graph is destroyed in this process, but we leave the list
+ * of rules so when a new graph is formed, the rules will remain. This
+ * function is called when a line '.SUFFIXES:' with an empty suffixes list is
+ * encountered in a makefile.
  */
 void
 Suff_ClearSuffixes(void)
 {
 #ifdef CLEANUP
-    Lst_Concat(suffClean, sufflist, LST_CONCLINK);
+	Lst_MoveAll(&suffClean, &sufflist);
 #endif
-    sufflist = Lst_Init(FALSE);
-    sNum = 0;
-    suffNull = emptySuff;
+	DEBUG0(SUFF, "Clearing all suffixes\n");
+	Lst_Init(&sufflist);
+	sNum = 0;
+	if (nullSuff != NULL)
+		SuffFree(nullSuff);
+	emptySuff = nullSuff = Suffix_New("");
+
+	SearchPath_AddAll(nullSuff->searchPath, &dirSearchPath);
+	nullSuff->flags = SUFF_NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffParseTransform --
- *	Parse a transformation string to find its two component suffixes.
+/*
+ * Parse a transformation string such as ".c.o" to find its two component
+ * suffixes (the source ".c" and the target ".o").  If there are no such
+ * suffixes, try a single-suffix transformation as well.
  *
- * Input:
- *	str		String being parsed
- *	srcPtr		Place to store source of trans.
- *	targPtr		Place to store target of trans.
- *
- * Results:
- *	TRUE if the string is a valid transformation and FALSE otherwise.
- *
- * Side Effects:
- *	The passed pointers are overwritten.
- *
- *-----------------------------------------------------------------------
+ * Return TRUE if the string is a valid transformation.
  */
 static Boolean
-SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
+ParseTransform(const char *str, Suffix **out_src, Suffix **out_targ)
 {
-    LstNode		srcLn;	    /* element in suffix list of trans source*/
-    Suff		*src;	    /* Source of transformation */
-    LstNode		targLn;	    /* element in suffix list of trans target*/
-    char		*str2;	    /* Extra pointer (maybe target suffix) */
-    LstNode 	    	singleLn;   /* element in suffix list of any suffix
-				     * that exactly matches str */
-    Suff    	    	*single = NULL;/* Source of possible transformation to
-				     * null suffix */
+	SuffixListNode *ln;
+	Suffix *single = NULL;
 
-    srcLn = NULL;
-    singleLn = NULL;
+	/*
+	 * Loop looking first for a suffix that matches the start of the
+	 * string and then for one that exactly matches the rest of it. If
+	 * we can find two that meet these criteria, we've successfully
+	 * parsed the string.
+	 */
+	for (ln = sufflist.first; ln != NULL; ln = ln->next) {
+		Suffix *src = ln->datum;
 
-    /*
-     * Loop looking first for a suffix that matches the start of the
-     * string and then for one that exactly matches the rest of it. If
-     * we can find two that meet these criteria, we've successfully
-     * parsed the string.
-     */
-    for (;;) {
-	if (srcLn == NULL) {
-	    srcLn = Lst_Find(sufflist, str, SuffSuffIsPrefix);
-	} else {
-	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn), str,
-				  SuffSuffIsPrefix);
+		if (StrTrimPrefix(src->name, str) == NULL)
+			continue;
+
+		if (str[src->nameLen] == '\0') {
+			single = src;
+		} else {
+			Suffix *targ = FindSuffixByName(str + src->nameLen);
+			if (targ != NULL) {
+				*out_src = src;
+				*out_targ = targ;
+				return TRUE;
+			}
+		}
 	}
-	if (srcLn == NULL) {
-	    /*
-	     * Ran out of source suffixes -- no such rule
-	     */
-	    if (singleLn != NULL) {
+
+	if (single != NULL) {
 		/*
-		 * Not so fast Mr. Smith! There was a suffix that encompassed
-		 * the entire string, so we assume it was a transformation
-		 * to the null suffix (thank you POSIX). We still prefer to
-		 * find a double rule over a singleton, hence we leave this
-		 * check until the end.
+		 * There was a suffix that encompassed the entire string, so we
+		 * assume it was a transformation to the null suffix (thank you
+		 * POSIX; search for "single suffix" or "single-suffix").
 		 *
-		 * XXX: Use emptySuff over suffNull?
+		 * We still prefer to find a double rule over a singleton,
+		 * hence we leave this check until the end.
+		 *
+		 * XXX: Use emptySuff over nullSuff?
 		 */
-		*srcPtr = single;
-		*targPtr = suffNull;
-		return(TRUE);
-	    }
-	    return (FALSE);
+		*out_src = single;
+		*out_targ = nullSuff;
+		return TRUE;
 	}
-	src = (Suff *)Lst_Datum(srcLn);
-	str2 = str + src->nameLen;
-	if (*str2 == '\0') {
-	    single = src;
-	    singleLn = srcLn;
-	} else {
-	    targLn = Lst_Find(sufflist, str2, SuffSuffHasNameP);
-	    if (targLn != NULL) {
-		*srcPtr = src;
-		*targPtr = (Suff *)Lst_Datum(targLn);
-		return (TRUE);
-	    }
-	}
-    }
+	return FALSE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_IsTransform  --
- *	Return TRUE if the given string is a transformation rule
- *
- *
- * Input:
- *	str		string to check
- *
- * Results:
- *	TRUE if the string is a concatenation of two known suffixes.
- *	FALSE otherwise
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
+/*
+ * Return TRUE if the given string is a transformation rule, that is, a
+ * concatenation of two known suffixes such as ".c.o" or a single suffix
+ * such as ".o".
  */
 Boolean
-Suff_IsTransform(char *str)
+Suff_IsTransform(const char *str)
 {
-    Suff    	  *src, *targ;
+	Suffix *src, *targ;
 
-    return (SuffParseTransform(str, &src, &targ));
+	return ParseTransform(str, &src, &targ);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_AddTransform --
- *	Add the transformation rule described by the line to the
- *	list of rules and place the transformation itself in the graph
+/*
+ * Add the transformation rule to the list of rules and place the
+ * transformation itself in the graph.
+ *
+ * The transformation is linked to the two suffixes mentioned in the name.
  *
  * Input:
- *	line		name of transformation to add
+ *	name		must have the form ".from.to" or just ".from"
  *
  * Results:
- *	The node created for the transformation in the transforms list
- *
- * Side Effects:
- *	The node is placed on the end of the transforms Lst and links are
- *	made between the two suffixes mentioned in the target name
- *-----------------------------------------------------------------------
+ *	The created or existing transformation node in the transforms list
  */
 GNode *
-Suff_AddTransform(char *line)
+Suff_AddTransform(const char *name)
 {
-    GNode         *gn;		/* GNode of transformation rule */
-    Suff          *s,		/* source suffix */
-                  *t;		/* target suffix */
-    LstNode 	  ln;	    	/* Node for existing transformation */
+	Suffix *srcSuff;
+	Suffix *targSuff;
 
-#if defined(__minix)
-    /* Prevent complains from GCC at -O3 optimisation level. */
-    s = NULL;
-    t = NULL;
-#endif /* defined(__minix) */
+	GNode *gn = FindTransformByName(name);
+	if (gn == NULL) {
+		/*
+		 * Make a new graph node for the transformation. It will be
+		 * filled in by the Parse module.
+		 */
+		gn = GNode_New(name);
+		Lst_Append(&transforms, gn);
+	} else {
+		/*
+		 * New specification for transformation rule. Just nuke the
+		 * old list of commands so they can be filled in again. We
+		 * don't actually free the commands themselves, because a
+		 * given command can be attached to several different
+		 * transformations.
+		 */
+		Lst_Done(&gn->commands);
+		Lst_Init(&gn->commands);
+		Lst_Done(&gn->children);
+		Lst_Init(&gn->children);
+	}
 
-    ln = Lst_Find(transforms, line, SuffGNHasNameP);
-    if (ln == NULL) {
-	/*
-	 * Make a new graph node for the transformation. It will be filled in
-	 * by the Parse module.
-	 */
-	gn = Targ_NewGN(line);
-	(void)Lst_AtEnd(transforms, gn);
-    } else {
-	/*
-	 * New specification for transformation rule. Just nuke the old list
-	 * of commands so they can be filled in again... We don't actually
-	 * free the commands themselves, because a given command can be
-	 * attached to several different transformations.
-	 */
-	gn = (GNode *)Lst_Datum(ln);
-	Lst_Destroy(gn->commands, NULL);
-	Lst_Destroy(gn->children, NULL);
-	gn->commands = Lst_Init(FALSE);
-	gn->children = Lst_Init(FALSE);
-    }
+	gn->type = OP_TRANSFORM;
 
-    gn->type = OP_TRANSFORM;
+	{
+		/* TODO: Avoid the redundant parsing here. */
+		Boolean ok = ParseTransform(name, &srcSuff, &targSuff);
+		assert(ok);
+		(void)ok;
+	}
 
-    (void)SuffParseTransform(line, &s, &t);
+	/* Link the two together in the proper relationship and order. */
+	DEBUG2(SUFF, "defining transformation from `%s' to `%s'\n",
+	    srcSuff->name, targSuff->name);
+	Relate(srcSuff, targSuff);
 
-    /*
-     * link the two together in the proper relationship and order
-     */
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "defining transformation from `%s' to `%s'\n",
-		s->name, t->name);
-    }
-    SuffInsert(t->children, s);
-    SuffInsert(s->parents, t);
-
-    return (gn);
+	return gn;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_EndTransform --
- *	Handle the finish of a transformation definition, removing the
- *	transformation from the graph if it has neither commands nor
- *	sources. This is a callback procedure for the Parse module via
- *	Lst_ForEach
+/*
+ * Handle the finish of a transformation definition, removing the
+ * transformation from the graph if it has neither commands nor sources.
+ *
+ * If the node has no commands or children, the children and parents lists
+ * of the affected suffixes are altered.
  *
  * Input:
- *	gnp		Node for transformation
- *	dummy		Node for transformation
- *
- * Results:
- *	=== 0
- *
- * Side Effects:
- *	If the node has no commands or children, the children and parents
- *	lists of the affected suffixes are altered.
- *
- *-----------------------------------------------------------------------
+ *	gn		Node for transformation
  */
-int
-Suff_EndTransform(void *gnp, void *dummy)
+void
+Suff_EndTransform(GNode *gn)
 {
-    GNode *gn = (GNode *)gnp;
+	Suffix *srcSuff, *targSuff;
+	SuffixList *srcSuffParents;
 
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
-	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
-    if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
-	Lst_IsEmpty(gn->children))
-    {
-	Suff	*s, *t;
+	if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(&gn->cohorts))
+		gn = gn->cohorts.last->datum;
+
+	if (!(gn->type & OP_TRANSFORM))
+		return;
+
+	if (!Lst_IsEmpty(&gn->commands) || !Lst_IsEmpty(&gn->children)) {
+		DEBUG1(SUFF, "transformation %s complete\n", gn->name);
+		return;
+	}
 
 	/*
 	 * SuffParseTransform() may fail for special rules which are not
 	 * actual transformation rules. (e.g. .DEFAULT)
 	 */
-	if (SuffParseTransform(gn->name, &s, &t)) {
-	    Lst	 p;
+	if (!ParseTransform(gn->name, &srcSuff, &targSuff))
+		return;
 
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "deleting transformation from `%s' to `%s'\n",
-		s->name, t->name);
-	    }
+	DEBUG2(SUFF, "deleting incomplete transformation from `%s' to `%s'\n",
+	    srcSuff->name, targSuff->name);
 
-	    /*
-	     * Store s->parents because s could be deleted in SuffRemove
-	     */
-	    p = s->parents;
-
-	    /*
-	     * Remove the source from the target's children list. We check for a
-	     * nil return to handle a beanhead saying something like
-	     *  .c.o .c.o:
-	     *
-	     * We'll be called twice when the next target is seen, but .c and .o
-	     * are only linked once...
-	     */
-	    SuffRemove(t->children, s);
-
-	    /*
-	     * Remove the target from the source's parents list
-	     */
-	    SuffRemove(p, t);
-	}
-    } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
-	fprintf(debug_file, "transformation %s complete\n", gn->name);
-    }
-
-    return(dummy ? 0 : 0);
+	/*
+	 * Remember the parents since srcSuff could be deleted in
+	 * SuffixList_Remove.
+	 */
+	srcSuffParents = &srcSuff->parents;
+	SuffixList_Remove(&targSuff->children, srcSuff);
+	SuffixList_Remove(srcSuffParents, targSuff);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffRebuildGraph --
- *	Called from Suff_AddSuffix via Lst_ForEach to search through the
- *	list of existing transformation rules and rebuild the transformation
- *	graph when it has been destroyed by Suff_ClearSuffixes. If the
- *	given rule is a transformation involving this suffix and another,
- *	existing suffix, the proper relationship is established between
- *	the two.
+/*
+ * Called from Suff_AddSuffix to search through the list of
+ * existing transformation rules and rebuild the transformation graph when
+ * it has been destroyed by Suff_ClearSuffixes. If the given rule is a
+ * transformation involving this suffix and another, existing suffix, the
+ * proper relationship is established between the two.
+ *
+ * The appropriate links will be made between this suffix and others if
+ * transformation rules exist for it.
  *
  * Input:
- *	transformp	Transformation to test
- *	sp		Suffix to rebuild
- *
- * Results:
- *	Always 0.
- *
- * Side Effects:
- *	The appropriate links will be made between this suffix and
- *	others if transformation rules exist for it.
- *
- *-----------------------------------------------------------------------
+ *	transform	Transformation to test
+ *	suff		Suffix to rebuild
  */
-static int
-SuffRebuildGraph(void *transformp, void *sp)
+static void
+RebuildGraph(GNode *transform, Suffix *suff)
 {
-    GNode   	*transform = (GNode *)transformp;
-    Suff    	*s = (Suff *)sp;
-    char 	*cp;
-    LstNode	ln;
-    Suff  	*s2;
-    SuffixCmpData sd;
+	const char *name = transform->name;
+	size_t nameLen = strlen(name);
+	const char *toName;
 
-    /*
-     * First see if it is a transformation from this suffix.
-     */
-    cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
-    if (cp != NULL) {
-	ln = Lst_Find(sufflist, cp, SuffSuffHasNameP);
-	if (ln != NULL) {
-	    /*
-	     * Found target. Link in and return, since it can't be anything
-	     * else.
-	     */
-	    s2 = (Suff *)Lst_Datum(ln);
-	    SuffInsert(s2->children, s);
-	    SuffInsert(s->parents, s2);
-	    return(0);
+	/* See if it is a transformation from this suffix to another suffix. */
+	toName = StrTrimPrefix(suff->name, name);
+	if (toName != NULL) {
+		Suffix *to = FindSuffixByName(toName);
+		if (to != NULL) {
+			Relate(suff, to);
+			return;
+		}
 	}
-    }
 
-    /*
-     * Not from, maybe to?
-     */
-    sd.len = strlen(transform->name);
-    sd.ename = transform->name + sd.len;
-    cp = SuffSuffIsSuffix(s, &sd);
-    if (cp != NULL) {
-	/*
-	 * Null-terminate the source suffix in order to find it.
-	 */
-	cp[1] = '\0';
-	ln = Lst_Find(sufflist, transform->name, SuffSuffHasNameP);
-	/*
-	 * Replace the start of the target suffix
-	 */
-	cp[1] = s->name[0];
-	if (ln != NULL) {
-	    /*
-	     * Found it -- establish the proper relationship
-	     */
-	    s2 = (Suff *)Lst_Datum(ln);
-	    SuffInsert(s->children, s2);
-	    SuffInsert(s2->parents, s);
+	/* See if it is a transformation from another suffix to this suffix. */
+	toName = Suffix_TrimSuffix(suff, nameLen, name + nameLen);
+	if (toName != NULL) {
+		Suffix *from = FindSuffixByNameLen(name,
+		    (size_t)(toName - name));
+		if (from != NULL)
+			Relate(from, suff);
 	}
-    }
-    return(0);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffScanTargets --
- *	Called from Suff_AddSuffix via Lst_ForEach to search through the
- *	list of existing targets and find if any of the existing targets
- *	can be turned into a transformation rule.
+/*
+ * During Suff_AddSuffix, search through the list of existing targets and find
+ * if any of the existing targets can be turned into a transformation rule.
+ *
+ * If such a target is found and the target is the current main target, the
+ * main target is set to NULL and the next target examined (if that exists)
+ * becomes the main target.
  *
  * Results:
- *	1 if a new main target has been selected, 0 otherwise.
- *
- * Side Effects:
- *	If such a target is found and the target is the current main
- *	target, the main target is set to NULL and the next target
- *	examined (if that exists) becomes the main target.
- *
- *-----------------------------------------------------------------------
+ *	TRUE iff a new main target has been selected.
  */
-static int
-SuffScanTargets(void *targetp, void *gsp)
+static Boolean
+UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
+	     Boolean *inout_removedMain)
 {
-    GNode   	*target = (GNode *)targetp;
-    GNodeSuff	*gs = (GNodeSuff *)gsp;
-    Suff	*s, *t;
-    char 	*ptr;
+	Suffix *srcSuff, *targSuff;
+	char *ptr;
 
-    if (*gs->gn == NULL && gs->r && (target->type & OP_NOTARGET) == 0) {
-	*gs->gn = target;
-	Targ_SetMain(target);
-	return 1;
-    }
-
-    if ((unsigned int)target->type == OP_TRANSFORM)
-	return 0;
-
-    if ((ptr = strstr(target->name, gs->s->name)) == NULL ||
-	ptr == target->name)
-	return 0;
-
-    if (SuffParseTransform(target->name, &s, &t)) {
-	if (*gs->gn == target) {
-	    gs->r = TRUE;
-	    *gs->gn = NULL;
-	    Targ_SetMain(NULL);
+	if (*inout_main == NULL && *inout_removedMain &&
+	    !(target->type & OP_NOTARGET)) {
+		DEBUG1(MAKE, "Setting main node to \"%s\"\n", target->name);
+		*inout_main = target;
+		Targ_SetMain(target);
+		/*
+		 * XXX: Why could it be a good idea to return TRUE here?
+		 * The main task of this function is to turn ordinary nodes
+		 * into transformations, no matter whether or not a new .MAIN
+		 * node has been found.
+		 */
+		/*
+		 * XXX: Even when changing this to FALSE, none of the existing
+		 * unit tests fails.
+		 */
+		return TRUE;
 	}
-	Lst_Destroy(target->children, NULL);
-	target->children = Lst_Init(FALSE);
-	target->type = OP_TRANSFORM;
+
+	if (target->type == OP_TRANSFORM)
+		return FALSE;
+
 	/*
-	 * link the two together in the proper relationship and order
+	 * XXX: What about a transformation ".cpp.c"?  If ".c" is added as
+	 * a new suffix, it seems wrong that this transformation would be
+	 * skipped just because ".c" happens to be a prefix of ".cpp".
 	 */
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "defining transformation from `%s' to `%s'\n",
-		s->name, t->name);
+	ptr = strstr(target->name, suff->name);
+	if (ptr == NULL)
+		return FALSE;
+
+	/*
+	 * XXX: In suff-rebuild.mk, in the line '.SUFFIXES: .c .b .a', this
+	 * condition prevents the rule '.b.c' from being added again during
+	 * Suff_AddSuffix(".b").
+	 *
+	 * XXX: Removing this paragraph makes suff-add-later.mk use massive
+	 * amounts of memory.
+	 */
+	if (ptr == target->name)
+		return FALSE;
+
+	if (ParseTransform(target->name, &srcSuff, &targSuff)) {
+		if (*inout_main == target) {
+			DEBUG1(MAKE,
+			    "Setting main node from \"%s\" back to null\n",
+			    target->name);
+			*inout_removedMain = TRUE;
+			*inout_main = NULL;
+			Targ_SetMain(NULL);
+		}
+		Lst_Done(&target->children);
+		Lst_Init(&target->children);
+		target->type = OP_TRANSFORM;
+
+		/*
+		 * Link the two together in the proper relationship and order.
+		 */
+		DEBUG2(SUFF, "defining transformation from `%s' to `%s'\n",
+		    srcSuff->name, targSuff->name);
+		Relate(srcSuff, targSuff);
 	}
-	SuffInsert(t->children, s);
-	SuffInsert(s->parents, t);
-    }
-    return 0;
+	return FALSE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_AddSuffix --
- *	Add the suffix in string to the end of the list of known suffixes.
- *	Should we restructure the suffix graph? Make doesn't...
+/*
+ * Look at all existing targets to see if adding this suffix will make one
+ * of the current targets mutate into a suffix rule.
+ *
+ * This is ugly, but other makes treat all targets that start with a '.' as
+ * suffix rules.
+ */
+static void
+UpdateTargets(GNode **inout_main, Suffix *suff)
+{
+	Boolean removedMain = FALSE;
+	GNodeListNode *ln;
+
+	for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
+		GNode *gn = ln->datum;
+		if (UpdateTarget(gn, inout_main, suff, &removedMain))
+			break;
+	}
+}
+
+/*
+ * Add the suffix to the end of the list of known suffixes.
+ * Should we restructure the suffix graph? Make doesn't.
+ *
+ * A GNode is created for the suffix (XXX: this sounds completely wrong) and
+ * a Suffix structure is created and added to the suffixes list unless the
+ * suffix was already known.
+ * The mainNode passed can be modified if a target mutated into a
+ * transform and that target happened to be the main target.
  *
  * Input:
- *	str		the name of the suffix to add
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	A GNode is created for the suffix and a Suff structure is created and
- *	added to the suffixes list unless the suffix was already known.
- *	The mainNode passed can be modified if a target mutated into a
- *	transform and that target happened to be the main target.
- *-----------------------------------------------------------------------
+ *	name		the name of the suffix to add
  */
 void
-Suff_AddSuffix(char *str, GNode **gn)
+Suff_AddSuffix(const char *name, GNode **inout_main)
 {
-    Suff          *s;	    /* new suffix descriptor */
-    LstNode 	  ln;
-    GNodeSuff	  gs;
+	GNodeListNode *ln;
 
-    ln = Lst_Find(sufflist, str, SuffSuffHasNameP);
-    if (ln == NULL) {
-	s = bmake_malloc(sizeof(Suff));
+	Suffix *suff = FindSuffixByName(name);
+	if (suff != NULL)
+		return;
 
-	s->name =   	bmake_strdup(str);
-	s->nameLen = 	strlen(s->name);
-	s->searchPath = Lst_Init(FALSE);
-	s->children = 	Lst_Init(FALSE);
-	s->parents = 	Lst_Init(FALSE);
-	s->ref = 	Lst_Init(FALSE);
-	s->sNum =   	sNum++;
-	s->flags =  	0;
-	s->refCount =	1;
+	suff = Suffix_New(name);
+	Lst_Append(&sufflist, suff);
+	DEBUG1(SUFF, "Adding suffix \"%s\"\n", suff->name);
 
-	(void)Lst_AtEnd(sufflist, s);
-	/*
-	 * We also look at our existing targets list to see if adding
-	 * this suffix will make one of our current targets mutate into
-	 * a suffix rule. This is ugly, but other makes treat all targets
-	 * that start with a . as suffix rules.
-	 */
-	gs.gn = gn;
-	gs.s  = s;
-	gs.r  = FALSE;
-	Lst_ForEach(Targ_List(), SuffScanTargets, &gs);
+	UpdateTargets(inout_main, suff);
+
 	/*
 	 * Look for any existing transformations from or to this suffix.
 	 * XXX: Only do this after a Suff_ClearSuffixes?
 	 */
-	Lst_ForEach(transforms, SuffRebuildGraph, s);
-    }
+	for (ln = transforms.first; ln != NULL; ln = ln->next)
+		RebuildGraph(ln->datum, suff);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_GetPath --
- *	Return the search path for the given suffix, if it's defined.
- *
- * Results:
- *	The searchPath for the desired suffix or NULL if the suffix isn't
- *	defined.
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-Lst
-Suff_GetPath(char *sname)
+/* Return the search path for the given suffix, or NULL. */
+SearchPath *
+Suff_GetPath(const char *sname)
 {
-    LstNode   	  ln;
-    Suff    	  *s;
-
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
-    if (ln == NULL) {
-	return NULL;
-    } else {
-	s = (Suff *)Lst_Datum(ln);
-	return (s->searchPath);
-    }
+	Suffix *suff = FindSuffixByName(sname);
+	return suff != NULL ? suff->searchPath : NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_DoPaths --
- *	Extend the search paths for all suffixes to include the default
- *	search path.
+/*
+ * Extend the search paths for all suffixes to include the default search
+ * path (dirSearchPath).
  *
- * Results:
- *	None.
+ * The default search path can be defined using the special target '.PATH'.
+ * The search path of each suffix can be defined using the special target
+ * '.PATH<suffix>'.
  *
- * Side Effects:
- *	The searchPath field of all the suffixes is extended by the
- *	directories in dirSearchPath. If paths were specified for the
- *	".h" suffix, the directories are stuffed into a global variable
- *	called ".INCLUDES" with each directory preceded by a -I. The same
- *	is done for the ".a" suffix, except the variable is called
- *	".LIBS" and the flag is -L.
- *-----------------------------------------------------------------------
+ * If paths were specified for the ".h" suffix, the directories are stuffed
+ * into a global variable called ".INCLUDES" with each directory preceded by
+ * '-I'. The same is done for the ".a" suffix, except the variable is called
+ * ".LIBS" and the flag is '-L'.
  */
 void
 Suff_DoPaths(void)
 {
-    Suff	   	*s;
-    LstNode  		ln;
-    char		*ptr;
-    Lst	    	    	inIncludes; /* Cumulative .INCLUDES path */
-    Lst	    	    	inLibs;	    /* Cumulative .LIBS path */
+	SuffixListNode *ln;
+	char *flags;
+	SearchPath *includesPath = SearchPath_New();
+	SearchPath *libsPath = SearchPath_New();
 
-    if (Lst_Open(sufflist) == FAILURE) {
-	return;
-    }
-
-    inIncludes = Lst_Init(FALSE);
-    inLibs = Lst_Init(FALSE);
-
-    while ((ln = Lst_Next(sufflist)) != NULL) {
-	s = (Suff *)Lst_Datum(ln);
-	if (!Lst_IsEmpty (s->searchPath)) {
+	for (ln = sufflist.first; ln != NULL; ln = ln->next) {
+		Suffix *suff = ln->datum;
+		if (!Lst_IsEmpty(&suff->searchPath->dirs)) {
 #ifdef INCLUDES
-	    if (s->flags & SUFF_INCLUDE) {
-		Dir_Concat(inIncludes, s->searchPath);
-	    }
-#endif /* INCLUDES */
+			if (suff->flags & SUFF_INCLUDE)
+				SearchPath_AddAll(includesPath,
+				    suff->searchPath);
+#endif
 #ifdef LIBRARIES
-	    if (s->flags & SUFF_LIBRARY) {
-		Dir_Concat(inLibs, s->searchPath);
-	    }
-#endif /* LIBRARIES */
-	    Dir_Concat(s->searchPath, dirSearchPath);
-	} else {
-	    Lst_Destroy(s->searchPath, Dir_Destroy);
-	    s->searchPath = Lst_Duplicate(dirSearchPath, Dir_CopyDir);
+			if (suff->flags & SUFF_LIBRARY)
+				SearchPath_AddAll(libsPath, suff->searchPath);
+#endif
+			SearchPath_AddAll(suff->searchPath, &dirSearchPath);
+		} else {
+			SearchPath_Free(suff->searchPath);
+			suff->searchPath = Dir_CopyDirSearchPath();
+		}
 	}
-    }
 
-    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL, 0);
-    free(ptr);
-    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", inLibs), VAR_GLOBAL, 0);
-    free(ptr);
+	flags = SearchPath_ToFlags(includesPath, "-I");
+	Global_Set(".INCLUDES", flags);
+	free(flags);
 
-    Lst_Destroy(inIncludes, Dir_Destroy);
-    Lst_Destroy(inLibs, Dir_Destroy);
+	flags = SearchPath_ToFlags(libsPath, "-L");
+	Global_Set(".LIBS", flags);
+	free(flags);
 
-    Lst_Close(sufflist);
+	SearchPath_Free(includesPath);
+	SearchPath_Free(libsPath);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_AddInclude --
- *	Add the given suffix as a type of file which gets included.
- *	Called from the parse module when a .INCLUDES line is parsed.
- *	The suffix must have already been defined.
- *
- * Input:
- *	sname		Name of the suffix to mark
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The SUFF_INCLUDE bit is set in the suffix's flags field
- *
- *-----------------------------------------------------------------------
+/*
+ * Add the given suffix as a type of file which gets included.
+ * Called when a '.INCLUDES: .h' line is parsed.
+ * To have an effect, the suffix must already exist.
+ * This affects the magic variable '.INCLUDES'.
  */
 void
-Suff_AddInclude(char *sname)
+Suff_AddInclude(const char *suffName)
 {
-    LstNode	  ln;
-    Suff	  *s;
-
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
-    if (ln != NULL) {
-	s = (Suff *)Lst_Datum(ln);
-	s->flags |= SUFF_INCLUDE;
-    }
+	Suffix *suff = FindSuffixByName(suffName);
+	if (suff != NULL)
+		suff->flags |= SUFF_INCLUDE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_AddLib --
- *	Add the given suffix as a type of file which is a library.
- *	Called from the parse module when parsing a .LIBS line. The
- *	suffix must have been defined via .SUFFIXES before this is
- *	called.
- *
- * Input:
- *	sname		Name of the suffix to mark
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The SUFF_LIBRARY bit is set in the suffix's flags field
- *
- *-----------------------------------------------------------------------
+/*
+ * Add the given suffix as a type of file which is a library.
+ * Called when a '.LIBS: .a' line is parsed.
+ * To have an effect, the suffix must already exist.
+ * This affects the magic variable '.LIBS'.
  */
 void
-Suff_AddLib(char *sname)
+Suff_AddLib(const char *suffName)
 {
-    LstNode	  ln;
-    Suff	  *s;
-
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
-    if (ln != NULL) {
-	s = (Suff *)Lst_Datum(ln);
-	s->flags |= SUFF_LIBRARY;
-    }
+	Suffix *suff = FindSuffixByName(suffName);
+	if (suff != NULL)
+		suff->flags |= SUFF_LIBRARY;
 }
 
- 	  /********** Implicit Source Search Functions *********/
+/********** Implicit Source Search Functions *********/
 
-/*-
- *-----------------------------------------------------------------------
- * SuffAddSrc  --
- *	Add a suffix as a Src structure to the given list with its parent
- *	being the given Src structure. If the suffix is the null suffix,
- *	the prefix is used unaltered as the file name in the Src structure.
- *
- * Input:
- *	sp		suffix for which to create a Src structure
- *	lsp		list and parent for the new Src
- *
- * Results:
- *	always returns 0
- *
- * Side Effects:
- *	A Src structure is created and tacked onto the end of the list
- *-----------------------------------------------------------------------
- */
-static int
-SuffAddSrc(void *sp, void *lsp)
+static void
+CandidateSearcher_Init(CandidateSearcher *cs)
 {
-    Suff	*s = (Suff *)sp;
-    LstSrc      *ls = (LstSrc *)lsp;
-    Src         *s2;	    /* new Src structure */
-    Src    	*targ; 	    /* Target structure */
-
-    targ = ls->s;
-
-    if ((s->flags & SUFF_NULL) && (*s->name != '\0')) {
-	/*
-	 * If the suffix has been marked as the NULL suffix, also create a Src
-	 * structure for a file with no suffix attached. Two birds, and all
-	 * that...
-	 */
-	s2 = bmake_malloc(sizeof(Src));
-	s2->file =  	bmake_strdup(targ->pref);
-	s2->pref =  	targ->pref;
-	s2->parent = 	targ;
-	s2->node =  	NULL;
-	s2->suff =  	s;
-	s->refCount++;
-	s2->children =	0;
-	targ->children += 1;
-	(void)Lst_AtEnd(ls->l, s2);
-#ifdef DEBUG_SRC
-	s2->cp = Lst_Init(FALSE);
-	Lst_AtEnd(targ->cp, s2);
-	fprintf(debug_file, "1 add %x %x to %x:", targ, s2, ls->l);
-	Lst_ForEach(ls->l, PrintAddr, NULL);
-	fprintf(debug_file, "\n");
-#endif
-    }
-    s2 = bmake_malloc(sizeof(Src));
-    s2->file = 	    str_concat(targ->pref, s->name, 0);
-    s2->pref =	    targ->pref;
-    s2->parent =    targ;
-    s2->node = 	    NULL;
-    s2->suff = 	    s;
-    s->refCount++;
-    s2->children =  0;
-    targ->children += 1;
-    (void)Lst_AtEnd(ls->l, s2);
-#ifdef DEBUG_SRC
-    s2->cp = Lst_Init(FALSE);
-    Lst_AtEnd(targ->cp, s2);
-    fprintf(debug_file, "2 add %x %x to %x:", targ, s2, ls->l);
-    Lst_ForEach(ls->l, PrintAddr, NULL);
-    fprintf(debug_file, "\n");
-#endif
-
-    return(0);
+	Lst_Init(&cs->list);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffAddLevel  --
- *	Add all the children of targ as Src structures to the given list
- *
- * Input:
- *	l		list to which to add the new level
- *	targ		Src structure to use as the parent
- *
- * Results:
- *	None
- *
- * Side Effects:
- * 	Lots of structures are created and added to the list
- *-----------------------------------------------------------------------
+static void
+CandidateSearcher_Done(CandidateSearcher *cs)
+{
+	Lst_Done(&cs->list);
+}
+
+static void
+CandidateSearcher_Add(CandidateSearcher *cs, Candidate *cand)
+{
+	/* TODO: filter duplicates */
+	Lst_Append(&cs->list, cand);
+}
+
+static void
+CandidateSearcher_AddIfNew(CandidateSearcher *cs, Candidate *cand)
+{
+	/* TODO: filter duplicates */
+	if (Lst_FindDatum(&cs->list, cand) == NULL)
+		Lst_Append(&cs->list, cand);
+}
+
+static void
+CandidateSearcher_MoveAll(CandidateSearcher *cs, CandidateList *list)
+{
+	/* TODO: filter duplicates */
+	Lst_MoveAll(&cs->list, list);
+}
+
+
+#ifdef DEBUG_SRC
+static void
+CandidateList_PrintAddrs(CandidateList *list)
+{
+	CandidateListNode *ln;
+
+	for (ln = list->first; ln != NULL; ln = ln->next) {
+		Candidate *cand = ln->datum;
+		debug_printf(" %p:%s", cand, cand->file);
+	}
+	debug_printf("\n");
+}
+#endif
+
+static Candidate *
+Candidate_New(char *name, char *prefix, Suffix *suff, Candidate *parent,
+	      GNode *gn)
+{
+	Candidate *cand = bmake_malloc(sizeof *cand);
+
+	cand->file = name;
+	cand->prefix = prefix;
+	cand->suff = Suffix_Ref(suff);
+	cand->parent = parent;
+	cand->node = gn;
+	cand->numChildren = 0;
+#ifdef DEBUG_SRC
+	Lst_Init(&cand->childrenList);
+#endif
+
+	return cand;
+}
+
+/* Add a new candidate to the list. */
+/*ARGSUSED*/
+static void
+CandidateList_Add(CandidateList *list, char *srcName, Candidate *targ,
+		  Suffix *suff, const char *debug_tag)
+{
+	Candidate *cand = Candidate_New(srcName, targ->prefix, suff, targ,
+	    NULL);
+	targ->numChildren++;
+	Lst_Append(list, cand);
+
+#ifdef DEBUG_SRC
+	Lst_Append(&targ->childrenList, cand);
+	debug_printf("%s add suff %p:%s candidate %p:%s to list %p:",
+	    debug_tag, targ, targ->file, cand, cand->file, list);
+	CandidateList_PrintAddrs(list);
+#endif
+}
+
+/*
+ * Add all candidates to the list that can be formed by applying a suffix to
+ * the candidate.
  */
 static void
-SuffAddLevel(Lst l, Src *targ)
+CandidateList_AddCandidatesFor(CandidateList *list, Candidate *cand)
 {
-    LstSrc         ls;
+	SuffixListNode *ln;
+	for (ln = cand->suff->children.first; ln != NULL; ln = ln->next) {
+		Suffix *suff = ln->datum;
 
-    ls.s = targ;
-    ls.l = l;
+		if ((suff->flags & SUFF_NULL) && suff->name[0] != '\0') {
+			/*
+			 * If the suffix has been marked as the NULL suffix,
+			 * also create a candidate for a file with no suffix
+			 * attached.
+			 */
+			CandidateList_Add(list, bmake_strdup(cand->prefix),
+			    cand, suff, "1");
+		}
 
-    Lst_ForEach(targ->suff->children, SuffAddSrc, &ls);
+		CandidateList_Add(list, str_concat2(cand->prefix, suff->name),
+		    cand, suff, "2");
+	}
 }
 
-/*-
- *----------------------------------------------------------------------
- * SuffRemoveSrc --
- *	Free all src structures in list that don't have a reference count
- *
- * Results:
- *	Ture if an src was removed
- *
- * Side Effects:
- *	The memory is free'd.
- *----------------------------------------------------------------------
+/*
+ * Free the first candidate in the list that is not referenced anymore.
+ * Return whether a candidate was removed.
  */
-static int
-SuffRemoveSrc(Lst l)
+static Boolean
+RemoveCandidate(CandidateList *srcs)
 {
-    LstNode ln;
-    Src *s;
-    int t = 0;
+	CandidateListNode *ln;
 
-    if (Lst_Open(l) == FAILURE) {
-	return 0;
-    }
 #ifdef DEBUG_SRC
-    fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
-    Lst_ForEach(l, PrintAddr, NULL);
-    fprintf(debug_file, "\n");
+	debug_printf("cleaning list %p:", srcs);
+	CandidateList_PrintAddrs(srcs);
 #endif
 
+	for (ln = srcs->first; ln != NULL; ln = ln->next) {
+		Candidate *src = ln->datum;
 
-    while ((ln = Lst_Next(l)) != NULL) {
-	s = (Src *)Lst_Datum(ln);
-	if (s->children == 0) {
-	    free(s->file);
-	    if (!s->parent)
-		free(s->pref);
-	    else {
+		if (src->numChildren == 0) {
+			if (src->parent == NULL)
+				free(src->prefix);
+			else {
 #ifdef DEBUG_SRC
-		LstNode ln = Lst_Member(s->parent->cp, s);
-		if (ln != NULL)
-		    Lst_Remove(s->parent->cp, ln);
+				/* XXX: Lst_RemoveDatum */
+				CandidateListNode *ln2;
+				ln2 = Lst_FindDatum(&src->parent->childrenList,
+				    src);
+				if (ln2 != NULL)
+					Lst_Remove(&src->parent->childrenList,
+					    ln2);
 #endif
-		--s->parent->children;
-	    }
+				src->parent->numChildren--;
+			}
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "free: [l=%x] p=%x %d\n", l, s, s->children);
-	    Lst_Destroy(s->cp, NULL);
+			debug_printf("free: list %p src %p:%s children %d\n",
+			    srcs, src, src->file, src->numChildren);
+			Lst_Done(&src->childrenList);
 #endif
-	    Lst_Remove(l, ln);
-	    free(s);
-	    t |= 1;
-	    Lst_Close(l);
-	    return TRUE;
+			Lst_Remove(srcs, ln);
+			free(src->file);
+			free(src);
+			return TRUE;
+		}
+#ifdef DEBUG_SRC
+		else {
+			debug_printf("keep: list %p src %p:%s children %d:",
+			    srcs, src, src->file, src->numChildren);
+			CandidateList_PrintAddrs(&src->childrenList);
+		}
+#endif
 	}
-#ifdef DEBUG_SRC
-	else {
-	    fprintf(debug_file, "keep: [l=%x] p=%x %d: ", l, s, s->children);
-	    Lst_ForEach(s->cp, PrintAddr, NULL);
-	    fprintf(debug_file, "\n");
-	}
-#endif
-    }
 
-    Lst_Close(l);
-
-    return t;
+	return FALSE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffFindThem --
- *	Find the first existing file/target in the list srcs
- *
- * Input:
- *	srcs		list of Src structures to search through
- *
- * Results:
- *	The lowest structure in the chain of transformations
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static Src *
-SuffFindThem(Lst srcs, Lst slst)
+/* Find the first existing file/target in srcs. */
+static Candidate *
+FindThem(CandidateList *srcs, CandidateSearcher *cs)
 {
-    Src            *s;		/* current Src */
-    Src		   *rs;		/* returned Src */
-    char	   *ptr;
+	HashSet seen;
 
-    rs = NULL;
+	HashSet_Init(&seen);
 
-    while (!Lst_IsEmpty (srcs)) {
-	s = (Src *)Lst_DeQueue(srcs);
+	while (!Lst_IsEmpty(srcs)) {
+		Candidate *src = Lst_Dequeue(srcs);
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "\ttrying %s...", s->file);
+#ifdef DEBUG_SRC
+		debug_printf("remove from list %p src %p:%s\n",
+		    srcs, src, src->file);
+#endif
+		DEBUG1(SUFF, "\ttrying %s...", src->file);
+
+		/*
+		 * A file is considered to exist if either a node exists in the
+		 * graph for it or the file actually exists.
+		 */
+		if (Targ_FindNode(src->file) != NULL) {
+		found:
+			HashSet_Done(&seen);
+			DEBUG0(SUFF, "got it\n");
+			return src;
+		}
+
+		{
+			char *file = Dir_FindFile(src->file,
+			    src->suff->searchPath);
+			if (file != NULL) {
+				free(file);
+				goto found;
+			}
+		}
+
+		DEBUG0(SUFF, "not there\n");
+
+		if (HashSet_Add(&seen, src->file))
+			CandidateList_AddCandidatesFor(srcs, src);
+		else {
+			DEBUG1(SUFF, "FindThem: skipping duplicate \"%s\"\n",
+			    src->file);
+		}
+
+		CandidateSearcher_Add(cs, src);
 	}
+
+	HashSet_Done(&seen);
+	return NULL;
+}
+
+/*
+ * See if any of the children of the candidate's GNode is one from which the
+ * target can be transformed. If there is one, a candidate is put together
+ * for it and returned.
+ */
+static Candidate *
+FindCmds(Candidate *targ, CandidateSearcher *cs)
+{
+	GNodeListNode *gln;
+	GNode *tgn;		/* Target GNode */
+	GNode *sgn;		/* Source GNode */
+	size_t prefLen;		/* The length of the defined prefix */
+	Suffix *suff;		/* Suffix of the matching candidate */
+	Candidate *ret;		/* Return value */
+
+	tgn = targ->node;
+	prefLen = strlen(targ->prefix);
+
+	for (gln = tgn->children.first; gln != NULL; gln = gln->next) {
+		const char *base;
+
+		sgn = gln->datum;
+
+		if (sgn->type & OP_OPTIONAL && Lst_IsEmpty(&tgn->commands)) {
+			/*
+			 * We haven't looked to see if .OPTIONAL files exist
+			 * yet, so don't use one as the implicit source.
+			 * This allows us to use .OPTIONAL in .depend files so
+			 * make won't complain "don't know how to make xxx.h"
+			 * when a dependent file has been moved/deleted.
+			 */
+			continue;
+		}
+
+		base = str_basename(sgn->name);
+		if (strncmp(base, targ->prefix, prefLen) != 0)
+			continue;
+		/* The node matches the prefix, see if it has a known suffix. */
+		suff = FindSuffixByName(base + prefLen);
+		if (suff == NULL)
+			continue;
+
+		/*
+		 * It even has a known suffix, see if there's a transformation
+		 * defined between the node's suffix and the target's suffix.
+		 *
+		 * XXX: Handle multi-stage transformations here, too.
+		 */
+
+		if (Lst_FindDatum(&suff->parents, targ->suff) != NULL)
+			break;
+	}
+
+	if (gln == NULL)
+		return NULL;
+
+	ret = Candidate_New(bmake_strdup(sgn->name), targ->prefix, suff, targ,
+	    sgn);
+	targ->numChildren++;
+#ifdef DEBUG_SRC
+	debug_printf("3 add targ %p:%s ret %p:%s\n",
+	    targ, targ->file, ret, ret->file);
+	Lst_Append(&targ->childrenList, ret);
+#endif
+	CandidateSearcher_Add(cs, ret);
+	DEBUG1(SUFF, "\tusing existing source %s\n", sgn->name);
+	return ret;
+}
+
+static void
+ExpandWildcards(GNodeListNode *cln, GNode *pgn)
+{
+	GNode *cgn = cln->datum;
+	StringList expansions;
+
+	if (!Dir_HasWildcards(cgn->name))
+		return;
 
 	/*
-	 * A file is considered to exist if either a node exists in the
-	 * graph for it or the file actually exists.
+	 * Expand the word along the chosen path
 	 */
-	if (Targ_FindNode(s->file, TARG_NOCREATE) != NULL) {
-#ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %x from %x\n", s, srcs);
-#endif
-	    rs = s;
-	    break;
+	Lst_Init(&expansions);
+	SearchPath_Expand(Suff_FindPath(cgn), cgn->name, &expansions);
+
+	while (!Lst_IsEmpty(&expansions)) {
+		GNode *gn;
+		/*
+		 * Fetch next expansion off the list and find its GNode
+		 */
+		char *cp = Lst_Dequeue(&expansions);
+
+		DEBUG1(SUFF, "%s...", cp);
+		gn = Targ_GetNode(cp);
+
+		/* Add gn to the parents child list before the original child */
+		Lst_InsertBefore(&pgn->children, cln, gn);
+		Lst_Append(&gn->parents, pgn);
+		pgn->unmade++;
 	}
 
-	if ((ptr = Dir_FindFile(s->file, s->suff->searchPath)) != NULL) {
-	    rs = s;
-#ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %x from %x\n", s, srcs);
-#endif
-	    free(ptr);
-	    break;
-	}
+	Lst_Done(&expansions);
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "not there\n");
-	}
+	DEBUG0(SUFF, "\n");
 
-	SuffAddLevel(srcs, s);
-	Lst_AtEnd(slst, s);
-    }
-
-    if (DEBUG(SUFF) && rs) {
-	fprintf(debug_file, "got it\n");
-    }
-    return (rs);
+	/*
+	 * Now the source is expanded, remove it from the list of children to
+	 * keep it from being processed.
+	 */
+	pgn->unmade--;
+	Lst_Remove(&pgn->children, cln);
+	Lst_Remove(&cgn->parents, Lst_FindDatum(&cgn->parents, pgn));
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffFindCmds --
- *	See if any of the children of the target in the Src structure is
- *	one from which the target can be transformed. If there is one,
- *	a Src structure is put together for it and returned.
+/*
+ * Break the result into a vector of strings whose nodes we can find, then
+ * add those nodes to the members list.
  *
- * Input:
- *	targ		Src structure to play with
- *
- * Results:
- *	The Src structure of the "winning" child, or NULL if no such beast.
- *
- * Side Effects:
- *	A Src structure may be allocated.
- *
- *-----------------------------------------------------------------------
+ * Unfortunately, we can't use Str_Words because it doesn't understand about
+ * variable expressions with spaces in them.
  */
-static Src *
-SuffFindCmds(Src *targ, Lst slst)
+static void
+ExpandChildrenRegular(char *cp, GNode *pgn, GNodeList *members)
 {
-    LstNode 	  	ln; 	/* General-purpose list node */
-    GNode		*t, 	/* Target GNode */
-	    	  	*s; 	/* Source GNode */
-    int	    	  	prefLen;/* The length of the defined prefix */
-    Suff    	  	*suff;	/* Suffix on matching beastie */
-    Src	    	  	*ret;	/* Return value */
-    char    	  	*cp;
+	char *start;
 
-    t = targ->node;
-    (void)Lst_Open(t->children);
-    prefLen = strlen(targ->pref);
+	pp_skip_hspace(&cp);
+	start = cp;
+	while (*cp != '\0') {
+		if (*cp == ' ' || *cp == '\t') {
+			GNode *gn;
+			/*
+			 * White-space -- terminate element, find the node,
+			 * add it, skip any further spaces.
+			 */
+			*cp++ = '\0';
+			gn = Targ_GetNode(start);
+			Lst_Append(members, gn);
+			pp_skip_hspace(&cp);
+			/* Continue at the next non-space. */
+			start = cp;
+		} else if (*cp == '$') {
+			/* Skip over the variable expression. */
+			const char *nested_p = cp;
+			FStr junk;
 
-    for (;;) {
-	ln = Lst_Next(t->children);
-	if (ln == NULL) {
-	    Lst_Close(t->children);
-	    return NULL;
+			(void)Var_Parse(&nested_p, pgn, VARE_PARSE_ONLY, &junk);
+			/* TODO: handle errors */
+			if (junk.str == var_Error) {
+				Parse_Error(PARSE_FATAL,
+				    "Malformed variable expression at \"%s\"",
+				    cp);
+				cp++;
+			} else {
+				cp += nested_p - cp;
+			}
+
+			FStr_Done(&junk);
+		} else if (cp[0] == '\\' && cp[1] != '\0') {
+			/* Escaped something -- skip over it. */
+			/*
+			 * XXX: In other places, escaping at this syntactical
+			 * position is done by a '$', not a '\'.  The '\' is
+			 * only used in variable modifiers.
+			 */
+			cp += 2;
+		} else {
+			cp++;
+		}
 	}
-	s = (GNode *)Lst_Datum(ln);
 
-	if (s->type & OP_OPTIONAL && Lst_IsEmpty(t->commands)) {
-	    /*
-	     * We haven't looked to see if .OPTIONAL files exist yet, so
-	     * don't use one as the implicit source.
-	     * This allows us to use .OPTIONAL in .depend files so make won't
-	     * complain "don't know how to make xxx.h' when a dependent file
-	     * has been moved/deleted.
-	     */
-	    continue;
+	if (cp != start) {
+		/*
+		 * Stuff left over -- add it to the list too
+		 */
+		GNode *gn = Targ_GetNode(start);
+		Lst_Append(members, gn);
 	}
-
-	cp = strrchr(s->name, '/');
-	if (cp == NULL) {
-	    cp = s->name;
-	} else {
-	    cp++;
-	}
-	if (strncmp(cp, targ->pref, prefLen) != 0)
-	    continue;
-	/*
-	 * The node matches the prefix ok, see if it has a known
-	 * suffix.
-	 */
-	ln = Lst_Find(sufflist, &cp[prefLen], SuffSuffHasNameP);
-	if (ln == NULL)
-	    continue;
-	/*
-	 * It even has a known suffix, see if there's a transformation
-	 * defined between the node's suffix and the target's suffix.
-	 *
-	 * XXX: Handle multi-stage transformations here, too.
-	 */
-	suff = (Suff *)Lst_Datum(ln);
-
-	if (Lst_Member(suff->parents, targ->suff) != NULL)
-	    break;
-    }
-
-    /*
-     * Hot Damn! Create a new Src structure to describe
-     * this transformation (making sure to duplicate the
-     * source node's name so Suff_FindDeps can free it
-     * again (ick)), and return the new structure.
-     */
-    ret = bmake_malloc(sizeof(Src));
-    ret->file = bmake_strdup(s->name);
-    ret->pref = targ->pref;
-    ret->suff = suff;
-    suff->refCount++;
-    ret->parent = targ;
-    ret->node = s;
-    ret->children = 0;
-    targ->children += 1;
-#ifdef DEBUG_SRC
-    ret->cp = Lst_Init(FALSE);
-    fprintf(debug_file, "3 add %x %x\n", targ, ret);
-    Lst_AtEnd(targ->cp, ret);
-#endif
-    Lst_AtEnd(slst, ret);
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\tusing existing source %s\n", s->name);
-    }
-    return (ret);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffExpandChildren --
- *	Expand the names of any children of a given node that contain
- *	variable invocations or file wildcards into actual targets.
+/*
+ * Expand the names of any children of a given node that contain variable
+ * expressions or file wildcards into actual targets.
+ *
+ * The expanded node is removed from the parent's list of children, and the
+ * parent's unmade counter is decremented, but other nodes may be added.
  *
  * Input:
  *	cln		Child to examine
  *	pgn		Parent node being processed
- *
- * Results:
- *	=== 0 (continue)
- *
- * Side Effects:
- *	The expanded node is removed from the parent's list of children,
- *	and the parent's unmade counter is decremented, but other nodes
- * 	may be added.
- *
- *-----------------------------------------------------------------------
  */
 static void
-SuffExpandChildren(LstNode cln, GNode *pgn)
+ExpandChildren(GNodeListNode *cln, GNode *pgn)
 {
-    GNode   	*cgn = (GNode *)Lst_Datum(cln);
-    GNode	*gn;	    /* New source 8) */
-    char	*cp;	    /* Expanded value */
+	GNode *cgn = cln->datum;
+	char *cp;		/* Expanded value */
 
-    if (!Lst_IsEmpty(cgn->order_pred) || !Lst_IsEmpty(cgn->order_succ))
-	/* It is all too hard to process the result of .ORDER */
-	return;
+	if (!Lst_IsEmpty(&cgn->order_pred) || !Lst_IsEmpty(&cgn->order_succ))
+		/* It is all too hard to process the result of .ORDER */
+		return;
 
-    if (cgn->type & OP_WAIT)
-	/* Ignore these (& OP_PHONY ?) */
-	return;
+	if (cgn->type & OP_WAIT)
+		/* Ignore these (& OP_PHONY ?) */
+		return;
 
-    /*
-     * First do variable expansion -- this takes precedence over
-     * wildcard expansion. If the result contains wildcards, they'll be gotten
-     * to later since the resulting words are tacked on to the end of
-     * the children list.
-     */
-    if (strchr(cgn->name, '$') == NULL) {
-	SuffExpandWildcards(cln, pgn);
-	return;
-    }
+	/*
+	 * First do variable expansion -- this takes precedence over wildcard
+	 * expansion. If the result contains wildcards, they'll be gotten to
+	 * later since the resulting words are tacked on to the end of the
+	 * children list.
+	 */
+	if (strchr(cgn->name, '$') == NULL) {
+		ExpandWildcards(cln, pgn);
+		return;
+	}
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "Expanding \"%s\"...", cgn->name);
-    }
-    cp = Var_Subst(NULL, cgn->name, pgn, TRUE);
+	DEBUG1(SUFF, "Expanding \"%s\"...", cgn->name);
+	(void)Var_Subst(cgn->name, pgn, VARE_UNDEFERR, &cp);
+	/* TODO: handle errors */
 
-    if (cp != NULL) {
-	Lst	    members = Lst_Init(FALSE);
+	{
+		GNodeList members = LST_INIT;
 
-	if (cgn->type & OP_ARCHV) {
-	    /*
-	     * Node was an archive(member) target, so we want to call
-	     * on the Arch module to find the nodes for us, expanding
-	     * variables in the parent's context.
-	     */
-	    char	*sacrifice = cp;
-
-	    (void)Arch_ParseArchive(&sacrifice, members, pgn);
-	} else {
-	    /*
-	     * Break the result into a vector of strings whose nodes
-	     * we can find, then add those nodes to the members list.
-	     * Unfortunately, we can't use brk_string b/c it
-	     * doesn't understand about variable specifications with
-	     * spaces in them...
-	     */
-	    char	    *start;
-	    char	    *initcp = cp;   /* For freeing... */
-
-	    for (start = cp; *start == ' ' || *start == '\t'; start++)
-		continue;
-	    for (cp = start; *cp != '\0'; cp++) {
-		if (*cp == ' ' || *cp == '\t') {
-		    /*
-		     * White-space -- terminate element, find the node,
-		     * add it, skip any further spaces.
-		     */
-		    *cp++ = '\0';
-		    gn = Targ_FindNode(start, TARG_CREATE);
-		    (void)Lst_AtEnd(members, gn);
-		    while (*cp == ' ' || *cp == '\t') {
-			cp++;
-		    }
-		    /*
-		     * Adjust cp for increment at start of loop, but
-		     * set start to first non-space.
-		     */
-		    start = cp--;
-		} else if (*cp == '$') {
-		    /*
-		     * Start of a variable spec -- contact variable module
-		     * to find the end so we can skip over it.
-		     */
-		    char	*junk;
-		    int 	len;
-		    void	*freeIt;
-
-		    junk = Var_Parse(cp, pgn, TRUE, &len, &freeIt);
-		    if (junk != var_Error) {
-			cp += len - 1;
-		    }
-
-		    if (freeIt)
-			free(freeIt);
-		} else if (*cp == '\\' && *cp != '\0') {
-		    /*
-		     * Escaped something -- skip over it
-		     */
-		    cp++;
+		if (cgn->type & OP_ARCHV) {
+			/*
+			 * Node was an 'archive(member)' target, so
+			 * call on the Arch module to find the nodes for us,
+			 * expanding variables in the parent's scope.
+			 */
+			char *p = cp;
+			(void)Arch_ParseArchive(&p, &members, pgn);
+		} else {
+			ExpandChildrenRegular(cp, pgn, &members);
 		}
-	    }
 
-	    if (cp != start) {
 		/*
-		 * Stuff left over -- add it to the list too
+		 * Add all elements of the members list to the parent node.
 		 */
-		gn = Targ_FindNode(start, TARG_CREATE);
-		(void)Lst_AtEnd(members, gn);
-	    }
-	    /*
-	     * Point cp back at the beginning again so the variable value
-	     * can be freed.
-	     */
-	    cp = initcp;
+		while (!Lst_IsEmpty(&members)) {
+			GNode *gn = Lst_Dequeue(&members);
+
+			DEBUG1(SUFF, "%s...", gn->name);
+			/*
+			 * Add gn to the parents child list before the
+			 * original child.
+			 */
+			Lst_InsertBefore(&pgn->children, cln, gn);
+			Lst_Append(&gn->parents, pgn);
+			pgn->unmade++;
+			/* Expand wildcards on new node */
+			ExpandWildcards(cln->prev, pgn);
+		}
+		Lst_Done(&members);
+
+		free(cp);
 	}
 
-	/*
-	 * Add all elements of the members list to the parent node.
-	 */
-	while(!Lst_IsEmpty(members)) {
-	    gn = (GNode *)Lst_DeQueue(members);
-
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "%s...", gn->name);
-	    }
-	    /* Add gn to the parents child list before the original child */
-	    (void)Lst_InsertBefore(pgn->children, cln, gn);
-	    (void)Lst_AtEnd(gn->parents, pgn);
-	    pgn->unmade++;
-	    /* Expand wildcards on new node */
-	    SuffExpandWildcards(Lst_Prev(cln), pgn);
-	}
-	Lst_Destroy(members, NULL);
+	DEBUG0(SUFF, "\n");
 
 	/*
-	 * Free the result
+	 * Now the source is expanded, remove it from the list of children to
+	 * keep it from being processed.
 	 */
-	free(cp);
-    }
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\n");
-    }
-
-    /*
-     * Now the source is expanded, remove it from the list of children to
-     * keep it from being processed.
-     */
-    pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
+	pgn->unmade--;
+	Lst_Remove(&pgn->children, cln);
+	Lst_Remove(&cgn->parents, Lst_FindDatum(&cgn->parents, pgn));
 }
 
 static void
-SuffExpandWildcards(LstNode cln, GNode *pgn)
+ExpandAllChildren(GNode *gn)
 {
-    GNode   	*cgn = (GNode *)Lst_Datum(cln);
-    GNode	*gn;	    /* New source 8) */
-    char	*cp;	    /* Expanded value */
-    Lst 	explist;    /* List of expansions */
+	GNodeListNode *ln, *nln;
 
-    if (!Dir_HasWildcards(cgn->name))
-	return;
-
-    /*
-     * Expand the word along the chosen path
-     */
-    explist = Lst_Init(FALSE);
-    Dir_Expand(cgn->name, Suff_FindPath(cgn), explist);
-
-    while (!Lst_IsEmpty(explist)) {
-	/*
-	 * Fetch next expansion off the list and find its GNode
-	 */
-	cp = (char *)Lst_DeQueue(explist);
-
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "%s...", cp);
+	for (ln = gn->children.first; ln != NULL; ln = nln) {
+		nln = ln->next;
+		ExpandChildren(ln, gn);
 	}
-	gn = Targ_FindNode(cp, TARG_CREATE);
-
-	/* Add gn to the parents child list before the original child */
-	(void)Lst_InsertBefore(pgn->children, cln, gn);
-	(void)Lst_AtEnd(gn->parents, pgn);
-	pgn->unmade++;
-    }
-
-    /*
-     * Nuke what's left of the list
-     */
-    Lst_Destroy(explist, NULL);
-
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\n");
-    }
-
-    /*
-     * Now the source is expanded, remove it from the list of children to
-     * keep it from being processed.
-     */
-    pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_FindPath --
- *	Find a path along which to expand the node.
+/*
+ * Find a path along which to expand the node.
  *
- *	If the word has a known suffix, use that path.
- *	If it has no known suffix, use the default system search path.
+ * If the node has a known suffix, use that path.
+ * If it has no known suffix, use the default system search path.
  *
  * Input:
  *	gn		Node being examined
  *
  * Results:
  *	The appropriate path to search for the GNode.
- *
- * Side Effects:
- *	XXX: We could set the suffix here so that we don't have to scan
- *	again.
- *
- *-----------------------------------------------------------------------
  */
-Lst
-Suff_FindPath(GNode* gn)
+SearchPath *
+Suff_FindPath(GNode *gn)
 {
-    Suff *suff = gn->suffix;
+	Suffix *suff = gn->suffix;
 
-    if (suff == NULL) {
-	SuffixCmpData sd;   /* Search string data */
-	LstNode ln;
-	sd.len = strlen(gn->name);
-	sd.ename = gn->name + sd.len;
-	ln = Lst_Find(sufflist, &sd, SuffSuffIsSuffixP);
+	if (suff == NULL) {
+		char *name = gn->name;
+		size_t nameLen = strlen(gn->name);
+		SuffixListNode *ln;
+		for (ln = sufflist.first; ln != NULL; ln = ln->next)
+			if (Suffix_IsSuffix(ln->datum, nameLen, name + nameLen))
+				break;
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "Wildcard expanding \"%s\"...", gn->name);
+		DEBUG1(SUFF, "Wildcard expanding \"%s\"...", gn->name);
+		if (ln != NULL)
+			suff = ln->datum;
+		/*
+		 * XXX: Here we can save the suffix so we don't have to do
+		 * this again.
+		 */
 	}
-	if (ln != NULL)
-	    suff = (Suff *)Lst_Datum(ln);
-	/* XXX: Here we can save the suffix so we don't have to do this again */
-    }
 
-    if (suff != NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "suffix is \"%s\"...", suff->name);
+	if (suff != NULL) {
+		DEBUG1(SUFF, "suffix is \"%s\"...\n", suff->name);
+		return suff->searchPath;
+	} else {
+		DEBUG0(SUFF, "\n");
+		return &dirSearchPath;	/* Use default search path */
 	}
-	return suff->searchPath;
-    } else {
-	/*
-	 * Use default search path
-	 */
-	return dirSearchPath;
-    }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffApplyTransform --
- *	Apply a transformation rule, given the source and target nodes
- *	and suffixes.
+/*
+ * Apply a transformation rule, given the source and target nodes and
+ * suffixes.
  *
- * Input:
- *	tGn		Target node
- *	sGn		Source node
- *	t		Target suffix
- *	s		Source suffix
+ * The source and target are linked and the commands from the transformation
+ * are added to the target node's commands list. The target also inherits all
+ * the sources for the transformation rule.
  *
  * Results:
  *	TRUE if successful, FALSE if not.
- *
- * Side Effects:
- *	The source and target are linked and the commands from the
- *	transformation are added to the target node's commands list.
- *	All attributes but OP_DEPMASK and OP_TRANSFORM are applied
- *	to the target. The target also inherits all the sources for
- *	the transformation rule.
- *
- *-----------------------------------------------------------------------
  */
 static Boolean
-SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
+ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 {
-    LstNode 	ln, nln;    /* General node */
-    char    	*tname;	    /* Name of transformation rule */
-    GNode   	*gn;	    /* Node for same */
+	GNodeListNode *ln;
+	char *tname;		/* Name of transformation rule */
+	GNode *gn;		/* Node for the transformation rule */
 
-    /*
-     * Form the proper links between the target and source.
-     */
-    (void)Lst_AtEnd(tGn->children, sGn);
-    (void)Lst_AtEnd(sGn->parents, tGn);
-    tGn->unmade += 1;
+	/* Form the proper links between the target and source. */
+	Lst_Append(&tgn->children, sgn);
+	Lst_Append(&sgn->parents, tgn);
+	tgn->unmade++;
 
-    /*
-     * Locate the transformation rule itself
-     */
-    tname = str_concat(s->name, t->name, 0);
-    ln = Lst_Find(transforms, tname, SuffGNHasNameP);
-    free(tname);
+	/* Locate the transformation rule itself. */
+	tname = str_concat2(ssuff->name, tsuff->name);
+	gn = FindTransformByName(tname);
+	free(tname);
 
-    if (ln == NULL) {
+	/* This can happen when linking an OP_MEMBER and OP_ARCHV node. */
+	if (gn == NULL)
+		return FALSE;
+
+	DEBUG3(SUFF, "\tapplying %s -> %s to \"%s\"\n",
+	    ssuff->name, tsuff->name, tgn->name);
+
+	/* Record last child; Make_HandleUse may add child nodes. */
+	ln = tgn->children.last;
+
+	/* Apply the rule. */
+	Make_HandleUse(gn, tgn);
+
+	/* Deal with wildcards and variables in any acquired sources. */
+	ln = ln != NULL ? ln->next : NULL;
+	while (ln != NULL) {
+		GNodeListNode *nln = ln->next;
+		ExpandChildren(ln, tgn);
+		ln = nln;
+	}
+
 	/*
-	 * Not really such a transformation rule (can happen when we're
-	 * called to link an OP_MEMBER and OP_ARCHV node), so return
-	 * FALSE.
+	 * Keep track of another parent to which this node is transformed so
+	 * the .IMPSRC variable can be set correctly for the parent.
 	 */
-	return(FALSE);
-    }
+	Lst_Append(&sgn->implicitParents, tgn);
 
-    gn = (GNode *)Lst_Datum(ln);
-
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
-    }
-
-    /*
-     * Record last child for expansion purposes
-     */
-    ln = Lst_Last(tGn->children);
-
-    /*
-     * Pass the buck to Make_HandleUse to apply the rule
-     */
-    (void)Make_HandleUse(gn, tGn);
-
-    /*
-     * Deal with wildcards and variables in any acquired sources
-     */
-    for (ln = Lst_Succ(ln); ln != NULL; ln = nln) {
-	nln = Lst_Succ(ln);
-	SuffExpandChildren(ln, tGn);
-    }
-
-    /*
-     * Keep track of another parent to which this beast is transformed so
-     * the .IMPSRC variable can be set correctly for the parent.
-     */
-    (void)Lst_AtEnd(sGn->iParents, tGn);
-
-    return(TRUE);
+	return TRUE;
 }
 
+/*
+ * Member has a known suffix, so look for a transformation rule from
+ * it to a possible suffix of the archive.
+ *
+ * Rather than searching through the entire list, we just look at
+ * suffixes to which the member's suffix may be transformed.
+ */
+static void
+ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
+{
+	GNodeListNode *ln;
+	size_t nameLen = (size_t)(eoarch - gn->name);
 
-/*-
- *-----------------------------------------------------------------------
- * SuffFindArchiveDeps --
- *	Locate dependencies for an OP_ARCHV node.
+	/* Use first matching suffix... */
+	for (ln = memSuff->parents.first; ln != NULL; ln = ln->next)
+		if (Suffix_IsSuffix(ln->datum, nameLen, eoarch))
+			break;
+
+	if (ln != NULL) {
+		/* Got one -- apply it */
+		Suffix *suff = ln->datum;
+		if (!ApplyTransform(gn, mem, suff, memSuff)) {
+			DEBUG2(SUFF, "\tNo transformation from %s -> %s\n",
+			    memSuff->name, suff->name);
+		}
+	}
+}
+
+static void FindDeps(GNode *, CandidateSearcher *);
+
+/*
+ * Locate dependencies for an OP_ARCHV node.
  *
  * Input:
  *	gn		Node for which to locate dependencies
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	Same as Suff_FindDeps
- *
- *-----------------------------------------------------------------------
  */
 static void
-SuffFindArchiveDeps(GNode *gn, Lst slst)
+FindDepsArchive(GNode *gn, CandidateSearcher *cs)
 {
-    char    	*eoarch;    /* End of archive portion */
-    char    	*eoname;    /* End of member portion */
-    GNode   	*mem;	    /* Node for member */
-    static const char	*copy[] = {
-	/* Variables to be copied from the member node */
-	TARGET,	    	    /* Must be first */
-	PREFIX,	    	    /* Must be second */
-    };
-    int	    	i;  	    /* Index into copy and vals */
-    Suff    	*ms;	    /* Suffix descriptor for member */
-    char    	*name;	    /* Start of member's name */
+	char *eoarch;		/* End of archive portion */
+	char *eoname;		/* End of member portion */
+	GNode *mem;		/* Node for member */
+	Suffix *memSuff;
+	const char *name;	/* Start of member's name */
 
-    /*
-     * The node is an archive(member) pair. so we must find a
-     * suffix for both of them.
-     */
-    eoarch = strchr(gn->name, '(');
-    eoname = strchr(eoarch, ')');
-
-    *eoname = '\0';	  /* Nuke parentheses during suffix search */
-    *eoarch = '\0';	  /* So a suffix can be found */
-
-    name = eoarch + 1;
-
-    /*
-     * To simplify things, call Suff_FindDeps recursively on the member now,
-     * so we can simply compare the member's .PREFIX and .TARGET variables
-     * to locate its suffix. This allows us to figure out the suffix to
-     * use for the archive without having to do a quadratic search over the
-     * suffix list, backtracking for each one...
-     */
-    mem = Targ_FindNode(name, TARG_CREATE);
-    SuffFindDeps(mem, slst);
-
-    /*
-     * Create the link between the two nodes right off
-     */
-    (void)Lst_AtEnd(gn->children, mem);
-    (void)Lst_AtEnd(mem->parents, gn);
-    gn->unmade += 1;
-
-    /*
-     * Copy in the variables from the member node to this one.
-     */
-    for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
-	char *p1;
-	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn, 0);
-	if (p1)
-	    free(p1);
-
-    }
-
-    ms = mem->suffix;
-    if (ms == NULL) {
 	/*
-	 * Didn't know what it was -- use .NULL suffix if not in make mode
+	 * The node is an archive(member) pair. so we must find a
+	 * suffix for both of them.
 	 */
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "using null suffix\n");
+	eoarch = strchr(gn->name, '(');
+	eoname = strchr(eoarch, ')');
+
+	/*
+	 * Caller guarantees the format `libname(member)', via
+	 * Arch_ParseArchive.
+	 */
+	assert(eoarch != NULL);
+	assert(eoname != NULL);
+
+	*eoname = '\0';		/* Nuke parentheses during suffix search */
+	*eoarch = '\0';		/* So a suffix can be found */
+
+	name = eoarch + 1;
+
+	/*
+	 * To simplify things, call Suff_FindDeps recursively on the member
+	 * now, so we can simply compare the member's .PREFIX and .TARGET
+	 * variables to locate its suffix. This allows us to figure out the
+	 * suffix to use for the archive without having to do a quadratic
+	 * search over the suffix list, backtracking for each one.
+	 */
+	mem = Targ_GetNode(name);
+	FindDeps(mem, cs);
+
+	/* Create the link between the two nodes right off. */
+	Lst_Append(&gn->children, mem);
+	Lst_Append(&mem->parents, gn);
+	gn->unmade++;
+
+	/* Copy in the variables from the member node to this one. */
+	Var_Set(gn, PREFIX, GNode_VarPrefix(mem));
+	Var_Set(gn, TARGET, GNode_VarTarget(mem));
+
+	memSuff = mem->suffix;
+	if (memSuff == NULL) {	/* Didn't know what it was. */
+		DEBUG0(SUFF, "using null suffix\n");
+		memSuff = nullSuff;
 	}
-	ms = suffNull;
-    }
 
 
-    /*
-     * Set the other two local variables required for this target.
-     */
-    Var_Set(MEMBER, name, gn, 0);
-    Var_Set(ARCHIVE, gn->name, gn, 0);
-
-    if (ms != NULL) {
-	/*
-	 * Member has a known suffix, so look for a transformation rule from
-	 * it to a possible suffix of the archive. Rather than searching
-	 * through the entire list, we just look at suffixes to which the
-	 * member's suffix may be transformed...
-	 */
-	LstNode		ln;
-	SuffixCmpData	sd;		/* Search string data */
+	/* Set the other two local variables required for this target. */
+	Var_Set(gn, MEMBER, name);
+	Var_Set(gn, ARCHIVE, gn->name);
+	/* Set $@ for compatibility with other makes. */
+	Var_Set(gn, TARGET, gn->name);
 
 	/*
-	 * Use first matching suffix...
+	 * Now we've got the important local variables set, expand any sources
+	 * that still contain variables or wildcards in their names.
 	 */
-	sd.len = eoarch - gn->name;
-	sd.ename = eoarch;
-	ln = Lst_Find(ms->parents, &sd, SuffSuffIsSuffixP);
+	ExpandAllChildren(gn);
 
-	if (ln != NULL) {
-	    /*
-	     * Got one -- apply it
-	     */
-	    if (!SuffApplyTransform(gn, mem, (Suff *)Lst_Datum(ln), ms) &&
-		DEBUG(SUFF))
-	    {
-		fprintf(debug_file, "\tNo transformation from %s -> %s\n",
-		       ms->name, ((Suff *)Lst_Datum(ln))->name);
-	    }
-	}
-    }
+	if (memSuff != NULL)
+		ExpandMember(gn, eoarch, mem, memSuff);
 
-    /*
-     * Replace the opening and closing parens now we've no need of the separate
-     * pieces.
-     */
-    *eoarch = '('; *eoname = ')';
+	/*
+	 * Replace the opening and closing parens now we've no need of the
+	 * separate pieces.
+	 */
+	*eoarch = '(';
+	*eoname = ')';
 
-    /*
-     * Pretend gn appeared to the left of a dependency operator so
-     * the user needn't provide a transformation from the member to the
-     * archive.
-     */
-    if (OP_NOP(gn->type)) {
-	gn->type |= OP_DEPENDS;
-    }
+	/*
+	 * Pretend gn appeared to the left of a dependency operator so the
+	 * user needn't provide a transformation from the member to the
+	 * archive.
+	 */
+	if (!GNode_IsTarget(gn))
+		gn->type |= OP_DEPENDS;
 
-    /*
-     * Flag the member as such so we remember to look in the archive for
-     * its modification time.
-     */
-    mem->type |= OP_MEMBER;
+	/*
+	 * Flag the member as such so we remember to look in the archive for
+	 * its modification time. The OP_JOIN | OP_MADE is needed because
+	 * this target should never get made.
+	 */
+	mem->type |= OP_MEMBER | OP_JOIN | OP_MADE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * SuffFindNormalDeps --
- *	Locate implicit dependencies for regular targets.
+/*
+ * If the node is a library, it is the arch module's job to find it
+ * and set the TARGET variable accordingly. We merely provide the
+ * search path, assuming all libraries end in ".a" (if the suffix
+ * hasn't been defined, there's nothing we can do for it, so we just
+ * set the TARGET variable to the node's name in order to give it a
+ * value).
+ */
+static void
+FindDepsLib(GNode *gn)
+{
+	Suffix *suff = FindSuffixByName(LIBSUFF);
+	if (suff != NULL) {
+		Suffix_Reassign(&gn->suffix, suff);
+		Arch_FindLib(gn, suff->searchPath);
+	} else {
+		Suffix_Unassign(&gn->suffix);
+		Var_Set(gn, TARGET, gn->name);
+	}
+
+	/*
+	 * Because a library (-lfoo) target doesn't follow the standard
+	 * filesystem conventions, we don't set the regular variables for
+	 * the thing. .PREFIX is simply made empty.
+	 */
+	Var_Set(gn, PREFIX, "");
+}
+
+static void
+FindDepsRegularKnown(const char *name, size_t nameLen, GNode *gn,
+		     CandidateList *srcs, CandidateList *targs)
+{
+	SuffixListNode *ln;
+	Candidate *targ;
+	char *pref;
+
+	for (ln = sufflist.first; ln != NULL; ln = ln->next) {
+		Suffix *suff = ln->datum;
+		if (!Suffix_IsSuffix(suff, nameLen, name + nameLen))
+			continue;
+
+		pref = bmake_strldup(name, (size_t)(nameLen - suff->nameLen));
+		targ = Candidate_New(bmake_strdup(gn->name), pref, suff, NULL,
+		    gn);
+
+		CandidateList_AddCandidatesFor(srcs, targ);
+
+		/* Record the target so we can nuke it. */
+		Lst_Append(targs, targ);
+	}
+}
+
+static void
+FindDepsRegularUnknown(GNode *gn, const char *sopref,
+		       CandidateList *srcs, CandidateList *targs)
+{
+	Candidate *targ;
+
+	if (!Lst_IsEmpty(targs) || nullSuff == NULL)
+		return;
+
+	DEBUG1(SUFF, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
+
+	targ = Candidate_New(bmake_strdup(gn->name), bmake_strdup(sopref),
+	    nullSuff, NULL, gn);
+
+	/*
+	 * Only use the default suffix rules if we don't have commands
+	 * defined for this gnode; traditional make programs used to not
+	 * define suffix rules if the gnode had children but we don't do
+	 * this anymore.
+	 */
+	if (Lst_IsEmpty(&gn->commands))
+		CandidateList_AddCandidatesFor(srcs, targ);
+	else {
+		DEBUG0(SUFF, "not ");
+	}
+
+	DEBUG0(SUFF, "adding suffix rules\n");
+
+	Lst_Append(targs, targ);
+}
+
+/*
+ * Deal with finding the thing on the default search path. We always do
+ * that, not only if the node is only a source (not on the lhs of a
+ * dependency operator or [XXX] it has neither children or commands) as
+ * the old pmake did.
+ */
+static void
+FindDepsRegularPath(GNode *gn, Candidate *targ)
+{
+	if (gn->type & (OP_PHONY | OP_NOPATH))
+		return;
+
+	free(gn->path);
+	gn->path = Dir_FindFile(gn->name,
+	    (targ == NULL ? &dirSearchPath :
+		targ->suff->searchPath));
+	if (gn->path == NULL)
+		return;
+
+	Var_Set(gn, TARGET, gn->path);
+
+	if (targ != NULL) {
+		/*
+		 * Suffix known for the thing -- trim the suffix off
+		 * the path to form the proper .PREFIX variable.
+		 */
+		size_t savep = strlen(gn->path) - targ->suff->nameLen;
+		char savec;
+
+		Suffix_Reassign(&gn->suffix, targ->suff);
+
+		savec = gn->path[savep];
+		gn->path[savep] = '\0';
+
+		Var_Set(gn, PREFIX, str_basename(gn->path));
+
+		gn->path[savep] = savec;
+	} else {
+		/*
+		 * The .PREFIX gets the full path if the target has no
+		 * known suffix.
+		 */
+		Suffix_Unassign(&gn->suffix);
+		Var_Set(gn, PREFIX, str_basename(gn->path));
+	}
+}
+
+/*
+ * Locate implicit dependencies for regular targets.
  *
  * Input:
  *	gn		Node for which to find sources
  *
- * Results:
- *	None.
- *
  * Side Effects:
- *	Same as Suff_FindDeps...
- *
- *-----------------------------------------------------------------------
+ *	Same as Suff_FindDeps
  */
 static void
-SuffFindNormalDeps(GNode *gn, Lst slst)
+FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 {
-    char    	*eoname;    /* End of name */
-    char    	*sopref;    /* Start of prefix */
-    LstNode 	ln, nln;    /* Next suffix node to check */
-    Lst	    	srcs;	    /* List of sources at which to look */
-    Lst	    	targs;	    /* List of targets to which things can be
-			     * transformed. They all have the same file,
-			     * but different suff and pref fields */
-    Src	    	*bottom;    /* Start of found transformation path */
-    Src 	*src;	    /* General Src pointer */
-    char    	*pref;	    /* Prefix to use */
-    Src	    	*targ;	    /* General Src target pointer */
-    SuffixCmpData sd;	    /* Search string data */
+	/* List of sources at which to look */
+	CandidateList srcs = LST_INIT;
+	/*
+	 * List of targets to which things can be transformed.
+	 * They all have the same file, but different suff and prefix fields.
+	 */
+	CandidateList targs = LST_INIT;
+	Candidate *bottom;	/* Start of found transformation path */
+	Candidate *src;
+	Candidate *targ;
 
+	const char *name = gn->name;
+	size_t nameLen = strlen(name);
 
-    sd.len = strlen(gn->name);
-    sd.ename = eoname = gn->name + sd.len;
-
-    sopref = gn->name;
-
-    /*
-     * Begin at the beginning...
-     */
-    ln = Lst_First(sufflist);
-    srcs = Lst_Init(FALSE);
-    targs = Lst_Init(FALSE);
-
-    /*
-     * We're caught in a catch-22 here. On the one hand, we want to use any
-     * transformation implied by the target's sources, but we can't examine
-     * the sources until we've expanded any variables/wildcards they may hold,
-     * and we can't do that until we've set up the target's local variables
-     * and we can't do that until we know what the proper suffix for the
-     * target is (in case there are two suffixes one of which is a suffix of
-     * the other) and we can't know that until we've found its implied
-     * source, which we may not want to use if there's an existing source
-     * that implies a different transformation.
-     *
-     * In an attempt to get around this, which may not work all the time,
-     * but should work most of the time, we look for implied sources first,
-     * checking transformations to all possible suffixes of the target,
-     * use what we find to set the target's local variables, expand the
-     * children, then look for any overriding transformations they imply.
-     * Should we find one, we discard the one we found before.
-     */
-    bottom = NULL;
-    targ = NULL;
-
-    if (!(gn->type & OP_PHONY)) {
-
-	while (ln != NULL) {
-	    /*
-	     * Look for next possible suffix...
-	     */
-	    ln = Lst_FindFrom(sufflist, ln, &sd, SuffSuffIsSuffixP);
-
-	    if (ln != NULL) {
-		int	    prefLen;	    /* Length of the prefix */
-
-		/*
-		 * Allocate a Src structure to which things can be transformed
-		 */
-		targ = bmake_malloc(sizeof(Src));
-		targ->file = bmake_strdup(gn->name);
-		targ->suff = (Suff *)Lst_Datum(ln);
-		targ->suff->refCount++;
-		targ->node = gn;
-		targ->parent = NULL;
-		targ->children = 0;
 #ifdef DEBUG_SRC
-		targ->cp = Lst_Init(FALSE);
+	DEBUG1(SUFF, "FindDepsRegular \"%s\"\n", gn->name);
 #endif
 
-		/*
-		 * Allocate room for the prefix, whose end is found by
-		 * subtracting the length of the suffix from
-		 * the end of the name.
-		 */
-		prefLen = (eoname - targ->suff->nameLen) - sopref;
-		targ->pref = bmake_malloc(prefLen + 1);
-		memcpy(targ->pref, sopref, prefLen);
-		targ->pref[prefLen] = '\0';
+	/*
+	 * We're caught in a catch-22 here. On the one hand, we want to use
+	 * any transformation implied by the target's sources, but we can't
+	 * examine the sources until we've expanded any variables/wildcards
+	 * they may hold, and we can't do that until we've set up the
+	 * target's local variables and we can't do that until we know what
+	 * the proper suffix for the target is (in case there are two
+	 * suffixes one of which is a suffix of the other) and we can't know
+	 * that until we've found its implied source, which we may not want
+	 * to use if there's an existing source that implies a different
+	 * transformation.
+	 *
+	 * In an attempt to get around this, which may not work all the time,
+	 * but should work most of the time, we look for implied sources
+	 * first, checking transformations to all possible suffixes of the
+	 * target, use what we find to set the target's local variables,
+	 * expand the children, then look for any overriding transformations
+	 * they imply. Should we find one, we discard the one we found before.
+	 */
+	bottom = NULL;
+	targ = NULL;
+
+	if (!(gn->type & OP_PHONY)) {
+
+		FindDepsRegularKnown(name, nameLen, gn, &srcs, &targs);
+
+		/* Handle target of unknown suffix... */
+		FindDepsRegularUnknown(gn, name, &srcs, &targs);
 
 		/*
-		 * Add nodes from which the target can be made
+		 * Using the list of possible sources built up from the target
+		 * suffix(es), try and find an existing file/target that
+		 * matches.
 		 */
-		SuffAddLevel(srcs, targ);
+		bottom = FindThem(&srcs, cs);
 
-		/*
-		 * Record the target so we can nuke it
-		 */
-		(void)Lst_AtEnd(targs, targ);
+		if (bottom == NULL) {
+			/*
+			 * No known transformations -- use the first suffix
+			 * found for setting the local variables.
+			 */
+			if (targs.first != NULL)
+				targ = targs.first->datum;
+			else
+				targ = NULL;
+		} else {
+			/*
+			 * Work up the transformation path to find the suffix
+			 * of the target to which the transformation was made.
+			 */
+			for (targ = bottom;
+			     targ->parent != NULL; targ = targ->parent)
+				continue;
+		}
+	}
 
-		/*
-		 * Search from this suffix's successor...
-		 */
-		ln = Lst_Succ(ln);
-	    }
+	Var_Set(gn, TARGET, GNode_Path(gn));
+	Var_Set(gn, PREFIX, targ != NULL ? targ->prefix : gn->name);
+
+	/*
+	 * Now we've got the important local variables set, expand any sources
+	 * that still contain variables or wildcards in their names.
+	 */
+	{
+		GNodeListNode *ln, *nln;
+		for (ln = gn->children.first; ln != NULL; ln = nln) {
+			nln = ln->next;
+			ExpandChildren(ln, gn);
+		}
+	}
+
+	if (targ == NULL) {
+		DEBUG1(SUFF, "\tNo valid suffix on %s\n", gn->name);
+
+	sfnd_abort:
+		FindDepsRegularPath(gn, targ);
+		goto sfnd_return;
 	}
 
 	/*
-	 * Handle target of unknown suffix...
+	 * If the suffix indicates that the target is a library, mark that in
+	 * the node's type field.
 	 */
-	if (Lst_IsEmpty(targs) && suffNull != NULL) {
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
-	    }
-
-	    targ = bmake_malloc(sizeof(Src));
-	    targ->file = bmake_strdup(gn->name);
-	    targ->suff = suffNull;
-	    targ->suff->refCount++;
-	    targ->node = gn;
-	    targ->parent = NULL;
-	    targ->children = 0;
-	    targ->pref = bmake_strdup(sopref);
-#ifdef DEBUG_SRC
-	    targ->cp = Lst_Init(FALSE);
-#endif
-
-	    /*
-	     * Only use the default suffix rules if we don't have commands
-	     * defined for this gnode; traditional make programs used to
-	     * not define suffix rules if the gnode had children but we
-	     * don't do this anymore.
-	     */
-	    if (Lst_IsEmpty(gn->commands))
-		SuffAddLevel(srcs, targ);
-	    else {
-		if (DEBUG(SUFF))
-		    fprintf(debug_file, "not ");
-	    }
-
-	    if (DEBUG(SUFF))
-		fprintf(debug_file, "adding suffix rules\n");
-
-	    (void)Lst_AtEnd(targs, targ);
-	}
+	if (targ->suff->flags & SUFF_LIBRARY)
+		gn->type |= OP_LIB;
 
 	/*
-	 * Using the list of possible sources built up from the target
-	 * suffix(es), try and find an existing file/target that matches.
+	 * Check for overriding transformation rule implied by sources
 	 */
-	bottom = SuffFindThem(srcs, slst);
+	if (!Lst_IsEmpty(&gn->children)) {
+		src = FindCmds(targ, cs);
+
+		if (src != NULL) {
+			/*
+			 * Free up all the candidates in the transformation
+			 * path, up to but not including the parent node.
+			 */
+			while (bottom != NULL && bottom->parent != NULL) {
+				CandidateSearcher_AddIfNew(cs, bottom);
+				bottom = bottom->parent;
+			}
+			bottom = src;
+		}
+	}
 
 	if (bottom == NULL) {
-	    /*
-	     * No known transformations -- use the first suffix found
-	     * for setting the local variables.
-	     */
-	    if (!Lst_IsEmpty(targs)) {
-		targ = (Src *)Lst_Datum(Lst_First(targs));
-	    } else {
-		targ = NULL;
-	    }
-	} else {
-	    /*
-	     * Work up the transformation path to find the suffix of the
-	     * target to which the transformation was made.
-	     */
-	    for (targ = bottom; targ->parent != NULL; targ = targ->parent)
-		continue;
-	}
-    }
-
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
-
-    pref = (targ != NULL) ? targ->pref : gn->name;
-    Var_Set(PREFIX, pref, gn, 0);
-
-    /*
-     * Now we've got the important local variables set, expand any sources
-     * that still contain variables or wildcards in their names.
-     */
-    for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
-	nln = Lst_Succ(ln);
-	SuffExpandChildren(ln, gn);
-    }
-
-    if (targ == NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "\tNo valid suffix on %s\n", gn->name);
+		/* No idea from where it can come -- return now. */
+		goto sfnd_abort;
 	}
 
-sfnd_abort:
 	/*
-	 * Deal with finding the thing on the default search path. We
-	 * always do that, not only if the node is only a source (not
-	 * on the lhs of a dependency operator or [XXX] it has neither
-	 * children or commands) as the old pmake did.
+	 * We now have a list of candidates headed by 'bottom' and linked via
+	 * their 'parent' pointers. What we do next is create links between
+	 * source and target nodes (which may or may not have been created)
+	 * and set the necessary local variables in each target.
+	 *
+	 * The commands for each target are set from the commands of the
+	 * transformation rule used to get from the src suffix to the targ
+	 * suffix. Note that this causes the commands list of the original
+	 * node, gn, to be replaced with the commands of the final
+	 * transformation rule.
 	 */
-	if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
-	    free(gn->path);
-	    gn->path = Dir_FindFile(gn->name,
-				    (targ == NULL ? dirSearchPath :
-				     targ->suff->searchPath));
-	    if (gn->path != NULL) {
-		char *ptr;
-		Var_Set(TARGET, gn->path, gn, 0);
+	if (bottom->node == NULL)
+		bottom->node = Targ_GetNode(bottom->file);
 
-		if (targ != NULL) {
-		    /*
-		     * Suffix known for the thing -- trim the suffix off
-		     * the path to form the proper .PREFIX variable.
-		     */
-		    int     savep = strlen(gn->path) - targ->suff->nameLen;
-		    char    savec;
+	for (src = bottom; src->parent != NULL; src = src->parent) {
+		targ = src->parent;
 
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = targ->suff;
-		    gn->suffix->refCount++;
+		Suffix_Reassign(&src->node->suffix, src->suff);
 
-		    savec = gn->path[savep];
-		    gn->path[savep] = '\0';
+		if (targ->node == NULL)
+			targ->node = Targ_GetNode(targ->file);
 
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
+		ApplyTransform(targ->node, src->node,
+		    targ->suff, src->suff);
 
-		    Var_Set(PREFIX, ptr, gn, 0);
-
-		    gn->path[savep] = savec;
-		} else {
-		    /*
-		     * The .PREFIX gets the full path if the target has
-		     * no known suffix.
-		     */
-		    if (gn->suffix)
-			gn->suffix->refCount--;
-		    gn->suffix = NULL;
-
-		    if ((ptr = strrchr(gn->path, '/')) != NULL)
-			ptr++;
-		    else
-			ptr = gn->path;
-
-		    Var_Set(PREFIX, ptr, gn, 0);
+		if (targ->node != gn) {
+			/*
+			 * Finish off the dependency-search process for any
+			 * nodes between bottom and gn (no point in questing
+			 * around the filesystem for their implicit source
+			 * when it's already known). Note that the node
+			 * can't have any sources that need expanding, since
+			 * SuffFindThem will stop on an existing node, so all
+			 * we need to do is set the standard variables.
+			 */
+			targ->node->type |= OP_DEPS_FOUND;
+			Var_Set(targ->node, PREFIX, targ->prefix);
+			Var_Set(targ->node, TARGET, targ->node->name);
 		}
-	    }
 	}
 
-	goto sfnd_return;
-    }
+	Suffix_Reassign(&gn->suffix, src->suff);
 
-    /*
-     * If the suffix indicates that the target is a library, mark that in
-     * the node's type field.
-     */
-    if (targ->suff->flags & SUFF_LIBRARY) {
-	gn->type |= OP_LIB;
-    }
-
-    /*
-     * Check for overriding transformation rule implied by sources
-     */
-    if (!Lst_IsEmpty(gn->children)) {
-	src = SuffFindCmds(targ, slst);
-
-	if (src != NULL) {
-	    /*
-	     * Free up all the Src structures in the transformation path
-	     * up to, but not including, the parent node.
-	     */
-	    while (bottom && bottom->parent != NULL) {
-		if (Lst_Member(slst, bottom) == NULL) {
-		    Lst_AtEnd(slst, bottom);
-		}
-		bottom = bottom->parent;
-	    }
-	    bottom = src;
-	}
-    }
-
-    if (bottom == NULL) {
 	/*
-	 * No idea from where it can come -- return now.
+	 * Nuke the transformation path and the candidates left over in the
+	 * two lists.
 	 */
-	goto sfnd_abort;
-    }
-
-    /*
-     * We now have a list of Src structures headed by 'bottom' and linked via
-     * their 'parent' pointers. What we do next is create links between
-     * source and target nodes (which may or may not have been created)
-     * and set the necessary local variables in each target. The
-     * commands for each target are set from the commands of the
-     * transformation rule used to get from the src suffix to the targ
-     * suffix. Note that this causes the commands list of the original
-     * node, gn, to be replaced by the commands of the final
-     * transformation rule. Also, the unmade field of gn is incremented.
-     * Etc.
-     */
-    if (bottom->node == NULL) {
-	bottom->node = Targ_FindNode(bottom->file, TARG_CREATE);
-    }
-
-    for (src = bottom; src->parent != NULL; src = src->parent) {
-	targ = src->parent;
-
-	if (src->node->suffix)
-	    src->node->suffix->refCount--;
-	src->node->suffix = src->suff;
-	src->node->suffix->refCount++;
-
-	if (targ->node == NULL) {
-	    targ->node = Targ_FindNode(targ->file, TARG_CREATE);
-	}
-
-	SuffApplyTransform(targ->node, src->node,
-			   targ->suff, src->suff);
-
-	if (targ->node != gn) {
-	    /*
-	     * Finish off the dependency-search process for any nodes
-	     * between bottom and gn (no point in questing around the
-	     * filesystem for their implicit source when it's already
-	     * known). Note that the node can't have any sources that
-	     * need expanding, since SuffFindThem will stop on an existing
-	     * node, so all we need to do is set the standard and System V
-	     * variables.
-	     */
-	    targ->node->type |= OP_DEPS_FOUND;
-
-	    Var_Set(PREFIX, targ->pref, targ->node, 0);
-
-	    Var_Set(TARGET, targ->node->name, targ->node, 0);
-	}
-    }
-
-    if (gn->suffix)
-	gn->suffix->refCount--;
-    gn->suffix = src->suff;
-    gn->suffix->refCount++;
-
-    /*
-     * Nuke the transformation path and the Src structures left over in the
-     * two lists.
-     */
 sfnd_return:
-    if (bottom)
-	if (Lst_Member(slst, bottom) == NULL)
-	    Lst_AtEnd(slst, bottom);
+	if (bottom != NULL)
+		CandidateSearcher_AddIfNew(cs, bottom);
 
-    while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
-	continue;
+	while (RemoveCandidate(&srcs) || RemoveCandidate(&targs))
+		continue;
 
-    Lst_Concat(slst, srcs, LST_CONCLINK);
-    Lst_Concat(slst, targs, LST_CONCLINK);
+	CandidateSearcher_MoveAll(cs, &srcs);
+	CandidateSearcher_MoveAll(cs, &targs);
 }
 
-
-/*-
- *-----------------------------------------------------------------------
- * Suff_FindDeps  --
- *	Find implicit sources for the target described by the graph node
- *	gn
- *
- * Results:
- *	Nothing.
- *
- * Side Effects:
- *	Nodes are added to the graph below the passed-in node. The nodes
- *	are marked to have their IMPSRC variable filled in. The
- *	PREFIX variable is set for the given node and all its
- *	implied children.
- *
- * Notes:
- *	The path found by this target is the shortest path in the
- *	transformation graph, which may pass through non-existent targets,
- *	to an existing target. The search continues on all paths from the
- *	root suffix until a file is found. I.e. if there's a path
- *	.o -> .c -> .l -> .l,v from the root and the .l,v file exists but
- *	the .c and .l files don't, the search will branch out in
- *	all directions from .o and again from all the nodes on the
- *	next level until the .l,v node is encountered.
- *
- *-----------------------------------------------------------------------
- */
-
-void
-Suff_FindDeps(GNode *gn)
+static void
+CandidateSearcher_CleanUp(CandidateSearcher *cs)
 {
-
-    SuffFindDeps(gn, srclist);
-    while (SuffRemoveSrc(srclist))
-	continue;
+	while (RemoveCandidate(&cs->list))
+		continue;
+	assert(Lst_IsEmpty(&cs->list));
 }
 
 
 /*
- * Input:
- *	gn		node we're dealing with
+ * Find implicit sources for the target.
  *
+ * Nodes are added to the graph as children of the passed-in node. The nodes
+ * are marked to have their IMPSRC variable filled in. The PREFIX variable
+ * is set for the given node and all its implied children.
+ *
+ * The path found by this target is the shortest path in the transformation
+ * graph, which may pass through nonexistent targets, to an existing target.
+ * The search continues on all paths from the root suffix until a file is
+ * found. I.e. if there's a path .o -> .c -> .l -> .l,v from the root and the
+ * .l,v file exists but the .c and .l files don't, the search will branch out
+ * in all directions from .o and again from all the nodes on the next level
+ * until the .l,v node is encountered.
  */
-static void
-SuffFindDeps(GNode *gn, Lst slst)
+void
+Suff_FindDeps(GNode *gn)
 {
-    if (gn->type & OP_DEPS_FOUND) {
-	/*
-	 * If dependencies already found, no need to do it again...
-	 */
-	return;
-    } else {
-	gn->type |= OP_DEPS_FOUND;
-    }
-    /*
-     * Make sure we have these set, may get revised below.
-     */
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
-    Var_Set(PREFIX, gn->name, gn, 0);
+	CandidateSearcher cs;
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "SuffFindDeps (%s)\n", gn->name);
-    }
+	CandidateSearcher_Init(&cs);
 
-    if (gn->type & OP_ARCHV) {
-	SuffFindArchiveDeps(gn, slst);
-    } else if (gn->type & OP_LIB) {
-	/*
-	 * If the node is a library, it is the arch module's job to find it
-	 * and set the TARGET variable accordingly. We merely provide the
-	 * search path, assuming all libraries end in ".a" (if the suffix
-	 * hasn't been defined, there's nothing we can do for it, so we just
-	 * set the TARGET variable to the node's name in order to give it a
-	 * value).
-	 */
-	LstNode	ln;
-	Suff	*s;
+	FindDeps(gn, &cs);
 
-	ln = Lst_Find(sufflist, LIBSUFF, SuffSuffHasNameP);
-	if (gn->suffix)
-	    gn->suffix->refCount--;
-	if (ln != NULL) {
-	    gn->suffix = s = (Suff *)Lst_Datum(ln);
-	    gn->suffix->refCount++;
-	    Arch_FindLib(gn, s->searchPath);
-	} else {
-	    gn->suffix = NULL;
-	    Var_Set(TARGET, gn->name, gn, 0);
-	}
-	/*
-	 * Because a library (-lfoo) target doesn't follow the standard
-	 * filesystem conventions, we don't set the regular variables for
-	 * the thing. .PREFIX is simply made empty...
-	 */
-	Var_Set(PREFIX, "", gn, 0);
-    } else {
-	SuffFindNormalDeps(gn, slst);
-    }
+	CandidateSearcher_CleanUp(&cs);
+	CandidateSearcher_Done(&cs);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_SetNull --
- *	Define which suffix is the null suffix.
+static void
+FindDeps(GNode *gn, CandidateSearcher *cs)
+{
+	if (gn->type & OP_DEPS_FOUND)
+		return;
+	gn->type |= OP_DEPS_FOUND;
+
+	/* Make sure we have these set, may get revised below. */
+	Var_Set(gn, TARGET, GNode_Path(gn));
+	Var_Set(gn, PREFIX, gn->name);
+
+	DEBUG1(SUFF, "SuffFindDeps \"%s\"\n", gn->name);
+
+	if (gn->type & OP_ARCHV)
+		FindDepsArchive(gn, cs);
+	else if (gn->type & OP_LIB)
+		FindDepsLib(gn);
+	else
+		FindDepsRegular(gn, cs);
+}
+
+/*
+ * Define which suffix is the null suffix.
+ *
+ * Need to handle the changing of the null suffix gracefully so the old
+ * transformation rules don't just go away.
  *
  * Input:
  *	name		Name of null suffix
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	'suffNull' is altered.
- *
- * Notes:
- *	Need to handle the changing of the null suffix gracefully so the
- *	old transformation rules don't just go away.
- *
- *-----------------------------------------------------------------------
  */
 void
-Suff_SetNull(char *name)
+Suff_SetNull(const char *name)
 {
-    Suff    *s;
-    LstNode ln;
-
-    ln = Lst_Find(sufflist, name, SuffSuffHasNameP);
-    if (ln != NULL) {
-	s = (Suff *)Lst_Datum(ln);
-	if (suffNull != NULL) {
-	    suffNull->flags &= ~SUFF_NULL;
+	Suffix *suff = FindSuffixByName(name);
+	if (suff == NULL) {
+		Parse_Error(PARSE_WARNING,
+		    "Desired null suffix %s not defined.",
+		    name);
+		return;
 	}
-	s->flags |= SUFF_NULL;
-	/*
-	 * XXX: Here's where the transformation mangling would take place
-	 */
-	suffNull = s;
-    } else {
-	Parse_Error(PARSE_WARNING, "Desired null suffix %s not defined.",
-		     name);
-    }
+
+	if (nullSuff != NULL)
+		nullSuff->flags &= ~(unsigned)SUFF_NULL;
+	suff->flags |= SUFF_NULL;
+	/* XXX: Here's where the transformation mangling would take place. */
+	nullSuff = suff;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_Init --
- *	Initialize suffixes module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Many
- *-----------------------------------------------------------------------
- */
+/* Initialize the suffixes module. */
 void
 Suff_Init(void)
 {
-    sufflist = Lst_Init(FALSE);
-#ifdef CLEANUP
-    suffClean = Lst_Init(FALSE);
-#endif
-    srclist = Lst_Init(FALSE);
-    transforms = Lst_Init(FALSE);
-
-    sNum = 0;
-    /*
-     * Create null suffix for single-suffix rules (POSIX). The thing doesn't
-     * actually go on the suffix list or everyone will think that's its
-     * suffix.
-     */
-    emptySuff = suffNull = bmake_malloc(sizeof(Suff));
-
-    suffNull->name =   	    bmake_strdup("");
-    suffNull->nameLen =     0;
-    suffNull->searchPath =  Lst_Init(FALSE);
-    Dir_Concat(suffNull->searchPath, dirSearchPath);
-    suffNull->children =    Lst_Init(FALSE);
-    suffNull->parents =	    Lst_Init(FALSE);
-    suffNull->ref =	    Lst_Init(FALSE);
-    suffNull->sNum =   	    sNum++;
-    suffNull->flags =  	    SUFF_NULL;
-    suffNull->refCount =    1;
-
+	/*
+	 * Create null suffix for single-suffix rules (POSIX). The thing
+	 * doesn't actually go on the suffix list or everyone will think
+	 * that's its suffix.
+	 */
+	Suff_ClearSuffixes();
 }
 
 
-/*-
- *----------------------------------------------------------------------
- * Suff_End --
- *	Cleanup the this module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The memory is free'd.
- *----------------------------------------------------------------------
- */
-
+/* Clean up the suffixes module. */
 void
 Suff_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(sufflist, SuffFree);
-    Lst_Destroy(suffClean, SuffFree);
-    if (suffNull)
-	SuffFree(suffNull);
-    Lst_Destroy(srclist, NULL);
-    Lst_Destroy(transforms, NULL);
+	Lst_DoneCall(&sufflist, SuffFree);
+	Lst_DoneCall(&suffClean, SuffFree);
+	if (nullSuff != NULL)
+		SuffFree(nullSuff);
+	Lst_Done(&transforms);
 #endif
 }
 
 
-/********************* DEBUGGING FUNCTIONS **********************/
-
-static int SuffPrintName(void *s, void *dummy)
+static void
+PrintSuffNames(const char *prefix, SuffixList *suffs)
 {
-    fprintf(debug_file, "%s ", ((Suff *)s)->name);
-    return (dummy ? 0 : 0);
-}
+	SuffixListNode *ln;
 
-static int
-SuffPrintSuff(void *sp, void *dummy)
-{
-    Suff    *s = (Suff *)sp;
-    int	    flags;
-    int	    flag;
-
-    fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
-
-    flags = s->flags;
-    if (flags) {
-	fputs(" (", debug_file);
-	while (flags) {
-	    flag = 1 << (ffs(flags) - 1);
-	    flags &= ~flag;
-	    switch (flag) {
-		case SUFF_NULL:
-		    fprintf(debug_file, "NULL");
-		    break;
-		case SUFF_INCLUDE:
-		    fprintf(debug_file, "INCLUDE");
-		    break;
-		case SUFF_LIBRARY:
-		    fprintf(debug_file, "LIBRARY");
-		    break;
-	    }
-	    fputc(flags ? '|' : ')', debug_file);
+	debug_printf("#\t%s: ", prefix);
+	for (ln = suffs->first; ln != NULL; ln = ln->next) {
+		Suffix *suff = ln->datum;
+		debug_printf("%s ", suff->name);
 	}
-    }
-    fputc('\n', debug_file);
-    fprintf(debug_file, "#\tTo: ");
-    Lst_ForEach(s->parents, SuffPrintName, NULL);
-    fputc('\n', debug_file);
-    fprintf(debug_file, "#\tFrom: ");
-    Lst_ForEach(s->children, SuffPrintName, NULL);
-    fputc('\n', debug_file);
-    fprintf(debug_file, "#\tSearch Path: ");
-    Dir_PrintPath(s->searchPath);
-    fputc('\n', debug_file);
-    return (dummy ? 0 : 0);
+	debug_printf("\n");
 }
 
-static int
-SuffPrintTrans(void *tp, void *dummy)
+static void
+Suffix_Print(Suffix *suff)
 {
-    GNode   *t = (GNode *)tp;
+	debug_printf("# \"%s\" (num %d, ref %d)",
+	    suff->name, suff->sNum, suff->refCount);
+	if (suff->flags != 0) {
+		char flags_buf[SuffixFlags_ToStringSize];
 
-    fprintf(debug_file, "%-16s: ", t->name);
-    Targ_PrintType(t->type);
-    fputc('\n', debug_file);
-    Lst_ForEach(t->commands, Targ_PrintCmd, NULL);
-    fputc('\n', debug_file);
-    return(dummy ? 0 : 0);
+		debug_printf(" (%s)",
+		    SuffixFlags_ToString(flags_buf, suff->flags));
+	}
+	debug_printf("\n");
+
+	PrintSuffNames("To", &suff->parents);
+	PrintSuffNames("From", &suff->children);
+
+	debug_printf("#\tSearch Path: ");
+	SearchPath_Print(suff->searchPath);
+	debug_printf("\n");
+}
+
+static void
+PrintTransformation(GNode *t)
+{
+	debug_printf("%-16s:", t->name);
+	Targ_PrintType(t->type);
+	debug_printf("\n");
+	Targ_PrintCmds(t);
+	debug_printf("\n");
 }
 
 void
 Suff_PrintAll(void)
 {
-    fprintf(debug_file, "#*** Suffixes:\n");
-    Lst_ForEach(sufflist, SuffPrintSuff, NULL);
+	debug_printf("#*** Suffixes:\n");
+	{
+		SuffixListNode *ln;
+		for (ln = sufflist.first; ln != NULL; ln = ln->next)
+			Suffix_Print(ln->datum);
+	}
 
-    fprintf(debug_file, "#*** Transformations:\n");
-    Lst_ForEach(transforms, SuffPrintTrans, NULL);
+	debug_printf("#*** Transformations:\n");
+	{
+		GNodeListNode *ln;
+		for (ln = transforms.first; ln != NULL; ln = ln->next)
+			PrintTransformation(ln->datum);
+	}
 }

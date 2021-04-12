@@ -637,7 +637,7 @@
 ./usr/libdata/debug/usr/sbin/fbdctl.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/i2cscan.debug              minix-debug     debug
 ./usr/libdata/debug/usr/sbin/inetd.debug                minix-debug     debug
-./usr/libdata/debug/usr/sbin/installboot_nbsd.debug     minix-debug     debug
+./usr/libdata/debug/usr/sbin/installboot.debug          minix-debug     debug
 ./usr/libdata/debug/usr/sbin/kernel.debug               minix-debug     debug
 ./usr/libdata/debug/usr/sbin/link.debug                 minix-debug     debug
 ./usr/libdata/debug/usr/sbin/makefs.debug               minix-debug     debug

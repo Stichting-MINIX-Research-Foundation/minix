@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 2014/02/15 13:34:28 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.31 2020/04/04 00:47:30 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 MODULE=		binutils
 
@@ -13,7 +13,7 @@ BRANDING?=	\
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--disable-werror \
+		--disable-werror --disable-initfini-array \
 		${BRANDING}
 
 .if defined(__MINIX) && ! exists(${GNUHOSTDIST}/gas/m68k-parse.c)
@@ -40,29 +40,11 @@ ALL_TARGET+=	all-gprof
 INSTALL_TARGET+=install-gprof
 .endif
 
-.if defined(__MINIX) && ${HAVE_GOLD:Uyes} != "no"
-ALL_TARGET+=	all-gold
-INSTALL_TARGET+=install-gold
-
-CONFIGURE_ARGS+=	\
-	--enable-lto \
-	--enable-plugins
-# LSC: Here we use the MK variable, as we have to select the right default
-#      linker. Problem is, when Gold is not seen, USE_BITCODE is forced to
-#      "no".
-.if ${MKBITCODE:Uno} == "yes"
-CONFIGURE_ARGS+= \
-	--enable-ld=yes \
-	--enable-gold=default
-.else
-CONFIGURE_ARGS+= \
-	--enable-ld=default \
-	--enable-gold=yes
-.endif # ${MKBITCODE:Uno} == "yes"
-.endif # defined(__MINIX)
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-I${GNUHOSTDIST}/include  -I${DESTDIR}/usr/include
+CCADDFLAGS+=	-B${DESTDIR}/usr/lib/
+LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 
 # Force avoiding possibly non-executable install-sh.
 CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
@@ -83,7 +65,8 @@ native-binutils: .native/.configure_done
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			CFLAGS= CPPFLAGS= CXXFLAGS= \
+			LDFLAGS=${LDADDFLAGS:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
@@ -93,6 +76,7 @@ native-binutils: .native/.configure_done
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM} \
+			--disable-initfini-array \
 			${BRANDING} \
 		)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \

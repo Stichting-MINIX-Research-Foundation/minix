@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -124,7 +124,7 @@ __RCSID("$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $");
 static void cd9660_finalize_PVD(iso9660_disk *);
 static cd9660node *cd9660_allocate_cd9660node(void);
 static void cd9660_set_defaults(iso9660_disk *);
-static int cd9660_arguments_set_string(const char *, const char *, int,
+static int cd9660_arguments_set_string(const char *, const char *, size_t,
     char, char *);
 static void cd9660_populate_iso_dir_record(
     struct _iso_directory_record_cd9660 *, u_char, u_char, u_char,
@@ -178,7 +178,7 @@ static int  cd9660_add_generic_bootimage(iso9660_disk *, const char *);
 
 
 /*
- * Allocate and initalize a cd9660node
+ * Allocate and initialize a cd9660node
  * @returns struct cd9660node * Pointer to new node, or NULL on error
  */
 static cd9660node *
@@ -298,7 +298,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		    "Allow 37 char filenames (unimplemented)"),
 	        OPT_BOOL('i', "allow-illegal-chars", allow_illegal_chars,
 		    "Allow illegal characters in filenames"),
-	        OPT_BOOL('D', "allow-multidot", allow_multidot,
+	        OPT_BOOL('m', "allow-multidot", allow_multidot,
 		    "Allow multiple periods in filenames"),
 	        OPT_BOOL('o', "omit-trailing-period", omit_trailing_period,
 		    "Omit trailing periods in filenames"),
@@ -321,6 +321,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_STR('\0', "no-boot", "No boot support"),
 		OPT_STR('\0', "hard-disk-boot", "Boot from hard disk"),
 		OPT_STR('\0', "boot-load-segment", "Boot load segment"),
+		OPT_STR('\0', "platformid", "Section Header Platform ID"),
 
 		{ .name = NULL }
 	};
@@ -339,10 +340,11 @@ cd9660_cleanup_opts(fsinfo_t *fsopts)
 }
 
 static int
-cd9660_arguments_set_string(const char *val, const char *fieldtitle, int length,
-			    char testmode, char * dest)
+cd9660_arguments_set_string(const char *val, const char *fieldtitle,
+    size_t length, char testmode, char * dest)
 {
-	int len, test;
+	size_t len;
+	int test;
 
 	if (val == NULL)
 		warnx("error: The %s requires a string argument", fieldtitle);
@@ -457,7 +459,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			/* RRIP */
 			cd9660_eltorito_add_boot_option(diskStructure, name, 0);
 			rv = 1;
-		} else if (strcmp(name, "boot-load-segment") == 0) {
+		} else if (strcmp(name, "boot-load-segment") == 0 ||
+		    strcmp(name, "platformid") == 0) {
 			if (buf[0] == '\0') {
 				warnx("Option `%s' doesn't contain a value",
 				    name);
@@ -483,7 +486,7 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
  */
 void
 cd9660_makefs(const char *image, const char *dir, fsnode *root,
-	      fsinfo_t *fsopts)
+    fsinfo_t *fsopts)
 {
 	int64_t startoffset;
 	int numDirectories;
@@ -661,7 +664,7 @@ typedef int (*cd9660node_func)(cd9660node *);
 static void
 cd9660_finalize_PVD(iso9660_disk *diskStructure)
 {
-	time_t tim;
+	time_t tstamp = stampst.st_ino ? stampst.st_mtime : time(NULL);
 
 	/* root should be a fixed size of 34 bytes since it has no name */
 	memcpy(diskStructure->primaryDescriptor.root_directory_record,
@@ -710,23 +713,23 @@ cd9660_finalize_PVD(iso9660_disk *diskStructure)
 		diskStructure->primaryDescriptor.bibliographic_file_id, 37);
 
 	/* Setup dates */
-	time(&tim);
 	cd9660_time_8426(
 	    (unsigned char *)diskStructure->primaryDescriptor.creation_date,
-	    tim);
+	    tstamp);
 	cd9660_time_8426(
 	    (unsigned char *)diskStructure->primaryDescriptor.modification_date,
-	    tim);
+	    tstamp);
 
-	/*
-	cd9660_set_date(diskStructure->primaryDescriptor.expiration_date, now);
-	*/
+#if 0
+	cd9660_set_date(diskStructure->primaryDescriptor.expiration_date,
+	    tstamp);
+#endif
 	memset(diskStructure->primaryDescriptor.expiration_date, '0' ,16);
 	diskStructure->primaryDescriptor.expiration_date[16] = 0;
 
 	cd9660_time_8426(
 	    (unsigned char *)diskStructure->primaryDescriptor.effective_date,
-	    tim);
+	    tstamp);
 }
 
 static void
@@ -821,7 +824,7 @@ cd9660_fill_extended_attribute_record(cd9660node *node)
 static int
 cd9660_translate_node_common(iso9660_disk *diskStructure, cd9660node *newnode)
 {
-	time_t tim;
+	time_t tstamp = stampst.st_ino ? stampst.st_mtime : time(NULL);
 	u_char flag;
 	char temp[ISO_FILENAME_MAXLENGTH_WITH_PADDING];
 
@@ -841,9 +844,8 @@ cd9660_translate_node_common(iso9660_disk *diskStructure, cd9660node *newnode)
 	/* Set the various dates */
 
 	/* If we want to use the current date and time */
-	time(&tim);
 
-	cd9660_time_915(newnode->isoDirRecord->date, tim);
+	cd9660_time_915(newnode->isoDirRecord->date, tstamp);
 
 	cd9660_bothendian_dword(newnode->fileDataLength,
 	    newnode->isoDirRecord->size);
@@ -883,7 +885,8 @@ cd9660_translate_node(iso9660_disk *diskStructure, fsnode *node,
 		return 0;
 
 	/* Finally, overwrite some of the values that are set by default */
-	cd9660_time_915(newnode->isoDirRecord->date, node->inode->st.st_mtime);
+	cd9660_time_915(newnode->isoDirRecord->date,
+	    stampst.st_ino ? stampst.st_mtime : node->inode->st.st_mtime);
 
 	return 1;
 }
@@ -1078,7 +1081,7 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 
 	tmp = emalloc(ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 
-	while (i < num) {
+	while (i < num && iter) {
 		powers = 1;
 		count = 0;
 		digits = 1;
@@ -1281,6 +1284,8 @@ cd9660_rrip_move_directory(iso9660_disk *diskStructure, cd9660node *dir)
 		    diskStructure->rootNode, dir);
 		if (diskStructure->rr_moved_dir == NULL)
 			return 0;
+		cd9660_time_915(diskStructure->rr_moved_dir->isoDirRecord->date,
+		    stampst.st_ino ? stampst.st_mtime : start_time.tv_sec);
 	}
 
 	/* Create a file with the same ORIGINAL name */
@@ -1290,7 +1295,7 @@ cd9660_rrip_move_directory(iso9660_disk *diskStructure, cd9660node *dir)
 		return NULL;
 
 	diskStructure->rock_ridge_move_count++;
-	snprintf(newname, sizeof(newname), "%08i",
+	snprintf(newname, sizeof(newname), "%08u",
 	    diskStructure->rock_ridge_move_count);
 
 	/* Point to old parent */

@@ -43,10 +43,7 @@
 #include <string.h>
 #include <zlib.h>
 #include <util.h>
-
-#if defined(__minix)
 #include <unistd.h>
-#endif
 
 #include "makefs.h"
 #include "chfs_makefs.h"
@@ -128,7 +125,6 @@ write_eb_header(fsinfo_t *fsopts)
 	if ((uint32_t)opts->pagesize < MINSIZE)
 		errx(EXIT_FAILURE, "pagesize cannot be less than %zu", MINSIZE);
 	buf = emalloc(opts->pagesize);
-	memset(buf, 0xFF, opts->pagesize);
 
 	ebhdr.ec_hdr.magic = htole32(CHFS_MAGIC_BITMASK);
 	ebhdr.ec_hdr.erase_cnt = htole32(1);
@@ -136,6 +132,8 @@ write_eb_header(fsinfo_t *fsopts)
 	    (uint8_t *)&ebhdr.ec_hdr + 8, 4));
 
 	memcpy(buf, &ebhdr.ec_hdr, CHFS_EB_EC_HDR_SIZE);
+	memset(buf + CHFS_EB_EC_HDR_SIZE, 0xFF,
+	    opts->pagesize - CHFS_EB_EC_HDR_SIZE);
 
 	buf_write(fsopts, buf, opts->pagesize);
 

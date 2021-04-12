@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $	*/
+/*	$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,23 +44,23 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.47 2011/08/29 14:47:48 joerg Exp $");
+__RCSID("$NetBSD: pax.c,v 1.49 2019/04/24 17:27:08 cheusov Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <stdio.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <signal.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <paths.h>
+#include <time.h>
+#include <unistd.h>
 #include <util.h>
 #include "pax.h"
 #include "extern.h"
@@ -453,28 +453,28 @@ gen_init(void)
 
 	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGHUP, &o_hand, &o_hand) < 0))
+	    (sigaction(SIGHUP, &o_hand, NULL) < 0))
 		goto out;
 
 	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGTERM, &o_hand, &o_hand) < 0))
+	    (sigaction(SIGTERM, &o_hand, NULL) < 0))
 		goto out;
 
 	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGINT, &o_hand, &o_hand) < 0))
+	    (sigaction(SIGINT, &o_hand, NULL) < 0))
 		goto out;
 
 	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
+	    (sigaction(SIGQUIT, &o_hand, NULL) < 0))
 		goto out;
 
 #ifdef SIGXCPU
 	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
-	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
+	    (sigaction(SIGXCPU, &o_hand, NULL) < 0))
 		goto out;
 #endif
 	n_hand.sa_handler = SIG_IGN;

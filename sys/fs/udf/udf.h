@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.50 2015/08/24 08:31:56 hannken Exp $ */
+/* $NetBSD: udf.h,v 1.52 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -76,7 +76,7 @@ extern int udf_verbose;
 #define UDF_DEBUG_RESERVE	0x1000000
 
 /* initial value of udf_verbose */
-#define UDF_DEBUGGING		0
+#define UDF_DEBUGGING		(0)
 
 #ifdef UDF_DEBUG
 #define DPRINTF(name, arg) { \
@@ -252,6 +252,7 @@ struct udf_strategy {
 	int  (*read_logvol_dscr)    (struct udf_strat_args *args);
 	int  (*write_logvol_dscr)   (struct udf_strat_args *args);
 	void (*queuebuf)	    (struct udf_strat_args *args);
+	void (*sync_caches)	    (struct udf_strat_args *args);
 	void (*discstrat_init)      (struct udf_strat_args *args);
 	void (*discstrat_finish)    (struct udf_strat_args *args);
 };
@@ -417,11 +418,12 @@ struct udf_node {
 #define	IN_SYNCED		0x0200	/* node is being used by sync */
 #define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
 #define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
+#define IN_NO_DELETE		0x1000	/* node is not to be deleted */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD\15IN_NO_DELETE"
 
 #endif /* !_FS_UDF_UDF_H_ */

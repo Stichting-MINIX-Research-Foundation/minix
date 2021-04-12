@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa.c,v 1.1 2014/02/24 07:23:44 skrll Exp $	*/
+/*	$NetBSD: hppa.c,v 1.2 2019/05/07 04:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hppa.c,v 1.1 2014/02/24 07:23:44 skrll Exp $");
+__RCSID("$NetBSD: hppa.c,v 1.2 2019/05/07 04:35:31 thorpej Exp $");
 #endif	/* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -65,8 +65,12 @@ __RCSID("$NetBSD: hppa.c,v 1.1 2014/02/24 07:23:44 skrll Exp $");
 static int hppa_clearboot(ib_params *);
 static int hppa_setboot(ib_params *);
 
-struct ib_mach ib_mach_hppa =
-	{ "hppa", hppa_setboot, hppa_clearboot, no_editboot, 0};
+struct ib_mach ib_mach_hppa = {
+	.name		=	"hppa",
+	.setboot	=	hppa_setboot,
+	.clearboot	=	hppa_clearboot,
+	.editboot	=	no_editboot,
+};
 
 static int
 hppa_clearboot(ib_params *params)

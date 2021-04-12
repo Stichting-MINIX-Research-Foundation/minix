@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.35 2013/08/05 14:41:57 reinoud Exp $	*/
+/*	$NetBSD: makefs.h,v 1.36 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -199,6 +199,7 @@ DECLARE_FUN(udf);
 
 extern	u_int		debug;
 extern	struct timespec	start_time;
+extern	struct stat stampst;
 
 /*
  * If -x is specified, we want to exclude nodes which do not appear

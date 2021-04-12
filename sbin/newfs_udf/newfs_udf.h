@@ -1,3 +1,5 @@
+/*	$NetBSD: newfs_udf.h,v 1.7 2020/04/05 15:25:40 joerg Exp $	*/
+
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.
@@ -53,8 +55,8 @@ extern float	 meta_fract;
 
 
 /* shared structure between udf_create.c users */
-struct udf_create_context context;
-struct udf_disclayout     layout;
+extern struct udf_create_context context;
+extern struct udf_disclayout     layout;
 
 /* prototypes */
 int udf_write_sector(void *sector, uint64_t location);
