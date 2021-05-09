@@ -346,7 +346,7 @@ void init_scheduling(void)
  *===========================================================================*/
 
 /* This function in called every N ticks to rebalance the queues. The current
- * scheduler bumps processes down one priority when ever they run out of
+ * scheduler bumps processes down one priority whenever they run out of
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
