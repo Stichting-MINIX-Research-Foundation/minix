@@ -290,7 +290,7 @@ line2tty(devminor_t line)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-static void sef_local_startup()
+static void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -896,10 +896,10 @@ static int do_select(devminor_t minor, unsigned int ops, endpoint_t endpt)
 }
 
 /*===========================================================================*
- *				handle_events				     *
+ *				handle_events				                                 *
+ *				tp: TTY to check for events                                  *
  *===========================================================================*/
-void handle_events(tp)
-tty_t *tp;			/* TTY to check for events. */
+void handle_events(tty_t *tp)
 {
 /* Handle any events pending on a TTY.  These events are usually device
  * interrupts.
@@ -946,8 +946,7 @@ tty_t *tp;			/* TTY to check for events. */
 /*===========================================================================*
  *				in_transfer				     *
  *===========================================================================*/
-static void in_transfer(tp)
-register tty_t *tp;		/* pointer to terminal to read from */
+static void in_transfer(register tty_t *tp)
 {
 /* Transfer bytes from the input queue to a process reading from a terminal. */
 
@@ -1007,12 +1006,12 @@ register tty_t *tp;		/* pointer to terminal to read from */
 }
 
 /*===========================================================================*
- *				in_process				     *
+ *				in_process				                                     *
+ *				terminal: on which character has arrived                     *
+ *				buf: buffer with input character                             *
+ *				count: number of input characters                            *
  *===========================================================================*/
-int in_process(tp, buf, count)
-register tty_t *tp;		/* terminal on which character has arrived */
-char *buf;			/* buffer with input characters */
-int count;			/* number of input characters */
+int in_process(tty_t *tp, char *buf, int count)
 {
 /* Characters have just been typed in.  Process, save, and echo them.  Return
  * the number of characters processed.
@@ -1172,11 +1171,11 @@ int count;			/* number of input characters */
 }
 
 /*===========================================================================*
- *				echo					     *
+ *				echo					                                     *
+ *				tp: terminal on which to echo                                *
+ *				ch: character to echo                                        *
  *===========================================================================*/
-static int tty_echo(tp, ch)
-register tty_t *tp;		/* terminal on which to echo */
-register int ch;		/* pointer to character to echo */
+static int tty_echo(register tty_t *tp, register int ch)
 {
 /* Echo the character if echoing is on.  Some control characters are echoed
  * with their normal effect, other control characters are echoed as "^X",
@@ -1235,9 +1234,7 @@ register int ch;		/* pointer to character to echo */
 /*===========================================================================*
  *				rawecho					     *
  *===========================================================================*/
-static void rawecho(tp, ch)
-register tty_t *tp;
-int ch;
+static void rawecho(tty_t *tp, int ch)
 {
 /* Echo without interpretation if ECHO is set. */
   int rp = tp->tty_reprint;
@@ -1248,8 +1245,7 @@ int ch;
 /*===========================================================================*
  *				back_over				     *
  *===========================================================================*/
-static int back_over(tp)
-register tty_t *tp;
+static int back_over(register tty_t *tp)
 {
 /* Backspace to previous character on screen and erase it. */
   u16_t *head;
@@ -1275,10 +1271,10 @@ register tty_t *tp;
 }
 
 /*===========================================================================*
- *				reprint					     *
+ *				reprint														 *
+ *				tp: pointer to tty struct									 *
  *===========================================================================*/
-static void reprint(tp)
-register tty_t *tp;		/* pointer to tty struct */
+static void reprint(register tty_t *tp)
 {
 /* Restore what has been echoed to screen before if the user input has been
  * messed up by output, or if REPRINT (^R) is typed.
@@ -1314,13 +1310,13 @@ register tty_t *tp;		/* pointer to tty struct */
 }
 
 /*===========================================================================*
- *				out_process				     *
+ *				out_process													 *
+ *				bstart/bpos/bend: start/pos/end of circular buffer			 *
+ *				icount: #input chars / input chars used						 *
+ *				ocount: max output chars / output chars used				 *
  *===========================================================================*/
-void out_process(tp, bstart, bpos, bend, icount, ocount)
-tty_t *tp;
-char *bstart, *bpos, *bend;	/* start/pos/end of circular buffer */
-int *icount;			/* # input chars / input chars used */
-int *ocount;			/* max output chars / output chars used */
+void out_process(tty_t *tp, char *bstart, char *bpos, char *bend, int *icount,
+				 int *ocount)
 {
 /* Perform output processing on a circular buffer.  *icount is the number of
  * bytes to process, and the number of bytes actually processed on return.
@@ -1401,8 +1397,7 @@ out_done:
 /*===========================================================================*
  *				dev_ioctl				     *
  *===========================================================================*/
-static void dev_ioctl(tp)
-tty_t *tp;
+static void dev_ioctl(tty_t *tp)
 {
 /* The ioctl's TCSETSW, TCSETSF and TIOCDRAIN wait for output to finish to make
  * sure that an attribute change doesn't affect the processing of current
@@ -1427,8 +1422,7 @@ tty_t *tp;
 /*===========================================================================*
  *				setattr					     *
  *===========================================================================*/
-static void setattr(tp)
-tty_t *tp;
+static void setattr(tty_t *tp)
 {
 /* Apply the new line attributes (raw/canonical, line speed, etc.) */
   u16_t *inp;
@@ -1478,12 +1472,10 @@ tty_t *tp;
 }
 
 /*===========================================================================*
- *				sigchar					     *
+ *				sigchar														 *
+ *				sig:	SIGINT, SIGQUIT, SIGKILL or SIGHUP					 *
  *===========================================================================*/
-void sigchar(tp, sig, mayflush)
-register tty_t *tp;
-int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
-int mayflush;
+void sigchar(register tty_t *tp, int sig, int mayflush)
 {
 /* Process a SIGINT, SIGQUIT or SIGKILL char from the keyboard or SIGHUP from
  * a tty close, "stty 0", or a real RS-232 hangup.  PM will send the signal to
@@ -1510,8 +1502,7 @@ int mayflush;
 /*===========================================================================*
  *				tty_icancel				     *
  *===========================================================================*/
-static void tty_icancel(tp)
-register tty_t *tp;
+static void tty_icancel(register tty_t *tp)
 {
 /* Discard all pending input, tty buffer or device. */
 
@@ -1532,7 +1523,7 @@ static int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
 /*===========================================================================*
  *				tty_init				     *
  *===========================================================================*/
-static void tty_init()
+static void tty_init(void)
 {
 /* Initialize tty structure and call device initialization routines. */
 
@@ -1583,11 +1574,11 @@ static void tty_timed_out(int arg)
 }
 
 /*===========================================================================*
- *				settimer				     *
+ *				settimer													 *
+ *				tty_ptr: line to set or unset a timer on					 *
+ *				enable: set timer if true, otherwise unset					 *
  *===========================================================================*/
-static void settimer(tty_ptr, enable)
-tty_t *tty_ptr;			/* line to set or unset a timer on */
-int enable;			/* set timer if true, otherwise unset */
+static void settimer(tty_t *tty_ptr, int enable)
 {
   clock_t ticks;
 

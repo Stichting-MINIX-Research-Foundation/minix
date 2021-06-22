@@ -312,11 +312,11 @@ static int rs_write(register tty_t *tp, int try)
 }
 
 /*===========================================================================*
- *				rs_echo					     *
+ *				rs_echo														 *
+ *				tp: which TTY												 *
+ *				c: character to echo										 *
  *===========================================================================*/
-static void rs_echo(tp, c)
-tty_t *tp;			/* which TTY */
-int c;				/* character to echo */
+static void rs_echo(tty_t *tp, int c)
 {
 /* Echo one character.  (Like rs_write, but only one character, optionally.) */
 
