@@ -192,12 +192,13 @@ ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 
 
 /*===========================================================================*
- *				remove_dir				     *
+ *				remove_dir													 *
+ *				rldirp: parent directory									 *
+ *				rip: directory to be removed								 *
+ *				dir_name: name of directory to be removed					 *
  *===========================================================================*/
-static int remove_dir(rldirp, rip, dir_name)
-struct inode *rldirp;		 	/* parent directory */
-struct inode *rip;			/* directory to be removed */
-const char *dir_name;			/* name of directory to be removed */
+static int remove_dir(struct inode *rldirp, struct inode *rip,
+					  const char *dir_name)
 {
   /* A directory file has to be removed. Five conditions have to met:
    * 	- The file must be a directory
@@ -227,12 +228,13 @@ const char *dir_name;			/* name of directory to be removed */
 
 
 /*===========================================================================*
- *				unlink_file				     *
+ *				unlink_file													 *
+ *				dirp: parent directory of file								 *
+ *				rip: inode of file, may be NULL too							 *
+ *				file_name: name of file to be removed						 *
  *===========================================================================*/
-static int unlink_file(dirp, rip, file_name)
-struct inode *dirp;		/* parent directory of file */
-struct inode *rip;		/* inode of file, may be NULL too. */
-const char *file_name;		/* name of file to be removed */
+static int unlink_file(struct inode *dirp, struct inode *rip,
+					   const char *file_name)
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
@@ -466,11 +468,11 @@ int fs_trunc(ino_t ino_nr, off_t start, off_t end)
 
 
 /*===========================================================================*
- *				truncate_inode				     *
+ *				truncate_inode												 *
+ *				rip: pointer to inode to be truncated						 *
+ *				newsize: inode must become this size						 *
  *===========================================================================*/
-int truncate_inode(rip, newsize)
-register struct inode *rip;	/* pointer to inode to be truncated */
-off_t newsize;			/* inode must become this size */
+int truncate_inode(register struct inode *rip, off_t newsize)
 {
 /* Set inode to a certain size, freeing any blocks no longer referenced
  * and updating the size in the inode. If the inode is extended, the
@@ -510,11 +512,11 @@ off_t newsize;			/* inode must become this size */
 
 
 /*===========================================================================*
- *				freesp_inode				     *
+ *				freesp_inode												 *
+ *				rip: pointer to inode to be partly freed					 *
+ *				start, end: range of bytes to free (end uninclusive)		 *
  *===========================================================================*/
-static int freesp_inode(rip, start, end)
-register struct inode *rip;	/* pointer to inode to be partly freed */
-off_t start, end;		/* range of bytes to free (end uninclusive) */
+static int freesp_inode(register struct inode *rip, off_t start, off_t end)
 {
 /* Cut an arbitrary hole in an inode. The caller is responsible for checking
  * the reasonableness of the inode type of rip. The reason is this is that
@@ -585,9 +587,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 /*===========================================================================*
  *				nextblock				     *
  *===========================================================================*/
-static off_t nextblock(pos, block_size)
-off_t pos;
-unsigned short block_size;
+static off_t nextblock(off_t pos, int block_size)
 {
 /* Return the first position in the next block after position 'pos'
  * (unless this is the first position in the current block).
@@ -603,10 +603,7 @@ unsigned short block_size;
 /*===========================================================================*
  *				zeroblock_half				     *
  *===========================================================================*/
-static void zeroblock_half(rip, pos, half)
-struct inode *rip;
-off_t pos;
-int half;
+static void zeroblock_half(struct inode *rip, off_t pos, int half)
 {
 /* Zero the upper or lower 'half' of a block that holds position 'pos'.
  * half can be FIRST_HALF or LAST_HALF.
@@ -633,10 +630,7 @@ int half;
 /*===========================================================================*
  *				zeroblock_range				     *
  *===========================================================================*/
-static void zeroblock_range(rip, pos, len)
-struct inode *rip;
-off_t pos;
-off_t len;
+static void zeroblock_range(struct inode *rip, off_t pos, off_t len)
 {
 /* Zero a range in a block.
  * This function is used to zero a segment of a block.

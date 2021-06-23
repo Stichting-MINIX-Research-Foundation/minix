@@ -25,11 +25,12 @@ static int empty_indir(struct buf *, struct super_block *);
 /*===========================================================================*
  *				write_map				     *
  *===========================================================================*/
-int write_map(rip, position, new_zone, op)
-struct inode *rip;		/* pointer to inode to be changed */
-off_t position;			/* file address to be mapped */
-zone_t new_zone;		/* zone # to be inserted */
-int op;				/* special actions */
+int write_map(
+  struct inode *rip,		/* pointer to inode to be changed */
+  off_t position,			/* file address to be mapped */
+  zone_t new_zone,		/* zone # to be inserted */
+  int op				/* special actions */
+)
 {
 /* Write a new zone into an inode.
  *
@@ -188,10 +189,11 @@ int op;				/* special actions */
 /*===========================================================================*
  *				wr_indir				     *
  *===========================================================================*/
-static void wr_indir(bp, index, zone)
-struct buf *bp;			/* pointer to indirect block */
-int index;			/* index into *bp */
-zone_t zone;			/* zone to write */
+static void wr_indir(
+  struct buf *bp,			/* pointer to indirect block */
+  int index,			/* index into *bp */
+  zone_t zone			/* zone to write */
+)
 {
 /* Given a pointer to an indirect block, write one entry. */
 
@@ -211,9 +213,10 @@ zone_t zone;			/* zone to write */
 /*===========================================================================*
  *				empty_indir				     *
  *===========================================================================*/
-static int empty_indir(bp, sb)
-struct buf *bp;			/* pointer to indirect block */
-struct super_block *sb;		/* superblock of device block resides on */
+static int empty_indir(
+  struct buf *bp,			/* pointer to indirect block */
+  struct super_block *sb		/* superblock of device block resides on */
+)
 {
 /* Return nonzero if the indirect block pointed to by bp contains
  * only NO_ZONE entries.
@@ -230,10 +233,11 @@ struct super_block *sb;		/* superblock of device block resides on */
 /*===========================================================================*
  *				clear_zone				     *
  *===========================================================================*/
-void clear_zone(rip, pos, flag)
-register struct inode *rip;	/* inode to clear */
-off_t __unused pos;		/* points to block to clear */
-int __unused flag;		/* 1 if called by new_block, 0 otherwise */
+void clear_zone(
+  register struct inode *rip,	/* inode to clear */
+  off_t __unused pos,		/* points to block to clear */
+  int __unused flag		/* 1 if called by new_block, 0 otherwise */
+)
 {
 /* Zero a zone, possibly starting in the middle.  The parameter 'pos' gives
  * a byte in the first block to be zeroed.  Clearzone() is called from 
@@ -251,9 +255,10 @@ int __unused flag;		/* 1 if called by new_block, 0 otherwise */
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-struct buf *new_block(rip, position)
-register struct inode *rip;	/* pointer to inode */
-off_t position;			/* file pointer */
+struct buf *new_block(
+  register struct inode *rip,	/* pointer to inode */
+  off_t position			/* file pointer */
+)
 {
 /* Acquire a new block and return a pointer to it.  Doing so may require
  * allocating a complete zone, and then returning the initial block.
@@ -308,8 +313,9 @@ off_t position;			/* file pointer */
 /*===========================================================================*
  *				zero_block				     *
  *===========================================================================*/
-void zero_block(bp)
-register struct buf *bp;	/* pointer to buffer to zero */
+void zero_block(
+  register struct buf *bp	/* pointer to buffer to zero */
+)
 {
 /* Zero a block. */
   ASSERT(bp->data);

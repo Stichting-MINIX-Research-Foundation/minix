@@ -11,9 +11,10 @@
 /*===========================================================================*
  *				count_free_bits				     *
  *===========================================================================*/
-bit_t count_free_bits(sp, map)
-struct super_block *sp;		/* the filesystem to allocate from */
-int map;			/* IMAP (inode map) or ZMAP (zone map) */
+bit_t count_free_bits(
+  struct super_block *sp,		/* the filesystem to allocate from */
+  int map			/* IMAP (inode map) or ZMAP (zone map) */
+)
 {
 /* Allocate a bit from a bit map and return its bit number. */
   block_t start_block;		/* first bit block */

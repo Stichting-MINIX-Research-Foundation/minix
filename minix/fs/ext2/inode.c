@@ -64,7 +64,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
 /*===========================================================================*
  *                init_inode_cache                                           *
  *===========================================================================*/
-void init_inode_cache()
+void init_inode_cache(void)
 {
   struct inode *rip;
   struct inodelist *rlp;

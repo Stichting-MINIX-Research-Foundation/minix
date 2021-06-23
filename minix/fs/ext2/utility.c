@@ -31,11 +31,11 @@ struct buf *get_block(dev_t dev, block_t block, int how)
 
 
 /*===========================================================================*
- *				conv2					     *
+ *				conv2														 *
+ *				norm: TRUE if no swap, FALSE for byte swap					 *
+ *				w: promotion of 16-bit word to be swapped					 *
  *===========================================================================*/
-unsigned conv2(norm, w)
-int norm;			/* TRUE if no swap, FALSE for byte swap */
-int w;				/* promotion of 16-bit word to be swapped */
+unsigned conv2(int norm, int w)
 {
 /* Possibly swap a 16-bit word between 8086 and 68000 byte order. */
   if (norm) return( (unsigned) w & 0xFFFF);
@@ -44,11 +44,11 @@ int w;				/* promotion of 16-bit word to be swapped */
 
 
 /*===========================================================================*
- *				conv4					     *
+ *				conv4														 *
+ *				norm: TRUE if no swap, FALSE for byte swap					 *
+ *				x: 32-bit long to be byte swapped							 *
  *===========================================================================*/
-long conv4(norm, x)
-int norm;			/* TRUE if no swap, FALSE for byte swap */
-long x;				/* 32-bit long to be byte swapped */
+long conv4(int norm, long x)
 {
 /* Possibly swap a 32-bit long between 8086 and 68000 byte order. */
   unsigned lo, hi;

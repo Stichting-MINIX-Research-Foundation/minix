@@ -22,13 +22,13 @@ static void wr_indir(struct buf *bp, int index, block_t block);
 static int empty_indir(struct buf *, struct super_block *);
 
 /*===========================================================================*
- *				write_map				     *
+ *				write_map													 *
+ *				rip: pointer to inode to be changed							 *
+ *				position: file address to be mapped							 *
+ *				new_wblock: block # to be inserted							 *
+ *				op: special actions											 *
  *===========================================================================*/
-int write_map(rip, position, new_wblock, op)
-struct inode *rip;		/* pointer to inode to be changed */
-off_t position;			/* file address to be mapped */
-block_t new_wblock;		/* block # to be inserted */
-int op;				/* special actions */
+int write_map(struct inode *rip, off_t position, block_t new_wblock, int op)
 {
 /* Write a new block into an inode.
  *
@@ -264,12 +264,12 @@ int op;				/* special actions */
 
 
 /*===========================================================================*
- *				wr_indir				     *
+ *				wr_indir													 *
+ *				bp: pointer to indirect block								 *
+ *				wrindex: index into *bp										 *
+ *				block: block to write										 *
  *===========================================================================*/
-static void wr_indir(bp, wrindex, block)
-struct buf *bp;			/* pointer to indirect block */
-int wrindex;			/* index into *bp */
-block_t block;			/* block to write */
+static void wr_indir(struct buf *bp, int wrindex, block_t block)
 {
 /* Given a pointer to an indirect block, write one entry. */
 
@@ -283,10 +283,10 @@ block_t block;			/* block to write */
 
 /*===========================================================================*
  *				empty_indir				     *
+ *				bp: pointer to indirect block
+ *				sb: superblock of device block resides on
  *===========================================================================*/
-static int empty_indir(bp, sb)
-struct buf *bp;			/* pointer to indirect block */
-struct super_block *sb;		/* superblock of device block resides on */
+static int empty_indir(struct buf *bp, struct super_block *sb)
 {
 /* Return nonzero if the indirect block pointed to by bp contains
  * only NO_BLOCK entries.
@@ -300,11 +300,11 @@ struct super_block *sb;		/* superblock of device block resides on */
 }
 
 /*===========================================================================*
- *				new_block				     *
+ *				new_block													 *
+ *				rip: pointer to inode										 *
+ *				position: file pointer										 *
  *===========================================================================*/
-struct buf *new_block(rip, position)
-register struct inode *rip;	/* pointer to inode */
-off_t position;			/* file pointer */
+struct buf *new_block(register struct inode *rip, off_t position)
 {
 /* Acquire a new block and return a pointer to it. */
   struct buf *bp;
@@ -364,10 +364,10 @@ off_t position;			/* file pointer */
 }
 
 /*===========================================================================*
- *				zero_block				     *
+ *				zero_block													 *
+ *				pointer to buffer to zero									 *
  *===========================================================================*/
-void zero_block(bp)
-register struct buf *bp;	/* pointer to buffer to zero */
+void zero_block(register struct buf *bp)
 {
 /* Zero a block. */
   ASSERT(bp->data);
