@@ -55,4 +55,3 @@
 # define GCC_FUNC_ATTR(x)
 # define GCC_FUNC_ATTR2(x,y)
 #endif /* HAVE_GCC_FUNC_ATTR */
-

@@ -25,4 +25,3 @@ extern time_t time ARGS((time_t *));
 # define CLK_TCK 60			/* 60HZ */
 #endif
 #endif /* KSH_TIME_H */
-

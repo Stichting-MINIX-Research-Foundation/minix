@@ -58,7 +58,8 @@ static char clexec_tab[MAXFD+1];
  * we now use this function always.
  */
 int
-fd_clexec(int fd)
+fd_clexec(fd)
+    int fd;
 {
 #ifndef F_SETFD
 	if (fd >= 0 && fd < sizeof(clexec_tab)) {
@@ -76,7 +77,9 @@ fd_clexec(int fd)
  * execute command tree
  */
 int
-execute(struct op * volatile t, volatile int flags)
+execute(t, flags)
+	struct op * volatile t;
+	volatile int flags;	/* if XEXEC don't fork */
 {
 	int i;
 	volatile int rv = 0;
@@ -447,7 +450,11 @@ execute(struct op * volatile t, volatile int flags)
  */
 
 static int
-comexec(struct op *t, struct tbl *volatile tp, register char **ap, int volatile flags)
+comexec(t, tp, ap, flags)
+	struct op *t;
+	struct tbl *volatile tp;
+	register char **ap;
+	int volatile flags;
 {
 	int i;
 	int leave = LLEAVE;
@@ -749,7 +756,9 @@ comexec(struct op *t, struct tbl *volatile tp, register char **ap, int volatile 
 }
 
 static void
-scriptexec(register struct op *tp, register char **ap)
+scriptexec(tp, ap)
+	register struct op *tp;
+	register char **ap;
 {
 	char *shellv;
 
@@ -861,7 +870,8 @@ scriptexec(register struct op *tp, register char **ap)
 }
 
 int
-shcomexec(register char **wp)
+shcomexec(wp)
+	register char **wp;
 {
 	register struct tbl *tp;
 
@@ -876,7 +886,10 @@ shcomexec(register char **wp)
  * is created if none is found.
  */
 struct tbl *
-findfunc(const char *name, unsigned int h, int create)
+findfunc(name, h, create)
+	const char *name;
+	unsigned int h;
+	int create;
 {
 	struct block *l;
 	struct tbl *tp = (struct tbl *) 0;
@@ -901,7 +914,9 @@ findfunc(const char *name, unsigned int h, int create)
  * function did not exist, returns 0 otherwise.
  */
 int
-define(const char *name, struct op *t)
+define(name, t)
+	const char *name;
+	struct op *t;
 {
 	struct tbl *tp;
 	int was_set = 0;
@@ -944,7 +959,9 @@ define(const char *name, struct op *t)
  * add builtin
  */
 void
-builtin(const char *name, int (*func) ARGS((char **)))
+builtin(name, func)
+	const char *name;
+	int (*func) ARGS((char **));
 {
 	register struct tbl *tp;
 	Tflag flag;
@@ -970,10 +987,11 @@ builtin(const char *name, int (*func) ARGS((char **)))
 /*
  * find command
  * either function, hashed command, or built-in (in that order)
- * flags is FC_*
  */
 struct tbl *
-findcom(const char *name, int flags)
+findcom(name, flags)
+	const char *name;
+	int	flags;		/* FC_* */
 {
 	static struct tbl temp;
 	unsigned int h = hash(name);
@@ -1073,10 +1091,10 @@ findcom(const char *name, int flags)
 
 /*
  * flush executable commands with relative paths
- * all - just relative or all
  */
 void
-flushcom(int all)
+flushcom(all)
+	int all;		/* just relative or all */
 {
 	struct tbl *tp;
 	struct tstate ts;
@@ -1091,11 +1109,12 @@ flushcom(int all)
 		}
 }
 
-/* Check if path is something we want to find.  Returns -1 for failure.
- * errnop is set if canidate found, but not suitable
- */
+/* Check if path is something we want to find.  Returns -1 for failure. */
 int
-search_access(const char *pathx, int mode, int *errnop)
+search_access(pathx, mode, errnop)
+	const char *pathx;
+	int mode;
+	int *errnop;		/* set if candidate found, but not suitable */
 {
 #ifndef OS2
 	int ret, err = 0;
@@ -1161,9 +1180,11 @@ search_access(const char *pathx, int mode, int *errnop)
 }
 
 #ifdef OS2
-/* errnop is set if candidate found, but not suitable */
 static int
-search_access1(const char *pathx, int mode, int *errnop)
+search_access1(pathx, mode, errnop)
+	const char *pathx;
+	int mode;
+	int *errnop;		/* set if candidate found, but not suitable */
 {
 	int ret, err = 0;
 	struct stat statb;
@@ -1185,11 +1206,13 @@ search_access1(const char *pathx, int mode, int *errnop)
 
 /*
  * search for command with PATH
- * mode == R_OK or X_OK
- * errnop is set if candidate found, but not suitable
  */
 char *
-search(const char *name, const char *pathx, int mode, int *errnop)
+search(name, pathx, mode, errnop)
+	const char *name;
+	const char *pathx;
+	int mode;		/* R_OK or X_OK */
+	int *errnop;		/* set if candidate found, but not suitable */
 {
 	const char *sp, *p;
 	char *xp;
@@ -1255,7 +1278,9 @@ search(const char *name, const char *pathx, int mode, int *errnop)
 }
 
 static int
-call_builtin(struct tbl *tp, char **wp)
+call_builtin(tp, wp)
+	struct tbl *tp;
+	char **wp;
 {
 	int rv;
 
@@ -1276,7 +1301,9 @@ call_builtin(struct tbl *tp, char **wp)
  * set up redirection, saving old fd's in e->savefd
  */
 static int
-iosetup(register struct ioword *iop, struct tbl *tp)
+iosetup(iop, tp)
+	register struct ioword *iop;
+	struct tbl *tp;
 {
 	register int u = -1;
 	char *cp = iop->name;
@@ -1420,7 +1447,9 @@ iosetup(register struct ioword *iop, struct tbl *tp)
  * if unquoted here, expand here temp file into second temp file.
  */
 static int
-herein(const char *content, int sub)
+herein(content, sub)
+	const char *content;
+	int sub;
 {
 	volatile int fd = -1;
 	struct source *s, *volatile osource;
@@ -1487,7 +1516,9 @@ herein(const char *content, int sub)
  *	print the args in column form - assuming that we can
  */
 static char *
-do_selectargs(register char **ap, bool_t print_menu)
+do_selectargs(ap, print_menu)
+	register char **ap;
+	bool_t print_menu;
 {
 	static const char *const read_args[] = {
 					"read", "-r", "REPLY", (char *) 0
@@ -1528,7 +1559,11 @@ static char *select_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
 /* format a single select menu item */
 static char *
-select_fmt_entry(void *arg, int i, char *buf, int buflen)
+select_fmt_entry(arg, i, buf, buflen)
+	void *arg;
+	int i;
+	char *buf;
+	int buflen;
 {
 	struct select_menu_info *smi = (struct select_menu_info *) arg;
 
@@ -1541,7 +1576,8 @@ select_fmt_entry(void *arg, int i, char *buf, int buflen)
  *	print a select style menu
  */
 int
-pr_menu(char *const *ap)
+pr_menu(ap)
+	char *const *ap;
 {
 	struct select_menu_info smi;
 	char *const *pp;
@@ -1584,14 +1620,19 @@ pr_menu(char *const *ap)
 static char *plain_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
 
 static char *
-plain_fmt_entry(void *arg, int i, char *buf, int buflen)
+plain_fmt_entry(arg, i, buf, buflen)
+	void *arg;
+	int i;
+	char *buf;
+	int buflen;
 {
 	shf_snprintf(buf, buflen, "%s", ((char *const *)arg)[i]);
 	return buf;
 }
 
 int
-pr_list(char *const *ap)
+pr_list(ap)
+	char *const *ap;
 {
 	char *const *pp;
 	int nwidth;
@@ -1621,7 +1662,9 @@ extern const char db_close[];
  * TM_UNOP and TM_BINOP, the returned value is a Test_op).
  */
 static int
-dbteste_isa(Test_env *te, Test_meta meta)
+dbteste_isa(te, meta)
+	Test_env *te;
+	Test_meta meta;
 {
 	int ret = 0;
 	int uqword;
@@ -1660,7 +1703,10 @@ dbteste_isa(Test_env *te, Test_meta meta)
 }
 
 static const char *
-dbteste_getopnd(Test_env *te, Test_op op, int do_eval)
+dbteste_getopnd(te, op, do_eval)
+	Test_env *te;
+	Test_op op;
+	int do_eval;
 {
 	char *s = *te->pos.wp;
 
@@ -1681,17 +1727,23 @@ dbteste_getopnd(Test_env *te, Test_op op, int do_eval)
 }
 
 static int
-dbteste_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
-			 int do_eval)
+dbteste_eval(te, op, opnd1, opnd2, do_eval)
+	Test_env *te;
+	Test_op op;
+	const char *opnd1;
+	const char *opnd2;
+	int do_eval;
 {
 	return test_eval(te, op, opnd1, opnd2, do_eval);
 }
 
 static void
-dbteste_error(Test_env *te, int offset, const char *msg)
+dbteste_error(te, offset, msg)
+	Test_env *te;
+	int offset;
+	const char *msg;
 {
 	te->flags |= TEF_ERROR;
 	internal_errorf(0, "dbteste_error: %s (offset %d)", msg, offset);
 }
 #endif /* KSH */
-

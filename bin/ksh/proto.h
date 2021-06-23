@@ -296,4 +296,3 @@ extern int gettimeofday ARGS(( /* struct timeval *, struct timezone * */ ));
 extern int setrlimit ARGS(( /* int, struct rlimit * */ ));
 extern int lstat ARGS(( /* const char *, struct stat * */ ));
 #endif
-

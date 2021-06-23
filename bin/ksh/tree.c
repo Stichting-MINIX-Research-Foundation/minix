@@ -28,7 +28,10 @@ static void     iofree ARGS((struct ioword **iow, Area *ap));
  */
 
 static void
-ptree(register struct op *t, int indent, register struct shf *shf)
+ptree(t, indent, shf)
+	register struct op *t;
+	int indent;
+	register struct shf *shf;
 {
 	register char **w;
 	struct ioword **ioact;
@@ -212,7 +215,10 @@ ptree(register struct op *t, int indent, register struct shf *shf)
 }
 
 static void
-pioact(register struct shf *shf, int indent, register struct ioword *iop)
+pioact(shf, indent, iop)
+	register struct shf *shf;
+	int indent;
+	register struct ioword *iop;
 {
 	int flag = iop->flag;
 	int type = flag & IOTYPE;
@@ -270,7 +276,9 @@ pioact(register struct shf *shf, int indent, register struct ioword *iop)
  */
 
 static void
-tputC(register int c, register struct shf *shf)
+tputC(c, shf)
+	register int c;
+	register struct shf *shf;
 {
 	if ((c&0x60) == 0) {		/* C0|C1 */
 		tputc((c&0x80) ? '$' : '^', shf);
@@ -283,7 +291,9 @@ tputC(register int c, register struct shf *shf)
 }
 
 static void
-tputS(register char *wp, register struct shf *shf)
+tputS(wp, shf)
+	register char *wp;
+	register struct shf *shf;
 {
 	register int c, quoted=0;
 
@@ -365,7 +375,15 @@ tputS(register char *wp, register struct shf *shf)
  */
 /* VARARGS */
 int
+#ifdef HAVE_PROTOTYPES
 fptreef(struct shf *shf, int indent, const char *fmt, ...)
+#else
+fptreef(shf, indent, fmt, va_alist)
+  struct shf *shf;
+  int indent;
+  const char *fmt;
+  va_dcl
+#endif
 {
   va_list	va;
 
@@ -378,7 +396,15 @@ fptreef(struct shf *shf, int indent, const char *fmt, ...)
 
 /* VARARGS */
 char *
+#ifdef HAVE_PROTOTYPES
 snptreef(char *s, int n, const char *fmt, ...)
+#else
+snptreef(s, n, fmt, va_alist)
+  char *s;
+  int n;
+  const char *fmt;
+  va_dcl
+#endif
 {
   va_list va;
   struct shf shf;
@@ -393,8 +419,11 @@ snptreef(char *s, int n, const char *fmt, ...)
 }
 
 static void
-vfptreef(register struct shf *shf, int indent, const char *fmt,
-		register va_list va)
+vfptreef(shf, indent, fmt, va)
+	register struct shf *shf;
+	int indent;
+	const char *fmt;
+	register va_list va;
 {
 	register int c;
 
@@ -462,7 +491,9 @@ vfptreef(register struct shf *shf, int indent, const char *fmt,
  */
 
 struct op *
-tcopy(register struct op *t, Area *ap)
+tcopy(t, ap)
+	register struct op *t;
+	Area *ap;
 {
 	register struct op *r;
 	register char **tw, **rw;
@@ -511,7 +542,9 @@ tcopy(register struct op *t, Area *ap)
 }
 
 char *
-wdcopy(const char *wp, Area *ap)
+wdcopy(wp, ap)
+	const char *wp;
+	Area *ap;
 {
 	size_t len = wdscan(wp, EOS) - wp;
 	return memcpy(alloc(len, ap), wp, len);
@@ -519,7 +552,9 @@ wdcopy(const char *wp, Area *ap)
 
 /* return the position of prefix c in wp plus 1 */
 char *
-wdscan(register const char *wp, register int c)
+wdscan(wp, c)
+	register const char *wp;
+	register int c;
 {
 	register int nest = 0;
 
@@ -575,7 +610,8 @@ wdscan(register const char *wp, register int c)
  * (string is allocated from ATEMP)
  */
 char *
-wdstrip(const char *wp)
+wdstrip(wp)
+	const char *wp;
 {
 	struct shf shf;
 	int c;
@@ -642,7 +678,9 @@ wdstrip(const char *wp)
 }
 
 static	struct ioword **
-iocopy(register struct ioword **iow, Area *ap)
+iocopy(iow, ap)
+	register struct ioword **iow;
+	Area *ap;
 {
 	register struct ioword **ior;
 	register int i;
@@ -675,7 +713,9 @@ iocopy(register struct ioword **iow, Area *ap)
  */
 
 void
-tfree(register struct op *t, Area *ap)
+tfree(t, ap)
+	register struct op *t;
+	Area *ap;
 {
 	register char **w;
 
@@ -707,7 +747,9 @@ tfree(register struct op *t, Area *ap)
 }
 
 static	void
-iofree(struct ioword **iow, Area *ap)
+iofree(iow, ap)
+	struct ioword **iow;
+	Area *ap;
 {
 	register struct ioword **iop;
 	register struct ioword *p;
@@ -722,4 +764,3 @@ iofree(struct ioword **iow, Area *ap)
 		afree((void*)p, ap);
 	}
 }
-

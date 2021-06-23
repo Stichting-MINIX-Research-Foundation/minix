@@ -36,12 +36,14 @@ static char	*do_phys_path ARGS((XString *, char *, const char *));
  *	  if there are no more elements.
  *	The return value indicates whether a non-null element from cdpathp
  *	was appended to result.
- *
- *	cdpathp - & of : separated list
  */
 int
-make_path(const char *cwd, const char *file, char **cdpathp, XString *xsp,
-		  int *phys_pathp)
+make_path(cwd, file, cdpathp, xsp, phys_pathp)
+	const char *cwd;
+	const char *file;
+	char	**cdpathp;	/* & of : separated list */
+	XString	*xsp;
+	int	*phys_pathp;
 {
 	int	rval = 0;
 	int	use_cdpath = 1;
@@ -114,7 +116,8 @@ make_path(const char *cwd, const char *file, char **cdpathp, XString *xsp,
  * ie, simplify_path("/a/b/c/./../d/..") returns "/a/b"
  */
 void
-simplify_path(char *pathx)
+simplify_path(pathx)
+	char	*pathx;
 {
 	char	*cur;
 	char	*t;
@@ -196,7 +199,8 @@ simplify_path(char *pathx)
 
 
 void
-set_current_wd(char *pathx)
+set_current_wd(pathx)
+	char *pathx;
 {
 	int len;
 	char *p = pathx;
@@ -215,7 +219,8 @@ set_current_wd(char *pathx)
 
 #ifdef S_ISLNK
 char *
-get_phys_path(const char *pathx)
+get_phys_path(pathx)
+	const char *pathx;
 {
 	XString xs;
 	char *xp;
@@ -235,7 +240,10 @@ get_phys_path(const char *pathx)
 }
 
 static char *
-do_phys_path(XString *xsp, char *xp, const char *pathx)
+do_phys_path(xsp, xp, pathx)
+	XString *xsp;
+	char *xp;
+	const char *pathx;
 {
 	const char *p, *q;
 	int len, llen;
@@ -288,7 +296,7 @@ do_phys_path(XString *xsp, char *xp, const char *pathx)
 
 #ifdef	TEST
 
-main(int argc, char **argv)
+main(argc, argv)
 {
 	int	rv;
 	char	*cp, cdpath[256], pwd[256], file[256], result[256];
@@ -308,4 +316,3 @@ main(int argc, char **argv)
 	}
 }
 #endif	/* TEST */
-

@@ -209,7 +209,9 @@ error must know what to implement with
 
  
 int
-sigaction(int sig, struct sigaction *act, struct sigaction *oact)
+sigaction(sig, act, oact)
+  int sig;
+  struct sigaction *act, *oact;
 {
   handler_t oldh;
 
@@ -259,7 +261,9 @@ sigaction(int sig, struct sigaction *act, struct sigaction *oact)
 
 
 int
-sigaddset(sigset_t *mask, int sig)
+sigaddset(mask, sig)
+  sigset_t *mask;
+  int sig;
 {
   *mask |= sigmask(sig);
   return 0;
@@ -268,7 +272,9 @@ sigaddset(sigset_t *mask, int sig)
 
 #ifndef IS_KSH
 int
-sigdelset(sigset_t *mask, int sig)
+sigdelset(mask, sig)
+  sigset_t *mask;
+  int sig;
 {
   *mask &= ~(sigmask(sig));
   return 0;
@@ -277,7 +283,8 @@ sigdelset(sigset_t *mask, int sig)
 
 
 int
-sigemptyset(sigset_t *mask)
+sigemptyset(mask)
+  sigset_t *mask;
 {
   *mask = 0;
   return 0;
@@ -286,7 +293,8 @@ sigemptyset(sigset_t *mask)
 
 #ifndef IS_KSH
 int
-sigfillset(sigset_t *mask)
+sigfillset(mask)
+  sigset_t *mask;
 {
   *mask = ~0;
   return 0;
@@ -296,7 +304,9 @@ sigfillset(sigset_t *mask)
 
 #ifndef IS_KSH
 int
-sigismember(sigset_t *mask, int sig)
+sigismember(mask, sig)
+  sigset_t *mask;
+  int sig;
 {
   return ((*mask) & sigmask(sig));
 }
@@ -305,7 +315,8 @@ sigismember(sigset_t *mask, int sig)
 
 #ifndef IS_KSH
 int
-sigpending(sigset_t *set)
+sigpending(set)
+  sigset_t *set;
 {
   return 0;				/* faking it! */
 }
@@ -313,7 +324,9 @@ sigpending(sigset_t *set)
 
 
 int
-sigprocmask(int how, sigset_t *set, sigset_t *oset)
+sigprocmask(how, set, oset)
+  int how;
+  sigset_t *set, *oset;
 {
 #ifdef USE_SIGSET
   register int i;
@@ -377,7 +390,8 @@ sigprocmask(int how, sigset_t *set, sigset_t *oset)
 
 
 int
-sigsuspend(sigset_t *mask)
+sigsuspend(mask)
+  sigset_t *mask;
 {
 #ifdef USE_SIGMASK
   sigpause(*mask);
@@ -433,8 +447,9 @@ sigsuspend(sigset_t *mask)
  */
 
 #ifndef IS_KSH
-handler_t
-Signal(int sig, handler_t handler)
+handler_t Signal(sig, handler)
+  int sig;
+  handler_t handler;
 {
   struct sigaction act, oact;
 
@@ -453,8 +468,9 @@ Signal(int sig, handler_t handler)
  * ensure we avoid signal mayhem
  */
 
-handler_t
-signal(int sig, handler_t handler)
+handler_t signal(sig, handler)
+  int sig;
+  handler_t handler;
 {
   return (Signal(sig, handler));
 }
@@ -468,4 +484,3 @@ signal(int sig, handler_t handler)
  * comment-column:40
  * End:
  */
-

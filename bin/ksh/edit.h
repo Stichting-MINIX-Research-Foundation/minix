@@ -85,4 +85,3 @@ int 	x_vi		ARGS((char *buf, size_t len));
  * comment-column:40
  * End:
  */
-

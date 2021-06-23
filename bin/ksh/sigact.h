@@ -123,4 +123,3 @@ int	sigsuspend	ARGS(( sigset_t *mask ));
 #endif
 #endif /* ! SA_NOCLDSTOP */
 #endif /* _SIGACT_H */
-

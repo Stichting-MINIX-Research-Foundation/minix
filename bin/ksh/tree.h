@@ -140,4 +140,3 @@ struct ioword {
 #define DB_AND	3		/* && -> -a conversion */
 #define DB_BE	4		/* an inserted -BE */
 #define DB_PAT	5		/* a pattern argument */
-

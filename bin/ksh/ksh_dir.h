@@ -25,4 +25,3 @@ extern DIR *ksh_opendir ARGS((const char *d));
 #else /* OPENDIR_DOES_NONDIR */
 # define ksh_opendir(d)	opendir(d)
 #endif /* OPENDIR_DOES_NONDIR */
-

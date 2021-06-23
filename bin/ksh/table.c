@@ -19,7 +19,8 @@ static int      tnamecmp    ARGS((void *p1, void *p2));
 
 
 unsigned int
-hash(register const char *n)
+hash(n)
+	register const char * n;
 {
 	register unsigned int h = 0;
 
@@ -29,7 +30,10 @@ hash(register const char *n)
 }
 
 void
-tinit(register struct table *tp, register Area *ap, int tsize)
+tinit(tp, ap, tsize)
+	register struct table *tp;
+	register Area *ap;
+	int tsize;
 {
 	tp->areap = ap;
 	tp->tbls = NULL;
@@ -39,7 +43,9 @@ tinit(register struct table *tp, register Area *ap, int tsize)
 }
 
 static void
-texpand(register struct table *tp, int nsize)
+texpand(tp, nsize)
+	register struct table *tp;
+	int nsize;
 {
 	register int i;
 	register struct tbl *tblp, **p;
@@ -72,13 +78,11 @@ texpand(register struct table *tp, int nsize)
 	afree((void*)otblp, tp->areap);
 }
 
-/*
- * tp - table
- * n - name to enter
- * h - hash(n)
- */
 struct tbl *
-tsearch(register struct table *tp, register const char *n, unsigned int h)
+tsearch(tp, n, h)
+	register struct table *tp;	/* table */
+	register const char *n;		/* name to enter */
+	unsigned int h;			/* hash(n) */
 {
 	register struct tbl **pp, *p;
 
@@ -97,13 +101,11 @@ tsearch(register struct table *tp, register const char *n, unsigned int h)
 	return NULL;
 }
 
-/*
- * tp - table
- * n - name to enter
- * h - hash(n)
- */
 struct tbl *
-tenter(register struct table *tp, register const char *n, unsigned int h)
+tenter(tp, n, h)
+	register struct table *tp;	/* table */
+	register const char *n;		/* name to enter */
+	unsigned int h;			/* hash(n) */
 {
 	register struct tbl **pp, *p;
 	register int len;
@@ -142,20 +144,24 @@ tenter(register struct table *tp, register const char *n, unsigned int h)
 }
 
 void
-tdelete(register struct tbl *p)
+tdelete(p)
+	register struct tbl *p;
 {
 	p->flag = 0;
 }
 
 void
-twalk(struct tstate *ts, struct table *tp)
+twalk(ts, tp)
+	struct tstate *ts;
+	struct table *tp;
 {
 	ts->left = tp->size;
 	ts->next = tp->tbls;
 }
 
 struct tbl *
-tnext(struct tstate *ts)
+tnext(ts)
+	struct tstate *ts;
 {
 	while (--ts->left >= 0) {
 		struct tbl *p = *ts->next++;
@@ -166,13 +172,15 @@ tnext(struct tstate *ts)
 }
 
 static int
-tnamecmp(void *p1, void *p2)
+tnamecmp(p1, p2)
+	void *p1, *p2;
 {
 	return strcmp(((struct tbl *)p1)->name, ((struct tbl *)p2)->name);
 }
 
 struct tbl **
-tsort(register struct table *tp)
+tsort(tp)
+	register struct table *tp;
 {
 	register int i;
 	register struct tbl **p, **sp, **dp;
@@ -195,7 +203,8 @@ tsort(register struct table *tp)
 void tprintinfo ARGS((struct table *tp));
 
 void
-tprintinfo(struct table *tp)
+tprintinfo(tp)
+	struct table *tp;
 {
 	struct tbl *te;
 	char *n;
@@ -236,4 +245,3 @@ tprintinfo(struct table *tp)
 			(totncmp % nentries) * 100 / nentries);
 }
 #endif /* PERF_DEBUG */
-

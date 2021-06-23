@@ -733,4 +733,3 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 # undef EXTERN
 #endif
 #undef I__
-

@@ -58,4 +58,3 @@
 #ifndef S_IXOTH
 # define S_IXOTH	00001	/* user execute bit */
 #endif /* S_IXOTH */
-

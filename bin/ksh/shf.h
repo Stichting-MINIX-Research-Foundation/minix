@@ -85,4 +85,3 @@ char	    *shf_smprintf ARGS((const char *fmt, ...));
 int	    shf_vfprintf ARGS((struct shf *, const char *fmt, va_list args));
 
 #endif /* SHF_H */
-

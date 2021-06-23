@@ -14,7 +14,9 @@ __RCSID("$NetBSD: tty.c,v 1.4 2003/06/23 11:39:06 agc Exp $");
 #undef EXTERN
 
 int
-get_tty(int fd, TTY_state *ts)
+get_tty(fd, ts)
+	int fd;
+	TTY_state *ts;
 {
 	int ret;
 
@@ -42,7 +44,10 @@ get_tty(int fd, TTY_state *ts)
 }
 
 int
-set_tty(int fd, TTY_state *ts, int flags)
+set_tty(fd, ts, flags)
+	int fd;
+	TTY_state *ts;
+	int flags;
 {
 	int ret = 0;
 
@@ -101,7 +106,8 @@ set_tty(int fd, TTY_state *ts, int flags)
  * foreground job completion and for setting up tty process group.
  */
 void
-tty_init(int init_ttystate)
+tty_init(init_ttystate)
+	int init_ttystate;
 {
 	int	do_close = 1;
 	int	tfd;
@@ -172,11 +178,10 @@ tty_init(int init_ttystate)
 }
 
 void
-tty_close(void)
+tty_close()
 {
 	if (tty_fd >= 0) {
 		close(tty_fd);
 		tty_fd = -1;
 	}
 }
-

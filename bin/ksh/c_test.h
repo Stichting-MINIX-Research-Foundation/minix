@@ -53,4 +53,3 @@ Test_op	test_isop ARGS((Test_env *te, Test_meta meta, const char *s));
 int     test_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
 			const char *opnd2, int do_eval));
 int	test_parse ARGS((Test_env *te));
-
