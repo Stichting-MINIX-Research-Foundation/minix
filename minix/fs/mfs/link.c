@@ -181,10 +181,11 @@ ssize_t fs_rdlink(ino_t ino_nr, struct fsdriver_data *data, size_t bytes)
 /*===========================================================================*
  *				remove_dir				     *
  *===========================================================================*/
-static int remove_dir(rldirp, rip, dir_name)
-struct inode *rldirp;		 	/* parent directory */
-struct inode *rip;			/* directory to be removed */
-char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
+static int remove_dir(
+  struct inode *rldirp,		 	/* parent directory */
+  struct inode *rip,			/* directory to be removed */
+  char dir_name[MFS_NAME_MAX]		/* name of directory to be removed */
+)
 {
   /* A directory file has to be removed. Five conditions have to met:
    * 	- The file must be a directory
@@ -216,10 +217,11 @@ char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
 /*===========================================================================*
  *				unlink_file				     *
  *===========================================================================*/
-static int unlink_file(dirp, rip, file_name)
-struct inode *dirp;		/* parent directory of file */
-struct inode *rip;		/* inode of file, may be NULL too. */
-char file_name[MFS_NAME_MAX];	/* name of file to be removed */
+static int unlink_file(
+  struct inode *dirp,		/* parent directory of file */
+  struct inode *rip,		/* inode of file, may be NULL too. */
+  char file_name[MFS_NAME_MAX]	/* name of file to be removed */
+)
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
@@ -449,9 +451,10 @@ int fs_trunc(ino_t ino_nr, off_t start, off_t end)
 /*===========================================================================*
  *				truncate_inode				     *
  *===========================================================================*/
-int truncate_inode(rip, newsize)
-register struct inode *rip;	/* pointer to inode to be truncated */
-off_t newsize;			/* inode must become this size */
+int truncate_inode(
+  register struct inode *rip,	/* pointer to inode to be truncated */
+  off_t newsize			/* inode must become this size */
+)
 {
 /* Set inode to a certain size, freeing any zones no longer referenced
  * and updating the size in the inode. If the inode is extended, the
@@ -491,9 +494,11 @@ off_t newsize;			/* inode must become this size */
 /*===========================================================================*
  *				freesp_inode				     *
  *===========================================================================*/
-static int freesp_inode(rip, start, end)
-register struct inode *rip;	/* pointer to inode to be partly freed */
-off_t start, end;		/* range of bytes to free (end uninclusive) */
+static int freesp_inode(
+  register struct inode *rip,	/* pointer to inode to be partly freed */
+  off_t start,
+  off_t end		/* range of bytes to free (end uninclusive) */
+)
 {
 /* Cut an arbitrary hole in an inode. The caller is responsible for checking
  * the reasonableness of the inode type of rip. The reason is this is that
@@ -555,9 +560,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 /*===========================================================================*
  *				nextblock				     *
  *===========================================================================*/
-static off_t nextblock(pos, zone_size)
-off_t pos;
-int zone_size;
+static off_t nextblock(off_t pos, int zone_size)
 {
 /* Return the first position in the next block after position 'pos'
  * (unless this is the first position in the current block).
@@ -573,11 +576,8 @@ int zone_size;
 /*===========================================================================*
  *				zerozone_half				     *
  *===========================================================================*/
-static void zerozone_half(rip, pos, half, zone_size)
-struct inode *rip;
-off_t pos;
-int half;
-int zone_size;
+static void zerozone_half(struct inode *rip, off_t pos, int half,
+						  int zone_size)
 {
 /* Zero the upper or lower 'half' of a zone that holds position 'pos'.
  * half can be FIRST_HALF or LAST_HALF.
@@ -604,10 +604,7 @@ int zone_size;
 /*===========================================================================*
  *				zerozone_range				     *
  *===========================================================================*/
-static void zerozone_range(rip, pos, len)
-struct inode *rip;
-off_t pos;
-off_t len;
+static void zerozone_range(struct inode *rip, off_t pos, off_t len)
 {
 /* Zero an arbitrary byte range in a zone, possibly spanning multiple blocks.
  */

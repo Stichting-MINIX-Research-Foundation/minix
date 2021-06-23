@@ -26,10 +26,11 @@
 /*===========================================================================*
  *				alloc_bit				     *
  *===========================================================================*/
-bit_t alloc_bit(sp, map, origin)
-struct super_block *sp;		/* the filesystem to allocate from */
-int map;			/* IMAP (inode map) or ZMAP (zone map) */
-bit_t origin;			/* number of bit to start searching at */
+bit_t alloc_bit(
+  struct super_block *sp,		/* the filesystem to allocate from */
+  int map,			/* IMAP (inode map) or ZMAP (zone map) */
+  bit_t origin			/* number of bit to start searching at */
+)
 {
 /* Allocate a bit from a bit map and return its bit number. */
 
@@ -108,10 +109,11 @@ bit_t origin;			/* number of bit to start searching at */
 /*===========================================================================*
  *				free_bit				     *
  *===========================================================================*/
-void free_bit(sp, map, bit_returned)
-struct super_block *sp;		/* the filesystem to operate on */
-int map;			/* IMAP (inode map) or ZMAP (zone map) */
-bit_t bit_returned;		/* number of bit to insert into the map */
+void free_bit(
+  struct super_block *sp,	/* the filesystem to operate on */
+  int map,					/* IMAP (inode map) or ZMAP (zone map) */
+  bit_t bit_returned		/* number of bit to insert into the map */
+)
 {
 /* Return a zone or inode by turning off its bitmap bit. */
 

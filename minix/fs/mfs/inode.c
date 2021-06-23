@@ -67,7 +67,7 @@ int fs_putnode(ino_t ino_nr, unsigned int count)
 /*===========================================================================*
  *				init_inode_cache			     *
  *===========================================================================*/
-void init_inode_cache()
+void init_inode_cache(void)
 {
   struct inode *rip;
   struct inodelist *rlp;
@@ -203,8 +203,9 @@ struct inode *find_inode(
 /*===========================================================================*
  *				put_inode				     *
  *===========================================================================*/
-void put_inode(rip)
-register struct inode *rip;	/* pointer to inode to be released */
+void put_inode(
+  register struct inode *rip	/* pointer to inode to be released */
+)
 {
 /* The caller is no longer using this inode.  If no one else is using it either
  * write it back to the disk immediately.  If it has no links, truncate it and
@@ -306,8 +307,9 @@ struct inode *alloc_inode(dev_t dev, mode_t bits, uid_t uid, gid_t gid)
 /*===========================================================================*
  *				wipe_inode				     *
  *===========================================================================*/
-static void wipe_inode(rip)
-register struct inode *rip;	/* the inode to be erased */
+static void wipe_inode(
+  register struct inode *rip	/* the inode to be erased */
+)
 {
 /* Erase some fields in the inode.  This function is called from alloc_inode()
  * when a new inode is to be allocated, and from truncate(), when an existing
@@ -346,8 +348,9 @@ static void free_inode(
 /*===========================================================================*
  *				update_times				     *
  *===========================================================================*/
-void update_times(rip)
-register struct inode *rip;	/* pointer to inode to be read/written */
+void update_times(
+  register struct inode *rip	/* pointer to inode to be read/written */
+)
 {
 /* Various system calls are required by the standard to update atime, ctime,
  * or mtime.  Since updating a time requires sending a message to the clock
@@ -372,9 +375,10 @@ register struct inode *rip;	/* pointer to inode to be read/written */
 /*===========================================================================*
  *				rw_inode				     *
  *===========================================================================*/
-void rw_inode(rip, rw_flag)
-register struct inode *rip;	/* pointer to inode to be read/written */
-int rw_flag;			/* READING or WRITING */
+void rw_inode(
+  register struct inode *rip,	/* pointer to inode to be read/written */
+  int rw_flag			/* READING or WRITING */
+)
 {
 /* An entry in the inode table is to be copied to or from the disk. */
 
@@ -411,11 +415,12 @@ int rw_flag;			/* READING or WRITING */
 /*===========================================================================*
  *				new_icopy				     *
  *===========================================================================*/
-static void new_icopy(rip, dip, direction, norm)
-register struct inode *rip;	/* pointer to the in-core inode struct */
-register d2_inode *dip;	/* pointer to the d2_inode struct */
-int direction;			/* READING (from disk) or WRITING (to disk) */
-int norm;			/* TRUE = do not swap bytes; FALSE = swap */
+static void new_icopy(
+  register struct inode *rip,	/* pointer to the in-core inode struct */
+  register d2_inode *dip,	/* pointer to the d2_inode struct */
+  int direction,			/* READING (from disk) or WRITING (to disk) */
+  int norm			/* TRUE = do not swap bytes; FALSE = swap */
+)
 {
   int i;
 
@@ -452,8 +457,9 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 /*===========================================================================*
  *				dup_inode				     *
  *===========================================================================*/
-void dup_inode(ip)
-struct inode *ip;		/* The inode to be duplicated. */
+void dup_inode(
+  struct inode *ip		/* The inode to be duplicated. */
+)
 {
 /* This routine is a simplified form of get_inode() for the case where
  * the inode pointer is already known.

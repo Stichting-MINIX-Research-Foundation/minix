@@ -114,18 +114,18 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
 /*===========================================================================*
  *				rw_chunk				     *
  *===========================================================================*/
-static int rw_chunk(rip, position, off, chunk, left, call, data, buf_off,
-	block_size, completed)
-register struct inode *rip;	/* pointer to inode for file to be rd/wr */
-u64_t position;			/* position within file to read or write */
-unsigned off;			/* off within the current block */
-size_t chunk;			/* number of bytes to read or write */
-unsigned left;			/* max number of bytes wanted after position */
-int call;			/* FSC_READ, FSC_WRITE, or FSC_PEEK */
-struct fsdriver_data *data;	/* structure for (remote) user buffer */
-unsigned buf_off;		/* offset in user buffer */
-unsigned int block_size;	/* block size of FS operating on */
-int *completed;			/* number of bytes copied */
+static int rw_chunk(
+  register struct inode *rip,	/* pointer to inode for file to be rd/wr */
+  u64_t position,			/* position within file to read or write */
+  unsigned off,			/* off within the current block */
+  size_t chunk,			/* number of bytes to read or write */
+  unsigned left,			/* max number of bytes wanted after position */
+  int call,			/* FSC_READ, FSC_WRITE, or FSC_PEEK */
+  struct fsdriver_data *data,	/* structure for (remote) user buffer */
+  unsigned buf_off,		/* offset in user buffer */
+  unsigned int block_size,	/* block size of FS operating on */
+  int *completed			/* number of bytes copied */
+)
 {
 /* Read or write (part of) a block. */
   struct buf *bp = NULL;
@@ -207,10 +207,11 @@ int *completed;			/* number of bytes copied */
 /*===========================================================================*
  *				read_map				     *
  *===========================================================================*/
-block_t read_map(rip, position, opportunistic)
-register struct inode *rip;	/* ptr to inode to map from */
-off_t position;			/* position in file whose blk wanted */
-int opportunistic;		/* if nonzero, only use cache for metadata */
+block_t read_map(
+  register struct inode *rip,	/* ptr to inode to map from */
+  off_t position,			/* position in file whose blk wanted */
+  int opportunistic		/* if nonzero, only use cache for metadata */
+)
 {
 /* Given an inode and a position within the corresponding file, locate the
  * block (not zone) number in which that position is to be found and return it.
@@ -298,9 +299,10 @@ struct buf *get_block_map(register struct inode *rip, u64_t position)
 /*===========================================================================*
  *				rd_indir				     *
  *===========================================================================*/
-zone_t rd_indir(bp, index)
-struct buf *bp;			/* pointer to indirect block */
-int index;			/* index into *bp */
+zone_t rd_indir(
+  struct buf *bp,			/* pointer to indirect block */
+  int index					/* index into *bp */
+)
 {
   struct super_block *sp;
   zone_t zone;
@@ -327,11 +329,12 @@ int index;			/* index into *bp */
 /*===========================================================================*
  *				rahead					     *
  *===========================================================================*/
-static struct buf *rahead(rip, baseblock, position, bytes_ahead)
-register struct inode *rip;	/* pointer to inode for file to be read */
-block_t baseblock;		/* block at current position */
-u64_t position;			/* position within file */
-unsigned bytes_ahead;		/* bytes beyond position for immediate use */
+static struct buf *rahead(
+  register struct inode *rip,	/* pointer to inode for file to be read */
+  block_t baseblock,		/* block at current position */
+  u64_t position,			/* position within file */
+  unsigned bytes_ahead		/* bytes beyond position for immediate use */
+)
 {
 /* Fetch a block from the cache or the device.  If a physical read is
  * required, prefetch as many more blocks as convenient into the cache.

@@ -101,20 +101,22 @@ ssize_t fs_readwrite(ino_t ino_nr, struct fsdriver_data *data, size_t nrbytes,
 
 
 /*===========================================================================*
- *				rw_chunk				     *
+ *				rw_chunk													 *
+ *				rip: pointer to inode for file to be rd/wr					 *
+ *				position: position within file to read or write				 *
+ *				off: off within the current block							 *
+ *				chunk: number of bytes to read or write						 *
+ *				left: max number of bytes wanted after position				 *
+ *				call: FSC_READ, FSC_WRITE, or FSC_PEEK						 *
+ *				data: structure for (remote) user buffer					 *
+ *				buf_off: offset in user buffer								 *
+ *				block_size: block size of FS operating on					 *
+ *				completed: number of bytes copied							 *
  *===========================================================================*/
-static int rw_chunk(rip, position, off, chunk, left, call, data, buf_off,
-	block_size, completed)
-register struct inode *rip;     /* pointer to inode for file to be rd/wr */
-u64_t position;                 /* position within file to read or write */
-unsigned off;                   /* off within the current block */
-size_t chunk;                   /* number of bytes to read or write */
-unsigned left;                  /* max number of bytes wanted after position */
-int call;                       /* FSC_READ, FSC_WRITE, or FSC_PEEK */
-struct fsdriver_data *data;     /* structure for (remote) user buffer */
-unsigned buf_off;               /* offset in user buffer */
-unsigned int block_size;        /* block size of FS operating on */
-int *completed;                 /* number of bytes copied */
+static int rw_chunk(register struct inode *rip, u64_t position, unsigned off,
+					size_t chunk, unsigned left, int call,
+					struct fsdriver_data *data, unsigned buf_off,
+					unsigned int block_size, int *completed)
 {
 /* Read or write (part of) a block. */
 
@@ -196,12 +198,11 @@ int *completed;                 /* number of bytes copied */
 
 
 /*===========================================================================*
- *				read_map				     *
+ *				read_map													 *
+ *				rip: prt to inode to map from								 *
+ *				position: position in file whose blk wanted					 *
  *===========================================================================*/
-block_t read_map(rip, position, opportunistic)
-register struct inode *rip;     /* ptr to inode to map from */
-off_t position;                 /* position in file whose blk wanted */
-int opportunistic;
+block_t read_map(register struct inode *rip, off_t position, int opportunistic)
 {
 /* Given an inode and a position within the corresponding file, locate the
  * block number in which that position is to be found and return it.
@@ -296,11 +297,11 @@ struct buf *get_block_map(register struct inode *rip, u64_t position)
 }
 
 /*===========================================================================*
- *				rd_indir				     *
+ *				rd_indir													 *
+ *				bp: pointer to indirect block								 *
+ *				mindex: index into *bp										 *
  *===========================================================================*/
-block_t rd_indir(bp, mindex)
-struct buf *bp;                 /* pointer to indirect block */
-int mindex;                      /* index into *bp */
+block_t rd_indir(struct buf *bp, int mindex)
 {
   if (bp == NULL)
 	panic("rd_indir() on NULL");
@@ -310,13 +311,14 @@ int mindex;                      /* index into *bp */
 
 
 /*===========================================================================*
- *				rahead					     *
+ *				rahead														 *
+ *				rip : pointer to inode for file to be read					 *
+ *				baselock: block at current position							 *
+ *				position: position within file								 *
+ *				bytes ahead: bytes beyond position for immediate use		 *
  *===========================================================================*/
-static struct buf *rahead(rip, baseblock, position, bytes_ahead)
-register struct inode *rip;     /* pointer to inode for file to be read */
-block_t baseblock;              /* block at current position */
-u64_t position;                 /* position within file */
-unsigned bytes_ahead;           /* bytes beyond position for immediate use */
+static struct buf *rahead(register struct inode *rip, block_t baseblock,
+						  u64_t position, unsigned bytes_ahead)
 {
 /* Fetch a block from the cache or the device.  If a physical read is
  * required, prefetch as many more blocks as convenient into the cache.
