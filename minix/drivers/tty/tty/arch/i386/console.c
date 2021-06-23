@@ -155,10 +155,9 @@ static struct chardriver video_tab = {
 
 /*===========================================================================*
  *				cons_write				     *
+ *				tp tells which terminal is to be used *
  *===========================================================================*/
-static int cons_write(tp, try)
-register struct tty *tp;	/* tells which terminal is to be used */
-int try;
+static int cons_write(register struct tty *tp, int try)
 {
 /* Copy as much data as possible to the output queue, then start I/O.  On
  * memory-mapped terminals, such as the IBM console, the I/O will also be
@@ -236,10 +235,10 @@ int try;
 
 /*===========================================================================*
  *				cons_echo				     *
+ *				tp pointer to tty struct
+ *				c character to be echoed
  *===========================================================================*/
-static void cons_echo(tp, c)
-register tty_t *tp;		/* pointer to tty struct */
-int c;				/* character to be echoed */
+static void cons_echo(register tty_t *tp, int c)
 {
 /* Echo keyboard input (print & flush). */
   console_t *cons = tp->tty_priv;
@@ -250,10 +249,10 @@ int c;				/* character to be echoed */
 
 /*===========================================================================*
  *				out_char				     *
+ *				cons - pointer to console struct
+ *				c - character to output
  *===========================================================================*/
-static void out_char(cons, c)
-register console_t *cons;	/* pointer to console struct */
-int c;				/* character to be output */
+static void out_char(register console_t *cons, int c)
 {
 /* Output a character on the console.  Check for escape sequences first. */
   if (cons->c_esc_state > 0) {
@@ -345,10 +344,10 @@ int c;				/* character to be output */
 
 /*===========================================================================*
  *				scroll_screen				     *
+ *				cons - pointer to console struct
+ *				dir - SCROLL_UP or SCROLL_DOWN
  *===========================================================================*/
-static void scroll_screen(cons, dir)
-register console_t *cons;	/* pointer to console struct */
-int dir;			/* SCROLL_UP or SCROLL_DOWN */
+static void scroll_screen(register console_t *cons, int dir)
 {
   unsigned new_line, new_org, chars;
 
@@ -397,9 +396,9 @@ int dir;			/* SCROLL_UP or SCROLL_DOWN */
 
 /*===========================================================================*
  *				flush					     *
+ *				cons - pointer to console struct
  *===========================================================================*/
-static void flush(cons)
-register console_t *cons;	/* pointer to console struct */
+static void flush(register console_t *cons)
 {
 /* Send characters buffered in 'ramqueue' to screen memory, check the new
  * cursor position, compute the new hardware cursor position and set it.
@@ -429,10 +428,10 @@ register console_t *cons;	/* pointer to console struct */
 
 /*===========================================================================*
  *				parse_escape				     *
+ *				cons pointer to console struct
+ *				c next character in escape sequence
  *===========================================================================*/
-static void parse_escape(cons, c)
-register console_t *cons;	/* pointer to console struct */
-char c;				/* next character in escape sequence */
+static void parse_escape(register console_t *cons, int c)
 {
 /* The following ANSI escape sequences are currently supported.
  * If n and/or m are omitted, they default to 1.
@@ -487,11 +486,11 @@ char c;				/* next character in escape sequence */
 }
 
 /*===========================================================================*
- *				do_escape				     *
+ *				do_escape													 *
+ *				cons: pointer to console struct								 *
+ *				c: next character in escape sequence						 *
  *===========================================================================*/
-static void do_escape(cons, c)
-register console_t *cons;	/* pointer to console struct */
-char c;				/* next character in escape sequence */
+static void do_escape(register console_t *cons, int c)
 {
   int value, n;
   unsigned src, dst, count;
@@ -729,11 +728,11 @@ char c;				/* next character in escape sequence */
 }
 
 /*===========================================================================*
- *				set_6845				     *
+ *				set_6845													 *
+ *				reg: which register pair to set								 *
+ *				val: 16-bit value to set it to								 *
  *===========================================================================*/
-static void set_6845(reg, val)
-int reg;			/* which register pair to set */
-unsigned val;			/* 16-bit value to set it to */
+static void set_6845(int reg, unsigned val)
 {
 /* Set a register pair inside the 6845.
  * Registers 12-13 tell the 6845 where in video ram to start
@@ -751,9 +750,9 @@ unsigned val;			/* 16-bit value to set it to */
 /*===========================================================================*
  *				get_6845				     *
  *===========================================================================*/
-static void get_6845(reg, val)
-int reg;			/* which register pair to set */
-unsigned *val;			/* 16-bit value to set it to */
+static void get_6845(int reg, unsigned *val)
+/* int reg;			/* which register pair to set */
+/* unsigned *val;			/* 16-bit value to set it to */
 {
   char v1, v2;
   u32_t v;
@@ -789,7 +788,7 @@ static long beep_disabled(void)
 /*===========================================================================*
  *				beep					     *
  *===========================================================================*/
-static void beep()
+static void beep(void)
 {
 /* Making a beeping sound on the speaker (output for CRTL-G).
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
@@ -858,9 +857,7 @@ void do_video(message *m, int ipc_status)
 /*===========================================================================*
  *				beep_x					     *
  *===========================================================================*/
-void beep_x(freq, dur)
-unsigned freq;
-clock_t dur;
+void beep_x(unsigned freq, clock_t dur)
 {
 /* Making a beeping sound on the speaker.
  * This routine works by turning on the bits 0 and 1 in port B of the 8255
@@ -907,8 +904,7 @@ static void stop_beep(int arg __unused)
 /*===========================================================================*
  *				scr_init				     *
  *===========================================================================*/
-void scr_init(tp)
-tty_t *tp;
+void scr_init(tty_t *tp)
 {
 /* Initialize the screen driver. */
   console_t *cons;
@@ -1009,7 +1005,7 @@ tty_t *tp;
 /*===========================================================================*
  *				toggle_scroll				     *
  *===========================================================================*/
-void toggle_scroll()
+void toggle_scroll(void)
 {
 /* Toggle between hardware and software scroll. */
 
@@ -1021,7 +1017,7 @@ void toggle_scroll()
 /*===========================================================================*
  *				cons_stop				     *
  *===========================================================================*/
-void cons_stop()
+void cons_stop(void)
 {
 /* Prepare for halt or reboot. */
   cons_org0();
@@ -1034,7 +1030,7 @@ void cons_stop()
 /*===========================================================================*
  *				cons_org0				     *
  *===========================================================================*/
-static void cons_org0()
+static void cons_org0(void)
 {
 /* Scroll video memory back to put the origin at 0. */
   int cons_line;
@@ -1058,7 +1054,7 @@ static void cons_org0()
 /*===========================================================================*
  *				disable_console				     *
  *===========================================================================*/
-static void disable_console()
+static void disable_console(void)
 {
 	if (disabled_vc != -1)
 		return;
@@ -1076,7 +1072,7 @@ static void disable_console()
 /*===========================================================================*
  *				reenable_console			     *
  *===========================================================================*/
-static void reenable_console()
+static void reenable_console(void)
 {
 	if (disabled_vc == -1)
 		return;
@@ -1146,8 +1142,7 @@ int con_loadfont(endpoint_t endpt, cp_grant_id_t grant)
 /*===========================================================================*
  *				ga_program				     *
  *===========================================================================*/
-static int ga_program(seq)
-struct sequence *seq;
+static int ga_program(struct sequence *seq)
 {
   pvb_pair_t char_out[14];
   int i;

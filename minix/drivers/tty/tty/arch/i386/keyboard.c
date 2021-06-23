@@ -86,8 +86,7 @@ static unsigned map_key(int scode);
 /*===========================================================================*
  *				map_key					     *
  *===========================================================================*/
-static unsigned map_key(scode)
-int scode;
+static unsigned map_key(int scode)
 {
 /* Map a scan code to an ASCII code. */
 
@@ -181,9 +180,7 @@ void do_input(message *msg)
 /*===========================================================================*
  *				kb_read					     *
  *===========================================================================*/
-static int kb_read(tp, try)
-tty_t *tp;
-int try;
+static int kb_read(tty_t *tp, int try)
 {
 /* Process characters from the circular keyboard buffer. */
   char buf[7], *p, suffix;
@@ -387,8 +384,7 @@ static void set_leds(void)
 /*===========================================================================*
  *				kb_init					     *
  *===========================================================================*/
-void kb_init(tp)
-tty_t *tp;
+void kb_init(tty_t *tp)
 {
 /* Initialize the keyboard driver. */
 
@@ -425,9 +421,9 @@ int kbd_loadmap(endpoint_t endpt, cp_grant_id_t grant)
 
 /*===========================================================================*
  *				do_fkey_ctl				     *
+ *				m_ptr pointer to request message
  *===========================================================================*/
-void do_fkey_ctl(m_ptr)
-message *m_ptr;			/* pointer to the request message */
+void do_fkey_ctl(message *m_ptr)
 {
 /* This procedure allows processes to register a function key to receive
  * notifications if it is pressed. At most one binding per key can exist.
@@ -527,10 +523,10 @@ message *m_ptr;			/* pointer to the request message */
 }
 
 /*===========================================================================*
- *				func_key				     *
+ *				func_key													 *
+ *				scode: scan code for a function key							 *
  *===========================================================================*/
-static int func_key(scode)
-int scode;			/* scan code for a function key */
+static int func_key(int scode)
 {
 /* This procedure traps function keys for debugging purposes. Observers of 
  * function keys are kept in a global array. If a subject (a key) is pressed
@@ -574,7 +570,7 @@ int scode;			/* scan code for a function key */
 /*===========================================================================*
  *				show_key_mappings			     *
  *===========================================================================*/
-static void show_key_mappings()
+static void show_key_mappings(void)
 {
     int i,s;
 

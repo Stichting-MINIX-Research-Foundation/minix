@@ -316,7 +316,7 @@ main(int argc, char *argv[])
 }
 
 static int
-keep_displaying_restarted()
+keep_displaying_restarted(void)
 {
 	u64_t delta;
 	u32_t micro_delta;

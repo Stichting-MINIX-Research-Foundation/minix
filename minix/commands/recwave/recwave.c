@@ -74,7 +74,7 @@ int old_stdin;
 struct termios old_tty, new_tty;
 int audio, file;
 
-void usage()
+void usage(void)
 {
   fprintf(stderr, "Usage: recwav [-b -s -r] file_name\n");
   exit(-1);
@@ -90,7 +90,7 @@ void terminate(int s)
   exit(0);		
 }
 
-void write_wave_header()
+void write_wave_header(void)
 {
   /* RIFF fields */
   r_fields.RIFF_id = RIFF_ID;

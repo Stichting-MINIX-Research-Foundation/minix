@@ -224,7 +224,7 @@ void printtotal(void);
 void chkdev(char *f, char **clist, char **ilist, char **zlist);
 
 /* Initialize the variables used by this program. */
-void initvars()
+void initvars(void)
 {
   register int level;
 
@@ -238,23 +238,20 @@ void initvars()
 }
 
 /* Print the string `s' and exit. */
-void fatal(s)
-char *s;
+void fatal(char *s)
 {
   printf("%s\nfatal\n", s);
   exit(FSCK_EXIT_CHECK_FAILED);
 }
 
 /* Test for end of line. */
-int eoln(c)
-int c;
+int eoln(int c)
 {
   return(c == EOF || c == '\n' || c == '\r');
 }
 
 /* Ask a question and get the answer unless automatic is set. */
-int yes(question)
-char *question;
+int yes(char *question)
 {
   register int c, answerchar;
   static int note = 0;
@@ -280,8 +277,7 @@ char *question;
 }
 
 /* Convert string to integer.  Representation is octal. */
-int atoo(s)
-register char *s;
+int atoo(register char *s)
 {
   register int n = 0;
 
@@ -293,9 +289,7 @@ register char *s;
 }
 
 /* If repairing the file system, print a prompt and get a string from user. */
-int input(buf, size)
-char *buf;
-int size;
+int input(char *buf, int size)
 {
   register char *p = buf;
 
@@ -319,8 +313,7 @@ int size;
 }
 
 /* Allocate some memory and zero it. */
-char *alloc(nelem, elsize)
-unsigned nelem, elsize;
+char *alloc(unsigned nelem, unsigned elsize)
 {
   char *p;
 
@@ -334,8 +327,7 @@ unsigned nelem, elsize;
 }
 
 /* Print the name in a directory entry. */
-void printname(s)
-char *s;
+void printname(char *s)
 {
   register int n = MFS_NAME_MAX;
   int c;
@@ -361,9 +353,7 @@ void printrec(struct stack *sp)
 }
 
 /* Print the current pathname.  */
-void printpath(mode, nlcr)
-int mode;
-int nlcr;
+void printpath(int mode, int nlcr)
 {
   if (ftop->st_next == 0)
 	putchar('/');
@@ -381,7 +371,7 @@ int nlcr;
 }
 
 /* Open the device.  */
-void devopen()
+void devopen(void)
 {
   if ((dev = open(fsck_device,
     (repair || markdirty) ? O_RDWR : O_RDONLY)) < 0) {
@@ -391,7 +381,7 @@ void devopen()
 }
 
 /* Close the device. */
-void devclose()
+void devclose(void)
 {
   if (close(dev) != 0) {
 	perror("close");
@@ -400,9 +390,7 @@ void devclose()
 }
 
 /* Read or write a block. */
-void devio(bno, dir)
-block_nr bno;
-int dir;
+void devio(block_nr bno, int dir)
 {
   off_t r;
 
@@ -437,11 +425,7 @@ printf("%s at block %5d\n", dir == READING ? "reading " : "writing", bno);
 /* Read `size' bytes from the disk starting at block 'block' and
  * byte `offset'.
  */
-void devread(block, offset, buf, size)
-long block;
-long offset;
-char *buf;
-int size;
+void devread(long block, long offset, char *buf, int size)
 {
   if(!block_size) fatal("devread() with unknown block size");
   if (offset >= block_size)
@@ -456,11 +440,7 @@ int size;
 /* Write `size' bytes to the disk starting at block 'block' and
  * byte `offset'.
  */
-void devwrite(block, offset, buf, size)
-long block;
-long offset;
-char *buf;
-int size;
+void devwrite(long block, long offset, char *buf, int size)
 {
   if(!block_size) fatal("devwrite() with unknown block size");
   if (!repair) fatal("internal error (devwrite)");
@@ -476,24 +456,19 @@ int size;
 }
 
 /* Print a string with either a singular or a plural pronoun. */
-void pr(fmt, cnt, s, p)
-char *fmt, *s, *p;
-int cnt;
+void pr(char *fmt, int cnt, char *s, char *p)
 {
   printf(fmt, cnt, cnt == 1 ? s : p);
 }
 
 /* Same as above, but with a long argument */
-void lpr(fmt, cnt, s, p)
-char *fmt, *s, *p;
-long cnt;
+void lpr(char *fmt, long cnt, char *s, char *p)
 {
   printf(fmt, cnt, cnt == 1 ? s : p);
 }
 
 /* Convert string to number. */
-bit_nr getnumber(s)
-register char *s;
+bit_nr getnumber(register char *s)
 {
   register bit_nr n = 0;
 
@@ -505,8 +480,7 @@ register char *s;
 }
 
 /* See if the list pointed to by `argv' contains numbers. */
-char **getlist(argv, type)
-char ***argv, *type;
+char **getlist(char ***argv, char *type)
 {
   register char **list = *argv;
   register int empty = 1;
@@ -525,7 +499,7 @@ char ***argv, *type;
 /* Make a listing of the super block.  If `repair' is set, ask the user
  * for changes.
  */
-void lsuper()
+void lsuper(void)
 {
   char buf[80];
 
@@ -599,7 +573,7 @@ void rw_super(int put)
 }
 
 /* Check the super block for reasonable contents. */
-void chksuper()
+void chksuper(void)
 {
   register int n;
   register off_t maxsize;
@@ -667,8 +641,7 @@ int inooff(int inn)
 /* Make a listing of the inodes given by `clist'.  If `repair' is set, ask
  * the user for changes.
  */
-void lsi(clist)
-char **clist;
+void lsi(char **clist)
 {
   register bit_nr bit;
   register ino_t ino;
@@ -698,8 +671,7 @@ char **clist;
 }
 
 /* Allocate `nblk' blocks worth of bitmap. */
-bitchunk_t *allocbitmap(nblk)
-int nblk;
+bitchunk_t *allocbitmap(int nblk)
 {
   register bitchunk_t *bitmap;
 
@@ -709,10 +681,7 @@ int nblk;
 }
 
 /* Load the bitmap starting at block `bno' from disk. */
-void loadbitmap(bitmap, bno, nblk)
-bitchunk_t *bitmap;
-block_nr bno;
-int nblk;
+void loadbitmap(bitchunk_t *bitmap, block_nr bno, int nblk)
 {
   register int i;
   register bitchunk_t *p;
@@ -724,10 +693,7 @@ int nblk;
 }
 
 /* Write the bitmap starting at block `bno' to disk. */
-void dumpbitmap(bitmap, bno, nblk)
-bitchunk_t *bitmap;
-block_nr bno;
-int nblk;
+void dumpbitmap(bitchunk_t *bitmap, block_nr bno, int nblk)
 {
   register int i;
   register bitchunk_t *p = bitmap;
@@ -737,10 +703,7 @@ int nblk;
 }
 
 /* Set the bits given by `list' in the bitmap. */
-void fillbitmap(bitmap, lwb, upb, list)
-bitchunk_t *bitmap;
-bit_nr lwb, upb;
-char **list;
+void fillbitmap(bitchunk_t *bitmap, bit_nr lwb, bit_nr upb, char **list)
 {
   register bit_nr bit;
 
@@ -757,14 +720,13 @@ char **list;
 }
 
 /* Deallocate the bitmap `p'. */
-void freebitmap(p)
-bitchunk_t *p;
+void freebitmap(bitchunk_t *p)
 {
   free((char *) p);
 }
 
 /* Get all the bitmaps used by this program. */
-void getbitmaps()
+void getbitmaps(void)
 {
   imap = allocbitmap(N_IMAP);
   zmap = allocbitmap(N_ZMAP);
@@ -774,7 +736,7 @@ void getbitmaps()
 }
 
 /* Release all the space taken by the bitmaps. */
-void putbitmaps()
+void putbitmaps(void)
 {
   freebitmap(imap);
   freebitmap(zmap);
@@ -786,12 +748,7 @@ void putbitmaps()
 /* `w1' and `w2' are differing words from two bitmaps that should be
  * identical.  Print what's the matter with them.
  */
-void chkword(w1, w2, bit, type, n, report, phys)
-unsigned w1, w2;
-char *type;
-bit_nr bit;
-int *n, *report;
-bit_nr phys;
+void chkword(unsigned w1, unsigned w2, bit_nr bit, char *type, int *n, int *report, bit_nr phys)
 {
   for (; (w1 | w2); w1 >>= 1, w2 >>= 1, bit++, phys++)
 	if ((w1 ^ w2) & 1 && ++(*n) % MAXPRINT == 0 && *report &&
@@ -810,12 +767,7 @@ bit_nr phys;
 /* Check if the given (correct) bitmap is identical with the one that is
  * on the disk.  If not, ask if the disk should be repaired.
  */
-void chkmap(cmap, dmap, bit, blkno, nblk, type)
-bitchunk_t *cmap, *dmap;
-bit_nr bit;
-block_nr blkno;
-int nblk;
-char *type;
+void chkmap(bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit, block_nr blkno, int nblk, char *type)
 {
   register bitchunk_t *p = dmap, *q = cmap;
   int report = 1, nerr = 0;
@@ -841,7 +793,7 @@ char *type;
 }
 
 /* See if the inodes that aren't allocated are cleared. */
-void chkilist()
+void chkilist(void)
 {
   register ino_t ino = 1;
   mode_t mode;
@@ -864,7 +816,7 @@ void chkilist()
 }
 
 /* Allocate an array to maintain the inode reference counts in. */
-void getcount()
+void getcount(void)
 {
   count = (nlink_t *) alloc((unsigned) (sb.s_ninodes + 1), sizeof(nlink_t));
 }
@@ -898,7 +850,7 @@ void counterror(ino_t ino)
  * Thus, when the whole file system has been traversed, all the entries
  * should be zero.
  */
-void chkcount()
+void chkcount(void)
 {
   register ino_t ino;
 
@@ -908,7 +860,7 @@ void chkcount()
 }
 
 /* Deallocate the `count' array. */
-void freecount()
+void freecount(void)
 {
   free((char *) count);
 }
@@ -983,10 +935,7 @@ int Remove(dir_struct *dp)
 }
 
 /* Convert string so that embedded control characters are printable. */
-void make_printable_name(dst, src, n)
-register char *dst;
-register char *src;
-register int n;
+void make_printable_name(register char *dst, register char *src, register int n)
 {
   register int c;
 
@@ -1194,11 +1143,7 @@ int chksymlinkzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno)
 }
 
 /* There is something wrong with the given zone.  Print some details. */
-void errzone(mess, zno, level, pos)
-char *mess;
-zone_nr zno;
-int level;
-off_t pos;
+void errzone(char *mess, zone_nr zno, int level, off_t pos)
 {
   printf("%s zone in ", mess);
   printpath(1, 0);
@@ -1215,10 +1160,7 @@ off_t pos;
 /* Found the given zone in the given inode.  Check it, and if ok, mark it
  * in the zone bitmap.
  */
-int markzone(zno, level, pos)
-zone_nr zno;
-int level;
-off_t pos;
+int markzone(zone_nr zno, int level, off_t pos)
 {
   register bit_nr bit = (bit_nr) zno - FIRST + 1;
 
@@ -1259,8 +1201,7 @@ int chkindzone(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 /* Return the size of a gap in the file, represented by a null zone number
  * at some level of indirection.
  */
-off_t jump(level)
-int level;
+off_t jump(int level)
 {
   off_t power = ZONE_SIZE;
 
@@ -1451,8 +1392,7 @@ int chkinode(ino_t ino, d_inode *ip)
 }
 
 /* Check the directory entry pointed to by dp, by checking the inode. */
-int descendtree(dp)
-dir_struct *dp;
+int descendtree(dir_struct *dp)
 {
   d_inode inode;
   register ino_t ino = dp->d_inum;
@@ -1488,7 +1428,7 @@ dir_struct *dp;
 }
 
 /* Check the file system tree. */
-void chktree()
+void chktree(void)
 {
   dir_struct dir;
 
@@ -1501,7 +1441,7 @@ void chktree()
 }
 
 /* Print the totals of all the objects found. */
-void printtotal()
+void printtotal(void)
 {
   if(preen) {
   	printf("%d files, %d directories, %d free inodes, %ld free zones\n",
@@ -1535,8 +1475,7 @@ void printtotal()
  * listed by `zlist' should be watched for while checking the file system.
  */
 
-void chkdev(f, clist, ilist, zlist)
-char *f, **clist, **ilist, **zlist;
+void chkdev(char *f, char **clist, char **ilist, char **zlist)
 {
   if (automatic) repair = 1;
   fsck_device = f;
@@ -1613,9 +1552,7 @@ char *f, **clist, **ilist, **zlist;
   devclose();
 }
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   register char **clist = 0, **ilist = 0, **zlist = 0;
   int badflag = 0;

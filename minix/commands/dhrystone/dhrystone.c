@@ -211,7 +211,7 @@ boolean Func3(Enumeration EnumParIn);
 Enumeration Func1(int CharPar1, int CharPar2);
 
 
-int main()
+int main(void)
 {
   Proc0();
   return(0);
@@ -224,14 +224,13 @@ volatile int done;
 int done;
 #endif
 
-void prep_timer()
+void prep_timer(void)
 {
   signal(SIGALRM, timeout);
   done = 0;
 }
 
-void timeout(sig)
-int sig;
+void timeout(int sig)
 {
   done = 1;
 }
@@ -247,7 +246,7 @@ RecordPtr PtrGlb;
 RecordPtr PtrGlbNext;
 
 
-void Proc0()
+void Proc0(void)
 {
   OneToFifty IntLoc1;
   REG OneToFifty IntLoc2;
@@ -383,8 +382,7 @@ void Proc0()
 }
 
 
-void Proc1(PtrParIn)
-REG RecordPtr PtrParIn;
+void Proc1(REG RecordPtr PtrParIn)
 {
 #define	NextRecord	(*(PtrParIn->PtrComp))
 
@@ -407,8 +405,7 @@ REG RecordPtr PtrParIn;
 }
 
 
-void Proc2(IntParIO)
-OneToFifty *IntParIO;
+void Proc2(OneToFifty *IntParIO)
 {
   REG OneToFifty IntLoc;
   REG Enumeration EnumLoc;
@@ -426,8 +423,7 @@ OneToFifty *IntParIO;
 }
 
 
-void Proc3(PtrParOut)
-RecordPtr *PtrParOut;
+void Proc3(RecordPtr *PtrParOut)
 {
   if (PtrGlb != NULL)
 	*PtrParOut = PtrGlb->PtrComp;
@@ -437,7 +433,7 @@ RecordPtr *PtrParOut;
 }
 
 
-void Proc4()
+void Proc4(void)
 {
   REG boolean BoolLoc;
 
@@ -448,16 +444,14 @@ void Proc4()
 }
 
 
-void Proc5()
+void Proc5(void)
 {
   Char1Glob = 'A';
   BoolGlob = FALSE;
 }
 
 
-void Proc6(EnumParIn, EnumParOut)
-REG Enumeration EnumParIn;
-REG Enumeration *EnumParOut;
+void Proc6(REG Enumeration EnumParIn, REG Enumeration *EnumParOut)
 {
   *EnumParOut = EnumParIn;
   if (!Func3(EnumParIn)) *EnumParOut = Ident4;
@@ -477,10 +471,7 @@ REG Enumeration *EnumParOut;
 }
 
 
-void Proc7(IntParI1, IntParI2, IntParOut)
-OneToFifty IntParI1;
-OneToFifty IntParI2;
-OneToFifty *IntParOut;
+void Proc7(OneToFifty IntParI1, OneToFifty IntParI2, OneToFifty *IntParOut)
 {
   REG OneToFifty IntLoc;
 
@@ -490,11 +481,8 @@ OneToFifty *IntParOut;
 }
 
 
-void Proc8(Array1Par, Array2Par, IntParI1, IntParI2)
-Array1Dim Array1Par;
-Array2Dim Array2Par;
-OneToFifty IntParI1;
-OneToFifty IntParI2;
+void Proc8(Array1Dim Array1Par, Array2Dim Array2Par,
+		   OneToFifty IntParI1, OneToFifty IntParI2)
 {
   REG OneToFifty IntLoc;
   REG OneToFifty IntIndex;
@@ -512,9 +500,7 @@ OneToFifty IntParI2;
 }
 
 
-Enumeration Func1(CharPar1, CharPar2)
-CapitalLetter CharPar1;
-CapitalLetter CharPar2;
+Enumeration Func1(int CharPar1, int CharPar2)
 {
   REG CapitalLetter CharLoc1;
   REG CapitalLetter CharLoc2;
@@ -529,9 +515,7 @@ CapitalLetter CharPar2;
 }
 
 
-boolean Func2(StrParI1, StrParI2)
-String30 StrParI1;
-String30 StrParI2;
+boolean Func2(String30 StrParI1, String30 StrParI2)
 {
   REG OneToThirty IntLoc;
   REG CapitalLetter CharLoc;
@@ -556,8 +540,7 @@ String30 StrParI2;
 }
 
 
-boolean Func3(EnumParIn)
-REG Enumeration EnumParIn;
+boolean Func3(REG Enumeration EnumParIn)
 {
   REG Enumeration EnumLoc;
 
@@ -569,10 +552,7 @@ REG Enumeration EnumParIn;
 
 
 #ifdef	NOSTRUCTASSIGN
-memcpy(d, s, l)
-register char *d;
-register char *s;
-register int l;
+memcpy(register char *d, register char *s, register int l)
 {
   while (l--) *d++ = *s++;
 }

@@ -20,9 +20,7 @@ int mount_all(void);
 
 static int write_mtab = 1;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int all = 0, i, v = 0, mountflags, srvflags;
   char **ap, *opt, *err, *type, *args, *device;
@@ -88,7 +86,7 @@ char *argv[];
   return(EXIT_SUCCESS);
 }
 
-void list()
+void list(void)
 {
   int n;
   char dev[PATH_MAX], mountpoint[PATH_MAX], type[MNTNAMELEN], flags[MNTFLAGLEN];
@@ -121,7 +119,7 @@ has_opt(char *mntopts, char *option)
 
 
 int
-mount_all()
+mount_all(void)
 {
 	struct fstab *fs;
 	int ro, mountflags;
@@ -165,7 +163,7 @@ mount_all()
 	return(EXIT_SUCCESS);
 }
 
-void usage()
+void usage(void)
 {
   std_err("Usage: mount [-a] [-r] [-e] [-t type] [-o options] special name\n");
   exit(1);

@@ -31,9 +31,7 @@ int rflag;
 int main(int argc, char **argv);
 void done(char *name, int status);
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   DIR *dp;
   struct dirent *entry;
@@ -56,9 +54,7 @@ char **argv;
   return(0);			/* not reached */
 }
 
-void done(name, status)
-char *name;
-int status;
+void done(char *name, int status)
 {
   int v;
 

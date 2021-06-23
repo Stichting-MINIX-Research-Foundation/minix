@@ -60,7 +60,7 @@ DWORD data_len;
 /******** End of wave definitions *********/
 
 
-void usage()
+void usage(void)
 {
   fprintf(stderr, "Usage: playwav [-i] file\n");
   exit(-1);

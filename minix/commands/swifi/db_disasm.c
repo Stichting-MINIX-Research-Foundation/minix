@@ -866,11 +866,7 @@ static db_addr_t
  * Read address at location and return updated location.
  */
 static db_addr_t
-db_read_address(loc, short_addr, regmodrm, addrp)
-	db_addr_t	loc;
-	int		short_addr;
-	int		regmodrm;
-	struct i_addr *	addrp;		/* out */
+db_read_address(db_addr_t loc, int short_addr, int regmodrm, struct i_addr *addrp /* out */)
 {
 	int		mod, rm, sib, index, disp;
 

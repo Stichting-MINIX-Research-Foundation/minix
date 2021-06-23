@@ -91,9 +91,7 @@ char *whoami(void);
 void dohelp(void);
 int filesize(char *name);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int c;
 
@@ -161,9 +159,7 @@ char *argv[];
   return(0);
 }
 
-int deliver(count, vec)
-int count;
-char *vec[];
+int deliver(int count, char *vec[])
 {
   int i, j;
   int errs = 0;			/* count of errors */
@@ -343,7 +339,7 @@ nobox:
  * for interactive mails, this might be the place to do it (though the
  * case where a MAILER is being used would also need to be handled).
  */
-FILE *makerewindable()
+FILE *makerewindable(void)
 {
   FILE *tempfp;			/* temp file used for copy */
   int c;			/* character being copied */
@@ -387,8 +383,7 @@ done:
   return tempfp;
 }
 
-int copy(fromfp, tofp)
-FILE *fromfp, *tofp;
+int copy(FILE *fromfp, FILE *tofp)
 {
   int c;			/* character being copied */
   int state;			/* ".\n" and postmark detection state */
@@ -455,7 +450,7 @@ done:
   return 0;
 }
 
-void readbox()
+void readbox(void)
 {
   char linebuf[512];
   struct letter *let;
@@ -496,7 +491,7 @@ void readbox()
   }
 }
 
-void printall()
+void printall(void)
 {
   struct letter *let;
 
@@ -512,7 +507,7 @@ void printall()
   }
 }
 
-void interact()
+void interact(void)
 {
   char linebuf[512];		/* user input line */
   struct letter *let, *next;	/* current and next letter */
@@ -592,15 +587,13 @@ void interact()
   }
 }
 
-void onint(dummy)
-int dummy;	/* to satisfy ANSI compilers */
+/* dummy to satisfy ANSI compilers */
+void onint(int dummy)
 {
   longjmp(printjump, 1);
 }
 
-void savelet(let, savefile)
-struct letter *let;
-char *savefile;
+void savelet(struct letter *let, char *savefile)
 {
   int waitstat, pid;
   FILE *savefp;
@@ -628,7 +621,7 @@ char *savefile;
   exit(0);
 }
 
-void updatebox()
+void updatebox(void)
 {
   FILE *tempfp;			/* fp for tempfile */
   char lockname[PATHLEN];	/* maildrop lock */
@@ -683,9 +676,7 @@ void updatebox()
   if (usedrop) unlink(lockname);
 }
 
-void printlet(let, tofp)
-struct letter *let;
-FILE *tofp;
+void printlet(struct letter *let, FILE *tofp)
 {
   off_t current, limit;
   int c;
@@ -699,8 +690,7 @@ FILE *tofp;
   }
 }
 
-void doshell(command)
-char *command;
+void doshell(char *command)
 {
   int waitstat, pid;
   char *shell;
@@ -725,14 +715,13 @@ char *command;
   exit(127);
 }
 
-void usage()
+void usage(void)
 {
   fprintf(stderr, "usage: mail [-epqr] [-f file]\n");
   fprintf(stderr, "       mail [-dtv] [-s subject] user [...]\n");
 }
 
-char *basename(name)
-char *name;
+char *basename(char *name)
 {
   char *p;
 
@@ -742,7 +731,7 @@ char *name;
 	return p + 1;
 }
 
-char *whoami()
+char *whoami(void)
 {
   struct passwd *pw;
 
@@ -752,7 +741,7 @@ char *whoami()
 	return "nobody";
 }
 
-void dohelp()
+void dohelp(void)
 {
   FILE *fp;
   char buffer[80];
@@ -768,8 +757,7 @@ void dohelp()
   fclose(fp);
 }
 
-int filesize(name)
-char *name ;
+int filesize(char *name)
 {
   struct stat buf;
  

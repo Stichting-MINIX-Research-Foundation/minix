@@ -58,9 +58,7 @@ void tape_inquire(char *name, int fd);
 void allocate_buffer(void);
 void diskio(int fd1, int fd2, char *file1, char *file2);
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int volume = 1, fd, tty, i, init, autovolsize;
   char *p, *name;
@@ -208,18 +206,14 @@ char *argv[];
   }
 }
 
-void usage()
+void usage(void)
 {
   fprintf(stderr,
 	"Usage: vol [-rw1] [-b blocksize] [-m max] [size] block-special\n");
   exit(1);
 }
 
-long str2size(name, str, min, max, assume_kb)
-char *name;
-char *str;
-long min, max;
-int assume_kb;
+long str2size(char *name, char *str, long min, long max, int assume_kb)
 {
   /* Convert a string to a size.  The number may be followed by 'm', 'k', 'b'
    * or 'w' to multiply the size as shown below.  If 'assume_kb' is set then
@@ -259,9 +253,7 @@ int assume_kb;
   return size;
 }
 
-void tape_inquire(name, fd)
-char *name;
-int fd;
+void tape_inquire(char *name, int fd)
 {
   /* If the device happens to be a tape, then what is its block size? */
   struct mtget mtget;
@@ -288,7 +280,7 @@ int fd;
   }
 }
 
-void allocate_buffer()
+void allocate_buffer(void)
 {
   /* Set block size and maximum multiple. */
   if (block_size == 0) block_size = variable ? 1 : FIX_BLKSIZ;
@@ -313,9 +305,7 @@ void allocate_buffer()
   }
 }
 
-void diskio(fd1, fd2, file1, file2)
-int fd1, fd2;
-char *file1, *file2;
+void diskio(int fd1, int fd2, char *file1, char *file2)
 {
 /* Read 'volume_size' bytes from 'fd1' and write them on 'fd2'.  Watch out for
  * the fact that reads on pipes can return less than the desired data.

@@ -46,10 +46,7 @@ static unsigned db_extend[] = {	/* table for sign-extending */
 };
 
 void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
+db_read_bytes(vm_offset_t addr, register int size, register char *data)
 {
 	register char	*src;
 
@@ -60,10 +57,7 @@ db_read_bytes(addr, size, data)
 }
 
 db_expr_t
-db_get_value(addr, size, is_signed)
-	db_addr_t	addr;
-	register int	size;
-	boolean_t	is_signed;
+db_get_value(db_addr_t addr, register int size, boolean_t is_signed)
 {
 	char		data[sizeof(int)];
 	register db_expr_t value;

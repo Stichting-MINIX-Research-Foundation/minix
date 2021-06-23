@@ -62,7 +62,7 @@ Howmany must be 255 or less
  */
 int Fromcu;		/* Were called from cu or yam */
 
-void from_cu()
+void from_cu(void)
 {
 	struct stat a, b;
 
@@ -71,7 +71,7 @@ void from_cu()
 	return;
 }
 
-void cucheck()
+void cucheck(void)
 {
 	if (Fromcu)
 		fprintf(stderr,"Please read the manual page BUGS chapter!\r\n");
@@ -123,7 +123,7 @@ char checked = '\0' ;
 /*
  * Nonblocking I/O is a bit different in System V, Release 2
  */
-int rdchk(f)
+int rdchk(int f)
 {
 	int lf, savestat;
 
@@ -170,8 +170,7 @@ int iofd = 0;		/* File descriptor for ioctls & reads */
  *  1: save old tty stat, set raw mode 
  *  0: restore original tty mode
  */
-int mode(n)
-int n;
+int mode(int n)
 {
 	static int did0 = FALSE;
 
@@ -397,7 +396,7 @@ int n;
 	}
 }
 
-void sendbrk()
+void sendbrk(void)
 {
 #ifdef POSIX
 	tcsendbreak(iofd, 1);
