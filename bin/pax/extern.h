@@ -204,7 +204,6 @@ void options(int, char **);
 OPLIST * opt_next(void);
 int bad_opt(void);
 int mkpath(char *);
-char *chdname;
 #if !HAVE_NBTOOL_CONFIG_H
 int do_chroot;
 #endif
