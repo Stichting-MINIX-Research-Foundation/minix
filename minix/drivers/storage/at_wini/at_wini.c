@@ -1052,8 +1052,9 @@ static ssize_t w_transfer(
 
 	if (do_dma) {
 		stop_dma(wn);
-		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write)) {
-			do_dma = 0;
+		r = setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write);
+		if (r == 0) {
+			return -errno;
 		}
 #if 0
 		printf("nbytes = %d\n", nbytes);
@@ -1324,97 +1325,121 @@ static int setup_dma(
   endpoint_t proc_nr,
   iovec_t *iov,
   size_t addr_offset,
-  int UNUSED(do_write)
-)
-{
-	phys_bytes user_phys;
-	unsigned n, offset, size;
-	int i, j, r;
+  int do_write
+){
+	/* vvec cannot be bigger than prdt, so I think it is a suitable size
+	 * Should not exhaust the stack */
+	struct vumap_vir vvec[N_PRDTE];
+	struct vumap_phys pvec[N_PRDTE];
+
+	unsigned bytes, offset, size;
+	int i, j, vvec_len, r, pcount;
 	u32_t v;
 	struct wini *wn = w_wn;
 
-	/* First try direct scatter/gather to the supplied buffers */
-	size= *sizep;
-	i= 0;	/* iov index */
-	j= 0;	/* prdt index */
-	offset= 0;	/* Offset in current iov */
+	size = *sizep;
+	i = 0;	/* pvec index */
+	j = 0;	/* prdt index */
+	vvec_len = 0;
 
-#if VERBOSE_DMA
-	printf("at_wini: setup_dma: proc_nr %d\n", proc_nr);
-#endif
+	/* Step 1: copy data from iov to vvec */
+	while (size > 0) {
+		if (proc_nr == SELF) {
+			vvec[vvec_len].vv_addr = iov[vvec_len].iov_addr;
+		}
+		else {
+			vvec[vvec_len].vv_grant = (cp_grant_id_t)iov[vvec_len].iov_addr;
+		}
 
-	while (size > 0)
-	{
-#if VERBOSE_DMA
-		printf(
-	"at_wini: setup_dma: iov[%d]: addr 0x%lx, size %ld offset %d, size %d\n",
-			i, iov[i].iov_addr, iov[i].iov_size, offset, size);
-#endif
-			
-		n= iov[i].iov_size-offset;
-		if (n > size)
-			n= size;
-		if (n == 0 || (n & 1))
-			panic("bad size in iov: 0x%lx", iov[i].iov_size);
-		if(proc_nr != SELF) {
-			r= sys_umap(proc_nr, VM_GRANT, iov[i].iov_addr, n,
-				&user_phys);
-			if (r != 0)
-				panic("can't map user buffer (VM_GRANT): %d", r);
-			user_phys += offset + addr_offset;
+		if (size < iov[vvec_len].iov_size) {
+			vvec[vvec_len].vv_size = size;
 		} else {
-			r= sys_umap(proc_nr, VM_D,
-				iov[i].iov_addr+offset+addr_offset, n,
-				&user_phys);
-			if (r != 0)
-				panic("can't map user buffer (VM_D): %d", r);
+			vvec[vvec_len].vv_size = iov[vvec_len].iov_size;
 		}
-		if (user_phys & 1)
-		{
-			/* Buffer is not aligned */
-			printf("setup_dma: user buffer is not aligned\n");
-			return 0;
-		}
-
-		/* vector is not allowed to cross a 64K boundary */
-		if (user_phys/0x10000 != (user_phys+n-1)/0x10000)
-			n= ((user_phys/0x10000)+1)*0x10000 - user_phys;
-
-		/* vector is not allowed to be bigger than 64K, but we get that
-		 * for free.
-		 */
-
-		if (j >= N_PRDTE)
-		{
-			/* Too many entries */
-			printf("setup_dma: user buffer has too many entries\n");
-			return 0;
-		}
-
-		prdt[j].prdte_base= user_phys;
-		prdt[j].prdte_count= n;
-		prdt[j].prdte_reserved= 0;
-		prdt[j].prdte_flags= 0;
-		j++;
-
-		offset += n;
-		if (offset >= iov[i].iov_size)
-		{
-			i++;
-			offset= 0;
-			addr_offset= 0;
-		}
-
-		size -= n;
+		size -= vvec[vvec_len].vv_size;
+		vvec_len++;
 	}
 
-	if (j <= 0 || j > N_PRDTE)
-		panic("bad prdt index: %d", j);
-	prdt[j-1].prdte_flags |= PRDTE_FL_EOT;
+	pcount = vvec_len;
+	
+	/* Step 2: sys_vumap */
+	/* sys_vumap should resolve all our addresses in one go,
+	 * since caller is required to provide us with physically
+	 * contiguous buffers. If sys_vumap fails to do so,
+	 * we can just return EINVAL */
+
+	r = sys_vumap(proc_nr, vvec, vvec_len, addr_offset,
+			do_write? VUA_READ : VUA_WRITE, pvec, &pcount);
+
+	if (r != OK) {
+		printf("setup_dma: can't map user buffer: %d", r);
+		errno = EINVAL;
+		return 0;
+	}
+
+	/* sanity check: buffers should be 2-aligned
+	 * (i.e. their start addresses should be even) */
+	for (i = 0; i < pcount; i++) {
+		if (pvec[i].vp_addr & 1) {
+			printf("setup_dma: user buffer is not aligned\n");
+			errno = EINVAL;
+			return 0;
+		}
+	}
+
+	/* Step 3: redistribute pvec ranges to PRD's */
+	i = 0;
+	size = 0;
+	offset = 0;
+	while (i < pcount) {
+		prdt[j].prdte_base = pvec[i].vp_addr + offset;
+		bytes = pvec[i].vp_size - offset;
+		
+		/* make sure PRD does not cross 64K boundary */
+		if (prdt[j].prdte_base / 0x10000 !=
+				(prdt[j].prdte_base + bytes - 1) / 0x10000) {
+			bytes = ((prdt[j].prdte_base / 0x10000) + 1) * 0x10000
+				- prdt[j].prdte_base;
+		}
+
+		/* PRD size must not exceed 64K, but we get that for free */
+
+		prdt[j].prdte_count = bytes;
+		prdt[j].prdte_reserved = 0;
+		prdt[j].prdte_flags = 0;
+
+		offset += bytes;
+		if (offset == pvec[i].vp_size) {
+			i++;
+			offset = 0;
+		}
+
+		/* keeping track of how much data in vvec were processed */
+		size += bytes;
+
+		j++;
+		if (j == N_PRDTE && i < pcount) {
+			/* we are out of PRDT space and not yet done with
+			 * all regions! Bail out gracefully. */
+			printf("setup_dma: user buffer has too many entries\n");
+			errno = EINVAL;
+			return 0;
+		}
+	}
+	prdt[j - 1].prdte_flags |= PRDTE_FL_EOT;
+
+	if (size < *sizep) {
+		/* sys_vumap didn't resolve everything in one go, therefore
+		 * buffers were not physically contiguous.
+		 */
+		printf("setup_dma: user buffers are not physically contiguous\n");
+		errno = EINVAL;
+		return 0;
+	}
 
 #if VERBOSE_DMA
 	printf("dma not bad\n");
-	for (i= 0; i<j; i++) {
+	for (i = 0; i < j; i++) {
 		printf("prdt[%d]: base 0x%lx, size %d, flags 0x%x\n",
 			i, prdt[i].prdte_base, prdt[i].prdte_count,
 			prdt[i].prdte_flags);
@@ -1422,18 +1447,18 @@ static int setup_dma(
 #endif
 
 	/* Verify that the bus master is not active */
-	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
+	r = sys_inb(wn->base_dma + DMA_STATUS, &v);
 	if (r != 0) panic("setup_dma: sys_inb failed: %d", r);
 	if (v & DMA_ST_BM_ACTIVE)
 		panic("Bus master IDE active");
 
 	if (prdt_phys & 3)
 		panic("prdt not aligned: 0x%lx", prdt_phys);
-	r= sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
+	r = sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
 	if (r != 0) panic("setup_dma: sys_outl failed: %d", r);
 
 	/* Clear interrupt and error flags */
-	r= sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
+	r = sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
 	if (r != 0) panic("setup_dma: sys_outb failed: %d", r);
 
 	return 1;
@@ -1849,8 +1874,9 @@ static int atapi_transfer(
 
 	if(do_dma) {
 		stop_dma(wn);
-		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, 0)) {
-			do_dma = 0;
+		r = setup_dma(&nbytes, proc_nr, iov, addr_offset, 0);
+		if (r == 0) {
+			return errno;
 		} else if(nbytes != nblocks * CD_SECTOR_SIZE) {
 			stop_dma(wn);
 			do_dma = 0;
