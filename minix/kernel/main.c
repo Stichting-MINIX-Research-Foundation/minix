@@ -1,11 +1,11 @@
 /* This file contains the main program of MINIX as well as its shutdown code.
- * The routine main() initializes the system and starts the ball rolling by
+ * The routine kmain() initializes the system and starts the ball rolling by
  * setting up the process table, interrupt vectors, and scheduling each task 
  * to run to initialize itself.
- * The routine shutdown() does the opposite and brings down MINIX. 
+ * The routine minix_shutdown() does the opposite and brings down MINIX. 
  *
  * The entries into this file are:
- *   main:	    	MINIX main program
+ *   kmain:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
  */
 #include <string.h>
@@ -354,7 +354,7 @@ void prepare_shutdown(const int how)
   static minix_timer_t shutdown_timer;
 
   /* Continue after 1 second, to give processes a chance to get scheduled to 
-   * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
+   * do shutdown work.  Set a watchog timer to call minix_shutdown(). The timer 
    * argument passes the shutdown status. 
    */
   printf("MINIX will now be shut down ...\n");
@@ -363,7 +363,7 @@ void prepare_shutdown(const int how)
 }
 
 /*===========================================================================*
- *				shutdown 				     *
+ *				minix_shutdown 				     *
  *===========================================================================*/
 void minix_shutdown(int how)
 {
@@ -402,7 +402,7 @@ void minix_shutdown(int how)
  *===========================================================================*/
 void cstart(void)
 {
-/* Perform system initializations prior to calling main(). Most settings are
+/* Perform system initializations prior to calling kmain(). Most settings are
  * determined with help of the environment strings passed by MINIX' loader.
  */
   register char *value;				/* value in key=value pair */
