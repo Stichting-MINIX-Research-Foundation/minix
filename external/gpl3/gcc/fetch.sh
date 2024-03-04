@@ -9,8 +9,9 @@ cd `dirname $0`
 : ${SED=sed}
 
 # Configure fetch method
-URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/gcc-4.8.5.tar.bz2"
-BACKUP_URL="ftp://ftp.gwdg.de/pub/misc/gcc/releases/gcc-4.8.5/gcc-4.8.5.tar.bz2"
+# URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/gcc-4.8.5.tar.bz2"
+URL="https://ftpmirror.gnu.org/gnu/gcc/gcc-4.8.5/gcc-4.8.5.tar.bz2"
+BACKUP_URL="http://www.minix3.org/pkgsrc/distfiles/minix/3.4.0/gcc-4.8.5.tar.bz2"
 FETCH=ftp
 if which curl >/dev/null
 then

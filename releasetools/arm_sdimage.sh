@@ -23,6 +23,8 @@ fi
 : ${OBJ=../obj.${ARCH}}
 : ${TOOLCHAIN_TRIPLET=arm-elf32-minix-}
 : ${BUILDSH=build.sh}
+# Set the number of parallel build jobs the same number of CPU cores.
+: ${JOBS=$(nproc)}
 
 : ${SETS="minix-base minix-comp minix-games minix-man minix-tests tests"}
 : ${IMG=minix_arm_sd.img}

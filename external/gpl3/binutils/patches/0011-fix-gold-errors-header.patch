@@ -1,0 +1,10 @@
+--- dist.orig/gold/errors.h	2011-06-08 04:43:28.000000000 +0000
++++ dist/gold/errors.h	2024-03-04 06:53:40.580217099 +0000
+@@ -24,6 +24,7 @@
+ #define GOLD_ERRORS_H
+ 
+ #include <cstdarg>
++#include <string>
+ 
+ #include "gold-threads.h"
+ 
