@@ -1,0 +1,16 @@
+--- dist.orig/gcc/reload1.c	2013-01-21 14:55:05.000000000 +0000
++++ dist/gcc/reload1.c	2024-03-04 09:27:54.119538490 +0000
+@@ -436,11 +436,11 @@
+ 				 gen_rtx_REG (Pmode,
+ 					      LAST_VIRTUAL_REGISTER + 1),
+ 				 GEN_INT (4)));
+-  spill_indirect_levels = 0;
++  spill_indirect_levels = false;
+ 
+   while (memory_address_p (QImode, tem))
+     {
+-      spill_indirect_levels++;
++      spill_indirect_levels = true;
+       tem = gen_rtx_MEM (Pmode, tem);
+     }
+ 
