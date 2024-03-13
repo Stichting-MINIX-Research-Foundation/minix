@@ -50,3 +50,5 @@ external/bsd/llvm/dist/llvm/test/Verifier/bitcast-address-space-through-constant
 lib/libc/compat__*
 .gdbinit
 *.img
+gdb.sh
+qemu.sh
