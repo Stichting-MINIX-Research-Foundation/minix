@@ -27,7 +27,7 @@
 #
 #	2. define the following shell function:
 #	pol_<policyname>() {}
-#	 - it will recieve the following parameters:
+#	 - it will receive the following parameters:
 #	   + service filename as $1	: the full path to the proc entry
 #	   + label as $2		: the service label
 #	 - which prints 'ok' on success, 'not ok' on failure.
