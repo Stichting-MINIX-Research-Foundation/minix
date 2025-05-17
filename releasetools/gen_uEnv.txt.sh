@@ -57,20 +57,22 @@ do
 done
 
 fill_cmd() {
-	#load == load method like fatload mmc 0:1
-	#prefix is an optional directory containing the ending /
-	load=$1
-	prefix=$2
-	export IFS=" "
-	echo $list | while true
-	do
-		if ! read -r mem addr
-		then
-			break
-		fi
-		#e.g. ; fatloat mmc 0:1 0x82000000 mydir/ds.elf
-		echo -n "; $load $mem $prefix$addr"
-	done
+        #load == load method like fatload mmc 0:1
+        #prefix is an optional directory containing the ending /
+        load=$1
+        prefix=$2
+        local old_IFS=$IFS
+        IFS=" "
+        echo $list | while true
+        do
+                if ! read -r mem addr
+                then
+                        break
+                fi
+                #e.g. ; fatloat mmc 0:1 0x82000000 mydir/ds.elf
+                echo -n "; $load $mem $prefix$addr"
+        done
+        IFS=$old_IFS
 }
 
 
