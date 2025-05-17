@@ -866,7 +866,8 @@ bsize_ffactor_body()
 	h_bsize_ffactor 8192 683
 }
 
-# FIXME: what does it test?
+# Verify hash database behavior when inserting 4-character keys and values
+# into a 65536-bucket hash.
 atf_test_case four_char_hash
 four_char_hash_head()
 {
