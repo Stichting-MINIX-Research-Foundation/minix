@@ -400,7 +400,93 @@ test_brconfig_maxaddr()
 	/sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
-	unset LD_PRELOAD
+        unset LD_PRELOAD
+}
+
+# Test the static address table handling of brconfig
+test_brconfig_static()
+{
+        addr1= addr3=
+
+        export RUMP_SERVER=$SOCK1
+        addr1=$(rump.ifconfig shmif0 |awk '/address:/ { print $2; }')
+        export RUMP_SERVER=$SOCK3
+        addr3=$(rump.ifconfig shmif0 |awk '/address:/ { print $2; }')
+        unset RUMP_SERVER
+
+        export RUMP_SERVER=$SOCK2
+        export LD_PRELOAD=/usr/lib/librumphijack.so
+
+        # Start from a clean table
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flushall
+
+        # Add static entries
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 static $addr1 shmif0
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 static $addr3 shmif1
+        atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
+
+        # Ensure static entries survive a flush
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flush
+        atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
+
+        unset LD_PRELOAD
+}
+
+# Test removing all addresses including static ones
+test_brconfig_flushall()
+{
+        addr1= addr3=
+
+        export RUMP_SERVER=$SOCK1
+        addr1=$(rump.ifconfig shmif0 |awk '/address:/ { print $2; }')
+        export RUMP_SERVER=$SOCK3
+        addr3=$(rump.ifconfig shmif0 |awk '/address:/ { print $2; }')
+        unset RUMP_SERVER
+
+        export RUMP_SERVER=$SOCK2
+        export LD_PRELOAD=/usr/lib/librumphijack.so
+
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 static $addr1 shmif0
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 static $addr3 shmif1
+        atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
+
+        # Flush all entries and confirm the table is empty
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flushall
+        atf_check -s exit:0 -o not-match:"$addr1" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o not-match:"$addr3" /sbin/brconfig bridge0
+
+        unset LD_PRELOAD
+}
+
+# Test toggling the DISCOVER flag
+test_brconfig_discover()
+{
+        export RUMP_SERVER=$SOCK2
+        export LD_PRELOAD=/usr/lib/librumphijack.so
+
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 -discover shmif0
+        atf_check -s exit:0 -o not-match:"shmif0.*DISCOVER" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 discover shmif0
+        atf_check -s exit:0 -o match:"shmif0.*DISCOVER" /sbin/brconfig bridge0
+
+        unset LD_PRELOAD
+}
+
+# Test toggling the LEARNING flag
+test_brconfig_learn()
+{
+        export RUMP_SERVER=$SOCK2
+        export LD_PRELOAD=/usr/lib/librumphijack.so
+
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 -learn shmif0
+        atf_check -s exit:0 -o not-match:"shmif0.*LEARNING" /sbin/brconfig bridge0
+        atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 learn shmif0
+        atf_check -s exit:0 -o match:"shmif0.*LEARNING" /sbin/brconfig bridge0
+
+        unset LD_PRELOAD
 }
 
 basic_body()
@@ -501,12 +587,17 @@ rtable_body()
 	atf_check -s exit:0 -o match:"timeout: 10" /sbin/brconfig bridge0
 	unset LD_PRELOAD
 
-	# Tests brconfig maxaddr.
-	test_brconfig_maxaddr
+        # Tests brconfig maxaddr.
+        test_brconfig_maxaddr
 
-	# TODO: brconfig static/flushall/discover/learn
-	# TODO: cache expiration; it takes 5 minutes at least and we want to
-	#       wait here so long. Should we have a sysctl to change the period?
+        # Exercise additional brconfig options
+        test_brconfig_static
+        test_brconfig_flushall
+        test_brconfig_discover
+        test_brconfig_learn
+
+        # TODO: cache expiration; it takes 5 minutes at least and we want to
+        #       wait here so long. Should we have a sysctl to change the period?
 }
 
 member_ip_body()
