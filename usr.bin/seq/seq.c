@@ -350,8 +350,13 @@ unescape(char *orig)
 			*orig = c;
 			--cp;
 			continue;
-		case 'x':	/* hexidecimal number */
+		case 'x':	/* hexadecimal number */
 			cp++;	/* skip 'x' */
+			if (!isxdigit((unsigned char)*cp)) {
+			        --cp;
+			/* keep the backslash, treat 'x' literally */
+			        continue;
+			}
 			for (i = 0, c = 0;
 			     isxdigit((unsigned char)*cp) && i < 2;
 			     i++, cp++) {
