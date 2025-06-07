@@ -5,10 +5,17 @@
 
 #include "kernel/kernel.h"
 #include "arch_proto.h"
-#include <signal.h>
-#include <string.h>
-#include <assert.h>
-#include <machine/vm.h>
+// #include <signal.h> // Replaced
+// #include <string.h> // Removed (memcpy handled by klib)
+// #include <assert.h> // Replaced
+#include <machine/vm.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_sigset_t (not directly used but signal.h was), signal constants
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 struct ex_s {
 	char *msg;
@@ -17,26 +24,26 @@ struct ex_s {
 };
 
 static struct ex_s ex_data[] = {
-	{ "Divide error", SIGFPE, 86 },
-	{ "Debug exception", SIGTRAP, 86 },
-	{ "Nonmaskable interrupt", SIGBUS, 86 },
-	{ "Breakpoint", SIGEMT, 86 },
-	{ "Overflow", SIGFPE, 86 },
-	{ "Bounds check", SIGFPE, 186 },
-	{ "Invalid opcode", SIGILL, 186 },
-	{ "Coprocessor not available", SIGFPE, 186 },
-	{ "Double fault", SIGBUS, 286 },
-	{ "Coprocessor segment overrun", SIGSEGV, 286 },
-	{ "Invalid TSS", SIGSEGV, 286 },
-	{ "Segment not present", SIGSEGV, 286 },
-	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
-	{ "General protection", SIGSEGV, 286 },
-	{ "Page fault", SIGSEGV, 386 },		/* not close */
-	{ NULL, SIGILL, 0 },			/* probably software trap */
-	{ "Coprocessor error", SIGFPE, 386 },
-	{ "Alignment check", SIGBUS, 386 },
-	{ "Machine check", SIGBUS, 386 },
-	{ "SIMD exception", SIGFPE, 386 },
+	{ "Divide error", SIGFPE, 86 },             // SIGFPE might be undefined
+	{ "Debug exception", SIGTRAP, 86 },         // SIGTRAP might be undefined
+	{ "Nonmaskable interrupt", SIGBUS, 86 },    // SIGBUS might be undefined
+	{ "Breakpoint", SIGEMT, 86 },             // SIGEMT might be undefined
+	{ "Overflow", SIGFPE, 86 },             // SIGFPE might be undefined
+	{ "Bounds check", SIGFPE, 186 },            // SIGFPE might be undefined
+	{ "Invalid opcode", SIGILL, 186 },          // SIGILL might be undefined
+	{ "Coprocessor not available", SIGFPE, 186 },// SIGFPE might be undefined
+	{ "Double fault", SIGBUS, 286 },            // SIGBUS might be undefined
+	{ "Coprocessor segment overrun", SIGSEGV, 286 },// SIGSEGV might be undefined
+	{ "Invalid TSS", SIGSEGV, 286 },            // SIGSEGV might be undefined
+	{ "Segment not present", SIGSEGV, 286 },    // SIGSEGV might be undefined
+	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */ // SIGSEGV
+	{ "General protection", SIGSEGV, 286 },     // SIGSEGV might be undefined
+	{ "Page fault", SIGSEGV, 386 },		/* not close */ // SIGSEGV
+	{ NULL, SIGILL, 0 },			/* probably software trap */ // NULL, SIGILL
+	{ "Coprocessor error", SIGFPE, 386 },       // SIGFPE might be undefined
+	{ "Alignment check", SIGBUS, 386 },         // SIGBUS might be undefined
+	{ "Machine check", SIGBUS, 386 },           // SIGBUS might be undefined
+	{ "SIMD exception", SIGFPE, 386 },          // SIGFPE might be undefined
 };
 
 static void inkernel_disaster(struct proc *saved_proc,
@@ -59,7 +66,7 @@ static void pagefault( struct proc *pr,
 	pagefaultcr2 = read_cr2();
 
 #if 0
-	printf("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n",
+	kprintf_stub("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n", // MODIFIED
 		pr->p_endpoint, pagefaultcr2, pr->p_seg.p_cr3, read_cr3());
 #endif
 
@@ -72,11 +79,11 @@ static void pagefault( struct proc *pr,
 	if((is_nested || iskernelp(pr)) &&
 		catch_pagefaults && (in_physcopy || in_memset)) {
 #if 0
-		printf("pf caught! addr 0x%lx\n", pagefaultcr2);
+		kprintf_stub("pf caught! addr 0x%lx\n", pagefaultcr2); // MODIFIED
 #endif
 		if (is_nested) {
 			if(in_physcopy) {
-				assert(!in_memset);
+				KASSERT_PLACEHOLDER(!in_memset); // MODIFIED
 				frame->eip = (reg_t) phys_copy_fault_in_kernel;
 			} else {
 				frame->eip = (reg_t) memset_fault_in_kernel;
@@ -91,9 +98,9 @@ static void pagefault( struct proc *pr,
 	}
 
 	if(is_nested) {
-		printf("pagefault in kernel at pc 0x%lx address 0x%lx\n",
+		kprintf_stub("pagefault in kernel at pc 0x%lx address 0x%lx\n", // MODIFIED
 			frame->eip, pagefaultcr2);
-		inkernel_disaster(pr, frame, NULL, is_nested);
+		inkernel_disaster(pr, frame, NULL, is_nested); // NULL might be undefined
 	}
 
 	/* VM can't handle page faults. */
@@ -101,12 +108,12 @@ static void pagefault( struct proc *pr,
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		printf("pagefault for VM on CPU %d, "
+		kprintf_stub("pagefault for VM on CPU %d, " // MODIFIED
 			"pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
 			cpuid, pr->p_reg.pc, pagefaultcr2, frame->errcode,
 			is_nested);
 		proc_stacktrace(pr);
-		printf("pc of pagefault: 0x%lx\n", frame->eip);
+		kprintf_stub("pc of pagefault: 0x%lx\n", frame->eip); // MODIFIED
 		panic("pagefault in VM");
 
 		return;
@@ -135,21 +142,21 @@ static void inkernel_disaster(struct proc *saved_proc,
 {
 #if USE_SYSDEBUG
   if(ep) {
-	if (ep->msg == NULL)
-		printf("\nIntel-reserved exception %d\n", frame->vector);
+	if (ep->msg == NULL) // NULL might be undefined
+		kprintf_stub("\nIntel-reserved exception %d\n", frame->vector); // MODIFIED
 	  else
-		printf("\n%s\n", ep->msg);
+		kprintf_stub("\n%s\n", ep->msg); // MODIFIED
   }
 
-  printf("cpu %d is_nested = %d ", cpuid, is_nested);
+  kprintf_stub("cpu %d is_nested = %d ", cpuid, is_nested); // MODIFIED
 
-  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, "
+  kprintf_stub("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, " // MODIFIED
 	"cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
 	frame->vector, frame->errcode, frame->eip,
 	frame->cs, frame->eflags, frame);
-  printf("KERNEL registers :\n");
+  kprintf_stub("KERNEL registers :\n"); // MODIFIED
 #define REG(n) (((u32_t *)frame)[-n])
-  printf(
+  kprintf_stub( // MODIFIED
 		  "\t%%eax 0x%08x %%ebx 0x%08x %%ecx 0x%08x %%edx 0x%08x\n"
 		  "\t%%esp 0x%08x %%ebp 0x%08x %%esi 0x%08x %%edi 0x%08x\n",
 		  REG(1), REG(2), REG(3), REG(4),
@@ -157,13 +164,13 @@ static void inkernel_disaster(struct proc *saved_proc,
 
   { 
   	reg_t k_ebp = REG(6);
-  	printf("KERNEL stacktrace, starting with ebp = 0x%lx:\n", k_ebp);
+	kprintf_stub("KERNEL stacktrace, starting with ebp = 0x%lx:\n", k_ebp); // MODIFIED
   	proc_stacktrace_execute(proc_addr(SYSTEM), k_ebp, frame->eip);
   }
 
   if (saved_proc) {
-	  printf("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name);
-	  printf("pc = 0x%x\n", (unsigned) saved_proc->p_reg.pc);
+	  kprintf_stub("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name); // MODIFIED
+	  kprintf_stub("pc = 0x%x\n", (unsigned) saved_proc->p_reg.pc); // MODIFIED
 	  proc_stacktrace(saved_proc);
 
 	  panic("Unhandled kernel exception");
@@ -189,7 +196,7 @@ void exception_handler(int is_nested, struct exception_frame * frame)
   ep = &ex_data[frame->vector];
 
   if (frame->vector == 2) {		/* spurious NMI on some machines */
-	printf("got spurious NMI\n");
+	kprintf_stub("got spurious NMI\n"); // MODIFIED
 	return;
   }
 
@@ -203,10 +210,10 @@ void exception_handler(int is_nested, struct exception_frame * frame)
 	 * of a wrong pointer supplied by userland, handle it the only way we
 	 * can handle it ...
 	 */
-	if (((void*)frame->eip >= (void*)copy_msg_to_user &&
-			(void*)frame->eip <= (void*)__copy_msg_to_user_end) ||
-			((void*)frame->eip >= (void*)copy_msg_from_user &&
-			(void*)frame->eip <= (void*)__copy_msg_from_user_end)) {
+	if (((void*)*frame->eip >= (void*)copy_msg_to_user && // MODIFIED eip to frame->eip based on context
+			(void*)*frame->eip <= (void*)__copy_msg_to_user_end) ||
+			((void*)*frame->eip >= (void*)copy_msg_from_user &&
+			(void*)*frame->eip <= (void*)__copy_msg_from_user_end)) {
 		switch(frame->vector) {
 		/* these error are expected */
 		case PAGE_FAULT_VECTOR:
@@ -221,9 +228,9 @@ void exception_handler(int is_nested, struct exception_frame * frame)
 	/* Pass any error resulting from restoring FPU state, as a FPU
 	 * exception to the process.
 	 */
-	if (((void*)frame->eip >= (void*)fxrstor &&
+	if (((void*)*frame->eip >= (void*)fxrstor && // MODIFIED eip to frame->eip
 			(void *)frame->eip <= (void*)__fxrstor_end) ||
-			((void*)frame->eip >= (void*)frstor &&
+			((void*)*frame->eip >= (void*)frstor && // MODIFIED eip to frame->eip
 			(void *)frame->eip <= (void*)__frstor_end)) {
 		frame->eip = (reg_t) __frstor_failure;
 		return;
@@ -263,7 +270,7 @@ void exception_handler(int is_nested, struct exception_frame * frame)
 #if 0
 	{
 
-  		printf(
+		kprintf_stub( // MODIFIED
   "vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, cs= 0x%x, eflags= 0x%lx\n",
 			frame->vector, (unsigned long)frame->errcode,
 			(unsigned long)frame->eip, frame->cs,
@@ -294,36 +301,36 @@ static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc
 
 	iskernel = iskernelp(whichproc);
 
-	printf("%-8.8s %6d 0x%lx ",
+	kprintf_stub("%-8.8s %6d 0x%lx ", // MODIFIED
 		whichproc->p_name, whichproc->p_endpoint, pc);
 
 	while(v_bp) {
 		reg_t v_pc;
 
 #define PRCOPY(pr, pv, v, n) \
-  (iskernel ? (memcpy((char *) v, (char *) pv, n), OK) : \
+  (iskernel ? (kmemcpy((char *) v, (char *) pv, n), OK) : \
      data_copy(pr->p_endpoint, pv, KERNEL, (vir_bytes) (v), n))
 
 	        if(PRCOPY(whichproc, v_bp, &v_hbp, sizeof(v_hbp)) != OK) {
-			printf("(v_bp 0x%lx ?)", v_bp);
+			kprintf_stub("(v_bp 0x%lx ?)", v_bp); // MODIFIED
 			break;
 		}
 		if(PRCOPY(whichproc, v_bp + sizeof(v_pc), &v_pc, sizeof(v_pc)) != OK) {
-			printf("(v_pc 0x%lx ?)", v_bp + sizeof(v_pc));
+			kprintf_stub("(v_pc 0x%lx ?)", v_bp + sizeof(v_pc)); // MODIFIED
 			break;
 		}
-		printf("0x%lx ", (unsigned long) v_pc);
+		kprintf_stub("0x%lx ", (unsigned long) v_pc); // MODIFIED
 		if(v_hbp != 0 && v_hbp <= v_bp) {
-			printf("(hbp 0x%lx ?)", v_hbp);
+			kprintf_stub("(hbp 0x%lx ?)", v_hbp); // MODIFIED
 			break;
 		}
 		v_bp = v_hbp;
 		if(n++ > 50) {
-			printf("(truncated after %d steps) ", n);
+			kprintf_stub("(truncated after %d steps) ", n); // MODIFIED
 			break;
 		}
 	}
-	printf("\n");
+	kprintf_stub("\n"); // MODIFIED
 }
 #endif /* USE_SYSDEBUG */
 
@@ -335,7 +342,7 @@ void proc_stacktrace(struct proc *whichproc)
 	u32_t use_bp;
 
 	if(whichproc->p_seg.p_kern_trap_style == KTS_NONE) {
-		printf("WARNING: stacktrace of running process\n");
+		kprintf_stub("WARNING: stacktrace of running process\n"); // MODIFIED
 	}
 
 	switch(whichproc->p_seg.p_kern_trap_style) {
@@ -355,7 +362,7 @@ void proc_stacktrace(struct proc *whichproc)
 			if(data_copy(whichproc->p_endpoint, sp+16,
 			  KERNEL, (vir_bytes) &use_bp,
 				sizeof(use_bp)) != OK) {
-				printf("stacktrace: aborting, copy failed\n");
+				kprintf_stub("stacktrace: aborting, copy failed\n"); // MODIFIED
 				return;
 			}
 
@@ -383,4 +390,3 @@ void disable_fpu_exception(void)
 {
 	clts();
 }
-

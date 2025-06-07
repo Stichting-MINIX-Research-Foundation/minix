@@ -4,8 +4,15 @@
 /* This header file defines constants for MINIX inter-process communication.
  * These definitions are used in the file proc.c.
  */
-#include <minix/com.h>
-#include <minix/ipcconst.h>
+#include <minix/com.h>        // Kept
+#include <minix/ipcconst.h>   // Kept
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Masks and flags for system calls. */
 #define NON_BLOCKING    0x0080  /* do not block if target not ready */

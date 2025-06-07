@@ -1,8 +1,14 @@
-
 #ifndef _I386_PROTO_H
 #define _I386_PROTO_H
 
-#include <machine/vm.h>
+#include <machine/vm.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t and fixed-width types
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define K_STACK_SIZE	I386_PAGE_SIZE
 
@@ -94,17 +100,17 @@ void write_cr4(unsigned long value);
 void write_cr3(unsigned long value);
 unsigned long read_cpu_flags(void);
 phys_bytes vir2phys(void *);
-void phys_insb(u16_t port, phys_bytes buf, size_t count);
-void phys_insw(u16_t port, phys_bytes buf, size_t count);
-void phys_outsb(u16_t port, phys_bytes buf, size_t count);
-void phys_outsw(u16_t port, phys_bytes buf, size_t count);
-u32_t read_cr3(void);
+void phys_insb(u16_t port, phys_bytes buf, k_size_t count); // MODIFIED size_t
+void phys_insw(u16_t port, phys_bytes buf, k_size_t count); // MODIFIED size_t
+void phys_outsb(u16_t port, phys_bytes buf, k_size_t count); // MODIFIED size_t
+void phys_outsw(u16_t port, phys_bytes buf, k_size_t count); // MODIFIED size_t
+u32_t read_cr3(void); // u32_t might be undefined
 void reload_cr3(void);
 void i386_invlpg(phys_bytes linaddr);
-vir_bytes phys_memset(phys_bytes ph, u32_t c, phys_bytes bytes);
+vir_bytes phys_memset(phys_bytes ph, u32_t c, phys_bytes bytes); // u32_t might be undefined
 void reload_ds(void);
-void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo);
-void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo);
+void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo); // u32_t might be undefined
+void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo); // u32_t might be undefined
 void fninit(void);
 void clts(void);
 void fxsave(void *);
@@ -117,15 +123,15 @@ int __frstor_failure(void *);
 unsigned short fnstsw(void);
 void fnstcw(unsigned short* cw);
 void x86_lgdt(void *);
-void x86_lldt(u32_t);
-void x86_ltr(u32_t);
+void x86_lldt(u32_t); // u32_t might be undefined
+void x86_ltr(u32_t); // u32_t might be undefined
 void x86_lidt(void *);
 void x86_load_kerncs(void);
-void x86_load_ds(u32_t);
-void x86_load_ss(u32_t);
-void x86_load_es(u32_t);
-void x86_load_fs(u32_t);
-void x86_load_gs(u32_t);
+void x86_load_ds(u32_t); // u32_t might be undefined
+void x86_load_ss(u32_t); // u32_t might be undefined
+void x86_load_es(u32_t); // u32_t might be undefined
+void x86_load_fs(u32_t); // u32_t might be undefined
+void x86_load_gs(u32_t); // u32_t might be undefined
 
 /* ipc functions in usermapped_ipc.S */
 int usermapped_send_softint(endpoint_t dest, message *m_ptr);
@@ -134,7 +140,7 @@ int usermapped_sendrec_softint(endpoint_t src_dest, message *m_ptr);
 int usermapped_sendnb_softint(endpoint_t dest, message *m_ptr);
 int usermapped_notify_softint(endpoint_t dest);
 int usermapped_do_kernel_call_softint(message *m_ptr);
-int usermapped_senda_softint(asynmsg_t *table, size_t count);
+int usermapped_senda_softint(asynmsg_t *table, k_size_t count); // MODIFIED size_t
 
 int usermapped_send_syscall(endpoint_t dest, message *m_ptr);
 int usermapped_receive_syscall(endpoint_t src, message *m_ptr, int *status_ptr);
@@ -142,7 +148,7 @@ int usermapped_sendrec_syscall(endpoint_t src_dest, message *m_ptr);
 int usermapped_sendnb_syscall(endpoint_t dest, message *m_ptr);
 int usermapped_notify_syscall(endpoint_t dest);
 int usermapped_do_kernel_call_syscall(message *m_ptr);
-int usermapped_senda_syscall(asynmsg_t *table, size_t count);
+int usermapped_senda_syscall(asynmsg_t *table, k_size_t count); // MODIFIED size_t
 
 int usermapped_send_sysenter(endpoint_t dest, message *m_ptr);
 int usermapped_receive_sysenter(endpoint_t src, message *m_ptr, int *status_ptr);
@@ -150,7 +156,7 @@ int usermapped_sendrec_sysenter(endpoint_t src_dest, message *m_ptr);
 int usermapped_sendnb_sysenter(endpoint_t dest, message *m_ptr);
 int usermapped_notify_sysenter(endpoint_t dest);
 int usermapped_do_kernel_call_sysenter(message *m_ptr);
-int usermapped_senda_sysenter(asynmsg_t *table, size_t count);
+int usermapped_senda_sysenter(asynmsg_t *table, k_size_t count); // MODIFIED size_t
 
 void switch_k_stack(void * esp, void (* continuation)(void));
 
@@ -190,22 +196,22 @@ struct tss_s {
   reg_t fs;
   reg_t gs;
   reg_t ldt;
-  u16_t trap;
-  u16_t iobase;
-/* u8_t iomap[0]; */
+  u16_t trap; // u16_t might be undefined
+  u16_t iobase; // u16_t might be undefined
+/* u8_t iomap[0]; */ // u8_t might be undefined
 } __attribute__((packed));
 
 void enable_iop(struct proc *pp);
-u32_t read_cs(void);
-u32_t read_ds(void);
-u32_t read_ss(void);
+u32_t read_cs(void); // u32_t might be undefined
+u32_t read_ds(void); // u32_t might be undefined
+u32_t read_ss(void); // u32_t might be undefined
 
-void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len);
+void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len); // u64_t might be undefined
 phys_bytes alloc_lowest(kinfo_t *cbi, phys_bytes len);
 void vm_enable_paging(void);
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end);
 phys_bytes pg_roundup(phys_bytes b);
-void pg_info(reg_t *, u32_t **);
+void pg_info(reg_t *, u32_t **); // u32_t might be undefined
 void pg_clear(void);
 void pg_identity(kinfo_t *);
 phys_bytes pg_load(void);
@@ -277,7 +283,7 @@ int breakpoint_set(phys_bytes linaddr, int bp, const int flags);
 #define BREAKPOINT_FLAG_MODE_GLOBAL	(2 << 4)
 
 /* functions defined in architecture-independent kernel source. */
-#include "kernel/proto.h"
+#include "kernel/proto.h" // Kept (local kernel header)
 
 #endif /* __ASSEMBLY__ */
 

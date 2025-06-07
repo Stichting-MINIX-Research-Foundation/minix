@@ -11,10 +11,17 @@
  */
 
 #include "kernel/system.h"
-#include <minix/devio.h>
-#include <minix/endpoint.h>
+#include <minix/devio.h>    // Kept
+#include <minix/endpoint.h> // Kept
 
 #include "arch_proto.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t, k_size_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_SDEVIO
 
@@ -27,7 +34,8 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   endpoint_t newep;
   int proc_nr;
   endpoint_t proc_nr_e = m_ptr->m_lsys_krn_sys_sdevio.vec_endpt;
-  vir_bytes count = m_ptr->m_lsys_krn_sys_sdevio.vec_size;
+  vir_bytes count_vb = m_ptr->m_lsys_krn_sys_sdevio.vec_size; // Keep as vir_bytes for message struct
+  k_size_t count_ksz = (k_size_t)m_ptr->m_lsys_krn_sys_sdevio.vec_size; // Use k_size_t for logic
   long port = m_ptr->m_lsys_krn_sys_sdevio.port;
   phys_bytes vir_buf;
   int i, r, req_type, req_dir, size, nr_io_range;
@@ -44,7 +52,7 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	if (first)
 	{
 		first= 0;
-		printf("do_sdevio: for %d, req %d\n",
+		kprintf_stub("do_sdevio: for %d, req %d\n", // MODIFIED
 			m_ptr->m_source, m_ptr->m_lsys_krn_sys_sdevio.request);
 	}
   }
@@ -57,8 +65,8 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	okendpt(caller->p_endpoint, &proc_nr);
   else
 	if(!isokendpt(proc_nr_e, &proc_nr))
-		return(EINVAL);
-  if (iskerneln(proc_nr)) return(EPERM);
+		return(EINVAL); // EINVAL might be undefined
+  if (iskerneln(proc_nr)) return(EPERM); // EPERM might be undefined
 
   /* Extract direction (in or out) and type (size). */
   req_dir = m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_DIRMASK;
@@ -68,24 +76,24 @@ int do_sdevio(struct proc * caller, message *m_ptr)
   if((m_ptr->m_lsys_krn_sys_sdevio.request & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
      if((r=verify_grant(proc_nr_e, caller->p_endpoint,
-		m_ptr->m_lsys_krn_sys_sdevio.vec_addr, count,
+		m_ptr->m_lsys_krn_sys_sdevio.vec_addr, count_ksz, // Use k_size_t version for verify_grant
 		req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
 		m_ptr->m_lsys_krn_sys_sdevio.offset, &newoffset, &newep,
-		NULL)) != OK) {
-	if(r == ENOTREADY) return r;
-	printf("do_sdevio: verify_grant failed\n");
-	return EPERM;
+		NULL)) != OK) { // NULL might be undefined
+	if(r == ENOTREADY) return r; // ENOTREADY might be undefined
+	kprintf_stub("do_sdevio: verify_grant failed\n"); // MODIFIED
+	return EPERM; // EPERM might be undefined
     }
 	if(!isokendpt(newep, &proc_nr))
-		return(EINVAL);
+		return(EINVAL); // EINVAL might be undefined
      destproc = proc_addr(proc_nr);
      vir_buf = newoffset;
   } else {
      if(proc_nr != _ENDPOINT_P(caller->p_endpoint))
      {
-	printf("do_sdevio: unsafe sdevio by %d in %d denied\n",
+	kprintf_stub("do_sdevio: unsafe sdevio by %d in %d denied\n", // MODIFIED
 		caller->p_endpoint, proc_nr_e);
-	return EPERM;
+	return EPERM; // EPERM might be undefined
      }
      /* Get and check physical address. */
      vir_buf = m_ptr->m_lsys_krn_sys_sdevio.vec_addr;
@@ -115,41 +123,41 @@ int do_sdevio(struct proc * caller, message *m_ptr)
 	}
 	if (i >= nr_io_range)
 	{
-		printf(
+		kprintf_stub( // MODIFIED
 		"do_sdevio: I/O port check failed for proc %d, port 0x%x\n",
 			m_ptr->m_source, port);
-		retval = EPERM;
+		retval = EPERM; // EPERM might be undefined
 		goto return_error;
 	}
   }
 
   if (port & (size-1))
   {
-	printf("do_devio: unaligned port 0x%x (size %d)\n", port, size);
-	retval = EPERM;
+	kprintf_stub("do_devio: unaligned port 0x%x (size %d)\n", (int)port, size); // MODIFIED, cast port to int for %x
+	retval = EPERM; // EPERM might be undefined
 	goto return_error;
   }
 
   /* Perform device I/O for bytes and words. Longs are not supported. */
   if (req_dir == _DIO_INPUT) { 
       switch (req_type) {
-      case _DIO_BYTE: phys_insb(port, vir_buf, count); break; 
-      case _DIO_WORD: phys_insw(port, vir_buf, count); break; 
+      case _DIO_BYTE: phys_insb(port, vir_buf, count_vb); break;
+      case _DIO_WORD: phys_insw(port, vir_buf, count_vb); break;
       default:
-  		retval = EINVAL;
+		retval = EINVAL; // EINVAL might be undefined
 		goto return_error;
       } 
   } else if (req_dir == _DIO_OUTPUT) { 
       switch (req_type) {
-      case _DIO_BYTE: phys_outsb(port, vir_buf, count); break; 
-      case _DIO_WORD: phys_outsw(port, vir_buf, count); break; 
+      case _DIO_BYTE: phys_outsb(port, vir_buf, count_vb); break;
+      case _DIO_WORD: phys_outsw(port, vir_buf, count_vb); break;
       default:
-  		retval = EINVAL;
+		retval = EINVAL; // EINVAL might be undefined
 		goto return_error;
       } 
   }
   else {
-	  retval = EINVAL;
+	  retval = EINVAL; // EINVAL might be undefined
 	  goto return_error;
   }
   retval = OK;

@@ -1,5 +1,12 @@
 #include "kernel/kernel.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 /* This is the user-visible struct that has pointers to other bits of data. */
 struct minix_kerninfo minix_kerninfo __section(".usermapped");
 

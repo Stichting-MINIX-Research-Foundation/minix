@@ -9,6 +9,13 @@
 
 #include "kernel/system.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 #if USE_MEMSET
 
 /*===========================================================================*
@@ -25,4 +32,3 @@ int do_memset(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_MEMSET */
-

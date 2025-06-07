@@ -8,8 +8,15 @@
  */
 
 #include "kernel/system.h"
-#include <string.h>
-#include <assert.h>
+// #include <string.h> // Removed
+// #include <assert.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_UPDATE
 
@@ -53,41 +60,41 @@ int do_update(struct proc * caller, message * m_ptr)
   flags = m_ptr->SYS_UPD_FLAGS;
   src_e = m_ptr->SYS_UPD_SRC_ENDPT;
   if(!isokendpt(src_e, &src_p)) {
-      return EINVAL;
+      return EINVAL; // EINVAL might be undefined
   }
   src_rp = proc_addr(src_p);
   src_privp = priv(src_rp);
   if(!(src_privp->s_flags & SYS_PROC)) {
-      return EPERM;
+      return EPERM; // EPERM might be undefined
   }
 
   dst_e = m_ptr->SYS_UPD_DST_ENDPT;
   if(!isokendpt(dst_e, &dst_p)) {
-      return EINVAL;
+      return EINVAL; // EINVAL might be undefined
   }
   dst_rp = proc_addr(dst_p);
   dst_privp = priv(dst_rp);
   if(!(dst_privp->s_flags & SYS_PROC)) {
-      return EPERM;
+      return EPERM; // EPERM might be undefined
   }
 
-  assert(!proc_is_runnable(src_rp) && !proc_is_runnable(dst_rp));
+  KASSERT_PLACEHOLDER(!proc_is_runnable(src_rp) && !proc_is_runnable(dst_rp)); // MODIFIED
 
   /* Check if processes are updatable. */
   if(!proc_is_updatable(src_rp) || !proc_is_updatable(dst_rp)) {
-      return EBUSY;
+      return EBUSY; // EBUSY might be undefined
   }
 
 #if DEBUG
-  printf("do_update: updating %d (%s, %d, %d) into %d (%s, %d, %d)\n",
+  kprintf_stub("do_update: updating %d (%s, %d, %d) into %d (%s, %d, %d)\n", // MODIFIED
       src_rp->p_endpoint, src_rp->p_name, src_rp->p_nr, priv(src_rp)->s_proc_nr,
       dst_rp->p_endpoint, dst_rp->p_name, dst_rp->p_nr, priv(dst_rp)->s_proc_nr);
 
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
-  printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
-  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint);
-  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint);
+  kprintf_stub("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint); // MODIFIED
+  kprintf_stub("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint); // MODIFIED
+  kprintf_stub("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint); // MODIFIED
 #endif
 
   /* Let destination inherit allowed IRQ, I/O ranges, and memory ranges. */
@@ -147,15 +154,15 @@ int do_update(struct proc * caller, message * m_ptr)
   swap_memreq(src_rp, dst_rp);
 
 #if DEBUG
-  printf("do_update: updated %d (%s, %d, %d) into %d (%s, %d, %d)\n",
+  kprintf_stub("do_update: updated %d (%s, %d, %d) into %d (%s, %d, %d)\n", // MODIFIED
       src_rp->p_endpoint, src_rp->p_name, src_rp->p_nr, priv(src_rp)->s_proc_nr,
       dst_rp->p_endpoint, dst_rp->p_name, dst_rp->p_nr, priv(dst_rp)->s_proc_nr);
 
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
-  printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
-  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint);
-  printf("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint);
+  kprintf_stub("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint); // MODIFIED
+  kprintf_stub("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", src_rp->p_endpoint, src_rp->p_rts_flags, priv(src_rp)->s_asyntab, priv(src_rp)->s_asynendpoint, priv(src_rp)->s_grant_table, priv(src_rp)->s_grant_endpoint); // MODIFIED
+  kprintf_stub("do_update: endpoint %d rts flags %x asyn tab %08x asyn endpoint %d grant tab %08x grant endpoint %d\n", dst_rp->p_endpoint, dst_rp->p_rts_flags, priv(dst_rp)->s_asyntab, priv(dst_rp)->s_asynendpoint, priv(dst_rp)->s_grant_table, priv(dst_rp)->s_grant_endpoint); // MODIFIED
 #endif
 
 #ifdef CONFIG_SMP
@@ -227,7 +234,7 @@ void abort_proc_ipc_send(struct proc *rp)
       while (*xpp) {
           if(*xpp == rp) {
               *xpp = rp->p_q_link;
-              rp->p_q_link = NULL;
+              rp->p_q_link = NULL; // MODIFIED (NULL)
               break;
           }
           xpp = &(*xpp)->p_q_link;
@@ -252,7 +259,7 @@ static void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
   rp->p_scheduler = from_rp->p_scheduler;
 #ifdef CONFIG_SMP
   rp->p_cpu = from_rp->p_cpu;
-  memcpy(rp->p_cpu_mask, from_rp->p_cpu_mask,
+  kmemcpy(rp->p_cpu_mask, from_rp->p_cpu_mask, // MODIFIED
 		  sizeof(bitchunk_t) * BITMAP_CHUNKS(CONFIG_MAX_CPUS));
 #endif
 }
@@ -269,7 +276,7 @@ static void adjust_asyn_table(struct priv *src_privp, struct priv *dst_privp)
   if(src_privp->s_asynsize > 0 && dst_privp->s_asynsize > 0 && src_privp->s_asynendpoint == dst_e) {
       if(data_copy(src_e, src_privp->s_asyntab, dst_e, dst_privp->s_asyntab,
 	  src_privp->s_asynsize*sizeof(asynmsg_t)) != OK) {
-	  printf("Warning: unable to transfer asyn table from ep %d to ep %d\n",
+	  kprintf_stub("Warning: unable to transfer asyn table from ep %d to ep %d\n", // MODIFIED
 	      src_e, dst_e);
       }
       else {
@@ -320,7 +327,7 @@ static void swap_memreq(struct proc *src_rp, struct proc *dst_rp)
   if (RTS_ISSET(src_rp, RTS_VMREQUEST) == RTS_ISSET(dst_rp, RTS_VMREQUEST))
 	return; /* nothing to do */
 
-  for (rpp = &vmrequest; *rpp != NULL;
+  for (rpp = &vmrequest; *rpp != NULL; // MODIFIED (NULL)
      rpp = &(*rpp)->p_vmrequest.nextrequestor) {
 	if (*rpp == src_rp) {
 		dst_rp->p_vmrequest.nextrequestor =
@@ -337,4 +344,3 @@ static void swap_memreq(struct proc *src_rp, struct proc *dst_rp)
 }
 
 #endif /* USE_UPDATE */
-

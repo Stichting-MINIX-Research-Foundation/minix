@@ -4,6 +4,13 @@
 
 #ifndef __ASSEMBLY__
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 #ifdef CONFIG_SMP
 
 /* SMP */

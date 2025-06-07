@@ -13,10 +13,16 @@
  *   disable_irq:     disable hook for IRQ.
  */
 
-#include <assert.h>
+// #include <assert.h> // Replaced
 
 #include "kernel/kernel.h"
 #include "hw_intr.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER and kprintf_stub
+#include <klib/include/kstring.h> // Precautionary
+#include <klib/include/kmemory.h> // Precautionary
 
 
 /* number of lists of IRQ hooks, one list per supported line. */
@@ -118,7 +124,7 @@ void irq_handle(int irq)
   irq_hook_t * hook;
 
   /* here we need not to get this IRQ until all the handlers had a say */
-  assert(irq >= 0 && irq < NR_IRQ_VECTORS);
+  KASSERT_PLACEHOLDER(irq >= 0 && irq < NR_IRQ_VECTORS); // MODIFIED
   hw_intr_mask(irq);
   hook = irq_handlers[irq];
 
@@ -127,9 +133,9 @@ void irq_handle(int irq)
       static int nspurious[NR_IRQ_VECTORS], report_interval = 100;
       nspurious[irq]++;
       if(nspurious[irq] == 1 || !(nspurious[irq] % report_interval)) {
-      	printf("irq_handle: spurious irq %d (count: %d); keeping masked\n",
+	kprintf_stub("irq_handle: spurious irq %d (count: %d); keeping masked\n", // MODIFIED
 		irq, nspurious[irq]);
-	if(report_interval < INT_MAX/2)
+	if(report_interval < (0x7FFFFFFF/2) /* INT_MAX might be undefined */ ) // MODIFIED INT_MAX with a large number
 		report_interval *= 2;
       }
       return;
@@ -174,4 +180,3 @@ int disable_irq(const irq_hook_t *hook)
   hw_intr_mask(hook->irq);
   return TRUE;
 }
-

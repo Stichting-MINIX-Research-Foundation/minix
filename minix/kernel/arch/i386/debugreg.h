@@ -1,6 +1,13 @@
 #ifndef __DEBUGREG_H__
 #define __DEBUGREG_H__
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 /* DR6: status flags */
 #define DR6_B(bp)	(1 << (bp))	/* breakpoint was triggered */
 #define DR6_BD		(1 << 13)	/* debug register access detected */
@@ -41,4 +48,3 @@ unsigned long st_dr6(void);
 unsigned long st_dr7(void); 
 
 #endif /* __DEBUGREG_H__ */
-

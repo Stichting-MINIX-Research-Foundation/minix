@@ -1,5 +1,11 @@
 #include "kernel/system.h"
-#include <minix/endpoint.h>
+#include <minix/endpoint.h> // Kept for now
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
 
 #if USE_PADCONF
 

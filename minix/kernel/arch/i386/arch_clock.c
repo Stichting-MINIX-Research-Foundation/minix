@@ -1,13 +1,21 @@
 /* i386-specific clock functions. */
 
-#include <machine/ports.h>
+#include <machine/ports.h> // Kept
 
 #include "kernel/clock.h"
 #include "kernel/interrupt.h"
-#include <minix/u64.h>
+#include <minix/u64.h>     // Kept
 
-#include <sys/sched.h> /* for CP_*, CPUSTATES */
-#if CPUSTATES != MINIX_CPUSTATES
+// #include <sys/sched.h> /* for CP_*, CPUSTATES */ // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_uint64_t and potentially CPUSTATES constants
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
+#if CPUSTATES != MINIX_CPUSTATES // CPUSTATES will be undefined
 /* If this breaks, the code in this file may have to be adapted accordingly. */
 #error "MINIX_CPUSTATES value is out of sync with CPUSTATES!"
 #endif
@@ -40,7 +48,7 @@ static u64_t tsc0, tsc1;
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
 static unsigned tsc_per_tick[CONFIG_MAX_CPUS];
-static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES];
+static k_uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES]; // MODIFIED uint64_t, CPUSTATES undefined
 
 /*===========================================================================*
  *				init_8235A_timer			     *
@@ -179,7 +187,7 @@ int register_local_timer_handler(const irq_handler_t handler)
 #ifdef USE_APIC
 	if (lapic_addr) {
 		/* Using APIC, it is configured in apic_idt_init() */
-		BOOT_VERBOSE(printf("Using LAPIC timer as tick source\n"));
+		BOOT_VERBOSE(kprintf_stub("Using LAPIC timer as tick source\n")); // MODIFIED
 	} else
 #endif
 	{
@@ -273,12 +281,12 @@ void context_stop(struct proc * p)
 
 	if (kbill_ipc) {
 		kbill_ipc->p_kipc_cycles += tsc_delta;
-		kbill_ipc = NULL;
+		kbill_ipc = NULL; // NULL might be undefined
 	}
 
 	if (kbill_kcall) {
 		kbill_kcall->p_kcall_cycles += tsc_delta;
-		kbill_kcall = NULL;
+		kbill_kcall = NULL; // NULL might be undefined
 	}
 
 	/*
@@ -314,11 +322,11 @@ void context_stop(struct proc * p)
 	if (p->p_endpoint >= 0) {
 		/* On MINIX3, the "system" counter covers system processes. */
 		if (p->p_priv != priv_addr(USER_PRIV_ID))
-			counter = CP_SYS;
+			counter = CP_SYS; // CP_SYS undefined
 		else if (p->p_misc_flags & MF_NICED)
-			counter = CP_NICE;
+			counter = CP_NICE; // CP_NICE undefined
 		else
-			counter = CP_USER;
+			counter = CP_USER; // CP_USER undefined
 
 #if DEBUG_RACE
 		p->p_cpu_time_left = 0;
@@ -332,12 +340,12 @@ void context_stop(struct proc * p)
 	} else {
 		/* On MINIX3, the "interrupts" counter covers the kernel. */
 		if (p->p_endpoint == IDLE)
-			counter = CP_IDLE;
+			counter = CP_IDLE; // CP_IDLE undefined
 		else
-			counter = CP_INTR;
+			counter = CP_INTR; // CP_INTR undefined
 	}
 
-	tsc_per_state[cpu][counter] += tsc_delta;
+	tsc_per_state[cpu][counter] += tsc_delta; // CPUSTATES undefined
 
 	*__tsc_ctr_switch = tsc;
 
@@ -430,11 +438,11 @@ void busy_delay_ms(int ms)
  * CPU states.
  */
 void
-get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES])
+get_cpu_ticks(unsigned int cpu, k_uint64_t ticks[CPUSTATES]) // MODIFIED uint64_t, CPUSTATES undefined
 {
 	int i;
 
 	/* TODO: make this inter-CPU safe! */
-	for (i = 0; i < CPUSTATES; i++)
+	for (i = 0; i < CPUSTATES; i++) // CPUSTATES undefined
 		ticks[i] = tsc_per_state[cpu][i] / tsc_per_tick[cpu];
 }

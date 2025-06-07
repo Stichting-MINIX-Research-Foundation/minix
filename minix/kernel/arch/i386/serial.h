@@ -1,6 +1,12 @@
-
 #ifndef _KERN_SERIAL_H
 #define _KERN_SERIAL_H 1
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define THRREG  0	/* transmitter holding, write-only, DLAB must be clear */
 #define RBRREG  0	/* receiver buffer, read-only, DLAB must be clear */

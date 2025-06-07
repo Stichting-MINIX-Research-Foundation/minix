@@ -9,8 +9,15 @@
 
 #include "kernel/system.h"
 
-#include <minix/endpoint.h>
-#include <assert.h>
+#include <minix/endpoint.h> // Kept
+// #include <assert.h> // Removed (no assert calls)
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_clock_t, k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_SETALARM
 
@@ -25,12 +32,12 @@ int do_setalarm(struct proc * caller, message * m_ptr)
   long exp_time;		/* expiration time for this alarm */
   int use_abs_time;		/* use absolute or relative time */
   minix_timer_t *tp;		/* the process' timer structure */
-  clock_t uptime;		/* placeholder for current uptime */
+  k_clock_t uptime;		/* placeholder for current uptime */ // MODIFIED clock_t
 
   /* Extract shared parameters from the request message. */
   exp_time = m_ptr->m_lsys_krn_sys_setalarm.exp_time;
   use_abs_time = m_ptr->m_lsys_krn_sys_setalarm.abs_time;
-  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
+  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM); // EPERM might be undefined
 
   /* Get the timer structure and set the parameters for this alarm. */
   tp = &(priv(caller)->s_alarm_timer);
@@ -58,7 +65,9 @@ int do_setalarm(struct proc * caller, message * m_ptr)
   } else {
 	if (!use_abs_time)
 		exp_time += uptime;
-	set_kernel_timer(tp, exp_time, cause_alarm, caller->p_endpoint);
+	// exp_time here is k_clock_t + long, implicit conversion might be an issue
+	// but set_kernel_timer takes k_clock_t.
+	set_kernel_timer(tp, (k_clock_t)exp_time, cause_alarm, caller->p_endpoint); // Cast to k_clock_t
   }
   return(OK);
 }

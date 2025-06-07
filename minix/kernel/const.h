@@ -2,10 +2,17 @@
 #ifndef CONST_H
 #define CONST_H
 
-#include <minix/config.h>
-#include <minix/bitmap.h>
+#include <minix/config.h>    // Kept
+#include <minix/bitmap.h>    // Kept
 
-#include "debug.h"
+#include "debug.h"           // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Translate an endpoint number to a process number, return success. */
 #ifndef isokendpt

@@ -1,9 +1,16 @@
 #ifndef TYPE_H
 #define TYPE_H
 
-#include <minix/com.h>
-#include <machine/interrupt.h>
-#include <machine/multiboot.h>
+#include <minix/com.h>          // Kept
+#include <machine/interrupt.h>  // Kept
+#include <machine/multiboot.h>  // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For base types like k_size_t if any typedefs expand to it
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Process table and system property related types. */ 
 typedef int proc_nr_t;			/* process table entry number */

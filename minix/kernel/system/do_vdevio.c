@@ -8,8 +8,15 @@
  */
 
 #include "kernel/system.h"
-#include <minix/devio.h>
-#include <minix/endpoint.h>
+#include <minix/devio.h>    // Kept
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t, k_errno_t, and fixed-width types if not from minix headers
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_VDEVIO
 
@@ -32,8 +39,8 @@ int do_vdevio(struct proc * caller, message * m_ptr)
  */ 
   int vec_size;               /* size of vector */
   int io_in;                  /* true if input */
-  size_t bytes;               /* # bytes to be copied */
-  port_t port;
+  k_size_t bytes;             /* # bytes to be copied */ // MODIFIED size_t
+  port_t port; // port_t might need kernel definition
   int i, j, io_size, nr_io_range;
   int io_dir, io_type;
   struct priv *privp;
@@ -45,24 +52,24 @@ int do_vdevio(struct proc * caller, message * m_ptr)
   io_type = m_ptr->m_lsys_krn_sys_vdevio.request & _DIO_TYPEMASK;
   if (io_dir == _DIO_INPUT) io_in = TRUE;
   else if (io_dir == _DIO_OUTPUT) io_in = FALSE;
-  else return(EINVAL);
-  if ((vec_size = m_ptr->m_lsys_krn_sys_vdevio.vec_size) <= 0) return(EINVAL);
+  else return(EINVAL); // EINVAL might be undefined
+  if ((vec_size = m_ptr->m_lsys_krn_sys_vdevio.vec_size) <= 0) return(EINVAL); // EINVAL might be undefined
   switch (io_type) {
       case _DIO_BYTE:
 	bytes = vec_size * sizeof(pvb_pair_t);
-	io_size= sizeof(u8_t);
+	io_size= sizeof(u8_t); // u8_t might be undefined
 	break;
       case _DIO_WORD:
 	bytes = vec_size * sizeof(pvw_pair_t);
-	io_size= sizeof(u16_t);
+	io_size= sizeof(u16_t); // u16_t might be undefined
 	break;
       case _DIO_LONG:
 	bytes = vec_size * sizeof(pvl_pair_t);
-	io_size= sizeof(u32_t);
+	io_size= sizeof(u32_t); // u32_t might be undefined
 	break;
-      default:  return(EINVAL);   /* check type once and for all */
+      default:  return(EINVAL);   /* check type once and for all */ // EINVAL might be undefined
   }
-  if (bytes > sizeof(vdevio_buf))  return(E2BIG);
+  if (bytes > sizeof(vdevio_buf))  return(E2BIG); // E2BIG might be undefined
 
   /* Copy (port,value)-pairs from user. */
   if((r=data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_vdevio.vec_addr,
@@ -91,10 +98,10 @@ int do_vdevio(struct proc * caller, message * m_ptr)
 		}
 		if (j >= nr_io_range)
 		{
-			printf(
+			kprintf_stub( // MODIFIED
 		"do_vdevio: I/O port check failed for proc %d, port 0x%x\n",
 				caller->p_endpoint, port);
-			return EPERM;
+			return EPERM; // EPERM might be undefined
 		}
 	}
   }
@@ -158,8 +165,7 @@ int do_vdevio(struct proc * caller, message * m_ptr)
 
 bad:
 	panic("do_vdevio: unaligned port: %d", port);
-	return EPERM;
+	return EPERM; // EPERM might be undefined
 }
 
 #endif /* USE_VDEVIO */
-

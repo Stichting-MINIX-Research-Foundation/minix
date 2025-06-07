@@ -6,8 +6,15 @@
 #ifndef __ASSEMBLY__
 
 #include "kernel/kernel.h"
-#include "arch_smp.h"
-#include "spinlock.h"
+#include "arch_smp.h"    // Kept (local arch header)
+#include "spinlock.h"    // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* number of CPUs (execution strands in the system */
 EXTERN unsigned ncpus;

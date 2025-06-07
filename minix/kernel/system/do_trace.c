@@ -10,7 +10,14 @@
  */
 
 #include "kernel/system.h"
-#include <sys/ptrace.h>
+// #include <sys/ptrace.h> // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t and potentially ptrace constants if moved
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_TRACE
 
@@ -61,7 +68,7 @@ int do_trace(struct proc * caller, message * m_ptr)
 	toaddr.offset = (addr);				\
 	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
 			&toaddr, length)) != OK) {	\
-		printf("Can't copy in sys_trace: %d\n", r);\
+		kprintf_stub("Can't copy in sys_trace: %d\n", r); /* MODIFIED */ \
 		return r;\
 	}  \
 }
@@ -75,35 +82,36 @@ int do_trace(struct proc * caller, message * m_ptr)
 	toaddr.offset = (myaddr);			\
 	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
 			&toaddr, length)) != OK) {	\
-		printf("Can't copy in sys_trace: %d\n", r);\
+		kprintf_stub("Can't copy in sys_trace: %d\n", r); /* MODIFIED */ \
 		return r;\
 	}  \
 }
 
-  if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL);
-  if (iskerneln(tr_proc_nr)) return(EPERM);
+  if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL); // EINVAL might be undefined
+  if (iskerneln(tr_proc_nr)) return(EPERM); // EPERM might be undefined
 
   rp = proc_addr(tr_proc_nr);
-  if (isemptyp(rp)) return(EINVAL);
+  if (isemptyp(rp)) return(EINVAL); // EINVAL might be undefined
   switch (tr_request) {
-  case T_STOP:			/* stop process */
+  // FIXME: T_* constants below will be undefined after removing <sys/ptrace.h>
+  case 0: /* T_STOP placeholder */			/* stop process */
 	RTS_SET(rp, RTS_P_STOP);
 	/* clear syscall trace and single step flags */
 	rp->p_misc_flags &= ~(MF_SC_TRACE | MF_STEP);
 	return(OK);
 
-  case T_GETINS:		/* return value from instruction space */
+  case 1: /* T_GETINS placeholder */		/* return value from instruction space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->m_krn_lsys_sys_trace.data = tr_data;
 	break;
 
-  case T_GETDATA:		/* return value from data space */
+  case 2: /* T_GETDATA placeholder */		/* return value from data space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->m_krn_lsys_sys_trace.data= tr_data;
 	break;
 
-  case T_GETUSER:		/* return value from process table */
-	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EFAULT);
+  case 3: /* T_GETUSER placeholder */		/* return value from process table */
+	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EFAULT); // EFAULT might be undefined
 
 	if (tr_addr <= sizeof(struct proc) - sizeof(long)) {
 		m_ptr->m_krn_lsys_sys_trace.data =
@@ -117,47 +125,47 @@ int do_trace(struct proc * caller, message * m_ptr)
 	i = sizeof(long) - 1;
 	tr_addr -= (sizeof(struct proc) + i) & ~i;
 
-	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EFAULT);
+	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EFAULT); // EFAULT might be undefined
 
 	m_ptr->m_krn_lsys_sys_trace.data =
 	    *(long *) ((char *) rp->p_priv + (int) tr_addr);
 	break;
 
-  case T_SETINS:		/* set value in instruction space */
+  case 4: /* T_SETINS placeholder */		/* set value in instruction space */
 	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_SETDATA:			/* set value in data space */
+  case 5: /* T_SETDATA placeholder */			/* set value in data space */
 	COPYTOPROC(tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_SETUSER:			/* set value in process table */
+  case 6: /* T_SETUSER placeholder */			/* set value in process table */
 	if ((tr_addr & (sizeof(reg_t) - 1)) != 0 ||
 	     tr_addr > sizeof(struct stackframe_s) - sizeof(reg_t))
-		return(EFAULT);
+		return(EFAULT); // EFAULT might be undefined
 	i = (int) tr_addr;
 #if defined(__i386__)
 	/* Altering segment registers might crash the kernel when it
 	 * tries to load them prior to restarting a process, so do
 	 * not allow it.
 	 */
-	if (i == (int) &((struct proc *) 0)->p_reg.cs ||
-	    i == (int) &((struct proc *) 0)->p_reg.ds ||
-	    i == (int) &((struct proc *) 0)->p_reg.es ||
-	    i == (int) &((struct proc *) 0)->p_reg.gs ||
-	    i == (int) &((struct proc *) 0)->p_reg.fs ||
-	    i == (int) &((struct proc *) 0)->p_reg.ss)
-		return(EFAULT);
+	if (i == K_OFFSETOF(struct proc, p_reg.cs) ||
+	    i == K_OFFSETOF(struct proc, p_reg.ds) ||
+	    i == K_OFFSETOF(struct proc, p_reg.es) ||
+	    i == K_OFFSETOF(struct proc, p_reg.gs) ||
+	    i == K_OFFSETOF(struct proc, p_reg.fs) ||
+	    i == K_OFFSETOF(struct proc, p_reg.ss))
+		return(EFAULT); // EFAULT might be undefined
 
-	if (i == (int) &((struct proc *) 0)->p_reg.psw)
+	if (i == K_OFFSETOF(struct proc, p_reg.psw))
 		/* only selected bits are changeable */
 		SETPSW(rp, tr_data);
 	else
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
 #elif defined(__arm__)
-	if (i == (int) &((struct proc *) 0)->p_reg.psr) {
+	if (i == K_OFFSETOF(struct proc, p_reg.psr)) {
 		/* only selected bits are changeable */
 		SET_USR_PSR(rp, tr_data);
 	} else {
@@ -167,40 +175,37 @@ int do_trace(struct proc * caller, message * m_ptr)
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_DETACH:		/* detach tracer */
+  case 7: /* T_DETACH / T_RESUME placeholder */		/* detach tracer / resume execution */
 	rp->p_misc_flags &= ~MF_SC_ACTIVE;
-
-	/* fall through */
-  case T_RESUME:		/* resume execution */
 	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_STEP:			/* set trace bit */
+  case 9: /* T_STEP placeholder */			/* set trace bit */
 	rp->p_misc_flags |= MF_STEP;
 	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_SYSCALL:		/* trace system call */
+  case 10: /* T_SYSCALL placeholder */		/* trace system call */
 	rp->p_misc_flags |= MF_SC_TRACE;
 	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
-  case T_READB_INS:		/* get value from instruction space */
+  case 11: /* T_READB_INS placeholder */		/* get value from instruction space */
 	COPYFROMPROC(tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->m_krn_lsys_sys_trace.data = ub;
 	break;
 
-  case T_WRITEB_INS:		/* set value in instruction space */
+  case 12: /* T_WRITEB_INS placeholder */		/* set value in instruction space */
 	ub = (unsigned char) (tr_data & 0xff);
 	COPYTOPROC(tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->m_krn_lsys_sys_trace.data = 0;
 	break;
 
   default:
-	return(EINVAL);
+	return(EINVAL); // EINVAL might be undefined
   }
   return(OK);
 }

@@ -6,9 +6,16 @@
  */
 
 #include "kernel/kernel.h"
-#include "arch_proto.h"
-#include "hw_intr.h"
-#include <machine/cpu.h>
+#include "arch_proto.h"  // Kept (local arch header)
+#include "hw_intr.h"     // Kept (local kernel header)
+#include <machine/cpu.h> // Kept (machine-specific)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */
 #define ICW1_PC         0x13	/* edge triggered, no cascade, need ICW4 */

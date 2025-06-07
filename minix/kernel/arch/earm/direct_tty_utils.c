@@ -1,8 +1,13 @@
-
 #include "kernel/kernel.h"
 #include "direct_utils.h"
 #include "bsp_serial.h"
 #include "glo.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
 
 void direct_cls(void)
 {

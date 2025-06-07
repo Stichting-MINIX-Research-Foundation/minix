@@ -1,11 +1,18 @@
 #ifndef PROFILE_H
 #define PROFILE_H
 
-#include <minix/profile.h>
+#include <minix/profile.h> // Kept
 
 #if SPROFILE	/* statistical profiling */
 
-#include "arch_watchdog.h"
+#include "arch_watchdog.h" // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define SAMPLE_BUFFER_SIZE	(64 << 20)
 extern char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
@@ -22,4 +29,3 @@ void nmi_sprofile_handler(struct nmi_frame * frame);
 #endif /* SPROFILE */
 
 #endif /* PROFILE_H */
-

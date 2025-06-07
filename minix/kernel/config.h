@@ -9,6 +9,13 @@
  *   Jul 11, 2005	Created.  (Jorrit N. Herder)
  */
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 /* In embedded and sensor applications, not all the kernel calls may be
  * needed. In this section you can specify which kernel calls are needed
  * and which are not. The code for unneeded kernel calls is not included in
@@ -65,4 +72,3 @@
 #define K_PARAM_SIZE     512
 
 #endif /* CONFIG_H */
-

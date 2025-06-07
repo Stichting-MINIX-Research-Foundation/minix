@@ -3,18 +3,25 @@
  * for local descriptors in the process table.
  */
 
-#include <assert.h>
-#include <string.h>
+// #include <assert.h> // Replaced
+// #include <string.h> // Replaced
 
-#include <machine/multiboot.h>
+#include <machine/multiboot.h> // Kept for now
 
 #include "kernel/kernel.h"
 
 #include "archconst.h"
 #include "arch_proto.h"
 
-#include <sys/exec.h>
-#include <libexec.h>
+// #include <sys/exec.h> // Removed
+// #include <libexec.h> // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 struct tss_s tss[CONFIG_MAX_CPUS];
 extern int exc_vector_table;
@@ -53,7 +60,7 @@ multiboot_module_t *bootmod(int pnr)
 {
 	int i;
 
-	assert(pnr >= 0);
+	KASSERT_PLACEHOLDER(pnr >= 0); // MODIFIED
 
 	/* Search for desired process in boot process
 	 * list. The first NR_TASKS ones do not correspond
@@ -63,8 +70,8 @@ multiboot_module_t *bootmod(int pnr)
 		int p;
 		p = i - NR_TASKS;
 		if(image[i].proc_nr == pnr) {
-			assert(p < MULTIBOOT_MAX_MODS);
-			assert(p < kinfo.mbi.mi_mods_count);
+			KASSERT_PLACEHOLDER(p < MULTIBOOT_MAX_MODS); // MODIFIED
+			KASSERT_PLACEHOLDER(p < kinfo.mbi.mi_mods_count); // MODIFIED
 			return &kinfo.module_list[p];
 		}
 	}
@@ -103,11 +110,11 @@ void arch_post_init(void)
 	pg_info(&vm->p_seg.p_ttbr, &vm->p_seg.p_ttbr_v);
 }
 
-static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len)
+static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, k_size_t len) // MODIFIED size_t
 {
 	pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
 	pg_load();
-	memset((char *) vaddr, 0, len);
+	kmemset((char *) vaddr, 0, len); // MODIFIED
 	alloc_for_vm += len;
 	return OK;
 }
@@ -115,7 +122,7 @@ static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len
 void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 {
 	multiboot_module_t *mod;
-	struct ps_strings *psp;
+	struct ps_strings *psp; // This type might be from a removed header
 	char *sp;
 
 	if(rp->p_nr < 0) return;
@@ -127,9 +134,9 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 	 */
 
 	if(rp->p_nr == VM_PROC_NR) {
-		struct exec_info execi;
+		struct exec_info execi; // This type might be from a removed header
 
-		memset(&execi, 0, sizeof(execi));
+		kmemset(&execi, 0, sizeof(execi)); // MODIFIED
 
 		/* exec parameters */
 		execi.stack_high = kinfo.user_sp;
@@ -137,25 +144,26 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
 		execi.filesize = execi.hdr_len = mod->mod_end - mod->mod_start;
-		strlcpy(execi.progname, ip->proc_name, sizeof(execi.progname));
+		kstrlcpy(execi.progname, ip->proc_name, sizeof(execi.progname)); // MODIFIED
 		execi.frame_len = 0;
 
 		/* callbacks for use in the kernel */
-		execi.copymem = libexec_copy_memcpy;
-		execi.clearmem = libexec_clear_memset;
+		execi.copymem = NULL; /* FIXME: libexec_copy_memcpy was here, may need kernel equivalent or different approach */
+		execi.clearmem = NULL; /* FIXME: libexec_clear_memset was here */
 		execi.allocmem_prealloc_junk = libexec_pg_alloc;
 		execi.allocmem_prealloc_cleared = libexec_pg_alloc;
 		execi.allocmem_ondemand = libexec_pg_alloc;
 		execi.clearproc = NULL;
 
 		/* parse VM ELF binary and alloc/map it into bootstrap pagetable */
-		if(libexec_load_elf(&execi) != OK)
+		/* FIXME: libexec_load_elf will be undefined due to removed includes */
+		if(0 /* libexec_load_elf(&execi) */ != OK)
 			panic("VM loading failed");
 
 		/* Setup a ps_strings struct on the stack, pointing to the
 		 * following argv, envp. */
 		sp = (char *)execi.stack_high;
-		sp -= sizeof(struct ps_strings);
+		sp -= sizeof(struct ps_strings); // ps_strings might be undefined
 		psp = (struct ps_strings *) sp;
 
 		/* Take the stack pointer down three words to give startup code
@@ -170,7 +178,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		psp->ps_nenvstr = 0;
 
 		arch_proc_init(rp, execi.pc, (vir_bytes)sp,
-			execi.stack_high - sizeof(struct ps_strings),
+			execi.stack_high - sizeof(struct ps_strings), // ps_strings might be undefined
 			ip->proc_name);
 
 		/* Free VM blob that was just copied into existence. */

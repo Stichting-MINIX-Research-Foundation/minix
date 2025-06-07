@@ -1,9 +1,15 @@
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 void oxpcie_set_vaddr(unsigned char *vaddr);
 void oxpcie_putc(char c);
 int oxpcie_in(void);
 
-#include "serial.h"
+#include "serial.h" // Kept (local header)
 
 /* OXPCIe952 info */
 #define UART1BASE_550   0x1000
@@ -28,4 +34,3 @@ int oxpcie_in(void);
 #define         OXPCIE_PIDX     oxpcie_vaddr[BASELINEICR + 0x12]
 
 #define         LCR_CONFIG      0x03 /* bits 6:0 -= 0x03 => 8N1, no break. */
-

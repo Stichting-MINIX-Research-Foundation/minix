@@ -9,8 +9,16 @@
 #include "kernel/glo.h"
 #include "kernel/profile.h"
 
-#include <sys/sched.h> /* for CP_*, CPUSTATES */
-#if CPUSTATES != MINIX_CPUSTATES
+// Removed: #include <sys/sched.h> /* for CP_*, CPUSTATES */
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
+#if CPUSTATES != MINIX_CPUSTATES // This will likely cause an error now if CPUSTATES is not defined elsewhere
 /* If this breaks, the code in this file may have to be adapted accordingly. */
 #error "MINIX_CPUSTATES value is out of sync with CPUSTATES!"
 #endif
@@ -27,7 +35,7 @@
 
 static unsigned tsc_per_ms[CONFIG_MAX_CPUS];
 static unsigned tsc_per_tick[CONFIG_MAX_CPUS];
-static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES];
+static uint64_t tsc_per_state[CONFIG_MAX_CPUS][CPUSTATES]; // CPUSTATES use here
 
 int init_local_timer(unsigned freq)
 {
@@ -127,11 +135,11 @@ void context_stop(struct proc * p)
 	if (p->p_endpoint >= 0) {
 		/* On MINIX3, the "system" counter covers system processes. */
 		if (p->p_priv != priv_addr(USER_PRIV_ID))
-			counter = CP_SYS;
+			counter = CP_SYS; // CP_SYS use here
 		else if (p->p_misc_flags & MF_NICED)
-			counter = CP_NICE;
+			counter = CP_NICE; // CP_NICE use here
 		else
-			counter = CP_USER;
+			counter = CP_USER; // CP_USER use here
 
 #if DEBUG_RACE
 		p->p_cpu_time_left = 0;
@@ -145,12 +153,12 @@ void context_stop(struct proc * p)
 	} else {
 		/* On MINIX3, the "interrupts" counter covers the kernel. */
 		if (p->p_endpoint == IDLE)
-			counter = CP_IDLE;
+			counter = CP_IDLE; // CP_IDLE use here
 		else
-			counter = CP_INTR;
+			counter = CP_INTR; // CP_INTR use here
 	}
 
-	tsc_per_state[cpu][counter] += tsc_delta;
+	tsc_per_state[cpu][counter] += tsc_delta; // CPUSTATES use here (as array dimension)
 
 	*__tsc_ctr_switch = tsc;
 }
@@ -237,11 +245,11 @@ short cpu_load(void)
  * CPU states.
  */
 void
-get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES])
+get_cpu_ticks(unsigned int cpu, uint64_t ticks[CPUSTATES]) // CPUSTATES use here
 {
 	int i;
 
 	/* TODO: make this inter-CPU safe! */
-	for (i = 0; i < CPUSTATES; i++)
+	for (i = 0; i < CPUSTATES; i++) // CPUSTATES use here
 		ticks[i] = tsc_per_state[cpu][i] / tsc_per_tick[cpu];
 }

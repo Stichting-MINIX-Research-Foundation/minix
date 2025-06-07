@@ -6,10 +6,17 @@
 #ifndef PROTO_H
 #define PROTO_H
 
-#include <minix/safecopies.h>
-#include <machine/archtypes.h>
-#include <machine/signal.h>
-#include <machine/frame.h>
+#include <minix/safecopies.h>   // Kept
+#include <machine/archtypes.h> // Kept
+#include <machine/signal.h>    // Kept for now, may need review
+#include <machine/frame.h>     // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_clock_t, k_time_t, k_size_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Struct declarations. */
 struct proc;
@@ -17,13 +24,13 @@ struct ipc_filter_s;
 
 /* clock.c */
 void init_clock(void);
-clock_t get_realtime(void);
-void set_realtime(clock_t);
-void set_adjtime_delta(int32_t);
-clock_t get_monotonic(void);
-void set_boottime(time_t);
-time_t get_boottime(void);
-void set_kernel_timer(minix_timer_t *tp, clock_t t, tmr_func_t f, int arg);
+k_clock_t get_realtime(void); // MODIFIED clock_t
+void set_realtime(k_clock_t); // MODIFIED clock_t
+void set_adjtime_delta(int32_t); // int32_t might need kernel definition
+k_clock_t get_monotonic(void); // MODIFIED clock_t
+void set_boottime(k_time_t); // MODIFIED time_t
+k_time_t get_boottime(void); // MODIFIED time_t
+void set_kernel_timer(minix_timer_t *tp, k_clock_t t, tmr_func_t f, int arg); // MODIFIED clock_t
 void reset_kernel_timer(minix_timer_t *tp);
 void ser_dump_proc(void);
 
@@ -43,7 +50,7 @@ int restore_fpu(struct proc *);
 void save_fpu(struct proc *);
 void save_local_fpu(struct proc *, int retain);
 void fpu_sigcontext(struct proc *, struct sigframe_sigcontext *fr, struct
-	sigcontext *sc);
+	sigcontext *sc); // struct sigcontext/sigframe_sigcontext might be userspace
 
 /* main.c */
 #ifndef UNPAGED
@@ -85,7 +92,7 @@ int isokendpt_f(endpoint_t e, int *p, int f);
 void proc_no_time(struct proc *p);
 void reset_proc_accounting(struct proc *p);
 void flag_account(struct proc *p, int flag);
-int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
+int try_deliver_senda(struct proc *caller_ptr, asynmsg_t *table, k_size_t // MODIFIED size_t
 	size);
 
 /* start.c */
@@ -108,7 +115,7 @@ void clear_ipc_refs(struct proc *rc, int caller_ret);
 void kernel_call_resume(struct proc *p);
 int sched_proc(struct proc *rp, int priority, int quantum, int cpu, int niced);
 int add_ipc_filter(struct proc *rp, int type,
-    vir_bytes address, size_t length);
+    vir_bytes address, k_size_t length); // MODIFIED size_t
 void clear_ipc_filters(struct proc *rp);
 int check_ipc_filter(struct ipc_filter_s *ipcf, int fill_flags);
 int allow_ipc_filtered_msg(struct proc *rp, endpoint_t src_e,
@@ -186,9 +193,9 @@ void memset_fault_in_kernel(void);
 int virtual_copy_f(struct proc * caller, struct vir_addr *src, struct
 	vir_addr *dst, vir_bytes bytes, int vmcheck);
 int data_copy(endpoint_t from, vir_bytes from_addr, endpoint_t to,
-	vir_bytes to_addr, size_t bytes);
+	vir_bytes to_addr, k_size_t bytes); // MODIFIED size_t
 int data_copy_vmcheck(struct proc *, endpoint_t from, vir_bytes
-	from_addr, endpoint_t to, vir_bytes to_addr, size_t bytes);
+	from_addr, endpoint_t to, vir_bytes to_addr, k_size_t bytes); // MODIFIED size_t
 phys_bytes umap_virtual(struct proc* rp, int seg, vir_bytes vir_addr,
 	vir_bytes bytes);
 phys_bytes seg2phys(u16_t);
@@ -217,12 +224,12 @@ void mem_clear_mapcache(void);
 void arch_proc_init(struct proc *pr, u32_t, u32_t, u32_t, char *);
 int arch_do_vmctl(message *m_ptr, struct proc *p);
 int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf,
-	size_t count);
+	k_size_t count); // MODIFIED size_t
 void proc_stacktrace(struct proc *proc);
 int vm_lookup(const struct proc *proc, vir_bytes virtual, phys_bytes
 	*result, u32_t *ptent);
-size_t vm_lookup_range(const struct proc *proc,
-       vir_bytes vir_addr, phys_bytes *phys_addr, size_t bytes);
+k_size_t vm_lookup_range(const struct proc *proc, // MODIFIED size_t
+       vir_bytes vir_addr, phys_bytes *phys_addr, k_size_t bytes); // MODIFIED size_t
 void arch_do_syscall(struct proc *proc);
 int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int
 	*flags);
@@ -230,7 +237,7 @@ int arch_phys_map_reply(int index, vir_bytes addr);
 reg_t arch_get_sp(struct proc *p);
 int arch_enable_paging(struct proc * caller);
 int vm_check_range(struct proc *caller,
-       struct proc *target, vir_bytes vir_addr, size_t bytes, int writable);
+       struct proc *target, vir_bytes vir_addr, k_size_t bytes, int writable); // MODIFIED size_t
 
 int copy_msg_from_user(message * user_mbuf, message * dst);
 int copy_msg_to_user(message * src, message * user_mbuf);

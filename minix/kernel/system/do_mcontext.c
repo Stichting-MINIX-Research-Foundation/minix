@@ -12,9 +12,16 @@
  */
 
 #include "kernel/system.h"
-#include <string.h>
-#include <assert.h>
-#include <machine/mcontext.h>
+// #include <string.h> // Replaced
+// #include <assert.h> // Replaced
+#include <machine/mcontext.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_MCONTEXT 
 /*===========================================================================*
@@ -29,8 +36,8 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
   mcontext_t mc;
 
   if (!isokendpt(m_ptr->m_lsys_krn_sys_getmcontext.endpt, &proc_nr))
-	return(EINVAL);
-  if (iskerneln(proc_nr)) return(EPERM);
+	return(EINVAL); // EINVAL might be undefined
+  if (iskerneln(proc_nr)) return(EPERM); // EPERM might be undefined
   rp = proc_addr(proc_nr);
 
 #if defined(__i386__)
@@ -51,8 +58,8 @@ int do_getmcontext(struct proc * caller, message * m_ptr)
 	/* make sure that the FPU context is saved into proc structure first */
 	save_fpu(rp);
 	mc.mc_flags = (rp->p_misc_flags & MF_FPU_INITIALIZED) ? _MC_FPU_SAVED : 0;
-	assert(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE);
-	memcpy(&(mc.__fpregs.__fp_reg_set), rp->p_seg.fpu_state, FPU_XFP_SIZE);
+	KASSERT_PLACEHOLDER(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE); // MODIFIED
+	kmemcpy(&(mc.__fpregs.__fp_reg_set), rp->p_seg.fpu_state, FPU_XFP_SIZE); // MODIFIED
   } 
 #endif
 
@@ -79,7 +86,7 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
   int proc_nr, r;
   mcontext_t mc;
 
-  if (!isokendpt(m_ptr->m_lsys_krn_sys_setmcontext.endpt, &proc_nr)) return(EINVAL);
+  if (!isokendpt(m_ptr->m_lsys_krn_sys_setmcontext.endpt, &proc_nr)) return(EINVAL); // EINVAL might be undefined
   rp = proc_addr(proc_nr);
 
   /* Get the mcontext structure into our address space.  */
@@ -92,8 +99,8 @@ int do_setmcontext(struct proc * caller, message * m_ptr)
   /* Copy FPU state */
   if (mc.mc_flags & _MC_FPU_SAVED) {
 	rp->p_misc_flags |= MF_FPU_INITIALIZED;
-	assert(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE);
-	memcpy(rp->p_seg.fpu_state, &(mc.__fpregs.__fp_reg_set), FPU_XFP_SIZE);
+	KASSERT_PLACEHOLDER(sizeof(mc.__fpregs.__fp_reg_set) == FPU_XFP_SIZE); // MODIFIED
+	kmemcpy(rp->p_seg.fpu_state, &(mc.__fpregs.__fp_reg_set), FPU_XFP_SIZE); // MODIFIED
   } else
 	rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   /* force reloading FPU in either case */

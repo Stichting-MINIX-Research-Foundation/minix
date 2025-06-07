@@ -1,22 +1,29 @@
 #define UNPAGED 1	/* for proper kmain() prototype */
 
 #include "kernel/kernel.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <minix/minlib.h>
-#include <minix/const.h>
-#include <minix/type.h>
-#include <minix/board.h>
-#include <minix/com.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/reboot.h>
-#include "string.h"
+// #include <assert.h> // Replaced
+// #include <stdlib.h> // Removed
+#include <minix/minlib.h>   // Kept for now
+#include <minix/const.h>    // Kept for now
+#include <minix/type.h>     // Kept for now
+#include <minix/board.h>    // Kept for now
+#include <minix/com.h>      // Kept for now
+// #include <sys/types.h> // Replaced by kernel_types.h
+#include <sys/param.h>      // Kept for now, may need review
+// #include <sys/reboot.h> // Removed
+// #include "string.h" // Corrected to <string.h> then Replaced (now kstring.h/kmemory.h)
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 #include "arch_proto.h"
 #include "direct_utils.h"
 #include "bsp_serial.h"
 #include "glo.h"
-#include <machine/multiboot.h>
+#include <machine/multiboot.h> // Kept for now
 
 #if USE_SYSDEBUG
 #define MULTIBOOT_VERBOSE 1
@@ -71,9 +78,11 @@ int find_value(char * content,char * key,char *value,int value_max_len){
 	}
 
 	/* find the key and content length */
-	key_len = content_len =0;
+	key_len = 0; // MODIFIED: kstrlen can be used if `content` and `key` are simple strings
 	for(iter = key ; *iter != '\0'; iter++, key_len++);
+	content_len = 0;
 	for(iter = content ; *iter != '\0'; iter++, content_len++);
+
 
 	/* return if key or content length invalid */
 	if (key_len == 0 || content_len == 0) {
@@ -94,7 +103,7 @@ int find_value(char * content,char * key,char *value,int value_max_len){
 	}
 
 	if (match_len == key_len) {
-		printf("key found at %d %s\n", match_len, &content[match_len]);
+		kprintf_stub("key found at %d %s\n", match_len, &content[match_len]); // MODIFIED
 		value_len = 0;
 		/* copy the content to the value char iter already points to the first 
 		   char value */
@@ -115,16 +124,26 @@ static int mb_set_param(char *bigbuf,char *name,char *value, kinfo_t *cbi)
 	char *p = bigbuf;
 	char *bufend = bigbuf + MULTIBOOT_PARAM_BUF_SIZE;
 	char *q;
-	int namelen = strlen(name);
-	int valuelen = strlen(value);
+	k_size_t namelen = kstrlen(name); // MODIFIED
+	k_size_t valuelen = kstrlen(value); // MODIFIED
 
 	/* Some variables we recognize */
-	if(!strcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; }
-	if(!strcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = atoi(value); }
+	if(!kstrcmp(name, SERVARNAME)) { cbi->do_serial_debug = 1; } // MODIFIED
+	if(!kstrcmp(name, SERBAUDVARNAME)) { cbi->serial_debug_baud = 0 /* FIXME: atoi(value) was here, replace with katoi */; } // MODIFIED
 
 	/* Delete the item if already exists */
 	while (*p) {
-		if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
+		// MODIFIED: strncmp to manual loop or kstrncmp if available
+                // if (strncmp(p, name, namelen) == 0 && p[namelen] == '=') {
+                int cmp_res = 1; // Non-zero if different or if p is shorter
+                if (kstrlen(p) >= namelen && p[namelen] == '=') {
+                    cmp_res = 0; // Assume same for now
+                    for(int k=0; k<namelen; k++) { if(p[k] != name[k]) { cmp_res=1; break; } }
+                }
+                if (cmp_res == 0) {
+                /* FIXME: strncmp was here. Manual loop above is a basic replacement.
+                 * Consider creating kstrncmp or validating this logic carefully.
+                 */
 			q = p;
 			/* let q point to the end of the entry */
 			while (*q) q++; 
@@ -151,9 +170,9 @@ static int mb_set_param(char *bigbuf,char *name,char *value, kinfo_t *cbi)
 		return -1;
 	}
 	
-	strcpy(p, name);
+	(void)kstrlcpy(p, name, namelen + 1); /* FIXME: strcpy was here, validate size for kstrlcpy. namelen+1 for null. */ // MODIFIED
 	p[namelen] = '=';
-	strcpy(p + namelen + 1, value);
+	(void)kstrlcpy(p + namelen + 1, value, valuelen + 1); /* FIXME: strcpy was here, validate size for kstrlcpy. valuelen+1 for null */ // MODIFIED
 	p[namelen + valuelen + 1] = 0;
 	p[namelen + valuelen + 2] = 0; /* end with a second delimiter */
 	return 0;
@@ -189,7 +208,7 @@ multiboot_memory_map_t mb_memmap;
 
 void setup_mbi(multiboot_info_t *mbi, char *bootargs)
 {
-	memset(mbi, 0, sizeof(*mbi));
+	kmemset(mbi, 0, sizeof(*mbi)); // MODIFIED
 	mbi->flags = MULTIBOOT_INFO_MODS | MULTIBOOT_INFO_MEM_MAP |
 			MULTIBOOT_INFO_CMDLINE;
 	mbi->mi_mods_count = MB_MODS_NR;
@@ -250,7 +269,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 		static char value[BUF];
 
 		/* Override values with cmdline argument */
-		memcpy(cmdline, (void *) mbi->cmdline, BUF);
+		kmemcpy(cmdline, (void *) mbi->cmdline, BUF); // MODIFIED
 		p = cmdline;
 		while (*p) {
 			var_i = 0;
@@ -288,15 +307,15 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	kinfo.kernel_allocated_bytes = (phys_bytes) &_kern_size;
 	kinfo.kernel_allocated_bytes -= cbi->bootstrap_len;
 
-	assert(!(cbi->bootstrap_start % ARM_PAGE_SIZE));
+	KASSERT_PLACEHOLDER(!(cbi->bootstrap_start % ARM_PAGE_SIZE)); // MODIFIED
 	cbi->bootstrap_len = rounddown(cbi->bootstrap_len, ARM_PAGE_SIZE);
-	assert(mbi->flags & MULTIBOOT_INFO_MODS);
-	assert(mbi->mi_mods_count < MULTIBOOT_MAX_MODS);
-	assert(mbi->mi_mods_count > 0);
-	memcpy(&cbi->module_list, (void *) mbi->mods_addr,
+	KASSERT_PLACEHOLDER(mbi->flags & MULTIBOOT_INFO_MODS); // MODIFIED
+	KASSERT_PLACEHOLDER(mbi->mi_mods_count < MULTIBOOT_MAX_MODS); // MODIFIED
+	KASSERT_PLACEHOLDER(mbi->mi_mods_count > 0); // MODIFIED
+	kmemcpy(&cbi->module_list, (void *) mbi->mods_addr, // MODIFIED
 		mbi->mi_mods_count * sizeof(multiboot_module_t));
 	
-	memset(cbi->memmap, 0, sizeof(cbi->memmap));
+	kmemset(cbi->memmap, 0, sizeof(cbi->memmap)); // MODIFIED
 	/* mem_map has a variable layout */
 	if(mbi->flags & MULTIBOOT_INFO_MEM_MAP) {
 		cbi->mmap_size = 0;
@@ -308,7 +327,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 			add_memmap(cbi, mmap->mm_base_addr, mmap->mm_length);
 		}
 	} else {
-		assert(mbi->flags & MULTIBOOT_INFO_MEMORY);
+		KASSERT_PLACEHOLDER(mbi->flags & MULTIBOOT_INFO_MEMORY); // MODIFIED
 		add_memmap(cbi, 0, mbi->mem_lower_unused*1024);
 		add_memmap(cbi, 0x100000, mbi->mem_upper_unused*1024);
 	}
@@ -318,7 +337,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 	 * second.
 	 */
 	k = mbi->mi_mods_count;
-	assert(k < MULTIBOOT_MAX_MODS);
+	KASSERT_PLACEHOLDER(k < MULTIBOOT_MAX_MODS); // MODIFIED
 	cbi->module_list[k].mod_start = kernbase;
 	cbi->module_list[k].mod_end = kernbase + kernsize;
 	cbi->mods_with_kernel = mbi->mi_mods_count+1;
@@ -326,7 +345,7 @@ void get_parameters(kinfo_t *cbi, char *bootargs)
 
 	for(m = 0; m < cbi->mods_with_kernel; m++) {
 #if 0
-		printf("checking overlap of module %08lx-%08lx\n",
+		kprintf_stub("checking overlap of module %08lx-%08lx\n", // MODIFIED
 		  cbi->module_list[m].mod_start, cbi->module_list[m].mod_end);
 #endif
 		if(overlaps(cbi->module_list, cbi->mods_with_kernel, m))
@@ -355,7 +374,7 @@ void set_machine_id(char *cmdline)
 {
 
 	char boardname[20];
-	memset(boardname,'\0',20);
+	kmemset(boardname,'\0',20); // MODIFIED
 	if (find_value(cmdline,"board_name=",boardname,20)){
 		/* we expect the bootloader to pass a board_name as argument
 		 * this however did not happen and given we still are in early
@@ -378,8 +397,8 @@ kinfo_t *pre_init(int argc, char **argv)
 	   from head.S */
 	   
 	/* Clear BSS */
-	memset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata);
-        memset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata);
+	kmemset(&_edata, 0, (u32_t)&_end - (u32_t)&_edata); // MODIFIED
+    kmemset(&_kern_unpaged_edata, 0, (u32_t)&_kern_unpaged_end - (u32_t)&_kern_unpaged_edata); // MODIFIED
 
 	/* we get called in a c like fashion where the first arg
          * is the program name (load address) and the rest are

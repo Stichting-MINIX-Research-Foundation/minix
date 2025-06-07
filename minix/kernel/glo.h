@@ -11,12 +11,20 @@
 #define EXTERN
 #endif
 
-#include <minix/config.h>
-#include <minix/ipcconst.h>
-#include <machine/archtypes.h>
-#include "archconst.h"
-#include "config.h"
-#include "debug.h"
+#include <minix/config.h>     // Kept
+#include <minix/ipcconst.h>   // Kept
+#include <machine/archtypes.h> // Kept
+
+#include "archconst.h"        // Kept (local kernel header)
+#include "config.h"           // Kept (local kernel header)
+#include "debug.h"            // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Kernel information structures. This groups vital kernel information. */
 extern struct kinfo kinfo;		  /* kernel information for services */

@@ -6,13 +6,18 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 
-#include <minix/syslib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <signal.h>
-#include <string.h>
+// Userspace includes to remove:
+// #include <minix/syslib.h> // Removed
+// #include <unistd.h> // Removed
+// #include <signal.h> // Removed
+// #include <string.h> // Removed
 
-#include <minix/sys_config.h>
+// Kernel includes to add:
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+#include <klib/include/kprintf.h> // This includes <stdarg.h> for the stub
+
+#include <minix/sys_config.h> // Keep if it's kernel-level, otherwise remove
 
 #define ARE_PANICING 0xDEADC0FF
 
@@ -28,19 +33,19 @@ void panic(const char *fmt, ...)
   }
   kinfo.minix_panicing = ARE_PANICING;
   if (fmt != NULL) {
-	printf("kernel panic: ");
+	kprintf_stub("kernel panic: "); // MODIFIED
   	va_start(arg, fmt);
-	vprintf(fmt, arg);
+	kvprintf_stub(fmt, arg); // MODIFIED
 	va_end(arg);
-	printf("\n");
+	kprintf_stub("\n"); // MODIFIED
   }
 
-  printf("kernel on CPU %d: ", cpuid);
+  kprintf_stub("kernel on CPU %d: ", cpuid); // MODIFIED
   util_stacktrace();
 
 #if 0
   if(get_cpulocal_var(proc_ptr)) {
-	  printf("current process : ");
+	  kprintf_stub("current process : "); // MODIFIED (though in #if 0)
 	  proc_stacktrace(get_cpulocal_var(proc_ptr));
   }
 #endif
@@ -74,11 +79,11 @@ void kputc(
           kmess.km_size += 1;
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
       if(kmess.blpos == maxblpos) {
-      	memmove(kmess.kmess_buf,
+	kmemmove(kmess.kmess_buf, // MODIFIED
 		kmess.kmess_buf+1, sizeof(kmess.kmess_buf)-1);
       } else kmess.blpos++;
   } else if (!(kinfo.minix_panicing || kinfo.do_serial_debug)) {
-	send_diag_sig();
+	/* send_diag_sig(); FIXME: Requires kernel signal mechanism */ // MODIFIED
   }
 }
 

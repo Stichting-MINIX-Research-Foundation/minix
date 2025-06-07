@@ -3,11 +3,19 @@
 
 #include "arch_proto.h" /* K_STACK_SIZE */
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h> // For fixed-width types like k_uint32_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 #define MAX_NR_INTERRUPT_ENTRIES	128
 
 #ifndef __ASSEMBLY__
 
 /* returns the current cpu id */
+// FIXME: u32_t might be undefined
 #define cpuid	(((u32_t *)(((u32_t)get_stack_frame() + (K_STACK_SIZE - 1)) \
 						& ~(K_STACK_SIZE - 1)))[-1])
 /* 
@@ -28,4 +36,3 @@ extern unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
 #endif
 
 #endif /* __SMP_X86_H__ */
-

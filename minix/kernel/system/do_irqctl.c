@@ -11,7 +11,14 @@
 
 #include "kernel/system.h"
 
-#include <minix/endpoint.h>
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_IRQCTL
 
@@ -42,8 +49,8 @@ int do_irqctl(struct proc * caller, message * m_ptr)
   case IRQ_ENABLE:           
   case IRQ_DISABLE: 
       if (irq_hook_id >= NR_IRQ_HOOKS || irq_hook_id < 0 ||
-          irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL);
-      if (irq_hooks[irq_hook_id].proc_nr_e != caller->p_endpoint) return(EPERM);
+          irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL); // EINVAL might be undefined
+      if (irq_hooks[irq_hook_id].proc_nr_e != caller->p_endpoint) return(EPERM); // EPERM might be undefined
       if (m_ptr->m_lsys_krn_sys_irqctl.request == IRQ_ENABLE) {
           enable_irq(&irq_hooks[irq_hook_id]);	
       }
@@ -57,13 +64,13 @@ int do_irqctl(struct proc * caller, message * m_ptr)
   case IRQ_SETPOLICY:  
 
       /* Check if IRQ line is acceptable. */
-      if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) return(EINVAL);
+      if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) return(EINVAL); // EINVAL might be undefined
 
       privp= priv(caller);
       if (!privp)
       {
-	printf("do_irqctl: no priv structure!\n");
-	return EPERM;
+	kprintf_stub("do_irqctl: no priv structure!\n"); // MODIFIED
+	return EPERM; // EPERM might be undefined
       }
       if (privp->s_flags & CHECK_IRQ)
       {
@@ -74,10 +81,10 @@ int do_irqctl(struct proc * caller, message * m_ptr)
 	}
 	if (i >= privp->s_nr_irq)
 	{
-		printf(
+		kprintf_stub( // MODIFIED
 		"do_irqctl: IRQ check failed for proc %d, IRQ %d\n",
 			caller->p_endpoint, irq_vec);
-		return EPERM;
+		return EPERM; // EPERM might be undefined
 	}
     }
 
@@ -85,10 +92,11 @@ int do_irqctl(struct proc * caller, message * m_ptr)
        * is returned on the notification message if a interrupt occurs.
        */
       notify_id = m_ptr->m_lsys_krn_sys_irqctl.hook_id;
-      if (notify_id > CHAR_BIT * sizeof(irq_id_t) - 1) return(EINVAL);
+      // CHAR_BIT might be undefined (from limits.h)
+      if (notify_id > 8 * sizeof(irq_id_t) - 1) return(EINVAL); // MODIFIED CHAR_BIT with 8
 
       /* Try to find an existing mapping to override. */
-      hook_ptr = NULL;
+      hook_ptr = NULL; // MODIFIED (NULL)
       for (i=0; !hook_ptr && i<NR_IRQ_HOOKS; i++) {
           if (irq_hooks[i].proc_nr_e == caller->p_endpoint
               && irq_hooks[i].notify_id == notify_id) {
@@ -105,7 +113,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
               hook_ptr = &irq_hooks[irq_hook_id];	/* free hook */
           }
       }
-      if (hook_ptr == NULL) return(ENOSPC);
+      if (hook_ptr == NULL) return(ENOSPC); // MODIFIED (NULL), ENOSPC might be undefined
 
       /* Install the handler. */
       hook_ptr->proc_nr_e = caller->p_endpoint;	/* process to notify */
@@ -122,9 +130,9 @@ int do_irqctl(struct proc * caller, message * m_ptr)
   case IRQ_RMPOLICY:
       if (irq_hook_id < 0 || irq_hook_id >= NR_IRQ_HOOKS ||
                irq_hooks[irq_hook_id].proc_nr_e == NONE) {
-           return(EINVAL);
+           return(EINVAL); // EINVAL might be undefined
       } else if (caller->p_endpoint != irq_hooks[irq_hook_id].proc_nr_e) {
-           return(EPERM);
+           return(EPERM); // EPERM might be undefined
       }
       /* Remove the handler and return. */
       rm_irq_handler(&irq_hooks[irq_hook_id]);
@@ -132,7 +140,7 @@ int do_irqctl(struct proc * caller, message * m_ptr)
       break;
 
   default:
-      r = EINVAL;				/* invalid IRQ REQUEST */
+      r = EINVAL;				/* invalid IRQ REQUEST */ // EINVAL might be undefined
   }
   return(r);
 }

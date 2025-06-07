@@ -31,6 +31,13 @@
 
 #include "kernel/kernel.h"
 
+// Added kernel headers (precautionary for consistency, especially with _TABLE defined)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
  * in the boot image and all kernel tasks must come first.
@@ -63,4 +70,3 @@ struct boot_image image[NR_BOOT_PROCS] = {
 {MFS_PROC_NR,   "mfs"   },
 {INIT_PROC_NR,  "init"  },
 };
-

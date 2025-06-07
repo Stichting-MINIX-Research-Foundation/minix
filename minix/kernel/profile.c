@@ -10,7 +10,14 @@
 
 #if SPROFILE
 
-#include <string.h>
+// #include <string.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 #include "watchdog.h"
 
 char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
@@ -67,8 +74,7 @@ static void sprof_save_proc(struct proc * p)
 	s = (struct sprof_proc *) (sprof_sample_buffer + sprof_info.mem_used);
 
 	s->proc = p->p_endpoint;
-	strcpy(s->name, p->p_name);
-
+	(void)kstrlcpy(s->name, p->p_name, sizeof(s->name)); /* FIXME: strcpy(dst,src) replaced. Validate size argument for kstrlcpy. sizeof(dst) is a guess. */ // MODIFIED
 	sprof_info.mem_used += sizeof(struct sprof_proc);
 }
 

@@ -2,17 +2,21 @@
 
 #include "kernel/kernel.h"
 
-#include <unistd.h>
-#include <ctype.h>
-#include <string.h>
+// Removed: <unistd.h>, <ctype.h>, <string.h>, <assert.h>, <signal.h>
 #include <minix/cpufeature.h>
-#include <assert.h>
-#include <signal.h>
+// Kept: <machine/vm.h>, <machine/signal.h>, <arm/armreg.h>, <minix/u64.h>
 #include <machine/vm.h>
-#include <machine/signal.h>
-#include <arm/armreg.h>
+#include <machine/signal.h> // May need review if it pulls userspace defs
+#include <arm/armreg.h>     // Arch-specific, likely okay
+#include <minix/u64.h>      // Minix-specific, likely okay
 
-#include <minix/u64.h>
+
+// Added kernel headers
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+#include <klib/include/kprintf.h>
+#include <minix/kernel_types.h>
+
 
 #include "archconst.h"
 #include "arch_proto.h"
@@ -41,10 +45,10 @@ void save_fpu(struct proc *pr)
 
 void arch_proc_reset(struct proc *pr)
 {
-	assert(pr->p_nr < NR_PROCS);
+	KASSERT_PLACEHOLDER(pr->p_nr < NR_PROCS); // MODIFIED
 
 	/* Clear process state. */
-	memset(&pr->p_reg, 0, sizeof(pr->p_reg));
+	kmemset(&pr->p_reg, 0, sizeof(pr->p_reg)); // MODIFIED
 	if(iskerneln(pr->p_nr)) {
 		pr->p_reg.psr = INIT_TASK_PSR;
 	} else {
@@ -55,9 +59,9 @@ void arch_proc_reset(struct proc *pr)
 void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
 	int isuser, int trapstyle)
 {
-        assert(sizeof(p->p_reg) == sizeof(*state));
+        KASSERT_PLACEHOLDER(sizeof(p->p_reg) == sizeof(*state)); // MODIFIED
 	if(state != &p->p_reg) {
-	        memcpy(&p->p_reg, state, sizeof(*state));
+	        kmemcpy(&p->p_reg, state, sizeof(*state)); // MODIFIED
 	}
 
         /* further code is instructed to not touch the context
@@ -66,7 +70,7 @@ void arch_proc_setcontext(struct proc *p, struct stackframe_s *state,
         p->p_misc_flags |= MF_CONTEXT_SET;
 
         if(!(p->p_rts_flags)) {
-                printf("WARNINIG: setting full context of runnable process\n");
+                kprintf_stub("WARNINIG: setting full context of runnable process\n"); // MODIFIED
                 print_proc(p);
                 util_stacktrace();
         }
@@ -103,7 +107,7 @@ void arch_init(void)
         u32_t value;
 
 	k_stacks = (void*) &k_stacks_start;
-	assert(!((vir_bytes) k_stacks % K_STACK_SIZE));
+	KASSERT_PLACEHOLDER(!((vir_bytes) k_stacks % K_STACK_SIZE)); // MODIFIED
 
 #ifndef CONFIG_SMP
 	/*
@@ -141,7 +145,7 @@ void do_ser_debug(void)
 void arch_do_syscall(struct proc *proc)
 {
   /* do_ipc assumes that it's running because of the current process */
-  assert(proc == get_cpulocal_var(proc_ptr));
+  KASSERT_PLACEHOLDER(proc == get_cpulocal_var(proc_ptr)); // MODIFIED
   /* Make the system call, for real this time. */
   proc->p_reg.retreg =
 	  do_ipc(proc->p_reg.retreg, proc->p_reg.r1, proc->p_reg.r2);

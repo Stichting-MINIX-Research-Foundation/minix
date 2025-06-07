@@ -12,7 +12,14 @@
 
 #include "kernel/system.h"
 #include "kernel/vm.h"
-#include <assert.h>
+// #include <assert.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)
 
@@ -38,7 +45,7 @@ int do_copy(struct proc * caller, message * m_ptr)
 	if (first)
 	{
 		first= 0;
-		printf(
+		kprintf_stub( // MODIFIED
 "do_copy: got request from %d (source %d, destination %d)\n",
 			caller->p_endpoint,
 			m_ptr->m_lsys_krn_sys_copy.src_endpt,
@@ -65,8 +72,8 @@ int do_copy(struct proc * caller, message * m_ptr)
 	vir_addr[i].proc_nr_e = caller->p_endpoint;
       if (vir_addr[i].proc_nr_e != NONE) {
 	if(! isokendpt(vir_addr[i].proc_nr_e, &p)) {
-	  printf("do_copy: %d: %d not ok endpoint\n", i, vir_addr[i].proc_nr_e);
-          return(EINVAL); 
+	  kprintf_stub("do_copy: %d: %d not ok endpoint\n", i, vir_addr[i].proc_nr_e); // MODIFIED
+          return(EINVAL);  // EINVAL might be undefined
         }
       }
   }
@@ -74,14 +81,14 @@ int do_copy(struct proc * caller, message * m_ptr)
   /* Check for overflow. This would happen for 64K segments and 16-bit 
    * vir_bytes. Especially copying by the PM on do_fork() is affected. 
    */
-  if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG);
+  if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG); // E2BIG might be undefined
 
   /* Now try to make the actual virtual copy. */
   if(m_ptr->m_lsys_krn_sys_copy.flags & CP_FLAG_TRY) {
 	int r;
-	assert(caller->p_endpoint == VFS_PROC_NR);
+	KASSERT_PLACEHOLDER(caller->p_endpoint == VFS_PROC_NR); // MODIFIED
 	r = virtual_copy(&vir_addr[_SRC_], &vir_addr[_DST_], bytes);
-	if(r == EFAULT_SRC || r == EFAULT_DST) return r = EFAULT;
+	if(r == EFAULT_SRC || r == EFAULT_DST) return r = EFAULT; // EFAULT* might be undefined
 	return r;
   } else {
 	return( virtual_copy_vmcheck(caller, &vir_addr[_SRC_],

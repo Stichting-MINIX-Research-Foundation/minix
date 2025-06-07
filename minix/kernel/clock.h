@@ -4,6 +4,13 @@
 #include "kernel/kernel.h"
 #include "arch_clock.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER if used in headers this includes
+#include <klib/include/kstring.h> // Precautionary
+#include <klib/include/kmemory.h> // Precautionary
+
+
 int boot_cpu_init_timer(unsigned freq);
 int app_cpu_init_timer(unsigned freq);
 

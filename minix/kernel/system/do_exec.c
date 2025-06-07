@@ -9,8 +9,15 @@
  *   m_lsys_krn_sys_exec.ps_str		(struct ps_strings *)
  */
 #include "kernel/system.h"
-#include <string.h>
-#include <minix/endpoint.h>
+// #include <string.h> // Replaced
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if EINVAL is mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_EXEC
 
@@ -25,7 +32,7 @@ int do_exec(struct proc * caller, message * m_ptr)
   char name[PROC_NAME_LEN];
 
   if(!isokendpt(m_ptr->m_lsys_krn_sys_exec.endpt, &proc_nr))
-	return EINVAL;
+	return EINVAL; // EINVAL might be undefined
 
   rp = proc_addr(proc_nr);
 
@@ -37,7 +44,8 @@ int do_exec(struct proc * caller, message * m_ptr)
   if(data_copy(caller->p_endpoint, m_ptr->m_lsys_krn_sys_exec.name,
 	KERNEL, (vir_bytes) name,
 	(phys_bytes) sizeof(name) - 1) != OK)
-  	strncpy(name, "<unset>", PROC_NAME_LEN);
+	// MODIFIED strncpy to kstrlcpy with FIXME
+	(void)kstrlcpy(name, "<unset>", PROC_NAME_LEN); /* FIXME: strncpy(dst,src,n) replaced. Validate 'n' is buffer size for kstrlcpy, not just copy length. Semantics differ. */
 
   name[sizeof(name)-1] = '\0';
 

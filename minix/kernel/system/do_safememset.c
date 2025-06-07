@@ -8,11 +8,18 @@
  *	SMS_PATTERN     memset pattern byte
  *	SMS_BYTES	bytes from offset
  */
-#include <assert.h>
+// #include <assert.h> // Removed (assert was not used)
 
-#include <minix/safecopies.h>
+#include <minix/safecopies.h> // Kept
 
 #include "kernel/system.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t, k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /*===========================================================================*
  *                              do_safememset                                *
@@ -26,7 +33,7 @@ int do_safememset(struct proc *caller, message *m_ptr) {
 	cp_grant_id_t grantid = m_ptr->SMS_GID;
 	vir_bytes g_offset = m_ptr->SMS_OFFSET;
 	int pattern = m_ptr->SMS_PATTERN;
-	size_t len = (size_t)m_ptr->SMS_BYTES;
+	k_size_t len = (k_size_t)m_ptr->SMS_BYTES; // MODIFIED size_t
 
 	struct proc *dst_p;
 	endpoint_t new_granter;
@@ -34,22 +41,22 @@ int do_safememset(struct proc *caller, message *m_ptr) {
 	int r;
 
 	if (dst_endpt == NONE || caller_endpt == NONE)
-		return EFAULT;
+		return EFAULT; // EFAULT might be undefined
 
 	if (!(dst_p = endpoint_lookup(dst_endpt)))
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 
 	if (!(priv(dst_p) && priv(dst_p)->s_grant_table)) {
-		printf("safememset: dst %d has no grant table\n", dst_endpt);
-		return EINVAL;
+		kprintf_stub("safememset: dst %d has no grant table\n", dst_endpt); // MODIFIED
+		return EINVAL; // EINVAL might be undefined
 	}
 
 	/* Verify permission exists, memset always requires CPF_WRITE */
 	r = verify_grant(dst_endpt, caller_endpt, grantid, len, CPF_WRITE,
-			 g_offset, &v_offset, &new_granter, NULL);
+			 g_offset, &v_offset, &new_granter, NULL); // MODIFIED (NULL)
 
 	if (r != OK) {
-		printf("safememset: grant %d verify failed %d", grantid, r);
+		kprintf_stub("safememset: grant %d verify failed %d", grantid, r); // MODIFIED
 		return r;
 	}
 

@@ -8,8 +8,15 @@
  */
 
 #include "kernel/system.h"
-#include <minix/devio.h>
-#include <minix/endpoint.h>
+#include <minix/devio.h>    // Kept
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_DEVIO
 
@@ -38,7 +45,7 @@ int do_devio(struct proc * caller, message * m_ptr)
     privp= priv(caller);
     if (!privp)
     {
-	printf("no priv structure!\n");
+	kprintf_stub("no priv structure!\n"); // MODIFIED
 	goto doit;
     }
     if (privp->s_flags & CHECK_IO_PORT)
@@ -52,18 +59,18 @@ int do_devio(struct proc * caller, message * m_ptr)
 	}
 	if (i >= nr_io_range)
 	{
-			printf("do_devio: port 0x%x (size %d) not allowed\n",
+			kprintf_stub("do_devio: port 0x%x (size %d) not allowed\n", // MODIFIED
 				m_ptr->m_lsys_krn_sys_devio.port, size);
-		return EPERM;
+		return EPERM; // EPERM might be undefined
 	}
     }
 
 doit:
     if (m_ptr->m_lsys_krn_sys_devio.port & (size-1))
     {
-		printf("do_devio: unaligned port 0x%x (size %d)\n",
+		kprintf_stub("do_devio: unaligned port 0x%x (size %d)\n", // MODIFIED
 			m_ptr->m_lsys_krn_sys_devio.port, size);
-	return EPERM;
+	return EPERM; // EPERM might be undefined
     }
 
 /* Process a single I/O request for byte, word, and long values. */
@@ -82,7 +89,7 @@ doit:
 		m_ptr->m_krn_lsys_sys_devio.value =
 			inl(m_ptr->m_lsys_krn_sys_devio.port);
 		break;
-    	default: return(EINVAL);
+	default: return(EINVAL); // EINVAL might be undefined
       } 
     } else { 
       switch (io_type) {
@@ -98,7 +105,7 @@ doit:
 		outl(m_ptr->m_lsys_krn_sys_devio.port,
 			m_ptr->m_lsys_krn_sys_devio.value);
 		break;
-    	default: return(EINVAL);
+	default: return(EINVAL); // EINVAL might be undefined
       } 
     }
     return(OK);

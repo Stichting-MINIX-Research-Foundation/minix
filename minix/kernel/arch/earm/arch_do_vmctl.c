@@ -8,16 +8,23 @@
  */
 
 #include "kernel/system.h"
-#include <assert.h>
-#include <minix/type.h>
+// #include <assert.h> // Replaced
+#include <minix/type.h> // Kept for now, may need future review
 
 #include "arch_proto.h"
+
+// Added kernel headers
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER and kprintf_stub
+#include <minix/kernel_types.h>
+#include <klib/include/kstring.h> // Precautionary
+#include <klib/include/kmemory.h> // Precautionary
+
 
 static void set_ttbr(struct proc *p, u32_t ttbr, u32_t *v)
 {
 	/* Set process TTBR. */
 	p->p_seg.p_ttbr = ttbr;
-	assert(p->p_seg.p_ttbr);
+	KASSERT_PLACEHOLDER(p->p_seg.p_ttbr); // MODIFIED
 	p->p_seg.p_ttbr_v = v;
 	if(p == get_cpulocal_var(ptproc)) {
 		write_ttbr0(p->p_seg.p_ttbr);
@@ -52,6 +59,6 @@ int arch_do_vmctl(
 	}
   }
 
-  printf("arch_do_vmctl: strange param %d\n", m_ptr->SVMCTL_PARAM);
+  kprintf_stub("arch_do_vmctl: strange param %d\n", m_ptr->SVMCTL_PARAM); // MODIFIED
   return EINVAL;
 }

@@ -12,11 +12,19 @@
  *   Nov 22, 2009  rewrite of privilege management (Cristiano Giuffrida)
  *   Jul 01, 2005  Created.  (Jorrit N. Herder)	
  */
-#include <minix/const.h>
-#include <minix/priv.h>
-#include "kernel/const.h"
-#include "kernel/type.h"
-#include "kernel/ipc_filter.h"
+#include <minix/const.h>    // Kept
+#include <minix/priv.h>     // Kept
+
+#include "kernel/const.h"    // Kept (local kernel header)
+#include "kernel/type.h"     // Kept (local kernel header)
+#include "kernel/ipc_filter.h" // Kept (local kernel header)
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t, k_sigset_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
@@ -26,7 +34,7 @@ struct priv {
 
   /* Asynchronous sends */
   vir_bytes s_asyntab;		/* addr. of table in process' address space */
-  size_t s_asynsize;		/* number of elements in table. 0 when not in
+  k_size_t s_asynsize;		/* number of elements in table. 0 when not in MODIFIED size_t to k_size_t
 				 * use
 				 */
   endpoint_t s_asynendpoint;    /* the endpoint the asyn table belongs to. */
@@ -42,7 +50,7 @@ struct priv {
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
   sys_map_t s_asyn_pending;	/* bit map with pending asyn messages */
   irq_id_t s_int_pending;	/* pending hardware interrupts */
-  sigset_t s_sig_pending;	/* pending signals */
+  k_sigset_t s_sig_pending;	/* pending signals */ // MODIFIED sigset_t to k_sigset_t
   ipc_filter_t *s_ipcf;         /* ipc filter (NULL when no filter is set) */
 
   minix_timer_t s_alarm_timer;	/* synchronous alarm timer */

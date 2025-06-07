@@ -4,6 +4,13 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 EXTERN int cpu_has_tsc;	/* signal whether this cpu has time stamp register. This
 			   feature was introduced by Pentium */
 

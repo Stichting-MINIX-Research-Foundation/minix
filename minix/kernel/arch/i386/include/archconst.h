@@ -1,9 +1,15 @@
-
 #ifndef _I386_ACONST_H
 #define _I386_ACONST_H 1
 
-#include <machine/interrupt.h>
-#include <machine/memory.h>
+#include <machine/interrupt.h> // Kept
+#include <machine/memory.h>    // Kept
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h> // For fixed-width types like k_uint16_t, k_uint32_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Constants for protected mode. */
 

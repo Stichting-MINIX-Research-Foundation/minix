@@ -7,7 +7,14 @@
  * to blacklist/whitelist a set of ipc messages identified by sender or message
  * type.
  */
-#include <minix/ipc_filter.h>
+#include <minix/ipc_filter.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h> // For kmemset (via klib/include/kmemory.h)
+#include <klib/include/kmemory.h>
+
 
 /* IPC filter types. */
 #define IPCF_NONE        0	/* no ipc filter */
@@ -68,6 +75,6 @@ EXTERN ipc_filter_t ipc_filter_pool[IPCF_POOL_SIZE];
 			} \
 		} \
 	} while(0)
-#define IPCF_POOL_INIT(S) memset(&ipc_filter_pool,0,sizeof(ipc_filter_pool))
+#define IPCF_POOL_INIT(S) kmemset(&ipc_filter_pool,0,sizeof(ipc_filter_pool)) // MODIFIED memset to kmemset
 
 #endif /* !IPC_FILTER_H */

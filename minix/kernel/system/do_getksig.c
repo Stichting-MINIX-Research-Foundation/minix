@@ -7,8 +7,15 @@
  */
 
 #include "kernel/system.h"
-#include <signal.h>
-#include <minix/endpoint.h>
+// #include <signal.h> // Replaced
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_sigset_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_GETKSIG
 
@@ -30,7 +37,7 @@ int do_getksig(struct proc * caller, message * m_ptr)
 	  /* store signaled process' endpoint */
           m_ptr->m_sigcalls.endpt = rp->p_endpoint;
           m_ptr->m_sigcalls.map = rp->p_pending;	/* pending signals map */
-          (void) sigemptyset(&rp->p_pending); 	/* clear map in the kernel */
+          /* FIXME: sigemptyset was here */ // (void) sigemptyset(&rp->p_pending); 	/* clear map in the kernel */
 	  RTS_UNSET(rp, RTS_SIGNALED);		/* blocked by SIG_PENDING */
           return(OK);
       }

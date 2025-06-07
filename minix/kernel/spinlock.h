@@ -3,6 +3,13 @@
 
 #include "kernel/kernel.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 typedef struct spinlock {
 	atomic_t val;
 } spinlock_t;

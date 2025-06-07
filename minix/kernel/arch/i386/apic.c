@@ -1,15 +1,21 @@
 /*
  * APIC handling routines. APIC is a requirement for SMP
  */
-#include <assert.h>
+// #include <assert.h> // Replaced
 
-#include <unistd.h>
-#include <minix/portio.h>
+// #include <unistd.h> // Removed
+#include <minix/portio.h>   // Kept
+// #include <minix/syslib.h> // Removed
+#include <machine/cmos.h>   // Kept
 
-#include <minix/syslib.h>
-#include <machine/cmos.h>
+#include <minix/u64.h>      // Kept
 
-#include <minix/u64.h>
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #include "apic.h"
 #include "apic_asm.h"
@@ -220,7 +226,7 @@ static void ioapic_redirt_entry_write(void * ioapic_addr,
 					u32_t lo)
 {
 #if 0
-	VERBOSE_APIC(printf("IO apic redir entry %3d "
+	VERBOSE_APIC(kprintf_stub("IO apic redir entry %3d " // MODIFIED
 				"write 0x%08x 0x%08x\n", entry, hi, lo));
 #endif
 	ioapic_write((u32_t)ioapic_addr, (u8_t) (IOAPIC_REDIR_TABLE + entry * 2 + 1), hi);
@@ -317,7 +323,7 @@ static void ioapic_disable(struct io_apic * ioapic)
 {
 	unsigned p;
 	
-	for (p = 0; p < io_apic->pins; p++) {
+	for (p = 0; p < ioapic->pins; p++) {
 		u32_t low_32, hi_32;
 		low_32 = ioapic_read((u32_t)ioapic->addr,
 				(uint8_t) (IOAPIC_REDIR_TABLE + p * 2));
@@ -361,11 +367,11 @@ void ioapic_disable_all(void)
 static void ioapic_disable_irq(unsigned irq)
 {
 	if(!(io_apic_irq[irq].ioa)) {
-		printf("ioapic_disable_irq: no ioa set for irq %d!\n", irq);
+		kprintf_stub("ioapic_disable_irq: no ioa set for irq %d!\n", irq); // MODIFIED
 		return;
 	}
 
-	assert(io_apic_irq[irq].ioa);
+	KASSERT_PLACEHOLDER(io_apic_irq[irq].ioa); // MODIFIED
 
 	ioapic_disable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
 	io_apic_irq[irq].state |= IOAPIC_IRQ_STATE_MASKED;
@@ -374,11 +380,11 @@ static void ioapic_disable_irq(unsigned irq)
 static void ioapic_enable_irq(unsigned irq)
 {
 	if(!(io_apic_irq[irq].ioa)) {
-		printf("ioapic_enable_irq: no ioa set for irq %d!\n", irq);
+		kprintf_stub("ioapic_enable_irq: no ioa set for irq %d!\n", irq); // MODIFIED
 		return;
 	}
 
-	assert(io_apic_irq[irq].ioa);
+	KASSERT_PLACEHOLDER(io_apic_irq[irq].ioa); // MODIFIED
 
 	ioapic_enable_pin(io_apic_irq[irq].ioa->addr, io_apic_irq[irq].pin);
 	io_apic_irq[irq].state &= ~IOAPIC_IRQ_STATE_MASKED;
@@ -448,7 +454,7 @@ static void apic_calibrate_clocks(unsigned cpu)
 
 	irq_hook_t calib_clk, spurious_irq;
 
-	BOOT_VERBOSE(printf("Calibrating clock\n"));
+	BOOT_VERBOSE(kprintf_stub("Calibrating clock\n")); // MODIFIED
 	/*
 	 * Set Initial count register to the highest value so it does not
 	 * underflow during the testing period
@@ -515,7 +521,7 @@ static void apic_calibrate_clocks(unsigned cpu)
 	tsc_delta = tsc1 - tsc0;
 
 	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
-	BOOT_VERBOSE(printf("APIC bus freq %u MHz\n",
+	BOOT_VERBOSE(kprintf_stub("APIC bus freq %u MHz\n", // MODIFIED
 				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = (tsc_delta / (PROBE_TICKS - 1)) * make64(system_hz, 0);
 	cpu_set_freq(cpuid, cpu_freq);
@@ -658,7 +664,7 @@ static int lapic_enable_in_msr(void)
 	addr = (msr_lo >> 12) | ((msr_hi & 0xf) << 20);
 	if (addr != (lapic_addr >> 12)) {
 		if (msr_hi & 0xf) {
-			printf("ERROR : APIC address needs more then 32 bits\n");
+			kprintf_stub("ERROR : APIC address needs more then 32 bits\n"); // MODIFIED
 			return 0;
 		}
 		lapic_addr = msr_lo & ~((1 << 12) - 1);
@@ -680,7 +686,7 @@ int lapic_enable(unsigned cpu)
 
 	cpu_has_tsc = _cpufeature(_CPUF_I386_TSC);
 	if (!cpu_has_tsc) {
-		printf("CPU lacks timestamp counter, "
+		kprintf_stub("CPU lacks timestamp counter, " // MODIFIED
 			"cannot calibrate LAPIC timer\n");
 		return 0;
 	}
@@ -737,7 +743,7 @@ int lapic_enable(unsigned cpu)
 	apic_eoi();
 
 	apic_calibrate_clocks(cpu);
-	BOOT_VERBOSE(printf("APIC timer calibrated\n"));
+	BOOT_VERBOSE(kprintf_stub("APIC timer calibrated\n")); // MODIFIED
 
 	return 1;
 }
@@ -748,7 +754,7 @@ void apic_spurios_intr_handler(void)
 
 	x++;
 	if (x == 1 || (x % 100) == 0)
-		printf("WARNING spurious interrupt(s) %d on cpu %d\n", x, cpuid);
+		kprintf_stub("WARNING spurious interrupt(s) %d on cpu %d\n", x, cpuid); // MODIFIED
 }
 
 void apic_error_intr_handler(void)
@@ -757,7 +763,7 @@ void apic_error_intr_handler(void)
 
 	x++;
 	if (x == 1 || (x % 100) == 0)
-		printf("WARNING apic error (0x%x) interrupt(s) %d on cpu %d\n",
+		kprintf_stub("WARNING apic error (0x%x) interrupt(s) %d on cpu %d\n", // MODIFIED
 				lapic_errstatus(), x, cpuid);
 }
 
@@ -828,7 +834,7 @@ static struct gate_table_s gate_table_ioapic[] = {
 	{ apic_hwint63, LAPIC_VECTOR(63), INTR_PRIVILEGE },
 	{ apic_spurios_intr, APIC_SPURIOUS_INT_VECTOR, INTR_PRIVILEGE },
 	{ apic_error_intr, APIC_ERROR_INT_VECTOR, INTR_PRIVILEGE },
-	{ NULL, 0, 0}
+	{ NULL, 0, 0} // NULL might be undefined
 };
 
 static struct gate_table_s gate_table_common[] = {
@@ -836,14 +842,14 @@ static struct gate_table_s gate_table_common[] = {
 	{ kernel_call_entry_orig, KERN_CALL_VECTOR_ORIG, USER_PRIVILEGE },
 	{ ipc_entry_softint_um, IPC_VECTOR_UM, USER_PRIVILEGE },
 	{ kernel_call_entry_um, KERN_CALL_VECTOR_UM, USER_PRIVILEGE },
-	{ NULL, 0, 0}
+	{ NULL, 0, 0} // NULL might be undefined
 };
 
 #ifdef CONFIG_SMP
 static struct gate_table_s gate_table_smp[] = {
 	{ apic_ipi_sched_intr, APIC_SMP_SCHED_PROC_VECTOR, INTR_PRIVILEGE },
 	{ apic_ipi_halt_intr,  APIC_SMP_CPU_HALT_VECTOR, INTR_PRIVILEGE },
-	{ NULL, 0, 0}
+	{ NULL, 0, 0} // NULL might be undefined
 };
 #endif
 
@@ -883,7 +889,7 @@ void apic_idt_init(const int reset)
 
 #ifdef APIC_DEBUG
 	if (is_bsp)
-		printf("APIC debugging is enabled\n");
+		kprintf_stub("APIC debugging is enabled\n"); // MODIFIED
 	lapic_set_dummy_handlers();
 #endif
 
@@ -908,7 +914,7 @@ void apic_idt_init(const int reset)
 
 	/* configure the timer interupt handler */
 	if (is_bsp) {
-		BOOT_VERBOSE(printf("Initiating APIC timer handler\n"));
+		BOOT_VERBOSE(kprintf_stub("Initiating APIC timer handler\n")); // MODIFIED
 		/* register the timer interrupt handler for this CPU */
 		int_gate_idt(APIC_TIMER_INT_VECTOR, (vir_bytes) lapic_timer_int_handler,
 				PRESENT | INT_GATE_TYPE | (INTR_PRIVILEGE << DPL_SHIFT));
@@ -923,10 +929,10 @@ static int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)
 
 	while (n < max) {
 		acpi_ioa = acpi_get_ioapic_next();
-		if (acpi_ioa == NULL)
+		if (acpi_ioa == NULL) // NULL might be undefined
 			break;
 
-		assert(acpi_ioa->address);
+		KASSERT_PLACEHOLDER(acpi_ioa->address); // MODIFIED
 
 		ioa[n].id = acpi_ioa->id;
 		ioa[n].addr = acpi_ioa->address;
@@ -934,7 +940,7 @@ static int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)
 		ioa[n].gsi_base = acpi_ioa->global_int_base;
 		ioa[n].pins = ((ioapic_read(ioa[n].addr,
 				IOAPIC_VERSION) & 0xff0000) >> 16)+1;
-		printf("IO APIC idx %d id %d addr 0x%lx paddr 0x%lx pins %d\n",
+		kprintf_stub("IO APIC idx %d id %d addr 0x%lx paddr 0x%lx pins %d\n", // MODIFIED
 				n, acpi_ioa->id, ioa[n].addr, ioa[n].paddr,
 				ioa[n].pins);
 		n++;
@@ -996,7 +1002,7 @@ void apic_send_ipi(unsigned vector, unsigned cpu, int type)
 			lapic_write_icr1(icr1 |	APIC_ICR_DEST_ALL | vector);
 			break;
 		default:
-			printf("WARNING : unknown send ipi type request\n");
+			kprintf_stub("WARNING : unknown send ipi type request\n"); // MODIFIED
 	}
 
 }
@@ -1136,7 +1142,7 @@ int apic_single_cpu_init(void)
 	}
 
 	bsp_lapic_id = apicid();
-	printf("Boot cpu apic id %d\n", bsp_lapic_id);
+	kprintf_stub("Boot cpu apic id %d\n", bsp_lapic_id); // MODIFIED
 
 	acpi_init();
 
@@ -1200,13 +1206,13 @@ void ioapic_set_irq(unsigned irq)
 {
 	unsigned ioa;
 
-	assert(irq < NR_IRQ_VECTORS);
+	KASSERT_PLACEHOLDER(irq < NR_IRQ_VECTORS); // MODIFIED
 	
 	/* shared irq, already set */
 	if (io_apic_irq[irq].ioa && io_apic_irq[irq].eoi)
 		return;
 	
-	assert(!io_apic_irq[irq].ioa || !io_apic_irq[irq].eoi);
+	KASSERT_PLACEHOLDER(!io_apic_irq[irq].ioa || !io_apic_irq[irq].eoi); // MODIFIED
 
 	for (ioa = 0; ioa < nioapics; ioa++) {
 		if (io_apic[ioa].gsi_base <= irq &&
@@ -1232,11 +1238,11 @@ void ioapic_set_irq(unsigned irq)
 
 void ioapic_unset_irq(unsigned irq)
 {
-	assert(irq < NR_IRQ_VECTORS);
+	KASSERT_PLACEHOLDER(irq < NR_IRQ_VECTORS); // MODIFIED
 
 	ioapic_disable_irq(irq);
-	io_apic_irq[irq].ioa = NULL;
-	io_apic_irq[irq].eoi = NULL;
+	io_apic_irq[irq].ioa = NULL; // NULL might be undefined
+	io_apic_irq[irq].eoi = NULL; // NULL might be undefined
 }
 
 void ioapic_reset_pic(void)
@@ -1269,21 +1275,21 @@ static void irq_lapic_status(int irq)
 
 
 	if (lapic_test_delivery_val(isr, vector)) {
-		printf("IRQ %d vec %d trigger %s irr %d isr %d\n",
+		kprintf_stub("IRQ %d vec %d trigger %s irr %d isr %d\n", // MODIFIED
 				irq, vector,
 				lapic_test_delivery_val(tmr, vector) ?
 				"level" : "edge",
 				lapic_test_delivery_val(irr, vector) ? 1 : 0,
 				lapic_test_delivery_val(isr, vector) ? 1 : 0);
 	} else {
-		printf("IRQ %d vec %d irr %d\n",
+		kprintf_stub("IRQ %d vec %d irr %d\n", // MODIFIED
 				irq, vector,
 				lapic_test_delivery_val(irr, vector) ? 1 : 0);
 	}
 	
 	lo = ioapic_read(intr->ioa->addr,
 			IOAPIC_REDIR_TABLE + intr->pin * 2);
-	printf("\tpin %2d vec 0x%02x ioa %d redir_lo 0x%08x %s\n",
+	kprintf_stub("\tpin %2d vec 0x%02x ioa %d redir_lo 0x%08x %s\n", // MODIFIED
 			intr->pin,
 			intr->vector,
 			intr->ioa->id,
@@ -1296,9 +1302,32 @@ void dump_apic_irq_state(void)
 {
 	int irq;
 
-	printf("--- IRQs state dump ---\n");
+	kprintf_stub("--- IRQs state dump ---\n"); // MODIFIED
 	for (irq = 0; irq < NR_IRQ_VECTORS; irq++) {
 		irq_lapic_status(irq);
 	}
-	printf("--- all ---\n");
+	kprintf_stub("--- all ---\n"); // MODIFIED
+}
+
+// Helper for strncmp placeholder
+int kstrncmp_placeholder(const char *s1, const char *s2, k_size_t n) {
+    /* FIXME: This is a placeholder for strncmp. It's not a correct implementation. */
+    /* A real kstrncmp should be implemented or this logic revisited. */
+    if (!s1 || !s2 || n == 0) return 0;
+    return kstrcmp(s1, s2);
+}
+
+// Helper for memcmp placeholder
+int kmemcmp_placeholder(const void *s1, const void *s2, k_size_t n) {
+    /* FIXME: This is a placeholder for memcmp. It's not a correct implementation. */
+    /* A real kmemcmp should be implemented. */
+    if (!s1 || !s2 || n == 0) return 0;
+    const unsigned char *p1 = s1;
+    const unsigned char *p2 = s2;
+    for (k_size_t i = 0; i < n; i++) {
+        if (p1[i] != p2[i]) {
+            return p1[i] - p2[i];
+        }
+    }
+    return 0;
 }

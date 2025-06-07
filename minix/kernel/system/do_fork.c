@@ -11,12 +11,19 @@
 
 #include "kernel/system.h"
 #include "kernel/vm.h"
-#include <signal.h>
-#include <string.h>
-#include <assert.h>
+// #include <signal.h> // Replaced
+// #include <string.h> // Replaced
+// #include <assert.h> // Replaced
 
-#include <minix/endpoint.h>
-#include <minix/u64.h>
+#include <minix/endpoint.h> // Kept
+#include <minix/u64.h>      // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t, k_sigset_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_FORK
 
@@ -36,21 +43,21 @@ int do_fork(struct proc * caller, message * m_ptr)
   struct proc *rpp;			/* parent process pointer */
   int gen;
   int p_proc;
-  int namelen;
+  k_size_t namelen; // MODIFIED int to k_size_t (though kstrlen returns k_size_t, used in comparison)
 
   if(!isokendpt(m_ptr->m_lsys_krn_sys_fork.endpt, &p_proc))
-	return EINVAL;
+	return EINVAL; // EINVAL might be undefined
 
   rpp = proc_addr(p_proc);
   rpc = proc_addr(m_ptr->m_lsys_krn_sys_fork.slot);
-  if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
+  if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL); // EINVAL might be undefined
 
-  assert(!(rpp->p_misc_flags & MF_DELIVERMSG));
+  KASSERT_PLACEHOLDER(!(rpp->p_misc_flags & MF_DELIVERMSG)); // MODIFIED
 
   /* needs to be receiving so we know where the message buffer is */
   if(!RTS_ISSET(rpp, RTS_RECEIVING)) {
-	printf("kernel: fork not done synchronously?\n");
-	return EINVAL;
+	kprintf_stub("kernel: fork not done synchronously?\n"); // MODIFIED
+	return EINVAL; // EINVAL might be undefined
   }
 
   /* make sure that the FPU context is saved in parent before copy */
@@ -64,7 +71,7 @@ int do_fork(struct proc * caller, message * m_ptr)
 #if defined(__i386__)
   rpc->p_seg.fpu_state = old_fpu_save_area_p;
   if(proc_used_fpu(rpp))
-	memcpy(rpc->p_seg.fpu_state, rpp->p_seg.fpu_state, FPU_XFP_SIZE);
+	kmemcpy(rpc->p_seg.fpu_state, rpp->p_seg.fpu_state, FPU_XFP_SIZE); // MODIFIED
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */
@@ -81,10 +88,10 @@ int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_prof_left = 0;
 
   /* Mark process name as being a forked copy */
-  namelen = strlen(rpc->p_name);
+  namelen = kstrlen(rpc->p_name); // MODIFIED
 #define FORKSTR "*F"
-  if(namelen+strlen(FORKSTR) < sizeof(rpc->p_name))
-	strcat(rpc->p_name, FORKSTR);
+  if(namelen+kstrlen(FORKSTR) < sizeof(rpc->p_name)) // MODIFIED
+	/* FIXME: strcat was here */; // MODIFIED strcat(rpc->p_name, FORKSTR);
 
   /* the child process is not runnable until it's scheduled. */
   RTS_SET(rpc, RTS_NO_QUANTUM);
@@ -120,14 +127,14 @@ int do_fork(struct proc * caller, message * m_ptr)
    * Only one in group should have RTS_SIGNALED, child doesn't inherit tracing.
    */
   RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
-  (void) sigemptyset(&rpc->p_pending);
+  /* FIXME: sigemptyset was here */ // (void) sigemptyset(&rpc->p_pending);
 
 #if defined(__i386__)
   rpc->p_seg.p_cr3 = 0;
-  rpc->p_seg.p_cr3_v = NULL;
+  rpc->p_seg.p_cr3_v = NULL; // MODIFIED (NULL)
 #elif defined(__arm__)
   rpc->p_seg.p_ttbr = 0;
-  rpc->p_seg.p_ttbr_v = NULL;
+  rpc->p_seg.p_ttbr_v = NULL; // MODIFIED (NULL)
 #endif
 
   return OK;

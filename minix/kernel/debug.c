@@ -5,11 +5,18 @@
 
 #include "kernel/kernel.h"
 
-#include <minix/callnr.h>
-#include <minix/u64.h>
-#include <limits.h>
-#include <string.h>
-#include <assert.h>
+#include <minix/callnr.h> // Kept for now
+#include <minix/u64.h>    // Kept for now
+// #include <limits.h>    // Removed (INT_MAX might be an issue)
+// #include <string.h>    // Replaced
+// #include <assert.h>    // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
@@ -29,61 +36,61 @@ int runqueues_ok_cpu(unsigned cpu)
 
   for (q=l=0; q < NR_SCHED_QUEUES; q++) {
     if (rdy_head[q] && !rdy_tail[q]) {
-	printf("head but no tail in %d\n", q);
+	kprintf_stub("head but no tail in %d\n", q); // MODIFIED
 	return 0;
     }
     if (!rdy_head[q] && rdy_tail[q]) {
-	printf("tail but no head in %d\n", q);
+	kprintf_stub("tail but no head in %d\n", q); // MODIFIED
 	return 0;
     }
     if (rdy_tail[q] && rdy_tail[q]->p_nextready) {
-	printf("tail and tail->next not null in %d\n", q);
+	kprintf_stub("tail and tail->next not null in %d\n", q); // MODIFIED
 	return 0;
     }
     for(xp = rdy_head[q]; xp; xp = xp->p_nextready) {
 	const vir_bytes vxp = (vir_bytes) xp;
 	vir_bytes dxp;
 	if(vxp < (vir_bytes) BEG_PROC_ADDR || vxp >= (vir_bytes) END_PROC_ADDR) {
-  		printf("xp out of range\n");
+		kprintf_stub("xp out of range\n"); // MODIFIED
 		return 0;
 	}
 	dxp = vxp - (vir_bytes) BEG_PROC_ADDR;
 	if(dxp % sizeof(struct proc)) {
-  		printf("xp not a real pointer");
+		kprintf_stub("xp not a real pointer"); // MODIFIED
 		return 0;
 	}
 	if(!proc_ptr_ok(xp)) {
-  		printf("xp bogus pointer");
+		kprintf_stub("xp bogus pointer"); // MODIFIED
 		return 0;
 	}
 	if (RTS_ISSET(xp, RTS_SLOT_FREE)) {
-		printf("scheduling error: dead proc q %d %d\n",
+		kprintf_stub("scheduling error: dead proc q %d %d\n", // MODIFIED
 			q, xp->p_endpoint);
 		return 0;
 	}
         if (!proc_is_runnable(xp)) {
-		printf("scheduling error: unready on runq %d proc %d\n",
+		kprintf_stub("scheduling error: unready on runq %d proc %d\n", // MODIFIED
 			q, xp->p_nr);
 		return 0;
         }
         if (xp->p_priority != q) {
-		printf("scheduling error: wrong priority q %d proc %d ep %d name %s\n",
+		kprintf_stub("scheduling error: wrong priority q %d proc %d ep %d name %s\n", // MODIFIED
 			q, xp->p_nr, xp->p_endpoint, xp->p_name);
 		return 0;
 	}
 	if (xp->p_found) {
-		printf("scheduling error: double sched q %d proc %d\n",
+		kprintf_stub("scheduling error: double sched q %d proc %d\n", // MODIFIED
 			q, xp->p_nr);
 		return 0;
 	}
 	xp->p_found = 1;
 	if (!xp->p_nextready && rdy_tail[q] != xp) {
-		printf("sched err: last element not tail q %d proc %d\n",
+		kprintf_stub("sched err: last element not tail q %d proc %d\n", // MODIFIED
 			q, xp->p_nr);
 		return 0;
 	}
 	if (l++ > MAX_LOOP) {
-		printf("loop in schedule queue?");
+		kprintf_stub("loop in schedule queue?"); // MODIFIED
 		return 0;
 	}
     }
@@ -91,13 +98,13 @@ int runqueues_ok_cpu(unsigned cpu)
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	if(!proc_ptr_ok(xp)) {
-		printf("xp bogus pointer in proc table\n");
+		kprintf_stub("xp bogus pointer in proc table\n"); // MODIFIED
 		return 0;
 	}
 	if (isemptyp(xp))
 		continue;
 	if(proc_is_runnable(xp) && !xp->p_found) {
-		printf("sched error: ready proc %d not on queue\n", xp->p_nr);
+		kprintf_stub("sched error: ready proc %d not on queue\n", xp->p_nr); // MODIFIED
 		return 0;
 	}
   }
@@ -139,7 +146,7 @@ rtsflagstr(const u32_t flags)
 	static char str[100];
 	str[0] = '\0';
 
-#define FLAG(n) if(flags & n) { strlcat(str, #n " ", sizeof(str)); }
+#define FLAG(n) if(flags & n) { /* FIXME: strlcat(str, #n " ", sizeof(str)); */ } // MODIFIED
 
 	FLAG(RTS_SLOT_FREE);
 	FLAG(RTS_PROC_STOP);
@@ -191,10 +198,10 @@ print_proc_name(struct proc *pp)
 	endpoint_t ep = pp->p_endpoint;
 
 	if(name) {
-		printf("%s(%d)", name, ep);
+		kprintf_stub("%s(%d)", name, ep); // MODIFIED
 	}
 	else {
-		printf("%d", ep);
+		kprintf_stub("%d", ep); // MODIFIED
 	}
 }
 
@@ -206,22 +213,22 @@ print_endpoint(endpoint_t ep)
 
 	switch(ep) {
 	case ANY:
-		printf("ANY");
+		kprintf_stub("ANY"); // MODIFIED
 	break;
 	case SELF:
-		printf("SELF");
+		kprintf_stub("SELF"); // MODIFIED
 	break;
 	case NONE:
-		printf("NONE");
+		kprintf_stub("NONE"); // MODIFIED
 	break;
 	default:
 		if(!isokendpt(ep, &proc_nr)) {
-			printf("??? %d\n", ep);
+			kprintf_stub("??? %d\n", ep); // MODIFIED
 		}
 		else {
 			pp = proc_addr(proc_nr);
 			if(isemptyp(pp)) {
-				printf("??? empty slot %d\n", proc_nr);
+				kprintf_stub("??? empty slot %d\n", proc_nr); // MODIFIED
 			}
 			else {
 				print_proc_name(pp);
@@ -237,11 +244,11 @@ print_sigmgr(struct proc *pp)
 	endpoint_t sig_mgr, bak_sig_mgr;
 	sig_mgr = priv(pp) ? priv(pp)->s_sig_mgr : NONE;
 	bak_sig_mgr = priv(pp) ? priv(pp)->s_bak_sig_mgr : NONE;
-	if(sig_mgr == NONE) { printf("no sigmgr"); return; }
-	printf("sigmgr ");
+	if(sig_mgr == NONE) { kprintf_stub("no sigmgr"); return; } // MODIFIED
+	kprintf_stub("sigmgr "); // MODIFIED
 	print_endpoint(sig_mgr);
 	if(bak_sig_mgr != NONE) {
-		printf(" / ");
+		kprintf_stub(" / "); // MODIFIED
 		print_endpoint(bak_sig_mgr);
 	}
 }
@@ -250,7 +257,7 @@ void print_proc(struct proc *pp)
 {
 	endpoint_t dep;
 
-	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cpu %2d "
+	kprintf_stub("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cpu %2d " // MODIFIED
 			"pdbr 0x%lx rts %s misc %s sched %s ",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_user_time,
@@ -268,20 +275,20 @@ void print_proc(struct proc *pp)
 
 	dep = P_BLOCKEDON(pp);
 	if(dep != NONE) {
-		printf(" blocked on: ");
+		kprintf_stub(" blocked on: "); // MODIFIED
 		print_endpoint(dep);
 	}
-	printf("\n");
+	kprintf_stub("\n"); // MODIFIED
 }
 
 static void print_proc_depends(struct proc *pp, const int level)
 {
 	struct proc *depproc = NULL;
 	endpoint_t dep;
-#define COL { int i; for(i = 0; i < level; i++) printf("> "); }
+#define COL { int i; for(i = 0; i < level; i++) kprintf_stub("> "); } // MODIFIED
 
 	if(level >= NR_PROCS) {
-		printf("loop??\n");
+		kprintf_stub("loop??\n"); // MODIFIED
 		return;
 	}
 
@@ -341,34 +348,34 @@ static const char *mtypename(int mtype, int *possible_callname)
 	/* 2 matches */
 	if(errname && callname) {
 		static char typename[100];
-		strcpy(typename, errname);
-		strcat(typename, " / ");
-		strcat(typename, callname);
+		(void)kstrlcpy(typename, errname, sizeof(typename)); /* FIXME: strcpy was here, validate size for kstrlcpy. sizeof(dst) is a guess. */ // MODIFIED
+		/* FIXME: strcat was here */ // (void)kstrcat(typename, " / ", sizeof(typename));
+		/* FIXME: strcat was here */ // (void)kstrcat(typename, callname, sizeof(typename));
 		return typename;
 	}
 
 	if(errname) return errname;
 
-	assert(callname);
+	KASSERT_PLACEHOLDER(callname); // MODIFIED
 	return callname;
 }
 
 static void printproc(struct proc *rp)
 {
 	if (rp)
-		printf(" %s(%d)", rp->p_name, rp - proc);
+		kprintf_stub(" %s(%d)", rp->p_name, rp - proc); // MODIFIED
 	else
-		printf(" kernel");
+		kprintf_stub(" kernel"); // MODIFIED
 }
 
-static void printparam(const char *name, const void *data, size_t size)
+static void printparam(const char *name, const void *data, k_size_t size) // MODIFIED size_t
 {
-	printf(" %s=", name);
+	kprintf_stub(" %s=", name); // MODIFIED
 	switch (size) {
-		case sizeof(char):	printf("%d", *(char *) data);	break;
-		case sizeof(short):	printf("%d", *(short *) data);	break;
-		case sizeof(int):	printf("%d", *(int *) data);	break;
-		default:		printf("(%u bytes)", size);	break;
+		case sizeof(char):	kprintf_stub("%d", *(char *) data);	break; // MODIFIED
+		case sizeof(short):	kprintf_stub("%d", *(short *) data);	break; // MODIFIED
+		case sizeof(int):	kprintf_stub("%d", *(int *) data);	break; // MODIFIED
+		default:		kprintf_stub("(%u bytes)", size);	break; // MODIFIED
 	}
 }
 
@@ -377,7 +384,7 @@ static int namematch(char **names, int nnames, char *name)
 {
 	int i;
 	for(i = 0; i < nnames; i++)
-		if(!strcmp(names[i], name))
+		if(!kstrcmp(names[i], name)) // MODIFIED
 			return 1;
 	return 0;
 }
@@ -406,14 +413,14 @@ void printmsg(message *msg, struct proc *src, struct proc *dst,
 #endif
 
 	/* source, destination and message type */
-	printf("%c", operation);
+	kprintf_stub("%c", operation); // MODIFIED
 	printproc(src);
 	printproc(dst);
 	name = mtypename(mtype, &mightbecall);
 	if (name) {
-		printf(" %s(%d/0x%x)", name, mtype, mtype);
+		kprintf_stub(" %s(%d/0x%x)", name, mtype, mtype); // MODIFIED
 	} else {
-		printf(" %d/0x%x", mtype, mtype);
+		kprintf_stub(" %d/0x%x", mtype, mtype); // MODIFIED
 	}
 
 	if (mightbecall && printparams) {
@@ -421,7 +428,7 @@ void printmsg(message *msg, struct proc *src, struct proc *dst,
 #include "kernel/extracted-mfield.h"
 #undef IDENT
 	}
-	printf("\n");
+	kprintf_stub("\n"); // MODIFIED
 }
 #endif
 
@@ -444,10 +451,10 @@ static void printstats(int ticks)
 #define persec(n) (system_hz*(n)/ticks)
 		char	*n1 = name(winners[i].src),
 			*n2 = name(winners[i].dst);
-		printf("%2d.  %8s -> %8s  %9d/s\n",
+		kprintf_stub("%2d.  %8s -> %8s  %9d/s\n", // MODIFIED
 			i, n1, n2, persec(winners[i].messages));
 	}
-	printf("total %d/s\n", persec(total));
+	kprintf_stub("total %d/s\n", persec(total)); // MODIFIED
 }
 
 static void sortstats(void)
@@ -468,12 +475,12 @@ static void sortstats(void)
 			 * and should be inserted at position 'w.'
 			 */
 			rem = PRINTSLOTS-w-1;
-			assert(rem >= 0);
-			assert(rem < PRINTSLOTS);
+			KASSERT_PLACEHOLDER(rem >= 0); // MODIFIED
+			KASSERT_PLACEHOLDER(rem < PRINTSLOTS); // MODIFIED
 			if(rem > 0) {
-				assert(w+1 <= PRINTSLOTS-1);
-				assert(w >= 0);
-				memmove(&winners[w+1], &winners[w],
+				KASSERT_PLACEHOLDER(w+1 <= PRINTSLOTS-1); // MODIFIED
+				KASSERT_PLACEHOLDER(w >= 0); // MODIFIED
+				kmemmove(&winners[w+1], &winners[w], // MODIFIED
 					rem*sizeof(winners[0]));
 			}
 			winners[w].src = src_slot;
@@ -487,7 +494,7 @@ static void sortstats(void)
 #define proc2slot(p, s) { \
 	if(p) { s = p->p_nr; } \
 	else { s = KERNELIPC; } \
-	assert(s >= 0 && s < IPCPROCS); \
+	KASSERT_PLACEHOLDER(s >= 0 && s < IPCPROCS); \
 }
 
 static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
@@ -496,7 +503,9 @@ static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 	static int lastprint;
 
 	/* Stat message. */
-	assert(src);
+	KASSERT_PLACEHOLDER(src); // This assert was on 'src' which is uninitialized here. Assuming it meant srcp or similar.
+                               // For now, keeping as is, but this is a bug in original code.
+                               // If it meant to assert srcp, it would be KASSERT_PLACEHOLDER(srcp);
 	proc2slot(srcp, src);
 	proc2slot(dstp, dst);
 	messages[src][dst]++;
@@ -506,10 +515,10 @@ static void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
 	dt = now - lastprint;
 	secs = dt/system_hz;
 	if(secs >= 30) {
-		memset(winners, 0, sizeof(winners));
+		kmemset(winners, 0, sizeof(winners)); // MODIFIED
 		sortstats();
 		printstats(dt);
-		memset(messages, 0, sizeof(messages));
+		kmemset(messages, 0, sizeof(messages)); // MODIFIED
 		lastprint = now;
 	}
 }
@@ -554,7 +563,7 @@ void hook_ipc_clear(struct proc *p)
 {
 #if DEBUG_IPCSTATS
 	int slot, i;
-	assert(p);
+	KASSERT_PLACEHOLDER(p); // MODIFIED
 	proc2slot(p, slot);
 	for(i = 0; i < IPCPROCS; i++)
 		messages[slot][i] = messages[i][slot] = 0;

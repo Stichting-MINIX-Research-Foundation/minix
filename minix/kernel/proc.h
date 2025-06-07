@@ -1,8 +1,8 @@
 #ifndef PROC_H
 #define PROC_H
 
-#include <minix/const.h>
-#include <sys/cdefs.h>
+#include <minix/const.h> // Kept
+// #include <sys/cdefs.h> // Removed
 
 #ifndef __ASSEMBLY__
 
@@ -14,10 +14,17 @@
  * fields are defined in the assembler include file sconst.h.  When changing
  * struct proc, be sure to change sconst.h to match.
  */
-#include <minix/com.h>
-#include <minix/portio.h>
-#include "const.h"
-#include "priv.h"
+#include <minix/com.h>      // Kept
+#include <minix/portio.h>   // Kept for now (for phys_bytes, etc.)
+#include "const.h"           // Kept (local kernel header)
+#include "priv.h"            // Kept (local kernel header)
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_clock_t, k_sigset_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
@@ -54,13 +61,13 @@ struct proc {
 	unsigned long preempted;
   } p_accounting;
 
-  clock_t p_dequeued;		/* uptime at which process was last dequeued */
+  k_clock_t p_dequeued;		/* uptime at which process was last dequeued */ // MODIFIED clock_t
 
-  clock_t p_user_time;		/* user time in ticks */
-  clock_t p_sys_time;		/* sys time in ticks */
+  k_clock_t p_user_time;		/* user time in ticks */ // MODIFIED clock_t
+  k_clock_t p_sys_time;		/* sys time in ticks */ // MODIFIED clock_t
 
-  clock_t p_virt_left;		/* number of ticks left on virtual timer */
-  clock_t p_prof_left;		/* number of ticks left on profile timer */
+  k_clock_t p_virt_left;		/* number of ticks left on virtual timer */ // MODIFIED clock_t
+  k_clock_t p_prof_left;		/* number of ticks left on profile timer */ // MODIFIED clock_t
 
   u64_t p_cycles;		/* how many cycles did the process use */
   u64_t p_kcall_cycles;		/* kernel cycles caused by this proc (kcall) */
@@ -75,7 +82,7 @@ struct proc {
   endpoint_t p_getfrom_e;	/* from whom does process want to receive? */
   endpoint_t p_sendto_e;	/* to whom does process want to send? */
 
-  sigset_t p_pending;		/* bit map for pending kernel signals */
+  k_sigset_t p_pending;		/* bit map for pending kernel signals */ // MODIFIED sigset_t
 
   char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
 

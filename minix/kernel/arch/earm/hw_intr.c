@@ -2,6 +2,12 @@
 #include "hw_intr.h"
 #include "bsp_intr.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 void hw_intr_mask(int irq){
 	bsp_irq_mask(irq);
 }

@@ -16,15 +16,21 @@
  *
  */
 
-#include <string.h>
+// #include <string.h> // Replaced
 
 #include "kernel/system.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
 
 
 #if USE_GETINFO
 
-#include <minix/u64.h>
-#include <sys/resource.h>
+#include <minix/u64.h>      // Kept
+// #include <sys/resource.h> // Removed
 
 /*===========================================================================*
  *			        update_idle_time			     *
@@ -49,12 +55,12 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 /* Request system information to be copied to caller's address space. This
  * call simply copies entire data structures to the caller.
  */
-  size_t length;
+  k_size_t length; // MODIFIED size_t
   vir_bytes src_vir; 
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;
   struct proc *p;
-  struct rusage r_usage;
+  struct rusage r_usage; // This struct might be undefined now
 
   /* Set source address and length based on request type. */
   switch (m_ptr->m_lsys_krn_sys_getinfo.request) {
@@ -107,7 +113,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
     case GET_PROC: {
         nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
 		caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
-	if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
+	if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */ // EINVAL might be undefined
         length = sizeof(struct proc);
         src_vir = (vir_bytes) proc_addr(nr);
         break;
@@ -115,7 +121,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
     case GET_PRIV: {
         nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
             caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
-        if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
+        if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */ // EINVAL might be undefined
         length = sizeof(struct priv);
         src_vir = (vir_bytes) priv_addr(nr_to_id(nr));
         break;
@@ -123,7 +129,7 @@ int do_getinfo(struct proc * caller, message * m_ptr)
     case GET_REGS: {
         nr_e = (m_ptr->m_lsys_krn_sys_getinfo.val_len2_e == SELF) ?
             caller->p_endpoint : m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
-        if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
+        if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */ // EINVAL might be undefined
         p = proc_addr(nr);
         length = sizeof(p->p_reg);
         src_vir = (vir_bytes) &p->p_reg;
@@ -134,7 +140,8 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	m_ptr->m_krn_lsys_sys_getwhoami.endpt = caller->p_endpoint;
 	len = MIN(sizeof(m_ptr->m_krn_lsys_sys_getwhoami.name),
 		sizeof(caller->p_name))-1;
-	strncpy(m_ptr->m_krn_lsys_sys_getwhoami.name, caller->p_name, len);
+	// MODIFIED strncpy to kstrlcpy with FIXME
+	(void)kstrlcpy(m_ptr->m_krn_lsys_sys_getwhoami.name, caller->p_name, len); /* FIXME: strncpy(dst,src,n) replaced. Validate 'n' is buffer size for kstrlcpy, not just copy length. Semantics differ. */
 	m_ptr->m_krn_lsys_sys_getwhoami.name[len] = '\0';
 	m_ptr->m_krn_lsys_sys_getwhoami.privflags = priv(caller)->s_flags;
         m_ptr->m_krn_lsys_sys_getwhoami.initflags = priv(caller)->s_init_flags;
@@ -162,12 +169,12 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 	int bin = m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
 
 	if(bin < 0 || bin >= RANDOM_SOURCES) {
-		printf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);
-		return EINVAL;
+		kprintf_stub("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin); // MODIFIED
+		return EINVAL; // EINVAL might be undefined
 	}
 
 	if(krandom.bin[bin].r_size < RANDOM_ELEMENTS)
-		return ENOENT;
+		return ENOENT; // ENOENT might be undefined
 
     	length = sizeof(krandom.bin[bin]);
     	src_vir = (vir_bytes) &krandom.bin[bin];
@@ -190,26 +197,26 @@ int do_getinfo(struct proc * caller, message * m_ptr)
         break;
     }
     case GET_CPUTICKS: {
-	uint64_t ticks[MINIX_CPUSTATES];
+	uint64_t ticks[MINIX_CPUSTATES]; // uint64_t might be undefined
 	unsigned int cpu;
 	cpu = (unsigned int)m_ptr->m_lsys_krn_sys_getinfo.val_len2_e;
 	if (cpu >= CONFIG_MAX_CPUS)
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 	get_cpu_ticks(cpu, ticks);
 	length = sizeof(ticks);
 	src_vir = (vir_bytes)ticks;
 	break;
     }
     default:
-	printf("do_getinfo: invalid request %d\n",
+	kprintf_stub("do_getinfo: invalid request %d\n", // MODIFIED
 		m_ptr->m_lsys_krn_sys_getinfo.request);
-        return(EINVAL);
+        return(EINVAL); // EINVAL might be undefined
   }
 
   /* Try to make the actual copy for the requested data. */
   if (m_ptr->m_lsys_krn_sys_getinfo.val_len > 0 &&
-	length > m_ptr->m_lsys_krn_sys_getinfo.val_len)
-	return (E2BIG);
+	length > (k_size_t)m_ptr->m_lsys_krn_sys_getinfo.val_len) // MODIFIED size_t cast
+	return (E2BIG); // E2BIG might be undefined
 
   r = data_copy_vmcheck(caller, KERNEL, src_vir, caller->p_endpoint,
 	m_ptr->m_lsys_krn_sys_getinfo.val_ptr, length);
@@ -225,4 +232,3 @@ int do_getinfo(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_GETINFO */
-

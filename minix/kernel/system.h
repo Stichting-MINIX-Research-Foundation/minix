@@ -32,6 +32,13 @@
 
 #include "kernel/kernel.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 int do_exec(struct proc * caller, message *m_ptr);
 #if ! USE_EXEC
 #define do_exec NULL
@@ -207,4 +214,3 @@ int do_padconf(struct proc * caller, message *m_ptr);
 #endif
 
 #endif	/* SYSTEM_H */
-

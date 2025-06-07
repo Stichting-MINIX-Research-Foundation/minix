@@ -15,7 +15,14 @@
  */
 
 #include "kernel/system.h"
-#include "kernel/watchdog.h"
+#include "kernel/watchdog.h" // Kept (local kernel header)
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if SPROFILE
 
@@ -48,13 +55,13 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 	 * Turn on profiling.
 	 */
 	if (sprofiling) {
-		printf("SYSTEM: start s-profiling: already started\n");
-		return EBUSY;
+		kprintf_stub("SYSTEM: start s-profiling: already started\n"); // MODIFIED
+		return EBUSY; // EBUSY might be undefined
 	}
 
 	/* Test endpoint number. */
 	if(!isokendpt(m_ptr->m_lsys_krn_sys_sprof.endpt, &proc_nr))
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 
 	/* Set parameters for statistical profiler. */
 	sprof_ep = m_ptr->m_lsys_krn_sys_sprof.endpt;
@@ -82,8 +89,8 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 				return err;
 			break;
 		default:
-			printf("ERROR : unknown profiling interrupt type\n");
-			return EINVAL;
+			kprintf_stub("ERROR : unknown profiling interrupt type\n"); // MODIFIED
+			return EINVAL; // EINVAL might be undefined
 	}
 	
 	sprofiling = 1;
@@ -99,8 +106,8 @@ int do_sprofile(struct proc * caller, message * m_ptr)
 	 * Stop CMOS timer.  Copy info struct to user process.
 	 */
 	if (!sprofiling) {
-		printf("SYSTEM: stop s-profiling: not started\n");
-		return EBUSY;
+		kprintf_stub("SYSTEM: stop s-profiling: not started\n"); // MODIFIED
+		return EBUSY; // EBUSY might be undefined
 	}
 
 	sprofiling = 0;
@@ -124,9 +131,8 @@ int do_sprofile(struct proc * caller, message * m_ptr)
   	return OK;
 
   default:
-	return EINVAL;
+	return EINVAL; // EINVAL might be undefined
   }
 }
 
 #endif /* SPROFILE */
-

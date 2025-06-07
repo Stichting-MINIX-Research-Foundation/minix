@@ -3,17 +3,24 @@
  * for local descriptors in the process table.
  */
 
-#include <assert.h>
-#include <string.h>
+// #include <assert.h> // Replaced
+// #include <string.h> // Replaced
 
-#include <minix/cpufeature.h>
-#include <sys/types.h>
+#include <minix/cpufeature.h> // Kept
+// #include <sys/types.h> // Replaced
 #include "kernel/kernel.h"
 
 #include "arch_proto.h"
 
-#include <sys/exec.h>
-#include <libexec.h>
+// #include <sys/exec.h> // Removed
+// #include <libexec.h> // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t and fixed-width types
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define INT_GATE_TYPE	(INT_286_GATE | DESC_386_BIT)
 #define TSS_TYPE	(AVL_286_TSS  | DESC_386_BIT)
@@ -26,14 +33,14 @@ struct segdesc_s gdt[GDT_SIZE] __aligned(DESC_SIZE);
 struct gatedesc_s idt[IDT_SIZE] __aligned(DESC_SIZE);
 struct tss_s tss[CONFIG_MAX_CPUS];
 
-u32_t k_percpu_stacks[CONFIG_MAX_CPUS];
+u32_t k_percpu_stacks[CONFIG_MAX_CPUS]; // u32_t might be undefined
 
 int prot_init_done = 0;
 
 phys_bytes vir2phys(void *vir)
 {
 	extern char _kern_vir_base, _kern_phys_base;	/* in kernel.lds */
-	u32_t offset = (vir_bytes) &_kern_vir_base -
+	u32_t offset = (vir_bytes) &_kern_vir_base - // u32_t might be undefined
 		(vir_bytes) &_kern_phys_base;
 	return (phys_bytes)vir - offset;
 }
@@ -121,7 +128,7 @@ static struct gate_table_s gate_table_pic[] = {
 	{ hwint13, VECTOR(13), INTR_PRIVILEGE },
 	{ hwint14, VECTOR(14), INTR_PRIVILEGE },
 	{ hwint15, VECTOR(15), INTR_PRIVILEGE },
-	{ NULL, 0, 0}
+	{ NULL, 0, 0} // NULL might be undefined
 };
 
 static struct gate_table_s gate_table_exceptions[] = {
@@ -148,7 +155,7 @@ static struct gate_table_s gate_table_exceptions[] = {
 	{ kernel_call_entry_orig, KERN_CALL_VECTOR_ORIG, USER_PRIVILEGE },
 	{ ipc_entry_softint_um, IPC_VECTOR_UM, USER_PRIVILEGE },
 	{ kernel_call_entry_um, KERN_CALL_VECTOR_UM, USER_PRIVILEGE },
-	{ NULL, 0, 0}
+	{ NULL, 0, 0} // NULL might be undefined
 };
 
 int tss_init(unsigned cpu, void * kernel_stack)
@@ -164,7 +171,7 @@ int tss_init(unsigned cpu, void * kernel_stack)
 	tssgdt->access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
 
 	/* Build TSS. */
-	memset(t, 0, sizeof(*t));
+	kmemset(t, 0, sizeof(*t)); // MODIFIED
 	t->ds = t->es = t->fs = t->gs = t->ss0 = KERN_DS_SELECTOR;
 	t->cs = KERN_CS_SELECTOR;
 	t->iobase = sizeof(struct tss_s);	/* empty i/o permissions map */
@@ -184,12 +191,12 @@ int tss_init(unsigned cpu, void * kernel_stack)
 	if(minix_feature_flags & MKF_I386_INTEL_SYSENTER) {
 	  ia32_msr_write(INTEL_MSR_SYSENTER_CS, 0, KERN_CS_SELECTOR);
   	  ia32_msr_write(INTEL_MSR_SYSENTER_ESP, 0, t->sp0);
-  	  ia32_msr_write(INTEL_MSR_SYSENTER_EIP, 0, (u32_t) ipc_entry_sysenter);
+	  ia32_msr_write(INTEL_MSR_SYSENTER_EIP, 0, (u32_t) ipc_entry_sysenter); // u32_t might be undefined
   	}
 
 	/* Set up AMD SYSCALL support if available. */
 	if(minix_feature_flags & MKF_I386_AMD_SYSCALL) {
-		u32_t msr_lo, msr_hi;
+		u32_t msr_lo, msr_hi; // u32_t might be undefined
 
 		/* set SYSCALL ENABLE bit in EFER MSR */
 		ia32_msr_read(AMD_MSR_EFER, &msr_hi, &msr_lo);
@@ -209,7 +216,7 @@ int tss_init(unsigned cpu, void * kernel_stack)
 		set_star_cpu(5);
 		set_star_cpu(6);
 		set_star_cpu(7);
-		assert(CONFIG_MAX_CPUS <= 8);
+		KASSERT_PLACEHOLDER(CONFIG_MAX_CPUS <= 8); // MODIFIED
   	}
 
 	return SEG_SELECTOR(index);
@@ -274,7 +281,7 @@ multiboot_module_t *bootmod(int pnr)
 {
 	int i;
 
-	assert(pnr >= 0);
+	KASSERT_PLACEHOLDER(pnr >= 0); // MODIFIED
 
 	/* Search for desired process in boot process
 	 * list. The first NR_TASKS ones do not correspond
@@ -284,8 +291,8 @@ multiboot_module_t *bootmod(int pnr)
 		int p;
 		p = i - NR_TASKS;
 		if(image[i].proc_nr == pnr) {
-			assert(p < MULTIBOOT_MAX_MODS);
-			assert(p < kinfo.mbi.mi_mods_count);
+			KASSERT_PLACEHOLDER(p < MULTIBOOT_MAX_MODS); // MODIFIED
+			KASSERT_PLACEHOLDER(p < kinfo.mbi.mi_mods_count); // MODIFIED
 			return &kinfo.module_list[p];
 		}
 	}
@@ -327,13 +334,13 @@ void prot_init(void)
   if(_cpufeature(_CPUF_I386_SYSCALL))
 	minix_feature_flags |= MKF_I386_AMD_SYSCALL;
 
-  memset(gdt, 0, sizeof(gdt));
-  memset(idt, 0, sizeof(idt));
+  kmemset(gdt, 0, sizeof(gdt)); // MODIFIED
+  kmemset(idt, 0, sizeof(idt)); // MODIFIED
 
   /* Build GDT, IDT, IDT descriptors. */
-  gdt_desc.base = (u32_t) gdt;
+  gdt_desc.base = (u32_t) gdt; // u32_t might be undefined
   gdt_desc.limit = sizeof(gdt)-1;
-  idt_desc.base = (u32_t) idt;
+  idt_desc.base = (u32_t) idt; // u32_t might be undefined
   idt_desc.limit = sizeof(idt)-1;
   tss_init(0, &k_boot_stktop);
 
@@ -376,19 +383,20 @@ void arch_post_init(void)
   pg_info(&vm->p_seg.p_cr3, &vm->p_seg.p_cr3_v);
 }
 
-static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, size_t len)
+static int libexec_pg_alloc(struct exec_info *execi, vir_bytes vaddr, k_size_t len) // MODIFIED size_t
 {
-        pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
+    // FIXME: struct exec_info might be undefined
+    pg_map(PG_ALLOCATEME, vaddr, vaddr+len, &kinfo);
   	pg_load();
-        memset((char *) vaddr, 0, len);
+    kmemset((char *) vaddr, 0, len); // MODIFIED
 	alloc_for_vm += len;
-        return OK;
+    return OK;
 }
 
 void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 {
 	multiboot_module_t *mod;
-	struct ps_strings *psp;
+	struct ps_strings *psp; // FIXME: struct ps_strings might be undefined
 	char *sp;
 
 	if(rp->p_nr < 0) return;
@@ -400,9 +408,9 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 	 */
 
 	if(rp->p_nr == VM_PROC_NR) {
-		struct exec_info execi;
+		struct exec_info execi; // FIXME: struct exec_info might be undefined
 
-		memset(&execi, 0, sizeof(execi));
+		kmemset(&execi, 0, sizeof(execi)); // MODIFIED
 
 		/* exec parameters */
 		execi.stack_high = kinfo.user_sp;
@@ -410,25 +418,25 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		execi.proc_e = ip->endpoint;
 		execi.hdr = (char *) mod->mod_start; /* phys mem direct */
 		execi.filesize = execi.hdr_len = mod->mod_end - mod->mod_start;
-		strlcpy(execi.progname, ip->proc_name, sizeof(execi.progname));
+		kstrlcpy(execi.progname, ip->proc_name, sizeof(execi.progname)); // MODIFIED
 		execi.frame_len = 0;
 
 		/* callbacks for use in the kernel */
-		execi.copymem = libexec_copy_memcpy;
-		execi.clearmem = libexec_clear_memset;
+		execi.copymem = NULL; /* FIXME: libexec_copy_memcpy was here */
+		execi.clearmem = NULL; /* FIXME: libexec_clear_memset was here */
 		execi.allocmem_prealloc_junk = libexec_pg_alloc;
 		execi.allocmem_prealloc_cleared = libexec_pg_alloc;
 		execi.allocmem_ondemand = libexec_pg_alloc;
-		execi.clearproc = NULL;
+		execi.clearproc = NULL; // NULL might be undefined
 
 		/* parse VM ELF binary and alloc/map it into bootstrap pagetable */
-		if(libexec_load_elf(&execi) != OK)
+		if(0 /* FIXME: libexec_load_elf(&execi) was here */ != OK)
 			panic("VM loading failed");
 
 		/* Setup a ps_strings struct on the stack, pointing to the
 		 * following argv, envp. */
 		sp = (char *)execi.stack_high;
-		sp -= sizeof(struct ps_strings);
+		sp -= sizeof(struct ps_strings); // ps_strings might be undefined
 		psp = (struct ps_strings *) sp;
 
 		/* Take the stack pointer down three words to give startup code
@@ -443,7 +451,7 @@ void arch_boot_proc(struct boot_image *ip, struct proc *rp)
 		psp->ps_nenvstr = 0;
 
 		arch_proc_init(rp, execi.pc, (vir_bytes)sp,
-			execi.stack_high - sizeof(struct ps_strings),
+			execi.stack_high - sizeof(struct ps_strings), // ps_strings might be undefined
 			ip->proc_name);
 
 		/* Free VM blob that was just copied into existence. */

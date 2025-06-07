@@ -1,16 +1,22 @@
+#include <minix/minlib.h>      // Kept
+#include <minix/cpufeature.h>  // Kept
+#include <machine/partition.h> // Kept
+// #include "string.h"         // Removed (was likely meant to be <string.h>, not used)
+#include "direct_utils.h"      // Kept (local header)
+#include "serial.h"            // Kept (local header)
+#include "glo.h"               // Kept (local header)
 
-#include <minix/minlib.h>
-#include <minix/cpufeature.h>
-#include <machine/partition.h>
-#include "string.h"
-#include "direct_utils.h"
-#include "serial.h"
-#include "glo.h"
+// #include <sys/video.h> // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Give non-zero values to avoid them in BSS */
 static int print_line = 1, print_col = 1;
-
-#include <sys/video.h>
 
 extern char *video_mem;
 #define VIDOFFSET(line, col) ((line) * MULTIBOOT_CONSOLE_COLS * 2 + (col) * 2)
@@ -40,10 +46,11 @@ void direct_cls(void)
 	print_line = print_col = 0;
 
 	/* Tell video hardware origin is 0. */
-	outb(C_6845+INDEX, VID_ORG);
-	outb(C_6845+DATA, 0);
-	outb(C_6845+INDEX, VID_ORG+1);
-	outb(C_6845+DATA, 0);
+	// FIXME: C_6845, INDEX, DATA, VID_ORG will be undefined
+	outb(0x3D4 /*C_6845*/+0 /*INDEX*/, 12 /*VID_ORG*/);
+	outb(0x3D4 /*C_6845*/+1 /*DATA*/, 0);
+	outb(0x3D4 /*C_6845*/+0 /*INDEX*/, 12 /*VID_ORG*/+1);
+	outb(0x3D4 /*C_6845*/+1 /*DATA*/, 0);
 }
 
 static void direct_scroll_up(int lines) 
@@ -127,4 +134,3 @@ int direct_read_char(unsigned char *ch)
 
 	return 0;
 }
-

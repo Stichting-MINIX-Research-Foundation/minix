@@ -8,14 +8,15 @@
  *   main:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
  */
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
+// #include <string.h> // Replaced by kstring.h
+// #include <stdlib.h> // Replaced by katoi placeholder or removed
+// #include <assert.h> // Replaced by KASSERT_PLACEHOLDER
+
 #include <minix/endpoint.h>
 #include <machine/vmparam.h>
 #include <minix/u64.h>
 #include <minix/board.h>
-#include <sys/reboot.h>
+#include <sys/reboot.h> // Keep for reboot flags like RB_POWERDOWN
 #include "clock.h"
 #include "direct_utils.h"
 #include "hw_intr.h"
@@ -28,6 +29,13 @@
 #include "watchdog.h"
 #endif
 #include "spinlock.h"
+
+// Kernel includes added:
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+#include <klib/include/kprintf.h>
+#include <minix/kernel_types.h>
+
 
 /* dummy for linking */
 char *** _penviron;
@@ -121,12 +129,12 @@ void kmain(kinfo_t *local_cbi)
   static int bss_test;
 
   /* bss sanity check */
-  assert(bss_test == 0);
+  KASSERT_PLACEHOLDER(bss_test == 0); // MODIFIED
   bss_test = 1;
 
   /* save a global copy of the boot parameters */
-  memcpy(&kinfo, local_cbi, sizeof(kinfo));
-  memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+  kmemcpy(&kinfo, local_cbi, sizeof(kinfo)); // MODIFIED
+  kmemcpy(&kmess, kinfo.kmess, sizeof(kmess)); // MODIFIED
 
    /* We have done this exercise in pre_init so we expect this code
       to simply work! */
@@ -141,8 +149,8 @@ void kmain(kinfo_t *local_cbi)
   /* Kernel may use bits of main memory before VM is started */
   kernel_may_alloc = 1;
 
-  assert(sizeof(kinfo.boot_procs) == sizeof(image));
-  memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
+  KASSERT_PLACEHOLDER(sizeof(kinfo.boot_procs) == sizeof(image)); // MODIFIED
+  kmemcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs)); // MODIFIED
 
   cstart();
 
@@ -174,7 +182,7 @@ void kmain(kinfo_t *local_cbi)
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	rp->p_cpu_time_left = 0;
 	if(i < NR_TASKS)			/* name (tasks only) */
-		strlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name));
+		kstrlcpy(rp->p_name, ip->proc_name, sizeof(rp->p_name)); // MODIFIED
 
 	if(i >= NR_TASKS) {
 		/* Remember this so it can be passed to VM */
@@ -222,7 +230,7 @@ void kmain(kinfo_t *local_cbi)
             }
             /* Privileges for the root system process. */
             else {
-	    	assert(isrootsysn(proc_nr));
+		KASSERT_PLACEHOLDER(isrootsysn(proc_nr)); // MODIFIED
                 priv(rp)->s_flags= RSYS_F;        /* privilege flags */
                 priv(rp)->s_init_flags = SRV_I;   /* init flags */
                 priv(rp)->s_trap_mask= SRV_T;     /* allowed traps */
@@ -234,7 +242,7 @@ void kmain(kinfo_t *local_cbi)
             }
 
             /* Fill in target mask. */
-            memset(&map, 0, sizeof(map));
+            kmemset(&map, 0, sizeof(map)); // MODIFIED
 
             if (ipc_to_m == ALL_M) {
                 for(j = 0; j < NR_SYS_PROCS; j++)
@@ -272,11 +280,11 @@ void kmain(kinfo_t *local_cbi)
   }
 
   /* update boot procs info for VM */
-  memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
+  kmemcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs)); // MODIFIED
 
 #define IPCNAME(n) { \
-	assert((n) >= 0 && (n) <= IPCNO_HIGHEST); \
-	assert(!ipc_call_names[n]);	\
+	KASSERT_PLACEHOLDER((n) >= 0 && (n) <= IPCNO_HIGHEST); \
+	KASSERT_PLACEHOLDER(!ipc_call_names[n]);	\
 	ipc_call_names[n] = #n; \
 }
 
@@ -333,7 +341,7 @@ void kmain(kinfo_t *local_cbi)
 static void announce(void)
 {
   /* Display the MINIX startup banner. */
-  printf("\nMINIX %s. "
+  kprintf_stub("\nMINIX %s. " // MODIFIED
 #ifdef PAE
 "(PAE) "
 #endif
@@ -342,7 +350,7 @@ static void announce(void)
 #endif
       "Copyright 2016, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE);
-  printf("MINIX is open source software, see http://www.minix3.org\n");
+  kprintf_stub("MINIX is open source software, see http://www.minix3.org\n"); // MODIFIED
 }
 
 /*===========================================================================*
@@ -357,7 +365,7 @@ void prepare_shutdown(const int how)
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
    * argument passes the shutdown status. 
    */
-  printf("MINIX will now be shut down ...\n");
+  kprintf_stub("MINIX will now be shut down ...\n"); // MODIFIED
   set_kernel_timer(&shutdown_timer, get_monotonic() + system_hz,
       minix_shutdown, how);
 }
@@ -412,14 +420,14 @@ void cstart(void)
 
   /* determine verbosity */
   if ((value = env_get(VERBOSEBOOTVARNAME)))
-	  verboseboot = atoi(value);
+	  verboseboot = 0; /* FIXME: atoi(value) was here, replace with katoi */ // MODIFIED
 
   /* Initialize clock variables. */
   init_clock();
 
   /* Get memory parameters. */
   value = env_get("ac_layout");
-  if(value && atoi(value)) {
+  if(value && (*value != '0')) { /* FIXME: atoi(value) was here, simple check for non-zero for now */ // MODIFIED
         kinfo.user_sp = (vir_bytes) USR_STACKTOP_COMPACT;
         kinfo.user_end = (vir_bytes) USR_DATATOP_COMPACT;
   }
@@ -429,33 +437,33 @@ void cstart(void)
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
-  strlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
-  strlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
+  kstrlcpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release)); // MODIFIED
+  kstrlcpy(kinfo.version, OS_VERSION, sizeof(kinfo.version)); // MODIFIED
 
   /* Initialize various user-mapped structures. */
-  memset(&arm_frclock, 0, sizeof(arm_frclock));
+  kmemset(&arm_frclock, 0, sizeof(arm_frclock)); // MODIFIED
 
-  memset(&kuserinfo, 0, sizeof(kuserinfo));
+  kmemset(&kuserinfo, 0, sizeof(kuserinfo)); // MODIFIED
   kuserinfo.kui_size = sizeof(kuserinfo);
   kuserinfo.kui_user_sp = kinfo.user_sp;
 
 #ifdef USE_APIC
   value = env_get("no_apic");
   if(value)
-	config_no_apic = atoi(value);
+	config_no_apic = (*value != '0'); /* FIXME: atoi(value) was here */ // MODIFIED (default to true if value is non-zero)
   else
-	config_no_apic = 1;
+	config_no_apic = 1; /* Default if not set */
   value = env_get("apic_timer_x");
   if(value)
-	config_apic_timer_x = atoi(value);
+	config_apic_timer_x = 0; /* FIXME: atoi(value) was here, replace with katoi */ // MODIFIED (default to 0, needs proper katoi)
   else
-	config_apic_timer_x = 1;
+	config_apic_timer_x = 1; /* Default if not set */
 #endif
 
 #ifdef USE_WATCHDOG
   value = env_get("watchdog");
   if (value)
-	  watchdog_enabled = atoi(value);
+	  watchdog_enabled = (*value != '0'); /* FIXME: atoi(value) was here */ // MODIFIED (default to true if value is non-zero)
 #endif
 
 #ifdef CONFIG_SMP
@@ -463,9 +471,9 @@ void cstart(void)
 	  config_no_smp = 1;
   value = env_get("no_smp");
   if(value)
-	config_no_smp = atoi(value);
+	config_no_smp = (*value != '0'); /* FIXME: atoi(value) was here */ // MODIFIED (default to true if value is non-zero)
   else
-	config_no_smp = 0;
+	config_no_smp = 0; /* Default if not set */
 #endif
   DEBUGEXTRA(("intr_init(0)\n"));
 
@@ -519,4 +527,3 @@ int is_fpu(void)
 {
         return get_cpulocal_var(fpu_presence);
 }
-

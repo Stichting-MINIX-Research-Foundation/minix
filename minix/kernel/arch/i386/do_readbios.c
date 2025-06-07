@@ -9,13 +9,20 @@
 
 #include "kernel/system.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t, k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 /*===========================================================================*
  *				do_readbios				     *
  *===========================================================================*/
 int do_readbios(struct proc * caller, message * m_ptr)
 {
   struct vir_addr src, dst;
-  size_t len = m_ptr->m_lsys_krn_readbios.size;
+  k_size_t len = (k_size_t)m_ptr->m_lsys_krn_readbios.size; // MODIFIED size_t and cast
   vir_bytes limit;
 
   src.offset = m_ptr->m_lsys_krn_readbios.addr;
@@ -31,7 +38,8 @@ int do_readbios(struct proc * caller, message * m_ptr)
 
   if(!USERRANGE(BIOS_MEM_BEGIN, BIOS_MEM_END) &&
      !USERRANGE(BASE_MEM_TOP, UPPER_MEM_END))
-  	return EPERM;
+	return EPERM; // EPERM might be undefined
 
-  return virtual_copy_vmcheck(caller, &src, &dst, m_ptr->m_lsys_krn_readbios.size);
+  // The last argument to virtual_copy_vmcheck is size, should be k_size_t
+  return virtual_copy_vmcheck(caller, &src, &dst, (k_size_t)m_ptr->m_lsys_krn_readbios.size); // MODIFIED cast
 }

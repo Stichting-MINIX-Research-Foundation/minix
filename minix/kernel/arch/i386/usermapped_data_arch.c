@@ -1,6 +1,13 @@
 #include "kernel/kernel.h"
 #include "arch_proto.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 struct minix_ipcvecs minix_ipcvecs_softint __section(".usermapped") = {
 	.send		= usermapped_send_softint,
 	.receive	= usermapped_receive_softint,
@@ -30,4 +37,3 @@ struct minix_ipcvecs minix_ipcvecs_syscall __section(".usermapped") = {
 	.do_kernel_call	= usermapped_do_kernel_call_syscall,
 	.senda		= usermapped_senda_syscall
 };
-

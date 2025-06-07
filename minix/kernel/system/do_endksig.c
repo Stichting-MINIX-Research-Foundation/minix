@@ -7,6 +7,13 @@
 
 #include "kernel/system.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 #if USE_ENDKSIG 
 
 /*===========================================================================*
@@ -25,11 +32,11 @@ int do_endksig(struct proc * caller, message * m_ptr)
    * process is already dead its flags will be reset. 
    */
   if(!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr))
-	return EINVAL;
+	return EINVAL; // EINVAL might be undefined
 
   rp = proc_addr(proc_nr);
-  if (caller->p_endpoint != priv(rp)->s_sig_mgr) return(EPERM);
-  if (!RTS_ISSET(rp, RTS_SIG_PENDING)) return(EINVAL);
+  if (caller->p_endpoint != priv(rp)->s_sig_mgr) return(EPERM); // EPERM might be undefined
+  if (!RTS_ISSET(rp, RTS_SIG_PENDING)) return(EINVAL); // EINVAL might be undefined
 
   /* The signal manager has finished one kernel signal. Is the process ready? */
   if (!RTS_ISSET(rp, RTS_SIGNALED)) 		/* new signal arrived */
@@ -38,4 +45,3 @@ int do_endksig(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_ENDKSIG */
-

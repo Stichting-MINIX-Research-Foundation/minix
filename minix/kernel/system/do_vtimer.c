@@ -10,8 +10,15 @@
 
 #include "kernel/system.h"
 
-#include <signal.h>
-#include <minix/endpoint.h>
+// #include <signal.h> // Replaced
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_clock_t, k_errno_t, and signal constants
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_VTIMER
 
@@ -23,19 +30,19 @@ int do_vtimer(struct proc * caller, message * m_ptr)
 /* Set and/or retrieve the value of one of a process' virtual timers. */
   struct proc *rp;		/* pointer to process the timer belongs to */
   register int pt_flag;		/* the misc on/off flag for the req.d timer */
-  register clock_t *pt_left;	/* pointer to the process' ticks-left field */ 
-  clock_t old_value;		/* the previous number of ticks left */
+  register k_clock_t *pt_left;	/* pointer to the process' ticks-left field */  // MODIFIED clock_t
+  k_clock_t old_value;		/* the previous number of ticks left */ // MODIFIED clock_t
   int proc_nr, proc_nr_e;
 
   /* The requesting process must be privileged. */
-  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
+  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM); // EPERM might be undefined
 
   if (m_ptr->VT_WHICH != VT_VIRTUAL && m_ptr->VT_WHICH != VT_PROF)
-      return(EINVAL);
+      return(EINVAL); // EINVAL might be undefined
 
   /* The target process must be valid. */
   proc_nr_e = (m_ptr->VT_ENDPT == SELF) ? caller->p_endpoint : m_ptr->VT_ENDPT;
-  if (!isokendpt(proc_nr_e, &proc_nr)) return(EINVAL);
+  if (!isokendpt(proc_nr_e, &proc_nr)) return(EINVAL); // EINVAL might be undefined
   rp = proc_addr(proc_nr);
 
   /* Determine which flag and which field in the proc structure we want to
@@ -91,13 +98,13 @@ void vtimer_check(struct proc * rp)
   if ((rp->p_misc_flags & MF_VIRT_TIMER) && rp->p_virt_left == 0) {
       rp->p_misc_flags &= ~MF_VIRT_TIMER;
       rp->p_virt_left = 0;
-      cause_sig(rp->p_nr, SIGVTALRM);
+      cause_sig(rp->p_nr, SIGVTALRM); // SIGVTALRM might be undefined
   }
 
   /* Check if the profile timer expired. If so, send a SIGPROF signal. */
   if ((rp->p_misc_flags & MF_PROF_TIMER) && rp->p_prof_left == 0) {
       rp->p_misc_flags &= ~MF_PROF_TIMER;
       rp->p_prof_left = 0;
-      cause_sig(rp->p_nr, SIGPROF);
+      cause_sig(rp->p_nr, SIGPROF); // SIGPROF might be undefined
   }
 }

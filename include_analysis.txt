@@ -1,0 +1,731 @@
+=== minix/kernel/arch/earm/arch_clock.c ===
+#include "bsp_intr.h"
+#include "bsp_timer.h"
+#include "kernel/clock.h"
+#include "kernel/glo.h"
+#include "kernel/interrupt.h"
+#include "kernel/kernel.h"
+#include "kernel/profile.h"
+#include "kernel/spinlock.h"
+#include <minix/board.h>
+#include <minix/u64.h>
+#include <sys/sched.h> /* for CP_*, CPUSTATES */
+=== minix/kernel/arch/earm/arch_do_vmctl.c ===
+#include "arch_proto.h"
+#include "kernel/system.h"
+#include <assert.h>
+#include <minix/type.h>
+=== minix/kernel/arch/earm/arch_reset.c ===
+#include "arch_proto.h"
+#include "archconst.h"
+#include "bsp_reset.h"
+#include "bsp_serial.h"
+#include "direct_utils.h"
+#include "kernel/debug.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include <assert.h>
+#include <ctype.h>
+#include <io.h>
+#include <machine/cpu.h>
+#include <machine/multiboot.h>
+#include <machine/vm.h>
+#include <minix/board.h>
+#include <minix/u64.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/reboot.h>
+#include <unistd.h>
+=== minix/kernel/arch/earm/arch_system.c ===
+#include "arch_proto.h"
+#include "archconst.h"
+#include "bsp_init.h"
+#include "bsp_serial.h"
+#include "ccnt.h"
+#include "glo.h"
+#include "kernel/debug.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include <arm/armreg.h>
+#include <assert.h>
+#include <ctype.h>
+#include <machine/signal.h>
+#include <machine/vm.h>
+#include <minix/cpufeature.h>
+#include <minix/u64.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+=== minix/kernel/arch/earm/bsp/include/bsp_init.h ===
+=== minix/kernel/arch/earm/bsp/include/bsp_intr.h ===
+=== minix/kernel/arch/earm/bsp/include/bsp_padconf.h ===
+=== minix/kernel/arch/earm/bsp/include/bsp_reset.h ===
+=== minix/kernel/arch/earm/bsp/include/bsp_serial.h ===
+=== minix/kernel/arch/earm/bsp/include/bsp_timer.h ===
+#ifndef __ASSEMBLY__
+=== minix/kernel/arch/earm/bsp/ti/omap_init.c ===
+#include "bsp_init.h"
+#include "bsp_padconf.h"
+#include "bsp_reset.h"
+#include "omap_rtc.h"
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_intr.c ===
+#include "bsp_intr.h"
+#include "kernel/kernel.h"
+#include "omap_intr_registers.h"
+#include <assert.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_intr_registers.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_padconf.c ===
+#include "bsp_padconf.h"
+#include "kernel/kernel.h"
+#include "omap_padconf_registers.h"
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_reset.c ===
+#include "arch_proto.h"
+#include "bsp_reset.h"
+#include "kernel/kernel.h"
+#include "omap_prcm_mpu_registers.h"
+#include "omap_timer.h"
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_rtc.c ===
+#include "kernel/kernel.h"
+#include "omap_rtc.h"
+#include "omap_rtc_registers.h"
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_rtc.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_serial.c ===
+#include "bsp_serial.h"
+#include "kernel/kernel.h"
+#include "omap_serial.h"
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_serial.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_timer.c ===
+#include "bsp_intr.h"
+#include "bsp_timer.h"
+#include "kernel/kernel.h"
+#include "omap_timer.h"
+#include "omap_timer_registers.h"
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/bsp/ti/omap_timer_registers.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/direct_tty_utils.c ===
+#include "bsp_serial.h"
+#include "direct_utils.h"
+#include "glo.h"
+#include "kernel/kernel.h"
+=== minix/kernel/arch/earm/do_padconf.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/arch/earm/exception.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include "kernel/proto.h"
+#include <assert.h>
+#include <machine/vm.h>
+#include <signal.h>
+#include <string.h>
+=== minix/kernel/arch/earm/glo.h ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+=== minix/kernel/arch/earm/hw_intr.c ===
+#include "bsp_intr.h"
+#include "hw_intr.h"
+=== minix/kernel/arch/earm/include/arch_clock.h ===
+=== minix/kernel/arch/earm/include/arch_proto.h ===
+#include "kernel/kernel.h"
+#include <machine/frame.h>
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/include/arch_watchdog.h ===
+=== minix/kernel/arch/earm/include/archconst.h ===
+#include "kernel/const.h"
+#include "kernel/type.h"
+#include <arm/armreg.h>
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/include/ccnt.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/include/cpufunc.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/include/direct_utils.h ===
+=== minix/kernel/arch/earm/include/hw_intr.h ===
+=== minix/kernel/arch/earm/include/io.h ===
+#include <sys/types.h>
+=== minix/kernel/arch/earm/memory.c ===
+#include "arch_proto.h"
+#include "bsp_timer.h"
+#include "kernel/debug.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include "kernel/proto.h"
+#include "kernel/vm.h"
+#include <assert.h>
+#include <machine/vm.h>
+#include <minix/board.h>
+#include <minix/cpufeature.h>
+#include <minix/syslib.h>
+#include <minix/type.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+=== minix/kernel/arch/earm/pg_utils.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include <arm/armreg.h>
+#include <assert.h>
+#include <machine/cpu.h>
+#include <minix/cpufeature.h>
+#include <minix/type.h>
+#include <string.h>
+=== minix/kernel/arch/earm/pre_init.c ===
+#include "arch_proto.h"
+#include "bsp_serial.h"
+#include "direct_utils.h"
+#include "glo.h"
+#include "kernel/kernel.h"
+#include "string.h"
+#include <assert.h>
+#include <machine/multiboot.h>
+#include <minix/board.h>
+#include <minix/com.h>
+#include <minix/const.h>
+#include <minix/minlib.h>
+#include <minix/type.h>
+#include <stdlib.h>
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <sys/types.h>
+=== minix/kernel/arch/earm/protect.c ===
+#include "arch_proto.h"
+#include "archconst.h"
+#include "kernel/kernel.h"
+#include <assert.h>
+#include <libexec.h>
+#include <machine/multiboot.h>
+#include <string.h>
+#include <sys/exec.h>
+=== minix/kernel/arch/earm/sconst.h ===
+#include "kernel/const.h"
+#include "kernel/procoffsets.h"
+=== minix/kernel/arch/earm/timer.h ===
+#include "omap_timer.h"
+=== minix/kernel/arch/i386/acpi.c ===
+#include "acpi.h"
+#include "arch_proto.h"
+#include <string.h>
+=== minix/kernel/arch/i386/acpi.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/arch/i386/apic.c ===
+#include "acpi.h"
+#include "apic.h"
+#include "apic_asm.h"
+#include "glo.h"
+#include "hw_intr.h"
+#include "kernel/clock.h"
+#include "kernel/spinlock.h"
+#include <assert.h>
+#include <machine/cmos.h>
+#include <minix/portio.h>
+#include <minix/syslib.h>
+#include <minix/u64.h>
+#include <unistd.h>
+=== minix/kernel/arch/i386/apic.h ===
+#include "kernel/kernel.h"
+#include <minix/cpufeature.h>
+=== minix/kernel/arch/i386/apic_asm.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/arch/i386/arch_clock.c ===
+#include "kernel/clock.h"
+#include "kernel/interrupt.h"
+#include "kernel/spinlock.h"
+#include <machine/ports.h>
+#include <minix/u64.h>
+#include <sys/sched.h> /* for CP_*, CPUSTATES */
+=== minix/kernel/arch/i386/arch_do_vmctl.c ===
+#include "arch_proto.h"
+#include "kernel/system.h"
+#include <assert.h>
+=== minix/kernel/arch/i386/arch_reset.c ===
+#include "acpi.h"
+#include "arch_proto.h"
+#include "direct_utils.h"
+#include "kernel/kernel.h"
+#include "oxpcie.h"
+#include <assert.h>
+#include <ctype.h>
+#include <machine/bios.h>
+#include <machine/cmos.h>
+#include <machine/cpu.h>
+#include <minix/cpufeature.h>
+#include <minix/u64.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/reboot.h>
+=== minix/kernel/arch/i386/arch_smp.c ===
+#include "acpi.h"
+#include "apic.h"
+#include "glo.h"
+#include "kernel/clock.h"
+#include "kernel/smp.h"
+#include "kernel/spinlock.h"
+#include <assert.h>
+#include <machine/bios.h>
+#include <machine/cmos.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+=== minix/kernel/arch/i386/arch_system.c ===
+#include "acpi.h"
+#include "apic.h"
+#include "arch_proto.h"
+#include "archconst.h"
+#include "glo.h"
+#include "oxpcie.h"
+#include <assert.h>
+#include <ctype.h>
+#include <machine/bios.h>
+#include <machine/cmos.h>
+#include <machine/cpu.h>
+#include <machine/vm.h>
+#include <minix/cpufeature.h>
+#include <minix/portio.h>
+#include <minix/u64.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+=== minix/kernel/arch/i386/arch_watchdog.c ===
+#include "apic.h"
+#include "glo.h"
+#include "kernel/watchdog.h"
+#include <minix/minlib.h>
+#include <minix/u64.h>
+=== minix/kernel/arch/i386/breakpoints.c ===
+#include "arch_proto.h"
+#include "debugreg.h"
+#include "kernel/kernel.h"
+=== minix/kernel/arch/i386/debugreg.h ===
+=== minix/kernel/arch/i386/direct_tty_utils.c ===
+#include "direct_utils.h"
+#include "glo.h"
+#include "serial.h"
+#include "string.h"
+#include <machine/partition.h>
+#include <minix/cpufeature.h>
+#include <minix/minlib.h>
+#include <sys/video.h>
+=== minix/kernel/arch/i386/do_iopenable.c ===
+#include "arch_proto.h"
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/arch/i386/do_readbios.c ===
+#include "kernel/system.h"
+=== minix/kernel/arch/i386/do_sdevio.c ===
+#include "arch_proto.h"
+#include "kernel/system.h"
+#include <minix/devio.h>
+#include <minix/endpoint.h>
+=== minix/kernel/arch/i386/exception.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include <assert.h>
+#include <machine/vm.h>
+#include <signal.h>
+#include <string.h>
+=== minix/kernel/arch/i386/glo.h ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+=== minix/kernel/arch/i386/i8259.c ===
+#include "arch_proto.h"
+#include "hw_intr.h"
+#include "kernel/kernel.h"
+#include <machine/cpu.h>
+=== minix/kernel/arch/i386/include/arch_clock.h ===
+#include <machine/archtypes.h>
+=== minix/kernel/arch/i386/include/arch_proto.h ===
+#include "kernel/kernel.h"
+#include <machine/frame.h>
+#include <machine/memory.h>
+#include <sys/types.h>
+=== minix/kernel/arch/i386/include/arch_smp.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/arch/i386/include/arch_watchdog.h ===
+#include <machine/frame.h>
+=== minix/kernel/arch/i386/include/archconst.h ===
+#include "kernel/const.h"
+#include "kernel/type.h"
+#include <machine/memory.h>
+#include <machine/stackframe.h>
+#include <sys/types.h>
+=== minix/kernel/arch/i386/include/direct_utils.h ===
+=== minix/kernel/arch/i386/include/hw_intr.h ===
+#include <machine/interrupt.h>
+#include <machine/ports.h>
+=== minix/kernel/arch/i386/memory.c ===
+#include "acpi.h"
+#include "apic.h"
+#include "arch_proto.h"
+#include "kernel/watchdog.h"
+#include "kernel/vm.h"
+#include "oxpcie.h"
+#include <assert.h>
+#include <machine/vm.h>
+#include <minix/cpufeature.h>
+#include <minix/syslib.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+=== minix/kernel/arch/i386/oxpcie.c ===
+#include "kernel/kernel.h"
+#include "oxpcie.h"
+#include "serial.h"
+=== minix/kernel/arch/i386/oxpcie.h ===
+#include "serial.h"
+=== minix/kernel/arch/i386/pg_utils.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include <assert.h>
+#include <minix/cpufeature.h>
+#include <string.h>
+=== minix/kernel/arch/i386/pre_init.c ===
+#include "direct_utils.h"
+#include "glo.h"
+#include "serial.h"
+#include "string.h"
+#include <assert.h>
+#include <machine/partition.h>
+#include <minix/board.h>
+#include <minix/minlib.h>
+#include <stdlib.h>
+#include <sys/reboot.h>
+=== minix/kernel/arch/i386/protect.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include <assert.h>
+#include <libexec.h>
+#include <machine/multiboot.h>
+#include <minix/cpufeature.h>
+#include <string.h>
+#include <sys/exec.h>
+#include <sys/types.h>
+=== minix/kernel/arch/i386/sconst.h ===
+#include "kernel/const.h"
+#include "kernel/procoffsets.h"
+=== minix/kernel/arch/i386/serial.h ===
+=== minix/kernel/arch/i386/usermapped_data_arch.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+=== minix/kernel/clock.c ===
+#include "clock.h"
+#include "watchdog.h"
+#include <assert.h>
+#include <minix/endpoint.h>
+#include <stdlib.h>
+#include <string.h>
+=== minix/kernel/clock.h ===
+#include "arch_clock.h"
+#include "kernel/kernel.h"
+=== minix/kernel/config.h ===
+=== minix/kernel/const.h ===
+#include "debug.h"
+#include <minix/bitmap.h>
+#include <minix/config.h>
+=== minix/kernel/cpulocals.c ===
+#include "kernel/kernel.h"
+=== minix/kernel/cpulocals.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/debug.c ===
+#include "kernel/kernel.h"
+#include <assert.h>
+#include <limits.h>
+#include <minix/callnr.h>
+#include <minix/u64.h>
+#include <string.h>
+=== minix/kernel/debug.h ===
+#include "config.h"
+#include <minix/debug.h>
+=== minix/kernel/glo.h ===
+#include "archconst.h"
+#include "config.h"
+#include "debug.h"
+#include "kernel/kernel.h"
+#include <machine/archtypes.h>
+#include <minix/config.h>
+#include <minix/ipcconst.h>
+=== minix/kernel/interrupt.c ===
+#include "hw_intr.h"
+#include "kernel/kernel.h"
+#include <assert.h>
+=== minix/kernel/interrupt.h ===
+#include "hw_intr.h"
+=== minix/kernel/ipc.h ===
+#include <minix/com.h>
+#include <minix/ipcconst.h>
+=== minix/kernel/ipc_filter.h ===
+#include "kernel/kernel.h"
+#include <minix/ipc_filter.h>
+=== minix/kernel/kernel.h ===
+#include "archconst.h"
+#include "config.h"
+#include "debug.h"
+#include "kernel/const.h"
+#include "kernel/cpulocals.h"
+#include "kernel/glo.h"
+#include "kernel/ipc.h"
+#include "kernel/proc.h"
+#include "kernel/profile.h"
+#include "kernel/proto.h"
+#include "kernel/type.h"
+#include <errno.h>
+#include <machine/archtypes.h>
+#include <minix/config.h>
+#include <minix/const.h>
+#include <minix/ipc.h>
+#include <minix/param.h>
+#include <minix/sysutil.h>
+#include <minix/timers.h>
+#include <minix/type.h>
+#include <sys/param.h>
+#include <sys/types.h>
+=== minix/kernel/main.c ===
+#include "arch_proto.h"
+#include "clock.h"
+#include "direct_utils.h"
+#include "hw_intr.h"
+#include "smp.h"
+#include "spinlock.h"
+#include "watchdog.h"
+#include <assert.h>
+#include <machine/vmparam.h>
+#include <minix/board.h>
+#include <minix/endpoint.h>
+#include <minix/u64.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/reboot.h>
+=== minix/kernel/priv.h ===
+#include "kernel/const.h"
+#include "kernel/ipc_filter.h"
+#include "kernel/type.h"
+#include <minix/const.h>
+#include <minix/priv.h>
+=== minix/kernel/proc.c ===
+#include "arch_proto.h"
+#include "clock.h"
+#include "kernel/vm.h"
+#include "spinlock.h"
+#include <assert.h>
+#include <minix/syslib.h>
+#include <signal.h>
+#include <stddef.h>
+#include <string.h>
+=== minix/kernel/proc.h ===
+#include "const.h"
+#include "priv.h"
+#include <minix/const.h>
+#include <sys/cdefs.h>
+=== minix/kernel/profile.c ===
+#include "kernel/kernel.h"
+#include "watchdog.h"
+#include <string.h>
+=== minix/kernel/profile.h ===
+#include "arch_watchdog.h"
+#include <minix/profile.h>
+=== minix/kernel/proto.h ===
+#include "kernel/kernel.h"
+#include <machine/archtypes.h>
+#include <machine/frame.h>
+#include <machine/signal.h>
+#include <minix/safecopies.h>
+=== minix/kernel/smp.c ===
+#include "clock.h"
+#include "interrupt.h"
+#include "smp.h"
+#include <assert.h>
+=== minix/kernel/smp.h ===
+#include "arch_smp.h"
+#include "kernel/kernel.h"
+#include "spinlock.h"
+=== minix/kernel/spinlock.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/system.c ===
+#include "kernel/clock.h"
+#include "kernel/system.h"
+#include "kernel/vm.h"
+#include <assert.h>
+#include <minix/endpoint.h>
+#include <minix/safecopies.h>
+#include <signal.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+=== minix/kernel/system/do_abort.c ===
+#include "kernel/system.h"
+#include <unistd.h>
+=== minix/kernel/system/do_clear.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_copy.c ===
+#include "kernel/system.h"
+#include "kernel/vm.h"
+#include <assert.h>
+=== minix/kernel/system/do_devio.c ===
+#include "kernel/system.h"
+#include <minix/devio.h>
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_diagctl.c ===
+#include "kernel/system.h"
+=== minix/kernel/system/do_exec.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+#include <string.h>
+=== minix/kernel/system/do_exit.c ===
+#include "kernel/system.h"
+#include <signal.h>
+=== minix/kernel/system/do_fork.c ===
+#include "kernel/system.h"
+#include "kernel/vm.h"
+#include <assert.h>
+#include <minix/endpoint.h>
+#include <minix/u64.h>
+#include <signal.h>
+#include <string.h>
+=== minix/kernel/system/do_getinfo.c ===
+#include "kernel/system.h"
+#include <minix/u64.h>
+#include <string.h>
+#include <sys/resource.h>
+=== minix/kernel/system/do_getksig.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+#include <signal.h>
+=== minix/kernel/system/do_irqctl.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_kill.c ===
+#include "kernel/system.h"
+#include <signal.h>
+=== minix/kernel/system/do_mcontext.c ===
+#include "kernel/system.h"
+#include <assert.h>
+#include <machine/mcontext.h>
+#include <string.h>
+=== minix/kernel/system/do_memset.c ===
+#include "kernel/system.h"
+=== minix/kernel/system/do_privctl.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+#include <signal.h>
+#include <string.h>
+=== minix/kernel/system/do_runctl.c ===
+#include "kernel/system.h"
+#include <assert.h>
+=== minix/kernel/system/do_safecopy.c ===
+#include "kernel/system.h"
+#include "kernel/vm.h"
+#include <assert.h>
+=== minix/kernel/system/do_safememset.c ===
+#include "kernel/system.h"
+#include <assert.h>
+#include <minix/safecopies.h>
+=== minix/kernel/system/do_schedctl.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_schedule.c ===
+#include "kernel/clock.h"
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_setalarm.c ===
+#include "kernel/system.h"
+#include <assert.h>
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_setgrant.c ===
+#include "kernel/system.h"
+#include <minix/safecopies.h>
+=== minix/kernel/system/do_settime.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+#include <time.h>
+=== minix/kernel/system/do_sigreturn.c ===
+#include "kernel/system.h"
+#include <machine/cpu.h>
+#include <string.h>
+=== minix/kernel/system/do_sigsend.c ===
+#include "kernel/system.h"
+#include <signal.h>
+#include <string.h>
+=== minix/kernel/system/do_sprofile.c ===
+#include "kernel/system.h"
+#include "kernel/watchdog.h"
+=== minix/kernel/system/do_statectl.c ===
+#include "kernel/system.h"
+=== minix/kernel/system/do_stime.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_times.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_trace.c ===
+#include "kernel/system.h"
+#include <sys/ptrace.h>
+=== minix/kernel/system/do_umap.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_umap_remote.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_update.c ===
+#include "kernel/system.h"
+#include <assert.h>
+#include <string.h>
+=== minix/kernel/system/do_vdevio.c ===
+#include "kernel/system.h"
+#include <minix/devio.h>
+#include <minix/endpoint.h>
+=== minix/kernel/system/do_vmctl.c ===
+#include "kernel/system.h"
+#include "kernel/vm.h"
+#include <assert.h>
+=== minix/kernel/system/do_vtimer.c ===
+#include "kernel/system.h"
+#include <minix/endpoint.h>
+#include <signal.h>
+=== minix/kernel/system/do_vumap.c ===
+#include "kernel/system.h"
+#include <assert.h>
+=== minix/kernel/system.h ===
+#include "kernel/kernel.h"
+=== minix/kernel/table.c ===
+#include "kernel/kernel.h"
+=== minix/kernel/type.h ===
+#include <machine/interrupt.h>
+#include <machine/multiboot.h>
+#include <minix/com.h>
+=== minix/kernel/usermapped_data.c ===
+#include "kernel/kernel.h"
+=== minix/kernel/utility.c ===
+#include "arch_proto.h"
+#include "kernel/kernel.h"
+#include <minix/sys_config.h>
+#include <minix/syslib.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
+=== minix/kernel/vm.h ===
+=== minix/kernel/watchdog.c ===
+#include "arch/i386/glo.h"
+#include "watchdog.h"
+=== minix/kernel/watchdog.h ===
+#include "arch_watchdog.h"
+#include "kernel/kernel.h"

@@ -12,10 +12,16 @@
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  */
 
-#include <minix/endpoint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include <minix/endpoint.h> // Kept for now
+// #include <stdlib.h>      // Removed
+// #include <string.h>      // Replaced
+// #include <assert.h>      // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
 
 #include "clock.h"
 
@@ -39,7 +45,7 @@ static minix_timer_t *clock_timers;	/* queue of CLOCK timers */
 /* Number of ticks to adjust realtime by. A negative value implies slowing
  * down realtime, a positive value implies speeding it up.
  */
-static int32_t adjtime_delta = 0;
+static int32_t adjtime_delta = 0; // int32_t may need definition in kernel_types.h
 
 /*
  * Initialize the clock variables.
@@ -50,17 +56,17 @@ init_clock(void)
 	char *value;
 
 	/* Initialize clock information structure. */
-	memset(&kclockinfo, 0, sizeof(kclockinfo));
+	kmemset(&kclockinfo, 0, sizeof(kclockinfo)); // MODIFIED
 
 	/* Get clock tick frequency. */
 	value = env_get("hz");
 	if (value != NULL)
-		kclockinfo.hz = atoi(value);
+		kclockinfo.hz = 0 /* FIXME: atoi(value) replaced */; // MODIFIED
 	if (value == NULL || kclockinfo.hz < 2 || kclockinfo.hz > 50000)
 		kclockinfo.hz = DEFAULT_HZ;
 
 	/* Load average data initialization. */
-	memset(&kloadinfo, 0, sizeof(kloadinfo));
+	kmemset(&kloadinfo, 0, sizeof(kloadinfo)); // MODIFIED
 }
 
 /*
@@ -175,7 +181,7 @@ int timer_int_handler(void)
 /*===========================================================================*
  *				get_realtime				     *
  *===========================================================================*/
-clock_t get_realtime(void)
+k_clock_t get_realtime(void) // MODIFIED clock_t to k_clock_t
 {
   /* Get and return the current wall time in ticks since boot. */
   return(kclockinfo.realtime);
@@ -184,7 +190,7 @@ clock_t get_realtime(void)
 /*===========================================================================*
  *				set_realtime				     *
  *===========================================================================*/
-void set_realtime(clock_t newrealtime)
+void set_realtime(k_clock_t newrealtime) // MODIFIED clock_t to k_clock_t
 {
   kclockinfo.realtime = newrealtime;
 }
@@ -192,7 +198,7 @@ void set_realtime(clock_t newrealtime)
 /*===========================================================================*
  *				set_adjtime_delta			     *
  *===========================================================================*/
-void set_adjtime_delta(int32_t ticks)
+void set_adjtime_delta(int32_t ticks) // int32_t may need definition
 {
   adjtime_delta = ticks;
 }
@@ -200,7 +206,7 @@ void set_adjtime_delta(int32_t ticks)
 /*===========================================================================*
  *				get_monotonic				     *
  *===========================================================================*/
-clock_t get_monotonic(void)
+k_clock_t get_monotonic(void) // MODIFIED clock_t to k_clock_t
 {
   /* Get and return the number of ticks since boot. */
   return(kclockinfo.uptime);
@@ -209,7 +215,7 @@ clock_t get_monotonic(void)
 /*===========================================================================*
  *				set_boottime				     *
  *===========================================================================*/
-void set_boottime(time_t newboottime)
+void set_boottime(k_time_t newboottime) // MODIFIED time_t to k_time_t
 {
   kclockinfo.boottime = newboottime;
 }
@@ -217,7 +223,7 @@ void set_boottime(time_t newboottime)
 /*===========================================================================*
  *				get_boottime				     *
  *===========================================================================*/
-time_t get_boottime(void)
+k_time_t get_boottime(void) // MODIFIED time_t to k_time_t
 {
   /* Get and return the number of seconds since the UNIX epoch. */
   return(kclockinfo.boottime);
@@ -228,7 +234,7 @@ time_t get_boottime(void)
  *===========================================================================*/
 void set_kernel_timer(
   minix_timer_t *tp,			/* pointer to timer structure */
-  clock_t exp_time,			/* expiration monotonic time */
+  k_clock_t exp_time,			/* expiration monotonic time */ // MODIFIED clock_t to k_clock_t
   tmr_func_t watchdog,			/* watchdog to be called */
   int arg				/* argument for watchdog function */
 )
@@ -259,7 +265,7 @@ void reset_kernel_timer(
  *===========================================================================*/
 static void load_update(void)
 {
-	u16_t slot;
+	u16_t slot; // u16_t may need definition
 	int enqueued = 0, q;
 	struct proc *p;
 	struct proc **rdy_head;

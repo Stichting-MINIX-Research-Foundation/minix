@@ -5,12 +5,19 @@
 
 #include "kernel/kernel.h"
 #include "arch_proto.h"
-#include <signal.h>
-#include <string.h>
-#include <assert.h>
+// #include <signal.h> // Removed
+// #include <string.h> // Removed
+// #include <assert.h> // Replaced
 #include "kernel/proc.h"
 #include "kernel/proto.h"
-#include <machine/vm.h>
+#include <machine/vm.h> // Kept for now
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_sigset_t (not used directly, but signal.h was present)
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER and kprintf_stub
+#include <klib/include/kstring.h> // Precautionary
+#include <klib/include/kmemory.h> // Precautionary
+
 
 struct ex_s {
 	char *msg;
@@ -19,10 +26,10 @@ struct ex_s {
 
 static struct ex_s ex_data[] = {
 	{ "Reset", 0},
-	{ "Undefined instruction", SIGILL},
+	{ "Undefined instruction", SIGILL}, // SIGILL might be undefined
 	{ "Supervisor call", 0},
-	{ "Prefetch Abort", SIGILL},
-	{ "Data Abort", SIGSEGV},
+	{ "Prefetch Abort", SIGILL}, // SIGILL might be undefined
+	{ "Data Abort", SIGSEGV},    // SIGSEGV might be undefined
 	{ "Hypervisor call", 0},
 	{ "Interrupt", 0},
 	{ "Fast Interrupt", 0},
@@ -56,7 +63,7 @@ static void pagefault( struct proc *pr,
 		catch_pagefaults && (in_physcopy || in_memset)) {
 		if (is_nested) {
 			if(in_physcopy) {
-				assert(!in_memset);
+				KASSERT_PLACEHOLDER(!in_memset); // MODIFIED
 				*saved_lr = (reg_t) phys_copy_fault_in_kernel;
 			} else {
 				*saved_lr = (reg_t) memset_fault_in_kernel;
@@ -71,7 +78,7 @@ static void pagefault( struct proc *pr,
 	}
 
 	if(is_nested) {
-		printf("pagefault in kernel at pc 0x%lx address 0x%lx\n",
+		kprintf_stub("pagefault in kernel at pc 0x%lx address 0x%lx\n", // MODIFIED
 			*saved_lr, pagefault_addr);
 		inkernel_disaster(pr, saved_lr, NULL, is_nested);
 	}
@@ -81,12 +88,12 @@ static void pagefault( struct proc *pr,
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		printf("pagefault for VM on CPU %d, "
+		kprintf_stub("pagefault for VM on CPU %d, " // MODIFIED
 			"pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
 			cpuid, pr->p_reg.pc, pagefault_addr, pagefault_status,
 			is_nested);
 		proc_stacktrace(pr);
-		printf("pc of pagefault: 0x%lx\n", pr->p_reg.pc);
+		kprintf_stub("pc of pagefault: 0x%lx\n", pr->p_reg.pc); // MODIFIED
 		panic("pagefault in VM");
 
 		return;
@@ -122,18 +129,18 @@ data_abort(int is_nested, struct proc *pr, reg_t *saved_lr,
 		pagefault(pr, saved_lr, is_nested, dfar, dfsr);
 	} else if (!is_nested) {
 		/* A user process caused some other kind of data abort. */
-		int signum = SIGSEGV;
+		int signum = SIGSEGV; // SIGSEGV might be undefined
 
 		if (is_align_fault(fs)) {
-			signum = SIGBUS;
+			signum = SIGBUS; // SIGBUS might be undefined
 		} else {
-			printf("KERNEL: unknown data abort by proc %d sending "
+			kprintf_stub("KERNEL: unknown data abort by proc %d sending " // MODIFIED
 			       "SIGSEGV (dfar=0x%lx dfsr=0x%lx fs=0x%lx)\n",
 			       proc_nr(pr), dfar, dfsr, fs);
 		}
 		cause_sig(proc_nr(pr), signum);
 	} else { /* is_nested */
-		printf("KERNEL: inkernel data abort - disaster (dfar=0x%lx "
+		kprintf_stub("KERNEL: inkernel data abort - disaster (dfar=0x%lx " // MODIFIED
 		       "dfsr=0x%lx fs=0x%lx)\n", dfar, dfsr, fs);
 		inkernel_disaster(pr, saved_lr, ep, is_nested);
 	}
@@ -145,13 +152,13 @@ static void inkernel_disaster(struct proc *saved_proc,
 {
 #if USE_SYSDEBUG
   if(ep)
-	printf("\n%s\n", ep->msg);
+	kprintf_stub("\n%s\n", ep->msg); // MODIFIED
 
-  printf("cpu %d is_nested = %d ", cpuid, is_nested);
+  kprintf_stub("cpu %d is_nested = %d ", cpuid, is_nested); // MODIFIED
 
   if (saved_proc) {
-	  printf("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name);
-	  printf("pc = 0x%x\n", (unsigned) saved_proc->p_reg.pc);
+	  kprintf_stub("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name); // MODIFIED
+	  kprintf_stub("pc = 0x%x\n", (unsigned) saved_proc->p_reg.pc); // MODIFIED
 	  proc_stacktrace(saved_proc);
 
 	  panic("Unhandled kernel exception");
@@ -173,7 +180,7 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
 
   ep = &ex_data[vector];
 
-  assert((vir_bytes) saved_lr >= kinfo.vir_kern_start);
+  KASSERT_PLACEHOLDER((vir_bytes) saved_lr >= kinfo.vir_kern_start); // MODIFIED
 
   /*
    * handle special cases for nested problems as they might be tricky or filter
@@ -223,8 +230,8 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
 	 * actual hardware, which is why we warn about this problem once.
 	 */
 	if (*saved_lr != ifar && !warned) {
-		printf("KERNEL: prefetch abort with differing IFAR and LR\n");
-		printf("KERNEL: IFSR %"PRIx32" IFAR %"PRIx32" LR %"PRIx32" in "
+		kprintf_stub("KERNEL: prefetch abort with differing IFAR and LR\n"); // MODIFIED
+		kprintf_stub("KERNEL: IFSR %"PRIx32" IFAR %"PRIx32" LR %"PRIx32" in " // MODIFIED
 		    "%s/%d\n", ifsr, ifar, *saved_lr, saved_proc->p_name,
 		    saved_proc->p_endpoint);
 		warned = TRUE;
@@ -254,7 +261,7 @@ void exception_handler(int is_nested, reg_t *saved_lr, int vector)
  *===========================================================================*/
 static void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc)
 {
-	printf("%-8.8s %6d 0x%lx \n",
+	kprintf_stub("%-8.8s %6d 0x%lx \n", // MODIFIED
 		whichproc->p_name, whichproc->p_endpoint, pc);
 }
 #endif

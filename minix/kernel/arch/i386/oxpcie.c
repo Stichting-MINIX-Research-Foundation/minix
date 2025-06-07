@@ -1,4 +1,3 @@
-
 #include "kernel/kernel.h"
 
 #if CONFIG_OXPCIE
@@ -8,7 +7,14 @@
 #include "oxpcie.h"
 #include "serial.h"
 
-static unsigned char *oxpcie_vaddr = NULL;
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
+static unsigned char *oxpcie_vaddr = NULL; // NULL might be undefined
 
 void oxpcie_set_vaddr(unsigned char *vaddr)
 {
@@ -17,7 +23,7 @@ void oxpcie_set_vaddr(unsigned char *vaddr)
 
 static void oxpcie_init(void)
 {
-	printf("oxpcie_init\n");
+	kprintf_stub("oxpcie_init\n"); // MODIFIED
 	/* Enable access to EFR and DLM+DLL */
 	OXPCIE_LCR = 0xBF;
 
@@ -49,7 +55,7 @@ void oxpcie_putc(char c)
 {
 	static int inuse = 0;
 
-	if(vm_running && oxpcie_vaddr && !inuse) {
+	if(vm_running && oxpcie_vaddr && !inuse) { // oxpcie_vaddr compared against NULL implicitly
         	int i;
 		static int init_done;
 		inuse = 1;
@@ -70,7 +76,7 @@ void oxpcie_putc(char c)
 
 int oxpcie_in(void)
 {
-	if(vm_running && oxpcie_vaddr) {
+	if(vm_running && oxpcie_vaddr) { // oxpcie_vaddr compared against NULL implicitly
 		int lsr;
 		lsr = OXPCIE_LSR;
 		if(lsr & LSR_DR)

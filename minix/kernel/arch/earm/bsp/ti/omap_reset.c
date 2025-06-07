@@ -1,9 +1,9 @@
-#include <assert.h>
-#include <sys/types.h>
-#include <machine/cpu.h>
-#include <minix/type.h>
-#include <minix/board.h>
-#include <io.h>
+// #include <assert.h> // Removed (not used)
+// #include <sys/types.h> // Replaced
+#include <machine/cpu.h>    // Kept
+#include <minix/type.h>     // Kept
+#include <minix/board.h>    // Kept
+#include <io.h>             // Kept
 
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
@@ -14,6 +14,13 @@
 
 #include "omap_timer_registers.h"
 #include "omap_rtc.h"
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #define AM335X_CM_BASE 0x44E00000
 #define AM335X_CM_SIZE 0x1000
@@ -97,4 +104,3 @@ void bsp_disable_watchdog(void)
 		while(mmio_read(AM335X_WDT_BASE+AM335X_WDT_WWPS) != 0) ;
 	}
 }
-

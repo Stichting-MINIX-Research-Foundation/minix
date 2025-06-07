@@ -1,14 +1,20 @@
-#include <minix/cpufeature.h>
+#include <minix/cpufeature.h> // Kept for now
 
-#include <minix/type.h>
-#include <assert.h>
+#include <minix/type.h>    // Kept for now (appears twice, will be one)
+// #include <assert.h>       // Replaced
 #include "kernel/kernel.h"
 #include "arch_proto.h"
-#include <machine/cpu.h>
-#include <arm/armreg.h>
+#include <machine/cpu.h>   // Kept for now
+#include <arm/armreg.h>    // Kept for now
 
-#include <string.h>
-#include <minix/type.h>
+// #include <string.h>       // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h> // For KASSERT_PLACEHOLDER and kprintf_stub
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* These are set/computed in kernel.lds. */
 extern char _kern_vir_base, _kern_phys_base, _kern_size;
@@ -24,12 +30,12 @@ static u32_t pagedir[4096]  __aligned(16384);
 void print_memmap(kinfo_t *cbi)
 {
 	int m;
-	assert(cbi->mmap_size < MAXMEMMAP);
+	KASSERT_PLACEHOLDER(cbi->mmap_size < MAXMEMMAP); // MODIFIED
 	for(m = 0; m < cbi->mmap_size; m++) {
 		phys_bytes addr = cbi->memmap[m].mm_base_addr, endit = cbi->memmap[m].mm_base_addr + cbi->memmap[m].mm_length;
-		printf("%08lx-%08lx ",addr, endit);
+		kprintf_stub("%08lx-%08lx ",addr, endit); // MODIFIED
 	}
-	printf("\nsize %08lx\n", cbi->mmap_size);
+	kprintf_stub("\nsize %08lx\n", cbi->mmap_size); // MODIFIED
 }
 
 void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
@@ -42,7 +48,7 @@ void cut_memmap(kinfo_t *cbi, phys_bytes start, phys_bytes end)
 	if((o=end % ARM_PAGE_SIZE))
 		end += ARM_PAGE_SIZE - o;
 
-	assert(kernel_may_alloc);
+	KASSERT_PLACEHOLDER(kernel_may_alloc); // MODIFIED
 
 	for(m = 0; m < cbi->mmap_size; m++) {
 		phys_bytes substart = start, subend = end;
@@ -80,14 +86,14 @@ void add_memmap(kinfo_t *cbi, u64_t addr, u64_t len)
 		len -= (addr + len - LIMIT);
 	}
 
-	assert(cbi->mmap_size < MAXMEMMAP);
+	KASSERT_PLACEHOLDER(cbi->mmap_size < MAXMEMMAP); // MODIFIED
 	if(len == 0) {
 		return;
 	}
 	addr = roundup(addr, ARM_PAGE_SIZE);
 	len = rounddown(len, ARM_PAGE_SIZE);
 
-	assert(kernel_may_alloc);
+	KASSERT_PLACEHOLDER(kernel_may_alloc); // MODIFIED
 
         for(m = 0; m < MAXMEMMAP; m++) {
 		phys_bytes highmark;
@@ -119,7 +125,7 @@ u32_t *alloc_pagetable(phys_bytes *ph)
 	if(pt_inuse >= PG_PAGETABLES) {
 		panic("no more pagetables");
 	}
-	assert(sizeof(pagetables[pt_inuse]) == 1024);
+	KASSERT_PLACEHOLDER(sizeof(pagetables[pt_inuse]) == 1024); // MODIFIED
 	ret = pagetables[pt_inuse++];
 	*ph = vir2phys(ret);
 	return ret;
@@ -132,16 +138,16 @@ phys_bytes pg_alloc_page(kinfo_t *cbi)
 	int m;
 	multiboot_memory_map_t *mmap;
 
-	assert(kernel_may_alloc);
+	KASSERT_PLACEHOLDER(kernel_may_alloc); // MODIFIED
 
 	for(m = 0; m < cbi->mmap_size; m++) {
 		mmap = &cbi->memmap[m];
 		if(!mmap->mm_length) {
 			continue;
 		}
-		assert(mmap->mm_length > 0);
-		assert(!(mmap->mm_length % ARM_PAGE_SIZE));
-		assert(!(mmap->mm_base_addr % ARM_PAGE_SIZE));
+		KASSERT_PLACEHOLDER(mmap->mm_length > 0); // MODIFIED
+		KASSERT_PLACEHOLDER(!(mmap->mm_length % ARM_PAGE_SIZE)); // MODIFIED
+		KASSERT_PLACEHOLDER(!(mmap->mm_base_addr % ARM_PAGE_SIZE)); // MODIFIED
 
 		u32_t addr = mmap->mm_base_addr;
 		mmap->mm_base_addr += ARM_PAGE_SIZE;
@@ -163,7 +169,7 @@ void pg_identity(kinfo_t *cbi)
 	/* We map memory that does not correspond to physical memory
 	 * as non-cacheable. Make sure we know what it is.
 	 */
-	assert(cbi->mem_high_phys);
+	KASSERT_PLACEHOLDER(cbi->mem_high_phys); // MODIFIED
 
         /* Set up an identity mapping page directory */
 	 for(i = 0; i < ARM_VM_DIR_ENTRIES; i++) {
@@ -186,8 +192,8 @@ int pg_mapkernel(void)
 	int pde;
 	u32_t mapped = 0, kern_phys = kern_phys_start;
 
-	assert(!(kern_vir_start % ARM_SECTION_SIZE));
-	assert(!(kern_phys_start % ARM_SECTION_SIZE));
+	KASSERT_PLACEHOLDER(!(kern_vir_start % ARM_SECTION_SIZE)); // MODIFIED
+	KASSERT_PLACEHOLDER(!(kern_phys_start % ARM_SECTION_SIZE)); // MODIFIED
 	pde = kern_vir_start / ARM_SECTION_SIZE; /* start pde */
 	while(mapped < kern_kernlen) {
 		pagedir[pde] = (kern_phys & ARM_VM_SECTION_MASK) 
@@ -249,7 +255,7 @@ phys_bytes pg_load(void)
 
 void pg_clear(void)
 {
-	memset(pagedir, 0, sizeof(pagedir));
+	kmemset(pagedir, 0, sizeof(pagedir)); // MODIFIED
 }
 
 phys_bytes pg_rounddown(phys_bytes b)
@@ -268,26 +274,26 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 	static u32_t *pt = NULL;
 	int pde, pte;
 
-	assert(kernel_may_alloc);
+	KASSERT_PLACEHOLDER(kernel_may_alloc); // MODIFIED
 
 	if(phys == PG_ALLOCATEME) {
-		assert(!(vaddr % ARM_PAGE_SIZE));
+		KASSERT_PLACEHOLDER(!(vaddr % ARM_PAGE_SIZE)); // MODIFIED
 	} else  {
-		assert((vaddr % ARM_PAGE_SIZE) == (phys % ARM_PAGE_SIZE));
+		KASSERT_PLACEHOLDER((vaddr % ARM_PAGE_SIZE) == (phys % ARM_PAGE_SIZE)); // MODIFIED
 		vaddr = pg_rounddown(vaddr);
 		phys = pg_rounddown(phys);
 	}
-	assert(vaddr < kern_vir_start);
+	KASSERT_PLACEHOLDER(vaddr < kern_vir_start); // MODIFIED
 
 	while(vaddr < vaddr_end) {
 		phys_bytes source = phys;
-		assert(!(vaddr % ARM_PAGE_SIZE));
+		KASSERT_PLACEHOLDER(!(vaddr % ARM_PAGE_SIZE)); // MODIFIED
 		if(phys == PG_ALLOCATEME) {
 			source = pg_alloc_page(cbi);
 		} else {
-			assert(!(phys % ARM_PAGE_SIZE));
+			KASSERT_PLACEHOLDER(!(phys % ARM_PAGE_SIZE)); // MODIFIED
 		}
-		assert(!(source % ARM_PAGE_SIZE));
+		KASSERT_PLACEHOLDER(!(source % ARM_PAGE_SIZE)); // MODIFIED
 		pde = ARM_VM_PDE(vaddr);
 		pte = ARM_VM_PTE(vaddr);
 		if(mapped_pde < pde) {
@@ -298,7 +304,7 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 					| ARM_VM_PDE_DOMAIN;
 			mapped_pde = pde;
 		}
-		assert(pt);
+		KASSERT_PLACEHOLDER(pt); // MODIFIED
 		pt[pte] = (source & ARM_VM_PTE_MASK)
 			| ARM_VM_PAGETABLE
 			| ARM_VM_PTE_CACHED

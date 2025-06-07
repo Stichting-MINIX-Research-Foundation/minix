@@ -7,7 +7,14 @@
 
 #include "kernel/system.h"
 
-#include <minix/endpoint.h>
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if EINVAL is mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_CLEAR
 
@@ -28,7 +35,7 @@ int do_clear(struct proc * caller, message * m_ptr)
 
   if(!isokendpt(m_ptr->m_lsys_krn_sys_clear.endpt, &exit_p)) {
       /* get exiting process */
-      return EINVAL;
+      return EINVAL; // EINVAL might be undefined
   }
   rc = proc_addr(exit_p);	/* clean up */
 

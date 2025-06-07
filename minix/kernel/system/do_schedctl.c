@@ -1,5 +1,12 @@
 #include "kernel/system.h"
-#include <minix/endpoint.h>
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped, and uint32_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /*===========================================================================*
  *			          do_schedctl			     *
@@ -7,7 +14,7 @@
 int do_schedctl(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
-	uint32_t flags;
+	uint32_t flags; // uint32_t might need definition from kernel_types.h
 	int priority, quantum, cpu;
 	int proc_nr;
 	int r;
@@ -15,13 +22,13 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 	/* check parameter validity */
 	flags = m_ptr->m_lsys_krn_schedctl.flags;
 	if (flags & ~SCHEDCTL_FLAG_KERNEL) {
-		printf("do_schedctl: flags 0x%x invalid, caller=%d\n", 
+		kprintf_stub("do_schedctl: flags 0x%x invalid, caller=%d\n", // MODIFIED
 			flags, caller - proc);
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 	}
 
 	if (!isokendpt(m_ptr->m_lsys_krn_schedctl.endpoint, &proc_nr))
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 
 	p = proc_addr(proc_nr);
 
@@ -36,7 +43,7 @@ int do_schedctl(struct proc * caller, message * m_ptr)
 		/* Try to schedule the process. */
 		if((r = sched_proc(p, priority, quantum, cpu, FALSE)) != OK)
 			return r;
-		p->p_scheduler = NULL;
+		p->p_scheduler = NULL; // NULL might be undefined
 	} else {
 		/* the caller becomes the scheduler */
 		p->p_scheduler = caller;

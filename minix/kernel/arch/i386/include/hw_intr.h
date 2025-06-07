@@ -2,6 +2,14 @@
 #define __HW_INTR_X86_H__
 
 #include "kernel/kernel.h"
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 void irq_8259_unmask(int irq);
 void irq_8259_mask(int irq);
 void irq_8259_eoi(int irq);
@@ -17,7 +25,7 @@ void eoi_8259_slave(void);
  * either
  */
 #if defined(USE_APIC)
-#include "kernel/arch/i386/apic.h"
+#include "kernel/arch/i386/apic.h" // Kept (local arch header)
 
 #define hw_intr_mask(irq)	ioapic_mask_irq(irq)
 #define hw_intr_unmask(irq)	ioapic_unmask_irq(irq)
@@ -43,7 +51,7 @@ void eoi_8259_slave(void);
 /* legacy PIC */
 
 #define hw_intr_mask(irq)	irq_8259_mask(irq)
-#define hw_intr_unmask(irq)	irq_8259_unmask(irq)
+#define hw_intr_unmask(irq)	ir_8259_unmask(irq)
 #define hw_intr_ack(irq)	irq_8259_eoi(irq)
 #define hw_intr_used(irq)
 #define hw_intr_not_used(irq)

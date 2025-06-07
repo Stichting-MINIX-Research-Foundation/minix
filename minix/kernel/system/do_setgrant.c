@@ -7,7 +7,14 @@
  */
 
 #include "kernel/system.h"
-#include <minix/safecopies.h>
+#include <minix/safecopies.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /*===========================================================================*
  *				do_setgrant				     *
@@ -18,7 +25,7 @@ int do_setgrant(struct proc * caller, message * m_ptr)
 
 	/* Copy grant table set in priv. struct. */
 	if (RTS_ISSET(caller, RTS_NO_PRIV) || !(priv(caller))) {
-		r = EPERM;
+		r = EPERM; // EPERM might be undefined
 	} else {
 		_K_SET_GRANT_TABLE(caller,
 			m_ptr->m_lsys_krn_sys_setgrant.addr,

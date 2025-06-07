@@ -8,8 +8,15 @@
  */
 
 #include "kernel/system.h"
-#include <signal.h>
-#include <string.h>
+// #include <signal.h> // Replaced
+// #include <string.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t, k_sigset_t (if sigcontext parts use it)
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_SIGSEND
 
@@ -20,19 +27,20 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_sigsend, POSIX-style signal handling. */
 
-  struct sigmsg smsg;
+  struct sigmsg smsg; // FIXME: struct sigmsg is likely undefined now
   register struct proc *rp;
-  struct sigframe_sigcontext fr, *frp;
+  struct sigframe_sigcontext fr, *frp; // FIXME: struct sigframe_sigcontext is likely undefined now
   int proc_nr, r;
 #if defined(__i386__)
   reg_t new_fp;
 #endif
 
-  if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL;
-  if (iskerneln(proc_nr)) return EPERM;
+  if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL; // EINVAL might be undefined
+  if (iskerneln(proc_nr)) return EPERM; // EPERM might be undefined
   rp = proc_addr(proc_nr);
 
   /* Get the sigmsg structure into our address space.  */
+  // FIXME: sizeof(struct sigmsg) will be problematic
   if ((r = data_copy_vmcheck(caller, caller->p_endpoint,
 		(vir_bytes)m_ptr->m_sigcalls.sigctx, KERNEL,
 		(vir_bytes)&smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
@@ -43,14 +51,16 @@ int do_sigsend(struct proc * caller, message * m_ptr)
    */
 
   /* Compute the user stack pointer where sigframe will start. */
+  // FIXME: smsg.sm_stkptr will be problematic
   smsg.sm_stkptr = arch_get_sp(rp);
   frp = (struct sigframe_sigcontext *) smsg.sm_stkptr - 1;
 
   /* Copy the registers to the sigcontext structure. */
-  memset(&fr, 0, sizeof(fr));
-  fr.sf_scp = &frp->sf_sc;
+  kmemset(&fr, 0, sizeof(fr)); // MODIFIED
+  fr.sf_scp = &frp->sf_sc; // FIXME: sf_scp, sf_sc might be problematic
 
 #if defined(__i386__)
+  // FIXME: all fr.sf_sc.sc_* and fr.sf_* fields will be problematic
   fr.sf_sc.sc_gs = rp->p_reg.gs;
   fr.sf_sc.sc_fs = rp->p_reg.fs;
   fr.sf_sc.sc_es = rp->p_reg.es;
@@ -77,18 +87,19 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   fr.sf_sc.trap_style = rp->p_seg.p_kern_trap_style;
 
   if (fr.sf_sc.trap_style == KTS_NONE) {
-  	printf("do_sigsend: sigsend an unsaved process\n");
-	return EINVAL;
+	kprintf_stub("do_sigsend: sigsend an unsaved process\n"); // MODIFIED
+	return EINVAL; // EINVAL might be undefined
   }
 
   if (proc_used_fpu(rp)) {
 	/* save the FPU context before saving it to the sig context */
 	save_fpu(rp);
-	memcpy(&fr.sf_sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE);
+	kmemcpy(&fr.sf_sc.sc_fpu_state, rp->p_seg.fpu_state, FPU_XFP_SIZE); // MODIFIED
   }
 #endif
 
 #if defined(__arm__)
+  // FIXME: all fr.sf_sc.sc_* fields will be problematic
   fr.sf_sc.sc_spsr = rp->p_reg.psr;
   fr.sf_sc.sc_r0 = rp->p_reg.retreg;
   fr.sf_sc.sc_r1 = rp->p_reg.r1;
@@ -110,14 +121,16 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 #endif
 
   /* Finish the sigcontext initialization. */
+  // FIXME: smsg.sm_mask, fr.sf_sc.sc_mask, fr.sf_sc.sc_flags, fr.sf_sc.sc_magic, SC_MAGIC will be problematic
   fr.sf_sc.sc_mask = smsg.sm_mask;
   fr.sf_sc.sc_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
-  fr.sf_sc.sc_magic = SC_MAGIC;
+  fr.sf_sc.sc_magic = 0; /* SC_MAGIC might be undefined */
 
   /* Initialize the sigframe structure. */
   fpu_sigcontext(rp, &fr, &fr.sf_sc);
 
   /* Copy the sigframe structure to the user's stack. */
+  // FIXME: sizeof(struct sigframe_sigcontext) will be problematic
   if ((r = data_copy_vmcheck(caller, KERNEL, (vir_bytes)&fr,
 		m_ptr->m_sigcalls.endpt, (vir_bytes)frp,
 		(vir_bytes)sizeof(struct sigframe_sigcontext))) != OK)
@@ -132,7 +145,7 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Reset user registers to execute the signal handler. */
   rp->p_reg.sp = (reg_t) frp;
-  rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
+  rp->p_reg.pc = (reg_t) smsg.sm_sighandler; // FIXME: smsg.sm_sighandler problematic
 
 #if defined(__i386__)
   rp->p_reg.fp = new_fp;
@@ -140,13 +153,13 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   /* use the ARM link register to set the return address from the signal
    * handler
    */
-  rp->p_reg.lr = (reg_t) smsg.sm_sigreturn;
-  if(rp->p_reg.lr & 1) { printf("sigsend: LSB LR makes no sense.\n"); }
+  rp->p_reg.lr = (reg_t) smsg.sm_sigreturn; // FIXME: smsg.sm_sigreturn problematic
+  if(rp->p_reg.lr & 1) { kprintf_stub("sigsend: LSB LR makes no sense.\n"); } // MODIFIED
 
   /* pass signal handler parameters in registers */
-  rp->p_reg.retreg = (reg_t) smsg.sm_signo;
+  rp->p_reg.retreg = (reg_t) smsg.sm_signo; // FIXME: smsg.sm_signo problematic
   rp->p_reg.r1 = 0;	/* sf_code */
-  rp->p_reg.r2 = (reg_t) fr.sf_scp;
+  rp->p_reg.r2 = (reg_t) fr.sf_scp; // FIXME: fr.sf_scp problematic
   rp->p_misc_flags |= MF_CONTEXT_SET;
 #endif
 
@@ -154,8 +167,8 @@ int do_sigsend(struct proc * caller, message * m_ptr)
   rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
 
   if(!RTS_ISSET(rp, RTS_PROC_STOP)) {
-	printf("system: warning: sigsend a running process\n");
-	printf("caller stack: ");
+	kprintf_stub("system: warning: sigsend a running process\n"); // MODIFIED
+	kprintf_stub("caller stack: "); // MODIFIED
 	proc_stacktrace(caller);
   }
 
@@ -163,4 +176,3 @@ int do_sigsend(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_SIGSEND */
-

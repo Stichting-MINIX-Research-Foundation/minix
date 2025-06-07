@@ -14,7 +14,14 @@
 
 #include "kernel/system.h"
 
-#include <assert.h>
+// #include <assert.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_size_t, k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /*===========================================================================*
  *				do_vumap				     *
@@ -32,7 +39,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
   vir_bytes vaddr, paddr, vir_addr;
   phys_bytes phys_addr;
   int i, r, proc_nr, vcount, pcount, pmax, access;
-  size_t size, chunk, offset;
+  k_size_t size, chunk, offset; // MODIFIED size_t
 
   endpt = caller->p_endpoint;
 
@@ -40,13 +47,13 @@ int do_vumap(struct proc *caller, message *m_ptr)
   source = m_ptr->m_lsys_krn_sys_vumap.endpt;
   vaddr = m_ptr->m_lsys_krn_sys_vumap.vaddr;
   vcount = m_ptr->m_lsys_krn_sys_vumap.vcount;
-  offset = m_ptr->m_lsys_krn_sys_vumap.offset;
+  offset = (k_size_t) m_ptr->m_lsys_krn_sys_vumap.offset; // MODIFIED: Treat as k_size_t
   access = m_ptr->m_lsys_krn_sys_vumap.access;
   paddr = m_ptr->m_lsys_krn_sys_vumap.paddr;
   pmax = m_ptr->m_lsys_krn_sys_vumap.pmax;
 
   if (vcount <= 0 || pmax <= 0)
-	return EINVAL;
+	return EINVAL; // EINVAL might be undefined
 
   if (vcount > MAPVEC_NR) vcount = MAPVEC_NR;
   if (pmax > MAPVEC_NR) pmax = MAPVEC_NR;
@@ -56,14 +63,14 @@ int do_vumap(struct proc *caller, message *m_ptr)
   case VUA_READ:		access = CPF_READ; break;
   case VUA_WRITE:		access = CPF_WRITE; break;
   case VUA_READ|VUA_WRITE:	access = CPF_READ|CPF_WRITE; break;
-  default:			return EINVAL;
+  default:			return EINVAL; // EINVAL might be undefined
   }
 
   /* Copy in the vector of virtual addresses. */
   size = vcount * sizeof(vvec[0]);
 
   if (data_copy(endpt, vaddr, KERNEL, (vir_bytes) vvec, size) != OK)
-	return EFAULT;
+	return EFAULT; // EFAULT might be undefined
 
   pcount = 0;
 
@@ -73,12 +80,13 @@ int do_vumap(struct proc *caller, message *m_ptr)
   for (i = 0; i < vcount && pcount < pmax; i++) {
 	size = vvec[i].vv_size;
 	if (size <= offset)
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 	size -= offset;
 
 	if (source != SELF) {
+        // Assuming verify_grant expects size as vir_bytes or compatible (k_size_t here)
 		r = verify_grant(source, endpt, vvec[i].vv_grant, size, access,
-			offset, &vir_addr, &granter, NULL);
+			offset, &vir_addr, &granter, NULL); // MODIFIED (NULL)
 		if (r != OK)
 			return r;
 	} else {
@@ -98,7 +106,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
 			 * is supposed to be there to be read from.
 			 */
 			if (access & CPF_READ)
-				return EFAULT;
+				return EFAULT; // EFAULT might be undefined
 
 			/* This call may suspend the current call, or return an
 			 * error for a previous invocation.
@@ -118,7 +126,7 @@ int do_vumap(struct proc *caller, message *m_ptr)
   }
 
   /* Copy out the resulting vector of physical addresses. */
-  assert(pcount > 0);
+  KASSERT_PLACEHOLDER(pcount > 0); // MODIFIED
 
   size = pcount * sizeof(pvec[0]);
 

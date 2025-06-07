@@ -8,8 +8,15 @@
  */
 
 #include "kernel/system.h"
-#include <string.h>
-#include <machine/cpu.h>
+// #include <string.h> // Replaced
+#include <machine/cpu.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_SIGRETURN 
 
@@ -21,15 +28,16 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 /* POSIX style signals require sys_sigreturn to put things in order before 
  * the signalled process can resume execution
  */
-  struct sigcontext sc;
+  struct sigcontext sc; // FIXME: struct sigcontext is likely undefined now
   register struct proc *rp;
   int proc_nr, r;
 
-  if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL;
-  if (iskerneln(proc_nr)) return EPERM;
+  if (!isokendpt(m_ptr->m_sigcalls.endpt, &proc_nr)) return EINVAL; // EINVAL might be undefined
+  if (iskerneln(proc_nr)) return EPERM; // EPERM might be undefined
   rp = proc_addr(proc_nr);
 
   /* Copy in the sigcontext structure. */
+  // FIXME: sizeof(struct sigcontext) will be problematic
   if ((r = data_copy(m_ptr->m_sigcalls.endpt,
 		 (vir_bytes)m_ptr->m_sigcalls.sigctx, KERNEL,
 		 (vir_bytes)&sc, sizeof(struct sigcontext))) != OK)
@@ -37,6 +45,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 
 #if defined(__i386__)
   /* Restore user bits of psw from sc, maintain system bits from proc. */
+  // FIXME: sc.sc_eflags will be problematic
   sc.sc_eflags  =  (sc.sc_eflags & X86_FLAGS_USER) |
                 (rp->p_reg.psw & ~X86_FLAGS_USER);
 #endif
@@ -45,6 +54,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   /* Write back registers we allow to be restored, i.e.
    * not the segment ones.
    */
+  // FIXME: all sc.sc_* fields will be problematic
   rp->p_reg.di = sc.sc_edi;
   rp->p_reg.si = sc.sc_esi;
   rp->p_reg.fp = sc.sc_ebp;
@@ -58,6 +68,7 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 #endif
 
 #if defined(__arm__)
+  // FIXME: all sc.sc_* fields will be problematic
   rp->p_reg.psr = sc.sc_spsr;
   rp->p_reg.retreg = sc.sc_r0;
   rp->p_reg.r1 = sc.sc_r1;
@@ -78,14 +89,17 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
 #endif
 
   /* Restore the registers. */
+  // FIXME: sc.trap_style will be problematic
   arch_proc_setcontext(rp, &rp->p_reg, 1, sc.trap_style);
 
-  if(sc.sc_magic != SC_MAGIC) { printf("kernel sigreturn: corrupt signal context\n"); }
+  // FIXME: sc.sc_magic and SC_MAGIC will be problematic
+  if(sc.sc_magic != 0 /* SC_MAGIC */) { kprintf_stub("kernel sigreturn: corrupt signal context\n"); } // MODIFIED
 
 #if defined(__i386__)
+  // FIXME: sc.sc_flags and sc.sc_fpu_state will be problematic
   if (sc.sc_flags & MF_FPU_INITIALIZED)
   {
-	memcpy(rp->p_seg.fpu_state, &sc.sc_fpu_state, FPU_XFP_SIZE);
+	kmemcpy(rp->p_seg.fpu_state, &sc.sc_fpu_state, FPU_XFP_SIZE); // MODIFIED
 	rp->p_misc_flags |=  MF_FPU_INITIALIZED; /* Restore math usage flag. */
 	/* force reloading FPU */
 	release_fpu(rp);
@@ -95,4 +109,3 @@ int do_sigreturn(struct proc * caller, message * m_ptr)
   return OK;
 }
 #endif /* USE_SIGRETURN */
-

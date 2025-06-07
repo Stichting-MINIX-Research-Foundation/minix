@@ -1,8 +1,15 @@
 #ifndef __SCONST_H__
 #define __SCONST_H__
 
-#include "kernel/const.h"
-#include "kernel/procoffsets.h"
+#include "kernel/const.h"      // Kept (local kernel header)
+#include "kernel/procoffsets.h" // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /*
  * offset to current process pointer right after trap, we assume we always have

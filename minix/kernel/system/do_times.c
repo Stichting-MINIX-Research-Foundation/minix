@@ -12,7 +12,14 @@
 
 #include "kernel/system.h"
 
-#include <minix/endpoint.h>
+#include <minix/endpoint.h> // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_clock_t, k_time_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_TIMES
 
@@ -37,6 +44,8 @@ int do_times(struct proc * caller, message * m_ptr)
       m_ptr->m_krn_lsys_sys_times.user_time   = rp->p_user_time;
       m_ptr->m_krn_lsys_sys_times.system_time = rp->p_sys_time;
   }
+  // These get_() functions now return k_clock_t or k_time_t.
+  // The message struct fields will need to align with these types eventually.
   m_ptr->m_krn_lsys_sys_times.boot_ticks = get_monotonic();
   m_ptr->m_krn_lsys_sys_times.real_ticks = get_realtime();
   m_ptr->m_krn_lsys_sys_times.boot_time = get_boottime();

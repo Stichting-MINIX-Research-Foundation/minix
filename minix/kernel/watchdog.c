@@ -5,7 +5,14 @@
  */
 
 #include "watchdog.h"
-#include "arch/i386/glo.h"
+#include "arch/i386/glo.h" // Kept (arch-specific)
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if ENODEV is mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 unsigned watchdog_local_timer_ticks = 0U;
 struct arch_watchdog *watchdog;
@@ -27,7 +34,7 @@ static void lockup_check(struct nmi_frame * frame)
 
 	if (last_tick_count != watchdog_local_timer_ticks) {
 		if (no_ticks == 1) {
-			printf("watchdog : kernel unlocked\n");
+			kprintf_stub("watchdog : kernel unlocked\n"); // MODIFIED
 			no_ticks = 0;
 		}
 		/* we are still ticking, everything seems good */
@@ -41,7 +48,7 @@ static void lockup_check(struct nmi_frame * frame)
 	 */
 	if (++no_ticks < 10) {
 		if (no_ticks == 1)
-			printf("WARNING watchdog : possible kernel lockup\n");
+			kprintf_stub("WARNING watchdog : possible kernel lockup\n"); // MODIFIED
 		return;
 	}
 
@@ -79,13 +86,13 @@ int nmi_watchdog_start_profiling(const unsigned freq)
 	/* if watchdog hasn't been enabled, we must enable it now */
 	if (!watchdog_enabled) {
 		if (arch_watchdog_init())
-			return ENODEV;
+			return ENODEV; // ENODEV might be undefined
 	}
 
 	if (!watchdog->profile_init) {
-		printf("WARNING NMI watchdog profiling not supported\n");
+		kprintf_stub("WARNING NMI watchdog profiling not supported\n"); // MODIFIED
 		nmi_watchdog_stop_profiling();
-		return ENODEV;
+		return ENODEV; // ENODEV might be undefined
 	}
 
 	err = watchdog->profile_init(freq);

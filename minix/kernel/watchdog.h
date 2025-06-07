@@ -2,7 +2,14 @@
 #define __WATCHDOG_H__
 
 #include "kernel/kernel.h"
-#include "arch_watchdog.h"
+#include "arch_watchdog.h" // Kept (local arch header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 extern int watchdog_enabled; /* if set to non-zero the watch dog is enabled */
 extern unsigned watchdog_local_timer_ticks; /* is timer still ticking? */

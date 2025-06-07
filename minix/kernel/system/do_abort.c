@@ -6,7 +6,14 @@
  */
 
 #include "kernel/system.h"
-#include <unistd.h>
+// #include <unistd.h> // Removed
+
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_ABORT
 
@@ -26,4 +33,3 @@ int do_abort(struct proc * caller, message * m_ptr)
 }
 
 #endif /* USE_ABORT */
-

@@ -1,20 +1,23 @@
-
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
 #include "kernel/vm.h"
 
-#include <machine/vm.h>
+#include <machine/vm.h> // Kept, appears twice, will be one after cleaning
 
-#include <minix/type.h>
-#include <minix/board.h>
-#include <minix/syslib.h>
-#include <minix/cpufeature.h>
-#include <string.h>
-#include <assert.h>
-#include <signal.h>
-#include <stdlib.h>
+#include <minix/type.h>    // Kept for now
+#include <minix/board.h>   // Kept for now
+// #include <minix/syslib.h> // Removed
+#include <minix/cpufeature.h> // Kept for now
+// #include <string.h>       // Replaced
+// #include <assert.h>       // Replaced
+// #include <signal.h>       // Replaced
+// #include <stdlib.h>       // Removed
 
-#include <machine/vm.h>
+// Added kernel headers
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
 
 #include "arch_proto.h"
 #include "kernel/proto.h"
@@ -39,9 +42,9 @@ void mem_clear_mapcache(void)
 		struct proc *ptproc = get_cpulocal_var(ptproc);
 		int pde = freepdes[i];
 		u32_t *ptv;
-		assert(ptproc);
+		KASSERT_PLACEHOLDER(ptproc); // MODIFIED
 		ptv = ptproc->p_seg.p_ttbr_v;
-		assert(ptv);
+		KASSERT_PLACEHOLDER(ptv); // MODIFIED
 		ptv[pde] = 0;
 	}
 }
@@ -78,9 +81,9 @@ static phys_bytes createpde(
 	phys_bytes offset;
 	int pde;
 
-	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
+	KASSERT_PLACEHOLDER(free_pde_idx >= 0 && free_pde_idx < nfreepdes); // MODIFIED
 	pde = freepdes[free_pde_idx];
-	assert(pde >= 0 && pde < 4096);
+	KASSERT_PLACEHOLDER(pde >= 0 && pde < 4096); // MODIFIED
 
 	if(pr && ((pr == get_cpulocal_var(ptproc)) || iskernelp(pr))) {
 		/* Process memory is requested, and
@@ -97,11 +100,11 @@ static phys_bytes createpde(
 		 * accessible directly. Grab the PDE entry of that process'
 		 * page table that corresponds to the requested address.
 		 */
-		assert(pr->p_seg.p_ttbr_v);
+		KASSERT_PLACEHOLDER(pr->p_seg.p_ttbr_v); // MODIFIED
 		pdeval = pr->p_seg.p_ttbr_v[ARM_VM_PDE(linaddr)];
 	} else {
 		/* Requested address is physical. Make up the PDE entry. */
-		assert (linaddr >= PHYS_MEM_BEGIN && linaddr <= PHYS_MEM_END);
+		KASSERT_PLACEHOLDER (linaddr >= PHYS_MEM_BEGIN && linaddr <= PHYS_MEM_END); // MODIFIED
 
 		/* memory */
 		pdeval = (linaddr & ARM_VM_SECTION_MASK)
@@ -115,7 +118,7 @@ static phys_bytes createpde(
 	 * can access, into the currently loaded page table so it becomes
 	 * visible.
 	 */
-	assert(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v);
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v); // MODIFIED
 	if(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v[pde] != pdeval) {
 		get_cpulocal_var(ptproc)->p_seg.p_ttbr_v[pde] = pdeval;
 		*changed = 1;
@@ -141,7 +144,7 @@ static int check_resumed_caller(struct proc *caller)
 {
 	/* Returns the result from VM if caller was resumed, otherwise OK. */
 	if (caller && (caller->p_misc_flags & MF_KCALL_RESUME)) {
-		assert(caller->p_vmrequest.vmresult != VMSUSPEND);
+		KASSERT_PLACEHOLDER(caller->p_vmrequest.vmresult != VMSUSPEND); // MODIFIED
 		return caller->p_vmrequest.vmresult;
 	}
 
@@ -157,20 +160,20 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	u32_t addr;
 	proc_nr_t procslot;
 
-	assert(get_cpulocal_var(ptproc));
-	assert(get_cpulocal_var(proc_ptr));
-	assert(read_ttbr0() == get_cpulocal_var(ptproc)->p_seg.p_ttbr);
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)); // MODIFIED
+	KASSERT_PLACEHOLDER(get_cpulocal_var(proc_ptr)); // MODIFIED
+	KASSERT_PLACEHOLDER(read_ttbr0() == get_cpulocal_var(ptproc)->p_seg.p_ttbr); // MODIFIED
 
 	procslot = get_cpulocal_var(ptproc)->p_nr;
 
-	assert(procslot >= 0 && procslot < ARM_VM_DIR_ENTRIES);
+	KASSERT_PLACEHOLDER(procslot >= 0 && procslot < ARM_VM_DIR_ENTRIES); // MODIFIED
 
-	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
-	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
-	assert(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE));
-	assert(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v);
-	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_VMINHIBIT));
-	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_VMINHIBIT));
+	if(srcproc) KASSERT_PLACEHOLDER(!RTS_ISSET(srcproc, RTS_SLOT_FREE)); // MODIFIED
+	if(dstproc) KASSERT_PLACEHOLDER(!RTS_ISSET(dstproc, RTS_SLOT_FREE)); // MODIFIED
+	KASSERT_PLACEHOLDER(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE)); // MODIFIED
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v); // MODIFIED
+	if(srcproc) KASSERT_PLACEHOLDER(!RTS_ISSET(srcproc, RTS_VMINHIBIT)); // MODIFIED
+	if(dstproc) KASSERT_PLACEHOLDER(!RTS_ISSET(dstproc, RTS_VMINHIBIT)); // MODIFIED
 
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
@@ -232,10 +235,10 @@ static int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		dstlinaddr += chunk;
 	}
 
-	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
-	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
-	assert(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE));
-	assert(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v);
+	if(srcproc) KASSERT_PLACEHOLDER(!RTS_ISSET(srcproc, RTS_SLOT_FREE)); // MODIFIED
+	if(dstproc) KASSERT_PLACEHOLDER(!RTS_ISSET(dstproc, RTS_SLOT_FREE)); // MODIFIED
+	KASSERT_PLACEHOLDER(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE)); // MODIFIED
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v); // MODIFIED
 
 	return OK;
 }
@@ -266,7 +269,7 @@ phys_bytes umap_virtual(
 	phys_bytes phys = 0;
 
 	if(vm_lookup(rp, vir_addr, &phys, NULL) != OK) {
-		printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%x: 0x%lx failed\n", rp->p_name, seg, vir_addr);
+		kprintf_stub("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%x: 0x%lx failed\n", rp->p_name, seg, vir_addr); // MODIFIED
 		phys = 0;
 	} else {
 		if(phys == 0)
@@ -274,7 +277,7 @@ phys_bytes umap_virtual(
 	}
 
 	if(phys == 0) {
-		printf("SYSTEM:umap_virtual: lookup failed\n");
+		kprintf_stub("SYSTEM:umap_virtual: lookup failed\n"); // MODIFIED
 		return 0;
 	}
 
@@ -282,15 +285,15 @@ phys_bytes umap_virtual(
 	 * so that the umap makes sense.
 	 */
 	if(bytes > 0 && vm_lookup_range(rp, vir_addr, NULL, bytes) != bytes) {
-		printf("umap_virtual: %s: %lu at 0x%lx (vir 0x%lx) not contiguous\n",
-			rp->p_name, bytes, vir_addr, vir_addr);
+		kprintf_stub("umap_virtual: %s: %lu at 0x%lx (vir 0x%lx) not contiguous\n", // MODIFIED
+			rp->p_name, (unsigned long)bytes, vir_addr, vir_addr); // MODIFIED k_size_t cast for %lu
 		return 0;
 	}
 
 	/* phys must be larger than 0 (or the caller will think the call
 	 * failed), and address must not cross a page boundary.
 	 */
-	assert(phys);
+	KASSERT_PLACEHOLDER(phys); // MODIFIED
 
 	return phys;
 }
@@ -306,16 +309,16 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 	int pde, pte;
 	u32_t pde_v, pte_v;
 
-	assert(proc);
-	assert(physical);
-	assert(!isemptyp(proc));
-	assert(HASPT(proc));
+	KASSERT_PLACEHOLDER(proc); // MODIFIED
+	KASSERT_PLACEHOLDER(physical); // MODIFIED
+	KASSERT_PLACEHOLDER(!isemptyp(proc)); // MODIFIED
+	KASSERT_PLACEHOLDER(HASPT(proc)); // MODIFIED
 
 	/* Retrieve page directory entry. */
 	root = (u32_t *) (proc->p_seg.p_ttbr & ARM_TTBR_ADDR_MASK);
-	assert(!((u32_t) root % ARM_PAGEDIR_SIZE));
+	KASSERT_PLACEHOLDER(!((u32_t) root % ARM_PAGEDIR_SIZE)); // MODIFIED
 	pde = ARM_VM_PDE(virtual);
-	assert(pde >= 0 && pde < ARM_VM_DIR_ENTRIES);
+	KASSERT_PLACEHOLDER(pde >= 0 && pde < ARM_VM_DIR_ENTRIES); // MODIFIED
 	pde_v = phys_get32((u32_t) (root + pde));
 
 	if(! ((pde_v & ARM_VM_PDE_PRESENT) 
@@ -331,9 +334,9 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 	} else  {
 		/* Retrieve page table entry. */
 		pt = (u32_t *) (pde_v & ARM_VM_PDE_MASK);
-		assert(!((u32_t) pt % ARM_PAGETABLE_SIZE));
+		KASSERT_PLACEHOLDER(!((u32_t) pt % ARM_PAGETABLE_SIZE)); // MODIFIED
 		pte = ARM_VM_PTE(virtual);
-		assert(pte >= 0 && pte < ARM_VM_PT_ENTRIES);
+		KASSERT_PLACEHOLDER(pte >= 0 && pte < ARM_VM_PT_ENTRIES); // MODIFIED
 		pte_v = phys_get32((u32_t) (pt + pte));
 		if(!(pte_v & ARM_VM_PTE_PRESENT)) {
 			return EFAULT;
@@ -352,8 +355,8 @@ int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *				vm_lookup_range				     *
  *===========================================================================*/
-size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
-	phys_bytes *phys_addr, size_t bytes)
+k_size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr, // MODIFIED size_t to k_size_t
+	phys_bytes *phys_addr, k_size_t bytes) // MODIFIED size_t to k_size_t
 {
 	/* Look up the physical address corresponding to linear virtual address
 	 * 'vir_addr' for process 'proc'. Return the size of the range covered
@@ -365,11 +368,11 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
 	 * linear range is valid for the given process at all.
 	 */
 	phys_bytes phys, next_phys;
-	size_t len;
+	k_size_t len; // MODIFIED size_t to k_size_t
 
-	assert(proc);
-	assert(bytes > 0);
-	assert(HASPT(proc));
+	KASSERT_PLACEHOLDER(proc); // MODIFIED
+	KASSERT_PLACEHOLDER(bytes > 0); // MODIFIED
+	KASSERT_PLACEHOLDER(HASPT(proc)); // MODIFIED
 
 	/* Look up the first page. */
 	if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
@@ -403,7 +406,7 @@ size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
  *				vm_check_range				     *
  *===========================================================================*/
 int vm_check_range(struct proc *caller, struct proc *target,
-	vir_bytes vir_addr, size_t bytes, int writeflag)
+	vir_bytes vir_addr, k_size_t bytes, int writeflag) // MODIFIED size_t to k_size_t
 {
 	/* Public interface to vm_suspend(), for use by kernel calls. On behalf
 	 * of 'caller', call into VM to check linear virtual address range of
@@ -448,8 +451,8 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 	c &= 0xFF;
 	pattern = c | (c << 8) | (c << 16) | (c << 24);
 
-	assert(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v);
-	assert(!catch_pagefaults);
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v); // MODIFIED
+	KASSERT_PLACEHOLDER(!catch_pagefaults); // MODIFIED
 	catch_pagefaults = 1;
 
 	/* We can memset as many bytes as we have remaining,
@@ -470,7 +473,7 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 			if (whoptr) {
 				vm_suspend(caller, whoptr, ph, count,
 						   VMSTYPE_KERNELCALL, 1);
-				assert(catch_pagefaults);
+				KASSERT_PLACEHOLDER(catch_pagefaults); // MODIFIED
 				catch_pagefaults = 0;
 				return VMSUSPEND;
 			}
@@ -484,8 +487,8 @@ int vm_memset(struct proc* caller, endpoint_t who, phys_bytes ph, int c,
 		left -= chunk;
 	}
 
-	assert(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v);
-	assert(catch_pagefaults);
+	KASSERT_PLACEHOLDER(get_cpulocal_var(ptproc)->p_seg.p_ttbr_v); // MODIFIED
+	KASSERT_PLACEHOLDER(catch_pagefaults); // MODIFIED
 	catch_pagefaults = 0;
 
 	return OK;
@@ -507,7 +510,7 @@ int virtual_copy_f(
   int i, r;
   struct proc *procs[2];
 
-  assert((vmcheck && caller) || (!vmcheck && !caller));
+  KASSERT_PLACEHOLDER((vmcheck && caller) || (!vmcheck && !caller)); // MODIFIED
 
   /* Check copy count. */
   if (bytes <= 0) return(EDOM);
@@ -525,7 +528,7 @@ int virtual_copy_f(
 		p = NULL;
 	} else {
 		if(!isokendpt(proc_e, &proc_nr)) {
-			printf("virtual_copy: no reasonable endpoint\n");
+			kprintf_stub("virtual_copy: no reasonable endpoint\n"); // MODIFIED
 			return ESRCH;
 		}
 		p = proc_addr(proc_nr);
@@ -560,8 +563,8 @@ int virtual_copy_f(
   		panic("r strange: %d",  r);
   	}
 
-	assert(caller);
-	assert(target);
+	KASSERT_PLACEHOLDER(caller); // MODIFIED
+	KASSERT_PLACEHOLDER(target); // MODIFIED
 
 	vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL, writeflag);
 	return VMSUSPEND;
@@ -575,7 +578,7 @@ int virtual_copy_f(
  *===========================================================================*/
 int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
 	const endpoint_t to_proc, const vir_bytes to_addr,
-	size_t bytes)
+	k_size_t bytes) // MODIFIED size_t to k_size_t
 {
   struct vir_addr src, dst;
 
@@ -583,8 +586,8 @@ int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
   dst.offset = to_addr;
   src.proc_nr_e = from_proc;
   dst.proc_nr_e = to_proc;
-  assert(src.proc_nr_e != NONE);
-  assert(dst.proc_nr_e != NONE);
+  KASSERT_PLACEHOLDER(src.proc_nr_e != NONE); // MODIFIED
+  KASSERT_PLACEHOLDER(dst.proc_nr_e != NONE); // MODIFIED
 
   return virtual_copy(&src, &dst, bytes);
 }
@@ -595,7 +598,7 @@ int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
 int data_copy_vmcheck(struct proc * caller,
 	const endpoint_t from_proc, const vir_bytes from_addr,
 	const endpoint_t to_proc, const vir_bytes to_addr,
-	size_t bytes)
+	k_size_t bytes) // MODIFIED size_t to k_size_t
 {
   struct vir_addr src, dst;
 
@@ -603,22 +606,22 @@ int data_copy_vmcheck(struct proc * caller,
   dst.offset = to_addr;
   src.proc_nr_e = from_proc;
   dst.proc_nr_e = to_proc;
-  assert(src.proc_nr_e != NONE);
-  assert(dst.proc_nr_e != NONE);
+  KASSERT_PLACEHOLDER(src.proc_nr_e != NONE); // MODIFIED
+  KASSERT_PLACEHOLDER(dst.proc_nr_e != NONE); // MODIFIED
 
   return virtual_copy_vmcheck(caller, &src, &dst, bytes);
 }
 
 void memory_init(void)
 {
-	assert(nfreepdes == 0);
+	KASSERT_PLACEHOLDER(nfreepdes == 0); // MODIFIED
 
 	freepdes[nfreepdes++] = kinfo.freepde_start++;
 	freepdes[nfreepdes++] = kinfo.freepde_start++;
 
-	assert(kinfo.freepde_start < ARM_VM_DIR_ENTRIES);
-	assert(nfreepdes == 2);
-	assert(nfreepdes <= MAXFREEPDES);
+	KASSERT_PLACEHOLDER(kinfo.freepde_start < ARM_VM_DIR_ENTRIES); // MODIFIED
+	KASSERT_PLACEHOLDER(nfreepdes == 2); // MODIFIED
+	KASSERT_PLACEHOLDER(nfreepdes <= MAXFREEPDES); // MODIFIED
 }
 
 /*===========================================================================*
@@ -628,7 +631,7 @@ void arch_proc_init(struct proc *pr, const u32_t ip, const u32_t sp,
 	const u32_t ps_str, char *name)
 {
 	arch_proc_reset(pr);
-	strcpy(pr->p_name, name);
+	(void)kstrlcpy(pr->p_name, name, sizeof(pr->p_name)); /* FIXME: strcpy was here, validate size for kstrlcpy */ // MODIFIED
 
 	/* set custom state we know */
 	pr->p_reg.pc = ip;
@@ -656,7 +659,7 @@ int arch_phys_map(const int index,
 			(u32_t) &usermapped_start;
 
 	if(first) {
-		memset(&minix_kerninfo, 0, sizeof(minix_kerninfo));
+		kmemset(&minix_kerninfo, 0, sizeof(minix_kerninfo)); // MODIFIED
 		if(glo_len > 0) {
 			usermapped_glo_index = freeidx++;
 		}
@@ -711,7 +714,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 
 	if(index == first_um_idx) {
 		u32_t usermapped_offset;
-		assert(addr > (u32_t) &usermapped_start);
+		KASSERT_PLACEHOLDER(addr > (u32_t) &usermapped_start); // MODIFIED
 		usermapped_offset = addr - (u32_t) &usermapped_start;
 #define FIXEDPTR(ptr) (void *) ((u32_t)ptr + usermapped_offset)
 #define FIXPTR(ptr) ptr = FIXEDPTR(ptr)
@@ -745,7 +748,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
 		if(phys_maps->index == index){
-			assert(phys_maps->cb != NULL);
+			KASSERT_PLACEHOLDER(phys_maps->cb != NULL); // MODIFIED
 			/* only update the vir addr we are
 			   going to call the callback in enable
 			   paging
@@ -762,7 +765,7 @@ int arch_phys_map_reply(const int index, const vir_bytes addr)
 int arch_enable_paging(struct proc * caller)
 {
 	kern_phys_map *phys_maps;
-	assert(caller->p_seg.p_ttbr);
+	KASSERT_PLACEHOLDER(caller->p_seg.p_ttbr); // MODIFIED
 
 
 	/* load caller's page table */
@@ -774,7 +777,7 @@ int arch_enable_paging(struct proc * caller)
 	   the new mapping is not in place */
 	phys_maps = kern_phys_map_head;
 	while(phys_maps != NULL){
-		assert(phys_maps->cb != NULL);
+		KASSERT_PLACEHOLDER(phys_maps->cb != NULL); // MODIFIED
 		phys_maps->cb(phys_maps->id, phys_maps->vir);
 		phys_maps = phys_maps->next;
 	}
@@ -799,9 +802,9 @@ int kern_req_phys_map( phys_bytes base_address, vir_bytes io_size,
 {
 	/* Assign the values to the given struct and add priv
 	to the list */
-	assert(base_address != 0);
-	assert(io_size % ARM_PAGE_SIZE == 0);
-	assert(cb != NULL);
+	KASSERT_PLACEHOLDER(base_address != 0); // MODIFIED
+	KASSERT_PLACEHOLDER(io_size % ARM_PAGE_SIZE == 0); // MODIFIED
+	KASSERT_PLACEHOLDER(cb != NULL); // MODIFIED
 
 	priv->addr  = base_address;
 	priv->size  = io_size;
@@ -850,4 +853,3 @@ int kern_phys_map_ptr(
 {
 	return kern_req_phys_map(base_address,io_size,vm_flags,priv,kern_phys_map_mapped_ptr,ptr);
 }
-

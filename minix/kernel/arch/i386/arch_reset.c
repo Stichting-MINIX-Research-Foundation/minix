@@ -1,17 +1,23 @@
-
 #include "kernel/kernel.h"
 
-#include <ctype.h>
-#include <string.h>
-#include <machine/cmos.h>
-#include <machine/bios.h>
-#include <machine/cpu.h>
-#include <minix/cpufeature.h>
-#include <sys/reboot.h>
-#include <assert.h>
-#include <signal.h>
+// #include <ctype.h> // Removed
+// #include <string.h> // Removed
+#include <machine/cmos.h>      // Kept
+#include <machine/bios.h>      // Kept
+#include <machine/cpu.h>       // Kept
+#include <minix/cpufeature.h> // Kept
+// #include <sys/reboot.h> // Removed
+// #include <assert.h> // Removed
+// #include <signal.h> // Removed
 
-#include <minix/u64.h>
+#include <minix/u64.h>         // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For RB_* constants (if moved), and fixed-width types like uint8_t
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #include "arch_proto.h"
 #include "oxpcie.h"
@@ -30,7 +36,7 @@ int cpu_has_tsc;
 void
 reset(void)
 {
-        uint8_t b;
+        uint8_t b; // uint8_t might be undefined
         /*
          * The keyboard controller has 4 random output pins, one of which is
          * connected to the RESET pin on the CPU in many PCs.  We tell the
@@ -130,13 +136,13 @@ __dead void arch_shutdown(int how)
 		reset();
 	}
 		
-	if((how & RB_POWERDOWN) == RB_POWERDOWN) {
+	if((how & RB_POWERDOWN) == RB_POWERDOWN) { // RB_POWERDOWN may be undefined
 		/* Power off if possible, hang otherwise */
 		poweroff();
 		NOT_REACHABLE;
 	}
 
-	if(how & RB_HALT) {
+	if(how & RB_HALT) { // RB_HALT may be undefined
 		/* Hang */
 		for (; ; ) halt_cpu();
 		NOT_REACHABLE;

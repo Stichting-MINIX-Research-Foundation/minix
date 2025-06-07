@@ -1,6 +1,12 @@
-
 #ifndef _VM_H
 #define _VM_H 1
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h> // For k_size_t if used by phys_copy
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 /* Pseudo error codes */
 #define VMSUSPEND       (-996)
@@ -14,5 +20,3 @@
 	}
 
 #endif
-
-

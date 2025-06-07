@@ -1,7 +1,14 @@
 #include "kernel/watchdog.h"
 #include "glo.h"
-#include <minix/minlib.h>
-#include <minix/u64.h>
+#include <minix/minlib.h> // Kept
+#include <minix/u64.h>   // Kept
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t and fixed-width types
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #include "apic.h"
 
@@ -56,7 +63,7 @@ int arch_watchdog_init(void)
 	unsigned cpu = cpuid;
 
 	if (!lapic_addr) {
-		printf("ERROR : Cannot use NMI watchdog if APIC is not enabled\n");
+		kprintf_stub("ERROR : Cannot use NMI watchdog if APIC is not enabled\n"); // MODIFIED
 		return -1;
 	}
 
@@ -104,7 +111,7 @@ void arch_watchdog_stop(void)
 
 void arch_watchdog_lockup(const struct nmi_frame * frame)
 {
-	printf("KERNEL LOCK UP\n"
+	kprintf_stub("KERNEL LOCK UP\n" // MODIFIED
 			"eax    0x%08x\n"
 			"ecx    0x%08x\n"
 			"edx    0x%08x\n"
@@ -140,13 +147,13 @@ void arch_watchdog_lockup(const struct nmi_frame * frame)
 int i386_watchdog_start(void)
 {
 	if (arch_watchdog_init()) {
-		printf("WARNING watchdog initialization "
+		kprintf_stub("WARNING watchdog initialization " // MODIFIED
 				"failed! Disabled\n");
 		watchdog_enabled = 0;
 		return -1;
 	}
 	else
-		BOOT_VERBOSE(printf("Watchdog enabled\n"););
+		BOOT_VERBOSE(kprintf_stub("Watchdog enabled\n");); // MODIFIED
 
 	return 0;
 }
@@ -164,8 +171,8 @@ static int intel_arch_watchdog_profile_init(const unsigned freq)
 	 * insane value which cannot be handled by the 31bit CPU perf counter
 	 */
 	if (ex64hi(cpuf) != 0 || ex64lo(cpuf) > 0x7fffffffU) {
-		printf("ERROR : nmi watchdog ticks exceed 31bits, use higher frequency\n");
-		return EINVAL;
+		kprintf_stub("ERROR : nmi watchdog ticks exceed 31bits, use higher frequency\n"); // MODIFIED
+		return EINVAL; // EINVAL might be undefined
 	}
 
 	cpuf = make64(-ex64lo(cpuf), ex64hi(cpuf));

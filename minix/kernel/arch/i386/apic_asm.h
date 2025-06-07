@@ -5,6 +5,13 @@
 #ifndef __ASSEMBLY__
 #include "kernel/kernel.h"
 
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 void apic_hwint0(void);
 void apic_hwint1(void);
 void apic_hwint2(void);

@@ -8,8 +8,15 @@
  */
 
 #ifndef __ASSEMBLY__
-#include <minix/debug.h>
-#include "config.h"
+#include <minix/debug.h> // Kept for now
+#include "config.h"      // Kept (local kernel header)
+
+// Added kernel headers (precautionary for consistency)
+#include <minix/kernel_types.h>
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 #endif
 
 /* Debug info via serial (see ser_debug()) */
@@ -70,7 +77,8 @@
 #define VF_SCHEDULING		(1L << 1)
 #define VF_PICKPROC		(1L << 2)
 
-#define TRACE(code, statement) if(verboseflags & code) { printf("%s:%d: ", __FILE__, __LINE__); statement }
+// MODIFIED: printf to kprintf_stub
+#define TRACE(code, statement) if(verboseflags & code) { kprintf_stub("%s:%d: ", __FILE__, __LINE__); statement }
 
 #else
 #define TRACE(code, statement)
@@ -83,8 +91,9 @@
 #endif
 
 #ifdef _SYSTEM
+// MODIFIED: printf to kprintf_stub
 #define DEBUG_PRINT(params, level) do { \
-	if (verboseboot >= (level)) printf params; } while (0)
+	if (verboseboot >= (level)) kprintf_stub params; } while (0)
 #define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
 #define DEBUGEXTRA(params) DEBUG_PRINT(params, VERBOSEBOOT_EXTRA)
 #define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)

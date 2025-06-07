@@ -3,12 +3,19 @@
 
 #include "debugreg.h"
 
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
+
 int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 {
 	unsigned long dr7, dr7flags;
 	
 	if (bp >= BREAKPOINT_COUNT)
-		return EINVAL;
+		return EINVAL; // EINVAL might be undefined
 	
 	/* convert flags */
 	dr7flags = 0;
@@ -16,19 +23,19 @@ int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 		case BREAKPOINT_FLAG_RW_EXEC:  dr7flags |= DR7_RW_EXEC(bp);  break;
 		case BREAKPOINT_FLAG_RW_WRITE: dr7flags |= DR7_RW_WRITE(bp); break;
 		case BREAKPOINT_FLAG_RW_RW:    dr7flags |= DR7_RW_RW(bp);    break;
-		default: return EINVAL;			
+		default: return EINVAL;			// EINVAL might be undefined
 	}
 	switch (flags & BREAKPOINT_FLAG_LEN_MASK) {
 		case BREAKPOINT_FLAG_LEN_1: dr7flags |= DR7_LN_1(bp); break;
 		case BREAKPOINT_FLAG_LEN_2: dr7flags |= DR7_LN_2(bp); break;
 		case BREAKPOINT_FLAG_LEN_4: dr7flags |= DR7_LN_4(bp); break;
-		default: return EINVAL;	
+		default: return EINVAL;	// EINVAL might be undefined
 	}
 	switch (flags & BREAKPOINT_FLAG_MODE_MASK) {
 		case BREAKPOINT_FLAG_MODE_OFF: break;
 		case BREAKPOINT_FLAG_MODE_LOCAL: dr7flags |= DR7_L(bp); break;
 		case BREAKPOINT_FLAG_MODE_GLOBAL: dr7flags |= DR7_G(bp); break;
-		default: return EINVAL;	
+		default: return EINVAL;	// EINVAL might be undefined
 	}
 	
 	/* disable breakpoint before setting address */
@@ -54,4 +61,3 @@ int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 	ld_dr7(dr7);
 	return 0;
 }
-

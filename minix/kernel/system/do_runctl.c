@@ -8,7 +8,14 @@
  */
 
 #include "kernel/system.h"
-#include <assert.h>
+// #include <assert.h> // Replaced
+
+// Added kernel headers
+#include <minix/kernel_types.h> // For k_errno_t or similar if error codes are mapped
+#include <klib/include/kprintf.h>
+#include <klib/include/kstring.h>
+#include <klib/include/kmemory.h>
+
 
 #if USE_RUNCTL
 
@@ -27,8 +34,8 @@ int do_runctl(struct proc * caller, message * m_ptr)
   register struct proc *rp;
 
   /* Extract the message parameters and do sanity checking. */
-  if (!isokendpt(m_ptr->RC_ENDPT, &proc_nr)) return(EINVAL);
-  if (iskerneln(proc_nr)) return(EPERM);
+  if (!isokendpt(m_ptr->RC_ENDPT, &proc_nr)) return(EINVAL); // EINVAL might be undefined
+  if (iskerneln(proc_nr)) return(EPERM); // EPERM might be undefined
   rp = proc_addr(proc_nr);
 
   action = m_ptr->RC_ACTION;
@@ -46,7 +53,7 @@ int do_runctl(struct proc * caller, message * m_ptr)
 		rp->p_misc_flags |= MF_SIG_DELAY;
 
 	if (rp->p_misc_flags & MF_SIG_DELAY)
-		return (EBUSY);
+		return (EBUSY); // EBUSY might be undefined
   }
 
   /* Either set or clear the stop flag. */
@@ -62,15 +69,14 @@ int do_runctl(struct proc * caller, message * m_ptr)
 	  RTS_SET(rp, RTS_PROC_STOP);
 	break;
   case RC_RESUME:
-	assert(RTS_ISSET(rp, RTS_PROC_STOP));
+	KASSERT_PLACEHOLDER(RTS_ISSET(rp, RTS_PROC_STOP)); // MODIFIED
 	RTS_UNSET(rp, RTS_PROC_STOP);
 	break;
   default:
-	return(EINVAL);
+	return(EINVAL); // EINVAL might be undefined
   }
 
   return(OK);
 }
 
 #endif /* USE_RUNCTL */
-
