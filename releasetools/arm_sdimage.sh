@@ -68,10 +68,41 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PATH}
 
 # we create a disk image of about 2 gig's
 # for alignment reasons, prefer sizes which are multiples of 4096 bytes
+if [ ! -n "$IMG_SIZE" ]
+then
 : ${IMG_SIZE=$((     2*(2**30) ))}
+fi
+if [ ! -n "$ROOT_SIZE" ]
+then
 : ${ROOT_SIZE=$((   64*(2**20) ))}
+fi
+if [ ! -n "$HOME_SIZE" ]
+then
 : ${HOME_SIZE=$((  128*(2**20) ))}
+fi
+if [ ! -n "$USR_SIZE" ]
+then
 : ${USR_SIZE=$((  1792*(2**20) ))}
+fi
+
+: ${TOTDSKSIZE=$(($ROOT_SIZE+$HOME_SIZE+$USR_SIZE))}
+
+if [ $IMG_SIZE -lt $TOTDSKSIZE ]
+then
+	echo "Warning:** Selected partition sizes larger than image size"
+	echo "Image Size = ${IMG_SIZE} < Partition Total size = ${TOTDSKSIZE}"
+	echo "Root  Size = ${ROOT_SIZE}"
+	echo "Home  Size = ${HOME_SIZE}"
+	echo "Usr   Size = ${USR_SIZE}"
+	echo "You must resize so the Image size is >= the size of the sum of"
+	echo "all partitions."
+	exit 1
+fi
+
+if [ -n "$BBB_MEM_FULL" ]
+then
+	export BBB_MEM_FULL
+fi
 
 # set up disk creation environment
 . releasetools/image.defaults

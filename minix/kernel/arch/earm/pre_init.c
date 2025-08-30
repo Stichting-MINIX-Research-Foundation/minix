@@ -182,7 +182,12 @@ int overlaps(multiboot_module_t *mod, int n, int cmp_mod)
 #define MB_MODS_BASE  0x82000000
 #define MB_MODS_ALIGN 0x00800000 /* 8 MB */
 #define MB_MMAP_START 0x80000000
+
+#ifdef BBB_MEM_FULL
+#define MB_MMAP_SIZE  0x20000000 /* 512 MB */
+#else
 #define MB_MMAP_SIZE  0x10000000 /* 256 MB */
+#endif
 
 multiboot_module_t mb_modlist[MB_MODS_NR];
 multiboot_memory_map_t mb_memmap;
