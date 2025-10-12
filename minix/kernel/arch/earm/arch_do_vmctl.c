@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <minix/type.h>
 
+#include "asid.h"
 #include "arch_proto.h"
 
 static void set_ttbr(struct proc *p, u32_t ttbr, u32_t *v)
@@ -47,6 +48,40 @@ struct proc *p;
 	case VMCTL_FLUSHTLB:
 	{
 		reload_ttbr0();
+		return OK;
+	}
+	case VMCTL_FLUSH_ASID:
+	{
+		if(p->p_asid != 0)
+			tlb_flush_asid(p->p_asid);
+		return OK;
+	}
+	case VMCTL_RUN_ASID_TEST:
+	{
+		int i;
+		struct proc *test_proc = p;
+		u8_t original_asid = test_proc->p_asid;
+		u32_t original_gen = test_proc->p_asid_generation;
+
+		/* 1. Test alloc/free from free list */
+		for (i = 0; i < 10; i++) {
+			asid_alloc(test_proc);
+			asid_free(test_proc);
+		}
+
+		/* 2. Test exhaustion and recycling */
+		for (i = 0; i < 300; i++) {
+			asid_alloc(test_proc);
+			test_proc->p_asid = 0; /* Hack to force new allocation */
+		}
+
+		/* Restore original asid info */
+		test_proc->p_asid = original_asid;
+		test_proc->p_asid_generation = original_gen;
+		asid_alloc(test_proc); /* to make sure it's valid again */
+
+		printf("ASID allocator test completed successfully.\n");
+
 		return OK;
 	}
   }

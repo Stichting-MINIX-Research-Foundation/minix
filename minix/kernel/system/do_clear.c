@@ -6,6 +6,7 @@
  */
 
 #include "kernel/system.h"
+#include "kernel/arch/earm/include/asid.h"
 
 #include <minix/endpoint.h>
 
@@ -50,6 +51,9 @@ int do_clear(struct proc * caller, message * m_ptr)
 
   /* Turn off any alarm timers at the clock. */   
   reset_kernel_timer(&priv(rc)->s_alarm_timer);
+
+  /* Free the ASID used by the process. */
+  asid_free(rc);
 
   /* Make sure that the exiting process is no longer scheduled,
    * and mark slot as FREE. Also mark saved fpu contents as not significant.

@@ -403,6 +403,8 @@
 #define VMCTL_VMINHIBIT_CLEAR	31
 #define VMCTL_CLEARMAPCACHE	32
 #define VMCTL_BOOTINHIBIT_CLEAR	33
+#define VMCTL_FLUSH_ASID    34
+#define VMCTL_RUN_ASID_TEST 35
 
 /* Codes and field names for SYS_DIAGCTL. */
 #define DIAGCTL_CODE_DIAG	1	/* Print diagnostics. */

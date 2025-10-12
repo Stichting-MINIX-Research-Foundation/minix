@@ -240,6 +240,14 @@ static inline void reload_ttbr0(void)
 	write_ttbr0(ttbr);
 }
 
+static inline void tlb_flush_all(void)
+{
+	/* Invalidate entire unified TLB */
+	asm volatile("mcr p15, 0, %0, c8, c7, 0" : : "r" (0));
+	dsb(); /* Ensure completion of the flush */
+	isb(); /* Synchronize instruction pipeline */
+}
+
 /* Read Translation Table Base Register 1 */
 static inline u32_t read_ttbr1()
 {
@@ -458,6 +466,15 @@ static inline void write_cpsr(u32_t status)
 {
 	asm volatile("msr cpsr_c, %[status] @ write CPSR"
 			: : [status] "r" (status));
+}
+
+// ADD NEW FUNCTION
+static inline void tlb_flush_asid(u32_t asid)
+{
+    /* Invalidate TLB entries by ASID match */
+    asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r" (asid));
+    dsb();
+    isb();
 }
 
 #endif /* _ARM_CPUFUNC_H */

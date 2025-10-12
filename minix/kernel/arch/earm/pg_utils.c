@@ -302,7 +302,8 @@ void pg_map(phys_bytes phys, vir_bytes vaddr, vir_bytes vaddr_end,
 		pt[pte] = (source & ARM_VM_PTE_MASK)
 			| ARM_VM_PAGETABLE
 			| ARM_VM_PTE_CACHED
-			| ARM_VM_PTE_USER;
+			| ARM_VM_PTE_USER
+			| ARM_VM_PTE_NOTGLOBAL;
 		vaddr += ARM_PAGE_SIZE;
 		if(phys != PG_ALLOCATEME) {
 			phys += ARM_PAGE_SIZE;

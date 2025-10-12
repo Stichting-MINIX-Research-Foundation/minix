@@ -11,6 +11,7 @@
 
 #include "kernel/system.h"
 #include "kernel/vm.h"
+#include "kernel/arch/earm/include/asid.h"
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
@@ -119,6 +120,18 @@ int do_fork(struct proc * caller, message * m_ptr)
    */
   RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
   (void) sigemptyset(&rpc->p_pending);
+
+  /*
+   * For user processes, allocate an ASID. Kernel threads will
+   * continue to use the reserved ASID 0 and do not need an allocation.
+   * The ASID fields are reset first to ensure a new ASID is allocated
+   * and not inherited from the parent.
+   */
+  rpc->p_asid = 0;
+  rpc->p_asid_generation = 0;
+  if (!(rpc->p_rts_flags & RTS_SYS_PROC)) {
+      asid_alloc(rpc);
+  }
 
 #if defined(__i386__)
   rpc->p_seg.p_cr3 = 0;

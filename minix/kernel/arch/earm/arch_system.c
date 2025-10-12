@@ -23,6 +23,7 @@
 #include "bsp_serial.h"
 
 #include "glo.h"
+#include "asid.h"
 
 void * k_stacks;
 
@@ -100,6 +101,7 @@ void cpu_identify(void)
 
 void arch_init(void)
 {
+	asid_init();
         u32_t value;
 
 	k_stacks = (void*) &k_stacks_start;
@@ -211,6 +213,14 @@ void __switch_address_space(struct proc *p, struct proc **__ptproc)
 	    return;
 
 	write_ttbr0(new_ttbr);
+
+	/*
+	 * Load the ASID. The ASID is pre-allocated at process creation.
+	 * Kernel threads use the reserved ASID 0.
+	 */
+	u32_t asid_to_load = (p->p_rts_flags & RTS_SYS_PROC) ? 0 : p->p_asid;
+	write_contextidr(asid_to_load);
+	isb();
 
 	*__ptproc = p;
 

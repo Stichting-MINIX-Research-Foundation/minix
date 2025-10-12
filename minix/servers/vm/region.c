@@ -1138,6 +1138,12 @@ int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 	    return ENOMEM;
 	}
 
+	if (vmp->vm_endpoint != VM_PROC_NR) {
+		if (sys_vmctl(vmp->vm_endpoint, VMCTL_FLUSH_ASID, 0) != OK) {
+			printf("VM: map_unmap_region: VMCTL_FLUSH_ASID failed\n");
+		}
+	}
+
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	return OK;

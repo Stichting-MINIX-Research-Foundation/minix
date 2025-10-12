@@ -44,6 +44,10 @@ struct proc {
 				 */
 #endif
 
+  /* ASID management */
+  u8_t p_asid;
+  u32_t p_asid_generation;
+
   /* Accounting statistics that get passed to the process' scheduler */
   struct {
 	u64_t enter_queue;	/* time when enqueued (cycles) */
