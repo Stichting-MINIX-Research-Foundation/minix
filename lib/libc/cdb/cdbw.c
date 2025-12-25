@@ -58,6 +58,8 @@ __weak_alias(cdbw_put_data,_cdbw_put_data)
 __weak_alias(cdbw_put_key,_cdbw_put_key)
 #endif
 
+void mi_vector_hash(const void * __restrict, size_t, uint32_t, uint32_t[3]);
+
 struct key_hash {
 	SLIST_ENTRY(key_hash) link;
 	uint32_t hashes[3];

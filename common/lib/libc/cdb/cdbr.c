@@ -86,6 +86,8 @@ __weak_alias(cdbr_open_mem,_cdbr_open_mem)
 #define	fast_remainder32(v,d,m,s1,s2)		(v%d)
 #endif
 
+void mi_vector_hash(const void * __restrict, size_t, uint32_t, uint32_t[3]);
+
 struct cdbr {
 	void (*unmap)(void *, void *, size_t);
 	void *cookie;
