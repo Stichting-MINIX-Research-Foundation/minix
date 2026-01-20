@@ -19,6 +19,7 @@
 
 #include "llvm/Support/Compiler.h"
 #include <cstddef> // for std::size_t
+#include <cstdint> // for intptr_t
 #include <cstdlib> // for qsort
 #include <functional>
 #include <iterator>

@@ -28,6 +28,7 @@
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
 #define __USE_ISOC99 1
+#define _XOPEN_SOURCE 600
 #endif	/* __linux__ && HAVE_FEATURES_H */
 
 /* System headers needed for (re)definitions below. */
@@ -321,6 +322,10 @@ int dprintf(int, const char *, ...);
 int flock(int, int);
 #endif
 
+#if !HAVE_FPURGE
+int fpurge(FILE *);
+#endif
+
 #if !HAVE_FPARSELN || BROKEN_FPARSELN || defined(__NetBSD__) || defined(__minix)
 # define FPARSELN_UNESCESC	0x01
 # define FPARSELN_UNESCCONT	0x02
@@ -558,6 +563,18 @@ int vasnprintf(char **, size_t, const char *, va_list);
 #if !HAVE_VSNPRINTF
 int vsnprintf(char *, size_t, const char *, va_list);
 #endif
+
+/* Wide character function declarations */
+#if defined(__linux__)
+#include <wchar.h>
+#ifndef wcwidth
+int wcwidth(wchar_t);
+#endif
+#endif
+
+/* NetBSD-specific hash function */
+void mi_vector_hash(const void * __restrict, size_t, uint32_t,
+    uint32_t[3]);
 
 /*
  * getmode() and setmode() are always defined, as these function names

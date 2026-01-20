@@ -53,6 +53,7 @@ __RCSID("$NetBSD: tic.c,v 1.24 2014/07/20 20:20:16 christos Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <term_private.h>
 #include <term.h>
 #include <util.h>

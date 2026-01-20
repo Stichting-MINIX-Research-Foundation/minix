@@ -38,12 +38,18 @@
 #if !HAVE_FPURGE
 #include <stdio.h>
 #include <fcntl.h>
+#if HAVE___FPURGE
+#include <stdio_ext.h>
+#endif
 
-void
+int
 fpurge(FILE *fp)
 {
 #if HAVE___FPURGE
 	__fpurge(fp);
+	return 0;
+#else
+	return 0;
 #endif
 }
 #endif
