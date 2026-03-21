@@ -7,6 +7,12 @@
 #include "serial.h"
 #include "glo.h"
 
+/* When set to 0 (e.g., novga=1 boot param), all VGA memory writes
+ * and 6845 I/O port access are suppressed.  Output goes only through
+ * ser_putc() in kputc.  Required for UEFI boot where there is no
+ * BIOS VGA text mode. */
+int direct_con_mode = 1;
+
 /* Give non-zero values to avoid them in BSS */
 static int print_line = 1, print_col = 1;
 
@@ -16,9 +22,11 @@ extern char *video_mem;
 #define VIDOFFSET(line, col) ((line) * MULTIBOOT_CONSOLE_COLS * 2 + (col) * 2)
 #define VIDSIZE VIDOFFSET(MULTIBOOT_CONSOLE_LINES-1,MULTIBOOT_CONSOLE_COLS-1)
 
-void direct_put_char(char c, int line, int col) 
+void direct_put_char(char c, int line, int col)
 {
-	int offset = VIDOFFSET(line, col);
+	int offset;
+	if (!direct_con_mode) return;
+	offset = VIDOFFSET(line, col);
 	video_mem[offset] = c;
 	video_mem[offset+1] = 0x07;	/* grey-on-black */
 }
@@ -32,6 +40,11 @@ void direct_cls(void)
 {
 	/* Clear screen */
 	int i,j;
+
+	if (!direct_con_mode) {
+		print_line = print_col = 0;
+		return;
+	}
 
 	for(i = 0; i < MULTIBOOT_CONSOLE_COLS; i++)
 		for(j = 0; j < MULTIBOOT_CONSOLE_LINES; j++)

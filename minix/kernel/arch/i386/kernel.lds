@@ -12,6 +12,15 @@ __k_unpaged__kern_phys_base = _kern_phys_base;
 SECTIONS
 {
 	. = _kern_phys_base;
+
+	/* Multiboot header must be in the first 8KB for GRUB EFI */
+	.multiboot : { *(.multiboot) }
+
+	/* Discard .eh_frame to prevent it from being placed before
+	 * the multiboot header (it's ~15KB and would push the header
+	 * beyond the 8KB multiboot spec limit). */
+	/DISCARD/ : { *(.eh_frame) *(.eh_frame_hdr) }
+
 	__k_unpaged__kern_unpaged_start = .;
 
 	.unpaged_text : { unpaged_*.o(.text) }

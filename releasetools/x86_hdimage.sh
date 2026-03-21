@@ -26,7 +26,7 @@ fi
 : ${ROOT_SIZE=$((  128*(2**20) - ${BOOTXX_SECS} * 512 ))}
 : ${HOME_SIZE=$((  128*(2**20) ))}
 : ${USR_SIZE=$((  1792*(2**20) ))}
-: ${EFI_SIZE=$((  0  ))}
+: ${EFI_SIZE=$(( 10*(2**20) ))}
 
 # set up disk creation environment
 . releasetools/image.defaults
@@ -86,11 +86,23 @@ then
        fetch_and_build_grub
 
        : ${EFI_DIR=$OBJ/efi}
-       rm -rf ${EFI_DIR} && mkdir -p ${EFI_DIR}/boot/minix_default ${EFI_DIR}/boot/efi
-       create_grub_cfg
+       rm -rf ${EFI_DIR}
+       mkdir -p ${EFI_DIR}/EFI/BOOT
+       mkdir -p ${EFI_DIR}/boot/minix_default
+       mkdir -p ${EFI_DIR}/boot/grub
+
+       # Copy boot modules
        cp ${MODDIR}/* ${EFI_DIR}/boot/minix_default/
-       cp ${RELEASETOOLSDIR}/grub/grub-core/booti386.efi ${EFI_DIR}/boot/efi
-       cp ${RELEASETOOLSDIR}/grub/grub-core/*.mod ${EFI_DIR}/boot/efi
+
+       # Install GRUB EFI binaries in standard UEFI paths
+       cp ${RELEASETOOLSDIR}/grub/grub-core/booti386.efi \
+          ${EFI_DIR}/EFI/BOOT/BOOTIA32.EFI
+       cp ${RELEASETOOLSDIR}/grub/grub-core/bootx64.efi \
+          ${EFI_DIR}/EFI/BOOT/BOOTX64.EFI
+       # GRUB modules for runtime loading
+       cp ${RELEASETOOLSDIR}/grub/grub-core/*.mod ${EFI_DIR}/boot/grub/ 2>/dev/null
+
+       create_grub_cfg
 fi
 
 ROOT_START=${BOOTXX_SECS}
@@ -115,7 +127,7 @@ then
        dd if=/dev/zero bs=${EFI_SIZE} count=1 > ${OBJ}/efi.img
        EFI_START=$((${HOME_START} + ${_HOME_SIZE}))
        echo " * EFI"
-       ${CROSS_TOOLS}/nbmakefs -t msdos -s ${EFI_SIZE} -o "F=32,c=1" ${OBJ}/efi.img ${EFI_DIR}
+       ${CROSS_TOOLS}/nbmakefs -t msdos -s ${EFI_SIZE} -o "F=16,c=1" ${OBJ}/efi.img ${EFI_DIR}
        dd if=${OBJ}/efi.img >> ${IMG}
        ${CROSS_TOOLS}/nbpartition -m ${IMG} ${BOOTXX_SECS} 81:${_ROOT_SIZE}* 81:${_USR_SIZE} 81:${_HOME_SIZE} EF:1+
 else

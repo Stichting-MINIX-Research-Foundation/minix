@@ -29,17 +29,11 @@ IMPORT(mon_ds)
 IMPORT(switch_to_user)
 IMPORT(multiboot_init)
 
-.text
-/*===========================================================================*/
-/*				MINIX				     */
-/*===========================================================================*/
-.global MINIX
-MINIX:
-/* this is the entry point for the MINIX kernel */
-	jmp multiboot_init
-
-/* Multiboot header here*/
-
+/* Multiboot header in its own section so the linker script can
+ * place it within the first 8KB of the binary, as required by
+ * the multiboot specification.  Without this, GRUB EFI cannot
+ * find the header. */
+.section .multiboot, "ax"
 .balign 8
 
 #define MULTIBOOT_FLAGS (MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_MODS_ALIGNED)
@@ -64,6 +58,12 @@ multiboot_height:
 	.long MULTIBOOT_CONSOLE_LINES
 multiboot_depth:
 	.long 0
+
+/* Entry point and remaining code in .text */
+.text
+.global MINIX
+MINIX:
+	jmp multiboot_init
 
 multiboot_init:
 	mov	$load_stack_start, %esp	/* make usable stack */

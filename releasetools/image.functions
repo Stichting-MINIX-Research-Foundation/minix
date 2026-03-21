@@ -260,77 +260,97 @@ create_protos()
 #
 fetch_and_build_grub()
 {
-       if [ -d ${RELEASETOOLSDIR}/grub ]
+       if [ -f ${RELEASETOOLSDIR}/grub/grub-core/booti386.efi ] && \
+          [ -f ${RELEASETOOLSDIR}/grub/grub-core/bootx64.efi ]
        then
-         echo grub is already checked out
-       else
-         git clone git://git.savannah.gnu.org/grub.git ${RELEASETOOLSDIR}/grub
-         pushd ${RELEASETOOLSDIR}/grub
-         # most recent known working commit at the time of writing
-         git checkout a0bf403f66dbaca4edd8e667bfc397dd91c8d71c
-         ./autogen.sh
-         ./configure --with-platform=efi --target=i386
-         make clean
-         make -j ${JOBS}
-         cd grub-core
-         ../grub-mkimage -v -d . -o booti386.efi -O i386-efi -p /boot/efi normal part_msdos fat chain boot configfile multiboot minix3 gzio efi_uga
-         ls -l booti386.efi
-         popd
+         echo "GRUB EFI binaries already built"
+         return
        fi
+
+       rm -rf ${RELEASETOOLSDIR}/grub
+       local _grub_ver="2.06"
+       local _grub_tar="grub-${_grub_ver}.tar.xz"
+       local _grub_url="https://ftp.gnu.org/gnu/grub/${_grub_tar}"
+
+       echo "Downloading GRUB ${_grub_ver}..."
+       if ! curl -fSL -o "/tmp/${_grub_tar}" "${_grub_url}"; then
+         bomb "Failed to download GRUB from ${_grub_url}"
+       fi
+       tar xf "/tmp/${_grub_tar}" -C ${RELEASETOOLSDIR}
+       mv ${RELEASETOOLSDIR}/grub-${_grub_ver} ${RELEASETOOLSDIR}/grub
+
+       GRUB_MODULES="normal part_msdos fat chain boot configfile"
+       GRUB_MODULES="$GRUB_MODULES multiboot serial gzio efi_gop all_video"
+
+       pushd ${RELEASETOOLSDIR}/grub
+
+       # Build i386-efi (for 32-bit UEFI firmware)
+       echo "Building GRUB i386-efi..."
+       ./configure --with-platform=efi --target=i386 --disable-werror \
+           --disable-nls
+       make -j ${JOBS}
+       cd grub-core
+       ../grub-mkimage -d . -o booti386.efi -O i386-efi \
+           -p /boot/grub ${GRUB_MODULES}
+       ls -l booti386.efi
+
+       # Build x86_64-efi (for 64-bit UEFI firmware)
+       echo "Building GRUB x86_64-efi..."
+       cd ..
+       make clean
+       ./configure --with-platform=efi --target=x86_64 --disable-werror \
+           --disable-nls
+       make -j ${JOBS}
+       cd grub-core
+       ../grub-mkimage -d . -o bootx64.efi -O x86_64-efi \
+           -p /boot/grub ${GRUB_MODULES}
+       ls -l bootx64.efi
+
+       popd
+       rm -f "/tmp/${_grub_tar}"
 }
 
 #
-# Create grub.cfg for efi boot
+# Create grub.cfg for EFI boot
 #
 create_grub_cfg()
 {
-	cat > ${EFI_DIR}/boot/efi/grub.cfg <<END_GRUBCFG
+	local _grub_dir="${EFI_DIR}/boot/grub"
 
+	# Generate module lines dynamically from actual module files
+	local _mods=""
+	for _m in ${EFI_DIR}/boot/minix_default/mod*; do
+		_mods="${_mods}	module /boot/minix_default/$(basename ${_m})
+"
+	done
+
+	# GRUB reads files from the EFI partition (FAT16) since it cannot
+	# read MINIX MFS partitions.  Kernel and modules are stored on the
+	# EFI partition under /boot/minix_default/.
+	# The EFI partition is partition 4 in MBR (hd0,msdos4).
+	cat > ${_grub_dir}/grub.cfg <<END_GRUBCFG
 insmod serial
-insmod minix3
 insmod gzio
-#insmod efi_uga
-#insmod video_fb
 insmod all_video
+insmod fat
+insmod part_msdos
 
-set timeout=30
+serial --unit=0 --speed=115200
+terminal_input serial console
+terminal_output serial console
+
+set timeout=10
 set default=0
 
-set gfxmode=text
+menuentry "MINIX 3 (serial + video)" {
+	set root=(hd0,msdos4)
+	multiboot /boot/minix_default/kernel rootdevname=c0d0p0 novga=1
+${_mods}}
 
-menuentry "Minix Boot" {
-        set root=(hd0,1)
-        multiboot /boot/minix_default/kernel rootdevname=c0d0p0
-        module /boot/minix_default/mod01_ds
-        module /boot/minix_default/mod02_rs
-        module /boot/minix_default/mod03_pm
-        module /boot/minix_default/mod04_sched
-        module /boot/minix_default/mod05_vfs
-        module /boot/minix_default/mod06_memory
-        module /boot/minix_default/mod07_tty
-        module /boot/minix_default/mod08_mib
-        module /boot/minix_default/mod09_vm
-        module /boot/minix_default/mod10_pfs
-        module /boot/minix_default/mod11_mfs
-        module /boot/minix_default/mod12_init
-}
-
-menuentry "Minix Boot (serial)" {
-        set root=(hd0,1)
-        multiboot /boot/minix_default/kernel rootdevname=c0d0p0 cttyline=0 ttybaud=115200 console=tty00 consdev=com0
-        module /boot/minix_default/mod01_ds
-        module /boot/minix_default/mod02_rs
-        module /boot/minix_default/mod03_pm
-        module /boot/minix_default/mod04_sched
-        module /boot/minix_default/mod05_vfs
-        module /boot/minix_default/mod06_memory
-        module /boot/minix_default/mod07_tty
-        module /boot/minix_default/mod08_mib
-        module /boot/minix_default/mod09_vm
-        module /boot/minix_default/mod10_pfs
-        module /boot/minix_default/mod11_mfs
-        module /boot/minix_default/mod12_init
-}
+menuentry "MINIX 3 (serial only)" {
+	set root=(hd0,msdos4)
+	multiboot /boot/minix_default/kernel rootdevname=c0d0p0 novga=1 cttyline=0 ttybaud=115200 console=tty00
+${_mods}}
 END_GRUBCFG
 }
 

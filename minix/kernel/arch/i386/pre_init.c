@@ -142,6 +142,14 @@ void get_parameters(u32_t ebx, kinfo_t *cbi)
 			value[value_i] = 0;
 			
 			mb_set_param(cbi->param_buf, var, value, cbi);
+
+			/* novga=1: disable VGA console (UEFI boot) */
+			if (var_i == 5 && var[0]=='n' && var[1]=='o' &&
+			    var[2]=='v' && var[3]=='g' && var[4]=='a' &&
+			    value[0] == '1') {
+				extern int direct_con_mode;
+				direct_con_mode = 0;
+			}
 		}
 	}
 

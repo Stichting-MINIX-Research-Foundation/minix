@@ -950,6 +950,13 @@ tty_t *tp;
   	font_lines = bios_fontlines;
 	scr_lines = bios_rows+1;
 
+	/* UEFI boot: BDA has no VGA parameters (all zeros).
+	 * Disable the console driver to prevent divide-by-zero. */
+	if (bios_crtbase == 0 && bios_columns == 0) {
+		nr_cons = 0;
+		return;
+	}
+
   	if (color) {
 		vid_base = COLOR_BASE;
 		vid_size = COLOR_SIZE;
