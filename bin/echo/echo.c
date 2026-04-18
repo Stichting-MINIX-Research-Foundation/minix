@@ -54,7 +54,7 @@ int
 main(int argc, char *argv[])
 {
 	int nflag;
-
+// Purpose: Automatically prepends the program name to error messages (e.g., from err/errx calls), making it easier for users to identify the source of problems.
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
