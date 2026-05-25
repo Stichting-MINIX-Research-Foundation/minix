@@ -12,12 +12,15 @@
 #include <assert.h>
 #include <minix/com.h>
 #include <machine/archtypes.h>
+#include "kernel/proc.h" /* for queue constants */
 
+static minix_timer_t sched_timer;
 static unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
 static int schedule_process(struct schedproc * rmp, unsigned flags);
+static void balance_queues(minix_timer_t *tp);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2
@@ -96,9 +99,13 @@ int do_noquantum(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
-		rmp->priority += 1; /* lower priority */
-	}
+		rmp->cpu_burst += 1;
+			if (rmp->cpu_burst >= 5 && rmp->priority < MIN_USER_Q) {
+					rmp->priority += 1;
+							rmp->cpu_burst = 0;
+								}
+										
+
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		return rv;
@@ -173,6 +180,8 @@ int do_start_scheduling(message *m_ptr)
 		   process scheduled, and the parent of itself. */
 		rmp->priority   = USER_Q;
 		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
+		rmp->cpu_burst = 0;
+
 
 		/*
 		 * Since kernel never changes the cpu of a process, all are
@@ -297,7 +306,7 @@ int do_nice(message *m_ptr)
 static int schedule_process(struct schedproc * rmp, unsigned flags)
 {
 	int err;
-	int new_prio, new_quantum, new_cpu, niced;
+	int new_prio, new_quantum, new_cpu;
 
 	pick_cpu(rmp);
 
@@ -316,10 +325,8 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 	else
 		new_cpu = -1;
 
-	niced = (rmp->max_priority > USER_Q);
-
 	if ((err = sys_schedule(rmp->endpoint, new_prio,
-		new_quantum, new_cpu, niced)) != OK) {
+		new_quantum, new_cpu)) != OK) {
 		printf("PM: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, err);
 	}
@@ -329,31 +336,29 @@ static int schedule_process(struct schedproc * rmp, unsigned flags)
 
 
 /*===========================================================================*
- *				init_scheduling				     *
+ *				start_scheduling			     *
  *===========================================================================*/
+
 void init_scheduling(void)
 {
-	int r;
-
 	balance_timeout = BALANCE_TIMEOUT * sys_hz();
-
-	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
-		panic("sys_setalarm failed: %d", r);
+	init_timer(&sched_timer);
+	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
 }
 
 /*===========================================================================*
  *				balance_queues				     *
  *===========================================================================*/
 
-/* This function in called every N ticks to rebalance the queues. The current
+/* This function in called every 100 ticks to rebalance the queues. The current
  * scheduler bumps processes down one priority when ever they run out of
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
-void balance_queues(void)
+static void balance_queues(minix_timer_t *tp)
 {
 	struct schedproc *rmp;
-	int r, proc_nr;
+	int proc_nr;
 
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if (rmp->flags & IN_USE) {
@@ -364,6 +369,5 @@ void balance_queues(void)
 		}
 	}
 
-	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
-		panic("sys_setalarm failed: %d", r);
+	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
 }
