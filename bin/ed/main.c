@@ -94,7 +94,7 @@ int mutex = 0;			/* if set, signals set "sigflags" */
 int red = 0;			/* if set, restrict shell/directory access */
 int ere = 0;			/* if set, use extended regexes */
 int scripted = 0;		/* if set, suppress diagnostics */
-int secure = 0;			/* is set, ! is not allowed */
+int secure = 0;			/* if set, ! is not allowed */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
 
@@ -1425,7 +1425,7 @@ handle_winch(int signo)
 int
 is_legal_filename(char *s)
 {
-	if (red && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
+	if ((red || secure) && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
 		seterrmsg("shell access restricted");
 		return 0;
 	}
