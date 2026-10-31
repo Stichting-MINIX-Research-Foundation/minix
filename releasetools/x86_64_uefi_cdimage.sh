@@ -8,6 +8,11 @@
 #
 set -e
 
+# Resolve the source root so this helper also works when called by build.sh
+# from a machine-dependent distrib/ subdirectory.
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "${SCRIPT_DIR}/.."
+
 : ${ARCH:=amd64}
 : ${OBJ:=../build}
 : ${TOOLCHAIN_TRIPLET:=x86_64-elf64-minix-}
