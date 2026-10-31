@@ -17,8 +17,17 @@ SUBDIR+=	liveimage
 SUBDIR+=	installimage
 TARGETS+=	release
 
-iso_image:
-	${MAKEDIRTARGET} cdroms iso_image
+# Build an x86_64 UEFI El Torito ISO.  The legacy cdroms target uses the
+# 32-bit BIOS boot path and is not suitable for the amd64 EFI loader.
+iso_image: .PHONY
+	ARCH=amd64 \
+	OBJ=${.OBJDIR:Q}/../.. \
+	DESTDIR=${DESTDIR:Q} \
+	RELEASEDIR=${RELEASEDIR:Q} \
+	SETS_DIR=${RELEASEDIR:Q}/${RELEASEMACHINEDIR}/binary/sets \
+	CROSS_TOOLS=${TOOLDIR:Q}/bin \
+	CREATE_IMAGE_ONLY=1 \
+	bash ${NETBSDSRCDIR:Q}/releasetools/x86_64_uefi_cdimage.sh
 
 live_image:
 	${MAKEDIRTARGET} liveimage live_image
